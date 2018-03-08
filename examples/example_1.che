@@ -1,0 +1,7 @@
+fn main :: () {
+    print "Hello World`n"
+    print "Hey, wassup?`n"
+}
+
+fn test :: () {
+}

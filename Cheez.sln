@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2003
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cheez", "Cheez\Cheez.csproj", "{18994E2F-310A-460F-AB2F-3AF665CE7F67}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CLC", "CLC\CLC.csproj", "{7E8D323A-959C-4387-8405-184081032D62}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{75693C29-814D-4E4F-8EC8-1E5F4CD9EA01}"
+	ProjectSection(SolutionItems) = preProject
+		examples\example_1.che = examples\example_1.che
+		examples\example_2.che = examples\example_2.che
+		examples\example_x.che = examples\example_x.che
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{61E7E744-0521-4156-BCB0-5E1DA76E69F6}"
+	ProjectSection(SolutionItems) = preProject
+		examples\tests\test1.che = examples\tests\test1.che
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gen", "gen", "{985545D1-CF28-4A55-80CD-727E820FF4A0}"
+	ProjectSection(SolutionItems) = preProject
+		gen\code.cpp = gen\code.cpp
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{18994E2F-310A-460F-AB2F-3AF665CE7F67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18994E2F-310A-460F-AB2F-3AF665CE7F67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18994E2F-310A-460F-AB2F-3AF665CE7F67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18994E2F-310A-460F-AB2F-3AF665CE7F67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E8D323A-959C-4387-8405-184081032D62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E8D323A-959C-4387-8405-184081032D62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E8D323A-959C-4387-8405-184081032D62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E8D323A-959C-4387-8405-184081032D62}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{61E7E744-0521-4156-BCB0-5E1DA76E69F6} = {75693C29-814D-4E4F-8EC8-1E5F4CD9EA01}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F405CD8B-BFF6-4AE1-BC0D-F0AF87F7AC8D}
+	EndGlobalSection
+EndGlobal

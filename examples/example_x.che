@@ -1,0 +1,47 @@
+constant :: 3.1415
+a := 5
+b := 6
+c := a + b
+
+test :: () -> string
+{
+    one := "Hi"
+    two := "wassup"
+    return one + " " + two
+}
+
+Vec :: struct
+{
+    x : int;
+    y : int;
+    z : int;
+}
+
+main :: ()
+{
+    println("Hello World!")
+    println(test())
+
+    if 1 > 10 {
+        // ...
+    }
+
+    str := "Hi, how are you?"
+    for i in ..[0, str.len) { ... }
+    for c in str { ... }
+    for c, i in str { ... }
+    for c in str println(c)
+
+    vec : Vec;
+    vec : Vec = Vec { 1, 2, 3 }
+    vec := Vec {
+        z = 1,
+        y = 2,
+        x = 3
+    }
+
+    local :: () -> str
+    {
+        
+    }
+}
