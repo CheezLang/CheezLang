@@ -1,3 +1,4 @@
 fn test1 :: () {
+    print "Inside test1()"
 }
 

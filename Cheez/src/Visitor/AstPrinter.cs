@@ -30,7 +30,7 @@ namespace Cheez.Visitor
 
         public string VisitStringLiteral(StringLiteral str, int data = 0)
         {
-            return $"\"{str.Value.Replace("`", "``").Replace("\n", "`n")}\"";
+            return $"\"{str.Value.Replace("`", "``").Replace("\n", "`n").Replace("\"", "`\"")}\"";
         }
     }
 }

@@ -14,7 +14,7 @@ namespace CLC
             var stopwatch = Stopwatch.StartNew(); 
             CompilationQueue queue = new CompilationQueue(2);
             queue.CompileFile("examples/example_1.che");
-            //queue.CompileFile("examples/example_2.che");
+            queue.CompileFile("examples/example_2.che");
 
             // tests
             /*

@@ -59,7 +59,7 @@ namespace Cheez.CodeGeneration
 
         public void VisitStringLiteral(StringLiteral str, StringBuilder sb)
         {
-            sb.Append('"').Append(str.Value.Replace("\n", "\\n")).Append('"');
+            sb.Append('"').Append(str.Value.Replace("\n", "\\n").Replace("\"", "\\\"")).Append('"');
         }
     }
 }
