@@ -1,6 +1,7 @@
 ﻿using Cheez.Parsing;
 using Cheez.Visitor;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Cheez.Ast
 {
@@ -17,11 +18,13 @@ namespace Cheez.Ast
             this.Statements = statements;
         }
 
+        [DebuggerStepThrough]
         public override T Visit<T, D>(IVisitor<T, D> visitor, D data = default(D))
         {
             return visitor.VisitFunctionDeclaration(this, data);
         }
 
+        [DebuggerStepThrough]
         public override void Visit<D>(IVoidVisitor<D> visitor, D data = default(D))
         {
             visitor.VisitFunctionDeclaration(this, data);

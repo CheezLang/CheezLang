@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Reflection;
+using System.Text;
 using Cheez.Ast;
 using log4net;
 
@@ -31,6 +32,25 @@ namespace Cheez.Visitor
         public string VisitStringLiteral(StringLiteral str, int data = 0)
         {
             return $"\"{str.Value.Replace("`", "``").Replace("\n", "`n").Replace("\"", "`\"")}\"";
+        }
+
+        public string VisitVariableDeclaration(VariableDeclaration variable, int data = 0)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("var ").Append(variable.Name);
+            if (variable.TypeName != null)
+                sb.Append(" : ").Append(variable.TypeName);
+            if (variable.Initializer != null)
+            {
+                sb.Append(" = ");
+                sb.AppendLine(variable.Initializer.Visit(this, data));
+            }
+            return sb.ToString();
+        }
+
+        public string VisitIdentifierExpression(IdentifierExpression ident, int data = 0)
+        {
+            return ident.Name;
         }
     }
 }

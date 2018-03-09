@@ -1,5 +1,6 @@
 ﻿using Cheez.Parsing;
 using Cheez.Visitor;
+using System.Diagnostics;
 
 namespace Cheez.Ast
 {
@@ -12,7 +13,10 @@ namespace Cheez.Ast
             Beginning = loc;
         }
 
+        [DebuggerStepThrough]
         public abstract T Visit<T, D>(IVisitor<T, D> visitor, D data = default(D));
+
+        [DebuggerStepThrough]
         public abstract void Visit<D>(IVoidVisitor<D> visitor, D data = default(D));
     }
 
@@ -32,11 +36,13 @@ namespace Cheez.Ast
             this.Value = value;
         }
 
+        [DebuggerStepThrough]
         public override T Visit<T, D>(IVisitor<T, D> visitor, D data = default(D))
         {
             return visitor.VisitStringLiteral(this, data);
         }
 
+        [DebuggerStepThrough]
         public override void Visit<D>(IVoidVisitor<D> visitor, D data = default(D))
         {
             visitor.VisitStringLiteral(this, data);

@@ -20,6 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -28,6 +29,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
@@ -48,11 +50,14 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\Ast\Expression.cs" />
+    <Compile Include="src\Ast\IdentifierExpression.cs" />
     <Compile Include="src\Ast\PrintStatement.cs" />
     <Compile Include="src\Ast\Statement.cs" />
     <Compile Include="src\Ast\FunctionDeclaration.cs" />
+    <Compile Include="src\Ast\VariableDeclaration.cs" />
     <Compile Include="src\CodeGeneration\CppCodeGenerator.cs" />
     <Compile Include="src\CompilationQueue.cs" />
+    <Compile Include="src\CType.cs" />
     <Compile Include="src\ErrorHandler.cs" />
     <Compile Include="src\Parsing\Lexer.cs" />
     <Compile Include="src\Parsing\Parser.cs" />

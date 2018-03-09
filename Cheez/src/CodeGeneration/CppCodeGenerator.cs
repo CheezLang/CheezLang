@@ -12,7 +12,9 @@ namespace Cheez.CodeGeneration
         public string GenerateCode(Statement[] statements)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("#include <cstdio>\n");
+            sb.AppendLine("#include <string>");
+            sb.AppendLine("#include <iostream>");
+            sb.AppendLine();
 
 
             var stmts = new StringBuilder();
@@ -52,14 +54,33 @@ namespace Cheez.CodeGeneration
 
         public void VisitPrintStatement(PrintStatement print, StringBuilder sb)
         {
-            sb.Append("printf(");
+            sb.Append("std::cout << ");
             print.Expr.Visit(this, sb);
-            sb.AppendLine(");");
+            sb.AppendLine(@" << '\n';");
+        }
+
+        public void VisitIdentifierExpression(IdentifierExpression ident, StringBuilder sb = null)
+        {
+            sb.Append(ident.Name);
         }
 
         public void VisitStringLiteral(StringLiteral str, StringBuilder sb)
         {
             sb.Append('"').Append(str.Value.Replace("\n", "\\n").Replace("\"", "\\\"")).Append('"');
+        }
+
+        public void VisitVariableDeclaration(VariableDeclaration variable, StringBuilder sb = null)
+        {
+            string type = variable.TypeName ?? "auto";
+            if (type == "string")
+                type = "std::string";
+            sb.Append($"{type} {variable.Name}");
+            if (variable.Initializer != null)
+            {
+                sb.Append($" = ");
+                variable.Initializer.Visit(this, sb);
+        }
+            sb.AppendLine(";");
         }
     }
 }

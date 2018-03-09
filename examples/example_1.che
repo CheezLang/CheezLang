@@ -1,7 +1,6 @@
 fn main :: () {
-    print "Hello World`n"
-    print "Hey, wassup? I'm `"The Developer`"`n"
-}
+    var a = "Hello World"
 
-fn test :: () {
+    print "test"
+    print a
 }

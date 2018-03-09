@@ -5,14 +5,17 @@ namespace Cheez.Parsing
 {
     public enum TokenType
     {
-        EOL,
+        NewLine,
         EOF,
 
         StringLiteral,
 
         Identifier,
 
+        Semicolon,
         DoubleColon,
+        Colon,
+        Equal,
 
         OpenParen,
         ClosingParen,
@@ -21,6 +24,7 @@ namespace Cheez.Parsing
         ClosingBrace,
 
         KwFn,
+        KwVar,
         KwPrint, // @Temporary
     }
 
@@ -115,7 +119,7 @@ namespace Cheez.Parsing
             {
                 Token tok = new Token();
                 tok.location = loc;
-                tok.type = TokenType.EOL;
+                tok.type = TokenType.NewLine;
                 return tok;
             }
 
@@ -133,6 +137,9 @@ namespace Cheez.Parsing
             switch (Current)
             {
                 case ':' when Next == ':': SimpleToken(ref token, TokenType.DoubleColon, 2); break;
+                case ':': SimpleToken(ref token, TokenType.Colon); break;
+                case ';': SimpleToken(ref token, TokenType.Semicolon); break;
+                case '=': SimpleToken(ref token, TokenType.Equal); break;
                 case '(': SimpleToken(ref token, TokenType.OpenParen); break;
                 case ')': SimpleToken(ref token, TokenType.ClosingParen); break;
                 case '{': SimpleToken(ref token, TokenType.OpenBrace); break;
@@ -207,7 +214,8 @@ namespace Cheez.Parsing
             switch (token.data as string)
             {
                 case "fn": token.type = TokenType.KwFn; break;
-                case "print": token.type = TokenType.KwPrint; break;
+                case "var": token.type = TokenType.KwVar; break;
+                case "print": token.type = TokenType.KwPrint; break; // @Temporary
             }
         }
 
@@ -290,13 +298,10 @@ namespace Cheez.Parsing
         {
             while (index < mFile.Length)
             {
-                index++;
-                if (Prev == '\n')
+                if (Current == '\n')
                     break;
+                index++;
             }
-
-            mLocation.line++;
-            mLocation.column = 1;
         }
 
         private void ParseMultiLineComment()

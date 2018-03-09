@@ -14,3 +14,15 @@ fn nested1 :: ()
 }
 
 // ...
+fn variableDeclarations :: ()
+{
+    print "Variable Declarations:"
+    var b : int
+    var c = "hello"
+    var d : string = "world"
+
+    // var e // error
+    // var e : "" // error
+    // var e : // error
+    // var e = // error
+}
