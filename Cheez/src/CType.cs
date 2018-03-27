@@ -2,7 +2,7 @@
 
 namespace Cheez
 {
-    public class CType
+    public class CTypeFactory
     {
         private Dictionary<string, CType> sTypes = new Dictionary<string, CType>();
 
@@ -22,9 +22,20 @@ namespace Cheez
         }
     }
 
+    public class CType
+    {
+        public static VoidType Void => VoidType.Intance;
+    }
+
+    public class VoidType : CType
+    {
+        public static VoidType Intance { get; } = new VoidType();
+    }
+
     public class IntType : CType
     {
         private static Dictionary<(int, bool), IntType> sTypes = new Dictionary<(int, bool), IntType>();
+        public static IntType LiteralType = new IntType { Signed = false, SizeInBytes = 0 };
 
         public int SizeInBytes { get; private set; }
         public bool Signed { get; private set; }
@@ -93,5 +104,10 @@ namespace Cheez
             sTypes[targetType] = type;
             return type;
         }
+    }
+
+    public class StringType : CType
+    {
+        public static StringType Instance = new StringType();
     }
 }

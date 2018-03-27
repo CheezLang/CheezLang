@@ -1,39 +1,53 @@
-﻿using Cheez;
-using Cheez.Ast;
+﻿using Cheez.Ast;
 using Cheez.CodeGeneration;
+using Cheez;
+using Cheez.Visitor;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 
 namespace CLC
 {
     class Prog
     {
+
         public static void Main(string[] args)
         {
-            var stopwatch = Stopwatch.StartNew(); 
-            CompilationQueue queue = new CompilationQueue(2);
-            queue.CompileFile("examples/example_1.che");
-            queue.CompileFile("examples/example_2.che");
+            var stopwatch = Stopwatch.StartNew();
+            // CompilationQueue queue = new CompilationQueue(2);
+            //queue.CompileFile("examples/example_1.che");
+            //queue.CompileFile("examples/example_2.che");
 
             // tests
             /*
             queue.CompileFile("examples/tests/test1.che");
             */
 
-            queue.Complete();
-            System.Console.WriteLine();
-
+            //queue.Complete();
+            var compiler = new Compiler();
+            var file = compiler.AddFile("examples/example_1.che");
+            compiler.CompileAll();
+            
             var ourCompileTime = stopwatch.Elapsed;
+            System.Console.WriteLine($"Our compile time  : {ourCompileTime}");
+
+            // print code
+            //var printer = new AstPrinter();
+            //foreach (var s in file.Statements)
+            //{
+            //    System.Console.WriteLine(s.Accept(printer));
+            //}
+
+            // generate code
+            //System.Console.WriteLine();
+
             stopwatch.Restart();
 
-            var statements = queue.GetCompiledStatements();
-            bool clangOk = GenerateAndCompileCode(statements);
+            //var statements = queue.GetCompiledStatements();
+            bool clangOk = GenerateAndCompileCode(file);
 
             var clangTime = stopwatch.Elapsed;
             System.Console.WriteLine();
-            System.Console.WriteLine($"Compilation finished in {ourCompileTime+clangTime}.");
-            System.Console.WriteLine($"Our compile time  : {ourCompileTime}");
+            System.Console.WriteLine($"Compilation finished in {ourCompileTime + clangTime}.");
             System.Console.WriteLine($"Clang compile time: {clangTime}");
 
             if (clangOk)
@@ -46,17 +60,17 @@ namespace CLC
             }
         }
 
-        private static bool GenerateAndCompileCode(Statement[] statements)
+        private static bool GenerateAndCompileCode(CheezFile file)
         {
-            foreach (string file in Directory.EnumerateFiles("gen"))
+            foreach (string f in Directory.EnumerateFiles("gen"))
             {
-                string extension = Path.GetExtension(file);
+                string extension = Path.GetExtension(f);
                 if (extension == ".cpp" || extension == ".exe")
-                    File.Delete(file);
+                    File.Delete(f);
             }
 
             CppCodeGenerator generator = new CppCodeGenerator();
-            string code = generator.GenerateCode(statements);
+            string code = generator.GenerateCode(file.Statements);
             File.WriteAllText("gen/code.cpp", code);
 
             // run clang

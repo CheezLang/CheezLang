@@ -14,9 +14,9 @@ namespace Cheez.Ast
         }
 
         [DebuggerStepThrough]
-        public abstract T Visit<T, D>(IVisitor<T, D> visitor, D data = default(D));
+        public abstract T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D));
 
         [DebuggerStepThrough]
-        public abstract void Visit<D>(IVoidVisitor<D> visitor, D data = default(D));
+        public abstract void Accept<D>(IVoidVisitor<D> visitor, D data = default(D));
     }
 }

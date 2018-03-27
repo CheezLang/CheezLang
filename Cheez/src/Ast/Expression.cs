@@ -7,6 +7,7 @@ namespace Cheez.Ast
     public abstract class Expression
     {
         public LocationInfo Beginning { get; set; }
+        public CType Type { get; set; }
 
         public Expression(LocationInfo loc)
         {
@@ -14,10 +15,10 @@ namespace Cheez.Ast
         }
 
         [DebuggerStepThrough]
-        public abstract T Visit<T, D>(IVisitor<T, D> visitor, D data = default(D));
+        public abstract T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D));
 
         [DebuggerStepThrough]
-        public abstract void Visit<D>(IVoidVisitor<D> visitor, D data = default(D));
+        public abstract void Accept<D>(IVoidVisitor<D> visitor, D data = default(D));
     }
 
     public abstract class Literal : Expression
@@ -34,18 +35,41 @@ namespace Cheez.Ast
         public StringLiteral(LocationInfo loc, string value) : base(loc)
         {
             this.Value = value;
+            Type = StringType.Instance;
         }
 
         [DebuggerStepThrough]
-        public override T Visit<T, D>(IVisitor<T, D> visitor, D data = default(D))
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D))
         {
             return visitor.VisitStringLiteral(this, data);
         }
 
         [DebuggerStepThrough]
-        public override void Visit<D>(IVoidVisitor<D> visitor, D data = default(D))
+        public override void Accept<D>(IVoidVisitor<D> visitor, D data = default(D))
         {
             visitor.VisitStringLiteral(this, data);
+        }
+    }
+
+    public class DotExpression : Expression
+    {
+        public Expression Left { get; set; }
+        public string Right { get; set; }
+
+        public DotExpression(LocationInfo loc, Expression left, string right) : base(loc)
+        {
+            this.Left = left;
+            this.Right = right;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitDotExpression(this, data);
+        }
+
+        public override void Accept<D>(IVoidVisitor<D> visitor, D data = default)
+        {
+            visitor.VisitDotExpression(this, data);
         }
     }
 }

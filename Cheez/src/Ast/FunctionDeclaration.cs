@@ -19,13 +19,13 @@ namespace Cheez.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Visit<T, D>(IVisitor<T, D> visitor, D data = default(D))
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D))
         {
             return visitor.VisitFunctionDeclaration(this, data);
         }
 
         [DebuggerStepThrough]
-        public override void Visit<D>(IVoidVisitor<D> visitor, D data = default(D))
+        public override void Accept<D>(IVoidVisitor<D> visitor, D data = default(D))
         {
             visitor.VisitFunctionDeclaration(this, data);
         }

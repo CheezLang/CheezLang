@@ -1,6 +1,41 @@
-fn main :: () {
-    var a = "Hello World"
+var a = 1
+var b = 10m
+var c = 9mps
 
-    print "test"
-    print a
+struct Vec3 {
+    x : i32
+    y : i32
+    z : i32
+}
+
+impl Vec3 {
+    fn print_me() {
+        print "("
+        print(", ") self.x, self.y, self.z
+        print ")`n"
+    }
+
+    fn normalize() {
+        print "normalize`n"
+    }
+}
+
+fn main() {
+    a = 2
+
+    print(" ") a, b, c, "`n"
+    print(" + ") 1, 2, 3
+    print " = 6`n"
+
+    if 1 {
+        print "hello "
+    }
+    
+    if 1 {
+        print "world"
+    } else {
+        print "you"
+    }
+
+    print "`n"
 }

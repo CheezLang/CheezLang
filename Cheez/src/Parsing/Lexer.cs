@@ -1,20 +1,26 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace Cheez.Parsing
 {
     public enum TokenType
     {
+        Unknown,
+
         NewLine,
         EOF,
 
         StringLiteral,
+        NumberLiteral,
 
         Identifier,
 
         Semicolon,
         DoubleColon,
         Colon,
+        Comma,
+        Period,
         Equal,
 
         OpenParen,
@@ -24,7 +30,14 @@ namespace Cheez.Parsing
         ClosingBrace,
 
         KwFn,
+        KwStruct,
+        KwImpl,
+        KwConstant,
         KwVar,
+        KwIf,
+        KwElse,
+        KwFor,
+        KwWhile,
         KwPrint, // @Temporary
     }
 
@@ -57,6 +70,21 @@ namespace Cheez.Parsing
         public object data;
     }
 
+    public struct NumberData
+    {
+        public enum NumberType
+        {
+            Float,
+            Int
+        }
+
+        public int IntBase;
+        public string Suffix;
+        public string StringValue;
+        public object Value;
+        public NumberType Type;
+    }
+
     public class Lexer
     {
         private string mFile;
@@ -81,7 +109,7 @@ namespace Cheez.Parsing
                 }
             };
         }
-        
+
         public static Lexer FromString(string str)
         {
             return new Lexer
@@ -139,13 +167,19 @@ namespace Cheez.Parsing
                 case ':' when Next == ':': SimpleToken(ref token, TokenType.DoubleColon, 2); break;
                 case ':': SimpleToken(ref token, TokenType.Colon); break;
                 case ';': SimpleToken(ref token, TokenType.Semicolon); break;
+                case '.': SimpleToken(ref token, TokenType.Period); break;
                 case '=': SimpleToken(ref token, TokenType.Equal); break;
                 case '(': SimpleToken(ref token, TokenType.OpenParen); break;
                 case ')': SimpleToken(ref token, TokenType.ClosingParen); break;
                 case '{': SimpleToken(ref token, TokenType.OpenBrace); break;
                 case '}': SimpleToken(ref token, TokenType.ClosingBrace); break;
+                case ',': SimpleToken(ref token, TokenType.Comma); break;
 
                 case '"': ParseStringLiteral(ref token); break;
+
+                case char cc when IsDigit(cc):
+                    ParseNumberLiteral(ref token);
+                    break;
 
                 case char cc when IsIdentBegin(cc):
                     ParseIdentifier(ref token);
@@ -214,7 +248,14 @@ namespace Cheez.Parsing
             switch (token.data as string)
             {
                 case "fn": token.type = TokenType.KwFn; break;
+                case "struct": token.type = TokenType.KwStruct; break;
+                case "impl": token.type = TokenType.KwImpl; break;
+                case "constant": token.type = TokenType.KwConstant; break;
                 case "var": token.type = TokenType.KwVar; break;
+                case "if": token.type = TokenType.KwIf; break;
+                case "else": token.type = TokenType.KwElse; break;
+                case "for": token.type = TokenType.KwFor; break;
+                case "while": token.type = TokenType.KwWhile; break;
                 case "print": token.type = TokenType.KwPrint; break; // @Temporary
             }
         }
@@ -233,9 +274,231 @@ namespace Cheez.Parsing
             token.data = mFile.Substring(start, index - start);
         }
 
+        private void ParseNumberLiteral(ref Token token)
+        {
+            token.type = TokenType.NumberLiteral;
+            NumberData data = new NumberData();
+            data.IntBase = 10;
+            data.Suffix = "";
+            data.StringValue = "";
+            data.Value = null;
+            data.Type = NumberData.NumberType.Int;
+
+            const int StateInit = 0;
+            const int State0 = 1;
+            const int StateX = 2;
+            const int StateB = 3;
+            const int StateDecimalDigit = 5;
+            const int StateBinaryDigit = 6;
+            const int StateHexDigit = 7;
+            const int StatePostfix = 8;
+            const int StateDone = 9;
+            int state = StateInit;
+            string error = null;
+
+
+            while (index < mFile.Length && state != -1 && state != StateDone)
+            {
+                char c = Current;
+
+                switch (state)
+                {
+                    case StateInit:
+                        {
+                            if (c == '0')
+                            {
+                                data.StringValue += '0';
+                                state = State0;
+                            }
+                            else if (IsDigit(c))
+                            {
+                                data.StringValue += c;
+                                state = StateDecimalDigit;
+                            }
+                            else
+                            {
+                                state = -1;
+                                error = "THIS SHOULD NOT HAPPEN!";
+                            }
+                            break;
+                        }
+
+
+
+                    case State0:
+                        {
+                            if (c == 'x')
+                            {
+                                data.IntBase = 16;
+                                data.StringValue = "";
+                                state = StateX;
+                            }
+                            else if (c == 'b')
+                            {
+                                data.IntBase = 2;
+                                data.StringValue = "";
+                                state = StateB;
+                            }
+                            else if (IsDigit(c))
+                            {
+                                data.StringValue += c;
+                                state = StateDecimalDigit;
+                            }
+                            else if (IsIdentBegin(c))
+                            {
+                                data.Suffix += c;
+                                state = StatePostfix;
+                            }
+                            else
+                            {
+                                state = StateDone;
+                            }
+                            break;
+                        }
+
+                    case StatePostfix:
+                        {
+                            if (IsIdent(c))
+                            {
+                                data.Suffix += c;
+                            }
+                            else
+                            {
+                                state = StateDone;
+                            }
+                            break;
+                        }
+
+                    case StateDecimalDigit:
+                        {
+                            if (IsDigit(c))
+                                data.StringValue += c;
+                            else if (IsIdentBegin(c))
+                            {
+                                data.Suffix += c;
+                                state = StatePostfix;
+                            }
+                            else
+                            {
+                                state = StateDone;
+                            }
+                            break;
+                        }
+
+                    case StateX:
+                        {
+                            if (IsHexDigit(c))
+                            {
+                                data.StringValue += c;
+                                state = StateHexDigit;
+                            }
+                            else
+                            {
+                                error = "Invalid character, expected hex digit";
+                                state = -1;
+                            }
+                            break;
+                        }
+
+                    case StateHexDigit:
+                        {
+                            if (IsHexDigit(c))
+                                data.StringValue += c;
+                            else if (IsIdentBegin(c))
+                            {
+                                data.Suffix += c;
+                                state = StatePostfix;
+                            }
+                            else
+                            {
+                                state = StateDone;
+                            }
+                            break;
+                        }
+
+                    case StateB:
+                        {
+                            if (IsBinaryDigit(c))
+                            {
+                                data.StringValue += c;
+                                state = StateBinaryDigit;
+                            }
+                            else if (IsDigit(c))
+                            {
+                                error = "Invalid character, expected binary digit";
+                                state = -1;
+                            }
+                            else
+                            {
+                                state = StateDone;
+                            }
+                            break;
+                        }
+
+                    case StateBinaryDigit:
+                        {
+                            if (IsBinaryDigit(c))
+                                data.StringValue += c;
+                            else if (IsDigit(c))
+                            {
+                                error = "Invalid character, expected binary digit";
+                                state = -1;
+                            }
+                            else if (IsIdentBegin(c))
+                            {
+                                data.Suffix += c;
+                                state = StatePostfix;
+                            }
+                            else
+                            {
+                                state = StateDone;
+                            }
+                            break;
+                        }
+                }
+
+                if (state != StateDone)
+                {
+                    index++;
+                    mLocation.column++;
+                }
+            }
+
+            if (state == -1)
+            {
+                token.type = TokenType.Unknown;
+                token.data = error;
+                return;
+            }
+
+
+
+            token.data = data;
+        }
+
+        private bool IsBinaryDigit(char c)
+        {
+            return c == '0' || c == '1';
+        }
+
+        private bool IsHexDigit(char c)
+        {
+            return IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c >= 'F');
+        }
+
+        private bool IsDigit(char c)
+        {
+            return c >= '0' && c <= '9';
+        }
+
         private bool IsIdentBegin(char c)
         {
             return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+        }
+
+        private bool IsAlpha(char c)
+        {
+            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
         }
 
         private bool IsIdent(char c)
@@ -293,7 +556,7 @@ namespace Cheez.Parsing
 
             return loc != null;
         }
-        
+
         private void ParseSingleLineComment()
         {
             while (index < mFile.Length)

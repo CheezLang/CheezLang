@@ -49,22 +49,36 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="src\Ast\Assignment.cs" />
+    <Compile Include="src\Ast\BlockStatement.cs" />
+    <Compile Include="src\Ast\ConstantDeclaration.cs" />
     <Compile Include="src\Ast\Expression.cs" />
+    <Compile Include="src\Ast\ExpressionStatement.cs" />
     <Compile Include="src\Ast\IdentifierExpression.cs" />
+    <Compile Include="src\Ast\IfStatement.cs" />
+    <Compile Include="src\Ast\ImplBlock.cs" />
+    <Compile Include="src\Ast\NumberExpression.cs" />
     <Compile Include="src\Ast\PrintStatement.cs" />
     <Compile Include="src\Ast\Statement.cs" />
     <Compile Include="src\Ast\FunctionDeclaration.cs" />
+    <Compile Include="src\Ast\TypeDeclaration.cs" />
     <Compile Include="src\Ast\VariableDeclaration.cs" />
     <Compile Include="src\CodeGeneration\CppCodeGenerator.cs" />
     <Compile Include="src\CompilationQueue.cs" />
+    <Compile Include="src\Compiler.cs" />
     <Compile Include="src\CType.cs" />
     <Compile Include="src\ErrorHandler.cs" />
+    <Compile Include="src\PriorityQueue.cs" />
     <Compile Include="src\Parsing\Lexer.cs" />
     <Compile Include="src\Parsing\Parser.cs" />
     <Compile Include="src\Parsing\ParsingError.cs" />
+    <Compile Include="src\Scope.cs" />
+    <Compile Include="src\SemanticAnalysis\TypeChecker.cs" />
+    <Compile Include="src\Semanticer.cs" />
     <Compile Include="src\StatementQueue.cs" />
     <Compile Include="src\Visitor\AstPrinter.cs" />
     <Compile Include="src\Visitor\Visitor.cs" />
+    <Compile Include="src\Workspace.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="log4net.config">

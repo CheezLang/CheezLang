@@ -13,7 +13,7 @@ namespace Cheez.Parsing
             mLexer = lex;
         }
 
-        private Token Expect(TokenType type, bool skipNewLines = true, Func<TokenType, object, string> customErrorMessage = null)
+        private Token Expect(TokenType type, bool skipNewLines, Func<TokenType, object, string> customErrorMessage = null)
         {
             while (true)
             {
@@ -32,7 +32,29 @@ namespace Cheez.Parsing
             }
         }
 
-        private Token PeekToken(bool skipNewLines = false)
+        private Token ConsumeOptionalToken(TokenType type, bool skipNewLines)
+        {
+            while (true)
+            {
+                var tok = mLexer.PeekToken();
+
+                if (skipNewLines && tok.type == TokenType.NewLine)
+                {
+                    mLexer.NextToken();
+                    continue;
+                }
+
+                if (tok.type == type)
+                {
+                    mLexer.NextToken();
+                    return tok;
+                }
+
+                return null;
+            }
+        }
+
+        private Token PeekToken(bool skipNewLines)
         {
             while (true)
             {
@@ -50,6 +72,7 @@ namespace Cheez.Parsing
 
         public Statement ParseStatement()
         {
+            SkipNewlines();
             var token = PeekToken(true);
             switch (token.type)
             {
@@ -59,19 +82,100 @@ namespace Cheez.Parsing
                     return ParseVariableDeclaration();
                 case TokenType.KwPrint:
                     return ParsePrintStatement();
+                case TokenType.KwIf:
+                    return ParseIfStatement();
                 case TokenType.EOF:
                     return null;
+                case TokenType.KwStruct:
+                    return ParseTypeDeclaration();
+                case TokenType.KwImpl:
+                    return ParseImplBlock();
+
                 default:
                     {
+                        var expr = ParseExpression();
+                        if (PeekToken(skipNewLines: false).type == TokenType.Equal)
+                        {
+                            mLexer.NextToken();
+                            var val = ParseExpression();
+                            return new Assignment(expr.Beginning, expr, val);
+                        }
+                        else
+                        {
+                            return new ExpressionStatement(expr.Beginning, expr);
+                        }
                         throw new ParsingError(token.location, $"Unexpected token ({token.type}) {token.data}");
                     }
             }
         }
 
+        public TypeDeclaration ParseTypeDeclaration()
+        {
+            var members = new List<MemberDeclaration>();
+            var beginnig = Expect(TokenType.KwStruct, skipNewLines: true);
+            var name = Expect(TokenType.Identifier, skipNewLines: true);
+
+            Expect(TokenType.OpenBrace, skipNewLines: true);
+
+            while (PeekToken(skipNewLines: true).type != TokenType.ClosingBrace)
+            {
+                var mName = Expect(TokenType.Identifier, skipNewLines: true);
+                Expect(TokenType.Colon, skipNewLines: true);
+                var mType = ParseTypeExpression();
+                Expect(TokenType.NewLine, skipNewLines: false);
+
+                members.Add(new MemberDeclaration((string)mName.data, (string)mType.data));
+            }
+
+            Expect(TokenType.ClosingBrace, skipNewLines: true);
+
+            return new TypeDeclaration(beginnig.location, (string)name.data, members);
+        }
+
+        public ImplBlock ParseImplBlock()
+        {
+            var functions = new List<FunctionDeclaration>();
+            var beginnig = Expect(TokenType.KwImpl, skipNewLines: true);
+            var target = Expect(TokenType.Identifier, skipNewLines: true);
+
+            Expect(TokenType.OpenBrace, skipNewLines: true);
+
+            while (PeekToken(skipNewLines: true).type != TokenType.ClosingBrace)
+            {
+                var f = ParseFunctionDeclaration();
+                functions.Add(f);
+            }
+
+            Expect(TokenType.ClosingBrace, skipNewLines: true);
+
+            return new ImplBlock(beginnig.location, (string)target.data, functions);
+        }
+
+        public BlockStatement ParseBlockStatement()
+        {
+            List<Statement> statements = new List<Statement>();
+            var beginning = Expect(TokenType.OpenBrace, skipNewLines: true);
+
+            while (PeekToken(skipNewLines: true).type != TokenType.ClosingBrace)
+            {
+                statements.Add(ParseStatement());
+            }
+
+            Expect(TokenType.ClosingBrace, skipNewLines: true);
+
+            return new BlockStatement(beginning.location, statements);
+        }
+
+        public ExpressionStatement ParseExpressionStatement()
+        {
+            var expr = ParseExpression();
+            return new ExpressionStatement(expr.Beginning, expr);
+        }
+
         public VariableDeclaration ParseVariableDeclaration()
         {
-            var beginning = Expect(TokenType.KwVar);
-            var name = Expect(TokenType.Identifier);
+            var beginning = Expect(TokenType.KwVar, skipNewLines: true);
+            var name = Expect(TokenType.Identifier, skipNewLines: true);
 
             var next = mLexer.PeekToken();
 
@@ -87,15 +191,15 @@ namespace Cheez.Parsing
                         goto case TokenType.Equal;
                     else if (next.type == TokenType.Semicolon || next.type == TokenType.NewLine)
                         break;
-                    goto case default;
+                    goto default;
                     
                 case TokenType.Equal:
                     mLexer.NextToken();
                     init = ParseExpression();
                     next = mLexer.PeekToken();
-                    if (next.type == TokenType.Semicolon || next.type == TokenType.NewLine)
+                    if (next.type == TokenType.Semicolon || next.type == TokenType.NewLine || next.type == TokenType.EOF)
                         break;
-                    goto case default;
+                    goto default;
 
                 case TokenType.Semicolon:
                 case TokenType.NewLine:
@@ -110,12 +214,48 @@ namespace Cheez.Parsing
             return new VariableDeclaration(beginning.location, (string)name.data, (string)type?.data, init);
         }
 
+        public IfStatement ParseIfStatement()
+        {
+            Expression condition = null;
+            Statement ifCase = null;
+            Statement elseCase = null;
+
+            var beginning = Expect(TokenType.KwIf, skipNewLines: true);
+
+            condition = ParseExpression();
+
+            ifCase = ParseBlockStatement();
+
+            if (PeekToken(skipNewLines: true).type == TokenType.KwElse)
+            {
+                mLexer.NextToken();
+                elseCase = ParseBlockStatement();
+            }
+
+            return new IfStatement(beginning.location, condition, ifCase, elseCase);
+        }
 
         public PrintStatement ParsePrintStatement()
         {
-            var beginning = Expect(TokenType.KwPrint);
-            var expr = ParseExpression();
-            return new PrintStatement(beginning.location, expr);
+            List<Expression> expr = new List<Expression>();
+            Expression seperator = null;
+
+            var beginning = Expect(TokenType.KwPrint, skipNewLines: true);
+
+            var next = PeekToken(skipNewLines: true);
+            if (next.type == TokenType.OpenParen)
+            {
+                mLexer.NextToken();
+                seperator = ParseExpression();
+                Expect(TokenType.ClosingParen, skipNewLines: true);
+            }
+
+            do
+            {
+                expr.Add(ParseExpression());
+            } while (ConsumeOptionalToken(TokenType.Comma, skipNewLines: false) != null);
+
+            return new PrintStatement(beginning.location, expr, seperator);
         }
 
         private void SkipNewlines()
@@ -134,7 +274,21 @@ namespace Cheez.Parsing
 
         public Expression ParseExpression()
         {
-            return ParseAtomicExpression();
+            return ParseDotExpression();
+        }
+
+        public Expression ParseDotExpression()
+        {
+            var left = ParseAtomicExpression();
+
+            while (mLexer.PeekToken().type == TokenType.Period)
+            {
+                mLexer.NextToken();
+                var right = Expect(TokenType.Identifier, skipNewLines: true);
+                left = new DotExpression(left.Beginning, left, (string)right.data);
+            }
+
+            return left;
         }
 
         private Expression ParseAtomicExpression()
@@ -148,10 +302,13 @@ namespace Cheez.Parsing
                 case TokenType.StringLiteral:
                     return new StringLiteral(token.location, (string)token.data);
 
+                case TokenType.NumberLiteral:
+                    return new NumberExpression(token.location, (NumberData)token.data);
+
                 case TokenType.OpenParen:
                     SkipNewlines();
                     var sub = ParseExpression();
-                    Expect(TokenType.ClosingParen, customErrorMessage: (t, d) => $"Expected open paren '(' at end of group expression, got ({t}) {d}");
+                    Expect(TokenType.ClosingParen, skipNewLines: true, customErrorMessage: (t, d) => $"Expected open paren '(' at end of group expression, got ({t}) {d}");
                     return sub;
 
                 default:
@@ -162,15 +319,14 @@ namespace Cheez.Parsing
 
         public FunctionDeclaration ParseFunctionDeclaration()
         {
-            var beginning = Expect(TokenType.KwFn);
+            var beginning = Expect(TokenType.KwFn, skipNewLines: true);
 
-            var name = Expect(TokenType.Identifier, customErrorMessage: (t, d) => $"Expected identifier at beginnig of function declaration, got ({t}) {d}");
+            var name = Expect(TokenType.Identifier, skipNewLines: true, customErrorMessage: (t, d) => $"Expected identifier at beginnig of function declaration, got ({t}) {d}");
             List<Statement> statements = new List<Statement>();
-
-            Expect(TokenType.DoubleColon);
-            Expect(TokenType.OpenParen);
-            Expect(TokenType.ClosingParen);
-            Expect(TokenType.OpenBrace);
+            
+            Expect(TokenType.OpenParen, skipNewLines: true);
+            Expect(TokenType.ClosingParen, skipNewLines: true);
+            Expect(TokenType.OpenBrace, skipNewLines: true);
 
             while (true)
             {
@@ -181,7 +337,7 @@ namespace Cheez.Parsing
                 statements.Add(ParseStatement());
             }
 
-            Expect(TokenType.ClosingBrace);
+            Expect(TokenType.ClosingBrace, skipNewLines: true);
 
             return new FunctionDeclaration(beginning.location, (string)name.data, statements);
         }

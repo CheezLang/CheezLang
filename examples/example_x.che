@@ -1,46 +1,57 @@
-constant :: 3.1415
-a := 5
-b := 6
-c := a + b
+/* declare a constant */
+const some_consant = 3.1415
 
-test :: () -> string
+/* declare variables */
+var a = 5     // typeof(a) == int
+var b = (6-1) // typeof(b) == int
+var c = a + b // typeof(c) == int
+
+/* function returning a string */
+fn test() : string
 {
-    one := "Hi"
-    two := "wassup"
+    var one = "Hi"
+    var two = "wassup"
     return one + " " + two
 }
 
-Vec :: struct
+// declare a struct
+struct Vec
 {
     x : int;
     y : int;
     z : int;
 }
 
-main :: ()
+// main function
+fn main()
 {
+    // call functions
     println("Hello World!")
     println(test())
 
+    // basic if statement
     if 1 > 10 {
         // ...
     }
 
-    str := "Hi, how are you?"
+    // for loops
+    var str = "Hi, how are you?"
     for i in ..[0, str.len) { ... }
     for c in str { ... }
     for c, i in str { ... }
     for c in str println(c)
 
-    vec : Vec;
-    vec : Vec = Vec { 1, 2, 3 }
-    vec := Vec {
+    // struct variables
+    var vec : Vec;
+    var vec : Vec = Vec { 1, 2, 3 }
+    var vec = Vec {
         z = 1,
         y = 2,
         x = 3
     }
 
-    local :: () -> str
+    // local function
+    fn local () -> str
     {
         
     }
