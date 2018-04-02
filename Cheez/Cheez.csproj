@@ -76,6 +76,7 @@
     <Compile Include="src\SemanticAnalysis\TypeChecker.cs" />
     <Compile Include="src\Semanticer.cs" />
     <Compile Include="src\StatementQueue.cs" />
+    <Compile Include="src\Util.cs" />
     <Compile Include="src\Visitor\AstPrinter.cs" />
     <Compile Include="src\Visitor\Visitor.cs" />
     <Compile Include="src\Workspace.cs" />

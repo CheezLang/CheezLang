@@ -24,8 +24,9 @@ namespace CLC
 
             //queue.Complete();
             var compiler = new Compiler();
-            var file = compiler.AddFile("examples/example_1.che");
-            compiler.CompileAll();
+            compiler.AddFile("examples/example_1.che", compiler.DefaultWorkspace);
+            compiler.DefaultWorkspace.CompileAll();
+            //compiler.CompileAll();
             
             var ourCompileTime = stopwatch.Elapsed;
             System.Console.WriteLine($"Our compile time  : {ourCompileTime}");
@@ -40,24 +41,24 @@ namespace CLC
             // generate code
             //System.Console.WriteLine();
 
-            stopwatch.Restart();
+            //stopwatch.Restart();
 
             //var statements = queue.GetCompiledStatements();
-            bool clangOk = GenerateAndCompileCode(file);
+            //bool clangOk = GenerateAndCompileCode(file);
 
-            var clangTime = stopwatch.Elapsed;
-            System.Console.WriteLine();
-            System.Console.WriteLine($"Compilation finished in {ourCompileTime + clangTime}.");
-            System.Console.WriteLine($"Clang compile time: {clangTime}");
+            //var clangTime = stopwatch.Elapsed;
+            //System.Console.WriteLine();
+            //System.Console.WriteLine($"Compilation finished in {ourCompileTime + clangTime}.");
+            //System.Console.WriteLine($"Clang compile time: {clangTime}");
 
-            if (clangOk)
-            {
-                System.Console.WriteLine();
-                System.Console.WriteLine($"Running code:");
-                System.Console.WriteLine("=======================================");
-                var testProc = StartProcess(@"gen\test.exe", workingDirectory: "gen", stdout: (s, e) => System.Console.WriteLine(e.Data));
-                testProc.WaitForExit();
-            }
+            //if (clangOk)
+            //{
+            //    System.Console.WriteLine();
+            //    System.Console.WriteLine($"Running code:");
+            //    System.Console.WriteLine("=======================================");
+            //    var testProc = StartProcess(@"gen\test.exe", workingDirectory: "gen", stdout: (s, e) => System.Console.WriteLine(e.Data));
+            //    testProc.WaitForExit();
+            //}
         }
 
         private static bool GenerateAndCompileCode(CheezFile file)
@@ -65,7 +66,7 @@ namespace CLC
             foreach (string f in Directory.EnumerateFiles("gen"))
             {
                 string extension = Path.GetExtension(f);
-                if (extension == ".cpp" || extension == ".exe")
+                if (/*extension == ".cpp" || */extension == ".exe")
                     File.Delete(f);
             }
 

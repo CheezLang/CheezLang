@@ -136,6 +136,11 @@ using string = const char*;
             return Indent(sb.ToString(), indent);
         }
 
+        public override string VisitExpressionStatement(ExpressionStatement stmt, int data = 0)
+        {
+            return $"{stmt.Expr.Accept(this)};";
+        }
+
         public override string VisitIdentifierExpression(IdentifierExpression ident, int indent = 0)
         {
             return ident.Name;
@@ -265,6 +270,12 @@ using string = const char*;
         public override string VisitDotExpression(DotExpression dot, int data = 0)
         {
             return dot.Left.Accept(this) + "." + dot.Right;
+        }
+
+        public override string VisitCallExpression(CallExpression call, int data = 0)
+        {
+            var args = string.Join(", ", call.Arguments.Select(a => a.Accept(this)));
+            return $"{call.Function.Accept(this)}({args})";
         }
     }
 }

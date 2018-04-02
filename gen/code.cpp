@@ -32,6 +32,7 @@ namespace Vec3_impl {
     void _print_me(Vec3 self);
     void _normalize(Vec3 self);
 }
+void _test();
 void _main();
 
 
@@ -50,6 +51,9 @@ namespace Vec3_impl {
         std::cout << "normalize\n";
     }
 }
+void _test() {
+    std::cout << "was geht?";
+}
 void _main() {
     a = 2;
     std::cout << a << " " << b << " " << c << " " << "\n";
@@ -64,6 +68,7 @@ void _main() {
         std::cout << "you";
     }
     std::cout << "\n";
+    _test();
 }
 
 

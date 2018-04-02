@@ -29,20 +29,15 @@ namespace Cheez.SemanticAnalysis
 
     public class TypeChecker : VisitorBase<CType, TypeCheckerData>
     {
-        private CompilationUnit mUnit;
+        private Workspace workspace;
 
-        public TypeChecker(CompilationUnit unit)
+        public TypeChecker(Workspace w)
         {
-            mUnit = unit;
-        }
-
-        public CType CheckTypes()
-        {
-            return CheckTypes(mUnit.statement);
+            workspace = w;
         }
 
         [DebuggerStepThrough]
-        private CType CheckTypes(Statement statement)
+        public CType CheckTypes(Statement statement)
         {
             return statement.Accept(this);
         }
@@ -71,11 +66,11 @@ namespace Cheez.SemanticAnalysis
 
         public override CType VisitNumberExpression(NumberExpression lit, TypeCheckerData data)
         {
+            var type = IntType.LiteralType;
             if (data.expectedType != null && data.expectedType is IntType i)
-                lit.Type = i;
-            else
-                lit.Type = IntType.LiteralType;
-            return lit.Type;
+                type = i;
+            workspace.SetType(lit, type);
+            return type;
         }
     }
 }

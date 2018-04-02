@@ -24,19 +24,20 @@ namespace Cheez
     {
         public CheezFile file;
         public Statement statement;
+        public Workspace workspace;
     }
 
     public class Compiler
     {
         private Dictionary<string, CheezFile> mFiles = new Dictionary<string, CheezFile>();
-        private Workspace mMainWorkspace = new Workspace();
+        private Workspace mMainWorkspace;
         private Dictionary<string, Workspace> mWorkspaces = new Dictionary<string, Workspace>();
 
-        private PriorityQueue<CompilationUnit> mCompilationQueue = new PriorityQueue<CompilationUnit>();
-        private List<(CompilationUnit unit, object condition)> mWaitingQueue = new List<(CompilationUnit, object)>();
+        public Workspace DefaultWorkspace => mMainWorkspace;
 
         public Compiler()
         {
+            mMainWorkspace = new Workspace(this);
             mWorkspaces["main"] = mMainWorkspace;
         }
 
@@ -67,75 +68,7 @@ namespace Cheez
             mFiles[fileName] = file;
             workspace.AddFile(file);
 
-            // queue statements for compilation
-            foreach (var s in statements)
-            {
-                EnqueueUnit(new CompilationUnit { file = file, statement = s });
-            }
-
             return file;
-        }
-
-        private void CheckWaitingQueue()
-        {
-            for (int i = mWaitingQueue.Count - 1; i >= 0; i--)
-            {
-                var v = mWaitingQueue[i];
-                var unit = v.unit;
-                var condition = v.condition;
-
-                switch (condition)
-                {
-                    case WaitForType t:
-                        if (unit.file.PrivateScope.Types.GetCType(t.TypeName) != null)
-                        {
-                            EnqueueUnit(unit);
-                            mWaitingQueue.RemoveAt(i);
-                        }
-                        break;
-                }
-            }
-        }
-
-        public void CompileAll()
-        {
-            while (true)
-            {
-                if (mCompilationQueue.IsEmpty)
-                {
-                    if (mWaitingQueue.Count == 0)
-                        return;
-
-                    CheckWaitingQueue();
-                    if (mCompilationQueue.IsEmpty && mWaitingQueue.Count > 0)
-                    {
-                        // compilation error: unresolved references
-                        throw new System.Exception("Compilation Error");
-                    }
-                }
-
-                var next = mCompilationQueue.Dequeue();
-
-                try
-                {
-                    Compile(next);
-                }
-                catch (WaitForType w)
-                {
-                    mWaitingQueue.Add((next, w));
-                }
-            }
-        }
-
-        private void EnqueueUnit(CompilationUnit unit)
-        {
-            mCompilationQueue.Enqueue(0, unit);
-        }
-
-        private void Compile(CompilationUnit unit)
-        {
-            //var typeChecker = new TypeChecker(unit);
-            //typeChecker.CheckTypes();
         }
     }
 }

@@ -192,7 +192,7 @@ namespace Cheez.Parsing
                     else if (next.type == TokenType.Semicolon || next.type == TokenType.NewLine)
                         break;
                     goto default;
-                    
+
                 case TokenType.Equal:
                     mLexer.NextToken();
                     init = ParseExpression();
@@ -274,7 +274,38 @@ namespace Cheez.Parsing
 
         public Expression ParseExpression()
         {
-            return ParseDotExpression();
+            return ParseCallExpression();
+        }
+
+        public Expression ParseCallExpression()
+        {
+            var func = ParseDotExpression();
+
+            if (PeekToken(false).type == TokenType.OpenParen)
+            {
+                mLexer.NextToken();
+                List<Expression> args = new List<Expression>();
+                if (PeekToken(true).type != TokenType.ClosingParen)
+                {
+                    while (true)
+                    {
+                        args.Add(ParseExpression());
+
+                        var next = PeekToken(true);
+                        if (next.type == TokenType.Comma)
+                            mLexer.NextToken();
+                        else if (next.type == TokenType.ClosingParen)
+                            break;
+                        else
+                            throw new Exception($"Failed to parse function call, expected comma or closing paren, got {next.data} ({next.type})");
+                    }
+                }
+                Expect(TokenType.ClosingParen, true);
+
+                return new CallExpression(func.Beginning, func, args);
+            }
+
+            return func;
         }
 
         public Expression ParseDotExpression()
@@ -323,8 +354,24 @@ namespace Cheez.Parsing
 
             var name = Expect(TokenType.Identifier, skipNewLines: true, customErrorMessage: (t, d) => $"Expected identifier at beginnig of function declaration, got ({t}) {d}");
             List<Statement> statements = new List<Statement>();
-            
+            List<FunctionParameter> parameters = new List<FunctionParameter>();
+
             Expect(TokenType.OpenParen, skipNewLines: true);
+            while (PeekToken(true).type != TokenType.ClosingParen)
+            {
+                var pname = Expect(TokenType.Identifier, true);
+                Expect(TokenType.Colon, true);
+                var tname = ParseTypeExpression();
+                parameters.Add(new FunctionParameter((string)pname.data, (string)tname.data));
+
+                var next = PeekToken(true);
+                if (next.type == TokenType.Comma)
+                    mLexer.NextToken();
+                else if (next.type == TokenType.ClosingParen)
+                    break;
+                else
+                    throw new Exception($"Expected comma or closing paren, got {next.data} ({next.type})");
+            }
             Expect(TokenType.ClosingParen, skipNewLines: true);
             Expect(TokenType.OpenBrace, skipNewLines: true);
 
@@ -339,7 +386,7 @@ namespace Cheez.Parsing
 
             Expect(TokenType.ClosingBrace, skipNewLines: true);
 
-            return new FunctionDeclaration(beginning.location, (string)name.data, statements);
+            return new FunctionDeclaration(beginning.location, (string)name.data, parameters, statements);
         }
     }
 }

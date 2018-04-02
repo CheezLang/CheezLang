@@ -20,6 +20,15 @@ impl Vec3 {
     }
 }
 
+fn add(a : int, b : int)
+{
+    print a, " + ", b
+}
+
+fn test() {
+    print "was geht?"
+}
+
 fn main() {
     a = 2
 
@@ -38,4 +47,6 @@ fn main() {
     }
 
     print "`n"
+
+    _test()
 }

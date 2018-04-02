@@ -17,9 +17,9 @@ fn test() : string
 // declare a struct
 struct Vec
 {
-    x : int;
-    y : int;
-    z : int;
+    x : int
+    y : int
+    z : int
 }
 
 // main function
@@ -42,7 +42,7 @@ fn main()
     for c in str println(c)
 
     // struct variables
-    var vec : Vec;
+    var vec : Vec
     var vec : Vec = Vec { 1, 2, 3 }
     var vec = Vec {
         z = 1,
@@ -51,7 +51,7 @@ fn main()
     }
 
     // local function
-    fn local () -> str
+    fn local () : str
     {
         
     }
