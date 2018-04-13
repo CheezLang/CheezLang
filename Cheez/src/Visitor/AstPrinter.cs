@@ -1,15 +1,11 @@
 ﻿using System.Linq;
-using System.Reflection;
 using System.Text;
 using Cheez.Ast;
-using log4net;
 
 namespace Cheez.Visitor
 {
     public class AstPrinter : VisitorBase<string, int>
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         public override string VisitFunctionDeclaration(FunctionDeclaration function, int indentLevel = 0)
         {
             var statements = function.Statements.Select(s => s.Accept(this));

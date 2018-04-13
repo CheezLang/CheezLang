@@ -1,14 +1,10 @@
 ﻿using Cheez.Parsing;
-using log4net;
 using System;
-using System.Reflection;
 
 namespace Cheez
 {
     public class ErrorHandler
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         public ErrorHandler()
         {
         }

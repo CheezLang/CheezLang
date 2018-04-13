@@ -1,15 +1,11 @@
 ﻿using Cheez.Ast;
 using Cheez.Parsing;
-using log4net;
 using System;
-using System.Reflection;
 
 namespace Cheez
 {
     public class CompilationQueue
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private ErrorHandler mErrorHandler;
         
         private Semanticer mSematicer = new Semanticer();
