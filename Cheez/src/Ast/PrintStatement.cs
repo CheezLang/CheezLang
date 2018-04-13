@@ -10,7 +10,7 @@ namespace Cheez.Ast
         public List<Expression> Expressions { get; }
         public Expression Seperator { get; }
 
-        public PrintStatement(LocationInfo beg, LocationInfo end, List<Expression> expr, Expression seperator = null) : base(beg, end)
+        public PrintStatement(TokenLocation beg, TokenLocation end, List<Expression> expr, Expression seperator = null) : base(beg, end)
         {
             this.Expressions = expr;
             this.Seperator = seperator;

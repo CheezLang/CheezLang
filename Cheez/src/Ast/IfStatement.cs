@@ -10,7 +10,7 @@ namespace Cheez.Ast
         public Statement IfCase { get; }
         public Statement ElseCase { get; }
 
-        public IfStatement(LocationInfo beg, LocationInfo end, Expression cond, Statement ifCase, Statement elseCase = null) : base(beg, end)
+        public IfStatement(TokenLocation beg, TokenLocation end, Expression cond, Statement ifCase, Statement elseCase = null) : base(beg, end)
         {
             this.Condition = cond;
             this.IfCase = ifCase;

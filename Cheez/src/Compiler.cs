@@ -5,10 +5,10 @@ using System.Collections.Generic;
 
 namespace Cheez
 {
-    public class CheezFile
+    public class CheezFile : IText
     {
         public string Name { get; }
-        public string RawText { get; set; }
+        public string Text { get; }
 
         public Scope ExportScope { get; } = new Scope();
         private Scope mPrivateScope = new Scope();
@@ -19,7 +19,7 @@ namespace Cheez
         public CheezFile(string name, string raw, List<Statement> statements)
         {
             this.Name = name;
-            this.RawText = raw;
+            this.Text = raw;
             PrivateScope = new ScopeRef(mPrivateScope, ExportScope);
             Statements = statements;
         }

@@ -9,7 +9,7 @@ namespace Cheez.Ast
         private NumberData mData;
         public NumberData Data => mData;
 
-        public NumberExpression(LocationInfo beg, LocationInfo end, NumberData data) : base(beg, end)
+        public NumberExpression(TokenLocation beg, TokenLocation end, NumberData data) : base(beg, end)
         {
             mData = data;
         }

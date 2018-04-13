@@ -1,5 +1,7 @@
-﻿using Cheez.Parsing;
+﻿using Cheez.Ast;
+using Cheez.Parsing;
 using System;
+using System.Text;
 
 namespace Cheez
 {
@@ -17,14 +19,36 @@ namespace Cheez
             Console.ForegroundColor = col;
         }
 
-        public void ReportParsingError(ParsingError error)
+        private void LogWarning(string message)
         {
-            LogError(error.Message);
+            var col = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Error.WriteLine(message);
+            Console.ForegroundColor = col;
         }
 
-        public void ReportCompileError(Exception e)
+        public void ReportError(IText text, ILocation location, string message)
         {
-            LogError(e.Message);
+            var sb = new StringBuilder();
+
+            var beg = location.Beginning;
+            var end = location.End;
+
+            var locationString = beg.ToString();
+            sb.AppendLine($"{locationString}: {message}");
+
+            int lineEnd = beg.lineStartIndex;
+            for (; lineEnd < text.Text.Length; lineEnd++)
+            {
+                if (text.Text[lineEnd] == '\n')
+                    break;
+            }
+
+            sb.Append("> ").AppendLine(text.Text.Substring(beg.lineStartIndex, lineEnd - beg.lineStartIndex));
+            sb.Append(new string(' ', beg.index - beg.lineStartIndex + 2));
+            sb.Append("^").AppendLine(new string('-', end.end - beg.index - 1));
+
+            LogError(sb.ToString());
         }
     }
 }

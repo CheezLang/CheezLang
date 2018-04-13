@@ -23,7 +23,7 @@ namespace Cheez.Ast
         public string Name { get; }
         public List<MemberDeclaration> Members { get; }
 
-        public TypeDeclaration(LocationInfo beg, LocationInfo end, string name, List<MemberDeclaration> members) : base(beg, end)
+        public TypeDeclaration(TokenLocation beg, TokenLocation end, string name, List<MemberDeclaration> members) : base(beg, end)
         {
             this.Name = name;
             this.Members = members;

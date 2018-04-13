@@ -4,16 +4,22 @@ namespace Cheez.Ast
 {
     public interface ILocation
     {
-        LocationInfo Beginning { get; }
-        LocationInfo End { get; }
+        TokenLocation Beginning { get; }
+        TokenLocation End { get; }
     }
 
     public class Location : ILocation
     {
-        public LocationInfo Beginning { get; }
-        public LocationInfo End { get; }
+        public TokenLocation Beginning { get; }
+        public TokenLocation End { get; }
 
-        public Location(LocationInfo beg, LocationInfo end)
+        public Location(TokenLocation beg)
+        {
+            this.Beginning = beg;
+            this.End = beg;
+        }
+
+        public Location(TokenLocation beg, TokenLocation end)
         {
             this.Beginning = beg;
             this.End = end;

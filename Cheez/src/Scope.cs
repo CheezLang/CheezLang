@@ -1,6 +1,7 @@
 ﻿using Cheez.Ast;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cheez
 {
@@ -11,6 +12,8 @@ namespace Cheez
         List<TypeDeclaration> TypeDeclarations { get; }
 
         CTypeFactory Types { get; }
+
+        FunctionDeclaration GetFunction(string name, List<CType> parameters);
     }
 
     public class Scope : IScope
@@ -21,9 +24,29 @@ namespace Cheez
 
         public CTypeFactory Types { get; } = new CTypeFactory();
 
-        public FunctionDeclaration GetFunction(string name, CType[] parameters)
+        private Dictionary<string, List<FunctionDeclaration>> mFunctionTable = new Dictionary<string, List<FunctionDeclaration>>();
+
+        public FunctionDeclaration GetFunction(string name, List<CType> parameters)
         {
-            throw new NotImplementedException();
+            if (!mFunctionTable.ContainsKey(name))
+            {
+                List<FunctionDeclaration> funcs = FunctionDeclarations.Where(f => f.Name == name).ToList();
+                mFunctionTable[name] = funcs;
+            }
+
+            {
+                var funcs = mFunctionTable[name];
+                return BestFittingFunction(funcs, parameters);
+            }
+        }
+
+        private FunctionDeclaration BestFittingFunction(List<FunctionDeclaration> funcs, List<CType> parameters)
+        {
+            foreach (var f in funcs)
+            {
+                return f;
+            }
+            return null;
         }
 
         public CType GetType(string name)
@@ -47,6 +70,14 @@ namespace Cheez
         {
             this.Scope = scope;
             this.Parent = parent;
+        }
+
+        public FunctionDeclaration GetFunction(string name, List<CType> parameters)
+        {
+            var func = Scope.GetFunction(name, parameters);
+            if (func == null && Parent != null)
+                func = Parent.GetFunction(name, parameters);
+            return func;
         }
     }
 }

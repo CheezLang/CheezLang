@@ -20,8 +20,9 @@ impl Vec3 {
     }
 }
 
-fn add(a : int, b : int)
-{
+fn malloc(size : i32) : i32*
+
+fn add(a : int, b : int) {
     print a, " + ", b
 }
 
@@ -30,8 +31,7 @@ fn test() {
 }
 
 fn main() : i32 {
-    var x
-    var y
+    var arr : i32* = malloc(4)
     a = 2
 
     print(" ") a, b, c, "`n"

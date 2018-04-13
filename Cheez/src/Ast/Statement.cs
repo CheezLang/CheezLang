@@ -6,11 +6,11 @@ namespace Cheez.Ast
 {
     public abstract class Statement : ILocation
     {
-        public LocationInfo Beginning { get; set; }
-        public LocationInfo End { get; set; }
+        public TokenLocation Beginning { get; set; }
+        public TokenLocation End { get; set; }
         public int Id { get; }
 
-        public Statement(LocationInfo beg, LocationInfo end)
+        public Statement(TokenLocation beg, TokenLocation end)
         {
             this.Beginning = beg;
             this.End = end;

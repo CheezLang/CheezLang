@@ -22,12 +22,16 @@ namespace Cheez.Parsing
         Comma,
         Period,
         Equal,
+        Asterisk,
 
         OpenParen,
         ClosingParen,
 
         OpenBrace,
         ClosingBrace,
+        
+        OpenBracket,
+        ClosingBracket,
 
         KwFn,
         KwStruct,
@@ -41,7 +45,7 @@ namespace Cheez.Parsing
         KwPrint, // @Temporary
     }
 
-    public class LocationInfo
+    public class TokenLocation
     {
         public string file;
         public int line;
@@ -49,14 +53,14 @@ namespace Cheez.Parsing
         public int end;
         public int lineStartIndex;
 
-        public LocationInfo()
+        public TokenLocation()
         {
 
         }
 
-        public LocationInfo Clone()
+        public TokenLocation Clone()
         {
-            return new LocationInfo
+            return new TokenLocation
             {
                 file = file,
                 line = line,
@@ -75,7 +79,7 @@ namespace Cheez.Parsing
     public class Token
     {
         public TokenType type;
-        public LocationInfo location;
+        public TokenLocation location;
         public object data;
     }
 
@@ -94,10 +98,15 @@ namespace Cheez.Parsing
         public NumberType Type;
     }
 
-    public class Lexer
+    public interface IText
+    {
+        string Text { get; }
+    }
+
+    public class Lexer : IText
     {
         private string mText;
-        private LocationInfo mLocation;
+        private TokenLocation mLocation;
 
         private char Current => mText[mLocation.index];
         private char Next => mLocation.index < mText.Length - 1 ? mText[mLocation.index + 1] : (char)0;
@@ -111,7 +120,7 @@ namespace Cheez.Parsing
             return new Lexer
             {
                 mText = File.ReadAllText(fileName, Encoding.UTF8),
-                mLocation = new LocationInfo
+                mLocation = new TokenLocation
                 {
                     file = fileName,
                     line = 1,
@@ -126,7 +135,7 @@ namespace Cheez.Parsing
             return new Lexer
             {
                 mText = str,
-                mLocation = new LocationInfo
+                mLocation = new TokenLocation
                 {
                     file = "string",
                     line = 1,
@@ -153,7 +162,7 @@ namespace Cheez.Parsing
                 return t;
             }
 
-            if (SkipWhitespaceAndComments(out LocationInfo loc))
+            if (SkipWhitespaceAndComments(out TokenLocation loc))
             {
                 Token tok = new Token();
                 tok.location = loc;
@@ -183,7 +192,10 @@ namespace Cheez.Parsing
                 case ')': SimpleToken(ref token, TokenType.ClosingParen); break;
                 case '{': SimpleToken(ref token, TokenType.OpenBrace); break;
                 case '}': SimpleToken(ref token, TokenType.ClosingBrace); break;
+                case '[': SimpleToken(ref token, TokenType.OpenBracket); break;
+                case ']': SimpleToken(ref token, TokenType.ClosingBracket); break;
                 case ',': SimpleToken(ref token, TokenType.Comma); break;
+                case '*': SimpleToken(ref token, TokenType.Asterisk); break;
 
                 case '"': ParseStringLiteral(ref token); break;
 
@@ -510,7 +522,7 @@ namespace Cheez.Parsing
             return IsIdentBegin(c) || (c >= '0' && c <= '9');
         }
 
-        private bool SkipWhitespaceAndComments(out LocationInfo loc)
+        private bool SkipWhitespaceAndComments(out TokenLocation loc)
         {
             loc = null;
 

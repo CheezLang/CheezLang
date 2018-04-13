@@ -8,7 +8,7 @@ namespace Cheez.Ast
     {
         public Expression Expr { get; set; }
 
-        public ExpressionStatement(LocationInfo beg, LocationInfo end, Expression expr) : base(beg, end)
+        public ExpressionStatement(TokenLocation beg, TokenLocation end, Expression expr) : base(beg, end)
         {
             this.Expr = expr;
         }

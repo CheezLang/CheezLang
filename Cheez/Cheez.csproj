@@ -70,7 +70,6 @@
     <Compile Include="src\PriorityQueue.cs" />
     <Compile Include="src\Parsing\Lexer.cs" />
     <Compile Include="src\Parsing\Parser.cs" />
-    <Compile Include="src\Parsing\ParsingError.cs" />
     <Compile Include="src\Scope.cs" />
     <Compile Include="src\SemanticAnalysis\TypeChecker.cs" />
     <Compile Include="src\Semanticer.cs" />

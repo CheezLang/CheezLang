@@ -28,10 +28,7 @@ namespace CLC
             compiler.DefaultWorkspace.CompileAll();
 
             if (compiler.DefaultWorkspace.HasErrors)
-            {
-                compiler.DefaultWorkspace.LogErrors();
                 return;
-            }
             //compiler.CompileAll();
             
             var ourCompileTime = stopwatch.Elapsed;

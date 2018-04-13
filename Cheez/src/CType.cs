@@ -7,14 +7,43 @@ namespace Cheez
     {
         private Dictionary<string, CType> sTypes = new Dictionary<string, CType>();
 
-        public CType GetCType(TypeExpression type)
+        public CTypeFactory()
         {
-            if (sTypes.ContainsKey(type.Text))
-            {
-                return sTypes[type.Text];
-            }
+            // create default types
+            CreateAlias("i8", IntType.GetIntType(1, true));
+            CreateAlias("i16", IntType.GetIntType(2, true));
+            CreateAlias("i32", IntType.GetIntType(4, true));
+            CreateAlias("i64", IntType.GetIntType(8, true));
 
-            return null;
+            CreateAlias("u8", IntType.GetIntType(1, false));
+            CreateAlias("u16", IntType.GetIntType(2, false));
+            CreateAlias("u32", IntType.GetIntType(4, false));
+            CreateAlias("u64", IntType.GetIntType(8, false));
+
+            //CreateAlias("bool", BoolType.Instance);
+        }
+
+        public CType GetCType(TypeExpression expr)
+        {
+            switch (expr)
+            {
+                case NamedTypeExression n:
+                    if (sTypes.ContainsKey(n.Name))
+                    {
+                        return sTypes[n.Name];
+                    }
+
+                    return null;
+
+                case PointerTypeExpression p:
+                    return PointerType.GetPointerType(GetCType(p.TargetType));
+
+                case ArrayTypeExpression p:
+                    return ArrayType.GetArrayType(GetCType(p.ElementType));
+
+                default:
+                    return null;
+            }
         }
 
         public void CreateAlias(string name, CType type)
@@ -59,6 +88,11 @@ namespace Cheez
             sTypes[key] = type;
             return type;
         }
+
+        public override string ToString()
+        {
+            return (Signed ? "i" : "u") + (SizeInBytes * 8);
+        }
     }
 
     public class FloatType : CType
@@ -81,6 +115,11 @@ namespace Cheez
 
             sTypes[size] = type;
             return type;
+        }
+
+        public override string ToString()
+        {
+            return "f" + (SizeInBytes * 8);
         }
     }
 
@@ -105,32 +144,58 @@ namespace Cheez
             sTypes[targetType] = type;
             return type;
         }
+
+        public override string ToString()
+        {
+            return $"{TargetType}*";
+        }
+    }
+
+    public class ArrayType : CType
+    {
+        private static Dictionary<CType, ArrayType> sTypes = new Dictionary<CType, ArrayType>();
+
+        public CType TargetType { get; set; }
+
+        public static ArrayType GetArrayType(CType targetType)
+        {
+            if (sTypes.ContainsKey(targetType))
+            {
+                return sTypes[targetType];
+            }
+
+            var type = new ArrayType
+            {
+                TargetType = targetType
+            };
+
+            sTypes[targetType] = type;
+            return type;
+        }
+
+        public override string ToString()
+        {
+            return $"{TargetType}[]";
+        }
     }
 
     public class StringType : CType
     {
         public static StringType Instance = new StringType();
+
+        public override string ToString()
+        {
+            return $"string";
+        }
     }
 
     public class StructType : CType
     {
-        private static Dictionary<string, StructType> sTypes = new Dictionary<string, StructType>();
-
         public TypeDeclaration Declaration { get; set; }
 
-        public static StructType GetStructType(string name)
+        public override string ToString()
         {
-            if (sTypes.ContainsKey(name))
-            {
-                return sTypes[name];
-            }
-
-            var type = new StructType
-            {
-            };
-
-            sTypes[name] = type;
-            return type;
+            return $"struct {Declaration.Name}";
         }
     }
 }

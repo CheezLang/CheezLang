@@ -29,7 +29,9 @@ namespace Cheez.Ast
 
         public List<Statement> Statements { get; private set; }
 
-        public FunctionDeclaration(LocationInfo beg, LocationInfo end, string name, List<FunctionParameter> parameters, TypeExpression returnType, List<Statement> statements)
+        public bool HasImplementation => Statements != null;
+
+        public FunctionDeclaration(TokenLocation beg, TokenLocation end, string name, List<FunctionParameter> parameters, TypeExpression returnType, List<Statement> statements = null)
             : base(beg, end)
         {
             this.Name = name;

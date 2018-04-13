@@ -5,9 +5,21 @@ using System.Linq;
 
 namespace Cheez.Parsing
 {
+    public class ParsingError : Exception
+    {
+        public ILocation Location { get; set; }
+
+        public ParsingError(TokenLocation location, string message)
+            : base(message)
+        {
+            this.Location = new Location(location);
+        }
+    }
+
     public class Parser
     {
         private Lexer mLexer;
+        private ErrorHandler mErrorHandler = new ErrorHandler();
 
         public Parser(Lexer lex)
         {
@@ -73,44 +85,55 @@ namespace Cheez.Parsing
 
         public Statement ParseStatement()
         {
-            SkipNewlines();
-            var token = PeekToken(true);
-            switch (token.type)
+            try
             {
-                case TokenType.KwFn:
-                    return ParseFunctionDeclaration();
-                case TokenType.KwVar:
-                    return ParseVariableDeclaration();
-                case TokenType.KwPrint:
-                    return ParsePrintStatement();
-                case TokenType.KwIf:
-                    return ParseIfStatement();
-                case TokenType.EOF:
-                    return null;
-                case TokenType.KwStruct:
-                    return ParseTypeDeclaration();
-                case TokenType.KwImpl:
-                    return ParseImplBlock();
+                SkipNewlines();
+                var token = PeekToken(true);
+                switch (token.type)
+                {
+                    case TokenType.KwFn:
+                        return ParseFunctionDeclaration();
+                    case TokenType.KwVar:
+                        return ParseVariableDeclaration();
+                    case TokenType.KwPrint:
+                        return ParsePrintStatement();
+                    case TokenType.KwIf:
+                        return ParseIfStatement();
+                    case TokenType.EOF:
+                        return null;
+                    case TokenType.KwStruct:
+                        return ParseTypeDeclaration();
+                    case TokenType.KwImpl:
+                        return ParseImplBlock();
 
-                default:
-                    {
-                        var expr = ParseExpression();
-                        if (PeekToken(skipNewLines: false).type == TokenType.Equal)
+                    default:
                         {
-                            mLexer.NextToken();
-                            var val = ParseExpression();
-                            return new Assignment(expr.Beginning, val.End, expr, val);
+                            var expr = ParseExpression();
+                            if (PeekToken(skipNewLines: false).type == TokenType.Equal)
+                            {
+                                mLexer.NextToken();
+                                var val = ParseExpression();
+                                return new Assignment(expr.Beginning, val.End, expr, val);
+                            }
+                            else
+                            {
+                                return new ExpressionStatement(expr.Beginning, expr.End, expr);
+                            }
+                            throw new ParsingError(token.location, $"Unexpected token ({token.type}) {token.data}");
                         }
-                        else
-                        {
-                            return new ExpressionStatement(expr.Beginning, expr.End, expr);
-                        }
-                        throw new ParsingError(token.location, $"Unexpected token ({token.type}) {token.data}");
-                    }
+                }
+            }
+            catch (ParsingError err)
+            {
+                mErrorHandler.ReportError(mLexer, err.Location, err.Message);
+                while (mLexer.PeekToken().type != TokenType.NewLine)
+                    mLexer.NextToken();
+
+                return null;
             }
         }
 
-        public TypeDeclaration ParseTypeDeclaration()
+        private TypeDeclaration ParseTypeDeclaration()
         {
             var members = new List<MemberDeclaration>();
             var beginnig = Expect(TokenType.KwStruct, skipNewLines: true);
@@ -134,7 +157,7 @@ namespace Cheez.Parsing
             return new TypeDeclaration(beginnig.location, end.location, (string)name.data, members);
         }
 
-        public ImplBlock ParseImplBlock()
+        private ImplBlock ParseImplBlock()
         {
             var functions = new List<FunctionDeclaration>();
             var beginnig = Expect(TokenType.KwImpl, skipNewLines: true);
@@ -153,7 +176,7 @@ namespace Cheez.Parsing
             return new ImplBlock(beginnig.location, end.location, (string)target.data, functions);
         }
 
-        public BlockStatement ParseBlockStatement()
+        private BlockStatement ParseBlockStatement()
         {
             List<Statement> statements = new List<Statement>();
             var beginning = Expect(TokenType.OpenBrace, skipNewLines: true);
@@ -168,17 +191,17 @@ namespace Cheez.Parsing
             return new BlockStatement(beginning.location, end.location, statements);
         }
 
-        public ExpressionStatement ParseExpressionStatement()
+        private ExpressionStatement ParseExpressionStatement()
         {
             var expr = ParseExpression();
             return new ExpressionStatement(expr.Beginning, expr.End, expr);
         }
 
-        public VariableDeclaration ParseVariableDeclaration()
+        private VariableDeclaration ParseVariableDeclaration()
         {
             var beginning = Expect(TokenType.KwVar, skipNewLines: true);
             var name = Expect(TokenType.Identifier, skipNewLines: true);
-            LocationInfo end = name.location;
+            TokenLocation end = name.location;
 
             var next = mLexer.PeekToken();
 
@@ -230,14 +253,14 @@ namespace Cheez.Parsing
             return new VariableDeclaration(beginning.location, end, (string)name.data, type, init);
         }
 
-        public IfStatement ParseIfStatement()
+        private IfStatement ParseIfStatement()
         {
             Expression condition = null;
             Statement ifCase = null;
             Statement elseCase = null;
 
             var beginning = Expect(TokenType.KwIf, skipNewLines: true);
-            LocationInfo end = beginning.location;
+            TokenLocation end = beginning.location;
 
             condition = ParseExpression();
 
@@ -254,7 +277,7 @@ namespace Cheez.Parsing
             return new IfStatement(beginning.location, end, condition, ifCase, elseCase);
         }
 
-        public PrintStatement ParsePrintStatement()
+        private PrintStatement ParsePrintStatement()
         {
             List<Expression> expr = new List<Expression>();
             Expression seperator = null;
@@ -283,20 +306,49 @@ namespace Cheez.Parsing
         }
 
         #region Expression Parsing
-        public TypeExpression ParseTypeExpression()
+        private TypeExpression ParseTypeExpression()
         {
-            var name = mLexer.NextToken();
-            if (name.type != TokenType.Identifier)
-                throw new ParsingError(name.location, $"Failed to parse type expression, unexpected token: ({name.type}) {name.data}");
-            return new TypeExpression(name.location, name.location, (string)name.data);
+            TypeExpression type = null;
+            bool cond = true;
+            while (cond)
+            {
+                var next = mLexer.PeekToken();
+                switch (next.type)
+                {
+                    case TokenType.Identifier:
+                        mLexer.NextToken();
+                        type = new NamedTypeExression(next.location, next.location, (string)next.data);
+                        break;
+
+                    case TokenType.Asterisk:
+                        mLexer.NextToken();
+                        if (type == null)
+                            throw new ParsingError(next.location, "Failed to parse type expression: * must be preceded by an actual type");
+                        type = new PointerTypeExpression(type.Beginning, next.location, type);
+                        break;
+
+                    case TokenType.OpenBracket:
+                        if (type == null)
+                            throw new ParsingError(next.location, "Failed to parse type expression: [] must be preceded by an actual type");
+                        mLexer.NextToken();
+                        next = Expect(TokenType.ClosingBracket, skipNewLines: true);
+                        type = new ArrayTypeExpression(type.Beginning, next.location, type);
+                        break;
+
+                    default:
+                        cond = false;
+                        break;
+                }
+            }
+            return type;
         }
 
-        public Expression ParseExpression()
+        private Expression ParseExpression()
         {
             return ParseCallExpression();
         }
 
-        public Expression ParseCallExpression()
+        private Expression ParseCallExpression()
         {
             var func = ParseDotExpression();
 
@@ -327,7 +379,7 @@ namespace Cheez.Parsing
             return func;
         }
 
-        public Expression ParseDotExpression()
+        private Expression ParseDotExpression()
         {
             var left = ParseAtomicExpression();
 
@@ -367,7 +419,7 @@ namespace Cheez.Parsing
         }
         #endregion
 
-        public FunctionDeclaration ParseFunctionDeclaration()
+        private FunctionDeclaration ParseFunctionDeclaration()
         {
             var beginning = Expect(TokenType.KwFn, skipNewLines: true);
 
@@ -375,6 +427,7 @@ namespace Cheez.Parsing
             List<Statement> statements = new List<Statement>();
             List<FunctionParameter> parameters = new List<FunctionParameter>();
             TypeExpression returnType = null;
+            TokenLocation end = name.location;
 
             // parameters
             Expect(TokenType.OpenParen, skipNewLines: true);
@@ -393,15 +446,23 @@ namespace Cheez.Parsing
                 else
                     throw new Exception($"Expected comma or closing paren, got {next.data} ({next.type})");
             }
-            Expect(TokenType.ClosingParen, skipNewLines: true);
+            end = Expect(TokenType.ClosingParen, skipNewLines: true).location;
             
             // return type
             if (PeekToken(skipNewLines: true).type == TokenType.Colon)
             {
                 mLexer.NextToken();
                 returnType = ParseTypeExpression();
+                end = returnType.End;
             }
 
+            if (PeekToken(false).type == TokenType.NewLine)
+            {
+                mLexer.NextToken();
+                return new FunctionDeclaration(beginning.location, end, (string)name.data, parameters, returnType);
+            }
+
+            // implementation
             Expect(TokenType.OpenBrace, skipNewLines: true);
 
             while (true)
@@ -413,9 +474,9 @@ namespace Cheez.Parsing
                 statements.Add(ParseStatement());
             }
 
-            var end = Expect(TokenType.ClosingBrace, skipNewLines: true);
+            end = Expect(TokenType.ClosingBrace, skipNewLines: true).location;
 
-            return new FunctionDeclaration(beginning.location, end.location, (string)name.data, parameters, returnType, statements);
+            return new FunctionDeclaration(beginning.location, end, (string)name.data, parameters, returnType, statements);
         }
     }
 }

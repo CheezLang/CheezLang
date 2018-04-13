@@ -1,6 +1,7 @@
 ﻿using Cheez.Ast;
 using Cheez.Visitor;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Cheez.SemanticAnalysis
@@ -36,27 +37,34 @@ namespace Cheez.SemanticAnalysis
             workspace = w;
         }
 
+        private IScope CurrentScope(TypeCheckerData data)
+        {
+            return data.scope ?? workspace.GlobalScope;
+        }
+
         [DebuggerStepThrough]
         public CType CheckTypes(Statement statement)
         {
-            return statement.Accept(this, new TypeCheckerData(workspace.GlobalScope));
+            return statement.Accept(this);
         }
 
         [DebuggerStepThrough]
         private CType CheckTypes(Expression expr)
         {
-            return expr.Accept(this, new TypeCheckerData(workspace.GlobalScope));
+            return expr.Accept(this);
         }
         
-        public override CType VisitVariableDeclaration(VariableDeclaration variable, TypeCheckerData data)
+        public override CType VisitVariableDeclaration(VariableDeclaration variable, TypeCheckerData data = default)
         {
+            var scope = CurrentScope(data);
+
             CType type = null;
             if (variable.Type != null)
             {
-                type = data.scope.Types.GetCType(variable.Type);
+                type = scope.Types.GetCType(variable.Type);
                 if (type == null)
                 {
-                    workspace.ReportError(variable.Type, $"Unknown type: {variable.Type.Text}");
+                    workspace.ReportError(variable.Type, $"Unknown type: {variable.Type}");
                     return null;
                 }
             }
@@ -76,7 +84,7 @@ namespace Cheez.SemanticAnalysis
                 var initType = CheckTypes(variable.Initializer);
                 if (initType != type)
                 {
-                    workspace.ReportError(variable.Initializer, $"Type of initialization does not match type of variable");
+                    workspace.ReportError(variable.Initializer, $"Type of initialization does not match type of variable. Expected {type}, got {initType}");
                     return null;
                 }
             }
@@ -85,13 +93,58 @@ namespace Cheez.SemanticAnalysis
             return type;
         }
 
-        public override CType VisitNumberExpression(NumberExpression lit, TypeCheckerData data)
+        public override CType VisitNumberExpression(NumberExpression lit, TypeCheckerData data = default)
         {
+            var scope = CurrentScope(data);
+
             var type = IntType.LiteralType;
             if (data.expectedType != null && data.expectedType is IntType i)
                 type = i;
             workspace.SetType(lit, type);
             return type;
+        }
+
+        public override CType VisitCallExpression(CallExpression call, TypeCheckerData data)
+        {
+            var scope = CurrentScope(data);
+
+            if (call.Function is IdentifierExpression id)
+            {
+                List<CType> argTypes = new List<CType>();
+                bool argTypesOk = true;
+                foreach (var a in call.Arguments)
+                {
+                    var atype = a.Accept(this);
+                    if (atype == null || atype == CType.Void)
+                        argTypesOk = false;
+                    argTypes.Add(atype);
+                }
+
+                if (!argTypesOk)
+                {
+                    workspace.ReportError(call, "Invalid arguments in function call!");
+                    return null;
+                }
+
+                var func = scope.GetFunction(id.Name, argTypes);
+                if (func == null)
+                {
+                    workspace.ReportError(call, "No function matches call!");
+                    return null;
+                }
+
+                var type = scope.Types.GetCType(func.ReturnType);
+                if (type == null)
+                {
+                    workspace.ReportError(call, "Return type of function does not exist!");
+                    return null;
+                }
+
+                workspace.SetType(call, type);
+                return type;
+            }
+
+            return null;
         }
     }
 }

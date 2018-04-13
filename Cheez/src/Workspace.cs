@@ -32,8 +32,8 @@ namespace Cheez
         private PriorityQueue<CompilationUnit> mCompilationQueue = new PriorityQueue<CompilationUnit>();
         private List<(CompilationUnit unit, object condition)> mWaitingQueue = new List<(CompilationUnit, object)>();
 
-        private List<CompilationError> mCompilationErrors = new List<CompilationError>();
-        public bool HasErrors => mCompilationErrors.Count > 0;
+        private ErrorHandler mErrorHandler = new ErrorHandler();
+        public bool HasErrors { get; private set; }
 
         public Workspace(Compiler comp)
         {
@@ -122,7 +122,9 @@ namespace Cheez
                             var funcScope = new Scope();
                             var funcScopeRef = new ScopeRef(funcScope, scope);
                             mFunctionScopeMap[f] = funcScopeRef;
-                            GatherDeclarations(scope, f.Statements);
+
+                            if (f.HasImplementation)
+                                GatherDeclarations(scope, f.Statements);
                         }
                         break;
 
@@ -203,40 +205,9 @@ namespace Cheez
 
         public void ReportError(ILocation location, string errorMessage)
         {
-            mCompilationErrors.Add(new CompilationError(location, errorMessage));
-        }
-
-        public void LogErrors()
-        {
-            var consoleColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Red;
-
-            var sb = new StringBuilder();
-            foreach (var err in mCompilationErrors)
-            {
-                var beg = err.Location.Beginning;
-                var end = err.Location.End;
-                var file = mFiles[beg.file];
-
-                var locationString = beg.ToString();
-                sb.AppendLine($"{locationString}: {err.Message}");
-
-                int lineEnd = beg.lineStartIndex;
-                for (;  lineEnd < file.RawText.Length; lineEnd++)
-                {
-                    if (file.RawText[lineEnd] == '\n')
-                        break;
-                }
-                
-                sb.Append("> ").AppendLine(file.RawText.Substring(beg.lineStartIndex, lineEnd - beg.lineStartIndex));
-                sb.Append(new string(' ', beg.index - beg.lineStartIndex + 2));
-                sb.Append("^").AppendLine(new string('-', end.end - beg.index - 1));
-
-                Console.WriteLine(sb.ToString());
-                sb.Clear();
-            }
-
-            Console.ForegroundColor = consoleColor;
+            HasErrors = true;
+            var file = mFiles[location.Beginning.file];
+            mErrorHandler.ReportError(file, location, errorMessage);
         }
     }
 }

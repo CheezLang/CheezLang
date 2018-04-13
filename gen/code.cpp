@@ -20,10 +20,46 @@ using string = const char*;
 
 
 // type declarations
+struct Vec3 {
+    i32 x;
+    i32 y;
+    i32 z;
+};
 
 // forward declarations
+i32* malloc(i32 size);
+void add(int a, int b);
+void test();
+i32 main();
 
 // global variables
+i32 a;
+auto b = 10;
+auto c = 9;
+i32* arr = malloc(4);
 
 // function implementations
+void add(int a, int b) {
+    std::cout << a << " + " << b;
+}
+void test() {
+    std::cout << "was geht?";
+}
+i32 main() {
+    i32* arr = malloc(4);
+    a = 2;
+    std::cout << a << " " << b << " " << c << " " << "\n";
+    std::cout << 1 << " + " << 2 << " + " << 3;
+    std::cout << " = 6\n";
+    if (1) {
+        std::cout << "hello ";
+    }
+    if (1) {
+        std::cout << "world";
+    } else {
+        std::cout << "you";
+    }
+    std::cout << "\n";
+    add(1, 2);
+}
 

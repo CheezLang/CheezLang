@@ -65,7 +65,8 @@ using string = const char*;
             mEmitFunctionBody = true;
             foreach (var func in workspace.GlobalScope.FunctionDeclarations)
             {
-                sb.AppendLine(func.Accept(this));
+                if (func.HasImplementation)
+                    sb.AppendLine(func.Accept(this));
             }
             sb.AppendLine();
 
@@ -96,7 +97,7 @@ using string = const char*;
         {
             var sb = new StringBuilder();
 
-            string returnType = function.ReturnType?.Text ?? "void";
+            string returnType = function.ReturnType?.Accept(this) ?? "void";
 
             string funcName = GetDecoratedName(function);
             
@@ -178,10 +179,14 @@ using string = const char*;
         public override string VisitVariableDeclaration(VariableDeclaration variable, int indent = 0)
         {
             var sb = new StringBuilder();
-            string type = variable.Type?.Text ?? "auto";
+            string type = variable.Type?.Accept(this) ?? "auto";
             if (type == "string")
                 type = "std::string";
             sb.Append($"{type} {variable.Name}");
+
+            //if (variable.Type is ArrayTypeExpression)
+            //    sb.Append("[]");
+
             if (variable.Initializer != null)
             {
                 sb.Append($" = ");
@@ -263,7 +268,7 @@ using string = const char*;
             sb.Append("struct ").Append(type.Name).AppendLine(" {");
             foreach (var m in type.Members)
             {
-                sb.Append(Indent(m.Type.Text, 4)).Append(" ").Append(m.Name).AppendLine(";");
+                sb.Append(Indent(m.Type.Accept(this), 4)).Append(" ").Append(m.Name).AppendLine(";");
             }
             sb.Append("};");
 
@@ -303,6 +308,24 @@ using string = const char*;
         {
             var args = string.Join(", ", call.Arguments.Select(a => a.Accept(this)));
             return $"{call.Function.Accept(this)}({args})";
+        }
+
+        public override string VisitTypeExpression(TypeExpression type, int data = 0)
+        {
+            switch (type)
+            {
+                case NamedTypeExression n:
+                    return n.Name;
+
+                case PointerTypeExpression p:
+                    return p.TargetType.Accept(this) + "*";
+
+                case ArrayTypeExpression a:
+                    return a.ElementType.Accept(this) + "*";
+
+                default:
+                    return "void";
+            }
         }
     }
 }

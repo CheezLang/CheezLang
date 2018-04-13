@@ -36,7 +36,8 @@ namespace Cheez
             }
             catch (Exception e)
             {
-                mErrorHandler.ReportCompileError(e);
+                // @Todo
+                //mErrorHandler.ReportCompileError(e);
             }
         }
         
@@ -62,7 +63,8 @@ namespace Cheez
                 }
                 catch (ParsingError err)
                 {
-                    mErrorHandler.ReportParsingError(err);
+                    // @Todo
+                    //mErrorHandler.ReportParsingError(err);
                     break;
                 }
             }

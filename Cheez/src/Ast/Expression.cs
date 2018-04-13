@@ -7,11 +7,11 @@ namespace Cheez.Ast
 {
     public abstract class Expression : ILocation
     {
-        public LocationInfo Beginning { get; set; }
-        public LocationInfo End { get; set; }
+        public TokenLocation Beginning { get; set; }
+        public TokenLocation End { get; set; }
         public int Id { get; }
 
-        public Expression(LocationInfo beg, LocationInfo end)
+        public Expression(TokenLocation beg, TokenLocation end)
         {
             this.Beginning = beg;
             this.End = end;
@@ -37,7 +37,7 @@ namespace Cheez.Ast
 
     public abstract class Literal : Expression
     {
-        public Literal(LocationInfo beg, LocationInfo end) : base(beg, end)
+        public Literal(TokenLocation beg, TokenLocation end) : base(beg, end)
         {
         }
     }
@@ -46,7 +46,7 @@ namespace Cheez.Ast
     {
         public string Value { get; set; }
 
-        public StringLiteral(LocationInfo beg, LocationInfo end, string value) : base(beg, end)
+        public StringLiteral(TokenLocation beg, TokenLocation end, string value) : base(beg, end)
         {
             this.Value = value;
         }
@@ -69,17 +69,19 @@ namespace Cheez.Ast
         public Expression Left { get; set; }
         public string Right { get; set; }
 
-        public DotExpression(LocationInfo beg, LocationInfo end, Expression left, string right) : base(beg, end)
+        public DotExpression(TokenLocation beg, TokenLocation end, Expression left, string right) : base(beg, end)
         {
             this.Left = left;
             this.Right = right;
         }
 
+        [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return visitor.VisitDotExpression(this, data);
         }
 
+        [DebuggerStepThrough]
         public override void Accept<D>(IVoidVisitor<D> visitor, D data = default)
         {
             visitor.VisitDotExpression(this, data);
@@ -91,17 +93,19 @@ namespace Cheez.Ast
         public Expression Function { get; }
         public List<Expression> Arguments { get; set; }
 
-        public CallExpression(LocationInfo beg, LocationInfo end, Expression func, List<Expression> args) : base(beg, end)
+        public CallExpression(TokenLocation beg, TokenLocation end, Expression func, List<Expression> args) : base(beg, end)
         {
             Function = func;
             Arguments = args;
         }
 
+        [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return visitor.VisitCallExpression(this, data);
         }
 
+        [DebuggerStepThrough]
         public override void Accept<D>(IVoidVisitor<D> visitor, D data = default)
         {
             visitor.VisitCallExpression(this, data);
