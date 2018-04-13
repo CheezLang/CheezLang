@@ -26,6 +26,12 @@ namespace CLC
             var compiler = new Compiler();
             compiler.AddFile("examples/example_1.che", compiler.DefaultWorkspace);
             compiler.DefaultWorkspace.CompileAll();
+
+            if (compiler.DefaultWorkspace.HasErrors)
+            {
+                compiler.DefaultWorkspace.LogErrors();
+                return;
+            }
             //compiler.CompileAll();
             
             var ourCompileTime = stopwatch.Elapsed;
@@ -39,17 +45,16 @@ namespace CLC
             //}
 
             // generate code
-            //System.Console.WriteLine();
+            System.Console.WriteLine();
 
-            //stopwatch.Restart();
+            stopwatch.Restart();
+            
+            bool clangOk = GenerateAndCompileCode(compiler.DefaultWorkspace);
 
-            //var statements = queue.GetCompiledStatements();
-            //bool clangOk = GenerateAndCompileCode(file);
-
-            //var clangTime = stopwatch.Elapsed;
-            //System.Console.WriteLine();
-            //System.Console.WriteLine($"Compilation finished in {ourCompileTime + clangTime}.");
-            //System.Console.WriteLine($"Clang compile time: {clangTime}");
+            var clangTime = stopwatch.Elapsed;
+            System.Console.WriteLine();
+            System.Console.WriteLine($"Compilation finished in {ourCompileTime + clangTime}.");
+            System.Console.WriteLine($"Clang compile time: {clangTime}");
 
             //if (clangOk)
             //{
@@ -61,7 +66,7 @@ namespace CLC
             //}
         }
 
-        private static bool GenerateAndCompileCode(CheezFile file)
+        private static bool GenerateAndCompileCode(Workspace workspace)
         {
             foreach (string f in Directory.EnumerateFiles("gen"))
             {
@@ -71,7 +76,7 @@ namespace CLC
             }
 
             CppCodeGenerator generator = new CppCodeGenerator();
-            string code = generator.GenerateCode(file.Statements);
+            string code = generator.GenerateCode(workspace);
             File.WriteAllText("gen/code.cpp", code);
 
             // run clang

@@ -2,14 +2,28 @@
 using Cheez.SemanticAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Text;
 
 namespace Cheez
 {
+    public class CompilationError
+    {
+        public ILocation Location { get; set; }
+        public string Message { get; set; }
+
+        public CompilationError(ILocation item, string message)
+        {
+            this.Location = item;
+            this.Message = message;
+        }
+    }
+
     public class Workspace
     {
         public Scope GlobalScope { get; set; } = new Scope();
 
-        private List<CheezFile> mFiles = new List<CheezFile>();
+        private Dictionary<string, CheezFile> mFiles = new Dictionary<string, CheezFile>();
         private Dictionary<object, CType> mTypeMap = new Dictionary<object, CType>();
         private Dictionary<object, IScope> mScopeMap = new Dictionary<object, IScope>();
         private Dictionary<FunctionDeclaration, IScope> mFunctionScopeMap = new Dictionary<FunctionDeclaration, IScope>();
@@ -18,6 +32,9 @@ namespace Cheez
         private PriorityQueue<CompilationUnit> mCompilationQueue = new PriorityQueue<CompilationUnit>();
         private List<(CompilationUnit unit, object condition)> mWaitingQueue = new List<(CompilationUnit, object)>();
 
+        private List<CompilationError> mCompilationErrors = new List<CompilationError>();
+        public bool HasErrors => mCompilationErrors.Count > 0;
+
         public Workspace(Compiler comp)
         {
             mCompiler = comp;
@@ -25,7 +42,7 @@ namespace Cheez
 
         public void AddFile(CheezFile file)
         {
-            mFiles.Add(file);
+            mFiles[file.Name] = file;
         }
 
         public void SetType(object o, CType type)
@@ -57,7 +74,7 @@ namespace Cheez
         public void CompileAll()
         {
             // gather declarations
-            foreach (var file in mFiles)
+            foreach (var file in mFiles.Values)
             {
                 GatherDeclarations(GlobalScope, file.Statements);
             }
@@ -70,13 +87,25 @@ namespace Cheez
 
             }
 
+            TypeChecker typeChecker = new TypeChecker(this);
             // define global variables
+            foreach (var v in GlobalScope.VariableDeclarations)
+            {
+                typeChecker.CheckTypes(v);
+            }
 
             // compile functions
-            TypeChecker typeChecker = new TypeChecker(this);
             foreach (var s in GlobalScope.FunctionDeclarations)
             {
                 typeChecker.CheckTypes(s);
+            }
+        }
+
+        void Login()
+        {
+            using (var client = new HttpClient())
+            {
+
             }
         }
 
@@ -171,5 +200,43 @@ namespace Cheez
         //{
 
         //}
+
+        public void ReportError(ILocation location, string errorMessage)
+        {
+            mCompilationErrors.Add(new CompilationError(location, errorMessage));
+        }
+
+        public void LogErrors()
+        {
+            var consoleColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Red;
+
+            var sb = new StringBuilder();
+            foreach (var err in mCompilationErrors)
+            {
+                var beg = err.Location.Beginning;
+                var end = err.Location.End;
+                var file = mFiles[beg.file];
+
+                var locationString = beg.ToString();
+                sb.AppendLine($"{locationString}: {err.Message}");
+
+                int lineEnd = beg.lineStartIndex;
+                for (;  lineEnd < file.RawText.Length; lineEnd++)
+                {
+                    if (file.RawText[lineEnd] == '\n')
+                        break;
+                }
+                
+                sb.Append("> ").AppendLine(file.RawText.Substring(beg.lineStartIndex, lineEnd - beg.lineStartIndex));
+                sb.Append(new string(' ', beg.index - beg.lineStartIndex + 2));
+                sb.Append("^").AppendLine(new string('-', end.end - beg.index - 1));
+
+                Console.WriteLine(sb.ToString());
+                sb.Clear();
+            }
+
+            Console.ForegroundColor = consoleColor;
+        }
     }
 }

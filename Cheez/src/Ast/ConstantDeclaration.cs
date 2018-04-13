@@ -9,7 +9,7 @@ namespace Cheez.Ast
         public string Name { get; set; }
         public Expression Value { get; set; }
 
-        public ConstantDeclaration(LocationInfo loc, string name, Expression value) : base(loc)
+        public ConstantDeclaration(LocationInfo beg, LocationInfo end, string name, Expression value) : base(beg, end)
         {
             this.Name = name;
             this.Value = value;

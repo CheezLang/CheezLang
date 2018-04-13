@@ -9,7 +9,7 @@ namespace Cheez.Ast
     {
         public List<Statement> Statements { get; }
 
-        public BlockStatement(LocationInfo loc, List<Statement> statements) : base(loc)
+        public BlockStatement(LocationInfo beg, LocationInfo end, List<Statement> statements) : base(beg, end)
         {
             this.Statements = statements;
         }

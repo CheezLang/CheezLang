@@ -9,7 +9,7 @@ namespace Cheez.Ast
         public Expression Target { get; set; }
         public Expression Value { get; set; }
 
-        public Assignment(LocationInfo loc, Expression target, Expression value) : base(loc)
+        public Assignment(LocationInfo beg, LocationInfo end, Expression target, Expression value) : base(beg, end)
         {
             this.Target = target;
             this.Value = value;

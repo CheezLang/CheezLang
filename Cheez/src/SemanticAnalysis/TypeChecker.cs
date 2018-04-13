@@ -39,29 +39,50 @@ namespace Cheez.SemanticAnalysis
         [DebuggerStepThrough]
         public CType CheckTypes(Statement statement)
         {
-            return statement.Accept(this);
+            return statement.Accept(this, new TypeCheckerData(workspace.GlobalScope));
         }
 
         [DebuggerStepThrough]
         private CType CheckTypes(Expression expr)
         {
-            return expr.Accept(this);
+            return expr.Accept(this, new TypeCheckerData(workspace.GlobalScope));
         }
         
         public override CType VisitVariableDeclaration(VariableDeclaration variable, TypeCheckerData data)
         {
-            if (variable.TypeName != null)
+            CType type = null;
+            if (variable.Type != null)
             {
-                var type = data.scope.Types.GetCType(variable.TypeName);
-                variable.Type = type ?? throw new WaitForType(variable.TypeName);
+                type = data.scope.Types.GetCType(variable.Type);
+                if (type == null)
+                {
+                    workspace.ReportError(variable.Type, $"Unknown type: {variable.Type.Text}");
+                    return null;
+                }
+            }
+            else
+            {
+                if (variable.Initializer == null)
+                {
+                    workspace.ReportError(variable, $"Type of variable must be explictly specified if no initial value is given");
+                    return null;
+                }
+
+                type = variable.Initializer.Accept(this, data);
             }
 
             if (variable.Initializer != null)
             {
-                var type = CheckTypes(variable.Initializer);
+                var initType = CheckTypes(variable.Initializer);
+                if (initType != type)
+                {
+                    workspace.ReportError(variable.Initializer, $"Type of initialization does not match type of variable");
+                    return null;
+                }
             }
 
-            return CType.Void;
+            workspace.SetType(variable, type);
+            return type;
         }
 
         public override CType VisitNumberExpression(NumberExpression lit, TypeCheckerData data)

@@ -7,14 +7,13 @@ namespace Cheez.Ast
     public class VariableDeclaration : Statement
     {
         public string Name { get; set; }
-        public string TypeName { get; set; }
-        public CType Type { get; set; }
+        public TypeExpression Type { get; set; }
         public Expression Initializer { get; set; }
 
-        public VariableDeclaration(LocationInfo loc, string name, string typeName = null, Expression init = null) : base(loc)
+        public VariableDeclaration(LocationInfo beg, LocationInfo end, string name, TypeExpression type = null, Expression init = null) : base(beg, end)
         {
             this.Name = name;
-            this.TypeName = typeName;
+            this.Type = type;
             this.Initializer = init;
         }
 

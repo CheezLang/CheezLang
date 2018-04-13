@@ -11,7 +11,7 @@ namespace Cheez.Ast
 
         public List<FunctionDeclaration> Functions { get; }
 
-        public ImplBlock(LocationInfo loc, string target, List<FunctionDeclaration> functions) : base(loc)
+        public ImplBlock(LocationInfo beg, LocationInfo end, string target, List<FunctionDeclaration> functions) : base(beg, end)
         {
             this.Target = target;
             this.Functions = functions;

@@ -1,4 +1,4 @@
-var a = 1
+var a : i32
 var b = 10m
 var c = 9mps
 
@@ -29,7 +29,9 @@ fn test() {
     print "was geht?"
 }
 
-fn main() {
+fn main() : i32 {
+    var x
+    var y
     a = 2
 
     print(" ") a, b, c, "`n"
@@ -48,5 +50,5 @@ fn main() {
 
     print "`n"
 
-    _test()
+    add(1, 2)
 }

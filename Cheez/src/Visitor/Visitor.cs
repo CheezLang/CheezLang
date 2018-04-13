@@ -19,6 +19,7 @@ namespace Cheez.Visitor
         ReturnType VisitNumberExpression(NumberExpression num, DataType data = default);
         ReturnType VisitDotExpression(DotExpression dot, DataType data = default);
         ReturnType VisitCallExpression(CallExpression call, DataType data = default);
+        ReturnType VisitTypeExpression(TypeExpression type, DataType data = default);
 
         ReturnType VisitPrintStatement(PrintStatement print, DataType data = default); // @Temporary
     }
@@ -40,6 +41,7 @@ namespace Cheez.Visitor
         void VisitNumberExpression(NumberExpression num, DataType data = default);
         void VisitDotExpression(DotExpression dot, DataType data = default);
         void VisitCallExpression(CallExpression call, DataType data = default);
+        void VisitTypeExpression(TypeExpression type, DataType data = default);
 
         void VisitPrintStatement(PrintStatement print, DataType data = default); // @Temporary
     }
@@ -72,7 +74,9 @@ namespace Cheez.Visitor
 
         public virtual ReturnType VisitStringLiteral(StringLiteral str, DataType data = default) => default; 
 
-        public virtual ReturnType VisitTypeDeclaration(TypeDeclaration type, DataType data = default) => default; 
+        public virtual ReturnType VisitTypeDeclaration(TypeDeclaration type, DataType data = default) => default;
+
+        public virtual ReturnType VisitTypeExpression(TypeExpression type, DataType data = default) => default;
 
         public virtual ReturnType VisitVariableDeclaration(VariableDeclaration variable, DataType data = default) => default; 
     }
@@ -108,5 +112,7 @@ namespace Cheez.Visitor
         public virtual void VisitDotExpression(DotExpression dot, DataType data = default) { }
 
         public virtual void VisitCallExpression(CallExpression call, DataType data = default) { }
+
+        public virtual void VisitTypeExpression(TypeExpression type, DataType data = default) { }
     }
 }

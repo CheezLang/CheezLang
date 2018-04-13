@@ -39,8 +39,8 @@ namespace Cheez.Visitor
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("var ").Append(variable.Name);
-            if (variable.TypeName != null)
-                sb.Append(" : ").Append(variable.TypeName);
+            if (variable.Type != null)
+                sb.Append(" : ").Append(variable.Type.Text);
             if (variable.Initializer != null)
             {
                 sb.Append(" = ");

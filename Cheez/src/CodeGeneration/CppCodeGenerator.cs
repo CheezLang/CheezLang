@@ -13,7 +13,9 @@ namespace Cheez.CodeGeneration
         private StringBuilder mTypeDeclarations = new StringBuilder();
         private string mImplTarget = null;
 
-        public string GenerateCode(List<Statement> statements)
+        private bool mEmitFunctionBody = false;
+
+        public string GenerateCode(Workspace workspace)
         {
             var sb = new StringBuilder();
             sb.AppendLine("#include <string>");
@@ -38,31 +40,44 @@ using string = const char*;
 ");
             sb.AppendLine();
 
-            var stmts = new StringBuilder();
-            foreach (var s in statements)
-                stmts.AppendLine(s.Accept(this));
-
             sb.AppendLine("// type declarations");
-            sb.AppendLine(mTypeDeclarations.ToString());
+            foreach (var td in workspace.GlobalScope.TypeDeclarations)
+            {
+                sb.AppendLine(td.Accept(this));
+            }
             sb.AppendLine();
 
             sb.AppendLine("// forward declarations");
-            sb.AppendLine(mFunctionForwardDeclarations.ToString());
+            foreach (var func in workspace.GlobalScope.FunctionDeclarations)
+            {
+                sb.AppendLine(func.Accept(this));
+            }
+            sb.AppendLine();
+            
+            sb.AppendLine("// global variables");
+            foreach (var func in workspace.GlobalScope.VariableDeclarations)
+            {
+                sb.AppendLine(func.Accept(this));
+            }
             sb.AppendLine();
 
-            sb.AppendLine("// compiled statements");
-            sb.AppendLine(stmts.ToString());
+            sb.AppendLine("// function implementations");
+            mEmitFunctionBody = true;
+            foreach (var func in workspace.GlobalScope.FunctionDeclarations)
+            {
+                sb.AppendLine(func.Accept(this));
+            }
             sb.AppendLine();
 
-            sb.Append(CreateMainFunction("_main")); // @Todo: entry point name
-            sb.AppendLine();
+            //sb.Append(CreateMainFunction("main")); // @Todo: entry point name
+            //sb.AppendLine();
 
             return sb.ToString();
         }
 
         private string GetDecoratedName(FunctionDeclaration func)
         {
-            return "_" + func.Name;
+            return func.Name;
         }
 
         public string CreateMainFunction(string entryPoint)
@@ -81,28 +96,42 @@ using string = const char*;
         {
             var sb = new StringBuilder();
 
-            string returnType = null;
-            returnType = "void";
+            string returnType = function.ReturnType?.Text ?? "void";
 
             string funcName = GetDecoratedName(function);
-
-            mFunctionForwardDeclarations.Append(Indent(indent)).Append($"{returnType} {funcName}(");
+            
             sb.Append($"{returnType} {funcName}(");
 
             if (mImplTarget != null)
             {
-                AddImplTargetParam(mImplTarget, mFunctionForwardDeclarations);
                 AddImplTargetParam(mImplTarget, sb);
             }
 
-            mFunctionForwardDeclarations.AppendLine(");");
-            sb.AppendLine(") {");
-            foreach (var s in function.Statements)
+            bool first = true;
+            foreach (var p in function.Parameters)
             {
-                sb.AppendLine(Indent(s.Accept(this), 4));
-            }
+                if (!first)
+                    sb.Append(", ");
+                sb.Append($"{p.Type} {p.Name}");
 
-            sb.Append("}");
+                first = false;
+            }
+            
+            sb.Append(")");
+
+            if (mEmitFunctionBody)
+            {
+                sb.AppendLine(" {");
+                foreach (var s in function.Statements)
+                {
+                    sb.AppendLine(Indent(s.Accept(this), 4));
+                }
+                sb.Append("}");
+            }
+            else
+            {
+                sb.Append(";");
+            }
 
             return Indent(sb.ToString(), indent);
         }
@@ -149,7 +178,7 @@ using string = const char*;
         public override string VisitVariableDeclaration(VariableDeclaration variable, int indent = 0)
         {
             var sb = new StringBuilder();
-            string type = variable.TypeName ?? "auto";
+            string type = variable.Type?.Text ?? "auto";
             if (type == "string")
                 type = "std::string";
             sb.Append($"{type} {variable.Name}");
@@ -234,13 +263,11 @@ using string = const char*;
             sb.Append("struct ").Append(type.Name).AppendLine(" {");
             foreach (var m in type.Members)
             {
-                sb.Append(Indent(m.TypeName, 4)).Append(" ").Append(m.Name).AppendLine(";");
+                sb.Append(Indent(m.Type.Text, 4)).Append(" ").Append(m.Name).AppendLine(";");
             }
             sb.Append("};");
 
-            var s = Indent(sb.ToString(), indent);
-            mTypeDeclarations.AppendLine(s);
-            return null;
+            return Indent(sb.ToString(), indent);
         }
 
         public override string VisitImplBlock(ImplBlock impl, int indent = 0)

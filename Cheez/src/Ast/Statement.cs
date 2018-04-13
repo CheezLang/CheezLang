@@ -4,15 +4,17 @@ using System.Diagnostics;
 
 namespace Cheez.Ast
 {
-    public abstract class Statement
+    public abstract class Statement : ILocation
     {
         public LocationInfo Beginning { get; set; }
+        public LocationInfo End { get; set; }
         public int Id { get; }
 
-        public Statement(LocationInfo loc)
+        public Statement(LocationInfo beg, LocationInfo end)
         {
-            Beginning = loc;
-            Id = Util.NewId;
+            this.Beginning = beg;
+            this.End = end;
+            this.Id = Util.NewId;
         }
 
         [DebuggerStepThrough]

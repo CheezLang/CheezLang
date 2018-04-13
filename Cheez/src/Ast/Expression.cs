@@ -5,15 +5,17 @@ using System.Diagnostics;
 
 namespace Cheez.Ast
 {
-    public abstract class Expression
+    public abstract class Expression : ILocation
     {
         public LocationInfo Beginning { get; set; }
+        public LocationInfo End { get; set; }
         public int Id { get; }
 
-        public Expression(LocationInfo loc)
+        public Expression(LocationInfo beg, LocationInfo end)
         {
-            Beginning = loc;
-            Id = Util.NewId;
+            this.Beginning = beg;
+            this.End = end;
+            this.Id = Util.NewId;
         }
 
         [DebuggerStepThrough]
@@ -35,7 +37,7 @@ namespace Cheez.Ast
 
     public abstract class Literal : Expression
     {
-        public Literal(LocationInfo loc) : base(loc)
+        public Literal(LocationInfo beg, LocationInfo end) : base(beg, end)
         {
         }
     }
@@ -44,7 +46,7 @@ namespace Cheez.Ast
     {
         public string Value { get; set; }
 
-        public StringLiteral(LocationInfo loc, string value) : base(loc)
+        public StringLiteral(LocationInfo beg, LocationInfo end, string value) : base(beg, end)
         {
             this.Value = value;
         }
@@ -67,7 +69,7 @@ namespace Cheez.Ast
         public Expression Left { get; set; }
         public string Right { get; set; }
 
-        public DotExpression(LocationInfo loc, Expression left, string right) : base(loc)
+        public DotExpression(LocationInfo beg, LocationInfo end, Expression left, string right) : base(beg, end)
         {
             this.Left = left;
             this.Right = right;
@@ -89,7 +91,7 @@ namespace Cheez.Ast
         public Expression Function { get; }
         public List<Expression> Arguments { get; set; }
 
-        public CallExpression(LocationInfo loc, Expression func, List<Expression> args) : base(loc)
+        public CallExpression(LocationInfo beg, LocationInfo end, Expression func, List<Expression> args) : base(beg, end)
         {
             Function = func;
             Arguments = args;

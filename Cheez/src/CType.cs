@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Cheez.Ast;
+using System.Collections.Generic;
 
 namespace Cheez
 {
@@ -6,11 +7,11 @@ namespace Cheez
     {
         private Dictionary<string, CType> sTypes = new Dictionary<string, CType>();
 
-        public CType GetCType(string name)
+        public CType GetCType(TypeExpression type)
         {
-            if (sTypes.ContainsKey(name))
+            if (sTypes.ContainsKey(type.Text))
             {
-                return sTypes[name];
+                return sTypes[type.Text];
             }
 
             return null;
@@ -109,5 +110,27 @@ namespace Cheez
     public class StringType : CType
     {
         public static StringType Instance = new StringType();
+    }
+
+    public class StructType : CType
+    {
+        private static Dictionary<string, StructType> sTypes = new Dictionary<string, StructType>();
+
+        public TypeDeclaration Declaration { get; set; }
+
+        public static StructType GetStructType(string name)
+        {
+            if (sTypes.ContainsKey(name))
+            {
+                return sTypes[name];
+            }
+
+            var type = new StructType
+            {
+            };
+
+            sTypes[name] = type;
+            return type;
+        }
     }
 }

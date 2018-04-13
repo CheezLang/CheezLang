@@ -1,20 +1,25 @@
 ﻿using Cheez.Ast;
 using Cheez.Parsing;
-using Cheez.SemanticAnalysis;
+using System;
 using System.Collections.Generic;
 
 namespace Cheez
 {
     public class CheezFile
     {
+        public string Name { get; }
+        public string RawText { get; set; }
+
         public Scope ExportScope { get; } = new Scope();
         private Scope mPrivateScope = new Scope();
         public ScopeRef PrivateScope { get; }
 
         public List<Statement> Statements { get; }
 
-        public CheezFile(List<Statement> statements)
+        public CheezFile(string name, string raw, List<Statement> statements)
         {
+            this.Name = name;
+            this.RawText = raw;
             PrivateScope = new ScopeRef(mPrivateScope, ExportScope);
             Statements = statements;
         }
@@ -51,20 +56,26 @@ namespace Cheez
 
             // parse file
             List<Statement> statements = new List<Statement>();
-            {
-                var lexer = Lexer.FromFile(fileName);
-                var parser = new Parser(lexer);
+            var lexer = Lexer.FromFile(fileName);
+            var parser = new Parser(lexer);
 
+            try
+            {
                 while (true)
                 {
+
                     var s = parser.ParseStatement();
                     if (s == null)
                         break;
                     statements.Add(s);
                 }
             }
+            catch (Exception e)
+            {
+                throw;
+            }
 
-            var file = new CheezFile(statements);
+            var file = new CheezFile(fileName, lexer.Text, statements);
             mFiles[fileName] = file;
             workspace.AddFile(file);
 

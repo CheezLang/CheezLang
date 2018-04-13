@@ -8,13 +8,13 @@ namespace Cheez.Ast
     public class MemberDeclaration
     {
         public string Name { get; }
-        public string TypeName { get; }
+        public TypeExpression Type { get; }
         public CType CType { get; set; }
 
-        public MemberDeclaration(string name, string typeName)
+        public MemberDeclaration(string name, TypeExpression type)
         {
             this.Name = name;
-            this.TypeName = typeName;
+            this.Type = type;
         }
     }
 
@@ -23,7 +23,7 @@ namespace Cheez.Ast
         public string Name { get; }
         public List<MemberDeclaration> Members { get; }
 
-        public TypeDeclaration(LocationInfo loc, string name, List<MemberDeclaration> members) : base(loc)
+        public TypeDeclaration(LocationInfo beg, LocationInfo end, string name, List<MemberDeclaration> members) : base(beg, end)
         {
             this.Name = name;
             this.Members = members;

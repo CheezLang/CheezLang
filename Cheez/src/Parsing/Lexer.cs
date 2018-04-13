@@ -45,7 +45,14 @@ namespace Cheez.Parsing
     {
         public string file;
         public int line;
-        public int column;
+        public int index;
+        public int end;
+        public int lineStartIndex;
+
+        public LocationInfo()
+        {
+
+        }
 
         public LocationInfo Clone()
         {
@@ -53,13 +60,15 @@ namespace Cheez.Parsing
             {
                 file = file,
                 line = line,
-                column = column
+                index = index,
+                end = end,
+                lineStartIndex = lineStartIndex
             };
         }
 
         public override string ToString()
         {
-            return $"{file} ({line}:{column})";
+            return $"{file} ({line}:{index-lineStartIndex+1})";
         }
     }
 
@@ -87,25 +96,27 @@ namespace Cheez.Parsing
 
     public class Lexer
     {
-        private string mFile;
+        private string mText;
         private LocationInfo mLocation;
-        private int index = 0;
 
-        private char Current => mFile[index];
-        private char Next => index < mFile.Length - 1 ? mFile[index + 1] : (char)0;
-        private char Prev => index > 0 ? mFile[index - 1] : (char)0;
+        private char Current => mText[mLocation.index];
+        private char Next => mLocation.index < mText.Length - 1 ? mText[mLocation.index + 1] : (char)0;
+        private char Prev => mLocation.index > 0 ? mText[mLocation.index - 1] : (char)0;
         private Token peek = null;
+
+        public string Text => mText;
 
         public static Lexer FromFile(string fileName)
         {
             return new Lexer
             {
-                mFile = File.ReadAllText(fileName, Encoding.UTF8),
+                mText = File.ReadAllText(fileName, Encoding.UTF8),
                 mLocation = new LocationInfo
                 {
                     file = fileName,
                     line = 1,
-                    column = 1
+                    index = 0,
+                    lineStartIndex = 0
                 }
             };
         }
@@ -114,12 +125,11 @@ namespace Cheez.Parsing
         {
             return new Lexer
             {
-                mFile = str,
+                mText = str,
                 mLocation = new LocationInfo
                 {
                     file = "string",
                     line = 1,
-                    column = 1
                 }
             };
         }
@@ -159,7 +169,7 @@ namespace Cheez.Parsing
             var token = new Token();
             token.location = mLocation.Clone();
             token.type = TokenType.EOF;
-            if (index >= mFile.Length)
+            if (mLocation.index >= mText.Length)
                 return token;
 
             switch (Current)
@@ -187,23 +197,21 @@ namespace Cheez.Parsing
                     break;
             }
 
-
+            token.location.end = mLocation.index;
             return token;
         }
 
         private void ParseStringLiteral(ref Token token)
         {
             token.type = TokenType.StringLiteral;
-            int start = index++;
-            mLocation.column++;
+            int start = mLocation.index++;
             StringBuilder sb = new StringBuilder();
 
             bool foundEnd = false;
-            while (index < mFile.Length)
+            while (mLocation.index < mText.Length)
             {
                 char c = Current;
-                index++;
-                mLocation.column++;
+                mLocation.index++;
                 if (c == '"')
                 {
                     foundEnd = true;
@@ -211,7 +219,7 @@ namespace Cheez.Parsing
                 }
                 else if (c == '`')
                 {
-                    if (index >= mFile.Length)
+                    if (mLocation.index >= mText.Length)
                         throw new ParsingError(mLocation, $"Unexpected end of file while parsing string literal");
                     switch (Current)
                     {
@@ -220,8 +228,7 @@ namespace Cheez.Parsing
                         case '0': sb.Append('\0'); break;
                         default: sb.Append(Current); break;
                     }
-                    index++;
-                    mLocation.column++;
+                    mLocation.index++;
                     continue;
                 }
 
@@ -239,8 +246,7 @@ namespace Cheez.Parsing
         private void SimpleToken(ref Token token, TokenType type, int len = 1)
         {
             token.type = type;
-            index += len;
-            mLocation.column += len;
+            mLocation.index += len;
         }
 
         private void CheckKeywords(ref Token token)
@@ -264,14 +270,13 @@ namespace Cheez.Parsing
         {
             token.type = TokenType.Identifier;
 
-            int start = index;
+            int start = mLocation.index;
             while (IsIdent(Current))
             {
-                index++;
-                mLocation.column++;
+                mLocation.index++;
             }
 
-            token.data = mFile.Substring(start, index - start);
+            token.data = mText.Substring(start, mLocation.index - start);
         }
 
         private void ParseNumberLiteral(ref Token token)
@@ -297,7 +302,7 @@ namespace Cheez.Parsing
             string error = null;
 
 
-            while (index < mFile.Length && state != -1 && state != StateDone)
+            while (mLocation.index < mText.Length && state != -1 && state != StateDone)
             {
                 char c = Current;
 
@@ -459,8 +464,7 @@ namespace Cheez.Parsing
 
                 if (state != StateDone)
                 {
-                    index++;
-                    mLocation.column++;
+                    mLocation.index++;
                 }
             }
 
@@ -510,7 +514,7 @@ namespace Cheez.Parsing
         {
             loc = null;
 
-            while (index < mFile.Length)
+            while (mLocation.index < mText.Length)
             {
                 char c = Current;
                 if (c == '/' && Next == '*')
@@ -525,69 +529,66 @@ namespace Cheez.Parsing
 
                 else if (c == ' ' || c == '\t')
                 {
-                    index++;
-                    mLocation.column++;
+                    mLocation.index++;
                 }
 
                 else if (c == '\r')
                 {
-                    index++;
+                    mLocation.index++;
                 }
 
                 else if (c == '\n')
                 {
                     if (loc == null)
                     {
-                        loc = new LocationInfo
-                        {
-                            file = mLocation.file,
-                            line = mLocation.line,
-                            column = mLocation.column,
-                        };
+                        loc = mLocation.Clone();
                     }
 
                     mLocation.line++;
-                    mLocation.column = 1;
-                    index++;
+                    mLocation.index++;
+                    mLocation.lineStartIndex = mLocation.index;
                 }
 
                 else break;
             }
 
-            return loc != null;
+            if (loc != null)
+            {
+                loc.end = mLocation.index;
+                return true;
+            }
+
+            return false;
         }
 
         private void ParseSingleLineComment()
         {
-            while (index < mFile.Length)
+            while (mLocation.index < mText.Length)
             {
                 if (Current == '\n')
                     break;
-                index++;
+                mLocation.index++;
             }
         }
 
         private void ParseMultiLineComment()
         {
             int level = 0;
-            while (index < mFile.Length)
+            while (mLocation.index < mText.Length)
             {
                 char curr = Current;
                 char next = Next;
-                index++;
-                mLocation.column++;
+                mLocation.index++;
 
                 if (curr == '/' && next == '*')
                 {
-                    index++;
-                    mLocation.column++;
+                    mLocation.index++;
                     level++;
                 }
 
                 else if (curr == '*' && next == '/')
                 {
-                    index++;
-                    mLocation.column++;
+                    mLocation.index++;
                     level--;
 
                     if (level == 0)
@@ -597,7 +598,7 @@ namespace Cheez.Parsing
                 else if (curr == '\n')
                 {
                     mLocation.line++;
-                    mLocation.column = 1;
+                    mLocation.lineStartIndex = mLocation.index;
                 }
             }
         }

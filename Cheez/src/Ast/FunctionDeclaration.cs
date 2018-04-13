@@ -9,14 +9,14 @@ namespace Cheez.Ast
     {
         public int Id { get; }
 
-        public string TypeName { get; set; }
+        public TypeExpression Type { get; set; }
         public string Name { get; set; }
 
-        public FunctionParameter(string name, string type)
+        public FunctionParameter(string name, TypeExpression type)
         {
             Id = Util.NewId;
             this.Name = name;
-            this.TypeName = type;
+            this.Type = type;
         }
     }
 
@@ -25,14 +25,17 @@ namespace Cheez.Ast
         public string Name { get; }
         public List<FunctionParameter> Parameters { get; }
 
+        public TypeExpression ReturnType { get; }
+
         public List<Statement> Statements { get; private set; }
 
-        public FunctionDeclaration(LocationInfo beginning, string name, List<FunctionParameter> parameters, List<Statement> statements)
-            : base(beginning)
+        public FunctionDeclaration(LocationInfo beg, LocationInfo end, string name, List<FunctionParameter> parameters, TypeExpression returnType, List<Statement> statements)
+            : base(beg, end)
         {
             this.Name = name;
             this.Parameters = parameters;
             this.Statements = statements;
+            this.ReturnType = returnType;
         }
 
         [DebuggerStepThrough]

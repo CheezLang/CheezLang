@@ -9,7 +9,7 @@ namespace Cheez.Ast
     {
         public String Name { get; set; }
 
-        public IdentifierExpression(LocationInfo loc, string name) : base(loc)
+        public IdentifierExpression(LocationInfo beg, LocationInfo end, string name) : base(beg, end)
         {
             this.Name = name;
         }
