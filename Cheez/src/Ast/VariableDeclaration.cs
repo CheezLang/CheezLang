@@ -9,12 +9,14 @@ namespace Cheez.Ast
         public string Name { get; set; }
         public TypeExpression Type { get; set; }
         public Expression Initializer { get; set; }
+        public ILocation NameLocation { get; internal set; }
 
-        public VariableDeclaration(TokenLocation beg, TokenLocation end, string name, TypeExpression type = null, Expression init = null) : base(beg, end)
+        public VariableDeclaration(TokenLocation beg, TokenLocation end, TokenLocation nameLocation, string name, TypeExpression type = null, Expression init = null) : base(beg, end)
         {
             this.Name = name;
             this.Type = type;
             this.Initializer = init;
+            this.NameLocation = new Location(nameLocation);
         }
 
         [DebuggerStepThrough]

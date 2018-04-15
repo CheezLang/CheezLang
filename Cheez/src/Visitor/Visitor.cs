@@ -13,6 +13,7 @@ namespace Cheez.Visitor
         ReturnType VisitIfStatement(IfStatement ifs, DataType data = default);
         ReturnType VisitBlockStatement(BlockStatement block, DataType data = default);
         ReturnType VisitImplBlock(ImplBlock impl, DataType data = default);
+        ReturnType VisitReturnStatement(ReturnStatement ret, DataType data = default);
 
         ReturnType VisitIdentifierExpression(IdentifierExpression ident, DataType data = default);
         ReturnType VisitStringLiteral(StringLiteral str, DataType data = default);
@@ -20,6 +21,7 @@ namespace Cheez.Visitor
         ReturnType VisitDotExpression(DotExpression dot, DataType data = default);
         ReturnType VisitCallExpression(CallExpression call, DataType data = default);
         ReturnType VisitTypeExpression(TypeExpression type, DataType data = default);
+        ReturnType VisitBinaryExpression(BinaryExpression bin, DataType data = default);
 
         ReturnType VisitPrintStatement(PrintStatement print, DataType data = default); // @Temporary
     }
@@ -35,6 +37,7 @@ namespace Cheez.Visitor
         void VisitIfStatement(IfStatement ifs, DataType data = default);
         void VisitBlockStatement(BlockStatement block, DataType data = default);
         void VisitImplBlock(ImplBlock impl, DataType data = default);
+        void VisitReturnStatement(ReturnStatement ret, DataType data = default);
 
         void VisitIdentifierExpression(IdentifierExpression ident, DataType data = default);
         void VisitStringLiteral(StringLiteral str, DataType data = default);
@@ -42,13 +45,16 @@ namespace Cheez.Visitor
         void VisitDotExpression(DotExpression dot, DataType data = default);
         void VisitCallExpression(CallExpression call, DataType data = default);
         void VisitTypeExpression(TypeExpression type, DataType data = default);
+        void VisitBinaryExpression(BinaryExpression bin, DataType data = default);
 
         void VisitPrintStatement(PrintStatement print, DataType data = default); // @Temporary
     }
 
     public abstract class VisitorBase<ReturnType, DataType> : IVisitor<ReturnType, DataType>
     {
-        public virtual ReturnType VisitAssignment(Assignment ass, DataType data = default) => default; 
+        public virtual ReturnType VisitAssignment(Assignment ass, DataType data = default) => default;
+
+        public virtual ReturnType VisitBinaryExpression(BinaryExpression bin, DataType data = default) => default;
 
         public virtual ReturnType VisitBlockStatement(BlockStatement block, DataType data = default) => default;
 
@@ -70,7 +76,9 @@ namespace Cheez.Visitor
 
         public virtual ReturnType VisitNumberExpression(NumberExpression num, DataType data = default) => default; 
 
-        public virtual ReturnType VisitPrintStatement(PrintStatement print, DataType data = default) => default; 
+        public virtual ReturnType VisitPrintStatement(PrintStatement print, DataType data = default) => default;
+
+        public virtual ReturnType VisitReturnStatement(ReturnStatement ret, DataType data = default) => default;
 
         public virtual ReturnType VisitStringLiteral(StringLiteral str, DataType data = default) => default; 
 
@@ -114,5 +122,9 @@ namespace Cheez.Visitor
         public virtual void VisitCallExpression(CallExpression call, DataType data = default) { }
 
         public virtual void VisitTypeExpression(TypeExpression type, DataType data = default) { }
+
+        public virtual void VisitReturnStatement(ReturnStatement ret, DataType data = default) { }
+
+        public virtual void VisitBinaryExpression(BinaryExpression bin, DataType data = default) { }
     }
 }

@@ -22,7 +22,11 @@ namespace Cheez.Parsing
         Comma,
         Period,
         Equal,
+
+        Plus,
+        Minus,
         Asterisk,
+        ForwardSlash,
 
         OpenParen,
         ClosingParen,
@@ -33,6 +37,7 @@ namespace Cheez.Parsing
         OpenBracket,
         ClosingBracket,
 
+        KwReturn,
         KwFn,
         KwStruct,
         KwImpl,
@@ -119,7 +124,7 @@ namespace Cheez.Parsing
         {
             return new Lexer
             {
-                mText = File.ReadAllText(fileName, Encoding.UTF8),
+                mText = File.ReadAllText(fileName, Encoding.UTF8).Replace("\r\n", "\n"),
                 mLocation = new TokenLocation
                 {
                     file = fileName,
@@ -134,7 +139,7 @@ namespace Cheez.Parsing
         {
             return new Lexer
             {
-                mText = str,
+                mText = str.Replace("\r\n", "\n"),
                 mLocation = new TokenLocation
                 {
                     file = "string",
@@ -196,6 +201,9 @@ namespace Cheez.Parsing
                 case ']': SimpleToken(ref token, TokenType.ClosingBracket); break;
                 case ',': SimpleToken(ref token, TokenType.Comma); break;
                 case '*': SimpleToken(ref token, TokenType.Asterisk); break;
+                case '/': SimpleToken(ref token, TokenType.ForwardSlash); break;
+                case '+': SimpleToken(ref token, TokenType.Plus); break;
+                case '-': SimpleToken(ref token, TokenType.Minus); break;
 
                 case '"': ParseStringLiteral(ref token); break;
 
@@ -265,6 +273,7 @@ namespace Cheez.Parsing
         {
             switch (token.data as string)
             {
+                case "return": token.type = TokenType.KwReturn; break;
                 case "fn": token.type = TokenType.KwFn; break;
                 case "struct": token.type = TokenType.KwStruct; break;
                 case "impl": token.type = TokenType.KwImpl; break;

@@ -21,6 +21,8 @@ namespace Cheez.Parsing
         private Lexer mLexer;
         private ErrorHandler mErrorHandler = new ErrorHandler();
 
+        public bool HasErrors => mErrorHandler.HasErrors;
+
         public Parser(Lexer lex)
         {
             mLexer = lex;
@@ -43,6 +45,19 @@ namespace Cheez.Parsing
 
                 return tok;
             }
+        }
+
+        private Token ConsumeNewLine(Func<TokenType, object, string> customErrorMessage = null)
+        {
+            var tok = mLexer.NextToken();
+
+            if (tok.type != TokenType.NewLine)
+            {
+                string message = customErrorMessage != null ? customErrorMessage(tok.type, tok.data) : $"Unexpected token ({tok.type}) {tok.data}, expected new line";
+                throw new ParsingError(tok.location, message);
+            }
+
+            return tok;
         }
 
         private Token ConsumeOptionalToken(TokenType type, bool skipNewLines)
@@ -91,6 +106,8 @@ namespace Cheez.Parsing
                 var token = PeekToken(true);
                 switch (token.type)
                 {
+                    case TokenType.KwReturn:
+                        return ParseReturnStatement();
                     case TokenType.KwFn:
                         return ParseFunctionDeclaration();
                     case TokenType.KwVar:
@@ -131,6 +148,23 @@ namespace Cheez.Parsing
 
                 return null;
             }
+        }
+
+        private ReturnStatement ParseReturnStatement()
+        {
+            var beg = Expect(TokenType.KwReturn, skipNewLines: true).location;
+            TokenLocation end = beg;
+            Expression returnValue = null;
+
+            if (PeekToken(skipNewLines: false).type != TokenType.NewLine)
+            {
+                returnValue = ParseExpression();
+                end = returnValue.End;
+            }
+
+            ConsumeNewLine();
+
+            return new ReturnStatement(beg, end, returnValue);
         }
 
         private TypeDeclaration ParseTypeDeclaration()
@@ -250,7 +284,7 @@ namespace Cheez.Parsing
 
             mLexer.NextToken();
 
-            return new VariableDeclaration(beginning.location, end, (string)name.data, type, init);
+            return new VariableDeclaration(beginning.location, end, name.location, (string)name.data, type, init);
         }
 
         private IfStatement ParseIfStatement()
@@ -345,9 +379,52 @@ namespace Cheez.Parsing
 
         private Expression ParseExpression()
         {
-            return ParseCallExpression();
+            Func<Expression> muldiv = () => ParseBinaryLeftAssociativeExpression(ParseCallExpression,
+                (TokenType.Asterisk, BinaryOperator.Multiply),
+                (TokenType.ForwardSlash, BinaryOperator.Divide));
+
+            Func<Expression> addsub = () => ParseBinaryLeftAssociativeExpression(muldiv,
+                (TokenType.Plus, BinaryOperator.Add),
+                (TokenType.Minus, BinaryOperator.Subtract));
+
+            return addsub();
         }
 
+        private Expression ParseBinaryLeftAssociativeExpression(Func<Expression> sub, params (TokenType, BinaryOperator)[] types)
+        {
+            return ParseLeftAssociativeExpression(sub, type =>
+            {
+                foreach (var (t, o) in types)
+                {
+                    if (t == type)
+                        return o;
+                }
+
+                return null;
+            });
+        }
+
+        private Expression ParseLeftAssociativeExpression(Func<Expression> sub, Func<TokenType, BinaryOperator?> tokenMapping)
+        {
+            var lhs = sub();
+            Expression rhs = null;
+
+            while (true)
+            {
+                var next = PeekToken(skipNewLines: false);
+
+                var op = tokenMapping(next.type);
+                if (op == null)
+                {
+                    return lhs;
+                }
+
+                mLexer.NextToken();
+                rhs = sub();
+                lhs = new BinaryExpression(lhs.Beginning, rhs.End, op.Value, lhs, rhs);
+            }
+        }
+        
         private Expression ParseCallExpression()
         {
             var func = ParseDotExpression();
@@ -447,7 +524,7 @@ namespace Cheez.Parsing
                     throw new Exception($"Expected comma or closing paren, got {next.data} ({next.type})");
             }
             end = Expect(TokenType.ClosingParen, skipNewLines: true).location;
-            
+
             // return type
             if (PeekToken(skipNewLines: true).type == TokenType.Colon)
             {

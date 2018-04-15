@@ -65,10 +65,16 @@ namespace Cheez
 
         public IScope GetScope(object o)
         {
-            // @Todo
-            //if (!mTypeMap.ContainsKey(o))
-            //    return null;
+            if (!mScopeMap.ContainsKey(o))
+                return null;
             return mScopeMap[o];
+        }
+
+        public IScope GetFunctionScope(FunctionDeclaration o)
+        {
+            if (!mFunctionScopeMap.ContainsKey(o))
+                return null;
+            return mFunctionScopeMap[o];
         }
 
         public void CompileAll()
@@ -124,7 +130,7 @@ namespace Cheez
                             mFunctionScopeMap[f] = funcScopeRef;
 
                             if (f.HasImplementation)
-                                GatherDeclarations(scope, f.Statements);
+                                GatherDeclarations(funcScopeRef, f.Statements);
                         }
                         break;
 

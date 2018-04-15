@@ -57,6 +57,7 @@
     <Compile Include="src\Ast\ImplBlock.cs" />
     <Compile Include="src\Ast\NumberExpression.cs" />
     <Compile Include="src\Ast\PrintStatement.cs" />
+    <Compile Include="src\Ast\ReturnStatement.cs" />
     <Compile Include="src\Ast\Statement.cs" />
     <Compile Include="src\Ast\FunctionDeclaration.cs" />
     <Compile Include="src\Ast\TypeDeclaration.cs" />

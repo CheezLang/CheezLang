@@ -66,13 +66,14 @@ namespace Cheez
     {
         private static Dictionary<(int, bool), IntType> sTypes = new Dictionary<(int, bool), IntType>();
         public static IntType LiteralType = new IntType { Signed = false, SizeInBytes = 0 };
+        public static IntType DefaultType => GetIntType(8, true);
 
         public int SizeInBytes { get; private set; }
         public bool Signed { get; private set; }
 
-        public static IntType GetIntType(int size, bool signed)
+        public static IntType GetIntType(int sizeInBytes, bool signed)
         {
-            var key = (size, signed);
+            var key = (sizeInBytes, signed);
 
             if (sTypes.ContainsKey(key))
             {
@@ -81,7 +82,7 @@ namespace Cheez
 
             var type = new IntType
             {
-                SizeInBytes = size,
+                SizeInBytes = sizeInBytes,
                 Signed = signed
             };
 

@@ -14,6 +14,8 @@ namespace Cheez
         CTypeFactory Types { get; }
 
         FunctionDeclaration GetFunction(string name, List<CType> parameters);
+        bool DefineVariable(string name, VariableDeclaration variable, CType type);
+        (CType type, VariableDeclaration ast)? GetVariable(string name);
     }
 
     public class Scope : IScope
@@ -25,6 +27,7 @@ namespace Cheez
         public CTypeFactory Types { get; } = new CTypeFactory();
 
         private Dictionary<string, List<FunctionDeclaration>> mFunctionTable = new Dictionary<string, List<FunctionDeclaration>>();
+        private Dictionary<string, (CType, VariableDeclaration)> mVariableTable = new Dictionary<string, (CType, VariableDeclaration)>();
 
         public FunctionDeclaration GetFunction(string name, List<CType> parameters)
         {
@@ -53,6 +56,24 @@ namespace Cheez
         {
             throw new NotImplementedException();
         }
+
+        public bool DefineVariable(string name, VariableDeclaration variable, CType type)
+        {
+            if (mVariableTable.ContainsKey(name))
+                return false;
+
+            mVariableTable[name] = (type, variable);
+
+            return true;
+        }
+
+        public (CType type, VariableDeclaration ast)? GetVariable(string name)
+        {
+            if (mVariableTable.ContainsKey(name))
+                return mVariableTable[name];
+
+            return null;
+        }
     }
 
     public class ScopeRef : IScope
@@ -78,6 +99,19 @@ namespace Cheez
             if (func == null && Parent != null)
                 func = Parent.GetFunction(name, parameters);
             return func;
+        }
+
+        public bool DefineVariable(string name, VariableDeclaration variable, CType type)
+        {
+            return Scope.DefineVariable(name, variable, type);
+        }
+
+        public (CType type, VariableDeclaration ast)? GetVariable(string name)
+        {
+            var v = Scope.GetVariable(name);
+            if (v == null && Parent != null)
+                v = Parent.GetVariable(name);
+            return v;
         }
     }
 }

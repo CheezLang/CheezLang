@@ -1,5 +1,6 @@
 ﻿using Cheez.Ast;
 using Cheez.Visitor;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -14,9 +15,12 @@ namespace Cheez.CodeGeneration
         private string mImplTarget = null;
 
         private bool mEmitFunctionBody = false;
+        private Workspace workspace;
 
-        public string GenerateCode(Workspace workspace)
+        public string GenerateCode(Workspace ws)
         {
+            workspace = ws;
+
             var sb = new StringBuilder();
             sb.AppendLine("#include <string>");
             sb.AppendLine("#include <iostream>");
@@ -70,8 +74,8 @@ using string = const char*;
             }
             sb.AppendLine();
 
-            //sb.Append(CreateMainFunction("main")); // @Todo: entry point name
-            //sb.AppendLine();
+            sb.Append(CreateMainFunction("Main")); // @Todo: entry point name
+            sb.AppendLine();
 
             return sb.ToString();
         }
@@ -179,7 +183,7 @@ using string = const char*;
         public override string VisitVariableDeclaration(VariableDeclaration variable, int indent = 0)
         {
             var sb = new StringBuilder();
-            string type = variable.Type?.Accept(this) ?? "auto";
+            string type = GetTypeName(workspace.GetType(variable));
             if (type == "string")
                 type = "std::string";
             sb.Append($"{type} {variable.Name}");
@@ -299,6 +303,43 @@ using string = const char*;
             }
         }
 
+        public override string VisitReturnStatement(ReturnStatement ret, int data = 0)
+        {
+            if (ret.ReturnValue != null)
+                return $"return {ret.ReturnValue.Accept(this)};";
+            return "return;";
+        }
+
+        public override string VisitBinaryExpression(BinaryExpression bin, int data = 0)
+        {
+            var lhs = bin.Left.Accept(this);
+            var rhs = bin.Right.Accept(this);
+
+            {
+                if (bin.Left is BinaryExpression b && b.Operator.GetPrecedence() < bin.Operator.GetPrecedence())
+                    lhs = $"({lhs})";
+            }
+
+            {
+                if (bin.Right is BinaryExpression b && b.Operator.GetPrecedence() < bin.Operator.GetPrecedence())
+                    rhs = $"({rhs})";
+            }
+
+            switch (bin.Operator)
+            {
+                case BinaryOperator.Add:
+                    return $"{lhs} + {rhs}";
+                case BinaryOperator.Subtract:
+                    return $"{lhs} - {rhs}";
+                case BinaryOperator.Multiply:
+                    return $"{lhs} * {rhs}";
+                case BinaryOperator.Divide:
+                    return $"{lhs} / {rhs}";
+            }
+
+            return "[ERROR]";
+        }
+
         public override string VisitDotExpression(DotExpression dot, int data = 0)
         {
             return dot.Left.Accept(this) + "." + dot.Right;
@@ -308,6 +349,24 @@ using string = const char*;
         {
             var args = string.Join(", ", call.Arguments.Select(a => a.Accept(this)));
             return $"{call.Function.Accept(this)}({args})";
+        }
+
+        private string GetTypeName(CType type)
+        {
+            switch (type)
+            {
+                case IntType n:
+                    return n.ToString();
+
+                case PointerType p:
+                     return GetTypeName(p.TargetType) + "*";
+
+                case ArrayType a:
+                    return GetTypeName(a.TargetType)+ "*";
+
+                default:
+                    return "void";
+            }
         }
 
         public override string VisitTypeExpression(TypeExpression type, int data = 0)

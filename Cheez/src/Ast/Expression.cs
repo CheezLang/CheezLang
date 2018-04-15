@@ -111,4 +111,58 @@ namespace Cheez.Ast
             visitor.VisitCallExpression(this, data);
         }
     }
+
+    public enum BinaryOperator
+    {
+        Add,
+        Subtract,
+        Multiply,
+        Divide,
+    }
+
+    public static class BinareyOperatorExtensions
+    {
+        public static int GetPrecedence(this BinaryOperator self)
+        {
+            switch (self)
+            {
+                case BinaryOperator.Add:
+                case BinaryOperator.Subtract:
+                    return 5;
+
+                case BinaryOperator.Multiply:
+                case BinaryOperator.Divide:
+                    return 10;
+
+                default:
+                    throw new System.Exception();
+            }
+        }
+    }
+
+    public class BinaryExpression : Expression
+    {
+        public BinaryOperator Operator { get; set; }
+        public Expression Left { get; set; }
+        public Expression Right { get; set; }
+
+        public BinaryExpression(TokenLocation beg, TokenLocation end, BinaryOperator op, Expression lhs, Expression rhs) : base(beg, end)
+        {
+            Operator = op;
+            Left = lhs;
+            Right = rhs;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitBinaryExpression(this, data);
+        }
+
+        [DebuggerStepThrough]
+        public override void Accept<D>(IVoidVisitor<D> visitor, D data = default)
+        {
+            visitor.VisitBinaryExpression(this, data);
+        }
+    }
 }

@@ -37,8 +37,11 @@ namespace Cheez
         private Dictionary<string, CheezFile> mFiles = new Dictionary<string, CheezFile>();
         private Workspace mMainWorkspace;
         private Dictionary<string, Workspace> mWorkspaces = new Dictionary<string, Workspace>();
+        private ErrorHandler mErrorHandler = new ErrorHandler();
 
         public Workspace DefaultWorkspace => mMainWorkspace;
+
+        public bool HasErrors => mErrorHandler.HasErrors;
 
         public Compiler()
         {
@@ -74,6 +77,9 @@ namespace Cheez
             {
                 throw;
             }
+
+            if (parser.HasErrors)
+                mErrorHandler.ReportCompilerError($"Failed to parse file '{fileName}'");
 
             var file = new CheezFile(fileName, lexer.Text, statements);
             mFiles[fileName] = file;
