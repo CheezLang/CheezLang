@@ -2,6 +2,8 @@
 using Cheez.Parsing;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Cheez
@@ -15,12 +17,7 @@ namespace Cheez
         {
         }
 
-        private void Log(string message)
-        {
-            Console.WriteLine(message);
-        }
-        
-        private void LogErrorLine(string message, ConsoleColor foreground = ConsoleColor.Red, ConsoleColor background = ConsoleColor.Black)
+        private void Log(string message, ConsoleColor foreground, ConsoleColor background = ConsoleColor.Black)
         {
             var colf = Console.ForegroundColor;
             var colb = Console.BackgroundColor;
@@ -31,7 +28,7 @@ namespace Cheez
             Console.BackgroundColor = colb;
         }
 
-        private void LogError(string message, ConsoleColor foreground = ConsoleColor.Red, ConsoleColor background = ConsoleColor.Black)
+        private void LogInline(string message, ConsoleColor foreground, ConsoleColor background = ConsoleColor.Black)
         {
             var colf = Console.ForegroundColor;
             var colb = Console.BackgroundColor;
@@ -42,96 +39,91 @@ namespace Cheez
             Console.BackgroundColor = colb;
         }
 
-        private void LogWarning(string message)
-        {
-            var col = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Error.WriteLine(message);
-            Console.ForegroundColor = col;
-        }
-
-        public void ReportError(IText text, ILocation location, string message, int LinesBefore = 1, int LinesAfter = 1)
+        public void ReportError(IText text, ILocation location, string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             mErrorCount++;
 
-            var sb = new StringBuilder();
+            const int linesBefore = 1;
+            const int linesAfter = 1;
 
-            var beg = location.Beginning;
-            var end = location.End;
+            TokenLocation beginning = location.Beginning;
+            TokenLocation end = location.End;
+            int index = beginning.index;
+            int lineNumber = beginning.line;
+            int lineStart = GetLineStartIndex(text, index);
+            int lineEnd = GetLineEndIndex(text, index);
+            
+            var errorLineBackgroundColor = ConsoleColor.Black;
+            int lineNumberWidth = (end.line + linesAfter).ToString().Length;
 
-            var locationString = beg.ToString();
-            LogErrorLine($"{locationString}: {message}");
+            if (true)
+            {
+                callingFunctionFile = Path.GetFileName(callingFunctionFile);
+                Log($"{callingFunctionFile}:{callingFunctionName}():{callLineNumber}", ConsoleColor.DarkYellow);
+            }
+            // location, message
+            Log($"{beginning}: {message}", ConsoleColor.Red);
 
-            // line before current line
+            // lines before current line
             {
                 List<string> previousLines = new List<string>();
-                int lineStart = beg.lineStartIndex;
-                for (int i = 0; i < LinesBefore && lineStart > 0; i++)
+                int startIndex = lineStart;
+                for (int i = 0; i < linesBefore && startIndex > 0; i++)
                 {
-                    var prevLineEnd = lineStart - 1;
+                    var prevLineEnd = startIndex - 1;
                     var prevLineStart = GetLineStartIndex(text, prevLineEnd - 1);
                     previousLines.Add(text.Text.Substring(prevLineStart, prevLineEnd - prevLineStart));
 
-                    lineStart = prevLineStart;
+                    startIndex = prevLineStart;
                 }
 
                 for (int i = previousLines.Count - 1; i >= 0; i--)
                 {
-                    int line = beg.line - previousLines.Count;
-                    sb.Append($"{line,4}> ").AppendLine(previousLines[i]);
+                    int line = lineNumber - previousLines.Count;
+                    Log(string.Format($"{{0,{lineNumberWidth}}}> {{1}}", line, previousLines[i]), ConsoleColor.White);
                 }
             }
 
-            LogError(sb.ToString(), ConsoleColor.White);
-            sb.Clear();
-
-            int lineEnd = GetLineEndIndex(text, beg.lineStartIndex);
-
+            // line containing error (may be multiple lines)
             {
-                var part1 = text.Text.Substring(beg.lineStartIndex, beg.index - beg.lineStartIndex);
-                var part2 = text.Text.Substring(beg.index, end.end - beg.index);
+                var part1 = text.Text.Substring(lineStart, index - lineStart);
+                var part2 = text.Text.Substring(index, end.end - index);
                 var part3 = text.Text.Substring(end.end, lineEnd - end.end);
-                LogError($"{beg.line,4}> ", ConsoleColor.White);
-                LogError(part1, ConsoleColor.White);
-                LogError(part2, ConsoleColor.DarkRed);
-                LogErrorLine(part3, ConsoleColor.White);
-                sb.Clear();
+                LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", lineNumber), ConsoleColor.White);
+                LogInline(part1, ConsoleColor.White, errorLineBackgroundColor);
+                LogInline(part2, ConsoleColor.Red, errorLineBackgroundColor);
+                Log(part3, ConsoleColor.White, errorLineBackgroundColor);
             }
-            //sb.Append("").Append(text.Text.Substring(beg.lineStartIndex, lineEnd - beg.lineStartIndex));
-            //LogErrorLine(sb.ToString(), ConsoleColor.White);
-            //sb.Clear();
 
             // underline
-            if (false)
             {
-                sb.Append(new string(' ', beg.index - beg.lineStartIndex + 6));
-                //sb.Append('^').Append(new string('—', end.end - beg.index - 1));
-                sb.Append('~').Append(new string('~', end.end - beg.index - 1));
-                LogErrorLine(sb.ToString(), ConsoleColor.Red);
-                sb.Clear();
+                char firstChar = '^'; // ^ ~
+                char underlineChar = '—'; // — ~
+                var str = new string(' ', index - lineStart + lineNumberWidth + 2) + firstChar + new string(underlineChar, end.end - index - 1);
+                Log(str, ConsoleColor.DarkRed);
             }
 
             // lines after current line
             {
+                var sb = new StringBuilder();
                 int lineBegin = lineEnd + 1;
-                for (int i = 0; i < LinesAfter; i++)
+                for (int i = 0; i < linesAfter; i++)
                 {
                     int line = end.line + i + 1;
                     lineEnd = GetLineEndIndex(text, lineBegin);
                     if (lineEnd >= text.Text.Length)
                         break;
-                    sb.Append($"{line,4}> ");
-                    sb.AppendLine(text.Text.Substring(lineBegin, lineEnd - lineBegin));
+                    var str = text.Text.Substring(lineBegin, lineEnd - lineBegin);
+                    Log(string.Format($"{{0,{lineNumberWidth}}}> {{1}}", line, str), ConsoleColor.White);
                     lineBegin = lineEnd + 1;
                 }
             }
-            LogErrorLine(sb.ToString(), ConsoleColor.White);
         }
 
         public void ReportCompilerError(string v)
         {
             mErrorCount++;
-            LogErrorLine(v);
+            Log(v, ConsoleColor.Red);
         }
 
         private int GetLineEndIndex(IText text, int currentIndex)

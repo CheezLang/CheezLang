@@ -3,6 +3,7 @@ using Cheez.SemanticAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Cheez
@@ -209,11 +210,11 @@ namespace Cheez
 
         //}
 
-        public void ReportError(ILocation location, string errorMessage)
+        public void ReportError(ILocation location, string errorMessage, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             HasErrors = true;
             var file = mFiles[location.Beginning.file];
-            mErrorHandler.ReportError(file, location, errorMessage);
+            mErrorHandler.ReportError(file, location, errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
         }
     }
 }
