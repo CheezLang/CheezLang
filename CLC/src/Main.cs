@@ -4,13 +4,27 @@ using Cheez;
 using Cheez.Visitor;
 using System.Diagnostics;
 using System.IO;
+using System;
+using System.Text;
 
 namespace CLC
 {
     class Prog
     {
-
         public static void Main(string[] args)
+        {
+            Console.OutputEncoding = Encoding.UTF8;
+            //try
+            //{
+                Run();
+            //}
+            //catch (Exception e)
+            //{
+            //    //Console.WriteLine(e.Message);
+            //}
+        }
+
+        public static void Run()
         {
             var stopwatch = Stopwatch.StartNew();
             // CompilationQueue queue = new CompilationQueue(2);
@@ -27,10 +41,10 @@ namespace CLC
             compiler.AddFile("examples/example_1.che", compiler.DefaultWorkspace);
             compiler.DefaultWorkspace.CompileAll();
 
-            if (compiler.DefaultWorkspace.HasErrors)
+            if (compiler.HasErrors)
                 return;
             //compiler.CompileAll();
-            
+
             var ourCompileTime = stopwatch.Elapsed;
             System.Console.WriteLine($"Our compile time  : {ourCompileTime}");
 
@@ -45,7 +59,7 @@ namespace CLC
             System.Console.WriteLine();
 
             stopwatch.Restart();
-            
+
             bool clangOk = GenerateAndCompileCode(compiler.DefaultWorkspace);
 
             var clangTime = stopwatch.Elapsed;
@@ -53,14 +67,14 @@ namespace CLC
             System.Console.WriteLine($"Compilation finished in {ourCompileTime + clangTime}.");
             System.Console.WriteLine($"Clang compile time: {clangTime}");
 
-            //if (clangOk)
-            //{
-            //    System.Console.WriteLine();
-            //    System.Console.WriteLine($"Running code:");
-            //    System.Console.WriteLine("=======================================");
-            //    var testProc = StartProcess(@"gen\test.exe", workingDirectory: "gen", stdout: (s, e) => System.Console.WriteLine(e.Data));
-            //    testProc.WaitForExit();
-            //}
+            if (clangOk)
+            {
+                System.Console.WriteLine();
+                System.Console.WriteLine($"Running code:");
+                System.Console.WriteLine("=======================================");
+                var testProc = StartProcess(@"gen\test.exe", workingDirectory: "gen", stdout: (s, e) => System.Console.WriteLine(e.Data));
+                testProc.WaitForExit();
+            }
         }
 
         private static bool GenerateAndCompileCode(Workspace workspace)

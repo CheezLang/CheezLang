@@ -1,54 +1,12 @@
-var a : i32
-var b = 10m
-var c = 9mps
-
-struct Vec3 {
-    x : i32
-    y : i32
-    z : i32
+fn add(a : i64, b : i64): i64 {
+    return (a * b) + (a / b)
 }
 
-impl Vec3 {
-    fn print_me() {
-        print "("
-        print(", ") self.x, self.y, self.z
-        print ")`n"
-    }
-
-    fn normalize() {
-        print "normalize`n"
-    }
-}
-
-fn malloc(size : i32) : i32*
-
-fn add(a : int, b : int) {
-    print a, " + ", b
-}
-
-fn test() {
-    print "was geht?"
-}
-
-fn main() : i32 {
-    var arr : i32* = malloc(4)
-    a = 2
-
-    print(" ") a, b, c, "`n"
-    print(" + ") 1, 2, 3
-    print " = 6`n"
-
-    if 1 {
-        print "hello "
-    }
-    
-    if 1 {
-        print "world"
-    } else {
-        print "you"
-    }
-
-    print "`n"
-
-    add(1, 2)
+fn Main() {
+    var a = 5
+    var b = add(1 + 2 * 3, (4 + 5) * 6)
+    var stringTest = "Hello world"
+    println stringTest
+    println b
+    println add(1 + 2 * 3, (4 + 5) * 6)
 }
