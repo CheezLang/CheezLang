@@ -139,14 +139,6 @@ namespace Cheez
             }
         }
 
-        void Login()
-        {
-            using (var client = new HttpClient())
-            {
-
-            }
-        }
-
         private void GatherDeclarations(Scope scope, IEnumerable<Statement> statements)
         {
             foreach (var s in statements)
