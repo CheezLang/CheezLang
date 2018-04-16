@@ -5,24 +5,31 @@ using System.Diagnostics;
 
 namespace Cheez.Ast
 {
-    public class FunctionParameter
+    public class FunctionParameter : IVariableDeclaration
     {
         public int Id { get; }
 
         public TypeExpression Type { get; set; }
         public string Name { get; set; }
 
-        public FunctionParameter(string name, TypeExpression type)
+        public TokenLocation Beginning { get; set; }
+        public TokenLocation End { get; set; }
+
+        public ILocation NameLocation => throw new System.NotImplementedException();
+
+        public FunctionParameter(TokenLocation beg, TokenLocation end, string name, TypeExpression type)
         {
+            Beginning = beg;
+            End = end;
             Id = Util.NewId;
             this.Name = name;
             this.Type = type;
         }
     }
 
-    public class FunctionDeclaration : Statement
+    public class FunctionDeclarationAst : Statement
     {
-        public string Name { get; }
+        public IdentifierExpression Name { get; }
         public List<FunctionParameter> Parameters { get; }
 
         public TypeExpression ReturnType { get; }
@@ -31,7 +38,7 @@ namespace Cheez.Ast
 
         public bool HasImplementation => Statements != null;
 
-        public FunctionDeclaration(TokenLocation beg, TokenLocation end, string name, List<FunctionParameter> parameters, TypeExpression returnType, List<Statement> statements = null)
+        public FunctionDeclarationAst(TokenLocation beg, TokenLocation end, IdentifierExpression name, List<FunctionParameter> parameters, TypeExpression returnType, List<Statement> statements = null)
             : base(beg, end)
         {
             this.Name = name;

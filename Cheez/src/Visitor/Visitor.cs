@@ -4,8 +4,8 @@ namespace Cheez.Visitor
 {
     public interface IVisitor<ReturnType, DataType>
     {
-        ReturnType VisitFunctionDeclaration(FunctionDeclaration function, DataType data = default);
-        ReturnType VisitVariableDeclaration(VariableDeclaration variable, DataType data = default);
+        ReturnType VisitFunctionDeclaration(FunctionDeclarationAst function, DataType data = default);
+        ReturnType VisitVariableDeclaration(VariableDeclarationAst variable, DataType data = default);
         ReturnType VisitConstantDeclaration(ConstantDeclaration constant, DataType data = default);
         ReturnType VisitTypeDeclaration(TypeDeclaration type, DataType data = default);
         ReturnType VisitAssignment(Assignment ass, DataType data = default);
@@ -28,8 +28,8 @@ namespace Cheez.Visitor
 
     public interface IVoidVisitor<DataType>
     {
-        void VisitFunctionDeclaration(FunctionDeclaration function, DataType data = default);
-        void VisitVariableDeclaration(VariableDeclaration variable, DataType data = default);
+        void VisitFunctionDeclaration(FunctionDeclarationAst function, DataType data = default);
+        void VisitVariableDeclaration(VariableDeclarationAst variable, DataType data = default);
         void VisitConstantDeclaration(ConstantDeclaration constant, DataType data = default);
         void VisitTypeDeclaration(TypeDeclaration type, DataType data = default);
         void VisitAssignment(Assignment ass, DataType data = default);
@@ -66,7 +66,7 @@ namespace Cheez.Visitor
 
         public virtual ReturnType VisitExpressionStatement(ExpressionStatement stmt, DataType data = default) => default; 
 
-        public virtual ReturnType VisitFunctionDeclaration(FunctionDeclaration function, DataType data = default) => default; 
+        public virtual ReturnType VisitFunctionDeclaration(FunctionDeclarationAst function, DataType data = default) => default; 
 
         public virtual ReturnType VisitIdentifierExpression(IdentifierExpression ident, DataType data = default) => default; 
 
@@ -86,7 +86,7 @@ namespace Cheez.Visitor
 
         public virtual ReturnType VisitTypeExpression(TypeExpression type, DataType data = default) => default;
 
-        public virtual ReturnType VisitVariableDeclaration(VariableDeclaration variable, DataType data = default) => default; 
+        public virtual ReturnType VisitVariableDeclaration(VariableDeclarationAst variable, DataType data = default) => default; 
     }
 
     public abstract class VisitorBase<DataType> : IVoidVisitor<DataType>
@@ -99,7 +99,7 @@ namespace Cheez.Visitor
 
         public virtual void VisitExpressionStatement(ExpressionStatement stmt, DataType data = default) {}
 
-        public virtual void VisitFunctionDeclaration(FunctionDeclaration function, DataType data = default) {}
+        public virtual void VisitFunctionDeclaration(FunctionDeclarationAst function, DataType data = default) {}
 
         public virtual void VisitIdentifierExpression(IdentifierExpression ident, DataType data = default) {}
 
@@ -113,7 +113,7 @@ namespace Cheez.Visitor
 
         public virtual void VisitTypeDeclaration(TypeDeclaration type, DataType data = default) {}
 
-        public virtual void VisitVariableDeclaration(VariableDeclaration variable, DataType data = default) {}
+        public virtual void VisitVariableDeclaration(VariableDeclarationAst variable, DataType data = default) {}
 
         public virtual void VisitImplBlock(ImplBlock impl, DataType data = default) { }
 

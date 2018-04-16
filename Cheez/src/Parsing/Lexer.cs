@@ -48,6 +48,7 @@ namespace Cheez.Parsing
         KwFor,
         KwWhile,
         KwPrint, // @Temporary
+        KwPrintln, // @Temporary
     }
 
     public class TokenLocation
@@ -284,6 +285,7 @@ namespace Cheez.Parsing
                 case "for": token.type = TokenType.KwFor; break;
                 case "while": token.type = TokenType.KwWhile; break;
                 case "print": token.type = TokenType.KwPrint; break; // @Temporary
+                case "println": token.type = TokenType.KwPrintln; break; // @Temporary
             }
         }
 

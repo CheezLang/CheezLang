@@ -10,9 +10,8 @@ namespace Cheez
         public string Name { get; }
         public string Text { get; }
 
-        public Scope ExportScope { get; } = new Scope();
-        private Scope mPrivateScope = new Scope();
-        public ScopeRef PrivateScope { get; }
+        public Scope ExportScope { get; }
+        public Scope PrivateScope { get; }
 
         public List<Statement> Statements { get; }
 
@@ -20,7 +19,8 @@ namespace Cheez
         {
             this.Name = name;
             this.Text = raw;
-            PrivateScope = new ScopeRef(mPrivateScope, ExportScope);
+            ExportScope = new Scope();
+            PrivateScope = new Scope(ExportScope);
             Statements = statements;
         }
     }
@@ -41,7 +41,17 @@ namespace Cheez
 
         public Workspace DefaultWorkspace => mMainWorkspace;
 
-        public bool HasErrors => mErrorHandler.HasErrors;
+        public bool HasErrors {
+            get
+            {
+                if (mErrorHandler.HasErrors)
+                    return true;
+                foreach (var w in mWorkspaces.Values)
+                    if (w.HasErrors)
+                        return true;
+                return false;
+            }
+        }
 
         public Compiler()
         {

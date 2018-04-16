@@ -143,7 +143,7 @@ namespace Cheez
 
         private int GetPriority(Statement statement)
         {
-            if (statement is FunctionDeclaration)
+            if (statement is FunctionDeclarationAst)
                 return 1;
 
             return 0;

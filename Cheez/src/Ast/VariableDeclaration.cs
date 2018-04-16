@@ -4,14 +4,21 @@ using Cheez.Visitor;
 
 namespace Cheez.Ast
 {
-    public class VariableDeclaration : Statement
+    public interface IVariableDeclaration
+    {
+        string Name { get; }
+        TypeExpression Type { get; }
+        ILocation NameLocation { get; }
+    }
+
+    public class VariableDeclarationAst : Statement, IVariableDeclaration
     {
         public string Name { get; set; }
         public TypeExpression Type { get; set; }
         public Expression Initializer { get; set; }
         public ILocation NameLocation { get; internal set; }
 
-        public VariableDeclaration(TokenLocation beg, TokenLocation end, TokenLocation nameLocation, string name, TypeExpression type = null, Expression init = null) : base(beg, end)
+        public VariableDeclarationAst(TokenLocation beg, TokenLocation end, TokenLocation nameLocation, string name, TypeExpression type = null, Expression init = null) : base(beg, end)
         {
             this.Name = name;
             this.Type = type;

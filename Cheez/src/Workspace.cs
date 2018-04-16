@@ -22,12 +22,12 @@ namespace Cheez
 
     public class Workspace
     {
-        public Scope GlobalScope { get; set; } = new Scope();
+        public Scope GlobalScope { get; } = new Scope();
 
         private Dictionary<string, CheezFile> mFiles = new Dictionary<string, CheezFile>();
-        private Dictionary<object, CType> mTypeMap = new Dictionary<object, CType>();
-        private Dictionary<object, IScope> mScopeMap = new Dictionary<object, IScope>();
-        private Dictionary<FunctionDeclaration, IScope> mFunctionScopeMap = new Dictionary<FunctionDeclaration, IScope>();
+        private Dictionary<object, CheezType> mTypeMap = new Dictionary<object, CheezType>();
+        private Dictionary<object, Scope> mScopeMap = new Dictionary<object, Scope>();
+        private Dictionary<FunctionDeclarationAst, Scope> mFunctionScopeMap = new Dictionary<FunctionDeclarationAst, Scope>();
         private Compiler mCompiler;
 
         private PriorityQueue<CompilationUnit> mCompilationQueue = new PriorityQueue<CompilationUnit>();
@@ -46,32 +46,33 @@ namespace Cheez
             mFiles[file.Name] = file;
         }
 
-        public void SetType(object o, CType type)
+        public void SetCheezType(object o, CheezType type)
         {
+            if (o == null)
+                return;
             mTypeMap[o] = type;
         }
 
-        public CType GetType(object o)
+        public CheezType GetCheezType(object o)
         {
-            // @Todo
-            //if (!mTypeMap.ContainsKey(o))
-            //    return null;
+            if (!mTypeMap.ContainsKey(o))
+                return null;
             return mTypeMap[o];
         }
 
-        public void SetScope(object o, IScope scope)
+        public void SetScope(object o, Scope scope)
         {
             mScopeMap[o] = scope;
         }
 
-        public IScope GetScope(object o)
+        public Scope GetScope(object o)
         {
             if (!mScopeMap.ContainsKey(o))
                 return null;
             return mScopeMap[o];
         }
 
-        public IScope GetFunctionScope(FunctionDeclaration o)
+        public Scope GetFunctionScope(FunctionDeclarationAst o)
         {
             if (!mFunctionScopeMap.ContainsKey(o))
                 return null;
@@ -89,22 +90,52 @@ namespace Cheez
             // define types
 
             // define functions
-            foreach (var f in GlobalScope.FunctionDeclarations)
+            foreach (var function in GlobalScope.FunctionDeclarations)
             {
+                if (!GlobalScope.DefineFunction(function))
+                {
+                    ReportError(function.Name, $"A function called '{function.Name}' already exists in current scope");
+                }
 
+                // check return type
+                {
+                    var returnType = CheezType.Void;
+                    if (function.ReturnType != null)
+                    {
+                        returnType = GlobalScope.GetCheezType(function.ReturnType);
+                        if (returnType == null)
+                        {
+                            ReportError(function.ReturnType, $"Unknown type '{function.ReturnType}' in function return type");
+                        }
+                    }
+                    SetCheezType(function.ReturnType, returnType);
+                }
+
+                // check parameter types
+                {
+                    foreach (var p in function.Parameters)
+                    {
+                        var type = GlobalScope.GetCheezType(p.Type);
+                        if (type == null)
+                        {
+                            ReportError(p.Type, $"Unknown type '{p.Type}' in function parameter list");
+                        }
+                        SetCheezType(p, type);
+                    }
+                }
             }
 
             TypeChecker typeChecker = new TypeChecker(this);
             // define global variables
             foreach (var v in GlobalScope.VariableDeclarations)
             {
-                typeChecker.CheckTypes(v);
+                typeChecker.CheckTypes(v, GlobalScope);
             }
 
             // compile functions
             foreach (var s in GlobalScope.FunctionDeclarations)
             {
-                typeChecker.CheckTypes(s);
+                typeChecker.CheckTypes(s, GlobalScope);
             }
         }
 
@@ -116,23 +147,15 @@ namespace Cheez
             }
         }
 
-        private void GatherDeclarations(IScope scope, IEnumerable<Statement> statements)
+        private void GatherDeclarations(Scope scope, IEnumerable<Statement> statements)
         {
             foreach (var s in statements)
             {
                 switch (s)
                 {
-                    case FunctionDeclaration f:
+                    case FunctionDeclarationAst f:
                         scope.FunctionDeclarations.Add(f);
                         SetScope(f, scope);
-                        {
-                            var funcScope = new Scope();
-                            var funcScopeRef = new ScopeRef(funcScope, scope);
-                            mFunctionScopeMap[f] = funcScopeRef;
-
-                            if (f.HasImplementation)
-                                GatherDeclarations(funcScopeRef, f.Statements);
-                        }
                         break;
 
                     case TypeDeclaration t:
@@ -141,7 +164,7 @@ namespace Cheez
                         break;
 
 
-                    case VariableDeclaration v:
+                    case VariableDeclarationAst v:
                         scope.VariableDeclarations.Add(v);
                         SetScope(v, scope);
                         break;

@@ -80,9 +80,9 @@ using string = const char*;
             return sb.ToString();
         }
 
-        private string GetDecoratedName(FunctionDeclaration func)
+        private string GetDecoratedName(FunctionDeclarationAst func)
         {
-            return func.Name;
+            return func.Name.Name;
         }
 
         public string CreateMainFunction(string entryPoint)
@@ -97,7 +97,7 @@ using string = const char*;
             return sb.ToString();
         }
 
-        public override string VisitFunctionDeclaration(FunctionDeclaration function, int indent = 0)
+        public override string VisitFunctionDeclaration(FunctionDeclarationAst function, int indent = 0)
         {
             var sb = new StringBuilder();
 
@@ -165,6 +165,11 @@ using string = const char*;
                 isFirst = false;
             }
 
+            if (print.NewLine)
+            {
+                sb.Append(" << '\\n'");
+            }
+
             sb.Append(";");
 
             return Indent(sb.ToString(), indent);
@@ -180,12 +185,10 @@ using string = const char*;
             return ident.Name;
         }
 
-        public override string VisitVariableDeclaration(VariableDeclaration variable, int indent = 0)
+        public override string VisitVariableDeclaration(VariableDeclarationAst variable, int indent = 0)
         {
             var sb = new StringBuilder();
-            string type = GetTypeName(workspace.GetType(variable));
-            if (type == "string")
-                type = "std::string";
+            string type = GetTypeName(workspace.GetCheezType(variable));
             sb.Append($"{type} {variable.Name}");
 
             //if (variable.Type is ArrayTypeExpression)
@@ -351,7 +354,7 @@ using string = const char*;
             return $"{call.Function.Accept(this)}({args})";
         }
 
-        private string GetTypeName(CType type)
+        private string GetTypeName(CheezType type)
         {
             switch (type)
             {
@@ -363,6 +366,9 @@ using string = const char*;
 
                 case ArrayType a:
                     return GetTypeName(a.TargetType)+ "*";
+
+                case StringType s:
+                    return "string";
 
                 default:
                     return "void";

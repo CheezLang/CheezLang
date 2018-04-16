@@ -9,9 +9,11 @@ namespace Cheez.Ast
     {
         public List<Expression> Expressions { get; }
         public Expression Seperator { get; }
+        public bool NewLine { get; set; }
 
-        public PrintStatement(TokenLocation beg, TokenLocation end, List<Expression> expr, Expression seperator = null) : base(beg, end)
+        public PrintStatement(TokenLocation beg, TokenLocation end, List<Expression> expr, Expression seperator = null, bool NewLine = true) : base(beg, end)
         {
+            this.NewLine = NewLine;
             this.Expressions = expr;
             this.Seperator = seperator;
         }

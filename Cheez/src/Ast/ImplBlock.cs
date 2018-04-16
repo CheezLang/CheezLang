@@ -9,9 +9,9 @@ namespace Cheez.Ast
         public string Target { get; set; }
         public string Trait { get; set; }
 
-        public List<FunctionDeclaration> Functions { get; }
+        public List<FunctionDeclarationAst> Functions { get; }
 
-        public ImplBlock(TokenLocation beg, TokenLocation end, string target, List<FunctionDeclaration> functions) : base(beg, end)
+        public ImplBlock(TokenLocation beg, TokenLocation end, string target, List<FunctionDeclarationAst> functions) : base(beg, end)
         {
             this.Target = target;
             this.Functions = functions;

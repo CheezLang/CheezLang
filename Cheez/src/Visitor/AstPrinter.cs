@@ -6,7 +6,7 @@ namespace Cheez.Visitor
 {
     public class AstPrinter : VisitorBase<string, int>
     {
-        public override string VisitFunctionDeclaration(FunctionDeclaration function, int indentLevel = 0)
+        public override string VisitFunctionDeclaration(FunctionDeclarationAst function, int indentLevel = 0)
         {
             var statements = function.Statements.Select(s => s.Accept(this));
             var statementsStr = string.Join("\n", statements);
@@ -31,7 +31,7 @@ namespace Cheez.Visitor
             return $"\"{str.Value.Replace("`", "``").Replace("\r", "").Replace("\n", "`n").Replace("\"", "`\"")}\"";
         }
 
-        public override string VisitVariableDeclaration(VariableDeclaration variable, int indentLevel = 0)
+        public override string VisitVariableDeclaration(VariableDeclarationAst variable, int indentLevel = 0)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("var ").Append(variable.Name);

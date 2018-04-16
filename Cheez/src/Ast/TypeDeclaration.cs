@@ -9,7 +9,7 @@ namespace Cheez.Ast
     {
         public string Name { get; }
         public TypeExpression Type { get; }
-        public CType CType { get; set; }
+        public CheezType CType { get; set; }
 
         public MemberDeclaration(string name, TypeExpression type)
         {

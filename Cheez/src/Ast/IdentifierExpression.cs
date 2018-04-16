@@ -25,5 +25,10 @@ namespace Cheez.Ast
         {
             visitor.VisitIdentifierExpression(this, data);
         }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

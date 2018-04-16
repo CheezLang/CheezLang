@@ -98,6 +98,21 @@ namespace Cheez.Parsing
             }
         }
 
+        private Token ReadToken(bool SkipNewLines)
+        {
+            while (true)
+            {
+                var tok = mLexer.NextToken();
+
+                if (SkipNewLines && tok.type == TokenType.NewLine)
+                {
+                    continue;
+                }
+
+                return tok;
+            }
+        }
+
         public Statement ParseStatement()
         {
             try
@@ -113,6 +128,7 @@ namespace Cheez.Parsing
                     case TokenType.KwVar:
                         return ParseVariableDeclaration();
                     case TokenType.KwPrint:
+                    case TokenType.KwPrintln:
                         return ParsePrintStatement();
                     case TokenType.KwIf:
                         return ParseIfStatement();
@@ -193,7 +209,7 @@ namespace Cheez.Parsing
 
         private ImplBlock ParseImplBlock()
         {
-            var functions = new List<FunctionDeclaration>();
+            var functions = new List<FunctionDeclarationAst>();
             var beginnig = Expect(TokenType.KwImpl, skipNewLines: true);
             var target = Expect(TokenType.Identifier, skipNewLines: true);
 
@@ -231,7 +247,7 @@ namespace Cheez.Parsing
             return new ExpressionStatement(expr.Beginning, expr.End, expr);
         }
 
-        private VariableDeclaration ParseVariableDeclaration()
+        private VariableDeclarationAst ParseVariableDeclaration()
         {
             var beginning = Expect(TokenType.KwVar, skipNewLines: true);
             var name = Expect(TokenType.Identifier, skipNewLines: true);
@@ -261,6 +277,7 @@ namespace Cheez.Parsing
 
                 case TokenType.Equal:
                     mLexer.NextToken();
+                    SkipNewlines();
                     init = ParseExpression();
                     next = mLexer.PeekToken();
                     end = init.End;
@@ -284,7 +301,7 @@ namespace Cheez.Parsing
 
             mLexer.NextToken();
 
-            return new VariableDeclaration(beginning.location, end, name.location, (string)name.data, type, init);
+            return new VariableDeclarationAst(beginning.location, end, name.location, (string)name.data, type, init);
         }
 
         private IfStatement ParseIfStatement()
@@ -316,7 +333,11 @@ namespace Cheez.Parsing
             List<Expression> expr = new List<Expression>();
             Expression seperator = null;
 
-            var beginning = Expect(TokenType.KwPrint, skipNewLines: true);
+            var beginning = ReadToken(true);
+            if (beginning.type != TokenType.KwPrint && beginning.type != TokenType.KwPrintln)
+            {
+                throw new ParsingError(beginning.location, "[ERROR]");
+            }
 
             var next = PeekToken(skipNewLines: true);
             if (next.type == TokenType.OpenParen)
@@ -331,7 +352,7 @@ namespace Cheez.Parsing
                 expr.Add(ParseExpression());
             } while (ConsumeOptionalToken(TokenType.Comma, skipNewLines: false) != null);
 
-            return new PrintStatement(beginning.location, expr.Last().End, expr, seperator);
+            return new PrintStatement(beginning.location, expr.Last().End, expr, seperator, beginning.type == TokenType.KwPrintln);
         }
 
         private void SkipNewlines()
@@ -487,7 +508,8 @@ namespace Cheez.Parsing
                 case TokenType.OpenParen:
                     SkipNewlines();
                     var sub = ParseExpression();
-                    Expect(TokenType.ClosingParen, skipNewLines: true, customErrorMessage: (t, d) => $"Expected open paren '(' at end of group expression, got ({t}) {d}");
+                    sub.Beginning = token.location;
+                    sub.End = Expect(TokenType.ClosingParen, skipNewLines: true, customErrorMessage: (t, d) => $"Expected open paren '(' at end of group expression, got ({t}) {d}").location;
                     return sub;
 
                 default:
@@ -496,11 +518,12 @@ namespace Cheez.Parsing
         }
         #endregion
 
-        private FunctionDeclaration ParseFunctionDeclaration()
+        private FunctionDeclarationAst ParseFunctionDeclaration()
         {
             var beginning = Expect(TokenType.KwFn, skipNewLines: true);
 
             var name = Expect(TokenType.Identifier, skipNewLines: true, customErrorMessage: (t, d) => $"Expected identifier at beginnig of function declaration, got ({t}) {d}");
+            var nameId = new IdentifierExpression(name.location, name.location, (string)name.data);
             List<Statement> statements = new List<Statement>();
             List<FunctionParameter> parameters = new List<FunctionParameter>();
             TypeExpression returnType = null;
@@ -513,7 +536,7 @@ namespace Cheez.Parsing
                 var pname = Expect(TokenType.Identifier, true);
                 Expect(TokenType.Colon, true);
                 var tname = ParseTypeExpression();
-                parameters.Add(new FunctionParameter((string)pname.data, tname));
+                parameters.Add(new FunctionParameter(pname.location, tname.End, (string)pname.data, tname));
 
                 var next = PeekToken(true);
                 if (next.type == TokenType.Comma)
@@ -536,7 +559,7 @@ namespace Cheez.Parsing
             if (PeekToken(false).type == TokenType.NewLine)
             {
                 mLexer.NextToken();
-                return new FunctionDeclaration(beginning.location, end, (string)name.data, parameters, returnType);
+                return new FunctionDeclarationAst(beginning.location, end, nameId, parameters, returnType);
             }
 
             // implementation
@@ -548,12 +571,14 @@ namespace Cheez.Parsing
                 if (token.type == TokenType.ClosingBrace)
                     break;
 
-                statements.Add(ParseStatement());
+                var stmt = ParseStatement();
+                if (stmt != null)
+                    statements.Add(stmt);
             }
 
             end = Expect(TokenType.ClosingBrace, skipNewLines: true).location;
 
-            return new FunctionDeclaration(beginning.location, end, (string)name.data, parameters, returnType, statements);
+            return new FunctionDeclarationAst(beginning.location, end, nameId, parameters, returnType, statements);
         }
     }
 }

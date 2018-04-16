@@ -5,7 +5,7 @@ namespace Cheez
 {
     public class CTypeFactory
     {
-        private Dictionary<string, CType> sTypes = new Dictionary<string, CType>();
+        private Dictionary<string, CheezType> sTypes = new Dictionary<string, CheezType>();
 
         public CTypeFactory()
         {
@@ -23,7 +23,7 @@ namespace Cheez
             //CreateAlias("bool", BoolType.Instance);
         }
 
-        public CType GetCType(TypeExpression expr)
+        public CheezType GetCType(TypeExpression expr)
         {
             switch (expr)
             {
@@ -46,23 +46,24 @@ namespace Cheez
             }
         }
 
-        public void CreateAlias(string name, CType type)
+        public void CreateAlias(string name, CheezType type)
         {
             sTypes[name] = type;
         }
     }
 
-    public class CType
+    public class CheezType
     {
-        public static VoidType Void => VoidType.Intance;
+        public static CheezType Void => VoidType.Intance;
+        public static CheezType String => StringType.Instance;
     }
 
-    public class VoidType : CType
+    public class VoidType : CheezType
     {
         public static VoidType Intance { get; } = new VoidType();
     }
 
-    public class IntType : CType
+    public class IntType : CheezType
     {
         private static Dictionary<(int, bool), IntType> sTypes = new Dictionary<(int, bool), IntType>();
         public static IntType LiteralType = new IntType { Signed = false, SizeInBytes = 0 };
@@ -96,7 +97,7 @@ namespace Cheez
         }
     }
 
-    public class FloatType : CType
+    public class FloatType : CheezType
     {
         private static Dictionary<int, FloatType> sTypes = new Dictionary<int, FloatType>();
 
@@ -124,14 +125,17 @@ namespace Cheez
         }
     }
 
-    public class PointerType : CType
+    public class PointerType : CheezType
     {
-        private static Dictionary<CType, PointerType> sTypes = new Dictionary<CType, PointerType>();
+        private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
 
-        public CType TargetType { get; set; }
+        public CheezType TargetType { get; set; }
 
-        public static PointerType GetPointerType(CType targetType)
+        public static PointerType GetPointerType(CheezType targetType)
         {
+            if (targetType == null)
+                return null;
+
             if (sTypes.ContainsKey(targetType))
             {
                 return sTypes[targetType];
@@ -152,14 +156,17 @@ namespace Cheez
         }
     }
 
-    public class ArrayType : CType
+    public class ArrayType : CheezType
     {
-        private static Dictionary<CType, ArrayType> sTypes = new Dictionary<CType, ArrayType>();
+        private static Dictionary<CheezType, ArrayType> sTypes = new Dictionary<CheezType, ArrayType>();
 
-        public CType TargetType { get; set; }
+        public CheezType TargetType { get; set; }
 
-        public static ArrayType GetArrayType(CType targetType)
+        public static ArrayType GetArrayType(CheezType targetType)
         {
+            if (targetType == null)
+                return null;
+
             if (sTypes.ContainsKey(targetType))
             {
                 return sTypes[targetType];
@@ -180,7 +187,7 @@ namespace Cheez
         }
     }
 
-    public class StringType : CType
+    public class StringType : CheezType
     {
         public static StringType Instance = new StringType();
 
@@ -190,7 +197,7 @@ namespace Cheez
         }
     }
 
-    public class StructType : CType
+    public class StructType : CheezType
     {
         public TypeDeclaration Declaration { get; set; }
 

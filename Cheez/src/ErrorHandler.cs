@@ -43,8 +43,9 @@ namespace Cheez
         {
             mErrorCount++;
 
-            const int linesBefore = 1;
-            const int linesAfter = 1;
+            const int linesBefore = 0;
+            const int linesAfter = 0;
+
 
             TokenLocation beginning = location.Beginning;
             TokenLocation end = location.End;
@@ -52,8 +53,9 @@ namespace Cheez
             int lineNumber = beginning.line;
             int lineStart = GetLineStartIndex(text, index);
             int lineEnd = GetLineEndIndex(text, index);
-            
-            var errorLineBackgroundColor = ConsoleColor.Black;
+            bool multiLine = beginning.line != end.line;
+
+                var errorLineBackgroundColor = ConsoleColor.Black;
             int lineNumberWidth = (end.line + linesAfter).ToString().Length;
 
             if (true)
@@ -86,17 +88,24 @@ namespace Cheez
 
             // line containing error (may be multiple lines)
             {
-                var part1 = text.Text.Substring(lineStart, index - lineStart);
-                var part2 = text.Text.Substring(index, end.end - index);
-                var part3 = text.Text.Substring(end.end, lineEnd - end.end);
-                LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", lineNumber), ConsoleColor.White);
-                LogInline(part1, ConsoleColor.White, errorLineBackgroundColor);
-                LogInline(part2, ConsoleColor.Red, errorLineBackgroundColor);
-                Log(part3, ConsoleColor.White, errorLineBackgroundColor);
+                if (!multiLine)
+                {
+                    var part1 = text.Text.Substring(lineStart, index - lineStart);
+                    var part2 = text.Text.Substring(index, end.end - index);
+                    var part3 = text.Text.Substring(end.end, lineEnd - end.end);
+                    LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", lineNumber), ConsoleColor.White);
+                    LogInline(part1, ConsoleColor.White, errorLineBackgroundColor);
+                    LogInline(part2, ConsoleColor.Red, errorLineBackgroundColor);
+                    Log(part3, ConsoleColor.White, errorLineBackgroundColor);
+                }
+                else
+                {
+                    Log(text.Text.Substring(lineStart, GetLineEndIndex(text, end.index) - lineStart), ConsoleColor.White);
+                }
             }
 
             // underline
-            {
+            if (!multiLine) {
                 char firstChar = '^'; // ^ ~
                 char underlineChar = '—'; // — ~
                 var str = new string(' ', index - lineStart + lineNumberWidth + 2) + firstChar + new string(underlineChar, end.end - index - 1);

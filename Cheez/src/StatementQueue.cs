@@ -32,7 +32,7 @@ namespace Cheez
         {
             switch (statement)
             {
-                case FunctionDeclaration fd:
+                case FunctionDeclarationAst fd:
                     Insert(1, statement);
                     break;
             }
