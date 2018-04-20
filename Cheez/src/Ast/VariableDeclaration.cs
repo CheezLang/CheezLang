@@ -4,14 +4,25 @@ using Cheez.Visitor;
 
 namespace Cheez.Ast
 {
-    public interface IVariableDeclaration
+    public interface IVariableDeclaration : INamed
     {
-        string Name { get; }
         TypeExpression Type { get; }
         ILocation NameLocation { get; }
     }
+    
+    public enum VariableType
+    {
+        Local,
+        Parameter,
+        Global
+    }
 
-    public class VariableDeclarationAst : Statement, IVariableDeclaration
+    public class VariableData
+    {
+        public VariableType type;
+    }
+
+    public class VariableDeclarationAst : Statement, IVariableDeclaration, INamed
     {
         public string Name { get; set; }
         public TypeExpression Type { get; set; }
@@ -36,6 +47,11 @@ namespace Cheez.Ast
         public override void Accept<D>(IVoidVisitor<D> visitor, D data = default(D))
         {
             visitor.VisitVariableDeclaration(this, data);
+        }
+
+        public override string ToString()
+        {
+            return $"var {Name}";
         }
     }
 }

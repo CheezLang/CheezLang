@@ -2,6 +2,12 @@
 
 namespace Cheez.Visitor
 {
+    public interface IVisitorAcceptor
+    {
+        T Accept<T, D>(IVisitor<T, D> visitor, D data = default);
+        void Accept<D>(IVoidVisitor<D> visitor, D data = default);
+    }
+
     public interface IVisitor<ReturnType, DataType>
     {
         ReturnType VisitFunctionDeclaration(FunctionDeclarationAst function, DataType data = default);

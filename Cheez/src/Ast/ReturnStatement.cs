@@ -1,5 +1,6 @@
 ﻿using Cheez.Parsing;
 using Cheez.Visitor;
+using System.Diagnostics;
 
 namespace Cheez.Ast
 {
@@ -12,11 +13,13 @@ namespace Cheez.Ast
             ReturnValue = value;
         }
 
+        [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return visitor.VisitReturnStatement(this, data);
         }
 
+        [DebuggerStepThrough]
         public override void Accept<D>(IVoidVisitor<D> visitor, D data = default)
         {
             visitor.VisitReturnStatement(this, data);

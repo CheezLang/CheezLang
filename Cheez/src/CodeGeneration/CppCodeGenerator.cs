@@ -1,14 +1,18 @@
 ﻿using Cheez.Ast;
 using Cheez.Visitor;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
 namespace Cheez.CodeGeneration
 {
-    public class CppCodeGenerator : VisitorBase<string, int>
+    public struct CppCodeGeneratorArgs
+    {
+        public int indent;
+        public Scope scope;
+    }
+
+    public class CppCodeGenerator : VisitorBase<string, CppCodeGeneratorArgs>
     {
         private StringBuilder mFunctionForwardDeclarations = new StringBuilder();
         private StringBuilder mTypeDeclarations = new StringBuilder();
@@ -17,9 +21,12 @@ namespace Cheez.CodeGeneration
         private bool mEmitFunctionBody = false;
         private Workspace workspace;
 
+        private UniqueNameDecorator nameDecorator = new UniqueNameDecorator();
+
         public string GenerateCode(Workspace ws)
         {
             workspace = ws;
+            nameDecorator.SetCurrentScope(ws.GlobalScope);
 
             var sb = new StringBuilder();
             sb.AppendLine("#include <string>");
@@ -47,21 +54,21 @@ using string = const char*;
             sb.AppendLine("// type declarations");
             foreach (var td in workspace.GlobalScope.TypeDeclarations)
             {
-                sb.AppendLine(td.Accept(this));
+                sb.AppendLine(GenerateCode(td, workspace.GlobalScope));
             }
             sb.AppendLine();
 
             sb.AppendLine("// forward declarations");
             foreach (var func in workspace.GlobalScope.FunctionDeclarations)
             {
-                sb.AppendLine(func.Accept(this));
+                sb.AppendLine(GenerateCode(func, workspace.GlobalScope));
             }
             sb.AppendLine();
             
             sb.AppendLine("// global variables");
-            foreach (var func in workspace.GlobalScope.VariableDeclarations)
+            foreach (var varia in workspace.GlobalScope.VariableDeclarations)
             {
-                sb.AppendLine(func.Accept(this));
+                sb.AppendLine(GenerateCode(varia, workspace.GlobalScope));
             }
             sb.AppendLine();
 
@@ -70,7 +77,7 @@ using string = const char*;
             foreach (var func in workspace.GlobalScope.FunctionDeclarations)
             {
                 if (func.HasImplementation)
-                    sb.AppendLine(func.Accept(this));
+                    sb.AppendLine(GenerateCode(func, workspace.GlobalScope));
             }
             sb.AppendLine();
 
@@ -82,7 +89,7 @@ using string = const char*;
 
         private string GetDecoratedName(FunctionDeclarationAst func)
         {
-            return func.Name.Name;
+            return func.NameExpr.Name;
         }
 
         public string CreateMainFunction(string entryPoint)
@@ -97,15 +104,48 @@ using string = const char*;
             return sb.ToString();
         }
 
-        public override string VisitFunctionDeclaration(FunctionDeclarationAst function, int indent = 0)
+        private void AddImplTargetParam(string target, StringBuilder sb)
         {
-            var sb = new StringBuilder();
+            sb.Append(target).Append(" self");
+        }
 
+        private string GenerateCode(Statement s, Scope scope, int indent = 0)
+        {
+            if (s == null)
+                return null;
+            var ss = workspace.GetScope(s) ?? scope;
+            return s.Accept(this, new CppCodeGeneratorArgs
+            {
+                indent = indent,
+                scope = ss
+            });
+        }
+
+        private string GenerateCode(Expression s, Scope scope, int indent = 0)
+        {
+            if (s == null)
+                return null;
+            var ss = workspace.GetScope(s) ?? scope;
+            return s.Accept(this, new CppCodeGeneratorArgs
+            {
+                indent = indent,
+                scope = ss
+            });
+        }
+
+        public override string VisitFunctionDeclaration(FunctionDeclarationAst function, CppCodeGeneratorArgs data)
+        {
+            var prevScope = nameDecorator.GetCurrentScope();
+            var decoratedName = nameDecorator.GetDecoratedName(function);
+            nameDecorator.SetCurrentScope(function);
+
+            var sb = new StringBuilder();
+            
             string returnType = function.ReturnType?.Accept(this) ?? "void";
 
             string funcName = GetDecoratedName(function);
             
-            sb.Append($"{returnType} {funcName}(");
+            sb.Append($"{returnType} {decoratedName}(");
 
             if (mImplTarget != null)
             {
@@ -117,7 +157,7 @@ using string = const char*;
             {
                 if (!first)
                     sb.Append(", ");
-                sb.Append($"{p.Type} {p.Name}");
+                sb.Append($"{p.Type} {nameDecorator.GetDecoratedName(p)}");
 
                 first = false;
             }
@@ -129,7 +169,7 @@ using string = const char*;
                 sb.AppendLine(" {");
                 foreach (var s in function.Statements)
                 {
-                    sb.AppendLine(Indent(s.Accept(this), 4));
+                    sb.AppendLine(Indent(GenerateCode(s, null), 4));
                 }
                 sb.Append("}");
             }
@@ -138,29 +178,26 @@ using string = const char*;
                 sb.Append(";");
             }
 
-            return Indent(sb.ToString(), indent);
+            nameDecorator.SetCurrentScope(prevScope);
+            return Indent(sb.ToString(), data.indent);
         }
 
-        private void AddImplTargetParam(string target, StringBuilder sb)
-        {
-            sb.Append(target).Append(" self");
-        }
-
-        public override string VisitPrintStatement(PrintStatement print, int indent = 0)
+        public override string VisitPrintStatement(PrintStatement print, CppCodeGeneratorArgs data)
         {
             var sb = new StringBuilder();
             sb.Append("std::cout");
 
             bool isFirst = true;
             var sepSb = new StringBuilder();
-            sepSb.Append(print.Seperator?.Accept(this) ?? "");
+            
+            sepSb.Append(GenerateCode(print.Seperator, data.scope) ?? "");
             var sep = sepSb.ToString();
             foreach (var e in print.Expressions)
             {
                 if (!isFirst && print.Seperator != null)
                     sb.Append(" << ").Append(sep);
                 sb.Append(" << ");
-                sb.Append(e.Accept(this));
+                sb.Append(GenerateCode(e, data.scope));
 
                 isFirst = false;
             }
@@ -172,50 +209,67 @@ using string = const char*;
 
             sb.Append(";");
 
-            return Indent(sb.ToString(), indent);
+            return Indent(sb.ToString(), data.indent);
         }
 
-        public override string VisitExpressionStatement(ExpressionStatement stmt, int data = 0)
+        public override string VisitExpressionStatement(ExpressionStatement stmt, CppCodeGeneratorArgs data)
         {
-            return $"{stmt.Expr.Accept(this)};";
+            return $"{GenerateCode(stmt.Expr, data.scope)};";
         }
 
-        public override string VisitIdentifierExpression(IdentifierExpression ident, int indent = 0)
+        public override string VisitIdentifierExpression(IdentifierExpression ident, CppCodeGeneratorArgs data)
         {
-            return ident.Name;
+            var v = data.scope.GetVariable(ident.Name);
+            return nameDecorator.GetDecoratedName(v.Value.ast);
         }
 
-        public override string VisitVariableDeclaration(VariableDeclarationAst variable, int indent = 0)
+        public override string VisitVariableDeclaration(VariableDeclarationAst variable, CppCodeGeneratorArgs data)
         {
+            var decoratedName = nameDecorator.GetDecoratedName(variable);
             var sb = new StringBuilder();
             string type = GetTypeName(workspace.GetCheezType(variable));
-            sb.Append($"{type} {variable.Name}");
+            sb.Append($"{type} {decoratedName}");
 
             //if (variable.Type is ArrayTypeExpression)
             //    sb.Append("[]");
 
             if (variable.Initializer != null)
             {
+                var initializerScope = workspace.GetScope(variable.Initializer);
                 sb.Append($" = ");
-                sb.Append(variable.Initializer.Accept(this));
+                sb.Append(GenerateCode(variable.Initializer, initializerScope));
             }
             sb.Append(";");
 
-            return Indent(sb.ToString(), indent);
+            return Indent(sb.ToString(), data.indent);
+        }
+
+        public override string VisitTypeDeclaration(TypeDeclaration type, CppCodeGeneratorArgs data)
+        {
+            var sb = new StringBuilder();
+
+            sb.Append("struct ").Append(type.Name).AppendLine(" {");
+            foreach (var m in type.Members)
+            {
+                sb.Append(Indent(m.Type.Accept(this), 4)).Append(" ").Append(m.Name).AppendLine(";");
+            }
+            sb.Append("};");
+
+            return Indent(sb.ToString(), data.indent);
         }
 
         #region literals
-        public override string VisitStringLiteral(StringLiteral str, int sb)
+        public override string VisitStringLiteral(StringLiteral str, CppCodeGeneratorArgs data)
         {
             return $"\"{str.Value.Replace("\r", "").Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
         }
         
-        public override string VisitAssignment(Assignment ass, int indent = 0)
+        public override string VisitAssignment(Assignment ass, CppCodeGeneratorArgs data)
         {
-            return Indent(ass.Target.Accept(this) + " = " + ass.Value.Accept(this) + ";", indent);
+            return Indent(ass.Target.Accept(this) + " = " + ass.Value.Accept(this) + ";", data.indent);
         }
         
-        public override string VisitNumberExpression(NumberExpression num, int indent = 0)
+        public override string VisitNumberExpression(NumberExpression num, CppCodeGeneratorArgs data)
         {
             switch (num.Data.Type)
             {
@@ -226,7 +280,7 @@ using string = const char*;
             return null;
         }
 
-        public override string VisitIfStatement(IfStatement ifs, int indent = 0)
+        public override string VisitIfStatement(IfStatement ifs, CppCodeGeneratorArgs data)
         {
             var sb = new StringBuilder();
             sb.Append("if (");
@@ -239,50 +293,23 @@ using string = const char*;
                 sb.Append(ifs.ElseCase.Accept(this));
             }
 
-            return Indent(sb.ToString(), indent);
+            return Indent(sb.ToString(), data.indent);
         }
 
-        public override string VisitBlockStatement(BlockStatement block, int indent = 0)
+        public override string VisitBlockStatement(BlockStatement block, CppCodeGeneratorArgs data)
         {
             var sb = new StringBuilder();
             sb.AppendLine("{");
             foreach (var s in block.Statements)
             {
-                sb.AppendLine(Indent(s.Accept(this), 4));
+                sb.AppendLine(Indent(GenerateCode(s, null), 4));
             }
             sb.Append("}");
-            return Indent(sb.ToString(), indent);
+            return Indent(sb.ToString(), data.indent);
         }
         #endregion
-
-        public static string Indent(string s, int level)
-        {
-            if (level == 0)
-                return s;
-            return string.Join("\n", s.Split('\n').Select(line => $"{new string(' ', level)}{line}"));
-        }
-        public static string Indent(int level)
-        {
-            if (level == 0)
-                return "";
-            return new string(' ', level);
-        }
-
-        public override string VisitTypeDeclaration(TypeDeclaration type, int indent = 0)
-        {
-            var sb = new StringBuilder();
-
-            sb.Append("struct ").Append(type.Name).AppendLine(" {");
-            foreach (var m in type.Members)
-            {
-                sb.Append(Indent(m.Type.Accept(this), 4)).Append(" ").Append(m.Name).AppendLine(";");
-            }
-            sb.Append("};");
-
-            return Indent(sb.ToString(), indent);
-        }
-
-        public override string VisitImplBlock(ImplBlock impl, int indent = 0)
+        
+        public override string VisitImplBlock(ImplBlock impl, CppCodeGeneratorArgs data)
         {
             Debug.Assert(mImplTarget == null);
             mImplTarget = impl.Target;
@@ -293,12 +320,12 @@ using string = const char*;
                 sb.Append("namespace ").Append(impl.Target).AppendLine("_impl {");
                 foreach (var f in impl.Functions)
                 {
-                    sb.AppendLine(f.Accept(this, 4));
+                    sb.AppendLine(GenerateCode(f, data.scope, 4));
                 }
                 sb.Append("}");
                 mFunctionForwardDeclarations.AppendLine("}");
 
-                return Indent(sb.ToString(), indent);
+                return Indent(sb.ToString(), data.indent);
             }
             finally
             {
@@ -306,17 +333,17 @@ using string = const char*;
             }
         }
 
-        public override string VisitReturnStatement(ReturnStatement ret, int data = 0)
+        public override string VisitReturnStatement(ReturnStatement ret, CppCodeGeneratorArgs data)
         {
             if (ret.ReturnValue != null)
-                return $"return {ret.ReturnValue.Accept(this)};";
+                return $"return {GenerateCode(ret.ReturnValue, data.scope)};";
             return "return;";
         }
 
-        public override string VisitBinaryExpression(BinaryExpression bin, int data = 0)
+        public override string VisitBinaryExpression(BinaryExpression bin, CppCodeGeneratorArgs data)
         {
-            var lhs = bin.Left.Accept(this);
-            var rhs = bin.Right.Accept(this);
+            var lhs = GenerateCode(bin.Left, data.scope);
+            var rhs = GenerateCode(bin.Right, data.scope);
 
             {
                 if (bin.Left is BinaryExpression b && b.Operator.GetPrecedence() < bin.Operator.GetPrecedence())
@@ -343,15 +370,21 @@ using string = const char*;
             return "[ERROR]";
         }
 
-        public override string VisitDotExpression(DotExpression dot, int data = 0)
+        public override string VisitDotExpression(DotExpression dot, CppCodeGeneratorArgs data)
         {
             return dot.Left.Accept(this) + "." + dot.Right;
         }
 
-        public override string VisitCallExpression(CallExpression call, int data = 0)
+        public override string VisitCallExpression(CallExpression call, CppCodeGeneratorArgs data)
         {
             var args = string.Join(", ", call.Arguments.Select(a => a.Accept(this)));
-            return $"{call.Function.Accept(this)}({args})";
+
+            if (call.Function is IdentifierExpression id)
+            {
+                return $"{call.Function}({args})";
+            }
+
+            return $"{GenerateCode(call.Function, data.scope)}({args})";
         }
 
         private string GetTypeName(CheezType type)
@@ -375,7 +408,7 @@ using string = const char*;
             }
         }
 
-        public override string VisitTypeExpression(TypeExpression type, int data = 0)
+        public override string VisitTypeExpression(TypeExpression type, CppCodeGeneratorArgs data)
         {
             switch (type)
             {
@@ -391,6 +424,20 @@ using string = const char*;
                 default:
                     return "void";
             }
+        }
+
+        public static string Indent(string s, int level)
+        {
+            if (level == 0)
+                return s;
+            return string.Join("\n", s.Split('\n').Select(line => $"{new string(' ', level)}{line}"));
+        }
+
+        public static string Indent(int level)
+        {
+            if (level == 0)
+                return "";
+            return new string(' ', level);
         }
     }
 }

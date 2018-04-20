@@ -25,11 +25,17 @@ namespace Cheez.Ast
             this.Name = name;
             this.Type = type;
         }
+
+        public override string ToString()
+        {
+            return $"param {Name} : {Type}";
+        }
     }
 
-    public class FunctionDeclarationAst : Statement
+    public class FunctionDeclarationAst : Statement, INamed
     {
-        public IdentifierExpression Name { get; }
+        public IdentifierExpression NameExpr { get; }
+        public string Name => NameExpr.Name;
         public List<FunctionParameter> Parameters { get; }
 
         public TypeExpression ReturnType { get; }
@@ -41,7 +47,7 @@ namespace Cheez.Ast
         public FunctionDeclarationAst(TokenLocation beg, TokenLocation end, IdentifierExpression name, List<FunctionParameter> parameters, TypeExpression returnType, List<Statement> statements = null)
             : base(beg, end)
         {
-            this.Name = name;
+            this.NameExpr = name;
             this.Parameters = parameters;
             this.Statements = statements;
             this.ReturnType = returnType;
@@ -57,6 +63,13 @@ namespace Cheez.Ast
         public override void Accept<D>(IVoidVisitor<D> visitor, D data = default(D))
         {
             visitor.VisitFunctionDeclaration(this, data);
+        }
+
+        public override string ToString()
+        {
+            if (ReturnType != null)
+                return $"fn {NameExpr}() : {ReturnType}";
+            return $"fn {NameExpr}()";
         }
     }
 }

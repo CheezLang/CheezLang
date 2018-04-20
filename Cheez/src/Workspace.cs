@@ -22,12 +22,13 @@ namespace Cheez
 
     public class Workspace
     {
-        public Scope GlobalScope { get; } = new Scope();
+        public Scope GlobalScope { get; } = new Scope("Global");
 
         private Dictionary<string, CheezFile> mFiles = new Dictionary<string, CheezFile>();
         private Dictionary<object, CheezType> mTypeMap = new Dictionary<object, CheezType>();
         private Dictionary<object, Scope> mScopeMap = new Dictionary<object, Scope>();
         private Dictionary<FunctionDeclarationAst, Scope> mFunctionScopeMap = new Dictionary<FunctionDeclarationAst, Scope>();
+        private Dictionary<IVariableDeclaration, VariableData> mVariableDataMap = new Dictionary<IVariableDeclaration, VariableData>();
         private Compiler mCompiler;
 
         private PriorityQueue<CompilationUnit> mCompilationQueue = new PriorityQueue<CompilationUnit>();
@@ -60,6 +61,11 @@ namespace Cheez
             return mTypeMap[o];
         }
 
+        public void SetFunctionScope(FunctionDeclarationAst o, Scope scope)
+        {
+            mFunctionScopeMap[o] = scope;
+        }
+
         public void SetScope(object o, Scope scope)
         {
             mScopeMap[o] = scope;
@@ -72,6 +78,18 @@ namespace Cheez
             return mScopeMap[o];
         }
 
+        public void SetVariableData(IVariableDeclaration declaration, VariableData data)
+        {
+            mVariableDataMap[declaration] = data;
+        }
+
+        public VariableData GetVariableData(IVariableDeclaration declaration)
+        {
+            if (!mVariableDataMap.ContainsKey(declaration))
+                return null;
+            return mVariableDataMap[declaration];
+        }
+
         public Scope GetFunctionScope(FunctionDeclarationAst o)
         {
             if (!mFunctionScopeMap.ContainsKey(o))
@@ -81,11 +99,20 @@ namespace Cheez
 
         public void CompileAll()
         {
-            // gather declarations
+            var scopeCreator = new ScopeCreator(this);
             foreach (var file in mFiles.Values)
             {
-                GatherDeclarations(GlobalScope, file.Statements);
+                foreach (var s in file.Statements)
+                {
+                    scopeCreator.CreateScopes(s, GlobalScope);
+                }
             }
+
+            // gather declarations
+            //foreach (var file in mFiles.Values)
+            //{
+            //    GatherDeclarations(GlobalScope, file.Statements);
+            //}
 
             // define types
 
@@ -94,7 +121,7 @@ namespace Cheez
             {
                 if (!GlobalScope.DefineFunction(function))
                 {
-                    ReportError(function.Name, $"A function called '{function.Name}' already exists in current scope");
+                    ReportError(function.NameExpr, $"A function called '{function.Name}' already exists in current scope");
                 }
 
                 // check return type
@@ -127,10 +154,10 @@ namespace Cheez
 
             TypeChecker typeChecker = new TypeChecker(this);
             // define global variables
-            foreach (var v in GlobalScope.VariableDeclarations)
-            {
-                typeChecker.CheckTypes(v, GlobalScope);
-            }
+            //foreach (var v in GlobalScope.VariableDeclarations)
+            //{
+            //    typeChecker.CheckTypes(v, GlobalScope);
+            //}
 
             // compile functions
             foreach (var s in GlobalScope.FunctionDeclarations)

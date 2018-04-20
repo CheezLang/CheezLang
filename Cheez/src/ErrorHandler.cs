@@ -43,8 +43,8 @@ namespace Cheez
         {
             mErrorCount++;
 
-            const int linesBefore = 0;
-            const int linesAfter = 0;
+            const int linesBefore = 1;
+            const int linesAfter = 1;
 
 
             TokenLocation beginning = location.Beginning;

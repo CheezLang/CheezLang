@@ -60,11 +60,15 @@ namespace Cheez.SemanticAnalysis
         }
 
         [DebuggerStepThrough]
-        public TypeCheckResult CheckTypes(Statement statement, Scope Scope)
+        public TypeCheckResult CheckTypes(Statement statement, Scope scope)
         {
+            if (scope == null)
+            {
+                scope = workspace.GetScope(statement);
+            }
             return statement.Accept(this, new TypeCheckerData
             {
-                scope = Scope
+                scope = scope
             });
         }
 
@@ -87,8 +91,7 @@ namespace Cheez.SemanticAnalysis
 
         public override TypeCheckResult VisitFunctionDeclaration(FunctionDeclarationAst function, TypeCheckerData data = default)
         {
-            var funcScope = new Scope(data.scope);
-            var scope = funcScope;
+            var funcScope = workspace.GetFunctionScope(function);
             
             // check parameter types
             {
@@ -102,8 +105,33 @@ namespace Cheez.SemanticAnalysis
             // check body
             foreach (var s in function.Statements)
             {
-                var result = CheckTypes(s, scope);
-                scope = result.scope ?? scope;
+                CheckTypes(s, null);
+            }
+
+            return default;
+        }
+
+        public override TypeCheckResult VisitBlockStatement(BlockStatement block, TypeCheckerData data = default)
+        {
+            foreach (var s in block.Statements)
+            {
+                CheckTypes(s, null);
+            }
+
+            return default;
+        }
+
+        public override TypeCheckResult VisitIfStatement(IfStatement ifs, TypeCheckerData data = default)
+        {
+            // check condition
+            {
+                var result = CheckTypes(ifs.Condition, data.scope);
+                ifs.Condition = result.expr ?? ifs.Condition;
+            }
+
+            // check if case
+            {
+                var result = CheckTypes(ifs.IfCase, null);
             }
 
             return default;
@@ -114,7 +142,11 @@ namespace Cheez.SemanticAnalysis
             for (int i = 0; i < print.Expressions.Count; i++)
             {
                 var result = CheckTypes(print.Expressions[i], data.scope);
-                if (result.type == null || result.type == CheezType.Void)
+                if (result.type == null)
+                {
+                    continue;
+                }
+                else if (result.type == CheezType.Void)
                 {
                     workspace.ReportError(print.Expressions[i], $"Cannot print value of type '{result.type}'");
                 }
@@ -140,7 +172,9 @@ namespace Cheez.SemanticAnalysis
 
                 if (varAst.Initializer != null)
                 {
-                    var initResult = CheckTypes(varAst.Initializer, scope);
+                    var initializerScope = workspace.GetScope(varAst.Initializer);
+
+                    var initResult = CheckTypes(varAst.Initializer, initializerScope);
                     var castResult = InsertCastExpressionIf(initResult.expr, initResult.type, type);
                     varAst.Initializer = castResult.expr;
                     workspace.SetCheezType(varAst.Initializer, castResult.type);
@@ -158,8 +192,9 @@ namespace Cheez.SemanticAnalysis
                     workspace.ReportError(varAst, $"Type of variable must be explictly specified if no initial value is given");
                     return new TypeCheckResult(varAst, CheezType.Void);
                 }
+                var initializerScope = workspace.GetScope(varAst.Initializer);
 
-                var init = CheckTypes(varAst.Initializer, scope);
+                var init = CheckTypes(varAst.Initializer, initializerScope);
                 if (init.type == IntType.LiteralType)
                 {
                     init.type = IntType.DefaultType;
@@ -177,7 +212,7 @@ namespace Cheez.SemanticAnalysis
 
             workspace.SetCheezType(varAst, type);
 
-            return new TypeCheckResult(varAst, CheezType.Void, new Scope(scope));
+            return new TypeCheckResult(varAst, CheezType.Void);
         }
 
         public override TypeCheckResult VisitStringLiteral(StringLiteral str, TypeCheckerData data = default)

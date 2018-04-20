@@ -6,9 +6,9 @@ namespace Cheez.Ast
 {
     public class IfStatement : Statement
     {
-        public Expression Condition { get; }
-        public Statement IfCase { get; }
-        public Statement ElseCase { get; }
+        public Expression Condition { get; set; }
+        public Statement IfCase { get; set; }
+        public Statement ElseCase { get; set; }
 
         public IfStatement(TokenLocation beg, TokenLocation end, Expression cond, Statement ifCase, Statement elseCase = null) : base(beg, end)
         {

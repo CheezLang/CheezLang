@@ -10,7 +10,7 @@ namespace Cheez.Visitor
         {
             var statements = function.Statements.Select(s => s.Accept(this));
             var statementsStr = string.Join("\n", statements);
-            return Indent($"fn {function.Name} :: ()\n{{\n{Indent(statementsStr, 4)}\n}}", indentLevel);
+            return Indent($"fn {function.NameExpr} :: ()\n{{\n{Indent(statementsStr, 4)}\n}}", indentLevel);
         }
 
         public static string Indent(string s, int level)

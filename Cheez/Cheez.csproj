@@ -72,9 +72,11 @@
     <Compile Include="src\Parsing\Lexer.cs" />
     <Compile Include="src\Parsing\Parser.cs" />
     <Compile Include="src\Scope.cs" />
+    <Compile Include="src\SemanticAnalysis\ScopeCreator.cs" />
     <Compile Include="src\SemanticAnalysis\TypeChecker.cs" />
     <Compile Include="src\Semanticer.cs" />
     <Compile Include="src\StatementQueue.cs" />
+    <Compile Include="src\UniqueNameDecorator.cs" />
     <Compile Include="src\Util.cs" />
     <Compile Include="src\Visitor\AstPrinter.cs" />
     <Compile Include="src\Visitor\Visitor.cs" />

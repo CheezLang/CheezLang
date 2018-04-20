@@ -19,8 +19,8 @@ namespace Cheez
         {
             this.Name = name;
             this.Text = raw;
-            ExportScope = new Scope();
-            PrivateScope = new Scope(ExportScope);
+            ExportScope = new Scope("Export");
+            PrivateScope = new Scope("Private", ExportScope);
             Statements = statements;
         }
     }

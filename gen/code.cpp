@@ -22,22 +22,23 @@ using string = const char*;
 // type declarations
 
 // forward declarations
-i64 add(i64 a, i64 b);
 void Main();
 
 // global variables
 
 // function implementations
-i64 add(i64 a, i64 b) {
-    return a * b + a / b;
-}
 void Main() {
-    i64 a = 5;
-    i64 b = add(7, 54);
-    string stringTest = "Hello world";
-    std::cout << stringTest << '\n';
-    std::cout << b << '\n';
-    std::cout << add(7, 54) << '\n';
+    i64 a = 1;
+    std::cout << a << '\n';
+    if (1) {
+        i64 a___1 = a + 1;
+        std::cout << a___1 << '\n';
+        i64 a___2 = a___1 + 1;
+        std::cout << a___2 << '\n';
+    }
+    std::cout << a << '\n';
+    i64 a___3 = a + 1;
+    std::cout << a___3 << '\n';
 }
 
 // entry point to the program

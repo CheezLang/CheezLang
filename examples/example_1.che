@@ -1,12 +1,15 @@
-fn add(a : i64, b : i64): i64 {
-    return (a * b) + (a / b)
+fn Main() {
+    var a = 1
+    println a
+    if (1) {
+        var a = a + 1
+        println a
+        var a = a + 1
+        println a
+    }
+    println a
+    var a = a + 1
+    println a
 }
 
-fn Main() {
-    var a = 5
-    var b = add(1 + 2 * 3, (4 + 5) * 6)
-    var stringTest = "Hello world"
-    println stringTest
-    println b
-    println add(1 + 2 * 3, (4 + 5) * 6)
-}
+

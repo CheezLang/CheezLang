@@ -138,6 +138,8 @@ namespace Cheez.Parsing
                         return ParseTypeDeclaration();
                     case TokenType.KwImpl:
                         return ParseImplBlock();
+                    case TokenType.OpenBrace:
+                        return ParseBlockStatement();
 
                     default:
                         {
@@ -233,7 +235,9 @@ namespace Cheez.Parsing
 
             while (PeekToken(skipNewLines: true).type != TokenType.ClosingBrace)
             {
-                statements.Add(ParseStatement());
+                var s = ParseStatement();
+                if (s != null)
+                    statements.Add(s);
             }
 
             var end = Expect(TokenType.ClosingBrace, skipNewLines: true);
