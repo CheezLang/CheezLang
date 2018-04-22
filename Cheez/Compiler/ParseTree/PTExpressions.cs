@@ -64,6 +64,21 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
+    public class PTBoolExpr : PTLiteral
+    {
+        public bool Value { get; }
+
+        public PTBoolExpr(TokenLocation loc, bool value) : base(loc, loc)
+        {
+            this.Value = value;
+        }
+
+        public override AstExpression CreateAst()
+        {
+            return new AstBoolExpr(this);
+        }
+    }
+
     public class PTDotExpr : PTExpr
     {
         public PTExpr Left { get; set; }

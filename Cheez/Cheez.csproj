@@ -67,11 +67,11 @@
     <Compile Include="Compiler\ErrorHandler.cs" />
     <Compile Include="Compiler\Operator.cs" />
     <Compile Include="Compiler\ParseTree\ParseTreeItem.cs" />
-    <Compile Include="Compiler\ParseTree\Expressions.cs" />
-    <Compile Include="Compiler\ParseTree\Declarations.cs" />
-    <Compile Include="Compiler\ParseTree\PrintStatement.cs" />
-    <Compile Include="Compiler\ParseTree\Statements.cs" />
-    <Compile Include="Compiler\ParseTree\TypeExpression.cs" />
+    <Compile Include="Compiler\ParseTree\PTExpressions.cs" />
+    <Compile Include="Compiler\ParseTree\PTDeclarations.cs" />
+    <Compile Include="Compiler\ParseTree\PTPrintStatement.cs" />
+    <Compile Include="Compiler\ParseTree\PTStatements.cs" />
+    <Compile Include="Compiler\ParseTree\PTTypeExpression.cs" />
     <Compile Include="Compiler\Parsing\Lexer.cs" />
     <Compile Include="Compiler\Parsing\Parser.cs" />
     <Compile Include="Compiler\PriorityQueue.cs" />

@@ -28,6 +28,11 @@ namespace Cheez.Compiler.Parsing
             mLexer = lex;
         }
 
+        private void SkipNewlines()
+        {
+            PeekToken(true);
+        }
+
         private Token Expect(TokenType type, bool skipNewLines, Func<TokenType, object, string> customErrorMessage = null)
         {
             while (true)
@@ -357,11 +362,6 @@ namespace Cheez.Compiler.Parsing
             return new PTPrintStmt(beginning.location, expr.Last().End, expr, seperator, beginning.type == TokenType.KwPrintln);
         }
 
-        private void SkipNewlines()
-        {
-            PeekToken(true);
-        }
-
         #region Expression Parsing
         private PTTypeExpr ParseTypeExpression()
         {
@@ -410,7 +410,21 @@ namespace Cheez.Compiler.Parsing
                 (TokenType.Plus, Operator.Add),
                 (TokenType.Minus, Operator.Subtract));
 
-            return addsub();
+            Func<PTExpr> comparison = () => ParseBinaryLeftAssociativeExpression(addsub,
+                (TokenType.Less, Operator.Less),
+                (TokenType.LessEqual, Operator.LessEqual),
+                (TokenType.Greater, Operator.Greater),
+                (TokenType.GreaterEqual, Operator.GreaterEqual),
+                (TokenType.DoubleEqual, Operator.Equal),
+                (TokenType.NotEqual, Operator.NotEqual));
+
+            Func<PTExpr> and = () => ParseBinaryLeftAssociativeExpression(comparison,
+                (TokenType.KwAnd, Operator.And));
+
+            Func<PTExpr> or = () => ParseBinaryLeftAssociativeExpression(and,
+                (TokenType.KwOr, Operator.Or));
+
+            return or();
         }
 
         private PTExpr ParseBinaryLeftAssociativeExpression(Func<PTExpr> sub, params (TokenType, Operator)[] types)
@@ -506,6 +520,9 @@ namespace Cheez.Compiler.Parsing
 
                 case TokenType.NumberLiteral:
                     return new PTNumberExpr(token.location, (NumberData)token.data);
+
+                case TokenType.KwTrue:
+                    return new PTBoolExpr(token.location, true);
 
                 case TokenType.OpenParen:
                     SkipNewlines();

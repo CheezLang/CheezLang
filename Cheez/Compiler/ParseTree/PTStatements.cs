@@ -82,7 +82,7 @@ namespace Cheez.Compiler.ParseTree
 
         public override AstStatement CreateAst()
         {
-            return new AstIfStmt(this, Condition.CreateAst(), IfCase.CreateAst(), ElseCase.CreateAst());
+            return new AstIfStmt(this, Condition.CreateAst(), IfCase.CreateAst(), ElseCase?.CreateAst());
         }
     }
 

@@ -6,6 +6,16 @@
         Subtract,
         Multiply,
         Divide,
+
+        Less,
+        LessEqual,
+        Greater,
+        GreaterEqual,
+        Equal,
+        NotEqual,
+
+        And,
+        Or
     }
 
     public static class BinaryOperatorExtensions
@@ -14,6 +24,20 @@
         {
             switch (self)
             {
+                case Operator.Or:
+                    return 1;
+
+                case Operator.And:
+                    return 2;
+
+                case Operator.Less:
+                case Operator.LessEqual:
+                case Operator.Greater:
+                case Operator.GreaterEqual:
+                case Operator.Equal:
+                case Operator.NotEqual:
+                    return 3;
+
                 case Operator.Add:
                 case Operator.Subtract:
                     return 5;

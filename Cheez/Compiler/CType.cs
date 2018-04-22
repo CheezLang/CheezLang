@@ -57,11 +57,17 @@ namespace Cheez.Compiler
     {
         public static CheezType Void => VoidType.Intance;
         public static CheezType String => StringType.Instance;
+        public static CheezType Bool => BoolType.Instance;
     }
 
     public class VoidType : CheezType
     {
         public static VoidType Intance { get; } = new VoidType();
+    }
+
+    public class BoolType : CheezType
+    {
+        public static BoolType Instance = new BoolType();
     }
 
     public class IntType : CheezType

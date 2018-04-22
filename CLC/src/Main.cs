@@ -1,7 +1,5 @@
-﻿using Cheez.Compiler.Ast;
-using Cheez.Compiler.CodeGeneration;
+﻿using Cheez.Compiler.CodeGeneration;
 using Cheez.Compiler;
-using Cheez.Compiler.Visitor;
 using System.Diagnostics;
 using System.IO;
 using System;

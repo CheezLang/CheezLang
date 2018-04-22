@@ -1,7 +1,7 @@
 fn Main() {
     var a = 1
     println a
-    if (1) {
+    if a == 1 {
         var a = a + 1
         println a
         var a = a + 1

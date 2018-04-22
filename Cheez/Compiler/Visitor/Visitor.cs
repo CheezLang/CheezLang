@@ -27,6 +27,7 @@ namespace Cheez.Compiler.Visitor
         ReturnType VisitCallExpression(AstCallExpr call, DataType data = default);
         ReturnType VisitTypeExpression(AstTypeExpr type, DataType data = default);
         ReturnType VisitBinaryExpression(AstBinaryExpr bin, DataType data = default);
+        ReturnType VisitBoolExpression(AstBoolExpr bo, DataType data = default);
 
         ReturnType VisitPrintStatement(AstPrintStmt print, DataType data = default); // @Temporary
     }
@@ -39,6 +40,8 @@ namespace Cheez.Compiler.Visitor
         public virtual ReturnType VisitBinaryExpression(AstBinaryExpr bin, DataType data = default) => default;
 
         public virtual ReturnType VisitBlockStatement(AstBlockStmt block, DataType data = default) => default;
+
+        public virtual ReturnType VisitBoolExpression(AstBoolExpr bo, DataType data = default) => default;
 
         public virtual ReturnType VisitCallExpression(AstCallExpr call, DataType data = default) => default;
 

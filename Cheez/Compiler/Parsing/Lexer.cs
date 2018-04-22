@@ -28,6 +28,13 @@ namespace Cheez.Compiler.Parsing
         Asterisk,
         ForwardSlash,
 
+        Less,
+        LessEqual,
+        Greater,
+        GreaterEqual,
+        DoubleEqual,
+        NotEqual,
+
         OpenParen,
         ClosingParen,
 
@@ -47,6 +54,10 @@ namespace Cheez.Compiler.Parsing
         KwElse,
         KwFor,
         KwWhile,
+        KwAnd,
+        KwOr,
+        KwTrue,
+        KwFalse,
         KwPrint, // @Temporary
         KwPrintln, // @Temporary
     }
@@ -189,6 +200,10 @@ namespace Cheez.Compiler.Parsing
 
             switch (Current)
             {
+                case '=' when Next == '=': SimpleToken(ref token, TokenType.DoubleEqual, 2); break;
+                case '!' when Next == '=': SimpleToken(ref token, TokenType.NotEqual, 2); break;
+                case '<' when Next == '=': SimpleToken(ref token, TokenType.LessEqual, 2); break;
+                case '>' when Next == '=': SimpleToken(ref token, TokenType.GreaterEqual, 2); break;
                 case ':' when Next == ':': SimpleToken(ref token, TokenType.DoubleColon, 2); break;
                 case ':': SimpleToken(ref token, TokenType.Colon); break;
                 case ';': SimpleToken(ref token, TokenType.Semicolon); break;
@@ -205,6 +220,8 @@ namespace Cheez.Compiler.Parsing
                 case '/': SimpleToken(ref token, TokenType.ForwardSlash); break;
                 case '+': SimpleToken(ref token, TokenType.Plus); break;
                 case '-': SimpleToken(ref token, TokenType.Minus); break;
+                case '<': SimpleToken(ref token, TokenType.Less); break;
+                case '>': SimpleToken(ref token, TokenType.Greater); break;
 
                 case '"': ParseStringLiteral(ref token); break;
 
@@ -284,6 +301,10 @@ namespace Cheez.Compiler.Parsing
                 case "else": token.type = TokenType.KwElse; break;
                 case "for": token.type = TokenType.KwFor; break;
                 case "while": token.type = TokenType.KwWhile; break;
+                case "and": token.type = TokenType.KwAnd; break;
+                case "or": token.type = TokenType.KwOr; break;
+                case "true": token.type = TokenType.KwTrue; break;
+                case "false": token.type = TokenType.KwFalse; break;
                 case "print": token.type = TokenType.KwPrint; break; // @Temporary
                 case "println": token.type = TokenType.KwPrintln; break; // @Temporary
             }

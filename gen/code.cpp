@@ -30,7 +30,7 @@ void Main();
 void Main() {
     i64 a = 1;
     std::cout << a << '\n';
-    if (1) {
+    if (a == 1) {
         i64 a___1 = a + 1;
         std::cout << a___1 << '\n';
         i64 a___2 = a___1 + 1;

@@ -17,7 +17,7 @@ namespace Cheez.Compiler.Ast
         {
             this.Id = Util.NewId;
         }
-                
+
         public override bool Equals(object obj)
         {
             return obj == this;
@@ -27,7 +27,7 @@ namespace Cheez.Compiler.Ast
         {
             return Id.GetHashCode();
         }
-        
+
         [DebuggerStepThrough]
         public abstract T Accept<T, D>(IVisitor<T, D> visitor, D data = default);
     }
@@ -125,6 +125,25 @@ namespace Cheez.Compiler.Ast
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return visitor.VisitBinaryExpression(this, data);
+        }
+    }
+
+    public class AstBoolExpr : AstExpression
+    {
+        public ParseTree.PTBoolExpr ParseTreeNode { get; }
+        public override ParseTree.PTExpr GenericParseTreeNode => ParseTreeNode;
+
+        public bool Value => ParseTreeNode.Value;
+
+        public AstBoolExpr(ParseTree.PTBoolExpr node)
+        {
+            ParseTreeNode = node;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitBoolExpression(this, data);
         }
     }
 }

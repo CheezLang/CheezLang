@@ -35,10 +35,10 @@ namespace Cheez.Compiler
                 mStatements.Add(pts.CreateAst());
             }
         }
-        
+
         public void CompileAll()
         {
-            var scopeCreator = new ScopeCreator(this);
+            var scopeCreator = new ScopeCreator(this, GlobalScope);
             foreach (var s in mStatements)
             {
                 scopeCreator.CreateScopes(s, GlobalScope);
@@ -50,40 +50,44 @@ namespace Cheez.Compiler
             //    GatherDeclarations(GlobalScope, file.Statements);
             //}
 
-            // define types
-
-            // define functions
-            foreach (var function in GlobalScope.FunctionDeclarations)
+            foreach (var scope in scopeCreator.AllScopes)
             {
-                if (!GlobalScope.DefineFunction(function))
-                {
-                    ReportError(function.ParseTreeNode.Name, $"A function called '{function.Name}' already exists in current scope");
-                }
+                // define types
 
-                // check return type
+                // define functions
+                foreach (var function in scope.FunctionDeclarations)
                 {
-                    function.ReturnType = CheezType.Void;
-                    if (function.ReturnType != null)
+                    if (!scope.DefineFunction(function))
                     {
-                        function.ReturnType = GlobalScope.GetCheezType(function.ParseTreeNode.ReturnType);
-                        if (function.ReturnType == null)
+                        ReportError(function.ParseTreeNode.Name, $"A function called '{function.Name}' already exists in current scope");
+                    }
+
+                    // check return type
+                    {
+                        function.ReturnType = CheezType.Void;
+                        if (function.ParseTreeNode.ReturnType != null)
                         {
-                            ReportError(function.ParseTreeNode.ReturnType, $"Unknown type '{function.ParseTreeNode.ReturnType}' in function return type");
+                            function.ReturnType = scope.GetCheezType(function.ParseTreeNode.ReturnType);
+                            if (function.ReturnType == null)
+                            {
+                                ReportError(function.ParseTreeNode.ReturnType, $"Unknown type '{function.ParseTreeNode.ReturnType}' in function return type");
+                            }
+                        }
+                    }
+
+                    // check parameter types
+                    {
+                        foreach (var p in function.Parameters)
+                        {
+                            p.VarType = scope.GetCheezType(p.ParseTreeNode.Type);
+                            if (p.VarType == null)
+                            {
+                                ReportError(p.ParseTreeNode.Type, $"Unknown type '{p.ParseTreeNode.Type}' in function parameter list");
+                            }
                         }
                     }
                 }
 
-                // check parameter types
-                {
-                    foreach (var p in function.Parameters)
-                    {
-                        p.VarType = GlobalScope.GetCheezType(p.ParseTreeNode.Type);
-                        if (p.VarType == null)
-                        {
-                            ReportError(p.ParseTreeNode.Type, $"Unknown type '{p.ParseTreeNode.Type}' in function parameter list");
-                        }
-                    }
-                }
             }
 
             TypeChecker typeChecker = new TypeChecker(this);
@@ -99,7 +103,7 @@ namespace Cheez.Compiler
                 typeChecker.CheckTypes(s);
             }
         }
-        
+
         //private void EnqueueUnit(CompilationUnit unit)
         //{
         //    mCompilationQueue.Enqueue(0, unit);

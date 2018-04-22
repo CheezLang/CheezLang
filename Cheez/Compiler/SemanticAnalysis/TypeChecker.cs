@@ -30,10 +30,10 @@ namespace Cheez.Compiler.SemanticAnalysis
 
     public struct TypeCheckResult
     {
-        public object ast;
+        private object ast;
 
-        public AstExpression expr => (AstExpression)ast;
-        public AstStatement stmt => (AstStatement)ast;
+        public AstExpression expr => ast as AstExpression;
+        public AstStatement stmt => ast as AstStatement;
 
         public TypeCheckResult(object ast)
         {
@@ -102,8 +102,11 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             // check condition
             {
-                var result = CheckTypes(ifs.Condition);
-                ifs.Condition = result.expr ?? ifs.Condition;
+                var c = ifs.Condition = CheckTypes(ifs.Condition).expr;
+                if (c.Type != CheezType.Bool)
+                {
+                    workspace.ReportError(ifs.Condition.GenericParseTreeNode, $"Condition of if statement has to be of type bool, but found type '{ifs.Condition.Type}'");
+                }
             }
 
             // check if case
@@ -118,16 +121,15 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             for (int i = 0; i < print.Expressions.Count; i++)
             {
-                var result = CheckTypes(print.Expressions[i]);
-                if (result.expr.Type == null)
+                var e = print.Expressions[i] = CheckTypes(print.Expressions[i]).expr;
+                if (e.Type == null)
                 {
                     continue;
                 }
-                else if (result.expr.Type == CheezType.Void)
+                else if (e.Type == CheezType.Void)
                 {
-                    workspace.ReportError(print.Expressions[i].GenericParseTreeNode, $"Cannot print value of type '{result.expr.Type}'");
+                    workspace.ReportError(print.Expressions[i].GenericParseTreeNode, $"Cannot print value of type 'void'");
                 }
-                print.Expressions[i] = result.expr;
             }
             return new TypeCheckResult(print);
         }
@@ -191,6 +193,12 @@ namespace Cheez.Compiler.SemanticAnalysis
             return new TypeCheckResult(lit);
         }
 
+        public override TypeCheckResult VisitBoolExpression(AstBoolExpr bo, TypeCheckerData data = default)
+        {
+            bo.Type = CheezType.Bool;
+            return new TypeCheckResult(bo);
+        }
+
         public override TypeCheckResult VisitIdentifierExpression(AstIdentifierExpr ident, TypeCheckerData data = default)
         {
             var variable = ident.Scope.GetVariable(ident.Name);
@@ -232,6 +240,45 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             bin.Type = bin.Left.Type;
+
+            switch (bin.Operator)
+            {
+                case Operator.Add:
+                case Operator.Subtract:
+                case Operator.Multiply:
+                case Operator.Divide:
+
+                    break;
+
+                case Operator.Less:
+                case Operator.LessEqual:
+                case Operator.Greater:
+                case Operator.GreaterEqual:
+                    if (!(bin.Type is IntType) && !(bin.Type is FloatType) && !(bin.Type is PointerType))
+                    {
+                        workspace.ReportError(bin.ParseTreeNode, $"Type of both sides of comparison operator has to be int, float or pointer, but found '{bin.Type}'");
+                    }
+                    bin.Type = CheezType.Bool;
+                    break;
+
+                case Operator.NotEqual:
+                case Operator.Equal:
+                    if (!(bin.Type is IntType) && !(bin.Type is FloatType) && !(bin.Type is PointerType))
+                    {
+                        workspace.ReportError(bin.ParseTreeNode, $"Type of both sides of comparison operator has to be int, float or pointer, but found '{bin.Type}'");
+                    }
+                    bin.Type = CheezType.Bool;
+                    break;
+
+                case Operator.And:
+                case Operator.Or:
+                    if (bin.Type != CheezType.Bool)
+                    {
+                        workspace.ReportError(bin.ParseTreeNode, $"Type of both sides of and/or operator has to be bool, but found '{bin.Type}'");
+                    }
+                    bin.Type = CheezType.Bool;
+                    break;
+            }
             return new TypeCheckResult(bin);
         }
 

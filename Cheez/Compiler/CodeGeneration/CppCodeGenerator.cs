@@ -366,9 +366,32 @@ using string = const char*;
                     return $"{lhs} * {rhs}";
                 case Operator.Divide:
                     return $"{lhs} / {rhs}";
+
+                case Operator.Less:
+                    return $"{lhs} < {rhs}";
+                case Operator.LessEqual:
+                    return $"{lhs} <= {rhs}";
+                case Operator.Greater:
+                    return $"{lhs} > {rhs}";
+                case Operator.GreaterEqual:
+                    return $"{lhs} >= {rhs}";
+                case Operator.Equal:
+                    return $"{lhs} == {rhs}";
+                case Operator.NotEqual:
+                    return $"{lhs} != {rhs}";
+
+                case Operator.And:
+                    return $"{lhs} && {rhs}";
+                case Operator.Or:
+                    return $"{lhs} || {rhs}";
             }
 
             return "[ERROR]";
+        }
+
+        public override string VisitBoolExpression(AstBoolExpr bo, CppCodeGeneratorArgs data = default)
+        {
+            return bo.Value ? "true" : "false";
         }
 
         public override string VisitDotExpression(AstDotExpr dot, CppCodeGeneratorArgs data)
