@@ -12,5 +12,6 @@ fn Main() {
 
     println a
     
-    let a = a + 1 a
+    let a = a + 1
+    println a
 }
