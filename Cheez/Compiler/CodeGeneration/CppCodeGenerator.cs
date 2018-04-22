@@ -1,7 +1,5 @@
 ﻿using Cheez.Compiler.Ast;
-using Cheez.Compiler.ParseTree;
 using Cheez.Compiler.Visitor;
-using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
