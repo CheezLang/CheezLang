@@ -1,15 +1,16 @@
 fn Main() {
-    var a = 1
+    let a = 1
     println a
+    
     if a == 1 {
-        var a = a + 1
+        let a = a + 1
         println a
-        var a = a + 1
+
+        let a = a + 1
         println a
     }
+
     println a
-    var a = a + 1
-    println a
+    
+    let a = a + 1 a
 }
-
-

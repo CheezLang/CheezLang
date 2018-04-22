@@ -296,7 +296,7 @@ namespace Cheez.Compiler.Parsing
                 case "struct": token.type = TokenType.KwStruct; break;
                 case "impl": token.type = TokenType.KwImpl; break;
                 case "constant": token.type = TokenType.KwConstant; break;
-                case "var": token.type = TokenType.KwVar; break;
+                case "let": token.type = TokenType.KwVar; break;
                 case "if": token.type = TokenType.KwIf; break;
                 case "else": token.type = TokenType.KwElse; break;
                 case "for": token.type = TokenType.KwFor; break;

@@ -222,7 +222,10 @@ using string = const char*;
         public override string VisitIdentifierExpression(AstIdentifierExpr ident, CppCodeGeneratorArgs data)
         {
             var v = data.scope.GetVariable(ident.Name);
-            return nameDecorator.GetDecoratedName(v);
+            var name = nameDecorator.GetDecoratedName(v);
+            if (ident.Type is IntType i && i.SizeInBytes == 1)
+                return $"+{name}";
+            return name;
         }
 
         public override string VisitVariableDeclaration(AstVariableDecl variable, CppCodeGeneratorArgs data)
