@@ -38,6 +38,7 @@ void Main() {
     }
     std::cout << a << '\n';
     i64 a___3 = a + 1;
+    std::cout << a___3 * 2 << '\n';
 }
 
 // entry point to the program
