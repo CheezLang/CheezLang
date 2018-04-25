@@ -44,15 +44,27 @@ namespace Cheez.Compiler
                 scopeCreator.CreateScopes(s, GlobalScope);
             }
 
-            // gather declarations
-            //foreach (var file in mFiles.Values)
-            //{
-            //    GatherDeclarations(GlobalScope, file.Statements);
-            //}
-
             foreach (var scope in scopeCreator.AllScopes)
             {
                 // define types
+                foreach (var typeDecl in scope.TypeDeclarations)
+                {
+                    foreach (var member in typeDecl.Members)
+                    {
+                        member.Type = scope.GetCheezType(member.ParseTreeNode.Type);
+                        if (member.Type == null)
+                        {
+                            ReportError(member.ParseTreeNode.Type, $"Unknown type '{member.ParseTreeNode.Type}' in struct member");
+
+                        }
+                    }
+
+                    if (!scope.DefineType(typeDecl))
+                    {
+                        ReportError(typeDecl.ParseTreeNode.Name, $"A type called '{typeDecl.Name}' already exists in current scope");
+                        continue;
+                    }
+                }
 
                 // define functions
                 foreach (var function in scope.FunctionDeclarations)
@@ -60,6 +72,7 @@ namespace Cheez.Compiler
                     if (!scope.DefineFunction(function))
                     {
                         ReportError(function.ParseTreeNode.Name, $"A function called '{function.Name}' already exists in current scope");
+                        continue;
                     }
 
                     // check return type

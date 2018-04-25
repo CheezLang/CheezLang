@@ -79,9 +79,19 @@ namespace Cheez.Compiler
                 {
 
                     var s = parser.ParseStatement();
+
                     if (s == null)
+                    {
                         break;
-                    statements.Add(s);
+                    }
+                    if (s is PTFunctionDecl || s is PTTypeDecl)
+                    {
+                        statements.Add(s);
+                    }
+                    else
+                    {
+                        mErrorHandler.ReportError(lexer, s, "Only variable and function declarations are allowed on in global scope");
+                    }
                 }
             }
             catch (Exception)

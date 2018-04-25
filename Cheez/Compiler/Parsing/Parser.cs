@@ -137,6 +137,8 @@ namespace Cheez.Compiler.Parsing
                         return ParsePrintStatement();
                     case TokenType.KwIf:
                         return ParseIfStatement();
+                    case TokenType.KwWhile:
+                        return ParseWhileStatement();
                     case TokenType.EOF:
                         return null;
                     case TokenType.KwStruct:
@@ -165,7 +167,9 @@ namespace Cheez.Compiler.Parsing
             }
             catch (ParsingError err)
             {
-                mErrorHandler.ReportError(mLexer, err.Location, err.Message);
+                var stackTrace = new System.Diagnostics.StackTrace(err);
+                var topFrame = stackTrace.GetFrame(0);
+                mErrorHandler.ReportError(mLexer, err.Location, err.Message, err.HelpLink, topFrame.GetMethod().Name, topFrame.GetFileLineNumber());
                 while (mLexer.PeekToken().type != TokenType.NewLine)
                     mLexer.NextToken();
 
@@ -254,7 +258,7 @@ namespace Cheez.Compiler.Parsing
             return new PTExprStmt(expr.Beginning, expr.End, expr);
         }
 
-        private PTVariableDecl ParseVariableDeclaration()
+        private PTVariableDecl ParseVariableDeclaration(params TokenType[] delimiters)
         {
             var beginning = Expect(TokenType.KwVar, skipNewLines: true);
             var name = ParseIdentifierExpr(true);
@@ -273,7 +277,7 @@ namespace Cheez.Compiler.Parsing
                     end = type.End;
                     if (next.type == TokenType.Equal)
                         goto case TokenType.Equal;
-                    else if (next.type == TokenType.Semicolon)
+                    else if (delimiters.Contains(next.type))
                     {
                         end = next.location;
                         break;
@@ -288,7 +292,7 @@ namespace Cheez.Compiler.Parsing
                     init = ParseExpression();
                     next = mLexer.PeekToken();
                     end = init.End;
-                    if (next.type == TokenType.Semicolon)
+                    if (delimiters.Contains(next.type))
                     {
                         end = next.location;
                         break;
@@ -297,6 +301,8 @@ namespace Cheez.Compiler.Parsing
                         break;
                     goto default;
 
+                case TokenType ttt when delimiters.Contains(ttt):
+                    break;
                 case TokenType.Semicolon:
                 case TokenType.NewLine:
                     break;
@@ -309,6 +315,31 @@ namespace Cheez.Compiler.Parsing
             mLexer.NextToken();
 
             return new PTVariableDecl(beginning.location, end, name, type, init);
+        }
+
+        private PTWhileStmt ParseWhileStatement()
+        {
+            var beginning = Expect(TokenType.KwWhile, skipNewLines: true);
+            PTVariableDecl varDecl = null;
+            PTStatement postAction = null;
+
+            if (PeekToken(true).type == TokenType.KwVar)
+            {
+                varDecl = ParseVariableDeclaration(TokenType.Comma);
+            }
+
+            PTExpr condition = ParseExpression();
+
+            if (PeekToken(false).type == TokenType.NewLine || PeekToken(false).type == TokenType.Comma)
+            {
+                mLexer.NextToken();
+                postAction = ParseStatement();
+            }
+
+            PTStatement body = ParseBlockStatement();
+
+
+            return new PTWhileStmt(beginning.location, body.End, condition, body, varDecl, postAction);
         }
 
         private PTIfStmt ParseIfStatement()
@@ -402,7 +433,7 @@ namespace Cheez.Compiler.Parsing
 
         private PTExpr ParseExpression()
         {
-            Func<PTExpr> muldiv = () => ParseBinaryLeftAssociativeExpression(ParseCallExpression,
+            Func<PTExpr> muldiv = () => ParseBinaryLeftAssociativeExpression(ParseAddressOfOrCallExpression,
                 (TokenType.Asterisk, Operator.Multiply),
                 (TokenType.ForwardSlash, Operator.Divide));
 
@@ -461,36 +492,65 @@ namespace Cheez.Compiler.Parsing
                 lhs = new PTBinaryExpr(lhs.Beginning, rhs.End, op.Value, lhs, rhs);
             }
         }
-        
-        private PTExpr ParseCallExpression()
-        {
-            var func = ParseDotExpression();
 
-            if (PeekToken(false).type == TokenType.OpenParen)
+        private PTExpr ParseAddressOfOrCallExpression()
+        {
+            var next = PeekToken(false);
+            if (next.type == TokenType.Ampersand)
             {
                 mLexer.NextToken();
-                List<PTExpr> args = new List<PTExpr>();
-                if (PeekToken(true).type != TokenType.ClosingParen)
-                {
-                    while (true)
-                    {
-                        args.Add(ParseExpression());
-
-                        var next = PeekToken(true);
-                        if (next.type == TokenType.Comma)
-                            mLexer.NextToken();
-                        else if (next.type == TokenType.ClosingParen)
-                            break;
-                        else
-                            throw new Exception($"Failed to parse function call, expected comma or closing paren, got {next.data} ({next.type})");
-                    }
-                }
-                var end = Expect(TokenType.ClosingParen, true);
-
-                return new PTCallExpr(func.Beginning, end.location, func, args);
+                return new PTAddressOfExpr(next.location, ParseDotExpression());
             }
 
-            return func;
+            return ParseCallExpression();
+        }
+
+        private PTExpr ParseCallExpression()
+        {
+            var expr = ParseDotExpression();
+
+            while (true)
+            {
+                switch (PeekToken(false).type)
+                {
+                    case TokenType.OpenParen:
+                        {
+                            mLexer.NextToken();
+                            List<PTExpr> args = new List<PTExpr>();
+                            if (PeekToken(true).type != TokenType.ClosingParen)
+                            {
+                                while (true)
+                                {
+                                    args.Add(ParseExpression());
+
+                                    var next = PeekToken(true);
+                                    if (next.type == TokenType.Comma)
+                                        mLexer.NextToken();
+                                    else if (next.type == TokenType.ClosingParen)
+                                        break;
+                                    else
+                                        throw new Exception($"Failed to parse function call, expected comma or closing paren, got {next.data} ({next.type})");
+                                }
+                            }
+                            var end = Expect(TokenType.ClosingParen, true);
+
+                            expr = new PTCallExpr(expr.Beginning, end.location, expr, args);
+                        }
+                        break;
+
+                    case TokenType.OpenBracket:
+                        {
+                            mLexer.NextToken();
+                            var index = ParseExpression();
+                            var end = Expect(TokenType.ClosingBracket, true);
+                            expr = new PTArrayAccessExpr(expr.Beginning, end.location, expr, index);
+                        }
+                        break;
+
+                    default:
+                        return expr;
+                }
+            }
         }
 
         private PTExpr ParseDotExpression()
@@ -523,6 +583,19 @@ namespace Cheez.Compiler.Parsing
 
                 case TokenType.KwTrue:
                     return new PTBoolExpr(token.location, true);
+                case TokenType.KwFalse:
+                    return new PTBoolExpr(token.location, false);
+
+                case TokenType.KwCast:
+                    {
+                        Expect(TokenType.Less, true);
+                        var type = ParseTypeExpression();
+                        Expect(TokenType.Greater, true);
+                        Expect(TokenType.OpenParen, true);
+                        var s = ParseExpression();
+                        var end = Expect(TokenType.ClosingParen, true);
+                        return new PTCastExpr(token.location, end.location, type, s);
+                    }
 
                 case TokenType.OpenParen:
                     SkipNewlines();
@@ -573,7 +646,7 @@ namespace Cheez.Compiler.Parsing
             end = Expect(TokenType.ClosingParen, skipNewLines: true).location;
 
             // return type
-            if (PeekToken(skipNewLines: true).type == TokenType.Colon)
+            if (PeekToken(skipNewLines: false).type == TokenType.Colon)
             {
                 mLexer.NextToken();
                 returnType = ParseTypeExpression();

@@ -1,0 +1,37 @@
+// #load cstdio
+
+fn Main() {
+    let SeekCur: i32 = 1
+    let SeekEnd: i32 = 2
+    let SeekSet: i32 = 0
+
+    // open file
+    let filename = "grammar.g"
+    let file: FILE*
+    let err = fopen_s(&file, filename, "r")
+
+    if err != 0 {
+        println "Couldn't open file '", filename, "'"
+        return
+    }
+
+    // find out file size
+    fseek(file, 0, SeekEnd)
+    let size = ftell(file)
+    println "Loading file ", filename, " with size ", size, " bytes"
+    fseek(file, 0, SeekSet)
+
+    // allocate memory for file and load file
+    let buff = cast<i8*>(malloc(size + 1))
+    fread(buff, 1, cast<u64>(size), file)
+    buff[size] = 0
+
+    let text = cast<string>(buff)
+
+    //
+    println "==================="
+    println text
+    println "==================="
+
+    free(buff)
+}

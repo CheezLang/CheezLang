@@ -52,10 +52,10 @@ using string = const char*;
             sb.AppendLine();
 
             sb.AppendLine("// type declarations");
-            foreach (var td in workspace.GlobalScope.TypeDeclarations)
-            {
-                sb.AppendLine(GenerateCode(td, workspace.GlobalScope));
-            }
+            //foreach (var td in workspace.GlobalScope.TypeDeclarations)
+            //{
+            //    sb.AppendLine(GenerateCode(td, workspace.GlobalScope));
+            //}
             sb.AppendLine();
 
             sb.AppendLine("// forward declarations");
@@ -135,6 +135,9 @@ using string = const char*;
 
         public override string VisitFunctionDeclaration(AstFunctionDecl function, CppCodeGeneratorArgs data)
         {
+            if (!function.HasImplementation)
+                return "";
+
             var prevScope = nameDecorator.GetCurrentScope();
             var decoratedName = nameDecorator.GetDecoratedName(function);
             nameDecorator.SetCurrentScope(function);
@@ -169,7 +172,15 @@ using string = const char*;
                 sb.AppendLine(" {");
                 foreach (var s in function.Statements)
                 {
-                    sb.AppendLine(Indent(GenerateCode(s, null), 4));
+                    sb.Append(Indent(GenerateCode(s, null), 4));
+                    if (s is AstWhileStmt || s is AstIfStmt)
+                    {
+                        sb.AppendLine();
+                    }
+                    else
+                    {
+                        sb.AppendLine(";");
+                    }
                 }
                 sb.Append("}");
             }
@@ -190,14 +201,14 @@ using string = const char*;
             bool isFirst = true;
             var sepSb = new StringBuilder();
             
-            sepSb.Append(GenerateCode(print.Seperator, data.scope) ?? "");
+            sepSb.Append(GenerateCode(print.Seperator, null) ?? "");
             var sep = sepSb.ToString();
             foreach (var e in print.Expressions)
             {
                 if (!isFirst && print.Seperator != null)
                     sb.Append(" << ").Append(sep);
                 sb.Append(" << ");
-                sb.Append(GenerateCode(e, data.scope));
+                sb.Append(GenerateCode(e, null));
 
                 isFirst = false;
             }
@@ -214,16 +225,21 @@ using string = const char*;
 
         public override string VisitExpressionStatement(AstExprStmt stmt, CppCodeGeneratorArgs data)
         {
-            return $"{GenerateCode(stmt.Expr, data.scope)};";
+            return $"{GenerateCode(stmt.Expr, null)}";
         }
 
         public override string VisitIdentifierExpression(AstIdentifierExpr ident, CppCodeGeneratorArgs data)
         {
-            var v = data.scope.GetVariable(ident.Name);
+            var v = ident.Scope.GetVariable(ident.Name);
             var name = nameDecorator.GetDecoratedName(v);
             if (ident.Type is IntType i && i.SizeInBytes == 1)
                 return $"+{name}";
             return name;
+        }
+
+        public override string VisitAddressOfExpression(AstAddressOfExpr add, CppCodeGeneratorArgs data = default)
+        {
+            return $"&{add.SubExpression.Accept(this, data)}";
         }
 
         public override string VisitVariableDeclaration(AstVariableDecl variable, CppCodeGeneratorArgs data)
@@ -241,7 +257,6 @@ using string = const char*;
                 sb.Append($" = ");
                 sb.Append(GenerateCode(variable.Initializer, variable.Initializer.Scope));
             }
-            sb.Append(";");
 
             return Indent(sb.ToString(), data.indent);
         }
@@ -268,7 +283,7 @@ using string = const char*;
         
         public override string VisitAssignment(AstAssignment ass, CppCodeGeneratorArgs data)
         {
-            return Indent(ass.Target.Accept(this) + " = " + ass.Value.Accept(this) + ";", data.indent);
+            return Indent(ass.Target.Accept(this) + " = " + ass.Value.Accept(this), data.indent);
         }
         
         public override string VisitNumberExpression(AstNumberExpr num, CppCodeGeneratorArgs data)
@@ -280,6 +295,29 @@ using string = const char*;
             }
 
             return null;
+        }
+
+        public override string VisitWhileStatement(AstWhileStmt ws, CppCodeGeneratorArgs data = default)
+        {
+            var sb = new StringBuilder();
+            sb.Append("for (");
+
+            if (ws.PreAction != null)
+            {
+                sb.Append(ws.PreAction.Accept(this));
+            }
+
+            sb.Append("; ").Append(ws.Condition.Accept(this)).Append("; ");
+
+            if (ws.PostAction != null)
+            {
+                sb.Append(ws.PostAction.Accept(this));
+            }
+
+            sb.Append(") ");
+            sb.Append(ws.Body.Accept(this));
+
+            return Indent(sb.ToString(), data.indent);
         }
 
         public override string VisitIfStatement(AstIfStmt ifs, CppCodeGeneratorArgs data)
@@ -322,7 +360,7 @@ using string = const char*;
                 sb.Append("namespace ").Append(impl.Target).AppendLine("_impl {");
                 foreach (var f in impl.Functions)
                 {
-                    sb.AppendLine(GenerateCode(f, data.scope, 4));
+                    sb.AppendLine(GenerateCode(f, null, 4));
                 }
                 sb.Append("}");
                 mFunctionForwardDeclarations.AppendLine("}");
@@ -338,14 +376,14 @@ using string = const char*;
         public override string VisitReturnStatement(AstReturnStmt ret, CppCodeGeneratorArgs data)
         {
             if (ret.ReturnValue != null)
-                return $"return {GenerateCode(ret.ReturnValue, data.scope)};";
+                return $"return {GenerateCode(ret.ReturnValue, null)};";
             return "return;";
         }
 
         public override string VisitBinaryExpression(AstBinaryExpr bin, CppCodeGeneratorArgs data)
         {
-            var lhs = GenerateCode(bin.Left, data.scope);
-            var rhs = GenerateCode(bin.Right, data.scope);
+            var lhs = GenerateCode(bin.Left, null);
+            var rhs = GenerateCode(bin.Right, null);
 
             {
                 if (bin.Left is AstBinaryExpr b && b.Operator.GetPrecedence() < bin.Operator.GetPrecedence())
@@ -400,6 +438,11 @@ using string = const char*;
             return dot.Left.Accept(this) + "." + dot.Right;
         }
 
+        public override string VisitCastExpression(AstCastExpr cast, CppCodeGeneratorArgs data = default)
+        {
+            return $"({GetCTypeName(cast.Type)})({cast.SubExpression.Accept(this, data)})";
+        }
+
         public override string VisitCallExpression(AstCallExpr call, CppCodeGeneratorArgs data)
         {
             var args = string.Join(", ", call.Arguments.Select(a => a.Accept(this)));
@@ -409,8 +452,20 @@ using string = const char*;
                 return $"{call.Function}({args})";
             }
 
-            return $"{GenerateCode(call.Function, data.scope)}({args})";
+            return $"{GenerateCode(call.Function, null)}({args})";
         }
+
+        public override string VisitArrayAccessExpression(AstArrayAccessExpr arr, CppCodeGeneratorArgs data = default)
+        {
+            string sub = arr.SubExpression.Accept(this, data);
+            string index = arr.Indexer.Accept(this, data);
+
+            if (arr.SubExpression is AstBinaryExpr || arr.SubExpression is AstAddressOfExpr)
+                sub = $"({sub})";
+            return $"{sub}[{index}]";
+        }
+
+        #region Helper Methods
 
         private string GetCTypeName(CheezType type)
         {
@@ -418,6 +473,9 @@ using string = const char*;
             {
                 case IntType n:
                     return n.ToString();
+
+                case BoolType b:
+                    return "bool";
 
                 case PointerType p:
                      return GetCTypeName(p.TargetType) + "*";
@@ -427,6 +485,9 @@ using string = const char*;
 
                 case StringType s:
                     return "string";
+
+                case StructType s:
+                    return s.Declaration.Name;
 
                 default:
                     return "void";
@@ -446,5 +507,7 @@ using string = const char*;
                 return "";
             return new string(' ', level);
         }
+
+        #endregion
     }
 }

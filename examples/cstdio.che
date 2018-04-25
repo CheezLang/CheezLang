@@ -1,0 +1,18 @@
+// file stuff
+struct FILE {
+    _Placeholder: void*
+}
+
+fn fopen_s(file: FILE**, name: string, mode: string): i32
+fn fclose(file: FILE*): i32
+fn fseek(file: FILE*, offset: i32, origin: i32): i32
+fn ftell(file: FILE*): i32
+fn fread(buff: i8*, eSize: u64, eCount: u64, file: FILE*): u64
+
+// memory stuff
+fn malloc(size: i32): i8*
+fn free(mem: i8*)
+fn memset(ptr: void*, val: i32, count: u64): void*
+
+// other stuff
+fn printf(format: string, val: i8*)

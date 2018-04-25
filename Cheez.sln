@@ -10,8 +10,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{75693C29-814D-4E4F-8EC8-1E5F4CD9EA01}"
 	ProjectSection(SolutionItems) = preProject
 		examples\example_1.che = examples\example_1.che
-		examples\example_2.che = examples\example_2.che
 		examples\example_x.che = examples\example_x.che
+		examples\load_file.che = examples\load_file.che
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{61E7E744-0521-4156-BCB0-5E1DA76E69F6}"

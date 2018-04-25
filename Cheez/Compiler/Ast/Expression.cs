@@ -146,4 +146,66 @@ namespace Cheez.Compiler.Ast
             return visitor.VisitBoolExpression(this, data);
         }
     }
+
+    public class AstAddressOfExpr : AstExpression
+    {
+        public ParseTree.PTAddressOfExpr ParseTreeNode { get; }
+        public override ParseTree.PTExpr GenericParseTreeNode => ParseTreeNode;
+
+        public AstExpression SubExpression { get; set; }
+
+        public AstAddressOfExpr(ParseTree.PTAddressOfExpr node, AstExpression sub)
+        {
+            ParseTreeNode = node;
+            SubExpression = sub;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitAddressOfExpression(this, data);
+        }
+    }
+
+    public class AstCastExpr : AstExpression
+    {
+        public ParseTree.PTCastExpr ParseTreeNode { get; }
+        public override ParseTree.PTExpr GenericParseTreeNode => ParseTreeNode;
+
+        public AstExpression SubExpression { get; set; }
+
+        public AstCastExpr(ParseTree.PTCastExpr node, AstExpression sub)
+        {
+            ParseTreeNode = node;
+            SubExpression = sub;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitCastExpression(this, data);
+        }
+    }
+    
+    public class AstArrayAccessExpr : AstExpression
+    {
+        public ParseTree.PTArrayAccessExpr ParseTreeNode { get; }
+        public override ParseTree.PTExpr GenericParseTreeNode => ParseTreeNode;
+
+        public AstExpression SubExpression { get; set; }
+        public AstExpression Indexer { get; set; }
+
+        public AstArrayAccessExpr(ParseTree.PTArrayAccessExpr node, AstExpression sub, AstExpression index)
+        {
+            ParseTreeNode = node;
+            SubExpression = sub;
+            Indexer = index;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitArrayAccessExpression(this, data);
+        }
+    }
 }

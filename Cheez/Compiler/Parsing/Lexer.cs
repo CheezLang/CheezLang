@@ -22,6 +22,7 @@ namespace Cheez.Compiler.Parsing
         Comma,
         Period,
         Equal,
+        Ampersand,
 
         Plus,
         Minus,
@@ -45,6 +46,7 @@ namespace Cheez.Compiler.Parsing
         ClosingBracket,
 
         KwReturn,
+        KwCast,
         KwFn,
         KwStruct,
         KwImpl,
@@ -216,6 +218,7 @@ namespace Cheez.Compiler.Parsing
                 case '[': SimpleToken(ref token, TokenType.OpenBracket); break;
                 case ']': SimpleToken(ref token, TokenType.ClosingBracket); break;
                 case ',': SimpleToken(ref token, TokenType.Comma); break;
+                case '&': SimpleToken(ref token, TokenType.Ampersand); break;
                 case '*': SimpleToken(ref token, TokenType.Asterisk); break;
                 case '/': SimpleToken(ref token, TokenType.ForwardSlash); break;
                 case '+': SimpleToken(ref token, TokenType.Plus); break;
@@ -292,6 +295,7 @@ namespace Cheez.Compiler.Parsing
             switch (token.data as string)
             {
                 case "return": token.type = TokenType.KwReturn; break;
+                case "cast": token.type = TokenType.KwCast; break;
                 case "fn": token.type = TokenType.KwFn; break;
                 case "struct": token.type = TokenType.KwStruct; break;
                 case "impl": token.type = TokenType.KwImpl; break;
@@ -315,7 +319,7 @@ namespace Cheez.Compiler.Parsing
             token.type = TokenType.Identifier;
 
             int start = mLocation.index;
-            while (IsIdent(Current))
+            while (mLocation.index < mText.Length && IsIdent(Current))
             {
                 mLocation.index++;
             }

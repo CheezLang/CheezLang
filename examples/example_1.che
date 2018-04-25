@@ -1,17 +1,8 @@
+struct Human {
+    name: string
+    age: i32
+}
+
 fn Main() {
-    let a = 1
-    println a
-    
-    if a == 1 {
-        let a = a + 1
-        println a
-
-        let a = a + 1
-        println a
-    }
-
-    println a
-    
-    let a = a + 1
-    println a * 2
+    let h: Human
 }

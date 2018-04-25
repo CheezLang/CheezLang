@@ -152,4 +152,69 @@ namespace Cheez.Compiler.ParseTree
             return new AstIdentifierExpr(this, Name);
         }
     }
+
+    public class PTAddressOfExpr : PTExpr
+    {
+        public PTExpr Variable { get; set; }
+
+        public PTAddressOfExpr(TokenLocation beg, PTExpr v) : base(beg, beg)
+        {
+            this.Variable = v;
+        }
+
+        public override string ToString()
+        {
+            return $"&{Variable}";
+        }
+
+        public override AstExpression CreateAst()
+        {
+            return new AstAddressOfExpr(this, Variable.CreateAst());
+        }
+    }
+
+    public class PTCastExpr : PTExpr
+    {
+        public PTExpr SubExpression { get; set; }
+        public PTTypeExpr TargetType { get; set; }
+
+        public PTCastExpr(TokenLocation beg, TokenLocation end, PTTypeExpr target, PTExpr v) : base(beg, end)
+        {
+            this.SubExpression = v;
+            this.TargetType = target;
+        }
+
+        public override string ToString()
+        {
+            return $"cast<{TargetType}>({SubExpression})";
+        }
+
+        public override AstExpression CreateAst()
+        {
+            return new AstCastExpr(this, SubExpression.CreateAst());
+        }
+    }
+
+    public class PTArrayAccessExpr : PTExpr
+    {
+        public PTExpr SubExpression { get; set; }
+        public PTExpr Indexer { get; set; }
+
+        public PTArrayAccessExpr(TokenLocation beg, TokenLocation end, PTExpr sub, PTExpr index) : base(beg, end)
+        {
+            this.SubExpression = sub;
+            this.Indexer = index;
+        }
+
+        public override string ToString()
+        {
+            return $"{SubExpression}{Indexer}]";
+        }
+
+        public override AstExpression CreateAst()
+        {
+            return new AstArrayAccessExpr(this, SubExpression.CreateAst(), Indexer.CreateAst());
+        }
+    }
+    
 }

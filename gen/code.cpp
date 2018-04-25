@@ -24,21 +24,20 @@ using string = const char*;
 // forward declarations
 void Main();
 
+
+
+
+
+
+
+
+
+
 // global variables
 
 // function implementations
 void Main() {
-    i64 a = 1;
-    std::cout << a << '\n';
-    if (a == 1) {
-        i64 a___1 = a + 1;
-        std::cout << a___1 << '\n';
-        i64 a___2 = a___1 + 1;
-        std::cout << a___2 << '\n';
-    }
-    std::cout << a << '\n';
-    i64 a___3 = a + 1;
-    std::cout << a___3 * 2 << '\n';
+    Human h;
 }
 
 // entry point to the program

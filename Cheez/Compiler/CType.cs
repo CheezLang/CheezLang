@@ -21,10 +21,21 @@ namespace Cheez.Compiler
             CreateAlias("u32", IntType.GetIntType(4, false));
             CreateAlias("u64", IntType.GetIntType(8, false));
 
-            //CreateAlias("bool", BoolType.Instance);
+            CreateAlias("bool", BoolType.Instance);
+            CreateAlias("string", StringType.Instance);
+            CreateAlias("void", VoidType.Intance);
         }
 
-        public CheezType GetCType(PTTypeExpr expr)
+        public CheezType GetCheezType(string name)
+        {
+            if (!sTypes.ContainsKey(name))
+            {
+                return null;
+            }
+            return sTypes[name];
+        }
+
+        public CheezType GetCheezType(PTTypeExpr expr)
         {
             switch (expr)
             {
@@ -37,10 +48,10 @@ namespace Cheez.Compiler
                     return null;
 
                 case PTPointerTypeExpr p:
-                    return PointerType.GetPointerType(GetCType(p.TargetType));
+                    return PointerType.GetPointerType(GetCheezType(p.TargetType));
 
                 case PTArrayTypeExpr p:
-                    return ArrayType.GetArrayType(GetCType(p.ElementType));
+                    return ArrayType.GetArrayType(GetCheezType(p.ElementType));
 
                 default:
                     return null;
@@ -207,6 +218,11 @@ namespace Cheez.Compiler
     public class StructType : CheezType
     {
         public AstTypeDecl Declaration { get; set; }
+
+        public StructType(AstTypeDecl decl)
+        {
+            Declaration = decl;
+        }
 
         public override string ToString()
         {

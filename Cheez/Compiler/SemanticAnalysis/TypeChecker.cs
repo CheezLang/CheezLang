@@ -80,9 +80,12 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             // check body
-            foreach (var s in function.Statements)
+            if (function.HasImplementation)
             {
-                CheckTypes(s);
+                foreach (var s in function.Statements)
+                {
+                    CheckTypes(s);
+                }
             }
 
             return default;
@@ -93,6 +96,36 @@ namespace Cheez.Compiler.SemanticAnalysis
             foreach (var s in block.Statements)
             {
                 CheckTypes(s);
+            }
+
+            return default;
+        }
+
+        public override TypeCheckResult VisitWhileStatement(AstWhileStmt ws, TypeCheckerData data = default)
+        {
+            // check pre action
+            if (ws.PreAction != null) {
+                ws.PreAction = CheckTypes(ws.PreAction).stmt;
+            }
+
+            // check condition
+            {
+                var c = ws.Condition = CheckTypes(ws.Condition).expr;
+                if (c.Type != CheezType.Bool)
+                {
+                    workspace.ReportError(ws.Condition.GenericParseTreeNode, $"Condition of while statement has to be of type bool, but found type '{ws.Condition.Type}'");
+                }
+            }
+
+            // check post action
+            if (ws.PostAction != null)
+            {
+                ws.PostAction = CheckTypes(ws.PostAction).stmt;
+            }
+
+            // check body
+            {
+                var result = CheckTypes(ws.Body);
             }
 
             return default;
@@ -132,6 +165,22 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
             }
             return new TypeCheckResult(print);
+        }
+
+        public override TypeCheckResult VisitAssignment(AstAssignment ass, TypeCheckerData data = default)
+        {
+            ass.Target = CheckTypes(ass.Target).expr;
+            ass.Value = CheckTypes(ass.Value).expr;
+            ass.Value = InsertCastExpressionIf(ass.Value, ass.Value.Type, ass.Target.Type);
+
+            // @Todo: check if left side is lvalue
+
+            if (ass.Target.Type != ass.Value.Type)
+            {
+                workspace.ReportError(ass.Value.GenericParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
+            }
+
+            return new TypeCheckResult(ass);
         }
 
         public override TypeCheckResult VisitVariableDeclaration(AstVariableDecl varAst, TypeCheckerData data = default)
@@ -197,6 +246,13 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             bo.Type = CheezType.Bool;
             return new TypeCheckResult(bo);
+        }
+
+        public override TypeCheckResult VisitAddressOfExpression(AstAddressOfExpr add, TypeCheckerData data = default)
+        {
+            add.SubExpression = CheckTypes(add.SubExpression).expr;
+            add.Type = PointerType.GetPointerType(add.SubExpression.Type);
+            return new TypeCheckResult(add);
         }
 
         public override TypeCheckResult VisitIdentifierExpression(AstIdentifierExpr ident, TypeCheckerData data = default)
@@ -315,6 +371,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     workspace.ReportError(call.ParseTreeNode, "Return type of function does not exist!");
                     return new TypeCheckResult(call);
                 }
+                call.Type = func.ReturnType;
 
                 // @Temp
                 // check if types match
@@ -349,8 +406,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             return new TypeCheckResult(call);
         }
 
-        #region Helper Methods
-
         private AstExpression InsertCastExpressionIf(AstExpression e, CheezType sourceType, CheezType targetType)
         {
             if (sourceType == targetType)
@@ -364,6 +419,57 @@ namespace Cheez.Compiler.SemanticAnalysis
             //workspace.ReportError(e, $"Can't cast {sourceType} to {targetType}");
             return e;
         }
+
+        public override TypeCheckResult VisitArrayAccessExpression(AstArrayAccessExpr arr, TypeCheckerData data = default)
+        {
+            arr.SubExpression = CheckTypes(arr.SubExpression).expr;
+            arr.Indexer = CheckTypes(arr.Indexer).expr;
+
+            switch (arr.SubExpression.Type)
+            {
+                case ArrayType a:
+                    arr.Type = a.TargetType;
+                    break;
+                case PointerType p:
+                    arr.Type = p.TargetType;
+                    break;
+
+                default:
+                    workspace.ReportError(arr.SubExpression.GenericParseTreeNode, $"Left hand side of [] operator has to be an array or pointer type, but is {arr.SubExpression.Type}");
+                    break;
+            }
+
+            switch (arr.Indexer.Type)
+            {
+                case IntType _:
+                    break;
+
+                default:
+                    workspace.ReportError(arr.SubExpression.GenericParseTreeNode, $"Indexer of [] operator has to be an int type, but is {arr.Indexer.Type}");
+                    break;
+            }
+
+            return new TypeCheckResult(arr);
+        }
+
+        public override TypeCheckResult VisitCastExpression(AstCastExpr cast, TypeCheckerData data = default)
+        {
+            cast.Type = cast.Scope.GetCheezType(cast.ParseTreeNode.TargetType);
+
+            if (cast.Type == null)
+            {
+                workspace.ReportError(cast.ParseTreeNode.TargetType, $"Unknown type in cast: '{cast.ParseTreeNode.TargetType}'");
+                return new TypeCheckResult(cast);
+            }
+
+            cast.SubExpression = CheckTypes(cast.SubExpression).expr;
+
+            // @TODO: check if cast is valid
+
+            return new TypeCheckResult(cast);
+        }
+
+        #region Helper Methods
 
         private double OperateNumbers(double a, double b, Operator op)
         {

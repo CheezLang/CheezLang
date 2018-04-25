@@ -67,8 +67,8 @@
     <Compile Include="Compiler\ErrorHandler.cs" />
     <Compile Include="Compiler\Operator.cs" />
     <Compile Include="Compiler\ParseTree\ParseTreeItem.cs" />
-    <Compile Include="Compiler\ParseTree\PTExpressions.cs" />
     <Compile Include="Compiler\ParseTree\PTDeclarations.cs" />
+    <Compile Include="Compiler\ParseTree\PTExpressions.cs" />
     <Compile Include="Compiler\ParseTree\PTPrintStatement.cs" />
     <Compile Include="Compiler\ParseTree\PTStatements.cs" />
     <Compile Include="Compiler\ParseTree\PTTypeExpression.cs" />

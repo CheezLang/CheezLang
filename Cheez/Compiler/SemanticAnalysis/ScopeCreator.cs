@@ -51,6 +51,15 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #region Statements
 
+        public override ScopeCreatorResult VisitTypeDeclaration(AstTypeDecl type, ScopeCreatorArg data = default)
+        {
+            data.scope.TypeDeclarations.Add(type);
+            type.Scope = data.scope;
+            
+
+            return default;
+        }
+
         public override ScopeCreatorResult VisitFunctionDeclaration(AstFunctionDecl function, ScopeCreatorArg data = default)
         {
             data.scope.FunctionDeclarations.Add(function);
@@ -64,10 +73,13 @@ namespace Cheez.Compiler.SemanticAnalysis
                 p.Scope = function.SubScope;
             }
 
-            foreach (var s in function.Statements)
+            if (function.HasImplementation)
             {
-                var result = CreateScopes(s, subScope);
-                subScope = result.scope ?? subScope;
+                foreach (var s in function.Statements)
+                {
+                    var result = CreateScopes(s, subScope);
+                    subScope = result.scope ?? subScope;
+                }
             }
 
             return default;
@@ -106,6 +118,22 @@ namespace Cheez.Compiler.SemanticAnalysis
             return default;
         }
 
+        public override ScopeCreatorResult VisitWhileStatement(AstWhileStmt ws, ScopeCreatorArg data = default)
+        {
+            ws.Scope = data.scope;
+            var subScope = NewScope("while", data.scope);
+            var res = CreateScopes(ws.PreAction, subScope);
+            subScope = res.scope ?? subScope;
+
+            CreateScopes(ws.Condition, subScope);
+            CreateScopes(ws.Body, subScope);
+
+            CreateScopes(ws.PostAction, subScope);
+
+
+            return default;
+        }
+
         public override ScopeCreatorResult VisitPrintStatement(AstPrintStmt print, ScopeCreatorArg data = default)
         {
             print.Scope = data.scope;
@@ -134,6 +162,13 @@ namespace Cheez.Compiler.SemanticAnalysis
         #endregion
 
         #region Expressions
+
+        public override ScopeCreatorResult VisitAddressOfExpression(AstAddressOfExpr add, ScopeCreatorArg data = default)
+        {
+            add.Scope = data.scope;
+            CreateScopes(add.SubExpression, data.scope);
+            return default;
+        }
 
         public override ScopeCreatorResult VisitBinaryExpression(AstBinaryExpr bin, ScopeCreatorArg data = default)
         {
@@ -177,6 +212,21 @@ namespace Cheez.Compiler.SemanticAnalysis
         public override ScopeCreatorResult VisitTypeExpression(AstTypeExpr type, ScopeCreatorArg data = default)
         {
             type.Scope = data.scope;
+            return default;
+        }
+
+        public override ScopeCreatorResult VisitCastExpression(AstCastExpr cast, ScopeCreatorArg data = default)
+        {
+            cast.Scope = data.scope;
+            CreateScopes(cast.SubExpression, data.scope);
+            return default;
+        }
+
+        public override ScopeCreatorResult VisitArrayAccessExpression(AstArrayAccessExpr arr, ScopeCreatorArg data = default)
+        {
+            arr.Scope = data.scope;
+            CreateScopes(arr.SubExpression, data.scope);
+            CreateScopes(arr.Indexer, data.scope);
             return default;
         }
 

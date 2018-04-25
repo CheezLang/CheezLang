@@ -64,7 +64,7 @@ namespace Cheez.Compiler
                 Log($"{callingFunctionFile}:{callingFunctionName}():{callLineNumber}", ConsoleColor.DarkYellow);
             }
             // location, message
-            Log($"{beginning}: {message}", ConsoleColor.Red);
+            Log($"{beginning.file}: {message}", ConsoleColor.Red);
 
             // lines before current line
             {

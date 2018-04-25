@@ -86,6 +86,27 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
+    public class PTWhileStmt : PTStatement
+    {
+        public PTExpr Condition { get; set; }
+        public PTStatement Body { get; set; }
+        public PTVariableDecl PreAction { get; set; }
+        public PTStatement PostAction { get; set; }
+
+        public PTWhileStmt(TokenLocation beg, TokenLocation end, PTExpr cond, PTStatement body, PTVariableDecl pre, PTStatement post) : base(beg, end)
+        {
+            this.Condition = cond;
+            this.Body = body;
+            this.PreAction = pre;
+            this.PostAction = post;
+        }
+
+        public override AstStatement CreateAst()
+        {
+            return new AstWhileStmt(this, Condition.CreateAst(), Body.CreateAst(), PreAction?.CreateAst(), PostAction?.CreateAst());
+        }
+    }
+
     public class PTReturnStmt : PTStatement
     {
         public PTExpr ReturnValue { get; set; }
@@ -97,7 +118,7 @@ namespace Cheez.Compiler.ParseTree
 
         public override AstStatement CreateAst()
         {
-            return new AstReturnStmt(this, ReturnValue.CreateAst());
+            return new AstReturnStmt(this, ReturnValue?.CreateAst());
         }
     }
 }

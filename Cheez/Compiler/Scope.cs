@@ -28,7 +28,7 @@ namespace Cheez.Compiler
 
         public CheezType GetCheezType(PTTypeExpr expr)
         {
-            return types.GetCType(expr) ?? Parent?.GetCheezType(expr);
+            return types.GetCheezType(expr) ?? Parent?.GetCheezType(expr);
         }
 
         public AstFunctionDecl GetFunction(string name, List<CheezType> parameters)
@@ -37,11 +37,6 @@ namespace Cheez.Compiler
                 return mFunctionTable[name];
 
             return Parent?.GetFunction(name, parameters);
-        }
-
-        public CheezType GetType(string name)
-        {
-            throw new NotImplementedException();
         }
 
         public bool DefineVariable(string name, IVariableDecl variable)
@@ -60,6 +55,15 @@ namespace Cheez.Compiler
                 return mVariableTable[name];
 
             return Parent?.GetVariable(name);
+        }
+
+        public bool DefineType(AstTypeDecl t)
+        {
+            if (types.GetCheezType(t.Name) != null)
+                return false;
+
+            types.CreateAlias(t.Name, new StructType(t));
+            return true;
         }
 
         public bool DefineFunction(AstFunctionDecl f)
