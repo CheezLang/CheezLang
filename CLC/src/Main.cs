@@ -12,7 +12,7 @@ namespace CLC
         public static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
-            try
+            //try
             {
                 //var clang = StartProcess(@"D:\Program Files\LLVM\bin\clang++.exe", "-O0 -o test.exe code.cpp", "gen", stderr: Process_ErrorDataReceived);
                 //clang.WaitForExit();
@@ -31,9 +31,9 @@ namespace CLC
 
                 Run();
             }
-            catch (Exception e)
+            //catch (Exception e)
             {
-                Console.Error.WriteLine(e);
+                //Console.Error.WriteLine(e);
             }
 }
 
@@ -51,8 +51,18 @@ namespace CLC
 
             //queue.Complete();
             var compiler = new Compiler();
-            compiler.AddFile("examples/example_1.che", compiler.DefaultWorkspace);
-            compiler.AddFile("examples/cstdio.che", compiler.DefaultWorkspace);
+            var result = compiler.AddFile("examples/example_1.che", workspace: compiler.DefaultWorkspace);
+
+            if (result.HasErrors)
+            {
+                foreach (var e in result.Errors)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                return;
+            }
+
+            //compiler.AddFile("examples/cstdio.che", workspace: compiler.DefaultWorkspace);
             compiler.DefaultWorkspace.CompileAll();
 
             if (compiler.HasErrors)

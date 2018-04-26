@@ -1,8 +1,4 @@
-struct Human {
-    name: string
-    age: i32
-}
-
 fn Main() {
-    let h: Human
+    let i : i32 S
+
 }

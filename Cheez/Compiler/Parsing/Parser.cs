@@ -18,14 +18,19 @@ namespace Cheez.Compiler.Parsing
 
     public class Parser
     {
+        private delegate TokenLocation LocationResolver(Token t);
+        private delegate string ErrorMessageResolver(Token t);
+        private delegate PTExpr ExpressionParser(LocationResolver t, ErrorMessageResolver e);
+
         private Lexer mLexer;
-        private ErrorHandler mErrorHandler = new ErrorHandler();
+        private IErrorHandler mErrorHandler = new ErrorHandler();
 
         public bool HasErrors => mErrorHandler.HasErrors;
 
-        public Parser(Lexer lex)
+        public Parser(Lexer lex, IErrorHandler errHandler)
         {
             mLexer = lex;
+            mErrorHandler = errHandler ?? mErrorHandler;
         }
 
         private void SkipNewlines()
@@ -33,19 +38,23 @@ namespace Cheez.Compiler.Parsing
             PeekToken(true);
         }
 
-        private Token Expect(TokenType type, bool skipNewLines, Func<TokenType, object, string> customErrorMessage = null)
+        private Token Expect(TokenType type, bool skipNewLines, Func<TokenType, object, string> customErrorMessage = null, LocationResolver customLocation = null)
         {
             while (true)
             {
                 var tok = mLexer.NextToken();
+
+                if (tok.type == TokenType.EOF)
+                    return tok;
 
                 if (skipNewLines && tok.type == TokenType.NewLine)
                     continue;
 
                 if (tok.type != type)
                 {
-                    string message = customErrorMessage != null ? customErrorMessage(tok.type, tok.data) : $"Unexpected token ({tok.type}) {tok.data}, expected {type}";
-                    throw new ParsingError(tok.location, message);
+                    string message = customErrorMessage?.Invoke(tok.type, tok.data) ?? $"Unexpected token ({tok.type}) {tok.data}, expected {type}";
+                    var loc = customLocation?.Invoke(tok) ?? tok.location;
+                    throw new ParsingError(loc, message);
                 }
 
                 return tok;
@@ -71,6 +80,9 @@ namespace Cheez.Compiler.Parsing
             {
                 var tok = mLexer.PeekToken();
 
+                if (tok.type == TokenType.EOF)
+                    return tok;
+
                 if (skipNewLines && tok.type == TokenType.NewLine)
                 {
                     mLexer.NextToken();
@@ -93,6 +105,9 @@ namespace Cheez.Compiler.Parsing
             {
                 var tok = mLexer.PeekToken();
 
+                if (tok.type == TokenType.EOF)
+                    return tok;
+
                 if (skipNewLines && tok.type == TokenType.NewLine)
                 {
                     mLexer.NextToken();
@@ -108,6 +123,9 @@ namespace Cheez.Compiler.Parsing
             while (true)
             {
                 var tok = mLexer.NextToken();
+
+                if (tok.type == TokenType.EOF)
+                    return tok;
 
                 if (SkipNewLines && tok.type == TokenType.NewLine)
                 {
@@ -170,9 +188,18 @@ namespace Cheez.Compiler.Parsing
                 var stackTrace = new System.Diagnostics.StackTrace(err);
                 var topFrame = stackTrace.GetFrame(0);
                 mErrorHandler.ReportError(mLexer, err.Location, err.Message, err.HelpLink, topFrame.GetMethod().Name, topFrame.GetFileLineNumber());
-                while (mLexer.PeekToken().type != TokenType.NewLine)
-                    mLexer.NextToken();
+                while (true)
+                {
+                    var next = mLexer.PeekToken();
 
+                    if (next.type == TokenType.EOF || next.type == TokenType.NewLine)
+                        break;
+
+                    if (next.type != TokenType.NewLine)
+                    {
+                        mLexer.NextToken();
+                    }
+                }
                 return null;
             }
         }
@@ -197,6 +224,14 @@ namespace Cheez.Compiler.Parsing
             var members = new List<PTMemberDecl>();
             var beginnig = Expect(TokenType.KwStruct, skipNewLines: true);
             var name = ParseIdentifierExpr(true);
+            List<PTDirective> directives = new List<PTDirective>();
+
+            while (PeekToken(false).type == TokenType.HashTag)
+            {
+                var hashtag = mLexer.NextToken();
+                var dname = ParseIdentifierExpr(false);
+                directives.Add(new PTDirective(hashtag.location, dname.End, dname));
+            }
 
             Expect(TokenType.OpenBrace, skipNewLines: true);
 
@@ -213,7 +248,7 @@ namespace Cheez.Compiler.Parsing
 
             var end = Expect(TokenType.ClosingBrace, skipNewLines: true);
 
-            return new PTTypeDecl(beginnig.location, end.location, name, members);
+            return new PTTypeDecl(beginnig.location, end.location, name, members, directives);
         }
 
         private PTImplBlock ParseImplBlock()
@@ -261,7 +296,7 @@ namespace Cheez.Compiler.Parsing
         private PTVariableDecl ParseVariableDeclaration(params TokenType[] delimiters)
         {
             var beginning = Expect(TokenType.KwVar, skipNewLines: true);
-            var name = ParseIdentifierExpr(true);
+            var name = ParseIdentifierExpr(true, (t, d) => $"Expected identifier after 'let' in variable declaration", t => beginning.location);
             TokenLocation end = name.End;
 
             var next = mLexer.PeekToken();
@@ -289,7 +324,7 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.Equal:
                     mLexer.NextToken();
                     SkipNewlines();
-                    init = ParseExpression();
+                    init = ParseExpression(errorMessage: t => $"Expected expression after '='");
                     next = mLexer.PeekToken();
                     end = init.End;
                     if (delimiters.Contains(next.type))
@@ -359,7 +394,11 @@ namespace Cheez.Compiler.Parsing
             if (PeekToken(skipNewLines: true).type == TokenType.KwElse)
             {
                 mLexer.NextToken();
-                elseCase = ParseBlockStatement();
+
+                if (PeekToken(skipNewLines: false).type == TokenType.KwIf)
+                    elseCase = ParseIfStatement();
+                else
+                    elseCase = ParseBlockStatement();
                 end = elseCase.End;
             }
 
@@ -393,229 +432,6 @@ namespace Cheez.Compiler.Parsing
             return new PTPrintStmt(beginning.location, expr.Last().End, expr, seperator, beginning.type == TokenType.KwPrintln);
         }
 
-        #region Expression Parsing
-        private PTTypeExpr ParseTypeExpression()
-        {
-            PTTypeExpr type = null;
-            bool cond = true;
-            while (cond)
-            {
-                var next = mLexer.PeekToken();
-                switch (next.type)
-                {
-                    case TokenType.Identifier:
-                        mLexer.NextToken();
-                        type = new PTNamedTypeExpr(next.location, next.location, (string)next.data);
-                        break;
-
-                    case TokenType.Asterisk:
-                        mLexer.NextToken();
-                        if (type == null)
-                            throw new ParsingError(next.location, "Failed to parse type expression: * must be preceded by an actual type");
-                        type = new PTPointerTypeExpr(type.Beginning, next.location, type);
-                        break;
-
-                    case TokenType.OpenBracket:
-                        if (type == null)
-                            throw new ParsingError(next.location, "Failed to parse type expression: [] must be preceded by an actual type");
-                        mLexer.NextToken();
-                        next = Expect(TokenType.ClosingBracket, skipNewLines: true);
-                        type = new PTArrayTypeExpr(type.Beginning, next.location, type);
-                        break;
-
-                    default:
-                        cond = false;
-                        break;
-                }
-            }
-            return type;
-        }
-
-        private PTExpr ParseExpression()
-        {
-            Func<PTExpr> muldiv = () => ParseBinaryLeftAssociativeExpression(ParseAddressOfOrCallExpression,
-                (TokenType.Asterisk, Operator.Multiply),
-                (TokenType.ForwardSlash, Operator.Divide));
-
-            Func<PTExpr> addsub = () => ParseBinaryLeftAssociativeExpression(muldiv,
-                (TokenType.Plus, Operator.Add),
-                (TokenType.Minus, Operator.Subtract));
-
-            Func<PTExpr> comparison = () => ParseBinaryLeftAssociativeExpression(addsub,
-                (TokenType.Less, Operator.Less),
-                (TokenType.LessEqual, Operator.LessEqual),
-                (TokenType.Greater, Operator.Greater),
-                (TokenType.GreaterEqual, Operator.GreaterEqual),
-                (TokenType.DoubleEqual, Operator.Equal),
-                (TokenType.NotEqual, Operator.NotEqual));
-
-            Func<PTExpr> and = () => ParseBinaryLeftAssociativeExpression(comparison,
-                (TokenType.KwAnd, Operator.And));
-
-            Func<PTExpr> or = () => ParseBinaryLeftAssociativeExpression(and,
-                (TokenType.KwOr, Operator.Or));
-
-            return or();
-        }
-
-        private PTExpr ParseBinaryLeftAssociativeExpression(Func<PTExpr> sub, params (TokenType, Operator)[] types)
-        {
-            return ParseLeftAssociativeExpression(sub, type =>
-            {
-                foreach (var (t, o) in types)
-                {
-                    if (t == type)
-                        return o;
-                }
-
-                return null;
-            });
-        }
-
-        private PTExpr ParseLeftAssociativeExpression(Func<PTExpr> sub, Func<TokenType, Operator?> tokenMapping)
-        {
-            var lhs = sub();
-            PTExpr rhs = null;
-
-            while (true)
-            {
-                var next = PeekToken(skipNewLines: false);
-
-                var op = tokenMapping(next.type);
-                if (op == null)
-                {
-                    return lhs;
-                }
-
-                mLexer.NextToken();
-                rhs = sub();
-                lhs = new PTBinaryExpr(lhs.Beginning, rhs.End, op.Value, lhs, rhs);
-            }
-        }
-
-        private PTExpr ParseAddressOfOrCallExpression()
-        {
-            var next = PeekToken(false);
-            if (next.type == TokenType.Ampersand)
-            {
-                mLexer.NextToken();
-                return new PTAddressOfExpr(next.location, ParseDotExpression());
-            }
-
-            return ParseCallExpression();
-        }
-
-        private PTExpr ParseCallExpression()
-        {
-            var expr = ParseDotExpression();
-
-            while (true)
-            {
-                switch (PeekToken(false).type)
-                {
-                    case TokenType.OpenParen:
-                        {
-                            mLexer.NextToken();
-                            List<PTExpr> args = new List<PTExpr>();
-                            if (PeekToken(true).type != TokenType.ClosingParen)
-                            {
-                                while (true)
-                                {
-                                    args.Add(ParseExpression());
-
-                                    var next = PeekToken(true);
-                                    if (next.type == TokenType.Comma)
-                                        mLexer.NextToken();
-                                    else if (next.type == TokenType.ClosingParen)
-                                        break;
-                                    else
-                                        throw new Exception($"Failed to parse function call, expected comma or closing paren, got {next.data} ({next.type})");
-                                }
-                            }
-                            var end = Expect(TokenType.ClosingParen, true);
-
-                            expr = new PTCallExpr(expr.Beginning, end.location, expr, args);
-                        }
-                        break;
-
-                    case TokenType.OpenBracket:
-                        {
-                            mLexer.NextToken();
-                            var index = ParseExpression();
-                            var end = Expect(TokenType.ClosingBracket, true);
-                            expr = new PTArrayAccessExpr(expr.Beginning, end.location, expr, index);
-                        }
-                        break;
-
-                    default:
-                        return expr;
-                }
-            }
-        }
-
-        private PTExpr ParseDotExpression()
-        {
-            var left = ParseAtomicExpression();
-
-            while (mLexer.PeekToken().type == TokenType.Period)
-            {
-                mLexer.NextToken();
-                var right = ParseIdentifierExpr(true);
-                left = new PTDotExpr(left.Beginning, right.End, left, right);
-            }
-
-            return left;
-        }
-
-        private PTExpr ParseAtomicExpression()
-        {
-            var token = mLexer.NextToken();
-            switch (token.type)
-            {
-                case TokenType.Identifier:
-                    return new PTIdentifierExpr(token.location, (string)token.data);
-
-                case TokenType.StringLiteral:
-                    return new PTStringLiteral(token.location, (string)token.data);
-
-                case TokenType.NumberLiteral:
-                    return new PTNumberExpr(token.location, (NumberData)token.data);
-
-                case TokenType.KwTrue:
-                    return new PTBoolExpr(token.location, true);
-                case TokenType.KwFalse:
-                    return new PTBoolExpr(token.location, false);
-
-                case TokenType.KwCast:
-                    {
-                        Expect(TokenType.Less, true);
-                        var type = ParseTypeExpression();
-                        Expect(TokenType.Greater, true);
-                        Expect(TokenType.OpenParen, true);
-                        var s = ParseExpression();
-                        var end = Expect(TokenType.ClosingParen, true);
-                        return new PTCastExpr(token.location, end.location, type, s);
-                    }
-
-                case TokenType.OpenParen:
-                    SkipNewlines();
-                    var sub = ParseExpression();
-                    sub.Beginning = token.location;
-                    sub.End = Expect(TokenType.ClosingParen, skipNewLines: true, customErrorMessage: (t, d) => $"Expected open paren '(' at end of group expression, got ({t}) {d}").location;
-                    return sub;
-
-                default:
-                    throw new ParsingError(token.location, $"Failed to parse expression, unpexpected token ({token.type}) {token.data}");
-            }
-        }
-
-        private PTIdentifierExpr ParseIdentifierExpr(bool SkipNewLines, Func<TokenType, object, string> customErrorMessage = null)
-        {
-            var t = Expect(TokenType.Identifier, SkipNewLines, customErrorMessage);
-            return new PTIdentifierExpr(t.location, (string)t.data);
-        }
-        #endregion
-
         private PTFunctionDecl ParseFunctionDeclaration()
         {
             var beginning = Expect(TokenType.KwFn, skipNewLines: true);
@@ -628,8 +444,12 @@ namespace Cheez.Compiler.Parsing
 
             // parameters
             Expect(TokenType.OpenParen, skipNewLines: true);
-            while (PeekToken(true).type != TokenType.ClosingParen)
+            while (true)
             {
+                var token = PeekToken(true);
+                if (token.type == TokenType.ClosingParen || token.type == TokenType.EOF)
+                    break;
+
                 var pname = ParseIdentifierExpr(true);
                 Expect(TokenType.Colon, true);
                 var tname = ParseTypeExpression();
@@ -665,6 +485,12 @@ namespace Cheez.Compiler.Parsing
             while (true)
             {
                 var token = PeekToken(true);
+
+                if (token.type == TokenType.EOF)
+                {
+                    throw new ParsingError(token.location, "Unexpected end of file in function declaration.");
+                }
+
                 if (token.type == TokenType.ClosingBrace)
                     break;
 
@@ -677,5 +503,244 @@ namespace Cheez.Compiler.Parsing
 
             return new PTFunctionDecl(beginning.location, end, name, parameters, returnType, statements);
         }
+
+        #region Expression Parsing
+
+        private PTTypeExpr ParseTypeExpression()
+        {
+            PTTypeExpr type = null;
+            bool cond = true;
+            while (cond)
+            {
+                var next = mLexer.PeekToken();
+                switch (next.type)
+                {
+                    case TokenType.Identifier:
+                        mLexer.NextToken();
+                        type = new PTNamedTypeExpr(next.location, next.location, (string)next.data);
+                        break;
+
+                    case TokenType.Asterisk:
+                        mLexer.NextToken();
+                        if (type == null)
+                            throw new ParsingError(next.location, "Failed to parse type expression: * must be preceded by an actual type");
+                        type = new PTPointerTypeExpr(type.Beginning, next.location, type);
+                        break;
+
+                    case TokenType.OpenBracket:
+                        if (type == null)
+                            throw new ParsingError(next.location, "Failed to parse type expression: [] must be preceded by an actual type");
+                        mLexer.NextToken();
+                        next = Expect(TokenType.ClosingBracket, skipNewLines: true);
+                        type = new PTArrayTypeExpr(type.Beginning, next.location, type);
+                        break;
+
+                    case TokenType.NewLine when type == null:
+                        throw new ParsingError(next.location, "Expected type expression, found new line");
+                    case TokenType.EOF when type == null:
+                        throw new ParsingError(next.location, "Expected type expression, found end of file");
+
+
+                    case TokenType t when type == null:
+                        throw new ParsingError(next.location, $"Unexpected token in type expression: {next}");
+
+                    default:
+                        cond = false;
+                        break;
+                }
+            }
+            return type;
+        }
+
+        private PTExpr ParseExpression(LocationResolver location = null, ErrorMessageResolver errorMessage = null)
+        {
+            location = location ?? (t => t.location);
+            errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
+
+            ExpressionParser muldiv = (l, e) => ParseBinaryLeftAssociativeExpression(ParseAddressOfOrCallExpression, l, e,
+                (TokenType.Asterisk, Operator.Multiply),
+                (TokenType.ForwardSlash, Operator.Divide),
+                (TokenType.Percent, Operator.Modulo));
+
+            ExpressionParser addsub = (l, e) => ParseBinaryLeftAssociativeExpression(muldiv, l, e,
+                (TokenType.Plus, Operator.Add),
+                (TokenType.Minus, Operator.Subtract));
+
+            ExpressionParser comparison = (l, e) => ParseBinaryLeftAssociativeExpression(addsub, l, e,
+                (TokenType.Less, Operator.Less),
+                (TokenType.LessEqual, Operator.LessEqual),
+                (TokenType.Greater, Operator.Greater),
+                (TokenType.GreaterEqual, Operator.GreaterEqual),
+                (TokenType.DoubleEqual, Operator.Equal),
+                (TokenType.NotEqual, Operator.NotEqual));
+
+            ExpressionParser and = (l, e) => ParseBinaryLeftAssociativeExpression(comparison, l, e,
+                (TokenType.KwAnd, Operator.And));
+
+            ExpressionParser or = (l, e) => ParseBinaryLeftAssociativeExpression(and, l, e,
+                (TokenType.KwOr, Operator.Or));
+
+
+            return or(location, errorMessage);
+        }
+
+        private PTExpr ParseBinaryLeftAssociativeExpression(ExpressionParser sub, LocationResolver location, ErrorMessageResolver errorMessage, params (TokenType, Operator)[] types)
+        {
+            return ParseLeftAssociativeExpression(sub, location, errorMessage, type =>
+            {
+                foreach (var (t, o) in types)
+                {
+                    if (t == type)
+                        return o;
+                }
+
+                return null;
+            });
+        }
+
+        private PTExpr ParseLeftAssociativeExpression(ExpressionParser sub, LocationResolver location, ErrorMessageResolver errorMessage, Func<TokenType, Operator?> tokenMapping)
+        {
+            var lhs = sub(location, errorMessage);
+            PTExpr rhs = null;
+
+            while (true)
+            {
+                var next = PeekToken(skipNewLines: false);
+
+                var op = tokenMapping(next.type);
+                if (op == null)
+                {
+                    return lhs;
+                }
+
+                mLexer.NextToken();
+                rhs = sub(location, errorMessage);
+                lhs = new PTBinaryExpr(lhs.Beginning, rhs.End, op.Value, lhs, rhs);
+            }
+        }
+
+        private PTExpr ParseAddressOfOrCallExpression(LocationResolver location, ErrorMessageResolver errorMessage = null)
+        {
+            var next = PeekToken(false);
+            if (next.type == TokenType.Ampersand)
+            {
+                mLexer.NextToken();
+                return new PTAddressOfExpr(next.location, ParseDotExpression(location, errorMessage));
+            }
+
+            return ParseCallExpression(location, errorMessage);
+        }
+
+        private PTExpr ParseCallExpression(LocationResolver location, ErrorMessageResolver errorMessage)
+        {
+            var expr = ParseDotExpression(location, errorMessage);
+
+            while (true)
+            {
+                switch (PeekToken(false).type)
+                {
+                    case TokenType.OpenParen:
+                        {
+                            mLexer.NextToken();
+                            List<PTExpr> args = new List<PTExpr>();
+                            if (PeekToken(true).type != TokenType.ClosingParen)
+                            {
+                                while (true)
+                                {
+                                    args.Add(ParseExpression(location));
+
+                                    var next = PeekToken(true);
+                                    if (next.type == TokenType.Comma)
+                                        mLexer.NextToken();
+                                    else if (next.type == TokenType.ClosingParen)
+                                        break;
+                                    else
+                                        throw new Exception($"Failed to parse function call, expected comma or closing paren, got {next.data} ({next.type})");
+                                }
+                            }
+                            var end = Expect(TokenType.ClosingParen, true);
+
+                            expr = new PTCallExpr(expr.Beginning, end.location, expr, args);
+                        }
+                        break;
+
+                    case TokenType.OpenBracket:
+                        {
+                            mLexer.NextToken();
+                            var index = ParseExpression(location, errorMessage);
+                            var end = Expect(TokenType.ClosingBracket, true, customLocation: location);
+                            expr = new PTArrayAccessExpr(expr.Beginning, end.location, expr, index);
+                        }
+                        break;
+
+                    default:
+                        return expr;
+                }
+            }
+        }
+
+        private PTExpr ParseDotExpression(LocationResolver location, ErrorMessageResolver errorMessage)
+        {
+            var left = ParseAtomicExpression(location, errorMessage);
+
+            while (mLexer.PeekToken().type == TokenType.Period)
+            {
+                mLexer.NextToken();
+                var right = ParseIdentifierExpr(true, (t, o) => $"Right side of '.' has to be an identifier", location);
+                left = new PTDotExpr(left.Beginning, right.End, left, right);
+            }
+
+            return left;
+        }
+
+        private PTExpr ParseAtomicExpression(LocationResolver location, ErrorMessageResolver errorMessage)
+        {
+            var token = mLexer.NextToken();
+            switch (token.type)
+            {
+                case TokenType.Identifier:
+                    return new PTIdentifierExpr(token.location, (string)token.data);
+
+                case TokenType.StringLiteral:
+                    return new PTStringLiteral(token.location, (string)token.data);
+
+                case TokenType.NumberLiteral:
+                    return new PTNumberExpr(token.location, (NumberData)token.data);
+
+                case TokenType.KwTrue:
+                    return new PTBoolExpr(token.location, true);
+                case TokenType.KwFalse:
+                    return new PTBoolExpr(token.location, false);
+
+                case TokenType.KwCast:
+                    {
+                        Expect(TokenType.Less, true);
+                        var type = ParseTypeExpression();
+                        Expect(TokenType.Greater, true);
+                        Expect(TokenType.OpenParen, true);
+                        var s = ParseExpression(location);
+                        var end = Expect(TokenType.ClosingParen, true);
+                        return new PTCastExpr(token.location, end.location, type, s);
+                    }
+
+                case TokenType.OpenParen:
+                    SkipNewlines();
+                    var sub = ParseExpression(location);
+                    sub.Beginning = token.location;
+                    sub.End = Expect(TokenType.ClosingParen, skipNewLines: true, customErrorMessage: (t, d) => $"Expected closing paren ')' at end of group expression, got ({t}) {d}").location;
+                    return sub;
+
+                default:
+                    throw new ParsingError(location?.Invoke(token) ?? token.location, errorMessage?.Invoke(token) ?? $"Failed to parse expression, unpexpected token ({token.type}) {token.data}");
+            }
+        }
+
+        private PTIdentifierExpr ParseIdentifierExpr(bool SkipNewLines, Func<TokenType, object, string> customErrorMessage = null, LocationResolver customLocation = null)
+        {
+            var t = Expect(TokenType.Identifier, SkipNewLines, customErrorMessage, customLocation);
+            return new PTIdentifierExpr(t.location, (string)t.data);
+        }
+        #endregion
+
     }
 }

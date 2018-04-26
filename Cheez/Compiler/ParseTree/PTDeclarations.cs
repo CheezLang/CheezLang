@@ -117,17 +117,20 @@ namespace Cheez.Compiler.ParseTree
     {
         public PTIdentifierExpr Name { get; }
         public List<PTMemberDecl> Members { get; }
+        public List<PTDirective> Directives { get; }
 
-        public PTTypeDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTMemberDecl> members) : base(beg, end)
+        public PTTypeDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTMemberDecl> members, List<PTDirective> directives) : base(beg, end)
         {
             this.Name = name;
             this.Members = members;
+            this.Directives = directives;
         }
 
         public override AstStatement CreateAst()
         {
             var mems = Members.Select(m => m.CreateAst()).ToList();
-            return new AstTypeDecl(this, mems);
+            var dirs = Directives.Select(d => d.CreateAst()).ToDictionary(d => d.Name);
+            return new AstTypeDecl(this, mems, dirs);
         }
     }
 

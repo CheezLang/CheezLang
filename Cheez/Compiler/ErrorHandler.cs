@@ -8,7 +8,15 @@ using System.Text;
 
 namespace Cheez.Compiler
 {
-    public class ErrorHandler
+    public interface IErrorHandler
+    {
+        void ReportError(IText text, ILocation location, string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
+        void ReportError(ILocation location, string message, object ptn, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
+
+        bool HasErrors { get; }
+    }
+
+    public class ErrorHandler : IErrorHandler
     {
         private int mErrorCount = 0;
         public bool HasErrors => mErrorCount > 0;
@@ -155,6 +163,11 @@ namespace Cheez.Compiler
             }
 
             return 0;
+        }
+
+        public void ReportError(ILocation location, string message, object ptn, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -1,5 +1,5 @@
 // file stuff
-struct FILE {
+struct FILE #DisableCodeGen {
     _Placeholder: void*
 }
 

@@ -52,19 +52,24 @@ using string = const char*;
             sb.AppendLine();
 
             sb.AppendLine("// type declarations");
-            //foreach (var td in workspace.GlobalScope.TypeDeclarations)
-            //{
-            //    sb.AppendLine(GenerateCode(td, workspace.GlobalScope));
-            //}
+            foreach (var td in workspace.GlobalScope.TypeDeclarations)
+            {
+                if (td.HasDirective("DisableCodeGen"))
+                    continue;
+                sb.AppendLine(GenerateCode(td, workspace.GlobalScope));
+            }
             sb.AppendLine();
 
             sb.AppendLine("// forward declarations");
             foreach (var func in workspace.GlobalScope.FunctionDeclarations)
             {
-                sb.AppendLine(GenerateCode(func, workspace.GlobalScope));
+                var code = GenerateCode(func, workspace.GlobalScope);
+                if (string.IsNullOrEmpty(code))
+                    continue;
+                sb.AppendLine(code);
             }
             sb.AppendLine();
-            
+
             sb.AppendLine("// global variables");
             foreach (var varia in workspace.GlobalScope.VariableDeclarations)
             {
@@ -143,11 +148,11 @@ using string = const char*;
             nameDecorator.SetCurrentScope(function);
 
             var sb = new StringBuilder();
-            
+
             string returnType = GetCTypeName(function.ReturnType) ?? "void";
 
             string funcName = GetDecoratedName(function);
-            
+
             sb.Append($"{returnType} {decoratedName}(");
 
             if (mImplTarget != null)
@@ -164,7 +169,7 @@ using string = const char*;
 
                 first = false;
             }
-            
+
             sb.Append(")");
 
             if (mEmitFunctionBody)
@@ -200,7 +205,7 @@ using string = const char*;
 
             bool isFirst = true;
             var sepSb = new StringBuilder();
-            
+
             sepSb.Append(GenerateCode(print.Seperator, null) ?? "");
             var sep = sepSb.ToString();
             foreach (var e in print.Expressions)
@@ -280,12 +285,12 @@ using string = const char*;
         {
             return $"\"{str.Value.Replace("\r", "").Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
         }
-        
+
         public override string VisitAssignment(AstAssignment ass, CppCodeGeneratorArgs data)
         {
             return Indent(ass.Target.Accept(this) + " = " + ass.Value.Accept(this), data.indent);
         }
-        
+
         public override string VisitNumberExpression(AstNumberExpr num, CppCodeGeneratorArgs data)
         {
             switch (num.Data.Type)
@@ -348,7 +353,7 @@ using string = const char*;
             return Indent(sb.ToString(), data.indent);
         }
         #endregion
-        
+
         public override string VisitImplBlock(AstImplBlock impl, CppCodeGeneratorArgs data)
         {
             Debug.Assert(mImplTarget == null);
@@ -405,6 +410,8 @@ using string = const char*;
                     return $"{lhs} * {rhs}";
                 case Operator.Divide:
                     return $"{lhs} / {rhs}";
+                case Operator.Modulo:
+                    return $"{lhs} % {rhs}";
 
                 case Operator.Less:
                     return $"{lhs} < {rhs}";
@@ -478,10 +485,10 @@ using string = const char*;
                     return "bool";
 
                 case PointerType p:
-                     return GetCTypeName(p.TargetType) + "*";
+                    return GetCTypeName(p.TargetType) + "*";
 
                 case ArrayType a:
-                    return GetCTypeName(a.TargetType)+ "*";
+                    return GetCTypeName(a.TargetType) + "*";
 
                 case StringType s:
                     return "string";

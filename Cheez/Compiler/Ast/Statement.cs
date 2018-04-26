@@ -1,27 +1,29 @@
 ﻿using Cheez.Compiler.Visitor;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Cheez.Compiler.Ast
 {
     public abstract class AstStatement : IVisitorAcceptor
     {
-        public int Id { get; }
-
         public Scope Scope { get; set; }
+        public Dictionary<string, AstDirective> Directives { get; }
 
-        public AstStatement()
+        public AstStatement(Dictionary<string, AstDirective> dirs = null)
         {
-            this.Id = Util.NewId;
+            this.Directives = dirs ?? new Dictionary<string, AstDirective>();
         }
 
-        public override bool Equals(object obj)
+        public bool HasDirective(string name)
         {
-            return obj == this;
+            return Directives.ContainsKey(name);
         }
 
-        public override int GetHashCode()
+        public AstDirective GetDirective(string name)
         {
-            return Id.GetHashCode();
+            if (!Directives.ContainsKey(name))
+                return null;
+            return Directives[name];
         }
 
         [DebuggerStepThrough]

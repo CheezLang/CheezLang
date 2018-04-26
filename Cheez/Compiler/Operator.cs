@@ -6,6 +6,7 @@
         Subtract,
         Multiply,
         Divide,
+        Modulo,
 
         Less,
         LessEqual,
@@ -44,6 +45,7 @@
 
                 case Operator.Multiply:
                 case Operator.Divide:
+                case Operator.Modulo:
                     return 10;
 
                 default:

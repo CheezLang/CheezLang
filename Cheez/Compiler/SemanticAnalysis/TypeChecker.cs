@@ -172,12 +172,14 @@ namespace Cheez.Compiler.SemanticAnalysis
             ass.Target = CheckTypes(ass.Target).expr;
             ass.Value = CheckTypes(ass.Value).expr;
             ass.Value = InsertCastExpressionIf(ass.Value, ass.Value.Type, ass.Target.Type);
-
-            // @Todo: check if left side is lvalue
-
+            
             if (ass.Target.Type != ass.Value.Type)
             {
                 workspace.ReportError(ass.Value.GenericParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
+            }
+            if (!ass.Target.GetFlag(ExprFlags.IsLValue))
+            {
+                workspace.ReportError(ass.Target.GenericParseTreeNode, $"Can't assign to rvalue");
             }
 
             return new TypeCheckResult(ass);
@@ -248,6 +250,41 @@ namespace Cheez.Compiler.SemanticAnalysis
             return new TypeCheckResult(bo);
         }
 
+        public override TypeCheckResult VisitDotExpression(AstDotExpr dot, TypeCheckerData data = default)
+        {
+            dot.Left = CheckTypes(dot.Left).expr;
+
+            if (dot.Left.Type is StructType s)
+            {
+                AstMemberDecl member = null;
+                foreach (var m in s.Declaration.Members)
+                {
+                    if (m.Name == dot.Right)
+                    {
+                        member = m;
+                        break;
+                    }
+                }
+
+                if (member == null)
+                {
+                    workspace.ReportError(dot.ParseTreeNode.Right, "................");
+                }
+                else
+                {
+                    dot.Type = member.Type;
+                }
+            }
+            else
+            {
+                workspace.ReportError(dot.Left.GenericParseTreeNode, $"Left side of '.' has to a struct type, got '{dot.Left.Type}'");
+            }
+
+            dot.SetFlag(ExprFlags.IsLValue);
+
+            return new TypeCheckResult(dot);
+        }
+
         public override TypeCheckResult VisitAddressOfExpression(AstAddressOfExpr add, TypeCheckerData data = default)
         {
             add.SubExpression = CheckTypes(add.SubExpression).expr;
@@ -266,6 +303,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             ident.Type = variable.VarType;
+            ident.SetFlag(ExprFlags.IsLValue);
             return new TypeCheckResult(ident);
         }
 
@@ -448,6 +486,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                     workspace.ReportError(arr.SubExpression.GenericParseTreeNode, $"Indexer of [] operator has to be an int type, but is {arr.Indexer.Type}");
                     break;
             }
+
+            arr.SetFlag(ExprFlags.IsLValue);
 
             return new TypeCheckResult(arr);
         }

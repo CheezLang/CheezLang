@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler\Ast\Assignment.cs" />
+    <Compile Include="Compiler\Ast\AstDirective.cs" />
     <Compile Include="Compiler\Ast\BlockStatement.cs" />
     <Compile Include="Compiler\Ast\Expression.cs" />
     <Compile Include="Compiler\Ast\ExpressionStatement.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="Compiler\Operator.cs" />
     <Compile Include="Compiler\ParseTree\ParseTreeItem.cs" />
     <Compile Include="Compiler\ParseTree\PTDeclarations.cs" />
+    <Compile Include="Compiler\ParseTree\PTDirective.cs" />
     <Compile Include="Compiler\ParseTree\PTExpressions.cs" />
     <Compile Include="Compiler\ParseTree\PTPrintStatement.cs" />
     <Compile Include="Compiler\ParseTree\PTStatements.cs" />

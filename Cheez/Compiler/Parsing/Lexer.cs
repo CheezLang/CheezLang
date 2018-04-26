@@ -23,11 +23,13 @@ namespace Cheez.Compiler.Parsing
         Period,
         Equal,
         Ampersand,
+        HashTag,
 
         Plus,
         Minus,
         Asterisk,
         ForwardSlash,
+        Percent,
 
         Less,
         LessEqual,
@@ -100,6 +102,11 @@ namespace Cheez.Compiler.Parsing
         public TokenType type;
         public TokenLocation location;
         public object data;
+
+        public override string ToString()
+        {
+            return $"({location.line}:{location.index - location.lineStartIndex}) ({type}) {data}";
+        }
     }
 
     public struct NumberData
@@ -196,6 +203,7 @@ namespace Cheez.Compiler.Parsing
         {
             var token = new Token();
             token.location = mLocation.Clone();
+            token.location.end = token.location.index;
             token.type = TokenType.EOF;
             if (mLocation.index >= mText.Length)
                 return token;
@@ -210,6 +218,7 @@ namespace Cheez.Compiler.Parsing
                 case ':': SimpleToken(ref token, TokenType.Colon); break;
                 case ';': SimpleToken(ref token, TokenType.Semicolon); break;
                 case '.': SimpleToken(ref token, TokenType.Period); break;
+                case '#': SimpleToken(ref token, TokenType.HashTag); break;
                 case '=': SimpleToken(ref token, TokenType.Equal); break;
                 case '(': SimpleToken(ref token, TokenType.OpenParen); break;
                 case ')': SimpleToken(ref token, TokenType.ClosingParen); break;
@@ -222,6 +231,7 @@ namespace Cheez.Compiler.Parsing
                 case '*': SimpleToken(ref token, TokenType.Asterisk); break;
                 case '/': SimpleToken(ref token, TokenType.ForwardSlash); break;
                 case '+': SimpleToken(ref token, TokenType.Plus); break;
+                case '%': SimpleToken(ref token, TokenType.Percent); break;
                 case '-': SimpleToken(ref token, TokenType.Minus); break;
                 case '<': SimpleToken(ref token, TokenType.Less); break;
                 case '>': SimpleToken(ref token, TokenType.Greater); break;

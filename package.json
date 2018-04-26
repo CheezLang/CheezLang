@@ -1,0 +1,24 @@
+{
+	"name": "lsp--sample",
+	"description": "A language server for CheezLang",
+	"author": "Nimaoth",
+	"license": "MIT",
+	"version": "0.0.1",
+	"publisher": "Nimaoth",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Nimaoth/CheezLang"
+	},
+	"scripts": {
+		"postinstall": "cd VSCodeExtension && npm install && cd ..",
+		"compile": "tsc -p LanguageServer/tsconfig.json && cd server && npm run compile && cd ..",
+		"compile:client": "tsc -p LanguageServer/tsconfig.json",
+		"watch:client": "tsc -w -p LanguageServer/tsconfig.json",
+		"compile:server": "cd server && npm run compile && cd .."
+	},
+	"devDependencies": {
+		"@types/mocha": "^2.2.42",
+		"@types/node": "^6.0.88",
+		"typescript": "^2.5.2"
+	}
+}

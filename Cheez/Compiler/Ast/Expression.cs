@@ -4,6 +4,11 @@ using System.Diagnostics;
 
 namespace Cheez.Compiler.Ast
 {
+    public enum ExprFlags
+    {
+        IsLValue = 0
+    }
+
     public abstract class AstExpression : IVisitorAcceptor
     {
         public int Id { get; }
@@ -12,10 +17,21 @@ namespace Cheez.Compiler.Ast
 
         public CheezType Type { get; set; }
         public Scope Scope { get; set; }
+        private int mFlags = 0;
 
         public AstExpression()
         {
             this.Id = Util.NewId;
+        }
+
+        public void SetFlag(ExprFlags f)
+        {
+            mFlags |= 1 << (int)f;
+        }
+
+        public bool GetFlag(ExprFlags f)
+        {
+            return (mFlags & (1 << (int)f)) != 0;
         }
 
         public override bool Equals(object obj)
