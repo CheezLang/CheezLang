@@ -4,54 +4,65 @@ using System.Diagnostics;
 using System.IO;
 using System;
 using System.Text;
+using CommandLine;
+using System.Collections.Generic;
 
-namespace CLC
+namespace CheezCLI
 {
     class Prog
     {
-        public static void Main(string[] args)
+        class CompilerOptions
         {
-            Console.OutputEncoding = Encoding.UTF8;
-            //try
-            {
-                Run();
-            }
-            //catch (Exception e)
-            {
-                //Console.Error.WriteLine(e);
-            }
-}
+            [Value(0, Min = 1)]
+            public IEnumerable<string> Files { get; set; }
+        }
 
-        public static void Run()
+        public static int Main(string[] args)
+        {
+            //var opts = new CompilerOptions()
+            //{
+            //    Files = new List<string> { "test.che", "another.che" },
+            //    TestOption = "loll"
+            //};
+
+            //var s = Parser.Default.FormatCommandLine(opts);
+            //Console.WriteLine(s);
+            //return;
+
+            Console.OutputEncoding = Encoding.UTF8;
+
+            var argsParser = Parser.Default;
+            //argsParser.Settings.HelpWriter = CommandLine.Text.HelpText.DefaultParsingErrorsHandler()
+
+            return argsParser.ParseArguments<CompilerOptions>(args)
+                .MapResult(
+                    options => Run(options),
+                    _ => 1);
+        }
+
+        static int Run(CompilerOptions options)
         {
             var stopwatch = Stopwatch.StartNew();
-            // CompilationQueue queue = new CompilationQueue(2);
-            //queue.CompileFile("examples/example_1.che");
-            //queue.CompileFile("examples/example_2.che");
-
-            // tests
-            /*
-            queue.CompileFile("examples/tests/test1.che");
-            */
-
-            //queue.Complete();
+            
             var compiler = new Compiler();
-            var result = compiler.AddFile("examples/example_1.che", workspace: compiler.DefaultWorkspace);
-
-            if (result.HasErrors)
+            foreach (var file in options.Files)
             {
-                foreach (var e in result.Errors)
+                var result = compiler.AddFile(file, workspace: compiler.DefaultWorkspace);
+                
+                if (result.HasErrors)
                 {
-                    Console.WriteLine(e.Message);
+                    foreach (var e in result.Errors)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+                    return 2;
                 }
-                return;
             }
-
-            //compiler.AddFile("examples/cstdio.che", workspace: compiler.DefaultWorkspace);
+            
             compiler.DefaultWorkspace.CompileAll();
 
             if (compiler.HasErrors)
-                return;
+                return 3;
             //compiler.CompileAll();
 
             var ourCompileTime = stopwatch.Elapsed;
@@ -84,6 +95,8 @@ namespace CLC
                 var testProc = StartProcess(@"gen\test.exe", workingDirectory: "gen", stdout: (s, e) => System.Console.WriteLine(e.Data));
                 testProc.WaitForExit();
             }
+
+            return 0;
         }
 
         private static bool GenerateAndCompileCode(Workspace workspace)
@@ -104,7 +117,7 @@ namespace CLC
             clang.WaitForExit();
 
             //var clangOutput = process.StandardOutput.ReadToEnd();
-            
+
             System.Console.WriteLine($"Clang finished compiling with exit code {clang.ExitCode}");
             return clang.ExitCode == 0;
         }

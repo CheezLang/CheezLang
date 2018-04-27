@@ -22,10 +22,16 @@ using string = const char*;
 // type declarations
 
 // forward declarations
+void Main();
 
 // global variables
 
 // function implementations
+void Main() {
+    for (; true; ) {
+        std::cout << "hi" << '\n';
+    }
+}
 
 // entry point to the program
 int main()

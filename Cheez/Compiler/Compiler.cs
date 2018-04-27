@@ -105,7 +105,6 @@ namespace Cheez.Compiler
                 workspace = mMainWorkspace;
 
             // parse file
-            List<PTStatement> statements = new List<PTStatement>();
             var lexer = body != null ? Lexer.FromString(body) : Lexer.FromFile(fileName);
             var file = new PTFile(fileName, lexer.Text);
             var parser = new Parser(lexer, file);
@@ -123,7 +122,7 @@ namespace Cheez.Compiler
                     }
                     if (s is PTFunctionDecl || s is PTTypeDecl)
                     {
-                        statements.Add(s);
+                        file.Statements.Add(s);
                     }
                     else
                     {

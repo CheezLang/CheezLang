@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cheez", "Cheez\Cheez.csproj", "{18994E2F-310A-460F-AB2F-3AF665CE7F67}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheezCompiler", "Cheez\CheezCompiler.csproj", "{18994E2F-310A-460F-AB2F-3AF665CE7F67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CLC", "CLC\CLC.csproj", "{7E8D323A-959C-4387-8405-184081032D62}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompilerCLI", "CLC\CompilerCLI.csproj", "{7E8D323A-959C-4387-8405-184081032D62}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{75693C29-814D-4E4F-8EC8-1E5F4CD9EA01}"
 	ProjectSection(SolutionItems) = preProject

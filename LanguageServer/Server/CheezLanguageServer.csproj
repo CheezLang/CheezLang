@@ -63,9 +63,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Cheez\Cheez.csproj">
+    <ProjectReference Include="..\..\Cheez\CheezCompiler.csproj">
       <Project>{18994e2f-310a-460f-ab2f-3af665ce7f67}</Project>
-      <Name>Cheez</Name>
+      <Name>CheezCompiler</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

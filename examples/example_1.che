@@ -2,5 +2,4 @@ fn Main() {
     while true {
         println "hi"
     }
-    
 }
