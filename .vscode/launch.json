@@ -8,14 +8,15 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}/VSCodeExtension"
+				"--extensionDevelopmentPath=${workspaceRoot}/LanguageServer/VSCodeExtension"
 			],
 			"stopOnEntry": false,
 			"sourceMaps": true,
 			"outFiles": [
-				"${workspaceRoot}/VSCodeExtension/out/**/*.js"
-			],
-			"preLaunchTask": "watch:client"
+				"${workspaceRoot}/LanguageServer/VSCodeExtension/out/**/*.js"
+			]
+			
+			//,"preLaunchTask": "watch:client"
 		}
 	]
 }

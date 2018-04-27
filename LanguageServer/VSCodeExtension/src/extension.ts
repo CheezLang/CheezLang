@@ -4,7 +4,6 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as path from 'path';
 import * as os from 'os';
 
 import { workspace, ExtensionContext } from 'vscode';
@@ -13,8 +12,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-lan
 export function activate(context: ExtensionContext) {
 
 	// The server is implemented in C#
-	let serverCommand = context.asAbsolutePath(path.join('..', 'LanguageServer', 'bin', 'Release', 'CheezLanguageServer.exe'));
-	let serverCommandDebug = context.asAbsolutePath(path.join('..', 'LanguageServer', 'bin', 'Debug', 'CheezLanguageServer.exe'));
+	let serverCommand = 'D:\\Utilities\\CheezLanguageServer\\CheezLanguageServer.exe';
 	let commandOptions = { stdio: 'pipe' };
 	
 	// If the extension is launched in debug mode then the debug server options are used
@@ -22,10 +20,10 @@ export function activate(context: ExtensionContext) {
 	let serverOptions: ServerOptions =
 		(os.platform() === 'win32') ? {
 			run : { command: serverCommand, options: commandOptions },
-			debug: { command: serverCommandDebug, options: commandOptions }
+			debug: { command: serverCommand, options: commandOptions }
 		} : {
 			run : { command: 'mono', args: [serverCommand], options: commandOptions },
-			debug: { command: 'mono', args: [serverCommandDebug], options: commandOptions }
+			debug: { command: 'mono', args: [serverCommand], options: commandOptions }
 		}
 	
 	// Options to control the language client

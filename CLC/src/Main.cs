@@ -14,21 +14,6 @@ namespace CLC
             Console.OutputEncoding = Encoding.UTF8;
             //try
             {
-                //var clang = StartProcess(@"D:\Program Files\LLVM\bin\clang++.exe", "-O0 -o test.exe code.cpp", "gen", stderr: Process_ErrorDataReceived);
-                //clang.WaitForExit();
-
-                //if (clang.ExitCode == 0)
-                //{
-                //    Console.WriteLine();
-                //    Console.WriteLine($"Running code:");
-                //    Console.WriteLine("=======================================");
-                //    var testProc = StartProcess(@"gen\test.exe", workingDirectory: "gen", stdout: (s, e) => System.Console.WriteLine(e.Data));
-                //    testProc.WaitForExit();
-
-                //    Console.WriteLine("=======================================");
-                //    Console.WriteLine($"Program exited with code {testProc.ExitCode}");
-                //}
-
                 Run();
             }
             //catch (Exception e)

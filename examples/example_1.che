@@ -1,4 +1,6 @@
 fn Main() {
-    let i : i32 S
-
+    while true {
+        println "hi"
+    }
+    
 }

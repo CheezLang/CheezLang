@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using Cheez.Compiler;
+using Cheez.Compiler.Parsing;
 using LanguageServer;
 using LanguageServer.Json;
 using LanguageServer.Parameters;
@@ -213,6 +214,17 @@ namespace CheezLanguageServer
         protected override Result<DocumentHighlight[], ResponseError> DocumentHighlight(TextDocumentPositionParams @params)
         {
             return base.DocumentHighlight(@params);
+        }
+
+        protected override Result<SymbolInformation[], ResponseError> DocumentSymbols(DocumentSymbolParams @params)
+        {
+            var symbols = new List<SymbolInformation>();
+
+
+            var doc = _documents.GetTextDocumentItem(@params.textDocument);
+            
+
+            return Result<SymbolInformation[], ResponseError>.Success(symbols.ToArray());
         }
 
         #endregion

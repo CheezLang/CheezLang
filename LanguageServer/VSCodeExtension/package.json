@@ -1,5 +1,5 @@
 {
-	"name": "lsp--sample",
+	"name": "cheezlangls",
 	"description": "A language server for CheezLang",
 	"author": "Nimaoth",
 	"license": "MIT",
@@ -16,7 +16,8 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onLanguage:cheezlang"
+		"onLanguage:cheezls",
+		"workspaceContains:**/*.che"
 	],
 	"main": "./out/src/extension",
 	"contributes": {
@@ -30,7 +31,8 @@
 					"cheez",
 					"Cheez",
 					"CheezLang"
-				]
+				],
+				"configuration": "./language-configuration.json"
 			}
 		],
 		"configuration": {
@@ -68,10 +70,16 @@
 		"compile": "tsc -p ./",
 		"watch": "tsc -w -p ./",
 		"update-vscode": "node ./node_modules/vscode/bin/install",
-		"postinstall": "node ./node_modules/vscode/bin/install"
+		"postinstall": "node ./node_modules/vscode/bin/install",
+		"deploy": "echo deploying..."
 	},
 	"dependencies": {
 		"vscode": "^1.1.5",
 		"vscode-languageclient": "^3.4.2"
+	},
+	"devDependencies": {
+		"@types/mocha": "^2.2.42",
+		"@types/node": "^6.0.88",
+		"typescript": "^2.5.2"
 	}
 }

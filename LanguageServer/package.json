@@ -1,5 +1,5 @@
 {
-	"name": "lsp--sample",
+	"name": "cheezlangls",
 	"description": "A language server for CheezLang",
 	"author": "Nimaoth",
 	"license": "MIT",

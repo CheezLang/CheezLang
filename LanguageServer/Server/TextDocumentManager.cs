@@ -1,4 +1,5 @@
-﻿using LanguageServer.Parameters.TextDocument;
+﻿using LanguageServer.Parameters;
+using LanguageServer.Parameters.TextDocument;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,16 @@ namespace CheezLanguageServer
             }
             _all.Add(document);
             OnChanged(document);
+        }
+
+        public TextDocumentItem GetTextDocumentItem(Uri uri)
+        {
+            return _all.FirstOrDefault(x => x.uri == uri);
+        }
+
+        public TextDocumentItem GetTextDocumentItem(TextDocumentIdentifier textDocument)
+        {
+            return GetTextDocumentItem(textDocument.uri);
         }
 
         public void Change(Uri uri, long version, TextDocumentContentChangeEvent[] changeEvents)
