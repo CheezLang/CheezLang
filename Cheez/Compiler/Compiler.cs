@@ -69,24 +69,13 @@ namespace Cheez.Compiler
         private Dictionary<string, PTFile> mFiles = new Dictionary<string, PTFile>();
         private Workspace mMainWorkspace;
         private Dictionary<string, Workspace> mWorkspaces = new Dictionary<string, Workspace>();
-        private ErrorHandler mErrorHandler = new ErrorHandler();
+        public IErrorHandler ErrorHandler { get; }
 
         public Workspace DefaultWorkspace => mMainWorkspace;
 
-        public bool HasErrors {
-            get
-            {
-                if (mErrorHandler.HasErrors)
-                    return true;
-                foreach (var w in mWorkspaces.Values)
-                    if (w.HasErrors)
-                        return true;
-                return false;
-            }
-        }
-
-        public Compiler()
+        public Compiler(IErrorHandler errorHandler)
         {
+            ErrorHandler = errorHandler;
             mMainWorkspace = new Workspace(this);
             mWorkspaces["main"] = mMainWorkspace;
         }
@@ -105,38 +94,35 @@ namespace Cheez.Compiler
                 workspace = mMainWorkspace;
 
             // parse file
-            var lexer = body != null ? Lexer.FromString(body) : Lexer.FromFile(fileName);
+            var lexer = body != null ? Lexer.FromString(body, ErrorHandler) : Lexer.FromFile(fileName, ErrorHandler);
+            var parser = new Parser(lexer, ErrorHandler);
             var file = new PTFile(fileName, lexer.Text);
-            var parser = new Parser(lexer, file);
 
             try
             {
                 while (true)
                 {
 
-                    var s = parser.ParseStatement();
+                    var result = parser.ParseStatement();
+                    var s = result.stmt;
 
-                    if (s == null)
-                    {
-                        break;
-                    }
                     if (s is PTFunctionDecl || s is PTTypeDecl)
                     {
                         file.Statements.Add(s);
                     }
-                    else
+                    else if (s != null)
                     {
-                        file.ReportError(s, "Only variable and function declarations are allowed on in global scope", s);
+                        ErrorHandler.ReportError(lexer, s, "Only variable and function declarations are allowed on in global scope");
                     }
+
+                    if (result.done)
+                        break;
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 throw;
             }
-
-            if (parser.HasErrors)
-                mErrorHandler.ReportCompilerError($"Failed to parse file '{fileName}'");
 
             mFiles[fileName] = file;
             workspace.AddFile(file);

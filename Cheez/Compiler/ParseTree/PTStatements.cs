@@ -1,5 +1,6 @@
 ﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.Parsing;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -17,6 +18,21 @@ namespace Cheez.Compiler.ParseTree
         }
 
         public abstract AstStatement CreateAst();
+    }
+
+    public class PTErrorStmt : PTStatement
+    {
+        public string Reason { get; set; }
+
+        public PTErrorStmt(TokenLocation beg, string reason) : base(beg, beg)
+        {
+            this.Reason = reason;
+        }
+
+        public override AstStatement CreateAst()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class PTAssignment : PTStatement

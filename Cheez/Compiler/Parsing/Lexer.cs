@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cheez.Compiler.ParseTree;
+using System;
 using System.IO;
 using System.Text;
 
@@ -141,10 +142,13 @@ namespace Cheez.Compiler.Parsing
 
         public string Text => mText;
 
-        public static Lexer FromFile(string fileName)
+        private IErrorHandler mErrorHandler;
+
+        public static Lexer FromFile(string fileName, IErrorHandler errorHandler)
         {
             return new Lexer
             {
+                mErrorHandler = errorHandler,
                 mText = File.ReadAllText(fileName, Encoding.UTF8).Replace("\r\n", "\n"),
                 mLocation = new TokenLocation
                 {
@@ -156,10 +160,11 @@ namespace Cheez.Compiler.Parsing
             };
         }
 
-        public static Lexer FromString(string str)
+        public static Lexer FromString(string str, IErrorHandler errorHandler)
         {
             return new Lexer
             {
+                mErrorHandler = errorHandler,
                 mText = str.Replace("\r\n", "\n"),
                 mLocation = new TokenLocation
                 {
@@ -190,6 +195,7 @@ namespace Cheez.Compiler.Parsing
 
             if (SkipWhitespaceAndComments(out TokenLocation loc))
             {
+                loc.end = loc.index;
                 Token tok = new Token();
                 tok.location = loc;
                 tok.type = TokenType.NewLine;
@@ -271,7 +277,11 @@ namespace Cheez.Compiler.Parsing
                 else if (c == '`')
                 {
                     if (mLocation.index >= mText.Length)
-                        throw new ParsingError(mLocation, $"Unexpected end of file while parsing string literal");
+                    {
+                        mErrorHandler.ReportError(this, new Location(mLocation), $"Unexpected end of file while parsing string literal");
+                        token.data = sb.ToString();
+                        return;
+                    }
                     switch (Current)
                     {
                         case 'n': sb.Append('\n'); break;
@@ -288,7 +298,7 @@ namespace Cheez.Compiler.Parsing
 
             if (!foundEnd)
             {
-                throw new ParsingError(mLocation, $"Unexpected end of string literal");
+                mErrorHandler.ReportError(this, new Location(mLocation), $"Unexpected end of string literal");
             }
 
             token.data = sb.ToString();

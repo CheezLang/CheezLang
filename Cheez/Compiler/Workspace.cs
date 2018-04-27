@@ -15,8 +15,7 @@ namespace Cheez.Compiler
 
         private PriorityQueue<CompilationUnit> mCompilationQueue = new PriorityQueue<CompilationUnit>();
         private List<(CompilationUnit unit, object condition)> mWaitingQueue = new List<(CompilationUnit, object)>();
-
-        private ErrorHandler mErrorHandler = new ErrorHandler();
+        
         public bool HasErrors { get; private set; }
 
         private List<AstStatement> mStatements = new List<AstStatement>();
@@ -117,72 +116,11 @@ namespace Cheez.Compiler
             }
         }
 
-        //private void EnqueueUnit(CompilationUnit unit)
-        //{
-        //    mCompilationQueue.Enqueue(0, unit);
-        //}
-
-        //private void CheckWaitingQueue()
-        //{
-        //    for (int i = mWaitingQueue.Count - 1; i >= 0; i--)
-        //    {
-        //        var v = mWaitingQueue[i];
-        //        var unit = v.unit;
-        //        var condition = v.condition;
-
-        //        switch (condition)
-        //        {
-        //            case WaitForType t:
-        //                if (unit.file.PrivateScope.Types.GetCType(t.TypeName) != null)
-        //                {
-        //                    EnqueueUnit(unit);
-        //                    mWaitingQueue.RemoveAt(i);
-        //                }
-        //                break;
-        //        }
-        //    }
-        //}
-
-        //public void Compile()
-        //{
-        //    while (true)
-        //    {
-        //        if (mCompilationQueue.IsEmpty)
-        //        {
-        //            if (mWaitingQueue.Count == 0)
-        //                return;
-
-        //            CheckWaitingQueue();
-        //            if (mCompilationQueue.IsEmpty && mWaitingQueue.Count > 0)
-        //            {
-        //                // compilation error: unresolved references
-        //                throw new Exception("Compilation Error");
-        //            }
-        //        }
-
-        //        var next = mCompilationQueue.Dequeue();
-
-        //        try
-        //        {
-        //            Compile(next);
-        //        }
-        //        catch (WaitForType w)
-        //        {
-        //            mWaitingQueue.Add((next, w));
-        //        }
-        //    }
-        //}
-
-        //private void Compile(CompilationUnit unit)
-        //{
-
-        //}
-
         public void ReportError(ILocation location, string errorMessage, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             HasErrors = true;
             var file = mFiles[location.Beginning.file];
-            mErrorHandler.ReportError(file, location, errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
+            mCompiler.ErrorHandler.ReportError(file, location, errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
         }
     }
 }

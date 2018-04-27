@@ -1,5 +1,6 @@
 ﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.Parsing;
+using System;
 
 namespace Cheez.Compiler.ParseTree
 {
@@ -12,6 +13,16 @@ namespace Cheez.Compiler.ParseTree
         public override AstExpression CreateAst()
         {
             return new AstTypeExpr(this);
+        }
+    }
+
+    public class PTErrorTypeExpr : PTTypeExpr
+    {
+        public string Reason { get; set; }
+
+        public PTErrorTypeExpr(TokenLocation beg, string reason) : base(beg, beg)
+        {
+            this.Reason = reason;
         }
     }
 

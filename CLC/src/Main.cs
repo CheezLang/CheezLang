@@ -13,27 +13,18 @@ namespace CheezCLI
     {
         class CompilerOptions
         {
-            [Value(0, Min = 1)]
+            [Option('r', "run", HelpText = "Specifies whether the code should be run immediatly", Default = false, Required = false, Hidden = false, MetaValue = "STRING", SetName = "run")]
+            public bool RunCode { get; set; }
+
+            [Value(1, Min = 1)]
             public IEnumerable<string> Files { get; set; }
         }
 
         public static int Main(string[] args)
         {
-            //var opts = new CompilerOptions()
-            //{
-            //    Files = new List<string> { "test.che", "another.che" },
-            //    TestOption = "loll"
-            //};
-
-            //var s = Parser.Default.FormatCommandLine(opts);
-            //Console.WriteLine(s);
-            //return;
-
             Console.OutputEncoding = Encoding.UTF8;
 
             var argsParser = Parser.Default;
-            //argsParser.Settings.HelpWriter = CommandLine.Text.HelpText.DefaultParsingErrorsHandler()
-
             return argsParser.ParseArguments<CompilerOptions>(args)
                 .MapResult(
                     options => Run(options),
@@ -42,38 +33,26 @@ namespace CheezCLI
 
         static int Run(CompilerOptions options)
         {
+            Console.WriteLine(Parser.Default.FormatCommandLine(options));
+
             var stopwatch = Stopwatch.StartNew();
-            
-            var compiler = new Compiler();
+
+            var errorHandler = new ConsoleErrorHandler();
+
+            var compiler = new Compiler(errorHandler);
             foreach (var file in options.Files)
             {
-                var result = compiler.AddFile(file, workspace: compiler.DefaultWorkspace);
-                
-                if (result.HasErrors)
-                {
-                    foreach (var e in result.Errors)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-                    return 2;
-                }
+                compiler.AddFile(file, workspace: compiler.DefaultWorkspace);
             }
-            
+
             compiler.DefaultWorkspace.CompileAll();
 
-            if (compiler.HasErrors)
-                return 3;
-            //compiler.CompileAll();
-
             var ourCompileTime = stopwatch.Elapsed;
-            System.Console.WriteLine($"Our compile time  : {ourCompileTime}");
+            System.Console.WriteLine($"Compilation finished in {ourCompileTime}");
 
-            // print code
-            //var printer = new AstPrinter();
-            //foreach (var s in file.Statements)
-            //{
-            //    System.Console.WriteLine(s.Accept(printer));
-            //}
+            if (errorHandler.HasErrors)
+                return 3;
+
 
             // generate code
             System.Console.WriteLine();
@@ -83,11 +62,9 @@ namespace CheezCLI
             bool clangOk = GenerateAndCompileCode(compiler.DefaultWorkspace);
 
             var clangTime = stopwatch.Elapsed;
-            System.Console.WriteLine();
-            System.Console.WriteLine($"Compilation finished in {ourCompileTime + clangTime}.");
             System.Console.WriteLine($"Clang compile time: {clangTime}");
 
-            if (clangOk)
+            if (options.RunCode && clangOk)
             {
                 System.Console.WriteLine();
                 System.Console.WriteLine($"Running code:");

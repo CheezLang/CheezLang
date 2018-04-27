@@ -26,6 +26,21 @@ namespace Cheez.Compiler.ParseTree
         //}
     }
 
+    public class PTErrorExpr : PTExpr
+    {
+        public string Reason { get; set; }
+
+        public PTErrorExpr(TokenLocation beg, string reason) : base(beg, beg)
+        {
+            this.Reason = reason;
+        }
+
+        public override AstExpression CreateAst()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public abstract class PTLiteral : PTExpr
     {
         public PTLiteral(TokenLocation beg, TokenLocation end) : base(beg, end)
