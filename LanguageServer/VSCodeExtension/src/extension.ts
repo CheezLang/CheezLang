@@ -4,41 +4,50 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-//import * as os from 'os';
+import * as os from 'os';
 import * as net from 'net';
 
-import { workspace, ExtensionContext } from 'vscode';
+import { workspace, ExtensionContext, window } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, StreamInfo } from 'vscode-languageclient';
-//import { TransportKind } from 'vscode-languageclient/lib/client';
 
 export function activate(context: ExtensionContext) {
+	const debugPort: number = workspace.getConfiguration().get('cheezls.debug.languageServerPort');
 
-	// The server is implemented in C#
-	//let serverCommand = 'D:\\Utilities\\CheezLanguageServer\\CheezLanguageServer.exe';
-	//let commandOptions = { stdio: 'pipe' };
+	let serverOptions: ServerOptions = null
 
-	// If the extension is launched in debug mode then the debug server options are used
-	// Otherwise the run options are used
-	// let serverOptions: ServerOptions =
-	// 	(os.platform() === 'win32') ? {
-	// 		run: { command: serverCommand, options: commandOptions },
-	// 		debug: { command: serverCommand, options: commandOptions }
-	// 	} : {
-	// 			run: { command: 'mono', args: [serverCommand], options: commandOptions },
-	// 			debug: { command: 'mono', args: [serverCommand], options: commandOptions }
-	// 		}
+	if (debugPort === null || debugPort === undefined)
+	{
+		// The server is implemented in C#
+		let serverCommand: string = workspace.getConfiguration().get('cheezls.languageServerPath');
+		if (serverCommand === null || serverCommand === undefined) {
+			window.showErrorMessage("Cheez language server location was not specified. Please configure the path to the language server executable under 'cheezls.languageServerPath', then restart Visual Studio Code");
+			return;
+		}
 
-	let serverOptions: ServerOptions = () => {
-		let socket = net.createConnection({
-			port: 5007,
-			localAddress: "127.0.0.1"
-		});
-		let result: StreamInfo = {
-			writer: socket,
-			reader: socket
+		let commandOptions = { stdio: 'pipe' };
+	
+		serverOptions = (os.platform() === 'win32') ? {
+				run: { command: serverCommand, options: commandOptions },
+				debug: { command: serverCommand, options: commandOptions }
+			} : {
+				run: { command: 'mono', args: [serverCommand], options: commandOptions },
+				debug: { command: 'mono', args: [serverCommand], options: commandOptions }
+			}
+	}
+	else
+	{
+		serverOptions = () => {
+			let socket = net.createConnection({
+				port: debugPort,
+				localAddress: "127.0.0.1"
+			});
+			let result: StreamInfo = {
+				writer: socket,
+				reader: socket
+			};
+			return Promise.resolve(result);
 		};
-		return Promise.resolve(result);
-	};
+	}
 
 	// Options to control the language client
 	let clientOptions: LanguageClientOptions = {
