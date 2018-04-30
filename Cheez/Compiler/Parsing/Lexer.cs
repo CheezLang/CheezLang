@@ -160,7 +160,7 @@ namespace Cheez.Compiler.Parsing
             };
         }
 
-        public static Lexer FromString(string str, IErrorHandler errorHandler)
+        public static Lexer FromString(string str, IErrorHandler errorHandler, string fileName = "string")
         {
             return new Lexer
             {
@@ -168,7 +168,7 @@ namespace Cheez.Compiler.Parsing
                 mText = str.Replace("\r\n", "\n"),
                 mLocation = new TokenLocation
                 {
-                    file = "string",
+                    file = fileName,
                     line = 1,
                 }
             };

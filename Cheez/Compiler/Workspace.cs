@@ -8,17 +8,14 @@ namespace Cheez.Compiler
 {
     public class Workspace
     {
-        public Scope GlobalScope { get; } = new Scope("Global");
-
         private Dictionary<string, PTFile> mFiles = new Dictionary<string, PTFile>();
         private Compiler mCompiler;
 
-        private PriorityQueue<CompilationUnit> mCompilationQueue = new PriorityQueue<CompilationUnit>();
-        private List<(CompilationUnit unit, object condition)> mWaitingQueue = new List<(CompilationUnit, object)>();
-        
-        public bool HasErrors { get; private set; }
-
         private List<AstStatement> mStatements = new List<AstStatement>();
+        public IReadOnlyList<AstStatement> Statements => mStatements;
+
+        public Scope GlobalScope { get; private set; }
+        public List<Scope> AllScopes { get; private set; }
 
         public Workspace(Compiler comp)
         {
@@ -35,13 +32,30 @@ namespace Cheez.Compiler
             }
         }
 
+        public void RemoveFile(PTFile file)
+        {
+            mFiles.Remove(file.Name);
+
+            mStatements.RemoveAll(s => s.GenericParseTreeNode.SourceFile == file);
+            //GlobalScope.FunctionDeclarations.RemoveAll(fd => fd.GenericParseTreeNode.SourceFile == file);
+            //GlobalScope.TypeDeclarations.RemoveAll(fd => fd.GenericParseTreeNode.SourceFile == file);
+            //GlobalScope.VariableDeclarations.RemoveAll(fd => fd.GenericParseTreeNode.SourceFile == file);
+
+            // @Todo: make that better, somewhere else
+            //GlobalScope = new Scope("Global");
+        }
+
         public void CompileAll()
         {
+            GlobalScope = new Scope("Global");
+
             var scopeCreator = new ScopeCreator(this, GlobalScope);
             foreach (var s in mStatements)
             {
                 scopeCreator.CreateScopes(s, GlobalScope);
             }
+
+            AllScopes = scopeCreator.AllScopes;
 
             foreach (var scope in scopeCreator.AllScopes)
             {
@@ -118,7 +132,6 @@ namespace Cheez.Compiler
 
         public void ReportError(ILocation location, string errorMessage, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
-            HasErrors = true;
             var file = mFiles[location.Beginning.file];
             mCompiler.ErrorHandler.ReportError(file, location, errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
         }

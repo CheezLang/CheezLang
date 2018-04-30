@@ -1,9 +1,5 @@
 ﻿using LLVMSharp;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Test
 {
@@ -11,12 +7,7 @@ namespace Test
     {
         static void Main(string[] args)
         {
-            var r = Add(1, 2);
-            Console.WriteLine(r);
-            r = Add(3, 4);
-            Console.WriteLine(r);
-            r = Add(5, 6);
-            Console.WriteLine(r);
+            //AustinHarris.JsonRpc.se
         }
 
         static int Add(int a, int b)

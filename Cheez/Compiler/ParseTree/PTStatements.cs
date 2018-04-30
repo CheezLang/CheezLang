@@ -8,6 +8,8 @@ namespace Cheez.Compiler.ParseTree
 {
     public abstract class PTStatement : ILocation
     {
+        public PTFile SourceFile { get; set; }
+        
         public TokenLocation Beginning { get; set; }
         public TokenLocation End { get; set; }
 

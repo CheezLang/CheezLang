@@ -6,6 +6,7 @@ namespace Cheez.Compiler.Ast
     public class AstAssignment : AstStatement
     {
         public ParseTree.PTAssignment ParseTreeNode { get; }
+        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
         public AstExpression Target { get; set; }
         public AstExpression Value { get; set; }

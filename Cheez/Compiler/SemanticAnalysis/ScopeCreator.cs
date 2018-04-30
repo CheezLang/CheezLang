@@ -87,6 +87,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override ScopeCreatorResult VisitVariableDeclaration(AstVariableDecl variable, ScopeCreatorArg data = default)
         {
+            data.scope.VariableDeclarations.Add(variable);
             variable.Scope = data.scope;
             variable.SubScope = NewScope($"var {variable.Name}", data.scope);
             CreateScopes(variable.Initializer, variable.Scope);

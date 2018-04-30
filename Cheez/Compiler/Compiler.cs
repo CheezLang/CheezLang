@@ -1,30 +1,11 @@
-﻿using Cheez.Compiler.Ast;
-using Cheez.Compiler.ParseTree;
+﻿using Cheez.Compiler.ParseTree;
 using Cheez.Compiler.Parsing;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace Cheez.Compiler
 {
-    public class ParseError
-    {
-        public ILocation Location { get; }
-        public string Message { get; }
-
-        public object ParseTreeNode { get; }
-        public PTExpr ParseTreeNodeExpr => ParseTreeNode as PTExpr;
-        public PTStatement ParseTreeNodeStmt => ParseTreeNode as PTStatement;
-
-        public ParseError(ILocation loc, string message, object ptn = null)
-        {
-            this.Location = loc;
-            this.Message = message;
-            this.ParseTreeNode = ptn;
-        }
-    }
-
-    public class PTFile : IText, IErrorHandler
+    public class PTFile : IText
     {
         public string Name { get; }
         public string Text { get; }
@@ -34,10 +15,6 @@ namespace Cheez.Compiler
 
         public List<PTStatement> Statements { get; } = new List<PTStatement>();
 
-        public List<ParseError> Errors { get; } = new List<ParseError>();
-
-        public bool HasErrors => Errors.Count != 0;
-
         public PTFile(string name, string raw)
         {
             this.Name = name;
@@ -45,25 +22,8 @@ namespace Cheez.Compiler
             ExportScope = new Scope("Export");
             PrivateScope = new Scope("Private", ExportScope);
         }
-
-        public void ReportError(IText text, ILocation location, string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
-        {
-            Errors.Add(new ParseError(location, message));
-        }
-
-        public void ReportError(ILocation location, string message, object ptn = null, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
-        {
-            Errors.Add(new ParseError(location, message, ptn));
-        }
     }
-
-    public struct CompilationUnit
-    {
-        public PTFile file;
-        public AstStatement statement;
-        public Workspace workspace;
-    }
-
+    
     public class Compiler
     {
         private Dictionary<string, PTFile> mFiles = new Dictionary<string, PTFile>();
@@ -87,47 +47,57 @@ namespace Cheez.Compiler
 
         public PTFile AddFile(string fileName, string body = null, Workspace workspace = null)
         {
-            if (mFiles.ContainsKey(fileName))
-                return mFiles[fileName];
-
             if (workspace == null)
                 workspace = mMainWorkspace;
 
-            // parse file
-            var lexer = body != null ? Lexer.FromString(body, ErrorHandler) : Lexer.FromFile(fileName, ErrorHandler);
-            var parser = new Parser(lexer, ErrorHandler);
-            var file = new PTFile(fileName, lexer.Text);
-
-            try
+            if (mFiles.ContainsKey(fileName))
             {
-                while (true)
-                {
-
-                    var result = parser.ParseStatement();
-                    var s = result.stmt;
-
-                    if (s is PTFunctionDecl || s is PTTypeDecl)
-                    {
-                        file.Statements.Add(s);
-                    }
-                    else if (s != null)
-                    {
-                        ErrorHandler.ReportError(lexer, s, "Only variable and function declarations are allowed on in global scope");
-                    }
-
-                    if (result.done)
-                        break;
-                }
-            }
-            catch (Exception e)
-            {
-                throw;
+                // remove all contributions of old file
+                workspace.RemoveFile(mFiles[fileName]);
             }
 
+            var file = ParseFile(fileName, body, ErrorHandler);
+            
             mFiles[fileName] = file;
             workspace.AddFile(file);
 
             return file;
+        }
+
+        private PTFile ParseFile(string fileName, string body, IErrorHandler eh)
+        {
+            var lexer = body != null ? Lexer.FromString(body, eh, fileName) : Lexer.FromFile(fileName, eh);
+            var parser = new Parser(lexer, eh);
+            var file = new PTFile(fileName, lexer.Text);
+            
+            while (true)
+            {
+
+                var result = parser.ParseStatement();
+                var s = result.stmt;
+
+                if (s is PTFunctionDecl || s is PTTypeDecl)
+                {
+                    s.SourceFile = file;
+                    file.Statements.Add(s);
+                }
+                else if (s != null)
+                {
+                    eh.ReportError(lexer, s, "Only variable and function declarations are allowed on in global scope");
+                }
+
+                if (result.done)
+                    break;
+            }
+
+            return file;
+        }
+
+        public PTFile GetFile(string v)
+        {
+            if (!mFiles.ContainsKey(v))
+                return null;
+            return mFiles[v];
         }
     }
 }

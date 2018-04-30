@@ -6,6 +6,7 @@ namespace Cheez.Compiler.Ast
     public class AstImplBlock : AstStatement
     {
         public ParseTree.PTImplBlock ParseTreeNode { get; }
+        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
         public string Target => ParseTreeNode.Target.Name;
         public string Trait { get; set; }

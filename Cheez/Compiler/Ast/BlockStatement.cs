@@ -7,6 +7,7 @@ namespace Cheez.Compiler.Ast
     public class AstBlockStmt : AstStatement
     {
         public ParseTree.PTBlockStmt ParseTreeNode { get; }
+        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
         public List<AstStatement> Statements { get; }
         public Scope SubScope { get; set; }

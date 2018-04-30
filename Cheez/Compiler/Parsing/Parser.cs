@@ -5,25 +5,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace Cheez.Compiler.Parsing
 {
-    //public class ParsingError : Exception
-    //{
-    //    public ILocation Location { get; set; }
-
-    //    public ParsingError(TokenLocation location, string message)
-    //        : base(message)
-    //    {
-    //        this.Location = new Location(location);
-    //    }
-    //}
-
     public class SkipInStackFrame : Attribute
-    {
-
-    }
+    {}
 
     public class Parser
     {

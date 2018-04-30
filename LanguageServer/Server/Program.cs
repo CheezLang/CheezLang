@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 
 namespace CheezLanguageServer
@@ -8,19 +10,67 @@ namespace CheezLanguageServer
     {
         static void Main(string[] args)
         {
-
-
             Console.OutputEncoding = Encoding.UTF8;
-            var app = new CheezLanguageServer(Console.OpenStandardInput(), Console.OpenStandardOutput());
-            Logger.Instance.Attach(app);
+#if DEBUG
+            RunLanguageServerOverTcp(5007);
+#else
+            RunLanguageServerOverStdInOut();
+#endif
+        }
+
+        private static void LaunchLanguageServer(Stream inStream, Stream outStream)
+        {
             try
             {
+                var app = new CheezLanguageServer(inStream, outStream);
+                Logger.Instance.Attach(app);
                 app.Listen().Wait();
             }
-            catch (AggregateException ex)
+            catch (Exception ex)
             {
-                Console.Error.WriteLine(ex.InnerExceptions[0]);
-                Environment.Exit(-1);
+                Console.Error.WriteLine(ex);
+            }
+        }
+
+        private static void RunLanguageServerOverStdInOut()
+        {
+            LaunchLanguageServer(Console.OpenStandardInput(), Console.OpenStandardOutput());
+        }
+
+        private static void RunLanguageServerOverTcp(int port)
+        {
+            Console.WriteLine("Running Language Server oper tcp");
+            TcpListener server = null;
+            try
+            {
+                IPAddress localAddr = IPAddress.Parse("127.0.0.1");
+                server = new TcpListener(localAddr, port);
+                server.Start();
+
+                while (true)
+                {
+                    Console.WriteLine("Waiting for client...");
+                    using (var client = server.AcceptTcpClient())
+                    using (var stream = client.GetStream())
+                    {
+                        Console.WriteLine($"Client connected from {client.Client.RemoteEndPoint}");
+                        LaunchLanguageServer(stream, stream);
+                        Console.WriteLine($"Client  disconnected");
+                    }
+                }
+            }
+            catch (SocketException e)
+            {
+                Console.WriteLine("SocketException: {0}", e);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception: {0}", e);
+            }
+            finally
+            {
+                // Stop listening for new clients.
+                server.Stop();
             }
         }
     }

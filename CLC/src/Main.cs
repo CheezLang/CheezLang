@@ -6,6 +6,7 @@ using System;
 using System.Text;
 using CommandLine;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CheezCLI
 {
@@ -16,8 +17,14 @@ namespace CheezCLI
             [Option('r', "run", HelpText = "Specifies whether the code should be run immediatly", Default = false, Required = false, Hidden = false, MetaValue = "STRING", SetName = "run")]
             public bool RunCode { get; set; }
 
-            [Value(1, Min = 1)]
+            [Value(0, Min = 1)]
             public IEnumerable<string> Files { get; set; }
+
+            [Option('o', "out", Default = "")]
+            public string OutPath { get; set; }
+
+            [Option('n', "name")]
+            public string OutName { get; set; }
         }
 
         public static int Main(string[] args)
@@ -33,6 +40,9 @@ namespace CheezCLI
 
         static int Run(CompilerOptions options)
         {
+            if (options.OutName == null)
+                options.OutName = Path.GetFileNameWithoutExtension(options.Files.First());
+
             Console.WriteLine(Parser.Default.FormatCommandLine(options));
 
             var stopwatch = Stopwatch.StartNew();
@@ -42,60 +52,55 @@ namespace CheezCLI
             var compiler = new Compiler(errorHandler);
             foreach (var file in options.Files)
             {
-                compiler.AddFile(file, workspace: compiler.DefaultWorkspace);
+                compiler.AddFile(file);
             }
 
             compiler.DefaultWorkspace.CompileAll();
 
             var ourCompileTime = stopwatch.Elapsed;
-            System.Console.WriteLine($"Compilation finished in {ourCompileTime}");
+            Console.WriteLine($"Compilation finished in {ourCompileTime}");
 
             if (errorHandler.HasErrors)
                 return 3;
 
 
             // generate code
-            System.Console.WriteLine();
+            Console.WriteLine();
 
             stopwatch.Restart();
 
-            bool clangOk = GenerateAndCompileCode(compiler.DefaultWorkspace);
+            bool clangOk = GenerateAndCompileCode(options, compiler.DefaultWorkspace);
 
             var clangTime = stopwatch.Elapsed;
-            System.Console.WriteLine($"Clang compile time: {clangTime}");
+            Console.WriteLine($"Clang compile time: {clangTime}");
 
             if (options.RunCode && clangOk)
             {
-                System.Console.WriteLine();
-                System.Console.WriteLine($"Running code:");
-                System.Console.WriteLine("=======================================");
-                var testProc = StartProcess(@"gen\test.exe", workingDirectory: "gen", stdout: (s, e) => System.Console.WriteLine(e.Data));
+                Console.WriteLine();
+                Console.WriteLine($"Running code:");
+                Console.WriteLine("=======================================");
+                var testProc = StartProcess(Path.Combine(options.OutPath, options.OutName + ".exe"), workingDirectory: options.OutPath, stdout: (s, e) => System.Console.WriteLine(e.Data));
                 testProc.WaitForExit();
             }
 
             return 0;
         }
 
-        private static bool GenerateAndCompileCode(Workspace workspace)
+        private static bool GenerateAndCompileCode(CompilerOptions options,  Workspace workspace)
         {
-            foreach (string f in Directory.EnumerateFiles("gen"))
-            {
-                string extension = Path.GetExtension(f);
-                if (/*extension == ".cpp" || */extension == ".exe")
-                    File.Delete(f);
-            }
+            string filePath = Path.Combine(options.OutPath, options.OutName);
 
             CppCodeGenerator generator = new CppCodeGenerator();
             string code = generator.GenerateCode(workspace);
-            File.WriteAllText("gen/code.cpp", code);
+            File.WriteAllText(filePath + ".cpp", code);
 
             // run clang
-            var clang = StartProcess(@"D:\Program Files\LLVM\bin\clang++.exe", "-O0 -o test.exe code.cpp", "gen", stderr: Process_ErrorDataReceived);
+            var clang = StartProcess(@"D:\Program Files\LLVM\bin\clang++.exe", $"-O0 -o {options.OutName}.exe {options.OutName}.cpp", options.OutPath, stderr: Process_ErrorDataReceived);
             clang.WaitForExit();
 
             //var clangOutput = process.StandardOutput.ReadToEnd();
 
-            System.Console.WriteLine($"Clang finished compiling with exit code {clang.ExitCode}");
+            Console.WriteLine($"Clang finished compiling with exit code {clang.ExitCode}");
             return clang.ExitCode == 0;
         }
 
@@ -137,7 +142,7 @@ namespace CheezCLI
         {
             if (string.IsNullOrWhiteSpace(e.Data))
                 return;
-            System.Console.WriteLine($"[CLANG] {e.Data}");
+            Console.WriteLine($"[CLANG] {e.Data}");
         }
     }
 }

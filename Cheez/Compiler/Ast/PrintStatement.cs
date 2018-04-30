@@ -7,6 +7,7 @@ namespace Cheez.Compiler.Ast
     public class AstPrintStmt : AstStatement
     {
         public ParseTree.PTPrintStmt ParseTreeNode { get; }
+        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
         public List<AstExpression> Expressions { get; }
         public AstExpression Seperator { get; }

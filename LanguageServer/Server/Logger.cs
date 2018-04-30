@@ -29,9 +29,7 @@ namespace CheezLanguageServer
         public void Log(string message) => Send(MessageType.Log, message);
 
         private void Send(MessageType type, string message)
-        {
-            CheezLanguageServer.Log(type, message);
-            
+        {            
             this._proxy?.Window.LogMessage(new LogMessageParams
             {
                 type = type,

@@ -34,6 +34,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AustinHarris.JsonRpc, Version=1.1.70.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AustinHarris.JsonRpc.1.1.70\lib\net40\AustinHarris.JsonRpc.dll</HintPath>
+    </Reference>
     <Reference Include="LanguageServer, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\LanguageServerProtocol.2.0.2\lib\netstandard1.3\LanguageServer.dll</HintPath>
     </Reference>

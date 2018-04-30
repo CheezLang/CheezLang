@@ -1,5 +1,0 @@
-S -> a | aS
-// comment
-
-
-

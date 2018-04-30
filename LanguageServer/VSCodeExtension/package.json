@@ -1,85 +1,86 @@
 {
-	"name": "cheezlangls",
-	"description": "A language server for CheezLang",
-	"author": "Nimaoth",
-	"license": "MIT",
-	"version": "0.0.1",
-	"publisher": "Nimaoth",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Nimaoth/CheezLang"
-	},
-	"engines": {
-		"vscode": "^1.16.0"
-	},
-	"categories": [
-		"Other"
-	],
-	"activationEvents": [
-		"onLanguage:cheezls",
-		"workspaceContains:**/*.che"
-	],
-	"main": "./out/src/extension",
-	"contributes": {
-		"languages": [
-			{
-				"id": "cheezlang",
-				"extensions": [
-					".che"
-				],
-				"aliases": [
-					"cheez",
-					"Cheez",
-					"CheezLang"
-				],
-				"configuration": "./language-configuration.json"
-			}
-		],
-		"configuration": {
-			"type": "object",
-			"title": "CheezLang Language Server Configuration",
-			"properties": {
-				"cheezls.maxNumberOfProblems": {
-					"scope": "resource",
-					"type": "number",
-					"default": 100,
-					"description": "Controls the maximum number of problems produced by the server."
-				},
-				"cheezls.logFilePath": {
-					"scope": "resource",
-					"type": "string",
-					"default": null,
-					"description": "Path to log file of cheez language server."
-				},
-				"cheezls.trace.server": {
-					"scope": "window",
-					"type": "string",
-					"enum": [
-						"off",
-						"messages",
-						"verbose"
-					],
-					"default": "off",
-					"description": "Traces the communication between VSCode and the language server."
-				}
-			}
-		}
-	},
-	"scripts": {
-		"vscode:prepublish": "tsc -p ./",
-		"compile": "tsc -p ./",
-		"watch": "tsc -w -p ./",
-		"update-vscode": "node ./node_modules/vscode/bin/install",
-		"postinstall": "node ./node_modules/vscode/bin/install",
-		"deploy": "echo deploying..."
-	},
-	"dependencies": {
-		"vscode": "^1.1.5",
-		"vscode-languageclient": "^3.4.2"
-	},
-	"devDependencies": {
-		"@types/mocha": "^2.2.42",
-		"@types/node": "^6.0.88",
-		"typescript": "^2.5.2"
-	}
+  "name": "cheezlangls",
+  "description": "A language server for CheezLang",
+  "author": "Nimaoth",
+  "license": "MIT",
+  "version": "0.0.1",
+  "publisher": "Nimaoth",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nimaoth/CheezLang"
+  },
+  "engines": {
+    "vscode": "^1.16.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:cheezls",
+    "workspaceContains:**/*.che"
+  ],
+  "main": "./out/src/extension",
+  "contributes": {
+    "languages": [
+      {
+        "id": "cheezlang",
+        "extensions": [
+          ".che"
+        ],
+        "aliases": [
+          "cheez",
+          "Cheez",
+          "CheezLang"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "CheezLang Language Server Configuration",
+      "properties": {
+        "cheezls.maxNumberOfProblems": {
+          "scope": "resource",
+          "type": "number",
+          "default": 100,
+          "description": "Controls the maximum number of problems produced by the server."
+        },
+        "cheezls.logFilePath": {
+          "scope": "resource",
+          "type": "string",
+          "default": null,
+          "description": "Path to log file of cheez language server."
+        },
+        "cheezls.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VSCode and the language server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./",
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "update-vscode": "node ./node_modules/vscode/bin/install",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "deploy": "echo deploying..."
+  },
+  "dependencies": {
+    "find-process": "^1.1.1",
+    "vscode": "^1.1.5",
+    "vscode-languageclient": "^3.4.2"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.42",
+    "@types/node": "^6.0.88",
+    "typescript": "^2.5.2"
+  }
 }

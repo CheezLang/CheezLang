@@ -6,6 +6,7 @@ namespace Cheez.Compiler.Ast
     public class AstIfStmt : AstStatement
     {
         public ParseTree.PTIfStmt ParseTreeNode { get; }
+        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
         public AstExpression Condition { get; set; }
         public AstStatement IfCase { get; set; }
