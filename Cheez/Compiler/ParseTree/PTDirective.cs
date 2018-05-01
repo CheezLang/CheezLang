@@ -1,5 +1,7 @@
 ﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.Parsing;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Cheez.Compiler.ParseTree
 {
@@ -10,16 +12,20 @@ namespace Cheez.Compiler.ParseTree
 
         public PTIdentifierExpr Name { get; }
 
-        public PTDirective(TokenLocation beg, TokenLocation end, PTIdentifierExpr name)
+        public List<PTExpr> Arguments { get; set; }
+
+        public PTDirective(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTExpr> args)
         {
             this.Beginning = beg;
             this.End = end;
             this.Name = name;
+            this.Arguments = args;
         }
 
         public AstDirective CreateAst()
         {
-            return new AstDirective(this, Name.Name);
+            var args = Arguments.Select(a => a.CreateAst()).ToList();
+            return new AstDirective(this, Name.Name, args);
         }
     }
 }

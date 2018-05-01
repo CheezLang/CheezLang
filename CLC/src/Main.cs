@@ -52,10 +52,13 @@ namespace CheezCLI
             var compiler = new Compiler(errorHandler);
             foreach (var file in options.Files)
             {
-                compiler.AddFile(file);
+                var v = compiler.AddFile(file);
+                if (v == null)
+                    return 4;
             }
 
-            compiler.DefaultWorkspace.CompileAll();
+            if (!errorHandler.HasErrors)
+                compiler.DefaultWorkspace.CompileAll();
 
             var ourCompileTime = stopwatch.Elapsed;
             Console.WriteLine($"Compilation finished in {ourCompileTime}");
@@ -86,7 +89,7 @@ namespace CheezCLI
             return 0;
         }
 
-        private static bool GenerateAndCompileCode(CompilerOptions options,  Workspace workspace)
+        private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace)
         {
             string filePath = Path.Combine(options.OutPath, options.OutName);
 

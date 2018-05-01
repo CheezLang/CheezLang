@@ -2,6 +2,7 @@
 using Cheez.Compiler.Parsing;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Cheez.Compiler
 {
@@ -23,7 +24,7 @@ namespace Cheez.Compiler
             PrivateScope = new Scope("Private", ExportScope);
         }
     }
-    
+
     public class Compiler
     {
         private Dictionary<string, PTFile> mFiles = new Dictionary<string, PTFile>();
@@ -40,36 +41,56 @@ namespace Cheez.Compiler
             mWorkspaces["main"] = mMainWorkspace;
         }
 
-        public PTFile AddFile(Uri uri, string body = null, Workspace workspace = null)
+        public PTFile AddFile(string fileName, string body = null, Workspace workspace = null, bool reparse = false)
         {
-            return AddFile(uri.AbsolutePath, body);
-        }
+            var normalizedPath = Path.GetFullPath(fileName).PathNormalize();
+            var directory = Path.GetDirectoryName(normalizedPath);
 
-        public PTFile AddFile(string fileName, string body = null, Workspace workspace = null)
-        {
             if (workspace == null)
                 workspace = mMainWorkspace;
 
-            if (mFiles.ContainsKey(fileName))
+            if (mFiles.ContainsKey(normalizedPath))
             {
+                if (!reparse)
+                    return mFiles[normalizedPath];
+
                 // remove all contributions of old file
-                workspace.RemoveFile(mFiles[fileName]);
+                workspace.RemoveFile(mFiles[normalizedPath]);
             }
 
-            var file = ParseFile(fileName, body, ErrorHandler);
-            
-            mFiles[fileName] = file;
+            var (file, loadedFiles) = ParseFile(fileName, body, ErrorHandler);
+            if (file == null)
+                return null;
+
+            mFiles[normalizedPath] = file;
             workspace.AddFile(file);
+
+            foreach (var fname in loadedFiles)
+            {
+                var path = Path.Combine(directory, fname);
+
+                if (mFiles.ContainsKey(path))
+                    continue;
+                var f = AddFile(path, null, workspace);
+                if (f == null)
+                    return null;
+            }
 
             return file;
         }
 
-        private PTFile ParseFile(string fileName, string body, IErrorHandler eh)
+        private (PTFile, List<string>) ParseFile(string fileName, string body, IErrorHandler eh)
         {
             var lexer = body != null ? Lexer.FromString(body, eh, fileName) : Lexer.FromFile(fileName, eh);
+
+            if (lexer == null)
+                return (null, null);
+
             var parser = new Parser(lexer, eh);
             var file = new PTFile(fileName, lexer.Text);
-            
+
+            List<string> loadedFiles = new List<string>();
+
             while (true)
             {
 
@@ -81,6 +102,25 @@ namespace Cheez.Compiler
                     s.SourceFile = file;
                     file.Statements.Add(s);
                 }
+                else if (s is PTDirectiveStatement p && p.Directive.Name.Name == "load")
+                {
+                    var d = p.Directive;
+                    if (d.Arguments.Count != 1 || !(d.Arguments[0] is PTStringLiteral f))
+                    {
+                        eh.ReportError(lexer, d, "#load takes one string as argument");
+                    }
+                    else
+                    {
+                        if (f.Value.EndsWith(".che"))
+                        {
+                            loadedFiles.Add(f.Value);
+                        }
+                        else
+                        {
+                            loadedFiles.Add(f.Value + ".che");
+                        }
+                    }
+                }
                 else if (s != null)
                 {
                     eh.ReportError(lexer, s, "Only variable and function declarations are allowed on in global scope");
@@ -90,14 +130,15 @@ namespace Cheez.Compiler
                     break;
             }
 
-            return file;
+            return (file, loadedFiles);
         }
 
         public PTFile GetFile(string v)
         {
-            if (!mFiles.ContainsKey(v))
+            var normalizedPath = Path.GetFullPath(v).PathNormalize();
+            if (!mFiles.ContainsKey(normalizedPath))
                 return null;
-            return mFiles[v];
+            return mFiles[normalizedPath];
         }
     }
 }

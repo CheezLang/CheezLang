@@ -11,7 +11,7 @@ namespace CheezLanguageServer
         public string Message { get; }
         public ILocation Location { get; }
 
-        public CompilationError(ILocation loc, string message)
+        public CompilationError(string message, ILocation loc = null)
         {
             this.Location = loc;
             this.Message = message;
@@ -26,12 +26,17 @@ namespace CheezLanguageServer
 
         public void ReportError(IText text, ILocation location, string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
-            Errors.Add(new CompilationError(location, message));
+            Errors.Add(new CompilationError(message, location));
         }
 
         public void ClearErrors()
         {
             Errors.Clear();
+        }
+
+        public void ReportError(string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        {
+            Errors.Add(new CompilationError(message));
         }
     }
 }

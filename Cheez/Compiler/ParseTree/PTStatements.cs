@@ -37,6 +37,21 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
+    public class PTDirectiveStatement : PTStatement
+    {
+        public PTDirective Directive { get; }
+
+        public PTDirectiveStatement(PTDirective dir) : base(dir.Beginning, dir.End)
+        {
+            Directive = dir;
+        }
+
+        public override AstStatement CreateAst()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class PTAssignment : PTStatement
     {
         public PTExpr Target { get; set; }

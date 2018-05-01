@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using Cheez.Compiler;
-using Cheez.Compiler.ParseTree;
+using Cheez.Compiler.CodeGeneration;
 using LanguageServer;
-using LanguageServer.Json;
 using LanguageServer.Parameters;
 using LanguageServer.Parameters.General;
 using LanguageServer.Parameters.TextDocument;
@@ -30,6 +29,14 @@ namespace CheezLanguageServer
             _compiler = new Compiler(_errorHandler);
         }
 
+        private static string GetFilePath(Uri uri)
+        {
+            var path = uri.LocalPath;
+            path = path.TrimStart('/');
+            path = path.Substring(0, 1).ToUpperInvariant() + path.Substring(1);
+            return path;
+        }
+
         private void Documents_Changed(object sender, TextDocumentChangedEventArgs e)
         {
             ValidateTextDocument(e.Document);
@@ -38,14 +45,26 @@ namespace CheezLanguageServer
         private void ValidateTextDocument(TextDocumentItem document)
         {
             _errorHandler.ClearErrors();
-
-            var fileName = Path.GetFileName(document.uri.AbsolutePath);
                         
             PTFile file = null;
             try
             {
-                file = _compiler.AddFile(document.uri, document.text);
-                _compiler.DefaultWorkspace.CompileAll();
+                var filePath = GetFilePath(document.uri);
+                file = _compiler.AddFile(filePath, document.text, reparse: true);
+
+                if (!_errorHandler.HasErrors)
+                {
+                    _compiler.DefaultWorkspace.CompileAll();
+
+                    if (!_errorHandler.HasErrors)
+                    {
+                        var fileName = Path.GetFileNameWithoutExtension(filePath) + ".cpp";
+                        var dir = Path.GetDirectoryName(filePath);
+                        var gen = new CppCodeGenerator();
+                        var code = gen.GenerateCode(_compiler.DefaultWorkspace);
+                        File.WriteAllText(Path.Combine(dir, fileName), code);
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -54,33 +73,30 @@ namespace CheezLanguageServer
 
             var diagnostics = new List<Diagnostic>();
             var problems = 0;
-            
+
             foreach (var err in _errorHandler.Errors)
             {
                 if (problems >= _maxNumberOfProblems)
                     break;
                 problems++;
 
-                var beg = err.Location.Beginning;
-                var end = err.Location.End;
-
-
-
                 var d = new Diagnostic
                 {
                     severity = DiagnosticSeverity.Error,
-                    range = new Range
-                    {
-                        start = new Position { line = beg.line - 1, character = beg.index - beg.lineStartIndex },
-                        end = new Position { line = end.line - 1, character = end.end - end.lineStartIndex }
-                    },
                     message = err.Message,
                     source = "CheezLang"
                 };
-
-                //LogParameters(beg);
-                //LogParameters(end);
-                //LogParameters(d);
+                if (err.Location != null)
+                {
+                    var beg = err.Location.Beginning;
+                    var end = err.Location.End;
+                    d.range = new Range
+                    {
+                        start = new Position { line = beg.line - 1, character = beg.index - beg.lineStartIndex },
+                        end = new Position { line = end.line - 1, character = end.end - end.lineStartIndex }
+                    };
+                }
+                
                 diagnostics.Add(d);
             }
 
@@ -142,7 +158,7 @@ namespace CheezLanguageServer
 
         protected override Result<SymbolInformation[], ResponseError> DocumentSymbols(DocumentSymbolParams @params)
         {
-            var file = _compiler.GetFile(Path.GetFileName(@params.textDocument.uri.AbsolutePath));
+            var file = _compiler.GetFile(GetFilePath(@params.textDocument.uri));
             if (file == null)
                 return Result<SymbolInformation[], ResponseError>.Error(new ResponseError
                 {

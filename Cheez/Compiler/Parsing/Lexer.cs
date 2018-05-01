@@ -146,6 +146,11 @@ namespace Cheez.Compiler.Parsing
 
         public static Lexer FromFile(string fileName, IErrorHandler errorHandler)
         {
+            if (!File.Exists(fileName))
+            {
+                errorHandler.ReportError($"'{fileName}' could not be found.");
+                return null;
+            }
             return new Lexer
             {
                 mErrorHandler = errorHandler,

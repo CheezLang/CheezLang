@@ -263,6 +263,9 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.EOF:
                     return (true, null);
 
+                case TokenType.HashTag:
+                    return (false, new PTDirectiveStatement(ParseDirective(false)));
+
                 case TokenType.KwReturn:
                     return (false, ParseReturnStatement());
                 case TokenType.KwFn:
@@ -315,6 +318,47 @@ namespace Cheez.Compiler.Parsing
             return new PTReturnStmt(beg.location, returnValue);
         }
 
+        private PTDirective ParseDirective(bool skip)
+        {
+            var beginning = Expect(TokenType.HashTag, skip).location;
+            var name = ParseIdentifierExpr(false, t => "Expected identifier after hashtag", t => beginning) as PTIdentifierExpr;
+            if (name == null)
+                return null;
+
+            var end = name.End;
+            var args = new List<PTExpr>();
+            
+            if (PeekToken(false).type == TokenType.OpenParen)
+            {
+                mLexer.NextToken();
+
+                while (true)
+                {
+                    var next = PeekToken(true);
+                    if (next.type == TokenType.ClosingParen)
+                    {
+                        break;
+                    }
+
+                    var expr = ParseExpression();
+                    if (expr != null)
+                        args.Add(expr);
+
+                    if (PeekToken(true).type == TokenType.Comma)
+                    {
+                        mLexer.NextToken();
+                        continue;
+                    }
+
+                    break;
+                }
+
+                Consume(TokenType.ClosingParen, true);
+            }
+
+            return new PTDirective(beginning, end, name, args);
+        }
+
         private PTTypeDecl ParseTypeDeclaration()
         {
             var members = new List<PTMemberDecl>();
@@ -327,11 +371,9 @@ namespace Cheez.Compiler.Parsing
 
             while (PeekToken(false).type == TokenType.HashTag)
             {
-                var hashtag = mLexer.NextToken();
-                var dname = ParseIdentifierExpr(false) as PTIdentifierExpr;
-                if (dname == null)
-                    return null;
-                directives.Add(new PTDirective(hashtag.location, dname.End, dname));
+                var dir = ParseDirective(false);
+                if (dir != null)
+                    directives.Add(dir);
             }
 
             Expect(TokenType.OpenBrace, skipNewLines: true);
@@ -823,7 +865,7 @@ namespace Cheez.Compiler.Parsing
             if (next.type == TokenType.Ampersand)
             {
                 mLexer.NextToken();
-                return new PTAddressOfExpr(next.location, ParseDotExpression(location, errorMessage));
+                return new PTAddressOfExpr(next.location, ParseCallExpression(location, errorMessage));
             }
 
             return ParseCallExpression(location, errorMessage);

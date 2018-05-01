@@ -21,6 +21,9 @@ namespace Cheez.Compiler
             CreateAlias("u32", IntType.GetIntType(4, false));
             CreateAlias("u64", IntType.GetIntType(8, false));
 
+            CreateAlias("f32", FloatType.GetFloatType(4));
+            CreateAlias("f64", FloatType.GetFloatType(8));
+
             CreateAlias("bool", BoolType.Instance);
             CreateAlias("string", StringType.Instance);
             CreateAlias("void", VoidType.Intance);

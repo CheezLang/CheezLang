@@ -35,6 +35,18 @@ namespace CheezLanguageServer
             };
         }
 
+        public override object VisitTypeDeclaration(AstTypeDecl type, List<SymbolInformation> list)
+        {
+            list.Add(new SymbolInformation
+            {
+                containerName = type.Scope.Name,
+                kind = SymbolKind.Class,
+                location = CastLocation(type.ParseTreeNode.Name),
+                name = type.Name
+            });
+            return default;
+        }
+
         public override object VisitFunctionDeclaration(AstFunctionDecl function, List<SymbolInformation> list)
         {
             list.Add(new SymbolInformation

@@ -223,8 +223,6 @@ using string = const char*;
                 sb.Append(" << '\\n'");
             }
 
-            sb.Append(";");
-
             return Indent(sb.ToString(), data.indent);
         }
 
@@ -347,7 +345,15 @@ using string = const char*;
             sb.AppendLine("{");
             foreach (var s in block.Statements)
             {
-                sb.AppendLine(Indent(GenerateCode(s, null), 4));
+                sb.Append(Indent(GenerateCode(s, null), 4));
+                if (s is AstWhileStmt || s is AstIfStmt)
+                {
+                    sb.AppendLine();
+                }
+                else
+                {
+                    sb.AppendLine(";");
+                }
             }
             sb.Append("}");
             return Indent(sb.ToString(), data.indent);
@@ -381,8 +387,8 @@ using string = const char*;
         public override string VisitReturnStatement(AstReturnStmt ret, CppCodeGeneratorArgs data)
         {
             if (ret.ReturnValue != null)
-                return $"return {GenerateCode(ret.ReturnValue, null)};";
-            return "return;";
+                return $"return {GenerateCode(ret.ReturnValue, null)}";
+            return "return";
         }
 
         public override string VisitBinaryExpression(AstBinaryExpr bin, CppCodeGeneratorArgs data)
@@ -447,7 +453,7 @@ using string = const char*;
 
         public override string VisitCastExpression(AstCastExpr cast, CppCodeGeneratorArgs data = default)
         {
-            return $"({GetCTypeName(cast.Type)})({cast.SubExpression.Accept(this, data)})";
+            return $"(({GetCTypeName(cast.Type)})({cast.SubExpression.Accept(this, data)}))";
         }
 
         public override string VisitCallExpression(AstCallExpr call, CppCodeGeneratorArgs data)
@@ -480,6 +486,9 @@ using string = const char*;
             {
                 case IntType n:
                     return n.ToString();
+
+                case FloatType f:
+                    return f.ToString();
 
                 case BoolType b:
                     return "bool";

@@ -453,6 +453,11 @@ namespace Cheez.Compiler.SemanticAnalysis
                 e.Type = targetType;
                 return e;
             }
+            else if (sourceType == IntType.LiteralType && targetType is FloatType)
+            {
+                e.Type = targetType;
+                return e;
+            }
 
             //workspace.ReportError(e, $"Can't cast {sourceType} to {targetType}");
             return e;

@@ -1,57 +1,5 @@
-// #load cstdio
-
-// file stuff
-struct FILE #DisableCodeGen {
-    _Placeholder: void*
-}
-
-fn fopen_s(file: FILE**, name: string, mode: string): i32;
-fn fclose(file: FILE*): i32;
-fn fseek(file: FILE*, offset: i32, origin: i32): i32;
-fn ftell(file: FILE*): i32;
-fn fread(buff: i8*, eSize: u64, eCount: u64, file: FILE*): u64;
-
-// memory stuff
-fn malloc(size: i32): i8*;
-fn free(mem: i8*);
-fn memset(ptr: void*, val: i32, count: u64): void*;
-
-// other stuff
-fn printf(format: string, val: i8*);
+#load("cstdio")
 
 fn Main() {
-    let SeekCur: i32 = 1
-    let SeekEnd: i32 = 2
-    let SeekSet: i32 = 0
-
-    // open file
-    let filename = "grammar.g"
-    let file: FILE*
-    let err = fopen_s(&file, filename, "r")
-
-    if err != 0 {
-        println "Couldn't open file '", filename, "'"
-        return
-    }
-
-    // find out file size
-    fseek(file, 0, SeekEnd)
-    let size = ftell(file)
-    println "Loading file ", filename, " with size ", size, " bytes"
-    fseek(file, 0, SeekSet)
-
-    // allocate memory for file and load file
-    let buff = cast<i8*>(malloc(size + 1))
-    fread(buff, 1, cast<u64>(size), file)
-    buff[size] = 0
-
-    let text = cast<string>(buff)
-
-    //
-    println "==================="
-    println text
-    println "==================="
-
-    free(buff)
+    let a = 1
 }
-
