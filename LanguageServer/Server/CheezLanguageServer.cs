@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using Cheez.Compiler;
 using Cheez.Compiler.CodeGeneration;
 using LanguageServer;
@@ -22,11 +23,17 @@ namespace CheezLanguageServer
 
         public CheezLanguageServer(Stream input, Stream output) : base(input, output)
         {
+            ResetLanguageServer();
+        }
+
+        private Result<dynamic, ResponseError> ResetLanguageServer()
+        {
             _documents = new TextDocumentManager();
             _documents.Changed += Documents_Changed;
 
             _errorHandler = new ErrorHandler();
             _compiler = new Compiler(_errorHandler);
+            return Result<dynamic, ResponseError>.Success(true);
         }
 
         private static string GetFilePath(Uri uri)
@@ -45,7 +52,7 @@ namespace CheezLanguageServer
         private void ValidateTextDocument(TextDocumentItem document)
         {
             _errorHandler.ClearErrors();
-                        
+
             PTFile file = null;
             try
             {
@@ -96,7 +103,7 @@ namespace CheezLanguageServer
                         end = new Position { line = end.line - 1, character = end.end - end.lineStartIndex }
                     };
                 }
-                
+
                 diagnostics.Add(d);
             }
 
@@ -109,6 +116,26 @@ namespace CheezLanguageServer
 
         #region ...
 
+        protected override Result<dynamic, ResponseError> ExecuteCommand(ExecuteCommandParams @params)
+        {
+            switch (@params.command)
+            {
+                case "reload_language_server":
+                    Proxy.Window.ShowMessage(new LanguageServer.Parameters.Window.ShowMessageParams
+                    {
+                        type = LanguageServer.Parameters.Window.MessageType.Info,
+                        message = "CheezLanguageServer was reset"
+                    });
+                    return ResetLanguageServer();
+            }
+
+            return Result<dynamic, ResponseError>.Error(new ResponseError
+            {
+                code = ErrorCodes.InvalidRequest,
+                message = $"Unknown command {@params.command}"
+            });
+        }
+
         protected override Result<InitializeResult, ResponseError<InitializeErrorData>> Initialize(InitializeParams @params)
         {
             _workerSpaceRoot = @params.rootUri;
@@ -117,9 +144,20 @@ namespace CheezLanguageServer
                 capabilities = new ServerCapabilities
                 {
                     textDocumentSync = TextDocumentSyncKind.Full,
-                    documentSymbolProvider = true
+                    documentSymbolProvider = true,
+                    executeCommandProvider = new ExecuteCommandOptions
+                    {
+                        commands = new string[] { "reload_language_server" }
+                    }
                 }
             };
+
+            Proxy.Window.ShowMessage(new LanguageServer.Parameters.Window.ShowMessageParams
+            {
+                type = LanguageServer.Parameters.Window.MessageType.Info,
+                message = "CheezLanguageServer initialized"
+            });
+
             return Result<InitializeResult, ResponseError<InitializeErrorData>>.Success(result);
         }
 
@@ -169,7 +207,7 @@ namespace CheezLanguageServer
 
             var symbolFinder = new SymbolFinder();
             var symbols = symbolFinder.FindSymbols(_compiler.DefaultWorkspace, file);
-            
+
             return Result<SymbolInformation[], ResponseError>.Success(symbols.ToArray());
         }
 
@@ -177,11 +215,11 @@ namespace CheezLanguageServer
         {
             return base.Symbol(@params);
         }
-        
+
         protected override VoidResult<ResponseError> Shutdown()
         {
             Console.WriteLine("Shutting down...");
-            
+
             return VoidResult<ResponseError>.Success();
         }
 

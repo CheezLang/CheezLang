@@ -21,6 +21,12 @@
   ],
   "main": "./out/src/extension",
   "contributes": {
+    "commands": [
+      {
+        "command": "reload_language_server",
+        "title": "Reset Cheez Language Server"
+      }
+    ],
     "languages": [
       {
         "id": "cheezlang",

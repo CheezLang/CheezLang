@@ -10,13 +10,23 @@ import * as net from 'net';
 import { workspace, ExtensionContext, window } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, StreamInfo } from 'vscode-languageclient';
 
+function startedInDebugMode() {
+	let args = process.execArgv;
+	if (args) {
+		return args.some((arg) => /^--inspect-brk=?/.test(arg));
+	}
+	return false;
+}
+
 export function activate(context: ExtensionContext) {
 	const debugPort: number = workspace.getConfiguration().get('cheezls.debug.languageServerPort');
 
-	let serverOptions: ServerOptions = null
+	let serverOptions: ServerOptions = null;
 
-	if (debugPort === null || debugPort === undefined)
+	if (!startedInDebugMode())
 	{
+		window.showInformationMessage("Cheez extension started in release mode");
+
 		// The server is implemented in C#
 		let serverCommand: string = workspace.getConfiguration().get('cheezls.languageServerPath');
 		if (serverCommand === null || serverCommand === undefined) {
@@ -36,6 +46,8 @@ export function activate(context: ExtensionContext) {
 	}
 	else
 	{
+		window.showInformationMessage("Cheez extension started in debug mode");
+
 		serverOptions = () => {
 			let socket = net.createConnection({
 				port: debugPort,
@@ -68,7 +80,8 @@ export function activate(context: ExtensionContext) {
 	}
 
 	// Create the language client and start the client.
-	let disposable = new LanguageClient('cheezls', 'CheezLang Language Server', serverOptions, clientOptions).start();
+	let lclient = new LanguageClient('cheezls', 'CheezLang Language Server', serverOptions, clientOptions);
+	let disposable = lclient.start();
 
 	// Push the disposable to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
