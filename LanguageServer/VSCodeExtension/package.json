@@ -35,6 +35,13 @@
         "configuration": "./language-configuration.json"
       }
     ],
+    "grammars": [
+      {
+        "language": "cheezlang",
+        "scopeName": "source.cheezlang",
+        "path": "./syntaxes/cheezlang.tmLanguage.json"
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "CheezLang Language Server Configuration",

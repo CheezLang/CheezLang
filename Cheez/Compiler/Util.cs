@@ -9,6 +9,15 @@ namespace Cheez.Compiler
 
         public static int NewId => mId++;
 
+        public static string Replace(this string str, params (string from, string to)[] reps)
+        {
+            foreach (var (f, t) in reps)
+            {
+                str = str.Replace(f, t);
+            }
+            return str;
+        }
+
         public static string PathNormalize(this string path)
         {
             return Path.GetFullPath(new Uri(path).LocalPath)

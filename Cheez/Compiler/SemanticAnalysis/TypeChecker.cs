@@ -192,7 +192,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 varAst.VarType = varAst.Scope.GetCheezType(varAst.ParseTreeNode.Type);
                 if (varAst.VarType == null)
                 {
-                    workspace.ReportError(varAst.ParseTreeNode.Type, $"Unknown type '{varAst.VarType}'");
+                    workspace.ReportError(varAst.ParseTreeNode.Type, $"Unknown type '{varAst.ParseTreeNode.Type}'");
                     return new TypeCheckResult(varAst);
                 }
 

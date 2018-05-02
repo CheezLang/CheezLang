@@ -281,7 +281,14 @@ using string = const char*;
         #region literals
         public override string VisitStringLiteral(AstStringLiteral str, CppCodeGeneratorArgs data)
         {
-            return $"\"{str.Value.Replace("\r", "").Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
+            var s = str.Value.Replace(
+                (@"\", @"\\"),
+                (@"""", @"\"""),
+                ("\0", @"\0"),
+                ("\r", @"\r"),
+                ("\n", @"\n")
+                );
+            return $"\"{s}\"";
         }
 
         public override string VisitAssignment(AstAssignment ass, CppCodeGeneratorArgs data)
