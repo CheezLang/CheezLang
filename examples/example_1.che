@@ -1,5 +1,18 @@
-#load("cstdio")
+struct Foo {
+    x: Bar
+    y: f32
+}
 
 fn Main() {
+    let a = SomeFunction("Hello World!")
+    println a
+}
 
+fn SomeFunction(arg: string): i32 {
+    println "SomeFunction(", arg, ")"
+
+}
+
+struct Bar {
+    name: string
 }

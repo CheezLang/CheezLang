@@ -8,15 +8,6 @@ using System.Linq;
 
 namespace Cheez.Compiler.SemanticAnalysis
 {
-    public class WaitForType : Exception
-    {
-        public string TypeName { get; private set; }
-
-        public WaitForType(string type)
-        {
-            this.TypeName = type;
-        }
-    }
 
     public struct TypeCheckerData
     {
@@ -75,7 +66,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 foreach (var p in function.Parameters)
                 {
-                    function.SubScope.DefineVariable(p.Name, p);
+                    function.SubScope.DefineVariable(p);
                 }
             }
 
@@ -223,7 +214,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 varAst.VarType = varAst.Initializer.Type;
             }
 
-            if (!varAst.SubScope.DefineVariable(varAst.Name, varAst))
+            if (!varAst.SubScope.DefineVariable(varAst))
             {
                 workspace.ReportError(varAst.ParseTreeNode.Name, $"Variable '{varAst.Name}' already exists in current scope!");
                 return new TypeCheckResult(varAst);

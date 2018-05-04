@@ -121,6 +121,7 @@ namespace Cheez.Compiler
     public class FloatType : CheezType
     {
         private static Dictionary<int, FloatType> sTypes = new Dictionary<int, FloatType>();
+        public static FloatType LiteralType = new FloatType { SizeInBytes = 0 };
 
         public int SizeInBytes { get; set; }
 

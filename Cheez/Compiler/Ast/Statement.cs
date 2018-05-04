@@ -4,8 +4,15 @@ using System.Diagnostics;
 
 namespace Cheez.Compiler.Ast
 {
+    public enum StmtFlags
+    {
+        Returns
+    }
+
     public abstract class AstStatement : IVisitorAcceptor
     {
+        private int mFlags = 0;
+
         public abstract ParseTree.PTStatement GenericParseTreeNode { get; }
 
         public Scope Scope { get; set; }
@@ -14,6 +21,16 @@ namespace Cheez.Compiler.Ast
         public AstStatement(Dictionary<string, AstDirective> dirs = null)
         {
             this.Directives = dirs ?? new Dictionary<string, AstDirective>();
+        }
+
+        public void SetFlag(StmtFlags f)
+        {
+            mFlags |= 1 << (int)f;
+        }
+
+        public bool GetFlag(StmtFlags f)
+        {
+            return (mFlags & (1 << (int)f)) != 0;
         }
 
         public bool HasDirective(string name)

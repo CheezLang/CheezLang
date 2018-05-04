@@ -49,6 +49,11 @@ namespace Cheez.Compiler
         {
             GlobalScope = new Scope("Global");
 
+            var semanticer = new Semanticer();
+            semanticer.DoWork(GlobalScope, mStatements, mCompiler.ErrorHandler);
+
+            return;
+
             var scopeCreator = new ScopeCreator(this, GlobalScope);
             foreach (var s in mStatements)
             {

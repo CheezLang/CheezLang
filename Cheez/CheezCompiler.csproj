@@ -76,8 +76,8 @@
     <Compile Include="Compiler\PriorityQueue.cs" />
     <Compile Include="Compiler\Scope.cs" />
     <Compile Include="Compiler\SemanticAnalysis\ScopeCreator.cs" />
+    <Compile Include="Compiler\SemanticAnalysis\Semanticer.cs" />
     <Compile Include="Compiler\SemanticAnalysis\TypeChecker.cs" />
-    <Compile Include="Compiler\Semanticer.cs" />
     <Compile Include="Compiler\StatementQueue.cs" />
     <Compile Include="Compiler\UniqueNameDecorator.cs" />
     <Compile Include="Compiler\Util.cs" />
