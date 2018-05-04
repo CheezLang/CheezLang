@@ -6,6 +6,8 @@ fn Main() {
     pp.x = 5
 
     println v.x
+    println p.x
+    println pp.x
 }
 
 struct Vec3 {

@@ -172,7 +172,7 @@ namespace Cheez.Compiler.ParseTree
     {
         public PTExpr SubExpression { get; set; }
 
-        public PTAddressOfExpr(TokenLocation beg, PTExpr v) : base(beg, beg)
+        public PTAddressOfExpr(TokenLocation beg, TokenLocation end, PTExpr v) : base(beg, end)
         {
             this.SubExpression = v;
         }
@@ -192,7 +192,7 @@ namespace Cheez.Compiler.ParseTree
     {
         public PTExpr SubExpression { get; set; }
 
-        public PTDereferenceExpr(TokenLocation beg, PTExpr v) : base(beg, beg)
+        public PTDereferenceExpr(TokenLocation beg, TokenLocation end, PTExpr v) : base(beg, end)
         {
             this.SubExpression = v;
         }

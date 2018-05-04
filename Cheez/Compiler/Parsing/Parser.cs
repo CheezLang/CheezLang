@@ -865,12 +865,14 @@ namespace Cheez.Compiler.Parsing
             if (next.type == TokenType.Ampersand)
             {
                 mLexer.NextToken();
-                return new PTAddressOfExpr(next.location, ParseAddressOfOrDerefExpression(location, errorMessage));
+                var sub = ParseAddressOfOrDerefExpression(location, errorMessage);
+                return new PTAddressOfExpr(next.location, sub.End, sub);
             }
             else if (next.type == TokenType.Asterisk)
             {
                 mLexer.NextToken();
-                return new PTDereferenceExpr(next.location, ParseAddressOfOrDerefExpression(location, errorMessage));
+                var sub = ParseAddressOfOrDerefExpression(location, errorMessage);
+                return new PTDereferenceExpr(next.location, sub.End, sub);
             }
 
             return ParseCallExpression(location, errorMessage);

@@ -645,7 +645,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             add.Type = PointerType.GetPointerType(add.SubExpression.Type);
             if (!add.SubExpression.GetFlag(ExprFlags.IsLValue))
-                yield return new LambdaError(eh => eh.ReportError(data.Text, add.ParseTreeNode.SubExpression, $"Can only take address of lvalue"));
+                yield return new LambdaError(eh => eh.ReportError(data.Text, add.ParseTreeNode.SubExpression, $"Sub expression of & is not a lvalue"));
 
             yield break;
         }
@@ -663,7 +663,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else
             {
-                yield return new LambdaError(eh => eh.ReportError(data.Text, deref.SubExpression.GenericParseTreeNode, $"Can only dereferece pointers"));
+                yield return new LambdaError(eh => eh.ReportError(data.Text, deref.SubExpression.GenericParseTreeNode, $"Sub expression of & is not a pointer"));
             }
             yield break;
         }
