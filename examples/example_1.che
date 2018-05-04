@@ -1,15 +1,15 @@
 fn Main() {
-    SomeFunction()
+    let v: Vec3
+    let p = &v
+    let pp = &p
+    p.x  = 5
+    pp.x = 5
+
+    println v.x
 }
 
-fn SomeFunction(): i32 {
-    if true {
-        println "Hello"
-        return 1
-    } else {
-        println "World"
-        //return 2
-    }
-
-    //return 3
+struct Vec3 {
+    x: f32
+    y: f32
+    z: f32
 }

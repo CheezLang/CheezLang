@@ -5,6 +5,7 @@ using Cheez.Compiler.Visitor;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Cheez.Compiler.SemanticAnalysis
 {
@@ -196,7 +197,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         }
     }
 
-    public class Semanticer : VisitorBase<IEnumerator<object>, SemanticerData>
+    public class Semanticer : VisitorBase<IEnumerable<object>, SemanticerData>
     {
         public void DoWork(Scope globalScope, List<AstStatement> statements, IErrorHandler errorHandler)
         {
@@ -204,7 +205,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             foreach (var s in statements)
             {
-                var enumerator = s.Accept(this, new SemanticerData(globalScope, s.GenericParseTreeNode.SourceFile));
+                var enumerator = s.Accept(this, new SemanticerData(globalScope, s.GenericParseTreeNode.SourceFile)).GetEnumerator();
                 enums.Add(enumerator);
             }
 
@@ -268,9 +269,9 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #endregion
 
-        #region Visitor Functions
+        #region Functions
 
-        public override IEnumerator<object> VisitTypeDeclaration(AstTypeDecl type, SemanticerData data = null)
+        public override IEnumerable<object> VisitTypeDeclaration(AstTypeDecl type, SemanticerData data = null)
         {
             var scope = data.Scope;
             type.Scope = scope;
@@ -296,7 +297,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
         }
 
-        public override IEnumerator<object> VisitFunctionDeclaration(AstFunctionDecl function, SemanticerData data = null)
+        public override IEnumerable<object> VisitFunctionDeclaration(AstFunctionDecl function, SemanticerData data = null)
         {
             var scope = data.Scope;
             scope.DefineFunction(function);
@@ -344,10 +345,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                 var subData = data.Clone(Scope: subScope, Function: function);
                 foreach (var s in function.Statements)
                 {
-                    var enumerator = s.Accept(this, subData);
-
-                    while (enumerator.MoveNext())
-                        yield return enumerator.Current;
+                    foreach (var v in s.Accept(this, subData))
+                        yield return v;
 
                     if (s.GetFlag(StmtFlags.Returns))
                     {
@@ -365,22 +364,21 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerator<object> VisitPrintStatement(AstPrintStmt print, SemanticerData data = null)
+        public override IEnumerable<object> VisitPrintStatement(AstPrintStmt print, SemanticerData data = null)
         {
             var scope = data.Scope;
             print.Scope = scope;
 
             foreach (var expr in print.Expressions)
             {
-                var enumerator = expr.Accept(this, data.Clone());
-                while (enumerator.MoveNext())
-                    yield return enumerator.Current;
+                foreach (var v in expr.Accept(this, data.Clone()))
+                    yield return v;
             }
 
             yield break;
         }
 
-        public override IEnumerator<object> VisitIfStatement(AstIfStmt ifs, SemanticerData data = null)
+        public override IEnumerable<object> VisitIfStatement(AstIfStmt ifs, SemanticerData data = null)
         {
             var scope = data.Scope;
             ifs.Scope = scope;
@@ -389,32 +387,30 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             // check condition
             {
-                var enu = ifs.Condition.Accept(this, data.Clone());
-                while (enu.MoveNext())
-                    yield return enu.Current;
+                foreach (var v in ifs.Condition.Accept(this, data.Clone()))
+                    yield return v;
 
                 if (ifs.Condition.Type != CheezType.Bool)
                 {
-                    yield return new LambdaError(eh => 
+                    yield return new LambdaError(eh =>
                         eh.ReportError(data.Text, ifs.ParseTreeNode.Condition, $"if-statement condition must be of type 'bool', got '{ifs.Condition.Type}'"));
                 }
             }
 
             // if case
             {
-                var enu = ifs.IfCase.Accept(this, data.Clone(NewScope("if", scope)));
-                while (enu.MoveNext())
-                    yield return enu.Current;
+                foreach (var v in ifs.IfCase.Accept(this, data.Clone(NewScope("if", scope))))
+                    yield return v;
 
                 if (!ifs.IfCase.GetFlag(StmtFlags.Returns))
                     returns = false;
             }
 
             // else case
-            if (ifs.ElseCase != null) {
-                var enu = ifs.ElseCase.Accept(this, data.Clone(NewScope("else", scope)));
-                while (enu.MoveNext())
-                    yield return enu.Current;
+            if (ifs.ElseCase != null)
+            {
+                foreach (var v in ifs.ElseCase.Accept(this, data.Clone(NewScope("else", scope))))
+                    yield return v;
 
                 if (!ifs.ElseCase.GetFlag(StmtFlags.Returns))
                     returns = false;
@@ -426,19 +422,17 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerator<object> VisitBlockStatement(AstBlockStmt block, SemanticerData data = null)
+        public override IEnumerable<object> VisitBlockStatement(AstBlockStmt block, SemanticerData data = null)
         {
             var scope = data.Scope;
             block.Scope = scope;
             block.SubScope = NewScope("{}", scope);
-            
+
             var subData = data.Clone(Scope: block.SubScope);
             foreach (var s in block.Statements)
             {
-                var enumerator = s.Accept(this, subData);
-
-                while (enumerator.MoveNext())
-                    yield return enumerator.Current;
+                foreach (var v in s.Accept(this, subData))
+                    yield return v;
 
                 if (s.GetFlag(StmtFlags.Returns))
                 {
@@ -449,7 +443,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerator<object> VisitReturnStatement(AstReturnStmt ret, SemanticerData data = null)
+        public override IEnumerable<object> VisitReturnStatement(AstReturnStmt ret, SemanticerData data = null)
         {
             var scope = data.Scope;
             ret.Scope = scope;
@@ -458,9 +452,8 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (ret.ReturnValue != null)
             {
-                var enu = ret.ReturnValue.Accept(this, data.Clone());
-                while (enu.MoveNext())
-                    yield return enu.Current;
+                foreach (var v in ret.ReturnValue.Accept(this, data.Clone()))
+                    yield return v;
             }
 
             Debug.Assert(data.Function != null, "return statement is only allowed in functions");
@@ -492,7 +485,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerator<object> VisitVariableDeclaration(AstVariableDecl variable, SemanticerData data = null)
+        public override IEnumerable<object> VisitVariableDeclaration(AstVariableDecl variable, SemanticerData data = null)
         {
             var scope = data.Scope;
             scope.VariableDeclarations.Add(variable);
@@ -511,9 +504,8 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (variable.Initializer != null)
             {
-                var enu = variable.Initializer.Accept(this, data.Clone());
-                while (enu.MoveNext())
-                    yield return enu.Current;
+                foreach (var v in variable.Initializer.Accept(this, data.Clone()))
+                    yield return v;
 
                 if (variable.VarType == null)
                 {
@@ -550,12 +542,32 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerator<object> VisitExpressionStatement(AstExprStmt stmt, SemanticerData data = null)
+        public override IEnumerable<object> VisitAssignment(AstAssignment ass, SemanticerData data = null)
+        {
+            var scope = data.Scope;
+            ass.Scope = scope;
+
+            // check target
+            foreach (var v in ass.Target.Accept(this, data.Clone()))
+                yield return v;
+
+            // check source
+            foreach (var v in ass.Value.Accept(this, data.Clone()))
+                yield return v;
+
+            if (!CastIfLiteral(ass.Value.Type, ass.Target.Type, out var type))
+                yield return new LambdaError(eh => eh.ReportError(data.Text, ass.ParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}"));
+            else if (!ass.Target.GetFlag(ExprFlags.IsLValue))
+                yield return new LambdaError(eh => eh.ReportError(data.Text, ass.ParseTreeNode.Target, $"Left side of assignment has to be a lvalue"));
+            
+            yield break;
+        }
+
+        public override IEnumerable<object> VisitExpressionStatement(AstExprStmt stmt, SemanticerData data = null)
         {
             stmt.Scope = data.Scope;
-            var enu = stmt.Expr.Accept(this, data.Clone());
-            while (enu.MoveNext())
-                yield return enu.Current;
+            foreach (var v in stmt.Expr.Accept(this, data.Clone()))
+                yield return v;
             yield break;
         }
 
@@ -563,7 +575,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #region Expressions
 
-        public override IEnumerator<object> VisitCallExpression(AstCallExpr call, SemanticerData data = null)
+        public override IEnumerable<object> VisitCallExpression(AstCallExpr call, SemanticerData data = null)
         {
             var scope = data.Scope;
             call.Scope = scope;
@@ -581,17 +593,14 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else
             {
-                var enu = call.Function.Accept(this, data);
-                while (enu.MoveNext())
-                    yield return enu.Current;
-
-                
+                foreach (var v in call.Function.Accept(this))
+                    yield return v;
             }
 
             yield break;
         }
 
-        public override IEnumerator<object> VisitIdentifierExpression(AstIdentifierExpr ident, SemanticerData data = null)
+        public override IEnumerable<object> VisitIdentifierExpression(AstIdentifierExpr ident, SemanticerData data = null)
         {
             var scope = data.Scope;
             ident.Scope = scope;
@@ -604,28 +613,137 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             ident.Type = v.VarType;
+            ident.SetFlag(ExprFlags.IsLValue);
 
             yield break;
         }
 
-        public override IEnumerator<object> VisitNumberExpression(AstNumberExpr num, SemanticerData data = null)
+        public override IEnumerable<object> VisitNumberExpression(AstNumberExpr num, SemanticerData data = null)
         {
             num.Type = IntType.LiteralType;
             yield break;
         }
 
-        public override IEnumerator<object> VisitStringLiteral(AstStringLiteral str, SemanticerData data = null)
+        public override IEnumerable<object> VisitStringLiteral(AstStringLiteral str, SemanticerData data = null)
         {
             str.Type = CheezType.String;
             yield break;
         }
 
-        public override IEnumerator<object> VisitBoolExpression(AstBoolExpr bo, SemanticerData data = null)
+        public override IEnumerable<object> VisitBoolExpression(AstBoolExpr bo, SemanticerData data = null)
         {
             bo.Type = CheezType.Bool;
             yield break;
         }
 
+        public override IEnumerable<object> VisitAddressOfExpression(AstAddressOfExpr add, SemanticerData data = null)
+        {
+            add.Scope = data.Scope;
+
+            foreach (var v in add.SubExpression.Accept(this, data))
+                yield return v;
+
+            add.Type = PointerType.GetPointerType(add.SubExpression.Type);
+            if (!add.SubExpression.GetFlag(ExprFlags.IsLValue))
+                yield return new LambdaError(eh => eh.ReportError(data.Text, add.ParseTreeNode.SubExpression, $"Can only take address of lvalue"));
+
+            yield break;
+        }
+
+        public override IEnumerable<object> VisitDereferenceExpression(AstDereferenceExpr deref, SemanticerData data = null)
+        {
+            deref.Scope = data.Scope;
+
+            foreach (var v in deref.SubExpression.Accept(this, data))
+                yield return v;
+
+            if (deref.SubExpression.Type is PointerType p)
+            {
+                deref.Type = p.TargetType;
+            }
+            else
+            {
+                yield return new LambdaError(eh => eh.ReportError(data.Text, deref.SubExpression.GenericParseTreeNode, $"Can only dereferece pointers"));
+            }
+            yield break;
+        }
+
+        public override IEnumerable<object> VisitCastExpression(AstCastExpr cast, SemanticerData data = null)
+        {
+            cast.Scope = data.Scope;
+
+            cast.Type = data.Scope.GetCheezType(cast.ParseTreeNode.TargetType);
+            if (cast.Type == null)
+            {
+                yield return new WaitForType(data.Text, data.Scope, cast.ParseTreeNode.TargetType);
+                cast.Type = data.Scope.GetCheezType(cast.ParseTreeNode.TargetType);
+            }
+
+            // check subExpression
+            foreach (var v in cast.SubExpression.Accept(this, data))
+                yield return v;
+
+
+            if (!CastIfLiteral(cast.SubExpression.Type, cast.Type, out var type)) ;
+            //{
+            //    yield return new LambdaError(eh => eh.ReportError(data.Text, cast.ParseTreeNode, $"Can't cast a value of to '{cast.SubExpression.Type}' to '{cast.Type}'"));
+            //}
+            cast.SubExpression.Type = type;
+
+            yield break;
+        }
+
+        public override IEnumerable<object> VisitDotExpression(AstDotExpr dot, SemanticerData data = null)
+        {
+            dot.Scope = data.Scope;
+
+            foreach (var v in dot.Left.Accept(this, data))
+                yield return v;
+
+            while (dot.Left.Type is PointerType p)
+            {
+                dot.Left = new AstDereferenceExpr(dot.Left.GenericParseTreeNode, dot.Left);
+                dot.Left.Type = p.TargetType;
+            }
+
+            if (dot.Left.Type is StructType s)
+            {
+                var member = s.Declaration.Members.FirstOrDefault(m => m.Name == dot.Right);
+                if (member == null)
+                    yield return new LambdaError(eh => eh.ReportError(data.Text, dot.ParseTreeNode.Right, $"'{dot.Right}' is not a member of struct '{dot.Left.Type}'"));
+
+                dot.Type = member.Type;
+            }
+            else
+            {
+                yield return new LambdaError(eh => eh.ReportError(data.Text, dot.ParseTreeNode.Left, $"Left side of '.' has to a struct type, got '{dot.Left.Type}'"));
+            }
+
+            dot.SetFlag(ExprFlags.IsLValue);
+
+            yield break;
+        }
+
         #endregion
+
+        private bool CastIfLiteral(CheezType sourceType, CheezType targetType, out CheezType outSource)
+        {
+            outSource = sourceType;
+
+            if (sourceType == IntType.LiteralType && (targetType is IntType || targetType is FloatType))
+            {
+                outSource = targetType;
+            }
+            else if (sourceType == FloatType.LiteralType && targetType is FloatType)
+            {
+                outSource = targetType;
+            }
+            else if (sourceType != targetType)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

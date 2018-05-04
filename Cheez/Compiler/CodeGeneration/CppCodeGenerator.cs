@@ -186,6 +186,9 @@ using string = const char*;
                     {
                         sb.AppendLine(";");
                     }
+
+                    if (s is AstReturnStmt)
+                        break;
                 }
                 sb.Append("}");
             }
@@ -242,7 +245,18 @@ using string = const char*;
 
         public override string VisitAddressOfExpression(AstAddressOfExpr add, CppCodeGeneratorArgs data = default)
         {
-            return $"&{add.SubExpression.Accept(this, data)}";
+            var sub = add.SubExpression.Accept(this, data);
+            if (!(add.SubExpression is AstIdentifierExpr))
+                sub = $"({sub})";
+            return $"&{sub}";
+        }
+
+        public override string VisitDereferenceExpression(AstDereferenceExpr deref, CppCodeGeneratorArgs data = default)
+        {
+            var sub = deref.SubExpression.Accept(this, data);
+            if (!(deref.SubExpression is AstIdentifierExpr))
+                sub = $"({sub})";
+            return $"*{sub}";
         }
 
         public override string VisitVariableDeclaration(AstVariableDecl variable, CppCodeGeneratorArgs data)
@@ -361,6 +375,9 @@ using string = const char*;
                 {
                     sb.AppendLine(";");
                 }
+
+                if (s is AstReturnStmt)
+                    break;
             }
             sb.Append("}");
             return Indent(sb.ToString(), data.indent);
@@ -455,7 +472,10 @@ using string = const char*;
 
         public override string VisitDotExpression(AstDotExpr dot, CppCodeGeneratorArgs data)
         {
-            return dot.Left.Accept(this) + "." + dot.Right;
+            var sub = dot.Left.Accept(this);
+            if (!(dot.Left is AstDotExpr || dot.Left is AstIdentifierExpr))
+                sub = $"({sub})";
+            return sub + "." + dot.Right;
         }
 
         public override string VisitCastExpression(AstCastExpr cast, CppCodeGeneratorArgs data = default)

@@ -183,6 +183,26 @@ namespace Cheez.Compiler.Ast
         }
     }
 
+    public class AstDereferenceExpr : AstExpression
+    {
+        public ParseTree.PTExpr ParseTreeNode { get; }
+        public override ParseTree.PTExpr GenericParseTreeNode => ParseTreeNode;
+
+        public AstExpression SubExpression { get; set; }
+
+        public AstDereferenceExpr(ParseTree.PTExpr node, AstExpression sub)
+        {
+            ParseTreeNode = node;
+            SubExpression = sub;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitDereferenceExpression(this, data);
+        }
+    }
+
     public class AstCastExpr : AstExpression
     {
         public ParseTree.PTCastExpr ParseTreeNode { get; }

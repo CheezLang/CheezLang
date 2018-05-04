@@ -797,7 +797,7 @@ namespace Cheez.Compiler.Parsing
             location = location ?? (t => t.location);
             errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
 
-            ExpressionParser muldiv = (l, e) => ParseBinaryLeftAssociativeExpression(ParseAddressOfOrCallExpression, l, e,
+            ExpressionParser muldiv = (l, e) => ParseBinaryLeftAssociativeExpression(ParseAddressOfOrDerefExpression, l, e,
                 (TokenType.Asterisk, Operator.Multiply),
                 (TokenType.ForwardSlash, Operator.Divide),
                 (TokenType.Percent, Operator.Modulo));
@@ -859,13 +859,18 @@ namespace Cheez.Compiler.Parsing
             }
         }
 
-        private PTExpr ParseAddressOfOrCallExpression(LocationResolver location, ErrorMessageResolver errorMessage = null)
+        private PTExpr ParseAddressOfOrDerefExpression(LocationResolver location, ErrorMessageResolver errorMessage = null)
         {
             var next = PeekToken(false);
             if (next.type == TokenType.Ampersand)
             {
                 mLexer.NextToken();
-                return new PTAddressOfExpr(next.location, ParseCallExpression(location, errorMessage));
+                return new PTAddressOfExpr(next.location, ParseAddressOfOrDerefExpression(location, errorMessage));
+            }
+            else if (next.type == TokenType.Asterisk)
+            {
+                mLexer.NextToken();
+                return new PTDereferenceExpr(next.location, ParseAddressOfOrDerefExpression(location, errorMessage));
             }
 
             return ParseCallExpression(location, errorMessage);
@@ -963,6 +968,13 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.KwFalse:
                     return new PTBoolExpr(token.location, false);
 
+                case TokenType.Less:
+                    {
+                        var type = ParseTypeExpression();
+                        Consume(TokenType.Greater, false);
+                        var e = ParseAddressOfOrDerefExpression(location, errorMessage);
+                        return new PTCastExpr(token.location, e.End, type, e);
+                    }
                 case TokenType.KwCast:
                     {
                         Expect(TokenType.Less, true);

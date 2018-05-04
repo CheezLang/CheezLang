@@ -170,21 +170,41 @@ namespace Cheez.Compiler.ParseTree
 
     public class PTAddressOfExpr : PTExpr
     {
-        public PTExpr Variable { get; set; }
+        public PTExpr SubExpression { get; set; }
 
         public PTAddressOfExpr(TokenLocation beg, PTExpr v) : base(beg, beg)
         {
-            this.Variable = v;
+            this.SubExpression = v;
         }
 
         public override string ToString()
         {
-            return $"&{Variable}";
+            return $"&{SubExpression}";
         }
 
         public override AstExpression CreateAst()
         {
-            return new AstAddressOfExpr(this, Variable.CreateAst());
+            return new AstAddressOfExpr(this, SubExpression.CreateAst());
+        }
+    }
+
+    public class PTDereferenceExpr : PTExpr
+    {
+        public PTExpr SubExpression { get; set; }
+
+        public PTDereferenceExpr(TokenLocation beg, PTExpr v) : base(beg, beg)
+        {
+            this.SubExpression = v;
+        }
+
+        public override string ToString()
+        {
+            return $"&{SubExpression}";
+        }
+
+        public override AstExpression CreateAst()
+        {
+            return new AstDereferenceExpr(this, SubExpression.CreateAst());
         }
     }
 
