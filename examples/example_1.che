@@ -1,18 +1,15 @@
-struct Foo {
-    x: Bar
-    y: f32
-}
-
 fn Main() {
-    let a = SomeFunction("Hello World!")
-    println a
+    SomeFunction()
 }
 
-fn SomeFunction(arg: string): i32 {
-    println "SomeFunction(", arg, ")"
+fn SomeFunction(): i32 {
+    if true {
+        println "Hello"
+        return 1
+    } else {
+        println "World"
+        //return 2
+    }
 
-}
-
-struct Bar {
-    name: string
+    //return 3
 }

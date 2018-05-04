@@ -380,6 +380,75 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
+        public override IEnumerator<object> VisitIfStatement(AstIfStmt ifs, SemanticerData data = null)
+        {
+            var scope = data.Scope;
+            ifs.Scope = scope;
+
+            bool returns = true;
+
+            // check condition
+            {
+                var enu = ifs.Condition.Accept(this, data.Clone());
+                while (enu.MoveNext())
+                    yield return enu.Current;
+
+                if (ifs.Condition.Type != CheezType.Bool)
+                {
+                    yield return new LambdaError(eh => 
+                        eh.ReportError(data.Text, ifs.ParseTreeNode.Condition, $"if-statement condition must be of type 'bool', got '{ifs.Condition.Type}'"));
+                }
+            }
+
+            // if case
+            {
+                var enu = ifs.IfCase.Accept(this, data.Clone(NewScope("if", scope)));
+                while (enu.MoveNext())
+                    yield return enu.Current;
+
+                if (!ifs.IfCase.GetFlag(StmtFlags.Returns))
+                    returns = false;
+            }
+
+            // else case
+            if (ifs.ElseCase != null) {
+                var enu = ifs.ElseCase.Accept(this, data.Clone(NewScope("else", scope)));
+                while (enu.MoveNext())
+                    yield return enu.Current;
+
+                if (!ifs.ElseCase.GetFlag(StmtFlags.Returns))
+                    returns = false;
+            }
+
+            if (returns)
+                ifs.SetFlag(StmtFlags.Returns);
+
+            yield break;
+        }
+
+        public override IEnumerator<object> VisitBlockStatement(AstBlockStmt block, SemanticerData data = null)
+        {
+            var scope = data.Scope;
+            block.Scope = scope;
+            block.SubScope = NewScope("{}", scope);
+            
+            var subData = data.Clone(Scope: block.SubScope);
+            foreach (var s in block.Statements)
+            {
+                var enumerator = s.Accept(this, subData);
+
+                while (enumerator.MoveNext())
+                    yield return enumerator.Current;
+
+                if (s.GetFlag(StmtFlags.Returns))
+                {
+                    block.SetFlag(StmtFlags.Returns);
+                }
+            }
+
+            yield break;
+        }
+
         public override IEnumerator<object> VisitReturnStatement(AstReturnStmt ret, SemanticerData data = null)
         {
             var scope = data.Scope;
@@ -548,6 +617,12 @@ namespace Cheez.Compiler.SemanticAnalysis
         public override IEnumerator<object> VisitStringLiteral(AstStringLiteral str, SemanticerData data = null)
         {
             str.Type = CheezType.String;
+            yield break;
+        }
+
+        public override IEnumerator<object> VisitBoolExpression(AstBoolExpr bo, SemanticerData data = null)
+        {
+            bo.Type = CheezType.Bool;
             yield break;
         }
 
