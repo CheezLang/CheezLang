@@ -165,7 +165,16 @@ using string = const char*;
             {
                 if (!first)
                     sb.Append(", ");
-                sb.Append($"{p.VarType} {nameDecorator.GetDecoratedName(p)}");
+
+                if (p.Type is FunctionType f)
+                {
+                    sb.Append(GetCTypeName(f, nameDecorator.GetDecoratedName(p)));
+                }
+                else
+                {
+                    sb.Append($"{p.Type} {nameDecorator.GetDecoratedName(p)}");
+                }
+
 
                 first = false;
             }
@@ -236,7 +245,7 @@ using string = const char*;
 
         public override string VisitIdentifierExpression(AstIdentifierExpr ident, CppCodeGeneratorArgs data)
         {
-            var v = ident.Scope.GetVariable(ident.Name);
+            var v = ident.Scope.GetSymbol(ident.Name);
             var name = nameDecorator.GetDecoratedName(v);
             if (ident.Type is IntType i && i.SizeInBytes == 1)
                 return $"+{name}";
@@ -263,8 +272,17 @@ using string = const char*;
         {
             var decoratedName = nameDecorator.GetDecoratedName(variable);
             var sb = new StringBuilder();
-            string type = GetCTypeName(variable.VarType);
-            sb.Append($"{type} {decoratedName}");
+
+            if (variable.Type is FunctionType f)
+            {
+                sb.Append(GetCTypeName(f, decoratedName));
+            }
+            else
+            {
+                string type = GetCTypeName(variable.Type, decoratedName);
+                sb.Append($"{type} {decoratedName}");
+            }
+
 
             //if (variable.Type is ArrayTypeExpression)
             //    sb.Append("[]");
@@ -507,7 +525,7 @@ using string = const char*;
 
         #region Helper Methods
 
-        private string GetCTypeName(CheezType type)
+        private string GetCTypeName(CheezType type, string name = null)
         {
             switch (type)
             {
@@ -531,6 +549,9 @@ using string = const char*;
 
                 case StructType s:
                     return s.Declaration.Name;
+
+                case FunctionType f:
+                    return $"{GetCTypeName(f.ReturnType)}(*{name})({string.Join(", ", f.ParameterTypes.Select(pt => GetCTypeName(pt)))})";
 
                 default:
                     return "void";

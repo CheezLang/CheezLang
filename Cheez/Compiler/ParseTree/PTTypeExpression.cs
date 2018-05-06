@@ -1,6 +1,8 @@
 ﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.Parsing;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Cheez.Compiler.ParseTree
 {
@@ -68,6 +70,24 @@ namespace Cheez.Compiler.ParseTree
         public override string ToString()
         {
             return $"{ElementType}[]";
+        }
+    }
+
+    public class PTFunctionTypeExpr : PTTypeExpr
+    {
+        public PTTypeExpr ReturnType { get; set; }
+        public List<PTTypeExpr> ParameterTypes { get; set; }
+
+        public PTFunctionTypeExpr(TokenLocation beg, TokenLocation end, PTTypeExpr target, List<PTTypeExpr> pt) : base(beg, end)
+        {
+            this.ReturnType = target;
+            this.ParameterTypes = pt;
+        }
+
+        public override string ToString()
+        {
+            var p = string.Join(", ", ParameterTypes);
+            return $"fn {ReturnType}({p})";
         }
     }
 

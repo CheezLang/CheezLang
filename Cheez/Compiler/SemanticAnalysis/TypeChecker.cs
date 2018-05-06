@@ -66,7 +66,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 foreach (var p in function.Parameters)
                 {
-                    function.SubScope.DefineVariable(p);
+                    function.SubScope.DefineSymbol(p);
                 }
             }
 
@@ -180,8 +180,8 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             if (varAst.ParseTreeNode.Type != null)
             {
-                varAst.VarType = varAst.Scope.GetCheezType(varAst.ParseTreeNode.Type);
-                if (varAst.VarType == null)
+                varAst.Type = varAst.Scope.GetCheezType(varAst.ParseTreeNode.Type);
+                if (varAst.Type == null)
                 {
                     workspace.ReportError(varAst.ParseTreeNode.Type, $"Unknown type '{varAst.ParseTreeNode.Type}'");
                     return new TypeCheckResult(varAst);
@@ -190,10 +190,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (varAst.Initializer != null)
                 {
                     varAst.Initializer = CheckTypes(varAst.Initializer).expr;
-                    varAst.Initializer = InsertCastExpressionIf(varAst.Initializer, varAst.Initializer.Type, varAst.VarType);
-                    if (varAst.Initializer.Type != varAst.VarType)
+                    varAst.Initializer = InsertCastExpressionIf(varAst.Initializer, varAst.Initializer.Type, varAst.Type);
+                    if (varAst.Initializer.Type != varAst.Type)
                     {
-                        workspace.ReportError(varAst.ParseTreeNode.Initializer, $"Type of initialization does not match type of variable. Expected {varAst.VarType}, got {varAst.Initializer.Type}");
+                        workspace.ReportError(varAst.ParseTreeNode.Initializer, $"Type of initialization does not match type of variable. Expected {varAst.Type}, got {varAst.Initializer.Type}");
                         return new TypeCheckResult(varAst);
                     }
                 }
@@ -211,10 +211,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                 {
                     varAst.Initializer.Type = IntType.DefaultType;
                 }
-                varAst.VarType = varAst.Initializer.Type;
+                varAst.Type = varAst.Initializer.Type;
             }
 
-            if (!varAst.SubScope.DefineVariable(varAst))
+            if (!varAst.SubScope.DefineSymbol(varAst))
             {
                 workspace.ReportError(varAst.ParseTreeNode.Name, $"Variable '{varAst.Name}' already exists in current scope!");
                 return new TypeCheckResult(varAst);
@@ -285,7 +285,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override TypeCheckResult VisitIdentifierExpression(AstIdentifierExpr ident, TypeCheckerData data = default)
         {
-            var variable = ident.Scope.GetVariable(ident.Name);
+            var variable = ident.Scope.GetSymbol(ident.Name);
 
             if (variable == null)
             {
@@ -293,7 +293,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 return new TypeCheckResult(ident);
             }
 
-            ident.Type = variable.VarType;
+            ident.Type = variable.Type;
             ident.SetFlag(ExprFlags.IsLValue);
             return new TypeCheckResult(ident);
         }
@@ -388,46 +388,51 @@ namespace Cheez.Compiler.SemanticAnalysis
                     return new TypeCheckResult(call);
                 }
 
-                var func = call.Scope.GetFunction(id.Name, argTypes);
+                var func = call.Scope.GetSymbol(id.Name);
                 if (func == null)
                 {
                     workspace.ReportError(call.ParseTreeNode, "No function matches call!");
                     return new TypeCheckResult(call);
                 }
+
+                //{
+                //    if (!(func is )
+
+                //}
                 
-                if (func.ReturnType == null)
-                {
-                    workspace.ReportError(call.ParseTreeNode, "Return type of function does not exist!");
-                    return new TypeCheckResult(call);
-                }
-                call.Type = func.ReturnType;
+                //if (func.ReturnType == null)
+                //{
+                //    workspace.ReportError(call.ParseTreeNode, "Return type of function does not exist!");
+                //    return new TypeCheckResult(call);
+                //}
+                //call.Type = func.ReturnType;
 
-                // @Temp
-                // check if types match
-                if (argTypes.Count != func.Parameters.Count)
-                {
-                    workspace.ReportError(call.ParseTreeNode, $"Wrong number of arguments in function call");
-                    return new TypeCheckResult(call);
-                }
-                else
-                {
-                    List<AstExpression> args = new List<AstExpression>();
-                    foreach (var (givenAst, expectedAst) in call.Arguments.Zip(func.Parameters, (a, b) => (a, b)))
-                    {
-                        var given = givenAst.Type;
-                        var expected = expectedAst.VarType;
+                //// @Temp
+                //// check if types match
+                //if (argTypes.Count != func.Parameters.Count)
+                //{
+                //    workspace.ReportError(call.ParseTreeNode, $"Wrong number of arguments in function call");
+                //    return new TypeCheckResult(call);
+                //}
+                //else
+                //{
+                //    List<AstExpression> args = new List<AstExpression>();
+                //    foreach (var (givenAst, expectedAst) in call.Arguments.Zip(func.Parameters, (a, b) => (a, b)))
+                //    {
+                //        var given = givenAst.Type;
+                //        var expected = expectedAst.VarType;
 
-                        var result = InsertCastExpressionIf(givenAst, given, expected);
-                        args.Add(result);
+                //        var result = InsertCastExpressionIf(givenAst, given, expected);
+                //        args.Add(result);
 
-                        if (result.Type != expected)
-                        {
-                            workspace.ReportError(givenAst.GenericParseTreeNode, $"Argument types in function call do not match. Expected {expected}, got {given}");
-                        }
-                    }
+                //        if (result.Type != expected)
+                //        {
+                //            workspace.ReportError(givenAst.GenericParseTreeNode, $"Argument types in function call do not match. Expected {expected}, got {given}");
+                //        }
+                //    }
 
-                    call.Arguments = args;
-                }
+                //    call.Arguments = args;
+                //}
 
                 return new TypeCheckResult(call);
             }

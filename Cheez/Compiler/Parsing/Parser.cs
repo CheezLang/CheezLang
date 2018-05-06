@@ -727,6 +727,44 @@ namespace Cheez.Compiler.Parsing
 
         #region Expression Parsing
 
+        private PTTypeExpr ParseFunctionTypeExpr()
+        {
+            var beginning = Expect(TokenType.KwFn, false).location;
+            Consume(TokenType.OpenParen, true);
+
+            List<PTTypeExpr> args = new List<PTTypeExpr>();
+            if (PeekToken(true).type != TokenType.ClosingParen)
+            {
+                while (true)
+                {
+                    args.Add(ParseTypeExpression());
+
+                    var next = PeekToken(true);
+                    if (next.type == TokenType.Comma)
+                        mLexer.NextToken();
+                    else if (next.type == TokenType.ClosingParen)
+                        break;
+                    else
+                    {
+                        ReportError(next.location, $"Failed to parse function type, expected comma or closing paren, got {next.data} ({next.type})");
+                        RecoverExpression();
+                        return null;
+                    }
+                }
+            }
+
+            var end = Expect(TokenType.ClosingParen, true).location;
+            PTTypeExpr returnType = null;
+            if (PeekToken(false).type == TokenType.Colon)
+            {
+                mLexer.NextToken();
+                returnType = ParseTypeExpression();
+                end = returnType.End;
+            }
+
+            return new PTFunctionTypeExpr(beginning, end, returnType, args);
+        }
+
         private PTTypeExpr ParseTypeExpression()
         {
             PTTypeExpr type = null;
@@ -736,6 +774,10 @@ namespace Cheez.Compiler.Parsing
                 var next = mLexer.PeekToken();
                 switch (next.type)
                 {
+                    case TokenType.KwFn:
+                        return ParseFunctionTypeExpr();
+                        break;
+
                     case TokenType.Identifier:
                         mLexer.NextToken();
                         type = new PTNamedTypeExpr(next.location, next.location, (string)next.data);
@@ -875,12 +917,12 @@ namespace Cheez.Compiler.Parsing
                 return new PTDereferenceExpr(next.location, sub.End, sub);
             }
 
-            return ParseCallExpression(location, errorMessage);
+            return ParseCallOrDotExpression(location, errorMessage);
         }
 
-        private PTExpr ParseCallExpression(LocationResolver location, ErrorMessageResolver errorMessage)
+        private PTExpr ParseCallOrDotExpression(LocationResolver location, ErrorMessageResolver errorMessage)
         {
-            var expr = ParseDotExpression(location, errorMessage);
+            var expr = ParseAtomicExpression(location, errorMessage);
 
             while (true)
             {
@@ -924,31 +966,25 @@ namespace Cheez.Compiler.Parsing
                         }
                         break;
 
+                    case TokenType.Period:
+                        {
+                            mLexer.NextToken();
+                            var right = ParseIdentifierExpr(true, t => $"Right side of '.' has to be an identifier", location);
+
+                            if (right is PTErrorExpr)
+                            {
+                                RecoverExpression();
+                                return right;
+                            }
+
+                            expr = new PTDotExpr(expr.Beginning, right.End, expr, right as PTIdentifierExpr);
+                            break;
+                        }
+
                     default:
                         return expr;
                 }
             }
-        }
-
-        private PTExpr ParseDotExpression(LocationResolver location, ErrorMessageResolver errorMessage)
-        {
-            var left = ParseAtomicExpression(location, errorMessage);
-
-            while (mLexer.PeekToken().type == TokenType.Period)
-            {
-                mLexer.NextToken();
-                var right = ParseIdentifierExpr(true, t => $"Right side of '.' has to be an identifier", location);
-
-                if (right is PTErrorExpr)
-                {
-                    RecoverExpression();
-                    return right;
-                }
-
-                left = new PTDotExpr(left.Beginning, right.End, left, right as PTIdentifierExpr);
-            }
-
-            return left;
         }
 
         private PTExpr ParseAtomicExpression(LocationResolver location, ErrorMessageResolver errorMessage)

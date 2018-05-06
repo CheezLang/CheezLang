@@ -6,12 +6,12 @@ namespace Cheez.Compiler.Ast
 {
     #region Function Declaration
 
-    public class AstFunctionParameter : IVariableDecl
+    public class AstFunctionParameter : ISymbol
     {
         public ParseTree.PTFunctionParam ParseTreeNode { get; }
 
         public string Name => ParseTreeNode.Name.Name;
-        public CheezType VarType { get; set; }
+        public CheezType Type { get; set; }
         public Scope Scope { get; set; }
 
         public AstFunctionParameter(ParseTree.PTFunctionParam node)
@@ -21,11 +21,11 @@ namespace Cheez.Compiler.Ast
 
         public override string ToString()
         {
-            return $"param {Name} : {VarType}";
+            return $"param {Name} : {Type}";
         }
     }
 
-    public class AstFunctionDecl : AstStatement, INamed
+    public class AstFunctionDecl : AstStatement, ISymbol
     {
         public ParseTree.PTFunctionDecl ParseTreeNode { get; set; }
         public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
@@ -35,6 +35,8 @@ namespace Cheez.Compiler.Ast
         public string Name { get; }
         public List<AstFunctionParameter> Parameters { get; }
         public CheezType ReturnType { get; set; }
+
+        public CheezType Type { get; set; }
 
         public List<AstStatement> Statements { get; private set; }
         public bool HasImplementation => Statements != null;
@@ -103,18 +105,13 @@ namespace Cheez.Compiler.Ast
 
     #region Variable Declarion
 
-    public interface IVariableDecl : INamed
-    {
-        CheezType VarType { get; }
-    }
-
-    public class AstVariableDecl : AstStatement, IVariableDecl
+    public class AstVariableDecl : AstStatement, ISymbol
     {
         public ParseTree.PTVariableDecl ParseTreeNode { get; }
         public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
         public string Name { get; set; }
-        public CheezType VarType { get; set; }
+        public CheezType Type { get; set; }
         public AstExpression Initializer { get; set; }
         public Scope SubScope { get; set; }
 

@@ -4,6 +4,11 @@ using System.Collections.Generic;
 
 namespace Cheez.Compiler
 {
+    public interface ISymbol : INamed
+    {
+        CheezType Type { get; }
+    }
+
     public class Scope
     {
         public string Name { get; set; }
@@ -16,8 +21,7 @@ namespace Cheez.Compiler
 
         private CTypeFactory types = new CTypeFactory();
 
-        private Dictionary<string, AstFunctionDecl> mFunctionTable = new Dictionary<string, AstFunctionDecl>();
-        private Dictionary<string, IVariableDecl> mVariableTable = new Dictionary<string, IVariableDecl>();
+        private Dictionary<string, ISymbol> mSymbolTable = new Dictionary<string, ISymbol>();
 
         public Scope(string name, Scope parent = null)
         {
@@ -35,30 +39,20 @@ namespace Cheez.Compiler
             return types.GetCheezType(name) ?? Parent?.GetCheezType(name);
         }
 
-        public AstFunctionDecl GetFunction(string name, List<CheezType> parameters = null)
+        public bool DefineSymbol(ISymbol symbol)
         {
-            if (mFunctionTable.ContainsKey(name))
-                return mFunctionTable[name];
-
-            return Parent?.GetFunction(name);
-        }
-
-        public bool DefineVariable(IVariableDecl variable)
-        {
-            if (mVariableTable.ContainsKey(variable.Name))
+            if (mSymbolTable.ContainsKey(symbol.Name))
                 return false;
 
-            mVariableTable[variable.Name] = variable;
-
+            mSymbolTable[symbol.Name] = symbol;
             return true;
         }
 
-        public IVariableDecl GetVariable(string name)
+        public ISymbol GetSymbol(string name)
         {
-            if (mVariableTable.ContainsKey(name))
-                return mVariableTable[name];
-
-            return Parent?.GetVariable(name);
+            if (mSymbolTable.ContainsKey(name))
+                return mSymbolTable[name];
+            return Parent?.GetSymbol(name);
         }
 
         public bool DefineType(AstTypeDecl t)
@@ -76,18 +70,6 @@ namespace Cheez.Compiler
                 return false;
 
             types.CreateAlias(name, type);
-            return true;
-        }
-
-        public bool DefineFunction(AstFunctionDecl f)
-        {
-            if (mFunctionTable.ContainsKey(f.Name))
-            {
-                return false;
-            }
-
-            mFunctionTable[f.Name] = f;
-
             return true;
         }
 

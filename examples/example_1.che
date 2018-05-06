@@ -1,17 +1,10 @@
 fn Main() {
-    let v: Vec3
-    let p = &v
-    let pp = &p
-    p.x  = 5
-    pp.x = 5
-
-    println v.x
-    println p.x
-    println pp.x
+    let f = Test
+    println f
+    println f(Main)
 }
 
-struct Vec3 {
-    x: f32
-    y: f32
-    z: f32
+fn Test(x : fn()): i32 {
+    println x
+    return 1
 }

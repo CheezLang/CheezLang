@@ -1,6 +1,7 @@
 ﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.ParseTree;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cheez.Compiler
 {
@@ -55,6 +56,12 @@ namespace Cheez.Compiler
 
                 case PTArrayTypeExpr p:
                     return ArrayType.GetArrayType(GetCheezType(p.ElementType));
+
+                case PTFunctionTypeExpr f:
+                    return FunctionType.GetFunctionType(GetCheezType(f.ReturnType), f.ParameterTypes.Select(pt => GetCheezType(pt)).ToArray());
+
+                case null:
+                    return CheezType.Void;
 
                 default:
                     return null;
@@ -221,7 +228,7 @@ namespace Cheez.Compiler
 
     public class StructType : CheezType
     {
-        public AstTypeDecl Declaration { get; set; }
+        public AstTypeDecl Declaration { get; }
 
         public StructType(AstTypeDecl decl)
         {
@@ -231,6 +238,52 @@ namespace Cheez.Compiler
         public override string ToString()
         {
             return $"struct {Declaration.Name}";
+        }
+    }
+
+    public class FunctionType : CheezType
+    {
+        private static List<FunctionType> sTypes = new List<FunctionType>();
+                
+        public CheezType[] ParameterTypes { get; private set; }
+        public CheezType ReturnType { get; private set; }
+
+        private FunctionType(CheezType returnType, CheezType[] parameterTypes)
+        {
+            this.ReturnType = returnType;
+            this.ParameterTypes = parameterTypes;
+        }
+
+        public static FunctionType GetFunctionType(AstFunctionDecl decl)
+        {
+            var pt = decl.Parameters.Select(p => p.Type).ToArray();
+            return GetFunctionType(decl.ReturnType, pt);
+        }
+
+        public static FunctionType GetFunctionType(CheezType returnType, CheezType[] parameterTypes)
+        {
+            var f = sTypes.FirstOrDefault(ft =>
+            {
+                if (ft.ReturnType != returnType)
+                    return false;
+                if (ft.ParameterTypes.Length != parameterTypes.Length)
+                    return false;
+
+                return ft.ParameterTypes.Zip(parameterTypes, (a, b) => a == b).All(b => b);
+            });
+
+            if (f != null)
+                return f;
+
+            var type = new FunctionType(returnType, parameterTypes);
+            sTypes.Add(type);
+            return type;
+        }
+
+        public override string ToString()
+        {
+            var args = string.Join(", ", ParameterTypes.ToList());
+            return $"fn({args}): {ReturnType}";
         }
     }
 }
