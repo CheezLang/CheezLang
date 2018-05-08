@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using Cheez.Compiler;
+using Cheez.Compiler.Ast;
 using Cheez.Compiler.CodeGeneration;
+using Cheez.Compiler.ParseTree;
 using LanguageServer;
 using LanguageServer.Parameters;
 using LanguageServer.Parameters.General;
@@ -148,7 +150,8 @@ namespace CheezLanguageServer
                     executeCommandProvider = new ExecuteCommandOptions
                     {
                         commands = new string[] { "reload_language_server" }
-                    }
+                    },
+                    hoverProvider = true
                 }
             };
 
@@ -160,6 +163,8 @@ namespace CheezLanguageServer
 
             return Result<InitializeResult, ResponseError<InitializeErrorData>>.Success(result);
         }
+
+        #region Document stuff
 
         protected override void DidOpenTextDocument(DidOpenTextDocumentParams @params)
         {
@@ -194,6 +199,8 @@ namespace CheezLanguageServer
             Logger.Instance.Log("We received an file change event");
         }
 
+        #endregion
+
         protected override Result<SymbolInformation[], ResponseError> DocumentSymbols(DocumentSymbolParams @params)
         {
             var file = _compiler.GetFile(GetFilePath(@params.textDocument.uri));
@@ -211,16 +218,76 @@ namespace CheezLanguageServer
             return Result<SymbolInformation[], ResponseError>.Success(symbols.ToArray());
         }
 
-        protected override Result<SymbolInformation[], ResponseError> Symbol(WorkspaceSymbolParams @params)
-        {
-            return base.Symbol(@params);
-        }
-
         protected override VoidResult<ResponseError> Shutdown()
         {
             Console.WriteLine("Shutting down...");
 
             return VoidResult<ResponseError>.Success();
+        }
+
+        protected override Result<Hover, ResponseError> Hover(TextDocumentPositionParams @params)
+        {
+            var file = _compiler.GetFile(GetFilePath(@params.textDocument.uri));
+            if (file == null)
+                return Result<Hover, ResponseError>.Error(new ResponseError
+                {
+                    code = ErrorCodes.InvalidRequest,
+                    message = $"No file called {@params.textDocument.uri} was found!"
+                });
+
+            var nodeFinder = new NodeFinder();
+            var node = nodeFinder.FindNode(_compiler.DefaultWorkspace, file, (int)@params.position.line, (int)@params.position.character, true);
+
+            if (node == null || (node.Expr == null && node.Stmt == null && node.Type == null))
+            {
+                return Result<Hover, ResponseError>.Success(new Hover());
+            }
+
+            string content = GetHoverTextFromNode(node);
+
+            var hover = new Hover
+            {
+                contents = new LanguageServer.Json.ArrayOrObject<LanguageServer.Json.StringOrObject<MarkedString>, LanguageServer.Json.StringOrObject<MarkedString>>(new LanguageServer.Json.StringOrObject<MarkedString>(content))
+            };
+
+            return Result<Hover, ResponseError>.Success(hover);
+        }
+
+        private string GetHoverTextFromNode(NodeFinderResult node)
+        {
+            if (node.Expr != null)
+            {
+                return node.Expr.Type.ToString();
+            }
+            else if (node.Stmt != null)
+            {
+                var s = node.Stmt;
+                switch (s)
+                {
+                    case AstVariableDecl v:
+                        return $"{v.Name} : {v.Type}";
+
+                    case AstFunctionDecl f:
+                        return $"fn {f.Name}(): {f.ReturnType}";
+                }
+            }
+            else if (node.Type != null)
+            {
+                return node.Type.ToString();
+            }
+
+            return "Hover Text, yay";
+        }
+
+        private Range CastLocation(ILocation loc)
+        {
+            var beg = loc.Beginning;
+            var end = loc.End;
+            return new Range
+            {
+                start = new Position { line = beg.line - 1, character = beg.index - beg.lineStartIndex },
+                end = new Position { line = end.line - 1, character = end.end - end.lineStartIndex }
+            };
         }
 
         #endregion

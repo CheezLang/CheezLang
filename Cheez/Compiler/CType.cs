@@ -84,11 +84,21 @@ namespace Cheez.Compiler
     public class VoidType : CheezType
     {
         public static VoidType Intance { get; } = new VoidType();
+
+        public override string ToString()
+        {
+            return "void";
+        }
     }
 
     public class BoolType : CheezType
     {
         public static BoolType Instance = new BoolType();
+
+        public override string ToString()
+        {
+            return "bool";
+        }
     }
 
     public class IntType : CheezType
@@ -129,6 +139,7 @@ namespace Cheez.Compiler
     {
         private static Dictionary<int, FloatType> sTypes = new Dictionary<int, FloatType>();
         public static FloatType LiteralType = new FloatType { SizeInBytes = 0 };
+        public static FloatType DefaultType => GetFloatType(8);
 
         public int SizeInBytes { get; set; }
 

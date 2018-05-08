@@ -840,33 +840,33 @@ namespace Cheez.Compiler.Parsing
             errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
 
             ExpressionParser muldiv = (l, e) => ParseBinaryLeftAssociativeExpression(ParseAddressOfOrDerefExpression, l, e,
-                (TokenType.Asterisk, Operator.Multiply),
-                (TokenType.ForwardSlash, Operator.Divide),
-                (TokenType.Percent, Operator.Modulo));
+                (TokenType.Asterisk, "*"),
+                (TokenType.ForwardSlash, "/"),
+                (TokenType.Percent, "%"));
 
             ExpressionParser addsub = (l, e) => ParseBinaryLeftAssociativeExpression(muldiv, l, e,
-                (TokenType.Plus, Operator.Add),
-                (TokenType.Minus, Operator.Subtract));
+                (TokenType.Plus, "+"),
+                (TokenType.Minus, "-"));
 
             ExpressionParser comparison = (l, e) => ParseBinaryLeftAssociativeExpression(addsub, l, e,
-                (TokenType.Less, Operator.Less),
-                (TokenType.LessEqual, Operator.LessEqual),
-                (TokenType.Greater, Operator.Greater),
-                (TokenType.GreaterEqual, Operator.GreaterEqual),
-                (TokenType.DoubleEqual, Operator.Equal),
-                (TokenType.NotEqual, Operator.NotEqual));
+                (TokenType.Less, "<"),
+                (TokenType.LessEqual, "<="),
+                (TokenType.Greater, ">"),
+                (TokenType.GreaterEqual, ">="),
+                (TokenType.DoubleEqual, "=="),
+                (TokenType.NotEqual, "!="));
 
             ExpressionParser and = (l, e) => ParseBinaryLeftAssociativeExpression(comparison, l, e,
-                (TokenType.KwAnd, Operator.And));
+                (TokenType.KwAnd, "and"));
 
             ExpressionParser or = (l, e) => ParseBinaryLeftAssociativeExpression(and, l, e,
-                (TokenType.KwOr, Operator.Or));
+                (TokenType.KwOr, "or"));
 
 
             return or(location, errorMessage);
         }
 
-        private PTExpr ParseBinaryLeftAssociativeExpression(ExpressionParser sub, LocationResolver location, ErrorMessageResolver errorMessage, params (TokenType, Operator)[] types)
+        private PTExpr ParseBinaryLeftAssociativeExpression(ExpressionParser sub, LocationResolver location, ErrorMessageResolver errorMessage, params (TokenType, string)[] types)
         {
             return ParseLeftAssociativeExpression(sub, location, errorMessage, type =>
             {
@@ -880,7 +880,7 @@ namespace Cheez.Compiler.Parsing
             });
         }
 
-        private PTExpr ParseLeftAssociativeExpression(ExpressionParser sub, LocationResolver location, ErrorMessageResolver errorMessage, Func<TokenType, Operator?> tokenMapping)
+        private PTExpr ParseLeftAssociativeExpression(ExpressionParser sub, LocationResolver location, ErrorMessageResolver errorMessage, Func<TokenType, string> tokenMapping)
         {
             var lhs = sub(location, errorMessage);
             PTExpr rhs = null;
@@ -897,7 +897,7 @@ namespace Cheez.Compiler.Parsing
 
                 mLexer.NextToken();
                 rhs = sub(location, errorMessage);
-                lhs = new PTBinaryExpr(lhs.Beginning, rhs.End, op.Value, lhs, rhs);
+                lhs = new PTBinaryExpr(lhs.Beginning, rhs.End, op, lhs, rhs);
             }
         }
 

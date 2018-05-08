@@ -103,7 +103,7 @@ namespace Cheez.Compiler.Ast
         public ParseTree.PTCallExpr ParseTreeNode { get; }
         public override ParseTree.PTExpr GenericParseTreeNode => ParseTreeNode;
 
-        public AstExpression Function { get; }
+        public AstExpression Function { get; set; }
         public List<AstExpression> Arguments { get; set; }
 
         public AstCallExpr(ParseTree.PTCallExpr node, AstExpression func, List<AstExpression> args) : base()
@@ -125,11 +125,11 @@ namespace Cheez.Compiler.Ast
         public ParseTree.PTBinaryExpr ParseTreeNode { get; }
         public override ParseTree.PTExpr GenericParseTreeNode => ParseTreeNode;
 
-        public Operator Operator { get; set; }
+        public string Operator { get; set; }
         public AstExpression Left { get; set; }
         public AstExpression Right { get; set; }
 
-        public AstBinaryExpr(ParseTree.PTBinaryExpr node, Operator op, AstExpression lhs, AstExpression rhs) : base()
+        public AstBinaryExpr(ParseTree.PTBinaryExpr node, string op, AstExpression lhs, AstExpression rhs) : base()
         {
             ParseTreeNode = node;
             Operator = op;

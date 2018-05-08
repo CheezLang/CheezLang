@@ -63,6 +63,7 @@
     <Compile Include="Compiler\Compiler.cs" />
     <Compile Include="Compiler\CType.cs" />
     <Compile Include="Compiler\ErrorHandler.cs" />
+    <Compile Include="Compiler\IOperator.cs" />
     <Compile Include="Compiler\Operator.cs" />
     <Compile Include="Compiler\ParseTree\ParseTreeItem.cs" />
     <Compile Include="Compiler\ParseTree\PTDeclarations.cs" />

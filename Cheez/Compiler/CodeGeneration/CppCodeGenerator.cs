@@ -439,48 +439,35 @@ using string = const char*;
             var rhs = GenerateCode(bin.Right, null);
 
             {
-                if (bin.Left is AstBinaryExpr b && b.Operator.GetPrecedence() < bin.Operator.GetPrecedence())
-                    lhs = $"({lhs})";
+                //if (bin.Left is AstBinaryExpr b && b.Operator.GetPrecedence() < bin.Operator.GetPrecedence())
+                lhs = $"({lhs})";
             }
 
             {
-                if (bin.Right is AstBinaryExpr b && b.Operator.GetPrecedence() < bin.Operator.GetPrecedence())
-                    rhs = $"({rhs})";
+                //if (bin.Right is AstBinaryExpr b && b.Operator.GetPrecedence() < bin.Operator.GetPrecedence())
+                rhs = $"({rhs})";
             }
 
             switch (bin.Operator)
             {
-                case Operator.Add:
-                    return $"{lhs} + {rhs}";
-                case Operator.Subtract:
-                    return $"{lhs} - {rhs}";
-                case Operator.Multiply:
-                    return $"{lhs} * {rhs}";
-                case Operator.Divide:
-                    return $"{lhs} / {rhs}";
-                case Operator.Modulo:
-                    return $"{lhs} % {rhs}";
+                case "+":   return $"{lhs} + {rhs}";
+                case "-":   return $"{lhs} - {rhs}";
+                case "*":   return $"{lhs} * {rhs}";
+                case "/":   return $"{lhs} / {rhs}";
+                case "%":   return $"{lhs} % {rhs}";
 
-                case Operator.Less:
-                    return $"{lhs} < {rhs}";
-                case Operator.LessEqual:
-                    return $"{lhs} <= {rhs}";
-                case Operator.Greater:
-                    return $"{lhs} > {rhs}";
-                case Operator.GreaterEqual:
-                    return $"{lhs} >= {rhs}";
-                case Operator.Equal:
-                    return $"{lhs} == {rhs}";
-                case Operator.NotEqual:
-                    return $"{lhs} != {rhs}";
+                case "<":   return $"{lhs} < {rhs}";
+                case "<=":  return $"{lhs} <= {rhs}";
+                case ">":   return $"{lhs} > {rhs}";
+                case ">=":  return $"{lhs} >= {rhs}";
+                case "==":  return $"{lhs} == {rhs}";
+                case "!=":  return $"{lhs} != {rhs}";
 
-                case Operator.And:
-                    return $"{lhs} && {rhs}";
-                case Operator.Or:
-                    return $"{lhs} || {rhs}";
+                case "&&":  return $"{lhs} && {rhs}";
+                case "||":  return $"{lhs} || {rhs}";
             }
 
-            return "[ERROR]";
+            return "[UNKNOWN OPERATOR]";
         }
 
         public override string VisitBoolExpression(AstBoolExpr bo, CppCodeGeneratorArgs data = default)

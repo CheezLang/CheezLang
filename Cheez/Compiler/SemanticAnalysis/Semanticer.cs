@@ -104,6 +104,16 @@ namespace Cheez.Compiler.SemanticAnalysis
         }
     }
 
+    public class ReplaceAstExpr
+    {
+        public AstExpression NewExpression { get; set; }
+
+        public ReplaceAstExpr(AstExpression newExpr)
+        {
+            NewExpression = newExpr;
+        }
+    }
+
     public class DuplicateTypeError : IError
     {
         public ILocation Node { get; set; }
@@ -344,10 +354,13 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = data.Scope;
             print.Scope = scope;
 
-            foreach (var expr in print.Expressions)
+            for (int i = 0; i < print.Expressions.Count; i++)
             {
-                foreach (var v in expr.Accept(this, data.Clone()))
-                    yield return v;
+                foreach (var v in print.Expressions[i].Accept(this, data.Clone()))
+                    if (v is ReplaceAstExpr r)
+                        print.Expressions[i] = r.NewExpression;
+                    else
+                        yield return v;
             }
 
             yield break;
@@ -363,7 +376,10 @@ namespace Cheez.Compiler.SemanticAnalysis
             // check condition
             {
                 foreach (var v in ifs.Condition.Accept(this, data.Clone()))
-                    yield return v;
+                    if (v is ReplaceAstExpr r)
+                        ifs.Condition = r.NewExpression;
+                    else
+                        yield return v;
 
                 if (ifs.Condition.Type != CheezType.Bool)
                 {
@@ -428,7 +444,10 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (ret.ReturnValue != null)
             {
                 foreach (var v in ret.ReturnValue.Accept(this, data.Clone()))
-                    yield return v;
+                    if (v is ReplaceAstExpr r)
+                        ret.ReturnValue = r.NewExpression;
+                    else
+                        yield return v;
             }
 
             Debug.Assert(data.Function != null, "return statement is only allowed in functions");
@@ -476,7 +495,10 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (variable.Initializer != null)
             {
                 foreach (var v in variable.Initializer.Accept(this, data.Clone()))
-                    yield return v;
+                    if (v is ReplaceAstExpr r)
+                        variable.Initializer = r.NewExpression;
+                    else
+                        yield return v;
 
                 if (variable.Type == null)
                 {
@@ -520,11 +542,17 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             // check target
             foreach (var v in ass.Target.Accept(this, data.Clone()))
-                yield return v;
+                if (v is ReplaceAstExpr r)
+                    ass.Target = r.NewExpression;
+                else
+                    yield return v;
 
             // check source
             foreach (var v in ass.Value.Accept(this, data.Clone()))
-                yield return v;
+                if (v is ReplaceAstExpr r)
+                    ass.Value = r.NewExpression;
+                else
+                    yield return v;
 
             if (!CastIfLiteral(ass.Value.Type, ass.Target.Type, out var type))
                 yield return new LambdaError(eh => eh.ReportError(data.Text, ass.ParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}"));
@@ -538,7 +566,10 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             stmt.Scope = data.Scope;
             foreach (var v in stmt.Expr.Accept(this, data.Clone()))
-                yield return v;
+                if (v is ReplaceAstExpr r)
+                    stmt.Expr = r.NewExpression;
+                else
+                    yield return v;
             yield break;
         }
 
@@ -546,23 +577,96 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #region Expressions
 
+        public override IEnumerable<object> VisitBinaryExpression(AstBinaryExpr bin, SemanticerData data = null)
+        {
+            var scope = data.Scope;
+            bin.Scope = scope;
+
+            foreach (var v in bin.Left.Accept(this, data))
+                if (v is ReplaceAstExpr r)
+                    bin.Left = r.NewExpression;
+                else
+                    yield return v;
+
+            foreach (var v in bin.Right.Accept(this, data))
+                if (v is ReplaceAstExpr r)
+                    bin.Right = r.NewExpression;
+                else
+                    yield return v;
+
+
+            bool leftIsLiteral = IsNumberLiteralType(bin.Left.Type);
+            bool rightIsLiteral = IsNumberLiteralType(bin.Right.Type);
+            if (leftIsLiteral && rightIsLiteral)
+            {
+                if (bin.Left.Type == FloatType.LiteralType || bin.Right.Type == FloatType.LiteralType)
+                {
+                    bin.Left.Type = FloatType.DefaultType;
+                    bin.Right.Type = FloatType.DefaultType;
+                }
+                else
+                {
+                    bin.Left.Type = IntType.DefaultType;
+                    bin.Right.Type = IntType.DefaultType;
+                }
+            }
+            else if (leftIsLiteral)
+            {
+                if (IsNumberType(bin.Right.Type))
+                    bin.Left.Type = bin.Right.Type;
+                else
+                    bin.Left.Type = IntType.DefaultType;
+            }
+            else if (rightIsLiteral)
+            {
+                if (IsNumberType(bin.Left.Type))
+                    bin.Right.Type = bin.Left.Type;
+                else
+                    bin.Right.Type = IntType.DefaultType;
+            }
+
+            var ops = scope.GetOperators(bin.Operator, bin.Left.Type, bin.Right.Type);
+
+            if (ops.Count > 1)
+            {
+                yield return new LambdaError(eh => eh.ReportError(data.Text, bin.ParseTreeNode, $"Multiple operators match the types '{bin.Left.Type}' and '{bin.Right.Type}'"));
+            }
+            else if (ops.Count == 0)
+            {
+                yield return new LambdaError(eh => eh.ReportError(data.Text, bin.ParseTreeNode, $"No operator matches the types '{bin.Left.Type}' and '{bin.Right.Type}'"));
+            }
+            else
+            {
+                var op = ops[0];
+                bin.Type = op.ResultType;
+            }
+
+            yield break;
+        }
+
         public override IEnumerable<object> VisitCallExpression(AstCallExpr call, SemanticerData data = null)
         {
             var scope = data.Scope;
             call.Scope = scope;
 
             foreach (var v in call.Function.Accept(this, data))
-                yield return v;
+                if (v is ReplaceAstExpr r)
+                    call.Function = r.NewExpression;
+                else
+                    yield return v;
 
             if (call.Function.Type is FunctionType f)
             {
                 call.Type = f.ReturnType;
 
                 // @Todo: check parameter types
-                foreach (var a in call.Arguments)
+                for (int i = 0; i < call.Arguments.Count; i++)
                 {
-                    foreach (var v in a.Accept(this, data))
-                        yield return v;
+                    foreach (var v in call.Arguments[i].Accept(this, data))
+                        if (v is ReplaceAstExpr r)
+                            call.Arguments[i] = r.NewExpression;
+                        else
+                            yield return v;
                 }
             }
             else
@@ -610,7 +714,10 @@ namespace Cheez.Compiler.SemanticAnalysis
             add.Scope = data.Scope;
 
             foreach (var v in add.SubExpression.Accept(this, data))
-                yield return v;
+                if (v is ReplaceAstExpr r)
+                    add.SubExpression = r.NewExpression;
+                else
+                    yield return v;
 
             add.Type = PointerType.GetPointerType(add.SubExpression.Type);
             if (!add.SubExpression.GetFlag(ExprFlags.IsLValue))
@@ -624,7 +731,10 @@ namespace Cheez.Compiler.SemanticAnalysis
             deref.Scope = data.Scope;
 
             foreach (var v in deref.SubExpression.Accept(this, data))
-                yield return v;
+                if (v is ReplaceAstExpr r)
+                    deref.SubExpression = r.NewExpression;
+                else
+                    yield return v;
 
             if (deref.SubExpression.Type is PointerType p)
             {
@@ -641,13 +751,16 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             cast.Scope = data.Scope;
 
-            
+
             yield return new WaitForType(data.Text, data.Scope, cast.ParseTreeNode.TargetType);
             cast.Type = data.Scope.GetCheezType(cast.ParseTreeNode.TargetType);
 
             // check subExpression
             foreach (var v in cast.SubExpression.Accept(this, data))
-                yield return v;
+                if (v is ReplaceAstExpr r)
+                    cast.SubExpression = r.NewExpression;
+                else
+                    yield return v;
 
 
             if (!CastIfLiteral(cast.SubExpression.Type, cast.Type, out var type)) ;
@@ -664,7 +777,10 @@ namespace Cheez.Compiler.SemanticAnalysis
             dot.Scope = data.Scope;
 
             foreach (var v in dot.Left.Accept(this, data))
-                yield return v;
+                if (v is ReplaceAstExpr r)
+                    dot.Left = r.NewExpression;
+                else
+                    yield return v;
 
             while (dot.Left.Type is PointerType p)
             {
@@ -710,6 +826,32 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             return true;
+        }
+
+        private bool IsNumberLiteralType(CheezType type)
+        {
+            return type == IntType.LiteralType || type == FloatType.LiteralType;
+        }
+
+        private bool IsNumberType(CheezType type)
+        {
+            return type is IntType || type is FloatType;
+        }
+
+        private IEnumerable<object> ReplaceAstExpr(AstExpression expr, SemanticerData data)
+        {
+            foreach (var v in expr.Accept(this, data))
+            {
+                if (v is ReplaceAstExpr r)
+                {
+                    expr = r.NewExpression;
+                    break;
+                }
+                else
+                    yield return v;
+            }
+
+            yield return new ReplaceAstExpr(expr);
         }
     }
 }

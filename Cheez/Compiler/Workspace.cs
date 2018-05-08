@@ -48,11 +48,12 @@ namespace Cheez.Compiler
         public void CompileAll()
         {
             GlobalScope = new Scope("Global");
+            GlobalScope.DefineBuiltInOperators();
 
             var semanticer = new Semanticer();
             semanticer.DoWork(GlobalScope, mStatements, mCompiler.ErrorHandler);
         }
-
+        
         public void ReportError(ILocation location, string errorMessage, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             var file = mFiles[location.Beginning.file];

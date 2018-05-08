@@ -326,44 +326,44 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             bin.Type = bin.Left.Type;
 
-            switch (bin.Operator)
-            {
-                case Operator.Add:
-                case Operator.Subtract:
-                case Operator.Multiply:
-                case Operator.Divide:
+            //switch (bin.Operator)
+            //{
+            //    case Operator.Add:
+            //    case Operator.Subtract:
+            //    case Operator.Multiply:
+            //    case Operator.Divide:
 
-                    break;
+            //        break;
 
-                case Operator.Less:
-                case Operator.LessEqual:
-                case Operator.Greater:
-                case Operator.GreaterEqual:
-                    if (!(bin.Type is IntType) && !(bin.Type is FloatType) && !(bin.Type is PointerType))
-                    {
-                        workspace.ReportError(bin.ParseTreeNode, $"Type of both sides of comparison operator has to be int, float or pointer, but found '{bin.Type}'");
-                    }
-                    bin.Type = CheezType.Bool;
-                    break;
+            //    case Operator.Less:
+            //    case Operator.LessEqual:
+            //    case Operator.Greater:
+            //    case Operator.GreaterEqual:
+            //        if (!(bin.Type is IntType) && !(bin.Type is FloatType) && !(bin.Type is PointerType))
+            //        {
+            //            workspace.ReportError(bin.ParseTreeNode, $"Type of both sides of comparison operator has to be int, float or pointer, but found '{bin.Type}'");
+            //        }
+            //        bin.Type = CheezType.Bool;
+            //        break;
 
-                case Operator.NotEqual:
-                case Operator.Equal:
-                    if (!(bin.Type is IntType) && !(bin.Type is FloatType) && !(bin.Type is PointerType))
-                    {
-                        workspace.ReportError(bin.ParseTreeNode, $"Type of both sides of comparison operator has to be int, float or pointer, but found '{bin.Type}'");
-                    }
-                    bin.Type = CheezType.Bool;
-                    break;
+            //    case Operator.NotEqual:
+            //    case Operator.Equal:
+            //        if (!(bin.Type is IntType) && !(bin.Type is FloatType) && !(bin.Type is PointerType))
+            //        {
+            //            workspace.ReportError(bin.ParseTreeNode, $"Type of both sides of comparison operator has to be int, float or pointer, but found '{bin.Type}'");
+            //        }
+            //        bin.Type = CheezType.Bool;
+            //        break;
 
-                case Operator.And:
-                case Operator.Or:
-                    if (bin.Type != CheezType.Bool)
-                    {
-                        workspace.ReportError(bin.ParseTreeNode, $"Type of both sides of and/or operator has to be bool, but found '{bin.Type}'");
-                    }
-                    bin.Type = CheezType.Bool;
-                    break;
-            }
+            //    case Operator.And:
+            //    case Operator.Or:
+            //        if (bin.Type != CheezType.Bool)
+            //        {
+            //            workspace.ReportError(bin.ParseTreeNode, $"Type of both sides of and/or operator has to be bool, but found '{bin.Type}'");
+            //        }
+            //        bin.Type = CheezType.Bool;
+            //        break;
+            //}
             return new TypeCheckResult(bin);
         }
 

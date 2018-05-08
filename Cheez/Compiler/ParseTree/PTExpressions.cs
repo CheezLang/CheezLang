@@ -131,11 +131,11 @@ namespace Cheez.Compiler.ParseTree
 
     public class PTBinaryExpr : PTExpr
     {
-        public Operator Operator { get; set; }
+        public string Operator { get; set; }
         public PTExpr Left { get; set; }
         public PTExpr Right { get; set; }
 
-        public PTBinaryExpr(TokenLocation beg, TokenLocation end, Operator op, PTExpr lhs, PTExpr rhs) : base(beg, end)
+        public PTBinaryExpr(TokenLocation beg, TokenLocation end, string op, PTExpr lhs, PTExpr rhs) : base(beg, end)
         {
             Operator = op;
             Left = lhs;
