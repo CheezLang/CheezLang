@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Cheez.Compiler;
 using Cheez.Compiler.Ast;
@@ -255,6 +256,9 @@ namespace CheezLanguageServer
 
         private string GetHoverTextFromNode(NodeFinderResult node)
         {
+            if (node == null)
+                return "";
+
             if (node.Expr != null)
             {
                 return node.Expr.Type.ToString();
@@ -268,7 +272,7 @@ namespace CheezLanguageServer
                         return $"{v.Name} : {v.Type}";
 
                     case AstFunctionDecl f:
-                        return $"fn {f.Name}(): {f.ReturnType}";
+                        return $"fn {f.Name}({string.Join(", ", f.Parameters.Select(p => p.Type))}): {f.ReturnType}";
                 }
             }
             else if (node.Type != null)
@@ -276,7 +280,7 @@ namespace CheezLanguageServer
                 return node.Type.ToString();
             }
 
-            return "Hover Text, yay";
+            return "";
         }
 
         private Range CastLocation(ILocation loc)

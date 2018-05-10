@@ -120,7 +120,77 @@ namespace CheezLanguageServer
             return new NodeFinderResult(variable.Scope, stmt: variable);
         }
 
+        public override NodeFinderResult VisitPrintStatement(AstPrintStmt print, int index = 0)
+        {
+            foreach (var sub in print.Expressions)
+            {
+                if (GetRelativeLocation(sub.GenericParseTreeNode, index) == RelativeLocation.Same)
+                    return sub.Accept(this, index);
+            }
+
+            return new NodeFinderResult(print.Scope, stmt: print);
+        }
+
+        public override NodeFinderResult VisitReturnStatement(AstReturnStmt ret, int index = 0)
+        {
+            if (ret.ReturnValue != null && GetRelativeLocation(ret.ReturnValue.GenericParseTreeNode, index) == RelativeLocation.Same)
+                return ret.ReturnValue.Accept(this, index);
+
+            return new NodeFinderResult(ret.Scope, stmt: ret);
+        }
+
+        public override NodeFinderResult VisitIfStatement(AstIfStmt ifs, int i = 0)
+        {
+            if (GetRelativeLocation(ifs.Condition.GenericParseTreeNode, i) == RelativeLocation.Same)
+                return ifs.Condition.Accept(this, i);
+
+            if (GetRelativeLocation(ifs.IfCase.GenericParseTreeNode, i) == RelativeLocation.Same)
+                return ifs.IfCase.Accept(this, i);
+            if (ifs.ElseCase != null && GetRelativeLocation(ifs.ElseCase.GenericParseTreeNode, i) == RelativeLocation.Same)
+                return ifs.ElseCase.Accept(this, i);
+
+            return new NodeFinderResult(ifs.Scope, stmt: ifs);
+        }
+
+        public override NodeFinderResult VisitBlockStatement(AstBlockStmt block, int i = 0)
+        {
+            foreach (var s in block.Statements)
+            {
+                if (GetRelativeLocation(s.GenericParseTreeNode, i) == RelativeLocation.Same)
+                    return s.Accept(this, i);
+            }
+
+            return new NodeFinderResult(block.Scope, stmt: block);
+        }
+
+        public override NodeFinderResult VisitExpressionStatement(AstExprStmt stmt, int data = 0)
+        {
+            return stmt.Expr.Accept(this, data);
+        }
+
         #region Expressions
+
+        public override NodeFinderResult VisitCastExpression(AstCastExpr cast, int i = 0)
+        {
+            if (GetRelativeLocation(cast.SubExpression.GenericParseTreeNode, i) == RelativeLocation.Same)
+                return cast.SubExpression.Accept(this, i);
+
+            if (GetRelativeLocation(cast.ParseTreeNode.TargetType, i) == RelativeLocation.Same)
+                return new NodeFinderResult(cast.Scope, type: cast.Type);
+
+            return new NodeFinderResult(cast.Scope, expr: cast);
+        }
+
+        public override NodeFinderResult VisitCallExpression(AstCallExpr call, int i = 0)
+        {
+            foreach (var arg in call.Arguments)
+            {
+                if (GetRelativeLocation(arg.GenericParseTreeNode, i) == RelativeLocation.Same)
+                    return arg.Accept(this, i);
+            }
+
+            return call.Function.Accept(this, i);
+        }
 
         public override NodeFinderResult VisitBinaryExpression(AstBinaryExpr bin, int index = 0)
         {
@@ -141,6 +211,11 @@ namespace CheezLanguageServer
         public override NodeFinderResult VisitIdentifierExpression(AstIdentifierExpr ident, int data = 0)
         {
             return new NodeFinderResult(ident.Scope, expr: ident);
+        }
+
+        public override NodeFinderResult VisitStringLiteral(AstStringLiteral str, int data = 0)
+        {
+            return new NodeFinderResult(str.Scope, expr: str);
         }
 
         #endregion
