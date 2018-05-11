@@ -16,7 +16,7 @@ namespace Cheez.Compiler.CodeGeneration
     {
         private StringBuilder mFunctionForwardDeclarations = new StringBuilder();
         private StringBuilder mTypeDeclarations = new StringBuilder();
-        private string mImplTarget = null;
+        private CheezType mImplTarget = null;
 
         private bool mEmitFunctionBody = false;
         private Workspace workspace;
@@ -109,7 +109,7 @@ using string = const char*;
             return sb.ToString();
         }
 
-        private void AddImplTargetParam(string target, StringBuilder sb)
+        private void AddImplTargetParam(CheezType target, StringBuilder sb)
         {
             sb.Append(target).Append(" self");
         }
@@ -405,12 +405,12 @@ using string = const char*;
         public override string VisitImplBlock(AstImplBlock impl, CppCodeGeneratorArgs data)
         {
             Debug.Assert(mImplTarget == null);
-            mImplTarget = impl.Target;
+            mImplTarget = impl.TargetType;
             try
             {
                 var sb = new StringBuilder();
-                mFunctionForwardDeclarations.Append("namespace ").Append(impl.Target).AppendLine("_impl {");
-                sb.Append("namespace ").Append(impl.Target).AppendLine("_impl {");
+                mFunctionForwardDeclarations.Append("namespace ").Append(impl.TargetType).AppendLine("_impl {");
+                sb.Append("namespace ").Append(impl.TargetType).AppendLine("_impl {");
                 foreach (var f in impl.Functions)
                 {
                     sb.AppendLine(GenerateCode(f, null, 4));

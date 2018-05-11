@@ -168,6 +168,17 @@ namespace CheezLanguageServer
             return stmt.Expr.Accept(this, data);
         }
 
+        public override NodeFinderResult VisitAssignment(AstAssignment ass, int i = 0)
+        {
+            if (GetRelativeLocation(ass.Value.GenericParseTreeNode, i) == RelativeLocation.Same)
+                return ass.Value.Accept(this, i);
+
+            if (GetRelativeLocation(ass.Target.GenericParseTreeNode, i) == RelativeLocation.Same)
+                return ass.Target.Accept(this, i);
+
+            return new NodeFinderResult(ass.Scope, stmt: ass);
+        }
+
         #region Expressions
 
         public override NodeFinderResult VisitCastExpression(AstCastExpr cast, int i = 0)
@@ -201,6 +212,38 @@ namespace CheezLanguageServer
                 return bin.Right.Accept(this, index);
 
             return new NodeFinderResult(bin.Scope, expr: bin);
+        }
+
+        public override NodeFinderResult VisitDotExpression(AstDotExpr dot, int i = 0)
+        {
+            if (GetRelativeLocation(dot.Left.GenericParseTreeNode, i) == RelativeLocation.Same)
+                return dot.Left.Accept(this, i);
+
+            return new NodeFinderResult(dot.Scope, expr: dot);
+        }
+
+        public override NodeFinderResult VisitAddressOfExpression(AstAddressOfExpr add, int i = 0)
+        {
+            if (GetRelativeLocation(add.SubExpression.GenericParseTreeNode, i) == RelativeLocation.Same)
+                return add.SubExpression.Accept(this, i);
+            return new NodeFinderResult(add.Scope, expr: add);
+        }
+
+        public override NodeFinderResult VisitDereferenceExpression(AstDereferenceExpr deref, int i = 0)
+        {
+            if (GetRelativeLocation(deref.SubExpression.GenericParseTreeNode, i) == RelativeLocation.Same)
+                return deref.SubExpression.Accept(this, i);
+            return new NodeFinderResult(deref.Scope, expr: deref);
+        }
+
+        public override NodeFinderResult VisitBoolExpression(AstBoolExpr bo, int data = 0)
+        {
+            return new NodeFinderResult(bo.Scope, expr: bo);
+        }
+
+        public override NodeFinderResult VisitTypeExpression(AstTypeExpr type, int data = 0)
+        {
+            return new NodeFinderResult(type.Scope, type: type.Type);
         }
 
         public override NodeFinderResult VisitNumberExpression(AstNumberExpr num, int data = 0)

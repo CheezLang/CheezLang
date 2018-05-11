@@ -136,12 +136,12 @@ namespace Cheez.Compiler.ParseTree
 
     public class PTImplBlock : PTStatement
     {
-        public PTIdentifierExpr Target { get; set; }
+        public PTTypeExpr Target { get; set; }
         public PTIdentifierExpr Trait { get; set; }
 
         public List<PTFunctionDecl> Functions { get; }
 
-        public PTImplBlock(TokenLocation beg, TokenLocation end, PTIdentifierExpr target, List<PTFunctionDecl> functions) : base(beg, end)
+        public PTImplBlock(TokenLocation beg, TokenLocation end, PTTypeExpr target, List<PTFunctionDecl> functions) : base(beg, end)
         {
             this.Target = target;
             this.Functions = functions;

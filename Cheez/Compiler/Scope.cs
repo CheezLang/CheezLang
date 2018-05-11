@@ -69,20 +69,20 @@ namespace Cheez.Compiler
                     result.Add(op);
                     level = 2;
                 }
-                else if (level < 2 && CheckType(op.LhsType, lhs))
-                {
-                    if (level < 1)
-                        result.Clear();
-                    result.Add(op);
-                    level = 1;
-                }
-                else if (level < 2 && CheckType(op.RhsType, rhs))
-                {
-                    if (level < 1)
-                        result.Clear();
-                    result.Add(op);
-                    level = 1;
-                }
+                //else if (level < 2 && CheckType(op.LhsType, lhs))
+                //{
+                //    if (level < 1)
+                //        result.Clear();
+                //    result.Add(op);
+                //    level = 1;
+                //}
+                //else if (level < 2 && CheckType(op.RhsType, rhs))
+                //{
+                //    if (level < 1)
+                //        result.Clear();
+                //    result.Add(op);
+                //    level = 1;
+                //}
             }
 
             Parent?.GetOperator(name, lhs, rhs, result, ref level);

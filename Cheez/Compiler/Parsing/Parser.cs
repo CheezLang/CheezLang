@@ -399,23 +399,21 @@ namespace Cheez.Compiler.Parsing
 
         private PTImplBlock ParseImplBlock()
         {
-            ReportError(mLexer.PeekToken().location, "ipml Not implemented");
-            return null;
-            //var functions = new List<PTFunctionDecl>();
-            //var beginnig = Expect(TokenType.KwImpl, skipNewLines: true);
-            //var target = ParseIdentifierExpr(true);
+            var functions = new List<PTFunctionDecl>();
+            var beginnig = Expect(TokenType.KwImpl, skipNewLines: true);
+            var target = ParseTypeExpression();
 
-            //Expect(TokenType.OpenBrace, skipNewLines: true);
+            Expect(TokenType.OpenBrace, skipNewLines: true);
 
-            //while (PeekToken(skipNewLines: true).type != TokenType.ClosingBrace)
-            //{
-            //    var f = ParseFunctionDeclaration();
-            //    functions.Add(f);
-            //}
+            while (PeekToken(skipNewLines: true).type != TokenType.ClosingBrace)
+            {
+                var f = ParseFunctionDeclaration();
+                functions.Add(f);
+            }
 
-            //var end = Expect(TokenType.ClosingBrace, skipNewLines: true);
+            var end = Expect(TokenType.ClosingBrace, skipNewLines: true);
 
-            //return new PTImplBlock(beginnig.location, end.location, target, functions);
+            return new PTImplBlock(beginnig.location, end.location, target, functions);
         }
 
         private PTBlockStmt ParseBlockStatement()

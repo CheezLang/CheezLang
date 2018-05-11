@@ -261,7 +261,22 @@ namespace CheezLanguageServer
 
             if (node.Expr != null)
             {
-                return node.Expr.Type.ToString();
+                switch (node.Expr)
+                {
+                    case AstDotExpr dot:
+                        {
+                            var t = dot.Left.Type;
+                            while (t is PointerType p)
+                                t = p.TargetType;
+                            if (dot.Left.Type is StructType s)
+                                return $"{dot.Left.Type}.{dot.Right}: {s.Declaration.Members.FirstOrDefault(m => m.Name == dot.Right)?.Type}";
+                            else
+                                return "";
+                        }
+
+                    default:
+                        return node.Expr.Type.ToString();
+                }
             }
             else if (node.Stmt != null)
             {

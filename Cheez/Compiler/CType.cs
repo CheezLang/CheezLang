@@ -79,6 +79,12 @@ namespace Cheez.Compiler
         public static CheezType Void => VoidType.Intance;
         public static CheezType String => StringType.Instance;
         public static CheezType Bool => BoolType.Instance;
+        public static CheezType Error => ErrorType.Instance;
+    }
+
+    public class ErrorType : CheezType
+    {
+        public static ErrorType Instance { get; } = new ErrorType();
     }
 
     public class VoidType : CheezType

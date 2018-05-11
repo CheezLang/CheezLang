@@ -1,4 +1,19 @@
+struct Test
+{
+    a: i64
+    b: string
+}
+
+impl Test {
+    fn Print() {
+        println a
+        println b
+    }
+}
+
 fn Main() {
-    println "Hello World!"
-    print "jo"
+    let t: Test
+    
+
+
 }

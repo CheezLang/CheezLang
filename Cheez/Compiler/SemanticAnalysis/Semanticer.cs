@@ -573,9 +573,70 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
+        public override IEnumerable<object> VisitImplBlock(AstImplBlock impl, SemanticerData data = null)
+        {
+            var scope = data.Scope;
+            impl.Scope = scope;
+
+            if (impl.ParseTreeNode.Trait != null)
+            {
+                yield return new WaitForSymbol(data.Text, impl.ParseTreeNode.Trait, scope, impl.ParseTreeNode.Trait.Name);
+                impl.Trait = "TODO";
+            }
+
+            yield return new WaitForType(data.Text, impl.Scope, impl.ParseTreeNode.Target);
+            impl.TargetType = scope.GetCheezType(impl.ParseTreeNode.Target);
+            impl.SubScope = new Scope($"impl {impl.TargetType}", impl.Scope);
+
+            foreach (var f in impl.Functions)
+            {
+                foreach (var v in f.Accept(this, data.Clone(Scope: impl.SubScope)))
+                    yield return v;
+            }
+
+
+        }
+
         #endregion
 
         #region Expressions
+
+        public override IEnumerable<object> VisitArrayAccessExpression(AstArrayAccessExpr arr, SemanticerData data = null)
+        {
+            foreach (var v in arr.SubExpression.Accept(this, data))
+                if (v is ReplaceAstExpr r)
+                    arr.SubExpression = r.NewExpression;
+                else yield return v;
+
+            foreach (var v in arr.Indexer.Accept(this, data))
+                if (v is ReplaceAstExpr r)
+                    arr.Indexer = r.NewExpression;
+                else yield return v;
+
+            if (arr.SubExpression.Type is PointerType p)
+            {
+                arr.Type = p.TargetType;
+            }
+            else if (arr.SubExpression.Type is ArrayType a)
+            {
+                arr.Type = a.TargetType;
+            }
+            else
+            {
+                arr.Type = CheezType.Error;
+                yield return new LambdaError(eh => eh.ReportError(data.Text, arr.SubExpression.GenericParseTreeNode, $"[] operator can only be used with array and pointer types, got '{arr.SubExpression.Type}'"));
+            }
+
+            if (arr.Indexer.Type is IntType i)
+            {
+
+            }
+            else
+            {
+                arr.Type = CheezType.Error;
+                yield return new LambdaError(eh => eh.ReportError(data.Text, arr.SubExpression.GenericParseTreeNode, $"Indexer of [] operator has to be an integer, got '{arr.Indexer.Type}"));
+            }
+        }
 
         public override IEnumerable<object> VisitBinaryExpression(AstBinaryExpr bin, SemanticerData data = null)
         {
@@ -659,7 +720,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 call.Type = f.ReturnType;
 
-                // @Todo: check parameter types
                 for (int i = 0; i < call.Arguments.Count; i++)
                 {
                     foreach (var v in call.Arguments[i].Accept(this, data))
@@ -667,11 +727,20 @@ namespace Cheez.Compiler.SemanticAnalysis
                             call.Arguments[i] = r.NewExpression;
                         else
                             yield return v;
+
+                    var expectedType = f.ParameterTypes[i];
+
+                    if (!CastIfLiteral(call.Arguments[i].Type, expectedType, out var t))
+                    {
+                        yield return new LambdaError(eh => eh.ReportError(data.Text, call.Arguments[i].GenericParseTreeNode, $"Argument type does not match parameter type. Expected {expectedType}"));
+                    }
+
+                    call.Arguments[i].Type = t;
                 }
             }
             else
             {
-                yield return new LambdaError(eh => eh.ReportError(data.Text, call.Function.GenericParseTreeNode, ""));
+                yield return new LambdaError(eh => eh.ReportError(data.Text, call.Function.GenericParseTreeNode, $"Type .{call.Function.Type}' is not a callable type"));
             }
 
             yield break;

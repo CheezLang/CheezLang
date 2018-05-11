@@ -8,10 +8,12 @@ namespace Cheez.Compiler.Ast
         public ParseTree.PTImplBlock ParseTreeNode { get; }
         public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
-        public string Target => ParseTreeNode.Target.Name;
+        public CheezType TargetType;
         public string Trait { get; set; }
 
         public List<AstFunctionDecl> Functions { get; }
+
+        public Scope SubScope { get; set; }
 
         public AstImplBlock(ParseTree.PTImplBlock node, List<AstFunctionDecl> functions) : base()
         {
