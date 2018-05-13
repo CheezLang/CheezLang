@@ -110,7 +110,7 @@
 		{
 			"comment": "Keyword",
 			"name": "keyword.other.cheezlang",
-			"match": "\\b(let)\\b"
+			"match": "\\b(let|using)\\b"
 		},
 		{
 			"comment": "Print Keyword",

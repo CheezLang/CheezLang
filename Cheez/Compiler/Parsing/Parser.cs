@@ -556,7 +556,7 @@ namespace Cheez.Compiler.Parsing
                 condition = new PTErrorExpr(beginning.location, "Failed to pares while statement condition");
             }
 
-            if (PeekToken(false).type == TokenType.NewLine || PeekToken(false).type == TokenType.Comma)
+            if (PeekToken(false).type == TokenType.Comma)
             {
                 mLexer.NextToken();
                 var s = ParseStatement();

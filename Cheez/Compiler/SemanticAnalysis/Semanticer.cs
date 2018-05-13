@@ -652,6 +652,23 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
+        public override IEnumerable<object> VisitWhileStatement(AstWhileStmt ws, SemanticerData data = null)
+        {
+            var scope = data.Scope;
+            ws.Scope = scope;
+
+            foreach (var v in ws.Condition.Accept(this, data.Clone()))
+                if (v is ReplaceAstExpr r)
+                    ws.Condition = r.NewExpression;
+                else
+                    yield return v;
+
+            foreach (var v in ws.Body.Accept(this, data.Clone()))
+                yield return v;
+
+            yield break;
+        }
+
         #endregion
 
         #region Expressions
