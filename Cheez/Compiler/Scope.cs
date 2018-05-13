@@ -1,13 +1,34 @@
 ﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.ParseTree;
-using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Cheez.Compiler
 {
     public interface ISymbol : INamed
     {
         CheezType Type { get; }
+    }
+
+    public class Using : ISymbol
+    {
+        public CheezType Type => Expr.Type;
+        public string Name { get; }
+
+        public AstExpression Expr { get; }
+
+        [DebuggerStepThrough]
+        public Using(string name, AstExpression expr)
+        {
+            this.Name = name;
+            this.Expr = expr;
+        }
+
+        [DebuggerStepThrough]
+        public override string ToString()
+        {
+            return $"using {Expr}";
+        }
     }
 
     public class Scope
@@ -19,6 +40,7 @@ namespace Cheez.Compiler
         public List<AstFunctionDecl> FunctionDeclarations { get; } = new List<AstFunctionDecl>();
         public List<AstVariableDecl> VariableDeclarations { get; } = new List<AstVariableDecl>();
         public List<AstTypeDecl> TypeDeclarations { get; } = new List<AstTypeDecl>();
+        public List<AstImplBlock> ImplBlocks { get; } = new List<AstImplBlock>();
 
 
         private CTypeFactory types = new CTypeFactory();

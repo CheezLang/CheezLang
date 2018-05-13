@@ -158,25 +158,31 @@ namespace Cheez.Compiler.SemanticAnalysis
         public IText Text { get; set; }
 
         public AstFunctionDecl Function { get; set; }
+        public CheezType ImplTarget { get; set; }
 
+        [DebuggerStepThrough]
         public SemanticerData()
         {
         }
 
-        public SemanticerData(Scope Scope = null, IText Text = null, AstFunctionDecl Function = null)
+        [DebuggerStepThrough]
+        public SemanticerData(Scope Scope = null, IText Text = null, AstFunctionDecl Function = null, CheezType Impl = null)
         {
             this.Scope = Scope;
             this.Text = Text;
             this.Function = Function;
+            this.ImplTarget = Impl;
         }
 
-        public SemanticerData Clone(Scope Scope = null, IText Text = null, AstFunctionDecl Function = null)
+        [DebuggerStepThrough]
+        public SemanticerData Clone(Scope Scope = null, IText Text = null, AstFunctionDecl Function = null, CheezType Impl = null)
         {
             return new SemanticerData
             {
                 Scope = Scope ?? this.Scope,
                 Text = Text ?? this.Text,
-                Function = Function ?? this.Function
+                Function = Function ?? this.Function,
+                ImplTarget = Impl ?? this.ImplTarget
             };
         }
     }
@@ -285,6 +291,22 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
         }
 
+        public void Using(Scope scope, StructType @struct, string name)
+        {
+            foreach (var member in @struct.Declaration.Members)
+            {
+                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, new AstIdentifierExpr(null, name), member.Name)));
+            }
+        }
+
+        public void Using(Scope scope, StructType @struct, AstExpression sub)
+        {
+            foreach (var member in @struct.Declaration.Members)
+            {
+                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, sub, member.Name)));
+            }
+        }
+
         public override IEnumerable<object> VisitFunctionDeclaration(AstFunctionDecl function, SemanticerData data = null)
         {
             var scope = data.Scope;
@@ -293,6 +315,11 @@ namespace Cheez.Compiler.SemanticAnalysis
             var subScope = function.SubScope;
 
             bool returns = false;
+
+            if (data.ImplTarget != null && data.ImplTarget is StructType @struct)
+            {
+                Using(subScope, @struct, "self");
+            }
 
             // return type
             if (function.ParseTreeNode.ReturnType != null)
@@ -310,8 +337,11 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 p.Scope = function.SubScope;
 
-                yield return new WaitForType(data.Text, scope, p.ParseTreeNode.Type);
-                p.Type = scope.GetCheezType(p.ParseTreeNode.Type);
+                if (p.Type == null)
+                {
+                    yield return new WaitForType(data.Text, scope, p.ParseTreeNode.Type);
+                    p.Type = scope.GetCheezType(p.ParseTreeNode.Type);
+                }
 
                 if (!function.SubScope.DefineSymbol(p))
                 {
@@ -590,11 +620,36 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             foreach (var f in impl.Functions)
             {
-                foreach (var v in f.Accept(this, data.Clone(Scope: impl.SubScope)))
+                f.Parameters.Insert(0, new AstFunctionParameter("self", impl.TargetType));
+                foreach (var v in f.Accept(this, data.Clone(Scope: impl.SubScope, Impl: impl.TargetType)))
                     yield return v;
             }
 
+            scope.ImplBlocks.Add(impl);
+        }
 
+        public override IEnumerable<object> VisitUsingStatement(AstUsingStmt use, SemanticerData data = null)
+        {
+            var scope = data.Scope;
+            use.Scope = scope;
+
+            foreach (var v in use.Value.Accept(this, data.Clone()))
+                if (v is ReplaceAstExpr r)
+                    use.Value = r.NewExpression;
+                else
+                    yield return v;
+
+            if (use.Value.Type is StructType @struct)
+            {
+                Using(scope, @struct, use.Value);
+            }
+            else
+            {
+                yield return new LambdaError(eh => eh.ReportError(data.Text, use.GenericParseTreeNode, "Only struct types can be used in 'using' statement"));
+            }
+
+
+            yield break;
         }
 
         #endregion
@@ -753,6 +808,15 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             yield return new WaitForSymbol(data.Text, ident.ParseTreeNode, scope, ident.Name);
             var v = scope.GetSymbol(ident.Name);
+
+            if (v is Using u)
+            {
+                var e = u.Expr.Clone();
+                //e.GenericParseTreeNode = ident.GenericParseTreeNode;
+                foreach (var vv in ReplaceAstExpr(e, data))
+                    yield return vv;
+                yield break;
+            }
 
             ident.Type = v.Type;
             ident.SetFlag(ExprFlags.IsLValue);

@@ -154,4 +154,19 @@ namespace Cheez.Compiler.ParseTree
             return new AstReturnStmt(this, ReturnValue?.CreateAst());
         }
     }
+
+    public class PTUsingStatement : PTStatement
+    {
+        public PTExpr Value { get; }
+
+        public PTUsingStatement(TokenLocation beg, PTExpr val) : base(beg, val.End)
+        {
+            Value = val;
+        }
+
+        public override AstStatement CreateAst()
+        {
+            return new AstUsingStmt(this, Value.CreateAst());
+        }
+    }
 }

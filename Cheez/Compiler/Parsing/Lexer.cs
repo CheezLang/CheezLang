@@ -63,6 +63,7 @@ namespace Cheez.Compiler.Parsing
         KwOr,
         KwTrue,
         KwFalse,
+        KwUsing,
         KwPrint, // @Temporary
         KwPrintln, // @Temporary
     }
@@ -334,6 +335,7 @@ namespace Cheez.Compiler.Parsing
                 case "or": token.type = TokenType.KwOr; break;
                 case "true": token.type = TokenType.KwTrue; break;
                 case "false": token.type = TokenType.KwFalse; break;
+                case "using": token.type = TokenType.KwUsing; break;
                 case "print": token.type = TokenType.KwPrint; break; // @Temporary
                 case "println": token.type = TokenType.KwPrintln; break; // @Temporary
             }

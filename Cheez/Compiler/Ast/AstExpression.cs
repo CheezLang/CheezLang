@@ -1,6 +1,8 @@
-﻿using Cheez.Compiler.Visitor;
+﻿using Cheez.Compiler.Parsing;
+using Cheez.Compiler.Visitor;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Cheez.Compiler.Ast
 {
@@ -19,26 +21,31 @@ namespace Cheez.Compiler.Ast
         public Scope Scope { get; set; }
         private int mFlags = 0;
 
+        [DebuggerStepThrough]
         public AstExpression()
         {
             this.Id = Util.NewId;
         }
 
+        [DebuggerStepThrough]
         public void SetFlag(ExprFlags f)
         {
             mFlags |= 1 << (int)f;
         }
 
+        [DebuggerStepThrough]
         public bool GetFlag(ExprFlags f)
         {
             return (mFlags & (1 << (int)f)) != 0;
         }
 
+        [DebuggerStepThrough]
         public override bool Equals(object obj)
         {
             return obj == this;
         }
 
+        [DebuggerStepThrough]
         public override int GetHashCode()
         {
             return Id.GetHashCode();
@@ -46,6 +53,9 @@ namespace Cheez.Compiler.Ast
 
         [DebuggerStepThrough]
         public abstract T Accept<T, D>(IVisitor<T, D> visitor, D data = default);
+
+        [DebuggerStepThrough]
+        public abstract AstExpression Clone();
     }
 
     public abstract class AstLiteral : AstExpression
@@ -61,8 +71,8 @@ namespace Cheez.Compiler.Ast
         public override ParseTree.PTExpr GenericParseTreeNode => ParseTreeNode;
 
         public string Value { get; set; }
-
-
+        
+        [DebuggerStepThrough]
         public AstStringLiteral(ParseTree.PTStringLiteral node, string value) : base()
         {
             ParseTreeNode = node;
@@ -74,6 +84,16 @@ namespace Cheez.Compiler.Ast
         {
             return visitor.VisitStringLiteral(this, data);
         }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstStringLiteral(ParseTreeNode, Value)
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
     }
 
     public class AstDotExpr : AstExpression
@@ -84,6 +104,7 @@ namespace Cheez.Compiler.Ast
         public AstExpression Left { get; set; }
         public string Right { get; set; }
 
+        [DebuggerStepThrough]
         public AstDotExpr(ParseTree.PTDotExpr node, AstExpression left, string right) : base()
         {
             ParseTreeNode = node;
@@ -96,6 +117,21 @@ namespace Cheez.Compiler.Ast
         {
             return visitor.VisitDotExpression(this, data);
         }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstDotExpr(ParseTreeNode, Left.Clone(), Right)
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
+
+        public override string ToString()
+        {
+            return $"{Left}.{Right}";
+        }
     }
 
     public class AstCallExpr : AstExpression
@@ -106,6 +142,7 @@ namespace Cheez.Compiler.Ast
         public AstExpression Function { get; set; }
         public List<AstExpression> Arguments { get; set; }
 
+        [DebuggerStepThrough]
         public AstCallExpr(ParseTree.PTCallExpr node, AstExpression func, List<AstExpression> args) : base()
         {
             ParseTreeNode = node;
@@ -118,6 +155,16 @@ namespace Cheez.Compiler.Ast
         {
             return visitor.VisitCallExpression(this, data);
         }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstCallExpr(ParseTreeNode, Function.Clone(), Arguments.Select(a => a.Clone()).ToList())
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
     }
 
     public class AstBinaryExpr : AstExpression
@@ -129,6 +176,7 @@ namespace Cheez.Compiler.Ast
         public AstExpression Left { get; set; }
         public AstExpression Right { get; set; }
 
+        [DebuggerStepThrough]
         public AstBinaryExpr(ParseTree.PTBinaryExpr node, string op, AstExpression lhs, AstExpression rhs) : base()
         {
             ParseTreeNode = node;
@@ -142,6 +190,16 @@ namespace Cheez.Compiler.Ast
         {
             return visitor.VisitBinaryExpression(this, data);
         }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstBinaryExpr(ParseTreeNode, Operator, Left.Clone(), Right.Clone())
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
     }
 
     public class AstBoolExpr : AstExpression
@@ -151,6 +209,7 @@ namespace Cheez.Compiler.Ast
 
         public bool Value => ParseTreeNode.Value;
 
+        [DebuggerStepThrough]
         public AstBoolExpr(ParseTree.PTBoolExpr node)
         {
             ParseTreeNode = node;
@@ -161,6 +220,16 @@ namespace Cheez.Compiler.Ast
         {
             return visitor.VisitBoolExpression(this, data);
         }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstBoolExpr(ParseTreeNode)
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
     }
 
     public class AstAddressOfExpr : AstExpression
@@ -170,6 +239,7 @@ namespace Cheez.Compiler.Ast
 
         public AstExpression SubExpression { get; set; }
 
+        [DebuggerStepThrough]
         public AstAddressOfExpr(ParseTree.PTAddressOfExpr node, AstExpression sub)
         {
             ParseTreeNode = node;
@@ -181,6 +251,16 @@ namespace Cheez.Compiler.Ast
         {
             return visitor.VisitAddressOfExpression(this, data);
         }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstAddressOfExpr(ParseTreeNode, SubExpression.Clone())
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
     }
 
     public class AstDereferenceExpr : AstExpression
@@ -190,6 +270,7 @@ namespace Cheez.Compiler.Ast
 
         public AstExpression SubExpression { get; set; }
 
+        [DebuggerStepThrough]
         public AstDereferenceExpr(ParseTree.PTExpr node, AstExpression sub)
         {
             ParseTreeNode = node;
@@ -201,6 +282,16 @@ namespace Cheez.Compiler.Ast
         {
             return visitor.VisitDereferenceExpression(this, data);
         }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstDereferenceExpr(ParseTreeNode, SubExpression.Clone())
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
     }
 
     public class AstCastExpr : AstExpression
@@ -210,6 +301,7 @@ namespace Cheez.Compiler.Ast
 
         public AstExpression SubExpression { get; set; }
 
+        [DebuggerStepThrough]
         public AstCastExpr(ParseTree.PTCastExpr node, AstExpression sub)
         {
             ParseTreeNode = node;
@@ -221,6 +313,16 @@ namespace Cheez.Compiler.Ast
         {
             return visitor.VisitCastExpression(this, data);
         }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstCastExpr(ParseTreeNode, SubExpression.Clone())
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
     }
     
     public class AstArrayAccessExpr : AstExpression
@@ -231,6 +333,7 @@ namespace Cheez.Compiler.Ast
         public AstExpression SubExpression { get; set; }
         public AstExpression Indexer { get; set; }
 
+        [DebuggerStepThrough]
         public AstArrayAccessExpr(ParseTree.PTArrayAccessExpr node, AstExpression sub, AstExpression index)
         {
             ParseTreeNode = node;
@@ -242,6 +345,117 @@ namespace Cheez.Compiler.Ast
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return visitor.VisitArrayAccessExpression(this, data);
+        }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstArrayAccessExpr(ParseTreeNode, SubExpression.Clone(), Indexer.Clone())
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
+    }
+
+    public class AstNumberExpr : AstExpression
+    {
+        public ParseTree.PTNumberExpr ParseTreeNode { get; }
+        public override ParseTree.PTExpr GenericParseTreeNode => ParseTreeNode;
+
+        private NumberData mData;
+        public NumberData Data => mData;
+
+        [DebuggerStepThrough]
+        public AstNumberExpr(ParseTree.PTNumberExpr node, NumberData data) : base()
+        {
+            ParseTreeNode = node;
+            mData = data;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitNumberExpression(this, data);
+        }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstNumberExpr(ParseTreeNode, Data)
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
+    }
+
+    public class AstIdentifierExpr : AstExpression
+    {
+        public ParseTree.PTIdentifierExpr ParseTreeNode { get; }
+        public override ParseTree.PTExpr GenericParseTreeNode => ParseTreeNode;
+
+        public string Name { get; set; }
+
+        [DebuggerStepThrough]
+        public AstIdentifierExpr(ParseTree.PTIdentifierExpr node, string name) : base()
+        {
+            ParseTreeNode = node;
+            this.Name = name;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitIdentifierExpression(this, data);
+        }
+
+        public override string ToString()
+        {
+            return Name;
+        }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstIdentifierExpr(ParseTreeNode, Name)
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
+    }
+
+    public class AstTypeExpr : AstExpression
+    {
+        public ParseTree.PTTypeExpr ParseTreeNode { get; set; }
+        public override ParseTree.PTExpr GenericParseTreeNode => ParseTreeNode;
+
+        [DebuggerStepThrough]
+        public AstTypeExpr(ParseTree.PTTypeExpr node) : base()
+        {
+            ParseTreeNode = node;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitTypeExpression(this, data);
+        }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstTypeExpr(ParseTreeNode)
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
+
+        public override string ToString()
+        {
+            return ParseTreeNode?.ToString() ?? Type?.ToString() ?? base.ToString();
         }
     }
 }

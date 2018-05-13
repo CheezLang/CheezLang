@@ -286,6 +286,9 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.OpenBrace:
                     return (false, ParseBlockStatement());
 
+                case TokenType.KwUsing:
+                    return (false, ParseUsingStatement());
+
                 default:
                     {
                         var expr = ParseExpression();
@@ -302,7 +305,16 @@ namespace Cheez.Compiler.Parsing
                     }
             }
         }
-        
+
+        private PTStatement ParseUsingStatement()
+        {
+            var beginning = Expect(TokenType.KwUsing, true).location;
+
+            var expr = ParseExpression();
+
+            return new PTUsingStatement(beginning, expr);
+        }
+
         private PTReturnStmt ParseReturnStatement()
         {
             Expect(out Token beg, TokenType.KwReturn, skipNewLines: true);
@@ -774,7 +786,6 @@ namespace Cheez.Compiler.Parsing
                 {
                     case TokenType.KwFn:
                         return ParseFunctionTypeExpr();
-                        break;
 
                     case TokenType.Identifier:
                         mLexer.NextToken();

@@ -69,6 +69,15 @@ using string = const char*;
                 sb.AppendLine(code);
             }
             sb.AppendLine();
+            
+            foreach (var impl in workspace.GlobalScope.ImplBlocks)
+            {
+                var code = GenerateCode(impl, workspace.GlobalScope);
+                if (string.IsNullOrEmpty(code))
+                    continue;
+                sb.AppendLine(code);
+            }
+            sb.AppendLine();
 
             sb.AppendLine("// global variables");
             foreach (var varia in workspace.GlobalScope.VariableDeclarations)
@@ -83,6 +92,12 @@ using string = const char*;
             {
                 if (func.HasImplementation)
                     sb.AppendLine(GenerateCode(func, workspace.GlobalScope));
+            }
+            sb.AppendLine();
+
+            foreach (var impl in workspace.GlobalScope.ImplBlocks)
+            {
+                sb.AppendLine(GenerateCode(impl, workspace.GlobalScope));
             }
             sb.AppendLine();
 
@@ -155,11 +170,6 @@ using string = const char*;
 
             sb.Append($"{returnType} {decoratedName}(");
 
-            if (mImplTarget != null)
-            {
-                AddImplTargetParam(mImplTarget, sb);
-            }
-
             bool first = true;
             foreach (var p in function.Parameters)
             {
@@ -187,7 +197,7 @@ using string = const char*;
                 foreach (var s in function.Statements)
                 {
                     sb.Append(Indent(GenerateCode(s, null), 4));
-                    if (s is AstWhileStmt || s is AstIfStmt)
+                    if (s is AstWhileStmt || s is AstIfStmt || s is AstUsingStmt)
                     {
                         sb.AppendLine();
                     }
@@ -385,7 +395,7 @@ using string = const char*;
             foreach (var s in block.Statements)
             {
                 sb.Append(Indent(GenerateCode(s, null), 4));
-                if (s is AstWhileStmt || s is AstIfStmt)
+                if (s is AstWhileStmt || s is AstIfStmt || s is AstUsingStmt)
                 {
                     sb.AppendLine();
                 }
@@ -406,17 +416,20 @@ using string = const char*;
         {
             Debug.Assert(mImplTarget == null);
             mImplTarget = impl.TargetType;
+            var targetName = impl.TargetType.ToString();
+            if (impl.TargetType is StructType t)
+            {
+                targetName = nameDecorator.GetDecoratedName(t.Declaration);
+            }
             try
             {
                 var sb = new StringBuilder();
-                mFunctionForwardDeclarations.Append("namespace ").Append(impl.TargetType).AppendLine("_impl {");
-                sb.Append("namespace ").Append(impl.TargetType).AppendLine("_impl {");
+                sb.Append("namespace ").Append(targetName).AppendLine("_impl {");
                 foreach (var f in impl.Functions)
                 {
                     sb.AppendLine(GenerateCode(f, null, 4));
                 }
                 sb.Append("}");
-                mFunctionForwardDeclarations.AppendLine("}");
 
                 return Indent(sb.ToString(), data.indent);
             }
@@ -547,6 +560,8 @@ using string = const char*;
 
         public static string Indent(string s, int level)
         {
+            if (s == null)
+                return "";
             if (level == 0)
                 return s;
             return string.Join("\n", s.Split('\n').Select(line => $"{new string(' ', level)}{line}"));

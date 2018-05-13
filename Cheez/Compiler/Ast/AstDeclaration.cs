@@ -10,13 +10,20 @@ namespace Cheez.Compiler.Ast
     {
         public ParseTree.PTFunctionParam ParseTreeNode { get; }
 
-        public string Name => ParseTreeNode.Name.Name;
+        public string Name { get; }
         public CheezType Type { get; set; }
         public Scope Scope { get; set; }
 
         public AstFunctionParameter(ParseTree.PTFunctionParam node)
         {
             ParseTreeNode = node;
+            Name = node.Name.Name;
+        }
+
+        public AstFunctionParameter(string name, CheezType type)
+        {
+            Name = name;
+            Type = type;
         }
 
         public override string ToString()
@@ -81,7 +88,7 @@ namespace Cheez.Compiler.Ast
         }
     }
 
-    public class AstTypeDecl : AstStatement
+    public class AstTypeDecl : AstStatement, INamed
     {
         public ParseTree.PTTypeDecl ParseTreeNode { get; set; }
         public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
@@ -101,6 +108,31 @@ namespace Cheez.Compiler.Ast
             return visitor.VisitTypeDeclaration(this, data);
         }
     }
+
+    public class AstImplBlock : AstStatement
+    {
+        public ParseTree.PTImplBlock ParseTreeNode { get; }
+        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
+
+        public CheezType TargetType;
+        public string Trait { get; set; }
+
+        public List<AstFunctionDecl> Functions { get; }
+
+        public Scope SubScope { get; set; }
+
+        public AstImplBlock(ParseTree.PTImplBlock node, List<AstFunctionDecl> functions) : base()
+        {
+            ParseTreeNode = node;
+            this.Functions = functions;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitImplBlock(this, data);
+        }
+    }
+
     #endregion
 
     #region Variable Declarion

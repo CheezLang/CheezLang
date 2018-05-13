@@ -2,18 +2,45 @@ struct Test
 {
     a: i64
     b: string
+    c: Foo
+}
+
+struct Foo {
+    bar: Bar
+}
+
+struct Bar {
+    name: string
 }
 
 impl Test {
     fn Print() {
         println a
         println b
+        println c.bar.name
     }
+}
+
+impl i64 {
+    fn Square(): i64 {
+        return self * self
+    }
+}
+
+fn PrintTest(t: Test) {
+    using t
+    using t.c.bar
+    println "struct Test {"
+    println "   a = ", a
+    println "   b = ", b
+    println "   name = ", name
+    println "}"
 }
 
 fn Main() {
     let t: Test
-    
-
-
+    t.a = 5
+    t.b = "hi"
+    t.c.bar.name = "du"
+    PrintTest(t)
 }
