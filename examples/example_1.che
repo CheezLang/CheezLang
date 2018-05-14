@@ -10,6 +10,12 @@ fn Main() {
 
     (&a)::Print()
     (&a)::Print()
+
+    println ""
+
+    let pa = &a
+    (&pa)::Print()
+    (&pa)::Print()
 }
 
 struct Vec2 {
@@ -25,6 +31,13 @@ impl Vec2 {
 }
 
 impl Vec2* {
+    fn Print() {
+        x = x + 10
+        println "Vec2(", x, ", ", y, ")"
+    }
+}
+
+impl Vec2** {
     fn Print() {
         x = x + 10
         println "Vec2(", x, ", ", y, ")"
