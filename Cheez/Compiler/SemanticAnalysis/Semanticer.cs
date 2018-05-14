@@ -21,6 +21,28 @@ namespace Cheez.Compiler.SemanticAnalysis
         bool Check();
     }
 
+    public class LambdaCondition : ICondition
+    {
+        private Func<bool> mCondition;
+        private Action<IErrorHandler> mAction;
+
+        public LambdaCondition(Func<bool> cond, Action<IErrorHandler> act)
+        {
+            this.mCondition = cond;
+            this.mAction = act;
+        }
+
+        public bool Check()
+        {
+            return mCondition?.Invoke() ?? false;
+        }
+
+        public void Report(IErrorHandler handler)
+        {
+            mAction?.Invoke(handler);
+        }
+    }
+
     public class LambdaError : IError
     {
         private Action<IErrorHandler> mAction;
@@ -295,7 +317,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             foreach (var member in @struct.Declaration.Members)
             {
-                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, new AstIdentifierExpr(null, name), member.Name)));
+                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, new AstIdentifierExpr(null, name), member.Name, false)));
             }
         }
 
@@ -303,7 +325,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             foreach (var member in @struct.Declaration.Members)
             {
-                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, sub, member.Name)));
+                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, sub, member.Name, false)));
             }
         }
 
@@ -626,12 +648,14 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield return new WaitForType(data.Text, impl.Scope, impl.ParseTreeNode.Target);
             impl.TargetType = scope.GetCheezType(impl.ParseTreeNode.Target);
             impl.SubScope = new Scope($"impl {impl.TargetType}", impl.Scope);
-
+            
             foreach (var f in impl.Functions)
             {
                 f.Parameters.Insert(0, new AstFunctionParameter("self", impl.TargetType));
                 foreach (var v in f.Accept(this, data.Clone(Scope: impl.SubScope, Impl: impl.TargetType)))
                     yield return v;
+
+                scope.DefineImplFunction(impl.TargetType, f);
             }
 
             scope.ImplBlocks.Add(impl);
@@ -797,6 +821,11 @@ namespace Cheez.Compiler.SemanticAnalysis
                 else
                     yield return v;
 
+            if (call.Function is AstDotExpr d && d.IsDoubleColon)
+            {
+                call.Arguments.Insert(0, d.Left);
+            }
+
             if (call.Function.Type is FunctionType f)
             {
                 call.Type = f.ReturnType;
@@ -934,33 +963,43 @@ namespace Cheez.Compiler.SemanticAnalysis
         public override IEnumerable<object> VisitDotExpression(AstDotExpr dot, SemanticerData data = null)
         {
             dot.Scope = data.Scope;
-
+            
             foreach (var v in dot.Left.Accept(this, data))
                 if (v is ReplaceAstExpr r)
                     dot.Left = r.NewExpression;
                 else
                     yield return v;
-
-            while (dot.Left.Type is PointerType p)
+            
+            if (dot.IsDoubleColon)
             {
-                dot.Left = new AstDereferenceExpr(dot.Left.GenericParseTreeNode, dot.Left);
-                dot.Left.Type = p.TargetType;
-            }
+                yield return new LambdaCondition(() => dot.Scope.GetImplFunction(dot.Left.Type, dot.Right) != null, null);
+                var func = dot.Scope.GetImplFunction(dot.Left.Type, dot.Right);
 
-            if (dot.Left.Type is StructType s)
-            {
-                var member = s.Declaration.Members.FirstOrDefault(m => m.Name == dot.Right);
-                if (member == null)
-                    yield return new LambdaError(eh => eh.ReportError(data.Text, dot.ParseTreeNode.Right, $"'{dot.Right}' is not a member of struct '{dot.Left.Type}'"));
-
-                dot.Type = member.Type;
+                dot.Type = func.Type;
             }
             else
             {
-                yield return new LambdaError(eh => eh.ReportError(data.Text, dot.ParseTreeNode.Left, $"Left side of '.' has to a struct type, got '{dot.Left.Type}'"));
-            }
+                while (dot.Left.Type is PointerType p)
+                {
+                    dot.Left = new AstDereferenceExpr(dot.Left.GenericParseTreeNode, dot.Left);
+                    dot.Left.Type = p.TargetType;
+                }
 
-            dot.SetFlag(ExprFlags.IsLValue);
+                if (dot.Left.Type is StructType s)
+                {
+                    var member = s.Declaration.Members.FirstOrDefault(m => m.Name == dot.Right);
+                    if (member == null)
+                        yield return new LambdaError(eh => eh.ReportError(data.Text, dot.ParseTreeNode.Right, $"'{dot.Right}' is not a member of struct '{dot.Left.Type}'"));
+
+                    dot.Type = member.Type;
+                }
+                else
+                {
+                    yield return new LambdaError(eh => eh.ReportError(data.Text, dot.ParseTreeNode.Left, $"Left side of '.' has to a struct type, got '{dot.Left.Type}'"));
+                }
+
+                dot.SetFlag(ExprFlags.IsLValue);
+            }
 
             yield break;
         }

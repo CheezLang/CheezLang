@@ -1,18 +1,34 @@
 fn Main() {
-    let foo: Foo
-    foo.function = Test
-    Bar(foo)
+    let a: Vec2
+    let b: Vec2
+
+    a.x = 1
+    a.y = 2
+
+    b.x = 3
+    b.y = 4
+
+    let c = a::Add(b)
+
+    a::Print()
+    b::Print()
+    c::Print()
 }
 
-struct Foo {
-    function: fn (i32): string
+struct Vec2 {
+    x: f32
+    y: f32
 }
 
-fn Bar(f: Foo) {
-    println f.function(5)
-}
+impl Vec2 {
+    fn Add(v: Vec2): Vec2 {
+        let result: Vec2
+        result.x = x + v.x
+        result.y = y + v.y
+        return result
+    }
 
-fn Test(i: i32): string {
-    println i
-    return "wassup?"
+    fn Print() {
+        println "Vec2(", x, ", ", y, ")"
+    }
 }

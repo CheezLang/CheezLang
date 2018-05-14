@@ -2,15 +2,15 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Build Cheez Example 1",
-			"identifier": "build_cheez_example_1",
+			"label": "Build Cheez Test Program",
+			"identifier": "build_cheez_test_program",
 			"command": "cheezc",
 			"args": [
 				"examples/example_1.che",
 				"--out",
-				"bin",
+				"gen",
 				"--name",
-				"example_1"
+				"TestProgram"
 			],
 			"group": {
 				"kind": "build",
@@ -20,19 +20,19 @@
 			"problemMatcher": []
 		},
 		{
-			"label": "Run Cheez Example 1",
-			"identifier": "run_cheez_example_1",
-			"command": "bin/example_1.exe",
+			"label": "Run Cheez Test Program",
+			"identifier": "run_cheez_test_program",
+			"command": "gen/TestProgram.exe",
 			"type": "shell",
 			"problemMatcher": []
 		},
 		{
-			"label": "Build and Run Cheez Example 1",
-			"identifier": "build_and_run_cheez_example_1",
-			"command": "bin/example_1.exe",
+			"label": "Build and Run Cheez Test Program",
+			"identifier": "build_and_run_cheez_test_program",
+			"command": "gen/TestProgram.exe",
 			"type": "shell",
 			"problemMatcher": [],
-			"dependsOn": "build_cheez_example_1"
+			"dependsOn": "build_cheez_test_program"
 		},
 		{
 			"taskName": "compile",

@@ -1,7 +1,9 @@
 ﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.ParseTree;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Cheez.Compiler
 {
@@ -47,6 +49,7 @@ namespace Cheez.Compiler
 
         private Dictionary<string, ISymbol> mSymbolTable = new Dictionary<string, ISymbol>();
         private Dictionary<string, List<IOperator>> mOperatorTable = new Dictionary<string, List<IOperator>>();
+        private Dictionary<CheezType, List<AstFunctionDecl>> mImplTable = new Dictionary<CheezType, List<AstFunctionDecl>>();
 
         public Scope(string name, Scope parent = null)
         {
@@ -172,7 +175,7 @@ namespace Cheez.Compiler
                     list = new List<IOperator>();
                     mOperatorTable[name] = list;
                 }
-                
+
                 foreach (var t in types)
                 {
                     list.Add(new BuiltInOperator(name, t, t, t));
@@ -211,6 +214,32 @@ namespace Cheez.Compiler
             if (mSymbolTable.ContainsKey(name))
                 return mSymbolTable[name];
             return Parent?.GetSymbol(name);
+        }
+
+        public bool DefineImplFunction(CheezType targetType, AstFunctionDecl f)
+        {
+            if(!mImplTable.TryGetValue(targetType, out var list))
+            {
+                list = new List<AstFunctionDecl>();
+                mImplTable[targetType] = list;
+            }
+
+            if (list.Any(ff => ff.Name == f.Name))
+                return false;
+
+            list.Add(f);
+
+            return true;
+        }
+
+        public AstFunctionDecl GetImplFunction(CheezType targetType, string name)
+        {
+            if (mImplTable.TryGetValue(targetType, out var list))
+            {
+                return list.FirstOrDefault(f => f.Name == name) ?? Parent?.GetImplFunction(targetType, name);
+            }
+
+            return Parent?.GetImplFunction(targetType, name);
         }
 
         public bool DefineType(AstTypeDecl t)

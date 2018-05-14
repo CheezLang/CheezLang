@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 namespace Cheez.Compiler.Parsing
 {
     public class SkipInStackFrame : Attribute
-    {}
+    { }
 
     public class Parser
     {
@@ -92,7 +92,7 @@ namespace Cheez.Compiler.Parsing
                     case TokenType.Semicolon:
                         mLexer.NextToken();
                         return;
-                        
+
                     case TokenType.EOF:
                     case TokenType.ClosingBrace:
                         return;
@@ -339,7 +339,7 @@ namespace Cheez.Compiler.Parsing
 
             var end = name.End;
             var args = new List<PTExpr>();
-            
+
             if (PeekToken(false).type == TokenType.OpenParen)
             {
                 mLexer.NextToken();
@@ -798,7 +798,7 @@ namespace Cheez.Compiler.Parsing
                         {
                             ReportError(next.location, "Failed to parse type expression: * must be preceded by an actual type");
                             RecoverExpression();
-                            type =  new PTErrorTypeExpr(next.location, GetCodeLocation() + " TODO");
+                            type = new PTErrorTypeExpr(next.location, GetCodeLocation() + " TODO");
                         }
                         type = new PTPointerTypeExpr(type.Beginning, next.location, type);
                         break;
@@ -986,7 +986,22 @@ namespace Cheez.Compiler.Parsing
                                 return right;
                             }
 
-                            expr = new PTDotExpr(expr.Beginning, right.End, expr, right as PTIdentifierExpr);
+                            expr = new PTDotExpr(expr.Beginning, right.End, expr, right as PTIdentifierExpr, false);
+                            break;
+                        }
+
+                    case TokenType.DoubleColon:
+                        {
+                            mLexer.NextToken();
+                            var right = ParseIdentifierExpr(true, t => $"Right side of '::' has to be an identifier", location);
+
+                            if (right is PTErrorExpr)
+                            {
+                                RecoverExpression();
+                                return right;
+                            }
+
+                            expr = new PTDotExpr(expr.Beginning, right.End, expr, right as PTIdentifierExpr, true);
                             break;
                         }
 
@@ -1044,7 +1059,7 @@ namespace Cheez.Compiler.Parsing
                 default:
                     RecoverExpression();
                     ReportError(location?.Invoke(token) ?? token.location, errorMessage?.Invoke(token) ?? $"Failed to parse expression, unpexpected token ({token.type}) {token.data}");
-                    return new PTErrorExpr(token.location, GetCodeLocation() +" TODO");
+                    return new PTErrorExpr(token.location, GetCodeLocation() + " TODO");
             }
         }
 

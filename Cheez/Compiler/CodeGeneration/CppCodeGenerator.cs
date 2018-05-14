@@ -515,10 +515,24 @@ using string = const char*;
 
         public override string VisitDotExpression(AstDotExpr dot, CppCodeGeneratorArgs data)
         {
-            var sub = dot.Left.Accept(this);
-            if (!(dot.Left is AstDotExpr || dot.Left is AstIdentifierExpr))
-                sub = $"({sub})";
-            return sub + "." + dot.Right;
+            if (dot.IsDoubleColon)
+            {
+                var targetType = dot.Left.Type;
+                var targetName = targetType.ToString();
+                if (targetType is StructType t)
+                {
+                    targetName = nameDecorator.GetDecoratedName(t.Declaration);
+                }
+
+                return $"{targetName}_impl::{dot.Right}";
+            }
+            else
+            {
+                var sub = dot.Left.Accept(this);
+                if (!(dot.Left is AstDotExpr || dot.Left is AstIdentifierExpr))
+                    sub = $"({sub})";
+                return sub + "." + dot.Right;
+            }
         }
 
         public override string VisitCastExpression(AstCastExpr cast, CppCodeGeneratorArgs data = default)
@@ -530,6 +544,12 @@ using string = const char*;
         {
             var args = string.Join(", ", call.Arguments.Select(a => a.Accept(this)));
 
+            //if (call.Function is AstDotExpr d && d.IsDoubleColon)
+            //{
+                
+            //    return "";
+            //}
+            //else 
             if (call.Function is AstIdentifierExpr id)
             {
                 return $"{call.Function}({args})";

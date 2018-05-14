@@ -96,18 +96,20 @@ namespace Cheez.Compiler.ParseTree
 
     public class PTDotExpr : PTExpr
     {
-        public PTExpr Left { get; set; }
-        public PTIdentifierExpr Right { get; set; }
+        public PTExpr Left { get; }
+        public PTIdentifierExpr Right { get; }
+        public bool IsDoubleColon { get; }
 
-        public PTDotExpr(TokenLocation beg, TokenLocation end, PTExpr left, PTIdentifierExpr right) : base(beg, end)
+        public PTDotExpr(TokenLocation beg, TokenLocation end, PTExpr left, PTIdentifierExpr right, bool isDC) : base(beg, end)
         {
             this.Left = left;
             this.Right = right;
+            this.IsDoubleColon = isDC;
         }
 
         public override AstExpression CreateAst()
         {
-            return new AstDotExpr(this, Left.CreateAst(), Right.Name);
+            return new AstDotExpr(this, Left.CreateAst(), Right.Name, IsDoubleColon);
         }
     }
 

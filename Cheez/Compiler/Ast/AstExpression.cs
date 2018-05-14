@@ -103,13 +103,15 @@ namespace Cheez.Compiler.Ast
 
         public AstExpression Left { get; set; }
         public string Right { get; set; }
+        public bool IsDoubleColon { get; }
 
         [DebuggerStepThrough]
-        public AstDotExpr(ParseTree.PTDotExpr node, AstExpression left, string right) : base()
+        public AstDotExpr(ParseTree.PTDotExpr node, AstExpression left, string right, bool isDC) : base()
         {
             ParseTreeNode = node;
             this.Left = left;
             this.Right = right;
+            IsDoubleColon = isDC;
         }
 
         [DebuggerStepThrough]
@@ -121,7 +123,7 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override AstExpression Clone()
         {
-            return new AstDotExpr(ParseTreeNode, Left.Clone(), Right)
+            return new AstDotExpr(ParseTreeNode, Left.Clone(), Right, IsDoubleColon)
             {
                 Type = this.Type,
                 Scope = this.Scope
