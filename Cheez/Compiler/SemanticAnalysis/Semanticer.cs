@@ -313,11 +313,11 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
         }
 
-        public void Using(Scope scope, StructType @struct, string name)
+        public void Using(Scope scope, StructType @struct, INamed name)
         {
             foreach (var member in @struct.Declaration.Members)
             {
-                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, new AstIdentifierExpr(null, name), member.Name, false)));
+                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, new AstIdentifierExpr(null, name.Name), member.Name, false)));
             }
         }
 
@@ -338,9 +338,16 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             bool returns = false;
 
-            if (data.ImplTarget != null && data.ImplTarget is StructType @struct)
+            if (data.ImplTarget != null)
             {
-                Using(subScope, @struct, "self");
+                var tar = data.ImplTarget;
+                while (tar is PointerType p)
+                    tar = p.TargetType;
+
+                if (tar is StructType @struct)
+                {
+                    Using(subScope, @struct, function.Parameters[0]);
+                }
             }
 
             // return type

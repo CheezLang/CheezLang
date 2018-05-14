@@ -1,18 +1,15 @@
 fn Main() {
     let a: Vec2
-    let b: Vec2
-
     a.x = 1
     a.y = 2
 
-    b.x = 3
-    b.y = 4
-
-    let c = a::Add(b)
-
     a::Print()
-    b::Print()
-    c::Print()
+    a::Print()
+
+    println ""
+
+    (&a)::Print()
+    (&a)::Print()
 }
 
 struct Vec2 {
@@ -21,14 +18,15 @@ struct Vec2 {
 }
 
 impl Vec2 {
-    fn Add(v: Vec2): Vec2 {
-        let result: Vec2
-        result.x = x + v.x
-        result.y = y + v.y
-        return result
-    }
-
     fn Print() {
+        x = x + 10
+        println "Vec2(", x, ", ", y, ")"
+    }
+}
+
+impl Vec2* {
+    fn Print() {
+        x = x + 10
         println "Vec2(", x, ", ", y, ")"
     }
 }

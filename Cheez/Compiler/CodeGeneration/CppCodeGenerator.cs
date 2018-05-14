@@ -336,9 +336,12 @@ using string = const char*;
 
         public override string VisitImplBlock(AstImplBlock impl, CppCodeGeneratorArgs data)
         {
+            var prevScope = nameDecorator.GetCurrentScope();
+            nameDecorator.SetCurrentScope(impl);
+
             Debug.Assert(mImplTarget == null);
             mImplTarget = impl.TargetType;
-            var targetName = impl.TargetType.ToString();
+            var targetName = impl.TargetType.ToString().Replace("*", "__ptr__");
             if (impl.TargetType is StructType t)
             {
                 targetName = nameDecorator.GetDecoratedName(t.Declaration);
@@ -358,6 +361,7 @@ using string = const char*;
             finally
             {
                 mImplTarget = null;
+                nameDecorator.SetCurrentScope(prevScope);
             }
         }
         public override string VisitReturnStatement(AstReturnStmt ret, CppCodeGeneratorArgs data)
@@ -518,7 +522,7 @@ using string = const char*;
             if (dot.IsDoubleColon)
             {
                 var targetType = dot.Left.Type;
-                var targetName = targetType.ToString();
+                var targetName = targetType.ToString().Replace("*", "__ptr__");
                 if (targetType is StructType t)
                 {
                     targetName = nameDecorator.GetDecoratedName(t.Declaration);
