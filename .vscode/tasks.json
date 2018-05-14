@@ -2,6 +2,30 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "Build Cheez Example 1",
+			"command": "cheezc",
+			"args": [
+				"examples/example_1.che",
+				"--out",
+				"bin",
+				"--name",
+				"example_1"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"type": "shell",
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Cheez Example 1",
+			"identifier": "run_cheez_example_1",
+			"command": "bin/example_1.exe",
+			"type": "shell",
+			"problemMatcher": []
+		},
+		{
 			"taskName": "compile",
 			"dependsOn": [
 				"compile:client",

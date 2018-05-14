@@ -196,14 +196,18 @@ using string = const char*;
                 sb.AppendLine(" {");
                 foreach (var s in function.Statements)
                 {
-                    sb.Append(Indent(GenerateCode(s, null), 4));
-                    if (s is AstWhileStmt || s is AstIfStmt || s is AstUsingStmt)
+                    var c = GenerateCode(s, null);
+                    if (c != null)
                     {
-                        sb.AppendLine();
-                    }
-                    else
-                    {
-                        sb.AppendLine(";");
+                        sb.Append(Indent(c, 4));
+                        if (s is AstWhileStmt || s is AstIfStmt)
+                        {
+                            sb.AppendLine();
+                        }
+                        else
+                        {
+                            sb.AppendLine(";");
+                        }
                     }
 
                     if (s is AstReturnStmt)
@@ -320,6 +324,46 @@ using string = const char*;
             return Indent(sb.ToString(), data.indent);
         }
 
+
+
+        public override string VisitImplBlock(AstImplBlock impl, CppCodeGeneratorArgs data)
+        {
+            Debug.Assert(mImplTarget == null);
+            mImplTarget = impl.TargetType;
+            var targetName = impl.TargetType.ToString();
+            if (impl.TargetType is StructType t)
+            {
+                targetName = nameDecorator.GetDecoratedName(t.Declaration);
+            }
+            try
+            {
+                var sb = new StringBuilder();
+                sb.Append("namespace ").Append(targetName).AppendLine("_impl {");
+                foreach (var f in impl.Functions)
+                {
+                    sb.AppendLine(GenerateCode(f, null, 4));
+                }
+                sb.Append("}");
+
+                return Indent(sb.ToString(), data.indent);
+            }
+            finally
+            {
+                mImplTarget = null;
+            }
+        }
+        public override string VisitReturnStatement(AstReturnStmt ret, CppCodeGeneratorArgs data)
+        {
+            if (ret.ReturnValue != null)
+                return $"return {GenerateCode(ret.ReturnValue, null)}";
+            return "return";
+        }
+
+        public override string VisitUsingStatement(AstUsingStmt use, CppCodeGeneratorArgs data = default)
+        {
+            return null;
+        }
+
         #region literals
         public override string VisitStringLiteral(AstStringLiteral str, CppCodeGeneratorArgs data)
         {
@@ -394,14 +438,18 @@ using string = const char*;
             sb.AppendLine("{");
             foreach (var s in block.Statements)
             {
-                sb.Append(Indent(GenerateCode(s, null), 4));
-                if (s is AstWhileStmt || s is AstIfStmt || s is AstUsingStmt)
+                var c = GenerateCode(s, null);
+                if (c != null)
                 {
-                    sb.AppendLine();
-                }
-                else
-                {
-                    sb.AppendLine(";");
+                    sb.Append(Indent(c, 4));
+                    if (s is AstWhileStmt || s is AstIfStmt)
+                    {
+                        sb.AppendLine();
+                    }
+                    else
+                    {
+                        sb.AppendLine(";");
+                    }
                 }
 
                 if (s is AstReturnStmt)
@@ -410,41 +458,10 @@ using string = const char*;
             sb.Append("}");
             return Indent(sb.ToString(), data.indent);
         }
+
+
         #endregion
 
-        public override string VisitImplBlock(AstImplBlock impl, CppCodeGeneratorArgs data)
-        {
-            Debug.Assert(mImplTarget == null);
-            mImplTarget = impl.TargetType;
-            var targetName = impl.TargetType.ToString();
-            if (impl.TargetType is StructType t)
-            {
-                targetName = nameDecorator.GetDecoratedName(t.Declaration);
-            }
-            try
-            {
-                var sb = new StringBuilder();
-                sb.Append("namespace ").Append(targetName).AppendLine("_impl {");
-                foreach (var f in impl.Functions)
-                {
-                    sb.AppendLine(GenerateCode(f, null, 4));
-                }
-                sb.Append("}");
-
-                return Indent(sb.ToString(), data.indent);
-            }
-            finally
-            {
-                mImplTarget = null;
-            }
-        }
-
-        public override string VisitReturnStatement(AstReturnStmt ret, CppCodeGeneratorArgs data)
-        {
-            if (ret.ReturnValue != null)
-                return $"return {GenerateCode(ret.ReturnValue, null)}";
-            return "return";
-        }
 
         public override string VisitBinaryExpression(AstBinaryExpr bin, CppCodeGeneratorArgs data)
         {

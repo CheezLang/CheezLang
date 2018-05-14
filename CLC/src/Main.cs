@@ -91,6 +91,8 @@ namespace CheezCLI
 
         private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace)
         {
+            if (!Directory.Exists(options.OutPath))
+                Directory.CreateDirectory(options.OutPath);
             string filePath = Path.Combine(options.OutPath, options.OutName);
 
             CppCodeGenerator generator = new CppCodeGenerator();

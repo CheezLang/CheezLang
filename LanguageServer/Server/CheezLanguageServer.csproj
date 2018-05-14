@@ -75,6 +75,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if $(ConfigurationName) == Release xcopy "$(TargetDir)*" "D:\Utilities\CheezLanguageServer" /F /Y</PostBuildEvent>
+    <PostBuildEvent>if $(ConfigurationName) == Release del /S /Q "D:\Utilities\CheezLanguageServer"
+if $(ConfigurationName) == Release mkdir "D:\Utilities\CheezLanguageServer"
+if $(ConfigurationName) == Release xcopy "$(TargetDir)*" "D:\Utilities\CheezLanguageServer" /F /Y</PostBuildEvent>
   </PropertyGroup>
 </Project>

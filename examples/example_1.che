@@ -43,4 +43,9 @@ fn Main() {
     t.b = "hi"
     t.c.bar.name = "du"
     PrintTest(t)
+
+    using t
+    using t.c.bar
+    name = "ich?"
+    PrintTest(t)
 }

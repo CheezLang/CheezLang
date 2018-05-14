@@ -254,7 +254,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return $"struct {Declaration.Name}";
+            return $"{Declaration.Name}";
         }
     }
 
