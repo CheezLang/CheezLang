@@ -384,6 +384,15 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = data.Scope;
             print.Scope = scope;
 
+            if (print.Separator != null)
+            {
+                foreach (var v in print.Separator.Accept(this, data.Clone()))
+                    if (v is ReplaceAstExpr r)
+                        print.Separator = r.NewExpression;
+                    else
+                        yield return v;
+            }
+
             for (int i = 0; i < print.Expressions.Count; i++)
             {
                 foreach (var v in print.Expressions[i].Accept(this, data.Clone()))

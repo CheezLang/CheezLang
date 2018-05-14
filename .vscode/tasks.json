@@ -3,6 +3,7 @@
 	"tasks": [
 		{
 			"label": "Build Cheez Example 1",
+			"identifier": "build_cheez_example_1",
 			"command": "cheezc",
 			"args": [
 				"examples/example_1.che",
@@ -24,6 +25,14 @@
 			"command": "bin/example_1.exe",
 			"type": "shell",
 			"problemMatcher": []
+		},
+		{
+			"label": "Build and Run Cheez Example 1",
+			"identifier": "build_and_run_cheez_example_1",
+			"command": "bin/example_1.exe",
+			"type": "shell",
+			"problemMatcher": [],
+			"dependsOn": "build_cheez_example_1"
 		},
 		{
 			"taskName": "compile",

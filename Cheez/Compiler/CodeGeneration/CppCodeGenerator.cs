@@ -232,11 +232,11 @@ using string = const char*;
             bool isFirst = true;
             var sepSb = new StringBuilder();
 
-            sepSb.Append(GenerateCode(print.Seperator, null) ?? "");
+            sepSb.Append(GenerateCode(print.Separator, null) ?? "");
             var sep = sepSb.ToString();
             foreach (var e in print.Expressions)
             {
-                if (!isFirst && print.Seperator != null)
+                if (!isFirst && print.Separator != null)
                     sb.Append(" << ").Append(sep);
                 sb.Append(" << ");
                 sb.Append(GenerateCode(e, null));
@@ -317,7 +317,15 @@ using string = const char*;
             sb.Append("struct ").Append(type.Name).AppendLine(" {");
             foreach (var m in type.Members)
             {
-                sb.Append(Indent(GetCTypeName(m.Type), 4)).Append(" ").Append(m.Name).AppendLine(";");
+                if (m.Type is FunctionType f)
+                {
+                    sb.AppendLine(Indent(GetCTypeName(f, m.Name) + ";", 4));
+                }
+                else
+                {
+                    string t = GetCTypeName(m.Type, m.Name);
+                    sb.AppendLine(Indent($"{t} {m.Name};", 4));
+                }
             }
             sb.Append("};");
 

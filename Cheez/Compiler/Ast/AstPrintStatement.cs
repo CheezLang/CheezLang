@@ -10,7 +10,7 @@ namespace Cheez.Compiler.Ast
         public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
         public List<AstExpression> Expressions { get; }
-        public AstExpression Seperator { get; }
+        public AstExpression Separator { get; set; }
         public bool NewLine { get; set; }
 
         public AstPrintStmt(ParseTree.PTPrintStmt node, List<AstExpression> expr, AstExpression seperator = null, bool NewLine = true) : base()
@@ -18,7 +18,7 @@ namespace Cheez.Compiler.Ast
             ParseTreeNode = node;
             this.NewLine = NewLine;
             this.Expressions = expr;
-            this.Seperator = seperator;
+            this.Separator = seperator;
         }
 
         [DebuggerStepThrough]

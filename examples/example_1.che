@@ -1,51 +1,18 @@
-struct Test
-{
-    a: i64
-    b: string
-    c: Foo
+fn Main() {
+    let foo: Foo
+    foo.function = Test
+    Bar(foo)
 }
 
 struct Foo {
-    bar: Bar
+    function: fn (i32): string
 }
 
-struct Bar {
-    name: string
+fn Bar(f: Foo) {
+    println f.function(5)
 }
 
-impl Test {
-    fn Print() {
-        println a
-        println b
-        println c.bar.name
-    }
-}
-
-impl i64 {
-    fn Square(): i64 {
-        return self * self
-    }
-}
-
-fn PrintTest(t: Test) {
-    using t
-    using t.c.bar
-    println "struct Test {"
-    println "   a = ", a
-    println "   b = ", b
-    println "   name = ", name
-    println "}"
-}
-
-fn Main() {
-    let t: Test
-    t.a = 5
-    t.b = "hi"
-    t.c.bar.name = "du"
-    PrintTest(t)
-
-    using t
-    using t.c.bar
-    name = "ich?"
-    PrintTest(t)
+fn Test(i: i32): string {
+    println i
+    return "wassup?"
 }
