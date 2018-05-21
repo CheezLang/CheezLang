@@ -419,7 +419,15 @@ namespace Cheez.Compiler.Parsing
 
             while (PeekToken(skipNewLines: true).type != TokenType.ClosingBrace)
             {
+                bool isRef = false;
+                if (PeekToken(true).type == TokenType.KwRef)
+                {
+                    isRef = true;
+                    mLexer.NextToken();
+                }
+
                 var f = ParseFunctionDeclaration();
+                f.RefSelf = isRef;
                 functions.Add(f);
             }
 
@@ -642,6 +650,11 @@ namespace Cheez.Compiler.Parsing
         private PTFunctionDecl ParseFunctionDeclaration()
         {
             var beginning = Expect(TokenType.KwFn, skipNewLines: true).location;
+
+            //bool refSelf = false;
+            //if (PeekToken(true).type == TokenType.Ampersand)
+            //{
+            //}
 
             var nameExpr = ParseIdentifierExpr(true, t => $"Expected identifier at beginnig of function declaration, got ({t.type}) {t.data}");
             if (nameExpr is PTErrorExpr)

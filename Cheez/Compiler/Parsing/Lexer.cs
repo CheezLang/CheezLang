@@ -50,6 +50,7 @@ namespace Cheez.Compiler.Parsing
 
         KwReturn,
         KwCast,
+        KwRef,
         KwFn,
         KwStruct,
         KwImpl,
@@ -322,6 +323,7 @@ namespace Cheez.Compiler.Parsing
             {
                 case "return": token.type = TokenType.KwReturn; break;
                 case "cast": token.type = TokenType.KwCast; break;
+                case "ref": token.type = TokenType.KwRef; break;
                 case "fn": token.type = TokenType.KwFn; break;
                 case "struct": token.type = TokenType.KwStruct; break;
                 case "impl": token.type = TokenType.KwImpl; break;

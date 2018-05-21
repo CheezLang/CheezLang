@@ -48,13 +48,16 @@ namespace Cheez.Compiler.Ast
         public List<AstStatement> Statements { get; private set; }
         public bool HasImplementation => Statements != null;
 
-        public AstFunctionDecl(ParseTree.PTFunctionDecl node, string name, List<AstFunctionParameter> parameters, List<AstStatement> statements = null)
+        public bool RefSelf { get; }
+
+        public AstFunctionDecl(ParseTree.PTFunctionDecl node, string name, List<AstFunctionParameter> parameters, List<AstStatement> statements = null, bool refSelf = false)
             : base()
         {
             ParseTreeNode = node;
             this.Name = name;
             this.Parameters = parameters;
             this.Statements = statements;
+            this.RefSelf = refSelf;
         }
 
         [DebuggerStepThrough]

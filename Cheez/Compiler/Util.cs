@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Cheez.Compiler
@@ -27,6 +29,14 @@ namespace Cheez.Compiler
         public static bool PathEqual(this string path1, string path2)
         {
             return path1.PathNormalize() == path2.PathNormalize();
+        }
+
+        public static IEnumerable<object> WithAction(this IEnumerable<object> en, Action a)
+        {
+            foreach (var v in en)
+                yield return v;
+            a();
+            yield break;
         }
     }
 }

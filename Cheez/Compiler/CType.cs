@@ -17,6 +17,16 @@ namespace Cheez.Compiler
             CreateAlias("i32", IntType.GetIntType(4, true));
             CreateAlias("i64", IntType.GetIntType(8, true));
 
+            CreateAlias("byte", IntType.GetIntType(1, true));
+            CreateAlias("short", IntType.GetIntType(2, true));
+            CreateAlias("int", IntType.GetIntType(4, true));
+            CreateAlias("long", IntType.GetIntType(8, true));
+
+            CreateAlias("ubyte", IntType.GetIntType(1, false));
+            CreateAlias("ushort", IntType.GetIntType(2, false));
+            CreateAlias("uint", IntType.GetIntType(4, false));
+            CreateAlias("ulong", IntType.GetIntType(8, false));
+
             CreateAlias("u8", IntType.GetIntType(1, false));
             CreateAlias("u16", IntType.GetIntType(2, false));
             CreateAlias("u32", IntType.GetIntType(4, false));
@@ -175,7 +185,7 @@ namespace Cheez.Compiler
     {
         private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
 
-        public CheezType TargetType { get; set; }
+        public CheezType TargetType { get; private set; }
 
         public static PointerType GetPointerType(CheezType targetType)
         {
@@ -199,6 +209,40 @@ namespace Cheez.Compiler
         public override string ToString()
         {
             return $"{TargetType}*";
+        }
+    }
+
+    public class ReferenceType : CheezType
+    {
+        private static Dictionary<CheezType, ReferenceType> sTypes = new Dictionary<CheezType, ReferenceType>();
+
+        public CheezType TargetType { get; private set; }
+
+        public static ReferenceType GetRefType(CheezType targetType)
+        {
+            if (targetType is ReferenceType r)
+                return r;
+
+            if (targetType == null)
+                return null;
+
+            if (sTypes.ContainsKey(targetType))
+            {
+                return sTypes[targetType];
+            }
+
+            var type = new ReferenceType
+            {
+                TargetType = targetType
+            };
+
+            sTypes[targetType] = type;
+            return type;
+        }
+
+        public override string ToString()
+        {
+            return $"{TargetType}&";
         }
     }
 

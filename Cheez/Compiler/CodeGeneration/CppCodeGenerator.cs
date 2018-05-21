@@ -522,7 +522,7 @@ using string = const char*;
             if (dot.IsDoubleColon)
             {
                 var targetType = dot.Left.Type;
-                var targetName = targetType.ToString().Replace("*", "__ptr__");
+                var targetName = targetType.ToString().Replace("*", "__ptr__").Replace("&", "");
                 if (targetType is StructType t)
                 {
                     targetName = nameDecorator.GetDecoratedName(t.Declaration);
@@ -589,6 +589,9 @@ using string = const char*;
 
                 case PointerType p:
                     return GetCTypeName(p.TargetType) + "*";
+                    
+                case ReferenceType p:
+                    return GetCTypeName(p.TargetType) + "&";
 
                 case ArrayType a:
                     return GetCTypeName(a.TargetType) + "*";

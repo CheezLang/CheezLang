@@ -68,13 +68,16 @@ namespace Cheez.Compiler.ParseTree
 
         public List<PTStatement> Statements { get; private set; }
 
-        public PTFunctionDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTFunctionParam> parameters, PTTypeExpr returnType, List<PTStatement> statements = null)
+        public bool RefSelf { get; set; }
+        
+        public PTFunctionDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTFunctionParam> parameters, PTTypeExpr returnType, List<PTStatement> statements = null, bool refSelf = false)
             : base(beg, end)
         {
             this.Name = name;
             this.Parameters = parameters;
             this.Statements = statements;
             this.ReturnType = returnType;
+            this.RefSelf = refSelf;
         }
 
         public override string ToString()
@@ -88,7 +91,7 @@ namespace Cheez.Compiler.ParseTree
         {
             var p = Parameters.Select(x => new AstFunctionParameter(x)).ToList();
             var s = Statements?.Select(x => x.CreateAst()).ToList();
-            return new AstFunctionDecl(this, Name.Name, p, s);
+            return new AstFunctionDecl(this, Name.Name, p, s, RefSelf);
         }
     }
 

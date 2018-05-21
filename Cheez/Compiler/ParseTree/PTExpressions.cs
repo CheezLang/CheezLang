@@ -90,7 +90,7 @@ namespace Cheez.Compiler.ParseTree
 
         public override AstExpression CreateAst()
         {
-            return new AstBoolExpr(this);
+            return new AstBoolExpr(this, Value);
         }
     }
 
