@@ -1,5 +1,8 @@
 fn malloc(x: i64): void*;
 fn realloc(d: void*, x: i64): void*;
+fn printf(str: string);
+
+fn _flush_cout();
 
 fn Main() {
     let arr: IntArray
@@ -7,12 +10,13 @@ fn Main() {
     arr.Print()
 
     let i: int = 0
-    while i <= 20 {
+    while i <= 25 {
         arr.Add(i)
         arr.Print()
-
         i = i + 1
     }
+
+    _flush_cout()
 }
 
 struct IntArray {

@@ -17,14 +17,16 @@
 				"isDefault": true
 			},
 			"type": "shell",
-			"problemMatcher": []
+			"problemMatcher": [],
+			"isBackground": false
 		},
 		{
 			"label": "Run Cheez Test Program",
 			"identifier": "run_cheez_test_program",
 			"command": "gen/TestProgram.exe",
 			"type": "shell",
-			"problemMatcher": []
+			"problemMatcher": [],
+			"isBackground": false
 		},
 		{
 			"label": "Build and Run Cheez Test Program",
@@ -32,7 +34,8 @@
 			"command": "gen/TestProgram.exe",
 			"type": "shell",
 			"problemMatcher": [],
-			"dependsOn": "build_cheez_test_program"
+			"dependsOn": "build_cheez_test_program",
+			"isBackground": false
 		},
 		{
 			"taskName": "compile",

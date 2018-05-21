@@ -48,6 +48,10 @@ using f32 = float_t;
 using f64 = double_t;
 
 using string = const char*;
+
+void _flush_cout() {
+    std::cout.flush();
+}
 ");
             sb.AppendLine();
 
@@ -246,7 +250,7 @@ using string = const char*;
 
             if (print.NewLine)
             {
-                sb.Append(" << '\\n'");
+                sb.Append(" << std::endl");
             }
 
             return Indent(sb.ToString(), data.indent);
