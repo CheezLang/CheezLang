@@ -34,6 +34,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.4.0\lib\net461\System.ValueTuple.dll</HintPath>
     </Reference>
@@ -50,13 +51,16 @@
     <Compile Include="Compiler\Ast\AstExpression.cs" />
     <Compile Include="Compiler\Ast\AstPrintStatement.cs" />
     <Compile Include="Compiler\Ast\AstStatement.cs" />
-    <Compile Include="Compiler\CCE\TreeWalkInterpreter.cs" />
     <Compile Include="Compiler\CodeGeneration\CppCodeGenerator.cs" />
     <Compile Include="Compiler\CompilationQueue.cs" />
     <Compile Include="Compiler\Compiler.cs" />
     <Compile Include="Compiler\CType.cs" />
     <Compile Include="Compiler\ErrorHandler.cs" />
     <Compile Include="Compiler\IOperator.cs" />
+    <Compile Include="Compiler\IR\IRBuilder.cs" />
+    <Compile Include="Compiler\IR\IRFunction.cs" />
+    <Compile Include="Compiler\IR\IRInstruction.cs" />
+    <Compile Include="Compiler\IR\IRInterpreter.cs" />
     <Compile Include="Compiler\Operator.cs" />
     <Compile Include="Compiler\ParseTree\ParseTreeItem.cs" />
     <Compile Include="Compiler\ParseTree\PTDeclarations.cs" />
@@ -83,6 +87,8 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Compiler\VM\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -122,6 +122,12 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cheez\CheezCompiler.csproj">
+      <Project>{18994e2f-310a-460f-ab2f-3af665ce7f67}</Project>
+      <Name>CheezCompiler</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets" Condition="Exists('..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
