@@ -50,6 +50,7 @@
     <Compile Include="Compiler\Ast\AstExpression.cs" />
     <Compile Include="Compiler\Ast\AstPrintStatement.cs" />
     <Compile Include="Compiler\Ast\AstStatement.cs" />
+    <Compile Include="Compiler\CCE\TreeWalkInterpreter.cs" />
     <Compile Include="Compiler\CodeGeneration\CppCodeGenerator.cs" />
     <Compile Include="Compiler\CompilationQueue.cs" />
     <Compile Include="Compiler\Compiler.cs" />

@@ -77,6 +77,11 @@ namespace Cheez.Compiler.ParseTree
         {
             return new AstNumberExpr(this, Data);
         }
+
+        public override string ToString()
+        {
+            return mData.StringValue;
+        }
     }
 
     public class PTBoolExpr : PTLiteral
@@ -253,5 +258,34 @@ namespace Cheez.Compiler.ParseTree
             return new AstArrayAccessExpr(this, SubExpression.CreateAst(), Indexer.CreateAst());
         }
     }
-    
+
+    public class PTStructMemberInitialization
+    {
+        public PTIdentifierExpr Name { get; set; }
+        public PTExpr Value { get; set; }
+    }
+
+    public class PTStructValueExpr : PTExpr
+    {
+        public PTIdentifierExpr Name { get; }
+        public List<PTStructMemberInitialization> Initializers { get; }
+
+        public PTStructValueExpr(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTStructMemberInitialization> inits) : base(beg, end)
+        {
+            this.Name = name;
+            this.Initializers = inits;
+        }
+
+        public override string ToString()
+        {
+            var i = string.Join(", ", Initializers.Select(m => m.Name != null ? $"{m.Name} = {m.Value}" : m.Value.ToString()));
+            return $"{Name} {{ {i} }}";
+        }
+
+        public override AstExpression CreateAst()
+        {
+            var inits = Initializers.Select(i => new AstStructMemberInitialization(i, i.Name?.Name, i.Value.CreateAst())).ToArray();
+            return new AstStructValueExpr(this, Name.Name, inits);
+        }
+    }
 }

@@ -466,4 +466,59 @@ namespace Cheez.Compiler.Ast
             return GenericParseTreeNode?.ToString() ?? Type?.ToString() ?? base.ToString();
         }
     }
+
+
+    public class AstStructMemberInitialization
+    {
+        public ParseTree.PTStructMemberInitialization GenericParseTreeNode { get; set; }
+
+        public string Name { get; set; }
+        public AstExpression Value { get; set; }
+
+        public AstStructMemberInitialization(ParseTree.PTStructMemberInitialization node, string name, AstExpression expr)
+        {
+            this.GenericParseTreeNode = node;
+            this.Name = name;
+            this.Value = expr;
+        }
+    }
+
+
+    public class AstStructValueExpr : AstExpression
+    {
+        public ParseTree.PTStructValueExpr ParseTreeNode => GenericParseTreeNode as ParseTree.PTStructValueExpr;
+        public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
+        public string Name { get; }
+        public AstStructMemberInitialization[] MemberInitializers { get; }
+
+        [DebuggerStepThrough]
+        public AstStructValueExpr(ParseTree.PTExpr node, string name, AstStructMemberInitialization[] inits) : base()
+        {
+            GenericParseTreeNode = node;
+            this.Name = name;
+            this.MemberInitializers = inits;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitStructValueExpression(this, data);
+        }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstStructValueExpr(GenericParseTreeNode, Name, MemberInitializers)
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
+
+        public override string ToString()
+        {
+            var i = string.Join(", ", MemberInitializers.Select(m => m.Name != null ? $"{m.Name} = {m.Value}" : m.Value.ToString()));
+            return $"{Name} {{ {i} }}";
+        }
+    }
 }

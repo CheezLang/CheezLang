@@ -1024,13 +1024,71 @@ namespace Cheez.Compiler.Parsing
             }
         }
 
+        private PTExpr ParseStructValue(PTIdentifierExpr name)
+        {
+            Consume(TokenType.OpenBrace, false);
+
+            List<PTStructMemberInitialization> members = new List<PTStructMemberInitialization>();
+
+
+            while (true)
+            {
+                var next = PeekToken(true);
+
+                if (next.type == TokenType.ClosingBrace)
+                {
+                    break;
+                }
+
+                var value = ParseExpression();
+                PTIdentifierExpr memberName = null;
+                if (value is PTIdentifierExpr n && PeekToken(false).type == TokenType.Equal)
+                {
+                    memberName = n;
+                    mLexer.NextToken();
+                    value = ParseExpression();
+                }
+
+                members.Add(new PTStructMemberInitialization
+                {
+                    Name = memberName,
+                    Value = value
+                });
+
+                next = PeekToken(false);
+                if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
+                {
+                    mLexer.NextToken();
+                }
+                else if (next.type == TokenType.ClosingBrace)
+                {
+                    break;
+                }
+                else
+                {
+                    ReportError(next.location, $"Unexpected token '{next.data}', expected comma, new line or closing brace '{{'");
+                }
+            }
+
+            var end = Expect(TokenType.ClosingBrace, true).location;
+
+            return new PTStructValueExpr(name.Beginning, end, name, members);
+        }
+
         private PTExpr ParseAtomicExpression(LocationResolver location, ErrorMessageResolver errorMessage)
         {
             var token = mLexer.NextToken();
             switch (token.type)
             {
                 case TokenType.Identifier:
-                    return new PTIdentifierExpr(token.location, (string)token.data);
+                    {
+                        var id = new PTIdentifierExpr(token.location, (string)token.data);
+                        if (PeekToken(false).type == TokenType.OpenBrace)
+                        {
+                            return ParseStructValue(id); 
+                        }
+                        return id;
+                    }
 
                 case TokenType.StringLiteral:
                     return new PTStringLiteral(token.location, (string)token.data);

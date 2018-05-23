@@ -77,6 +77,25 @@ namespace Cheez.Compiler.SemanticAnalysis
         }
     }
 
+    public class GenericError : IError
+    {
+        private IText text;
+        private ILocation loc;
+        private string message;
+
+        public GenericError(IText text, ILocation loc, string message)
+        {
+            this.text = text;
+            this.loc = loc;
+            this.message = message;
+        }
+
+        public void Report(IErrorHandler handler)
+        {
+            handler.ReportError(text, loc, message);
+        }
+    }
+
     public class WaitForType : ICondition
     {
         public Scope Scope { get; }
@@ -321,6 +340,8 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             var scope = data.Scope;
             type.Scope = scope;
+
+            
 
             foreach (var mem in type.Members)
             {
@@ -749,6 +770,80 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #region Expressions
 
+        public override IEnumerable<object> VisitStructValueExpression(AstStructValueExpr str, SemanticerData data = null)
+        {
+            var scope = data.Scope;
+            str.Scope = scope;
+
+            yield return new WaitForType(data.Text, scope, str.Name);
+
+            str.Type = scope.GetCheezType(str.Name);
+
+            if (str.Type is StructType s)
+            {
+                if (str.MemberInitializers.Length > s.Declaration.Members.Count)
+                {
+                    yield return new GenericError(data.Text, str.ParseTreeNode?.Name, $"Struct initialization has to many values");
+                }
+                else
+                {
+                    int namesProvided = 0;
+                    foreach (var m in str.MemberInitializers)
+                    {
+                        if (m.Name != null)
+                        {
+                            if (!s.Declaration.Members.Any(m2 => m2.Name == m.Name))
+                            {
+                                yield return new GenericError(data.Text, m.GenericParseTreeNode.Name, $"'{m.Name}' is not a member of struct {s.Declaration.Name}");
+                            }
+                            namesProvided++;
+                        }
+                    }
+
+                    if (namesProvided == 0)
+                    {
+                        for (int i = 0; i < str.MemberInitializers.Length; i++)
+                        {
+                            foreach (var v in str.MemberInitializers[i].Value.Accept(this, data))
+                            {
+                                if (v is ReplaceAstExpr r)
+                                    str.MemberInitializers[i].Value = r.NewExpression;
+                                else
+                                    yield return v;
+                            }
+
+                            var mem = s.Declaration.Members[i];
+                            var mi = str.MemberInitializers[i];
+                            mi.Name = mem.Name;
+
+                            if (CastIfLiteral(mi.Value.Type, mem.Type, out var miType))
+                            {
+                                mi.Value.Type = miType;
+                            }
+                            else
+                            {
+                                yield return new GenericError(data.Text, mi.GenericParseTreeNode.Value, $"Value of type '{mi.Value.Type}' cannot be assigned to struct member '{mem.Name}' with type '{mem.Type}'");
+                            }
+                        }
+                    }
+                    else if (namesProvided == str.MemberInitializers.Length)
+                    {
+
+                    }
+                    else
+                    {
+                        yield return new GenericError(data.Text, str.ParseTreeNode?.Name, $"Either all or no values must have a name");
+                    }
+                }
+            }
+            else
+            {
+                yield return new GenericError(data.Text, str.ParseTreeNode?.Name, $"'{str.Name}' is not a struct type");
+            }
+
+            yield break;
+        }
+
         public override IEnumerable<object> VisitArrayAccessExpression(AstArrayAccessExpr arr, SemanticerData data = null)
         {
             foreach (var v in arr.SubExpression.Accept(this, data))
@@ -1013,7 +1108,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         public override IEnumerable<object> VisitDotExpression(AstDotExpr dot, SemanticerData data = null)
         {
             dot.Scope = data.Scope;
-            
+
             foreach (var v in dot.Left.Accept(this, data))
                 if (v is ReplaceAstExpr r)
                     dot.Left = r.NewExpression;
@@ -1027,7 +1122,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 dot.Left.Type = IntType.DefaultType;
             else if (dot.Left.Type == FloatType.LiteralType)
                 dot.Left.Type = FloatType.DefaultType;
-            
+
             if (dot.IsDoubleColon)
             {
                 yield return new LambdaCondition(() => dot.Scope.GetImplFunction(dot.Left.Type, dot.Right) != null,
@@ -1081,10 +1176,10 @@ namespace Cheez.Compiler.SemanticAnalysis
         private bool CastIfLiteral(CheezType sourceType, CheezType targetType, out CheezType outSource)
         {
             outSource = sourceType;
-            
+
             while (targetType is ReferenceType r)
                 targetType = r.TargetType;
-            
+
             while (sourceType is ReferenceType r)
                 sourceType = r.TargetType;
 
