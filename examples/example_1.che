@@ -1,16 +1,24 @@
 fn Main() {
 
-    let v = Vec3 {
+    let v : Vec3  = Vec3 {
         1
         2
         3
     }
 
-    println "test"
+    v.Print()
 }
 
 struct Vec3 {
     x: f32
     y: f32
     z: f32
+
+    parent: Vec3*
+}
+
+impl Vec3 {
+    ref fn Print() {
+        println "Vec3(", x, ", ", y, ", ", z, ")"
+    }
 }

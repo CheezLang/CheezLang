@@ -488,6 +488,7 @@ namespace Cheez.Compiler.Parsing
             {
                 case TokenType.Colon:
                     mLexer.NextToken();
+                    SkipNewlines();
                     type = ParseTypeExpression();
                     if (type == null)
                     {
@@ -512,6 +513,7 @@ namespace Cheez.Compiler.Parsing
 
                 case TokenType.Equal:
                     mLexer.NextToken();
+                    SkipNewlines();
                     init = ParseExpression(errorMessage: t => $"Expected expression after '='");
                     if (init == null)
                     {

@@ -291,6 +291,8 @@ namespace Cheez.Compiler
     {
         public AstTypeDecl Declaration { get; }
 
+        public bool Analyzed { get; set; } = false;
+
         public StructType(AstTypeDecl decl)
         {
             Declaration = decl;

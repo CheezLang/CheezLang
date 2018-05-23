@@ -307,8 +307,19 @@ void _flush_cout() {
 
             if (variable.Initializer != null)
             {
-                sb.Append($" = ");
-                sb.Append(GenerateCode(variable.Initializer, variable.Initializer.Scope));
+                if (variable.Initializer is AstStructValueExpr str)
+                {
+                    sb.AppendLine(";");
+                    foreach (var v in str.MemberInitializers)
+                    {
+                        sb.AppendLine($"{variable.Name}.{v.Name} = {v.Value.Accept(this, data)};");
+                    }
+                }
+                else
+                {
+                    sb.Append($" = ");
+                    sb.Append(GenerateCode(variable.Initializer, variable.Initializer.Scope));
+                }
             }
 
             return Indent(sb.ToString(), data.indent);

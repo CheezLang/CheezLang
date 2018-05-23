@@ -102,15 +102,16 @@ namespace Cheez.Compiler.SemanticAnalysis
         public string TypeName { get; } = null;
         public PTTypeExpr TypeExpr { get; } = null;
         public IText Text { get; set; }
+        public bool OnlyWaitForDefinition { get; set; }
 
-        public WaitForType(IText text, Scope scope, string typeName)
+        public WaitForType(IText text, Scope scope, string typeName, bool onlyWaitForDefinition = false)
         {
             this.Scope = scope;
             this.TypeName = typeName;
             this.Text = text;
         }
 
-        public WaitForType(IText text, Scope scope, PTTypeExpr type)
+        public WaitForType(IText text, Scope scope, PTTypeExpr type, bool onlyWaitForDefinition = false)
         {
             this.Scope = scope;
             this.TypeExpr = type;
@@ -121,11 +122,25 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             if (TypeExpr != null)
             {
-                return Scope.GetCheezType(TypeExpr) != null;
+                var t = Scope.GetCheezType(TypeExpr);
+                if (t == null)
+                    return false;
+                if (OnlyWaitForDefinition)
+                    return true;
+                if (t is StructType s && !s.Analyzed)
+                    return false;
+                return true;
             }
             if (TypeName != null)
             {
-                return Scope.GetCheezType(TypeName) != null;
+                var t = Scope.GetCheezType(TypeName);
+                if (t == null)
+                    return false;
+                if (OnlyWaitForDefinition)
+                    return true;
+                if (t is StructType s && !s.Analyzed)
+                    return false;
+                return true;
             }
 
             Debug.Assert(false, "UNREACHABLE");
@@ -340,24 +355,22 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             var scope = data.Scope;
             type.Scope = scope;
-
             
-
-            foreach (var mem in type.Members)
-            {
-                yield return new WaitForType(data.Text, scope, mem.ParseTreeNode.Type);
-                mem.Type = scope.GetCheezType(mem.ParseTreeNode.Type);
-            }
-
             scope.TypeDeclarations.Add(type);
             if (!scope.DefineType(type))
             {
                 yield return new DuplicateTypeError(data.Text, type.ParseTreeNode.Name, type.Name);
             }
-            else
+
+            foreach (var mem in type.Members)
             {
-                yield break;
+                yield return new WaitForType(data.Text, scope, mem.ParseTreeNode.Type, true);
+                mem.Type = scope.GetCheezType(mem.ParseTreeNode.Type);
             }
+
+            var st = scope.GetCheezType(type.Name) as StructType;
+            Debug.Assert(st != null && st.Declaration == type);
+            st.Analyzed = true;
         }
 
         public void Using(Scope scope, StructType @struct, INamed name)
