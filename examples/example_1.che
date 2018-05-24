@@ -1,11 +1,12 @@
+//#load("compiler/main.che")
+
 fn Main() {
-
+    print "Hello World`n"
+    Test("hi")
 }
 
-struct Token {
-
-}
-
-enum TokenType { 
-
+fn Test(a: string) {
+    // print a
+    print "hi wie giehts"
+    print "`n"
 }

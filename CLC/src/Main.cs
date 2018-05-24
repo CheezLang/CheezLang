@@ -82,7 +82,7 @@ namespace CheezCLI
                 Console.WriteLine();
                 Console.WriteLine($"Running code:");
                 Console.WriteLine("=======================================");
-                var testProc = StartProcess(Path.Combine(options.OutPath, options.OutName + ".exe"), workingDirectory: options.OutPath, stdout: (s, e) => System.Console.WriteLine(e.Data));
+                var testProc = Util.StartProcess(Path.Combine(options.OutPath, options.OutName + ".exe"), workingDirectory: options.OutPath, stdout: (s, e) => System.Console.WriteLine(e.Data));
                 testProc.WaitForExit();
             }
 
@@ -95,59 +95,11 @@ namespace CheezCLI
                 Directory.CreateDirectory(options.OutPath);
             string filePath = Path.Combine(options.OutPath, options.OutName);
 
-            CppCodeGenerator generator = new CppCodeGenerator();
-            string code = generator.GenerateCode(workspace);
-            File.WriteAllText(filePath + ".cpp", code);
-
-            // run clang
-            var clang = StartProcess(@"D:\Program Files\LLVM\bin\clang++.exe", $"-O0 -o {options.OutName}.exe {options.OutName}.cpp", options.OutPath, stderr: Process_ErrorDataReceived);
-            clang.WaitForExit();
-
-            //var clangOutput = process.StandardOutput.ReadToEnd();
-
-            Console.WriteLine($"Clang finished compiling with exit code {clang.ExitCode}");
-            return clang.ExitCode == 0;
+            ICodeGenerator generator = new LLVMCodeGenerator();
+            bool success = generator.GenerateCode(workspace, filePath);
+            return success;
         }
 
-        private static Process StartProcess(string exe, string args = null, string workingDirectory = null, DataReceivedEventHandler stdout = null, DataReceivedEventHandler stderr = null)
-        {
-            var process = new Process();
-            process.StartInfo.FileName = exe;
-            if (workingDirectory != null)
-                process.StartInfo.WorkingDirectory = workingDirectory;
-            if (args != null)
-                process.StartInfo.Arguments = args;
-            process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
-
-            if (stdout != null)
-            {
-                process.StartInfo.RedirectStandardOutput = true;
-                process.OutputDataReceived += stdout;
-            }
-
-            if (stderr != null)
-            {
-                process.StartInfo.RedirectStandardError = true;
-                process.ErrorDataReceived += stderr;
-            }
-
-            process.Start();
-
-            if (stdout != null)
-                process.BeginOutputReadLine();
-            if (stderr != null)
-                process.BeginErrorReadLine();
-
-            return process;
-        }
-
-        private static void Process_ErrorDataReceived(object sender, DataReceivedEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(e.Data))
-                return;
-            Console.WriteLine($"[CLANG] {e.Data}");
-        }
+        
     }
 }

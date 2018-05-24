@@ -17,6 +17,8 @@ namespace Cheez.Compiler
         public Scope GlobalScope { get; private set; }
         public List<Scope> AllScopes { get; private set; }
 
+        public AstFunctionDecl MainFunction { get; set; }
+
         public Workspace(Compiler comp)
         {
             mCompiler = comp;
@@ -51,7 +53,7 @@ namespace Cheez.Compiler
             GlobalScope.DefineBuiltInOperators();
 
             var semanticer = new Semanticer();
-            semanticer.DoWork(GlobalScope, mStatements, mCompiler.ErrorHandler);
+            semanticer.DoWork(this, mStatements, mCompiler.ErrorHandler);
         }
         
         public void ReportError(ILocation location, string errorMessage, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)

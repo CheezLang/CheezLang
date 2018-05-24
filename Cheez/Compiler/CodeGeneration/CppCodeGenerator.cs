@@ -1,6 +1,8 @@
 ﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.Visitor;
+using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -10,9 +12,10 @@ namespace Cheez.Compiler.CodeGeneration
     {
         public int indent;
         public Scope scope;
+        public bool declarationOnly;
     }
 
-    public class CppCodeGenerator : VisitorBase<string, CppCodeGeneratorArgs>
+    public class CppCodeGenerator : VisitorBase<string, CppCodeGeneratorArgs>, ICodeGenerator
     {
         private StringBuilder mFunctionForwardDeclarations = new StringBuilder();
         private StringBuilder mTypeDeclarations = new StringBuilder();
@@ -22,6 +25,27 @@ namespace Cheez.Compiler.CodeGeneration
         private Workspace workspace;
 
         private UniqueNameDecorator nameDecorator = new UniqueNameDecorator();
+        
+        private static void Process_ErrorDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(e.Data))
+                return;
+            Console.WriteLine($"[CLANG] {e.Data}");
+        }
+
+        public bool GenerateCode(Workspace ws, string targetFile)
+        {
+            File.WriteAllText(targetFile + ".cpp", GenerateCode(ws));
+
+            // run clang
+            var clang = Util.StartProcess(@"D:\Program Files\LLVM\bin\clang++.exe", $"-O0 -o {targetFile}.exe {targetFile}.cpp", Path.GetDirectoryName(targetFile), stderr: Process_ErrorDataReceived);
+            clang.WaitForExit();
+
+            //var clangOutput = process.StandardOutput.ReadToEnd();
+
+            Console.WriteLine($"Clang finished compiling with exit code {clang.ExitCode}");
+            return clang.ExitCode == 0;
+        }
 
         public string GenerateCode(Workspace ws)
         {
@@ -56,6 +80,13 @@ void _flush_cout() {
             sb.AppendLine();
 
             sb.AppendLine("// type declarations");
+            foreach (var td in workspace.GlobalScope.TypeDeclarations)
+            {
+                if (td.HasDirective("DisableCodeGen"))
+                    continue;
+                sb.AppendLine(GenerateCode(td, workspace.GlobalScope, declarationOnly: true));
+            }
+            sb.AppendLine();
             foreach (var td in workspace.GlobalScope.TypeDeclarations)
             {
                 if (td.HasDirective("DisableCodeGen"))
@@ -133,7 +164,7 @@ void _flush_cout() {
             sb.Append(target).Append(" self");
         }
 
-        private string GenerateCode(AstStatement s, Scope scope, int indent = 0)
+        private string GenerateCode(AstStatement s, Scope scope, int indent = 0, bool declarationOnly = false)
         {
             if (s == null)
                 return null;
@@ -141,7 +172,8 @@ void _flush_cout() {
             return s.Accept(this, new CppCodeGeneratorArgs
             {
                 indent = indent,
-                scope = ss
+                scope = ss,
+                declarationOnly = declarationOnly
             });
         }
 
@@ -155,6 +187,54 @@ void _flush_cout() {
                 indent = indent,
                 scope = ss
             });
+        }
+
+        // =================================================================================
+        // =================================================================================
+        // =================================================================================
+
+        public override string VisitEnumDeclaration(AstEnumDecl en, CppCodeGeneratorArgs data = default)
+        {
+            var sb = new StringBuilder();
+
+            if (data.declarationOnly)
+                return $"enum class {en.Name};";
+
+            sb.AppendLine($"enum class {en.Name} {{");
+            
+            foreach (var m in en.Members)
+            {
+                sb.AppendLine($"{m.Name},".Indent(4));
+            }
+
+            sb.AppendLine().Append("};");
+
+            return sb.ToString();
+        }
+
+        public override string VisitTypeDeclaration(AstTypeDecl type, CppCodeGeneratorArgs data)
+        {
+            var sb = new StringBuilder();
+
+            if (data.declarationOnly)
+                return $"struct {type.Name};";
+
+            sb.Append("struct ").Append(type.Name).AppendLine(" {");
+            foreach (var m in type.Members)
+            {
+                if (m.Type is FunctionType f)
+                {
+                    sb.AppendLine(Indent(GetCTypeName(f, m.Name) + ";", 4));
+                }
+                else
+                {
+                    string t = GetCTypeName(m.Type, m.Name);
+                    sb.AppendLine(Indent($"{t} {m.Name};", 4));
+                }
+            }
+            sb.Append("};");
+
+            return Indent(sb.ToString(), data.indent);
         }
 
         public override string VisitFunctionDeclaration(AstFunctionDecl function, CppCodeGeneratorArgs data)
@@ -321,28 +401,6 @@ void _flush_cout() {
                     sb.Append(GenerateCode(variable.Initializer, variable.Initializer.Scope));
                 }
             }
-
-            return Indent(sb.ToString(), data.indent);
-        }
-
-        public override string VisitTypeDeclaration(AstTypeDecl type, CppCodeGeneratorArgs data)
-        {
-            var sb = new StringBuilder();
-
-            sb.Append("struct ").Append(type.Name).AppendLine(" {");
-            foreach (var m in type.Members)
-            {
-                if (m.Type is FunctionType f)
-                {
-                    sb.AppendLine(Indent(GetCTypeName(f, m.Name) + ";", 4));
-                }
-                else
-                {
-                    string t = GetCTypeName(m.Type, m.Name);
-                    sb.AppendLine(Indent($"{t} {m.Name};", 4));
-                }
-            }
-            sb.Append("};");
 
             return Indent(sb.ToString(), data.indent);
         }
@@ -616,6 +674,9 @@ void _flush_cout() {
 
                 case StructType s:
                     return s.Declaration.Name;
+
+                case EnumType e:
+                    return e.Name;
 
                 case FunctionType f:
                     return $"{GetCTypeName(f.ReturnType)}(*{name})({string.Join(", ", f.ParameterTypes.Select(pt => GetCTypeName(pt)))})";

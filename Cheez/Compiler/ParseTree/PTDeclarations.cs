@@ -194,7 +194,7 @@ namespace Cheez.Compiler.ParseTree
         public override AstStatement CreateAst()
         {
             var mems = Members.Select(m => m.CreateAst()).ToList();
-            var dirs = Directives.Select(d => d.CreateAst()).ToDictionary(d => d.Name);
+            var dirs = Directives?.Select(d => d.CreateAst()).ToDictionary(d => d.Name);
             return new AstEnumDecl(this, Name.Name, mems, dirs);
         }
     }

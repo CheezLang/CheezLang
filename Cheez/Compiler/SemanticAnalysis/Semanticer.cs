@@ -264,13 +264,16 @@ namespace Cheez.Compiler.SemanticAnalysis
 
     public class Semanticer : VisitorBase<IEnumerable<object>, SemanticerData>
     {
-        public void DoWork(Scope globalScope, List<AstStatement> statements, IErrorHandler errorHandler)
+        private Workspace workspace;
+
+        public void DoWork(Workspace workspace, List<AstStatement> statements, IErrorHandler errorHandler)
         {
+            this.workspace = workspace;
             List<IEnumerator<object>> enums = new List<IEnumerator<object>>();
 
             foreach (var s in statements)
             {
-                var enumerator = s.Accept(this, new SemanticerData(globalScope, s.GenericParseTreeNode.SourceFile)).GetEnumerator();
+                var enumerator = s.Accept(this, new SemanticerData(workspace.GlobalScope, s.GenericParseTreeNode.SourceFile)).GetEnumerator();
                 enums.Add(enumerator);
             }
 
@@ -351,6 +354,33 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #region Functions
 
+        public override IEnumerable<object> VisitEnumDeclaration(AstEnumDecl en, SemanticerData data = null)
+        {
+            var scope = data.Scope;
+            en.Scope = scope;
+
+
+            // check if all names in this enum are unique
+            var names = new HashSet<string>();
+            foreach (var m in en.Members)
+            {
+                if (names.Contains(m.Name))
+                {
+                    yield return new GenericError(data.Text, m.ParseTreeNode.Name, $"A member with name '{m.Name}' already exists in enum '{en.Name}'");
+                }
+
+                names.Add(m.Name);
+            }
+
+            var t = scope.DefineType(en);
+            if (t == null)
+            {
+                yield return new GenericError(data.Text, en.ParseTreeNode.Name, $"A type with name '{en.Name}' already exists in current scope");
+            }
+
+            scope.TypeDeclarations.Add(en);
+        }
+
         public override IEnumerable<object> VisitTypeDeclaration(AstTypeDecl type, SemanticerData data = null)
         {
             var scope = data.Scope;
@@ -391,6 +421,9 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitFunctionDeclaration(AstFunctionDecl function, SemanticerData data = null)
         {
+            if (function.Name == "Main" && data.Scope == workspace.GlobalScope)
+                workspace.MainFunction = function;
+
             var scope = data.Scope;
             function.Scope = scope;
             function.SubScope = NewScope($"fn {function.Name}", scope);

@@ -304,6 +304,29 @@ namespace Cheez.Compiler
         }
     }
 
+    public class EnumType : CheezType
+    {
+        public string Name { get; }
+        public Dictionary<string, int> Members { get; }
+
+        public EnumType(AstEnumDecl en)
+        {
+            Name = en.Name;
+            Members = new Dictionary<string, int>();
+            int value = 0;
+            foreach (var m in en.Members)
+            {
+                Members.Add(m.Name, value++);
+            }
+        }
+
+        public override string ToString()
+        {
+            var vals = string.Join("\n", Members.Select(kv => $"{kv.Key} = {kv.Value}"));
+            return $"enum {{\n{vals.Indent(4)}\n}}";
+        }
+    }
+
     public class FunctionType : CheezType
     {
         private static List<FunctionType> sTypes = new List<FunctionType>();

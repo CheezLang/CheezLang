@@ -41,7 +41,7 @@ namespace Cheez.Compiler
 
         public List<AstFunctionDecl> FunctionDeclarations { get; } = new List<AstFunctionDecl>();
         public List<AstVariableDecl> VariableDeclarations { get; } = new List<AstVariableDecl>();
-        public List<AstTypeDecl> TypeDeclarations { get; } = new List<AstTypeDecl>();
+        public List<AstStatement> TypeDeclarations { get; } = new List<AstStatement>();
         public List<AstImplBlock> ImplBlocks { get; } = new List<AstImplBlock>();
 
 
@@ -240,6 +240,16 @@ namespace Cheez.Compiler
             }
 
             return Parent?.GetImplFunction(targetType, name);
+        }
+
+        public EnumType DefineType(AstEnumDecl en)
+        {
+            if (types.GetCheezType(en.Name) != null)
+                return null;
+
+            var type = new EnumType(en);
+            types.CreateAlias(en.Name, type);
+            return type;
         }
 
         public bool DefineType(AstTypeDecl t)

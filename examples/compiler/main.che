@@ -1,0 +1,110 @@
+#load("system.che")
+
+fn Main() {
+    let filename = "D:\Programming\CS\CheezLang\examples\example_1.che"
+    let file: String
+    if LoadFile(filename, &file) {}
+    else
+    {
+        println "Failed to load file '", filename, "'"
+    }
+
+    //file.Print()
+
+    let lexer = Lexer {
+        file
+    }
+}
+
+struct TokenLocation {
+    file: string
+    line: uint
+    start: uint
+    end: uint
+}
+
+struct Lexer {
+    text: String
+    location: TokenLocation
+}
+
+struct Token {
+    type: TokenType
+    location: TokenLocation
+}
+
+impl TokenLocation {
+    ref fn Clone(): TokenLocation {
+        let t = TokenLocation {
+            file,
+            line,
+            start,
+            end
+        }
+        return t
+    }
+}
+
+enum TokenType {
+    Unknown
+
+    NewLine
+    EndOfFile
+
+    StringLiteral
+    NumberLiteral
+
+    Identifier
+
+    Semicolon
+    DoubleColon
+    Colon
+    Comma
+    Period
+    Equal
+    Ampersand
+    HashTag
+
+    Plus
+    Minus
+    Asterisk
+    ForwardSlash
+    Percent
+
+    Less
+    LessEqual
+    Greater
+    GreaterEqual
+    DoubleEqual
+    NotEqual
+
+    OpenParen
+    ClosingParen
+
+    OpenBrace
+    ClosingBrace
+    
+    OpenBracket
+    ClosingBracket
+
+    KwReturn
+    KwCast
+    KwRef
+    KwFn
+    KwStruct
+    KwEnum
+    KwImpl
+    KwConstant
+    KwVar
+    KwIf
+    KwElse
+    KwFor
+    KwWhile
+    KwAnd
+    KwOr
+    KwTrue
+    KwFalse
+    KwUsing
+    KwPrint
+    KwPrintln
+}
