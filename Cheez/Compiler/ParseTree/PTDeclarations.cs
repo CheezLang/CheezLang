@@ -158,4 +158,46 @@ namespace Cheez.Compiler.ParseTree
     }
 
     #endregion
+
+    #region Enum
+
+    public class PTEnumMember
+    {
+        public PTIdentifierExpr Name { get; }
+        public PTExpr Value { get; }
+
+        public PTEnumMember(PTIdentifierExpr name, PTExpr value)
+        {
+            this.Name = name;
+            this.Value = value;
+        }
+
+        public AstEnumMember CreateAst()
+        {
+            return new AstEnumMember(this, Name.Name, Value?.CreateAst());
+        }
+    }
+
+    public class PTEnumDecl : PTStatement
+    {
+        public PTIdentifierExpr Name { get; }
+        public List<PTEnumMember> Members { get; }
+        public List<PTDirective> Directives { get; }
+
+        public PTEnumDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTEnumMember> members, List<PTDirective> directives) : base(beg, end)
+        {
+            this.Name = name;
+            this.Members = members;
+            this.Directives = directives;
+        }
+
+        public override AstStatement CreateAst()
+        {
+            var mems = Members.Select(m => m.CreateAst()).ToList();
+            var dirs = Directives.Select(d => d.CreateAst()).ToDictionary(d => d.Name);
+            return new AstEnumDecl(this, Name.Name, mems, dirs);
+        }
+    }
+
+    #endregion
 }

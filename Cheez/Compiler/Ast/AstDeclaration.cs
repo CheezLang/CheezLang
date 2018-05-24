@@ -170,4 +170,46 @@ namespace Cheez.Compiler.Ast
     }
 
     #endregion
+
+    #region Enum
+
+    public class AstEnumMember
+    {
+        public ParseTree.PTEnumMember ParseTreeNode { get; set; }
+
+        public string Name { get; }
+        public AstExpression Value { get; }
+        public CheezType Type { get; set; }
+
+        public AstEnumMember(ParseTree.PTEnumMember node, string name, AstExpression value)
+        {
+            ParseTreeNode = node;
+            this.Name = name;
+            this.Value = value;
+        }
+    }
+
+    public class AstEnumDecl : AstStatement, INamed
+    {
+        public ParseTree.PTEnumDecl ParseTreeNode { get; set; }
+        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
+
+        public string Name { get; }
+        public List<AstEnumMember> Members { get; }
+
+        public AstEnumDecl(ParseTree.PTEnumDecl node, string name, List<AstEnumMember> members, Dictionary<string, AstDirective> dirs) : base(dirs)
+        {
+            ParseTreeNode = node;
+            this.Name = name;
+            this.Members = members;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitEnumDeclaration(this, data);
+        }
+    }
+
+    #endregion
 }

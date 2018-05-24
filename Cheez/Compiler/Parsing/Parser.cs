@@ -279,6 +279,8 @@ namespace Cheez.Compiler.Parsing
                     return (false, ParseIfStatement());
                 case TokenType.KwWhile:
                     return (false, ParseWhileStatement());
+                case TokenType.KwEnum:
+                    return (false, ParseEnumDeclaration());
                 case TokenType.KwStruct:
                     return (false, ParseTypeDeclaration());
                 case TokenType.KwImpl:
@@ -304,6 +306,46 @@ namespace Cheez.Compiler.Parsing
                         }
                     }
             }
+        }
+
+        private PTStatement ParseEnumDeclaration()
+        {
+            var beginning = Expect(TokenType.KwEnum, true).location;
+
+            var name = ParseIdentifierExpr(true);
+            if (!(name is PTIdentifierExpr))
+                return null;
+
+            var members = new List<PTEnumMember>();
+            Expect(TokenType.OpenBrace, true);
+
+            while (PeekToken(true).type != TokenType.ClosingBrace)
+            {
+                var mn = ParseIdentifierExpr(true) as PTIdentifierExpr;
+                if (mn == null)
+                    continue;
+
+                members.Add(new PTEnumMember(mn, null));
+
+                var next = PeekToken(false);
+
+                if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
+                {
+                    mLexer.NextToken();
+                }
+                else if (next.type == TokenType.ClosingBrace)
+                {
+                    break;
+                }
+                else
+                {
+                    ReportError(next.location, $"Expected either comma, new line or closing brace after enum member, got '{next.data}'");
+                }
+            }
+
+            var end = Expect(TokenType.ClosingBrace, true).location;
+
+            return new PTEnumDecl(beginning, end, name as PTIdentifierExpr, members, null);
         }
 
         private PTStatement ParseUsingStatement()

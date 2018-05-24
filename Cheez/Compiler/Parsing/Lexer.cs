@@ -53,6 +53,7 @@ namespace Cheez.Compiler.Parsing
         KwRef,
         KwFn,
         KwStruct,
+        KwEnum,
         KwImpl,
         KwConstant,
         KwVar,
@@ -125,6 +126,11 @@ namespace Cheez.Compiler.Parsing
         public string StringValue;
         public object Value;
         public NumberType Type;
+
+        public override string ToString()
+        {
+            return StringValue;
+        }
     }
 
     public interface IText
@@ -338,6 +344,7 @@ namespace Cheez.Compiler.Parsing
                 case "true": token.type = TokenType.KwTrue; break;
                 case "false": token.type = TokenType.KwFalse; break;
                 case "using": token.type = TokenType.KwUsing; break;
+                case "enum": token.type = TokenType.KwEnum; break;
                 case "print": token.type = TokenType.KwPrint; break; // @Temporary
                 case "println": token.type = TokenType.KwPrintln; break; // @Temporary
             }

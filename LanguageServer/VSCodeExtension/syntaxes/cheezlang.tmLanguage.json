@@ -221,6 +221,30 @@
 					"include": "#core_types"
 				}
 			]
+		},
+		{
+			"comment": "Enum declaration",
+			"begin": "\\b(enum)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+			"end": "[\\{]",
+			"beginCaptures": {
+				"1": {
+					"name": "storage.type.cheezlang"
+				},
+				"2": {
+					"name": "entity.name.type.cheezlang"
+				}
+			},
+			"patterns": [
+				{
+					"include": "#block_comment"
+				},
+				{
+					"include": "#line_comment"
+				},
+				{
+					"include": "#core_types"
+				}
+			]
 		}
 	],
 	"repository": {
