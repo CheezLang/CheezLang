@@ -58,10 +58,7 @@ namespace Cheez.Compiler
         }
 
 
-
-
-
-
+        
         public static Process StartProcess(string exe, string args = null, string workingDirectory = null, DataReceivedEventHandler stdout = null, DataReceivedEventHandler stderr = null)
         {
             var process = new Process();

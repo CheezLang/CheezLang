@@ -2,11 +2,10 @@
 
 fn Main() {
     print "Hello World`n"
-    Test("hi")
+    Test("lol")
 }
 
 fn Test(a: string) {
-    // print a
-    print "hi wie giehts"
-    print "`n"
+    println a
+    println "hi wie giehts"
 }

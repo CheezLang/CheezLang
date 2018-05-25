@@ -34,6 +34,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LanguageServer", "LanguageS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheezLanguageServer", "LanguageServer\Server\CheezLanguageServer.csproj", "{B43C7AC6-EAF2-4B9A-B44F-87513E089FB5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Project1", "Project1\Project1.vcxproj", "{139BA6D5-FD50-4D1F-9274-7B7E137D6055}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,6 +106,16 @@ Global
 		{B43C7AC6-EAF2-4B9A-B44F-87513E089FB5}.Release|x64.Build.0 = Release|Any CPU
 		{B43C7AC6-EAF2-4B9A-B44F-87513E089FB5}.Release|x86.ActiveCfg = Release|Any CPU
 		{B43C7AC6-EAF2-4B9A-B44F-87513E089FB5}.Release|x86.Build.0 = Release|Any CPU
+		{139BA6D5-FD50-4D1F-9274-7B7E137D6055}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{139BA6D5-FD50-4D1F-9274-7B7E137D6055}.Debug|x64.ActiveCfg = Debug|x64
+		{139BA6D5-FD50-4D1F-9274-7B7E137D6055}.Debug|x64.Build.0 = Debug|x64
+		{139BA6D5-FD50-4D1F-9274-7B7E137D6055}.Debug|x86.ActiveCfg = Debug|Win32
+		{139BA6D5-FD50-4D1F-9274-7B7E137D6055}.Debug|x86.Build.0 = Debug|Win32
+		{139BA6D5-FD50-4D1F-9274-7B7E137D6055}.Release|Any CPU.ActiveCfg = Release|Win32
+		{139BA6D5-FD50-4D1F-9274-7B7E137D6055}.Release|x64.ActiveCfg = Release|x64
+		{139BA6D5-FD50-4D1F-9274-7B7E137D6055}.Release|x64.Build.0 = Release|x64
+		{139BA6D5-FD50-4D1F-9274-7B7E137D6055}.Release|x86.ActiveCfg = Release|Win32
+		{139BA6D5-FD50-4D1F-9274-7B7E137D6055}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

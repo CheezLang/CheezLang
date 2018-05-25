@@ -404,6 +404,7 @@ namespace Cheez.Compiler.Ast
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
 
         public string Name { get; set; }
+        public ISymbol Symbol { get; set; }
 
         [DebuggerStepThrough]
         public AstIdentifierExpr(ParseTree.PTExpr node, string name) : base()

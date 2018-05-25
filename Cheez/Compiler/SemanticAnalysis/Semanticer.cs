@@ -1054,6 +1054,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             yield return new WaitForSymbol(data.Text, ident.GenericParseTreeNode, scope, ident.Name);
             var v = scope.GetSymbol(ident.Name);
+            ident.Symbol = v;
 
             if (v is Using u)
             {

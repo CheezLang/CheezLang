@@ -82,7 +82,10 @@ namespace CheezCLI
                 Console.WriteLine();
                 Console.WriteLine($"Running code:");
                 Console.WriteLine("=======================================");
-                var testProc = Util.StartProcess(Path.Combine(options.OutPath, options.OutName + ".exe"), workingDirectory: options.OutPath, stdout: (s, e) => System.Console.WriteLine(e.Data));
+                var testProc = Util.StartProcess(Path.Combine(options.OutPath, options.OutName + ".exe"), 
+                    workingDirectory: options.OutPath, 
+                    stdout: (s, e) => System.Console.WriteLine(e.Data),
+                    stderr: (s, e) => System.Console.Error.WriteLine(e.Data));
                 testProc.WaitForExit();
             }
 

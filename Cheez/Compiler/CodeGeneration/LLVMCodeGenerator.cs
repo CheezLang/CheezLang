@@ -4,6 +4,7 @@ using LLVMSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -21,13 +22,18 @@ namespace Cheez.Compiler.CodeGeneration
         private Workspace workspace;
 
         private Dictionary<AstFunctionDecl, LLVMValueRef> functionMap = new Dictionary<AstFunctionDecl, LLVMValueRef>();
-        private Dictionary<AstExpression, LLVMValueRef> expressionMap = new Dictionary<AstExpression, LLVMValueRef>();
+        private Dictionary<object, LLVMValueRef> expressionMap = new Dictionary<object, LLVMValueRef>();
 
-        private LLVMValueRef llvmPrintf;
+        private LLVMValueRef llvmGetStdOutHandle;
+        private LLVMValueRef llvmPrintln;
+        private LLVMValueRef llvmPrint;
 
         public bool GenerateCode(Workspace workspace, string targetFile)
         {
-            const string targetTriple = "i686-pc-win32";
+            // <arch><sub>-<vendor>-<sys>-<abi>
+            // arch = x86_64, i386, arm, thumb, mips, etc.
+            const string targetTriple = "i386-pc-win32";
+            
 
             module = LLVM.ModuleCreateWithName("test");
             this.workspace = workspace;
@@ -37,12 +43,17 @@ namespace Cheez.Compiler.CodeGeneration
 
             // generate functions
             {
-                var ltype = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] {
-                    LLVM.PointerType(LLVM.Int8Type(), 0)
-                }, false);
-                llvmPrintf = LLVM.AddFunction(module, "printf", ltype);
-                
-                LLVM.VerifyFunction(llvmPrintf, LLVMVerifierFailureAction.LLVMPrintMessageAction);
+                var ltype = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[0], false);
+                llvmGetStdOutHandle = LLVM.AddFunction(module, "GetStdOutHandle", ltype);
+                LLVM.VerifyFunction(llvmGetStdOutHandle, LLVMVerifierFailureAction.LLVMPrintMessageAction);
+
+                ltype = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { LLVM.PointerType(LLVM.Int8Type(), 0) }, false);
+                llvmPrintln = LLVM.AddFunction(module, "Println", ltype);
+                LLVM.VerifyFunction(llvmGetStdOutHandle, LLVMVerifierFailureAction.LLVMPrintMessageAction);
+
+                ltype = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { LLVM.PointerType(LLVM.Int8Type(), 0) }, false);
+                llvmPrint = LLVM.AddFunction(module, "Print", ltype);
+                LLVM.VerifyFunction(llvmGetStdOutHandle, LLVMVerifierFailureAction.LLVMPrintMessageAction);
             }
             GenerateFunctions();
             GenerateMainFunction();
@@ -70,41 +81,18 @@ namespace Cheez.Compiler.CodeGeneration
                 }
             }
 
-            // compile code to exe
+            // compile to exe
             {
-                LLVM.InitializeAllTargetInfos();
-                LLVM.InitializeAllTargets();
-                LLVM.InitializeAllTargetMCs();
-                if (LLVM.GetTargetFromTriple(targetTriple, out var target, out string llvmErrors).Value == 0)
-                {
-                    var targetMachine = LLVM.CreateTargetMachine(target, targetTriple, "", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelNone, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
-                    var filenameStr = $"{targetFile}.exe";
-                    var filename = Marshal.StringToCoTaskMemAnsi(filenameStr);
-                    if (LLVM.TargetMachineEmitToFile(targetMachine, module, filename, LLVMCodeGenFileType.LLVMAssemblyFile, out string llvmErrors2).Value == 0)
-                    {
-
-                    }
-                    else
-                    {
-                        Console.WriteLine(llvmErrors2);
-                    }
-                }
-                else
-                {
-                    Console.WriteLine(llvmErrors);
-                }
+                var filename = Path.GetFileNameWithoutExtension(targetFile + ".ll");
+                var dir = Path.GetDirectoryName(Path.GetFullPath(targetFile));
+                var build = Util.StartProcess(
+                    @"cmd.exe",
+                    $"/c ..\\build.bat {filename}",
+                    dir,
+                    (l, a) => Console.WriteLine($"{a.Data}"),
+                    (l, a) => Console.WriteLine($"[BUILD] {a.Data}"));
+                build.WaitForExit();
             }
-            //{                
-            //    LLVM.GetDefaultTargetTriple()
-            //    if (LLVM.GetTargetFromTriple(targetTriple, out var target, out string llvmErrors).Value == 0)
-            //    {
-
-            //    }
-            //    else
-            //    {
-            //        Console.WriteLine(llvmErrors);
-            //    }
-            //}
 
             // cleanup
             LLVM.DisposeModule(module);
@@ -122,6 +110,7 @@ namespace Cheez.Compiler.CodeGeneration
             var cheezMain = functionMap[workspace.MainFunction];
 
             {
+                LLVM.BuildCall(builder, llvmGetStdOutHandle, new LLVMValueRef[0], "");
                 LLVM.BuildCall(builder, cheezMain, new LLVMValueRef[0], "");
                 LLVM.BuildRetVoid(builder);
             }
@@ -189,6 +178,11 @@ namespace Cheez.Compiler.CodeGeneration
         {
             var lfunc = functionMap[function];
 
+            for (int i = 0; i < function.Parameters.Count; i++)
+            {
+                expressionMap[function.Parameters[i]] = lfunc.GetParam((uint)i);
+            }
+
             if (function.HasImplementation)
             {
                 LLVMBuilderRef builder = LLVM.CreateBuilder();
@@ -223,7 +217,10 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitIdentifierExpression(AstIdentifierExpr ident, LLVMCodeGeneratorData data = null)
         {
-            return base.VisitIdentifierExpression(ident, data);
+            var s = ident.Symbol;
+            var v = expressionMap[s];
+
+            return v;
         }
 
         public override LLVMValueRef VisitCallExpression(AstCallExpr call, LLVMCodeGeneratorData data = null)
@@ -248,7 +245,15 @@ namespace Cheez.Compiler.CodeGeneration
         {
             var val = print.Expressions.First().Accept(this, data);
             var casted = LLVM.BuildPointerCast(data.Builder, val, LLVM.PointerType(LLVM.Int8Type(), 0), "");
-            LLVM.BuildCall(data.Builder, llvmPrintf, new LLVMValueRef[] { casted }, "");
+            
+            if( print.NewLine)
+            {
+                LLVM.BuildCall(data.Builder, llvmPrintln, new LLVMValueRef[] { casted }, "");
+            }
+            else
+            {
+                LLVM.BuildCall(data.Builder, llvmPrint, new LLVMValueRef[] { casted }, "");
+            }
             return val;
         }
 
