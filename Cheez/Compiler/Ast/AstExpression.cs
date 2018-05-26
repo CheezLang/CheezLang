@@ -174,7 +174,7 @@ namespace Cheez.Compiler.Ast
         }
     }
 
-    public class AstBinaryExpr : AstExpression
+    public class AstBinaryExpr : AstExpression, ITempVariable
     {
         //public ParseTree.PTBinaryExpr ParseTreeNode => GenericParseTreeNode as ParseTree.PTBinaryExpr;
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
@@ -182,6 +182,8 @@ namespace Cheez.Compiler.Ast
         public string Operator { get; set; }
         public AstExpression Left { get; set; }
         public AstExpression Right { get; set; }
+
+        public string Name => "";
 
         [DebuggerStepThrough]
         public AstBinaryExpr(ParseTree.PTExpr node, string op, AstExpression lhs, AstExpression rhs) : base()
@@ -206,6 +208,11 @@ namespace Cheez.Compiler.Ast
                 Type = this.Type,
                 Scope = this.Scope
             };
+        }
+
+        public override string ToString()
+        {
+            return $"{Left} {Operator} {Right}";
         }
     }
 
@@ -428,6 +435,11 @@ namespace Cheez.Compiler.Ast
                 Type = this.Type,
                 Scope = this.Scope
             };
+        }
+
+        public override string ToString()
+        {
+            return mData.StringValue;
         }
     }
 

@@ -32,6 +32,12 @@ namespace Cheez.Compiler.Ast
         }
     }
 
+    public interface ITempVariable
+    {
+        string Name { get; }
+        CheezType Type { get; }
+    }
+
     public class AstFunctionDecl : AstStatement, ISymbol
     {
         public ParseTree.PTFunctionDecl ParseTreeNode { get; set; }
@@ -48,7 +54,7 @@ namespace Cheez.Compiler.Ast
         public List<AstStatement> Statements { get; private set; }
         public bool HasImplementation => Statements != null;
 
-        public List<AstVariableDecl> LocalVariables { get; } = new List<AstVariableDecl>();
+        public List<ITempVariable> LocalVariables { get; } = new List<ITempVariable>();
 
         public bool RefSelf { get; }
 
@@ -147,7 +153,7 @@ namespace Cheez.Compiler.Ast
 
     #region Variable Declarion
 
-    public class AstVariableDecl : AstStatement, ISymbol
+    public class AstVariableDecl : AstStatement, ISymbol, ITempVariable
     {
         public ParseTree.PTVariableDecl ParseTreeNode { get; }
         public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;

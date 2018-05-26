@@ -777,8 +777,12 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (!CastIfLiteral(ass.Value.Type, ass.Target.Type, out var type))
                 yield return new LambdaError(eh => eh.ReportError(data.Text, ass.ParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}"));
-            else if (!ass.Target.GetFlag(ExprFlags.IsLValue))
-                yield return new LambdaError(eh => eh.ReportError(data.Text, ass.ParseTreeNode.Target, $"Left side of assignment has to be a lvalue"));
+            else
+            {
+                ass.Value.Type = type;
+                if (!ass.Target.GetFlag(ExprFlags.IsLValue))
+                    yield return new LambdaError(eh => eh.ReportError(data.Text, ass.ParseTreeNode.Target, $"Left side of assignment has to be a lvalue"));
+            }
 
             yield break;
         }
@@ -978,7 +982,8 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (arr.Indexer.Type is IntType i)
             {
-
+                if (i == IntType.LiteralType)
+                    arr.Indexer.Type = IntType.DefaultType;
             }
             else
             {
@@ -1113,6 +1118,11 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 var op = ops[0];
                 bin.Type = op.ResultType;
+            }
+
+            if (bin.Operator == "and" || bin.Operator == "or")
+            {
+                data.Function.LocalVariables.Add(bin);
             }
 
             yield break;
