@@ -64,13 +64,15 @@ namespace Cheez.Compiler.CodeGeneration
             // verify module
             {
                 LLVM.VerifyModule(module, LLVMVerifierFailureAction.LLVMPrintMessageAction, out string llvmErrors);
-                System.Console.Error.WriteLine(llvmErrors);
+                if (!string.IsNullOrWhiteSpace(llvmErrors))
+                    Console.Error.WriteLine($"[LLVM-validate-module] {llvmErrors}");
             }
 
             // generate file
             {
                 LLVM.PrintModuleToFile(module, $"{targetFile}.ll", out string llvmErrors);
-                System.Console.Error.WriteLine(llvmErrors);
+                if (!string.IsNullOrWhiteSpace(llvmErrors))
+                    Console.Error.WriteLine($"[LLVM-validate-print] {llvmErrors}");
             }
 
             // run code
@@ -158,6 +160,8 @@ namespace Cheez.Compiler.CodeGeneration
             link.WaitForExit();
             if (link.ExitCode != 0)
                 return false;
+
+            Console.WriteLine($"Generated {filename}.exe");
 
             return true;
         }

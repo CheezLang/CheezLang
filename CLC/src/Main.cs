@@ -32,10 +32,20 @@ namespace CheezCLI
             Console.OutputEncoding = Encoding.UTF8;
 
             var argsParser = Parser.Default;
-            return argsParser.ParseArguments<CompilerOptions>(args)
+
+
+            var stopwatch = Stopwatch.StartNew();
+            var exitCode = argsParser.ParseArguments<CompilerOptions>(args)
                 .MapResult(
                     options => Run(options),
                     _ => 1);
+
+
+            var ourCompileTime = stopwatch.Elapsed;
+
+            Console.WriteLine($"Compilation finished in {ourCompileTime}");
+
+            return exitCode;
         }
 
         static int Run(CompilerOptions options)
@@ -45,7 +55,6 @@ namespace CheezCLI
 
             Console.WriteLine(Parser.Default.FormatCommandLine(options));
 
-            var stopwatch = Stopwatch.StartNew();
 
             var errorHandler = new ConsoleErrorHandler();
 
@@ -60,26 +69,15 @@ namespace CheezCLI
             if (!errorHandler.HasErrors)
                 compiler.DefaultWorkspace.CompileAll();
 
-            var ourCompileTime = stopwatch.Elapsed;
-            Console.WriteLine($"Compilation finished in {ourCompileTime}");
-
             if (errorHandler.HasErrors)
                 return 3;
 
 
             // generate code
-            Console.WriteLine();
+            bool codeGenOk = GenerateAndCompileCode(options, compiler.DefaultWorkspace);
 
-            stopwatch.Restart();
-
-            bool clangOk = GenerateAndCompileCode(options, compiler.DefaultWorkspace);
-
-            var clangTime = stopwatch.Elapsed;
-            Console.WriteLine($"Clang compile time: {clangTime}");
-
-            if (options.RunCode && clangOk)
+            if (options.RunCode && codeGenOk)
             {
-                Console.WriteLine();
                 Console.WriteLine($"Running code:");
                 Console.WriteLine("=======================================");
                 var testProc = Util.StartProcess(
@@ -98,7 +96,7 @@ namespace CheezCLI
 
         private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace)
         {
-            if (!Directory.Exists(options.OutPath))
+            if (!string.IsNullOrWhiteSpace(options.OutPath) && !Directory.Exists(options.OutPath))
                 Directory.CreateDirectory(options.OutPath);
             string filePath = Path.Combine(options.OutPath, options.OutName);
 
