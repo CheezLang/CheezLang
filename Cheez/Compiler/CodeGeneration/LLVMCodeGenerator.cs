@@ -38,10 +38,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         private Dictionary<AstFunctionDecl, LLVMValueRef> functionMap = new Dictionary<AstFunctionDecl, LLVMValueRef>();
         private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
-
-        private LLVMValueRef llvmPrintln;
-        private LLVMValueRef llvmPrint;
-
+        
         public bool GenerateCode(Workspace workspace, string targetFile)
         {
             this.targetFile = targetFile;
@@ -61,15 +58,6 @@ namespace Cheez.Compiler.CodeGeneration
             GenerateGlobalVariables();
 
             // generate functions
-            {
-                var ltype = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { LLVM.PointerType(LLVM.Int8Type(), 0) }, false);
-                llvmPrintln = LLVM.AddFunction(module, "Println", ltype);
-                LLVM.VerifyFunction(llvmPrintln, LLVMVerifierFailureAction.LLVMPrintMessageAction);
-
-                ltype = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { LLVM.PointerType(LLVM.Int8Type(), 0) }, false);
-                llvmPrint = LLVM.AddFunction(module, "PrintString", ltype);
-                LLVM.VerifyFunction(llvmPrint, LLVMVerifierFailureAction.LLVMPrintMessageAction);
-            }
             GenerateFunctions();
             GenerateMainFunction();
 
@@ -133,13 +121,34 @@ namespace Cheez.Compiler.CodeGeneration
                 new List<string>
                 {
                     $"/out:{filename}.exe",
-                    "-libpath:C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.12.25827\\lib\\x86",
-                    "-libpath:C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.16299.0\\ucrt\\x86",
-                    "-libpath:C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.16299.0\\um\\x86",
+                    @"-libpath:C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.12.25827\lib\x86",
+                    @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.16299.0\ucrt\x86",
+                    @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.16299.0\um\x86",
+                    @"-libpath:D:\llvm\build\Debug\lib",
                     "/entry:main",
                     "/machine:X86",
                     "/subsystem:console",
+
+                    //"libucrtd.lib",
+                    //"msvcrtd.lib", //
+                    //"libcmtd.lib",
+                    //"libvcruntimed.lib",
+
                     "kernel32.lib",
+                    "user32.lib",
+                    "gdi32.lib",
+                    "winspool.lib",
+                    "comdlg32.lib",
+                    "advapi32.lib",
+                    "shell32.lib",
+                    "ole32.lib",
+                    "oleaut32.lib",
+                    "uuid.lib",
+                    "odbc32.lib",
+                    "odbccp32.lib",
+
+                    "libclang.lib",
+
                     $"{filename}.obj"
                 },
                 dir,
@@ -242,6 +251,20 @@ namespace Cheez.Compiler.CodeGeneration
                 default: return default;
             }
         }
+        
+        private void PrintFunctionsInModule()
+        {
+            var f = LLVM.GetFirstFunction(module);
+
+            Console.WriteLine($"Functions in module {module}");
+            Console.WriteLine("==================");
+            while (f.Pointer.ToInt64() != 0)
+            {
+                Console.WriteLine(f.ToString());
+                f = f.GetNextFunction();
+            }
+            Console.WriteLine("==================");
+        }
 
         //[DebuggerStepThrough]
         private void GenerateFunctions()
@@ -251,6 +274,7 @@ namespace Cheez.Compiler.CodeGeneration
             {
                 var ltype = CheezTypeToLLVMType(function.Type);
                 var lfunc = LLVM.AddFunction(module, function.Name, ltype);
+
 
                 var ccDir = function.GetDirective("stdcall");
                 if (ccDir != null)
@@ -321,7 +345,14 @@ namespace Cheez.Compiler.CodeGeneration
             {
                 var type = CheezTypeToLLVMType(variable.Type);
                 var val = LLVM.AddGlobal(module, type, variable.Name);
-                LLVM.SetLinkage(val, LLVMLinkage.LLVMInternalLinkage); // @TODO
+                LLVM.SetLinkage(val, LLVMLinkage.LLVMInternalLinkage);
+
+                var dExtern = variable.GetDirective("extern");
+                if (dExtern != null)
+                {
+                    LLVM.SetLinkage(val, LLVMLinkage.LLVMExternalLinkage);
+                }
+
                 LLVM.SetInitializer(val, GetDefaultLLVMValue(variable.Type));
                 valueMap[variable] = val;
                 return val;
@@ -777,14 +808,14 @@ namespace Cheez.Compiler.CodeGeneration
             var val = print.Expressions.First().Accept(this, data);
             var casted = LLVM.BuildPointerCast(data.Builder, val, LLVM.PointerType(LLVM.Int8Type(), 0), "");
 
-            if (print.NewLine)
-            {
-                LLVM.BuildCall(data.Builder, llvmPrintln, new LLVMValueRef[] { casted }, "");
-            }
-            else
-            {
-                LLVM.BuildCall(data.Builder, llvmPrint, new LLVMValueRef[] { casted }, "");
-            }
+            //if (print.NewLine)
+            //{
+            //    LLVM.BuildCall(data.Builder, llvmPrintln, new LLVMValueRef[] { casted }, "");
+            //}
+            //else
+            //{
+            //    LLVM.BuildCall(data.Builder, llvmPrint, new LLVMValueRef[] { casted }, "");
+            //}
             return val;
         }
     }

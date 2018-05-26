@@ -30,11 +30,11 @@ namespace CheezLanguageServer
 
         private void Send(MessageType type, string message)
         {            
-            this._proxy?.Window.LogMessage(new LogMessageParams
-            {
-                type = type,
-                message = message
-            });
+            //this._proxy?.Window.LogMessage(new LogMessageParams
+            //{
+            //    type = type,
+            //    message = message
+            //});
         }
     }
 }

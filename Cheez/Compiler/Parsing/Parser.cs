@@ -513,6 +513,13 @@ namespace Cheez.Compiler.Parsing
         private PTVariableDecl ParseVariableDeclaration(params TokenType[] delimiters)
         {
             var beginning = Expect(TokenType.KwVar, skipNewLines: true).location;
+            List<PTDirective> directives = new List<PTDirective>();
+
+            while (PeekToken(true).type == TokenType.HashTag)
+            {
+                directives.Add(ParseDirective(true));
+            }
+
             var name = ParseIdentifierExpr(true, t => $"Expected identifier after 'let' in variable declaration", t => beginning) as PTIdentifierExpr;
             if (name == null)
             {
@@ -588,7 +595,7 @@ namespace Cheez.Compiler.Parsing
                     break;
             }
 
-            return new PTVariableDecl(beginning, end, name, type, init);
+            return new PTVariableDecl(beginning, end, name, type, init, directives);
         }
 
         private PTWhileStmt ParseWhileStatement()

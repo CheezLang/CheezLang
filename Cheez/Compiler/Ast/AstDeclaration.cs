@@ -163,7 +163,7 @@ namespace Cheez.Compiler.Ast
         public AstExpression Initializer { get; set; }
         public Scope SubScope { get; set; }
 
-        public AstVariableDecl(ParseTree.PTVariableDecl node, string name, AstExpression init) : base()
+        public AstVariableDecl(ParseTree.PTVariableDecl node, string name, AstExpression init, Dictionary<string, AstDirective> directives = null) : base(directives)
         {
             ParseTreeNode = node;
             this.Name = name;

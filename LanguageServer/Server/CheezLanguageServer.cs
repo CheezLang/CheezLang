@@ -170,19 +170,19 @@ namespace CheezLanguageServer
         protected override void DidOpenTextDocument(DidOpenTextDocumentParams @params)
         {
             _documents.Add(@params.textDocument);
-            Logger.Instance.Log($"{@params.textDocument.uri} opened.");
+            //Logger.Instance.Log($"{@params.textDocument.uri} opened.");
         }
 
         protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params)
         {
             _documents.Change(@params.textDocument.uri, @params.textDocument.version, @params.contentChanges);
-            Logger.Instance.Log($"{@params.textDocument.uri} changed.");
+            //Logger.Instance.Log($"{@params.textDocument.uri} changed.");
         }
 
         protected override void DidCloseTextDocument(DidCloseTextDocumentParams @params)
         {
             _documents.Remove(@params.textDocument.uri);
-            Logger.Instance.Log($"{@params.textDocument.uri} closed.");
+            //Logger.Instance.Log($"{@params.textDocument.uri} closed.");
         }
 
         protected override void DidChangeConfiguration(DidChangeConfigurationParams @params)

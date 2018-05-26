@@ -1,38 +1,9 @@
-//#load("compiler/main.che")
+#load("io.che")
 
-fn GetStdHandle(h: int) -> int #stdcall;
-fn WriteFile(handle: int, str: string, length: int, bw: int*, res: int) #stdcall;
-
-let stdOutHandle2: int = GetStdHandle(-11)
 let testString: string = "Hello World!"
 
-fn strlen(s: string) -> int {
-    let s = <u8[]>s
-    let len: int = 0
-    while s[len] != 0 {
-        len = len + 1
-    }
-    return len
-}
-
-fn printf(s: string) {
-    let len = strlen(s)
-    let bytesWritten: int
-    WriteFile(stdOutHandle2, s, len, &bytesWritten, 0)
-}
-
 fn Main() {
-    let i: int = 1
-    while i != 16 {
-        if i % 5 == 0 and i % 3 == 0 {
-            printf("FizzBuzz`n")
-        } else if i % 3 == 0 {
-            printf("Fizz`n")
-        } else if i % 5 == 0 {
-            printf("Buzz`n")
-        } else {
-            printf("number`n")
-        }
-        i = i + 1
-    }
+    Println("test")
+    Println(testString)
+    PrintInt(5)
 }
