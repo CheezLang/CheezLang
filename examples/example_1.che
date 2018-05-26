@@ -6,4 +6,6 @@ fn Main() {
     PrintlnInt(123456)
     PrintlnInt(123456789)
     PrintlnInt(-123)
+    PrintlnBool(true)
+    PrintlnBool(false)
 }

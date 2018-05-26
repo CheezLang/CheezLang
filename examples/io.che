@@ -1,0 +1,96 @@
+#load("string.che")
+
+fn GetStdHandle(h: int) -> int #stdcall;
+fn WriteFile(handle: int, str: string, length: int, bw: int*, res: int) #stdcall;
+fn ReadFile(hFile: int, lpBuffer: ubyte*, nNumberOfBytesToRead: int, lpNumberOfBytesRead: int*, lpOverlapped: ubyte*) #stdcall;
+fn malloc(size: int) -> void*;
+fn free(mem: void*);
+
+// void * __enclave_config;
+// need it because without it the program wont link
+let #extern __enclave_config: ubyte*
+
+let __std_in_handle: int = GetStdHandle(-10)
+let __std_out_handle: int = GetStdHandle(-11)
+let __std_err_handle: int = GetStdHandle(-12)
+
+fn PrintString(s: string) {
+    let len = strlen(s)
+    let bytesWritten: int
+    WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
+}
+
+fn Println(s: string) {
+    let len = strlen(s)
+    let bytesWritten: int
+    WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
+    WriteFile(__std_out_handle, "`n", 1, &bytesWritten, 0)
+}
+
+fn PrintChar(c: byte) { 
+    let bytesWritten: int
+    WriteFile(__std_out_handle, <string>&c, 1, &bytesWritten, 0)
+}
+
+fn clearmem(mem: byte*, len: int) {
+    let i: int = 0
+    while (i < len) {
+        mem[i] = 0
+        i = i + 1
+    }
+}
+
+fn PrintDigit(d: int) {
+    PrintChar(<byte>d + 48)
+}
+
+fn PrintlnBool(b: bool) {
+    if (b) {
+        Println("true")
+    }
+    else {
+        Println("false")
+    }
+}
+
+fn PrintInt(num: int) {
+    if (num == 0)
+    {
+        PrintDigit(0)
+    }
+    else
+    {
+        let bufferSize: int = 30
+        let buff = <byte*>malloc(bufferSize)
+        clearmem(buff, bufferSize)
+
+        let neg = false
+        if num < 0 {
+            neg = true
+            num = -num
+        }
+
+        let i: int = bufferSize - 2
+        while i > 0 and num != 0 {
+            let lastDigit = num % 10
+            num = num / 10
+            buff[i] = <byte>lastDigit + 48
+            i = i - 1
+        }
+
+        if (neg) {
+            buff[i] = 45
+            i = i - 1
+        }
+
+        let str = <string>(<int>buff + i + 1)
+        PrintString(str)
+
+        free(<void*>buff)
+    }
+}
+
+fn PrintlnInt(num: int) {
+    PrintInt(num)
+    PrintChar(10)
+}
