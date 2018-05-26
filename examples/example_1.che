@@ -3,7 +3,9 @@
 let testString: string = "Hello World!"
 
 fn Main() {
+    let m = malloc(4)
     Println("test")
     Println(testString)
     PrintInt(5)
+    Println("uiaeuiae=")
 }

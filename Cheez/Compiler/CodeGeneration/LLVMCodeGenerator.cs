@@ -125,14 +125,14 @@ namespace Cheez.Compiler.CodeGeneration
                     @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.16299.0\ucrt\x86",
                     @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.16299.0\um\x86",
                     @"-libpath:D:\llvm\build\Debug\lib",
-                    "/entry:main",
+                    "/entry:mainCRTStartup",
                     "/machine:X86",
                     "/subsystem:console",
 
-                    //"libucrtd.lib",
-                    //"msvcrtd.lib", //
-                    //"libcmtd.lib",
+                    "libucrtd.lib",
                     //"libvcruntimed.lib",
+                    "libcmtd.lib",
+                    //"msvcrtd.lib", //
 
                     "kernel32.lib",
                     "user32.lib",
