@@ -6,7 +6,8 @@ namespace Cheez.Compiler.Ast
 {
     public enum StmtFlags
     {
-        Returns
+        Returns,
+        GlobalScope
     }
 
     public abstract class AstStatement : IVisitorAcceptor

@@ -709,6 +709,7 @@ namespace Cheez.Compiler.Parsing
 
             List<PTStatement> statements = new List<PTStatement>();
             List<PTFunctionParam> parameters = new List<PTFunctionParam>();
+            List<PTDirective> directives = new List<PTDirective>();
             PTTypeExpr returnType = null;
             TokenLocation end = name.End;
 
@@ -751,7 +752,7 @@ namespace Cheez.Compiler.Parsing
                 return null;
 
             // return type
-            if (PeekToken(skipNewLines: false).type == TokenType.Colon)
+            if (PeekToken(skipNewLines: false).type == TokenType.Arrow)
             {
                 mLexer.NextToken();
                 returnType = ParseTypeExpression();
@@ -759,10 +760,15 @@ namespace Cheez.Compiler.Parsing
                     end = returnType.End;
             }
 
+            while (PeekToken(false).type == TokenType.HashTag)
+            {
+                directives.Add(ParseDirective(false));
+            }
+
             if (PeekToken(false).type == TokenType.Semicolon)
             {
                 mLexer.NextToken();
-                return new PTFunctionDecl(beginning, end, name, parameters, returnType);
+                return new PTFunctionDecl(beginning, end, name, parameters, returnType, directives: directives);
             }
 
             // implementation
@@ -981,6 +987,18 @@ namespace Cheez.Compiler.Parsing
                 mLexer.NextToken();
                 var sub = ParseAddressOfOrDerefExpression(location, errorMessage);
                 return new PTDereferenceExpr(next.location, sub.End, sub);
+            }
+            else if (next.type == TokenType.Minus || next.type == TokenType.Plus)
+            {
+                mLexer.NextToken();
+                var sub = ParseAddressOfOrDerefExpression(location, errorMessage);
+                string op = "";
+                switch (next.type)
+                {
+                    case TokenType.Plus: op = "+"; break;
+                    case TokenType.Minus: op = "-"; break;
+                }
+                return new PTUnaryExpr(next.location, sub.End, op, sub);
             }
 
             return ParseCallOrDotExpression(location, errorMessage);

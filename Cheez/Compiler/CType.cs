@@ -275,6 +275,11 @@ namespace Cheez.Compiler
         {
             return $"{TargetType}[]";
         }
+
+        public PointerType ToPointerType()
+        {
+            return PointerType.GetPointerType(TargetType);
+        }
     }
 
     public class StringType : CheezType

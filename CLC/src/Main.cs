@@ -100,6 +100,11 @@ namespace CheezCLI
 
             ICodeGenerator generator = new LLVMCodeGenerator();
             bool success = generator.GenerateCode(workspace, filePath);
+            if (!success)
+                return false;
+            
+            if (true)
+                return generator.CompileCode();
             return success;
         }
 

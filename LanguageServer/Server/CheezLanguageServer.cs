@@ -70,9 +70,9 @@ namespace CheezLanguageServer
                     {
                         var fileName = Path.GetFileNameWithoutExtension(filePath) + ".cpp";
                         var dir = Path.GetDirectoryName(filePath);
-                        var gen = new CppCodeGenerator();
-                        var code = gen.GenerateCode(_compiler.DefaultWorkspace);
-                        File.WriteAllText(Path.Combine(dir, fileName), code);
+                        var gen = new LLVMCodeGenerator();
+                        var code = gen.GenerateCode(_compiler.DefaultWorkspace, Path.Combine(dir, Path.GetFileNameWithoutExtension(filePath)));
+                        //File.WriteAllText(Path.Combine(dir, fileName), code);
                     }
                 }
             }

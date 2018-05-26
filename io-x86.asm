@@ -122,7 +122,7 @@ l_printChar:
 	lea eax, dword ptr [singleCharBuffer]
 	push eax
 	push dword ptr [stdOutHandle]
-	call WriteConsoleA
+	call WriteFile
 
 	mov eax, 0
 
@@ -168,7 +168,7 @@ l_printChar:
 	push dword ptr [strLength]
 	push dword ptr [strPointer]
 	push dword ptr [stdOutHandle]
-	call WriteConsoleA
+	call WriteFile
 
 	mov eax, 0
 

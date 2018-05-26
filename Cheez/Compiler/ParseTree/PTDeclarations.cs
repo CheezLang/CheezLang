@@ -70,8 +70,15 @@ namespace Cheez.Compiler.ParseTree
 
         public bool RefSelf { get; set; }
         
-        public PTFunctionDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTFunctionParam> parameters, PTTypeExpr returnType, List<PTStatement> statements = null, bool refSelf = false)
-            : base(beg, end)
+        public PTFunctionDecl(TokenLocation beg, 
+            TokenLocation end, 
+            PTIdentifierExpr name, 
+            List<PTFunctionParam> parameters, 
+            PTTypeExpr returnType, 
+            List<PTStatement> statements = null, 
+            List<PTDirective> directives = null, 
+            bool refSelf = false)
+            : base(beg, end, directives)
         {
             this.Name = name;
             this.Parameters = parameters;
@@ -91,7 +98,8 @@ namespace Cheez.Compiler.ParseTree
         {
             var p = Parameters.Select(x => new AstFunctionParameter(x)).ToList();
             var s = Statements?.Select(x => x.CreateAst()).ToList();
-            return new AstFunctionDecl(this, Name.Name, p, s, RefSelf);
+            var dirs = Directives?.Select(d => d.CreateAst()).ToDictionary(d => d.Name);
+            return new AstFunctionDecl(this, Name.Name, p, s, dirs, RefSelf);
         }
     }
 

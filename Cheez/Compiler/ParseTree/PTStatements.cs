@@ -12,11 +12,13 @@ namespace Cheez.Compiler.ParseTree
         
         public TokenLocation Beginning { get; set; }
         public TokenLocation End { get; set; }
+        public List<PTDirective> Directives { get; set; }
 
-        public PTStatement(TokenLocation beg, TokenLocation end)
+        public PTStatement(TokenLocation beg, TokenLocation end, List<PTDirective> directives = null)
         {
             this.Beginning = beg;
             this.End = end;
+            this.Directives = directives;
         }
 
         public abstract AstStatement CreateAst();

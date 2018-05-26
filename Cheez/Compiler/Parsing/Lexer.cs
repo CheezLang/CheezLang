@@ -1,6 +1,6 @@
 ﻿using Cheez.Compiler.ParseTree;
-using System;
 using System.IO;
+using System.Numerics;
 using System.Text;
 
 namespace Cheez.Compiler.Parsing
@@ -38,6 +38,8 @@ namespace Cheez.Compiler.Parsing
         GreaterEqual,
         DoubleEqual,
         NotEqual,
+
+        Arrow,
 
         OpenParen,
         ClosingParen,
@@ -124,12 +126,45 @@ namespace Cheez.Compiler.Parsing
         public int IntBase;
         public string Suffix;
         public string StringValue;
-        public object Value;
         public NumberType Type;
+        public BigInteger IntValue;
+
+        public NumberData(NumberType type, string val, string suff, int b)
+        {
+            IntBase = b;
+            StringValue = val;
+            Suffix = suff;
+            Type = type;
+            IntValue = default;
+
+            if (type == NumberType.Int)
+                IntValue = BigInteger.Parse(val);
+        }
 
         public override string ToString()
         {
             return StringValue;
+        }
+
+        public ulong ToUlong()
+        {
+            unsafe
+            {
+                long p = (long)IntValue;
+                return *(ulong*)&p;
+            }
+        }
+
+        public NumberData Negate()
+        {
+            return new NumberData
+            {
+                StringValue = "-" + StringValue,
+                IntBase = IntBase,
+                IntValue = -IntValue,
+                Suffix = Suffix,
+                Type = Type
+            };
         }
     }
 
@@ -234,6 +269,7 @@ namespace Cheez.Compiler.Parsing
                 case '<' when Next == '=': SimpleToken(ref token, TokenType.LessEqual, 2); break;
                 case '>' when Next == '=': SimpleToken(ref token, TokenType.GreaterEqual, 2); break;
                 case ':' when Next == ':': SimpleToken(ref token, TokenType.DoubleColon, 2); break;
+                case '-' when Next == '>': SimpleToken(ref token, TokenType.Arrow, 2); break;
                 case ':': SimpleToken(ref token, TokenType.Colon); break;
                 case ';': SimpleToken(ref token, TokenType.Semicolon); break;
                 case '.': SimpleToken(ref token, TokenType.Period); break;
@@ -366,12 +402,10 @@ namespace Cheez.Compiler.Parsing
         private void ParseNumberLiteral(ref Token token)
         {
             token.type = TokenType.NumberLiteral;
-            NumberData data = new NumberData();
-            data.IntBase = 10;
-            data.Suffix = "";
-            data.StringValue = "";
-            data.Value = null;
-            data.Type = NumberData.NumberType.Int;
+            var dataIntBase = 10;
+            var dataSuffix = "";
+            var dataStringValue = "";
+            var dataType = NumberData.NumberType.Int;
 
             const int StateInit = 0;
             const int State0 = 1;
@@ -396,12 +430,12 @@ namespace Cheez.Compiler.Parsing
                         {
                             if (c == '0')
                             {
-                                data.StringValue += '0';
+                                dataStringValue += '0';
                                 state = State0;
                             }
                             else if (IsDigit(c))
                             {
-                                data.StringValue += c;
+                                dataStringValue += c;
                                 state = StateDecimalDigit;
                             }
                             else
@@ -418,24 +452,24 @@ namespace Cheez.Compiler.Parsing
                         {
                             if (c == 'x')
                             {
-                                data.IntBase = 16;
-                                data.StringValue = "";
+                                dataIntBase = 16;
+                                dataStringValue = "";
                                 state = StateX;
                             }
                             else if (c == 'b')
                             {
-                                data.IntBase = 2;
-                                data.StringValue = "";
+                                dataIntBase = 2;
+                                dataStringValue = "";
                                 state = StateB;
                             }
                             else if (IsDigit(c))
                             {
-                                data.StringValue += c;
+                                dataStringValue += c;
                                 state = StateDecimalDigit;
                             }
                             else if (IsIdentBegin(c))
                             {
-                                data.Suffix += c;
+                                dataSuffix += c;
                                 state = StatePostfix;
                             }
                             else
@@ -449,7 +483,7 @@ namespace Cheez.Compiler.Parsing
                         {
                             if (IsIdent(c))
                             {
-                                data.Suffix += c;
+                                dataSuffix += c;
                             }
                             else
                             {
@@ -461,10 +495,10 @@ namespace Cheez.Compiler.Parsing
                     case StateDecimalDigit:
                         {
                             if (IsDigit(c))
-                                data.StringValue += c;
+                                dataStringValue += c;
                             else if (IsIdentBegin(c))
                             {
-                                data.Suffix += c;
+                                dataSuffix += c;
                                 state = StatePostfix;
                             }
                             else
@@ -478,7 +512,7 @@ namespace Cheez.Compiler.Parsing
                         {
                             if (IsHexDigit(c))
                             {
-                                data.StringValue += c;
+                                dataStringValue += c;
                                 state = StateHexDigit;
                             }
                             else
@@ -492,10 +526,10 @@ namespace Cheez.Compiler.Parsing
                     case StateHexDigit:
                         {
                             if (IsHexDigit(c))
-                                data.StringValue += c;
+                                dataStringValue += c;
                             else if (IsIdentBegin(c))
                             {
-                                data.Suffix += c;
+                                dataSuffix += c;
                                 state = StatePostfix;
                             }
                             else
@@ -509,7 +543,7 @@ namespace Cheez.Compiler.Parsing
                         {
                             if (IsBinaryDigit(c))
                             {
-                                data.StringValue += c;
+                                dataStringValue += c;
                                 state = StateBinaryDigit;
                             }
                             else if (IsDigit(c))
@@ -527,7 +561,7 @@ namespace Cheez.Compiler.Parsing
                     case StateBinaryDigit:
                         {
                             if (IsBinaryDigit(c))
-                                data.StringValue += c;
+                                dataStringValue += c;
                             else if (IsDigit(c))
                             {
                                 error = "Invalid character, expected binary digit";
@@ -535,7 +569,7 @@ namespace Cheez.Compiler.Parsing
                             }
                             else if (IsIdentBegin(c))
                             {
-                                data.Suffix += c;
+                                dataSuffix += c;
                                 state = StatePostfix;
                             }
                             else
@@ -561,7 +595,7 @@ namespace Cheez.Compiler.Parsing
 
 
 
-            token.data = data;
+            token.data = new NumberData(dataType, dataStringValue, dataSuffix, dataIntBase);
         }
 
         private bool IsBinaryDigit(char c)

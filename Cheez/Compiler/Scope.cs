@@ -49,6 +49,7 @@ namespace Cheez.Compiler
 
         private Dictionary<string, ISymbol> mSymbolTable = new Dictionary<string, ISymbol>();
         private Dictionary<string, List<IOperator>> mOperatorTable = new Dictionary<string, List<IOperator>>();
+        private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
         private Dictionary<CheezType, List<AstFunctionDecl>> mImplTable = new Dictionary<CheezType, List<AstFunctionDecl>>();
 
         public Scope(string name, Scope parent = null)
@@ -113,6 +114,52 @@ namespace Cheez.Compiler
             Parent?.GetOperator(name, lhs, rhs, result, ref level);
         }
 
+        public List<IUnaryOperator> GetOperators(string name, CheezType sub)
+        {
+            var result = new List<IUnaryOperator>();
+            int level = 0;
+            GetOperator(name, sub, result, ref level);
+            return result;
+        }
+
+        private void GetOperator(string name, CheezType sub, List<IUnaryOperator> result, ref int level)
+        {
+            if (!mOperatorTable.ContainsKey(name))
+            {
+                Parent?.GetOperator(name, sub, result, ref level);
+                return;
+            }
+
+            var ops = mUnaryOperatorTable[name];
+
+            foreach (var op in ops)
+            {
+                if (CheckType(op.SubExprType, sub))
+                {
+                    if (level < 2)
+                        result.Clear();
+                    result.Add(op);
+                    level = 2;
+                }
+                //else if (level < 2 && CheckType(op.LhsType, lhs))
+                //{
+                //    if (level < 1)
+                //        result.Clear();
+                //    result.Add(op);
+                //    level = 1;
+                //}
+                //else if (level < 2 && CheckType(op.RhsType, rhs))
+                //{
+                //    if (level < 1)
+                //        result.Clear();
+                //    result.Add(op);
+                //    level = 1;
+                //}
+            }
+
+            Parent?.GetOperator(name, sub, result, ref level);
+        }
+
         internal void DefineBuiltInOperators()
         {
             CheezType[] intTypes = new CheezType[]
@@ -141,6 +188,9 @@ namespace Cheez.Compiler
 
             DefineLogicOperators(new CheezType[] { BoolType.Instance }, "and", "or");
 
+            //
+            DefineArithmeticUnaryOperators(intTypes, "-", "+");
+            DefineArithmeticUnaryOperators(floatTypes, "-", "+");
         }
 
         private void DefineLogicOperators(CheezType[] types, params string[] ops)
@@ -179,6 +229,26 @@ namespace Cheez.Compiler
                 foreach (var t in types)
                 {
                     list.Add(new BuiltInOperator(name, t, t, t));
+                }
+            }
+        }
+
+        private void DefineArithmeticUnaryOperators(CheezType[] types, params string[] ops)
+        {
+            foreach (var name in ops)
+            {
+                List<IUnaryOperator> list = null;
+                if (mUnaryOperatorTable.ContainsKey(name))
+                    list = mUnaryOperatorTable[name];
+                else
+                {
+                    list = new List<IUnaryOperator>();
+                    mUnaryOperatorTable[name] = list;
+                }
+
+                foreach (var t in types)
+                {
+                    list.Add(new BuiltInUnaryOperator(name, t, t));
                 }
             }
         }

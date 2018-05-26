@@ -155,6 +155,23 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
+    public class PTUnaryExpr : PTExpr
+    {
+        public string Operator { get; set; }
+        public PTExpr SubExpr { get; set; }
+
+        public PTUnaryExpr(TokenLocation beg, TokenLocation end, string op, PTExpr lhs) : base(beg, end)
+        {
+            Operator = op;
+            SubExpr = lhs;
+        }
+
+        public override AstExpression CreateAst()
+        {
+            return new AstUnaryExpr(this, Operator, SubExpr.CreateAst());
+        }
+    }
+
     public class PTIdentifierExpr : PTExpr
     {
         public string Name { get; set; }

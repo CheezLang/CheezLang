@@ -209,6 +209,39 @@ namespace Cheez.Compiler.Ast
         }
     }
 
+    public class AstUnaryExpr : AstExpression
+    {
+        //public ParseTree.PTBinaryExpr ParseTreeNode => GenericParseTreeNode as ParseTree.PTBinaryExpr;
+        public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
+
+        public string Operator { get; set; }
+        public AstExpression SubExpr { get; set; }
+
+        [DebuggerStepThrough]
+        public AstUnaryExpr(ParseTree.PTExpr node, string op, AstExpression sub) : base()
+        {
+            GenericParseTreeNode = node;
+            Operator = op;
+            SubExpr = sub;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitUnaryExpression(this, data);
+        }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstUnaryExpr(GenericParseTreeNode, Operator, SubExpr.Clone())
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
+    }
+
     public class AstBoolExpr : AstExpression
     {
         //public ParseTree.PTBoolExpr ParseTreeNode => GenericParseTreeNode as ParseTree.PTBoolExpr;

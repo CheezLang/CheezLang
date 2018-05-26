@@ -642,58 +642,118 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitVariableDeclaration(AstVariableDecl variable, SemanticerData data = null)
         {
-            var scope = data.Scope;
-            scope.VariableDeclarations.Add(variable);
-            variable.Scope = scope;
-            variable.SubScope = NewScope($"var {variable.Name}", scope);
-
-            if (variable.ParseTreeNode.Type != null)
+            if (data.Function != null)
             {
-                yield return new WaitForType(data.Text, scope, variable.ParseTreeNode.Type);
-                variable.Type = scope.GetCheezType(variable.ParseTreeNode.Type);
-            }
+                data.Function.LocalVariables.Add(variable);
+                var scope = data.Scope;
+                scope.VariableDeclarations.Add(variable);
+                variable.Scope = scope;
+                variable.SubScope = NewScope($"var {variable.Name}", scope);
 
-            if (variable.Initializer != null)
-            {
-                foreach (var v in variable.Initializer.Accept(this, data.Clone()))
-                    if (v is ReplaceAstExpr r)
-                        variable.Initializer = r.NewExpression;
+                if (variable.ParseTreeNode.Type != null)
+                {
+                    yield return new WaitForType(data.Text, scope, variable.ParseTreeNode.Type);
+                    variable.Type = scope.GetCheezType(variable.ParseTreeNode.Type);
+                }
+
+                if (variable.Initializer != null)
+                {
+                    foreach (var v in variable.Initializer.Accept(this, data.Clone()))
+                        if (v is ReplaceAstExpr r)
+                            variable.Initializer = r.NewExpression;
+                        else
+                            yield return v;
+
+                    if (variable.Type == null)
+                    {
+                        if (variable.Initializer.Type == IntType.LiteralType)
+                        {
+                            variable.Initializer.Type = IntType.DefaultType;
+                        }
+                        variable.Type = variable.Initializer.Type;
+                    }
                     else
-                        yield return v;
+                    {
+                        if (variable.Initializer.Type == IntType.LiteralType && (variable.Type is IntType || variable.Type is FloatType))
+                        {
+                            variable.Initializer.Type = variable.Type;
+                        }
+                        else if (variable.Initializer.Type == FloatType.LiteralType && variable.Type is FloatType)
+                        {
+                            variable.Initializer.Type = variable.Type;
+                        }
+                        else if (variable.Initializer.Type != variable.Type)
+                        {
+                            yield return new LambdaError(eh => eh.ReportError(data.Text, variable.ParseTreeNode.Initializer, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'"));
+                        }
+                    }
+                }
 
-                if (variable.Type == null)
+                if (!variable.SubScope.DefineSymbol(variable))
                 {
-                    if (variable.Initializer.Type == IntType.LiteralType)
-                    {
-                        variable.Initializer.Type = IntType.DefaultType;
-                    }
-                    variable.Type = variable.Initializer.Type;
+                    // @Note: This should probably never happen, except for global variables, which are not implemented yet
+                    yield return new LambdaError(eh => eh.ReportError(data.Text, variable.ParseTreeNode.Name, $"A variable with name '{variable.Name}' already exists in current scope"));
                 }
-                else
-                {
-                    if (variable.Initializer.Type == IntType.LiteralType && (variable.Type is IntType || variable.Type is FloatType))
-                    {
-                        variable.Initializer.Type = variable.Type;
-                    }
-                    else if (variable.Initializer.Type == FloatType.LiteralType && variable.Type is FloatType)
-                    {
-                        variable.Initializer.Type = variable.Type;
-                    }
-                    else if (variable.Initializer.Type != variable.Type)
-                    {
-                        yield return new LambdaError(eh => eh.ReportError(data.Text, variable.ParseTreeNode.Initializer, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'"));
-                    }
-                }
+
+                data.Scope = variable.SubScope;
+                yield break;
             }
-
-            if (!scope.DefineSymbol(variable))
+            else
             {
-                // @Note: This should probably never happen, except for global variables, which are not implemented yet
-                yield return new LambdaError(eh => eh.ReportError(data.Text, variable.ParseTreeNode.Name, $"A variable with name '{variable.Name}' already exists in current scope"));
-            }
+                variable.SetFlag(StmtFlags.GlobalScope);
+                var scope = data.Scope;
+                scope.VariableDeclarations.Add(variable);
+                variable.Scope = scope;
+                variable.SubScope = scope;
 
-            data.Scope = variable.SubScope;
-            yield break;
+                if (variable.ParseTreeNode.Type != null)
+                {
+                    yield return new WaitForType(data.Text, scope, variable.ParseTreeNode.Type);
+                    variable.Type = scope.GetCheezType(variable.ParseTreeNode.Type);
+                }
+
+                if (variable.Initializer != null)
+                {
+                    foreach (var v in variable.Initializer.Accept(this, data.Clone()))
+                        if (v is ReplaceAstExpr r)
+                            variable.Initializer = r.NewExpression;
+                        else
+                            yield return v;
+
+                    if (variable.Type == null)
+                    {
+                        if (variable.Initializer.Type == IntType.LiteralType)
+                        {
+                            variable.Initializer.Type = IntType.DefaultType;
+                        }
+                        variable.Type = variable.Initializer.Type;
+                    }
+                    else
+                    {
+                        if (variable.Initializer.Type == IntType.LiteralType && (variable.Type is IntType || variable.Type is FloatType))
+                        {
+                            variable.Initializer.Type = variable.Type;
+                        }
+                        else if (variable.Initializer.Type == FloatType.LiteralType && variable.Type is FloatType)
+                        {
+                            variable.Initializer.Type = variable.Type;
+                        }
+                        else if (variable.Initializer.Type != variable.Type)
+                        {
+                            yield return new LambdaError(eh => eh.ReportError(data.Text, variable.ParseTreeNode.Initializer, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'"));
+                        }
+                    }
+                }
+
+                if (!scope.DefineSymbol(variable))
+                {
+                    // @Note: This should probably never happen, except for global variables, which are not implemented yet
+                    yield return new LambdaError(eh => eh.ReportError(data.Text, variable.ParseTreeNode.Name, $"A variable with name '{variable.Name}' already exists in current scope"));
+                }
+
+                data.Scope = variable.SubScope;
+                yield break;
+            }
         }
 
         public override IEnumerable<object> VisitAssignment(AstAssignment ass, SemanticerData data = null)
@@ -927,6 +987,68 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             arr.SetFlag(ExprFlags.IsLValue);
+        }
+
+        public override IEnumerable<object> VisitUnaryExpression(AstUnaryExpr bin, SemanticerData data = null)
+        {
+            var scope = data.Scope;
+            bin.Scope = scope;
+
+            foreach (var v in bin.SubExpr.Accept(this, data))
+                if (v is ReplaceAstExpr r)
+                    bin.SubExpr = r.NewExpression;
+                else
+                    yield return v;
+
+            if (bin.SubExpr is AstNumberExpr n)
+            {
+                if (n.Data.Type == NumberData.NumberType.Int)
+                {
+                    switch (bin.Operator)
+                    {
+                        case "-":
+                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(bin.GenericParseTreeNode, n.Data.Negate()), data))
+                                yield return vv;
+                            yield break;
+
+                        default:
+                            throw new NotImplementedException("Compile time evaluation of int literals in unary operator other than '-'");
+                    }
+                }
+                else
+                {
+                    throw new NotImplementedException("Compile time evaluation of float literals in unary operator");
+                }
+            }
+
+            bool subIsLit = IsNumberLiteralType(bin.SubExpr.Type);
+            if (subIsLit)
+            {
+                if (bin.SubExpr.Type == IntType.LiteralType)
+                {
+                    bin.SubExpr.Type = IntType.DefaultType;
+                }
+                else
+                    bin.SubExpr.Type = FloatType.DefaultType;
+            }
+
+            var ops = scope.GetOperators(bin.Operator, bin.SubExpr.Type);
+
+            if (ops.Count > 1)
+            {
+                yield return new LambdaError(eh => eh.ReportError(data.Text, bin.GenericParseTreeNode, $"Multiple operators match the type '{bin.SubExpr.Type}"));
+            }
+            else if (ops.Count == 0)
+            {
+                yield return new LambdaError(eh => eh.ReportError(data.Text, bin.GenericParseTreeNode, $"No operator matches the type '{bin.SubExpr.Type}'"));
+            }
+            else
+            {
+                var op = ops[0];
+                bin.Type = op.ResultType;
+            }
+
+            yield break;
         }
 
         public override IEnumerable<object> VisitBinaryExpression(AstBinaryExpr bin, SemanticerData data = null)

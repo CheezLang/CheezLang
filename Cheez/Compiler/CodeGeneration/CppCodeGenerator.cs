@@ -17,6 +17,8 @@ namespace Cheez.Compiler.CodeGeneration
 
     public class CppCodeGenerator : VisitorBase<string, CppCodeGeneratorArgs>, ICodeGenerator
     {
+        private string targetFile;
+
         private StringBuilder mFunctionForwardDeclarations = new StringBuilder();
         private StringBuilder mTypeDeclarations = new StringBuilder();
         private CheezType mImplTarget = null;
@@ -35,8 +37,13 @@ namespace Cheez.Compiler.CodeGeneration
 
         public bool GenerateCode(Workspace ws, string targetFile)
         {
+            this.targetFile = targetFile;
             File.WriteAllText(targetFile + ".cpp", GenerateCode(ws));
+            return true;
+        }
 
+        public bool CompileCode()
+        {
             // run clang
             var clang = Util.StartProcess(@"D:\Program Files\LLVM\bin\clang++.exe", $"-O0 -o {targetFile}.exe {targetFile}.cpp", Path.GetDirectoryName(targetFile), stderr: Process_ErrorDataReceived);
             clang.WaitForExit();
