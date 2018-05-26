@@ -106,17 +106,60 @@ namespace Cheez.Compiler.CodeGeneration
 
         public bool CompileCode()
         {
-            // compile to exe
             var filename = Path.GetFileNameWithoutExtension(targetFile + ".ll");
             var dir = Path.GetDirectoryName(Path.GetFullPath(targetFile));
-            var build = Util.StartProcess(
-                @"cmd.exe",
-                $"/c ..\\build.bat {filename}",
+            // compile .ll to .obj
+            var llc = Util.StartProcess(
+                "llc.exe",
+                new List<string>()
+                {
+                    "-O0",
+                    "-filetype=obj",
+                    "-o",
+                    $"{filename}.obj",
+                    $"{filename}.ll"
+                },
                 dir,
-                (l, a) => Console.WriteLine($"{a.Data}"),
-                (l, a) => Console.WriteLine($"[BUILD] {a.Data}"));
-            build.WaitForExit();
-            return build.ExitCode == 0;
+                CreateHandler("llc.exe", Console.Out),
+                CreateHandler("llc.exe - ERROR", Console.Error)
+                );
+            llc.WaitForExit();
+            if (llc.ExitCode != 0)
+                return false;
+
+            // link .obj to .exe
+            var link = Util.StartProcess(
+                @"lld-link.exe",
+                new List<string>
+                {
+                    $"/out:{filename}.exe",
+                    "-libpath:C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.12.25827\\lib\\x86",
+                    "-libpath:C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.16299.0\\ucrt\\x86",
+                    "-libpath:C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.16299.0\\um\\x86",
+                    "/entry:main",
+                    "/machine:X86",
+                    "/subsystem:console",
+                    "kernel32.lib",
+                    $"{filename}.obj"
+                },
+                dir,
+                CreateHandler("link.exe", Console.Out),
+                CreateHandler("link.exe - ERROR", Console.Error)
+                );
+            link.WaitForExit();
+            if (link.ExitCode != 0)
+                return false;
+
+            return true;
+        }
+
+        private DataReceivedEventHandler CreateHandler(string name, TextWriter writer)
+        {
+            return (l, a) =>
+            {
+                if (!string.IsNullOrWhiteSpace(a.Data))
+                    writer.WriteLine($"[{name}] {a.Data}");
+            };
         }
 
         private void GenerateGlobalVariables()
@@ -441,13 +484,13 @@ namespace Cheez.Compiler.CodeGeneration
             // connect basic blocks
             LLVM.PositionBuilderAtEnd(data.Builder, bbPrev);
             LLVM.BuildCondBr(data.Builder, cond, bbIfBody, bbElseBody);
-            
+
             LLVM.PositionBuilderAtEnd(data.Builder, bbIfBodyEnd);
             LLVM.BuildBr(data.Builder, bbEnd);
-            
+
             LLVM.PositionBuilderAtEnd(data.Builder, bbElseBodyEnd);
             LLVM.BuildBr(data.Builder, bbEnd);
-            
+
             LLVM.PositionBuilderAtEnd(data.Builder, bbEnd);
             data.BasicBlock = bbEnd;
 
@@ -698,7 +741,7 @@ namespace Cheez.Compiler.CodeGeneration
                                 LLVM.PositionBuilderAtEnd(data.Builder, bbSecond);
                                 var right = bin.Right.Accept(this, data);
                                 LLVM.BuildStore(data.Builder, right, tempVar);
-                                
+
                                 var bbEnd = LLVM.AppendBasicBlock(data.Function, "and_end");
                                 LLVM.BuildBr(data.Builder, bbEnd);
 

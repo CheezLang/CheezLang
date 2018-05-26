@@ -57,8 +57,18 @@ namespace Cheez.Compiler
             return new string(' ', level);
         }
 
+        public static Process StartProcess(string exe, List<string> argList = null, string workingDirectory = null, DataReceivedEventHandler stdout = null, DataReceivedEventHandler stderr = null)
+        {
+            argList = argList ?? new List<string>();
+            var args = string.Join(" ", argList.Select(a =>
+            {
+                if (a.Contains(" "))
+                    return $"\"{a}\"";
+                return a;
+            }));
+            return StartProcess(exe, args, workingDirectory, stdout, stderr);
+        }
 
-        
         public static Process StartProcess(string exe, string args = null, string workingDirectory = null, DataReceivedEventHandler stdout = null, DataReceivedEventHandler stderr = null)
         {
             var process = new Process();

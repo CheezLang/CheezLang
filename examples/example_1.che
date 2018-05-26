@@ -36,13 +36,3 @@ fn Main() {
         i = i + 1
     }
 }
-
-struct Test {
-
-}
-
-impl Test { 
-    ref fn hi() {
-        
-    }
-}
