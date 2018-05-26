@@ -38,7 +38,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         private Dictionary<AstFunctionDecl, LLVMValueRef> functionMap = new Dictionary<AstFunctionDecl, LLVMValueRef>();
         private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
-        
+
         public bool GenerateCode(Workspace workspace, string targetFile)
         {
             this.targetFile = targetFile;
@@ -187,7 +187,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         private void GenerateMainFunction()
         {
-            var ltype = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[0], false);
+            var ltype = LLVM.FunctionType(LLVM.Int32Type(), new LLVMTypeRef[0], false);
             var lfunc = LLVM.AddFunction(module, "main", ltype);
 
             LLVMBuilderRef builder = LLVM.CreateBuilder();
@@ -213,8 +213,16 @@ namespace Cheez.Compiler.CodeGeneration
             }
 
             {
-                LLVM.BuildCall(builder, cheezMain, new LLVMValueRef[0], "");
-                LLVM.BuildRetVoid(builder);
+                if (workspace.MainFunction.ReturnType == VoidType.Intance)
+                {
+                    LLVM.BuildCall(builder, cheezMain, new LLVMValueRef[0], "");
+                    LLVM.BuildRet(builder, LLVM.ConstInt(LLVM.Int32Type(), 0, false));
+                }
+                else
+                {
+                    var exitCode = LLVM.BuildCall(builder, cheezMain, new LLVMValueRef[0], "exitCode");
+                    LLVM.BuildRet(builder, exitCode);
+                }
             }
 
             LLVM.VerifyFunction(lfunc, LLVMVerifierFailureAction.LLVMPrintMessageAction);
@@ -236,6 +244,8 @@ namespace Cheez.Compiler.CodeGeneration
                     return LLVM.PointerType(LLVM.Int8Type(), 0);
 
                 case PointerType p:
+                    if (p.TargetType == VoidType.Intance)
+                        return LLVM.PointerType(LLVM.Int8Type(), 0);
                     return LLVM.PointerType(CheezTypeToLLVMType(p.TargetType), 0);
 
                 case VoidType _:
@@ -251,7 +261,7 @@ namespace Cheez.Compiler.CodeGeneration
                 default: return default;
             }
         }
-        
+
         private void PrintFunctionsInModule()
         {
             var f = LLVM.GetFirstFunction(module);
@@ -550,22 +560,52 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitCastExpression(AstCastExpr cast, LLVMCodeGeneratorData data = null)
         {
+            var sub = cast.SubExpression.Accept(this, data);
+
             if (cast.Type is PointerType)
             {
-                var sub = cast.SubExpression.Accept(this, data);
                 var type = CheezTypeToLLVMType(cast.Type);
-                return LLVM.BuildPointerCast(data.Builder, sub, type, "");
+                if (cast.SubExpression.Type is PointerType)
+                {
+                    return LLVM.BuildPointerCast(data.Builder, sub, type, "");
+                }
+                else if (cast.SubExpression.Type is IntType i)
+                {
+                    return LLVM.BuildIntToPtr(data.Builder, sub, type, "");
+                }
+            }
+            else if (cast.Type is StringType s)
+            {
+                var type = CheezTypeToLLVMType(s.ToPointerType());
+
+                if (cast.SubExpression.Type is PointerType)
+                {
+                    return LLVM.BuildPointerCast(data.Builder, sub, type, "");
+                }
+                else if (cast.SubExpression.Type is IntType)
+                {
+                    return LLVM.BuildIntToPtr(data.Builder, sub, type, "");
+                }
             }
             else if (cast.Type is ArrayType a)
             {
-                var sub = cast.SubExpression.Accept(this, data);
                 var type = CheezTypeToLLVMType(a.ToPointerType());
                 return LLVM.BuildPointerCast(data.Builder, sub, type, "");
             }
-            else
+            else if (cast.Type is IntType tt)
             {
-                throw new NotImplementedException();
+                var type = CheezTypeToLLVMType(cast.Type);
+                if (cast.SubExpression.Type is IntType st)
+                {
+                    return LLVM.BuildIntCast(data.Builder, sub, type, "");
+                }
+                else if (cast.SubExpression.Type is PointerType)
+                {
+                    return LLVM.BuildPtrToInt(data.Builder, sub, type, "");
+                }
             }
+
+            throw new NotImplementedException();
         }
 
         public override LLVMValueRef VisitIdentifierExpression(AstIdentifierExpr ident, LLVMCodeGeneratorData data = null)
@@ -619,10 +659,15 @@ namespace Cheez.Compiler.CodeGeneration
             }
         }
 
+        public override LLVMValueRef VisitBoolExpression(AstBoolExpr bo, LLVMCodeGeneratorData data = null)
+        {
+            return LLVM.ConstInt(LLVM.Int1Type(), bo.Value ? 1ul : 0ul, false);
+        }
+
         public override LLVMValueRef VisitArrayAccessExpression(AstArrayAccessExpr arr, LLVMCodeGeneratorData data = null)
         {
-            var sub = arr.SubExpression.Accept(this, data);
-            var ind = arr.Indexer.Accept(this, data);
+            var sub = arr.SubExpression.Accept(this, data.Clone(Deref: true)); // @Todo: Deref: !data.Deref / true
+            var ind = arr.Indexer.Accept(this, data.Clone(Deref: true));
 
             var dataLayout = LLVM.GetModuleDataLayout(module);
             var pointerSize = LLVM.PointerSize(dataLayout);

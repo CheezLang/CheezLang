@@ -8,6 +8,7 @@ using Cheez.Compiler.Ast;
 using Cheez.Compiler.CodeGeneration;
 using Cheez.Compiler.ParseTree;
 using LanguageServer;
+using LanguageServer.Json;
 using LanguageServer.Parameters;
 using LanguageServer.Parameters.General;
 using LanguageServer.Parameters.TextDocument;
@@ -170,19 +171,16 @@ namespace CheezLanguageServer
         protected override void DidOpenTextDocument(DidOpenTextDocumentParams @params)
         {
             _documents.Add(@params.textDocument);
-            //Logger.Instance.Log($"{@params.textDocument.uri} opened.");
         }
 
         protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params)
         {
             _documents.Change(@params.textDocument.uri, @params.textDocument.version, @params.contentChanges);
-            //Logger.Instance.Log($"{@params.textDocument.uri} changed.");
         }
 
         protected override void DidCloseTextDocument(DidCloseTextDocumentParams @params)
         {
             _documents.Remove(@params.textDocument.uri);
-            //Logger.Instance.Log($"{@params.textDocument.uri} closed.");
         }
 
         protected override void DidChangeConfiguration(DidChangeConfigurationParams @params)
@@ -197,26 +195,32 @@ namespace CheezLanguageServer
 
         protected override void DidChangeWatchedFiles(DidChangeWatchedFilesParams @params)
         {
-            Logger.Instance.Log("We received an file change event");
         }
 
         #endregion
 
         protected override Result<SymbolInformation[], ResponseError> DocumentSymbols(DocumentSymbolParams @params)
         {
-            var file = _compiler.GetFile(GetFilePath(@params.textDocument.uri));
-            if (file == null)
-                return Result<SymbolInformation[], ResponseError>.Error(new ResponseError
-                {
-                    code = ErrorCodes.InvalidRequest,
-                    message = $"No file called {@params.textDocument.uri} was found!"
-                });
+            try
+            {
+                var file = _compiler.GetFile(GetFilePath(@params.textDocument.uri));
+                if (file == null)
+                    return Result<SymbolInformation[], ResponseError>.Error(new ResponseError
+                    {
+                        code = ErrorCodes.InvalidRequest,
+                        message = $"No file called {@params.textDocument.uri} was found!"
+                    });
 
 
-            var symbolFinder = new SymbolFinder();
-            var symbols = symbolFinder.FindSymbols(_compiler.DefaultWorkspace, file);
+                var symbolFinder = new SymbolFinder();
+                var symbols = symbolFinder.FindSymbols(_compiler.DefaultWorkspace, file);
 
-            return Result<SymbolInformation[], ResponseError>.Success(symbols.ToArray());
+                return Result<SymbolInformation[], ResponseError>.Success(symbols.ToArray());
+            }
+            catch (Exception e)
+            {
+                return Result<SymbolInformation[], ResponseError>.Success(new SymbolInformation[0]);
+            }
         }
 
         protected override VoidResult<ResponseError> Shutdown()
@@ -228,30 +232,41 @@ namespace CheezLanguageServer
 
         protected override Result<Hover, ResponseError> Hover(TextDocumentPositionParams @params)
         {
-            var file = _compiler.GetFile(GetFilePath(@params.textDocument.uri));
-            if (file == null)
-                return Result<Hover, ResponseError>.Error(new ResponseError
-                {
-                    code = ErrorCodes.InvalidRequest,
-                    message = $"No file called {@params.textDocument.uri} was found!"
-                });
-
-            var nodeFinder = new NodeFinder();
-            var node = nodeFinder.FindNode(_compiler.DefaultWorkspace, file, (int)@params.position.line, (int)@params.position.character, true);
-
-            if (node == null || (node.Expr == null && node.Stmt == null && node.Type == null))
+            try
             {
+                var file = _compiler.GetFile(GetFilePath(@params.textDocument.uri));
+                if (file == null)
+                    return Result<Hover, ResponseError>.Error(new ResponseError
+                    {
+                        code = ErrorCodes.InvalidRequest,
+                        message = $"No file called {@params.textDocument.uri} was found!"
+                    });
+
+                var nodeFinder = new NodeFinder();
+                var node = nodeFinder.FindNode(_compiler.DefaultWorkspace, file, (int)@params.position.line, (int)@params.position.character, true);
+
+                if (node == null || (node.Expr == null && node.Stmt == null && node.Type == null))
+                {
+                    return Result<Hover, ResponseError>.Success(new Hover());
+                }
+
+                string content = GetHoverTextFromNode(node);
+
+                var hover = new Hover
+                {
+                    contents = new ArrayOrObject<StringOrObject<MarkedString>, StringOrObject<MarkedString>>(new StringOrObject<MarkedString>(content))
+                };
+
+                return Result<Hover, ResponseError>.Success(hover);
+            }
+            catch (Exception e)
+            {
+                var hover = new Hover
+                {
+                    contents = new ArrayOrObject<StringOrObject<MarkedString>, StringOrObject<MarkedString>>(new StringOrObject<MarkedString>(e.Message))
+                };
                 return Result<Hover, ResponseError>.Success(new Hover());
             }
-
-            string content = GetHoverTextFromNode(node);
-
-            var hover = new Hover
-            {
-                contents = new LanguageServer.Json.ArrayOrObject<LanguageServer.Json.StringOrObject<MarkedString>, LanguageServer.Json.StringOrObject<MarkedString>>(new LanguageServer.Json.StringOrObject<MarkedString>(content))
-            };
-
-            return Result<Hover, ResponseError>.Success(hover);
         }
 
         private string GetHoverTextFromNode(NodeFinderResult node)

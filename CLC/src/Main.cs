@@ -89,6 +89,8 @@ namespace CheezCLI
                     stdout: (s, e) => System.Console.WriteLine(e.Data),
                     stderr: (s, e) => System.Console.Error.WriteLine(e.Data));
                 testProc.WaitForExit();
+                Console.WriteLine("=======================================");
+                Console.WriteLine("Program exited with code " + testProc.ExitCode);
             }
 
             return 0;

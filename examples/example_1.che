@@ -1,11 +1,9 @@
 #load("io.che")
 
-let testString: string = "Hello World!"
-
 fn Main() {
-    let m = malloc(4)
-    Println("test")
-    Println(testString)
-    PrintInt(5)
-    Println("uiaeuiae=")
+    PrintlnInt(0)
+    PrintlnInt(123)
+    PrintlnInt(123456)
+    PrintlnInt(123456789)
+    PrintlnInt(-123)
 }

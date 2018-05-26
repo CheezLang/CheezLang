@@ -292,6 +292,11 @@ namespace Cheez.Compiler
         {
             return $"string";
         }
+
+        public PointerType ToPointerType()
+        {
+            return PointerType.GetPointerType(IntType.GetIntType(1, true));
+        }
     }
 
     public class StructType : CheezType
