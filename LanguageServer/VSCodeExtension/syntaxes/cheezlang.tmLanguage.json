@@ -110,7 +110,7 @@
 		{
 			"comment": "Keyword",
 			"name": "keyword.other.cheezlang",
-			"match": "\\b(let|using)\\b"
+			"match": "\\b(let|using|use)\\b"
 		},
 		{
 			"comment": "Print Keyword",
@@ -147,7 +147,7 @@
 		},
 		{
 			"comment": "Load directive",
-			"match": "(#)(loadaeeea)\\(\"([a-zA-Z]+)\"\\)",
+			"match": "(#)(load)\\(\"([a-zA-Z]+)\"\\)",
 			"captures": {
 				"1": {
 					"name": "keyword.operator.other.cheezlang"
@@ -171,13 +171,16 @@
 		},
 		{
 			"comment": "Function definition",
-			"begin": "\\b(fn)\\s+([A-Za-z][A-Za-z0-9_]*)",
+			"begin": "\\b(ref\\s+)?(fn)\\s+([A-Za-z][A-Za-z0-9_]*)",
 			"end": "[\\{;]",
 			"beginCaptures": {
 				"1": {
-					"name": "keyword.other.fn.cheezlang"
+					"name": "keyword.modifier.cheezlang"
 				},
 				"2": {
+					"name": "keyword.other.fn.cheezlang"
+				},
+				"3": {
 					"name": "entity.name.function.cheezlang"
 				}
 			},
@@ -301,7 +304,12 @@
 		"core_types": {
 			"comment": "Built-in/core type",
 			"name": "storage.type.core.cheezlang",
-			"match": "\\b(bool|char|u8|u16|u32|u64|i8|i16|i32|i64|f32|f64|string)\\b"
+			"match": "\\b(bool|char|u8|u16|u32|u64|i8|i16|i32|i64|f32|f64|string|byte|short|int|long|ubyte|ushort|uint|ulong)\\b"
+		},
+		"modifiers": {
+			"comment": "Modifiers",
+			"name": "keyword.modifier.cheezlang",
+			"match": "\\b(pub|ref)\\b"
 		},
 		"type": {
 			"comment": "A type",

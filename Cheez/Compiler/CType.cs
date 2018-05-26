@@ -22,18 +22,20 @@ namespace Cheez.Compiler
             CreateAlias("int", IntType.GetIntType(4, true));
             CreateAlias("long", IntType.GetIntType(8, true));
 
-            CreateAlias("ubyte", IntType.GetIntType(1, false));
-            CreateAlias("ushort", IntType.GetIntType(2, false));
-            CreateAlias("uint", IntType.GetIntType(4, false));
-            CreateAlias("ulong", IntType.GetIntType(8, false));
-
             CreateAlias("u8", IntType.GetIntType(1, false));
             CreateAlias("u16", IntType.GetIntType(2, false));
             CreateAlias("u32", IntType.GetIntType(4, false));
             CreateAlias("u64", IntType.GetIntType(8, false));
 
+            CreateAlias("ubyte", IntType.GetIntType(1, false));
+            CreateAlias("ushort", IntType.GetIntType(2, false));
+            CreateAlias("uint", IntType.GetIntType(4, false));
+            CreateAlias("ulong", IntType.GetIntType(8, false));
+
             CreateAlias("f32", FloatType.GetFloatType(4));
+            CreateAlias("float", FloatType.GetFloatType(4));
             CreateAlias("f64", FloatType.GetFloatType(8));
+            CreateAlias("double", FloatType.GetFloatType(8));
 
             CreateAlias("bool", BoolType.Instance);
             CreateAlias("string", StringType.Instance);

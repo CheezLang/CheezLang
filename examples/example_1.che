@@ -22,10 +22,6 @@ fn printf(s: string) {
 }
 
 fn Main() {
-    printf("Hi`n")
-    printf(testString)
-    printf("`n")
-
     let i: int = 1
     while i != 16 {
         if i % 5 == 0 and i % 3 == 0 {
@@ -38,5 +34,15 @@ fn Main() {
             printf("number`n")
         }
         i = i + 1
+    }
+}
+
+struct Test {
+
+}
+
+impl Test { 
+    ref fn hi() {
+        
     }
 }
