@@ -7,7 +7,8 @@ namespace Cheez.Compiler.Ast
     public enum StmtFlags
     {
         Returns,
-        GlobalScope
+        GlobalScope,
+        IsLastStatementInBlock
     }
 
     public abstract class AstStatement : IVisitorAcceptor
@@ -94,6 +95,11 @@ namespace Cheez.Compiler.Ast
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return visitor.VisitReturnStatement(this, data);
+        }
+
+        public override string ToString()
+        {
+            return $"return {ReturnValue}";
         }
     }
 

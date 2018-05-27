@@ -1,5 +1,6 @@
 ﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.ParseTree;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -313,6 +314,11 @@ namespace Cheez.Compiler
         public override string ToString()
         {
             return $"{Declaration.Name}";
+        }
+
+        public int GetIndexOfMember(string right)
+        {
+            return Declaration.Members.FindIndex(m => m.Name == right);
         }
     }
 

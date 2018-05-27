@@ -94,6 +94,11 @@ namespace Cheez.Compiler.Ast
                 Scope = this.Scope
             };
         }
+
+        public override string ToString()
+        {
+            return "string-lit";
+        }
     }
 
     public class AstDotExpr : AstExpression
@@ -339,6 +344,11 @@ namespace Cheez.Compiler.Ast
                 Type = this.Type,
                 Scope = this.Scope
             };
+        }
+
+        public override string ToString()
+        {
+            return $"*{SubExpression}";
         }
     }
 

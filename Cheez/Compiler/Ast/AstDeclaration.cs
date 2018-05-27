@@ -112,6 +112,8 @@ namespace Cheez.Compiler.Ast
         public string Name => ParseTreeNode.Name.Name;
         public List<AstMemberDecl> Members { get; }
 
+        public CheezType Type { get; set; }
+
         public AstTypeDecl(ParseTree.PTTypeDecl node, List<AstMemberDecl> members, Dictionary<string, AstDirective> dirs) : base(dirs)
         {
             ParseTreeNode = node;

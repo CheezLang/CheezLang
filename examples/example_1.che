@@ -1,11 +1,25 @@
 #load("io.che")
+//let #extern __enclave_config: ubyte*
+
+
 
 fn Main() {
-    PrintlnInt(0)
-    PrintlnInt(123)
-    PrintlnInt(123456)
-    PrintlnInt(123456789)
-    PrintlnInt(-123)
-    PrintlnBool(true)
-    PrintlnBool(false)
+    let a: int = 5
+    let pa = &a
+    Printlnf("  a: {i32}", <void*>a)
+    Printlnf("*pa: {i32}", <void*>*pa)
+    Printlnf(" pa: {i32}", <void*>pa)
+    Printlnf("a == 5: {b}", <void*><ulong>(a == 5))
+    Printlnf("a != 5: {b}", <void*><ulong>(a != 5))
+
+    Println("=======")
+
+    *pa = 9
+
+    Printlnf("  a: {i32}", <void*>a)
+    Printlnf("*pa: {i32}", <void*>*pa)
+    Printlnf(" pa: {i32}", <void*>pa)
+    Printlnf("a == 5: {b}", <void*><ulong>(a == 5))
+    Printlnf("a != 5: {b}", <void*><ulong>(a != 5))
+    
 }

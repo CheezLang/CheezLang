@@ -401,6 +401,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             var st = scope.GetCheezType(type.Name) as StructType;
             Debug.Assert(st != null && st.Declaration == type);
             st.Analyzed = true;
+            type.Type = st;
         }
 
         public void Using(Scope scope, StructType @struct, INamed name)
@@ -496,6 +497,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                 {
                     yield return new LambdaError(eh => eh.ReportError(data.Text, function.ParseTreeNode.Name, "Not all code paths return a value!"));
                 }
+                
+                function.Statements.LastOrDefault()?.SetFlag(StmtFlags.IsLastStatementInBlock);
             }
 
             yield break;
@@ -591,6 +594,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                     block.SetFlag(StmtFlags.Returns);
                 }
             }
+
+            block.Statements.LastOrDefault()?.SetFlag(StmtFlags.IsLastStatementInBlock);
 
             yield break;
         }
@@ -974,6 +979,10 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 arr.Type = a.TargetType;
             }
+            else if (arr.SubExpression.Type is StringType)
+            {
+                arr.Type = IntType.GetIntType(1, true);
+            }
             else
             {
                 arr.Type = CheezType.Error;
@@ -1252,11 +1261,16 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 deref.Type = p.TargetType;
             }
+            else if (deref.SubExpression.Type is StringType s)
+            {
+                deref.Type = IntType.GetIntType(1, true);
+            }
             else
             {
                 yield return new LambdaError(eh => eh.ReportError(data.Text, deref.SubExpression.GenericParseTreeNode, $"Sub expression of & is not a pointer"));
             }
-            yield break;
+
+            deref.SetFlag(ExprFlags.IsLValue);
         }
 
         public override IEnumerable<object> VisitCastExpression(AstCastExpr cast, SemanticerData data = null)

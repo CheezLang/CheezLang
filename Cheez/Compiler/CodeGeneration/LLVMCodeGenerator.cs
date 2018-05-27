@@ -54,6 +54,9 @@ namespace Cheez.Compiler.CodeGeneration
             // <arch><sub>-<vendor>-<sys>-<abi>
             LLVM.SetTarget(module, targetTriple);
 
+            // generate all types
+            GenerateAllTypes();
+
             // generate global variables
             GenerateGlobalVariables();
 
@@ -87,7 +90,7 @@ namespace Cheez.Compiler.CodeGeneration
                 }
             }
 
-
+            
 
             // cleanup
             LLVM.DisposeModule(module);
@@ -262,6 +265,12 @@ namespace Cheez.Compiler.CodeGeneration
                         return LLVM.FunctionType(returnType, paramTypes, false);
                     }
 
+                case StructType s:
+                    {
+                        var memTypes = s.Declaration.Members.Select(m => CheezTypeToLLVMType(m.Type)).ToArray();
+                        return LLVM.StructType(memTypes, false);
+                    }
+
                 default: return default;
             }
         }
@@ -278,6 +287,14 @@ namespace Cheez.Compiler.CodeGeneration
                 f = f.GetNextFunction();
             }
             Console.WriteLine("==================");
+        }
+
+        private void GenerateAllTypes()
+        {
+            foreach (var td in workspace.GlobalScope.TypeDeclarations)
+            {
+                td.Accept(this, null);
+            }
         }
 
         //[DebuggerStepThrough]
@@ -340,7 +357,9 @@ namespace Cheez.Compiler.CodeGeneration
             }
             else if (type is StructType s)
             {
-                throw new NotImplementedException();
+                llvmType = CheezTypeToLLVMType(s);
+                var val = LLVM.BuildAlloca(builder, llvmType, name);
+                return val;
             }
             else
             {
@@ -352,6 +371,14 @@ namespace Cheez.Compiler.CodeGeneration
         #endregion
 
         #region Statements
+
+        public override LLVMValueRef VisitTypeDeclaration(AstTypeDecl type, LLVMCodeGeneratorData data = null)
+        {
+            var ct = type.Type;
+            var llvmType = CheezTypeToLLVMType(ct);
+
+            return default;
+        }
 
         public override LLVMValueRef VisitVariableDeclaration(AstVariableDecl variable, LLVMCodeGeneratorData data = null)
         {
@@ -447,15 +474,27 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitReturnStatement(AstReturnStmt ret, LLVMCodeGeneratorData data = null)
         {
+            var prevBB = data.BasicBlock;
+            var nextBB = prevBB;
+
+            if (!ret.GetFlag(StmtFlags.IsLastStatementInBlock))
+                nextBB = LLVM.AppendBasicBlock(data.Function, "ret");
+
+            LLVMValueRef? retInts = null;
             if (ret.ReturnValue != null)
             {
                 var retVal = ret.ReturnValue.Accept(this, data);
-                return LLVM.BuildRet(data.Builder, retVal);
+                retInts = LLVM.BuildRet(data.Builder, retVal);
             }
             else
             {
-                return LLVM.BuildRetVoid(data.Builder);
+                retInts = LLVM.BuildRetVoid(data.Builder);
             }
+
+            LLVM.PositionBuilderAtEnd(data.Builder, nextBB);
+            data.BasicBlock = nextBB;
+
+            return retInts.Value;
         }
 
         public override LLVMValueRef VisitExpressionStatement(AstExprStmt stmt, LLVMCodeGeneratorData data = null)
@@ -530,11 +569,17 @@ namespace Cheez.Compiler.CodeGeneration
             LLVM.PositionBuilderAtEnd(data.Builder, bbPrev);
             LLVM.BuildCondBr(data.Builder, cond, bbIfBody, bbElseBody);
 
-            LLVM.PositionBuilderAtEnd(data.Builder, bbIfBodyEnd);
-            LLVM.BuildBr(data.Builder, bbEnd);
+            if (!ifs.IfCase.GetFlag(StmtFlags.Returns))
+            {
+                LLVM.PositionBuilderAtEnd(data.Builder, bbIfBodyEnd);
+                LLVM.BuildBr(data.Builder, bbEnd);
+            }
 
-            LLVM.PositionBuilderAtEnd(data.Builder, bbElseBodyEnd);
-            LLVM.BuildBr(data.Builder, bbEnd);
+            if (!(ifs.ElseCase?.GetFlag(StmtFlags.Returns) ?? false))
+            {
+                LLVM.PositionBuilderAtEnd(data.Builder, bbElseBodyEnd);
+                LLVM.BuildBr(data.Builder, bbEnd);
+            }
 
             LLVM.PositionBuilderAtEnd(data.Builder, bbEnd);
             data.BasicBlock = bbEnd;
@@ -556,6 +601,33 @@ namespace Cheez.Compiler.CodeGeneration
 
         #region Expressions
 
+        public override LLVMValueRef VisitDotExpression(AstDotExpr dot, LLVMCodeGeneratorData data = null)
+        {
+            if (dot.IsDoubleColon)
+            {
+                throw new NotImplementedException();
+            }
+            else
+            {
+                if (dot.Left.Type is StructType s)
+                {
+                    var left = dot.Left.Accept(this, data.Clone(Deref: false));
+                    var index = (uint)s.GetIndexOfMember(dot.Right);
+                    var elemPtr = LLVM.BuildStructGEP(data.Builder, left, index, dot.ToString());
+
+                    if (data.Deref)
+                    {
+                        elemPtr = LLVM.BuildLoad(data.Builder, elemPtr, $"*{dot}");
+                    }
+                    return elemPtr;
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+            }
+        }
+
         public override LLVMValueRef VisitAddressOfExpression(AstAddressOfExpr add, LLVMCodeGeneratorData data = null)
         {
             var sub = add.SubExpression.Accept(this, data.Clone(Deref: false));
@@ -576,6 +648,10 @@ namespace Cheez.Compiler.CodeGeneration
                 else if (cast.SubExpression.Type is IntType i)
                 {
                     return LLVM.BuildIntToPtr(data.Builder, sub, type, "");
+                }
+                else if (cast.SubExpression.Type is StringType s)
+                {
+                    return LLVM.BuildPointerCast(data.Builder, sub, type, "");
                 }
             }
             else if (cast.Type is StringType s)
@@ -599,7 +675,7 @@ namespace Cheez.Compiler.CodeGeneration
             else if (cast.Type is IntType tt)
             {
                 var type = CheezTypeToLLVMType(cast.Type);
-                if (cast.SubExpression.Type is IntType st)
+                if (cast.SubExpression.Type is IntType || cast.SubExpression.Type is BoolType)
                 {
                     return LLVM.BuildIntCast(data.Builder, sub, type, "");
                 }
@@ -608,8 +684,16 @@ namespace Cheez.Compiler.CodeGeneration
                     return LLVM.BuildPtrToInt(data.Builder, sub, type, "");
                 }
             }
+            else if (cast.Type is BoolType)
+            {
+                var type = CheezTypeToLLVMType(cast.Type);
+                if (cast.SubExpression.Type is IntType i)
+                {
+                    return LLVM.BuildIntCast(data.Builder, sub, type, "");
+                }
+            }
 
-            throw new NotImplementedException();
+            throw new NotImplementedException($"Cast from {cast.SubExpression.Type} to {cast.Type} is not implemented yet");
         }
 
         public override LLVMValueRef VisitIdentifierExpression(AstIdentifierExpr ident, LLVMCodeGeneratorData data = null)
@@ -689,6 +773,16 @@ namespace Cheez.Compiler.CodeGeneration
                 return LLVM.BuildLoad(data.Builder, result, "");
 
             return result;
+        }
+
+        public override LLVMValueRef VisitDereferenceExpression(AstDereferenceExpr deref, LLVMCodeGeneratorData data = null)
+        {
+            var ptr = deref.SubExpression.Accept(this, data.Clone(Deref: true));
+
+            var v = ptr;
+            if (data.Deref)
+                v = LLVM.BuildLoad(data.Builder, ptr, deref.ToString());
+            return v;
         }
 
         public override LLVMValueRef VisitUnaryExpression(AstUnaryExpr bin, LLVMCodeGeneratorData data = null)

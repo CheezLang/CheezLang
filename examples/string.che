@@ -6,3 +6,42 @@ fn strlen(s: string) -> int {
     }
     return len
 }
+
+fn streql(a: string, b: string, len: ulong) -> bool {
+    let alen: ulong = <ulong>strlen(a)
+    let blen: ulong = <ulong>strlen(b)
+    if (len > alen) {
+        len = alen
+    }
+    if (len > blen) {
+        len = blen
+    }
+
+    let i: ulong = 0
+    while (i < len) {
+        if a[i] != b[i] {
+            return false
+        }
+
+        i = i + 1
+    }
+    return true
+}
+
+fn streq(a: string, b: string) -> bool {
+    let len: ulong = <ulong>strlen(a)
+    let blen: ulong = <ulong>strlen(b)
+    if (len > blen) {
+        len = blen
+    }
+
+    let i: ulong = 0
+    while (i < len) {
+        if a[i] != b[i] {
+            return false
+        }
+
+        i = i + 1
+    }
+    return true
+}
