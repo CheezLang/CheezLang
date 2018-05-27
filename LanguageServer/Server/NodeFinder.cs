@@ -75,8 +75,10 @@ namespace CheezLanguageServer
 
             syms = syms.Where(kv =>
             {
-                if (kv.Value.Type != paramType)
-                    return false;
+                if (kv.Value.Type is FunctionType f && f.ReturnType == paramType)
+                    return true;
+                if (kv.Value.Type == paramType)
+                    return true;
                 return true;
             }).ToDictionary(kv => kv.Key, kv => kv.Value);
             return syms;
