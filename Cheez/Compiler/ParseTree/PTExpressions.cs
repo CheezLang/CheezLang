@@ -30,14 +30,14 @@ namespace Cheez.Compiler.ParseTree
     {
         public string Reason { get; set; }
 
-        public PTErrorExpr(TokenLocation beg, string reason) : base(beg, beg)
+        public PTErrorExpr(TokenLocation beg, TokenLocation end = null, string reason = null) : base(beg, end ?? beg)
         {
             this.Reason = reason;
         }
 
         public override AstExpression CreateAst()
         {
-            throw new NotImplementedException();
+            return new AstEmptyExpr(this);
         }
     }
 

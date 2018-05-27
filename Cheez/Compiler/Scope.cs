@@ -52,6 +52,8 @@ namespace Cheez.Compiler
         private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
         private Dictionary<CheezType, List<AstFunctionDecl>> mImplTable = new Dictionary<CheezType, List<AstFunctionDecl>>();
 
+        public IEnumerable<KeyValuePair<string, ISymbol>> Symbols => mSymbolTable.AsEnumerable();
+
         public Scope(string name, Scope parent = null)
         {
             this.Name = name;

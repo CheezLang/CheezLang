@@ -1,25 +1,11 @@
 #load("io.che")
 //let #extern __enclave_config: ubyte*
 
-
+let testString = "hi wie gehts?"
 
 fn Main() {
     let a: int = 5
     let pa = &a
-    Printlnf("  a: {i32}", <void*>a)
-    Printlnf("*pa: {i32}", <void*>*pa)
-    Printlnf(" pa: {i32}", <void*>pa)
-    Printlnf("a == 5: {b}", <void*><ulong>(a == 5))
-    Printlnf("a != 5: {b}", <void*><ulong>(a != 5))
-
-    Println("=======")
-
-    *pa = 9
-
-    Printlnf("  a: {i32}", <void*>a)
-    Printlnf("*pa: {i32}", <void*>*pa)
-    Printlnf(" pa: {i32}", <void*>pa)
-    Printlnf("a == 5: {b}", <void*><ulong>(a == 5))
-    Printlnf("a != 5: {b}", <void*><ulong>(a != 5))
-    
+    Printlnf("Test: {i32}", <void*>a)
+    Printlnf("Test: {s}", <void*>"lol")
 }

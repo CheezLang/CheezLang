@@ -93,6 +93,9 @@ fn PrintfData(formatSpecifier: string, data: void*) {
             PrintString("false")
         }
     }
+    else if streq(formatSpecifier, "s") {
+        PrintString(<string>data)
+    }
     else {
         PrintString("<Unknown format specifier: ")
         PrintString(formatSpecifier)

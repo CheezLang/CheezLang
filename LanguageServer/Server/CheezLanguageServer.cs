@@ -66,15 +66,6 @@ namespace CheezLanguageServer
                 if (!_errorHandler.HasErrors)
                 {
                     _compiler.DefaultWorkspace.CompileAll();
-
-                    if (!_errorHandler.HasErrors)
-                    {
-                        var fileName = Path.GetFileNameWithoutExtension(filePath) + ".cpp";
-                        var dir = Path.GetDirectoryName(filePath);
-                        var gen = new LLVMCodeGenerator();
-                        var code = gen.GenerateCode(_compiler.DefaultWorkspace, Path.Combine(dir, Path.GetFileNameWithoutExtension(filePath)));
-                        //File.WriteAllText(Path.Combine(dir, fileName), code);
-                    }
                 }
             }
             catch (Exception e)
@@ -153,7 +144,11 @@ namespace CheezLanguageServer
                     {
                         commands = new string[] { "reload_language_server" }
                     },
-                    hoverProvider = true
+                    hoverProvider = true,
+                    completionProvider = new CompletionOptions
+                    {
+                        resolveProvider = false
+                    }
                 }
             };
 
@@ -228,6 +223,68 @@ namespace CheezLanguageServer
             Console.WriteLine("Shutting down...");
 
             return VoidResult<ResponseError>.Success();
+        }
+
+        private CompletionItemKind GetCompletionItemKind(ISymbol sym)
+        {
+            switch (sym)
+            {
+                case AstFunctionParameter _:
+                case AstVariableDecl _:
+                    return CompletionItemKind.Variable;
+
+                case AstFunctionDecl _:
+                    return CompletionItemKind.Function;
+
+                default: return CompletionItemKind.Color;
+            }
+        }
+
+        private string GetInsertText(ISymbol sym)
+        {
+            switch (sym)
+            {
+                case AstFunctionDecl _:
+                    return $"{sym.Name}";
+
+                default: return sym.Name;
+            }
+        }
+
+        private CompletionItem SymbolToCompletionItem(ISymbol sym)
+        {
+            return new CompletionItem
+            {
+                label = sym.Name,
+                kind = GetCompletionItemKind(sym),
+                detail = $"{sym.Type}",
+                insertText = GetInsertText(sym)
+            };
+        }
+
+        protected override Result<ArrayOrObject<CompletionItem, CompletionList>, ResponseError> Completion(TextDocumentPositionParams @params)
+        {
+            try
+            {
+                var file = _compiler.GetFile(GetFilePath(@params.textDocument.uri));
+                if (file == null)
+                    return Result<ArrayOrObject<CompletionItem, CompletionList>, ResponseError>.Success(new ArrayOrObject<CompletionItem, CompletionList>());
+
+                var nodeFinder = new NodeFinder();
+                var node = nodeFinder.FindNode(_compiler.DefaultWorkspace, file, (int)@params.position.line, (int)@params.position.character, true);
+
+                if (node == null)
+                    return Result<ArrayOrObject<CompletionItem, CompletionList>, ResponseError>.Success(new ArrayOrObject<CompletionItem, CompletionList>());
+
+                var symbols = node.GetSymbols();
+                var completionList = symbols.Select(kv => SymbolToCompletionItem(kv.Value)).ToArray();
+
+                return Result<ArrayOrObject<CompletionItem, CompletionList>, ResponseError>.Success(new ArrayOrObject<CompletionItem, CompletionList>(completionList));
+            }
+            catch (Exception e)
+            {
+                return Result<ArrayOrObject<CompletionItem, CompletionList>, ResponseError>.Success(new ArrayOrObject<CompletionItem, CompletionList>());
+            }
         }
 
         protected override Result<Hover, ResponseError> Hover(TextDocumentPositionParams @params)

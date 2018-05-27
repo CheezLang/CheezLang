@@ -20,16 +20,40 @@ namespace Cheez.Compiler.Parsing
         private Lexer mLexer;
         private IErrorHandler mErrorHandler;
 
+        private Token lastNonWhitespace = null;
+
         public Parser(Lexer lex, IErrorHandler errHandler)
         {
             mLexer = lex;
             mErrorHandler = errHandler;
         }
 
+        private (TokenLocation beg, TokenLocation end) GetWhitespaceLocation()
+        {
+            var end = mLexer.PeekToken().location;
+            return (new TokenLocation
+            {
+                file = end.file,
+                index = lastNonWhitespace?.location?.end ?? 0,
+                end = lastNonWhitespace?.location?.end ?? 0,
+                line = lastNonWhitespace?.location?.line ?? end.line,
+                lineStartIndex = lastNonWhitespace?.location?.lineStartIndex ?? end.lineStartIndex,
+            }, end);
+        }
+
         [SkipInStackFrame]
         private void SkipNewlines()
         {
             PeekToken(true);
+        }
+
+        [SkipInStackFrame]
+        private Token NextToken()
+        {
+            var next = mLexer.NextToken();
+            if (next.type != TokenType.NewLine)
+                lastNonWhitespace = next;
+            return next;
         }
 
         [SkipInStackFrame]
@@ -90,14 +114,14 @@ namespace Cheez.Compiler.Parsing
                 {
                     case TokenType.NewLine:
                     case TokenType.Semicolon:
-                        mLexer.NextToken();
+                        NextToken();
                         return;
 
                     case TokenType.EOF:
                     case TokenType.ClosingBrace:
                         return;
                 }
-                mLexer.NextToken();
+                NextToken();
             }
         }
 
@@ -121,7 +145,7 @@ namespace Cheez.Compiler.Parsing
                     case TokenType.Comma:
                         return;
                 }
-                mLexer.NextToken();
+                NextToken();
             }
         }
 
@@ -134,7 +158,7 @@ namespace Cheez.Compiler.Parsing
 
                 if (skipNewLines && tok.type == TokenType.NewLine)
                 {
-                    mLexer.NextToken();
+                    NextToken();
                     continue;
                 }
 
@@ -147,7 +171,7 @@ namespace Cheez.Compiler.Parsing
                     return false;
                 }
 
-                mLexer.NextToken();
+                NextToken();
                 result = tok;
                 return true;
             }
@@ -177,7 +201,7 @@ namespace Cheez.Compiler.Parsing
         [SkipInStackFrame]
         private void ConsumeNewLine(Func<TokenType, object, string> customErrorMessage = null)
         {
-            var tok = mLexer.NextToken();
+            var tok = NextToken();
 
             if (tok.type != TokenType.NewLine)
             {
@@ -201,13 +225,13 @@ namespace Cheez.Compiler.Parsing
 
                 if (skipNewLines && tok.type == TokenType.NewLine)
                 {
-                    mLexer.NextToken();
+                    NextToken();
                     continue;
                 }
 
                 if (tok.type == type)
                 {
-                    mLexer.NextToken();
+                    NextToken();
                     return tok;
                 }
 
@@ -216,7 +240,7 @@ namespace Cheez.Compiler.Parsing
         }
 
         [SkipInStackFrame]
-        private Token PeekToken(bool skipNewLines)
+        private Token PeekToken(bool skipNewLines = false)
         {
             while (true)
             {
@@ -227,7 +251,7 @@ namespace Cheez.Compiler.Parsing
 
                 if (skipNewLines && tok.type == TokenType.NewLine)
                 {
-                    mLexer.NextToken();
+                    NextToken();
                     continue;
                 }
 
@@ -240,7 +264,7 @@ namespace Cheez.Compiler.Parsing
         {
             while (true)
             {
-                var tok = mLexer.NextToken();
+                var tok = NextToken();
 
                 if (tok.type == TokenType.EOF)
                     return tok;
@@ -296,7 +320,7 @@ namespace Cheez.Compiler.Parsing
                         var expr = ParseExpression();
                         if (PeekToken(skipNewLines: false).type == TokenType.Equal)
                         {
-                            mLexer.NextToken();
+                            NextToken();
                             var val = ParseExpression();
                             return (false, new PTAssignment(expr.Beginning, val.End, expr, val));
                         }
@@ -331,7 +355,7 @@ namespace Cheez.Compiler.Parsing
 
                 if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
                 {
-                    mLexer.NextToken();
+                    NextToken();
                 }
                 else if (next.type == TokenType.ClosingBrace)
                 {
@@ -384,7 +408,7 @@ namespace Cheez.Compiler.Parsing
 
             if (PeekToken(false).type == TokenType.OpenParen)
             {
-                mLexer.NextToken();
+                NextToken();
 
                 while (true)
                 {
@@ -400,7 +424,7 @@ namespace Cheez.Compiler.Parsing
 
                     if (PeekToken(true).type == TokenType.Comma)
                     {
-                        mLexer.NextToken();
+                        NextToken();
                         continue;
                     }
 
@@ -465,7 +489,7 @@ namespace Cheez.Compiler.Parsing
                 if (PeekToken(true).type == TokenType.KwRef)
                 {
                     isRef = true;
-                    mLexer.NextToken();
+                    NextToken();
                 }
 
                 var f = ParseFunctionDeclaration();
@@ -529,14 +553,14 @@ namespace Cheez.Compiler.Parsing
 
             TokenLocation end = name.End;
 
-            var next = mLexer.PeekToken();
+            var next = PeekToken();
 
             PTTypeExpr type = null;
             PTExpr init = null;
             switch (next.type)
             {
                 case TokenType.Colon:
-                    mLexer.NextToken();
+                    NextToken();
                     SkipNewlines();
                     type = ParseTypeExpression();
                     if (type == null)
@@ -544,7 +568,7 @@ namespace Cheez.Compiler.Parsing
                         RecoverStatement();
                         return null;
                     }
-                    next = mLexer.PeekToken();
+                    next = PeekToken();
                     end = type.End;
                     if (next.type == TokenType.Equal)
                         goto case TokenType.Equal;
@@ -555,13 +579,13 @@ namespace Cheez.Compiler.Parsing
                     }
                     else if (next.type == TokenType.NewLine)
                     {
-                        mLexer.NextToken();
+                        NextToken();
                         break;
                     }
                     goto default;
 
                 case TokenType.Equal:
-                    mLexer.NextToken();
+                    NextToken();
                     SkipNewlines();
                     init = ParseExpression(errorMessage: t => $"Expected expression after '='");
                     if (init == null)
@@ -569,7 +593,7 @@ namespace Cheez.Compiler.Parsing
                         RecoverStatement();
                         return null;
                     }
-                    next = mLexer.PeekToken();
+                    next = PeekToken();
                     end = init.End;
                     if (delimiters.Contains(next.type))
                     {
@@ -578,7 +602,7 @@ namespace Cheez.Compiler.Parsing
                     }
                     if (next.type == TokenType.NewLine || next.type == TokenType.EOF)
                     {
-                        mLexer.NextToken();
+                        NextToken();
                         break;
                     }
                     goto default;
@@ -587,7 +611,7 @@ namespace Cheez.Compiler.Parsing
                     break;
                 case TokenType.Semicolon:
                 case TokenType.NewLine:
-                    mLexer.NextToken();
+                    NextToken();
                     break;
 
                 default:
@@ -610,14 +634,10 @@ namespace Cheez.Compiler.Parsing
             }
 
             PTExpr condition = ParseExpression(errorMessage: t => $"Failed to parse while loop condition");
-            if (condition == null)
-            {
-                condition = new PTErrorExpr(beginning.location, "Failed to pares while statement condition");
-            }
 
             if (PeekToken(false).type == TokenType.Comma)
             {
-                mLexer.NextToken();
+                NextToken();
                 var s = ParseStatement();
                 postAction = s.stmt;
             }
@@ -642,8 +662,6 @@ namespace Cheez.Compiler.Parsing
             TokenLocation end = beginning;
 
             condition = ParseExpression(errorMessage: t => $"Failed to parse if statement condition");
-            if (condition == null)
-                condition = new PTErrorExpr(beginning, "Failed to parse if statement condition");
 
             ifCase = ParseBlockStatement();
             if (ifCase == null)
@@ -655,7 +673,7 @@ namespace Cheez.Compiler.Parsing
 
             if (PeekToken(skipNewLines: true).type == TokenType.KwElse)
             {
-                mLexer.NextToken();
+                NextToken();
 
                 if (PeekToken(skipNewLines: false).type == TokenType.KwIf)
                     elseCase = ParseIfStatement();
@@ -683,7 +701,7 @@ namespace Cheez.Compiler.Parsing
             var next = PeekToken(skipNewLines: true);
             if (next.type == TokenType.OpenParen)
             {
-                mLexer.NextToken();
+                NextToken();
                 seperator = ParseExpression();
                 Expect(TokenType.ClosingParen, skipNewLines: true);
             }
@@ -749,7 +767,7 @@ namespace Cheez.Compiler.Parsing
 
                 var next = PeekToken(true);
                 if (next.type == TokenType.Comma)
-                    mLexer.NextToken();
+                    NextToken();
                 else if (next.type == TokenType.ClosingParen)
                     break;
                 else
@@ -761,7 +779,7 @@ namespace Cheez.Compiler.Parsing
             // return type
             if (PeekToken(skipNewLines: false).type == TokenType.Arrow)
             {
-                mLexer.NextToken();
+                NextToken();
                 returnType = ParseTypeExpression();
                 if (returnType != null)
                     end = returnType.End;
@@ -774,7 +792,7 @@ namespace Cheez.Compiler.Parsing
 
             if (PeekToken(false).type == TokenType.Semicolon)
             {
-                mLexer.NextToken();
+                NextToken();
                 return new PTFunctionDecl(beginning, end, name, parameters, returnType, directives: directives);
             }
 
@@ -821,7 +839,7 @@ namespace Cheez.Compiler.Parsing
 
                     var next = PeekToken(true);
                     if (next.type == TokenType.Comma)
-                        mLexer.NextToken();
+                        NextToken();
                     else if (next.type == TokenType.ClosingParen)
                         break;
                     else
@@ -837,7 +855,7 @@ namespace Cheez.Compiler.Parsing
             PTTypeExpr returnType = null;
             if (PeekToken(false).type == TokenType.Colon)
             {
-                mLexer.NextToken();
+                NextToken();
                 returnType = ParseTypeExpression();
                 end = returnType.End;
             }
@@ -851,19 +869,19 @@ namespace Cheez.Compiler.Parsing
             bool cond = true;
             while (cond)
             {
-                var next = mLexer.PeekToken();
+                var next = PeekToken();
                 switch (next.type)
                 {
                     case TokenType.KwFn:
                         return ParseFunctionTypeExpr();
 
                     case TokenType.Identifier:
-                        mLexer.NextToken();
+                        NextToken();
                         type = new PTNamedTypeExpr(next.location, next.location, (string)next.data);
                         break;
 
                     case TokenType.Asterisk:
-                        mLexer.NextToken();
+                        NextToken();
                         if (type == null)
                         {
                             ReportError(next.location, "Failed to parse type expression: * must be preceded by an actual type");
@@ -880,7 +898,7 @@ namespace Cheez.Compiler.Parsing
                             RecoverExpression();
                             type = new PTErrorTypeExpr(next.location, GetCodeLocation() + " TODO");
                         }
-                        mLexer.NextToken();
+                        NextToken();
                         next = Expect(TokenType.ClosingBracket, skipNewLines: true);
                         type = new PTArrayTypeExpr(type.Beginning, next.location, type);
                         break;
@@ -917,34 +935,54 @@ namespace Cheez.Compiler.Parsing
         {
             location = location ?? (t => t.location);
             errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
+            
+            return ParseOrExpression(location, errorMessage);
+        }
 
-            ExpressionParser muldiv = (l, e) => ParseBinaryLeftAssociativeExpression(ParseAddressOfOrDerefExpression, l, e,
-                (TokenType.Asterisk, "*"),
-                (TokenType.ForwardSlash, "/"),
-                (TokenType.Percent, "%"));
+        [DebuggerStepThrough]
+        private PTExpr ParseOrExpression(LocationResolver l, ErrorMessageResolver e)
+        {
+            return ParseBinaryLeftAssociativeExpression(ParseAndExpression, l, e,
+                (TokenType.KwOr, "or"));
+        }
 
-            ExpressionParser addsub = (l, e) => ParseBinaryLeftAssociativeExpression(muldiv, l, e,
-                (TokenType.Plus, "+"),
-                (TokenType.Minus, "-"));
+        [DebuggerStepThrough]
+        private PTExpr ParseAndExpression(LocationResolver l, ErrorMessageResolver e)
+        {
+            return ParseBinaryLeftAssociativeExpression(ParseComparisonExpression, l, e,
+                (TokenType.KwAnd, "and"));
+        }
 
-            ExpressionParser comparison = (l, e) => ParseBinaryLeftAssociativeExpression(addsub, l, e,
+        [DebuggerStepThrough]
+        private PTExpr ParseComparisonExpression(LocationResolver l, ErrorMessageResolver e)
+        {
+            return ParseBinaryLeftAssociativeExpression(ParseAddSubExpression, l, e,
                 (TokenType.Less, "<"),
                 (TokenType.LessEqual, "<="),
                 (TokenType.Greater, ">"),
                 (TokenType.GreaterEqual, ">="),
                 (TokenType.DoubleEqual, "=="),
                 (TokenType.NotEqual, "!="));
-
-            ExpressionParser and = (l, e) => ParseBinaryLeftAssociativeExpression(comparison, l, e,
-                (TokenType.KwAnd, "and"));
-
-            ExpressionParser or = (l, e) => ParseBinaryLeftAssociativeExpression(and, l, e,
-                (TokenType.KwOr, "or"));
-
-
-            return or(location, errorMessage);
         }
 
+        [DebuggerStepThrough]
+        private PTExpr ParseAddSubExpression(LocationResolver l, ErrorMessageResolver e)
+        {
+            return ParseBinaryLeftAssociativeExpression(ParseMulDivExpression, l, e,
+                (TokenType.Plus, "+"),
+                (TokenType.Minus, "-"));
+        }
+
+        [DebuggerStepThrough]
+        private PTExpr ParseMulDivExpression(LocationResolver l, ErrorMessageResolver e)
+        {
+            return ParseBinaryLeftAssociativeExpression(ParseAddressOfOrDerefExpression, l, e,
+                (TokenType.Asterisk, "*"),
+                (TokenType.ForwardSlash, "/"),
+                (TokenType.Percent, "%"));
+        }
+
+        [DebuggerStepThrough]
         private PTExpr ParseBinaryLeftAssociativeExpression(ExpressionParser sub, LocationResolver location, ErrorMessageResolver errorMessage, params (TokenType, string)[] types)
         {
             return ParseLeftAssociativeExpression(sub, location, errorMessage, type =>
@@ -974,7 +1012,7 @@ namespace Cheez.Compiler.Parsing
                     return lhs;
                 }
 
-                mLexer.NextToken();
+                NextToken();
                 rhs = sub(location, errorMessage);
                 lhs = new PTBinaryExpr(lhs.Beginning, rhs.End, op, lhs, rhs);
             }
@@ -985,19 +1023,19 @@ namespace Cheez.Compiler.Parsing
             var next = PeekToken(false);
             if (next.type == TokenType.Ampersand)
             {
-                mLexer.NextToken();
+                NextToken();
                 var sub = ParseAddressOfOrDerefExpression(location, errorMessage);
                 return new PTAddressOfExpr(next.location, sub.End, sub);
             }
             else if (next.type == TokenType.Asterisk)
             {
-                mLexer.NextToken();
+                NextToken();
                 var sub = ParseAddressOfOrDerefExpression(location, errorMessage);
                 return new PTDereferenceExpr(next.location, sub.End, sub);
             }
             else if (next.type == TokenType.Minus || next.type == TokenType.Plus)
             {
-                mLexer.NextToken();
+                NextToken();
                 var sub = ParseAddressOfOrDerefExpression(location, errorMessage);
                 string op = "";
                 switch (next.type)
@@ -1011,6 +1049,12 @@ namespace Cheez.Compiler.Parsing
             return ParseCallOrDotExpression(location, errorMessage);
         }
 
+        private PTExpr ParseEmptyExpression()
+        {
+            var loc = GetWhitespaceLocation();
+            return new PTErrorExpr(loc.beg, loc.end);
+        }
+
         private PTExpr ParseCallOrDotExpression(LocationResolver location, ErrorMessageResolver errorMessage)
         {
             var expr = ParseAtomicExpression(location, errorMessage);
@@ -1021,17 +1065,18 @@ namespace Cheez.Compiler.Parsing
                 {
                     case TokenType.OpenParen:
                         {
-                            mLexer.NextToken();
+                            NextToken();
                             List<PTExpr> args = new List<PTExpr>();
                             if (PeekToken(true).type != TokenType.ClosingParen)
                             {
                                 while (true)
                                 {
+                                    var next = PeekToken(true);
                                     args.Add(ParseExpression(location));
 
-                                    var next = PeekToken(true);
+                                    next = PeekToken(true);
                                     if (next.type == TokenType.Comma)
-                                        mLexer.NextToken();
+                                        NextToken();
                                     else if (next.type == TokenType.ClosingParen)
                                         break;
                                     else
@@ -1050,7 +1095,7 @@ namespace Cheez.Compiler.Parsing
 
                     case TokenType.OpenBracket:
                         {
-                            mLexer.NextToken();
+                            NextToken();
                             var index = ParseExpression(location, errorMessage);
                             var end = Expect(TokenType.ClosingBracket, true, customLocation: location).location;
                             expr = new PTArrayAccessExpr(expr.Beginning, end, expr, index);
@@ -1059,7 +1104,7 @@ namespace Cheez.Compiler.Parsing
 
                     case TokenType.Period:
                         {
-                            mLexer.NextToken();
+                            NextToken();
                             var right = ParseIdentifierExpr(true, t => $"Right side of '.' has to be an identifier", location);
 
                             if (right is PTErrorExpr)
@@ -1074,7 +1119,7 @@ namespace Cheez.Compiler.Parsing
 
                     case TokenType.DoubleColon:
                         {
-                            mLexer.NextToken();
+                            NextToken();
                             var right = ParseIdentifierExpr(true, t => $"Right side of '::' has to be an identifier", location);
 
                             if (right is PTErrorExpr)
@@ -1114,7 +1159,7 @@ namespace Cheez.Compiler.Parsing
                 if (value is PTIdentifierExpr n && PeekToken(false).type == TokenType.Equal)
                 {
                     memberName = n;
-                    mLexer.NextToken();
+                    NextToken();
                     value = ParseExpression();
                 }
 
@@ -1127,7 +1172,7 @@ namespace Cheez.Compiler.Parsing
                 next = PeekToken(false);
                 if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
                 {
-                    mLexer.NextToken();
+                    NextToken();
                 }
                 else if (next.type == TokenType.ClosingBrace)
                 {
@@ -1146,11 +1191,12 @@ namespace Cheez.Compiler.Parsing
 
         private PTExpr ParseAtomicExpression(LocationResolver location, ErrorMessageResolver errorMessage)
         {
-            var token = mLexer.NextToken();
+            var token = PeekToken();
             switch (token.type)
             {
                 case TokenType.Identifier:
                     {
+                        NextToken();
                         var id = new PTIdentifierExpr(token.location, (string)token.data);
                         if (PeekToken(false).type == TokenType.OpenBrace)
                         {
@@ -1160,18 +1206,24 @@ namespace Cheez.Compiler.Parsing
                     }
 
                 case TokenType.StringLiteral:
+                    NextToken();
                     return new PTStringLiteral(token.location, (string)token.data);
 
                 case TokenType.NumberLiteral:
+                    NextToken();
                     return new PTNumberExpr(token.location, (NumberData)token.data);
 
                 case TokenType.KwTrue:
+                    NextToken();
                     return new PTBoolExpr(token.location, true);
+
                 case TokenType.KwFalse:
+                    NextToken();
                     return new PTBoolExpr(token.location, false);
 
                 case TokenType.Less:
                     {
+                        NextToken();
                         var type = ParseTypeExpression();
                         Consume(TokenType.Greater, false);
                         var e = ParseAddressOfOrDerefExpression(location, errorMessage);
@@ -1179,6 +1231,7 @@ namespace Cheez.Compiler.Parsing
                     }
                 case TokenType.KwCast:
                     {
+                        NextToken();
                         Expect(TokenType.Less, true);
                         var type = ParseTypeExpression();
 
@@ -1190,6 +1243,7 @@ namespace Cheez.Compiler.Parsing
                     }
 
                 case TokenType.OpenParen:
+                    NextToken();
                     SkipNewlines();
                     var sub = ParseExpression(location, errorMessage);
                     sub.Beginning = token.location;
@@ -1199,7 +1253,7 @@ namespace Cheez.Compiler.Parsing
                 default:
                     RecoverExpression();
                     ReportError(location?.Invoke(token) ?? token.location, errorMessage?.Invoke(token) ?? $"Failed to parse expression, unpexpected token ({token.type}) {token.data}");
-                    return new PTErrorExpr(token.location, GetCodeLocation() + " TODO");
+                    return ParseEmptyExpression();
             }
         }
 
@@ -1208,7 +1262,7 @@ namespace Cheez.Compiler.Parsing
             if (!Expect(out Token t, TokenType.Identifier, SkipNewLines, customErrorMessage, customLocation))
             {
                 RecoverExpression();
-                return new PTErrorExpr(mLexer.PeekToken().location, GetCodeLocation() + " TODO");
+                return new PTErrorExpr(PeekToken().location, reason: GetCodeLocation() + " TODO");
             }
             return new PTIdentifierExpr(t.location, (string)t.data);
         }

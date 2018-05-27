@@ -3,6 +3,7 @@ using Cheez.Compiler.Ast;
 using Cheez.Compiler.ParseTree;
 using Cheez.Compiler.Parsing;
 using Cheez.Compiler.Visitor;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace CheezLanguageServer
@@ -15,12 +16,70 @@ namespace CheezLanguageServer
         public AstStatement Stmt { get; }
         public CheezType Type { get; }
 
+        public NodeFinderResult()
+        {
+        }
+
         public NodeFinderResult(Scope s, AstExpression expr = null, AstStatement stmt = null, CheezType type = null)
         {
             Scope = s;
             Expr = expr;
             Stmt = stmt;
             Type = type;
+        }
+
+        public virtual Dictionary<string, ISymbol> GetSymbols()
+        {
+            var symbols = new Dictionary<string, ISymbol>();
+            if (Scope != null)
+            {
+                AddSymbolsToSymbolList(symbols, Scope);
+            }
+            return symbols;
+        }
+
+        protected void AddSymbolsToSymbolList(Dictionary<string, ISymbol> symbols, Scope scope)
+        {
+            foreach (var kv in scope.Symbols)
+            {
+                var sym = kv.Value;
+                if (!symbols.ContainsKey(sym.Name))
+                    symbols.Add(sym.Name, sym);
+            }
+
+            if (scope.Parent != null)
+                AddSymbolsToSymbolList(symbols, scope.Parent);
+        }
+    }
+
+    public class NodeFinderResultCallExpr : NodeFinderResult
+    {
+        public AstCallExpr Call { get; set; }
+        public int ArgIndex { get; set; }
+
+        public NodeFinderResultCallExpr(AstCallExpr call, int index) : base(call.Scope)
+        {
+            this.Call = call;
+            this.ArgIndex = index;
+        }
+
+        public override Dictionary<string, ISymbol> GetSymbols()
+        {
+            var syms = base.GetSymbols();
+            var funcType = Call.Function.Type as FunctionType;
+            var pars = funcType?.ParameterTypes;
+            if (pars == null || ArgIndex >= pars.Length)
+                return syms;
+
+            var paramType = pars[ArgIndex];
+
+            syms = syms.Where(kv =>
+            {
+                if (kv.Value.Type != paramType)
+                    return false;
+                return true;
+            }).ToDictionary(kv => kv.Key, kv => kv.Value);
+            return syms;
         }
     }
 
@@ -241,7 +300,10 @@ namespace CheezLanguageServer
                     return arg.Accept(this, i);
             }
 
-            return call.Function.Accept(this, i);
+            if (GetRelativeLocation(call.Function.GenericParseTreeNode, i) == RelativeLocation.Same)
+                return call.Function.Accept(this, i);
+
+            return new NodeFinderResultCallExpr(call, 0);
         }
 
         public override NodeFinderResult VisitBinaryExpression(AstBinaryExpr bin, int index = 0)
