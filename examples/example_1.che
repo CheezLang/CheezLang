@@ -1,18 +1,5 @@
 #load("io.che")
-//let #extern __enclave_config: ubyte*
-
-let testString = "hi wie gehts?"
-
-fn Foo() -> string {
-    return "hi"
-}
 
 fn Main() {
-    let a: int = 5
-    let pa = &a
-    Printlnf("Test: {i32}", <void*>a)
-    Printlnf("Test: {s}", <void*>"lol")
-    
-    PrintString(Foo())
-
+    printf("%d`n", 123)
 }

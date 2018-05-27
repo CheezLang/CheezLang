@@ -1,0 +1,2 @@
+fn malloc(size: int) -> void*;
+fn free(mem: void*);

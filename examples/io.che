@@ -1,10 +1,10 @@
 #load("string.che")
+#load("memory.che")
 
 fn GetStdHandle(h: int) -> int #stdcall;
 fn WriteFile(handle: int, str: string, length: int, bw: int*, res: int) #stdcall;
 fn ReadFile(hFile: int, lpBuffer: ubyte*, nNumberOfBytesToRead: int, lpNumberOfBytesRead: int*, lpOverlapped: ubyte*) #stdcall;
-fn malloc(size: int) -> void*;
-fn free(mem: void*);
+fn printf(format: string, num: int) #varargs;
 
 // void * __enclave_config;
 // need it because without it the program wont link

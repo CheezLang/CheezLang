@@ -152,6 +152,9 @@ namespace Cheez.Compiler.CodeGeneration
                     "odbc32.lib",
                     "odbccp32.lib",
 
+                    "legacy_stdio_definitions.lib",
+                    "legacy_stdio_wide_specifiers.lib",
+
                     "libclang.lib",
 
                     $"{filename}.obj"
@@ -262,7 +265,7 @@ namespace Cheez.Compiler.CodeGeneration
                     {
                         var returnType = CheezTypeToLLVMType(f.ReturnType);
                         var paramTypes = f.ParameterTypes.Select(t => CheezTypeToLLVMType(t)).ToArray();
-                        return LLVM.FunctionType(returnType, paramTypes, false);
+                        return LLVM.FunctionType(returnType, paramTypes, f.VarArgs);
                     }
 
                 case StructType s:
@@ -303,9 +306,12 @@ namespace Cheez.Compiler.CodeGeneration
             // create declarations
             foreach (var function in workspace.GlobalScope.FunctionDeclarations)
             {
+                var varargs = function.GetDirective("varargs");
+                if (varargs != null)
+                    (function.Type as FunctionType).VarArgs = true;
+
                 var ltype = CheezTypeToLLVMType(function.Type);
                 var lfunc = LLVM.AddFunction(module, function.Name, ltype);
-
 
                 var ccDir = function.GetDirective("stdcall");
                 if (ccDir != null)

@@ -351,6 +351,7 @@ namespace Cheez.Compiler
                 
         public CheezType[] ParameterTypes { get; private set; }
         public CheezType ReturnType { get; private set; }
+        public bool VarArgs { get; set; } = false;
 
         private FunctionType(CheezType returnType, CheezType[] parameterTypes)
         {
