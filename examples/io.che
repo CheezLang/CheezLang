@@ -1,18 +1,6 @@
 #load("string.che")
 #load("memory.che")
-
-fn GetStdHandle(h: int) -> int #stdcall;
-fn WriteFile(handle: int, str: string, length: int, bw: int*, res: int) #stdcall;
-fn ReadFile(hFile: int, lpBuffer: ubyte*, nNumberOfBytesToRead: int, lpNumberOfBytesRead: int*, lpOverlapped: ubyte*) #stdcall;
-
-
-// void * __enclave_config;
-// need it because without it the program wont link
-let #extern __enclave_config: ubyte*
-
-let __std_in_handle: int = GetStdHandle(-10)
-let __std_out_handle: int = GetStdHandle(-11)
-let __std_err_handle: int = GetStdHandle(-12)
+#load("std/windows.che")
 
 fn PrintString(s: string) {
     let len = strlen(s)
