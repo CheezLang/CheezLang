@@ -1,11 +1,22 @@
+# .\count_loc.ps1 .\CheezCompiler\Compiler .\CheezCompiler\loc.csv
+# .\count_loc.ps1 .\CompilerCLI\src .\CompilerCLI\loc.csv
+# .\count_loc.ps1 .\LanguageServer\VSCodeExtension\src .\LanguageServer\VSCodeExtension\loc.csv *.ts
+# .\count_loc.ps1 .\LanguageServer\Server .\LanguageServer\Server\loc.csv *.cs TemporaryGeneratedFile*
+# .\count_loc.ps1 .\examples .\examples\loc.csv *.che
 param([string]$path, [string]$outputFile = "loc.csv", [string]$include = "*.*", [string]$exclude = "")
-Clear-Host
+Write-Host "Counting lines in" $path
+if ($exclude) { Write-Host "Excluding:" $exclude }
+Write-Host ""
+$totalLineCount = 0
+$totalFileCount = 0
 "File Name,Lines" | Out-File $outputFile -encoding "UTF8"
-Get-ChildItem -re -in $include -ex $exclude $path |
+Get-ChildItem -re -in $include -Exclude $exclude $path |
 Foreach-Object { 
     $fileStats = Get-Content $_.FullName | Measure-Object -line
     $fileName = $_.Name
     $linesInFile = $fileStats.Lines
+    $totalLineCount += $linesInFile
+    $totalFileCount += 1
     $res = New-Object -TypeName PSObject
     $res | Add-Member -MemberType NoteProperty -Name FileName -Value $fileName
     $res | Add-Member -MemberType NoteProperty -Name Lines -Value $linesInFile
@@ -13,7 +24,11 @@ Foreach-Object {
 } | Sort-Object Lines -Descending | ForEach-Object {
     $fileName = $_.FileName
     $lines = $_.Lines
-    $formatted = "{0,25}: {1}" -f $fileName,$lines
+    $formatted = "{0,40}: {1}" -f $fileName,$lines
     Write-Host $formatted
     "$fileName,$lines"
 } | Out-File $outputFile -Append -encoding "UTF8"
+
+Write-Host ""
+$totalLineCountStr = "{0,40}: {1} lines in {2} file(s)" -f "Total",$totalLineCount,$totalFileCount
+Write-Host $totalLineCountStr
