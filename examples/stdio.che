@@ -1,0 +1,18 @@
+struct FILE {
+    _Placeholder: void*
+}
+
+fn __acrt_iob_func(_: uint) -> FILE*;
+
+let stdin = __acrt_iob_func(1)
+let stdout = __acrt_iob_func(1)
+let stderr = __acrt_iob_func(1)
+
+fn printf(format: string, num: int) #varargs;
+fn fflush(file: FILE*);
+
+///
+
+type errno_t = int
+
+

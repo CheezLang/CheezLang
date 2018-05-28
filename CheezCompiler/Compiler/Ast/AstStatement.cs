@@ -1,6 +1,7 @@
 ﻿using Cheez.Compiler.Visitor;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Cheez.Compiler.Ast
 {

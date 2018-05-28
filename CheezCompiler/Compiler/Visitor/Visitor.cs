@@ -22,6 +22,7 @@ namespace Cheez.Compiler.Visitor
         ReturnType VisitImplBlock(AstImplBlock impl, DataType data = default);
         ReturnType VisitReturnStatement(AstReturnStmt ret, DataType data = default);
         ReturnType VisitUsingStatement(AstUsingStmt use, DataType data = default);
+        ReturnType VisitTypeAlias(AstTypeAliasDecl al, DataType data = default);
 
         ReturnType VisitEmptyExpression(AstEmptyExpr em, DataType data = default);
 
@@ -39,11 +40,8 @@ namespace Cheez.Compiler.Visitor
         ReturnType VisitCastExpression(AstCastExpr cast, DataType data = default);
         ReturnType VisitArrayAccessExpression(AstArrayAccessExpr arr, DataType data = default);
         ReturnType VisitStructValueExpression(AstStructValueExpr str, DataType data = default);
-        
-
-        ReturnType VisitPrintStatement(AstPrintStmt print, DataType data = default); // @Temporary
     }
-    
+
 
     public abstract class VisitorBase<ReturnType, DataType> : IVisitor<ReturnType, DataType>
     {
@@ -73,25 +71,25 @@ namespace Cheez.Compiler.Visitor
 
         public virtual ReturnType VisitEnumDeclaration(AstEnumDecl en, DataType data = default) => default;
 
-        public virtual ReturnType VisitExpressionStatement(AstExprStmt stmt, DataType data = default) => default; 
+        public virtual ReturnType VisitExpressionStatement(AstExprStmt stmt, DataType data = default) => default;
 
-        public virtual ReturnType VisitFunctionDeclaration(AstFunctionDecl function, DataType data = default) => default; 
+        public virtual ReturnType VisitFunctionDeclaration(AstFunctionDecl function, DataType data = default) => default;
 
-        public virtual ReturnType VisitIdentifierExpression(AstIdentifierExpr ident, DataType data = default) => default; 
+        public virtual ReturnType VisitIdentifierExpression(AstIdentifierExpr ident, DataType data = default) => default;
 
         public virtual ReturnType VisitIfStatement(AstIfStmt ifs, DataType data = default) => default;
 
         public virtual ReturnType VisitImplBlock(AstImplBlock impl, DataType data = default) => default;
 
-        public virtual ReturnType VisitNumberExpression(AstNumberExpr num, DataType data = default) => default; 
-
-        public virtual ReturnType VisitPrintStatement(AstPrintStmt print, DataType data = default) => default;
+        public virtual ReturnType VisitNumberExpression(AstNumberExpr num, DataType data = default) => default;
 
         public virtual ReturnType VisitReturnStatement(AstReturnStmt ret, DataType data = default) => default;
 
         public virtual ReturnType VisitStringLiteral(AstStringLiteral str, DataType data = default) => default;
 
         public virtual ReturnType VisitStructValueExpression(AstStructValueExpr str, DataType data = default) => default;
+
+        public virtual ReturnType VisitTypeAlias(AstTypeAliasDecl al, DataType data = default) => default;
 
         public virtual ReturnType VisitTypeDeclaration(AstTypeDecl type, DataType data = default) => default;
 

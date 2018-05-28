@@ -22,6 +22,11 @@ namespace Cheez.Compiler.ParseTree
         }
 
         public abstract AstStatement CreateAst();
+        
+        public Dictionary<string, AstDirective> CreateDirectivesAst()
+        {
+            return Directives?.Select(d => d.CreateAst()).ToDictionary(d => d.Name);
+        }
     }
 
     public class PTErrorStmt : PTStatement

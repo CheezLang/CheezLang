@@ -27,7 +27,7 @@ namespace Cheez.Compiler.ParseTree
 
         public override AstStatement CreateAst()
         {
-            var dirs = Directives.Select(d => d.CreateAst()).ToDictionary(d => d.Name);
+            var dirs = CreateDirectivesAst();
             return new AstVariableDecl(this, Name.Name, Initializer?.CreateAst(), dirs);
         }
     }
@@ -99,7 +99,7 @@ namespace Cheez.Compiler.ParseTree
         {
             var p = Parameters.Select(x => new AstFunctionParameter(x)).ToList();
             var s = Statements?.Select(x => x.CreateAst()).ToList();
-            var dirs = Directives?.Select(d => d.CreateAst()).ToDictionary(d => d.Name);
+            var dirs = CreateDirectivesAst();
             return new AstFunctionDecl(this, Name.Name, p, s, dirs, RefSelf);
         }
     }
@@ -140,7 +140,7 @@ namespace Cheez.Compiler.ParseTree
         public override AstStatement CreateAst()
         {
             var mems = Members.Select(m => m.CreateAst()).ToList();
-            var dirs = Directives.Select(d => d.CreateAst()).ToDictionary(d => d.Name);
+            var dirs = CreateDirectivesAst();
             return new AstTypeDecl(this, mems, dirs);
         }
     }
@@ -204,6 +204,28 @@ namespace Cheez.Compiler.ParseTree
             var mems = Members.Select(m => m.CreateAst()).ToList();
             var dirs = Directives?.Select(d => d.CreateAst()).ToDictionary(d => d.Name);
             return new AstEnumDecl(this, Name.Name, mems, dirs);
+        }
+    }
+
+    #endregion
+
+    #region Type Alias
+
+    public class PTTypeAliasDecl : PTStatement
+    {
+        public PTIdentifierExpr Name { get; set; }
+        public PTTypeExpr Type { get; set; }
+
+        public PTTypeAliasDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, PTTypeExpr type, List<PTDirective> directives = null) : base(beg, end, directives)
+        {
+            this.Name = name;
+            this.Type = type;
+        }
+
+        public override AstStatement CreateAst()
+        {
+            var dirs = CreateDirectivesAst();
+            return new AstTypeAliasDecl(this, Name.Name, dirs);
         }
     }
 

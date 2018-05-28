@@ -296,9 +296,8 @@ namespace Cheez.Compiler.Parsing
                     return (false, ParseFunctionDeclaration());
                 case TokenType.KwVar:
                     return (false, ParseVariableDeclaration(TokenType.ClosingBrace));
-                case TokenType.KwPrint:
-                case TokenType.KwPrintln:
-                    return (false, ParsePrintStatement());
+                case TokenType.KwType:
+                    return (false, ParseTypeAliasStatement());
                 case TokenType.KwIf:
                     return (false, ParseIfStatement());
                 case TokenType.KwWhile:
@@ -685,35 +684,22 @@ namespace Cheez.Compiler.Parsing
             return new PTIfStmt(beginning, end, condition, ifCase, elseCase);
         }
 
-        private PTPrintStmt ParsePrintStatement()
+        private PTTypeAliasDecl ParseTypeAliasStatement()
         {
-            List<PTExpr> expr = new List<PTExpr>();
-            PTExpr seperator = null;
-
-            var beginning = ReadToken(true);
-            if (beginning.type != TokenType.KwPrint && beginning.type != TokenType.KwPrintln)
+            var beg = Expect(TokenType.KwType, true).location;
+            
+            var name = ParseIdentifierExpr(true) as PTIdentifierExpr;
+            if (name == null)
+                return null;
+            
+            if (!Consume(TokenType.Equal, true))
             {
-                ReportError(beginning.location, "Failed to parse print statement");
-                RecoverStatement();
                 return null;
             }
 
-            var next = PeekToken(skipNewLines: true);
-            if (next.type == TokenType.OpenParen)
-            {
-                NextToken();
-                seperator = ParseExpression();
-                Expect(TokenType.ClosingParen, skipNewLines: true);
-            }
+            var type = ParseTypeExpression();
 
-            do
-            {
-                var e = ParseExpression();
-                if (e != null)
-                    expr.Add(e);
-            } while (ConsumeOptionalToken(TokenType.Comma, skipNewLines: false) != null);
-
-            return new PTPrintStmt(beginning.location, expr.Last().End, expr, seperator, beginning.type == TokenType.KwPrintln);
+            return new PTTypeAliasDecl(beg, type.End, name, type);
         }
 
         private PTFunctionDecl ParseFunctionDeclaration()

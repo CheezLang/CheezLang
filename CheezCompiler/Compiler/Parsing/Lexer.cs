@@ -68,8 +68,7 @@ namespace Cheez.Compiler.Parsing
         KwTrue,
         KwFalse,
         KwUsing,
-        KwPrint, // @Temporary
-        KwPrintln, // @Temporary
+        KwType
     }
 
     public class TokenLocation
@@ -381,8 +380,7 @@ namespace Cheez.Compiler.Parsing
                 case "false": token.type = TokenType.KwFalse; break;
                 case "using": token.type = TokenType.KwUsing; break;
                 case "enum": token.type = TokenType.KwEnum; break;
-                case "print": token.type = TokenType.KwPrint; break; // @Temporary
-                case "println": token.type = TokenType.KwPrintln; break; // @Temporary
+                case "type": token.type = TokenType.KwType; break;
             }
         }
 

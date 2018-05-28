@@ -352,7 +352,24 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #endregion
 
-        #region Functions
+        #region Statements
+
+        public override IEnumerable<object> VisitTypeAlias(AstTypeAliasDecl al, SemanticerData data = null)
+        {
+            al.Scope = data.Scope;
+            al.Type = al.Scope.GetCheezType(al.ParseTreeNode.Type);
+            if (!al.Scope.DefineType(al.Name, al.Type))
+            {
+                yield return new GenericError(data.Text, al.GenericParseTreeNode, $"Type type name '{al.Name}' already exists in current scope");
+            }
+        }
+
+        public override IEnumerable<object> VisitEmptyExpression(AstEmptyExpr em, SemanticerData data = null)
+        {
+            em.Scope = data.Scope;
+            em.Type = CheezType.Error;
+            yield break;
+        }
 
         public override IEnumerable<object> VisitEnumDeclaration(AstEnumDecl en, SemanticerData data = null)
         {
@@ -503,33 +520,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             yield break;
         }
-
-        public override IEnumerable<object> VisitPrintStatement(AstPrintStmt print, SemanticerData data = null)
-        {
-            var scope = data.Scope;
-            print.Scope = scope;
-
-            if (print.Separator != null)
-            {
-                foreach (var v in print.Separator.Accept(this, data.Clone()))
-                    if (v is ReplaceAstExpr r)
-                        print.Separator = r.NewExpression;
-                    else
-                        yield return v;
-            }
-
-            for (int i = 0; i < print.Expressions.Count; i++)
-            {
-                foreach (var v in print.Expressions[i].Accept(this, data.Clone()))
-                    if (v is ReplaceAstExpr r)
-                        print.Expressions[i] = r.NewExpression;
-                    else
-                        yield return v;
-            }
-
-            yield break;
-        }
-
+        
         public override IEnumerable<object> VisitIfStatement(AstIfStmt ifs, SemanticerData data = null)
         {
             var scope = data.Scope;

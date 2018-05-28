@@ -181,17 +181,6 @@ namespace CheezLanguageServer
             return new NodeFinderResult(variable.Scope, stmt: variable);
         }
 
-        public override NodeFinderResult VisitPrintStatement(AstPrintStmt print, int index = 0)
-        {
-            foreach (var sub in print.Expressions)
-            {
-                if (GetRelativeLocation(sub.GenericParseTreeNode, index) == RelativeLocation.Same)
-                    return sub.Accept(this, index);
-            }
-
-            return new NodeFinderResult(print.Scope, stmt: print);
-        }
-
         public override NodeFinderResult VisitReturnStatement(AstReturnStmt ret, int index = 0)
         {
             if (ret.ReturnValue != null && GetRelativeLocation(ret.ReturnValue.GenericParseTreeNode, index) == RelativeLocation.Same)

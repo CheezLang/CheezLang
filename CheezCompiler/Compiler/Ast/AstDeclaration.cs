@@ -1,4 +1,5 @@
-﻿using Cheez.Compiler.Visitor;
+﻿using Cheez.Compiler.ParseTree;
+using Cheez.Compiler.Visitor;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -223,6 +224,30 @@ namespace Cheez.Compiler.Ast
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return visitor.VisitEnumDeclaration(this, data);
+        }
+    }
+
+    #endregion
+
+    #region Type Alias
+
+    public class AstTypeAliasDecl : AstStatement
+    {
+        public PTTypeAliasDecl ParseTreeNode => GenericParseTreeNode as PTTypeAliasDecl;
+        public override PTStatement GenericParseTreeNode { get; }
+
+        public string Name { get; set; }
+        public CheezType Type { get; set; }
+
+        public AstTypeAliasDecl(PTStatement node, string name, Dictionary<string, AstDirective> dirs = null) : base(dirs)
+        {
+            this.GenericParseTreeNode = node;
+            this.Name = name;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitTypeAlias(this, data);
         }
     }
 

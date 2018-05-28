@@ -135,16 +135,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             return default;
         }
 
-        public override ScopeCreatorResult VisitPrintStatement(AstPrintStmt print, ScopeCreatorArg data = default)
-        {
-            print.Scope = data.scope;
-            foreach (var e in print.Expressions)
-            {
-                CreateScopes(e, data.scope);
-            }
-            return default;
-        }
-
         public override ScopeCreatorResult VisitReturnStatement(AstReturnStmt ret, ScopeCreatorArg data = default)
         {
             ret.Scope = data.scope;

@@ -63,7 +63,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Cheez\CheezCompiler.csproj">
+    <ProjectReference Include="..\CheezCompiler\CheezCompiler.csproj">
       <Project>{18994e2f-310a-460f-ab2f-3af665ce7f67}</Project>
       <Name>CheezCompiler</Name>
     </ProjectReference>

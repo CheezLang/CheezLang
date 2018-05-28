@@ -9,6 +9,7 @@
 	"typescript.tsc.autoDetect": "off",
 	"files.associations": {
 		"*.che": "cheezlang",
-		"xstring": "cpp"
+		"xstring": "cpp",
+		"cstdio": "cpp"
 	}
 }

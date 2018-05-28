@@ -1,5 +1,9 @@
 #load("io.che")
+#load("stdio.che")
 
 fn Main() {
     printf("%d`n", 123)
+    printf("%d`n", 456)
+    fflush(stdout)
+    Printlnf("some number {i32}", <void*><int>987)
 }

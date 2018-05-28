@@ -114,7 +114,6 @@
     <Compile Include="Compiler\Ast\AstDirective.cs" />
     <Compile Include="Compiler\Ast\AstDeclaration.cs" />
     <Compile Include="Compiler\Ast\AstExpression.cs" />
-    <Compile Include="Compiler\Ast\AstPrintStatement.cs" />
     <Compile Include="Compiler\Ast\AstStatement.cs" />
     <Compile Include="Compiler\CodeGeneration\CppCodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\ICodeGenerator.cs" />
@@ -133,7 +132,6 @@
     <Compile Include="Compiler\ParseTree\PTDeclarations.cs" />
     <Compile Include="Compiler\ParseTree\PTDirective.cs" />
     <Compile Include="Compiler\ParseTree\PTExpressions.cs" />
-    <Compile Include="Compiler\ParseTree\PTPrintStatement.cs" />
     <Compile Include="Compiler\ParseTree\PTStatements.cs" />
     <Compile Include="Compiler\ParseTree\PTTypeExpression.cs" />
     <Compile Include="Compiler\Parsing\Lexer.cs" />

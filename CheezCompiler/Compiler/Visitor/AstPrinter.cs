@@ -20,12 +20,6 @@ namespace Cheez.Compiler.Visitor
             return string.Join("\n", s.Split('\n').Select(line => $"{new string(' ', level)}{line}"));
         }
 
-        public override string VisitPrintStatement(AstPrintStmt print, int indentLevel = 0)
-        {
-            string str = string.Join(", ", print.Expressions.Select(e => e.Accept(this)));
-            return Indent($"print {str}", indentLevel);
-        }
-
         public override string VisitStringLiteral(AstStringLiteral str, int data = 0)
         {
             return $"\"{str.Value.Replace("`", "``").Replace("\r", "").Replace("\n", "`n").Replace("\"", "`\"")}\"";

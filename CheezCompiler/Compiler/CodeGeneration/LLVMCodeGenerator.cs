@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Cheez.Compiler.CodeGeneration
 {
@@ -72,7 +73,7 @@ namespace Cheez.Compiler.CodeGeneration
             }
 
             // generate file
-            {
+            if (true) {
                 LLVM.PrintModuleToFile(module, $"{targetFile}.ll", out string llvmErrors);
                 if (!string.IsNullOrWhiteSpace(llvmErrors))
                     Console.Error.WriteLine($"[LLVM-validate-print] {llvmErrors}");
@@ -90,7 +91,42 @@ namespace Cheez.Compiler.CodeGeneration
                 }
             }
 
-            
+            {
+                LLVM.InitializeX86TargetMC();
+                LLVM.InitializeX86Target();
+                LLVM.InitializeX86TargetInfo();
+                LLVM.InitializeX86AsmParser();
+                LLVM.InitializeX86AsmPrinter();
+
+                LLVMTargetRef target = default;
+                if (LLVM.GetTargetFromTriple(targetTriple, out target, out var llvmTargetError))
+                {
+                    System.Console.Error.WriteLine(llvmTargetError);
+                    return false;
+                }
+                var targetMachine = LLVM.CreateTargetMachine(
+                    target, 
+                    targetTriple, 
+                    "generic", 
+                    "", 
+                    LLVMCodeGenOptLevel.LLVMCodeGenLevelNone, 
+                    LLVMRelocMode.LLVMRelocDefault, 
+                    LLVMCodeModel.LLVMCodeModelDefault);
+
+                var objFile = targetFile + ".obj";
+                var dir = Path.GetDirectoryName(Path.GetFullPath(targetFile));
+                objFile = Path.Combine(dir, Path.GetFileName(objFile));
+                var filename = Marshal.StringToCoTaskMemAnsi(objFile);
+                var uiae = Marshal.PtrToStringAnsi(filename);
+
+                if (LLVM.TargetMachineEmitToFile(targetMachine, module, filename, LLVMCodeGenFileType.LLVMObjectFile, out string llvmError))
+                {
+                    System.Console.Error.WriteLine(llvmError);
+                    return false;
+                }
+
+
+            }
 
             // cleanup
             LLVM.DisposeModule(module);
@@ -99,26 +135,27 @@ namespace Cheez.Compiler.CodeGeneration
 
         public bool CompileCode()
         {
-            var filename = Path.GetFileNameWithoutExtension(targetFile + ".ll");
+            var filename = Path.GetFileNameWithoutExtension(targetFile + ".x");
             var dir = Path.GetDirectoryName(Path.GetFullPath(targetFile));
-            // compile .ll to .obj
-            var llc = Util.StartProcess(
-                "llc.exe",
-                new List<string>()
-                {
-                    "-O0",
-                    "-filetype=obj",
-                    "-o",
-                    $"{filename}.obj",
-                    $"{filename}.ll"
-                },
-                dir,
-                CreateHandler("llc.exe", Console.Out),
-                CreateHandler("llc.exe - ERROR", Console.Error)
-                );
-            llc.WaitForExit();
-            if (llc.ExitCode != 0)
-                return false;
+
+            //// compile .ll to .obj
+            //var llc = Util.StartProcess(
+            //    "llc.exe",
+            //    new List<string>()
+            //    {
+            //        "-O0",
+            //        "-filetype=obj",
+            //        "-o",
+            //        $"{filename}.obj",
+            //        $"{filename}.ll"
+            //    },
+            //    dir,
+            //    CreateHandler("llc.exe", Console.Out),
+            //    CreateHandler("llc.exe - ERROR", Console.Error)
+            //    );
+            //llc.WaitForExit();
+            //if (llc.ExitCode != 0)
+            //    return false;
 
             // link .obj to .exe
             var link = Util.StartProcess(
@@ -160,8 +197,8 @@ namespace Cheez.Compiler.CodeGeneration
                     $"{filename}.obj"
                 },
                 dir,
-                CreateHandler("link.exe", Console.Out),
-                CreateHandler("link.exe - ERROR", Console.Error)
+                stdout: CreateHandler("link.exe", Console.Out),
+                stderr: CreateHandler("link.exe - ERROR", Console.Error)
                 );
             link.WaitForExit();
             if (link.ExitCode != 0)
@@ -949,23 +986,5 @@ namespace Cheez.Compiler.CodeGeneration
         }
 
         #endregion
-
-
-
-        public override LLVMValueRef VisitPrintStatement(AstPrintStmt print, LLVMCodeGeneratorData data = null)
-        {
-            var val = print.Expressions.First().Accept(this, data);
-            var casted = LLVM.BuildPointerCast(data.Builder, val, LLVM.PointerType(LLVM.Int8Type(), 0), "");
-
-            //if (print.NewLine)
-            //{
-            //    LLVM.BuildCall(data.Builder, llvmPrintln, new LLVMValueRef[] { casted }, "");
-            //}
-            //else
-            //{
-            //    LLVM.BuildCall(data.Builder, llvmPrint, new LLVMValueRef[] { casted }, "");
-            //}
-            return val;
-        }
     }
 }

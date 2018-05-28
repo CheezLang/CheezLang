@@ -314,35 +314,7 @@ void _flush_cout() {
             nameDecorator.SetCurrentScope(prevScope);
             return Indent(sb.ToString(), data.indent);
         }
-
-        public override string VisitPrintStatement(AstPrintStmt print, CppCodeGeneratorArgs data)
-        {
-            var sb = new StringBuilder();
-            sb.Append("std::cout");
-
-            bool isFirst = true;
-            var sepSb = new StringBuilder();
-
-            sepSb.Append(GenerateCode(print.Separator, null) ?? "");
-            var sep = sepSb.ToString();
-            foreach (var e in print.Expressions)
-            {
-                if (!isFirst && print.Separator != null)
-                    sb.Append(" << ").Append(sep);
-                sb.Append(" << ");
-                sb.Append(GenerateCode(e, null));
-
-                isFirst = false;
-            }
-
-            if (print.NewLine)
-            {
-                sb.Append(" << std::endl");
-            }
-
-            return Indent(sb.ToString(), data.indent);
-        }
-
+        
         public override string VisitExpressionStatement(AstExprStmt stmt, CppCodeGeneratorArgs data)
         {
             return $"{GenerateCode(stmt.Expr, null)}";
