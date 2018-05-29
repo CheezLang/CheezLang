@@ -13,7 +13,7 @@ namespace Cheez.Compiler.Ast
 
     public abstract class AstExpression : IVisitorAcceptor
     {
-        public int Id { get; }
+        //public int Id { get; }
 
         public abstract ParseTree.PTExpr GenericParseTreeNode { get; set; }
 
@@ -24,7 +24,6 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public AstExpression()
         {
-            this.Id = Util.NewId;
         }
 
         [DebuggerStepThrough]
@@ -38,19 +37,7 @@ namespace Cheez.Compiler.Ast
         {
             return (mFlags & (1 << (int)f)) != 0;
         }
-
-        [DebuggerStepThrough]
-        public override bool Equals(object obj)
-        {
-            return obj == this;
-        }
-
-        [DebuggerStepThrough]
-        public override int GetHashCode()
-        {
-            return Id.GetHashCode();
-        }
-
+        
         [DebuggerStepThrough]
         public abstract T Accept<T, D>(IVisitor<T, D> visitor, D data = default);
 

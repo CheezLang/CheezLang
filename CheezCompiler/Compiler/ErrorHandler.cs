@@ -14,4 +14,19 @@ namespace Cheez.Compiler
 
         bool HasErrors { get; }
     }
+
+    public class SilentErrorHandler : IErrorHandler
+    {
+        public bool HasErrors { get; private set; }
+
+        public void ReportError(string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        {
+            HasErrors = true;
+        }
+
+        public void ReportError(IText text, ILocation location, string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        {
+            HasErrors = true;
+        }
+    }
 }

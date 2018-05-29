@@ -300,6 +300,11 @@ namespace Cheez.Compiler.Parsing
                     ParseIdentifier(ref token);
                     CheckKeywords(ref token);
                     break;
+
+                default:
+                    token.type = TokenType.Unknown;
+                    mLocation.index += 1;
+                    break;
             }
 
             token.location.end = mLocation.index;

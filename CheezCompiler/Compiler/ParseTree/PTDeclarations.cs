@@ -190,7 +190,6 @@ namespace Cheez.Compiler.ParseTree
     {
         public PTIdentifierExpr Name { get; }
         public List<PTEnumMember> Members { get; }
-        public List<PTDirective> Directives { get; }
 
         public PTEnumDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTEnumMember> members, List<PTDirective> directives) : base(beg, end)
         {

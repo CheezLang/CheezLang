@@ -1,31 +1,6 @@
-#load("io.che")
-#load("stdio.che")
-
-// void * __enclave_config;
-// need it because without it the program wont link
-let #extern __enclave_config: ubyte*
+// #load("io.che")
+// #load("stdio.che")
 
 fn Main() {
-    PrintString("PrintString(`"Hello World!``n`")`n")
-    PrintString("Hello World!`n")
-
-    Println("")
-
-    Println("Println(`"Hello World!`")")
-    Println("Hello World!")
-
-    Println("")
     
-    Printf("{s}`n", <void*>"Printf(`"{s}``n`", <void*>`"Hello World!`")")
-    Printf("{s}`n", <void*>"Hello World!")
-
-    Println("")
-
-    Printlnf("{s}", <void*>"Printlnf(`"{s}`", <void*>`"Hello World!`")")
-    Printlnf("{s}", <void*>"Hello World!")
-
-    Println("")
-    
-    printf("%s`n", <void*>"printf(`"%s``n`", <void*>`"Hello World!`")")
-    printf("%s`n", <void*>"Hello World!")
 }

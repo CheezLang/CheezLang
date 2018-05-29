@@ -7,6 +7,7 @@ using Cheez.Compiler;
 using Cheez.Compiler.Ast;
 using Cheez.Compiler.CodeGeneration;
 using Cheez.Compiler.ParseTree;
+using Cheez.Compiler.Visitor;
 using LanguageServer;
 using LanguageServer.Json;
 using LanguageServer.Parameters;
@@ -62,6 +63,14 @@ namespace CheezLanguageServer
             {
                 var filePath = GetFilePath(document.uri);
                 file = _compiler.AddFile(filePath, document.text, reparse: true);
+
+                var astFilePath = Path.Combine(Path.GetDirectoryName(filePath), Path.GetFileNameWithoutExtension(filePath) + ".ast");
+                
+                using (var astFile = new StreamWriter(File.Open(astFilePath, FileMode.Truncate, FileAccess.Write, FileShare.Write)))
+                {
+                    var printer = new AstPrinter();
+                    printer.PrintWorkspace(_compiler.DefaultWorkspace, astFile);
+                }
 
                 if (!_errorHandler.HasErrors)
                 {
@@ -145,10 +154,10 @@ namespace CheezLanguageServer
                         commands = new string[] { "reload_language_server" }
                     },
                     hoverProvider = true,
-                    completionProvider = new CompletionOptions
-                    {
-                        resolveProvider = false
-                    }
+                    //completionProvider = new CompletionOptions
+                    //{
+                    //    resolveProvider = false
+                    //}
                 }
             };
 
