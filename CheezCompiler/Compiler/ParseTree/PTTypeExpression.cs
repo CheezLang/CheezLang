@@ -23,6 +23,11 @@ namespace Cheez.Compiler.ParseTree
         public PTErrorTypeExpr(TokenLocation beg, TokenLocation end = null) : base(beg, end ?? beg)
         {
         }
+
+        public override string ToString()
+        {
+            return "§";
+        }
     }
 
     public class PTNamedTypeExpr : PTTypeExpr

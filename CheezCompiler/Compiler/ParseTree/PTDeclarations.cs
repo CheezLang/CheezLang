@@ -215,7 +215,7 @@ namespace Cheez.Compiler.ParseTree
         public PTIdentifierExpr Name { get; set; }
         public PTTypeExpr Type { get; set; }
 
-        public PTTypeAliasDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, PTTypeExpr type, List<PTDirective> directives = null) : base(beg, end, directives)
+        public PTTypeAliasDecl(TokenLocation beg, PTIdentifierExpr name, PTTypeExpr type, List<PTDirective> directives = null) : base(beg, type.End, directives)
         {
             this.Name = name;
             this.Type = type;

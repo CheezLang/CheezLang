@@ -517,7 +517,7 @@ namespace Cheez.Compiler.Ast
 
     public class AstTypeExpr : AstExpression
     {
-        //public ParseTree.PTTypeExpr ParseTreeNode { get; set; }
+        public ParseTree.PTTypeExpr ParseTreeNode => GenericParseTreeNode as ParseTree.PTTypeExpr;
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
 
         [DebuggerStepThrough]

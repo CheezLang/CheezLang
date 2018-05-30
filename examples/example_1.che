@@ -1,6 +1,14 @@
 // #load("io.che")
 // #load("stdio.che")
 
-fn Main() {
+fn Main()
+{
     
+}
+
+impl int { 
+    fn test() -> int
+    {
+        return self * self
+    }
 }

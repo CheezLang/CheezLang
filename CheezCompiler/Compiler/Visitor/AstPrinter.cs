@@ -23,23 +23,62 @@ namespace Cheez.Compiler.Visitor
             var statements = function.Statements.Select(s => s.Accept(this));
             var statementsStr = string.Join("\n", statements);
 
-            var head = $"fn {function.Name}()";
+            var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name}: {p.ParseTreeNode.Type}"));
+            var head = $"fn {function.Name}({pars})";
+
+            if (function.ParseTreeNode.ReturnType != null)
+            {
+                head += $" -> {function.ParseTreeNode.ReturnType}";
+            }
+
             var body = statementsStr;
 
             return $"{head} {{\n{body.Indent(4)}\n}}".Indent(indentLevel);
         }
 
+        public override string VisitReturnStatement(AstReturnStmt ret, int data = 0)
+        {
+            if (ret.ReturnValue != null)
+                return $"return {ret.ReturnValue.Accept(this, 0)}";
+            return "return";
+        }
+
+        public override string VisitTypeAlias(AstTypeAliasDecl al, int data = 0)
+        {
+            return $"type {al.Name} = {al.ParseTreeNode.Type}";
+        }
+
+        public override string VisitUsingStatement(AstUsingStmt use, int data = 0)
+        {
+            return $"using {use.Value.Accept(this, 0)}";
+        }
+
+        public override string VisitTypeDeclaration(AstTypeDecl type, int data = 0)
+        {
+            var body = string.Join("\n", type.Members.Select(m => $"{m.Name}: {m.ParseTreeNode.Type}"));
+            return $"struct {type.Name} {{\n{body.Indent(4)}\n}}";
+        }
+
+        public override string VisitTypeExpression(AstTypeExpr type, int data = 0)
+        {
+            return type.GenericParseTreeNode.ToString();
+        }
+
+        public override string VisitImplBlock(AstImplBlock impl, int data = 0)
+        {
+            var body = string.Join("\n\n", impl.Functions.Select(f => f.Accept(this, 0)));
+
+            return $"impl {impl.ParseTreeNode.Target} {{\n{body.Indent(4)}\n}}";
+        }
+
         public override string VisitVariableDeclaration(AstVariableDecl variable, int indentLevel = 0)
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("var ").Append(variable.Name);
-            if (variable.Type != null)
-                sb.Append(" : ").Append(variable.Type);
+            sb.Append("let ").Append(variable.Name);
+            if (variable.ParseTreeNode.Type != null)
+                sb.Append($": {variable.ParseTreeNode.Type}");
             if (variable.Initializer != null)
-            {
-                sb.Append(" = ");
-                sb.Append(variable.Initializer.Accept(this, indentLevel));
-            }
+                sb.Append($" = {variable.Initializer.Accept(this, indentLevel)}");
             return sb.ToString();
         }
 

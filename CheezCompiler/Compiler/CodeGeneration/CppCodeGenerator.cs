@@ -461,18 +461,8 @@ void _flush_cout() {
         {
             var sb = new StringBuilder();
             sb.Append("for (");
-
-            if (ws.PreAction != null)
-            {
-                sb.Append(ws.PreAction.Accept(this));
-            }
-
+            
             sb.Append("; ").Append(ws.Condition.Accept(this)).Append("; ");
-
-            if (ws.PostAction != null)
-            {
-                sb.Append(ws.PostAction.Accept(this));
-            }
 
             sb.Append(") ");
             sb.Append(ws.Body.Accept(this));

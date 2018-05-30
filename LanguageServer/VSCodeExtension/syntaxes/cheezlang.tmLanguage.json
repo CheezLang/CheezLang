@@ -171,7 +171,7 @@
 		},
 		{
 			"comment": "Function definition",
-			"begin": "\\b(ref\\s+)?(fn)\\s+([A-Za-z][A-Za-z0-9_]*)",
+			"begin": "\\b(ref[\\s\\n]+)?(fn)[\\s\\n]+([A-Za-z][A-Za-z0-9_]*)",
 			"end": "[\\{;]",
 			"beginCaptures": {
 				"1": {

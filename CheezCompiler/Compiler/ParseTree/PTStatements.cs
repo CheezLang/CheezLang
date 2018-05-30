@@ -130,20 +130,16 @@ namespace Cheez.Compiler.ParseTree
     {
         public PTExpr Condition { get; set; }
         public PTStatement Body { get; set; }
-        public PTVariableDecl PreAction { get; set; }
-        public PTStatement PostAction { get; set; }
 
-        public PTWhileStmt(TokenLocation beg, TokenLocation end, PTExpr cond, PTStatement body, PTVariableDecl pre, PTStatement post) : base(beg, end)
+        public PTWhileStmt(TokenLocation beg, PTExpr cond, PTStatement body) : base(beg, body.End)
         {
             this.Condition = cond;
             this.Body = body;
-            this.PreAction = pre;
-            this.PostAction = post;
         }
 
         public override AstStatement CreateAst()
         {
-            return new AstWhileStmt(this, Condition.CreateAst(), Body.CreateAst(), PreAction?.CreateAst(), PostAction?.CreateAst());
+            return new AstWhileStmt(this, Condition.CreateAst(), Body.CreateAst());
         }
     }
 

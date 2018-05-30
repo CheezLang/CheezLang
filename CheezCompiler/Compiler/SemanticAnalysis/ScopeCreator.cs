@@ -123,15 +123,10 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             ws.Scope = data.scope;
             var subScope = NewScope("while", data.scope);
-            var res = CreateScopes(ws.PreAction, subScope);
-            subScope = res.scope ?? subScope;
 
             CreateScopes(ws.Condition, subScope);
             CreateScopes(ws.Body, subScope);
-
-            CreateScopes(ws.PostAction, subScope);
-
-
+            
             return default;
         }
 

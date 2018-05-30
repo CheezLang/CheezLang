@@ -59,17 +59,13 @@ namespace Cheez.Compiler.Ast
 
         public AstExpression Condition { get; set; }
         public AstStatement Body { get; set; }
-        public AstStatement PreAction { get; set; }
-        public AstStatement PostAction { get; set; }
 
 
-        public AstWhileStmt(ParseTree.PTWhileStmt node, AstExpression cond, AstStatement body, AstStatement pre, AstStatement post) : base()
+        public AstWhileStmt(ParseTree.PTWhileStmt node, AstExpression cond, AstStatement body) : base()
         {
             ParseTreeNode = node;
             this.Condition = cond;
             this.Body = body;
-            this.PreAction = pre;
-            this.PostAction = post;
         }
 
         [DebuggerStepThrough]

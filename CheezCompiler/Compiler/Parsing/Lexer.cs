@@ -51,14 +51,14 @@ namespace Cheez.Compiler.Parsing
         ClosingBracket,
 
         KwReturn,
-        KwCast,
+        KwNew,
         KwRef,
         KwFn,
         KwStruct,
         KwEnum,
         KwImpl,
         KwConstant,
-        KwVar,
+        KwLet,
         KwIf,
         KwElse,
         KwFor,
@@ -368,13 +368,13 @@ namespace Cheez.Compiler.Parsing
             switch (token.data as string)
             {
                 case "return": token.type = TokenType.KwReturn; break;
-                case "cast": token.type = TokenType.KwCast; break;
+                case "new": token.type = TokenType.KwNew; break;
                 case "ref": token.type = TokenType.KwRef; break;
                 case "fn": token.type = TokenType.KwFn; break;
                 case "struct": token.type = TokenType.KwStruct; break;
                 case "impl": token.type = TokenType.KwImpl; break;
                 case "constant": token.type = TokenType.KwConstant; break;
-                case "let": token.type = TokenType.KwVar; break;
+                case "let": token.type = TokenType.KwLet; break;
                 case "if": token.type = TokenType.KwIf; break;
                 case "else": token.type = TokenType.KwElse; break;
                 case "for": token.type = TokenType.KwFor; break;
