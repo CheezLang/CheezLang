@@ -118,7 +118,6 @@
     <Compile Include="Compiler\CodeGeneration\CppCodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\ICodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVMCodeGenerator.cs" />
-    <Compile Include="Compiler\CompilationQueue.cs" />
     <Compile Include="Compiler\Compiler.cs" />
     <Compile Include="Compiler\CType.cs" />
     <Compile Include="Compiler\ErrorHandler.cs" />
@@ -127,7 +126,6 @@
     <Compile Include="Compiler\IR\IRFunction.cs" />
     <Compile Include="Compiler\IR\IRInstruction.cs" />
     <Compile Include="Compiler\IR\IRInterpreter.cs" />
-    <Compile Include="Compiler\Operator.cs" />
     <Compile Include="Compiler\ParseTree\ParseTreeItem.cs" />
     <Compile Include="Compiler\ParseTree\PTDeclarations.cs" />
     <Compile Include="Compiler\ParseTree\PTDirective.cs" />
@@ -136,12 +134,8 @@
     <Compile Include="Compiler\ParseTree\PTTypeExpression.cs" />
     <Compile Include="Compiler\Parsing\Lexer.cs" />
     <Compile Include="Compiler\Parsing\Parser.cs" />
-    <Compile Include="Compiler\PriorityQueue.cs" />
     <Compile Include="Compiler\Scope.cs" />
-    <Compile Include="Compiler\SemanticAnalysis\ScopeCreator.cs" />
     <Compile Include="Compiler\SemanticAnalysis\Semanticer.cs" />
-    <Compile Include="Compiler\SemanticAnalysis\TypeChecker.cs" />
-    <Compile Include="Compiler\StatementQueue.cs" />
     <Compile Include="Compiler\UniqueNameDecorator.cs" />
     <Compile Include="Compiler\Util.cs" />
     <Compile Include="Compiler\Visitor\AstPrinter.cs" />
@@ -153,9 +147,7 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Compiler\VM\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets" Condition="Exists('..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
