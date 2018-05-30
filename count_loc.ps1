@@ -29,6 +29,8 @@ Foreach-Object {
     "$fileName,$lines"
 } | Out-File $outputFile -Append -encoding "UTF8"
 
+"Total,$totalLineCount" | Out-File $outputFile  -Append -encoding "UTF8"
+
 Write-Host ""
 $totalLineCountStr = "{0,40}: {1} lines in {2} file(s)" -f "Total",$totalLineCount,$totalFileCount
 Write-Host $totalLineCountStr
