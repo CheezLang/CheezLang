@@ -4,7 +4,6 @@ Parser.cs,907
 LLVMCodeGenerator.cs,822
 Lexer.cs,632
 CppCodeGenerator.cs,566
-TypeChecker.cs,536
 AstExpression.cs,509
 CType.cs,317
 Scope.cs,297
@@ -12,21 +11,16 @@ PTExpressions.cs,253
 AstPrinter.cs,209
 AstDeclaration.cs,199
 PTDeclarations.cs,188
-ScopeCreator.cs,184
 AstStatement.cs,171
 PTStatements.cs,145
 Compiler.cs,118
-StatementQueue.cs,95
 Util.cs,92
 PTTypeExpression.cs,79
-PriorityQueue.cs,77
 Visitor.cs,72
-CompilationQueue.cs,65
 IOperator.cs,60
 IRFunction.cs,56
 IRInstruction.cs,55
 Workspace.cs,53
-Operator.cs,48
 IRBuilder.cs,48
 UniqueNameDecorator.cs,48
 PTDirective.cs,26
@@ -35,4 +29,4 @@ ParseTreeItem.cs,24
 IRInterpreter.cs,19
 AstDirective.cs,16
 ICodeGenerator.cs,8
-Total,8210
+Total,7205
