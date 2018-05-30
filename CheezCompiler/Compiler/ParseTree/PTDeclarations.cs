@@ -65,25 +65,29 @@ namespace Cheez.Compiler.ParseTree
         public PTIdentifierExpr Name { get; }
         public List<PTFunctionParam> Parameters { get; }
 
+        public List<PTIdentifierExpr> Generics { get; }
+
         public PTTypeExpr ReturnType { get; }
 
-        public List<PTStatement> Statements { get; private set; }
+        public PTBlockStmt Body { get; private set; }
 
         public bool RefSelf { get; set; }
-        
-        public PTFunctionDecl(TokenLocation beg, 
-            TokenLocation end, 
-            PTIdentifierExpr name, 
-            List<PTFunctionParam> parameters, 
-            PTTypeExpr returnType, 
-            List<PTStatement> statements = null, 
-            List<PTDirective> directives = null, 
+
+        public PTFunctionDecl(TokenLocation beg,
+            TokenLocation end,
+            PTIdentifierExpr name,
+            List<PTIdentifierExpr> generics,
+            List<PTFunctionParam> parameters,
+            PTTypeExpr returnType,
+            PTBlockStmt body = null,
+            List<PTDirective> directives = null,
             bool refSelf = false)
             : base(beg, end, directives)
         {
             this.Name = name;
+            this.Generics = generics;
             this.Parameters = parameters;
-            this.Statements = statements;
+            this.Body = body;
             this.ReturnType = returnType;
             this.RefSelf = refSelf;
         }
@@ -98,9 +102,10 @@ namespace Cheez.Compiler.ParseTree
         public override AstStatement CreateAst()
         {
             var p = Parameters.Select(x => new AstFunctionParameter(x)).ToList();
-            var s = Statements?.Select(x => x.CreateAst()).ToList();
+            var g = Generics.Select(x => x.CreateAst() as AstIdentifierExpr).ToList();
+            var b = Body?.CreateAst() as AstBlockStmt;
             var dirs = CreateDirectivesAst();
-            return new AstFunctionDecl(this, Name.Name, p, s, dirs, RefSelf);
+            return new AstFunctionDecl(this, Name.Name, g, p, b, dirs, RefSelf);
         }
     }
 

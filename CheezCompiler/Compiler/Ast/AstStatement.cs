@@ -14,12 +14,12 @@ namespace Cheez.Compiler.Ast
 
     public abstract class AstStatement : IVisitorAcceptor
     {
-        private int mFlags = 0;
+        protected int mFlags = 0;
 
         public abstract ParseTree.PTStatement GenericParseTreeNode { get; }
 
         public Scope Scope { get; set; }
-        public Dictionary<string, AstDirective> Directives { get; }
+        public Dictionary<string, AstDirective> Directives { get; protected set; }
 
         public AstStatement(Dictionary<string, AstDirective> dirs = null)
         {
@@ -50,6 +50,8 @@ namespace Cheez.Compiler.Ast
 
         [DebuggerStepThrough]
         public abstract T Accept<T, D>(IVisitor<T, D> visitor, D data = default);
+
+        public abstract AstStatement Clone();
     }
 
     public class AstWhileStmt : AstStatement
@@ -72,6 +74,16 @@ namespace Cheez.Compiler.Ast
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return visitor.VisitWhileStatement(this, data);
+        }
+
+        public override AstStatement Clone()
+        {
+            return new AstWhileStmt(ParseTreeNode, Condition.Clone(), Body.Clone())
+            {
+                Scope = this.Scope,
+                Directives = this.Directives,
+                mFlags = this.mFlags
+            };
         }
     }
 
@@ -98,6 +110,16 @@ namespace Cheez.Compiler.Ast
         {
             return $"return {ReturnValue}";
         }
+
+        public override AstStatement Clone()
+        {
+            return new AstReturnStmt(ParseTreeNode, ReturnValue.Clone())
+            {
+                Scope = this.Scope,
+                Directives = this.Directives,
+                mFlags = this.mFlags
+            };
+        }
     }
 
     public class AstIfStmt : AstStatement
@@ -122,6 +144,16 @@ namespace Cheez.Compiler.Ast
         {
             return visitor.VisitIfStatement(this, data);
         }
+
+        public override AstStatement Clone()
+        {
+            return new AstIfStmt(ParseTreeNode, Condition.Clone(), IfCase.Clone(), ElseCase?.Clone())
+            {
+                Scope = this.Scope,
+                Directives = this.Directives,
+                mFlags = this.mFlags
+            };
+        }
     }
 
     public class AstBlockStmt : AstStatement
@@ -142,6 +174,16 @@ namespace Cheez.Compiler.Ast
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return visitor.VisitBlockStatement(this, data);
+        }
+
+        public override AstStatement Clone()
+        {
+            return new AstBlockStmt(ParseTreeNode, Statements.Select(s => s.Clone()).ToList())
+            {
+                Scope = this.Scope,
+                Directives = this.Directives,
+                mFlags = this.mFlags
+            };
         }
     }
 
@@ -165,6 +207,16 @@ namespace Cheez.Compiler.Ast
         {
             return visitor.VisitAssignment(this, data);
         }
+
+        public override AstStatement Clone()
+        {
+            return new AstAssignment(ParseTreeNode, Target.Clone(), Value.Clone())
+            {
+                Scope = this.Scope,
+                Directives = this.Directives,
+                mFlags = this.mFlags
+            };
+        }
     }
 
     public class AstExprStmt : AstStatement
@@ -186,6 +238,16 @@ namespace Cheez.Compiler.Ast
         {
             return visitor.VisitExpressionStatement(this, data);
         }
+
+        public override AstStatement Clone()
+        {
+            return new AstExprStmt(ParseTreeNode, Expr.Clone())
+            {
+                Scope = this.Scope,
+                Directives = this.Directives,
+                mFlags = this.mFlags
+            };
+        }
     }
 
     public class AstUsingStmt : AstStatement
@@ -201,12 +263,21 @@ namespace Cheez.Compiler.Ast
             ParseTreeNode = node;
             Value = expr;
         }
-
-
+        
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return visitor.VisitUsingStatement(this, data);
+        }
+
+        public override AstStatement Clone()
+        {
+            return new AstUsingStmt(ParseTreeNode, Value.Clone())
+            {
+                Scope = this.Scope,
+                Directives = this.Directives,
+                mFlags = this.mFlags
+            };
         }
     }
 }

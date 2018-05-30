@@ -60,6 +60,14 @@ namespace Cheez.Compiler
             this.Parent = parent;
         }
 
+        public Scope Clone()
+        {
+            return new Scope(Name, Parent)
+            {
+                // @Todo: clone everything?
+            };
+        }
+
         public CheezType GetCheezType(PTTypeExpr expr)
         {
             return types.GetCheezType(expr) ?? Parent?.GetCheezType(expr);

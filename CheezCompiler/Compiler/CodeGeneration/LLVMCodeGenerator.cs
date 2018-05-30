@@ -464,7 +464,7 @@ namespace Cheez.Compiler.CodeGeneration
         {
             var lfunc = functionMap[function];
 
-            if (function.HasImplementation)
+            if (function.Body != null)
             {
                 LLVMBuilderRef builder = LLVM.CreateBuilder();
                 var entry = LLVM.AppendBasicBlock(lfunc, "entry");
@@ -499,10 +499,11 @@ namespace Cheez.Compiler.CodeGeneration
                 // body
                 {
                     var d = new LLVMCodeGeneratorData { Builder = builder, BasicBlock = entry, Function = lfunc };
-                    foreach (var s in function.Statements)
-                    {
-                        s.Accept(this, d);
-                    }
+                    //foreach (var s in function.Statements)
+                    //{
+                    //    s.Accept(this, d);
+                    //}
+                    function.Body.Accept(this, d);
                 }
 
                 if (function.ReturnType == VoidType.Intance)
@@ -756,6 +757,10 @@ namespace Cheez.Compiler.CodeGeneration
             if (call.Function is AstIdentifierExpr i)
             {
                 func = LLVM.GetNamedFunction(module, i.Name);
+            }
+            else if (call.Function is AstFunctionExpression afe)
+            {
+                func = LLVM.GetNamedFunction(module, afe.Declaration.Name);
             }
             else
             {

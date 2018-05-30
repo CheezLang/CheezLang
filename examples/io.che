@@ -69,9 +69,21 @@ fn PrintInt(num: int) {
 
 fn PrintfData(formatSpecifier: string, data: void*) {
     let len = strlen(formatSpecifier)
-    if streq(formatSpecifier, "i32") {
+    if streq(formatSpecifier, "i8") {
+        let d: i8 = <i8>data
+        PrintInt(<i32>d)
+    }
+    else if streq(formatSpecifier, "i16") {
+        let d: i16 = <i16>data
+        PrintInt(<i32>d)
+    }
+    else if streq(formatSpecifier, "i32") {
         let d: i32 = <i32>data
-        PrintInt(d)
+        PrintInt(<i32>d)
+    }
+    else if streq(formatSpecifier, "i64") {
+        let d: i64 = <i64>data
+        PrintInt(<i32>d)
     }
     else if streq(formatSpecifier, "b") {
         let b = <bool><ulong>data

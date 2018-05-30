@@ -156,12 +156,8 @@ namespace CheezLanguageServer
 
         public override NodeFinderResult VisitFunctionDeclaration(AstFunctionDecl function, int index = 0)
         {
-            foreach (var s in function.Statements)
-            {
-                var loc = GetRelativeLocation(s.GenericParseTreeNode, index);
-                if (loc == RelativeLocation.Same)
-                    return s.Accept(this, index);
-            }
+            if (GetRelativeLocation(function.Body.GenericParseTreeNode, index) == RelativeLocation.Same)
+                return function.Body.Accept(this, index);
 
             return new NodeFinderResult(function.Scope, stmt: function);
         }

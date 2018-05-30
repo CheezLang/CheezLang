@@ -235,29 +235,33 @@ namespace Cheez.Compiler.SemanticAnalysis
         public AstFunctionDecl Function { get; set; }
         public CheezType ImplTarget { get; set; }
 
+        public CheezType ExpectedType { get; set; }
+
         [DebuggerStepThrough]
         public SemanticerData()
         {
         }
 
         [DebuggerStepThrough]
-        public SemanticerData(Scope Scope = null, IText Text = null, AstFunctionDecl Function = null, CheezType Impl = null)
+        public SemanticerData(Scope Scope = null, IText Text = null, AstFunctionDecl Function = null, CheezType Impl = null, CheezType ExpectedType = null)
         {
             this.Scope = Scope;
             this.Text = Text;
             this.Function = Function;
             this.ImplTarget = Impl;
+            this.ExpectedType = ExpectedType;
         }
 
         [DebuggerStepThrough]
-        public SemanticerData Clone(Scope Scope = null, IText Text = null, AstFunctionDecl Function = null, CheezType Impl = null)
+        public SemanticerData Clone(Scope Scope = null, IText Text = null, AstFunctionDecl Function = null, CheezType Impl = null, CheezType ExpectedType = null)
         {
             return new SemanticerData
             {
                 Scope = Scope ?? this.Scope,
                 Text = Text ?? this.Text,
                 Function = Function ?? this.Function,
-                ImplTarget = Impl ?? this.ImplTarget
+                ImplTarget = Impl ?? this.ImplTarget,
+                ExpectedType = ExpectedType ?? this.ExpectedType
             };
         }
     }
@@ -402,7 +406,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             var scope = data.Scope;
             type.Scope = scope;
-            
+
             scope.TypeDeclarations.Add(type);
             if (!scope.DefineType(type))
             {
@@ -437,35 +441,39 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
         }
 
-        public override IEnumerable<object> VisitFunctionDeclaration(AstFunctionDecl function, SemanticerData data = null)
+        private IEnumerable<object> VisitFunctionHeader(AstFunctionDecl function, IText text, CheezType implTarget)
         {
-            if (function.Name == "Main" && data.Scope == workspace.GlobalScope)
+            if (function.IsGeneric)
+            {
+                function.Type = new GenericFunctionType(function);
+                if (!function.Scope.DefineSymbol(function))
+                {
+                    yield return new GenericError(text, function.ParseTreeNode.Name, $"Duplicate name: {function.Name}");
+                }
+                yield break;
+            }
+
+            // @Todo: make entry point configurable
+            if (function.Name == "Main" && function.Scope == workspace.GlobalScope)
                 workspace.MainFunction = function;
 
-            var scope = data.Scope;
-            function.Scope = scope;
-            function.SubScope = NewScope($"fn {function.Name}", scope);
-            var subScope = function.SubScope;
-
-            bool returns = false;
-
-            if (data.ImplTarget != null)
+            if (implTarget != null)
             {
-                var tar = data.ImplTarget;
+                var tar = implTarget;
                 while (tar is PointerType p)
                     tar = p.TargetType;
 
                 if (tar is StructType @struct)
                 {
-                    Using(subScope, @struct, function.Parameters[0]);
+                    Using(function.SubScope, @struct, function.Parameters[0]);
                 }
             }
 
             // return type
             if (function.ParseTreeNode.ReturnType != null)
             {
-                yield return new WaitForType(data.Text, scope, function.ParseTreeNode.ReturnType);
-                function.ReturnType = scope.GetCheezType(function.ParseTreeNode.ReturnType);
+                yield return new WaitForType(text, function.SubScope, function.ParseTreeNode.ReturnType);
+                function.ReturnType = function.SubScope.GetCheezType(function.ParseTreeNode.ReturnType);
             }
             else
             {
@@ -479,48 +487,53 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (p.Type == null)
                 {
-                    yield return new WaitForType(data.Text, scope, p.ParseTreeNode.Type);
-                    p.Type = scope.GetCheezType(p.ParseTreeNode.Type);
+                    yield return new WaitForType(text, function.SubScope, p.ParseTreeNode.Type);
+                    p.Type = function.SubScope.GetCheezType(p.ParseTreeNode.Type);
                 }
 
                 if (!function.SubScope.DefineSymbol(p))
                 {
-                    yield return new ArgumentAlreadyExists(data.Text, p);
+                    yield return new ArgumentAlreadyExists(text, p);
                 }
             }
 
             function.Type = FunctionType.GetFunctionType(function);
-            scope.FunctionDeclarations.Add(function);
-            if (!scope.DefineSymbol(function))
+            function.Scope.FunctionDeclarations.Add(function);
+            if (!function.Scope.DefineSymbol(function))
             {
-                yield return new LambdaError(eh => eh.ReportError(data.Text, function.ParseTreeNode.Name, $"A function or variable with name '{function.Name}' already exists in current scope"));
+                yield return new LambdaError(eh => eh.ReportError(text, function.ParseTreeNode.Name, $"A function or variable with name '{function.Name}' already exists in current scope"));
             }
-
-            if (function.HasImplementation)
-            {
-                var subData = data.Clone(Scope: subScope, Function: function);
-                foreach (var s in function.Statements)
-                {
-                    foreach (var v in s.Accept(this, subData))
-                        yield return v;
-
-                    if (s.GetFlag(StmtFlags.Returns))
-                    {
-                        returns = true;
-                    }
-                }
-
-                if (function.ReturnType != CheezType.Void && !returns)
-                {
-                    yield return new LambdaError(eh => eh.ReportError(data.Text, function.ParseTreeNode.Name, "Not all code paths return a value!"));
-                }
-                
-                function.Statements.LastOrDefault()?.SetFlag(StmtFlags.IsLastStatementInBlock);
-            }
-
-            yield break;
         }
-        
+
+        private IEnumerable<object> VisitFunctionBody(AstFunctionDecl function, IText text, CheezType impl)
+        {
+            var subData = new SemanticerData(Scope: function.SubScope, Function: function, Text: text, Impl: impl);
+            foreach (var v in function.Body.Accept(this, subData))
+                yield return v;
+            bool returns = function.Body.GetFlag(StmtFlags.Returns);
+
+            if (function.ReturnType != CheezType.Void && !returns)
+            {
+                yield return new LambdaError(eh => eh.ReportError(text, function.ParseTreeNode.Name, "Not all code paths return a value!"));
+            }
+        }
+
+        public override IEnumerable<object> VisitFunctionDeclaration(AstFunctionDecl function, SemanticerData data = null)
+        {
+            var scope = data.Scope;
+            function.Scope = scope;
+            function.SubScope = NewScope($"fn {function.Name}", scope);
+
+            foreach (var v in VisitFunctionHeader(function, data.Text, data.ImplTarget))
+                yield return v;
+
+            if (!function.IsGeneric && function.Body != null)
+            {
+                foreach (var v in VisitFunctionBody(function, data.Text, data.ImplTarget))
+                    yield return v;
+            }
+        }
+
         public override IEnumerable<object> VisitIfStatement(AstIfStmt ifs, SemanticerData data = null)
         {
             var scope = data.Scope;
@@ -600,7 +613,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (ret.ReturnValue != null)
             {
-                foreach (var v in ret.ReturnValue.Accept(this, data.Clone()))
+                foreach (var v in ret.ReturnValue.Accept(this, data.Clone(ExpectedType: data.Function.ReturnType)))
                     if (v is ReplaceAstExpr r)
                         ret.ReturnValue = r.NewExpression;
                     else
@@ -654,7 +667,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (variable.Initializer != null)
                 {
-                    foreach (var v in variable.Initializer.Accept(this, data.Clone()))
+                    foreach (var v in variable.Initializer.Accept(this, data.Clone(ExpectedType: variable.Type)))
                         if (v is ReplaceAstExpr r)
                             variable.Initializer = r.NewExpression;
                         else
@@ -765,7 +778,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
 
             // check source
-            foreach (var v in ass.Value.Accept(this, data.Clone()))
+            foreach (var v in ass.Value.Accept(this, data.Clone(ExpectedType: ass.Target.Type)))
                 if (v is ReplaceAstExpr r)
                     ass.Value = r.NewExpression;
                 else
@@ -1128,6 +1141,17 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
+        private void InferGenericParameterType(Dictionary<string, CheezType> result, PTTypeExpr param, CheezType arg)
+        {
+            switch (param)
+            {
+                case PTNamedTypeExpr n:
+                    if (result.TryGetValue(n.Name, out var t) && t == null)
+                        result[n.Name] = arg;
+                    break;
+            }
+        }
+
         public override IEnumerable<object> VisitCallExpression(AstCallExpr call, SemanticerData data = null)
         {
             var scope = data.Scope;
@@ -1144,6 +1168,54 @@ namespace Cheez.Compiler.SemanticAnalysis
                 call.Arguments.Insert(0, d.Left);
             }
 
+            for (int i = 0; i < call.Arguments.Count; i++)
+            {
+                foreach (var v in call.Arguments[i].Accept(this, data))
+                    if (v is ReplaceAstExpr r)
+                        call.Arguments[i] = r.NewExpression;
+                    else
+                        yield return v;
+            }
+
+            if (call.Function.Type is GenericFunctionType g)
+            {
+                if (g.Declaration.Parameters.Count != call.Arguments.Count)
+                {
+                    yield return new LambdaError(eh => eh.ReportError(data.Text, call.GenericParseTreeNode, $"Wrong number of arguments in function call"));
+                }
+
+                var types = new Dictionary<string, CheezType>();
+                types = g.GenericParameters.ToDictionary(x => x, x => (CheezType)null);
+
+                // find out types of generic parameters
+                int argCount = call.Arguments.Count;
+                for (int i = 0; i < argCount; i++)
+                {
+                    InferGenericParameterType(types, g.Declaration.Parameters[i].ParseTreeNode.Type, call.Arguments[i].Type);
+                }
+
+                if (data.ExpectedType != null && g.Declaration.ParseTreeNode.ReturnType != null)
+                {
+                    InferGenericParameterType(types, g.Declaration.ParseTreeNode.ReturnType, data.ExpectedType);
+                }
+
+                // instantiate function
+                var instance = g.Declaration.Clone() as AstFunctionDecl;
+                instance.IsGeneric = false;
+                instance.Name += $"<{string.Join(", ", g.GenericParameters.Select(x => types[x]))}>";
+
+                foreach (var kv in types)
+                {
+                    instance.SubScope.DefineType(kv.Key, kv.Value);
+                }
+
+                foreach (var v in VisitFunctionHeader(instance, data.Text, null)) // @Todo: implTarget, text
+                    yield return v;
+                foreach (var v in VisitFunctionBody(instance, data.Text, null)) // @Todo: text
+                    yield return v;
+                call.Function = new AstFunctionExpression(call.Function.GenericParseTreeNode, instance, call.Function);
+            }
+
             if (call.Function.Type is FunctionType f)
             {
                 if (f.ParameterTypes.Length != call.Arguments.Count)
@@ -1155,12 +1227,6 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 for (int i = 0; i < call.Arguments.Count; i++)
                 {
-                    foreach (var v in call.Arguments[i].Accept(this, data))
-                        if (v is ReplaceAstExpr r)
-                            call.Arguments[i] = r.NewExpression;
-                        else
-                            yield return v;
-
                     var expectedType = f.ParameterTypes[i];
 
                     if (!CastIfLiteral(call.Arguments[i].Type, expectedType, out var t))
@@ -1273,7 +1339,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             cast.Type = data.Scope.GetCheezType(cast.ParseTreeNode.TargetType);
 
             // check subExpression
-            foreach (var v in cast.SubExpression.Accept(this, data))
+            foreach (var v in cast.SubExpression.Accept(this, data.Clone(ExpectedType: cast.Type)))
                 if (v is ReplaceAstExpr r)
                     cast.SubExpression = r.NewExpression;
                 else

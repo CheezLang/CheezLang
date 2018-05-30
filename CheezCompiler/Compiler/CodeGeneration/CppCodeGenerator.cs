@@ -132,7 +132,7 @@ void _flush_cout() {
             mEmitFunctionBody = true;
             foreach (var func in workspace.GlobalScope.FunctionDeclarations)
             {
-                if (func.HasImplementation)
+                if (func.Body != null)
                     sb.AppendLine(GenerateCode(func, workspace.GlobalScope));
             }
             sb.AppendLine();
@@ -246,7 +246,7 @@ void _flush_cout() {
 
         public override string VisitFunctionDeclaration(AstFunctionDecl function, CppCodeGeneratorArgs data)
         {
-            if (!function.HasImplementation)
+            if (function.Body == null)
                 return "";
 
             var prevScope = nameDecorator.GetCurrentScope();
@@ -284,27 +284,28 @@ void _flush_cout() {
 
             if (mEmitFunctionBody)
             {
-                sb.AppendLine(" {");
-                foreach (var s in function.Statements)
-                {
-                    var c = GenerateCode(s, null);
-                    if (c != null)
-                    {
-                        sb.Append(Indent(c, 4));
-                        if (s is AstWhileStmt || s is AstIfStmt)
-                        {
-                            sb.AppendLine();
-                        }
-                        else
-                        {
-                            sb.AppendLine(";");
-                        }
-                    }
+                sb.AppendLine(function.Body.Accept(this));
+                //sb.AppendLine(" {");
+                //foreach (var s in function.Statements)
+                //{
+                //    var c = GenerateCode(s, null);
+                //    if (c != null)
+                //    {
+                //        sb.Append(Indent(c, 4));
+                //        if (s is AstWhileStmt || s is AstIfStmt)
+                //        {
+                //            sb.AppendLine();
+                //        }
+                //        else
+                //        {
+                //            sb.AppendLine(";");
+                //        }
+                //    }
 
-                    if (s is AstReturnStmt)
-                        break;
-                }
-                sb.Append("}");
+                //    if (s is AstReturnStmt)
+                //        break;
+                //}
+                //sb.Append("}");
             }
             else
             {

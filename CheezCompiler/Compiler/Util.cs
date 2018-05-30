@@ -71,6 +71,8 @@ namespace Cheez.Compiler
 
         public static Process StartProcess(string exe, string args = null, string workingDirectory = null, DataReceivedEventHandler stdout = null, DataReceivedEventHandler stderr = null)
         {
+            //Console.WriteLine($"{exe} {args}");
+
             var process = new Process();
             process.StartInfo.FileName = exe;
             if (workingDirectory != null)

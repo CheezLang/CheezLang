@@ -20,20 +20,24 @@ namespace Cheez.Compiler.Visitor
 
         public override string VisitFunctionDeclaration(AstFunctionDecl function, int indentLevel = 0)
         {
-            var statements = function.Statements.Select(s => s.Accept(this));
-            var statementsStr = string.Join("\n", statements);
+            var body = function.Body?.Accept(this, 0) ?? ";";
 
             var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name}: {p.ParseTreeNode.Type}"));
-            var head = $"fn {function.Name}({pars})";
+            var head = $"fn {function.Name}";
+                
+            if (function.IsGeneric)
+            {
+                head += $"<{string.Join(", ", function.Generics.Select(g => g.Name))}>";
+            }
+
+            head += $"({pars})";
 
             if (function.ParseTreeNode.ReturnType != null)
             {
                 head += $" -> {function.ParseTreeNode.ReturnType}";
             }
 
-            var body = statementsStr;
-
-            return $"{head} {{\n{body.Indent(4)}\n}}".Indent(indentLevel);
+            return $"{head} {body}".Indent(indentLevel);
         }
 
         public override string VisitReturnStatement(AstReturnStmt ret, int data = 0)

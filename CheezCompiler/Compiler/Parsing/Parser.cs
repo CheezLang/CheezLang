@@ -2,9 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace Cheez.Compiler.Parsing
 {
@@ -193,6 +191,14 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.EOF:
                     return (true, null);
 
+                case TokenType.HashTag:
+                    {
+                        var dir = new PTDirectiveStatement(ParseDirective());
+                        Consume(TokenType.NewLine, ErrMsg("\\n", "after directive statement"));
+                        return (false, dir);
+                    }
+
+
                 case TokenType.KwReturn:
                     return (false, ParseReturnStatement());
                 case TokenType.KwFn:
@@ -235,7 +241,7 @@ namespace Cheez.Compiler.Parsing
                         }
                         else
                         {
-                            Consume(TokenType.NewLine, ErrMsg("\\n", "after expression statement"));
+                            Expect(TokenType.NewLine, ErrMsg("\\n", "after expression statement"));
                             return (false, new PTExprStmt(expr.Beginning, expr.End, expr));
                         }
                     }
@@ -322,6 +328,36 @@ namespace Cheez.Compiler.Parsing
             var name = ParseIdentifierExpr(ErrMsg("identifier", "after # in directive"));
 
             end = name.End;
+
+            if (CheckToken(TokenType.OpenParen))
+            {
+                NextToken();
+                SkipNewlines();
+
+                while (true)
+                {
+                    var next = PeekToken();
+                    if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
+                        break;
+
+                    var expr = ParseExpression();
+                    args.Add(expr);
+                    SkipNewlines();
+
+                    next = PeekToken();
+
+                    if (next.type == TokenType.Comma)
+                    {
+                        NextToken();
+                        SkipNewlines();
+                        continue;
+                    }
+
+                    break;
+                }
+
+                end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of directive")).location;
+            }
 
             return new PTDirective(beginning, end, name, args);
         }
@@ -566,22 +602,59 @@ namespace Cheez.Compiler.Parsing
         private PTFunctionDecl ParseFunctionDeclaration()
         {
             TokenLocation beginning = null, end = null;
-            List<PTStatement> statements = new List<PTStatement>();
+            PTBlockStmt body = null;
             List<PTFunctionParam> parameters = new List<PTFunctionParam>();
             List<PTDirective> directives = new List<PTDirective>();
+            List<PTIdentifierExpr> generics = new List<PTIdentifierExpr>();
             PTTypeExpr returnType = null;
 
-
             beginning = NextToken().location;
-
             SkipNewlines();
+
             var name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'fn' in function declaration"));
+            SkipNewlines();
+
+            // generics
+            if (CheckToken(TokenType.Less))
+            {
+                NextToken();
+                SkipNewlines();
+
+                while (true)
+                {
+                    var next = PeekToken();
+                    if (next.type == TokenType.Greater || next.type == TokenType.EOF)
+                        break;
+
+                    var gname = ParseIdentifierExpr(null);
+                    generics.Add(gname);
+                    SkipNewlines();
+
+                    next = PeekToken();
+
+                    if (next.type == TokenType.Comma)
+                    {
+                        NextToken();
+                        SkipNewlines();
+                    }
+                    else if (next.type == TokenType.Greater || next.type == TokenType.EOF)
+                        break;
+                    else
+                    {
+                        NextToken();
+                        SkipNewlines();
+                        ReportError(next.location, "Expected ',' or '>'");
+                    }
+                }
+
+                Consume(TokenType.Greater, ErrMsg(">", "at end of generic parameter list"));
+                SkipNewlines();
+            }
 
             // parameters
-            SkipNewlines();
             Consume(TokenType.OpenParen, ErrMsg("(", "after name in function declaration"));
-
             SkipNewlines();
+
             while (true)
             {
                 var next = PeekToken();
@@ -641,25 +714,26 @@ namespace Cheez.Compiler.Parsing
             else
             {
                 // implementation
-                Consume(TokenType.OpenBrace, ErrMsg("{", "after header in function declaration"));
+                body = ParseBlockStatement();
+                //Consume(TokenType.OpenBrace, ErrMsg("{", "after header in function declaration"));
 
-                while (true)
-                {
-                    SkipNewlines();
-                    var token = PeekToken();
+                //while (true)
+                //{
+                //    SkipNewlines();
+                //    var token = PeekToken();
 
-                    if (token.type == TokenType.ClosingBrace || token.type == TokenType.EOF)
-                        break;
+                //    if (token.type == TokenType.ClosingBrace || token.type == TokenType.EOF)
+                //        break;
 
-                    var stmt = ParseStatement();
-                    if (stmt.stmt != null)
-                        statements.Add(stmt.stmt);
-                }
+                //    var stmt = ParseStatement();
+                //    if (stmt.stmt != null)
+                //        statements.Add(stmt.stmt);
+                //}
 
-                end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of function")).location;
+                //end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of function")).location;
             }
 
-            return new PTFunctionDecl(beginning, end, name, parameters, returnType, statements);
+            return new PTFunctionDecl(beginning, end, name, generics, parameters, returnType, body, directives);
         }
 
         #region Expression Parsing

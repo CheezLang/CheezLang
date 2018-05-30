@@ -57,10 +57,7 @@ namespace CheezLanguageServer
                 name = function.Name
             });
 
-            foreach (var s in function.Statements)
-            {
-                s.Accept(this, list);
-            }
+            function.Body?.Accept(this, list);
 
             return default;
         }

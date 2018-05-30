@@ -95,6 +95,18 @@ namespace Cheez.Compiler
         public static CheezType Error => ErrorType.Instance;
     }
 
+    public class GenericFunctionType : CheezType
+    {
+        public string[] GenericParameters { get; }
+        public AstFunctionDecl Declaration { get; }
+
+        public GenericFunctionType(AstFunctionDecl decl)
+        {
+            Declaration = decl;
+            GenericParameters = decl.Generics.Select(g => g.Name).ToArray();
+        }
+    }
+
     public class ErrorType : CheezType
     {
         public static ErrorType Instance { get; } = new ErrorType();
