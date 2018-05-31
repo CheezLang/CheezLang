@@ -71,12 +71,16 @@ namespace Cheez.Compiler.Ast
 
         public List<ITempVariable> LocalVariables { get; } = new List<ITempVariable>();
 
+        public List<AstFunctionDecl> PolymorphicInstances { get; } = new List<AstFunctionDecl>();
+
         public bool RefSelf { get; }
         public bool IsGeneric { get; set; }
 
         public bool IsConstant => true;
 
         public bool IsPolyInstance { get; set; } = false;
+        public Dictionary<string, AstExpression> PolymorphicTypeExprs { get; internal set; }
+        public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
 
         public AstFunctionDecl(ParseTree.PTStatement node,
             AstIdentifierExpr name,
@@ -119,7 +123,7 @@ namespace Cheez.Compiler.Ast
                 Name.Clone() as AstIdentifierExpr,
                 null, //Generics.Select(g => g.Clone() as AstIdentifierExpr).ToList(),
                 Parameters.Select(p => p.Clone()).ToList(),
-                ReturnTypeExpr.Clone(),
+                ReturnTypeExpr?.Clone(),
                 Body?.Clone() as AstBlockStmt,
                 Directives) // @Tode: clone this too?
             {

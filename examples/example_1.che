@@ -3,13 +3,13 @@
 
 fn Main()
 {
-    let a: byte = GetTwo()
-    a = Square(a)
+    let a = Square((int)5)
+    let b: int = Square(GetTwo())
 
-    a = Add(a, a)
-
-    Printlnf(" i8: {i8}", (void^)a)
+    Printlnf("{i32}", (void^)a)
+    Printlnf("{i32}", (void^)b)
 }
+
 
 fn Square(num: $T) -> $T {
     return num * num

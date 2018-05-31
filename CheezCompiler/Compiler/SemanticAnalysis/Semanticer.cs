@@ -207,7 +207,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 Text = Text ?? this.Text,
                 Function = Function ?? this.Function,
                 ImplTarget = Impl ?? this.ImplTarget,
-                ExpectedType = ExpectedType ?? this.ExpectedType
+                ExpectedType = ExpectedType
             };
         }
     }
@@ -395,10 +395,16 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         private IEnumerable<object> VisitFunctionHeader(AstFunctionDecl function, IText text, CheezType implTarget)
         {
-            if (function.ReturnType.IsPolyType || function.Parameters.Any(p => p.Type.IsPolyType))
+            if (!function.IsPolyInstance && ((function.ReturnTypeExpr?.IsPolymorphic ?? false) || function.Parameters.Any(p => p.TypeExpr.IsPolymorphic)))
             {
                 function.IsGeneric = true;
                 function.Type = new GenericFunctionType(function);
+
+                // collect polymorphic types
+                CollectPolymorphicTypes(function.Parameters.Select(p => p.TypeExpr), out var types);
+                CollectPolymorphicTypes(function.ReturnTypeExpr, ref types);
+                function.PolymorphicTypeExprs = types;
+
                 if (!function.Scope.DefineSymbol(function))
                 {
                     yield return new GenericError(text, function.Name.GenericParseTreeNode, $"Duplicate name: {function.Name}");
@@ -887,7 +893,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             str.Scope = scope;
 
             // types
-            foreach (var v in str.TypeExpr.Accept(this, data.Clone()))
+            foreach (var v in str.TypeExpr.Accept(this, data.Clone(ExpectedType: null)))
                 yield return v;
             if (str.TypeExpr.Value is CheezType t)
                 str.Type = t;
@@ -919,7 +925,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         for (int i = 0; i < str.MemberInitializers.Length; i++)
                         {
-                            foreach (var v in str.MemberInitializers[i].Value.Accept(this, data))
+                            foreach (var v in str.MemberInitializers[i].Value.Accept(this, data.Clone(ExpectedType: null)))
                             {
                                 if (v is ReplaceAstExpr r)
                                     str.MemberInitializers[i].Value = r.NewExpression;
@@ -961,12 +967,12 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitArrayAccessExpression(AstArrayAccessExpr arr, SemanticerData data = null)
         {
-            foreach (var v in arr.SubExpression.Accept(this, data))
+            foreach (var v in arr.SubExpression.Accept(this, data.Clone(ExpectedType: null)))
                 if (v is ReplaceAstExpr r)
                     arr.SubExpression = r.NewExpression;
                 else yield return v;
 
-            foreach (var v in arr.Indexer.Accept(this, data))
+            foreach (var v in arr.Indexer.Accept(this, data.Clone(ExpectedType: null)))
                 if (v is ReplaceAstExpr r)
                     arr.Indexer = r.NewExpression;
                 else yield return v;
@@ -1008,7 +1014,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = data.Scope;
             bin.Scope = scope;
 
-            foreach (var v in bin.SubExpr.Accept(this, data))
+            foreach (var v in bin.SubExpr.Accept(this, data.Clone(ExpectedType: null)))
                 if (v is ReplaceAstExpr r)
                     bin.SubExpr = r.NewExpression;
                 else
@@ -1021,7 +1027,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     switch (bin.Operator)
                     {
                         case "-":
-                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(bin.GenericParseTreeNode, n.Data.Negate()), data))
+                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(bin.GenericParseTreeNode, n.Data.Negate()), data.Clone(ExpectedType: null)))
                                 yield return vv;
                             yield break;
 
@@ -1070,13 +1076,13 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = data.Scope;
             bin.Scope = scope;
 
-            foreach (var v in bin.Left.Accept(this, data))
+            foreach (var v in bin.Left.Accept(this, data.Clone(ExpectedType: null)))
                 if (v is ReplaceAstExpr r)
                     bin.Left = r.NewExpression;
                 else
                     yield return v;
 
-            foreach (var v in bin.Right.Accept(this, data))
+            foreach (var v in bin.Right.Accept(this, data.Clone(ExpectedType: null)))
                 if (v is ReplaceAstExpr r)
                     bin.Right = r.NewExpression;
                 else
@@ -1141,11 +1147,11 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             switch (param)
             {
-                case AstIdentifierExpr i when i.IsPolyTypeExpr && arg is PolyType:
+                case AstIdentifierExpr i when i.IsPolymorphic && arg is PolyType:
                     return false;
 
-                case AstIdentifierExpr i when i.IsPolyTypeExpr:
-                    if (!result.TryGetValue(i.Name, out var _))
+                case AstIdentifierExpr i when i.IsPolymorphic:
+                    if (result != null && !result.TryGetValue(i.Name, out var _))
                     {
                         result[i.Name] = arg;
                         return true;
@@ -1170,9 +1176,45 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             var types = new Dictionary<string, CheezType>();
+            int argCount = call.Arguments.Count;
+
+            var parameterTypeExprs = g.Declaration.Parameters.Select(p => p.TypeExpr.Clone()).ToArray();
+            var returnTypeExpr = g.Declaration.ReturnTypeExpr?.Clone();
+
+            // try to infer type from expected type before checking arguments
+            if (data.ExpectedType != null && returnTypeExpr != null)
+            {
+                var t = data.ExpectedType;
+                if (InferGenericParameterType(types, returnTypeExpr, ref t))
+                {
+                    data.ExpectedType = t;
+
+                    var scope = new Scope("temp", g.Declaration.Scope);
+                    foreach (var kv in types)
+                    {
+                        scope.DefineTypeSymbol(kv.Key, kv.Value);
+                    }
+
+                    foreach (var p in parameterTypeExprs)
+                    {
+                        foreach (var v in p.Accept(this, new SemanticerData(Scope: scope, Text: data.Text)))
+                            yield return v;
+                    }
+                }
+            }
+
+            { // check arguments
+                for (int i = 0; i < call.Arguments.Count; i++)
+                {
+                    foreach (var v in call.Arguments[i].Accept(this, data.Clone(ExpectedType: parameterTypeExprs[i].Value as CheezType)))
+                        if (v is ReplaceAstExpr r)
+                            call.Arguments[i] = r.NewExpression;
+                        else
+                            yield return v;
+                }
+            }
 
             // find out types of generic parameters
-            int argCount = call.Arguments.Count;
 
             while (true)
             {
@@ -1181,39 +1223,74 @@ namespace Cheez.Compiler.SemanticAnalysis
                 for (int i = 0; i < argCount; i++)
                 {
                     var t = call.Arguments[i].Type;
-                    changes |= InferGenericParameterType(types, g.Declaration.Parameters[i].TypeExpr, ref t);
+                    changes |= InferGenericParameterType(types, parameterTypeExprs[i], ref t);
                     call.Arguments[i].Type = t;
                 }
 
-                if (data.ExpectedType != null && g.Declaration.ReturnTypeExpr != null)
+                if (data.ExpectedType != null && returnTypeExpr != null)
                 {
                     var t = data.ExpectedType;
-                    changes |= InferGenericParameterType(types, g.Declaration.ReturnTypeExpr, ref t);
+                    changes |= InferGenericParameterType(types, returnTypeExpr, ref t);
                     data.ExpectedType = t;
                 }
 
                 if (!changes)
                     break;
             }
-            
-            // @Todo: check if function is already instantiated
 
-
-            // instantiate function
-            var instance = g.Declaration.Clone() as AstFunctionDecl;
-            instance.IsGeneric = false;
-            instance.IsPolyInstance = true;
-            //g.Declaration.AddPolyInstance(types, instance);
-
-            foreach (var kv in types)
+            // check if all types are present
             {
-                instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value); // @Todo
+                foreach (var pt in g.Declaration.PolymorphicTypeExprs)
+                {
+                    if (!types.ContainsKey(pt.Key))
+                    {
+                        yield return new GenericError(data.Text, pt.Value.GenericParseTreeNode, $"Couldn't infer type for polymorphic parameter ${pt.Key}");
+                    }
+                }
             }
 
-            foreach (var v in VisitFunctionHeader(instance, data.Text, null)) // @Todo: implTarget, text
-                yield return v;
-            foreach (var v in VisitFunctionBody(instance, data.Text, null)) // @Todo: text
-                yield return v;
+            AstFunctionDecl instance = null;
+            foreach (var pi in g.Declaration.PolymorphicInstances)
+            {
+                bool eq = true;
+                foreach (var kv in pi.PolymorphicTypes)
+                {
+                    var existingType = kv.Value;
+                    var newType = types[kv.Key];
+                    if (existingType != newType)
+                    {
+                        eq = false;
+                        break;
+                    }
+                }
+
+                if (eq)
+                {
+                    instance = pi;
+                    break;
+                }
+            }
+            if (instance == null)
+            {
+                // instantiate function
+                instance = g.Declaration.Clone() as AstFunctionDecl;
+                g.Declaration.PolymorphicInstances.Add(instance);
+                instance.IsGeneric = false;
+                instance.IsPolyInstance = true;
+                instance.PolymorphicTypes = types;
+                //g.Declaration.AddPolyInstance(types, instance);
+
+                foreach (var kv in types)
+                {
+                    instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value); // @Todo
+                }
+
+                foreach (var v in VisitFunctionHeader(instance, data.Text, null)) // @Todo: implTarget, text
+                    yield return v;
+                foreach (var v in VisitFunctionBody(instance, data.Text, null)) // @Todo: text
+                    yield return v;
+            }
+                        
             call.Function = new AstFunctionExpression(call.Function.GenericParseTreeNode, instance, call.Function);
         }
 
@@ -1221,8 +1298,8 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             var scope = data.Scope;
             call.Scope = scope;
-
-            foreach (var v in call.Function.Accept(this, data))
+            
+            foreach (var v in call.Function.Accept(this, data.Clone(ExpectedType: null)))
                 if (v is ReplaceAstExpr r)
                     call.Function = r.NewExpression;
                 else
@@ -1233,19 +1310,21 @@ namespace Cheez.Compiler.SemanticAnalysis
                 call.Arguments.Insert(0, d.Left);
             }
 
-            for (int i = 0; i < call.Arguments.Count; i++)
-            {
-                foreach (var v in call.Arguments[i].Accept(this, data))
-                    if (v is ReplaceAstExpr r)
-                        call.Arguments[i] = r.NewExpression;
-                    else
-                        yield return v;
-            }
-
             if (call.Function.Type is GenericFunctionType g)
             {
                 foreach (var v in CallPolyFunction(call, g, data))
                     yield return v;
+            }
+            else
+            {
+                for (int i = 0; i < call.Arguments.Count; i++)
+                {
+                    foreach (var v in call.Arguments[i].Accept(this, data.Clone(ExpectedType: CheezType.Type)))
+                        if (v is ReplaceAstExpr r)
+                            call.Arguments[i] = r.NewExpression;
+                        else
+                            yield return v;
+                }
             }
 
             if (call.Function.Type is FunctionType f)
@@ -1279,13 +1358,13 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitIdentifierExpression(AstIdentifierExpr ident, SemanticerData data = null)
         {
-            if (ident.IsPolyTypeExpr)
+            if (ident.IsPolymorphic)
             {
                 if (data.Function != null)
                 {
                     if (data.Function.IsPolyInstance)
                     {
-                        ident.IsPolyTypeExpr = false;
+                        ident.IsPolymorphicExpression = false;
                     }
                     else
                     {
@@ -1295,10 +1374,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                         yield break;
                     }
                 }
-                else
-                {
-                    yield return new GenericError(data.Text, ident.GenericParseTreeNode, "Polymorphic type not allowed here");
-                }
+                //else
+                //{
+                //    yield return new GenericError(data.Text, ident.GenericParseTreeNode, "Polymorphic type not allowed here");
+                //}
             }
 
             var scope = data.Scope;
@@ -1312,7 +1391,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 var e = u.Expr.Clone();
                 e.GenericParseTreeNode = ident.GenericParseTreeNode;
-                foreach (var vv in ReplaceAstExpr(e, data))
+                foreach (var vv in ReplaceAstExpr(e, data.Clone(ExpectedType: null)))
                     yield return vv;
                 yield break;
             }
@@ -1355,7 +1434,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             add.Scope = data.Scope;
 
-            foreach (var v in add.SubExpression.Accept(this, data))
+            foreach (var v in add.SubExpression.Accept(this, data.Clone(ExpectedType: null)))
                 if (v is ReplaceAstExpr r)
                     add.SubExpression = r.NewExpression;
                 else
@@ -1372,7 +1451,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             deref.Scope = data.Scope;
 
-            foreach (var v in deref.SubExpression.Accept(this, data))
+            foreach (var v in deref.SubExpression.Accept(this, data.Clone(ExpectedType: null)))
                 if (v is ReplaceAstExpr r)
                     deref.SubExpression = r.NewExpression;
                 else
@@ -1399,7 +1478,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             cast.Scope = data.Scope;
 
             // type
-            foreach (var v in cast.TypeExpr.Accept(this, data.Clone()))
+            foreach (var v in cast.TypeExpr.Accept(this, data.Clone(ExpectedType: null)))
                 yield return v;
             if (cast.TypeExpr.Value is CheezType t)
                 cast.Type = t;
@@ -1427,7 +1506,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             dot.Scope = data.Scope;
 
-            foreach (var v in dot.Left.Accept(this, data))
+            foreach (var v in dot.Left.Accept(this, data.Clone(ExpectedType: null)))
                 if (v is ReplaceAstExpr r)
                     dot.Left = r.NewExpression;
                 else
@@ -1492,7 +1571,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         public override IEnumerable<object> VisitArrayTypeExpr(AstArrayTypeExpr arr, SemanticerData data = default)
         {
             arr.Scope = data.Scope;
-            foreach (var v in arr.Target.Accept(this, data))
+            foreach (var v in arr.Target.Accept(this, data.Clone(ExpectedType: null)))
                 yield return v;
 
             arr.Type = CheezType.Type;
@@ -1509,7 +1588,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         public override IEnumerable<object> VisitPointerTypeExpr(AstPointerTypeExpr ptr, SemanticerData data = default)
         {
             ptr.Scope = data.Scope;
-            foreach (var v in ptr.Target.Accept(this, data))
+            foreach (var v in ptr.Target.Accept(this, data.Clone(ExpectedType: null)))
                 yield return v;
 
             ptr.Type = CheezType.Type;
@@ -1521,14 +1600,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 yield return new GenericError(data.Text, ptr.Target.GenericParseTreeNode, $"Expected type, got {ptr.Target.Type}");
             }
-        }
-
-        public override IEnumerable<object> VisitPolyTypeExpr(AstPolyTypeExpr pol, SemanticerData data = default)
-        {
-            pol.Scope = data.Scope;
-            pol.Value = new PolyType(pol.Name);
-            pol.Type = CheezType.Type;
-            yield break;
         }
 
         #endregion
@@ -1583,6 +1654,34 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             yield return new ReplaceAstExpr(expr);
+        }
+
+        private void CollectPolymorphicTypes(IEnumerable<AstExpression> expr, out Dictionary<string, AstExpression> types)
+        {
+            types = new Dictionary<string, AstExpression>();
+
+            foreach (var e in expr)
+            {
+                CollectPolymorphicTypes(e, ref types);
+            }
+        }
+
+        private void CollectPolymorphicTypes(AstExpression expr, ref Dictionary<string, AstExpression> types)
+        {
+            switch (expr)
+            {
+                case AstIdentifierExpr i when i.IsPolymorphic:
+                    types[i.Name] = expr;
+                    break;
+
+                case AstPointerTypeExpr p:
+                    CollectPolymorphicTypes(p.Target, ref types);
+                    break;
+
+                case AstArrayTypeExpr p:
+                    CollectPolymorphicTypes(p.Target, ref types);
+                    break;
+            }
         }
     }
 }

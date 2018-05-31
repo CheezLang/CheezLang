@@ -18,8 +18,8 @@ namespace CheezCLI
             HasErrors = true;
 
 
-            const int linesBefore = 1;
-            const int linesAfter = 1;
+            const int linesBefore = 2;
+            const int linesAfter = 0;
 
 
             TokenLocation beginning = location.Beginning;
@@ -54,7 +54,7 @@ namespace CheezCLI
 
                 for (int i = previousLines.Count - 1; i >= 0; i--)
                 {
-                    int line = lineNumber - previousLines.Count;
+                    int line = lineNumber - 1 - i;
                     Log(string.Format($"{{0,{lineNumberWidth}}}> {{1}}", line, previousLines[i]), ConsoleColor.White);
                 }
             }

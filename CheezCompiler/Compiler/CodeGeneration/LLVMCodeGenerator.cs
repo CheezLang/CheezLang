@@ -36,8 +36,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         private LLVMModuleRef module;
         private Workspace workspace;
-
-        private Dictionary<AstFunctionDecl, LLVMValueRef> functionMap = new Dictionary<AstFunctionDecl, LLVMValueRef>();
+        
         private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
 
         public bool GenerateCode(Workspace workspace, string targetFile)
@@ -86,7 +85,7 @@ namespace Cheez.Compiler.CodeGeneration
                 System.Console.Error.WriteLine(llvmErrors);
                 if (res.Value == 0)
                 {
-                    var main = functionMap[workspace.MainFunction];
+                    var main = valueMap[workspace.MainFunction];
                     int result = LLVM.RunFunctionAsMain(exe, main, 0, new string[0], new string[0]);
                 }
             }
@@ -240,7 +239,7 @@ namespace Cheez.Compiler.CodeGeneration
             LLVMBuilderRef builder = LLVM.CreateBuilder();
             LLVM.PositionBuilderAtEnd(builder, LLVM.AppendBasicBlock(lfunc, "entry"));
 
-            var cheezMain = functionMap[workspace.MainFunction];
+            var cheezMain = valueMap[workspace.MainFunction];
 
             // initialize global variables
             {
@@ -356,7 +355,7 @@ namespace Cheez.Compiler.CodeGeneration
                     LLVM.SetFunctionCallConv(lfunc, (uint)LLVMCallConv.LLVMX86StdcallCallConv);
                 }
 
-                functionMap[function] = lfunc;
+                valueMap[function] = lfunc;
             }
 
             // create implementations
@@ -465,7 +464,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitFunctionDeclaration(AstFunctionDecl function, LLVMCodeGeneratorData data = null)
         {
-            var lfunc = functionMap[function];
+            var lfunc = valueMap[function];
 
             if (function.Body != null)
             {
@@ -760,10 +759,12 @@ namespace Cheez.Compiler.CodeGeneration
             if (call.Function is AstIdentifierExpr i)
             {
                 func = LLVM.GetNamedFunction(module, i.Name);
+                //func = valueMap[i.Value];
             }
             else if (call.Function is AstFunctionExpression afe)
             {
-                func = LLVM.GetNamedFunction(module, afe.Declaration.Name.Name);
+                func = valueMap[afe.Declaration];
+                //func = LLVM.GetNamedFunction(module, afe.Declaration.Name.Name);
             }
             else
             {

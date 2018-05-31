@@ -22,6 +22,8 @@ namespace Cheez.Compiler.Ast
         public Scope Scope { get; set; }
         private int mFlags = 0;
 
+        public abstract bool IsPolymorphic { get; }
+
         [DebuggerStepThrough]
         public AstExpression()
         {
@@ -53,6 +55,8 @@ namespace Cheez.Compiler.Ast
 
         public AstExpression Original { get; set; }
 
+        public override bool IsPolymorphic => false;
+
         public AstFunctionExpression(ParseTree.PTExpr genericParseTreeNode, AstFunctionDecl func, AstExpression original)
         {
             GenericParseTreeNode = genericParseTreeNode;
@@ -80,6 +84,7 @@ namespace Cheez.Compiler.Ast
     {
         //public ParseTree.PTStringLiteral ParseTreeNode => GenericParseTreeNode as ParseTree.PTStringLiteral;
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
+        public override bool IsPolymorphic => false;
 
         [DebuggerStepThrough]
         public AstEmptyExpr(ParseTree.PTExpr node) : base()
@@ -122,7 +127,8 @@ namespace Cheez.Compiler.Ast
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
 
         public string Value { get; set; }
-        
+        public override bool IsPolymorphic => false;
+
         [DebuggerStepThrough]
         public AstStringLiteral(ParseTree.PTExpr node, string value) : base()
         {
@@ -160,6 +166,7 @@ namespace Cheez.Compiler.Ast
         public AstExpression Left { get; set; }
         public string Right { get; set; }
         public bool IsDoubleColon { get; set; }
+        public override bool IsPolymorphic => Left.IsPolymorphic;
 
         [DebuggerStepThrough]
         public AstDotExpr(ParseTree.PTExpr node, AstExpression left, string right, bool isDC) : base()
@@ -199,6 +206,7 @@ namespace Cheez.Compiler.Ast
 
         public AstExpression Function { get; set; }
         public List<AstExpression> Arguments { get; set; }
+        public override bool IsPolymorphic => Function.IsPolymorphic || Arguments.Any(a => a.IsPolymorphic);
 
         [DebuggerStepThrough]
         public AstCallExpr(ParseTree.PTExpr node, AstExpression func, List<AstExpression> args) : base()
@@ -240,6 +248,7 @@ namespace Cheez.Compiler.Ast
         public AstExpression Right { get; set; }
 
         public AstIdentifierExpr Name => null;
+        public override bool IsPolymorphic => Left.IsPolymorphic || Right.IsPolymorphic;
 
         [DebuggerStepThrough]
         public AstBinaryExpr(ParseTree.PTExpr node, string op, AstExpression lhs, AstExpression rhs) : base()
@@ -279,6 +288,7 @@ namespace Cheez.Compiler.Ast
 
         public string Operator { get; set; }
         public AstExpression SubExpr { get; set; }
+        public override bool IsPolymorphic => SubExpr.IsPolymorphic;
 
         [DebuggerStepThrough]
         public AstUnaryExpr(ParseTree.PTExpr node, string op, AstExpression sub) : base()
@@ -316,6 +326,7 @@ namespace Cheez.Compiler.Ast
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
 
         public bool Value { get; }
+        public override bool IsPolymorphic => false;
 
         [DebuggerStepThrough]
         public AstBoolExpr(ParseTree.PTExpr node, bool value)
@@ -352,6 +363,7 @@ namespace Cheez.Compiler.Ast
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
 
         public AstExpression SubExpression { get; set; }
+        public override bool IsPolymorphic => SubExpression.IsPolymorphic;
 
         [DebuggerStepThrough]
         public AstAddressOfExpr(ParseTree.PTExpr node, AstExpression sub)
@@ -388,6 +400,7 @@ namespace Cheez.Compiler.Ast
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
 
         public AstExpression SubExpression { get; set; }
+        public override bool IsPolymorphic => SubExpression.IsPolymorphic;
 
         [DebuggerStepThrough]
         public AstDereferenceExpr(ParseTree.PTExpr node, AstExpression sub)
@@ -425,6 +438,7 @@ namespace Cheez.Compiler.Ast
 
         public AstExpression SubExpression { get; set; }
         public AstExpression TypeExpr { get; set; }
+        public override bool IsPolymorphic => SubExpression.IsPolymorphic || Type.IsPolyType;
 
         [DebuggerStepThrough]
         public AstCastExpr(ParseTree.PTExpr node, AstExpression typeExpr, AstExpression sub)
@@ -463,6 +477,7 @@ namespace Cheez.Compiler.Ast
 
         public AstExpression SubExpression { get; set; }
         public AstExpression Indexer { get; set; }
+        public override bool IsPolymorphic => SubExpression.IsPolymorphic || Indexer.IsPolymorphic;
 
         [DebuggerStepThrough]
         public AstArrayAccessExpr(ParseTree.PTExpr node, AstExpression sub, AstExpression index)
@@ -501,6 +516,7 @@ namespace Cheez.Compiler.Ast
 
         private NumberData mData;
         public NumberData Data => mData;
+        public override bool IsPolymorphic => false;
 
         [DebuggerStepThrough]
         public AstNumberExpr(ParseTree.PTExpr node, NumberData data) : base()
@@ -539,14 +555,15 @@ namespace Cheez.Compiler.Ast
         public string Name { get; set; }
         public ISymbol Symbol { get; set; }
 
-        public bool IsPolyTypeExpr { get; set; }
+        public override bool IsPolymorphic => IsPolymorphicExpression;
+        public bool IsPolymorphicExpression { get; set; }
 
         [DebuggerStepThrough]
         public AstIdentifierExpr(ParseTree.PTExpr node, string name, bool isPolyTypeExpr) : base()
         {
             GenericParseTreeNode = node;
             this.Name = name;
-            this.IsPolyTypeExpr = isPolyTypeExpr;
+            this.IsPolymorphicExpression = isPolyTypeExpr;
         }
 
         [DebuggerStepThrough]
@@ -563,46 +580,19 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override AstExpression Clone()
         {
-            return new AstIdentifierExpr(GenericParseTreeNode, Name, IsPolyTypeExpr)
+            return new AstIdentifierExpr(GenericParseTreeNode, Name, IsPolymorphic)
             {
                 Type = this.Type,
                 Scope = this.Scope
             };
         }
     }
-
-    public class AstPolyTypeExpr : AstExpression
-    {
-        public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
-        public string Name { get; set; }
-
-        public AstPolyTypeExpr(ParseTree.PTExpr node, string name) : base()
-        {
-            this.GenericParseTreeNode = node;
-            this.Name = name;
-        }
-
-        [DebuggerStepThrough]
-        public override AstExpression Clone()
-        {
-            return new AstPolyTypeExpr(GenericParseTreeNode, Name)
-            {
-                Type = this.Type,
-                Scope = this.Scope
-            };
-        }
-
-        [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
-        {
-            return visitor.VisitPolyTypeExpr(this, data);
-        }
-    }
-
+    
     public class AstPointerTypeExpr : AstExpression
     {
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
         public AstExpression Target { get; set; }
+        public override bool IsPolymorphic => Target.IsPolymorphic;
 
         public AstPointerTypeExpr(ParseTree.PTExpr node, AstExpression target) : base()
         {
@@ -636,6 +626,7 @@ namespace Cheez.Compiler.Ast
     {
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
         public AstExpression Target { get; set; }
+        public override bool IsPolymorphic => Target.IsPolymorphic;
 
         public AstArrayTypeExpr(ParseTree.PTExpr node, AstExpression target) : base()
         {
@@ -686,6 +677,7 @@ namespace Cheez.Compiler.Ast
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
         public AstExpression TypeExpr { get; }
         public AstStructMemberInitialization[] MemberInitializers { get; }
+        public override bool IsPolymorphic => false;
 
         [DebuggerStepThrough]
         public AstStructValueExpr(ParseTree.PTExpr node, AstExpression name, AstStructMemberInitialization[] inits) : base()
