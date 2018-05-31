@@ -395,8 +395,9 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         private IEnumerable<object> VisitFunctionHeader(AstFunctionDecl function, IText text, CheezType implTarget)
         {
-            if (function.IsGeneric)
+            if (function.ReturnType.IsPolyType || function.Parameters.Any(p => p.Type.IsPolyType))
             {
+                function.IsGeneric = true;
                 function.Type = new GenericFunctionType(function);
                 if (!function.Scope.DefineSymbol(function))
                 {
@@ -457,9 +458,13 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             function.Type = FunctionType.GetFunctionType(function);
             function.Scope.FunctionDeclarations.Add(function);
-            if (!function.Scope.DefineSymbol(function))
+
+            if (!function.IsPolyInstance)
             {
-                yield return new LambdaError(eh => eh.ReportError(text, function.Name.GenericParseTreeNode, $"A function or variable with name '{function.Name}' already exists in current scope"));
+                if (!function.Scope.DefineSymbol(function))
+                {
+                    yield return new LambdaError(eh => eh.ReportError(text, function.Name.GenericParseTreeNode, $"A function or variable with name '{function.Name}' already exists in current scope"));
+                }
             }
         }
 
@@ -815,7 +820,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 var selfType = impl.TargetType;
                 if (f.RefSelf)
                     selfType = ReferenceType.GetRefType(selfType);
-                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(null, "self"), selfType));
+                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(null, "self", false), selfType));
                 //scope.DefineImplFunction(impl.TargetType, f);
             }
 
@@ -1132,15 +1137,84 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        private void InferGenericParameterType(Dictionary<string, CheezType> result, AstExpression param, CheezType arg)
+        private bool InferGenericParameterType(Dictionary<string, CheezType> result, AstExpression param, ref CheezType arg)
         {
-            //switch (param)
-            //{
-            //    case AstNamedTypeExpr n:
-            //        if (result.TryGetValue(n.Name, out var t) && t == null)
-            //            result[n.Name] = arg;
-            //        break;
-            //}
+            switch (param)
+            {
+                case AstIdentifierExpr i when i.IsPolyTypeExpr && arg is PolyType:
+                    return false;
+
+                case AstIdentifierExpr i when i.IsPolyTypeExpr:
+                    if (!result.TryGetValue(i.Name, out var _))
+                    {
+                        result[i.Name] = arg;
+                        return true;
+                    }
+                    return false;
+                    
+                default:
+                    if (arg is PolyType)
+                    {
+                        arg = param.Type;
+                        return true;
+                    }
+                    return false;
+            }
+        }
+
+        private IEnumerable<object> CallPolyFunction(AstCallExpr call, GenericFunctionType g, SemanticerData data)
+        {
+            if (g.Declaration.Parameters.Count != call.Arguments.Count)
+            {
+                yield return new LambdaError(eh => eh.ReportError(data.Text, call.GenericParseTreeNode, $"Wrong number of arguments in function call"));
+            }
+
+            var types = new Dictionary<string, CheezType>();
+
+            // find out types of generic parameters
+            int argCount = call.Arguments.Count;
+
+            while (true)
+            {
+                bool changes = false;
+
+                for (int i = 0; i < argCount; i++)
+                {
+                    var t = call.Arguments[i].Type;
+                    changes |= InferGenericParameterType(types, g.Declaration.Parameters[i].TypeExpr, ref t);
+                    call.Arguments[i].Type = t;
+                }
+
+                if (data.ExpectedType != null && g.Declaration.ReturnTypeExpr != null)
+                {
+                    var t = data.ExpectedType;
+                    changes |= InferGenericParameterType(types, g.Declaration.ReturnTypeExpr, ref t);
+                    data.ExpectedType = t;
+                }
+
+                if (!changes)
+                    break;
+            }
+            
+            // @Todo: check if function is already instantiated
+
+
+            // instantiate function
+            var instance = g.Declaration.Clone() as AstFunctionDecl;
+            instance.IsGeneric = false;
+            instance.IsPolyInstance = true;
+            //g.Declaration.AddPolyInstance(types, instance);
+
+            foreach (var kv in types)
+            {
+                instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value); // @Todo
+            }
+
+            foreach (var v in VisitFunctionHeader(instance, data.Text, null)) // @Todo: implTarget, text
+                yield return v;
+            foreach (var v in VisitFunctionBody(instance, data.Text, null)) // @Todo: text
+                yield return v;
+            call.Function = new AstFunctionExpression(call.Function.GenericParseTreeNode, instance, call.Function);
         }
 
         public override IEnumerable<object> VisitCallExpression(AstCallExpr call, SemanticerData data = null)
@@ -1170,41 +1244,8 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (call.Function.Type is GenericFunctionType g)
             {
-                if (g.Declaration.Parameters.Count != call.Arguments.Count)
-                {
-                    yield return new LambdaError(eh => eh.ReportError(data.Text, call.GenericParseTreeNode, $"Wrong number of arguments in function call"));
-                }
-
-                var types = new Dictionary<string, CheezType>();
-                types = g.GenericParameters.ToDictionary(x => x, x => (CheezType)null);
-
-                // find out types of generic parameters
-                int argCount = call.Arguments.Count;
-                for (int i = 0; i < argCount; i++)
-                {
-                    InferGenericParameterType(types, g.Declaration.Parameters[i].TypeExpr, call.Arguments[i].Type);
-                }
-
-                if (data.ExpectedType != null && g.Declaration.ReturnTypeExpr != null)
-                {
-                    InferGenericParameterType(types, g.Declaration.ReturnTypeExpr, data.ExpectedType);
-                }
-
-                // instantiate function
-                var instance = g.Declaration.Clone() as AstFunctionDecl;
-                instance.IsGeneric = false;
-                instance.Name.Name += $"<{string.Join(", ", g.GenericParameters.Select(x => types[x]))}>"; // @Todo
-
-                foreach (var kv in types)
-                {
-                    instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value); // @Todo
-                }
-
-                foreach (var v in VisitFunctionHeader(instance, data.Text, null)) // @Todo: implTarget, text
+                foreach (var v in CallPolyFunction(call, g, data))
                     yield return v;
-                foreach (var v in VisitFunctionBody(instance, data.Text, null)) // @Todo: text
-                    yield return v;
-                call.Function = new AstFunctionExpression(call.Function.GenericParseTreeNode, instance, call.Function);
             }
 
             if (call.Function.Type is FunctionType f)
@@ -1238,6 +1279,28 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitIdentifierExpression(AstIdentifierExpr ident, SemanticerData data = null)
         {
+            if (ident.IsPolyTypeExpr)
+            {
+                if (data.Function != null)
+                {
+                    if (data.Function.IsPolyInstance)
+                    {
+                        ident.IsPolyTypeExpr = false;
+                    }
+                    else
+                    {
+                        ident.Scope = data.Scope;
+                        ident.Value = new PolyType(ident.Name);
+                        ident.Type = CheezType.Type;
+                        yield break;
+                    }
+                }
+                else
+                {
+                    yield return new GenericError(data.Text, ident.GenericParseTreeNode, "Polymorphic type not allowed here");
+                }
+            }
+
             var scope = data.Scope;
             ident.Scope = scope;
 
@@ -1462,7 +1525,10 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitPolyTypeExpr(AstPolyTypeExpr pol, SemanticerData data = default)
         {
-            throw new NotImplementedException();
+            pol.Scope = data.Scope;
+            pol.Value = new PolyType(pol.Name);
+            pol.Type = CheezType.Type;
+            yield break;
         }
 
         #endregion

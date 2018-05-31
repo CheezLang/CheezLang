@@ -539,11 +539,14 @@ namespace Cheez.Compiler.Ast
         public string Name { get; set; }
         public ISymbol Symbol { get; set; }
 
+        public bool IsPolyTypeExpr { get; set; }
+
         [DebuggerStepThrough]
-        public AstIdentifierExpr(ParseTree.PTExpr node, string name) : base()
+        public AstIdentifierExpr(ParseTree.PTExpr node, string name, bool isPolyTypeExpr) : base()
         {
             GenericParseTreeNode = node;
             this.Name = name;
+            this.IsPolyTypeExpr = isPolyTypeExpr;
         }
 
         [DebuggerStepThrough]
@@ -560,7 +563,7 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override AstExpression Clone()
         {
-            return new AstIdentifierExpr(GenericParseTreeNode, Name)
+            return new AstIdentifierExpr(GenericParseTreeNode, Name, IsPolyTypeExpr)
             {
                 Type = this.Type,
                 Scope = this.Scope
@@ -571,9 +574,9 @@ namespace Cheez.Compiler.Ast
     public class AstPolyTypeExpr : AstExpression
     {
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
-        public AstIdentifierExpr Name { get; set; }
+        public string Name { get; set; }
 
-        public AstPolyTypeExpr(ParseTree.PTExpr node, AstIdentifierExpr name) : base()
+        public AstPolyTypeExpr(ParseTree.PTExpr node, string name) : base()
         {
             this.GenericParseTreeNode = node;
             this.Name = name;
@@ -610,7 +613,7 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override AstExpression Clone()
         {
-            return new AstPointerTypeExpr(GenericParseTreeNode, Target)
+            return new AstPointerTypeExpr(GenericParseTreeNode, Target.Clone())
             {
                 Type = this.Type,
                 Scope = this.Scope
@@ -643,7 +646,7 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override AstExpression Clone()
         {
-            return new AstArrayTypeExpr(GenericParseTreeNode, Target)
+            return new AstArrayTypeExpr(GenericParseTreeNode, Target.Clone())
             {
                 Type = this.Type,
                 Scope = this.Scope

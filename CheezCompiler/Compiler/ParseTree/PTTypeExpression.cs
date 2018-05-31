@@ -23,6 +23,21 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
+    public class PTPolyTypeExpr : PTExpr
+    {
+        public string Name { get; }
+
+        public PTPolyTypeExpr(TokenLocation loc, string name) : base(loc, loc)
+        {
+            this.Name = name;
+        }
+
+        public override AstExpression CreateAst()
+        {
+            return new AstPolyTypeExpr(this, Name);
+        }
+    }
+
     public class PTPointerTypeExpr : PTExpr
     {
         public PTExpr SubExpr { get; set; }

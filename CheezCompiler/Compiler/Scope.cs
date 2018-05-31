@@ -42,7 +42,7 @@ namespace Cheez.Compiler
 
         public CompTimeVariable(string name, CheezType type, object value)
         {
-            this.Name = new AstIdentifierExpr(null, name);
+            this.Name = new AstIdentifierExpr(null, name, false);
             this.Type = type;
             this.Value = value;
         }

@@ -1010,9 +1010,13 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.KwNew:
                     return ParseStructValue();
 
+                case TokenType.DollarIdentifier:
+                    NextToken();
+                    return new PTIdentifierExpr(token.location, (string)token.data, true);
+
                 case TokenType.Identifier:
                     NextToken();
-                    return new PTIdentifierExpr(token.location, (string)token.data);
+                    return new PTIdentifierExpr(token.location, (string)token.data, false);
 
                 case TokenType.StringLiteral:
                     NextToken();
@@ -1130,10 +1134,10 @@ namespace Cheez.Compiler.Parsing
             if (next.type != identType)
             {
                 ReportError(next.location, customErrorMessage?.Invoke(next) ?? "Expected identifier");
-                return new PTIdentifierExpr(next.location, "§");
+                return new PTIdentifierExpr(next.location, "§", false);
             }
             NextToken();
-            return new PTIdentifierExpr(next.location, (string)next.data);
+            return new PTIdentifierExpr(next.location, (string)next.data, false);
         }
 
         private PTExpr ParseEmptyExpression()

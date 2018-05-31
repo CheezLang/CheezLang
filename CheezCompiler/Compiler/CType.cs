@@ -87,35 +87,43 @@ namespace Cheez.Compiler
     //    }
     //}
 
-    public class CheezType
+    public abstract class CheezType
     {
         public static CheezType Void => VoidType.Intance;
         public static CheezType String => StringType.Instance;
         public static CheezType Bool => BoolType.Instance;
         public static CheezType Error => ErrorType.Instance;
         public static CheezType Type => CheezTypeType.Instance;
+
+        public abstract bool IsPolyType { get; }
     }
 
     public class CheezTypeType : CheezType
     {
         public static CheezTypeType Instance { get; } = new CheezTypeType();
+
+        public override bool IsPolyType => false;
     }
 
     public class GenericFunctionType : CheezType
     {
-        public string[] GenericParameters { get; }
+        //public string[] GenericParameters { get; }
         public AstFunctionDecl Declaration { get; }
+
+        public override bool IsPolyType => false;
 
         public GenericFunctionType(AstFunctionDecl decl)
         {
             Declaration = decl;
-            GenericParameters = decl.Generics.Select(g => g.Name).ToArray();
+            //GenericParameters = decl.Generics.Select(g => g.Name).ToArray();
         }
     }
 
     public class ErrorType : CheezType
     {
         public static ErrorType Instance { get; } = new ErrorType();
+
+        public override bool IsPolyType => false;
     }
 
     public class VoidType : CheezType
@@ -126,6 +134,8 @@ namespace Cheez.Compiler
         {
             return "void";
         }
+
+        public override bool IsPolyType => false;
     }
 
     public class BoolType : CheezType
@@ -136,6 +146,8 @@ namespace Cheez.Compiler
         {
             return "bool";
         }
+
+        public override bool IsPolyType => false;
     }
 
     public class IntType : CheezType
@@ -170,6 +182,8 @@ namespace Cheez.Compiler
         {
             return (Signed ? "i" : "u") + (SizeInBytes * 8);
         }
+
+        public override bool IsPolyType => false;
     }
 
     public class FloatType : CheezType
@@ -200,6 +214,8 @@ namespace Cheez.Compiler
         {
             return "f" + (SizeInBytes * 8);
         }
+
+        public override bool IsPolyType => false;
     }
 
     public class PointerType : CheezType
@@ -231,6 +247,8 @@ namespace Cheez.Compiler
         {
             return $"{TargetType}*";
         }
+
+        public override bool IsPolyType => TargetType.IsPolyType;
     }
 
     public class ReferenceType : CheezType
@@ -265,6 +283,8 @@ namespace Cheez.Compiler
         {
             return $"{TargetType}&";
         }
+
+        public override bool IsPolyType => TargetType.IsPolyType;
     }
 
     public class ArrayType : CheezType
@@ -301,6 +321,8 @@ namespace Cheez.Compiler
         {
             return PointerType.GetPointerType(TargetType);
         }
+
+        public override bool IsPolyType => TargetType.IsPolyType;
     }
 
     public class StringType : CheezType
@@ -316,6 +338,8 @@ namespace Cheez.Compiler
         {
             return PointerType.GetPointerType(IntType.GetIntType(1, true));
         }
+
+        public override bool IsPolyType => false;
     }
 
     public class StructType : CheezType
@@ -338,6 +362,8 @@ namespace Cheez.Compiler
         {
             return Declaration.Members.FindIndex(m => m.Name.Name == right);
         }
+
+        public override bool IsPolyType => false;
     }
 
     public class EnumType : CheezType
@@ -361,6 +387,8 @@ namespace Cheez.Compiler
             var vals = string.Join("\n", Members.Select(kv => $"{kv.Key} = {kv.Value}"));
             return $"enum {{\n{vals.Indent(4)}\n}}";
         }
+
+        public override bool IsPolyType => false;
     }
 
     public class FunctionType : CheezType
@@ -407,6 +435,24 @@ namespace Cheez.Compiler
         {
             var args = string.Join(", ", ParameterTypes.ToList());
             return $"fn({args}): {ReturnType}";
+        }
+
+        public override bool IsPolyType => false;
+    }
+
+    public class PolyType : CheezType
+    {
+        public string Name { get; }
+        public override bool IsPolyType => true;
+
+        public PolyType(string name)
+        {
+            this.Name = name;
+        }
+
+        public override string ToString()
+        {
+            return $"${Name}";
         }
     }
 }

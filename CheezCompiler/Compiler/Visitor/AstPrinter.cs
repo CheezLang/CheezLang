@@ -25,10 +25,10 @@ namespace Cheez.Compiler.Visitor
             var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name}: {p.ParseTreeNode.Type}"));
             var head = $"fn {function.Name}";
                 
-            if (function.IsGeneric)
-            {
-                head += $"<{string.Join(", ", function.Generics.Select(g => g.Name))}>";
-            }
+            //if (function.IsGeneric)
+            //{
+            //    head += $"<{string.Join(", ", function.Generics.Select(g => g.Name))}>";
+            //}
 
             head += $"({pars})";
 

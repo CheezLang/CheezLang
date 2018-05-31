@@ -175,10 +175,12 @@ namespace Cheez.Compiler.ParseTree
     public class PTIdentifierExpr : PTExpr
     {
         public string Name { get; set; }
+        public bool IsPolyTypeExpr { get; }
 
-        public PTIdentifierExpr(TokenLocation beg, string name) : base(beg, beg)
+        public PTIdentifierExpr(TokenLocation beg, string name, bool isPolyTypeExpr) : base(beg, beg)
         {
             this.Name = name;
+            this.IsPolyTypeExpr = isPolyTypeExpr;
         }
 
         public override string ToString()
@@ -188,7 +190,7 @@ namespace Cheez.Compiler.ParseTree
 
         public override AstExpression CreateAst()
         {
-            return new AstIdentifierExpr(this, Name);
+            return new AstIdentifierExpr(this, Name, IsPolyTypeExpr);
         }
     }
 

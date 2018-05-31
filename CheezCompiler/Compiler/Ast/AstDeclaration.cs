@@ -63,7 +63,7 @@ namespace Cheez.Compiler.Ast
         public AstExpression ReturnTypeExpr { get; set; }
         public CheezType ReturnType { get; set; }
 
-        public List<AstIdentifierExpr> Generics { get; }
+        //public List<AstIdentifierExpr> Generics { get; }
 
         public CheezType Type { get; set; }
 
@@ -75,6 +75,8 @@ namespace Cheez.Compiler.Ast
         public bool IsGeneric { get; set; }
 
         public bool IsConstant => true;
+
+        public bool IsPolyInstance { get; set; } = false;
 
         public AstFunctionDecl(ParseTree.PTStatement node,
             AstIdentifierExpr name,
@@ -88,14 +90,14 @@ namespace Cheez.Compiler.Ast
         {
             GenericParseTreeNode = node;
             this.Name = name;
-            this.Generics = generics;
+            //this.Generics = generics;
             this.Parameters = parameters;
             this.ReturnTypeExpr = returnTypeExpr;
             this.Body = body;
             this.RefSelf = refSelf;
 
-            if (Generics.Count > 0)
-                IsGeneric = true;
+            //if (Generics.Count > 0)
+            //    IsGeneric = true;
         }
 
         [DebuggerStepThrough]
@@ -115,7 +117,7 @@ namespace Cheez.Compiler.Ast
         {
             return new AstFunctionDecl(GenericParseTreeNode,
                 Name.Clone() as AstIdentifierExpr,
-                Generics.Select(g => g.Clone() as AstIdentifierExpr).ToList(),
+                null, //Generics.Select(g => g.Clone() as AstIdentifierExpr).ToList(),
                 Parameters.Select(p => p.Clone()).ToList(),
                 ReturnTypeExpr.Clone(),
                 Body?.Clone() as AstBlockStmt,
