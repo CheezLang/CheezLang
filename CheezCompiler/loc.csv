@@ -1,21 +1,21 @@
 ﻿File Name,Lines
-Semanticer.cs,1288
-Parser.cs,950
-LLVMCodeGenerator.cs,829
+Semanticer.cs,1435
+Parser.cs,953
+LLVMCodeGenerator.cs,831
 Lexer.cs,648
-AstExpression.cs,606
+AstExpression.cs,602
 CppCodeGenerator.cs,567
 Scope.cs,363
-CType.cs,332
-AstDeclaration.cs,315
+CType.cs,360
+AstDeclaration.cs,319
 AstStatement.cs,256
-PTExpressions.cs,253
+PTExpressions.cs,255
 AstPrinter.cs,209
 PTDeclarations.cs,191
 PTStatements.cs,145
 Compiler.cs,118
 Util.cs,93
-Visitor.cs,76
+Visitor.cs,74
 PTTypeExpression.cs,73
 IOperator.cs,60
 IRFunction.cs,56
@@ -29,4 +29,4 @@ ParseTreeItem.cs,24
 IRInterpreter.cs,19
 AstDirective.cs,16
 ICodeGenerator.cs,8
-Total,7752
+Total,7932
