@@ -85,6 +85,11 @@ namespace Cheez.Compiler.Ast
                 mFlags = this.mFlags
             };
         }
+
+        public override string ToString()
+        {
+            return $"while {Condition} {{ ... }}";
+        }
     }
 
     public class AstReturnStmt : AstStatement
@@ -154,6 +159,11 @@ namespace Cheez.Compiler.Ast
                 mFlags = this.mFlags
             };
         }
+
+        public override string ToString()
+        {
+            return $"if {Condition} {{ ... }}";
+        }
     }
 
     public class AstBlockStmt : AstStatement
@@ -184,6 +194,11 @@ namespace Cheez.Compiler.Ast
                 Directives = this.Directives,
                 mFlags = this.mFlags
             };
+        }
+
+        public override string ToString()
+        {
+            return "{ ... }";
         }
     }
 
@@ -217,6 +232,11 @@ namespace Cheez.Compiler.Ast
                 mFlags = this.mFlags
             };
         }
+
+        public override string ToString()
+        {
+            return $"{Target} = {Value}";
+        }
     }
 
     public class AstExprStmt : AstStatement
@@ -247,6 +267,11 @@ namespace Cheez.Compiler.Ast
                 Directives = this.Directives,
                 mFlags = this.mFlags
             };
+        }
+
+        public override string ToString()
+        {
+            return Expr.ToString();
         }
     }
 

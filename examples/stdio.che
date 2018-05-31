@@ -1,24 +1,24 @@
 struct FILE {
-    _Placeholder: void*
+    _Placeholder: void^
 }
 
-fn __acrt_iob_func(_: uint) -> FILE*;
+fn __acrt_iob_func(_: uint) -> FILE^;
 
 let stdin = __acrt_iob_func(1)
 let stdout = __acrt_iob_func(1)
 let stderr = __acrt_iob_func(1)
 
-fn printf(format: string, num: void*) #varargs;
-fn fflush(file: FILE*);
+fn printf(format: string, num: void^) #varargs;
+fn fflush(file: FILE^);
 
 ///
 
 type errno_t = int
 type size_t = int
 
-fn clearerr_s(_Stream: FILE*) -> errno_t;
-fn fopen_s(_Stream: FILE**, _FileName: string, _Mode: string) -> errno_t;
-fn fread_s(_Buffer: void*, _BufferSize: size_t, _ElementSize: size_t, _ElementCount: size_t, _Stream: FILE*) -> size_t;
+fn clearerr_s(_Stream: FILE^) -> errno_t;
+fn fopen_s(_Stream: FILE^^, _FileName: string, _Mode: string) -> errno_t;
+fn fread_s(_Buffer: void^, _BufferSize: size_t, _ElementSize: size_t, _ElementCount: size_t, _Stream: FILE^) -> size_t;
 
 /*
     next: freopen_s

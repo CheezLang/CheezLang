@@ -11,17 +11,21 @@ namespace Cheez.Compiler.Ast
     {
         public ParseTree.PTFunctionParam ParseTreeNode { get; }
 
-        public string Name { get; }
+        public AstIdentifierExpr Name { get; }
         public CheezType Type { get; set; }
+        public AstExpression TypeExpr { get; set; }
         public Scope Scope { get; set; }
 
-        public AstFunctionParameter(ParseTree.PTFunctionParam node)
+        public bool IsConstant => false;
+
+        public AstFunctionParameter(ParseTree.PTFunctionParam node, AstIdentifierExpr name, AstExpression typeExpr)
         {
             ParseTreeNode = node;
-            Name = node.Name.Name;
+            Name = name;
+            this.TypeExpr = typeExpr;
         }
 
-        public AstFunctionParameter(string name, CheezType type)
+        public AstFunctionParameter(AstIdentifierExpr name, CheezType type)
         {
             Name = name;
             Type = type;
@@ -34,7 +38,7 @@ namespace Cheez.Compiler.Ast
 
         public AstFunctionParameter Clone()
         {
-            return new AstFunctionParameter(ParseTreeNode)
+            return new AstFunctionParameter(ParseTreeNode, Name.Clone() as AstIdentifierExpr, TypeExpr.Clone())
             {
                 Scope = this.Scope,
                 Type = this.Type
@@ -44,19 +48,19 @@ namespace Cheez.Compiler.Ast
 
     public interface ITempVariable
     {
-        string Name { get; }
+        AstIdentifierExpr Name { get; }
         CheezType Type { get; }
     }
 
     public class AstFunctionDecl : AstStatement, ISymbol
     {
-        public ParseTree.PTFunctionDecl ParseTreeNode { get; set; }
-        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
+        public override ParseTree.PTStatement GenericParseTreeNode { get; }
 
         public Scope SubScope { get; set; }
 
-        public string Name { get; set; }
+        public AstIdentifierExpr Name { get; set; }
         public List<AstFunctionParameter> Parameters { get; }
+        public AstExpression ReturnTypeExpr { get; set; }
         public CheezType ReturnType { get; set; }
 
         public List<AstIdentifierExpr> Generics { get; }
@@ -64,27 +68,29 @@ namespace Cheez.Compiler.Ast
         public CheezType Type { get; set; }
 
         public AstBlockStmt Body { get; private set; }
-        //public List<AstStatement> Statements { get; private set; }
-        //public bool HasImplementation => Statements != null;
 
         public List<ITempVariable> LocalVariables { get; } = new List<ITempVariable>();
 
         public bool RefSelf { get; }
         public bool IsGeneric { get; set; }
 
-        public AstFunctionDecl(ParseTree.PTFunctionDecl node, 
-            string name, 
+        public bool IsConstant => true;
+
+        public AstFunctionDecl(ParseTree.PTStatement node,
+            AstIdentifierExpr name,
             List<AstIdentifierExpr> generics,
-            List<AstFunctionParameter> parameters, 
+            List<AstFunctionParameter> parameters,
+            AstExpression returnTypeExpr,
             AstBlockStmt body = null, 
             Dictionary<string, AstDirective> directives = null, 
             bool refSelf = false)
             : base(directives)
         {
-            ParseTreeNode = node;
+            GenericParseTreeNode = node;
             this.Name = name;
             this.Generics = generics;
             this.Parameters = parameters;
+            this.ReturnTypeExpr = returnTypeExpr;
             this.Body = body;
             this.RefSelf = refSelf;
 
@@ -107,17 +113,19 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstFunctionDecl(ParseTreeNode,
-                Name,
+            return new AstFunctionDecl(GenericParseTreeNode,
+                Name.Clone() as AstIdentifierExpr,
                 Generics.Select(g => g.Clone() as AstIdentifierExpr).ToList(),
                 Parameters.Select(p => p.Clone()).ToList(),
+                ReturnTypeExpr.Clone(),
                 Body?.Clone() as AstBlockStmt,
                 Directives) // @Tode: clone this too?
             {
                 Scope = this.Scope,
                 SubScope = this.SubScope?.Clone(),
                 Directives = this.Directives,
-                mFlags = this.mFlags
+                mFlags = this.mFlags,
+                ReturnType = this.ReturnType
             };
         }
     }
@@ -130,17 +138,20 @@ namespace Cheez.Compiler.Ast
     {
         public ParseTree.PTMemberDecl ParseTreeNode { get; set; }
 
-        public string Name => ParseTreeNode.Name.Name;
+        public AstIdentifierExpr Name { get; }
+        public AstExpression TypeExpr { get; set; }
         public CheezType Type { get; set; }
 
-        public AstMemberDecl(ParseTree.PTMemberDecl node)
+        public AstMemberDecl(ParseTree.PTMemberDecl node, AstIdentifierExpr name, AstExpression typeExpr)
         {
             ParseTreeNode = node;
+            this.Name = name;
+            this.TypeExpr = typeExpr;
         }
 
         public AstMemberDecl Clone()
         {
-            return new AstMemberDecl(ParseTreeNode)
+            return new AstMemberDecl(ParseTreeNode, Name.Clone() as AstIdentifierExpr, TypeExpr.Clone())
             {
                 Type = this.Type
             };
@@ -152,14 +163,15 @@ namespace Cheez.Compiler.Ast
         public ParseTree.PTTypeDecl ParseTreeNode { get; set; }
         public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
-        public string Name => ParseTreeNode.Name.Name;
+        public AstIdentifierExpr Name { get; }
         public List<AstMemberDecl> Members { get; }
 
         public CheezType Type { get; set; }
 
-        public AstTypeDecl(ParseTree.PTTypeDecl node, List<AstMemberDecl> members, Dictionary<string, AstDirective> dirs) : base(dirs)
+        public AstTypeDecl(ParseTree.PTTypeDecl node, AstIdentifierExpr name, List<AstMemberDecl> members, Dictionary<string, AstDirective> dirs) : base(dirs)
         {
             ParseTreeNode = node;
+            this.Name = name;
             this.Members = members;
         }
 
@@ -172,6 +184,7 @@ namespace Cheez.Compiler.Ast
         public override AstStatement Clone()
         {
             return new AstTypeDecl(ParseTreeNode,
+                Name.Clone() as AstIdentifierExpr,
                 Members.Select(m => m.Clone()).ToList(),
                 Directives) // @Tode: clone this?
             {
@@ -187,16 +200,18 @@ namespace Cheez.Compiler.Ast
         public ParseTree.PTImplBlock ParseTreeNode { get; }
         public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
-        public CheezType TargetType;
+        public CheezType TargetType { get; set; }
+        public AstExpression TargetTypeExpr { get; set; }
         public string Trait { get; set; }
 
         public List<AstFunctionDecl> Functions { get; }
 
         public Scope SubScope { get; set; }
 
-        public AstImplBlock(ParseTree.PTImplBlock node, List<AstFunctionDecl> functions) : base()
+        public AstImplBlock(ParseTree.PTImplBlock node, AstExpression targetTypeExpr, List<AstFunctionDecl> functions) : base()
         {
             ParseTreeNode = node;
+            this.TargetTypeExpr = targetTypeExpr;
             this.Functions = functions;
         }
 
@@ -207,7 +222,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstImplBlock(ParseTreeNode, Functions.Select(f => f.Clone() as AstFunctionDecl).ToList())
+            return new AstImplBlock(ParseTreeNode, TargetTypeExpr.Clone(), Functions.Select(f => f.Clone() as AstFunctionDecl).ToList())
             {
                 Scope = this.Scope,
                 Directives = this.Directives,
@@ -222,18 +237,21 @@ namespace Cheez.Compiler.Ast
 
     public class AstVariableDecl : AstStatement, ISymbol, ITempVariable
     {
-        public ParseTree.PTVariableDecl ParseTreeNode { get; }
-        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
+        public override ParseTree.PTStatement GenericParseTreeNode { get; }
 
-        public string Name { get; set; }
+        public AstIdentifierExpr Name { get; set; }
         public CheezType Type { get; set; }
+        public AstExpression TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
         public Scope SubScope { get; set; }
 
-        public AstVariableDecl(ParseTree.PTVariableDecl node, string name, AstExpression init, Dictionary<string, AstDirective> directives = null) : base(directives)
+        public bool IsConstant { get; set; } = false;
+
+        public AstVariableDecl(ParseTree.PTStatement node, AstIdentifierExpr name, AstExpression typeExpr, AstExpression init, Dictionary<string, AstDirective> directives = null) : base(directives)
         {
-            ParseTreeNode = node;
+            GenericParseTreeNode = node;
             this.Name = name;
+            this.TypeExpr = typeExpr;
             this.Initializer = init;
         }
 
@@ -250,8 +268,9 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstVariableDecl(ParseTreeNode,
-                Name,
+            return new AstVariableDecl(GenericParseTreeNode,
+                Name.Clone() as AstIdentifierExpr,
+                TypeExpr.Clone(),
                 Initializer?.Clone(),
                 Directives) // @Tode: clone this?
             {
@@ -295,10 +314,10 @@ namespace Cheez.Compiler.Ast
         public ParseTree.PTEnumDecl ParseTreeNode { get; set; }
         public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
-        public string Name { get; }
+        public AstIdentifierExpr Name { get; }
         public List<AstEnumMember> Members { get; }
 
-        public AstEnumDecl(ParseTree.PTEnumDecl node, string name, List<AstEnumMember> members, Dictionary<string, AstDirective> dirs) : base(dirs)
+        public AstEnumDecl(ParseTree.PTEnumDecl node, AstIdentifierExpr name, List<AstEnumMember> members, Dictionary<string, AstDirective> dirs) : base(dirs)
         {
             ParseTreeNode = node;
             this.Name = name;
@@ -314,7 +333,7 @@ namespace Cheez.Compiler.Ast
         public override AstStatement Clone()
         {
             return new AstEnumDecl(ParseTreeNode, 
-                Name,
+                Name.Clone() as AstIdentifierExpr,
                 Members.Select(m => m.Clone()).ToList(),
                 Directives) // @Tode: clone this?
             {
@@ -331,13 +350,13 @@ namespace Cheez.Compiler.Ast
 
     public class AstTypeAliasDecl : AstStatement
     {
-        public ParseTree.PTTypeAliasDecl ParseTreeNode => GenericParseTreeNode as ParseTree.PTTypeAliasDecl;
         public override ParseTree.PTStatement GenericParseTreeNode { get; }
 
-        public string Name { get; set; }
+        public AstIdentifierExpr Name { get; set; }
+        public AstExpression TypeExpr { get; set; }
         public CheezType Type { get; set; }
 
-        public AstTypeAliasDecl(ParseTree.PTStatement node, string name, Dictionary<string, AstDirective> dirs = null) : base(dirs)
+        public AstTypeAliasDecl(ParseTree.PTStatement node, AstIdentifierExpr name, AstExpression typeExpr, Dictionary<string, AstDirective> dirs = null) : base(dirs)
         {
             this.GenericParseTreeNode = node;
             this.Name = name;
@@ -350,8 +369,9 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstTypeAliasDecl(ParseTreeNode, 
-                Name,
+            return new AstTypeAliasDecl(GenericParseTreeNode, 
+                Name.Clone() as AstIdentifierExpr,
+                TypeExpr.Clone(),
                 Directives) // @Tode: clone this?
             {
                 Scope = this.Scope,

@@ -43,8 +43,8 @@ namespace CheezLanguageServer
             foreach (var kv in scope.Symbols)
             {
                 var sym = kv.Value;
-                if (!symbols.ContainsKey(sym.Name))
-                    symbols.Add(sym.Name, sym);
+                if (!symbols.ContainsKey(sym.Name.Name))
+                    symbols.Add(sym.Name.Name, sym);
             }
 
             if (scope.Parent != null)
@@ -169,7 +169,7 @@ namespace CheezLanguageServer
                 return variable.Initializer.Accept(this, index);
             }
 
-            if (GetRelativeLocation(variable.ParseTreeNode.Type, index) == RelativeLocation.Same)
+            if (GetRelativeLocation(variable.TypeExpr.GenericParseTreeNode, index) == RelativeLocation.Same)
             {
                 return new NodeFinderResult(variable.Scope, type: variable.Type);
             }
@@ -329,11 +329,6 @@ namespace CheezLanguageServer
         public override NodeFinderResult VisitBoolExpression(AstBoolExpr bo, int data = 0)
         {
             return new NodeFinderResult(bo.Scope, expr: bo);
-        }
-
-        public override NodeFinderResult VisitTypeExpression(AstTypeExpr type, int data = 0)
-        {
-            return new NodeFinderResult(type.Scope, type: type.Type);
         }
 
         public override NodeFinderResult VisitNumberExpression(AstNumberExpr num, int data = 0)

@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using Cheez.Compiler.Ast;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Cheez.Compiler
 {
     public interface INamed
     {
-        string Name { get; }
+        AstIdentifierExpr Name { get; }
     }
 
     public class UniqueNameDecorator
@@ -37,7 +38,7 @@ namespace Cheez.Compiler
             if (mCurrentScopeMap.ContainsKey(named))
                 return mCurrentScopeMap[named];
 
-            string name = named.Name;
+            string name = named.Name.Name;
 
             while (mCurrentScopeMap.Values.Any(n => n == name))
             {

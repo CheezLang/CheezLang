@@ -6,86 +6,86 @@ using System.Linq;
 
 namespace Cheez.Compiler
 {
-    public class CTypeFactory
-    {
-        private Dictionary<string, CheezType> sTypes = new Dictionary<string, CheezType>();
+    //public class CTypeFactory
+    //{
+    //    private Dictionary<string, CheezType> sTypes = new Dictionary<string, CheezType>();
 
-        public CTypeFactory()
-        {
-            // create default types
-            CreateAlias("i8", IntType.GetIntType(1, true));
-            CreateAlias("i16", IntType.GetIntType(2, true));
-            CreateAlias("i32", IntType.GetIntType(4, true));
-            CreateAlias("i64", IntType.GetIntType(8, true));
+    //    public CTypeFactory()
+    //    {
+    //        // create default types
+    //        CreateAlias("i8", IntType.GetIntType(1, true));
+    //        CreateAlias("i16", IntType.GetIntType(2, true));
+    //        CreateAlias("i32", IntType.GetIntType(4, true));
+    //        CreateAlias("i64", IntType.GetIntType(8, true));
 
-            CreateAlias("byte", IntType.GetIntType(1, true));
-            CreateAlias("short", IntType.GetIntType(2, true));
-            CreateAlias("int", IntType.GetIntType(4, true));
-            CreateAlias("long", IntType.GetIntType(8, true));
+    //        CreateAlias("byte", IntType.GetIntType(1, true));
+    //        CreateAlias("short", IntType.GetIntType(2, true));
+    //        CreateAlias("int", IntType.GetIntType(4, true));
+    //        CreateAlias("long", IntType.GetIntType(8, true));
 
-            CreateAlias("u8", IntType.GetIntType(1, false));
-            CreateAlias("u16", IntType.GetIntType(2, false));
-            CreateAlias("u32", IntType.GetIntType(4, false));
-            CreateAlias("u64", IntType.GetIntType(8, false));
+    //        CreateAlias("u8", IntType.GetIntType(1, false));
+    //        CreateAlias("u16", IntType.GetIntType(2, false));
+    //        CreateAlias("u32", IntType.GetIntType(4, false));
+    //        CreateAlias("u64", IntType.GetIntType(8, false));
 
-            CreateAlias("ubyte", IntType.GetIntType(1, false));
-            CreateAlias("ushort", IntType.GetIntType(2, false));
-            CreateAlias("uint", IntType.GetIntType(4, false));
-            CreateAlias("ulong", IntType.GetIntType(8, false));
+    //        CreateAlias("ubyte", IntType.GetIntType(1, false));
+    //        CreateAlias("ushort", IntType.GetIntType(2, false));
+    //        CreateAlias("uint", IntType.GetIntType(4, false));
+    //        CreateAlias("ulong", IntType.GetIntType(8, false));
 
-            CreateAlias("f32", FloatType.GetFloatType(4));
-            CreateAlias("float", FloatType.GetFloatType(4));
-            CreateAlias("f64", FloatType.GetFloatType(8));
-            CreateAlias("double", FloatType.GetFloatType(8));
+    //        CreateAlias("f32", FloatType.GetFloatType(4));
+    //        CreateAlias("float", FloatType.GetFloatType(4));
+    //        CreateAlias("f64", FloatType.GetFloatType(8));
+    //        CreateAlias("double", FloatType.GetFloatType(8));
 
-            CreateAlias("bool", BoolType.Instance);
-            CreateAlias("string", StringType.Instance);
-            CreateAlias("void", VoidType.Intance);
-        }
+    //        CreateAlias("bool", BoolType.Instance);
+    //        CreateAlias("string", StringType.Instance);
+    //        CreateAlias("void", VoidType.Intance);
+    //    }
 
-        public CheezType GetCheezType(string name)
-        {
-            if (!sTypes.ContainsKey(name))
-            {
-                return null;
-            }
-            return sTypes[name];
-        }
+    //    public CheezType GetCheezType(string name)
+    //    {
+    //        if (!sTypes.ContainsKey(name))
+    //        {
+    //            return null;
+    //        }
+    //        return sTypes[name];
+    //    }
 
-        public CheezType GetCheezType(PTTypeExpr expr)
-        {
-            switch (expr)
-            {
-                case PTNamedTypeExpr n:
-                    if (sTypes.ContainsKey(n.Name))
-                    {
-                        return sTypes[n.Name];
-                    }
+    //    //public CheezType GetCheezType(PTTypeExpr expr)
+    //    //{
+    //    //    switch (expr)
+    //    //    {
+    //    //        case PTNamedTypeExpr n:
+    //    //            if (sTypes.ContainsKey(n.Name))
+    //    //            {
+    //    //                return sTypes[n.Name];
+    //    //            }
 
-                    return null;
+    //    //            return null;
 
-                case PTPointerTypeExpr p:
-                    return PointerType.GetPointerType(GetCheezType(p.TargetType));
+    //    //        case PTPointerTypeExpr p:
+    //    //            return PointerType.GetPointerType(GetCheezType(p.SubExpr));
 
-                case PTArrayTypeExpr p:
-                    return ArrayType.GetArrayType(GetCheezType(p.ElementType));
+    //    //        case PTArrayTypeExpr p:
+    //    //            return ArrayType.GetArrayType(GetCheezType(p.SubExpr));
 
-                case PTFunctionTypeExpr f:
-                    return FunctionType.GetFunctionType(GetCheezType(f.ReturnType), f.ParameterTypes.Select(pt => GetCheezType(pt)).ToArray());
+    //    //        case PTFunctionTypeExpr f:
+    //    //            return FunctionType.GetFunctionType(GetCheezType(f.ReturnType), f.ParameterTypes.Select(pt => GetCheezType(pt)).ToArray());
 
-                case null:
-                    return CheezType.Void;
+    //    //        case null:
+    //    //            return CheezType.Void;
 
-                default:
-                    return null;
-            }
-        }
+    //    //        default:
+    //    //            return null;
+    //    //    }
+    //    //}
 
-        public void CreateAlias(string name, CheezType type)
-        {
-            sTypes[name] = type;
-        }
-    }
+    //    public void CreateAlias(string name, CheezType type)
+    //    {
+    //        sTypes[name] = type;
+    //    }
+    //}
 
     public class CheezType
     {
@@ -93,6 +93,12 @@ namespace Cheez.Compiler
         public static CheezType String => StringType.Instance;
         public static CheezType Bool => BoolType.Instance;
         public static CheezType Error => ErrorType.Instance;
+        public static CheezType Type => CheezTypeType.Instance;
+    }
+
+    public class CheezTypeType : CheezType
+    {
+        public static CheezTypeType Instance { get; } = new CheezTypeType();
     }
 
     public class GenericFunctionType : CheezType
@@ -330,7 +336,7 @@ namespace Cheez.Compiler
 
         public int GetIndexOfMember(string right)
         {
-            return Declaration.Members.FindIndex(m => m.Name == right);
+            return Declaration.Members.FindIndex(m => m.Name.Name == right);
         }
     }
 
@@ -341,7 +347,7 @@ namespace Cheez.Compiler
 
         public EnumType(AstEnumDecl en)
         {
-            Name = en.Name;
+            Name = en.Name.Name;
             Members = new Dictionary<string, int>();
             int value = 0;
             foreach (var m in en.Members)

@@ -42,7 +42,7 @@ namespace CheezLanguageServer
                 containerName = type.Scope.Name,
                 kind = SymbolKind.Class,
                 location = CastLocation(type.ParseTreeNode.Name),
-                name = type.Name
+                name = type.Name.Name
             });
             return default;
         }
@@ -53,8 +53,8 @@ namespace CheezLanguageServer
             {
                 containerName = function.Scope.Name,
                 kind = SymbolKind.Function,
-                location = CastLocation(function.ParseTreeNode.Name),
-                name = function.Name
+                location = CastLocation(function.Name.GenericParseTreeNode),
+                name = function.Name.Name
             });
 
             function.Body?.Accept(this, list);
@@ -92,8 +92,8 @@ namespace CheezLanguageServer
             {
                 containerName = variable.Scope.Name,
                 kind = SymbolKind.Variable,
-                location = CastLocation(variable.ParseTreeNode.Name),
-                name = variable.Name
+                location = CastLocation(variable.Name.GenericParseTreeNode),
+                name = variable.Name.Name
             });
             return default;
         }

@@ -32,9 +32,9 @@ namespace Cheez.Compiler.Visitor
 
             head += $"({pars})";
 
-            if (function.ParseTreeNode.ReturnType != null)
+            if (function.ReturnTypeExpr != null)
             {
-                head += $" -> {function.ParseTreeNode.ReturnType}";
+                head += $" -> {function.ReturnTypeExpr.Accept(this, 0)}";
             }
 
             return $"{head} {body}".Indent(indentLevel);
@@ -49,7 +49,7 @@ namespace Cheez.Compiler.Visitor
 
         public override string VisitTypeAlias(AstTypeAliasDecl al, int data = 0)
         {
-            return $"type {al.Name} = {al.ParseTreeNode.Type}";
+            return $"type {al.Name.Name} = {al.TypeExpr.Accept(this, 0)}";
         }
 
         public override string VisitUsingStatement(AstUsingStmt use, int data = 0)
@@ -63,11 +63,6 @@ namespace Cheez.Compiler.Visitor
             return $"struct {type.Name} {{\n{body.Indent(4)}\n}}";
         }
 
-        public override string VisitTypeExpression(AstTypeExpr type, int data = 0)
-        {
-            return type.GenericParseTreeNode.ToString();
-        }
-
         public override string VisitImplBlock(AstImplBlock impl, int data = 0)
         {
             var body = string.Join("\n\n", impl.Functions.Select(f => f.Accept(this, 0)));
@@ -79,8 +74,8 @@ namespace Cheez.Compiler.Visitor
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("let ").Append(variable.Name);
-            if (variable.ParseTreeNode.Type != null)
-                sb.Append($": {variable.ParseTreeNode.Type}");
+            if (variable.TypeExpr != null)
+                sb.Append($": {variable.TypeExpr.Accept(this, 0)}");
             if (variable.Initializer != null)
                 sb.Append($" = {variable.Initializer.Accept(this, indentLevel)}");
             return sb.ToString();
@@ -237,7 +232,7 @@ namespace Cheez.Compiler.Visitor
                 body = $"{{ {body} }}";
             }
 
-            return $"{str.Name} {body}";
+            return $"{str.TypeExpr} {body}";
         }
 
         public override string VisitEmptyExpression(AstEmptyExpr em, int data = 0)

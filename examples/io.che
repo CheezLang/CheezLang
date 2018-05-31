@@ -17,10 +17,10 @@ fn Println(s: string) {
 
 fn PrintChar(c: byte) { 
     let bytesWritten: int
-    WriteFile(__std_out_handle, <string>&c, 1, &bytesWritten, 0)
+    WriteFile(__std_out_handle, (string)&c, 1, &bytesWritten, 0)
 }
 
-fn clearmem(mem: byte*, len: int) {
+fn clearmem(mem: byte^, len: int) {
     let i: int = 0
     while (i < len) {
         mem[i] = 0
@@ -29,7 +29,7 @@ fn clearmem(mem: byte*, len: int) {
 }
 
 fn PrintDigit(d: int) {
-    PrintChar(<byte>d + 48)
+    PrintChar((byte)d + 48)
 }
 
 fn PrintInt(num: int) {
@@ -39,7 +39,7 @@ fn PrintInt(num: int) {
         return
     }
     let bufferSize: int = 30
-    let buff = <byte*>malloc(bufferSize)
+    let buff = (byte^)malloc(bufferSize)
     clearmem(buff, bufferSize)
 
     let neg = false
@@ -52,7 +52,7 @@ fn PrintInt(num: int) {
     while i > 0 and num != 0 {
         let lastDigit = num % 10
         num = num / 10
-        buff[i] = <byte>lastDigit + 48
+        buff[i] = (byte)lastDigit + 48
         i = i - 1
     }
 
@@ -61,32 +61,32 @@ fn PrintInt(num: int) {
         i = i - 1
     }
 
-    let str = <string>(<int>buff + i + 1)
+    let str = (string)((int)buff + i + 1)
     PrintString(str)
 
-    free(<void*>buff)
+    free((void^)buff)
 }
 
-fn PrintfData(formatSpecifier: string, data: void*) {
+fn PrintfData(formatSpecifier: string, data: void^) {
     let len = strlen(formatSpecifier)
     if streq(formatSpecifier, "i8") {
-        let d: i8 = <i8>data
-        PrintInt(<i32>d)
+        let d: i8 = (i8)data
+        PrintInt((i32)d)
     }
     else if streq(formatSpecifier, "i16") {
-        let d: i16 = <i16>data
-        PrintInt(<i32>d)
+        let d: i16 = (i16)data
+        PrintInt((i32)d)
     }
     else if streq(formatSpecifier, "i32") {
-        let d: i32 = <i32>data
-        PrintInt(<i32>d)
+        let d: i32 = (i32)data
+        PrintInt((i32)d)
     }
     else if streq(formatSpecifier, "i64") {
-        let d: i64 = <i64>data
-        PrintInt(<i32>d)
+        let d: i64 = (i64)data
+        PrintInt((i32)d)
     }
     else if streq(formatSpecifier, "b") {
-        let b = <bool><ulong>data
+        let b = (bool)(ulong)data
         if (b) {
             PrintString("true")
         } else {
@@ -94,7 +94,7 @@ fn PrintfData(formatSpecifier: string, data: void*) {
         }
     }
     else if streq(formatSpecifier, "s") {
-        PrintString(<string>data)
+        PrintString((string)data)
     }
     else {
         PrintString("<Unknown format specifier: ")
@@ -103,16 +103,22 @@ fn PrintfData(formatSpecifier: string, data: void*) {
     }
 }
 
-fn Printf(format: string, data: void*) {
+fn PrintlnInt(i: int) {
+    PrintInt(i)
+    Println("")
+}
+
+fn Printf(format: string, data: void^) {
     let open = *"{"
     let close = *"}"
 
-    let formatSpecifier = <string>malloc(5)
+    let formatSpecifier = (string)malloc(5)
     let fi: ulong = 0
 
-    let len = <ulong>strlen(format)
+    let len = (ulong)strlen(format)
     let i: ulong = 0
     let state = 0
+
     while (i < len) {
         let c = format[i]
 
@@ -142,10 +148,10 @@ fn Printf(format: string, data: void*) {
         i = i + 1
     }
 
-    free(<void*>formatSpecifier)
+    free((void^)formatSpecifier)
 }
 
-fn Printlnf(format: string, data: void*) {
+fn Printlnf(format: string, data: void^) {
     Printf(format, data)
     Println("")
 }

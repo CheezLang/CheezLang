@@ -6,22 +6,15 @@ using System.Linq;
 
 namespace Cheez.Compiler.ParseTree
 {
-    public class PTTypeExpr : PTExpr
+    public class PTErrorTypeExpr : PTExpr
     {
-        public PTTypeExpr(TokenLocation beg, TokenLocation end) : base(beg, end)
+        public PTErrorTypeExpr(TokenLocation beg, TokenLocation end = null) : base(beg, end ?? beg)
         {
         }
 
         public override AstExpression CreateAst()
         {
-            return new AstTypeExpr(this);
-        }
-    }
-
-    public class PTErrorTypeExpr : PTTypeExpr
-    {
-        public PTErrorTypeExpr(TokenLocation beg, TokenLocation end = null) : base(beg, end ?? beg)
-        {
+            throw new NotImplementedException();
         }
 
         public override string ToString()
@@ -30,57 +23,52 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
-    public class PTNamedTypeExpr : PTTypeExpr
+    public class PTPointerTypeExpr : PTExpr
     {
-        public string Name { get; set; }
+        public PTExpr SubExpr { get; set; }
 
-        public PTNamedTypeExpr(TokenLocation beg, TokenLocation end, string name) : base(beg, end)
+        public PTPointerTypeExpr(TokenLocation beg, TokenLocation end, PTExpr target) : base(beg, end)
         {
-            this.Name = name;
+            this.SubExpr = target;
         }
 
         public override string ToString()
         {
-            return Name;
+            return $"{SubExpr}*";
+        }
+
+        public override AstExpression CreateAst()
+        {
+            return new AstPointerTypeExpr(this, SubExpr.CreateAst());
         }
     }
 
-    public class PTPointerTypeExpr : PTTypeExpr
+    public class PTArrayTypeExpr : PTExpr
     {
-        public PTTypeExpr TargetType { get; set; }
+        public PTExpr SubExpr { get; set; }
 
-        public PTPointerTypeExpr(TokenLocation beg, TokenLocation end, PTTypeExpr target) : base(beg, end)
+        public PTArrayTypeExpr(TokenLocation beg, TokenLocation end, PTExpr target) : base(beg, end)
         {
-            this.TargetType = target;
+            this.SubExpr = target;
         }
 
         public override string ToString()
         {
-            return $"{TargetType}*";
+            return $"{SubExpr}[]";
+        }
+
+        public override AstExpression CreateAst()
+        {
+            return new AstArrayTypeExpr(this, SubExpr.CreateAst());
         }
     }
 
-    public class PTArrayTypeExpr : PTTypeExpr
+    public class PTFunctionTypeExpr : PTExpr
     {
-        public PTTypeExpr ElementType { get; set; }
+        public PTExpr ReturnType { get; set; }
+        public List<PTExpr> ParameterTypes { get; set; }
 
-        public PTArrayTypeExpr(TokenLocation beg, TokenLocation end, PTTypeExpr target) : base(beg, end)
-        {
-            this.ElementType = target;
-        }
-
-        public override string ToString()
-        {
-            return $"{ElementType}[]";
-        }
-    }
-
-    public class PTFunctionTypeExpr : PTTypeExpr
-    {
-        public PTTypeExpr ReturnType { get; set; }
-        public List<PTTypeExpr> ParameterTypes { get; set; }
-
-        public PTFunctionTypeExpr(TokenLocation beg, TokenLocation end, PTTypeExpr target, List<PTTypeExpr> pt) : base(beg, end)
+        public PTFunctionTypeExpr(TokenLocation beg, TokenLocation end, PTExpr target, List<PTExpr> pt) : base(beg, end)
         {
             this.ReturnType = target;
             this.ParameterTypes = pt;
@@ -90,6 +78,11 @@ namespace Cheez.Compiler.ParseTree
         {
             var p = string.Join(", ", ParameterTypes);
             return $"fn {ReturnType}({p})";
+        }
+
+        public override AstExpression CreateAst()
+        {
+            throw new NotImplementedException();
         }
     }
 

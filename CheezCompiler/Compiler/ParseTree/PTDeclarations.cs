@@ -10,10 +10,10 @@ namespace Cheez.Compiler.ParseTree
     public class PTVariableDecl : PTStatement
     {
         public PTIdentifierExpr Name { get; set; }
-        public PTTypeExpr Type { get; set; }
+        public PTExpr Type { get; set; }
         public PTExpr Initializer { get; set; }
 
-        public PTVariableDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, PTTypeExpr type = null, PTExpr init = null, List<PTDirective> directives = null) : base(beg, end, directives)
+        public PTVariableDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, PTExpr type = null, PTExpr init = null, List<PTDirective> directives = null) : base(beg, end, directives)
         {
             this.Name = name;
             this.Type = type;
@@ -28,7 +28,7 @@ namespace Cheez.Compiler.ParseTree
         public override AstStatement CreateAst()
         {
             var dirs = CreateDirectivesAst();
-            return new AstVariableDecl(this, Name.Name, Initializer?.CreateAst(), dirs);
+            return new AstVariableDecl(this, Name.CreateAst() as AstIdentifierExpr, Type?.CreateAst(), Initializer?.CreateAst(), dirs);
         }
     }
 
@@ -38,7 +38,7 @@ namespace Cheez.Compiler.ParseTree
 
     public class PTFunctionParam : ILocation
     {
-        public PTTypeExpr Type { get; set; }
+        public PTExpr Type { get; set; }
         public PTIdentifierExpr Name { get; set; }
 
         public TokenLocation Beginning { get; set; }
@@ -46,7 +46,7 @@ namespace Cheez.Compiler.ParseTree
 
         public ILocation NameLocation => throw new System.NotImplementedException();
 
-        public PTFunctionParam(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, PTTypeExpr type)
+        public PTFunctionParam(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, PTExpr type)
         {
             Beginning = beg;
             End = end;
@@ -67,7 +67,7 @@ namespace Cheez.Compiler.ParseTree
 
         public List<PTIdentifierExpr> Generics { get; }
 
-        public PTTypeExpr ReturnType { get; }
+        public PTExpr ReturnType { get; }
 
         public PTBlockStmt Body { get; private set; }
 
@@ -78,7 +78,7 @@ namespace Cheez.Compiler.ParseTree
             PTIdentifierExpr name,
             List<PTIdentifierExpr> generics,
             List<PTFunctionParam> parameters,
-            PTTypeExpr returnType,
+            PTExpr returnType,
             PTBlockStmt body = null,
             List<PTDirective> directives = null,
             bool refSelf = false)
@@ -101,11 +101,11 @@ namespace Cheez.Compiler.ParseTree
 
         public override AstStatement CreateAst()
         {
-            var p = Parameters.Select(x => new AstFunctionParameter(x)).ToList();
+            var p = Parameters.Select(x => new AstFunctionParameter(x, x.Name.CreateAst() as AstIdentifierExpr, x.Type.CreateAst())).ToList();
             var g = Generics.Select(x => x.CreateAst() as AstIdentifierExpr).ToList();
             var b = Body?.CreateAst() as AstBlockStmt;
             var dirs = CreateDirectivesAst();
-            return new AstFunctionDecl(this, Name.Name, g, p, b, dirs, RefSelf);
+            return new AstFunctionDecl(this, Name.CreateAst() as AstIdentifierExpr, g, p, ReturnType?.CreateAst(), b, dirs, RefSelf);
         }
     }
 
@@ -116,9 +116,9 @@ namespace Cheez.Compiler.ParseTree
     public class PTMemberDecl
     {
         public PTIdentifierExpr Name { get; }
-        public PTTypeExpr Type { get; }
+        public PTExpr Type { get; }
 
-        public PTMemberDecl(PTIdentifierExpr name, PTTypeExpr type)
+        public PTMemberDecl(PTIdentifierExpr name, PTExpr type)
         {
             this.Name = name;
             this.Type = type;
@@ -126,7 +126,7 @@ namespace Cheez.Compiler.ParseTree
 
         public AstMemberDecl CreateAst()
         {
-            return new AstMemberDecl(this);
+            return new AstMemberDecl(this, Name.CreateAst() as AstIdentifierExpr, Type.CreateAst());
         }
     }
 
@@ -146,18 +146,18 @@ namespace Cheez.Compiler.ParseTree
         {
             var mems = Members.Select(m => m.CreateAst()).ToList();
             var dirs = CreateDirectivesAst();
-            return new AstTypeDecl(this, mems, dirs);
+            return new AstTypeDecl(this, Name.CreateAst() as AstIdentifierExpr, mems, dirs);
         }
     }
 
     public class PTImplBlock : PTStatement
     {
-        public PTTypeExpr Target { get; set; }
+        public PTExpr Target { get; set; }
         public PTIdentifierExpr Trait { get; set; }
 
         public List<PTFunctionDecl> Functions { get; }
 
-        public PTImplBlock(TokenLocation beg, TokenLocation end, PTTypeExpr target, List<PTFunctionDecl> functions) : base(beg, end)
+        public PTImplBlock(TokenLocation beg, TokenLocation end, PTExpr target, List<PTFunctionDecl> functions) : base(beg, end)
         {
             this.Target = target;
             this.Functions = functions;
@@ -166,7 +166,7 @@ namespace Cheez.Compiler.ParseTree
         public override AstStatement CreateAst()
         {
             var funcs = Functions.Select(f => (AstFunctionDecl)f.CreateAst()).ToList();
-            return new AstImplBlock(this, funcs);
+            return new AstImplBlock(this, Target.CreateAst(), funcs);
         }
     }
 
@@ -207,7 +207,7 @@ namespace Cheez.Compiler.ParseTree
         {
             var mems = Members.Select(m => m.CreateAst()).ToList();
             var dirs = Directives?.Select(d => d.CreateAst()).ToDictionary(d => d.Name);
-            return new AstEnumDecl(this, Name.Name, mems, dirs);
+            return new AstEnumDecl(this, Name.CreateAst() as AstIdentifierExpr, mems, dirs);
         }
     }
 
@@ -218,9 +218,9 @@ namespace Cheez.Compiler.ParseTree
     public class PTTypeAliasDecl : PTStatement
     {
         public PTIdentifierExpr Name { get; set; }
-        public PTTypeExpr Type { get; set; }
+        public PTExpr Type { get; set; }
 
-        public PTTypeAliasDecl(TokenLocation beg, PTIdentifierExpr name, PTTypeExpr type, List<PTDirective> directives = null) : base(beg, type.End, directives)
+        public PTTypeAliasDecl(TokenLocation beg, PTIdentifierExpr name, PTExpr type, List<PTDirective> directives = null) : base(beg, type.End, directives)
         {
             this.Name = name;
             this.Type = type;
@@ -229,7 +229,7 @@ namespace Cheez.Compiler.ParseTree
         public override AstStatement CreateAst()
         {
             var dirs = CreateDirectivesAst();
-            return new AstTypeAliasDecl(this, Name.Name, dirs);
+            return new AstTypeAliasDecl(this, Name.CreateAst() as AstIdentifierExpr, Type.CreateAst(), dirs);
         }
     }
 

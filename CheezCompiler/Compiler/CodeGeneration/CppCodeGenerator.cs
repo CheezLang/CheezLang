@@ -151,7 +151,7 @@ void _flush_cout() {
 
         private string GetDecoratedName(AstFunctionDecl func)
         {
-            return func.Name;
+            return func.Name.Name;
         }
 
         public string CreateMainFunction(string entryPoint)
@@ -231,11 +231,11 @@ void _flush_cout() {
             {
                 if (m.Type is FunctionType f)
                 {
-                    sb.AppendLine(Indent(GetCTypeName(f, m.Name) + ";", 4));
+                    sb.AppendLine(Indent(GetCTypeName(f, m.Name.Name) + ";", 4));
                 }
                 else
                 {
-                    string t = GetCTypeName(m.Type, m.Name);
+                    string t = GetCTypeName(m.Type, m.Name.Name);
                     sb.AppendLine(Indent($"{t} {m.Name};", 4));
                 }
             }
@@ -643,7 +643,7 @@ void _flush_cout() {
                     return "string";
 
                 case StructType s:
-                    return s.Declaration.Name;
+                    return s.Declaration.Name.Name;
 
                 case EnumType e:
                     return e.Name;

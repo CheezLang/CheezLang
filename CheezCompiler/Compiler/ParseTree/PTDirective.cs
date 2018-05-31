@@ -14,9 +14,9 @@ namespace Cheez.Compiler.ParseTree
 
         public List<PTExpr> Arguments { get; set; }
 
-        public PTDirective(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTExpr> args)
+        public PTDirective(TokenLocation end, PTIdentifierExpr name, List<PTExpr> args)
         {
-            this.Beginning = beg;
+            this.Beginning = name.Beginning;
             this.End = end;
             this.Name = name;
             this.Arguments = args;

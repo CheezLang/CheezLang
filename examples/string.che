@@ -1,5 +1,5 @@
 fn strlen(s: string) -> int {
-    let s = <u8[]>s
+    let s = (u8^)s
     let len: int = 0
     while s[len] != 0 {
         len = len + 1
@@ -8,8 +8,8 @@ fn strlen(s: string) -> int {
 }
 
 fn streql(a: string, b: string, len: ulong) -> bool {
-    let alen: ulong = <ulong>strlen(a)
-    let blen: ulong = <ulong>strlen(b)
+    let alen: ulong = (ulong)strlen(a)
+    let blen: ulong = (ulong)strlen(b)
     if (len > alen) {
         len = alen
     }
@@ -29,8 +29,8 @@ fn streql(a: string, b: string, len: ulong) -> bool {
 }
 
 fn streq(a: string, b: string) -> bool {
-    let len: ulong = <ulong>strlen(a)
-    let blen: ulong = <ulong>strlen(b)
+    let len: ulong = (ulong)strlen(a)
+    let blen: ulong = (ulong)strlen(b)
     if (len > blen) {
         len = blen
     }

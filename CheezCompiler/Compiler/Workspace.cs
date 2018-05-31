@@ -50,6 +50,7 @@ namespace Cheez.Compiler
         public void CompileAll()
         {
             GlobalScope = new Scope("Global");
+            GlobalScope.DefineBuiltInTypes();
             GlobalScope.DefineBuiltInOperators();
 
             var semanticer = new Semanticer();

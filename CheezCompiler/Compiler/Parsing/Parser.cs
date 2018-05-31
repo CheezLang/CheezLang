@@ -157,6 +157,29 @@ namespace Cheez.Compiler.Parsing
             return next.type == type;
         }
 
+        //[DebuggerStepThrough]
+        private bool IsExprToken()
+        {
+            var next = PeekToken();
+            switch (next.type)
+            {
+                case TokenType.Plus:
+                case TokenType.Minus:
+                case TokenType.OpenParen:
+                case TokenType.StringLiteral:
+                case TokenType.NumberLiteral:
+                case TokenType.KwTrue:
+                case TokenType.KwFalse:
+                case TokenType.Ampersand:
+                case TokenType.Asterisk:
+                case TokenType.Identifier:
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
         [DebuggerStepThrough]
         private Token PeekToken()
         {
@@ -191,7 +214,7 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.EOF:
                     return (true, null);
 
-                case TokenType.HashTag:
+                case TokenType.HashIdentifier:
                     {
                         var dir = new PTDirectiveStatement(ParseDirective());
                         Consume(TokenType.NewLine, ErrMsg("\\n", "after directive statement"));
@@ -321,11 +344,10 @@ namespace Cheez.Compiler.Parsing
 
         private PTDirective ParseDirective()
         {
-            TokenLocation beginning = null, end = null;
+            TokenLocation end = null;
             var args = new List<PTExpr>();
-
-            beginning = NextToken().location;
-            var name = ParseIdentifierExpr(ErrMsg("identifier", "after # in directive"));
+            
+            var name = ParseIdentifierExpr(ErrMsg("identifier", "after # in directive"), TokenType.HashIdentifier);
 
             end = name.End;
 
@@ -359,7 +381,7 @@ namespace Cheez.Compiler.Parsing
                 end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of directive")).location;
             }
 
-            return new PTDirective(beginning, end, name, args);
+            return new PTDirective(end, name, args);
         }
 
         private PTTypeDecl ParseStructDeclaration()
@@ -375,7 +397,7 @@ namespace Cheez.Compiler.Parsing
 
 
             SkipNewlines();
-            while (CheckToken(TokenType.HashTag))
+            while (CheckToken(TokenType.HashIdentifier))
             {
                 var dir = ParseDirective();
                 if (dir != null)
@@ -397,7 +419,7 @@ namespace Cheez.Compiler.Parsing
                 Consume(TokenType.Colon, ErrMsg(":", "after struct member name"));
                 SkipNewlines();
 
-                var mType = ParseTypeExpression();
+                var mType = ParseExpression();
 
                 next = PeekToken();
                 if (next.type == TokenType.NewLine)
@@ -426,13 +448,13 @@ namespace Cheez.Compiler.Parsing
         {
             TokenLocation beg = null, end = null;
             var functions = new List<PTFunctionDecl>();
-            PTTypeExpr target = null;
+            PTExpr target = null;
 
             beg = Consume(TokenType.KwImpl, ErrMsg("keyword 'impl'", "at beginning of impl statement")).location;
 
             SkipNewlines();
 
-            target = ParseTypeExpression();
+            target = ParseExpression();
 
             SkipNewlines();
             Consume(TokenType.OpenBrace, ErrMsg("{", "after type"));
@@ -500,13 +522,13 @@ namespace Cheez.Compiler.Parsing
             TokenLocation beg = null, end = null;
             List<PTDirective> directives = new List<PTDirective>();
             PTIdentifierExpr name = null;
-            PTTypeExpr type = null;
+            PTExpr type = null;
             PTExpr init = null;
 
             beg = Consume(TokenType.KwLet, ErrMsg("keyword 'let'", "at beginning of variable declaration")).location;
 
             SkipNewlines();
-            while (CheckToken(TokenType.HashTag))
+            while (CheckToken(TokenType.HashIdentifier))
             {
                 directives.Add(ParseDirective());
                 SkipNewlines();
@@ -519,7 +541,7 @@ namespace Cheez.Compiler.Parsing
             {
                 NextToken();
                 SkipNewlines();
-                type = ParseTypeExpression();
+                type = ParseExpression();
                 end = type.End;
             }
 
@@ -593,7 +615,7 @@ namespace Cheez.Compiler.Parsing
             SkipNewlines();
             Consume(TokenType.Equal, ErrMsg("=", "after type name in type alias"));
             SkipNewlines();
-            var type = ParseTypeExpression();
+            var type = ParseExpression();
             Consume(TokenType.NewLine, ErrMsg("\\n", "after type alias"));
 
             return new PTTypeAliasDecl(beg, name, type);
@@ -606,7 +628,7 @@ namespace Cheez.Compiler.Parsing
             List<PTFunctionParam> parameters = new List<PTFunctionParam>();
             List<PTDirective> directives = new List<PTDirective>();
             List<PTIdentifierExpr> generics = new List<PTIdentifierExpr>();
-            PTTypeExpr returnType = null;
+            PTExpr returnType = null;
 
             beginning = NextToken().location;
             SkipNewlines();
@@ -662,7 +684,7 @@ namespace Cheez.Compiler.Parsing
                     break;
 
                 PTIdentifierExpr pname = null;
-                PTTypeExpr ptype = null;
+                PTExpr ptype = null;
 
                 if (next.type != TokenType.Colon)
                     pname = ParseIdentifierExpr(ErrMsg("identifier"));
@@ -671,7 +693,7 @@ namespace Cheez.Compiler.Parsing
                 Consume(TokenType.Colon, ErrMsg(":", "after name in parameter list"));
 
                 SkipNewlines();
-                ptype = ParseTypeExpression();
+                ptype = ParseExpression();
 
                 parameters.Add(new PTFunctionParam(pname.Beginning, ptype.End, pname, ptype));
 
@@ -697,11 +719,11 @@ namespace Cheez.Compiler.Parsing
             {
                 NextToken();
                 SkipNewlines();
-                returnType = ParseTypeExpression();
+                returnType = ParseExpression();
                 SkipNewlines();
             }
 
-            while (CheckToken(TokenType.HashTag))
+            while (CheckToken(TokenType.HashIdentifier))
             {
                 directives.Add(ParseDirective());
                 SkipNewlines();
@@ -775,63 +797,6 @@ namespace Cheez.Compiler.Parsing
 
         //    return new PTFunctionTypeExpr(beginning, end, returnType, args);
         //}
-
-        private PTTypeExpr ParseTypeExpression()
-        {
-            PTTypeExpr type = null;
-            bool cond = true;
-            while (cond)
-            {
-                var next = PeekToken();
-                switch (next.type)
-                {
-                    //case TokenType.KwFn:
-                    //    return ParseFunctionTypeExpr();
-
-                    case TokenType.Identifier when type == null:
-                        NextToken();
-                        type = new PTNamedTypeExpr(next.location, next.location, (string)next.data);
-                        break;
-
-                    case TokenType.Asterisk when type != null:
-                        NextToken();
-                        type = new PTPointerTypeExpr(type.Beginning, next.location, type);
-                        break;
-
-                    case TokenType.OpenBracket when type != null:
-                        NextToken();
-                        SkipNewlines();
-                        next = Consume(TokenType.ClosingBracket, ErrMsg("]", "after [ in array type expression"));
-                        type = new PTArrayTypeExpr(type.Beginning, next.location, type);
-                        break;
-
-                    case TokenType.NewLine when type == null:
-                        {
-                            NextToken();
-                            ReportError(next.location, "Expected type expression, found new line");
-                            return new PTErrorTypeExpr(next.location);
-                        }
-                    case TokenType.EOF when type == null:
-                        {
-                            NextToken();
-                            ReportError(next.location, "Expected type expression, found end of file");
-                            return new PTErrorTypeExpr(next.location);
-                        }
-
-                    case TokenType t when type == null:
-                        {
-                            NextToken();
-                            ReportError(next.location, $"Unexpected token in type expression: {next}");
-                            return new PTErrorTypeExpr(next.location);
-                        }
-
-                    default:
-                        cond = false;
-                        break;
-                }
-            }
-            return type;
-        }
 
         private PTExpr ParseExpression(ErrorMessageResolver errorMessage = null)
         {
@@ -1024,6 +989,13 @@ namespace Cheez.Compiler.Parsing
                             break;
                         }
 
+                    case TokenType.Hat:
+                        {
+                            NextToken();
+                            expr = new PTPointerTypeExpr(expr.Beginning, CurrentToken.location, expr);
+                            break;
+                        }
+
                     default:
                         return expr;
                 }
@@ -1058,16 +1030,16 @@ namespace Cheez.Compiler.Parsing
                     NextToken();
                     return new PTBoolExpr(token.location, false);
 
-                case TokenType.Less:
-                    {
-                        NextToken();
-                        SkipNewlines();
-                        var type = ParseTypeExpression();
-                        Consume(TokenType.Greater, ErrMsg(">", "after type in cast"));
-                        SkipNewlines();
-                        var e = ParseUnaryExpression(errorMessage);
-                        return new PTCastExpr(token.location, e.End, type, e);
-                    }
+                //case TokenType.Less:
+                //    {
+                //        NextToken();
+                //        SkipNewlines();
+                //        var type = ParseExpression();
+                //        Consume(TokenType.Greater, ErrMsg(">", "after type in cast"));
+                //        SkipNewlines();
+                //        var e = ParseUnaryExpression(errorMessage);
+                //        return new PTCastExpr(token.location, e.End, type, e);
+                //    }
 
                 case TokenType.OpenParen:
                     NextToken();
@@ -1076,6 +1048,13 @@ namespace Cheez.Compiler.Parsing
                     SkipNewlines();
                     sub.Beginning = token.location;
                     sub.End = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression")).location;
+
+                    if (IsExprToken())
+                    {
+                        var type = sub;
+                        sub = ParseUnaryExpression();
+                        return new PTCastExpr(type.Beginning, sub.End, type, sub);
+                    }
                     return sub;
 
                 default:
@@ -1145,10 +1124,10 @@ namespace Cheez.Compiler.Parsing
             return new PTStructValueExpr(name.Beginning, end, name, members);
         }
 
-        private PTIdentifierExpr ParseIdentifierExpr(ErrorMessageResolver customErrorMessage)
+        private PTIdentifierExpr ParseIdentifierExpr(ErrorMessageResolver customErrorMessage, TokenType identType = TokenType.Identifier)
         {
             var next = PeekToken();
-            if (next.type != TokenType.Identifier)
+            if (next.type != identType)
             {
                 ReportError(next.location, customErrorMessage?.Invoke(next) ?? "Expected identifier");
                 return new PTIdentifierExpr(next.location, "§");

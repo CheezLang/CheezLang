@@ -256,7 +256,7 @@ namespace CheezLanguageServer
                 case AstFunctionDecl _:
                     return $"{sym.Name}";
 
-                default: return sym.Name;
+                default: return sym.Name.Name;
             }
         }
 
@@ -264,7 +264,7 @@ namespace CheezLanguageServer
         {
             return new CompletionItem
             {
-                label = sym.Name,
+                label = sym.Name.Name,
                 kind = GetCompletionItemKind(sym),
                 detail = $"{sym.Type}",
                 insertText = GetInsertText(sym)
@@ -350,7 +350,7 @@ namespace CheezLanguageServer
                             while (t is PointerType p)
                                 t = p.TargetType;
                             if (dot.Left.Type is StructType s)
-                                return $"{dot.Left.Type}.{dot.Right}: {s.Declaration.Members.FirstOrDefault(m => m.Name == dot.Right)?.Type}";
+                                return $"{dot.Left.Type}.{dot.Right}: {s.Declaration.Members.FirstOrDefault(m => m.Name.Name == dot.Right)?.Type}";
                             else
                                 return "";
                         }

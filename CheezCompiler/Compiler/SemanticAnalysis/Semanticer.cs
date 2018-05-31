@@ -1,11 +1,12 @@
 ﻿using Cheez.Compiler.Ast;
-using Cheez.Compiler.ParseTree;
 using Cheez.Compiler.Parsing;
 using Cheez.Compiler.Visitor;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Cheez.Compiler.ParseTree;
+using System.Runtime.CompilerServices;
 
 namespace Cheez.Compiler.SemanticAnalysis
 {
@@ -83,73 +84,23 @@ namespace Cheez.Compiler.SemanticAnalysis
         private ILocation loc;
         private string message;
 
-        public GenericError(IText text, ILocation loc, string message)
+        public string File { get; }
+        public string Function { get; }
+        public int Line { get; }
+
+        public GenericError(IText text, ILocation loc, string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             this.text = text;
             this.loc = loc;
             this.message = message;
+            File = callingFunctionFile;
+            Function = callingFunctionName;
+            Line = callLineNumber;
         }
 
         public void Report(IErrorHandler handler)
         {
-            handler.ReportError(text, loc, message);
-        }
-    }
-
-    public class WaitForType : ICondition
-    {
-        public Scope Scope { get; }
-        public string TypeName { get; } = null;
-        public PTTypeExpr TypeExpr { get; } = null;
-        public IText Text { get; set; }
-        public bool OnlyWaitForDefinition { get; set; }
-
-        public WaitForType(IText text, Scope scope, string typeName, bool onlyWaitForDefinition = false)
-        {
-            this.Scope = scope;
-            this.TypeName = typeName;
-            this.Text = text;
-        }
-
-        public WaitForType(IText text, Scope scope, PTTypeExpr type, bool onlyWaitForDefinition = false)
-        {
-            this.Scope = scope;
-            this.TypeExpr = type;
-            this.Text = text;
-        }
-
-        public bool Check()
-        {
-            if (TypeExpr != null)
-            {
-                var t = Scope.GetCheezType(TypeExpr);
-                if (t == null)
-                    return false;
-                if (OnlyWaitForDefinition)
-                    return true;
-                if (t is StructType s && !s.Analyzed)
-                    return false;
-                return true;
-            }
-            if (TypeName != null)
-            {
-                var t = Scope.GetCheezType(TypeName);
-                if (t == null)
-                    return false;
-                if (OnlyWaitForDefinition)
-                    return true;
-                if (t is StructType s && !s.Analyzed)
-                    return false;
-                return true;
-            }
-
-            Debug.Assert(false, "UNREACHABLE");
-            return false;
-        }
-
-        public void Report(IErrorHandler handler)
-        {
-            handler.ReportError(Text, TypeExpr, $"Unknown type '{TypeName ?? TypeExpr.ToString()}'");
+            handler.ReportError(text, loc, message, File, Function, Line);
         }
     }
 
@@ -160,12 +111,19 @@ namespace Cheez.Compiler.SemanticAnalysis
         public ILocation Node { get; set; }
         public IText Text { get; set; }
 
-        public WaitForSymbol(IText text, ILocation node, Scope scope, string varNem)
+        public string File { get; }
+        public string Function { get; }
+        public int Line { get; }
+
+        public WaitForSymbol(IText text, ILocation node, Scope scope, string varNem, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             this.Scope = scope;
             this.SymbolName = varNem;
             this.Text = text;
             this.Node = node;
+            File = callingFunctionFile;
+            Function = callingFunctionName;
+            Line = callLineNumber;
         }
 
         public bool Check()
@@ -175,7 +133,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public void Report(IErrorHandler handler)
         {
-            handler.ReportError(Text, Node, $"Unknown symbol '{SymbolName}'");
+            handler.ReportError(Text, Node, $"Unknown symbol '{SymbolName}'", File, Function, Line);
         }
     }
 
@@ -189,39 +147,27 @@ namespace Cheez.Compiler.SemanticAnalysis
         }
     }
 
-    public class DuplicateTypeError : IError
-    {
-        public ILocation Node { get; set; }
-        public string TypeName { get; set; }
-        public IText Text { get; set; }
-
-        public DuplicateTypeError(IText text, ILocation node, string typeName)
-        {
-            this.Node = node;
-            this.TypeName = typeName;
-            this.Text = text;
-        }
-
-        public void Report(IErrorHandler handler)
-        {
-            handler.ReportError(Text, Node, $"Type '{TypeName}' is already defined");
-        }
-    }
-
     public class ArgumentAlreadyExists : IError
     {
         public AstFunctionParameter Argument { get; }
         public IText Text { get; }
 
-        public ArgumentAlreadyExists(IText text, AstFunctionParameter arg)
+        public string File { get;  }
+        public string Function { get; }
+        public int Line { get; }
+
+        public ArgumentAlreadyExists(IText text, AstFunctionParameter arg, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             this.Text = text;
             this.Argument = arg;
+            File = callingFunctionFile;
+            Function = callingFunctionName;
+            Line = callLineNumber;
         }
 
         public void Report(IErrorHandler handler)
         {
-            handler.ReportError(Text, Argument.ParseTreeNode, $"Argument with name '{Argument.Name}' already exists in current function signature");
+            handler.ReportError(Text, Argument.ParseTreeNode, $"Argument with name '{Argument.Name}' already exists in current function signature", File, Function, Line);
         }
     }
 
@@ -361,11 +307,12 @@ namespace Cheez.Compiler.SemanticAnalysis
         public override IEnumerable<object> VisitTypeAlias(AstTypeAliasDecl al, SemanticerData data = null)
         {
             al.Scope = data.Scope;
-            al.Type = al.Scope.GetCheezType(al.ParseTreeNode.Type);
-            if (!al.Scope.DefineType(al.Name, al.Type))
-            {
-                yield return new GenericError(data.Text, al.GenericParseTreeNode, $"Type type name '{al.Name}' already exists in current scope");
-            }
+            foreach (var v in al.TypeExpr.Accept(this, data.Clone()))
+                yield return v;
+            if (al.TypeExpr.Value is CheezType t)
+                al.Type = t;
+            else
+                yield return new GenericError(data.Text, al.TypeExpr.GenericParseTreeNode, $"Expected type, got {al.TypeExpr.Type}");
         }
 
         public override IEnumerable<object> VisitEmptyExpression(AstEmptyExpr em, SemanticerData data = null)
@@ -393,8 +340,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                 names.Add(m.Name);
             }
 
-            var t = scope.DefineType(en);
-            if (t == null)
+            var enumType = new EnumType(en);
+            if (!scope.DefineTypeSymbol(en.Name.Name, enumType))
             {
                 yield return new GenericError(data.Text, en.ParseTreeNode.Name, $"A type with name '{en.Name}' already exists in current scope");
             }
@@ -408,28 +355,33 @@ namespace Cheez.Compiler.SemanticAnalysis
             type.Scope = scope;
 
             scope.TypeDeclarations.Add(type);
-            if (!scope.DefineType(type))
+            var structType = new StructType(type);
+            if (!scope.DefineTypeSymbol(type.Name.Name, structType))
             {
-                yield return new DuplicateTypeError(data.Text, type.ParseTreeNode.Name, type.Name);
+                yield return new GenericError(data.Text, type.ParseTreeNode.Name, $"A symbol with name '{type.Name.Name}' already exists in current scope");
             }
+
 
             foreach (var mem in type.Members)
             {
-                yield return new WaitForType(data.Text, scope, mem.ParseTreeNode.Type, true);
-                mem.Type = scope.GetCheezType(mem.ParseTreeNode.Type);
+                foreach (var v in mem.TypeExpr.Accept(this, data.Clone()))
+                    yield return v;
+                if (mem.TypeExpr.Value is CheezType t)
+                    mem.Type = t;
+                else
+                    yield return new GenericError(data.Text, mem.TypeExpr.GenericParseTreeNode, $"Expected type, got {mem.TypeExpr.Type}");
             }
-
-            var st = scope.GetCheezType(type.Name) as StructType;
-            Debug.Assert(st != null && st.Declaration == type);
-            st.Analyzed = true;
-            type.Type = st;
+            
+            Debug.Assert(structType != null && structType.Declaration == type);
+            structType.Analyzed = true;
+            type.Type = structType;
         }
 
         public void Using(Scope scope, StructType @struct, INamed name)
         {
             foreach (var member in @struct.Declaration.Members)
             {
-                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, new AstIdentifierExpr(null, name.Name), member.Name, false)));
+                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, name.Name.Clone(), member.Name.Name, false)));
             }
         }
 
@@ -437,7 +389,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             foreach (var member in @struct.Declaration.Members)
             {
-                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, sub, member.Name, false)));
+                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, sub, member.Name.Name, false)));
             }
         }
 
@@ -448,13 +400,13 @@ namespace Cheez.Compiler.SemanticAnalysis
                 function.Type = new GenericFunctionType(function);
                 if (!function.Scope.DefineSymbol(function))
                 {
-                    yield return new GenericError(text, function.ParseTreeNode.Name, $"Duplicate name: {function.Name}");
+                    yield return new GenericError(text, function.Name.GenericParseTreeNode, $"Duplicate name: {function.Name}");
                 }
                 yield break;
             }
 
             // @Todo: make entry point configurable
-            if (function.Name == "Main" && function.Scope == workspace.GlobalScope)
+            if (function.Name.Name == "Main" && function.Scope == workspace.GlobalScope)
                 workspace.MainFunction = function;
 
             if (implTarget != null)
@@ -470,10 +422,14 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             // return type
-            if (function.ParseTreeNode.ReturnType != null)
+            if (function.ReturnTypeExpr != null)
             {
-                yield return new WaitForType(text, function.SubScope, function.ParseTreeNode.ReturnType);
-                function.ReturnType = function.SubScope.GetCheezType(function.ParseTreeNode.ReturnType);
+                foreach (var v in function.ReturnTypeExpr.Accept(this, new SemanticerData(Scope: function.SubScope, Text: text, Function: function, Impl: implTarget)))
+                    yield return v;
+                if (function.ReturnTypeExpr.Value is CheezType t)
+                    function.ReturnType = t;
+                else
+                    yield return new GenericError(text, function.ReturnTypeExpr.GenericParseTreeNode, $"Expected type, got {function.ReturnTypeExpr.Type}");
             }
             else
             {
@@ -485,11 +441,13 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 p.Scope = function.SubScope;
 
-                if (p.Type == null)
-                {
-                    yield return new WaitForType(text, function.SubScope, p.ParseTreeNode.Type);
-                    p.Type = function.SubScope.GetCheezType(p.ParseTreeNode.Type);
-                }
+                // infer type
+                foreach (var v in p.TypeExpr.Accept(this, new SemanticerData(Scope: function.SubScope, Text: text, Function: function, Impl: implTarget)))
+                    yield return v;
+                if (p.TypeExpr.Value is CheezType t)
+                    p.Type = t;
+                else
+                    yield return new GenericError(text, function.ReturnTypeExpr.GenericParseTreeNode, $"Expected type, got {p.TypeExpr.Type}");
 
                 if (!function.SubScope.DefineSymbol(p))
                 {
@@ -501,7 +459,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             function.Scope.FunctionDeclarations.Add(function);
             if (!function.Scope.DefineSymbol(function))
             {
-                yield return new LambdaError(eh => eh.ReportError(text, function.ParseTreeNode.Name, $"A function or variable with name '{function.Name}' already exists in current scope"));
+                yield return new LambdaError(eh => eh.ReportError(text, function.Name.GenericParseTreeNode, $"A function or variable with name '{function.Name}' already exists in current scope"));
             }
         }
 
@@ -514,7 +472,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (function.ReturnType != CheezType.Void && !returns)
             {
-                yield return new LambdaError(eh => eh.ReportError(text, function.ParseTreeNode.Name, "Not all code paths return a value!"));
+                yield return new LambdaError(eh => eh.ReportError(text, function.Name.GenericParseTreeNode, "Not all code paths return a value!"));
             }
         }
 
@@ -653,16 +611,24 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             if (data.Function != null)
             {
-                data.Function.LocalVariables.Add(variable);
                 var scope = data.Scope;
                 scope.VariableDeclarations.Add(variable);
                 variable.Scope = scope;
                 variable.SubScope = NewScope($"var {variable.Name}", scope);
 
-                if (variable.ParseTreeNode.Type != null)
+                if (variable.TypeExpr == null && variable.Initializer == null)
                 {
-                    yield return new WaitForType(data.Text, scope, variable.ParseTreeNode.Type);
-                    variable.Type = scope.GetCheezType(variable.ParseTreeNode.Type);
+                    yield return new GenericError(data.Text, variable.GenericParseTreeNode, "Either type or initializer has to be specified in variable declaration");
+                }
+
+                if (variable.TypeExpr != null)
+                {
+                    foreach (var v in variable.TypeExpr.Accept(this, data.Clone()))
+                        yield return v;
+                    if (variable.TypeExpr.Value is CheezType t)
+                        variable.Type = t;
+                    else
+                        yield return new GenericError(data.Text, variable.TypeExpr.GenericParseTreeNode, $"Expected type, got {variable.TypeExpr.Type}");
                 }
 
                 if (variable.Initializer != null)
@@ -693,15 +659,25 @@ namespace Cheez.Compiler.SemanticAnalysis
                         }
                         else if (variable.Initializer.Type != variable.Type)
                         {
-                            yield return new LambdaError(eh => eh.ReportError(data.Text, variable.ParseTreeNode.Initializer, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'"));
+                            yield return new LambdaError(eh => eh.ReportError(data.Text, variable.Initializer.GenericParseTreeNode, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'"));
                         }
                     }
                 }
 
-                if (!variable.SubScope.DefineSymbol(variable))
+
+                if (variable.Type == CheezType.Type)
+                {
+                    variable.IsConstant = true;
+                    variable.SubScope.DefineTypeSymbol(variable.Name.Name, variable.Initializer.Value as CheezType);
+                }
+                else if (variable.SubScope.DefineSymbol(variable))
+                {
+                    data.Function.LocalVariables.Add(variable);
+                }
+                else
                 {
                     // @Note: This should probably never happen, except for global variables, which are not implemented yet
-                    yield return new LambdaError(eh => eh.ReportError(data.Text, variable.ParseTreeNode.Name, $"A variable with name '{variable.Name}' already exists in current scope"));
+                    yield return new LambdaError(eh => eh.ReportError(data.Text, variable.Name.GenericParseTreeNode, $"A variable with name '{variable.Name}' already exists in current scope"));
                 }
 
                 data.Scope = variable.SubScope;
@@ -715,10 +691,14 @@ namespace Cheez.Compiler.SemanticAnalysis
                 variable.Scope = scope;
                 variable.SubScope = scope;
 
-                if (variable.ParseTreeNode.Type != null)
+                if (variable.TypeExpr != null)
                 {
-                    yield return new WaitForType(data.Text, scope, variable.ParseTreeNode.Type);
-                    variable.Type = scope.GetCheezType(variable.ParseTreeNode.Type);
+                    foreach (var v in variable.TypeExpr.Accept(this, data.Clone()))
+                        yield return v;
+                    if (variable.TypeExpr.Value is CheezType t)
+                        variable.Type = t;
+                    else
+                        yield return new GenericError(data.Text, variable.TypeExpr.GenericParseTreeNode, $"Expected type, got {variable.TypeExpr.Type}");
                 }
 
                 if (variable.Initializer != null)
@@ -749,7 +729,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         }
                         else if (variable.Initializer.Type != variable.Type)
                         {
-                            yield return new LambdaError(eh => eh.ReportError(data.Text, variable.ParseTreeNode.Initializer, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'"));
+                            yield return new LambdaError(eh => eh.ReportError(data.Text, variable.Initializer.GenericParseTreeNode, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'"));
                         }
                     }
                 }
@@ -757,7 +737,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (!scope.DefineSymbol(variable))
                 {
                     // @Note: This should probably never happen, except for global variables, which are not implemented yet
-                    yield return new LambdaError(eh => eh.ReportError(data.Text, variable.ParseTreeNode.Name, $"A variable with name '{variable.Name}' already exists in current scope"));
+                    yield return new LambdaError(eh => eh.ReportError(data.Text, variable.Name.GenericParseTreeNode, $"A variable with name '{variable.Name}' already exists in current scope"));
                 }
 
                 data.Scope = variable.SubScope;
@@ -818,8 +798,15 @@ namespace Cheez.Compiler.SemanticAnalysis
                 impl.Trait = "TODO";
             }
 
-            yield return new WaitForType(data.Text, impl.Scope, impl.ParseTreeNode.Target);
-            impl.TargetType = scope.GetCheezType(impl.ParseTreeNode.Target);
+
+            // types
+            foreach (var v in impl.TargetTypeExpr.Accept(this, data.Clone()))
+                yield return v;
+            if (impl.TargetTypeExpr.Value is CheezType t)
+                impl.TargetType = t;
+            else
+                yield return new GenericError(data.Text, impl.TargetTypeExpr.GenericParseTreeNode, $"Expected type, got {impl.TargetTypeExpr.Type}");
+
             impl.SubScope = new Scope($"impl {impl.TargetType}", impl.Scope);
 
 
@@ -828,7 +815,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 var selfType = impl.TargetType;
                 if (f.RefSelf)
                     selfType = ReferenceType.GetRefType(selfType);
-                f.Parameters.Insert(0, new AstFunctionParameter("self", selfType));
+                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(null, "self"), selfType));
                 //scope.DefineImplFunction(impl.TargetType, f);
             }
 
@@ -894,15 +881,19 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = data.Scope;
             str.Scope = scope;
 
-            yield return new WaitForType(data.Text, scope, str.Name);
-
-            str.Type = scope.GetCheezType(str.Name);
+            // types
+            foreach (var v in str.TypeExpr.Accept(this, data.Clone()))
+                yield return v;
+            if (str.TypeExpr.Value is CheezType t)
+                str.Type = t;
+            else
+                yield return new GenericError(data.Text, str.TypeExpr.GenericParseTreeNode, $"Expected type, got {str.TypeExpr.Type}");
 
             if (str.Type is StructType s)
             {
                 if (str.MemberInitializers.Length > s.Declaration.Members.Count)
                 {
-                    yield return new GenericError(data.Text, str.ParseTreeNode?.Name, $"Struct initialization has to many values");
+                    yield return new GenericError(data.Text, str.ParseTreeNode?.Type, $"Struct initialization has to many values");
                 }
                 else
                 {
@@ -911,7 +902,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (m.Name != null)
                         {
-                            if (!s.Declaration.Members.Any(m2 => m2.Name == m.Name))
+                            if (!s.Declaration.Members.Any(m2 => m2.Name.Name == m.Name))
                             {
                                 yield return new GenericError(data.Text, m.GenericParseTreeNode.Name, $"'{m.Name}' is not a member of struct {s.Declaration.Name}");
                             }
@@ -933,7 +924,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                             var mem = s.Declaration.Members[i];
                             var mi = str.MemberInitializers[i];
-                            mi.Name = mem.Name;
+                            mi.Name = mem.Name.Name;
 
                             if (CastIfLiteral(mi.Value.Type, mem.Type, out var miType))
                             {
@@ -951,13 +942,13 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                     else
                     {
-                        yield return new GenericError(data.Text, str.ParseTreeNode?.Name, $"Either all or no values must have a name");
+                        yield return new GenericError(data.Text, str.ParseTreeNode?.Type, $"Either all or no values must have a name");
                     }
                 }
             }
             else
             {
-                yield return new GenericError(data.Text, str.ParseTreeNode?.Name, $"'{str.Name}' is not a struct type");
+                yield return new GenericError(data.Text, str.ParseTreeNode?.Type, $"'{str.TypeExpr}' is not a struct type");
             }
 
             yield break;
@@ -1141,15 +1132,15 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        private void InferGenericParameterType(Dictionary<string, CheezType> result, PTTypeExpr param, CheezType arg)
+        private void InferGenericParameterType(Dictionary<string, CheezType> result, AstExpression param, CheezType arg)
         {
-            switch (param)
-            {
-                case PTNamedTypeExpr n:
-                    if (result.TryGetValue(n.Name, out var t) && t == null)
-                        result[n.Name] = arg;
-                    break;
-            }
+            //switch (param)
+            //{
+            //    case AstNamedTypeExpr n:
+            //        if (result.TryGetValue(n.Name, out var t) && t == null)
+            //            result[n.Name] = arg;
+            //        break;
+            //}
         }
 
         public override IEnumerable<object> VisitCallExpression(AstCallExpr call, SemanticerData data = null)
@@ -1191,22 +1182,22 @@ namespace Cheez.Compiler.SemanticAnalysis
                 int argCount = call.Arguments.Count;
                 for (int i = 0; i < argCount; i++)
                 {
-                    InferGenericParameterType(types, g.Declaration.Parameters[i].ParseTreeNode.Type, call.Arguments[i].Type);
+                    InferGenericParameterType(types, g.Declaration.Parameters[i].TypeExpr, call.Arguments[i].Type);
                 }
 
-                if (data.ExpectedType != null && g.Declaration.ParseTreeNode.ReturnType != null)
+                if (data.ExpectedType != null && g.Declaration.ReturnTypeExpr != null)
                 {
-                    InferGenericParameterType(types, g.Declaration.ParseTreeNode.ReturnType, data.ExpectedType);
+                    InferGenericParameterType(types, g.Declaration.ReturnTypeExpr, data.ExpectedType);
                 }
 
                 // instantiate function
                 var instance = g.Declaration.Clone() as AstFunctionDecl;
                 instance.IsGeneric = false;
-                instance.Name += $"<{string.Join(", ", g.GenericParameters.Select(x => types[x]))}>";
+                instance.Name.Name += $"<{string.Join(", ", g.GenericParameters.Select(x => types[x]))}>"; // @Todo
 
                 foreach (var kv in types)
                 {
-                    instance.SubScope.DefineType(kv.Key, kv.Value);
+                    instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value); // @Todo
                 }
 
                 foreach (var v in VisitFunctionHeader(instance, data.Text, null)) // @Todo: implTarget, text
@@ -1262,9 +1253,19 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return vv;
                 yield break;
             }
+            else if (v is CompTimeVariable comp)
+            {
+                ident.Type = comp.Type;
+                ident.Value = comp.Value;
+            }
+            else
+            {
+                ident.Type = v.Type;
+            }
 
-            ident.Type = v.Type;
-            ident.SetFlag(ExprFlags.IsLValue);
+
+            if (!v.IsConstant)
+                ident.SetFlag(ExprFlags.IsLValue);
 
             yield break;
         }
@@ -1334,9 +1335,13 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             cast.Scope = data.Scope;
 
-
-            yield return new WaitForType(data.Text, data.Scope, cast.ParseTreeNode.TargetType);
-            cast.Type = data.Scope.GetCheezType(cast.ParseTreeNode.TargetType);
+            // type
+            foreach (var v in cast.TypeExpr.Accept(this, data.Clone()))
+                yield return v;
+            if (cast.TypeExpr.Value is CheezType t)
+                cast.Type = t;
+            else
+                yield return new GenericError(data.Text, cast.TypeExpr.GenericParseTreeNode, $"Expected type, got {cast.TypeExpr.Type}");
 
             // check subExpression
             foreach (var v in cast.SubExpression.Accept(this, data.Clone(ExpectedType: cast.Type)))
@@ -1390,7 +1395,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (dot.Left.Type is StructType s)
                 {
-                    var member = s.Declaration.Members.FirstOrDefault(m => m.Name == dot.Right);
+                    var member = s.Declaration.Members.FirstOrDefault(m => m.Name.Name == dot.Right);
                     if (member == null)
                     {
                         yield return new LambdaCondition(() => dot.Scope.GetImplFunction(dot.Left.Type, dot.Right) != null,
@@ -1419,6 +1424,45 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             yield break;
+        }
+
+        public override IEnumerable<object> VisitArrayTypeExpr(AstArrayTypeExpr arr, SemanticerData data = default)
+        {
+            arr.Scope = data.Scope;
+            foreach (var v in arr.Target.Accept(this, data))
+                yield return v;
+
+            arr.Type = CheezType.Type;
+            if (arr.Target.Value is CheezType t)
+            {
+                arr.Value = ArrayType.GetArrayType(t);
+            }
+            else
+            {
+                yield return new GenericError(data.Text, arr.Target.GenericParseTreeNode, $"Expected type, got {arr.Target.Type}");
+            }
+        }
+
+        public override IEnumerable<object> VisitPointerTypeExpr(AstPointerTypeExpr ptr, SemanticerData data = default)
+        {
+            ptr.Scope = data.Scope;
+            foreach (var v in ptr.Target.Accept(this, data))
+                yield return v;
+
+            ptr.Type = CheezType.Type;
+            if (ptr.Target.Value is CheezType t)
+            {
+                ptr.Value = PointerType.GetPointerType(t);
+            }
+            else
+            {
+                yield return new GenericError(data.Text, ptr.Target.GenericParseTreeNode, $"Expected type, got {ptr.Target.Type}");
+            }
+        }
+
+        public override IEnumerable<object> VisitPolyTypeExpr(AstPolyTypeExpr pol, SemanticerData data = default)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion

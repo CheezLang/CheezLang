@@ -348,7 +348,7 @@ namespace Cheez.Compiler.CodeGeneration
                     (function.Type as FunctionType).VarArgs = true;
 
                 var ltype = CheezTypeToLLVMType(function.Type);
-                var lfunc = LLVM.AddFunction(module, function.Name, ltype);
+                var lfunc = LLVM.AddFunction(module, function.Name.Name, ltype);
 
                 var ccDir = function.GetDirective("stdcall");
                 if (ccDir != null)
@@ -425,10 +425,13 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitVariableDeclaration(AstVariableDecl variable, LLVMCodeGeneratorData data = null)
         {
+            if (variable.IsConstant)
+                return default;
+
             if (variable.GetFlag(StmtFlags.GlobalScope))
             {
                 var type = CheezTypeToLLVMType(variable.Type);
-                var val = LLVM.AddGlobal(module, type, variable.Name);
+                var val = LLVM.AddGlobal(module, type, variable.Name.Name);
                 LLVM.SetLinkage(val, LLVMLinkage.LLVMInternalLinkage);
 
                 var dExtern = variable.GetDirective("extern");
@@ -483,7 +486,7 @@ namespace Cheez.Compiler.CodeGeneration
                 {
                     foreach (var l in function.LocalVariables)
                     {
-                        valueMap[l] = AllocVar(builder, l.Type, l.Name);
+                        valueMap[l] = AllocVar(builder, l.Type, l.Name?.Name ?? "");
                     }
                 }
 
@@ -760,7 +763,7 @@ namespace Cheez.Compiler.CodeGeneration
             }
             else if (call.Function is AstFunctionExpression afe)
             {
-                func = LLVM.GetNamedFunction(module, afe.Declaration.Name);
+                func = LLVM.GetNamedFunction(module, afe.Declaration.Name.Name);
             }
             else
             {

@@ -1,6 +1,4 @@
 ﻿using Cheez.Compiler.Ast;
-using Cheez.Compiler.ParseTree;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -10,17 +8,19 @@ namespace Cheez.Compiler
     public interface ISymbol : INamed
     {
         CheezType Type { get; }
+        bool IsConstant { get; }
     }
 
     public class Using : ISymbol
     {
         public CheezType Type => Expr.Type;
-        public string Name { get; }
+        public AstIdentifierExpr Name { get; }
 
         public AstExpression Expr { get; }
+        public bool IsConstant => true;
 
         [DebuggerStepThrough]
-        public Using(string name, AstExpression expr)
+        public Using(AstIdentifierExpr name, AstExpression expr)
         {
             this.Name = name;
             this.Expr = expr;
@@ -32,6 +32,37 @@ namespace Cheez.Compiler
             return $"using {Expr}";
         }
     }
+
+    public class CompTimeVariable : ISymbol
+    {
+        public AstIdentifierExpr Name { get; }
+        public CheezType Type { get; }
+        public bool IsConstant => true;
+        public object Value { get; }
+
+        public CompTimeVariable(string name, CheezType type, object value)
+        {
+            this.Name = new AstIdentifierExpr(null, name);
+            this.Type = type;
+            this.Value = value;
+        }
+    }
+
+    //public class CheezTypeSymbol : ISymbol
+    //{
+    //    public AstIdentifierExpr Name { get; }
+    //    public CheezType Type { get; }
+    //    public CheezType Value { get; set; }
+
+    //    public bool IsConstant => true;
+
+    //    public CheezTypeSymbol(AstIdentifierExpr name, CheezType type)
+    //    {
+    //        this.Name = name;
+    //        this.Value = type;
+    //        this.Type = CheezType.Type;
+    //    }
+    //}
 
     public class Scope
     {
@@ -45,7 +76,7 @@ namespace Cheez.Compiler
         public List<AstImplBlock> ImplBlocks { get; } = new List<AstImplBlock>();
 
 
-        private CTypeFactory types = new CTypeFactory();
+        //private CTypeFactory types = new CTypeFactory();
 
         private Dictionary<string, ISymbol> mSymbolTable = new Dictionary<string, ISymbol>();
         private Dictionary<string, List<IOperator>> mOperatorTable = new Dictionary<string, List<IOperator>>();
@@ -68,15 +99,15 @@ namespace Cheez.Compiler
             };
         }
 
-        public CheezType GetCheezType(PTTypeExpr expr)
-        {
-            return types.GetCheezType(expr) ?? Parent?.GetCheezType(expr);
-        }
+        //public CheezType GetCheezType(PTTypeExpr expr)
+        //{
+        //    return types.GetCheezType(expr) ?? Parent?.GetCheezType(expr);
+        //}
 
-        public CheezType GetCheezType(string name)
-        {
-            return types.GetCheezType(name) ?? Parent?.GetCheezType(name);
-        }
+        //public CheezType GetCheezType(string name)
+        //{
+        //    return types.GetCheezType(name) ?? Parent?.GetCheezType(name);
+        //}
 
         public List<IOperator> GetOperators(string name, CheezType lhs, CheezType rhs)
         {
@@ -168,6 +199,38 @@ namespace Cheez.Compiler
             }
 
             Parent?.GetOperator(name, sub, result, ref level);
+        }
+
+        internal void DefineBuiltInTypes()
+        {
+            DefineTypeSymbol("i8", IntType.GetIntType(1, true));
+            DefineTypeSymbol("i16", IntType.GetIntType(2, true));
+            DefineTypeSymbol("i32", IntType.GetIntType(4, true));
+            DefineTypeSymbol("i64", IntType.GetIntType(8, true));
+
+            DefineTypeSymbol("byte", IntType.GetIntType(1, true));
+            DefineTypeSymbol("short", IntType.GetIntType(2, true));
+            DefineTypeSymbol("int", IntType.GetIntType(4, true));
+            DefineTypeSymbol("long", IntType.GetIntType(8, true));
+
+            DefineTypeSymbol("u8", IntType.GetIntType(1, false));
+            DefineTypeSymbol("u16", IntType.GetIntType(2, false));
+            DefineTypeSymbol("u32", IntType.GetIntType(4, false));
+            DefineTypeSymbol("u64", IntType.GetIntType(8, false));
+
+            DefineTypeSymbol("ubyte", IntType.GetIntType(1, false));
+            DefineTypeSymbol("ushort", IntType.GetIntType(2, false));
+            DefineTypeSymbol("uint", IntType.GetIntType(4, false));
+            DefineTypeSymbol("ulong", IntType.GetIntType(8, false));
+
+            DefineTypeSymbol("f32", FloatType.GetFloatType(4));
+            DefineTypeSymbol("float", FloatType.GetFloatType(4));
+            DefineTypeSymbol("f64", FloatType.GetFloatType(8));
+            DefineTypeSymbol("double", FloatType.GetFloatType(8));
+
+            DefineTypeSymbol("bool", BoolType.Instance);
+            DefineTypeSymbol("string", StringType.Instance);
+            DefineTypeSymbol("void", VoidType.Intance);
         }
 
         internal void DefineBuiltInOperators()
@@ -282,10 +345,19 @@ namespace Cheez.Compiler
 
         public bool DefineSymbol(ISymbol symbol)
         {
-            if (mSymbolTable.ContainsKey(symbol.Name))
+            if (mSymbolTable.ContainsKey(symbol.Name.Name))
                 return false;
 
-            mSymbolTable[symbol.Name] = symbol;
+            mSymbolTable[symbol.Name.Name] = symbol;
+            return true;
+        }
+
+        public bool DefineTypeSymbol(string name, CheezType symbol)
+        {
+            if (mSymbolTable.ContainsKey(name))
+                return false;
+
+            mSymbolTable[name] = new CompTimeVariable(name, CheezType.Type, symbol);
             return true;
         }
 
@@ -298,7 +370,7 @@ namespace Cheez.Compiler
 
         public bool DefineImplFunction(CheezType targetType, AstFunctionDecl f)
         {
-            if(!mImplTable.TryGetValue(targetType, out var list))
+            if (!mImplTable.TryGetValue(targetType, out var list))
             {
                 list = new List<AstFunctionDecl>();
                 mImplTable[targetType] = list;
@@ -316,39 +388,39 @@ namespace Cheez.Compiler
         {
             if (mImplTable.TryGetValue(targetType, out var list))
             {
-                return list.FirstOrDefault(f => f.Name == name) ?? Parent?.GetImplFunction(targetType, name);
+                return list.FirstOrDefault(f => f.Name.Name == name) ?? Parent?.GetImplFunction(targetType, name);
             }
 
             return Parent?.GetImplFunction(targetType, name);
         }
 
-        public EnumType DefineType(AstEnumDecl en)
-        {
-            if (types.GetCheezType(en.Name) != null)
-                return null;
+        //public EnumType DefineType(AstEnumDecl en)
+        //{
+        //    if (types.GetCheezType(en.Name.Name) != null)
+        //        return null;
 
-            var type = new EnumType(en);
-            types.CreateAlias(en.Name, type);
-            return type;
-        }
+        //    var type = new EnumType(en);
+        //    types.CreateAlias(en.Name.Name, type);
+        //    return type;
+        //}
 
-        public bool DefineType(AstTypeDecl t)
-        {
-            if (types.GetCheezType(t.Name) != null)
-                return false;
+        //public bool DefineType(AstTypeDecl t)
+        //{
+        //    if (types.GetCheezType(t.Name.Name) != null)
+        //        return false;
 
-            types.CreateAlias(t.Name, new StructType(t));
-            return true;
-        }
+        //    types.CreateAlias(t.Name.Name, new StructType(t));
+        //    return true;
+        //}
 
-        public bool DefineType(string name, CheezType type)
-        {
-            if (types.GetCheezType(name) != null)
-                return false;
+        //public bool DefineType(string name, CheezType type)
+        //{
+        //    if (types.GetCheezType(name) != null)
+        //        return false;
 
-            types.CreateAlias(name, type);
-            return true;
-        }
+        //    types.CreateAlias(name, type);
+        //    return true;
+        //}
 
         public override string ToString()
         {

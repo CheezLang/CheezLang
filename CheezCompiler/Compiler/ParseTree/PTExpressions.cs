@@ -235,9 +235,9 @@ namespace Cheez.Compiler.ParseTree
     public class PTCastExpr : PTExpr
     {
         public PTExpr SubExpression { get; set; }
-        public PTTypeExpr TargetType { get; set; }
+        public PTExpr TargetType { get; set; }
 
-        public PTCastExpr(TokenLocation beg, TokenLocation end, PTTypeExpr target, PTExpr v) : base(beg, end)
+        public PTCastExpr(TokenLocation beg, TokenLocation end, PTExpr target, PTExpr v) : base(beg, end)
         {
             this.SubExpression = v;
             this.TargetType = target;
@@ -250,7 +250,7 @@ namespace Cheez.Compiler.ParseTree
 
         public override AstExpression CreateAst()
         {
-            return new AstCastExpr(this, SubExpression.CreateAst());
+            return new AstCastExpr(this, TargetType.CreateAst(), SubExpression.CreateAst());
         }
     }
 
@@ -284,25 +284,25 @@ namespace Cheez.Compiler.ParseTree
 
     public class PTStructValueExpr : PTExpr
     {
-        public PTIdentifierExpr Name { get; }
+        public PTExpr Type { get; }
         public List<PTStructMemberInitialization> Initializers { get; }
 
         public PTStructValueExpr(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTStructMemberInitialization> inits) : base(beg, end)
         {
-            this.Name = name;
+            this.Type = name;
             this.Initializers = inits;
         }
 
         public override string ToString()
         {
             var i = string.Join(", ", Initializers.Select(m => m.Name != null ? $"{m.Name} = {m.Value}" : m.Value.ToString()));
-            return $"{Name} {{ {i} }}";
+            return $"{Type} {{ {i} }}";
         }
 
         public override AstExpression CreateAst()
         {
             var inits = Initializers.Select(i => new AstStructMemberInitialization(i, i.Name?.Name, i.Value.CreateAst())).ToArray();
-            return new AstStructValueExpr(this, Name.Name, inits);
+            return new AstStructValueExpr(this, Type.CreateAst(), inits);
         }
     }
 }

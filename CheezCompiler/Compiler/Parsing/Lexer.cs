@@ -16,6 +16,9 @@ namespace Cheez.Compiler.Parsing
         NumberLiteral,
 
         Identifier,
+        DollarIdentifier,
+        HashIdentifier,
+        AtSignIdentifier,
 
         Semicolon,
         DoubleColon,
@@ -24,7 +27,8 @@ namespace Cheez.Compiler.Parsing
         Period,
         Equal,
         Ampersand,
-        HashTag,
+        //HashTag,
+        Hat,
 
         Plus,
         Minus,
@@ -272,7 +276,6 @@ namespace Cheez.Compiler.Parsing
                 case ':': SimpleToken(ref token, TokenType.Colon); break;
                 case ';': SimpleToken(ref token, TokenType.Semicolon); break;
                 case '.': SimpleToken(ref token, TokenType.Period); break;
-                case '#': SimpleToken(ref token, TokenType.HashTag); break;
                 case '=': SimpleToken(ref token, TokenType.Equal); break;
                 case '(': SimpleToken(ref token, TokenType.OpenParen); break;
                 case ')': SimpleToken(ref token, TokenType.ClosingParen); break;
@@ -289,6 +292,8 @@ namespace Cheez.Compiler.Parsing
                 case '-': SimpleToken(ref token, TokenType.Minus); break;
                 case '<': SimpleToken(ref token, TokenType.Less); break;
                 case '>': SimpleToken(ref token, TokenType.Greater); break;
+                case '^': SimpleToken(ref token, TokenType.Hat); break;
+
 
                 case '"': ParseStringLiteral(ref token); break;
 
@@ -296,8 +301,12 @@ namespace Cheez.Compiler.Parsing
                     ParseNumberLiteral(ref token);
                     break;
 
+                case '$': ParseIdentifier(ref token, TokenType.DollarIdentifier); break;
+                case '#': ParseIdentifier(ref token, TokenType.HashIdentifier); break;
+                case '@': ParseIdentifier(ref token, TokenType.AtSignIdentifier); break;
+
                 case char cc when IsIdentBegin(cc):
-                    ParseIdentifier(ref token);
+                    ParseIdentifier(ref token, TokenType.Identifier);
                     CheckKeywords(ref token);
                     break;
 
@@ -389,11 +398,22 @@ namespace Cheez.Compiler.Parsing
             }
         }
 
-        private void ParseIdentifier(ref Token token)
+        private void ParseIdentifier(ref Token token, TokenType idtype)
         {
-            token.type = TokenType.Identifier;
+            token.type = idtype;
 
             int start = mLocation.index;
+
+            switch (idtype)
+            {
+                case TokenType.AtSignIdentifier:
+                case TokenType.DollarIdentifier:
+                case TokenType.HashIdentifier:
+                    mLocation.index++;
+                    start++;
+                    break;
+            }
+
             while (mLocation.index < mText.Length && IsIdent(Current))
             {
                 mLocation.index++;

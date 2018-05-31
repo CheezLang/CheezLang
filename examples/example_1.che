@@ -1,41 +1,48 @@
 #load("io.che")
 // #load("stdio.che")
 
-fn Main()
-{
-    let a: byte = GetTwo()
-    let b: short = GetTwo()
-    let c: int = GetTwo()
-    let d: long = GetTwo()
+fn Main() {
+    let a: int = 123
 
-    a = Square(a)
-    b = Square(b)
-    c = Square(c)
-    d = Square(d)
-
-    Printlnf(" i8: {i8}", <void*>a)
-    Printlnf("i16: {i16}", <void*>b)
-    Printlnf("i32: {i32}", <void*>c)
-    Printlnf("i64: {i64}", <void*>d)
-
-    let a = new Test {
-
-    }
+    Printlnf("hiuiaeuiae {i32}", (void^)a)
+    // Println("uiaeuaie")
 }
 
-struct Test {
-    a: int
-    b: int
-}
+// fn Main()
+// {
+//     let a: byte = GetTwo()
+//     let b: short = GetTwo()
+//     let c: int = GetTwo()
+//     let d: long = GetTwo()
 
-fn Test(i: string) -> string {
-    return i
-}
+//     a = Square(a)
+//     b = Square(b)
+//     c = Square(c)
+//     d = Square(d)
 
-fn Square<X>(num: X) -> X {
-    return num * num
-}
+//     Printlnf(" i8: {i8}", <void*>a)
+//     Printlnf("i16: {i16}", <void*>b)
+//     Printlnf("i32: {i32}", <void*>c)
+//     Printlnf("i64: {i64}", <void*>d)
 
-fn GetTwo<T>() -> T {
-    return 2
-}
+//     let a = new Test {
+
+//     }
+// }
+
+// struct Test {
+//     a: int
+//     b: int
+// }
+
+// fn Test(i: string) -> string {
+//     return i
+// }
+
+// fn Square<X>(num: X) -> X {
+//     return num * num
+// }
+
+// fn GetTwo<T>() -> T {
+//     return 2
+// }
