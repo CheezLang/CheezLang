@@ -44,7 +44,8 @@ namespace CheezCLI
             var argsParser = Parser.Default;
 
 
-            var stopwatch = Stopwatch.StartNew();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             var exitCode = argsParser.ParseArguments<CompilerOptions>(args)
                 .MapResult(
                     options => Run(options),
@@ -72,6 +73,8 @@ namespace CheezCLI
                 errorHandler = new SilentErrorHandler();
             }
 
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             var compiler = new Compiler(errorHandler);
             foreach (var file in options.Files)
             {
@@ -80,8 +83,14 @@ namespace CheezCLI
                     return 4;
             }
 
+            var lexAndParseTime = stopwatch.Elapsed;
+            stopwatch.Restart();
+
             //if (!errorHandler.HasErrors)
-                compiler.DefaultWorkspace.CompileAll();
+            compiler.DefaultWorkspace.CompileAll();
+
+            var semaniticAnalysisTime = stopwatch.Elapsed;
+            stopwatch.Restart();
 
             if (options.PrintAst)
             {
@@ -96,8 +105,17 @@ namespace CheezCLI
                 return 0;
 
             // generate code
+            stopwatch.Restart();
             bool codeGenOk = GenerateAndCompileCode(options, compiler.DefaultWorkspace);
+            var codeGenAndLinkTime = stopwatch.Elapsed;
 
+            Console.WriteLine($"------- Total Frontend: {(lexAndParseTime + semaniticAnalysisTime):mm\\:ss\\.fffffff}");
+            Console.WriteLine($"    Lexing and Parsing: {lexAndParseTime:mm\\:ss\\.fffffff}");
+            Console.WriteLine($"     Semantic Analysis: {semaniticAnalysisTime:mm\\:ss\\.fffffff}");
+
+            Console.WriteLine($"-------------- Backend: {codeGenAndLinkTime:mm\\:ss\\.fffffff}");
+
+            stopwatch.Restart();
             if (options.RunCode && codeGenOk)
             {
                 Console.WriteLine($"Running code:");
@@ -105,12 +123,15 @@ namespace CheezCLI
                 var testProc = Util.StartProcess(
                     Path.Combine(options.OutPath, options.OutName + ".exe"),
                     "",
-                    workingDirectory: options.OutPath, 
+                    workingDirectory: options.OutPath,
                     stdout: (s, e) => System.Console.WriteLine(e.Data),
                     stderr: (s, e) => System.Console.Error.WriteLine(e.Data));
                 testProc.WaitForExit();
                 Console.WriteLine("=======================================");
                 Console.WriteLine("Program exited with code " + testProc.ExitCode);
+                var executionTime = stopwatch.Elapsed;
+
+                Console.WriteLine($"------- Execution time: {executionTime:mm\\:ss\\.fffffff}");
             }
 
             return 0;
@@ -126,12 +147,12 @@ namespace CheezCLI
             bool success = generator.GenerateCode(workspace, filePath);
             if (!success)
                 return false;
-            
+
             if (true)
                 return generator.CompileCode();
             return success;
         }
 
-        
+
     }
 }
