@@ -104,7 +104,7 @@ namespace Cheez.Compiler.Parsing
             string callingFunctionFile, callingFunctionName;
             int callLineNumber;
             (callingFunctionFile, callingFunctionName, callLineNumber) = GetCallingFunction().GetValueOrDefault(("", "", -1));
-            mErrorHandler.ReportError(mLexer, new Location(location, location), message, callingFunctionFile, callingFunctionName, callLineNumber);
+            mErrorHandler.ReportError(mLexer, new Location(location, location), message, null, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
         [SkipInStackFrame]
@@ -114,7 +114,7 @@ namespace Cheez.Compiler.Parsing
             string callingFunctionFile, callingFunctionName;
             int callLineNumber;
             (callingFunctionFile, callingFunctionName, callLineNumber) = GetCallingFunction().GetValueOrDefault(("", "", -1));
-            mErrorHandler.ReportError(mLexer, location, message, callingFunctionFile, callingFunctionName, callLineNumber);
+            mErrorHandler.ReportError(mLexer, location, message, null, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
         [DebuggerStepThrough]
@@ -346,7 +346,7 @@ namespace Cheez.Compiler.Parsing
         {
             TokenLocation end = null;
             var args = new List<PTExpr>();
-            
+
             var name = ParseIdentifierExpr(ErrMsg("identifier", "after # in directive"), TokenType.HashIdentifier);
 
             end = name.End;

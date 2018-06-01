@@ -325,7 +325,7 @@ void _flush_cout() {
         {
             var v = ident.Scope.GetSymbol(ident.Name);
             var name = nameDecorator.GetDecoratedName(v);
-            if (ident.Type is IntType i && i.SizeInBytes == 1)
+            if (ident.Type is IntType i && i.Size == 1)
                 return $"+{name}";
             return name;
         }

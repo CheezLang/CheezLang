@@ -60,7 +60,7 @@ namespace Cheez.Compiler
         public void ReportError(ILocation location, string errorMessage, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             var file = mFiles[location.Beginning.file];
-            mCompiler.ErrorHandler.ReportError(file, location, errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
+            mCompiler.ErrorHandler.ReportError(file, location, errorMessage, null, callingFunctionFile, callingFunctionName, callLineNumber);
         }
     }
 }

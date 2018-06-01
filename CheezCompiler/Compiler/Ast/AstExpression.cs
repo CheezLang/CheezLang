@@ -63,6 +63,7 @@ namespace Cheez.Compiler.Ast
             Declaration = func;
             Type = func.Type;
             this.Original = original;
+            Value = func;
         }
         
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
@@ -594,6 +595,8 @@ namespace Cheez.Compiler.Ast
         public AstExpression Target { get; set; }
         public override bool IsPolymorphic => Target.IsPolymorphic;
 
+        public bool IsReference { get; set; }
+
         public AstPointerTypeExpr(ParseTree.PTExpr node, AstExpression target) : base()
         {
             this.GenericParseTreeNode = node;
@@ -606,7 +609,8 @@ namespace Cheez.Compiler.Ast
             return new AstPointerTypeExpr(GenericParseTreeNode, Target.Clone())
             {
                 Type = this.Type,
-                Scope = this.Scope
+                Scope = this.Scope,
+                IsReference = this.IsReference
             };
         }
 

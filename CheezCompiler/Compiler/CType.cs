@@ -96,6 +96,7 @@ namespace Cheez.Compiler
         public static CheezType Type => CheezTypeType.Instance;
 
         public abstract bool IsPolyType { get; }
+        public int Size { get; set; }
     }
 
     public class CheezTypeType : CheezType
@@ -153,10 +154,9 @@ namespace Cheez.Compiler
     public class IntType : CheezType
     {
         private static Dictionary<(int, bool), IntType> sTypes = new Dictionary<(int, bool), IntType>();
-        public static IntType LiteralType = new IntType { Signed = false, SizeInBytes = 0 };
-        public static IntType DefaultType => GetIntType(8, true);
-
-        public int SizeInBytes { get; private set; }
+        public static IntType LiteralType = new IntType { Signed = false, Size = 0 };
+        public static IntType DefaultType => GetIntType(4, true);
+        
         public bool Signed { get; private set; }
 
         public static IntType GetIntType(int sizeInBytes, bool signed)
@@ -170,7 +170,7 @@ namespace Cheez.Compiler
 
             var type = new IntType
             {
-                SizeInBytes = sizeInBytes,
+                Size = sizeInBytes,
                 Signed = signed
             };
 
@@ -180,7 +180,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return (Signed ? "i" : "u") + (SizeInBytes * 8);
+            return (Signed ? "i" : "u") + (Size * 8);
         }
 
         public override bool IsPolyType => false;
@@ -190,7 +190,7 @@ namespace Cheez.Compiler
     {
         private static Dictionary<int, FloatType> sTypes = new Dictionary<int, FloatType>();
         public static FloatType LiteralType = new FloatType { SizeInBytes = 0 };
-        public static FloatType DefaultType => GetFloatType(8);
+        public static FloatType DefaultType => GetFloatType(4);
 
         public int SizeInBytes { get; set; }
 

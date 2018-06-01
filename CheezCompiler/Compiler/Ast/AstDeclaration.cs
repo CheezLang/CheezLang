@@ -25,15 +25,15 @@ namespace Cheez.Compiler.Ast
             this.TypeExpr = typeExpr;
         }
 
-        public AstFunctionParameter(AstIdentifierExpr name, CheezType type)
+        public AstFunctionParameter(AstIdentifierExpr name, AstExpression typeExpr)
         {
             Name = name;
-            Type = type;
+            this.TypeExpr = typeExpr;
         }
 
         public override string ToString()
         {
-            return $"param {Name} : {Type}";
+            return $"{Name}: {TypeExpr}";
         }
 
         public AstFunctionParameter Clone()
@@ -82,6 +82,8 @@ namespace Cheez.Compiler.Ast
         public Dictionary<string, AstExpression> PolymorphicTypeExprs { get; internal set; }
         public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
 
+        public CheezType ImplTarget { get; set; }
+
         public AstFunctionDecl(ParseTree.PTStatement node,
             AstIdentifierExpr name,
             List<AstIdentifierExpr> generics,
@@ -112,9 +114,10 @@ namespace Cheez.Compiler.Ast
 
         public override string ToString()
         {
-            if (ReturnType != null)
-                return $"fn {Name}() : {ReturnType}";
-            return $"fn {Name}()";
+            var p = string.Join(", ", Parameters.Select(x => x.ToString()));
+            if (ReturnTypeExpr != null)
+                return $"fn {Name}({p}) -> {ReturnTypeExpr}";
+            return $"fn {Name}({p})";
         }
 
         public override AstStatement Clone()

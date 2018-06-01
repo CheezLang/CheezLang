@@ -284,7 +284,7 @@ namespace Cheez.Compiler.CodeGeneration
                     return LLVM.Int1Type();
 
                 case IntType i:
-                    return LLVM.IntType((uint)i.SizeInBytes * 8);
+                    return LLVM.IntType((uint)i.Size * 8);
 
                 case StringType _:
                     return LLVM.PointerType(LLVM.Int8Type(), 0);
@@ -293,6 +293,9 @@ namespace Cheez.Compiler.CodeGeneration
                     if (p.TargetType == VoidType.Intance)
                         return LLVM.PointerType(LLVM.Int8Type(), 0);
                     return LLVM.PointerType(CheezTypeToLLVMType(p.TargetType), 0);
+
+                case ReferenceType r:
+                    return LLVM.PointerType(CheezTypeToLLVMType(r.TargetType), 0);
 
                 case VoidType _:
                     return LLVM.VoidType();
@@ -342,20 +345,16 @@ namespace Cheez.Compiler.CodeGeneration
             // create declarations
             foreach (var function in workspace.GlobalScope.FunctionDeclarations)
             {
-                var varargs = function.GetDirective("varargs");
-                if (varargs != null)
-                    (function.Type as FunctionType).VarArgs = true;
+                GenerateFunctionHeader(function);
+            }
 
-                var ltype = CheezTypeToLLVMType(function.Type);
-                var lfunc = LLVM.AddFunction(module, function.Name.Name, ltype);
-
-                var ccDir = function.GetDirective("stdcall");
-                if (ccDir != null)
+            // impl functions
+            foreach (var impl in workspace.GlobalScope.ImplBlocks)
+            {
+                foreach (var function in impl.SubScope.FunctionDeclarations)
                 {
-                    LLVM.SetFunctionCallConv(lfunc, (uint)LLVMCallConv.LLVMX86StdcallCallConv);
+                    GenerateFunctionHeader(function);
                 }
-
-                valueMap[function] = lfunc;
             }
 
             // create implementations
@@ -363,6 +362,31 @@ namespace Cheez.Compiler.CodeGeneration
             {
                 f.Accept(this, null);
             }
+            foreach (var impl in workspace.GlobalScope.ImplBlocks)
+            {
+                foreach (var function in impl.SubScope.FunctionDeclarations)
+                {
+                    function.Accept(this, null);
+                }
+            }
+        }
+
+        private void GenerateFunctionHeader(AstFunctionDecl function)
+        {
+            var varargs = function.GetDirective("varargs");
+            if (varargs != null)
+                (function.Type as FunctionType).VarArgs = true;
+
+            var ltype = CheezTypeToLLVMType(function.Type);
+            var lfunc = LLVM.AddFunction(module, function.Name.Name, ltype);
+
+            var ccDir = function.GetDirective("stdcall");
+            if (ccDir != null)
+            {
+                LLVM.SetFunctionCallConv(lfunc, (uint)LLVMCallConv.LLVMX86StdcallCallConv);
+            }
+
+            valueMap[function] = lfunc;
         }
 
         //private LLVMValueRef CastIfString(LLVMValueRef val, LLVMBuilderRef builder)
@@ -461,6 +485,16 @@ namespace Cheez.Compiler.CodeGeneration
             var right = ass.Value.Accept(this, data);
             return LLVM.BuildStore(data.Builder, right, left);
         }
+
+        //public override LLVMValueRef VisitImplBlock(AstImplBlock impl, LLVMCodeGeneratorData data = null)
+        //{
+        //    foreach (var f in impl.Functions)
+        //    {
+        //        f.Accept(this, data);
+        //    }
+
+        //    return default;
+        //}
 
         public override LLVMValueRef VisitFunctionDeclaration(AstFunctionDecl function, LLVMCodeGeneratorData data = null)
         {
@@ -651,7 +685,7 @@ namespace Cheez.Compiler.CodeGeneration
         {
             if (dot.IsDoubleColon)
             {
-                throw new NotImplementedException();
+                return valueMap[dot.Value];
             }
             else
             {
@@ -659,6 +693,26 @@ namespace Cheez.Compiler.CodeGeneration
                 {
                     var left = dot.Left.Accept(this, data.Clone(Deref: false));
                     var index = (uint)s.GetIndexOfMember(dot.Right);
+                    var elemPtr = LLVM.BuildStructGEP(data.Builder, left, index, dot.ToString());
+
+                    if (data.Deref)
+                    {
+                        elemPtr = LLVM.BuildLoad(data.Builder, elemPtr, $"*{dot}");
+                    }
+                    return elemPtr;
+                }
+                else if (dot.Left.Type is ReferenceType r && r.TargetType is StructType @struct)
+                {
+                    var left = dot.Left.Accept(this, data.Clone(Deref: false));
+                    var index = (uint)@struct.GetIndexOfMember(dot.Right);
+
+                    //var indices = new LLVMValueRef[2]
+                    //{
+                    //    LLVM.ConstInt(LLVM.Int32Type(), 0, new LLVMBool(0)),
+                    //    LLVM.ConstInt(LLVM.Int32Type(), index, new LLVMBool(0))
+                    //};
+                    //var elemPtr = LLVM.BuildGEP(data.Builder, left, indices, dot.ToString());
+                    left = LLVM.BuildLoad(data.Builder, left, "");
                     var elemPtr = LLVM.BuildStructGEP(data.Builder, left, index, dot.ToString());
 
                     if (data.Deref)
@@ -756,9 +810,9 @@ namespace Cheez.Compiler.CodeGeneration
         public override LLVMValueRef VisitCallExpression(AstCallExpr call, LLVMCodeGeneratorData data = null)
         {
             LLVMValueRef func;
-            if (call.Function is AstIdentifierExpr i)
+            if (call.Function is AstIdentifierExpr id)
             {
-                func = LLVM.GetNamedFunction(module, i.Name);
+                func = LLVM.GetNamedFunction(module, id.Name);
                 //func = valueMap[i.Value];
             }
             else if (call.Function is AstFunctionExpression afe)
@@ -768,10 +822,24 @@ namespace Cheez.Compiler.CodeGeneration
             }
             else
             {
-                throw new NotImplementedException();
+                func = call.Function.Accept(this, data);
             }
 
-            var args = call.Arguments.Select(a => a.Accept(this, data)).ToArray();
+            var funcDecl = call.Function.Value as AstFunctionDecl;
+
+            var args = new LLVMValueRef[call.Arguments.Count];
+            for (int i = 0; i < funcDecl.Parameters.Count; i++)
+            {
+                var param = funcDecl.Parameters[i];
+                var arg = call.Arguments[i];
+
+                bool deref = true;
+                if (param.Type is ReferenceType && !(arg.Type is ReferenceType))
+                    deref = false;
+
+                args[i] = arg.Accept(this, data.Clone(Deref: deref));
+            }
+            //var args = call.Arguments.Select(a => a.Accept(this, data)).ToArray();
 
             var res = LLVM.BuildCall(data.Builder, func, args, "");
             LLVM.SetInstructionCallConv(res, LLVM.GetFunctionCallConv(func));
@@ -806,6 +874,15 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitArrayAccessExpression(AstArrayAccessExpr arr, LLVMCodeGeneratorData data = null)
         {
+            ulong dataSize = 1;
+            var targetType = arr.SubExpression.Type;
+            switch (targetType)
+            {
+                case PointerType p:
+                    dataSize = (ulong)p.TargetType.Size;
+                    break;
+            }
+
             var sub = arr.SubExpression.Accept(this, data.Clone(Deref: true)); // @Todo: Deref: !data.Deref / true
             var ind = arr.Indexer.Accept(this, data.Clone(Deref: true));
 
@@ -816,6 +893,11 @@ namespace Cheez.Compiler.CodeGeneration
 
             var subCasted = LLVM.BuildPtrToInt(data.Builder, sub, castType, "");
             var indCasted = LLVM.BuildIntCast(data.Builder, ind, castType, "");
+
+            if (dataSize != 1)
+            {
+                indCasted = LLVM.BuildMul(data.Builder, indCasted, LLVM.ConstInt(castType, dataSize, new LLVMBool(0)), "");
+            }
 
             var add = LLVM.BuildAdd(data.Builder, subCasted, indCasted, "");
 

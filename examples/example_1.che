@@ -3,22 +3,82 @@
 
 fn Main()
 {
-    let a = Square((int)5)
-    let b: int = Square(GetTwo())
+    let a: byte = 1
+    let b: short = 2
+    let c: int = 3
+    let d: long = 4
 
-    Printlnf("{i32}", (void^)a)
-    Printlnf("{i32}", (void^)b)
+    let arr: IntArray
+    arr.Init()
+    arr.Print()
+
+    arr.Add(a)
+    arr.Print()
+
+    arr.Add(b)
+    arr.Print()
+
+    arr.Add(c)
+    arr.Print()
+
+    arr.Add(d)
+    arr.Print()
 }
 
-
-fn Square(num: $T) -> $T {
-    return num * num
+struct IntArray {
+    data: ulong^
+    capacity: uint
+    count: uint
 }
 
-fn Add(a: $T, b: T) -> T {
-    return a + b
-}
+impl IntArray {
+    ref fn Init() {
+        count = 0
+        capacity = 10
+        data = (ulong^)malloc((int)capacity * 8)
+    }
 
-fn GetTwo() -> $T {
-    return 2
+    ref fn Add(val: $T) {
+        if capacity <= count {
+            self.Grow(2)
+        }
+
+        data[count] = (ulong)val
+        count = count + 1
+    }
+
+    ref fn Grow(fac: uint) {
+        capacity = capacity * fac
+        data = (ulong^)realloc((void^)data, (int)capacity * 8)
+    }
+
+    ref fn Get(id: uint) -> ulong {
+        if id >= count {
+            return 0
+        }
+
+        return data[id]
+    }
+
+    ref fn Print() {
+        PrintString("(")
+        PrintInt((int)count)
+        PrintString("/")
+        PrintInt((int)capacity)
+        PrintString(")[")
+        let i: uint = 0
+        while i < capacity {
+            if i > 0 {
+                PrintString(", ")
+            }
+            
+            if i < count {
+                PrintInt((int)self.Get(i))
+            }
+
+            i = i + 1
+        }
+
+        Println("]")
+    }
 }

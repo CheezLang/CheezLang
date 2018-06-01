@@ -13,7 +13,7 @@ namespace CheezCLI
     {
         public bool HasErrors { get; private set; }
 
-        public void ReportError(IText text, ILocation location, string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        public void ReportError(IText text, ILocation location, string message, List<Error> subErrors, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             HasErrors = true;
 
@@ -101,6 +101,16 @@ namespace CheezCLI
                     var str = text.Text.Substring(lineBegin, lineEnd - lineBegin);
                     Log(string.Format($"{{0,{lineNumberWidth}}}> {{1}}", line, str), ConsoleColor.White);
                     lineBegin = lineEnd + 1;
+                }
+            }
+
+            if (subErrors?.Count > 0)
+            {
+                Log("Error caused from here:", ConsoleColor.White);
+
+                foreach (var e in subErrors)
+                {
+                    ReportError(e.Text, e.Location, e.Message, null, e.File, e.Function, e.LineNumber);
                 }
             }
         }

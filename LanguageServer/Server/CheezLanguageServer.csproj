@@ -57,7 +57,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CheezLanguageServer.cs" />
-    <Compile Include="ErrorHandler.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="NodeFinder.cs" />
     <Compile Include="Program.cs" />

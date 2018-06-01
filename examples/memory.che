@@ -1,2 +1,3 @@
 fn malloc(size: int) -> void^;
+fn realloc(mem: void^, size: int) -> void^;
 fn free(mem: void^);

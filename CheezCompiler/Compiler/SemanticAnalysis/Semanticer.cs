@@ -92,7 +92,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public void Report(IErrorHandler handler)
         {
-            handler.ReportError(Text, Node, $"Unknown symbol '{SymbolName}'", File, Function, Line);
+            handler.ReportError(Text, Node, $"Unknown symbol '{SymbolName}'", null, File, Function, Line);
         }
     }
 
@@ -120,7 +120,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public IErrorHandler ErrorHandler { get; set; }
 
-        public bool HasErrors => throw new NotImplementedException();
+        public bool HasErrors => ErrorHandler.HasErrors;
 
         [DebuggerStepThrough]
         public SemanticerData()
@@ -157,14 +157,14 @@ namespace Cheez.Compiler.SemanticAnalysis
             ErrorHandler.ReportError(message, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
-        public void ReportError(IText text, ILocation location, string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        public void ReportError(IText text, ILocation location, string message, List<Error> subErrors = null, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
-            ErrorHandler.ReportError(text, location, message, callingFunctionFile, callingFunctionName, callLineNumber);
+            ErrorHandler.ReportError(text, location, message, subErrors, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
-        public void ReportError(ILocation location, string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        public void ReportError(ILocation location, string message, List<Error> subErrors = null, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
-            ErrorHandler.ReportError(Text, location, message, callingFunctionFile, callingFunctionName, callLineNumber);
+            ErrorHandler.ReportError(Text, location, message, subErrors, callingFunctionFile, callingFunctionName, callLineNumber);
         }
     }
 
@@ -179,7 +179,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             foreach (var s in statements)
             {
-                var enumerator = s.Accept(this, new SemanticerData(workspace.GlobalScope, s.GenericParseTreeNode.SourceFile)).GetEnumerator();
+                var enumerator = s.Accept(this, new SemanticerData(workspace.GlobalScope, s.GenericParseTreeNode.SourceFile, ErrorHandler: errorHandler)).GetEnumerator();
                 enums.Add(enumerator);
             }
 
@@ -356,6 +356,19 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         private IEnumerable<object> VisitFunctionHeader(AstFunctionDecl function, SemanticerData context)
         {
+            function.ImplTarget = context.ImplTarget;
+            if (function.ImplTarget != null)
+            {
+                var tar = function.ImplTarget;
+                while (tar is PointerType p)
+                    tar = p.TargetType;
+
+                if (tar is StructType @struct)
+                {
+                    Using(function.SubScope, @struct, function.Parameters[0]);
+                }
+            }
+
             if (!function.IsPolyInstance && ((function.ReturnTypeExpr?.IsPolymorphic ?? false) || function.Parameters.Any(p => p.TypeExpr.IsPolymorphic)))
             {
                 function.IsGeneric = true;
@@ -376,18 +389,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             // @Todo: make entry point configurable
             if (function.Name.Name == "Main" && function.Scope == workspace.GlobalScope)
                 workspace.MainFunction = function;
-
-            if (context.ImplTarget != null)
-            {
-                var tar = context.ImplTarget;
-                while (tar is PointerType p)
-                    tar = p.TargetType;
-
-                if (tar is StructType @struct)
-                {
-                    Using(function.SubScope, @struct, function.Parameters[0]);
-                }
-            }
 
             // return type
             if (function.ReturnTypeExpr != null)
@@ -437,7 +438,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         private IEnumerable<object> VisitFunctionBody(AstFunctionDecl function, SemanticerData context)
         {
-            var subData = new SemanticerData(Scope: function.SubScope, Function: function, Text: context.Text, Impl: context.ImplTarget);
+            var subData = context.Clone(Scope: function.SubScope, Function: function);
             foreach (var v in function.Body.Accept(this, subData))
                 yield return v;
             bool returns = function.Body.GetFlag(StmtFlags.Returns);
@@ -781,11 +782,15 @@ namespace Cheez.Compiler.SemanticAnalysis
             impl.SubScope = new Scope($"impl {impl.TargetType}", impl.Scope);
 
 
+            // add self parameter
             foreach (var f in impl.Functions)
             {
-                var selfType = impl.TargetType;
+                var selfType = impl.TargetTypeExpr.Clone();
                 if (f.RefSelf)
-                    selfType = ReferenceType.GetRefType(selfType);
+                    selfType = new AstPointerTypeExpr(selfType.GenericParseTreeNode, selfType)
+                    {
+                        IsReference = true
+                    };
                 f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(null, "self", false), selfType));
                 //scope.DefineImplFunction(impl.TargetType, f);
             }
@@ -1118,6 +1123,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                 case AstIdentifierExpr i when i.IsPolymorphic:
                     if (result != null && !result.TryGetValue(i.Name, out var _))
                     {
+                        if (arg == IntType.LiteralType)
+                            arg = IntType.DefaultType;
+                        if (arg == FloatType.LiteralType)
+                            arg = FloatType.DefaultType;
                         result[i.Name] = arg;
                         return true;
                     }
@@ -1250,10 +1259,18 @@ namespace Cheez.Compiler.SemanticAnalysis
                     instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value); // @Todo
                 }
 
-                foreach (var v in VisitFunctionHeader(instance, context)) // @Todo: implTarget, text
+                var errorHandler = new SilentErrorHandler();
+                var subContext = new SemanticerData(g.Declaration.Scope, context.Text, null, g.Declaration.ImplTarget, null, errorHandler);
+
+                foreach (var v in VisitFunctionHeader(instance, subContext)) // @Todo: implTarget, text
                     yield return v;
-                foreach (var v in VisitFunctionBody(instance, context)) // @Todo: text
+                foreach (var v in VisitFunctionBody(instance, subContext)) // @Todo: text
                     yield return v;
+
+                if (errorHandler.HasErrors)
+                {
+                    context.ReportError(call.GenericParseTreeNode, "Failed to invoke polymorphic function", errorHandler.Errors);
+                }
             }
 
             call.Function = new AstFunctionExpression(call.Function.GenericParseTreeNode, instance, call.Function);
@@ -1351,6 +1368,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield return new WaitForSymbol(context.Text, ident.GenericParseTreeNode, scope, ident.Name);
             var v = scope.GetSymbol(ident.Name);
             ident.Symbol = v;
+            ident.Value = v;
 
             if (v is Using u)
             {
@@ -1477,8 +1495,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                 else
                     yield return v;
 
-            while (dot.Left.Type is ReferenceType r)
-                dot.Left.Type = r.TargetType;
+            //while (dot.Left.Type is ReferenceType r)
+            //    dot.Left.Type = r.TargetType;
 
             if (dot.Left.Type == IntType.LiteralType)
                 dot.Left.Type = IntType.DefaultType;
@@ -1491,6 +1509,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function  '{dot.Right}' exists for type '{dot.Left.Type}'"));
                 var func = dot.Scope.GetImplFunction(dot.Left.Type, dot.Right);
                 dot.Type = func.Type;
+                dot.Value = func;
             }
             else
             {
@@ -1500,17 +1519,21 @@ namespace Cheez.Compiler.SemanticAnalysis
                     dot.Left.Type = p.TargetType;
                 }
 
-                if (dot.Left.Type is StructType s)
+                var leftType = dot.Left.Type;
+                if (leftType is ReferenceType r)
+                    leftType = r.TargetType;
+
+                if (leftType is StructType s)
                 {
                     var member = s.Declaration.Members.FirstOrDefault(m => m.Name.Name == dot.Right);
                     if (member == null)
                     {
-                        yield return new LambdaCondition(() => dot.Scope.GetImplFunction(dot.Left.Type, dot.Right) != null,
-                            eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function  '{dot.Right}' exists for type '{dot.Left.Type}'"));
-                        var func = dot.Scope.GetImplFunction(dot.Left.Type, dot.Right);
+                        yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
+                            eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function  '{dot.Right}' exists for type '{leftType}'"));
+                        var func = dot.Scope.GetImplFunction(leftType, dot.Right);
                         dot.Type = func.Type;
                         dot.IsDoubleColon = true;
-                        //yield return new LambdaError(eh => eh.ReportError(data.Text, dot.ParseTreeNode.Right, $"'{dot.Right}' is not a member of struct '{dot.Left.Type}'"));
+                        dot.Value = func;
                     }
                     else
                     {
@@ -1519,12 +1542,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 else
                 {
-                    yield return new LambdaCondition(() => dot.Scope.GetImplFunction(dot.Left.Type, dot.Right) != null,
-                        eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function  '{dot.Right}' exists for type '{dot.Left.Type}'"));
-                    var func = dot.Scope.GetImplFunction(dot.Left.Type, dot.Right);
+                    yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
+                        eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function  '{dot.Right}' exists for type '{leftType}'"));
+                    var func = dot.Scope.GetImplFunction(leftType, dot.Right);
                     dot.Type = func.Type;
                     dot.IsDoubleColon = true;
-                    //yield return new LambdaError(eh => eh.ReportError(data.Text, dot.ParseTreeNode.Left, $"Left side of '.' has to a struct type, got '{dot.Left.Type}'"));
+                    dot.Value = func;
                 }
 
                 dot.SetFlag(ExprFlags.IsLValue);
@@ -1559,7 +1582,10 @@ namespace Cheez.Compiler.SemanticAnalysis
             ptr.Type = CheezType.Type;
             if (ptr.Target.Value is CheezType t)
             {
-                ptr.Value = PointerType.GetPointerType(t);
+                if (ptr.IsReference)
+                    ptr.Value = ReferenceType.GetRefType(t);
+                else
+                    ptr.Value = PointerType.GetPointerType(t);
             }
             else
             {

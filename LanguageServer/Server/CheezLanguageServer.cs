@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Cheez.Compiler;
 using Cheez.Compiler.Ast;
-using Cheez.Compiler.CodeGeneration;
 using Cheez.Compiler.ParseTree;
 using Cheez.Compiler.Visitor;
 using LanguageServer;
@@ -23,7 +21,7 @@ namespace CheezLanguageServer
         private int _maxNumberOfProblems;
         private TextDocumentManager _documents;
 
-        private ErrorHandler _errorHandler;
+        private SilentErrorHandler _errorHandler;
         private Compiler _compiler;
 
         public CheezLanguageServer(Stream input, Stream output) : base(input, output)
@@ -36,7 +34,7 @@ namespace CheezLanguageServer
             _documents = new TextDocumentManager();
             _documents.Changed += Documents_Changed;
 
-            _errorHandler = new ErrorHandler();
+            _errorHandler = new SilentErrorHandler();
             _compiler = new Compiler(_errorHandler);
             return Result<dynamic, ResponseError>.Success(true);
         }

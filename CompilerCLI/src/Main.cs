@@ -37,6 +37,16 @@ namespace CheezCLI
             public bool NoErrors { get; set; }
         }
 
+        class CompilationResult
+        {
+            public int ExitCode;
+            public TimeSpan? LexAndParse;
+            public TimeSpan? SemanticAnalysis;
+            public TimeSpan? FrontEnd;
+            public TimeSpan? BackEnd;
+            public TimeSpan? Execution;
+        }
+
         public static int Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
@@ -46,21 +56,41 @@ namespace CheezCLI
 
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var exitCode = argsParser.ParseArguments<CompilerOptions>(args)
+            var result = argsParser.ParseArguments<CompilerOptions>(args)
                 .MapResult(
                     options => Run(options),
-                    _ => 1);
+                    _ => new CompilationResult { ExitCode = -1 });
 
 
             var ourCompileTime = stopwatch.Elapsed;
 
-            Console.WriteLine($"Compilation finished in {ourCompileTime}");
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("-------------------------------------");
+            Console.WriteLine($"Total Compilation Time: {ourCompileTime:mm\\:ss\\.fffffff}");
+            Console.WriteLine($"              Frontend: {result.FrontEnd:mm\\:ss\\.fffffff}");
+            if (result.LexAndParse != null)
+                Console.WriteLine($"    Lexing and Parsing: {result.LexAndParse:mm\\:ss\\.fffffff}");
+            if (result.SemanticAnalysis != null)
+                Console.WriteLine($"     Semantic Analysis: {result.SemanticAnalysis:mm\\:ss\\.fffffff}");
+            if (result.BackEnd != null)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"               Backend: {result.BackEnd:mm\\:ss\\.fffffff}");
+            }
+            if (result.Execution != null)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"        Execution time: {result.Execution:mm\\:ss\\.fffffff}");
+            }
 
-            return exitCode;
+            return result.ExitCode;
         }
 
-        static int Run(CompilerOptions options)
+        static CompilationResult Run(CompilerOptions options)
         {
+            var result = new CompilationResult();
+
             if (options.OutName == null)
                 options.OutName = Path.GetFileNameWithoutExtension(options.Files.First());
 
@@ -80,17 +110,19 @@ namespace CheezCLI
             {
                 var v = compiler.AddFile(file);
                 if (v == null)
-                    return 4;
+                {
+                    result.ExitCode = 4;
+                }
             }
 
-            var lexAndParseTime = stopwatch.Elapsed;
+            result.LexAndParse = stopwatch.Elapsed;
             stopwatch.Restart();
 
             //if (!errorHandler.HasErrors)
             compiler.DefaultWorkspace.CompileAll();
 
-            var semaniticAnalysisTime = stopwatch.Elapsed;
-            stopwatch.Restart();
+            result.SemanticAnalysis = stopwatch.Elapsed;
+            result.FrontEnd = result.LexAndParse + result.SemanticAnalysis;
 
             if (options.PrintAst)
             {
@@ -99,42 +131,37 @@ namespace CheezCLI
             }
 
             if (errorHandler.HasErrors)
-                return 3;
-
-            if (options.DontEmitCode)
-                return 0;
-
-            // generate code
-            stopwatch.Restart();
-            bool codeGenOk = GenerateAndCompileCode(options, compiler.DefaultWorkspace);
-            var codeGenAndLinkTime = stopwatch.Elapsed;
-
-            Console.WriteLine($"------- Total Frontend: {(lexAndParseTime + semaniticAnalysisTime):mm\\:ss\\.fffffff}");
-            Console.WriteLine($"    Lexing and Parsing: {lexAndParseTime:mm\\:ss\\.fffffff}");
-            Console.WriteLine($"     Semantic Analysis: {semaniticAnalysisTime:mm\\:ss\\.fffffff}");
-
-            Console.WriteLine($"-------------- Backend: {codeGenAndLinkTime:mm\\:ss\\.fffffff}");
-
-            stopwatch.Restart();
-            if (options.RunCode && codeGenOk)
             {
-                Console.WriteLine($"Running code:");
-                Console.WriteLine("=======================================");
-                var testProc = Util.StartProcess(
-                    Path.Combine(options.OutPath, options.OutName + ".exe"),
-                    "",
-                    workingDirectory: options.OutPath,
-                    stdout: (s, e) => System.Console.WriteLine(e.Data),
-                    stderr: (s, e) => System.Console.Error.WriteLine(e.Data));
-                testProc.WaitForExit();
-                Console.WriteLine("=======================================");
-                Console.WriteLine("Program exited with code " + testProc.ExitCode);
-                var executionTime = stopwatch.Elapsed;
-
-                Console.WriteLine($"------- Execution time: {executionTime:mm\\:ss\\.fffffff}");
+                result.ExitCode = 3;
+                return result;
             }
 
-            return 0;
+            if (!options.DontEmitCode)
+            {
+                // generate code
+                stopwatch.Restart();
+                bool codeGenOk = GenerateAndCompileCode(options, compiler.DefaultWorkspace);
+                result.BackEnd = stopwatch.Elapsed;
+
+                stopwatch.Restart();
+                if (options.RunCode && codeGenOk)
+                {
+                    Console.WriteLine($"Running code:");
+                    Console.WriteLine("=====================================");
+                    var testProc = Util.StartProcess(
+                        Path.Combine(options.OutPath, options.OutName + ".exe"),
+                        "",
+                        workingDirectory: options.OutPath,
+                        stdout: (s, e) => System.Console.WriteLine(e.Data),
+                        stderr: (s, e) => System.Console.Error.WriteLine(e.Data));
+                    testProc.WaitForExit();
+                    Console.WriteLine("=====================================");
+                    Console.WriteLine("Program exited with code " + testProc.ExitCode);
+                    result.Execution = stopwatch.Elapsed;
+                }
+            }
+
+            return result;
         }
 
         private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace)
