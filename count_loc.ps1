@@ -1,8 +1,3 @@
-# .\count_loc.ps1 .\CheezCompiler\Compiler .\CheezCompiler\loc.csv
-# .\count_loc.ps1 .\CompilerCLI\src .\CompilerCLI\loc.csv
-# .\count_loc.ps1 .\LanguageServer\VSCodeExtension\src .\LanguageServer\VSCodeExtension\loc.csv *.ts
-# .\count_loc.ps1 .\LanguageServer\Server .\LanguageServer\Server\loc.csv *.cs TemporaryGeneratedFile*
-# .\count_loc.ps1 .\examples .\examples\loc.csv *.che
 param([string]$path, [string]$outputFile = "loc.csv", [string]$include = "*.*", [string]$exclude = "")
 Write-Host "Counting lines in" $path
 if ($exclude) { Write-Host "Excluding:" $exclude }

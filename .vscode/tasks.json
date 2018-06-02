@@ -10,7 +10,9 @@
 				"--out",
 				"gen",
 				"--name",
-				"TestProgram"
+				"TestProgram",
+				"--print-ast-file",
+				"ast.che"
 			],
 			"group": {
 				"kind": "build",

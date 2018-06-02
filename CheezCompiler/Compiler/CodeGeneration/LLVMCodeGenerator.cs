@@ -165,11 +165,13 @@ namespace Cheez.Compiler.CodeGeneration
                     @"-libpath:C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.12.25827\lib\x86",
                     @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.16299.0\ucrt\x86",
                     @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.16299.0\um\x86",
+                    @"-libpath:D:\Programming\CS\CheezLang\CheezRuntimeSupport\lib\x86",
                     @"-libpath:D:\llvm\build\Debug\lib",
                     "/entry:mainCRTStartup",
                     "/machine:X86",
                     "/subsystem:console",
-
+                    
+                    "cheez-rtd.o",
                     "libucrtd.lib",
                     //"libvcruntimed.lib",
                     "libcmtd.lib",
@@ -803,6 +805,8 @@ namespace Cheez.Compiler.CodeGeneration
                     return LLVM.BuildIntToPtr(data.Builder, sub, type, "");
                 else if (cast.SubExpression.Type is PointerType)
                     return LLVM.BuildPointerCast(data.Builder, sub, type, "");
+                else if (cast.SubExpression.Type is IntType)
+                    return LLVM.BuildIntToPtr(data.Builder, sub, type, "");
                 return LLVM.BuildPointerCast(data.Builder, sub, type, "");
             }
             else if (cast.Type is IntType tt)
@@ -810,7 +814,7 @@ namespace Cheez.Compiler.CodeGeneration
                 var type = CheezTypeToLLVMType(cast.Type);
                 if (cast.SubExpression.Type is IntType || cast.SubExpression.Type is BoolType)
                     return LLVM.BuildIntCast(data.Builder, sub, type, "");
-                else if (cast.SubExpression.Type is PointerType)
+                else if (cast.SubExpression.Type is PointerType || cast.SubExpression.Type is ArrayType)
                     return LLVM.BuildPtrToInt(data.Builder, sub, type, "");
                 else if (cast.SubExpression.Type is AnyType)
                     return LLVM.BuildIntCast(data.Builder, sub, type, "");

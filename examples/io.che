@@ -156,8 +156,8 @@ fn Printfn(format: string, args: any[]) {
     let formatSpecifier = (string)malloc(5)
     let fi: ulong = 0
 
-    let len = (ulong)strlen(format)
-    let i: ulong = 0
+    let len = strlen(format)
+    let i = 0
     let state = 0
 
     while (i < len) {

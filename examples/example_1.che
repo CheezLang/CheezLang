@@ -1,14 +1,16 @@
 #load("io.che")
-// #load("stdio.che")
 
 fn Main()
 {
-    let args: any[] = Array(2)
-    args[0] = (byte)123
-    args[1] = (short)456
-    args[2] = "hi wie gehts?"
+    let a: long = 5
+    let b = a % 3
 
-    Printlnfn("args[0]: {i8}`nargs[1]: {i16}`nargs[2]: {s}", args)
+    PrintlnInt((int)a)
+    PrintlnInt((int)b)
+    PrintlnInt((int)(a % 2))    
+
+
+    let t: int[][] = Array(5)
 }
 
 fn Array(size: int) -> $T[] {

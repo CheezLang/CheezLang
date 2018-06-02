@@ -1114,6 +1114,8 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = context.Scope;
             bin.Scope = scope;
 
+            bin.Left.Scope = bin.Scope;
+            bin.Right.Scope = bin.Scope;
             foreach (var v in bin.Left.Accept(this, context.Clone(ExpectedType: null)))
                 if (v is ReplaceAstExpr r)
                     bin.Left = r.NewExpression;
@@ -1565,7 +1567,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
 
 
-            if (!CastIfLiteral(cast.SubExpression.Type, cast.Type, out var type)) ;
+            if (!CastIfLiteral(cast.SubExpression.Type, cast.Type, out var type))
+                ;
             //{
             //    yield return new LambdaError(eh => eh.ReportError(data.Text, cast.ParseTreeNode, $"Can't cast a value of to '{cast.SubExpression.Type}' to '{cast.Type}'"));
             //}
@@ -1706,13 +1709,16 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (sourceType == IntType.LiteralType)
                     outSource = IntType.DefaultType;
-
-                if (sourceType == FloatType.LiteralType)
+                else if (sourceType == FloatType.LiteralType)
                     outSource = FloatType.DefaultType;
                 return true;
             }
             else if (sourceType != targetType)
             {
+                if (sourceType == IntType.LiteralType)
+                    outSource = IntType.DefaultType;
+                else if (sourceType == FloatType.LiteralType)
+                    outSource = FloatType.DefaultType;
                 return false;
             }
 

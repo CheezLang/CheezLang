@@ -154,7 +154,7 @@ namespace Cheez.Compiler
 
     public class BoolType : CheezType
     {
-        public static BoolType Instance = new BoolType();
+        public static BoolType Instance = new BoolType { Size = 1 };
 
         public override string ToString()
         {
@@ -202,10 +202,8 @@ namespace Cheez.Compiler
     public class FloatType : CheezType
     {
         private static Dictionary<int, FloatType> sTypes = new Dictionary<int, FloatType>();
-        public static FloatType LiteralType = new FloatType { SizeInBytes = 0 };
+        public static FloatType LiteralType = new FloatType { Size = 0 };
         public static FloatType DefaultType => GetFloatType(4);
-
-        public int SizeInBytes { get; set; }
 
         public static FloatType GetFloatType(int size)
         {
@@ -216,7 +214,7 @@ namespace Cheez.Compiler
 
             var type = new FloatType
             {
-                SizeInBytes = size
+                Size = size
             };
 
             sTypes[size] = type;
@@ -225,7 +223,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return "f" + (SizeInBytes * 8);
+            return "f" + (Size * 8);
         }
 
         public override bool IsPolyType => false;
@@ -233,6 +231,8 @@ namespace Cheez.Compiler
 
     public class PointerType : CheezType
     {
+        public static int PointerSize = 8;
+
         private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
 
         public CheezType TargetType { get; private set; }
@@ -249,7 +249,8 @@ namespace Cheez.Compiler
 
             var type = new PointerType
             {
-                TargetType = targetType
+                TargetType = targetType,
+                Size = PointerSize
             };
 
             sTypes[targetType] = type;
@@ -285,7 +286,8 @@ namespace Cheez.Compiler
 
             var type = new ReferenceType
             {
-                TargetType = targetType
+                TargetType = targetType,
+                Size = PointerType.PointerSize
             };
 
             sTypes[targetType] = type;
@@ -302,6 +304,8 @@ namespace Cheez.Compiler
 
     public class ArrayType : CheezType
     {
+        public static int ArraySize = 8;
+
         private static Dictionary<CheezType, ArrayType> sTypes = new Dictionary<CheezType, ArrayType>();
 
         public CheezType TargetType { get; set; }
@@ -318,7 +322,8 @@ namespace Cheez.Compiler
 
             var type = new ArrayType
             {
-                TargetType = targetType
+                TargetType = targetType,
+                Size = ArraySize
             };
 
             sTypes[targetType] = type;
@@ -340,7 +345,7 @@ namespace Cheez.Compiler
 
     public class StringType : CheezType
     {
-        public static StringType Instance = new StringType();
+        public static StringType Instance = new StringType { Size = PointerType.PointerSize };
 
         public override string ToString()
         {
