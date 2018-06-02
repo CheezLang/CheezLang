@@ -887,14 +887,15 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                         var arg = call.Arguments[0];
 
-                        if (arg.Type != CheezType.Type)
+                        CheezType type = CheezType.Error;
+                        if (arg.Type == CheezType.Type)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, "Argument of '@sizeof' must be a type");
-                            foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(0)), context))
-                                yield return v;
+                            type = arg.Value as CheezType;
                         }
-
-                        var type = arg.Value as CheezType;
+                        else
+                        {
+                            type = arg.Type;
+                        }
 
                         foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(type.Size)), context))
                             yield return v;

@@ -962,10 +962,19 @@ namespace Cheez.Compiler.Parsing
                         {
                             NextToken();
                             SkipNewlines();
-                            var index = ParseExpression(errorMessage);
-                            SkipNewlines();
-                            var end = Consume(TokenType.ClosingBracket, ErrMsg("]", "at end of [] operator")).location;
-                            expr = new PTArrayAccessExpr(expr.Beginning, end, expr, index);
+
+                            if (CheckToken(TokenType.ClosingBracket))
+                            {
+                                var c = NextToken();
+                                expr = new PTArrayTypeExpr(expr.Beginning, c.location, expr);
+                            }
+                            else
+                            {
+                                var index = ParseExpression(errorMessage);
+                                SkipNewlines();
+                                var end = Consume(TokenType.ClosingBracket, ErrMsg("]", "at end of [] operator")).location;
+                                expr = new PTArrayAccessExpr(expr.Beginning, end, expr, index);
+                            }
                         }
                         break;
 

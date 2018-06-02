@@ -105,7 +105,7 @@
 		{
 			"comment": "Control keyword",
 			"name": "keyword.control.cheezlang",
-			"match": "\\b(break|continue|else|if|return|while)\\b"
+			"match": "\\b(break|continue|else|if|return|while|defer)\\b"
 		},
 		{
 			"comment": "Keyword",
@@ -120,7 +120,7 @@
 		{
 			"comment": "Other operator",
 			"name": "keyword.operator.other.cheezlang",
-			"match": "(#)"
+			"match": "(#|@|\\[|\\])"
 		},
 		{
 			"comment": "Comparison operator",
@@ -135,12 +135,12 @@
 		{
 			"comment": "Assignment operator",
 			"name": "keyword.operator.assignment.cheezlang",
-			"match": "(=)"
+			"match": "(=|:)"
 		},
 		{
 			"comment": "Arithmetic operator",
 			"name": "keyword.operator.arithmetic.cheezlang",
-			"match": "(\\+|-|/|\\*|%|&)"
+			"match": "(\\+|-|/|\\*|%|&|\\^|\\||\\.)"
 		},
 		{
 			"comment": "Comparison operator (second group because of regex precedence)",
@@ -318,7 +318,7 @@
 		"core_types": {
 			"comment": "Built-in/core type",
 			"name": "storage.type.core.cheezlang",
-			"match": "\\b(bool|char|u8|u16|u32|u64|i8|i16|i32|i64|f32|f64|string|byte|short|int|long|ubyte|ushort|uint|ulong)\\b"
+			"match": "\\b(bool|char|u8|u16|u32|u64|i8|i16|i32|i64|f32|f64|string|byte|short|int|long|ubyte|ushort|uint|ulong|void|self)\\b"
 		},
 		"modifiers": {
 			"comment": "Modifiers",

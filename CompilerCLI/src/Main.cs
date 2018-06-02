@@ -30,7 +30,7 @@ namespace CheezCLI
             [Option("print-ast", Default = false)]
             public bool PrintAst { get; set; }
 
-            [Option("print-ast-file", Default = false)]
+            [Option("print-ast-file", Default = null)]
             public string PrintAstFile { get; set; }
 
             [Option("no-code", Default = false)]

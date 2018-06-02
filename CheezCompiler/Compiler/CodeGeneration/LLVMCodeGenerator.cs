@@ -294,6 +294,10 @@ namespace Cheez.Compiler.CodeGeneration
                         return LLVM.PointerType(LLVM.Int8Type(), 0);
                     return LLVM.PointerType(CheezTypeToLLVMType(p.TargetType), 0);
 
+                case ArrayType a:
+                    return LLVM.PointerType(CheezTypeToLLVMType(a.TargetType), 0);
+
+
                 case ReferenceType r:
                     return LLVM.PointerType(CheezTypeToLLVMType(r.TargetType), 0);
 

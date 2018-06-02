@@ -96,7 +96,7 @@ namespace Cheez.Compiler
         public static CheezType Type => CheezTypeType.Instance;
 
         public abstract bool IsPolyType { get; }
-        public int Size { get; set; }
+        public int Size { get; set; } = 0;
     }
 
     public class CheezTypeType : CheezType
@@ -122,7 +122,7 @@ namespace Cheez.Compiler
 
     public class ErrorType : CheezType
     {
-        public static ErrorType Instance { get; } = new ErrorType();
+        public static ErrorType Instance { get; } = new ErrorType { Size = 0 };
 
         public override bool IsPolyType => false;
     }

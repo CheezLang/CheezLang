@@ -3,29 +3,23 @@
 
 fn Main()
 {
-    let T = byte
+    let a: byte = 1
+    let b: short = 2
+    let c: int = 3
+    let d: long = 4
 
-    let a: T = 1
-    let b: T = 2
-    let c: T = 3
-    let d: T = 4
+    let arr: int[]^
 
-    let arr: IntArray
-    arr.Init(@sizeof(T))
-    (T)arr.Print()
+    PrintlnInt(@sizeof(byte))
+    PrintlnInt(@sizeof(short))
+    PrintlnInt(@sizeof(int))
+    PrintlnInt(@sizeof(long))
 
-    arr.Add(a)
-    (T)arr.Print()
-
-    arr.Add(b)
-    (T)arr.Print()
-
-    arr.Add(c)
-    (T)arr.Print()
-
-    arr.Add(d)
-    (T)arr.Print()
-
+    Println("")
+    PrintlnInt(@sizeof(a))
+    PrintlnInt(@sizeof(b))
+    PrintlnInt(@sizeof(c))
+    PrintlnInt(@sizeof(d))
 }
 
 struct IntArray {
