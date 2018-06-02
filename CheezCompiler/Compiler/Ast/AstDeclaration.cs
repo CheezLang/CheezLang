@@ -56,6 +56,7 @@ namespace Cheez.Compiler.Ast
     {
         public override ParseTree.PTStatement GenericParseTreeNode { get; }
 
+        public Scope HeaderScope { get; set; }
         public Scope SubScope { get; set; }
 
         public AstIdentifierExpr Name { get; set; }
@@ -96,14 +97,10 @@ namespace Cheez.Compiler.Ast
         {
             GenericParseTreeNode = node;
             this.Name = name;
-            //this.Generics = generics;
             this.Parameters = parameters;
             this.ReturnTypeExpr = returnTypeExpr;
             this.Body = body;
             this.RefSelf = refSelf;
-
-            //if (Generics.Count > 0)
-            //    IsGeneric = true;
         }
 
         [DebuggerStepThrough]
@@ -124,14 +121,15 @@ namespace Cheez.Compiler.Ast
         {
             return new AstFunctionDecl(GenericParseTreeNode,
                 Name.Clone() as AstIdentifierExpr,
-                null, //Generics.Select(g => g.Clone() as AstIdentifierExpr).ToList(),
+                null,
                 Parameters.Select(p => p.Clone()).ToList(),
                 ReturnTypeExpr?.Clone(),
                 Body?.Clone() as AstBlockStmt,
                 Directives) // @Tode: clone this too?
             {
                 Scope = this.Scope,
-                SubScope = this.SubScope?.Clone(),
+                HeaderScope = null,
+                SubScope = null,
                 Directives = this.Directives,
                 mFlags = this.mFlags,
                 ReturnType = this.ReturnType
@@ -279,7 +277,7 @@ namespace Cheez.Compiler.Ast
         {
             return new AstVariableDecl(GenericParseTreeNode,
                 Name.Clone() as AstIdentifierExpr,
-                TypeExpr.Clone(),
+                TypeExpr?.Clone(),
                 Initializer?.Clone(),
                 Directives) // @Tode: clone this?
             {

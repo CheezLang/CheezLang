@@ -136,6 +136,24 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
+    public class PTCompCallExpr : PTExpr
+    {
+        public PTIdentifierExpr Name { get; }
+        public List<PTExpr> Arguments { get; set; }
+
+        public PTCompCallExpr(TokenLocation end, PTIdentifierExpr func, List<PTExpr> args) : base(func.Beginning, end)
+        {
+            Name = func;
+            Arguments = args;
+        }
+
+        public override AstExpression CreateAst()
+        {
+            var args = Arguments.Select(a => a.CreateAst()).ToList();
+            return new AstCompCallExpr(this, Name.CreateAst() as AstIdentifierExpr, args);
+        }
+    }
+
     public class PTBinaryExpr : PTExpr
     {
         public string Operator { get; set; }

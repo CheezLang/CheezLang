@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using Cheez.Compiler.ParseTree;
 using System.Runtime.CompilerServices;
+using System.Numerics;
 
 namespace Cheez.Compiler.SemanticAnalysis
 {
@@ -393,7 +394,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             // return type
             if (function.ReturnTypeExpr != null)
             {
-                foreach (var v in function.ReturnTypeExpr.Accept(this, new SemanticerData(Scope: function.SubScope, Text: context.Text, Function: function, Impl: context.ImplTarget)))
+                foreach (var v in function.ReturnTypeExpr.Accept(this, new SemanticerData(Scope: function.HeaderScope, Text: context.Text, Function: function, Impl: context.ImplTarget)))
                     yield return v;
                 if (function.ReturnTypeExpr.Value is CheezType t)
                     function.ReturnType = t;
@@ -408,17 +409,17 @@ namespace Cheez.Compiler.SemanticAnalysis
             // parameters
             foreach (var p in function.Parameters)
             {
-                p.Scope = function.SubScope;
+                p.Scope = function.HeaderScope;
 
                 // infer type
-                foreach (var v in p.TypeExpr.Accept(this, new SemanticerData(Scope: function.SubScope, Text: context.Text, Function: function, Impl: context.ImplTarget)))
+                foreach (var v in p.TypeExpr.Accept(this, new SemanticerData(Scope: function.HeaderScope, Text: context.Text, Function: function, Impl: context.ImplTarget)))
                     yield return v;
                 if (p.TypeExpr.Value is CheezType t)
                     p.Type = t;
                 else
                     context.ReportError(function.ReturnTypeExpr.GenericParseTreeNode, $"Expected type, got {p.TypeExpr.Type}");
 
-                if (!function.SubScope.DefineSymbol(p))
+                if (!function.HeaderScope.DefineSymbol(p))
                 {
                     context.ReportError(p.ParseTreeNode, $"A parameter with name '{p.Name}' already exists in this function");
                 }
@@ -453,7 +454,8 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             var scope = context.Scope;
             function.Scope = scope;
-            function.SubScope = NewScope($"fn {function.Name}", scope);
+            function.HeaderScope = NewScope($"fn {function.Name}()", function.Scope);
+            function.SubScope = NewScope("{}", function.HeaderScope);
 
             foreach (var v in VisitFunctionHeader(function, context))
                 yield return v;
@@ -857,6 +859,57 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #region Expressions
 
+        public override IEnumerable<object> VisitCompCallExpression(AstCompCallExpr call, SemanticerData context = null)
+        {
+            call.Scope = context.Scope;
+
+            var name = call.Name.Name;
+
+            foreach (var arg in call.Arguments)
+            {
+                arg.Scope = call.Scope;
+                foreach (var v in arg.Accept(this, context))
+                    yield return v;
+            }
+
+            switch (name)
+            {
+                case "sizeof":
+                    {
+                        if (call.Arguments.Count < 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, "Comptime function '@sizeof' requires one argument");
+                            foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(0)), context))
+                                yield return v;
+                        }
+                        if (call.Arguments.Count > 1)
+                            context.ReportError(call.Name.GenericParseTreeNode, "Comptime function '@sizeof' requires only one argument");
+
+                        var arg = call.Arguments[0];
+
+                        if (arg.Type != CheezType.Type)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, "Argument of '@sizeof' must be a type");
+                            foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(0)), context))
+                                yield return v;
+                        }
+
+                        var type = arg.Value as CheezType;
+
+                        foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(type.Size)), context))
+                            yield return v;
+                        break;
+                    }
+
+                default:
+                    context.ReportError(call.Name.GenericParseTreeNode, $"Unknown comptime function '@{name}'");
+                    call.Type = CheezType.Error;
+                    break;
+            }
+
+            yield break;
+        }
+
         public override IEnumerable<object> VisitStructValueExpression(AstStructValueExpr str, SemanticerData context = null)
         {
             var scope = context.Scope;
@@ -1254,9 +1307,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                 instance.PolymorphicTypes = types;
                 //g.Declaration.AddPolyInstance(types, instance);
 
+                instance.HeaderScope = NewScope($"fn {instance.Name}()", instance.Scope);
+                instance.SubScope = NewScope("{}", instance.HeaderScope);
+
                 foreach (var kv in types)
                 {
-                    instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value); // @Todo
+                    instance.HeaderScope.DefineTypeSymbol(kv.Key, kv.Value); // @Todo
                 }
 
                 var errorHandler = new SilentErrorHandler();
@@ -1673,6 +1729,11 @@ namespace Cheez.Compiler.SemanticAnalysis
                     CollectPolymorphicTypes(p.Target, ref types);
                     break;
             }
+        }
+
+        private AstNumberExpr ConstInt(PTExpr node, BigInteger value)
+        {
+            return new AstNumberExpr(node, new NumberData(value));
         }
     }
 }

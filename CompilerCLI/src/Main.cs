@@ -30,6 +30,9 @@ namespace CheezCLI
             [Option("print-ast", Default = false)]
             public bool PrintAst { get; set; }
 
+            [Option("print-ast-file", Default = false)]
+            public string PrintAstFile { get; set; }
+
             [Option("no-code", Default = false)]
             public bool DontEmitCode { get; set; }
 
@@ -128,6 +131,15 @@ namespace CheezCLI
             {
                 var printer = new AstPrinter();
                 printer.PrintWorkspace(compiler.DefaultWorkspace, Console.Out);
+            }
+            if (options.PrintAstFile != null)
+            {
+                var printer = new AstPrinter();
+                using (var file = File.Open(options.PrintAstFile, FileMode.Create))
+                using (var writer = new StreamWriter(file))
+                {
+                    printer.PrintWorkspace(compiler.DefaultWorkspace, writer);
+                }
             }
 
             if (errorHandler.HasErrors)

@@ -239,6 +239,46 @@ namespace Cheez.Compiler.Ast
         }
     }
 
+    public class AstCompCallExpr : AstExpression
+    {
+        public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
+
+        public AstIdentifierExpr Name { get; set; }
+        public List<AstExpression> Arguments { get; set; }
+
+        public override bool IsPolymorphic => false;
+
+        [DebuggerStepThrough]
+        public AstCompCallExpr(ParseTree.PTExpr node, AstIdentifierExpr func, List<AstExpression> args) : base()
+        {
+            GenericParseTreeNode = node;
+            Name = func;
+            Arguments = args;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitCompCallExpression(this, data);
+        }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstCallExpr(GenericParseTreeNode, Name.Clone(), Arguments.Select(a => a.Clone()).ToList())
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
+
+        public override string ToString()
+        {
+            var args = string.Join(", ", Arguments);
+            return $"@{Name}({args})";
+        }
+    }
+
     public class AstBinaryExpr : AstExpression, ITempVariable
     {
         //public ParseTree.PTBinaryExpr ParseTreeNode => GenericParseTreeNode as ParseTree.PTBinaryExpr;

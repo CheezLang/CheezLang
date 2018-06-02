@@ -144,6 +144,15 @@ namespace Cheez.Compiler.Parsing
                 IntValue = BigInteger.Parse(val);
         }
 
+        public NumberData(BigInteger num)
+        {
+            IntBase = 10;
+            StringValue = num.ToString();
+            Suffix = "";
+            Type = NumberType.Int;
+            IntValue = num;
+        }
+
         public override string ToString()
         {
             return StringValue;

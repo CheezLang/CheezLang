@@ -22,7 +22,7 @@ namespace Cheez.Compiler.Visitor
         {
             var body = function.Body?.Accept(this, 0) ?? ";";
 
-            var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name}: {p.ParseTreeNode.Type}"));
+            var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name}: {p.TypeExpr}"));
             var head = $"fn {function.Name}";
                 
             //if (function.IsGeneric)
@@ -59,7 +59,7 @@ namespace Cheez.Compiler.Visitor
 
         public override string VisitTypeDeclaration(AstTypeDecl type, int data = 0)
         {
-            var body = string.Join("\n", type.Members.Select(m => $"{m.Name}: {m.ParseTreeNode.Type}"));
+            var body = string.Join("\n", type.Members.Select(m => $"{m.Name}: {m.TypeExpr}"));
             return $"struct {type.Name} {{\n{body.Indent(4)}\n}}";
         }
 
@@ -67,7 +67,7 @@ namespace Cheez.Compiler.Visitor
         {
             var body = string.Join("\n\n", impl.Functions.Select(f => f.Accept(this, 0)));
 
-            return $"impl {impl.ParseTreeNode.Target} {{\n{body.Indent(4)}\n}}";
+            return $"impl {impl.TargetTypeExpr} {{\n{body.Indent(4)}\n}}";
         }
 
         public override string VisitVariableDeclaration(AstVariableDecl variable, int indentLevel = 0)
@@ -174,9 +174,9 @@ namespace Cheez.Compiler.Visitor
         {
             var sb = new StringBuilder();
             if (num.Data.IntBase == 2)
-                sb.Append('b');
+                sb.Append("0b");
             else if (num.Data.IntBase == 16)
-                sb.Append('x');
+                sb.Append("0x");
             sb.Append(num.Data.StringValue);
             sb.Append(num.Data.Suffix);
             return sb.ToString();
@@ -206,7 +206,7 @@ namespace Cheez.Compiler.Visitor
 
         public override string VisitCastExpression(AstCastExpr cast, int data = 0)
         {
-            return $"<{cast.ParseTreeNode.TargetType.ToString()}>({cast.SubExpression.Accept(this, 0)})";
+            return $"({cast.TypeExpr})({cast.SubExpression.Accept(this, 0)})";
         }
 
         public override string VisitDotExpression(AstDotExpr dot, int data = 0)

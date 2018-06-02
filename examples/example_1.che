@@ -3,39 +3,45 @@
 
 fn Main()
 {
-    let a: byte = 1
-    let b: short = 2
-    let c: int = 3
-    let d: long = 4
+    let T = byte
+
+    let a: T = 1
+    let b: T = 2
+    let c: T = 3
+    let d: T = 4
 
     let arr: IntArray
-    arr.Init()
-    arr.Print()
+    arr.Init(@sizeof(T))
+    (T)arr.Print()
 
     arr.Add(a)
-    arr.Print()
+    (T)arr.Print()
 
     arr.Add(b)
-    arr.Print()
+    (T)arr.Print()
 
     arr.Add(c)
-    arr.Print()
+    (T)arr.Print()
 
     arr.Add(d)
-    arr.Print()
+    (T)arr.Print()
+
 }
 
 struct IntArray {
-    data: ulong^
+    data: void^
     capacity: uint
     count: uint
+    elementSize: uint
 }
 
 impl IntArray {
-    ref fn Init() {
+    ref fn Init(elSize: uint) {
         count = 0
         capacity = 10
-        data = (ulong^)malloc((int)capacity * 8)
+        self.elementSize = elSize
+
+        data = malloc((int)(capacity * elementSize))
     }
 
     ref fn Add(val: $T) {
@@ -43,24 +49,26 @@ impl IntArray {
             self.Grow(2)
         }
 
-        data[count] = (ulong)val
+        let d: T^ = (T^)data
+        d[count] = val
         count = count + 1
     }
 
     ref fn Grow(fac: uint) {
         capacity = capacity * fac
-        data = (ulong^)realloc((void^)data, (int)capacity * 8)
+        data = realloc(data, (int)(capacity * elementSize))
     }
 
-    ref fn Get(id: uint) -> ulong {
+    ref fn Get(id: uint) -> $T {
         if id >= count {
             return 0
         }
 
-        return data[id]
+        let d: T^ = (T^)data
+        return d[id]
     }
 
-    ref fn Print() {
+    ref fn Print() -> $T {
         PrintString("(")
         PrintInt((int)count)
         PrintString("/")
@@ -73,12 +81,14 @@ impl IntArray {
             }
             
             if i < count {
-                PrintInt((int)self.Get(i))
+                PrintInt((int)(T)self.Get(i))
             }
 
             i = i + 1
         }
 
         Println("]")
+
+        return (T)self.Get(0)
     }
 }

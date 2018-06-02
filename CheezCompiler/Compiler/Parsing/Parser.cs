@@ -1002,6 +1002,36 @@ namespace Cheez.Compiler.Parsing
             }
         }
 
+        private List<PTExpr> ParseArgumentList(out TokenLocation end)
+        {
+            Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of argument list"));
+
+            List<PTExpr> args = new List<PTExpr>();
+            while (true)
+            {
+                var next = PeekToken();
+                if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
+                    break;
+                args.Add(ParseExpression());
+                SkipNewlines();
+
+                next = PeekToken();
+                if (next.type == TokenType.Comma)
+                    NextToken();
+                else if (next.type == TokenType.ClosingParen)
+                    break;
+                else
+                {
+                    NextToken();
+                    ReportError(next.location, $"Failed to parse argument list, expected ',' or ')'");
+                    //RecoverExpression();
+                }
+            }
+            end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of argument list")).location;
+
+            return args;
+        }
+
         private PTExpr ParseAtomicExpression(ErrorMessageResolver errorMessage)
         {
             var token = PeekToken();
@@ -1009,6 +1039,14 @@ namespace Cheez.Compiler.Parsing
             {
                 case TokenType.KwNew:
                     return ParseStructValue();
+
+                case TokenType.AtSignIdentifier:
+                    {
+                        NextToken();
+                        var args = ParseArgumentList(out var end);
+                        return new PTCompCallExpr(end, new PTIdentifierExpr(token.location, (string)token.data, false), args);
+                    }
+
 
                 case TokenType.DollarIdentifier:
                     NextToken();
