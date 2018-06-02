@@ -232,6 +232,7 @@ namespace Cheez.Compiler
             DefineTypeSymbol("string", CheezType.String);
             DefineTypeSymbol("void", CheezType.Void);
             DefineTypeSymbol("any", CheezType.Any);
+            DefineTypeSymbol("type", CheezType.Type);
         }
 
         internal void DefineBuiltInOperators()

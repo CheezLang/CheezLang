@@ -219,7 +219,7 @@ void _flush_cout() {
             return sb.ToString();
         }
 
-        public override string VisitTypeDeclaration(AstTypeDecl type, CppCodeGeneratorArgs data)
+        public override string VisitStructDeclaration(AstStructDecl type, CppCodeGeneratorArgs data)
         {
             var sb = new StringBuilder();
 

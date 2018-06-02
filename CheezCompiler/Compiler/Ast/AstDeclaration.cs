@@ -5,6 +5,39 @@ using System.Linq;
 
 namespace Cheez.Compiler.Ast
 {
+    public class AstParameter : ISymbol
+    {
+        public ParseTree.PTParameter ParseTreeNode { get; }
+
+        public AstIdentifierExpr Name { get; }
+        public CheezType Type { get; set; }
+        public AstExpression TypeExpr { get; set; }
+        public Scope Scope { get; set; }
+
+        public bool IsConstant => true;
+
+        public AstParameter(ParseTree.PTParameter node, AstIdentifierExpr name, AstExpression typeExpr)
+        {
+            ParseTreeNode = node;
+            Name = name;
+            this.TypeExpr = typeExpr;
+        }
+
+        public override string ToString()
+        {
+            return $"{Name}: {TypeExpr}";
+        }
+
+        public AstParameter Clone()
+        {
+            return new AstParameter(ParseTreeNode, Name?.Clone() as AstIdentifierExpr, TypeExpr.Clone())
+            {
+                Scope = this.Scope,
+                Type = this.Type
+            };
+        }
+    }
+
     #region Function Declaration
 
     public class AstFunctionParameter : ISymbol
@@ -165,33 +198,36 @@ namespace Cheez.Compiler.Ast
         }
     }
 
-    public class AstTypeDecl : AstStatement, INamed
+    public class AstStructDecl : AstStatement, INamed
     {
-        public ParseTree.PTTypeDecl ParseTreeNode { get; set; }
+        public ParseTree.PTStructDecl ParseTreeNode { get; set; }
         public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
         public AstIdentifierExpr Name { get; }
         public List<AstMemberDecl> Members { get; }
+        public List<AstParameter> Parameters { get; }
 
         public CheezType Type { get; set; }
 
-        public AstTypeDecl(ParseTree.PTTypeDecl node, AstIdentifierExpr name, List<AstMemberDecl> members, Dictionary<string, AstDirective> dirs) : base(dirs)
+        public AstStructDecl(ParseTree.PTStructDecl node, AstIdentifierExpr name, List<AstParameter> param, List<AstMemberDecl> members, Dictionary<string, AstDirective> dirs) : base(dirs)
         {
             ParseTreeNode = node;
             this.Name = name;
+            this.Parameters = param;
             this.Members = members;
         }
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
-            return visitor.VisitTypeDeclaration(this, data);
+            return visitor.VisitStructDeclaration(this, data);
         }
 
         public override AstStatement Clone()
         {
-            return new AstTypeDecl(ParseTreeNode,
+            return new AstStructDecl(ParseTreeNode,
                 Name.Clone() as AstIdentifierExpr,
+                Parameters?.Select(p => p.Clone()).ToList(),
                 Members.Select(m => m.Clone()).ToList(),
                 Directives) // @Tode: clone this?
             {

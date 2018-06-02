@@ -165,13 +165,14 @@ namespace Cheez.Compiler.CodeGeneration
                     @"-libpath:C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.12.25827\lib\x86",
                     @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.16299.0\ucrt\x86",
                     @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.16299.0\um\x86",
-                    @"-libpath:D:\Programming\CS\CheezLang\CheezRuntimeSupport\lib\x86",
+                    @"-libpath:D:\Programming\CS\CheezLang\CheezRuntimeLibrary\lib\x86",
                     @"-libpath:D:\llvm\build\Debug\lib",
                     "/entry:mainCRTStartup",
                     "/machine:X86",
                     "/subsystem:console",
                     
-                    "cheez-rtd.o",
+                    "cheez-rtd.obj",
+
                     "libucrtd.lib",
                     //"libvcruntimed.lib",
                     "libcmtd.lib",
@@ -464,7 +465,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         #region Statements
 
-        public override LLVMValueRef VisitTypeDeclaration(AstTypeDecl type, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitStructDeclaration(AstStructDecl type, LLVMCodeGeneratorData data = null)
         {
             var ct = type.Type;
             var llvmType = CheezTypeToLLVMType(ct);

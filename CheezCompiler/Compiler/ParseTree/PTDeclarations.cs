@@ -5,6 +5,33 @@ using System.Linq;
 
 namespace Cheez.Compiler.ParseTree
 {
+    public class PTParameter : ILocation
+    {
+        public PTExpr Type { get; set; }
+        public PTIdentifierExpr Name { get; set; }
+
+        public TokenLocation Beginning { get; set; }
+        public TokenLocation End { get; set; }
+
+        public PTParameter(TokenLocation beg, PTIdentifierExpr name, PTExpr type)
+        {
+            Beginning = beg;
+            End = type.End;
+            this.Name = name;
+            this.Type = type;
+        }
+
+        public override string ToString()
+        {
+            return $"{Name}: {Type}";
+        }
+
+        public AstParameter CreateAst()
+        {
+            return new AstParameter(this, Name?.CreateAst() as AstIdentifierExpr, Type.CreateAst());
+        }
+    }
+
     #region Variable Declaration
 
     public class PTVariableDecl : PTStatement
@@ -111,7 +138,7 @@ namespace Cheez.Compiler.ParseTree
 
     #endregion
 
-    #region Type Declaration
+    #region Struct Declaration
 
     public class PTMemberDecl
     {
@@ -130,23 +157,26 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
-    public class PTTypeDecl : PTStatement
+    public class PTStructDecl : PTStatement
     {
         public PTIdentifierExpr Name { get; }
         public List<PTMemberDecl> Members { get; }
+        public List<PTParameter> Paramenters { get; }
 
-        public PTTypeDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTMemberDecl> members, List<PTDirective> directives) : base(beg, end)
+        public PTStructDecl(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTParameter> parameters, List<PTMemberDecl> members, List<PTDirective> directives) : base(beg, end)
         {
             this.Name = name;
+            this.Paramenters = parameters;
             this.Members = members;
             this.Directives = directives;
         }
 
         public override AstStatement CreateAst()
         {
+            var p = Paramenters?.Select(pa => pa.CreateAst()).ToList();
             var mems = Members.Select(m => m.CreateAst()).ToList();
             var dirs = CreateDirectivesAst();
-            return new AstTypeDecl(this, Name.CreateAst() as AstIdentifierExpr, mems, dirs);
+            return new AstStructDecl(this, Name.CreateAst() as AstIdentifierExpr, p, mems, dirs);
         }
     }
 

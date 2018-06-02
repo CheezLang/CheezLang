@@ -24,5 +24,5 @@ if ($configuration.Equals("Debug")) {
 }
 
 
-clang -target $targetTriple -c -o ".\$targetDir\$targetFileName.o" "src\source.c"
+clang -target $targetTriple -c -o ".\$targetDir\$targetFileName.obj" "src\source.c"
 

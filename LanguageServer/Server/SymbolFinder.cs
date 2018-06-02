@@ -35,7 +35,7 @@ namespace CheezLanguageServer
             };
         }
 
-        public override object VisitTypeDeclaration(AstTypeDecl type, List<SymbolInformation> list)
+        public override object VisitStructDeclaration(AstStructDecl type, List<SymbolInformation> list)
         {
             list.Add(new SymbolInformation
             {

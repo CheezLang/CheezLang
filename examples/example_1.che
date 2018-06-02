@@ -1,18 +1,9 @@
-#load("io.che")
+// #load("io.che")
 
 fn Main()
 {
-    let a: long = 5
-    let b = a % 3
-
-    PrintlnInt((int)a)
-    PrintlnInt((int)b)
-    PrintlnInt((int)(a % 2))    
-
-
-    let t: int[][] = Array(5)
 }
 
-fn Array(size: int) -> $T[] {
-    return (T[])malloc(size * @sizeof(T))
+struct List(T: type) {
+    data: T[]
 }

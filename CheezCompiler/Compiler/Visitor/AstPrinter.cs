@@ -72,7 +72,7 @@ namespace Cheez.Compiler.Visitor
             return $"using {use.Value.Accept(this, 0)}";
         }
 
-        public override string VisitTypeDeclaration(AstTypeDecl type, int data = 0)
+        public override string VisitStructDeclaration(AstStructDecl type, int data = 0)
         {
             var body = string.Join("\n", type.Members.Select(m => $"{m.Name}: {m.TypeExpr}"));
             return $"struct {type.Name} {{\n{body.Indent(4)}\n}}";

@@ -362,11 +362,11 @@ namespace Cheez.Compiler
 
     public class StructType : CheezType
     {
-        public AstTypeDecl Declaration { get; }
+        public AstStructDecl Declaration { get; }
 
         public bool Analyzed { get; set; } = false;
 
-        public StructType(AstTypeDecl decl)
+        public StructType(AstStructDecl decl)
         {
             Declaration = decl;
         }

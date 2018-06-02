@@ -311,7 +311,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitTypeDeclaration(AstTypeDecl type, SemanticerData data = null)
+        public override IEnumerable<object> VisitStructDeclaration(AstStructDecl type, SemanticerData data = null)
         {
             var scope = data.Scope;
             type.Scope = scope;
@@ -583,145 +583,79 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitVariableDeclaration(AstVariableDecl variable, SemanticerData context = null)
         {
+            var scope = context.Scope;
+            variable.Scope = scope;
+
             if (context.Function != null)
             {
-                var scope = context.Scope;
-                scope.VariableDeclarations.Add(variable);
-                variable.Scope = scope;
                 variable.SubScope = NewScope($"var {variable.Name}", scope);
-
-                if (variable.TypeExpr == null && variable.Initializer == null)
-                {
-                    context.ReportError(variable.GenericParseTreeNode, "Either type or initializer has to be specified in variable declaration");
-                }
-
-                if (variable.TypeExpr != null)
-                {
-                    foreach (var v in variable.TypeExpr.Accept(this, context.Clone()))
-                        yield return v;
-                    if (variable.TypeExpr.Value is CheezType t)
-                        variable.Type = t;
-                    else
-                        context.ReportError(variable.TypeExpr.GenericParseTreeNode, $"Expected type, got {variable.TypeExpr.Type}");
-                }
-
-                if (variable.Initializer != null)
-                {
-                    foreach (var v in variable.Initializer.Accept(this, context.Clone(ExpectedType: variable.Type)))
-                        if (v is ReplaceAstExpr r)
-                            variable.Initializer = r.NewExpression;
-                        else
-                            yield return v;
-
-                    if (variable.Type == null)
-                    {
-                        if (variable.Initializer.Type == IntType.LiteralType)
-                        {
-                            variable.Initializer.Type = IntType.DefaultType;
-                        }
-                        variable.Type = variable.Initializer.Type;
-                    }
-                    else
-                    {
-                        if (!CastIfLiteral(variable.Initializer.Type, variable.Type, out var t))
-                            context.ReportError(variable.Initializer.GenericParseTreeNode, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'");
-
-                        variable.Initializer.Type = t;
-
-
-                        //if (variable.Initializer.Type == IntType.LiteralType && (variable.Type is IntType || variable.Type is FloatType))
-                        //{
-                        //    variable.Initializer.Type = variable.Type;
-                        //}
-                        //else if (variable.Initializer.Type == FloatType.LiteralType && variable.Type is FloatType)
-                        //{
-                        //    variable.Initializer.Type = variable.Type;
-                        //}
-                        //else if (variable.Initializer.Type != variable.Type)
-                        //{
-                        //}
-                    }
-                }
-
-
-                if (variable.Type == CheezType.Type)
-                {
-                    variable.IsConstant = true;
-                    variable.SubScope.DefineTypeSymbol(variable.Name.Name, variable.Initializer.Value as CheezType);
-                }
-                else if (variable.SubScope.DefineSymbol(variable))
-                {
-                    context.Function.LocalVariables.Add(variable);
-                }
-                else
-                {
-                    // @Note: This should probably never happen, except for global variables, which are not implemented yet
-                    context.ReportError(variable.Name.GenericParseTreeNode, $"A variable with name '{variable.Name}' already exists in current scope");
-                }
-
-                context.Scope = variable.SubScope;
-                yield break;
             }
             else
             {
                 variable.SetFlag(StmtFlags.GlobalScope);
-                var scope = context.Scope;
-                scope.VariableDeclarations.Add(variable);
-                variable.Scope = scope;
-                variable.SubScope = scope;
-
-                if (variable.TypeExpr != null)
-                {
-                    foreach (var v in variable.TypeExpr.Accept(this, context.Clone()))
-                        yield return v;
-                    if (variable.TypeExpr.Value is CheezType t)
-                        variable.Type = t;
-                    else
-                        context.ReportError(variable.TypeExpr.GenericParseTreeNode, $"Expected type, got {variable.TypeExpr.Type}");
-                }
-
-                if (variable.Initializer != null)
-                {
-                    foreach (var v in variable.Initializer.Accept(this, context.Clone()))
-                        if (v is ReplaceAstExpr r)
-                            variable.Initializer = r.NewExpression;
-                        else
-                            yield return v;
-
-                    if (variable.Type == null)
-                    {
-                        if (variable.Initializer.Type == IntType.LiteralType)
-                        {
-                            variable.Initializer.Type = IntType.DefaultType;
-                        }
-                        variable.Type = variable.Initializer.Type;
-                    }
-                    else
-                    {
-                        if (variable.Initializer.Type == IntType.LiteralType && (variable.Type is IntType || variable.Type is FloatType))
-                        {
-                            variable.Initializer.Type = variable.Type;
-                        }
-                        else if (variable.Initializer.Type == FloatType.LiteralType && variable.Type is FloatType)
-                        {
-                            variable.Initializer.Type = variable.Type;
-                        }
-                        else if (variable.Initializer.Type != variable.Type)
-                        {
-                            context.ReportError(variable.Initializer.GenericParseTreeNode, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'");
-                        }
-                    }
-                }
-
-                if (!scope.DefineSymbol(variable))
-                {
-                    // @Note: This should probably never happen, except for global variables, which are not implemented yet
-                    context.ReportError(variable.Name.GenericParseTreeNode, $"A variable with name '{variable.Name}' already exists in current scope");
-                }
-
-                context.Scope = variable.SubScope;
-                yield break;
+                variable.SubScope = variable.Scope;
             }
+
+            if (variable.TypeExpr == null && variable.Initializer == null)
+            {
+                context.ReportError(variable.GenericParseTreeNode, "Either type or initializer has to be specified in variable declaration");
+            }
+
+            if (variable.TypeExpr != null)
+            {
+                foreach (var v in variable.TypeExpr.Accept(this, context.Clone()))
+                    yield return v;
+                if (variable.TypeExpr.Value is CheezType t)
+                    variable.Type = t;
+                else
+                    context.ReportError(variable.TypeExpr.GenericParseTreeNode, $"Expected type, got {variable.TypeExpr.Type}");
+            }
+
+            if (variable.Initializer != null)
+            {
+                foreach (var v in variable.Initializer.Accept(this, context.Clone(ExpectedType: variable.Type)))
+                    if (v is ReplaceAstExpr r)
+                        variable.Initializer = r.NewExpression;
+                    else
+                        yield return v;
+
+                if (variable.Type == null)
+                {
+                    if (variable.Initializer.Type == IntType.LiteralType)
+                    {
+                        variable.Initializer.Type = IntType.DefaultType;
+                    }
+                    variable.Type = variable.Initializer.Type;
+                }
+                else
+                {
+                    if (!CastIfLiteral(variable.Initializer.Type, variable.Type, out var t))
+                        context.ReportError(variable.Initializer.GenericParseTreeNode, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'");
+
+                    variable.Initializer.Type = t;
+                }
+            }
+
+
+            if (variable.Type == CheezType.Type)
+            {
+                variable.IsConstant = true;
+                variable.SubScope.DefineTypeSymbol(variable.Name.Name, variable.Initializer.Value as CheezType);
+            }
+            else if (variable.SubScope.DefineSymbol(variable))
+            {
+                if (context.Function != null)
+                    context.Function.LocalVariables.Add(variable);
+                scope.VariableDeclarations.Add(variable);
+            }
+            else
+            {
+                // @Note: This should probably never happen, except for global variables, which are not implemented yet
+                context.ReportError(variable.Name.GenericParseTreeNode, $"A variable with name '{variable.Name}' already exists in current scope");
+            }
+
+            context.Scope = variable.SubScope;
+            yield break;
         }
 
         public override IEnumerable<object> VisitAssignment(AstAssignment ass, SemanticerData context = null)
@@ -755,11 +689,6 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (ass.Value.Type == FloatType.LiteralType)
                 ass.Value.Type = FloatType.DefaultType;
-
-            //if (CastIfAny(ass.Value.Type, ass.Target.Type))
-            //{
-            //    ass.Value = new AstCastExpr(ass.Value.GenericParseTreeNode, new Ast)
-            //}
 
             yield break;
         }

@@ -228,8 +228,6 @@ namespace Cheez.Compiler.Parsing
                     return (false, ParseFunctionDeclaration());
                 case TokenType.KwLet:
                     return (false, ParseVariableDeclaration(TokenType.ClosingBrace));
-                case TokenType.KwType:
-                    return (false, ParseTypeAliasStatement());
                 case TokenType.KwIf:
                     return (false, ParseIfStatement());
                 case TokenType.KwWhile:
@@ -384,19 +382,74 @@ namespace Cheez.Compiler.Parsing
             return new PTDirective(end, name, args);
         }
 
-        private PTTypeDecl ParseStructDeclaration()
+        private List<PTParameter> ParseParameterList()
+        {
+            var parameters = new List<PTParameter>();
+
+            Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of parameter list"));
+            SkipNewlines();
+
+            while (true)
+            {
+                var next = PeekToken();
+                if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
+                    break;
+
+                PTIdentifierExpr pname = null;
+                PTExpr ptype = null;
+
+                if (next.type != TokenType.Colon)
+                {
+                    pname = ParseIdentifierExpr(ErrMsg("identifier"));
+                    SkipNewlines();
+                }
+
+                Consume(TokenType.Colon, ErrMsg(":", "after name in parameter list"));
+                SkipNewlines();
+
+                ptype = ParseExpression();
+
+                parameters.Add(new PTParameter(pname.Beginning, pname, ptype));
+
+                SkipNewlines();
+                next = PeekToken();
+                if (next.type == TokenType.Comma)
+                    NextToken();
+                else if (next.type == TokenType.ClosingParen)
+                    break;
+                else
+                {
+                    NextToken();
+                    SkipNewlines();
+                    ReportError(next.location, "Expected ',' or ')'");
+                }
+            }
+
+            Consume(TokenType.ClosingParen, ErrMsg(")", "at end of parameter list"));
+
+            return parameters;
+        }
+
+        private PTStructDecl ParseStructDeclaration()
         {
             TokenLocation beg = null, end = null;
             var members = new List<PTMemberDecl>();
             List<PTDirective> directives = new List<PTDirective>();
             PTIdentifierExpr name = null;
+            List<PTParameter> parameters = null;
 
             beg = Consume(TokenType.KwStruct, ErrMsg("keyword 'struct'", "at beginning of struct declaration")).location;
             SkipNewlines();
             name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'struct'"));
-
-
             SkipNewlines();
+
+            if (CheckToken(TokenType.OpenParen))
+            {
+                parameters = ParseParameterList();
+                SkipNewlines();
+            }
+
+
             while (CheckToken(TokenType.HashIdentifier))
             {
                 var dir = ParseDirective();
@@ -441,7 +494,7 @@ namespace Cheez.Compiler.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct declaration")).location;
 
-            return new PTTypeDecl(beg, end, name, members, directives);
+            return new PTStructDecl(beg, end, name, parameters, members, directives);
         }
 
         private PTImplBlock ParseImplBlock()
@@ -606,21 +659,7 @@ namespace Cheez.Compiler.Parsing
 
             return new PTIfStmt(beg, end, condition, ifCase, elseCase);
         }
-
-        private PTTypeAliasDecl ParseTypeAliasStatement()
-        {
-            var beg = Consume(TokenType.KwType, ErrMsg("keyword 'type'", "at beginning of type alias")).location;
-            SkipNewlines();
-            var name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'type'"));
-            SkipNewlines();
-            Consume(TokenType.Equal, ErrMsg("=", "after type name in type alias"));
-            SkipNewlines();
-            var type = ParseExpression();
-            Consume(TokenType.NewLine, ErrMsg("\\n", "after type alias"));
-
-            return new PTTypeAliasDecl(beg, name, type);
-        }
-
+        
         private PTFunctionDecl ParseFunctionDeclaration()
         {
             TokenLocation beginning = null, end = null;
