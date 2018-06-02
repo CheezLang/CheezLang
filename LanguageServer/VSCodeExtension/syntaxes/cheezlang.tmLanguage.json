@@ -118,11 +118,6 @@
 			"match": "\\b(print|println)\\b"
 		},
 		{
-			"comment": "Other operator",
-			"name": "keyword.operator.other.cheezlang",
-			"match": "(#|@|\\[|\\])"
-		},
-		{
 			"comment": "Comparison operator",
 			"name": "keyword.operator.comparison.cheezlang",
 			"match": "(==|!=)"
@@ -135,12 +130,12 @@
 		{
 			"comment": "Assignment operator",
 			"name": "keyword.operator.assignment.cheezlang",
-			"match": "(=|:)"
+			"match": "(=|:|->)"
 		},
 		{
 			"comment": "Arithmetic operator",
 			"name": "keyword.operator.arithmetic.cheezlang",
-			"match": "(\\+|-|/|\\*|%|&|\\^|\\||\\.)"
+			"match": "(\\+|-|/|\\*|%|&|\\||\\.)"
 		},
 		{
 			"comment": "Comparison operator (second group because of regex precedence)",
@@ -192,7 +187,7 @@
 					"name": "keyword.modifier.cheezlang"
 				},
 				"2": {
-					"name": "keyword.other.fn.cheezlang"
+					"name": "storage.type.cheezlang"
 				},
 				"3": {
 					"name": "entity.name.function.cheezlang"
@@ -209,9 +204,7 @@
 					"include": "#core_types"
 				},
 				{
-					"comment": "Function arguments",
-					"match": "\bfn\b",
-					"name": "keyword.other.fn.cheezlang"
+					"include": "#other_operators"
 				}
 			]
 		},
@@ -329,6 +322,11 @@
 			"comment": "A type",
 			"name": "entity.name.type.cheezlang",
 			"match": "\\b([A-Za-z][_A-Za-z0-9]*|_[_A-Za-z0-9]+)\\b"
+		},
+		"other_operators": {
+			"comment": "Other operator",
+			"name": "keyword.operator.other.cheezlang",
+			"match": "(#|@|\\[|\\]|\\^|\\$|:|->)"
 		}
 	}
 }

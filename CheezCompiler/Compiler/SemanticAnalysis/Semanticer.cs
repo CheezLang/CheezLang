@@ -1225,7 +1225,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                     foreach (var p in parameterTypeExprs)
                     {
-                        foreach (var v in p.Accept(this, new SemanticerData(Scope: scope, Text: context.Text)))
+                        foreach (var v in p.Accept(this, new SemanticerData(Scope: scope, Text: context.Text, Function: g.Declaration)))
                             yield return v;
                     }
                 }
@@ -1243,7 +1243,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             // find out types of generic parameters
-
             while (true)
             {
                 bool changes = false;
@@ -1268,12 +1267,20 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             // check if all types are present
             {
+                bool ok = true;
                 foreach (var pt in g.Declaration.PolymorphicTypeExprs)
                 {
                     if (!types.ContainsKey(pt.Key))
                     {
-                        context.ReportError(context.Text, pt.Value.GenericParseTreeNode, $"Couldn't infer type for polymorphic parameter ${pt.Key}");
+                        ok = false;
+                        context.ReportError(context.Text, call.GenericParseTreeNode, $"Couldn't infer type for polymorphic parameter ${pt.Key}");
                     }
+                }
+
+                if (!ok)
+                {
+                    call.Function.Type = CheezType.Error;
+                    yield break;
                 }
             }
 
@@ -1377,17 +1384,18 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 for (int i = 0; i < call.Arguments.Count; i++)
                 {
+                    var arg = call.Arguments[i];
                     var expectedType = f.ParameterTypes[i];
 
-                    if (!CastIfLiteral(call.Arguments[i].Type, expectedType, out var t))
+                    if (!CastIfLiteral(arg.Type, expectedType, out var t))
                     {
-                        context.ReportError(context.Text, call.Arguments[i].GenericParseTreeNode, $"Argument type does not match parameter type. Expected {expectedType}");
+                        context.ReportError(context.Text, arg.GenericParseTreeNode, $"Argument type does not match parameter type. Expected {expectedType}, got {arg.Type}");
                     }
 
-                    call.Arguments[i].Type = t;
+                    arg.Type = t;
                 }
             }
-            else
+            else if (call.Function.Type != CheezType.Error)
             {
                 context.ReportError(call.Function.GenericParseTreeNode, $"Type .{call.Function.Type}' is not a callable type");
             }

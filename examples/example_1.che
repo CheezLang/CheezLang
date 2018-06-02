@@ -3,23 +3,15 @@
 
 fn Main()
 {
-    let a: byte = 1
-    let b: short = 2
-    let c: int = 3
-    let d: long = 4
+    let a = Add(1, Cast(2))
+}
 
-    let arr: int[]^
+fn Cast(a: $X) -> $T {
+    return (T)a
+}
 
-    PrintlnInt(@sizeof(byte))
-    PrintlnInt(@sizeof(short))
-    PrintlnInt(@sizeof(int))
-    PrintlnInt(@sizeof(long))
-
-    Println("")
-    PrintlnInt(@sizeof(a))
-    PrintlnInt(@sizeof(b))
-    PrintlnInt(@sizeof(c))
-    PrintlnInt(@sizeof(d))
+fn Add(a: $T, b: $T) -> $T {
+    return a + b
 }
 
 struct IntArray {
