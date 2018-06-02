@@ -3,78 +3,14 @@
 
 fn Main()
 {
-    let a = Add(1, Cast(2))
+    let args: any[] = Array(2)
+    args[0] = (byte)123
+    args[1] = (short)456
+    args[2] = "hi wie gehts?"
+
+    Printlnfn("args[0]: {i8}`nargs[1]: {i16}`nargs[2]: {s}", args)
 }
 
-fn Cast(a: $X) -> $T {
-    return (T)a
-}
-
-fn Add(a: $T, b: $T) -> $T {
-    return a + b
-}
-
-struct IntArray {
-    data: void^
-    capacity: uint
-    count: uint
-    elementSize: uint
-}
-
-impl IntArray {
-    ref fn Init(elSize: uint) {
-        count = 0
-        capacity = 10
-        self.elementSize = elSize
-
-        data = malloc((int)(capacity * elementSize))
-    }
-
-    ref fn Add(val: $T) {
-        if capacity <= count {
-            self.Grow(2)
-        }
-
-        let d: T^ = (T^)data
-        d[count] = val
-        count = count + 1
-    }
-
-    ref fn Grow(fac: uint) {
-        capacity = capacity * fac
-        data = realloc(data, (int)(capacity * elementSize))
-    }
-
-    ref fn Get(id: uint) -> $T {
-        if id >= count {
-            return 0
-        }
-
-        let d: T^ = (T^)data
-        return d[id]
-    }
-
-    ref fn Print() -> $T {
-        PrintString("(")
-        PrintInt((int)count)
-        PrintString("/")
-        PrintInt((int)capacity)
-        PrintString(")[")
-        let i: uint = 0
-        while i < capacity {
-            if i > 0 {
-                PrintString(", ")
-            }
-            
-            if i < count {
-                PrintInt((int)(T)self.Get(i))
-            }
-
-            i = i + 1
-        }
-
-        Println("]")
-
-        return (T)self.Get(0)
-    }
+fn Array(size: int) -> $T[] {
+    return (T[])malloc(size * @sizeof(T))
 }

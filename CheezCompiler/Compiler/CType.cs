@@ -94,6 +94,7 @@ namespace Cheez.Compiler
         public static CheezType Bool => BoolType.Instance;
         public static CheezType Error => ErrorType.Instance;
         public static CheezType Type => CheezTypeType.Instance;
+        public static CheezType Any => AnyType.Intance;
 
         public abstract bool IsPolyType { get; }
         public int Size { get; set; } = 0;
@@ -134,6 +135,18 @@ namespace Cheez.Compiler
         public override string ToString()
         {
             return "void";
+        }
+
+        public override bool IsPolyType => false;
+    }
+
+    public class AnyType : CheezType
+    {
+        public static AnyType Intance { get; } = new AnyType { Size = 8 };
+
+        public override string ToString()
+        {
+            return "any";
         }
 
         public override bool IsPolyType => false;

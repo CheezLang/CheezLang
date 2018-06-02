@@ -265,7 +265,7 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override AstExpression Clone()
         {
-            return new AstCallExpr(GenericParseTreeNode, Name.Clone(), Arguments.Select(a => a.Clone()).ToList())
+            return new AstCompCallExpr(GenericParseTreeNode, Name.Clone() as AstIdentifierExpr, Arguments.Select(a => a.Clone()).ToList())
             {
                 Type = this.Type,
                 Scope = this.Scope

@@ -623,18 +623,23 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                     else
                     {
-                        if (variable.Initializer.Type == IntType.LiteralType && (variable.Type is IntType || variable.Type is FloatType))
-                        {
-                            variable.Initializer.Type = variable.Type;
-                        }
-                        else if (variable.Initializer.Type == FloatType.LiteralType && variable.Type is FloatType)
-                        {
-                            variable.Initializer.Type = variable.Type;
-                        }
-                        else if (variable.Initializer.Type != variable.Type)
-                        {
+                        if (!CastIfLiteral(variable.Initializer.Type, variable.Type, out var t))
                             context.ReportError(variable.Initializer.GenericParseTreeNode, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'");
-                        }
+
+                        variable.Initializer.Type = t;
+
+
+                        //if (variable.Initializer.Type == IntType.LiteralType && (variable.Type is IntType || variable.Type is FloatType))
+                        //{
+                        //    variable.Initializer.Type = variable.Type;
+                        //}
+                        //else if (variable.Initializer.Type == FloatType.LiteralType && variable.Type is FloatType)
+                        //{
+                        //    variable.Initializer.Type = variable.Type;
+                        //}
+                        //else if (variable.Initializer.Type != variable.Type)
+                        //{
+                        //}
                     }
                 }
 
@@ -740,12 +745,21 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (!CastIfLiteral(ass.Value.Type, ass.Target.Type, out var type))
                 context.ReportError(ass.ParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
-            else
-            {
-                ass.Value.Type = type;
-                if (!ass.Target.GetFlag(ExprFlags.IsLValue))
-                    context.ReportError(ass.ParseTreeNode.Target, $"Left side of assignment has to be a lvalue");
-            }
+
+            ass.Value.Type = type;
+            if (!ass.Target.GetFlag(ExprFlags.IsLValue))
+                context.ReportError(ass.ParseTreeNode.Target, $"Left side of assignment has to be a lvalue");
+
+            if (ass.Value.Type == IntType.LiteralType)
+                ass.Value.Type = IntType.DefaultType;
+
+            if (ass.Value.Type == FloatType.LiteralType)
+                ass.Value.Type = FloatType.DefaultType;
+
+            //if (CastIfAny(ass.Value.Type, ass.Target.Type))
+            //{
+            //    ass.Value = new AstCastExpr(ass.Value.GenericParseTreeNode, new Ast)
+            //}
 
             yield break;
         }
@@ -1186,6 +1200,16 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                     return false;
 
+                case AstArrayTypeExpr pArr:
+                    if (arg is ArrayType aArr)
+                    {
+                        var t = aArr.TargetType;
+                        var changes = InferGenericParameterType(result, pArr.Target, ref t);
+                        aArr.TargetType = t;
+                        return changes;
+                    }
+                    return false;
+
                 default:
                     if (arg is PolyType)
                     {
@@ -1382,7 +1406,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 call.Type = f.ReturnType;
 
-                for (int i = 0; i < call.Arguments.Count; i++)
+                for (int i = 0; i < call.Arguments.Count && i < f.ParameterTypes.Length; i++)
                 {
                     var arg = call.Arguments[i];
                     var expectedType = f.ParameterTypes[i];
@@ -1674,9 +1698,18 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 outSource = targetType;
             }
-            else if (sourceType == FloatType.LiteralType && targetType is FloatType)
+            else if (sourceType == FloatType.LiteralType && (targetType is FloatType))
             {
                 outSource = targetType;
+            }
+            else if (targetType == CheezType.Any)
+            {
+                if (sourceType == IntType.LiteralType)
+                    outSource = IntType.DefaultType;
+
+                if (sourceType == FloatType.LiteralType)
+                    outSource = FloatType.DefaultType;
+                return true;
             }
             else if (sourceType != targetType)
             {
@@ -1684,6 +1717,21 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             return true;
+        }
+
+        private void CastIfAny(CheezType source, CheezType target)
+        {
+            if (source == CheezType.Any && target == CheezType.Any)
+                return;
+
+            if (source == CheezType.Any)
+            {
+
+            }
+            else if (source == CheezType.Any)
+            {
+
+            }
         }
 
         private bool IsNumberLiteralType(CheezType type)

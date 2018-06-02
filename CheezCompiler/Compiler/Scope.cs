@@ -228,9 +228,10 @@ namespace Cheez.Compiler
             DefineTypeSymbol("f64", FloatType.GetFloatType(8));
             DefineTypeSymbol("double", FloatType.GetFloatType(8));
 
-            DefineTypeSymbol("bool", BoolType.Instance);
-            DefineTypeSymbol("string", StringType.Instance);
-            DefineTypeSymbol("void", VoidType.Intance);
+            DefineTypeSymbol("bool", CheezType.Bool);
+            DefineTypeSymbol("string", CheezType.String);
+            DefineTypeSymbol("void", CheezType.Void);
+            DefineTypeSymbol("any", CheezType.Any);
         }
 
         internal void DefineBuiltInOperators()

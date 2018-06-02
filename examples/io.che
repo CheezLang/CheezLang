@@ -67,26 +67,22 @@ fn PrintInt(num: int) {
     free((void^)buff)
 }
 
-fn PrintfData(formatSpecifier: string, data: void^) {
+fn PrintfData(formatSpecifier: string, data: any) {
     let len = strlen(formatSpecifier)
     if streq(formatSpecifier, "i8") {
-        let d: i8 = (i8)data
-        PrintInt((i32)d)
+        PrintInt((i32)(i8)data)
     }
     else if streq(formatSpecifier, "i16") {
-        let d: i16 = (i16)data
-        PrintInt((i32)d)
+        PrintInt((i32)(i16)data)
     }
     else if streq(formatSpecifier, "i32") {
-        let d: i32 = (i32)data
-        PrintInt((i32)d)
+        PrintInt((i32)data)
     }
     else if streq(formatSpecifier, "i64") {
-        let d: i64 = (i64)data
-        PrintInt((i32)d)
+        PrintInt((i32)(i64)data)
     }
     else if streq(formatSpecifier, "b") {
-        let b = (bool)(ulong)data
+        let b = (bool)data
         if (b) {
             PrintString("true")
         } else {
@@ -108,7 +104,7 @@ fn PrintlnInt(i: int) {
     Println("")
 }
 
-fn Printf(format: string, data: void^) {
+fn Printf(format: string, data: any) {
     let open = *"{"
     let close = *"}"
 
@@ -151,7 +147,57 @@ fn Printf(format: string, data: void^) {
     free((void^)formatSpecifier)
 }
 
-fn Printlnf(format: string, data: void^) {
+fn Printfn(format: string, args: any[]) {
+    let open = *"{"
+    let close = *"}"
+
+    let argIndex = 0
+
+    let formatSpecifier = (string)malloc(5)
+    let fi: ulong = 0
+
+    let len = (ulong)strlen(format)
+    let i: ulong = 0
+    let state = 0
+
+    while (i < len) {
+        let c = format[i]
+
+        if state == 0 {
+            if (c == open) {
+                state = 1
+            }
+            else {
+                PrintChar(c)
+            }
+        }
+        else if state == 1 {
+            if (c == close) {
+                formatSpecifier[fi] = 0
+                state = 0
+                fi = 0
+
+                PrintfData(formatSpecifier, args[argIndex])
+                argIndex = argIndex + 1
+            } else {
+                formatSpecifier[fi] = c
+                fi = fi + 1
+            }
+        }
+
+
+        i = i + 1
+    }
+
+    free((void^)formatSpecifier)
+}
+
+fn Printlnf(format: string, data: any) {
     Printf(format, data)
+    Println("")
+}
+
+fn Printlnfn(format: string, args: any[]) {
+    Printfn(format, args)
     Println("")
 }
