@@ -3,8 +3,9 @@
 fn Main()
 {
     let a: int^ = Malloc(3)
-    a[0] = 0
+    a[0] = 1
     a[1] = 2
+    a[2] = 3
     Free(a)
 
     let a: List(string)
@@ -23,27 +24,27 @@ fn Main()
 
     Println("")
 
-    (byte)Test()
+    (byte)Test(0)
     Println("")
 
-    (short)Test()
+    (short)Test(10)
     Println("")
     
-    (int)Test()
+    (int)Test(20)
     Println("")
     
-    (long)Test()
+    (long)Test(30)
     Println("")
 }
 
-fn Test() -> $T {
+fn Test(start: T) -> $T {
     let arr: List(T)
     arr.data = AllocateArray(5)
-    arr.data[0] = 1
-    arr.data[1] = 2
-    arr.data[2] = 3
-    arr.data[3] = 4
-    arr.data[4] = 5
+    arr.data[0] = start + 1
+    arr.data[1] = start + 2
+    arr.data[2] = start + 3
+    arr.data[3] = start + 4
+    arr.data[4] = start + 5
     
     let args: any[] = AllocateArray(3)
 
@@ -60,7 +61,7 @@ fn Test() -> $T {
         i = i + 1
     }
 
-    free((void^)args)
+    FreeArray(args)
 
     return sum
 }
