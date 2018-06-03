@@ -92,7 +92,7 @@ namespace CheezLanguageServer
                 var d = new Diagnostic
                 {
                     severity = DiagnosticSeverity.Error,
-                    message = err.Message,
+                    message = CreateErrorMessage(err),
                     source = "CheezLang"
                 };
                 if (err.Location != null)
@@ -114,6 +114,20 @@ namespace CheezLanguageServer
                 uri = document.uri,
                 diagnostics = diagnostics.ToArray()
             });
+        }
+
+        private string CreateErrorMessage(Error e)
+        {
+            string msg = e.Message;
+            if (e.SubErrors?.Count > 0)
+            {
+                foreach (var s in e.SubErrors)
+                {
+                    msg += "\n" + CreateErrorMessage(s);
+                }
+            }
+
+            return msg;
         }
 
         #region ...

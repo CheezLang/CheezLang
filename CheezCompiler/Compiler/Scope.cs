@@ -258,32 +258,46 @@ namespace Cheez.Compiler
             DefineArithmeticOperators(floatTypes, "+", "-", "*", "/");
 
             // 
-            DefineLogicOperators(intTypes, ">", ">=", "<", "<=", "==", "!=");
-            DefineLogicOperators(floatTypes, ">", ">=", "<", "<=", "==", "!=");
+            DefineLogicOperators(intTypes, 
+                (">", null), 
+                (">=", null), 
+                ("<", null), 
+                ("<=", null), 
+                ("==", null), 
+                ("!=", null));
+            DefineLogicOperators(floatTypes,
+                (">", null),
+                (">=", null),
+                ("<", null),
+                ("<=", null),
+                ("==", null),
+                ("!=", null));
 
-            DefineLogicOperators(new CheezType[] { BoolType.Instance }, "and", "or");
+            DefineLogicOperators(new CheezType[] { BoolType.Instance }, 
+                ("and", (a, b) => (bool)a && (bool)b), 
+                ("or", (a, b) => (bool)a || (bool)b));
 
             //
             DefineArithmeticUnaryOperators(intTypes, "-", "+");
             DefineArithmeticUnaryOperators(floatTypes, "-", "+");
         }
 
-        private void DefineLogicOperators(CheezType[] types, params string[] ops)
+        private void DefineLogicOperators(CheezType[] types, params (string name, BuiltInOperator.ComptimeExecution exe)[] ops)
         {
-            foreach (var name in ops)
+            foreach (var op in ops)
             {
                 List<IOperator> list = null;
-                if (mOperatorTable.ContainsKey(name))
-                    list = mOperatorTable[name];
+                if (mOperatorTable.ContainsKey(op.name))
+                    list = mOperatorTable[op.name];
                 else
                 {
                     list = new List<IOperator>();
-                    mOperatorTable[name] = list;
+                    mOperatorTable[op.name] = list;
                 }
 
                 foreach (var t in types)
                 {
-                    list.Add(new BuiltInOperator(name, BoolType.Instance, t, t));
+                    list.Add(new BuiltInOperator(op.name, BoolType.Instance, t, t, op.exe));
                 }
             }
         }

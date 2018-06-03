@@ -110,7 +110,7 @@ namespace CheezCLI
 
                 foreach (var e in subErrors)
                 {
-                    ReportError(e.Text, e.Location, e.Message, null, e.File, e.Function, e.LineNumber);
+                    ReportError(e.Text, e.Location, e.Message, e.SubErrors, e.File, e.Function, e.LineNumber);
                 }
             }
         }

@@ -24,6 +24,8 @@ namespace Cheez.Compiler.Visitor
         ReturnType VisitUsingStatement(AstUsingStmt use, DataType data = default);
         ReturnType VisitTypeAlias(AstTypeAliasDecl al, DataType data = default);
 
+        ReturnType VisitEmptyStatement(AstEmptyStatement em, DataType data = default);
+
         ReturnType VisitEmptyExpression(AstEmptyExpr em, DataType data = default);
 
         ReturnType VisitIdentifierExpression(AstIdentifierExpr ident, DataType data = default);
@@ -106,5 +108,7 @@ namespace Cheez.Compiler.Visitor
         public virtual ReturnType VisitVariableDeclaration(AstVariableDecl variable, DataType data = default) => default;
 
         public virtual ReturnType VisitWhileStatement(AstWhileStmt ws, DataType data = default) => default;
+
+        public virtual ReturnType VisitEmptyStatement(AstEmptyStatement em, DataType data = default) => default;
     }
 }

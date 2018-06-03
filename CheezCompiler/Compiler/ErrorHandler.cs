@@ -21,6 +21,8 @@ namespace Cheez.Compiler
         public string File { get; set; }
         public string Function { get; set; }
         public int LineNumber { get; set; }
+
+        public List<Error> SubErrors { get; set; } = new List<Error>();
     }
 
     public class SilentErrorHandler : IErrorHandler
@@ -49,7 +51,8 @@ namespace Cheez.Compiler
                 Message = message,
                 File = callingFunctionFile,
                 Function = callingFunctionName,
-                LineNumber = callLineNumber
+                LineNumber = callLineNumber,
+                SubErrors = subErrors
             });
         }
 

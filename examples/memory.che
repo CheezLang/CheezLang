@@ -3,13 +3,6 @@ fn realloc(mem: void^, size: int) -> void^;
 fn free(mem: void^);
 
 
-fn AllocateArray(count: int) -> $T[] {
-    return (T[])malloc(count * @sizeof(T))
-}
-
-fn FreeArray(arr: $T[]) {
-    free((void^)arr)
-}
 
 fn Malloc(count: int) -> $T^ {
     return (T^)malloc(count * @sizeof(T))
@@ -21,4 +14,16 @@ fn Realloc(mem: $T^, count: int) -> T^ {
 
 fn Free(mem: $T^) {
     free((void^)mem)
+}
+
+fn AllocateArray(count: int) -> $T[] {
+    return (T[])malloc(count * @sizeof(T))
+}
+
+fn ReallocArray(arr: $T[], count: int) -> T[] {
+    return (T[])realloc((void^)arr, count * @sizeof(T))
+}
+
+fn FreeArray(arr: $T[]) {
+    free((void^)arr)
 }

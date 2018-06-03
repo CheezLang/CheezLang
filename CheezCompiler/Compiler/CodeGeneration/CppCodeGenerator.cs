@@ -432,7 +432,7 @@ void _flush_cout() {
         #region literals
         public override string VisitStringLiteral(AstStringLiteral str, CppCodeGeneratorArgs data)
         {
-            var s = str.Value.Replace(
+            var s = str.StringValue.Replace(
                 (@"\", @"\\"),
                 (@"""", @"\"""),
                 ("\0", @"\0"),
@@ -557,7 +557,7 @@ void _flush_cout() {
 
         public override string VisitBoolExpression(AstBoolExpr bo, CppCodeGeneratorArgs data = default)
         {
-            return bo.Value ? "true" : "false";
+            return bo.BoolValue ? "true" : "false";
         }
 
         public override string VisitDotExpression(AstDotExpr dot, CppCodeGeneratorArgs data)

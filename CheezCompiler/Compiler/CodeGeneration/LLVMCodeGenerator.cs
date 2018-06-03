@@ -905,7 +905,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitStringLiteral(AstStringLiteral str, LLVMCodeGeneratorData data = null)
         {
-            var lstr = LLVM.BuildGlobalString(data.Builder, str.Value, "");
+            var lstr = LLVM.BuildGlobalString(data.Builder, str.StringValue, "");
             var val = LLVM.BuildPointerCast(data.Builder, lstr, CheezTypeToLLVMType(StringType.Instance), "");
             return val;
         }
@@ -926,7 +926,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitBoolExpression(AstBoolExpr bo, LLVMCodeGeneratorData data = null)
         {
-            return LLVM.ConstInt(LLVM.Int1Type(), bo.Value ? 1ul : 0ul, false);
+            return LLVM.ConstInt(LLVM.Int1Type(), bo.BoolValue ? 1ul : 0ul, false);
         }
 
         public override LLVMValueRef VisitArrayAccessExpression(AstArrayAccessExpr arr, LLVMCodeGeneratorData data = null)
@@ -1124,6 +1124,32 @@ namespace Cheez.Compiler.CodeGeneration
                                 data.BasicBlock = bbEnd;
                                 return tempVar;
                             }
+
+                        case "or":
+                            {
+                                var tempVar = valueMap[bin];
+                                LLVM.BuildStore(data.Builder, left, tempVar);
+
+                                // right
+                                var bbSecond = LLVM.AppendBasicBlock(data.Function, "or_rhs");
+                                LLVM.PositionBuilderAtEnd(data.Builder, bbSecond);
+                                var right = bin.Right.Accept(this, data);
+                                LLVM.BuildStore(data.Builder, right, tempVar);
+
+                                var bbEnd = LLVM.AppendBasicBlock(data.Function, "or_end");
+                                LLVM.BuildBr(data.Builder, bbEnd);
+
+                                // 
+                                LLVM.PositionBuilderAtEnd(data.Builder, data.BasicBlock);
+                                LLVM.BuildCondBr(data.Builder, left, bbEnd, bbSecond);
+
+                                //
+                                LLVM.PositionBuilderAtEnd(data.Builder, bbEnd);
+                                tempVar = LLVM.BuildLoad(data.Builder, tempVar, bin.ToString());
+                                data.BasicBlock = bbEnd;
+                                return tempVar;
+                            }
+
                         default:
                             throw new NotImplementedException();
                     }

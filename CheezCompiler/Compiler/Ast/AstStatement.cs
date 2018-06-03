@@ -54,6 +54,31 @@ namespace Cheez.Compiler.Ast
         public abstract AstStatement Clone();
     }
 
+    public class AstEmptyStatement : AstStatement
+    {
+        public override ParseTree.PTStatement GenericParseTreeNode { get; }
+
+        public AstEmptyStatement(ParseTree.PTStatement node)
+        {
+            GenericParseTreeNode = node;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitEmptyStatement(this, data);
+        }
+
+        public override AstStatement Clone()
+        {
+            return new AstEmptyStatement(GenericParseTreeNode)
+            {
+                Scope = this.Scope,
+                Directives = this.Directives,
+                mFlags = this.mFlags
+            };
+        }
+    }
+
     public class AstWhileStmt : AstStatement
     {
         public ParseTree.PTWhileStmt ParseTreeNode { get; }

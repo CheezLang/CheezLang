@@ -24,6 +24,8 @@ namespace Cheez.Compiler.Ast
 
         public abstract bool IsPolymorphic { get; }
 
+        public bool IsCompTimeValue { get; set; } = false;
+
         [DebuggerStepThrough]
         public AstExpression()
         {
@@ -169,15 +171,16 @@ namespace Cheez.Compiler.Ast
     {
         //public ParseTree.PTStringLiteral ParseTreeNode => GenericParseTreeNode as ParseTree.PTStringLiteral;
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
-
-        public string Value { get; set; }
+        
         public override bool IsPolymorphic => false;
+        public string StringValue => (string)Value;
 
         [DebuggerStepThrough]
         public AstStringLiteral(ParseTree.PTExpr node, string value) : base()
         {
             GenericParseTreeNode = node;
             this.Value = value;
+            IsCompTimeValue = true;
         }
 
         [DebuggerStepThrough]
@@ -189,7 +192,7 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override AstExpression Clone()
         {
-            return new AstStringLiteral(GenericParseTreeNode, Value)
+            return new AstStringLiteral(GenericParseTreeNode, Value as string)
             {
                 Type = this.Type,
                 Scope = this.Scope
@@ -298,6 +301,7 @@ namespace Cheez.Compiler.Ast
             GenericParseTreeNode = node;
             Name = func;
             Arguments = args;
+            IsCompTimeValue = true;
         }
 
         [DebuggerStepThrough]
@@ -409,15 +413,17 @@ namespace Cheez.Compiler.Ast
     {
         //public ParseTree.PTBoolExpr ParseTreeNode => GenericParseTreeNode as ParseTree.PTBoolExpr;
         public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
-
-        public bool Value { get; }
+        
         public override bool IsPolymorphic => false;
+
+        public bool BoolValue => (bool)Value;
 
         [DebuggerStepThrough]
         public AstBoolExpr(ParseTree.PTExpr node, bool value)
         {
             GenericParseTreeNode = node;
             this.Value = value;
+            IsCompTimeValue = true;
         }
 
         [DebuggerStepThrough]
@@ -429,7 +435,7 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override AstExpression Clone()
         {
-            return new AstBoolExpr(GenericParseTreeNode, Value)
+            return new AstBoolExpr(GenericParseTreeNode, (bool)Value)
             {
                 Type = this.Type,
                 Scope = this.Scope
@@ -608,6 +614,7 @@ namespace Cheez.Compiler.Ast
         {
             GenericParseTreeNode = node;
             mData = data;
+            IsCompTimeValue = true;
         }
 
         [DebuggerStepThrough]
@@ -687,6 +694,7 @@ namespace Cheez.Compiler.Ast
         {
             this.GenericParseTreeNode = node;
             this.Target = target;
+            IsCompTimeValue = true;
         }
 
         [DebuggerStepThrough]
@@ -722,6 +730,7 @@ namespace Cheez.Compiler.Ast
         {
             this.GenericParseTreeNode = node;
             this.Target = target;
+            IsCompTimeValue = true;
         }
 
         [DebuggerStepThrough]

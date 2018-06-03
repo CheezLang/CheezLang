@@ -1,4 +1,6 @@
-﻿namespace Cheez.Compiler
+﻿using System;
+
+namespace Cheez.Compiler
 {
     public interface IOperator
     {
@@ -8,6 +10,8 @@
         string Name { get; }
 
         int Accepts(CheezType lhs, CheezType rhs);
+
+        object Execute(object left, object right);
     }
 
     public interface IUnaryOperator
@@ -27,13 +31,16 @@
 
         public string Name { get; private set; }
 
+        public delegate object ComptimeExecution(object left, object right);
+        public ComptimeExecution Execution { get; set; }
 
-        public BuiltInOperator(string name, CheezType resType, CheezType lhs, CheezType rhs)
+        public BuiltInOperator(string name, CheezType resType, CheezType lhs, CheezType rhs, ComptimeExecution exe = null)
         {
             Name = name;
             ResultType = resType;
             LhsType = lhs;
             RhsType = rhs;
+            Execution = exe;
         }
 
         public int Accepts(CheezType lhs, CheezType rhs)
@@ -44,6 +51,11 @@
         public override string ToString()
         {
             return $"({ResultType}) {LhsType} {Name} {RhsType}";
+        }
+
+        public object Execute(object left, object right)
+        {
+            return Execution?.Invoke(left, right);
         }
     }
 

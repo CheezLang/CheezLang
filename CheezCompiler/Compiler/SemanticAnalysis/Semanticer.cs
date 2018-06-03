@@ -107,6 +107,16 @@ namespace Cheez.Compiler.SemanticAnalysis
         }
     }
 
+    public class ReplaceAstStmt
+    {
+        public AstStatement NewStatement { get; set; }
+
+        public ReplaceAstStmt(AstStatement newExpr)
+        {
+            NewStatement = newExpr;
+        }
+    }
+
     #endregion
 
     public class SemanticerData : IErrorHandler
@@ -250,6 +260,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #region Helper Functions
 
+        [DebuggerStepThrough]
         private Scope NewScope(string name, Scope parent)
         {
             var s = new Scope(name, parent);
@@ -417,7 +428,8 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 // check that all parameters are types
                 bool ok = true;
-                foreach (var p in str.Parameters) {
+                foreach (var p in str.Parameters)
+                {
                     foreach (var v in VisitParameter(p, data.Clone()))
                         yield return v;
 
@@ -593,6 +605,11 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
         }
 
+        public override IEnumerable<object> VisitEmptyStatement(AstEmptyStatement em, SemanticerData data = null)
+        {
+            yield break;
+        }
+
         public override IEnumerable<object> VisitIfStatement(AstIfStmt ifs, SemanticerData context = null)
         {
             var scope = context.Scope;
@@ -611,6 +628,30 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (ifs.Condition.Type != CheezType.Bool)
                 {
                     context.ReportError(ifs.ParseTreeNode.Condition, $"if-statement condition must be of type 'bool', got '{ifs.Condition.Type}'");
+                }
+            }
+            
+            if (ifs.Condition.Type == CheezType.Bool && ifs.Condition.IsCompTimeValue)
+            {
+                var b = (bool)ifs.Condition.Value;
+
+                if (b)
+                {
+                    foreach (var v in ReplaceAstStmt(ifs.IfCase, context.Clone(NewScope("if", scope))))
+                        yield return v;
+                    yield break;
+                }
+                else if (ifs.ElseCase != null)
+                {
+                    foreach (var v in ReplaceAstStmt(ifs.ElseCase, context.Clone(NewScope("else", scope))))
+                        yield return v;
+                    yield break;
+                }
+                else
+                {
+                    foreach (var v in ReplaceAstStmt(new AstEmptyStatement(ifs.GenericParseTreeNode), context.Clone(NewScope("else", scope))))
+                        yield return v;
+                    yield break;
                 }
             }
 
@@ -646,12 +687,16 @@ namespace Cheez.Compiler.SemanticAnalysis
             block.SubScope = NewScope("{}", scope);
 
             var subData = context.Clone(Scope: block.SubScope);
-            foreach (var s in block.Statements)
-            {
-                foreach (var v in s.Accept(this, subData))
-                    yield return v;
 
-                if (s.GetFlag(StmtFlags.Returns))
+            for (int i = 0; i < block.Statements.Count; i++)
+            {
+                foreach (var v in block.Statements[i].Accept(this, subData))
+                    if (v is ReplaceAstStmt r)
+                        block.Statements[i] = r.NewStatement;
+                    else
+                        yield return v;
+
+                if (block.Statements[i].GetFlag(StmtFlags.Returns))
                 {
                     block.SetFlag(StmtFlags.Returns);
                 }
@@ -972,6 +1017,51 @@ namespace Cheez.Compiler.SemanticAnalysis
                         break;
                     }
 
+                case "typeseq":
+                    {
+                        if (call.Arguments.Count != 2)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires two arguments");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                                yield return v;
+                        }
+
+                        var type1 = (call.Arguments[0].Type == CheezType.Type) ? (call.Arguments[0].Value as CheezType) : call.Arguments[0].Type;
+                        var type2 = (call.Arguments[1].Type == CheezType.Type) ? (call.Arguments[1].Value as CheezType) : call.Arguments[1].Type;
+
+                        var eq = type1 == type2;
+
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, eq), context))
+                            yield return v;
+                        break;
+                    }
+
+                case "error":
+                    {
+                        if (call.Arguments.Count != 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                                yield return v;
+                        }
+
+                        var arg = call.Arguments[0];
+                        if (arg.Type != CheezType.String || !arg.IsCompTimeValue)
+                        {
+                            context.ReportError(arg.GenericParseTreeNode, $"Argument of '@{name}' must be a string literal");
+                        }
+                        else
+                        {
+                            string value = arg.Value as string;
+                            if (value != null)
+                                context.ReportError(call.GenericParseTreeNode, value);
+                        }
+
+                        foreach (var v in ReplaceAstExpr(new AstEmptyExpr(call.GenericParseTreeNode), context))
+                            yield return v;
+                        break;
+                    }
+                    
                 default:
                     context.ReportError(call.Name.GenericParseTreeNode, $"Unknown comptime function '@{name}'");
                     call.Type = CheezType.Error;
@@ -1220,21 +1310,38 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (ops.Count > 1)
             {
                 context.ReportError(bin.GenericParseTreeNode, $"Multiple operators match the types '{bin.Left.Type}' and '{bin.Right.Type}'");
+                yield break;
             }
             else if (ops.Count == 0)
             {
                 context.ReportError(bin.GenericParseTreeNode, $"No operator matches the types '{bin.Left.Type}' and '{bin.Right.Type}'");
+                yield break;
             }
-            else
-            {
-                var op = ops[0];
-                bin.Type = op.ResultType;
-            }
+
+            var op = ops[0];
+            bin.Type = op.ResultType;
 
             if (bin.Operator == "and" || bin.Operator == "or")
             {
                 context.Function.LocalVariables.Add(bin);
             }
+
+
+            if (bin.Left.IsCompTimeValue && bin.Right.IsCompTimeValue)
+            {
+                var result = op.Execute(bin.Left.Value, bin.Right.Value);
+
+                if (result != null)
+                {
+                    if (result is bool b)
+                    {
+                        bin.Type = CheezType.Bool;
+                        bin.Value = b;
+                        bin.IsCompTimeValue = true;
+                    }
+                }
+            }
+
 
             yield break;
         }
@@ -1551,8 +1658,12 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = context.Scope;
             ident.Scope = scope;
 
-            yield return new WaitForSymbol(context.Text, ident.GenericParseTreeNode, scope, ident.Name);
             var v = scope.GetSymbol(ident.Name);
+            if (v == null)
+            {
+                yield return new WaitForSymbol(context.Text, ident.GenericParseTreeNode, scope, ident.Name);
+                v = scope.GetSymbol(ident.Name);
+            }
             ident.Symbol = v;
             ident.Value = v;
 
@@ -1859,6 +1970,22 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             yield return new ReplaceAstExpr(expr);
+        }
+
+        private IEnumerable<object> ReplaceAstStmt(AstStatement stmt, SemanticerData data)
+        {
+            foreach (var v in stmt.Accept(this, data))
+            {
+                if (v is ReplaceAstStmt r)
+                {
+                    stmt = r.NewStatement;
+                    break;
+                }
+                else
+                    yield return v;
+            }
+
+            yield return new ReplaceAstStmt(stmt);
         }
 
         private void CollectPolymorphicTypes(IEnumerable<AstExpression> expr, out Dictionary<string, AstExpression> types)

@@ -2,39 +2,118 @@
 
 fn Main()
 {
-    let a: Array(int) = NewArray(5)
+    TestIntArray()
+    Println("")
 
-    ArraySet(a, 0, 123)
-    ArraySet(a, 1, 456)
-    ArraySet(a, 2, 789)
-
-    PrintlnInt(ArrayGet(a, 0))
-    PrintlnInt(ArrayGet(a, 1))
-    PrintlnInt(ArrayGet(a, 2))
-
-    // let a: int = Test()
+    TestStringArray()
 }
 
-fn Test() -> $T {
-    return 5
+fn TestIntArray() {
+    let a: Array(int) = ArrayNew()
+
+    ArrayPrint(a)
+
+    ArrayAdd(&a, 123)
+    ArrayPrint(a)
+
+    ArrayAdd(&a, 456)
+    ArrayPrint(a)
+
+    ArrayAdd(&a, 798)
+    ArrayPrint(a)
 }
 
-fn NewArray(count: int) -> Array($T) {
-    let a: Array(T)
-    a.data = AllocateArray(count)
-    return a
+fn TestStringArray() {
+    let a: Array(string) = ArrayNew()
+
+    ArrayPrint(a)
+
+    ArrayAdd(&a, "hi")
+    ArrayPrint(a)
+
+    ArrayAdd(&a, "du")
+    ArrayPrint(a)
+    
+    ArrayAdd(&a, "lappen")
+    ArrayPrint(a)
 }
 
-struct Array(T: type) {
-    data: T[]
+fn PrintlnValue(v: $T) {
+    PrintValue(v)
+    Println("")
+}
+
+fn PrintValue(v: $T) {
+    if @typeseq(bool, T) {
+        if v {
+            PrintString("true")
+        } else {
+            PrintString("false")
+        }
+    } else if @typeseq(T, i8) or @typeseq(T, i16) or @typeseq(T, i32) or @typeseq(T, i64) {
+        PrintInt(v)
+    } else if @typeseq(string, T) {
+        PrintString(v)
+    } else {
+        @error("Can't print value of unknown type")
+    }
+}
+
+struct Array(ElementType: type) {
+    data: ElementType[]
     length: int
+    capacity: int
 }
 
-fn ArraySet(arr: Array($T), index: int, val: T) {
-    arr.data[index] = val
+fn ArrayNew() -> Array($T) {
+    let array: Array(T)
+    using array
+    length = 0
+    capacity = 10
+    data = AllocateArray(capacity)
+    return array
 }
 
-fn ArrayGet(arr: Array($T), index: int) -> T {
-    return arr.data[index]
+fn ArrayDelete(array: Array($T)) {
+    using array
+    FreeArray(data)
 }
 
+fn ArrayAdd(array: Array($T)^, val: T) {
+    using *array
+    if capacity <= length {
+        capacity = capacity * 2
+        data = ReallocArray(data, capacity)
+    }
+
+    data[length] = val
+    length = length + 1
+}
+
+fn ArrayPrint(arr: Array($T)) {
+    using arr
+
+    PrintString("(")
+    PrintInt(length)
+    PrintString("/")
+    PrintInt(capacity)
+    PrintString(") [")
+
+    let first = true
+    let i = 0
+    while i < capacity {
+        if i > 0 {
+            PrintString(", ")
+        }
+
+        if i < length {
+            PrintValue(data[i])
+        } else {
+            PrintString("_")
+        }
+
+        i = i + 1
+    }
+    
+    Println("]")
+}
