@@ -2,7 +2,8 @@
 #load("memory.che")
 #load("std/windows.che")
 
-fn PrintString(s: string) {
+fn PrintString(s: $T) {
+    let s = (string)s
     let len = strlen(s)
     let bytesWritten: int
     WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
@@ -32,14 +33,14 @@ fn PrintDigit(d: int) {
     PrintChar((byte)d + 48)
 }
 
-fn PrintInt(num: int) {
+fn PrintInt(num: $T) {
     if (num == 0)
     {
         PrintDigit(0)
         return
     }
     let bufferSize: int = 30
-    let buff = (byte^)malloc(bufferSize)
+    let buff: byte^ = Malloc(bufferSize)
     clearmem(buff, bufferSize)
 
     let neg = false
@@ -64,10 +65,15 @@ fn PrintInt(num: int) {
     let str = (string)((int)buff + i + 1)
     PrintString(str)
 
-    free((void^)buff)
+    Free(buff)
 }
 
-fn PrintfData(formatSpecifier: string, data: any) {
+fn PrintlnInt(i: $T) {
+    PrintInt(i)
+    Println("")
+}
+
+fn PrintfData(formatSpecifier: byte^, data: any) {
     let len = strlen(formatSpecifier)
     if streq(formatSpecifier, "i8") {
         PrintInt((i32)(i8)data)
@@ -99,16 +105,11 @@ fn PrintfData(formatSpecifier: string, data: any) {
     }
 }
 
-fn PrintlnInt(i: int) {
-    PrintInt(i)
-    Println("")
-}
-
 fn Printf(format: string, data: any) {
     let open = *"{"
     let close = *"}"
 
-    let formatSpecifier = (string)malloc(5)
+    let formatSpecifier: byte^ = Malloc(5)
     let fi: ulong = 0
 
     let len = (ulong)strlen(format)
@@ -144,7 +145,7 @@ fn Printf(format: string, data: any) {
         i = i + 1
     }
 
-    free((void^)formatSpecifier)
+    Free(formatSpecifier)
 }
 
 fn Printfn(format: string, args: any[]) {
@@ -153,7 +154,7 @@ fn Printfn(format: string, args: any[]) {
 
     let argIndex = 0
 
-    let formatSpecifier = (string)malloc(5)
+    let formatSpecifier: byte^ = Malloc(5)
     let fi: ulong = 0
 
     let len = strlen(format)
@@ -189,7 +190,7 @@ fn Printfn(format: string, args: any[]) {
         i = i + 1
     }
 
-    free((void^)formatSpecifier)
+    Free(formatSpecifier)
 }
 
 fn Printlnf(format: string, data: any) {

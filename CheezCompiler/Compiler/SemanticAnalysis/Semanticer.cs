@@ -311,22 +311,116 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitStructDeclaration(AstStructDecl type, SemanticerData data = null)
+        public IEnumerable<object> VisitParameter(AstParameter param, SemanticerData context)
         {
-            var scope = data.Scope;
-            type.Scope = scope;
+            foreach (var v in param.TypeExpr.Accept(this, context))
+                yield return v;
 
-            scope.TypeDeclarations.Add(type);
-            var structType = new StructType(type);
-            if (!scope.DefineTypeSymbol(type.Name.Name, structType))
+            if (param.TypeExpr.Value is CheezType t)
+                param.Type = t;
+            else
+                context.ReportError(param.TypeExpr.GenericParseTreeNode, $"Expected type, got {param.TypeExpr.Type}");
+        }
+
+        private IEnumerable<object> CallPolyStruct(AstCallExpr call, GenericStructType @struct, SemanticerData context)
+        {
+            var types = new Dictionary<string, CheezType>();
+
+            // args
+
+            if (call.Arguments.Count != @struct.Declaration.Parameters.Count)
             {
-                data.ReportError(type.ParseTreeNode.Name, $"A symbol with name '{type.Name.Name}' already exists in current scope");
+                context.ReportError(call.GenericParseTreeNode, "Wrong number of arguments in struct type instantiation");
+                yield break;
             }
 
-
-            foreach (var mem in type.Members)
+            int argCount = call.Arguments.Count;
+            for (int i = 0; i < argCount; i++)
             {
-                foreach (var v in mem.TypeExpr.Accept(this, data.Clone()))
+                var param = @struct.Declaration.Parameters[i];
+                var arg = call.Arguments[i];
+
+                foreach (var v in arg.Accept(this, context))
+                    yield return v;
+
+                if (arg.Type == CheezType.Type)
+                {
+                    types[param.Name.Name] = arg.Value as CheezType;
+                }
+                else
+                {
+                    context.ReportError(arg.GenericParseTreeNode, $"Argument has to be a type, got {arg.Type}");
+                }
+            }
+
+            // instatiate type
+            var instance = @struct.Declaration.Clone() as AstStructDecl;
+            instance.Parameters = null;
+            instance.SubScope = NewScope($"struct {@struct.Declaration.Name.Name}", @struct.Declaration.Scope);
+            instance.IsPolyInstance = true;
+            instance.IsPolymorphic = false;
+
+            foreach (var kv in types)
+            {
+                instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value);
+            }
+
+            foreach (var v in  instance.Accept(this, new SemanticerData(instance.Scope, context.Text, ErrorHandler: context.ErrorHandler)))
+                yield return v;
+
+            call.Function = new AstStructExpression(call.Function.GenericParseTreeNode, instance, call.Function);
+            call.Value = instance.Type;
+
+            yield break;
+        }
+
+        public override IEnumerable<object> VisitStructDeclaration(AstStructDecl str, SemanticerData data = null)
+        {
+            var scope = data.Scope;
+            str.Scope = scope;
+
+            if (str.Parameters != null)
+            {
+                str.IsPolymorphic = true;
+
+                // check that all parameters are types
+                bool ok = true;
+                foreach (var p in str.Parameters) {
+                    foreach (var v in VisitParameter(p, data.Clone()))
+                        yield return v;
+
+                    if (p.Type != CheezType.Type)
+                    {
+                        ok = false;
+                        data.ReportError(p.ParseTreeNode, $"Struct parameters can only be types, found {p.Type}");
+                    }
+                }
+
+                if (!ok)
+                    yield break;
+
+                str.Type = new GenericStructType(str);
+                if (!scope.DefineSymbol(str))
+                {
+                    data.ReportError(str.ParseTreeNode.Name, $"A symbol with name '{str.Name.Name}' already exists in current scope");
+                }
+                yield break;
+            }
+
+            scope.TypeDeclarations.Add(str);
+            var structType = new StructType(str);
+            if (!str.IsPolyInstance)
+            {
+                if (!scope.DefineTypeSymbol(str.Name.Name, structType))
+                {
+                    data.ReportError(str.ParseTreeNode.Name, $"A symbol with name '{str.Name.Name}' already exists in current scope");
+                }
+            }
+
+            foreach (var mem in str.Members)
+            {
+                mem.TypeExpr.Scope = str.SubScope;
+                foreach (var v in mem.TypeExpr.Accept(this, data.Clone(Scope: str.SubScope)))
                     yield return v;
                 if (mem.TypeExpr.Value is CheezType t)
                     mem.Type = t;
@@ -334,9 +428,9 @@ namespace Cheez.Compiler.SemanticAnalysis
                     data.ReportError(mem.TypeExpr.GenericParseTreeNode, $"Expected type, got {mem.TypeExpr.Type}");
             }
 
-            Debug.Assert(structType != null && structType.Declaration == type);
+            Debug.Assert(structType != null && structType.Declaration == str);
             structType.Analyzed = true;
-            type.Type = structType;
+            str.Type = structType;
         }
 
         public void Using(Scope scope, StructType @struct, INamed name)
@@ -1141,6 +1235,16 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                     return false;
 
+                case AstPointerTypeExpr pPtr:
+                    if (arg is PointerType aPtr)
+                    {
+                        var t = aPtr.TargetType;
+                        var changes = InferGenericParameterType(result, pPtr.Target, ref t);
+                        aPtr.TargetType = t;
+                        return changes;
+                    }
+                    return false;
+
                 default:
                     if (arg is PolyType)
                     {
@@ -1315,6 +1419,12 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 foreach (var v in CallPolyFunction(call, g, context))
                     yield return v;
+            }
+            else if (call.Function.Type is GenericStructType genStruct)
+            {
+                foreach (var v in CallPolyStruct(call, genStruct, context))
+                    yield return v;
+                yield break;
             }
             else
             {

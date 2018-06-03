@@ -118,7 +118,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstReturnStmt(ParseTreeNode, ReturnValue.Clone())
+            return new AstReturnStmt(ParseTreeNode, ReturnValue?.Clone())
             {
                 Scope = this.Scope,
                 Directives = this.Directives,

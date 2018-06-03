@@ -1,7 +1,68 @@
-// #load("io.che")
+#load("io.che")
 
 fn Main()
 {
+    let a: int^ = Malloc(3)
+    a[0] = 0
+    a[1] = 2
+    Free(a)
+
+    let a: List(string)
+    a.data = AllocateArray(5)
+    a.data[0] = "hi"
+    a.data[1] = "wie"
+    a.data[2] = "geht"
+    a.data[3] = "es"
+    a.data[4] = "dir?"
+
+    let i = 0
+    while i < 5 {
+        Println(a.data[i])
+        i = i + 1
+    }
+
+    Println("")
+
+    (byte)Test()
+    Println("")
+
+    (short)Test()
+    Println("")
+    
+    (int)Test()
+    Println("")
+    
+    (long)Test()
+    Println("")
+}
+
+fn Test() -> $T {
+    let arr: List(T)
+    arr.data = AllocateArray(5)
+    arr.data[0] = 1
+    arr.data[1] = 2
+    arr.data[2] = 3
+    arr.data[3] = 4
+    arr.data[4] = 5
+    
+    let args: any[] = AllocateArray(3)
+
+    args[0] = @sizeof(T) * 8
+    let sum: T = 0
+    let i = 0
+    while i < 5 {
+        let val = arr.data[i]
+        sum = sum + val
+        args[1] = (int)i
+        args[2] = (int)val
+
+        Printlnfn("i{i32} arr[{i32}] = {i32}", args)
+        i = i + 1
+    }
+
+    free((void^)args)
+
+    return sum
 }
 
 struct List(T: type) {

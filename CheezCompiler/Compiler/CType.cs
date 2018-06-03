@@ -121,6 +121,18 @@ namespace Cheez.Compiler
         }
     }
 
+    public class GenericStructType : CheezType
+    {
+        public AstStructDecl Declaration { get; }
+
+        public override bool IsPolyType => false;
+
+        public GenericStructType(AstStructDecl decl)
+        {
+            Declaration = decl;
+        }
+    }
+
     public class ErrorType : CheezType
     {
         public static ErrorType Instance { get; } = new ErrorType { Size = 0 };
@@ -235,7 +247,7 @@ namespace Cheez.Compiler
 
         private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
 
-        public CheezType TargetType { get; private set; }
+        public CheezType TargetType { get; set; }
 
         public static PointerType GetPointerType(CheezType targetType)
         {

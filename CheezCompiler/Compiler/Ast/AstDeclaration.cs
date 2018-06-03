@@ -198,16 +198,23 @@ namespace Cheez.Compiler.Ast
         }
     }
 
-    public class AstStructDecl : AstStatement, INamed
+    public class AstStructDecl : AstStatement, ISymbol
     {
         public ParseTree.PTStructDecl ParseTreeNode { get; set; }
         public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
 
-        public AstIdentifierExpr Name { get; }
+        public AstIdentifierExpr Name { get; set; }
         public List<AstMemberDecl> Members { get; }
-        public List<AstParameter> Parameters { get; }
+        public List<AstParameter> Parameters { get; set; }
 
         public CheezType Type { get; set; }
+
+        public Scope SubScope { get; set; }
+
+        public bool IsPolymorphic { get; set; }
+        public bool IsPolyInstance { get; set; }
+
+        public bool IsConstant => true;
 
         public AstStructDecl(ParseTree.PTStructDecl node, AstIdentifierExpr name, List<AstParameter> param, List<AstMemberDecl> members, Dictionary<string, AstDirective> dirs) : base(dirs)
         {

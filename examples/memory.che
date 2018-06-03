@@ -5,3 +5,15 @@ fn free(mem: void^);
 fn AllocateArray(size: int) -> $T[] {
     return (T[])malloc(size * @sizeof(T))
 }
+
+fn Malloc(size: int) -> $T^ {
+    return (T^)malloc(size * @sizeof(T))
+}
+
+fn Realloc(mem: $T^, size: int) -> T^ {
+    return (T^)realloc((void^)mem, size * @sizeof(T))
+}
+
+fn Free(mem: $T^) {
+    free((void^)mem)
+}

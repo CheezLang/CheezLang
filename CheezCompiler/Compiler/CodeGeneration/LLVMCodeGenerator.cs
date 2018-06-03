@@ -774,6 +774,9 @@ namespace Cheez.Compiler.CodeGeneration
         {
             var sub = cast.SubExpression.Accept(this, data);
 
+            if (cast.Type == cast.SubExpression.Type)
+                return sub;
+
             if (cast.Type is PointerType)
             {
                 var type = CheezTypeToLLVMType(cast.Type);
@@ -855,6 +858,9 @@ namespace Cheez.Compiler.CodeGeneration
             {
                 func = valueMap[afe.Declaration];
                 //func = LLVM.GetNamedFunction(module, afe.Declaration.Name.Name);
+            }
+            else if (call.Function is AstStructExpression str) {
+                return default;
             }
             else
             {

@@ -47,6 +47,39 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public abstract AstExpression Clone();
     }
+    
+    public class AstStructExpression : AstExpression
+    {
+        public AstStructDecl Declaration { get; }
+        public override ParseTree.PTExpr GenericParseTreeNode { get; set; }
+
+        public AstExpression Original { get; set; }
+
+        public override bool IsPolymorphic => false;
+
+        public AstStructExpression(ParseTree.PTExpr genericParseTreeNode, AstStructDecl @struct, AstExpression original)
+        {
+            GenericParseTreeNode = genericParseTreeNode;
+            Declaration = @struct;
+            Type = @struct.Type;
+            this.Original = original;
+            Value = @struct;
+        }
+        
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return Original.Accept(visitor, data);
+        }
+
+        public override AstExpression Clone()
+        {
+            return new AstStructExpression(GenericParseTreeNode, Declaration, Original)
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
+    }
 
     public class AstFunctionExpression : AstExpression
     {
