@@ -353,20 +353,52 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
             }
 
-            // instatiate type
-            var instance = @struct.Declaration.Clone() as AstStructDecl;
-            instance.Parameters = null;
-            instance.SubScope = NewScope($"struct {@struct.Declaration.Name.Name}", @struct.Declaration.Scope);
-            instance.IsPolyInstance = true;
-            instance.IsPolymorphic = false;
-
-            foreach (var kv in types)
+            // check if instance already exists
+            AstStructDecl instance = null;
+            foreach (var pi in @struct.Declaration.PolymorphicInstances)
             {
-                instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value);
+                bool eq = true;
+                foreach (var param in pi.Parameters)
+                {
+                    var existingType = param.Value;
+                    var newType = types[param.Name.Name];
+                    if (existingType != newType)
+                    {
+                        eq = false;
+                        break;
+                    }
+                }
+
+                if (eq)
+                {
+                    instance = pi;
+                    break;
+                }
             }
 
-            foreach (var v in  instance.Accept(this, new SemanticerData(instance.Scope, context.Text, ErrorHandler: context.ErrorHandler)))
-                yield return v;
+
+            // instatiate type
+            if (instance == null)
+            {
+                instance = @struct.Declaration.Clone() as AstStructDecl;
+                instance.SubScope = NewScope($"struct {@struct.Declaration.Name.Name}", @struct.Declaration.Scope);
+                instance.IsPolyInstance = true;
+                instance.IsPolymorphic = false;
+                @struct.Declaration.PolymorphicInstances.Add(instance);
+
+                foreach (var p in instance.Parameters)
+                {
+                    p.Value = types[p.Name.Name];
+                }
+
+                foreach (var kv in types)
+                {
+                    instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value);
+                }
+
+                foreach (var v in instance.Accept(this, new SemanticerData(instance.Scope, context.Text, ErrorHandler: context.ErrorHandler)))
+                    yield return v;
+            }
 
             call.Function = new AstStructExpression(call.Function.GenericParseTreeNode, instance, call.Function);
             call.Value = instance.Type;
@@ -379,7 +411,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = data.Scope;
             str.Scope = scope;
 
-            if (str.Parameters != null)
+            if (str.Parameters != null && !str.IsPolyInstance)
             {
                 str.IsPolymorphic = true;
 
@@ -697,6 +729,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (variable.TypeExpr != null)
             {
+                variable.TypeExpr.Scope = variable.Scope;
                 foreach (var v in variable.TypeExpr.Accept(this, context.Clone()))
                     yield return v;
                 if (variable.TypeExpr.Value is CheezType t)
@@ -1245,6 +1278,26 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                     return false;
 
+                case AstCallExpr call:
+                    if (arg is StructType s && s.Declaration.IsPolyInstance && s.Declaration.Parameters.Count == call.Arguments.Count)
+                    {
+                        bool changes = false;
+                        var @struct = s.Declaration;
+                        for (int i = 0; i < @struct.Parameters.Count; i++)
+                        {
+                            var p = call.Arguments[i];
+                            var a = @struct.Parameters[i].Value as CheezType;
+
+                            if (InferGenericParameterType(result, p, ref a))
+                                changes = true;
+                            @struct.Parameters[i].Value = a;
+                        }
+
+                        return changes;
+                    }
+
+                    return false;
+
                 default:
                     if (arg is PolyType)
                     {
@@ -1267,6 +1320,9 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             var parameterTypeExprs = g.Declaration.Parameters.Select(p => p.TypeExpr.Clone()).ToArray();
             var returnTypeExpr = g.Declaration.ReturnTypeExpr?.Clone();
+
+            //foreach (var v in returnTypeExpr.Accept(this, context))
+            //    yield return v;
 
             // try to infer type from expected type before checking arguments
             if (context.ExpectedType != null && returnTypeExpr != null)
@@ -1829,6 +1885,12 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 case AstArrayTypeExpr p:
                     CollectPolymorphicTypes(p.Target, ref types);
+                    break;
+
+                case AstCallExpr c:
+                    CollectPolymorphicTypes(c.Function, ref types);
+                    foreach (var a in c.Arguments)
+                        CollectPolymorphicTypes(a, ref types);
                     break;
             }
         }

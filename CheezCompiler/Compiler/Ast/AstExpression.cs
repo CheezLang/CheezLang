@@ -79,6 +79,11 @@ namespace Cheez.Compiler.Ast
                 Scope = this.Scope
             };
         }
+
+        public override string ToString()
+        {
+            return Original.ToString();
+        }
     }
 
     public class AstFunctionExpression : AstExpression
@@ -111,6 +116,11 @@ namespace Cheez.Compiler.Ast
                 Type = this.Type,
                 Scope = this.Scope
             };
+        }
+
+        public override string ToString()
+        {
+            return Original.ToString();
         }
     }
 
@@ -268,7 +278,8 @@ namespace Cheez.Compiler.Ast
 
         public override string ToString()
         {
-            return $"{Function}(...)";
+            var args = string.Join(", ", Arguments);
+            return $"{Function}({args})";
         }
     }
 
@@ -648,6 +659,8 @@ namespace Cheez.Compiler.Ast
 
         public override string ToString()
         {
+            if (IsPolymorphic)
+                return $"${Name}";
             return Name;
         }
 

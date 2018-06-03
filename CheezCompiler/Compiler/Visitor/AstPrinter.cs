@@ -24,7 +24,7 @@ namespace Cheez.Compiler.Visitor
 
             var body = function.Body?.Accept(this, 0) ?? ";";
 
-            var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name}: {p.TypeExpr}"));
+            var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name}: {p.TypeExpr.Accept(this, 0)}"));
             var head = $"fn {function.Name}";
                 
             //if (function.IsGeneric)
@@ -72,10 +72,26 @@ namespace Cheez.Compiler.Visitor
             return $"using {use.Value.Accept(this, 0)}";
         }
 
-        public override string VisitStructDeclaration(AstStructDecl type, int data = 0)
+        public override string VisitStructDeclaration(AstStructDecl str, int data = 0)
         {
-            var body = string.Join("\n", type.Members.Select(m => $"{m.Name}: {m.TypeExpr}"));
-            return $"struct {type.Name} {{\n{body.Indent(4)}\n}}";
+            var body = string.Join("\n", str.Members.Select(m => $"{m.Name}: {m.TypeExpr.Accept(this, 0)}"));
+            var head = $"struct {str.Name}";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"{head} {{\n{body.Indent(4)}\n}}");
+            
+            if (str.PolymorphicInstances?.Count > 0)
+            {
+                sb.AppendLine($"// Polymorphic instances for {head}");
+                foreach (var pi in str.PolymorphicInstances)
+                {
+                    var args = string.Join(", ", pi.Parameters.Select(p => $"{p.Name.Name} = {p.Value}"));
+                    sb.AppendLine($"// {args}".Indent(4));
+                    sb.AppendLine(pi.Accept(this, 0).Indent(4));
+                }
+            }
+
+            return sb.ToString();
         }
 
         public override string VisitImplBlock(AstImplBlock impl, int data = 0)
@@ -272,7 +288,7 @@ namespace Cheez.Compiler.Visitor
             {
                 body = $"{{ {body} }}";
             }
-
+            
             return $"{str.TypeExpr} {body}";
         }
 

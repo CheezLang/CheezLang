@@ -2,70 +2,39 @@
 
 fn Main()
 {
-    let a: int^ = Malloc(3)
-    a[0] = 1
-    a[1] = 2
-    a[2] = 3
-    Free(a)
+    let a: Array(int) = NewArray(5)
 
-    let a: List(string)
-    a.data = AllocateArray(5)
-    a.data[0] = "hi"
-    a.data[1] = "wie"
-    a.data[2] = "geht"
-    a.data[3] = "es"
-    a.data[4] = "dir?"
+    ArraySet(a, 0, 123)
+    ArraySet(a, 1, 456)
+    ArraySet(a, 2, 789)
 
-    let i = 0
-    while i < 5 {
-        Println(a.data[i])
-        i = i + 1
-    }
+    PrintlnInt(ArrayGet(a, 0))
+    PrintlnInt(ArrayGet(a, 1))
+    PrintlnInt(ArrayGet(a, 2))
 
-    Println("")
-
-    (byte)Test(0)
-    Println("")
-
-    (short)Test(10)
-    Println("")
-    
-    (int)Test(20)
-    Println("")
-    
-    (long)Test(30)
-    Println("")
+    // let a: int = Test()
 }
 
-fn Test(start: T) -> $T {
-    let arr: List(T)
-    arr.data = AllocateArray(5)
-    arr.data[0] = start + 1
-    arr.data[1] = start + 2
-    arr.data[2] = start + 3
-    arr.data[3] = start + 4
-    arr.data[4] = start + 5
-    
-    let args: any[] = AllocateArray(3)
-
-    args[0] = @sizeof(T) * 8
-    let sum: T = 0
-    let i = 0
-    while i < 5 {
-        let val = arr.data[i]
-        sum = sum + val
-        args[1] = (int)i
-        args[2] = (int)val
-
-        Printlnfn("i{i32} arr[{i32}] = {i32}", args)
-        i = i + 1
-    }
-
-    FreeArray(args)
-
-    return sum
+fn Test() -> $T {
+    return 5
 }
 
-struct List(T: type) {
+fn NewArray(count: int) -> Array($T) {
+    let a: Array(T)
+    a.data = AllocateArray(count)
+    return a
+}
+
+struct Array(T: type) {
     data: T[]
+    length: int
 }
+
+fn ArraySet(arr: Array($T), index: int, val: T) {
+    arr.data[index] = val
+}
+
+fn ArrayGet(arr: Array($T), index: int) -> T {
+    return arr.data[index]
+}
+

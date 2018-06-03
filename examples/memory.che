@@ -2,6 +2,7 @@ fn malloc(size: int) -> void^;
 fn realloc(mem: void^, size: int) -> void^;
 fn free(mem: void^);
 
+
 fn AllocateArray(count: int) -> $T[] {
     return (T[])malloc(count * @sizeof(T))
 }

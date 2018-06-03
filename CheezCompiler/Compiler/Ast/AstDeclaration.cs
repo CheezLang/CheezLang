@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 namespace Cheez.Compiler.Ast
 {
@@ -13,6 +14,8 @@ namespace Cheez.Compiler.Ast
         public CheezType Type { get; set; }
         public AstExpression TypeExpr { get; set; }
         public Scope Scope { get; set; }
+
+        public object Value { get; set; }
 
         public bool IsConstant => true;
 
@@ -216,6 +219,8 @@ namespace Cheez.Compiler.Ast
 
         public bool IsConstant => true;
 
+        public List<AstStructDecl> PolymorphicInstances { get; } = new List<AstStructDecl>();
+
         public AstStructDecl(ParseTree.PTStructDecl node, AstIdentifierExpr name, List<AstParameter> param, List<AstMemberDecl> members, Dictionary<string, AstDirective> dirs) : base(dirs)
         {
             ParseTreeNode = node;
@@ -313,7 +318,16 @@ namespace Cheez.Compiler.Ast
 
         public override string ToString()
         {
-            return $"var {Name}";
+            var sb = new StringBuilder();
+            sb.Append($"let {Name}");
+
+            if (TypeExpr != null)
+                sb.Append($": {TypeExpr}");
+
+            if (Initializer != null)
+                sb.Append($" = {Initializer}");
+
+            return sb.ToString();
         }
 
         public override AstStatement Clone()
