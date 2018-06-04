@@ -11,9 +11,9 @@
 	},
 	"scripts": {
 		"postinstall": "cd VSCodeExtension && npm install && cd ..",
-		"compile": "tsc -p LanguageServer/tsconfig.json && cd server && npm run compile && cd ..",
-		"compile:client": "tsc -p LanguageServer/tsconfig.json",
-		"watch:client": "tsc -w -p LanguageServer/tsconfig.json",
+		"compile": "tsc -p VSCodeExtension/tsconfig.json && cd server && npm run compile && cd ..",
+		"compile:client": "tsc -p VSCodeExtension/tsconfig.json",
+		"watch:client": "tsc -w -p VSCodeExtension/tsconfig.json",
 		"compile:server": "cd server && npm run compile && cd .."
 	},
 	"devDependencies": {
