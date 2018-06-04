@@ -33,7 +33,7 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -46,7 +46,7 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -114,7 +114,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>D:\Programming\llvm-new\build\Debug\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\Programming\llvm-new\build-release\Release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>LLVMSupport.lib;lldCOFF.lib;lldDriver.lib;lldELF.lib;lldMinGW.lib;lldWasm.lib;lldMachO.lib;lldReaderWriter.lib;lldYAML.lib;lldCore.lib;LLVMDebugInfoDWARF.lib;LLVMDebugInfoPDB.lib;LLVMLibDriver.lib;LLVMWindowsManifest.lib;lldCommon.lib;LLVMAArch64CodeGen.lib;LLVMAArch64AsmParser.lib;LLVMAArch64Disassembler.lib;LLVMAArch64Desc.lib;LLVMAArch64AsmPrinter.lib;LLVMAArch64Info.lib;LLVMAArch64Utils.lib;LLVMAMDGPUCodeGen.lib;LLVMAMDGPUAsmParser.lib;LLVMAMDGPUDisassembler.lib;LLVMAMDGPUDesc.lib;LLVMAMDGPUAsmPrinter.lib;LLVMAMDGPUInfo.lib;LLVMAMDGPUUtils.lib;LLVMARMCodeGen.lib;LLVMARMAsmParser.lib;LLVMARMDisassembler.lib;LLVMARMDesc.lib;LLVMARMAsmPrinter.lib;LLVMARMInfo.lib;LLVMARMUtils.lib;LLVMBPFCodeGen.lib;LLVMBPFAsmParser.lib;LLVMBPFDesc.lib;LLVMBPFAsmPrinter.lib;LLVMBPFDisassembler.lib;LLVMBPFInfo.lib;LLVMHexagonCodeGen.lib;LLVMHexagonAsmParser.lib;LLVMHexagonDisassembler.lib;LLVMHexagonDesc.lib;LLVMHexagonInfo.lib;LLVMLanaiCodeGen.lib;LLVMLanaiAsmParser.lib;LLVMLanaiDisassembler.lib;LLVMLanaiDesc.lib;LLVMLanaiAsmPrinter.lib;LLVMLanaiInfo.lib;LLVMMipsCodeGen.lib;LLVMMipsAsmParser.lib;LLVMMipsDesc.lib;LLVMMipsAsmPrinter.lib;LLVMMipsDisassembler.lib;LLVMMipsInfo.lib;LLVMMSP430CodeGen.lib;LLVMMSP430Desc.lib;LLVMMSP430AsmPrinter.lib;LLVMMSP430Info.lib;LLVMNVPTXCodeGen.lib;LLVMNVPTXDesc.lib;LLVMNVPTXAsmPrinter.lib;LLVMNVPTXInfo.lib;LLVMPowerPCCodeGen.lib;LLVMPowerPCAsmParser.lib;LLVMPowerPCDesc.lib;LLVMPowerPCAsmPrinter.lib;LLVMPowerPCDisassembler.lib;LLVMPowerPCInfo.lib;LLVMSparcCodeGen.lib;LLVMSparcAsmParser.lib;LLVMSparcDesc.lib;LLVMSparcAsmPrinter.lib;LLVMSparcDisassembler.lib;LLVMSparcInfo.lib;LLVMSystemZCodeGen.lib;LLVMSystemZAsmParser.lib;LLVMSystemZDisassembler.lib;LLVMSystemZDesc.lib;LLVMSystemZAsmPrinter.lib;LLVMSystemZInfo.lib;LLVMX86CodeGen.lib;LLVMGlobalISel.lib;LLVMX86AsmParser.lib;LLVMX86Desc.lib;LLVMX86AsmPrinter.lib;LLVMX86Disassembler.lib;LLVMX86Info.lib;LLVMX86Utils.lib;LLVMXCoreCodeGen.lib;LLVMAsmPrinter.lib;LLVMSelectionDAG.lib;LLVMXCoreDesc.lib;LLVMXCoreAsmPrinter.lib;LLVMXCoreDisassembler.lib;LLVMMCDisassembler.lib;LLVMXCoreInfo.lib;LLVMLTO.lib;LLVMObjCARCOpts.lib;LLVMPasses.lib;LLVMCodeGen.lib;LLVMTarget.lib;LLVMipo.lib;LLVMBitWriter.lib;LLVMScalarOpts.lib;LLVMVectorize.lib;LLVMLinker.lib;LLVMIRReader.lib;LLVMAsmParser.lib;LLVMAggressiveInstCombine.lib;LLVMInstCombine.lib;LLVMInstrumentation.lib;LLVMTransformUtils.lib;LLVMAnalysis.lib;LLVMProfileData.lib;LLVMObject.lib;LLVMMCParser.lib;LLVMMC.lib;LLVMDebugInfoCodeView.lib;LLVMDebugInfoMSF.lib;LLVMBitReader.lib;LLVMCore.lib;LLVMBinaryFormat.lib;LLVMOption.lib;psapi.lib;LLVMDemangle.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -130,7 +130,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>D:\Programming\llvm-new\build\Debug\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\Programming\llvm-new\build-release\Release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>LLVMSupport.lib;lldCOFF.lib;lldDriver.lib;lldELF.lib;lldMinGW.lib;lldWasm.lib;lldMachO.lib;lldReaderWriter.lib;lldYAML.lib;lldCore.lib;LLVMDebugInfoDWARF.lib;LLVMDebugInfoPDB.lib;LLVMLibDriver.lib;LLVMWindowsManifest.lib;lldCommon.lib;LLVMAArch64CodeGen.lib;LLVMAArch64AsmParser.lib;LLVMAArch64Disassembler.lib;LLVMAArch64Desc.lib;LLVMAArch64AsmPrinter.lib;LLVMAArch64Info.lib;LLVMAArch64Utils.lib;LLVMAMDGPUCodeGen.lib;LLVMAMDGPUAsmParser.lib;LLVMAMDGPUDisassembler.lib;LLVMAMDGPUDesc.lib;LLVMAMDGPUAsmPrinter.lib;LLVMAMDGPUInfo.lib;LLVMAMDGPUUtils.lib;LLVMARMCodeGen.lib;LLVMARMAsmParser.lib;LLVMARMDisassembler.lib;LLVMARMDesc.lib;LLVMARMAsmPrinter.lib;LLVMARMInfo.lib;LLVMARMUtils.lib;LLVMBPFCodeGen.lib;LLVMBPFAsmParser.lib;LLVMBPFDesc.lib;LLVMBPFAsmPrinter.lib;LLVMBPFDisassembler.lib;LLVMBPFInfo.lib;LLVMHexagonCodeGen.lib;LLVMHexagonAsmParser.lib;LLVMHexagonDisassembler.lib;LLVMHexagonDesc.lib;LLVMHexagonInfo.lib;LLVMLanaiCodeGen.lib;LLVMLanaiAsmParser.lib;LLVMLanaiDisassembler.lib;LLVMLanaiDesc.lib;LLVMLanaiAsmPrinter.lib;LLVMLanaiInfo.lib;LLVMMipsCodeGen.lib;LLVMMipsAsmParser.lib;LLVMMipsDesc.lib;LLVMMipsAsmPrinter.lib;LLVMMipsDisassembler.lib;LLVMMipsInfo.lib;LLVMMSP430CodeGen.lib;LLVMMSP430Desc.lib;LLVMMSP430AsmPrinter.lib;LLVMMSP430Info.lib;LLVMNVPTXCodeGen.lib;LLVMNVPTXDesc.lib;LLVMNVPTXAsmPrinter.lib;LLVMNVPTXInfo.lib;LLVMPowerPCCodeGen.lib;LLVMPowerPCAsmParser.lib;LLVMPowerPCDesc.lib;LLVMPowerPCAsmPrinter.lib;LLVMPowerPCDisassembler.lib;LLVMPowerPCInfo.lib;LLVMSparcCodeGen.lib;LLVMSparcAsmParser.lib;LLVMSparcDesc.lib;LLVMSparcAsmPrinter.lib;LLVMSparcDisassembler.lib;LLVMSparcInfo.lib;LLVMSystemZCodeGen.lib;LLVMSystemZAsmParser.lib;LLVMSystemZDisassembler.lib;LLVMSystemZDesc.lib;LLVMSystemZAsmPrinter.lib;LLVMSystemZInfo.lib;LLVMX86CodeGen.lib;LLVMGlobalISel.lib;LLVMX86AsmParser.lib;LLVMX86Desc.lib;LLVMX86AsmPrinter.lib;LLVMX86Disassembler.lib;LLVMX86Info.lib;LLVMX86Utils.lib;LLVMXCoreCodeGen.lib;LLVMAsmPrinter.lib;LLVMSelectionDAG.lib;LLVMXCoreDesc.lib;LLVMXCoreAsmPrinter.lib;LLVMXCoreDisassembler.lib;LLVMMCDisassembler.lib;LLVMXCoreInfo.lib;LLVMLTO.lib;LLVMObjCARCOpts.lib;LLVMPasses.lib;LLVMCodeGen.lib;LLVMTarget.lib;LLVMipo.lib;LLVMBitWriter.lib;LLVMScalarOpts.lib;LLVMVectorize.lib;LLVMLinker.lib;LLVMIRReader.lib;LLVMAsmParser.lib;LLVMAggressiveInstCombine.lib;LLVMInstCombine.lib;LLVMInstrumentation.lib;LLVMTransformUtils.lib;LLVMAnalysis.lib;LLVMProfileData.lib;LLVMObject.lib;LLVMMCParser.lib;LLVMMC.lib;LLVMDebugInfoCodeView.lib;LLVMDebugInfoMSF.lib;LLVMBitReader.lib;LLVMCore.lib;LLVMBinaryFormat.lib;LLVMOption.lib;psapi.lib;LLVMDemangle.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

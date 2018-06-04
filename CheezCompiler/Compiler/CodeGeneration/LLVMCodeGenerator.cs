@@ -171,7 +171,11 @@ namespace Cheez.Compiler.CodeGeneration
         private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
 
 
+#if DEBUG
         [DllImport("Linker/Debug/Linker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+#else
+        [DllImport("Linker/Release/Linker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+#endif
         public extern static bool llvm_link_coff(string[] argv, int argc);
 
 
@@ -451,7 +455,7 @@ namespace Cheez.Compiler.CodeGeneration
             LLVM.DisposeBuilder(builder);
         }
 
-        #region Utility
+#region Utility
 
         private void CastIfAny(LLVMBuilderRef builder, CheezType targetType, CheezType sourceType, ref LLVMValueRef value)
         {
@@ -634,9 +638,9 @@ namespace Cheez.Compiler.CodeGeneration
             }
         }
 
-        #endregion
+#endregion
 
-        #region Statements
+#region Statements
 
         public override LLVMValueRef VisitStructDeclaration(AstStructDecl type, LLVMCodeGeneratorData data = null)
         {
@@ -886,9 +890,9 @@ namespace Cheez.Compiler.CodeGeneration
             return default;
         }
 
-        #endregion
+#endregion
 
-        #region Expressions
+#region Expressions
 
         public override LLVMValueRef VisitDotExpression(AstDotExpr dot, LLVMCodeGeneratorData data = null)
         {
@@ -1337,6 +1341,6 @@ namespace Cheez.Compiler.CodeGeneration
             throw new NotImplementedException();
         }
 
-        #endregion
+#endregion
     }
 }
