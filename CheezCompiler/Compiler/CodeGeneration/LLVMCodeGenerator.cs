@@ -170,12 +170,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
 
-
-#if DEBUG
-        [DllImport("Linker/Debug/Linker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-#else
-        [DllImport("Linker/Release/Linker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-#endif
+        [DllImport("Linker/Win32/Linker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public extern static bool llvm_link_coff(string[] argv, int argc);
 
 
