@@ -41,7 +41,7 @@ namespace Cheez.Compiler.CodeGeneration
 
 
         [DllImport("Linker/Debug/Linker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public extern static bool link_coff(string[] argv, int argc);
+        public extern static bool llvm_link_coff(string[] argv, int argc);
 
 
         public bool GenerateCode(Workspace workspace, string targetFile)
@@ -142,27 +142,10 @@ namespace Cheez.Compiler.CodeGeneration
             var filename = Path.GetFileNameWithoutExtension(targetFile + ".x");
             var dir = Path.GetDirectoryName(Path.GetFullPath(targetFile));
 
-            //// compile .ll to .obj
-            //var llc = Util.StartProcess(
-            //    "llc.exe",
-            //    new List<string>()
-            //    {
-            //        "-O0",
-            //        "-filetype=obj",
-            //        "-o",
-            //        $"{filename}.obj",
-            //        $"{filename}.ll"
-            //    },
-            //    dir,
-            //    CreateHandler("llc.exe", Console.Out),
-            //    CreateHandler("llc.exe - ERROR", Console.Error)
-            //    );
-            //llc.WaitForExit();
-            //if (llc.ExitCode != 0)
-            //    return false;
-
+            filename = Path.Combine(dir, filename);
             var args = new string[]
             {
+                "lld",
                 $"/out:{filename}.exe",
                 @"-libpath:C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.11.25503\lib\x86",
                 @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.15063.0\ucrt\x86",
@@ -173,7 +156,7 @@ namespace Cheez.Compiler.CodeGeneration
                 "/machine:X86",
                 "/subsystem:console",
 
-                "cheez-rtd.obj",
+                @"CheezRuntimeLibrary\lib\x86\cheez-rtd.obj",
 
                 "libucrtd.lib",
                 //"libvcruntimed.lib",
@@ -193,65 +176,14 @@ namespace Cheez.Compiler.CodeGeneration
                 "odbc32.lib",
                 "odbccp32.lib",
 
-                "legacy_stdio_definitions.lib",
-                "legacy_stdio_wide_specifiers.lib",
+                //"legacy_stdio_definitions.lib",
+                //"legacy_stdio_wide_specifiers.lib",
 
-                "libclang.lib",
+                //"libclang.lib",
 
-                $"{filename}.obj"
+                $@"{filename}.obj"
             };
-            var result = link_coff(args, args.Length);
-
-            // link .obj to .exe
-            //var link = Util.StartProcess(
-            //    @"D:\Programming\llvm\build\Debug\bin\lld-link.exe",
-            //    new List<string>
-            //    {
-            //        $"/out:{filename}.exe",
-            //        @"-libpath:C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.11.25503\lib\x86",
-            //        @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.15063.0\ucrt\x86",
-            //        @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.15063.0\um\x86",
-            //        @"-libpath:D:\Programming\CS\CheezLang\CheezRuntimeLibrary\lib\x86",
-            //        @"-libpath:D:\Programming\llvm\build\Debug\lib",
-            //        "/entry:mainCRTStartup",
-            //        "/machine:X86",
-            //        "/subsystem:console",
-                    
-            //        "cheez-rtd.obj",
-
-            //        "libucrtd.lib",
-            //        //"libvcruntimed.lib",
-            //        "libcmtd.lib",
-            //        //"msvcrtd.lib", //
-
-            //        "kernel32.lib",
-            //        "user32.lib",
-            //        "gdi32.lib",
-            //        "winspool.lib",
-            //        "comdlg32.lib",
-            //        "advapi32.lib",
-            //        "shell32.lib",
-            //        "ole32.lib",
-            //        "oleaut32.lib",
-            //        "uuid.lib",
-            //        "odbc32.lib",
-            //        "odbccp32.lib",
-
-            //        "legacy_stdio_definitions.lib",
-            //        "legacy_stdio_wide_specifiers.lib",
-
-            //        "libclang.lib",
-
-            //        $"{filename}.obj"
-            //    },
-            //    dir,
-            //    stdout: CreateHandler("link.exe", Console.Out),
-            //    stderr: CreateHandler("link.exe - ERROR", Console.Error)
-            //    );
-            //link.WaitForExit();
-            //if (link.ExitCode != 0)
-            //    return false;
-
+            var result = llvm_link_coff(args, args.Length);
             Console.WriteLine($"Generated {filename}.exe");
 
             return result;
