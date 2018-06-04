@@ -55,6 +55,11 @@ namespace Cheez.Compiler
 
             var semanticer = new Semanticer();
             semanticer.DoWork(this, mStatements, mCompiler.ErrorHandler);
+
+            if (MainFunction == null)
+            {
+                mCompiler.ErrorHandler.ReportError("No main function was specified");
+            }
         }
         
         public void ReportError(ILocation location, string errorMessage, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)

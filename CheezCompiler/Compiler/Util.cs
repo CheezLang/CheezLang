@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -8,6 +7,21 @@ using System.Text.RegularExpressions;
 
 namespace Cheez.Compiler
 {
+    public class Reference<T>
+    {
+        public T Value { get; set; }
+
+        public Reference()
+        {
+            Value = default;
+        }
+
+        public Reference(T v)
+        {
+            Value = v;
+        }
+    }
+
     public static class Util
     {
         private static int mId = 0;

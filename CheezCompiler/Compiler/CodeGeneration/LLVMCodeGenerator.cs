@@ -7,11 +7,140 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Microsoft;
 using System.Reflection;
+using System.Text;
 
 namespace Cheez.Compiler.CodeGeneration
 {
+    class VsWhere
+    {
+        public string instanceId;
+        public string installDate;
+        public string installationName;
+        public string installationPath;
+        public string installationVersion;
+        public string isPrerelease;
+        public string displayName;
+        public string description;
+        public string enginePath;
+        public string channelId;
+        public string channelPath;
+        public string channelUri;
+        public string releaseNotes;
+        public string thirdPartyNotices;
+    }
+
+    static class LinkerUtil
+    {
+        private static (int, string) FindVSInstallDirWithVsWhere()
+        {
+            try
+            {
+                StringBuilder sb = new StringBuilder();
+                var programFilesX86 = Environment.ExpandEnvironmentVariables("%ProgramFiles(x86)%");
+                var p = Util.StartProcess($@"{programFilesX86}\Microsoft Visual Studio\Installer\vswhere.exe", "-nologo -latest -format json", stdout:
+                    (sender, e) =>
+                    {
+                        sb.AppendLine(e.Data);
+                    });
+                p.WaitForExit();
+
+                var versions = Newtonsoft.Json.JsonConvert.DeserializeObject<VsWhere[]>(sb.ToString());
+
+                if (versions?.Length == 0)
+                    return (-1, null);
+
+                var latest = versions[0];
+
+                var v = latest.installationVersion.Scan1(@"(\d+)\.(\d+)\.(\d+)\.(\d+)").Select(s => int.TryParse(s, out int i) ? i : 0).First();
+                var dir = latest.installationPath;
+
+                return (v, dir);
+            }
+            catch (Exception e)
+            {
+                return (-1, null);
+            }
+        }
+
+        private static (int, string) FindVSInstallDirWithRegistry()
+        {
+            return (-1, null);
+        }
+
+        private static (int, string) FindVSInstallDirWithPath()
+        {
+            return (-1, null);
+        }
+
+        private static string FindVSLibDir(int version, string installDir)
+        {
+            switch (version)
+            {
+                case 15:
+                    {
+                        var MSVC = Path.Combine(installDir, "VC", "Tools", "MSVC");
+                        if (!Directory.Exists(MSVC))
+                            return null;
+
+                        SortedList<int[], string> versions = new SortedList<int[], string>(Comparer<int[]>.Create((a, b) =>
+                        {
+                            for (int i = 0; i < a.Length && i < b.Length; i++)
+                            {
+                                if (a[i] > b[i])
+                                    return -1;
+                                else if (a[i] < b[i])
+                                    return 1;
+                            }
+
+                            return 0;
+                        }));
+
+                        foreach (var sub in Directory.EnumerateDirectories(MSVC))
+                        {
+                            var name = sub.Substring(sub.LastIndexOfAny(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }) + 1);
+                            var v = name.Scan1(@"(\d+)\.(\d+)\.(\d+)").Select(s => int.TryParse(s, out int i) ? i : 0).ToArray();
+
+                            if (v.Length != 3)
+                                continue;
+
+                            versions.Add(v, sub);
+                        }
+
+                        foreach (var kv in versions)
+                        {
+                            var libDir = Path.Combine(kv.Value, "lib");
+
+                            if (!Directory.Exists(libDir))
+                                continue;
+
+                            return libDir;
+                        }
+
+                        return null;
+                    }
+
+                default:
+                    return null;
+            }
+        }
+
+        public static string FindVisualStudioLibraryDirectory()
+        {
+            var (version, dir) = FindVSInstallDirWithVsWhere();
+
+            if (dir == null)
+                (version, dir) = FindVSInstallDirWithRegistry();
+
+            if (dir == null)
+                (version, dir) = FindVSInstallDirWithPath();
+
+            if (dir == null)
+                return null;
+
+            return FindVSLibDir(version, dir);
+        }
+    }
 
     public class LLVMCodeGeneratorData
     {
@@ -38,7 +167,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         private LLVMModuleRef module;
         private Workspace workspace;
-        
+
         private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
 
 
@@ -79,7 +208,8 @@ namespace Cheez.Compiler.CodeGeneration
             }
 
             // generate file
-            if (true) {
+            if (true)
+            {
                 LLVM.PrintModuleToFile(module, $"{targetFile}.ll", out string llvmErrors);
                 if (!string.IsNullOrWhiteSpace(llvmErrors))
                     Console.Error.WriteLine($"[LLVM-validate-print] {llvmErrors}");
@@ -111,12 +241,12 @@ namespace Cheez.Compiler.CodeGeneration
                     return false;
                 }
                 var targetMachine = LLVM.CreateTargetMachine(
-                    target, 
-                    targetTriple, 
-                    "generic", 
-                    "", 
-                    LLVMCodeGenOptLevel.LLVMCodeGenLevelNone, 
-                    LLVMRelocMode.LLVMRelocDefault, 
+                    target,
+                    targetTriple,
+                    "generic",
+                    "",
+                    LLVMCodeGenOptLevel.LLVMCodeGenLevelNone,
+                    LLVMRelocMode.LLVMRelocDefault,
                     LLVMCodeModel.LLVMCodeModelDefault);
 
                 var objFile = targetFile + ".obj";
@@ -148,6 +278,13 @@ namespace Cheez.Compiler.CodeGeneration
                 return false;
             }
 
+            var msvcLibPath = LinkerUtil.FindVisualStudioLibraryDirectory();
+            if (winSdk == null)
+            {
+                errorHandler.ReportError("Couldn't find Visual Studio library directory");
+                return false;
+            }
+
             var filename = Path.GetFileNameWithoutExtension(targetFile + ".x");
             var dir = Path.GetDirectoryName(Path.GetFullPath(targetFile));
 
@@ -159,13 +296,16 @@ namespace Cheez.Compiler.CodeGeneration
 
             // library paths
             if (winSdk.UcrtPath != null)
-                lldArgs.Add($"-libpath:{winSdk.UcrtPath}\x86");
+                lldArgs.Add($@"-libpath:{winSdk.UcrtPath}\x86");
 
             if (winSdk.UmPath != null)
-                lldArgs.Add($"-libpath:{winSdk.UmPath}\x86");
+                lldArgs.Add($@"-libpath:{winSdk.UmPath}\x86");
 
             var exePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             lldArgs.Add($"-libpath:{exePath}");
+
+            if (msvcLibPath != null)
+                lldArgs.Add($@"-libpath:{msvcLibPath}\x86");
 
             // @hack
             lldArgs.Add($@"-libpath:{Environment.CurrentDirectory}\CheezRuntimeLibrary\lib\x86");
@@ -892,7 +1032,8 @@ namespace Cheez.Compiler.CodeGeneration
                 func = valueMap[afe.Declaration];
                 //func = LLVM.GetNamedFunction(module, afe.Declaration.Name.Name);
             }
-            else if (call.Function is AstStructExpression str) {
+            else if (call.Function is AstStructExpression str)
+            {
                 return default;
             }
             else
