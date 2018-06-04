@@ -39,6 +39,11 @@ namespace Cheez.Compiler.CodeGeneration
         
         private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
 
+
+        [DllImport("Linker/Debug/Linker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public extern static bool link_coff(string[] argv, int argc);
+
+
         public bool GenerateCode(Workspace workspace, string targetFile)
         {
             this.targetFile = targetFile;
@@ -156,59 +161,100 @@ namespace Cheez.Compiler.CodeGeneration
             //if (llc.ExitCode != 0)
             //    return false;
 
+            var args = new string[]
+            {
+                $"/out:{filename}.exe",
+                @"-libpath:C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.11.25503\lib\x86",
+                @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.15063.0\ucrt\x86",
+                @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.15063.0\um\x86",
+                @"-libpath:D:\Programming\CS\CheezLang\CheezRuntimeLibrary\lib\x86",
+                @"-libpath:D:\Programming\llvm\build\Debug\lib",
+                "/entry:mainCRTStartup",
+                "/machine:X86",
+                "/subsystem:console",
+
+                "cheez-rtd.obj",
+
+                "libucrtd.lib",
+                //"libvcruntimed.lib",
+                "libcmtd.lib",
+                //"msvcrtd.lib", //
+
+                "kernel32.lib",
+                "user32.lib",
+                "gdi32.lib",
+                "winspool.lib",
+                "comdlg32.lib",
+                "advapi32.lib",
+                "shell32.lib",
+                "ole32.lib",
+                "oleaut32.lib",
+                "uuid.lib",
+                "odbc32.lib",
+                "odbccp32.lib",
+
+                "legacy_stdio_definitions.lib",
+                "legacy_stdio_wide_specifiers.lib",
+
+                "libclang.lib",
+
+                $"{filename}.obj"
+            };
+            var result = link_coff(args, args.Length);
+
             // link .obj to .exe
-            var link = Util.StartProcess(
-                @"lld-link.exe",
-                new List<string>
-                {
-                    $"/out:{filename}.exe",
-                    @"-libpath:C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.12.25827\lib\x86",
-                    @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.16299.0\ucrt\x86",
-                    @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.16299.0\um\x86",
-                    @"-libpath:D:\Programming\CS\CheezLang\CheezRuntimeLibrary\lib\x86",
-                    @"-libpath:D:\llvm\build\Debug\lib",
-                    "/entry:mainCRTStartup",
-                    "/machine:X86",
-                    "/subsystem:console",
+            //var link = Util.StartProcess(
+            //    @"D:\Programming\llvm\build\Debug\bin\lld-link.exe",
+            //    new List<string>
+            //    {
+            //        $"/out:{filename}.exe",
+            //        @"-libpath:C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.11.25503\lib\x86",
+            //        @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.15063.0\ucrt\x86",
+            //        @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.15063.0\um\x86",
+            //        @"-libpath:D:\Programming\CS\CheezLang\CheezRuntimeLibrary\lib\x86",
+            //        @"-libpath:D:\Programming\llvm\build\Debug\lib",
+            //        "/entry:mainCRTStartup",
+            //        "/machine:X86",
+            //        "/subsystem:console",
                     
-                    "cheez-rtd.obj",
+            //        "cheez-rtd.obj",
 
-                    "libucrtd.lib",
-                    //"libvcruntimed.lib",
-                    "libcmtd.lib",
-                    //"msvcrtd.lib", //
+            //        "libucrtd.lib",
+            //        //"libvcruntimed.lib",
+            //        "libcmtd.lib",
+            //        //"msvcrtd.lib", //
 
-                    "kernel32.lib",
-                    "user32.lib",
-                    "gdi32.lib",
-                    "winspool.lib",
-                    "comdlg32.lib",
-                    "advapi32.lib",
-                    "shell32.lib",
-                    "ole32.lib",
-                    "oleaut32.lib",
-                    "uuid.lib",
-                    "odbc32.lib",
-                    "odbccp32.lib",
+            //        "kernel32.lib",
+            //        "user32.lib",
+            //        "gdi32.lib",
+            //        "winspool.lib",
+            //        "comdlg32.lib",
+            //        "advapi32.lib",
+            //        "shell32.lib",
+            //        "ole32.lib",
+            //        "oleaut32.lib",
+            //        "uuid.lib",
+            //        "odbc32.lib",
+            //        "odbccp32.lib",
 
-                    "legacy_stdio_definitions.lib",
-                    "legacy_stdio_wide_specifiers.lib",
+            //        "legacy_stdio_definitions.lib",
+            //        "legacy_stdio_wide_specifiers.lib",
 
-                    "libclang.lib",
+            //        "libclang.lib",
 
-                    $"{filename}.obj"
-                },
-                dir,
-                stdout: CreateHandler("link.exe", Console.Out),
-                stderr: CreateHandler("link.exe - ERROR", Console.Error)
-                );
-            link.WaitForExit();
-            if (link.ExitCode != 0)
-                return false;
+            //        $"{filename}.obj"
+            //    },
+            //    dir,
+            //    stdout: CreateHandler("link.exe", Console.Out),
+            //    stderr: CreateHandler("link.exe - ERROR", Console.Error)
+            //    );
+            //link.WaitForExit();
+            //if (link.ExitCode != 0)
+            //    return false;
 
             Console.WriteLine($"Generated {filename}.exe");
 
-            return true;
+            return result;
         }
 
         private DataReceivedEventHandler CreateHandler(string name, TextWriter writer)
