@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Cheez.Compiler
 {
@@ -55,6 +56,22 @@ namespace Cheez.Compiler
             if (level == 0)
                 return "";
             return new string(' ', level);
+        }
+
+        public static IEnumerable<string> Scan(this string value, string pattern)
+        {
+            var regex = new Regex(pattern);
+            var matches = regex.Match(value);
+
+            foreach (Group c in matches.Groups)
+            {
+                yield return c.Value;
+            }
+        }
+
+        public static IEnumerable<string> Scan1(this string value, string pattern)
+        {
+            return value.Scan(pattern).Skip(1);
         }
 
         public static Process StartProcess(string exe, List<string> argList = null, string workingDirectory = null, DataReceivedEventHandler stdout = null, DataReceivedEventHandler stderr = null)

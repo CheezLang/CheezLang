@@ -42,7 +42,7 @@ namespace Cheez.Compiler.CodeGeneration
             return true;
         }
 
-        public bool CompileCode()
+        public bool CompileCode(IErrorHandler errorHandler)
         {
             // run clang
             var clang = Util.StartProcess(@"D:\Program Files\LLVM\bin\clang++.exe", $"-O0 -o {targetFile}.exe {targetFile}.cpp", Path.GetDirectoryName(targetFile), stderr: Process_ErrorDataReceived);

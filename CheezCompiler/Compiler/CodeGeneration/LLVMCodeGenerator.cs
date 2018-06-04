@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Microsoft;
+using System.Reflection;
 
 namespace Cheez.Compiler.CodeGeneration
 {
@@ -137,12 +139,65 @@ namespace Cheez.Compiler.CodeGeneration
             return true;
         }
 
-        public bool CompileCode()
+        public bool CompileCode(IErrorHandler errorHandler)
         {
+            var winSdk = OS.FindWindowsSdk();
+            if (winSdk == null)
+            {
+                errorHandler.ReportError("Couldn't find windows sdk");
+                return false;
+            }
+
             var filename = Path.GetFileNameWithoutExtension(targetFile + ".x");
             var dir = Path.GetDirectoryName(Path.GetFullPath(targetFile));
 
             filename = Path.Combine(dir, filename);
+
+            var lldArgs = new List<string>();
+            lldArgs.Add("lld");
+            lldArgs.Add($"/out:{filename}.exe");
+
+            // library paths
+            if (winSdk.UcrtPath != null)
+                lldArgs.Add($"-libpath:{winSdk.UcrtPath}\x86");
+
+            if (winSdk.UmPath != null)
+                lldArgs.Add($"-libpath:{winSdk.UmPath}\x86");
+
+            var exePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            lldArgs.Add($"-libpath:{exePath}");
+
+            // @hack
+            lldArgs.Add($@"-libpath:{Environment.CurrentDirectory}\CheezRuntimeLibrary\lib\x86");
+
+            // other options
+            lldArgs.Add("/entry:mainCRTStartup");
+            lldArgs.Add("/machine:X86");
+            lldArgs.Add("/subsystem:console");
+
+            // runtime
+            lldArgs.Add("cheez-rtd.obj");
+
+            // windows and c libs
+            lldArgs.Add("libucrtd.lib");
+            lldArgs.Add("libcmtd.lib");
+
+            lldArgs.Add("kernel32.lib");
+            lldArgs.Add("user32.lib");
+            lldArgs.Add("gdi32.lib");
+            lldArgs.Add("winspool.lib");
+            lldArgs.Add("comdlg32.lib");
+            lldArgs.Add("advapi32.lib");
+            lldArgs.Add("shell32.lib");
+            lldArgs.Add("ole32.lib");
+            lldArgs.Add("oleaut32.lib");
+            lldArgs.Add("uuid.lib");
+            lldArgs.Add("odbc32.lib");
+            lldArgs.Add("odbccp32.lib");
+
+            // generated object files
+            lldArgs.Add($"{filename}.obj");
+
             var args = new string[]
             {
                 "lld",
@@ -183,7 +238,7 @@ namespace Cheez.Compiler.CodeGeneration
 
                 $@"{filename}.obj"
             };
-            var result = llvm_link_coff(args, args.Length);
+            var result = llvm_link_coff(lldArgs.ToArray(), lldArgs.Count);
             Console.WriteLine($"Generated {filename}.exe");
 
             return result;

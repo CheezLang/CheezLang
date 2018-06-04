@@ -8,6 +8,9 @@ using CommandLine;
 using System.Collections.Generic;
 using System.Linq;
 using Cheez.Compiler.Visitor;
+using Microsoft.Win32;
+using System.Security.AccessControl;
+using System.Text.RegularExpressions;
 
 namespace CheezCLI
 {
@@ -152,7 +155,7 @@ namespace CheezCLI
             {
                 // generate code
                 stopwatch.Restart();
-                bool codeGenOk = GenerateAndCompileCode(options, compiler.DefaultWorkspace);
+                bool codeGenOk = GenerateAndCompileCode(options, compiler.DefaultWorkspace, errorHandler);
                 result.BackEnd = stopwatch.Elapsed;
 
                 stopwatch.Restart();
@@ -176,7 +179,7 @@ namespace CheezCLI
             return result;
         }
 
-        private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace)
+        private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace, IErrorHandler errorHandler)
         {
             if (!string.IsNullOrWhiteSpace(options.OutPath) && !Directory.Exists(options.OutPath))
                 Directory.CreateDirectory(options.OutPath);
@@ -188,7 +191,7 @@ namespace CheezCLI
                 return false;
 
             if (true)
-                return generator.CompileCode();
+                return generator.CompileCode(errorHandler);
             return success;
         }
 

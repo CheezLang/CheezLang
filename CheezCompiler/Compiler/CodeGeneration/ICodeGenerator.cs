@@ -3,6 +3,6 @@
     public interface ICodeGenerator
     {
         bool GenerateCode(Workspace workspace, string targetFile);
-        bool CompileCode();
+        bool CompileCode(IErrorHandler errorHandler);
     }
 }

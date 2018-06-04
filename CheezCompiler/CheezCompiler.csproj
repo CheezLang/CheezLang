@@ -118,6 +118,7 @@
     <Compile Include="Compiler\CodeGeneration\CppCodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\ICodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVMCodeGenerator.cs" />
+    <Compile Include="Compiler\CodeGeneration\OS.cs" />
     <Compile Include="Compiler\Compiler.cs" />
     <Compile Include="Compiler\CType.cs" />
     <Compile Include="Compiler\ErrorHandler.cs" />
