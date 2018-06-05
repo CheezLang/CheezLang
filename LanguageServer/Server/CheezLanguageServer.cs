@@ -75,7 +75,7 @@ namespace CheezLanguageServer
                     _compiler.DefaultWorkspace.CompileAll();
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return;
             }
@@ -233,7 +233,7 @@ namespace CheezLanguageServer
 
                 return Result<SymbolInformation[], ResponseError>.Success(symbols.ToArray());
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return Result<SymbolInformation[], ResponseError>.Success(new SymbolInformation[0]);
             }
@@ -302,7 +302,7 @@ namespace CheezLanguageServer
 
                 return Result<ArrayOrObject<CompletionItem, CompletionList>, ResponseError>.Success(new ArrayOrObject<CompletionItem, CompletionList>(completionList));
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return Result<ArrayOrObject<CompletionItem, CompletionList>, ResponseError>.Success(new ArrayOrObject<CompletionItem, CompletionList>());
             }

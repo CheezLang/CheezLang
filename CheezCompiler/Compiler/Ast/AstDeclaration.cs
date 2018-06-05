@@ -91,6 +91,7 @@ namespace Cheez.Compiler.Ast
     public class AstFunctionDecl : AstStatement, ISymbol
     {
         public override ParseTree.PTStatement GenericParseTreeNode { get; }
+        public Parsing.IText Text { get; set; }
 
         public Scope HeaderScope { get; set; }
         public Scope SubScope { get; set; }

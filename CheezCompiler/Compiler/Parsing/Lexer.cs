@@ -30,6 +30,8 @@ namespace Cheez.Compiler.Parsing
         //HashTag,
         Hat,
 
+        Bang,
+
         Plus,
         Minus,
         Asterisk,
@@ -301,6 +303,7 @@ namespace Cheez.Compiler.Parsing
                 case '<': SimpleToken(ref token, TokenType.Less); break;
                 case '>': SimpleToken(ref token, TokenType.Greater); break;
                 case '^': SimpleToken(ref token, TokenType.Hat); break;
+                case '!': SimpleToken(ref token, TokenType.Bang); break;
 
 
                 case '"': ParseStringLiteral(ref token); break;

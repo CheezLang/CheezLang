@@ -23,6 +23,11 @@ namespace Cheez.Compiler
             ExportScope = new Scope("Export");
             PrivateScope = new Scope("Private", ExportScope);
         }
+
+        public override string ToString()
+        {
+            return $"PTFile: {Name}";
+        }
     }
 
     public class Compiler

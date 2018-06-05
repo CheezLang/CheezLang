@@ -13,6 +13,8 @@ namespace Cheez.Compiler.ParseTree
         public TokenLocation Beginning { get; }
         public TokenLocation End { get; }
 
+        public IText Text => throw new System.NotImplementedException();
+
         public Location(TokenLocation beg)
         {
             this.Beginning = beg;

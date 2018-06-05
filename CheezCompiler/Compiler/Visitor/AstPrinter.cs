@@ -192,6 +192,12 @@ namespace Cheez.Compiler.Visitor
             var args = call.Arguments.Select(a => a.Accept(this, 0));
             var argsStr = string.Join(", ", args);
             var func = call.Function.Accept(this, 0);
+            
+            if (call.Function is AstFunctionExpression fe)
+            {
+                func += $"<{string.Join(", ", fe.Declaration.PolymorphicTypes.Select(kv => $"{kv.Key}={kv.Value}"))}>";
+            }
+
             return $"{func}({argsStr})";
         }
 

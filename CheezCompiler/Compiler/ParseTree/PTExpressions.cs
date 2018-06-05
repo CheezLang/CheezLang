@@ -24,6 +24,11 @@ namespace Cheez.Compiler.ParseTree
         //{
         //    return (T)CreateGenericAst();
         //}
+
+        public override string ToString()
+        {
+            return $"{Beginning.file}: ({Beginning.line}:{Beginning.index - Beginning.lineStartIndex}) - ({End.line}:{End.index - End.lineStartIndex})";
+        }
     }
 
     public class PTErrorExpr : PTExpr

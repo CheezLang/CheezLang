@@ -1,16 +1,17 @@
 #load("io.che")
+#load("array.che")
 
 fn Main()
 {
     let a: Array(int)
     a.Init()
 
-    a.Print()
+    PrintArray(&a)
 
-    let i = 0
+    let i: int = 0
     while i < 50 {
         a.Add(i)
-        a.Print()
+        PrintArray(&a)
         i = i + 2
     }
 
@@ -19,88 +20,41 @@ fn Main()
     a.Delete()
 
     Println("-------------------------------------")
-    b.Print()
+    PrintArray(&b)
+    b.Set(0, 123)
+    PrintArray(&b)
     b.Delete()
 
+    Println("-------------------------------------")
     Printlnf("Size of a[0]: {i32}", @sizeof(a.data[0]))
     Printlnf("Size of b[0]: {i32}", @sizeof(b.data[0]))
+
 }
 
-struct Array(ElementType: type) {
-    data: ElementType[]
-    length: int
-    capacity: int
-}
+fn PrintArray(arr: Array($T)^) {
+    using *arr
 
-// impl(T: type) Array(T) {
-// }
+    PrintString("(")
+    PrintInt(length)
+    PrintString("/")
+    PrintInt(capacity)
+    PrintString(") [")
 
-impl Array($T) {
-
-    ref fn Init() {
-        length = 0
-        capacity = 10
-        data = AllocateArray(capacity)
-    }
-
-    ref fn Delete() {
-        FreeArray(data)
-    }
-
-    ref fn Reserve(s: int) {
-        if s <= capacity {
-            return
-        }
-        capacity = s
-        data = ReallocArray(data, capacity)
-    }
-
-    ref fn Add(val: T) {
-        if capacity <= length {
-            capacity = capacity * 2
-            data = ReallocArray(data, capacity)
+    let first = true
+    let i: uint = 0
+    while i < capacity {
+        if i > 0 {
+            PrintString(", ")
         }
 
-        data[length] = val
-        length = length + 1
-    }
-
-    ref fn Convert() -> Array($X) {
-        let r: Array(X)
-        r.Init()
-        r.Reserve(length)
-
-        while r.length < length {
-            r.data[r.length] = (X)data[r.length]
-            r.length = r.length + 1
+        if i < length {
+            PrintValue(data[i])
+        } else {
+            PrintString("_")
         }
 
-        return r
+        i = i + 1
     }
-
-    ref fn Print() {
-        PrintString("(")
-        PrintInt(length)
-        PrintString("/")
-        PrintInt(capacity)
-        PrintString(") [")
-
-        let first = true
-        let i = 0
-        while i < capacity {
-            if i > 0 {
-                PrintString(", ")
-            }
-
-            if i < length {
-                PrintValue(data[i])
-            } else {
-                PrintString("_")
-            }
-
-            i = i + 1
-        }
-        
-        Println("]")
-    }
+    
+    Println("]")
 }

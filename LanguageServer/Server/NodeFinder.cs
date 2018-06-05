@@ -273,7 +273,7 @@ namespace CheezLanguageServer
             if (GetRelativeLocation(cast.SubExpression.GenericParseTreeNode, i) == RelativeLocation.Same)
                 return cast.SubExpression.Accept(this, i);
 
-            if (GetRelativeLocation(cast.ParseTreeNode.TargetType, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(cast.TypeExpr.GenericParseTreeNode, i) == RelativeLocation.Same)
                 return new NodeFinderResult(cast.Scope, type: cast.Type);
 
             return new NodeFinderResult(cast.Scope, expr: cast);

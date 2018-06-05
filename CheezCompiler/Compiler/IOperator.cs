@@ -21,6 +21,8 @@ namespace Cheez.Compiler
         string Name { get; }
 
         int Accepts(CheezType sub);
+
+        object Execute(object value);
     }
 
     public class BuiltInOperator : IOperator
@@ -66,12 +68,15 @@ namespace Cheez.Compiler
 
         public string Name { get; private set; }
 
+        public delegate object ComptimeExecution(object value);
+        public ComptimeExecution Execution { get; set; }
 
-        public BuiltInUnaryOperator(string name, CheezType resType, CheezType sub)
+        public BuiltInUnaryOperator(string name, CheezType resType, CheezType sub, ComptimeExecution exe = null)
         {
             Name = name;
             ResultType = resType;
             SubExprType = sub;
+            this.Execution = exe;
         }
 
         public override string ToString()
@@ -82,6 +87,11 @@ namespace Cheez.Compiler
         public int Accepts(CheezType sub)
         {
             throw new System.NotImplementedException();
+        }
+
+        public object Execute(object value)
+        {
+            return Execution?.Invoke(value);
         }
     }
 }

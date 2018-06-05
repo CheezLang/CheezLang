@@ -954,6 +954,13 @@ namespace Cheez.Compiler.Parsing
                 }
                 return new PTUnaryExpr(next.location, sub.End, op, sub);
             }
+            else if (next.type == TokenType.Bang)
+            {
+                NextToken();
+                SkipNewlines();
+                var sub = ParseUnaryExpression(errorMessage);
+                return new PTUnaryExpr(next.location, sub.End, "!", sub);
+            }
 
             return ParsePostUnaryExpression(errorMessage);
         }

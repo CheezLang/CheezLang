@@ -165,7 +165,7 @@ namespace Cheez.Compiler
 
         private void GetOperator(string name, CheezType sub, List<IUnaryOperator> result, ref int level)
         {
-            if (!mOperatorTable.ContainsKey(name))
+            if (!mUnaryOperatorTable.ContainsKey(name))
             {
                 Parent?.GetOperator(name, sub, result, ref level);
                 return;
@@ -275,11 +275,29 @@ namespace Cheez.Compiler
 
             DefineLogicOperators(new CheezType[] { BoolType.Instance }, 
                 ("and", (a, b) => (bool)a && (bool)b), 
-                ("or", (a, b) => (bool)a || (bool)b));
+                ("or", (a, b) => (bool)a || (bool)b),
+                ("==", (a, b) => (bool)a == (bool)b),
+                ("!=", (a, b) => (bool)a != (bool)b));
 
             //
             DefineArithmeticUnaryOperators(intTypes, "-", "+");
             DefineArithmeticUnaryOperators(floatTypes, "-", "+");
+
+            DefineUnaryOperator("!", CheezType.Bool, b => !(bool)b);
+        }
+
+        private void DefineUnaryOperator(string name, CheezType type, BuiltInUnaryOperator.ComptimeExecution exe)
+        {
+            List<IUnaryOperator> list = null;
+            if (mUnaryOperatorTable.ContainsKey(name))
+                list = mUnaryOperatorTable[name];
+            else
+            {
+                list = new List<IUnaryOperator>();
+                mUnaryOperatorTable[name] = list;
+            }
+
+            list.Add(new BuiltInUnaryOperator(name, type, type, exe));
         }
 
         private void DefineLogicOperators(CheezType[] types, params (string name, BuiltInOperator.ComptimeExecution exe)[] ops)

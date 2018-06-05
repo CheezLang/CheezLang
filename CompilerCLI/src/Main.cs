@@ -190,9 +190,7 @@ namespace CheezCLI
             if (!success)
                 return false;
 
-            if (true)
-                return generator.CompileCode(errorHandler);
-            return success;
+            return generator.CompileCode(errorHandler);
         }
 
 

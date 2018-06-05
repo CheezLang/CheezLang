@@ -609,6 +609,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             function.Scope = scope;
             function.HeaderScope = NewScope($"fn {function.Name}()", function.Scope);
             function.SubScope = NewScope("{}", function.HeaderScope);
+            function.Text = context.Text;
 
             foreach (var v in VisitFunctionHeader(function, context))
                 yield return v;
@@ -791,7 +792,12 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 variable.TypeExpr.Scope = variable.Scope;
                 foreach (var v in variable.TypeExpr.Accept(this, context.Clone()))
-                    yield return v;
+                {
+                    if (v is ReplaceAstExpr r)
+                        variable.TypeExpr = r.NewExpression;
+                    else
+                        yield return v;
+                }
                 if (variable.TypeExpr.Value is CheezType t)
                     variable.Type = t;
                 else
@@ -959,8 +965,6 @@ namespace Cheez.Compiler.SemanticAnalysis
                             yield return CheezType.Error;
                             yield break;
                         }
-
-                        yield break;
                     }
             }
         }
@@ -1101,6 +1105,187 @@ namespace Cheez.Compiler.SemanticAnalysis
                         }
 
                         foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(type.Size)), context))
+                            yield return v;
+                        break;
+                    }
+
+                case "typeof":
+                    {
+                        if (call.Arguments.Count < 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(0)), context))
+                                yield return v;
+                        }
+                        if (call.Arguments.Count > 1)
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires only one argument");
+
+                        var arg = call.Arguments[0];
+
+                        CheezType type = CheezType.Error;
+                        if (arg.Type == CheezType.Type)
+                        {
+                            type = arg.Value as CheezType;
+                        }
+                        else
+                        {
+                            type = arg.Type;
+                        }
+
+                        foreach (var v in ReplaceAstExpr(new AstTypeExpr(call.GenericParseTreeNode, type), context))
+                            yield return v;
+                        break;
+                    }
+
+                case "isint":
+                    {
+                        if (call.Arguments.Count != 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                                yield return v;
+                        }
+
+                        var arg = call.Arguments[0];
+                        var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
+
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is IntType), context))
+                            yield return v;
+                        break;
+                    }
+
+                case "isbool":
+                    {
+                        if (call.Arguments.Count != 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                                yield return v;
+                        }
+
+                        var arg = call.Arguments[0];
+                        var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
+
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type == CheezType.Bool), context))
+                            yield return v;
+                        break;
+                    }
+
+                case "isfloat":
+                    {
+                        if (call.Arguments.Count != 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                                yield return v;
+                        }
+
+                        var arg = call.Arguments[0];
+                        var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
+
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is FloatType), context))
+                            yield return v;
+                        break;
+                    }
+
+                case "ispointer":
+                    {
+                        if (call.Arguments.Count != 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                                yield return v;
+                        }
+
+                        var arg = call.Arguments[0];
+                        var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
+
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is PointerType), context))
+                            yield return v;
+                        break;
+                    }
+
+                case "isarray":
+                    {
+                        if (call.Arguments.Count != 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                                yield return v;
+                        }
+
+                        var arg = call.Arguments[0];
+                        var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
+
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is ArrayType), context))
+                            yield return v;
+                        break;
+                    }
+
+                case "isstring":
+                    {
+                        if (call.Arguments.Count != 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                                yield return v;
+                        }
+
+                        var arg = call.Arguments[0];
+                        var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
+
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is StringType), context))
+                            yield return v;
+                        break;
+                    }
+
+                case "isstruct":
+                    {
+                        if (call.Arguments.Count != 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                                yield return v;
+                        }
+
+                        var arg = call.Arguments[0];
+                        var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
+
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is StructType), context))
+                            yield return v;
+                        break;
+                    }
+
+                case "isenum":
+                    {
+                        if (call.Arguments.Count != 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                                yield return v;
+                        }
+
+                        var arg = call.Arguments[0];
+                        var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
+
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is EnumType), context))
+                            yield return v;
+                        break;
+                    }
+
+                case "isfunction":
+                    {
+                        if (call.Arguments.Count != 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                                yield return v;
+                        }
+
+                        var arg = call.Arguments[0];
+                        var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
+
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is FunctionType), context))
                             yield return v;
                         break;
                     }
@@ -1329,15 +1514,31 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (ops.Count > 1)
             {
                 context.ReportError(bin.GenericParseTreeNode, $"Multiple operators match the type '{bin.SubExpr.Type}");
+                yield break;
             }
             else if (ops.Count == 0)
             {
                 context.ReportError(bin.GenericParseTreeNode, $"No operator matches the type '{bin.SubExpr.Type}'");
+                yield break;
             }
-            else
+
+            var op = ops[0];
+            bin.Type = op.ResultType;
+
+
+            if (bin.SubExpr.IsCompTimeValue)
             {
-                var op = ops[0];
-                bin.Type = op.ResultType;
+                var result = op.Execute(bin.SubExpr.Value);
+
+                if (result != null)
+                {
+                    if (result is bool b)
+                    {
+                        bin.Type = CheezType.Bool;
+                        bin.Value = b;
+                        bin.IsCompTimeValue = true;
+                    }
+                }
             }
 
             yield break;
@@ -1638,7 +1839,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
 
                 var errorHandler = new SilentErrorHandler();
-                var subContext = new SemanticerData(g.Declaration.Scope, context.Text, null, g.Declaration.ImplBlock, null, errorHandler);
+                var subContext = new SemanticerData(g.Declaration.Scope, g.Declaration.Text, null, g.Declaration.ImplBlock, null, errorHandler);
 
                 foreach (var v in VisitFunctionHeader(instance, subContext)) // @Todo: implTarget, text
                     yield return v;
@@ -1873,7 +2074,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
 
             if (!CastIfLiteral(cast.SubExpression.Type, cast.Type, out var type))
-                ;
+            { }
             //{
             //    yield return new LambdaError(eh => eh.ReportError(data.Text, cast.ParseTreeNode, $"Can't cast a value of to '{cast.SubExpression.Type}' to '{cast.Type}'"));
             //}

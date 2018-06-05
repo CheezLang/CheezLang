@@ -173,6 +173,9 @@ namespace Cheez.Compiler
     {
         public static BoolType Instance = new BoolType { Size = 1 };
 
+        private BoolType()
+        {}
+
         public override string ToString()
         {
             return "bool";

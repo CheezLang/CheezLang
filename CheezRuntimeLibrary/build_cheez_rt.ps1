@@ -24,5 +24,5 @@ if ($configuration.Equals("Debug")) {
 }
 
 
-clang -target $targetTriple -c -o ".\$targetDir\$targetFileName.obj" "src\source.c"
+&"D:\Program Files (x86)\LLVM\bin\clang.exe" -target $targetTriple -c -o ".\$targetDir\$targetFileName.obj" "src\source.c"
 

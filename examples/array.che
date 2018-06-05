@@ -1,0 +1,80 @@
+#load("memory.che")
+
+struct Array(ElementType: type) {
+    data: ElementType[]
+    length: uint
+    capacity: uint
+}
+
+impl Array($ElementType) {
+    ref fn Init() {
+        length = 0
+        capacity = 10
+        data = AllocateArray(capacity)
+    }
+    
+    ref fn InitSize(size: uint) {
+        length = 0
+        capacity = size
+        data = AllocateArray(capacity)
+    }
+
+    ref fn Delete() {
+        FreeArray(data)
+    }
+
+    ref fn RawData() -> ElementType^ {
+        return (T^)data
+    }
+
+    ref fn Reserve(s: uint) {
+        if s <= capacity {
+            return
+        }
+        capacity = s
+        data = ReallocArray(data, capacity)
+    }
+
+    ref fn Add(val: ElementType) {
+        if capacity <= length {
+            capacity = capacity * 2
+            data = ReallocArray(data, capacity)
+        }
+
+        data[length] = val
+        length = length + 1
+    }
+
+    ref fn Get(index: $IndexType) -> ElementType {
+        if !@isint(IndexType) {
+            @error("Index must be an int")
+            return data[0]
+        }
+        else {
+            return data[index]
+        }
+    }
+
+    ref fn Set(index: $IndexType, value: ElementType) {
+        if !@isint(IndexType) {
+            @error("Index must be an int")
+            return
+        }
+        else {
+            data[index] = value
+        }
+    }
+
+    ref fn Convert() -> Array($X) {
+        let r: Array(X)
+        r.Init()
+        r.Reserve(length)
+
+        while r.length < length {
+            r.data[r.length] = (X)data[r.length]
+            r.length = r.length + 1
+        }
+
+        return r
+    }
+}

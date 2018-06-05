@@ -14,6 +14,7 @@ namespace Cheez.Compiler.CodeGeneration
 {
     class VsWhere
     {
+#pragma warning disable 0649 // #warning directive
         public string instanceId;
         public string installDate;
         public string installationName;
@@ -28,6 +29,7 @@ namespace Cheez.Compiler.CodeGeneration
         public string channelUri;
         public string releaseNotes;
         public string thirdPartyNotices;
+#pragma warning restore CS0649 // #warning directive
     }
 
     static class LinkerUtil
@@ -57,7 +59,7 @@ namespace Cheez.Compiler.CodeGeneration
 
                 return (v, dir);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return (-1, null);
             }
@@ -212,18 +214,6 @@ namespace Cheez.Compiler.CodeGeneration
                 LLVM.PrintModuleToFile(module, $"{targetFile}.ll", out string llvmErrors);
                 if (!string.IsNullOrWhiteSpace(llvmErrors))
                     Console.Error.WriteLine($"[LLVM-validate-print] {llvmErrors}");
-            }
-
-            // run code
-            if (false)
-            {
-                var res = LLVM.CreateExecutionEngineForModule(out var exe, module, out var llvmErrors);
-                System.Console.Error.WriteLine(llvmErrors);
-                if (res.Value == 0)
-                {
-                    var main = valueMap[workspace.MainFunction];
-                    int result = LLVM.RunFunctionAsMain(exe, main, 0, new string[0], new string[0]);
-                }
             }
 
             {
@@ -755,6 +745,18 @@ namespace Cheez.Compiler.CodeGeneration
                 LLVM.DisposeBuilder(builder);
             }
 
+            var bb = LLVM.GetFirstBasicBlock(lfunc);
+            while (bb.Pointer.ToInt64() != 0)
+            {
+                var firstInst = bb.GetFirstInstruction();
+                if (firstInst.Pointer.ToInt64() == 0)
+                {
+                    bb.RemoveBasicBlockFromParent();
+                }
+
+                bb = bb.GetNextBasicBlock();
+            }
+
             LLVM.VerifyFunction(lfunc, LLVMVerifierFailureAction.LLVMPrintMessageAction);
 
             return lfunc;
@@ -765,7 +767,7 @@ namespace Cheez.Compiler.CodeGeneration
             var prevBB = data.BasicBlock;
             var nextBB = prevBB;
 
-            if (!ret.GetFlag(StmtFlags.IsLastStatementInBlock))
+            //if (!ret.GetFlag(StmtFlags.IsLastStatementInBlock))
                 nextBB = LLVM.AppendBasicBlock(data.Function, "ret");
 
             LLVMValueRef? retInts = null;
@@ -826,49 +828,37 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitIfStatement(AstIfStmt ifs, LLVMCodeGeneratorData data = null)
         {
-            var bbPrev = data.BasicBlock;
+            var bbIfBody = LLVM.AppendBasicBlock(data.Function, "if_body");
+            var bbEnd = LLVM.AppendBasicBlock(data.Function, "if_end");
+            LLVMBasicBlockRef? bbElseBody = null;
+            if (ifs.ElseCase != null)
+                bbElseBody = LLVM.AppendBasicBlock(data.Function, "else_body");
 
             // Condition
             var cond = ifs.Condition.Accept(this, data);
-            bbPrev = data.BasicBlock;
+            if (ifs.ElseCase != null)
+                LLVM.BuildCondBr(data.Builder, cond, bbIfBody, bbElseBody.Value);
+            else
+                LLVM.BuildCondBr(data.Builder, cond, bbIfBody, bbEnd);
+
 
             // if body
-            var bbIfBody = LLVM.AppendBasicBlock(data.Function, "if_body");
             LLVM.PositionBuilderAtEnd(data.Builder, bbIfBody);
             data.BasicBlock = bbIfBody;
             ifs.IfCase.Accept(this, data);
-            var bbIfBodyEnd = data.BasicBlock;
+            //if (!ifs.IfCase.GetFlag(StmtFlags.Returns))
+                LLVM.BuildBr(data.Builder, bbEnd);
 
             // else body
-            var bbElseBody = LLVM.AppendBasicBlock(data.Function, "else_body");
-            var bbElseBodyEnd = bbElseBody;
-            LLVM.PositionBuilderAtEnd(data.Builder, bbElseBody);
             if (ifs.ElseCase != null)
             {
-                data.BasicBlock = bbElseBody;
+                LLVM.PositionBuilderAtEnd(data.Builder, bbElseBody.Value);
+                data.BasicBlock = bbElseBody.Value;
                 ifs.ElseCase.Accept(this, data);
-                bbElseBodyEnd = data.BasicBlock;
+                LLVM.BuildBr(data.Builder, bbEnd);
             }
 
             //
-            var bbEnd = LLVM.AppendBasicBlock(data.Function, "if_end");
-
-            // connect basic blocks
-            LLVM.PositionBuilderAtEnd(data.Builder, bbPrev);
-            LLVM.BuildCondBr(data.Builder, cond, bbIfBody, bbElseBody);
-
-            if (!ifs.IfCase.GetFlag(StmtFlags.Returns))
-            {
-                LLVM.PositionBuilderAtEnd(data.Builder, bbIfBodyEnd);
-                LLVM.BuildBr(data.Builder, bbEnd);
-            }
-
-            if (!(ifs.ElseCase?.GetFlag(StmtFlags.Returns) ?? false))
-            {
-                LLVM.PositionBuilderAtEnd(data.Builder, bbElseBodyEnd);
-                LLVM.BuildBr(data.Builder, bbEnd);
-            }
-
             LLVM.PositionBuilderAtEnd(data.Builder, bbEnd);
             data.BasicBlock = bbEnd;
 

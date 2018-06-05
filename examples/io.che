@@ -21,14 +21,6 @@ fn PrintChar(c: byte) {
     WriteFile(__std_out_handle, (string)&c, 1, &bytesWritten, 0)
 }
 
-fn clearmem(mem: byte^, len: int) {
-    let i: int = 0
-    while (i < len) {
-        mem[i] = 0
-        i = i + 1
-    }
-}
-
 fn PrintDigit(d: int) {
     PrintChar((byte)d + 48)
 }
@@ -39,19 +31,30 @@ fn PrintInt(num: $T) {
         PrintDigit(0)
         return
     }
-    let bufferSize: int = 30
+    let bufferSize: uint = 30
     let buff: byte^ = Malloc(bufferSize)
-    clearmem(buff, bufferSize)
+    ClearMemory(buff, bufferSize)
 
     let neg = false
+    let minimum = false
     if num < 0 {
         neg = true
         num = -num
+
+        if num < 0 {
+            // num is minimum value
+            num = -(num + 1)
+            minimum = true
+        }
     }
 
-    let i: int = bufferSize - 2
+    let i: uint = bufferSize - 2
     while i > 0 and num != 0 {
         let lastDigit = num % 10
+        if i == (bufferSize - 2) and minimum {
+            lastDigit = lastDigit + 1
+        }
+
         num = num / 10
         buff[i] = (byte)lastDigit + 48
         i = i - 1
@@ -62,7 +65,7 @@ fn PrintInt(num: $T) {
         i = i - 1
     }
 
-    let str = (string)((int)buff + i + 1)
+    let str = (string)((uint)buff + i + 1)
     PrintString(str)
 
     Free(buff)
@@ -209,15 +212,15 @@ fn PrintlnValue(v: $T) {
 }
 
 fn PrintValue(v: $T) {
-    if @typeseq(bool, T) {
+    if @isbool(T) {
         if v {
             PrintString("true")
         } else {
             PrintString("false")
         }
-    } else if @typeseq(T, i8) or @typeseq(T, i16) or @typeseq(T, i32) or @typeseq(T, i64) {
+    } else if @isint(T) {
         PrintInt(v)
-    } else if @typeseq(string, T) {
+    } else if @isstring(T) {
         PrintString(v)
     } else {
         @error("Can't print value of unknown type")
