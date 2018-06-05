@@ -1,4 +1,4 @@
-// #load("io.che")
+#load("io.che")
 
 fn Main()
 {
@@ -8,13 +8,22 @@ fn Main()
     a.Print()
 
     let i = 0
-    while i < 0 {
+    while i < 50 {
         a.Add(i)
         a.Print()
         i = i + 2
     }
 
+    let b: Array(byte) = a.Convert()
+
     a.Delete()
+
+    Println("-------------------------------------")
+    b.Print()
+    b.Delete()
+
+    Printlnf("Size of a[0]: {i32}", @sizeof(a.data[0]))
+    Printlnf("Size of b[0]: {i32}", @sizeof(b.data[0]))
 }
 
 struct Array(ElementType: type) {
@@ -31,46 +40,67 @@ impl Array($T) {
     ref fn Init() {
         length = 0
         capacity = 10
-        // data = AllocateArray(capacity)
+        data = AllocateArray(capacity)
     }
 
     ref fn Delete() {
-        // FreeArray(data)
+        FreeArray(data)
+    }
+
+    ref fn Reserve(s: int) {
+        if s <= capacity {
+            return
+        }
+        capacity = s
+        data = ReallocArray(data, capacity)
     }
 
     ref fn Add(val: T) {
         if capacity <= length {
             capacity = capacity * 2
-            // data = ReallocArray(data, capacity)
+            data = ReallocArray(data, capacity)
         }
 
         data[length] = val
         length = length + 1
     }
 
+    ref fn Convert() -> Array($X) {
+        let r: Array(X)
+        r.Init()
+        r.Reserve(length)
+
+        while r.length < length {
+            r.data[r.length] = (X)data[r.length]
+            r.length = r.length + 1
+        }
+
+        return r
+    }
+
     ref fn Print() {
-    //     PrintString("(")
-    //     PrintInt(length)
-    //     PrintString("/")
-    //     PrintInt(capacity)
-    //     PrintString(") [")
+        PrintString("(")
+        PrintInt(length)
+        PrintString("/")
+        PrintInt(capacity)
+        PrintString(") [")
 
-    //     let first = true
-    //     let i = 0
-    //     while i < capacity {
-    //         if i > 0 {
-    //             PrintString(", ")
-    //         }
+        let first = true
+        let i = 0
+        while i < capacity {
+            if i > 0 {
+                PrintString(", ")
+            }
 
-    //         if i < length {
-    //             PrintValue(data[i])
-    //         } else {
-    //             PrintString("_")
-    //         }
+            if i < length {
+                PrintValue(data[i])
+            } else {
+                PrintString("_")
+            }
 
-    //         i = i + 1
-    //     }
+            i = i + 1
+        }
         
-    //     Println("]")
+        Println("]")
     }
 }

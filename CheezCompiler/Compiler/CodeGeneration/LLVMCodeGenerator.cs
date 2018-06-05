@@ -548,26 +548,26 @@ namespace Cheez.Compiler.CodeGeneration
             }
 
             // impl functions
-            foreach (var impl in workspace.GlobalScope.ImplBlocks)
-            {
-                foreach (var function in impl.SubScope.FunctionDeclarations)
-                {
-                    GenerateFunctionHeader(function);
-                }
-            }
+            //foreach (var impl in workspace.GlobalScope.ImplBlocks)
+            //{
+            //    foreach (var function in impl.SubScope.FunctionDeclarations)
+            //    {
+            //        GenerateFunctionHeader(function);
+            //    }
+            //}
 
             // create implementations
             foreach (var f in workspace.GlobalScope.FunctionDeclarations)
             {
                 f.Accept(this, null);
             }
-            foreach (var impl in workspace.GlobalScope.ImplBlocks)
-            {
-                foreach (var function in impl.SubScope.FunctionDeclarations)
-                {
-                    function.Accept(this, null);
-                }
-            }
+            //foreach (var impl in workspace.GlobalScope.ImplBlocks)
+            //{
+            //    foreach (var function in impl.SubScope.FunctionDeclarations)
+            //    {
+            //        function.Accept(this, null);
+            //    }
+            //}
         }
 
         private void GenerateFunctionHeader(AstFunctionDecl function)
@@ -639,8 +639,8 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitStructDeclaration(AstStructDecl type, LLVMCodeGeneratorData data = null)
         {
-            var ct = type.Type;
-            var llvmType = CheezTypeToLLVMType(ct);
+            //var ct = type.Type;
+            //var llvmType = CheezTypeToLLVMType(ct);
 
             return default;
         }
