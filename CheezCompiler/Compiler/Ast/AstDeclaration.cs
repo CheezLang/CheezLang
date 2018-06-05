@@ -248,6 +248,16 @@ namespace Cheez.Compiler.Ast
                 mFlags = this.mFlags
             };
         }
+
+        public override string ToString()
+        {
+            var str = Name.Name;
+            if (Parameters?.Count > 0)
+            {
+                str += $"({string.Join(", ", Parameters.Select(p => $"{p.Name}: {p.Type}"))})";
+            }
+            return str;
+        }
     }
 
     public class AstImplBlock : AstStatement

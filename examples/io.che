@@ -202,3 +202,24 @@ fn Printlnfn(format: string, args: any[]) {
     Printfn(format, args)
     Println("")
 }
+
+fn PrintlnValue(v: $T) {
+    PrintValue(v)
+    Println("")
+}
+
+fn PrintValue(v: $T) {
+    if @typeseq(bool, T) {
+        if v {
+            PrintString("true")
+        } else {
+            PrintString("false")
+        }
+    } else if @typeseq(T, i8) or @typeseq(T, i16) or @typeseq(T, i32) or @typeseq(T, i64) {
+        PrintInt(v)
+    } else if @typeseq(string, T) {
+        PrintString(v)
+    } else {
+        @error("Can't print value of unknown type")
+    }
+}

@@ -496,17 +496,6 @@ namespace Cheez.Compiler.SemanticAnalysis
         private IEnumerable<object> VisitFunctionHeader(AstFunctionDecl function, SemanticerData context)
         {
             function.ImplTarget = context.ImplTarget;
-            if (function.ImplTarget != null)
-            {
-                var tar = function.ImplTarget;
-                while (tar is PointerType p)
-                    tar = p.TargetType;
-
-                if (tar is StructType @struct)
-                {
-                    Using(function.SubScope, @struct, function.Parameters[0]);
-                }
-            }
 
             if (!function.IsPolyInstance && ((function.ReturnTypeExpr?.IsPolymorphic ?? false) || function.Parameters.Any(p => p.TypeExpr.IsPolymorphic)))
             {
@@ -550,12 +539,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                 p.Scope = function.HeaderScope;
 
                 // infer type
-                foreach (var v in p.TypeExpr.Accept(this, new SemanticerData(Scope: function.HeaderScope, Text: context.Text, Function: function, Impl: context.ImplTarget)))
+                foreach (var v in p.TypeExpr.Accept(this, new SemanticerData(Scope: function.HeaderScope, Text: context.Text, Function: function, Impl: context.ImplTarget, ErrorHandler: context.ErrorHandler)))
                     yield return v;
                 if (p.TypeExpr.Value is CheezType t)
                     p.Type = t;
                 else
-                    context.ReportError(function.ReturnTypeExpr.GenericParseTreeNode, $"Expected type, got {p.TypeExpr.Type}");
+                    context.ReportError(p.TypeExpr.GenericParseTreeNode, $"Expected type, got {p.TypeExpr.Type}");
 
                 if (!function.HeaderScope.DefineSymbol(p))
                 {
@@ -577,6 +566,18 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         private IEnumerable<object> VisitFunctionBody(AstFunctionDecl function, SemanticerData context)
         {
+            if (function.ImplTarget != null)
+            {
+                var tar = function.ImplTarget;
+                while (tar is PointerType p)
+                    tar = p.TargetType;
+
+                if (tar is StructType @struct)
+                {
+                    Using(function.SubScope, @struct, function.Parameters[0]);
+                }
+            }
+
             var subData = context.Clone(Scope: function.SubScope, Function: function);
             foreach (var v in function.Body.Accept(this, subData))
                 yield return v;
@@ -630,7 +631,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     context.ReportError(ifs.ParseTreeNode.Condition, $"if-statement condition must be of type 'bool', got '{ifs.Condition.Type}'");
                 }
             }
-            
+
             if (ifs.Condition.Type == CheezType.Bool && ifs.Condition.IsCompTimeValue)
             {
                 var b = (bool)ifs.Condition.Value;
@@ -902,23 +903,20 @@ namespace Cheez.Compiler.SemanticAnalysis
             // add self parameter
             foreach (var f in impl.Functions)
             {
-                var selfType = impl.TargetTypeExpr.Clone();
+                AstExpression selfType = new AstTypeExpr(impl.TargetTypeExpr.GenericParseTreeNode, impl.TargetType); // impl.TargetTypeExpr.Clone();
                 if (f.RefSelf)
                     selfType = new AstPointerTypeExpr(selfType.GenericParseTreeNode, selfType)
                     {
                         IsReference = true
                     };
                 f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(null, "self", false), selfType));
-                //scope.DefineImplFunction(impl.TargetType, f);
             }
 
             foreach (var f in impl.Functions)
             {
-                var cc = f.Accept(this, context.Clone(Scope: impl.SubScope, Impl: impl.TargetType))
+                var cc = f.Accept(this, context.Clone(Scope: impl.SubScope, Impl: impl.TargetType, ErrorHandler: context.ErrorHandler))
                     .WithAction(() => scope.DefineImplFunction(impl.TargetType, f));
                 yield return new CompileStatement(cc);
-                //foreach (var v in f.Accept(this, data.Clone(Scope: impl.SubScope, Impl: impl.TargetType)))
-                //    yield return v;
             }
 
             scope.ImplBlocks.Add(impl);
@@ -1061,7 +1059,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             yield return v;
                         break;
                     }
-                    
+
                 default:
                     context.ReportError(call.Name.GenericParseTreeNode, $"Unknown comptime function '@{name}'");
                     call.Type = CheezType.Error;
@@ -1625,7 +1623,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else if (call.Function.Type != CheezType.Error)
             {
-                context.ReportError(call.Function.GenericParseTreeNode, $"Type .{call.Function.Type}' is not a callable type");
+                context.ReportError(call.Function.GenericParseTreeNode, $"Type '{call.Function.Type}' is not a callable type");
             }
 
             yield break;
@@ -1787,7 +1785,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             dot.Scope = context.Scope;
 
-            foreach (var v in dot.Left.Accept(this, context.Clone(ExpectedType: null)))
+            foreach (var v in dot.Left.Accept(this, context.Clone(ExpectedType: null, ErrorHandler: context.ErrorHandler)))
                 if (v is ReplaceAstExpr r)
                     dot.Left = r.NewExpression;
                 else
@@ -1851,6 +1849,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                 dot.SetFlag(ExprFlags.IsLValue);
             }
 
+            yield break;
+        }
+
+        public override IEnumerable<object> VisitTypeExpr(AstTypeExpr astArrayTypeExpr, SemanticerData data = null)
+        {
+            astArrayTypeExpr.Value = astArrayTypeExpr.Type;
             yield break;
         }
 

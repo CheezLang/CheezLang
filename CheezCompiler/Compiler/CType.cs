@@ -105,6 +105,11 @@ namespace Cheez.Compiler
         public static CheezTypeType Instance { get; } = new CheezTypeType();
 
         public override bool IsPolyType => false;
+
+        public override string ToString()
+        {
+            return "type";
+        }
     }
 
     public class GenericFunctionType : CheezType
@@ -385,7 +390,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return $"{Declaration.Name}";
+            return Declaration.ToString();
         }
 
         public int GetIndexOfMember(string right)
