@@ -119,7 +119,8 @@ namespace Cheez.Compiler.Ast
         public Dictionary<string, AstExpression> PolymorphicTypeExprs { get; internal set; }
         public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
 
-        public CheezType ImplTarget { get; set; }
+        //public CheezType ImplTarget { get; set; }
+        public AstImplBlock ImplBlock { get; set; }
 
         public AstFunctionDecl(ParseTree.PTStatement node,
             AstIdentifierExpr name,
@@ -168,7 +169,8 @@ namespace Cheez.Compiler.Ast
                 SubScope = null,
                 Directives = this.Directives,
                 mFlags = this.mFlags,
-                ReturnType = this.ReturnType
+                ReturnType = this.ReturnType,
+                ImplBlock = this.ImplBlock
             };
         }
     }
@@ -254,7 +256,7 @@ namespace Cheez.Compiler.Ast
             var str = Name.Name;
             if (Parameters?.Count > 0)
             {
-                str += $"({string.Join(", ", Parameters.Select(p => $"{p.Name}: {p.Type}"))})";
+                str += $"({string.Join(", ", Parameters.Select(p => $"{p.Value}"))})";
             }
             return str;
         }

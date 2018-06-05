@@ -614,15 +614,20 @@ namespace Cheez.Compiler.Ast
         public string Name { get; set; }
         public ISymbol Symbol { get; set; }
 
-        public override bool IsPolymorphic => IsPolymorphicExpression;
-        public bool IsPolymorphicExpression { get; set; }
+        public override bool IsPolymorphic => _isPolymorphic;
+        private bool _isPolymorphic;
 
         [DebuggerStepThrough]
         public AstIdentifierExpr(ParseTree.PTExpr node, string name, bool isPolyTypeExpr) : base()
         {
             GenericParseTreeNode = node;
             this.Name = name;
-            this.IsPolymorphicExpression = isPolyTypeExpr;
+            this._isPolymorphic = isPolyTypeExpr;
+        }
+
+        public void SetIsPolymorphic(bool b)
+        {
+            _isPolymorphic = b;
         }
 
         [DebuggerStepThrough]

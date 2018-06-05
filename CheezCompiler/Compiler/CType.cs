@@ -383,9 +383,17 @@ namespace Cheez.Compiler
 
         public bool Analyzed { get; set; } = false;
 
+        public CheezType[] Arguments { get; }
+
         public StructType(AstStructDecl decl)
         {
             Declaration = decl;
+            Arguments = decl.Parameters.Select(p => p.Value as CheezType).ToArray();
+        }
+        
+        public StructType(CheezType[] args)
+        {
+            Arguments = args;
         }
 
         public override string ToString()

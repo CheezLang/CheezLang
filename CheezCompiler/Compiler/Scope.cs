@@ -81,7 +81,7 @@ namespace Cheez.Compiler
         private Dictionary<string, ISymbol> mSymbolTable = new Dictionary<string, ISymbol>();
         private Dictionary<string, List<IOperator>> mOperatorTable = new Dictionary<string, List<IOperator>>();
         private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
-        private Dictionary<CheezType, List<AstFunctionDecl>> mImplTable = new Dictionary<CheezType, List<AstFunctionDecl>>();
+        private Dictionary<AstImplBlock, List<AstFunctionDecl>> mImplTable = new Dictionary<AstImplBlock, List<AstFunctionDecl>>();
 
         public IEnumerable<KeyValuePair<string, ISymbol>> Symbols => mSymbolTable.AsEnumerable();
 
@@ -384,12 +384,12 @@ namespace Cheez.Compiler
             return Parent?.GetSymbol(name);
         }
 
-        public bool DefineImplFunction(CheezType targetType, AstFunctionDecl f)
+        public bool DefineImplFunction(AstFunctionDecl f)
         {
-            if (!mImplTable.TryGetValue(targetType, out var list))
+            if (!mImplTable.TryGetValue(f.ImplBlock, out var list))
             {
                 list = new List<AstFunctionDecl>();
-                mImplTable[targetType] = list;
+                mImplTable[f.ImplBlock] = list;
             }
 
             if (list.Any(ff => ff.Name == f.Name))
@@ -400,43 +400,48 @@ namespace Cheez.Compiler
             return true;
         }
 
+        private bool TypesMatch(CheezType a, CheezType b)
+        {
+            if (a == b)
+                return true;
+
+            if (Util.Xor(a is PolyType, b is PolyType))
+                return true;
+
+            if (a is StructType sa && b is StructType sb)
+            {
+                if (sa.Arguments.Length != sb.Arguments.Length)
+                    return false;
+                for (int i = 0; i < sa.Arguments.Length; i++)
+                {
+                    if (!TypesMatch(sa.Arguments[i], sb.Arguments[i]))
+                        return false;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
         public AstFunctionDecl GetImplFunction(CheezType targetType, string name)
         {
-            if (mImplTable.TryGetValue(targetType, out var list))
+            var impl = mImplTable.FirstOrDefault(kv =>
+            {
+                var implType = kv.Key.TargetType;
+                if (TypesMatch(implType, targetType))
+                    return true;
+                return false;
+            });
+            var list = impl.Value;
+
+            if (list != null)
             {
                 return list.FirstOrDefault(f => f.Name.Name == name) ?? Parent?.GetImplFunction(targetType, name);
             }
 
             return Parent?.GetImplFunction(targetType, name);
         }
-
-        //public EnumType DefineType(AstEnumDecl en)
-        //{
-        //    if (types.GetCheezType(en.Name.Name) != null)
-        //        return null;
-
-        //    var type = new EnumType(en);
-        //    types.CreateAlias(en.Name.Name, type);
-        //    return type;
-        //}
-
-        //public bool DefineType(AstTypeDecl t)
-        //{
-        //    if (types.GetCheezType(t.Name.Name) != null)
-        //        return false;
-
-        //    types.CreateAlias(t.Name.Name, new StructType(t));
-        //    return true;
-        //}
-
-        //public bool DefineType(string name, CheezType type)
-        //{
-        //    if (types.GetCheezType(name) != null)
-        //        return false;
-
-        //    types.CreateAlias(name, type);
-        //    return true;
-        //}
 
         public override string ToString()
         {

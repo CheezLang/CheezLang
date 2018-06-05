@@ -24,9 +24,10 @@ namespace Cheez.Compiler
 
     public static class Util
     {
-        private static int mId = 0;
-
-        public static int NewId => mId++;
+        public static bool Xor(bool a, bool b)
+        {
+            return (a && !b) || (!a && b);
+        }
 
         public static string Replace(this string str, params (string from, string to)[] reps)
         {
