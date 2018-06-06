@@ -414,6 +414,8 @@ namespace Cheez.Compiler.CodeGeneration
                 };
                 foreach (var g in workspace.GlobalScope.VariableDeclarations)
                 {
+                    if (g.IsConstant)
+                        continue;
                     if (g.Initializer != null)
                     {
                         var val = g.Initializer.Accept(this, d);
@@ -928,7 +930,11 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitAddressOfExpression(AstAddressOfExpr add, LLVMCodeGeneratorData data = null)
         {
-            var sub = add.SubExpression.Accept(this, data.Clone(Deref: false));
+            LLVMValueRef sub;
+            if (add.SubExpression.Type is ReferenceType)
+                sub = add.SubExpression.Accept(this, data.Clone(Deref: true));
+            else
+                sub = add.SubExpression.Accept(this, data.Clone(Deref: false));
             return sub;
         }
 

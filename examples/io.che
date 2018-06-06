@@ -1,12 +1,18 @@
 #load("string.che")
 #load("memory.che")
 #load("std/windows.che")
+#load("string.che")
 
 fn PrintString(s: $T) {
     let s = (string)s
     let len = strlen(s)
     let bytesWritten: int
     WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
+}
+
+fn PrintStringl(s: String^) {
+    let bytesWritten: int
+    WriteFile(__std_out_handle, (string)s.data, s.length, &bytesWritten, 0)
 }
 
 fn Println(s: string) {
@@ -100,6 +106,9 @@ fn PrintfData(formatSpecifier: byte^, data: any) {
     }
     else if streq(formatSpecifier, "s") {
         PrintString((string)data)
+    }
+    else if streq(formatSpecifier, "S") {
+        PrintStringl((String^)data)
     }
     else {
         PrintString("<Unknown format specifier: ")

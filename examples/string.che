@@ -1,3 +1,5 @@
+#load("memory.che")
+
 fn strlen(s: $T) -> int {
     let len: int = 0
     while s[len] != 0 {
@@ -9,15 +11,15 @@ fn strlen(s: $T) -> int {
 fn streql(a: $T, b: $T2, len: ulong) -> bool {
     let alen: ulong = (ulong)strlen(a)
     let blen: ulong = (ulong)strlen(b)
-    if (len > alen) {
+    if len > alen {
         len = alen
     }
-    if (len > blen) {
+    if len > blen {
         len = blen
     }
 
     let i: ulong = 0
-    while (i < len) {
+    while i < len {
         if a[i] != b[i] {
             return false
         }
@@ -30,7 +32,7 @@ fn streql(a: $T, b: $T2, len: ulong) -> bool {
 fn streq(a: $T, b: $T2) -> bool {
     let len: ulong = (ulong)strlen(a)
     let blen: ulong = (ulong)strlen(b)
-    if (len > blen) {
+    if len > blen {
         len = blen
     }
 
@@ -44,3 +46,77 @@ fn streq(a: $T, b: $T2) -> bool {
     }
     return true
 }
+
+struct StringBase(CharType: type) {
+    data: CharType^
+    length: int
+}
+
+fn NewString() -> String {
+    let s: String
+    s.data = (i8^)0
+    s.length = 0
+    return s
+}
+
+impl string {
+    fn ToString() -> String {
+        let s = NewString()
+        s.FromString(self)
+        return s
+    }
+}
+
+impl StringBase($CharType) {
+    ref fn FromString(str: string) -> StringBase(CharType)^ {
+        if (ulong)data != 0 {
+            // @Todo:
+            //self.Dispose()
+            Free((void^)data)
+            data = (CharType^)0
+            length = 0
+        }
+
+        length = strlen(str)
+        data = Malloc((uint)length)
+
+        if @sizeof(CharType) == 1 {
+            memcpy((void^)data, (void^)str, length)
+        } else {
+            let i = 0
+            while i < length {
+                data[i] = (CharType)str[i]
+                i = i + 1
+            }
+        }
+
+        return &self
+    }
+
+    ref fn Append(other: StringBase(CharType)) -> StringBase(CharType)^ {
+        let newLength = length + other.length
+        data = Realloc(data, (uint)newLength)
+        let end = &data[length]
+        memcpy((void^)end, (void^)other.data, other.length)
+        length = newLength
+        return &self
+    }
+
+    ref fn AppendString(other: string) {
+        let otherLength = strlen(other)
+        let newLength = length + otherLength
+        data = Realloc(data, (uint)newLength)
+        let end = &data[length]
+        memcpy((void^)end, (void^)other, otherLength)
+        length = newLength
+    }
+
+    ref fn Dispose() {
+        Free((void^)data)
+        data = (CharType^)0
+        length = 0
+    }
+}
+
+let String = StringBase(byte)
+let Utf32String = StringBase(int)

@@ -205,6 +205,27 @@ namespace Cheez.Compiler.Parsing
             }
         }
 
+        private void RecoverStatement()
+        {
+            while (true)
+            {
+                var next = PeekToken();
+                switch (next.type)
+                {
+                    case TokenType.NewLine:
+                        NextToken();
+                        return;
+
+                    case TokenType.ClosingBrace:
+                        return;
+
+                    default:
+                        NextToken();
+                        break;
+                }
+            }
+        }
+
         public (bool done, PTStatement stmt) ParseStatement()
         {
             SkipNewlines();
@@ -217,7 +238,8 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.HashIdentifier:
                     {
                         var dir = new PTDirectiveStatement(ParseDirective());
-                        Consume(TokenType.NewLine, ErrMsg("\\n", "after directive statement"));
+                        if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after directive statement")))
+                            RecoverStatement();
                         return (false, dir);
                     }
 
@@ -257,12 +279,14 @@ namespace Cheez.Compiler.Parsing
                             NextToken();
                             SkipNewlines();
                             var val = ParseExpression();
-                            Consume(TokenType.NewLine, ErrMsg("\\n", "after assignment"));
+                            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after assignment")))
+                                RecoverStatement();
                             return (false, new PTAssignment(expr.Beginning, val.End, expr, val));
                         }
                         else
                         {
-                            Expect(TokenType.NewLine, ErrMsg("\\n", "after expression statement"));
+                            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after expression statement")))
+                                RecoverStatement();
                             return (false, new PTExprStmt(expr.Beginning, expr.End, expr));
                         }
                     }
@@ -320,7 +344,8 @@ namespace Cheez.Compiler.Parsing
             var beg = Consume(TokenType.KwUsing, ErrMsg("keyword 'using'", "at beginning of using statement")).location;
             SkipNewlines();
             var expr = ParseExpression(ErrMsg("expression", "after keyword 'using'"));
-            Consume(TokenType.NewLine, ErrMsg("\\n", "after using statement"));
+            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after using statement")))
+                RecoverStatement();
 
             return new PTUsingStatement(beg, expr);
         }
@@ -335,7 +360,8 @@ namespace Cheez.Compiler.Parsing
                 returnValue = ParseExpression();
             }
 
-            Consume(TokenType.NewLine, ErrMsg("\\n", "at end of return statement"));
+            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "at end of return statement")))
+                RecoverStatement();
 
             return new PTReturnStmt(beg, returnValue);
         }
@@ -566,7 +592,8 @@ namespace Cheez.Compiler.Parsing
         private PTExprStmt ParseExpressionStatement()
         {
             var expr = ParseExpression();
-            Consume(TokenType.NewLine, ErrMsg("\\n", "after expression statement"));
+            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after expression statement")))
+                RecoverStatement();
             return new PTExprStmt(expr.Beginning, expr.End, expr);
         }
 
@@ -606,7 +633,8 @@ namespace Cheez.Compiler.Parsing
                 end = init.End;
             }
 
-            Consume(TokenType.NewLine, ErrMsg("\\n", "after variable declaration"));
+            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after variable declaration")))
+                RecoverStatement();
 
             return new PTVariableDecl(beg, end, name, type, init, directives);
         }

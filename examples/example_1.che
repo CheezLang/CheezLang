@@ -3,32 +3,19 @@
 
 fn Main()
 {
-    let a: Array(int)
-    a.Init()
+    let s = "Hi".ToString()
+    Printlnf("str: {S}", &s)
 
-    PrintArray(&a)
+    s.AppendString(" du")
+    Printlnf("str: {S}", &s)
 
-    let i: int = 0
-    while i < 50 {
-        a.Add(i)
-        PrintArray(&a)
-        i = i + 2
-    }
+    s.AppendString(" lappen")
+    Printlnf("str: {S}", &s)
 
-    let b: Array(byte) = a.Convert()
+    s.AppendString("!")
+    Printlnf("str: {S}", &s)
 
-    a.Delete()
-
-    Println("-------------------------------------")
-    PrintArray(&b)
-    b.Set(0, 123)
-    PrintArray(&b)
-    b.Delete()
-
-    Println("-------------------------------------")
-    Printlnf("Size of a[0]: {i32}", @sizeof(a.data[0]))
-    Printlnf("Size of b[0]: {i32}", @sizeof(b.data[0]))
-
+    s.Dispose()
 }
 
 fn PrintArray(arr: Array($T)^) {

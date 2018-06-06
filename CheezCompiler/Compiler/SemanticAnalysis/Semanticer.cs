@@ -415,6 +415,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             call.Function = new AstStructExpression(call.Function.GenericParseTreeNode, instance, call.Function);
+            call.Type = CheezType.Type;
             call.Value = instance.Type;
 
             yield break;
@@ -567,8 +568,14 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (!function.IsPolyInstance)
             {
-
-                if (!function.Scope.DefineSymbol(function))
+                if (function.ImplBlock != null)
+                {
+                    if (!function.Scope.DefineImplFunction(function))
+                    {
+                        context.ReportError(function.Name.GenericParseTreeNode, $"Duplicate name: {function.Name}");
+                    }
+                }
+                else if (!function.Scope.DefineSymbol(function))
                 {
                     context.ReportError(function.Name.GenericParseTreeNode, $"A function or variable with name '{function.Name}' already exists in current scope");
                 }
@@ -956,7 +963,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                                 yield break;
                             }
 
-                            yield return new StructType(aTypes);
+                            yield return new StructType(s.Declaration, aTypes);
                             yield break;
                         }
                         else
@@ -1913,6 +1920,9 @@ namespace Cheez.Compiler.SemanticAnalysis
                         context.ReportError(context.Text, arg.GenericParseTreeNode, $"Argument type does not match parameter type. Expected {expectedType}, got {arg.Type}");
                     }
 
+                    if (expectedType is ReferenceType && !arg.GetFlag(ExprFlags.IsLValue))
+                        context.ReportError(arg.GenericParseTreeNode, "Can't convert an rvalue to a reference");
+
                     arg.Type = t;
                 }
             }
@@ -2020,7 +2030,13 @@ namespace Cheez.Compiler.SemanticAnalysis
                 else
                     yield return v;
 
-            add.Type = PointerType.GetPointerType(add.SubExpression.Type);
+            var subType = add.SubExpression.Type;
+            if (add.SubExpression.Type is ReferenceType t)
+            {
+                subType = t.TargetType;
+            }
+
+            add.Type = PointerType.GetPointerType(subType);
             if (!add.SubExpression.GetFlag(ExprFlags.IsLValue))
                 context.ReportError(add.SubExpression.GenericParseTreeNode, $"Sub expression of & is not a lvalue");
 

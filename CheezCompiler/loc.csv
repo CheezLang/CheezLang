@@ -1,12 +1,12 @@
 ﻿File Name,Lines
-Semanticer.cs,1972
-LLVMCodeGenerator.cs,1095
-Parser.cs,1029
+Semanticer.cs,1987
+LLVMCodeGenerator.cs,1101
+Parser.cs,1054
 AstExpression.cs,683
 Lexer.cs,656
 CppCodeGenerator.cs,567
-Scope.cs,399
-CType.cs,397
+Scope.cs,401
+CType.cs,398
 AstDeclaration.cs,375
 AstStatement.cs,277
 PTExpressions.cs,274
@@ -30,4 +30,4 @@ ParseTreeItem.cs,25
 IRInterpreter.cs,19
 AstDirective.cs,16
 ICodeGenerator.cs,8
-Total,9300
+Total,9349

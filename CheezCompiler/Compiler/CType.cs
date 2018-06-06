@@ -394,8 +394,9 @@ namespace Cheez.Compiler
             Arguments = decl.Parameters.Select(p => p.Value as CheezType).ToArray();
         }
         
-        public StructType(CheezType[] args)
+        public StructType(AstStructDecl decl, CheezType[] args)
         {
+            Declaration = decl;
             Arguments = args;
         }
 

@@ -428,6 +428,8 @@ namespace Cheez.Compiler
 
             if (a is StructType sa && b is StructType sb)
             {
+                if (sa.Declaration.Name.Name != sb.Declaration.Name.Name)
+                    return false;
                 if (sa.Arguments.Length != sb.Arguments.Length)
                     return false;
                 for (int i = 0; i < sa.Arguments.Length; i++)

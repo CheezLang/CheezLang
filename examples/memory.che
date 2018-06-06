@@ -2,7 +2,7 @@ fn malloc(size: int) -> void^;
 fn realloc(mem: void^, size: int) -> void^;
 fn free(mem: void^);
 
-
+fn memcpy(dest: void^, src: void^, size: int);
 
 fn Malloc(count: uint) -> $T^ {
     return (T^)malloc((int)count * @sizeof(T))
