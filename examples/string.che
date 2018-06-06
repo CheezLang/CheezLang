@@ -83,20 +83,29 @@ impl StringBase($CharType) {
 
     ref fn Append(other: StringBase(CharType)) -> StringBase(CharType)^ {
         let newLength = length + other.length
+        
         data = Realloc(data, (uint)newLength)
+        
         let end = &data[length]
         memcpy((void^)end, (void^)other.data, other.length * @sizeof(CharType))
+
         length = newLength
+
         return &self
     }
 
-    ref fn AppendString(other: string) {
+    ref fn AppendString(other: string) -> StringBase(CharType)^ {
         let otherLength = strlen(other)
         let newLength = length + otherLength
+        
         data = Realloc(data, (uint)newLength)
+        
         let end = &data[length]
         memcpy((void^)end, (void^)other, otherLength)
+
         length = newLength
+
+        return &self
     }
 
     ref fn Dispose() {

@@ -15,6 +15,9 @@ fn Main()
     s.AppendString("!")
     Printlnf("str: {S}", &s)
 
+    s.AppendString(" Du").AppendString(" ").AppendString("stinkts").AppendString(", lol")
+    Printlnf("str: {S}", &s)
+
     s.Dispose()
 
     Println("")
