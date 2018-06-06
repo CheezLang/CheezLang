@@ -41,7 +41,7 @@ namespace CheezLanguageServer
             {
                 containerName = type.Scope.Name,
                 kind = SymbolKind.Class,
-                location = CastLocation(type.ParseTreeNode.Name),
+                location = CastLocation(type.Name.GenericParseTreeNode),
                 name = type.Name.Name
             });
             return default;

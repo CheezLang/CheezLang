@@ -16,13 +16,19 @@ namespace Cheez.Compiler.Ast
     {
         protected int mFlags = 0;
 
-        public abstract ParseTree.PTStatement GenericParseTreeNode { get; }
+        public ParseTree.PTStatement GenericParseTreeNode { get; set; }
 
         public Scope Scope { get; set; }
         public Dictionary<string, AstDirective> Directives { get; protected set; }
 
         public AstStatement(Dictionary<string, AstDirective> dirs = null)
         {
+            this.Directives = dirs ?? new Dictionary<string, AstDirective>();
+        }
+
+        public AstStatement(ParseTree.PTStatement node, Dictionary<string, AstDirective> dirs = null)
+        {
+            this.GenericParseTreeNode = node;
             this.Directives = dirs ?? new Dictionary<string, AstDirective>();
         }
 
@@ -56,11 +62,8 @@ namespace Cheez.Compiler.Ast
 
     public class AstEmptyStatement : AstStatement
     {
-        public override ParseTree.PTStatement GenericParseTreeNode { get; }
-
-        public AstEmptyStatement(ParseTree.PTStatement node)
+        public AstEmptyStatement(ParseTree.PTStatement node) : base(node)
         {
-            GenericParseTreeNode = node;
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
@@ -79,18 +82,39 @@ namespace Cheez.Compiler.Ast
         }
     }
 
+    public class AstDeferStmt : AstStatement
+    {
+        public AstStatement Deferred { get; set; }
+
+        public AstDeferStmt(ParseTree.PTStatement node, AstStatement deferred, Dictionary<string, AstDirective> dirs = null) : base(node, dirs)
+        {
+            this.Deferred = deferred;
+        }
+
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitDeferStatement(this, data);
+        }
+
+        public override AstStatement Clone()
+        {
+            return new AstDeferStmt(GenericParseTreeNode, Deferred.Clone(), Directives)
+            {
+                Scope = this.Scope,
+                mFlags = this.mFlags
+            };
+        }
+    }
+
     public class AstWhileStmt : AstStatement
     {
-        public ParseTree.PTWhileStmt ParseTreeNode { get; }
-        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
-
         public AstExpression Condition { get; set; }
         public AstStatement Body { get; set; }
 
 
-        public AstWhileStmt(ParseTree.PTWhileStmt node, AstExpression cond, AstStatement body) : base()
+        public AstWhileStmt(ParseTree.PTStatement node, AstExpression cond, AstStatement body) : base(node)
         {
-            ParseTreeNode = node;
             this.Condition = cond;
             this.Body = body;
         }
@@ -103,7 +127,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstWhileStmt(ParseTreeNode, Condition.Clone(), Body.Clone())
+            return new AstWhileStmt(GenericParseTreeNode, Condition.Clone(), Body.Clone())
             {
                 Scope = this.Scope,
                 Directives = this.Directives,
@@ -119,14 +143,12 @@ namespace Cheez.Compiler.Ast
 
     public class AstReturnStmt : AstStatement
     {
-        public ParseTree.PTReturnStmt ParseTreeNode { get; }
-        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
-
         public AstExpression ReturnValue { get; set; }
 
-        public AstReturnStmt(ParseTree.PTReturnStmt node, AstExpression value) : base()
+        public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
+
+        public AstReturnStmt(ParseTree.PTStatement node, AstExpression value) : base(node)
         {
-            ParseTreeNode = node;
             ReturnValue = value;
         }
 
@@ -143,7 +165,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstReturnStmt(ParseTreeNode, ReturnValue?.Clone())
+            return new AstReturnStmt(GenericParseTreeNode, ReturnValue?.Clone())
             {
                 Scope = this.Scope,
                 Directives = this.Directives,
@@ -154,16 +176,12 @@ namespace Cheez.Compiler.Ast
 
     public class AstIfStmt : AstStatement
     {
-        public ParseTree.PTIfStmt ParseTreeNode { get; }
-        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
-
         public AstExpression Condition { get; set; }
         public AstStatement IfCase { get; set; }
         public AstStatement ElseCase { get; set; }
 
-        public AstIfStmt(ParseTree.PTIfStmt node, AstExpression cond, AstStatement ifCase, AstStatement elseCase = null) : base()
+        public AstIfStmt(ParseTree.PTStatement node, AstExpression cond, AstStatement ifCase, AstStatement elseCase = null) : base(node)
         {
-            ParseTreeNode = node;
             this.Condition = cond;
             this.IfCase = ifCase;
             this.ElseCase = elseCase;
@@ -177,7 +195,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstIfStmt(ParseTreeNode, Condition.Clone(), IfCase.Clone(), ElseCase?.Clone())
+            return new AstIfStmt(GenericParseTreeNode, Condition.Clone(), IfCase.Clone(), ElseCase?.Clone())
             {
                 Scope = this.Scope,
                 Directives = this.Directives,
@@ -193,15 +211,15 @@ namespace Cheez.Compiler.Ast
 
     public class AstBlockStmt : AstStatement
     {
-        public ParseTree.PTBlockStmt ParseTreeNode { get; }
-        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
-
         public List<AstStatement> Statements { get; }
         public Scope SubScope { get; set; }
 
-        public AstBlockStmt(ParseTree.PTBlockStmt node, List<AstStatement> statements) : base()
+        public AstBlockStmt Parent { get; set; }
+
+        public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
+
+        public AstBlockStmt(ParseTree.PTStatement node, List<AstStatement> statements) : base(node)
         {
-            ParseTreeNode = node;
             this.Statements = statements;
         }
 
@@ -213,7 +231,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstBlockStmt(ParseTreeNode, Statements.Select(s => s.Clone()).ToList())
+            return new AstBlockStmt(GenericParseTreeNode, Statements.Select(s => s.Clone()).ToList())
             {
                 Scope = this.Scope,
                 Directives = this.Directives,
@@ -229,15 +247,11 @@ namespace Cheez.Compiler.Ast
 
     public class AstAssignment : AstStatement
     {
-        public ParseTree.PTAssignment ParseTreeNode { get; }
-        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
-
         public AstExpression Target { get; set; }
         public AstExpression Value { get; set; }
 
-        public AstAssignment(ParseTree.PTAssignment node, AstExpression target, AstExpression value) : base()
+        public AstAssignment(ParseTree.PTStatement node, AstExpression target, AstExpression value) : base(node)
         {
-            ParseTreeNode = node;
             this.Target = target;
             this.Value = value;
         }
@@ -250,7 +264,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstAssignment(ParseTreeNode, Target.Clone(), Value.Clone())
+            return new AstAssignment(GenericParseTreeNode, Target.Clone(), Value.Clone())
             {
                 Scope = this.Scope,
                 Directives = this.Directives,
@@ -266,15 +280,11 @@ namespace Cheez.Compiler.Ast
 
     public class AstExprStmt : AstStatement
     {
-        public ParseTree.PTExprStmt ParseTreeNode { get; }
-        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
-
         public AstExpression Expr { get; set; }
 
         [DebuggerStepThrough]
-        public AstExprStmt(ParseTree.PTExprStmt node, AstExpression expr) : base()
+        public AstExprStmt(ParseTree.PTStatement node, AstExpression expr) : base(node)
         {
-            ParseTreeNode = node;
             this.Expr = expr;
         }
 
@@ -286,7 +296,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstExprStmt(ParseTreeNode, Expr.Clone())
+            return new AstExprStmt(GenericParseTreeNode, Expr.Clone())
             {
                 Scope = this.Scope,
                 Directives = this.Directives,
@@ -302,15 +312,11 @@ namespace Cheez.Compiler.Ast
 
     public class AstUsingStmt : AstStatement
     {
-        public ParseTree.PTUsingStatement ParseTreeNode { get; }
-        public override ParseTree.PTStatement GenericParseTreeNode => ParseTreeNode;
-
         public AstExpression Value { get; set; }
 
         [DebuggerStepThrough]
-        public AstUsingStmt(ParseTree.PTUsingStatement node, AstExpression expr, Dictionary<string, AstDirective> dirs = null) : base(dirs)
+        public AstUsingStmt(ParseTree.PTStatement node, AstExpression expr, Dictionary<string, AstDirective> dirs = null) : base(node, dirs)
         {
-            ParseTreeNode = node;
             Value = expr;
         }
         
@@ -322,7 +328,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstUsingStmt(ParseTreeNode, Value.Clone())
+            return new AstUsingStmt(GenericParseTreeNode, Value.Clone())
             {
                 Scope = this.Scope,
                 Directives = this.Directives,

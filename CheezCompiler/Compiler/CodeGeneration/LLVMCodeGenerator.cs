@@ -442,7 +442,7 @@ namespace Cheez.Compiler.CodeGeneration
             LLVM.DisposeBuilder(builder);
         }
 
-#region Utility
+        #region Utility
 
         private void CastIfAny(LLVMBuilderRef builder, CheezType targetType, CheezType sourceType, ref LLVMValueRef value)
         {
@@ -625,9 +625,9 @@ namespace Cheez.Compiler.CodeGeneration
             }
         }
 
-#endregion
+        #endregion
 
-#region Statements
+        #region Statements
 
         public override LLVMValueRef VisitStructDeclaration(AstStructDecl type, LLVMCodeGeneratorData data = null)
         {
@@ -769,8 +769,12 @@ namespace Cheez.Compiler.CodeGeneration
             var prevBB = data.BasicBlock;
             var nextBB = prevBB;
 
-            //if (!ret.GetFlag(StmtFlags.IsLastStatementInBlock))
-                nextBB = LLVM.AppendBasicBlock(data.Function, "ret");
+            nextBB = LLVM.AppendBasicBlock(data.Function, "ret");
+
+            foreach (var d in ret.DeferredStatements)
+            {
+                d.Accept(this, data);
+            }
 
             LLVMValueRef? retInts = null;
             if (ret.ReturnValue != null)
@@ -849,7 +853,7 @@ namespace Cheez.Compiler.CodeGeneration
             data.BasicBlock = bbIfBody;
             ifs.IfCase.Accept(this, data);
             //if (!ifs.IfCase.GetFlag(StmtFlags.Returns))
-                LLVM.BuildBr(data.Builder, bbEnd);
+            LLVM.BuildBr(data.Builder, bbEnd);
 
             // else body
             if (ifs.ElseCase != null)
@@ -874,12 +878,17 @@ namespace Cheez.Compiler.CodeGeneration
                 s.Accept(this, data);
             }
 
+            for (int i = block.DeferredStatements.Count - 1; i >= 0; i--)
+            {
+                block.DeferredStatements[i].Accept(this, data);
+            }
+
             return default;
         }
 
-#endregion
+        #endregion
 
-#region Expressions
+        #region Expressions
 
         public override LLVMValueRef VisitDotExpression(AstDotExpr dot, LLVMCodeGeneratorData data = null)
         {
@@ -1332,6 +1341,6 @@ namespace Cheez.Compiler.CodeGeneration
             throw new NotImplementedException();
         }
 
-#endregion
+        #endregion
     }
 }

@@ -126,7 +126,8 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public AstImplBlock ImplBlock { get; set; }
         public AstFunctionDecl Function { get; set; }
-        //public CheezType ImplTarget { get; set; }
+        public AstBlockStmt Block { get; set; }
+
 
         public CheezType ExpectedType { get; set; }
 
@@ -152,7 +153,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         }
 
         [DebuggerStepThrough]
-        public SemanticerData Clone(Scope Scope = null, IText Text = null, AstFunctionDecl Function = null/*, CheezType Impl = null*/, AstImplBlock ImplBlock = null, CheezType ExpectedType = null, IErrorHandler ErrorHandler = null)
+        public SemanticerData Clone(Scope Scope = null, IText Text = null, AstFunctionDecl Function = null/*, CheezType Impl = null*/, AstImplBlock ImplBlock = null, CheezType ExpectedType = null, IErrorHandler ErrorHandler = null, AstBlockStmt Block = null)
         {
             return new SemanticerData
             {
@@ -162,8 +163,16 @@ namespace Cheez.Compiler.SemanticAnalysis
                 //ImplTarget = Impl ?? this.ImplTarget,
                 ImplBlock = ImplBlock ?? this.ImplBlock,
                 ExpectedType = ExpectedType,
-                ErrorHandler = ErrorHandler ?? this.ErrorHandler
+                ErrorHandler = ErrorHandler ?? this.ErrorHandler,
+                Block = Block ?? this.Block
             };
+        }
+
+        [DebuggerStepThrough]
+        public SemanticerData WithBlock(AstBlockStmt Block)
+        {
+            this.Block = Block;
+            return this;
         }
 
         public void ReportError(string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
@@ -450,7 +459,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 str.Type = new GenericStructType(str);
                 if (!scope.DefineSymbol(str))
                 {
-                    data.ReportError(str.ParseTreeNode.Name, $"A symbol with name '{str.Name.Name}' already exists in current scope");
+                    data.ReportError(str.Name.GenericParseTreeNode, $"A symbol with name '{str.Name.Name}' already exists in current scope");
                 }
                 yield break;
             }
@@ -461,7 +470,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (!scope.DefineTypeSymbol(str.Name.Name, structType))
                 {
-                    data.ReportError(str.ParseTreeNode.Name, $"A symbol with name '{str.Name.Name}' already exists in current scope");
+                    data.ReportError(str.Name.GenericParseTreeNode, $"A symbol with name '{str.Name.Name}' already exists in current scope");
                 }
             }
 
@@ -650,7 +659,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (ifs.Condition.Type != CheezType.Bool)
                 {
-                    context.ReportError(ifs.ParseTreeNode.Condition, $"if-statement condition must be of type 'bool', got '{ifs.Condition.Type}'");
+                    context.ReportError(ifs.Condition.GenericParseTreeNode, $"if-statement condition must be of type 'bool', got '{ifs.Condition.Type}'");
                 }
             }
 
@@ -703,17 +712,35 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
+        public override IEnumerable<object> VisitDeferStatement(AstDeferStmt def, SemanticerData context = null)
+        {
+            if (context.Block == null)
+            {
+                context.ReportError(def.GenericParseTreeNode, "defer statement can only be used in blocks");
+                yield break;
+            }
+
+            foreach (var v in def.Deferred.Accept(this, context.Clone().WithBlock(null)))
+                if (v is ReplaceAstStmt r)
+                    def.Deferred = r.NewStatement;
+                else
+                    yield return v;
+
+            context.Block.DeferredStatements.Add(def.Deferred);
+        }
+
         public override IEnumerable<object> VisitBlockStatement(AstBlockStmt block, SemanticerData context = null)
         {
             var scope = context.Scope;
             block.Scope = scope;
             block.SubScope = NewScope("{}", scope);
+            block.Parent = context.Block;
 
-            var subData = context.Clone(Scope: block.SubScope);
+            var subContext = context.Clone(Scope: block.SubScope, Block: block);
 
             for (int i = 0; i < block.Statements.Count; i++)
             {
-                foreach (var v in block.Statements[i].Accept(this, subData))
+                foreach (var v in block.Statements[i].Accept(this, subContext))
                     if (v is ReplaceAstStmt r)
                         block.Statements[i] = r.NewStatement;
                     else
@@ -735,6 +762,18 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = context.Scope;
             ret.Scope = scope;
 
+            // add currently deferred statements of all parent blocks
+            var block = context.Block;
+            while (block != null)
+            {
+                for (int i = block.DeferredStatements.Count - 1; i >= 0; i--)
+                {
+                    ret.DeferredStatements.Add(block.DeferredStatements[i]);
+                }
+
+                block = block.Parent;
+            }
+
             ret.SetFlag(StmtFlags.Returns);
 
             if (ret.ReturnValue != null)
@@ -749,11 +788,11 @@ namespace Cheez.Compiler.SemanticAnalysis
             Debug.Assert(context.Function != null, "return statement is only allowed in functions");
             if (context.Function.ReturnType != CheezType.Void && ret.ReturnValue == null) // !void, return
             {
-                context.ReportError(ret.ParseTreeNode, $"Missing return value in non-void function {context.Function.Name}");
+                context.ReportError(ret.GenericParseTreeNode, $"Missing return value in non-void function {context.Function.Name}");
             }
             else if (context.Function.ReturnType == CheezType.Void && ret.ReturnValue != null) // void, return some
             {
-                context.ReportError(ret.ParseTreeNode, $"Can't return value of type '{ ret.ReturnValue.Type }' in void function");
+                context.ReportError(ret.GenericParseTreeNode, $"Can't return value of type '{ ret.ReturnValue.Type }' in void function");
             }
             else if (context.Function.ReturnType != CheezType.Void && ret.ReturnValue != null) // !void, return some
             {
@@ -768,7 +807,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 else if (ret.ReturnValue.Type != context.Function.ReturnType)
                 {
-                    context.ReportError(ret.ParseTreeNode.ReturnValue, $"Can't return value of type '{ret.ReturnValue.Type}' in function with return type '{context.Function.ReturnType}'");
+                    context.ReportError(ret.ReturnValue.GenericParseTreeNode, $"Can't return value of type '{ret.ReturnValue.Type}' in function with return type '{context.Function.ReturnType}'");
                 }
             }
 
@@ -878,11 +917,11 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
 
             if (!CastIfLiteral(ass.Value.Type, ass.Target.Type, out var type))
-                context.ReportError(ass.ParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
+                context.ReportError(ass.GenericParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
 
             ass.Value.Type = type;
             if (!ass.Target.GetFlag(ExprFlags.IsLValue))
-                context.ReportError(ass.ParseTreeNode.Target, $"Left side of assignment has to be a lvalue");
+                context.ReportError(ass.Target.GenericParseTreeNode, $"Left side of assignment has to be a lvalue");
 
             if (ass.Value.Type == IntType.LiteralType)
                 ass.Value.Type = IntType.DefaultType;
@@ -980,13 +1019,6 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             var scope = context.Scope;
             impl.Scope = scope;
-
-            if (impl.ParseTreeNode.Trait != null)
-            {
-                yield return new WaitForSymbol(context.Text, impl.ParseTreeNode.Trait, scope, impl.ParseTreeNode.Trait.Name);
-                impl.Trait = "TODO";
-            }
-
 
             // types
             impl.TargetType = CheezType.Error;

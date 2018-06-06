@@ -26,7 +26,7 @@ namespace Cheez.Compiler.Visitor
 
             var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name}: {p.TypeExpr.Accept(this, 0)}"));
             var head = $"fn {function.Name}";
-                
+
             //if (function.IsGeneric)
             //{
             //    head += $"<{string.Join(", ", function.Generics.Select(g => g.Name))}>";
@@ -57,9 +57,25 @@ namespace Cheez.Compiler.Visitor
 
         public override string VisitReturnStatement(AstReturnStmt ret, int data = 0)
         {
+            var sb = new StringBuilder();
+
+            if (ret.DeferredStatements.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("// deferred statements");
+                foreach (var s in ret.DeferredStatements)
+                {
+                    sb.AppendLine(s.Accept(this));
+                }
+            }
+
+            sb.AppendLine("// return");
+            sb.Append("return");
+
             if (ret.ReturnValue != null)
-                return $"return {ret.ReturnValue.Accept(this, 0)}";
-            return "return";
+                sb.Append(" ").Append(ret.ReturnValue.Accept(this, 0));
+
+            return sb.ToString();
         }
 
         public override string VisitTypeAlias(AstTypeAliasDecl al, int data = 0)
@@ -79,7 +95,7 @@ namespace Cheez.Compiler.Visitor
 
             var sb = new StringBuilder();
             sb.AppendLine($"{head} {{\n{body.Indent(4)}\n}}");
-            
+
             if (str.PolymorphicInstances?.Count > 0)
             {
                 sb.AppendLine($"// Polymorphic instances for {head}");
@@ -137,16 +153,34 @@ namespace Cheez.Compiler.Visitor
             return sb.ToString().Indent(indentLevel);
         }
 
+        public override string VisitDeferStatement(AstDeferStmt def, int data = 0)
+        {
+            return $"defer {def.Deferred.Accept(this)}".Indent(data);
+        }
+
         public override string VisitBlockStatement(AstBlockStmt block, int indentLevel = 0)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("{");
             foreach (var s in block.Statements)
             {
-                sb.AppendLine(s.Accept(this).Indent(4));
+                sb.AppendLine(s.Accept(this));
             }
-            sb.Append("}");
-            return sb.ToString().Indent(indentLevel);
+
+            if (block.DeferredStatements.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("// deferred statements");
+                for (int i = block.DeferredStatements.Count - 1; i >= 0; i--)
+                {
+                    var s = block.DeferredStatements[i];
+                    sb.Append(s.Accept(this));
+
+                    if (i > 0)
+                        sb.AppendLine();
+                }
+            }
+
+            return $"{{\n{sb.ToString().Indent(4)}\n}}".Indent(indentLevel);
         }
 
         public override string VisitAssignment(AstAssignment ass, int indentLevel = 0)
@@ -192,7 +226,7 @@ namespace Cheez.Compiler.Visitor
             var args = call.Arguments.Select(a => a.Accept(this, 0));
             var argsStr = string.Join(", ", args);
             var func = call.Function.Accept(this, 0);
-            
+
             if (call.Function is AstFunctionExpression fe)
             {
                 func += $"<{string.Join(", ", fe.Declaration.PolymorphicTypes.Select(kv => $"{kv.Key}={kv.Value}"))}>";
@@ -294,7 +328,7 @@ namespace Cheez.Compiler.Visitor
             {
                 body = $"{{ {body} }}";
             }
-            
+
             return $"{str.TypeExpr} {body}";
         }
 

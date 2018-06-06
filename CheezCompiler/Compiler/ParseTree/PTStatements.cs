@@ -44,6 +44,21 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
+    public class PTDeferStatement : PTStatement
+    {
+        public PTStatement DeferredStatement { get; set; }
+
+        public PTDeferStatement(TokenLocation beg, PTStatement deferred, List<PTDirective> directives = null) : base(beg, deferred.End, directives)
+        {
+            this.DeferredStatement = deferred;
+        }
+
+        public override AstStatement CreateAst()
+        {
+            return new AstDeferStmt(this, DeferredStatement.CreateAst(), CreateDirectivesAst());
+        }
+    }
+
     public class PTDirectiveStatement : PTStatement
     {
         public PTDirective Directive { get; }

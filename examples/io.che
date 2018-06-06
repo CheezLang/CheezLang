@@ -39,6 +39,7 @@ fn PrintInt(num: $T) {
     }
     let bufferSize: uint = 30
     let buff: byte^ = Malloc(bufferSize)
+    defer Free(buff)
     ClearMemory(buff, bufferSize)
 
     let neg = false
@@ -73,8 +74,6 @@ fn PrintInt(num: $T) {
 
     let str = (string)((uint)buff + i + 1)
     PrintString(str)
-
-    Free(buff)
 }
 
 fn PrintlnInt(i: $T) {
@@ -122,6 +121,7 @@ fn Printf(format: string, data: any) {
     let close = *"}"
 
     let formatSpecifier: byte^ = Malloc(5)
+    defer Free(formatSpecifier)
     let fi: ulong = 0
 
     let len = (ulong)strlen(format)
@@ -156,8 +156,6 @@ fn Printf(format: string, data: any) {
 
         i = i + 1
     }
-
-    Free(formatSpecifier)
 }
 
 fn Printfn(format: string, args: any[]) {
@@ -167,6 +165,7 @@ fn Printfn(format: string, args: any[]) {
     let argIndex = 0
 
     let formatSpecifier: byte^ = Malloc(5)
+    defer Free(formatSpecifier)
     let fi: ulong = 0
 
     let len = strlen(format)
@@ -201,8 +200,6 @@ fn Printfn(format: string, args: any[]) {
 
         i = i + 1
     }
-
-    Free(formatSpecifier)
 }
 
 fn Printlnf(format: string, data: any) {

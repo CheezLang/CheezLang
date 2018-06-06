@@ -243,6 +243,22 @@ namespace Cheez.Compiler.Parsing
                         return (false, dir);
                     }
 
+                case TokenType.KwDefer:
+                    {
+                        NextToken();
+                        var next = PeekToken();
+                        if (next.type == TokenType.NewLine || next.type == TokenType.EOF)
+                        {
+                            ReportError(token.location, "Expected statement after keyword 'defer'");
+                            return (false, null);
+                        }
+
+                        var s = ParseStatement();
+                        if (s.stmt != null)
+                            return (false, new PTDeferStatement(token.location, s.stmt));
+
+                        return (false, null);
+                    }
 
                 case TokenType.KwReturn:
                     return (false, ParseReturnStatement());

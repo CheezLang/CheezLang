@@ -1,9 +1,17 @@
 #load("io.che")
 #load("array.che")
 
+let g_a = 5
+
+fn uiae() -> @typeof(g_a + 3) {
+    return g_a + 3
+}
+
 fn Main()
 {
     let s = "Hi".ToString()
+    defer s.Dispose()
+
     Printlnf("str: {S}", &s)
 
     s.AppendString(" du")
@@ -18,8 +26,6 @@ fn Main()
     s.AppendString(" Du").AppendString(" ").AppendString("stinkts").AppendString(", lol")
     Printlnf("str: {S}", &s)
 
-    s.Dispose()
-
     Println("")
 
     Printlnf("Size of int:           {i32}", 5.SizeInBytes())
@@ -29,7 +35,7 @@ fn Main()
 }
 
 fn PrintArray(arr: Array($T)^) {
-    using *arr
+    use *arr
 
     PrintString("(")
     PrintInt(length)
