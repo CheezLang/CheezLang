@@ -52,20 +52,8 @@ struct StringBase(CharType: type) {
     length: int
 }
 
-fn NewString() -> String {
-    let s: String
-    s.data = (i8^)0
-    s.length = 0
-    return s
-}
-
-impl string {
-    fn ToString() -> String {
-        let s = NewString()
-        s.FromString(self)
-        return s
-    }
-}
+let String = StringBase(byte)
+let Utf32String = StringBase(int)
 
 impl StringBase($CharType) {
     ref fn FromString(str: string) -> StringBase(CharType)^ {
@@ -97,7 +85,7 @@ impl StringBase($CharType) {
         let newLength = length + other.length
         data = Realloc(data, (uint)newLength)
         let end = &data[length]
-        memcpy((void^)end, (void^)other.data, other.length)
+        memcpy((void^)end, (void^)other.data, other.length * @sizeof(CharType))
         length = newLength
         return &self
     }
@@ -118,5 +106,23 @@ impl StringBase($CharType) {
     }
 }
 
-let String = StringBase(byte)
-let Utf32String = StringBase(int)
+fn NewString() -> String {
+    let s: String
+    s.data = (i8^)0
+    s.length = 0
+    return s
+}
+
+impl string {
+    fn ToString() -> String {
+        let s = NewString()
+        s.FromString(self)
+        return s
+    }
+}
+
+impl $T {
+    fn SizeInBytes() -> int {
+        return @sizeof(T)
+    }
+}

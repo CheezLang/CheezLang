@@ -384,7 +384,16 @@ namespace Cheez.Compiler
     {
         public AstStructDecl Declaration { get; }
 
-        public bool Analyzed { get; set; } = false;
+        private bool _analyzed = false;
+        public bool Analyzed
+        {
+            get => _analyzed;
+            set
+            {
+                _analyzed = value;
+                CalculateSize();
+            }
+        }
 
         public CheezType[] Arguments { get; }
 
@@ -398,6 +407,15 @@ namespace Cheez.Compiler
         {
             Declaration = decl;
             Arguments = args;
+        }
+
+        private void CalculateSize()
+        {
+            Size = 0;
+            foreach (var m in Declaration.Members)
+            {
+                Size += m.Type.Size;
+            }
         }
 
         public override string ToString()

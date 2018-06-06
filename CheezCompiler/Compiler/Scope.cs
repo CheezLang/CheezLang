@@ -446,21 +446,30 @@ namespace Cheez.Compiler
 
         public AstFunctionDecl GetImplFunction(CheezType targetType, string name)
         {
-            var impl = mImplTable.FirstOrDefault(kv =>
+            var impls = mImplTable.Where(kv =>
             {
                 var implType = kv.Key.TargetType;
                 if (TypesMatch(implType, targetType))
                     return true;
                 return false;
             });
-            var list = impl.Value;
 
-            if (list != null)
+            var candidates = new List<AstFunctionDecl>();
+
+            foreach (var impl in impls)
             {
-                return list.FirstOrDefault(f => f.Name.Name == name) ?? Parent?.GetImplFunction(targetType, name);
+                var list = impl.Value;
+                
+                var c = list?.FirstOrDefault(f => f.Name.Name == name);
+                if (c != null)
+                    candidates.Add(c);
+
             }
 
-            return Parent?.GetImplFunction(targetType, name);
+            if (candidates.Count == 0)
+                return Parent?.GetImplFunction(targetType, name);
+
+            return candidates[0];
         }
 
         public override string ToString()

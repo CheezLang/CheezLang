@@ -5,8 +5,8 @@ Parser.cs,1054
 AstExpression.cs,683
 Lexer.cs,656
 CppCodeGenerator.cs,567
-Scope.cs,401
-CType.cs,398
+CType.cs,415
+Scope.cs,407
 AstDeclaration.cs,375
 AstStatement.cs,277
 PTExpressions.cs,274
@@ -30,4 +30,4 @@ ParseTreeItem.cs,25
 IRInterpreter.cs,19
 AstDirective.cs,16
 ICodeGenerator.cs,8
-Total,9349
+Total,9372

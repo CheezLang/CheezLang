@@ -16,6 +16,13 @@ fn Main()
     Printlnf("str: {S}", &s)
 
     s.Dispose()
+
+    Println("")
+
+    Printlnf("Size of int:           {i32}", 5.SizeInBytes())
+    Printlnf("Size of string:        {i32}", "".SizeInBytes())
+    Printlnf("Size of boolean:       {i32}", true.SizeInBytes())
+    Printlnf("Size of struct String: {i32}", s.SizeInBytes())
 }
 
 fn PrintArray(arr: Array($T)^) {
