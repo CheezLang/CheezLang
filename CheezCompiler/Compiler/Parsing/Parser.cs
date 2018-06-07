@@ -1209,12 +1209,12 @@ namespace Cheez.Compiler.Parsing
         {
             TokenLocation beg = null, end = null;
             List<PTStructMemberInitialization> members = new List<PTStructMemberInitialization>();
-            PTIdentifierExpr name;
+            PTExpr type;
 
             beg = Consume(TokenType.KwNew, ErrMsg("keyword 'new'", "at beginning of struct value expression")).location;
 
             SkipNewlines();
-            name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'new'"));
+            type = ParseExpression(ErrMsg("type expression", "after keyword 'new'"));
 
             SkipNewlines();
             Consume(TokenType.OpenBrace, ErrMsg("{", "after name in struct value"));
@@ -1262,7 +1262,7 @@ namespace Cheez.Compiler.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct value expression")).location;
 
-            return new PTStructValueExpr(name.Beginning, end, name, members);
+            return new PTStructValueExpr(type.Beginning, end, type, members);
         }
 
         private PTIdentifierExpr ParseIdentifierExpr(ErrorMessageResolver customErrorMessage, TokenType identType = TokenType.Identifier)

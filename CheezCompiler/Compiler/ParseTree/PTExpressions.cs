@@ -312,9 +312,9 @@ namespace Cheez.Compiler.ParseTree
         public PTExpr Type { get; }
         public List<PTStructMemberInitialization> Initializers { get; }
 
-        public PTStructValueExpr(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTStructMemberInitialization> inits) : base(beg, end)
+        public PTStructValueExpr(TokenLocation beg, TokenLocation end, PTExpr type, List<PTStructMemberInitialization> inits) : base(beg, end)
         {
-            this.Type = name;
+            this.Type = type;
             this.Initializers = inits;
         }
 

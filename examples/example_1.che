@@ -1,15 +1,32 @@
 #load("io.che")
 // #load("array.che")
+#load("memory.che")
 
 fn Main()
 {
-    let as: StringBase(i8)
-    let bs: StringBase(i16)
-    let cs: StringBase(i32)
+    let str = NewString()
+    defer str.Dispose()
 
-    test(as)
-    test(bs)
-    test(cs)
+    str.Reserve(20)
+
+    Sprint(&str, true)
+    Sprint(&str, " ")
+    Sprint(&str, false)
+    Sprint(&str, " test ".ToString())
+    Sprint(&str, 5)
+    Sprint(&str, " ")
+    Sprint(&str, 123)
+    Sprint(&str, " ")
+    Sprint(&str, -789456)
+    Sprint(&str, " ")
+    Sprintf(&str, "`nthis is a number: {i32}`n", 654)
+
+    let test = "uiaeuiaeu".ToString()
+
+    Sprintf(&str, "this is a StringBase(i8): {S}", &test)
+
+
+    Println(str)
 }
 
 fn test(val: $T) {

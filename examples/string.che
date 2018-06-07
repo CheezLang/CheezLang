@@ -50,12 +50,27 @@ fn streq(a: $T, b: $T2) -> bool {
 struct StringBase(CharType: type) {
     data: CharType&
     length: int
+    capacity: int
 }
 
 let String = StringBase(byte)
 let Utf32String = StringBase(int)
 
 impl StringBase($CharType) {
+    ref fn Reserve(size: int) {
+        capacity = size
+        if (ulong)data == 0 {
+            length = 0
+            data = Malloc((uint)capacity)
+        }
+        else {
+            data = Realloc(data, (uint)capacity)
+            if length > capacity {
+                length = capacity
+            }
+        }
+    }
+
     ref fn FromString(str: string) -> StringBase(CharType)& {
         if (ulong)data != 0 {
             // @Todo:
@@ -63,10 +78,12 @@ impl StringBase($CharType) {
             Free((void&)data)
             data = (CharType&)0
             length = 0
+            capacity = 0
         }
 
         length = strlen(str)
-        data = Malloc((uint)length)
+        capacity = length
+        data = Malloc((uint)capacity)
 
         if @sizeof(CharType) == 1 {
             memcpy((void&)data, (void&)str, length)
@@ -83,8 +100,12 @@ impl StringBase($CharType) {
 
     ref fn Append(other: StringBase(CharType)) -> StringBase(CharType)& {
         let newLength = length + other.length
-        
-        data = Realloc(data, (uint)newLength)
+
+        if newLength >= capacity {
+            Println("Rezising")
+            capacity = capacity * 2
+            data = Realloc(data, (uint)capacity)
+        }
         
         let end = &data[length]
         memcpy((void&)end, (void&)other.data, other.length * @sizeof(CharType))
@@ -98,7 +119,11 @@ impl StringBase($CharType) {
         let otherLength = strlen(other)
         let newLength = length + otherLength
         
-        data = Realloc(data, (uint)newLength)
+        if newLength >= capacity {
+            Println("Rezising")
+            capacity = capacity * 2
+            data = Realloc(data, (uint)capacity)
+        }
         
         let end = &data[length]
         memcpy((void&)end, (void&)other, otherLength)
@@ -106,6 +131,43 @@ impl StringBase($CharType) {
         length = newLength
 
         return &self
+    }
+
+    ref fn AppendChar(ch: CharType) -> StringBase(CharType)& {
+        let newLength = length + 1
+        
+        if newLength >= capacity {
+            Println("Rezising")
+            capacity = capacity * 2
+            data = Realloc(data, (uint)capacity)
+        }
+        
+        data[length] = ch
+        length = newLength
+
+        return &self
+    }
+
+    ref fn Equals(other: $T) -> bool {
+        if @isstring(T) { 
+            let len: @typeof(length) = strlen(other)
+            if len != length {
+                return false
+            }
+            
+            let i: @typeof(length) = 0
+            while i < len {
+                if data[i] != other[i] {
+                    return false
+                }
+
+                i = i + 1
+            }
+            return true
+        }
+        else {
+            @error("Not implemented")
+        }
     }
 
     ref fn Dispose() {
@@ -116,10 +178,11 @@ impl StringBase($CharType) {
 }
 
 fn NewString() -> String {
-    let s: String
-    s.data = (i8&)0
-    s.length = 0
-    return s
+    return new String {
+        (byte&)0
+        0
+        0
+    }
 }
 
 impl string {
@@ -127,11 +190,5 @@ impl string {
         let s = NewString()
         s.FromString(self)
         return s
-    }
-}
-
-impl $T {
-    fn SizeInBytes() -> int {
-        return @sizeof(T)
     }
 }

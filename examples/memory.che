@@ -35,3 +35,8 @@ fn ClearMemory(mem: byte&, len: uint) {
         i = i + 1
     }
 }
+
+struct Slice(T: type) {
+    data: T&
+    length: int
+}

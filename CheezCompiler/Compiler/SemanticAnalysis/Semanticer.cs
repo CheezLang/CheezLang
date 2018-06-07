@@ -1103,11 +1103,18 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (name != "typeseq")
             {
-                foreach (var arg in call.Arguments)
+                //foreach (var arg in call.Arguments)
+                for (int i = 0; i < call.Arguments.Count; i++)
                 {
+                    var arg = call.Arguments[i];
                     arg.Scope = call.Scope;
                     foreach (var v in arg.Accept(this, context))
-                        yield return v;
+                    {
+                        if (v is ReplaceAstExpr r)
+                            call.Arguments[i] = r.NewExpression;
+                        else
+                            yield return v;
+                    }
                 }
             }
 
@@ -2467,6 +2474,20 @@ namespace Cheez.Compiler.SemanticAnalysis
                         yield break;
                     }
 
+                case AstPointerTypeExpr p:
+                    {
+                        CheezType sub = null;
+                        foreach (var v in CreateType(scope, p.Target, text, error))
+                        {
+                            if (v is CheezType t)
+                                sub = t;
+                            else
+                                yield return v;
+                        }
+                        yield return PointerType.GetPointerType(sub);
+                        yield break;
+                    }
+
                 case AstCallExpr c:
                     {
                         CheezType fType = null;
@@ -2509,6 +2530,9 @@ namespace Cheez.Compiler.SemanticAnalysis
                             yield break;
                         }
                     }
+
+                default:
+                    throw new NotImplementedException();
             }
         }
     }

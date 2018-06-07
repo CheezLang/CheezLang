@@ -26,16 +26,12 @@ fn PrintDigit(d: int) {
     PrintChar((byte)d + 48)
 }
 
-fn PrintInt(num: $T) {
+fn Bprinti(buffer: byte&, num: $T) {
     if (num == 0)
     {
-        PrintDigit(0)
+        *buffer = 48
         return
     }
-    let bufferSize: uint = 30
-    let buff: byte& = Malloc(bufferSize)
-    defer Free(buff)
-    ClearMemory(buff, bufferSize)
 
     let neg = false
     let minimum = false
@@ -50,74 +46,96 @@ fn PrintInt(num: $T) {
         }
     }
 
-    let i: uint = bufferSize - 2
-    while i > 0 and num != 0 {
+    let i: uint = 0
+    while num != 0 {
         let lastDigit = num % 10
-        if i == (bufferSize - 2) and minimum {
+        if i == 0 and minimum {
             lastDigit = lastDigit + 1
         }
 
         num = num / 10
-        buff[i] = (byte)lastDigit + 48
+        buffer[i] = (byte)lastDigit + 48
         i = i - 1
     }
 
     if (neg) {
-        buff[i] = 45
+        buffer[i] = 45
         i = i - 1
     }
-
-    let str = (string)((uint)buff + i + 1)
-    PrintString(str)
 }
 
-fn PrintlnInt(i: $T) {
-    PrintInt(i)
-    PrintChar(NEW_LINE)
-}
-
-fn PrintfData(formatSpecifier: byte&, data: any) {
-    let len = strlen(formatSpecifier)
-    if streq(formatSpecifier, "i8") {
-        PrintInt((i32)(i8)data)
-    }
-    else if streq(formatSpecifier, "i16") {
-        PrintInt((i32)(i16)data)
-    }
-    else if streq(formatSpecifier, "i32") {
-        PrintInt((i32)data)
-    }
-    else if streq(formatSpecifier, "i64") {
-        PrintInt((i32)(i64)data)
-    }
-    else if streq(formatSpecifier, "b") {
-        let b = (bool)data
-        if (b) {
-            PrintString("true")
+fn Sprint(buffer: String&, value: $T) {
+    if @isbool(T) {
+        if value {
+            buffer.AppendString("true")
         } else {
-            PrintString("false")
+            buffer.AppendString("false")
         }
-    }
-    else if streq(formatSpecifier, "s") {
-        PrintString((string)data)
-    }
-    else if streq(formatSpecifier, "S") {
-        PrintStringl((String&)data)
-    }
-    else {
-        PrintString("<Unknown format specifier: ")
-        PrintString(formatSpecifier)
-        PrintString(">")
+    } else if @isint(T) {
+        let v = value
+        let len = 0
+
+        if v < 0 {
+            len = 1
+            v = -v
+        }
+
+        while v != 0 {
+            v = v / 10
+            len = len + 1
+        }
+
+        let minLen = buffer.length + len
+        if minLen > buffer.capacity {
+            buffer.Reserve(minLen)
+        }
+
+        buffer.length = minLen
+
+        Bprinti((byte&)((ulong)buffer.data + (ulong)minLen - 1), value)
+    } else if @isstring(T) {
+        buffer.AppendString(value)
+    } else if @typeseq(String&, T) {
+        buffer.Append(*value)
+    } else if @typeseq(String, T) {
+        buffer.Append(value)
+    } else {
+        @error("Can't print value of unknown type")
     }
 }
 
-fn Printf(format: string, data: any) {
+
+fn SprintfData(buffer: String&, format: String, value: any) {
+    if format.Equals("i8") {
+        Sprint(buffer, (i8)value)
+    }
+    else if format.Equals("i16") {
+        Sprint(buffer, (i16)value)
+    }
+    else if format.Equals("i32") {
+        Sprint(buffer, (i32)value)
+    }
+    else if format.Equals("i64") {
+        Sprint(buffer, (i32)value)
+    }
+    else if format.Equals("b") {
+        Sprint(buffer, (bool)value)
+    }
+    else if format.Equals("s") {
+        Sprint(buffer, (string)value)
+    }
+    else if format.Equals("S") {
+        Sprint(buffer, (String&)value)
+    }
+}
+
+fn Sprintf(buffer: String&, format: string, data: any) {
     let open = *"{"
     let close = *"}"
 
-    let formatSpecifier: byte& = Malloc(5)
-    defer Free(formatSpecifier)
-    let fi: ulong = 0
+    let formatSpecifier = NewString()
+    defer formatSpecifier.Dispose()
+    formatSpecifier.Reserve(5)
 
     let len = (ulong)strlen(format)
     let i: ulong = 0
@@ -131,81 +149,77 @@ fn Printf(format: string, data: any) {
                 state = 1
             }
             else {
-                PrintChar(c)
+                buffer.AppendChar(c)
             }
         }
         else if state == 1 {
             if (c == close) {
-                formatSpecifier[fi] = 0
                 state = 0
-                fi = 0
-
-                PrintfData(formatSpecifier, data)
+                SprintfData(buffer, formatSpecifier, data)
+                formatSpecifier.length = 0
 
             } else {
-                formatSpecifier[fi] = c
-                fi = fi + 1
+                formatSpecifier.data[formatSpecifier.length] = c
+                formatSpecifier.length = formatSpecifier.length + 1
             }
         }
-
 
         i = i + 1
     }
 }
 
-fn Printfn(format: string, args: any[]) {
-    let open = *"{"
-    let close = *"}"
+// fn Printfn(format: string, args: any[]) {
+//     let open = *"{"
+//     let close = *"}"
 
-    let argIndex = 0
+//     let argIndex = 0
 
-    let formatSpecifier: byte& = Malloc(5)
-    defer Free(formatSpecifier)
-    let fi: ulong = 0
+//     let formatSpecifier: byte& = Malloc(5)
+//     defer Free(formatSpecifier)
 
-    let len = strlen(format)
-    let i = 0
-    let state = 0
+//     let len = strlen(format)
+//     let i = 0
+//     let state = 0
 
-    while (i < len) {
-        let c = format[i]
+//     while (i < len) {
+//         let c = format[i]
 
-        if state == 0 {
-            if (c == open) {
-                state = 1
-            }
-            else {
-                PrintChar(c)
-            }
-        }
-        else if state == 1 {
-            if (c == close) {
-                formatSpecifier[fi] = 0
-                state = 0
-                fi = 0
+//         if state == 0 {
+//             if (c == open) {
+//                 state = 1
+//             }
+//             else {
+//                 PrintChar(c)
+//             }
+//         }
+//         else if state == 1 {
+//             if (c == close) {
+//                 formatSpecifier[fi] = 0
+//                 state = 0
+//                 formatSpecifier.length = 0
 
-                PrintfData(formatSpecifier, args[argIndex])
-                argIndex = argIndex + 1
-            } else {
-                formatSpecifier[fi] = c
-                fi = fi + 1
-            }
-        }
+//                 SprintfData(formatSpecifier, args[argIndex])
+//                 argIndex = argIndex + 1
+//             } else {
+//                 formatSpecifier[formatSpecifier.length] = c
+//                 formatSpecifier.length = formatSpecifier.length + 1
+//             }
+//         }
 
 
-        i = i + 1
-    }
-}
+//         i = i + 1
+//     }
+// }
 
-fn Printlnf(format: string, data: any) {
-    Printf(format, data)
-    PrintChar(NEW_LINE)
-}
+// fn Printlnf(format: string, data: any) {
+//     Printf(format, data)
+//     PrintChar(NEW_LINE)
+// }
 
-fn Printlnfn(format: string, args: any[]) {
-    Printfn(format, args)
-    PrintChar(NEW_LINE)
-}
+// fn Printlnfn(format: string, args: any[]) {
+//     Printfn(format, args)
+//     PrintChar(NEW_LINE)
+// }
 
 fn Println(v: $T) {
     Print(v)
