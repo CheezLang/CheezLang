@@ -1088,7 +1088,7 @@ namespace Cheez.Compiler.Parsing
                             break;
                         }
 
-                    case TokenType.Hat:
+                    case TokenType.Ampersand:
                         {
                             NextToken();
                             expr = new PTPointerTypeExpr(expr.Beginning, CurrentToken.location, expr);

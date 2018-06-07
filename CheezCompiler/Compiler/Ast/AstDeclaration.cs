@@ -84,7 +84,7 @@ namespace Cheez.Compiler.Ast
 
     public interface ITempVariable
     {
-        AstIdentifierExpr Name { get; }
+        AstIdentifierExpr Name { get; } // can be null
         CheezType Type { get; }
     }
 
@@ -222,7 +222,7 @@ namespace Cheez.Compiler.Ast
         public AstStructDecl(ParseTree.PTStatement node, AstIdentifierExpr name, List<AstParameter> param, List<AstMemberDecl> members, Dictionary<string, AstDirective> dirs) : base(node, dirs)
         {
             this.Name = name;
-            this.Parameters = param;
+            this.Parameters = param ?? new List<AstParameter>();
             this.Members = members;
         }
 

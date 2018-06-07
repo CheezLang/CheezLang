@@ -890,6 +890,24 @@ namespace Cheez.Compiler.CodeGeneration
 
         #region Expressions
 
+        public override LLVMValueRef VisitStructValueExpression(AstStructValueExpr str, LLVMCodeGeneratorData data = null)
+        {
+            var value = valueMap[str];
+
+            var llvmType = CheezTypeToLLVMType(str.Type);
+
+            foreach (var m in str.MemberInitializers)
+            {
+                var v = m.Value.Accept(this, data);
+                var memberPtr = LLVM.BuildStructGEP(data.Builder, value, (uint)m.Index, "");
+                var s = LLVM.BuildStore(data.Builder, v, memberPtr);
+            }
+
+            value = LLVM.BuildLoad(data.Builder, value, "");
+
+            return value;
+        }
+
         public override LLVMValueRef VisitDotExpression(AstDotExpr dot, LLVMCodeGeneratorData data = null)
         {
             if (dot.IsDoubleColon)

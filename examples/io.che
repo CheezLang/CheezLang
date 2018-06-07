@@ -3,6 +3,8 @@
 #load("std/windows.che")
 #load("string.che")
 
+let NEW_LINE: byte = 10
+
 fn PrintString(s: $T) {
     let s = (string)s
     let len = strlen(s)
@@ -10,16 +12,9 @@ fn PrintString(s: $T) {
     WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
 }
 
-fn PrintStringl(s: String^) {
+fn PrintStringl(s: String&) {
     let bytesWritten: int
     WriteFile(__std_out_handle, (string)s.data, s.length, &bytesWritten, 0)
-}
-
-fn Println(s: string) {
-    let len = strlen(s)
-    let bytesWritten: int
-    WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
-    WriteFile(__std_out_handle, "`n", 1, &bytesWritten, 0)
 }
 
 fn PrintChar(c: byte) { 
@@ -38,7 +33,7 @@ fn PrintInt(num: $T) {
         return
     }
     let bufferSize: uint = 30
-    let buff: byte^ = Malloc(bufferSize)
+    let buff: byte& = Malloc(bufferSize)
     defer Free(buff)
     ClearMemory(buff, bufferSize)
 
@@ -78,10 +73,10 @@ fn PrintInt(num: $T) {
 
 fn PrintlnInt(i: $T) {
     PrintInt(i)
-    Println("")
+    PrintChar(NEW_LINE)
 }
 
-fn PrintfData(formatSpecifier: byte^, data: any) {
+fn PrintfData(formatSpecifier: byte&, data: any) {
     let len = strlen(formatSpecifier)
     if streq(formatSpecifier, "i8") {
         PrintInt((i32)(i8)data)
@@ -107,7 +102,7 @@ fn PrintfData(formatSpecifier: byte^, data: any) {
         PrintString((string)data)
     }
     else if streq(formatSpecifier, "S") {
-        PrintStringl((String^)data)
+        PrintStringl((String&)data)
     }
     else {
         PrintString("<Unknown format specifier: ")
@@ -120,7 +115,7 @@ fn Printf(format: string, data: any) {
     let open = *"{"
     let close = *"}"
 
-    let formatSpecifier: byte^ = Malloc(5)
+    let formatSpecifier: byte& = Malloc(5)
     defer Free(formatSpecifier)
     let fi: ulong = 0
 
@@ -164,7 +159,7 @@ fn Printfn(format: string, args: any[]) {
 
     let argIndex = 0
 
-    let formatSpecifier: byte^ = Malloc(5)
+    let formatSpecifier: byte& = Malloc(5)
     defer Free(formatSpecifier)
     let fi: ulong = 0
 
@@ -204,20 +199,20 @@ fn Printfn(format: string, args: any[]) {
 
 fn Printlnf(format: string, data: any) {
     Printf(format, data)
-    Println("")
+    PrintChar(NEW_LINE)
 }
 
 fn Printlnfn(format: string, args: any[]) {
     Printfn(format, args)
-    Println("")
+    PrintChar(NEW_LINE)
 }
 
-fn PrintlnValue(v: $T) {
-    PrintValue(v)
-    Println("")
+fn Println(v: $T) {
+    Print(v)
+    PrintChar(NEW_LINE)
 }
 
-fn PrintValue(v: $T) {
+fn Print(v: $T) {
     if @isbool(T) {
         if v {
             PrintString("true")
@@ -228,6 +223,10 @@ fn PrintValue(v: $T) {
         PrintInt(v)
     } else if @isstring(T) {
         PrintString(v)
+    } else if @typeseq(String, T) {
+        PrintStringl(&v)
+    } else if @typeseq(String&, T) {
+        PrintStringl(v)
     } else {
         @error("Can't print value of unknown type")
     }

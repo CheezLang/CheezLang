@@ -1,63 +1,30 @@
 #load("io.che")
-#load("array.che")
-
-let g_a = 5
-
-fn uiae() -> @typeof(g_a + 3) {
-    return g_a + 3
-}
+// #load("array.che")
 
 fn Main()
 {
-    let s = "Hi".ToString()
-    defer s.Dispose()
+    let as: StringBase(i8)
+    let bs: StringBase(i16)
+    let cs: StringBase(i32)
 
-    Printlnf("str: {S}", &s)
-
-    s.AppendString(" du")
-    Printlnf("str: {S}", &s)
-
-    s.AppendString(" lappen")
-    Printlnf("str: {S}", &s)
-
-    s.AppendString("!")
-    Printlnf("str: {S}", &s)
-
-    s.AppendString(" Du").AppendString(" ").AppendString("stinkts").AppendString(", lol")
-    Printlnf("str: {S}", &s)
-
-    Println("")
-
-    Printlnf("Size of int:           {i32}", 5.SizeInBytes())
-    Printlnf("Size of string:        {i32}", "".SizeInBytes())
-    Printlnf("Size of boolean:       {i32}", true.SizeInBytes())
-    Printlnf("Size of struct String: {i32}", s.SizeInBytes())
+    test(as)
+    test(bs)
+    test(cs)
 }
 
-fn PrintArray(arr: Array($T)^) {
-    use *arr
-
-    PrintString("(")
-    PrintInt(length)
-    PrintString("/")
-    PrintInt(capacity)
-    PrintString(") [")
-
-    let first = true
-    let i: uint = 0
-    while i < capacity {
-        if i > 0 {
-            PrintString(", ")
+fn test(val: $T) {
+    if (@typeseq(StringBase($X), T)) {
+        if @typeseq(X, i8) {
+            Println("ascii string")
         }
-
-        if i < length {
-            PrintValue(data[i])
-        } else {
-            PrintString("_")
+        else if @typeseq(X, int) {
+            Println("utf32 string")
         }
-
-        i = i + 1
+        else {
+            Printlnf("StringBase({s})", @typename(X))
+        }
     }
-    
-    Println("]")
+    else {
+        Printlnf("not a StringBase type: {s}", @typename(T))
+    }
 }

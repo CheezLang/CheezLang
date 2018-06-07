@@ -1,8 +1,8 @@
 
 
 fn GetStdHandle(h: int) -> int #stdcall;
-fn WriteFile(handle: int, str: string, length: int, bw: int^, res: int) #stdcall;
-fn ReadFile(hFile: int, lpBuffer: ubyte^, nNumberOfBytesToRead: int, lpNumberOfBytesRead: int^, lpOverlapped: ubyte^) #stdcall;
+fn WriteFile(handle: int, str: string, length: int, bw: int&, res: int) #stdcall;
+fn ReadFile(hFile: int, lpBuffer: ubyte&, nNumberOfBytesToRead: int, lpNumberOfBytesRead: int&, lpOverlapped: ubyte&) #stdcall;
 
 let __std_in_handle: int = GetStdHandle(-10)
 let __std_out_handle: int = GetStdHandle(-11)

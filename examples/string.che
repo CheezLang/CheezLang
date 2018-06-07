@@ -48,7 +48,7 @@ fn streq(a: $T, b: $T2) -> bool {
 }
 
 struct StringBase(CharType: type) {
-    data: CharType^
+    data: CharType&
     length: int
 }
 
@@ -56,12 +56,12 @@ let String = StringBase(byte)
 let Utf32String = StringBase(int)
 
 impl StringBase($CharType) {
-    ref fn FromString(str: string) -> StringBase(CharType)^ {
+    ref fn FromString(str: string) -> StringBase(CharType)& {
         if (ulong)data != 0 {
             // @Todo:
             //self.Dispose()
-            Free((void^)data)
-            data = (CharType^)0
+            Free((void&)data)
+            data = (CharType&)0
             length = 0
         }
 
@@ -69,7 +69,7 @@ impl StringBase($CharType) {
         data = Malloc((uint)length)
 
         if @sizeof(CharType) == 1 {
-            memcpy((void^)data, (void^)str, length)
+            memcpy((void&)data, (void&)str, length)
         } else {
             let i = 0
             while i < length {
@@ -81,27 +81,27 @@ impl StringBase($CharType) {
         return &self
     }
 
-    ref fn Append(other: StringBase(CharType)) -> StringBase(CharType)^ {
+    ref fn Append(other: StringBase(CharType)) -> StringBase(CharType)& {
         let newLength = length + other.length
         
         data = Realloc(data, (uint)newLength)
         
         let end = &data[length]
-        memcpy((void^)end, (void^)other.data, other.length * @sizeof(CharType))
+        memcpy((void&)end, (void&)other.data, other.length * @sizeof(CharType))
 
         length = newLength
 
         return &self
     }
 
-    ref fn AppendString(other: string) -> StringBase(CharType)^ {
+    ref fn AppendString(other: string) -> StringBase(CharType)& {
         let otherLength = strlen(other)
         let newLength = length + otherLength
         
         data = Realloc(data, (uint)newLength)
         
         let end = &data[length]
-        memcpy((void^)end, (void^)other, otherLength)
+        memcpy((void&)end, (void&)other, otherLength)
 
         length = newLength
 
@@ -109,15 +109,15 @@ impl StringBase($CharType) {
     }
 
     ref fn Dispose() {
-        Free((void^)data)
-        data = (CharType^)0
+        Free((void&)data)
+        data = (CharType&)0
         length = 0
     }
 }
 
 fn NewString() -> String {
     let s: String
-    s.data = (i8^)0
+    s.data = (i8&)0
     s.length = 0
     return s
 }

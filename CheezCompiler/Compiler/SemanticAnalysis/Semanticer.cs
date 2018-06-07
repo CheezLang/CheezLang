@@ -70,17 +70,19 @@ namespace Cheez.Compiler.SemanticAnalysis
         public string SymbolName { get; }
         public ILocation Node { get; set; }
         public IText Text { get; set; }
+        public bool Analyzed { get; set; }
 
         public string File { get; }
         public string Function { get; }
         public int Line { get; }
 
-        public WaitForSymbol(IText text, ILocation node, Scope scope, string varNem, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        public WaitForSymbol(IText text, ILocation node, Scope scope, string varNem, bool analyzed = true, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             this.Scope = scope;
             this.SymbolName = varNem;
             this.Text = text;
             this.Node = node;
+            this.Analyzed = analyzed;
             File = callingFunctionFile;
             Function = callingFunctionName;
             Line = callLineNumber;
@@ -88,7 +90,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public bool Check()
         {
-            return Scope.GetSymbol(SymbolName) != null;
+            return Scope.GetSymbol(SymbolName, Analyzed) != null;
         }
 
         public void Report(IErrorHandler handler)
@@ -127,6 +129,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         public AstImplBlock ImplBlock { get; set; }
         public AstFunctionDecl Function { get; set; }
         public AstBlockStmt Block { get; set; }
+        public AstStructDecl Struct { get; set; }
 
 
         public CheezType ExpectedType { get; set; }
@@ -141,7 +144,12 @@ namespace Cheez.Compiler.SemanticAnalysis
         }
 
         [DebuggerStepThrough]
-        public SemanticerData(Scope Scope = null, IText Text = null, AstFunctionDecl Function = null/*, CheezType Impl = null*/, AstImplBlock ImplBlock = null, CheezType ExpectedType = null, IErrorHandler ErrorHandler = null)
+        public SemanticerData(Scope Scope = null,
+            IText Text = null,
+            AstFunctionDecl Function = null/*, CheezType Impl = null*/,
+            AstImplBlock ImplBlock = null,
+            CheezType ExpectedType = null,
+            IErrorHandler ErrorHandler = null)
         {
             this.Scope = Scope;
             this.Text = Text;
@@ -153,7 +161,14 @@ namespace Cheez.Compiler.SemanticAnalysis
         }
 
         [DebuggerStepThrough]
-        public SemanticerData Clone(Scope Scope = null, IText Text = null, AstFunctionDecl Function = null/*, CheezType Impl = null*/, AstImplBlock ImplBlock = null, CheezType ExpectedType = null, IErrorHandler ErrorHandler = null, AstBlockStmt Block = null)
+        public SemanticerData Clone(Scope Scope = null,
+            IText Text = null,
+            AstFunctionDecl Function = null/*, CheezType Impl = null*/,
+            AstImplBlock ImplBlock = null,
+            CheezType ExpectedType = null,
+            IErrorHandler ErrorHandler = null,
+            AstBlockStmt Block = null,
+            AstStructDecl Struct = null)
         {
             return new SemanticerData
             {
@@ -164,7 +179,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                 ImplBlock = ImplBlock ?? this.ImplBlock,
                 ExpectedType = ExpectedType,
                 ErrorHandler = ErrorHandler ?? this.ErrorHandler,
-                Block = Block ?? this.Block
+                Block = Block ?? this.Block,
+                Struct = Struct ?? this.Struct
             };
         }
 
@@ -435,7 +451,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = data.Scope;
             str.Scope = scope;
 
-            if (str.Parameters != null && !str.IsPolyInstance)
+            if (str.Parameters.Count > 0 && !str.IsPolyInstance)
             {
                 str.IsPolymorphic = true;
 
@@ -477,8 +493,13 @@ namespace Cheez.Compiler.SemanticAnalysis
             foreach (var mem in str.Members)
             {
                 mem.TypeExpr.Scope = str.SubScope;
-                foreach (var v in mem.TypeExpr.Accept(this, data.Clone(Scope: str.SubScope)))
-                    yield return v;
+                foreach (var v in mem.TypeExpr.Accept(this, data.Clone(Scope: str.SubScope, Struct: str)))
+                {
+                    if (v is ReplaceAstExpr r)
+                        mem.TypeExpr = r.NewExpression;
+                    else
+                        yield return v;
+                }
                 if (mem.TypeExpr.Value is CheezType t)
                     mem.Type = t;
                 else
@@ -644,14 +665,14 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitIfStatement(AstIfStmt ifs, SemanticerData context = null)
         {
-            var scope = context.Scope;
-            ifs.Scope = scope;
+            ifs.Scope = context.Scope;
+            ifs.SubScope = new Scope("if", ifs.Scope);
 
             bool returns = true;
 
             // check condition
             {
-                foreach (var v in ifs.Condition.Accept(this, context.Clone()))
+                foreach (var v in ifs.Condition.Accept(this, context.Clone(Scope: ifs.SubScope)))
                     if (v is ReplaceAstExpr r)
                         ifs.Condition = r.NewExpression;
                     else
@@ -669,19 +690,19 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (b)
                 {
-                    foreach (var v in ReplaceAstStmt(ifs.IfCase, context.Clone(NewScope("if", scope))))
+                    foreach (var v in ReplaceAstStmt(ifs.IfCase, context.Clone(ifs.SubScope)))
                         yield return v;
                     yield break;
                 }
                 else if (ifs.ElseCase != null)
                 {
-                    foreach (var v in ReplaceAstStmt(ifs.ElseCase, context.Clone(NewScope("else", scope))))
+                    foreach (var v in ReplaceAstStmt(ifs.ElseCase, context.Clone(ifs.SubScope)))
                         yield return v;
                     yield break;
                 }
                 else
                 {
-                    foreach (var v in ReplaceAstStmt(new AstEmptyStatement(ifs.GenericParseTreeNode), context.Clone(NewScope("else", scope))))
+                    foreach (var v in ReplaceAstStmt(new AstEmptyStatement(ifs.GenericParseTreeNode), context.Clone(ifs.SubScope)))
                         yield return v;
                     yield break;
                 }
@@ -689,7 +710,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             // if case
             {
-                foreach (var v in ifs.IfCase.Accept(this, context.Clone(NewScope("if", scope))))
+                foreach (var v in ifs.IfCase.Accept(this, context.Clone(ifs.SubScope)))
                     yield return v;
 
                 if (!ifs.IfCase.GetFlag(StmtFlags.Returns))
@@ -699,7 +720,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             // else case
             if (ifs.ElseCase != null)
             {
-                foreach (var v in ifs.ElseCase.Accept(this, context.Clone(NewScope("else", scope))))
+                foreach (var v in ifs.ElseCase.Accept(this, context.Clone(ifs.SubScope)))
                     yield return v;
 
                 if (!ifs.ElseCase.GetFlag(StmtFlags.Returns))
@@ -943,78 +964,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        private IEnumerable<object> CreateType(Scope scope, AstExpression e, IText text, IErrorHandler error)
-        {
-            switch (e)
-            {
-                case AstIdentifierExpr i:
-                    {
-                        if (i.IsPolymorphic)
-                        {
-                            yield return new PolyType(i.Name);
-                        }
-                        else
-                        {
-                            var v = scope.GetSymbol(i.Name);
-                            if (v == null)
-                            {
-                                yield return new WaitForSymbol(text, e.GenericParseTreeNode, scope, i.Name);
-                                v = scope.GetSymbol(i.Name);
-                            }
-
-                            if (v is CompTimeVariable comp)
-                                yield return comp.Value as CheezType;
-                            else
-                                yield return v.Type;
-                        }
-                        yield break;
-                    }
-
-                case AstCallExpr c:
-                    {
-                        CheezType fType = null;
-                        foreach (var v in CreateType(scope, c.Function, text, error))
-                        {
-                            if (v is CheezType t)
-                                fType = t;
-                            else
-                                yield return v;
-                        }
-
-                        var aTypes = new CheezType[c.Arguments.Count];
-                        for (int i = 0; i < aTypes.Length; i++)
-                        {
-                            foreach (var v in CreateType(scope, c.Arguments[i], text, error))
-                            {
-                                if (v is CheezType t)
-                                    aTypes[i] = t;
-                                else
-                                    yield return v;
-                            }
-                        }
-
-                        if (fType is GenericStructType s)
-                        {
-                            if (s.Declaration.Parameters.Count != aTypes.Length)
-                            {
-                                error.ReportError(text, c.Function.GenericParseTreeNode, $"Wrong number of arguments for struct '{s.Declaration.Name.Name}'");
-                                yield return CheezType.Error;
-                                yield break;
-                            }
-
-                            yield return new StructType(s.Declaration, aTypes);
-                            yield break;
-                        }
-                        else
-                        {
-                            error.ReportError(text, c.Function.GenericParseTreeNode, $"Expected struct type, got '{c.Function}'");
-                            yield return CheezType.Error;
-                            yield break;
-                        }
-                    }
-            }
-        }
-
         public override IEnumerable<object> VisitImplBlock(AstImplBlock impl, SemanticerData context = null)
         {
             var scope = context.Scope;
@@ -1105,17 +1054,61 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #region Expressions
 
+        private bool TypesMatch(CheezType a, CheezType b, Dictionary<string, CheezType> bindings)
+        {
+            if (a == b)
+                return true;
+
+            if (a is PolyType && b is PolyType)
+                return true;
+            {
+                if (a is PolyType p)
+                {
+                    bindings[p.Name] = b;
+                    return true;
+                }
+            }
+
+            {
+                if (b is PolyType p)
+                {
+                    bindings[p.Name] = a;
+                    return true;
+                }
+            }
+
+            if (a is StructType sa && b is StructType sb)
+            {
+                if (sa.Declaration.Name.Name != sb.Declaration.Name.Name)
+                    return false;
+                if (sa.Arguments.Length != sb.Arguments.Length)
+                    return false;
+                for (int i = 0; i < sa.Arguments.Length; i++)
+                {
+                    if (!TypesMatch(sa.Arguments[i], sb.Arguments[i], bindings))
+                        return false;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
         public override IEnumerable<object> VisitCompCallExpression(AstCompCallExpr call, SemanticerData context = null)
         {
             call.Scope = context.Scope;
 
             var name = call.Name.Name;
 
-            foreach (var arg in call.Arguments)
+            if (name != "typeseq")
             {
-                arg.Scope = call.Scope;
-                foreach (var v in arg.Accept(this, context))
-                    yield return v;
+                foreach (var arg in call.Arguments)
+                {
+                    arg.Scope = call.Scope;
+                    foreach (var v in arg.Accept(this, context))
+                        yield return v;
+                }
             }
 
             switch (name)
@@ -1124,12 +1117,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (call.Arguments.Count < 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, "Comptime function '@sizeof' requires one argument");
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
                             foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(0)), context))
                                 yield return v;
                         }
                         if (call.Arguments.Count > 1)
-                            context.ReportError(call.Name.GenericParseTreeNode, "Comptime function '@sizeof' requires only one argument");
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires only one argument");
 
                         var arg = call.Arguments[0];
 
@@ -1331,19 +1324,71 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 case "typeseq":
                     {
+                        call.Type = CheezType.Bool;
+                        call.IsCompTimeValue = true;
+                        call.Value = false;
+
+                        foreach (var arg in call.Arguments)
+                        {
+                            foreach (var v in CreateType(call.Scope, arg, context.Text, context.ErrorHandler))
+                            {
+                                if (v is CheezType t)
+                                    arg.Type = t;
+                                else
+                                    yield return v;
+                            }
+                        }
+
                         if (call.Arguments.Count != 2)
                         {
                             context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires two arguments");
-                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
-                                yield return v;
+                            break;
                         }
 
-                        var type1 = (call.Arguments[0].Type == CheezType.Type) ? (call.Arguments[0].Value as CheezType) : call.Arguments[0].Type;
-                        var type2 = (call.Arguments[1].Type == CheezType.Type) ? (call.Arguments[1].Value as CheezType) : call.Arguments[1].Type;
+                        var type1 = call.Arguments[0].Type;
+                        var type2 = call.Arguments[1].Type;
 
-                        var eq = type1 == type2;
+                        var bindings = new Dictionary<string, CheezType>();
+                        var typesMatch = TypesMatch(type1, type2, bindings);
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, eq), context))
+                        foreach (var binding in bindings)
+                        {
+                            if (!call.Scope.DefineTypeSymbol(binding.Key, binding.Value))
+                            {
+                                context.ReportError(call.GenericParseTreeNode, $"Symbol '{binding.Key}' already exists in current scope");
+                            }
+                        }
+
+                        call.Type = CheezType.Bool;
+                        call.IsCompTimeValue = true;
+                        call.Value = typesMatch;
+                        break;
+                    }
+
+                case "typename":
+                    {
+                        if (call.Arguments.Count < 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(0)), context))
+                                yield return v;
+                        }
+                        if (call.Arguments.Count > 1)
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires only one argument");
+
+                        var arg = call.Arguments[0];
+
+                        CheezType type = CheezType.Error;
+                        if (arg.Type == CheezType.Type)
+                        {
+                            type = arg.Value as CheezType;
+                        }
+                        else
+                        {
+                            type = arg.Type;
+                        }
+
+                        foreach (var v in ReplaceAstExpr(new AstStringLiteral(call.GenericParseTreeNode, type.ToString()), context))
                             yield return v;
                         break;
                     }
@@ -1388,9 +1433,16 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = context.Scope;
             str.Scope = scope;
 
+            context.Function.LocalVariables.Add(str);
+
             // types
             foreach (var v in str.TypeExpr.Accept(this, context.Clone(ExpectedType: null)))
-                yield return v;
+            {
+                if (v is ReplaceAstExpr r)
+                    str.TypeExpr = r.NewExpression;
+                else
+                    yield return v;
+            }
             if (str.TypeExpr.Value is CheezType t)
                 str.Type = t;
             else
@@ -1413,7 +1465,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                             {
                                 context.ReportError(m.GenericParseTreeNode.Name, $"'{m.Name}' is not a member of struct {s.Declaration.Name}");
                             }
-                            namesProvided++;
+                            else
+                            {
+                                namesProvided++;
+                            }
                         }
                     }
 
@@ -1432,6 +1487,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             var mem = s.Declaration.Members[i];
                             var mi = str.MemberInitializers[i];
                             mi.Name = mem.Name.Name;
+                            mi.Index = i;
 
                             if (CastIfLiteral(mi.Value.Type, mem.Type, out var miType))
                             {
@@ -1445,7 +1501,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                     else if (namesProvided == str.MemberInitializers.Length)
                     {
-
+                        context.ReportError(str.ParseTreeNode?.Type, $"Named members not implemented yet");
                     }
                     else
                     {
@@ -2000,11 +2056,14 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = context.Scope;
             ident.Scope = scope;
 
-            var v = scope.GetSymbol(ident.Name);
+            var analyzed = true;
+            if (context.Struct != null)
+                analyzed = false;
+            var v = scope.GetSymbol(ident.Name, analyzed);
             if (v == null)
             {
-                yield return new WaitForSymbol(context.Text, ident.GenericParseTreeNode, scope, ident.Name);
-                v = scope.GetSymbol(ident.Name);
+                yield return new WaitForSymbol(context.Text, ident.GenericParseTreeNode, scope, ident.Name, analyzed);
+                v = scope.GetSymbol(ident.Name, analyzed);
             }
             ident.Symbol = v;
             ident.Value = v;
@@ -2379,6 +2438,78 @@ namespace Cheez.Compiler.SemanticAnalysis
         private AstNumberExpr ConstInt(PTExpr node, BigInteger value)
         {
             return new AstNumberExpr(node, new NumberData(value));
+        }
+
+        private IEnumerable<object> CreateType(Scope scope, AstExpression e, IText text, IErrorHandler error)
+        {
+            switch (e)
+            {
+                case AstIdentifierExpr i:
+                    {
+                        if (i.IsPolymorphic)
+                        {
+                            yield return new PolyType(i.Name);
+                        }
+                        else
+                        {
+                            var v = scope.GetSymbol(i.Name);
+                            if (v == null)
+                            {
+                                yield return new WaitForSymbol(text, e.GenericParseTreeNode, scope, i.Name);
+                                v = scope.GetSymbol(i.Name);
+                            }
+
+                            if (v is CompTimeVariable comp)
+                                yield return comp.Value as CheezType;
+                            else
+                                yield return v.Type;
+                        }
+                        yield break;
+                    }
+
+                case AstCallExpr c:
+                    {
+                        CheezType fType = null;
+                        foreach (var v in CreateType(scope, c.Function, text, error))
+                        {
+                            if (v is CheezType t)
+                                fType = t;
+                            else
+                                yield return v;
+                        }
+
+                        var aTypes = new CheezType[c.Arguments.Count];
+                        for (int i = 0; i < aTypes.Length; i++)
+                        {
+                            foreach (var v in CreateType(scope, c.Arguments[i], text, error))
+                            {
+                                if (v is CheezType t)
+                                    aTypes[i] = t;
+                                else
+                                    yield return v;
+                            }
+                        }
+
+                        if (fType is GenericStructType s)
+                        {
+                            if (s.Declaration.Parameters.Count != aTypes.Length)
+                            {
+                                error.ReportError(text, c.Function.GenericParseTreeNode, $"Wrong number of arguments for struct '{s.Declaration.Name.Name}'");
+                                yield return CheezType.Error;
+                                yield break;
+                            }
+
+                            yield return new StructType(s.Declaration, aTypes);
+                            yield break;
+                        }
+                        else
+                        {
+                            error.ReportError(text, c.Function.GenericParseTreeNode, $"Expected struct type, got '{c.Function}'");
+                            yield return CheezType.Error;
+                            yield break;
+                        }
+                    }
+            }
         }
     }
 }

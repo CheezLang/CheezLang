@@ -761,6 +761,8 @@ namespace Cheez.Compiler.Ast
         public string Name { get; set; }
         public AstExpression Value { get; set; }
 
+        public int Index { get; set; }
+
         public AstStructMemberInitialization(ParseTree.PTStructMemberInitialization node, string name, AstExpression expr)
         {
             this.GenericParseTreeNode = node;
@@ -769,12 +771,14 @@ namespace Cheez.Compiler.Ast
         }
     }
 
-    public class AstStructValueExpr : AstExpression
+    public class AstStructValueExpr : AstExpression, ITempVariable
     {
         public ParseTree.PTStructValueExpr ParseTreeNode => GenericParseTreeNode as ParseTree.PTStructValueExpr;
-        public AstExpression TypeExpr { get; }
+        public AstExpression TypeExpr { get; set; }
         public AstStructMemberInitialization[] MemberInitializers { get; }
         public override bool IsPolymorphic => false;
+
+        public AstIdentifierExpr Name => null;
 
         [DebuggerStepThrough]
         public AstStructValueExpr(ParseTree.PTExpr node, AstExpression name, AstStructMemberInitialization[] inits) : base()

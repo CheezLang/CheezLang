@@ -23,8 +23,8 @@ impl Array($ElementType) {
         FreeArray(data)
     }
 
-    ref fn RawData() -> ElementType^ {
-        return (T^)data
+    ref fn RawData() -> ElementType& {
+        return (T&)data
     }
 
     ref fn Reserve(s: uint) {

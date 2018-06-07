@@ -395,10 +395,21 @@ namespace Cheez.Compiler
             return true;
         }
 
-        public ISymbol GetSymbol(string name)
+        public ISymbol GetSymbol(string name, bool analyzed = true)
         {
             if (mSymbolTable.ContainsKey(name))
-                return mSymbolTable[name];
+            {
+                var v = mSymbolTable[name];
+                if (analyzed && v is CompTimeVariable c && c.Value is StructType s)
+                {
+                    if (s.Analyzed)
+                        return v;
+                }
+                else
+                {
+                    return v;
+                }
+            }
             return Parent?.GetSymbol(name);
         }
 

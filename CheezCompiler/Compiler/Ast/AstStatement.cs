@@ -176,6 +176,7 @@ namespace Cheez.Compiler.Ast
 
     public class AstIfStmt : AstStatement
     {
+        public Scope SubScope { get; set; }
         public AstExpression Condition { get; set; }
         public AstStatement IfCase { get; set; }
         public AstStatement ElseCase { get; set; }

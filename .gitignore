@@ -227,3 +227,6 @@ _Pvt_Extensions
 src
 /gen
 /examples/*.cpp
+/Linker/Win32
+/Linker/int
+*.dll
