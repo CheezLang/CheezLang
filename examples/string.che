@@ -179,9 +179,7 @@ impl StringBase($CharType) {
 
 fn NewString() -> String {
     return new String {
-        (byte&)0
-        0
-        0
+        (byte&)0, 0, 0
     }
 }
 

@@ -1,7 +1,7 @@
 #load("string.che")
 #load("memory.che")
 #load("std/windows.che")
-#load("string.che")
+#load("stdio.che")
 
 let NEW_LINE: byte = 10
 
@@ -24,6 +24,65 @@ fn PrintChar(c: byte) {
 
 fn PrintDigit(d: int) {
     PrintChar((byte)d + 48)
+}
+
+fn PrintInt(val: $T) {
+    let v = val
+    let len = 0
+
+    let neg = false
+    if v < 0 {
+        neg = true
+        len = 1
+        v = -v
+    }
+    else if v == 0 {
+        len = 1
+    }
+
+    while v != 0 {
+        v = v / 10
+        len = len + 1
+    }
+
+
+    let buffer: String = NewString()
+    defer buffer.Dispose()
+    buffer.Reserve(len)
+
+    buffer.length = len
+
+    if (val == 0)
+    {
+        *buffer.data = 48
+    }
+    else {
+        let minimum = false
+        if neg and val < 0 {
+            // val is minimum value
+            val = -(val + 1)
+            minimum = true
+        }
+
+        let i = len - 1
+        while val != 0 {
+            let lastDigit = val % 10
+            if i == len - 1 and minimum {
+                lastDigit = lastDigit + 1
+            }
+
+            val = val / 10
+            buffer.data[i] = (byte)lastDigit + 48
+            i = i - 1
+        }
+
+        if (neg) {
+            buffer.data[i] = 45
+            i = i - 1
+        }
+    }
+
+    PrintStringl(&buffer)
 }
 
 fn Bprinti(buffer: byte&, num: $T) {
@@ -72,27 +131,7 @@ fn Sprint(buffer: String&, value: $T) {
             buffer.AppendString("false")
         }
     } else if @isint(T) {
-        let v = value
-        let len = 0
-
-        if v < 0 {
-            len = 1
-            v = -v
-        }
-
-        while v != 0 {
-            v = v / 10
-            len = len + 1
-        }
-
-        let minLen = buffer.length + len
-        if minLen > buffer.capacity {
-            buffer.Reserve(minLen)
-        }
-
-        buffer.length = minLen
-
-        Bprinti((byte&)((ulong)buffer.data + (ulong)minLen - 1), value)
+        PrintInt(value)
     } else if @isstring(T) {
         buffer.AppendString(value)
     } else if @typeseq(String&, T) {
@@ -168,64 +207,12 @@ fn Sprintf(buffer: String&, format: string, data: any) {
     }
 }
 
-// fn Printfn(format: string, args: any[]) {
-//     let open = *"{"
-//     let close = *"}"
-
-//     let argIndex = 0
-
-//     let formatSpecifier: byte& = Malloc(5)
-//     defer Free(formatSpecifier)
-
-//     let len = strlen(format)
-//     let i = 0
-//     let state = 0
-
-//     while (i < len) {
-//         let c = format[i]
-
-//         if state == 0 {
-//             if (c == open) {
-//                 state = 1
-//             }
-//             else {
-//                 PrintChar(c)
-//             }
-//         }
-//         else if state == 1 {
-//             if (c == close) {
-//                 formatSpecifier[fi] = 0
-//                 state = 0
-//                 formatSpecifier.length = 0
-
-//                 SprintfData(formatSpecifier, args[argIndex])
-//                 argIndex = argIndex + 1
-//             } else {
-//                 formatSpecifier[formatSpecifier.length] = c
-//                 formatSpecifier.length = formatSpecifier.length + 1
-//             }
-//         }
-
-
-//         i = i + 1
-//     }
-// }
-
-// fn Printlnf(format: string, data: any) {
-//     Printf(format, data)
-//     PrintChar(NEW_LINE)
-// }
-
-// fn Printlnfn(format: string, args: any[]) {
-//     Printfn(format, args)
-//     PrintChar(NEW_LINE)
-// }
-
 fn Println(v: $T) {
     Print(v)
     PrintChar(NEW_LINE)
 }
 
+let _int_to_string_buffer: byte& = Malloc(25)
 fn Print(v: $T) {
     if @isbool(T) {
         if v {
@@ -234,7 +221,10 @@ fn Print(v: $T) {
             PrintString("false")
         }
     } else if @isint(T) {
-        PrintInt(v)
+        let s = "".ToString()
+        defer s.Dispose()
+        Sprint(&s, v)
+        // PrintStringl(&s)
     } else if @isstring(T) {
         PrintString(v)
     } else if @typeseq(String, T) {

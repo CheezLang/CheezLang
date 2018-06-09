@@ -722,10 +722,12 @@ namespace Cheez.Compiler.Ast
 
     public class AstArrayTypeExpr : AstExpression
     {
-        public AstExpression Target { get; set; }
         public override bool IsPolymorphic => Target.IsPolymorphic;
 
-        public AstArrayTypeExpr(ParseTree.PTExpr node, AstExpression target) : base()
+        public AstExpression Target { get; set; }
+        public AstExpression Length { get; set; }
+
+        public AstArrayTypeExpr(ParseTree.PTExpr node, AstExpression target, AstExpression length) : base()
         {
             this.GenericParseTreeNode = node;
             this.Target = target;
@@ -735,7 +737,7 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override AstExpression Clone()
         {
-            return new AstArrayTypeExpr(GenericParseTreeNode, Target.Clone())
+            return new AstArrayTypeExpr(GenericParseTreeNode, Target.Clone(), Length.Clone())
             {
                 Type = this.Type,
                 Scope = this.Scope
@@ -808,6 +810,34 @@ namespace Cheez.Compiler.Ast
         {
             var i = string.Join(", ", MemberInitializers.Select(m => m.Name != null ? $"{m.Name} = {m.Value}" : m.Value.ToString()));
             return $"{TypeExpr} {{ {i} }}";
+        }
+    }
+
+    public class AstArrayExpression : AstExpression, ITempVariable
+    {
+        public override bool IsPolymorphic => false;
+
+        public List<AstExpression> Values { get; set; }
+
+        public AstIdentifierExpr Name => null;
+
+        public AstArrayExpression(ParseTree.PTExpr node, List<AstExpression> values) : base(node)
+        {
+            this.Values = values;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitArrayExpression(this, data);
+        }
+
+        public override AstExpression Clone()
+        {
+            return new AstArrayExpression(GenericParseTreeNode, Values)
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
         }
     }
 }

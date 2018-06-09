@@ -1146,6 +1146,40 @@ namespace Cheez.Compiler.Parsing
                         return new PTCompCallExpr(end, new PTIdentifierExpr(token.location, (string)token.data, false), args);
                     }
 
+                case TokenType.OpenBracket:
+                    {
+                        NextToken();
+                        var values = new List<PTExpr>();
+
+                        while (true)
+                        {
+                            SkipNewlines();
+                            var next = PeekToken();
+
+                            if (next.type == TokenType.ClosingBracket || next.type == TokenType.EOF)
+                                break;
+
+                            values.Add(ParseExpression());
+
+                            next = PeekToken();
+
+                            if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
+                            {
+                                NextToken();
+                            }
+                            else if (next.type == TokenType.ClosingBracket)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                ReportError(next.location, "Unexpected token in array expression");
+                            }
+                        }
+
+                        var end = Consume(TokenType.ClosingBracket, ErrMsg("]", "at end of array expression")).location;
+                        return new PTArrayExpression(token.location, end, values);
+                    }
 
                 case TokenType.DollarIdentifier:
                     NextToken();

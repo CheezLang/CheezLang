@@ -1244,22 +1244,23 @@ namespace Cheez.Compiler.SemanticAnalysis
                         break;
                     }
 
-                case "isarray":
-                    {
-                        if (call.Arguments.Count != 1)
-                        {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
-                                yield return v;
-                        }
+                    // @Todo
+                //case "isarray":
+                //    {
+                //        if (call.Arguments.Count != 1)
+                //        {
+                //            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                //            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                //                yield return v;
+                //        }
 
-                        var arg = call.Arguments[0];
-                        var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
+                //        var arg = call.Arguments[0];
+                //        var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is ArrayType), context))
-                            yield return v;
-                        break;
-                    }
+                //        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is ArrayType), context))
+                //            yield return v;
+                //        break;
+                //    }
 
                 case "isstring":
                     {
@@ -1547,6 +1548,19 @@ namespace Cheez.Compiler.SemanticAnalysis
             else if (arr.SubExpression.Type is StringType)
             {
                 arr.Type = IntType.GetIntType(1, true);
+            }
+            else if (arr.SubExpression.Type == CheezType.Type)
+            {
+                if (arr.Indexer.IsCompTimeValue && arr.Indexer.Value is long length)
+                {
+                    arr.Type = CheezType.Type;
+                    arr.Value = ArrayType.GetArrayType(arr.SubExpression.Value as CheezType, (int)length);
+                }
+                else
+                {
+                    arr.Type = CheezType.Error;
+                    context.ReportError(arr.Indexer.GenericParseTreeNode, "Index must be a constant int");
+                }
             }
             else
             {
@@ -2103,6 +2117,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         public override IEnumerable<object> VisitNumberExpression(AstNumberExpr num, SemanticerData context = null)
         {
             num.Type = IntType.LiteralType;
+            num.Value = num.Data.ToLong();
             yield break;
         }
 
@@ -2276,19 +2291,31 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitArrayTypeExpr(AstArrayTypeExpr arr, SemanticerData context = default)
         {
-            arr.Scope = context.Scope;
-            foreach (var v in arr.Target.Accept(this, context.Clone(ExpectedType: null)))
-                yield return v;
+            throw new NotImplementedException();
+            //arr.Scope = context.Scope;
+            //foreach (var v in arr.Target.Accept(this, context.Clone(ExpectedType: null)))
+            //{
+            //    if (v is ReplaceAstExpr r)
+            //        arr.Target = r.NewExpression;
+            //    else yield return v;
+            //}
 
-            arr.Type = CheezType.Type;
-            if (arr.Target.Value is CheezType t)
-            {
-                arr.Value = ArrayType.GetArrayType(t);
-            }
-            else
-            {
-                context.ReportError(context.Text, arr.Target.GenericParseTreeNode, $"Expected type, got {arr.Target.Type}");
-            }
+            //foreach (var v in arr.Length.Accept(this, context.Clone(ExpectedType: null)))
+            //{
+            //    if (v is ReplaceAstExpr r)
+            //        arr.Target = r.NewExpression;
+            //    else yield return v;
+            //}
+
+            //arr.Type = CheezType.Type;
+            //if (arr.Target.Value is CheezType t)
+            //{
+            //    arr.Value = ArrayType.GetArrayType(t, leng);
+            //}
+            //else
+            //{
+            //    context.ReportError(context.Text, arr.Target.GenericParseTreeNode, $"Expected type, got {arr.Target.Type}");
+            //}
         }
 
         public override IEnumerable<object> VisitPointerTypeExpr(AstPointerTypeExpr ptr, SemanticerData context = default)
@@ -2309,6 +2336,64 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 context.ReportError(ptr.Target.GenericParseTreeNode, $"Expected type, got {ptr.Target.Type}");
             }
+        }
+
+        public override IEnumerable<object> VisitArrayExpression(AstArrayExpression arr, SemanticerData context = null)
+        {
+            arr.Scope = context.Scope;
+
+            CheezType type = null;
+
+            context.Function.LocalVariables.Add(arr);
+
+            bool containsLiterals = false;
+            for (int i = 0; i < arr.Values.Count; i++)
+            {
+                foreach (var v in arr.Values[i].Accept(this, context))
+                {
+                    if (v is ReplaceAstExpr r)
+                        arr.Values[i] = r.NewExpression;
+                    else
+                        yield return v;
+                }
+
+                var value = arr.Values[i];
+
+                if (value.Type == IntType.LiteralType || value.Type == FloatType.LiteralType)
+                {
+                    containsLiterals = true;
+                }
+                if (type == null || type == IntType.LiteralType || type == FloatType.LiteralType)
+                {
+                    type = value.Type;
+                }
+                else if (!CastIfLiteral(value.Type, type, out var t))
+                {
+                    context.ReportError(value.GenericParseTreeNode, $"Can't implicitly convert a value of type '{value.Type}' to type '{type}'");
+                }
+                else
+                {
+                    value.Type = t;
+                }
+
+            }
+
+            if (type == IntType.LiteralType || type == FloatType.LiteralType)
+            {
+                type = IntType.DefaultType;
+            }
+
+            if (containsLiterals)
+            {
+                foreach (var value in arr.Values)
+                {
+                    value.Type = type;
+                }
+            }
+
+            arr.Type = ArrayType.GetArrayType(type, arr.Values.Count);
+
+            yield break;
         }
 
         #endregion

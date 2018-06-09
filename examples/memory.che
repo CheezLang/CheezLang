@@ -16,17 +16,17 @@ fn Free(mem: $T&) {
     free((void&)mem)
 }
 
-fn AllocateArray(count: uint) -> $T[] {
-    return (T[])malloc((int)count * @sizeof(T))
-}
+// fn AllocateArray(count: uint) -> $T[] {
+//     return (T[])malloc((int)count * @sizeof(T))
+// }
 
-fn ReallocArray(arr: $T[], count: uint) -> T[] {
-    return (T[])realloc((void&)arr, (int)count * @sizeof(T))
-}
+// fn ReallocArray(arr: $T[], count: uint) -> T[] {
+//     return (T[])realloc((void&)arr, (int)count * @sizeof(T))
+// }
 
-fn FreeArray(arr: $T[]) {
-    free((void&)arr)
-}
+// fn FreeArray(arr: $T[]) {
+//     free((void&)arr)
+// }
 
 fn ClearMemory(mem: byte&, len: uint) {
     let i: @typeof(len) = 0

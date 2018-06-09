@@ -330,4 +330,20 @@ namespace Cheez.Compiler.ParseTree
             return new AstStructValueExpr(this, Type.CreateAst(), inits);
         }
     }
+
+    public class PTArrayExpression : PTExpr
+    {
+        public List<PTExpr> Values { get; set; }
+
+        public PTArrayExpression(TokenLocation beg, TokenLocation end, List<PTExpr> values) : base(beg, end)
+        {
+            this.Values = values;
+        }
+
+        public override AstExpression CreateAst()
+        {
+            var vs = Values.Select(v => v.CreateAst()).ToList();
+            return new AstArrayExpression(this, vs);
+        }
+    }
 }

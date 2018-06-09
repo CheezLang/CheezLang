@@ -1,7 +1,7 @@
 #load("memory.che")
 
 struct Array(ElementType: type) {
-    data: ElementType[]
+    data: ElementType&
     length: uint
     capacity: uint
 }
@@ -10,17 +10,17 @@ impl Array($ElementType) {
     ref fn Init() {
         length = 0
         capacity = 10
-        data = AllocateArray(capacity)
+        data = Malloc(capacity)
     }
     
     ref fn InitSize(size: uint) {
         length = 0
         capacity = size
-        data = AllocateArray(capacity)
+        data = Malloc(capacity)
     }
 
-    ref fn Delete() {
-        FreeArray(data)
+    ref fn Dispose() {
+        Free(data)
     }
 
     ref fn RawData() -> ElementType& {
@@ -32,13 +32,13 @@ impl Array($ElementType) {
             return
         }
         capacity = s
-        data = ReallocArray(data, capacity)
+        data = Realloc(data, capacity)
     }
 
     ref fn Add(val: ElementType) {
         if capacity <= length {
             capacity = capacity * 2
-            data = ReallocArray(data, capacity)
+            data = Realloc(data, capacity)
         }
 
         data[length] = val

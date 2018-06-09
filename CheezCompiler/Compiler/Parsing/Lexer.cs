@@ -2,6 +2,7 @@
 using System.IO;
 using System.Numerics;
 using System.Text;
+using System;
 
 namespace Cheez.Compiler.Parsing
 {
@@ -52,7 +53,7 @@ namespace Cheez.Compiler.Parsing
 
         OpenBrace,
         ClosingBrace,
-        
+
         OpenBracket,
         ClosingBracket,
 
@@ -104,7 +105,7 @@ namespace Cheez.Compiler.Parsing
 
         public override string ToString()
         {
-            return $"{file} ({line}:{index-lineStartIndex+1})";
+            return $"{file} ({line}:{index - lineStartIndex + 1})";
         }
     }
 
@@ -169,6 +170,11 @@ namespace Cheez.Compiler.Parsing
             }
         }
 
+        public long ToLong()
+        {
+            return (long)IntValue;
+        }
+
         public NumberData Negate()
         {
             return new NumberData
@@ -180,6 +186,7 @@ namespace Cheez.Compiler.Parsing
                 Type = Type
             };
         }
+
     }
 
     public interface IText

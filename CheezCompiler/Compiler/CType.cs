@@ -143,6 +143,11 @@ namespace Cheez.Compiler
         public static ErrorType Instance { get; } = new ErrorType { Size = 0 };
 
         public override bool IsPolyType => false;
+
+        public override string ToString()
+        {
+            return "<Error Type>";
+        }
     }
 
     public class VoidType : CheezType
@@ -324,26 +329,25 @@ namespace Cheez.Compiler
 
     public class ArrayType : CheezType
     {
-        public static int ArraySize = 8;
-
         private static Dictionary<CheezType, ArrayType> sTypes = new Dictionary<CheezType, ArrayType>();
 
         public CheezType TargetType { get; set; }
+        public int Length { get; set; }
 
-        public static ArrayType GetArrayType(CheezType targetType)
+        public static ArrayType GetArrayType(CheezType targetType, int length)
         {
             if (targetType == null)
                 return null;
 
-            if (sTypes.ContainsKey(targetType))
-            {
-                return sTypes[targetType];
-            }
+            var existing = sTypes.FirstOrDefault(t => t.Value.TargetType == targetType && t.Value.Length == length).Value;
+            if (existing != null)
+                return existing;
 
             var type = new ArrayType
             {
                 TargetType = targetType,
-                Size = ArraySize
+                Size = length * targetType.Size,
+                Length = length
             };
 
             sTypes[targetType] = type;
@@ -352,7 +356,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return $"{TargetType}[]";
+            return $"{TargetType}[{Length}]";
         }
 
         public PointerType ToPointerType()

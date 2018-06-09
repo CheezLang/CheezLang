@@ -8,13 +8,13 @@ let stdin = __acrt_iob_func(1)
 let stdout = __acrt_iob_func(1)
 let stderr = __acrt_iob_func(1)
 
-// fn printf(format: string, num: any) #varargs;
+fn printf(format: string) #varargs;
 fn fflush(file: FILE&);
 
 ///
 
-type errno_t = int
-type size_t = int
+let errno_t = int
+let size_t = int
 
 fn clearerr_s(_Stream: FILE&) -> errno_t;
 fn fopen_s(_Stream: FILE&&, _FileName: string, _Mode: string) -> errno_t;
