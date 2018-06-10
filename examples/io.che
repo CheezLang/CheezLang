@@ -254,6 +254,8 @@ fn Print(v: $T) {
         PrintStringl(&v)
     } else if @typeseq(String&, T) {
         PrintStringl(v)
+    } else if @isenum(T) {
+        PrintInt((int)v)
     } else {
         @error("Can't print value of unknown type")
     }

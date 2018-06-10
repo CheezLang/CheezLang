@@ -1719,6 +1719,17 @@ namespace Cheez.Compiler.SemanticAnalysis
                     bin.Right.Type = IntType.DefaultType;
             }
 
+
+            if (bin.Left.Type is EnumType e1 && bin.Right.Type is EnumType e2 && e1 == e2)
+            {
+                switch (bin.Operator)
+                {
+                    case "==":
+                        bin.Type = CheezType.Bool;
+                        yield break;
+                }
+            }
+
             var ops = scope.GetOperators(bin.Operator, bin.Left.Type, bin.Right.Type);
 
             if (ops.Count > 1)
@@ -1731,32 +1742,33 @@ namespace Cheez.Compiler.SemanticAnalysis
                 context.ReportError(bin.GenericParseTreeNode, $"No operator matches the types '{bin.Left.Type}' and '{bin.Right.Type}'");
                 yield break;
             }
-
-            var op = ops[0];
-            bin.Type = op.ResultType;
-
-            if (bin.Operator == "and" || bin.Operator == "or")
+            else
             {
-                context.Function.LocalVariables.Add(bin);
-            }
+                var op = ops[0];
+                bin.Type = op.ResultType;
 
-
-            if (bin.Left.IsCompTimeValue && bin.Right.IsCompTimeValue)
-            {
-                var result = op.Execute(bin.Left.Value, bin.Right.Value);
-
-                if (result != null)
+                if (bin.Operator == "and" || bin.Operator == "or")
                 {
-                    if (result is bool b)
+                    context.Function.LocalVariables.Add(bin);
+                }
+
+
+                if (bin.Left.IsCompTimeValue && bin.Right.IsCompTimeValue)
+                {
+                    var result = op.Execute(bin.Left.Value, bin.Right.Value);
+
+                    if (result != null)
                     {
-                        bin.Type = CheezType.Bool;
-                        bin.Value = b;
-                        bin.IsCompTimeValue = true;
+                        if (result is bool b)
+                        {
+                            bin.Type = CheezType.Bool;
+                            bin.Value = b;
+                            bin.IsCompTimeValue = true;
+                        }
                     }
                 }
             }
-
-
+            
             yield break;
         }
 
@@ -2287,6 +2299,27 @@ namespace Cheez.Compiler.SemanticAnalysis
                     else
                     {
                         dot.Type = member.Type;
+                    }
+                }
+                else if (leftType == CheezType.Type && dot.Left.Value is EnumType e)
+                {
+                    if (e.Members.TryGetValue(dot.Right, out int m))
+                    {
+                        dot.Type = dot.Left.Value as CheezType;
+                        dot.Value = m;
+                    }
+                    else
+                    {
+                        var implFunc = dot.Scope.GetImplFunction(leftType, dot.Right);
+                        if (implFunc == null)
+                        {
+                            yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
+                                eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function '{dot.Right}' exists for type '{leftType}'"));
+                            implFunc = dot.Scope.GetImplFunction(leftType, dot.Right);
+                        }
+                        dot.Type = implFunc.Type;
+                        dot.IsDoubleColon = true;
+                        dot.Value = implFunc;
                     }
                 }
                 else if (leftType is SliceType slice)

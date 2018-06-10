@@ -226,7 +226,7 @@ namespace Cheez.Compiler.Parsing
             }
         }
 
-        public (bool done, PTStatement stmt) ParseStatement()
+        public (bool done, PTStatement stmt) ParseStatement(bool expectNewline = true)
         {
             SkipNewlines();
             var token = PeekToken();
@@ -238,7 +238,7 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.HashIdentifier:
                     {
                         var dir = new PTDirectiveStatement(ParseDirective());
-                        if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after directive statement")))
+                        if (expectNewline && !Expect(TokenType.NewLine, ErrMsg("\\n", "after directive statement")))
                             RecoverStatement();
                         return (false, dir);
                     }
@@ -253,7 +253,7 @@ namespace Cheez.Compiler.Parsing
                             return (false, null);
                         }
 
-                        var s = ParseStatement();
+                        var s = ParseStatement(expectNewline);
                         if (s.stmt != null)
                             return (false, new PTDeferStatement(token.location, s.stmt));
 
@@ -295,13 +295,13 @@ namespace Cheez.Compiler.Parsing
                             NextToken();
                             SkipNewlines();
                             var val = ParseExpression();
-                            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after assignment")))
+                            if (expectNewline && !Expect(TokenType.NewLine, ErrMsg("\\n", "after assignment")))
                                 RecoverStatement();
                             return (false, new PTAssignment(expr.Beginning, val.End, expr, val));
                         }
                         else
                         {
-                            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after expression statement")))
+                            if (expectNewline && !Expect(TokenType.NewLine, ErrMsg("\\n", "after expression statement")))
                                 RecoverStatement();
                             return (false, new PTExprStmt(expr.Beginning, expr.End, expr));
                         }
@@ -360,8 +360,8 @@ namespace Cheez.Compiler.Parsing
             var beg = Consume(TokenType.KwUsing, ErrMsg("keyword 'using'", "at beginning of using statement")).location;
             SkipNewlines();
             var expr = ParseExpression(ErrMsg("expression", "after keyword 'using'"));
-            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after using statement")))
-                RecoverStatement();
+            //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after using statement")))
+            //    RecoverStatement();
 
             return new PTUsingStatement(beg, expr);
         }
@@ -376,8 +376,8 @@ namespace Cheez.Compiler.Parsing
                 returnValue = ParseExpression();
             }
 
-            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "at end of return statement")))
-                RecoverStatement();
+            //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "at end of return statement")))
+            //    RecoverStatement();
 
             return new PTReturnStmt(beg, returnValue);
         }
@@ -594,9 +594,29 @@ namespace Cheez.Compiler.Parsing
                 if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
                     break;
 
-                var s = ParseStatement();
+                var s = ParseStatement(false);
                 if (s.stmt != null)
+                {
                     statements.Add(s.stmt);
+
+                    next = PeekToken();
+
+                    if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
+                        break;
+
+                    switch (s.stmt)
+                    {
+                        case PTIfStmt _:
+                        case PTBlockStmt _:
+                            break;
+
+                        default:
+                            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after statement")))
+                                RecoverStatement();
+                            break;
+                    }
+
+                }
                 SkipNewlines();
             }
 
@@ -608,8 +628,8 @@ namespace Cheez.Compiler.Parsing
         private PTExprStmt ParseExpressionStatement()
         {
             var expr = ParseExpression();
-            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after expression statement")))
-                RecoverStatement();
+            //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after expression statement")))
+            //    RecoverStatement();
             return new PTExprStmt(expr.Beginning, expr.End, expr);
         }
 
@@ -649,8 +669,8 @@ namespace Cheez.Compiler.Parsing
                 end = init.End;
             }
 
-            if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after variable declaration")))
-                RecoverStatement();
+            //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after variable declaration")))
+            //    RecoverStatement();
 
             return new PTVariableDecl(beg, end, name, type, init, directives);
         }

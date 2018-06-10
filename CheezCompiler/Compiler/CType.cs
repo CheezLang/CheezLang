@@ -477,10 +477,17 @@ namespace Cheez.Compiler
         public string Name { get; }
         public Dictionary<string, int> Members { get; }
 
-        public EnumType(AstEnumDecl en)
+        public CheezType MemberType { get; set; }
+
+        public EnumType(AstEnumDecl en, CheezType memberType = null)
         {
+            if (memberType == null)
+                memberType = IntType.DefaultType;
+
             Name = en.Name.Name;
             Members = new Dictionary<string, int>();
+            MemberType = memberType;
+
             int value = 0;
             foreach (var m in en.Members)
             {
@@ -490,8 +497,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            var vals = string.Join("\n", Members.Select(kv => $"{kv.Key} = {kv.Value}"));
-            return $"enum {{\n{vals.Indent(4)}\n}}";
+            return $"enum {Name}";
         }
 
         public override bool IsPolyType => false;

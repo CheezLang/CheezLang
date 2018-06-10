@@ -1,24 +1,25 @@
 #load("io.che")
 
+enum TokenType {
+    identifier,
+    eof
+}
+
+impl TokenType {
+    fn ToString() -> string {
+        if self == TokenType.identifier { return "identifier" }
+        else if self == TokenType.eof { return "eof" }
+        else { return "UNKNOWN" }
+    }
+}
+
+struct Token {
+    type: TokenType
+}
+
 fn Main()
 {
-    let n = 0 
-    let fibSum = 0
-    while n <= 43 {
-        let fibOfN = fib(n)
-        fibSum = fibSum + fibOfN
-        Printf("fib({i32}) = ", n)
-        Println(fibOfN)
-        n = n + 1
-    }
-
-    Printf("fibsum: {i32}", fibSum)
+    
 }
 
-fn fib(n: int) -> int {
-    if n < 2 {
-        return 1
-    }
 
-    return fib(n - 1) + fib(n - 2)
-}

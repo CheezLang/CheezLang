@@ -219,8 +219,8 @@ namespace Cheez.Compiler.CodeGeneration
             }
 
             {
-                var optimize = true;
-                if (optimize) 
+                var optimize = false;
+                if (optimize)
                 {
                     var pmBuilder = LLVM.PassManagerBuilderCreate();
                     LLVM.PassManagerBuilderSetOptLevel(pmBuilder, 3);
@@ -262,7 +262,7 @@ namespace Cheez.Compiler.CodeGeneration
                             Console.Error.WriteLine($"[PrintModuleToFile] {llvmErrors}");
                     }
                 }
-                
+
 
                 LLVM.InitializeX86TargetMC();
                 LLVM.InitializeX86Target();
@@ -486,7 +486,11 @@ namespace Cheez.Compiler.CodeGeneration
             }
 
 
-            //LLVM.VerifyFunction(lfunc, LLVMVerifierFailureAction.LLVMPrintMessageAction);
+            bool v = LLVM.VerifyFunction(lfunc, LLVMVerifierFailureAction.LLVMPrintMessageAction);
+            if (v)
+            {
+                Console.Error.WriteLine($"in function {lfunc}");
+            }
             LLVM.DisposeBuilder(builder);
         }
 
@@ -506,6 +510,17 @@ namespace Cheez.Compiler.CodeGeneration
                 else
                     throw new NotImplementedException("any cast");
             }
+        }
+
+        private LLVMValueRef CheezValueToLLVMValue(object value)
+        {
+            switch (value)
+            {
+                case int i:
+                    return LLVM.ConstInt(LLVM.Int32Type(), (ulong)i, true);
+            }
+
+            throw new NotImplementedException();
         }
 
         private LLVMTypeRef CheezTypeToLLVMType(CheezType ct)
@@ -551,6 +566,11 @@ namespace Cheez.Compiler.CodeGeneration
                         var returnType = CheezTypeToLLVMType(f.ReturnType);
                         var paramTypes = f.ParameterTypes.Select(t => CheezTypeToLLVMType(t)).ToArray();
                         return LLVM.FunctionType(returnType, paramTypes, f.VarArgs);
+                    }
+
+                case EnumType e:
+                    {
+                        return CheezTypeToLLVMType(e.MemberType);
                     }
 
                 case StructType s:
@@ -818,19 +838,43 @@ namespace Cheez.Compiler.CodeGeneration
                 LLVM.DisposeBuilder(builder);
             }
 
+            //LLVM.ViewFunctionCFG(lfunc);
             var bb = LLVM.GetFirstBasicBlock(lfunc);
             while (bb.Pointer.ToInt64() != 0)
             {
-                var firstInst = bb.GetFirstInstruction();
-                if (firstInst.Pointer.ToInt64() == 0)
+                var inst = bb.GetFirstInstruction();
+
+                if (bb.GetBasicBlockTerminator().Pointer == IntPtr.Zero)
                 {
+                    var next = bb.GetNextBasicBlock();
                     bb.RemoveBasicBlockFromParent();
+                    bb = next;
+                    continue;
+                }
+
+                bool remove = false;
+                while (inst.Pointer != IntPtr.Zero)
+                {
+                    if (remove)
+                    {
+                        inst.InstructionEraseFromParent();
+                    }
+                    else if (inst.IsATerminatorInst().Pointer != IntPtr.Zero)
+                    {
+                        remove = true;
+                    }
+
+                    inst = inst.GetNextInstruction();
                 }
 
                 bb = bb.GetNextBasicBlock();
             }
 
-            LLVM.VerifyFunction(lfunc, LLVMVerifierFailureAction.LLVMPrintMessageAction);
+            bool v = LLVM.VerifyFunction(lfunc, LLVMVerifierFailureAction.LLVMPrintMessageAction);
+            if (v)
+            {
+                //Console.Error.WriteLine($"in function {lfunc}");
+            }
 
             return lfunc;
         }
@@ -906,7 +950,11 @@ namespace Cheez.Compiler.CodeGeneration
         public override LLVMValueRef VisitIfStatement(AstIfStmt ifs, LLVMCodeGeneratorData data = null)
         {
             var bbIfBody = LLVM.AppendBasicBlock(data.Function, "if_body");
-            var bbEnd = LLVM.AppendBasicBlock(data.Function, "if_end");
+            LLVMBasicBlockRef? bbEnd = null;
+
+            if (!ifs.GetFlag(StmtFlags.Returns))
+                bbEnd = LLVM.AppendBasicBlock(data.Function, "if_end");
+
             LLVMBasicBlockRef? bbElseBody = null;
             if (ifs.ElseCase != null)
                 bbElseBody = LLVM.AppendBasicBlock(data.Function, "else_body");
@@ -915,8 +963,10 @@ namespace Cheez.Compiler.CodeGeneration
             var cond = ifs.Condition.Accept(this, data);
             if (ifs.ElseCase != null)
                 LLVM.BuildCondBr(data.Builder, cond, bbIfBody, bbElseBody.Value);
+            else if (bbEnd != null)
+                LLVM.BuildCondBr(data.Builder, cond, bbIfBody, bbEnd.Value);
             else
-                LLVM.BuildCondBr(data.Builder, cond, bbIfBody, bbEnd);
+                LLVM.BuildBr(data.Builder, bbIfBody);
 
 
             // if body
@@ -924,7 +974,8 @@ namespace Cheez.Compiler.CodeGeneration
             data.BasicBlock = bbIfBody;
             ifs.IfCase.Accept(this, data);
             //if (!ifs.IfCase.GetFlag(StmtFlags.Returns))
-            LLVM.BuildBr(data.Builder, bbEnd);
+            if (bbEnd != null)
+                LLVM.BuildBr(data.Builder, bbEnd.Value);
 
             // else body
             if (ifs.ElseCase != null)
@@ -932,12 +983,17 @@ namespace Cheez.Compiler.CodeGeneration
                 LLVM.PositionBuilderAtEnd(data.Builder, bbElseBody.Value);
                 data.BasicBlock = bbElseBody.Value;
                 ifs.ElseCase.Accept(this, data);
-                LLVM.BuildBr(data.Builder, bbEnd);
+
+                if (bbEnd != null)
+                    LLVM.BuildBr(data.Builder, bbEnd.Value);
             }
 
             //
-            LLVM.PositionBuilderAtEnd(data.Builder, bbEnd);
-            data.BasicBlock = bbEnd;
+            if (bbEnd != null)
+            {
+                LLVM.PositionBuilderAtEnd(data.Builder, bbEnd.Value);
+                data.BasicBlock = bbEnd.Value;
+            }
 
             return default;
         }
@@ -998,6 +1054,10 @@ namespace Cheez.Compiler.CodeGeneration
                         elemPtr = LLVM.BuildLoad(data.Builder, elemPtr, $"*{dot}");
                     }
                     return elemPtr;
+                }
+                else if (dot.Left.Type == CheezType.Type && dot.Left.Value is EnumType e)
+                {
+                    return CheezValueToLLVMValue(dot.Value);
                 }
                 else if (dot.Left.Type is SliceType slice)
                 {
@@ -1120,6 +1180,8 @@ namespace Cheez.Compiler.CodeGeneration
                     return LLVM.BuildPtrToInt(data.Builder, sub, type, "");
                 else if (cast.SubExpression.Type is AnyType)
                     return LLVM.BuildIntCast(data.Builder, sub, type, "");
+                else if (cast.SubExpression.Type is EnumType)
+                    return LLVM.BuildIntCast(data.Builder, sub, type, "");
             }
             else if (cast.Type is BoolType)
             {
@@ -1154,6 +1216,14 @@ namespace Cheez.Compiler.CodeGeneration
                     var result = LLVM.BuildLoad(data.Builder, temp, "");
                     return result;
                 }
+            }
+            else if (cast.Type is EnumType en)
+            {
+                var sub = cast.SubExpression.Accept(this, data);
+                var type = CheezTypeToLLVMType(cast.Type);
+
+                if (cast.SubExpression.Type is IntType || cast.SubExpression.Type is BoolType)
+                    return LLVM.BuildIntCast(data.Builder, sub, type, "");
             }
 
             throw new NotImplementedException($"Cast from {cast.SubExpression.Type} to {cast.Type} is not implemented yet");
@@ -1271,7 +1341,7 @@ namespace Cheez.Compiler.CodeGeneration
                     LLVM.ConstInt(LLVM.Int32Type(), 0, new LLVMBool(0)),
                     LLVM.ConstInt(LLVM.Int32Type(), index, new LLVMBool(0))
                 }, "");
-                
+
                 var store = LLVM.BuildStore(data.Builder, lv, vp);
 
                 index++;
@@ -1325,7 +1395,7 @@ namespace Cheez.Compiler.CodeGeneration
 
             else if (!deref)
             {
-                subCasted = LLVM.BuildGEP(data.Builder, sub, new LLVMValueRef[] 
+                subCasted = LLVM.BuildGEP(data.Builder, sub, new LLVMValueRef[]
                 {
                     LLVM.ConstInt(LLVM.Int32Type(), 0, LLVMFalse)
                 }, "");
@@ -1468,6 +1538,34 @@ namespace Cheez.Compiler.CodeGeneration
                                 return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSGE, left, right, "");
                             else
                                 return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntUGE, left, right, "");
+
+                        default:
+                            throw new NotImplementedException();
+                    }
+                }
+                else if (bin.Left.Type is EnumType e)
+                {
+                    var left = bin.Left.Accept(this, data);
+                    var right = bin.Right.Accept(this, data);
+                    switch (bin.Operator)
+                    {
+                        case "!=":
+                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
+
+                        case "==":
+                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
+
+                        case "<":
+                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSLT, left, right, "");
+
+                        case ">":
+                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSGT, left, right, "");
+
+                        case "<=":
+                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSLE, left, right, "");
+
+                        case ">=":
+                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSGE, left, right, "");
 
                         default:
                             throw new NotImplementedException();
