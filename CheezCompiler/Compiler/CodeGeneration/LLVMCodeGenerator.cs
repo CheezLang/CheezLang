@@ -215,10 +215,55 @@ namespace Cheez.Compiler.CodeGeneration
             {
                 LLVM.PrintModuleToFile(module, $"{targetFile}.ll", out string llvmErrors);
                 if (!string.IsNullOrWhiteSpace(llvmErrors))
-                    Console.Error.WriteLine($"[LLVM-validate-print] {llvmErrors}");
+                    Console.Error.WriteLine($"[PrintModuleToFile] {llvmErrors}");
             }
 
             {
+                var optimize = true;
+                if (optimize) 
+                {
+                    var pmBuilder = LLVM.PassManagerBuilderCreate();
+                    LLVM.PassManagerBuilderSetOptLevel(pmBuilder, 3);
+                    LLVM.PassManagerBuilderUseInlinerWithThreshold(pmBuilder, 20);
+                    LLVM.PassManagerBuilderSetSizeLevel(pmBuilder, 0);
+                    LLVM.PassManagerBuilderSetDisableUnrollLoops(pmBuilder, false);
+                    LLVM.PassManagerBuilderSetDisableUnitAtATime(pmBuilder, false);
+                    LLVM.PassManagerBuilderSetDisableSimplifyLibCalls(pmBuilder, false);
+
+                    var funcPM = LLVM.CreateFunctionPassManagerForModule(module);
+                    LLVM.PassManagerBuilderPopulateFunctionPassManager(pmBuilder, funcPM);
+                    bool r = LLVM.InitializeFunctionPassManager(funcPM);
+
+                    // optimize functions
+                    var func = LLVM.GetFirstFunction(module);
+                    while (func.Pointer != IntPtr.Zero)
+                    {
+                        if (!func.IsDeclaration())
+                        {
+                            var res = LLVM.RunFunctionPassManager(funcPM, func);
+                            if (!res)
+                            {
+                                workspace.ReportError("Failed to run llvm passes on function " + func.ToString());
+                            }
+                        }
+                        func = func.GetNextFunction();
+                    }
+                    r = LLVM.FinalizeFunctionPassManager(funcPM);
+
+                    var modPM = LLVM.CreatePassManager();
+                    LLVM.PassManagerBuilderPopulateModulePassManager(pmBuilder, modPM);
+                    r = LLVM.RunPassManager(modPM, module);
+
+
+                    if (true)
+                    {
+                        LLVM.PrintModuleToFile(module, $"{targetFile}.opt.ll", out string llvmErrors);
+                        if (!string.IsNullOrWhiteSpace(llvmErrors))
+                            Console.Error.WriteLine($"[PrintModuleToFile] {llvmErrors}");
+                    }
+                }
+                
+
                 LLVM.InitializeX86TargetMC();
                 LLVM.InitializeX86Target();
                 LLVM.InitializeX86TargetInfo();
@@ -236,7 +281,7 @@ namespace Cheez.Compiler.CodeGeneration
                     targetTriple,
                     "generic",
                     "",
-                    LLVMCodeGenOptLevel.LLVMCodeGenLevelNone,
+                    LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive,
                     LLVMRelocMode.LLVMRelocDefault,
                     LLVMCodeModel.LLVMCodeModelDefault);
 

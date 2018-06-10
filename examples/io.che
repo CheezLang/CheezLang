@@ -104,7 +104,7 @@ fn Bprinti(buffer: String&, val: $T) {
         len = len + 1
     }
 
-    if buffer.length + len < buffer.capacity {
+    if buffer.length + len > buffer.capacity {
         buffer.Reserve(buffer.length + len)
     }
 
@@ -228,7 +228,7 @@ fn Sprintf(buffer: String&, format: string, data: any) {
 fn Printf(format: string, value: any) {
     let buffer = NewString()
     defer buffer.Dispose()
-    buffer.Reserve(10)
+    buffer.Reserve(20)
 
     Sprintf(&buffer, format, value)
     PrintStringl(&buffer)

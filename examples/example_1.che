@@ -2,49 +2,23 @@
 
 fn Main()
 {
-    let x: int[5]
-    Println(@typename(x))
-    Println(x.length)
-    PrintArray("x", x)
-    Println("")
-
-    {
-        let x: int[] = x
-        Println(@typename(x))
-        Println(x.length)
-        PrintArray("x", x)
-        Println("")
-    }
-    
-    {
-        let i = 0
-        while i < x.length {
-            x[i] = i + 10
-            i = i + 1
-        }
+    let n = 0 
+    let fibSum = 0
+    while n <= 43 {
+        let fibOfN = fib(n)
+        fibSum = fibSum + fibOfN
+        Printf("fib({i32}) = ", n)
+        Println(fibOfN)
+        n = n + 1
     }
 
-    Println(@typename(x))
-    Println(x.length)
-    PrintArray("x", x)
-    Println("")
-
-    {
-        let x: int[] = x
-        Println(@typename(x))
-        Println(x.length)
-        PrintArray("x", x)
-        Println("")
-    }
+    Printf("fibsum: {i32}", fibSum)
 }
 
-fn PrintArray(name: string, slice: $T[]) {
-    let i = 0
-    while i < slice.length {
-        Print(name)
-        Printf("[{i32}] = ", i)
-        Println(slice[i])
-
-        i = i + 1
+fn fib(n: int) -> int {
+    if n < 2 {
+        return 1
     }
+
+    return fib(n - 1) + fib(n - 2)
 }
