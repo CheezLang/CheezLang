@@ -1,22 +1,42 @@
 #load("io.che")
-#load("array.che")
-//#load("memory.che")
-
-struct Test {
-    arr: int[5]
-    curr: int
-}
 
 fn Main()
 {
-    let t: Test
-    t.arr = [ 1, 2, 3, 4, 5 ]
-    t.curr = 0
+    let s: int[]
+    let a = [ 1, 2, 3 ]
 
-    use t
-    while curr < 5 {
-        PrintInt(arr[curr])
-        Println("")
-        curr = curr + 1
-    }
+    let sLen = s.length
+
+    s = (int[])a
+    let s0 = s[0]
+
+    Printf("s.length = {i32}`n", s.length)
+    Printf("s[0] = {i32}`n", s[0])
+    Printf("s[1] = {i32}`n", s[1])
+    Printf("s[2] = {i32}`n", s[2])
+    Println("")
+    Printf("a[0] = {i32}`n", a[0])
+    Printf("a[1] = {i32}`n", a[1])
+    Printf("a[2] = {i32}`n", a[2])
+
+    s[0] = 4
+    a[1] = 5
+    Println("")
+    Println("")
+
+    Printf("s[0] = {i32}`n", s[0])
+    Printf("s[1] = {i32}`n", s[1])
+    Printf("s[2] = {i32}`n", s[2])
+    Println("")
+    Printf("a[0] = {i32}`n", a[0])
+    Printf("a[1] = {i32}`n", a[1])
+    Printf("a[2] = {i32}`n", a[2])
+
+
+    foo(s)
+    // foo(a)
+}
+
+fn foo(slice: int[]) {
+
 }

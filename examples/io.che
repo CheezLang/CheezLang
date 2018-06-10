@@ -85,41 +85,59 @@ fn PrintInt(val: $T) {
     PrintStringl(&buffer)
 }
 
-fn Bprinti(buffer: byte&, num: $T) {
-    if (num == 0)
-    {
-        *buffer = 48
-        return
-    }
+fn Bprinti(buffer: String&, val: $T) {
+    let v = val
+    let len = 0
 
     let neg = false
-    let minimum = false
-    if num < 0 {
+    if v < 0 {
         neg = true
-        num = -num
+        len = 1
+        v = -v
+    }
+    else if v == 0 {
+        len = 1
+    }
 
-        if num < 0 {
-            // num is minimum value
-            num = -(num + 1)
+    while v != 0 {
+        v = v / 10
+        len = len + 1
+    }
+
+    if buffer.length + len < buffer.capacity {
+        buffer.Reserve(buffer.length + len)
+    }
+
+    buffer.length = buffer.length + len
+    
+    if (val == 0)
+    {
+        *buffer.data = 48
+    }
+    else {
+        let minimum = false
+        if neg and val < 0 {
+            // val is minimum value
+            val = -(val + 1)
             minimum = true
         }
-    }
 
-    let i: uint = 0
-    while num != 0 {
-        let lastDigit = num % 10
-        if i == 0 and minimum {
-            lastDigit = lastDigit + 1
+        let i = buffer.length - 1
+        while val != 0 {
+            let lastDigit = val % 10
+            if i == len - 1 and minimum {
+                lastDigit = lastDigit + 1
+            }
+
+            val = val / 10
+            buffer.data[i] = (byte)lastDigit + 48
+            i = i - 1
         }
 
-        num = num / 10
-        buffer[i] = (byte)lastDigit + 48
-        i = i - 1
-    }
-
-    if (neg) {
-        buffer[i] = 45
-        i = i - 1
+        if (neg) {
+            buffer.data[i] = 45
+            i = i - 1
+        }
     }
 }
 
@@ -131,7 +149,7 @@ fn Sprint(buffer: String&, value: $T) {
             buffer.AppendString("false")
         }
     } else if @isint(T) {
-        PrintInt(value)
+        Bprinti(buffer, value)
     } else if @isstring(T) {
         buffer.AppendString(value)
     } else if @typeseq(String&, T) {
@@ -207,6 +225,15 @@ fn Sprintf(buffer: String&, format: string, data: any) {
     }
 }
 
+fn Printf(format: string, value: any) {
+    let buffer = NewString()
+    defer buffer.Dispose()
+    buffer.Reserve(10)
+
+    Sprintf(&buffer, format, value)
+    PrintStringl(&buffer)
+}
+
 fn Println(v: $T) {
     Print(v)
     PrintChar(NEW_LINE)
@@ -224,7 +251,7 @@ fn Print(v: $T) {
         let s = "".ToString()
         defer s.Dispose()
         Sprint(&s, v)
-        // PrintStringl(&s)
+        PrintStringl(&s)
     } else if @isstring(T) {
         PrintString(v)
     } else if @typeseq(String, T) {

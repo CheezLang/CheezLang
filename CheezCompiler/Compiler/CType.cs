@@ -367,6 +367,43 @@ namespace Cheez.Compiler
         public override bool IsPolyType => TargetType.IsPolyType;
     }
 
+    public class SliceType : CheezType
+    {
+        private static Dictionary<CheezType, SliceType> sTypes = new Dictionary<CheezType, SliceType>();
+
+        public CheezType TargetType { get; set; }
+
+        public static SliceType GetSliceType(CheezType targetType)
+        {
+            if (targetType == null)
+                return null;
+
+            if (sTypes.ContainsKey(targetType))
+                return sTypes[targetType];
+
+            var type = new SliceType
+            {
+                TargetType = targetType,
+                Size = PointerType.PointerSize + 4,
+            };
+
+            sTypes[targetType] = type;
+            return type;
+        }
+
+        public override string ToString()
+        {
+            return $"{TargetType}[]";
+        }
+
+        public PointerType ToPointerType()
+        {
+            return PointerType.GetPointerType(TargetType);
+        }
+
+        public override bool IsPolyType => TargetType.IsPolyType;
+    }
+
     public class StringType : CheezType
     {
         public static StringType Instance = new StringType { Size = PointerType.PointerSize };

@@ -1545,6 +1545,10 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 arr.Type = a.TargetType;
             }
+            else if (arr.SubExpression.Type is SliceType slice)
+            {
+                arr.Type = slice.TargetType;
+            }
             else if (arr.SubExpression.Type is StringType)
             {
                 arr.Type = IntType.GetIntType(1, true);
@@ -2209,6 +2213,11 @@ namespace Cheez.Compiler.SemanticAnalysis
             //}
             cast.SubExpression.Type = type;
 
+            if (cast.Type is SliceType)
+            {
+                context.Function.LocalVariables.Add(cast);
+            }
+
             yield break;
         }
 
@@ -2267,6 +2276,18 @@ namespace Cheez.Compiler.SemanticAnalysis
                         dot.Type = member.Type;
                     }
                 }
+                else if (leftType is SliceType slice)
+                {
+                    if (dot.Right == "length")
+                    {
+                        dot.Type = IntType.GetIntType(4, true);
+                    }
+                    else
+                    {
+                        dot.Type = CheezType.Error;
+                        context.ReportError(dot.GenericParseTreeNode, $"'{dot.Right}' is not a member of type slice");
+                    }
+                }
                 else
                 {
                     yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
@@ -2291,31 +2312,23 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitArrayTypeExpr(AstArrayTypeExpr arr, SemanticerData context = default)
         {
-            throw new NotImplementedException();
-            //arr.Scope = context.Scope;
-            //foreach (var v in arr.Target.Accept(this, context.Clone(ExpectedType: null)))
-            //{
-            //    if (v is ReplaceAstExpr r)
-            //        arr.Target = r.NewExpression;
-            //    else yield return v;
-            //}
+            arr.Scope = context.Scope;
+            foreach (var v in arr.Target.Accept(this, context.Clone(ExpectedType: null)))
+            {
+                if (v is ReplaceAstExpr r)
+                    arr.Target = r.NewExpression;
+                else yield return v;
+            }
 
-            //foreach (var v in arr.Length.Accept(this, context.Clone(ExpectedType: null)))
-            //{
-            //    if (v is ReplaceAstExpr r)
-            //        arr.Target = r.NewExpression;
-            //    else yield return v;
-            //}
-
-            //arr.Type = CheezType.Type;
-            //if (arr.Target.Value is CheezType t)
-            //{
-            //    arr.Value = ArrayType.GetArrayType(t, leng);
-            //}
-            //else
-            //{
-            //    context.ReportError(context.Text, arr.Target.GenericParseTreeNode, $"Expected type, got {arr.Target.Type}");
-            //}
+            arr.Type = CheezType.Type;
+            if (arr.Target.Value is CheezType t)
+            {
+                arr.Value = SliceType.GetSliceType(t);
+            }
+            else
+            {
+                context.ReportError(context.Text, arr.Target.GenericParseTreeNode, $"Expected type, got {arr.Target.Type}");
+            }
         }
 
         public override IEnumerable<object> VisitPointerTypeExpr(AstPointerTypeExpr ptr, SemanticerData context = default)

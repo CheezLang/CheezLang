@@ -487,6 +487,13 @@ namespace Cheez.Compiler.CodeGeneration
                 case ArrayType a:
                     return LLVM.ArrayType(CheezTypeToLLVMType(a.TargetType), (uint)a.Length);
 
+                case SliceType s:
+                    return LLVM.StructType(new LLVMTypeRef[]
+                    {
+                        LLVM.PointerType(CheezTypeToLLVMType(s.TargetType), 0),
+                        LLVM.Int32Type()
+                    }, false);
+
 
                 case ReferenceType r:
                     return LLVM.PointerType(CheezTypeToLLVMType(r.TargetType), 0);
@@ -615,12 +622,6 @@ namespace Cheez.Compiler.CodeGeneration
             {
                 llvmType = CheezTypeToLLVMType(a);
                 //LLVM.BuildArrayAlloca(builder, llvmType, )
-                var val = LLVM.BuildAlloca(builder, llvmType, name);
-                return val;
-            }
-            else if (type is StructType s)
-            {
-                llvmType = CheezTypeToLLVMType(s);
                 var val = LLVM.BuildAlloca(builder, llvmType, name);
                 return val;
             }
@@ -934,6 +935,20 @@ namespace Cheez.Compiler.CodeGeneration
                     }
                     return elemPtr;
                 }
+                else if (dot.Left.Type is SliceType slice)
+                {
+                    if (dot.Right == "length")
+                    {
+                        var left = dot.Left.Accept(this, data.Clone(Deref: false));
+                        var lengthPtr = LLVM.BuildStructGEP(data.Builder, left, 1, "");
+                        var length = LLVM.BuildLoad(data.Builder, lengthPtr, "");
+                        return length;
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
                 else if (dot.Left.Type is ReferenceType r && r.TargetType is StructType @struct)
                 {
                     var left = dot.Left.Accept(this, data.Clone(Deref: false));
@@ -973,13 +988,16 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitCastExpression(AstCastExpr cast, LLVMCodeGeneratorData data = null)
         {
-            var sub = cast.SubExpression.Accept(this, data);
 
             if (cast.Type == cast.SubExpression.Type)
+            {
+                var sub = cast.SubExpression.Accept(this, data);
                 return sub;
+            }
 
             if (cast.Type is PointerType)
             {
+                var sub = cast.SubExpression.Accept(this, data);
                 var type = CheezTypeToLLVMType(cast.Type);
                 if (cast.SubExpression.Type is PointerType)
                     return LLVM.BuildPointerCast(data.Builder, sub, type, "");
@@ -994,6 +1012,7 @@ namespace Cheez.Compiler.CodeGeneration
             }
             else if (cast.Type is StringType s)
             {
+                var sub = cast.SubExpression.Accept(this, data);
                 var type = CheezTypeToLLVMType(s.ToPointerType());
 
                 if (cast.SubExpression.Type is PointerType)
@@ -1017,6 +1036,7 @@ namespace Cheez.Compiler.CodeGeneration
             //}
             else if (cast.Type is IntType tt)
             {
+                var sub = cast.SubExpression.Accept(this, data);
                 var type = CheezTypeToLLVMType(cast.Type);
                 if (cast.SubExpression.Type is IntType || cast.SubExpression.Type is BoolType)
                     return LLVM.BuildIntCast(data.Builder, sub, type, "");
@@ -1027,11 +1047,37 @@ namespace Cheez.Compiler.CodeGeneration
             }
             else if (cast.Type is BoolType)
             {
+                var sub = cast.SubExpression.Accept(this, data);
                 var type = CheezTypeToLLVMType(cast.Type);
                 if (cast.SubExpression.Type is IntType i)
                     return LLVM.BuildIntCast(data.Builder, sub, type, "");
                 else if (cast.SubExpression.Type is AnyType)
                     return LLVM.BuildIntCast(data.Builder, sub, type, "");
+            }
+            else if (cast.Type is SliceType slice)
+            {
+                var sub = cast.SubExpression.Accept(this, data.Clone(Deref: false));
+
+                var type = CheezTypeToLLVMType(cast.Type);
+
+                if (cast.SubExpression.Type is ArrayType arr)
+                {
+                    var temp = valueMap[cast];
+
+                    var dataPtr = LLVM.BuildStructGEP(data.Builder, temp, 0, "");
+                    var lenPtr = LLVM.BuildStructGEP(data.Builder, temp, 1, "");
+
+                    sub = LLVM.BuildGEP(data.Builder, sub, new LLVMValueRef[]
+                    {
+                        LLVM.ConstInt(LLVM.Int32Type(), 0, LLVMFalse),
+                        LLVM.ConstInt(LLVM.Int32Type(), 0, LLVMFalse)
+                    }, "");
+                    var d = LLVM.BuildStore(data.Builder, sub, dataPtr);
+                    var len = LLVM.BuildStore(data.Builder, LLVM.ConstInt(LLVM.Int32Type(), (ulong)arr.Length, LLVMFalse), lenPtr);
+
+                    var result = LLVM.BuildLoad(data.Builder, temp, "");
+                    return result;
+                }
             }
 
             throw new NotImplementedException($"Cast from {cast.SubExpression.Type} to {cast.Type} is not implemented yet");
@@ -1176,6 +1222,12 @@ namespace Cheez.Compiler.CodeGeneration
                     targetType = a.ToPointerType();
                     deref = false;
                     break;
+
+                case SliceType s:
+                    dataSize = (ulong)s.TargetType.Size;
+                    targetType = s.ToPointerType();
+                    deref = false;
+                    break;
             }
             var targetLLVMType = CheezTypeToLLVMType(targetType);
 
@@ -1188,7 +1240,14 @@ namespace Cheez.Compiler.CodeGeneration
             var castType = LLVM.IntType(pointerSize * 8);
 
             LLVMValueRef subCasted = sub;
-            if (!deref)
+
+            if (arr.SubExpression.Type is SliceType)
+            {
+                subCasted = LLVM.BuildStructGEP(data.Builder, subCasted, 0, "");
+                subCasted = LLVM.BuildLoad(data.Builder, subCasted, "");
+            }
+
+            else if (!deref)
             {
                 subCasted = LLVM.BuildGEP(data.Builder, sub, new LLVMValueRef[] 
                 {

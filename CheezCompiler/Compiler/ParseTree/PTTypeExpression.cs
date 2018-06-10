@@ -59,8 +59,7 @@ namespace Cheez.Compiler.ParseTree
 
         public override AstExpression CreateAst()
         {
-            throw new NotImplementedException();
-            return new AstArrayTypeExpr(this, SubExpr.CreateAst(), null);
+            return new AstArrayTypeExpr(this, SubExpr.CreateAst());
         }
     }
 

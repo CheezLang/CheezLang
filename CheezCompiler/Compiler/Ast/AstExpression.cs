@@ -501,11 +501,13 @@ namespace Cheez.Compiler.Ast
         }
     }
 
-    public class AstCastExpr : AstExpression
+    public class AstCastExpr : AstExpression, ITempVariable
     {
         public AstExpression SubExpression { get; set; }
         public AstExpression TypeExpr { get; set; }
         public override bool IsPolymorphic => SubExpression.IsPolymorphic || Type.IsPolyType;
+
+        public AstIdentifierExpr Name => null;
 
         [DebuggerStepThrough]
         public AstCastExpr(ParseTree.PTExpr node, AstExpression typeExpr, AstExpression sub)
@@ -725,9 +727,8 @@ namespace Cheez.Compiler.Ast
         public override bool IsPolymorphic => Target.IsPolymorphic;
 
         public AstExpression Target { get; set; }
-        public AstExpression Length { get; set; }
 
-        public AstArrayTypeExpr(ParseTree.PTExpr node, AstExpression target, AstExpression length) : base()
+        public AstArrayTypeExpr(ParseTree.PTExpr node, AstExpression target) : base()
         {
             this.GenericParseTreeNode = node;
             this.Target = target;
@@ -737,7 +738,7 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override AstExpression Clone()
         {
-            return new AstArrayTypeExpr(GenericParseTreeNode, Target.Clone(), Length.Clone())
+            return new AstArrayTypeExpr(GenericParseTreeNode, Target.Clone())
             {
                 Type = this.Type,
                 Scope = this.Scope

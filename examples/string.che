@@ -102,7 +102,6 @@ impl StringBase($CharType) {
         let newLength = length + other.length
 
         if newLength >= capacity {
-            Println("Rezising")
             capacity = capacity * 2
             data = Realloc(data, (uint)capacity)
         }
@@ -120,7 +119,6 @@ impl StringBase($CharType) {
         let newLength = length + otherLength
         
         if newLength >= capacity {
-            Println("Rezising")
             capacity = capacity * 2
             data = Realloc(data, (uint)capacity)
         }
@@ -137,7 +135,6 @@ impl StringBase($CharType) {
         let newLength = length + 1
         
         if newLength >= capacity {
-            Println("Rezising")
             capacity = capacity * 2
             data = Realloc(data, (uint)capacity)
         }
