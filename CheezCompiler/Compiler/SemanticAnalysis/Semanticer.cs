@@ -2496,12 +2496,20 @@ namespace Cheez.Compiler.SemanticAnalysis
                     outSource = FloatType.DefaultType;
                 return true;
             }
-            else if (targetType is SliceType slice && sourceType is ArrayType arr)
+            else if (targetType is SliceType slice)
             {
-                if (slice.TargetType != arr.TargetType)
-                    return false;
-                outSource = slice;
-                return true;
+                if (sourceType is ArrayType arr && slice.TargetType == arr.TargetType)
+                {
+                    outSource = slice;
+                    return true;
+                }
+                else if (sourceType is PointerType ptr && slice.TargetType == ptr.TargetType)
+                {
+                    outSource = slice;
+                    return true;
+                }
+
+                return false;
             }
             else if (sourceType != targetType)
             {
@@ -2613,9 +2621,12 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         private AstExpression CreateCastIfImplicit(CheezType targetType, AstExpression source)
         {
-            if (targetType is SliceType && source.Type is ArrayType)
+            if (targetType is SliceType s)
             {
-                return new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                if (source.Type is ArrayType a && s.TargetType == a.TargetType)
+                    return new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                else if (source.Type is PointerType p && s.TargetType == p.TargetType)
+                    return new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
             }
 
             return source;

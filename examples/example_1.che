@@ -19,7 +19,9 @@ struct Token {
 
 fn Main()
 {
-    
+    let str = "Hello World".ToString()
+    let sub = str.Slice(0, str.length)
+
 }
 
 

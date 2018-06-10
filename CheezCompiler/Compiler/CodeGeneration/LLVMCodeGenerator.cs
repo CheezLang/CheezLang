@@ -1064,8 +1064,9 @@ namespace Cheez.Compiler.CodeGeneration
                     if (dot.Right == "length")
                     {
                         var left = dot.Left.Accept(this, data.Clone(Deref: false));
-                        var lengthPtr = LLVM.BuildStructGEP(data.Builder, left, 1, "");
-                        var length = LLVM.BuildLoad(data.Builder, lengthPtr, "");
+                        var length = LLVM.BuildStructGEP(data.Builder, left, 1, "");
+                        if (data.Deref)
+                            length = LLVM.BuildLoad(data.Builder, length, "");
                         return length;
                     }
                     else
@@ -1212,6 +1213,19 @@ namespace Cheez.Compiler.CodeGeneration
                     }, "");
                     var d = LLVM.BuildStore(data.Builder, sub, dataPtr);
                     var len = LLVM.BuildStore(data.Builder, LLVM.ConstInt(LLVM.Int32Type(), (ulong)arr.Length, LLVMFalse), lenPtr);
+
+                    var result = LLVM.BuildLoad(data.Builder, temp, "");
+                    return result;
+                }
+                else if (cast.SubExpression.Type is PointerType ptr)
+                {
+                    var temp = GetTempValue(cast, data.Function);
+
+                    var dataPtr = LLVM.BuildStructGEP(data.Builder, temp, 0, "");
+                    var lenPtr = LLVM.BuildStructGEP(data.Builder, temp, 1, "");
+                    
+                    var d = LLVM.BuildStore(data.Builder, sub, dataPtr);
+                    var len = LLVM.BuildStore(data.Builder, LLVM.ConstInt(LLVM.Int32Type(), 1, false), lenPtr);
 
                     var result = LLVM.BuildLoad(data.Builder, temp, "");
                     return result;

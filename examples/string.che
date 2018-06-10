@@ -172,6 +172,12 @@ impl StringBase($CharType) {
         data = (CharType&)0
         length = 0
     }
+
+    fn Slice(from: int, len: int) -> CharType[] {
+        let slice: CharType[] = &data[from]
+        slice.length = len
+        return slice
+    }
 }
 
 fn NewString() -> String {
