@@ -1,6 +1,6 @@
 ﻿File Name,Lines
-Semanticer.cs,2240
-LLVMCodeGenerator.cs,1211
+Semanticer.cs,2278
+LLVMCodeGenerator.cs,1235
 Parser.cs,1096
 AstExpression.cs,708
 Lexer.cs,662
@@ -8,8 +8,8 @@ CppCodeGenerator.cs,567
 CType.cs,447
 Scope.cs,418
 AstDeclaration.cs,361
+AstPrinter.cs,289
 PTExpressions.cs,287
-AstPrinter.cs,285
 AstStatement.cs,283
 PTDeclarations.cs,216
 PTStatements.cs,157
@@ -20,8 +20,8 @@ IOperator.cs,77
 PTTypeExpression.cs,73
 OS.cs,64
 Workspace.cs,58
-ErrorHandler.cs,56
 IRFunction.cs,56
+ErrorHandler.cs,56
 IRInstruction.cs,55
 UniqueNameDecorator.cs,49
 IRBuilder.cs,48
@@ -30,4 +30,4 @@ ParseTreeItem.cs,25
 IRInterpreter.cs,19
 AstDirective.cs,16
 ICodeGenerator.cs,8
-Total,9894
+Total,9960

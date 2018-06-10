@@ -892,6 +892,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                     if (!CastIfLiteral(variable.Initializer.Type, variable.Type, out var t))
                         context.ReportError(variable.Initializer.GenericParseTreeNode, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'");
 
+                    variable.Initializer = CreateCastIfImplicit(variable.Type, variable.Initializer);
+
                     variable.Initializer.Type = t;
                 }
             }
@@ -939,6 +941,8 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (!CastIfLiteral(ass.Value.Type, ass.Target.Type, out var type))
                 context.ReportError(ass.GenericParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
+
+            ass.Value = CreateCastIfImplicit(ass.Target.Type, ass.Value);
 
             ass.Value.Type = type;
             if (!ass.Target.GetFlag(ExprFlags.IsLValue))
@@ -1499,6 +1503,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                             if (CastIfLiteral(mi.Value.Type, mem.Type, out var miType))
                             {
+                                mi.Value = CreateCastIfImplicit(mem.Type, mi.Value);
                                 mi.Value.Type = miType;
                             }
                             else
@@ -1775,7 +1780,14 @@ namespace Cheez.Compiler.SemanticAnalysis
                     return false;
 
                 case AstArrayTypeExpr pArr:
-                    if (arg is ArrayType aArr)
+                    if (arg is SliceType slice)
+                    {
+                        var t = slice.TargetType;
+                        var changes = InferGenericParameterType(result, pArr.Target, ref t);
+                        slice.TargetType = t;
+                        return changes;
+                    }
+                    else if (arg is ArrayType aArr)
                     {
                         var t = aArr.TargetType;
                         var changes = InferGenericParameterType(result, pArr.Target, ref t);
@@ -2025,18 +2037,19 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 for (int i = 0; i < call.Arguments.Count && i < f.ParameterTypes.Length; i++)
                 {
-                    var arg = call.Arguments[i];
                     var expectedType = f.ParameterTypes[i];
 
-                    if (!CastIfLiteral(arg.Type, expectedType, out var t))
+                    if (!CastIfLiteral(call.Arguments[i].Type, expectedType, out var t))
                     {
-                        context.ReportError(context.Text, arg.GenericParseTreeNode, $"Argument type does not match parameter type. Expected {expectedType}, got {arg.Type}");
+                        context.ReportError(context.Text, call.Arguments[i].GenericParseTreeNode, $"Argument type does not match parameter type. Expected {expectedType}, got {call.Arguments[i].Type}");
                     }
 
-                    if (expectedType is ReferenceType && !arg.GetFlag(ExprFlags.IsLValue))
-                        context.ReportError(arg.GenericParseTreeNode, "Can't convert an rvalue to a reference");
+                    call.Arguments[i] = CreateCastIfImplicit(expectedType, call.Arguments[i]);
 
-                    arg.Type = t;
+                    if (expectedType is ReferenceType && !call.Arguments[i].GetFlag(ExprFlags.IsLValue))
+                        context.ReportError(call.Arguments[i].GenericParseTreeNode, "Can't convert an rvalue to a reference");
+
+                    call.Arguments[i].Type = t;
                 }
             }
             else if (call.Function.Type != CheezType.Error)
@@ -2285,7 +2298,19 @@ namespace Cheez.Compiler.SemanticAnalysis
                     else
                     {
                         dot.Type = CheezType.Error;
-                        context.ReportError(dot.GenericParseTreeNode, $"'{dot.Right}' is not a member of type slice");
+                        context.ReportError(dot.GenericParseTreeNode, $"'{dot.Right}' is not a member of type {dot.Left.Type}");
+                    }
+                }
+                else if (leftType is ArrayType arr)
+                {
+                    if (dot.Right == "length")
+                    {
+                        dot.Type = IntType.GetIntType(4, true);
+                    }
+                    else
+                    {
+                        dot.Type = CheezType.Error;
+                        context.ReportError(dot.GenericParseTreeNode, $"'{dot.Right}' is not a member of type {dot.Left.Type}");
                     }
                 }
                 else
@@ -2386,7 +2411,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 else
                 {
-                    value.Type = t;
+                    arr.Values[i] = CreateCastIfImplicit(type, value);
+                    arr.Values[i].Type = t;
                 }
 
             }
@@ -2435,6 +2461,13 @@ namespace Cheez.Compiler.SemanticAnalysis
                     outSource = IntType.DefaultType;
                 else if (sourceType == FloatType.LiteralType)
                     outSource = FloatType.DefaultType;
+                return true;
+            }
+            else if (targetType is SliceType slice && sourceType is ArrayType arr)
+            {
+                if (slice.TargetType != arr.TargetType)
+                    return false;
+                outSource = slice;
                 return true;
             }
             else if (sourceType != targetType)
@@ -2543,6 +2576,16 @@ namespace Cheez.Compiler.SemanticAnalysis
         private AstNumberExpr ConstInt(PTExpr node, BigInteger value)
         {
             return new AstNumberExpr(node, new NumberData(value));
+        }
+
+        private AstExpression CreateCastIfImplicit(CheezType targetType, AstExpression source)
+        {
+            if (targetType is SliceType && source.Type is ArrayType)
+            {
+                return new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+            }
+
+            return source;
         }
 
         private IEnumerable<object> CreateType(Scope scope, AstExpression e, IText text, IErrorHandler error)

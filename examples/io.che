@@ -112,7 +112,7 @@ fn Bprinti(buffer: String&, val: $T) {
     
     if (val == 0)
     {
-        *buffer.data = 48
+        buffer.data[buffer.length - 1] = 48
     }
     else {
         let minimum = false
@@ -239,7 +239,6 @@ fn Println(v: $T) {
     PrintChar(NEW_LINE)
 }
 
-let _int_to_string_buffer: byte& = Malloc(25)
 fn Print(v: $T) {
     if @isbool(T) {
         if v {
@@ -248,10 +247,7 @@ fn Print(v: $T) {
             PrintString("false")
         }
     } else if @isint(T) {
-        let s = "".ToString()
-        defer s.Dispose()
-        Sprint(&s, v)
-        PrintStringl(&s)
+        PrintInt(v)
     } else if @isstring(T) {
         PrintString(v)
     } else if @typeseq(String, T) {

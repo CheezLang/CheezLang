@@ -632,6 +632,25 @@ namespace Cheez.Compiler.CodeGeneration
             }
         }
 
+        private LLVMValueRef GetTempValue(AstExpression expr, LLVMValueRef func)
+        {
+            if (valueMap.ContainsKey(expr))
+                return valueMap[expr];
+
+            var builder = LLVM.CreateBuilder();
+
+            var bb = func.GetFirstBasicBlock();
+            var brInst = bb.GetLastInstruction();
+            LLVM.PositionBuilderBefore(builder, brInst);
+
+            var type = CheezTypeToLLVMType(expr.Type);
+            var result = LLVM.BuildAlloca(builder, type, "");
+
+            LLVM.DisposeBuilder(builder);
+
+            return result;
+        }
+
         #endregion
 
         #region Statements
@@ -739,13 +758,13 @@ namespace Cheez.Compiler.CodeGeneration
                     LLVM.BuildStore(builder, p, valueMap[param]);
                 }
 
+                var bodyBB = LLVM.AppendBasicBlock(lfunc, "body");
+                LLVM.BuildBr(builder, bodyBB);
+                LLVM.PositionBuilderAtEnd(builder, bodyBB);
+
                 // body
                 {
-                    var d = new LLVMCodeGeneratorData { Builder = builder, BasicBlock = entry, Function = lfunc };
-                    //foreach (var s in function.Statements)
-                    //{
-                    //    s.Accept(this, d);
-                    //}
+                    var d = new LLVMCodeGeneratorData { Builder = builder, BasicBlock = bodyBB, Function = lfunc };
                     function.Body.Accept(this, d);
                 }
 
@@ -949,6 +968,18 @@ namespace Cheez.Compiler.CodeGeneration
                         throw new NotImplementedException();
                     }
                 }
+                else if (dot.Left.Type is ArrayType arr)
+                {
+                    if (dot.Right == "length")
+                    {
+                        var length = LLVM.ConstInt(LLVM.Int32Type(), (ulong)arr.Length, LLVMFalse);
+                        return length;
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
                 else if (dot.Left.Type is ReferenceType r && r.TargetType is StructType @struct)
                 {
                     var left = dot.Left.Accept(this, data.Clone(Deref: false));
@@ -1062,7 +1093,7 @@ namespace Cheez.Compiler.CodeGeneration
 
                 if (cast.SubExpression.Type is ArrayType arr)
                 {
-                    var temp = valueMap[cast];
+                    var temp = GetTempValue(cast, data.Function);
 
                     var dataPtr = LLVM.BuildStructGEP(data.Builder, temp, 0, "");
                     var lenPtr = LLVM.BuildStructGEP(data.Builder, temp, 1, "");

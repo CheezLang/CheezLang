@@ -204,6 +204,11 @@ namespace Cheez.Compiler.Visitor
 
         #region Expressions
 
+        public override string VisitTypeExpr(AstTypeExpr astArrayTypeExpr, int data = 0)
+        {
+            return astArrayTypeExpr.Type.ToString();
+        }
+
         public override string VisitArrayTypeExpr(AstArrayTypeExpr astArrayTypeExpr, int data = 0)
         {
             return $"{astArrayTypeExpr.Target.Accept(this, 0)}[]";
