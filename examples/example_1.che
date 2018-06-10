@@ -1,27 +1,9 @@
 #load("io.che")
-
-enum TokenType {
-    identifier,
-    eof
-}
-
-impl TokenType {
-    fn ToString() -> string {
-        if self == TokenType.identifier { return "identifier" }
-        else if self == TokenType.eof { return "eof" }
-        else { return "UNKNOWN" }
-    }
-}
-
-struct Token {
-    type: TokenType
-}
+#load("compiler/main.che")
+#load("std/windows.che")
 
 fn Main()
 {
-    let str = "Hello World".ToString()
-    let sub = str.Slice(0, str.length)
-
+    let filename = "D:\Programming\CheezLang\examples\example_1.che"
+    RunCompiler(filename)
 }
-
-

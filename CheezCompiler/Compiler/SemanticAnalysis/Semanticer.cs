@@ -726,6 +726,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (!ifs.ElseCase.GetFlag(StmtFlags.Returns))
                     returns = false;
             }
+            else
+            {
+                returns = false;
+            }
 
             if (returns)
                 ifs.SetFlag(StmtFlags.Returns);

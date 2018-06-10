@@ -35,6 +35,7 @@ fn PrintInt(val: $T) {
         neg = true
         len = 1
         v = -v
+        val = -val
     }
     else if v == 0 {
         len = 1
@@ -48,9 +49,7 @@ fn PrintInt(val: $T) {
 
     let buffer: String = NewString()
     defer buffer.Dispose()
-    buffer.Reserve(len)
-
-    buffer.length = len
+    buffer.Resize(len)
 
     if (val == 0)
     {
@@ -77,8 +76,7 @@ fn PrintInt(val: $T) {
         }
 
         if (neg) {
-            buffer.data[i] = 45
-            i = i - 1
+            buffer.data[0] = 45
         }
     }
 

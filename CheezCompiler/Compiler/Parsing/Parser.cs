@@ -163,6 +163,7 @@ namespace Cheez.Compiler.Parsing
             var next = PeekToken();
             switch (next.type)
             {
+                case TokenType.KwNew:
                 case TokenType.Plus:
                 case TokenType.Minus:
                 case TokenType.OpenParen:
@@ -371,7 +372,7 @@ namespace Cheez.Compiler.Parsing
             var beg = Consume(TokenType.KwReturn, ErrMsg("keyword 'return'", "at beginning of return statement")).location;
             PTExpr returnValue = null;
 
-            if (!CheckToken(TokenType.NewLine))
+            if (IsExprToken())
             {
                 returnValue = ParseExpression();
             }

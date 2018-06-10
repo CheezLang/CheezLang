@@ -1,9 +1,24 @@
 
+struct _OFSTRUCT {
+    cBytes: byte
+    fFixedDisk: byte
+    nErrCode: short
+    Reserved1: short
+    Reserved2: short
+    szPathName: byte[128]
+}
+
+let HFILE = int
+let HANDLE = void&
 
 fn GetStdHandle(h: int) -> int #stdcall;
 fn WriteFile(handle: int, str: string, length: int, bw: int&, res: int) #stdcall;
-fn ReadFile(hFile: int, lpBuffer: ubyte&, nNumberOfBytesToRead: int, lpNumberOfBytesRead: int&, lpOverlapped: ubyte&) #stdcall;
+fn ReadFile(hFile: HANDLE, lpBuffer: void&, nNumberOfBytesToRead: int, lpNumberOfBytesRead: int&, lpOverlapped: void&) -> bool #stdcall;
 
 let __std_in_handle: int = GetStdHandle(-10)
 let __std_out_handle: int = GetStdHandle(-11)
 let __std_err_handle: int = GetStdHandle(-12)
+
+fn OpenFile(lpFileName: string, lpReOpenBuff: _OFSTRUCT&, uStyle: uint) -> HFILE #stdcall;
+fn CloseHandle(hObject: HANDLE) -> bool #stdcall;
+fn GetFileSize(hObject: HANDLE, lpFileSizeHigh: int&) -> int #stdcall;

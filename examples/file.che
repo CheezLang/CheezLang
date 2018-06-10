@@ -1,0 +1,19 @@
+#load("stdio.che")
+
+fn LoadFile(filename: string, str: String&) -> bool {
+    let of: _OFSTRUCT
+    let handle = OpenFile(filename, &of, 0)
+    if handle == -1 {
+        return false
+    }
+    let size = GetFileSize((HANDLE)handle, (int&)0)
+
+    str.Resize((int)size)
+    
+    let bytesRead = 0
+    ReadFile((HANDLE)handle, (void&)str.data, size, &bytesRead, (void&)0)
+    CloseHandle((HANDLE)handle)
+
+    return true
+}
+

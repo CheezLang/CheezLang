@@ -852,20 +852,20 @@ namespace Cheez.Compiler.CodeGeneration
                     continue;
                 }
 
-                bool remove = false;
-                while (inst.Pointer != IntPtr.Zero)
-                {
-                    if (remove)
-                    {
-                        inst.InstructionEraseFromParent();
-                    }
-                    else if (inst.IsATerminatorInst().Pointer != IntPtr.Zero)
-                    {
-                        remove = true;
-                    }
+                //bool remove = false;
+                //while (inst.Pointer != IntPtr.Zero)
+                //{
+                //    if (remove)
+                //    {
+                //        inst.InstructionEraseFromParent();
+                //    }
+                //    else if (inst.IsATerminatorInst().Pointer != IntPtr.Zero)
+                //    {
+                //        remove = true;
+                //    }
 
-                    inst = inst.GetNextInstruction();
-                }
+                //    inst = inst.GetNextInstruction();
+                //}
 
                 bb = bb.GetNextBasicBlock();
             }

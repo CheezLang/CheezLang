@@ -1,17 +1,19 @@
-#load("system.che")
+#load("../stdio.che")
+#load("../string.che")
+#load("../file.che")
 
-fn Main() {
-    let filename = "D:\Programming\CS\CheezLang\examples\example_1.che"
-    let file: String
+fn RunCompiler(filename: string) {
+    let file: String = NewString()
     if LoadFile(filename, &file) {}
     else
     {
-        println "Failed to load file '", filename, "'"
+        Printf("Failed to load file '{s}'`n", filename)
+        return
     }
 
-    //file.Print()
+    Println(file)
 
-    let lexer = Lexer {
+    let lexer = new Lexer {
         file
     }
 }
@@ -34,14 +36,13 @@ struct Token {
 }
 
 impl TokenLocation {
-    ref fn Clone(): TokenLocation {
-        let t = TokenLocation {
+    ref fn Clone() -> TokenLocation {
+        return new TokenLocation {
             file,
             line,
             start,
             end
         }
-        return t
     }
 }
 

@@ -70,6 +70,17 @@ impl StringBase($CharType) {
             }
         }
     }
+    
+    ref fn Resize(size: int) {
+        length = size
+        capacity = size
+        if (ulong)data == 0 {
+            data = Malloc((uint)capacity)
+        }
+        else {
+            data = Realloc(data, (uint)capacity)
+        }
+    }
 
     ref fn FromString(str: string) -> StringBase(CharType)& {
         if (ulong)data != 0 {
