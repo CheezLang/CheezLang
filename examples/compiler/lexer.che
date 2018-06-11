@@ -6,6 +6,19 @@ struct Lexer {
     location: TokenLocation
 }
 
+fn IsIdentBegin(c: byte) -> bool {
+    let a = *"a"
+    let z = *"z"
+    let A = *"A"
+    let Z = *"Z"
+    
+    if (c >= a and c <= z) or (c >= A and c <= Z) {
+        return true
+    }
+
+    return false
+}
+
 impl Lexer {
     ref fn Init(filename: string) -> bool {
         text = NewString()
@@ -22,9 +35,56 @@ impl Lexer {
         text.Dispose()
     }
 
-    ref fn NextToken() {
-        // let token = new Token {
+    ref fn NextToken() -> Token {
+        let token = new Token {
+            TokenType.EOF
+            location.Clone()
+        }
 
-        // }
+        self.SkipNewlinesAndComments()
+
+        if location.start >= text.length {
+            return token
+        }
+
+        let c = self.PeekChar(0)
+
+        if c == *"#" {
+            self.MakeSimpleToken(&token, TokenType.HashTag)
+            return token
+        }
+        else if c == *"(" {
+            self.MakeSimpleToken(&token, TokenType.OpenParen)
+            return token
+        }
+        else if c == *")" {
+            self.MakeSimpleToken(&token, TokenType.ClosingParen)
+            return token
+        }
+        else if IsIdentBegin(c) {
+            token.type = TokenType.Identifier
+        }
+
+        return token
+    }
+
+    ref fn MakeSimpleToken(token: Token&, type: TokenType) {
+        location.start = location.start + 1
+
+        token.type = type
+        token.location.end = token.location.start + 1
+    }
+
+    ref fn PeekChar(offset: int) -> byte {
+        let index = location.start + offset
+        if index >= text.length {
+            return 0
+        }
+
+        return text.data[index]
+    }
+
+    ref fn SkipNewlinesAndComments() {
+
     }
 }

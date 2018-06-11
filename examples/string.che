@@ -113,7 +113,9 @@ impl StringBase($CharType) {
         let newLength = length + other.length
 
         if newLength >= capacity {
-            capacity = capacity * 2
+            while newLength >= capacity {
+                capacity = capacity * 2
+            }
             data = Realloc(data, (uint)capacity)
         }
         
@@ -128,9 +130,11 @@ impl StringBase($CharType) {
     ref fn AppendString(other: string) -> StringBase(CharType)& {
         let otherLength = strlen(other)
         let newLength = length + otherLength
-        
+                
         if newLength >= capacity {
-            capacity = capacity * 2
+            while newLength >= capacity {
+                capacity = capacity * 2
+            }
             data = Realloc(data, (uint)capacity)
         }
         
@@ -146,9 +150,12 @@ impl StringBase($CharType) {
         let newLength = length + 1
         
         if newLength >= capacity {
-            capacity = capacity * 2
+            while newLength >= capacity {
+                capacity = capacity * 2
+            }
             data = Realloc(data, (uint)capacity)
         }
+        
         
         data[length] = ch
         length = newLength

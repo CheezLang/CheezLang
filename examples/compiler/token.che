@@ -1,13 +1,10 @@
+#load("../io.che")
+
 struct TokenLocation {
     file: string
-    line: uint
-    start: uint
-    end: uint
-}
-
-struct Token {
-    type: TokenType
-    location: TokenLocation
+    line: int
+    start: int
+    end: int
 }
 
 impl TokenLocation {
@@ -21,11 +18,23 @@ impl TokenLocation {
     }
 }
 
+struct Token {
+    type: TokenType
+    location: TokenLocation
+}
+
+impl Token {
+    ref fn Print() {
+        Printfn("{s}:{i32}: ", [ (any)location.file, location.line ])
+        type.Print()
+    }
+}
+
 enum TokenType {
     Unknown
 
     NewLine
-    EndOfFile
+    EOF
 
     StringLiteral
     NumberLiteral
@@ -83,4 +92,61 @@ enum TokenType {
     KwUsing
     KwPrint
     KwPrintln
+}
+
+impl TokenType {
+    fn Print() {
+        if self == TokenType.Unknown { Print("Unknown") }
+        else if self == TokenType.NewLine { Print("NewLine") }
+        else if self == TokenType.EOF { Print("EOF") }
+        else if self == TokenType.StringLiteral { Print("StringLiteral") }
+        else if self == TokenType.NumberLiteral { Print("NumberLiteral") }
+        else if self == TokenType.Identifier { Print("Identifier") }
+        else if self == TokenType.Semicolon { Print("Semicolon") }
+        else if self == TokenType.DoubleColon { Print("DoubleColon") }
+        else if self == TokenType.Colon { Print("Colon") }
+        else if self == TokenType.Comma { Print("Comma") }
+        else if self == TokenType.Period { Print("Period") }
+        else if self == TokenType.Equal { Print("Equal") }
+        else if self == TokenType.Ampersand { Print("Ampersand") }
+        else if self == TokenType.HashTag { Print("HashTag") }
+        else if self == TokenType.Plus { Print("Plus") }
+        else if self == TokenType.Minus { Print("Minus") }
+        else if self == TokenType.Asterisk { Print("Asterisk") }
+        else if self == TokenType.ForwardSlash { Print("ForwardSlash") }
+        else if self == TokenType.Percent { Print("Percent") }
+        else if self == TokenType.Less { Print("Less") }
+        else if self == TokenType.LessEqual { Print("LessEqual") }
+        else if self == TokenType.Greater { Print("Greater") }
+        else if self == TokenType.GreaterEqual { Print("GreaterEqual") }
+        else if self == TokenType.DoubleEqual { Print("DoubleEqual") }
+        else if self == TokenType.NotEqual { Print("NotEqual") }
+        else if self == TokenType.OpenParen { Print("OpenParen") }
+        else if self == TokenType.ClosingParen { Print("ClosingParen") }
+        else if self == TokenType.OpenBrace { Print("OpenBrace") }
+        else if self == TokenType.ClosingBrace { Print("ClosingBrace") }
+        else if self == TokenType.OpenBracket { Print("OpenBracket") }
+        else if self == TokenType.ClosingBracket { Print("ClosingBracket") }
+        else if self == TokenType.KwReturn { Print("KwReturn") }
+        else if self == TokenType.KwCast { Print("KwCast") }
+        else if self == TokenType.KwRef { Print("KwRef") }
+        else if self == TokenType.KwFn { Print("KwFn") }
+        else if self == TokenType.KwStruct { Print("KwStruct") }
+        else if self == TokenType.KwEnum { Print("KwEnum") }
+        else if self == TokenType.KwImpl { Print("KwImpl") }
+        else if self == TokenType.KwConstant { Print("KwConstant") }
+        else if self == TokenType.KwVar { Print("KwVar") }
+        else if self == TokenType.KwIf { Print("KwIf") }
+        else if self == TokenType.KwElse { Print("KwElse") }
+        else if self == TokenType.KwFor { Print("KwFor") }
+        else if self == TokenType.KwWhile { Print("KwWhile") }
+        else if self == TokenType.KwAnd { Print("KwAnd") }
+        else if self == TokenType.KwOr { Print("KwOr") }
+        else if self == TokenType.KwTrue { Print("KwTrue") }
+        else if self == TokenType.KwFalse { Print("KwFalse") }
+        else if self == TokenType.KwUsing { Print("KwUsing") }
+        else if self == TokenType.KwPrint { Print("KwPrint") }
+        else if self == TokenType.KwPrintln { Print("KwPrintln") }
+        else { Print("UNKNOWN") }
+    }
 }

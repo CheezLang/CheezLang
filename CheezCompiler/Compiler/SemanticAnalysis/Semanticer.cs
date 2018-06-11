@@ -2515,6 +2515,11 @@ namespace Cheez.Compiler.SemanticAnalysis
                     outSource = slice;
                     return true;
                 }
+                else if (sourceType is SliceType slice2 && slice.TargetType == slice2.TargetType)
+                {
+                    outSource = slice;
+                    return true;
+                }
 
                 return false;
             }

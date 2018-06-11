@@ -1193,8 +1193,8 @@ namespace Cheez.Compiler.CodeGeneration
 
                     sub = LLVM.BuildGEP(data.Builder, sub, new LLVMValueRef[]
                     {
-                        LLVM.ConstInt(LLVM.Int32Type(), 0, LLVMFalse),
-                        LLVM.ConstInt(LLVM.Int32Type(), 0, LLVMFalse)
+                        LLVM.ConstInt(LLVM.Int32Type(), 0, false),
+                        LLVM.ConstInt(LLVM.Int32Type(), 0, false)
                     }, "");
                     var d = LLVM.BuildStore(data.Builder, sub, dataPtr);
                     var len = LLVM.BuildStore(data.Builder, LLVM.ConstInt(LLVM.Int32Type(), (ulong)arr.Length, LLVMFalse), lenPtr);
@@ -1223,6 +1223,12 @@ namespace Cheez.Compiler.CodeGeneration
 
                 if (cast.SubExpression.Type is IntType || cast.SubExpression.Type is BoolType)
                     return LLVM.BuildIntCast(data.Builder, sub, type, "");
+            }
+            else if (cast.Type == CheezType.Any)
+            {
+                var sub = cast.SubExpression.Accept(this, data.Clone(Deref: true));
+                CastIfAny(data.Builder, cast.Type, cast.SubExpression.Type, ref sub);
+                return sub;
             }
 
             throw new NotImplementedException($"Cast from {cast.SubExpression.Type} to {cast.Type} is not implemented yet");
@@ -1326,15 +1332,17 @@ namespace Cheez.Compiler.CodeGeneration
         public override LLVMValueRef VisitArrayExpression(AstArrayExpression arr, LLVMCodeGeneratorData data = null)
         {
             var ptr = valueMap[arr];
-            var typeAsPointer = CheezTypeToLLVMType((arr.Type as ArrayType).ToPointerType());
 
-            //ptr = LLVM.BuildLoad(data.Builder, ptr, "");
-            //ptr = LLVM.BuildPointerCast(data.Builder, ptr, typeAsPointer, "");
+            var targetType = (arr.Type as ArrayType).TargetType;
+
 
             uint index = 0;
             foreach (var value in arr.Values)
             {
-                var lv = value.Accept(this, data);
+                var lv = value.Accept(this, data.Clone(Deref: true));
+
+                CastIfAny(data.Builder, targetType, value.Type, ref lv);
+
                 var vp = LLVM.BuildGEP(data.Builder, ptr, new LLVMValueRef[]
                 {
                     LLVM.ConstInt(LLVM.Int32Type(), 0, new LLVMBool(0)),
@@ -1346,7 +1354,9 @@ namespace Cheez.Compiler.CodeGeneration
                 index++;
             }
 
-            var val = LLVM.BuildLoad(data.Builder, ptr, "");
+            var val = ptr;
+            if (data.Deref)
+                val = LLVM.BuildLoad(data.Builder, ptr, "");
 
             return val;
         }

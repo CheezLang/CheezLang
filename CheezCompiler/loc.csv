@@ -1,6 +1,6 @@
 ﻿File Name,Lines
-Semanticer.cs,2326
-LLVMCodeGenerator.cs,1366
+Semanticer.cs,2333
+LLVMCodeGenerator.cs,1372
 Parser.cs,1112
 AstExpression.cs,708
 Lexer.cs,662
@@ -30,4 +30,4 @@ ParseTreeItem.cs,25
 IRInterpreter.cs,19
 AstDirective.cs,16
 ICodeGenerator.cs,8
-Total,10162
+Total,10175

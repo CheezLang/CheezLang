@@ -8,11 +8,19 @@ fn RunCompiler(filename: string) {
     let lexer: Lexer
     lexer.Init(filename)
 
-    while true {
+    let cond = true
+    while cond {
         let t = lexer.NextToken()
 
+        t.Print()
+        Println("")
 
+        if t.type == TokenType.EOF {
+            cond = false
+        }
     }
+
+    Println("`ndone")
 
     lexer.Cleanup()
 }
