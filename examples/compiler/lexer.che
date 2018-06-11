@@ -11,16 +11,20 @@ impl Lexer {
         text = NewString()
         if LoadFile(filename, &text) == false { return false }
 
-        // location = new TokenLocation {
-
-        // }
+        location = new TokenLocation {
+            filename, 1, 0, 0
+        }
 
         return true
     }
 
-    ref fn NextToken() {
-        let token = new Token {
+    ref fn Cleanup() {
+        text.Dispose()
+    }
 
-        }
+    ref fn NextToken() {
+        // let token = new Token {
+
+        // }
     }
 }

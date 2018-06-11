@@ -913,6 +913,9 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (context.Function != null)
                     context.Function.LocalVariables.Add(variable);
                 scope.VariableDeclarations.Add(variable);
+
+                if (variable.Type == CheezType.Void)
+                    context.ReportError(variable.Name.GenericParseTreeNode, "Can't create a variable of type void");
             }
             else
             {

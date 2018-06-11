@@ -852,28 +852,13 @@ namespace Cheez.Compiler.CodeGeneration
                     continue;
                 }
 
-                //bool remove = false;
-                //while (inst.Pointer != IntPtr.Zero)
-                //{
-                //    if (remove)
-                //    {
-                //        inst.InstructionEraseFromParent();
-                //    }
-                //    else if (inst.IsATerminatorInst().Pointer != IntPtr.Zero)
-                //    {
-                //        remove = true;
-                //    }
-
-                //    inst = inst.GetNextInstruction();
-                //}
-
                 bb = bb.GetNextBasicBlock();
             }
 
             bool v = LLVM.VerifyFunction(lfunc, LLVMVerifierFailureAction.LLVMPrintMessageAction);
             if (v)
             {
-                //Console.Error.WriteLine($"in function {lfunc}");
+                Console.Error.WriteLine($"in function {lfunc}");
             }
 
             return lfunc;
