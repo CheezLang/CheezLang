@@ -1,0 +1,86 @@
+struct TokenLocation {
+    file: string
+    line: uint
+    start: uint
+    end: uint
+}
+
+struct Token {
+    type: TokenType
+    location: TokenLocation
+}
+
+impl TokenLocation {
+    ref fn Clone() -> TokenLocation {
+        return new TokenLocation {
+            file,
+            line,
+            start,
+            end
+        }
+    }
+}
+
+enum TokenType {
+    Unknown
+
+    NewLine
+    EndOfFile
+
+    StringLiteral
+    NumberLiteral
+
+    Identifier
+
+    Semicolon
+    DoubleColon
+    Colon
+    Comma
+    Period
+    Equal
+    Ampersand
+    HashTag
+
+    Plus
+    Minus
+    Asterisk
+    ForwardSlash
+    Percent
+
+    Less
+    LessEqual
+    Greater
+    GreaterEqual
+    DoubleEqual
+    NotEqual
+
+    OpenParen
+    ClosingParen
+
+    OpenBrace
+    ClosingBrace
+    
+    OpenBracket
+    ClosingBracket
+
+    KwReturn
+    KwCast
+    KwRef
+    KwFn
+    KwStruct
+    KwEnum
+    KwImpl
+    KwConstant
+    KwVar
+    KwIf
+    KwElse
+    KwFor
+    KwWhile
+    KwAnd
+    KwOr
+    KwTrue
+    KwFalse
+    KwUsing
+    KwPrint
+    KwPrintln
+}

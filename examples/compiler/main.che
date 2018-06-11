@@ -1,111 +1,12 @@
 #load("../stdio.che")
 #load("../string.che")
 #load("../file.che")
+#load("lexer.che")
+#load("token.che")
 
 fn RunCompiler(filename: string) {
-    let file: String = NewString()
-    if LoadFile(filename, &file) {}
-    else
-    {
-        Printf("Failed to load file '{s}'`n", filename)
-        return
-    }
+    let lexer: Lexer
+    lexer.Init(filename)
 
-    Println(file)
 
-    let lexer = new Lexer {
-        file
-    }
-}
-
-struct TokenLocation {
-    file: string
-    line: uint
-    start: uint
-    end: uint
-}
-
-struct Lexer {
-    text: String
-    location: TokenLocation
-}
-
-struct Token {
-    type: TokenType
-    location: TokenLocation
-}
-
-impl TokenLocation {
-    ref fn Clone() -> TokenLocation {
-        return new TokenLocation {
-            file,
-            line,
-            start,
-            end
-        }
-    }
-}
-
-enum TokenType {
-    Unknown
-
-    NewLine
-    EndOfFile
-
-    StringLiteral
-    NumberLiteral
-
-    Identifier
-
-    Semicolon
-    DoubleColon
-    Colon
-    Comma
-    Period
-    Equal
-    Ampersand
-    HashTag
-
-    Plus
-    Minus
-    Asterisk
-    ForwardSlash
-    Percent
-
-    Less
-    LessEqual
-    Greater
-    GreaterEqual
-    DoubleEqual
-    NotEqual
-
-    OpenParen
-    ClosingParen
-
-    OpenBrace
-    ClosingBrace
-    
-    OpenBracket
-    ClosingBracket
-
-    KwReturn
-    KwCast
-    KwRef
-    KwFn
-    KwStruct
-    KwEnum
-    KwImpl
-    KwConstant
-    KwVar
-    KwIf
-    KwElse
-    KwFor
-    KwWhile
-    KwAnd
-    KwOr
-    KwTrue
-    KwFalse
-    KwUsing
-    KwPrint
-    KwPrintln
 }

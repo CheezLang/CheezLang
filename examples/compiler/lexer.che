@@ -1,0 +1,26 @@
+#load("../string.che")
+#load("token.che")
+
+struct Lexer {
+    text: String
+    location: TokenLocation
+}
+
+impl Lexer {
+    ref fn Init(filename: string) -> bool {
+        text = NewString()
+        if LoadFile(filename, &text) == false { return false }
+
+        // location = new TokenLocation {
+
+        // }
+
+        return true
+    }
+
+    ref fn NextToken() {
+        let token = new Token {
+
+        }
+    }
+}

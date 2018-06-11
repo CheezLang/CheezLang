@@ -1451,6 +1451,9 @@ namespace Cheez.Compiler.CodeGeneration
                 case "-":
                     return LLVM.BuildNeg(data.Builder, sub, "");
 
+                case "!":
+                    return LLVM.BuildNot(data.Builder, sub, "");
+
                 default:
                     throw new NotImplementedException();
             }
@@ -1587,9 +1590,21 @@ namespace Cheez.Compiler.CodeGeneration
                 }
                 else if (bin.Left.Type is BoolType)
                 {
-                    var left = bin.Left.Accept(this, data);
+                    var left = bin.Left.Accept(this, data.Clone(Deref: true));
                     switch (bin.Operator)
                     {
+                        case "!=":
+                            {
+                                var right = bin.Right.Accept(this, data.Clone(Deref: true));
+                                return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
+                            }
+
+                        case "==":
+                            {
+                                var right = bin.Right.Accept(this, data.Clone(Deref: true));
+                                return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
+                            }
+
                         case "and":
                             {
                                 var tempVar = valueMap[bin];
