@@ -56,15 +56,17 @@ namespace Cheez.Compiler.ParseTree
     public class PTStringLiteral : PTLiteral
     {
         public string Value { get; set; }
+        public bool IsChar { get; set; }
 
-        public PTStringLiteral(TokenLocation beg, string value) : base(beg, beg)
+        public PTStringLiteral(TokenLocation beg, string value, bool isChar) : base(beg, beg)
         {
             this.Value = value;
+            this.IsChar = isChar;
         }
 
         public override AstExpression CreateAst()
         {
-            return new AstStringLiteral(this, Value);
+            return new AstStringLiteral(this, Value, IsChar);
         }
     }
 
@@ -346,4 +348,6 @@ namespace Cheez.Compiler.ParseTree
             return new AstArrayExpression(this, vs);
         }
     }
+
+
 }

@@ -25,8 +25,7 @@ struct Token {
 
 impl Token {
     ref fn Print() {
-        Printfn("{s}:{i32}: ", [ (any)location.file, location.line ])
-        type.Print()
+        Printfn("{s}:{i32}: {s}", [ (any)location.file, location.line, type.ToString() ])
     }
 }
 
@@ -95,58 +94,60 @@ enum TokenType {
 }
 
 impl TokenType {
-    fn Print() {
-        if self == TokenType.Unknown { Print("Unknown") }
-        else if self == TokenType.NewLine { Print("NewLine") }
-        else if self == TokenType.EOF { Print("EOF") }
-        else if self == TokenType.StringLiteral { Print("StringLiteral") }
-        else if self == TokenType.NumberLiteral { Print("NumberLiteral") }
-        else if self == TokenType.Identifier { Print("Identifier") }
-        else if self == TokenType.Semicolon { Print("Semicolon") }
-        else if self == TokenType.DoubleColon { Print("DoubleColon") }
-        else if self == TokenType.Colon { Print("Colon") }
-        else if self == TokenType.Comma { Print("Comma") }
-        else if self == TokenType.Period { Print("Period") }
-        else if self == TokenType.Equal { Print("Equal") }
-        else if self == TokenType.Ampersand { Print("Ampersand") }
-        else if self == TokenType.HashTag { Print("HashTag") }
-        else if self == TokenType.Plus { Print("Plus") }
-        else if self == TokenType.Minus { Print("Minus") }
-        else if self == TokenType.Asterisk { Print("Asterisk") }
-        else if self == TokenType.ForwardSlash { Print("ForwardSlash") }
-        else if self == TokenType.Percent { Print("Percent") }
-        else if self == TokenType.Less { Print("Less") }
-        else if self == TokenType.LessEqual { Print("LessEqual") }
-        else if self == TokenType.Greater { Print("Greater") }
-        else if self == TokenType.GreaterEqual { Print("GreaterEqual") }
-        else if self == TokenType.DoubleEqual { Print("DoubleEqual") }
-        else if self == TokenType.NotEqual { Print("NotEqual") }
-        else if self == TokenType.OpenParen { Print("OpenParen") }
-        else if self == TokenType.ClosingParen { Print("ClosingParen") }
-        else if self == TokenType.OpenBrace { Print("OpenBrace") }
-        else if self == TokenType.ClosingBrace { Print("ClosingBrace") }
-        else if self == TokenType.OpenBracket { Print("OpenBracket") }
-        else if self == TokenType.ClosingBracket { Print("ClosingBracket") }
-        else if self == TokenType.KwReturn { Print("KwReturn") }
-        else if self == TokenType.KwCast { Print("KwCast") }
-        else if self == TokenType.KwRef { Print("KwRef") }
-        else if self == TokenType.KwFn { Print("KwFn") }
-        else if self == TokenType.KwStruct { Print("KwStruct") }
-        else if self == TokenType.KwEnum { Print("KwEnum") }
-        else if self == TokenType.KwImpl { Print("KwImpl") }
-        else if self == TokenType.KwConstant { Print("KwConstant") }
-        else if self == TokenType.KwVar { Print("KwVar") }
-        else if self == TokenType.KwIf { Print("KwIf") }
-        else if self == TokenType.KwElse { Print("KwElse") }
-        else if self == TokenType.KwFor { Print("KwFor") }
-        else if self == TokenType.KwWhile { Print("KwWhile") }
-        else if self == TokenType.KwAnd { Print("KwAnd") }
-        else if self == TokenType.KwOr { Print("KwOr") }
-        else if self == TokenType.KwTrue { Print("KwTrue") }
-        else if self == TokenType.KwFalse { Print("KwFalse") }
-        else if self == TokenType.KwUsing { Print("KwUsing") }
-        else if self == TokenType.KwPrint { Print("KwPrint") }
-        else if self == TokenType.KwPrintln { Print("KwPrintln") }
-        else { Print("UNKNOWN") }
+    fn ToString() -> string {
+        match self {
+            TokenType.Unknown -> return "Unknown",
+            TokenType.NewLine -> return "NewLine",
+            TokenType.EOF -> return "EOF",
+            TokenType.StringLiteral -> return "StringLiteral",
+            TokenType.NumberLiteral -> return "NumberLiteral",
+            TokenType.Identifier -> return "Identifier",
+            TokenType.Semicolon -> return "Semicolon",
+            TokenType.DoubleColon -> return "DoubleColon",
+            TokenType.Colon -> return "Colon",
+            TokenType.Comma -> return "Comma",
+            TokenType.Period -> return "Period",
+            TokenType.Equal -> return "Equal",
+            TokenType.Ampersand -> return "Ampersand",
+            TokenType.HashTag -> return "HashTag",
+            TokenType.Plus -> return "Plus",
+            TokenType.Minus -> return "Minus",
+            TokenType.Asterisk -> return "Asterisk",
+            TokenType.ForwardSlash -> return "ForwardSlash",
+            TokenType.Percent -> return "Percent",
+            TokenType.Less -> return "Less",
+            TokenType.LessEqual -> return "LessEqual",
+            TokenType.Greater -> return "Greater",
+            TokenType.GreaterEqual -> return "GreaterEqual",
+            TokenType.DoubleEqual -> return "DoubleEqual",
+            TokenType.NotEqual -> return "NotEqual",
+            TokenType.OpenParen -> return "OpenParen",
+            TokenType.ClosingParen -> return "ClosingParen",
+            TokenType.OpenBrace -> return "OpenBrace",
+            TokenType.ClosingBrace -> return "ClosingBrace",
+            TokenType.OpenBracket -> return "OpenBracket",
+            TokenType.ClosingBracket -> return "ClosingBracket",
+            TokenType.KwReturn -> return "KwReturn",
+            TokenType.KwCast -> return "KwCast",
+            TokenType.KwRef -> return "KwRef",
+            TokenType.KwFn -> return "KwFn",
+            TokenType.KwStruct -> return "KwStruct",
+            TokenType.KwEnum -> return "KwEnum",
+            TokenType.KwImpl -> return "KwImpl",
+            TokenType.KwConstant -> return "KwConstant",
+            TokenType.KwVar -> return "KwVar",
+            TokenType.KwIf -> return "KwIf",
+            TokenType.KwElse -> return "KwElse",
+            TokenType.KwFor -> return "KwFor",
+            TokenType.KwWhile -> return "KwWhile",
+            TokenType.KwAnd -> return "KwAnd",
+            TokenType.KwOr -> return "KwOr",
+            TokenType.KwTrue -> return "KwTrue",
+            TokenType.KwFalse -> return "KwFalse",
+            TokenType.KwUsing -> return "KwUsing",
+            TokenType.KwPrint -> return "KwPrint",
+            TokenType.KwPrintln -> return "KwPrintln",
+        }
+        return "UNKNOWN"
     }
 }

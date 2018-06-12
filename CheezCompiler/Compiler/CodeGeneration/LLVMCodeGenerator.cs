@@ -161,6 +161,12 @@ namespace Cheez.Compiler.CodeGeneration
                 BasicBlock = BasicBlock ?? this.BasicBlock
             };
         }
+
+        public void MoveBuilderTo(LLVMBasicBlockRef bb)
+        {
+            LLVM.PositionBuilderAtEnd(Builder, bb);
+            BasicBlock = bb;
+        }
     }
 
     public class LLVMCodeGenerator : VisitorBase<LLVMValueRef, LLVMCodeGeneratorData>, ICodeGenerator
@@ -172,11 +178,10 @@ namespace Cheez.Compiler.CodeGeneration
 
         private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
 
+        private LLVMValueRef currentFunction;
+
         [DllImport("Linker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public extern static bool llvm_link_coff(string[] argv, int argc);
-
-        static readonly LLVMBool LLVMTrue = new LLVMBool(1);
-        static readonly LLVMBool LLVMFalse = new LLVMBool(0);
 
         public bool GenerateCode(Workspace workspace, string targetFile)
         {
@@ -447,6 +452,7 @@ namespace Cheez.Compiler.CodeGeneration
         {
             var ltype = LLVM.FunctionType(LLVM.Int32Type(), new LLVMTypeRef[0], false);
             var lfunc = LLVM.AddFunction(module, "main", ltype);
+            currentFunction = lfunc;
 
             LLVMBuilderRef builder = LLVM.CreateBuilder();
             LLVM.PositionBuilderAtEnd(builder, LLVM.AppendBasicBlock(lfunc, "entry"));
@@ -495,7 +501,7 @@ namespace Cheez.Compiler.CodeGeneration
         }
 
         #region Utility
-
+        
         private void CastIfAny(LLVMBuilderRef builder, CheezType targetType, CheezType sourceType, ref LLVMValueRef value)
         {
             if (targetType == CheezType.Any && sourceType != CheezType.Any)
@@ -535,6 +541,9 @@ namespace Cheez.Compiler.CodeGeneration
 
                 case IntType i:
                     return LLVM.IntType((uint)i.Size * 8);
+
+                case CharType c:
+                    return LLVM.Int8Type();
 
                 case StringType _:
                     return LLVM.PointerType(LLVM.Int8Type(), 0);
@@ -579,7 +588,8 @@ namespace Cheez.Compiler.CodeGeneration
                         return LLVM.StructType(memTypes, false);
                     }
 
-                default: return default;
+                default:
+                    throw new NotImplementedException();
             }
         }
 
@@ -645,8 +655,15 @@ namespace Cheez.Compiler.CodeGeneration
                 (function.Type as FunctionType).VarArgs = true;
             }
 
+            var name = function.Name.Name;
+            if (function.IsPolyInstance)
+            {
+                name += ".";
+                name += string.Join(".", function.PolymorphicTypes.Select(p => $"{p.Key}.{p.Value}"));
+            }
+
             var ltype = CheezTypeToLLVMType(function.Type);
-            var lfunc = LLVM.AddFunction(module, function.Name.Name, ltype);
+            var lfunc = LLVM.AddFunction(module, name, ltype);
 
             var ccDir = function.GetDirective("stdcall");
             if (ccDir != null)
@@ -675,6 +692,9 @@ namespace Cheez.Compiler.CodeGeneration
                 case IntType i:
                     return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
 
+                case CharType c:
+                    return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
+
                 default:
                     throw new NotImplementedException();
             }
@@ -697,14 +717,14 @@ namespace Cheez.Compiler.CodeGeneration
             }
         }
 
-        private LLVMValueRef GetTempValue(AstExpression expr, LLVMValueRef func)
+        private LLVMValueRef GetTempValue(AstExpression expr)
         {
             if (valueMap.ContainsKey(expr))
                 return valueMap[expr];
 
             var builder = LLVM.CreateBuilder();
 
-            var bb = func.GetFirstBasicBlock();
+            var bb = currentFunction.GetFirstBasicBlock();
             var brInst = bb.GetLastInstruction();
             LLVM.PositionBuilderBefore(builder, brInst);
 
@@ -719,6 +739,38 @@ namespace Cheez.Compiler.CodeGeneration
         #endregion
 
         #region Statements
+
+        public override LLVMValueRef VisitMatchStatement(AstMatchStmt match, LLVMCodeGeneratorData data = null)
+        {
+            var value = match.Value.Accept(this, data.Clone(Deref: true));
+
+            var end = LLVM.AppendBasicBlock(data.Function, "match_end");
+
+            var sw = LLVM.BuildSwitch(data.Builder, value, end, (uint)match.Cases.Count);
+            foreach (var ca in match.Cases)
+            {
+                var cv = ca.Value.Accept(this, data.Clone(Deref: true));
+
+                var cbb = LLVM.AppendBasicBlock(data.Function, "case " + ca.Value.ToString());
+                LLVM.PositionBuilderAtEnd(data.Builder, cbb);
+                data.BasicBlock = cbb;
+
+                ca.Body.Accept(this, data);
+
+                if (!ca.Body.GetFlag(StmtFlags.Returns))
+                    LLVM.BuildBr(data.Builder, end);
+
+                LLVM.AddCase(sw, cv, cbb);
+            }
+
+            LLVM.PositionBuilderAtEnd(data.Builder, end);
+            data.BasicBlock = end;
+
+            if (match.GetFlag(StmtFlags.Returns))
+                LLVM.BuildUnreachable(data.Builder);
+
+            return default;
+        }
 
         public override LLVMValueRef VisitStructDeclaration(AstStructDecl type, LLVMCodeGeneratorData data = null)
         {
@@ -790,6 +842,7 @@ namespace Cheez.Compiler.CodeGeneration
         public override LLVMValueRef VisitFunctionDeclaration(AstFunctionDecl function, LLVMCodeGeneratorData data = null)
         {
             var lfunc = valueMap[function];
+            currentFunction = lfunc;
 
             if (function.Body != null)
             {
@@ -1063,7 +1116,7 @@ namespace Cheez.Compiler.CodeGeneration
                 {
                     if (dot.Right == "length")
                     {
-                        var length = LLVM.ConstInt(LLVM.Int32Type(), (ulong)arr.Length, LLVMFalse);
+                        var length = LLVM.ConstInt(LLVM.Int32Type(), (ulong)arr.Length, false);
                         return length;
                     }
                     else
@@ -1168,6 +1221,8 @@ namespace Cheez.Compiler.CodeGeneration
                     return LLVM.BuildIntCast(data.Builder, sub, type, "");
                 else if (cast.SubExpression.Type is EnumType)
                     return LLVM.BuildIntCast(data.Builder, sub, type, "");
+                else if (cast.SubExpression.Type is CharType)
+                    return LLVM.BuildIntCast(data.Builder, sub, type, "");
             }
             else if (cast.Type is BoolType)
             {
@@ -1186,7 +1241,7 @@ namespace Cheez.Compiler.CodeGeneration
 
                 if (cast.SubExpression.Type is ArrayType arr)
                 {
-                    var temp = GetTempValue(cast, data.Function);
+                    var temp = GetTempValue(cast);
 
                     var dataPtr = LLVM.BuildStructGEP(data.Builder, temp, 0, "");
                     var lenPtr = LLVM.BuildStructGEP(data.Builder, temp, 1, "");
@@ -1197,14 +1252,14 @@ namespace Cheez.Compiler.CodeGeneration
                         LLVM.ConstInt(LLVM.Int32Type(), 0, false)
                     }, "");
                     var d = LLVM.BuildStore(data.Builder, sub, dataPtr);
-                    var len = LLVM.BuildStore(data.Builder, LLVM.ConstInt(LLVM.Int32Type(), (ulong)arr.Length, LLVMFalse), lenPtr);
+                    var len = LLVM.BuildStore(data.Builder, LLVM.ConstInt(LLVM.Int32Type(), (ulong)arr.Length, false), lenPtr);
 
                     var result = LLVM.BuildLoad(data.Builder, temp, "");
                     return result;
                 }
                 else if (cast.SubExpression.Type is PointerType ptr)
                 {
-                    var temp = GetTempValue(cast, data.Function);
+                    var temp = GetTempValue(cast);
 
                     var dataPtr = LLVM.BuildStructGEP(data.Builder, temp, 0, "");
                     var lenPtr = LLVM.BuildStructGEP(data.Builder, temp, 1, "");
@@ -1305,9 +1360,18 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitStringLiteral(AstStringLiteral str, LLVMCodeGeneratorData data = null)
         {
-            var lstr = LLVM.BuildGlobalString(data.Builder, str.StringValue, "");
-            var val = LLVM.BuildPointerCast(data.Builder, lstr, CheezTypeToLLVMType(StringType.Instance), "");
-            return val;
+            if (str.IsChar)
+            {
+                var ch = (char)str.Value;
+                var val = LLVM.ConstInt(LLVM.Int8Type(), (ulong)ch, true);
+                return val;
+            }
+            else
+            {
+                var lstr = LLVM.BuildGlobalString(data.Builder, str.StringValue, "");
+                var val = LLVM.BuildPointerCast(data.Builder, lstr, CheezTypeToLLVMType(StringType.Instance), "");
+                return val;
+            }
         }
 
         public override LLVMValueRef VisitNumberExpression(AstNumberExpr num, LLVMCodeGeneratorData data = null)
@@ -1406,7 +1470,7 @@ namespace Cheez.Compiler.CodeGeneration
             {
                 subCasted = LLVM.BuildGEP(data.Builder, sub, new LLVMValueRef[]
                 {
-                    LLVM.ConstInt(LLVM.Int32Type(), 0, LLVMFalse)
+                    LLVM.ConstInt(LLVM.Int32Type(), 0, false)
                 }, "");
             }
             subCasted = LLVM.BuildPtrToInt(data.Builder, subCasted, castType, "");
@@ -1585,68 +1649,77 @@ namespace Cheez.Compiler.CodeGeneration
                 }
                 else if (bin.Left.Type is BoolType)
                 {
-                    var left = bin.Left.Accept(this, data.Clone(Deref: true));
                     switch (bin.Operator)
                     {
                         case "!=":
                             {
+                                var left = bin.Left.Accept(this, data.Clone(Deref: true));
                                 var right = bin.Right.Accept(this, data.Clone(Deref: true));
                                 return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
                             }
 
                         case "==":
                             {
+                                var left = bin.Left.Accept(this, data.Clone(Deref: true));
                                 var right = bin.Right.Accept(this, data.Clone(Deref: true));
                                 return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
                             }
 
                         case "and":
                             {
-                                var tempVar = valueMap[bin];
-                                LLVM.BuildStore(data.Builder, left, tempVar);
-
-                                // right
-                                var bbSecond = LLVM.AppendBasicBlock(data.Function, "and_rhs");
-                                LLVM.PositionBuilderAtEnd(data.Builder, bbSecond);
-                                var right = bin.Right.Accept(this, data);
-                                LLVM.BuildStore(data.Builder, right, tempVar);
-
+                                var bbAnd = LLVM.AppendBasicBlock(data.Function, "and");
+                                var bbRhs = LLVM.AppendBasicBlock(data.Function, "and_rhs");
                                 var bbEnd = LLVM.AppendBasicBlock(data.Function, "and_end");
-                                LLVM.BuildBr(data.Builder, bbEnd);
 
-                                // 
-                                LLVM.PositionBuilderAtEnd(data.Builder, data.BasicBlock);
-                                LLVM.BuildCondBr(data.Builder, left, bbSecond, bbEnd);
+                                LLVM.BuildBr(data.Builder, bbAnd);
+                                data.MoveBuilderTo(bbAnd);
 
                                 //
-                                LLVM.PositionBuilderAtEnd(data.Builder, bbEnd);
-                                tempVar = LLVM.BuildLoad(data.Builder, tempVar, bin.ToString());
-                                data.BasicBlock = bbEnd;
+                                var tempVar = GetTempValue(bin);
+
+                                //
+                                var left = bin.Left.Accept(this, data.Clone(Deref: true));
+                                LLVM.BuildStore(data.Builder, left, tempVar);
+                                LLVM.BuildCondBr(data.Builder, left, bbRhs, bbEnd);
+
+                                // rhs
+                                data.MoveBuilderTo(bbRhs);
+                                var right = bin.Right.Accept(this, data);
+                                LLVM.BuildStore(data.Builder, right, tempVar);
+                                LLVM.BuildBr(data.Builder, bbEnd);
+                                
+                                //
+                                data.MoveBuilderTo(bbEnd);
+                                tempVar = LLVM.BuildLoad(data.Builder, tempVar, "");
                                 return tempVar;
                             }
 
                         case "or":
                             {
-                                var tempVar = valueMap[bin];
-                                LLVM.BuildStore(data.Builder, left, tempVar);
-
-                                // right
-                                var bbSecond = LLVM.AppendBasicBlock(data.Function, "or_rhs");
-                                LLVM.PositionBuilderAtEnd(data.Builder, bbSecond);
-                                var right = bin.Right.Accept(this, data);
-                                LLVM.BuildStore(data.Builder, right, tempVar);
-
+                                var bbOr = LLVM.AppendBasicBlock(data.Function, "or");
+                                var bbRhs = LLVM.AppendBasicBlock(data.Function, "or_rhs");
                                 var bbEnd = LLVM.AppendBasicBlock(data.Function, "or_end");
-                                LLVM.BuildBr(data.Builder, bbEnd);
 
-                                // 
-                                LLVM.PositionBuilderAtEnd(data.Builder, data.BasicBlock);
-                                LLVM.BuildCondBr(data.Builder, left, bbEnd, bbSecond);
+                                LLVM.BuildBr(data.Builder, bbOr);
+                                data.MoveBuilderTo(bbOr);
 
                                 //
-                                LLVM.PositionBuilderAtEnd(data.Builder, bbEnd);
-                                tempVar = LLVM.BuildLoad(data.Builder, tempVar, bin.ToString());
-                                data.BasicBlock = bbEnd;
+                                var tempVar = GetTempValue(bin);
+
+                                //
+                                var left = bin.Left.Accept(this, data.Clone(Deref: true));
+                                LLVM.BuildStore(data.Builder, left, tempVar);
+                                LLVM.BuildCondBr(data.Builder, left, bbEnd, bbRhs);
+
+                                // rhs
+                                data.MoveBuilderTo(bbRhs);
+                                var right = bin.Right.Accept(this, data);
+                                LLVM.BuildStore(data.Builder, right, tempVar);
+                                LLVM.BuildBr(data.Builder, bbEnd);
+
+                                //
+                                data.MoveBuilderTo(bbEnd);
+                                tempVar = LLVM.BuildLoad(data.Builder, tempVar, "");
                                 return tempVar;
                             }
 

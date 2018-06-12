@@ -7,16 +7,19 @@ struct Lexer {
 }
 
 fn IsIdentBegin(c: byte) -> bool {
-    let a = *"a"
-    let z = *"z"
-    let A = *"A"
-    let Z = *"Z"
+    let a = 'a'
+    let z = 'z'
+    let A = 'A'
+    let Z = 'Z'
     
-    if (c >= a and c <= z) or (c >= A and c <= Z) {
-        return true
-    }
+    return (c >= a and c <= z) or (c >= A and c <= Z)
+}
 
-    return false
+fn IsIdentChar(c: byte) -> bool {
+    let zero = '0'
+    let nine = '9'
+    
+    return IsIdentBegin(c) or (c >= zero and c <= nine)
 }
 
 impl Lexer {
@@ -49,15 +52,17 @@ impl Lexer {
 
         let c = self.PeekChar(0)
 
-        if c == *"#" {
+        
+
+        if c == '#' {
             self.MakeSimpleToken(&token, TokenType.HashTag)
             return token
         }
-        else if c == *"(" {
+        else if c == '(' {
             self.MakeSimpleToken(&token, TokenType.OpenParen)
             return token
         }
-        else if c == *")" {
+        else if c == ')' {
             self.MakeSimpleToken(&token, TokenType.ClosingParen)
             return token
         }

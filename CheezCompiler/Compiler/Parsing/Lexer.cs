@@ -14,6 +14,7 @@ namespace Cheez.Compiler.Parsing
         EOF,
 
         StringLiteral,
+        CharLiteral,
         NumberLiteral,
 
         Identifier,
@@ -75,7 +76,8 @@ namespace Cheez.Compiler.Parsing
         KwTrue,
         KwFalse,
         KwUsing,
-        KwDefer
+        KwDefer,
+        KwMatch
     }
 
     public class TokenLocation
@@ -314,7 +316,13 @@ namespace Cheez.Compiler.Parsing
                 case '!': SimpleToken(ref token, TokenType.Bang); break;
 
 
-                case '"': ParseStringLiteral(ref token); break;
+                case '"': ParseStringLiteral(ref token, '"'); break;
+                case '\'':
+                    {
+                        ParseStringLiteral(ref token, '\'');
+                        token.type = TokenType.CharLiteral;
+                        break;
+                    }
 
                 case char cc when IsDigit(cc):
                     ParseNumberLiteral(ref token);
@@ -339,7 +347,7 @@ namespace Cheez.Compiler.Parsing
             return token;
         }
 
-        private void ParseStringLiteral(ref Token token)
+        private void ParseStringLiteral(ref Token token, char end)
         {
             token.type = TokenType.StringLiteral;
             int start = mLocation.index++;
@@ -350,7 +358,7 @@ namespace Cheez.Compiler.Parsing
             {
                 char c = Current;
                 mLocation.index++;
-                if (c == '"')
+                if (c == end)
                 {
                     foundEnd = true;
                     break;
@@ -414,6 +422,7 @@ namespace Cheez.Compiler.Parsing
                 case "use": token.type = TokenType.KwUsing; break;
                 case "defer": token.type = TokenType.KwDefer; break;
                 case "enum": token.type = TokenType.KwEnum; break;
+                case "match": token.type = TokenType.KwMatch; break;
             }
         }
 

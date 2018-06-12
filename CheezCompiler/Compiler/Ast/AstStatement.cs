@@ -7,8 +7,8 @@ namespace Cheez.Compiler.Ast
 {
     public enum StmtFlags
     {
-        Returns,
         GlobalScope,
+        Returns,
         IsLastStatementInBlock
     }
 
@@ -35,6 +35,12 @@ namespace Cheez.Compiler.Ast
         public void SetFlag(StmtFlags f)
         {
             mFlags |= 1 << (int)f;
+        }
+        
+        public void ClearFlag(StmtFlags f)
+        {
+            var mask = ~(1 << (int)f);
+            mFlags &= mask;
         }
 
         public bool GetFlag(StmtFlags f)
@@ -330,6 +336,52 @@ namespace Cheez.Compiler.Ast
         public override AstStatement Clone()
         {
             return new AstUsingStmt(GenericParseTreeNode, Value.Clone())
+            {
+                Scope = this.Scope,
+                Directives = this.Directives,
+                mFlags = this.mFlags
+            };
+        }
+    }
+
+    public class AstMatchCase
+    {
+        public ParseTree.PTMatchCase GenericParseTreeNode { get; set; }
+        public AstExpression Value { get; set; }
+        public AstStatement Body { get; set; }
+
+        public AstMatchCase(ParseTree.PTMatchCase node, AstExpression value, AstStatement body)
+        {
+            this.GenericParseTreeNode = node;
+            this.Value = value;
+            this.Body = body;
+        }
+
+        public AstMatchCase Clone()
+        {
+            return new AstMatchCase(GenericParseTreeNode, Value.Clone(), Body.Clone());
+        }
+    }
+
+    public class AstMatchStmt : AstStatement
+    {
+        public AstExpression Value { get; set; }
+        public List<AstMatchCase> Cases { get; set; }
+
+        public AstMatchStmt(ParseTree.PTStatement node, AstExpression value, List<AstMatchCase> cases, Dictionary<string, AstDirective> dirs = null) : base(node, dirs)
+        {
+            this.Value = value;
+            this.Cases = cases;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitMatchStatement(this, data);
+        }
+
+        public override AstStatement Clone()
+        {
+            return new AstMatchStmt(GenericParseTreeNode, Value.Clone(), Cases.Select(c => c.Clone()).ToList(), Directives)
             {
                 Scope = this.Scope,
                 Directives = this.Directives,

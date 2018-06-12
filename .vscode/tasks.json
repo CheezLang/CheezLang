@@ -12,7 +12,7 @@
 				"--name",
 				"TestProgram",
 				"--print-ast-file",
-				"ast.che"
+				"gen/ast.txt"
 			],
 			"group": {
 				"kind": "build",

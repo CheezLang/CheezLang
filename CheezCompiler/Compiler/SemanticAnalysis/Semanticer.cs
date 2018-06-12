@@ -300,6 +300,70 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #region Statements
 
+        public override IEnumerable<object> VisitMatchStatement(AstMatchStmt match, SemanticerData context = null)
+        {
+            match.Scope = context.Scope;
+
+            foreach (var v in match.Value.Accept(this, context.Clone()))
+            {
+                if (v is ReplaceAstExpr r)
+                    match.Value = r.NewExpression;
+                else
+                    yield return v;
+            }
+
+            var type = match.Value.Type;
+            if (type is IntType || type is EnumType e)
+            {
+                // do nothing
+            }
+            else
+            {
+                context.ReportError(match.Value.GenericParseTreeNode, "Must be an int or enum value");
+            }
+
+            //match.SetFlag(StmtFlags.Returns);
+            foreach (var ca in match.Cases)
+            {
+                foreach (var v in ca.Value.Accept(this, context.Clone()))
+                {
+                    if (v is ReplaceAstExpr r)
+                        ca.Value = r.NewExpression;
+                    else
+                        yield return v;
+                }
+
+                foreach (var v in ca.Body.Accept(this, context.Clone()))
+                {
+                    if (v is ReplaceAstStmt r)
+                        ca.Body = r.NewStatement;
+                    else
+                        yield return v;
+
+                }
+                if (!ca.Body.GetFlag(StmtFlags.Returns))
+                    match.ClearFlag(StmtFlags.Returns);
+
+                if (CastIfLiteral(ca.Value.Type, type, out var t))
+                {
+                    ca.Value.Type = t;
+
+                    ca.Value = CreateCastIfImplicit(type, ca.Value);
+
+                    if (!ca.Value.IsCompTimeValue)
+                    {
+                        context.ReportError(ca.Value.GenericParseTreeNode, $"Value must be a compile time constant");
+                    }
+                }
+                else
+                {
+                    context.ReportError(ca.Value.GenericParseTreeNode, $"Type of case '{ca.Value}' does not match type of match-statement. (found {ca.Value.Type}, wanted {type})");
+                }
+            }
+
+            yield break;
+        }
+
         public override IEnumerable<object> VisitTypeAlias(AstTypeAliasDecl al, SemanticerData data = null)
         {
             al.Scope = data.Scope;
@@ -1407,7 +1471,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             type = arg.Type;
                         }
 
-                        foreach (var v in ReplaceAstExpr(new AstStringLiteral(call.GenericParseTreeNode, type.ToString()), context))
+                        foreach (var v in ReplaceAstExpr(new AstStringLiteral(call.GenericParseTreeNode, type.ToString(), false), context))
                             yield return v;
                         break;
                     }
@@ -2154,18 +2218,39 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             num.Type = IntType.LiteralType;
             num.Value = num.Data.ToLong();
+            num.IsCompTimeValue = true;
             yield break;
         }
 
         public override IEnumerable<object> VisitStringLiteral(AstStringLiteral str, SemanticerData context = null)
         {
-            str.Type = CheezType.String;
+            str.IsCompTimeValue = true;
+            if (str.IsChar)
+            {
+                var val = str.StringValue;
+                if (val.Length != 1)
+                {
+                    context.ReportError(str.GenericParseTreeNode, "Char literal must be of length 1");
+                    str.Type = CheezType.Error;
+                }
+                else
+                {
+                    str.Type = CheezType.Char;
+                    str.Value = val[0];
+                    str.CharValue = val[0];
+                }
+            }
+            else
+            {
+                str.Type = CheezType.String;
+            }
             yield break;
         }
 
         public override IEnumerable<object> VisitBoolExpression(AstBoolExpr bo, SemanticerData context = null)
         {
             bo.Type = CheezType.Bool;
+            bo.IsCompTimeValue = true;
             yield break;
         }
 
@@ -2314,6 +2399,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         dot.Type = dot.Left.Value as CheezType;
                         dot.Value = m;
+                        dot.IsCompTimeValue = true;
                     }
                     else
                     {

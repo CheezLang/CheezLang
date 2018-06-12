@@ -63,6 +63,9 @@
 			"include": "#raw_string_literal"
 		},
 		{
+			"include": "#char_literal"
+		},
+		{
 			"comment": "Floating point literal (fraction)",
 			"name": "constant.numeric.float.cheezlang",
 			"match": "\\b[0-9][0-9_]*\\.[0-9][0-9_]*([eE][+-]?[0-9_]+)?(f32|f64)?\\b"
@@ -284,6 +287,17 @@
 			"name": "string.quoted.double.cheezlang",
 			"begin": "b?\"",
 			"end": "\"",
+			"patterns": [
+				{
+					"include": "#escaped_character"
+				}
+			]
+		},
+		"char_literal": {
+			"comment": "Single-quote char literal",
+			"name": "string.quoted.single.cheezlang",
+			"begin": "b?'",
+			"end": "'",
 			"patterns": [
 				{
 					"include": "#escaped_character"

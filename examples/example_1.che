@@ -1,9 +1,17 @@
 #load("io.che")
-#load("compiler/main.che")
-#load("std/windows.che")
+// #load("compiler/main.che")
+// #load("std/windows.che")
 
 fn Main()
 {
-    let filename = "D:\Programming\CheezLang\examples\example_1.che"
-    RunCompiler(filename)
+    // let filename = "D:\Programming\CheezLang\examples\example_1.che"
+    // RunCompiler(filename)
+
+    let c = 'a'
+    Println(c)
+    Println('x')
+    Println('y')
+    Println('"')
+    Println('`'')
+
 }

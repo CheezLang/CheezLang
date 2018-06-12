@@ -6,91 +6,11 @@ using System.Linq;
 
 namespace Cheez.Compiler
 {
-    //public class CTypeFactory
-    //{
-    //    private Dictionary<string, CheezType> sTypes = new Dictionary<string, CheezType>();
-
-    //    public CTypeFactory()
-    //    {
-    //        // create default types
-    //        CreateAlias("i8", IntType.GetIntType(1, true));
-    //        CreateAlias("i16", IntType.GetIntType(2, true));
-    //        CreateAlias("i32", IntType.GetIntType(4, true));
-    //        CreateAlias("i64", IntType.GetIntType(8, true));
-
-    //        CreateAlias("byte", IntType.GetIntType(1, true));
-    //        CreateAlias("short", IntType.GetIntType(2, true));
-    //        CreateAlias("int", IntType.GetIntType(4, true));
-    //        CreateAlias("long", IntType.GetIntType(8, true));
-
-    //        CreateAlias("u8", IntType.GetIntType(1, false));
-    //        CreateAlias("u16", IntType.GetIntType(2, false));
-    //        CreateAlias("u32", IntType.GetIntType(4, false));
-    //        CreateAlias("u64", IntType.GetIntType(8, false));
-
-    //        CreateAlias("ubyte", IntType.GetIntType(1, false));
-    //        CreateAlias("ushort", IntType.GetIntType(2, false));
-    //        CreateAlias("uint", IntType.GetIntType(4, false));
-    //        CreateAlias("ulong", IntType.GetIntType(8, false));
-
-    //        CreateAlias("f32", FloatType.GetFloatType(4));
-    //        CreateAlias("float", FloatType.GetFloatType(4));
-    //        CreateAlias("f64", FloatType.GetFloatType(8));
-    //        CreateAlias("double", FloatType.GetFloatType(8));
-
-    //        CreateAlias("bool", BoolType.Instance);
-    //        CreateAlias("string", StringType.Instance);
-    //        CreateAlias("void", VoidType.Intance);
-    //    }
-
-    //    public CheezType GetCheezType(string name)
-    //    {
-    //        if (!sTypes.ContainsKey(name))
-    //        {
-    //            return null;
-    //        }
-    //        return sTypes[name];
-    //    }
-
-    //    //public CheezType GetCheezType(PTTypeExpr expr)
-    //    //{
-    //    //    switch (expr)
-    //    //    {
-    //    //        case PTNamedTypeExpr n:
-    //    //            if (sTypes.ContainsKey(n.Name))
-    //    //            {
-    //    //                return sTypes[n.Name];
-    //    //            }
-
-    //    //            return null;
-
-    //    //        case PTPointerTypeExpr p:
-    //    //            return PointerType.GetPointerType(GetCheezType(p.SubExpr));
-
-    //    //        case PTArrayTypeExpr p:
-    //    //            return ArrayType.GetArrayType(GetCheezType(p.SubExpr));
-
-    //    //        case PTFunctionTypeExpr f:
-    //    //            return FunctionType.GetFunctionType(GetCheezType(f.ReturnType), f.ParameterTypes.Select(pt => GetCheezType(pt)).ToArray());
-
-    //    //        case null:
-    //    //            return CheezType.Void;
-
-    //    //        default:
-    //    //            return null;
-    //    //    }
-    //    //}
-
-    //    public void CreateAlias(string name, CheezType type)
-    //    {
-    //        sTypes[name] = type;
-    //    }
-    //}
-
     public abstract class CheezType
     {
         public static CheezType Void => VoidType.Intance;
         public static CheezType String => StringType.Instance;
+        public static CheezType Char => CharType.Instance;
         public static CheezType Bool => BoolType.Instance;
         public static CheezType Error => ErrorType.Instance;
         public static CheezType Type => CheezTypeType.Instance;
@@ -419,6 +339,18 @@ namespace Cheez.Compiler
         }
 
         public override bool IsPolyType => false;
+    }
+
+    public class CharType : CheezType
+    {
+        public static CharType Instance = new CharType { Size = 1 };
+        public override bool IsPolyType => false;
+
+        public override string ToString()
+        {
+            return $"char";
+        }
+
     }
 
     public class StructType : CheezType

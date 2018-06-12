@@ -169,13 +169,17 @@ namespace Cheez.Compiler.Ast
         
         public override bool IsPolymorphic => false;
         public string StringValue => (string)Value;
+        public char CharValue { get; set; }
+
+        public bool IsChar { get; set; }
 
         [DebuggerStepThrough]
-        public AstStringLiteral(ParseTree.PTExpr node, string value) : base()
+        public AstStringLiteral(ParseTree.PTExpr node, string value, bool isChar) : base()
         {
             GenericParseTreeNode = node;
             this.Value = value;
-            IsCompTimeValue = true;
+            this.IsCompTimeValue = true;
+            this.IsChar = isChar;
         }
 
         [DebuggerStepThrough]
@@ -187,16 +191,19 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override AstExpression Clone()
         {
-            return new AstStringLiteral(GenericParseTreeNode, Value as string)
+            return new AstStringLiteral(GenericParseTreeNode, Value as string, IsChar)
             {
                 Type = this.Type,
-                Scope = this.Scope
+                Scope = this.Scope,
+                CharValue = this.CharValue
             };
         }
 
         public override string ToString()
         {
-            return "string-lit";
+            if (IsChar)
+                return $"'{Value}'";
+            return '"' + StringValue + '"';
         }
     }
 

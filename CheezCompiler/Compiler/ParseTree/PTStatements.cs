@@ -187,4 +187,42 @@ namespace Cheez.Compiler.ParseTree
             return new AstUsingStmt(this, Value.CreateAst());
         }
     }
+
+    public class PTMatchCase
+    {
+        public TokenLocation Beginning { get; set; }
+        public TokenLocation End { get; set; }
+        public PTExpr Value { get; set; }
+        public PTStatement Body { get; set; }
+
+        public PTMatchCase(TokenLocation beg, TokenLocation end, PTExpr value, PTStatement body)
+        {
+            this.Beginning = beg;
+            this.End = end;
+            this.Value = value;
+            this.Body = body;
+        }
+
+        public AstMatchCase CreateAst()
+        {
+            return new AstMatchCase(this, Value.CreateAst(), Body.CreateAst());
+        }
+    }
+
+    public class PTMatchStmt : PTStatement
+    {
+        public PTExpr Value { get; set; }
+        public List<PTMatchCase> Cases { get; set; }
+
+        public PTMatchStmt(TokenLocation beg, TokenLocation end, PTExpr value, List<PTMatchCase> cases) : base(beg, end)
+        {
+            this.Value = value;
+            this.Cases = cases;
+        }
+
+        public override AstStatement CreateAst()
+        {
+            return new AstMatchStmt(this, Value.CreateAst(), Cases.Select(c => c.CreateAst()).ToList());
+        }
+    }
 }

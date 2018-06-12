@@ -242,7 +242,18 @@ namespace Cheez.Compiler.Visitor
 
         public override string VisitStringLiteral(AstStringLiteral str, int data = 0)
         {
-            return $"\"{str.StringValue.Replace("`", "``").Replace("\r", "").Replace("\n", "`n").Replace("\"", "`\"")}\"";
+            string v = null;
+            if (str.IsChar)
+                v = str.CharValue.ToString();
+            else
+                v = str.StringValue;
+
+            v = v.Replace("`", "``").Replace("\r", "").Replace("\n", "`n");
+
+            if (str.IsChar)
+                return $"'{v.Replace("'", "`'")}'";
+            else 
+                return $"\"{v.Replace("\"", "`\"")}\"";
         }
 
         public override string VisitIdentifierExpression(AstIdentifierExpr ident, int indentLevel = 0)

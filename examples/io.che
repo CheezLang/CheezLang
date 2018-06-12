@@ -3,7 +3,7 @@
 #load("std/windows.che")
 #load("stdio.che")
 
-let NEW_LINE: byte = 10
+let NEW_LINE: char = '`n'
 
 fn PrintString(s: $T) {
     let s = (string)s
@@ -17,13 +17,9 @@ fn PrintStringl(s: String&) {
     WriteFile(__std_out_handle, (string)s.data, s.length, &bytesWritten, 0)
 }
 
-fn PrintChar(c: byte) { 
+fn PrintChar(c: char) { 
     let bytesWritten: int
     WriteFile(__std_out_handle, (string)&c, 1, &bytesWritten, 0)
-}
-
-fn PrintDigit(d: int) {
-    PrintChar((byte)d + 48)
 }
 
 fn PrintInt(val: $T) {
@@ -185,8 +181,8 @@ fn SprintfData(buffer: String&, format: String, value: any) {
 }
 
 fn Sprintf(buffer: String&, format: string, data: any) {
-    let open = *"{"
-    let close = *"}"
+    let open = '{'
+    let close = '}'
 
     let formatSpecifier = NewString()
     defer formatSpecifier.Dispose()
@@ -224,8 +220,8 @@ fn Sprintf(buffer: String&, format: string, data: any) {
 }
 
 fn Sprintfn(buffer: String&, format: string, data: any[]) {
-    let open = *"{"
-    let close = *"}"
+    let open = '{'
+    let close = '}'
 
     let formatSpecifier = NewString()
     defer formatSpecifier.Dispose()
@@ -304,6 +300,8 @@ fn Print(v: $T) {
         PrintStringl(v)
     } else if @isenum(T) {
         PrintInt((int)v)
+    } else if @typeseq(T, char) {
+        PrintChar((char)v)
     } else {
         @error("Can't print value of unknown type")
     }

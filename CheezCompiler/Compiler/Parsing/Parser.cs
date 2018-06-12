@@ -236,6 +236,9 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.EOF:
                     return (true, null);
 
+                case TokenType.KwMatch:
+                    return (false, ParseMatchStatement());
+
                 case TokenType.HashIdentifier:
                     {
                         var dir = new PTDirectiveStatement(ParseDirective());
@@ -308,6 +311,59 @@ namespace Cheez.Compiler.Parsing
                         }
                     }
             }
+        }
+
+        private PTStatement ParseMatchStatement()
+        {
+            TokenLocation beg = null, end = null;
+            PTExpr value = null;
+            List<PTMatchCase> cases = new List<PTMatchCase>();
+            
+            beg = Consume(TokenType.KwMatch, ErrMsg("keyword 'match'", "at beginning of match statement")).location;
+            SkipNewlines();
+
+            value = ParseExpression();
+            SkipNewlines();
+
+            Consume(TokenType.OpenBrace, ErrMsg("{", "after value in match statement"));
+            
+            while (true)
+            {
+                SkipNewlines();
+                var next = PeekToken();
+
+                if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
+                    break;
+
+                var v = ParseExpression();
+
+                Consume(TokenType.Arrow, ErrMsg("->", "after value in match case"));
+
+                var s = ParseStatement(false);
+
+                if (s.stmt != null)
+                {
+                    cases.Add(new PTMatchCase(v.Beginning, s.stmt.End, v, s.stmt));
+                }
+
+                next = PeekToken();
+                if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
+                {
+                    break;
+                }
+                else if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
+                {
+                    NextToken();
+                }
+                else
+                {
+                    ReportError(next.location, $"Unexpected token after match case (found {next.type}, wanted '\n' or ',')");
+                }
+            }
+
+            end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of match statement")).location;
+
+            return new PTMatchStmt(beg, end, value, cases);
         }
 
         private PTStatement ParseEnumDeclaration()
@@ -1212,7 +1268,11 @@ namespace Cheez.Compiler.Parsing
 
                 case TokenType.StringLiteral:
                     NextToken();
-                    return new PTStringLiteral(token.location, (string)token.data);
+                    return new PTStringLiteral(token.location, (string)token.data, false);
+
+                case TokenType.CharLiteral:
+                    NextToken();
+                    return new PTStringLiteral(token.location, (string)token.data, true);
 
                 case TokenType.NumberLiteral:
                     NextToken();
