@@ -1191,6 +1191,12 @@ namespace Cheez.Compiler.CodeGeneration
                     return LLVM.BuildPointerCast(data.Builder, sub, type, "");
                 else if (cast.SubExpression.Type is AnyType)
                     return LLVM.BuildIntToPtr(data.Builder, sub, type, "");
+                else if (cast.SubExpression.Type is SliceType)
+                {
+                    var ptr = LLVM.BuildExtractValue(data.Builder, sub, 0, "");
+                    //var ptr = LLVM.BuildStructGEP(data.Builder, sub, 0, "");
+                    return LLVM.BuildPointerCast(data.Builder, ptr, type, "");
+                }
             }
             else if (cast.Type is StringType s)
             {
@@ -1411,9 +1417,9 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitArrayExpression(AstArrayExpression arr, LLVMCodeGeneratorData data = null)
         {
-            var ptr = valueMap[arr];
+            var ptr = GetTempValue(arr);
 
-            var targetType = (arr.Type as ArrayType).TargetType;
+            var targetType = (arr.Type as ArrayType).TargetType; // @Todo
 
 
             uint index = 0;

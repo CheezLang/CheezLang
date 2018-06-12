@@ -2514,8 +2514,6 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             CheezType type = null;
 
-            context.Function.LocalVariables.Add(arr);
-
             bool containsLiterals = false;
             for (int i = 0; i < arr.Values.Count; i++)
             {
@@ -2602,17 +2600,17 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (sourceType is ArrayType arr && slice.TargetType == arr.TargetType)
                 {
-                    outSource = slice;
+                    //outSource = slice;
                     return true;
                 }
                 else if (sourceType is PointerType ptr && slice.TargetType == ptr.TargetType)
                 {
-                    outSource = slice;
+                    //outSource = slice;
                     return true;
                 }
                 else if (sourceType is SliceType slice2 && slice.TargetType == slice2.TargetType)
                 {
-                    outSource = slice;
+                    //outSource = slice;
                     return true;
                 }
 
@@ -2753,6 +2751,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             return source;
         }
 
+        // this function creates the CheezType structure from an expression, with polytypes
         private IEnumerable<object> CreateType(Scope scope, AstExpression e, IText text, IErrorHandler error)
         {
             switch (e)
@@ -2835,6 +2834,20 @@ namespace Cheez.Compiler.SemanticAnalysis
                             yield return CheezType.Error;
                             yield break;
                         }
+                    }
+
+                case AstArrayTypeExpr slice:
+                    {
+                        CheezType type = CheezType.Error;
+                        foreach (var v in CreateType(scope, slice.Target, text, error))
+                        {
+                            if (v is CheezType t)
+                                type = t;
+                            else
+                                yield return v;
+                        }
+                        yield return SliceType.GetSliceType(type);
+                        yield break;
                     }
 
                 default:

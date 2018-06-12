@@ -6,11 +6,11 @@ struct Lexer {
     location: TokenLocation
 }
 
-fn IsIdentBegin(c: byte) -> bool {    
+fn IsIdentBegin(c: char) -> bool {    
     return (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z')
 }
 
-fn IsIdentChar(c: byte) -> bool {
+fn IsIdentChar(c: char) -> bool {
     return IsIdentBegin(c) or (c >= '0' and c <= '9')
 }
 
@@ -47,34 +47,111 @@ impl Lexer {
 
         
         match c {
-            ':' -> MakeSimpleToken(&token, TokenType.Colon),
-            ';' -> MakeSimpleToken(&token, TokenType.Semicolon),
-            '.' -> MakeSimpleToken(&token, TokenType.Period),
-            '=' -> MakeSimpleToken(&token, TokenType.Equal),
-            '(' -> MakeSimpleToken(&token, TokenType.OpenParen),
-            ')' -> MakeSimpleToken(&token, TokenType.ClosingParen),
-            '{' -> MakeSimpleToken(&token, TokenType.OpenBrace),
-            '}' -> MakeSimpleToken(&token, TokenType.ClosingBrace),
-            '[' -> MakeSimpleToken(&token, TokenType.OpenBracket),
-            ']' -> MakeSimpleToken(&token, TokenType.ClosingBracket),
-            ',' -> MakeSimpleToken(&token, TokenType.Comma),
-            '&' -> MakeSimpleToken(&token, TokenType.Ampersand),
-            '*' -> MakeSimpleToken(&token, TokenType.Asterisk),
-            '/' -> MakeSimpleToken(&token, TokenType.ForwardSlash),
-            '+' -> MakeSimpleToken(&token, TokenType.Plus),
-            '%' -> MakeSimpleToken(&token, TokenType.Percent),
-            '-' -> MakeSimpleToken(&token, TokenType.Minus),
-            '<' -> MakeSimpleToken(&token, TokenType.Less),
-            '>' -> MakeSimpleToken(&token, TokenType.Greater),
-            '^' -> MakeSimpleToken(&token, TokenType.Hat),
-            '!' -> MakeSimpleToken(&token, TokenType.Bang),
+            ':' -> self.MakeSimpleToken(&token, TokenType.Colon),
+            ';' -> self.MakeSimpleToken(&token, TokenType.Semicolon),
+            '.' -> self.MakeSimpleToken(&token, TokenType.Period),
+            '=' -> self.MakeSimpleToken(&token, TokenType.Equal),
+            '(' -> self.MakeSimpleToken(&token, TokenType.OpenParen),
+            ')' -> self.MakeSimpleToken(&token, TokenType.ClosingParen),
+            '{' -> self.MakeSimpleToken(&token, TokenType.OpenBrace),
+            '}' -> self.MakeSimpleToken(&token, TokenType.ClosingBrace),
+            '[' -> self.MakeSimpleToken(&token, TokenType.OpenBracket),
+            ']' -> self.MakeSimpleToken(&token, TokenType.ClosingBracket),
+            ',' -> self.MakeSimpleToken(&token, TokenType.Comma),
+            '&' -> self.MakeSimpleToken(&token, TokenType.Ampersand),
+            '*' -> self.MakeSimpleToken(&token, TokenType.Asterisk),
+            '/' -> self.MakeSimpleToken(&token, TokenType.ForwardSlash),
+            '+' -> self.MakeSimpleToken(&token, TokenType.Plus),
+            '%' -> self.MakeSimpleToken(&token, TokenType.Percent),
+            '-' -> self.MakeSimpleToken(&token, TokenType.Minus),
+            '<' -> self.MakeSimpleToken(&token, TokenType.Less),
+            '>' -> self.MakeSimpleToken(&token, TokenType.Greater),
+            '!' -> self.MakeSimpleToken(&token, TokenType.Bang),
         }
 
-        if token.type = TokenType.Unknown {
-            token.type = TokenType.Identifier
+        if token.type == TokenType.Unknown {
+            if IsIdentBegin(c) {
+                self.ParseIdentifier(&token, TokenType.Identifier)
+            }
+            else if c == '$' {
+                location.start = location.start + 1
+                self.ParseIdentifier(&token, TokenType.DollarIdentifier)
+            }
+            else if c == '#' {
+                location.start = location.start + 1
+                self.ParseIdentifier(&token, TokenType.HashIdentifier)
+            }
+            else if c == '@' {
+                location.start = location.start + 1
+                self.ParseIdentifier(&token, TokenType.AtSignIdentifier)
+            }
+            else if c == '"' {
+                self.ParseStringLiteral(&token, TokenType.StringLiteral, '"')
+            }
+            else if c == '`'' {
+                self.ParseStringLiteral(&token, TokenType.CharLiteral, '`'')
+            }
+            else {
+                location.start = location.start + 1
+            }
         }
+
+        token.location.end = location.start
 
         return token
+    }
+
+    ref fn ParseStringLiteral(token: Token&, type: TokenType, end: char) {
+        token.type = TokenType.StringLiteral
+        location.start = location.start + 1
+        let start = location.start
+
+        token.data.stringLiteral = "".ToString()
+
+        let foundEnd = false
+        let cond = true
+        while cond and location.start < text.length {
+            let c = self.PeekChar(0)
+            location.start = location.start + 1
+
+            if c == end {
+                foundEnd = true
+                cond = false
+            }
+            else if c == '``' {
+                if location.start >= text.length {
+                    cond = false
+                }
+                else {
+                    let c = self.PeekChar(0)
+
+                    if c == 'n' {
+                        token.data.stringLiteral.AppendChar('`n')
+                    } else if c == '0' {
+                        token.data.stringLiteral.AppendChar('`0')
+                    } else {
+                        token.data.stringLiteral.AppendChar(c)
+                    }
+
+                    location.start = location.start + 1
+                }
+            }
+            else {
+                token.data.stringLiteral.AppendChar(c)
+            }
+        }
+    }
+
+    ref fn ParseIdentifier(token: Token&, type: TokenType) {
+        token.type = type
+        let start = location.start
+
+        while location.start < text.length and IsIdentChar(self.PeekChar(0)) {
+            location.start = location.start + 1
+        }
+
+        token.data.identifier = &text.data[start]
+        token.data.identifier.length = location.start - start
     }
 
     ref fn MakeSimpleToken(token: Token&, type: TokenType) {
@@ -84,10 +161,10 @@ impl Lexer {
         token.location.end = token.location.start + 1
     }
 
-    ref fn PeekChar(offset: int) -> byte {
+    ref fn PeekChar(offset: int) -> char {
         let index = location.start + offset
         if index >= text.length {
-            return 0
+            return '`0'
         }
 
         return text.data[index]

@@ -21,7 +21,13 @@ impl TokenLocation {
 struct Token {
     type: TokenType
     location: TokenLocation
-    stringValue: String&
+
+    data: TokenData
+}
+
+struct TokenData {
+    identifier: char[]
+    stringLiteral: String
 }
 
 impl Token {
@@ -31,67 +37,75 @@ impl Token {
 }
 
 enum TokenType {
-    Unknown
+    Unknown,
 
-    NewLine
-    EOF
+    NewLine,
+    EOF,
 
-    StringLiteral
-    NumberLiteral
+    StringLiteral,
+    CharLiteral,
+    NumberLiteral,
 
-    Identifier
+    Identifier,
+    DollarIdentifier,
+    HashIdentifier,
+    AtSignIdentifier,
 
-    Semicolon
-    DoubleColon
-    Colon
-    Comma
-    Period
-    Equal
-    Ampersand
-    HashTag
+    Semicolon,
+    DoubleColon,
+    Colon,
+    Comma,
+    Period,
+    Equal,
+    Ampersand,
 
-    Plus
-    Minus
-    Asterisk
-    ForwardSlash
-    Percent
+    Bang,
 
-    Less
-    LessEqual
-    Greater
-    GreaterEqual
-    DoubleEqual
-    NotEqual
+    Plus,
+    Minus,
+    Asterisk,
+    ForwardSlash,
+    Percent,
 
-    OpenParen
-    ClosingParen
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
+    DoubleEqual,
+    NotEqual,
 
-    OpenBrace
-    ClosingBrace
-    
-    OpenBracket
-    ClosingBracket
+    Arrow,
 
-    KwReturn
-    KwCast
-    KwRef
-    KwFn
-    KwStruct
-    KwEnum
-    KwImpl
-    KwConstant
-    KwVar
-    KwIf
-    KwElse
-    KwFor
-    KwWhile
-    KwAnd
-    KwOr
-    KwTrue
-    KwFalse
-    KwUsing
-    KwPrint
-    KwPrintln
+    OpenParen,
+    ClosingParen,
+
+    OpenBrace,
+    ClosingBrace,
+
+    OpenBracket,
+    ClosingBracket,
+
+    KwReturn,
+    KwNew,
+    KwRef,
+    KwFn,
+    KwStruct,
+    KwEnum,
+    KwImpl,
+    KwConstant,
+    KwLet,
+    KwIf,
+    KwElse,
+    KwFor,
+    KwWhile,
+    KwAnd,
+    KwOr,
+    KwTrue,
+    KwFalse,
+    KwNull,
+    KwUsing,
+    KwDefer,
+    KwMatch
 }
 
 impl TokenType {
@@ -101,8 +115,12 @@ impl TokenType {
             TokenType.NewLine -> return "NewLine",
             TokenType.EOF -> return "EOF",
             TokenType.StringLiteral -> return "StringLiteral",
+            TokenType.CharLiteral -> return "CharLiteral",
             TokenType.NumberLiteral -> return "NumberLiteral",
             TokenType.Identifier -> return "Identifier",
+            TokenType.DollarIdentifier -> return "DollarIdentifier",
+            TokenType.HashIdentifier -> return "HashIdentifier",
+            TokenType.AtSignIdentifier -> return "AtSignIdentifier",
             TokenType.Semicolon -> return "Semicolon",
             TokenType.DoubleColon -> return "DoubleColon",
             TokenType.Colon -> return "Colon",
@@ -110,7 +128,7 @@ impl TokenType {
             TokenType.Period -> return "Period",
             TokenType.Equal -> return "Equal",
             TokenType.Ampersand -> return "Ampersand",
-            TokenType.HashTag -> return "HashTag",
+            TokenType.Bang -> return "Bang",
             TokenType.Plus -> return "Plus",
             TokenType.Minus -> return "Minus",
             TokenType.Asterisk -> return "Asterisk",
@@ -122,6 +140,7 @@ impl TokenType {
             TokenType.GreaterEqual -> return "GreaterEqual",
             TokenType.DoubleEqual -> return "DoubleEqual",
             TokenType.NotEqual -> return "NotEqual",
+            TokenType.Arrow -> return "Arrow",
             TokenType.OpenParen -> return "OpenParen",
             TokenType.ClosingParen -> return "ClosingParen",
             TokenType.OpenBrace -> return "OpenBrace",
@@ -129,14 +148,14 @@ impl TokenType {
             TokenType.OpenBracket -> return "OpenBracket",
             TokenType.ClosingBracket -> return "ClosingBracket",
             TokenType.KwReturn -> return "KwReturn",
-            TokenType.KwCast -> return "KwCast",
+            TokenType.KwNew -> return "KwNew",
             TokenType.KwRef -> return "KwRef",
             TokenType.KwFn -> return "KwFn",
             TokenType.KwStruct -> return "KwStruct",
             TokenType.KwEnum -> return "KwEnum",
             TokenType.KwImpl -> return "KwImpl",
             TokenType.KwConstant -> return "KwConstant",
-            TokenType.KwVar -> return "KwVar",
+            TokenType.KwLet -> return "KwLet",
             TokenType.KwIf -> return "KwIf",
             TokenType.KwElse -> return "KwElse",
             TokenType.KwFor -> return "KwFor",
@@ -145,9 +164,10 @@ impl TokenType {
             TokenType.KwOr -> return "KwOr",
             TokenType.KwTrue -> return "KwTrue",
             TokenType.KwFalse -> return "KwFalse",
+            TokenType.KwNull -> return "KwNull",
             TokenType.KwUsing -> return "KwUsing",
-            TokenType.KwPrint -> return "KwPrint",
-            TokenType.KwPrintln -> return "KwPrintln",
+            TokenType.KwDefer -> return "KwDefer",
+            TokenType.KwMatch -> return "KwMatch",
         }
         return "UNKNOWN"
     }

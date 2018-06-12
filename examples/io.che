@@ -67,7 +67,7 @@ fn PrintInt(val: $T) {
             }
 
             val = val / 10
-            buffer.data[i] = (byte)lastDigit + 48
+            buffer.data[i] = (char)(lastDigit + 48)
             i = i - 1
         }
 
@@ -150,6 +150,8 @@ fn Sprint(buffer: String&, value: $T) {
         buffer.Append(*value)
     } else if @typeseq(String, T) {
         buffer.Append(value)
+    } else if @typeseq(char[], T) {
+        buffer.AppendChars(value)
     } else {
         @error("Can't print value of unknown type")
     }
@@ -177,6 +179,9 @@ fn SprintfData(buffer: String&, format: String, value: any) {
     }
     else if format.Equals("S") {
         Sprint(buffer, (String&)value)
+    }
+    else if format.Equals("c[]") {
+        Sprint(buffer, *(char[]&)value)
     }
 }
 

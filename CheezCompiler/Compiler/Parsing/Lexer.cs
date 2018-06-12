@@ -29,8 +29,6 @@ namespace Cheez.Compiler.Parsing
         Period,
         Equal,
         Ampersand,
-        //HashTag,
-        Hat,
 
         Bang,
 
@@ -313,7 +311,6 @@ namespace Cheez.Compiler.Parsing
                 case '-': SimpleToken(ref token, TokenType.Minus); break;
                 case '<': SimpleToken(ref token, TokenType.Less); break;
                 case '>': SimpleToken(ref token, TokenType.Greater); break;
-                case '^': SimpleToken(ref token, TokenType.Hat); break;
                 case '!': SimpleToken(ref token, TokenType.Bang); break;
 
 

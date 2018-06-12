@@ -113,9 +113,7 @@ impl StringBase($CharType) {
         let newLength = length + other.length
 
         if newLength >= capacity {
-            while newLength >= capacity {
-                capacity = capacity * 2
-            }
+            capacity = newLength * 2
             data = Realloc(data, (uint)capacity)
         }
         
@@ -132,9 +130,7 @@ impl StringBase($CharType) {
         let newLength = length + otherLength
                 
         if newLength >= capacity {
-            while newLength >= capacity {
-                capacity = capacity * 2
-            }
+            capacity = newLength * 2
             data = Realloc(data, (uint)capacity)
         }
         
@@ -146,13 +142,27 @@ impl StringBase($CharType) {
         return &self
     }
 
+    ref fn AppendChars(other: char[]) -> StringBase(CharType)& {
+        let newLength = length + other.length
+                
+        if newLength >= capacity {
+            capacity = newLength * 2
+            data = Realloc(data, (uint)capacity)
+        }
+        
+        let end = &data[length]
+        memcpy(end, (any&)other, other.length)
+
+        length = newLength
+
+        return &self
+    }
+
     ref fn AppendChar(ch: CharType) -> StringBase(CharType)& {
         let newLength = length + 1
         
         if newLength >= capacity {
-            while newLength >= capacity {
-                capacity = capacity * 2
-            }
+            capacity = newLength * 2
             data = Realloc(data, (uint)capacity)
         }
         

@@ -168,7 +168,9 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.Minus:
                 case TokenType.OpenParen:
                 case TokenType.StringLiteral:
+                case TokenType.CharLiteral:
                 case TokenType.NumberLiteral:
+                case TokenType.KwNull:
                 case TokenType.KwTrue:
                 case TokenType.KwFalse:
                 case TokenType.Ampersand:

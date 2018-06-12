@@ -13,6 +13,15 @@ fn RunCompiler(filename: string) {
         let t = lexer.NextToken()
 
         t.Print()
+        match t.type {
+            TokenType.Identifier -> Printf(" ({c[]})", &t.data.identifier)
+            TokenType.AtSignIdentifier -> Printf(" ({c[]})", &t.data.identifier)
+            TokenType.HashIdentifier -> Printf(" ({c[]})", &t.data.identifier)
+            TokenType.DollarIdentifier -> Printf(" ({c[]})", &t.data.identifier)
+            TokenType.StringLiteral -> {
+                Printf(" (`"{S}`")", &t.data.stringLiteral)
+            }
+        }
         Println("")
 
         if t.type == TokenType.EOF {

@@ -1,13 +1,13 @@
 ﻿File Name,Lines
-io.che,264
-string.che,184
-token.che,137
-lexer.che,71
+io.che,268
+string.che,191
+token.che,154
+lexer.che,146
 array.che,68
-memory.che,24
+main.che,29
 stdio.che,24
-main.che,20
+memory.che,24
 windows.che,19
 file.che,15
-example_1.che,8
-Total,834
+example_1.che,6
+Total,944
