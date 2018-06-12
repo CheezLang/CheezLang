@@ -21,6 +21,7 @@ impl TokenLocation {
 struct Token {
     type: TokenType
     location: TokenLocation
+    stringValue: String&
 }
 
 impl Token {

@@ -75,6 +75,7 @@ namespace Cheez.Compiler.Parsing
         KwOr,
         KwTrue,
         KwFalse,
+        KwNull,
         KwUsing,
         KwDefer,
         KwMatch
@@ -419,6 +420,7 @@ namespace Cheez.Compiler.Parsing
                 case "or": token.type = TokenType.KwOr; break;
                 case "true": token.type = TokenType.KwTrue; break;
                 case "false": token.type = TokenType.KwFalse; break;
+                case "null": token.type = TokenType.KwNull; break;
                 case "use": token.type = TokenType.KwUsing; break;
                 case "defer": token.type = TokenType.KwDefer; break;
                 case "enum": token.type = TokenType.KwEnum; break;

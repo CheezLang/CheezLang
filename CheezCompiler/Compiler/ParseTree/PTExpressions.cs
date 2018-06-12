@@ -70,6 +70,23 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
+    public class PTNullExpr : PTLiteral
+    {
+        public PTNullExpr(TokenLocation loc) : base(loc, loc)
+        {
+        }
+
+        public override AstExpression CreateAst()
+        {
+            return new AstNullExpr(this);
+        }
+
+        public override string ToString()
+        {
+            return "null";
+        }
+    }
+
     public class PTNumberExpr : PTLiteral
     {
         private NumberData mData;

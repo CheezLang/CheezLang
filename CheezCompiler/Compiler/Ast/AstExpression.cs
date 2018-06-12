@@ -43,14 +43,14 @@ namespace Cheez.Compiler.Ast
         {
             return (mFlags & (1 << (int)f)) != 0;
         }
-        
+
         [DebuggerStepThrough]
         public abstract T Accept<T, D>(IVisitor<T, D> visitor, D data = default);
 
         [DebuggerStepThrough]
         public abstract AstExpression Clone();
     }
-    
+
     public class AstStructExpression : AstExpression
     {
         public AstStructDecl Declaration { get; }
@@ -67,7 +67,7 @@ namespace Cheez.Compiler.Ast
             this.Original = original;
             Value = @struct;
         }
-        
+
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return Original.Accept(visitor, data);
@@ -104,7 +104,7 @@ namespace Cheez.Compiler.Ast
             this.Original = original;
             Value = func;
         }
-        
+
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return Original.Accept(visitor, data);
@@ -166,7 +166,7 @@ namespace Cheez.Compiler.Ast
 
     public class AstStringLiteral : AstLiteral
     {
-        
+
         public override bool IsPolymorphic => false;
         public string StringValue => (string)Value;
         public char CharValue { get; set; }
@@ -404,7 +404,7 @@ namespace Cheez.Compiler.Ast
 
     public class AstBoolExpr : AstExpression
     {
-        
+
         public override bool IsPolymorphic => false;
 
         public bool BoolValue => (bool)Value;
@@ -545,7 +545,7 @@ namespace Cheez.Compiler.Ast
             return $"({Type})({SubExpression})";
         }
     }
-    
+
     public class AstArrayAccessExpr : AstExpression
     {
         public AstExpression SubExpression { get; set; }
@@ -579,6 +579,39 @@ namespace Cheez.Compiler.Ast
         public override string ToString()
         {
             return $"{SubExpression}[{Indexer}]";
+        }
+    }
+
+    public class AstNullExpr : AstExpression
+    {
+        public override bool IsPolymorphic => false;
+
+        [DebuggerStepThrough]
+        public AstNullExpr(ParseTree.PTExpr node) : base()
+        {
+            GenericParseTreeNode = node;
+            IsCompTimeValue = true;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitNullExpression(this, data);
+        }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstNullExpr(GenericParseTreeNode)
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
+
+        public override string ToString()
+        {
+            return "null";
         }
     }
 

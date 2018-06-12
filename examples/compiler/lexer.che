@@ -6,20 +6,12 @@ struct Lexer {
     location: TokenLocation
 }
 
-fn IsIdentBegin(c: byte) -> bool {
-    let a = 'a'
-    let z = 'z'
-    let A = 'A'
-    let Z = 'Z'
-    
-    return (c >= a and c <= z) or (c >= A and c <= Z)
+fn IsIdentBegin(c: byte) -> bool {    
+    return (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z')
 }
 
 fn IsIdentChar(c: byte) -> bool {
-    let zero = '0'
-    let nine = '9'
-    
-    return IsIdentBegin(c) or (c >= zero and c <= nine)
+    return IsIdentBegin(c) or (c >= '0' and c <= '9')
 }
 
 impl Lexer {
@@ -40,33 +32,45 @@ impl Lexer {
 
     ref fn NextToken() -> Token {
         let token = new Token {
-            TokenType.EOF
+            TokenType.Unknown
             location.Clone()
         }
 
         self.SkipNewlinesAndComments()
 
         if location.start >= text.length {
+            token.type = TokenType.EOF
             return token
         }
 
         let c = self.PeekChar(0)
 
         
+        match c {
+            ':' -> MakeSimpleToken(&token, TokenType.Colon),
+            ';' -> MakeSimpleToken(&token, TokenType.Semicolon),
+            '.' -> MakeSimpleToken(&token, TokenType.Period),
+            '=' -> MakeSimpleToken(&token, TokenType.Equal),
+            '(' -> MakeSimpleToken(&token, TokenType.OpenParen),
+            ')' -> MakeSimpleToken(&token, TokenType.ClosingParen),
+            '{' -> MakeSimpleToken(&token, TokenType.OpenBrace),
+            '}' -> MakeSimpleToken(&token, TokenType.ClosingBrace),
+            '[' -> MakeSimpleToken(&token, TokenType.OpenBracket),
+            ']' -> MakeSimpleToken(&token, TokenType.ClosingBracket),
+            ',' -> MakeSimpleToken(&token, TokenType.Comma),
+            '&' -> MakeSimpleToken(&token, TokenType.Ampersand),
+            '*' -> MakeSimpleToken(&token, TokenType.Asterisk),
+            '/' -> MakeSimpleToken(&token, TokenType.ForwardSlash),
+            '+' -> MakeSimpleToken(&token, TokenType.Plus),
+            '%' -> MakeSimpleToken(&token, TokenType.Percent),
+            '-' -> MakeSimpleToken(&token, TokenType.Minus),
+            '<' -> MakeSimpleToken(&token, TokenType.Less),
+            '>' -> MakeSimpleToken(&token, TokenType.Greater),
+            '^' -> MakeSimpleToken(&token, TokenType.Hat),
+            '!' -> MakeSimpleToken(&token, TokenType.Bang),
+        }
 
-        if c == '#' {
-            self.MakeSimpleToken(&token, TokenType.HashTag)
-            return token
-        }
-        else if c == '(' {
-            self.MakeSimpleToken(&token, TokenType.OpenParen)
-            return token
-        }
-        else if c == ')' {
-            self.MakeSimpleToken(&token, TokenType.ClosingParen)
-            return token
-        }
-        else if IsIdentBegin(c) {
+        if token.type = TokenType.Unknown {
             token.type = TokenType.Identifier
         }
 

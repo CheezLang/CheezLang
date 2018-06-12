@@ -1216,6 +1216,10 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.KwNew:
                     return ParseStructValue();
 
+                case TokenType.KwNull:
+                    NextToken();
+                    return new PTNullExpr(token.location);
+
                 case TokenType.AtSignIdentifier:
                     {
                         NextToken();

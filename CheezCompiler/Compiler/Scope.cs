@@ -247,7 +247,8 @@ namespace Cheez.Compiler
                 IntType.GetIntType(1, false),
                 IntType.GetIntType(2, false),
                 IntType.GetIntType(4, false),
-                IntType.GetIntType(8, false)
+                IntType.GetIntType(8, false),
+                CheezType.Char
             };
             CheezType[] floatTypes = new CheezType[]
             {

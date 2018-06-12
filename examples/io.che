@@ -49,7 +49,7 @@ fn PrintInt(val: $T) {
 
     if (val == 0)
     {
-        *buffer.data = 48
+        buffer.data[0] = '0'
     }
     else {
         let minimum = false
@@ -72,7 +72,7 @@ fn PrintInt(val: $T) {
         }
 
         if (neg) {
-            buffer.data[0] = 45
+            buffer.data[0] = '-'
         }
     }
 
@@ -106,7 +106,7 @@ fn Bprinti(buffer: String&, val: $T) {
     
     if (val == 0)
     {
-        buffer.data[buffer.length - 1] = 48
+        buffer.data[buffer.length - 1] = '0'
     }
     else {
         let minimum = false
@@ -124,12 +124,12 @@ fn Bprinti(buffer: String&, val: $T) {
             }
 
             val = val / 10
-            buffer.data[i] = (byte)lastDigit + 48
+            buffer.data[i] = (char)(lastDigit + 48)
             i = i - 1
         }
 
         if (neg) {
-            buffer.data[i] = 45
+            buffer.data[i] = '-'
             i = i - 1
         }
     }

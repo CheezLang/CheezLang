@@ -313,7 +313,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             var type = match.Value.Type;
-            if (type is IntType || type is EnumType e)
+            if (type is IntType || type is EnumType e || type is CharType)
             {
                 // do nothing
             }
@@ -1627,7 +1627,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else if (arr.SubExpression.Type is StringType)
             {
-                arr.Type = IntType.GetIntType(1, true);
+                arr.Type = CheezType.Char;
             }
             else if (arr.SubExpression.Type == CheezType.Type)
             {
@@ -2214,6 +2214,14 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
+        public override IEnumerable<object> VisitNullExpression(AstNullExpr nul, SemanticerData data = null)
+        {
+            nul.Scope = data.Scope;
+            nul.Type = PointerType.GetPointerType(CheezType.Any);
+            nul.IsCompTimeValue = true;
+            yield break;
+        }
+
         public override IEnumerable<object> VisitNumberExpression(AstNumberExpr num, SemanticerData context = null)
         {
             num.Type = IntType.LiteralType;
@@ -2293,7 +2301,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else if (deref.SubExpression.Type is StringType s)
             {
-                deref.Type = IntType.GetIntType(1, true);
+                deref.Type = CheezType.Char;
             }
             else
             {

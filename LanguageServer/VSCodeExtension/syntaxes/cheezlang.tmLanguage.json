@@ -57,6 +57,9 @@
 			]
 		},
 		{
+			"include": "#null_literal"
+		},
+		{
 			"include": "#string_literal"
 		},
 		{
@@ -106,9 +109,14 @@
 			"match": "\\b(true|false)\\b"
 		},
 		{
+			"comment": "Null literal",
+			"name": "constant.language.pointer.cheezlang",
+			"match": "\\b(null)\\b"
+		},
+		{
 			"comment": "Control keyword",
 			"name": "keyword.control.cheezlang",
-			"match": "\\b(break|continue|else|if|return|while|defer)\\b"
+			"match": "\\b(break|continue|else|if|return|while|defer|match)\\b"
 		},
 		{
 			"comment": "Keyword",
