@@ -6,12 +6,12 @@ fn LoadFile(filename: string, str: String&) -> bool {
     if handle == -1 {
         return false
     }
-    let size = GetFileSize((HANDLE)handle, (int&)0)
+    let size = GetFileSize((HANDLE)handle, null)
 
     str.Resize((int)size)
     
     let bytesRead = 0
-    ReadFile((HANDLE)handle, (void&)str.data, size, &bytesRead, (void&)0)
+    ReadFile((HANDLE)handle, str.data, size, &bytesRead, null)
     CloseHandle((HANDLE)handle)
 
     return true

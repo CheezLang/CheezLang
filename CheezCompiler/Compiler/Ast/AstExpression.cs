@@ -611,7 +611,7 @@ namespace Cheez.Compiler.Ast
 
         public override string ToString()
         {
-            return "null";
+            return "nullptr";
         }
     }
 
@@ -758,7 +758,7 @@ namespace Cheez.Compiler.Ast
 
         public override string ToString()
         {
-            return $"{Target}^";
+            return $"{Target}&";
         }
     }
 

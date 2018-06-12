@@ -86,7 +86,7 @@ impl StringBase($CharType) {
         if (ulong)data != 0 {
             // @Todo:
             //self.Dispose()
-            Free((void&)data)
+            Free(data)
             data = (CharType&)0
             length = 0
             capacity = 0
@@ -97,7 +97,7 @@ impl StringBase($CharType) {
         data = Malloc((uint)capacity)
 
         if @sizeof(CharType) == 1 {
-            memcpy((void&)data, (void&)str, length)
+            memcpy(data, (any&)str, length)
         } else {
             let i = 0
             while i < length {
@@ -120,7 +120,7 @@ impl StringBase($CharType) {
         }
         
         let end = &data[length]
-        memcpy((void&)end, (void&)other.data, other.length * @sizeof(CharType))
+        memcpy(end, other.data, other.length * @sizeof(CharType))
 
         length = newLength
 
@@ -139,7 +139,7 @@ impl StringBase($CharType) {
         }
         
         let end = &data[length]
-        memcpy((void&)end, (void&)other, otherLength)
+        memcpy(end, (any&)other, otherLength)
 
         length = newLength
 
@@ -186,7 +186,7 @@ impl StringBase($CharType) {
     }
 
     ref fn Dispose() {
-        Free((void&)data)
+        Free(data)
         data = (CharType&)0
         length = 0
     }

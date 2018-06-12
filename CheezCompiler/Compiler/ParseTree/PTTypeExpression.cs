@@ -34,7 +34,7 @@ namespace Cheez.Compiler.ParseTree
 
         public override string ToString()
         {
-            return $"{SubExpr}*";
+            return $"{SubExpr}&";
         }
 
         public override AstExpression CreateAst()

@@ -83,7 +83,7 @@ namespace Cheez.Compiler.ParseTree
 
         public override string ToString()
         {
-            return "null";
+            return "nullptr";
         }
     }
 

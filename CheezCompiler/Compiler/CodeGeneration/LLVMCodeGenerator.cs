@@ -148,7 +148,8 @@ namespace Cheez.Compiler.CodeGeneration
     {
         public LLVMBuilderRef Builder { get; set; }
         public bool Deref { get; set; } = true;
-        public LLVMValueRef Function { get; set; }
+        public LLVMValueRef LFunction { get; set; }
+        public AstFunctionDecl Function { get; set; }
         public LLVMBasicBlockRef BasicBlock { get; set; }
 
         public LLVMCodeGeneratorData Clone(LLVMBuilderRef? Builder = null, bool? Deref = null, LLVMValueRef? Function = null, LLVMBasicBlockRef? BasicBlock = null)
@@ -157,8 +158,9 @@ namespace Cheez.Compiler.CodeGeneration
             {
                 Builder = Builder ?? this.Builder,
                 Deref = Deref ?? this.Deref,
-                Function = Function ?? this.Function,
-                BasicBlock = BasicBlock ?? this.BasicBlock
+                LFunction = Function ?? this.LFunction,
+                BasicBlock = BasicBlock ?? this.BasicBlock,
+                Function = this.Function
             };
         }
 
@@ -744,14 +746,14 @@ namespace Cheez.Compiler.CodeGeneration
         {
             var value = match.Value.Accept(this, data.Clone(Deref: true));
 
-            var end = LLVM.AppendBasicBlock(data.Function, "match_end");
+            var end = LLVM.AppendBasicBlock(data.LFunction, "match_end");
 
             var sw = LLVM.BuildSwitch(data.Builder, value, end, (uint)match.Cases.Count);
             foreach (var ca in match.Cases)
             {
                 var cv = ca.Value.Accept(this, data.Clone(Deref: true));
 
-                var cbb = LLVM.AppendBasicBlock(data.Function, "case " + ca.Value.ToString());
+                var cbb = LLVM.AppendBasicBlock(data.LFunction, "case " + ca.Value.ToString());
                 LLVM.PositionBuilderAtEnd(data.Builder, cbb);
                 data.BasicBlock = cbb;
 
@@ -882,7 +884,7 @@ namespace Cheez.Compiler.CodeGeneration
 
                 // body
                 {
-                    var d = new LLVMCodeGeneratorData { Builder = builder, BasicBlock = bodyBB, Function = lfunc };
+                    var d = new LLVMCodeGeneratorData { Builder = builder, BasicBlock = bodyBB, LFunction = lfunc, Function = function };
                     function.Body.Accept(this, d);
                 }
 
@@ -922,7 +924,7 @@ namespace Cheez.Compiler.CodeGeneration
             var prevBB = data.BasicBlock;
             var nextBB = prevBB;
 
-            nextBB = LLVM.AppendBasicBlock(data.Function, "ret");
+            nextBB = LLVM.AppendBasicBlock(data.LFunction, "ret");
 
             foreach (var d in ret.DeferredStatements)
             {
@@ -955,7 +957,7 @@ namespace Cheez.Compiler.CodeGeneration
         {
 
             // Condition
-            var bbCondition = LLVM.AppendBasicBlock(data.Function, "while_condition");
+            var bbCondition = LLVM.AppendBasicBlock(data.LFunction, "while_condition");
             LLVM.BuildBr(data.Builder, bbCondition);
             LLVM.PositionBuilderAtEnd(data.Builder, bbCondition);
 
@@ -964,7 +966,7 @@ namespace Cheez.Compiler.CodeGeneration
             var bbConditionEnd = data.BasicBlock;
 
             // body
-            var bbBody = LLVM.AppendBasicBlock(data.Function, "while_body");
+            var bbBody = LLVM.AppendBasicBlock(data.LFunction, "while_body");
             LLVM.PositionBuilderAtEnd(data.Builder, bbBody);
 
             data.BasicBlock = bbBody;
@@ -972,7 +974,7 @@ namespace Cheez.Compiler.CodeGeneration
             LLVM.BuildBr(data.Builder, bbCondition);
 
             //
-            var bbEnd = LLVM.AppendBasicBlock(data.Function, "while_end");
+            var bbEnd = LLVM.AppendBasicBlock(data.LFunction, "while_end");
             LLVM.PositionBuilderAtEnd(data.Builder, bbEnd);
             data.BasicBlock = bbEnd;
 
@@ -987,15 +989,15 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitIfStatement(AstIfStmt ifs, LLVMCodeGeneratorData data = null)
         {
-            var bbIfBody = LLVM.AppendBasicBlock(data.Function, "if_body");
+            var bbIfBody = LLVM.AppendBasicBlock(data.LFunction, "if_body");
             LLVMBasicBlockRef? bbEnd = null;
 
             if (!ifs.GetFlag(StmtFlags.Returns))
-                bbEnd = LLVM.AppendBasicBlock(data.Function, "if_end");
+                bbEnd = LLVM.AppendBasicBlock(data.LFunction, "if_end");
 
             LLVMBasicBlockRef? bbElseBody = null;
             if (ifs.ElseCase != null)
-                bbElseBody = LLVM.AppendBasicBlock(data.Function, "else_body");
+                bbElseBody = LLVM.AppendBasicBlock(data.LFunction, "else_body");
 
             // Condition
             var cond = ifs.Condition.Accept(this, data);
@@ -1054,6 +1056,11 @@ namespace Cheez.Compiler.CodeGeneration
         #endregion
 
         #region Expressions
+
+        public override LLVMValueRef VisitNullExpression(AstNullExpr nul, LLVMCodeGeneratorData data = null)
+        {
+            return LLVM.ConstNull(CheezTypeToLLVMType(nul.Type));
+        }
 
         public override LLVMValueRef VisitStructValueExpression(AstStructValueExpr str, LLVMCodeGeneratorData data = null)
         {
@@ -1704,9 +1711,9 @@ namespace Cheez.Compiler.CodeGeneration
 
                         case "and":
                             {
-                                var bbAnd = LLVM.AppendBasicBlock(data.Function, "and");
-                                var bbRhs = LLVM.AppendBasicBlock(data.Function, "and_rhs");
-                                var bbEnd = LLVM.AppendBasicBlock(data.Function, "and_end");
+                                var bbAnd = LLVM.AppendBasicBlock(data.LFunction, "and");
+                                var bbRhs = LLVM.AppendBasicBlock(data.LFunction, "and_rhs");
+                                var bbEnd = LLVM.AppendBasicBlock(data.LFunction, "and_end");
 
                                 LLVM.BuildBr(data.Builder, bbAnd);
                                 data.MoveBuilderTo(bbAnd);
@@ -1733,9 +1740,9 @@ namespace Cheez.Compiler.CodeGeneration
 
                         case "or":
                             {
-                                var bbOr = LLVM.AppendBasicBlock(data.Function, "or");
-                                var bbRhs = LLVM.AppendBasicBlock(data.Function, "or_rhs");
-                                var bbEnd = LLVM.AppendBasicBlock(data.Function, "or_end");
+                                var bbOr = LLVM.AppendBasicBlock(data.LFunction, "or");
+                                var bbRhs = LLVM.AppendBasicBlock(data.LFunction, "or_rhs");
+                                var bbEnd = LLVM.AppendBasicBlock(data.LFunction, "or_end");
 
                                 LLVM.BuildBr(data.Builder, bbOr);
                                 data.MoveBuilderTo(bbOr);

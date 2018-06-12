@@ -283,6 +283,11 @@ namespace Cheez.Compiler.Visitor
             return bin.Operator + sub;
         }
 
+        public override string VisitNullExpression(AstNullExpr nul, int data = 0)
+        {
+            return "null";
+        }
+
         public override string VisitNumberExpression(AstNumberExpr num, int indentLevel = 0)
         {
             var sb = new StringBuilder();

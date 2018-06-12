@@ -347,7 +347,6 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (CastIfLiteral(ca.Value.Type, type, out var t))
                 {
                     ca.Value.Type = t;
-
                     ca.Value = CreateCastIfImplicit(type, ca.Value);
 
                     if (!ca.Value.IsCompTimeValue)
@@ -960,9 +959,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                     if (!CastIfLiteral(variable.Initializer.Type, variable.Type, out var t))
                         context.ReportError(variable.Initializer.GenericParseTreeNode, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'");
 
-                    variable.Initializer = CreateCastIfImplicit(variable.Type, variable.Initializer);
-
                     variable.Initializer.Type = t;
+                    variable.Initializer = CreateCastIfImplicit(variable.Type, variable.Initializer);
                 }
             }
 
@@ -1013,9 +1011,9 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (!CastIfLiteral(ass.Value.Type, ass.Target.Type, out var type))
                 context.ReportError(ass.GenericParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
 
+            ass.Value.Type = type;
             ass.Value = CreateCastIfImplicit(ass.Target.Type, ass.Value);
 
-            ass.Value.Type = type;
             if (!ass.Target.GetFlag(ExprFlags.IsLValue))
                 context.ReportError(ass.Target.GenericParseTreeNode, $"Left side of assignment has to be a lvalue");
 
@@ -1574,8 +1572,8 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                             if (CastIfLiteral(mi.Value.Type, mem.Type, out var miType))
                             {
-                                mi.Value = CreateCastIfImplicit(mem.Type, mi.Value);
                                 mi.Value.Type = miType;
+                                mi.Value = CreateCastIfImplicit(mem.Type, mi.Value);
                             }
                             else
                             {
@@ -2127,12 +2125,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                         context.ReportError(context.Text, call.Arguments[i].GenericParseTreeNode, $"Argument type does not match parameter type. Expected {expectedType}, got {call.Arguments[i].Type}");
                     }
 
+                    call.Arguments[i].Type = t;
                     call.Arguments[i] = CreateCastIfImplicit(expectedType, call.Arguments[i]);
 
                     if (expectedType is ReferenceType && !call.Arguments[i].GetFlag(ExprFlags.IsLValue))
                         context.ReportError(call.Arguments[i].GenericParseTreeNode, "Can't convert an rvalue to a reference");
 
-                    call.Arguments[i].Type = t;
                 }
             }
             else if (call.Function.Type != CheezType.Error)
@@ -2545,8 +2543,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 else
                 {
-                    arr.Values[i] = CreateCastIfImplicit(type, value);
                     arr.Values[i].Type = t;
+                    arr.Values[i] = CreateCastIfImplicit(type, value);
                 }
 
             }
@@ -2580,6 +2578,9 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             while (sourceType is ReferenceType r)
                 sourceType = r.TargetType;
+
+            if (sourceType == targetType)
+                return true;
 
             if (sourceType == IntType.LiteralType && (targetType is IntType || targetType is FloatType))
             {
@@ -2617,6 +2618,17 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 return false;
             }
+            else if (targetType is PointerType tp && sourceType is PointerType sp)
+            {
+                if (tp.TargetType == CheezType.Any || sp.TargetType == CheezType.Any)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
             else if (sourceType != targetType)
             {
                 if (sourceType == IntType.LiteralType)
@@ -2627,21 +2639,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             return true;
-        }
-
-        private void CastIfAny(CheezType source, CheezType target)
-        {
-            if (source == CheezType.Any && target == CheezType.Any)
-                return;
-
-            if (source == CheezType.Any)
-            {
-
-            }
-            else if (source == CheezType.Any)
-            {
-
-            }
         }
 
         private bool IsNumberLiteralType(CheezType type)
@@ -2730,9 +2727,27 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (targetType is SliceType s)
             {
                 if (source.Type is ArrayType a && s.TargetType == a.TargetType)
-                    return new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                {
+                    var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                    cast.Type = targetType;
+                    return cast;
+                }
                 else if (source.Type is PointerType p && s.TargetType == p.TargetType)
-                    return new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                {
+                    var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                    cast.Type = targetType;
+                    return cast;
+                }
+            }
+
+            if (targetType is PointerType pt && source.Type is PointerType sp)
+            {
+                if (pt.TargetType != sp.TargetType)
+                {
+                    var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                    cast.Type = targetType;
+                    return cast;
+                }
             }
 
             return source;

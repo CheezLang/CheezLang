@@ -1,5 +1,5 @@
 struct FILE {
-    _Placeholder: void&
+    _Placeholder: any&
 }
 
 fn __acrt_iob_func(_: uint) -> FILE&;
@@ -19,7 +19,7 @@ let size_t = long
 fn clearerr_s(_Stream: FILE&) -> errno_t;
 fn fopen_s(_Stream: FILE&&, _FileName: string, _Mode: string) -> errno_t;
 fn fopen(_Stream: FILE&&, _FileName: string, _Mode: string) -> errno_t;
-fn fread_s(_Buffer: void&, _BufferSize: size_t, _ElementSize: size_t, _ElementCount: size_t, _Stream: FILE&) -> size_t;
+fn fread_s(_Buffer: any&, _BufferSize: size_t, _ElementSize: size_t, _ElementCount: size_t, _Stream: FILE&) -> size_t;
 fn fseek(_Stream: FILE&, _Offset: long, _Rel: int);
 fn ftell(_Stream: FILE&) -> long;
 fn fclose(_Stream: FILE&) -> int;

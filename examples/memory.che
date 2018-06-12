@@ -1,19 +1,19 @@
-fn malloc(size: int) -> void&;
-fn realloc(mem: void&, size: int) -> void&;
-fn free(mem: void&);
+fn malloc(size: int) -> any&;
+fn realloc(mem: any&, size: int) -> any&;
+fn free(mem: any&);
 
-fn memcpy(dest: void&, src: void&, size: int);
+fn memcpy(dest: any&, src: any&, size: int);
 
 fn Malloc(count: uint) -> $T& {
     return (T&)malloc((int)count * @sizeof(T))
 }
 
 fn Realloc(mem: $T&, count: uint) -> T& {
-    return (T&)realloc((void&)mem, (int)count * @sizeof(T))
+    return (T&)realloc(mem, (int)count * @sizeof(T))
 }
 
 fn Free(mem: $T&) {
-    free((void&)mem)
+    free(mem)
 }
 
 fn ClearMemory(mem: byte&, len: uint) {

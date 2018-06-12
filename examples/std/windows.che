@@ -9,11 +9,11 @@ struct _OFSTRUCT {
 }
 
 let HFILE = int
-let HANDLE = void&
+let HANDLE = any&
 
 fn GetStdHandle(h: int) -> int #stdcall;
 fn WriteFile(handle: int, str: string, length: int, bw: int&, res: int) #stdcall;
-fn ReadFile(hFile: HANDLE, lpBuffer: void&, nNumberOfBytesToRead: int, lpNumberOfBytesRead: int&, lpOverlapped: void&) -> bool #stdcall;
+fn ReadFile(hFile: HANDLE, lpBuffer: any&, nNumberOfBytesToRead: int, lpNumberOfBytesRead: int&, lpOverlapped: any&) -> bool #stdcall;
 
 let __std_in_handle: int = GetStdHandle(-10)
 let __std_out_handle: int = GetStdHandle(-11)

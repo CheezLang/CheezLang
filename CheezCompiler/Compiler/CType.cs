@@ -204,7 +204,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return $"{TargetType}*";
+            return $"{TargetType}&";
         }
 
         public override bool IsPolyType => TargetType.IsPolyType;
