@@ -2,10 +2,23 @@
 
 fn Main()
 {
-    let test = "hallo `n welt, wie `0 geht es dir"
-    Println(test)
-
     let filename = "D:\Programming\CheezLang\examples\example_1.che"
 
-    RunCompiler(filename)
+    // RunCompiler(filename)
+
+    let ints: int[] = MallocSlice(25)
+    defer FreeSlice(ints)
+
+
+    Println(ints)
+
+    let i = 0
+    while i < ints.length {
+        defer i = i + 1
+        ints[i] = i * i
+    }
+
+    Println(ints)
 }
+
+

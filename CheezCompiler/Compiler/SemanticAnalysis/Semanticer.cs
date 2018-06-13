@@ -1218,19 +1218,28 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
             }
 
-            if (a is StructType sa && b is StructType sb)
             {
-                if (sa.Declaration.Name.Name != sb.Declaration.Name.Name)
-                    return false;
-                if (sa.Arguments.Length != sb.Arguments.Length)
-                    return false;
-                for (int i = 0; i < sa.Arguments.Length; i++)
+                if (a is StructType sa && b is StructType sb)
                 {
-                    if (!TypesMatch(sa.Arguments[i], sb.Arguments[i], bindings))
+                    if (sa.Declaration.Name.Name != sb.Declaration.Name.Name)
                         return false;
-                }
+                    if (sa.Arguments.Length != sb.Arguments.Length)
+                        return false;
+                    for (int i = 0; i < sa.Arguments.Length; i++)
+                    {
+                        if (!TypesMatch(sa.Arguments[i], sb.Arguments[i], bindings))
+                            return false;
+                    }
 
-                return true;
+                    return true;
+                }
+            }
+
+            {
+                if (a is SliceType sa && b is SliceType sb)
+                {
+                    return TypesMatch(sa.TargetType, sb.TargetType, bindings);
+                }
             }
 
             return false;
@@ -1385,7 +1394,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         break;
                     }
 
-                    // @Todo
+                // @Todo
                 //case "isarray":
                 //    {
                 //        if (call.Arguments.Count != 1)
@@ -1871,8 +1880,8 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (lt.TargetType == CheezType.Any && rt.TargetType != CheezType.Any)
                 {
-                    bin.Left = new AstCastExpr(bin.Left.GenericParseTreeNode, 
-                        new AstTypeExpr(null, bin.Right.Type), 
+                    bin.Left = new AstCastExpr(bin.Left.GenericParseTreeNode,
+                        new AstTypeExpr(null, bin.Right.Type),
                         bin.Left);
                     bin.Left.Type = bin.Right.Type;
                 }
@@ -1925,7 +1934,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                 }
             }
-            
+
             yield break;
         }
 
@@ -2149,7 +2158,8 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (errorHandler.HasErrors)
                 {
-                    context.ReportError(call.GenericParseTreeNode, "Failed to invoke polymorphic function", errorHandler.Errors);
+                    var bindings = instance.PolymorphicTypes.Select(t => $"{t.Key} = {t.Value}");
+                    context.ReportError(call.GenericParseTreeNode, $"Failed to invoke polymorphic function ({string.Join(", ", bindings)})", errorHandler.Errors);
                 }
             }
 

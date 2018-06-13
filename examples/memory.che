@@ -8,12 +8,22 @@ fn Malloc(count: uint) -> $T& {
     return (T&)malloc((int)count * @sizeof(T))
 }
 
+fn MallocSlice(count: uint) -> $T[] {
+    let mem: T[] = (T&)malloc((int)count * @sizeof(T))
+    mem.length = (int)count
+    return mem
+}
+
 fn Realloc(mem: $T&, count: uint) -> T& {
     return (T&)realloc(mem, (int)count * @sizeof(T))
 }
 
 fn Free(mem: $T&) {
     free(mem)
+}
+
+fn FreeSlice(mem: $T[]) {
+    free((any&)mem)
 }
 
 fn ClearMemory(mem: byte&, len: uint) {

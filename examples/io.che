@@ -307,7 +307,24 @@ fn Print(v: $T) {
         PrintInt((int)v)
     } else if @typeseq(T, char) {
         PrintChar((char)v)
+    } else if @typeseq(T, $X[]) {
+        PrintSlice(v)
     } else {
         @error("Can't print value of unknown type")
     }
+}
+
+fn PrintSlice(slice: $T[]) {
+    let i = 0
+
+    Print("[")
+    while i < slice.length {
+        defer i = i + 1
+
+        if i > 0 {
+            Print(", ")
+        }
+        Print(slice[i])
+    }
+    Printf("].{i32}", slice.length)
 }
