@@ -2,6 +2,10 @@
 
 fn Main()
 {
+    let test = "hallo `n welt, wie `0 geht es dir"
+    Println(test)
+
     let filename = "D:\Programming\CheezLang\examples\example_1.che"
+
     RunCompiler(filename)
 }

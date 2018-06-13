@@ -10,7 +10,7 @@ namespace Cheez.Compiler
         void ReportError(string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
         void ReportError(IText text, ILocation location, string message, List<Error> subErrors = null, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
 
-        bool HasErrors { get; }
+        bool HasErrors { get; set; }
     }
     
     public class Error
@@ -27,12 +27,13 @@ namespace Cheez.Compiler
 
     public class SilentErrorHandler : IErrorHandler
     {
-        public bool HasErrors => Errors.Count > 0;
+        public bool HasErrors { get; set; }
 
         public List<Error> Errors { get; } = new List<Error>();
 
         public void ReportError(string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
+            HasErrors = true;
             Errors.Add(new Error
             {
                 Message = message,
@@ -44,6 +45,7 @@ namespace Cheez.Compiler
 
         public void ReportError(IText text, ILocation location, string message, List<Error> subErrors, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
+            HasErrors = true;
             Errors.Add(new Error
             {
                 Text = text,
@@ -58,6 +60,7 @@ namespace Cheez.Compiler
 
         public void ClearErrors()
         {
+            HasErrors = false;
             Errors.Clear();
         }
     }

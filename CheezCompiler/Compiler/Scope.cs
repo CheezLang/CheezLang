@@ -129,13 +129,18 @@ namespace Cheez.Compiler
 
             foreach (var op in ops)
             {
-                if (CheckType(op.LhsType, lhs) && CheckType(op.RhsType, rhs))
+                var l = op.Accepts(lhs, rhs);
+                if (l > 0)
                 {
-                    if (level < 2)
-                        result.Clear();
                     result.Add(op);
-                    level = 2;
                 }
+                //if (CheckType(op.LhsType, lhs) && CheckType(op.RhsType, rhs))
+                //{
+                //    if (level < 2)
+                //        result.Clear();
+                //    result.Add(op);
+                //    level = 2;
+                //}
                 //else if (level < 2 && CheckType(op.LhsType, lhs))
                 //{
                 //    if (level < 1)
@@ -286,6 +291,9 @@ namespace Cheez.Compiler
             DefineArithmeticUnaryOperators(floatTypes, "-", "+");
 
             DefineUnaryOperator("!", CheezType.Bool, b => !(bool)b);
+
+            //DefineBuiltIn
+            DefinePointerOperators();
         }
 
         private void DefineUnaryOperator(string name, CheezType type, BuiltInUnaryOperator.ComptimeExecution exe)
@@ -319,6 +327,23 @@ namespace Cheez.Compiler
                 {
                     list.Add(new BuiltInOperator(op.name, BoolType.Instance, t, t, op.exe));
                 }
+            }
+        }
+
+        private void DefinePointerOperators()
+        {
+            foreach (var op in new string[] { "==", "!=" })
+            {
+                List<IOperator> list = null;
+                if (mOperatorTable.ContainsKey(op))
+                    list = mOperatorTable[op];
+                else
+                {
+                    list = new List<IOperator>();
+                    mOperatorTable[op] = list;
+                }
+                
+                list.Add(new BuiltInPointerOperator(op));
             }
         }
 

@@ -199,6 +199,46 @@ namespace Cheez.Compiler.Visitor
             return $"enum {en.Name} {{\n{body.Indent(4)}\n}}";
         }
 
+        public override string VisitBreakStatement(AstBreakStmt br, int data = 0)
+        {
+            var sb = new StringBuilder();
+
+            if (br.DeferredStatements.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("// deferred statements");
+                foreach (var s in br.DeferredStatements)
+                {
+                    sb.AppendLine(s.Accept(this));
+                }
+            }
+
+
+            sb.AppendLine("// break");
+            sb.Append("break");
+            return sb.ToString();
+        }
+
+        public override string VisitContinueStatement(AstContinueStmt cont, int data = 0)
+        {
+            var sb = new StringBuilder();
+
+            if (cont.DeferredStatements.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("// deferred statements");
+                foreach (var s in cont.DeferredStatements)
+                {
+                    sb.AppendLine(s.Accept(this));
+                }
+            }
+
+
+            sb.AppendLine("// continue");
+            sb.Append("continue");
+            return sb.ToString();
+        }
+
         #endregion
 
 

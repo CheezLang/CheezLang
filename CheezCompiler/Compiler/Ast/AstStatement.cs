@@ -21,6 +21,8 @@ namespace Cheez.Compiler.Ast
         public Scope Scope { get; set; }
         public Dictionary<string, AstDirective> Directives { get; protected set; }
 
+        public AstStatement Parent { get; set; }
+
         public AstStatement(Dictionary<string, AstDirective> dirs = null)
         {
             this.Directives = dirs ?? new Dictionary<string, AstDirective>();
@@ -116,10 +118,10 @@ namespace Cheez.Compiler.Ast
     public class AstWhileStmt : AstStatement
     {
         public AstExpression Condition { get; set; }
-        public AstStatement Body { get; set; }
+        public AstBlockStmt Body { get; set; }
 
 
-        public AstWhileStmt(ParseTree.PTStatement node, AstExpression cond, AstStatement body) : base(node)
+        public AstWhileStmt(ParseTree.PTStatement node, AstExpression cond, AstBlockStmt body) : base(node)
         {
             this.Condition = cond;
             this.Body = body;
@@ -133,7 +135,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstWhileStmt(GenericParseTreeNode, Condition.Clone(), Body.Clone())
+            return new AstWhileStmt(GenericParseTreeNode, Condition.Clone(), Body.Clone() as AstBlockStmt)
             {
                 Scope = this.Scope,
                 Directives = this.Directives,
@@ -220,8 +222,6 @@ namespace Cheez.Compiler.Ast
     {
         public List<AstStatement> Statements { get; }
         public Scope SubScope { get; set; }
-
-        public AstBlockStmt Parent { get; set; }
 
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
 
@@ -382,6 +382,56 @@ namespace Cheez.Compiler.Ast
         public override AstStatement Clone()
         {
             return new AstMatchStmt(GenericParseTreeNode, Value.Clone(), Cases.Select(c => c.Clone()).ToList(), Directives)
+            {
+                Scope = this.Scope,
+                Directives = this.Directives,
+                mFlags = this.mFlags
+            };
+        }
+    }
+
+    public class AstBreakStmt : AstStatement
+    {
+        public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
+        public AstStatement Loop { get; set; }
+
+        public AstBreakStmt(ParseTree.PTStatement node) : base(node, null)
+        {
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitBreakStatement(this, data);
+        }
+
+        public override AstStatement Clone()
+        {
+            return new AstBreakStmt(GenericParseTreeNode)
+            {
+                Scope = this.Scope,
+                Directives = this.Directives,
+                mFlags = this.mFlags
+            };
+        }
+    }
+
+    public class AstContinueStmt : AstStatement
+    {
+        public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
+        public AstStatement Loop { get; set; }
+
+        public AstContinueStmt(ParseTree.PTStatement node) : base(node, null)
+        {
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitContinueStatement(this, data);
+        }
+
+        public override AstStatement Clone()
+        {
+            return new AstContinueStmt(GenericParseTreeNode)
             {
                 Scope = this.Scope,
                 Directives = this.Directives,

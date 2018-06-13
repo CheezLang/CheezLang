@@ -25,6 +25,39 @@ namespace Cheez.Compiler
         object Execute(object value);
     }
 
+    public class BuiltInPointerOperator : IOperator
+    {
+        public CheezType LhsType => throw new NotImplementedException();
+        public CheezType RhsType => throw new NotImplementedException();
+        public CheezType ResultType { get; private set; }
+
+        public string Name { get; private set; }
+
+        public BuiltInPointerOperator(string name)
+        {
+            this.Name = name;
+            switch (name)
+            {
+                case "==": ResultType = CheezType.Bool; break;
+                case "!=": ResultType = CheezType.Bool; break;
+
+                default: ResultType = PointerType.GetPointerType(CheezType.Any); break;
+            }
+        }
+
+        public int Accepts(CheezType lhs, CheezType rhs)
+        {
+            if (lhs is PointerType lt && rhs is PointerType rt && lt == rt)
+                return 1;
+            return 0;
+        }
+
+        public object Execute(object left, object right)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class BuiltInOperator : IOperator
     {
         public CheezType LhsType { get; private set; }
@@ -47,7 +80,26 @@ namespace Cheez.Compiler
 
         public int Accepts(CheezType lhs, CheezType rhs)
         {
-            throw new System.NotImplementedException();
+            if (CheckType(LhsType, lhs) && CheckType(RhsType, rhs))
+                return 1;
+            return 0;
+        }
+
+        private bool CheckType(CheezType needed, CheezType got)
+        {
+            if (needed == got)
+                return true;
+
+            if (got == IntType.LiteralType)
+            {
+                return needed is IntType || needed is FloatType;
+            }
+            if (got == FloatType.LiteralType)
+            {
+                return needed is FloatType;
+            }
+
+            return false;
         }
 
         public override string ToString()

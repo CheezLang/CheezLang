@@ -208,6 +208,7 @@ namespace Cheez.Compiler
         }
 
         public override bool IsPolyType => TargetType.IsPolyType;
+
     }
 
     public class ReferenceType : CheezType

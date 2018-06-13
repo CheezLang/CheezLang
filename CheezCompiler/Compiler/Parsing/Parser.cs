@@ -241,6 +241,14 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.KwMatch:
                     return (false, ParseMatchStatement());
 
+                case TokenType.KwBreak:
+                    NextToken();
+                    return (false, new PTBreakStmt(token.location));
+
+                case TokenType.KwContinue:
+                    NextToken();
+                    return (false, new PTContinueStmt(token.location));
+
                 case TokenType.HashIdentifier:
                     {
                         var dir = new PTDirectiveStatement(ParseDirective());
@@ -738,7 +746,7 @@ namespace Cheez.Compiler.Parsing
         {
             TokenLocation beg = null;
             PTExpr condition = null;
-            PTStatement body = null;
+            PTBlockStmt body = null;
 
             beg = Consume(TokenType.KwWhile, ErrMsg("keyword 'while'", "at beginning of while statement")).location;
 

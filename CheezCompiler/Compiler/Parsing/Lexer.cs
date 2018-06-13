@@ -76,7 +76,9 @@ namespace Cheez.Compiler.Parsing
         KwNull,
         KwUsing,
         KwDefer,
-        KwMatch
+        KwMatch,
+        KwBreak,
+        KwContinue
     }
 
     public class TokenLocation
@@ -422,6 +424,8 @@ namespace Cheez.Compiler.Parsing
                 case "defer": token.type = TokenType.KwDefer; break;
                 case "enum": token.type = TokenType.KwEnum; break;
                 case "match": token.type = TokenType.KwMatch; break;
+                case "break": token.type = TokenType.KwBreak; break;
+                case "continue": token.type = TokenType.KwContinue; break;
             }
         }
 

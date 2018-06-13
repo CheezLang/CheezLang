@@ -136,7 +136,14 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public IErrorHandler ErrorHandler { get; set; }
 
-        public bool HasErrors => ErrorHandler.HasErrors;
+        public bool HasErrors
+        {
+            get => ErrorHandler.HasErrors;
+            set
+            {
+                ErrorHandler.HasErrors = value;
+            }
+        }
 
         [DebuggerStepThrough]
         public SemanticerData()
@@ -296,9 +303,73 @@ namespace Cheez.Compiler.SemanticAnalysis
             return s;
         }
 
+        private AstStatement AddDeferredStatements(AstStatement container, List<AstStatement> deferrred, bool BreakOnWhile = false, bool BreakOnIf = false)
+        {
+            while (container != null)
+            {
+                if (container is AstBlockStmt block)
+                {
+                    for (int i = block.DeferredStatements.Count - 1; i >= 0; i--)
+                    {
+                        deferrred.Add(block.DeferredStatements[i]);
+                    }
+                    container = block.Parent;
+                }
+                else if (BreakOnWhile && container is AstWhileStmt ws)
+                {
+                    return container;
+                }
+                else if (BreakOnIf && container is AstIfStmt ifs)
+                {
+                    return container;
+                }
+                else
+                {
+                    container = container.Parent;
+                }
+            }
+
+            return null;
+        }
+
         #endregion
 
         #region Statements
+
+        public override IEnumerable<object> VisitBreakStatement(AstBreakStmt br, SemanticerData context = null)
+        {
+            br.Scope = context.Scope;
+
+            // add currently deferred statements of all parent blocks
+            var loop = AddDeferredStatements(context.Block, br.DeferredStatements, BreakOnWhile: true);
+            if (loop is AstWhileStmt)
+            {
+                br.Loop = loop;
+            }
+            else
+            {
+                context.ReportError(br.GenericParseTreeNode, "break-statament can only be used inside of a loop");
+            }
+
+            yield break;
+        }
+
+        public override IEnumerable<object> VisitContinueStatement(AstContinueStmt cont, SemanticerData context = null)
+        {
+            cont.Scope = context.Scope;
+
+            // add currently deferred statements of all parent blocks
+            var loop = AddDeferredStatements(context.Block, cont.DeferredStatements, BreakOnWhile: true);
+            if (loop is AstWhileStmt)
+            {
+                cont.Loop = loop;
+            }
+            else
+            {
+                context.ReportError(cont.GenericParseTreeNode, "continue-statament can only be used inside of a loop");
+            }
+            yield break;
+        }
 
         public override IEnumerable<object> VisitMatchStatement(AstMatchStmt match, SemanticerData context = null)
         {
@@ -741,10 +812,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                     else
                         yield return v;
 
-                if (ifs.Condition.Type != CheezType.Bool)
-                {
+                if (ifs.Condition.Type == CheezType.Error)
+                    context.HasErrors = true;
+                else if (ifs.Condition.Type != CheezType.Bool)
                     context.ReportError(ifs.Condition.GenericParseTreeNode, $"if-statement condition must be of type 'bool', got '{ifs.Condition.Type}'");
-                }
             }
 
             if (ifs.Condition.Type == CheezType.Bool && ifs.Condition.IsCompTimeValue)
@@ -773,6 +844,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             // if case
             {
+                ifs.IfCase.Parent = ifs;
                 foreach (var v in ifs.IfCase.Accept(this, context.Clone(ifs.SubScope)))
                     yield return v;
 
@@ -783,6 +855,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             // else case
             if (ifs.ElseCase != null)
             {
+                ifs.ElseCase.Parent = ifs;
                 foreach (var v in ifs.ElseCase.Accept(this, context.Clone(ifs.SubScope)))
                     yield return v;
 
@@ -808,6 +881,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 yield break;
             }
 
+            def.Deferred.Parent = def;
             foreach (var v in def.Deferred.Accept(this, context.Clone().WithBlock(null)))
                 if (v is ReplaceAstStmt r)
                     def.Deferred = r.NewStatement;
@@ -822,12 +896,13 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = context.Scope;
             block.Scope = scope;
             block.SubScope = NewScope("{}", scope);
-            block.Parent = context.Block;
+            //block.Parent = context.Block;
 
             var subContext = context.Clone(Scope: block.SubScope, Block: block);
 
             for (int i = 0; i < block.Statements.Count; i++)
             {
+                block.Statements[i].Parent = block;
                 foreach (var v in block.Statements[i].Accept(this, subContext))
                     if (v is ReplaceAstStmt r)
                         block.Statements[i] = r.NewStatement;
@@ -851,16 +926,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             ret.Scope = scope;
 
             // add currently deferred statements of all parent blocks
-            var block = context.Block;
-            while (block != null)
-            {
-                for (int i = block.DeferredStatements.Count - 1; i >= 0; i--)
-                {
-                    ret.DeferredStatements.Add(block.DeferredStatements[i]);
-                }
-
-                block = block.Parent;
-            }
+            AddDeferredStatements(context.Block, ret.DeferredStatements);
 
             ret.SetFlag(StmtFlags.Returns);
 
@@ -1116,6 +1182,8 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 context.ReportError(ws.Condition.GenericParseTreeNode, $"Condition of while statement has to be of type bool, but is of type {ws.Condition.Type}");
             }
+
+            ws.Body.Parent = ws;
 
             foreach (var v in ws.Body.Accept(this, context.Clone()))
                 yield return v;
@@ -1799,15 +1867,35 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
             }
 
+            if (bin.Left.Type is PointerType lt && bin.Right.Type is PointerType rt)
+            {
+                if (lt.TargetType == CheezType.Any && rt.TargetType != CheezType.Any)
+                {
+                    bin.Left = new AstCastExpr(bin.Left.GenericParseTreeNode, 
+                        new AstTypeExpr(null, bin.Right.Type), 
+                        bin.Left);
+                    bin.Left.Type = bin.Right.Type;
+                }
+                else if (lt.TargetType != CheezType.Any && rt.TargetType == CheezType.Any)
+                {
+                    bin.Right = new AstCastExpr(bin.Right.GenericParseTreeNode,
+                        new AstTypeExpr(null, bin.Left.Type),
+                        bin.Right);
+                    bin.Right.Type = bin.Left.Type;
+                }
+            }
+
             var ops = scope.GetOperators(bin.Operator, bin.Left.Type, bin.Right.Type);
 
             if (ops.Count > 1)
             {
+                bin.Type = CheezType.Error;
                 context.ReportError(bin.GenericParseTreeNode, $"Multiple operators match the types '{bin.Left.Type}' and '{bin.Right.Type}'");
                 yield break;
             }
             else if (ops.Count == 0)
             {
+                bin.Type = CheezType.Error;
                 context.ReportError(bin.GenericParseTreeNode, $"No operator matches the types '{bin.Left.Type}' and '{bin.Right.Type}'");
                 yield break;
             }

@@ -152,7 +152,10 @@ namespace Cheez.Compiler.CodeGeneration
         public AstFunctionDecl Function { get; set; }
         public LLVMBasicBlockRef BasicBlock { get; set; }
 
-        public LLVMCodeGeneratorData Clone(LLVMBuilderRef? Builder = null, bool? Deref = null, LLVMValueRef? Function = null, LLVMBasicBlockRef? BasicBlock = null)
+        public LLVMBasicBlockRef LoopCondition { get; set; }
+        public LLVMBasicBlockRef LoopEnd { get; set; }
+
+        public LLVMCodeGeneratorData Clone(LLVMBuilderRef? Builder = null, bool? Deref = null, LLVMValueRef? Function = null, LLVMBasicBlockRef? BasicBlock = null, LLVMBasicBlockRef? LoopCondition = null, LLVMBasicBlockRef? LoopEnd = null)
         {
             return new LLVMCodeGeneratorData
             {
@@ -160,6 +163,8 @@ namespace Cheez.Compiler.CodeGeneration
                 Deref = Deref ?? this.Deref,
                 LFunction = Function ?? this.LFunction,
                 BasicBlock = BasicBlock ?? this.BasicBlock,
+                LoopCondition = LoopCondition ?? this.LoopCondition,
+                LoopEnd = LoopEnd ?? this.LoopEnd,
                 Function = this.Function
             };
         }
@@ -955,34 +960,68 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitWhileStatement(AstWhileStmt ws, LLVMCodeGeneratorData data = null)
         {
+            var bbCondition = LLVM.AppendBasicBlock(data.LFunction, "while_condition");
+            var bbBody = LLVM.AppendBasicBlock(data.LFunction, "while_body");
+            var bbEnd = LLVM.AppendBasicBlock(data.LFunction, "while_end");
 
             // Condition
-            var bbCondition = LLVM.AppendBasicBlock(data.LFunction, "while_condition");
             LLVM.BuildBr(data.Builder, bbCondition);
-            LLVM.PositionBuilderAtEnd(data.Builder, bbCondition);
-
-            data.BasicBlock = bbCondition;
+            data.MoveBuilderTo(bbCondition);
             var cond = ws.Condition.Accept(this, data);
             var bbConditionEnd = data.BasicBlock;
 
             // body
-            var bbBody = LLVM.AppendBasicBlock(data.LFunction, "while_body");
-            LLVM.PositionBuilderAtEnd(data.Builder, bbBody);
-
-            data.BasicBlock = bbBody;
-            ws.Body.Accept(this, data);
+            data.MoveBuilderTo(bbBody);
+            ws.Body.Accept(this, data.Clone(LoopCondition: bbCondition, LoopEnd: bbEnd));
             LLVM.BuildBr(data.Builder, bbCondition);
 
             //
-            var bbEnd = LLVM.AppendBasicBlock(data.LFunction, "while_end");
-            LLVM.PositionBuilderAtEnd(data.Builder, bbEnd);
-            data.BasicBlock = bbEnd;
+            data.MoveBuilderTo(bbEnd);
 
             // connect condition with body and end
-            LLVM.PositionBuilderAtEnd(data.Builder, bbConditionEnd);
+            data.MoveBuilderTo(bbConditionEnd);
             LLVM.BuildCondBr(data.Builder, cond, bbBody, bbEnd);
 
-            LLVM.PositionBuilderAtEnd(data.Builder, bbEnd);
+            //
+            data.MoveBuilderTo(bbEnd);
+
+            return default;
+        }
+
+        public override LLVMValueRef VisitBreakStatement(AstBreakStmt br, LLVMCodeGeneratorData data = null)
+        {
+            var prevBB = data.BasicBlock;
+            var nextBB = prevBB;
+
+            nextBB = LLVM.AppendBasicBlock(data.LFunction, "break");
+
+            foreach (var d in br.DeferredStatements)
+            {
+                d.Accept(this, data);
+            }
+
+            LLVM.BuildBr(data.Builder, data.LoopEnd);
+
+            data.MoveBuilderTo(nextBB);
+
+            return default;
+        }
+
+        public override LLVMValueRef VisitContinueStatement(AstContinueStmt cont, LLVMCodeGeneratorData data = null)
+        {
+            var prevBB = data.BasicBlock;
+            var nextBB = prevBB;
+
+            nextBB = LLVM.AppendBasicBlock(data.LFunction, "continue");
+
+            foreach (var d in cont.DeferredStatements)
+            {
+                d.Accept(this, data);
+            }
+
+            LLVM.BuildBr(data.Builder, data.LoopCondition);
+
+            data.MoveBuilderTo(nextBB);
 
             return default;
         }
@@ -1643,8 +1682,8 @@ namespace Cheez.Compiler.CodeGeneration
                 }
                 else if (bin.Left.Type is CharType c)
                 {
-                    var left = bin.Left.Accept(this, data);
-                    var right = bin.Right.Accept(this, data);
+                    var left = bin.Left.Accept(this, data.Clone(Deref: true));
+                    var right = bin.Right.Accept(this, data.Clone(Deref: true));
                     switch (bin.Operator)
                     {
                         case "!=":
@@ -1669,10 +1708,35 @@ namespace Cheez.Compiler.CodeGeneration
                             throw new NotImplementedException();
                     }
                 }
+                else if (bin.Left.Type is PointerType)
+                {
+                    var left = bin.Left.Accept(this, data.Clone(Deref: true));
+                    var right = bin.Right.Accept(this, data.Clone(Deref: true));
+                    switch (bin.Operator)
+                    {
+                        case "!=":
+                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
+
+                        case "==":
+                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
+
+                        case "<":
+                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntULT, left, right, "");
+
+                        case ">":
+                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntUGT, left, right, "");
+
+                        case "<=":
+                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntULE, left, right, "");
+
+                        case ">=":
+                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntUGE, left, right, "");
+                    }
+                }
                 else if (bin.Left.Type is EnumType e)
                 {
-                    var left = bin.Left.Accept(this, data);
-                    var right = bin.Right.Accept(this, data);
+                    var left = bin.Left.Accept(this, data.Clone(Deref: true));
+                    var right = bin.Right.Accept(this, data.Clone(Deref: true));
                     switch (bin.Operator)
                     {
                         case "!=":
@@ -1776,6 +1840,33 @@ namespace Cheez.Compiler.CodeGeneration
                         default:
                             throw new NotImplementedException();
                     }
+                }
+            }
+            else if (bin.Type is PointerType p)
+            {
+                var left = bin.Left.Accept(this, data.Clone(Deref: true));
+                var right = bin.Right.Accept(this, data.Clone(Deref: true));
+
+                switch (bin.Operator)
+                {
+                    case "+":
+                        return LLVM.BuildAdd(data.Builder, left, right, "");
+
+                    case "-":
+                        return LLVM.BuildSub(data.Builder, left, right, "");
+
+                    case "*":
+                        return LLVM.BuildMul(data.Builder, left, right, "");
+
+                    case "/":
+                        return LLVM.BuildUDiv(data.Builder, left, right, "");
+
+                    case "%":
+                        return LLVM.BuildURem(data.Builder, left, right, "");
+
+
+                    default:
+                        throw new NotImplementedException();
                 }
             }
             else

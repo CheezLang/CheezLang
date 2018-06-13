@@ -11,7 +11,7 @@ namespace CheezCLI
 {
     class ConsoleErrorHandler : IErrorHandler
     {
-        public bool HasErrors { get; private set; }
+        public bool HasErrors { get; set; }
 
         public void ReportError(IText text, ILocation location, string message, List<Error> subErrors, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
