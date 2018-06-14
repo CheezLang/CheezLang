@@ -234,6 +234,9 @@ namespace Cheez.Compiler.Parsing
                     case TokenType.ClosingBrace:
                         return;
 
+                    case TokenType.EOF:
+                        return;
+
                     default:
                         NextToken();
                         break;

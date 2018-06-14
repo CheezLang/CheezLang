@@ -19,5 +19,46 @@ struct GLFWvidmode {
     refreshRate: int
 }
 
+struct GLFWgammaramp {
+    /*! An array of value describing the response of the red channel.
+     */
+    red: ushort&
+    /*! An array of value describing the response of the green channel.
+     */
+    green: ushort&
+    /*! An array of value describing the response of the blue channel.
+     */
+    blue: ushort&
+    /*! The number of elements in each array.
+     */
+    size: uint
+}
+
+struct GLFWimage {
+    /*! The width, in pixels, of this image.
+     */
+    width: int
+    /*! The height, in pixels, of this image.
+     */
+    height: int
+    /*! The pixel data of this image, arranged left-to-right, top-to-bottom.
+     */
+    pixels: ubyte&
+}
+
+struct GLFWwindow {}
+struct GLFWmonitor {}
+struct GLFWcursor {}
+
 fn glfwInit() -> int;
 fn glfwTerminate();
+
+fn glfwCreateWindow(widht: int, height: int, title: string, monitor: GLFWmonitor&, share: GLFWwindow&) -> GLFWwindow&;
+fn glfwWindowShouldClose(window: GLFWwindow&) -> bool;
+fn glfwPollEvents();
+fn glfwSwapBuffers(window: GLFWwindow&);
+
+fn glfwMakeContextCurrent(window: GLFWwindow&);
+
+let GLFW_TRUE  = 1
+let GLFW_FALSE = 0

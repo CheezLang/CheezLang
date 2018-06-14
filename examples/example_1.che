@@ -1,16 +1,35 @@
-#load("compiler/main.che")
+// #load("compiler/main.che")
 
 #load("io.che")
-// #load("glfw3.che")
+#load("glfw3.che")
+#load("opengl.che")
 
 fn Main()
 {
-    let filename = "D:\Programming\CheezLang\examples\example_1.che"
-    RunCompiler(filename)
+    // let filename = "D:\Programming\CheezLang\examples\example_1.che"
+    // RunCompiler(filename)
 
-    // glfwInit()
+    let ok = glfwInit()
+    if ok == GLFW_FALSE {
+        Println("Failed to initialize GLFW")
+    }
+    defer glfwTerminate()
 
-    // glfwTerminate()
+    let window = glfwCreateWindow(640, 480, "Hello World", null, null)
+    if window == null {
+        Println("Failed to create window")
+    }
+
+    glfwMakeContextCurrent(window)
+
+    glClearColor(0.5, 0.5, 0.5, 1)
+
+    while !glfwWindowShouldClose(window) {
+        glClear(GL_COLOR_BUFFER_BIT)
+
+        glfwSwapBuffers(window)
+
+        glfwPollEvents()
+    }
+
 }
-
-

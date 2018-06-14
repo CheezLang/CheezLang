@@ -1,0 +1,7 @@
+let GLbitfield = uint
+let GLclampf = float
+
+let GL_COLOR_BUFFER_BIT: uint = 0x00004000
+
+fn glClear(mask: GLbitfield) #stdcall;
+fn glClearColor(red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf) #stdcall;

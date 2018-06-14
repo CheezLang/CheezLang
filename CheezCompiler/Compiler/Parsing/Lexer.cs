@@ -3,6 +3,7 @@ using System.IO;
 using System.Numerics;
 using System.Text;
 using System;
+using System.Globalization;
 
 namespace Cheez.Compiler.Parsing
 {
@@ -143,7 +144,9 @@ namespace Cheez.Compiler.Parsing
         public string StringValue;
         public NumberType Type;
         public BigInteger IntValue;
-
+        public double DoubleValue;
+        public string Error;
+        
         public NumberData(NumberType type, string val, string suff, int b)
         {
             IntBase = b;
@@ -151,9 +154,30 @@ namespace Cheez.Compiler.Parsing
             Suffix = suff;
             Type = type;
             IntValue = default;
+            DoubleValue = default;
+            Error = null;
 
             if (type == NumberType.Int)
-                IntValue = BigInteger.Parse(val);
+            {
+                if (b == 10)
+                    IntValue = BigInteger.Parse(val);
+                else if (b == 16)
+                    IntValue = BigInteger.Parse(val, System.Globalization.NumberStyles.HexNumber);
+                else if (b == 2)
+                    throw new NotImplementedException();
+            }
+            else if (type == NumberType.Float)
+            {
+                double v;
+                if (double.TryParse(val, System.Globalization.NumberStyles.Float, CultureInfo.InvariantCulture, out v))
+                {
+                    DoubleValue = v;
+                }
+                else
+                {
+                    Error = "Literal is too big to fit in a double";
+                }
+            }
         }
 
         public NumberData(BigInteger num)
@@ -163,6 +187,8 @@ namespace Cheez.Compiler.Parsing
             Suffix = "";
             Type = NumberType.Int;
             IntValue = num;
+            DoubleValue = default;
+            Error = null;
         }
 
         public override string ToString()
@@ -183,6 +209,14 @@ namespace Cheez.Compiler.Parsing
         {
             return (long)IntValue;
         }
+        
+        public double ToDouble()
+        {
+            if (Type == NumberType.Int)
+                return (double)IntValue;
+            else
+                return DoubleValue;
+        }
 
         public NumberData Negate()
         {
@@ -195,7 +229,6 @@ namespace Cheez.Compiler.Parsing
                 Type = Type
             };
         }
-
     }
 
     public interface IText
@@ -481,6 +514,8 @@ namespace Cheez.Compiler.Parsing
             const int StateHexDigit = 7;
             const int StatePostfix = 8;
             const int StateDone = 9;
+            const int StateFloatPoint = 10;
+            const int StateFloatDigit = 11;
             int state = StateInit;
             string error = null;
 
@@ -537,6 +572,12 @@ namespace Cheez.Compiler.Parsing
                                 dataSuffix += c;
                                 state = StatePostfix;
                             }
+                            else if (c == '.')
+                            {
+                                dataStringValue += c;
+                                state = StateFloatPoint;
+                                dataType = NumberData.NumberType.Float;
+                            }
                             else
                             {
                                 state = StateDone;
@@ -561,6 +602,46 @@ namespace Cheez.Compiler.Parsing
                         {
                             if (IsDigit(c))
                                 dataStringValue += c;
+                            else if (IsIdentBegin(c))
+                            {
+                                dataSuffix += c;
+                                state = StatePostfix;
+                            }
+                            else if (c == '.')
+                            {
+                                dataStringValue += c;
+                                state = StateFloatPoint;
+                                dataType = NumberData.NumberType.Float;
+
+                            }
+                            else
+                            {
+                                state = StateDone;
+                            }
+                            break;
+                        }
+
+                    case StateFloatPoint:
+                        {
+                            if (IsDigit(c))
+                            {
+                                dataStringValue += c;
+                                state = StateFloatDigit;
+                            }
+                            else
+                            {
+                                error = "Invalid character, expected digit";
+                                state = -1;
+                            }
+                            break;
+                        }
+
+                    case StateFloatDigit:
+                        {
+                            if (IsDigit(c))
+                            {
+                                dataStringValue += c;
+                            }
                             else if (IsIdentBegin(c))
                             {
                                 dataSuffix += c;

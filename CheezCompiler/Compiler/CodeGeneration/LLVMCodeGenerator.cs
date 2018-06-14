@@ -529,6 +529,14 @@ namespace Cheez.Compiler.CodeGeneration
                 case IntType i:
                     return LLVM.IntType((uint)i.Size * 8);
 
+                case FloatType f:
+                    if (f.Size == 4)
+                        return LLVM.FloatType();
+                    else if (f.Size == 8)
+                        return LLVM.DoubleType();
+                    else
+                        throw new NotImplementedException();
+
                 case CharType c:
                     return LLVM.Int8Type();
 
@@ -1423,15 +1431,17 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitNumberExpression(AstNumberExpr num, LLVMCodeGeneratorData data = null)
         {
-            if (num.Type is IntType i)
+            var llvmType = CheezTypeToLLVMType(num.Type);
+            if (num.Type is IntType)
             {
-                var llvmType = CheezTypeToLLVMType(i);
                 var val = num.Data.ToUlong();
                 return LLVM.ConstInt(llvmType, val, false);
             }
             else
             {
-                throw new NotImplementedException();
+                var val = num.Data.ToDouble();
+                var result = LLVM.ConstReal(llvmType, val);
+                return result;
             }
         }
 
