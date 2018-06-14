@@ -317,8 +317,14 @@ namespace Cheez.Compiler.CodeGeneration
             return true;
         }
 
-        public bool CompileCode(IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, IErrorHandler errorHandler)
+        public bool CompileCode(IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
         {
+            foreach (var f in workspace.Files)
+            {
+                libraries = libraries.Concat(f.Libraries);
+            }
+            libraries = libraries.Distinct();
+
             var winSdk = OS.FindWindowsSdk();
             if (winSdk == null)
             {
@@ -367,7 +373,7 @@ namespace Cheez.Compiler.CodeGeneration
             // other options
             lldArgs.Add("/entry:mainCRTStartup");
             lldArgs.Add("/machine:X86");
-            lldArgs.Add("/subsystem:console");
+            lldArgs.Add($"/subsystem:{subsystem}");
 
             // runtime
             lldArgs.Add("cheez-rtd.obj");

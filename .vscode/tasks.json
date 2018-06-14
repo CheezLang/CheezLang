@@ -12,7 +12,9 @@
 				"--name",
 				"TestProgram",
 				"--print-ast-file",
-				"gen/ast.txt"
+				"gen/ast.txt",
+				"--subsystem",
+				"console"
 			],
 			"group": {
 				"kind": "build",

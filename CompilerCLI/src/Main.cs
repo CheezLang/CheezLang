@@ -8,47 +8,53 @@ using CommandLine;
 using System.Collections.Generic;
 using System.Linq;
 using Cheez.Compiler.Visitor;
-using Microsoft.Win32;
-using System.Security.AccessControl;
-using System.Text.RegularExpressions;
 
 namespace CheezCLI
 {
+    public enum SubSystem
+    {
+        windows,
+        console
+    }
+
+    public class CompilerOptions
+    {
+        [Option('r', "run", HelpText = "Specifies whether the code should be run immediatly", Default = false, Required = false, Hidden = false, MetaValue = "STRING", SetName = "run")]
+        public bool RunCode { get; set; }
+
+        [Value(0, Min = 1)]
+        public IEnumerable<string> Files { get; set; }
+
+        [Option('o', "out", Default = "")]
+        public string OutPath { get; set; }
+
+        [Option('n', "name")]
+        public string OutName { get; set; }
+
+        [Option("print-ast", Default = false)]
+        public bool PrintAst { get; set; }
+
+        [Option("print-ast-file", Default = null)]
+        public string PrintAstFile { get; set; }
+
+        [Option("no-code", Default = false)]
+        public bool DontEmitCode { get; set; }
+
+        [Option("no-errors", Default = false)]
+        public bool NoErrors { get; set; }
+
+        [Option("ld")]
+        public IEnumerable<string> LibraryIncludeDirectories { get; set; }
+
+        [Option("libs")]
+        public IEnumerable<string> Libraries { get; set; }
+
+        [Option("subsystem", Default = SubSystem.console)]
+        public SubSystem SubSystem { get; set; }
+    }
+
     class Prog
     {
-        class CompilerOptions
-        {
-            [Option('r', "run", HelpText = "Specifies whether the code should be run immediatly", Default = false, Required = false, Hidden = false, MetaValue = "STRING", SetName = "run")]
-            public bool RunCode { get; set; }
-
-            [Value(0, Min = 1)]
-            public IEnumerable<string> Files { get; set; }
-
-            [Option('o', "out", Default = "")]
-            public string OutPath { get; set; }
-
-            [Option('n', "name")]
-            public string OutName { get; set; }
-
-            [Option("print-ast", Default = false)]
-            public bool PrintAst { get; set; }
-
-            [Option("print-ast-file", Default = null)]
-            public string PrintAstFile { get; set; }
-
-            [Option("no-code", Default = false)]
-            public bool DontEmitCode { get; set; }
-
-            [Option("no-errors", Default = false)]
-            public bool NoErrors { get; set; }
-
-            [Option("ld")]
-            public IEnumerable<string> LibraryIncludeDirectories { get; set; }
-
-            [Option("libs")]
-            public IEnumerable<string> Libraries { get; set; }
-        }
-
         class CompilationResult
         {
             public int ExitCode;
@@ -196,7 +202,7 @@ namespace CheezCLI
             if (!success)
                 return false;
 
-            return generator.CompileCode(options.LibraryIncludeDirectories, options.Libraries, errorHandler);
+            return generator.CompileCode(options.LibraryIncludeDirectories, options.Libraries, options.SubSystem.ToString(), errorHandler);
         }
 
 

@@ -2,6 +2,7 @@
 using Cheez.Compiler.ParseTree;
 using Cheez.Compiler.SemanticAnalysis;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Cheez.Compiler
@@ -10,6 +11,8 @@ namespace Cheez.Compiler
     {
         private Dictionary<string, PTFile> mFiles = new Dictionary<string, PTFile>();
         private Compiler mCompiler;
+
+        public IEnumerable<PTFile> Files => mFiles.Select(kv => kv.Value);
 
         private List<AstStatement> mStatements = new List<AstStatement>();
         public IReadOnlyList<AstStatement> Statements => mStatements;

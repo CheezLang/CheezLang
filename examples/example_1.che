@@ -9,6 +9,8 @@ fn Main()
     // let filename = "D:\Programming\CheezLang\examples\example_1.che"
     // RunCompiler(filename)
 
+    Println("Glfw test")
+
     if !glfwInit() {
         Println("Failed to initialize GLFW")
         return

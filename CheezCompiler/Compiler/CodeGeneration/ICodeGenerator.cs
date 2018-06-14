@@ -5,6 +5,6 @@ namespace Cheez.Compiler.CodeGeneration
     public interface ICodeGenerator
     {
         bool GenerateCode(Workspace workspace, string targetFile);
-        bool CompileCode(IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, IErrorHandler errorHandler);
+        bool CompileCode(IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler);
     }
 }

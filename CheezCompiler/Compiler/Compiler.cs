@@ -16,6 +16,9 @@ namespace Cheez.Compiler
 
         public List<PTStatement> Statements { get; } = new List<PTStatement>();
 
+        public List<string> Libraries { get; set; } = new List<string>();
+        public List<string> LibrariyIncludeDirectories { get; set; } = new List<string>();
+
         public PTFile(string name, string raw)
         {
             this.Name = name;
@@ -124,6 +127,18 @@ namespace Cheez.Compiler
                         {
                             loadedFiles.Add(f.Value + ".che");
                         }
+                    }
+                }
+                else if (s is PTDirectiveStatement lib && lib.Directive.Name.Name == "lib")
+                {
+                    var d = lib.Directive;
+                    if (d.Arguments.Count != 1 || !(d.Arguments[0] is PTStringLiteral f))
+                    {
+                        eh.ReportError(lexer, d, "#lib takes one string as argument");
+                    }
+                    else
+                    {
+                        file.Libraries.Add(f.Value);
                     }
                 }
                 else if (s != null)
