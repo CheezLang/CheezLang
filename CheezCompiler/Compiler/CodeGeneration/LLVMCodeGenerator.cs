@@ -317,7 +317,7 @@ namespace Cheez.Compiler.CodeGeneration
             return true;
         }
 
-        public bool CompileCode(IErrorHandler errorHandler)
+        public bool CompileCode(IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, IErrorHandler errorHandler)
         {
             var winSdk = OS.FindWindowsSdk();
             if (winSdk == null)
@@ -355,8 +355,14 @@ namespace Cheez.Compiler.CodeGeneration
             if (msvcLibPath != null)
                 lldArgs.Add($@"-libpath:{msvcLibPath}\x86");
 
+            foreach (var linc in libraryIncludeDirectories)
+            {
+                lldArgs.Add($@"-libpath:{linc}");
+            }
+
             // @hack
             lldArgs.Add($@"-libpath:{Environment.CurrentDirectory}\CheezRuntimeLibrary\lib\x86");
+            lldArgs.Add($@"-libpath:D:\Program Files (x86)\LLVM\lib");
 
             // other options
             lldArgs.Add("/entry:mainCRTStartup");
@@ -383,51 +389,25 @@ namespace Cheez.Compiler.CodeGeneration
             lldArgs.Add("odbc32.lib");
             lldArgs.Add("odbccp32.lib");
 
+            lldArgs.Add("legacy_stdio_definitions.lib");
+            lldArgs.Add("legacy_stdio_wide_specifiers.lib");
+            lldArgs.Add("libclang.lib");
+            lldArgs.Add("libvcruntimed.lib");
+            lldArgs.Add("msvcrtd.lib");
+
+            foreach (var linc in libraries)
+            {
+                lldArgs.Add(linc);
+            }
+
             // generated object files
             lldArgs.Add($"{filename}.obj");
 
-            var args = new string[]
-            {
-                "lld",
-                $"/out:{filename}.exe",
-                @"-libpath:C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.11.25503\lib\x86",
-                @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.15063.0\ucrt\x86",
-                @"-libpath:C:\Program Files (x86)\Windows Kits\10\Lib\10.0.15063.0\um\x86",
-                @"-libpath:D:\Programming\CS\CheezLang\CheezRuntimeLibrary\lib\x86",
-                @"-libpath:D:\Program Files (x86)\LLVM\lib",
-                "/entry:mainCRTStartup",
-                "/machine:X86",
-                "/subsystem:console",
-
-                @"CheezRuntimeLibrary\lib\x86\cheez-rtd.obj",
-
-                "libucrtd.lib",
-                "libvcruntimed.lib", //
-                "libcmtd.lib",
-                "msvcrtd.lib", //
-
-                "kernel32.lib",
-                "user32.lib",
-                "gdi32.lib",
-                "winspool.lib",
-                "comdlg32.lib",
-                "advapi32.lib",
-                "shell32.lib",
-                "ole32.lib",
-                "oleaut32.lib",
-                "uuid.lib",
-                "odbc32.lib",
-                "odbccp32.lib",
-
-                "legacy_stdio_definitions.lib", //
-                "legacy_stdio_wide_specifiers.lib", //
-
-                "libclang.lib", //
-
-                $@"{filename}.obj"
-            };
             var result = llvm_link_coff(lldArgs.ToArray(), lldArgs.Count);
-            Console.WriteLine($"Generated {filename}.exe");
+            if (result)
+            {
+                Console.WriteLine($"Generated {filename}.exe");
+            }
 
             return result;
         }

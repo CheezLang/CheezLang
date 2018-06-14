@@ -41,6 +41,12 @@ namespace CheezCLI
 
             [Option("no-errors", Default = false)]
             public bool NoErrors { get; set; }
+
+            [Option("ld")]
+            public IEnumerable<string> LibraryIncludeDirectories { get; set; }
+
+            [Option("libs")]
+            public IEnumerable<string> Libraries { get; set; }
         }
 
         class CompilationResult
@@ -190,7 +196,7 @@ namespace CheezCLI
             if (!success)
                 return false;
 
-            return generator.CompileCode(errorHandler);
+            return generator.CompileCode(options.LibraryIncludeDirectories, options.Libraries, errorHandler);
         }
 
 

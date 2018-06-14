@@ -1,24 +1,16 @@
-#load("compiler/main.che")
+// #load("compiler/main.che")
+
+#load("io.che")
+#load("glfw3.che")
 
 fn Main()
 {
-    let filename = "D:\Programming\CheezLang\examples\example_1.che"
-
+    // let filename = "D:\Programming\CheezLang\examples\example_1.che"
     // RunCompiler(filename)
 
-    let ints: int[] = MallocSlice(25)
-    defer FreeSlice(ints)
+    // glfwInit()
 
-
-    Println(ints)
-
-    let i = 0
-    while i < ints.length {
-        defer i = i + 1
-        ints[i] = i * i
-    }
-
-    Println(ints)
+    glfwTerminate()
 }
 
 

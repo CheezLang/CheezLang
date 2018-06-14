@@ -1,0 +1,23 @@
+struct GLFWvidmode {
+    /*! The width, in screen coordinates, of the video mode.
+     */
+    width: int
+    /*! The height, in screen coordinates, of the video mode.
+     */
+    height: int
+    /*! The bit depth of the red channel of the video mode.
+     */
+    redBits: int
+    /*! The bit depth of the green channel of the video mode.
+     */
+    greenBits: int
+    /*! The bit depth of the blue channel of the video mode.
+     */
+    blueBits: int
+    /*! The refresh rate, in Hz, of the video mode.
+     */
+    refreshRate: int
+}
+
+fn glfwInit() -> int;
+fn glfwTerminate();
