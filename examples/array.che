@@ -42,7 +42,7 @@ impl Array($ElementType) {
         }
 
         data[length] = val
-        length = length + 1
+        length += 1
     }
 
     ref fn Get(index: $IndexType) -> ElementType {
@@ -72,7 +72,7 @@ impl Array($ElementType) {
 
         while r.length < length {
             r.data[r.length] = (X)data[r.length]
-            r.length = r.length + 1
+            r.length += 1
         }
 
         return r

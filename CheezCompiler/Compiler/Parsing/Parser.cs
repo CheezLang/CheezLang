@@ -157,6 +157,18 @@ namespace Cheez.Compiler.Parsing
             return next.type == type;
         }
 
+        [DebuggerStepThrough]
+        private bool CheckTokens(params TokenType[] types)
+        {
+            var next = PeekToken();
+            foreach (var t in types)
+            {
+                if (next.type == t)
+                    return true;
+            }
+            return false;
+        }
+
         //[DebuggerStepThrough]
         private bool IsExprToken()
         {
@@ -304,14 +316,23 @@ namespace Cheez.Compiler.Parsing
                             NextToken();
                             return (false, null);
                         }
-                        if (CheckToken(TokenType.Equal))
+                        if (CheckTokens(TokenType.Equal, TokenType.AddEq, TokenType.SubEq, TokenType.MulEq, TokenType.DivEq, TokenType.ModEq))
                         {
-                            NextToken();
+                            var x = NextToken().type;
+                            string op = null;
+                            switch (x)
+                            {
+                                case TokenType.AddEq: op = "+"; break;
+                                case TokenType.SubEq: op = "-"; break;
+                                case TokenType.MulEq: op = "*"; break;
+                                case TokenType.DivEq: op = "/"; break;
+                                case TokenType.ModEq: op = "%"; break;
+                            }
                             SkipNewlines();
                             var val = ParseExpression();
                             if (expectNewline && !Expect(TokenType.NewLine, ErrMsg("\\n", "after assignment")))
                                 RecoverStatement();
-                            return (false, new PTAssignment(expr.Beginning, val.End, expr, val));
+                            return (false, new PTAssignment(expr.Beginning, val.End, expr, val, op));
                         }
                         else
                         {

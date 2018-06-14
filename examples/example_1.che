@@ -1,16 +1,16 @@
-// #load("compiler/main.che")
+#load("compiler/main.che")
 
 #load("io.che")
-#load("glfw3.che")
+// #load("glfw3.che")
 
 fn Main()
 {
-    // let filename = "D:\Programming\CheezLang\examples\example_1.che"
-    // RunCompiler(filename)
+    let filename = "D:\Programming\CheezLang\examples\example_1.che"
+    RunCompiler(filename)
 
     // glfwInit()
 
-    glfwTerminate()
+    // glfwTerminate()
 }
 
 

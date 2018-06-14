@@ -29,8 +29,8 @@ fn FreeSlice(mem: $T[]) {
 fn ClearMemory(mem: byte&, len: uint) {
     let i: @typeof(len) = 0
     while i < len {
+        defer i += 1
         mem[i] = 0
-        i = i + 1
     }
 }
 

@@ -38,6 +38,12 @@ namespace Cheez.Compiler.Parsing
         ForwardSlash,
         Percent,
 
+        AddEq,
+        SubEq,
+        MulEq,
+        DivEq,
+        ModEq,
+
         Less,
         LessEqual,
         Greater,
@@ -294,6 +300,11 @@ namespace Cheez.Compiler.Parsing
                 case '>' when Next == '=': SimpleToken(ref token, TokenType.GreaterEqual, 2); break;
                 case ':' when Next == ':': SimpleToken(ref token, TokenType.DoubleColon, 2); break;
                 case '-' when Next == '>': SimpleToken(ref token, TokenType.Arrow, 2); break;
+                case '+' when Next == '=': SimpleToken(ref token, TokenType.AddEq, 2); break;
+                case '-' when Next == '=': SimpleToken(ref token, TokenType.SubEq, 2); break;
+                case '*' when Next == '=': SimpleToken(ref token, TokenType.MulEq, 2); break;
+                case '/' when Next == '=': SimpleToken(ref token, TokenType.DivEq, 2); break;
+                case '%' when Next == '=': SimpleToken(ref token, TokenType.ModEq, 2); break;
                 case ':': SimpleToken(ref token, TokenType.Colon); break;
                 case ';': SimpleToken(ref token, TokenType.Semicolon); break;
                 case '.': SimpleToken(ref token, TokenType.Period); break;

@@ -129,7 +129,7 @@ impl Lexer {
         let foundEnd = false
         while location.start < text.length {
             let c = self.PeekChar(0)
-            location.start = location.start + 1
+            location.start += 1
 
             if c == end {
                 foundEnd = true
@@ -140,7 +140,7 @@ impl Lexer {
                     break
                 }
 
-                location.start = location.start + 1
+                location.start += 1
             }
         }
 
@@ -154,7 +154,7 @@ impl Lexer {
         let start = location.start
 
         while location.start < text.length and IsIdentChar(self.PeekChar(0)) {
-            location.start = location.start + 1
+            location.start += 1
         }
 
         token.data.stringValue = &text.data[start]
@@ -162,7 +162,7 @@ impl Lexer {
     }
 
     ref fn MakeSimpleToken(token: Token&, type: TokenType) {
-        location.start = location.start + 1
+        location.start += 1
 
         token.type = type
         token.location.end = token.location.start + 1
@@ -194,11 +194,11 @@ impl Lexer {
             }
 
             else if c == ' ' or c == '`t' {
-                location.start = location.start + 1
+                location.start += 1
             }
 
             else if c == '`r' {
-                location.start = location.start + 1
+                location.start += 1
             }
 
             else if c == '`n' {
@@ -207,8 +207,8 @@ impl Lexer {
                     locExists = true
                 }
 
-                location.line = location.line + 1
-                location.start = location.start + 1
+                location.line += 1
+                location.start += 1
             }
 
             else {
@@ -230,7 +230,7 @@ impl Lexer {
                 break
             }
 
-            location.start = location.start + 1
+            location.start += 1
         }
     }
 }

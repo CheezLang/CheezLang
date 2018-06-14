@@ -808,12 +808,18 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitAssignment(AstAssignment ass, LLVMCodeGeneratorData data = null)
         {
-            var left = ass.Target.Accept(this, data.Clone(Deref: false));
+            var leftPtr = ass.Target.Accept(this, data.Clone(Deref: false));
             var right = ass.Value.Accept(this, data);
+
+            if (ass.Operator != null)
+            {
+                var left = LLVM.BuildLoad(data.Builder, leftPtr, "");
+                right = GenerateBinaryOperator(data.Builder, ass.Operator, ass.Target.Type, ass.Value.Type, left, right);
+            }
 
             CastIfAny(data.Builder, ass.Target.Type, ass.Value.Type, ref right);
 
-            return LLVM.BuildStore(data.Builder, right, left);
+            return LLVM.BuildStore(data.Builder, right, leftPtr);
         }
 
         //public override LLVMValueRef VisitImplBlock(AstImplBlock impl, LLVMCodeGeneratorData data = null)
@@ -1561,288 +1567,286 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitBinaryExpression(AstBinaryExpr bin, LLVMCodeGeneratorData data = null)
         {
-
-            if (bin.Type is IntType i)
+            switch (bin.Operator)
             {
-                var left = bin.Left.Accept(this, data);
-                var right = bin.Right.Accept(this, data);
+                case "and":
+                    {
+                        var bbAnd = LLVM.AppendBasicBlock(data.LFunction, "and");
+                        var bbRhs = LLVM.AppendBasicBlock(data.LFunction, "and_rhs");
+                        var bbEnd = LLVM.AppendBasicBlock(data.LFunction, "and_end");
 
-                switch (bin.Operator)
-                {
-                    case "+":
-                        return LLVM.BuildAdd(data.Builder, left, right, "");
+                        LLVM.BuildBr(data.Builder, bbAnd);
+                        data.MoveBuilderTo(bbAnd);
 
-                    case "-":
-                        return LLVM.BuildSub(data.Builder, left, right, "");
+                        //
+                        var tempVar = GetTempValue(bin);
 
-                    case "*":
-                        return LLVM.BuildMul(data.Builder, left, right, "");
+                        //
+                        var left = bin.Left.Accept(this, data.Clone(Deref: true));
+                        LLVM.BuildStore(data.Builder, left, tempVar);
+                        LLVM.BuildCondBr(data.Builder, left, bbRhs, bbEnd);
 
-                    case "/":
-                        if (i.Signed)
-                            return LLVM.BuildSDiv(data.Builder, left, right, "");
-                        else
-                            return LLVM.BuildUDiv(data.Builder, left, right, "");
+                        // rhs
+                        data.MoveBuilderTo(bbRhs);
+                        var right = bin.Right.Accept(this, data);
+                        LLVM.BuildStore(data.Builder, right, tempVar);
+                        LLVM.BuildBr(data.Builder, bbEnd);
 
-                    case "%":
-                        if (i.Signed)
-                            return LLVM.BuildSRem(data.Builder, left, right, "");
-                        else
-                            return LLVM.BuildURem(data.Builder, left, right, "");
+                        //
+                        data.MoveBuilderTo(bbEnd);
+                        tempVar = LLVM.BuildLoad(data.Builder, tempVar, "");
+                        return tempVar;
+                    }
 
+                case "or":
+                    {
+                        var bbOr = LLVM.AppendBasicBlock(data.LFunction, "or");
+                        var bbRhs = LLVM.AppendBasicBlock(data.LFunction, "or_rhs");
+                        var bbEnd = LLVM.AppendBasicBlock(data.LFunction, "or_end");
 
-                    default:
-                        throw new NotImplementedException();
-                }
+                        LLVM.BuildBr(data.Builder, bbOr);
+                        data.MoveBuilderTo(bbOr);
+
+                        //
+                        var tempVar = GetTempValue(bin);
+
+                        //
+                        var left = bin.Left.Accept(this, data.Clone(Deref: true));
+                        LLVM.BuildStore(data.Builder, left, tempVar);
+                        LLVM.BuildCondBr(data.Builder, left, bbEnd, bbRhs);
+
+                        // rhs
+                        data.MoveBuilderTo(bbRhs);
+                        var right = bin.Right.Accept(this, data);
+                        LLVM.BuildStore(data.Builder, right, tempVar);
+                        LLVM.BuildBr(data.Builder, bbEnd);
+
+                        //
+                        data.MoveBuilderTo(bbEnd);
+                        tempVar = LLVM.BuildLoad(data.Builder, tempVar, "");
+                        return tempVar;
+                    }
             }
-            else if (bin.Type is FloatType)
-            {
-                var left = bin.Left.Accept(this, data);
-                var right = bin.Right.Accept(this, data);
-
-                switch (bin.Operator)
-                {
-                    case "+":
-                        return LLVM.BuildFAdd(data.Builder, left, right, "");
-
-                    case "-":
-                        return LLVM.BuildFSub(data.Builder, left, right, "");
-
-                    case "*":
-                        return LLVM.BuildFMul(data.Builder, left, right, "");
-
-                    case "/":
-                        return LLVM.BuildFDiv(data.Builder, left, right, "");
-
-                    default:
-                        throw new NotImplementedException();
-                }
-            }
-            else if (bin.Type is BoolType b)
-            {
-                if (bin.Left.Type is IntType ii)
-                {
-                    var left = bin.Left.Accept(this, data);
-                    var right = bin.Right.Accept(this, data);
-                    switch (bin.Operator)
-                    {
-                        case "!=":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
-
-                        case "==":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
-
-                        case "<":
-                            if (ii.Signed)
-                                return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSLT, left, right, "");
-                            else
-                                return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntULT, left, right, "");
-
-                        case ">":
-                            if (ii.Signed)
-                                return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSGT, left, right, "");
-                            else
-                                return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntUGT, left, right, "");
-
-                        case "<=":
-                            if (ii.Signed)
-                                return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSLE, left, right, "");
-                            else
-                                return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntULE, left, right, "");
-
-                        case ">=":
-                            if (ii.Signed)
-                                return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSGE, left, right, "");
-                            else
-                                return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntUGE, left, right, "");
-
-                        default:
-                            throw new NotImplementedException();
-                    }
-                }
-                else if (bin.Left.Type is CharType c)
-                {
-                    var left = bin.Left.Accept(this, data.Clone(Deref: true));
-                    var right = bin.Right.Accept(this, data.Clone(Deref: true));
-                    switch (bin.Operator)
-                    {
-                        case "!=":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
-
-                        case "==":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
-
-                        case "<":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSLT, left, right, "");
-
-                        case ">":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSGT, left, right, "");
-
-                        case "<=":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSLE, left, right, "");
-
-                        case ">=":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSGE, left, right, "");
-
-                        default:
-                            throw new NotImplementedException();
-                    }
-                }
-                else if (bin.Left.Type is PointerType)
-                {
-                    var left = bin.Left.Accept(this, data.Clone(Deref: true));
-                    var right = bin.Right.Accept(this, data.Clone(Deref: true));
-                    switch (bin.Operator)
-                    {
-                        case "!=":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
-
-                        case "==":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
-
-                        case "<":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntULT, left, right, "");
-
-                        case ">":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntUGT, left, right, "");
-
-                        case "<=":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntULE, left, right, "");
-
-                        case ">=":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntUGE, left, right, "");
-                    }
-                }
-                else if (bin.Left.Type is EnumType e)
-                {
-                    var left = bin.Left.Accept(this, data.Clone(Deref: true));
-                    var right = bin.Right.Accept(this, data.Clone(Deref: true));
-                    switch (bin.Operator)
-                    {
-                        case "!=":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
-
-                        case "==":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
-
-                        case "<":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSLT, left, right, "");
-
-                        case ">":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSGT, left, right, "");
-
-                        case "<=":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSLE, left, right, "");
-
-                        case ">=":
-                            return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntSGE, left, right, "");
-
-                        default:
-                            throw new NotImplementedException();
-                    }
-                }
-                else if (bin.Left.Type is BoolType)
-                {
-                    switch (bin.Operator)
-                    {
-                        case "!=":
-                            {
-                                var left = bin.Left.Accept(this, data.Clone(Deref: true));
-                                var right = bin.Right.Accept(this, data.Clone(Deref: true));
-                                return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
-                            }
-
-                        case "==":
-                            {
-                                var left = bin.Left.Accept(this, data.Clone(Deref: true));
-                                var right = bin.Right.Accept(this, data.Clone(Deref: true));
-                                return LLVM.BuildICmp(data.Builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
-                            }
-
-                        case "and":
-                            {
-                                var bbAnd = LLVM.AppendBasicBlock(data.LFunction, "and");
-                                var bbRhs = LLVM.AppendBasicBlock(data.LFunction, "and_rhs");
-                                var bbEnd = LLVM.AppendBasicBlock(data.LFunction, "and_end");
-
-                                LLVM.BuildBr(data.Builder, bbAnd);
-                                data.MoveBuilderTo(bbAnd);
-
-                                //
-                                var tempVar = GetTempValue(bin);
-
-                                //
-                                var left = bin.Left.Accept(this, data.Clone(Deref: true));
-                                LLVM.BuildStore(data.Builder, left, tempVar);
-                                LLVM.BuildCondBr(data.Builder, left, bbRhs, bbEnd);
-
-                                // rhs
-                                data.MoveBuilderTo(bbRhs);
-                                var right = bin.Right.Accept(this, data);
-                                LLVM.BuildStore(data.Builder, right, tempVar);
-                                LLVM.BuildBr(data.Builder, bbEnd);
-
-                                //
-                                data.MoveBuilderTo(bbEnd);
-                                tempVar = LLVM.BuildLoad(data.Builder, tempVar, "");
-                                return tempVar;
-                            }
-
-                        case "or":
-                            {
-                                var bbOr = LLVM.AppendBasicBlock(data.LFunction, "or");
-                                var bbRhs = LLVM.AppendBasicBlock(data.LFunction, "or_rhs");
-                                var bbEnd = LLVM.AppendBasicBlock(data.LFunction, "or_end");
-
-                                LLVM.BuildBr(data.Builder, bbOr);
-                                data.MoveBuilderTo(bbOr);
-
-                                //
-                                var tempVar = GetTempValue(bin);
-
-                                //
-                                var left = bin.Left.Accept(this, data.Clone(Deref: true));
-                                LLVM.BuildStore(data.Builder, left, tempVar);
-                                LLVM.BuildCondBr(data.Builder, left, bbEnd, bbRhs);
-
-                                // rhs
-                                data.MoveBuilderTo(bbRhs);
-                                var right = bin.Right.Accept(this, data);
-                                LLVM.BuildStore(data.Builder, right, tempVar);
-                                LLVM.BuildBr(data.Builder, bbEnd);
-
-                                //
-                                data.MoveBuilderTo(bbEnd);
-                                tempVar = LLVM.BuildLoad(data.Builder, tempVar, "");
-                                return tempVar;
-                            }
-
-                        default:
-                            throw new NotImplementedException();
-                    }
-                }
-            }
-            else if (bin.Type is PointerType p)
             {
                 var left = bin.Left.Accept(this, data.Clone(Deref: true));
                 var right = bin.Right.Accept(this, data.Clone(Deref: true));
 
-                switch (bin.Operator)
+                var result = GenerateBinaryOperator(data.Builder, bin.Operator, bin.Type, bin.Left.Type, left, right);
+                return result;
+            }
+        }
+
+        private LLVMValueRef GenerateBinaryOperator(LLVMBuilderRef builder, string op, CheezType targetType, CheezType argType, LLVMValueRef left, LLVMValueRef right)
+        {
+            if (targetType is IntType i)
+            {
+                switch (op)
                 {
                     case "+":
-                        return LLVM.BuildAdd(data.Builder, left, right, "");
+                        return LLVM.BuildAdd(builder, left, right, "");
 
                     case "-":
-                        return LLVM.BuildSub(data.Builder, left, right, "");
+                        return LLVM.BuildSub(builder, left, right, "");
 
                     case "*":
-                        return LLVM.BuildMul(data.Builder, left, right, "");
+                        return LLVM.BuildMul(builder, left, right, "");
 
                     case "/":
-                        return LLVM.BuildUDiv(data.Builder, left, right, "");
+                        if (i.Signed)
+                            return LLVM.BuildSDiv(builder, left, right, "");
+                        else
+                            return LLVM.BuildUDiv(builder, left, right, "");
 
                     case "%":
-                        return LLVM.BuildURem(data.Builder, left, right, "");
+                        if (i.Signed)
+                            return LLVM.BuildSRem(builder, left, right, "");
+                        else
+                            return LLVM.BuildURem(builder, left, right, "");
+
+
+                    default:
+                        throw new NotImplementedException();
+                }
+            }
+            else if (targetType is FloatType)
+            {
+                switch (op)
+                {
+                    case "+":
+                        return LLVM.BuildFAdd(builder, left, right, "");
+
+                    case "-":
+                        return LLVM.BuildFSub(builder, left, right, "");
+
+                    case "*":
+                        return LLVM.BuildFMul(builder, left, right, "");
+
+                    case "/":
+                        return LLVM.BuildFDiv(builder, left, right, "");
+
+                    default:
+                        throw new NotImplementedException();
+                }
+            }
+            else if (targetType is BoolType b)
+            {
+                if (argType is IntType ii)
+                {
+                    switch (op)
+                    {
+                        case "!=":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
+
+                        case "==":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
+
+                        case "<":
+                            if (ii.Signed)
+                                return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntSLT, left, right, "");
+                            else
+                                return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntULT, left, right, "");
+
+                        case ">":
+                            if (ii.Signed)
+                                return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntSGT, left, right, "");
+                            else
+                                return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntUGT, left, right, "");
+
+                        case "<=":
+                            if (ii.Signed)
+                                return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntSLE, left, right, "");
+                            else
+                                return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntULE, left, right, "");
+
+                        case ">=":
+                            if (ii.Signed)
+                                return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntSGE, left, right, "");
+                            else
+                                return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntUGE, left, right, "");
+
+                        default:
+                            throw new NotImplementedException();
+                    }
+                }
+                else if (argType is CharType c)
+                {
+                    switch (op)
+                    {
+                        case "!=":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
+
+                        case "==":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
+
+                        case "<":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntSLT, left, right, "");
+
+                        case ">":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntSGT, left, right, "");
+
+                        case "<=":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntSLE, left, right, "");
+
+                        case ">=":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntSGE, left, right, "");
+
+                        default:
+                            throw new NotImplementedException();
+                    }
+                }
+                else if (argType is PointerType)
+                {
+                    switch (op)
+                    {
+                        case "!=":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
+
+                        case "==":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
+
+                        case "<":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntULT, left, right, "");
+
+                        case ">":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntUGT, left, right, "");
+
+                        case "<=":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntULE, left, right, "");
+
+                        case ">=":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntUGE, left, right, "");
+
+                        default:
+                            throw new NotImplementedException();
+                    }
+                }
+                else if (argType is EnumType e)
+                {
+                    switch (op)
+                    {
+                        case "!=":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
+
+                        case "==":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
+
+                        case "<":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntSLT, left, right, "");
+
+                        case ">":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntSGT, left, right, "");
+
+                        case "<=":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntSLE, left, right, "");
+
+                        case ">=":
+                            return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntSGE, left, right, "");
+
+                        default:
+                            throw new NotImplementedException();
+                    }
+                }
+                else if (argType is BoolType)
+                {
+                    switch (op)
+                    {
+                        case "!=":
+                            {
+                                return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntNE, left, right, "");
+                            }
+
+                        case "==":
+                            {
+                                return LLVM.BuildICmp(builder, LLVMIntPredicate.LLVMIntEQ, left, right, "");
+                            }
+
+                        default:
+                            throw new NotImplementedException();
+                    }
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+            }
+            else if (targetType is PointerType p)
+            {
+                switch (op)
+                {
+                    case "+":
+                        return LLVM.BuildAdd(builder, left, right, "");
+
+                    case "-":
+                        return LLVM.BuildSub(builder, left, right, "");
+
+                    case "*":
+                        return LLVM.BuildMul(builder, left, right, "");
+
+                    case "/":
+                        return LLVM.BuildUDiv(builder, left, right, "");
+
+                    case "%":
+                        return LLVM.BuildURem(builder, left, right, "");
 
 
                     default:
@@ -1853,8 +1857,6 @@ namespace Cheez.Compiler.CodeGeneration
             {
                 throw new NotImplementedException();
             }
-
-            throw new NotImplementedException();
         }
 
         #endregion

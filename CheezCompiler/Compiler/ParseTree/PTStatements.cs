@@ -78,16 +78,18 @@ namespace Cheez.Compiler.ParseTree
     {
         public PTExpr Target { get; set; }
         public PTExpr Value { get; set; }
+        public string Operator { get; set; }
 
-        public PTAssignment(TokenLocation beg, TokenLocation end, PTExpr target, PTExpr value) : base(beg, end)
+        public PTAssignment(TokenLocation beg, TokenLocation end, PTExpr target, PTExpr value, string op) : base(beg, end)
         {
             this.Target = target;
             this.Value = value;
+            this.Operator = op;
         }
 
         public override AstStatement CreateAst()
         {
-            return new AstAssignment(this, Target.CreateAst(), Value.CreateAst());
+            return new AstAssignment(this, Target.CreateAst(), Value.CreateAst(), Operator);
         }
     }
 

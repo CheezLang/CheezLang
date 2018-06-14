@@ -256,11 +256,13 @@ namespace Cheez.Compiler.Ast
     {
         public AstExpression Target { get; set; }
         public AstExpression Value { get; set; }
+        public string Operator { get; set; }
 
-        public AstAssignment(ParseTree.PTStatement node, AstExpression target, AstExpression value) : base(node)
+        public AstAssignment(ParseTree.PTStatement node, AstExpression target, AstExpression value, string op) : base(node)
         {
             this.Target = target;
             this.Value = value;
+            this.Operator = op;
         }
 
         [DebuggerStepThrough]
@@ -271,7 +273,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstAssignment(GenericParseTreeNode, Target.Clone(), Value.Clone())
+            return new AstAssignment(GenericParseTreeNode, Target.Clone(), Value.Clone(), Operator)
             {
                 Scope = this.Scope,
                 Directives = this.Directives,

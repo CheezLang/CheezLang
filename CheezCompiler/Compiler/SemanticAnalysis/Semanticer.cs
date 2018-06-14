@@ -415,7 +415,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (!ca.Body.GetFlag(StmtFlags.Returns))
                     match.ClearFlag(StmtFlags.Returns);
 
-                if (CastIfLiteral(ca.Value.Type, type, out var t))
+                if (CanAssign(ca.Value.Type, type, out var t))
                 {
                     ca.Value.Type = t;
                     ca.Value = CreateCastIfImplicit(type, ca.Value);
@@ -1022,7 +1022,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 else
                 {
-                    if (!CastIfLiteral(variable.Initializer.Type, variable.Type, out var t))
+                    if (!CanAssign(variable.Initializer.Type, variable.Type, out var t))
                         context.ReportError(variable.Initializer.GenericParseTreeNode, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'");
 
                     variable.Initializer.Type = t;
@@ -1062,32 +1062,73 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             // check target
             foreach (var v in ass.Target.Accept(this, context.Clone()))
+            {
                 if (v is ReplaceAstExpr r)
                     ass.Target = r.NewExpression;
                 else
                     yield return v;
+            }
 
             // check source
             foreach (var v in ass.Value.Accept(this, context.Clone(ExpectedType: ass.Target.Type)))
+            {
                 if (v is ReplaceAstExpr r)
                     ass.Value = r.NewExpression;
                 else
                     yield return v;
+            }
 
-            if (!CastIfLiteral(ass.Value.Type, ass.Target.Type, out var type))
-                context.ReportError(ass.GenericParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
-
-            ass.Value.Type = type;
-            ass.Value = CreateCastIfImplicit(ass.Target.Type, ass.Value);
 
             if (!ass.Target.GetFlag(ExprFlags.IsLValue))
-                context.ReportError(ass.Target.GenericParseTreeNode, $"Left side of assignment has to be a lvalue");
+                context.ReportError(ass.Target.GenericParseTreeNode, $"Left side of assignment has to be an lvalue");
 
-            if (ass.Value.Type == IntType.LiteralType)
-                ass.Value.Type = IntType.DefaultType;
+            if (ass.Operator == null)
+            {
+                if (!CanAssign(ass.Value.Type, ass.Target.Type, out var type))
+                    context.ReportError(ass.GenericParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
 
-            if (ass.Value.Type == FloatType.LiteralType)
-                ass.Value.Type = FloatType.DefaultType;
+                ass.Value.Type = type;
+                ass.Value = CreateCastIfImplicit(ass.Target.Type, ass.Value);
+
+                if (ass.Value.Type == IntType.LiteralType)
+                    ass.Value.Type = IntType.DefaultType;
+
+                if (ass.Value.Type == FloatType.LiteralType)
+                    ass.Value.Type = FloatType.DefaultType;
+            }
+            else
+            {
+                if (IsNumberLiteralType(ass.Value.Type))
+                {
+                    if (IsNumberType(ass.Target.Type))
+                        ass.Value.Type = ass.Target.Type;
+                    else
+                        ass.Value.Type = IntType.DefaultType;
+                }
+
+                var ops = scope.GetOperators(ass.Operator, ass.Target.Type, ass.Value.Type);
+
+
+                if (ops.Count > 1)
+                {
+                    context.ReportError(ass.GenericParseTreeNode, $"Multiple operators match the types '{ass.Target.Type}' and '{ass.Value.Type}'");
+                    yield break;
+                }
+                else if (ops.Count == 0)
+                {
+                    context.ReportError(ass.GenericParseTreeNode, $"No operator matches the types '{ass.Target.Type}' and '{ass.Value.Type}'");
+                    yield break;
+                }
+                else
+                {
+                    var op = ops[0];
+                    var resultType = op.ResultType;
+
+
+                    if (!CanAssign(resultType, ass.Target.Type, out var type))
+                        context.ReportError(ass.GenericParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
+                }
+            }
 
             yield break;
         }
@@ -1647,7 +1688,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             mi.Name = mem.Name.Name;
                             mi.Index = i;
 
-                            if (CastIfLiteral(mi.Value.Type, mem.Type, out var miType))
+                            if (CanAssign(mi.Value.Type, mem.Type, out var miType))
                             {
                                 mi.Value.Type = miType;
                                 mi.Value = CreateCastIfImplicit(mem.Type, mi.Value);
@@ -1823,17 +1864,20 @@ namespace Cheez.Compiler.SemanticAnalysis
             bin.Left.Scope = bin.Scope;
             bin.Right.Scope = bin.Scope;
             foreach (var v in bin.Left.Accept(this, context.Clone(ExpectedType: null)))
+            {
                 if (v is ReplaceAstExpr r)
                     bin.Left = r.NewExpression;
                 else
                     yield return v;
+            }
 
             foreach (var v in bin.Right.Accept(this, context.Clone(ExpectedType: null)))
+            {
                 if (v is ReplaceAstExpr r)
                     bin.Right = r.NewExpression;
                 else
                     yield return v;
-
+            }
 
             bool leftIsLiteral = IsNumberLiteralType(bin.Left.Type);
             bool rightIsLiteral = IsNumberLiteralType(bin.Right.Type);
@@ -1912,12 +1956,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 var op = ops[0];
                 bin.Type = op.ResultType;
-
-                if (bin.Operator == "and" || bin.Operator == "or")
-                {
-                    context.Function.LocalVariables.Add(bin);
-                }
-
 
                 if (bin.Left.IsCompTimeValue && bin.Right.IsCompTimeValue)
                 {
@@ -2218,7 +2256,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 {
                     var expectedType = f.ParameterTypes[i];
 
-                    if (!CastIfLiteral(call.Arguments[i].Type, expectedType, out var t))
+                    if (!CanAssign(call.Arguments[i].Type, expectedType, out var t))
                     {
                         context.ReportError(context.Text, call.Arguments[i].GenericParseTreeNode, $"Argument type does not match parameter type. Expected {expectedType}, got {call.Arguments[i].Type}");
                     }
@@ -2427,7 +2465,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
 
 
-            if (!CastIfLiteral(cast.SubExpression.Type, cast.Type, out var type))
+            if (!CanAssign(cast.SubExpression.Type, cast.Type, out var type))
             { }
             //{
             //    yield return new LambdaError(eh => eh.ReportError(data.Text, cast.ParseTreeNode, $"Can't cast a value of to '{cast.SubExpression.Type}' to '{cast.Type}'"));
@@ -2633,7 +2671,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 {
                     type = value.Type;
                 }
-                else if (!CastIfLiteral(value.Type, type, out var t))
+                else if (!CanAssign(value.Type, type, out var t))
                 {
                     context.ReportError(value.GenericParseTreeNode, $"Can't implicitly convert a value of type '{value.Type}' to type '{type}'");
                 }
@@ -2665,7 +2703,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #endregion
 
-        private bool CastIfLiteral(CheezType sourceType, CheezType targetType, out CheezType outSource)
+        private bool CanAssign(CheezType sourceType, CheezType targetType, out CheezType outSource)
         {
             outSource = sourceType;
 
@@ -2698,17 +2736,14 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (sourceType is ArrayType arr && slice.TargetType == arr.TargetType)
                 {
-                    //outSource = slice;
                     return true;
                 }
                 else if (sourceType is PointerType ptr && slice.TargetType == ptr.TargetType)
                 {
-                    //outSource = slice;
                     return true;
                 }
                 else if (sourceType is SliceType slice2 && slice.TargetType == slice2.TargetType)
                 {
-                    //outSource = slice;
                     return true;
                 }
 
