@@ -50,7 +50,7 @@ struct GLFWwindow {}
 struct GLFWmonitor {}
 struct GLFWcursor {}
 
-fn glfwInit() -> int;
+fn glfwInit() -> bool;
 fn glfwTerminate();
 
 fn glfwCreateWindow(widht: int, height: int, title: string, monitor: GLFWmonitor&, share: GLFWwindow&) -> GLFWwindow&;
@@ -59,6 +59,3 @@ fn glfwPollEvents();
 fn glfwSwapBuffers(window: GLFWwindow&);
 
 fn glfwMakeContextCurrent(window: GLFWwindow&);
-
-let GLFW_TRUE  = 1
-let GLFW_FALSE = 0

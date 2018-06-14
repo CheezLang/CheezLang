@@ -9,9 +9,9 @@ fn Main()
     // let filename = "D:\Programming\CheezLang\examples\example_1.che"
     // RunCompiler(filename)
 
-    let ok = glfwInit()
-    if ok == GLFW_FALSE {
+    if !glfwInit() {
         Println("Failed to initialize GLFW")
+        return
     }
     defer glfwTerminate()
 
@@ -22,7 +22,7 @@ fn Main()
 
     glfwMakeContextCurrent(window)
 
-    glClearColor(0.5, 0.5, 0.5, 1)
+    // glClearColor(0.5, 0.5, 0.5, 1)
 
     while !glfwWindowShouldClose(window) {
         glClear(GL_COLOR_BUFFER_BIT)
