@@ -82,8 +82,8 @@ fn Main()
 
     let q = new Quad {
         pos = new Vec2 { -0.5, -0.5 }
-        size = new Vec2 { 1, 1}
-        col = new Color { 1, 0, 1}
+        size = new Vec2 { 1, 1 }
+        col = new Color { 1, 0, 1 }
     }
 
     while !glfwWindowShouldClose(window) {
