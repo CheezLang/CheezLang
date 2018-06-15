@@ -105,6 +105,7 @@ namespace Cheez.Compiler.Ast
             Value = func;
         }
 
+        [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return Original.Accept(visitor, data);
@@ -794,6 +795,44 @@ namespace Cheez.Compiler.Ast
         public override string ToString()
         {
             return $"{Target}[]";
+        }
+    }
+
+    public class AstFunctionTypeExpr : AstExpression
+    {
+        public override bool IsPolymorphic => ParameterTypes.Any(p => p.IsPolymorphic) || (ReturnType?.IsPolymorphic ?? false);
+
+        public AstExpression ReturnType { get; set; }
+        public List<AstExpression> ParameterTypes { get; set; }
+
+        public AstFunctionTypeExpr(ParseTree.PTExpr node, List<AstExpression> parTypes, AstExpression returnType) : base()
+        {
+            this.GenericParseTreeNode = node;
+            this.ParameterTypes = parTypes;
+            this.ReturnType = returnType;
+            IsCompTimeValue = true;
+        }
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+        {
+            return new AstFunctionTypeExpr(GenericParseTreeNode, ParameterTypes.Select(p => p.Clone()).ToList(), ReturnType?.Clone())
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitFunctionTypeExpr(this, data);
+        }
+
+        public override string ToString()
+        {
+            var p = string.Join(", ", ParameterTypes);
+            return $"fn ({p}) -> {ReturnType?.ToString() ?? "void"}";
         }
     }
 

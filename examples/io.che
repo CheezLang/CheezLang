@@ -185,9 +185,6 @@ fn SprintfData(buffer: String&, format: String, value: any) {
 }
 
 fn Sprintf(buffer: String&, format: string, data: any) {
-    let open = '{'
-    let close = '}'
-
     let formatSpecifier = NewString()
     defer formatSpecifier.Dispose()
     formatSpecifier.Reserve(5)
@@ -202,7 +199,7 @@ fn Sprintf(buffer: String&, format: string, data: any) {
         let c = format[i]
 
         if state == 0 {
-            if (c == open) {
+            if (c == '{') {
                 state = 1
             }
             else {
@@ -210,7 +207,7 @@ fn Sprintf(buffer: String&, format: string, data: any) {
             }
         }
         else if state == 1 {
-            if (c == close) {
+            if (c == '}') {
                 state = 0
                 SprintfData(buffer, formatSpecifier, data)
                 formatSpecifier.length = 0
@@ -224,9 +221,6 @@ fn Sprintf(buffer: String&, format: string, data: any) {
 }
 
 fn Sprintfn(buffer: String&, format: string, data: any[]) {
-    let open = '{'
-    let close = '}'
-
     let formatSpecifier = NewString()
     defer formatSpecifier.Dispose()
     formatSpecifier.Reserve(5)
@@ -242,7 +236,7 @@ fn Sprintfn(buffer: String&, format: string, data: any[]) {
         let c = format[i]
 
         if state == 0 {
-            if (c == open) {
+            if (c == '{') {
                 state = 1
             }
             else {
@@ -250,7 +244,7 @@ fn Sprintfn(buffer: String&, format: string, data: any[]) {
             }
         }
         else if state == 1 {
-            if (c == close) {
+            if (c == '}') {
                 state = 0
                 SprintfData(buffer, formatSpecifier, data[dataIndex])
                 dataIndex += 1

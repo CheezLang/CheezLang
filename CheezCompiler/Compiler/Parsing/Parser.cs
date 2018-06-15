@@ -954,43 +954,47 @@ namespace Cheez.Compiler.Parsing
 
         #region Expression Parsing
 
-        //private PTTypeExpr ParseFunctionTypeExpr()
-        //{
-        //    var beginning = Expect(TokenType.KwFn, false).location;
-        //    Consume(TokenType.OpenParen, true);
+        private PTExpr ParseFunctionTypeExpr()
+        {
+            var beginning = Consume(TokenType.KwFn, ErrMsg("keyword 'fn'", "at beginning of function type")).location;
+            SkipNewlines();
 
-        //    List<PTTypeExpr> args = new List<PTTypeExpr>();
-        //    if (PeekToken(true).type != TokenType.ClosingParen)
-        //    {
-        //        while (true)
-        //        {
-        //            args.Add(ParseTypeExpression());
+            Consume(TokenType.OpenParen, ErrMsg("(", "after keyword 'fn'"));
+            SkipNewlines();
 
-        //            var next = PeekToken(true);
-        //            if (next.type == TokenType.Comma)
-        //                NextToken();
-        //            else if (next.type == TokenType.ClosingParen)
-        //                break;
-        //            else
-        //            {
-        //                ReportError(next.location, $"Failed to parse function type, expected comma or closing paren, got {next.data} ({next.type})");
-        //                RecoverExpression();
-        //                return null;
-        //            }
-        //        }
-        //    }
+            List<PTExpr> args = new List<PTExpr>();
+            while (true)
+            {
+                var next = PeekToken();
+                if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
+                    break;
 
-        //    var end = Expect(TokenType.ClosingParen, true).location;
-        //    PTTypeExpr returnType = null;
-        //    if (PeekToken(false).type == TokenType.Colon)
-        //    {
-        //        NextToken();
-        //        returnType = ParseTypeExpression();
-        //        end = returnType.End;
-        //    }
+                args.Add(ParseExpression());
+                SkipNewlines();
 
-        //    return new PTFunctionTypeExpr(beginning, end, returnType, args);
-        //}
+                next = PeekToken();
+                if (next.type == TokenType.Comma)
+                    NextToken();
+                else if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
+                    break;
+                else
+                {
+                    ReportError(next.location, $"Failed to parse function type, expected comma or closing paren, got {next.data} ({next.type})");
+                    NextToken();
+                }
+            }
+
+            var end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of function type parameter list")).location;
+            PTExpr returnType = null;
+            if (CheckToken(TokenType.Arrow))
+            {
+                NextToken();
+                returnType = ParseExpression();
+                end = returnType.End;
+            }
+
+            return new PTFunctionTypeExpr(beginning, end, returnType, args);
+        }
 
         private PTExpr ParseExpression(ErrorMessageResolver errorMessage = null)
         {
@@ -1247,6 +1251,9 @@ namespace Cheez.Compiler.Parsing
             var token = PeekToken();
             switch (token.type)
             {
+                case TokenType.KwFn:
+                    return ParseFunctionTypeExpr();
+
                 case TokenType.KwNew:
                     return ParseStructValue();
 

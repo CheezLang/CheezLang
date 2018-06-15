@@ -1632,8 +1632,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             var scope = context.Scope;
             str.Scope = scope;
 
-            context.Function.LocalVariables.Add(str);
-
             // types
             foreach (var v in str.TypeExpr.Accept(this, context.Clone(ExpectedType: null)))
             {
@@ -2644,6 +2642,36 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             astArrayTypeExpr.Value = astArrayTypeExpr.Type;
             yield break;
+        }
+
+        public override IEnumerable<object> VisitFunctionTypeExpr(AstFunctionTypeExpr func, SemanticerData context = null)
+        {
+            func.Scope = context.Scope;
+
+            for (int i = 0; i < func.ParameterTypes.Count; i++)
+            {
+                foreach (var v in func.ParameterTypes[i].Accept(this, context.Clone(ExpectedType: null)))
+                {
+                    if (v is ReplaceAstExpr r)
+                        func.ParameterTypes[i] = r.NewExpression;
+                    else yield return v;
+                }
+            }
+            if (func.ReturnType != null)
+            {
+                foreach (var v in func.ReturnType.Accept(this, context.Clone(ExpectedType: null)))
+                {
+                    if (v is ReplaceAstExpr r)
+                        func.ReturnType = r.NewExpression;
+                    else yield return v;
+                }
+            }
+
+            func.Type = CheezType.Type;
+
+            var rt = func.ReturnType?.Value as CheezType ?? CheezType.Void;
+            var pt = func.ParameterTypes.Select(p => p.Value as CheezType).ToArray();
+            func.Value = FunctionType.GetFunctionType(rt, pt);
         }
 
         public override IEnumerable<object> VisitArrayTypeExpr(AstArrayTypeExpr arr, SemanticerData context = default)

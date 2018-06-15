@@ -77,12 +77,12 @@ namespace Cheez.Compiler.ParseTree
         public override string ToString()
         {
             var p = string.Join(", ", ParameterTypes);
-            return $"fn {ReturnType}({p})";
+            return $"fn ({p}) -> {ReturnType?.ToString() ?? "void"}";
         }
 
         public override AstExpression CreateAst()
         {
-            throw new NotImplementedException();
+            return new AstFunctionTypeExpr(this, ParameterTypes.Select(p => p.CreateAst()).ToList(), ReturnType?.CreateAst());
         }
     }
 

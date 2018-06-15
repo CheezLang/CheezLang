@@ -1,6 +1,6 @@
 #load("memory.che")
 
-fn strlen(s: $T) -> int {
+fn strlen(s: string) -> int {
     let len: int = 0
     while s[len] != '`0' {
         len += 1
@@ -9,8 +9,8 @@ fn strlen(s: $T) -> int {
 }
 
 fn streql(a: $T, b: $T2, len: ulong) -> bool {
-    let alen: ulong = (ulong)strlen(a)
-    let blen: ulong = (ulong)strlen(b)
+    let alen: ulong = (ulong)a.GetLength()
+    let blen: ulong = (ulong)b.GetLength()
     if len > alen {
         len = alen
     }
@@ -21,7 +21,7 @@ fn streql(a: $T, b: $T2, len: ulong) -> bool {
     let i: ulong = 0
     while i < len {
         defer i += 1
-        if a[i] != b[i] {
+        if a.GetChar(i) != b.GetChar(i) {
             return false
         }
     }
@@ -29,8 +29,13 @@ fn streql(a: $T, b: $T2, len: ulong) -> bool {
 }
 
 fn streq(a: $T, b: $T2) -> bool {
-    let len: ulong = (ulong)strlen(a)
-    let blen: ulong = (ulong)strlen(b)
+    let len: ulong = (ulong)a.GetLength()
+    let blen: ulong = (ulong)b.GetLength()
+
+    if len != blen {
+        return false
+    }
+
     if len > blen {
         len = blen
     }
@@ -38,11 +43,21 @@ fn streq(a: $T, b: $T2) -> bool {
     let i: ulong = 0
     while (i < len) {
         defer i += 1
-        if a[i] != b[i] {
+        if a.GetChar(i) != b.GetChar(i) {
             return false
         }
     }
     return true
+}
+
+impl string {
+    fn GetLength() -> int {
+        return strlen(self)
+    }
+
+    fn GetChar(i: $T) -> char {
+        return self[i]
+    }
 }
 
 struct StringBase(CharType: type) {
@@ -55,6 +70,14 @@ let String = StringBase(char)
 let Utf32String = StringBase(int)
 
 impl StringBase($CharType) {
+    ref fn GetLength() -> int {
+        return length
+    }
+
+    fn GetChar(i: $T) -> char {
+        return data[i]
+    }
+
     ref fn Reserve(size: int) {
         capacity = size
         if data == null {

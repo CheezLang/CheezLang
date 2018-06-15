@@ -155,6 +155,7 @@ namespace Cheez.Compiler.CodeGeneration
         public LLVMBasicBlockRef LoopCondition { get; set; }
         public LLVMBasicBlockRef LoopEnd { get; set; }
 
+        [DebuggerStepThrough]
         public LLVMCodeGeneratorData Clone(LLVMBuilderRef? Builder = null, bool? Deref = null, LLVMValueRef? Function = null, LLVMBasicBlockRef? BasicBlock = null, LLVMBasicBlockRef? LoopCondition = null, LLVMBasicBlockRef? LoopEnd = null)
         {
             return new LLVMCodeGeneratorData
@@ -522,7 +523,7 @@ namespace Cheez.Compiler.CodeGeneration
             throw new NotImplementedException();
         }
 
-        private LLVMTypeRef CheezTypeToLLVMType(CheezType ct)
+        private LLVMTypeRef CheezTypeToLLVMType(CheezType ct, bool functionPointer = true)
         {
             switch (ct)
             {
@@ -575,7 +576,10 @@ namespace Cheez.Compiler.CodeGeneration
                     {
                         var returnType = CheezTypeToLLVMType(f.ReturnType);
                         var paramTypes = f.ParameterTypes.Select(t => CheezTypeToLLVMType(t)).ToArray();
-                        return LLVM.FunctionType(returnType, paramTypes, f.VarArgs);
+                        var func = LLVM.FunctionType(returnType, paramTypes, f.VarArgs);
+                        if (functionPointer)
+                            func = LLVM.PointerType(func, 0);
+                        return func;
                     }
 
                 case EnumType e:
@@ -663,7 +667,7 @@ namespace Cheez.Compiler.CodeGeneration
                 name += string.Join(".", function.PolymorphicTypes.Select(p => $"{p.Key}.{p.Value}"));
             }
 
-            var ltype = CheezTypeToLLVMType(function.Type);
+            var ltype = CheezTypeToLLVMType(function.Type, false);
             var lfunc = LLVM.AddFunction(module, name, ltype);
 
             var ccDir = function.GetDirective("stdcall");
@@ -693,8 +697,14 @@ namespace Cheez.Compiler.CodeGeneration
                 case IntType i:
                     return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
 
+                case FloatType f:
+                    return LLVM.ConstReal(CheezTypeToLLVMType(type), 0.0);
+
                 case CharType c:
                     return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
+
+                case StructType p:
+                    return LLVM.ConstStruct(p.Declaration.Members.Select(m => GetDefaultLLVMValue(m.Type)).ToArray(), false);
 
                 default:
                     throw new NotImplementedException();
@@ -807,7 +817,7 @@ namespace Cheez.Compiler.CodeGeneration
                 if (variable.Initializer != null)
                 {
                     var ptr = valueMap[variable];
-                    var val = variable.Initializer.Accept(this, data);
+                    var val = variable.Initializer.Accept(this, data.Clone(Deref: true));
                     CastIfAny(data.Builder, variable.Type, variable.Initializer.Type, ref val);
                     return LLVM.BuildStore(data.Builder, val, ptr);
                 }
@@ -1103,7 +1113,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitStructValueExpression(AstStructValueExpr str, LLVMCodeGeneratorData data = null)
         {
-            var value = valueMap[str];
+            var value = GetTempValue(str);
 
             var llvmType = CheezTypeToLLVMType(str.Type);
 
@@ -1355,7 +1365,9 @@ namespace Cheez.Compiler.CodeGeneration
             var s = ident.Symbol;
             var v = valueMap[s];
 
-            if (data.Deref)
+            var func = v.IsAFunction();
+
+            if (data.Deref && func.Pointer == IntPtr.Zero)
                 return LLVM.BuildLoad(data.Builder, v, "");
 
             return v;
@@ -1364,10 +1376,16 @@ namespace Cheez.Compiler.CodeGeneration
         public override LLVMValueRef VisitCallExpression(AstCallExpr call, LLVMCodeGeneratorData data = null)
         {
             LLVMValueRef func;
+
+            //func = call.Function.Accept(this, data.Clone(Deref: false));
+
             if (call.Function is AstIdentifierExpr id)
             {
                 func = LLVM.GetNamedFunction(module, id.Name);
-                //func = valueMap[i.Value];
+                if (func.Pointer == IntPtr.Zero)
+                {
+                    func = call.Function.Accept(this, data);
+                }
             }
             else if (call.Function is AstFunctionExpression afe)
             {
@@ -1383,25 +1401,26 @@ namespace Cheez.Compiler.CodeGeneration
                 func = call.Function.Accept(this, data);
             }
 
-            var funcDecl = call.Function.Value as AstFunctionDecl;
+            //var funcDecl = call.Function.Value as AstFunctionDecl;
+            var funcType = call.Function.Type as FunctionType;
 
             var args = new LLVMValueRef[call.Arguments.Count];
-            for (int i = 0; i < funcDecl.Parameters.Count; i++)
+            for (int i = 0; i < funcType.ParameterTypes.Length; i++)
             {
-                var param = funcDecl.Parameters[i];
+                var param = funcType.ParameterTypes[i];
                 var arg = call.Arguments[i];
 
                 bool deref = true;
-                if (param.Type is ReferenceType && !(arg.Type is ReferenceType))
+                if (param is ReferenceType && !(arg.Type is ReferenceType))
                     deref = false;
 
                 args[i] = arg.Accept(this, data.Clone(Deref: deref));
 
-                CastIfAny(data.Builder, param.Type, arg.Type, ref args[i]);
+                CastIfAny(data.Builder, param, arg.Type, ref args[i]);
 
-                if (param.Type == CheezType.Any && arg.Type != CheezType.Any)
+                if (param == CheezType.Any && arg.Type != CheezType.Any)
                 {
-                    var type = CheezTypeToLLVMType(param.Type);
+                    var type = CheezTypeToLLVMType(param);
                     if (arg.Type is IntType)
                         args[i] = LLVM.BuildIntCast(data.Builder, args[i], type, "");
                     else if (arg.Type is BoolType)

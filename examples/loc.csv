@@ -1,18 +1,18 @@
 ﻿File Name,Lines
 opengl_constants.che,651
-opengl_functions.che,339
-io.che,280
+opengl_functions.che,338
+io.che,276
+string.che,210
 lexer.che,194
-string.che,193
+glfw3.che,187
 token.che,153
+example_1.che,82
 opengl_types.che,71
-example_1.che,69
 array.che,68
-glfw3.che,57
 memory.che,32
 main.che,29
 stdio.che,24
 windows.che,19
 file.che,15
 opengl.che,4
-Total,2198
+Total,2353

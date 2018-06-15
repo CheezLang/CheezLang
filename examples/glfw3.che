@@ -62,3 +62,138 @@ fn glfwPollEvents();
 fn glfwSwapBuffers(window: GLFWwindow&);
 
 fn glfwMakeContextCurrent(window: GLFWwindow&);
+fn glfwSetKeyCallback(window: GLFWwindow&, callback: fn (GLFWwindow&, int, int, int, int));
+fn glfwSetWindowSizeCallback(window: GLFWwindow&, callback: fn (GLFWwindow&, int, int));
+
+let GLFW_RELEASE                : int = 0
+let GLFW_PRESS                  : int = 1
+let GLFW_REPEAT                 : int = 2
+
+/* The unknown key */
+let GLFW_KEY_UNKNOWN            : int = -1
+
+/* Printable keys */
+let GLFW_KEY_SPACE              : int = 32
+let GLFW_KEY_APOSTROPHE         : int = 39  /* ' */
+let GLFW_KEY_COMMA              : int = 44  /* , */
+let GLFW_KEY_MINUS              : int = 45  /* - */
+let GLFW_KEY_PERIOD             : int = 46  /* . */
+let GLFW_KEY_SLASH              : int = 47  /* / */
+let GLFW_KEY_0                  : int = 48
+let GLFW_KEY_1                  : int = 49
+let GLFW_KEY_2                  : int = 50
+let GLFW_KEY_3                  : int = 51
+let GLFW_KEY_4                  : int = 52
+let GLFW_KEY_5                  : int = 53
+let GLFW_KEY_6                  : int = 54
+let GLFW_KEY_7                  : int = 55
+let GLFW_KEY_8                  : int = 56
+let GLFW_KEY_9                  : int = 57
+let GLFW_KEY_SEMICOLON          : int = 59  /* ; */
+let GLFW_KEY_EQUAL              : int = 61  /* = */
+let GLFW_KEY_A                  : int = 65
+let GLFW_KEY_B                  : int = 66
+let GLFW_KEY_C                  : int = 67
+let GLFW_KEY_D                  : int = 68
+let GLFW_KEY_E                  : int = 69
+let GLFW_KEY_F                  : int = 70
+let GLFW_KEY_G                  : int = 71
+let GLFW_KEY_H                  : int = 72
+let GLFW_KEY_I                  : int = 73
+let GLFW_KEY_J                  : int = 74
+let GLFW_KEY_K                  : int = 75
+let GLFW_KEY_L                  : int = 76
+let GLFW_KEY_M                  : int = 77
+let GLFW_KEY_N                  : int = 78
+let GLFW_KEY_O                  : int = 79
+let GLFW_KEY_P                  : int = 80
+let GLFW_KEY_Q                  : int = 81
+let GLFW_KEY_R                  : int = 82
+let GLFW_KEY_S                  : int = 83
+let GLFW_KEY_T                  : int = 84
+let GLFW_KEY_U                  : int = 85
+let GLFW_KEY_V                  : int = 86
+let GLFW_KEY_W                  : int = 87
+let GLFW_KEY_X                  : int = 88
+let GLFW_KEY_Y                  : int = 89
+let GLFW_KEY_Z                  : int = 90
+let GLFW_KEY_LEFT_BRACKET       : int = 91  /* [ */
+let GLFW_KEY_BACKSLASH          : int = 92  /* \ */
+let GLFW_KEY_RIGHT_BRACKET      : int = 93  /* ] */
+let GLFW_KEY_GRAVE_ACCENT       : int = 96  /* ` */
+let GLFW_KEY_WORLD_1            : int = 161 /* non-US #1 */
+let GLFW_KEY_WORLD_2            : int = 162 /* non-US #2 */
+
+/* Function keys */
+let GLFW_KEY_ESCAPE             : int = 256
+let GLFW_KEY_ENTER              : int = 257
+let GLFW_KEY_TAB                : int = 258
+let GLFW_KEY_BACKSPACE          : int = 259
+let GLFW_KEY_INSERT             : int = 260
+let GLFW_KEY_DELETE             : int = 261
+let GLFW_KEY_RIGHT              : int = 262
+let GLFW_KEY_LEFT               : int = 263
+let GLFW_KEY_DOWN               : int = 264
+let GLFW_KEY_UP                 : int = 265
+let GLFW_KEY_PAGE_UP            : int = 266
+let GLFW_KEY_PAGE_DOWN          : int = 267
+let GLFW_KEY_HOME               : int = 268
+let GLFW_KEY_END                : int = 269
+let GLFW_KEY_CAPS_LOCK          : int = 280
+let GLFW_KEY_SCROLL_LOCK        : int = 281
+let GLFW_KEY_NUM_LOCK           : int = 282
+let GLFW_KEY_PRINT_SCREEN       : int = 283
+let GLFW_KEY_PAUSE              : int = 284
+let GLFW_KEY_F1                 : int = 290
+let GLFW_KEY_F2                 : int = 291
+let GLFW_KEY_F3                 : int = 292
+let GLFW_KEY_F4                 : int = 293
+let GLFW_KEY_F5                 : int = 294
+let GLFW_KEY_F6                 : int = 295
+let GLFW_KEY_F7                 : int = 296
+let GLFW_KEY_F8                 : int = 297
+let GLFW_KEY_F9                 : int = 298
+let GLFW_KEY_F10                : int = 299
+let GLFW_KEY_F11                : int = 300
+let GLFW_KEY_F12                : int = 301
+let GLFW_KEY_F13                : int = 302
+let GLFW_KEY_F14                : int = 303
+let GLFW_KEY_F15                : int = 304
+let GLFW_KEY_F16                : int = 305
+let GLFW_KEY_F17                : int = 306
+let GLFW_KEY_F18                : int = 307
+let GLFW_KEY_F19                : int = 308
+let GLFW_KEY_F20                : int = 309
+let GLFW_KEY_F21                : int = 310
+let GLFW_KEY_F22                : int = 311
+let GLFW_KEY_F23                : int = 312
+let GLFW_KEY_F24                : int = 313
+let GLFW_KEY_F25                : int = 314
+let GLFW_KEY_KP_0               : int = 320
+let GLFW_KEY_KP_1               : int = 321
+let GLFW_KEY_KP_2               : int = 322
+let GLFW_KEY_KP_3               : int = 323
+let GLFW_KEY_KP_4               : int = 324
+let GLFW_KEY_KP_5               : int = 325
+let GLFW_KEY_KP_6               : int = 326
+let GLFW_KEY_KP_7               : int = 327
+let GLFW_KEY_KP_8               : int = 328
+let GLFW_KEY_KP_9               : int = 329
+let GLFW_KEY_KP_DECIMAL         : int = 330
+let GLFW_KEY_KP_DIVIDE          : int = 331
+let GLFW_KEY_KP_MULTIPLY        : int = 332
+let GLFW_KEY_KP_SUBTRACT        : int = 333
+let GLFW_KEY_KP_ADD             : int = 334
+let GLFW_KEY_KP_ENTER           : int = 335
+let GLFW_KEY_KP_EQUAL           : int = 336
+let GLFW_KEY_LEFT_SHIFT         : int = 340
+let GLFW_KEY_LEFT_CONTROL       : int = 341
+let GLFW_KEY_LEFT_ALT           : int = 342
+let GLFW_KEY_LEFT_SUPER         : int = 343
+let GLFW_KEY_RIGHT_SHIFT        : int = 344
+let GLFW_KEY_RIGHT_CONTROL      : int = 345
+let GLFW_KEY_RIGHT_ALT          : int = 346
+let GLFW_KEY_RIGHT_SUPER        : int = 347
+let GLFW_KEY_MENU               : int = 348
+
+let GLFW_KEY_LAST               : int = GLFW_KEY_MENU
