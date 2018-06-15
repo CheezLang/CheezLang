@@ -1392,6 +1392,8 @@ namespace Cheez.Compiler.Parsing
 
                 members.Add(new PTStructMemberInitialization
                 {
+                    Beginning = memberName?.Beginning ?? value.Beginning,
+                    End = value.End,
                     Name = memberName,
                     Value = value
                 });

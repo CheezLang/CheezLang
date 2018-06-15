@@ -220,14 +220,32 @@ namespace Cheez.Compiler.Parsing
 
         public NumberData Negate()
         {
-            return new NumberData
+            switch (Type)
             {
-                StringValue = "-" + StringValue,
-                IntBase = IntBase,
-                IntValue = -IntValue,
-                Suffix = Suffix,
-                Type = Type
-            };
+                case NumberType.Int:
+                    return new NumberData
+                    {
+                        StringValue = "-" + StringValue,
+                        IntBase = IntBase,
+                        IntValue = -IntValue,
+                        Suffix = Suffix,
+                        Type = Type
+                    };
+
+
+                case NumberType.Float:
+                    return new NumberData
+                    {
+                        StringValue = "-" + StringValue,
+                        IntBase = IntBase,
+                        DoubleValue = -DoubleValue,
+                        Suffix = Suffix,
+                        Type = Type
+                    };
+
+                default:
+                    throw new NotImplementedException();
+            }
         }
     }
 

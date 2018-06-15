@@ -1701,7 +1701,37 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                     else if (namesProvided == str.MemberInitializers.Length)
                     {
-                        context.ReportError(str.ParseTreeNode?.Type, $"Named members not implemented yet");
+                        for (int i = 0; i < str.MemberInitializers.Length; i++)
+                        {
+                            var mi = str.MemberInitializers[i];
+                            var memIndex = s.Declaration.Members.FindIndex(m => m.Name.Name == mi.Name);
+
+                            if (memIndex < 0)
+                            {
+                                continue;
+                            }
+
+                            var mem = s.Declaration.Members[memIndex];
+                            mi.Index = memIndex;
+
+                            foreach (var v in mi.Value.Accept(this, context.Clone(ExpectedType: null)))
+                            {
+                                if (v is ReplaceAstExpr r)
+                                    mi.Value = r.NewExpression;
+                                else
+                                    yield return v;
+                            }
+
+                            if (CanAssign(mi.Value.Type, mem.Type, out var miType))
+                            {
+                                mi.Value.Type = miType;
+                                mi.Value = CreateCastIfImplicit(mem.Type, mi.Value);
+                            }
+                            else
+                            {
+                                context.ReportError(mi.GenericParseTreeNode.Value, $"Value of type '{mi.Value.Type}' cannot be assigned to struct member '{mem.Name}' with type '{mem.Type}'");
+                            }
+                        }
                     }
                     else
                     {
@@ -1804,9 +1834,22 @@ namespace Cheez.Compiler.SemanticAnalysis
                             throw new NotImplementedException("Compile time evaluation of int literals in unary operator other than '-'");
                     }
                 }
+                else if (n.Data.Type == NumberData.NumberType.Float)
+                {
+                    switch (bin.Operator)
+                    {
+                        case "-":
+                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(bin.GenericParseTreeNode, n.Data.Negate()), context.Clone(ExpectedType: null)))
+                                yield return vv;
+                            yield break;
+
+                        default:
+                            throw new NotImplementedException("Compile time evaluation of float literals in unary operator other than '-'");
+                    }
+                }
                 else
                 {
-                    throw new NotImplementedException("Compile time evaluation of float literals in unary operator");
+                    throw new NotImplementedException("Compile time evaluation of unknown literals in unary operator");
                 }
             }
 

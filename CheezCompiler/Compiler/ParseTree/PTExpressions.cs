@@ -320,10 +320,14 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
-    public class PTStructMemberInitialization
+    public class PTStructMemberInitialization : ILocation
     {
+        public TokenLocation Beginning { get; set; }
+        public TokenLocation End { get; set; }
+
         public PTIdentifierExpr Name { get; set; }
         public PTExpr Value { get; set; }
+
     }
 
     public class PTStructValueExpr : PTExpr

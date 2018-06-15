@@ -4,6 +4,59 @@
 #load("glfw3.che")
 #load("opengl.che")
 
+struct Color {
+    r: float
+    g: float
+    b: float
+}
+
+struct Vec2 {
+    x: float
+    y: float
+}
+
+struct Quad {
+    pos: Vec2
+    size: Vec2
+    col: Color
+}
+
+impl Quad {
+    ref fn Draw() {
+        glBegin(GL_TRIANGLES)
+
+        {
+            // v1
+            glColor3f(col.r, col.g, col.b)
+            glVertex2f(pos.x, pos.y)
+
+            // v2
+            glColor3f(col.r, col.g, col.b)
+            glVertex2f(pos.x + size.x, pos.y)
+
+            // v3
+            glColor3f(col.r, col.g, col.b)
+            glVertex2f(pos.x + size.x, pos.y + size.y)
+        }
+
+        {
+            // v1
+            glColor3f(col.r, col.g, col.b)
+            glVertex2f(pos.x, pos.y)
+
+            // v3
+            glColor3f(col.r, col.g, col.b)
+            glVertex2f(pos.x + size.x, pos.y + size.y)
+
+            // v4
+            glColor3f(col.r, col.g, col.b)
+            glVertex2f(pos.x, pos.y + size.y)
+        }
+
+        glEnd()
+    }
+}
+
 fn Main()
 {
     // let filename = "D:\Programming\CheezLang\examples\example_1.che"
@@ -25,13 +78,23 @@ fn Main()
 
     glfwMakeContextCurrent(window)
 
-    glClearColor(0.5, 0.5, 0.5, 1)
+    glClearColor(0, 0, 0, 1)
+
+    let q = new Quad {
+        pos = new Vec2 { -0.5, -0.5 }
+        size = new Vec2 { 1, 1}
+        col = new Color { 1, 0, 1}
+    }
 
     while !glfwWindowShouldClose(window) {
         glClear(GL_COLOR_BUFFER_BIT)
 
-        glfwSwapBuffers(window)
+        //
+        q.Draw()
 
+        // present image
+        glfwSwapBuffers(window)
+        //
         glfwPollEvents()
     }
 
