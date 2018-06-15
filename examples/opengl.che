@@ -1,27 +1,5 @@
 #lib("OpenGL32.Lib")
 
-let GLbitfield = uint
-let GLclampf = float
-let GLenum = uint
-
-let GL_COLOR_BUFFER_BIT: uint = 0x00004000
-
-// BeginMode
-let GL_POINTS        : GLenum = 0x0000
-let GL_LINES         : GLenum = 0x0001
-let GL_LINE_LOOP     : GLenum = 0x0002
-let GL_LINE_STRIP    : GLenum = 0x0003
-let GL_TRIANGLES     : GLenum = 0x0004
-let GL_TRIANGLE_STRIP: GLenum = 0x0005
-let GL_TRIANGLE_FAN  : GLenum = 0x0006
-let GL_QUADS         : GLenum = 0x0007
-let GL_QUAD_STRIP    : GLenum = 0x0008
-let GL_POLYGON       : GLenum = 0x0009
-
-fn glClear(mask: GLbitfield) #stdcall;
-fn glClearColor(red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf) #stdcall;
-fn glBegin(mode: GLenum) #stdcall;
-fn glEnd() #stdcall;
-
-fn glColor3f(red: float, green: float, blue: float) #stdcall;
-fn glVertex2f(x: float, y: float) #stdcall;
+#load("opengl_types")
+#load("opengl_constants")
+#load("opengl_functions")

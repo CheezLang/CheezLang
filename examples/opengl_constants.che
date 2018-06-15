@@ -1,0 +1,709 @@
+#load("opengl_types")
+
+/* AccumOp */
+let GL_ACCUM                : GLenum = 0x0100
+let GL_LOAD                 : GLenum = 0x0101
+let GL_RETURN               : GLenum = 0x0102
+let GL_MULT                 : GLenum = 0x0103
+let GL_ADD                  : GLenum = 0x0104
+
+/* AlphaFunction */
+let GL_NEVER                : GLenum = 0x0200
+let GL_LESS                 : GLenum = 0x0201
+let GL_EQUAL                : GLenum = 0x0202
+let GL_LEQUAL               : GLenum = 0x0203
+let GL_GREATER              : GLenum = 0x0204
+let GL_NOTEQUAL             : GLenum = 0x0205
+let GL_GEQUAL               : GLenum = 0x0206
+let GL_ALWAYS               : GLenum = 0x0207
+
+
+/* AttribMask */
+let GL_CURRENT_BIT          : GLenum = 0x00000001
+let GL_POINT_BIT            : GLenum = 0x00000002
+let GL_LINE_BIT             : GLenum = 0x00000004
+let GL_POLYGON_BIT          : GLenum = 0x00000008
+let GL_POLYGON_STIPPLE_BIT  : GLenum = 0x00000010
+let GL_PIXEL_MODE_BIT       : GLenum = 0x00000020
+let GL_LIGHTING_BIT         : GLenum = 0x00000040
+let GL_FOG_BIT              : GLenum = 0x00000080
+let GL_DEPTH_BUFFER_BIT     : GLenum = 0x00000100
+let GL_ACCUM_BUFFER_BIT     : GLenum = 0x00000200
+let GL_STENCIL_BUFFER_BIT   : GLenum = 0x00000400
+let GL_VIEWPORT_BIT         : GLenum = 0x00000800
+let GL_TRANSFORM_BIT        : GLenum = 0x00001000
+let GL_ENABLE_BIT           : GLenum = 0x00002000
+let GL_COLOR_BUFFER_BIT     : GLenum = 0x00004000
+let GL_HINT_BIT             : GLenum = 0x00008000
+let GL_EVAL_BIT             : GLenum = 0x00010000
+let GL_LIST_BIT             : GLenum = 0x00020000
+let GL_TEXTURE_BIT          : GLenum = 0x00040000
+let GL_SCISSOR_BIT          : GLenum = 0x00080000
+let GL_ALL_ATTRIB_BITS      : GLenum = 0x000fffff
+
+/* BeginMode */
+let GL_POINTS               : GLenum = 0x0000
+let GL_LINES                : GLenum = 0x0001
+let GL_LINE_LOOP            : GLenum = 0x0002
+let GL_LINE_STRIP           : GLenum = 0x0003
+let GL_TRIANGLES            : GLenum = 0x0004
+let GL_TRIANGLE_STRIP       : GLenum = 0x0005
+let GL_TRIANGLE_FAN         : GLenum = 0x0006
+let GL_QUADS                : GLenum = 0x0007
+let GL_QUAD_STRIP           : GLenum = 0x0008
+let GL_POLYGON              : GLenum = 0x0009
+
+/* BlendingFactorDest */
+let GL_ZERO                 : GLenum = 0
+let GL_ONE                  : GLenum = 1
+let GL_SRC_COLOR            : GLenum = 0x0300
+let GL_ONE_MINUS_SRC_COLOR  : GLenum = 0x0301
+let GL_SRC_ALPHA            : GLenum = 0x0302
+let GL_ONE_MINUS_SRC_ALPHA  : GLenum = 0x0303
+let GL_DST_ALPHA            : GLenum = 0x0304
+let GL_ONE_MINUS_DST_ALPHA  : GLenum = 0x0305
+
+/* BlendingFactorSrc */
+/*      GL_ZERO */
+/*      GL_ONE */
+let GL_DST_COLOR                      : GLenum = 0x0306
+let GL_ONE_MINUS_DST_COLOR            : GLenum = 0x0307
+let GL_SRC_ALPHA_SATURATE             : GLenum = 0x0308
+/*      GL_SRC_ALPHA */
+/*      GL_ONE_MINUS_SRC_ALPHA */
+/*      GL_DST_ALPHA */
+/*      GL_ONE_MINUS_DST_ALPHA */
+
+/* Boolean */
+let GL_TRUE                           : GLenum = 1
+let GL_FALSE                          : GLenum = 0
+
+/* ClipPlaneName */
+let GL_CLIP_PLANE0                    : GLenum = 0x3000
+let GL_CLIP_PLANE1                    : GLenum = 0x3001
+let GL_CLIP_PLANE2                    : GLenum = 0x3002
+let GL_CLIP_PLANE3                    : GLenum = 0x3003
+let GL_CLIP_PLANE4                    : GLenum = 0x3004
+let GL_CLIP_PLANE5                    : GLenum = 0x3005
+
+/* DataType */
+let GL_BYTE                           : GLenum = 0x1400
+let GL_UNSIGNED_BYTE                  : GLenum = 0x1401
+let GL_SHORT                          : GLenum = 0x1402
+let GL_UNSIGNED_SHORT                 : GLenum = 0x1403
+let GL_INT                            : GLenum = 0x1404
+let GL_UNSIGNED_INT                   : GLenum = 0x1405
+let GL_FLOAT                          : GLenum = 0x1406
+let GL_2_BYTES                        : GLenum = 0x1407
+let GL_3_BYTES                        : GLenum = 0x1408
+let GL_4_BYTES                        : GLenum = 0x1409
+let GL_DOUBLE                         : GLenum = 0x140A
+
+/* DrawBufferMode */
+let GL_NONE                           : GLenum = 0
+let GL_FRONT_LEFT                     : GLenum = 0x0400
+let GL_FRONT_RIGHT                    : GLenum = 0x0401
+let GL_BACK_LEFT                      : GLenum = 0x0402
+let GL_BACK_RIGHT                     : GLenum = 0x0403
+let GL_FRONT                          : GLenum = 0x0404
+let GL_BACK                           : GLenum = 0x0405
+let GL_LEFT                           : GLenum = 0x0406
+let GL_RIGHT                          : GLenum = 0x0407
+let GL_FRONT_AND_BACK                 : GLenum = 0x0408
+let GL_AUX0                           : GLenum = 0x0409
+let GL_AUX1                           : GLenum = 0x040A
+let GL_AUX2                           : GLenum = 0x040B
+let GL_AUX3                           : GLenum = 0x040C
+
+/* ErrorCode */
+let GL_NO_ERROR                       : GLenum = 0
+let GL_INVALID_ENUM                   : GLenum = 0x0500
+let GL_INVALID_VALUE                  : GLenum = 0x0501
+let GL_INVALID_OPERATION              : GLenum = 0x0502
+let GL_STACK_OVERFLOW                 : GLenum = 0x0503
+let GL_STACK_UNDERFLOW                : GLenum = 0x0504
+let GL_OUT_OF_MEMORY                  : GLenum = 0x0505
+
+/* FeedBackMode */
+let GL_2D                             : GLenum = 0x0600
+let GL_3D                             : GLenum = 0x0601
+let GL_3D_COLOR                       : GLenum = 0x0602
+let GL_3D_COLOR_TEXTURE               : GLenum = 0x0603
+let GL_4D_COLOR_TEXTURE               : GLenum = 0x0604
+
+/* FeedBackToken */
+let GL_PASS_THROUGH_TOKEN             : GLenum = 0x0700
+let GL_POINT_TOKEN                    : GLenum = 0x0701
+let GL_LINE_TOKEN                     : GLenum = 0x0702
+let GL_POLYGON_TOKEN                  : GLenum = 0x0703
+let GL_BITMAP_TOKEN                   : GLenum = 0x0704
+let GL_DRAW_PIXEL_TOKEN               : GLenum = 0x0705
+let GL_COPY_PIXEL_TOKEN               : GLenum = 0x0706
+let GL_LINE_RESET_TOKEN               : GLenum = 0x0707
+
+/* FogMode */
+/*      GL_LINEAR */
+let GL_EXP                            : GLenum = 0x0800
+let GL_EXP2                           : GLenum = 0x0801
+
+/* FrontFaceDirection */
+let GL_CW                             : GLenum = 0x0900
+let GL_CCW                            : GLenum = 0x0901
+
+/* GetMapTarget */
+let GL_COEFF                          : GLenum = 0x0A00
+let GL_ORDER                          : GLenum = 0x0A01
+let GL_DOMAIN                         : GLenum = 0x0A02
+
+/* GetTarget */
+let GL_CURRENT_COLOR                  : GLenum = 0x0B00
+let GL_CURRENT_INDEX                  : GLenum = 0x0B01
+let GL_CURRENT_NORMAL                 : GLenum = 0x0B02
+let GL_CURRENT_TEXTURE_COORDS         : GLenum = 0x0B03
+let GL_CURRENT_RASTER_COLOR           : GLenum = 0x0B04
+let GL_CURRENT_RASTER_INDEX           : GLenum = 0x0B05
+let GL_CURRENT_RASTER_TEXTURE_COORDS  : GLenum = 0x0B06
+let GL_CURRENT_RASTER_POSITION        : GLenum = 0x0B07
+let GL_CURRENT_RASTER_POSITION_VALID  : GLenum = 0x0B08
+let GL_CURRENT_RASTER_DISTANCE        : GLenum = 0x0B09
+let GL_POINT_SMOOTH                   : GLenum = 0x0B10
+let GL_POINT_SIZE                     : GLenum = 0x0B11
+let GL_POINT_SIZE_RANGE               : GLenum = 0x0B12
+let GL_POINT_SIZE_GRANULARITY         : GLenum = 0x0B13
+let GL_LINE_SMOOTH                    : GLenum = 0x0B20
+let GL_LINE_WIDTH                     : GLenum = 0x0B21
+let GL_LINE_WIDTH_RANGE               : GLenum = 0x0B22
+let GL_LINE_WIDTH_GRANULARITY         : GLenum = 0x0B23
+let GL_LINE_STIPPLE                   : GLenum = 0x0B24
+let GL_LINE_STIPPLE_PATTERN           : GLenum = 0x0B25
+let GL_LINE_STIPPLE_REPEAT            : GLenum = 0x0B26
+let GL_LIST_MODE                      : GLenum = 0x0B30
+let GL_MAX_LIST_NESTING               : GLenum = 0x0B31
+let GL_LIST_BASE                      : GLenum = 0x0B32
+let GL_LIST_INDEX                     : GLenum = 0x0B33
+let GL_POLYGON_MODE                   : GLenum = 0x0B40
+let GL_POLYGON_SMOOTH                 : GLenum = 0x0B41
+let GL_POLYGON_STIPPLE                : GLenum = 0x0B42
+let GL_EDGE_FLAG                      : GLenum = 0x0B43
+let GL_CULL_FACE                      : GLenum = 0x0B44
+let GL_CULL_FACE_MODE                 : GLenum = 0x0B45
+let GL_FRONT_FACE                     : GLenum = 0x0B46
+let GL_LIGHTING                       : GLenum = 0x0B50
+let GL_LIGHT_MODEL_LOCAL_VIEWER       : GLenum = 0x0B51
+let GL_LIGHT_MODEL_TWO_SIDE           : GLenum = 0x0B52
+let GL_LIGHT_MODEL_AMBIENT            : GLenum = 0x0B53
+let GL_SHADE_MODEL                    : GLenum = 0x0B54
+let GL_COLOR_MATERIAL_FACE            : GLenum = 0x0B55
+let GL_COLOR_MATERIAL_PARAMETER       : GLenum = 0x0B56
+let GL_COLOR_MATERIAL                 : GLenum = 0x0B57
+let GL_FOG                            : GLenum = 0x0B60
+let GL_FOG_INDEX                      : GLenum = 0x0B61
+let GL_FOG_DENSITY                    : GLenum = 0x0B62
+let GL_FOG_START                      : GLenum = 0x0B63
+let GL_FOG_END                        : GLenum = 0x0B64
+let GL_FOG_MODE                       : GLenum = 0x0B65
+let GL_FOG_COLOR                      : GLenum = 0x0B66
+let GL_DEPTH_RANGE                    : GLenum = 0x0B70
+let GL_DEPTH_TEST                     : GLenum = 0x0B71
+let GL_DEPTH_WRITEMASK                : GLenum = 0x0B72
+let GL_DEPTH_CLEAR_VALUE              : GLenum = 0x0B73
+let GL_DEPTH_FUNC                     : GLenum = 0x0B74
+let GL_ACCUM_CLEAR_VALUE              : GLenum = 0x0B80
+let GL_STENCIL_TEST                   : GLenum = 0x0B90
+let GL_STENCIL_CLEAR_VALUE            : GLenum = 0x0B91
+let GL_STENCIL_FUNC                   : GLenum = 0x0B92
+let GL_STENCIL_VALUE_MASK             : GLenum = 0x0B93
+let GL_STENCIL_FAIL                   : GLenum = 0x0B94
+let GL_STENCIL_PASS_DEPTH_FAIL        : GLenum = 0x0B95
+let GL_STENCIL_PASS_DEPTH_PASS        : GLenum = 0x0B96
+let GL_STENCIL_REF                    : GLenum = 0x0B97
+let GL_STENCIL_WRITEMASK              : GLenum = 0x0B98
+let GL_MATRIX_MODE                    : GLenum = 0x0BA0
+let GL_NORMALIZE                      : GLenum = 0x0BA1
+let GL_VIEWPORT                       : GLenum = 0x0BA2
+let GL_MODELVIEW_STACK_DEPTH          : GLenum = 0x0BA3
+let GL_PROJECTION_STACK_DEPTH         : GLenum = 0x0BA4
+let GL_TEXTURE_STACK_DEPTH            : GLenum = 0x0BA5
+let GL_MODELVIEW_MATRIX               : GLenum = 0x0BA6
+let GL_PROJECTION_MATRIX              : GLenum = 0x0BA7
+let GL_TEXTURE_MATRIX                 : GLenum = 0x0BA8
+let GL_ATTRIB_STACK_DEPTH             : GLenum = 0x0BB0
+let GL_CLIENT_ATTRIB_STACK_DEPTH      : GLenum = 0x0BB1
+let GL_ALPHA_TEST                     : GLenum = 0x0BC0
+let GL_ALPHA_TEST_FUNC                : GLenum = 0x0BC1
+let GL_ALPHA_TEST_REF                 : GLenum = 0x0BC2
+let GL_DITHER                         : GLenum = 0x0BD0
+let GL_BLEND_DST                      : GLenum = 0x0BE0
+let GL_BLEND_SRC                      : GLenum = 0x0BE1
+let GL_BLEND                          : GLenum = 0x0BE2
+let GL_LOGIC_OP_MODE                  : GLenum = 0x0BF0
+let GL_INDEX_LOGIC_OP                 : GLenum = 0x0BF1
+let GL_COLOR_LOGIC_OP                 : GLenum = 0x0BF2
+let GL_AUX_BUFFERS                    : GLenum = 0x0C00
+let GL_DRAW_BUFFER                    : GLenum = 0x0C01
+let GL_READ_BUFFER                    : GLenum = 0x0C02
+let GL_SCISSOR_BOX                    : GLenum = 0x0C10
+let GL_SCISSOR_TEST                   : GLenum = 0x0C11
+let GL_INDEX_CLEAR_VALUE              : GLenum = 0x0C20
+let GL_INDEX_WRITEMASK                : GLenum = 0x0C21
+let GL_COLOR_CLEAR_VALUE              : GLenum = 0x0C22
+let GL_COLOR_WRITEMASK                : GLenum = 0x0C23
+let GL_INDEX_MODE                     : GLenum = 0x0C30
+let GL_RGBA_MODE                      : GLenum = 0x0C31
+let GL_DOUBLEBUFFER                   : GLenum = 0x0C32
+let GL_STEREO                         : GLenum = 0x0C33
+let GL_RENDER_MODE                    : GLenum = 0x0C40
+let GL_PERSPECTIVE_CORRECTION_HINT    : GLenum = 0x0C50
+let GL_POINT_SMOOTH_HINT              : GLenum = 0x0C51
+let GL_LINE_SMOOTH_HINT               : GLenum = 0x0C52
+let GL_POLYGON_SMOOTH_HINT            : GLenum = 0x0C53
+let GL_FOG_HINT                       : GLenum = 0x0C54
+let GL_TEXTURE_GEN_S                  : GLenum = 0x0C60
+let GL_TEXTURE_GEN_T                  : GLenum = 0x0C61
+let GL_TEXTURE_GEN_R                  : GLenum = 0x0C62
+let GL_TEXTURE_GEN_Q                  : GLenum = 0x0C63
+let GL_PIXEL_MAP_I_TO_I               : GLenum = 0x0C70
+let GL_PIXEL_MAP_S_TO_S               : GLenum = 0x0C71
+let GL_PIXEL_MAP_I_TO_R               : GLenum = 0x0C72
+let GL_PIXEL_MAP_I_TO_G               : GLenum = 0x0C73
+let GL_PIXEL_MAP_I_TO_B               : GLenum = 0x0C74
+let GL_PIXEL_MAP_I_TO_A               : GLenum = 0x0C75
+let GL_PIXEL_MAP_R_TO_R               : GLenum = 0x0C76
+let GL_PIXEL_MAP_G_TO_G               : GLenum = 0x0C77
+let GL_PIXEL_MAP_B_TO_B               : GLenum = 0x0C78
+let GL_PIXEL_MAP_A_TO_A               : GLenum = 0x0C79
+let GL_PIXEL_MAP_I_TO_I_SIZE          : GLenum = 0x0CB0
+let GL_PIXEL_MAP_S_TO_S_SIZE          : GLenum = 0x0CB1
+let GL_PIXEL_MAP_I_TO_R_SIZE          : GLenum = 0x0CB2
+let GL_PIXEL_MAP_I_TO_G_SIZE          : GLenum = 0x0CB3
+let GL_PIXEL_MAP_I_TO_B_SIZE          : GLenum = 0x0CB4
+let GL_PIXEL_MAP_I_TO_A_SIZE          : GLenum = 0x0CB5
+let GL_PIXEL_MAP_R_TO_R_SIZE          : GLenum = 0x0CB6
+let GL_PIXEL_MAP_G_TO_G_SIZE          : GLenum = 0x0CB7
+let GL_PIXEL_MAP_B_TO_B_SIZE          : GLenum = 0x0CB8
+let GL_PIXEL_MAP_A_TO_A_SIZE          : GLenum = 0x0CB9
+let GL_UNPACK_SWAP_BYTES              : GLenum = 0x0CF0
+let GL_UNPACK_LSB_FIRST               : GLenum = 0x0CF1
+let GL_UNPACK_ROW_LENGTH              : GLenum = 0x0CF2
+let GL_UNPACK_SKIP_ROWS               : GLenum = 0x0CF3
+let GL_UNPACK_SKIP_PIXELS             : GLenum = 0x0CF4
+let GL_UNPACK_ALIGNMENT               : GLenum = 0x0CF5
+let GL_PACK_SWAP_BYTES                : GLenum = 0x0D00
+let GL_PACK_LSB_FIRST                 : GLenum = 0x0D01
+let GL_PACK_ROW_LENGTH                : GLenum = 0x0D02
+let GL_PACK_SKIP_ROWS                 : GLenum = 0x0D03
+let GL_PACK_SKIP_PIXELS               : GLenum = 0x0D04
+let GL_PACK_ALIGNMENT                 : GLenum = 0x0D05
+let GL_MAP_COLOR                      : GLenum = 0x0D10
+let GL_MAP_STENCIL                    : GLenum = 0x0D11
+let GL_INDEX_SHIFT                    : GLenum = 0x0D12
+let GL_INDEX_OFFSET                   : GLenum = 0x0D13
+let GL_RED_SCALE                      : GLenum = 0x0D14
+let GL_RED_BIAS                       : GLenum = 0x0D15
+let GL_ZOOM_X                         : GLenum = 0x0D16
+let GL_ZOOM_Y                         : GLenum = 0x0D17
+let GL_GREEN_SCALE                    : GLenum = 0x0D18
+let GL_GREEN_BIAS                     : GLenum = 0x0D19
+let GL_BLUE_SCALE                     : GLenum = 0x0D1A
+let GL_BLUE_BIAS                      : GLenum = 0x0D1B
+let GL_ALPHA_SCALE                    : GLenum = 0x0D1C
+let GL_ALPHA_BIAS                     : GLenum = 0x0D1D
+let GL_DEPTH_SCALE                    : GLenum = 0x0D1E
+let GL_DEPTH_BIAS                     : GLenum = 0x0D1F
+let GL_MAX_EVAL_ORDER                 : GLenum = 0x0D30
+let GL_MAX_LIGHTS                     : GLenum = 0x0D31
+let GL_MAX_CLIP_PLANES                : GLenum = 0x0D32
+let GL_MAX_TEXTURE_SIZE               : GLenum = 0x0D33
+let GL_MAX_PIXEL_MAP_TABLE            : GLenum = 0x0D34
+let GL_MAX_ATTRIB_STACK_DEPTH         : GLenum = 0x0D35
+let GL_MAX_MODELVIEW_STACK_DEPTH      : GLenum = 0x0D36
+let GL_MAX_NAME_STACK_DEPTH           : GLenum = 0x0D37
+let GL_MAX_PROJECTION_STACK_DEPTH     : GLenum = 0x0D38
+let GL_MAX_TEXTURE_STACK_DEPTH        : GLenum = 0x0D39
+let GL_MAX_VIEWPORT_DIMS              : GLenum = 0x0D3A
+let GL_MAX_CLIENT_ATTRIB_STACK_DEPTH  : GLenum = 0x0D3B
+let GL_SUBPIXEL_BITS                  : GLenum = 0x0D50
+let GL_INDEX_BITS                     : GLenum = 0x0D51
+let GL_RED_BITS                       : GLenum = 0x0D52
+let GL_GREEN_BITS                     : GLenum = 0x0D53
+let GL_BLUE_BITS                      : GLenum = 0x0D54
+let GL_ALPHA_BITS                     : GLenum = 0x0D55
+let GL_DEPTH_BITS                     : GLenum = 0x0D56
+let GL_STENCIL_BITS                   : GLenum = 0x0D57
+let GL_ACCUM_RED_BITS                 : GLenum = 0x0D58
+let GL_ACCUM_GREEN_BITS               : GLenum = 0x0D59
+let GL_ACCUM_BLUE_BITS                : GLenum = 0x0D5A
+let GL_ACCUM_ALPHA_BITS               : GLenum = 0x0D5B
+let GL_NAME_STACK_DEPTH               : GLenum = 0x0D70
+let GL_AUTO_NORMAL                    : GLenum = 0x0D80
+let GL_MAP1_COLOR_4                   : GLenum = 0x0D90
+let GL_MAP1_INDEX                     : GLenum = 0x0D91
+let GL_MAP1_NORMAL                    : GLenum = 0x0D92
+let GL_MAP1_TEXTURE_COORD_1           : GLenum = 0x0D93
+let GL_MAP1_TEXTURE_COORD_2           : GLenum = 0x0D94
+let GL_MAP1_TEXTURE_COORD_3           : GLenum = 0x0D95
+let GL_MAP1_TEXTURE_COORD_4           : GLenum = 0x0D96
+let GL_MAP1_VERTEX_3                  : GLenum = 0x0D97
+let GL_MAP1_VERTEX_4                  : GLenum = 0x0D98
+let GL_MAP2_COLOR_4                   : GLenum = 0x0DB0
+let GL_MAP2_INDEX                     : GLenum = 0x0DB1
+let GL_MAP2_NORMAL                    : GLenum = 0x0DB2
+let GL_MAP2_TEXTURE_COORD_1           : GLenum = 0x0DB3
+let GL_MAP2_TEXTURE_COORD_2           : GLenum = 0x0DB4
+let GL_MAP2_TEXTURE_COORD_3           : GLenum = 0x0DB5
+let GL_MAP2_TEXTURE_COORD_4           : GLenum = 0x0DB6
+let GL_MAP2_VERTEX_3                  : GLenum = 0x0DB7
+let GL_MAP2_VERTEX_4                  : GLenum = 0x0DB8
+let GL_MAP1_GRID_DOMAIN               : GLenum = 0x0DD0
+let GL_MAP1_GRID_SEGMENTS             : GLenum = 0x0DD1
+let GL_MAP2_GRID_DOMAIN               : GLenum = 0x0DD2
+let GL_MAP2_GRID_SEGMENTS             : GLenum = 0x0DD3
+let GL_TEXTURE_1D                     : GLenum = 0x0DE0
+let GL_TEXTURE_2D                     : GLenum = 0x0DE1
+let GL_FEEDBACK_BUFFER_POINTER        : GLenum = 0x0DF0
+let GL_FEEDBACK_BUFFER_SIZE           : GLenum = 0x0DF1
+let GL_FEEDBACK_BUFFER_TYPE           : GLenum = 0x0DF2
+let GL_SELECTION_BUFFER_POINTER       : GLenum = 0x0DF3
+let GL_SELECTION_BUFFER_SIZE          : GLenum = 0x0DF4
+
+/* GetTextureParameter */
+let GL_TEXTURE_WIDTH                  : GLenum = 0x1000
+let GL_TEXTURE_HEIGHT                 : GLenum = 0x1001
+let GL_TEXTURE_INTERNAL_FORMAT        : GLenum = 0x1003
+let GL_TEXTURE_BORDER_COLOR           : GLenum = 0x1004
+let GL_TEXTURE_BORDER                 : GLenum = 0x1005
+
+/* HintMode */
+let GL_DONT_CARE                      : GLenum = 0x1100
+let GL_FASTEST                        : GLenum = 0x1101
+let GL_NICEST                         : GLenum = 0x1102
+
+/* LightName */
+let GL_LIGHT0                         : GLenum = 0x4000
+let GL_LIGHT1                         : GLenum = 0x4001
+let GL_LIGHT2                         : GLenum = 0x4002
+let GL_LIGHT3                         : GLenum = 0x4003
+let GL_LIGHT4                         : GLenum = 0x4004
+let GL_LIGHT5                         : GLenum = 0x4005
+let GL_LIGHT6                         : GLenum = 0x4006
+let GL_LIGHT7                         : GLenum = 0x4007
+
+/* LightParameter */
+let GL_AMBIENT                        : GLenum = 0x1200
+let GL_DIFFUSE                        : GLenum = 0x1201
+let GL_SPECULAR                       : GLenum = 0x1202
+let GL_POSITION                       : GLenum = 0x1203
+let GL_SPOT_DIRECTION                 : GLenum = 0x1204
+let GL_SPOT_EXPONENT                  : GLenum = 0x1205
+let GL_SPOT_CUTOFF                    : GLenum = 0x1206
+let GL_CONSTANT_ATTENUATION           : GLenum = 0x1207
+let GL_LINEAR_ATTENUATION             : GLenum = 0x1208
+let GL_QUADRATIC_ATTENUATION          : GLenum = 0x1209
+
+/* ListMode */
+let GL_COMPILE                        : GLenum = 0x1300
+let GL_COMPILE_AND_EXECUTE            : GLenum = 0x1301
+
+/* LogicOp */
+let GL_CLEAR                          : GLenum = 0x1500
+let GL_AND                            : GLenum = 0x1501
+let GL_AND_REVERSE                    : GLenum = 0x1502
+let GL_COPY                           : GLenum = 0x1503
+let GL_AND_INVERTED                   : GLenum = 0x1504
+let GL_NOOP                           : GLenum = 0x1505
+let GL_XOR                            : GLenum = 0x1506
+let GL_OR                             : GLenum = 0x1507
+let GL_NOR                            : GLenum = 0x1508
+let GL_EQUIV                          : GLenum = 0x1509
+let GL_INVERT                         : GLenum = 0x150A
+let GL_OR_REVERSE                     : GLenum = 0x150B
+let GL_COPY_INVERTED                  : GLenum = 0x150C
+let GL_OR_INVERTED                    : GLenum = 0x150D
+let GL_NAND                           : GLenum = 0x150E
+let GL_SET                            : GLenum = 0x150F
+
+/* MaterialParameter */
+let GL_EMISSION                       : GLenum = 0x1600
+let GL_SHININESS                      : GLenum = 0x1601
+let GL_AMBIENT_AND_DIFFUSE            : GLenum = 0x1602
+let GL_COLOR_INDEXES                  : GLenum = 0x1603
+
+/* MatrixMode */
+let GL_MODELVIEW                      : GLenum = 0x1700
+let GL_PROJECTION                     : GLenum = 0x1701
+let GL_TEXTURE                        : GLenum = 0x1702
+
+/* PixelCopyType */
+let GL_COLOR                          : GLenum = 0x1800
+let GL_DEPTH                          : GLenum = 0x1801
+let GL_STENCIL                        : GLenum = 0x1802
+
+/* PixelFormat */
+let GL_COLOR_INDEX                    : GLenum = 0x1900
+let GL_STENCIL_INDEX                  : GLenum = 0x1901
+let GL_DEPTH_COMPONENT                : GLenum = 0x1902
+let GL_RED                            : GLenum = 0x1903
+let GL_GREEN                          : GLenum = 0x1904
+let GL_BLUE                           : GLenum = 0x1905
+let GL_ALPHA                          : GLenum = 0x1906
+let GL_RGB                            : GLenum = 0x1907
+let GL_RGBA                           : GLenum = 0x1908
+let GL_LUMINANCE                      : GLenum = 0x1909
+let GL_LUMINANCE_ALPHA                : GLenum = 0x190A
+
+/* PixelType */
+let GL_BITMAP                         : GLenum = 0x1A00
+
+/* PolygonMode */
+let GL_POINT                          : GLenum = 0x1B00
+let GL_LINE                           : GLenum = 0x1B01
+let GL_FILL                           : GLenum = 0x1B02
+
+/* RenderingMode */
+let GL_RENDER                         : GLenum = 0x1C00
+let GL_FEEDBACK                       : GLenum = 0x1C01
+let GL_SELECT                         : GLenum = 0x1C02
+
+/* ShadingModel */
+let GL_FLAT                           : GLenum = 0x1D00
+let GL_SMOOTH                         : GLenum = 0x1D01
+
+/* StencilOp */
+let GL_KEEP                           : GLenum = 0x1E00
+let GL_REPLACE                        : GLenum = 0x1E01
+let GL_INCR                           : GLenum = 0x1E02
+let GL_DECR                           : GLenum = 0x1E03
+
+/* StringName */
+let GL_VENDOR                         : GLenum = 0x1F00
+let GL_RENDERER                       : GLenum = 0x1F01
+let GL_VERSION                        : GLenum = 0x1F02
+let GL_EXTENSIONS                     : GLenum = 0x1F03
+
+/* TextureCoordName */
+let GL_S                              : GLenum = 0x2000
+let GL_T                              : GLenum = 0x2001
+let GL_R                              : GLenum = 0x2002
+let GL_Q                              : GLenum = 0x2003
+
+/* TextureEnvMode */
+let GL_MODULATE                       : GLenum = 0x2100
+let GL_DECAL                          : GLenum = 0x2101
+
+/* TextureEnvParameter */
+let GL_TEXTURE_ENV_MODE               : GLenum = 0x2200
+let GL_TEXTURE_ENV_COLOR              : GLenum = 0x2201
+
+/* TextureEnvTarget */
+let GL_TEXTURE_ENV                    : GLenum = 0x2300
+
+/* TextureGenMode */
+let GL_EYE_LINEAR                     : GLenum = 0x2400
+let GL_OBJECT_LINEAR                  : GLenum = 0x2401
+let GL_SPHERE_MAP                     : GLenum = 0x2402
+
+/* TextureGenParameter */
+let GL_TEXTURE_GEN_MODE               : GLenum = 0x2500
+let GL_OBJECT_PLANE                   : GLenum = 0x2501
+let GL_EYE_PLANE                      : GLenum = 0x2502
+
+/* TextureMagFilter */
+let GL_NEAREST                        : GLenum = 0x2600
+let GL_LINEAR                         : GLenum = 0x2601
+
+/* TextureMinFilter */
+let GL_NEAREST_MIPMAP_NEAREST         : GLenum = 0x2700
+let GL_LINEAR_MIPMAP_NEAREST          : GLenum = 0x2701
+let GL_NEAREST_MIPMAP_LINEAR          : GLenum = 0x2702
+let GL_LINEAR_MIPMAP_LINEAR           : GLenum = 0x2703
+
+/* TextureParameterName */
+let GL_TEXTURE_MAG_FILTER             : GLenum = 0x2800
+let GL_TEXTURE_MIN_FILTER             : GLenum = 0x2801
+let GL_TEXTURE_WRAP_S                 : GLenum = 0x2802
+let GL_TEXTURE_WRAP_T                 : GLenum = 0x2803
+
+/* TextureWrapMode */
+let GL_CLAMP                          : GLenum = 0x2900
+let GL_REPEAT                         : GLenum = 0x2901
+
+/* ClientAttribMask */
+let GL_CLIENT_PIXEL_STORE_BIT         : GLenum = 0x00000001
+let GL_CLIENT_VERTEX_ARRAY_BIT        : GLenum = 0x00000002
+let GL_CLIENT_ALL_ATTRIB_BITS         : GLenum = 0xffffffff
+
+/* polygon_offset */
+let GL_POLYGON_OFFSET_FACTOR          : GLenum = 0x8038
+let GL_POLYGON_OFFSET_UNITS           : GLenum = 0x2A00
+let GL_POLYGON_OFFSET_POINT           : GLenum = 0x2A01
+let GL_POLYGON_OFFSET_LINE            : GLenum = 0x2A02
+let GL_POLYGON_OFFSET_FILL            : GLenum = 0x8037
+
+/* texture */
+let GL_ALPHA4                         : GLenum = 0x803B
+let GL_ALPHA8                         : GLenum = 0x803C
+let GL_ALPHA12                        : GLenum = 0x803D
+let GL_ALPHA16                        : GLenum = 0x803E
+let GL_LUMINANCE4                     : GLenum = 0x803F
+let GL_LUMINANCE8                     : GLenum = 0x8040
+let GL_LUMINANCE12                    : GLenum = 0x8041
+let GL_LUMINANCE16                    : GLenum = 0x8042
+let GL_LUMINANCE4_ALPHA4              : GLenum = 0x8043
+let GL_LUMINANCE6_ALPHA2              : GLenum = 0x8044
+let GL_LUMINANCE8_ALPHA8              : GLenum = 0x8045
+let GL_LUMINANCE12_ALPHA4             : GLenum = 0x8046
+let GL_LUMINANCE12_ALPHA12            : GLenum = 0x8047
+let GL_LUMINANCE16_ALPHA16            : GLenum = 0x8048
+let GL_INTENSITY                      : GLenum = 0x8049
+let GL_INTENSITY4                     : GLenum = 0x804A
+let GL_INTENSITY8                     : GLenum = 0x804B
+let GL_INTENSITY12                    : GLenum = 0x804C
+let GL_INTENSITY16                    : GLenum = 0x804D
+let GL_R3_G3_B2                       : GLenum = 0x2A10
+let GL_RGB4                           : GLenum = 0x804F
+let GL_RGB5                           : GLenum = 0x8050
+let GL_RGB8                           : GLenum = 0x8051
+let GL_RGB10                          : GLenum = 0x8052
+let GL_RGB12                          : GLenum = 0x8053
+let GL_RGB16                          : GLenum = 0x8054
+let GL_RGBA2                          : GLenum = 0x8055
+let GL_RGBA4                          : GLenum = 0x8056
+let GL_RGB5_A1                        : GLenum = 0x8057
+let GL_RGBA8                          : GLenum = 0x8058
+let GL_RGB10_A2                       : GLenum = 0x8059
+let GL_RGBA12                         : GLenum = 0x805A
+let GL_RGBA16                         : GLenum = 0x805B
+let GL_TEXTURE_RED_SIZE               : GLenum = 0x805C
+let GL_TEXTURE_GREEN_SIZE             : GLenum = 0x805D
+let GL_TEXTURE_BLUE_SIZE              : GLenum = 0x805E
+let GL_TEXTURE_ALPHA_SIZE             : GLenum = 0x805F
+let GL_TEXTURE_LUMINANCE_SIZE         : GLenum = 0x8060
+let GL_TEXTURE_INTENSITY_SIZE         : GLenum = 0x8061
+let GL_PROXY_TEXTURE_1D               : GLenum = 0x8063
+let GL_PROXY_TEXTURE_2D               : GLenum = 0x8064
+
+/* texture_object */
+let GL_TEXTURE_PRIORITY               : GLenum = 0x8066
+let GL_TEXTURE_RESIDENT               : GLenum = 0x8067
+let GL_TEXTURE_BINDING_1D             : GLenum = 0x8068
+let GL_TEXTURE_BINDING_2D             : GLenum = 0x8069
+
+/* vertex_array */
+let GL_VERTEX_ARRAY                   : GLenum = 0x8074
+let GL_NORMAL_ARRAY                   : GLenum = 0x8075
+let GL_COLOR_ARRAY                    : GLenum = 0x8076
+let GL_INDEX_ARRAY                    : GLenum = 0x8077
+let GL_TEXTURE_COORD_ARRAY            : GLenum = 0x8078
+let GL_EDGE_FLAG_ARRAY                : GLenum = 0x8079
+let GL_VERTEX_ARRAY_SIZE              : GLenum = 0x807A
+let GL_VERTEX_ARRAY_TYPE              : GLenum = 0x807B
+let GL_VERTEX_ARRAY_STRIDE            : GLenum = 0x807C
+let GL_NORMAL_ARRAY_TYPE              : GLenum = 0x807E
+let GL_NORMAL_ARRAY_STRIDE            : GLenum = 0x807F
+let GL_COLOR_ARRAY_SIZE               : GLenum = 0x8081
+let GL_COLOR_ARRAY_TYPE               : GLenum = 0x8082
+let GL_COLOR_ARRAY_STRIDE             : GLenum = 0x8083
+let GL_INDEX_ARRAY_TYPE               : GLenum = 0x8085
+let GL_INDEX_ARRAY_STRIDE             : GLenum = 0x8086
+let GL_TEXTURE_COORD_ARRAY_SIZE       : GLenum = 0x8088
+let GL_TEXTURE_COORD_ARRAY_TYPE       : GLenum = 0x8089
+let GL_TEXTURE_COORD_ARRAY_STRIDE     : GLenum = 0x808A
+let GL_EDGE_FLAG_ARRAY_STRIDE         : GLenum = 0x808C
+let GL_VERTEX_ARRAY_POINTER           : GLenum = 0x808E
+let GL_NORMAL_ARRAY_POINTER           : GLenum = 0x808F
+let GL_COLOR_ARRAY_POINTER            : GLenum = 0x8090
+let GL_INDEX_ARRAY_POINTER            : GLenum = 0x8091
+let GL_TEXTURE_COORD_ARRAY_POINTER    : GLenum = 0x8092
+let GL_EDGE_FLAG_ARRAY_POINTER        : GLenum = 0x8093
+let GL_V2F                            : GLenum = 0x2A20
+let GL_V3F                            : GLenum = 0x2A21
+let GL_C4UB_V2F                       : GLenum = 0x2A22
+let GL_C4UB_V3F                       : GLenum = 0x2A23
+let GL_C3F_V3F                        : GLenum = 0x2A24
+let GL_N3F_V3F                        : GLenum = 0x2A25
+let GL_C4F_N3F_V3F                    : GLenum = 0x2A26
+let GL_T2F_V3F                        : GLenum = 0x2A27
+let GL_T4F_V4F                        : GLenum = 0x2A28
+let GL_T2F_C4UB_V3F                   : GLenum = 0x2A29
+let GL_T2F_C3F_V3F                    : GLenum = 0x2A2A
+let GL_T2F_N3F_V3F                    : GLenum = 0x2A2B
+let GL_T2F_C4F_N3F_V3F                : GLenum = 0x2A2C
+let GL_T4F_C4F_N3F_V4F                : GLenum = 0x2A2D
+
+/* Extensions */
+let GL_EXT_vertex_array               : GLenum = 1
+let GL_EXT_bgra                       : GLenum = 1
+let GL_EXT_paletted_texture           : GLenum = 1
+let GL_WIN_swap_hint                  : GLenum = 1
+let GL_WIN_draw_range_elements        : GLenum = 1
+
+/* EXT_vertex_array */
+let GL_VERTEX_ARRAY_EXT               : GLenum = 0x8074
+let GL_NORMAL_ARRAY_EXT               : GLenum = 0x8075
+let GL_COLOR_ARRAY_EXT                : GLenum = 0x8076
+let GL_INDEX_ARRAY_EXT                : GLenum = 0x8077
+let GL_TEXTURE_COORD_ARRAY_EXT        : GLenum = 0x8078
+let GL_EDGE_FLAG_ARRAY_EXT            : GLenum = 0x8079
+let GL_VERTEX_ARRAY_SIZE_EXT          : GLenum = 0x807A
+let GL_VERTEX_ARRAY_TYPE_EXT          : GLenum = 0x807B
+let GL_VERTEX_ARRAY_STRIDE_EXT        : GLenum = 0x807C
+let GL_VERTEX_ARRAY_COUNT_EXT         : GLenum = 0x807D
+let GL_NORMAL_ARRAY_TYPE_EXT          : GLenum = 0x807E
+let GL_NORMAL_ARRAY_STRIDE_EXT        : GLenum = 0x807F
+let GL_NORMAL_ARRAY_COUNT_EXT         : GLenum = 0x8080
+let GL_COLOR_ARRAY_SIZE_EXT           : GLenum = 0x8081
+let GL_COLOR_ARRAY_TYPE_EXT           : GLenum = 0x8082
+let GL_COLOR_ARRAY_STRIDE_EXT         : GLenum = 0x8083
+let GL_COLOR_ARRAY_COUNT_EXT          : GLenum = 0x8084
+let GL_INDEX_ARRAY_TYPE_EXT           : GLenum = 0x8085
+let GL_INDEX_ARRAY_STRIDE_EXT         : GLenum = 0x8086
+let GL_INDEX_ARRAY_COUNT_EXT          : GLenum = 0x8087
+let GL_TEXTURE_COORD_ARRAY_SIZE_EXT   : GLenum = 0x8088
+let GL_TEXTURE_COORD_ARRAY_TYPE_EXT   : GLenum = 0x8089
+let GL_TEXTURE_COORD_ARRAY_STRIDE_EXT : GLenum = 0x808A
+let GL_TEXTURE_COORD_ARRAY_COUNT_EXT  : GLenum = 0x808B
+let GL_EDGE_FLAG_ARRAY_STRIDE_EXT     : GLenum = 0x808C
+let GL_EDGE_FLAG_ARRAY_COUNT_EXT      : GLenum = 0x808D
+let GL_VERTEX_ARRAY_POINTER_EXT       : GLenum = 0x808E
+let GL_NORMAL_ARRAY_POINTER_EXT       : GLenum = 0x808F
+let GL_COLOR_ARRAY_POINTER_EXT        : GLenum = 0x8090
+let GL_INDEX_ARRAY_POINTER_EXT        : GLenum = 0x8091
+let GL_TEXTURE_COORD_ARRAY_POINTER_EXT : GLenum = 0x8092
+let GL_EDGE_FLAG_ARRAY_POINTER_EXT    : GLenum = 0x8093
+let GL_DOUBLE_EXT                     : GLenum = GL_DOUBLE
+
+/* EXT_bgra */
+let GL_BGR_EXT                        : GLenum = 0x80E0
+let GL_BGRA_EXT                       : GLenum = 0x80E1
+
+/* These must match the GL_COLOR_TABLE_*_SGI enumerants */
+let GL_COLOR_TABLE_FORMAT_EXT         : GLenum = 0x80D8
+let GL_COLOR_TABLE_WIDTH_EXT          : GLenum = 0x80D9
+let GL_COLOR_TABLE_RED_SIZE_EXT       : GLenum = 0x80DA
+let GL_COLOR_TABLE_GREEN_SIZE_EXT     : GLenum = 0x80DB
+let GL_COLOR_TABLE_BLUE_SIZE_EXT      : GLenum = 0x80DC
+let GL_COLOR_TABLE_ALPHA_SIZE_EXT     : GLenum = 0x80DD
+let GL_COLOR_TABLE_LUMINANCE_SIZE_EXT : GLenum = 0x80DE
+let GL_COLOR_TABLE_INTENSITY_SIZE_EXT : GLenum = 0x80DF
+
+let GL_COLOR_INDEX1_EXT               : GLenum = 0x80E2
+let GL_COLOR_INDEX2_EXT               : GLenum = 0x80E3
+let GL_COLOR_INDEX4_EXT               : GLenum = 0x80E4
+let GL_COLOR_INDEX8_EXT               : GLenum = 0x80E5
+let GL_COLOR_INDEX12_EXT              : GLenum = 0x80E6
+let GL_COLOR_INDEX16_EXT              : GLenum = 0x80E7
+
+/* WIN_draw_range_elements */
+let GL_MAX_ELEMENTS_VERTICES_WIN      : GLenum = 0x80E8
+let GL_MAX_ELEMENTS_INDICES_WIN       : GLenum = 0x80E9
+
+/* WIN_phong_shading */
+let GL_PHONG_WIN                      : GLenum = 0x80EA 
+let GL_PHONG_HINT_WIN                 : GLenum = 0x80EB 
+
+/* WIN_specular_fog */
+let GL_FOG_SPECULAR_TEXTURE_WIN       : GLenum = 0x80EC
+
+/* For compatibility with OpenGL v1.0 */
+let GL_LOGIC_OP                         : GLenum = GL_INDEX_LOGIC_OP
+let GL_TEXTURE_COMPONENTS               : GLenum = GL_TEXTURE_INTERNAL_FORMAT

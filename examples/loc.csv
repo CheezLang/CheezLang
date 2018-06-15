@@ -1,13 +1,18 @@
 ﻿File Name,Lines
-io.che,268
-string.che,191
-token.che,154
-lexer.che,146
+opengl_constants.che,651
+opengl_functions.che,339
+io.che,280
+lexer.che,194
+string.che,193
+token.che,153
+opengl_types.che,71
+example_1.che,69
 array.che,68
+glfw3.che,57
+memory.che,32
 main.che,29
 stdio.che,24
-memory.che,24
 windows.che,19
 file.che,15
-example_1.che,6
-Total,944
+opengl.che,4
+Total,2198

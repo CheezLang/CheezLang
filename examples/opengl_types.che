@@ -1,0 +1,81 @@
+// float vectors
+struct Vec2f {
+    x: float
+    y: float
+}
+
+struct Vec3f {
+    x: float
+    y: float
+    z: float
+}
+
+struct Vec4f {
+    x: float
+    y: float
+    z: float
+    w: float
+}
+
+// double vectors
+struct Vec2d {
+    x: double
+    y: double
+}
+
+struct Vec3d {
+    x: double
+    y: double
+    z: double
+}
+
+struct Vec4d {
+    x: double
+    y: double
+    z: double
+    w: double
+}
+
+// colors
+struct Color3f {
+    r: float
+    g: float
+    b: float
+}
+
+struct Color4f {
+    r: float
+    g: float
+    b: float
+    a: float
+}
+
+struct Color3d {
+    r: double
+    g: double
+    b: double
+}
+
+struct Color4d {
+    r: double
+    g: double
+    b: double
+    a: double
+}
+
+//
+let GLenum     = uint
+let GLboolean  = bool
+let GLbitfield = uint
+let GLbyte     = byte
+let GLshort    = short
+let GLint      = int
+let GLsizei    = int
+let GLubyte    = ubyte
+let GLushort   = ushort
+let GLuint     = uint
+let GLfloat    = float
+let GLclampf   = float
+let GLdouble   = double
+let GLclampd   = double
+let GLvoid     = void
