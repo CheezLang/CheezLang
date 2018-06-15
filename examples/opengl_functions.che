@@ -1,5 +1,4 @@
 #load("opengl_types")
-#load("opengl_constants")
 
 //
 fn glAccum(op: GLenum, value: GLfloat) -> void #stdcall;
