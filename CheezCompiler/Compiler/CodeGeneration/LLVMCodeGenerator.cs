@@ -389,7 +389,8 @@ namespace Cheez.Compiler.CodeGeneration
             lldArgs.Add($"/subsystem:{subsystem}");
 
             // runtime
-            lldArgs.Add("cheez-rtd.obj");
+            //lldArgs.Add("cheez-rtd.obj");
+            lldArgs.Add("clang_rt.builtins-i386.lib");
 
             // windows and c libs
             lldArgs.Add("libucrtd.lib");
@@ -1524,7 +1525,15 @@ namespace Cheez.Compiler.CodeGeneration
 
                 var temp = GetTempValue(cast);
 
-                if (cast.SubExpression.Type is StructType @struct)
+                var type = cast.SubExpression.Type;
+
+                if (cast.SubExpression.Type is PointerType ptr)
+                {
+                    type = ptr.TargetType;
+                    sub = LLVM.BuildLoad(data.Builder, sub, "");
+                }
+
+                if (type is StructType @struct)
                 {
                     var vtablePtr = LLVM.BuildStructGEP(data.Builder, temp, 0, "");
                     var vtable = vtableMap[@struct.Declaration];

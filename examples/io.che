@@ -189,10 +189,12 @@ fn Sprintf(buffer: String&, format: string, data: any) {
     defer formatSpecifier.Dispose()
     formatSpecifier.Reserve(5)
 
+
     let len = (ulong)strlen(format)
     let i: ulong = 0
     let state = 0
-
+    // PrintInt(len)
+    // return
     while (i < len) {
         defer i += 1
 

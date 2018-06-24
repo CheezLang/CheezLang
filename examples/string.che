@@ -1,4 +1,3 @@
-#load("memory.che")
 #load("allocator.che")
 
 fn strlen(s: string) -> int {
@@ -92,10 +91,10 @@ impl StringBase($CharType) {
         capacity = size
         if data == null {
             length = 0
-            data = Malloc((uint)capacity)
+            data = allocator.allocate((ulong)capacity, @sizeof(CharType))
         }
         else {
-            data = Realloc(data, (uint)capacity)
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType))
             if length > capacity {
                 length = capacity
             }
@@ -106,10 +105,10 @@ impl StringBase($CharType) {
         length = size
         capacity = size
         if data == null {
-            data = Malloc((uint)capacity)
+            data = allocator.allocate((ulong)capacity, @sizeof(CharType))
         }
         else {
-            data = Realloc(data, (uint)capacity)
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType))
         }
     }
 
@@ -117,7 +116,7 @@ impl StringBase($CharType) {
         if (ulong)data != 0 {
             // @Todo:
             //self.Dispose()
-            Free(data)
+            allocator.free(data)
             data = null
             length = 0
             capacity = 0
@@ -125,7 +124,7 @@ impl StringBase($CharType) {
 
         length = strlen(str)
         capacity = length
-        data = Malloc((uint)capacity)
+        data = allocator.allocate((ulong)capacity, @sizeof(CharType))
 
         if @sizeof(CharType) == 1 {
             memcpy(data, (any&)str, length)
@@ -145,7 +144,7 @@ impl StringBase($CharType) {
 
         if newLength >= capacity {
             capacity = newLength * 2
-            data = Realloc(data, (uint)capacity)
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType))
         }
         
         let end = &data[length]
@@ -162,7 +161,7 @@ impl StringBase($CharType) {
                 
         if newLength >= capacity {
             capacity = newLength * 2
-            data = Realloc(data, (uint)capacity)
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType))
         }
         
         let end = &data[length]
@@ -178,7 +177,7 @@ impl StringBase($CharType) {
                 
         if newLength >= capacity {
             capacity = newLength * 2
-            data = Realloc(data, (uint)capacity)
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType))
         }
         
         let end = &data[length]
@@ -194,7 +193,7 @@ impl StringBase($CharType) {
         
         if newLength >= capacity {
             capacity = newLength * 2
-            data = Realloc(data, (uint)capacity)
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType))
         }
         
         
@@ -227,7 +226,7 @@ impl StringBase($CharType) {
     }
 
     ref fn Dispose() {
-        Free(data)
+        allocator.free(data)
         data = null
         length = 0
     }
@@ -241,7 +240,15 @@ impl StringBase($CharType) {
 
 fn NewString() -> String {
     let t = new String {
-        null, 0, 0
+        null, 0, 0, new StdHeapAllocator {}
+    }
+    t.Reserve(10)
+    return t
+}
+
+fn NewString2(alloc: Allocator) -> String {
+    let t = new String {
+        null, 0, 0, alloc
     }
     t.Reserve(10)
     return t

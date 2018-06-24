@@ -227,7 +227,7 @@ namespace Cheez.Compiler
     {
         private static Dictionary<CheezType, ReferenceType> sTypes = new Dictionary<CheezType, ReferenceType>();
 
-        public CheezType TargetType { get; private set; }
+        public CheezType TargetType { get; set; }
 
         public static ReferenceType GetRefType(CheezType targetType)
         {
@@ -254,7 +254,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return $"{TargetType}&";
+            return $"ref({TargetType})";
         }
 
         public override bool IsPolyType => TargetType.IsPolyType;

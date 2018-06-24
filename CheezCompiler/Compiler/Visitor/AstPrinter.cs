@@ -267,6 +267,17 @@ namespace Cheez.Compiler.Visitor
 
 
         #region Expressions
+        public override string VisitFunctionTypeExpr(AstFunctionTypeExpr func, int data = 0)
+        {
+            var args = string.Join(", ", func.ParameterTypes.Select(p => p.Accept(this)));
+            return $"fn({args}) -> {func.ReturnType?.Accept(this) ?? "void"}";
+        }
+
+        public override string VisitArrayExpression(AstArrayExpression arr, int data = 0)
+        {
+            var vals = string.Join(", ", arr.Values.Select(v => v.Accept(this)));
+            return $"[{vals}]";
+        }
 
         public override string VisitTypeExpr(AstTypeExpr astArrayTypeExpr, int data = 0)
         {

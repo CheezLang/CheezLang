@@ -1,17 +1,65 @@
 #load("io.che")
 #load("std_heap_allocator.che")
+#load("counting_allocator.che")
+#load("stack_allocator.che")
+#load("util.che")
+
+fn GetCurrentTimeInMicroseconds() -> ulong {
+    let freq: ulong
+    QueryPerformanceFrequency(&freq)
+
+    let time: ulong
+    QueryPerformanceCounter(&time)
+
+    time *= 1000000
+    time /= freq
+
+    return time
+}
+
+fn GetCurrentTimeInMilliseconds() -> ulong {
+    let freq: ulong
+    QueryPerformanceFrequency(&freq)
+
+    let time: ulong
+    QueryPerformanceCounter(&time)
+
+    time *= 1000000
+    time /= freq
+
+    return time / 1000
+}
+
+fn TimeAllocator(name: string, allocator: Allocator, iterations: int, memorySize: ulong) {
+    let start = GetCurrentTimeInMicroseconds()
+    defer {
+        let end = GetCurrentTimeInMicroseconds()
+        let diff = end - start
+        let ms = diff / 1000
+
+        Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations, {i64} bytes per allocation)`n", [(any)name, ms, iterations, memorySize])
+    }   
+
+    let i = 0
+    while i < iterations {
+        defer i += 1
+
+        let mem = allocator.allocate(memorySize, 1)
+        allocator.free(mem)
+    }
+}
 
 fn Main() {
-    let s: String
-    s.Init(new StdHeapAllocator {})
-    Println(s)
+    let sa = NewStackAllocator(1024)
+    defer sa.Dispose()
 
-    s.AppendString("hi wie gehts?")
-    Println(s)
+    let std = new StdHeapAllocator {}
 
-    Sprintf(&s, " lol, du lappen: {i32}", 123)
-    Println(s)
+    let iterations = 1000000
+    let memSize: ulong = (ulong)1024
 
-    Sprintfn(&s, " ein vector: ({i32}, {i32}, {i32})", [(any)4, 5, 6])
-    Println(s)
+    TimeAllocator("StdHeapAllocator", std, iterations, memSize)
+    TimeAllocator("StackAllocator", sa, iterations, memSize)
+    sa.PrintDiagnostics()
+
 }

@@ -1,0 +1,7 @@
+fn PointerAddSized(ptr: $T&, amount: long) -> T& {
+    return (T&)((long)ptr + amount * @sizeof(T))
+}
+
+fn PointerAdd(ptr: $T&, amount: long) -> T& {
+    return (T&)((long)ptr + amount)
+}

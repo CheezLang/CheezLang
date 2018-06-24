@@ -22,3 +22,6 @@ let __std_err_handle: int = GetStdHandle(-12)
 fn OpenFile(lpFileName: string, lpReOpenBuff: _OFSTRUCT&, uStyle: uint) -> HFILE #stdcall;
 fn CloseHandle(hObject: HANDLE) -> bool #stdcall;
 fn GetFileSize(hObject: HANDLE, lpFileSizeHigh: int&) -> int #stdcall;
+
+fn QueryPerformanceCounter(lpPerformanceCount: ulong&) -> bool #stdcall;
+fn QueryPerformanceFrequency(lpPerformanceCount: ulong&) -> bool #stdcall;

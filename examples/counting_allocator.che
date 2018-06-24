@@ -1,0 +1,64 @@
+#load("allocator.che")
+#load("std_heap_allocator.che")
+
+struct CountingAllocator {
+    parent: Allocator
+    allocated: ulong
+    freed: ulong
+}
+
+fn NewCountingAllocator() -> CountingAllocator {
+    return new CountingAllocator {
+        new StdHeapAllocator {}, 0, 0
+    }
+}
+
+fn NewCountingAllocator2(alloc: Allocator) -> CountingAllocator {
+    return new CountingAllocator {
+        alloc, 0, 0
+    }
+}
+
+impl CountingAllocator {
+    ref fn PrintDiagnostics() {
+        Printfn("( Allocated: {i32}, Freed: {i32} ) `n", [(any)allocated, freed])
+    }
+}
+
+impl Allocator for CountingAllocator {
+    fn allocate(count: ulong, elementSize: ulong) -> any& {
+        let size = count * elementSize
+        allocated += size
+
+        let mem = parent.allocate(size + @sizeof(ulong), 1)
+
+        // store size before allocated memory
+        let sizePtr = (ulong&)mem
+        *sizePtr = size
+
+        return PointerAdd(mem, @sizeof(ulong))
+    }
+
+    fn reallocate(mem: any&, count: ulong, elementSize: ulong) -> any& {
+        let size = count * elementSize
+        let actualMem = PointerAdd(mem, -@sizeof(ulong))
+        
+        {
+            let sizePtr = (ulong&)actualMem
+            allocated += size - *sizePtr
+        }
+
+        mem = parent.reallocate(actualMem, size + @sizeof(ulong), 1)
+
+        let sizePtr = (ulong&)mem
+        *sizePtr = size
+        return PointerAdd(mem, @sizeof(ulong))
+    }
+
+    fn free(mem: any&) {
+        let actualMem = PointerAdd(mem, -@sizeof(ulong))
+        let sizePtr = (ulong&)actualMem
+        freed += *sizePtr
+        parent.free(actualMem)
+    }
+}

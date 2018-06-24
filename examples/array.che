@@ -1,26 +1,36 @@
 #load("memory.che")
+#load("allocator.che")
+#load("std_heap_allocator.che")
 
 struct Array(ElementType: type) {
     data: ElementType&
     length: uint
     capacity: uint
+    allocator: Allocator
+}
+
+fn NewArray() -> Array($T) {
+    let a: Array(T)
+    a.Init()
+    return a
 }
 
 impl Array($ElementType) {
     ref fn Init() {
+        allocator = new StdHeapAllocator{}
         length = 0
         capacity = 10
-        data = Malloc(capacity)
+        data = allocator.allocate((ulong)capacity, @sizeof(ElementType))
     }
     
     ref fn InitSize(size: uint) {
         length = 0
         capacity = size
-        data = Malloc(capacity)
+        data = allocator.allocate((ulong)capacity, @sizeof(ElementType))
     }
 
     ref fn Dispose() {
-        Free(data)
+        allocator.free(data)
     }
 
     ref fn RawData() -> ElementType& {
@@ -32,13 +42,13 @@ impl Array($ElementType) {
             return
         }
         capacity = s
-        data = Realloc(data, capacity)
+        data = allocator.reallocate(data, (ulong)capacity, @sizeof(ElementType))
     }
 
     ref fn Add(val: ElementType) {
         if capacity <= length {
             capacity = capacity * 2
-            data = Realloc(data, capacity)
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(ElementType))
         }
 
         data[length] = val

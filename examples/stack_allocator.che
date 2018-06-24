@@ -1,0 +1,132 @@
+#load("allocator.che")
+#load("std_heap_allocator.che")
+#load("array.che")
+
+struct StackAllocator {
+    parent: Allocator
+
+    memory: byte&
+    capacity: ulong
+    used: ulong
+
+    lastAllocation: byte&
+    lastAllocationSize: ulong
+
+    allocations: Array(ulong)
+}
+
+fn NewStackAllocator(size: ulong) -> StackAllocator {
+    let a = new StackAllocator {
+        parent = new StdHeapAllocator {}
+        memory = null
+        capacity = 0
+        used = 0
+        lastAllocation = null
+        allocations = (Array(ulong))NewArray()
+    }
+    a.Reserve(size)
+    return a
+}
+
+fn NewStackAllocator2(size: ulong, alloc: Allocator) -> StackAllocator {
+    let a = new StackAllocator {
+        parent = alloc
+        memory = null
+        capacity = 0
+        used = 0
+        lastAllocation = null
+        allocations = (Array(ulong))NewArray()
+    }
+    a.Reserve(size)
+    return a
+}
+
+impl StackAllocator {
+    ref fn Reserve(s: ulong) {
+        if s <= capacity {
+            return
+        }
+        capacity = s
+
+        if memory == null {
+            memory = parent.allocate(capacity, @sizeof(byte))
+        }
+        else {
+            memory = parent.reallocate(memory, capacity, @sizeof(byte))
+        }
+    }
+
+    ref fn Clear() {
+        lastAllocation = null
+        lastAllocationSize = 0
+        used = 0
+        allocations.length = 0
+    }
+
+    ref fn Dispose() {
+        parent.free(memory)
+    }
+
+    ref fn PrintDiagnostics() {
+        let i: uint = 0
+
+        let s = NewString()
+        s.AppendString("( [")
+        while i < allocations.length {
+            defer i += 1
+            if i > 0 {
+                s.AppendString(", ")
+            }
+            Sprintf(&s, "{i32}", allocations.Get(i))
+        }
+        Sprintfn(&s, "], Free: {i32}, lastAllocation: {i32}, lastAllocationSize: {i32}", [(any)(capacity - used), PointerAdd(lastAllocation, -(long)memory), lastAllocationSize])
+        s.AppendString(" )")
+        Println(s)
+    }
+}
+
+impl Allocator for StackAllocator {
+    fn allocate(count: ulong, elementSize: ulong) -> any& {
+        let size = count * elementSize
+
+        if used + size > capacity {
+            self.Reserve(2 * (used + size))
+        }
+
+        lastAllocation = PointerAdd(memory, (long)used)
+        lastAllocationSize = size
+        used += size
+        allocations.Add(size)
+        return lastAllocation
+    }
+
+    fn reallocate(mem: any&, count: ulong, elementSize: ulong) -> any& {
+        let size = count * elementSize
+
+        if mem == lastAllocation {
+            Println("foo")
+            
+            let sizeDiff = size - lastAllocationSize
+            if used + sizeDiff > capacity {
+                self.Reserve(2 * (used + sizeDiff))
+            }
+
+            lastAllocationSize = size
+            used += sizeDiff
+            allocations.Set(allocations.length - 1, lastAllocationSize)
+            return mem
+        } else {
+            let newMem = self.allocate(count, elementSize)
+            memcpy(newMem, mem, (int)size)
+            return newMem
+        }
+    }
+
+    fn free(mem: any&) {
+        if mem == lastAllocation {
+            PointerAdd(lastAllocation, -(long)lastAllocationSize)
+            used -= lastAllocationSize
+            allocations.length -= 1
+        }
+    }
+}
