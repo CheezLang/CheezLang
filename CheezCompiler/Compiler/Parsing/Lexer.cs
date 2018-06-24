@@ -85,7 +85,8 @@ namespace Cheez.Compiler.Parsing
         KwDefer,
         KwMatch,
         KwBreak,
-        KwContinue
+        KwContinue,
+        KwTrait
     }
 
     public class TokenLocation
@@ -488,6 +489,7 @@ namespace Cheez.Compiler.Parsing
                 case "match": token.type = TokenType.KwMatch; break;
                 case "break": token.type = TokenType.KwBreak; break;
                 case "continue": token.type = TokenType.KwContinue; break;
+                case "trait": token.type = TokenType.KwTrait; break;
             }
         }
 

@@ -185,6 +185,11 @@ namespace Cheez.Compiler.CodeGeneration
         private Workspace workspace;
 
         private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
+        private Dictionary<object, LLVMValueRef> vtableMap = new Dictionary<object, LLVMValueRef>();
+        //private Dictionary<object, LLVMTypeRef> vtableTypeMap = new Dictionary<object, LLVMTypeRef>();
+        private Dictionary<object, int> vtableIndices = new Dictionary<object, int>();
+
+        private LLVMTypeRef vtableType;
 
         private LLVMValueRef currentFunction;
 
@@ -206,6 +211,9 @@ namespace Cheez.Compiler.CodeGeneration
             // <arch><sub>-<vendor>-<sys>-<abi>
             LLVM.SetTarget(module, targetTriple);
 
+            // generate vtable
+            GenerateVTables();
+
             // generate all types
             GenerateAllTypes();
 
@@ -214,7 +222,11 @@ namespace Cheez.Compiler.CodeGeneration
 
             // generate functions
             GenerateFunctions();
+
             GenerateMainFunction();
+
+            // set vtable values
+            SetVTables();
 
             // verify module
             {
@@ -459,6 +471,27 @@ namespace Cheez.Compiler.CodeGeneration
                 {
                     Builder = builder
                 };
+                
+                //foreach (var str in workspace.GlobalScope.TypeDeclarations)
+                //{
+                //    if (str is AstStructDecl @struct && @struct.Traits.Count > 0)
+                //    {
+                //        var vtable = vtableMap[@struct];
+                //        foreach (var impl in @struct.Implementations)
+                //        {
+                //            foreach (var func in impl.FunctionInstances)
+                //            {
+                //                var llvmFunc = valueMap[func];
+                //                var vtableIndex = vtableIndices[func];
+
+                //                var ptr = LLVM.BuildStructGEP(builder, vtable, (uint)vtableIndex, "");
+                //                var r = LLVM.BuildStore(builder, llvmFunc, ptr);
+
+                //            }
+                //        }
+                //    }
+                //}
+
                 foreach (var g in workspace.GlobalScope.VariableDeclarations)
                 {
                     if (g.IsConstant)
@@ -496,6 +529,83 @@ namespace Cheez.Compiler.CodeGeneration
 
         #region Utility
 
+        private void SetVTables()
+        {
+            var vfuncTypes = LLVM.GetStructElementTypes(vtableType);
+            var vfuncCount = vfuncTypes.Length;
+            foreach (var str in workspace.GlobalScope.TypeDeclarations)
+            {
+                if (str is AstStructDecl @struct && @struct.Traits.Count > 0)
+                {
+                    var functions = new LLVMValueRef[vfuncCount];
+                    for (int i = 0; i < functions.Length; i++)
+                        functions[i] = LLVM.ConstNull(vfuncTypes[i]);
+                    foreach (var impl in @struct.Implementations)
+                    {
+                        if (impl.Trait == null)
+                            continue;
+
+                        foreach (var func in impl.FunctionInstances)
+                        {
+                            var traitFunc = func.TraitFunction;
+                            var index = vtableIndices[traitFunc];
+                            functions[index] = valueMap[func];
+                        }
+                    }
+                    var defValue = LLVM.ConstStruct(functions, false);
+
+                    var vtable = vtableMap[@struct];
+                    LLVM.SetInitializer(vtable, defValue);
+                }
+            }
+        }
+
+        private void GenerateVTables()
+        {
+            // create vtable type
+            var vfuncs = new List<AstFunctionDecl>();
+            foreach (var type in workspace.GlobalScope.TypeDeclarations)
+            {
+                if (type is AstTraitDeclaration trait)
+                {
+                    foreach (var func in trait.Functions)
+                    {
+                        if (func.IsGeneric)
+                        {
+                            throw new NotImplementedException();
+                        }
+                        else
+                        {
+                            vfuncs.Add(func);
+                        }
+                    }
+                }
+            }
+            var temp = string.Join("\n", vfuncs);
+            Console.WriteLine($"vtables: \n{temp}");
+
+            var funcTypes = new List<LLVMTypeRef>();
+            foreach (var func in vfuncs)
+            {
+                vtableIndices[func] = funcTypes.Count;
+
+                var funcType = CheezTypeToLLVMType(func.Type, true);
+                funcTypes.Add(funcType);
+            }
+            
+            vtableType = LLVM.StructType(funcTypes.ToArray(), false);
+
+            foreach (var str in workspace.GlobalScope.TypeDeclarations)
+            {
+                if (str is AstStructDecl @struct && @struct.Traits.Count > 0)
+                {
+                    var vtable = LLVM.AddGlobal(module, vtableType, "__vtable_" + @struct.Name.Name);
+                    LLVM.SetLinkage(vtable, LLVMLinkage.LLVMInternalLinkage);                    
+                    vtableMap[@struct] = vtable;
+                }
+            }
+        }
+
         private void CastIfAny(LLVMBuilderRef builder, CheezType targetType, CheezType sourceType, ref LLVMValueRef value)
         {
             if (targetType == CheezType.Any && sourceType != CheezType.Any)
@@ -527,6 +637,12 @@ namespace Cheez.Compiler.CodeGeneration
         {
             switch (ct)
             {
+                case TraitType t:
+                    return LLVM.StructType(new LLVMTypeRef[] {
+                        LLVM.PointerType(LLVM.Int8Type(), 0),
+                        LLVM.PointerType(LLVM.Int8Type(), 0)
+                    }, false);
+
                 case AnyType a:
                     return LLVM.Int64Type();
 
@@ -747,6 +863,22 @@ namespace Cheez.Compiler.CodeGeneration
             return result;
         }
 
+        private LLVMValueRef GetTempValue(CheezType exprType)
+        {
+            var builder = LLVM.CreateBuilder();
+
+            var bb = currentFunction.GetFirstBasicBlock();
+            var brInst = bb.GetLastInstruction();
+            LLVM.PositionBuilderBefore(builder, brInst);
+
+            var type = CheezTypeToLLVMType(exprType);
+            var result = LLVM.BuildAlloca(builder, type, "");
+
+            LLVM.DisposeBuilder(builder);
+
+            return result;
+        }
+
         #endregion
 
         #region Statements
@@ -788,6 +920,8 @@ namespace Cheez.Compiler.CodeGeneration
             //var ct = type.Type;
             //var llvmType = CheezTypeToLLVMType(ct);
 
+
+
             return default;
         }
 
@@ -814,9 +948,10 @@ namespace Cheez.Compiler.CodeGeneration
             }
             else
             {
+                var ptr = valueMap[variable];
                 if (variable.Initializer != null)
                 {
-                    var ptr = valueMap[variable];
+
                     var val = variable.Initializer.Accept(this, data.Clone(Deref: true));
                     CastIfAny(data.Builder, variable.Type, variable.Initializer.Type, ref val);
                     return LLVM.BuildStore(data.Builder, val, ptr);
@@ -1131,6 +1266,19 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitDotExpression(AstDotExpr dot, LLVMCodeGeneratorData data = null)
         {
+            if (dot.Left.Type is TraitType trait)
+            {
+                var ptr = dot.Left.Accept(this, data.Clone(Deref: false));
+                var vtablePtr = LLVM.BuildStructGEP(data.Builder, ptr, 0, "");
+                vtablePtr = LLVM.BuildLoad(data.Builder, vtablePtr, "");
+                vtablePtr = LLVM.BuildPointerCast(data.Builder, vtablePtr, LLVM.PointerType(vtableType, 0), "");
+
+                var index = vtableIndices[dot.Value];
+                var func = LLVM.BuildStructGEP(data.Builder, vtablePtr, (uint)index, "");
+                func = LLVM.BuildLoad(data.Builder, func, "");
+                return func;
+            }
+
             if (dot.IsDoubleColon)
             {
                 return valueMap[dot.Value];
@@ -1228,23 +1376,29 @@ namespace Cheez.Compiler.CodeGeneration
 
             if (cast.Type is PointerType)
             {
-                var sub = cast.SubExpression.Accept(this, data);
                 var type = CheezTypeToLLVMType(cast.Type);
                 if (cast.SubExpression.Type is PointerType)
-                    return LLVM.BuildPointerCast(data.Builder, sub, type, "");
+                    return LLVM.BuildPointerCast(data.Builder, cast.SubExpression.Accept(this, data.Clone(Deref: true)), type, "");
                 else if (cast.SubExpression.Type is ArrayType)
-                    return LLVM.BuildPointerCast(data.Builder, sub, type, "");
+                    return LLVM.BuildPointerCast(data.Builder, cast.SubExpression.Accept(this, data.Clone(Deref: true)), type, "");
                 else if (cast.SubExpression.Type is IntType i)
-                    return LLVM.BuildIntToPtr(data.Builder, sub, type, "");
+                    return LLVM.BuildIntToPtr(data.Builder, cast.SubExpression.Accept(this, data.Clone(Deref: true)), type, "");
                 else if (cast.SubExpression.Type is StringType s)
-                    return LLVM.BuildPointerCast(data.Builder, sub, type, "");
+                    return LLVM.BuildPointerCast(data.Builder, cast.SubExpression.Accept(this, data.Clone(Deref: true)), type, "");
                 else if (cast.SubExpression.Type is AnyType)
-                    return LLVM.BuildIntToPtr(data.Builder, sub, type, "");
+                    return LLVM.BuildIntToPtr(data.Builder, cast.SubExpression.Accept(this, data.Clone(Deref: true)), type, "");
                 else if (cast.SubExpression.Type is SliceType)
                 {
-                    var ptr = LLVM.BuildExtractValue(data.Builder, sub, 0, "");
-                    //var ptr = LLVM.BuildStructGEP(data.Builder, sub, 0, "");
+                    var ptr = LLVM.BuildExtractValue(data.Builder, cast.SubExpression.Accept(this, data.Clone(Deref: true)), 0, "");
                     return LLVM.BuildPointerCast(data.Builder, ptr, type, "");
+                }
+                else if (cast.SubExpression.Type is TraitType trait)
+                {
+                    var sub = cast.SubExpression.Accept(this, data.Clone(Deref: false));
+                    var ptr = LLVM.BuildStructGEP(data.Builder, sub, 1, "");
+                    ptr = LLVM.BuildLoad(data.Builder, ptr, "");
+                    ptr = LLVM.BuildPointerCast(data.Builder, ptr, type, "");
+                    return ptr;
                 }
             }
             else if (cast.Type is StringType s)
@@ -1355,6 +1509,35 @@ namespace Cheez.Compiler.CodeGeneration
                 var sub = cast.SubExpression.Accept(this, data.Clone(Deref: true));
                 CastIfAny(data.Builder, cast.Type, cast.SubExpression.Type, ref sub);
                 return sub;
+            }
+            else if (cast.Type is TraitType trait)
+            {
+                var sub = cast.SubExpression.Accept(this, data.Clone(Deref: false));
+
+
+                if (!cast.SubExpression.GetFlag(ExprFlags.IsLValue))
+                {
+                    var t = GetTempValue(cast.SubExpression.Type);
+                    var x = LLVM.BuildStore(data.Builder, sub, t);
+                    sub = t;
+                }
+
+                var temp = GetTempValue(cast);
+
+                if (cast.SubExpression.Type is StructType @struct)
+                {
+                    var vtablePtr = LLVM.BuildStructGEP(data.Builder, temp, 0, "");
+                    var vtable = vtableMap[@struct.Declaration];
+                    vtable = LLVM.BuildPointerCast(data.Builder, vtable, LLVM.PointerType(LLVM.Int8Type(), 0), "");
+                    LLVM.BuildStore(data.Builder, vtable, vtablePtr);
+
+                    var valuePtr = LLVM.BuildStructGEP(data.Builder, temp, 1, "");
+                    sub = LLVM.BuildPointerCast(data.Builder, sub, LLVM.PointerType(LLVM.Int8Type(), 0), "");
+                    var _ = LLVM.BuildStore(data.Builder, sub, valuePtr);
+
+                    temp = LLVM.BuildLoad(data.Builder, temp, "");
+                    return temp;
+                }
             }
 
             throw new NotImplementedException($"Cast from {cast.SubExpression.Type} to {cast.Type} is not implemented yet");

@@ -1,0 +1,104 @@
+// #load("compiler/main.che")
+
+#load("io.che")
+#load("glfw3.che")
+#load("opengl.che")
+
+struct Quad {
+    pos: Vec2f
+    size: Vec2f
+    col: Color3f
+}
+
+impl Quad {
+    ref fn Draw() {
+        glBegin(GL_TRIANGLES)
+
+        {
+            // v1
+            glColor3f(col.r, col.g, col.b)
+            glVertex2f(pos.x, pos.y)
+
+            // v2
+            glColor3f(col.r, col.g, col.b)
+            glVertex2f(pos.x + size.x, pos.y)
+
+            // v3
+            glColor3f(col.r, col.g, col.b)
+            glVertex2f(pos.x + size.x, pos.y + size.y)
+        }
+
+        {
+            // v1
+            glColor3f(col.r, col.g, col.b)
+            glVertex2f(pos.x, pos.y)
+
+            // v3
+            glColor3f(col.r, col.g, col.b)
+            glVertex2f(pos.x + size.x, pos.y + size.y)
+
+            // v4
+            glColor3f(col.r, col.g, col.b)
+            glVertex2f(pos.x, pos.y + size.y)
+        }
+
+        glEnd()
+    }
+}
+
+let q = new Quad {
+    pos = new Vec2f { -0.5, -0.5 }
+    size = new Vec2f { 1, 1 }
+    col = new Color3f { 1, 0, 1 }
+}
+
+fn OnKeyDown(window: GLFWwindow&, key: int, scancode: int, action: int, mods: int) {
+    if action == GLFW_PRESS {
+        match key {
+            86 -> q.pos.y += 0.1
+            73 -> q.pos.y -= 0.1
+            85 -> q.pos.x -= 0.1
+            65 -> q.pos.x += 0.1
+        }
+    }
+}
+
+fn OnResize(window: GLFWwindow&, w: int, h: int) {
+    glViewport(0, 0, w, h)
+}
+
+fn Main()
+{
+    if !glfwInit() {
+        Println("Failed to initialize GLFW")
+        return
+    }
+    defer glfwTerminate()
+
+    let window = glfwCreateWindow(640, 480, "Hello World", null, null)
+    if window == null {
+        Println("Failed to create window")
+        return
+    }
+
+    glfwSetKeyCallback(window, OnKeyDown)
+    glfwSetWindowSizeCallback(window, OnResize)
+
+    glfwMakeContextCurrent(window)
+    glViewport(0, 0, 640, 480)
+
+    glClearColor(0, 0, 0, 1)
+
+    while !glfwWindowShouldClose(window) {
+        glClear(GL_COLOR_BUFFER_BIT)
+
+        //
+        q.Draw()
+
+        // present image
+        glfwSwapBuffers(window)
+        //
+        glfwPollEvents()
+    }
+
+}

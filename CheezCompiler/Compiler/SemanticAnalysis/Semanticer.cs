@@ -495,6 +495,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                 context.ReportError(param.TypeExpr.GenericParseTreeNode, $"Expected type, got {param.TypeExpr.Type}");
         }
 
+        private IEnumerable<object> CallPolyTrait(AstCallExpr call, GenericTraitType trait, SemanticerData context)
+        {
+            context.ReportError(call.GenericParseTreeNode, "Polymorphic traits not implemented yet!");
+            yield break;
+        }
+
         private IEnumerable<object> CallPolyStruct(AstCallExpr call, GenericStructType @struct, SemanticerData context)
         {
             var types = new Dictionary<string, CheezType>();
@@ -665,6 +671,65 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             function.ImplBlock = context.ImplBlock;
 
+            // if the impl block implements a trait, add the trait declaration to this block
+            if (function.ImplBlock?.Trait != null)
+            {
+                // parameters
+                foreach (var p in function.Parameters.Skip(1))
+                {
+                    p.Scope = function.HeaderScope;
+                    
+                    foreach (var v in CreateType(p.Scope, p.TypeExpr, context.Text, context.ErrorHandler))
+                    {
+                        if (v is CheezType tt)
+                            p.Type = tt;
+                        else
+                            yield return v;
+                    }
+                }
+
+                var trait = function.ImplBlock.Trait as TraitType;
+                var ok = false;
+                foreach (var tf in trait.Declaration.Functions)
+                {
+                    if (tf.Name.Name != function.Name.Name)
+                        continue;
+
+                    if (!TypesMatch(function.ReturnType, tf.ReturnType))
+                        continue;
+
+                    if (function.Parameters.Count != tf.Parameters.Count)
+                        continue;
+
+                    bool paramsOk = true;
+                    for (int i = 1; i < function.Parameters.Count; i++)
+                    {
+
+                        if (!TypesMatch(function.Parameters[i].Type, tf.Parameters[i].Type))
+                        {
+                            paramsOk = false;
+                            break;
+                        }
+                    }
+
+                    if (!paramsOk)
+                        continue;
+
+                    if (ok)
+                    {
+                        context.ReportError(function.Name.GenericParseTreeNode, $"Function redefinition");
+                        continue;
+                    }
+                    ok = true;
+                    function.TraitFunction = tf;
+                }
+                if (!ok)
+                {
+                    context.ReportError(function.Name.GenericParseTreeNode, $"Function {function.Name.Name} is not a function of trait {trait.Declaration.Name.Name}");
+                }
+                function.ImplBlock.FunctionInstances.Add(function);
+            }
+
             if (!function.IsPolyInstance && ((function.ReturnTypeExpr?.IsPolymorphic ?? false) || function.Parameters.Any(p => p.TypeExpr.IsPolymorphic)))
             {
                 function.IsGeneric = true;
@@ -730,6 +795,17 @@ namespace Cheez.Compiler.SemanticAnalysis
             function.Type = FunctionType.GetFunctionType(function);
             function.Scope.FunctionDeclarations.Add(function);
 
+            // if this function is in an impl block, add this function to the function instances of this block
+            if (function.ImplBlock != null)
+            {
+                function.ImplBlock.FunctionInstances.Add(function);
+
+                if (function.ImplBlock.Trait != null)
+                {
+                    function.ImplBlock.Trait.Declaration.FunctionInstances.Add(function.TraitFunction);
+                }
+            }
+
             if (!function.IsPolyInstance)
             {
                 if (function.ImplBlock != null)
@@ -750,7 +826,23 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             if (function.ImplBlock != null)
             {
-                var tar = function.Parameters[0].Type;
+                ISymbol self = function.Parameters[0];
+
+                if (function.ImplBlock.Trait != null)
+                {
+                    var type = new AstPointerTypeExpr(null, new AstTypeExpr(null, function.ImplBlock.TargetType));
+
+                    var use = new AstVariableDecl(null,
+                        new AstIdentifierExpr(null, "self", false),
+                        type,
+                        new AstCastExpr(null, type, new AstIdentifierExpr(null, "__self", false)));
+                    use.Type = PointerType.GetPointerType(function.ImplBlock.TargetType);
+                    function.Body.Statements.Insert(0, use);
+                    self = use;
+                }
+
+                var tar = self.Type;
+
                 while (tar is PointerType p)
                     tar = p.TargetType;
 
@@ -759,8 +851,9 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (tar is StructType @struct)
                 {
-                    Using(function.SubScope, @struct, function.Parameters[0]);
+                    Using(function.SubScope, @struct, self);
                 }
+
             }
 
             var subData = context.Clone(Scope: function.SubScope, Function: function);
@@ -950,16 +1043,12 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else if (context.Function.ReturnType != CheezType.Void && ret.ReturnValue != null) // !void, return some
             {
-                // compare types
-                if (ret.ReturnValue.Type == IntType.LiteralType && (context.Function.ReturnType is IntType || context.Function.ReturnType is FloatType))
+                if (CanAssign(ret.ReturnValue.Type, context.Function.ReturnType, out var t))
                 {
-                    ret.ReturnValue.Type = context.Function.ReturnType;
+                    ret.ReturnValue.Type = t;
+                    ret.ReturnValue = CreateCastIfImplicit(context.Function.ReturnType, ret.ReturnValue);
                 }
-                else if (ret.ReturnValue.Type == FloatType.LiteralType && context.Function.ReturnType is FloatType)
-                {
-                    ret.ReturnValue.Type = context.Function.ReturnType;
-                }
-                else if (ret.ReturnValue.Type != context.Function.ReturnType)
+                else
                 {
                     context.ReportError(ret.ReturnValue.GenericParseTreeNode, $"Can't return value of type '{ret.ReturnValue.Type}' in function with return type '{context.Function.ReturnType}'");
                 }
@@ -1144,10 +1233,120 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
+        public override IEnumerable<object> VisitTraitDeclaration(AstTraitDeclaration trait, SemanticerData context = null)
+        {
+            trait.Scope = context.Scope;
+            trait.Scope.TypeDeclarations.Add(trait);
+
+            if (trait.Parameters.Count > 0 && !trait.IsPolyInstance)
+            {
+                trait.IsPolymorphic = true;
+
+                // check that all parameters are types
+                bool ok = true;
+                foreach (var p in trait.Parameters)
+                {
+                    foreach (var v in VisitParameter(p, context.Clone()))
+                        yield return v;
+
+                    if (p.Type != CheezType.Type)
+                    {
+                        ok = false;
+                        context.ReportError(p.ParseTreeNode, $"Struct parameters can only be types, found {p.Type}");
+                    }
+                }
+
+                if (!ok)
+                    yield break;
+
+                trait.Type = new GenericTraitType(trait);
+                if (!trait.Scope.DefineSymbol(trait))
+                {
+                    context.ReportError(trait.Name.GenericParseTreeNode, $"A symbol with name '{trait.Name.Name}' already exists in current scope");
+                }
+                yield break;
+            }
+
+            trait.Type = new TraitType(trait);
+            if (!trait.Scope.DefineTypeSymbol(trait.Name.Name, trait.Type))
+            {
+                context.ReportError(trait.Name.GenericParseTreeNode, $"The name '{trait.Name.Name}' is alreay taken in this scope");
+            }
+
+            var subScope = NewScope("trait{}", trait.Scope);
+            var subContext = context.Clone(Scope: subScope);
+
+            // add self parameter
+            foreach (var f in trait.Functions)
+            {
+                AstExpression selfType = new AstTypeExpr(trait.Name.GenericParseTreeNode, trait.Type);
+
+                foreach (var p in f.Parameters)
+                {
+                    foreach (var v in CreateType(trait.Scope, p.TypeExpr, context.Text, context.ErrorHandler))
+                    {
+                        if (v is CheezType t)
+                            p.Type = t;
+                        else
+                            yield return v;
+                    }
+                }
+
+                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(null, "self", false), selfType));
+            }
+
+            foreach (var func in trait.Functions)
+            {
+                if (func.Body != null)
+                {
+                    context.ReportError(func.Name.GenericParseTreeNode, "Function can not hava a body");
+                }
+
+                foreach (var v in func.Accept(this, subContext))
+                    yield return v;
+            }
+
+            yield break;
+        }
+
         public override IEnumerable<object> VisitImplBlock(AstImplBlock impl, SemanticerData context = null)
         {
             var scope = context.Scope;
             impl.Scope = scope;
+
+            if (impl.TraitExpr != null)
+            {
+                foreach (var v in impl.TraitExpr.Accept(this, context))
+                {
+                    if (v is ReplaceAstExpr r)
+                        impl.TraitExpr = r.NewExpression;
+                    else
+                        yield return v;
+                }
+
+                if (impl.TraitExpr.Type != CheezType.Type)
+                {
+                    context.ReportError(impl.TraitExpr.GenericParseTreeNode, $"Expected type, found {impl.TraitExpr.Type}");
+                }
+                else if (impl.TraitExpr.Value is TraitType)
+                {
+                    impl.Trait = impl.TraitExpr.Value as TraitType;
+
+                    // check if all functions of trait are implemented
+                    foreach (var tf in impl.Trait.Declaration.Functions)
+                    {
+                        var implementsFunction = impl.Functions.Any(f => f.Name.Name == tf.Name.Name);
+                        if (!implementsFunction)
+                            context.ReportError(impl.TargetTypeExpr.GenericParseTreeNode, $"Missing implementation for trait function '{tf}'");
+                    }
+
+                }
+                else
+                {
+                    context.ReportError(impl.TraitExpr.GenericParseTreeNode, $"Expected trait, found {impl.TraitExpr.Value}");
+                }
+
+            }
 
             // types
             impl.TargetType = CheezType.Error;
@@ -1159,6 +1358,16 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
             }
 
+            if (impl.TargetType is StructType @struct)
+            {
+                @struct.Declaration.Implementations.Add(impl);
+
+                if (impl.Trait != null)
+                {
+                    @struct.Declaration.Traits.Add(impl.Trait as TraitType);
+                }
+            }
+
             //impl.SubScope = new Scope($"impl {impl.TargetTypeExpr}", impl.Scope);
             impl.SubScope = impl.Scope;
 
@@ -1166,13 +1375,30 @@ namespace Cheez.Compiler.SemanticAnalysis
             // add self parameter
             foreach (var f in impl.Functions)
             {
-                AstExpression selfType = impl.TargetTypeExpr.Clone(); // new AstTypeExpr(impl.TargetTypeExpr.GenericParseTreeNode, impl.TargetType); // impl.TargetTypeExpr.Clone();
-                if (f.RefSelf)
-                    selfType = new AstPointerTypeExpr(selfType.GenericParseTreeNode, selfType)
+                AstExpression selfType = null;
+                string name = "self";
+
+                if (impl.Trait == null)
+                {
+                    selfType = impl.TargetTypeExpr.Clone(); // new AstTypeExpr(impl.TargetTypeExpr.GenericParseTreeNode, impl.TargetType); // impl.TargetTypeExpr.Clone();
+                    if (f.RefSelf)
                     {
-                        IsReference = true
-                    };
-                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(null, "self", false), selfType));
+                        selfType = new AstPointerTypeExpr(selfType.GenericParseTreeNode, selfType)
+                        {
+                            IsReference = true
+                        };
+                    }
+                }
+                else
+                {
+                    if (f.RefSelf)
+                    {
+                        context.ReportError(f.Name.GenericParseTreeNode, "Functions which implement a trait are can't have a ref modifier. They are always ref");
+                    }
+                    selfType = new AstTypeExpr(impl.TraitExpr.GenericParseTreeNode, impl.Trait);
+                    name = "__self";
+                }
+                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(null, name, false), selfType));
             }
 
             foreach (var f in impl.Functions)
@@ -1236,7 +1462,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #region Expressions
 
-        private bool TypesMatch(CheezType a, CheezType b, Dictionary<string, CheezType> bindings)
+        private bool TypesMatch(CheezType a, CheezType b, Dictionary<string, CheezType> bindings = null)
         {
             if (a == b)
                 return true;
@@ -1246,7 +1472,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (a is PolyType p)
                 {
-                    bindings[p.Name] = b;
+                    bindings?.Add(p.Name, b);
                     return true;
                 }
             }
@@ -1254,7 +1480,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (b is PolyType p)
                 {
-                    bindings[p.Name] = a;
+                    bindings?.Add(p.Name, a);
                     return true;
                 }
             }
@@ -2136,7 +2362,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             { // check arguments
-                for (int i = 0; i < call.Arguments.Count; i++)
+                for (int i = 0; i < call.Arguments.Count && i < parameterTypeExprs.Length; i++)
                 {
                     foreach (var v in call.Arguments[i].Accept(this, context.Clone(ExpectedType: parameterTypeExprs[i].Value as CheezType)))
                         if (v is ReplaceAstExpr r)
@@ -2151,7 +2377,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 bool changes = false;
 
-                for (int i = 0; i < argCount; i++)
+                for (int i = 0; i < argCount && i < parameterTypeExprs.Length; i++)
                 {
                     var t = call.Arguments[i].Type;
                     changes |= InferGenericParameterType(types, parameterTypeExprs[i], ref t);
@@ -2269,6 +2495,12 @@ namespace Cheez.Compiler.SemanticAnalysis
             else if (call.Function.Type is GenericStructType genStruct)
             {
                 foreach (var v in CallPolyStruct(call, genStruct, context))
+                    yield return v;
+                yield break;
+            }
+            else if (call.Function.Type is GenericTraitType genTrait)
+            {
+                foreach (var v in CallPolyTrait(call, genTrait, context))
                     yield return v;
                 yield break;
             }
@@ -2565,7 +2797,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     if (member == null)
                     {
                         yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
-                            eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function  '{dot.Right}' exists for type '{leftType}'"));
+                            eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function '{dot.Right}' exists for type '{leftType}'"));
                         var func = dot.Scope.GetImplFunction(leftType, dot.Right);
                         dot.Type = func.Type;
                         dot.IsDoubleColon = true;
@@ -2574,6 +2806,20 @@ namespace Cheez.Compiler.SemanticAnalysis
                     else
                     {
                         dot.Type = member.Type;
+                    }
+                }
+                else if (leftType is TraitType trait)
+                {
+                    var func = trait.Declaration.Functions.FirstOrDefault(f => f.Name.Name == dot.Right);
+                    if (func == null)
+                    {
+                        context.ReportError(context.Text, dot.GenericParseTreeNode, $"No function '{dot.Right}' exists for type '{leftType}'");
+                    }
+                    else
+                    {
+                        dot.Type = func.Type;
+                        dot.Value = func;
+                        dot.IsDoubleColon = true;
                     }
                 }
                 else if (leftType == CheezType.Type && dot.Left.Value is EnumType e)
@@ -2831,6 +3077,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                     return false;
                 }
             }
+            else if (targetType is TraitType trait && sourceType is StructType str && str.Declaration.Traits.Contains(trait))
+            {
+                return true;
+            }
             else if (sourceType != targetType)
             {
                 if (sourceType == IntType.LiteralType)
@@ -2950,6 +3200,13 @@ namespace Cheez.Compiler.SemanticAnalysis
                     cast.Type = targetType;
                     return cast;
                 }
+            }
+
+            if (targetType is TraitType trait && source.Type is StructType str)
+            {
+                var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                cast.Type = targetType;
+                return cast;
             }
 
             return source;

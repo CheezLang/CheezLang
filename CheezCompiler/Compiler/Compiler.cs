@@ -105,7 +105,7 @@ namespace Cheez.Compiler
                 var result = parser.ParseStatement();
                 var s = result.stmt;
 
-                if (s is PTFunctionDecl || s is PTStructDecl || s is PTImplBlock || s is PTEnumDecl || s is PTVariableDecl || s is PTTypeAliasDecl)
+                if (s is PTFunctionDecl || s is PTStructDecl || s is PTImplBlock || s is PTEnumDecl || s is PTVariableDecl || s is PTTypeAliasDecl || s is PTTraitDeclaration)
                 {
                     s.SourceFile = file;
                     file.Statements.Add(s);

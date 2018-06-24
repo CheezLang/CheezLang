@@ -110,11 +110,35 @@ namespace Cheez.Compiler.Visitor
             return sb.ToString();
         }
 
+        public override string VisitTraitDeclaration(AstTraitDeclaration trait, int data = 0)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"trait {trait.Name.Name} {{");
+
+            foreach (var f in trait.Functions)
+            {
+                sb.AppendLine(f.Accept(this).Indent(4));
+            }
+
+            sb.Append("}");
+
+            return sb.ToString().Indent(data);
+        }
+
         public override string VisitImplBlock(AstImplBlock impl, int data = 0)
         {
             var body = string.Join("\n\n", impl.Functions.Select(f => f.Accept(this, 0)));
 
-            return $"impl {impl.TargetTypeExpr} {{\n{body.Indent(4)}\n}}";
+            var header = "impl ";
+
+            if (impl.Trait != null)
+            {
+                header += impl.Trait + " for ";
+            }
+
+            header += impl.TargetType;
+
+            return $"{header} {{\n{body.Indent(4)}\n}}";
         }
 
         public override string VisitVariableDeclaration(AstVariableDecl variable, int indentLevel = 0)
@@ -256,7 +280,7 @@ namespace Cheez.Compiler.Visitor
 
         public override string VisitPointerTypeExpr(AstPointerTypeExpr astPointerTypeExpr, int data = 0)
         {
-            return $"{astPointerTypeExpr.Target.Accept(this, 0)}^";
+            return $"{astPointerTypeExpr.Target.Accept(this, 0)}&";
         }
 
         public override string VisitCompCallExpression(AstCompCallExpr call, int data = 0)

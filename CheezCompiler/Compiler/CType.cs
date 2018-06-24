@@ -58,6 +58,18 @@ namespace Cheez.Compiler
         }
     }
 
+    public class GenericTraitType : CheezType
+    {
+        public AstTraitDeclaration Declaration { get; }
+
+        public override bool IsPolyType => false;
+
+        public GenericTraitType(AstTraitDeclaration decl)
+        {
+            Declaration = decl;
+        }
+    }
+
     public class ErrorType : CheezType
     {
         public static ErrorType Instance { get; } = new ErrorType { Size = 0 };
@@ -354,6 +366,23 @@ namespace Cheez.Compiler
 
     }
 
+    public class TraitType : CheezType
+    {
+        public AstTraitDeclaration Declaration { get; }
+        public override bool IsPolyType => false;
+
+        public TraitType(AstTraitDeclaration decl)
+        {
+            Size = 2 * PointerType.PointerSize;
+            Declaration = decl;
+        }
+
+        public override string ToString()
+        {
+            return Declaration.ToString();
+        }
+    }
+
     public class StructType : CheezType
     {
         public AstStructDecl Declaration { get; }
@@ -479,7 +508,7 @@ namespace Cheez.Compiler
         public override string ToString()
         {
             var args = string.Join(", ", ParameterTypes.ToList());
-            return $"fn({args}): {ReturnType}";
+            return $"fn({args}) -> {ReturnType}";
         }
 
         public override bool IsPolyType => false;

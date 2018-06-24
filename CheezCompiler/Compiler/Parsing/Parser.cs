@@ -305,6 +305,8 @@ namespace Cheez.Compiler.Parsing
                     return (false, ParseStructDeclaration());
                 case TokenType.KwImpl:
                     return (false, ParseImplBlock());
+                case TokenType.KwTrait:
+                    return (false, ParseTraitDeclaration());
                 case TokenType.OpenBrace:
                     return (false, ParseBlockStatement());
 
@@ -345,6 +347,43 @@ namespace Cheez.Compiler.Parsing
                         }
                     }
             }
+        }
+
+        private PTStatement ParseTraitDeclaration()
+        {
+            TokenLocation beg = null, end = null;
+            PTIdentifierExpr name = null;
+            var functions = new List<PTFunctionDecl>();
+            var parameters = new List<PTParameter>();
+
+            beg = Consume(TokenType.KwTrait, ErrMsg("keyword 'trait'", "at beginning of trait declaration")).location;
+            SkipNewlines();
+
+            name = ParseIdentifierExpr(ErrMsg("name", "after keyword 'trait'"));
+            SkipNewlines();
+
+            if (CheckToken(TokenType.OpenParen))
+            {
+                parameters = ParseParameterList();
+                SkipNewlines();
+            }
+
+            Consume(TokenType.OpenBrace, ErrMsg("{", "after name of trait"));
+            SkipNewlines();
+
+            while (true)
+            {
+                var next = PeekToken();
+                if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
+                    break;
+
+                functions.Add(ParseFunctionDeclaration());
+                SkipNewlines();
+            }
+
+            end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of trait")).location;
+
+            return new PTTraitDeclaration(beg, end, name, parameters, functions);
         }
 
         private PTStatement ParseMatchStatement()
@@ -635,14 +674,23 @@ namespace Cheez.Compiler.Parsing
             TokenLocation beg = null, end = null;
             var functions = new List<PTFunctionDecl>();
             PTExpr target = null;
+            PTExpr trait = null;
 
             beg = Consume(TokenType.KwImpl, ErrMsg("keyword 'impl'", "at beginning of impl statement")).location;
-
             SkipNewlines();
 
             target = ParseExpression();
-
             SkipNewlines();
+
+            if (CheckToken(TokenType.KwFor))
+            {
+                NextToken();
+                SkipNewlines();
+                trait = target;
+                target = ParseExpression();
+                SkipNewlines();
+            }
+
             Consume(TokenType.OpenBrace, ErrMsg("{", "after type"));
 
             SkipNewlines();
@@ -670,7 +718,7 @@ namespace Cheez.Compiler.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of impl statement")).location;
 
-            return new PTImplBlock(beg, end, target, functions);
+            return new PTImplBlock(beg, end, target, trait, functions);
         }
 
         private PTBlockStmt ParseBlockStatement()

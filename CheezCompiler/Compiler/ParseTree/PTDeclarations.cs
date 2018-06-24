@@ -180,23 +180,46 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
-    public class PTImplBlock : PTStatement
+    public class PTTraitDeclaration : PTStatement
     {
-        public PTExpr Target { get; set; }
-        public PTIdentifierExpr Trait { get; set; }
+        public PTIdentifierExpr Name { get; set; }
+        public List<PTParameter> Paramenters { get; }
 
         public List<PTFunctionDecl> Functions { get; }
 
-        public PTImplBlock(TokenLocation beg, TokenLocation end, PTExpr target, List<PTFunctionDecl> functions) : base(beg, end)
+        public PTTraitDeclaration(TokenLocation beg, TokenLocation end, PTIdentifierExpr name, List<PTParameter> parameters, List<PTFunctionDecl> functions) : base(beg, end)
         {
-            this.Target = target;
+            this.Name = name;
+            this.Paramenters = parameters;
             this.Functions = functions;
         }
 
         public override AstStatement CreateAst()
         {
+            var p = Paramenters?.Select(pa => pa.CreateAst()).ToList();
             var funcs = Functions.Select(f => (AstFunctionDecl)f.CreateAst()).ToList();
-            return new AstImplBlock(this, Target.CreateAst(), funcs);
+            return new AstTraitDeclaration(this, Name.CreateAst() as AstIdentifierExpr, p, funcs);
+        }
+    }
+
+    public class PTImplBlock : PTStatement
+    {
+        public PTExpr Target { get; set; }
+        public PTExpr Trait { get; set; }
+
+        public List<PTFunctionDecl> Functions { get; }
+
+        public PTImplBlock(TokenLocation beg, TokenLocation end, PTExpr target, PTExpr trait, List<PTFunctionDecl> functions) : base(beg, end)
+        {
+            this.Target = target;
+            this.Functions = functions;
+            this.Trait = trait;
+        }
+
+        public override AstStatement CreateAst()
+        {
+            var funcs = Functions.Select(f => (AstFunctionDecl)f.CreateAst()).ToList();
+            return new AstImplBlock(this, Target.CreateAst(), Trait?.CreateAst(), funcs);
         }
     }
 

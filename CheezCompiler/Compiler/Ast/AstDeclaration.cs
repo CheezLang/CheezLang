@@ -110,7 +110,7 @@ namespace Cheez.Compiler.Ast
 
         public List<AstFunctionDecl> PolymorphicInstances { get; } = new List<AstFunctionDecl>();
 
-        public bool RefSelf { get; }
+        public bool RefSelf { get; set; }
         public bool IsGeneric { get; set; }
 
         public bool IsConstant => true;
@@ -121,6 +121,7 @@ namespace Cheez.Compiler.Ast
 
         //public CheezType ImplTarget { get; set; }
         public AstImplBlock ImplBlock { get; set; }
+        public AstFunctionDecl TraitFunction { get; internal set; }
 
         public AstFunctionDecl(ParseTree.PTStatement node,
             AstIdentifierExpr name,
@@ -219,6 +220,9 @@ namespace Cheez.Compiler.Ast
 
         public List<AstStructDecl> PolymorphicInstances { get; } = new List<AstStructDecl>();
 
+        public List<AstImplBlock> Implementations { get; } = new List<AstImplBlock>();
+        public List<TraitType> Traits { get; } = new List<TraitType>();
+
         public AstStructDecl(ParseTree.PTStatement node, AstIdentifierExpr name, List<AstParameter> param, List<AstMemberDecl> members, Dictionary<string, AstDirective> dirs) : base(node, dirs)
         {
             this.Name = name;
@@ -257,20 +261,69 @@ namespace Cheez.Compiler.Ast
         }
     }
 
+    public class AstTraitDeclaration : AstStatement, ISymbol
+    {
+        public AstIdentifierExpr Name { get; set; }
+        public List<AstParameter> Parameters { get; set; }
+
+        public List<AstFunctionDecl> Functions { get; }
+        public List<AstFunctionDecl> FunctionInstances { get; }
+
+        public CheezType Type { get; set; }
+        public bool IsConstant => true;
+
+        public bool IsPolymorphic { get; set; }
+        public bool IsPolyInstance { get; set; }
+
+        public AstTraitDeclaration(ParseTree.PTStatement node, AstIdentifierExpr name, List<AstParameter> parameters, List<AstFunctionDecl> functions) : base(node)
+        {
+            this.Name = name;
+            this.Parameters = parameters;
+            this.Functions = functions;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return visitor.VisitTraitDeclaration(this, data);
+        }
+
+        public override AstStatement Clone()
+        {
+            return new AstTraitDeclaration(GenericParseTreeNode,
+                Name.Clone() as AstIdentifierExpr,
+                Parameters.Select(p => p.Clone()).ToList(),
+                Functions.Select(f => f.Clone() as AstFunctionDecl).ToList())
+            {
+                Scope = this.Scope,
+                Directives = this.Directives,
+                mFlags = this.mFlags
+            };
+        }
+
+        public override string ToString()
+        {
+            return $"trait {Name.Name}";
+        }
+    }
+
     public class AstImplBlock : AstStatement
     {
         public CheezType TargetType { get; set; }
         public AstExpression TargetTypeExpr { get; set; }
-        public string Trait { get; set; }
+        public AstExpression TraitExpr { get; set; }
+
+        public TraitType Trait { get; set; }
 
         public List<AstFunctionDecl> Functions { get; }
+        public List<AstFunctionDecl> FunctionInstances { get; } = new List<AstFunctionDecl>();
 
         public Scope SubScope { get; set; }
 
-        public AstImplBlock(ParseTree.PTStatement node, AstExpression targetTypeExpr, List<AstFunctionDecl> functions) : base(node)
+        public AstImplBlock(ParseTree.PTStatement node, AstExpression targetTypeExpr, AstExpression traitExpr, List<AstFunctionDecl> functions) : base(node)
         {
             this.TargetTypeExpr = targetTypeExpr;
             this.Functions = functions;
+            this.TraitExpr = traitExpr;
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
@@ -280,7 +333,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstImplBlock(GenericParseTreeNode, TargetTypeExpr.Clone(), Functions.Select(f => f.Clone() as AstFunctionDecl).ToList())
+            return new AstImplBlock(GenericParseTreeNode, TargetTypeExpr.Clone(), TraitExpr.Clone(), Functions.Select(f => f.Clone() as AstFunctionDecl).ToList())
             {
                 Scope = this.Scope,
                 Directives = this.Directives,
