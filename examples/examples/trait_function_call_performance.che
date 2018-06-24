@@ -1,0 +1,99 @@
+#load("io.che")
+#load("util.che")
+
+
+fn scanf(format: string, value: int&, value2: int&) -> int #varargs;
+
+trait TestTrait {
+    fn TraitFunction(n: ulong);
+}
+
+struct Test {
+    counter: ulong
+}
+
+impl Test {
+    fn NormalFunction(n: ulong) {
+        counter += n
+    }
+}
+
+impl TestTrait for Test {
+    fn TraitFunction(n: ulong) {
+        counter += n
+    }
+}
+
+fn Main() {
+    let iterations = 1000000000
+    let n = 1
+
+    // 1000000000 5
+    scanf("%d %d", &iterations, &n)
+
+    Printfn("iterations: {i32}, n: {i32}`n", [(any)iterations, n])
+
+    let t: Test
+    let tt: TestTrait = t
+
+
+    {
+        let start = GetCurrentTimeInMicroseconds()
+        defer {
+            let end = GetCurrentTimeInMicroseconds()
+            let diff = end - start
+            let ms = diff / 1000
+
+            Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations)`n", [(any)"t.NormalFunction()", ms, iterations])
+        }   
+
+        t.counter = 0
+        let i = 0
+        while i < iterations {
+            defer i += 1
+            t.NormalFunction((ulong)n)
+        }
+
+        Printf("counter: {i64}`n", t.counter)
+    }
+
+    {
+        let start = GetCurrentTimeInMicroseconds()
+        defer {
+            let end = GetCurrentTimeInMicroseconds()
+            let diff = end - start
+            let ms = diff / 1000
+
+            Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations)`n", [(any)"t.TraitFunction()", ms, iterations])
+        }   
+
+        t.counter = 0
+        let i = 0
+        while i < iterations {
+            defer i += 1
+            t.TraitFunction((ulong)n)
+        }
+
+        Printf("counter: {i64}`n", t.counter)
+    }
+
+    {
+        let start = GetCurrentTimeInMicroseconds()
+        defer {
+            let end = GetCurrentTimeInMicroseconds()
+            let diff = end - start
+            let ms = diff / 1000
+
+            Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations)`n", [(any)"tt.TraitFunction()", ms, iterations])
+        }   
+
+        t.counter = 0
+        let i = 0
+        while i < iterations {
+            defer i += 1
+            tt.TraitFunction((ulong)n)
+        }
+
+        Printf("counter: {i64}`n", t.counter)
+    }
+}

@@ -1,7 +1,35 @@
+#load("std/windows.che")
+
 fn PointerAddSized(ptr: $T&, amount: long) -> T& {
     return (T&)((long)ptr + amount * @sizeof(T))
 }
 
 fn PointerAdd(ptr: $T&, amount: long) -> T& {
     return (T&)((long)ptr + amount)
+}
+
+fn GetCurrentTimeInMicroseconds() -> ulong {
+    let freq: ulong
+    QueryPerformanceFrequency(&freq)
+
+    let time: ulong
+    QueryPerformanceCounter(&time)
+
+    time *= 1000000
+    time /= freq
+
+    return time
+}
+
+fn GetCurrentTimeInMilliseconds() -> ulong {
+    let freq: ulong
+    QueryPerformanceFrequency(&freq)
+
+    let time: ulong
+    QueryPerformanceCounter(&time)
+
+    time *= 1000000
+    time /= freq
+
+    return time / 1000
 }

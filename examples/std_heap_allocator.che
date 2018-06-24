@@ -1,7 +1,9 @@
 #load("allocator.che")
 #load("memory.che")
 
-struct StdHeapAllocator {}
+struct StdHeapAllocator {
+    _unused: int
+}
 
 impl Allocator for StdHeapAllocator {
     fn allocate(count: ulong, elementSize: ulong) -> any& {

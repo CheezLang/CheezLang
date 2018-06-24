@@ -54,6 +54,7 @@ impl StackAllocator {
         else {
             memory = parent.reallocate(memory, capacity, @sizeof(byte))
         }
+        Println((long)memory)
     }
 
     ref fn Clear() {
@@ -64,6 +65,7 @@ impl StackAllocator {
     }
 
     ref fn Dispose() {
+        Println((long)memory)
         parent.free(memory)
     }
 
@@ -85,9 +87,30 @@ impl StackAllocator {
     }
 }
 
+/*
+parent: Allocator
+
+    memory: byte&
+    capacity: ulong
+    used: ulong
+
+    lastAllocation: byte&
+    lastAllocationSize: ulong
+
+    allocations: Array(ulong)
+*/
+
 impl Allocator for StackAllocator {
     fn allocate(count: ulong, elementSize: ulong) -> any& {
         let size = count * elementSize
+
+//         Printfn("(
+//     memory             = {i64}
+//     capacity           = {i64}
+//     used               = {i64}
+//     lastAllocation     = {i64}
+//     lastAllocationSize = {i64}
+// )`n", [(any)memory, capacity, used, lastAllocation, lastAllocationSize])
 
         if used + size > capacity {
             self.Reserve(2 * (used + size))
@@ -103,9 +126,7 @@ impl Allocator for StackAllocator {
     fn reallocate(mem: any&, count: ulong, elementSize: ulong) -> any& {
         let size = count * elementSize
 
-        if mem == lastAllocation {
-            Println("foo")
-            
+        if mem == lastAllocation {            
             let sizeDiff = size - lastAllocationSize
             if used + sizeDiff > capacity {
                 self.Reserve(2 * (used + sizeDiff))

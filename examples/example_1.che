@@ -4,49 +4,44 @@
 #load("stack_allocator.che")
 #load("util.che")
 
-fn GetCurrentTimeInMicroseconds() -> ulong {
-    let freq: ulong
-    QueryPerformanceFrequency(&freq)
-
-    let time: ulong
-    QueryPerformanceCounter(&time)
-
-    time *= 1000000
-    time /= freq
-
-    return time
+fn Test(allocator: Allocator, memorySize: ulong) {
+    let mem = allocator.allocate(memorySize, 1)
+    allocator.free(mem)
 }
 
-fn GetCurrentTimeInMilliseconds() -> ulong {
-    let freq: ulong
-    QueryPerformanceFrequency(&freq)
+fn Test2(sa: StackAllocator, memorySize: ulong) {
+    sa.PrintDiagnostics()
 
-    let time: ulong
-    QueryPerformanceCounter(&time)
-
-    time *= 1000000
-    time /= freq
-
-    return time / 1000
+    Println("1")
+    let mem = sa.allocate(memorySize, 1)
+    Println("2")
+    
+    sa.free(mem)
+    Println("3")
+    sa.PrintDiagnostics()
+    Println("4")
 }
 
-fn TimeAllocator(name: string, allocator: Allocator, iterations: int, memorySize: ulong) {
+fn TimeAllocator(name: string, allocator: Allocator, iterations: ulong, memorySize: ulong) {
     let start = GetCurrentTimeInMicroseconds()
+    let end: ulong
+    let diff: ulong
+    let ms: ulong
+
     defer {
-        let end = GetCurrentTimeInMicroseconds()
-        let diff = end - start
-        let ms = diff / 1000
+        end = GetCurrentTimeInMicroseconds()
+        diff = end - start
+        ms = diff / 1000
 
         Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations, {i64} bytes per allocation)`n", [(any)name, ms, iterations, memorySize])
     }   
 
-    let i = 0
+    let i: ulong = 0
     while i < iterations {
         defer i += 1
-
-        let mem = allocator.allocate(memorySize, 1)
-        allocator.free(mem)
+        Test(allocator, memorySize)
     }
+    Println("")
 }
 
 fn Main() {
@@ -55,11 +50,21 @@ fn Main() {
 
     let std = new StdHeapAllocator {}
 
-    let iterations = 1000000
+    let iterations: ulong = 10000000
     let memSize: ulong = (ulong)1024
 
-    TimeAllocator("StdHeapAllocator", std, iterations, memSize)
-    TimeAllocator("StackAllocator", sa, iterations, memSize)
-    sa.PrintDiagnostics()
+    // sa.PrintDiagnostics()
+    // Println("---------------")
+    // Test(sa, 10)
+    // sa.PrintDiagnostics()
+    // Println("---------------")
+    // Test2(sa, 10)
+    // sa.PrintDiagnostics()
+
+    let a: Allocator = sa
+    TimeAllocator("StackAllocator", a, iterations, memSize)
+
+    let a: Allocator = std
+    TimeAllocator("StdHeapAllocator", a, iterations, memSize)
 
 }
