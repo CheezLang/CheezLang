@@ -1,4 +1,5 @@
 #load("memory.che")
+#load("allocator.che")
 
 fn strlen(s: string) -> int {
     let len: int = 0
@@ -64,6 +65,7 @@ struct StringBase(CharType: type) {
     data: CharType&
     length: int
     capacity: int
+    allocator: Allocator
 }
 
 let String = StringBase(char)
@@ -74,8 +76,16 @@ impl StringBase($CharType) {
         return length
     }
 
-    fn GetChar(i: $T) -> char {
+    ref fn GetChar(i: $T) -> char {
         return data[i]
+    }
+
+    ref fn Init(alloc: Allocator) {
+        allocator = alloc
+        data = null
+        length = 0
+        capacity = 0
+        self.Reserve(10)
     }
 
     ref fn Reserve(size: int) {
@@ -222,7 +232,7 @@ impl StringBase($CharType) {
         length = 0
     }
 
-    fn Slice(from: int, len: int) -> CharType[] {
+    ref fn Slice(from: int, len: int) -> CharType[] {
         let slice: CharType[] = &data[from]
         slice.length = len
         return slice
