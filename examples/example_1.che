@@ -1,37 +1,14 @@
 // #load("io.che")
+#load("std_heap_allocator.che")
 
-trait Test {
-    fn Foo(x: $T);
-}
-
-struct StdHeapAllocator {
-    prefix: string
-}
-
-struct Bar {
-
-}
-
-impl Test for Bar {
-    fn Foo(x: $T) {
-        // Print("Bar::Foo(")
-        // Print(x)
-        // Println(")")
-    }
-}
-
-impl Test for StdHeapAllocator {
-    fn Foo(x: $T) {
-        // Printf("StdHeapAllocator::Foo({s}", prefix)
-        // Print(x)
-        // Println(")")
-    }
+struct AString(CharType: type) {
+    data: CharType&
+    length: int
+    capacity: int
+    allocator: Allocator
 }
 
 fn Main() {
-    let sha: StdHeapAllocator
-    let bar: Bar
-
-    let test: Test = sha
-    test.Foo("Hi")
+    let s: AString(char)
+    s.allocator = new StdHeapAllocator {}
 }
