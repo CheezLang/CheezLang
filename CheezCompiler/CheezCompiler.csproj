@@ -123,10 +123,8 @@
     <Compile Include="Compiler\CodeGeneration\LLVMCodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVM\AttributeKind.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVM\CodeGenerator.cs" />
-    <Compile Include="Compiler\CodeGeneration\LLVM\Context.cs" />
+    <Compile Include="Compiler\CodeGeneration\LLVM\Extensions.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVM\Linker.cs" />
-    <Compile Include="Compiler\CodeGeneration\LLVM\Module.cs" />
-    <Compile Include="Compiler\CodeGeneration\LLVM\Target.cs" />
     <Compile Include="Compiler\CodeGeneration\OS.cs" />
     <Compile Include="Compiler\Compiler.cs" />
     <Compile Include="Compiler\CType.cs" />

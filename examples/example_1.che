@@ -16,17 +16,20 @@ struct Vec2 {
     y: int
 }
 
-fn foo(v: Vec3&) {
+let v = new Vec3 { }
 
+fn foo() -> Vec3 {
+    return new Vec3 {
+        1, 2, 3
+    }
+}
+
+fn foo2() -> int {
+    return 5
 }
 
 fn bar(v: Vec3) {
 
-}
-
-
-let v = new Vec3 { 
-    1, 2, 3
 }
 
 fn Main() {
