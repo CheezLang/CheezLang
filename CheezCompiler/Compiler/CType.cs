@@ -400,6 +400,8 @@ namespace Cheez.Compiler
 
         public CheezType[] Arguments { get; }
 
+        public int[] MemberOffsets { get; private set; }
+
         public StructType(AstStructDecl decl)
         {
             Declaration = decl;
@@ -415,8 +417,11 @@ namespace Cheez.Compiler
         private void CalculateSize()
         {
             Size = 0;
-            foreach (var m in Declaration.Members)
+            MemberOffsets = new int[Declaration.Members.Count];
+            for (int i = 0; i < Declaration.Members.Count; i++)
             {
+                var m = Declaration.Members[i];
+                MemberOffsets[i] = Size;
                 Size += m.Type.Size;
             }
         }

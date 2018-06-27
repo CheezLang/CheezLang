@@ -103,6 +103,7 @@ namespace Cheez.Compiler.Ast
         //public List<AstIdentifierExpr> Generics { get; }
 
         public CheezType Type { get; set; }
+        public FunctionType FunctionType => Type as FunctionType;
 
         public AstBlockStmt Body { get; private set; }
 

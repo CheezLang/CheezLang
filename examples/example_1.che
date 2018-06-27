@@ -1,70 +1,34 @@
-#load("io.che")
-#load("std_heap_allocator.che")
-#load("counting_allocator.che")
-#load("stack_allocator.che")
-#load("util.che")
-
-fn Test(allocator: Allocator, memorySize: ulong) {
-    let mem = allocator.allocate(memorySize, 1)
-    allocator.free(mem)
+struct Vec4 {
+    x: int
+    y: int
+    z: int
+    w: int
 }
 
-fn Test2(sa: StackAllocator, memorySize: ulong) {
-    sa.PrintDiagnostics()
-
-    Println("1")
-    let mem = sa.allocate(memorySize, 1)
-    Println("2")
-    
-    sa.free(mem)
-    Println("3")
-    sa.PrintDiagnostics()
-    Println("4")
+struct Vec3 {
+    x: int
+    y: int
+    z: int
 }
 
-fn TimeAllocator(name: string, allocator: Allocator, iterations: ulong, memorySize: ulong) {
-    let start = GetCurrentTimeInMicroseconds()
-    let end: ulong
-    let diff: ulong
-    let ms: ulong
+struct Vec2 {
+    x: int
+    y: int
+}
 
-    defer {
-        end = GetCurrentTimeInMicroseconds()
-        diff = end - start
-        ms = diff / 1000
+fn foo(v: Vec3&) {
 
-        Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations, {i64} bytes per allocation)`n", [(any)name, ms, iterations, memorySize])
-    }   
+}
 
-    let i: ulong = 0
-    while i < iterations {
-        defer i += 1
-        Test(allocator, memorySize)
-    }
-    Println("")
+fn bar(v: Vec3) {
+
+}
+
+
+let v = new Vec3 { 
+    1, 2, 3
 }
 
 fn Main() {
-    let sa = NewStackAllocator(1024)
-    defer sa.Dispose()
-
-    let std = new StdHeapAllocator {}
-
-    let iterations: ulong = 10000000
-    let memSize: ulong = (ulong)1024
-
-    // sa.PrintDiagnostics()
-    // Println("---------------")
-    // Test(sa, 10)
-    // sa.PrintDiagnostics()
-    // Println("---------------")
-    // Test2(sa, 10)
-    // sa.PrintDiagnostics()
-
-    let a: Allocator = sa
-    TimeAllocator("StackAllocator", a, iterations, memSize)
-
-    let a: Allocator = std
-    TimeAllocator("StdHeapAllocator", a, iterations, memSize)
-
+    bar(v)
 }

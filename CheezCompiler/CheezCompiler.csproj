@@ -121,6 +121,12 @@
     <Compile Include="Compiler\CodeGeneration\CppCodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\ICodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVMCodeGenerator.cs" />
+    <Compile Include="Compiler\CodeGeneration\LLVM\AttributeKind.cs" />
+    <Compile Include="Compiler\CodeGeneration\LLVM\CodeGenerator.cs" />
+    <Compile Include="Compiler\CodeGeneration\LLVM\Context.cs" />
+    <Compile Include="Compiler\CodeGeneration\LLVM\Linker.cs" />
+    <Compile Include="Compiler\CodeGeneration\LLVM\Module.cs" />
+    <Compile Include="Compiler\CodeGeneration\LLVM\Target.cs" />
     <Compile Include="Compiler\CodeGeneration\OS.cs" />
     <Compile Include="Compiler\Compiler.cs" />
     <Compile Include="Compiler\CType.cs" />
@@ -151,7 +157,6 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets" Condition="Exists('..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
