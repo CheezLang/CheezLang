@@ -203,7 +203,7 @@ impl Lexer {
 
             else if c == '`n' {
                 if !locExists {
-                    *loc = location.Clone()
+                    <<loc = location.Clone()
                     locExists = true
                 }
 

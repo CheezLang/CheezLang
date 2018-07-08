@@ -492,7 +492,8 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                 }
                 else
                 {
-                    ulong size = 4;
+                    var type = CheezTypeToLLVMType(ret.ReturnValue.Type);
+                    ulong size = targetData.SizeOfTypeInBits(type);
                     var sizeInBytes = LLVM.ConstInt(LLVM.Int32Type(), size, false);
                     var retPtr = returnValuePointer[currentFunction];
 
@@ -501,8 +502,6 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
 
                     var call = builder.CallIntrinsic(memcpy32, dst, src, sizeInBytes, LLVM.ConstInt(LLVM.Int1Type(), 0, false));
-                    //call.AddCallAttribute(context, 0, AttributeKind.Alignment, 4);
-                    //call.AddCallAttribute(context, 1, AttributeKind.Alignment, 4);
                     return builder.CreateRetVoid();
                 }
             }

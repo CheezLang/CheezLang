@@ -186,7 +186,6 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.KwTrue:
                 case TokenType.KwFalse:
                 case TokenType.Ampersand:
-                case TokenType.Asterisk:
                 case TokenType.Identifier:
                     return true;
 
@@ -1141,7 +1140,7 @@ namespace Cheez.Compiler.Parsing
                 var sub = ParseUnaryExpression(errorMessage);
                 return new PTAddressOfExpr(next.location, sub.End, sub);
             }
-            else if (next.type == TokenType.Asterisk)
+            else if (next.type == TokenType.LessLess)
             {
                 NextToken();
                 SkipNewlines();

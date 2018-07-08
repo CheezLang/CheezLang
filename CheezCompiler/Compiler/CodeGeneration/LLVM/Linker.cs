@@ -131,6 +131,10 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             {
                 Console.WriteLine($"Generated {filename}.exe");
             }
+            else
+            {
+                Console.WriteLine($"Failed to link");
+            }
 
             return result;
         }

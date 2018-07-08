@@ -1144,6 +1144,9 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         variable.Initializer.Type = IntType.DefaultType;
                     }
+                    else if (variable.Initializer.Type == FloatType.LiteralType)
+                        variable.Initializer.Type = FloatType.DefaultType;
+
                     variable.Type = variable.Initializer.Type;
                 }
                 else
@@ -1574,6 +1577,22 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             switch (name)
             {
+                case "file":
+                    {
+                        var value = new AstStringLiteral(call.GenericParseTreeNode, call.GenericParseTreeNode.Beginning.file, false);
+                        foreach (var v in ReplaceAstExpr(value, context))
+                            yield return v;
+                        break;
+                    }
+
+                case "line":
+                    {
+                        var value = ConstInt(call.GenericParseTreeNode, call.GenericParseTreeNode.Beginning.line);
+                        foreach (var v in ReplaceAstExpr(value, context))
+                            yield return v;
+                        break;
+                    }
+
                 case "sizeof":
                     {
                         if (call.Arguments.Count < 1)
@@ -2685,9 +2704,18 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitNumberExpression(AstNumberExpr num, SemanticerData context = null)
         {
-            num.Type = IntType.LiteralType;
-            num.Value = num.Data.ToLong();
-            num.IsCompTimeValue = true;
+            if (num.Data.Type == NumberData.NumberType.Int)
+            {
+                num.Type = IntType.LiteralType;
+                num.Value = num.Data.ToLong();
+                num.IsCompTimeValue = true;
+            }
+            else
+            {
+                num.Type = FloatType.LiteralType;
+                num.Value = num.Data.ToDouble();
+                num.IsCompTimeValue = true;
+            }
             yield break;
         }
 
@@ -3390,6 +3418,20 @@ namespace Cheez.Compiler.SemanticAnalysis
                                 yield return v;
                         }
                         yield return SliceType.GetSliceType(type);
+                        yield break;
+                    }
+
+                case AstAddressOfExpr add:
+                    {
+                        var type = CheezType.Error;
+                        foreach (var v in CreateType(scope, add.SubExpression, text, error))
+                        {
+                            if (v is CheezType t)
+                                type = t;
+                            else
+                                yield return v;
+                        }
+                        yield return PointerType.GetPointerType(type);
                         yield break;
                     }
 

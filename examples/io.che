@@ -1,7 +1,9 @@
 #load("string.che")
 #load("memory.che")
 #load("std/windows.che")
-#load("stdio.che")
+//#load("stdio.che")
+
+fn sprintf(buff: char&, f: string, a: double) #varargs;
 
 let NEW_LINE: char = '`n'
 
@@ -20,6 +22,20 @@ fn PrintStringl(s: String&) {
 fn PrintChar(c: char) { 
     let bytesWritten: int
     WriteFile(__std_out_handle, (string)&c, 1, &bytesWritten, 0)
+}
+
+fn PrintFloat(val: float) {
+    let buff: char[32]
+    let buff: char[] = buff
+    sprintf((char&)buff, "%f", (double)val)
+    PrintString((string)(char&)buff)
+}
+
+fn PrintDouble(val: double) {
+    let buff: char[32]
+    let buff: char[] = buff
+    sprintf((char&)buff, "%f", val)
+    PrintString((string)(char&)buff)
 }
 
 fn PrintInt(val: $T) {
@@ -145,14 +161,18 @@ fn Sprint(buffer: String&, value: $T) {
         Bprinti(buffer, value)
     } else if @isstring(T) {
         buffer.AppendString(value)
+    } else if @typeseq(T, f32&) {
+        buffer.AppendString("!!!!!!!!")
+    } else if @typeseq(T, f64) {
+        buffer.AppendString("!!!!!!!!")
     } else if @typeseq(String&, T) {
-        buffer.Append(*value)
+        buffer.Append(<<value)
     } else if @typeseq(String, T) {
         buffer.Append(value)
     } else if @typeseq(char[], T) {
         buffer.AppendChars(value)
     } else {
-        @error("Can't print value of unknown type")
+        @error(@typename(T))
     }
 }
 
@@ -170,6 +190,12 @@ fn SprintfData(buffer: String&, format: String, value: any) {
     else if format.Equals("i64") {
         Sprint(buffer, (i32)value)
     }
+    else if format.Equals("f32") {
+        Sprint(buffer, (f32&)value)
+    }
+    else if format.Equals("f64") {
+        Sprint(buffer, (f64)value)
+    }
     else if format.Equals("b") {
         Sprint(buffer, (bool)value)
     }
@@ -180,7 +206,7 @@ fn SprintfData(buffer: String&, format: String, value: any) {
         Sprint(buffer, (String&)value)
     }
     else if format.Equals("c[]") {
-        Sprint(buffer, *(char[]&)value)
+        Sprint(buffer, <<(char[]&)value)
     }
 }
 
@@ -292,6 +318,8 @@ fn Print(v: $T) {
         }
     } else if @isint(T) {
         PrintInt(v)
+    } else if @typeseq(T, f64) {
+        PrintDouble(v)
     } else if @isstring(T) {
         PrintString(v)
     } else if @typeseq(String, T) {
@@ -305,7 +333,7 @@ fn Print(v: $T) {
     } else if @typeseq(T, $X[]) {
         PrintSlice(v)
     } else {
-        @error("Can't print value of unknown type")
+        @error(@typename(T))
     }
 }
 

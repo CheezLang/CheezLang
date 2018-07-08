@@ -70,6 +70,14 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
         }
     }
 
+    public static class TargetDataExt
+    {
+        public static ulong SizeOfTypeInBits(this LLVMTargetDataRef self, LLVMTypeRef type)
+        {
+            return LLVM.SizeOfTypeInBits(self, type);
+        }
+    }
+
     public static class TargetExt
     {
         public static LLVMTargetRef FromTriple(string triple)

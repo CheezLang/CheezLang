@@ -64,6 +64,7 @@ fn glfwSwapBuffers(window: GLFWwindow&);
 fn glfwMakeContextCurrent(window: GLFWwindow&);
 fn glfwSetKeyCallback(window: GLFWwindow&, callback: fn (GLFWwindow&, int, int, int, int));
 fn glfwSetWindowSizeCallback(window: GLFWwindow&, callback: fn (GLFWwindow&, int, int));
+fn glfwWindowHint(hint: int, value: int);
 
 let GLFW_RELEASE                : int = 0
 let GLFW_PRESS                  : int = 1
@@ -197,3 +198,17 @@ let GLFW_KEY_RIGHT_SUPER        : int = 347
 let GLFW_KEY_MENU               : int = 348
 
 let GLFW_KEY_LAST               : int = GLFW_KEY_MENU
+
+//
+let GLFW_CLIENT_API             : int = 0x00022001
+let GLFW_CONTEXT_VERSION_MAJOR  : int = 0x00022002
+let GLFW_CONTEXT_VERSION_MINOR  : int = 0x00022003
+let GLFW_CONTEXT_REVISION       : int = 0x00022004
+let GLFW_CONTEXT_ROBUSTNESS     : int = 0x00022005
+let GLFW_OPENGL_FORWARD_COMPAT  : int = 0x00022006
+let GLFW_OPENGL_DEBUG_CONTEXT   : int = 0x00022007
+let GLFW_OPENGL_PROFILE         : int = 0x00022008
+let GLFW_CONTEXT_RELEASE_BEHAVIOR : int = 0x00022009
+let GLFW_CONTEXT_NO_ERROR       : int = 0x0002200A
+let GLFW_CONTEXT_CREATION_API   : int = 0x0002200B
+//

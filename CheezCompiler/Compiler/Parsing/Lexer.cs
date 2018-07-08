@@ -53,6 +53,7 @@ namespace Cheez.Compiler.Parsing
         NotEqual,
 
         Arrow,
+        LessLess,
 
         OpenParen,
         ClosingParen,
@@ -349,6 +350,7 @@ namespace Cheez.Compiler.Parsing
                 case '=' when Next == '=': SimpleToken(ref token, TokenType.DoubleEqual, 2); break;
                 case '!' when Next == '=': SimpleToken(ref token, TokenType.NotEqual, 2); break;
                 case '<' when Next == '=': SimpleToken(ref token, TokenType.LessEqual, 2); break;
+                case '<' when Next == '<': SimpleToken(ref token, TokenType.LessLess, 2); break;
                 case '>' when Next == '=': SimpleToken(ref token, TokenType.GreaterEqual, 2); break;
                 case ':' when Next == ':': SimpleToken(ref token, TokenType.DoubleColon, 2); break;
                 case '-' when Next == '>': SimpleToken(ref token, TokenType.Arrow, 2); break;

@@ -45,6 +45,11 @@ impl Array($ElementType) {
         data = allocator.reallocate(data, (ulong)capacity, @sizeof(ElementType))
     }
 
+    ref fn Resize(s: uint) {
+        self.Reserve(s)
+        length = s
+    }
+
     ref fn Add(val: ElementType) {
         if capacity <= length {
             capacity = capacity * 2
@@ -86,5 +91,11 @@ impl Array($ElementType) {
         }
 
         return r
+    }
+
+    ref fn Slice() -> ElementType[] {
+        let slice: ElementType[] = self.data
+        slice.length = (i32)self.length
+        return slice
     }
 }

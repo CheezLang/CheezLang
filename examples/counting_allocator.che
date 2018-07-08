@@ -34,7 +34,7 @@ impl Allocator for CountingAllocator {
 
         // store size before allocated memory
         let sizePtr = (ulong&)mem
-        *sizePtr = size
+        <<sizePtr = size
 
         return PointerAdd(mem, @sizeof(ulong))
     }
@@ -51,7 +51,7 @@ impl Allocator for CountingAllocator {
         mem = parent.reallocate(actualMem, size + @sizeof(ulong), 1)
 
         let sizePtr = (ulong&)mem
-        *sizePtr = size
+        <<sizePtr = size
         return PointerAdd(mem, @sizeof(ulong))
     }
 

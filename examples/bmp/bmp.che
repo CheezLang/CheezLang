@@ -1,0 +1,4 @@
+#lib("D:\Programming\CheezLang\examples\bmp\bmp.lib")
+
+fn write_bmp(w: int, h: int, data: double&, filename: string);
+
