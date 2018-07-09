@@ -1,4 +1,4 @@
-#load("stdio.che")
+#load("../os/windows.che")
 
 fn LoadFile(filename: string, str: String&) -> bool {
     let of: _OFSTRUCT

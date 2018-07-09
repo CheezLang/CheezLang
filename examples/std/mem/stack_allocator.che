@@ -1,7 +1,7 @@
 #load("allocator.che")
 #load("std_heap_allocator.che")
-#load("array.che")
-#load("util.che")
+#load("../array.che")
+#load("../util.che")
 
 struct StackAllocator {
     parent: Allocator

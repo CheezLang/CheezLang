@@ -1,8 +1,8 @@
-#load("io.che")
-#load("math.che")
-#load("array.che")
-#load("stack_allocator.che")
-#load("bmp/bmp.che")
+#load("../std/io/io.che")
+#load("../std/math.che")
+#load("../std/array.che")
+#load("../std/mem/stack_allocator.che")
+#load("../bmp/bmp.che")
 
 struct Ray {
     origin: Vec3
@@ -489,7 +489,7 @@ fn RenderImage(film: Film&)
     film.trigger(camera, raymarcher)
 }
 
-fn SignedDistanceField()
+fn signed_distance_field_renderer()
 {
     //
     let scale = 4

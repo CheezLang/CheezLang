@@ -1,0 +1,8 @@
+#load("examples/signed_distance_field_renderer.che")
+// #load("examples/glfw3_example.che")
+// #load("examples/trait_function_call_performance.che")
+
+fn Main()
+{
+    signed_distance_field_renderer()
+}

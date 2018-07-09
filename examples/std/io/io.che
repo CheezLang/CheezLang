@@ -1,7 +1,6 @@
-#load("string.che")
-#load("memory.che")
-#load("std/windows.che")
-//#load("stdio.che")
+#load("../string.che")
+#load("../mem/memory.che")
+#load("../os/windows.che")
 
 fn sprintf(buff: char&, f: string, a: double) #varargs;
 

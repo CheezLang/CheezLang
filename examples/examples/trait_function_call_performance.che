@@ -1,5 +1,5 @@
-#load("io.che")
-#load("util.che")
+#load("../std/io/io.che")
+#load("../std/util.che")
 
 
 fn scanf(format: string, value: int&, value2: int&) -> int #varargs;
@@ -24,12 +24,12 @@ impl TestTrait for Test {
     }
 }
 
-fn Main() {
-    let iterations = 1000000000
-    let n = 1
+fn trait_function_call_performance() {
+    let iterations = 100000000
+    let n = 8
 
     // 1000000000 5
-    scanf("%d %d", &iterations, &n)
+    // scanf("%d %d", &iterations, &n)
 
     Printfn("iterations: {i32}, n: {i32}`n", [(any)iterations, n])
 

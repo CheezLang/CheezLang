@@ -1,8 +1,8 @@
 // #load("compiler/main.che")
 
-#load("io.che")
-#load("glfw3.che")
-#load("opengl.che")
+#load("../std/io/io.che")
+#load("../glfw/glfw3.che")
+#load("../opengl/opengl.che")
 
 struct Quad {
     pos: Vec2f
@@ -67,7 +67,7 @@ fn OnResize(window: GLFWwindow&, w: int, h: int) {
     glViewport(0, 0, w, h)
 }
 
-fn Main()
+fn glfw3_example()
 {
     if !glfwInit() {
         Println("Failed to initialize GLFW")

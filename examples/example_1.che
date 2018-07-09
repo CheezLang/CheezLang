@@ -1,6 +1,0 @@
-#load("signed_distance_field_renderer.che")
-
-fn Main()
-{
-    SignedDistanceField()
-}

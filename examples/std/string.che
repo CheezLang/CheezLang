@@ -1,5 +1,5 @@
-#load("allocator.che")
-#load("std_heap_allocator.che")
+#load("mem/allocator.che")
+#load("mem/std_heap_allocator.che")
 
 fn strlen(s: string) -> int {
     let len: int = 0

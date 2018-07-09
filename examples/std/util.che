@@ -1,4 +1,4 @@
-#load("std/windows.che")
+#load("os/windows.che")
 
 fn PointerAddSized(ptr: $T&, amount: long) -> T& {
     return (T&)((long)ptr + amount * @sizeof(T))

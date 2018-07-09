@@ -1,6 +1,6 @@
-#load("memory.che")
-#load("allocator.che")
-#load("std_heap_allocator.che")
+#load("mem/memory.che")
+#load("mem/allocator.che")
+#load("mem/std_heap_allocator.che")
 
 struct Array(ElementType: type) {
     data: ElementType&
