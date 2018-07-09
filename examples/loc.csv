@@ -2,9 +2,8 @@
 opengl_constants.che,651
 signed_distance_field_renderer.che,423
 opengl_functions.che,338
-io.che,303
+io.che,302
 string.che,226
-dynamic_dispatch.che,210
 glfw3.che,201
 lexer.che,194
 token.che,153
@@ -21,10 +20,10 @@ util.che,25
 stdio.che,24
 windows.che,21
 std_heap_allocator.che,16
-glew.che,15
 file.che,15
-example_1.che,5
+glew.che,15
+test.che,7
 allocator.che,5
 opengl.che,4
 bmp.che,2
-Total,3416
+Total,3207
