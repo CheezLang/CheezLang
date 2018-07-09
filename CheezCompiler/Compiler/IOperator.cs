@@ -90,14 +90,14 @@ namespace Cheez.Compiler
             if (needed == got)
                 return true;
 
-            if (got == IntType.LiteralType)
-            {
-                return needed is IntType || needed is FloatType;
-            }
-            if (got == FloatType.LiteralType)
-            {
-                return needed is FloatType;
-            }
+            //if (got == IntType.LiteralType)
+            //{
+            //    return needed is IntType || needed is FloatType;
+            //}
+            //if (got == FloatType.LiteralType)
+            //{
+            //    return needed is FloatType;
+            //}
 
             return false;
         }

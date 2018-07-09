@@ -578,7 +578,7 @@ namespace Cheez.Compiler.CodeGeneration
                             functions[index] = valueMap[func];
                         }
                     }
-                    var defValue = LLVM.ConstStruct(functions, false);
+                    var defValue = LLVM.ConstNamedStruct(vtableType, functions);
 
                     var vtable = vtableMap[@struct];
                     LLVM.SetInitializer(vtable, defValue);
@@ -1372,7 +1372,7 @@ namespace Cheez.Compiler.CodeGeneration
 
             foreach (var m in str.MemberInitializers)
             {
-                var v = m.Value.Accept(this, data);
+                var v = m.Value.Accept(this, data.Clone(Deref: true));
                 //var memberPtr = LLVM.BuildStructGEP(data.Builder, value, (uint)m.Index, "");
                 var memberPtr = GetStructMemberPointer(data.Builder, value, (uint)m.Index);
                 var s = LLVM.BuildStore(data.Builder, v, memberPtr);
@@ -1694,6 +1694,8 @@ namespace Cheez.Compiler.CodeGeneration
                 {
                     if (cast.SubExpression.Type is PointerType ptr && ptr.TargetType is StructType @struct)
                     {
+                        sub = LLVM.BuildLoad(data.Builder, sub, "");
+
                         //var vtablePtr = LLVM.BuildStructGEP(data.Builder, temp, 0, "");
                         var vtablePtr = GetStructMemberPointer(data.Builder, temp, 0);
                         var vtable = vtableMap[@struct.Declaration];

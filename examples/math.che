@@ -1,0 +1,55 @@
+fn sqrtf(f: float) -> float;
+fn sqrt(f: double) -> double;
+
+fn fabsf(f: float) -> float;
+fn fabs(f: double) -> double;
+
+fn fmaxf(f1: float, f2: float) -> float;
+fn fmax(f1: double, f2: double) -> double;
+
+fn fminf(f1: float, f2: float) -> float;
+fn fmin(f1: double, f2: double) -> double;
+
+fn sinf(f: float) -> float;
+fn sin(f: double) -> double;
+
+fn cosf(f: float) -> float;
+fn cos(f: double) -> double;
+
+struct Vec3 {
+    x: double
+    y: double
+    z: double
+}
+
+impl Vec3 {
+    fn mul(f: double) -> Vec3 {
+        return new Vec3 { x * f, y * f, z * f }
+    }
+
+    fn mul3(v: Vec3) -> Vec3 {
+        return new Vec3 { x * v.x, y * v.y, z * v.z }
+    }
+
+    fn add(v: Vec3) -> Vec3 {
+        return new Vec3 { x + v.x, y + v.y, z + v.z }
+    }
+
+    fn sub(v: Vec3) -> Vec3 {
+        return new Vec3 { x - v.x, y - v.y, z - v.z }
+    }
+
+    fn mag() -> double {
+        let sum = x * x + y * y + z * z
+        return sqrt(sum)
+    }
+
+    fn normaziled() -> Vec3 {
+        let m = self.mag()
+        return self.mul(1 / m)
+    }
+    
+    fn dot(v: Vec3) -> double {
+        return x * v.x + y * v.y + z * v.z
+    }
+}

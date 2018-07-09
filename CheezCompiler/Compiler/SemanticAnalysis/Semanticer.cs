@@ -2110,6 +2110,11 @@ namespace Cheez.Compiler.SemanticAnalysis
                                 yield return vv;
                             yield break;
 
+                        case "+":
+                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(bin.GenericParseTreeNode, n.Data), context.Clone(ExpectedType: null)))
+                                yield return vv;
+                            yield break;
+
                         default:
                             throw new NotImplementedException("Compile time evaluation of int literals in unary operator other than '-'");
                     }
@@ -2120,6 +2125,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         case "-":
                             foreach (var vv in ReplaceAstExpr(new AstNumberExpr(bin.GenericParseTreeNode, n.Data.Negate()), context.Clone(ExpectedType: null)))
+                                yield return vv;
+                            yield break;
+                        case "+":
+                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(bin.GenericParseTreeNode, n.Data), context.Clone(ExpectedType: null)))
                                 yield return vv;
                             yield break;
 
@@ -2208,14 +2217,14 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (bin.Left.Type == FloatType.LiteralType || bin.Right.Type == FloatType.LiteralType)
                 {
-                    bin.Left.Type = FloatType.DefaultType;
-                    bin.Right.Type = FloatType.DefaultType;
+                    bin.Left.Type = FloatType.LiteralType;
+                    bin.Right.Type = FloatType.LiteralType;
                 }
-                else
-                {
-                    bin.Left.Type = IntType.DefaultType;
-                    bin.Right.Type = IntType.DefaultType;
-                }
+                //else
+                //{
+                //    bin.Left.Type = IntType.DefaultType;
+                //    bin.Right.Type = IntType.DefaultType;
+                //}
             }
             else if (leftIsLiteral)
             {
@@ -2286,12 +2295,19 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                     if (result != null)
                     {
+                        AstExpression newAst = null;
+
                         if (result is bool b)
+                            newAst = new AstBoolExpr(bin.GenericParseTreeNode, b);
+                        else if (result is long i)
+                            newAst = new AstNumberExpr(bin.GenericParseTreeNode, new NumberData((BigInteger)i));
+                        else
                         {
-                            bin.Type = CheezType.Bool;
-                            bin.Value = b;
-                            bin.IsCompTimeValue = true;
+                            throw new NotImplementedException();
                         }
+
+                        foreach (var v in ReplaceAstExpr(newAst, context))
+                            yield return v;
                     }
                 }
             }

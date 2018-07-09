@@ -1,62 +1,12 @@
 #load("io.che")
+#load("math.che")
 #load("array.che")
+#load("stack_allocator.che")
 #load("bmp/bmp.che")
-
-//fn sqrtf(f: float) -> float;
-fn sqrt(f: double) -> double;
-
-//fn fabsf(f: float) -> float;
-fn fabs(f: double) -> double;
-
-fn fmax(f1: double, f2: double) -> double;
-
-struct Vec3 {
-    x: double
-    y: double
-    z: double
-}
-
-impl Vec3 {
-    fn mul(f: double) -> Vec3 {
-        return new Vec3 { x * f, y * f, z * f }
-    }
-
-    fn mul3(v: Vec3) -> Vec3 {
-        return new Vec3 { x * v.x, y * v.y, z * v.z }
-    }
-
-    fn add(v: Vec3) -> Vec3 {
-        return new Vec3 { x + v.x, y + v.y, z + v.z }
-    }
-
-    fn sub(v: Vec3) -> Vec3 {
-        return new Vec3 { x - v.x, y - v.y, z - v.z }
-    }
-
-    fn mag() -> double {
-        let sum = x * x + y * y + z * z
-        return sqrt(sum)
-    }
-
-    fn normaziled() -> Vec3 {
-        let m = self.mag()
-        return self.mul(1 / m)
-    }
-    
-    fn dot(v: Vec3) -> double {
-        return x * v.x + y * v.y + z * v.z
-    }
-}
 
 struct Ray {
     origin: Vec3
     direction: Vec3
-}
-
-impl Ray {
-    ref fn normalize() {
-        direction = direction.normaziled()
-    }
 }
 
 struct PerspectiveCamera {
@@ -111,15 +61,11 @@ impl Film {
     }
 }
 
-trait Scene {
-    fn project(ray: Ray) -> Vec3;
-}
-
 struct Background {
 
 }
 
-impl Scene for Background {
+impl Background {
     fn project(ray: Ray) -> Vec3 {
         if (ray.direction.y < 0) {
             return new Vec3 { 0.1, 0.4, 0.1 }
@@ -153,13 +99,12 @@ impl Raymarcher {
     ref fn project(ray: Ray) -> Vec3 {
         let ds = sdf.distance(ray.origin)
 
-        while fabs(ds.distance) > 0.0001 {
+        while fabs(ds.distance) > 0.0000001 {
             ray.origin = ray.origin.add(ray.direction.mul(ds.distance))
             ds = sdf.distance(ray.origin)
 
 
             if ray.origin.mag() >= backgroundDistance {
-                // Println("ok")
                 return background.project(ray)
             }
         }
@@ -200,6 +145,60 @@ impl SDF for Sphere {
     }
 }
 
+struct Cube {
+    radius: double
+    shader: Shader
+}
+
+impl SDF for Cube {
+    fn distance(v: Vec3) -> DistanceShaderPair {
+        let dx = fabs(v.x) - radius
+        let dy = fabs(v.y) - radius
+        let dz = fabs(v.z) - radius
+
+        let d: double = 0
+
+        if dx > 0 and dy > 0 and dz > 0 { // corner
+            let r = new Vec3 {
+                dx, dy, dz
+            }
+            d = r.mag()
+        }
+        else if dx > 0 and dy > 0 {
+            let r = new Vec3 {
+                x = dx
+                y = dy
+                z = 0
+            }
+            d = r.mag()
+        }
+        else if dx > 0 and dz > 0 {
+            let r = new Vec3 {
+                x = dx
+                y = 0
+                z = dz
+            }
+            d = r.mag()
+        }
+        else if dy > 0 and dz > 0 {
+            let r = new Vec3 {
+                x = 0
+                y = dy
+                z = dz
+            }
+            d = r.mag()
+        }
+        else {
+            d = fmax(dx, fmax(dy, dz))
+        }
+
+        return new DistanceShaderPair {
+            distance = d
+            shader = shader
+        }
+    }
+}
+
 struct TranslatedSDF {
     sdf: SDF
     translation: Vec3
@@ -208,6 +207,54 @@ struct TranslatedSDF {
 impl SDF for TranslatedSDF {
     fn distance(v: Vec3) -> DistanceShaderPair {
         return sdf.distance(v.sub(translation))
+    }
+}
+
+struct RotatedXSDF {
+    sdf: SDF
+    angle: double
+}
+
+struct RotatedYSDF {
+    sdf: SDF
+    angle: double
+}
+
+struct RotatedZSDF {
+    sdf: SDF
+    angle: double
+}
+
+impl SDF for RotatedXSDF {
+    fn distance(v: Vec3) -> DistanceShaderPair {
+        let rad = angle / 360 * 2 * 3.1415
+        let c = cos(rad)
+        let s = sin(rad)
+        let y = c * v.y - s * v.z
+        let z = s * v.y + c * v.z
+        return sdf.distance(new Vec3{v.x, y, z})
+    }
+}
+
+impl SDF for RotatedYSDF {
+    fn distance(v: Vec3) -> DistanceShaderPair {
+        let rad = angle / 360 * 2 * 3.1415
+        let c = cos(rad)
+        let s = sin(rad)
+        let x = c * v.x + s * v.z
+        let z = -s * v.x + c * v.z
+        return sdf.distance(new Vec3{x, v.y, z})
+    }
+}
+
+impl SDF for RotatedZSDF {
+    fn distance(v: Vec3) -> DistanceShaderPair {
+        let rad = angle / 360 * 2 * 3.1415
+        let c = cos(rad)
+        let s = sin(rad)
+        let x = c * v.x - s * v.y
+        let y = s * v.x + c * v.y
+        return sdf.distance(new Vec3{x, y, v.z})
     }
 }
 
@@ -294,6 +341,104 @@ impl Shader for LambertianShader {
 /////////////////////////////
 
 /////////////////////////////
+struct SDFAllocator {
+    allocator: StackAllocator
+}
+
+impl SDFAllocator {
+    ref fn Init() {
+        allocator = NewStackAllocator(1024 * 2)
+        allocator.PrintDiagnostics()
+    }
+
+    ref fn Dispose() {
+        allocator.Dispose()
+    }
+
+    ref fn Allocate() -> $T& {
+        let t = (T&)allocator.allocate(1, @sizeof(T))
+        allocator.PrintDiagnostics()
+        return t
+    }
+
+    ref fn Sphere(radius: double, shader: Shader) -> SDF {
+        let s: Sphere& = self.Allocate()
+        s.radius = radius
+        s.shader = shader
+        return s
+    }
+
+    ref fn SphereT(position: Vec3, radius: double, shader: Shader) -> SDF {
+        return self.Translate(self.Sphere(radius, shader), position)
+    }
+
+    ref fn Cube(radius: double, shader: Shader) -> SDF {
+        let s: Cube& = self.Allocate()
+        s.radius = radius
+        s.shader = shader
+        return s
+    }
+
+    ref fn CubeT(position: Vec3, radius: double, shader: Shader) -> SDF {
+        return self.Translate(self.Cube(radius, shader), position)
+    }
+
+    ref fn Translate(sdf: SDF, translation: Vec3) -> SDF {
+        let t: TranslatedSDF& = self.Allocate()
+        t.sdf = sdf
+        t.translation = translation
+        return t
+    }
+
+    ref fn RotateX(sdf: SDF, angle: double) -> SDF {
+        let t: RotatedXSDF& = self.Allocate()
+        t.sdf = sdf
+        t.angle = angle
+        return t
+    }
+
+    ref fn RotateY(sdf: SDF, angle: double) -> SDF {
+        let t: RotatedYSDF& = self.Allocate()
+        t.sdf = sdf
+        t.angle = angle
+        return t
+    }
+
+    ref fn RotateZ(sdf: SDF, angle: double) -> SDF {
+        let t: RotatedZSDF& = self.Allocate()
+        t.sdf = sdf
+        t.angle = angle
+        return t
+    }
+
+    ref fn Add(sdf1: SDF, sdf2: SDF) -> SDF {
+        let t: UnionSDF& = self.Allocate()
+        t.sdf1 = sdf1
+        t.sdf2 = sdf2
+        return t
+    }
+
+    ref fn Intersect(sdf1: SDF, sdf2: SDF) -> SDF {
+        let t: IntersectionSDF& = self.Allocate()
+        t.sdf1 = sdf1
+        t.sdf2 = sdf2
+        return t
+    }
+
+    ref fn Subtract(sdf1: SDF, sdf2: SDF) -> SDF {
+        let t: SubtractionSDF& = self.Allocate()
+        t.sdf1 = sdf1
+        t.sdf2 = sdf2
+        return t
+    }
+
+    ref fn Combine(sdf1: SDF, sdf2: SDF) -> $T& {
+        let t: T& = self.Allocate()
+        t.sdf1 = sdf1
+        t.sdf2 = sdf2
+        return t
+    }
+}
 
 fn RenderImage(film: Film&)
 {
@@ -304,13 +449,18 @@ fn RenderImage(film: Film&)
         film.pixels[i] = new Vec3 { 0, 0, 0 }
     }
 
+    let as = (double)film.width/(double)film.height
     let camera = new PerspectiveCamera {
         focalLength = 50
-        sensorWidth = 32
-        sensorHeight = 18
+        sensorWidth = as * 24
+        sensorHeight = 24
     }
 
     let bg = new Background{}
+
+    let all: SDFAllocator
+    all.Init()
+    defer all.Dispose()
 
     //
     let sRed    = new LambertianShader{new Vec3{1, 0, 0}}
@@ -318,40 +468,33 @@ fn RenderImage(film: Film&)
     let sBlue   = new LambertianShader{new Vec3{0, 0, 1}}
 
     //
-    let sdf: SDF = new TranslatedSDF {
-        sdf = new SubtractionSDF {
-            sdf1 = new TranslatedSDF {
-                new Sphere{1, sRed}
-                new Vec3{0.25, -0.25, -0.5}
-            }
-            sdf2 = new UnionSDF {
-                sdf1 = new TranslatedSDF {
-                    new Sphere{0.8, sBlue}
-                    new Vec3{0.5, 0, 0}
-                }
-                sdf2 = new TranslatedSDF {
-                    new Sphere{0.8, sGreen}
-                    new Vec3{-0.5, 0, 0}
-                }
-            }
-        }
-        translation = new Vec3{-0.5, 0, -10}
-    }
+    let s1 = all.SphereT(new Vec3{0, 0, 0}, 1, sRed)
+    let s2 = all.SphereT(new Vec3{0, 0, 0}, 0.3, sRed)
+    let c1 = all.CubeT(new Vec3{0, 0, 0}, 0.8, sRed)
+
+    let sdf = c1
+    let sdf = all.Subtract(sdf, s1)
+    let sdf = all.Add(sdf, s2)
+
+    let sdf = all.RotateX(sdf, -10)
+    let sdf = all.RotateY(sdf, -20)
+    let sdf = all.Translate(sdf, new Vec3{0, 0, -6})
 
     let raymarcher = new Raymarcher {
         sdf = sdf
         background = bg
-        backgroundDistance = 1000
+        backgroundDistance = 100
     }
 
     film.trigger(camera, raymarcher)
 }
 
-fn Main()
+fn SignedDistanceField()
 {
     //
-    let width: uint = (uint)(320*3)
-    let height: uint = (uint)(180*3)
+    let scale = 4
+    let width: uint = (uint)(360 * scale)
+    let height: uint = (uint)(240 * scale)
 
     let imageArr: Array(Vec3) = NewArray()
     defer imageArr.Dispose()
@@ -363,6 +506,5 @@ fn Main()
     RenderImage(&film)
 
     // store image as bmp
-
     write_bmp((int)width, (int)height, (double&)imageArr.data, "test.bmp")
 }

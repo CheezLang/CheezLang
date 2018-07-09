@@ -264,6 +264,8 @@ namespace Cheez.Compiler
             DefineArithmeticOperators(intTypes, "+", "-", "*", "/", "%");
             DefineArithmeticOperators(floatTypes, "+", "-", "*", "/");
 
+            DefineLiteralOperators();
+
             // 
             DefineLogicOperators(intTypes, 
                 (">", null), 
@@ -347,6 +349,22 @@ namespace Cheez.Compiler
             }
         }
 
+        private void DefineLiteralOperators()
+        {
+            DefineOperator(new BuiltInOperator("+", IntType.LiteralType, IntType.LiteralType, IntType.LiteralType, (a, b) => (long)a + (long)b));
+            DefineOperator(new BuiltInOperator("-", IntType.LiteralType, IntType.LiteralType, IntType.LiteralType, (a, b) => (long)a - (long)b));
+            DefineOperator(new BuiltInOperator("*", IntType.LiteralType, IntType.LiteralType, IntType.LiteralType, (a, b) => (long)a * (long)b));
+            DefineOperator(new BuiltInOperator("/", IntType.LiteralType, IntType.LiteralType, IntType.LiteralType, (a, b) => (long)a / (long)b));
+            DefineOperator(new BuiltInOperator("%", IntType.LiteralType, IntType.LiteralType, IntType.LiteralType, (a, b) => (long)a % (long)b));
+
+            DefineOperator(new BuiltInOperator("==", CheezType.Bool, IntType.LiteralType, IntType.LiteralType, (a, b) => (long)a == (long)b));
+            DefineOperator(new BuiltInOperator("!=", CheezType.Bool, IntType.LiteralType, IntType.LiteralType, (a, b) => (long)a != (long)b));
+            DefineOperator(new BuiltInOperator("<", CheezType.Bool, IntType.LiteralType, IntType.LiteralType, (a, b) => (long)a < (long)b));
+            DefineOperator(new BuiltInOperator("<=", CheezType.Bool, IntType.LiteralType, IntType.LiteralType, (a, b) => (long)a <= (long)b));
+            DefineOperator(new BuiltInOperator(">", CheezType.Bool, IntType.LiteralType, IntType.LiteralType, (a, b) => (long)a > (long)b));
+            DefineOperator(new BuiltInOperator(">=", CheezType.Bool, IntType.LiteralType, IntType.LiteralType, (a, b) => (long)a >= (long)b));
+        }
+
         private void DefineArithmeticOperators(CheezType[] types, params string[] ops)
         {
             foreach (var name in ops)
@@ -385,6 +403,20 @@ namespace Cheez.Compiler
                     list.Add(new BuiltInUnaryOperator(name, t, t));
                 }
             }
+        }
+
+        private void DefineOperator(IOperator op)
+        {
+            List<IOperator> list = null;
+            if (mOperatorTable.ContainsKey(op.Name))
+                list = mOperatorTable[op.Name];
+            else
+            {
+                list = new List<IOperator>();
+                mOperatorTable[op.Name] = list;
+            }
+
+            list.Add(op);
         }
 
         private bool CheckType(CheezType needed, CheezType got)

@@ -1194,7 +1194,10 @@ namespace Cheez.Compiler.Parsing
 
                                 next = PeekToken();
                                 if (next.type == TokenType.Comma)
+                                {
                                     NextToken();
+                                    SkipNewlines();
+                                }
                                 else if (next.type == TokenType.ClosingParen)
                                     break;
                                 else
