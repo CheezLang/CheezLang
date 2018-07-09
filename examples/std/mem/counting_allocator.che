@@ -45,7 +45,7 @@ impl Allocator for CountingAllocator {
         
         {
             let sizePtr = (ulong&)actualMem
-            allocated += size - *sizePtr
+            allocated += size - <<sizePtr
         }
 
         mem = parent.reallocate(actualMem, size + @sizeof(ulong), 1)
@@ -58,7 +58,7 @@ impl Allocator for CountingAllocator {
     fn free(mem: any&) {
         let actualMem = PointerAdd(mem, -@sizeof(ulong))
         let sizePtr = (ulong&)actualMem
-        freed += *sizePtr
+        freed += <<sizePtr
         parent.free(actualMem)
     }
 }
