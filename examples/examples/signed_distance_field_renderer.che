@@ -4,84 +4,11 @@
 #load("../std/mem/stack_allocator.che")
 #load("../bmp/bmp.che")
 
+///////////////////////////////////////////////////////////
+
 struct Ray {
     origin: Vec3
     direction: Vec3
-}
-
-struct PerspectiveCamera {
-    focalLength: double
-    sensorWidth: double
-    sensorHeight: double
-}
-
-impl PerspectiveCamera {
-    ref fn project(x: double, y: double) -> Ray {
-        return new Ray {
-            origin = new Vec3 {0, 0, 0}
-            direction = new Vec3 {
-                x = (x - 0.5) * sensorWidth
-                y = -(y - 0.5) * sensorHeight
-                z = -focalLength
-            }.normaziled()
-        }
-    }
-}
-
-struct Film {
-    width: uint
-    height: uint
-    pixels: Vec3[]
-}
-
-impl Film {
-    ref fn trigger(camera: PerspectiveCamera, scene: Raymarcher) {
-
-        Printfn("({i32}, {i32})`n", [(any)width, height])
-
-        let fw = 1 / (double)width
-        let fh = 1 / (double)height
-
-        let y: uint = 0
-        while y < height {
-            defer y += 1
-
-            let x: uint = 0
-            while x < width {
-                defer x += 1
-
-                let fx = (double)x + 0.5
-                let fy = (double)y + 0.5
-                let ray = camera.project(fx * fw, fy * fh)
-                let color = scene.project(ray)
-
-                pixels[x + y * width] = color
-            }
-        }
-    }
-}
-
-struct Background {
-
-}
-
-impl Background {
-    fn project(ray: Ray) -> Vec3 {
-        if (ray.direction.y < 0) {
-            return new Vec3 { 0.1, 0.4, 0.1 }
-        }
-        else {
-            return new Vec3 { ray.direction.y * 2, ray.direction.y * 4, 1 }
-        }
-    }
-}
-
-trait Shader {
-    fn shade(ray: Ray, raymarcher: Raymarcher&) -> Vec3;
-}
-
-trait SDF {
-    fn distance(v: Vec3) -> DistanceShaderPair;
 }
 
 struct DistanceShaderPair {
@@ -89,48 +16,12 @@ struct DistanceShaderPair {
     shader: Shader
 }
 
-struct Raymarcher {
-    sdf: SDF
-    background: Background
-    backgroundDistance: double // = 1000
+////////////////////////////////// SDF //////////////////////////////////////////////
+
+///////////////////// basic ///////////////////
+trait SDF {
+    fn distance(v: Vec3) -> DistanceShaderPair;
 }
-
-impl Raymarcher {
-    ref fn project(ray: Ray) -> Vec3 {
-        let ds = sdf.distance(ray.origin)
-
-        while fabs(ds.distance) > 0.0000001 {
-            ray.origin = ray.origin.add(ray.direction.mul(ds.distance))
-            ds = sdf.distance(ray.origin)
-
-
-            if ray.origin.mag() >= backgroundDistance {
-                return background.project(ray)
-            }
-        }
-
-        return ds.shader.shade(ray, &self)
-    }
-
-    ref fn sampleLightDirection(dir: Vec3&, col: Vec3&) {
-        <<dir = new Vec3 {
-            -1, 1, 1
-        }.normaziled()
-        <<col = new Vec3 {1, 1, 1}
-    }
-
-    ref fn normal(p: Vec3) -> Vec3 {
-        let off: double = 0.001
-
-        let n = new Vec3 {
-            x = sdf.distance(new Vec3{p.x + off, p.y, p.z}).distance - sdf.distance(new Vec3{p.x - off, p.y, p.z}).distance
-            y = sdf.distance(new Vec3{p.x, p.y + off, p.z}).distance - sdf.distance(new Vec3{p.x, p.y - off, p.z}).distance
-            z = sdf.distance(new Vec3{p.x, p.y, p.z + off}).distance - sdf.distance(new Vec3{p.x, p.y, p.z - off}).distance
-        }
-        return n.normaziled()
-    }
-}
-
 struct Sphere {
     radius: double
     shader: Shader
@@ -199,6 +90,8 @@ impl SDF for Cube {
     }
 }
 
+///////////////////// transformations //////////////////////////
+
 struct TranslatedSDF {
     sdf: SDF
     translation: Vec3
@@ -258,6 +151,8 @@ impl SDF for RotatedZSDF {
     }
 }
 
+
+////////////////////// combinations ///////////////////////
 struct UnionSDF {
     sdf1: SDF
     sdf2: SDF
@@ -311,6 +206,13 @@ impl SDF for SubtractionSDF {
     }
 }
 
+////////////////////////////// shaders //////////////////////////////////
+
+trait Shader {
+    fn shade(ray: Ray, raymarcher: Raymarcher&) -> Vec3;
+}
+
+//////
 struct ConstantColorShader {
     color: Vec3
 }
@@ -321,6 +223,7 @@ impl Shader for ConstantColorShader {
     }
 }
 
+//////
 struct LambertianShader {
     color: Vec3
 }
@@ -338,9 +241,122 @@ impl Shader for LambertianShader {
     }
 }
 
-/////////////////////////////
+///////////////////////////// scene //////////////////////////////
+struct Background {
 
-/////////////////////////////
+}
+
+impl Background {
+    fn project(ray: Ray) -> Vec3 {
+        if (ray.direction.y < 0) {
+            return new Vec3 { 0.1, 0.4, 0.1 }
+        }
+        else {
+            return new Vec3 { ray.direction.y * 2, ray.direction.y * 4, 1 }
+        }
+    }
+}
+
+struct Raymarcher {
+    sdf: SDF
+    background: Background
+    backgroundDistance: double // = 1000
+}
+
+impl Raymarcher {
+    ref fn project(ray: Ray) -> Vec3 {
+        let ds = sdf.distance(ray.origin)
+
+        while fabs(ds.distance) > 0.0000001 {
+            ray.origin = ray.origin.add(ray.direction.mul(ds.distance))
+            ds = sdf.distance(ray.origin)
+
+
+            if ray.origin.mag() >= backgroundDistance {
+                return background.project(ray)
+            }
+        }
+
+        return ds.shader.shade(ray, &self)
+    }
+
+    ref fn sampleLightDirection(dir: Vec3&, col: Vec3&) {
+        <<dir = new Vec3 {
+            -1, 1, 1
+        }.normaziled()
+        <<col = new Vec3 {1, 1, 1}
+    }
+
+    ref fn normal(p: Vec3) -> Vec3 {
+        let off: double = 0.001
+
+        let n = new Vec3 {
+            x = sdf.distance(new Vec3{p.x + off, p.y, p.z}).distance - sdf.distance(new Vec3{p.x - off, p.y, p.z}).distance
+            y = sdf.distance(new Vec3{p.x, p.y + off, p.z}).distance - sdf.distance(new Vec3{p.x, p.y - off, p.z}).distance
+            z = sdf.distance(new Vec3{p.x, p.y, p.z + off}).distance - sdf.distance(new Vec3{p.x, p.y, p.z - off}).distance
+        }
+        return n.normaziled()
+    }
+}
+
+
+/////////////////////////////////////////////////
+
+
+struct PerspectiveCamera {
+    focalLength: double
+    sensorWidth: double
+    sensorHeight: double
+}
+
+impl PerspectiveCamera {
+    ref fn project(x: double, y: double) -> Ray {
+        return new Ray {
+            origin = new Vec3 {0, 0, 0}
+            direction = new Vec3 {
+                x = (x - 0.5) * sensorWidth
+                y = -(y - 0.5) * sensorHeight
+                z = -focalLength
+            }.normaziled()
+        }
+    }
+}
+
+struct Film {
+    width: uint
+    height: uint
+    pixels: Vec3[]
+}
+
+impl Film {
+    ref fn trigger(camera: PerspectiveCamera, scene: Raymarcher) {
+
+        Printfn("({i32}, {i32})`n", [(any)width, height])
+
+        let fw = 1 / (double)width
+        let fh = 1 / (double)height
+
+        let y: uint = 0
+        while y < height {
+            defer y += 1
+
+            let x: uint = 0
+            while x < width {
+                defer x += 1
+
+                let fx = (double)x + 0.5
+                let fy = (double)y + 0.5
+                let ray = camera.project(fx * fw, fy * fh)
+                let color = scene.project(ray)
+
+                pixels[x + y * width] = color
+            }
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////
+
 struct SDFAllocator {
     allocator: StackAllocator
 }

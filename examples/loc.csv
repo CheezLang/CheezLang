@@ -1,6 +1,6 @@
 ﻿File Name,Lines
 opengl_constants.che,651
-signed_distance_field_renderer.che,423
+signed_distance_field_renderer.che,432
 opengl_functions.che,338
 io.che,302
 string.che,226
@@ -8,9 +8,9 @@ glfw3.che,201
 lexer.che,194
 token.che,153
 stack_allocator.che,114
+trait_function_call_performance.che,107
 array.che,86
 glfw3_example.che,82
-trait_function_call_performance.che,76
 opengl_types.che,71
 counting_allocator.che,52
 math.che,43
@@ -26,4 +26,4 @@ test.che,7
 allocator.che,5
 opengl.che,4
 bmp.che,2
-Total,3207
+Total,3247
