@@ -10,10 +10,24 @@ trait TestTrait {
 
 struct Test {
     counter: ulong
+    a0: int
+    a1: int
+    a2: int
+    a3: int
+    a4: int
+    a5: int
+    a6: int
+    a7: int
+    a8: int
+    a9: int
 }
 
 impl Test {
     fn NormalFunction(n: ulong) {
+        counter += n
+    }
+
+    ref fn RefFunction(n: ulong) {
         counter += n
     }
 }
@@ -38,62 +52,82 @@ fn trait_function_call_performance() {
 
 
     {
+        t.counter = 0
+
         let start = GetCurrentTimeInMicroseconds()
         defer {
             let end = GetCurrentTimeInMicroseconds()
             let diff = end - start
             let ms = diff / 1000
 
+            Printf("counter: {i64}`n", t.counter)
             Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations)`n", [(any)"t.NormalFunction()", ms, iterations])
         }   
 
-        t.counter = 0
         let i = 0
         while i < iterations {
             defer i += 1
             t.NormalFunction((ulong)n)
         }
-
-        Printf("counter: {i64}`n", t.counter)
     }
 
     {
+        t.counter = 0
+
         let start = GetCurrentTimeInMicroseconds()
         defer {
             let end = GetCurrentTimeInMicroseconds()
             let diff = end - start
             let ms = diff / 1000
 
+            Printf("counter: {i64}`n", t.counter)
+            Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations)`n", [(any)"t.RefFunction()", ms, iterations])
+        }   
+
+        let i = 0
+        while i < iterations {
+            defer i += 1
+            t.RefFunction((ulong)n)
+        }
+    }
+
+    {
+        t.counter = 0
+        
+        let start = GetCurrentTimeInMicroseconds()
+        defer {
+            let end = GetCurrentTimeInMicroseconds()
+            let diff = end - start
+            let ms = diff / 1000
+
+            Printf("counter: {i64}`n", t.counter)
             Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations)`n", [(any)"t.TraitFunction()", ms, iterations])
         }   
 
-        t.counter = 0
         let i = 0
         while i < iterations {
             defer i += 1
             t.TraitFunction((ulong)n)
         }
-
-        Printf("counter: {i64}`n", t.counter)
     }
 
     {
+        t.counter = 0
+        
         let start = GetCurrentTimeInMicroseconds()
         defer {
             let end = GetCurrentTimeInMicroseconds()
             let diff = end - start
             let ms = diff / 1000
 
+            Printf("counter: {i64}`n", t.counter)
             Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations)`n", [(any)"tt.TraitFunction()", ms, iterations])
         }   
 
-        t.counter = 0
         let i = 0
         while i < iterations {
             defer i += 1
             tt.TraitFunction((ulong)n)
         }
-
-        Printf("counter: {i64}`n", t.counter)
     }
 }
