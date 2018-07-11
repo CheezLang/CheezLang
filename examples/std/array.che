@@ -20,13 +20,13 @@ impl Array($ElementType) {
         allocator = new StdHeapAllocator{}
         length = 0
         capacity = 10
-        data = allocator.allocate((ulong)capacity, @sizeof(ElementType))
+        data = allocator.allocate((ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
     }
     
     ref fn InitSize(size: uint) {
         length = 0
         capacity = size
-        data = allocator.allocate((ulong)capacity, @sizeof(ElementType))
+        data = allocator.allocate((ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
     }
 
     ref fn Dispose() {
@@ -42,7 +42,7 @@ impl Array($ElementType) {
             return
         }
         capacity = s
-        data = allocator.reallocate(data, (ulong)capacity, @sizeof(ElementType))
+        data = allocator.reallocate(data, (ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
     }
 
     ref fn Resize(s: uint) {
@@ -53,7 +53,7 @@ impl Array($ElementType) {
     ref fn Add(val: ElementType) {
         if capacity <= length {
             capacity = capacity * 2
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(ElementType))
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
         }
 
         data[length] = val

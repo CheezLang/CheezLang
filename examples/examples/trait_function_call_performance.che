@@ -45,7 +45,7 @@ fn trait_function_call_performance() {
     // 1000000000 5
     // scanf("%d %d", &iterations, &n)
 
-    Printfn("iterations: {i32}, n: {i32}`n", [(any)iterations, n])
+    Printf("iterations: {}, n: {}`n", [iterations, n])
 
     let t: Test
     let tt: TestTrait = t
@@ -60,13 +60,11 @@ fn trait_function_call_performance() {
             let diff = end - start
             let ms = diff / 1000
 
-            Printf("counter: {i64}`n", t.counter)
-            Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations)`n", [(any)"t.NormalFunction()", ms, iterations])
+            Printf("counter: {}`n", [t.counter])
+            Printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.NormalFunction()", ms, iterations])
         }   
 
-        let i = 0
-        while i < iterations {
-            defer i += 1
+        while let i = 0, i < iterations, i += 1 {
             t.NormalFunction((ulong)n)
         }
     }
@@ -80,13 +78,11 @@ fn trait_function_call_performance() {
             let diff = end - start
             let ms = diff / 1000
 
-            Printf("counter: {i64}`n", t.counter)
-            Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations)`n", [(any)"t.RefFunction()", ms, iterations])
+            Printf("counter: {}`n", [t.counter])
+            Printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.RefFunction()", ms, iterations])
         }   
 
-        let i = 0
-        while i < iterations {
-            defer i += 1
+        while let i = 0, i < iterations, i += 1 {
             t.RefFunction((ulong)n)
         }
     }
@@ -100,13 +96,11 @@ fn trait_function_call_performance() {
             let diff = end - start
             let ms = diff / 1000
 
-            Printf("counter: {i64}`n", t.counter)
-            Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations)`n", [(any)"t.TraitFunction()", ms, iterations])
+            Printf("counter: {}`n", [t.counter])
+            Printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.TraitFunction()", ms, iterations])
         }   
 
-        let i = 0
-        while i < iterations {
-            defer i += 1
+        while let i = 0, i < iterations, i += 1 {
             t.TraitFunction((ulong)n)
         }
     }
@@ -120,13 +114,11 @@ fn trait_function_call_performance() {
             let diff = end - start
             let ms = diff / 1000
 
-            Printf("counter: {i64}`n", t.counter)
-            Printfn("[{s}] Time elapsed: {i64} ms ({i32} iterations)`n", [(any)"tt.TraitFunction()", ms, iterations])
+            Printf("counter: {}`n", [t.counter])
+            Printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["tt.TraitFunction()", ms, iterations])
         }   
 
-        let i = 0
-        while i < iterations {
-            defer i += 1
+        while let i = 0, i < iterations, i += 1 {
             tt.TraitFunction((ulong)n)
         }
     }

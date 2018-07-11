@@ -298,7 +298,7 @@ namespace Cheez.Compiler.CodeGeneration
                             var res = LLVM.RunFunctionPassManager(funcPM, func);
                             if (!res)
                             {
-                                //workspace.ReportError("Failed to run llvm passes on function " + func.ToString());
+                                workspace.ReportError("Failed to run llvm passes on function " + func.ToString());
                             }
                         }
                         func = func.GetNextFunction();
@@ -1272,6 +1272,14 @@ namespace Cheez.Compiler.CodeGeneration
             var bbBody = LLVM.AppendBasicBlock(data.LFunction, "while_body");
             var bbEnd = LLVM.AppendBasicBlock(data.LFunction, "while_end");
 
+            // pre statement
+            if (ws.PreAction != null)
+            {
+                var temp = GetTempValue(ws.PreAction.Type);
+                valueMap[ws.PreAction] = temp;
+                ws.PreAction.Accept(this, data);
+            }
+
             // Condition
             LLVM.BuildBr(data.Builder, bbCondition);
             data.MoveBuilderTo(bbCondition);
@@ -1281,6 +1289,14 @@ namespace Cheez.Compiler.CodeGeneration
             // body
             data.MoveBuilderTo(bbBody);
             ws.Body.Accept(this, data.Clone(LoopCondition: bbCondition, LoopEnd: bbEnd));
+
+            // post action
+            if (ws.PostAction != null)
+            {
+                ws.PostAction.Accept(this, data);
+            }
+
+            // go back to condition
             LLVM.BuildBr(data.Builder, bbCondition);
 
             //

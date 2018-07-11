@@ -3,17 +3,32 @@
 #load("../array.che")
 #load("../util.che")
 
+fn NextAligned(add: $T&, align: ulong) -> T& {
+    let add = (ulong)add
+    let mul = add + align - 1
+    mul -= (mul % align)
+    
+    return (T&)mul
+}
+
+struct StackAllocation {
+    offset: ulong
+    size: ulong
+}
+
+impl Printable for StackAllocation {
+    fn Print(str: String&, format: char[]) {
+        Sprintf(str, "({}:{})", [offset, size])
+    }
+}
+
 struct StackAllocator {
     parent: Allocator
 
     memory: byte&
     capacity: ulong
-    used: ulong
 
-    lastAllocation: byte&
-    lastAllocationSize: ulong
-
-    allocations: Array(ulong)
+    allocations: Array(StackAllocation)
 }
 
 fn NewStackAllocator(size: ulong) -> StackAllocator {
@@ -21,9 +36,7 @@ fn NewStackAllocator(size: ulong) -> StackAllocator {
         parent = new StdHeapAllocator {}
         memory = null
         capacity = 0
-        used = 0
-        lastAllocation = null
-        allocations = (Array(ulong))NewArray()
+        allocations = (Array(StackAllocation))NewArray()
     }
     a.Reserve(size)
     return a
@@ -34,9 +47,7 @@ fn NewStackAllocator2(size: ulong, alloc: Allocator) -> StackAllocator {
         parent = alloc
         memory = null
         capacity = 0
-        used = 0
-        lastAllocation = null
-        allocations = (Array(ulong))NewArray()
+        allocations = (Array(StackAllocation))NewArray()
     }
     a.Reserve(size)
     return a
@@ -50,83 +61,114 @@ impl StackAllocator {
         capacity = s
 
         if memory == null {
-            memory = parent.allocate(capacity, @sizeof(byte))
+            memory = parent.allocate(capacity, @sizeof(byte), 8)
         }
         else {
-            memory = parent.reallocate(memory, capacity, @sizeof(byte))
+            memory = parent.reallocate(memory, capacity, @sizeof(byte), 8)
         }
     }
 
     ref fn Clear() {
-        lastAllocation = null
-        lastAllocationSize = 0
-        used = 0
         allocations.length = 0
     }
 
     ref fn Dispose() {
         self.Clear()
-        // parent.free(memory)
-        // allocations.Dispose()
+        parent.free(memory)
+        allocations.Dispose()
     }
 
     ref fn PrintDiagnostics() {
-        let i: uint = 0
-
         let s = NewString()
+        defer s.Dispose()
         s.AppendString("( [")
-        while i < allocations.length {
-            defer i += 1
+        while let i: uint = 0, i < allocations.length, i += 1 {
             if i > 0 {
                 s.AppendString(", ")
             }
-            Sprintf(&s, "{i32}", allocations.Get(i))
+            let a = allocations.Get(i)
+            Sprintf(&s, "{}", [a])
         }
-        Sprintfn(&s, "], Free: {i32}, lastAllocation: {i32}, lastAllocationSize: {i32}", [(any)(capacity - used), PointerAdd(lastAllocation, -(long)memory), lastAllocationSize])
-        s.AppendString(" )")
+        s.AppendString("]")
+
+        let free: ulong = capacity
+        let lastAllocation = self.GetLastAllocation()
+        if lastAllocation != null {
+            free = capacity - (lastAllocation.offset + lastAllocation.size)
+        }
+        Sprintf(&s, ", Free: {} )", [free])
         Println(s)
+    }
+
+    ref fn GetLastAllocation() -> StackAllocation& {
+        if allocations.length == 0 {
+            return null
+        } else {
+            return &allocations.data[allocations.length - 1]
+        }
+    }
+
+    ref fn GetNextAllocationOffset() -> ulong {
+        let last = self.GetLastAllocation()
+        if last == null {
+            return 0
+        } else {
+            return last.offset + last.size
+        }
     }
 }
 
 impl Allocator for StackAllocator {
-    fn allocate(count: ulong, elementSize: ulong) -> any& {
-        let size = count * elementSize
+    fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> any& {
+        let nao = self.GetNextAllocationOffset()
+        let nextAddress = PointerAdd(memory, (long)nao)
+        nextAddress = NextAligned(nextAddress, alignment)
 
-        if used + size > capacity {
-            self.Reserve(2 * (used + size))
+        let newAllocation = new StackAllocation {
+            offset = (ulong)((ulong)nextAddress - (ulong)memory)
+            size = count * elementSize
         }
 
-        lastAllocation = PointerAdd(memory, (long)used)
-        lastAllocationSize = size
-        used += size
-        allocations.Add(size)
-        return lastAllocation
+        let end = newAllocation.offset + newAllocation.size
+
+        if end > capacity {
+            self.Reserve(2 * end)
+        }
+
+        allocations.Add(newAllocation)
+        return nextAddress
     }
 
-    fn reallocate(mem: any&, count: ulong, elementSize: ulong) -> any& {
+    fn reallocate(mem: any&, count: ulong, elementSize: ulong, alignment: ulong) -> any& {
         let size = count * elementSize
 
-        if mem == lastAllocation {            
-            let sizeDiff = size - lastAllocationSize
-            if used + sizeDiff > capacity {
-                self.Reserve(2 * (used + sizeDiff))
+        let lastAllocation = self.GetLastAllocation()
+        if lastAllocation == null {
+            return null
+        }
+
+        let lastAllocationAddress = PointerAdd(memory, lastAllocation.offset)
+        if mem == lastAllocationAddress {
+            let newEnd = lastAllocation.offset + size
+            if newEnd > capacity {
+                self.Reserve(2 * newEnd)
             }
 
-            lastAllocationSize = size
-            used += sizeDiff
-            allocations.Set(allocations.length - 1, lastAllocationSize)
+            lastAllocation.size = size
             return mem
         } else {
-            let newMem = self.allocate(count, elementSize)
+            let newMem = self.allocate(count, elementSize, 8)
             memcpy(newMem, mem, (int)size)
             return newMem
         }
     }
 
     fn free(mem: any&) {
-        if mem == lastAllocation {
-            PointerAdd(lastAllocation, -(long)lastAllocationSize)
-            used -= lastAllocationSize
+        let lastAllocation = self.GetLastAllocation()
+        if lastAllocation == null {
+            return
+        }
+        if mem == PointerAdd(memory, lastAllocation.offset) {
             allocations.length -= 1
         }
     }

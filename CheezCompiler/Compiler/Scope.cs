@@ -454,12 +454,12 @@ namespace Cheez.Compiler
             return true;
         }
 
-        public ISymbol GetSymbol(string name, bool analyzed = true)
+        public ISymbol GetSymbol(string name, bool forceAnalyzed = true)
         {
             if (mSymbolTable.ContainsKey(name))
             {
                 var v = mSymbolTable[name];
-                if (analyzed && v is CompTimeVariable c && c.Value is Analizable a)
+                if (forceAnalyzed && v is CompTimeVariable c && c.Value is Analizable a)
                 {
                     if (a.Analyzed)
                         return v;

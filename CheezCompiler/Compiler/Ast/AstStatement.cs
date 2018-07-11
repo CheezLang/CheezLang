@@ -120,11 +120,17 @@ namespace Cheez.Compiler.Ast
         public AstExpression Condition { get; set; }
         public AstBlockStmt Body { get; set; }
 
+        public AstVariableDecl PreAction { get; set; }
+        public AstStatement PostAction { get; set; }
 
-        public AstWhileStmt(ParseTree.PTStatement node, AstExpression cond, AstBlockStmt body) : base(node)
+        public Scope SubScope { get; set; }
+
+        public AstWhileStmt(ParseTree.PTStatement node, AstExpression cond, AstBlockStmt body, AstVariableDecl pre, AstStatement post) : base(node)
         {
             this.Condition = cond;
             this.Body = body;
+            PreAction = pre;
+            PostAction = post;
         }
 
         [DebuggerStepThrough]
@@ -135,7 +141,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstWhileStmt(GenericParseTreeNode, Condition.Clone(), Body.Clone() as AstBlockStmt)
+            return new AstWhileStmt(GenericParseTreeNode, Condition.Clone(), Body.Clone() as AstBlockStmt, PreAction?.Clone() as AstVariableDecl, PostAction?.Clone())
             {
                 Scope = this.Scope,
                 Directives = this.Directives,

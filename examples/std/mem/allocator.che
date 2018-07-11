@@ -1,5 +1,5 @@
 trait Allocator {
-    fn allocate(count: ulong, elementSize: ulong) -> any&;
-    fn reallocate(mem: any&, count: ulong, elementSize: ulong) -> any&;
+    fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> any&;
+    fn reallocate(mem: any&, count: ulong, elementSize: ulong, alignment: ulong) -> any&;
     fn free(mem: any&);
 }

@@ -238,6 +238,57 @@ namespace Cheez.Compiler.SemanticAnalysis
         public void DoWork(Workspace workspace, List<AstStatement> statements, IErrorHandler errorHandler)
         {
             this.workspace = workspace;
+
+            // struct declarations
+            if (false) {
+                var structs = new List<AstStructDecl>();
+                var ens = new List<AstEnumDecl>();
+                var traits = new List<AstTraitDeclaration>();
+                var globals = new List<AstVariableDecl>();
+                var functions = new List<AstFunctionDecl>();
+                var impls = new List<AstImplBlock>();
+
+                foreach (var s in statements)
+                {
+                    switch (s)
+                    {
+                        case AstStructDecl str: structs.Add(str); break;
+                        case AstEnumDecl e: ens.Add(e); break;
+                        case AstTraitDeclaration t: traits.Add(t); break;
+                        case AstVariableDecl v: globals.Add(v); break;
+                        case AstFunctionDecl f: functions.Add(f); break;
+                        case AstImplBlock i: impls.Add(i); break;
+                    }
+                }
+
+                foreach (var t in ens)
+                    Console.WriteLine($"  enum {t.Name.Name}");
+
+                Console.WriteLine();
+                foreach (var @struct in structs)
+                    Console.WriteLine($"  struct {@struct.Name.Name}({string.Join(", ", @struct.Parameters.Select(p => $"{p.Name.Name}: {p.TypeExpr}"))})");
+
+                Console.WriteLine();
+                foreach (var t in traits)
+                    Console.WriteLine($"  trait {t.Name.Name}");
+
+                Console.WriteLine();
+                foreach (var i in impls)
+                    if (i.TraitExpr != null)
+                        Console.WriteLine($"  impl {i.TraitExpr} for {i.TargetTypeExpr}");
+                    else
+                        Console.WriteLine($"  impl {i.TargetTypeExpr}");
+
+                Console.WriteLine();
+                foreach (var t in globals)
+                    Console.WriteLine($"  let {t.Name.Name}: {t.TypeExpr} = {t.Initializer}");
+
+                Console.WriteLine();
+                foreach (var t in functions)
+                    Console.WriteLine($"  fn {t.Name.Name}({string.Join(", ", t.Parameters.Select(p => $"{p.Name.Name}: {p.TypeExpr}"))})");
+            }
+
+            // 
             List<IEnumerator<object>> enums = new List<IEnumerator<object>>();
 
             foreach (var s in statements)
@@ -632,6 +683,11 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
+        public void VisitStructHeader(AstStructDecl str)
+        {
+
+        }
+
         public override IEnumerable<object> VisitStructDeclaration(AstStructDecl str, SemanticerData data = null)
         {
             var scope = data.Scope;
@@ -721,11 +777,11 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (function.ImplBlock?.Trait != null)
             {
                 // parameters
-                foreach (var p in function.Parameters.Skip(1))
+                foreach (var p in function.Parameters.Skip(0))
                 {
                     p.Scope = function.HeaderScope;
 
-                    foreach (var v in CreateType(p.Scope, p.TypeExpr, context.Text, context.ErrorHandler))
+                    foreach (var v in CreateType(p.Scope, p.TypeExpr, context.Text, context.ErrorHandler, false))
                     {
                         if (v is CheezType tt)
                             p.Type = tt;
@@ -736,7 +792,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (function.ReturnTypeExpr != null)
                 {
-                    foreach (var v in CreateType(function.HeaderScope, function.ReturnTypeExpr, context.Text, context.ErrorHandler))
+                    foreach (var v in CreateType(function.HeaderScope, function.ReturnTypeExpr, context.Text, context.ErrorHandler, false))
                     {
                         if (v is CheezType tt)
                             function.ReturnType = tt;
@@ -1346,7 +1402,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 AstExpression selfType = new AstTypeExpr(trait.Name.GenericParseTreeNode, trait.Type);
 
                 {
-                    foreach (var v in CreateType(trait.Scope, f.ReturnTypeExpr, context.Text, context.ErrorHandler))
+                    foreach (var v in CreateType(trait.Scope, f.ReturnTypeExpr, context.Text, context.ErrorHandler, false))
                     {
                         if (v is CheezType t)
                             f.ReturnType = t;
@@ -1357,7 +1413,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 foreach (var p in f.Parameters)
                 {
-                    foreach (var v in CreateType(trait.Scope, p.TypeExpr, context.Text, context.ErrorHandler))
+                    foreach (var v in CreateType(trait.Scope, p.TypeExpr, context.Text, context.ErrorHandler, false))
                     {
                         if (v is CheezType t)
                             p.Type = t;
@@ -1426,7 +1482,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             // types
             impl.TargetType = CheezType.Error;
-            foreach (var v in CreateType(context.Scope, impl.TargetTypeExpr, context.Text, context.ErrorHandler))
+            foreach (var v in CreateType(context.Scope, impl.TargetTypeExpr, context.Text, context.ErrorHandler, true))
             {
                 if (v is CheezType type)
                     impl.TargetType = type;
@@ -1516,12 +1572,37 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             var scope = context.Scope;
             ws.Scope = scope;
+            ws.SubScope = NewScope("while", scope);
 
-            foreach (var v in ws.Condition.Accept(this, context.Clone()))
+            var subContext = context.Clone(Scope: ws.SubScope);
+
+            if (ws.PreAction != null)
+            {
+                foreach (var v in ws.PreAction.Accept(this, subContext))
+                {
+                    if (v is ReplaceAstStmt r)
+                        yield return r.NewStatement;
+                    else
+                        yield return v;
+                }
+            }
+
+            foreach (var v in ws.Condition.Accept(this, subContext))
                 if (v is ReplaceAstExpr r)
                     ws.Condition = r.NewExpression;
                 else
                     yield return v;
+
+            if (ws.PostAction != null)
+            {
+                foreach (var v in ws.PostAction.Accept(this, subContext))
+                {
+                    if (v is ReplaceAstStmt r)
+                        yield return r.NewStatement;
+                    else
+                        yield return v;
+                }
+            }
 
             if (ws.Condition.Type != CheezType.Bool)
             {
@@ -1530,7 +1611,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             ws.Body.Parent = ws;
 
-            foreach (var v in ws.Body.Accept(this, context.Clone()))
+            foreach (var v in ws.Body.Accept(this, subContext))
                 yield return v;
 
             yield break;
@@ -1627,6 +1708,34 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         var value = ConstInt(call.GenericParseTreeNode, call.GenericParseTreeNode.Beginning.line);
                         foreach (var v in ReplaceAstExpr(value, context))
+                            yield return v;
+                        break;
+                    }
+
+                case "alignof":
+                    {
+                        if (call.Arguments.Count < 1)
+                        {
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(0)), context))
+                                yield return v;
+                        }
+                        if (call.Arguments.Count > 1)
+                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires only one argument");
+
+                        var arg = call.Arguments[0];
+
+                        CheezType type = CheezType.Error;
+                        if (arg.Type == CheezType.Type)
+                        {
+                            type = arg.Value as CheezType;
+                        }
+                        else
+                        {
+                            type = arg.Type;
+                        }
+
+                        foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(type.Alignment)), context))
                             yield return v;
                         break;
                     }
@@ -1849,7 +1958,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                         foreach (var arg in call.Arguments)
                         {
-                            foreach (var v in CreateType(call.Scope, arg, context.Text, context.ErrorHandler))
+                            foreach (var v in CreateType(call.Scope, arg, context.Text, context.ErrorHandler, true))
                             {
                                 if (v is CheezType t)
                                     arg.Type = t;
@@ -2876,7 +2985,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
 
 
-            if (!CanAssign(cast.SubExpression.Type, cast.Type, out var type, context, cast.SubExpression.GenericParseTreeNode))
+            if (!CanAssign(cast.SubExpression.Type, cast.Type, out var type, context, cast.SubExpression.GenericParseTreeNode, false))
             { }
             //{
             //    yield return new LambdaError(eh => eh.ReportError(data.Text, cast.ParseTreeNode, $"Can't cast a value of to '{cast.SubExpression.Type}' to '{cast.Type}'"));
@@ -3167,7 +3276,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #endregion
 
-        private bool CanAssign(CheezType sourceType, CheezType targetType, out CheezType outSource, SemanticerData context, ILocation location)
+        private bool CanAssign(CheezType sourceType, CheezType targetType, out CheezType outSource, SemanticerData context, ILocation location, bool implict = true)
         {
             outSource = sourceType;
 
@@ -3232,9 +3341,19 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 postCheckConditions.Add(new PostCheckCondition(() =>
                 {
-                    if (workspace.TypeTraitMap.TryGetValue(src, out var traits) && traits.Contains(trait))
-                        return;
-                    context.ReportError(location, $"Can't convert a value of type {sourceType} to {trait} because is doesn't implement the trait");
+                    if (implict && sourceType is PointerType)
+                    {
+                        if (workspace.TypeTraitMap.TryGetValue(src, out var traits) && traits.Contains(trait))
+                            context.ReportError(location, $"Can't implicitly convert a value of type {sourceType} to {trait}. An explicit conversion exists");
+                        else
+                            context.ReportError(location, $"Can't convert a value of type {sourceType} to {trait} because is doesn't implement the trait");
+                    }
+                    else
+                    {
+                        if (workspace.TypeTraitMap.TryGetValue(src, out var traits) && traits.Contains(trait))
+                            return;
+                        context.ReportError(location, $"Can't convert a value of type {sourceType} to {trait} because is doesn't implement the trait");
+                    }
                 }));
                 return true;
             }
@@ -3370,7 +3489,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         }
 
         // this function creates the CheezType structure from an expression, with polytypes
-        private IEnumerable<object> CreateType(Scope scope, AstExpression e, IText text, IErrorHandler error)
+        private IEnumerable<object> CreateType(Scope scope, AstExpression e, IText text, IErrorHandler error, bool forceAnalyzed)
         {
             switch (e)
             {
@@ -3386,7 +3505,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         }
                         else
                         {
-                            var v = scope.GetSymbol(i.Name);
+                            var v = scope.GetSymbol(i.Name, forceAnalyzed);
                             if (v == null)
                             {
                                 yield return new WaitForSymbol(text, e.GenericParseTreeNode, scope, i.Name);
@@ -3404,7 +3523,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 case AstPointerTypeExpr p:
                     {
                         CheezType sub = null;
-                        foreach (var v in CreateType(scope, p.Target, text, error))
+                        foreach (var v in CreateType(scope, p.Target, text, error, forceAnalyzed))
                         {
                             if (v is CheezType t)
                                 sub = t;
@@ -3418,7 +3537,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 case AstCallExpr c:
                     {
                         CheezType fType = null;
-                        foreach (var v in CreateType(scope, c.Function, text, error))
+                        foreach (var v in CreateType(scope, c.Function, text, error, forceAnalyzed))
                         {
                             if (v is CheezType t)
                                 fType = t;
@@ -3429,7 +3548,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         var aTypes = new CheezType[c.Arguments.Count];
                         for (int i = 0; i < aTypes.Length; i++)
                         {
-                            foreach (var v in CreateType(scope, c.Arguments[i], text, error))
+                            foreach (var v in CreateType(scope, c.Arguments[i], text, error, forceAnalyzed))
                             {
                                 if (v is CheezType t)
                                     aTypes[i] = t;
@@ -3461,7 +3580,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 case AstArrayTypeExpr slice:
                     {
                         CheezType type = CheezType.Error;
-                        foreach (var v in CreateType(scope, slice.Target, text, error))
+                        foreach (var v in CreateType(scope, slice.Target, text, error, forceAnalyzed))
                         {
                             if (v is CheezType t)
                                 type = t;
@@ -3475,7 +3594,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 case AstAddressOfExpr add:
                     {
                         var type = CheezType.Error;
-                        foreach (var v in CreateType(scope, add.SubExpression, text, error))
+                        foreach (var v in CreateType(scope, add.SubExpression, text, error, forceAnalyzed))
                         {
                             if (v is CheezType t)
                                 type = t;
@@ -3485,6 +3604,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                         yield return PointerType.GetPointerType(type);
                         yield break;
                     }
+
+                case AstTypeExpr t:
+                    yield return t.Type;
+                    yield break;
 
                 default:
                     throw new NotImplementedException();

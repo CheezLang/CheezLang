@@ -1,24 +1,15 @@
-//#load("examples/signed_distance_field_renderer.che")
-// #load("examples/glfw3_example.che")
-// #load("examples/trait_function_call_performance.che")
+#load("examples/signed_distance_field_renderer.che")
+#load("examples/glfw3_example.che")
+#load("examples/trait_function_call_performance.che")
 
 #load("std/string.che")
 #load("std/mem/memory.che")
 #load("std/io/io.che")
 
-struct Vec3 {
-    x: int
-    y: int
-    z: int
-}
-
-impl Printable for Vec3 {
-    fn Print(str: String&, format: char[]) {
-        Sprintf(str, "({}, {}, {})", [x, y, z])
-    }
-}
-
 fn Main()
 {
-    Printf("Hi {0}, my name is {1}. How are you doing, {0}? - {2}", ["friend", "me", new Vec3{147, 258, 369}])
+    trait_function_call_performance()
+    signed_distance_field_renderer()
+    glfw3_example()
 }
+

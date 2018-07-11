@@ -19,9 +19,8 @@ fn streql(a: $T, b: $T2, len: ulong) -> bool {
         len = blen
     }
 
-    let i: ulong = 0
-    while i < len {
-        defer i += 1
+    
+    while let i: ulong = 0, i < len, i += 1 {
         if a.CharAt(i) != b.CharAt(i) {
             return false
         }
@@ -41,9 +40,7 @@ fn streq(a: $T, b: $T2) -> bool {
         len = blen
     }
 
-    let i: ulong = 0
-    while (i < len) {
-        defer i += 1
+    while let i: ulong = 0, i < len, i += 1 {
         if a.CharAt(i) != b.CharAt(i) {
             return false
         }
@@ -108,10 +105,10 @@ impl StringBase($CharType) {
         capacity = size
         if data == null {
             length = 0
-            data = allocator.allocate((ulong)capacity, @sizeof(CharType))
+            data = allocator.allocate((ulong)capacity, @sizeof(CharType), @alignof(CharType))
         }
         else {
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType))
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType), @alignof(CharType))
             if length > capacity {
                 length = capacity
             }
@@ -122,10 +119,10 @@ impl StringBase($CharType) {
         length = size
         capacity = size
         if data == null {
-            data = allocator.allocate((ulong)capacity, @sizeof(CharType))
+            data = allocator.allocate((ulong)capacity, @sizeof(CharType), @alignof(CharType))
         }
         else {
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType))
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType), @alignof(CharType))
         }
     }
 
@@ -141,14 +138,12 @@ impl StringBase($CharType) {
 
         length = strlen(str)
         capacity = length
-        data = allocator.allocate((ulong)capacity, @sizeof(CharType))
+        data = allocator.allocate((ulong)capacity, @sizeof(CharType), @alignof(CharType))
 
         if @sizeof(CharType) == 1 {
             memcpy(data, (any&)str, length)
         } else {
-            let i = 0
-            while i < length {
-                defer i += 1
+            while let i = 0, i < length, i += 1 {
                 data[i] = (CharType)str[i]
             }
         }
@@ -161,7 +156,7 @@ impl StringBase($CharType) {
 
         if newLength >= capacity {
             capacity = newLength * 2
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType))
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType), @alignof(CharType))
         }
         
         let end = &data[length]
@@ -178,7 +173,7 @@ impl StringBase($CharType) {
                 
         if newLength >= capacity {
             capacity = newLength * 2
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType))
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType), @alignof(CharType))
         }
         
         let end = &data[length]
@@ -194,7 +189,7 @@ impl StringBase($CharType) {
                 
         if newLength >= capacity {
             capacity = newLength * 2
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType))
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType), @alignof(CharType))
         }
         
         let end = &data[length]
@@ -210,7 +205,7 @@ impl StringBase($CharType) {
         
         if newLength >= capacity {
             capacity = newLength * 2
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType))
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType), @alignof(CharType))
         }
         
         
@@ -227,9 +222,7 @@ impl StringBase($CharType) {
                 return false
             }
             
-            let i: @typeof(length) = 0
-            while i < len {
-                defer i += 1
+            while let i: ulong = 0, i < len, i += 1 {
 
                 if data[i] != other[i] {
                     return false

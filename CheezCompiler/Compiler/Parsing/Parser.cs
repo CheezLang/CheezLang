@@ -390,7 +390,7 @@ namespace Cheez.Compiler.Parsing
             TokenLocation beg = null, end = null;
             PTExpr value = null;
             List<PTMatchCase> cases = new List<PTMatchCase>();
-            
+
             beg = Consume(TokenType.KwMatch, ErrMsg("keyword 'match'", "at beginning of match statement")).location;
             SkipNewlines();
 
@@ -398,7 +398,7 @@ namespace Cheez.Compiler.Parsing
             SkipNewlines();
 
             Consume(TokenType.OpenBrace, ErrMsg("{", "after value in match statement"));
-            
+
             while (true)
             {
                 SkipNewlines();
@@ -818,16 +818,35 @@ namespace Cheez.Compiler.Parsing
             TokenLocation beg = null;
             PTExpr condition = null;
             PTBlockStmt body = null;
+            PTVariableDecl init = null;
+            PTStatement post = null;
 
             beg = Consume(TokenType.KwWhile, ErrMsg("keyword 'while'", "at beginning of while statement")).location;
-
             SkipNewlines();
+
+            if (CheckToken(TokenType.KwLet))
+            {
+                init = ParseVariableDeclaration(TokenType.Comma);
+                SkipNewlines();
+                Consume(TokenType.Comma, ErrMsg(",", "after variable declaration in while statement"));
+                SkipNewlines();
+            }
+
             condition = ParseExpression(ErrMsg("expression", "after keyword 'while'"));
-
             SkipNewlines();
+
+            if (CheckToken(TokenType.Comma))
+            {
+                NextToken();
+                SkipNewlines();
+                var p = ParseStatement(false);
+                post = p.stmt;
+                SkipNewlines();
+            }
+
             body = ParseBlockStatement();
 
-            return new PTWhileStmt(beg, condition, body);
+            return new PTWhileStmt(beg, condition, body, init, post);
         }
 
         private PTIfStmt ParseIfStatement()
@@ -861,7 +880,7 @@ namespace Cheez.Compiler.Parsing
 
             return new PTIfStmt(beg, end, condition, ifCase, elseCase);
         }
-        
+
         private PTFunctionDecl ParseFunctionDeclaration()
         {
             TokenLocation beginning = null, end = null;

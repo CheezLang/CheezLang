@@ -6,11 +6,11 @@ struct StdHeapAllocator {
 }
 
 impl Allocator for StdHeapAllocator {
-    fn allocate(count: ulong, elementSize: ulong) -> any& {
+    fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> any& {
         return malloc((int)(count * elementSize))
     }
 
-    fn reallocate(mem: any&, count: ulong, elementSize: ulong) -> any& {
+    fn reallocate(mem: any&, count: ulong, elementSize: ulong, alignment: ulong) -> any& {
         return realloc(mem, (int)(count * elementSize))
     }
 

@@ -22,6 +22,7 @@ struct DistanceShaderPair {
 trait SDF {
     fn distance(v: Vec3) -> DistanceShaderPair;
 }
+
 struct Sphere {
     radius: double
     shader: Shader
@@ -331,7 +332,7 @@ struct Film {
 impl Film {
     ref fn trigger(camera: PerspectiveCamera, scene: Raymarcher) {
 
-        Printfn("({i32}, {i32})`n", [(any)width, height])
+        Printf("({}, {})`n", [width, height])
 
         let fw = 1 / (double)width
         let fh = 1 / (double)height
@@ -372,7 +373,7 @@ impl SDFAllocator {
     }
 
     ref fn Allocate() -> $T& {
-        let t = (T&)allocator.allocate(1, @sizeof(T))
+        let t = (T&)allocator.allocate(1, @sizeof(T), @alignof(T))
         allocator.PrintDiagnostics()
         return t
     }
@@ -381,7 +382,7 @@ impl SDFAllocator {
         let s: Sphere& = self.Allocate()
         s.radius = radius
         s.shader = shader
-        return s
+        return (SDF)s
     }
 
     ref fn SphereT(position: Vec3, radius: double, shader: Shader) -> SDF {
@@ -392,7 +393,7 @@ impl SDFAllocator {
         let s: Cube& = self.Allocate()
         s.radius = radius
         s.shader = shader
-        return s
+        return (SDF)s
     }
 
     ref fn CubeT(position: Vec3, radius: double, shader: Shader) -> SDF {
@@ -403,65 +404,62 @@ impl SDFAllocator {
         let t: TranslatedSDF& = self.Allocate()
         t.sdf = sdf
         t.translation = translation
-        return t
+        return (SDF)t
     }
 
     ref fn RotateX(sdf: SDF, angle: double) -> SDF {
         let t: RotatedXSDF& = self.Allocate()
         t.sdf = sdf
         t.angle = angle
-        return t
+        return (SDF)t
     }
 
     ref fn RotateY(sdf: SDF, angle: double) -> SDF {
         let t: RotatedYSDF& = self.Allocate()
         t.sdf = sdf
         t.angle = angle
-        return t
+        return (SDF)t
     }
 
     ref fn RotateZ(sdf: SDF, angle: double) -> SDF {
         let t: RotatedZSDF& = self.Allocate()
         t.sdf = sdf
         t.angle = angle
-        return t
+        return (SDF)t
     }
 
     ref fn Add(sdf1: SDF, sdf2: SDF) -> SDF {
         let t: UnionSDF& = self.Allocate()
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return t
+        return (SDF)t
     }
 
     ref fn Intersect(sdf1: SDF, sdf2: SDF) -> SDF {
         let t: IntersectionSDF& = self.Allocate()
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return t
+        return (SDF)t
     }
 
     ref fn Subtract(sdf1: SDF, sdf2: SDF) -> SDF {
         let t: SubtractionSDF& = self.Allocate()
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return t
+        return (SDF)t
     }
 
     ref fn Combine(sdf1: SDF, sdf2: SDF) -> $T& {
         let t: T& = self.Allocate()
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return t
+        return (SDF)t
     }
 }
 
 fn RenderImage(film: Film&)
 {
-    let i = 0
-    while i < film.pixels.length {
-        defer i += 1
-
+    while let i = 0, i < film.pixels.length, i += 1 {
         film.pixels[i] = new Vec3 { 0, 0, 0 }
     }
 
@@ -508,9 +506,9 @@ fn RenderImage(film: Film&)
 fn signed_distance_field_renderer()
 {
     //
-    let scale = 4
-    let width: uint = (uint)(360 * scale)
-    let height: uint = (uint)(240 * scale)
+    let scale: uint = 1
+    let width: uint = 360 * scale
+    let height: uint = 240 * scale
 
     let imageArr: Array(Vec3) = NewArray()
     defer imageArr.Dispose()
@@ -521,6 +519,6 @@ fn signed_distance_field_renderer()
 
     RenderImage(&film)
 
-    // store image as bmp
+    // // store image as bmp
     write_bmp((int)width, (int)height, (double&)imageArr.data, "test.bmp")
 }

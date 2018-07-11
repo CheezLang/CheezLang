@@ -18,6 +18,7 @@ namespace Cheez.Compiler
 
         public abstract bool IsPolyType { get; }
         public int Size { get; set; } = 0;
+        public int Alignment { get; set; } = 1;
     }
 
     public class CheezTypeType : CheezType
@@ -96,7 +97,7 @@ namespace Cheez.Compiler
 
     public class AnyType : CheezType
     {
-        public static AnyType Intance { get; } = new AnyType { Size = 8 };
+        public static AnyType Intance { get; } = new AnyType { Size = 8, Alignment = 8 };
 
         public override string ToString()
         {
@@ -108,7 +109,7 @@ namespace Cheez.Compiler
 
     public class BoolType : CheezType
     {
-        public static BoolType Instance = new BoolType { Size = 1 };
+        public static BoolType Instance = new BoolType { Size = 1, Alignment = 1 };
 
         private BoolType()
         {}
@@ -141,6 +142,7 @@ namespace Cheez.Compiler
             var type = new IntType
             {
                 Size = sizeInBytes,
+                Alignment = sizeInBytes,
                 Signed = signed
             };
 
@@ -171,7 +173,8 @@ namespace Cheez.Compiler
 
             var type = new FloatType
             {
-                Size = size
+                Size = size,
+                Alignment = size
             };
 
             sTypes[size] = type;
@@ -189,6 +192,7 @@ namespace Cheez.Compiler
     public class PointerType : CheezType
     {
         public static int PointerSize = 4;
+        public static int PointerAlignment = 4;
 
         private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
 
@@ -207,7 +211,8 @@ namespace Cheez.Compiler
             var type = new PointerType
             {
                 TargetType = targetType,
-                Size = PointerSize
+                Size = PointerSize,
+                Alignment = PointerAlignment
             };
 
             sTypes[targetType] = type;
@@ -318,6 +323,7 @@ namespace Cheez.Compiler
             {
                 TargetType = targetType,
                 Size = PointerType.PointerSize + 4,
+                Alignment = PointerType.PointerAlignment
             };
 
             sTypes[targetType] = type;
@@ -339,7 +345,7 @@ namespace Cheez.Compiler
 
     public class StringType : CheezType
     {
-        public static StringType Instance = new StringType { Size = PointerType.PointerSize };
+        public static StringType Instance = new StringType { Size = PointerType.PointerSize, Alignment = PointerType.PointerAlignment };
 
         public override string ToString()
         {
@@ -356,7 +362,7 @@ namespace Cheez.Compiler
 
     public class CharType : CheezType
     {
-        public static CharType Instance = new CharType { Size = 1 };
+        public static CharType Instance = new CharType { Size = 1, Alignment = 1 };
         public override bool IsPolyType => false;
 
         public override string ToString()
@@ -389,6 +395,7 @@ namespace Cheez.Compiler
         public TraitType(AstTraitDeclaration decl)
         {
             Size = 2 * PointerType.PointerSize;
+            Alignment = PointerType.PointerAlignment;
             Declaration = decl;
         }
 
@@ -439,6 +446,10 @@ namespace Cheez.Compiler
                 MemberOffsets[i] = Size;
                 Size += m.Type.Size;
             }
+
+            Alignment = Size;
+            if (Alignment == 0)
+                Alignment = 4;
         }
 
         public override string ToString()
@@ -465,6 +476,8 @@ namespace Cheez.Compiler
         {
             if (memberType == null)
                 memberType = IntType.DefaultType;
+
+            Alignment = memberType.Alignment;
 
             Name = en.Name.Name;
             Members = new Dictionary<string, int>();

@@ -26,11 +26,11 @@ impl CountingAllocator {
 }
 
 impl Allocator for CountingAllocator {
-    fn allocate(count: ulong, elementSize: ulong) -> any& {
+    fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> any& {
         let size = count * elementSize
         allocated += size
 
-        let mem = parent.allocate(size + @sizeof(ulong), 1)
+        let mem = parent.allocate(size + @sizeof(ulong), 1, alignment)
 
         // store size before allocated memory
         let sizePtr = (ulong&)mem
@@ -39,7 +39,7 @@ impl Allocator for CountingAllocator {
         return PointerAdd(mem, @sizeof(ulong))
     }
 
-    fn reallocate(mem: any&, count: ulong, elementSize: ulong) -> any& {
+    fn reallocate(mem: any&, count: ulong, elementSize: ulong, alignment: ulong) -> any& {
         let size = count * elementSize
         let actualMem = PointerAdd(mem, -@sizeof(ulong))
         
@@ -48,7 +48,7 @@ impl Allocator for CountingAllocator {
             allocated += size - <<sizePtr
         }
 
-        mem = parent.reallocate(actualMem, size + @sizeof(ulong), 1)
+        mem = parent.reallocate(actualMem, size + @sizeof(ulong), 1, alignment)
 
         let sizePtr = (ulong&)mem
         <<sizePtr = size

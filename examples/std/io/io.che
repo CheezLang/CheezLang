@@ -183,12 +183,10 @@ fn Print(v: $T) {
 }
 
 fn PrintSlice(slice: $T[]) {
-    let i = 0
+    
 
     Print("[")
-    while i < slice.length {
-        defer i += 1
-
+    while let i = 0, i < slice.length, i += 1 {
         if i > 0 {
             Print(", ")
         }
@@ -205,9 +203,7 @@ trait Printable {
 fn ParseInt(str: $String) -> int {
     let val = 0
 
-    let i = 0
-    while i < str::GetLength() {
-        defer i += 1
+    while let i = 0, i < str::GetLength(), i += 1 {
         val *= 10
         val += (int)str::CharAt(i) - (int)'0'
     }
@@ -220,7 +216,7 @@ fn Printf(format: string, args: Printable[]) {
     defer s.Dispose()
 
     Sprintf(&s, format, args)
-    Println(s)
+    Print(s)
 }
 
 fn Sprintf(buffer: String&, format: string, args: Printable[]) {
@@ -229,13 +225,10 @@ fn Sprintf(buffer: String&, format: string, args: Printable[]) {
     formatSpecifier.Reserve(5)
 
     let len = (ulong)format.GetLength()
-    let i: ulong = 0
     let state = 0
     let argIndex = 0
 
-    while i < len {
-        defer i += 1
-
+    while let i: ulong = 0, i < len, i += 1 {
         let c = format[i]
 
         if state == 0 {
