@@ -22,7 +22,7 @@ fn streql(a: $T, b: $T2, len: ulong) -> bool {
     let i: ulong = 0
     while i < len {
         defer i += 1
-        if a.GetChar(i) != b.GetChar(i) {
+        if a.CharAt(i) != b.CharAt(i) {
             return false
         }
     }
@@ -44,7 +44,7 @@ fn streq(a: $T, b: $T2) -> bool {
     let i: ulong = 0
     while (i < len) {
         defer i += 1
-        if a.GetChar(i) != b.GetChar(i) {
+        if a.CharAt(i) != b.CharAt(i) {
             return false
         }
     }
@@ -55,8 +55,24 @@ impl string {
     fn GetLength() -> int {
         return strlen(self)
     }
+    
+    fn CharAt(i: $T) -> char {
+        return self[i]
+    }
+}
 
-    fn GetChar(i: $T) -> char {
+impl Printable for string {
+    fn Print(str: String&, format: char[]) {
+        str.AppendString(<<self)
+    }
+}
+
+impl char[] {
+    fn GetLength() -> int {
+        return self.length
+    }
+
+    fn CharAt(i: $T) -> char {
         return self[i]
     }
 }
@@ -76,7 +92,7 @@ impl StringBase($CharType) {
         return length
     }
 
-    ref fn GetChar(i: $T) -> char {
+    ref fn CharAt(i: $T) -> char {
         return data[i]
     }
 
@@ -232,6 +248,10 @@ impl StringBase($CharType) {
         length = 0
     }
 
+    ref fn Slice() -> CharType[] {
+        return self.SliceFL(0, length)
+    }
+
     ref fn SliceFL(from: int, len: int) -> CharType[] {
         let slice: CharType[] = &data[from]
         slice.length = len
@@ -239,11 +259,24 @@ impl StringBase($CharType) {
     }
 
     ref fn SliceF(from: int) -> CharType[] {
-        return self.SliceFL(from, length)
+        return self.SliceFL(from, length - from)
     }
     
     ref fn SliceL(len: int) -> CharType[] {
         return self.SliceFL(0, len)
+    }
+
+    ref fn IndexOf(ch: CharType) -> int {
+        let i = 0
+        while i < length {
+            if data[i] == ch {
+                return i
+            }
+
+            i += 1
+        }
+
+        return -1
     }
 }
 

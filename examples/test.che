@@ -6,10 +6,6 @@
 #load("std/mem/memory.che")
 #load("std/io/io.che")
 
-trait Printable {
-    fn Print(str: String&, format: char[]);
-}
-
 struct Vec3 {
     x: long
     y: long
@@ -18,80 +14,11 @@ struct Vec3 {
 
 impl Printable for Vec3 {
     fn Print(str: String&, format: char[]) {
-        Sprintfn(str, "({i32}, {i32}, {i32})", [(any)x, y, z])
+        // Sprintf(str, "({}, {}, {})", [x, y, z])
     }
-}
-
-impl Printable for string {
-    fn Print(str: String&, format: char[]) {
-        str.AppendString(<<self)
-
-        Print("format:")
-        Println(format)
-    }
-}
-
-fn print(format: string, args: Printable[]) {
-    let formatSpecifier = NewString()
-    defer formatSpecifier.Dispose()
-    formatSpecifier.Reserve(5)
-
-    let len = (ulong)format.GetLength()
-    let i: ulong = 0
-    let state = 0
-    let argIndex = 0
-
-    let buffer = "".ToString()
-    defer buffer.Dispose()
-
-    while (i < len) {
-        defer i += 1
-
-        let c = format[i]
-
-        if state == 0 {
-            if (c == '{') {
-                state = 1
-            }
-            else {
-                buffer.AppendChar(c)
-            }
-        }
-        else if state == 1 {
-            if (c == '}') {
-                state = 0
-                args[argIndex].Print(&buffer, formatSpecifier.SliceF(0))
-                argIndex += 1
-                formatSpecifier.length = 0
-
-            } else {
-                formatSpecifier.AppendChar(c)
-            }
-        }
-    }
-
-    Println(buffer)
 }
 
 fn Main()
 {
-    let s = "you"
-    let s = (Printable)s
-
-    let v = new Vec3 {4, 5, 6}
-    let v = (Printable)v
-
-    let arr: Printable[] = MallocSlice(3)
-    arr.length = 3
-    arr[0] = s
-    arr[1] = v
-    arr[2] = s
-    print("hello {}, {}, {}", arr)
-    
-    let arr = [s, v, s]
-    print("hi {}, {}, {}", arr)
-    
-    print("wassup {}, {}, {}", [s, v, s])
-    
-    print("wassup {}, {}, {}", [(Printable)"test", new Vec3{987, 654, 321}, s])
+    Printf("Hi {0}, my name is {1}. How are you doing, {0}?", ["friend", "me"])
 }

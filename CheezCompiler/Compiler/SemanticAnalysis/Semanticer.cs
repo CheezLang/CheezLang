@@ -724,7 +724,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 foreach (var p in function.Parameters.Skip(1))
                 {
                     p.Scope = function.HeaderScope;
-                    
+
                     foreach (var v in CreateType(p.Scope, p.TypeExpr, context.Text, context.ErrorHandler))
                     {
                         if (v is CheezType tt)
@@ -2619,20 +2619,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
                 yield break;
             }
-            else
-            {
-                for (int i = 0; i < call.Arguments.Count; i++)
-                {
-                    foreach (var v in call.Arguments[i].Accept(this, context.Clone(ExpectedType: CheezType.Type)))
-                        if (v is ReplaceAstExpr r)
-                            call.Arguments[i] = r.NewExpression;
-                        else
-                            yield return v;
-                }
-            }
 
             if (call.Function.Type is FunctionType f)
             {
+
                 if (f.ParameterTypes.Length != call.Arguments.Count)
                 {
                     context.ReportError(call.GenericParseTreeNode, $"Wrong number of arguments in function call. Expected {f.ParameterTypes.Length}, got {call.Arguments.Count}");
@@ -2643,6 +2633,14 @@ namespace Cheez.Compiler.SemanticAnalysis
                 for (int i = 0; i < call.Arguments.Count && i < f.ParameterTypes.Length; i++)
                 {
                     var expectedType = f.ParameterTypes[i];
+
+                    foreach (var v in call.Arguments[i].Accept(this, context.Clone(ExpectedType: expectedType)))
+                    {
+                        if (v is ReplaceAstExpr r)
+                            call.Arguments[i] = r.NewExpression;
+                        else
+                            yield return v;
+                    }
 
                     if (!CanAssign(call.Arguments[i].Type, expectedType, out var t, context, call.Arguments[i].GenericParseTreeNode))
                     {
@@ -2763,20 +2761,25 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitStringLiteral(AstStringLiteral str, SemanticerData context = null)
         {
-            str.IsCompTimeValue = true;
             if (str.IsChar)
             {
-                var val = str.StringValue;
-                if (val.Length != 1)
+                if (str.Value is string s)
                 {
-                    context.ReportError(str.GenericParseTreeNode, "Char literal must be of length 1");
-                    str.Type = CheezType.Error;
+                    if (s.Length != 1)
+                    {
+                        context.ReportError(str.GenericParseTreeNode, "Char literal must be of length 1");
+                        str.Type = CheezType.Error;
+                    }
+                    else
+                    {
+                        str.Type = CheezType.Char;
+                        str.Value = s[0];
+                        str.CharValue = s[0];
+                    }
                 }
                 else
                 {
-                    str.Type = CheezType.Char;
-                    str.Value = val[0];
-                    str.CharValue = val[0];
+
                 }
             }
             else
@@ -3091,10 +3094,19 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             CheezType type = null;
 
+            if (context.ExpectedType != null)
+            {
+                if (context.ExpectedType is ArrayType arrType)
+                    type = arrType.TargetType;
+                else if (context.ExpectedType is SliceType sliceType)
+                    type = sliceType.TargetType;
+            }
+            var expectedType = type;
+
             bool containsLiterals = false;
             for (int i = 0; i < arr.Values.Count; i++)
             {
-                foreach (var v in arr.Values[i].Accept(this, context))
+                foreach (var v in arr.Values[i].Accept(this, context.Clone(ExpectedType: expectedType)))
                 {
                     if (v is ReplaceAstExpr r)
                         arr.Values[i] = r.NewExpression;
@@ -3207,23 +3219,13 @@ namespace Cheez.Compiler.SemanticAnalysis
                 while (src is PointerType p)
                     src = p.TargetType;
 
-                if (src is StructType str)
+                postCheckConditions.Add(new PostCheckCondition(() =>
                 {
-                    postCheckConditions.Add(new PostCheckCondition(() =>
-                    {
-                        if (workspace.TypeTraitMap.TryGetValue(src, out var traits) && traits.Contains(trait))
-                            return;
-                        context.ReportError(location, $"Can't convert a value of type {sourceType} to {trait} because is doesn't implement the trait");
-                        //if (!str.Declaration.Traits.Contains(trait))
-                        //{
-                        //}
-                    }));
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                    if (workspace.TypeTraitMap.TryGetValue(src, out var traits) && traits.Contains(trait))
+                        return;
+                    context.ReportError(location, $"Can't convert a value of type {sourceType} to {trait} because is doesn't implement the trait");
+                }));
+                return true;
             }
             else if (sourceType != targetType)
             {
@@ -3348,19 +3350,9 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (targetType is TraitType trait)
             {
-                if (source.Type is StructType str)
-                {
-                    var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
-                    cast.Type = targetType;
-                    return cast;
-
-                }
-                else if (source.Type is PointerType ptr)
-                {
-                    var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
-                    cast.Type = targetType;
-                    return cast;
-                }
+                var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                cast.Type = targetType;
+                return cast;
             }
 
             return source;
