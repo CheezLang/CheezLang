@@ -279,8 +279,50 @@ fn Sprintf(buffer: String&, format: string, args: Printable[]) {
     }
 }
 
-// impl Printable for i64 {
-//     fn Print(str: String&, format: char[]) {
-//         // Bprinti(str, <<self)
-//     }
-// }
+impl Printable for u8 {
+    fn Print(str: String&, format: char[]) {
+        Bprinti(str, <<self)
+    }
+}
+
+impl Printable for u16 {
+    fn Print(str: String&, format: char[]) {
+        Bprinti(str, <<self)
+    }
+}
+
+impl Printable for u32 {
+    fn Print(str: String&, format: char[]) {
+        Bprinti(str, <<self)
+    }
+}
+
+impl Printable for u64 {
+    fn Print(str: String&, format: char[]) {
+        Bprinti(str, <<self)
+    }
+}
+
+impl Printable for i8 {
+    fn Print(str: String&, format: char[]) {
+        Bprinti(str, <<self)
+    }
+}
+
+impl Printable for i16 {
+    fn Print(str: String&, format: char[]) {
+        Bprinti(str, <<self)
+    }
+}
+
+impl Printable for i32 {
+    fn Print(str: String&, format: char[]) {
+        Bprinti(str, <<self)
+    }
+}
+
+impl Printable for i64 {
+    fn Print(str: String&, format: char[]) {
+        Bprinti(str, <<self)
+    }
+}

@@ -1345,6 +1345,16 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 AstExpression selfType = new AstTypeExpr(trait.Name.GenericParseTreeNode, trait.Type);
 
+                {
+                    foreach (var v in CreateType(trait.Scope, f.ReturnTypeExpr, context.Text, context.ErrorHandler))
+                    {
+                        if (v is CheezType t)
+                            f.ReturnType = t;
+                        else
+                            yield return v;
+                    }
+                }
+
                 foreach (var p in f.Parameters)
                 {
                     foreach (var v in CreateType(trait.Scope, p.TypeExpr, context.Text, context.ErrorHandler))
@@ -1369,6 +1379,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                 foreach (var v in func.Accept(this, subContext))
                     yield return v;
             }
+
+            (trait.Type as TraitType).Analyzed = true;
 
             yield break;
         }
@@ -2779,7 +2791,6 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 else
                 {
-
                 }
             }
             else
@@ -3363,6 +3374,10 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             switch (e)
             {
+                case null:
+                    yield return CheezType.Void;
+                    yield break;
+
                 case AstIdentifierExpr i:
                     {
                         if (i.IsPolymorphic)

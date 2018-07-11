@@ -366,10 +366,25 @@ namespace Cheez.Compiler
 
     }
 
-    public class TraitType : CheezType
+    interface Analizable
+    {
+        bool Analyzed { get; set; }
+    }
+
+    public class TraitType : CheezType, Analizable
     {
         public AstTraitDeclaration Declaration { get; }
         public override bool IsPolyType => false;
+
+        private bool _analyzed = false;
+        public bool Analyzed
+        {
+            get => _analyzed;
+            set
+            {
+                _analyzed = value;
+            }
+        }
 
         public TraitType(AstTraitDeclaration decl)
         {
@@ -383,7 +398,7 @@ namespace Cheez.Compiler
         }
     }
 
-    public class StructType : CheezType
+    public class StructType : CheezType, Analizable
     {
         public AstStructDecl Declaration { get; }
 

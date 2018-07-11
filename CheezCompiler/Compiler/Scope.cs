@@ -459,9 +459,9 @@ namespace Cheez.Compiler
             if (mSymbolTable.ContainsKey(name))
             {
                 var v = mSymbolTable[name];
-                if (analyzed && v is CompTimeVariable c && c.Value is StructType s)
+                if (analyzed && v is CompTimeVariable c && c.Value is Analizable a)
                 {
-                    if (s.Analyzed)
+                    if (a.Analyzed)
                         return v;
                 }
                 else
