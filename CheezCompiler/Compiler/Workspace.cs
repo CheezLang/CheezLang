@@ -1,6 +1,7 @@
 ﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.ParseTree;
 using Cheez.Compiler.SemanticAnalysis;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -21,6 +22,9 @@ namespace Cheez.Compiler
         public List<Scope> AllScopes { get; private set; }
 
         public AstFunctionDecl MainFunction { get; set; }
+
+        public Dictionary<CheezType, List<TraitType>> TypeTraitMap = new Dictionary<CheezType, List<TraitType>>();
+        public Dictionary<CheezType, List<AstImplBlock>> Implementations = new Dictionary<CheezType, List<AstImplBlock>>();
 
         public Workspace(Compiler comp)
         {
@@ -74,6 +78,16 @@ namespace Cheez.Compiler
         public void ReportError(string errorMessage, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             mCompiler.ErrorHandler.ReportError(errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
+        }
+
+        public IEnumerable<AstImplBlock> GetTraitImplementations(CheezType type)
+        {
+            if (Implementations.TryGetValue(type, out var impls))
+            {
+                return impls.Where(i => i.Trait != null);
+            }
+
+            return new AstImplBlock[0];
         }
     }
 }

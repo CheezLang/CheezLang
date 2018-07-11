@@ -232,10 +232,18 @@ impl StringBase($CharType) {
         length = 0
     }
 
-    ref fn Slice(from: int, len: int) -> CharType[] {
+    ref fn SliceFL(from: int, len: int) -> CharType[] {
         let slice: CharType[] = &data[from]
         slice.length = len
         return slice
+    }
+
+    ref fn SliceF(from: int) -> CharType[] {
+        return self.SliceFL(from, length)
+    }
+    
+    ref fn SliceL(len: int) -> CharType[] {
+        return self.SliceFL(0, len)
     }
 }
 

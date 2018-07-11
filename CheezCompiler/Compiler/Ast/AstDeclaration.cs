@@ -221,7 +221,7 @@ namespace Cheez.Compiler.Ast
 
         public List<AstStructDecl> PolymorphicInstances { get; } = new List<AstStructDecl>();
 
-        public List<AstImplBlock> Implementations { get; } = new List<AstImplBlock>();
+        //public List<AstImplBlock> Implementations { get; } = new List<AstImplBlock>();
         public List<TraitType> Traits { get; } = new List<TraitType>();
 
         public AstStructDecl(ParseTree.PTStatement node, AstIdentifierExpr name, List<AstParameter> param, List<AstMemberDecl> members, Dictionary<string, AstDirective> dirs) : base(node, dirs)

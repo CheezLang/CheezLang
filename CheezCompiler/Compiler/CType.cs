@@ -188,7 +188,7 @@ namespace Cheez.Compiler
 
     public class PointerType : CheezType
     {
-        public static int PointerSize = 8;
+        public static int PointerSize = 4;
 
         private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
 

@@ -317,6 +317,30 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #region Helper Functions
 
+        private void AddTraitForType(CheezType type, TraitType trait)
+        {
+            List<TraitType> traits = null;
+            if (!workspace.TypeTraitMap.TryGetValue(type, out traits))
+            {
+                traits = new List<TraitType>();
+                workspace.TypeTraitMap.Add(type, traits);
+            }
+
+            traits.Add(trait);
+        }
+
+        private void AddImplementationForType(CheezType type, AstImplBlock impl)
+        {
+            List<AstImplBlock> impls = null;
+            if (!workspace.Implementations.TryGetValue(type, out impls))
+            {
+                impls = new List<AstImplBlock>();
+                workspace.Implementations.Add(type, impls);
+            }
+
+            impls.Add(impl);
+        }
+
         [DebuggerStepThrough]
         private Scope NewScope(string name, Scope parent)
         {
@@ -1398,14 +1422,16 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
             }
 
-            if (impl.TargetType is StructType @struct)
-            {
-                @struct.Declaration.Implementations.Add(impl);
 
-                if (impl.Trait != null)
-                {
-                    @struct.Declaration.Traits.Add(impl.Trait as TraitType);
-                }
+            AddImplementationForType(impl.TargetType, impl);
+            //if (impl.TargetType is StructType @struct)
+            //{
+            //    @struct.Declaration.Implementations.Add(impl);
+
+            //}
+            if (impl.Trait != null)
+            {
+                AddTraitForType(impl.TargetType, impl.Trait);
             }
 
             //impl.SubScope = new Scope($"impl {impl.TargetTypeExpr}", impl.Scope);
@@ -3185,10 +3211,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                 {
                     postCheckConditions.Add(new PostCheckCondition(() =>
                     {
-                        if (!str.Declaration.Traits.Contains(trait))
-                        {
-                            context.ReportError(location, $"Can't convert a value of type {sourceType} to {trait} because is doesn't implement the trait");
-                        }
+                        if (workspace.TypeTraitMap.TryGetValue(src, out var traits) && traits.Contains(trait))
+                            return;
+                        context.ReportError(location, $"Can't convert a value of type {sourceType} to {trait} because is doesn't implement the trait");
+                        //if (!str.Declaration.Traits.Contains(trait))
+                        //{
+                        //}
                     }));
                     return true;
                 }

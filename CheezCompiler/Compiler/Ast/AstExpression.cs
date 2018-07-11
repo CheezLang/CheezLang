@@ -919,5 +919,10 @@ namespace Cheez.Compiler.Ast
                 Scope = this.Scope
             };
         }
+
+        public override string ToString()
+        {
+            return $"[{string.Join(", ", Values)}]";
+        }
     }
 }

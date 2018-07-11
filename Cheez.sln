@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.12
+VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheezCompiler", "CheezCompiler\CheezCompiler.csproj", "{18994E2F-310A-460F-AB2F-3AF665CE7F67}"
 EndProject
@@ -57,12 +57,12 @@ Global
 		{B43C7AC6-EAF2-4B9A-B44F-87513E089FB5}.Release|x64.Build.0 = Release|Any CPU
 		{B43C7AC6-EAF2-4B9A-B44F-87513E089FB5}.Release|x86.ActiveCfg = Release|Any CPU
 		{B43C7AC6-EAF2-4B9A-B44F-87513E089FB5}.Release|x86.Build.0 = Release|Any CPU
-		{852C7066-356E-44D4-9805-5C9D0E4896E8}.Debug|Any CPU.ActiveCfg = Release|Win32
+		{852C7066-356E-44D4-9805-5C9D0E4896E8}.Debug|Any CPU.ActiveCfg = Debug|Win32
 		{852C7066-356E-44D4-9805-5C9D0E4896E8}.Debug|x64.ActiveCfg = Debug|x64
 		{852C7066-356E-44D4-9805-5C9D0E4896E8}.Debug|x64.Build.0 = Debug|x64
 		{852C7066-356E-44D4-9805-5C9D0E4896E8}.Debug|x86.ActiveCfg = Debug|Win32
 		{852C7066-356E-44D4-9805-5C9D0E4896E8}.Debug|x86.Build.0 = Debug|Win32
-		{852C7066-356E-44D4-9805-5C9D0E4896E8}.Release|Any CPU.ActiveCfg = Release|Win32
+		{852C7066-356E-44D4-9805-5C9D0E4896E8}.Release|Any CPU.ActiveCfg = Debug|Win32
 		{852C7066-356E-44D4-9805-5C9D0E4896E8}.Release|x64.ActiveCfg = Release|x64
 		{852C7066-356E-44D4-9805-5C9D0E4896E8}.Release|x64.Build.0 = Release|x64
 		{852C7066-356E-44D4-9805-5C9D0E4896E8}.Release|x86.ActiveCfg = Release|Win32

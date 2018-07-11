@@ -76,6 +76,12 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
         {
             return LLVM.SizeOfTypeInBits(self, type);
         }
+
+
+        public static uint AlignmentOfType(this LLVMTargetDataRef self, LLVMTypeRef type)
+        {
+            return LLVM.ABIAlignmentOfType(self, type);
+        }
     }
 
     public static class TargetExt
