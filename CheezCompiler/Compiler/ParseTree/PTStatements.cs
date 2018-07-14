@@ -129,17 +129,19 @@ namespace Cheez.Compiler.ParseTree
         public PTExpr Condition { get; set; }
         public PTStatement IfCase { get; set; }
         public PTStatement ElseCase { get; set; }
+        public PTVariableDecl PreAction { get; set; }
 
-        public PTIfStmt(TokenLocation beg, TokenLocation end, PTExpr cond, PTStatement ifCase, PTStatement elseCase = null) : base(beg, end)
+        public PTIfStmt(TokenLocation beg, TokenLocation end, PTExpr cond, PTStatement ifCase, PTStatement elseCase = null, PTVariableDecl PreAction = null) : base(beg, end)
         {
             this.Condition = cond;
             this.IfCase = ifCase;
             this.ElseCase = elseCase;
+            this.PreAction = PreAction;
         }
 
         public override AstStatement CreateAst()
         {
-            return new AstIfStmt(this, Condition.CreateAst(), IfCase.CreateAst(), ElseCase?.CreateAst());
+            return new AstIfStmt(this, Condition.CreateAst(), IfCase.CreateAst(), ElseCase?.CreateAst(), PreAction?.CreateAst() as AstVariableDecl);
         }
     }
 

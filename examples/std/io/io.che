@@ -186,7 +186,7 @@ fn PrintSlice(slice: $T[]) {
     
 
     Print("[")
-    while let i = 0, i < slice.length, i += 1 {
+    while let i = 0; i < slice.length; i += 1 {
         if i > 0 {
             Print(", ")
         }
@@ -203,7 +203,7 @@ trait Printable {
 fn ParseInt(str: $String) -> int {
     let val = 0
 
-    while let i = 0, i < str::GetLength(), i += 1 {
+    while let i = 0; i < str::GetLength(); i += 1 {
         val *= 10
         val += (int)str::CharAt(i) - (int)'0'
     }
@@ -228,7 +228,7 @@ fn Sprintf(buffer: String&, format: string, args: Printable[]) {
     let state = 0
     let argIndex = 0
 
-    while let i: ulong = 0, i < len, i += 1 {
+    while let i: ulong = 0; i < len; i += 1 {
         let c = format[i]
 
         if state == 0 {

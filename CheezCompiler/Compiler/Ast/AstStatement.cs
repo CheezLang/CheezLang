@@ -194,8 +194,9 @@ namespace Cheez.Compiler.Ast
         public AstExpression Condition { get; set; }
         public AstStatement IfCase { get; set; }
         public AstStatement ElseCase { get; set; }
+        public AstVariableDecl PreAction { get; set; }
 
-        public AstIfStmt(ParseTree.PTStatement node, AstExpression cond, AstStatement ifCase, AstStatement elseCase = null) : base(node)
+        public AstIfStmt(ParseTree.PTStatement node, AstExpression cond, AstStatement ifCase, AstStatement elseCase = null, AstVariableDecl pre = null) : base(node)
         {
             this.Condition = cond;
             this.IfCase = ifCase;
@@ -210,7 +211,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstStatement Clone()
         {
-            return new AstIfStmt(GenericParseTreeNode, Condition.Clone(), IfCase.Clone(), ElseCase?.Clone())
+            return new AstIfStmt(GenericParseTreeNode, Condition.Clone(), IfCase.Clone(), ElseCase?.Clone(), PreAction?.Clone() as AstVariableDecl)
             {
                 Scope = this.Scope,
                 Directives = this.Directives,
@@ -220,7 +221,10 @@ namespace Cheez.Compiler.Ast
 
         public override string ToString()
         {
-            return $"if {Condition} {{ ... }}";
+            var pre = "";
+            if (PreAction != null)
+                pre = PreAction.ToString() + "; ";
+            return $"if {pre}{Condition} {{ ... }}";
         }
     }
 

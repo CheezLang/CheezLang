@@ -337,13 +337,9 @@ impl Film {
         let fw = 1 / (double)width
         let fh = 1 / (double)height
 
-        let y: uint = 0
-        while y < height {
-            defer y += 1
-
-            let x: uint = 0
-            while x < width {
-                defer x += 1
+        
+        while let y: uint = 0; y < height; y += 1 {
+            while let x: uint = 0; x < width; x += 1 {
 
                 let fx = (double)x + 0.5
                 let fy = (double)y + 0.5
@@ -374,7 +370,7 @@ impl SDFAllocator {
 
     ref fn Allocate() -> $T& {
         let t = (T&)allocator.allocate(1, @sizeof(T), @alignof(T))
-        allocator.PrintDiagnostics()
+        Printf("{}`n", [allocator])
         return t
     }
 
@@ -459,7 +455,7 @@ impl SDFAllocator {
 
 fn RenderImage(film: Film&)
 {
-    while let i = 0, i < film.pixels.length, i += 1 {
+    while let i = 0; i < film.pixels.length; i += 1 {
         film.pixels[i] = new Vec3 { 0, 0, 0 }
     }
 
@@ -506,7 +502,7 @@ fn RenderImage(film: Film&)
 fn signed_distance_field_renderer()
 {
     //
-    let scale: uint = 1
+    let scale: uint = 3
     let width: uint = 360 * scale
     let height: uint = 240 * scale
 

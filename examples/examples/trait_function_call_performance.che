@@ -64,7 +64,7 @@ fn trait_function_call_performance() {
             Printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.NormalFunction()", ms, iterations])
         }   
 
-        while let i = 0, i < iterations, i += 1 {
+        while let i = 0; i < iterations; i += 1 {
             t.NormalFunction((ulong)n)
         }
     }
@@ -82,7 +82,7 @@ fn trait_function_call_performance() {
             Printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.RefFunction()", ms, iterations])
         }   
 
-        while let i = 0, i < iterations, i += 1 {
+        while let i = 0; i < iterations; i += 1 {
             t.RefFunction((ulong)n)
         }
     }
@@ -100,7 +100,7 @@ fn trait_function_call_performance() {
             Printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.TraitFunction()", ms, iterations])
         }   
 
-        while let i = 0, i < iterations, i += 1 {
+        while let i = 0; i < iterations; i += 1 {
             t.TraitFunction((ulong)n)
         }
     }
@@ -118,7 +118,7 @@ fn trait_function_call_performance() {
             Printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["tt.TraitFunction()", ms, iterations])
         }   
 
-        while let i = 0, i < iterations, i += 1 {
+        while let i = 0; i < iterations; i += 1 {
             tt.TraitFunction((ulong)n)
         }
     }

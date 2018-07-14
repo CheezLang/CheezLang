@@ -8,8 +8,8 @@
 
 fn Main()
 {
-    trait_function_call_performance()
+    // trait_function_call_performance()
     signed_distance_field_renderer()
-    glfw3_example()
+    // glfw3_example()
 }
 

@@ -906,6 +906,7 @@ namespace Cheez.Compiler.Ast
             this.Values = values;
         }
 
+        [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
             return visitor.VisitArrayExpression(this, data);
@@ -913,7 +914,7 @@ namespace Cheez.Compiler.Ast
 
         public override AstExpression Clone()
         {
-            return new AstArrayExpression(GenericParseTreeNode, Values)
+            return new AstArrayExpression(GenericParseTreeNode, Values.Select(v => v.Clone()).ToList())
             {
                 Type = this.Type,
                 Scope = this.Scope

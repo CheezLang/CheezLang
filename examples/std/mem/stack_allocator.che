@@ -31,6 +31,27 @@ struct StackAllocator {
     allocations: Array(StackAllocation)
 }
 
+impl Printable for StackAllocator {
+    fn Print(s: String&, format: char[]) {
+        s.AppendString("( [")
+        while let i: uint = 0; i < allocations.length; i += 1 {
+            if i > 0 {
+                s.AppendString(", ")
+            }
+            let a = allocations.Get(i)
+            Sprintf(s, "{}", [a])
+        }
+        s.AppendString("]")
+
+        let free: ulong = capacity
+        let lastAllocation = self.GetLastAllocation()
+        if lastAllocation != null {
+            free = capacity - (lastAllocation.offset + lastAllocation.size)
+        }
+        Sprintf(s, ", Free: {} )", [free])
+    }
+}
+
 fn NewStackAllocator(size: ulong) -> StackAllocator {
     let a = new StackAllocator {
         parent = new StdHeapAllocator {}
@@ -82,7 +103,7 @@ impl StackAllocator {
         let s = NewString()
         defer s.Dispose()
         s.AppendString("( [")
-        while let i: uint = 0, i < allocations.length, i += 1 {
+        while let i: uint = 0; i < allocations.length; i += 1 {
             if i > 0 {
                 s.AppendString(", ")
             }

@@ -20,7 +20,7 @@ fn streql(a: $T, b: $T2, len: ulong) -> bool {
     }
 
     
-    while let i: ulong = 0, i < len, i += 1 {
+    while let i: ulong = 0; i < len; i += 1 {
         if a.CharAt(i) != b.CharAt(i) {
             return false
         }
@@ -40,7 +40,7 @@ fn streq(a: $T, b: $T2) -> bool {
         len = blen
     }
 
-    while let i: ulong = 0, i < len, i += 1 {
+    while let i: ulong = 0; i < len; i += 1 {
         if a.CharAt(i) != b.CharAt(i) {
             return false
         }
@@ -143,7 +143,7 @@ impl StringBase($CharType) {
         if @sizeof(CharType) == 1 {
             memcpy(data, (any&)str, length)
         } else {
-            while let i = 0, i < length, i += 1 {
+            while let i = 0; i < length; i += 1 {
                 data[i] = (CharType)str[i]
             }
         }
@@ -222,7 +222,7 @@ impl StringBase($CharType) {
                 return false
             }
             
-            while let i: ulong = 0, i < len, i += 1 {
+            while let i: ulong = 0; i < len; i += 1 {
 
                 if data[i] != other[i] {
                     return false

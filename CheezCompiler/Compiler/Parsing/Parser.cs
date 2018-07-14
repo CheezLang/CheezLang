@@ -826,16 +826,16 @@ namespace Cheez.Compiler.Parsing
 
             if (CheckToken(TokenType.KwLet))
             {
-                init = ParseVariableDeclaration(TokenType.Comma);
+                init = ParseVariableDeclaration(TokenType.Semicolon);
                 SkipNewlines();
-                Consume(TokenType.Comma, ErrMsg(",", "after variable declaration in while statement"));
+                Consume(TokenType.Semicolon, ErrMsg(";", "after variable declaration in while statement"));
                 SkipNewlines();
             }
 
             condition = ParseExpression(ErrMsg("expression", "after keyword 'while'"));
             SkipNewlines();
 
-            if (CheckToken(TokenType.Comma))
+            if (CheckToken(TokenType.Semicolon))
             {
                 NextToken();
                 SkipNewlines();
@@ -855,10 +855,19 @@ namespace Cheez.Compiler.Parsing
             PTExpr condition = null;
             PTStatement ifCase = null;
             PTStatement elseCase = null;
+            PTVariableDecl pre = null;
 
             beg = Consume(TokenType.KwIf, ErrMsg("keyword 'if'", "at beginning of if statement")).location;
-
             SkipNewlines();
+
+            if (CheckToken(TokenType.KwLet))
+            {
+                pre = ParseVariableDeclaration(TokenType.Semicolon);
+                SkipNewlines();
+                Consume(TokenType.Semicolon, ErrMsg(";", "after variable declaration in if statement"));
+                SkipNewlines();
+            }
+
             condition = ParseExpression(ErrMsg("expression", "after keyword 'if'"));
 
             SkipNewlines();
@@ -878,7 +887,7 @@ namespace Cheez.Compiler.Parsing
                 end = elseCase.End;
             }
 
-            return new PTIfStmt(beg, end, condition, ifCase, elseCase);
+            return new PTIfStmt(beg, end, condition, ifCase, elseCase, pre);
         }
 
         private PTFunctionDecl ParseFunctionDeclaration()
