@@ -170,14 +170,17 @@ namespace Cheez.Compiler.Parsing
         }
 
         //[DebuggerStepThrough]
-        private bool IsExprToken()
+        private bool IsExprToken(params TokenType[] exclude)
         {
             var next = PeekToken();
+            if (exclude.Contains(next.type))
+                return false;
             switch (next.type)
             {
                 case TokenType.KwNew:
                 case TokenType.Plus:
                 case TokenType.Minus:
+                case TokenType.LessLess:
                 case TokenType.OpenParen:
                 case TokenType.StringLiteral:
                 case TokenType.CharLiteral:
@@ -185,6 +188,7 @@ namespace Cheez.Compiler.Parsing
                 case TokenType.KwNull:
                 case TokenType.KwTrue:
                 case TokenType.KwFalse:
+                case TokenType.KwCast:
                 case TokenType.Ampersand:
                 case TokenType.Identifier:
                     return true;
@@ -1420,21 +1424,41 @@ namespace Cheez.Compiler.Parsing
                 //        return new PTCastExpr(token.location, e.End, type, e);
                 //    }
 
-                case TokenType.OpenParen:
-                    NextToken();
-                    SkipNewlines();
-                    var sub = ParseExpression(errorMessage);
-                    SkipNewlines();
-                    sub.Beginning = token.location;
-                    sub.End = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression")).location;
-
-                    if (IsExprToken())
+                case TokenType.KwCast:
                     {
-                        var type = sub;
-                        sub = ParseUnaryExpression();
-                        return new PTCastExpr(type.Beginning, sub.End, type, sub);
+                        NextToken();
+                        SkipNewlines();
+
+                        Consume(TokenType.OpenParen, ErrMsg("(", "after keyword 'cast'"));
+                        SkipNewlines();
+
+                        var type = ParseExpression(errorMessage);
+                        SkipNewlines();
+
+                        Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression"));
+                        SkipNewlines();
+
+                        var sub = ParseUnaryExpression();
+                        return new PTCastExpr(token.location, sub.End, type, sub);
                     }
-                    return sub;
+
+                case TokenType.OpenParen:
+                    {
+                        NextToken();
+                        SkipNewlines();
+                        var sub = ParseExpression(errorMessage);
+                        SkipNewlines();
+                        sub.Beginning = token.location;
+                        sub.End = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression")).location;
+
+                        if (IsExprToken(TokenType.Plus, TokenType.Minus))
+                        {
+                            var type = sub;
+                            sub = ParseUnaryExpression();
+                            return new PTCastExpr(type.Beginning, sub.End, type, sub);
+                        }
+                        return sub;
+                    }
 
                 default:
                     //NextToken();

@@ -2,7 +2,9 @@
 #load("../mem/memory.che")
 #load("../os/windows.che")
 
-fn sprintf(buff: char&, f: string, a: double) #varargs;
+let isize = int
+
+fn sprintf(buff: char&, f: string, a: double) -> int #varargs;
 
 let NEW_LINE: char = '`n'
 
@@ -317,5 +319,23 @@ impl Printable for i32 {
 impl Printable for i64 {
     fn Print(str: String&, format: char[]) {
         Bprinti(str, <<self)
+    }
+}
+
+impl Printable for f32 {
+    fn Print(str: String&, format: char[]) {
+        let buff: char[32]
+        let buff: char[] = buff
+        buff.length = sprintf((char&)buff, "%f", (double)<<self)
+        str.AppendChars(buff)
+    }
+}
+
+impl Printable for f64 {
+    fn Print(str: String&, format: char[]) {
+        let buff: char[32]
+        let buff: char[] = buff
+        buff.length = sprintf((char&)buff, "%f", <<self)
+        str.AppendChars(buff)
     }
 }

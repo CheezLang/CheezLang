@@ -5,6 +5,15 @@
 #load("../bmp/bmp.che")
 
 ///////////////////////////////////////////////////////////
+fn xor(a: bool, b: bool) -> bool {
+    return (a and !b) or (!a and b)
+}
+
+fn mod(a: $T, b: T) -> T {
+    return ((a % b) + b) % b
+}
+
+///////////////////////////////////////////////////////////
 
 struct Ray {
     origin: Vec3
@@ -32,6 +41,20 @@ impl SDF for Sphere {
     fn distance(v: Vec3) -> DistanceShaderPair {
         return new DistanceShaderPair {
             distance = v.mag() - radius
+            shader = shader
+        }
+    }
+}
+
+struct PlaneY {
+    location: double
+    shader: Shader
+}
+
+impl SDF for PlaneY {
+    fn distance(v: Vec3) -> DistanceShaderPair {
+        return new DistanceShaderPair {
+            distance = v.y - location
             shader = shader
         }
     }
@@ -238,7 +261,44 @@ impl Shader for LambertianShader {
 
         let i = normal.dot(ld)
         let c = color.mul3(lc)
-        return c.mul(fmax(i, 0.1))
+
+        let sdfHit = ray.origin.add(ld.mul(0.001))
+        let shadowRay = new Ray{sdfHit, ld}
+        let distance = raymarcher.sdf.distance(shadowRay.origin).distance
+
+        while shadowRay.origin.mag() < raymarcher.backgroundDistance and fabs(distance) > 0.00005 {
+            shadowRay.origin = shadowRay.origin.add(shadowRay.direction.mul(distance))
+            distance = raymarcher.sdf.distance(shadowRay.origin).distance
+        }
+
+        let shadow: double = 1.0
+        if shadowRay.origin.mag() < raymarcher.backgroundDistance {
+            shadow = 0.3
+        }
+        
+        let c = c.mul(fmax(i, 0.1))
+        return c.mul(shadow)
+    }
+}
+
+struct CheckerBoardShader {
+    size: double
+    shader1: Shader
+    shader2: Shader
+}
+
+
+impl Shader for CheckerBoardShader {
+    fn shade(ray: Ray, raymarcher: Raymarcher&) -> Vec3 {
+        let x = mod(ray.origin.x, 2 * size)
+        let y = mod(ray.origin.y, 2 * size)
+        let z = mod(ray.origin.z, 2 * size)
+
+        if xor(x < size, xor(y < size, z < size)) {
+            return shader1.shade(ray, raymarcher)
+        } else {
+            return shader2.shade(ray, raymarcher)
+        }
     }
 }
 
@@ -249,12 +309,9 @@ struct Background {
 
 impl Background {
     fn project(ray: Ray) -> Vec3 {
-        if (ray.direction.y < 0) {
-            return new Vec3 { 0.1, 0.4, 0.1 }
-        }
-        else {
-            return new Vec3 { ray.direction.y * 2, ray.direction.y * 4, 1 }
-        }
+        let i = ray.direction.y + 0.5
+        i *= i
+        return new Vec3 { i, i, i }
     }
 }
 
@@ -283,7 +340,7 @@ impl Raymarcher {
 
     ref fn sampleLightDirection(dir: Vec3&, col: Vec3&) {
         <<dir = new Vec3 {
-            -1, 1, 1
+            -1, 1.5, 1
         }.normaziled()
         <<col = new Vec3 {1, 1, 1}
     }
@@ -327,6 +384,8 @@ struct Film {
     width: uint
     height: uint
     pixels: Vec3[]
+
+    antiAliasingSteps: uint
 }
 
 impl Film {
@@ -337,14 +396,40 @@ impl Film {
         let fw = 1 / (double)width
         let fh = 1 / (double)height
 
+        Printf("Rendering image with {} anti-aliasing step(s)`n", [antiAliasingSteps])
+        if antiAliasingSteps < 1 {
+            antiAliasingSteps = 1
+        }
         
+
+        let r = new LinearCongruentialGenerator{
+            GetCurrentTimeInMicroseconds()
+        }
+
         while let y: uint = 0; y < height; y += 1 {
+            if antiAliasingSteps >= 5 {
+                Printf("Rendering row {}/{}`n", [(y + 1), height])
+            }
+
             while let x: uint = 0; x < width; x += 1 {
 
-                let fx = (double)x + 0.5
-                let fy = (double)y + 0.5
-                let ray = camera.project(fx * fw, fy * fh)
-                let color = scene.project(ray)
+                let fx = (double)x
+                let fy = (double)y
+
+                let color = new Vec3{0, 0, 0}
+
+                if antiAliasingSteps == 1 {
+                    let ray = camera.project((fx + 0.5) * fw, (fy + 0.5) * fh)
+                    color= scene.project(ray)
+                }
+                else {
+                    while let i: uint = 0; i < antiAliasingSteps; i += 1 {
+                        let ray = camera.project((fx + r.NextDouble()) * fw, (fy + r.NextDouble()) * fh)
+                        let c = scene.project(ray)
+                        color = color.add(c)
+                    }
+                    color = color.mul(1 / (double)antiAliasingSteps)
+                }
 
                 pixels[x + y * width] = color
             }
@@ -383,6 +468,13 @@ impl SDFAllocator {
 
     ref fn SphereT(position: Vec3, radius: double, shader: Shader) -> SDF {
         return self.Translate(self.Sphere(radius, shader), position)
+    }
+
+    ref fn PlaneY(location: double, shader: Shader) -> SDF {
+        let s: PlaneY& = self.Allocate()
+        s.location = location
+        s.shader = shader
+        return (SDF)s
     }
 
     ref fn Cube(radius: double, shader: Shader) -> SDF {
@@ -473,27 +565,45 @@ fn RenderImage(film: Film&)
     defer all.Dispose()
 
     //
-    let sRed    = new LambertianShader{new Vec3{1, 0, 0}}
+    let sChecker1    = new LambertianShader{new Vec3{0.9, 0.8, 0.8}}
+    let sChecker2    = new LambertianShader{new Vec3{0.2, 0.1, 0.1}}
+    let sChecker  = new CheckerBoardShader{1, sChecker1, sChecker2}
+
+    let sWhite    = new LambertianShader{new Vec3{1, 1, 1}}
+    let sBlack    = new LambertianShader{new Vec3{0, 0, 0}}
+    let sRed    = new LambertianShader{new Vec3{1, 1, 1}}
     let sGreen  = new LambertianShader{new Vec3{0, 1, 0}}
     let sBlue   = new LambertianShader{new Vec3{0, 0, 1}}
 
     //
-    let s1 = all.SphereT(new Vec3{0, 0, 0}, 1, sRed)
+    let ground = all.PlaneY(-1.25, sWhite)
+    let s1 = all.SphereT(new Vec3{0, 0.5, 0}, 1, sRed)
     let s2 = all.SphereT(new Vec3{0, 0, 0}, 0.3, sRed)
-    let c1 = all.CubeT(new Vec3{0, 0, 0}, 0.8, sRed)
+    let c1 = all.CubeT(new Vec3{0, 0.5, 0}, 0.8, sRed)
 
-    let sdf = c1
-    let sdf = all.Subtract(sdf, s1)
-    let sdf = all.Add(sdf, s2)
 
-    let sdf = all.RotateX(sdf, -10)
-    let sdf = all.RotateY(sdf, -20)
-    let sdf = all.Translate(sdf, new Vec3{0, 0, -6})
+    // cube
+    let sdf: SDF
+    {
+        sdf = c1
+        sdf = all.Subtract(sdf, s1)
+        // sdf = all.Add(sdf, s2)
+
+        sdf = all.RotateX(sdf, -20)
+        sdf = all.RotateY(sdf, 20)
+    }
+    // {
+    //     sdf = s1
+    //     // sdf = all.Subtract(sdf, all.SphereT(new Vec3{1, 0, 1}, 1.2, sWhite))
+    // }
+
+    let sdf = all.Add(sdf, ground)
+    let sdf = all.Translate(sdf, new Vec3{0, 0, -7.5})
 
     let raymarcher = new Raymarcher {
         sdf = sdf
         background = bg
-        backgroundDistance = 100
+        backgroundDistance = 15
     }
 
     film.trigger(camera, raymarcher)
@@ -502,18 +612,25 @@ fn RenderImage(film: Film&)
 fn signed_distance_field_renderer()
 {
     //
-    let scale: uint = 3
-    let width: uint = 360 * scale
-    let height: uint = 240 * scale
+    let scale: uint = 1
+    let width: uint = 192 * scale
+    let height: uint = 128 * scale
+    let antiAliasingSteps: uint = 1
 
     let imageArr: Array(Vec3) = NewArray()
     defer imageArr.Dispose()
 
     imageArr.Resize(width * height)
 
-    let film = new Film { width, height, imageArr.Slice() }
+    let film = new Film { width, height, imageArr.Slice(), antiAliasingSteps }
 
+    let start = GetCurrentTimeInMilliseconds()
     RenderImage(&film)
+    let end = GetCurrentTimeInMilliseconds()
+    let dur = end - start
+    let dur = (double)dur / (double)1000
+
+    Printf("Rendering took {} seconds", [dur])
 
     // // store image as bmp
     write_bmp((int)width, (int)height, (double&)imageArr.data, "test.bmp")

@@ -392,10 +392,10 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                 
                 var bbParams = lfunc.AppendBasicBlock("params");
                 var bbLocals = lfunc.AppendBasicBlock("locals");
-                var bbTemps = lfunc.AppendBasicBlock("temps");
+                //var bbTemps = lfunc.AppendBasicBlock("temps");
                 var bbBody = lfunc.AppendBasicBlock("body");
 
-                currentTempBasicBlock = bbTemps;
+                currentTempBasicBlock = bbLocals;
 
                 // allocate space for parameters on stack
                 builder.PositionBuilderAtEnd(bbParams);
@@ -417,14 +417,14 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
                 // allocate space for local variables
                 builder.PositionBuilderAtEnd(bbLocals);
-                foreach (var l in function.LocalVariables)
-                {
-                    valueMap[l] = builder.CreateAlloca(CheezTypeToLLVMType(l.Type), l.Name?.Name ?? "");
-                }
-                builder.CreateBr(bbTemps);
+                //foreach (var l in function.LocalVariables)
+                //{
+                //    valueMap[l] = builder.CreateAlloca(CheezTypeToLLVMType(l.Type), l.Name?.Name ?? "");
+                //}
+                //builder.CreateBr(bbTemps);
 
                 // temp values
-                builder.PositionBuilderAtEnd(bbTemps);
+                //builder.PositionBuilderAtEnd(bbTemps);
                 builder.CreateBr(bbBody);
 
                 // body

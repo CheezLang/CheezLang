@@ -278,7 +278,7 @@ namespace CheezLanguageServer
             {
                 label = sym.Name.Name,
                 kind = GetCompletionItemKind(sym),
-                detail = $"{sym.Type}",
+                detail = $"{(sym as ITypedSymbol)?.Type}",
                 insertText = GetInsertText(sym)
             };
         }

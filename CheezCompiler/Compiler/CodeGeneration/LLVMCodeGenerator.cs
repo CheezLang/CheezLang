@@ -1000,31 +1000,17 @@ namespace Cheez.Compiler.CodeGeneration
             }
         }
 
-        private LLVMValueRef GetTempValue(AstExpression expr)
+        private LLVMValueRef CreateLocalVariable(ITypedSymbol sym)
         {
-            if (valueMap.ContainsKey(expr))
-                return valueMap[expr];
+            if (valueMap.ContainsKey(sym))
+                return valueMap[sym];
 
-            var builder = LLVM.CreateBuilder();
-
-            var bb = currentFunction.GetFirstBasicBlock();
-            var brInst = bb.GetLastInstruction();
-            if (brInst.Pointer != IntPtr.Zero)
-                LLVM.PositionBuilderBefore(builder, brInst);
-            else
-                LLVM.PositionBuilderAtEnd(builder, bb);
-
-            var type = CheezTypeToLLVMType(expr.Type);
-            var result = LLVM.BuildAlloca(builder, type, "");
-            var alignment = moduleDataLayout.AlignmentOfType(type);
-            LLVM.SetAlignment(result, alignment);
-
-            LLVM.DisposeBuilder(builder);
-
-            return result;
+            var t = CreateLocalVariable(sym.Type);
+            valueMap[sym] = t;
+            return t;
         }
 
-        private LLVMValueRef GetTempValue(CheezType exprType)
+        private LLVMValueRef CreateLocalVariable(CheezType exprType)
         {
             var builder = LLVM.CreateBuilder();
 
@@ -1111,7 +1097,7 @@ namespace Cheez.Compiler.CodeGeneration
             }
             else
             {
-                var ptr = valueMap[variable];
+                var ptr = CreateLocalVariable(variable);
                 if (variable.Initializer != null)
                 {
 
@@ -1175,12 +1161,12 @@ namespace Cheez.Compiler.CodeGeneration
                 }
 
                 // create space for local variables
-                {
-                    foreach (var l in function.LocalVariables)
-                    {
-                        valueMap[l] = AllocVar(builder, l.Type, l.Name?.Name ?? "");
-                    }
-                }
+                //{
+                //    foreach (var l in function.LocalVariables)
+                //    {
+                //        valueMap[l] = AllocVar(builder, l.Type, l.Name?.Name ?? "");
+                //    }
+                //}
 
 
                 // store params in local variables
@@ -1239,6 +1225,8 @@ namespace Cheez.Compiler.CodeGeneration
 
             nextBB = LLVM.AppendBasicBlock(data.LFunction, "ret");
 
+            var retVal = ret.ReturnValue?.Accept(this, data);
+
             foreach (var d in ret.DeferredStatements)
             {
                 d.Accept(this, data);
@@ -1247,8 +1235,7 @@ namespace Cheez.Compiler.CodeGeneration
             LLVMValueRef? retInts = null;
             if (ret.ReturnValue != null)
             {
-                var retVal = ret.ReturnValue.Accept(this, data);
-                retInts = LLVM.BuildRet(data.Builder, retVal);
+                retInts = LLVM.BuildRet(data.Builder, retVal.Value);
             }
             else
             {
@@ -1275,8 +1262,7 @@ namespace Cheez.Compiler.CodeGeneration
             // pre statement
             if (ws.PreAction != null)
             {
-                var temp = GetTempValue(ws.PreAction.Type);
-                valueMap[ws.PreAction] = temp;
+                var temp = CreateLocalVariable(ws.PreAction);
                 ws.PreAction.Accept(this, data);
             }
 
@@ -1352,8 +1338,10 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitIfStatement(AstIfStmt ifs, LLVMCodeGeneratorData data = null)
         {
-            var bbIfBody = LLVM.AppendBasicBlock(data.LFunction, "if_body");
             LLVMBasicBlockRef? bbEnd = null;
+
+            var bbIfCond = LLVM.AppendBasicBlock(data.LFunction, "if_cond");
+            var bbIfBody = LLVM.AppendBasicBlock(data.LFunction, "if_body");
 
             if (!ifs.GetFlag(StmtFlags.Returns))
                 bbEnd = LLVM.AppendBasicBlock(data.LFunction, "if_end");
@@ -1362,7 +1350,17 @@ namespace Cheez.Compiler.CodeGeneration
             if (ifs.ElseCase != null)
                 bbElseBody = LLVM.AppendBasicBlock(data.LFunction, "else_body");
 
+            // pre action
+            if (ifs.PreAction != null)
+            {
+                var temp = CreateLocalVariable(ifs.PreAction);
+                ifs.PreAction.Accept(this, data);
+            }
+            LLVM.BuildBr(data.Builder, bbIfCond);
+
             // Condition
+            LLVM.PositionBuilderAtEnd(data.Builder, bbIfCond);
+            data.BasicBlock = bbIfCond;
             var cond = ifs.Condition.Accept(this, data);
             if (ifs.ElseCase != null)
                 LLVM.BuildCondBr(data.Builder, cond, bbIfBody, bbElseBody.Value);
@@ -1466,7 +1464,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitStructValueExpression(AstStructValueExpr str, LLVMCodeGeneratorData data = null)
         {
-            var value = GetTempValue(str);
+            var value = CreateLocalVariable(str.Type);
 
             var llvmType = CheezTypeToLLVMType(str.Type);
 
@@ -1724,7 +1722,7 @@ namespace Cheez.Compiler.CodeGeneration
 
                 if (cast.SubExpression.Type is ArrayType arr)
                 {
-                    var temp = GetTempValue(cast);
+                    var temp = CreateLocalVariable(cast.Type);
 
                     //var dataPtr = LLVM.BuildStructGEP(data.Builder, temp, 0, "");
                     //var lenPtr = LLVM.BuildStructGEP(data.Builder, temp, 1, "");
@@ -1748,7 +1746,7 @@ namespace Cheez.Compiler.CodeGeneration
                     if (cast.SubExpression.GetFlag(ExprFlags.IsLValue))
                         sub = LLVM.BuildLoad(data.Builder, sub, ""); // TODO: sometimes necessery?
 
-                    var temp = GetTempValue(cast);
+                    var temp = CreateLocalVariable(cast.Type);
                     
                     var dataPtr = GetStructMemberPointer(data.Builder, temp, 0);
                     var lenPtr = GetStructMemberPointer(data.Builder, temp, 1);
@@ -1781,12 +1779,12 @@ namespace Cheez.Compiler.CodeGeneration
 
                 if (!cast.SubExpression.GetFlag(ExprFlags.IsLValue))
                 {
-                    var t = GetTempValue(cast.SubExpression.Type);
+                    var t = CreateLocalVariable(cast.SubExpression.Type);
                     var _ = LLVM.BuildStore(data.Builder, sub, t);
                     sub = t;
                 }
 
-                var temp = GetTempValue(cast);
+                var temp = CreateLocalVariable(cast.Type);
 
                 var type = cast.SubExpression.Type;
 
@@ -1955,7 +1953,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitArrayExpression(AstArrayExpression arr, LLVMCodeGeneratorData data = null)
         {
-            var ptr = GetTempValue(arr);
+            var ptr = CreateLocalVariable(arr.Type);
 
             var targetType = (arr.Type as ArrayType).TargetType; // @Todo
             var llvmTargetType = CheezTypeToLLVMType(targetType);
@@ -1975,14 +1973,7 @@ namespace Cheez.Compiler.CodeGeneration
                     LLVM.ConstInt(LLVM.Int32Type(), index, new LLVMBool(0))
                 }, "");
 
-                //var vp = GetStructMemberPointer(data.Builder, ptr, index);
-                //lv = GetDefaultLLVMValue(targetType);
                 var store = LLVM.BuildStore(data.Builder, lv, vp);
-
-                //var dst = LLVM.BuildPointerCast(data.Builder, vp, LLVM.PointerType(LLVM.Int8Type(), 0), "");
-                //var src = LLVM.BuildPointerCast(data.Builder, lv, LLVM.PointerType(LLVM.Int8Type(), 0), "");
-                //var call = LLVM.BuildCall(data.Builder, memcpy64, new LLVMValueRef[] { dst, src, typeSize }, "");
-
 
                 index++;
             }
@@ -2106,7 +2097,7 @@ namespace Cheez.Compiler.CodeGeneration
                         data.MoveBuilderTo(bbAnd);
 
                         //
-                        var tempVar = GetTempValue(bin);
+                        var tempVar = CreateLocalVariable(bin.Type);
 
                         //
                         var left = bin.Left.Accept(this, data.Clone(Deref: true));
@@ -2135,7 +2126,7 @@ namespace Cheez.Compiler.CodeGeneration
                         data.MoveBuilderTo(bbOr);
 
                         //
-                        var tempVar = GetTempValue(bin);
+                        var tempVar = CreateLocalVariable(bin.Type);
 
                         //
                         var left = bin.Left.Accept(this, data.Clone(Deref: true));
@@ -2210,6 +2201,9 @@ namespace Cheez.Compiler.CodeGeneration
 
                     case "/":
                         return LLVM.BuildFDiv(builder, left, right, "");
+
+                    case "%":
+                        return LLVM.BuildFRem(builder, left, right, "");
 
                     default:
                         throw new NotImplementedException();

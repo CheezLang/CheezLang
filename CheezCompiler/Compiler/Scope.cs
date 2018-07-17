@@ -7,11 +7,16 @@ namespace Cheez.Compiler
 {
     public interface ISymbol : INamed
     {
-        CheezType Type { get; }
+        //CheezType Type { get; }
         bool IsConstant { get; }
     }
 
-    public class Using : ISymbol
+    public interface ITypedSymbol : ISymbol
+    {
+        CheezType Type { get; }
+    }
+
+    public class Using : ITypedSymbol
     {
         public CheezType Type => Expr.Type;
         public AstIdentifierExpr Name { get; }
@@ -33,7 +38,7 @@ namespace Cheez.Compiler
         }
     }
 
-    public class CompTimeVariable : ISymbol
+    public class CompTimeVariable : ITypedSymbol
     {
         public AstIdentifierExpr Name { get; }
         public CheezType Type { get; }
@@ -46,6 +51,15 @@ namespace Cheez.Compiler
             this.Type = type;
             this.Value = value;
         }
+    }
+
+    public class FunctionList : ISymbol
+    {
+        public CheezType Type => throw new System.NotImplementedException();
+
+        public bool IsConstant => throw new System.NotImplementedException();
+
+        public AstIdentifierExpr Name => throw new System.NotImplementedException();
     }
 
     //public class CheezTypeSymbol : ISymbol
@@ -262,7 +276,7 @@ namespace Cheez.Compiler
             };
 
             DefineArithmeticOperators(intTypes, "+", "-", "*", "/", "%");
-            DefineArithmeticOperators(floatTypes, "+", "-", "*", "/");
+            DefineArithmeticOperators(floatTypes, "+", "-", "*", "/", "%");
 
             DefineLiteralOperators();
 

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Cheez.Compiler.Ast
 {
-    public class AstParameter : ISymbol
+    public class AstParameter : ITypedSymbol
     {
         public ParseTree.PTParameter ParseTreeNode { get; }
 
@@ -43,7 +43,7 @@ namespace Cheez.Compiler.Ast
 
     #region Function Declaration
 
-    public class AstFunctionParameter : ISymbol
+    public class AstFunctionParameter : ITypedSymbol
     {
         public ParseTree.PTFunctionParam ParseTreeNode { get; }
 
@@ -88,7 +88,7 @@ namespace Cheez.Compiler.Ast
         CheezType Type { get; }
     }
 
-    public class AstFunctionDecl : AstStatement, ISymbol
+    public class AstFunctionDecl : AstStatement, ITypedSymbol
     {
         public Parsing.IText Text { get; set; }
 
@@ -107,7 +107,7 @@ namespace Cheez.Compiler.Ast
 
         public AstBlockStmt Body { get; private set; }
 
-        public List<ITempVariable> LocalVariables { get; } = new List<ITempVariable>();
+        //public List<ITempVariable> LocalVariables { get; } = new List<ITempVariable>();
 
         public List<AstFunctionDecl> PolymorphicInstances { get; } = new List<AstFunctionDecl>();
 
@@ -204,7 +204,7 @@ namespace Cheez.Compiler.Ast
         }
     }
 
-    public class AstStructDecl : AstStatement, ISymbol
+    public class AstStructDecl : AstStatement, ITypedSymbol
     {
         public AstIdentifierExpr Name { get; set; }
         public List<AstMemberDecl> Members { get; }
@@ -262,7 +262,7 @@ namespace Cheez.Compiler.Ast
         }
     }
 
-    public class AstTraitDeclaration : AstStatement, ISymbol
+    public class AstTraitDeclaration : AstStatement, ITypedSymbol
     {
         public AstIdentifierExpr Name { get; set; }
         public List<AstParameter> Parameters { get; set; }
@@ -347,7 +347,7 @@ namespace Cheez.Compiler.Ast
 
     #region Variable Declarion
 
-    public class AstVariableDecl : AstStatement, ISymbol, ITempVariable
+    public class AstVariableDecl : AstStatement, ITypedSymbol
     {
         public AstIdentifierExpr Name { get; set; }
         public CheezType Type { get; set; }

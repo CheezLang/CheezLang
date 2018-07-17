@@ -201,6 +201,7 @@ namespace Cheez.Compiler.Ast
             this.Condition = cond;
             this.IfCase = ifCase;
             this.ElseCase = elseCase;
+            this.PreAction = pre;
         }
 
         [DebuggerStepThrough]

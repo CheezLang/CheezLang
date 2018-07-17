@@ -1,15 +1,21 @@
-#load("examples/signed_distance_field_renderer.che")
-#load("examples/glfw3_example.che")
-#load("examples/trait_function_call_performance.che")
+// #load("examples/signed_distance_field_renderer.che")
+// #load("examples/glfw3_example.che")
+// #load("examples/trait_function_call_performance.che")
 
-#load("std/string.che")
-#load("std/mem/memory.che")
-#load("std/io/io.che")
-
-fn Main()
-{
-    // trait_function_call_performance()
-    signed_distance_field_renderer()
+fn Main() {
+    // signed_distance_field_renderer()
     // glfw3_example()
+    // trait_function_call_performance()
+
+    // foo(1)
+    // foo("hi")
 }
+
+// fn foo(i: int) {
+
+// }
+
+// fn foo(i: string) {
+
+// }
 

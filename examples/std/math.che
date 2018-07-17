@@ -16,6 +16,41 @@ fn sin(f: double) -> double;
 fn cosf(f: float) -> float;
 fn cos(f: double) -> double;
 
+fn u8_max() -> u8 {
+    return cast(u8)-1
+}
+
+fn u16_max() -> u16 {
+    return cast(u16)-1
+}
+
+fn u32_max() -> u32 {
+    return cast(u32)-1
+}
+
+fn u64_max() -> u64 {
+    return cast(u64)-1
+}
+
+struct LinearCongruentialGenerator {
+    seed: ulong
+}
+
+impl LinearCongruentialGenerator {
+    ref fn Next() -> uint {
+        let M: ulong = (ulong)u32_max()
+        let A: ulong = 1664525
+        let B: ulong = 1013904223
+        seed = (A * seed + B) % M
+
+        return (uint)seed
+    }
+
+    ref fn NextDouble() -> double {
+        return (double)self.Next() / (double)u32_max()
+    }
+}
+
 struct Vec3 {
     x: double
     y: double

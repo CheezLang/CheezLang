@@ -943,7 +943,8 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             if (function.ImplBlock != null)
             {
-                ISymbol self = function.Parameters[0];
+                INamed self = function.Parameters[0];
+                var tar = function.Parameters[0].Type;
 
                 if (function.ImplBlock.Trait != null)
                 {
@@ -956,9 +957,9 @@ namespace Cheez.Compiler.SemanticAnalysis
                     use.Type = PointerType.GetPointerType(function.ImplBlock.TargetType);
                     function.Body.Statements.Insert(0, use);
                     self = use;
+                    tar = function.ImplBlock.TargetType;
                 }
 
-                var tar = self.Type;
 
                 while (tar is PointerType p)
                     tar = p.TargetType;
@@ -1012,11 +1013,21 @@ namespace Cheez.Compiler.SemanticAnalysis
             ifs.Scope = context.Scope;
             ifs.SubScope = new Scope("if", ifs.Scope);
 
+            var subContext = context.Clone(Scope: ifs.SubScope);
+
             bool returns = true;
+
+            if (ifs.PreAction != null)
+            {
+                foreach (var v in ifs.PreAction.Accept(this, subContext))
+                {
+                    yield return v;
+                }
+            }
 
             // check condition
             {
-                foreach (var v in ifs.Condition.Accept(this, context.Clone(Scope: ifs.SubScope)))
+                foreach (var v in ifs.Condition.Accept(this, subContext))
                     if (v is ReplaceAstExpr r)
                         ifs.Condition = r.NewExpression;
                     else
@@ -1034,19 +1045,19 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (b)
                 {
-                    foreach (var v in ReplaceAstStmt(ifs.IfCase, context.Clone(ifs.SubScope)))
+                    foreach (var v in ReplaceAstStmt(ifs.IfCase, subContext))
                         yield return v;
                     yield break;
                 }
                 else if (ifs.ElseCase != null)
                 {
-                    foreach (var v in ReplaceAstStmt(ifs.ElseCase, context.Clone(ifs.SubScope)))
+                    foreach (var v in ReplaceAstStmt(ifs.ElseCase, subContext))
                         yield return v;
                     yield break;
                 }
                 else
                 {
-                    foreach (var v in ReplaceAstStmt(new AstEmptyStatement(ifs.GenericParseTreeNode), context.Clone(ifs.SubScope)))
+                    foreach (var v in ReplaceAstStmt(new AstEmptyStatement(ifs.GenericParseTreeNode), subContext))
                         yield return v;
                     yield break;
                 }
@@ -1055,7 +1066,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             // if case
             {
                 ifs.IfCase.Parent = ifs;
-                foreach (var v in ifs.IfCase.Accept(this, context.Clone(ifs.SubScope)))
+                foreach (var v in ifs.IfCase.Accept(this, subContext))
                     yield return v;
 
                 if (!ifs.IfCase.GetFlag(StmtFlags.Returns))
@@ -1066,7 +1077,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (ifs.ElseCase != null)
             {
                 ifs.ElseCase.Parent = ifs;
-                foreach (var v in ifs.ElseCase.Accept(this, context.Clone(ifs.SubScope)))
+                foreach (var v in ifs.ElseCase.Accept(this, subContext))
                     yield return v;
 
                 if (!ifs.ElseCase.GetFlag(StmtFlags.Returns))
@@ -1247,8 +1258,8 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else if (variable.SubScope.DefineSymbol(variable))
             {
-                if (context.Function != null)
-                    context.Function.LocalVariables.Add(variable);
+                //if (context.Function != null)
+                //    context.Function.LocalVariables.Add(variable);
                 scope.VariableDeclarations.Add(variable);
 
                 if (variable.Type == CheezType.Void)
@@ -2740,6 +2751,20 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
                 yield break;
             }
+            else if (call.Function.Type is FunctionType ff)
+            {
+                for (int i = 0; i < call.Arguments.Count && i < ff.ParameterTypes.Length; i++)
+                {
+                    var expectedType = ff.ParameterTypes[i];
+                    foreach (var v in call.Arguments[i].Accept(this, context.Clone(ExpectedType: expectedType)))
+                    {
+                        if (v is ReplaceAstExpr r)
+                            call.Arguments[i] = r.NewExpression;
+                        else
+                            yield return v;
+                    }
+                }
+            }
 
             if (call.Function.Type is FunctionType f)
             {
@@ -2754,15 +2779,6 @@ namespace Cheez.Compiler.SemanticAnalysis
                 for (int i = 0; i < call.Arguments.Count && i < f.ParameterTypes.Length; i++)
                 {
                     var expectedType = f.ParameterTypes[i];
-
-                    foreach (var v in call.Arguments[i].Accept(this, context.Clone(ExpectedType: expectedType)))
-                    {
-                        if (v is ReplaceAstExpr r)
-                            call.Arguments[i] = r.NewExpression;
-                        else
-                            yield return v;
-                    }
-
                     if (!CanAssign(call.Arguments[i].Type, expectedType, out var t, context, call.Arguments[i].GenericParseTreeNode))
                     {
                         context.ReportError(context.Text, call.Arguments[i].GenericParseTreeNode, $"Argument type does not match parameter type. Expected {expectedType}, got {call.Arguments[i].Type}");
@@ -2843,9 +2859,13 @@ namespace Cheez.Compiler.SemanticAnalysis
                 ident.Type = comp.Type;
                 ident.Value = comp.Value;
             }
+            else if (v is ITypedSymbol ts)
+            {
+                ident.Type = ts.Type;
+            }
             else
             {
-                ident.Type = v.Type;
+                throw new NotImplementedException();
             }
 
 
@@ -2992,10 +3012,10 @@ namespace Cheez.Compiler.SemanticAnalysis
             //}
             cast.SubExpression.Type = type;
 
-            if (cast.Type is SliceType)
-            {
-                context.Function.LocalVariables.Add(cast);
-            }
+            //if (cast.Type is SliceType)
+            //{
+            //    context.Function.LocalVariables.Add(cast);
+            //}
 
             yield break;
         }
@@ -3514,8 +3534,10 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                             if (v is CompTimeVariable comp)
                                 yield return comp.Value as CheezType;
+                            else if (v is ITypedSymbol ts)
+                                yield return ts.Type;
                             else
-                                yield return v.Type;
+                                throw new NotImplementedException();
                         }
                         yield break;
                     }

@@ -38,14 +38,12 @@ impl Printable for StackAllocator {
             if i > 0 {
                 s.AppendString(", ")
             }
-            let a = allocations.Get(i)
-            Sprintf(s, "{}", [a])
+            Sprintf(s, "{}", [allocations.Get(i)])
         }
         s.AppendString("]")
 
         let free: ulong = capacity
-        let lastAllocation = self.GetLastAllocation()
-        if lastAllocation != null {
+        if let lastAllocation = self.GetLastAllocation(); lastAllocation != null {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
         }
         Sprintf(s, ", Free: {} )", [free])
@@ -107,14 +105,13 @@ impl StackAllocator {
             if i > 0 {
                 s.AppendString(", ")
             }
-            let a = allocations.Get(i)
-            Sprintf(&s, "{}", [a])
+            Sprintf(&s, "{}", [allocations.Get(i)])
         }
         s.AppendString("]")
 
         let free: ulong = capacity
-        let lastAllocation = self.GetLastAllocation()
-        if lastAllocation != null {
+        
+        if let lastAllocation = self.GetLastAllocation(); lastAllocation != null {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
         }
         Sprintf(&s, ", Free: {} )", [free])
@@ -130,8 +127,7 @@ impl StackAllocator {
     }
 
     ref fn GetNextAllocationOffset() -> ulong {
-        let last = self.GetLastAllocation()
-        if last == null {
+        if let last = self.GetLastAllocation(); last == null {
             return 0
         } else {
             return last.offset + last.size
@@ -141,8 +137,7 @@ impl StackAllocator {
 
 impl Allocator for StackAllocator {
     fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> any& {
-        let nao = self.GetNextAllocationOffset()
-        let nextAddress = PointerAdd(memory, (long)nao)
+        let nextAddress = PointerAdd(memory, (long)self.GetNextAllocationOffset())
         nextAddress = NextAligned(nextAddress, alignment)
 
         let newAllocation = new StackAllocation {
