@@ -26,31 +26,31 @@ namespace CheezCLI
         [Value(0, Min = 1)]
         public IEnumerable<string> Files { get; set; }
 
-        [Option('o', "out", Default = "")]
+        [Option('o', "out", Default = ".", HelpText = "Output directory")]
         public string OutPath { get; set; }
 
-        [Option('n', "name")]
+        [Option('n', "name", HelpText = "Name of the executable generated")]
         public string OutName { get; set; }
 
-        [Option("print-ast", Default = false)]
+        [Option("print-ast", Default = false, HelpText = "Print the abstract syntrax tree to a file")]
         public bool PrintAst { get; set; }
 
-        [Option("print-ast-file", Default = null)]
+        [Option("print-ast-file", Default = null, HelpText = "If print-ast is set, this is the generated file")]
         public string PrintAstFile { get; set; }
 
-        [Option("no-code", Default = false)]
+        [Option("no-code", Default = false, HelpText = "Don't generate exe")]
         public bool DontEmitCode { get; set; }
 
-        [Option("no-errors", Default = false)]
+        [Option("no-errors", Default = false, HelpText = "Don't show error messages")]
         public bool NoErrors { get; set; }
 
-        [Option("ld")]
+        [Option("ld", HelpText = "Additional include directories")]
         public IEnumerable<string> LibraryIncludeDirectories { get; set; }
 
-        [Option("libs")]
+        [Option("libs", HelpText = "Additional Libraries to link to")]
         public IEnumerable<string> Libraries { get; set; }
 
-        [Option("subsystem", Default = SubSystem.console)]
+        [Option("subsystem", Default = SubSystem.console, HelpText = "Sub system: 'console' or 'windows'")]
         public SubSystem SubSystem { get; set; }
     }
 

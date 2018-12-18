@@ -71,6 +71,6 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(SolutionDir)Linker.dll" "$(TargetDir)" /Y
-xcopy "$(SolutionDir)CheezRuntimeLibrary\lib\x86\clang_rt.builtins-i386.lib" "$(TargetDir)" /Y</PostBuildEvent>
+xcopy "$(SolutionDir)CheezRuntimeLibrary\lib\x86\clang_rt.builtins-i386.libC" "$(TargetDir)" /Y</PostBuildEvent>
   </PropertyGroup>
 </Project>
