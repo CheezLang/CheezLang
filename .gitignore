@@ -229,4 +229,4 @@ src
 /examples/*.cpp
 /Linker/Win32
 /Linker/int
-*.dll
+*/**.dll
