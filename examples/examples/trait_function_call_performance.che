@@ -42,15 +42,14 @@ fn trait_function_call_performance() {
     let iterations = 100000000
     let n = 8
 
-    // 1000000000 5
-    // scanf("%d %d", &iterations, &n)
 
     Printf("iterations: {}, n: {}`n", [iterations, n])
 
     let t: Test
     let tt: TestTrait = t
 
-
+    // call NormalFunction() on Test
+    // t is implicitly passed by value
     {
         t.counter = 0
 
@@ -69,6 +68,8 @@ fn trait_function_call_performance() {
         }
     }
 
+    // call RefFunction() on Test
+    // t is implicitly passed as a pointer 
     {
         t.counter = 0
 
@@ -87,6 +88,9 @@ fn trait_function_call_performance() {
         }
     }
 
+    // call TraitFunction() on Test
+    // t is implicitly converted to a trait object (vtable pointer + pointer to object)
+    // and passed to the function
     {
         t.counter = 0
         
@@ -105,6 +109,9 @@ fn trait_function_call_performance() {
         }
     }
 
+    // call TraitFunction() on TestTrait
+    // tt is implicitly  passed to the function
+    // tt is already a trait object, so no implicit casting for every call
     {
         t.counter = 0
         

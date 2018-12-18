@@ -1,4 +1,4 @@
-#lib("D:\Programming\glew\glew-2.1.0\lib\Release\Win32\glew32s.lib")
+#lib("glew32s.lib")
 #lib("OpenGL32.Lib")
 
 #load("opengl.che")
