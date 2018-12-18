@@ -1,8 +1,10 @@
-# CheezLang
+# Cheez Lang
 
 Cheez is a small programming language I created in 2018. It's more on the low level side, inspired by Rust and uses LLVM as it's backend.
 
 The compiler is written in C#. I also wrote a Language Server, but I haven't maintained it so it's not even compiling right now. There is also a VSCode extension which provides basic syntax highlighting and access to the language server.
+
+You can download it from the releases page.
 
 Heres what a Hello World program:
 ```rust
@@ -114,7 +116,7 @@ false
 ```rust
 #load("std/io/io.che")
 
-// Greate common
+// Greatest common divisor
 fn gcd_it(a: int, b: int) -> int {
     if a == 0 {
         return b
