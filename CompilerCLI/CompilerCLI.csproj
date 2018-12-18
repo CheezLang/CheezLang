@@ -70,6 +70,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(SolutionDir)Linker.dll" "$(TargetDir)"</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(SolutionDir)Linker.dll" "$(TargetDir)" /Y</PostBuildEvent>
   </PropertyGroup>
 </Project>

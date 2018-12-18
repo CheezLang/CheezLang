@@ -1,10 +1,14 @@
 #load("examples/signed_distance_field_renderer.che")
-// #load("examples/glfw3_example.che")
-// #load("examples/trait_function_call_performance.che")
-//#load("std/io/io.che")
+//#load("examples/glfw3_example.che")
+//#load("examples/trait_function_call_performance.che")
+#load("std/io/io.che")
 
 fn Main() {
+    PrintString("Hello World
+")
+
+    // examples
     signed_distance_field_renderer()
-    // glfw3_example()
-    // trait_function_call_performance()
+    //glfw3_example()
+    //trait_function_call_performance()
 }

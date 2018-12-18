@@ -72,7 +72,6 @@ namespace CheezCLI
 
             var argsParser = Parser.Default;
 
-
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             var result = argsParser.ParseArguments<CompilerOptions>(args)

@@ -1,4 +1,4 @@
-#lib("glfw3dll.lib")
+#lib("./glfw3dll.lib")
 #lib("OpenGL32.Lib")
 
 struct GLFWvidmode {

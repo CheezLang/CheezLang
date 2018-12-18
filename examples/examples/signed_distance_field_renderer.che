@@ -592,10 +592,10 @@ fn RenderImage(film: Film&)
         sdf = all.RotateX(sdf, -20)
         sdf = all.RotateY(sdf, 20)
     }
-    {
-        sdf = s1
-        sdf = all.Intersect(sdf, all.SphereT(new Vec3{-1, 0, 0}, 1.2, sWhite))
-    }
+    // {
+    //     sdf = s1
+    //     sdf = all.Subtract(sdf, all.SphereT(new Vec3{-1, 0, 1}, 1.2, sWhite))
+    // }
 
     let sdf = all.Add(sdf, ground)
     let sdf = all.Translate(sdf, new Vec3{0, 0, -7.5})
@@ -634,5 +634,5 @@ fn signed_distance_field_renderer()
 ", [dur])
 
     // // store image as bmp
-    write_bmp((int)width, (int)height, (double&)imageArr.data, "test.bmp")
+    write_bmp((int)width, (int)height, (double&)imageArr.data, "../examples/examples/sdf_images/test3.bmp")
 }

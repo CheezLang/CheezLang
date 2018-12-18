@@ -1,4 +1,4 @@
-#lib("glew32s.lib")
+#lib("./glew32s.lib")
 #lib("OpenGL32.Lib")
 
 #load("opengl.che")

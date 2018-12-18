@@ -138,7 +138,14 @@ namespace Cheez.Compiler
                     }
                     else
                     {
-                        file.Libraries.Add(f.Value);
+                        string libFile = f.Value;
+                        if (libFile.StartsWith("./"))
+                        {
+                            string sourceFileDir = Path.GetDirectoryName(lib.Beginning.file);
+                            libFile = Path.Combine(sourceFileDir, f.Value);
+                        }
+
+                        file.Libraries.Add(libFile);
                     }
                 }
                 else if (s != null)

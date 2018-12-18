@@ -10,6 +10,9 @@ trait TestTrait {
 
 struct Test {
     counter: ulong
+
+    // not used, just so that passing by value will be slow
+    // comment out to see performance of pass by value with small structs
     a0: int
     a1: int
     a2: int
