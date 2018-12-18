@@ -4,7 +4,7 @@ Cheez is a small programming language I created in 2018. It's more on the low le
 
 The compiler is written in C#. I also wrote a Language Server, but I haven't maintained it so it's not even compiling right now. There is also a VSCode extension which provides basic syntax highlighting and access to the language server.
 
-You can download it from the releases page.
+[You can download it from the releases page.](https://github.com/Nimaoth/CheezLang/releases)
 
 Heres what a Hello World program:
 ```rust
