@@ -185,3 +185,18 @@ fn Main() {
 = {}", [a, b, c])
 }
 ```
+
+## Run
+Run the compiler using this command in Window Command Line:
+```bat
+cheez.exe test.che -n TestProgram
+TestProgram.exe
+```
+Powershell
+```ps1
+.\cheez.exe .\test.che -n TestProgram
+.\TestProgram.exe
+```
+
+- -n [name] - Name the .exe file [name].exe
+- -help - display help screen
