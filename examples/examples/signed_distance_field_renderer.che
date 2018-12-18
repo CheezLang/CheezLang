@@ -407,7 +407,7 @@ impl Film {
         }
 
         while let y: uint = 0; y < height; y += 1 {
-            if antiAliasingSteps >= 5 {
+            if antiAliasingSteps >= 0 {
                 Printf("Rendering row {}/{}`n", [(y + 1), height])
             }
 
@@ -592,10 +592,10 @@ fn RenderImage(film: Film&)
         sdf = all.RotateX(sdf, -20)
         sdf = all.RotateY(sdf, 20)
     }
-    // {
-    //     sdf = s1
-    //     // sdf = all.Subtract(sdf, all.SphereT(new Vec3{1, 0, 1}, 1.2, sWhite))
-    // }
+    {
+        sdf = s1
+        sdf = all.Intersect(sdf, all.SphereT(new Vec3{-1, 0, 0}, 1.2, sWhite))
+    }
 
     let sdf = all.Add(sdf, ground)
     let sdf = all.Translate(sdf, new Vec3{0, 0, -7.5})
@@ -612,7 +612,7 @@ fn RenderImage(film: Film&)
 fn signed_distance_field_renderer()
 {
     //
-    let scale: uint = 1
+    let scale: uint = 5
     let width: uint = 192 * scale
     let height: uint = 128 * scale
     let antiAliasingSteps: uint = 1
@@ -630,7 +630,8 @@ fn signed_distance_field_renderer()
     let dur = end - start
     let dur = (double)dur / (double)1000
 
-    Printf("Rendering took {} seconds", [dur])
+    Printf("Rendering took {} seconds
+", [dur])
 
     // // store image as bmp
     write_bmp((int)width, (int)height, (double&)imageArr.data, "test.bmp")

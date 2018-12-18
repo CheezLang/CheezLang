@@ -1,119 +1,137 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "Build Cheez Test Program",
-			"identifier": "build_cheez_test_program",
-			"command": "cheezc",
-			"args": [
-				"examples/example_1.che",
-				"--out",
-				"gen",
-				"--name",
-				"TestProgram",
-				"--print-ast-file",
-				"gen/ast.txt",
-				"--subsystem",
-				"console"
-			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			"type": "shell",
-			"problemMatcher": [],
-			"isBackground": false
-		},
-		{
-			"label": "Run Cheez Test Program",
-			"identifier": "run_cheez_test_program",
-			"command": "gen/TestProgram.exe",
-			"type": "shell",
-			"problemMatcher": [],
-			"isBackground": false
-		},
-		{
-			"label": "Build and Run Cheez Test Program",
-			"identifier": "build_and_run_cheez_test_program",
-			"command": "gen/TestProgram.exe",
-			"type": "shell",
-			"problemMatcher": [],
-			"dependsOn": "build_cheez_test_program",
-			"isBackground": false
-		},
-		{
-			"label": "compile",
-			"dependsOn": [
-				"compile:client",
-				"compile:server"
-			],
-			"problemMatcher": []
-		},
-		{
-			"label": "compile:client",
-			"type": "npm",
-			"script": "compile:client",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc"
-			]
-		},
-		{
-			"label": "compile:server",
-			"type": "npm",
-			"script": "compile:server",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc"
-			]
-		},
-		{
-			"label": "watch",
-			"dependsOn": [
-				"watch:client",
-				"watch:server"
-			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "watch:client",
-			"type": "npm",
-			"script": "watch:client",
-			"isBackground": true,
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc-watch"
-			]
-		},
-		{
-			"label": "watch:server",
-			"type": "npm",
-			"script": "watch:server",
-			"isBackground": true,
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc-watch"
-			]
-		}
-	]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "run",
+            "type": "shell",
+            "command": "./gen/TestProgram.exe & ./gen/test.bmp"
+        },
+        {
+            "label": "build_and_run",
+            "type": "shell",
+            "command": "./examples/build_and_run_test.ps1",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            }
+        },
+        {
+            "label": "Build Cheez Test Program",
+            "identifier": "build_cheez_test_program",
+            "command": "cheezc",
+            "args": [
+                "examples/example_1.che",
+                "--out",
+                "gen",
+                "--name",
+                "TestProgram",
+                "--print-ast-file",
+                "gen/ast.txt",
+                "--subsystem",
+                "console"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "type": "shell",
+            "problemMatcher": [],
+            "isBackground": false
+        },
+        {
+            "label": "Run Cheez Test Program",
+            "identifier": "run_cheez_test_program",
+            "command": "gen/TestProgram.exe",
+            "type": "shell",
+            "problemMatcher": [],
+            "isBackground": false
+        },
+        {
+            "label": "Build and Run Cheez Test Program",
+            "identifier": "build_and_run_cheez_test_program",
+            "command": "gen/TestProgram.exe",
+            "type": "shell",
+            "problemMatcher": [],
+            "dependsOn": "build_cheez_test_program",
+            "isBackground": false
+        },
+        {
+            "label": "compile",
+            "dependsOn": [
+                "compile:client",
+                "compile:server"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "compile:client",
+            "type": "npm",
+            "script": "compile:client",
+            "group": "build",
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "never"
+            },
+            "problemMatcher": [
+                "$tsc"
+            ]
+        },
+        {
+            "label": "compile:server",
+            "type": "npm",
+            "script": "compile:server",
+            "group": "build",
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "never"
+            },
+            "problemMatcher": [
+                "$tsc"
+            ]
+        },
+        {
+            "label": "watch",
+            "dependsOn": [
+                "watch:client",
+                "watch:server"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "watch:client",
+            "type": "npm",
+            "script": "watch:client",
+            "isBackground": true,
+            "group": "build",
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "never"
+            },
+            "problemMatcher": [
+                "$tsc-watch"
+            ]
+        },
+        {
+            "label": "watch:server",
+            "type": "npm",
+            "script": "watch:server",
+            "isBackground": true,
+            "group": "build",
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "never"
+            },
+            "problemMatcher": [
+                "$tsc-watch"
+            ]
+        }
+    ]
 }
