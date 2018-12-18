@@ -147,6 +147,8 @@ namespace Cheez.Compiler.Visitor
             sb.Append("let ").Append(variable.Name);
             if (variable.TypeExpr != null)
                 sb.Append($": {variable.TypeExpr.Accept(this, 0)}");
+            else
+                sb.Append($": {variable.Type}");
             if (variable.Initializer != null)
                 sb.Append($" = {variable.Initializer.Accept(this, indentLevel)}");
             return sb.ToString();
