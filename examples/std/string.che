@@ -84,7 +84,7 @@ impl StringBase($CharType) {
         return length
     }
 
-    ref fn CharAt(i: $T) -> char {
+    ref fn CharAt(i: $T) -> CharType {
         return data[i]
     }
 

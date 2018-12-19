@@ -2002,6 +2002,9 @@ namespace Cheez.Compiler.SemanticAnalysis
                         call.Type = CheezType.Bool;
                         call.IsCompTimeValue = true;
                         call.Value = typesMatch;
+
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, typesMatch), context))
+                            yield return v;
                         break;
                     }
 
@@ -3517,6 +3520,18 @@ namespace Cheez.Compiler.SemanticAnalysis
                 case null:
                     yield return CheezType.Void;
                     yield break;
+
+                case AstCompCallExpr c:
+                    AstExpression expr = c;
+                    foreach (var v in c.Accept(this, new SemanticerData(scope, text, ErrorHandler: error)))
+                    {
+                        if (v is ReplaceAstExpr r)
+                            expr = r.NewExpression;
+                        else
+                            yield return v;
+                    }
+                    yield return expr.Value;
+                    break;
 
                 case AstIdentifierExpr i:
                     {
