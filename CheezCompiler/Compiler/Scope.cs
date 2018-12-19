@@ -249,7 +249,8 @@ namespace Cheez.Compiler
 
             DefineTypeSymbol("char", CheezType.Char);
             DefineTypeSymbol("bool", CheezType.Bool);
-            DefineTypeSymbol("string", CheezType.String);
+            DefineTypeSymbol("c_string", CheezType.CString);
+            DefineTypeSymbol("string", SliceType.GetSliceType(CheezType.Char));
             DefineTypeSymbol("void", CheezType.Void);
             DefineTypeSymbol("any", CheezType.Any);
             DefineTypeSymbol("type", CheezType.Type);

@@ -1,7 +1,7 @@
 #load("../io.che")
 
 struct TokenLocation {
-    file: string
+    file: c_string
     line: int
     start: int
     end: int
@@ -108,7 +108,7 @@ enum TokenType {
 }
 
 impl TokenType {
-    fn ToString() -> string {
+    fn ToString() -> c_string {
         match self {
             TokenType.Unknown -> return "Unknown",
             TokenType.NewLine -> return "NewLine",

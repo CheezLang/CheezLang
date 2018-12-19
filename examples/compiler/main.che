@@ -4,7 +4,7 @@
 #load("lexer.che")
 #load("token.che")
 
-fn RunCompiler(filename: string) {
+fn RunCompiler(filename: c_string) {
     let lexer: Lexer
     lexer.Init(filename)
 

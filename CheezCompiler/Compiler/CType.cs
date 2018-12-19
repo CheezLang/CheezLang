@@ -9,7 +9,8 @@ namespace Cheez.Compiler
     public abstract class CheezType
     {
         public static CheezType Void => VoidType.Intance;
-        public static CheezType String => StringType.Instance;
+        public static CheezType CString => CStringType.Instance;
+        public static CheezType String => SliceType.GetSliceType(CheezType.Char);
         public static CheezType Char => CharType.Instance;
         public static CheezType Bool => BoolType.Instance;
         public static CheezType Error => ErrorType.Instance;
@@ -343,13 +344,13 @@ namespace Cheez.Compiler
         public override bool IsPolyType => TargetType.IsPolyType;
     }
 
-    public class StringType : CheezType
+    public class CStringType : CheezType
     {
-        public static StringType Instance = new StringType { Size = PointerType.PointerSize, Alignment = PointerType.PointerAlignment };
+        public static CStringType Instance = new CStringType { Size = PointerType.PointerSize, Alignment = PointerType.PointerAlignment };
 
         public override string ToString()
         {
-            return $"string";
+            return $"c_string";
         }
 
         public PointerType ToPointerType()

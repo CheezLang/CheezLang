@@ -1,6 +1,6 @@
 #load("../os/windows.che")
 
-fn LoadFile(filename: string, str: String&) -> bool {
+fn LoadFile(filename: c_string, str: String&) -> bool {
     let of: _OFSTRUCT
     let handle = OpenFile(filename, &of, 0)
     if handle == -1 {

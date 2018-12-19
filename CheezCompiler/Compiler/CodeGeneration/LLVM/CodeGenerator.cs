@@ -187,7 +187,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                 case FloatType _:
                 case PointerType _:
                 case BoolType _:
-                case StringType _:
+                case CStringType _:
                 case VoidType _:
                     return true;
 
@@ -234,7 +234,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                 case CharType c:
                     return LLVM.Int8Type();
 
-                case StringType _:
+                case CStringType _:
                     return LLVM.PointerType(LLVM.Int8Type(), 0);
 
                 case PointerType p:

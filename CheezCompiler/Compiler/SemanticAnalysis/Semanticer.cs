@@ -1708,6 +1708,25 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             switch (name)
             {
+                case "concat":
+                    {
+                        string result = "";
+                        foreach (var arg in call.Arguments)
+                        {
+                            if (!arg.IsCompTimeValue)
+                            {
+                                context.ReportError(arg.GenericParseTreeNode, "Arguments to @concat have to be compile time constants");
+                            }
+
+                            Debug.Assert(arg.Value != null);
+
+                            result += arg.Value;
+                        }
+                        var value = new AstStringLiteral(call.GenericParseTreeNode, result, false);
+                        foreach (var v in ReplaceAstExpr(value, context))
+                            yield return v;
+                        break;
+                    }
                 case "file":
                     {
                         var value = new AstStringLiteral(call.GenericParseTreeNode, call.GenericParseTreeNode.Beginning.file, false);
@@ -1906,7 +1925,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         var arg = call.Arguments[0];
                         var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is StringType), context))
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is CStringType), context))
                             yield return v;
                         break;
                     }
@@ -2046,7 +2065,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         }
 
                         var arg = call.Arguments[0];
-                        if (arg.Type != CheezType.String || !arg.IsCompTimeValue)
+                        if (arg.Type != CheezType.CString || !arg.IsCompTimeValue)
                         {
                             context.ReportError(arg.GenericParseTreeNode, $"Argument of '@{name}' must be a string literal");
                         }
@@ -2213,7 +2232,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 arr.Type = slice.TargetType;
             }
-            else if (arr.SubExpression.Type is StringType)
+            else if (arr.SubExpression.Type is CStringType)
             {
                 arr.Type = CheezType.Char;
             }
@@ -2928,7 +2947,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else
             {
-                str.Type = CheezType.String;
+                str.Type = CheezType.CString;
             }
             yield break;
         }
@@ -2977,7 +2996,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 deref.Type = p.TargetType;
             }
-            else if (deref.SubExpression.Type is StringType s)
+            else if (deref.SubExpression.Type is CStringType s)
             {
                 deref.Type = CheezType.Char;
             }
@@ -3313,6 +3332,11 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (sourceType == targetType)
                 return true;
 
+            if (sourceType == CheezType.CString && targetType == CheezType.String)
+            {
+                return true;
+            }
+
             if (sourceType == IntType.LiteralType && (targetType is IntType || targetType is FloatType))
             {
                 outSource = targetType;
@@ -3485,6 +3509,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                     return cast;
                 }
                 else if (source.Type is PointerType p && s.TargetType == p.TargetType)
+                {
+                    var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                    cast.Type = targetType;
+                    return cast;
+                }
+                else if (source.Type == CheezType.CString)
                 {
                     var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
                     cast.Type = targetType;

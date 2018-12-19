@@ -17,4 +17,4 @@ let GLEW_VERSION_MAJOR  : uint =  2
 let GLEW_VERSION_MINOR  : uint =  3
 let GLEW_VERSION_MICRO  : uint =  4
 
-fn glewGetString(name: GLenum) -> string #stdcall;
+fn glewGetString(name: GLenum) -> c_string #stdcall;

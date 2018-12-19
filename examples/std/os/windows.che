@@ -12,14 +12,14 @@ let HFILE = int
 let HANDLE = any&
 
 fn GetStdHandle(h: int) -> int #stdcall;
-fn WriteFile(handle: int, str: string, length: int, bw: int&, res: int) #stdcall;
+fn WriteFile(handle: int, str: c_string, length: int, bw: int&, res: int) #stdcall;
 fn ReadFile(hFile: HANDLE, lpBuffer: any&, nNumberOfBytesToRead: int, lpNumberOfBytesRead: int&, lpOverlapped: any&) -> bool #stdcall;
 
 let __std_in_handle: int = GetStdHandle(-10)
 let __std_out_handle: int = GetStdHandle(-11)
 let __std_err_handle: int = GetStdHandle(-12)
 
-fn OpenFile(lpFileName: string, lpReOpenBuff: _OFSTRUCT&, uStyle: uint) -> HFILE #stdcall;
+fn OpenFile(lpFileName: c_string, lpReOpenBuff: _OFSTRUCT&, uStyle: uint) -> HFILE #stdcall;
 fn CloseHandle(hObject: HANDLE) -> bool #stdcall;
 fn GetFileSize(hObject: HANDLE, lpFileSizeHigh: int&) -> int #stdcall;
 

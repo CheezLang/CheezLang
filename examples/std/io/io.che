@@ -4,39 +4,46 @@
 
 let isize = int
 
-fn sprintf(buff: char&, f: string, a: double) -> int #varargs;
+fn sprintf(buff: char&, f: c_string, a: double) -> int #varargs;
 
 let NEW_LINE: char = '`n'
 
 fn PrintString(s: $T) {
-    let s = (string)s
-    let len = strlen(s)
-    let bytesWritten: int
-    WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
+    if @typeseq(c_string, T) {
+        let len = strlen(s)
+        let bytesWritten: int
+        WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
+    } else if @typeseq(string, T) {
+        let c_s = (c_string)(char&)s
+        let bytesWritten: int
+        WriteFile(__std_out_handle, c_s, s.length, &bytesWritten, 0)
+    } else {
+        @error(@concat("Can't call PrintString($T) with type ", @typename(T)))
+    }
 }
 
 fn PrintStringl(s: String&) {
     let bytesWritten: int
-    WriteFile(__std_out_handle, (string)s.data, s.length, &bytesWritten, 0)
+    WriteFile(__std_out_handle, (c_string)s.data, s.length, &bytesWritten, 0)
 }
 
 fn PrintChar(c: char) { 
     let bytesWritten: int
-    WriteFile(__std_out_handle, (string)&c, 1, &bytesWritten, 0)
+    WriteFile(__std_out_handle, (c_string)&c, 1, &bytesWritten, 0)
 }
 
 fn PrintFloat(val: float) {
     let buff: char[32]
     let buff: char[] = buff
     sprintf((char&)buff, "%f", (double)val)
-    PrintString((string)(char&)buff)
+    PrintString((c_string)(char&)buff)
 }
 
 fn PrintDouble(val: double) {
     let buff: char[32]
     let buff: char[] = buff
     sprintf((char&)buff, "%f", val)
-    PrintString((string)(char&)buff)
+    PrintString((c_string)(char&)buff)
 }
 
 fn PrintInt(val: $T) {
@@ -163,6 +170,8 @@ fn Print(v: $T) {
         } else {
             PrintString("false")
         }
+    } else if (@typeseq(string, T)) {
+        PrintString(v)
     } else if @isint(T) {
         PrintInt(v)
     } else if @typeseq(T, f64) {
@@ -176,7 +185,7 @@ fn Print(v: $T) {
     } else if @isenum(T) {
         PrintInt((int)v)
     } else if @typeseq(T, char) {
-        PrintChar((char)v)
+        PrintChar(v)
     } else if @typeseq(T, $X[]) {
         PrintSlice(v)
     } else {
@@ -211,7 +220,7 @@ fn ParseInt(str: $String) -> int {
     return val
 }
 
-fn Printf(format: string, args: Printable[]) {
+fn Printf(format: c_string, args: Printable[]) {
     let s = NewString()
     defer s.Dispose()
 
@@ -219,7 +228,7 @@ fn Printf(format: string, args: Printable[]) {
     Print(s)
 }
 
-fn Sprintf(buffer: String&, format: string, args: Printable[]) {
+fn Sprintf(buffer: String&, format: c_string, args: Printable[]) {
     let formatSpecifier = NewString()
     defer formatSpecifier.Dispose()
     formatSpecifier.Reserve(5)

@@ -56,7 +56,7 @@ struct GLFWcursor {}
 fn glfwInit() -> bool;
 fn glfwTerminate();
 
-fn glfwCreateWindow(widht: int, height: int, title: string, monitor: GLFWmonitor&, share: GLFWwindow&) -> GLFWwindow&;
+fn glfwCreateWindow(widht: int, height: int, title: c_string, monitor: GLFWmonitor&, share: GLFWwindow&) -> GLFWwindow&;
 fn glfwWindowShouldClose(window: GLFWwindow&) -> bool;
 fn glfwPollEvents();
 fn glfwSwapBuffers(window: GLFWwindow&);

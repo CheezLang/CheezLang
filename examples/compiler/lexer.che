@@ -1,4 +1,4 @@
-#load("../string.che")
+#load("../c_string.che")
 #load("token.che")
 
 struct Lexer {
@@ -17,7 +17,7 @@ fn IsIdentChar(c: char) -> bool {
 }
 
 impl Lexer {
-    ref fn Init(filename: string) -> bool {
+    ref fn Init(filename: c_string) -> bool {
         text = NewString()
         if LoadFile(filename, &text) == false { return false }
 

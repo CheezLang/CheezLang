@@ -1,7 +1,7 @@
 #load("mem/allocator.che")
 #load("mem/std_heap_allocator.che")
 
-fn strlen(s: string) -> int {
+fn strlen(s: c_string) -> int {
     let len: int = 0
     while s[len] != '`0' {
         len += 1
@@ -43,7 +43,7 @@ fn streq(a: $T, b: $T2) -> bool {
     return true
 }
 
-impl string {
+impl c_string {
     fn GetLength() -> int {
         return strlen(self)
     }
@@ -53,7 +53,7 @@ impl string {
     }
 }
 
-impl Printable for string {
+impl Printable for c_string {
     fn Print(str: String&, format: char[]) {
         str.AppendString(<<self)
     }
@@ -121,7 +121,7 @@ impl StringBase($CharType) {
         }
     }
 
-    ref fn FromString(str: string) -> StringBase(CharType)& {
+    ref fn FromString(str: c_string) -> StringBase(CharType)& {
         if (ulong)data != 0 {
             // @Todo:
             //self.Dispose()
@@ -162,7 +162,7 @@ impl StringBase($CharType) {
         return &self
     }
 
-    ref fn AppendString(other: string) -> StringBase(CharType)& {
+    ref fn AppendString(other: c_string) -> StringBase(CharType)& {
         let otherLength = strlen(other)
         let newLength = length + otherLength
                 
@@ -284,7 +284,7 @@ fn NewString2(alloc: Allocator) -> String {
     return t
 }
 
-impl string {
+impl c_string {
     fn ToString() -> String {
         let s = NewString()
         s.FromString(self)

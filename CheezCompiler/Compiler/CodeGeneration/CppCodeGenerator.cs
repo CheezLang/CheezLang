@@ -640,7 +640,7 @@
 //                    return GetCTypeName(a.TargetType) + "*";
 
 //                case StringType s:
-//                    return "string";
+//                    return c_string;
 
 //                case StructType s:
 //                    return s.Declaration.Name.Name;
