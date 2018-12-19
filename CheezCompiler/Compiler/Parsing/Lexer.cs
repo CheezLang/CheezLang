@@ -448,6 +448,12 @@ namespace Cheez.Compiler.Parsing
                     continue;
                 }
 
+                if (c == '\n')
+                {
+                    mLocation.line++;
+                    mLocation.lineStartIndex = mLocation.index;
+                }
+
                 sb.Append(c);
             }
 
