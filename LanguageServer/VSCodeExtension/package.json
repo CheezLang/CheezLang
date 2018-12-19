@@ -87,13 +87,13 @@
     "deploy": "echo deploying..."
   },
   "dependencies": {
-    "find-process": "^1.1.1",
-    "vscode": "^1.1.5",
-    "vscode-languageclient": "^3.4.2"
+    "find-process": "^1.2.1",
+    "vscode": "^1.1.26",
+    "vscode-languageclient": "^5.2.1"
   },
   "devDependencies": {
-    "@types/mocha": "^2.2.42",
-    "@types/node": "^6.0.88",
-    "typescript": "^2.5.2"
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.12.17",
+    "typescript": "^3.2.2"
   }
 }
