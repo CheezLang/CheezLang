@@ -1,6 +1,12 @@
 # Cheez Lang
 
 Cheez is a small programming language I created in 2018. It's more on the low level side, inspired by Rust and uses LLVM as it's backend.
+Some features are parametric polymorphism (I think that's what it's called), `defer`, structs, traits,
+currently C-like memory allocation using malloc and free, "virtual functions" using trait objects.
+
+Some features I plan to implement someday are lambdas, pattern matching, something like Rust's borrow checker but less restrictive and compile time code execution.
+
+A detailed description of each feature can soon be found [here](https://github.com/Nimaoth/CheezLang/wiki) (still very early in progress).
 
 The compiler is written in C#. I also wrote a Language Server, but I haven't maintained it so it's not even compiling right now. There is also a VSCode extension which provides basic syntax highlighting and access to the language server.
 
