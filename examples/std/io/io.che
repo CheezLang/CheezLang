@@ -185,8 +185,6 @@ fn Print(v: $T) {
 }
 
 fn PrintSlice(slice: $T[]) {
-    
-
     Print("[")
     while let i = 0; i < slice.length; i += 1 {
         if i > 0 {
@@ -194,7 +192,7 @@ fn PrintSlice(slice: $T[]) {
         }
         Print(slice[i])
     }
-    Printf("].{i32}", slice.length)
+    Print("]")
 }
 /////////////////////////// new functions ///////////////////////////
 
@@ -337,5 +335,15 @@ impl Printable for f64 {
         let buff: char[] = buff
         buff.length = sprintf((char&)buff, "%f", <<self)
         str.AppendChars(buff)
+    }
+}
+
+impl Printable for bool {
+    fn Print(str: String&, format: char[]) {
+        if <<self {
+            str.AppendString("true")
+        } else {
+            str.AppendString("false")
+        }
     }
 }
