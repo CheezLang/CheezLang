@@ -1,6 +1,10 @@
 # Cheez Lang
 
 Cheez is a small programming language I created in 2018. It's more on the low level side, inspired by Rust and uses LLVM as it's backend.
+
+It is statically and strongly typed.
+
+
 Some features are parametric polymorphism (I think that's what it's called), `defer`, structs, traits,
 currently C-like memory allocation using malloc and free, "virtual functions" using trait objects.
 
