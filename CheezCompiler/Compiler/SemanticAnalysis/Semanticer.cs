@@ -487,7 +487,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else
             {
-                context.ReportError(match.Value.GenericParseTreeNode, "Must be an int or enum value");
+                context.ReportError(match.Value.GenericParseTreeNode, "Must be an int, char or enum value");
             }
 
             //match.SetFlag(StmtFlags.Returns);
@@ -724,6 +724,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             scope.TypeDeclarations.Add(str);
             var structType = new StructType(str);
+            str.Type = structType;
             if (!str.IsPolyInstance)
             {
                 if (!scope.DefineTypeSymbol(str.Name.Name, structType))
@@ -731,6 +732,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     data.ReportError(str.Name.GenericParseTreeNode, $"A symbol with name '{str.Name.Name}' already exists in current scope");
                 }
             }
+
 
             foreach (var mem in str.Members)
             {
@@ -750,7 +752,6 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             Debug.Assert(structType != null && structType.Declaration == str);
             structType.Analyzed = true;
-            str.Type = structType;
         }
 
         public void Using(Scope scope, StructType @struct, INamed name)

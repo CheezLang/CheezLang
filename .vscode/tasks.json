@@ -4,7 +4,7 @@
         {
             "label": "run",
             "type": "shell",
-            "command": "./gen/TestProgram.exe & ./gen/test.bmp"
+            "command": "./gen/TestProgram.exe"
         },
         {
             "label": "build_and_run",
