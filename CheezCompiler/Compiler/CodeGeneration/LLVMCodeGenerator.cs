@@ -1129,6 +1129,9 @@ namespace Cheez.Compiler.CodeGeneration
                 right = GenerateBinaryOperator(data.Builder, ass.Operator, ass.Target.Type, ass.Value.Type, left, right);
             }
 
+            var targetType = LLVM.PointerType(CheezTypeToLLVMType(ass.Target.Type), 0);
+            leftPtr = LLVM.BuildPointerCast(data.Builder, leftPtr, targetType, "");
+
             CastIfAny(data.Builder, ass.Target.Type, ass.Value.Type, ref right);
 
             return LLVM.BuildStore(data.Builder, right, leftPtr);
@@ -1571,10 +1574,13 @@ namespace Cheez.Compiler.CodeGeneration
                 {
                     var left = dot.Left.Accept(this, data.Clone(Deref: false));
                     var index = (uint)@struct.GetIndexOfMember(dot.Right);
+                    var member = @struct.Declaration.Members[(int)index];
 
                     left = LLVM.BuildLoad(data.Builder, left, "");
                     //var elemPtr = LLVM.BuildStructGEP(data.Builder, left, index, dot.ToString());
-                    var elemPtr = GetStructMemberPointer(data.Builder, left, index);
+                    var elemPtrRaw = GetStructMemberPointer(data.Builder, left, index);
+                    var elemType = LLVM.PointerType(CheezTypeToLLVMType(member.Type), 0);
+                    var elemPtr = LLVM.BuildPointerCast(data.Builder, elemPtrRaw, elemType, "");
 
                     if (data.Deref)
                     {
