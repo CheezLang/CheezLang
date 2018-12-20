@@ -634,5 +634,5 @@ fn signed_distance_field_renderer()
 ", [dur])
 
     // // store image as bmp
-    write_bmp((int)width, (int)height, (double&)imageArr.data, "../examples/examples/sdf_images/test3.bmp")
+    write_bmp((int)width, (int)height, (double&)imageArr.data, "test.bmp")
 }

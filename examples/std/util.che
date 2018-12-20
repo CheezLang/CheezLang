@@ -1,4 +1,4 @@
-#load("os/windows.che")
+#load("std:os/windows")
 
 fn PointerAddSized(ptr: $T&, amount: $OffsetType) -> T& {
     return (T&)((OffsetType)ptr + amount * @sizeof(T))

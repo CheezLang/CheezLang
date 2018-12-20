@@ -1,6 +1,6 @@
-#load("../string.che")
-#load("../mem/memory.che")
-#load("../os/windows.che")
+#load("std:string")
+#load("std:mem/memory")
+#load("std:os/windows")
 
 let isize = int
 

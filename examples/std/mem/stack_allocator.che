@@ -1,7 +1,7 @@
-#load("allocator.che")
-#load("std_heap_allocator.che")
-#load("../array.che")
-#load("../util.che")
+#load("std:mem/allocator")
+#load("std:mem/std_heap_allocator")
+#load("std:array")
+#load("std:util")
 
 fn NextAligned(add: $T&, align: ulong) -> T& {
     let add = (ulong)add

@@ -25,18 +25,12 @@ namespace Cheez.Compiler
     public class CheezTypeType : CheezType
     {
         public static CheezTypeType Instance { get; } = new CheezTypeType();
-
         public override bool IsPolyType => false;
-
-        public override string ToString()
-        {
-            return "type";
-        }
+        public override string ToString() => "type";
     }
 
     public class GenericFunctionType : CheezType
     {
-        //public string[] GenericParameters { get; }
         public AstFunctionDecl Declaration { get; }
 
         public override bool IsPolyType => false;
@@ -44,7 +38,6 @@ namespace Cheez.Compiler
         public GenericFunctionType(AstFunctionDecl decl)
         {
             Declaration = decl;
-            //GenericParameters = decl.Generics.Select(g => g.Name).ToArray();
         }
     }
 
@@ -75,51 +68,29 @@ namespace Cheez.Compiler
     public class ErrorType : CheezType
     {
         public static ErrorType Instance { get; } = new ErrorType { Size = 0 };
-
         public override bool IsPolyType => false;
-
-        public override string ToString()
-        {
-            return "<Error Type>";
-        }
+        public override string ToString() => "<Error Type>";
     }
 
     public class VoidType : CheezType
     {
         public static VoidType Intance { get; } = new VoidType();
-
-        public override string ToString()
-        {
-            return "void";
-        }
-
+        public override string ToString() => "void";
         public override bool IsPolyType => false;
     }
 
     public class AnyType : CheezType
     {
         public static AnyType Intance { get; } = new AnyType { Size = 8, Alignment = 8 };
-
-        public override string ToString()
-        {
-            return "any";
-        }
-
+        public override string ToString() => "any";
         public override bool IsPolyType => false;
     }
 
     public class BoolType : CheezType
     {
         public static BoolType Instance = new BoolType { Size = 1, Alignment = 1 };
-
-        private BoolType()
-        {}
-
-        public override string ToString()
-        {
-            return "bool";
-        }
-
+        private BoolType() {}
+        public override string ToString() => "bool";
         public override bool IsPolyType => false;
     }
 
@@ -365,11 +336,7 @@ namespace Cheez.Compiler
     {
         public static CharType Instance = new CharType { Size = 1, Alignment = 1 };
         public override bool IsPolyType => false;
-
-        public override string ToString()
-        {
-            return $"char";
-        }
+        public override string ToString() => "char";
 
     }
 
@@ -382,16 +349,7 @@ namespace Cheez.Compiler
     {
         public AstTraitDeclaration Declaration { get; }
         public override bool IsPolyType => false;
-
-        private bool _analyzed = false;
-        public bool Analyzed
-        {
-            get => _analyzed;
-            set
-            {
-                _analyzed = value;
-            }
-        }
+        public bool Analyzed { get; set; } = false;
 
         public TraitType(AstTraitDeclaration decl)
         {
@@ -400,10 +358,7 @@ namespace Cheez.Compiler
             Declaration = decl;
         }
 
-        public override string ToString()
-        {
-            return Declaration.ToString();
-        }
+        public override string ToString() => Declaration.ToString();
     }
 
     public class StructType : CheezType, Analizable
@@ -491,11 +446,7 @@ namespace Cheez.Compiler
             }
         }
 
-        public override string ToString()
-        {
-            return $"enum {Name}";
-        }
-
+        public override string ToString() => $"enum {Name}";
         public override bool IsPolyType => false;
     }
 
@@ -558,9 +509,6 @@ namespace Cheez.Compiler
             this.Name = name;
         }
 
-        public override string ToString()
-        {
-            return $"${Name}";
-        }
+        public override string ToString() => "$" + Name;
     }
 }

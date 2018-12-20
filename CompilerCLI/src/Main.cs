@@ -52,6 +52,9 @@ namespace CheezCLI
 
         [Option("subsystem", Default = SubSystem.console, HelpText = "Sub system: 'console' or 'windows'")]
         public SubSystem SubSystem { get; set; }
+
+        [Option("modules", HelpText = "Additional modules")]
+        public IEnumerable<string> Modules { get; set; }
     }
 
     class Prog
@@ -124,6 +127,18 @@ namespace CheezCLI
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             var compiler = new Compiler(errorHandler);
+            foreach (string mod in options.Modules)
+            {
+                var parts = mod.Split(':');
+                if (parts.Length != 2)
+                {
+                    errorHandler.ReportError($"Invalid module option: {mod}");
+                    continue;
+                }
+
+                compiler.ModulePaths[parts[0]] = parts[1];
+            }
+
             foreach (var file in options.Files)
             {
                 var v = compiler.AddFile(file);

@@ -1,5 +1,5 @@
-#load("allocator.che")
-#load("memory.che")
+#load("std:mem/allocator")
+#load("std:mem/memory")
 
 struct StdHeapAllocator {
     _unused: int
