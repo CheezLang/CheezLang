@@ -199,14 +199,13 @@ fn Main() {
 ## Run
 Run the compiler using this command in Window Command Line:
 ```bat
-cheez.exe test.che -n TestProgram
-TestProgram.exe
+cheezc.exe test.che
+test.exe
 ```
 Powershell
 ```ps1
-.\cheez.exe .\test.che -n TestProgram
-.\TestProgram.exe
+.\cheezc.exe .\test.che
+.\test.ene
 ```
 
-- -n [name] - Name the .exe file [name].exe
 - -help - display help screen

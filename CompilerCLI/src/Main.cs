@@ -26,16 +26,16 @@ namespace CheezCLI
         [Value(0, Min = 1)]
         public IEnumerable<string> Files { get; set; }
 
-        [Option('o', "out", Default = ".", HelpText = "Output directory")]
+        [Option('o', "out", Default = ".", HelpText = "Output directory: --out <directory>")]
         public string OutPath { get; set; }
 
-        [Option('n', "name", HelpText = "Name of the executable generated")]
+        [Option('n', "name", HelpText = "Name of the executable generated: <name>")]
         public string OutName { get; set; }
 
         [Option("print-ast", Default = false, HelpText = "Print the abstract syntrax tree to a file")]
         public bool PrintAst { get; set; }
 
-        [Option("print-ast-file", Default = null, HelpText = "If print-ast is set, this is the generated file")]
+        [Option("print-ast-file", Default = null, HelpText = "If print-ast is set, this is the generated file: --print-ast-file <filepath>")]
         public string PrintAstFile { get; set; }
 
         [Option("no-code", Default = false, HelpText = "Don't generate exe")]
@@ -44,16 +44,16 @@ namespace CheezCLI
         [Option("no-errors", Default = false, HelpText = "Don't show error messages")]
         public bool NoErrors { get; set; }
 
-        [Option("ld", HelpText = "Additional include directories")]
+        [Option("ld", HelpText = "Additional include directories: --ld [<path> [<path>]...]")]
         public IEnumerable<string> LibraryIncludeDirectories { get; set; }
 
-        [Option("libs", HelpText = "Additional Libraries to link to")]
+        [Option("libs", HelpText = "Additional Libraries to link to: --libs [<path> [<path>]...]")]
         public IEnumerable<string> Libraries { get; set; }
 
-        [Option("subsystem", Default = SubSystem.console, HelpText = "Sub system: 'console' or 'windows'")]
+        [Option("subsystem", Default = SubSystem.console, HelpText = "Sub system: --subsystem [windows|console]")]
         public SubSystem SubSystem { get; set; }
 
-        [Option("modules", HelpText = "Additional modules")]
+        [Option("modules", HelpText = "Additional modules: --modules [<name>:<path> [<name>:<path>]...]")]
         public IEnumerable<string> Modules { get; set; }
     }
 
