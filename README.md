@@ -205,7 +205,7 @@ test.exe
 Powershell
 ```ps1
 .\cheezc.exe .\test.che
-.\test.ene
+.\test.exe
 ```
 
 - -help - display help screen
