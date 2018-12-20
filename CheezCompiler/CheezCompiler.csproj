@@ -118,7 +118,6 @@
     <Compile Include="Compiler\Ast\AstDeclaration.cs" />
     <Compile Include="Compiler\Ast\AstExpression.cs" />
     <Compile Include="Compiler\Ast\AstStatement.cs" />
-    <Compile Include="Compiler\CodeGeneration\CppCodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\ICodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVMCodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVM\AttributeKind.cs" />
