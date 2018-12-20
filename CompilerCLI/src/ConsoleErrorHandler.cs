@@ -38,8 +38,8 @@ namespace CheezCLI
             int index = beginning.index;
             int lineNumber = beginning.line;
             int lineStart = GetLineStartIndex(error.Text, index);
-            int lineEnd = GetLineEndIndex(error.Text, index);
-            bool multiLine = beginning.line != end.line;
+            int lineEnd = GetLineEndIndex(error.Text, end.end);
+            int linesSpread = CountLines(error.Text, index, end.end);
 
             var errorLineBackgroundColor = ConsoleColor.Black;
             int lineNumberWidth = (end.line + linesAfter).ToString().Length;
@@ -73,19 +73,18 @@ namespace CheezCLI
             // line containing error (may be multiple lines)
             {
                 var firstLine = beginning.line;
-                var lastLine = end.line;
                 var ls = lineStart; // lineStart
                 var le = GetLineEndIndex(error.Text, index); // lineEnd
                 var ei = Math.Min(le, end.end); // endIndex
                 var i = index;
 
-                for (var line = firstLine; line <= lastLine; ++line)
+                for (var line = 0; line < linesSpread; ++line)
                 {
                     var part1 = error.Text.Text.Substring(ls, i - ls);
                     var part2 = error.Text.Text.Substring(i, ei - i);
                     var part3 = error.Text.Text.Substring(ei, le - ei);
 
-                    LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", line), ConsoleColor.White);
+                    LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", line + firstLine), ConsoleColor.White);
 
                     LogInline(part1, ConsoleColor.White, errorLineBackgroundColor);
                     LogInline(part2, ConsoleColor.Red, errorLineBackgroundColor);
@@ -99,7 +98,7 @@ namespace CheezCLI
             }
 
             // underline
-            if (!multiLine)
+            if (linesSpread == 1)
             {
                 char firstChar = '^'; // ^ ~
                 char underlineChar = '—'; // — ~
@@ -155,6 +154,18 @@ namespace CheezCLI
 #endif
 
             Log(message, ConsoleColor.Red);
+        }
+
+        private int CountLines(IText text, int start, int end)
+        {
+            int lines = 1;
+            for (; start < end && start < text.Text.Length; start++)
+            {
+                if (text.Text[start] == '\n')
+                    lines++;
+            }
+
+            return lines;
         }
 
         private int GetLineEndIndex(IText text, int currentIndex)

@@ -3,6 +3,7 @@ using Cheez.Compiler.Parsing;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 
 namespace Cheez.Compiler
 {
@@ -43,12 +44,18 @@ namespace Cheez.Compiler
         private Workspace mMainWorkspace;
         public Workspace DefaultWorkspace => mMainWorkspace;
 
-        public Compiler(IErrorHandler errorHandler)
+        public Compiler(IErrorHandler errorHandler, string stdlib)
         {
             ErrorHandler = errorHandler;
             mMainWorkspace = new Workspace(this);
             mWorkspaces["main"] = mMainWorkspace;
-            ModulePaths["std"] = "./std";
+
+            string exePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "lib");
+            if (stdlib != null) exePath = stdlib;
+            ModulePaths["std"] = Path.Combine(exePath, "std");
+            ModulePaths["opengl"] = Path.Combine(exePath, "opengl");
+            ModulePaths["glfw"] = Path.Combine(exePath, "glfw");
+            ModulePaths["bmp"] = Path.Combine(exePath, "bmp");
         }
 
         public PTFile AddFile(string fileNameT, string body = null, Workspace workspace = null, bool reparse = false)

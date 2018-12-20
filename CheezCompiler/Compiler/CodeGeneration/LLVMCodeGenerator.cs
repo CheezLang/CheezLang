@@ -417,7 +417,7 @@ namespace Cheez.Compiler.CodeGeneration
 
             // @hack
             lldArgs.Add($@"-libpath:{Environment.CurrentDirectory}\CheezRuntimeLibrary\lib\x86");
-            lldArgs.Add($@"-libpath:{Assembly.GetEntryAssembly().Location}\CheezRuntimeLibrary\lib\x86");
+            lldArgs.Add($@"-libpath:{exePath}\rtl\x86");
             lldArgs.Add($@"-libpath:D:\Program Files (x86)\LLVM\lib");
 
             // other options

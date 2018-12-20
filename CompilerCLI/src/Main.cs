@@ -55,6 +55,9 @@ namespace CheezCLI
 
         [Option("modules", HelpText = "Additional modules: --modules [<name>:<path> [<name>:<path>]...]")]
         public IEnumerable<string> Modules { get; set; }
+
+        [Option("stdlib", Default = null, HelpText = "Path to the standard library: --stdlib <path>")]
+        public string Stdlib { get; set; }
     }
 
     class Prog
@@ -126,7 +129,7 @@ namespace CheezCLI
 
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var compiler = new Compiler(errorHandler);
+            var compiler = new Compiler(errorHandler, options.Stdlib);
             foreach (string mod in options.Modules)
             {
                 var parts = mod.Split(':');

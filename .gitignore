@@ -226,6 +226,7 @@ _Pvt_Extensions
 # Custom
 src
 /gen
+/dist
 /examples/*.cpp
 /Linker/Win32
 /Linker/int
