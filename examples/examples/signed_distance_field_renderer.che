@@ -1,8 +1,8 @@
-#load("../std/io/io.che")
-#load("../std/math.che")
-#load("../std/array.che")
-#load("../std/mem/stack_allocator.che")
-#load("../bmp/bmp.che")
+#load("std:io/io")
+#load("std:math")
+#load("std:array")
+#load("std:mem/stack_allocator")
+#load("bmp:bmp")
 
 ///////////////////////////////////////////////////////////
 fn xor(a: bool, b: bool) -> bool {

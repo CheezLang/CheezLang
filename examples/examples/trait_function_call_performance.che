@@ -1,5 +1,5 @@
-#load("../std/io/io.che")
-#load("../std/util.che")
+#load("std:io/io")
+#load("std:util")
 
 
 fn scanf(format: c_string, value: int&, value2: int&) -> int #varargs;

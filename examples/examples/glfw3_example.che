@@ -1,8 +1,8 @@
 // #load("compiler/main.che")
 
-#load("../std/io/io.che")
-#load("../glfw/glfw3.che")
-#load("../opengl/opengl.che")
+#load("std:io/io")
+#load("glfw:glfw3")
+#load("opengl:opengl")
 
 struct Quad {
     pos: Vec2f
