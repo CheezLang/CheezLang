@@ -48,7 +48,7 @@ namespace CheezCLI
             Log($"{Path.GetFileName(callingFunctionFile)}:{callingFunctionName}():{callLineNumber}", ConsoleColor.DarkYellow);
 #endif
             // location, message
-            Log($"{beginning.file}: {error.Message}", ConsoleColor.Red);
+            Log($"{beginning.file}:{beginning.line}: {error.Message}", ConsoleColor.Red);
 
             // lines before current line
             {
