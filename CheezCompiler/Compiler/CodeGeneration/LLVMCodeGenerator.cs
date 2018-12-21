@@ -916,6 +916,17 @@ namespace Cheez.Compiler.CodeGeneration
                 name += string.Join(".", function.PolymorphicTypes.Select(p => $"{p.Key}.{p.Value}"));
             }
 
+            var linkname = function.GetDirective("linkname");
+            if (linkname != null)
+            {
+                if (linkname.Arguments.Count != 1 || !(linkname.Arguments[0] is AstStringLiteral))
+                {
+                    throw new NotImplementedException("#linkname neads exactly one string argument");
+                }
+
+                name = (linkname.Arguments[0] as AstStringLiteral).StringValue;
+            }
+
             var ltype = CheezTypeToLLVMType(function.Type, false);
             var lfunc = LLVM.AddFunction(module, name, ltype);
 
