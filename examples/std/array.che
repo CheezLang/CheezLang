@@ -24,6 +24,7 @@ impl Array($ElementType) {
     }
     
     ref fn InitSize(size: uint) {
+        allocator = new StdHeapAllocator{}
         length = 0
         capacity = size
         data = allocator.allocate((ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
