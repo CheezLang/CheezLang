@@ -2,7 +2,7 @@
 
 Cheez is a small programming language I created in 2018. It's more on the low level side, inspired by Rust and uses LLVM as it's backend.
 
-It is statically and strongly typed with C-like memory management, so no garbage collector. It doesn't use semicolons, has parametric polymorphism (I think that's what it's called), `defer`, __virtual functions__ using trait objects, slices and more.
+It is statically and strongly typed with C-like memory management, so no garbage collector. It doesn't use semicolons, has parametric polymorphism (I think that's what it's called), `defer`, __virtual functions__ using trait objects, slices, type inference and more.
 
 Some features I plan to implement someday are lambdas, pattern matching, something like Rust's borrow checker but less restrictive and compile time code execution.
 
@@ -14,12 +14,81 @@ The compiler is written in C#. I also wrote a Language Server, but I haven't mai
 
 ## Examples
 
+Here are some simple examples, more advanced examples can be found [here](https://github.com/Nimaoth/CheezLang/tree/release/examples/examples)
+
 Here's what a Hello World program looks like:
 ```rust
 #load("std:io/io.che")
 
 fn Main() {
     println("Hello World.")
+}
+```
+
+Generic dynamic array:
+```rust
+#load("std:mem/std_heap_allocator")
+#load("std:io/io")
+
+fn Main() {
+    let ints: Array(int) = create_array()
+    defer ints.dispose()
+
+    ints.add(3)
+    ints.add(2)
+    ints.add(1)
+
+    while let i: u32 = 0; i < ints.length; i += 1 {
+        print_f("ints[{}] = {}`n", [i, ints.get(i)])
+    }
+}
+
+fn create_array() -> Array($T) {
+    let arr: Array(T)
+    arr.init()
+    return arr
+}
+
+struct Array(ElementType: type) {
+    data: ElementType&
+    length: uint
+    capacity: uint
+    allocator: Allocator
+}
+
+impl Array($ElementType) {
+    ref fn init() {
+        allocator = new StdHeapAllocator{}
+        length = 0
+        capacity = 10
+        data = allocator.allocate((ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
+    }
+
+    ref fn dispose() {
+        allocator.free(data)
+    }
+
+    ref fn reserve(s: uint) {
+        if s <= capacity {
+            return
+        }
+        capacity = s
+        data = allocator.reallocate(data, (ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
+    }
+
+    ref fn add(val: ElementType) {
+        if capacity <= length {
+            capacity = capacity * 2
+            data = allocator.reallocate(data, (ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
+        }
+
+        data[length] = val
+        length += 1
+    }
+
+    ref fn get(index: uint) -> ElementType {
+        return data[index]
+    }
 }
 ```
 
