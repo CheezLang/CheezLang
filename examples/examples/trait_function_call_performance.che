@@ -5,7 +5,7 @@
 fn scanf(format: c_string, value: int&, value2: int&) -> int #varargs;
 
 trait TestTrait {
-    fn TraitFunction(n: ulong);
+    fn traitFunction(n: ulong);
 }
 
 struct Test {
@@ -26,17 +26,17 @@ struct Test {
 }
 
 impl Test {
-    fn NormalFunction(n: ulong) {
+    fn normalFunction(n: ulong) {
         counter += n
     }
 
-    ref fn RefFunction(n: ulong) {
+    ref fn refFunction(n: ulong) {
         counter += n
     }
 }
 
 impl TestTrait for Test {
-    fn TraitFunction(n: ulong) {
+    fn traitFunction(n: ulong) {
         counter += n
     }
 }
@@ -46,90 +46,90 @@ fn trait_function_call_performance() {
     let n = 8
 
 
-    Printf("iterations: {}, n: {}`n", [iterations, n])
+    print_f("iterations: {}, n: {}`n", [iterations, n])
 
     let t: Test
     let tt: TestTrait = t
 
-    // call NormalFunction() on Test
+    // call normalFunction() on Test
     // t is implicitly passed by value
     {
         t.counter = 0
 
-        let start = GetCurrentTimeInMicroseconds()
+        let start = getCurrentTimeInMicroseconds()
         defer {
-            let end = GetCurrentTimeInMicroseconds()
+            let end = getCurrentTimeInMicroseconds()
             let diff = end - start
             let ms = diff / 1000
 
-            Printf("counter: {}`n", [t.counter])
-            Printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.NormalFunction()", ms, iterations])
+            print_f("counter: {}`n", [t.counter])
+            print_f("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.normalFunction()", ms, iterations])
         }   
 
         while let i = 0; i < iterations; i += 1 {
-            t.NormalFunction((ulong)n)
+            t.normalFunction((ulong)n)
         }
     }
 
-    // call RefFunction() on Test
+    // call refFunction() on Test
     // t is implicitly passed as a pointer 
     {
         t.counter = 0
 
-        let start = GetCurrentTimeInMicroseconds()
+        let start = getCurrentTimeInMicroseconds()
         defer {
-            let end = GetCurrentTimeInMicroseconds()
+            let end = getCurrentTimeInMicroseconds()
             let diff = end - start
             let ms = diff / 1000
 
-            Printf("counter: {}`n", [t.counter])
-            Printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.RefFunction()", ms, iterations])
+            print_f("counter: {}`n", [t.counter])
+            print_f("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.refFunction()", ms, iterations])
         }   
 
         while let i = 0; i < iterations; i += 1 {
-            t.RefFunction((ulong)n)
+            t.refFunction((ulong)n)
         }
     }
 
-    // call TraitFunction() on Test
+    // call traitFunction() on Test
     // t is implicitly converted to a trait object (vtable pointer + pointer to object)
     // and passed to the function
     {
         t.counter = 0
         
-        let start = GetCurrentTimeInMicroseconds()
+        let start = getCurrentTimeInMicroseconds()
         defer {
-            let end = GetCurrentTimeInMicroseconds()
+            let end = getCurrentTimeInMicroseconds()
             let diff = end - start
             let ms = diff / 1000
 
-            Printf("counter: {}`n", [t.counter])
-            Printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.TraitFunction()", ms, iterations])
+            print_f("counter: {}`n", [t.counter])
+            print_f("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.traitFunction()", ms, iterations])
         }   
 
         while let i = 0; i < iterations; i += 1 {
-            t.TraitFunction((ulong)n)
+            t.traitFunction((ulong)n)
         }
     }
 
-    // call TraitFunction() on TestTrait
+    // call traitFunction() on TestTrait
     // tt is implicitly  passed to the function
     // tt is already a trait object, so no implicit casting for every call
     {
         t.counter = 0
         
-        let start = GetCurrentTimeInMicroseconds()
+        let start = getCurrentTimeInMicroseconds()
         defer {
-            let end = GetCurrentTimeInMicroseconds()
+            let end = getCurrentTimeInMicroseconds()
             let diff = end - start
             let ms = diff / 1000
 
-            Printf("counter: {}`n", [t.counter])
-            Printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["tt.TraitFunction()", ms, iterations])
+            print_f("counter: {}`n", [t.counter])
+            print_f("[{}] Time elapsed: {} ms ({} iterations)`n", ["tt.traitFunction()", ms, iterations])
         }   
 
         while let i = 0; i < iterations; i += 1 {
-            tt.TraitFunction((ulong)n)
+            tt.traitFunction((ulong)n)
         }
     }
 }

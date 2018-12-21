@@ -37,7 +37,7 @@ struct LinearCongruentialGenerator {
 }
 
 impl LinearCongruentialGenerator {
-    ref fn Next() -> uint {
+    ref fn next() -> uint {
         let M: ulong = (ulong)u32_max()
         let A: ulong = 1664525
         let B: ulong = 1013904223
@@ -46,8 +46,8 @@ impl LinearCongruentialGenerator {
         return (uint)seed
     }
 
-    ref fn NextDouble() -> double {
-        return (double)self.Next() / (double)u32_max()
+    ref fn nextDouble() -> double {
+        return (double)self.next() / (double)u32_max()
     }
 }
 

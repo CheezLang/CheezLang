@@ -8,7 +8,7 @@ struct TokenLocation {
 }
 
 impl TokenLocation {
-    ref fn Clone() -> TokenLocation {
+    ref fn clone() -> TokenLocation {
         return new TokenLocation {
             file,
             line,
@@ -30,8 +30,8 @@ struct TokenData {
 }
 
 impl Token {
-    ref fn Print() {
-        Printfn("{s}:{i32}: {s}", [ (any)location.file, location.line, type.ToString() ])
+    ref fn print() {
+        printfn("{s}:{i32}: {s}", [ (any)location.file, location.line, type.toString() ])
     }
 }
 
@@ -108,7 +108,7 @@ enum TokenType {
 }
 
 impl TokenType {
-    fn ToString() -> c_string {
+    fn toString() -> c_string {
         match self {
             TokenType.Unknown -> return "Unknown",
             TokenType.NewLine -> return "NewLine",

@@ -7,14 +7,14 @@ struct StdHeapAllocator {
 
 impl Allocator for StdHeapAllocator {
     fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> any& {
-        return malloc((int)(count * elementSize))
+        return c_malloc((int)(count * elementSize))
     }
 
     fn reallocate(mem: any&, count: ulong, elementSize: ulong, alignment: ulong) -> any& {
-        return realloc(mem, (int)(count * elementSize))
+        return c_realloc(mem, (int)(count * elementSize))
     }
 
     fn free(mem: any&) {
-        free(mem)
+        c_free(mem)
     }
 }

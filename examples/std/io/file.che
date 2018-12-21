@@ -1,6 +1,6 @@
 #load("std:os/windows")
 
-fn LoadFile(filename: c_string, str: String&) -> bool {
+fn loadFile(filename: c_string, str: String&) -> bool {
     let of: _OFSTRUCT
     let handle = OpenFile(filename, &of, 0)
     if handle == -1 {
@@ -8,7 +8,7 @@ fn LoadFile(filename: c_string, str: String&) -> bool {
     }
     let size = GetFileSize((HANDLE)handle, null)
 
-    str.Resize((int)size)
+    str.resize((int)size)
     
     let bytesRead = 0
     ReadFile((HANDLE)handle, str.data, size, &bytesRead, null)

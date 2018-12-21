@@ -4,32 +4,32 @@
 #load("lexer.che")
 #load("token.che")
 
-fn RunCompiler(filename: c_string) {
+fn runCompiler(filename: c_string) {
     let lexer: Lexer
-    lexer.Init(filename)
+    lexer.init(filename)
 
     let cond = true
     while cond {
-        let t = lexer.NextToken()
+        let t = lexer.nextToken()
 
-        t.Print()
+        t.print()
         match t.type {
-            TokenType.Identifier -> Printf(" ({c[]})", &t.data.stringValue)
-            TokenType.AtSignIdentifier -> Printf(" ({c[]})", &t.data.stringValue)
-            TokenType.HashIdentifier -> Printf(" ({c[]})", &t.data.stringValue)
-            TokenType.DollarIdentifier -> Printf(" ({c[]})", &t.data.stringValue)
+            TokenType.Identifier -> print_f(" ({c[]})", &t.data.stringValue)
+            TokenType.AtSignIdentifier -> print_f(" ({c[]})", &t.data.stringValue)
+            TokenType.HashIdentifier -> print_f(" ({c[]})", &t.data.stringValue)
+            TokenType.DollarIdentifier -> print_f(" ({c[]})", &t.data.stringValue)
             TokenType.StringLiteral -> {
-                Printf(" (`"{c[]}`")", &t.data.stringValue)
+                print_f(" (`"{c[]}`")", &t.data.stringValue)
             }
         }
-        Println("")
+        println("")
 
         if t.type == TokenType.EOF {
             cond = false
         }
     }
 
-    Println("`ndone")
+    println("`ndone")
 
-    lexer.Cleanup()
+    lexer.cleanup()
 }

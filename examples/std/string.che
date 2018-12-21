@@ -10,8 +10,8 @@ fn strlen(s: c_string) -> int {
 }
 
 fn streql(a: $T, b: $T2, len: ulong) -> bool {
-    let alen: ulong = (ulong)a.GetLength()
-    let blen: ulong = (ulong)b.GetLength()
+    let alen: ulong = (ulong)a.getLength()
+    let blen: ulong = (ulong)b.getLength()
     if len > alen {
         len = alen
     }
@@ -20,7 +20,7 @@ fn streql(a: $T, b: $T2, len: ulong) -> bool {
     }
 
     while let i: ulong = 0; i < len; i += 1 {
-        if a.CharAt(i) != b.CharAt(i) {
+        if a.charAt(i) != b.charAt(i) {
             return false
         }
     }
@@ -28,15 +28,15 @@ fn streql(a: $T, b: $T2, len: ulong) -> bool {
 }
 
 fn streq(a: $T, b: $T2) -> bool {
-    let len: ulong = (ulong)a.GetLength()
-    let blen: ulong = (ulong)b.GetLength()
+    let len: ulong = (ulong)a.getLength()
+    let blen: ulong = (ulong)b.getLength()
 
     if len != blen {
         return false
     }
 
     while let i: ulong = 0; i < len; i += 1 {
-        if a.CharAt(i) != b.CharAt(i) {
+        if a.charAt(i) != b.charAt(i) {
             return false
         }
     }
@@ -44,27 +44,27 @@ fn streq(a: $T, b: $T2) -> bool {
 }
 
 impl c_string {
-    fn GetLength() -> int {
+    fn getLength() -> int {
         return strlen(self)
     }
     
-    fn CharAt(i: $T) -> char {
+    fn charAt(i: $T) -> char {
         return self[i]
     }
 }
 
 impl Printable for c_string {
-    fn Print(str: String&, format: char[]) {
-        str.AppendString(<<self)
+    fn print(str: String&, format: char[]) {
+        str.appendString(<<self)
     }
 }
 
 impl char[] {
-    fn GetLength() -> int {
+    fn getLength() -> int {
         return self.length
     }
 
-    fn CharAt(i: $T) -> char {
+    fn charAt(i: $T) -> char {
         return self[i]
     }
 }
@@ -80,23 +80,23 @@ let String = StringBase(char)
 let Utf32String = StringBase(int)
 
 impl StringBase($CharType) {
-    ref fn GetLength() -> int {
+    ref fn getLength() -> int {
         return length
     }
 
-    ref fn CharAt(i: $T) -> CharType {
+    ref fn charAt(i: $T) -> CharType {
         return data[i]
     }
 
-    ref fn Init(alloc: Allocator) {
+    ref fn init(alloc: Allocator) {
         allocator = alloc
         data = null
         length = 0
         capacity = 0
-        self.Reserve(10)
+        self.reserve(10)
     }
 
-    ref fn Reserve(size: int) {
+    ref fn reserve(size: int) {
         capacity = size
         if data == null {
             length = 0
@@ -110,7 +110,7 @@ impl StringBase($CharType) {
         }
     }
     
-    ref fn Resize(size: int) {
+    ref fn resize(size: int) {
         length = size
         capacity = size
         if data == null {
@@ -121,10 +121,10 @@ impl StringBase($CharType) {
         }
     }
 
-    ref fn FromString(str: c_string) -> StringBase(CharType)& {
+    ref fn fromString(str: c_string) -> StringBase(CharType)& {
         if (ulong)data != 0 {
             // @Todo:
-            //self.Dispose()
+            //self.dispose()
             allocator.free(data)
             data = null
             length = 0
@@ -136,7 +136,7 @@ impl StringBase($CharType) {
         data = allocator.allocate((ulong)capacity, @sizeof(CharType), @alignof(CharType))
 
         if @sizeof(CharType) == 1 {
-            memcpy(data, (any&)str, length)
+            c_memcpy(data, (any&)str, length)
         } else {
             while let i = 0; i < length; i += 1 {
                 data[i] = (CharType)str[i]
@@ -146,7 +146,7 @@ impl StringBase($CharType) {
         return &self
     }
 
-    ref fn Append(other: StringBase(CharType)) -> StringBase(CharType)& {
+    ref fn append(other: StringBase(CharType)) -> StringBase(CharType)& {
         let newLength = length + other.length
 
         if newLength >= capacity {
@@ -155,14 +155,14 @@ impl StringBase($CharType) {
         }
         
         let end = &data[length]
-        memcpy(end, other.data, other.length * @sizeof(CharType))
+        c_memcpy(end, other.data, other.length * @sizeof(CharType))
 
         length = newLength
 
         return &self
     }
 
-    ref fn AppendString(other: c_string) -> StringBase(CharType)& {
+    ref fn appendString(other: c_string) -> StringBase(CharType)& {
         let otherLength = strlen(other)
         let newLength = length + otherLength
                 
@@ -172,14 +172,14 @@ impl StringBase($CharType) {
         }
         
         let end = &data[length]
-        memcpy(end, (any&)other, otherLength)
+        c_memcpy(end, (any&)other, otherLength)
 
         length = newLength
 
         return &self
     }
 
-    ref fn AppendChars(other: char[]) -> StringBase(CharType)& {
+    ref fn appendChars(other: char[]) -> StringBase(CharType)& {
         let newLength = length + other.length
                 
         if newLength >= capacity {
@@ -188,14 +188,14 @@ impl StringBase($CharType) {
         }
         
         let end = &data[length]
-        memcpy(end, (any&)other, other.length)
+        c_memcpy(end, (any&)other, other.length)
 
         length = newLength
 
         return &self
     }
 
-    ref fn AppendChar(ch: CharType) -> StringBase(CharType)& {
+    ref fn appendChar(ch: CharType) -> StringBase(CharType)& {
         let newLength = length + 1
         
         if newLength >= capacity {
@@ -210,7 +210,7 @@ impl StringBase($CharType) {
         return &self
     }
 
-    ref fn Equals(other: $T) -> bool {
+    ref fn equals(other: $T) -> bool {
         if @isstring(T) { 
             let len: @typeof(length) = strlen(other)
             if len != length {
@@ -230,31 +230,31 @@ impl StringBase($CharType) {
         }
     }
 
-    ref fn Dispose() {
+    ref fn dispose() {
         allocator.free(data)
         data = null
         length = 0
     }
 
-    ref fn Slice() -> CharType[] {
-        return self.SliceFL(0, length)
+    ref fn slice() -> CharType[] {
+        return self.sliceFL(0, length)
     }
 
-    ref fn SliceFL(from: int, len: int) -> CharType[] {
+    ref fn sliceFL(from: int, len: int) -> CharType[] {
         let slice: CharType[] = &data[from]
         slice.length = len
         return slice
     }
 
-    ref fn SliceF(from: int) -> CharType[] {
-        return self.SliceFL(from, length - from)
+    ref fn sliceF(from: int) -> CharType[] {
+        return self.sliceFL(from, length - from)
     }
     
-    ref fn SliceL(len: int) -> CharType[] {
-        return self.SliceFL(0, len)
+    ref fn sliceL(len: int) -> CharType[] {
+        return self.sliceFL(0, len)
     }
 
-    ref fn IndexOf(ch: CharType) -> int {
+    ref fn indexOf(ch: CharType) -> int {
         let i = 0
         while i < length {
             if data[i] == ch {
@@ -268,26 +268,26 @@ impl StringBase($CharType) {
     }
 }
 
-fn NewString() -> String {
+fn newString() -> String {
     let t = new String {
         null, 0, 0, new StdHeapAllocator {}
     }
-    t.Reserve(10)
+    t.reserve(10)
     return t
 }
 
-fn NewString2(alloc: Allocator) -> String {
+fn newString2(alloc: Allocator) -> String {
     let t = new String {
         null, 0, 0, alloc
     }
-    t.Reserve(10)
+    t.reserve(10)
     return t
 }
 
 impl c_string {
-    fn ToString() -> String {
-        let s = NewString()
-        s.FromString(self)
+    fn toString() -> String {
+        let s = newString()
+        s.fromString(self)
         return s
     }
 }

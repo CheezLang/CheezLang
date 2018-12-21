@@ -1,14 +1,14 @@
 #load("std:os/windows")
 
-fn PointerAddSized(ptr: $T&, amount: $OffsetType) -> T& {
+fn pointerAddSized(ptr: $T&, amount: $OffsetType) -> T& {
     return (T&)((OffsetType)ptr + amount * @sizeof(T))
 }
 
-fn PointerAdd(ptr: $T&, amount: $OffsetType) -> T& {
+fn pointerAdd(ptr: $T&, amount: $OffsetType) -> T& {
     return (T&)((OffsetType)ptr + amount)
 }
 
-fn GetCurrentTimeInMicroseconds() -> ulong {
+fn getCurrentTimeInMicroseconds() -> ulong {
     let freq: ulong
     QueryPerformanceFrequency(&freq)
 
@@ -21,7 +21,7 @@ fn GetCurrentTimeInMicroseconds() -> ulong {
     return time
 }
 
-fn GetCurrentTimeInMilliseconds() -> ulong {
+fn getCurrentTimeInMilliseconds() -> ulong {
     let freq: ulong
     QueryPerformanceFrequency(&freq)
 

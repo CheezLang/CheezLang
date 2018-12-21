@@ -7,21 +7,21 @@ struct CountingAllocator {
     freed: ulong
 }
 
-fn NewCountingAllocator() -> CountingAllocator {
+fn newCountingAllocator() -> CountingAllocator {
     return new CountingAllocator {
         new StdHeapAllocator {}, 0, 0
     }
 }
 
-fn NewCountingAllocator2(alloc: Allocator) -> CountingAllocator {
+fn newCountingAllocator2(alloc: Allocator) -> CountingAllocator {
     return new CountingAllocator {
         alloc, 0, 0
     }
 }
 
 impl CountingAllocator {
-    ref fn PrintDiagnostics() {
-        Printfn("( Allocated: {i32}, Freed: {i32} ) `n", [(any)allocated, freed])
+    ref fn printDiagnostics() {
+        printfn("( Allocated: {i32}, Freed: {i32} ) `n", [(any)allocated, freed])
     }
 }
 
@@ -36,12 +36,12 @@ impl Allocator for CountingAllocator {
         let sizePtr = (ulong&)mem
         <<sizePtr = size
 
-        return PointerAdd(mem, @sizeof(ulong))
+        return pointerAdd(mem, @sizeof(ulong))
     }
 
     fn reallocate(mem: any&, count: ulong, elementSize: ulong, alignment: ulong) -> any& {
         let size = count * elementSize
-        let actualMem = PointerAdd(mem, -@sizeof(ulong))
+        let actualMem = pointerAdd(mem, -@sizeof(ulong))
         
         {
             let sizePtr = (ulong&)actualMem
@@ -52,11 +52,11 @@ impl Allocator for CountingAllocator {
 
         let sizePtr = (ulong&)mem
         <<sizePtr = size
-        return PointerAdd(mem, @sizeof(ulong))
+        return pointerAdd(mem, @sizeof(ulong))
     }
 
     fn free(mem: any&) {
-        let actualMem = PointerAdd(mem, -@sizeof(ulong))
+        let actualMem = pointerAdd(mem, -@sizeof(ulong))
         let sizePtr = (ulong&)actualMem
         freed += <<sizePtr
         parent.free(actualMem)

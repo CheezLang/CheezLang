@@ -8,7 +8,6 @@ let stdin = __acrt_iob_func(1)
 let stdout = __acrt_iob_func(1)
 let stderr = __acrt_iob_func(1)
 
-fn printf(format: c_string) #varargs;
 fn fflush(file: FILE&);
 
 ///

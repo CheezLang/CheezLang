@@ -11,7 +11,7 @@ struct Quad {
 }
 
 impl Quad {
-    ref fn Draw() {
+    ref fn draw() {
         glBegin(GL_TRIANGLES)
 
         {
@@ -52,7 +52,7 @@ let q = new Quad {
     col = new Color3f { 1, 0, 1 }
 }
 
-fn OnKeyDown(window: GLFWwindow&, key: int, scancode: int, action: int, mods: int) {
+fn onKeyDown(window: GLFWwindow&, key: int, scancode: int, action: int, mods: int) {
     if action == GLFW_PRESS {
         match key {
             86 -> q.pos.y += 0.1
@@ -63,26 +63,26 @@ fn OnKeyDown(window: GLFWwindow&, key: int, scancode: int, action: int, mods: in
     }
 }
 
-fn OnResize(window: GLFWwindow&, w: int, h: int) {
+fn onResize(window: GLFWwindow&, w: int, h: int) {
     glViewport(0, 0, w, h)
 }
 
 fn glfw3_example()
 {
     if !glfwInit() {
-        Println("Failed to initialize GLFW")
+        println("Failed to initialize GLFW")
         return
     }
     defer glfwTerminate()
 
     let window = glfwCreateWindow(640, 480, "Hello World", null, null)
     if window == null {
-        Println("Failed to create window")
+        println("Failed to create window")
         return
     }
 
-    glfwSetKeyCallback(window, OnKeyDown)
-    glfwSetWindowSizeCallback(window, OnResize)
+    glfwSetKeyCallback(window, onKeyDown)
+    glfwSetWindowSizeCallback(window, onResize)
 
     glfwMakeContextCurrent(window)
     glViewport(0, 0, 640, 480)
@@ -93,7 +93,7 @@ fn glfw3_example()
         glClear(GL_COLOR_BUFFER_BIT)
 
         //
-        q.Draw()
+        q.draw()
 
         // present image
         glfwSwapBuffers(window)
