@@ -1,4 +1,4 @@
-#load("std/io/io.che")
+#load("std:io/io.che")
 
 struct Vec3 {
     x: float
@@ -17,8 +17,8 @@ impl Vec3 {
 }
 
 impl Printable for Vec3 {
-    fn Print(str: String&, format: char[]) {
-        Sprintf(str, "({}, {}, {})", [self.x, self.y, self.z])
+    fn print(str: String&, format: string) {
+        sprint_f(str, "({}, {}, {})", [self.x, self.y, self.z])
     }
 }
 
@@ -28,7 +28,7 @@ fn Main() {
 
     let c = a.add(b)
 
-    Printf("
+    print_f("
   {}
 + {}
   ------------------------------
