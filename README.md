@@ -68,14 +68,6 @@ impl Array($ElementType) {
         allocator.free(data)
     }
 
-    ref fn reserve(s: uint) {
-        if s <= capacity {
-            return
-        }
-        capacity = s
-        data = allocator.reallocate(data, (ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
-    }
-
     ref fn add(val: ElementType) {
         if capacity <= length {
             capacity = capacity * 2
