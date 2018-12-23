@@ -181,6 +181,8 @@ namespace Cheez.Compiler.CodeGeneration
     public class LLVMCodeGenerator : VisitorBase<LLVMValueRef, LLVMCodeGeneratorData>, ICodeGenerator
     {
         private string targetFile;
+        private string intDir;
+        private string outDir;
 
         private LLVMModuleRef module;
         private LLVMContextRef context;
@@ -206,8 +208,10 @@ namespace Cheez.Compiler.CodeGeneration
         [DllImport("Linker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public extern static bool llvm_link_coff(string[] argv, int argc);
 
-        public bool GenerateCode(Workspace workspace, string targetFile)
+        public bool GenerateCode(Workspace workspace, string intDir, string outDir, string targetFile, bool optimize)
         {
+            this.intDir = intDir ?? "";
+            this.outDir = outDir ?? "";
             this.targetFile = targetFile;
 
             // <arch><sub>-<vendor>-<sys>-<abi>
@@ -268,13 +272,12 @@ namespace Cheez.Compiler.CodeGeneration
             // generate file
             if (true)
             {
-                LLVM.PrintModuleToFile(module, $"{targetFile}.ll", out string llvmErrors);
+                LLVM.PrintModuleToFile(module, Path.Combine(intDir, $"{targetFile}.ll"), out string llvmErrors);
                 if (!string.IsNullOrWhiteSpace(llvmErrors))
                     Console.Error.WriteLine($"[PrintModuleToFile] {llvmErrors}");
             }
 
             {
-                var optimize = false;
                 if (optimize)
                 {
                     var pmBuilder = LLVM.PassManagerBuilderCreate();
@@ -318,7 +321,7 @@ namespace Cheez.Compiler.CodeGeneration
 
                     if (true)
                     {
-                        LLVM.PrintModuleToFile(module, $"{targetFile}.opt.ll", out string llvmErrors);
+                        LLVM.PrintModuleToFile(module, Path.Combine(intDir, $"{targetFile}.opt.ll"), out string llvmErrors);
                         if (!string.IsNullOrWhiteSpace(llvmErrors))
                             Console.Error.WriteLine($"[PrintModuleToFile] {llvmErrors}");
                     }
@@ -346,7 +349,7 @@ namespace Cheez.Compiler.CodeGeneration
                     LLVMRelocMode.LLVMRelocDefault,
                     LLVMCodeModel.LLVMCodeModelDefault);
 
-                var objFile = targetFile + ".obj";
+                var objFile = Path.Combine(intDir, targetFile + ".obj");
                 var dir = Path.GetDirectoryName(Path.GetFullPath(targetFile));
                 objFile = Path.Combine(dir, Path.GetFileName(objFile));
                 var filename = Marshal.StringToCoTaskMemAnsi(objFile);

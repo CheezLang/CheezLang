@@ -68,6 +68,11 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             var data = LLVM.GetModuleDataLayout(self.GetModuleRef());
             return data;
         }
+
+        public static bool VerifyModule(this Module self, LLVMVerifierFailureAction Action, out string OutMessage)
+        {
+            return LLVM.VerifyModule(self.GetModuleRef(), LLVMVerifierFailureAction.LLVMPrintMessageAction, out OutMessage);
+        }
     }
 
     public static class TargetDataExt
