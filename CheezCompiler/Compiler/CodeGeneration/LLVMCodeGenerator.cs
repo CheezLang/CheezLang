@@ -21,9 +21,10 @@ namespace Cheez.Compiler.CodeGeneration
 
         public LLVMBasicBlockRef LoopCondition { get; set; }
         public LLVMBasicBlockRef LoopEnd { get; set; }
+        public LLVMBasicBlockRef LoopPost { get; set; }
 
         [DebuggerStepThrough]
-        public LLVMCodeGeneratorData Clone(LLVMBuilderRef? Builder = null, bool? Deref = null, LLVMValueRef? Function = null, LLVMBasicBlockRef? BasicBlock = null, LLVMBasicBlockRef? LoopCondition = null, LLVMBasicBlockRef? LoopEnd = null)
+        public LLVMCodeGeneratorData Clone(LLVMBuilderRef? Builder = null, bool? Deref = null, LLVMValueRef? Function = null, LLVMBasicBlockRef? BasicBlock = null, LLVMBasicBlockRef? LoopCondition = null, LLVMBasicBlockRef? LoopEnd = null, LLVMBasicBlockRef? LoopPost = null)
         {
             return new LLVMCodeGeneratorData
             {
@@ -33,6 +34,7 @@ namespace Cheez.Compiler.CodeGeneration
                 BasicBlock = BasicBlock ?? this.BasicBlock,
                 LoopCondition = LoopCondition ?? this.LoopCondition,
                 LoopEnd = LoopEnd ?? this.LoopEnd,
+                LoopPost = LoopPost ?? this.LoopPost,
                 Function = this.Function
             };
         }
@@ -60,6 +62,8 @@ namespace Cheez.Compiler.CodeGeneration
         private Dictionary<object, LLVMTypeRef> typeMap = new Dictionary<object, LLVMTypeRef>();
         //private Dictionary<object, LLVMTypeRef> vtableTypeMap = new Dictionary<object, LLVMTypeRef>();
         private Dictionary<object, int> vtableIndices = new Dictionary<object, int>();
+
+        private Dictionary<object, LLVMValueRef> constructors = new Dictionary<object, LLVMValueRef>();
 
         private LLVMTypeRef vtableType;
 
@@ -110,11 +114,11 @@ namespace Cheez.Compiler.CodeGeneration
             // generate vtable
             GenerateVTables();
 
-            // generate all types
-            GenerateAllTypes();
-
             // generate global variables
             GenerateGlobalVariables();
+
+            // generate all types
+            GenerateAllTypes();
 
             // generate functions
             GenerateFunctions();
@@ -746,6 +750,9 @@ namespace Cheez.Compiler.CodeGeneration
                 case IntType i:
                     return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
 
+                case BoolType b:
+                    return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
+
                 case FloatType f:
                     return LLVM.ConstReal(CheezTypeToLLVMType(type), 0.0);
 
@@ -763,6 +770,26 @@ namespace Cheez.Compiler.CodeGeneration
 
                 case AnyType a:
                     return LLVM.ConstInt(LLVM.Int64Type(), 0, false);
+
+                case ArrayType a:
+                    {
+                        LLVMValueRef[] vals = new LLVMValueRef[a.Length];
+                        LLVMValueRef def = GetDefaultLLVMValue(a.TargetType);
+                        for (int i = 0; i < vals.Length; ++i)
+                            vals[i] = def;
+
+                        //LLVMValueRef[] vals = new LLVMValueRef[1];
+                        //LLVMValueRef def = GetDefaultLLVMValue(a.TargetType);
+                        //vals[0] = def;
+
+                        return LLVM.ConstArray(CheezTypeToLLVMType(a.TargetType), vals);
+                    }
+
+                case SliceType s:
+                    return LLVM.ConstStruct(new LLVMValueRef[] {
+                        GetDefaultLLVMValue(s.ToPointerType()),
+                        LLVM.ConstInt(LLVM.Int32Type(), 0, true)
+                    }, false);
 
                 default:
                     throw new NotImplementedException();
@@ -856,10 +883,33 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitStructDeclaration(AstStructDecl type, LLVMCodeGeneratorData data = null)
         {
-            //var ct = type.Type;
-            //var llvmType = CheezTypeToLLVMType(ct);
+            // create constructor
+            var constructorType = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { LLVM.PointerType(CheezTypeToLLVMType(type.Type), 0) }, false);
+            var constructor = LLVM.AddFunction(module, $"{type.Name}.constructor", constructorType);
+            constructors[type] = constructor;
 
+            LLVMBuilderRef builder = LLVM.CreateBuilder();
 
+            var entry = LLVM.AppendBasicBlock(constructor, "entry");
+            LLVM.PositionBuilderAtEnd(builder, entry);
+
+            var selfPtr = LLVM.GetParam(constructor, 0);
+
+            // initialize members
+            for (int i = 0; i < type.Members.Count; i++)
+            {
+                var mem = type.Members[i];
+
+                LLVMValueRef init = GetDefaultLLVMValue(mem.Type);
+                if (mem.Initializer != null)
+                    init = mem.Initializer.Accept(this, new LLVMCodeGeneratorData { Builder = builder, Deref = true, BasicBlock = entry, LFunction = constructor });
+
+                var memberPtr = GetStructMemberPointer(builder, selfPtr, (uint)i, mem.Type);
+                var s = LLVM.BuildStore(builder, init, memberPtr);
+            }
+
+            LLVM.BuildRetVoid(builder);
+            LLVM.DisposeBuilder(builder);
 
             return default;
         }
@@ -888,14 +938,15 @@ namespace Cheez.Compiler.CodeGeneration
             else
             {
                 var ptr = CreateLocalVariable(variable);
+
+                var val = GetDefaultLLVMValue(variable.Type);
+
                 if (variable.Initializer != null)
                 {
-
-                    var val = variable.Initializer.Accept(this, data.Clone(Deref: true));
+                    val = variable.Initializer.Accept(this, data.Clone(Deref: true));
                     CastIfAny(data.Builder, variable.Type, variable.Initializer.Type, ref val);
-                    return LLVM.BuildStore(data.Builder, val, ptr);
                 }
-                return default;
+                return LLVM.BuildStore(data.Builder, val, ptr);
             }
         }
 
@@ -1048,11 +1099,15 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitWhileStatement(AstWhileStmt ws, LLVMCodeGeneratorData data = null)
         {
+            var bbPre = LLVM.AppendBasicBlock(data.LFunction, "while_pre");
             var bbCondition = LLVM.AppendBasicBlock(data.LFunction, "while_condition");
             var bbBody = LLVM.AppendBasicBlock(data.LFunction, "while_body");
+            var bbPost = LLVM.AppendBasicBlock(data.LFunction, "while_post");
             var bbEnd = LLVM.AppendBasicBlock(data.LFunction, "while_end");
 
             // pre statement
+            LLVM.BuildBr(data.Builder, bbPre);
+            data.MoveBuilderTo(bbPre);
             if (ws.PreAction != null)
             {
                 var temp = CreateLocalVariable(ws.PreAction);
@@ -1067,9 +1122,12 @@ namespace Cheez.Compiler.CodeGeneration
 
             // body
             data.MoveBuilderTo(bbBody);
-            ws.Body.Accept(this, data.Clone(LoopCondition: bbCondition, LoopEnd: bbEnd));
+            ws.Body.Accept(this, data.Clone(LoopCondition: bbCondition, LoopEnd: bbEnd, LoopPost: bbPost));
+
+            LLVM.BuildBr(data.Builder, bbPost);
 
             // post action
+            data.MoveBuilderTo(bbPost);
             if (ws.PostAction != null)
             {
                 ws.PostAction.Accept(this, data);
@@ -1122,7 +1180,7 @@ namespace Cheez.Compiler.CodeGeneration
                 d.Accept(this, data);
             }
 
-            LLVM.BuildBr(data.Builder, data.LoopCondition);
+            LLVM.BuildBr(data.Builder, data.LoopPost);
 
             data.MoveBuilderTo(nextBB);
 
@@ -1207,7 +1265,7 @@ namespace Cheez.Compiler.CodeGeneration
             return default;
         }
 
-        private LLVMValueRef GetStructMemberPointer(LLVMBuilderRef builder, LLVMValueRef pointer, uint member)
+        private LLVMValueRef GetStructMemberPointer(LLVMBuilderRef builder, LLVMValueRef pointer, uint member, CheezType ctype = null)
         {
             var type = pointer.TypeOf().GetElementType();
 
@@ -1220,7 +1278,11 @@ namespace Cheez.Compiler.CodeGeneration
                 }, "");
             }
 
-            return LLVM.BuildStructGEP(builder, pointer, member, "");
+            var memberPtrRaw = LLVM.BuildStructGEP(builder, pointer, member, "");
+            if (ctype != null)
+                return LLVM.BuildPointerCast(builder, memberPtrRaw, LLVM.PointerType(CheezTypeToLLVMType(ctype), 0), "");
+            else
+                return memberPtrRaw;
 
             var structType = pointer.TypeOf().GetElementType();
             var elementType = structType.GetStructElementTypes()[member];
@@ -1258,16 +1320,19 @@ namespace Cheez.Compiler.CodeGeneration
         public override LLVMValueRef VisitStructValueExpression(AstStructValueExpr str, LLVMCodeGeneratorData data = null)
         {
             var value = CreateLocalVariable(str.Type);
-
             var llvmType = CheezTypeToLLVMType(str.Type);
+
+            // call constructor
+            var strType = str.Type as StructType;
+            var ctor = constructors[strType.Declaration];
+            //LLVM.BuildCall(data.Builder, ctor, new LLVMValueRef[] { value }, "");
 
             foreach (var m in str.MemberInitializers)
             {
                 var v = m.Value.Accept(this, data.Clone(Deref: true));
                 //var memberPtr = LLVM.BuildStructGEP(data.Builder, value, (uint)m.Index, "");
-                var memberPtr = GetStructMemberPointer(data.Builder, value, (uint)m.Index);
-                var castedMemberPtr = LLVM.BuildPointerCast(data.Builder, memberPtr, LLVM.PointerType(CheezTypeToLLVMType(m.Value.Type), 0), "");
-                var s = LLVM.BuildStore(data.Builder, v, castedMemberPtr);
+                var memberPtr = GetStructMemberPointer(data.Builder, value, (uint)m.Index, m.Value.Type);
+                var s = LLVM.BuildStore(data.Builder, v, memberPtr);
             }
 
             value = LLVM.BuildLoad(data.Builder, value, "");
@@ -1313,9 +1378,7 @@ namespace Cheez.Compiler.CodeGeneration
                     }
                     else
                     {
-                        var elemPtrRaw = GetStructMemberPointer(data.Builder, left, index);
-                        var elemType = LLVM.PointerType(CheezTypeToLLVMType(member.Type), 0);
-                        var elemPtr = LLVM.BuildPointerCast(data.Builder, elemPtrRaw, elemType, "");
+                        var elemPtr = GetStructMemberPointer(data.Builder, left, index, member.Type);
 
                         if (data.Deref)
                         {
@@ -1333,7 +1396,6 @@ namespace Cheez.Compiler.CodeGeneration
                     if (dot.Right == "length")
                     {
                         var left = dot.Left.Accept(this, data.Clone(Deref: false));
-                        //var length = LLVM.BuildStructGEP(data.Builder, left, 1, "");
                         var length = GetStructMemberPointer(data.Builder, left, 1);
                         if (data.Deref)
                             length = LLVM.BuildLoad(data.Builder, length, "");
@@ -1363,10 +1425,7 @@ namespace Cheez.Compiler.CodeGeneration
                     var member = @struct.Declaration.Members[(int)index];
 
                     left = LLVM.BuildLoad(data.Builder, left, "");
-                    //var elemPtr = LLVM.BuildStructGEP(data.Builder, left, index, dot.ToString());
-                    var elemPtrRaw = GetStructMemberPointer(data.Builder, left, index);
-                    var elemType = LLVM.PointerType(CheezTypeToLLVMType(member.Type), 0);
-                    var elemPtr = LLVM.BuildPointerCast(data.Builder, elemPtrRaw, elemType, "");
+                    var elemPtr = GetStructMemberPointer(data.Builder, left, index, member.Type);
 
                     if (data.Deref)
                     {
