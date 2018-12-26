@@ -1321,7 +1321,7 @@ namespace Cheez.Compiler.CodeGeneration
             // call constructor
             var strType = str.Type as StructType;
             var ctor = constructors[strType.Declaration];
-            //LLVM.BuildCall(data.Builder, ctor, new LLVMValueRef[] { value }, "");
+            LLVM.BuildCall(data.Builder, ctor, new LLVMValueRef[] { value }, "");
 
             foreach (var m in str.MemberInitializers)
             {
