@@ -2,7 +2,7 @@
 #load("std:mem/memory")
 
 struct StdHeapAllocator {
-    _unused: int
+    _unused: int = 0
 }
 
 impl Allocator for StdHeapAllocator {
@@ -18,3 +18,5 @@ impl Allocator for StdHeapAllocator {
         c_free(mem)
     }
 }
+
+let DEFAULT_STD_HEAP_ALLOCATOR = new StdHeapAllocator {}

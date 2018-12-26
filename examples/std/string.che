@@ -75,21 +75,11 @@ impl Printable for string {
     }
 }
 
-impl char[] {
-    fn getLength() -> int {
-        return self.length
-    }
-
-    fn charAt(i: $T) -> char {
-        return self[i]
-    }
-}
-
 struct StringBase(CharType: type) {
-    data: CharType&
-    length: int
-    capacity: int
-    allocator: Allocator
+    data: CharType&         = null
+    length: int             = 0
+    capacity: int           = 0
+    allocator: Allocator    = null
 }
 
 let String = StringBase(char)
@@ -303,7 +293,15 @@ fn newString2(alloc: Allocator) -> String {
 impl c_string {
     fn toString() -> String {
         let s = newString()
-        s.fromString(self)
+        s.append_cstring(self)
+        return s
+    }
+}
+
+impl string {
+    fn toString() -> String {
+        let s = newString()
+        s.append_string(self)
         return s
     }
 }

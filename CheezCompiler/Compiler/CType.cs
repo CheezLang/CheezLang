@@ -323,23 +323,6 @@ namespace Cheez.Compiler
         public override string ToString() => "string_literal";
     }
 
-    //public class CStringType : CheezType
-    //{
-    //    public static CStringType Instance = new CStringType { Size = PointerType.PointerSize, Alignment = PointerType.PointerAlignment };
-
-    //    public override string ToString()
-    //    {
-    //        return $"c_string";
-    //    }
-
-    //    public PointerType ToPointerType()
-    //    {
-    //        return PointerType.GetPointerType(IntType.GetIntType(1, true));
-    //    }
-
-    //    public override bool IsPolyType => false;
-    //}
-
     public class CharType : CheezType
     {
         public static CharType Instance = new CharType { Size = 1, Alignment = 1 };

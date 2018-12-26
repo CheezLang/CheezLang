@@ -3437,6 +3437,10 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else if (targetType is TraitType trait)
             {
+                if (sourceType == PointerType.GetPointerType(CheezType.Any))
+                {
+                    return true;
+                }
                 var src = sourceType;
                 while (src is PointerType p)
                     src = p.TargetType;
