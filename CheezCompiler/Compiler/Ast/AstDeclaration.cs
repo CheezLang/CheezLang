@@ -185,19 +185,21 @@ namespace Cheez.Compiler.Ast
         public ParseTree.PTMemberDecl ParseTreeNode { get; set; }
 
         public AstIdentifierExpr Name { get; }
+        public AstExpression Initializer { get; set; }
         public AstExpression TypeExpr { get; set; }
         public CheezType Type { get; set; }
 
-        public AstMemberDecl(ParseTree.PTMemberDecl node, AstIdentifierExpr name, AstExpression typeExpr)
+        public AstMemberDecl(ParseTree.PTMemberDecl node, AstIdentifierExpr name, AstExpression typeExpr, AstExpression init)
         {
             ParseTreeNode = node;
             this.Name = name;
             this.TypeExpr = typeExpr;
+            this.Initializer = init;
         }
 
         public AstMemberDecl Clone()
         {
-            return new AstMemberDecl(ParseTreeNode, Name.Clone() as AstIdentifierExpr, TypeExpr.Clone())
+            return new AstMemberDecl(ParseTreeNode, Name.Clone() as AstIdentifierExpr, TypeExpr.Clone(), Initializer?.Clone())
             {
                 Type = this.Type
             };

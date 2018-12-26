@@ -747,7 +747,36 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (mem.TypeExpr.Value is CheezType t)
                     mem.Type = t;
                 else
+                {
                     data.ReportError(mem.TypeExpr.GenericParseTreeNode, $"Expected type, got {mem.TypeExpr.Type}");
+                }
+
+                if (mem.Initializer != null)
+                {
+                    mem.Initializer.Scope = str.SubScope;
+                    foreach (var v in mem.Initializer.Accept(this, data.Clone(Scope: str.SubScope, Struct: str)))
+                    {
+                        if (v is ReplaceAstExpr r)
+                            mem.Initializer = r.NewExpression;
+                        else
+                            yield return v;
+                    }
+
+                    if (mem.Type != null && mem.Initializer.Type != null)
+                    {
+                        if (CanAssign(mem.Initializer.Type, mem.Type, out var newMemType, data, mem.ParseTreeNode, true))
+                        {
+                            mem.Initializer.Type = newMemType;
+                            mem.Initializer = CreateCastIfImplicit(mem.Type, mem.Initializer);
+                        }
+                        else
+                        {
+                            data.ReportError(mem.ParseTreeNode, $"Can't initialize a member of type {mem.Type} with a value of type {mem.Initializer.Type}");
+                        }
+
+                        // TODO: verify that initializer is a constant value?
+                    }
+                }
             }
 
             Debug.Assert(structType != null && structType.Declaration == str);
@@ -3318,7 +3347,16 @@ namespace Cheez.Compiler.SemanticAnalysis
         }
 
         #endregion
-
+        /// <summary>
+        /// Check wether <paramref name="sourceType"/> can be assigned to <paramref name="targetType"/>
+        /// </summary>
+        /// <param name="sourceType">Source Type</param>
+        /// <param name="targetType">Target Type</param>
+        /// <param name="outSource">The type <paramref name="sourceType"/> should be assigned to</param>
+        /// <param name="context"></param>
+        /// <param name="location"></param>
+        /// <param name="implict">Allow implicit conversion to trait object</param>
+        /// <returns>Returns true if possible, false otherwise</returns>
         private bool CanAssign(CheezType sourceType, CheezType targetType, out CheezType outSource, SemanticerData context, ILocation location, bool implict = true)
         {
             outSource = sourceType;
@@ -3498,6 +3536,12 @@ namespace Cheez.Compiler.SemanticAnalysis
             return new AstNumberExpr(node, new NumberData(value));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="targetType"></param>
+        /// <param name="source"></param>
+        /// <returns></returns>
         private AstExpression CreateCastIfImplicit(CheezType targetType, AstExpression source)
         {
             if (targetType is SliceType s)
