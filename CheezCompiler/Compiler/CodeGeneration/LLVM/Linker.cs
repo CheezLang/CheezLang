@@ -31,7 +31,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
     public class LLVMLinker
     {
         [DllImport("Linker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public extern static bool llvm_link_coff(string[] argv, int argc);
+        private extern static bool llvm_link_coff(string[] argv, int argc);
 
         public static bool Link(Workspace workspace, string targetFile, string objFile, IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
         {
