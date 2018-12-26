@@ -111,6 +111,9 @@ namespace Cheez.Compiler.CodeGeneration
 
             // generate vtable
             GenerateVTables();
+            
+            // generate all types
+            GenerateConstructorDeclarations();
 
             // generate global variables
             GenerateGlobalVariables();
@@ -873,12 +876,23 @@ namespace Cheez.Compiler.CodeGeneration
             return default;
         }
 
+        private void GenerateConstructorDeclarations()
+        {
+            foreach (var td in workspace.GlobalScope.TypeDeclarations)
+            {
+                if (td is AstStructDecl @struct)
+                {
+                    var constructorType = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { LLVM.PointerType(CheezTypeToLLVMType(@struct.Type), 0) }, false);
+                    var constructor = LLVM.AddFunction(module, $"{@struct.Name}.constructor", constructorType);
+                    constructors[@struct] = constructor;
+                }
+            }
+        }
+
         public override LLVMValueRef VisitStructDeclaration(AstStructDecl type, LLVMCodeGeneratorData data = null)
         {
             // create constructor
-            var constructorType = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { LLVM.PointerType(CheezTypeToLLVMType(type.Type), 0) }, false);
-            var constructor = LLVM.AddFunction(module, $"{type.Name}.constructor", constructorType);
-            constructors[type] = constructor;
+            var constructor = constructors[type];
 
             LLVMBuilderRef builder = LLVM.CreateBuilder();
 
@@ -892,14 +906,23 @@ namespace Cheez.Compiler.CodeGeneration
             {
                 var mem = type.Members[i];
 
-                LLVMValueRef init = GetDefaultLLVMValue(mem.Type);
-                if (mem.Initializer != null)
-                    init = mem.Initializer.Accept(this, new LLVMCodeGeneratorData { Builder = builder, Deref = true, BasicBlock = entry, LFunction = constructor });
-                var initType = LLVM.TypeOf(init);
+                if (mem.Type is StructType str)
+                {
+                    var memberPtr = GetStructMemberPointer(builder, selfPtr, (uint)i, mem.Type);
+                    var memCtor = constructors[str.Declaration];
+                    LLVM.BuildCall(builder, memCtor, new LLVMValueRef[] { memberPtr }, "");
+                }
+                else
+                {
+                    LLVMValueRef init = GetDefaultLLVMValue(mem.Type);
+                    if (mem.Initializer != null)
+                        init = mem.Initializer.Accept(this, new LLVMCodeGeneratorData { Builder = builder, Deref = true, BasicBlock = entry, LFunction = constructor });
+                    var initType = LLVM.TypeOf(init);
 
-                var memberPtr = GetStructMemberPointer(builder, selfPtr, (uint)i, mem.Type);
-                memberPtr = LLVM.BuildPointerCast(builder, memberPtr, LLVM.PointerType(initType, 0), "");
-                var s = LLVM.BuildStore(builder, init, memberPtr);
+                    var memberPtr = GetStructMemberPointer(builder, selfPtr, (uint)i, mem.Type);
+                    memberPtr = LLVM.BuildPointerCast(builder, memberPtr, LLVM.PointerType(initType, 0), "");
+                    var s = LLVM.BuildStore(builder, init, memberPtr);
+                }
             }
 
             LLVM.BuildRetVoid(builder);
