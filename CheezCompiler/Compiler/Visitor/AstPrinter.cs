@@ -288,13 +288,13 @@ namespace Cheez.Compiler.Visitor
 
         public override string VisitArrayTypeExpr(AstArrayTypeExpr astArrayTypeExpr, int data = 0)
         {
-            return $"{astArrayTypeExpr.Target.Accept(this, 0)}[]";
+            return $"[]{astArrayTypeExpr.Target.Accept(this, 0)}";
         }
 
-        public override string VisitPointerTypeExpr(AstPointerTypeExpr astPointerTypeExpr, int data = 0)
-        {
-            return $"{astPointerTypeExpr.Target.Accept(this, 0)}&";
-        }
+        //public override string VisitPointerTypeExpr(AstPointerTypeExpr astPointerTypeExpr, int data = 0)
+        //{
+        //    return $"&{astPointerTypeExpr.Target.Accept(this, 0)}";
+        //}
 
         public override string VisitCompCallExpression(AstCompCallExpr call, int data = 0)
         {
@@ -384,7 +384,7 @@ namespace Cheez.Compiler.Visitor
 
         public override string VisitDereferenceExpression(AstDereferenceExpr deref, int data = 0)
         {
-            return "*" + deref.SubExpression.Accept(this, 0);
+            return "<<" + deref.SubExpression.Accept(this, 0);
         }
 
         public override string VisitArrayAccessExpression(AstArrayAccessExpr arr, int data = 0)

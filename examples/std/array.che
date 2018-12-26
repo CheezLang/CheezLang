@@ -3,7 +3,7 @@
 #load("std:mem/std_heap_allocator")
 
 struct Array(ElementType: type) {
-    data: ElementType&
+    data: &ElementType
     length: uint
     capacity: uint
     allocator: Allocator
@@ -34,8 +34,8 @@ impl Array($ElementType) {
         allocator.free(data)
     }
 
-    ref fn rawData() -> ElementType& {
-        return (T&)data
+    ref fn rawData() -> &ElementType {
+        return (&T)data
     }
 
     ref fn reserve(s: uint) {

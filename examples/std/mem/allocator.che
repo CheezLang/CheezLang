@@ -1,31 +1,31 @@
 trait Allocator {
-    fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> any&;
-    fn reallocate(mem: any&, count: ulong, elementSize: ulong, alignment: ulong) -> any&;
-    fn free(mem: any&);
+    fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> &any;
+    fn reallocate(mem: &any, count: ulong, elementSize: ulong, alignment: ulong) -> &any;
+    fn free(mem: &any);
 }
 
-fn alloc(allocator: Allocator) -> $T& {
+fn alloc(allocator: Allocator) -> &$T {
     return alloc_raw(allocator, 1)
 }
 
-fn alloc_raw(allocator: Allocator, count: uint) -> $T& {
-    return (T&)allocator.allocate((ulong)count, @sizeof(T), @alignof(T))
+fn alloc_raw(allocator: Allocator, count: uint) -> &$T {
+    return (&T)allocator.allocate((ulong)count, @sizeof(T), @alignof(T))
 }
 
 fn alloc_n(allocator: Allocator, count: uint) -> $T[] {
-    let mem: T[] = (T&)allocator.allocate((ulong)count, @sizeof(T), @alignof(T))
+    let mem: T[] = (&T)allocator.allocate((ulong)count, @sizeof(T), @alignof(T))
     mem.length = (int)count
     return mem
 }
 
-fn realloc_n(allocator: Allocator, mem: $T&, count: uint) -> T& {
-    return (T&)allocator.reallocate((any&)mem, (ulong)count, @sizeof(T), @alignof(T))
+fn realloc_n(allocator: Allocator, mem: &$T, count: uint) -> &T {
+    return (&T)allocator.reallocate((&any)mem, (ulong)count, @sizeof(T), @alignof(T))
 }
 
-fn free(allocator: Allocator, mem: $T&) {
-    allocator.free((any&)mem)
+fn free(allocator: Allocator, mem: &$T) {
+    allocator.free((&any)mem)
 }
 
 fn free_n(allocator: Allocator, mem: $T[]) {
-    allocator.free((any&)mem)
+    allocator.free((&any)mem)
 }

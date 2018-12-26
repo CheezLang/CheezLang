@@ -23,25 +23,25 @@ namespace Cheez.Compiler.ParseTree
         }
     }
 
-    public class PTPointerTypeExpr : PTExpr
-    {
-        public PTExpr SubExpr { get; set; }
+    //public class PTPointerTypeExpr : PTExpr
+    //{
+    //    public PTExpr SubExpr { get; set; }
 
-        public PTPointerTypeExpr(TokenLocation beg, TokenLocation end, PTExpr target) : base(beg, end)
-        {
-            this.SubExpr = target;
-        }
+    //    public PTPointerTypeExpr(TokenLocation beg, TokenLocation end, PTExpr target) : base(beg, end)
+    //    {
+    //        this.SubExpr = target;
+    //    }
 
-        public override string ToString()
-        {
-            return $"{SubExpr}&";
-        }
+    //    public override string ToString()
+    //    {
+    //        return $"{SubExpr}&";
+    //    }
 
-        public override AstExpression CreateAst()
-        {
-            return new AstPointerTypeExpr(this, SubExpr.CreateAst());
-        }
-    }
+    //    public override AstExpression CreateAst()
+    //    {
+    //        return new AstPointerTypeExpr(this, SubExpr.CreateAst());
+    //    }
+    //}
 
     public class PTArrayTypeExpr : PTExpr
     {

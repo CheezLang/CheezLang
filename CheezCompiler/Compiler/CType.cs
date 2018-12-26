@@ -194,7 +194,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return $"{TargetType}&";
+            return $"&{TargetType}";
         }
 
         public override bool IsPolyType => TargetType.IsPolyType;
@@ -232,7 +232,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return $"ref({TargetType})";
+            return $"ref {TargetType}";
         }
 
         public override bool IsPolyType => TargetType.IsPolyType;
@@ -267,7 +267,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return $"{TargetType}[{Length}]";
+            return $"[{Length}]{TargetType}";
         }
 
         public PointerType ToPointerType()
@@ -305,7 +305,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return $"{TargetType}[]";
+            return $"[]{TargetType}";
         }
 
         public PointerType ToPointerType()

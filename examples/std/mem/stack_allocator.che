@@ -3,12 +3,12 @@
 #load("std:array")
 #load("std:util")
 
-fn nextAligned(add: $T&, align: ulong) -> T& {
+fn nextAligned(add: &$T, align: ulong) -> &T {
     let add = (ulong)add
     let mul = add + align - 1
     mul -= (mul % align)
     
-    return (T&)mul
+    return (&T)mul
 }
 
 struct StackAllocation {
@@ -17,7 +17,7 @@ struct StackAllocation {
 }
 
 impl Printable for StackAllocation {
-    fn print(str: String&, format: char[]) {
+    fn print(str: &String, format: char[]) {
         sprint_f(str, "({}:{})", [offset, size])
     }
 }
@@ -25,14 +25,14 @@ impl Printable for StackAllocation {
 struct StackAllocator {
     parent: Allocator
 
-    memory: byte&
+    memory: &byte
     capacity: ulong
 
     allocations: Array(StackAllocation)
 }
 
 impl Printable for StackAllocator {
-    fn print(s: String&, format: char[]) {
+    fn print(s: &String, format: char[]) {
         s.append_string("( [")
         while let i: uint = 0; i < allocations.length; i += 1 {
             if i > 0 {
@@ -118,7 +118,7 @@ impl StackAllocator {
         println(s)
     }
 
-    ref fn getLastAllocation() -> StackAllocation& {
+    ref fn getLastAllocation() -> &StackAllocation {
         if allocations.length == 0 {
             return null
         } else {
@@ -136,7 +136,7 @@ impl StackAllocator {
 }
 
 impl Allocator for StackAllocator {
-    fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> any& {
+    fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> &any {
         let nextAddress = pointerAdd(memory, (long)self.getNextAllocationOffset())
         nextAddress = nextAligned(nextAddress, alignment)
 
@@ -155,7 +155,7 @@ impl Allocator for StackAllocator {
         return nextAddress
     }
 
-    fn reallocate(mem: any&, count: ulong, elementSize: ulong, alignment: ulong) -> any& {
+    fn reallocate(mem: &any, count: ulong, elementSize: ulong, alignment: ulong) -> &any {
         let size = count * elementSize
 
         let lastAllocation = self.getLastAllocation()
@@ -179,7 +179,7 @@ impl Allocator for StackAllocator {
         }
     }
 
-    fn free(mem: any&) {
+    fn free(mem: &any) {
         let lastAllocation = self.getLastAllocation()
         if lastAllocation == null {
             return

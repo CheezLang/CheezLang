@@ -4,7 +4,7 @@
 
 let isize = int
 
-fn c_sprintf(buff: char&, f: c_string, a: double) -> int #varargs #linkname("sprintf");
+fn c_sprintf(buff: &char, f: c_string, a: double) -> int #varargs #linkname("sprintf");
 
 let NEW_LINE: char = '`n'
 
@@ -21,7 +21,7 @@ fn print_string(s: $T) {
     }
 }
 
-fn print_stringl(s: String&) {
+fn print_stringl(s: &String) {
     let bytesWritten: int
     WriteFile(__std_out_handle, s.data, s.length, &bytesWritten, 0)
 }
@@ -101,7 +101,7 @@ fn print_int(val: $T) {
     print_stringl(&buffer)
 }
 
-fn b_print_i(buffer: String&, val: $T) {
+fn b_print_i(buffer: &String, val: $T) {
     let v = val
     let len = 0
 
@@ -180,7 +180,7 @@ fn print(v: $T) {
         print_string(v)
     } else if @typeseq(String, T) {
         print_stringl(&v)
-    } else if @typeseq(String&, T) {
+    } else if @typeseq(&String, T) {
         print_stringl(v)
     } else if @isenum(T) {
         print_int((int)v)
@@ -206,7 +206,7 @@ fn print_slice(slice: $T[]) {
 /////////////////////////// new functions ///////////////////////////
 
 trait Printable {
-    fn print(str: String&, format: string);
+    fn print(str: &String, format: string);
 }
 
 fn parseInt(str: $String) -> int {
@@ -228,7 +228,7 @@ fn print_f(format: string, args: Printable[]) {
     print(s)
 }
 
-fn sprint_f(buffer: String&, format: string, args: Printable[]) {
+fn sprint_f(buffer: &String, format: string, args: Printable[]) {
     let formatSpecifier = new_string()
     defer formatSpecifier.dispose()
     formatSpecifier.reserve(5)
@@ -282,55 +282,55 @@ fn sprint_f(buffer: String&, format: string, args: Printable[]) {
 }
 
 impl Printable for u8 {
-    fn print(str: String&, format: string) {
+    fn print(str: &String, format: string) {
         b_print_i(str, <<self)
     }
 }
 
 impl Printable for u16 {
-    fn print(str: String&, format: string) {
+    fn print(str: &String, format: string) {
         b_print_i(str, <<self)
     }
 }
 
 impl Printable for u32 {
-    fn print(str: String&, format: string) {
+    fn print(str: &String, format: string) {
         b_print_i(str, <<self)
     }
 }
 
 impl Printable for u64 {
-    fn print(str: String&, format: string) {
+    fn print(str: &String, format: string) {
         b_print_i(str, <<self)
     }
 }
 
 impl Printable for i8 {
-    fn print(str: String&, format: string) {
+    fn print(str: &String, format: string) {
         b_print_i(str, <<self)
     }
 }
 
 impl Printable for i16 {
-    fn print(str: String&, format: string) {
+    fn print(str: &String, format: string) {
         b_print_i(str, <<self)
     }
 }
 
 impl Printable for i32 {
-    fn print(str: String&, format: string) {
+    fn print(str: &String, format: string) {
         b_print_i(str, <<self)
     }
 }
 
 impl Printable for i64 {
-    fn print(str: String&, format: string) {
+    fn print(str: &String, format: string) {
         b_print_i(str, <<self)
     }
 }
 
 impl Printable for f32 {
-    fn print(str: String&, format: string) {
+    fn print(str: &String, format: string) {
         let buff: char[32]
         let buff: string = buff
         buff.length = c_sprintf(buff.data, "%f", (double)<<self)
@@ -339,7 +339,7 @@ impl Printable for f32 {
 }
 
 impl Printable for f64 {
-    fn print(str: String&, format: string) {
+    fn print(str: &String, format: string) {
         let buff: char[32]
         let buff: string = buff
         buff.length = c_sprintf(buff.data, "%f", <<self)
@@ -348,7 +348,7 @@ impl Printable for f64 {
 }
 
 impl Printable for bool {
-    fn print(str: String&, format: string) {
+    fn print(str: &String, format: string) {
         if <<self {
             str.append_string("true")
         } else {

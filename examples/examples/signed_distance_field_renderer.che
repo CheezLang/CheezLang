@@ -233,7 +233,7 @@ impl SDF for SubtractionSDF {
 ////////////////////////////// shaders //////////////////////////////////
 
 trait Shader {
-    fn shade(ray: Ray, raymarcher: Raymarcher&) -> Vec3;
+    fn shade(ray: Ray, raymarcher: &Raymarcher) -> Vec3;
 }
 
 //////
@@ -242,7 +242,7 @@ struct ConstantColorShader {
 }
 
 impl Shader for ConstantColorShader {
-    fn shade(ray: Ray, raymarcher: Raymarcher&) -> Vec3 {
+    fn shade(ray: Ray, raymarcher: &Raymarcher) -> Vec3 {
         return color
     }
 }
@@ -253,7 +253,7 @@ struct LambertianShader {
 }
 
 impl Shader for LambertianShader {
-    fn shade(ray: Ray, raymarcher: Raymarcher&) -> Vec3 {
+    fn shade(ray: Ray, raymarcher: &Raymarcher) -> Vec3 {
         let ld: Vec3
         let lc: Vec3
         raymarcher.sampleLightDirection(&ld, &lc)
@@ -289,7 +289,7 @@ struct CheckerBoardShader {
 
 
 impl Shader for CheckerBoardShader {
-    fn shade(ray: Ray, raymarcher: Raymarcher&) -> Vec3 {
+    fn shade(ray: Ray, raymarcher: &Raymarcher) -> Vec3 {
         let x = mod(ray.origin.x, 2 * size)
         let y = mod(ray.origin.y, 2 * size)
         let z = mod(ray.origin.z, 2 * size)
@@ -338,7 +338,7 @@ impl Raymarcher {
         return ds.shader.shade(ray, &self)
     }
 
-    ref fn sampleLightDirection(dir: Vec3&, col: Vec3&) {
+    ref fn sampleLightDirection(dir: &Vec3, col: &Vec3) {
         <<dir = new Vec3 {
             -1, 1.5, 1
         }.normaziled()
@@ -453,14 +453,14 @@ impl SDFAllocator {
         allocator.dispose()
     }
 
-    ref fn allocate() -> $T& {
-        let t = (T&)allocator.allocate(1, @sizeof(T), @alignof(T))
+    ref fn allocate() -> &$T {
+        let t = (&T)allocator.allocate(1, @sizeof(T), @alignof(T))
         print_f("{}`n", [allocator])
         return t
     }
 
     ref fn sphere(radius: double, shader: Shader) -> SDF {
-        let s: Sphere& = self.allocate()
+        let s: &Sphere = self.allocate()
         s.radius = radius
         s.shader = shader
         return (SDF)s
@@ -471,14 +471,14 @@ impl SDFAllocator {
     }
 
     ref fn planeY(location: double, shader: Shader) -> SDF {
-        let s: PlaneY& = self.allocate()
+        let s: &PlaneY = self.allocate()
         s.location = location
         s.shader = shader
         return (SDF)s
     }
 
     ref fn cube(radius: double, shader: Shader) -> SDF {
-        let s: Cube& = self.allocate()
+        let s: &Cube = self.allocate()
         s.radius = radius
         s.shader = shader
         return (SDF)s
@@ -489,63 +489,63 @@ impl SDFAllocator {
     }
 
     ref fn translate(sdf: SDF, translation: Vec3) -> SDF {
-        let t: TranslatedSDF& = self.allocate()
+        let t: &TranslatedSDF = self.allocate()
         t.sdf = sdf
         t.translation = translation
         return (SDF)t
     }
 
     ref fn rotateX(sdf: SDF, angle: double) -> SDF {
-        let t: RotatedXSDF& = self.allocate()
+        let t: &RotatedXSDF = self.allocate()
         t.sdf = sdf
         t.angle = angle
         return (SDF)t
     }
 
     ref fn rotateY(sdf: SDF, angle: double) -> SDF {
-        let t: RotatedYSDF& = self.allocate()
+        let t: &RotatedYSDF = self.allocate()
         t.sdf = sdf
         t.angle = angle
         return (SDF)t
     }
 
     ref fn rotateZ(sdf: SDF, angle: double) -> SDF {
-        let t: RotatedZSDF& = self.allocate()
+        let t: &RotatedZSDF = self.allocate()
         t.sdf = sdf
         t.angle = angle
         return (SDF)t
     }
 
     ref fn add(sdf1: SDF, sdf2: SDF) -> SDF {
-        let t: UnionSDF& = self.allocate()
+        let t: &UnionSDF = self.allocate()
         t.sdf1 = sdf1
         t.sdf2 = sdf2
         return (SDF)t
     }
 
     ref fn intersect(sdf1: SDF, sdf2: SDF) -> SDF {
-        let t: IntersectionSDF& = self.allocate()
+        let t: &IntersectionSDF = self.allocate()
         t.sdf1 = sdf1
         t.sdf2 = sdf2
         return (SDF)t
     }
 
     ref fn subtract(sdf1: SDF, sdf2: SDF) -> SDF {
-        let t: SubtractionSDF& = self.allocate()
+        let t: &SubtractionSDF = self.allocate()
         t.sdf1 = sdf1
         t.sdf2 = sdf2
         return (SDF)t
     }
 
-    ref fn combine(sdf1: SDF, sdf2: SDF) -> $T& {
-        let t: T& = self.allocate()
+    ref fn combine(sdf1: SDF, sdf2: SDF) -> &$T {
+        let t: &T = self.allocate()
         t.sdf1 = sdf1
         t.sdf2 = sdf2
         return (SDF)t
     }
 }
 
-fn renderImage(film: Film&)
+fn renderImage(film: &Film)
 {
     while let i = 0; i < film.pixels.length; i += 1 {
         film.pixels[i] = new Vec3 { 0, 0, 0 }
@@ -634,5 +634,5 @@ fn signed_distance_field_renderer()
 ", [dur])
 
     // // store image as bmp
-    write_bmp((int)width, (int)height, (double&)imageArr.data, "test.bmp")
+    write_bmp((int)width, (int)height, (&double)imageArr.data, "test.bmp")
 }
