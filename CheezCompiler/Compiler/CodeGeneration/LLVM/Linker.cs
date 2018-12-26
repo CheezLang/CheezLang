@@ -28,12 +28,12 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 #pragma warning restore CS0649 // #warning directive
     }
 
-    public class Linker
+    public class LLVMLinker
     {
         [DllImport("Linker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public extern static bool llvm_link_coff(string[] argv, int argc);
+        private extern static bool llvm_link_coff(string[] argv, int argc);
 
-        public static bool Link(Workspace workspace, string targetFile, IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
+        public static bool Link(Workspace workspace, string targetFile, string objFile, IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
         {
             foreach (var f in workspace.Files)
             {
@@ -84,6 +84,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
             // @hack
             lldArgs.Add($@"-libpath:{Environment.CurrentDirectory}\CheezRuntimeLibrary\lib\x86");
+            lldArgs.Add($@"-libpath:{exePath}\rtl\x86");
             lldArgs.Add($@"-libpath:D:\Program Files (x86)\LLVM\lib");
 
             // other options
@@ -92,7 +93,6 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             lldArgs.Add($"/subsystem:{subsystem}");
 
             // runtime
-            //lldArgs.Add("cheez-rtd.obj");
             lldArgs.Add("clang_rt.builtins-i386.lib");
 
             // windows and c libs
@@ -124,7 +124,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             }
 
             // generated object files
-            lldArgs.Add($"{filename}.obj");
+            lldArgs.Add(objFile);
 
             var result = llvm_link_coff(lldArgs.ToArray(), lldArgs.Count);
             if (result)

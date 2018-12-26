@@ -88,6 +88,39 @@ namespace Cheez.Compiler.Ast
         }
     }
 
+    public class AstVariableExpression : AstExpression
+    {
+        public AstVariableDecl Declaration { get; }
+        public AstExpression Original { get; set; }
+        public override bool IsPolymorphic => false;
+
+        public AstVariableExpression(ParseTree.PTExpr genericParseTreeNode, AstVariableDecl let, AstExpression original)
+        {
+            GenericParseTreeNode = genericParseTreeNode;
+            Declaration = let;
+            Type = let.Type;
+            this.Original = original;
+            Value = let;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return Original != null ? Original.Accept(visitor, data) : visitor.VisitVariableExpression(this, data);
+        }
+
+        public override AstExpression Clone()
+        {
+            return new AstVariableExpression(GenericParseTreeNode, Declaration, Original)
+            {
+                Type = this.Type,
+                Scope = this.Scope
+            };
+        }
+
+        public override string ToString() => Original?.ToString() ?? $"let {Declaration.Name}";
+    }
+
     public class AstFunctionExpression : AstExpression
     {
         public AstFunctionDecl Declaration { get; }
@@ -108,7 +141,7 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
         {
-            return Original.Accept(visitor, data);
+            return Original != null ? Original.Accept(visitor, data) : default;
         }
 
         public override AstExpression Clone()

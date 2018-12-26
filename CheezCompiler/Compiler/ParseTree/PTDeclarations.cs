@@ -140,20 +140,26 @@ namespace Cheez.Compiler.ParseTree
 
     #region Struct Declaration
 
-    public class PTMemberDecl
+    public class PTMemberDecl : ILocation
     {
         public PTIdentifierExpr Name { get; }
         public PTExpr Type { get; }
+        public PTExpr Initializer { get; }
 
-        public PTMemberDecl(PTIdentifierExpr name, PTExpr type)
+        public TokenLocation Beginning => Name.Beginning;
+
+        public TokenLocation End => Initializer != null ? Initializer.End : Type.End;
+
+        public PTMemberDecl(PTIdentifierExpr name, PTExpr type, PTExpr init)
         {
             this.Name = name;
             this.Type = type;
+            this.Initializer = init;
         }
 
         public AstMemberDecl CreateAst()
         {
-            return new AstMemberDecl(this, Name.CreateAst() as AstIdentifierExpr, Type.CreateAst());
+            return new AstMemberDecl(this, Name.CreateAst() as AstIdentifierExpr, Type.CreateAst(), Initializer?.CreateAst());
         }
     }
 

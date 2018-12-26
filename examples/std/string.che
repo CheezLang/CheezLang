@@ -51,29 +51,47 @@ impl c_string {
     fn charAt(i: $T) -> char {
         return self[i]
     }
+
+    fn to_string() -> String {
+        let s = new_string()
+        s.append_cstring(self)
+        return s
+    }
+}
+
+impl string {
+    fn getLength() -> int {
+        return self.length
+    }
+    
+    fn charAt(i: $T) -> char {
+        return self[i]
+    }
+
+    fn to_string() -> String {
+        let s = new_string()
+        s.append_string(self)
+        return s
+    }
 }
 
 impl Printable for c_string {
     fn print(str: String&, format: char[]) {
-        str.appendString(<<self)
+        str.append_cstring(<<self)
     }
 }
 
-impl char[] {
-    fn getLength() -> int {
-        return self.length
-    }
-
-    fn charAt(i: $T) -> char {
-        return self[i]
+impl Printable for string {
+    fn print(str: String&, format: char[]) {
+        str.append_string(<<self)
     }
 }
 
 struct StringBase(CharType: type) {
-    data: CharType&
-    length: int
-    capacity: int
-    allocator: Allocator
+    data: CharType&         = null
+    length: int             = 0
+    capacity: int           = 0
+    allocator: Allocator    = null
 }
 
 let String = StringBase(char)
@@ -136,7 +154,7 @@ impl StringBase($CharType) {
         data = allocator.allocate((ulong)capacity, @sizeof(CharType), @alignof(CharType))
 
         if @sizeof(CharType) == 1 {
-            c_memcpy(data, (any&)str, length)
+            c_memcpy(data, str, length)
         } else {
             while let i = 0; i < length; i += 1 {
                 data[i] = (CharType)str[i]
@@ -162,7 +180,7 @@ impl StringBase($CharType) {
         return &self
     }
 
-    ref fn appendString(other: c_string) -> StringBase(CharType)& {
+    ref fn append_cstring(other: c_string) -> StringBase(CharType)& {
         let otherLength = strlen(other)
         let newLength = length + otherLength
                 
@@ -172,14 +190,14 @@ impl StringBase($CharType) {
         }
         
         let end = &data[length]
-        c_memcpy(end, (any&)other, otherLength)
+        c_memcpy(end, other, otherLength)
 
         length = newLength
 
         return &self
     }
 
-    ref fn appendChars(other: char[]) -> StringBase(CharType)& {
+    ref fn append_string(other: char[]) -> StringBase(CharType)& {
         let newLength = length + other.length
                 
         if newLength >= capacity {
@@ -188,7 +206,7 @@ impl StringBase($CharType) {
         }
         
         let end = &data[length]
-        c_memcpy(end, (any&)other, other.length)
+        c_memcpy(end, other.data, other.length)
 
         length = newLength
 
@@ -268,26 +286,14 @@ impl StringBase($CharType) {
     }
 }
 
-fn newString() -> String {
-    let t = new String {
-        null, 0, 0, new StdHeapAllocator {}
-    }
+fn new_string() -> String {
+    let t = new String { allocator = DEFAULT_STD_HEAP_ALLOCATOR }
     t.reserve(10)
     return t
 }
 
-fn newString2(alloc: Allocator) -> String {
-    let t = new String {
-        null, 0, 0, alloc
-    }
+fn new_string2(alloc: Allocator) -> String {
+    let t = new String { allocator = alloc }
     t.reserve(10)
     return t
-}
-
-impl c_string {
-    fn toString() -> String {
-        let s = newString()
-        s.fromString(self)
-        return s
-    }
 }

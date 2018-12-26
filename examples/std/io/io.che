@@ -8,45 +8,43 @@ fn c_sprintf(buff: char&, f: c_string, a: double) -> int #varargs #linkname("spr
 
 let NEW_LINE: char = '`n'
 
-fn printString(s: $T) {
+fn print_string(s: $T) {
     if @typeseq(c_string, T) {
         let len = strlen(s)
         let bytesWritten: int
         WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
     } else if @typeseq(string, T) {
-        let c_s = (c_string)(char&)s
         let bytesWritten: int
-        WriteFile(__std_out_handle, c_s, s.length, &bytesWritten, 0)
+        WriteFile(__std_out_handle, s.data, s.length, &bytesWritten, 0)
     } else {
         @error(@concat("Can't call printString($T) with type ", @typename(T)))
     }
 }
 
-fn printStringl(s: String&) {
+fn print_stringl(s: String&) {
     let bytesWritten: int
-    WriteFile(__std_out_handle, (c_string)s.data, s.length, &bytesWritten, 0)
+    WriteFile(__std_out_handle, s.data, s.length, &bytesWritten, 0)
 }
 
-fn printChar(c: char) { 
+fn print_char(c: char) { 
     let bytesWritten: int
-    WriteFile(__std_out_handle, (c_string)&c, 1, &bytesWritten, 0)
+    WriteFile(__std_out_handle, &c, 1, &bytesWritten, 0)
 }
 
-fn printFloat(val: float) {
+fn print_float(val: $T) {
     let buff: char[32]
     let buff: char[] = buff
-    c_sprintf((char&)buff, "%f", (double)val)
-    printString((c_string)(char&)buff)
+    if @typeseq(T, float) {
+        c_sprintf(buff.data, "%f", (double)val)
+    } else if @typeseq(T, double) {
+        c_sprintf(buff.data, "%f", val)
+    } else {
+        @error(@concat("print_float can't be called with value of type ", @typename(T)))
+    }
+    print_string(buff.data)
 }
 
-fn printDouble(val: double) {
-    let buff: char[32]
-    let buff: char[] = buff
-    c_sprintf((char&)buff, "%f", val)
-    printString((c_string)(char&)buff)
-}
-
-fn printInt(val: $T) {
+fn print_int(val: $T) {
     let v = val
     let len = 0
 
@@ -67,7 +65,7 @@ fn printInt(val: $T) {
     }
 
 
-    let buffer: String = newString()
+    let buffer: String = new_string()
     defer buffer.dispose()
     buffer.resize(len)
 
@@ -100,7 +98,7 @@ fn printInt(val: $T) {
         }
     }
 
-    printStringl(&buffer)
+    print_stringl(&buffer)
 }
 
 fn b_print_i(buffer: String&, val: $T) {
@@ -160,36 +158,38 @@ fn b_print_i(buffer: String&, val: $T) {
 
 fn println(v: $T) {
     print(v)
-    printChar(NEW_LINE)
+    print_char(NEW_LINE)
 }
 
 fn print(v: $T) {
     if @isbool(T) {
         if v {
-            printString("true")
+            print_string("true")
         } else {
-            printString("false")
+            print_string("false")
         }
     } else if (@typeseq(string, T)) {
-        printString(v)
+        print_string(v)
     } else if @isint(T) {
-        printInt(v)
+        print_int(v)
     } else if @typeseq(T, f64) {
-        printDouble(v)
+        print_float(v)
+    } else if @typeseq(T, f32) {
+        print_float(v)
     } else if @isstring(T) {
-        printString(v)
+        print_string(v)
     } else if @typeseq(String, T) {
-        printStringl(&v)
+        print_stringl(&v)
     } else if @typeseq(String&, T) {
-        printStringl(v)
+        print_stringl(v)
     } else if @isenum(T) {
-        printInt((int)v)
+        print_int((int)v)
     } else if @typeseq(T, char) {
-        printChar(v)
+        print_char(v)
     } else if @typeseq(T, $X[]) {
-        printSlice(v)
+        print_slice(v)
     } else {
-        @error(@typename(T))
+        @error(@concat("print() can't be called with type ", @typename(T)))
     }
 }
 
@@ -220,20 +220,20 @@ fn parseInt(str: $String) -> int {
     return val
 }
 
-fn print_f(format: c_string, args: Printable[]) {
-    let s = newString()
+fn print_f(format: string, args: Printable[]) {
+    let s = new_string()
     defer s.dispose()
 
     sprint_f(&s, format, args)
     print(s)
 }
 
-fn sprint_f(buffer: String&, format: c_string, args: Printable[]) {
-    let formatSpecifier = newString()
+fn sprint_f(buffer: String&, format: string, args: Printable[]) {
+    let formatSpecifier = new_string()
     defer formatSpecifier.dispose()
     formatSpecifier.reserve(5)
 
-    let len = (ulong)format.getLength()
+    let len = (ulong)format.length
     let state = 0
     let argIndex = 0
 
@@ -333,8 +333,8 @@ impl Printable for f32 {
     fn print(str: String&, format: char[]) {
         let buff: char[32]
         let buff: char[] = buff
-        buff.length = c_sprintf((char&)buff, "%f", (double)<<self)
-        str.appendChars(buff)
+        buff.length = c_sprintf(buff.data, "%f", (double)<<self)
+        str.append_string(buff)
     }
 }
 
@@ -342,17 +342,17 @@ impl Printable for f64 {
     fn print(str: String&, format: char[]) {
         let buff: char[32]
         let buff: char[] = buff
-        buff.length = c_sprintf((char&)buff, "%f", <<self)
-        str.appendChars(buff)
+        buff.length = c_sprintf(buff.data, "%f", <<self)
+        str.append_string(buff)
     }
 }
 
 impl Printable for bool {
     fn print(str: String&, format: char[]) {
         if <<self {
-            str.appendString("true")
+            str.append_string("true")
         } else {
-            str.appendString("false")
+            str.append_string("false")
         }
     }
 }

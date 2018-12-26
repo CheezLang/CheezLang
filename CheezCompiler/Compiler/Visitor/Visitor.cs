@@ -54,6 +54,9 @@ namespace Cheez.Compiler.Visitor
         ReturnType VisitTypeExpr(AstTypeExpr astArrayTypeExpr, DataType data = default);
         ReturnType VisitArrayExpression(AstArrayExpression arr, DataType data = default);
         ReturnType VisitNullExpression(AstNullExpr nul, DataType data = default);
+
+
+        ReturnType VisitVariableExpression(AstVariableExpression expr, DataType data = default);
     }
 
 
@@ -138,5 +141,7 @@ namespace Cheez.Compiler.Visitor
         public virtual ReturnType VisitFunctionTypeExpr(AstFunctionTypeExpr func, DataType data = default) => default;
 
         public virtual ReturnType VisitTraitDeclaration(AstTraitDeclaration trait, DataType data = default) => default;
+
+        public virtual ReturnType VisitVariableExpression(AstVariableExpression expr, DataType data = default) => default;
     }
 }

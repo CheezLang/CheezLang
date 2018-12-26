@@ -250,7 +250,7 @@ namespace Cheez.Compiler
             DefineTypeSymbol("char", CheezType.Char);
             DefineTypeSymbol("bool", CheezType.Bool);
             DefineTypeSymbol("c_string", CheezType.CString);
-            DefineTypeSymbol("string", SliceType.GetSliceType(CheezType.Char));
+            DefineTypeSymbol("string", CheezType.String);
             DefineTypeSymbol("void", CheezType.Void);
             DefineTypeSymbol("any", CheezType.Any);
             DefineTypeSymbol("type", CheezType.Type);
@@ -553,6 +553,34 @@ namespace Cheez.Compiler
 
             if (candidates.Count == 0)
                 return Parent?.GetImplFunction(targetType, name);
+
+            return candidates[0];
+        }
+
+        public AstFunctionDecl GetImplFunctionWithDirective(CheezType targetType, string attribute)
+        {
+            var impls = mImplTable.Where(kv =>
+            {
+                var implType = kv.Key.TargetType;
+                if (TypesMatch(implType, targetType))
+                    return true;
+                return false;
+            });
+
+            var candidates = new List<AstFunctionDecl>();
+
+            foreach (var impl in impls)
+            {
+                var list = impl.Value;
+
+                var c = list?.FirstOrDefault(f => f.HasDirective(attribute));
+                if (c != null)
+                    candidates.Add(c);
+
+            }
+
+            if (candidates.Count == 0)
+                return Parent?.GetImplFunctionWithDirective(targetType, attribute);
 
             return candidates[0];
         }

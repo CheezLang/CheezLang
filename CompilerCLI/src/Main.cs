@@ -29,6 +29,9 @@ namespace CheezCLI
         [Option('o', "out", Default = ".", HelpText = "Output directory: --out <directory>")]
         public string OutPath { get; set; }
 
+        [Option("int", Default = "./int", HelpText = "Intermediate directory: --int <directory>")]
+        public string IntPath { get; set; }
+
         [Option('n', "name", HelpText = "Name of the executable generated: <name>")]
         public string OutName { get; set; }
 
@@ -58,6 +61,9 @@ namespace CheezCLI
 
         [Option("stdlib", Default = null, HelpText = "Path to the standard library: --stdlib <path>")]
         public string Stdlib { get; set; }
+
+        [Option("opt", Default = false, HelpText = "Perform optimizations: --opt")]
+        public bool Optimize { get; set; }
     }
 
     class Prog
@@ -211,12 +217,9 @@ namespace CheezCLI
 
         private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace, IErrorHandler errorHandler)
         {
-            if (!string.IsNullOrWhiteSpace(options.OutPath) && !Directory.Exists(options.OutPath))
-                Directory.CreateDirectory(options.OutPath);
-            string filePath = Path.Combine(options.OutPath, options.OutName);
 
             ICodeGenerator generator = new LLVMCodeGenerator();
-            bool success = generator.GenerateCode(workspace, filePath);
+            bool success = generator.GenerateCode(workspace, options.IntPath, options.OutPath, options.OutName, options.Optimize);
             if (!success)
                 return false;
 

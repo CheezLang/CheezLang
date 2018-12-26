@@ -648,8 +648,16 @@ namespace Cheez.Compiler.Parsing
                 SkipNewlines();
 
                 var mType = ParseExpression();
+                PTExpr init = null;
 
                 next = PeekToken();
+                if (next.type == TokenType.Equal)
+                {
+                    NextToken();
+                    init = ParseExpression();
+                    next = PeekToken();
+                }
+
                 if (next.type == TokenType.NewLine)
                 {
                     SkipNewlines();
@@ -664,7 +672,7 @@ namespace Cheez.Compiler.Parsing
                     ReportError(next.location, $"Unexpected token {next} at end of struct member");
                 }
 
-                members.Add(new PTMemberDecl(mName, mType));
+                members.Add(new PTMemberDecl(mName, mType, init));
             }
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct declaration")).location;
