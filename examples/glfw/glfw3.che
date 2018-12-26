@@ -25,13 +25,13 @@ struct GLFWvidmode {
 struct GLFWgammaramp {
     /*! An array of value describing the response of the red channel.
      */
-    red: ushort&
+    red: &ushort
     /*! An array of value describing the response of the green channel.
      */
-    green: ushort&
+    green: &ushort
     /*! An array of value describing the response of the blue channel.
      */
-    blue: ushort&
+    blue: &ushort
     /*! The number of elements in each array.
      */
     size: uint
@@ -46,7 +46,7 @@ struct GLFWimage {
     height: int
     /*! The pixel data of this image, arranged left-to-right, top-to-bottom.
      */
-    pixels: ubyte&
+    pixels: &ubyte
 }
 
 struct GLFWwindow {}
@@ -56,14 +56,14 @@ struct GLFWcursor {}
 fn glfwInit() -> bool;
 fn glfwTerminate();
 
-fn glfwCreateWindow(widht: int, height: int, title: c_string, monitor: GLFWmonitor&, share: GLFWwindow&) -> GLFWwindow&;
-fn glfwWindowShouldClose(window: GLFWwindow&) -> bool;
+fn glfwCreateWindow(widht: int, height: int, title: c_string, monitor: &GLFWmonitor, share: &GLFWwindow) -> &GLFWwindow;
+fn glfwWindowShouldClose(window: &GLFWwindow) -> bool;
 fn glfwPollEvents();
-fn glfwSwapBuffers(window: GLFWwindow&);
+fn glfwSwapBuffers(window: &GLFWwindow);
 
-fn glfwMakeContextCurrent(window: GLFWwindow&);
-fn glfwSetKeyCallback(window: GLFWwindow&, callback: fn (GLFWwindow&, int, int, int, int));
-fn glfwSetWindowSizeCallback(window: GLFWwindow&, callback: fn (GLFWwindow&, int, int));
+fn glfwMakeContextCurrent(window: &GLFWwindow);
+fn glfwSetKeyCallback(window: &GLFWwindow, callback: fn (&GLFWwindow, int, int, int, int));
+fn glfwSetWindowSizeCallback(window: &GLFWwindow, callback: fn (&GLFWwindow, int, int));
 fn glfwWindowHint(hint: int, value: int);
 
 let GLFW_RELEASE                : int = 0

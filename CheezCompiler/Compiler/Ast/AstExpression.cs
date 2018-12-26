@@ -478,6 +478,7 @@ namespace Cheez.Compiler.Ast
 
         public AstExpression SubExpression { get; set; }
         public override bool IsPolymorphic => SubExpression.IsPolymorphic;
+        public bool IsReference = false;
 
         [DebuggerStepThrough]
         public AstAddressOfExpr(ParseTree.PTExpr node, AstExpression sub)
@@ -498,7 +499,8 @@ namespace Cheez.Compiler.Ast
             return new AstAddressOfExpr(GenericParseTreeNode, SubExpression.Clone())
             {
                 Type = this.Type,
-                Scope = this.Scope
+                Scope = this.Scope,
+                IsReference = this.IsReference
             };
         }
 
@@ -736,7 +738,8 @@ namespace Cheez.Compiler.Ast
 
         public AstTypeExpr(ParseTree.PTExpr node, CheezType type) : base(node)
         {
-            this.Type = type;
+            this.Type = CheezType.Type;
+            this.Value = type;
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
@@ -749,7 +752,8 @@ namespace Cheez.Compiler.Ast
             return new AstTypeExpr(GenericParseTreeNode, Type)
             {
                 Type = this.Type,
-                Scope = this.Scope
+                Scope = this.Scope,
+                Value = this.Value
             };
         }
 
@@ -759,42 +763,42 @@ namespace Cheez.Compiler.Ast
         }
     }
 
-    public class AstPointerTypeExpr : AstExpression
-    {
-        public AstExpression Target { get; set; }
-        public override bool IsPolymorphic => Target.IsPolymorphic;
+    //public class AstPointerTypeExpr : AstExpression
+    //{
+    //    public AstExpression Target { get; set; }
+    //    public override bool IsPolymorphic => Target.IsPolymorphic;
 
-        public bool IsReference { get; set; }
+    //    public bool IsReference { get; set; }
 
-        public AstPointerTypeExpr(ParseTree.PTExpr node, AstExpression target) : base()
-        {
-            this.GenericParseTreeNode = node;
-            this.Target = target;
-            IsCompTimeValue = true;
-        }
+    //    public AstPointerTypeExpr(ParseTree.PTExpr node, AstExpression target) : base()
+    //    {
+    //        this.GenericParseTreeNode = node;
+    //        this.Target = target;
+    //        IsCompTimeValue = true;
+    //    }
 
-        [DebuggerStepThrough]
-        public override AstExpression Clone()
-        {
-            return new AstPointerTypeExpr(GenericParseTreeNode, Target.Clone())
-            {
-                Type = this.Type,
-                Scope = this.Scope,
-                IsReference = this.IsReference
-            };
-        }
+    //    [DebuggerStepThrough]
+    //    public override AstExpression Clone()
+    //    {
+    //        return new AstPointerTypeExpr(GenericParseTreeNode, Target.Clone())
+    //        {
+    //            Type = this.Type,
+    //            Scope = this.Scope,
+    //            IsReference = this.IsReference
+    //        };
+    //    }
 
-        [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
-        {
-            return visitor.VisitPointerTypeExpr(this, data);
-        }
+    //    [DebuggerStepThrough]
+    //    public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+    //    {
+    //        return visitor.VisitPointerTypeExpr(this, data);
+    //    }
 
-        public override string ToString()
-        {
-            return $"{Target}&";
-        }
-    }
+    //    public override string ToString()
+    //    {
+    //        return $"&{Target}";
+    //    }
+    //}
 
     public class AstArrayTypeExpr : AstExpression
     {

@@ -48,7 +48,7 @@ namespace Cheez.Compiler.Visitor
         ReturnType VisitCastExpression(AstCastExpr cast, DataType data = default);
         ReturnType VisitArrayAccessExpression(AstArrayAccessExpr arr, DataType data = default);
         ReturnType VisitStructValueExpression(AstStructValueExpr str, DataType data = default);
-        ReturnType VisitPointerTypeExpr(AstPointerTypeExpr astPointerTypeExpr, DataType data = default);
+        //ReturnType VisitPointerTypeExpr(AstPointerTypeExpr astPointerTypeExpr, DataType data = default);
         ReturnType VisitArrayTypeExpr(AstArrayTypeExpr astArrayTypeExpr, DataType data = default);
         ReturnType VisitFunctionTypeExpr(AstFunctionTypeExpr func, DataType data = default);
         ReturnType VisitTypeExpr(AstTypeExpr astArrayTypeExpr, DataType data = default);
@@ -102,7 +102,7 @@ namespace Cheez.Compiler.Visitor
 
         public virtual ReturnType VisitNumberExpression(AstNumberExpr num, DataType data = default) => default;
 
-        public virtual ReturnType VisitPointerTypeExpr(AstPointerTypeExpr astPointerTypeExpr, DataType data = default) => default;
+        //public virtual ReturnType VisitPointerTypeExpr(AstPointerTypeExpr astPointerTypeExpr, DataType data = default) => default;
 
         public virtual ReturnType VisitReturnStatement(AstReturnStmt ret, DataType data = default) => default;
 

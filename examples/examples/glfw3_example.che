@@ -52,7 +52,7 @@ let q = new Quad {
     col = new Color3f { 1, 0, 1 }
 }
 
-fn onKeyDown(window: GLFWwindow&, key: int, scancode: int, action: int, mods: int) {
+fn onKeyDown(window: &GLFWwindow, key: int, scancode: int, action: int, mods: int) {
     if action == GLFW_PRESS {
         match key {
             86 -> q.pos.y += 0.1
@@ -63,7 +63,7 @@ fn onKeyDown(window: GLFWwindow&, key: int, scancode: int, action: int, mods: in
     }
 }
 
-fn onResize(window: GLFWwindow&, w: int, h: int) {
+fn onResize(window: &GLFWwindow, w: int, h: int) {
     glViewport(0, 0, w, h)
 }
 

@@ -76,19 +76,19 @@ impl string {
 }
 
 impl Printable for c_string {
-    fn print(str: String&, format: char[]) {
+    fn print(str: &String, format: string) {
         str.append_cstring(<<self)
     }
 }
 
 impl Printable for string {
-    fn print(str: String&, format: char[]) {
+    fn print(str: &String, format: string) {
         str.append_string(<<self)
     }
 }
 
 struct StringBase(CharType: type) {
-    data: CharType&         = null
+    data: &CharType         = null
     length: int             = 0
     capacity: int           = 0
     allocator: Allocator    = null
@@ -139,7 +139,7 @@ impl StringBase($CharType) {
         }
     }
 
-    ref fn fromString(str: c_string) -> StringBase(CharType)& {
+    ref fn fromString(str: c_string) -> &StringBase(CharType) {
         if (ulong)data != 0 {
             // @Todo:
             //self.dispose()
@@ -164,7 +164,7 @@ impl StringBase($CharType) {
         return &self
     }
 
-    ref fn append(other: StringBase(CharType)) -> StringBase(CharType)& {
+    ref fn append(other: &StringBase(CharType)) -> &StringBase(CharType) {
         let newLength = length + other.length
 
         if newLength >= capacity {
@@ -180,7 +180,7 @@ impl StringBase($CharType) {
         return &self
     }
 
-    ref fn append_cstring(other: c_string) -> StringBase(CharType)& {
+    ref fn append_cstring(other: c_string) -> &StringBase(CharType) {
         let otherLength = strlen(other)
         let newLength = length + otherLength
                 
@@ -197,7 +197,7 @@ impl StringBase($CharType) {
         return &self
     }
 
-    ref fn append_string(other: char[]) -> StringBase(CharType)& {
+    ref fn append_string(other: string) -> &StringBase(CharType) {
         let newLength = length + other.length
                 
         if newLength >= capacity {
@@ -213,7 +213,7 @@ impl StringBase($CharType) {
         return &self
     }
 
-    ref fn appendChar(ch: CharType) -> StringBase(CharType)& {
+    ref fn appendChar(ch: CharType) -> &StringBase(CharType) {
         let newLength = length + 1
         
         if newLength >= capacity {

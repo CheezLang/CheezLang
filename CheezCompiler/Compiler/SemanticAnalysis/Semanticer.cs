@@ -978,7 +978,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (function.ImplBlock.Trait != null)
                 {
-                    var type = new AstPointerTypeExpr(null, new AstTypeExpr(null, function.ImplBlock.TargetType));
+                    var type = new AstAddressOfExpr(function.Name.GenericParseTreeNode, new AstTypeExpr(function.Name.GenericParseTreeNode, function.ImplBlock.TargetType));
 
                     var use = new AstVariableDecl(function.GenericParseTreeNode,
                         new AstIdentifierExpr(function.Name.GenericParseTreeNode, "self", false),
@@ -1482,7 +1482,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                 }
 
-                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(null, "self", false), selfType));
+                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(trait.Name.GenericParseTreeNode, "self", false), selfType));
             }
 
             foreach (var func in trait.Functions)
@@ -1577,7 +1577,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     selfType = impl.TargetTypeExpr.Clone(); // new AstTypeExpr(impl.TargetTypeExpr.GenericParseTreeNode, impl.TargetType); // impl.TargetTypeExpr.Clone();
                     if (f.RefSelf)
                     {
-                        selfType = new AstPointerTypeExpr(selfType.GenericParseTreeNode, selfType)
+                        selfType = new AstAddressOfExpr(selfType.GenericParseTreeNode, selfType)
                         {
                             IsReference = true
                         };
@@ -2583,32 +2583,32 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                     return false;
 
-                case AstPointerTypeExpr pPtr:
+                case AstAddressOfExpr pPtr:
                     if (pPtr.IsReference)
                     {
                         if (arg is PointerType pt)
                         {
                             var t = pt.TargetType;
-                            var changes = InferGenericParameterType(result, pPtr.Target, ref t);
+                            var changes = InferGenericParameterType(result, pPtr.SubExpression, ref t);
                             pt.TargetType = t;
                             return changes;
                         }
                         else if (arg is ReferenceType rt)
                         {
                             var t = rt.TargetType;
-                            var changes = InferGenericParameterType(result, pPtr.Target, ref t);
+                            var changes = InferGenericParameterType(result, pPtr.SubExpression, ref t);
                             rt.TargetType = t;
                             return changes;
                         }
                         else
                         {
-                            return InferGenericParameterType(result, pPtr.Target, ref arg);
+                            return InferGenericParameterType(result, pPtr.SubExpression, ref arg);
                         }
                     }
                     if (arg is PointerType aPtr)
                     {
                         var t = aPtr.TargetType;
-                        var changes = InferGenericParameterType(result, pPtr.Target, ref t);
+                        var changes = InferGenericParameterType(result, pPtr.SubExpression, ref t);
                         aPtr.TargetType = t;
                         return changes;
                     }
@@ -3026,12 +3026,25 @@ namespace Cheez.Compiler.SemanticAnalysis
             add.Scope = context.Scope;
 
             foreach (var v in add.SubExpression.Accept(this, context.Clone(ExpectedType: null)))
+            {
                 if (v is ReplaceAstExpr r)
                     add.SubExpression = r.NewExpression;
                 else
                     yield return v;
+            }
 
             var subType = add.SubExpression.Type;
+            if (subType == CheezType.Type)
+            {
+                add.Type = CheezType.Type;
+
+                if (add.IsReference)
+                    add.Value = ReferenceType.GetRefType(add.SubExpression.Value as CheezType);
+                else
+                    add.Value = PointerType.GetPointerType(add.SubExpression.Value as CheezType);
+                yield break;
+            }
+
             if (add.SubExpression.Type is ReferenceType t)
             {
                 subType = t.TargetType;
@@ -3239,9 +3252,13 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
         }
 
-        public override IEnumerable<object> VisitTypeExpr(AstTypeExpr astArrayTypeExpr, SemanticerData data = null)
+        public override IEnumerable<object> VisitTypeExpr(AstTypeExpr type, SemanticerData data = null)
         {
-            astArrayTypeExpr.Value = astArrayTypeExpr.Type;
+            if (type.Value == null)
+            {
+                type.Value = type.Type;
+                type.Type = CheezType.Type;
+            }
             yield break;
         }
 
@@ -3296,25 +3313,25 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
         }
 
-        public override IEnumerable<object> VisitPointerTypeExpr(AstPointerTypeExpr ptr, SemanticerData context = default)
-        {
-            ptr.Scope = context.Scope;
-            foreach (var v in ptr.Target.Accept(this, context.Clone(ExpectedType: null)))
-                yield return v;
+        //public override IEnumerable<object> VisitPointerTypeExpr(AstPointerTypeExpr ptr, SemanticerData context = default)
+        //{
+        //    ptr.Scope = context.Scope;
+        //    foreach (var v in ptr.Target.Accept(this, context.Clone(ExpectedType: null)))
+        //        yield return v;
 
-            ptr.Type = CheezType.Type;
-            if (ptr.Target.Value is CheezType t)
-            {
-                if (ptr.IsReference)
-                    ptr.Value = ReferenceType.GetRefType(t);
-                else
-                    ptr.Value = PointerType.GetPointerType(t);
-            }
-            else
-            {
-                context.ReportError(ptr.Target.GenericParseTreeNode, $"Expected type, got {ptr.Target.Type}");
-            }
-        }
+        //    ptr.Type = CheezType.Type;
+        //    if (ptr.Target.Value is CheezType t)
+        //    {
+        //        if (ptr.IsReference)
+        //            ptr.Value = ReferenceType.GetRefType(t);
+        //        else
+        //            ptr.Value = PointerType.GetPointerType(t);
+        //    }
+        //    else
+        //    {
+        //        context.ReportError(ptr.Target.GenericParseTreeNode, $"Expected type, got {ptr.Target.Type}");
+        //    }
+        //}
 
         public override IEnumerable<object> VisitArrayExpression(AstArrayExpression arr, SemanticerData context = null)
         {
@@ -3605,8 +3622,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                     types[i.Name] = expr;
                     break;
 
-                case AstPointerTypeExpr p:
-                    CollectPolymorphicTypes(p.Target, ref types);
+                case AstAddressOfExpr p:
+                    CollectPolymorphicTypes(p.SubExpression, ref types);
                     break;
 
                 case AstArrayTypeExpr p:
@@ -3716,10 +3733,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                         yield break;
                     }
 
-                case AstPointerTypeExpr p:
+                case AstAddressOfExpr p:
                     {
                         CheezType sub = null;
-                        foreach (var v in CreateType(scope, p.Target, text, error, forceAnalyzed))
+                        foreach (var v in CreateType(scope, p.SubExpression, text, error, forceAnalyzed))
                         {
                             if (v is CheezType t)
                                 sub = t;
@@ -3784,20 +3801,6 @@ namespace Cheez.Compiler.SemanticAnalysis
                                 yield return v;
                         }
                         yield return SliceType.GetSliceType(type);
-                        yield break;
-                    }
-
-                case AstAddressOfExpr add:
-                    {
-                        var type = CheezType.Error;
-                        foreach (var v in CreateType(scope, add.SubExpression, text, error, forceAnalyzed))
-                        {
-                            if (v is CheezType t)
-                                type = t;
-                            else
-                                yield return v;
-                        }
-                        yield return PointerType.GetPointerType(type);
                         yield break;
                     }
 

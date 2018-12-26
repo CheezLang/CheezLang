@@ -828,7 +828,10 @@ namespace Cheez.Compiler.CodeGeneration
 
             var bb = context.LFunction.GetFirstBasicBlock();
             var brInst = bb.GetLastInstruction();
-            LLVM.PositionBuilderBefore(builder, brInst);
+            if (brInst.Pointer != IntPtr.Zero)
+                LLVM.PositionBuilderBefore(builder, brInst);
+            else
+                LLVM.PositionBuilderAtEnd(builder, bb);
 
             var type = CheezTypeToLLVMType(exprType);
             var result = LLVM.BuildAlloca(builder, type, name);
@@ -1472,6 +1475,9 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitAddressOfExpression(AstAddressOfExpr add, LLVMCodeGeneratorData data = null)
         {
+            if (add.Type == CheezType.Type)
+                return default;
+
             LLVMValueRef sub;
             if (add.SubExpression.Type is ReferenceType)
                 sub = add.SubExpression.Accept(this, data.Clone(Deref: true));

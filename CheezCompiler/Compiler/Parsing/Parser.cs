@@ -1293,12 +1293,12 @@ namespace Cheez.Compiler.Parsing
                             break;
                         }
 
-                    case TokenType.Ampersand:
-                        {
-                            NextToken();
-                            expr = new PTPointerTypeExpr(expr.Beginning, CurrentToken.location, expr);
-                            break;
-                        }
+                    //case TokenType.Ampersand:
+                    //    {
+                    //        NextToken();
+                    //        expr = new PTPointerTypeExpr(expr.Beginning, CurrentToken.location, expr);
+                    //        break;
+                    //    }
 
                     default:
                         return expr;
@@ -1390,6 +1390,13 @@ namespace Cheez.Compiler.Parsing
                         }
 
                         var end = Consume(TokenType.ClosingBracket, ErrMsg("]", "at end of array expression")).location;
+
+                        //var next = PeekToken();
+                        //if (IsExprToken())
+                        //{
+
+                        //}
+
                         return new PTArrayExpression(token.location, end, values);
                     }
 
