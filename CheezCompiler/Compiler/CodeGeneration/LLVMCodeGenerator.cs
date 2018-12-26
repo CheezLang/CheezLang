@@ -487,7 +487,7 @@ namespace Cheez.Compiler.CodeGeneration
                     value = LLVM.BuildIntCast(builder, value, type, "");
                 else if (sourceType is BoolType)
                     value = LLVM.BuildZExtOrBitCast(builder, value, type, "");
-                else if (sourceType is PointerType || sourceType is CStringType || sourceType is ArrayType)
+                else if (sourceType is PointerType || sourceType is ArrayType)
                     value = LLVM.BuildPtrToInt(builder, value, type, "");
                 else
                     throw new NotImplementedException("any cast");
@@ -562,9 +562,6 @@ namespace Cheez.Compiler.CodeGeneration
 
                 case CharType c:
                     return LLVM.Int8Type();
-
-                case CStringType _:
-                    return LLVM.PointerType(LLVM.Int8Type(), 0);
 
                 case PointerType p:
                     if (voidPointer || p.TargetType == VoidType.Intance)
@@ -744,9 +741,6 @@ namespace Cheez.Compiler.CodeGeneration
                 case PointerType p:
                     return LLVM.ConstIntToPtr(LLVM.ConstInt(LLVM.IntType(pointerSize * 8), 0, false), CheezTypeToLLVMType(type));
 
-                case CStringType s:
-                    return LLVM.ConstIntToPtr(LLVM.ConstInt(LLVM.IntType(pointerSize * 8), 0, false), LLVM.PointerType(LLVM.Int8Type(), 0));
-
                 case IntType i:
                     return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
 
@@ -822,12 +816,12 @@ namespace Cheez.Compiler.CodeGeneration
             if (valueMap.ContainsKey(sym))
                 return valueMap[sym];
 
-            var t = CreateLocalVariable(sym.Type);
+            var t = CreateLocalVariable(sym.Type, "local." + sym.Name);
             valueMap[sym] = t;
             return t;
         }
 
-        private LLVMValueRef CreateLocalVariable(CheezType exprType)
+        private LLVMValueRef CreateLocalVariable(CheezType exprType, string name)
         {
             var builder = LLVM.CreateBuilder();
 
@@ -836,7 +830,7 @@ namespace Cheez.Compiler.CodeGeneration
             LLVM.PositionBuilderBefore(builder, brInst);
 
             var type = CheezTypeToLLVMType(exprType);
-            var result = LLVM.BuildAlloca(builder, type, "");
+            var result = LLVM.BuildAlloca(builder, type, name);
             var alignment = moduleDataLayout.AlignmentOfType(type);
             LLVM.SetAlignment(result, alignment);
 
@@ -903,8 +897,10 @@ namespace Cheez.Compiler.CodeGeneration
                 LLVMValueRef init = GetDefaultLLVMValue(mem.Type);
                 if (mem.Initializer != null)
                     init = mem.Initializer.Accept(this, new LLVMCodeGeneratorData { Builder = builder, Deref = true, BasicBlock = entry, LFunction = constructor });
+                var initType = LLVM.TypeOf(init);
 
                 var memberPtr = GetStructMemberPointer(builder, selfPtr, (uint)i, mem.Type);
+                memberPtr = LLVM.BuildPointerCast(builder, memberPtr, LLVM.PointerType(initType, 0), "");
                 var s = LLVM.BuildStore(builder, init, memberPtr);
             }
 
@@ -939,14 +935,17 @@ namespace Cheez.Compiler.CodeGeneration
             {
                 var ptr = CreateLocalVariable(variable);
 
-                var val = GetDefaultLLVMValue(variable.Type);
+                var init = GetDefaultLLVMValue(variable.Type);
 
                 if (variable.Initializer != null)
                 {
-                    val = variable.Initializer.Accept(this, data.Clone(Deref: true));
-                    CastIfAny(data.Builder, variable.Type, variable.Initializer.Type, ref val);
+                    init = variable.Initializer.Accept(this, data.Clone(Deref: true));
+                    CastIfAny(data.Builder, variable.Type, variable.Initializer.Type, ref init);
                 }
-                return LLVM.BuildStore(data.Builder, val, ptr);
+                var initType = LLVM.TypeOf(init);
+
+                ptr = LLVM.BuildPointerCast(data.Builder, ptr, LLVM.PointerType(initType, 0), "");
+                return LLVM.BuildStore(data.Builder, init, ptr);
             }
         }
 
@@ -1265,7 +1264,7 @@ namespace Cheez.Compiler.CodeGeneration
             return default;
         }
 
-        private LLVMValueRef GetStructMemberPointer(LLVMBuilderRef builder, LLVMValueRef pointer, uint member, CheezType ctype = null)
+        private LLVMValueRef GetStructMemberPointer(LLVMBuilderRef builder, LLVMValueRef pointer, uint member, CheezType ctype = null, string Name = "")
         {
             var type = pointer.TypeOf().GetElementType();
 
@@ -1278,9 +1277,9 @@ namespace Cheez.Compiler.CodeGeneration
                 }, "");
             }
 
-            var memberPtrRaw = LLVM.BuildStructGEP(builder, pointer, member, "");
+            var memberPtrRaw = LLVM.BuildStructGEP(builder, pointer, member, Name);
             if (ctype != null)
-                return LLVM.BuildPointerCast(builder, memberPtrRaw, LLVM.PointerType(CheezTypeToLLVMType(ctype), 0), "");
+                return LLVM.BuildPointerCast(builder, memberPtrRaw, LLVM.PointerType(CheezTypeToLLVMType(ctype), 0), Name + ".casted");
             else
                 return memberPtrRaw;
 
@@ -1319,7 +1318,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitStructValueExpression(AstStructValueExpr str, LLVMCodeGeneratorData data = null)
         {
-            var value = CreateLocalVariable(str.Type);
+            var value = CreateLocalVariable(str.Type, $"temp.{str.Name}");
             var llvmType = CheezTypeToLLVMType(str.Type);
 
             // call constructor
@@ -1401,6 +1400,12 @@ namespace Cheez.Compiler.CodeGeneration
                             length = LLVM.BuildLoad(data.Builder, length, "");
                         return length;
                     }
+                    else if (dot.Right == "data")
+                    {
+                        var left = dot.Left.Accept(this, data.Clone(Deref: true));
+                        var ptr = LLVM.BuildExtractValue(data.Builder, left, 0, $"slice.data({slice})");
+                        return LLVM.BuildPointerCast(data.Builder, ptr, CheezTypeToLLVMType(slice.ToPointerType()), $"slice.data({slice}).casted");
+                    }
                     else
                     {
                         throw new NotImplementedException();
@@ -1468,15 +1473,8 @@ namespace Cheez.Compiler.CodeGeneration
                     return LLVM.BuildPointerCast(data.Builder, cast.SubExpression.Accept(this, data.Clone(Deref: true)), type, "");
                 else if (cast.SubExpression.Type is IntType i)
                     return LLVM.BuildIntToPtr(data.Builder, cast.SubExpression.Accept(this, data.Clone(Deref: true)), type, "");
-                else if (cast.SubExpression.Type is CStringType s)
-                    return LLVM.BuildPointerCast(data.Builder, cast.SubExpression.Accept(this, data.Clone(Deref: true)), type, "");
                 else if (cast.SubExpression.Type is AnyType)
                     return LLVM.BuildIntToPtr(data.Builder, cast.SubExpression.Accept(this, data.Clone(Deref: true)), type, "");
-                else if (cast.SubExpression.Type is SliceType)
-                {
-                    var ptr = LLVM.BuildExtractValue(data.Builder, cast.SubExpression.Accept(this, data.Clone(Deref: true)), 0, "");
-                    return LLVM.BuildPointerCast(data.Builder, ptr, type, "");
-                }
                 else if (cast.SubExpression.Type is TraitType trait)
                 {
                     var sub = cast.SubExpression.Accept(this, data.Clone(Deref: false));
@@ -1486,18 +1484,6 @@ namespace Cheez.Compiler.CodeGeneration
                     ptr = LLVM.BuildPointerCast(data.Builder, ptr, type, "");
                     return ptr;
                 }
-            }
-            else if (cast.Type is CStringType s)
-            {
-                var sub = cast.SubExpression.Accept(this, data);
-                var type = CheezTypeToLLVMType(s.ToPointerType());
-
-                if (cast.SubExpression.Type is PointerType)
-                    return LLVM.BuildPointerCast(data.Builder, sub, type, "");
-                else if (cast.SubExpression.Type is IntType)
-                    return LLVM.BuildIntToPtr(data.Builder, sub, type, "");
-                else if (cast.SubExpression.Type is AnyType)
-                    return LLVM.BuildIntToPtr(data.Builder, sub, type, "");
             }
             // @Todo
             //else if (cast.Type is ArrayType a)
@@ -1583,7 +1569,7 @@ namespace Cheez.Compiler.CodeGeneration
 
                 if (cast.SubExpression.Type is ArrayType arr)
                 {
-                    var temp = CreateLocalVariable(cast.Type);
+                    var temp = CreateLocalVariable(cast.Type, $"temp.{cast.Type}");
 
                     //var dataPtr = LLVM.BuildStructGEP(data.Builder, temp, 0, "");
                     //var lenPtr = LLVM.BuildStructGEP(data.Builder, temp, 1, "");
@@ -1605,17 +1591,17 @@ namespace Cheez.Compiler.CodeGeneration
                 else if (cast.SubExpression.Type is PointerType ptr)
                 {
                     if (cast.SubExpression.GetFlag(ExprFlags.IsLValue))
-                        sub = LLVM.BuildLoad(data.Builder, sub, ""); // TODO: sometimes necessery?
+                        sub = LLVM.BuildLoad(data.Builder, sub, $"cast({cast.Type}, {cast.SubExpression.Type}).sub"); // TODO: sometimes necessery?
 
-                    var temp = CreateLocalVariable(cast.Type);
+                    var temp = CreateLocalVariable(cast.Type, $"cast({cast.Type}, {cast.SubExpression.Type}).temp");
                     
-                    var dataPtr = GetStructMemberPointer(data.Builder, temp, 0);
-                    var lenPtr = GetStructMemberPointer(data.Builder, temp, 1);
+                    var dataPtr = GetStructMemberPointer(data.Builder, temp, 0, Name: $"cast({cast.Type}, {cast.SubExpression.Type}).temp.ptr");
+                    var lenPtr = GetStructMemberPointer(data.Builder, temp, 1, Name: $"cast({cast.Type}, {cast.SubExpression.Type}).temp.len");
 
                     var d = LLVM.BuildStore(data.Builder, sub, dataPtr);
                     var len = LLVM.BuildStore(data.Builder, LLVM.ConstInt(LLVM.Int32Type(), 0, false), lenPtr);
 
-                    var result = LLVM.BuildLoad(data.Builder, temp, "");
+                    var result = LLVM.BuildLoad(data.Builder, temp, $"cast({cast.Type}, {cast.SubExpression.Type})");
                     return result;
                 }
                 else if (cast.SubExpression.Type == CheezType.CString)
@@ -1627,7 +1613,7 @@ namespace Cheez.Compiler.CodeGeneration
 
                     int strLen = ((string)cast.SubExpression.Value).Length;
 
-                    var temp = CreateLocalVariable(cast.Type);
+                    var temp = CreateLocalVariable(cast.Type, $"temp.{cast.Type}");
 
                     var dataPtr = GetStructMemberPointer(data.Builder, temp, 0);
                     var lenPtr = GetStructMemberPointer(data.Builder, temp, 1);
@@ -1664,12 +1650,12 @@ namespace Cheez.Compiler.CodeGeneration
 
                 if (!cast.SubExpression.GetFlag(ExprFlags.IsLValue))
                 {
-                    var t = CreateLocalVariable(cast.SubExpression.Type);
+                    var t = CreateLocalVariable(cast.SubExpression.Type, $"temp.{cast.SubExpression.Type}");
                     var _ = LLVM.BuildStore(data.Builder, sub, t);
                     sub = t;
                 }
 
-                var temp = CreateLocalVariable(cast.Type);
+                var temp = CreateLocalVariable(cast.Type, $"temp.{cast.Type}");
 
                 var type = cast.SubExpression.Type;
 
@@ -1786,7 +1772,7 @@ namespace Cheez.Compiler.CodeGeneration
                         args[i] = LLVM.BuildIntCast(data.Builder, args[i], type, "");
                     else if (arg.Type is BoolType)
                         args[i] = LLVM.BuildZExtOrBitCast(data.Builder, args[i], type, "");
-                    else if (arg.Type is PointerType || arg.Type is CStringType || arg.Type is ArrayType)
+                    else if (arg.Type is PointerType || arg.Type is ArrayType)
                         args[i] = LLVM.BuildPtrToInt(data.Builder, args[i], type, "");
                     else
                         throw new NotImplementedException("any cast");
@@ -1810,8 +1796,26 @@ namespace Cheez.Compiler.CodeGeneration
             else
             {
                 var lstr = LLVM.BuildGlobalString(data.Builder, str.StringValue, "");
-                var val = LLVM.BuildPointerCast(data.Builder, lstr, CheezTypeToLLVMType(CStringType.Instance), "");
-                return val;
+                var val = LLVM.BuildPointerCast(data.Builder, lstr, LLVM.PointerType(LLVM.Int8Type(), 0), "");
+
+                if (str.Type == CheezType.String)
+                {
+                    var temp = CreateLocalVariable(CheezType.String, "str_lit.temp");
+
+                    var temp_ptr = GetStructMemberPointer(data.Builder, temp, 0, (str.Type as SliceType).ToPointerType(), "str_lit.temp.data");
+                    var temp_len = GetStructMemberPointer(data.Builder, temp, 1, IntType.GetIntType(4, true), "str_lit.temp.len");
+
+                    var v = LLVM.BuildStore(data.Builder, val, temp_ptr);
+                    v = LLVM.BuildStore(data.Builder, LLVM.ConstInt(LLVM.Int32Type(), (ulong)str.StringValue.Length, true), temp_len);
+
+                    temp = LLVM.BuildLoad(data.Builder, temp, "str_lit");
+                    return temp;
+                }
+                else if (str.Type == CheezType.CString)
+                {
+                    return val;
+                }
+                throw new NotImplementedException();
             }
         }
 
@@ -1838,7 +1842,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitArrayExpression(AstArrayExpression arr, LLVMCodeGeneratorData data = null)
         {
-            var ptr = CreateLocalVariable(arr.Type);
+            var ptr = CreateLocalVariable(arr.Type, $"temp.{arr.Type}");
 
             var targetType = (arr.Type as ArrayType).TargetType; // @Todo
             var llvmTargetType = CheezTypeToLLVMType(targetType);
@@ -1982,7 +1986,7 @@ namespace Cheez.Compiler.CodeGeneration
                         data.MoveBuilderTo(bbAnd);
 
                         //
-                        var tempVar = CreateLocalVariable(bin.Type);
+                        var tempVar = CreateLocalVariable(bin.Type, $"temp.{bin.Type}");
 
                         //
                         var left = bin.Left.Accept(this, data.Clone(Deref: true));
@@ -2011,7 +2015,7 @@ namespace Cheez.Compiler.CodeGeneration
                         data.MoveBuilderTo(bbOr);
 
                         //
-                        var tempVar = CreateLocalVariable(bin.Type);
+                        var tempVar = CreateLocalVariable(bin.Type, $"temp.{bin.Type}");
 
                         //
                         var left = bin.Left.Accept(this, data.Clone(Deref: true));

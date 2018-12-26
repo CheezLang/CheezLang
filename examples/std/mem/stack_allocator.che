@@ -33,14 +33,14 @@ struct StackAllocator {
 
 impl Printable for StackAllocator {
     fn print(s: String&, format: char[]) {
-        s.appendString("( [")
+        s.append_string("( [")
         while let i: uint = 0; i < allocations.length; i += 1 {
             if i > 0 {
-                s.appendString(", ")
+                s.append_string(", ")
             }
             sprint_f(s, "{}", [allocations.get(i)])
         }
-        s.appendString("]")
+        s.append_string("]")
 
         let free: ulong = capacity
         if let lastAllocation = self.getLastAllocation(); lastAllocation != null {
@@ -100,14 +100,14 @@ impl StackAllocator {
     ref fn printDiagnostics() {
         let s = newString()
         defer s.dispose()
-        s.appendString("( [")
+        s.append_string("( [")
         while let i: uint = 0; i < allocations.length; i += 1 {
             if i > 0 {
-                s.appendString(", ")
+                s.append_string(", ")
             }
             sprint_f(&s, "{}", [allocations.get(i)])
         }
-        s.appendString("]")
+        s.append_string("]")
 
         let free: ulong = capacity
         

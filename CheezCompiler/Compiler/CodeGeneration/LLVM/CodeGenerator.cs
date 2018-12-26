@@ -293,8 +293,8 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                 case FloatType _:
                 case PointerType _:
                 case BoolType _:
-                case CStringType _:
                 case VoidType _:
+                case SliceType _:
                     return true;
 
                 default:
@@ -339,9 +339,6 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
                 case CharType c:
                     return LLVM.Int8Type();
-
-                case CStringType _:
-                    return LLVM.PointerType(LLVM.Int8Type(), 0);
 
                 case PointerType p:
                     if (p.TargetType == VoidType.Intance)
@@ -711,7 +708,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                     value = builder.CreateIntCast(value, type, "");
                 else if (sourceType is BoolType)
                     value = builder.CreateZExtOrBitCast(value, type, "");
-                else if (sourceType is PointerType || sourceType is CStringType || sourceType is ArrayType)
+                else if (sourceType is PointerType || sourceType is ArrayType)
                     value = builder.CreatePtrToInt(value, type, "");
                 else
                     throw new NotImplementedException("any cast");

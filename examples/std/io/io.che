@@ -14,9 +14,8 @@ fn printString(s: $T) {
         let bytesWritten: int
         WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
     } else if @typeseq(string, T) {
-        let c_s = (c_string)(char&)s
         let bytesWritten: int
-        WriteFile(__std_out_handle, c_s, s.length, &bytesWritten, 0)
+        WriteFile(__std_out_handle, s.data, s.length, &bytesWritten, 0)
     } else {
         @error(@concat("Can't call printString($T) with type ", @typename(T)))
     }
@@ -24,26 +23,26 @@ fn printString(s: $T) {
 
 fn printStringl(s: String&) {
     let bytesWritten: int
-    WriteFile(__std_out_handle, (c_string)s.data, s.length, &bytesWritten, 0)
+    WriteFile(__std_out_handle, s.data, s.length, &bytesWritten, 0)
 }
 
 fn printChar(c: char) { 
     let bytesWritten: int
-    WriteFile(__std_out_handle, (c_string)&c, 1, &bytesWritten, 0)
+    WriteFile(__std_out_handle, &c, 1, &bytesWritten, 0)
 }
 
 fn printFloat(val: float) {
     let buff: char[32]
     let buff: char[] = buff
-    c_sprintf((char&)buff, "%f", (double)val)
-    printString((c_string)(char&)buff)
+    c_sprintf(buff.data, "%f", (double)val)
+    printString(buff.data)
 }
 
 fn printDouble(val: double) {
     let buff: char[32]
     let buff: char[] = buff
-    c_sprintf((char&)buff, "%f", val)
-    printString((c_string)(char&)buff)
+    c_sprintf(buff.data, "%f", val)
+    printString(buff.data)
 }
 
 fn printInt(val: $T) {
@@ -220,7 +219,7 @@ fn parseInt(str: $String) -> int {
     return val
 }
 
-fn print_f(format: c_string, args: Printable[]) {
+fn print_f(format: string, args: Printable[]) {
     let s = newString()
     defer s.dispose()
 
@@ -228,12 +227,12 @@ fn print_f(format: c_string, args: Printable[]) {
     print(s)
 }
 
-fn sprint_f(buffer: String&, format: c_string, args: Printable[]) {
+fn sprint_f(buffer: String&, format: string, args: Printable[]) {
     let formatSpecifier = newString()
     defer formatSpecifier.dispose()
     formatSpecifier.reserve(5)
 
-    let len = (ulong)format.getLength()
+    let len = (ulong)format.length
     let state = 0
     let argIndex = 0
 
@@ -333,8 +332,8 @@ impl Printable for f32 {
     fn print(str: String&, format: char[]) {
         let buff: char[32]
         let buff: char[] = buff
-        buff.length = c_sprintf((char&)buff, "%f", (double)<<self)
-        str.appendChars(buff)
+        buff.length = c_sprintf(buff.data, "%f", (double)<<self)
+        str.append_string(buff)
     }
 }
 
@@ -342,17 +341,17 @@ impl Printable for f64 {
     fn print(str: String&, format: char[]) {
         let buff: char[32]
         let buff: char[] = buff
-        buff.length = c_sprintf((char&)buff, "%f", <<self)
-        str.appendChars(buff)
+        buff.length = c_sprintf(buff.data, "%f", <<self)
+        str.append_string(buff)
     }
 }
 
 impl Printable for bool {
     fn print(str: String&, format: char[]) {
         if <<self {
-            str.appendString("true")
+            str.append_string("true")
         } else {
-            str.appendString("false")
+            str.append_string("false")
         }
     }
 }

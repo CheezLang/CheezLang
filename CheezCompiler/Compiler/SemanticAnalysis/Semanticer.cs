@@ -512,7 +512,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (!ca.Body.GetFlag(StmtFlags.Returns))
                     match.ClearFlag(StmtFlags.Returns);
 
-                if (CanAssign(ca.Value.Type, type, out var t, context, ca.Value.GenericParseTreeNode))
+                if (CanAssign(ca.Value.Type, type, out var t, context, ca.Value.GenericParseTreeNode, false))
                 {
                     ca.Value.Type = t;
                     ca.Value = CreateCastIfImplicit(type, ca.Value);
@@ -774,7 +774,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             data.ReportError(mem.ParseTreeNode, $"Can't initialize a member of type {mem.Type} with a value of type {mem.Initializer.Type}");
                         }
 
-                        // TODO: verify that initializer is a constant value?
+                        // TODO: verify that initializer is a constant value
                     }
                 }
             }
@@ -980,10 +980,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                 {
                     var type = new AstPointerTypeExpr(null, new AstTypeExpr(null, function.ImplBlock.TargetType));
 
-                    var use = new AstVariableDecl(null,
-                        new AstIdentifierExpr(null, "self", false),
+                    var use = new AstVariableDecl(function.GenericParseTreeNode,
+                        new AstIdentifierExpr(function.Name.GenericParseTreeNode, "self", false),
                         type,
-                        new AstCastExpr(null, type, new AstIdentifierExpr(null, "__self", false)));
+                        new AstCastExpr(function.Name.GenericParseTreeNode, type, new AstIdentifierExpr(function.Name.GenericParseTreeNode, "__self", false)));
                     use.Type = PointerType.GetPointerType(function.ImplBlock.TargetType);
                     function.Body.Statements.Insert(0, use);
                     self = use;
@@ -1201,7 +1201,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else if (context.Function.ReturnType != CheezType.Void && ret.ReturnValue != null) // !void, return some
             {
-                if (CanAssign(ret.ReturnValue.Type, context.Function.ReturnType, out var t, context, ret.ReturnValue.GenericParseTreeNode))
+                if (CanAssign(ret.ReturnValue.Type, context.Function.ReturnType, out var t, context, ret.ReturnValue.GenericParseTreeNode, false))
                 {
                     ret.ReturnValue.Type = t;
                     ret.ReturnValue = CreateCastIfImplicit(context.Function.ReturnType, ret.ReturnValue);
@@ -1272,7 +1272,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 else
                 {
-                    if (!CanAssign(variable.Initializer.Type, variable.Type, out var t, context, variable.Initializer.GenericParseTreeNode))
+                    if (!CanAssign(variable.Initializer.Type, variable.Type, out var t, context, variable.Initializer.GenericParseTreeNode, false))
                         context.ReportError(variable.Initializer.GenericParseTreeNode, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'");
 
                     variable.Initializer.Type = t;
@@ -1334,7 +1334,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (ass.Operator == null)
             {
-                if (!CanAssign(ass.Value.Type, ass.Target.Type, out var type, context, ass.Value.GenericParseTreeNode))
+                if (!CanAssign(ass.Value.Type, ass.Target.Type, out var type, context, ass.Value.GenericParseTreeNode, false))
                     context.ReportError(ass.GenericParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
 
                 ass.Value.Type = type;
@@ -1375,7 +1375,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     var resultType = op.ResultType;
 
 
-                    if (!CanAssign(resultType, ass.Target.Type, out var type, context, ass.GenericParseTreeNode))
+                    if (!CanAssign(resultType, ass.Target.Type, out var type, context, ass.GenericParseTreeNode, false))
                         context.ReportError(ass.GenericParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
                 }
             }
@@ -1954,7 +1954,9 @@ namespace Cheez.Compiler.SemanticAnalysis
                         var arg = call.Arguments[0];
                         var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is CStringType), context))
+                        bool isString = type == CheezType.StringLiteral || type == CheezType.String || type == CheezType.CString;
+
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, isString), context))
                             yield return v;
                         break;
                     }
@@ -2094,7 +2096,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         }
 
                         var arg = call.Arguments[0];
-                        if (arg.Type != CheezType.CString || !arg.IsCompTimeValue)
+                        if (arg.Type != CheezType.StringLiteral || !arg.IsCompTimeValue)
                         {
                             context.ReportError(arg.GenericParseTreeNode, $"Argument of '@{name}' must be a string literal");
                         }
@@ -2178,7 +2180,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             mi.Name = mem.Name.Name;
                             mi.Index = i;
 
-                            if (CanAssign(mi.Value.Type, mem.Type, out var miType, context, mi.Value.GenericParseTreeNode))
+                            if (CanAssign(mi.Value.Type, mem.Type, out var miType, context, mi.Value.GenericParseTreeNode, false))
                             {
                                 mi.Value.Type = miType;
                                 mi.Value = CreateCastIfImplicit(mem.Type, mi.Value);
@@ -2212,7 +2214,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                                     yield return v;
                             }
 
-                            if (CanAssign(mi.Value.Type, mem.Type, out var miType, context, mi.Value.GenericParseTreeNode))
+                            if (CanAssign(mi.Value.Type, mem.Type, out var miType, context, mi.Value.GenericParseTreeNode, false))
                             {
                                 mi.Value.Type = miType;
                                 mi.Value = CreateCastIfImplicit(mem.Type, mi.Value);
@@ -2260,10 +2262,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             else if (arr.SubExpression.Type is SliceType slice)
             {
                 arr.Type = slice.TargetType;
-            }
-            else if (arr.SubExpression.Type is CStringType)
-            {
-                arr.Type = CheezType.Char;
             }
             else if (arr.SubExpression.Type == CheezType.Type)
             {
@@ -2831,7 +2829,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 for (int i = 0; i < call.Arguments.Count && i < f.ParameterTypes.Length; i++)
                 {
                     var expectedType = f.ParameterTypes[i];
-                    if (!CanAssign(call.Arguments[i].Type, expectedType, out var t, context, call.Arguments[i].GenericParseTreeNode))
+                    if (!CanAssign(call.Arguments[i].Type, expectedType, out var t, context, call.Arguments[i].GenericParseTreeNode, false))
                     {
                         context.ReportError(context.Text, call.Arguments[i].GenericParseTreeNode, $"Argument type does not match parameter type. Expected {expectedType}, got {call.Arguments[i].Type}");
                     }
@@ -2976,7 +2974,18 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else
             {
-                str.Type = CheezType.CString;
+                if (context.ExpectedType == CheezType.CString)
+                {
+                    str.Type = CheezType.CString;
+                }
+                else if(context.ExpectedType == CheezType.String)
+                {
+                    str.Type = CheezType.String;
+                }
+                else
+                {
+                    str.Type = CheezType.String;
+                }
             }
             yield break;
         }
@@ -3025,10 +3034,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 deref.Type = p.TargetType;
             }
-            else if (deref.SubExpression.Type is CStringType s)
-            {
-                deref.Type = CheezType.Char;
-            }
             else
             {
                 context.ReportError(deref.SubExpression.GenericParseTreeNode, $"Sub expression of & is not a pointer");
@@ -3057,8 +3062,11 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
 
 
-            if (!CanAssign(cast.SubExpression.Type, cast.Type, out var type, context, cast.SubExpression.GenericParseTreeNode, false))
-            { }
+            if (!CanAssign(cast.SubExpression.Type, cast.Type, out var type, context, cast.SubExpression.GenericParseTreeNode, true))
+            {
+                // TODO: maybe comment out?
+                context.ReportError(cast.GenericParseTreeNode, $"Can't cast a value of to '{cast.SubExpression.Type}' to '{cast.Type}'");
+            }
             //{
             //    yield return new LambdaError(eh => eh.ReportError(data.Text, cast.ParseTreeNode, $"Can't cast a value of to '{cast.SubExpression.Type}' to '{cast.Type}'"));
             //}
@@ -3077,8 +3085,8 @@ namespace Cheez.Compiler.SemanticAnalysis
             dot.Scope = context.Scope;
 
             foreach (var v in dot.Left.Accept(this, context.Clone(ExpectedType: null, ErrorHandler: context.ErrorHandler)))
-                if (v is ReplaceAstExpr r)
-                    dot.Left = r.NewExpression;
+                if (v is ReplaceAstExpr rr)
+                    dot.Left = rr.NewExpression;
                 else
                     yield return v;
 
@@ -3090,117 +3098,121 @@ namespace Cheez.Compiler.SemanticAnalysis
             else if (dot.Left.Type == FloatType.LiteralType)
                 dot.Left.Type = FloatType.DefaultType;
 
-            if (dot.IsDoubleColon)
-            {
-                yield return new LambdaCondition(() => dot.Scope.GetImplFunction(dot.Left.Type, dot.Right) != null,
-                    eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function  '{dot.Right}' exists for type '{dot.Left.Type}'"));
-                var func = dot.Scope.GetImplFunction(dot.Left.Type, dot.Right);
-                dot.Type = func.Type;
-                dot.Value = func;
-            }
-            else
+            if (!dot.IsDoubleColon)
             {
                 while (dot.Left.Type is PointerType p)
                 {
                     dot.Left = new AstDereferenceExpr(dot.Left.GenericParseTreeNode, dot.Left);
                     dot.Left.Type = p.TargetType;
                 }
+            }
+            else
+            {
 
-                var leftType = dot.Left.Type;
-                if (leftType is ReferenceType r)
-                    leftType = r.TargetType;
+            }
 
-                if (leftType is StructType s)
-                {
-                    var member = s.Declaration.Members.FirstOrDefault(m => m.Name.Name == dot.Right);
-                    if (member == null)
-                    {
-                        yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
-                            eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function '{dot.Right}' exists for type '{leftType}'"));
-                        var func = dot.Scope.GetImplFunction(leftType, dot.Right);
-                        dot.Type = func.Type;
-                        dot.IsDoubleColon = true;
-                        dot.Value = func;
-                    }
-                    else
-                    {
-                        dot.Type = member.Type;
-                    }
-                }
-                else if (leftType is TraitType trait)
-                {
-                    var func = trait.Declaration.Functions.FirstOrDefault(f => f.Name.Name == dot.Right);
-                    if (func == null)
-                    {
-                        context.ReportError(context.Text, dot.GenericParseTreeNode, $"No function '{dot.Right}' exists for type '{leftType}'");
-                    }
-                    else
-                    {
-                        dot.Type = func.Type;
-                        dot.Value = func;
-                        dot.IsDoubleColon = true;
-                    }
-                }
-                else if (leftType == CheezType.Type && dot.Left.Value is EnumType e)
-                {
-                    if (e.Members.TryGetValue(dot.Right, out int m))
-                    {
-                        dot.Type = dot.Left.Value as CheezType;
-                        dot.Value = m;
-                        dot.IsCompTimeValue = true;
-                    }
-                    else
-                    {
-                        var implFunc = dot.Scope.GetImplFunction(leftType, dot.Right);
-                        if (implFunc == null)
-                        {
-                            yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
-                                eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function '{dot.Right}' exists for type '{leftType}'"));
-                            implFunc = dot.Scope.GetImplFunction(leftType, dot.Right);
-                        }
-                        dot.Type = implFunc.Type;
-                        dot.IsDoubleColon = true;
-                        dot.Value = implFunc;
-                    }
-                }
-                else if (leftType is SliceType slice)
-                {
-                    if (dot.Right == "length")
-                    {
-                        dot.Type = IntType.GetIntType(4, true);
-                    }
-                    else
-                    {
-                        dot.Type = CheezType.Error;
-                        context.ReportError(dot.GenericParseTreeNode, $"'{dot.Right}' is not a member of type {dot.Left.Type}");
-                    }
-                }
-                else if (leftType is ArrayType arr)
-                {
-                    if (dot.Right == "length")
-                    {
-                        dot.Type = IntType.GetIntType(4, true);
-                    }
-                    else
-                    {
-                        dot.Type = CheezType.Error;
-                        context.ReportError(dot.GenericParseTreeNode, $"'{dot.Right}' is not a member of type {dot.Left.Type}");
-                    }
-                }
-                else
+            var leftType = dot.Left.Type;
+            if (leftType is ReferenceType r)
+                leftType = r.TargetType;
+
+            if (leftType is StructType s)
+            {
+                var member = s.Declaration.Members.FirstOrDefault(m => m.Name.Name == dot.Right);
+                if (member == null)
                 {
                     yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
-                        eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function  '{dot.Right}' exists for type '{leftType}'"));
+                        eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function '{dot.Right}' exists for type '{leftType}'"));
                     var func = dot.Scope.GetImplFunction(leftType, dot.Right);
                     dot.Type = func.Type;
                     dot.IsDoubleColon = true;
                     dot.Value = func;
                 }
+                else
+                {
+                    dot.Type = member.Type;
+                }
 
                 dot.SetFlag(ExprFlags.IsLValue);
+                yield break;
+            }
+            if (leftType is TraitType trait)
+            {
+                var func = trait.Declaration.Functions.FirstOrDefault(f => f.Name.Name == dot.Right);
+                if (func == null)
+                {
+                    context.ReportError(context.Text, dot.GenericParseTreeNode, $"No function '{dot.Right}' exists for type '{leftType}'");
+                    yield break;
+                }
+                else
+                {
+                    dot.Type = func.Type;
+                    dot.Value = func;
+                    dot.IsDoubleColon = true;
+                    yield break;
+                }
+            }
+            if (leftType == CheezType.Type && dot.Left.Value is EnumType e)
+            {
+                if (e.Members.TryGetValue(dot.Right, out int m))
+                {
+                    dot.Type = dot.Left.Value as CheezType;
+                    dot.Value = m;
+                    dot.IsCompTimeValue = true;
+                    yield break;
+                }
+                else
+                {
+                    var implFunc = dot.Scope.GetImplFunction(leftType, dot.Right);
+                    if (implFunc == null)
+                    {
+                        yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
+                            eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function '{dot.Right}' exists for type '{leftType}'"));
+                        implFunc = dot.Scope.GetImplFunction(leftType, dot.Right);
+                    }
+                    dot.Type = implFunc.Type;
+                    dot.IsDoubleColon = true;
+                    dot.Value = implFunc;
+                    yield break;
+                }
+            }
+            if (leftType is SliceType slice)
+            {
+                if (dot.Right == "length")
+                {
+                    dot.Type = IntType.GetIntType(4, true);
+                    dot.SetFlag(ExprFlags.IsLValue);
+                    yield break;
+                }
+                if (dot.Right == "data")
+                {
+                    dot.Type = slice.ToPointerType();
+                    dot.SetFlag(ExprFlags.IsLValue);
+                    yield break;
+                }
+            }
+            if (leftType is ArrayType arr)
+            {
+                if (dot.Right == "length")
+                {
+                    dot.Type = IntType.GetIntType(4, true);
+                    yield break;
+                }
+                else
+                {
+                    dot.Type = CheezType.Error;
+                    context.ReportError(dot.GenericParseTreeNode, $"'{dot.Right}' is not a member of type {dot.Left.Type}");
+                    yield break;
+                }
             }
 
-            yield break;
+            {
+                yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
+                    eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function  '{dot.Right}' exists for type '{leftType}'"));
+                var func = dot.Scope.GetImplFunction(leftType, dot.Right);
+                dot.Type = func.Type;
+                dot.Value = func;
+                yield break;
+            }
         }
 
         public override IEnumerable<object> VisitTypeExpr(AstTypeExpr astArrayTypeExpr, SemanticerData data = null)
@@ -3316,7 +3328,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 {
                     type = value.Type;
                 }
-                else if (!CanAssign(value.Type, type, out var t, context, value.GenericParseTreeNode))
+                else if (!CanAssign(value.Type, type, out var t, context, value.GenericParseTreeNode, true))
                 {
                     context.ReportError(value.GenericParseTreeNode, $"Can't implicitly convert a value of type '{value.Type}' to type '{type}'");
                 }
@@ -3355,9 +3367,9 @@ namespace Cheez.Compiler.SemanticAnalysis
         /// <param name="outSource">The type <paramref name="sourceType"/> should be assigned to</param>
         /// <param name="context"></param>
         /// <param name="location"></param>
-        /// <param name="implict">Allow implicit conversion to trait object</param>
+        /// <param name="doImplicit">Allow implicit conversion to trait object</param>
         /// <returns>Returns true if possible, false otherwise</returns>
-        private bool CanAssign(CheezType sourceType, CheezType targetType, out CheezType outSource, SemanticerData context, ILocation location, bool implict = true)
+        private bool CanAssign(CheezType sourceType, CheezType targetType, out CheezType outSource, SemanticerData context, ILocation location, bool doImplicit)
         {
             outSource = sourceType;
 
@@ -3370,7 +3382,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (sourceType == targetType)
                 return true;
 
-            if (sourceType == CheezType.CString && targetType == CheezType.String)
+            if (sourceType == CheezType.StringLiteral && (targetType == PointerType.GetPointerType(CheezType.Char) || targetType == SliceType.GetSliceType(CheezType.Char)))
             {
                 return true;
             }
@@ -3410,7 +3422,11 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else if (targetType is PointerType tp && sourceType is PointerType sp)
             {
-                if (tp.TargetType == CheezType.Any || sp.TargetType == CheezType.Any)
+                if (doImplicit)
+                {
+                    return true;
+                }
+                else if (tp.TargetType == CheezType.Any || sp.TargetType == CheezType.Any)
                 {
                     return true;
                 }
@@ -3427,7 +3443,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 postCheckConditions.Add(new PostCheckCondition(() =>
                 {
-                    if (implict && sourceType is PointerType)
+                    if (!doImplicit && sourceType is PointerType)
                     {
                         if (workspace.TypeTraitMap.TryGetValue(src, out var traits) && traits.Contains(trait))
                             context.ReportError(location, $"Can't implicitly convert a value of type {sourceType} to {trait}. An explicit conversion exists");
@@ -3442,6 +3458,52 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                 }));
                 return true;
+            }
+            else if  (targetType is PointerType ptr && sourceType is TraitType t1)
+            {
+                postCheckConditions.Add(new PostCheckCondition(() =>
+                {
+                    CheezType target = ptr.TargetType;
+
+                    if (!doImplicit)
+                    {
+                        if (workspace.TypeTraitMap.TryGetValue(target, out var traits) && traits.Contains(t1))
+                            context.ReportError(location, $"Can't convert a value of type {t1} to {ptr}. An explicit conversion exists");
+                        else
+                            context.ReportError(location, $"Can't convert a value of type {t1} to {ptr} because is doesn't implement the trait");
+                    }
+                    else
+                    {
+                        if (workspace.TypeTraitMap.TryGetValue(target, out var traits) && traits.Contains(t1))
+                            return;
+                        context.ReportError(location, $"Can't convert a value of type {t1} to {ptr} because is doesn't implement the trait");
+                    }
+                }));
+                return true;
+            }
+            else if (targetType is IntType t && sourceType is IntType s && t.Signed == s.Signed && sourceType.Size <= targetType.Size)
+            {
+                return true;
+            }
+            else if (targetType == FloatType.GetFloatType(8) && (sourceType is IntType || sourceType is FloatType))
+            {
+                return true;
+            }
+            else if (targetType == FloatType.GetFloatType(4) && sourceType is IntType i1 && i1.Size <= 2)
+            {
+                return true;
+            }
+            else if (targetType is PointerType && sourceType is IntType)
+            {
+                return true;
+            }
+            else if (doImplicit)
+            {
+                if (targetType == CheezType.Char && sourceType is IntType) return true;
+                if (targetType is IntType && sourceType is IntType) return true;
+                if (targetType is IntType && sourceType is PointerType) return true;
+                if (targetType is IntType && sourceType is CharType) return true;
+                return false;
             }
             else if (sourceType != targetType)
             {
@@ -3553,12 +3615,6 @@ namespace Cheez.Compiler.SemanticAnalysis
                     return cast;
                 }
                 else if (source.Type is PointerType p && s.TargetType == p.TargetType)
-                {
-                    var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
-                    cast.Type = targetType;
-                    return cast;
-                }
-                else if (source.Type == CheezType.CString)
                 {
                     var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
                     cast.Type = targetType;

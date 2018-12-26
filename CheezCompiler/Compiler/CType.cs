@@ -9,8 +9,9 @@ namespace Cheez.Compiler
     public abstract class CheezType
     {
         public static CheezType Void => VoidType.Intance;
-        public static CheezType CString => CStringType.Instance;
+        public static CheezType CString => PointerType.GetPointerType(CheezType.Char);
         public static CheezType String => SliceType.GetSliceType(CheezType.Char);
+        public static CheezType StringLiteral => StringLiteralType.Instance;
         public static CheezType Char => CharType.Instance;
         public static CheezType Bool => BoolType.Instance;
         public static CheezType Error => ErrorType.Instance;
@@ -136,20 +137,20 @@ namespace Cheez.Compiler
         public static FloatType LiteralType = new FloatType { Size = 0 };
         public static FloatType DefaultType => GetFloatType(4);
 
-        public static FloatType GetFloatType(int size)
+        public static FloatType GetFloatType(int bytes)
         {
-            if (sTypes.ContainsKey(size))
+            if (sTypes.ContainsKey(bytes))
             {
-                return sTypes[size];
+                return sTypes[bytes];
             }
 
             var type = new FloatType
             {
-                Size = size,
-                Alignment = size
+                Size = bytes,
+                Alignment = bytes
             };
 
-            sTypes[size] = type;
+            sTypes[bytes] = type;
             return type;
         }
 
@@ -314,23 +315,30 @@ namespace Cheez.Compiler
 
         public override bool IsPolyType => TargetType.IsPolyType;
     }
-
-    public class CStringType : CheezType
+    
+    public class StringLiteralType : CheezType
     {
-        public static CStringType Instance = new CStringType { Size = PointerType.PointerSize, Alignment = PointerType.PointerAlignment };
-
-        public override string ToString()
-        {
-            return $"c_string";
-        }
-
-        public PointerType ToPointerType()
-        {
-            return PointerType.GetPointerType(IntType.GetIntType(1, true));
-        }
-
+        public static StringLiteralType Instance = new StringLiteralType();
         public override bool IsPolyType => false;
+        public override string ToString() => "string_literal";
     }
+
+    //public class CStringType : CheezType
+    //{
+    //    public static CStringType Instance = new CStringType { Size = PointerType.PointerSize, Alignment = PointerType.PointerAlignment };
+
+    //    public override string ToString()
+    //    {
+    //        return $"c_string";
+    //    }
+
+    //    public PointerType ToPointerType()
+    //    {
+    //        return PointerType.GetPointerType(IntType.GetIntType(1, true));
+    //    }
+
+    //    public override bool IsPolyType => false;
+    //}
 
     public class CharType : CheezType
     {
