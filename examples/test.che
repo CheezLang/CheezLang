@@ -1,4 +1,7 @@
 #load("std:io/io.che")
+// #load("examples/trait_function_call_performance")
+// #load("examples/glfw3_example")
+// #load("examples/signed_distance_field_renderer")
 
 struct Vec3 {
     x: float
@@ -33,4 +36,8 @@ fn Main() {
 + {}
   ------------------------------
 = {}", [a, b, c])
+
+    // trait_function_call_performance()
+    // glfw3_example()
+    // signed_distance_field_renderer()
 }
