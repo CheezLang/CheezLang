@@ -8,7 +8,7 @@ fn c_sprintf(buff: char&, f: c_string, a: double) -> int #varargs #linkname("spr
 
 let NEW_LINE: char = '`n'
 
-fn printString(s: $T) {
+fn print_string(s: $T) {
     if @typeseq(c_string, T) {
         let len = strlen(s)
         let bytesWritten: int
@@ -21,31 +21,30 @@ fn printString(s: $T) {
     }
 }
 
-fn printStringl(s: String&) {
+fn print_stringl(s: String&) {
     let bytesWritten: int
     WriteFile(__std_out_handle, s.data, s.length, &bytesWritten, 0)
 }
 
-fn printChar(c: char) { 
+fn print_char(c: char) { 
     let bytesWritten: int
     WriteFile(__std_out_handle, &c, 1, &bytesWritten, 0)
 }
 
-fn printFloat(val: float) {
+fn print_float(val: $T) {
     let buff: char[32]
     let buff: char[] = buff
-    c_sprintf(buff.data, "%f", (double)val)
-    printString(buff.data)
+    if @typeseq(T, float) {
+        c_sprintf(buff.data, "%f", (double)val)
+    } else if @typeseq(T, double) {
+        c_sprintf(buff.data, "%f", val)
+    } else {
+        @error(@concat("print_float can't be called with value of type ", @typename(T)))
+    }
+    print_string(buff.data)
 }
 
-fn printDouble(val: double) {
-    let buff: char[32]
-    let buff: char[] = buff
-    c_sprintf(buff.data, "%f", val)
-    printString(buff.data)
-}
-
-fn printInt(val: $T) {
+fn print_int(val: $T) {
     let v = val
     let len = 0
 
@@ -66,7 +65,7 @@ fn printInt(val: $T) {
     }
 
 
-    let buffer: String = newString()
+    let buffer: String = new_string()
     defer buffer.dispose()
     buffer.resize(len)
 
@@ -99,7 +98,7 @@ fn printInt(val: $T) {
         }
     }
 
-    printStringl(&buffer)
+    print_stringl(&buffer)
 }
 
 fn b_print_i(buffer: String&, val: $T) {
@@ -159,36 +158,38 @@ fn b_print_i(buffer: String&, val: $T) {
 
 fn println(v: $T) {
     print(v)
-    printChar(NEW_LINE)
+    print_char(NEW_LINE)
 }
 
 fn print(v: $T) {
     if @isbool(T) {
         if v {
-            printString("true")
+            print_string("true")
         } else {
-            printString("false")
+            print_string("false")
         }
     } else if (@typeseq(string, T)) {
-        printString(v)
+        print_string(v)
     } else if @isint(T) {
-        printInt(v)
+        print_int(v)
     } else if @typeseq(T, f64) {
-        printDouble(v)
+        print_float(v)
+    } else if @typeseq(T, f32) {
+        print_float(v)
     } else if @isstring(T) {
-        printString(v)
+        print_string(v)
     } else if @typeseq(String, T) {
-        printStringl(&v)
+        print_stringl(&v)
     } else if @typeseq(String&, T) {
-        printStringl(v)
+        print_stringl(v)
     } else if @isenum(T) {
-        printInt((int)v)
+        print_int((int)v)
     } else if @typeseq(T, char) {
-        printChar(v)
+        print_char(v)
     } else if @typeseq(T, $X[]) {
-        printSlice(v)
+        print_slice(v)
     } else {
-        @error(@typename(T))
+        @error(@concat("print() can't be called with type ", @typename(T)))
     }
 }
 
@@ -220,7 +221,7 @@ fn parseInt(str: $String) -> int {
 }
 
 fn print_f(format: string, args: Printable[]) {
-    let s = newString()
+    let s = new_string()
     defer s.dispose()
 
     sprint_f(&s, format, args)
@@ -228,7 +229,7 @@ fn print_f(format: string, args: Printable[]) {
 }
 
 fn sprint_f(buffer: String&, format: string, args: Printable[]) {
-    let formatSpecifier = newString()
+    let formatSpecifier = new_string()
     defer formatSpecifier.dispose()
     formatSpecifier.reserve(5)
 

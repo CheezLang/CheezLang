@@ -931,6 +931,11 @@ namespace Cheez.Compiler.CodeGeneration
             return default;
         }
 
+        public override LLVMValueRef VisitVariableExpression(AstVariableExpression expr, LLVMCodeGeneratorData data = null)
+        {
+            return valueMap[expr.Declaration];
+        }
+
         public override LLVMValueRef VisitVariableDeclaration(AstVariableDecl variable, LLVMCodeGeneratorData data = null)
         {
             if (variable.IsConstant)

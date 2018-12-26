@@ -1222,7 +1222,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (context.Function != null)
             {
-                variable.SubScope = NewScope($"var {variable.Name}", scope);
+                variable.SubScope = NewScope($"let {variable.Name}", scope);
             }
             else
             {
@@ -1280,7 +1280,6 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
             }
 
-
             if (variable.Type == CheezType.Type)
             {
                 variable.IsConstant = true;
@@ -1294,6 +1293,26 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (variable.Type == CheezType.Void)
                     context.ReportError(variable.Name.GenericParseTreeNode, "Can't create a variable of type void");
+
+                var ctor = scope.GetImplFunctionWithDirective(variable.Type, "ctor");
+                var dtor = scope.GetImplFunctionWithDirective(variable.Type, "scope_exit");
+
+                if (ctor != null)
+                {
+
+                }
+
+                if (dtor != null)
+                {
+                    var locStmt = variable.GenericParseTreeNode;
+                    var locExpr = variable.Name.GenericParseTreeNode;
+
+                    var args = new List<AstExpression>() {
+                        new AstVariableExpression(locExpr, variable, null)
+                    };
+                    var ctorCall = new AstCallExpr(locExpr, new AstFunctionExpression(locExpr, dtor, null), args);
+                    context.Block.DeferredStatements.Add(new AstExprStmt(locStmt, ctorCall));
+                }
             }
             else
             {
@@ -1752,6 +1771,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             result += arg.Value;
                         }
                         var value = new AstStringLiteral(call.GenericParseTreeNode, result, false);
+                        value.Type = CheezType.StringLiteral;
                         foreach (var v in ReplaceAstExpr(value, context))
                             yield return v;
                         break;
@@ -2096,9 +2116,13 @@ namespace Cheez.Compiler.SemanticAnalysis
                         }
 
                         var arg = call.Arguments[0];
-                        if (arg.Type != CheezType.StringLiteral || !arg.IsCompTimeValue)
+                        if (!arg.IsCompTimeValue)
                         {
-                            context.ReportError(arg.GenericParseTreeNode, $"Argument of '@{name}' must be a string literal");
+                            context.ReportError(arg.GenericParseTreeNode, $"Argument of '@{name}' must be a constant string");
+                        }
+                        else if (!(arg.Type == CheezType.StringLiteral || arg.Type == CheezType.CString || arg.Type == CheezType.String))
+                        {
+                            context.ReportError(arg.GenericParseTreeNode, $"Argument of '@{name}' must be a constant string");
                         }
                         else
                         {

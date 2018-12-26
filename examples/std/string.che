@@ -51,6 +51,12 @@ impl c_string {
     fn charAt(i: $T) -> char {
         return self[i]
     }
+
+    fn to_string() -> String {
+        let s = new_string()
+        s.append_cstring(self)
+        return s
+    }
 }
 
 impl string {
@@ -60,6 +66,12 @@ impl string {
     
     fn charAt(i: $T) -> char {
         return self[i]
+    }
+
+    fn to_string() -> String {
+        let s = new_string()
+        s.append_string(self)
+        return s
     }
 }
 
@@ -274,34 +286,14 @@ impl StringBase($CharType) {
     }
 }
 
-fn newString() -> String {
-    let t = new String {
-        null, 0, 0, new StdHeapAllocator {}
-    }
+fn new_string() -> String {
+    let t = new String { allocator = DEFAULT_STD_HEAP_ALLOCATOR }
     t.reserve(10)
     return t
 }
 
-fn newString2(alloc: Allocator) -> String {
-    let t = new String {
-        null, 0, 0, alloc
-    }
+fn new_string2(alloc: Allocator) -> String {
+    let t = new String { allocator = alloc }
     t.reserve(10)
     return t
-}
-
-impl c_string {
-    fn toString() -> String {
-        let s = newString()
-        s.append_cstring(self)
-        return s
-    }
-}
-
-impl string {
-    fn toString() -> String {
-        let s = newString()
-        s.append_string(self)
-        return s
-    }
 }

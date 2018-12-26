@@ -98,7 +98,7 @@ impl StackAllocator {
     }
 
     ref fn printDiagnostics() {
-        let s = newString()
+        let s = new_string()
         defer s.dispose()
         s.append_string("( [")
         while let i: uint = 0; i < allocations.length; i += 1 {
