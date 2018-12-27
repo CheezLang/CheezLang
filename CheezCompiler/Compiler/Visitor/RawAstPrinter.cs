@@ -7,13 +7,30 @@ namespace Cheez.Compiler.Visitor
 {
     public class RawAstPrinter : VisitorBase<string, int>
     {
-        public void PrintWorkspace(Workspace workspace, TextWriter writer)
+        private TextWriter _writer;
+
+        public RawAstPrinter(TextWriter writer)
+        {
+            _writer = writer;
+        }
+
+        public void PrintWorkspace(Workspace workspace)
         {
             foreach (var s in workspace.Statements)
             {
-                writer.WriteLine(s.Accept(this, 0));
-                writer.WriteLine();
+                _writer.WriteLine(s.Accept(this));
+                _writer.WriteLine();
             }
+        }
+
+        public void PrintStatement(AstStatement statement)
+        {
+            _writer.WriteLine(statement.Accept(this));
+        }
+
+        public void PrintExpression(AstExpression expr)
+        {
+            _writer.WriteLine(expr.Accept(this));
         }
 
         #region Statements

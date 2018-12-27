@@ -60,8 +60,11 @@ namespace Cheez.Compiler
             GlobalScope.DefineBuiltInTypes();
             GlobalScope.DefineBuiltInOperators();
 
-            var semanticer = new Semanticer();
-            semanticer.DoWork(this, mStatements, mCompiler.ErrorHandler);
+            //var semanticer = new Semanticer();
+            //semanticer.DoWork(this, mStatements, mCompiler.ErrorHandler);
+
+            var declarationAnalyzer = new DeclarationAnalyzer();
+            declarationAnalyzer.CollectDeclarations(this, mCompiler.ErrorHandler);
 
             if (MainFunction == null)
             {

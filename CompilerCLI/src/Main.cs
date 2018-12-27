@@ -162,11 +162,11 @@ namespace CheezCLI
 
             if (options.PrintRawAst != null)
             {
-                var printer = new RawAstPrinter();
                 using (var file = File.Open(options.PrintRawAst, FileMode.Create))
                 using (var writer = new StreamWriter(file))
                 {
-                    printer.PrintWorkspace(compiler.DefaultWorkspace, writer);
+                    var printer = new RawAstPrinter(writer);
+                    printer.PrintWorkspace(compiler.DefaultWorkspace);
                 }
             }
 
@@ -222,7 +222,7 @@ namespace CheezCLI
         private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace, IErrorHandler errorHandler)
         {
 
-            ICodeGenerator generator = new LLVMCodeGenerator();
+            ICodeGenerator generator = new LLVMCodeGeneratorNew();
             bool success = generator.GenerateCode(workspace, options.IntPath, options.OutPath, options.OutName, options.Optimize);
             if (!success)
                 return false;
