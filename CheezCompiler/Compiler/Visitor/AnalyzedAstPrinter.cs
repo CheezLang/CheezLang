@@ -5,7 +5,7 @@ using Cheez.Compiler.Ast;
 
 namespace Cheez.Compiler.Visitor
 {
-    public class AstPrinter : VisitorBase<string, int>
+    public class AnalyzedAstPrinter : VisitorBase<string, int>
     {
         public void PrintWorkspace(Workspace workspace, TextWriter writer)
         {
@@ -22,21 +22,16 @@ namespace Cheez.Compiler.Visitor
         {
             var sb = new StringBuilder();
 
-            var body = function.Body?.Accept(this, 0) ?? ";";
+            var body = function.Body?.Accept(this) ?? ";";
 
-            var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name}: {p.TypeExpr.Accept(this, 0)}"));
-            var head = $"fn {function.Name}";
-
-            //if (function.IsGeneric)
-            //{
-            //    head += $"<{string.Join(", ", function.Generics.Select(g => g.Name))}>";
-            //}
+            var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name}: {p.TypeExpr.Accept(this)}"));
+            var head = $"fn {function.Name.Accept(this)}";
 
             head += $"({pars})";
 
             if (function.ReturnTypeExpr != null)
             {
-                head += $" -> {function.ReturnTypeExpr.Accept(this, 0)}";
+                head += $" -> {function.ReturnTypeExpr.Accept(this)}";
             }
 
             sb.AppendLine($"{head} {body}".Indent(indentLevel));

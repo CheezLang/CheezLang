@@ -165,9 +165,21 @@ namespace Cheez.Compiler.Parsing
                 if (b == 10)
                     IntValue = BigInteger.Parse(val);
                 else if (b == 16)
-                    IntValue = BigInteger.Parse(val, System.Globalization.NumberStyles.HexNumber);
+                    IntValue = BigInteger.Parse(val, NumberStyles.HexNumber);
                 else if (b == 2)
-                    throw new NotImplementedException();
+                {
+                    BigInteger currentDigit = 1;
+                    IntValue = 0;
+
+                    for (int i = val.Length - 1; i >= 0; i--)
+                    {
+                        if (val[i] == '1')
+                            IntValue += currentDigit;
+                        else if (val[i] == '0') ;  // do nothing
+                        else throw new NotImplementedException();
+                        currentDigit *= 2;
+                    }
+                }
             }
             else if (type == NumberType.Float)
             {
