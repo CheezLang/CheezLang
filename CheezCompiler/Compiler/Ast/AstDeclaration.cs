@@ -294,6 +294,7 @@ namespace Cheez.Compiler.Ast
     {
         public AstIdentifierExpr Name { get; }
         public List<AstEnumMember> Members { get; }
+        public CheezType Type { get; set; }
 
         public AstEnumDecl(AstIdentifierExpr name, List<AstEnumMember> members, List<AstDirective> Directive = null, ILocation Location = null) : base(Directive, Location)
         {
@@ -320,6 +321,7 @@ namespace Cheez.Compiler.Ast
         public AstTypeAliasDecl(AstIdentifierExpr name, AstExpression typeExpr, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
         {
             this.Name = name;
+            this.TypeExpr = typeExpr;
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTypeAlias(this, data);

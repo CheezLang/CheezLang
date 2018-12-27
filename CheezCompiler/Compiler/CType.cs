@@ -5,6 +5,11 @@ using System.Linq;
 
 namespace Cheez.Compiler
 {
+    interface Analizable
+    {
+        bool Analyzed { get; set; }
+    }
+
     public abstract class CheezType
     {
         public static CheezType Void => VoidType.Intance;
@@ -328,11 +333,6 @@ namespace Cheez.Compiler
         public override bool IsPolyType => false;
         public override string ToString() => "char";
 
-    }
-
-    interface Analizable
-    {
-        bool Analyzed { get; set; }
     }
 
     public class TraitType : CheezType, Analizable

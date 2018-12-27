@@ -299,6 +299,8 @@ namespace Cheez.Compiler.Parsing
                     return (false, ParseFunctionDeclaration());
                 case TokenType.KwLet:
                     return (false, ParseVariableDeclaration(TokenType.ClosingBrace));
+                case TokenType.KwTypedef:
+                    return (false, ParseTypedefDeclaration());
                 case TokenType.KwIf:
                     return (false, ParseIfStatement());
                 case TokenType.KwWhile:
@@ -788,6 +790,27 @@ namespace Cheez.Compiler.Parsing
         {
             var expr = ParseExpression();
             return new AstExprStmt(expr, new Location(expr.Beginning, expr.End));
+        }
+
+        private AstTypeAliasDecl ParseTypedefDeclaration()
+        {
+            TokenLocation beg = null, end = null;
+            AstIdentifierExpr name = null;
+            AstExpression value = null;
+
+            beg = Consume(TokenType.KwTypedef, ErrMsg("keyword 'typedef'", "at beginning of type alias declaration")).location;
+            SkipNewlines();
+
+            name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'typedef'"));
+            SkipNewlines();
+
+            Consume(TokenType.Equal, ErrMsg("type expression", "after '=' in type alias declaration"));
+            SkipNewlines();
+
+            value = ParseExpression(ErrMsg("expression", "after '=' in variable declaration"));
+            end = value.End;
+
+            return new AstTypeAliasDecl(name, value, Location: new Location(beg, end));
         }
 
         private AstVariableDecl ParseVariableDeclaration(params TokenType[] delimiters)
