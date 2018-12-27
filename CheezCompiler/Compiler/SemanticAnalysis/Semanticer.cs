@@ -226,6 +226,11 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             ErrorHandler.ReportError(Text, location, message, subErrors, callingFunctionFile, callingFunctionName, callLineNumber);
         }
+
+        public void ReportError(Error error, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        {
+            ErrorHandler.ReportError(error, callingFunctionFile, callingFunctionName, callLineNumber);
+        }
     }
 
     public class Semanticer : VisitorBase<IEnumerable<object>, SemanticerData>

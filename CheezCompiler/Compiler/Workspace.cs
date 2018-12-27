@@ -36,12 +36,16 @@ namespace Cheez.Compiler
             mStatements.AddRange(file.Statements);
         }
 
+        public PTFile GetFile(string file)
+        {
+            return mFiles[file];
+        }
+
         public void RemoveFile(PTFile file)
         {
             mFiles.Remove(file.Name);
 
-            // TODO: check this
-            mStatements.RemoveAll(s => s.Location.Beginning.file == file.Name);
+            mStatements.RemoveAll(s => s.SourceFile == file);
             //GlobalScope.FunctionDeclarations.RemoveAll(fd => fd.GenericParseTreeNode.SourceFile == file);
             //GlobalScope.TypeDeclarations.RemoveAll(fd => fd.GenericParseTreeNode.SourceFile == file);
             //GlobalScope.VariableDeclarations.RemoveAll(fd => fd.GenericParseTreeNode.SourceFile == file);

@@ -6,9 +6,6 @@ using System.Linq;
 
 namespace Cheez.Compiler.Parsing
 {
-    public class SkipInStackFrame : Attribute
-    { }
-
     public class Parser
     {
         private delegate string ErrorMessageResolver(Token t);
