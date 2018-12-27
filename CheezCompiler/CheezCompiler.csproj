@@ -119,6 +119,9 @@
     <Compile Include="Compiler\Ast\AstExpression.cs" />
     <Compile Include="Compiler\Ast\AstLocation.cs" />
     <Compile Include="Compiler\Ast\AstStatement.cs" />
+    <Compile Include="Compiler\Ast\DesugaredExpressions.cs" />
+    <Compile Include="Compiler\Ast\TypeExpressions.cs" />
+    <Compile Include="Compiler\CheezValue.cs" />
     <Compile Include="Compiler\CodeGeneration\ICodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVMCodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVM\AttributeKind.cs" />
@@ -137,10 +140,12 @@
     <Compile Include="Compiler\Parsing\Lexer.cs" />
     <Compile Include="Compiler\Parsing\Parser.cs" />
     <Compile Include="Compiler\Scope.cs" />
+    <Compile Include="Compiler\SemanticAnalysis\DeclarationAnalyzer.cs" />
     <Compile Include="Compiler\SemanticAnalysis\Semanticer.cs" />
     <Compile Include="Compiler\UniqueNameDecorator.cs" />
     <Compile Include="Compiler\Util.cs" />
-    <Compile Include="Compiler\Visitor\AstPrinter.cs" />
+    <Compile Include="Compiler\Visitor\AnalyzedAstPrinter.cs" />
+    <Compile Include="Compiler\Visitor\RawAstPrinter.cs" />
     <Compile Include="Compiler\Visitor\Visitor.cs" />
     <Compile Include="Compiler\Workspace.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
