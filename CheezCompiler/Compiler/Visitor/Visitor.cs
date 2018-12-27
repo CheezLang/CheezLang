@@ -28,6 +28,7 @@ namespace Cheez.Compiler.Visitor
         ReturnType VisitBreakStatement(AstBreakStmt br, DataType data = default);
         ReturnType VisitContinueStatement(AstContinueStmt cont, DataType data = default);
         ReturnType VisitTraitDeclaration(AstTraitDeclaration trait, DataType data = default);
+        ReturnType VisitDirectiveStatement(AstDirectiveStatement dir, DataType data = default);
 
 
         ReturnType VisitEmptyStatement(AstEmptyStatement em, DataType data = default);
@@ -143,5 +144,7 @@ namespace Cheez.Compiler.Visitor
         public virtual ReturnType VisitTraitDeclaration(AstTraitDeclaration trait, DataType data = default) => default;
 
         public virtual ReturnType VisitVariableExpression(AstVariableExpression expr, DataType data = default) => default;
+
+        public virtual ReturnType VisitDirectiveStatement(AstDirectiveStatement dir, DataType data = default) => default;
     }
 }

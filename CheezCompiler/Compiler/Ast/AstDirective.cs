@@ -1,18 +1,21 @@
 ﻿using System.Collections.Generic;
+using Cheez.Compiler.Parsing;
 
 namespace Cheez.Compiler.Ast
 {
-    public class AstDirective
+    public class AstDirective : ILocation
     {
-        public ParseTree.PTDirective ParseTreeNode { get; }
+        public ILocation Location { get; private set; }
+        public TokenLocation Beginning => Location?.Beginning;
+        public TokenLocation End => Location?.End;
 
-        public string Name { get; }
+        public AstIdentifierExpr Name { get; }
 
         public List<AstExpression> Arguments { get; set; }
 
-        public AstDirective(ParseTree.PTDirective node, string name, List<AstExpression> args)
+        public AstDirective(AstIdentifierExpr name, List<AstExpression> args, ILocation Location = null)
         {
-            ParseTreeNode = node;
+            this.Location = Location;
             this.Name = name;
             this.Arguments = args;
         }

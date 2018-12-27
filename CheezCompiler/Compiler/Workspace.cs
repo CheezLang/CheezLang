@@ -1,5 +1,4 @@
 ﻿using Cheez.Compiler.Ast;
-using Cheez.Compiler.ParseTree;
 using Cheez.Compiler.SemanticAnalysis;
 using System;
 using System.Collections.Generic;
@@ -34,18 +33,15 @@ namespace Cheez.Compiler
         public void AddFile(PTFile file)
         {
             mFiles[file.Name] = file;
-
-            foreach (var pts in file.Statements)
-            {
-                mStatements.Add(pts.CreateAst());
-            }
+            mStatements.AddRange(file.Statements);
         }
 
         public void RemoveFile(PTFile file)
         {
             mFiles.Remove(file.Name);
 
-            mStatements.RemoveAll(s => s.GenericParseTreeNode.SourceFile == file);
+            // TODO: check this
+            mStatements.RemoveAll(s => s.Location.Beginning.file == file.Name);
             //GlobalScope.FunctionDeclarations.RemoveAll(fd => fd.GenericParseTreeNode.SourceFile == file);
             //GlobalScope.TypeDeclarations.RemoveAll(fd => fd.GenericParseTreeNode.SourceFile == file);
             //GlobalScope.VariableDeclarations.RemoveAll(fd => fd.GenericParseTreeNode.SourceFile == file);

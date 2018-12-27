@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Cheez.Compiler.ParseTree;
 using System.Runtime.CompilerServices;
 using System.Numerics;
 
@@ -293,7 +292,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             foreach (var s in statements)
             {
-                var enumerator = s.Accept(this, new SemanticerData(workspace.GlobalScope, s.GenericParseTreeNode.SourceFile, ErrorHandler: errorHandler)).GetEnumerator();
+                var enumerator = s.Accept(this, new SemanticerData(workspace.GlobalScope, s.SourceFile, ErrorHandler: errorHandler)).GetEnumerator();
                 enums.Add(enumerator);
             }
 
@@ -445,7 +444,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else
             {
-                context.ReportError(br.GenericParseTreeNode, "break-statament can only be used inside of a loop");
+                context.ReportError(br, "break-statament can only be used inside of a loop");
             }
 
             yield break;
@@ -463,7 +462,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else
             {
-                context.ReportError(cont.GenericParseTreeNode, "continue-statament can only be used inside of a loop");
+                context.ReportError(cont, "continue-statament can only be used inside of a loop");
             }
             yield break;
         }
@@ -487,7 +486,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else
             {
-                context.ReportError(match.Value.GenericParseTreeNode, "Must be an int, char or enum value");
+                context.ReportError(match.Value, "Must be an int, char or enum value");
             }
 
             //match.SetFlag(StmtFlags.Returns);
@@ -512,19 +511,19 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (!ca.Body.GetFlag(StmtFlags.Returns))
                     match.ClearFlag(StmtFlags.Returns);
 
-                if (CanAssign(ca.Value.Type, type, out var t, context, ca.Value.GenericParseTreeNode, false))
+                if (CanAssign(ca.Value.Type, type, out var t, context, ca.Value, false))
                 {
                     ca.Value.Type = t;
                     ca.Value = CreateCastIfImplicit(type, ca.Value);
 
                     if (!ca.Value.IsCompTimeValue)
                     {
-                        context.ReportError(ca.Value.GenericParseTreeNode, $"Value must be a compile time constant");
+                        context.ReportError(ca.Value, $"Value must be a compile time constant");
                     }
                 }
                 else
                 {
-                    context.ReportError(ca.Value.GenericParseTreeNode, $"Type of case '{ca.Value}' does not match type of match-statement. (found {ca.Value.Type}, wanted {type})");
+                    context.ReportError(ca.Value, $"Type of case '{ca.Value}' does not match type of match-statement. (found {ca.Value.Type}, wanted {type})");
                 }
             }
 
@@ -540,7 +539,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 al.Type = t;
             else
             {
-                data.ReportError(al.TypeExpr.GenericParseTreeNode, $"Expected type, got {al.TypeExpr.Type}");
+                data.ReportError(al.TypeExpr, $"Expected type, got {al.TypeExpr.Type}");
             }
         }
 
@@ -561,19 +560,19 @@ namespace Cheez.Compiler.SemanticAnalysis
             var names = new HashSet<string>();
             foreach (var m in en.Members)
             {
-                if (names.Contains(m.Name))
+                if (names.Contains(m.Name.Name))
                 {
-                    data.ReportError(m.ParseTreeNode.Name, $"A member with name '{m.Name}' already exists in enum '{en.Name}'");
+                    data.ReportError(m.Name, $"A member with name '{m.Name}' already exists in enum '{en.Name}'");
                     continue;
                 }
 
-                names.Add(m.Name);
+                names.Add(m.Name.Name);
             }
 
             var enumType = new EnumType(en);
             if (!scope.DefineTypeSymbol(en.Name.Name, enumType))
             {
-                data.ReportError(en.ParseTreeNode.Name, $"A type with name '{en.Name}' already exists in current scope");
+                data.ReportError(en.Name, $"A type with name '{en.Name}' already exists in current scope");
             }
 
             scope.TypeDeclarations.Add(en);
@@ -589,12 +588,12 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (param.TypeExpr.Value is CheezType t)
                 param.Type = t;
             else
-                context.ReportError(param.TypeExpr.GenericParseTreeNode, $"Expected type, got {param.TypeExpr.Type}");
+                context.ReportError(param.TypeExpr, $"Expected type, got {param.TypeExpr.Type}");
         }
 
         private IEnumerable<object> CallPolyTrait(AstCallExpr call, GenericTraitType trait, SemanticerData context)
         {
-            context.ReportError(call.GenericParseTreeNode, "Polymorphic traits not implemented yet!");
+            context.ReportError(call, "Polymorphic traits not implemented yet!");
             yield break;
         }
 
@@ -606,7 +605,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (call.Arguments.Count != @struct.Declaration.Parameters.Count)
             {
-                context.ReportError(call.GenericParseTreeNode, "Wrong number of arguments in struct type instantiation");
+                context.ReportError(call, "Wrong number of arguments in struct type instantiation");
                 yield break;
             }
 
@@ -625,7 +624,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 else
                 {
-                    context.ReportError(arg.GenericParseTreeNode, $"Argument has to be a type, got {arg.Type}");
+                    context.ReportError(arg, $"Argument has to be a type, got {arg.Type}");
                 }
             }
 
@@ -676,7 +675,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
             }
 
-            call.Function = new AstStructExpression(call.Function.GenericParseTreeNode, instance, call.Function);
+            call.Function = new AstStructExpression(instance, call.Function, call.Function);
             call.Type = CheezType.Type;
             call.Value = instance.Type;
 
@@ -707,7 +706,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     if (p.Type != CheezType.Type)
                     {
                         ok = false;
-                        data.ReportError(p.ParseTreeNode, $"Struct parameters can only be types, found {p.Type}");
+                        data.ReportError(p, $"Struct parameters can only be types, found {p.Type}");
                     }
                 }
 
@@ -717,7 +716,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 str.Type = new GenericStructType(str);
                 if (!scope.DefineSymbol(str))
                 {
-                    data.ReportError(str.Name.GenericParseTreeNode, $"A symbol with name '{str.Name.Name}' already exists in current scope");
+                    data.ReportError(str.Name, $"A symbol with name '{str.Name.Name}' already exists in current scope");
                 }
                 yield break;
             }
@@ -729,7 +728,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (!scope.DefineTypeSymbol(str.Name.Name, structType))
                 {
-                    data.ReportError(str.Name.GenericParseTreeNode, $"A symbol with name '{str.Name.Name}' already exists in current scope");
+                    data.ReportError(str.Name, $"A symbol with name '{str.Name.Name}' already exists in current scope");
                 }
             }
 
@@ -748,7 +747,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     mem.Type = t;
                 else
                 {
-                    data.ReportError(mem.TypeExpr.GenericParseTreeNode, $"Expected type, got {mem.TypeExpr.Type}");
+                    data.ReportError(mem.TypeExpr, $"Expected type, got {mem.TypeExpr.Type}");
                 }
 
                 if (mem.Initializer != null)
@@ -764,14 +763,14 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                     if (mem.Type != null && mem.Initializer.Type != null)
                     {
-                        if (CanAssign(mem.Initializer.Type, mem.Type, out var newMemType, data, mem.ParseTreeNode, true))
+                        if (CanAssign(mem.Initializer.Type, mem.Type, out var newMemType, data, mem, true))
                         {
                             mem.Initializer.Type = newMemType;
                             mem.Initializer = CreateCastIfImplicit(mem.Type, mem.Initializer);
                         }
                         else
                         {
-                            data.ReportError(mem.ParseTreeNode, $"Can't initialize a member of type {mem.Type} with a value of type {mem.Initializer.Type}");
+                            data.ReportError(mem, $"Can't initialize a member of type {mem.Type} with a value of type {mem.Initializer.Type}");
                         }
 
                         // TODO: verify that initializer is a constant value
@@ -787,7 +786,9 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             foreach (var member in @struct.Declaration.Members)
             {
-                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, name.Name.Clone(), member.Name.Name, false)));
+                scope.DefineSymbol(
+                    new Using(member.Name, 
+                        new AstDotExpr(name.Name.Clone() as AstIdentifierExpr, member.Name, false)));
             }
         }
 
@@ -795,7 +796,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             foreach (var member in @struct.Declaration.Members)
             {
-                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(null, sub, member.Name.Name, false)));
+                scope.DefineSymbol(new Using(member.Name, new AstDotExpr(sub, member.Name, false)));
             }
         }
 
@@ -864,7 +865,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                     if (ok)
                     {
-                        context.ReportError(function.Name.GenericParseTreeNode, $"Function redefinition");
+                        context.ReportError(function.Name, $"Function redefinition");
                         continue;
                     }
                     ok = true;
@@ -872,7 +873,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 if (!ok)
                 {
-                    context.ReportError(function.Name.GenericParseTreeNode, $"Function {function.Name.Name} is not a function of trait {trait.Declaration.Name.Name}");
+                    context.ReportError(function.Name, $"Function {function.Name.Name} is not a function of trait {trait.Declaration.Name.Name}");
                 }
                 function.ImplBlock.FunctionInstances.Add(function);
             }
@@ -891,12 +892,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                 {
                     if (!function.Scope.DefineImplFunction(function))
                     {
-                        context.ReportError(function.Name.GenericParseTreeNode, $"Duplicate name: {function.Name}");
+                        context.ReportError(function.Name, $"Duplicate name: {function.Name}");
                     }
                 }
                 else if (!function.Scope.DefineSymbol(function))
                 {
-                    context.ReportError(function.Name.GenericParseTreeNode, $"Duplicate name: {function.Name}");
+                    context.ReportError(function.Name, $"Duplicate name: {function.Name}");
                 }
                 yield break;
             }
@@ -913,7 +914,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (function.ReturnTypeExpr.Value is CheezType t)
                     function.ReturnType = t;
                 else
-                    context.ReportError(function.ReturnTypeExpr.GenericParseTreeNode, $"Expected type, got {function.ReturnTypeExpr.Type}");
+                    context.ReportError(function.ReturnTypeExpr, $"Expected type, got {function.ReturnTypeExpr.Type}");
             }
             else
             {
@@ -931,11 +932,11 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (p.TypeExpr.Value is CheezType t)
                     p.Type = t;
                 else
-                    context.ReportError(p.TypeExpr.GenericParseTreeNode, $"Expected type, got {p.TypeExpr.Type}");
+                    context.ReportError(p.TypeExpr, $"Expected type, got {p.TypeExpr.Type}");
 
                 if (!function.HeaderScope.DefineSymbol(p))
                 {
-                    context.ReportError(p.ParseTreeNode, $"A parameter with name '{p.Name}' already exists in this function");
+                    context.ReportError(p, $"A parameter with name '{p.Name}' already exists in this function");
                 }
             }
 
@@ -959,12 +960,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                 {
                     if (!function.Scope.DefineImplFunction(function))
                     {
-                        context.ReportError(function.Name.GenericParseTreeNode, $"Duplicate name: {function.Name}");
+                        context.ReportError(function.Name, $"Duplicate name: {function.Name}");
                     }
                 }
                 else if (!function.Scope.DefineSymbol(function))
                 {
-                    context.ReportError(function.Name.GenericParseTreeNode, $"A function or variable with name '{function.Name}' already exists in current scope");
+                    context.ReportError(function.Name, $"A function or variable with name '{function.Name}' already exists in current scope");
                 }
             }
         }
@@ -978,12 +979,13 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (function.ImplBlock.Trait != null)
                 {
-                    var type = new AstAddressOfExpr(function.Name.GenericParseTreeNode, new AstTypeExpr(function.Name.GenericParseTreeNode, function.ImplBlock.TargetType));
+                    var type = new AstAddressOfExpr(function.Name, new AstTypeExpr(function.ImplBlock.TargetType, function.Name));
 
-                    var use = new AstVariableDecl(function.GenericParseTreeNode,
-                        new AstIdentifierExpr(function.Name.GenericParseTreeNode, "self", false),
+                    var use = new AstVariableDecl(
+                        new AstIdentifierExpr("self", false, function.Name),
                         type,
-                        new AstCastExpr(function.Name.GenericParseTreeNode, type, new AstIdentifierExpr(function.Name.GenericParseTreeNode, "__self", false)));
+                        new AstCastExpr(function.Name, type, new AstIdentifierExpr("__self", false, function.Name)),
+                        Location: function);
                     use.Type = PointerType.GetPointerType(function.ImplBlock.TargetType);
                     function.Body.Statements.Insert(0, use);
                     self = use;
@@ -1011,7 +1013,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (function.ReturnType != CheezType.Void && !returns)
             {
-                context.ReportError(function.Name.GenericParseTreeNode, "Not all code paths return a value!");
+                context.ReportError(function.Name, "Not all code paths return a value!");
             }
         }
 
@@ -1066,7 +1068,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (ifs.Condition.Type == CheezType.Error)
                     context.HasErrors = true;
                 else if (ifs.Condition.Type != CheezType.Bool)
-                    context.ReportError(ifs.Condition.GenericParseTreeNode, $"if-statement condition must be of type 'bool', got '{ifs.Condition.Type}'");
+                    context.ReportError(ifs.Condition, $"if-statement condition must be of type 'bool', got '{ifs.Condition.Type}'");
             }
 
             if (ifs.Condition.Type == CheezType.Bool && ifs.Condition.IsCompTimeValue)
@@ -1087,7 +1089,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 else
                 {
-                    foreach (var v in ReplaceAstStmt(new AstEmptyStatement(ifs.GenericParseTreeNode), subContext))
+                    foreach (var v in ReplaceAstStmt(new AstEmptyStatement(ifs), subContext))
                         yield return v;
                     yield break;
                 }
@@ -1128,7 +1130,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             if (context.Block == null)
             {
-                context.ReportError(def.GenericParseTreeNode, "defer statement can only be used in blocks");
+                context.ReportError(def, "defer statement can only be used in blocks");
                 yield break;
             }
 
@@ -1193,22 +1195,22 @@ namespace Cheez.Compiler.SemanticAnalysis
             Debug.Assert(context.Function != null, "return statement is only allowed in functions");
             if (context.Function.ReturnType != CheezType.Void && ret.ReturnValue == null) // !void, return
             {
-                context.ReportError(ret.GenericParseTreeNode, $"Missing return value in non-void function {context.Function.Name}");
+                context.ReportError(ret, $"Missing return value in non-void function {context.Function.Name}");
             }
             else if (context.Function.ReturnType == CheezType.Void && ret.ReturnValue != null) // void, return some
             {
-                context.ReportError(ret.GenericParseTreeNode, $"Can't return value of type '{ ret.ReturnValue.Type }' in void function");
+                context.ReportError(ret, $"Can't return value of type '{ ret.ReturnValue.Type }' in void function");
             }
             else if (context.Function.ReturnType != CheezType.Void && ret.ReturnValue != null) // !void, return some
             {
-                if (CanAssign(ret.ReturnValue.Type, context.Function.ReturnType, out var t, context, ret.ReturnValue.GenericParseTreeNode, false))
+                if (CanAssign(ret.ReturnValue.Type, context.Function.ReturnType, out var t, context, ret.ReturnValue, false))
                 {
                     ret.ReturnValue.Type = t;
                     ret.ReturnValue = CreateCastIfImplicit(context.Function.ReturnType, ret.ReturnValue);
                 }
                 else
                 {
-                    context.ReportError(ret.ReturnValue.GenericParseTreeNode, $"Can't return value of type '{ret.ReturnValue.Type}' in function with return type '{context.Function.ReturnType}'");
+                    context.ReportError(ret.ReturnValue, $"Can't return value of type '{ret.ReturnValue.Type}' in function with return type '{context.Function.ReturnType}'");
                 }
             }
 
@@ -1232,7 +1234,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (variable.TypeExpr == null && variable.Initializer == null)
             {
-                context.ReportError(variable.GenericParseTreeNode, "Either type or initializer has to be specified in variable declaration");
+                context.ReportError(variable, "Either type or initializer has to be specified in variable declaration");
             }
 
             if (variable.TypeExpr != null)
@@ -1248,7 +1250,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (variable.TypeExpr.Value is CheezType t)
                     variable.Type = t;
                 else
-                    context.ReportError(variable.TypeExpr.GenericParseTreeNode, $"Expected type, got {variable.TypeExpr.Type}");
+                    context.ReportError(variable.TypeExpr, $"Expected type, got {variable.TypeExpr.Type}");
             }
 
             if (variable.Initializer != null)
@@ -1272,8 +1274,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 else
                 {
-                    if (!CanAssign(variable.Initializer.Type, variable.Type, out var t, context, variable.Initializer.GenericParseTreeNode, false))
-                        context.ReportError(variable.Initializer.GenericParseTreeNode, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'");
+                    if (!CanAssign(variable.Initializer.Type, variable.Type, out var t, context, variable.Initializer, false))
+                        context.ReportError(variable.Initializer, $"Can't assign value of type '{variable.Initializer.Type}' to '{variable.Type}'");
 
                     variable.Initializer.Type = t;
                     variable.Initializer = CreateCastIfImplicit(variable.Type, variable.Initializer);
@@ -1292,7 +1294,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 scope.VariableDeclarations.Add(variable);
 
                 if (variable.Type == CheezType.Void)
-                    context.ReportError(variable.Name.GenericParseTreeNode, "Can't create a variable of type void");
+                    context.ReportError(variable.Name, "Can't create a variable of type void");
 
                 var ctor = scope.GetImplFunctionWithDirective(variable.Type, "ctor");
                 var dtor = scope.GetImplFunctionWithDirective(variable.Type, "scope_exit");
@@ -1304,20 +1306,20 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (dtor != null)
                 {
-                    var locStmt = variable.GenericParseTreeNode;
-                    var locExpr = variable.Name.GenericParseTreeNode;
+                    var locStmt = variable;
+                    var locExpr = variable.Name;
 
                     var args = new List<AstExpression>() {
-                        new AstVariableExpression(locExpr, variable, null)
+                        new AstVariableExpression(variable, null, Location: locExpr)
                     };
-                    var ctorCall = new AstCallExpr(locExpr, new AstFunctionExpression(locExpr, dtor, null), args);
-                    context.Block.DeferredStatements.Add(new AstExprStmt(locStmt, ctorCall));
+                    var ctorCall = new AstCallExpr(new AstFunctionExpression(dtor, null, locExpr), args, locExpr);
+                    context.Block.DeferredStatements.Add(new AstExprStmt(ctorCall, locStmt));
                 }
             }
             else
             {
                 // @Note: This should probably never happen, except for global variables, which are not implemented yet
-                context.ReportError(variable.Name.GenericParseTreeNode, $"A variable with name '{variable.Name}' already exists in current scope");
+                context.ReportError(variable.Name, $"A variable with name '{variable.Name}' already exists in current scope");
             }
 
             context.Scope = variable.SubScope;
@@ -1349,12 +1351,12 @@ namespace Cheez.Compiler.SemanticAnalysis
 
 
             if (!ass.Target.GetFlag(ExprFlags.IsLValue))
-                context.ReportError(ass.Target.GenericParseTreeNode, $"Left side of assignment has to be an lvalue");
+                context.ReportError(ass.Target, $"Left side of assignment has to be an lvalue");
 
             if (ass.Operator == null)
             {
-                if (!CanAssign(ass.Value.Type, ass.Target.Type, out var type, context, ass.Value.GenericParseTreeNode, false))
-                    context.ReportError(ass.GenericParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
+                if (!CanAssign(ass.Value.Type, ass.Target.Type, out var type, context, ass.Value, false))
+                    context.ReportError(ass, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
 
                 ass.Value.Type = type;
                 ass.Value = CreateCastIfImplicit(ass.Target.Type, ass.Value);
@@ -1380,12 +1382,12 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (ops.Count > 1)
                 {
-                    context.ReportError(ass.GenericParseTreeNode, $"Multiple operators match the types '{ass.Target.Type}' and '{ass.Value.Type}'");
+                    context.ReportError(ass, $"Multiple operators match the types '{ass.Target.Type}' and '{ass.Value.Type}'");
                     yield break;
                 }
                 else if (ops.Count == 0)
                 {
-                    context.ReportError(ass.GenericParseTreeNode, $"No operator matches the types '{ass.Target.Type}' and '{ass.Value.Type}'");
+                    context.ReportError(ass, $"No operator matches the types '{ass.Target.Type}' and '{ass.Value.Type}'");
                     yield break;
                 }
                 else
@@ -1394,8 +1396,8 @@ namespace Cheez.Compiler.SemanticAnalysis
                     var resultType = op.ResultType;
 
 
-                    if (!CanAssign(resultType, ass.Target.Type, out var type, context, ass.GenericParseTreeNode, false))
-                        context.ReportError(ass.GenericParseTreeNode, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
+                    if (!CanAssign(resultType, ass.Target.Type, out var type, context, ass, false))
+                        context.ReportError(ass, $"Can't assign value of type {ass.Value.Type} to {ass.Target.Type}");
                 }
             }
 
@@ -1432,7 +1434,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     if (p.Type != CheezType.Type)
                     {
                         ok = false;
-                        context.ReportError(p.ParseTreeNode, $"Struct parameters can only be types, found {p.Type}");
+                        context.ReportError(p, $"Struct parameters can only be types, found {p.Type}");
                     }
                 }
 
@@ -1442,7 +1444,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 trait.Type = new GenericTraitType(trait);
                 if (!trait.Scope.DefineSymbol(trait))
                 {
-                    context.ReportError(trait.Name.GenericParseTreeNode, $"A symbol with name '{trait.Name.Name}' already exists in current scope");
+                    context.ReportError(trait.Name, $"A symbol with name '{trait.Name.Name}' already exists in current scope");
                 }
                 yield break;
             }
@@ -1450,7 +1452,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             trait.Type = new TraitType(trait);
             if (!trait.Scope.DefineTypeSymbol(trait.Name.Name, trait.Type))
             {
-                context.ReportError(trait.Name.GenericParseTreeNode, $"The name '{trait.Name.Name}' is alreay taken in this scope");
+                context.ReportError(trait.Name, $"The name '{trait.Name.Name}' is alreay taken in this scope");
             }
 
             var subScope = NewScope("trait{}", trait.Scope);
@@ -1459,7 +1461,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             // add self parameter
             foreach (var f in trait.Functions)
             {
-                AstExpression selfType = new AstTypeExpr(trait.Name.GenericParseTreeNode, trait.Type);
+                AstExpression selfType = new AstTypeExpr(trait.Type, trait.Name);
 
                 {
                     foreach (var v in CreateType(trait.Scope, f.ReturnTypeExpr, context.Text, context.ErrorHandler, false))
@@ -1482,14 +1484,14 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                 }
 
-                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(trait.Name.GenericParseTreeNode, "self", false), selfType));
+                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr("self", false, trait.Name), selfType));
             }
 
             foreach (var func in trait.Functions)
             {
                 if (func.Body != null)
                 {
-                    context.ReportError(func.Name.GenericParseTreeNode, "Function can not hava a body");
+                    context.ReportError(func.Name, "Function can not hava a body");
                 }
 
                 foreach (var v in func.Accept(this, subContext))
@@ -1518,7 +1520,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (impl.TraitExpr.Type != CheezType.Type)
                 {
-                    context.ReportError(impl.TraitExpr.GenericParseTreeNode, $"Expected type, found {impl.TraitExpr.Type}");
+                    context.ReportError(impl.TraitExpr, $"Expected type, found {impl.TraitExpr.Type}");
                 }
                 else if (impl.TraitExpr.Value is TraitType)
                 {
@@ -1529,13 +1531,13 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         var implementsFunction = impl.Functions.Any(f => f.Name.Name == tf.Name.Name);
                         if (!implementsFunction)
-                            context.ReportError(impl.TargetTypeExpr.GenericParseTreeNode, $"Missing implementation for trait function '{tf}'");
+                            context.ReportError(impl.TargetTypeExpr, $"Missing implementation for trait function '{tf}'");
                     }
 
                 }
                 else
                 {
-                    context.ReportError(impl.TraitExpr.GenericParseTreeNode, $"Expected trait, found {impl.TraitExpr.Value}");
+                    context.ReportError(impl.TraitExpr, $"Expected trait, found {impl.TraitExpr.Value}");
                 }
 
             }
@@ -1574,10 +1576,10 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (impl.Trait == null)
                 {
-                    selfType = impl.TargetTypeExpr.Clone(); // new AstTypeExpr(impl.TargetTypeExpr.GenericParseTreeNode, impl.TargetType); // impl.TargetTypeExpr.Clone();
+                    selfType = impl.TargetTypeExpr.Clone(); // new AstTypeExpr(impl.TargetTypeExpr, impl.TargetType); // impl.TargetTypeExpr.Clone();
                     if (f.RefSelf)
                     {
-                        selfType = new AstAddressOfExpr(selfType.GenericParseTreeNode, selfType)
+                        selfType = new AstAddressOfExpr(selfType, selfType)
                         {
                             IsReference = true
                         };
@@ -1587,12 +1589,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                 {
                     if (f.RefSelf)
                     {
-                        context.ReportError(f.Name.GenericParseTreeNode, "Functions which implement a trait are can't have a ref modifier. They are always ref");
+                        context.ReportError(f.Name, "Functions which implement a trait are can't have a ref modifier. They are always ref");
                     }
-                    selfType = new AstTypeExpr(impl.TraitExpr.GenericParseTreeNode, impl.Trait);
+                    selfType = new AstTypeExpr(impl.Trait, impl.TraitExpr);
                     name = "__self";
                 }
-                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(null, name, false), selfType));
+                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(name, false), selfType));
             }
 
             foreach (var f in impl.Functions)
@@ -1621,7 +1623,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else
             {
-                context.ReportError(use.GenericParseTreeNode, "Only struct types can be used in 'using' statement");
+                context.ReportError(use, "Only struct types can be used in 'using' statement");
             }
 
 
@@ -1666,7 +1668,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (ws.Condition.Type != CheezType.Bool)
             {
-                context.ReportError(ws.Condition.GenericParseTreeNode, $"Condition of while statement has to be of type bool, but is of type {ws.Condition.Type}");
+                context.ReportError(ws.Condition, $"Condition of while statement has to be of type bool, but is of type {ws.Condition.Type}");
             }
 
             ws.Body.Parent = ws;
@@ -1763,14 +1765,14 @@ namespace Cheez.Compiler.SemanticAnalysis
                         {
                             if (!arg.IsCompTimeValue)
                             {
-                                context.ReportError(arg.GenericParseTreeNode, "Arguments to @concat have to be compile time constants");
+                                context.ReportError(arg, "Arguments to @concat have to be compile time constants");
                             }
 
                             Debug.Assert(arg.Value != null);
 
                             result += arg.Value;
                         }
-                        var value = new AstStringLiteral(call.GenericParseTreeNode, result, false);
+                        var value = new AstStringLiteral(result, false, call);
                         value.Type = CheezType.StringLiteral;
                         foreach (var v in ReplaceAstExpr(value, context))
                             yield return v;
@@ -1778,7 +1780,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                 case "file":
                     {
-                        var value = new AstStringLiteral(call.GenericParseTreeNode, call.GenericParseTreeNode.Beginning.file, false);
+                        var value = new AstStringLiteral(call.Beginning.file, false, call);
                         foreach (var v in ReplaceAstExpr(value, context))
                             yield return v;
                         break;
@@ -1786,7 +1788,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 case "line":
                     {
-                        var value = ConstInt(call.GenericParseTreeNode, call.GenericParseTreeNode.Beginning.line);
+                        var value = ConstInt(call.Beginning.line, call);
                         foreach (var v in ReplaceAstExpr(value, context))
                             yield return v;
                         break;
@@ -1796,12 +1798,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (call.Arguments.Count < 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(0)), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(ConstInt(new BigInteger(0), call), context))
                                 yield return v;
                         }
                         if (call.Arguments.Count > 1)
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires only one argument");
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires only one argument");
 
                         var arg = call.Arguments[0];
 
@@ -1815,7 +1817,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             type = arg.Type;
                         }
 
-                        foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(type.Alignment)), context))
+                        foreach (var v in ReplaceAstExpr(ConstInt(new BigInteger(type.Alignment), call), context))
                             yield return v;
                         break;
                     }
@@ -1824,12 +1826,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (call.Arguments.Count < 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(0)), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(ConstInt(new BigInteger(0), call), context))
                                 yield return v;
                         }
                         if (call.Arguments.Count > 1)
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires only one argument");
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires only one argument");
 
                         var arg = call.Arguments[0];
 
@@ -1843,7 +1845,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             type = arg.Type;
                         }
 
-                        foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(type.Size)), context))
+                        foreach (var v in ReplaceAstExpr(ConstInt(new BigInteger(type.Size), call), context))
                             yield return v;
                         break;
                     }
@@ -1852,12 +1854,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (call.Arguments.Count < 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(0)), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(ConstInt(new BigInteger(0), call), context))
                                 yield return v;
                         }
                         if (call.Arguments.Count > 1)
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires only one argument");
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires only one argument");
 
                         var arg = call.Arguments[0];
 
@@ -1871,7 +1873,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             type = arg.Type;
                         }
 
-                        foreach (var v in ReplaceAstExpr(new AstTypeExpr(call.GenericParseTreeNode, type), context))
+                        foreach (var v in ReplaceAstExpr(new AstTypeExpr(type, call), context))
                             yield return v;
                         break;
                     }
@@ -1880,15 +1882,15 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (call.Arguments.Count != 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(false, call), context))
                                 yield return v;
                         }
 
                         var arg = call.Arguments[0];
                         var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is IntType), context))
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(type is IntType, call), context))
                             yield return v;
                         break;
                     }
@@ -1897,15 +1899,15 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (call.Arguments.Count != 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(false, call), context))
                                 yield return v;
                         }
 
                         var arg = call.Arguments[0];
                         var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type == CheezType.Bool), context))
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(type == CheezType.Bool, call), context))
                             yield return v;
                         break;
                     }
@@ -1914,15 +1916,15 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (call.Arguments.Count != 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(false, call), context))
                                 yield return v;
                         }
 
                         var arg = call.Arguments[0];
                         var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is FloatType), context))
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(type is FloatType, call), context))
                             yield return v;
                         break;
                     }
@@ -1931,43 +1933,25 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (call.Arguments.Count != 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(false, call), context))
                                 yield return v;
                         }
 
                         var arg = call.Arguments[0];
                         var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is PointerType), context))
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(type is PointerType, call), context))
                             yield return v;
                         break;
                     }
-
-                // @Todo
-                //case "isarray":
-                //    {
-                //        if (call.Arguments.Count != 1)
-                //        {
-                //            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                //            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
-                //                yield return v;
-                //        }
-
-                //        var arg = call.Arguments[0];
-                //        var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
-
-                //        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is ArrayType), context))
-                //            yield return v;
-                //        break;
-                //    }
 
                 case "isstring":
                     {
                         if (call.Arguments.Count != 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(false, call), context))
                                 yield return v;
                         }
 
@@ -1976,24 +1960,22 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                         bool isString = type == CheezType.StringLiteral || type == CheezType.String || type == CheezType.CString;
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, isString), context))
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(isString, call), context))
                             yield return v;
                         break;
-                    }
-
-                case "isstruct":
+                    }               case "isstruct":
                     {
                         if (call.Arguments.Count != 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(false, call), context))
                                 yield return v;
                         }
 
                         var arg = call.Arguments[0];
                         var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is StructType), context))
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(type is StructType, call), context))
                             yield return v;
                         break;
                     }
@@ -2002,15 +1984,15 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (call.Arguments.Count != 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(false, call), context))
                                 yield return v;
                         }
 
                         var arg = call.Arguments[0];
                         var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is EnumType), context))
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(type is EnumType, call), context))
                             yield return v;
                         break;
                     }
@@ -2019,15 +2001,15 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (call.Arguments.Count != 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(false, call), context))
                                 yield return v;
                         }
 
                         var arg = call.Arguments[0];
                         var type = (arg.Type == CheezType.Type) ? (arg.Value as CheezType) : arg.Type;
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, type is FunctionType), context))
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(type is FunctionType, call), context))
                             yield return v;
                         break;
                     }
@@ -2051,7 +2033,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                         if (call.Arguments.Count != 2)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires two arguments");
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires two arguments");
                             break;
                         }
 
@@ -2065,7 +2047,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         {
                             if (!call.Scope.DefineTypeSymbol(binding.Key, binding.Value))
                             {
-                                context.ReportError(call.GenericParseTreeNode, $"Symbol '{binding.Key}' already exists in current scope");
+                                context.ReportError(call, $"Symbol '{binding.Key}' already exists in current scope");
                             }
                         }
 
@@ -2073,7 +2055,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         call.IsCompTimeValue = true;
                         call.Value = typesMatch;
 
-                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, typesMatch), context))
+                        foreach (var v in ReplaceAstExpr(new AstBoolExpr(typesMatch, call), context))
                             yield return v;
                         break;
                     }
@@ -2082,12 +2064,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (call.Arguments.Count < 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(ConstInt(call.GenericParseTreeNode, new BigInteger(0)), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(ConstInt(new BigInteger(0), call), context))
                                 yield return v;
                         }
                         if (call.Arguments.Count > 1)
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires only one argument");
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires only one argument");
 
                         var arg = call.Arguments[0];
 
@@ -2101,7 +2083,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             type = arg.Type;
                         }
 
-                        foreach (var v in ReplaceAstExpr(new AstStringLiteral(call.GenericParseTreeNode, type.ToString(), false), context))
+                        foreach (var v in ReplaceAstExpr(new AstStringLiteral(type.ToString(), false, call), context))
                             yield return v;
                         break;
                     }
@@ -2110,34 +2092,34 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (call.Arguments.Count != 1)
                         {
-                            context.ReportError(call.Name.GenericParseTreeNode, $"Comptime function '@{name}' requires one argument");
-                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(call.GenericParseTreeNode, false), context))
+                            context.ReportError(call.Name, $"Comptime function '@{name}' requires one argument");
+                            foreach (var v in ReplaceAstExpr(new AstBoolExpr(false, call), context))
                                 yield return v;
                         }
 
                         var arg = call.Arguments[0];
                         if (!arg.IsCompTimeValue)
                         {
-                            context.ReportError(arg.GenericParseTreeNode, $"Argument of '@{name}' must be a constant string");
+                            context.ReportError(arg, $"Argument of '@{name}' must be a constant string");
                         }
                         else if (!(arg.Type == CheezType.StringLiteral || arg.Type == CheezType.CString || arg.Type == CheezType.String))
                         {
-                            context.ReportError(arg.GenericParseTreeNode, $"Argument of '@{name}' must be a constant string");
+                            context.ReportError(arg, $"Argument of '@{name}' must be a constant string");
                         }
                         else
                         {
                             string value = arg.Value as string;
                             if (value != null)
-                                context.ReportError(call.GenericParseTreeNode, value);
+                                context.ReportError(call, value);
                         }
 
-                        foreach (var v in ReplaceAstExpr(new AstEmptyExpr(call.GenericParseTreeNode), context))
+                        foreach (var v in ReplaceAstExpr(new AstEmptyExpr(call), context))
                             yield return v;
                         break;
                     }
 
                 default:
-                    context.ReportError(call.Name.GenericParseTreeNode, $"Unknown comptime function '@{name}'");
+                    context.ReportError(call.Name, $"Unknown comptime function '@{name}'");
                     call.Type = CheezType.Error;
                     break;
             }
@@ -2161,13 +2143,13 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (str.TypeExpr.Value is CheezType t)
                 str.Type = t;
             else
-                context.ReportError(str.TypeExpr.GenericParseTreeNode, $"Expected type, got {str.TypeExpr.Type}");
+                context.ReportError(str.TypeExpr, $"Expected type, got {str.TypeExpr.Type}");
 
             if (str.Type is StructType s)
             {
-                if (str.MemberInitializers.Length > s.Declaration.Members.Count)
+                if (str.MemberInitializers.Count > s.Declaration.Members.Count)
                 {
-                    context.ReportError(str.ParseTreeNode?.Type, $"Struct initialization has to many values");
+                    context.ReportError(str?.TypeExpr, $"Struct initialization has to many values");
                 }
                 else
                 {
@@ -2176,9 +2158,9 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         if (m.Name != null)
                         {
-                            if (!s.Declaration.Members.Any(m2 => m2.Name.Name == m.Name))
+                            if (!s.Declaration.Members.Any(m2 => m2.Name.Name == m.Name.Name))
                             {
-                                context.ReportError(m.GenericParseTreeNode.Name, $"'{m.Name}' is not a member of struct {s.Declaration.Name}");
+                                context.ReportError(m.Name, $"'{m.Name}' is not a member of struct {s.Declaration.Name}");
                             }
                             else
                             {
@@ -2189,7 +2171,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                     if (namesProvided == 0)
                     {
-                        for (int i = 0; i < str.MemberInitializers.Length; i++)
+                        for (int i = 0; i < str.MemberInitializers.Count; i++)
                         {
                             foreach (var v in str.MemberInitializers[i].Value.Accept(this, context.Clone(ExpectedType: null)))
                             {
@@ -2201,26 +2183,26 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                             var mem = s.Declaration.Members[i];
                             var mi = str.MemberInitializers[i];
-                            mi.Name = mem.Name.Name;
+                            mi.Name.Name = mem.Name.Name;
                             mi.Index = i;
 
-                            if (CanAssign(mi.Value.Type, mem.Type, out var miType, context, mi.Value.GenericParseTreeNode, false))
+                            if (CanAssign(mi.Value.Type, mem.Type, out var miType, context, mi.Value, false))
                             {
                                 mi.Value.Type = miType;
                                 mi.Value = CreateCastIfImplicit(mem.Type, mi.Value);
                             }
                             else
                             {
-                                context.ReportError(mi.GenericParseTreeNode.Value, $"Value of type '{mi.Value.Type}' cannot be assigned to struct member '{mem.Name}' with type '{mem.Type}'");
+                                context.ReportError(mi.Value, $"Value of type '{mi.Value.Type}' cannot be assigned to struct member '{mem.Name}' with type '{mem.Type}'");
                             }
                         }
                     }
-                    else if (namesProvided == str.MemberInitializers.Length)
+                    else if (namesProvided == str.MemberInitializers.Count)
                     {
-                        for (int i = 0; i < str.MemberInitializers.Length; i++)
+                        for (int i = 0; i < str.MemberInitializers.Count; i++)
                         {
                             var mi = str.MemberInitializers[i];
-                            var memIndex = s.Declaration.Members.FindIndex(m => m.Name.Name == mi.Name);
+                            var memIndex = s.Declaration.Members.FindIndex(m => m.Name.Name == mi.Name.Name);
 
                             if (memIndex < 0)
                             {
@@ -2238,26 +2220,26 @@ namespace Cheez.Compiler.SemanticAnalysis
                                     yield return v;
                             }
 
-                            if (CanAssign(mi.Value.Type, mem.Type, out var miType, context, mi.Value.GenericParseTreeNode, false))
+                            if (CanAssign(mi.Value.Type, mem.Type, out var miType, context, mi.Value, false))
                             {
                                 mi.Value.Type = miType;
                                 mi.Value = CreateCastIfImplicit(mem.Type, mi.Value);
                             }
                             else
                             {
-                                context.ReportError(mi.GenericParseTreeNode.Value, $"Value of type '{mi.Value.Type}' cannot be assigned to struct member '{mem.Name}' with type '{mem.Type}'");
+                                context.ReportError(mi.Value, $"Value of type '{mi.Value.Type}' cannot be assigned to struct member '{mem.Name}' with type '{mem.Type}'");
                             }
                         }
                     }
                     else
                     {
-                        context.ReportError(str.ParseTreeNode?.Type, $"Either all or no values must have a name");
+                        context.ReportError(str?.TypeExpr, $"Either all or no values must have a name");
                     }
                 }
             }
             else
             {
-                context.ReportError(str.ParseTreeNode?.Type, $"'{str.TypeExpr}' is not a struct type");
+                context.ReportError(str?.TypeExpr, $"'{str.TypeExpr}' is not a struct type");
             }
 
             yield break;
@@ -2297,13 +2279,13 @@ namespace Cheez.Compiler.SemanticAnalysis
                 else
                 {
                     arr.Type = CheezType.Error;
-                    context.ReportError(arr.Indexer.GenericParseTreeNode, "Index must be a constant int");
+                    context.ReportError(arr.Indexer, "Index must be a constant int");
                 }
             }
             else
             {
                 arr.Type = CheezType.Error;
-                context.ReportError(arr.SubExpression.GenericParseTreeNode, $"[] operator can only be used with array and pointer types, got '{arr.SubExpression.Type}'");
+                context.ReportError(arr.SubExpression, $"[] operator can only be used with array and pointer types, got '{arr.SubExpression.Type}'");
             }
 
             if (arr.Indexer.Type is IntType i)
@@ -2314,7 +2296,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             else
             {
                 arr.Type = CheezType.Error;
-                context.ReportError(arr.SubExpression.GenericParseTreeNode, $"Indexer of [] operator has to be an integer, got '{arr.Indexer.Type}");
+                context.ReportError(arr.SubExpression, $"Indexer of [] operator has to be an integer, got '{arr.Indexer.Type}");
             }
 
             arr.SetFlag(ExprFlags.IsLValue);
@@ -2338,12 +2320,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                     switch (bin.Operator)
                     {
                         case "-":
-                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(bin.GenericParseTreeNode, n.Data.Negate()), context.Clone(ExpectedType: null)))
+                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(n.Data.Negate(), bin), context.Clone(ExpectedType: null)))
                                 yield return vv;
                             yield break;
 
                         case "+":
-                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(bin.GenericParseTreeNode, n.Data), context.Clone(ExpectedType: null)))
+                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(n.Data, bin), context.Clone(ExpectedType: null)))
                                 yield return vv;
                             yield break;
 
@@ -2356,11 +2338,11 @@ namespace Cheez.Compiler.SemanticAnalysis
                     switch (bin.Operator)
                     {
                         case "-":
-                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(bin.GenericParseTreeNode, n.Data.Negate()), context.Clone(ExpectedType: null)))
+                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(n.Data.Negate(), bin), context.Clone(ExpectedType: null)))
                                 yield return vv;
                             yield break;
                         case "+":
-                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(bin.GenericParseTreeNode, n.Data), context.Clone(ExpectedType: null)))
+                            foreach (var vv in ReplaceAstExpr(new AstNumberExpr(n.Data, bin), context.Clone(ExpectedType: null)))
                                 yield return vv;
                             yield break;
 
@@ -2389,12 +2371,12 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (ops.Count > 1)
             {
-                context.ReportError(bin.GenericParseTreeNode, $"Multiple operators match the type '{bin.SubExpr.Type}");
+                context.ReportError(bin, $"Multiple operators match the type '{bin.SubExpr.Type}");
                 yield break;
             }
             else if (ops.Count == 0)
             {
-                context.ReportError(bin.GenericParseTreeNode, $"No operator matches the type '{bin.SubExpr.Type}'");
+                context.ReportError(bin, $"No operator matches the type '{bin.SubExpr.Type}'");
                 yield break;
             }
 
@@ -2488,15 +2470,15 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (lt.TargetType == CheezType.Any && rt.TargetType != CheezType.Any)
                 {
-                    bin.Left = new AstCastExpr(bin.Left.GenericParseTreeNode,
-                        new AstTypeExpr(null, bin.Right.Type),
+                    bin.Left = new AstCastExpr(bin.Left,
+                        new AstTypeExpr(bin.Right.Type),
                         bin.Left);
                     bin.Left.Type = bin.Right.Type;
                 }
                 else if (lt.TargetType != CheezType.Any && rt.TargetType == CheezType.Any)
                 {
-                    bin.Right = new AstCastExpr(bin.Right.GenericParseTreeNode,
-                        new AstTypeExpr(null, bin.Left.Type),
+                    bin.Right = new AstCastExpr(bin.Right,
+                        new AstTypeExpr(bin.Left.Type),
                         bin.Right);
                     bin.Right.Type = bin.Left.Type;
                 }
@@ -2507,13 +2489,13 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (ops.Count > 1)
             {
                 bin.Type = CheezType.Error;
-                context.ReportError(bin.GenericParseTreeNode, $"Multiple operators match the types '{bin.Left.Type}' and '{bin.Right.Type}'");
+                context.ReportError(bin, $"Multiple operators match the types '{bin.Left.Type}' and '{bin.Right.Type}'");
                 yield break;
             }
             else if (ops.Count == 0)
             {
                 bin.Type = CheezType.Error;
-                context.ReportError(bin.GenericParseTreeNode, $"No operator matches the types '{bin.Left.Type}' and '{bin.Right.Type}'");
+                context.ReportError(bin, $"No operator matches the types '{bin.Left.Type}' and '{bin.Right.Type}'");
                 yield break;
             }
             else
@@ -2530,9 +2512,9 @@ namespace Cheez.Compiler.SemanticAnalysis
                         AstExpression newAst = null;
 
                         if (result is bool b)
-                            newAst = new AstBoolExpr(bin.GenericParseTreeNode, b);
+                            newAst = new AstBoolExpr(b, bin);
                         else if (result is long i)
-                            newAst = new AstNumberExpr(bin.GenericParseTreeNode, new NumberData((BigInteger)i));
+                            newAst = new AstNumberExpr(new NumberData((BigInteger)i), bin);
                         else
                         {
                             throw new NotImplementedException();
@@ -2648,7 +2630,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             if (g.Declaration.Parameters.Count != call.Arguments.Count)
             {
-                context.ReportError(call.GenericParseTreeNode, $"Wrong number of arguments in function call");
+                context.ReportError(call, $"Wrong number of arguments in function call");
             }
 
             var types = new Dictionary<string, CheezType>();
@@ -2724,7 +2706,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     if (!types.ContainsKey(pt.Key))
                     {
                         ok = false;
-                        context.ReportError(context.Text, call.GenericParseTreeNode, $"Couldn't infer type for polymorphic parameter ${pt.Key}");
+                        context.ReportError(context.Text, call, $"Couldn't infer type for polymorphic parameter ${pt.Key}");
                     }
                 }
 
@@ -2785,11 +2767,11 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (errorHandler.HasErrors)
                 {
                     var bindings = instance.PolymorphicTypes.Select(t => $"{t.Key} = {t.Value}");
-                    context.ReportError(call.GenericParseTreeNode, $"Failed to invoke polymorphic function ({string.Join(", ", bindings)})", errorHandler.Errors);
+                    context.ReportError(call, $"Failed to invoke polymorphic function ({string.Join(", ", bindings)})", errorHandler.Errors);
                 }
             }
 
-            call.Function = new AstFunctionExpression(call.Function.GenericParseTreeNode, instance, call.Function);
+            call.Function = new AstFunctionExpression(instance, call.Function, call.Function);
         }
 
         public override IEnumerable<object> VisitCallExpression(AstCallExpr call, SemanticerData context = null)
@@ -2845,7 +2827,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (f.ParameterTypes.Length != call.Arguments.Count)
                 {
-                    context.ReportError(call.GenericParseTreeNode, $"Wrong number of arguments in function call. Expected {f.ParameterTypes.Length}, got {call.Arguments.Count}");
+                    context.ReportError(call, $"Wrong number of arguments in function call. Expected {f.ParameterTypes.Length}, got {call.Arguments.Count}");
                 }
 
                 call.Type = f.ReturnType;
@@ -2853,22 +2835,22 @@ namespace Cheez.Compiler.SemanticAnalysis
                 for (int i = 0; i < call.Arguments.Count && i < f.ParameterTypes.Length; i++)
                 {
                     var expectedType = f.ParameterTypes[i];
-                    if (!CanAssign(call.Arguments[i].Type, expectedType, out var t, context, call.Arguments[i].GenericParseTreeNode, false))
+                    if (!CanAssign(call.Arguments[i].Type, expectedType, out var t, context, call.Arguments[i], false))
                     {
-                        context.ReportError(context.Text, call.Arguments[i].GenericParseTreeNode, $"Argument type does not match parameter type. Expected {expectedType}, got {call.Arguments[i].Type}");
+                        context.ReportError(context.Text, call.Arguments[i], $"Argument type does not match parameter type. Expected {expectedType}, got {call.Arguments[i].Type}");
                     }
 
                     call.Arguments[i].Type = t;
                     call.Arguments[i] = CreateCastIfImplicit(expectedType, call.Arguments[i]);
 
                     if (expectedType is ReferenceType && !call.Arguments[i].GetFlag(ExprFlags.IsLValue))
-                        context.ReportError(call.Arguments[i].GenericParseTreeNode, "Can't convert an rvalue to a reference");
+                        context.ReportError(call.Arguments[i], "Can't convert an rvalue to a reference");
 
                 }
             }
             else if (call.Function.Type != CheezType.Error)
             {
-                context.ReportError(call.Function.GenericParseTreeNode, $"Type '{call.Function.Type}' is not a callable type");
+                context.ReportError(call.Function, $"Type '{call.Function.Type}' is not a callable type");
             }
 
             yield break;
@@ -2901,7 +2883,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 //else
                 //{
-                //    yield return new GenericError(data.Text, ident.GenericParseTreeNode, "Polymorphic type not allowed here");
+                //    yield return new GenericError(data.Text, ident, "Polymorphic type not allowed here");
                 //}
             }
 
@@ -2914,7 +2896,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             var v = scope.GetSymbol(ident.Name, analyzed);
             if (v == null)
             {
-                yield return new WaitForSymbol(context.Text, ident.GenericParseTreeNode, scope, ident.Name, analyzed);
+                yield return new WaitForSymbol(context.Text, ident, scope, ident.Name, analyzed);
                 v = scope.GetSymbol(ident.Name, analyzed);
             }
             ident.Symbol = v;
@@ -2923,7 +2905,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (v is Using u)
             {
                 var e = u.Expr.Clone();
-                e.GenericParseTreeNode = ident.GenericParseTreeNode;
+                e = ident;
                 foreach (var vv in ReplaceAstExpr(e, context.Clone(ExpectedType: null)))
                     yield return vv;
                 yield break;
@@ -2982,7 +2964,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 {
                     if (s.Length != 1)
                     {
-                        context.ReportError(str.GenericParseTreeNode, "Char literal must be of length 1");
+                        context.ReportError(str, "Char literal must be of length 1");
                         str.Type = CheezType.Error;
                     }
                     else
@@ -3052,7 +3034,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             add.Type = PointerType.GetPointerType(subType);
             if (!add.SubExpression.GetFlag(ExprFlags.IsLValue))
-                context.ReportError(add.SubExpression.GenericParseTreeNode, $"Sub expression of & is not a lvalue");
+                context.ReportError(add.SubExpression, $"Sub expression of & is not a lvalue");
 
             yield break;
         }
@@ -3073,7 +3055,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else
             {
-                context.ReportError(deref.SubExpression.GenericParseTreeNode, $"Sub expression of & is not a pointer");
+                context.ReportError(deref.SubExpression, $"Sub expression of & is not a pointer");
             }
 
             deref.SetFlag(ExprFlags.IsLValue);
@@ -3089,7 +3071,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             if (cast.TypeExpr.Value is CheezType t)
                 cast.Type = t;
             else
-                context.ReportError(cast.TypeExpr.GenericParseTreeNode, $"Expected type, got {cast.TypeExpr.Type}");
+                context.ReportError(cast.TypeExpr, $"Expected type, got {cast.TypeExpr.Type}");
 
             // check subExpression
             foreach (var v in cast.SubExpression.Accept(this, context.Clone(ExpectedType: cast.Type)))
@@ -3099,13 +3081,13 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
 
 
-            if (!CanAssign(cast.SubExpression.Type, cast.Type, out var type, context, cast.SubExpression.GenericParseTreeNode, true))
+            if (!CanAssign(cast.SubExpression.Type, cast.Type, out var type, context, cast.SubExpression, true))
             {
                 // TODO: maybe comment out?
-                context.ReportError(cast.GenericParseTreeNode, $"Can't cast a value of to '{cast.SubExpression.Type}' to '{cast.Type}'");
+                context.ReportError(cast, $"Can't cast a value of to '{cast.SubExpression.Type}' to '{cast.Type}'");
             }
             //{
-            //    yield return new LambdaError(eh => eh.ReportError(data.Text, cast.ParseTreeNode, $"Can't cast a value of to '{cast.SubExpression.Type}' to '{cast.Type}'"));
+            //    yield return new LambdaError(eh => eh.ReportError(data.Text, cast, $"Can't cast a value of to '{cast.SubExpression.Type}' to '{cast.Type}'"));
             //}
             cast.SubExpression.Type = type;
 
@@ -3139,7 +3121,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 while (dot.Left.Type is PointerType p)
                 {
-                    dot.Left = new AstDereferenceExpr(dot.Left.GenericParseTreeNode, dot.Left);
+                    dot.Left = new AstDereferenceExpr(dot.Left, dot.Left);
                     dot.Left.Type = p.TargetType;
                 }
             }
@@ -3154,12 +3136,12 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (leftType is StructType s)
             {
-                var member = s.Declaration.Members.FirstOrDefault(m => m.Name.Name == dot.Right);
+                var member = s.Declaration.Members.FirstOrDefault(m => m.Name.Name == dot.Right.Name);
                 if (member == null)
                 {
-                    yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
-                        eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function '{dot.Right}' exists for type '{leftType}'"));
-                    var func = dot.Scope.GetImplFunction(leftType, dot.Right);
+                    yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right.Name) != null,
+                        eh => eh.ReportError(context.Text, dot, $"No impl function '{dot.Right}' exists for type '{leftType}'"));
+                    var func = dot.Scope.GetImplFunction(leftType, dot.Right.Name);
                     dot.Type = func.Type;
                     dot.IsDoubleColon = true;
                     dot.Value = func;
@@ -3174,10 +3156,10 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             if (leftType is TraitType trait)
             {
-                var func = trait.Declaration.Functions.FirstOrDefault(f => f.Name.Name == dot.Right);
+                var func = trait.Declaration.Functions.FirstOrDefault(f => f.Name.Name == dot.Right.Name);
                 if (func == null)
                 {
-                    context.ReportError(context.Text, dot.GenericParseTreeNode, $"No function '{dot.Right}' exists for type '{leftType}'");
+                    context.ReportError(context.Text, dot, $"No function '{dot.Right.Name}' exists for type '{leftType}'");
                     yield break;
                 }
                 else
@@ -3190,7 +3172,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             if (leftType == CheezType.Type && dot.Left.Value is EnumType e)
             {
-                if (e.Members.TryGetValue(dot.Right, out int m))
+                if (e.Members.TryGetValue(dot.Right.Name, out int m))
                 {
                     dot.Type = dot.Left.Value as CheezType;
                     dot.Value = m;
@@ -3199,12 +3181,12 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
                 else
                 {
-                    var implFunc = dot.Scope.GetImplFunction(leftType, dot.Right);
+                    var implFunc = dot.Scope.GetImplFunction(leftType, dot.Right.Name);
                     if (implFunc == null)
                     {
-                        yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
-                            eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function '{dot.Right}' exists for type '{leftType}'"));
-                        implFunc = dot.Scope.GetImplFunction(leftType, dot.Right);
+                        yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right.Name) != null,
+                            eh => eh.ReportError(context.Text, dot, $"No impl function '{dot.Right.Name}' exists for type '{leftType}'"));
+                        implFunc = dot.Scope.GetImplFunction(leftType, dot.Right.Name);
                     }
                     dot.Type = implFunc.Type;
                     dot.IsDoubleColon = true;
@@ -3214,13 +3196,13 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             if (leftType is SliceType slice)
             {
-                if (dot.Right == "length")
+                if (dot.Right.Name == "length")
                 {
                     dot.Type = IntType.GetIntType(4, true);
                     dot.SetFlag(ExprFlags.IsLValue);
                     yield break;
                 }
-                if (dot.Right == "data")
+                if (dot.Right.Name == "data")
                 {
                     dot.Type = slice.ToPointerType();
                     dot.SetFlag(ExprFlags.IsLValue);
@@ -3229,7 +3211,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             if (leftType is ArrayType arr)
             {
-                if (dot.Right == "length")
+                if (dot.Right.Name == "length")
                 {
                     dot.Type = IntType.GetIntType(4, true);
                     yield break;
@@ -3237,15 +3219,15 @@ namespace Cheez.Compiler.SemanticAnalysis
                 else
                 {
                     dot.Type = CheezType.Error;
-                    context.ReportError(dot.GenericParseTreeNode, $"'{dot.Right}' is not a member of type {dot.Left.Type}");
+                    context.ReportError(dot, $"'{dot.Right.Name}' is not a member of type {dot.Left.Type}");
                     yield break;
                 }
             }
 
             {
-                yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right) != null,
-                    eh => eh.ReportError(context.Text, dot.GenericParseTreeNode, $"No impl function  '{dot.Right}' exists for type '{leftType}'"));
-                var func = dot.Scope.GetImplFunction(leftType, dot.Right);
+                yield return new LambdaCondition(() => dot.Scope.GetImplFunction(leftType, dot.Right.Name) != null,
+                    eh => eh.ReportError(context.Text, dot, $"No impl function  '{dot.Right.Name}' exists for type '{leftType}'"));
+                var func = dot.Scope.GetImplFunction(leftType, dot.Right.Name);
                 dot.Type = func.Type;
                 dot.Value = func;
                 yield break;
@@ -3309,7 +3291,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
             else
             {
-                context.ReportError(context.Text, arr.Target.GenericParseTreeNode, $"Expected type, got {arr.Target.Type}");
+                context.ReportError(context.Text, arr.Target, $"Expected type, got {arr.Target.Type}");
             }
         }
 
@@ -3329,7 +3311,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         //    }
         //    else
         //    {
-        //        context.ReportError(ptr.Target.GenericParseTreeNode, $"Expected type, got {ptr.Target.Type}");
+        //        context.ReportError(ptr.Target, $"Expected type, got {ptr.Target.Type}");
         //    }
         //}
 
@@ -3369,9 +3351,9 @@ namespace Cheez.Compiler.SemanticAnalysis
                 {
                     type = value.Type;
                 }
-                else if (!CanAssign(value.Type, type, out var t, context, value.GenericParseTreeNode, true))
+                else if (!CanAssign(value.Type, type, out var t, context, value, true))
                 {
-                    context.ReportError(value.GenericParseTreeNode, $"Can't implicitly convert a value of type '{value.Type}' to type '{type}'");
+                    context.ReportError(value, $"Can't implicitly convert a value of type '{value.Type}' to type '{type}'");
                 }
                 else
                 {
@@ -3638,9 +3620,9 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
         }
 
-        private AstNumberExpr ConstInt(PTExpr node, BigInteger value)
+        private AstNumberExpr ConstInt(BigInteger value, ILocation Location = null)
         {
-            return new AstNumberExpr(node, new NumberData(value));
+            return new AstNumberExpr(new NumberData(value), Location);
         }
 
         /// <summary>
@@ -3655,13 +3637,13 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (source.Type is ArrayType a && s.TargetType == a.TargetType)
                 {
-                    var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                    var cast = new AstCastExpr(source, new AstTypeExpr(targetType), source);
                     cast.Type = targetType;
                     return cast;
                 }
                 else if (source.Type is PointerType p && s.TargetType == p.TargetType)
                 {
-                    var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                    var cast = new AstCastExpr(source, new AstTypeExpr(targetType), source);
                     cast.Type = targetType;
                     return cast;
                 }
@@ -3671,7 +3653,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (pt.TargetType != sp.TargetType)
                 {
-                    var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                    var cast = new AstCastExpr(source, new AstTypeExpr(targetType), source);
                     cast.Type = targetType;
                     return cast;
                 }
@@ -3679,7 +3661,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (targetType is TraitType trait)
             {
-                var cast = new AstCastExpr(source.GenericParseTreeNode, new AstTypeExpr(null, targetType), source);
+                var cast = new AstCastExpr(source, new AstTypeExpr(targetType), source);
                 cast.Type = targetType;
                 return cast;
             }
@@ -3719,7 +3701,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             var v = scope.GetSymbol(i.Name, forceAnalyzed);
                             if (v == null)
                             {
-                                yield return new WaitForSymbol(text, e.GenericParseTreeNode, scope, i.Name);
+                                yield return new WaitForSymbol(text, e, scope, i.Name);
                                 v = scope.GetSymbol(i.Name);
                             }
 
@@ -3774,7 +3756,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         {
                             if (s.Declaration.Parameters.Count != aTypes.Length)
                             {
-                                error.ReportError(text, c.Function.GenericParseTreeNode, $"Wrong number of arguments for struct '{s.Declaration.Name.Name}'");
+                                error.ReportError(text, c.Function, $"Wrong number of arguments for struct '{s.Declaration.Name.Name}'");
                                 yield return CheezType.Error;
                                 yield break;
                             }
@@ -3784,7 +3766,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         }
                         else
                         {
-                            error.ReportError(text, c.Function.GenericParseTreeNode, $"Expected struct type, got '{c.Function}'");
+                            error.ReportError(text, c.Function, $"Expected struct type, got '{c.Function}'");
                             yield return CheezType.Error;
                             yield break;
                         }

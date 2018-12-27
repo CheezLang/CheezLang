@@ -1397,7 +1397,7 @@ namespace Cheez.Compiler.CodeGeneration
                 if (dot.Left.Type is StructType s)
                 {
                     var left = dot.Left.Accept(this, data.Clone(Deref: false));
-                    var index = (uint)s.GetIndexOfMember(dot.Right);
+                    var index = (uint)s.GetIndexOfMember(dot.Right.Name);
                     var member = s.Declaration.Members[(int)index];
 
                     if (left.TypeOf().TypeKind == LLVMTypeKind.LLVMStructTypeKind)
@@ -1424,7 +1424,7 @@ namespace Cheez.Compiler.CodeGeneration
                 }
                 else if (dot.Left.Type is SliceType slice)
                 {
-                    if (dot.Right == "length")
+                    if (dot.Right.Name == "length")
                     {
                         var left = dot.Left.Accept(this, data.Clone(Deref: false));
                         var length = GetStructMemberPointer(data.Builder, left, 1);
@@ -1432,7 +1432,7 @@ namespace Cheez.Compiler.CodeGeneration
                             length = LLVM.BuildLoad(data.Builder, length, "");
                         return length;
                     }
-                    else if (dot.Right == "data")
+                    else if (dot.Right.Name == "data")
                     {
                         var left = dot.Left.Accept(this, data.Clone(Deref: true));
                         var ptr = LLVM.BuildExtractValue(data.Builder, left, 0, $"slice.data({slice})");
@@ -1445,7 +1445,7 @@ namespace Cheez.Compiler.CodeGeneration
                 }
                 else if (dot.Left.Type is ArrayType arr)
                 {
-                    if (dot.Right == "length")
+                    if (dot.Right.Name == "length")
                     {
                         var length = LLVM.ConstInt(LLVM.Int32Type(), (ulong)arr.Length, false);
                         return length;
@@ -1458,7 +1458,7 @@ namespace Cheez.Compiler.CodeGeneration
                 else if (dot.Left.Type is ReferenceType r && r.TargetType is StructType @struct)
                 {
                     var left = dot.Left.Accept(this, data.Clone(Deref: false));
-                    var index = (uint)@struct.GetIndexOfMember(dot.Right);
+                    var index = (uint)@struct.GetIndexOfMember(dot.Right.Name);
                     var member = @struct.Declaration.Members[(int)index];
 
                     left = LLVM.BuildLoad(data.Builder, left, "");
