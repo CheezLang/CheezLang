@@ -1,19 +1,19 @@
 ﻿using Cheez.Compiler.Parsing;
 
-namespace Cheez.Compiler.ParseTree
+namespace Cheez.Compiler.Ast
 {
     public interface ILocation
     {
         TokenLocation Beginning { get; }
+
         TokenLocation End { get; }
     }
 
     public class Location : ILocation
     {
         public TokenLocation Beginning { get; }
-        public TokenLocation End { get; }
 
-        public IText Text => throw new System.NotImplementedException();
+        public TokenLocation End { get; }
 
         public Location(TokenLocation beg)
         {

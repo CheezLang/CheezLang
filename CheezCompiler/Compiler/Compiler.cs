@@ -1,4 +1,4 @@
-﻿using Cheez.Compiler.ParseTree;
+﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.Parsing;
 using System;
 using System.Collections.Generic;
@@ -15,7 +15,7 @@ namespace Cheez.Compiler
         public Scope ExportScope { get; }
         public Scope PrivateScope { get; }
 
-        public List<PTStatement> Statements { get; } = new List<PTStatement>();
+        public List<AstStatement> Statements { get; } = new List<AstStatement>();
 
         public List<string> Libraries { get; set; } = new List<string>();
         public List<string> LibrariyIncludeDirectories { get; set; } = new List<string>();
@@ -129,7 +129,7 @@ namespace Cheez.Compiler
             return true;
         }
 
-        private bool RequireDirectiveArguments(List<PTExpr> args, params Type[] types)
+        private bool RequireDirectiveArguments(List<AstExpression> args, params Type[] types)
         {
             if (args.Count != types.Length)
             {
@@ -145,19 +145,19 @@ namespace Cheez.Compiler
             return true;
         }
 
-        private void HandleDirective(PTDirectiveStatement directive, IErrorHandler eh, Lexer lexer, List<string> loadedFiles, PTFile file)
+        private void HandleDirective(AstDirectiveStatement directive, IErrorHandler eh, Lexer lexer, List<string> loadedFiles, PTFile file)
         {
             if (directive.Directive.Name.Name == "with_module")
             {
                 var d = directive.Directive;
-                if (!RequireDirectiveArguments(d.Arguments, typeof(PTStringLiteral), typeof(PTStringLiteral)))
+                if (!RequireDirectiveArguments(d.Arguments, typeof(AstStringLiteral), typeof(AstStringLiteral)))
                 {
                     eh.ReportError(lexer, d, $"Invalid arguments for with_module directive");
                     return;
                 }
 
-                string moduleName = (d.Arguments[0] as PTStringLiteral).Value;
-                string modulePath = (d.Arguments[1] as PTStringLiteral).Value;
+                string moduleName = (d.Arguments[0] as AstStringLiteral).StringValue;
+                string modulePath = (d.Arguments[1] as AstStringLiteral).StringValue;
 
                 if (modulePath.StartsWith("./"))
                 {
@@ -170,13 +170,13 @@ namespace Cheez.Compiler
             else if (directive.Directive.Name.Name == "load")
             {
                 var d = directive.Directive;
-                if (d.Arguments.Count != 1 || !(d.Arguments[0] is PTStringLiteral f))
+                if (d.Arguments.Count != 1 || !(d.Arguments[0] is AstStringLiteral f))
                 {
                     eh.ReportError(lexer, d, "#load takes one string as argument");
                     return;
                 }
 
-                string path = f.Value;
+                string path = f.StringValue;
                 int colon = path.IndexOf(':');
                 if (colon >= path.Length - 1)
                 {
@@ -204,7 +204,7 @@ namespace Cheez.Compiler
                     if (ValidateFilePath(modulePath, libPath, true, eh, (lexer, d), out string pp))
                         loadedFiles.Add(pp);
                 }
-                else if (ValidateFilePath(Path.GetDirectoryName(file.Name), f.Value, true, eh, (lexer, d), out string pp))
+                else if (ValidateFilePath(Path.GetDirectoryName(file.Name), f.StringValue, true, eh, (lexer, d), out string pp))
                 {
                     loadedFiles.Add(pp);
                 }
@@ -212,17 +212,17 @@ namespace Cheez.Compiler
             else if (directive.Directive.Name.Name == "lib")
             {
                 var d = directive.Directive;
-                if (d.Arguments.Count != 1 || !(d.Arguments[0] is PTStringLiteral f))
+                if (d.Arguments.Count != 1 || !(d.Arguments[0] is AstStringLiteral f))
                 {
                     eh.ReportError(lexer, d, "#lib takes one string as argument");
                     return;
                 }
 
-                string libFile = f.Value;
+                string libFile = f.StringValue;
                 if (libFile.StartsWith("./"))
                 {
                     string sourceFileDir = Path.GetDirectoryName(directive.Beginning.file);
-                    libFile = Path.Combine(sourceFileDir, f.Value);
+                    libFile = Path.Combine(sourceFileDir, f.StringValue);
                 }
 
                 file.Libraries.Add(libFile);
@@ -251,12 +251,12 @@ namespace Cheez.Compiler
                 var result = parser.ParseStatement();
                 var s = result.stmt;
 
-                if (s is PTFunctionDecl || s is PTStructDecl || s is PTImplBlock || s is PTEnumDecl || s is PTVariableDecl || s is PTTypeAliasDecl || s is PTTraitDeclaration)
+                if (s is AstFunctionDecl || s is AstStructDecl || s is AstImplBlock || s is AstEnumDecl || s is AstVariableDecl || s is AstTypeAliasDecl || s is AstTraitDeclaration)
                 {
                     s.SourceFile = file;
                     file.Statements.Add(s);
                 }
-                else if (s is PTDirectiveStatement directive)
+                else if (s is AstDirectiveStatement directive)
                 {
                     HandleDirective(directive, eh, lexer, loadedFiles, file);
                 }

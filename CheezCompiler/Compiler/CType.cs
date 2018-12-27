@@ -1,5 +1,4 @@
 ﻿using Cheez.Compiler.Ast;
-using Cheez.Compiler.ParseTree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -433,7 +432,7 @@ namespace Cheez.Compiler
             int value = 0;
             foreach (var m in en.Members)
             {
-                Members.Add(m.Name, value++);
+                Members.Add(m.Name.Name, value++);
             }
         }
 

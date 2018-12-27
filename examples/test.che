@@ -1,43 +1,17 @@
 #load("std:io/io.che")
-// #load("examples/trait_function_call_performance")
-// #load("examples/glfw3_example")
-// #load("examples/signed_distance_field_renderer")
+#load("examples/trait_function_call_performance")
+#load("examples/glfw3_example")
+#load("examples/signed_distance_field_renderer")
 
-struct Vec3 {
-    x: float
-    y: float
-    z: float
-}
-
-impl Vec3 {
-    ref fn add(other: Vec3) -> Vec3 {
-        return new Vec3 {
-            x = self.x + other.x
-            y = self.y + other.y
-            z = self.z + other.z
-        }
-    }
-}
-
-impl Printable for Vec3 {
-    fn print(str: String&, format: string) {
-        sprint_f(str, "({}, {}, {})", [self.x, self.y, self.z])
-    }
-}
 
 fn Main() {
-    let a = new Vec3 { 1, 2, 3 }
-    let b = new Vec3 { x = 4, y = 5, z = 6 }
-
-    let c = a.add(b)
-
-    print_f("
-  {}
-+ {}
-  ------------------------------
-= {}", [a, b, c])
-
     // trait_function_call_performance()
     // glfw3_example()
-    // signed_distance_field_renderer()
+    signed_distance_field_renderer()
+
+    // let x: int          // int
+    // let x: &int         // int reference
+    // let x: []&int       // slice of int references
+    // let x: ptr int      // int ptr
+    // let x: []ptr int    // slice of int pointers
 }

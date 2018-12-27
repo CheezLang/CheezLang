@@ -1,4 +1,4 @@
-﻿using Cheez.Compiler.ParseTree;
+﻿using Cheez.Compiler.Ast;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +12,7 @@ namespace Cheez.Compiler.Parsing
     public class Parser
     {
         private delegate string ErrorMessageResolver(Token t);
-        private delegate PTExpr ExpressionParser(ErrorMessageResolver e);
+        private delegate AstExpression ExpressionParser(ErrorMessageResolver e);
 
         private Lexer mLexer;
         private IErrorHandler mErrorHandler;
@@ -26,6 +26,8 @@ namespace Cheez.Compiler.Parsing
             mLexer = lex;
             mErrorHandler = errHandler;
         }
+
+#region Helpers
 
         [DebuggerStepThrough]
         private (TokenLocation beg, TokenLocation end) GetWhitespaceLocation()
@@ -104,7 +106,7 @@ namespace Cheez.Compiler.Parsing
             string callingFunctionFile, callingFunctionName;
             int callLineNumber;
             (callingFunctionFile, callingFunctionName, callLineNumber) = GetCallingFunction().GetValueOrDefault(("", "", -1));
-            mErrorHandler.ReportError(mLexer, new Location(location, location), message, null, callingFunctionFile, callingFunctionName, callLineNumber);
+            mErrorHandler.ReportError(mLexer, new Location(location), message, null, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
         [SkipInStackFrame]
@@ -247,7 +249,9 @@ namespace Cheez.Compiler.Parsing
             }
         }
 
-        public (bool done, PTStatement stmt) ParseStatement(bool expectNewline = true)
+#endregion
+
+        public (bool done, AstStatement stmt) ParseStatement(bool expectNewline = true)
         {
             SkipNewlines();
             var token = PeekToken();
@@ -261,15 +265,15 @@ namespace Cheez.Compiler.Parsing
 
                 case TokenType.KwBreak:
                     NextToken();
-                    return (false, new PTBreakStmt(token.location));
+                    return (false, new AstBreakStmt(new Location(token.location)));
 
                 case TokenType.KwContinue:
                     NextToken();
-                    return (false, new PTContinueStmt(token.location));
+                    return (false, new AstContinueStmt(new Location(token.location)));
 
                 case TokenType.HashIdentifier:
                     {
-                        var dir = new PTDirectiveStatement(ParseDirective());
+                        var dir = ParseDirectiveStatement();
                         if (expectNewline && !Expect(TokenType.NewLine, ErrMsg("\\n", "after directive statement")))
                             RecoverStatement();
                         return (false, dir);
@@ -287,7 +291,7 @@ namespace Cheez.Compiler.Parsing
 
                         var s = ParseStatement(expectNewline);
                         if (s.stmt != null)
-                            return (false, new PTDeferStatement(token.location, s.stmt));
+                            return (false, new AstDeferStmt(s.stmt, Location: new Location(token.location)));
 
                         return (false, null);
                     }
@@ -319,7 +323,7 @@ namespace Cheez.Compiler.Parsing
                 default:
                     {
                         var expr = ParseExpression();
-                        if (expr is PTErrorExpr)
+                        if (expr is AstEmptyExpr)
                         {
                             NextToken();
                             return (false, null);
@@ -340,24 +344,24 @@ namespace Cheez.Compiler.Parsing
                             var val = ParseExpression();
                             if (expectNewline && !Expect(TokenType.NewLine, ErrMsg("\\n", "after assignment")))
                                 RecoverStatement();
-                            return (false, new PTAssignment(expr.Beginning, val.End, expr, val, op));
+                            return (false, new AstAssignment(expr, val, op, new Location(expr.Beginning, val.End)));
                         }
                         else
                         {
                             if (expectNewline && !Expect(TokenType.NewLine, ErrMsg("\\n", "after expression statement")))
                                 RecoverStatement();
-                            return (false, new PTExprStmt(expr.Beginning, expr.End, expr));
+                            return (false, new AstExprStmt(expr, new Location(expr.Beginning, expr.End)));
                         }
                     }
             }
         }
 
-        private PTStatement ParseTraitDeclaration()
+        private AstStatement ParseTraitDeclaration()
         {
             TokenLocation beg = null, end = null;
-            PTIdentifierExpr name = null;
-            var functions = new List<PTFunctionDecl>();
-            var parameters = new List<PTParameter>();
+            AstIdentifierExpr name = null;
+            var functions = new List<AstFunctionDecl>();
+            var parameters = new List<AstParameter>();
 
             beg = Consume(TokenType.KwTrait, ErrMsg("keyword 'trait'", "at beginning of trait declaration")).location;
             SkipNewlines();
@@ -386,14 +390,14 @@ namespace Cheez.Compiler.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of trait")).location;
 
-            return new PTTraitDeclaration(beg, end, name, parameters, functions);
+            return new AstTraitDeclaration(name, parameters, functions, new Location(beg, end));
         }
 
-        private PTStatement ParseMatchStatement()
+        private AstStatement ParseMatchStatement()
         {
             TokenLocation beg = null, end = null;
-            PTExpr value = null;
-            List<PTMatchCase> cases = new List<PTMatchCase>();
+            AstExpression value = null;
+            var cases = new List<AstMatchCase>();
 
             beg = Consume(TokenType.KwMatch, ErrMsg("keyword 'match'", "at beginning of match statement")).location;
             SkipNewlines();
@@ -419,7 +423,7 @@ namespace Cheez.Compiler.Parsing
 
                 if (s.stmt != null)
                 {
-                    cases.Add(new PTMatchCase(v.Beginning, s.stmt.End, v, s.stmt));
+                    cases.Add(new AstMatchCase(v, s.stmt, new Location(v.Beginning, s.stmt.End)));
                 }
 
                 next = PeekToken();
@@ -439,14 +443,14 @@ namespace Cheez.Compiler.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of match statement")).location;
 
-            return new PTMatchStmt(beg, end, value, cases);
+            return new AstMatchStmt(value, cases, Location: new Location(beg, end));
         }
 
-        private PTStatement ParseEnumDeclaration()
+        private AstStatement ParseEnumDeclaration()
         {
             TokenLocation beginning = null, end = null;
-            PTIdentifierExpr name;
-            var members = new List<PTEnumMember>();
+            AstIdentifierExpr name;
+            var members = new List<AstEnumMember>();
 
             beginning = NextToken().location;
             SkipNewlines();
@@ -466,7 +470,7 @@ namespace Cheez.Compiler.Parsing
 
                 var memberName = ParseIdentifierExpr(ErrMsg("identifier", "at enum member"));
 
-                members.Add(new PTEnumMember(memberName, null));
+                members.Add(new AstEnumMember(memberName, null, memberName.Location));
 
                 next = PeekToken();
                 if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
@@ -485,10 +489,10 @@ namespace Cheez.Compiler.Parsing
             }
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}")).location;
-            return new PTEnumDecl(beginning, end, name, members, null);
+            return new AstEnumDecl(name, members, Location: new Location(beginning, end));
         }
 
-        private PTStatement ParseUsingStatement()
+        private AstStatement ParseUsingStatement()
         {
             var beg = Consume(TokenType.KwUsing, ErrMsg("keyword 'using'", "at beginning of using statement")).location;
             SkipNewlines();
@@ -496,13 +500,13 @@ namespace Cheez.Compiler.Parsing
             //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after using statement")))
             //    RecoverStatement();
 
-            return new PTUsingStatement(beg, expr);
+            return new AstUsingStmt(expr, Location: new Location(beg));
         }
 
-        private PTReturnStmt ParseReturnStatement()
+        private AstReturnStmt ParseReturnStatement()
         {
             var beg = Consume(TokenType.KwReturn, ErrMsg("keyword 'return'", "at beginning of return statement")).location;
-            PTExpr returnValue = null;
+            AstExpression returnValue = null;
 
             if (IsExprToken())
             {
@@ -512,13 +516,19 @@ namespace Cheez.Compiler.Parsing
             //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "at end of return statement")))
             //    RecoverStatement();
 
-            return new PTReturnStmt(beg, returnValue);
+            return new AstReturnStmt(returnValue, new Location(beg));
         }
 
-        private PTDirective ParseDirective()
+        private AstDirectiveStatement ParseDirectiveStatement()
+        {
+            var dir = ParseDirective();
+            return new AstDirectiveStatement(dir, dir.Location);
+        }
+
+        private AstDirective ParseDirective()
         {
             TokenLocation end = null;
-            var args = new List<PTExpr>();
+            var args = new List<AstExpression>();
 
             var name = ParseIdentifierExpr(ErrMsg("identifier", "after # in directive"), TokenType.HashIdentifier);
 
@@ -554,12 +564,12 @@ namespace Cheez.Compiler.Parsing
                 end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of directive")).location;
             }
 
-            return new PTDirective(end, name, args);
+            return new AstDirective(name, args, new Location(name.Beginning, end));
         }
 
-        private List<PTParameter> ParseParameterList()
+        private List<AstParameter> ParseParameterList()
         {
-            var parameters = new List<PTParameter>();
+            var parameters = new List<AstParameter>();
 
             Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of parameter list"));
             SkipNewlines();
@@ -570,8 +580,8 @@ namespace Cheez.Compiler.Parsing
                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                     break;
 
-                PTIdentifierExpr pname = null;
-                PTExpr ptype = null;
+                AstIdentifierExpr pname = null;
+                AstExpression ptype = null;
 
                 if (next.type != TokenType.Colon)
                 {
@@ -584,7 +594,7 @@ namespace Cheez.Compiler.Parsing
 
                 ptype = ParseExpression();
 
-                parameters.Add(new PTParameter(pname.Beginning, pname, ptype));
+                parameters.Add(new AstParameter(pname, ptype, new Location(pname.Beginning)));
 
                 SkipNewlines();
                 next = PeekToken();
@@ -605,13 +615,13 @@ namespace Cheez.Compiler.Parsing
             return parameters;
         }
 
-        private PTStructDecl ParseStructDeclaration()
+        private AstStructDecl ParseStructDeclaration()
         {
             TokenLocation beg = null, end = null;
-            var members = new List<PTMemberDecl>();
-            List<PTDirective> directives = new List<PTDirective>();
-            PTIdentifierExpr name = null;
-            List<PTParameter> parameters = null;
+            var members = new List<AstMemberDecl>();
+            var directives = new List<AstDirective>();
+            AstIdentifierExpr name = null;
+            List<AstParameter> parameters = null;
 
             beg = Consume(TokenType.KwStruct, ErrMsg("keyword 'struct'", "at beginning of struct declaration")).location;
             SkipNewlines();
@@ -648,7 +658,7 @@ namespace Cheez.Compiler.Parsing
                 SkipNewlines();
 
                 var mType = ParseExpression();
-                PTExpr init = null;
+                AstExpression init = null;
 
                 next = PeekToken();
                 if (next.type == TokenType.Equal)
@@ -672,20 +682,22 @@ namespace Cheez.Compiler.Parsing
                     ReportError(next.location, $"Unexpected token {next} at end of struct member");
                 }
 
-                members.Add(new PTMemberDecl(mName, mType, init));
+                var memberEnd = init?.End ?? mType.End;
+
+                members.Add(new AstMemberDecl(mName, mType, init, new Location(mName.Beginning, end)));
             }
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct declaration")).location;
 
-            return new PTStructDecl(beg, end, name, parameters, members, directives);
+            return new AstStructDecl(name, parameters, members, directives, new Location(beg, end));
         }
 
-        private PTImplBlock ParseImplBlock()
+        private AstImplBlock ParseImplBlock()
         {
             TokenLocation beg = null, end = null;
-            var functions = new List<PTFunctionDecl>();
-            PTExpr target = null;
-            PTExpr trait = null;
+            var functions = new List<AstFunctionDecl>();
+            AstExpression target = null;
+            AstExpression trait = null;
 
             beg = Consume(TokenType.KwImpl, ErrMsg("keyword 'impl'", "at beginning of impl statement")).location;
             SkipNewlines();
@@ -729,12 +741,12 @@ namespace Cheez.Compiler.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of impl statement")).location;
 
-            return new PTImplBlock(beg, end, target, trait, functions);
+            return new AstImplBlock(target, trait, functions, new Location(beg, end));
         }
 
-        private PTBlockStmt ParseBlockStatement()
+        private AstBlockStmt ParseBlockStatement()
         {
-            List<PTStatement> statements = new List<PTStatement>();
+            var statements = new List<AstStatement>();
             var beg = Consume(TokenType.OpenBrace, ErrMsg("{", "at beginning of block statement")).location;
 
             SkipNewlines();
@@ -756,8 +768,8 @@ namespace Cheez.Compiler.Parsing
 
                     switch (s.stmt)
                     {
-                        case PTIfStmt _:
-                        case PTBlockStmt _:
+                        case AstIfStmt _:
+                        case AstBlockStmt _:
                             break;
 
                         default:
@@ -772,24 +784,22 @@ namespace Cheez.Compiler.Parsing
 
             var end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of block statement")).location;
 
-            return new PTBlockStmt(beg, end, statements);
+            return new AstBlockStmt(statements, new Location(beg, end));
         }
 
-        private PTExprStmt ParseExpressionStatement()
+        private AstExprStmt ParseExpressionStatement()
         {
             var expr = ParseExpression();
-            //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after expression statement")))
-            //    RecoverStatement();
-            return new PTExprStmt(expr.Beginning, expr.End, expr);
+            return new AstExprStmt(expr, new Location(expr.Beginning, expr.End));
         }
 
-        private PTVariableDecl ParseVariableDeclaration(params TokenType[] delimiters)
+        private AstVariableDecl ParseVariableDeclaration(params TokenType[] delimiters)
         {
             TokenLocation beg = null, end = null;
-            List<PTDirective> directives = new List<PTDirective>();
-            PTIdentifierExpr name = null;
-            PTExpr type = null;
-            PTExpr init = null;
+            var directives = new List<AstDirective>();
+            AstIdentifierExpr name = null;
+            AstExpression type = null;
+            AstExpression init = null;
 
             beg = Consume(TokenType.KwLet, ErrMsg("keyword 'let'", "at beginning of variable declaration")).location;
 
@@ -822,16 +832,16 @@ namespace Cheez.Compiler.Parsing
             //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after variable declaration")))
             //    RecoverStatement();
 
-            return new PTVariableDecl(beg, end, name, type, init, directives);
+            return new AstVariableDecl(name, type, init, directives, new Location(beg, end));
         }
 
-        private PTWhileStmt ParseWhileStatement()
+        private AstWhileStmt ParseWhileStatement()
         {
             TokenLocation beg = null;
-            PTExpr condition = null;
-            PTBlockStmt body = null;
-            PTVariableDecl init = null;
-            PTStatement post = null;
+            AstExpression condition = null;
+            AstBlockStmt body = null;
+            AstVariableDecl init = null;
+            AstStatement post = null;
 
             beg = Consume(TokenType.KwWhile, ErrMsg("keyword 'while'", "at beginning of while statement")).location;
             SkipNewlines();
@@ -858,16 +868,16 @@ namespace Cheez.Compiler.Parsing
 
             body = ParseBlockStatement();
 
-            return new PTWhileStmt(beg, condition, body, init, post);
+            return new AstWhileStmt(condition, body, init, post, new Location(beg, body.End));
         }
 
-        private PTIfStmt ParseIfStatement()
+        private AstIfStmt ParseIfStatement()
         {
             TokenLocation beg = null, end = null;
-            PTExpr condition = null;
-            PTStatement ifCase = null;
-            PTStatement elseCase = null;
-            PTVariableDecl pre = null;
+            AstExpression condition = null;
+            AstStatement ifCase = null;
+            AstStatement elseCase = null;
+            AstVariableDecl pre = null;
 
             beg = Consume(TokenType.KwIf, ErrMsg("keyword 'if'", "at beginning of if statement")).location;
             SkipNewlines();
@@ -899,17 +909,17 @@ namespace Cheez.Compiler.Parsing
                 end = elseCase.End;
             }
 
-            return new PTIfStmt(beg, end, condition, ifCase, elseCase, pre);
+            return new AstIfStmt(condition, ifCase, elseCase, pre, new Location(beg, end));
         }
 
-        private PTFunctionDecl ParseFunctionDeclaration()
+        private AstFunctionDecl ParseFunctionDeclaration()
         {
             TokenLocation beginning = null, end = null;
-            PTBlockStmt body = null;
-            List<PTFunctionParam> parameters = new List<PTFunctionParam>();
-            List<PTDirective> directives = new List<PTDirective>();
-            List<PTIdentifierExpr> generics = new List<PTIdentifierExpr>();
-            PTExpr returnType = null;
+            AstBlockStmt body = null;
+            var parameters = new List<AstFunctionParameter>();
+            var directives = new List<AstDirective>();
+            var generics = new List<AstIdentifierExpr>();
+            AstExpression returnType = null;
 
             beginning = NextToken().location;
             SkipNewlines();
@@ -964,8 +974,8 @@ namespace Cheez.Compiler.Parsing
                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                     break;
 
-                PTIdentifierExpr pname = null;
-                PTExpr ptype = null;
+                AstIdentifierExpr pname = null;
+                AstExpression ptype = null;
 
                 if (next.type != TokenType.Colon)
                     pname = ParseIdentifierExpr(ErrMsg("identifier"));
@@ -976,7 +986,7 @@ namespace Cheez.Compiler.Parsing
                 SkipNewlines();
                 ptype = ParseExpression();
 
-                parameters.Add(new PTFunctionParam(pname.Beginning, ptype.End, pname, ptype));
+                parameters.Add(new AstFunctionParameter(pname, ptype, new Location(pname.Beginning, ptype.End)));
 
                 SkipNewlines();
                 next = PeekToken();
@@ -1036,12 +1046,12 @@ namespace Cheez.Compiler.Parsing
                 //end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of function")).location;
             }
 
-            return new PTFunctionDecl(beginning, end, name, generics, parameters, returnType, body, directives);
+            return new AstFunctionDecl(name, generics, parameters, returnType, body, directives, Location: new Location(beginning, end));
         }
 
         #region Expression Parsing
 
-        private PTExpr ParseFunctionTypeExpr()
+        private AstExpression ParseFunctionTypeExpr()
         {
             var beginning = Consume(TokenType.KwFn, ErrMsg("keyword 'fn'", "at beginning of function type")).location;
             SkipNewlines();
@@ -1049,7 +1059,7 @@ namespace Cheez.Compiler.Parsing
             Consume(TokenType.OpenParen, ErrMsg("(", "after keyword 'fn'"));
             SkipNewlines();
 
-            List<PTExpr> args = new List<PTExpr>();
+            List<AstExpression> args = new List<AstExpression>();
             while (true)
             {
                 var next = PeekToken();
@@ -1072,7 +1082,7 @@ namespace Cheez.Compiler.Parsing
             }
 
             var end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of function type parameter list")).location;
-            PTExpr returnType = null;
+            AstExpression returnType = null;
             if (CheckToken(TokenType.Arrow))
             {
                 NextToken();
@@ -1080,10 +1090,10 @@ namespace Cheez.Compiler.Parsing
                 end = returnType.End;
             }
 
-            return new PTFunctionTypeExpr(beginning, end, returnType, args);
+            return new AstFunctionTypeExpr(args, returnType, new Location(beginning, end));
         }
 
-        private PTExpr ParseExpression(ErrorMessageResolver errorMessage = null)
+        private AstExpression ParseExpression(ErrorMessageResolver errorMessage = null)
         {
             errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
 
@@ -1091,21 +1101,21 @@ namespace Cheez.Compiler.Parsing
         }
 
         [DebuggerStepThrough]
-        private PTExpr ParseOrExpression(ErrorMessageResolver e)
+        private AstExpression ParseOrExpression(ErrorMessageResolver e)
         {
             return ParseBinaryLeftAssociativeExpression(ParseAndExpression, e,
                 (TokenType.KwOr, "or"));
         }
 
         [DebuggerStepThrough]
-        private PTExpr ParseAndExpression(ErrorMessageResolver e)
+        private AstExpression ParseAndExpression(ErrorMessageResolver e)
         {
             return ParseBinaryLeftAssociativeExpression(ParseComparisonExpression, e,
                 (TokenType.KwAnd, "and"));
         }
 
         [DebuggerStepThrough]
-        private PTExpr ParseComparisonExpression(ErrorMessageResolver e)
+        private AstExpression ParseComparisonExpression(ErrorMessageResolver e)
         {
             return ParseBinaryLeftAssociativeExpression(ParseAddSubExpression, e,
                 (TokenType.Less, "<"),
@@ -1117,7 +1127,7 @@ namespace Cheez.Compiler.Parsing
         }
 
         [DebuggerStepThrough]
-        private PTExpr ParseAddSubExpression(ErrorMessageResolver e)
+        private AstExpression ParseAddSubExpression(ErrorMessageResolver e)
         {
             return ParseBinaryLeftAssociativeExpression(ParseMulDivExpression, e,
                 (TokenType.Plus, "+"),
@@ -1125,7 +1135,7 @@ namespace Cheez.Compiler.Parsing
         }
 
         [DebuggerStepThrough]
-        private PTExpr ParseMulDivExpression(ErrorMessageResolver e)
+        private AstExpression ParseMulDivExpression(ErrorMessageResolver e)
         {
             return ParseBinaryLeftAssociativeExpression(ParseUnaryExpression, e,
                 (TokenType.Asterisk, "*"),
@@ -1134,7 +1144,7 @@ namespace Cheez.Compiler.Parsing
         }
 
         [DebuggerStepThrough]
-        private PTExpr ParseBinaryLeftAssociativeExpression(ExpressionParser sub, ErrorMessageResolver errorMessage, params (TokenType, string)[] types)
+        private AstExpression ParseBinaryLeftAssociativeExpression(ExpressionParser sub, ErrorMessageResolver errorMessage, params (TokenType, string)[] types)
         {
             return ParseLeftAssociativeExpression(sub, errorMessage, type =>
             {
@@ -1148,10 +1158,10 @@ namespace Cheez.Compiler.Parsing
             });
         }
 
-        private PTExpr ParseLeftAssociativeExpression(ExpressionParser sub, ErrorMessageResolver errorMessage, Func<TokenType, string> tokenMapping)
+        private AstExpression ParseLeftAssociativeExpression(ExpressionParser sub, ErrorMessageResolver errorMessage, Func<TokenType, string> tokenMapping)
         {
             var lhs = sub(errorMessage);
-            PTExpr rhs = null;
+            AstExpression rhs = null;
 
             while (true)
             {
@@ -1166,11 +1176,11 @@ namespace Cheez.Compiler.Parsing
                 NextToken();
                 SkipNewlines();
                 rhs = sub(errorMessage);
-                lhs = new PTBinaryExpr(lhs.Beginning, rhs.End, op, lhs, rhs);
+                lhs = new AstBinaryExpr(op, lhs, rhs, new Location(lhs.Beginning, rhs.End));
             }
         }
 
-        private PTExpr ParseUnaryExpression(ErrorMessageResolver errorMessage = null)
+        private AstExpression ParseUnaryExpression(ErrorMessageResolver errorMessage = null)
         {
             var next = PeekToken();
             if (next.type == TokenType.Ampersand)
@@ -1178,14 +1188,14 @@ namespace Cheez.Compiler.Parsing
                 NextToken();
                 SkipNewlines();
                 var sub = ParseUnaryExpression(errorMessage);
-                return new PTAddressOfExpr(next.location, sub.End, sub);
+                return new AstAddressOfExpr(sub, new Location(next.location, sub.End));
             }
             else if (next.type == TokenType.LessLess)
             {
                 NextToken();
                 SkipNewlines();
                 var sub = ParseUnaryExpression(errorMessage);
-                return new PTDereferenceExpr(next.location, sub.End, sub);
+                return new AstDereferenceExpr(sub, new Location(next.location, sub.End));
             }
             else if (next.type == TokenType.Minus || next.type == TokenType.Plus)
             {
@@ -1198,20 +1208,20 @@ namespace Cheez.Compiler.Parsing
                     case TokenType.Plus: op = "+"; break;
                     case TokenType.Minus: op = "-"; break;
                 }
-                return new PTUnaryExpr(next.location, sub.End, op, sub);
+                return new AstUnaryExpr(op, sub, new Location(next.location, sub.End));
             }
             else if (next.type == TokenType.Bang)
             {
                 NextToken();
                 SkipNewlines();
                 var sub = ParseUnaryExpression(errorMessage);
-                return new PTUnaryExpr(next.location, sub.End, "!", sub);
+                return new AstUnaryExpr("!", sub, new Location(next.location, sub.End));
             }
 
             return ParsePostUnaryExpression(errorMessage);
         }
 
-        private PTExpr ParsePostUnaryExpression(ErrorMessageResolver errorMessage)
+        private AstExpression ParsePostUnaryExpression(ErrorMessageResolver errorMessage)
         {
             var expr = ParseAtomicExpression(errorMessage);
 
@@ -1223,7 +1233,7 @@ namespace Cheez.Compiler.Parsing
                         {
                             NextToken();
                             SkipNewlines();
-                            List<PTExpr> args = new List<PTExpr>();
+                            List<AstExpression> args = new List<AstExpression>();
                             while (true)
                             {
                                 var next = PeekToken();
@@ -1249,7 +1259,7 @@ namespace Cheez.Compiler.Parsing
                             }
                             var end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of function call")).location;
 
-                            expr = new PTCallExpr(expr.Beginning, end, expr, args);
+                            expr = new AstCallExpr(expr, args, new Location(expr.Beginning, end));
                         }
                         break;
 
@@ -1261,14 +1271,14 @@ namespace Cheez.Compiler.Parsing
                             if (CheckToken(TokenType.ClosingBracket))
                             {
                                 var c = NextToken();
-                                expr = new PTArrayTypeExpr(expr.Beginning, c.location, expr);
+                                expr = new AstArrayTypeExpr(expr, new Location(expr.Beginning, c.location));
                             }
                             else
                             {
                                 var index = ParseExpression(errorMessage);
                                 SkipNewlines();
                                 var end = Consume(TokenType.ClosingBracket, ErrMsg("]", "at end of [] operator")).location;
-                                expr = new PTArrayAccessExpr(expr.Beginning, end, expr, index);
+                                expr = new AstArrayAccessExpr(expr, index, new Location(expr.Beginning, end));
                             }
                         }
                         break;
@@ -1279,7 +1289,7 @@ namespace Cheez.Compiler.Parsing
                             SkipNewlines();
                             var right = ParseIdentifierExpr(ErrMsg("identifier", "after ."));
 
-                            expr = new PTDotExpr(expr.Beginning, right.End, expr, right, false);
+                            expr = new AstDotExpr(expr, right, false, new Location(expr.Beginning, right.End));
                             break;
                         }
 
@@ -1289,7 +1299,7 @@ namespace Cheez.Compiler.Parsing
                             SkipNewlines();
                             var right = ParseIdentifierExpr(ErrMsg("identifier", "after ."));
 
-                            expr = new PTDotExpr(expr.Beginning, right.End, expr, right, true);
+                            expr = new AstDotExpr(expr, right, true, new Location(expr.Beginning, right.End));
                             break;
                         }
 
@@ -1306,11 +1316,11 @@ namespace Cheez.Compiler.Parsing
             }
         }
 
-        private List<PTExpr> ParseArgumentList(out TokenLocation end)
+        private List<AstExpression> ParseArgumentList(out TokenLocation end)
         {
             Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of argument list"));
 
-            List<PTExpr> args = new List<PTExpr>();
+            List<AstExpression> args = new List<AstExpression>();
             while (true)
             {
                 var next = PeekToken();
@@ -1336,7 +1346,7 @@ namespace Cheez.Compiler.Parsing
             return args;
         }
 
-        private PTExpr ParseAtomicExpression(ErrorMessageResolver errorMessage)
+        private AstExpression ParseAtomicExpression(ErrorMessageResolver errorMessage)
         {
             var token = PeekToken();
             switch (token.type)
@@ -1349,19 +1359,20 @@ namespace Cheez.Compiler.Parsing
 
                 case TokenType.KwNull:
                     NextToken();
-                    return new PTNullExpr(token.location);
+                    return new AstNullExpr(new Location(token.location));
 
                 case TokenType.AtSignIdentifier:
                     {
                         NextToken();
                         var args = ParseArgumentList(out var end);
-                        return new PTCompCallExpr(end, new PTIdentifierExpr(token.location, (string)token.data, false), args);
+                        var name = new AstIdentifierExpr((string)token.data, false, new Location(token.location));
+                        return new AstCompCallExpr(name, args, new Location(end));
                     }
 
                 case TokenType.OpenBracket:
                     {
                         NextToken();
-                        var values = new List<PTExpr>();
+                        var values = new List<AstExpression>();
 
                         while (true)
                         {
@@ -1397,36 +1408,36 @@ namespace Cheez.Compiler.Parsing
 
                         //}
 
-                        return new PTArrayExpression(token.location, end, values);
+                        return new AstArrayExpression(values, new Location(token.location, end));
                     }
 
                 case TokenType.DollarIdentifier:
                     NextToken();
-                    return new PTIdentifierExpr(token.location, (string)token.data, true);
+                    return new AstIdentifierExpr((string)token.data, true, new Location(token.location));
 
                 case TokenType.Identifier:
                     NextToken();
-                    return new PTIdentifierExpr(token.location, (string)token.data, false);
+                    return new AstIdentifierExpr((string)token.data, false, new Location(token.location));
 
                 case TokenType.StringLiteral:
                     NextToken();
-                    return new PTStringLiteral(token.location, (string)token.data, false);
+                    return new AstStringLiteral((string)token.data, false, new Location(token.location));
 
                 case TokenType.CharLiteral:
                     NextToken();
-                    return new PTStringLiteral(token.location, (string)token.data, true);
+                    return new AstStringLiteral((string)token.data, true, new Location(token.location));
 
                 case TokenType.NumberLiteral:
                     NextToken();
-                    return new PTNumberExpr(token.location, (NumberData)token.data);
+                    return new AstNumberExpr((NumberData)token.data, new Location(token.location));
 
                 case TokenType.KwTrue:
                     NextToken();
-                    return new PTBoolExpr(token.location, true);
+                    return new AstBoolExpr(true, new Location(token.location));
 
                 case TokenType.KwFalse:
                     NextToken();
-                    return new PTBoolExpr(token.location, false);
+                    return new AstBoolExpr(false, new Location(token.location));
 
                 //case TokenType.Less:
                 //    {
@@ -1436,7 +1447,7 @@ namespace Cheez.Compiler.Parsing
                 //        Consume(TokenType.Greater, ErrMsg(">", "after type in cast"));
                 //        SkipNewlines();
                 //        var e = ParseUnaryExpression(errorMessage);
-                //        return new PTCastExpr(token.location, e.End, type, e);
+                //        return new AstCastExpr(token.location, e.End, type, e);
                 //    }
 
                 case TokenType.KwCast:
@@ -1454,7 +1465,7 @@ namespace Cheez.Compiler.Parsing
                         SkipNewlines();
 
                         var sub = ParseUnaryExpression();
-                        return new PTCastExpr(token.location, sub.End, type, sub);
+                        return new AstCastExpr(type, sub, new Location(token.location, sub.End));
                     }
 
                 case TokenType.OpenParen:
@@ -1463,14 +1474,13 @@ namespace Cheez.Compiler.Parsing
                         SkipNewlines();
                         var sub = ParseExpression(errorMessage);
                         SkipNewlines();
-                        sub.Beginning = token.location;
-                        sub.End = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression")).location;
+                        Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression"));
 
                         if (IsExprToken(TokenType.Plus, TokenType.Minus))
                         {
                             var type = sub;
                             sub = ParseUnaryExpression();
-                            return new PTCastExpr(type.Beginning, sub.End, type, sub);
+                            return new AstCastExpr(type, sub, new Location(type.Beginning, sub.End));
                         }
                         return sub;
                     }
@@ -1482,11 +1492,11 @@ namespace Cheez.Compiler.Parsing
             }
         }
 
-        private PTExpr ParseStructValue()
+        private AstExpression ParseStructValue()
         {
             TokenLocation beg = null, end = null;
-            List<PTStructMemberInitialization> members = new List<PTStructMemberInitialization>();
-            PTExpr type;
+            List<AstStructMemberInitialization> members = new List<AstStructMemberInitialization>();
+            AstExpression type;
 
             beg = Consume(TokenType.KwNew, ErrMsg("keyword 'new'", "at beginning of struct value expression")).location;
 
@@ -1505,8 +1515,8 @@ namespace Cheez.Compiler.Parsing
                     break;
 
                 var value = ParseExpression();
-                PTIdentifierExpr memberName = null;
-                if (value is PTIdentifierExpr n && CheckToken(TokenType.Equal))
+                AstIdentifierExpr memberName = null;
+                if (value is AstIdentifierExpr n && CheckToken(TokenType.Equal))
                 {
                     memberName = n;
                     NextToken();
@@ -1514,13 +1524,7 @@ namespace Cheez.Compiler.Parsing
                     value = ParseExpression();
                 }
 
-                members.Add(new PTStructMemberInitialization
-                {
-                    Beginning = memberName?.Beginning ?? value.Beginning,
-                    End = value.End,
-                    Name = memberName,
-                    Value = value
-                });
+                members.Add(new AstStructMemberInitialization(memberName, value, new Location(memberName?.Beginning ?? value.Beginning, value.End)));
 
                 next = PeekToken();
                 if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
@@ -1541,25 +1545,25 @@ namespace Cheez.Compiler.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct value expression")).location;
 
-            return new PTStructValueExpr(type.Beginning, end, type, members);
+            return new AstStructValueExpr(type, members, new Location(type.Beginning, end));
         }
 
-        private PTIdentifierExpr ParseIdentifierExpr(ErrorMessageResolver customErrorMessage, TokenType identType = TokenType.Identifier)
+        private AstIdentifierExpr ParseIdentifierExpr(ErrorMessageResolver customErrorMessage, TokenType identType = TokenType.Identifier)
         {
             var next = PeekToken();
             if (next.type != identType)
             {
                 ReportError(next.location, customErrorMessage?.Invoke(next) ?? "Expected identifier");
-                return new PTIdentifierExpr(next.location, "§", false);
+                return new AstIdentifierExpr("§", false, new Location(next.location));
             }
             NextToken();
-            return new PTIdentifierExpr(next.location, (string)next.data, false);
+            return new AstIdentifierExpr((string)next.data, false, new Location(next.location));
         }
 
-        private PTExpr ParseEmptyExpression()
+        private AstExpression ParseEmptyExpression()
         {
             var loc = GetWhitespaceLocation();
-            return new PTErrorExpr(loc.beg, loc.end);
+            return new AstEmptyExpr(new Location(loc.beg, loc.end));
         }
         #endregion
 

@@ -4,7 +4,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Cheez.Compiler;
-using Cheez.Compiler.ParseTree;
+using Cheez.Compiler.Ast;
 using Cheez.Compiler.Parsing;
 
 namespace CheezCLI

@@ -1,4 +1,4 @@
-﻿using Cheez.Compiler.ParseTree;
+﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.Parsing;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

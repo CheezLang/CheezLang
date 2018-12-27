@@ -433,8 +433,8 @@ namespace Cheez.Compiler.Visitor
         public override string VisitEmptyExpression(AstEmptyExpr em, int data = 0)
         {
             int len = 0;
-            if (em.GenericParseTreeNode.Beginning.line == em.GenericParseTreeNode.End.line)
-                len = em.GenericParseTreeNode.End.end - em.GenericParseTreeNode.Beginning.index;
+            if (em.Beginning.line == em.End.line)
+                len = em.End.end - em.Beginning.index;
             if (len < 1)
                 len = 1;
             return new string('§', len);
