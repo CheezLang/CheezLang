@@ -35,11 +35,11 @@ namespace CheezCLI
         [Option('n', "name", HelpText = "Name of the executable generated: <name>")]
         public string OutName { get; set; }
 
-        [Option("print-ast", Default = false, HelpText = "Print the abstract syntrax tree to a file")]
-        public bool PrintAst { get; set; }
+        [Option("print-ast-raw", Default = null, HelpText = "Print the raw abstract syntax tree to a file: --print-ast-raw <filepath>")]
+        public string PrintRawAst { get; set; }
 
-        [Option("print-ast-file", Default = null, HelpText = "If print-ast is set, this is the generated file: --print-ast-file <filepath>")]
-        public string PrintAstFile { get; set; }
+        [Option("print-ast-analyzed", Default = null, HelpText = "Print the analyzed abstract syntax tree to a file: --print-ast-analyzed <filepath>")]
+        public string PrintAnalyzedAst { get; set; }
 
         [Option("no-code", Default = false, HelpText = "Don't generate exe")]
         public bool DontEmitCode { get; set; }
@@ -160,21 +160,25 @@ namespace CheezCLI
             result.LexAndParse = stopwatch.Elapsed;
             stopwatch.Restart();
 
-            //if (!errorHandler.HasErrors)
+            if (options.PrintRawAst != null)
+            {
+                var printer = new RawAstPrinter();
+                using (var file = File.Open(options.PrintRawAst, FileMode.Create))
+                using (var writer = new StreamWriter(file))
+                {
+                    printer.PrintWorkspace(compiler.DefaultWorkspace, writer);
+                }
+            }
+
             compiler.DefaultWorkspace.CompileAll();
 
             result.SemanticAnalysis = stopwatch.Elapsed;
             result.FrontEnd = result.LexAndParse + result.SemanticAnalysis;
 
-            if (options.PrintAst)
+            if (options.PrintAnalyzedAst != null)
             {
-                var printer = new RawAstPrinter();
-                printer.PrintWorkspace(compiler.DefaultWorkspace, Console.Out);
-            }
-            if (options.PrintAstFile != null)
-            {
-                var printer = new RawAstPrinter();
-                using (var file = File.Open(options.PrintAstFile, FileMode.Create))
+                var printer = new AnalyzedAstPrinter();
+                using (var file = File.Open(options.PrintAnalyzedAst, FileMode.Create))
                 using (var writer = new StreamWriter(file))
                 {
                     printer.PrintWorkspace(compiler.DefaultWorkspace, writer);

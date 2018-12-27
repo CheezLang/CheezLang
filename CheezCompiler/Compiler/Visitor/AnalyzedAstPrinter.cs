@@ -24,14 +24,14 @@ namespace Cheez.Compiler.Visitor
 
             var body = function.Body?.Accept(this) ?? ";";
 
-            var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name.Accept(this)}: {p.TypeExpr.Accept(this)}"));
+            var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name.Accept(this)}: {p.Type}"));
             var head = $"fn {function.Name.Accept(this)}";
 
             head += $"({pars})";
 
             if (function.ReturnTypeExpr != null)
             {
-                head += $" -> {function.ReturnTypeExpr.Accept(this)}";
+                head += $" -> {function.ReturnType}";
             }
 
             sb.Append($"{head} {body}".Indent(indentLevel));
@@ -63,9 +63,10 @@ namespace Cheez.Compiler.Visitor
                 {
                     sb.AppendLine(s.Accept(this));
                 }
+
+                sb.AppendLine("// return");
             }
 
-            sb.AppendLine("// return");
             sb.Append("return");
             if (ret.ReturnValue != null)
                 sb.Append(" ").Append(ret.ReturnValue.Accept(this));
@@ -74,7 +75,7 @@ namespace Cheez.Compiler.Visitor
 
         public override string VisitTypeAlias(AstTypeAliasDecl al, int data = 0)
         {
-            return $"type {al.Name.Accept(this)} = {al.TypeExpr.Accept(this)}";
+            return $"type {al.Name.Accept(this)} = {al.Type}";
         }
 
         public override string VisitUsingStatement(AstUsingStmt use, int data = 0)
@@ -84,13 +85,13 @@ namespace Cheez.Compiler.Visitor
 
         public override string VisitStructDeclaration(AstStructDecl str, int data = 0)
         {
-            var body = string.Join("\n", str.Members.Select(m => $"{m.Name.Accept(this)}: {m.TypeExpr.Accept(this)}"));
+            var body = string.Join("\n", str.Members.Select(m => $"{m.Name.Accept(this)}: {m.Type}"));
             var head = $"struct {str.Name.Accept(this)}";
 
             if (str.Parameters?.Count > 0)
             {
                 head += "(";
-                head += string.Join(", ", str.Parameters.Select(p => $"{p.Name.Accept(this)}: {p.TypeExpr.Accept(this)}"));
+                head += string.Join(", ", str.Parameters.Select(p => $"{p.Name.Accept(this)}: {p.Type}"));
                 head += ")";
             }
 
@@ -135,10 +136,10 @@ namespace Cheez.Compiler.Visitor
 
             if (impl.TraitExpr != null)
             {
-                header += impl.TraitExpr.Accept(this) + " for ";
+                header += impl.Trait + " for ";
             }
 
-            header += impl.TargetTypeExpr.Accept(this);
+            header += impl.TargetType;
 
             return $"{header} {{\n{body.Indent(4)}\n}}";
         }
@@ -147,8 +148,7 @@ namespace Cheez.Compiler.Visitor
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("let ").Append(variable.Name.Accept(this));
-            if (variable.TypeExpr != null)
-                sb.Append($": {variable.TypeExpr.Accept(this)}");
+            sb.Append($": {variable.Type}");
             if (variable.Initializer != null)
                 sb.Append($" = {variable.Initializer.Accept(this)}");
             return sb.ToString();
@@ -243,10 +243,9 @@ namespace Cheez.Compiler.Visitor
                 {
                     sb.AppendLine(s.Accept(this));
                 }
+                sb.AppendLine("// break");
             }
 
-
-            sb.AppendLine("// break");
             sb.Append("break");
             return sb.ToString();
         }
@@ -263,10 +262,9 @@ namespace Cheez.Compiler.Visitor
                 {
                     sb.AppendLine(s.Accept(this));
                 }
+                sb.AppendLine("// continue");
             }
 
-
-            sb.AppendLine("// continue");
             sb.Append("continue");
             return sb.ToString();
         }
@@ -275,15 +273,6 @@ namespace Cheez.Compiler.Visitor
 
 
         #region Expressions
-        public override string VisitFunctionTypeExpr(AstFunctionTypeExpr func, int data = 0)
-        {
-            var args = string.Join(", ", func.ParameterTypes.Select(p => p.Accept(this)));
-            if (func.ReturnType != null)
-                return $"fn({args}) -> {func.ReturnType.Accept(this)}";
-            else
-                return $"fn({args})";
-        }
-
         public override string VisitArrayExpression(AstArrayExpression arr, int data = 0)
         {
             var vals = string.Join(", ", arr.Values.Select(v => v.Accept(this)));
@@ -292,12 +281,7 @@ namespace Cheez.Compiler.Visitor
 
         public override string VisitTypeExpr(AstTypeExpr astArrayTypeExpr, int data = 0)
         {
-            return astArrayTypeExpr.Type.ToString();
-        }
-
-        public override string VisitArrayTypeExpr(AstArrayTypeExpr astArrayTypeExpr, int data = 0)
-        {
-            return $"[]{astArrayTypeExpr.Target.Accept(this)}";
+            return astArrayTypeExpr.Type?.ToString();
         }
 
         public override string VisitCompCallExpression(AstCompCallExpr call, int data = 0)
@@ -390,7 +374,7 @@ namespace Cheez.Compiler.Visitor
         public override string VisitCastExpression(AstCastExpr cast, int data = 0)
         {
             if (cast.TypeExpr != null)
-                return $"({cast.TypeExpr.Accept(this, 0)})({cast.SubExpression.Accept(this, 0)})";
+                return $"({cast.Type})({cast.SubExpression.Accept(this, 0)})";
             return $"cast ({cast.SubExpression.Accept(this, 0)})";
         }
 
@@ -417,7 +401,7 @@ namespace Cheez.Compiler.Visitor
                 body = $"{{ {body} }}";
             }
 
-            return $"new {str.TypeExpr.Accept(this)} {body}";
+            return $"new {str.Type} {body}";
         }
 
         public override string VisitEmptyExpression(AstEmptyExpr em, int data = 0)
