@@ -59,75 +59,6 @@ namespace Cheez.Compiler.Ast
         }
     }
 
-    public class AstStructExpression : AstExpression
-    {
-        public AstStructDecl Declaration { get; }
-
-        public AstExpression Original { get; set; }
-
-        public override bool IsPolymorphic => false;
-
-        public AstStructExpression(AstStructDecl @struct, AstExpression original, ILocation Location = null)
-            : base(Location)
-        {
-            Declaration = @struct;
-            Type = @struct.Type;
-            this.Original = original;
-            Value = @struct;
-        }
-
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => Original.Accept(visitor, data);
-
-        public override AstExpression Clone()
-            => CopyValuesTo(new AstStructExpression(Declaration, Original));
-    }
-
-    public class AstVariableExpression : AstExpression
-    {
-        public AstVariableDecl Declaration { get; }
-        public AstExpression Original { get; set; }
-        public override bool IsPolymorphic => false;
-
-        public AstVariableExpression(AstVariableDecl let, AstExpression original, ILocation Location = null)
-            : base(Location)
-        {
-            Declaration = let;
-            Type = let.Type;
-            this.Original = original;
-            Value = let;
-        }
-
-        [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
-            => Original != null ? Original.Accept(visitor, data) : visitor.VisitVariableExpression(this, data);
-
-        public override AstExpression Clone()
-            => CopyValuesTo(new AstVariableExpression(Declaration, Original));
-    }
-
-    public class AstFunctionExpression : AstExpression
-    {
-        public AstFunctionDecl Declaration { get; }
-
-        public AstExpression Original { get; set; }
-
-        public override bool IsPolymorphic => false;
-
-        public AstFunctionExpression(AstFunctionDecl func, AstExpression original, ILocation Location = null) : base(Location)
-        {
-            Declaration = func;
-            Type = func.Type;
-            this.Original = original;
-            Value = func;
-        }
-
-        [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => Original != null ? Original.Accept(visitor, data) : default;
-
-        public override AstExpression Clone()
-            => CopyValuesTo(new AstFunctionExpression(Declaration, Original));
-    }
-
     public class AstEmptyExpr : AstExpression
     {
         public override bool IsPolymorphic => false;
@@ -451,61 +382,6 @@ namespace Cheez.Compiler.Ast
 
         [DebuggerStepThrough]
         public override AstExpression Clone() => CopyValuesTo(new AstIdentifierExpr(Name, IsPolymorphic));
-    }
-
-    public class AstTypeExpr : AstExpression
-    {
-        public override bool IsPolymorphic => false;
-
-        public AstTypeExpr(CheezType type, ILocation Location = null) : base(Location)
-        {
-            this.Type = CheezType.Type;
-            this.Value = type;
-        }
-
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTypeExpr(this, data);
-
-        public override AstExpression Clone() => CopyValuesTo(new AstTypeExpr(Type));
-    }
-
-    public class AstArrayTypeExpr : AstExpression
-    {
-        public override bool IsPolymorphic => Target.IsPolymorphic;
-
-        public AstExpression Target { get; set; }
-
-        public AstArrayTypeExpr(AstExpression target, ILocation Location = null) : base(Location)
-        {
-            this.Target = target;
-            IsCompTimeValue = true;
-        }
-
-        [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitArrayTypeExpr(this, data);
-
-        [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstArrayTypeExpr(Target.Clone()));
-    }
-
-    public class AstFunctionTypeExpr : AstExpression
-    {
-        public override bool IsPolymorphic => ParameterTypes.Any(p => p.IsPolymorphic) || (ReturnType?.IsPolymorphic ?? false);
-
-        public AstExpression ReturnType { get; set; }
-        public List<AstExpression> ParameterTypes { get; set; }
-
-        public AstFunctionTypeExpr(List<AstExpression> parTypes, AstExpression returnType, ILocation Location = null) : base(Location)
-        {
-            this.ParameterTypes = parTypes;
-            this.ReturnType = returnType;
-            IsCompTimeValue = true;
-        }
-
-        [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitFunctionTypeExpr(this, data);
-
-        [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstFunctionTypeExpr(ParameterTypes.Select(p => p.Clone()).ToList(), ReturnType?.Clone()));
     }
 
     public class AstStructMemberInitialization: ILocation
