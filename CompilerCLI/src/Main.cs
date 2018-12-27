@@ -168,12 +168,12 @@ namespace CheezCLI
 
             if (options.PrintAst)
             {
-                var printer = new AstPrinter();
+                var printer = new RawAstPrinter();
                 printer.PrintWorkspace(compiler.DefaultWorkspace, Console.Out);
             }
             if (options.PrintAstFile != null)
             {
-                var printer = new AstPrinter();
+                var printer = new RawAstPrinter();
                 using (var file = File.Open(options.PrintAstFile, FileMode.Create))
                 using (var writer = new StreamWriter(file))
                 {

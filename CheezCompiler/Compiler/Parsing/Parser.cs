@@ -924,43 +924,6 @@ namespace Cheez.Compiler.Parsing
             var name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'fn' in function declaration"));
             SkipNewlines();
 
-            // generics
-            if (CheckToken(TokenType.Less))
-            {
-                NextToken();
-                SkipNewlines();
-
-                while (true)
-                {
-                    var next = PeekToken();
-                    if (next.type == TokenType.Greater || next.type == TokenType.EOF)
-                        break;
-
-                    var gname = ParseIdentifierExpr(null);
-                    generics.Add(gname);
-                    SkipNewlines();
-
-                    next = PeekToken();
-
-                    if (next.type == TokenType.Comma)
-                    {
-                        NextToken();
-                        SkipNewlines();
-                    }
-                    else if (next.type == TokenType.Greater || next.type == TokenType.EOF)
-                        break;
-                    else
-                    {
-                        NextToken();
-                        SkipNewlines();
-                        ReportError(next.location, "Expected ',' or '>'");
-                    }
-                }
-
-                Consume(TokenType.Greater, ErrMsg(">", "at end of generic parameter list"));
-                SkipNewlines();
-            }
-
             // parameters
             Consume(TokenType.OpenParen, ErrMsg("(", "after name in function declaration"));
             SkipNewlines();
@@ -997,6 +960,7 @@ namespace Cheez.Compiler.Parsing
                     SkipNewlines();
                     ReportError(next.location, "Expected ',' or ')'");
                 }
+                SkipNewlines();
             }
             Consume(TokenType.ClosingParen, ErrMsg(")", "at end of parameter list"));
 
@@ -1186,6 +1150,13 @@ namespace Cheez.Compiler.Parsing
                 SkipNewlines();
                 var sub = ParseUnaryExpression(errorMessage);
                 return new AstAddressOfExpr(sub, new Location(next.location, sub.End));
+            }
+            else if (next.type == TokenType.KwCast)
+            {
+                NextToken();
+                SkipNewlines();
+                var sub = ParseUnaryExpression(errorMessage);
+                return new AstCastExpr(null, sub, new Location(next.location, sub.End));
             }
             else if (next.type == TokenType.LessLess)
             {
