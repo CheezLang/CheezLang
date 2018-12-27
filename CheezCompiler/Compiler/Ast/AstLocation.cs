@@ -1,4 +1,6 @@
 ﻿using Cheez.Compiler.Parsing;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Cheez.Compiler.Ast
 {
@@ -25,6 +27,12 @@ namespace Cheez.Compiler.Ast
         {
             this.Beginning = beg;
             this.End = end;
+        }
+
+        public Location(IEnumerable<ILocation> locations)
+        {
+            this.Beginning = locations.First().Beginning;
+            this.End = locations.Last().End;
         }
     }
 }

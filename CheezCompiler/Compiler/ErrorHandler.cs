@@ -5,14 +5,6 @@ using System.Runtime.CompilerServices;
 
 namespace Cheez.Compiler
 {
-    public interface IErrorHandler
-    {
-        void ReportError(string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
-        void ReportError(IText text, ILocation location, string message, List<Error> subErrors = null, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
-
-        bool HasErrors { get; set; }
-    }
-    
     public class Error
     {
         public IText Text { get; set; }
@@ -23,6 +15,16 @@ namespace Cheez.Compiler
         public int LineNumber { get; set; }
 
         public List<Error> SubErrors { get; set; } = new List<Error>();
+        public List<string> Details { get; set; }
+    }
+
+    public interface IErrorHandler
+    {
+        void ReportError(string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
+        void ReportError(IText text, ILocation location, string message, List<Error> subErrors = null, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
+        void ReportError(Error error, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
+
+        bool HasErrors { get; set; }
     }
 
     public class SilentErrorHandler : IErrorHandler
@@ -45,23 +47,36 @@ namespace Cheez.Compiler
 
         public void ReportError(IText text, ILocation location, string message, List<Error> subErrors, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
-            HasErrors = true;
-            Errors.Add(new Error
+            ReportError(new Error
             {
                 Text = text,
                 Location = location,
-                Message = message,
+                Message = message, 
+                SubErrors = subErrors,
                 File = callingFunctionFile,
                 Function = callingFunctionName,
                 LineNumber = callLineNumber,
-                SubErrors = subErrors
             });
+        }
+        
+        public void ReportError(Error error, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        {
+            HasErrors = true;
+            Errors.Add(error);
         }
 
         public void ClearErrors()
         {
             HasErrors = false;
             Errors.Clear();
+        }
+
+        public void ForwardErrors(IErrorHandler next)
+        {
+            foreach (var e in Errors)
+            {
+                next.ReportError(e);
+            }
         }
     }
 }
