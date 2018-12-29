@@ -238,24 +238,24 @@ namespace Cheez.Compiler.Ast
             => CopyValuesTo(new AstBoolExpr((bool)Value));
     }
 
-    public class AstAmpersandExpr : AstExpression
+    public class AstAddressOfExpr : AstExpression
     {
         public AstExpression SubExpression { get; set; }
         public override bool IsPolymorphic => SubExpression.IsPolymorphic;
         public bool IsReference = false;
 
         [DebuggerStepThrough]
-        public AstAmpersandExpr(AstExpression sub, ILocation Location = null) : base(Location)
+        public AstAddressOfExpr(AstExpression sub, ILocation Location = null) : base(Location)
         {
             SubExpression = sub;
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitAmpersandExpr(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitAddressOfExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstAmpersandExpr(SubExpression.Clone()) { IsReference = this.IsReference });
+            => CopyValuesTo(new AstAddressOfExpr(SubExpression.Clone()) { IsReference = this.IsReference });
     }
 
     public class AstDereferenceExpr : AstExpression

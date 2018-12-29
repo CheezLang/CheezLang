@@ -1226,7 +1226,7 @@ namespace Cheez.Compiler.Parsing
                 NextToken();
                 SkipNewlines();
                 var sub = ParseUnaryExpression(errorMessage);
-                return new AstAmpersandExpr(sub, new Location(next.location, sub.End));
+                return new AstAddressOfExpr(sub, new Location(next.location, sub.End));
             }
             else if (next.type == TokenType.KwCast)
             {

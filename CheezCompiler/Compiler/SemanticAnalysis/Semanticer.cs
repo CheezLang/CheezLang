@@ -984,7 +984,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (function.ImplBlock.Trait != null)
                 {
-                    var type = new AstAmpersandExpr(function.Name, new AstTypeRef(function.ImplBlock.TargetType, function.Name));
+                    var type = new AstAddressOfExpr(function.Name, new AstTypeRef(function.ImplBlock.TargetType, function.Name));
 
                     var use = new AstVariableDecl(
                         new AstIdExpr("self", false, function.Name),
@@ -1584,7 +1584,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     selfType = impl.TargetTypeExpr.Clone(); // new AstTypeExpr(impl.TargetTypeExpr, impl.TargetType); // impl.TargetTypeExpr.Clone();
                     if (f.RefSelf)
                     {
-                        selfType = new AstAmpersandExpr(selfType, selfType)
+                        selfType = new AstAddressOfExpr(selfType, selfType)
                         {
                             IsReference = true
                         };
@@ -2570,7 +2570,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                     return false;
 
-                case AstAmpersandExpr pPtr:
+                case AstAddressOfExpr pPtr:
                     if (pPtr.IsReference)
                     {
                         if (arg is PointerType pt)
@@ -3008,7 +3008,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitAmpersandExpr(AstAmpersandExpr add, SemanticerData context = null)
+        public override IEnumerable<object> VisitAddressOfExpr(AstAddressOfExpr add, SemanticerData context = null)
         {
             add.Scope = context.Scope;
 
@@ -3609,7 +3609,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     types[i.Name] = expr;
                     break;
 
-                case AstAmpersandExpr p:
+                case AstAddressOfExpr p:
                     CollectPolymorphicTypes(p.SubExpression, ref types);
                     break;
 
@@ -3720,7 +3720,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         yield break;
                     }
 
-                case AstAmpersandExpr p:
+                case AstAddressOfExpr p:
                     {
                         CheezType sub = null;
                         foreach (var v in CreateType(scope, p.SubExpression, text, error, forceAnalyzed))

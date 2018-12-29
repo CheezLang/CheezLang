@@ -1473,7 +1473,7 @@ namespace Cheez.Compiler.CodeGeneration
             }
         }
 
-        public override LLVMValueRef VisitAmpersandExpr(AstAmpersandExpr add, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitAddressOfExpr(AstAddressOfExpr add, LLVMCodeGeneratorData data = null)
         {
             if (add.Type == CheezType.Type)
                 return default;
