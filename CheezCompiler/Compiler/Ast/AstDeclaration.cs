@@ -248,13 +248,15 @@ namespace Cheez.Compiler.Ast
 
     public class AstVariableDecl : AstDecl, ITypedSymbol
     {
-        public AstExpression TypeExpr { get; set; }
+        public AstTypeExpr TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
         public Scope SubScope { get; set; }
 
         public bool IsConstant { get; set; } = false;
 
-        public AstVariableDecl(AstIdExpr name, AstExpression typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null) 
+        public List<AstVariableDecl> Dependencies { get; set; }
+
+        public AstVariableDecl(AstIdExpr name, AstTypeExpr typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null) 
             : base(name, Directives, Location)
         {
             this.TypeExpr = typeExpr;
@@ -264,7 +266,7 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitVariableDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstVariableDecl(Name.Clone() as AstIdExpr, TypeExpr?.Clone(), Initializer?.Clone()));
+        public override AstStatement Clone() => CopyValuesTo(new AstVariableDecl(Name.Clone() as AstIdExpr, TypeExpr?.Clone() as AstTypeExpr, Initializer?.Clone()));
     }
 
     #endregion

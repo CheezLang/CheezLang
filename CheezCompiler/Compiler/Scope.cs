@@ -472,13 +472,14 @@ namespace Cheez.Compiler
             return false;
         }
 
-        public bool DefineSymbol(ISymbol symbol)
+        public (bool ok, ILocation other) DefineSymbol(ISymbol symbol)
         {
-            if (mSymbolTable.ContainsKey(symbol.Name.Name))
-                return false;
+            string name = symbol.Name.Name;
+            if (mSymbolTable.TryGetValue(name, out var other))
+                return (false, other.Location);
 
-            mSymbolTable[symbol.Name.Name] = symbol;
-            return true;
+            mSymbolTable[name] = symbol;
+            return (true, null);
         }
 
         public bool DefineTypeSymbol(string name, CheezType symbol)
@@ -506,7 +507,13 @@ namespace Cheez.Compiler
             ctv.Value = decl.Type;
         }
 
-        public ISymbol GetSymbol(string name, bool forceAnalyzed = true)
+        public void ChangeTypeOfVarDecl(AstDecl decl)
+        {
+            var ctv = mSymbolTable[decl.Name.Name] as AstVariableDecl;
+            ctv.Type = decl.Type;
+        }
+
+        public ISymbol GetSymbol(string name)
         {
             if (mSymbolTable.ContainsKey(name))
             {

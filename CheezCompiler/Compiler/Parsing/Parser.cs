@@ -818,7 +818,7 @@ namespace Cheez.Compiler.Parsing
             TokenLocation beg = null, end = null;
             var directives = new List<AstDirective>();
             AstIdExpr name = null;
-            AstExpression type = null;
+            AstTypeExpr type = null;
             AstExpression init = null;
 
             beg = Consume(TokenType.KwLet, ErrMsg("keyword 'let'", "at beginning of variable declaration")).location;

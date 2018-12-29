@@ -104,7 +104,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public bool Check()
         {
-            return Scope.GetSymbol(SymbolName, Analyzed) != null;
+            return Scope.GetSymbol(SymbolName) != null;
         }
 
         public void Report(IErrorHandler handler)
@@ -719,7 +719,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield break;
 
                 str.Type = new GenericStructType(str);
-                if (!scope.DefineSymbol(str))
+                if (!scope.DefineSymbol(str).ok)
                 {
                     data.ReportError(str.Name, $"A symbol with name '{str.Name.Name}' already exists in current scope");
                 }
@@ -900,7 +900,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         context.ReportError(function.Name, $"Duplicate name: {function.Name}");
                     }
                 }
-                else if (!function.Scope.DefineSymbol(function))
+                else if (!function.Scope.DefineSymbol(function).ok)
                 {
                     context.ReportError(function.Name, $"Duplicate name: {function.Name}");
                 }
@@ -939,7 +939,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 else
                     context.ReportError(p.TypeExpr, $"Expected type, got {p.TypeExpr.Type}");
 
-                if (!function.HeaderScope.DefineSymbol(p))
+                if (!function.HeaderScope.DefineSymbol(p).ok)
                 {
                     context.ReportError(p, $"A parameter with name '{p.Name}' already exists in this function");
                 }
@@ -968,7 +968,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         context.ReportError(function.Name, $"Duplicate name: {function.Name}");
                     }
                 }
-                else if (!function.Scope.DefineSymbol(function))
+                else if (!function.Scope.DefineSymbol(function).ok)
                 {
                     context.ReportError(function.Name, $"A function or variable with name '{function.Name}' already exists in current scope");
                 }
@@ -988,7 +988,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                     var use = new AstVariableDecl(
                         new AstIdExpr("self", false, function.Name),
-                        type,
+                        null, // type
                         new AstCastExpr(function.Name, type, new AstIdExpr("__self", false, function.Name)),
                         Location: function);
                     use.Type = PointerType.GetPointerType(function.ImplBlock.TargetType);
@@ -1247,7 +1247,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 foreach (var v in variable.TypeExpr.Accept(this, context.Clone()))
                 {
                     if (v is ReplaceAstExpr r)
-                        variable.TypeExpr = r.NewExpression;
+                        variable.TypeExpr = r.NewExpression as AstTypeExpr;
                     else
                         yield return v;
                 }
@@ -1291,7 +1291,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 variable.IsConstant = true;
                 variable.SubScope.DefineTypeSymbol(variable.Name.Name, variable.Initializer.Value as CheezType);
             }
-            else if (variable.SubScope.DefineSymbol(variable))
+            else if (variable.SubScope.DefineSymbol(variable).ok)
             {
                 //if (context.Function != null)
                 //    context.Function.LocalVariables.Add(variable);
@@ -1446,7 +1446,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield break;
 
                 trait.Type = new GenericTraitType(trait);
-                if (!trait.Scope.DefineSymbol(trait))
+                if (!trait.Scope.DefineSymbol(trait).ok)
                 {
                     context.ReportError(trait.Name, $"A symbol with name '{trait.Name.Name}' already exists in current scope");
                 }
@@ -2897,11 +2897,11 @@ namespace Cheez.Compiler.SemanticAnalysis
             var analyzed = true;
             if (context.Struct != null)
                 analyzed = false;
-            var v = scope.GetSymbol(ident.Name, analyzed);
+            var v = scope.GetSymbol(ident.Name);
             if (v == null)
             {
                 yield return new WaitForSymbol(context.Text, ident, scope, ident.Name, analyzed);
-                v = scope.GetSymbol(ident.Name, analyzed);
+                v = scope.GetSymbol(ident.Name);
             }
             ident.Symbol = v;
             ident.Value = v;
@@ -3702,7 +3702,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         }
                         else
                         {
-                            var v = scope.GetSymbol(i.Name, forceAnalyzed);
+                            var v = scope.GetSymbol(i.Name);
                             if (v == null)
                             {
                                 yield return new WaitForSymbol(text, e, scope, i.Name);

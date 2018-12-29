@@ -24,6 +24,19 @@ namespace Cheez.Compiler
 
     public abstract class AbstractType : CheezType { }
 
+    public class VarDeclType : AbstractType
+    {
+        public override bool IsPolyType => false;
+        public AstVariableDecl Declaration { get; }
+
+        public VarDeclType(AstVariableDecl decl)
+        {
+            Declaration = decl;
+        }
+
+        public override string ToString() => $"<var decl> {Declaration.Name.Name}";
+    }
+
     public class AliasType : AbstractType
     {
         public override bool IsPolyType => false;

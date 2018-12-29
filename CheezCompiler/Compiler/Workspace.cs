@@ -68,10 +68,12 @@ namespace Cheez.Compiler
             Pass4(); // resolve function signatures
             // Pass5(); // impls
             // Pass6(); // match impl functions with trait functions
-            // Pass6(); // function bodies and variabl
+            Pass6(); // function bodies and variables
 
 
-
+            var main = GlobalScope.GetSymbol("Main");
+            if (main != null && main is CompTimeVariable ctv && ctv.Value is FunctionType f)
+                MainFunction = ctv.Declaration as AstFunctionDecl;
             if (MainFunction == null)
             {
                 mCompiler.ErrorHandler.ReportError("No main function was specified");
