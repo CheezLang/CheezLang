@@ -296,7 +296,7 @@ namespace Cheez.Compiler.Visitor
             return sb.ToString();
         }
 
-        public override string VisitAmpersandExpr(AstAmpersandExpr add, int data = 0)
+        public override string VisitAddressOfExpr(AstAddressOfExpr add, int data = 0)
         {
             return "&" + add.SubExpression.Accept(this);
         }
