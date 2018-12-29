@@ -1028,7 +1028,6 @@ namespace Cheez.Compiler.SemanticAnalysis
             function.Scope = scope;
             function.HeaderScope = NewScope($"fn {function.Name}()", function.Scope);
             function.SubScope = NewScope("{}", function.HeaderScope);
-            function.Text = context.Text;
 
             foreach (var v in VisitFunctionHeader(function, context))
                 yield return v;
@@ -2762,7 +2761,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
 
                 var errorHandler = new SilentErrorHandler();
-                var subContext = new SemanticerData(g.Declaration.Scope, g.Declaration.Text, null, g.Declaration.ImplBlock, null, errorHandler);
+                var subContext = new SemanticerData(g.Declaration.Scope, null, null, g.Declaration.ImplBlock, null, errorHandler);
 
                 foreach (var v in VisitFunctionHeader(instance, subContext)) // @Todo: implTarget, text
                     yield return v;

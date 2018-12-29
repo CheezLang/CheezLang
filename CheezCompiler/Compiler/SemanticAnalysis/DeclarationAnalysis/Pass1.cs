@@ -87,7 +87,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
             trait.Scope.TypeDeclarations.Add(trait);
             trait.Type = new TraitType(trait);
 
-            var res = trait.Scope.DefineTypeSymbolNew(trait.Name.Name, trait.Type, trait);
+            var res = trait.Scope.DefineDeclaration(trait);
             if (!res.ok)
             {
                 (string, ILocation)? detail = null;
@@ -102,7 +102,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
             @enum.Type = new EnumType(@enum);
 
 
-            var res = @enum.Scope.DefineTypeSymbolNew(@enum.Name.Name, @enum.Type, @enum);
+            var res = @enum.Scope.DefineDeclaration(@enum);
             if (!res.ok)
             {
                 (string, ILocation)? detail = null;
@@ -113,22 +113,20 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
 
         private void Pass1StructDeclaration(AstStructDecl @struct)
         {
-            CheezType type;
-
             if (@struct.Parameters.Count > 0)
             {
                 @struct.IsPolymorphic = true;
-                type = new GenericStructType(@struct);
+                @struct.Type = new GenericStructType(@struct);
                 @struct.SubScope = new Scope($"struct {@struct.Name.Name}", @struct.Scope);
             }
             else
             {
                 @struct.Scope.TypeDeclarations.Add(@struct);
-                type = new StructType(@struct);
+                @struct.Type = new StructType(@struct);
                 @struct.SubScope = new Scope($"struct {@struct.Name.Name}", @struct.Scope);
             }
 
-            var res = @struct.Scope.DefineTypeSymbolNew(@struct.Name.Name, type, @struct);
+            var res = @struct.Scope.DefineDeclaration(@struct);
             if (!res.ok)
             {
                 (string, ILocation)? detail = null;
@@ -140,18 +138,14 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
         private void Pass1TypeAlias(AstTypeAliasDecl alias)
         {
             alias.TypeExpr.Scope = alias.Scope;
+            alias.Type = new AliasType(alias);
 
-            if (alias.TypeExpr is AstIdTypeExpr id)
+            var res = alias.Scope.DefineDeclaration(alias);
+            if (!res.ok)
             {
-                alias.Type = mWorkspace.ResolveType(alias.TypeExpr);
-
-                var res = alias.Scope.DefineTypeSymbolNew(alias.Name.Name, alias.Type, alias);
-                if (!res.ok)
-                {
-                    (string, ILocation)? detail = null;
-                    if (res.other != null) detail = ("Other declaration here:", res.other);
-                    mWorkspace.ReportError(alias.Name, $"A symbol with name '{alias.Name.Name}' already exists in current scope", detail);
-                }
+                (string, ILocation)? detail = null;
+                if (res.other != null) detail = ("Other declaration here:", res.other);
+                mWorkspace.ReportError(alias.Name, $"A symbol with name '{alias.Name.Name}' already exists in current scope", detail);
             }
         }
     }

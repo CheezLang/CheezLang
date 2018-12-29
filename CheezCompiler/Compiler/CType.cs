@@ -27,6 +27,17 @@ namespace Cheez.Compiler
         public int Alignment { get; set; } = 1;
     }
 
+    public class AliasType : CheezType
+    {
+        public override bool IsPolyType => false;
+        public AstTypeAliasDecl Declaration { get; }
+
+        public AliasType(AstTypeAliasDecl decl)
+        {
+            Declaration = decl;
+        }
+    }
+
     public class CheezTypeType : CheezType
     {
         public static CheezTypeType Instance { get; } = new CheezTypeType();

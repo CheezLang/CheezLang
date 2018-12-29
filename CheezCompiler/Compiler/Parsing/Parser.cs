@@ -656,7 +656,7 @@ namespace Cheez.Compiler.Parsing
                 Consume(TokenType.Colon, ErrMsg(":", "after struct member name"));
                 SkipNewlines();
 
-                var mType = ParseExpression();
+                var mType = ParseTypeExpr();
                 AstExpression init = null;
 
                 next = PeekToken();
