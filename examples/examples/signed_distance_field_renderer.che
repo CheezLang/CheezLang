@@ -233,7 +233,7 @@ impl SDF for SubtractionSDF {
 ////////////////////////////// shaders //////////////////////////////////
 
 trait Shader {
-    fn shade(ray: Ray, raymarcher: &Raymarcher) -> Vec3;
+    fn shade(ray: Ray, raymarcher: *Raymarcher) -> Vec3;
 }
 
 //////
@@ -242,7 +242,7 @@ struct ConstantColorShader {
 }
 
 impl Shader for ConstantColorShader {
-    fn shade(ray: Ray, raymarcher: &Raymarcher) -> Vec3 {
+    fn shade(ray: Ray, raymarcher: *Raymarcher) -> Vec3 {
         return color
     }
 }
@@ -253,7 +253,7 @@ struct LambertianShader {
 }
 
 impl Shader for LambertianShader {
-    fn shade(ray: Ray, raymarcher: &Raymarcher) -> Vec3 {
+    fn shade(ray: Ray, raymarcher: *Raymarcher) -> Vec3 {
         let ld: Vec3
         let lc: Vec3
         raymarcher.sampleLightDirection(&ld, &lc)
@@ -289,7 +289,7 @@ struct CheckerBoardShader {
 
 
 impl Shader for CheckerBoardShader {
-    fn shade(ray: Ray, raymarcher: &Raymarcher) -> Vec3 {
+    fn shade(ray: Ray, raymarcher: *Raymarcher) -> Vec3 {
         let x = mod(ray.origin.x, 2 * size)
         let y = mod(ray.origin.y, 2 * size)
         let z = mod(ray.origin.z, 2 * size)
@@ -318,7 +318,7 @@ impl Background {
 struct Raymarcher {
     sdf: SDF
     background: Background
-    backgroundDistance: double // = 1000
+    backgroundDistance: double = 1000
 }
 
 impl Raymarcher {
@@ -338,10 +338,10 @@ impl Raymarcher {
         return ds.shader.shade(ray, &self)
     }
 
-    ref fn sampleLightDirection(dir: &Vec3, col: &Vec3) {
+    ref fn sampleLightDirection(dir: *Vec3, col: *Vec3) {
         <<dir = new Vec3 {
             -1, 1.5, 1
-        }.normaziled()
+        }.normalized()
         <<col = new Vec3 {1, 1, 1}
     }
 
@@ -353,7 +353,7 @@ impl Raymarcher {
             y = sdf.distance(new Vec3{p.x, p.y + off, p.z}).distance - sdf.distance(new Vec3{p.x, p.y - off, p.z}).distance
             z = sdf.distance(new Vec3{p.x, p.y, p.z + off}).distance - sdf.distance(new Vec3{p.x, p.y, p.z - off}).distance
         }
-        return n.normaziled()
+        return n.normalized()
     }
 }
 
@@ -375,7 +375,7 @@ impl PerspectiveCamera {
                 x = (x - 0.5) * sensorWidth
                 y = -(y - 0.5) * sensorHeight
                 z = -focalLength
-            }.normaziled()
+            }.normalized()
         }
     }
 }
@@ -383,7 +383,7 @@ impl PerspectiveCamera {
 struct Film {
     width: uint
     height: uint
-    pixels: Vec3[]
+    pixels: []Vec3
 
     antiAliasingSteps: uint
 }
@@ -393,8 +393,8 @@ impl Film {
 
         print_f("({}, {})`n", [width, height])
 
-        let fw = 1 / (double)width
-        let fh = 1 / (double)height
+        let fw = 1 / cast(double) width
+        let fh = 1 / cast(double) height
 
         print_f("Rendering image with {} anti-aliasing step(s)`n", [antiAliasingSteps])
         if antiAliasingSteps < 1 {
@@ -413,8 +413,8 @@ impl Film {
 
             while let x: uint = 0; x < width; x += 1 {
 
-                let fx = (double)x
-                let fy = (double)y
+                let fx = cast(double) x
+                let fy = cast(double) y
 
                 let color = new Vec3{0, 0, 0}
 
@@ -428,7 +428,7 @@ impl Film {
                         let c = scene.project(ray)
                         color = color.add(c)
                     }
-                    color = color.mul(1 / (double)antiAliasingSteps)
+                    color = color.mul(1 / cast(double) antiAliasingSteps)
                 }
 
                 pixels[x + y * width] = color
@@ -453,17 +453,17 @@ impl SDFAllocator {
         allocator.dispose()
     }
 
-    ref fn allocate() -> &$T {
-        let t = (&T)allocator.allocate(1, @sizeof(T), @alignof(T))
+    ref fn allocate() -> *$T {
+        let t = cast(*T) allocator.allocate(1, @sizeof(T), @alignof(T))
         print_f("{}`n", [allocator])
         return t
     }
 
     ref fn sphere(radius: double, shader: Shader) -> SDF {
-        let s: &Sphere = self.allocate()
+        let s: *Sphere = self.allocate()
         s.radius = radius
         s.shader = shader
-        return (SDF)s
+        return cast(SDF) s
     }
 
     ref fn sphereT(position: Vec3, radius: double, shader: Shader) -> SDF {
@@ -471,17 +471,17 @@ impl SDFAllocator {
     }
 
     ref fn planeY(location: double, shader: Shader) -> SDF {
-        let s: &PlaneY = self.allocate()
+        let s: *PlaneY = self.allocate()
         s.location = location
         s.shader = shader
-        return (SDF)s
+        return cast(SDF) s
     }
 
     ref fn cube(radius: double, shader: Shader) -> SDF {
-        let s: &Cube = self.allocate()
+        let s: *Cube = self.allocate()
         s.radius = radius
         s.shader = shader
-        return (SDF)s
+        return cast(SDF) s
     }
 
     ref fn cubeT(position: Vec3, radius: double, shader: Shader) -> SDF {
@@ -489,69 +489,69 @@ impl SDFAllocator {
     }
 
     ref fn translate(sdf: SDF, translation: Vec3) -> SDF {
-        let t: &TranslatedSDF = self.allocate()
+        let t: *TranslatedSDF = self.allocate()
         t.sdf = sdf
         t.translation = translation
-        return (SDF)t
+        return cast(SDF) t
     }
 
     ref fn rotateX(sdf: SDF, angle: double) -> SDF {
-        let t: &RotatedXSDF = self.allocate()
+        let t: *RotatedXSDF = self.allocate()
         t.sdf = sdf
         t.angle = angle
-        return (SDF)t
+        return cast(SDF) t
     }
 
     ref fn rotateY(sdf: SDF, angle: double) -> SDF {
-        let t: &RotatedYSDF = self.allocate()
+        let t: *RotatedYSDF = self.allocate()
         t.sdf = sdf
         t.angle = angle
-        return (SDF)t
+        return cast(SDF) t
     }
 
     ref fn rotateZ(sdf: SDF, angle: double) -> SDF {
-        let t: &RotatedZSDF = self.allocate()
+        let t: *RotatedZSDF = self.allocate()
         t.sdf = sdf
         t.angle = angle
-        return (SDF)t
+        return cast(SDF) t
     }
 
     ref fn add(sdf1: SDF, sdf2: SDF) -> SDF {
-        let t: &UnionSDF = self.allocate()
+        let t: *UnionSDF = self.allocate()
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return (SDF)t
+        return cast(SDF) t
     }
 
     ref fn intersect(sdf1: SDF, sdf2: SDF) -> SDF {
-        let t: &IntersectionSDF = self.allocate()
+        let t: *IntersectionSDF = self.allocate()
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return (SDF)t
+        return cast(SDF) t
     }
 
     ref fn subtract(sdf1: SDF, sdf2: SDF) -> SDF {
-        let t: &SubtractionSDF = self.allocate()
+        let t: *SubtractionSDF = self.allocate()
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return (SDF)t
+        return cast(SDF) t
     }
 
-    ref fn combine(sdf1: SDF, sdf2: SDF) -> &$T {
-        let t: &T = self.allocate()
+    ref fn combine(sdf1: SDF, sdf2: SDF) -> *$T {
+        let t: *T = self.allocate()
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return (SDF)t
+        return cast(SDF) t
     }
 }
 
-fn renderImage(film: &Film)
+fn renderImage(film: *Film)
 {
     while let i = 0; i < film.pixels.length; i += 1 {
         film.pixels[i] = new Vec3 { 0, 0, 0 }
     }
 
-    let as = (double)film.width/(double)film.height
+    let as = cast(double) film.width / cast(double) film.height
     let camera = new PerspectiveCamera {
         focalLength = 50
         sensorWidth = as * 24
@@ -628,11 +628,11 @@ fn signed_distance_field_renderer()
     renderImage(&film)
     let end = getCurrentTimeInMilliseconds()
     let dur = end - start
-    let dur = (double)dur / (double)1000
+    let dur = cast(double) dur / cast(double) 1000
 
     print_f("Rendering took {} seconds
 ", [dur])
 
     // // store image as bmp
-    write_bmp((int)width, (int)height, (&double)imageArr.data, "test.bmp")
+    write_bmp(cast(int) width, cast(int) height, cast(*double) imageArr.data, "test.bmp")
 }

@@ -64,18 +64,18 @@ struct Color4d {
 }
 
 //
-let GLenum     = uint
-let GLboolean  = bool
-let GLbitfield = uint
-let GLbyte     = byte
-let GLshort    = short
-let GLint      = int
-let GLsizei    = int
-let GLubyte    = ubyte
-let GLushort   = ushort
-let GLuint     = uint
-let GLfloat    = float
-let GLclampf   = float
-let GLdouble   = double
-let GLclampd   = double
-let GLvoid     = void
+typedef GLenum     = uint
+typedef GLboolean  = bool
+typedef GLbitfield = uint
+typedef GLbyte     = byte
+typedef GLshort    = short
+typedef GLint      = int
+typedef GLsizei    = int
+typedef GLubyte    = ubyte
+typedef GLushort   = ushort
+typedef GLuint     = uint
+typedef GLfloat    = float
+typedef GLclampf   = float
+typedef GLdouble   = double
+typedef GLclampd   = double
+typedef GLvoid     = void

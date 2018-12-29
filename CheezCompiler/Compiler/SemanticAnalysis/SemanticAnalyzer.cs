@@ -28,6 +28,9 @@ namespace Cheez.Compiler
         {
             switch (typeExpr)
             {
+                case AstErrorTypeExpr _:
+                    return CheezType.Error;
+
                 case AstIdTypeExpr i:
                     {
                         if (i.IsPolymorphic)
