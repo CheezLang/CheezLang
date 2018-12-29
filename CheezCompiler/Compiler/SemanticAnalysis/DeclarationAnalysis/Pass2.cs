@@ -22,7 +22,10 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
 
             while (true)
             {
-                bool changes = false;
+                waitingList.Clear();
+                dependencies.Clear();
+
+                bool processedDecls = false;
                 for (int i = typeDeclarations.Count - 1; i >= 0; i--)
                 {
                     var decl = typeDeclarations[i];
@@ -45,13 +48,16 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
                         waitingList.Add(decl);
                         dependencies.Add(decl, deps);
                     }
+                    else
+                    {
+                        processedDecls = true;
+                    }
                 }
 
-                if (!changes || waitingList.Count == 0)
+                if (!processedDecls || waitingList.Count == 0)
                     break;
 
                 typeDeclarations.AddRange(waitingList);
-                dependencies.Clear();
             }
 
             if (waitingList.Count > 0)
@@ -82,18 +88,33 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
         private HashSet<AstDecl> Pass2TypeAlias(AstTypeAliasDecl alias)
         {
             var deps = new HashSet<AstDecl>();
+            
+            var newType = mWorkspace.ResolveType(alias.TypeExpr, deps);
+            if (newType != alias.Type && !(newType is AliasType))
+            {
+                alias.Type = newType;
+                alias.Scope.ChangeTypeOfDeclaration(alias);
+            }
 
-            alias.Type = mWorkspace.ResolveType(alias.TypeExpr, deps);
-
+            alias.Type = newType;
             return deps;
         }
 
         private HashSet<AstDecl> Pass2PolyStruct(AstStructDecl @struct)
         {
+            var deps = new HashSet<AstDecl>();
+
             foreach (var param in @struct.Parameters)
             {
                 param.TypeExpr.Scope = @struct.Scope;
-                param.Type = mWorkspace.ResolveType(param.TypeExpr);
+                var newType = mWorkspace.ResolveType(param.TypeExpr, deps);
+
+                if (newType is AbstractType)
+                {
+                    continue;
+                }
+
+                param.Type = newType;
 
                 switch (param.Type)
                 {
@@ -113,7 +134,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
                 }
             }
 
-            return new HashSet<AstDecl>();
+            return deps;
         }
     }
 }

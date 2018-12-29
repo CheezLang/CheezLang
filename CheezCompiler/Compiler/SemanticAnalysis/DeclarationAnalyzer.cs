@@ -25,13 +25,10 @@ namespace Cheez.Compiler
 
                         if (sym is CompTimeVariable c && c.Type == CheezType.Type)
                         {
-                            if (deps != null && c.Declaration != null)
-                            {
+                            var type = c.Value as CheezType;
+                            if (deps != null && c.Declaration != null && type is AbstractType)
                                 deps.Add(c.Declaration);
-                                return null;
-                            }
-                            var t = c.Value as CheezType;
-                            return t;
+                            return type;
                         }
                         else
                         {
@@ -136,7 +133,6 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
 
             // pass 2: resolve types
             Pass2();
-            
         }
     }
 }

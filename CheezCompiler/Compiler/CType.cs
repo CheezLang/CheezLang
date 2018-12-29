@@ -27,7 +27,9 @@ namespace Cheez.Compiler
         public int Alignment { get; set; } = 1;
     }
 
-    public class AliasType : CheezType
+    public abstract class AbstractType : CheezType { }
+
+    public class AliasType : AbstractType
     {
         public override bool IsPolyType => false;
         public AstTypeAliasDecl Declaration { get; }
@@ -36,6 +38,8 @@ namespace Cheez.Compiler
         {
             Declaration = decl;
         }
+
+        public override string ToString() => $"<type alias> {Declaration.Name.Name}";
     }
 
     public class CheezTypeType : CheezType
