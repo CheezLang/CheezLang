@@ -1,4 +1,5 @@
-﻿using Cheez.Compiler.Ast;
+﻿using System;
+using Cheez.Compiler.Ast;
 
 namespace Cheez.Compiler
 {
@@ -47,6 +48,7 @@ namespace Cheez.Compiler
                         {
                             @var.Scope = GlobalScope;
                             mVariables.Add(@var);
+                            Pass1VariableDeclaration(@var);
                             break;
                         }
 
@@ -79,6 +81,22 @@ namespace Cheez.Compiler
             foreach (var t in mTypeDefs)
             {
                 Pass1TypeAlias(t);
+            }
+        }
+
+        private void Pass1VariableDeclaration(AstVariableDecl var)
+        {
+            var.Type = new VarDeclType(var);
+            var res = var.Scope.DefineSymbol(var);
+            if (!res.ok)
+            {
+                (string, ILocation)? detail = null;
+                if (res.other != null) detail = ("Other declaration here:", res.other);
+                ReportError(var.Name, $"A symbol with name '{var.Name.Name}' already exists in current scope", detail);
+            }
+            else
+            {
+                var.Scope.VariableDeclarations.Add(var);
             }
         }
 

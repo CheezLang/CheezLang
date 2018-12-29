@@ -144,9 +144,11 @@
     <Compile Include="Compiler\SemanticAnalysis\Passes\Pass2.cs" />
     <Compile Include="Compiler\SemanticAnalysis\Passes\Pass3.cs" />
     <Compile Include="Compiler\SemanticAnalysis\Passes\Pass4.cs" />
+    <Compile Include="Compiler\SemanticAnalysis\Passes\Pass6.cs" />
     <Compile Include="Compiler\SemanticAnalysis\Passes\Pass_.cs" />
     <Compile Include="Compiler\SemanticAnalysis\SemanticAnalyzer.cs" />
     <Compile Include="Compiler\SemanticAnalysis\Semanticer.cs" />
+    <Compile Include="Compiler\SemanticAnalysis\TypeInference.cs" />
     <Compile Include="Compiler\UniqueNameDecorator.cs" />
     <Compile Include="Compiler\Util.cs" />
     <Compile Include="Compiler\Visitor\AnalyzedAstPrinter.cs" />

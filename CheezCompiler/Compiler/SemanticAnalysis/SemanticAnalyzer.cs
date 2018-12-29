@@ -47,7 +47,7 @@ namespace Cheez.Compiler
                         if (i.IsPolymorphic)
                             return new PolyType(i.Name);
 
-                        var sym = typeExpr.Scope.GetSymbol(i.Name, false);
+                        var sym = typeExpr.Scope.GetSymbol(i.Name);
 
                         if (sym == null)
                         {
