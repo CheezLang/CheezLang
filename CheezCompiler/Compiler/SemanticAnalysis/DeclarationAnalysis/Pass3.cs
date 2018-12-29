@@ -16,47 +16,14 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
         {
             var newInstances = new List<AstStructDecl>();
 
-            foreach (var @struct in mStructs)
-            {
-                mWorkspace.ResolveStruct(@struct, newInstances);
-            }
+            newInstances.AddRange(mStructs);
 
             foreach (var @struct in mPolyStructs)
             {
-                // this kind of loop because @struct.PolymorphicInstances can change while iterating
-                var count = @struct.PolymorphicInstances.Count;
-                for (int i = 0; i < count; i++)
-                {
-                    mWorkspace.ResolveStruct(@struct.PolymorphicInstances[i], newInstances);
-                }
+                newInstances.AddRange(@struct.PolymorphicInstances);
             }
 
-            {
-                var nextInstances = new List<AstStructDecl>();
-
-                int i = 0;
-                const int max_count = 100;
-                while (i < max_count && newInstances.Count != 0)
-                {
-                    foreach (var instance in newInstances)
-                    {
-                        mWorkspace.ResolveStruct(instance, nextInstances);
-                    }
-                    newInstances.Clear();
-
-                    var t = newInstances;
-                    newInstances = nextInstances;
-                    nextInstances = t;
-
-                    i++;
-                }
-
-                if (i == max_count)
-                {
-                    var details = newInstances.Select(str => ("Here:", str.Location)).ToList();
-                    mWorkspace.ReportError($"Detected a potential infinite loop in polymorphic struct declarations after {max_count} steps", details);
-                }
-            }
+            mWorkspace.ResolveStructs(newInstances);
         }
     }
 }

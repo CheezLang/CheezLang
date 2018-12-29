@@ -1,10 +1,7 @@
 ﻿using Cheez.Compiler.Ast;
-using Cheez.Compiler.SemanticAnalysis;
 using Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace Cheez.Compiler
 {
@@ -25,6 +22,8 @@ namespace Cheez.Compiler
 
         public Dictionary<CheezType, List<TraitType>> TypeTraitMap = new Dictionary<CheezType, List<TraitType>>();
         public Dictionary<CheezType, List<AstImplBlock>> Implementations = new Dictionary<CheezType, List<AstImplBlock>>();
+
+        public int MaxPolyStructResolveStepCount { get; set; } = 10;
 
         public Workspace(Compiler comp)
         {
