@@ -65,7 +65,7 @@ fn trait_function_call_performance() {
         }   
 
         while let i = 0; i < iterations; i += 1 {
-            t.normalFunction((ulong)n)
+            t.normalFunction(cast(ulong)n)
         }
     }
 
@@ -85,7 +85,7 @@ fn trait_function_call_performance() {
         }   
 
         while let i = 0; i < iterations; i += 1 {
-            t.refFunction((ulong)n)
+            t.refFunction(cast(ulong)n)
         }
     }
 
@@ -106,7 +106,7 @@ fn trait_function_call_performance() {
         }   
 
         while let i = 0; i < iterations; i += 1 {
-            t.traitFunction((ulong)n)
+            t.traitFunction(cast(ulong)n)
         }
     }
 
@@ -127,7 +127,7 @@ fn trait_function_call_performance() {
         }   
 
         while let i = 0; i < iterations; i += 1 {
-            tt.traitFunction((ulong)n)
+            tt.traitFunction(cast(ulong)n)
         }
     }
 }

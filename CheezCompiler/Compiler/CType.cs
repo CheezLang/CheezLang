@@ -5,11 +5,6 @@ using System.Linq;
 
 namespace Cheez.Compiler
 {
-    interface Analizable
-    {
-        bool Analyzed { get; set; }
-    }
-
     public abstract class CheezType
     {
         public static CheezType Void => VoidType.Intance;
@@ -350,11 +345,10 @@ namespace Cheez.Compiler
 
     }
 
-    public class TraitType : CheezType, Analizable
+    public class TraitType : CheezType
     {
         public AstTraitDeclaration Declaration { get; }
         public override bool IsPolyType => false;
-        public bool Analyzed { get; set; } = false;
 
         public TraitType(AstTraitDeclaration decl)
         {
@@ -363,26 +357,13 @@ namespace Cheez.Compiler
             Declaration = decl;
         }
 
-        public override string ToString() => Declaration.ToString();
+        public override string ToString() => Declaration.Name.Name;
     }
 
-    public class StructType : CheezType, Analizable
+    public class StructType : CheezType
     {
         public AstStructDecl Declaration { get; }
-
-        private bool _analyzed = false;
-        public bool Analyzed
-        {
-            get => _analyzed;
-            set
-            {
-                _analyzed = value;
-                CalculateSize();
-            }
-        }
-
         public CheezType[] Arguments { get; }
-
         public int[] MemberOffsets { get; private set; }
 
         public StructType(AstStructDecl decl)

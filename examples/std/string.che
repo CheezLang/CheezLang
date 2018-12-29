@@ -10,8 +10,8 @@ fn strlen(s: c_string) -> int {
 }
 
 fn streql(a: $T, b: $T2, len: ulong) -> bool {
-    let alen: ulong = (ulong)a.getLength()
-    let blen: ulong = (ulong)b.getLength()
+    let alen: ulong = cast a.getLength()
+    let blen: ulong = cast b.getLength()
     if len > alen {
         len = alen
     }
@@ -28,8 +28,8 @@ fn streql(a: $T, b: $T2, len: ulong) -> bool {
 }
 
 fn streq(a: $T, b: $T2) -> bool {
-    let len: ulong = (ulong)a.getLength()
-    let blen: ulong = (ulong)b.getLength()
+    let len: ulong = cast a.getLength()
+    let blen: ulong = cast b.getLength()
 
     if len != blen {
         return false
@@ -76,19 +76,19 @@ impl string {
 }
 
 impl Printable for c_string {
-    fn print(str: &String, format: string) {
+    fn print(str: *String, format: string) {
         str.append_cstring(<<self)
     }
 }
 
 impl Printable for string {
-    fn print(str: &String, format: string) {
+    fn print(str: *String, format: string) {
         str.append_string(<<self)
     }
 }
 
 struct StringBase(CharType: type) {
-    data: &CharType         = null
+    data: *CharType         = null
     length: int             = 0
     capacity: int           = 0
     allocator: Allocator    = null
@@ -118,10 +118,10 @@ impl StringBase($CharType) {
         capacity = size
         if data == null {
             length = 0
-            data = allocator.allocate((ulong)capacity, @sizeof(CharType), @alignof(CharType))
+            data = allocator.allocate(cast capacity, @sizeof(CharType), @alignof(CharType))
         }
         else {
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType), @alignof(CharType))
+            data = allocator.reallocate(data, cast capacity, @sizeof(CharType), @alignof(CharType))
             if length > capacity {
                 length = capacity
             }
@@ -132,15 +132,15 @@ impl StringBase($CharType) {
         length = size
         capacity = size
         if data == null {
-            data = allocator.allocate((ulong)capacity, @sizeof(CharType), @alignof(CharType))
+            data = allocator.allocate(cast capacity, @sizeof(CharType), @alignof(CharType))
         }
         else {
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType), @alignof(CharType))
+            data = allocator.reallocate(data, cast capacity, @sizeof(CharType), @alignof(CharType))
         }
     }
 
-    ref fn fromString(str: c_string) -> &StringBase(CharType) {
-        if (ulong)data != 0 {
+    ref fn fromString(str: c_string) -> *StringBase(CharType) {
+        if cast(ulong) data != 0 {
             // @Todo:
             //self.dispose()
             allocator.free(data)
@@ -151,25 +151,25 @@ impl StringBase($CharType) {
 
         length = strlen(str)
         capacity = length
-        data = allocator.allocate((ulong)capacity, @sizeof(CharType), @alignof(CharType))
+        data = allocator.allocate(cast capacity, @sizeof(CharType), @alignof(CharType))
 
         if @sizeof(CharType) == 1 {
             c_memcpy(data, str, length)
         } else {
             while let i = 0; i < length; i += 1 {
-                data[i] = (CharType)str[i]
+                data[i] = cast(CharType) str[i]
             }
         }
 
         return &self
     }
 
-    ref fn append(other: &StringBase(CharType)) -> &StringBase(CharType) {
+    ref fn append(other: *StringBase(CharType)) -> *StringBase(CharType) {
         let newLength = length + other.length
 
         if newLength >= capacity {
             capacity = newLength * 2
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType), @alignof(CharType))
+            data = allocator.reallocate(data, cast capacity, @sizeof(CharType), @alignof(CharType))
         }
         
         let end = &data[length]
@@ -180,13 +180,13 @@ impl StringBase($CharType) {
         return &self
     }
 
-    ref fn append_cstring(other: c_string) -> &StringBase(CharType) {
+    ref fn append_cstring(other: c_string) -> *StringBase(CharType) {
         let otherLength = strlen(other)
         let newLength = length + otherLength
                 
         if newLength >= capacity {
             capacity = newLength * 2
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType), @alignof(CharType))
+            data = allocator.reallocate(data, cast capacity, @sizeof(CharType), @alignof(CharType))
         }
         
         let end = &data[length]
@@ -197,12 +197,12 @@ impl StringBase($CharType) {
         return &self
     }
 
-    ref fn append_string(other: string) -> &StringBase(CharType) {
+    ref fn append_string(other: string) -> *StringBase(CharType) {
         let newLength = length + other.length
                 
         if newLength >= capacity {
             capacity = newLength * 2
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType), @alignof(CharType))
+            data = allocator.reallocate(data, cast capacity, @sizeof(CharType), @alignof(CharType))
         }
         
         let end = &data[length]
@@ -213,12 +213,12 @@ impl StringBase($CharType) {
         return &self
     }
 
-    ref fn appendChar(ch: CharType) -> &StringBase(CharType) {
+    ref fn append_char(ch: CharType) -> *StringBase(CharType) {
         let newLength = length + 1
         
         if newLength >= capacity {
             capacity = newLength * 2
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(CharType), @alignof(CharType))
+            data = allocator.reallocate(data, cast capacity, @sizeof(CharType), @alignof(CharType))
         }
         
         
@@ -254,21 +254,21 @@ impl StringBase($CharType) {
         length = 0
     }
 
-    ref fn slice() -> CharType[] {
+    ref fn slice() -> []CharType {
         return self.sliceFL(0, length)
     }
 
-    ref fn sliceFL(from: int, len: int) -> CharType[] {
-        let slice: CharType[] = &data[from]
+    ref fn sliceFL(from: int, len: int) -> []CharType {
+        let slice: []CharType = &data[from]
         slice.length = len
         return slice
     }
 
-    ref fn sliceF(from: int) -> CharType[] {
+    ref fn sliceF(from: int) -> []CharType {
         return self.sliceFL(from, length - from)
     }
     
-    ref fn sliceL(len: int) -> CharType[] {
+    ref fn sliceL(len: int) -> []CharType {
         return self.sliceFL(0, len)
     }
 

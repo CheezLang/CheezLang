@@ -1,11 +1,11 @@
 #load("std:os/windows")
 
-fn pointerAddSized(ptr: &$T, amount: $OffsetType) -> &T {
-    return (&T)((OffsetType)ptr + amount * @sizeof(T))
+fn pointerAddSized(ptr: *$T, amount: $OffsetType) -> *T {
+    return cast(*T)(cast(OffsetType) ptr + amount * @sizeof(T))
 }
 
-fn pointerAdd(ptr: &$T, amount: $OffsetType) -> &T {
-    return (&T)((OffsetType)ptr + amount)
+fn pointerAdd(ptr: *$T, amount: $OffsetType) -> *T {
+    return cast(*T)(cast(OffsetType) ptr + amount)
 }
 
 fn getCurrentTimeInMicroseconds() -> ulong {

@@ -511,15 +511,7 @@ namespace Cheez.Compiler
             if (mSymbolTable.ContainsKey(name))
             {
                 var v = mSymbolTable[name];
-                if (forceAnalyzed && v is CompTimeVariable c && c.Value is Analizable a)
-                {
-                    if (a.Analyzed)
-                        return v;
-                }
-                else
-                {
-                    return v;
-                }
+                return v;
             }
             return Parent?.GetSymbol(name);
         }

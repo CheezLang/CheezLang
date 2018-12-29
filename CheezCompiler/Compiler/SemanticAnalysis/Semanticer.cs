@@ -784,7 +784,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
 
             Debug.Assert(structType != null && structType.Declaration == str);
-            structType.Analyzed = true;
+            //structType.Analyzed = true;
         }
 
         public void Using(Scope scope, StructType @struct, INamed name)
@@ -1502,7 +1502,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
             }
 
-            (trait.Type as TraitType).Analyzed = true;
+            //(trait.Type as TraitType).Analyzed = true;
 
             yield break;
         }

@@ -3,7 +3,7 @@
 #load("std:mem/std_heap_allocator")
 
 struct Array(ElementType: type) {
-    data: &ElementType
+    data: *ElementType
     length: uint
     capacity: uint
     allocator: Allocator
@@ -20,22 +20,22 @@ impl Array($ElementType) {
         allocator = new StdHeapAllocator{}
         length = 0
         capacity = 10
-        data = allocator.allocate((ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
+        data = allocator.allocate(cast(ulong) capacity, @sizeof(ElementType), @alignof(ElementType))
     }
     
     ref fn initSize(size: uint) {
         allocator = new StdHeapAllocator{}
         length = 0
         capacity = size
-        data = allocator.allocate((ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
+        data = allocator.allocate(cast(ulong) capacity, @sizeof(ElementType), @alignof(ElementType))
     }
 
     ref fn dispose() {
         allocator.free(data)
     }
 
-    ref fn rawData() -> &ElementType {
-        return (&T)data
+    ref fn rawData() -> *ElementType {
+        return data
     }
 
     ref fn reserve(s: uint) {
@@ -43,7 +43,7 @@ impl Array($ElementType) {
             return
         }
         capacity = s
-        data = allocator.reallocate(data, (ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
+        data = allocator.reallocate(data, cast(ulong) capacity, @sizeof(ElementType), @alignof(ElementType))
     }
 
     ref fn resize(s: uint) {
@@ -54,7 +54,7 @@ impl Array($ElementType) {
     ref fn add(val: ElementType) {
         if capacity <= length {
             capacity = capacity * 2
-            data = allocator.reallocate(data, (ulong)capacity, @sizeof(ElementType), @alignof(ElementType))
+            data = allocator.reallocate(data, cast(ulong) capacity, @sizeof(ElementType), @alignof(ElementType))
         }
 
         data[length] = val
@@ -87,16 +87,16 @@ impl Array($ElementType) {
         r.reserve(length)
 
         while r.length < length {
-            r.data[r.length] = (X)data[r.length]
+            r.data[r.length] = cast(X) data[r.length]
             r.length += 1
         }
 
         return r
     }
 
-    ref fn slice() -> ElementType[] {
-        let slice: ElementType[] = self.data
-        slice.length = (i32)self.length
+    ref fn slice() -> []ElementType {
+        let slice: []ElementType = self.data
+        slice.length = cast(i32) self.length
         return slice
     }
 }

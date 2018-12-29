@@ -308,8 +308,8 @@ namespace Cheez.Compiler.Visitor
         public override string VisitCastExpr(AstCastExpr cast, int data = 0)
         {
             if (cast.TypeExpr != null)
-                return $"({cast.TypeExpr.Accept(this, 0)})({cast.SubExpression.Accept(this, 0)})";
-            return $"cast ({cast.SubExpression.Accept(this, 0)})";
+                return $"cast({cast.TypeExpr.Accept(this, 0)}) ({cast.SubExpression.Accept(this, 0)})";
+            return $"cast {cast.SubExpression.Accept(this, 0)}";
         }
 
         public override string VisitDotExpr(AstDotExpr dot, int data = 0)

@@ -375,7 +375,7 @@ namespace Cheez.Compiler.Visitor
         public override string VisitCastExpr(AstCastExpr cast, int data = 0)
         {
             if (cast.TypeExpr != null)
-                return $"({cast.Type})({cast.SubExpression.Accept(this, 0)})";
+                return $"cast({cast.Type}) ({cast.SubExpression.Accept(this, 0)})";
             return $"cast ({cast.SubExpression.Accept(this, 0)})";
         }
 

@@ -1,5 +1,5 @@
-fn c_malloc(size: int) -> &any #linkname("malloc");
-fn c_realloc(mem: &any, size: int) -> &any #linkname("realloc");
-fn c_free(mem: &any) #linkname("free");
+fn c_malloc(size: int) -> *any #linkname("malloc");
+fn c_realloc(mem: *any, size: int) -> *any #linkname("realloc");
+fn c_free(mem: *any) #linkname("free");
 
-fn c_memcpy(dest: &any, src: &any, size: int) #linkname("memcpy");
+fn c_memcpy(dest: *any, src: *any, size: int) #linkname("memcpy");

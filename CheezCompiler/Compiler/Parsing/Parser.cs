@@ -837,7 +837,7 @@ namespace Cheez.Compiler.Parsing
             {
                 NextToken();
                 SkipNewlines();
-                type = ParseExpression();
+                type = ParseTypeExpr();
                 end = type.End;
             }
 
@@ -967,9 +967,11 @@ namespace Cheez.Compiler.Parsing
                 Consume(TokenType.Colon, ErrMsg(":", "after name in parameter list"));
 
                 SkipNewlines();
-                ptype = ParseExpression();
+                ptype = ParseTypeExpr();
 
-                parameters.Add(new AstFunctionParameter(pname, ptype, new Location(pname.Beginning, ptype.End)));
+                var beg = pname?.Beginning ?? ptype.Beginning;
+
+                parameters.Add(new AstFunctionParameter(pname, ptype, new Location(beg, ptype.End)));
 
                 SkipNewlines();
                 next = PeekToken();
@@ -994,7 +996,7 @@ namespace Cheez.Compiler.Parsing
             {
                 NextToken();
                 SkipNewlines();
-                returnType = ParseExpression();
+                returnType = ParseTypeExpr();
                 SkipNewlines();
             }
 
@@ -1088,6 +1090,12 @@ namespace Cheez.Compiler.Parsing
         {
             var token = PeekToken();
 
+            if (token.type == TokenType.AtSignIdentifier)
+            {
+                var sub = ParseExpression();
+                return new AstExprTypeExpr(sub);
+            }
+
             if (token.type == TokenType.OpenBracket)
             {
                 NextToken();
@@ -1115,10 +1123,10 @@ namespace Cheez.Compiler.Parsing
                 }
             }
 
-            if (token.type == TokenType.Identifier)
+            if (token.type == TokenType.Identifier || token.type == TokenType.DollarIdentifier)
             {
                 NextToken();
-                AstTypeExpr result = new AstIdTypeExpr(token.data as string, new Location(token.location));
+                AstTypeExpr result = new AstIdTypeExpr(token.data as string, token.type == TokenType.DollarIdentifier, new Location(token.location));
 
                 var next = PeekToken();
                 if (next.type == TokenType.OpenParen)
@@ -1170,7 +1178,7 @@ namespace Cheez.Compiler.Parsing
 
             NextToken();
             ReportError(token.location, $"Unexpected token in type expression: '{token}'");
-            return null;
+            return new AstErrorTypeExpr(new Location(token.location));
         }
 
         [DebuggerStepThrough]
@@ -1265,8 +1273,22 @@ namespace Cheez.Compiler.Parsing
             }
             else if (next.type == TokenType.KwCast)
             {
+                AstTypeExpr type = null;
+
                 NextToken();
                 SkipNewlines();
+
+                next = PeekToken();
+                if (next.type == TokenType.OpenParen)
+                {
+                    NextToken();
+                    SkipNewlines();
+                    type = ParseTypeExpr();
+                    SkipNewlines();
+                    Consume(TokenType.ClosingParen, ErrMsg("')'", "after type in cast expression"));
+                    SkipNewlines();
+                }
+
                 var sub = ParseUnaryExpression(errorMessage);
                 return new AstCastExpr(null, sub, new Location(next.location, sub.End));
             }
@@ -1494,35 +1516,6 @@ namespace Cheez.Compiler.Parsing
                     NextToken();
                     return new AstBoolExpr(false, new Location(token.location));
 
-                //case TokenType.Less:
-                //    {
-                //        NextToken();
-                //        SkipNewlines();
-                //        var type = ParseExpression();
-                //        Consume(TokenType.Greater, ErrMsg(">", "after type in cast"));
-                //        SkipNewlines();
-                //        var e = ParseUnaryExpression(errorMessage);
-                //        return new AstCastExpr(token.location, e.End, type, e);
-                //    }
-
-                case TokenType.KwCast:
-                    {
-                        NextToken();
-                        SkipNewlines();
-
-                        Consume(TokenType.OpenParen, ErrMsg("(", "after keyword 'cast'"));
-                        SkipNewlines();
-
-                        var type = ParseExpression(errorMessage);
-                        SkipNewlines();
-
-                        Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression"));
-                        SkipNewlines();
-
-                        var sub = ParseUnaryExpression();
-                        return new AstCastExpr(type, sub, new Location(token.location, sub.End));
-                    }
-
                 case TokenType.OpenParen:
                     {
                         NextToken();
@@ -1530,13 +1523,6 @@ namespace Cheez.Compiler.Parsing
                         var sub = ParseExpression(errorMessage);
                         SkipNewlines();
                         Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression"));
-
-                        if (IsExprToken(TokenType.Plus, TokenType.Minus))
-                        {
-                            var type = sub;
-                            sub = ParseUnaryExpression();
-                            return new AstCastExpr(type, sub, new Location(type.Beginning, sub.End));
-                        }
                         return sub;
                     }
 
