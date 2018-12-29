@@ -1,10 +1,28 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using Cheez.Compiler.Ast;
 
 namespace Cheez.Compiler
 {
     public partial class Workspace
     {
+        // for semantic analysis
+        private List<AstStructDecl> mPolyStructs = new List<AstStructDecl>();
+        private List<AstStructDecl> mPolyStructInstances = new List<AstStructDecl>();
+        private List<AstStructDecl> mStructs = new List<AstStructDecl>();
+
+        private List<AstTraitDeclaration> mTraits = new List<AstTraitDeclaration>();
+        private List<AstEnumDecl> mEnums = new List<AstEnumDecl>();
+        private List<AstVariableDecl> mVariables = new List<AstVariableDecl>();
+        private List<AstTypeAliasDecl> mTypeDefs = new List<AstTypeAliasDecl>();
+        private List<AstImplBlock> mAllImpls = new List<AstImplBlock>();
+        private List<AstImplBlock> mTraitImpls = new List<AstImplBlock>();
+        private List<AstImplBlock> mPolyImpls = new List<AstImplBlock>();
+        private List<AstImplBlock> mImpls = new List<AstImplBlock>();
+
+        private List<AstFunctionDecl> mFunctions = new List<AstFunctionDecl>();
+        private List<AstFunctionDecl> mPolyFunctions = new List<AstFunctionDecl>();
+        private List<AstFunctionDecl> mFunctionInstances = new List<AstFunctionDecl>();
+        //
 
         /// <summary>
         /// pass 1:
