@@ -4,11 +4,94 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+namespace Cheez.Compiler
+{
+    public partial class Workspace
+    {
+        public CheezType ResolveType(AstExpression typeExpr)
+        {
+            switch (typeExpr)
+            {
+            case AstIdentifierExpr i:
+            {
+                if (i.IsPolymorphic)
+                    return new PolyType(i.Name);
+
+                var sym = typeExpr.Scope.GetSymbol(i.Name, false);
+
+                if (sym == null)
+                {
+                    ReportError(typeExpr, $"Unknown symbol");
+                    return CheezType.Error;
+                }
+
+                if (sym is CompTimeVariable c && c.Type == CheezType.Type)
+                {
+                    var t = c.Value as CheezType;
+                    return t;
+                }
+                else
+                {
+                    ReportError(typeExpr, $"'{typeExpr}' is not a valid type");
+                }
+
+                break;
+            }
+
+            case AstAddressOfExpr p:
+            {
+                p.SubExpression.Scope = typeExpr.Scope;
+                var subType = ResolveType(p.SubExpression);
+                return PointerType.GetPointerType(subType);
+            }
+
+            case AstArrayTypeExpr a:
+            {
+                a.Target.Scope = typeExpr.Scope;
+                var subType = ResolveType(a.Target);
+                return SliceType.GetSliceType(subType);
+            }
+
+            case AstArrayAccessExpr arr:
+            {
+                throw new NotImplementedException();
+                // arr.SubExpression.Scope = typeExpr.Scope;
+                // arr.Indexer.Scope = typeExpr.Scope;
+                // var subType = ResolveType(arr.SubExpression);
+                // var index = ResolveConstantExpression(arr.Indexer);
+
+                // if (index.type is IntType)
+                // {
+                //     long v = (long)index.value;
+                //     return ArrayType.GetArrayType(subType, (int)v);
+                // }
+                // ReportError(arr.Indexer, "Index must be a constant int");
+                // return CheezType.Error;
+            }
+
+            case AstCallExpr call:
+            {
+                throw new NotImplementedException();
+                // call.Function.Scope = call.Scope;
+                // var subType = ResolveType(call.Function);
+                // if (subType is PolyStructType @struct)
+                // {
+                //     return ResolvePolyStructType(call, @struct);
+                // }
+                // return CheezType.Error;
+            }
+            }
+
+            ReportError(typeExpr, $"Expected type");
+            return CheezType.Error;
+        }
+    }
+}
+
 namespace Cheez.Compiler.SemanticAnalysis
 {
     class DeclarationAnalyzer
     {
-        private Stack<IErrorHandler> mErrorHandler = new Stack<IErrorHandler>();
         private Workspace mWorkspace;
 
         private List<AstStructDecl> mPolyStructs = new List<AstStructDecl>();
@@ -25,104 +108,18 @@ namespace Cheez.Compiler.SemanticAnalysis
         private List<AstFunctionDecl> mPolyFunctions = new List<AstFunctionDecl>();
         private List<AstFunctionDecl> mFunctionInstances = new List<AstFunctionDecl>();
 
-        [SkipInStackFrame]
-        private void ReportError(ILocation lc, string message)
-        {
-            var (callingFunctionFile, callingFunctionName, callLineNumber) = Util.GetCallingFunction().GetValueOrDefault(("", "", -1));
-            var file = mWorkspace.GetFile(lc.Beginning.file);
-            mErrorHandler.Peek().ReportError(file, lc, message, null, callingFunctionFile, callingFunctionName, callLineNumber);
-        }
-
-        [SkipInStackFrame]
-        private void ReportError(ILocation lc, string message, params string[] details)
-        {
-            var (callingFunctionFile, callingFunctionName, callLineNumber) = Util.GetCallingFunction().GetValueOrDefault(("", "", -1));
-            var file = mWorkspace.GetFile(lc.Beginning.file);
-            mErrorHandler.Peek().ReportError(new Error
-            {
-                Text = file,
-                Location = lc,
-                Message = message,
-                Details = details.ToList()
-            }, callingFunctionFile, callingFunctionName, callLineNumber);
-        }
-
-        public void CollectDeclarations(Workspace ws, IErrorHandler errorHandler)
+        public void CollectDeclarations(Workspace ws)
         {
             mWorkspace = ws;
-            mErrorHandler.Push(errorHandler);
 
-            var globalScope = ws.GlobalScope;
+            // pass 1: collect types (structs, enums, traits, simple typedefs)
+            Pass1();
 
-            // pass 1:
-            // collect types (structs, enums, traits)
-            foreach (var s in ws.Statements)
-            {
-                switch (s)
-                {
-                    case AstStructDecl @struct:
-                        {
-                            @struct.Scope = globalScope;
-                            Pass1StructDeclaration(@struct);
+            // pass 2: poly struct parameter types
+            Pass2();
 
-                            if (@struct.Parameters.Count > 0)
-                                mPolyStructs.Add(@struct);
-                            else
-                                mStructs.Add(@struct);
-                            break;
-                        }
-
-                    case AstTraitDeclaration @trait:
-                        {
-                            trait.Scope = globalScope;
-                            Pass1TraitDeclaration(@trait);
-                            mTraits.Add(@trait);
-                            break;
-                        }
-
-                    case AstEnumDecl @enum:
-                        {
-                            @enum.Scope = globalScope;
-                            Pass1EnumDeclaration(@enum);
-                            mEnums.Add(@enum);
-                            break;
-                        }
-
-                    case AstVariableDecl @var:
-                        {
-                            @var.Scope = globalScope;
-                            mVariables.Add(@var);
-                            break;
-                        }
-
-                    case AstFunctionDecl func:
-                        {
-                            func.Scope = globalScope;
-                            mFunctions.Add(func);
-                            break;
-                        }
-
-                    case AstImplBlock impl:
-                        {
-                            impl.Scope = globalScope;
-                            mImpls.Add(impl);
-                            break;
-                        }
-
-                    case AstTypeAliasDecl type:
-                        {
-                            type.Scope = globalScope;
-                            mTypeDefs.Add(type);
-                            break;
-                        }
-                }
-            }
-
-            // typedefs
-            foreach (var t in mTypeDefs)
-            {
-                Pass1TypeAlias(t);
-            }
+            // pass 3: rest of typedefs
+            Pass3();
 
             //// pass 2:
             //// functions, trait functions
@@ -215,18 +212,102 @@ namespace Cheez.Compiler.SemanticAnalysis
             Console.WriteLine("--------------------------");
         }
 
+
+
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         #region Pass 1
 
+        /// <summary>
+        /// pass 1:
+        /// collect types (structs, enums, traits)
+        /// </summary>
+        private void Pass1()
+        {
+            var globalScope = mWorkspace.GlobalScope;
+
+            foreach (var s in mWorkspace.Statements)
+            {
+                switch (s)
+                {
+                    case AstStructDecl @struct:
+                        {
+                            @struct.Scope = globalScope;
+                            Pass1StructDeclaration(@struct);
+
+                            if (@struct.Parameters.Count > 0)
+                                mPolyStructs.Add(@struct);
+                            else
+                                mStructs.Add(@struct);
+                            break;
+                        }
+
+                    case AstTraitDeclaration @trait:
+                        {
+                            trait.Scope = globalScope;
+                            Pass1TraitDeclaration(@trait);
+                            mTraits.Add(@trait);
+                            break;
+                        }
+
+                    case AstEnumDecl @enum:
+                        {
+                            @enum.Scope = globalScope;
+                            Pass1EnumDeclaration(@enum);
+                            mEnums.Add(@enum);
+                            break;
+                        }
+
+                    case AstVariableDecl @var:
+                        {
+                            @var.Scope = globalScope;
+                            mVariables.Add(@var);
+                            break;
+                        }
+
+                    case AstFunctionDecl func:
+                        {
+                            func.Scope = globalScope;
+                            mFunctions.Add(func);
+                            break;
+                        }
+
+                    case AstImplBlock impl:
+                        {
+                            impl.Scope = globalScope;
+                            mImpls.Add(impl);
+                            break;
+                        }
+
+                    case AstTypeAliasDecl type:
+                        {
+                            type.Scope = globalScope;
+                            mTypeDefs.Add(type);
+                            break;
+                        }
+                }
+            }
+
+            // typedefs
+            foreach (var t in mTypeDefs)
+            {
+                Pass1TypeAlias(t);
+            }
+        }
+
         private void Pass1TraitDeclaration(AstTraitDeclaration trait)
         {
             trait.Scope.TypeDeclarations.Add(trait);
             trait.Type = new TraitType(trait);
-            if (!trait.Scope.DefineTypeSymbol(trait.Name.Name, trait.Type))
+
+            var res = trait.Scope.DefineTypeSymbolNew(trait.Name.Name, trait.Type, trait);
+            if (!res.ok)
             {
-                ReportError(trait.Name, $"A symbol with name '{trait.Name.Name}' already exists in current scope");
+                (string, ILocation)? detail = null;
+                if (res.other != null) detail = ("Other declaration here:", res.other);
+                mWorkspace.ReportError(trait.Name, $"A symbol with name '{trait.Name.Name}' already exists in current scope", detail);
             }
         }
 
@@ -235,9 +316,13 @@ namespace Cheez.Compiler.SemanticAnalysis
             @enum.Scope.TypeDeclarations.Add(@enum);
             @enum.Type = new EnumType(@enum);
 
-            if (!@enum.Scope.DefineTypeSymbol(@enum.Name.Name, @enum.Type))
+
+            var res = @enum.Scope.DefineTypeSymbolNew(@enum.Name.Name, @enum.Type, @enum);
+            if (!res.ok)
             {
-                ReportError(@enum.Name, $"A symbol with name '{@enum.Name.Name}' already exists in current scope");
+                (string, ILocation)? detail = null;
+                if (res.other != null) detail = ("Other declaration here:", res.other);
+                mWorkspace.ReportError(@enum.Name, $"A symbol with name '{@enum.Name.Name}' already exists in current scope", detail);
             }
         }
 
@@ -258,43 +343,90 @@ namespace Cheez.Compiler.SemanticAnalysis
                 @struct.SubScope = new Scope($"struct {@struct.Name.Name}", @struct.Scope);
             }
 
-            if (!@struct.Scope.DefineTypeSymbol(@struct.Name.Name, type))
+            var res = @struct.Scope.DefineTypeSymbolNew(@struct.Name.Name, type, @struct);
+            if (!res.ok)
             {
-                ReportError(@struct.Name, $"A symbol with name '{@struct.Name.Name}' already exists in current scope");
+                (string, ILocation)? detail = null;
+                if (res.other != null) detail = ("Other declaration here:", res.other);
+                mWorkspace.ReportError(@struct.Name, $"A symbol with name '{@struct.Name.Name}' already exists in current scope", detail);
             }
         }
 
-        private void Pass1TypeAlias(AstTypeAliasDecl t)
+        private void Pass1TypeAlias(AstTypeAliasDecl alias)
         {
-            //t.TypeExpr.Scope = t.Scope;
-            ////t.Type = ResolveType(t.TypeExpr);
+            alias.TypeExpr.Scope = alias.Scope;
 
-            //if (!t.Scope.DefineTypeSymbol(t.Name.Name, t.Type))
-            //{
-            //    ReportError(t.Name, $"A type with name '{t.Name.Name}' already exists in this scope.");
-            //}
+            if (alias.TypeExpr is AstIdentifierExpr id) {
+                alias.Type = mWorkspace.ResolveType(alias.TypeExpr);
+
+                var res = alias.Scope.DefineTypeSymbolNew(alias.Name.Name, alias.Type, alias);
+                if (!res.ok)
+                {
+                    (string, ILocation)? detail = null;
+                    if (res.other != null) detail = ("Other declaration here:", res.other);
+                    mWorkspace.ReportError(alias.Name, $"A symbol with name '{alias.Name.Name}' already exists in current scope", detail);
+                }
+            }
         }
-
-        //private void Pass2StructDeclaration(AstStructDecl @struct)
-        //{
-        //    @struct.SubScope = new Scope("struct", @struct.Scope);
-
-        //    var nameSet = new HashSet<string>();
-        //    foreach (var m in @struct.Members)
-        //    {
-        //        if (nameSet.Contains(m.Name.Name))
-        //            ReportError(m.Name.GenericParseTreeNode, $"A member with name '{m.Name.Name}' already exists in struct '{@struct.Name}'");
-        //        nameSet.Add(m.Name.Name);
-
-        //        m.TypeExpr.Scope = @struct.SubScope;
-        //        m.Type = ResolveType(m.TypeExpr);
-        //    }
-        //}
 
         #endregion
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        #region Pass 2
+
+        /// <summary>
+        /// Pass 2: poly struct parameter types
+        /// </summary>
+        private void Pass2()
+        {
+            foreach (var polyStruct in mPolyStructs)
+            {
+                Pass2PolyStruct(polyStruct);
+            }
+        }
+
+        private void Pass2PolyStruct(AstStructDecl @struct)
+        {
+            foreach (var param in @struct.Parameters)
+            {
+                param.TypeExpr.Scope = @struct.Scope;
+                param.Type = mWorkspace.ResolveType(param.TypeExpr);
+
+                switch (param.Type)
+                {
+                    case IntType _:
+                    case FloatType _:
+                    case CheezTypeType _:
+                        break;
+
+                    case ErrorType _:
+                        break;
+
+                    default:
+                        mWorkspace.ReportError(param.TypeExpr, $"The type '{param.Type}' is not allowed here.");
+                        break;
+                }
+            }
+        }
+
+        #endregion
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        #region Pass 3
+
+        /// <summary>
+        /// pass 3: rest of typedefs
+        /// </summary>
+        private void Pass3()
+        {
+
+        }
+
+        #endregion
 
         //#region Pass 3
 
@@ -517,83 +649,6 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         //    return ResolveType(expr);
         //}
-
-        //private CheezType ResolveType(AstExpression typeExpr)
-        //{
-        //    switch (typeExpr)
-        //    {
-        //        case AstIdentifierExpr i:
-        //            {
-        //                if (i.IsPolymorphic)
-        //                    return new PolyType(i.Name);
-
-        //                var sym = typeExpr.Scope.GetSymbol(i.Name, false);
-
-        //                if (sym == null)
-        //                {
-        //                    ReportError(typeExpr, $"Unknown symbol");
-        //                    break;
-        //                }
-
-        //                if (sym is CompTimeVariable c && c.Type == CheezType.Type)
-        //                {
-        //                    var t = c.Value as CheezType;
-        //                    return t;
-        //                }
-        //                else
-        //                {
-        //                    ReportError(typeExpr, $"'{typeExpr}' is not a valid type");
-        //                }
-
-        //                break;
-        //            }
-
-        //        case AstPointerTypeExpr p:
-        //            {
-        //                p.Target.Scope = typeExpr.Scope;
-        //                var subType = ResolveType(p.Target);
-        //                return PointerType.GetPointerType(subType);
-        //            }
-
-        //        case AstArrayTypeExpr a:
-        //            {
-        //                a.Target.Scope = typeExpr.Scope;
-        //                var subType = ResolveType(a.Target);
-        //                return SliceType.GetSliceType(subType);
-        //            }
-
-        //        case AstArrayAccessExpr arr:
-        //            {
-        //                arr.SubExpression.Scope = typeExpr.Scope;
-        //                arr.Indexer.Scope = typeExpr.Scope;
-        //                var subType = ResolveType(arr.SubExpression);
-        //                var index = ResolveConstantExpression(arr.Indexer);
-
-        //                if (index.type is IntType)
-        //                {
-        //                    long v = (long)index.value;
-        //                    return ArrayType.GetArrayType(subType, (int)v);
-        //                }
-        //                ReportError(arr.Indexer, "Index must be a constant int");
-        //                return CheezType.Error;
-        //            }
-
-        //        case AstCallExpr call:
-        //            {
-        //                call.Function.Scope = call.Scope;
-        //                var subType = ResolveType(call.Function);
-        //                if (subType is PolyStructType @struct)
-        //                {
-        //                    return ResolvePolyStructType(call, @struct);
-        //                }
-        //                return CheezType.Error;
-        //            }
-        //    }
-
-        //    ReportError(typeExpr, $"Expected type");
-        //    return CheezType.Error;
-        //}
-
         //private CheezType ResolvePolyStructType(AstCallExpr call, PolyStructType @struct)
         //{
         //    var decl = @struct.Declaration;

@@ -94,8 +94,8 @@ struct StringBase(CharType: type) {
     allocator: Allocator    = null
 }
 
-let String = StringBase(char)
-let Utf32String = StringBase(int)
+typedef String = StringBase(char)
+typedef Utf32String = StringBase(int)
 
 impl StringBase($CharType) {
     ref fn getLength() -> int {

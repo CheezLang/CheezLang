@@ -13,11 +13,12 @@ namespace CheezCLI
     {
         public bool HasErrors { get; set; }
 
+        public Workspace Workspace { get; set; }
+
         public void ReportError(IText text, ILocation location, string message, List<Error> subErrors, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             ReportError(new Error
             {
-                Text = text,
                 Location = location,
                 Message = message,
                 SubErrors = subErrors
@@ -28,116 +29,46 @@ namespace CheezCLI
         {
             HasErrors = true;
 
-
-            const int linesBefore = 2;
-            const int linesAfter = 0;
-
-
-            TokenLocation beginning = error.Location.Beginning;
-            TokenLocation end = error.Location.End;
-            int index = beginning.index;
-            int lineNumber = beginning.line;
-            int lineStart = GetLineStartIndex(error.Text, index);
-            int lineEnd = GetLineEndIndex(error.Text, end.end);
-            int linesSpread = CountLines(error.Text, index, end.end);
-
-            var errorLineBackgroundColor = ConsoleColor.Black;
-            int lineNumberWidth = (end.line + linesAfter).ToString().Length;
-
 #if DEBUG
             Log($"{Path.GetFileName(callingFunctionFile)}:{callingFunctionName}():{callLineNumber}", ConsoleColor.DarkYellow);
 #endif
+
+            if (error.Location == null)
+            {
+                Log(error.Message, ConsoleColor.Red);
+                return;
+            }
+
+            var text = Workspace.GetFile(error.Location.Beginning.file);
+
+            TokenLocation beginning = error.Location.Beginning;
+            TokenLocation end = error.Location.End;
+
             // location, message
             Log($"{beginning.file}:{beginning.line}: {error.Message}", ConsoleColor.Red);
 
-            // lines before current line
-            {
-                List<string> previousLines = new List<string>();
-                int startIndex = lineStart;
-                for (int i = 0; i < linesBefore && startIndex > 0; i++)
-                {
-                    var prevLineEnd = startIndex - 1;
-                    var prevLineStart = GetLineStartIndex(error.Text, prevLineEnd);
-                    previousLines.Add(error.Text.Text.Substring(prevLineStart, prevLineEnd - prevLineStart));
-
-                    startIndex = prevLineStart;
-                }
-
-                for (int i = previousLines.Count - 1; i >= 0; i--)
-                {
-                    int line = lineNumber - 1 - i;
-                    Log(string.Format($"{{0,{lineNumberWidth}}}> {{1}}", line, previousLines[i]), ConsoleColor.White);
-                }
-            }
-
-            // line containing error (may be multiple lines)
-            {
-                var firstLine = beginning.line;
-                var ls = lineStart; // lineStart
-                var le = GetLineEndIndex(error.Text, index); // lineEnd
-                var ei = Math.Min(le, end.end); // endIndex
-                var i = index;
-
-                for (var line = 0; line < linesSpread; ++line)
-                {
-                    var part1 = error.Text.Text.Substring(ls, i - ls);
-                    var part2 = error.Text.Text.Substring(i, ei - i);
-                    var part3 = error.Text.Text.Substring(ei, le - ei);
-
-                    LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", line + firstLine), ConsoleColor.White);
-
-                    LogInline(part1, ConsoleColor.White, errorLineBackgroundColor);
-                    LogInline(part2, ConsoleColor.Red, errorLineBackgroundColor);
-                    Log(part3, ConsoleColor.White, errorLineBackgroundColor);
-
-                    ls = le + 1;
-                    i = ls;
-                    le = GetLineEndIndex(error.Text, i);
-                    ei = Math.Min(le, end.end);
-                }
-            }
-
-            // underline
-            if (linesSpread == 1)
-            {
-                char firstChar = '^'; // ^ ~
-                char underlineChar = '—'; // — ~
-                var str = new string(' ', index - lineStart + lineNumberWidth + 2) + firstChar;
-                if (end.end - index - 1 > 0)
-                    str += new string(underlineChar, end.end - index - 1);
-                Log(str, ConsoleColor.DarkRed);
-            }
-
-            // lines after current line
-            {
-                var sb = new StringBuilder();
-                int lineBegin = lineEnd + 1;
-                for (int i = 0; i < linesAfter; i++)
-                {
-                    int line = end.line + i + 1;
-                    lineEnd = GetLineEndIndex(error.Text, lineBegin);
-                    if (lineEnd >= error.Text.Text.Length)
-                        break;
-                    var str = error.Text.Text.Substring(lineBegin, lineEnd - lineBegin);
-                    Log(string.Format($"{{0,{lineNumberWidth}}}> {{1}}", line, str), ConsoleColor.White);
-                    lineBegin = lineEnd + 1;
-                }
-            }
+            PrintLocation(text, error.Location);
 
             // details
-            //if (error.Details?.Count > 0)
-            //{
-            //    foreach (var d in error.Details)
-            //    {
-            //        Log("| " + d, ConsoleColor.White);
-            //    }
-            //}
+            if (error.Details?.Count > 0)
+            {
+                foreach (var d in error.Details)
+                {
+                    Console.WriteLine("|");
+                    Log("| " + d.message, ConsoleColor.White);
+                    if (d.location != null)
+                    {
+                        var detailText = Workspace.GetFile(d.location.Beginning.file);
+                        PrintLocation(detailText, d.location, linesBefore: 0, highlightColor: ConsoleColor.Green);
+                    }
+                }
+            }
 
             Console.Error.WriteLine();
 
             if (error.SubErrors?.Count > 0)
             {
-                Log("Error caused from here:", ConsoleColor.White);
+                Log("Related:", ConsoleColor.White);
 
                 foreach (var e in error.SubErrors)
                 {
@@ -154,6 +85,112 @@ namespace CheezCLI
 #endif
 
             Log(message, ConsoleColor.Red);
+        }
+
+        private void PrintLocation(IText text, ILocation location, bool underline = true, int linesBefore = 2, int linesAfter = 0, ConsoleColor highlightColor = ConsoleColor.Red, ConsoleColor textColor = ConsoleColor.DarkGreen)
+        {
+            TokenLocation beginning = location.Beginning;
+            TokenLocation end = location.End;
+
+            int index = beginning.index;
+            int lineNumber = beginning.line;
+            int lineStart = GetLineStartIndex(text, index);
+            int lineEnd = GetLineEndIndex(text, end.end);
+            int linesSpread = CountLines(text, index, end.end);
+
+            var errorLineBackgroundColor = ConsoleColor.Black;
+            int lineNumberWidth = (end.line + linesAfter).ToString().Length;
+
+            // lines before current line
+            {
+                List<string> previousLines = new List<string>();
+                int startIndex = lineStart;
+                for (int i = 0; i < linesBefore && startIndex > 0; i++)
+                {
+                    var prevLineEnd = startIndex - 1;
+                    var prevLineStart = GetLineStartIndex(text, prevLineEnd);
+                    previousLines.Add(text.Text.Substring(prevLineStart, prevLineEnd - prevLineStart));
+
+                    startIndex = prevLineStart;
+                }
+
+                for (int i = previousLines.Count - 1; i >= 0; i--)
+                {
+                    int line = lineNumber - 1 - i;
+                    LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", line), ConsoleColor.White);
+                    Log(previousLines[i], textColor);
+                }
+            }
+
+            // line containing error (may be multiple lines)
+            {
+                var firstLine = beginning.line;
+                var ls = lineStart; // lineStart
+                var le = GetLineEndIndex(text, index); // lineEnd
+                var ei = Math.Min(le, end.end); // endIndex
+                var i = index;
+
+                for (var line = 0; line < linesSpread; ++line)
+                {
+                    var part1 = text.Text.Substring(ls, i - ls);
+                    var part2 = text.Text.Substring(i, ei - i);
+                    var part3 = text.Text.Substring(ei, le - ei);
+
+                    LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", line + firstLine), ConsoleColor.White);
+
+                    LogInline(part1, textColor, errorLineBackgroundColor);
+                    LogInline(part2, highlightColor, errorLineBackgroundColor);
+                    Log(part3, textColor, errorLineBackgroundColor);
+
+                    ls = le + 1;
+                    i = ls;
+                    le = GetLineEndIndex(text, i);
+                    ei = Math.Min(le, end.end);
+                }
+            }
+
+            // underline
+            if (linesSpread == 1 && underline)
+            {
+                char firstChar = '^'; // ^ ~
+                char underlineChar = '—'; // — ~
+                var str = new string(' ', index - lineStart + lineNumberWidth + 2) + firstChar;
+                if (end.end - index - 1 > 0)
+                    str += new string(underlineChar, end.end - index - 1);
+                Log(str, GetDarkColor(highlightColor));
+            }
+
+            // lines after current line
+            {
+                var sb = new StringBuilder();
+                int lineBegin = lineEnd + 1;
+                for (int i = 0; i < linesAfter; i++)
+                {
+                    int line = end.line + i + 1;
+                    lineEnd = GetLineEndIndex(text, lineBegin);
+                    if (lineEnd >= text.Text.Length)
+                        break;
+                    var str = text.Text.Substring(lineBegin, lineEnd - lineBegin);
+                    Log(string.Format($"{{0,{lineNumberWidth}}}> "), ConsoleColor.White);
+                    Log(str, textColor);
+                    lineBegin = lineEnd + 1;
+                }
+            }
+        }
+
+        private ConsoleColor GetDarkColor(ConsoleColor color)
+        {
+            switch (color)
+            {
+            case ConsoleColor.Blue: return ConsoleColor.DarkBlue;
+            case ConsoleColor.Cyan: return ConsoleColor.DarkCyan;
+            case ConsoleColor.Gray: return ConsoleColor.DarkGray;
+            case ConsoleColor.Green: return ConsoleColor.DarkGreen;
+            case ConsoleColor.Magenta: return ConsoleColor.Magenta;
+            case ConsoleColor.Red: return ConsoleColor.DarkRed;
+            case ConsoleColor.Yellow: return ConsoleColor.DarkYellow;
+            default: return color;
+            }
         }
 
         private int CountLines(IText text, int start, int end)

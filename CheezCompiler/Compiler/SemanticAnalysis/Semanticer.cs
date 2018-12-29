@@ -135,7 +135,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
     #endregion
 
-    public class SemanticerData : IErrorHandler
+    public class SemanticerData
     {
         public Scope Scope { get; set; }
         public IText Text { get; set; }
