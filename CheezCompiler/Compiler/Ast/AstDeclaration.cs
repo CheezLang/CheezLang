@@ -16,21 +16,21 @@ namespace Cheez.Compiler.Ast
 
         public AstIdExpr Name { get; }
         public CheezType Type { get; set; }
-        public AstExpression TypeExpr { get; set; }
+        public AstTypeExpr TypeExpr { get; set; }
         public Scope Scope { get; set; }
 
         public object Value { get; set; }
 
         public bool IsConstant => true;
 
-        public AstParameter(AstIdExpr name, AstExpression typeExpr, ILocation Location = null)
+        public AstParameter(AstIdExpr name, AstTypeExpr typeExpr, ILocation Location = null)
         {
             this.Location = Location;
             Name = name;
             this.TypeExpr = typeExpr;
         }
 
-        public AstParameter Clone() => new AstParameter(Name?.Clone() as AstIdExpr, TypeExpr.Clone());
+        public AstParameter Clone() => new AstParameter(Name?.Clone() as AstIdExpr, TypeExpr.Clone() as AstTypeExpr);
     }
 
     #region Function Declaration
@@ -315,10 +315,10 @@ namespace Cheez.Compiler.Ast
     public class AstTypeAliasDecl : AstStatement
     {
         public AstIdExpr Name { get; set; }
-        public AstExpression TypeExpr { get; set; }
+        public AstTypeExpr TypeExpr { get; set; }
         public CheezType Type { get; set; }
 
-        public AstTypeAliasDecl(AstIdExpr name, AstExpression typeExpr, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
+        public AstTypeAliasDecl(AstIdExpr name, AstTypeExpr typeExpr, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
         {
             this.Name = name;
             this.TypeExpr = typeExpr;
@@ -326,7 +326,7 @@ namespace Cheez.Compiler.Ast
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTypeAliasDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstTypeAliasDecl(Name.Clone() as AstIdExpr, TypeExpr.Clone()));
+        public override AstStatement Clone() => CopyValuesTo(new AstTypeAliasDecl(Name.Clone() as AstIdExpr, TypeExpr.Clone() as AstTypeExpr));
     }
 
     #endregion

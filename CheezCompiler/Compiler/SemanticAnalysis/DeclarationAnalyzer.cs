@@ -6,11 +6,11 @@ namespace Cheez.Compiler
 {
     public partial class Workspace
     {
-        public CheezType ResolveType(AstExpression typeExpr)
+        public CheezType ResolveType(AstTypeExpr typeExpr)
         {
             switch (typeExpr)
             {
-            case AstIdExpr i:
+            case AstIdTypeExpr i:
             {
                 if (i.IsPolymorphic)
                     return new PolyType(i.Name);
@@ -36,10 +36,10 @@ namespace Cheez.Compiler
                 break;
             }
 
-            case AstAmpersandExpr p:
+            case AstPointerTypeExpr p:
             {
-                p.SubExpression.Scope = typeExpr.Scope;
-                var subType = ResolveType(p.SubExpression);
+                p.Target.Scope = typeExpr.Scope;
+                var subType = ResolveType(p.Target);
                 return PointerType.GetPointerType(subType);
             }
 
@@ -50,34 +50,50 @@ namespace Cheez.Compiler
                 return SliceType.GetSliceType(subType);
             }
 
-            case AstArrayAccessExpr arr:
+            case AstArrayTypeExpr arr:
             {
-                throw new NotImplementedException();
-                // arr.SubExpression.Scope = typeExpr.Scope;
-                // arr.Indexer.Scope = typeExpr.Scope;
-                // var subType = ResolveType(arr.SubExpression);
-                // var index = ResolveConstantExpression(arr.Indexer);
+                arr.Target.Scope = typeExpr.Scope;
+                var subType = ResolveType(arr.Target);
 
-                // if (index.type is IntType)
-                // {
-                //     long v = (long)index.value;
-                //     return ArrayType.GetArrayType(subType, (int)v);
-                // }
-                // ReportError(arr.Indexer, "Index must be a constant int");
-                // return CheezType.Error;
+                if (arr.SizeExpr is AstNumberExpr num && num.Data.Type == Parsing.NumberData.NumberType.Int)
+                {
+                    int v = (int)num.Data.IntValue;
+                    // TODO: check size of num.Data.IntValue
+                    return ArrayType.GetArrayType(subType, v);
+                }
+                ReportError(arr.SizeExpr, "Index must be a constant int");
+                return CheezType.Error;
             }
 
-            case AstCallExpr call:
+            case AstFunctionTypeExpr func:
             {
-                throw new NotImplementedException();
-                // call.Function.Scope = call.Scope;
-                // var subType = ResolveType(call.Function);
-                // if (subType is PolyStructType @struct)
-                // {
-                //     return ResolvePolyStructType(call, @struct);
-                // }
-                // return CheezType.Error;
+                CheezType returnType = CheezType.Void;
+                if (func.ReturnType != null)
+                {
+                    func.ReturnType.Scope = func.Scope;
+                    returnType = ResolveType(func.ReturnType);
+                }
+
+                CheezType[] par = new CheezType[func.ParameterTypes.Count];
+                for (int i = 0; i < par.Length; i++) {
+                    func.ParameterTypes[i].Scope = func.Scope;
+                    par[i] = ResolveType(func.ParameterTypes[i]);
+                }
+
+                return FunctionType.GetFunctionType(returnType, par);
             }
+
+            //case AstCallExpr call:
+            //{
+            //    throw new NotImplementedException();
+            //    // call.Function.Scope = call.Scope;
+            //    // var subType = ResolveType(call.Function);
+            //    // if (subType is PolyStructType @struct)
+            //    // {
+            //    //     return ResolvePolyStructType(call, @struct);
+            //    // }
+            //    // return CheezType.Error;
+            //}
             }
 
             ReportError(typeExpr, $"Expected type");

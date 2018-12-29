@@ -5,6 +5,11 @@ using System.Runtime.CompilerServices;
 
 namespace Cheez.Compiler
 {
+    public interface ITextProvider
+    {
+        IText GetText(ILocation location);
+    }
+
     public class Error
     {
         public ILocation Location { get; set; }
@@ -36,7 +41,7 @@ namespace Cheez.Compiler
     public interface IErrorHandler
     {
         bool HasErrors { get; set; }
-        Workspace Workspace { get; set; }
+        ITextProvider TextProvider { get; set; }
 
         void ReportError(string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
         void ReportError(IText text, ILocation location, string message, List<Error> subErrors = null, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
@@ -46,7 +51,7 @@ namespace Cheez.Compiler
     public class SilentErrorHandler : IErrorHandler
     {
         public bool HasErrors { get; set; }
-        public Workspace Workspace { get; set; }
+        public ITextProvider TextProvider { get; set; }
 
         public List<Error> Errors { get; } = new List<Error>();
 

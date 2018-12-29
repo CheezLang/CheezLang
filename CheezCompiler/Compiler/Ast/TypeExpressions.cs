@@ -18,9 +18,9 @@ namespace Cheez.Compiler.Ast
     {
         public override bool IsPolymorphic => Target.IsPolymorphic;
 
-        public AstExpression Target { get; set; }
+        public AstTypeExpr Target { get; set; }
 
-        public AstSliceTypeExpr(AstExpression target, ILocation Location = null) : base(Location)
+        public AstSliceTypeExpr(AstTypeExpr target, ILocation Location = null) : base(Location)
         {
             this.Target = target;
         }
@@ -29,35 +29,37 @@ namespace Cheez.Compiler.Ast
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitSliceTypeExpr(this, data);
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstSliceTypeExpr(Target.Clone()));
+        public override AstExpression Clone() => CopyValuesTo(new AstSliceTypeExpr(Target.Clone() as AstTypeExpr));
     }
 
     public class AstArrayTypeExpr : AstTypeExpr
     {
         public override bool IsPolymorphic => Target.IsPolymorphic;
 
-        public AstExpression Target { get; set; }
+        public AstTypeExpr Target { get; set; }
+        public AstExpression SizeExpr { get; set; }
 
-        public AstArrayTypeExpr(AstExpression target, ILocation Location = null) : base(Location)
+        public AstArrayTypeExpr(AstTypeExpr target, AstExpression size, ILocation Location = null) : base(Location)
         {
             this.Target = target;
+            this.SizeExpr = size;
         }
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitArrayTypeExpr(this, data);
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstArrayTypeExpr(Target.Clone()));
+        public override AstExpression Clone() => CopyValuesTo(new AstArrayTypeExpr(Target.Clone() as AstTypeExpr, SizeExpr.Clone()));
     }
 
     public class AstFunctionTypeExpr : AstTypeExpr
     {
         public override bool IsPolymorphic => ParameterTypes.Any(p => p.IsPolymorphic) || (ReturnType?.IsPolymorphic ?? false);
 
-        public AstExpression ReturnType { get; set; }
-        public List<AstExpression> ParameterTypes { get; set; }
+        public AstTypeExpr ReturnType { get; set; }
+        public List<AstTypeExpr> ParameterTypes { get; set; }
 
-        public AstFunctionTypeExpr(List<AstExpression> parTypes, AstExpression returnType, ILocation Location = null) : base(Location)
+        public AstFunctionTypeExpr(List<AstTypeExpr> parTypes, AstTypeExpr returnType, ILocation Location = null) : base(Location)
         {
             this.ParameterTypes = parTypes;
             this.ReturnType = returnType;
@@ -67,7 +69,7 @@ namespace Cheez.Compiler.Ast
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitFunctionTypeExpr(this, data);
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstFunctionTypeExpr(ParameterTypes.Select(p => p.Clone()).ToList(), ReturnType?.Clone()));
+        public override AstExpression Clone() => CopyValuesTo(new AstFunctionTypeExpr(ParameterTypes.Select(p => p.Clone() as AstTypeExpr).ToList(), ReturnType?.Clone() as AstTypeExpr));
     }
 
     public class AstIdTypeExpr : AstTypeExpr

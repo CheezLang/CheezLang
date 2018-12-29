@@ -13,7 +13,7 @@ namespace CheezCLI
     {
         public bool HasErrors { get; set; }
 
-        public Workspace Workspace { get; set; }
+        public ITextProvider TextProvider { get; set; }
 
         public void ReportError(IText text, ILocation location, string message, List<Error> subErrors, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
@@ -39,7 +39,7 @@ namespace CheezCLI
                 return;
             }
 
-            var text = Workspace.GetFile(error.Location.Beginning.file);
+            var text = TextProvider.GetText(error.Location);
 
             TokenLocation beginning = error.Location.Beginning;
             TokenLocation end = error.Location.End;
@@ -58,7 +58,7 @@ namespace CheezCLI
                     Log("| " + d.message, ConsoleColor.White);
                     if (d.location != null)
                     {
-                        var detailText = Workspace.GetFile(d.location.Beginning.file);
+                        var detailText = TextProvider.GetText(d.location);
                         PrintLocation(detailText, d.location, linesBefore: 0, highlightColor: ConsoleColor.Green);
                     }
                 }

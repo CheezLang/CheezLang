@@ -3258,7 +3258,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 foreach (var v in func.ParameterTypes[i].Accept(this, context.Clone(ExpectedType: null)))
                 {
                     if (v is ReplaceAstExpr r)
-                        func.ParameterTypes[i] = r.NewExpression;
+                        func.ParameterTypes[i] = r.NewExpression as AstTypeExpr;
                     else yield return v;
                 }
             }
@@ -3267,7 +3267,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 foreach (var v in func.ReturnType.Accept(this, context.Clone(ExpectedType: null)))
                 {
                     if (v is ReplaceAstExpr r)
-                        func.ReturnType = r.NewExpression;
+                        func.ReturnType = r.NewExpression as AstTypeExpr;
                     else yield return v;
                 }
             }
@@ -3285,7 +3285,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             foreach (var v in arr.Target.Accept(this, context.Clone(ExpectedType: null)))
             {
                 if (v is ReplaceAstExpr r)
-                    arr.Target = r.NewExpression;
+                    arr.Target = r.NewExpression as AstTypeExpr;
                 else yield return v;
             }
 
