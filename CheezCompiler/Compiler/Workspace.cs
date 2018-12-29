@@ -1,5 +1,6 @@
 ﻿using Cheez.Compiler.Ast;
 using Cheez.Compiler.SemanticAnalysis;
+using Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;

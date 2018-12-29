@@ -21,7 +21,7 @@ namespace Cheez.Compiler
     public class Using : ITypedSymbol
     {
         public CheezType Type => Expr.Type;
-        public AstIdentifierExpr Name { get; }
+        public AstIdExpr Name { get; }
 
         public AstExpression Expr { get; }
         public bool IsConstant => true;
@@ -29,7 +29,7 @@ namespace Cheez.Compiler
         public ILocation Location => throw new NotImplementedException();
 
         [DebuggerStepThrough]
-        public Using(AstIdentifierExpr name, AstExpression expr)
+        public Using(AstIdExpr name, AstExpression expr)
         {
             this.Name = name;
             this.Expr = expr;
@@ -44,7 +44,7 @@ namespace Cheez.Compiler
 
     public class CompTimeVariable : ITypedSymbol
     {
-        public AstIdentifierExpr Name { get; }
+        public AstIdExpr Name { get; }
         public CheezType Type { get; }
         public bool IsConstant => true;
         public object Value { get; }
@@ -53,7 +53,7 @@ namespace Cheez.Compiler
 
         public CompTimeVariable(string name, CheezType type, object value, ILocation location)
         {
-            this.Name = new AstIdentifierExpr(name, false);
+            this.Name = new AstIdExpr(name, false);
             this.Type = type;
             this.Value = value;
             this.Location = location;
@@ -66,7 +66,7 @@ namespace Cheez.Compiler
 
         public bool IsConstant => throw new System.NotImplementedException();
 
-        public AstIdentifierExpr Name => throw new System.NotImplementedException();
+        public AstIdExpr Name => throw new System.NotImplementedException();
 
         public ILocation Location => throw new NotImplementedException();
     }

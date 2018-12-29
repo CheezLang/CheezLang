@@ -18,7 +18,7 @@ namespace Cheez.Compiler.Visitor
 
         #region Statements
 
-        public override string VisitFunctionDeclaration(AstFunctionDecl function, int indentLevel = 0)
+        public override string VisitFunctionDecl(AstFunctionDecl function, int indentLevel = 0)
         {
             var sb = new StringBuilder();
 
@@ -51,7 +51,7 @@ namespace Cheez.Compiler.Visitor
             return sb.ToString();
         }
 
-        public override string VisitReturnStatement(AstReturnStmt ret, int data = 0)
+        public override string VisitReturnStmt(AstReturnStmt ret, int data = 0)
         {
             var sb = new StringBuilder();
 
@@ -73,17 +73,17 @@ namespace Cheez.Compiler.Visitor
             return sb.ToString();
         }
 
-        public override string VisitTypeAlias(AstTypeAliasDecl al, int data = 0)
+        public override string VisitTypeAliasDecl(AstTypeAliasDecl al, int data = 0)
         {
             return $"type {al.Name.Accept(this)} = {al.Type}";
         }
 
-        public override string VisitUsingStatement(AstUsingStmt use, int data = 0)
+        public override string VisitUsingStmt(AstUsingStmt use, int data = 0)
         {
             return $"using {use.Value.Accept(this)}";
         }
 
-        public override string VisitStructDeclaration(AstStructDecl str, int data = 0)
+        public override string VisitStructDecl(AstStructDecl str, int data = 0)
         {
             var body = string.Join("\n", str.Members.Select(m => $"{m.Name.Accept(this)}: {m.Type}"));
             var head = $"struct {str.Name.Accept(this)}";
@@ -113,7 +113,7 @@ namespace Cheez.Compiler.Visitor
             return sb.ToString();
         }
 
-        public override string VisitTraitDeclaration(AstTraitDeclaration trait, int data = 0)
+        public override string VisitTraitDecl(AstTraitDeclaration trait, int data = 0)
         {
             var sb = new StringBuilder();
             sb.AppendLine($"trait {trait.Name.Accept(this)} {{");
@@ -128,7 +128,7 @@ namespace Cheez.Compiler.Visitor
             return sb.ToString().Indent(data);
         }
 
-        public override string VisitImplBlock(AstImplBlock impl, int data = 0)
+        public override string VisitImplDecl(AstImplBlock impl, int data = 0)
         {
             var body = string.Join("\n\n", impl.Functions.Select(f => f.Accept(this, 0)));
 
@@ -144,7 +144,7 @@ namespace Cheez.Compiler.Visitor
             return $"{header} {{\n{body.Indent(4)}\n}}";
         }
 
-        public override string VisitVariableDeclaration(AstVariableDecl variable, int indentLevel = 0)
+        public override string VisitVariableDecl(AstVariableDecl variable, int indentLevel = 0)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("let ").Append(variable.Name.Accept(this));
@@ -154,7 +154,7 @@ namespace Cheez.Compiler.Visitor
             return sb.ToString();
         }
 
-        public override string VisitIfStatement(AstIfStmt ifs, int indentLevel = 0)
+        public override string VisitIfStmt(AstIfStmt ifs, int indentLevel = 0)
         {
             var sb = new StringBuilder();
             sb.Append("if ");
@@ -169,7 +169,7 @@ namespace Cheez.Compiler.Visitor
             return sb.ToString().Indent(indentLevel);
         }
 
-        public override string VisitWhileStatement(AstWhileStmt wh, int indentLevel = 0)
+        public override string VisitWhileStmt(AstWhileStmt wh, int indentLevel = 0)
         {
             var sb = new StringBuilder();
             sb.Append("while ");
@@ -180,12 +180,12 @@ namespace Cheez.Compiler.Visitor
             return sb.ToString().Indent(indentLevel);
         }
 
-        public override string VisitDeferStatement(AstDeferStmt def, int data = 0)
+        public override string VisitDeferStmt(AstDeferStmt def, int data = 0)
         {
             return $"defer {def.Deferred.Accept(this)}".Indent(data);
         }
 
-        public override string VisitBlockStatement(AstBlockStmt block, int indentLevel = 0)
+        public override string VisitBlockStmt(AstBlockStmt block, int indentLevel = 0)
         {
             var sb = new StringBuilder();
             {
@@ -215,23 +215,23 @@ namespace Cheez.Compiler.Visitor
             return $"{{\n{sb.ToString().Indent(4)}\n}}".Indent(indentLevel);
         }
 
-        public override string VisitAssignment(AstAssignment ass, int indentLevel = 0)
+        public override string VisitAssignmentStmt(AstAssignment ass, int indentLevel = 0)
         {
             return ass.Target.Accept(this) + $" {ass.Operator}= " + ass.Value.Accept(this);
         }
 
-        public override string VisitExpressionStatement(AstExprStmt stmt, int indentLevel = 0)
+        public override string VisitExpressionStmt(AstExprStmt stmt, int indentLevel = 0)
         {
             return stmt.Expr.Accept(this);
         }
 
-        public override string VisitEnumDeclaration(AstEnumDecl en, int data = 0)
+        public override string VisitEnumDecl(AstEnumDecl en, int data = 0)
         {
             var body = string.Join("\n", en.Members.Select(m => m.Name.Accept(this)));
             return $"enum {en.Name.Accept(this)} {{\n{body.Indent(4)}\n}}";
         }
 
-        public override string VisitBreakStatement(AstBreakStmt br, int data = 0)
+        public override string VisitBreakStmt(AstBreakStmt br, int data = 0)
         {
             var sb = new StringBuilder();
 
@@ -250,7 +250,7 @@ namespace Cheez.Compiler.Visitor
             return sb.ToString();
         }
 
-        public override string VisitContinueStatement(AstContinueStmt cont, int data = 0)
+        public override string VisitContinueStmt(AstContinueStmt cont, int data = 0)
         {
             var sb = new StringBuilder();
 
@@ -273,25 +273,25 @@ namespace Cheez.Compiler.Visitor
 
 
         #region Expressions
-        public override string VisitArrayExpression(AstArrayExpression arr, int data = 0)
+        public override string VisitArrayExpr(AstArrayExpr arr, int data = 0)
         {
             var vals = string.Join(", ", arr.Values.Select(v => v.Accept(this)));
             return $"[{vals}]";
         }
 
-        public override string VisitTypeExpr(AstTypeExpr astArrayTypeExpr, int data = 0)
+        public override string VisitTypeExpr(AstTypeRef astArrayTypeExpr, int data = 0)
         {
             return astArrayTypeExpr.Type?.ToString();
         }
 
-        public override string VisitCompCallExpression(AstCompCallExpr call, int data = 0)
+        public override string VisitCompCallExpr(AstCompCallExpr call, int data = 0)
         {
             var args = call.Arguments.Select(a => a.Accept(this));
             var argsStr = string.Join(", ", args);
             return $"@{call.Name.Accept(this)}({argsStr})";
         }
 
-        public override string VisitCallExpression(AstCallExpr call, int data = 0)
+        public override string VisitCallExpr(AstCallExpr call, int data = 0)
         {
             var args = call.Arguments.Select(a => a.Accept(this));
             var argsStr = string.Join(", ", args);
@@ -299,7 +299,7 @@ namespace Cheez.Compiler.Visitor
             return $"{func}({argsStr})";
         }
 
-        public override string VisitStringLiteral(AstStringLiteral str, int data = 0)
+        public override string VisitStringLiteralExpr(AstStringLiteral str, int data = 0)
         {
             string v = null;
             if (str.IsChar)
@@ -315,29 +315,29 @@ namespace Cheez.Compiler.Visitor
                 return $"\"{v.Replace("\"", "`\"")}\"";
         }
 
-        public override string VisitIdentifierExpression(AstIdentifierExpr ident, int indentLevel = 0)
+        public override string VisitIdExpr(AstIdExpr ident, int indentLevel = 0)
         {
             if (ident.IsPolymorphic)
                 return '$' + ident.Name;
             return ident.Name;
         }
 
-        public override string VisitBinaryExpression(AstBinaryExpr bin, int data = 0)
+        public override string VisitBinaryExpr(AstBinaryExpr bin, int data = 0)
         {
             var left = bin.Left.Accept(this, 0);
             var right = bin.Right.Accept(this, 0);
             return $"({left} {bin.Operator} {right})";
         }
 
-        public override string VisitUnaryExpression(AstUnaryExpr bin, int data = 0)
+        public override string VisitUnaryExpr(AstUnaryExpr bin, int data = 0)
         {
             var sub = bin.SubExpr.Accept(this, 0);
             return bin.Operator + sub;
         }
 
-        public override string VisitNullExpression(AstNullExpr nul, int data = 0) => "null";
+        public override string VisitNullExpr(AstNullExpr nul, int data = 0) => "null";
 
-        public override string VisitNumberExpression(AstNumberExpr num, int indentLevel = 0)
+        public override string VisitNumberExpr(AstNumberExpr num, int indentLevel = 0)
         {
             var sb = new StringBuilder();
             if (num.Data.IntBase == 2)
@@ -349,41 +349,41 @@ namespace Cheez.Compiler.Visitor
             return sb.ToString();
         }
 
-        public override string VisitAddressOfExpression(AstAddressOfExpr add, int data = 0)
+        public override string VisitAmpersandExpr(AstAmpersandExpr add, int data = 0)
         {
             return "&" + add.SubExpression.Accept(this);
         }
 
-        public override string VisitDereferenceExpression(AstDereferenceExpr deref, int data = 0)
+        public override string VisitDerefExpr(AstDereferenceExpr deref, int data = 0)
         {
             return "<<" + deref.SubExpression.Accept(this);
         }
 
-        public override string VisitArrayAccessExpression(AstArrayAccessExpr arr, int data = 0)
+        public override string VisitArrayAccessExpr(AstArrayAccessExpr arr, int data = 0)
         {
             var sub = arr.SubExpression.Accept(this);
             var ind = arr.Indexer.Accept(this);
             return $"{sub}[{ind}]";
         }
 
-        public override string VisitBoolExpression(AstBoolExpr bo, int data = 0)
+        public override string VisitBoolExpr(AstBoolExpr bo, int data = 0)
         {
             return bo.BoolValue ? "true" : "false";
         }
 
-        public override string VisitCastExpression(AstCastExpr cast, int data = 0)
+        public override string VisitCastExpr(AstCastExpr cast, int data = 0)
         {
             if (cast.TypeExpr != null)
                 return $"({cast.Type})({cast.SubExpression.Accept(this, 0)})";
             return $"cast ({cast.SubExpression.Accept(this, 0)})";
         }
 
-        public override string VisitDotExpression(AstDotExpr dot, int data = 0)
+        public override string VisitDotExpr(AstDotExpr dot, int data = 0)
         {
             return $"{dot.Left.Accept(this, 0)}.{dot.Right.Accept(this)}";
         }
 
-        public override string VisitStructValueExpression(AstStructValueExpr str, int data = 0)
+        public override string VisitStructValueExpr(AstStructValueExpr str, int data = 0)
         {
             const int maxOnOneLine = 4;
 

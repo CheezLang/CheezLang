@@ -847,7 +847,7 @@ namespace Cheez.Compiler.CodeGeneration
 
         #region Statements
 
-        public override LLVMValueRef VisitMatchStatement(AstMatchStmt match, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitMatchStmt(AstMatchStmt match, LLVMCodeGeneratorData data = null)
         {
             var value = match.Value.Accept(this, data.Clone(Deref: true));
 
@@ -892,7 +892,7 @@ namespace Cheez.Compiler.CodeGeneration
             }
         }
 
-        public override LLVMValueRef VisitStructDeclaration(AstStructDecl type, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitStructDecl(AstStructDecl type, LLVMCodeGeneratorData data = null)
         {
             // create constructor
             var constructor = constructors[type];
@@ -934,12 +934,12 @@ namespace Cheez.Compiler.CodeGeneration
             return default;
         }
 
-        public override LLVMValueRef VisitVariableExpression(AstVariableExpression expr, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitVariableRef(AstVariableRef expr, LLVMCodeGeneratorData data = null)
         {
             return valueMap[expr.Declaration];
         }
 
-        public override LLVMValueRef VisitVariableDeclaration(AstVariableDecl variable, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitVariableDecl(AstVariableDecl variable, LLVMCodeGeneratorData data = null)
         {
             if (variable.IsConstant)
                 return default;
@@ -983,7 +983,7 @@ namespace Cheez.Compiler.CodeGeneration
             return (a && !b) || (!a && b);
         }
 
-        public override LLVMValueRef VisitAssignment(AstAssignment ass, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitAssignmentStmt(AstAssignment ass, LLVMCodeGeneratorData data = null)
         {
             var leftPtr = ass.Target.Accept(this, data.Clone(Deref: false));
             var right = ass.Value.Accept(this, data.Clone(Deref: true));
@@ -1012,7 +1012,7 @@ namespace Cheez.Compiler.CodeGeneration
         //    return default;
         //}
 
-        public override LLVMValueRef VisitFunctionDeclaration(AstFunctionDecl function, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitFunctionDecl(AstFunctionDecl function, LLVMCodeGeneratorData data = null)
         {
             var lfunc = valueMap[function];
 
@@ -1089,7 +1089,7 @@ namespace Cheez.Compiler.CodeGeneration
             return lfunc;
         }
 
-        public override LLVMValueRef VisitReturnStatement(AstReturnStmt ret, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitReturnStmt(AstReturnStmt ret, LLVMCodeGeneratorData data = null)
         {
             var prevBB = data.BasicBlock;
             var nextBB = prevBB;
@@ -1119,12 +1119,12 @@ namespace Cheez.Compiler.CodeGeneration
             return retInts.Value;
         }
 
-        public override LLVMValueRef VisitExpressionStatement(AstExprStmt stmt, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitExpressionStmt(AstExprStmt stmt, LLVMCodeGeneratorData data = null)
         {
             return stmt.Expr.Accept(this, data);
         }
 
-        public override LLVMValueRef VisitWhileStatement(AstWhileStmt ws, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitWhileStmt(AstWhileStmt ws, LLVMCodeGeneratorData data = null)
         {
             var bbPre = LLVM.AppendBasicBlock(data.LFunction, "while_pre");
             var bbCondition = LLVM.AppendBasicBlock(data.LFunction, "while_condition");
@@ -1176,7 +1176,7 @@ namespace Cheez.Compiler.CodeGeneration
             return default;
         }
 
-        public override LLVMValueRef VisitBreakStatement(AstBreakStmt br, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitBreakStmt(AstBreakStmt br, LLVMCodeGeneratorData data = null)
         {
             var prevBB = data.BasicBlock;
             var nextBB = prevBB;
@@ -1195,7 +1195,7 @@ namespace Cheez.Compiler.CodeGeneration
             return default;
         }
 
-        public override LLVMValueRef VisitContinueStatement(AstContinueStmt cont, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitContinueStmt(AstContinueStmt cont, LLVMCodeGeneratorData data = null)
         {
             var prevBB = data.BasicBlock;
             var nextBB = prevBB;
@@ -1214,7 +1214,7 @@ namespace Cheez.Compiler.CodeGeneration
             return default;
         }
 
-        public override LLVMValueRef VisitIfStatement(AstIfStmt ifs, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitIfStmt(AstIfStmt ifs, LLVMCodeGeneratorData data = null)
         {
             LLVMBasicBlockRef? bbEnd = null;
 
@@ -1277,7 +1277,7 @@ namespace Cheez.Compiler.CodeGeneration
             return default;
         }
 
-        public override LLVMValueRef VisitBlockStatement(AstBlockStmt block, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitBlockStmt(AstBlockStmt block, LLVMCodeGeneratorData data = null)
         {
             foreach (var s in block.Statements)
             {
@@ -1339,12 +1339,12 @@ namespace Cheez.Compiler.CodeGeneration
 
         #region Expressions
 
-        public override LLVMValueRef VisitNullExpression(AstNullExpr nul, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitNullExpr(AstNullExpr nul, LLVMCodeGeneratorData data = null)
         {
             return LLVM.ConstNull(CheezTypeToLLVMType(nul.Type));
         }
 
-        public override LLVMValueRef VisitStructValueExpression(AstStructValueExpr str, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitStructValueExpr(AstStructValueExpr str, LLVMCodeGeneratorData data = null)
         {
             var value = CreateLocalVariable(data, str.Type, $"temp.{str.Name}");
             var llvmType = CheezTypeToLLVMType(str.Type);
@@ -1367,7 +1367,7 @@ namespace Cheez.Compiler.CodeGeneration
             return value;
         }
 
-        public override LLVMValueRef VisitDotExpression(AstDotExpr dot, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitDotExpr(AstDotExpr dot, LLVMCodeGeneratorData data = null)
         {
             if (dot.Left.Type is TraitType trait)
             {
@@ -1473,7 +1473,7 @@ namespace Cheez.Compiler.CodeGeneration
             }
         }
 
-        public override LLVMValueRef VisitAddressOfExpression(AstAddressOfExpr add, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitAmpersandExpr(AstAmpersandExpr add, LLVMCodeGeneratorData data = null)
         {
             if (add.Type == CheezType.Type)
                 return default;
@@ -1486,7 +1486,7 @@ namespace Cheez.Compiler.CodeGeneration
             return sub;
         }
 
-        public override LLVMValueRef VisitCastExpression(AstCastExpr cast, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitCastExpr(AstCastExpr cast, LLVMCodeGeneratorData data = null)
         {
 
             if (cast.Type == cast.SubExpression.Type)
@@ -1738,7 +1738,7 @@ namespace Cheez.Compiler.CodeGeneration
             throw new NotImplementedException($"Cast from {cast.SubExpression.Type} to {cast.Type} is not implemented yet");
         }
 
-        public override LLVMValueRef VisitIdentifierExpression(AstIdentifierExpr ident, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitIdExpr(AstIdExpr ident, LLVMCodeGeneratorData data = null)
         {
             var s = ident.Symbol;
             var v = valueMap[s];
@@ -1751,13 +1751,13 @@ namespace Cheez.Compiler.CodeGeneration
             return v;
         }
 
-        public override LLVMValueRef VisitCallExpression(AstCallExpr call, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitCallExpr(AstCallExpr call, LLVMCodeGeneratorData data = null)
         {
             LLVMValueRef func;
 
             //func = call.Function.Accept(this, data.Clone(Deref: false));
 
-            if (call.Function is AstIdentifierExpr id)
+            if (call.Function is AstIdExpr id)
             {
                 func = LLVM.GetNamedFunction(module, id.Name);
                 if (func.Pointer == IntPtr.Zero)
@@ -1765,12 +1765,12 @@ namespace Cheez.Compiler.CodeGeneration
                     func = call.Function.Accept(this, data);
                 }
             }
-            else if (call.Function is AstFunctionExpression afe)
+            else if (call.Function is AstFunctionRef afe)
             {
                 func = valueMap[afe.Declaration];
                 //func = LLVM.GetNamedFunction(module, afe.Declaration.Name.Name);
             }
-            else if (call.Function is AstStructExpression str)
+            else if (call.Function is AstStructRef str)
             {
                 return default;
             }
@@ -1826,7 +1826,7 @@ namespace Cheez.Compiler.CodeGeneration
             return res;
         }
 
-        public override LLVMValueRef VisitStringLiteral(AstStringLiteral str, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitStringLiteralExpr(AstStringLiteral str, LLVMCodeGeneratorData data = null)
         {
             if (str.IsChar)
             {
@@ -1860,7 +1860,7 @@ namespace Cheez.Compiler.CodeGeneration
             }
         }
 
-        public override LLVMValueRef VisitNumberExpression(AstNumberExpr num, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitNumberExpr(AstNumberExpr num, LLVMCodeGeneratorData data = null)
         {
             var llvmType = CheezTypeToLLVMType(num.Type);
             if (num.Type is IntType)
@@ -1876,12 +1876,12 @@ namespace Cheez.Compiler.CodeGeneration
             }
         }
 
-        public override LLVMValueRef VisitBoolExpression(AstBoolExpr bo, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitBoolExpr(AstBoolExpr bo, LLVMCodeGeneratorData data = null)
         {
             return LLVM.ConstInt(LLVM.Int1Type(), bo.BoolValue ? 1ul : 0ul, false);
         }
 
-        public override LLVMValueRef VisitArrayExpression(AstArrayExpression arr, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitArrayExpr(AstArrayExpr arr, LLVMCodeGeneratorData data = null)
         {
             var ptr = CreateLocalVariable(data, arr.Type, $"temp.{arr.Type}");
 
@@ -1915,7 +1915,7 @@ namespace Cheez.Compiler.CodeGeneration
             return val;
         }
 
-        public override LLVMValueRef VisitArrayAccessExpression(AstArrayAccessExpr arr, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitArrayAccessExpr(AstArrayAccessExpr arr, LLVMCodeGeneratorData data = null)
         {
             ulong dataSize = 1;
             var targetType = arr.SubExpression.Type;
@@ -1981,7 +1981,7 @@ namespace Cheez.Compiler.CodeGeneration
             return result;
         }
 
-        public override LLVMValueRef VisitDereferenceExpression(AstDereferenceExpr deref, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitDerefExpr(AstDereferenceExpr deref, LLVMCodeGeneratorData data = null)
         {
             var ptr = deref.SubExpression.Accept(this, data.Clone(Deref: true));
 
@@ -1991,7 +1991,7 @@ namespace Cheez.Compiler.CodeGeneration
             return v;
         }
 
-        public override LLVMValueRef VisitUnaryExpression(AstUnaryExpr bin, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitUnaryExpr(AstUnaryExpr bin, LLVMCodeGeneratorData data = null)
         {
             var sub = bin.SubExpr.Accept(this, data);
 
@@ -2013,7 +2013,7 @@ namespace Cheez.Compiler.CodeGeneration
             }
         }
 
-        public override LLVMValueRef VisitBinaryExpression(AstBinaryExpr bin, LLVMCodeGeneratorData data = null)
+        public override LLVMValueRef VisitBinaryExpr(AstBinaryExpr bin, LLVMCodeGeneratorData data = null)
         {
             switch (bin.Operator)
             {

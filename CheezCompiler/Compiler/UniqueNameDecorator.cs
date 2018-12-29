@@ -6,7 +6,7 @@ namespace Cheez.Compiler
 {
     public interface INamed
     {
-        AstIdentifierExpr Name { get; }
+        AstIdExpr Name { get; }
     }
 
     public class UniqueNameDecorator

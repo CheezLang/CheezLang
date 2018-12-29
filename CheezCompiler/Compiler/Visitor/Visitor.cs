@@ -9,142 +9,120 @@ namespace Cheez.Compiler.Visitor
 
     public interface IVisitor<ReturnType, DataType>
     {
-        ReturnType VisitFunctionDeclaration(AstFunctionDecl function, DataType data = default);
-        ReturnType VisitVariableDeclaration(AstVariableDecl variable, DataType data = default);
-        //ReturnType VisitConstantDeclaration(ConstantDeclaration constant, DataType data = default);
-        ReturnType VisitStructDeclaration(AstStructDecl type, DataType data = default);
-        ReturnType VisitEnumDeclaration(AstEnumDecl en, DataType data = default);
-        ReturnType VisitAssignment(AstAssignment ass, DataType data = default);
-        ReturnType VisitExpressionStatement(AstExprStmt stmt, DataType data = default);
-        ReturnType VisitIfStatement(AstIfStmt ifs, DataType data = default);
-        ReturnType VisitWhileStatement(AstWhileStmt ws, DataType data = default);
-        ReturnType VisitBlockStatement(AstBlockStmt block, DataType data = default);
-        ReturnType VisitImplBlock(AstImplBlock impl, DataType data = default);
-        ReturnType VisitReturnStatement(AstReturnStmt ret, DataType data = default);
-        ReturnType VisitUsingStatement(AstUsingStmt use, DataType data = default);
-        ReturnType VisitTypeAlias(AstTypeAliasDecl al, DataType data = default);
-        ReturnType VisitDeferStatement(AstDeferStmt def, DataType data = default);
-        ReturnType VisitMatchStatement(AstMatchStmt match, DataType data = default);
-        ReturnType VisitBreakStatement(AstBreakStmt br, DataType data = default);
-        ReturnType VisitContinueStatement(AstContinueStmt cont, DataType data = default);
-        ReturnType VisitTraitDeclaration(AstTraitDeclaration trait, DataType data = default);
-        ReturnType VisitDirectiveStatement(AstDirectiveStatement dir, DataType data = default);
+        // statements
+        ReturnType VisitAssignmentStmt(AstAssignment stmt, DataType data = default);
+        ReturnType VisitExpressionStmt(AstExprStmt stmt, DataType data = default);
+        ReturnType VisitIfStmt(AstIfStmt stmt, DataType data = default);
+        ReturnType VisitWhileStmt(AstWhileStmt stmt, DataType data = default);
+        ReturnType VisitBlockStmt(AstBlockStmt stmt, DataType data = default);
+        ReturnType VisitDirectiveStmt(AstDirectiveStatement stmt, DataType data = default);
+        ReturnType VisitDeferStmt(AstDeferStmt stmt, DataType data = default);
+        ReturnType VisitMatchStmt(AstMatchStmt stmt, DataType data = default);
+        ReturnType VisitBreakStmt(AstBreakStmt stmt, DataType data = default);
+        ReturnType VisitContinueStmt(AstContinueStmt stmt, DataType data = default);
+        ReturnType VisitReturnStmt(AstReturnStmt stmt, DataType data = default);
+        ReturnType VisitUsingStmt(AstUsingStmt stmt, DataType data = default);
 
+        ReturnType VisitEmptyStmt(AstEmptyStatement stmt, DataType data = default);
 
-        ReturnType VisitEmptyStatement(AstEmptyStatement em, DataType data = default);
+        // declarations
+        ReturnType VisitFunctionDecl(AstFunctionDecl decl, DataType data = default);
+        ReturnType VisitVariableDecl(AstVariableDecl decl, DataType data = default);
+        ReturnType VisitStructDecl(AstStructDecl decl, DataType data = default);
+        ReturnType VisitEnumDecl(AstEnumDecl decl, DataType data = default);
+        ReturnType VisitImplDecl(AstImplBlock decl, DataType data = default);
+        ReturnType VisitTypeAliasDecl(AstTypeAliasDecl decl, DataType data = default);
+        ReturnType VisitTraitDecl(AstTraitDeclaration decl, DataType data = default);
 
-        ReturnType VisitEmptyExpression(AstEmptyExpr em, DataType data = default);
+        // expressions
+        ReturnType VisitIdExpr(AstIdExpr expr, DataType data = default);
+        ReturnType VisitStringLiteralExpr(AstStringLiteral expr, DataType data = default);
+        ReturnType VisitNumberExpr(AstNumberExpr expr, DataType data = default);
+        ReturnType VisitDotExpr(AstDotExpr expr, DataType data = default);
+        ReturnType VisitCallExpr(AstCallExpr expr, DataType data = default);
+        ReturnType VisitCompCallExpr(AstCompCallExpr expr, DataType data = default);
+        ReturnType VisitBinaryExpr(AstBinaryExpr expr, DataType data = default);
+        ReturnType VisitUnaryExpr(AstUnaryExpr expr, DataType data = default);
+        ReturnType VisitBoolExpr(AstBoolExpr expr, DataType data = default);
+        ReturnType VisitAmpersandExpr(AstAmpersandExpr expr, DataType data = default);
+        ReturnType VisitDerefExpr(AstDereferenceExpr expr, DataType data = default);
+        ReturnType VisitCastExpr(AstCastExpr expr, DataType data = default);
+        ReturnType VisitArrayAccessExpr(AstArrayAccessExpr expr, DataType data = default);
+        ReturnType VisitStructValueExpr(AstStructValueExpr expr, DataType data = default);
+        ReturnType VisitArrayExpr(AstArrayExpr expr, DataType data = default);
+        ReturnType VisitNullExpr(AstNullExpr expr, DataType data = default);
 
-        ReturnType VisitIdentifierExpression(AstIdentifierExpr ident, DataType data = default);
-        ReturnType VisitStringLiteral(AstStringLiteral str, DataType data = default);
-        ReturnType VisitNumberExpression(AstNumberExpr num, DataType data = default);
-        ReturnType VisitDotExpression(AstDotExpr dot, DataType data = default);
-        ReturnType VisitCallExpression(AstCallExpr call, DataType data = default);
-        ReturnType VisitCompCallExpression(AstCompCallExpr call, DataType data = default);
-        ReturnType VisitBinaryExpression(AstBinaryExpr bin, DataType data = default);
-        ReturnType VisitUnaryExpression(AstUnaryExpr bin, DataType data = default);
-        ReturnType VisitBoolExpression(AstBoolExpr bo, DataType data = default);
-        ReturnType VisitAddressOfExpression(AstAddressOfExpr add, DataType data = default);
-        ReturnType VisitDereferenceExpression(AstDereferenceExpr deref, DataType data = default);
-        ReturnType VisitCastExpression(AstCastExpr cast, DataType data = default);
-        ReturnType VisitArrayAccessExpression(AstArrayAccessExpr arr, DataType data = default);
-        ReturnType VisitStructValueExpression(AstStructValueExpr str, DataType data = default);
-        //ReturnType VisitPointerTypeExpr(AstPointerTypeExpr astPointerTypeExpr, DataType data = default);
-        ReturnType VisitArrayTypeExpr(AstArrayTypeExpr astArrayTypeExpr, DataType data = default);
-        ReturnType VisitFunctionTypeExpr(AstFunctionTypeExpr func, DataType data = default);
-        ReturnType VisitTypeExpr(AstTypeExpr astArrayTypeExpr, DataType data = default);
-        ReturnType VisitArrayExpression(AstArrayExpression arr, DataType data = default);
-        ReturnType VisitNullExpression(AstNullExpr nul, DataType data = default);
+        ReturnType VisitEmptyExpression(AstEmptyExpr expr, DataType data = default);
 
-
-        ReturnType VisitVariableExpression(AstVariableExpression expr, DataType data = default);
+        // type expressions
+        ReturnType VisitIdTypeExpr(AstIdTypeExpr type, DataType data = default);
+        ReturnType VisitPointerTypeExpr(AstPointerTypeExpr type, DataType data = default);
+        ReturnType VisitSliceTypeExpr(AstSliceTypeExpr type, DataType data = default);
+        ReturnType VisitArrayTypeExpr(AstArrayTypeExpr type, DataType data = default);
+        ReturnType VisitFunctionTypeExpr(AstFunctionTypeExpr type, DataType data = default);
+        
+        // special expressions
+        ReturnType VisitVariableRef(AstVariableRef re, DataType data = default);
+        ReturnType VisitTypeExpr(AstTypeRef re, DataType data = default);
     }
 
 
     public abstract class VisitorBase<ReturnType, DataType> : IVisitor<ReturnType, DataType>
     {
-        public virtual ReturnType VisitAddressOfExpression(AstAddressOfExpr add, DataType data = default) => default;
+        // statements
+        public virtual ReturnType VisitDirectiveStmt(AstDirectiveStatement stmt, DataType data = default) => default;
+        public virtual ReturnType VisitAssignmentStmt(AstAssignment stmt, DataType data = default) => default;
+        public virtual ReturnType VisitBlockStmt(AstBlockStmt stmt, DataType data = default) => default;
+        public virtual ReturnType VisitBreakStmt(AstBreakStmt stmt, DataType data = default) => default;
+        public virtual ReturnType VisitContinueStmt(AstContinueStmt stmt, DataType data = default) => default;
+        public virtual ReturnType VisitExpressionStmt(AstExprStmt stmt, DataType data = default) => default;
+        public virtual ReturnType VisitMatchStmt(AstMatchStmt stmt, DataType data = default) => default;
+        public virtual ReturnType VisitIfStmt(AstIfStmt stmt, DataType data = default) => default;
+        public virtual ReturnType VisitDeferStmt(AstDeferStmt stmt, DataType data = default) => default;
+        public virtual ReturnType VisitReturnStmt(AstReturnStmt stmt, DataType data = default) => default;
+        public virtual ReturnType VisitUsingStmt(AstUsingStmt stmt, DataType data = default) => default;
+        public virtual ReturnType VisitWhileStmt(AstWhileStmt stmt, DataType data = default) => default;
 
-        public virtual ReturnType VisitArrayAccessExpression(AstArrayAccessExpr arr, DataType data = default) => default;
+        public virtual ReturnType VisitEmptyStmt(AstEmptyStatement stmt, DataType data = default) => default;
 
-        public virtual ReturnType VisitArrayTypeExpr(AstArrayTypeExpr astArrayTypeExpr, DataType data = default) => default;
+        // declarations
+        public virtual ReturnType VisitTypeAliasDecl(AstTypeAliasDecl decl, DataType data = default) => default;
+        public virtual ReturnType VisitEnumDecl(AstEnumDecl decl, DataType data = default) => default;
+        public virtual ReturnType VisitTraitDecl(AstTraitDeclaration decl, DataType data = default) => default;
+        public virtual ReturnType VisitFunctionDecl(AstFunctionDecl decl, DataType data = default) => default;
+        public virtual ReturnType VisitStructDecl(AstStructDecl decl, DataType data = default) => default;
+        public virtual ReturnType VisitVariableDecl(AstVariableDecl decl, DataType data = default) => default;
+        public virtual ReturnType VisitImplDecl(AstImplBlock decl, DataType data = default) => default;
 
-        public virtual ReturnType VisitAssignment(AstAssignment ass, DataType data = default) => default;
+        // expressions
+        public virtual ReturnType VisitStringLiteralExpr(AstStringLiteral expr, DataType data = default) => default;
+        public virtual ReturnType VisitStructValueExpr(AstStructValueExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitUnaryExpr(AstUnaryExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitArrayExpr(AstArrayExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitAmpersandExpr(AstAmpersandExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitArrayAccessExpr(AstArrayAccessExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitBinaryExpr(AstBinaryExpr bexprin, DataType data = default) => default;
+        public virtual ReturnType VisitBoolExpr(AstBoolExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitCallExpr(AstCallExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitCastExpr(AstCastExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitCompCallExpr(AstCompCallExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitDerefExpr(AstDereferenceExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitDotExpr(AstDotExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitIdExpr(AstIdExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitNullExpr(AstNullExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitNumberExpr(AstNumberExpr expr, DataType data = default) => default;
 
-        public virtual ReturnType VisitBinaryExpression(AstBinaryExpr bin, DataType data = default) => default;
+        public virtual ReturnType VisitEmptyExpression(AstEmptyExpr expr, DataType data = default) => default;
 
-        public virtual ReturnType VisitBlockStatement(AstBlockStmt block, DataType data = default) => default;
+        // type expressions
+        public virtual ReturnType VisitIdTypeExpr(AstIdTypeExpr type, DataType data = default) => default;
+        public virtual ReturnType VisitPointerTypeExpr(AstPointerTypeExpr type, DataType data = default) => default;
+        public virtual ReturnType VisitSliceTypeExpr(AstSliceTypeExpr type, DataType data = default) => default;
+        public virtual ReturnType VisitArrayTypeExpr(AstArrayTypeExpr type, DataType data = default) => default;
+        public virtual ReturnType VisitFunctionTypeExpr(AstFunctionTypeExpr type, DataType data = default) => default;
 
-        public virtual ReturnType VisitBoolExpression(AstBoolExpr bo, DataType data = default) => default;
-
-        public virtual ReturnType VisitCallExpression(AstCallExpr call, DataType data = default) => default;
-
-        public virtual ReturnType VisitCastExpression(AstCastExpr cast, DataType data = default) => default;
-
-        public virtual ReturnType VisitCompCallExpression(AstCompCallExpr call, DataType data = default) => default;
-
-        public virtual ReturnType VisitDereferenceExpression(AstDereferenceExpr deref, DataType data = default) => default;
-        
-        public virtual ReturnType VisitDotExpression(AstDotExpr dot, DataType data = default) => default;
-
-        public virtual ReturnType VisitEmptyExpression(AstEmptyExpr em, DataType data = default) => default;
-
-        public virtual ReturnType VisitEnumDeclaration(AstEnumDecl en, DataType data = default) => default;
-
-        public virtual ReturnType VisitExpressionStatement(AstExprStmt stmt, DataType data = default) => default;
-
-        public virtual ReturnType VisitFunctionDeclaration(AstFunctionDecl function, DataType data = default) => default;
-
-        public virtual ReturnType VisitIdentifierExpression(AstIdentifierExpr ident, DataType data = default) => default;
-
-        public virtual ReturnType VisitIfStatement(AstIfStmt ifs, DataType data = default) => default;
-
-        public virtual ReturnType VisitImplBlock(AstImplBlock impl, DataType data = default) => default;
-
-        public virtual ReturnType VisitNumberExpression(AstNumberExpr num, DataType data = default) => default;
-
-        //public virtual ReturnType VisitPointerTypeExpr(AstPointerTypeExpr astPointerTypeExpr, DataType data = default) => default;
-
-        public virtual ReturnType VisitReturnStatement(AstReturnStmt ret, DataType data = default) => default;
-
-        public virtual ReturnType VisitStringLiteral(AstStringLiteral str, DataType data = default) => default;
-
-        public virtual ReturnType VisitStructValueExpression(AstStructValueExpr str, DataType data = default) => default;
-
-        public virtual ReturnType VisitTypeAlias(AstTypeAliasDecl al, DataType data = default) => default;
-
-        public virtual ReturnType VisitStructDeclaration(AstStructDecl type, DataType data = default) => default;
-
-        public virtual ReturnType VisitUnaryExpression(AstUnaryExpr bin, DataType data = default) => default;
-
-        public virtual ReturnType VisitUsingStatement(AstUsingStmt use, DataType data = default) => default;
-
-        public virtual ReturnType VisitVariableDeclaration(AstVariableDecl variable, DataType data = default) => default;
-
-        public virtual ReturnType VisitWhileStatement(AstWhileStmt ws, DataType data = default) => default;
-
-        public virtual ReturnType VisitEmptyStatement(AstEmptyStatement em, DataType data = default) => default;
-
-        public virtual ReturnType VisitTypeExpr(AstTypeExpr astArrayTypeExpr, DataType data = default) => default;
-
-        public virtual ReturnType VisitDeferStatement(AstDeferStmt def, DataType data = default) => default;
-
-        public virtual ReturnType VisitArrayExpression(AstArrayExpression arr, DataType data = default) => default;
-
-        public virtual ReturnType VisitMatchStatement(AstMatchStmt match, DataType data = default) => default;
-
-        public virtual ReturnType VisitNullExpression(AstNullExpr nul, DataType data = default) => default;
-
-        public virtual ReturnType VisitBreakStatement(AstBreakStmt br, DataType data = default) => default;
-
-        public virtual ReturnType VisitContinueStatement(AstContinueStmt cont, DataType data = default) => default;
-
-        public virtual ReturnType VisitFunctionTypeExpr(AstFunctionTypeExpr func, DataType data = default) => default;
-
-        public virtual ReturnType VisitTraitDeclaration(AstTraitDeclaration trait, DataType data = default) => default;
-
-        public virtual ReturnType VisitVariableExpression(AstVariableExpression expr, DataType data = default) => default;
-
-        public virtual ReturnType VisitDirectiveStatement(AstDirectiveStatement dir, DataType data = default) => default;
+        // special
+        public virtual ReturnType VisitTypeExpr(AstTypeRef re, DataType data = default) => default;
+        public virtual ReturnType VisitVariableRef(AstVariableRef re, DataType data = default) => default;
     }
 }

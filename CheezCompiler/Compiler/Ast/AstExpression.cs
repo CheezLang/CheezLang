@@ -19,7 +19,6 @@ namespace Cheez.Compiler.Ast
         public TokenLocation Beginning => Location?.Beginning;
         public TokenLocation End => Location?.End;
 
-
         public CheezType Type { get; set; }
         public object Value { get; set; }
         public Scope Scope { get; set; }
@@ -98,7 +97,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitStringLiteral(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitStringLiteralExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
@@ -108,12 +107,12 @@ namespace Cheez.Compiler.Ast
     public class AstDotExpr : AstExpression
     {
         public AstExpression Left { get; set; }
-        public AstIdentifierExpr Right { get; set; }
+        public AstIdExpr Right { get; set; }
         public bool IsDoubleColon { get; set; }
         public override bool IsPolymorphic => Left.IsPolymorphic;
 
         [DebuggerStepThrough]
-        public AstDotExpr(AstExpression left, AstIdentifierExpr right, bool isDC, ILocation Location = null) : base(Location)
+        public AstDotExpr(AstExpression left, AstIdExpr right, bool isDC, ILocation Location = null) : base(Location)
         {
             this.Left = left;
             this.Right = right;
@@ -121,11 +120,11 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitDotExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitDotExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstDotExpr(Left.Clone(), Right.Clone() as AstIdentifierExpr, IsDoubleColon));
+            => CopyValuesTo(new AstDotExpr(Left.Clone(), Right.Clone() as AstIdExpr, IsDoubleColon));
     }
 
     public class AstCallExpr : AstExpression
@@ -142,7 +141,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitCallExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitCallExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
@@ -151,13 +150,13 @@ namespace Cheez.Compiler.Ast
 
     public class AstCompCallExpr : AstExpression
     {
-        public AstIdentifierExpr Name { get; set; }
+        public AstIdExpr Name { get; set; }
         public List<AstExpression> Arguments { get; set; }
 
         public override bool IsPolymorphic => false;
 
         [DebuggerStepThrough]
-        public AstCompCallExpr(AstIdentifierExpr func, List<AstExpression> args, ILocation Location = null) : base(Location)
+        public AstCompCallExpr(AstIdExpr func, List<AstExpression> args, ILocation Location = null) : base(Location)
         {
             Name = func;
             Arguments = args;
@@ -165,11 +164,11 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitCompCallExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitCompCallExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstCompCallExpr(Name.Clone() as AstIdentifierExpr, Arguments.Select(a => a.Clone()).ToList()));
+            => CopyValuesTo(new AstCompCallExpr(Name.Clone() as AstIdExpr, Arguments.Select(a => a.Clone()).ToList()));
     }
 
     public class AstBinaryExpr : AstExpression, ITempVariable
@@ -178,7 +177,7 @@ namespace Cheez.Compiler.Ast
         public AstExpression Left { get; set; }
         public AstExpression Right { get; set; }
 
-        public AstIdentifierExpr Name => null;
+        public AstIdExpr Name => null;
         public override bool IsPolymorphic => Left.IsPolymorphic || Right.IsPolymorphic;
 
         [DebuggerStepThrough]
@@ -190,7 +189,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBinaryExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBinaryExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
@@ -211,7 +210,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitUnaryExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitUnaryExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
@@ -232,31 +231,31 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBoolExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBoolExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
             => CopyValuesTo(new AstBoolExpr((bool)Value));
     }
 
-    public class AstAddressOfExpr : AstExpression
+    public class AstAmpersandExpr : AstExpression
     {
         public AstExpression SubExpression { get; set; }
         public override bool IsPolymorphic => SubExpression.IsPolymorphic;
         public bool IsReference = false;
 
         [DebuggerStepThrough]
-        public AstAddressOfExpr(AstExpression sub, ILocation Location = null) : base(Location)
+        public AstAmpersandExpr(AstExpression sub, ILocation Location = null) : base(Location)
         {
             SubExpression = sub;
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitAddressOfExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitAmpersandExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstAddressOfExpr(SubExpression.Clone()) { IsReference = this.IsReference });
+            => CopyValuesTo(new AstAmpersandExpr(SubExpression.Clone()) { IsReference = this.IsReference });
     }
 
     public class AstDereferenceExpr : AstExpression
@@ -271,7 +270,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitDereferenceExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitDerefExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
@@ -284,7 +283,7 @@ namespace Cheez.Compiler.Ast
         public AstExpression TypeExpr { get; set; }
         public override bool IsPolymorphic => SubExpression.IsPolymorphic || Type.IsPolyType;
 
-        public AstIdentifierExpr Name => null;
+        public AstIdExpr Name => null;
 
         [DebuggerStepThrough]
         public AstCastExpr(AstExpression typeExpr, AstExpression sub, ILocation Location = null) : base(Location)
@@ -294,7 +293,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitCastExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitCastExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone() => CopyValuesTo(new AstCastExpr(TypeExpr.Clone(), SubExpression.Clone()));
@@ -314,7 +313,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitArrayAccessExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitArrayAccessExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone() => CopyValuesTo(new AstArrayAccessExpr(SubExpression.Clone(), Indexer.Clone()));
@@ -331,7 +330,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitNullExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitNullExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone() => CopyValuesTo(new AstNullExpr());
@@ -351,13 +350,13 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitNumberExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitNumberExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone() => CopyValuesTo(new AstNumberExpr(Data));
     }
 
-    public class AstIdentifierExpr : AstExpression
+    public class AstIdExpr : AstExpression
     {
         public string Name { get; set; }
         public ISymbol Symbol { get; set; }
@@ -366,7 +365,7 @@ namespace Cheez.Compiler.Ast
         private bool _isPolymorphic;
 
         [DebuggerStepThrough]
-        public AstIdentifierExpr(string name, bool isPolyTypeExpr, ILocation Location = null) : base(Location)
+        public AstIdExpr(string name, bool isPolyTypeExpr, ILocation Location = null) : base(Location)
         {
             this.Name = name;
             this._isPolymorphic = isPolyTypeExpr;
@@ -378,10 +377,10 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitIdentifierExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitIdExpr(this, data);
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstIdentifierExpr(Name, IsPolymorphic));
+        public override AstExpression Clone() => CopyValuesTo(new AstIdExpr(Name, IsPolymorphic));
     }
 
     public class AstStructMemberInitialization: ILocation
@@ -390,12 +389,12 @@ namespace Cheez.Compiler.Ast
         public TokenLocation Beginning => Location?.Beginning;
         public TokenLocation End => Location?.End;
 
-        public AstIdentifierExpr Name { get; set; }
+        public AstIdExpr Name { get; set; }
         public AstExpression Value { get; set; }
 
         public int Index { get; set; }
 
-        public AstStructMemberInitialization(AstIdentifierExpr name, AstExpression expr, ILocation Location = null)
+        public AstStructMemberInitialization(AstIdExpr name, AstExpression expr, ILocation Location = null)
         {
             this.Location = Location;
             this.Name = name;
@@ -409,7 +408,7 @@ namespace Cheez.Compiler.Ast
         public List<AstStructMemberInitialization> MemberInitializers { get; }
         public override bool IsPolymorphic => false;
 
-        public AstIdentifierExpr Name => null;
+        public AstIdExpr Name => null;
 
         [DebuggerStepThrough]
         public AstStructValueExpr(AstExpression name, List<AstStructMemberInitialization> inits, ILocation Location = null) : base(Location)
@@ -419,28 +418,28 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitStructValueExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitStructValueExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone() => CopyValuesTo(new AstStructValueExpr(TypeExpr, MemberInitializers));
     }
 
-    public class AstArrayExpression : AstExpression, ITempVariable
+    public class AstArrayExpr : AstExpression, ITempVariable
     {
         public override bool IsPolymorphic => false;
 
         public List<AstExpression> Values { get; set; }
 
-        public AstIdentifierExpr Name => null;
+        public AstIdExpr Name => null;
 
-        public AstArrayExpression(List<AstExpression> values, ILocation Location = null) : base(Location)
+        public AstArrayExpr(List<AstExpression> values, ILocation Location = null) : base(Location)
         {
             this.Values = values;
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitArrayExpression(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitArrayExpr(this, data);
 
-        public override AstExpression Clone() => CopyValuesTo(new AstArrayExpression(Values.Select(v => v.Clone()).ToList()));
+        public override AstExpression Clone() => CopyValuesTo(new AstArrayExpr(Values.Select(v => v.Clone()).ToList()));
     }
 }
