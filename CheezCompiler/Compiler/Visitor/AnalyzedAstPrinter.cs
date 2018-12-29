@@ -101,6 +101,7 @@ namespace Cheez.Compiler.Visitor
             // polies
             if (str.PolymorphicInstances?.Count > 0)
             {
+                sb.AppendLine();
                 sb.AppendLine($"// Polymorphic instances for {head}");
                 foreach (var pi in str.PolymorphicInstances)
                 {

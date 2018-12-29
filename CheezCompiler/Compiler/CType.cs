@@ -415,7 +415,12 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return $"struct {Declaration.Name.Name}";
+            if (Declaration.IsPolyInstance)
+            {
+                var args = string.Join(", ", Declaration.Parameters.Select(p => $"{p.Value}"));
+                return $"{Declaration.Name.Name}({args})";
+            }
+            return $"{Declaration.Name.Name}";
         }
 
         public int GetIndexOfMember(string right)
