@@ -580,7 +580,7 @@ namespace Cheez.Compiler.Parsing
                     break;
 
                 AstIdExpr pname = null;
-                AstExpression ptype = null;
+                AstTypeExpr ptype = null;
 
                 if (next.type != TokenType.Colon)
                 {
@@ -591,7 +591,7 @@ namespace Cheez.Compiler.Parsing
                 Consume(TokenType.Colon, ErrMsg(":", "after name in parameter list"));
                 SkipNewlines();
 
-                ptype = ParseExpression();
+                ptype = ParseTypeExpr();
 
                 parameters.Add(new AstParameter(pname, ptype, new Location(pname.Beginning)));
 
@@ -796,7 +796,7 @@ namespace Cheez.Compiler.Parsing
         {
             TokenLocation beg = null, end = null;
             AstIdExpr name = null;
-            AstExpression value = null;
+            AstTypeExpr value = null;
 
             beg = Consume(TokenType.KwTypedef, ErrMsg("keyword 'typedef'", "at beginning of type alias declaration")).location;
             SkipNewlines();
@@ -807,7 +807,7 @@ namespace Cheez.Compiler.Parsing
             Consume(TokenType.Equal, ErrMsg("type expression", "after '=' in type alias declaration"));
             SkipNewlines();
 
-            value = ParseExpression(ErrMsg("expression", "after '=' in variable declaration"));
+            value = ParseTypeExpr();
             end = value.End;
 
             return new AstTypeAliasDecl(name, value, Location: new Location(beg, end));
@@ -1035,7 +1035,7 @@ namespace Cheez.Compiler.Parsing
 
         #region Expression Parsing
 
-        private AstExpression ParseFunctionTypeExpr()
+        private AstTypeExpr ParseFunctionTypeExpr()
         {
             var beginning = Consume(TokenType.KwFn, ErrMsg("keyword 'fn'", "at beginning of function type")).location;
             SkipNewlines();
@@ -1043,14 +1043,14 @@ namespace Cheez.Compiler.Parsing
             Consume(TokenType.OpenParen, ErrMsg("(", "after keyword 'fn'"));
             SkipNewlines();
 
-            List<AstExpression> args = new List<AstExpression>();
+            List<AstTypeExpr> args = new List<AstTypeExpr>();
             while (true)
             {
                 var next = PeekToken();
                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                     break;
 
-                args.Add(ParseExpression());
+                args.Add(ParseTypeExpr());
                 SkipNewlines();
 
                 next = PeekToken();
@@ -1066,11 +1066,11 @@ namespace Cheez.Compiler.Parsing
             }
 
             var end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of function type parameter list")).location;
-            AstExpression returnType = null;
+            AstTypeExpr returnType = null;
             if (CheckToken(TokenType.Arrow))
             {
                 NextToken();
-                returnType = ParseExpression();
+                returnType = ParseTypeExpr();
                 end = returnType.End;
             }
 
@@ -1082,6 +1082,60 @@ namespace Cheez.Compiler.Parsing
             errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
 
             return ParseOrExpression(errorMessage);
+        }
+
+        private AstTypeExpr ParseTypeExpr()
+        {
+            var token = PeekToken();
+
+            if (token.type == TokenType.OpenBracket)
+            {
+                NextToken();
+                SkipNewlines();
+
+                var next = PeekToken();
+                if (next.type == TokenType.ClosingBracket)
+                {
+                    NextToken();
+                    SkipNewlines();
+
+                    var target = ParseTypeExpr();
+                    return new AstSliceTypeExpr(target, new Location(token.location, target.End));
+                }
+
+                var size = ParseExpression();
+                SkipNewlines();
+
+                Consume(TokenType.ClosingBracket, ErrMsg("']'", "at end of array type expression"));
+                SkipNewlines();
+
+                {
+                    var target = ParseTypeExpr();
+                    return new AstArrayTypeExpr(target, size, new Location(token.location, target.End));
+                }
+            }
+
+            if (token.type == TokenType.Identifier)
+            {
+                NextToken();
+                return new AstIdTypeExpr(token.data as string, new Location(token.location));
+            }
+
+            if (token.type == TokenType.Asterisk)
+            {
+                NextToken();
+                SkipNewlines();
+                var target = ParseTypeExpr();
+                return new AstPointerTypeExpr(target, new Location(token.location, target.End));
+            }
+
+            if (token.type == TokenType.KwFn)
+            {
+                return ParseFunctionTypeExpr();
+            }
+
+            ReportError(token.location, $"Unexpected token in type expression: '{token}'");
+            return null;
         }
 
         [DebuggerStepThrough]
@@ -1384,20 +1438,6 @@ namespace Cheez.Compiler.Parsing
                         }
 
                         var end = Consume(TokenType.ClosingBracket, ErrMsg("]", "at end of array expression")).location;
-                        {
-                            var next = PeekToken();
-                            switch (next.type)
-                            {
-                                case TokenType.Ampersand:
-                                case TokenType.Identifier:
-                                case TokenType.OpenBracket:
-                                    {
-                                        var sub = ParseUnaryExpression();
-                                        return new AstSliceTypeExpr(sub, new Location(token.location, sub.End));
-                                    }
-                            }
-                        }
-
                         return new AstArrayExpr(values, new Location(token.location, end));
                     }
 

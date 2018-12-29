@@ -141,7 +141,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
         {
             alias.TypeExpr.Scope = alias.Scope;
 
-            if (alias.TypeExpr is AstIdExpr id)
+            if (alias.TypeExpr is AstIdTypeExpr id)
             {
                 alias.Type = mWorkspace.ResolveType(alias.TypeExpr);
 

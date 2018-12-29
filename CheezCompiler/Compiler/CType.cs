@@ -198,7 +198,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return $"&{TargetType}";
+            return $"*{TargetType}";
         }
 
         public override bool IsPolyType => TargetType.IsPolyType;
@@ -483,7 +483,10 @@ namespace Cheez.Compiler
         public override string ToString()
         {
             var args = string.Join(", ", ParameterTypes.ToList());
-            return $"fn({args}) -> {ReturnType}";
+            if (ReturnType != CheezType.Void)
+                return $"fn({args}) -> {ReturnType}";
+            else
+                return $"fn({args})";
         }
 
         public override bool IsPolyType => false;

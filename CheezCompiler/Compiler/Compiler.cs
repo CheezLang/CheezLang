@@ -34,9 +34,10 @@ namespace Cheez.Compiler
         }
     }
 
-    public class Compiler
+    public class Compiler : ITextProvider
     {
         private Dictionary<string, PTFile> mFiles = new Dictionary<string, PTFile>();
+        private Dictionary<string, Lexer> mLoadingFiles = new Dictionary<string, Lexer>();
         private Dictionary<string, Workspace> mWorkspaces = new Dictionary<string, Workspace>();
         public IErrorHandler ErrorHandler { get; }
         public Dictionary<string, string> ModulePaths = new Dictionary<string, string>();
@@ -49,6 +50,8 @@ namespace Cheez.Compiler
             ErrorHandler = errorHandler;
             mMainWorkspace = new Workspace(this);
             mWorkspaces["main"] = mMainWorkspace;
+
+            ErrorHandler.TextProvider = this;
 
             string exePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "libraries");
             if (stdlib != null) exePath = stdlib;
@@ -236,6 +239,8 @@ namespace Cheez.Compiler
         private (PTFile, List<string>) ParseFile(string fileName, string body, IErrorHandler eh)
         {
             var lexer = body != null ? Lexer.FromString(body, eh, fileName) : Lexer.FromFile(fileName, eh);
+            
+            mLoadingFiles.Add(fileName, lexer);
 
             if (lexer == null)
                 return (null, null);
@@ -269,6 +274,7 @@ namespace Cheez.Compiler
                     break;
             }
 
+            mLoadingFiles.Remove(fileName);
             return (file, loadedFiles);
         }
 
@@ -278,6 +284,18 @@ namespace Cheez.Compiler
             if (!mFiles.ContainsKey(normalizedPath))
                 return null;
             return mFiles[normalizedPath];
+        }
+
+        public IText GetText(ILocation location)
+        {
+            var normalizedPath = Path.GetFullPath(location.Beginning.file).PathNormalize();
+
+            if (mFiles.TryGetValue(normalizedPath, out var f))
+                return f;
+            if (mLoadingFiles.TryGetValue(normalizedPath, out var f2))
+                return f2;
+
+            return null;
         }
     }
 }
