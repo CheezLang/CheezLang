@@ -1,6 +1,6 @@
-﻿namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
+﻿namespace Cheez.Compiler
 {
-    public partial class DeclarationAnalyzer
+    public partial class Workspace
     {
     }
 }

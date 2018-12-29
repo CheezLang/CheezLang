@@ -89,7 +89,7 @@ namespace Cheez.Compiler
         {
             var deps = new HashSet<AstDecl>();
             
-            var newType = ResolveType(alias.TypeExpr, deps);
+            var newType = ResolveTypeHelper(alias.TypeExpr, deps);
             if (newType != alias.Type && !(newType is AliasType))
             {
                 alias.Type = newType;
@@ -107,7 +107,7 @@ namespace Cheez.Compiler
             foreach (var param in @struct.Parameters)
             {
                 param.TypeExpr.Scope = @struct.Scope;
-                var newType = ResolveType(param.TypeExpr, deps);
+                var newType = ResolveTypeHelper(param.TypeExpr, deps);
 
                 if (newType is AbstractType)
                 {

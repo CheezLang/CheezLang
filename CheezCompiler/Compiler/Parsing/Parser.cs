@@ -695,13 +695,13 @@ namespace Cheez.Compiler.Parsing
         {
             TokenLocation beg = null, end = null;
             var functions = new List<AstFunctionDecl>();
-            AstExpression target = null;
-            AstExpression trait = null;
+            AstTypeExpr target = null;
+            AstTypeExpr trait = null;
 
             beg = Consume(TokenType.KwImpl, ErrMsg("keyword 'impl'", "at beginning of impl statement")).location;
             SkipNewlines();
 
-            target = ParseExpression();
+            target = ParseTypeExpr();
             SkipNewlines();
 
             if (CheckToken(TokenType.KwFor))
@@ -709,7 +709,7 @@ namespace Cheez.Compiler.Parsing
                 NextToken();
                 SkipNewlines();
                 trait = target;
-                target = ParseExpression();
+                target = ParseTypeExpr();
                 SkipNewlines();
             }
 
@@ -939,7 +939,7 @@ namespace Cheez.Compiler.Parsing
             var parameters = new List<AstFunctionParameter>();
             var directives = new List<AstDirective>();
             var generics = new List<AstIdExpr>();
-            AstExpression returnType = null;
+            AstTypeExpr returnType = null;
 
             beginning = NextToken().location;
             SkipNewlines();
@@ -958,7 +958,7 @@ namespace Cheez.Compiler.Parsing
                     break;
 
                 AstIdExpr pname = null;
-                AstExpression ptype = null;
+                AstTypeExpr ptype = null;
 
                 if (next.type != TokenType.Colon)
                     pname = ParseIdentifierExpr(ErrMsg("identifier"));
@@ -1007,30 +1007,9 @@ namespace Cheez.Compiler.Parsing
             }
 
             if (CheckToken(TokenType.Semicolon))
-            {
                 end = NextToken().location;
-            }
             else
-            {
-                // implementation
                 body = ParseBlockStatement();
-                //Consume(TokenType.OpenBrace, ErrMsg("{", "after header in function declaration"));
-
-                //while (true)
-                //{
-                //    SkipNewlines();
-                //    var token = PeekToken();
-
-                //    if (token.type == TokenType.ClosingBrace || token.type == TokenType.EOF)
-                //        break;
-
-                //    var stmt = ParseStatement();
-                //    if (stmt.stmt != null)
-                //        statements.Add(stmt.stmt);
-                //}
-
-                //end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of function")).location;
-            }
 
             return new AstFunctionDecl(name, generics, parameters, returnType, body, directives, Location: new Location(beginning, end));
         }

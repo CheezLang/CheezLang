@@ -1,5 +1,4 @@
 ﻿using Cheez.Compiler.Ast;
-using Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -24,6 +23,7 @@ namespace Cheez.Compiler
         public Dictionary<CheezType, List<AstImplBlock>> Implementations = new Dictionary<CheezType, List<AstImplBlock>>();
 
         public int MaxPolyStructResolveStepCount { get; set; } = 10;
+        public int MaxPolyFuncResolveStepCount { get; set; } = 10;
 
         public Workspace(Compiler comp)
         {
@@ -65,6 +65,12 @@ namespace Cheez.Compiler
             Pass1(); // collect declarations
             Pass2(); // resolve types
             Pass3(); // resolve struct members
+            Pass4(); // resolve function signatures
+            // Pass5(); // impls
+            // Pass6(); // match impl functions with trait functions
+            // Pass6(); // function bodies and variabl
+
+
 
             if (MainFunction == null)
             {

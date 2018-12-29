@@ -2,6 +2,7 @@
 using Cheez.Compiler.Visitor;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 
 namespace Cheez.Compiler.Ast
@@ -55,6 +56,13 @@ namespace Cheez.Compiler.Ast
             to.Scope = this.Scope;
             to.mFlags = this.mFlags;
             return to;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringWriter();
+            new RawAstPrinter(sb).PrintExpression(this);
+            return sb.GetStringBuilder().ToString();
         }
     }
 
