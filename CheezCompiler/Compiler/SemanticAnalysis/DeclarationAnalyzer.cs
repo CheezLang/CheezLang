@@ -1,6 +1,7 @@
 ﻿using Cheez.Compiler.Ast;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Cheez.Compiler
 {
@@ -85,21 +86,85 @@ namespace Cheez.Compiler
                         return FunctionType.GetFunctionType(returnType, par);
                     }
 
-                //case AstCallExpr call:
-                //{
-                //    throw new NotImplementedException();
-                //    // call.Function.Scope = call.Scope;
-                //    // var subType = ResolveType(call.Function);
-                //    // if (subType is PolyStructType @struct)
-                //    // {
-                //    //     return ResolvePolyStructType(call, @struct);
-                //    // }
-                //    // return CheezType.Error;
-                //}
+                case AstPolyStructTypeExpr @struct:
+                    {
+                        @struct.Struct.Scope = @struct.Scope;
+                        @struct.Struct.Type = ResolveType(@struct.Struct, deps);
+
+                        foreach (var arg in @struct.Arguments)
+                        {
+                            arg.Scope = @struct.Scope;
+                            arg.Type = ResolveType(arg, deps);
+                        }
+
+                        // instantiate struct
+                        var instance = InstantiatePolyStruct(@struct);
+                        return instance.Type;
+                    }
             }
 
             ReportError(typeExpr, $"Expected type");
             return CheezType.Error;
+        }
+
+        private AstStructDecl InstantiatePolyStruct(AstPolyStructTypeExpr expr)
+        {
+            var @struct = expr.Struct.Type as GenericStructType;
+
+            // check if instance already exists
+            AstStructDecl instance = null;
+            foreach (var pi in @struct.Declaration.PolymorphicInstances)
+            {
+                Debug.Assert(pi.Parameters.Count == expr.Arguments.Count);
+
+                bool eq = true;
+                for (int i = 0; i < pi.Parameters.Count; i++)
+                {
+                    var param = pi.Parameters[i];
+                    var ptype = param.Type;
+                    var pvalue = param.Value;
+
+                    var arg = expr.Arguments[i];
+                    var atype = arg.Type;
+                    var avalue = arg.Value;
+
+                    //if (existingType != newType)
+                    {
+                        eq = false;
+                        break;
+                    }
+                }
+
+                if (eq)
+                {
+                    instance = pi;
+                    break;
+                }
+            }
+
+            // instatiate type
+            if (instance == null)
+            {
+                instance = @struct.Declaration.Clone() as AstStructDecl;
+                instance.SubScope = new Scope($"struct {@struct.Declaration.Name.Name}<poly>", instance.Scope);
+                instance.IsPolyInstance = true;
+                instance.IsPolymorphic = false;
+                @struct.Declaration.PolymorphicInstances.Add(instance);
+
+                Debug.Assert(instance.Parameters.Count == expr.Arguments.Count);
+
+                for (int i = 0; i < instance.Parameters.Count; i++)
+                {
+                    var param = instance.Parameters[i];
+                    var arg = expr.Arguments[i];
+                    param.Type = @struct.Declaration.Parameters[i].Type;
+                    param.Value = arg.Type;
+                }
+
+                instance.Type = new StructType(instance);
+            }
+
+            return instance;
         }
     }
 }
