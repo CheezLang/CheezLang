@@ -1340,13 +1340,6 @@ namespace Cheez.Compiler.Parsing
                             break;
                         }
 
-                    //case TokenType.Ampersand:
-                    //    {
-                    //        NextToken();
-                    //        expr = new PTPointerTypeExpr(expr.Beginning, CurrentToken.location, expr);
-                    //        break;
-                    //    }
-
                     default:
                         return expr;
                 }
@@ -1388,9 +1381,6 @@ namespace Cheez.Compiler.Parsing
             var token = PeekToken();
             switch (token.type)
             {
-                case TokenType.KwFn:
-                    return ParseFunctionTypeExpr();
-
                 case TokenType.KwNew:
                     return ParseStructValue();
 
