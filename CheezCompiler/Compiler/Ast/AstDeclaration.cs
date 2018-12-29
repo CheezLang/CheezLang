@@ -7,6 +7,18 @@ using System.Text;
 
 namespace Cheez.Compiler.Ast
 {
+
+    public abstract class AstDecl : AstStatement
+    {
+        public AstIdExpr Name { get; set; }
+        public CheezType Type { get; set; }
+
+        public AstDecl(AstIdExpr name, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
+        {
+            this.Name = name;
+        }
+    }
+
     public class AstParameter : ITypedSymbol, ILocation
     {
         public ILocation Location { get; private set; }
@@ -41,7 +53,6 @@ namespace Cheez.Compiler.Ast
         public TokenLocation Beginning => Location?.Beginning;
         public TokenLocation End => Location?.End;
 
-
         public AstIdExpr Name { get; }
         public CheezType Type { get; set; }
         public AstExpression TypeExpr { get; set; }
@@ -65,21 +76,17 @@ namespace Cheez.Compiler.Ast
         CheezType Type { get; }
     }
 
-    public class AstFunctionDecl : AstStatement, ITypedSymbol
+    public class AstFunctionDecl : AstDecl, ITypedSymbol
     {
-        public Parsing.IText Text { get; set; }
-
         public Scope HeaderScope { get; set; }
         public Scope SubScope { get; set; }
 
-        public AstIdExpr Name { get; set; }
         public List<AstFunctionParameter> Parameters { get; }
         public AstExpression ReturnTypeExpr { get; set; }
         public CheezType ReturnType { get; set; }
 
         //public List<AstIdentifierExpr> Generics { get; }
 
-        public CheezType Type { get; set; }
         public FunctionType FunctionType => Type as FunctionType;
 
         public AstBlockStmt Body { get; private set; }
@@ -108,9 +115,8 @@ namespace Cheez.Compiler.Ast
             AstBlockStmt body = null, 
             List<AstDirective> Directives = null, 
             bool refSelf = false, ILocation Location = null)
-            : base(Directives, Location)
+            : base(name, Directives, Location)
         {
-            this.Name = name;
             this.Parameters = parameters;
             this.ReturnTypeExpr = returnTypeExpr;
             this.Body = body;
@@ -129,7 +135,7 @@ namespace Cheez.Compiler.Ast
 
     #endregion
 
-    #region Type Declaration
+    #region Struct Declaration
 
     public class AstMemberDecl : ILocation
     {
@@ -154,13 +160,10 @@ namespace Cheez.Compiler.Ast
         public AstMemberDecl Clone() => new AstMemberDecl(Name.Clone() as AstIdExpr, TypeExpr.Clone(), Initializer?.Clone());
     }
 
-    public class AstStructDecl : AstStatement, ITypedSymbol
+    public class AstStructDecl : AstDecl, ITypedSymbol
     {
-        public AstIdExpr Name { get; set; }
         public List<AstMemberDecl> Members { get; }
         public List<AstParameter> Parameters { get; set; }
-
-        public CheezType Type { get; set; }
 
         public Scope SubScope { get; set; }
 
@@ -174,9 +177,9 @@ namespace Cheez.Compiler.Ast
         //public List<AstImplBlock> Implementations { get; } = new List<AstImplBlock>();
         public List<TraitType> Traits { get; } = new List<TraitType>();
 
-        public AstStructDecl(AstIdExpr name, List<AstParameter> param, List<AstMemberDecl> members, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
+        public AstStructDecl(AstIdExpr name, List<AstParameter> param, List<AstMemberDecl> members, List<AstDirective> Directives = null, ILocation Location = null)
+            : base(name, Directives, Location)
         {
-            this.Name = name;
             this.Parameters = param ?? new List<AstParameter>();
             this.Members = members;
         }
@@ -187,23 +190,25 @@ namespace Cheez.Compiler.Ast
         public override AstStatement Clone() => CopyValuesTo(new AstStructDecl(Name.Clone() as AstIdExpr, Parameters?.Select(p => p.Clone()).ToList(), Members.Select(m => m.Clone()).ToList()));
     }
 
-    public class AstTraitDeclaration : AstStatement, ITypedSymbol
+    #endregion
+
+    #region Trait
+
+    public class AstTraitDeclaration : AstDecl, ITypedSymbol
     {
-        public AstIdExpr Name { get; set; }
         public List<AstParameter> Parameters { get; set; }
 
         public List<AstFunctionDecl> Functions { get; }
         public List<AstFunctionDecl> FunctionInstances { get; }
 
-        public CheezType Type { get; set; }
         public bool IsConstant => true;
 
         public bool IsPolymorphic { get; set; }
         public bool IsPolyInstance { get; set; }
 
-        public AstTraitDeclaration(AstIdExpr name, List<AstParameter> parameters, List<AstFunctionDecl> functions, ILocation Location = null) : base(Location: Location)
+        public AstTraitDeclaration(AstIdExpr name, List<AstParameter> parameters, List<AstFunctionDecl> functions, ILocation Location = null)
+            : base(name, Location: Location)
         {
-            this.Name = name;
             this.Parameters = parameters;
             this.Functions = functions;
         }
@@ -242,19 +247,17 @@ namespace Cheez.Compiler.Ast
 
     #region Variable Declarion
 
-    public class AstVariableDecl : AstStatement, ITypedSymbol
+    public class AstVariableDecl : AstDecl, ITypedSymbol
     {
-        public AstIdExpr Name { get; set; }
-        public CheezType Type { get; set; }
         public AstExpression TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
         public Scope SubScope { get; set; }
 
         public bool IsConstant { get; set; } = false;
 
-        public AstVariableDecl(AstIdExpr name, AstExpression typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
+        public AstVariableDecl(AstIdExpr name, AstExpression typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null) 
+            : base(name, Directives, Location)
         {
-            this.Name = name;
             this.TypeExpr = typeExpr;
             this.Initializer = init;
         }
@@ -290,15 +293,13 @@ namespace Cheez.Compiler.Ast
         public AstEnumMember Clone() => new AstEnumMember(Name.Clone() as AstIdExpr, Value?.Clone());
     }
 
-    public class AstEnumDecl : AstStatement, INamed
+    public class AstEnumDecl : AstDecl, INamed
     {
-        public AstIdExpr Name { get; }
         public List<AstEnumMember> Members { get; }
-        public CheezType Type { get; set; }
 
-        public AstEnumDecl(AstIdExpr name, List<AstEnumMember> members, List<AstDirective> Directive = null, ILocation Location = null) : base(Directive, Location)
+        public AstEnumDecl(AstIdExpr name, List<AstEnumMember> members, List<AstDirective> Directive = null, ILocation Location = null)
+            : base(name, Directive, Location)
         {
-            this.Name = name;
             this.Members = members;
         }
 
@@ -312,15 +313,13 @@ namespace Cheez.Compiler.Ast
 
     #region Type Alias
 
-    public class AstTypeAliasDecl : AstStatement
+    public class AstTypeAliasDecl : AstDecl
     {
-        public AstIdExpr Name { get; set; }
         public AstTypeExpr TypeExpr { get; set; }
-        public CheezType Type { get; set; }
 
-        public AstTypeAliasDecl(AstIdExpr name, AstTypeExpr typeExpr, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
+        public AstTypeAliasDecl(AstIdExpr name, AstTypeExpr typeExpr, List<AstDirective> Directives = null, ILocation Location = null)
+            : base(name, Directives, Location)
         {
-            this.Name = name;
             this.TypeExpr = typeExpr;
         }
 

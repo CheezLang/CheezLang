@@ -57,9 +57,11 @@ namespace Cheez.Compiler
 
         public void CompileAll()
         {
-            GlobalScope = new Scope("Global");
-            GlobalScope.DefineBuiltInTypes();
-            GlobalScope.DefineBuiltInOperators();
+            var preludeScope = new Scope("prelude");
+            preludeScope.DefineBuiltInTypes();
+            preludeScope.DefineBuiltInOperators();
+
+            GlobalScope = new Scope("Global", preludeScope);
 
             //var semanticer = new Semanticer();
             //semanticer.DoWork(this, mStatements, mCompiler.ErrorHandler);
@@ -74,7 +76,20 @@ namespace Cheez.Compiler
         }
 
         [SkipInStackFrame]
+        public void ReportError(Error error)
+        {
+            mCompiler.ErrorHandler.ReportError(error);
+        }
+
+        [SkipInStackFrame]
         public void ReportError(string errorMessage)
+        {
+            var (callingFunctionFile, callingFunctionName, callLineNumber) = Util.GetCallingFunction().GetValueOrDefault(("", "", -1));
+            mCompiler.ErrorHandler.ReportError(errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
+        }
+
+        [SkipInStackFrame]
+        public void ReportError(string errorMessage, List<(string, ILocation)> details)
         {
             var (callingFunctionFile, callingFunctionName, callLineNumber) = Util.GetCallingFunction().GetValueOrDefault(("", "", -1));
             mCompiler.ErrorHandler.ReportError(errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);

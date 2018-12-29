@@ -51,12 +51,24 @@ namespace Cheez.Compiler
 
         public ILocation Location { get; set; }
 
-        public CompTimeVariable(string name, CheezType type, object value, ILocation location)
+        public AstDecl Declaration { get; }
+
+        public CompTimeVariable(string name, CheezType type, object value, ILocation location, AstDecl decl = null)
         {
             this.Name = new AstIdExpr(name, false);
             this.Type = type;
             this.Value = value;
             this.Location = location;
+            this.Declaration = decl;
+        }
+
+        public CompTimeVariable(string name, CheezType type, AstDecl decl)
+        {
+            this.Name = new AstIdExpr(name, false);
+            this.Type = type;
+            this.Value = decl.Type;
+            this.Location = decl;
+            this.Declaration = decl;
         }
     }
 
@@ -477,6 +489,16 @@ namespace Cheez.Compiler
 
             mSymbolTable[name] = new CompTimeVariable(name, CheezType.Type, symbol, null);
             return true;
+        }
+
+        public (bool ok, ILocation other) DefineDeclaration(AstDecl decl)
+        {
+            string name = decl.Name.Name;
+            if (mSymbolTable.TryGetValue(name, out var other))
+                return (false, other.Location);
+
+            mSymbolTable[name] = new CompTimeVariable(name, CheezType.Type, decl);
+            return (true, null);
         }
 
         public (bool ok, ILocation other) DefineTypeSymbolNew(string name, CheezType symbol, ILocation location)

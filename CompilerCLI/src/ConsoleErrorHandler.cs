@@ -33,21 +33,21 @@ namespace CheezCLI
             Log($"{Path.GetFileName(callingFunctionFile)}:{callingFunctionName}():{callLineNumber}", ConsoleColor.DarkYellow);
 #endif
 
-            if (error.Location == null)
+            if (error.Location != null)
+            {
+                var text = TextProvider.GetText(error.Location);
+
+                TokenLocation beginning = error.Location.Beginning;
+                TokenLocation end = error.Location.End;
+
+                // location, message
+                Log($"{beginning.file}:{beginning.line}: {error.Message}", ConsoleColor.Red);
+                PrintLocation(text, error.Location);
+            }
+            else
             {
                 Log(error.Message, ConsoleColor.Red);
-                return;
             }
-
-            var text = TextProvider.GetText(error.Location);
-
-            TokenLocation beginning = error.Location.Beginning;
-            TokenLocation end = error.Location.End;
-
-            // location, message
-            Log($"{beginning.file}:{beginning.line}: {error.Message}", ConsoleColor.Red);
-
-            PrintLocation(text, error.Location);
 
             // details
             if (error.Details?.Count > 0)
@@ -68,7 +68,7 @@ namespace CheezCLI
 
             if (error.SubErrors?.Count > 0)
             {
-                Log("Related:", ConsoleColor.White);
+                Log("| Related:", ConsoleColor.White);
 
                 foreach (var e in error.SubErrors)
                 {
