@@ -1,4 +1,5 @@
 ﻿using Cheez.Compiler.Ast;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,6 +10,7 @@ namespace Cheez.Compiler
     {
         //CheezType Type { get; }
         bool IsConstant { get; }
+        ILocation Location { get; }
     }
 
     public interface ITypedSymbol : ISymbol
@@ -23,6 +25,8 @@ namespace Cheez.Compiler
 
         public AstExpression Expr { get; }
         public bool IsConstant => true;
+
+        public ILocation Location => throw new NotImplementedException();
 
         [DebuggerStepThrough]
         public Using(AstIdentifierExpr name, AstExpression expr)
@@ -45,11 +49,14 @@ namespace Cheez.Compiler
         public bool IsConstant => true;
         public object Value { get; }
 
-        public CompTimeVariable(string name, CheezType type, object value)
+        public ILocation Location { get; set; }
+
+        public CompTimeVariable(string name, CheezType type, object value, ILocation location)
         {
             this.Name = new AstIdentifierExpr(name, false);
             this.Type = type;
             this.Value = value;
+            this.Location = location;
         }
     }
 
@@ -60,6 +67,8 @@ namespace Cheez.Compiler
         public bool IsConstant => throw new System.NotImplementedException();
 
         public AstIdentifierExpr Name => throw new System.NotImplementedException();
+
+        public ILocation Location => throw new NotImplementedException();
     }
 
     //public class CheezTypeSymbol : ISymbol
@@ -460,13 +469,23 @@ namespace Cheez.Compiler
             return true;
         }
 
+        [Obsolete]
         public bool DefineTypeSymbol(string name, CheezType symbol)
         {
             if (mSymbolTable.ContainsKey(name))
                 return false;
 
-            mSymbolTable[name] = new CompTimeVariable(name, CheezType.Type, symbol);
+            mSymbolTable[name] = new CompTimeVariable(name, CheezType.Type, symbol, null);
             return true;
+        }
+
+        public (bool ok, ILocation other) DefineTypeSymbolNew(string name, CheezType symbol, ILocation location)
+        {
+            if (mSymbolTable.TryGetValue(name, out var other))
+                return (false, other.Location);
+
+            mSymbolTable[name] = new CompTimeVariable(name, CheezType.Type, symbol, location);
+            return (true, null);
         }
 
         public ISymbol GetSymbol(string name, bool forceAnalyzed = true)

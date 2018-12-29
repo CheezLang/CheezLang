@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace Cheez.Compiler
 {
-    public class Workspace
+    public partial class Workspace
     {
         private Dictionary<string, PTFile> mFiles = new Dictionary<string, PTFile>();
         private Compiler mCompiler;
@@ -64,23 +64,32 @@ namespace Cheez.Compiler
             //semanticer.DoWork(this, mStatements, mCompiler.ErrorHandler);
 
             var declarationAnalyzer = new DeclarationAnalyzer();
-            declarationAnalyzer.CollectDeclarations(this, mCompiler.ErrorHandler);
+            declarationAnalyzer.CollectDeclarations(this);
 
             if (MainFunction == null)
             {
                 mCompiler.ErrorHandler.ReportError("No main function was specified");
             }
         }
-        
-        public void ReportError(ILocation location, string errorMessage, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+
+        [SkipInStackFrame]
+        public void ReportError(string errorMessage)
         {
-            var file = mFiles[location.Beginning.file];
-            mCompiler.ErrorHandler.ReportError(file, location, errorMessage, null, callingFunctionFile, callingFunctionName, callLineNumber);
+            var (callingFunctionFile, callingFunctionName, callLineNumber) = Util.GetCallingFunction().GetValueOrDefault(("", "", -1));
+            mCompiler.ErrorHandler.ReportError(errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
-        public void ReportError(string errorMessage, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        [SkipInStackFrame]
+        public void ReportError(ILocation lc, string message, (string, ILocation)? detail = null)
         {
-            mCompiler.ErrorHandler.ReportError(errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
+            var (callingFunctionFile, callingFunctionName, callLineNumber) = Util.GetCallingFunction().GetValueOrDefault(("", "", -1));
+            var details = detail != null ? new List<(string, ILocation)> { detail.Value } : null;
+            mCompiler.ErrorHandler.ReportError(new Error
+            {
+                Location = lc,
+                Message = message,
+                Details = details
+            }, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
         public IEnumerable<AstImplBlock> GetTraitImplementations(CheezType type)

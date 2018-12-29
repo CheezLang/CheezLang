@@ -50,6 +50,8 @@ namespace Cheez.Compiler
             mMainWorkspace = new Workspace(this);
             mWorkspaces["main"] = mMainWorkspace;
 
+            ErrorHandler.Workspace = mMainWorkspace;
+
             string exePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "lib");
             if (stdlib != null) exePath = stdlib;
             ModulePaths["std"] = Path.Combine(exePath, "std");
