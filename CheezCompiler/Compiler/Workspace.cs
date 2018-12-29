@@ -92,7 +92,11 @@ namespace Cheez.Compiler
         public void ReportError(string errorMessage, List<(string, ILocation)> details)
         {
             var (callingFunctionFile, callingFunctionName, callLineNumber) = Util.GetCallingFunction().GetValueOrDefault(("", "", -1));
-            mCompiler.ErrorHandler.ReportError(errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
+            mCompiler.ErrorHandler.ReportError(new Error
+            {
+                Message = errorMessage,
+                Details = details
+            }, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
         [SkipInStackFrame]

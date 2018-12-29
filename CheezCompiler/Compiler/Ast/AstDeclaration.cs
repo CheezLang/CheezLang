@@ -146,10 +146,10 @@ namespace Cheez.Compiler.Ast
 
         public AstIdExpr Name { get; }
         public AstExpression Initializer { get; set; }
-        public AstExpression TypeExpr { get; set; }
+        public AstTypeExpr TypeExpr { get; set; }
         public CheezType Type { get; set; }
 
-        public AstMemberDecl(AstIdExpr name, AstExpression typeExpr, AstExpression init, ILocation Location = null)
+        public AstMemberDecl(AstIdExpr name, AstTypeExpr typeExpr, AstExpression init, ILocation Location = null)
         {
             this.Location = Location;
             this.Name = name;
@@ -157,7 +157,7 @@ namespace Cheez.Compiler.Ast
             this.Initializer = init;
         }
 
-        public AstMemberDecl Clone() => new AstMemberDecl(Name.Clone() as AstIdExpr, TypeExpr.Clone(), Initializer?.Clone());
+        public AstMemberDecl Clone() => new AstMemberDecl(Name.Clone() as AstIdExpr, TypeExpr.Clone() as AstTypeExpr, Initializer?.Clone());
     }
 
     public class AstStructDecl : AstDecl, ITypedSymbol
