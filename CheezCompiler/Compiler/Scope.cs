@@ -47,7 +47,7 @@ namespace Cheez.Compiler
         public AstIdExpr Name { get; }
         public CheezType Type { get; }
         public bool IsConstant => true;
-        public object Value { get; }
+        public object Value { get; set; }
 
         public ILocation Location { get; set; }
 
@@ -481,7 +481,6 @@ namespace Cheez.Compiler
             return true;
         }
 
-        [Obsolete]
         public bool DefineTypeSymbol(string name, CheezType symbol)
         {
             if (mSymbolTable.ContainsKey(name))
@@ -501,13 +500,10 @@ namespace Cheez.Compiler
             return (true, null);
         }
 
-        public (bool ok, ILocation other) DefineTypeSymbolNew(string name, CheezType symbol, ILocation location)
+        public void ChangeTypeOfDeclaration(AstDecl decl)
         {
-            if (mSymbolTable.TryGetValue(name, out var other))
-                return (false, other.Location);
-
-            mSymbolTable[name] = new CompTimeVariable(name, CheezType.Type, symbol, location);
-            return (true, null);
+            var ctv = mSymbolTable[decl.Name.Name] as CompTimeVariable;
+            ctv.Value = decl.Type;
         }
 
         public ISymbol GetSymbol(string name, bool forceAnalyzed = true)
