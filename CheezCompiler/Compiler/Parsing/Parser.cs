@@ -1143,6 +1143,7 @@ namespace Cheez.Compiler.Parsing
                         }
                         else if (next.type != TokenType.ClosingParen)
                         {
+                            NextToken();
                             ReportError(next.location, $"Unexpected token '{next}' in poly struct type expression. Expected ',' or ')'");
                         }
                     }
@@ -1167,6 +1168,7 @@ namespace Cheez.Compiler.Parsing
                 return ParseFunctionTypeExpr();
             }
 
+            NextToken();
             ReportError(token.location, $"Unexpected token in type expression: '{token}'");
             return null;
         }
