@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
+namespace Cheez.Compiler
 {
     /// <summary>
     /// This pass resolves the types of struct members
     /// </summary>
-    public partial class DeclarationAnalyzer
+    public partial class Workspace
     {
         /// <summary>
         /// pass 3: resolve the types of struct members
@@ -23,7 +23,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
                 newInstances.AddRange(@struct.PolymorphicInstances);
             }
 
-            mWorkspace.ResolveStructs(newInstances);
+            ResolveStructs(newInstances);
         }
     }
 }

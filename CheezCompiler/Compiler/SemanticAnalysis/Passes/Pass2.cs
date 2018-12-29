@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
+namespace Cheez.Compiler
 {
-    public partial class DeclarationAnalyzer
+    public partial class Workspace
     {
         /// <summary>
         /// Pass 2: resolve types
@@ -81,7 +81,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
                     Message = "Failed to compile due to cyclic dependencies in global type declarations:",
                     Details = details
                 };
-                mWorkspace.ReportError(error);
+                ReportError(error);
             }
         }
 
@@ -89,7 +89,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
         {
             var deps = new HashSet<AstDecl>();
             
-            var newType = mWorkspace.ResolveType(alias.TypeExpr, deps);
+            var newType = ResolveType(alias.TypeExpr, deps);
             if (newType != alias.Type && !(newType is AliasType))
             {
                 alias.Type = newType;
@@ -107,7 +107,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
             foreach (var param in @struct.Parameters)
             {
                 param.TypeExpr.Scope = @struct.Scope;
-                var newType = mWorkspace.ResolveType(param.TypeExpr, deps);
+                var newType = ResolveType(param.TypeExpr, deps);
 
                 if (newType is AbstractType)
                 {
@@ -129,7 +129,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
                         break;
 
                     default:
-                        mWorkspace.ReportError(param.TypeExpr, $"The type '{param.Type}' is not allowed here.");
+                        ReportError(param.TypeExpr, $"The type '{param.Type}' is not allowed here.");
                         break;
                 }
             }
