@@ -164,8 +164,9 @@ namespace Cheez.Compiler
                 return null;
             }
 
-            // check if instance already exists
             AstStructDecl instance = null;
+
+            // check if instance already exists
             foreach (var pi in @struct.Declaration.PolymorphicInstances)
             {
                 Debug.Assert(pi.Parameters.Count == expr.Arguments.Count);
@@ -174,14 +175,8 @@ namespace Cheez.Compiler
                 for (int i = 0; i < pi.Parameters.Count; i++)
                 {
                     var param = pi.Parameters[i];
-                    var ptype = param.Type;
-                    var pvalue = param.Value;
-
                     var arg = expr.Arguments[i];
-                    var atype = arg.Type;
-                    var avalue = arg.Value;
-
-                    if (pvalue != avalue)
+                    if (param.Value != arg.Value)
                     {
                         eq = false;
                         break;
