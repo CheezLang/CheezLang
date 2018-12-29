@@ -744,7 +744,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 foreach (var v in mem.TypeExpr.Accept(this, data.Clone(Scope: str.SubScope, Struct: str)))
                 {
                     if (v is ReplaceAstExpr r)
-                        mem.TypeExpr = r.NewExpression;
+                        mem.TypeExpr = r.NewExpression as AstTypeExpr;
                     else
                         yield return v;
                 }

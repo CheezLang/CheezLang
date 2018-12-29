@@ -7,7 +7,7 @@ namespace Cheez.Compiler
 {
     public partial class Workspace
     {
-        public CheezType ResolveType(AstTypeExpr typeExpr, HashSet<AstDecl> deps = null)
+        public CheezType ResolveType(AstTypeExpr typeExpr, HashSet<AstDecl> deps = null, List<AstStructDecl> instances = null)
         {
             switch (typeExpr)
             {
@@ -42,21 +42,21 @@ namespace Cheez.Compiler
                 case AstPointerTypeExpr p:
                     {
                         p.Target.Scope = typeExpr.Scope;
-                        var subType = ResolveType(p.Target, deps);
+                        var subType = ResolveType(p.Target, deps, instances);
                         return PointerType.GetPointerType(subType);
                     }
 
                 case AstSliceTypeExpr a:
                     {
                         a.Target.Scope = typeExpr.Scope;
-                        var subType = ResolveType(a.Target, deps);
+                        var subType = ResolveType(a.Target, deps, instances);
                         return SliceType.GetSliceType(subType);
                     }
 
                 case AstArrayTypeExpr arr:
                     {
                         arr.Target.Scope = typeExpr.Scope;
-                        var subType = ResolveType(arr.Target, deps);
+                        var subType = ResolveType(arr.Target, deps, instances);
 
                         if (arr.SizeExpr is AstNumberExpr num && num.Data.Type == Parsing.NumberData.NumberType.Int)
                         {
@@ -74,13 +74,13 @@ namespace Cheez.Compiler
                         if (func.ReturnType != null)
                         {
                             func.ReturnType.Scope = func.Scope;
-                            returnType = ResolveType(func.ReturnType, deps);
+                            returnType = ResolveType(func.ReturnType, deps, instances);
                         }
 
                         CheezType[] par = new CheezType[func.ParameterTypes.Count];
                         for (int i = 0; i < par.Length; i++) {
                             func.ParameterTypes[i].Scope = func.Scope;
-                            par[i] = ResolveType(func.ParameterTypes[i], deps);
+                            par[i] = ResolveType(func.ParameterTypes[i], deps, instances);
                         }
 
                         return FunctionType.GetFunctionType(returnType, par);
@@ -90,17 +90,17 @@ namespace Cheez.Compiler
                     {
                         @struct.Struct.Scope = @struct.Scope;
                         @struct.Struct.Type = CheezType.Type;
-                        @struct.Struct.Value = ResolveType(@struct.Struct, deps);
+                        @struct.Struct.Value = ResolveType(@struct.Struct, deps, instances);
 
                         foreach (var arg in @struct.Arguments)
                         {
                             arg.Scope = @struct.Scope;
                             arg.Type = CheezType.Type;
-                            arg.Value = ResolveType(arg, deps);
+                            arg.Value = ResolveType(arg, deps, instances);
                         }
 
                         // instantiate struct
-                        var instance = InstantiatePolyStruct(@struct);
+                        var instance = InstantiatePolyStruct(@struct, instances);
                         return instance?.Type ?? CheezType.Error;
                     }
             }
@@ -109,7 +109,7 @@ namespace Cheez.Compiler
             return CheezType.Error;
         }
 
-        private AstStructDecl InstantiatePolyStruct(AstPolyStructTypeExpr expr)
+        private AstStructDecl InstantiatePolyStruct(AstPolyStructTypeExpr expr, List<AstStructDecl> instances = null)
         {
             var @struct = expr.Struct.Value as GenericStructType;
 
@@ -170,9 +170,28 @@ namespace Cheez.Compiler
                 }
 
                 instance.Type = new StructType(instance);
+
+                if (instances != null)
+                    instances.Add(instance);
             }
 
             return instance;
+        }
+
+        public void ResolveStruct(AstStructDecl @struct, List<AstStructDecl> instances = null)
+        {
+            // define parameter types
+            foreach (var p in @struct.Parameters)
+            {
+                @struct.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
+            }
+
+            // resolve member types
+            foreach (var member in @struct.Members)
+            {
+                member.TypeExpr.Scope = @struct.SubScope;
+                member.Type = ResolveType(member.TypeExpr, instances: instances);
+            }
         }
     }
 }
@@ -206,6 +225,8 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
 
             // pass 2: resolve types
             Pass2();
+
+            Pass3();
         }
     }
 }
