@@ -60,7 +60,9 @@ namespace Cheez.Compiler
                     case AstImplBlock impl:
                         {
                             impl.Scope = GlobalScope;
-                            mImpls.Add(impl);
+                            impl.SubScope = new Scope($"impl", impl.Scope);
+                            if (impl.TraitExpr != null) mTraitImpls.Add(impl);
+                            else mAllImpls.Add(impl);
                             break;
                         }
 

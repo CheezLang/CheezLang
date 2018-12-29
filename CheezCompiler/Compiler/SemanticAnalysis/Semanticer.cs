@@ -1488,7 +1488,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                 }
 
-                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdExpr("self", false, trait.Name), selfType));
+                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdExpr("self", false, trait.Name), selfType as AstTypeExpr));
             }
 
             foreach (var func in trait.Functions)
@@ -1517,7 +1517,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                 foreach (var v in impl.TraitExpr.Accept(this, context))
                 {
                     if (v is ReplaceAstExpr r)
-                        impl.TraitExpr = r.NewExpression;
+                        impl.TraitExpr = r.NewExpression as AstTypeExpr;
                     else
                         yield return v;
                 }
@@ -1598,7 +1598,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     selfType = new AstTypeRef(impl.Trait, impl.TraitExpr);
                     name = "__self";
                 }
-                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdExpr(name, false), selfType));
+                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdExpr(name, false), selfType as AstTypeExpr));
             }
 
             foreach (var f in impl.Functions)

@@ -8,7 +8,7 @@ fn c_sprintf(buff: *char, f: c_string, a: double) -> int #varargs #linkname("spr
 
 let NEW_LINE: char = '`n'
 
-fn print_string(s: *T) {
+fn print_string(s: *$T) {
     if @typeseq(c_string, T) {
         let len = strlen(s)
         let bytesWritten: int

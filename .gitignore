@@ -224,7 +224,7 @@ FakesAssemblies/
 _Pvt_Extensions
 
 # Custom
-src
+**/out/src
 /gen
 /dist
 /examples/*.cpp

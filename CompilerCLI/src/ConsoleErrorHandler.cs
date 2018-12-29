@@ -42,7 +42,7 @@ namespace CheezCLI
 
                 // location, message
                 Log($"{beginning.file}:{beginning.line}: {error.Message}", ConsoleColor.Red);
-                PrintLocation(text, error.Location);
+                PrintLocation(text, error.Location, linesBefore: 0);
             }
             else
             {

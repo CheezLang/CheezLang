@@ -1,6 +1,5 @@
 ﻿using Cheez.Compiler.Ast;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Cheez.Compiler
 {
@@ -12,7 +11,7 @@ namespace Cheez.Compiler
         /// <summary>
         /// pass 3: resolve the types of struct members
         /// </summary>
-        public void Pass3()
+        private void Pass3()
         {
             var newInstances = new List<AstStructDecl>();
 
@@ -24,6 +23,51 @@ namespace Cheez.Compiler
             }
 
             ResolveStructs(newInstances);
+
+            // impls
+            foreach (var impl in mAllImpls)
+            {
+                Pass3Impl(impl);
+            }
+            foreach (var impl in mTraitImpls)
+            {
+                Pass3TraitImpl(impl);
+            }
+        }
+
+        private void Pass3TraitImpl(AstImplBlock impl)
+        {
+            impl.TraitExpr.Scope = impl.Scope;
+            var type = ResolveType(impl.TraitExpr);
+            if (type is TraitType tt)
+            {
+                impl.Trait = tt;
+            }
+            else
+            {
+                ReportError(impl.TraitExpr, $"Has to be a trait, but is {type}");
+            }
+
+            impl.TargetTypeExpr.Scope = impl.Scope;
+            impl.TargetType = ResolveType(impl.TargetTypeExpr);
+            if (impl.TargetTypeExpr.IsPolymorphic)
+            {
+                ReportError(impl.TargetTypeExpr, $"Polymorphic type is not allowed here");
+            }
+        }
+
+        private void Pass3Impl(AstImplBlock impl)
+        {
+            impl.TargetTypeExpr.Scope = impl.Scope;
+            impl.TargetType = ResolveType(impl.TargetTypeExpr);
+
+            if (impl.TargetTypeExpr.IsPolymorphic)
+            {
+            }
+            else
+            {
+                mImpls.Add(impl);
+            }
         }
     }
 }

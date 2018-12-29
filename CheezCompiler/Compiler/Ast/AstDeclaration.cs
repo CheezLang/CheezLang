@@ -55,19 +55,19 @@ namespace Cheez.Compiler.Ast
 
         public AstIdExpr Name { get; }
         public CheezType Type { get; set; }
-        public AstExpression TypeExpr { get; set; }
+        public AstTypeExpr TypeExpr { get; set; }
         public Scope Scope { get; set; }
 
         public bool IsConstant => false;
 
-        public AstFunctionParameter(AstIdExpr name, AstExpression typeExpr, ILocation Location = null)
+        public AstFunctionParameter(AstIdExpr name, AstTypeExpr typeExpr, ILocation Location = null)
         {
             this.Location = Location;
             this.Name = name;
             this.TypeExpr = typeExpr;
         }
 
-        public AstFunctionParameter Clone() => new AstFunctionParameter(Name.Clone() as AstIdExpr, TypeExpr.Clone(), Location);
+        public AstFunctionParameter Clone() => new AstFunctionParameter(Name.Clone() as AstIdExpr, TypeExpr.Clone() as AstTypeExpr, Location);
     }
 
     public interface ITempVariable
@@ -82,7 +82,7 @@ namespace Cheez.Compiler.Ast
         public Scope SubScope { get; set; }
 
         public List<AstFunctionParameter> Parameters { get; }
-        public AstExpression ReturnTypeExpr { get; set; }
+        public AstTypeExpr ReturnTypeExpr { get; set; }
         public CheezType ReturnType { get; set; }
 
         //public List<AstIdentifierExpr> Generics { get; }
@@ -104,14 +104,13 @@ namespace Cheez.Compiler.Ast
         public Dictionary<string, AstExpression> PolymorphicTypeExprs { get; internal set; }
         public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
 
-        //public CheezType ImplTarget { get; set; }
         public AstImplBlock ImplBlock { get; set; }
         public AstFunctionDecl TraitFunction { get; internal set; }
 
         public AstFunctionDecl(AstIdExpr name,
             List<AstIdExpr> generics,
             List<AstFunctionParameter> parameters,
-            AstExpression returnTypeExpr,
+            AstTypeExpr returnTypeExpr,
             AstBlockStmt body = null, 
             List<AstDirective> Directives = null, 
             bool refSelf = false, ILocation Location = null)
@@ -129,7 +128,7 @@ namespace Cheez.Compiler.Ast
         public override AstStatement Clone() => CopyValuesTo(new AstFunctionDecl(Name.Clone() as AstIdExpr,
                 null,
                 Parameters.Select(p => p.Clone()).ToList(),
-                ReturnTypeExpr?.Clone(),
+                ReturnTypeExpr?.Clone() as AstTypeExpr,
                 Body?.Clone() as AstBlockStmt));
     }
 
@@ -221,8 +220,8 @@ namespace Cheez.Compiler.Ast
     public class AstImplBlock : AstStatement
     {
         public CheezType TargetType { get; set; }
-        public AstExpression TargetTypeExpr { get; set; }
-        public AstExpression TraitExpr { get; set; }
+        public AstTypeExpr TargetTypeExpr { get; set; }
+        public AstTypeExpr TraitExpr { get; set; }
 
         public TraitType Trait { get; set; }
 
@@ -231,7 +230,7 @@ namespace Cheez.Compiler.Ast
 
         public Scope SubScope { get; set; }
 
-        public AstImplBlock(AstExpression targetTypeExpr, AstExpression traitExpr, List<AstFunctionDecl> functions, ILocation Location = null) : base(Location: Location)
+        public AstImplBlock(AstTypeExpr targetTypeExpr, AstTypeExpr traitExpr, List<AstFunctionDecl> functions, ILocation Location = null) : base(Location: Location)
         {
             this.TargetTypeExpr = targetTypeExpr;
             this.Functions = functions;
@@ -240,7 +239,7 @@ namespace Cheez.Compiler.Ast
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitImplDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstImplBlock(TargetTypeExpr.Clone(), TraitExpr.Clone(), Functions.Select(f => f.Clone() as AstFunctionDecl).ToList()));
+        public override AstStatement Clone() => CopyValuesTo(new AstImplBlock(TargetTypeExpr.Clone() as AstTypeExpr, TraitExpr.Clone() as AstTypeExpr, Functions.Select(f => f.Clone() as AstFunctionDecl).ToList()));
     }
 
     #endregion

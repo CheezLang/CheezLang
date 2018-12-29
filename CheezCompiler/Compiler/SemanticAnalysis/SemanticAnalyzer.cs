@@ -17,6 +17,9 @@ namespace Cheez.Compiler
         private List<AstEnumDecl> mEnums = new List<AstEnumDecl>();
         private List<AstVariableDecl> mVariables = new List<AstVariableDecl>();
         private List<AstTypeAliasDecl> mTypeDefs = new List<AstTypeAliasDecl>();
+        private List<AstImplBlock> mAllImpls = new List<AstImplBlock>();
+        private List<AstImplBlock> mTraitImpls = new List<AstImplBlock>();
+        private List<AstImplBlock> mPolyImpls = new List<AstImplBlock>();
         private List<AstImplBlock> mImpls = new List<AstImplBlock>();
 
         private List<AstFunctionDecl> mFunctions = new List<AstFunctionDecl>();
@@ -24,7 +27,15 @@ namespace Cheez.Compiler
         private List<AstFunctionDecl> mFunctionInstances = new List<AstFunctionDecl>();
         //
 
-        public CheezType ResolveType(AstTypeExpr typeExpr, HashSet<AstDecl> deps = null, List<AstStructDecl> instances = null)
+        private CheezType ResolveType(AstTypeExpr typeExpr)
+        {
+            List<AstStructDecl> newInstances = new List<AstStructDecl>();
+            var t = ResolveTypeHelper(typeExpr, null, newInstances);
+            ResolveStructs(newInstances);
+            return t;
+        }
+
+        private CheezType ResolveTypeHelper(AstTypeExpr typeExpr, HashSet<AstDecl> deps = null, List<AstStructDecl> instances = null)
         {
             switch (typeExpr)
             {
@@ -62,21 +73,21 @@ namespace Cheez.Compiler
                 case AstPointerTypeExpr p:
                     {
                         p.Target.Scope = typeExpr.Scope;
-                        var subType = ResolveType(p.Target, deps, instances);
+                        var subType = ResolveTypeHelper(p.Target, deps, instances);
                         return PointerType.GetPointerType(subType);
                     }
 
                 case AstSliceTypeExpr a:
                     {
                         a.Target.Scope = typeExpr.Scope;
-                        var subType = ResolveType(a.Target, deps, instances);
+                        var subType = ResolveTypeHelper(a.Target, deps, instances);
                         return SliceType.GetSliceType(subType);
                     }
 
                 case AstArrayTypeExpr arr:
                     {
                         arr.Target.Scope = typeExpr.Scope;
-                        var subType = ResolveType(arr.Target, deps, instances);
+                        var subType = ResolveTypeHelper(arr.Target, deps, instances);
 
                         if (arr.SizeExpr is AstNumberExpr num && num.Data.Type == Parsing.NumberData.NumberType.Int)
                         {
@@ -94,13 +105,13 @@ namespace Cheez.Compiler
                         if (func.ReturnType != null)
                         {
                             func.ReturnType.Scope = func.Scope;
-                            returnType = ResolveType(func.ReturnType, deps, instances);
+                            returnType = ResolveTypeHelper(func.ReturnType, deps, instances);
                         }
 
                         CheezType[] par = new CheezType[func.ParameterTypes.Count];
                         for (int i = 0; i < par.Length; i++) {
                             func.ParameterTypes[i].Scope = func.Scope;
-                            par[i] = ResolveType(func.ParameterTypes[i], deps, instances);
+                            par[i] = ResolveTypeHelper(func.ParameterTypes[i], deps, instances);
                         }
 
                         return FunctionType.GetFunctionType(returnType, par);
@@ -110,13 +121,13 @@ namespace Cheez.Compiler
                     {
                         @struct.Struct.Scope = @struct.Scope;
                         @struct.Struct.Type = CheezType.Type;
-                        @struct.Struct.Value = ResolveType(@struct.Struct, deps, instances);
+                        @struct.Struct.Value = ResolveTypeHelper(@struct.Struct, deps, instances);
 
                         foreach (var arg in @struct.Arguments)
                         {
                             arg.Scope = @struct.Scope;
                             arg.Type = CheezType.Type;
-                            arg.Value = ResolveType(arg, deps, instances);
+                            arg.Value = ResolveTypeHelper(arg, deps, instances);
                         }
 
                         // instantiate struct
@@ -129,6 +140,40 @@ namespace Cheez.Compiler
             return CheezType.Error;
         }
 
+        private void CollectPolyTypes(AstTypeExpr typeExpr, HashSet<AstIdTypeExpr> types)
+        {
+            switch (typeExpr)
+            {
+                case AstIdTypeExpr i:
+                    if (i.IsPolymorphic)
+                        types.Add(i);
+                    break;
+
+                case AstPointerTypeExpr p:
+                    CollectPolyTypes(p.Target, types);
+                    break;
+
+                case AstSliceTypeExpr p:
+                    CollectPolyTypes(p.Target, types);
+                    break;
+
+                case AstArrayTypeExpr p:
+                    CollectPolyTypes(p.Target, types);
+                    break;
+
+                case AstFunctionTypeExpr func:
+                    if (func.ReturnType != null)
+                        CollectPolyTypes(func.ReturnType, types);
+                    foreach (var p in func.ParameterTypes) CollectPolyTypes(p, types);
+                    break;
+
+                case AstPolyStructTypeExpr @struct:
+                    foreach (var p in @struct.Arguments) CollectPolyTypes(p, types);
+                    break;
+            }
+        }
+
+        // struct
         private AstStructDecl InstantiatePolyStruct(AstPolyStructTypeExpr expr, List<AstStructDecl> instances = null)
         {
             var @struct = expr.Struct.Value as GenericStructType;
@@ -198,7 +243,7 @@ namespace Cheez.Compiler
             return instance;
         }
 
-        public void ResolveStruct(AstStructDecl @struct, List<AstStructDecl> instances = null)
+        private void ResolveStruct(AstStructDecl @struct, List<AstStructDecl> instances = null)
         {
             // define parameter types
             foreach (var p in @struct.Parameters)
@@ -210,11 +255,11 @@ namespace Cheez.Compiler
             foreach (var member in @struct.Members)
             {
                 member.TypeExpr.Scope = @struct.SubScope;
-                member.Type = ResolveType(member.TypeExpr, instances: instances);
+                member.Type = ResolveTypeHelper(member.TypeExpr, instances: instances);
             }
         }
 
-        public void ResolveStructs(List<AstStructDecl> newInstances)
+        private void ResolveStructs(List<AstStructDecl> newInstances)
         {
             var nextInstances = new List<AstStructDecl>();
 
@@ -238,6 +283,107 @@ namespace Cheez.Compiler
             {
                 var details = newInstances.Select(str => ("Here:", str.Location)).ToList();
                 ReportError($"Detected a potential infinite loop in polymorphic struct declarations after {MaxPolyStructResolveStepCount} steps", details);
+            }
+        }
+
+        // impl
+        //private AstStructDecl InstantiatePolyImpl(AstImplBlock impl, List<AstImplBlock> instances = null)
+        //{
+        //    var target = impl.TargetType;
+
+        //    //if (expr.Arguments.Count != @struct.Declaration.Parameters.Count)
+        //    //{
+        //    //    ReportError(expr, "Polymorphic struct instantiation has wrong number of arguments.", ("Declaration here:", @struct.Declaration));
+        //    //    return null;
+        //    //}
+
+        //    // check if instance already exists
+        //    AstStructDecl instance = null;
+        //    //foreach (var pi in @struct.Declaration.PolymorphicInstances)
+        //    //{
+        //    //    Debug.Assert(pi.Parameters.Count == expr.Arguments.Count);
+
+        //    //    bool eq = true;
+        //    //    for (int i = 0; i < pi.Parameters.Count; i++)
+        //    //    {
+        //    //        var param = pi.Parameters[i];
+        //    //        var ptype = param.Type;
+        //    //        var pvalue = param.Value;
+
+        //    //        var arg = expr.Arguments[i];
+        //    //        var atype = arg.Type;
+        //    //        var avalue = arg.Value;
+
+        //    //        if (pvalue != avalue)
+        //    //        {
+        //    //            eq = false;
+        //    //            break;
+        //    //        }
+        //    //    }
+
+        //    //    if (eq)
+        //    //    {
+        //    //        instance = pi;
+        //    //        break;
+        //    //    }
+        //    //}
+
+        //    // instatiate type
+        //    if (instance == null)
+        //    {
+        //        instance = impl.Clone() as AstImplBlock;
+        //        instance.SubScope = new Scope($"impl {impl.TargetTypeExpr}<poly>", instance.Scope);
+        //        impl..PolymorphicInstances.Add(instance);
+
+        //        Debug.Assert(instance.Parameters.Count == expr.Arguments.Count);
+
+        //        for (int i = 0; i < instance.Parameters.Count; i++)
+        //        {
+        //            var param = instance.Parameters[i];
+        //            var arg = expr.Arguments[i];
+        //            param.Type = arg.Type;
+        //            param.Value = arg.Value;
+        //        }
+
+        //        instance.Type = new StructType(instance);
+
+        //        if (instances != null)
+        //            instances.Add(instance);
+        //    }
+
+        //    return instance;
+        //}
+
+
+        private void AnalyzeFunction(AstFunctionDecl func, List<AstFunctionDecl> instances = null)
+        {
+            // TODO
+        }
+
+        private void AnalyzeFunctions(List<AstFunctionDecl> newInstances)
+        {
+            var nextInstances = new List<AstFunctionDecl>();
+
+            int i = 0;
+            while (i < MaxPolyFuncResolveStepCount && newInstances.Count != 0)
+            {
+                foreach (var instance in newInstances)
+                {
+                    AnalyzeFunction(instance, nextInstances);
+                }
+                newInstances.Clear();
+
+                var t = newInstances;
+                newInstances = nextInstances;
+                nextInstances = t;
+
+                i++;
+            }
+
+            if (i == MaxPolyFuncResolveStepCount)
+            {
+                var details = newInstances.Select(str => ("Here:", str.Location)).ToList();
+                ReportError($"Detected a potential infinite loop in polymorphic function declarations after {MaxPolyFuncResolveStepCount} steps", details);
             }
         }
     }

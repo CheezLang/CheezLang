@@ -143,6 +143,7 @@
     <Compile Include="Compiler\SemanticAnalysis\Passes\Pass1.cs" />
     <Compile Include="Compiler\SemanticAnalysis\Passes\Pass2.cs" />
     <Compile Include="Compiler\SemanticAnalysis\Passes\Pass3.cs" />
+    <Compile Include="Compiler\SemanticAnalysis\Passes\Pass4.cs" />
     <Compile Include="Compiler\SemanticAnalysis\Passes\Pass_.cs" />
     <Compile Include="Compiler\SemanticAnalysis\SemanticAnalyzer.cs" />
     <Compile Include="Compiler\SemanticAnalysis\Semanticer.cs" />
