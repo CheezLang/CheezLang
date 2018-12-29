@@ -107,5 +107,25 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override AstExpression Clone() => CopyValuesTo(new AstPointerTypeExpr(Target));
     }
+
+    public class AstPolyStructTypeExpr : AstTypeExpr
+    {
+        public override bool IsPolymorphic => Struct.IsPolymorphic || Arguments.Any(a => a.IsPolymorphic);
+        public AstTypeExpr Struct { get; set; }
+        public List<AstTypeExpr> Arguments { get; set; }
+
+        [DebuggerStepThrough]
+        public AstPolyStructTypeExpr(AstTypeExpr str, List<AstTypeExpr> args, ILocation Location = null) : base(Location)
+        {
+            this.Struct = str;
+            this.Arguments = args;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitPolyStructTypeExpr(this, data);
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone() => CopyValuesTo(new AstPolyStructTypeExpr(Struct.Clone() as AstTypeExpr, Arguments.Select(a => a.Clone() as AstTypeExpr).ToList()));
+    }
 }
 
