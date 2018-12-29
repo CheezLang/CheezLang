@@ -9,11 +9,11 @@ namespace Cheez.Compiler.Ast
         public TokenLocation Beginning => Location?.Beginning;
         public TokenLocation End => Location?.End;
 
-        public AstIdentifierExpr Name { get; }
+        public AstIdExpr Name { get; }
 
         public List<AstExpression> Arguments { get; set; }
 
-        public AstDirective(AstIdentifierExpr name, List<AstExpression> args, ILocation Location = null)
+        public AstDirective(AstIdExpr name, List<AstExpression> args, ILocation Location = null)
         {
             this.Location = Location;
             this.Name = name;

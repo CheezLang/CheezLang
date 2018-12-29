@@ -437,7 +437,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         #region Statements
 
-        public override IEnumerable<object> VisitBreakStatement(AstBreakStmt br, SemanticerData context = null)
+        public override IEnumerable<object> VisitBreakStmt(AstBreakStmt br, SemanticerData context = null)
         {
             br.Scope = context.Scope;
 
@@ -455,7 +455,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitContinueStatement(AstContinueStmt cont, SemanticerData context = null)
+        public override IEnumerable<object> VisitContinueStmt(AstContinueStmt cont, SemanticerData context = null)
         {
             cont.Scope = context.Scope;
 
@@ -472,7 +472,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitMatchStatement(AstMatchStmt match, SemanticerData context = null)
+        public override IEnumerable<object> VisitMatchStmt(AstMatchStmt match, SemanticerData context = null)
         {
             match.Scope = context.Scope;
 
@@ -535,7 +535,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitTypeAlias(AstTypeAliasDecl al, SemanticerData data = null)
+        public override IEnumerable<object> VisitTypeAliasDecl(AstTypeAliasDecl al, SemanticerData data = null)
         {
             al.Scope = data.Scope;
             foreach (var v in al.TypeExpr.Accept(this, data.Clone()))
@@ -555,7 +555,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitEnumDeclaration(AstEnumDecl en, SemanticerData data = null)
+        public override IEnumerable<object> VisitEnumDecl(AstEnumDecl en, SemanticerData data = null)
         {
             var scope = data.Scope;
             en.Scope = scope;
@@ -680,7 +680,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return v;
             }
 
-            call.Function = new AstStructExpression(instance, call.Function, call.Function);
+            call.Function = new AstStructRef(instance, call.Function, call.Function);
             call.Type = CheezType.Type;
             call.Value = instance.Type;
 
@@ -692,7 +692,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         }
 
-        public override IEnumerable<object> VisitStructDeclaration(AstStructDecl str, SemanticerData data = null)
+        public override IEnumerable<object> VisitStructDecl(AstStructDecl str, SemanticerData data = null)
         {
             var scope = data.Scope;
             str.Scope = scope;
@@ -793,7 +793,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 scope.DefineSymbol(
                     new Using(member.Name, 
-                        new AstDotExpr(name.Name.Clone() as AstIdentifierExpr, member.Name, false)));
+                        new AstDotExpr(name.Name.Clone() as AstIdExpr, member.Name, false)));
             }
         }
 
@@ -984,12 +984,12 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                 if (function.ImplBlock.Trait != null)
                 {
-                    var type = new AstAddressOfExpr(function.Name, new AstTypeExpr(function.ImplBlock.TargetType, function.Name));
+                    var type = new AstAmpersandExpr(function.Name, new AstTypeRef(function.ImplBlock.TargetType, function.Name));
 
                     var use = new AstVariableDecl(
-                        new AstIdentifierExpr("self", false, function.Name),
+                        new AstIdExpr("self", false, function.Name),
                         type,
-                        new AstCastExpr(function.Name, type, new AstIdentifierExpr("__self", false, function.Name)),
+                        new AstCastExpr(function.Name, type, new AstIdExpr("__self", false, function.Name)),
                         Location: function);
                     use.Type = PointerType.GetPointerType(function.ImplBlock.TargetType);
                     function.Body.Statements.Insert(0, use);
@@ -1022,7 +1022,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
         }
 
-        public override IEnumerable<object> VisitFunctionDeclaration(AstFunctionDecl function, SemanticerData context = null)
+        public override IEnumerable<object> VisitFunctionDecl(AstFunctionDecl function, SemanticerData context = null)
         {
             var scope = context.Scope;
             function.Scope = scope;
@@ -1040,12 +1040,12 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
         }
 
-        public override IEnumerable<object> VisitEmptyStatement(AstEmptyStatement em, SemanticerData data = null)
+        public override IEnumerable<object> VisitEmptyStmt(AstEmptyStatement em, SemanticerData data = null)
         {
             yield break;
         }
 
-        public override IEnumerable<object> VisitIfStatement(AstIfStmt ifs, SemanticerData context = null)
+        public override IEnumerable<object> VisitIfStmt(AstIfStmt ifs, SemanticerData context = null)
         {
             ifs.Scope = context.Scope;
             ifs.SubScope = new Scope("if", ifs.Scope);
@@ -1131,7 +1131,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitDeferStatement(AstDeferStmt def, SemanticerData context = null)
+        public override IEnumerable<object> VisitDeferStmt(AstDeferStmt def, SemanticerData context = null)
         {
             if (context.Block == null)
             {
@@ -1149,7 +1149,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             context.Block.DeferredStatements.Add(def.Deferred);
         }
 
-        public override IEnumerable<object> VisitBlockStatement(AstBlockStmt block, SemanticerData context = null)
+        public override IEnumerable<object> VisitBlockStmt(AstBlockStmt block, SemanticerData context = null)
         {
             var scope = context.Scope;
             block.Scope = scope;
@@ -1178,7 +1178,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitReturnStatement(AstReturnStmt ret, SemanticerData context = null)
+        public override IEnumerable<object> VisitReturnStmt(AstReturnStmt ret, SemanticerData context = null)
         {
             var scope = context.Scope;
             ret.Scope = scope;
@@ -1222,7 +1222,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitVariableDeclaration(AstVariableDecl variable, SemanticerData context = null)
+        public override IEnumerable<object> VisitVariableDecl(AstVariableDecl variable, SemanticerData context = null)
         {
             var scope = context.Scope;
             variable.Scope = scope;
@@ -1315,9 +1315,9 @@ namespace Cheez.Compiler.SemanticAnalysis
                     var locExpr = variable.Name;
 
                     var args = new List<AstExpression>() {
-                        new AstVariableExpression(variable, null, Location: locExpr)
+                        new AstVariableRef(variable, null, Location: locExpr)
                     };
-                    var ctorCall = new AstCallExpr(new AstFunctionExpression(dtor, null, locExpr), args, locExpr);
+                    var ctorCall = new AstCallExpr(new AstFunctionRef(dtor, null, locExpr), args, locExpr);
                     context.Block.DeferredStatements.Add(new AstExprStmt(ctorCall, locStmt));
                 }
             }
@@ -1331,7 +1331,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitAssignment(AstAssignment ass, SemanticerData context = null)
+        public override IEnumerable<object> VisitAssignmentStmt(AstAssignment ass, SemanticerData context = null)
         {
             var scope = context.Scope;
             ass.Scope = scope;
@@ -1409,7 +1409,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitExpressionStatement(AstExprStmt stmt, SemanticerData context = null)
+        public override IEnumerable<object> VisitExpressionStmt(AstExprStmt stmt, SemanticerData context = null)
         {
             stmt.Scope = context.Scope;
             foreach (var v in stmt.Expr.Accept(this, context.Clone()))
@@ -1420,7 +1420,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitTraitDeclaration(AstTraitDeclaration trait, SemanticerData context = null)
+        public override IEnumerable<object> VisitTraitDecl(AstTraitDeclaration trait, SemanticerData context = null)
         {
             trait.Scope = context.Scope;
             trait.Scope.TypeDeclarations.Add(trait);
@@ -1466,7 +1466,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             // add self parameter
             foreach (var f in trait.Functions)
             {
-                AstExpression selfType = new AstTypeExpr(trait.Type, trait.Name);
+                AstExpression selfType = new AstTypeRef(trait.Type, trait.Name);
 
                 {
                     foreach (var v in CreateType(trait.Scope, f.ReturnTypeExpr, context.Text, context.ErrorHandler, false))
@@ -1489,7 +1489,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                 }
 
-                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr("self", false, trait.Name), selfType));
+                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdExpr("self", false, trait.Name), selfType));
             }
 
             foreach (var func in trait.Functions)
@@ -1508,7 +1508,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitImplBlock(AstImplBlock impl, SemanticerData context = null)
+        public override IEnumerable<object> VisitImplDecl(AstImplBlock impl, SemanticerData context = null)
         {
             var scope = context.Scope;
             impl.Scope = scope;
@@ -1584,7 +1584,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     selfType = impl.TargetTypeExpr.Clone(); // new AstTypeExpr(impl.TargetTypeExpr, impl.TargetType); // impl.TargetTypeExpr.Clone();
                     if (f.RefSelf)
                     {
-                        selfType = new AstAddressOfExpr(selfType, selfType)
+                        selfType = new AstAmpersandExpr(selfType, selfType)
                         {
                             IsReference = true
                         };
@@ -1596,10 +1596,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                     {
                         context.ReportError(f.Name, "Functions which implement a trait are can't have a ref modifier. They are always ref");
                     }
-                    selfType = new AstTypeExpr(impl.Trait, impl.TraitExpr);
+                    selfType = new AstTypeRef(impl.Trait, impl.TraitExpr);
                     name = "__self";
                 }
-                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdentifierExpr(name, false), selfType));
+                f.Parameters.Insert(0, new AstFunctionParameter(new AstIdExpr(name, false), selfType));
             }
 
             foreach (var f in impl.Functions)
@@ -1611,7 +1611,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             scope.ImplBlocks.Add(impl);
         }
 
-        public override IEnumerable<object> VisitUsingStatement(AstUsingStmt use, SemanticerData context = null)
+        public override IEnumerable<object> VisitUsingStmt(AstUsingStmt use, SemanticerData context = null)
         {
             var scope = context.Scope;
             use.Scope = scope;
@@ -1635,7 +1635,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitWhileStatement(AstWhileStmt ws, SemanticerData context = null)
+        public override IEnumerable<object> VisitWhileStmt(AstWhileStmt ws, SemanticerData context = null)
         {
             var scope = context.Scope;
             ws.Scope = scope;
@@ -1738,7 +1738,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             return false;
         }
 
-        public override IEnumerable<object> VisitCompCallExpression(AstCompCallExpr call, SemanticerData context = null)
+        public override IEnumerable<object> VisitCompCallExpr(AstCompCallExpr call, SemanticerData context = null)
         {
             call.Scope = context.Scope;
 
@@ -1878,7 +1878,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             type = arg.Type;
                         }
 
-                        foreach (var v in ReplaceAstExpr(new AstTypeExpr(type, call), context))
+                        foreach (var v in ReplaceAstExpr(new AstTypeRef(type, call), context))
                             yield return v;
                         break;
                     }
@@ -2132,7 +2132,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitStructValueExpression(AstStructValueExpr str, SemanticerData context = null)
+        public override IEnumerable<object> VisitStructValueExpr(AstStructValueExpr str, SemanticerData context = null)
         {
             var scope = context.Scope;
             str.Scope = scope;
@@ -2250,7 +2250,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitArrayAccessExpression(AstArrayAccessExpr arr, SemanticerData context = null)
+        public override IEnumerable<object> VisitArrayAccessExpr(AstArrayAccessExpr arr, SemanticerData context = null)
         {
             foreach (var v in arr.SubExpression.Accept(this, context.Clone(ExpectedType: null)))
                 if (v is ReplaceAstExpr r)
@@ -2307,7 +2307,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             arr.SetFlag(ExprFlags.IsLValue);
         }
 
-        public override IEnumerable<object> VisitUnaryExpression(AstUnaryExpr bin, SemanticerData context = null)
+        public override IEnumerable<object> VisitUnaryExpr(AstUnaryExpr bin, SemanticerData context = null)
         {
             var scope = context.Scope;
             bin.Scope = scope;
@@ -2407,7 +2407,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitBinaryExpression(AstBinaryExpr bin, SemanticerData context = null)
+        public override IEnumerable<object> VisitBinaryExpr(AstBinaryExpr bin, SemanticerData context = null)
         {
             var scope = context.Scope;
             bin.Scope = scope;
@@ -2476,14 +2476,14 @@ namespace Cheez.Compiler.SemanticAnalysis
                 if (lt.TargetType == CheezType.Any && rt.TargetType != CheezType.Any)
                 {
                     bin.Left = new AstCastExpr(bin.Left,
-                        new AstTypeExpr(bin.Right.Type),
+                        new AstTypeRef(bin.Right.Type),
                         bin.Left);
                     bin.Left.Type = bin.Right.Type;
                 }
                 else if (lt.TargetType != CheezType.Any && rt.TargetType == CheezType.Any)
                 {
                     bin.Right = new AstCastExpr(bin.Right,
-                        new AstTypeExpr(bin.Left.Type),
+                        new AstTypeRef(bin.Left.Type),
                         bin.Right);
                     bin.Right.Type = bin.Left.Type;
                 }
@@ -2538,10 +2538,10 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             switch (param)
             {
-                case AstIdentifierExpr i when i.IsPolymorphic && arg is PolyType:
+                case AstIdExpr i when i.IsPolymorphic && arg is PolyType:
                     return false;
 
-                case AstIdentifierExpr i when i.IsPolymorphic:
+                case AstIdExpr i when i.IsPolymorphic:
                     if (result != null && !result.TryGetValue(i.Name, out var _))
                     {
                         if (arg == IntType.LiteralType)
@@ -2553,7 +2553,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                     return false;
 
-                case AstArrayTypeExpr pArr:
+                case AstSliceTypeExpr pArr:
                     if (arg is SliceType slice)
                     {
                         var t = slice.TargetType;
@@ -2570,7 +2570,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                     return false;
 
-                case AstAddressOfExpr pPtr:
+                case AstAmpersandExpr pPtr:
                     if (pPtr.IsReference)
                     {
                         if (arg is PointerType pt)
@@ -2776,10 +2776,10 @@ namespace Cheez.Compiler.SemanticAnalysis
                 }
             }
 
-            call.Function = new AstFunctionExpression(instance, call.Function, call.Function);
+            call.Function = new AstFunctionRef(instance, call.Function, call.Function);
         }
 
-        public override IEnumerable<object> VisitCallExpression(AstCallExpr call, SemanticerData context = null)
+        public override IEnumerable<object> VisitCallExpr(AstCallExpr call, SemanticerData context = null)
         {
             var scope = context.Scope;
             call.Scope = scope;
@@ -2861,7 +2861,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitIdentifierExpression(AstIdentifierExpr ident, SemanticerData context = null)
+        public override IEnumerable<object> VisitIdExpr(AstIdExpr ident, SemanticerData context = null)
         {
             if (ident.IsPolymorphic)
             {
@@ -2936,7 +2936,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitNullExpression(AstNullExpr nul, SemanticerData data = null)
+        public override IEnumerable<object> VisitNullExpr(AstNullExpr nul, SemanticerData data = null)
         {
             nul.Scope = data.Scope;
             nul.Type = PointerType.GetPointerType(CheezType.Any);
@@ -2944,7 +2944,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitNumberExpression(AstNumberExpr num, SemanticerData context = null)
+        public override IEnumerable<object> VisitNumberExpr(AstNumberExpr num, SemanticerData context = null)
         {
             if (num.Data.Type == NumberData.NumberType.Int)
             {
@@ -2961,7 +2961,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitStringLiteral(AstStringLiteral str, SemanticerData context = null)
+        public override IEnumerable<object> VisitStringLiteralExpr(AstStringLiteral str, SemanticerData context = null)
         {
             if (str.IsChar)
             {
@@ -3001,14 +3001,14 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitBoolExpression(AstBoolExpr bo, SemanticerData context = null)
+        public override IEnumerable<object> VisitBoolExpr(AstBoolExpr bo, SemanticerData context = null)
         {
             bo.Type = CheezType.Bool;
             bo.IsCompTimeValue = true;
             yield break;
         }
 
-        public override IEnumerable<object> VisitAddressOfExpression(AstAddressOfExpr add, SemanticerData context = null)
+        public override IEnumerable<object> VisitAmpersandExpr(AstAmpersandExpr add, SemanticerData context = null)
         {
             add.Scope = context.Scope;
 
@@ -3044,7 +3044,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitDereferenceExpression(AstDereferenceExpr deref, SemanticerData context = null)
+        public override IEnumerable<object> VisitDerefExpr(AstDereferenceExpr deref, SemanticerData context = null)
         {
             deref.Scope = context.Scope;
 
@@ -3066,7 +3066,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             deref.SetFlag(ExprFlags.IsLValue);
         }
 
-        public override IEnumerable<object> VisitCastExpression(AstCastExpr cast, SemanticerData context = null)
+        public override IEnumerable<object> VisitCastExpr(AstCastExpr cast, SemanticerData context = null)
         {
             cast.Scope = context.Scope;
 
@@ -3104,7 +3104,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             yield break;
         }
 
-        public override IEnumerable<object> VisitDotExpression(AstDotExpr dot, SemanticerData context = null)
+        public override IEnumerable<object> VisitDotExpr(AstDotExpr dot, SemanticerData context = null)
         {
             dot.Scope = context.Scope;
 
@@ -3239,7 +3239,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             }
         }
 
-        public override IEnumerable<object> VisitTypeExpr(AstTypeExpr type, SemanticerData data = null)
+        public override IEnumerable<object> VisitTypeExpr(AstTypeRef type, SemanticerData data = null)
         {
             if (type.Value == null)
             {
@@ -3279,7 +3279,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             func.Value = FunctionType.GetFunctionType(rt, pt);
         }
 
-        public override IEnumerable<object> VisitArrayTypeExpr(AstArrayTypeExpr arr, SemanticerData context = default)
+        public override IEnumerable<object> VisitSliceTypeExpr(AstSliceTypeExpr arr, SemanticerData context = default)
         {
             arr.Scope = context.Scope;
             foreach (var v in arr.Target.Accept(this, context.Clone(ExpectedType: null)))
@@ -3320,7 +3320,7 @@ namespace Cheez.Compiler.SemanticAnalysis
         //    }
         //}
 
-        public override IEnumerable<object> VisitArrayExpression(AstArrayExpression arr, SemanticerData context = null)
+        public override IEnumerable<object> VisitArrayExpr(AstArrayExpr arr, SemanticerData context = null)
         {
             arr.Scope = context.Scope;
 
@@ -3605,15 +3605,15 @@ namespace Cheez.Compiler.SemanticAnalysis
         {
             switch (expr)
             {
-                case AstIdentifierExpr i when i.IsPolymorphic:
+                case AstIdExpr i when i.IsPolymorphic:
                     types[i.Name] = expr;
                     break;
 
-                case AstAddressOfExpr p:
+                case AstAmpersandExpr p:
                     CollectPolymorphicTypes(p.SubExpression, ref types);
                     break;
 
-                case AstArrayTypeExpr p:
+                case AstSliceTypeExpr p:
                     CollectPolymorphicTypes(p.Target, ref types);
                     break;
 
@@ -3642,13 +3642,13 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (source.Type is ArrayType a && s.TargetType == a.TargetType)
                 {
-                    var cast = new AstCastExpr(source, new AstTypeExpr(targetType), source);
+                    var cast = new AstCastExpr(source, new AstTypeRef(targetType), source);
                     cast.Type = targetType;
                     return cast;
                 }
                 else if (source.Type is PointerType p && s.TargetType == p.TargetType)
                 {
-                    var cast = new AstCastExpr(source, new AstTypeExpr(targetType), source);
+                    var cast = new AstCastExpr(source, new AstTypeRef(targetType), source);
                     cast.Type = targetType;
                     return cast;
                 }
@@ -3658,7 +3658,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             {
                 if (pt.TargetType != sp.TargetType)
                 {
-                    var cast = new AstCastExpr(source, new AstTypeExpr(targetType), source);
+                    var cast = new AstCastExpr(source, new AstTypeRef(targetType), source);
                     cast.Type = targetType;
                     return cast;
                 }
@@ -3666,7 +3666,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
             if (targetType is TraitType trait)
             {
-                var cast = new AstCastExpr(source, new AstTypeExpr(targetType), source);
+                var cast = new AstCastExpr(source, new AstTypeRef(targetType), source);
                 cast.Type = targetType;
                 return cast;
             }
@@ -3695,7 +3695,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     yield return expr.Value;
                     break;
 
-                case AstIdentifierExpr i:
+                case AstIdExpr i:
                     {
                         if (i.IsPolymorphic)
                         {
@@ -3720,7 +3720,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         yield break;
                     }
 
-                case AstAddressOfExpr p:
+                case AstAmpersandExpr p:
                     {
                         CheezType sub = null;
                         foreach (var v in CreateType(scope, p.SubExpression, text, error, forceAnalyzed))
@@ -3777,7 +3777,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         }
                     }
 
-                case AstArrayTypeExpr slice:
+                case AstSliceTypeExpr slice:
                     {
                         CheezType type = CheezType.Error;
                         foreach (var v in CreateType(scope, slice.Target, text, error, forceAnalyzed))
@@ -3791,7 +3791,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                         yield break;
                     }
 
-                case AstTypeExpr t:
+                case AstTypeRef t:
                     yield return t.Type;
                     yield break;
 

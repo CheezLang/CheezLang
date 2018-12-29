@@ -14,7 +14,7 @@ namespace Cheez.Compiler.Ast
         public TokenLocation End => Location?.End;
 
 
-        public AstIdentifierExpr Name { get; }
+        public AstIdExpr Name { get; }
         public CheezType Type { get; set; }
         public AstExpression TypeExpr { get; set; }
         public Scope Scope { get; set; }
@@ -23,14 +23,14 @@ namespace Cheez.Compiler.Ast
 
         public bool IsConstant => true;
 
-        public AstParameter(AstIdentifierExpr name, AstExpression typeExpr, ILocation Location = null)
+        public AstParameter(AstIdExpr name, AstExpression typeExpr, ILocation Location = null)
         {
             this.Location = Location;
             Name = name;
             this.TypeExpr = typeExpr;
         }
 
-        public AstParameter Clone() => new AstParameter(Name?.Clone() as AstIdentifierExpr, TypeExpr.Clone());
+        public AstParameter Clone() => new AstParameter(Name?.Clone() as AstIdExpr, TypeExpr.Clone());
     }
 
     #region Function Declaration
@@ -42,26 +42,26 @@ namespace Cheez.Compiler.Ast
         public TokenLocation End => Location?.End;
 
 
-        public AstIdentifierExpr Name { get; }
+        public AstIdExpr Name { get; }
         public CheezType Type { get; set; }
         public AstExpression TypeExpr { get; set; }
         public Scope Scope { get; set; }
 
         public bool IsConstant => false;
 
-        public AstFunctionParameter(AstIdentifierExpr name, AstExpression typeExpr, ILocation Location = null)
+        public AstFunctionParameter(AstIdExpr name, AstExpression typeExpr, ILocation Location = null)
         {
             this.Location = Location;
             this.Name = name;
             this.TypeExpr = typeExpr;
         }
 
-        public AstFunctionParameter Clone() => new AstFunctionParameter(Name.Clone() as AstIdentifierExpr, TypeExpr.Clone(), Location);
+        public AstFunctionParameter Clone() => new AstFunctionParameter(Name.Clone() as AstIdExpr, TypeExpr.Clone(), Location);
     }
 
     public interface ITempVariable
     {
-        AstIdentifierExpr Name { get; } // can be null
+        AstIdExpr Name { get; } // can be null
         CheezType Type { get; }
     }
 
@@ -72,7 +72,7 @@ namespace Cheez.Compiler.Ast
         public Scope HeaderScope { get; set; }
         public Scope SubScope { get; set; }
 
-        public AstIdentifierExpr Name { get; set; }
+        public AstIdExpr Name { get; set; }
         public List<AstFunctionParameter> Parameters { get; }
         public AstExpression ReturnTypeExpr { get; set; }
         public CheezType ReturnType { get; set; }
@@ -101,8 +101,8 @@ namespace Cheez.Compiler.Ast
         public AstImplBlock ImplBlock { get; set; }
         public AstFunctionDecl TraitFunction { get; internal set; }
 
-        public AstFunctionDecl(AstIdentifierExpr name,
-            List<AstIdentifierExpr> generics,
+        public AstFunctionDecl(AstIdExpr name,
+            List<AstIdExpr> generics,
             List<AstFunctionParameter> parameters,
             AstExpression returnTypeExpr,
             AstBlockStmt body = null, 
@@ -118,9 +118,9 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitFunctionDeclaration(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitFunctionDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstFunctionDecl(Name.Clone() as AstIdentifierExpr,
+        public override AstStatement Clone() => CopyValuesTo(new AstFunctionDecl(Name.Clone() as AstIdExpr,
                 null,
                 Parameters.Select(p => p.Clone()).ToList(),
                 ReturnTypeExpr?.Clone(),
@@ -138,12 +138,12 @@ namespace Cheez.Compiler.Ast
         public TokenLocation End => Location?.End;
 
 
-        public AstIdentifierExpr Name { get; }
+        public AstIdExpr Name { get; }
         public AstExpression Initializer { get; set; }
         public AstExpression TypeExpr { get; set; }
         public CheezType Type { get; set; }
 
-        public AstMemberDecl(AstIdentifierExpr name, AstExpression typeExpr, AstExpression init, ILocation Location = null)
+        public AstMemberDecl(AstIdExpr name, AstExpression typeExpr, AstExpression init, ILocation Location = null)
         {
             this.Location = Location;
             this.Name = name;
@@ -151,12 +151,12 @@ namespace Cheez.Compiler.Ast
             this.Initializer = init;
         }
 
-        public AstMemberDecl Clone() => new AstMemberDecl(Name.Clone() as AstIdentifierExpr, TypeExpr.Clone(), Initializer?.Clone());
+        public AstMemberDecl Clone() => new AstMemberDecl(Name.Clone() as AstIdExpr, TypeExpr.Clone(), Initializer?.Clone());
     }
 
     public class AstStructDecl : AstStatement, ITypedSymbol
     {
-        public AstIdentifierExpr Name { get; set; }
+        public AstIdExpr Name { get; set; }
         public List<AstMemberDecl> Members { get; }
         public List<AstParameter> Parameters { get; set; }
 
@@ -174,7 +174,7 @@ namespace Cheez.Compiler.Ast
         //public List<AstImplBlock> Implementations { get; } = new List<AstImplBlock>();
         public List<TraitType> Traits { get; } = new List<TraitType>();
 
-        public AstStructDecl(AstIdentifierExpr name, List<AstParameter> param, List<AstMemberDecl> members, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
+        public AstStructDecl(AstIdExpr name, List<AstParameter> param, List<AstMemberDecl> members, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
         {
             this.Name = name;
             this.Parameters = param ?? new List<AstParameter>();
@@ -182,14 +182,14 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitStructDeclaration(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitStructDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstStructDecl(Name.Clone() as AstIdentifierExpr, Parameters?.Select(p => p.Clone()).ToList(), Members.Select(m => m.Clone()).ToList()));
+        public override AstStatement Clone() => CopyValuesTo(new AstStructDecl(Name.Clone() as AstIdExpr, Parameters?.Select(p => p.Clone()).ToList(), Members.Select(m => m.Clone()).ToList()));
     }
 
     public class AstTraitDeclaration : AstStatement, ITypedSymbol
     {
-        public AstIdentifierExpr Name { get; set; }
+        public AstIdExpr Name { get; set; }
         public List<AstParameter> Parameters { get; set; }
 
         public List<AstFunctionDecl> Functions { get; }
@@ -201,16 +201,16 @@ namespace Cheez.Compiler.Ast
         public bool IsPolymorphic { get; set; }
         public bool IsPolyInstance { get; set; }
 
-        public AstTraitDeclaration(AstIdentifierExpr name, List<AstParameter> parameters, List<AstFunctionDecl> functions, ILocation Location = null) : base(Location: Location)
+        public AstTraitDeclaration(AstIdExpr name, List<AstParameter> parameters, List<AstFunctionDecl> functions, ILocation Location = null) : base(Location: Location)
         {
             this.Name = name;
             this.Parameters = parameters;
             this.Functions = functions;
         }
 
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTraitDeclaration(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTraitDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstTraitDeclaration(Name.Clone() as AstIdentifierExpr, Parameters.Select(p => p.Clone()).ToList(), Functions.Select(f => f.Clone() as AstFunctionDecl).ToList()));
+        public override AstStatement Clone() => CopyValuesTo(new AstTraitDeclaration(Name.Clone() as AstIdExpr, Parameters.Select(p => p.Clone()).ToList(), Functions.Select(f => f.Clone() as AstFunctionDecl).ToList()));
     }
 
     public class AstImplBlock : AstStatement
@@ -233,7 +233,7 @@ namespace Cheez.Compiler.Ast
             this.TraitExpr = traitExpr;
         }
 
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitImplBlock(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitImplDecl(this, data);
 
         public override AstStatement Clone() => CopyValuesTo(new AstImplBlock(TargetTypeExpr.Clone(), TraitExpr.Clone(), Functions.Select(f => f.Clone() as AstFunctionDecl).ToList()));
     }
@@ -244,7 +244,7 @@ namespace Cheez.Compiler.Ast
 
     public class AstVariableDecl : AstStatement, ITypedSymbol
     {
-        public AstIdentifierExpr Name { get; set; }
+        public AstIdExpr Name { get; set; }
         public CheezType Type { get; set; }
         public AstExpression TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
@@ -252,7 +252,7 @@ namespace Cheez.Compiler.Ast
 
         public bool IsConstant { get; set; } = false;
 
-        public AstVariableDecl(AstIdentifierExpr name, AstExpression typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
+        public AstVariableDecl(AstIdExpr name, AstExpression typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
         {
             this.Name = name;
             this.TypeExpr = typeExpr;
@@ -260,9 +260,9 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitVariableDeclaration(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitVariableDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstVariableDecl(Name.Clone() as AstIdentifierExpr, TypeExpr?.Clone(), Initializer?.Clone()));
+        public override AstStatement Clone() => CopyValuesTo(new AstVariableDecl(Name.Clone() as AstIdExpr, TypeExpr?.Clone(), Initializer?.Clone()));
     }
 
     #endregion
@@ -276,36 +276,36 @@ namespace Cheez.Compiler.Ast
         public TokenLocation End => Location?.End;
 
 
-        public AstIdentifierExpr Name { get; }
+        public AstIdExpr Name { get; }
         public AstExpression Value { get; }
         public CheezType Type { get; set; }
 
-        public AstEnumMember(AstIdentifierExpr name, AstExpression value, ILocation Location = null)
+        public AstEnumMember(AstIdExpr name, AstExpression value, ILocation Location = null)
         {
             this.Location = Location;
             this.Name = name;
             this.Value = value;
         }
 
-        public AstEnumMember Clone() => new AstEnumMember(Name.Clone() as AstIdentifierExpr, Value?.Clone());
+        public AstEnumMember Clone() => new AstEnumMember(Name.Clone() as AstIdExpr, Value?.Clone());
     }
 
     public class AstEnumDecl : AstStatement, INamed
     {
-        public AstIdentifierExpr Name { get; }
+        public AstIdExpr Name { get; }
         public List<AstEnumMember> Members { get; }
         public CheezType Type { get; set; }
 
-        public AstEnumDecl(AstIdentifierExpr name, List<AstEnumMember> members, List<AstDirective> Directive = null, ILocation Location = null) : base(Directive, Location)
+        public AstEnumDecl(AstIdExpr name, List<AstEnumMember> members, List<AstDirective> Directive = null, ILocation Location = null) : base(Directive, Location)
         {
             this.Name = name;
             this.Members = members;
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitEnumDeclaration(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitEnumDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstEnumDecl(Name.Clone() as AstIdentifierExpr, Members.Select(m => m.Clone()).ToList()));
+        public override AstStatement Clone() => CopyValuesTo(new AstEnumDecl(Name.Clone() as AstIdExpr, Members.Select(m => m.Clone()).ToList()));
     }
 
     #endregion
@@ -314,19 +314,19 @@ namespace Cheez.Compiler.Ast
 
     public class AstTypeAliasDecl : AstStatement
     {
-        public AstIdentifierExpr Name { get; set; }
+        public AstIdExpr Name { get; set; }
         public AstExpression TypeExpr { get; set; }
         public CheezType Type { get; set; }
 
-        public AstTypeAliasDecl(AstIdentifierExpr name, AstExpression typeExpr, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
+        public AstTypeAliasDecl(AstIdExpr name, AstExpression typeExpr, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
         {
             this.Name = name;
             this.TypeExpr = typeExpr;
         }
 
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTypeAlias(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTypeAliasDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstTypeAliasDecl(Name.Clone() as AstIdentifierExpr, TypeExpr.Clone()));
+        public override AstStatement Clone() => CopyValuesTo(new AstTypeAliasDecl(Name.Clone() as AstIdExpr, TypeExpr.Clone()));
     }
 
     #endregion

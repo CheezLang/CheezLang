@@ -400,7 +400,7 @@ namespace Cheez.Compiler
 
         public override string ToString()
         {
-            return Declaration.ToString();
+            return $"struct {Declaration.Name.Name}";
         }
 
         public int GetIndexOfMember(string right)

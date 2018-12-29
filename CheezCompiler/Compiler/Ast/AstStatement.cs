@@ -79,7 +79,7 @@ namespace Cheez.Compiler.Ast
             this.Directive = Directive;
         }
 
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitDirectiveStatement(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitDirectiveStmt(this, data);
 
         public override AstStatement Clone() => CopyValuesTo(new AstDirectiveStatement(Directive));
     }
@@ -87,7 +87,7 @@ namespace Cheez.Compiler.Ast
     public class AstEmptyStatement : AstStatement
     {
         public AstEmptyStatement(ILocation Location = null) : base(Location: Location) {}
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitEmptyStatement(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitEmptyStmt(this, data);
         public override AstStatement Clone() =>  CopyValuesTo(new AstEmptyStatement());
     }
 
@@ -101,7 +101,7 @@ namespace Cheez.Compiler.Ast
             this.Deferred = deferred;
         }
 
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitDeferStatement(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitDeferStmt(this, data);
 
         public override AstStatement Clone() => CopyValuesTo(new AstDeferStmt(Deferred.Clone()));
     }
@@ -126,7 +126,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitWhileStatement(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitWhileStmt(this, data);
         public override AstStatement Clone() 
             => CopyValuesTo(new AstWhileStmt(Condition.Clone(), Body.Clone() as AstBlockStmt, PreAction?.Clone() as AstVariableDecl, PostAction?.Clone()));
     }
@@ -143,7 +143,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitReturnStatement(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitReturnStmt(this, data);
         public override AstStatement Clone() => CopyValuesTo(new AstReturnStmt(ReturnValue?.Clone()));
     }
 
@@ -165,7 +165,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitIfStatement(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitIfStmt(this, data);
 
         public override AstStatement Clone()
             => CopyValuesTo(new AstIfStmt(Condition.Clone(), IfCase.Clone(), ElseCase?.Clone(), PreAction?.Clone() as AstVariableDecl));
@@ -184,7 +184,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBlockStatement(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBlockStmt(this, data);
 
         public override AstStatement Clone()
          => CopyValuesTo(new AstBlockStmt(Statements.Select(s => s.Clone()).ToList()));
@@ -205,7 +205,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitAssignment(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitAssignmentStmt(this, data);
 
         public override AstStatement Clone()
             => CopyValuesTo(new AstAssignment(Target.Clone(), Value.Clone(), Operator));
@@ -222,7 +222,7 @@ namespace Cheez.Compiler.Ast
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitExpressionStatement(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitExpressionStmt(this, data);
 
         public override AstStatement Clone()
             => CopyValuesTo(new AstExprStmt(Expr.Clone()));
@@ -240,7 +240,7 @@ namespace Cheez.Compiler.Ast
         }
         
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitUsingStatement(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitUsingStmt(this, data);
 
         public override AstStatement Clone()
             => CopyValuesTo(new AstUsingStmt(Value.Clone()));
@@ -277,7 +277,7 @@ namespace Cheez.Compiler.Ast
             this.Cases = cases;
         }
 
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitMatchStatement(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitMatchStmt(this, data);
 
         public override AstStatement Clone()
             => CopyValuesTo(new AstMatchStmt(Value.Clone(), Cases.Select(c => c.Clone()).ToList()));
@@ -291,7 +291,7 @@ namespace Cheez.Compiler.Ast
         public AstBreakStmt(ILocation Location = null) : base(Location: Location)
         { }
 
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBreakStatement(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBreakStmt(this, data);
 
         public override AstStatement Clone()
             => CopyValuesTo(new AstBreakStmt());
@@ -305,7 +305,7 @@ namespace Cheez.Compiler.Ast
         public AstContinueStmt(ILocation Location = null) : base(Location: Location)
         { }
 
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitContinueStatement(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitContinueStmt(this, data);
 
         public override AstStatement Clone()
             => CopyValuesTo(new AstContinueStmt());

@@ -3,11 +3,11 @@ using System.Diagnostics;
 
 namespace Cheez.Compiler.Ast
 {
-    public class AstTypeExpr : AstExpression
+    public class AstTypeRef : AstExpression
     {
         public override bool IsPolymorphic => false;
 
-        public AstTypeExpr(CheezType type, ILocation Location = null) : base(Location)
+        public AstTypeRef(CheezType type, ILocation Location = null) : base(Location)
         {
             this.Type = CheezType.Type;
             this.Value = type;
@@ -15,10 +15,10 @@ namespace Cheez.Compiler.Ast
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTypeExpr(this, data);
 
-        public override AstExpression Clone() => CopyValuesTo(new AstTypeExpr(Type));
+        public override AstExpression Clone() => CopyValuesTo(new AstTypeRef(Type));
     }
 
-    public class AstStructExpression : AstExpression
+    public class AstStructRef : AstExpression
     {
         public AstStructDecl Declaration { get; }
 
@@ -26,7 +26,7 @@ namespace Cheez.Compiler.Ast
 
         public override bool IsPolymorphic => false;
 
-        public AstStructExpression(AstStructDecl @struct, AstExpression original, ILocation Location = null)
+        public AstStructRef(AstStructDecl @struct, AstExpression original, ILocation Location = null)
             : base(Location)
         {
             Declaration = @struct;
@@ -38,16 +38,16 @@ namespace Cheez.Compiler.Ast
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => Original.Accept(visitor, data);
 
         public override AstExpression Clone()
-            => CopyValuesTo(new AstStructExpression(Declaration, Original));
+            => CopyValuesTo(new AstStructRef(Declaration, Original));
     }
 
-    public class AstVariableExpression : AstExpression
+    public class AstVariableRef : AstExpression
     {
         public AstVariableDecl Declaration { get; }
         public AstExpression Original { get; set; }
         public override bool IsPolymorphic => false;
 
-        public AstVariableExpression(AstVariableDecl let, AstExpression original, ILocation Location = null)
+        public AstVariableRef(AstVariableDecl let, AstExpression original, ILocation Location = null)
             : base(Location)
         {
             Declaration = let;
@@ -58,13 +58,13 @@ namespace Cheez.Compiler.Ast
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
-            => Original != null ? Original.Accept(visitor, data) : visitor.VisitVariableExpression(this, data);
+            => Original != null ? Original.Accept(visitor, data) : visitor.VisitVariableRef(this, data);
 
         public override AstExpression Clone()
-            => CopyValuesTo(new AstVariableExpression(Declaration, Original));
+            => CopyValuesTo(new AstVariableRef(Declaration, Original));
     }
 
-    public class AstFunctionExpression : AstExpression
+    public class AstFunctionRef : AstExpression
     {
         public AstFunctionDecl Declaration { get; }
 
@@ -72,7 +72,7 @@ namespace Cheez.Compiler.Ast
 
         public override bool IsPolymorphic => false;
 
-        public AstFunctionExpression(AstFunctionDecl func, AstExpression original, ILocation Location = null) : base(Location)
+        public AstFunctionRef(AstFunctionDecl func, AstExpression original, ILocation Location = null) : base(Location)
         {
             Declaration = func;
             Type = func.Type;
@@ -84,7 +84,7 @@ namespace Cheez.Compiler.Ast
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => Original != null ? Original.Accept(visitor, data) : default;
 
         public override AstExpression Clone()
-            => CopyValuesTo(new AstFunctionExpression(Declaration, Original));
+            => CopyValuesTo(new AstFunctionRef(Declaration, Original));
     }
 
 }

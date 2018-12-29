@@ -480,7 +480,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             function.Accept(this);
         }
 
-        public override LLVMValueRef VisitFunctionDeclaration(AstFunctionDecl function, object data = null)
+        public override LLVMValueRef VisitFunctionDecl(AstFunctionDecl function, object data = null)
         {
             var lfunc = valueMap[function];
             currentLLVMFunction = lfunc;
@@ -570,7 +570,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             return lfunc;
         }
 
-        public override LLVMValueRef VisitBlockStatement(AstBlockStmt block, object data = null)
+        public override LLVMValueRef VisitBlockStmt(AstBlockStmt block, object data = null)
         {
             foreach (var s in block.Statements)
             {
@@ -585,7 +585,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             return default;
         }
 
-        public override LLVMValueRef VisitVariableDeclaration(AstVariableDecl variable, object data = null)
+        public override LLVMValueRef VisitVariableDecl(AstVariableDecl variable, object data = null)
         {
             if (variable.IsConstant)
                 return default;
@@ -655,7 +655,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
         //    return value;
         //}
 
-        public override LLVMValueRef VisitNumberExpression(AstNumberExpr num, object data = null)
+        public override LLVMValueRef VisitNumberExpr(AstNumberExpr num, object data = null)
         {
             var llvmType = CheezTypeToLLVMType(num.Type);
             if (num.Type is IntType)
