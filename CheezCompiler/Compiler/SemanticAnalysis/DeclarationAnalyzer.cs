@@ -89,17 +89,19 @@ namespace Cheez.Compiler
                 case AstPolyStructTypeExpr @struct:
                     {
                         @struct.Struct.Scope = @struct.Scope;
-                        @struct.Struct.Type = ResolveType(@struct.Struct, deps);
+                        @struct.Struct.Type = CheezType.Type;
+                        @struct.Struct.Value = ResolveType(@struct.Struct, deps);
 
                         foreach (var arg in @struct.Arguments)
                         {
                             arg.Scope = @struct.Scope;
-                            arg.Type = ResolveType(arg, deps);
+                            arg.Type = CheezType.Type;
+                            arg.Value = ResolveType(arg, deps);
                         }
 
                         // instantiate struct
                         var instance = InstantiatePolyStruct(@struct);
-                        return instance.Type;
+                        return instance?.Type ?? CheezType.Error;
                     }
             }
 
@@ -109,7 +111,13 @@ namespace Cheez.Compiler
 
         private AstStructDecl InstantiatePolyStruct(AstPolyStructTypeExpr expr)
         {
-            var @struct = expr.Struct.Type as GenericStructType;
+            var @struct = expr.Struct.Value as GenericStructType;
+
+            if (expr.Arguments.Count != @struct.Declaration.Parameters.Count)
+            {
+                ReportError(expr, "Polymorphic struct instantiation has wrong number of arguments.", ("Declaration here:", @struct.Declaration));
+                return null;
+            }
 
             // check if instance already exists
             AstStructDecl instance = null;
@@ -128,7 +136,7 @@ namespace Cheez.Compiler
                     var atype = arg.Type;
                     var avalue = arg.Value;
 
-                    //if (existingType != newType)
+                    if (pvalue != avalue)
                     {
                         eq = false;
                         break;
@@ -157,8 +165,8 @@ namespace Cheez.Compiler
                 {
                     var param = instance.Parameters[i];
                     var arg = expr.Arguments[i];
-                    param.Type = @struct.Declaration.Parameters[i].Type;
-                    param.Value = arg.Type;
+                    param.Type = arg.Type;
+                    param.Value = arg.Value;
                 }
 
                 instance.Type = new StructType(instance);
