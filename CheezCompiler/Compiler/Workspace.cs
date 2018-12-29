@@ -62,11 +62,9 @@ namespace Cheez.Compiler
 
             GlobalScope = new Scope("Global", preludeScope);
 
-            //var semanticer = new Semanticer();
-            //semanticer.DoWork(this, mStatements, mCompiler.ErrorHandler);
-
-            var declarationAnalyzer = new DeclarationAnalyzer();
-            declarationAnalyzer.CollectDeclarations(this);
+            Pass1(); // collect declarations
+            Pass2(); // resolve types
+            Pass3(); // resolve struct members
 
             if (MainFunction == null)
             {

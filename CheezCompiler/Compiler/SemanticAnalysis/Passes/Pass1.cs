@@ -1,8 +1,8 @@
 ﻿using Cheez.Compiler.Ast;
 
-namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
+namespace Cheez.Compiler
 {
-    public partial class DeclarationAnalyzer
+    public partial class Workspace
     {
 
         /// <summary>
@@ -11,15 +11,13 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
         /// </summary>
         private void Pass1()
         {
-            var globalScope = mWorkspace.GlobalScope;
-
-            foreach (var s in mWorkspace.Statements)
+            foreach (var s in Statements)
             {
                 switch (s)
                 {
                     case AstStructDecl @struct:
                         {
-                            @struct.Scope = globalScope;
+                            @struct.Scope = GlobalScope;
                             Pass1StructDeclaration(@struct);
 
                             if (@struct.Parameters.Count > 0)
@@ -31,7 +29,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
 
                     case AstTraitDeclaration @trait:
                         {
-                            trait.Scope = globalScope;
+                            trait.Scope = GlobalScope;
                             Pass1TraitDeclaration(@trait);
                             mTraits.Add(@trait);
                             break;
@@ -39,7 +37,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
 
                     case AstEnumDecl @enum:
                         {
-                            @enum.Scope = globalScope;
+                            @enum.Scope = GlobalScope;
                             Pass1EnumDeclaration(@enum);
                             mEnums.Add(@enum);
                             break;
@@ -47,28 +45,28 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
 
                     case AstVariableDecl @var:
                         {
-                            @var.Scope = globalScope;
+                            @var.Scope = GlobalScope;
                             mVariables.Add(@var);
                             break;
                         }
 
                     case AstFunctionDecl func:
                         {
-                            func.Scope = globalScope;
+                            func.Scope = GlobalScope;
                             mFunctions.Add(func);
                             break;
                         }
 
                     case AstImplBlock impl:
                         {
-                            impl.Scope = globalScope;
+                            impl.Scope = GlobalScope;
                             mImpls.Add(impl);
                             break;
                         }
 
                     case AstTypeAliasDecl type:
                         {
-                            type.Scope = globalScope;
+                            type.Scope = GlobalScope;
                             mTypeDefs.Add(type);
                             break;
                         }
@@ -92,7 +90,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
             {
                 (string, ILocation)? detail = null;
                 if (res.other != null) detail = ("Other declaration here:", res.other);
-                mWorkspace.ReportError(trait.Name, $"A symbol with name '{trait.Name.Name}' already exists in current scope", detail);
+                ReportError(trait.Name, $"A symbol with name '{trait.Name.Name}' already exists in current scope", detail);
             }
         }
 
@@ -107,7 +105,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
             {
                 (string, ILocation)? detail = null;
                 if (res.other != null) detail = ("Other declaration here:", res.other);
-                mWorkspace.ReportError(@enum.Name, $"A symbol with name '{@enum.Name.Name}' already exists in current scope", detail);
+                ReportError(@enum.Name, $"A symbol with name '{@enum.Name.Name}' already exists in current scope", detail);
             }
         }
 
@@ -131,7 +129,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
             {
                 (string, ILocation)? detail = null;
                 if (res.other != null) detail = ("Other declaration here:", res.other);
-                mWorkspace.ReportError(@struct.Name, $"A symbol with name '{@struct.Name.Name}' already exists in current scope", detail);
+                ReportError(@struct.Name, $"A symbol with name '{@struct.Name.Name}' already exists in current scope", detail);
             }
         }
 
@@ -145,7 +143,7 @@ namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
             {
                 (string, ILocation)? detail = null;
                 if (res.other != null) detail = ("Other declaration here:", res.other);
-                mWorkspace.ReportError(alias.Name, $"A symbol with name '{alias.Name.Name}' already exists in current scope", detail);
+                ReportError(alias.Name, $"A symbol with name '{alias.Name.Name}' already exists in current scope", detail);
             }
         }
     }

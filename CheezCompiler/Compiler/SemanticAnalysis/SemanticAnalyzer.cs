@@ -8,6 +8,22 @@ namespace Cheez.Compiler
 {
     public partial class Workspace
     {
+        // for semantic analysis
+        private List<AstStructDecl> mPolyStructs = new List<AstStructDecl>();
+        private List<AstStructDecl> mPolyStructInstances = new List<AstStructDecl>();
+        private List<AstStructDecl> mStructs = new List<AstStructDecl>();
+
+        private List<AstTraitDeclaration> mTraits = new List<AstTraitDeclaration>();
+        private List<AstEnumDecl> mEnums = new List<AstEnumDecl>();
+        private List<AstVariableDecl> mVariables = new List<AstVariableDecl>();
+        private List<AstTypeAliasDecl> mTypeDefs = new List<AstTypeAliasDecl>();
+        private List<AstImplBlock> mImpls = new List<AstImplBlock>();
+
+        private List<AstFunctionDecl> mFunctions = new List<AstFunctionDecl>();
+        private List<AstFunctionDecl> mPolyFunctions = new List<AstFunctionDecl>();
+        private List<AstFunctionDecl> mFunctionInstances = new List<AstFunctionDecl>();
+        //
+
         public CheezType ResolveType(AstTypeExpr typeExpr, HashSet<AstDecl> deps = null, List<AstStructDecl> instances = null)
         {
             switch (typeExpr)
@@ -220,41 +236,6 @@ namespace Cheez.Compiler
                 var details = newInstances.Select(str => ("Here:", str.Location)).ToList();
                 ReportError($"Detected a potential infinite loop in polymorphic struct declarations after {MaxPolyStructResolveStepCount} steps", details);
             }
-        }
-    }
-}
-
-namespace Cheez.Compiler.SemanticAnalysis.DeclarationAnalysis
-{
-    public partial class DeclarationAnalyzer
-    {
-        private Workspace mWorkspace;
-
-        private List<AstStructDecl> mPolyStructs = new List<AstStructDecl>();
-        private List<AstStructDecl> mPolyStructInstances = new List<AstStructDecl>();
-        private List<AstStructDecl> mStructs = new List<AstStructDecl>();
-
-        private List<AstTraitDeclaration> mTraits = new List<AstTraitDeclaration>();
-        private List<AstEnumDecl> mEnums = new List<AstEnumDecl>();
-        private List<AstVariableDecl> mVariables = new List<AstVariableDecl>();
-        private List<AstTypeAliasDecl> mTypeDefs = new List<AstTypeAliasDecl>();
-        private List<AstImplBlock> mImpls = new List<AstImplBlock>();
-
-        private List<AstFunctionDecl> mFunctions = new List<AstFunctionDecl>();
-        private List<AstFunctionDecl> mPolyFunctions = new List<AstFunctionDecl>();
-        private List<AstFunctionDecl> mFunctionInstances = new List<AstFunctionDecl>();
-
-        public void CollectDeclarations(Workspace ws)
-        {
-            mWorkspace = ws;
-
-            // pass 1: collect types (structs, enums, traits, simple typedefs)
-            Pass1();
-
-            // pass 2: resolve types
-            Pass2();
-
-            Pass3();
         }
     }
 }
