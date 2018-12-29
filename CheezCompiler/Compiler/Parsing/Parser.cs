@@ -1118,7 +1118,40 @@ namespace Cheez.Compiler.Parsing
             if (token.type == TokenType.Identifier)
             {
                 NextToken();
-                return new AstIdTypeExpr(token.data as string, new Location(token.location));
+                AstTypeExpr result = new AstIdTypeExpr(token.data as string, new Location(token.location));
+
+                var next = PeekToken();
+                if (next.type == TokenType.OpenParen)
+                {
+                    NextToken();
+                    SkipNewlines();
+
+                    var args = new List<AstTypeExpr>();
+
+                    next = PeekToken();
+                    while (next.type != TokenType.ClosingParen)
+                    {
+                        var a = ParseTypeExpr();
+                        if (a != null) args.Add(a);
+                        SkipNewlines();
+
+                        next = PeekToken();
+                        if (next.type == TokenType.Comma)
+                        {
+                            NextToken();
+                            SkipNewlines();
+                        }
+                        else if (next.type != TokenType.ClosingParen)
+                        {
+                            ReportError(next.location, $"Unexpected token '{next}' in poly struct type expression. Expected ',' or ')'");
+                        }
+                    }
+
+                    var end = Consume(TokenType.ClosingParen, ErrMsg("')'", "at end of poly struct type expressino")).location;
+                    result = new AstPolyStructTypeExpr(result, args, new Location(result.Beginning, end));
+                }
+
+                return result;
             }
 
             if (token.type == TokenType.Asterisk)

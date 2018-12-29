@@ -206,14 +206,6 @@ namespace Cheez.Compiler.Visitor
 
 
         #region Expressions
-        public override string VisitFunctionTypeExpr(AstFunctionTypeExpr func, int data = 0)
-        {
-            var args = string.Join(", ", func.ParameterTypes.Select(p => p.Accept(this)));
-            if (func.ReturnType != null)
-                return $"fn({args}) -> {func.ReturnType.Accept(this)}";
-            else
-                return $"fn({args})";
-        }
 
         public override string VisitArrayExpr(AstArrayExpr arr, int data = 0)
         {
@@ -224,11 +216,6 @@ namespace Cheez.Compiler.Visitor
         public override string VisitTypeExpr(AstTypeRef astArrayTypeExpr, int data = 0)
         {
             return astArrayTypeExpr.Type.ToString();
-        }
-
-        public override string VisitSliceTypeExpr(AstSliceTypeExpr astArrayTypeExpr, int data = 0)
-        {
-            return $"[]{astArrayTypeExpr.Target.Accept(this)}";
         }
 
         public override string VisitCompCallExpr(AstCompCallExpr call, int data = 0)
@@ -361,6 +348,44 @@ namespace Cheez.Compiler.Visitor
             return new string('§', len);
         }
 
+        #endregion
+
+        #region Type expressions
+
+        public override string VisitSliceTypeExpr(AstSliceTypeExpr type, int data = 0)
+        {
+            return $"[]{type.Target.Accept(this)}";
+        }
+
+        public override string VisitFunctionTypeExpr(AstFunctionTypeExpr type, int data = 0)
+        {
+            var args = string.Join(", ", type.ParameterTypes.Select(p => p.Accept(this)));
+            if (type.ReturnType != null)
+                return $"fn({args}) -> {type.ReturnType.Accept(this)}";
+            else
+                return $"fn({args})";
+        }
+
+        public override string VisitArrayTypeExpr(AstArrayTypeExpr type, int data = 0)
+        {
+            return $"[{type.SizeExpr.Accept(this)}]{type.Target.Accept(this)}";
+        }
+
+        public override string VisitPointerTypeExpr(AstPointerTypeExpr type, int data = 0)
+        {
+            return $"*{type.Target.Accept(this)}";
+        }
+
+        public override string VisitPolyStructTypeExpr(AstPolyStructTypeExpr type, int data = 0)
+        {
+            string args = string.Join(", ", type.Arguments.Select(a => a.Accept(this)));
+            return $"{type.Struct.Accept(this)}({args})";
+        }
+
+        public override string VisitIdTypeExpr(AstIdTypeExpr type, int data = 0)
+        {
+            return type.Name;
+        }
         #endregion
     }
 }
