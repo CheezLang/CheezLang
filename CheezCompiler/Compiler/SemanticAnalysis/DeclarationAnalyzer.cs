@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Cheez.Compiler
 {
@@ -191,6 +192,33 @@ namespace Cheez.Compiler
             {
                 member.TypeExpr.Scope = @struct.SubScope;
                 member.Type = ResolveType(member.TypeExpr, instances: instances);
+            }
+        }
+
+        public void ResolveStructs(List<AstStructDecl> newInstances)
+        {
+            var nextInstances = new List<AstStructDecl>();
+
+            int i = 0;
+            while (i < MaxPolyStructResolveStepCount && newInstances.Count != 0)
+            {
+                foreach (var instance in newInstances)
+                {
+                    ResolveStruct(instance, nextInstances);
+                }
+                newInstances.Clear();
+
+                var t = newInstances;
+                newInstances = nextInstances;
+                nextInstances = t;
+
+                i++;
+            }
+
+            if (i == MaxPolyStructResolveStepCount)
+            {
+                var details = newInstances.Select(str => ("Here:", str.Location)).ToList();
+                ReportError($"Detected a potential infinite loop in polymorphic struct declarations after {MaxPolyStructResolveStepCount} steps", details);
             }
         }
     }
