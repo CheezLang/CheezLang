@@ -1776,7 +1776,7 @@ namespace Cheez.Compiler.SemanticAnalysis
 
                             result += arg.Value;
                         }
-                        var value = new AstStringLiteral(result, false, call);
+                        var value = new AstStringLiteral(result, call);
                         value.Type = CheezType.StringLiteral;
                         foreach (var v in ReplaceAstExpr(value, context))
                             yield return v;
@@ -1784,7 +1784,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                     }
                 case "file":
                     {
-                        var value = new AstStringLiteral(call.Beginning.file, false, call);
+                        var value = new AstStringLiteral(call.Beginning.file, call);
                         foreach (var v in ReplaceAstExpr(value, context))
                             yield return v;
                         break;
@@ -2087,7 +2087,7 @@ namespace Cheez.Compiler.SemanticAnalysis
                             type = arg.Type;
                         }
 
-                        foreach (var v in ReplaceAstExpr(new AstStringLiteral(type.ToString(), false, call), context))
+                        foreach (var v in ReplaceAstExpr(new AstStringLiteral(type.ToString(), call), context))
                             yield return v;
                         break;
                     }
@@ -2140,7 +2140,7 @@ namespace Cheez.Compiler.SemanticAnalysis
             foreach (var v in str.TypeExpr.Accept(this, context.Clone(ExpectedType: null)))
             {
                 if (v is ReplaceAstExpr r)
-                    str.TypeExpr = r.NewExpression;
+                    str.TypeExpr = r.NewExpression as AstTypeExpr;
                 else
                     yield return v;
             }
@@ -2962,40 +2962,17 @@ namespace Cheez.Compiler.SemanticAnalysis
 
         public override IEnumerable<object> VisitStringLiteralExpr(AstStringLiteral str, SemanticerData context = null)
         {
-            if (str.IsChar)
+            if (context.ExpectedType == CheezType.CString)
             {
-                if (str.Value is string s)
-                {
-                    if (s.Length != 1)
-                    {
-                        context.ReportError(str, "Char literal must be of length 1");
-                        str.Type = CheezType.Error;
-                    }
-                    else
-                    {
-                        str.Type = CheezType.Char;
-                        str.Value = s[0];
-                        str.CharValue = s[0];
-                    }
-                }
-                else
-                {
-                }
+                str.Type = CheezType.CString;
+            }
+            else if(context.ExpectedType == CheezType.String)
+            {
+                str.Type = CheezType.String;
             }
             else
             {
-                if (context.ExpectedType == CheezType.CString)
-                {
-                    str.Type = CheezType.CString;
-                }
-                else if(context.ExpectedType == CheezType.String)
-                {
-                    str.Type = CheezType.String;
-                }
-                else
-                {
-                    str.Type = CheezType.String;
-                }
+                str.Type = CheezType.String;
             }
             yield break;
         }

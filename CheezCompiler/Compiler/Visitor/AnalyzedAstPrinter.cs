@@ -300,20 +300,23 @@ namespace Cheez.Compiler.Visitor
             return $"{func}({argsStr})";
         }
 
+        public override string VisitCharLiteralExpr(AstCharLiteral expr, int data = 0)
+        {
+            switch (expr.CharValue)
+            {
+                case '\0': return "'`0'";
+                case '\r': return "'`r'";
+                case '\n': return "'`n'";
+                case '\t': return "'`t'";
+                default: return $"'{expr.CharValue.ToString()}'";
+            }
+        }
+
         public override string VisitStringLiteralExpr(AstStringLiteral str, int data = 0)
         {
-            string v = null;
-            if (str.IsChar)
-                v = str.CharValue.ToString();
-            else
-                v = str.StringValue;
-
-            v = v.Replace("`", "``").Replace("\r", "").Replace("\n", "`n");
-
-            if (str.IsChar)
-                return $"'{v.Replace("'", "`'")}'";
-            else
-                return $"\"{v.Replace("\"", "`\"")}\"";
+            string v = str.StringValue;
+            v = v.Replace("`", "``").Replace("\r", "`r").Replace("\n", "`n").Replace("\0", "`0");
+            return $"\"{v.Replace("\"", "`\"")}\"";
         }
 
         public override string VisitIdExpr(AstIdExpr ident, int indentLevel = 0)

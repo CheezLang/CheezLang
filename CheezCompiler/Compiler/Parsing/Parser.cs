@@ -1477,11 +1477,11 @@ namespace Cheez.Compiler.Parsing
 
                 case TokenType.StringLiteral:
                     NextToken();
-                    return new AstStringLiteral((string)token.data, false, new Location(token.location));
+                    return new AstStringLiteral((string)token.data, new Location(token.location));
 
                 case TokenType.CharLiteral:
                     NextToken();
-                    return new AstStringLiteral((string)token.data, true, new Location(token.location));
+                    return new AstCharLiteral((string)token.data, new Location(token.location));
 
                 case TokenType.NumberLiteral:
                     NextToken();
@@ -1516,14 +1516,18 @@ namespace Cheez.Compiler.Parsing
         {
             TokenLocation beg = null, end = null;
             List<AstStructMemberInitialization> members = new List<AstStructMemberInitialization>();
-            AstExpression type;
+            AstTypeExpr type = null;
 
             beg = Consume(TokenType.KwNew, ErrMsg("keyword 'new'", "at beginning of struct value expression")).location;
 
             SkipNewlines();
-            type = ParseExpression(ErrMsg("type expression", "after keyword 'new'"));
+            var maybeOpenBrace = PeekToken();
+            if (maybeOpenBrace.type != TokenType.OpenBrace)
+            {
+                type = ParseTypeExpr();
+                SkipNewlines();
+            }
 
-            SkipNewlines();
             Consume(TokenType.OpenBrace, ErrMsg("{", "after name in struct value"));
 
             SkipNewlines();
@@ -1565,7 +1569,7 @@ namespace Cheez.Compiler.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct value expression")).location;
 
-            return new AstStructValueExpr(type, members, new Location(type.Beginning, end));
+            return new AstStructValueExpr(type, members, new Location(beg, end));
         }
 
         private AstIdExpr ParseIdentifierExpr(ErrorMessageResolver customErrorMessage, TokenType identType = TokenType.Identifier)

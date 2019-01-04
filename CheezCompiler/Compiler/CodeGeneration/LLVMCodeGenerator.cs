@@ -1832,36 +1832,27 @@ namespace Cheez.Compiler.CodeGeneration
 
         public override LLVMValueRef VisitStringLiteralExpr(AstStringLiteral str, LLVMCodeGeneratorData data = null)
         {
-            if (str.IsChar)
+            var lstr = LLVM.BuildGlobalString(data.Builder, str.StringValue, "");
+            var val = LLVM.BuildPointerCast(data.Builder, lstr, LLVM.PointerType(LLVM.Int8Type(), 0), "");
+
+            if (str.Type == CheezType.String)
             {
-                var ch = (char)str.Value;
-                var val = LLVM.ConstInt(LLVM.Int8Type(), (ulong)ch, true);
+                var temp = CreateLocalVariable(data, CheezType.String, "str_lit.temp");
+
+                var temp_ptr = GetStructMemberPointer(data.Builder, temp, 0, (str.Type as SliceType).ToPointerType(), "str_lit.temp.data");
+                var temp_len = GetStructMemberPointer(data.Builder, temp, 1, IntType.GetIntType(4, true), "str_lit.temp.len");
+
+                var v = LLVM.BuildStore(data.Builder, val, temp_ptr);
+                v = LLVM.BuildStore(data.Builder, LLVM.ConstInt(LLVM.Int32Type(), (ulong)str.StringValue.Length, true), temp_len);
+
+                temp = LLVM.BuildLoad(data.Builder, temp, "str_lit");
+                return temp;
+            }
+            else if (str.Type == CheezType.CString)
+            {
                 return val;
             }
-            else
-            {
-                var lstr = LLVM.BuildGlobalString(data.Builder, str.StringValue, "");
-                var val = LLVM.BuildPointerCast(data.Builder, lstr, LLVM.PointerType(LLVM.Int8Type(), 0), "");
-
-                if (str.Type == CheezType.String)
-                {
-                    var temp = CreateLocalVariable(data, CheezType.String, "str_lit.temp");
-
-                    var temp_ptr = GetStructMemberPointer(data.Builder, temp, 0, (str.Type as SliceType).ToPointerType(), "str_lit.temp.data");
-                    var temp_len = GetStructMemberPointer(data.Builder, temp, 1, IntType.GetIntType(4, true), "str_lit.temp.len");
-
-                    var v = LLVM.BuildStore(data.Builder, val, temp_ptr);
-                    v = LLVM.BuildStore(data.Builder, LLVM.ConstInt(LLVM.Int32Type(), (ulong)str.StringValue.Length, true), temp_len);
-
-                    temp = LLVM.BuildLoad(data.Builder, temp, "str_lit");
-                    return temp;
-                }
-                else if (str.Type == CheezType.CString)
-                {
-                    return val;
-                }
-                throw new NotImplementedException();
-            }
+            throw new NotImplementedException();
         }
 
         public override LLVMValueRef VisitNumberExpr(AstNumberExpr num, LLVMCodeGeneratorData data = null)

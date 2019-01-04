@@ -55,6 +55,7 @@ namespace Cheez.Compiler.Ast
             to.Location = this.Location;
             to.Scope = this.Scope;
             to.mFlags = this.mFlags;
+            to.Value = this.Value;
             return to;
         }
 
@@ -88,20 +89,37 @@ namespace Cheez.Compiler.Ast
         { }
     }
 
+    public class AstCharLiteral : AstLiteral
+    {
+        public override bool IsPolymorphic => false;
+        public char CharValue { get; set; }
+        public string RawValue { get; set; }
+
+        [DebuggerStepThrough]
+        public AstCharLiteral(string rawValue, ILocation Location = null) : base(Location)
+        {
+            this.RawValue = rawValue;
+            this.IsCompTimeValue = true;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitCharLiteralExpr(this, data);
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstCharLiteral(RawValue) { CharValue = this.CharValue });
+    }
+
     public class AstStringLiteral : AstLiteral
     {
         public override bool IsPolymorphic => false;
         public string StringValue => (string)Value;
-        public char CharValue { get; set; }
-
-        public bool IsChar { get; set; }
 
         [DebuggerStepThrough]
-        public AstStringLiteral(string value, bool isChar, ILocation Location = null) : base(Location)
+        public AstStringLiteral(string value, ILocation Location = null) : base(Location)
         {
             this.Value = value;
             this.IsCompTimeValue = true;
-            this.IsChar = isChar;
         }
 
         [DebuggerStepThrough]
@@ -109,7 +127,7 @@ namespace Cheez.Compiler.Ast
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstStringLiteral(Value as string, IsChar) { CharValue = this.CharValue });
+            => CopyValuesTo(new AstStringLiteral(Value as string));
     }
 
     public class AstDotExpr : AstExpression
@@ -412,16 +430,16 @@ namespace Cheez.Compiler.Ast
 
     public class AstStructValueExpr : AstExpression, ITempVariable
     {
-        public AstExpression TypeExpr { get; set; }
+        public AstTypeExpr TypeExpr { get; set; }
         public List<AstStructMemberInitialization> MemberInitializers { get; }
         public override bool IsPolymorphic => false;
 
         public AstIdExpr Name => null;
 
         [DebuggerStepThrough]
-        public AstStructValueExpr(AstExpression name, List<AstStructMemberInitialization> inits, ILocation Location = null) : base(Location)
+        public AstStructValueExpr(AstTypeExpr type, List<AstStructMemberInitialization> inits, ILocation Location = null) : base(Location)
         {
-            this.TypeExpr = name;
+            this.TypeExpr = type;
             this.MemberInitializers = inits;
         }
 

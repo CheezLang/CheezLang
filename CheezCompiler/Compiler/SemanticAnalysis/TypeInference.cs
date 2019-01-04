@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Cheez.Compiler.Ast;
 using Cheez.Compiler.Parsing;
 
@@ -17,12 +18,19 @@ namespace Cheez.Compiler
         {
             switch (expr)
             {
+                case AstTypeExpr t:
+                    throw new NotImplementedException();
+
                 case AstNumberExpr n:
                     InferTypesNumberExpr(n, expected);
                     break;
 
                 case AstStringLiteral s:
                     InferTypesStringLiteral(s, expected);
+                    break;
+
+                case AstCharLiteral ch:
+                    InferTypesCharLiteral(ch, expected);
                     break;
 
                 case AstIdExpr i:
@@ -32,7 +40,57 @@ namespace Cheez.Compiler
                 case AstBinaryExpr b:
                     InferTypesBinaryExpr(b, expected, unresolvedDependencies, allDependencies);
                     break;
+
+                case AstStructValueExpr s:
+                    InferTypeStructValueExpr(s, expected, unresolvedDependencies, allDependencies);
+                    break;
+
+                case AstUnaryExpr u:
+                    InferTypeUnaryExpr(u, expected, unresolvedDependencies, allDependencies);
+                    break;
+
+                case AstCallExpr c:
+                    InferTypeCallExpr(c, expected, unresolvedDependencies, allDependencies);
+                    break;
+
+                default:
+                    throw new NotImplementedException();
             }
+        }
+
+        private void InferTypeCallExpr(AstCallExpr expr, CheezType expected, HashSet<AstVariableDecl> unresolvedDependencies, HashSet<AstVariableDecl> allDependencies)
+        {
+        }
+
+        private void InferTypeUnaryExpr(AstUnaryExpr expr, CheezType expected, HashSet<AstVariableDecl> unresolvedDependencies, HashSet<AstVariableDecl> allDependencies)
+        {
+        }
+
+        private void InferTypeStructValueExpr(AstStructValueExpr expr, CheezType expected, HashSet<AstVariableDecl> unresolvedDependencies, HashSet<AstVariableDecl> allDependencies)
+        {
+            if (expr.TypeExpr != null)
+            {
+                expr.TypeExpr.Scope = expr.Scope;
+                expr.TypeExpr.Type = ResolveType(expr.TypeExpr);
+                expr.Type = expr.TypeExpr.Type;
+            }
+            else
+            {
+                expr.Type = expected;
+            }
+
+            if (expr.Type == null)
+            {
+                ReportError(expr, $"Failed to infer type for expression");
+                expr.Type = CheezType.Error;
+                return;
+            }
+            else if (expr.Type == CheezType.Error)
+            {
+                return;
+            }
+
+
         }
 
         private void InferTypesBinaryExpr(AstBinaryExpr b, CheezType expected, HashSet<AstVariableDecl> unresolvedDependencies, HashSet<AstVariableDecl> allDependencies)
@@ -82,6 +140,13 @@ namespace Cheez.Compiler
             {
                 ReportError(i, $"'{i.Name}' is not a valid variable");
             }
+        }
+
+        private void InferTypesCharLiteral(AstCharLiteral s, CheezType expected)
+        {
+            s.Type = CheezType.Char;
+            s.CharValue = s.RawValue[0];
+            s.Value = s.CharValue;
         }
 
         private void InferTypesStringLiteral(AstStringLiteral s, CheezType expected)

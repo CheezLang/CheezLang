@@ -27,10 +27,10 @@ namespace CheezCLI
         public IEnumerable<string> Files { get; set; }
 
         [Option('o', "out", Default = ".", HelpText = "Output directory: --out <directory>")]
-        public string OutPath { get; set; }
+        public string OutDir { get; set; }
 
-        [Option("int", Default = "./int", HelpText = "Intermediate directory: --int <directory>")]
-        public string IntPath { get; set; }
+        [Option("int", Default = null, HelpText = "Intermediate directory: --int <directory>")]
+        public string IntDir { get; set; }
 
         [Option('n', "name", HelpText = "Name of the executable generated: <name>")]
         public string OutName { get; set; }
@@ -65,8 +65,8 @@ namespace CheezCLI
         [Option("opt", Default = false, HelpText = "Perform optimizations: --opt")]
         public bool Optimize { get; set; }
 
-        [Option("output-intermediate", Default = false, HelpText = "Output .ll file containing LLVM IR: --output-intermediate")]
-        public bool OutputIntermediate { get; set; }
+        [Option("emit-llvm-ir", Default = false, HelpText = "Output .ll file containing LLVM IR: --emit-llvm-ir")]
+        public bool EmitLLVMIR { get; set; }
 
         [Option("time", Default = false, HelpText = "Print how long the compilation takes: --time")]
         public bool PrintTime { get; set; }
@@ -96,7 +96,7 @@ namespace CheezCLI
             stopwatch.Start();
             var result = argsParser.ParseArguments<CompilerOptions>(args)
                 .MapResult(
-                    options => Run(options),
+                    options => Run(SetDefaults(options)),
                     _ => new CompilationResult { ExitCode = -1 });
 
 
@@ -126,6 +126,22 @@ namespace CheezCLI
             }
 
             return result.ExitCode;
+        }
+
+        private static CompilerOptions SetDefaults(CompilerOptions options)
+        {
+            if (options.OutDir != null) options.OutDir = Path.GetFullPath(options.OutDir);
+            else options.OutDir = Path.GetFullPath(".");
+
+            if (options.IntDir != null) options.IntDir = Path.GetFullPath(options.IntDir);
+            else options.IntDir = Path.Combine(options.OutDir, "int");
+
+            if (options.PrintRawAst != null) options.PrintRawAst = Path.GetFullPath(options.PrintRawAst);
+            if (options.PrintAnalyzedAst != null) options.PrintAnalyzedAst = Path.GetFullPath(options.PrintAnalyzedAst);
+
+            if (options.Stdlib != null) options.Stdlib = Path.GetFullPath(options.Stdlib);
+
+            return options;
         }
 
         static CompilationResult Run(CompilerOptions options)
@@ -173,6 +189,9 @@ namespace CheezCLI
 
             if (options.PrintRawAst != null)
             {
+                var dir = Path.GetDirectoryName(options.PrintRawAst);
+                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
                 using (var file = File.Open(options.PrintRawAst, FileMode.Create))
                 using (var writer = new StreamWriter(file))
                 {
@@ -188,6 +207,9 @@ namespace CheezCLI
 
             if (options.PrintAnalyzedAst != null)
             {
+                var dir = Path.GetDirectoryName(options.PrintAnalyzedAst);
+                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
                 var printer = new AnalyzedAstPrinter();
                 using (var file = File.Open(options.PrintAnalyzedAst, FileMode.Create))
                 using (var writer = new StreamWriter(file))
@@ -215,9 +237,9 @@ namespace CheezCLI
                     Console.WriteLine($"Running code:");
                     Console.WriteLine("=====================================");
                     var testProc = Util.StartProcess(
-                        Path.Combine(options.OutPath, options.OutName + ".exe"),
+                        Path.Combine(options.OutDir, options.OutName + ".exe"),
                         "",
-                        workingDirectory: options.OutPath,
+                        workingDirectory: options.OutDir,
                         stdout: (s, e) => System.Console.WriteLine(e.Data),
                         stderr: (s, e) => System.Console.Error.WriteLine(e.Data));
                     testProc.WaitForExit();
@@ -234,7 +256,7 @@ namespace CheezCLI
         {
 
             ICodeGenerator generator = new LLVMCodeGeneratorNew();
-            bool success = generator.GenerateCode(workspace, options.IntPath, options.OutPath, options.OutName, options.Optimize, options.OutputIntermediate);
+            bool success = generator.GenerateCode(workspace, options.IntDir, options.OutDir, options.OutName, options.Optimize, options.EmitLLVMIR);
             if (!success)
                 return false;
 
