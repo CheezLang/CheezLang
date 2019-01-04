@@ -1,17 +1,30 @@
-#load("std:io/io.che")
-#load("examples/trait_function_call_performance")
-#load("examples/glfw3_example")
-#load("examples/signed_distance_field_renderer")
+// #load("std:io/io.che")
+// #load("examples/trait_function_call_performance")
+// #load("examples/glfw3_example")
+// #load("examples/signed_distance_field_renderer")
 
+
+// fn Main() {
+//     // trait_function_call_performance()
+//     // glfw3_example()
+//     signed_distance_field_renderer()
+
+//     // let x: int          // int
+//     // let x: &int         // int reference
+//     // let x: []&int       // slice of int references
+//     // let x: ptr int      // int ptr
+//     // let x: []ptr int    // slice of int pointers
+// }
+
+let a: int = c
+let b: int = a
+let c: int = b
+
+let resolved: int = a
+
+let x: int = y
+let y: int = z
+let z: int = x + y * c / b % a - resolved
 
 fn Main() {
-    // trait_function_call_performance()
-    // glfw3_example()
-    signed_distance_field_renderer()
-
-    // let x: int          // int
-    // let x: &int         // int reference
-    // let x: []&int       // slice of int references
-    // let x: ptr int      // int ptr
-    // let x: []ptr int    // slice of int pointers
 }
