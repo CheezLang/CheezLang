@@ -29,6 +29,9 @@ namespace CheezCLI
         [Option('o', "out", Default = ".", HelpText = "Output directory: --out <directory>")]
         public string OutPath { get; set; }
 
+        [Option("int", Default = "./int", HelpText = "Intermediate directory: --int <directory>")]
+        public string IntPath { get; set; }
+
         [Option('n', "name", HelpText = "Name of the executable generated: <name>")]
         public string OutName { get; set; }
 
@@ -58,6 +61,16 @@ namespace CheezCLI
 
         [Option("stdlib", Default = null, HelpText = "Path to the standard library: --stdlib <path>")]
         public string Stdlib { get; set; }
+
+        [Option("opt", Default = false, HelpText = "Perform optimizations: --opt")]
+        public bool Optimize { get; set; }
+
+        [Option("output-intermediate", Default = false, HelpText = "Output .ll file containing LLVM IR: --output-intermediate")]
+        public bool OutputIntermediate { get; set; }
+
+        [Option("time", Default = false, HelpText = "Print how long the compilation takes: --time")]
+        public bool PrintTime { get; set; }
+
     }
 
     class Prog
@@ -70,6 +83,7 @@ namespace CheezCLI
             public TimeSpan? FrontEnd;
             public TimeSpan? BackEnd;
             public TimeSpan? Execution;
+            public bool PrintTime = false;
         }
 
         public static int Main(string[] args)
@@ -88,24 +102,27 @@ namespace CheezCLI
 
             var ourCompileTime = stopwatch.Elapsed;
 
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine("-------------------------------------");
-            Console.WriteLine($"Total Compilation Time: {ourCompileTime:mm\\:ss\\.fffffff}");
-            Console.WriteLine($"              Frontend: {result.FrontEnd:mm\\:ss\\.fffffff}");
-            if (result.LexAndParse != null)
-                Console.WriteLine($"    Lexing and Parsing: {result.LexAndParse:mm\\:ss\\.fffffff}");
-            if (result.SemanticAnalysis != null)
-                Console.WriteLine($"     Semantic Analysis: {result.SemanticAnalysis:mm\\:ss\\.fffffff}");
-            if (result.BackEnd != null)
+            if (result.PrintTime)
             {
                 Console.WriteLine();
-                Console.WriteLine($"               Backend: {result.BackEnd:mm\\:ss\\.fffffff}");
-            }
-            if (result.Execution != null)
-            {
                 Console.WriteLine();
-                Console.WriteLine($"        Execution time: {result.Execution:mm\\:ss\\.fffffff}");
+                Console.WriteLine("-------------------------------------");
+                Console.WriteLine($"Total Compilation Time: {ourCompileTime:mm\\:ss\\.fffffff}");
+                Console.WriteLine($"              Frontend: {result.FrontEnd:mm\\:ss\\.fffffff}");
+                if (result.LexAndParse != null)
+                    Console.WriteLine($"    Lexing and Parsing: {result.LexAndParse:mm\\:ss\\.fffffff}");
+                if (result.SemanticAnalysis != null)
+                    Console.WriteLine($"     Semantic Analysis: {result.SemanticAnalysis:mm\\:ss\\.fffffff}");
+                if (result.BackEnd != null)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"               Backend: {result.BackEnd:mm\\:ss\\.fffffff}");
+                }
+                if (result.Execution != null)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"        Execution time: {result.Execution:mm\\:ss\\.fffffff}");
+                }
             }
 
             return result.ExitCode;
@@ -114,12 +131,12 @@ namespace CheezCLI
         static CompilationResult Run(CompilerOptions options)
         {
             var result = new CompilationResult();
+            result.PrintTime = options.PrintTime;
 
             if (options.OutName == null)
                 options.OutName = Path.GetFileNameWithoutExtension(options.Files.First());
 
-            Console.WriteLine(Parser.Default.FormatCommandLine(options));
-
+            //Console.WriteLine(Parser.Default.FormatCommandLine(options));
 
             IErrorHandler errorHandler = new ConsoleErrorHandler();
             if (options.NoErrors)
@@ -211,12 +228,9 @@ namespace CheezCLI
 
         private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace, IErrorHandler errorHandler)
         {
-            if (!string.IsNullOrWhiteSpace(options.OutPath) && !Directory.Exists(options.OutPath))
-                Directory.CreateDirectory(options.OutPath);
-            string filePath = Path.Combine(options.OutPath, options.OutName);
 
             ICodeGenerator generator = new LLVMCodeGenerator();
-            bool success = generator.GenerateCode(workspace, filePath);
+            bool success = generator.GenerateCode(workspace, options.IntPath, options.OutPath, options.OutName, options.Optimize, options.OutputIntermediate);
             if (!success)
                 return false;
 

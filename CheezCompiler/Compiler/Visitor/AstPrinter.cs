@@ -309,7 +309,7 @@ namespace Cheez.Compiler.Visitor
             var argsStr = string.Join(", ", args);
             var func = call.Function.Accept(this, 0);
 
-            if (call.Function is AstFunctionExpression fe)
+            if (call.Function is AstFunctionExpression fe && fe.Declaration.PolymorphicTypes != null)
             {
                 func += $"<{string.Join(", ", fe.Declaration.PolymorphicTypes.Select(kv => $"{kv.Key}={kv.Value}"))}>";
             }
