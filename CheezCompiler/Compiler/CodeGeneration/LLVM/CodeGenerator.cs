@@ -130,8 +130,8 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             try
             {
                 this.workspace = workspace;
-                this.intDir = intDir ?? "";
-                this.outDir = outDir ?? "";
+                this.intDir = Path.GetFullPath(intDir ?? "");
+                this.outDir = Path.GetFullPath(outDir ?? "");
                 this.targetFile = targetFile;
                 this.emitDebugInfo = !optimize;
 
@@ -573,6 +573,18 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
         //    return value;
         //}
 
+        public override LLVMValueRef VisitCharLiteralExpr(AstCharLiteral expr, object data = null)
+        {
+            var ch = expr.CharValue;
+            var val = LLVM.ConstInt(LLVM.Int8Type(), ch, true);
+            return val;
+        }
+
+        public override LLVMValueRef VisitStringLiteralExpr(AstStringLiteral expr, object data = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public override LLVMValueRef VisitNumberExpr(AstNumberExpr num, object data = null)
         {
             var llvmType = CheezTypeToLLVMType(num.Type);
@@ -665,7 +677,12 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             }
         }
 
-        private LLVMTypeRef CheezTypeToLLVMType(CheezType ct, bool functionPointer = true)
+        private LLVMTypeRef CheezTypeToLLVMType(CheezType ct, bool functionPointer = true, bool voidPointer = false)
+        {
+            return CheezTypeToLLVMTypeHelper(ct, functionPointer, voidPointer);
+        }
+
+        private LLVMTypeRef CheezTypeToLLVMTypeHelper(CheezType ct, bool functionPointer, bool voidPointer = false)
         {
             switch (ct)
             {
@@ -696,7 +713,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                     return LLVM.Int8Type();
 
                 case PointerType p:
-                    if (p.TargetType == VoidType.Intance)
+                    if (voidPointer || p.TargetType == VoidType.Intance)
                         return LLVM.PointerType(LLVM.Int8Type(), 0);
                     return LLVM.PointerType(CheezTypeToLLVMType(p.TargetType), 0);
 
@@ -748,15 +765,15 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
                 case StructType s:
                     {
-                        return typeMap[s];
-                        //var memTypes = s.Declaration.Members.Select(m => CheezTypeToLLVMType(m.Type)).ToArray();
-                        //return LLVM.StructType(memTypes, false);
+                        var memTypes = s.Declaration.Members.Select(m => CheezTypeToLLVMType(m.Type, voidPointer: true)).ToArray();
+                        return LLVM.StructType(memTypes, false);
                     }
 
                 default:
                     throw new NotImplementedException();
             }
         }
+
         private LLVMValueRef GetDefaultLLVMValue(CheezType type)
         {
             switch (type)
