@@ -233,14 +233,12 @@ namespace CheezCLI
         private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace, IErrorHandler errorHandler)
         {
 
-            ICodeGenerator generator = new LLVMCodeGenerator();
+            ICodeGenerator generator = new LLVMCodeGeneratorNew();
             bool success = generator.GenerateCode(workspace, options.IntPath, options.OutPath, options.OutName, options.Optimize, options.OutputIntermediate);
             if (!success)
                 return false;
 
             return generator.CompileCode(options.LibraryIncludeDirectories, options.Libraries, options.SubSystem.ToString(), errorHandler);
         }
-
-
     }
 }

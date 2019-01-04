@@ -37,6 +37,19 @@ namespace Cheez.Compiler
         public override string ToString() => $"<var decl> {Declaration.Name.Name}";
     }
 
+    public class CombiType : AbstractType
+    {
+        public override bool IsPolyType => false;
+        public List<AbstractType> SubTypes { get; }
+
+        public CombiType(List<AbstractType> decls)
+        {
+            SubTypes = decls;
+        }
+
+        public override string ToString() => $"<decls> ({string.Join(", ", SubTypes)})";
+    }
+
     public class AliasType : AbstractType
     {
         public override bool IsPolyType => false;

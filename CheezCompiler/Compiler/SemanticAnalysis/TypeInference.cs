@@ -28,6 +28,34 @@ namespace Cheez.Compiler
                 case AstIdExpr i:
                     InferTypesIdExpr(i, expected, unresolvedDependencies, allDependencies);
                     break;
+
+                case AstBinaryExpr b:
+                    InferTypesBinaryExpr(b, expected, unresolvedDependencies, allDependencies);
+                    break;
+            }
+        }
+
+        private void InferTypesBinaryExpr(AstBinaryExpr b, CheezType expected, HashSet<AstVariableDecl> unresolvedDependencies, HashSet<AstVariableDecl> allDependencies)
+        {
+            b.Left.Scope = b.Scope;
+            b.Right.Scope = b.Scope;
+
+            InferTypes(b.Left, null, unresolvedDependencies, allDependencies);
+            InferTypes(b.Right, null, unresolvedDependencies, allDependencies);
+
+            var at = new List<AbstractType>();
+            if (b.Left.Type is AbstractType at1) at.Add(at1);
+            if (b.Right.Type is AbstractType at2) at.Add(at2);
+            if (at.Count > 0)
+            {
+                b.Type = new CombiType(at);
+            }
+            else
+            {
+                // TODO: find matching operator
+
+                // @hack
+                b.Type = expected;
             }
         }
 
@@ -36,7 +64,9 @@ namespace Cheez.Compiler
             var sym = i.Scope.GetSymbol(i.Name);
             if (sym == null)
             {
-                ReportError(i, $"Unknown symbol {i.Name}");
+                ReportError(i, $"Unknown symbol '{i.Name}'");
+                i.Type = CheezType.Error;
+                return;
             }
 
             i.Symbol = sym;
@@ -50,7 +80,7 @@ namespace Cheez.Compiler
             }
             else
             {
-                ReportError(i, $"'{i}' is not a valid variable");
+                ReportError(i, $"'{i.Name}' is not a valid variable");
             }
         }
 

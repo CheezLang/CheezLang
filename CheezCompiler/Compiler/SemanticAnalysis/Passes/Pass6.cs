@@ -59,8 +59,8 @@ namespace Cheez.Compiler
                 {
                     if (dependencies.TryGetValue(decl, out var deps))
                     {
-                        string locations = string.Join(", ", deps.Select(d => $"{d.Name.Name} ({d.Location.Beginning})"));
-                        string message = $"Depends on {locations}";
+                        string locations = string.Join("\n", deps.Select(d => $" - {d.Name.Name} ({d.Location.Beginning})"));
+                        string message = $"{decl.Location.Beginning} depends on\n{locations}";
                         details.Add((message, decl.Location));
                     }
                     else
@@ -70,7 +70,7 @@ namespace Cheez.Compiler
                 }
                 var error = new Error
                 {
-                    Message = "Failed to compile due to cyclic dependencies in global variable declarations:",
+                    Message = "Cyclic dependencies in global variable declarations:",
                     Details = details
                 };
                 ReportError(error);

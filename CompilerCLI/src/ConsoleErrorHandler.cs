@@ -41,7 +41,7 @@ namespace CheezCLI
                 TokenLocation end = error.Location.End;
 
                 // location, message
-                Log($"{beginning.file}:{beginning.line}: {error.Message}", ConsoleColor.Red);
+                Log($"{beginning}: {error.Message}", ConsoleColor.Red);
                 PrintLocation(text, error.Location, linesBefore: 0);
             }
             else
@@ -55,7 +55,13 @@ namespace CheezCLI
                 foreach (var d in error.Details)
                 {
                     Console.WriteLine("|");
-                    Log("| " + d.message, ConsoleColor.White);
+
+                    foreach (var line in d.message.Split('\n'))
+                    {
+                        if (line != "") 
+                            Log("| " + line, ConsoleColor.White);
+                    }
+
                     if (d.location != null)
                     {
                         var detailText = TextProvider.GetText(d.location);

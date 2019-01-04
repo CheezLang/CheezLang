@@ -119,7 +119,7 @@ namespace Cheez.Compiler.Parsing
 
         public override string ToString()
         {
-            return $"{file} ({line}:{index - lineStartIndex + 1})";
+            return $"{file}:{line}:{index - lineStartIndex + 1}";
         }
     }
 
