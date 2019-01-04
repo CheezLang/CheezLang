@@ -415,10 +415,8 @@ namespace Cheez.Compiler.CodeGeneration
                 lldArgs.Add($@"-libpath:{linc}");
             }
 
-            // @hack
-            lldArgs.Add($@"-libpath:{Environment.CurrentDirectory}\CheezRuntimeLibrary\lib\x86");
-            lldArgs.Add($@"-libpath:{exePath}\rtl\x86");
-            lldArgs.Add($@"-libpath:D:\Program Files (x86)\LLVM\lib");
+            lldArgs.Add($@"-libpath:{Environment.CurrentDirectory}\lib"); // @hack
+            lldArgs.Add($@"-libpath:{exePath}\lib");
 
             // other options
             lldArgs.Add("/entry:mainCRTStartup");
@@ -426,7 +424,6 @@ namespace Cheez.Compiler.CodeGeneration
             lldArgs.Add($"/subsystem:{subsystem}");
 
             // runtime
-            //lldArgs.Add("cheez-rtd.obj");
             lldArgs.Add("clang_rt.builtins-i386.lib");
 
             // windows and c libs

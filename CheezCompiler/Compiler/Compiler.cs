@@ -50,7 +50,7 @@ namespace Cheez.Compiler
             mMainWorkspace = new Workspace(this);
             mWorkspaces["main"] = mMainWorkspace;
 
-            string exePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "lib");
+            string exePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "libraries");
             if (stdlib != null) exePath = stdlib;
             ModulePaths["std"] = Path.Combine(exePath, "std");
             ModulePaths["opengl"] = Path.Combine(exePath, "opengl");

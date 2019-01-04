@@ -25,13 +25,13 @@ if (Test-Path $targetDir) {
 mk-dir $targetDir
 
 # binaries
-copy-stuff ".\CheezRuntimeLibrary\lib\x86\clang_rt.builtins-i386.lib" "$targetDir\rtl\x86"
+copy-stuff ".\lib" $targetDir
 copy-stuff ".\Linker.dll" $targetDir
 copy-stuff ".\CompilerCLI\bin\Release\*" $targetDir
 
 # libraries
-copy-stuff ".\examples\std" "$targetDir\lib"
-copy-stuff ".\examples\bmp\bmp.che" "$targetDir\lib\bmp"
-copy-stuff ".\examples\bmp\bmp.lib" "$targetDir\lib\bmp"
-copy-stuff ".\examples\opengl" "$targetDir\lib"
-copy-stuff ".\examples\glfw" "$targetDir\lib"
+copy-stuff ".\examples\std" "$targetDir\libraries"
+copy-stuff ".\examples\bmp\bmp.che" "$targetDir\libraries\bmp"
+copy-stuff ".\examples\bmp\bmp.lib" "$targetDir\libraries\bmp"
+copy-stuff ".\examples\opengl" "$targetDir\libraries"
+copy-stuff ".\examples\glfw" "$targetDir\libraries"
