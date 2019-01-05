@@ -40,7 +40,14 @@ namespace Cheez.Compiler
 
         private void Pass4ResolveFunctionSignature(AstFunctionDecl func)
         {
-            if (func.ReturnTypeExpr != null && func.ReturnTypeExpr.IsPolymorphic) func.IsGeneric = true;
+            foreach (var p in func.ReturnValues)
+            {
+                if (p.TypeExpr.IsPolymorphic)
+                {
+                    func.IsGeneric = true;
+                    break;
+                }
+            }
             if (!func.IsGeneric)
             {
                 foreach (var p in func.Parameters)
@@ -59,15 +66,11 @@ namespace Cheez.Compiler
             }
             else
             {
-                // return type
-                if (func.ReturnTypeExpr != null)
+                // return types
+                foreach (var p in func.ReturnValues)
                 {
-                    func.ReturnTypeExpr.Scope = func.Scope;
-                    func.ReturnType = ResolveType(func.ReturnTypeExpr);
-                }
-                else
-                {
-                    func.ReturnType = CheezType.Void;
+                    p.TypeExpr.Scope = func.Scope;
+                    p.Type = ResolveType(p.TypeExpr);
                 }
 
                 // parameter types

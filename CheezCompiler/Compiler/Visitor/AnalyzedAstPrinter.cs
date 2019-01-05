@@ -29,9 +29,17 @@ namespace Cheez.Compiler.Visitor
 
             head += $"({pars})";
 
-            if (function.ReturnTypeExpr != null)
+            if (function.ReturnValues.Count > 0)
             {
-                head += $" -> {function.ReturnType}";
+                head += $" -> ";
+
+                head += string.Join(", ", function.ReturnValues.Select(rv =>
+                {
+                    if (rv.Name != null)
+                        return $"{rv.Name.Accept(this)}: {rv.Type}";
+                    else
+                        return rv.Type.ToString();
+                }));
             }
 
             sb.Append($"{head} {body}".Indent(indentLevel));

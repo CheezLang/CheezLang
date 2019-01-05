@@ -246,7 +246,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
             { // call main function
                 var cheezMain = valueMap[workspace.MainFunction];
-                if (workspace.MainFunction.ReturnType == VoidType.Intance)
+                if (workspace.MainFunction.ReturnValues.Count == 0)
                 {
                     builder.CreateCall(cheezMain, new LLVMValueRef[0], "");
                     builder.CreateRet(LLVM.ConstInt(LLVM.Int32Type(), 0, false));
@@ -342,54 +342,56 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
         private void GenerateFunctionHeader(AstFunctionDecl function)
         {
-            var varargs = function.GetDirective("varargs");
-            if (varargs != null)
-            {
-                function.FunctionType.VarArgs = true;
-            }
+            throw new NotImplementedException();
+            // TODO
+            //var varargs = function.GetDirective("varargs");
+            //if (varargs != null)
+            //{
+            //    function.FunctionType.VarArgs = true;
+            //}
 
-            var name = function.Name.Name;
-            if (function.IsPolyInstance)
-            {
-                name += ".";
-                name += string.Join(".", function.PolymorphicTypes.Select(p => $"{p.Key}.{p.Value}"));
-            }
+            //var name = function.Name.Name;
+            //if (function.IsPolyInstance)
+            //{
+            //    name += ".";
+            //    name += string.Join(".", function.PolymorphicTypes.Select(p => $"{p.Key}.{p.Value}"));
+            //}
 
-            var ltype = CheezTypeToLLVMType(function.Type, false);
-            var lfunc = module.AddFunction(name, ltype);
+            //var ltype = CheezTypeToLLVMType(function.Type, false);
+            //var lfunc = module.AddFunction(name, ltype);
 
-            lfunc.AddFunctionAttribute(context, AttributeKind.NoInline);
-            lfunc.AddFunctionAttribute(context, AttributeKind.NoUnwind);
-            //lfunc.AddFunctionAttribute(context, AttributeKind.OptimizeNone);
+            //lfunc.AddFunctionAttribute(context, AttributeKind.NoInline);
+            //lfunc.AddFunctionAttribute(context, AttributeKind.NoUnwind);
+            ////lfunc.AddFunctionAttribute(context, AttributeKind.OptimizeNone);
 
-            int paramOffset = 0;
+            //int paramOffset = 0;
 
-            if (!CanPassByValue(function.ReturnType))
-            {
-                lfunc.AddFunctionParamAttribute(context, 0, AttributeKind.StructRet);
-                paramOffset = 1;
-                returnValuePointer[function] = lfunc.GetParam(0);
-            }
-            
-            for (int i = 0; i < function.Parameters.Count; i++)
-            {
-                var param = function.Parameters[i];
-                var llvmParam = lfunc.GetParam((uint)(i + paramOffset));
+            //if (!CanPassByValue(function.ReturnType))
+            //{
+            //    lfunc.AddFunctionParamAttribute(context, 0, AttributeKind.StructRet);
+            //    paramOffset = 1;
+            //    returnValuePointer[function] = lfunc.GetParam(0);
+            //}
 
-                if (!CanPassByValue(param.Type))
-                {
-                    //var att = LLVM.CreateStringAttribute(context, "sret", 4, "", 0);
-                    lfunc.AddFunctionParamAttribute(context, i + paramOffset, AttributeKind.ByVal);
-                }
-            }
+            //for (int i = 0; i < function.Parameters.Count; i++)
+            //{
+            //    var param = function.Parameters[i];
+            //    var llvmParam = lfunc.GetParam((uint)(i + paramOffset));
 
-            var ccDir = function.GetDirective("stdcall");
-            if (ccDir != null)
-            {
-                LLVM.SetFunctionCallConv(lfunc, (uint)LLVMCallConv.LLVMX86StdcallCallConv);
-            }
+            //    if (!CanPassByValue(param.Type))
+            //    {
+            //        //var att = LLVM.CreateStringAttribute(context, "sret", 4, "", 0);
+            //        lfunc.AddFunctionParamAttribute(context, i + paramOffset, AttributeKind.ByVal);
+            //    }
+            //}
 
-            valueMap[function] = lfunc;
+            //var ccDir = function.GetDirective("stdcall");
+            //if (ccDir != null)
+            //{
+            //    LLVM.SetFunctionCallConv(lfunc, (uint)LLVMCallConv.LLVMX86StdcallCallConv);
+            //}
+
+            //valueMap[function] = lfunc;
         }
 
         [DebuggerStepThrough]
@@ -455,7 +457,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                 function.Body.Accept(this);
 
                 // ret if void
-                if (function.ReturnType == VoidType.Intance)
+                if (function.ReturnValues.Count == 0)
                     builder.CreateRetVoid();
                 builder.Dispose();
             }
@@ -736,26 +738,27 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
                 case FunctionType f:
                     {
-                        var paramTypes = new List<LLVMTypeRef>();
-                        var returnType = CheezTypeToLLVMType(f.ReturnType);
-                        if (!CanPassByValue(f.ReturnType) && !(f.ReturnType is VoidType))
-                        {
-                            paramTypes.Add(LLVM.PointerType(returnType, 0));
-                            returnType = LLVM.VoidType();
-                        }
-                        foreach (var p in f.ParameterTypes)
-                        {
-                            var pt = CheezTypeToLLVMType(p);
-                            if (!CanPassByValue(p))
-                                pt = LLVM.PointerType(pt, 0);
+                        throw new NotImplementedException();
+                        //var paramTypes = new List<LLVMTypeRef>();
+                        //var returnType = CheezTypeToLLVMType(f.ReturnType);
+                        //if (!CanPassByValue(f.ReturnType) && !(f.ReturnType is VoidType))
+                        //{
+                        //    paramTypes.Add(LLVM.PointerType(returnType, 0));
+                        //    returnType = LLVM.VoidType();
+                        //}
+                        //foreach (var p in f.ParameterTypes)
+                        //{
+                        //    var pt = CheezTypeToLLVMType(p);
+                        //    if (!CanPassByValue(p))
+                        //        pt = LLVM.PointerType(pt, 0);
 
-                            paramTypes.Add(pt);
-                        }
+                        //    paramTypes.Add(pt);
+                        //}
 
-                        var func = LLVM.FunctionType(returnType, paramTypes.ToArray(), f.VarArgs);
-                        if (functionPointer)
-                            func = LLVM.PointerType(func, 0);
-                        return func;
+                        //var func = LLVM.FunctionType(returnType, paramTypes.ToArray(), f.VarArgs);
+                        //if (functionPointer)
+                        //    func = LLVM.PointerType(func, 0);
+                        //return func;
                     }
 
                 case EnumType e:

@@ -347,7 +347,7 @@ namespace Cheez.Compiler.CodeGeneration
             }
 
             {
-                if (workspace.MainFunction.ReturnType == VoidType.Intance)
+                if (workspace.MainFunction.ReturnValues.Count == 0)
                 {
                     LLVM.BuildCall(builder, cheezMain, new LLVMValueRef[0], "");
                     LLVM.BuildRet(builder, LLVM.ConstInt(LLVM.Int32Type(), 0, false));
@@ -593,7 +593,7 @@ namespace Cheez.Compiler.CodeGeneration
                 case FunctionType f:
                     {
                         var paramTypes = new List<LLVMTypeRef>();
-                        var returnType = CheezTypeToLLVMType(f.ReturnType);
+                        var returnType = CheezTypeToLLVMType(f.ReturnTypes[0]);
                         //if (!CanPassByValue(f.ReturnType) && !(f.ReturnType is VoidType))
                         //{
                         //    paramTypes.Add(LLVM.PointerType(returnType, 0));
@@ -1062,7 +1062,7 @@ namespace Cheez.Compiler.CodeGeneration
                     function.Body.Accept(this, d);
                 }
 
-                if (function.ReturnType == VoidType.Intance)
+                if (function.ReturnValues.Count == 0)
                     LLVM.BuildRetVoid(builder);
                 LLVM.DisposeBuilder(builder);
             }

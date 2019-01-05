@@ -47,29 +47,6 @@ namespace Cheez.Compiler.Ast
 
     #region Function Declaration
 
-    public class AstFunctionParameter : ITypedSymbol, ILocation
-    {
-        public ILocation Location { get; private set; }
-        public TokenLocation Beginning => Location?.Beginning;
-        public TokenLocation End => Location?.End;
-
-        public AstIdExpr Name { get; }
-        public CheezType Type { get; set; }
-        public AstTypeExpr TypeExpr { get; set; }
-        public Scope Scope { get; set; }
-
-        public bool IsConstant => false;
-
-        public AstFunctionParameter(AstIdExpr name, AstTypeExpr typeExpr, ILocation Location = null)
-        {
-            this.Location = Location;
-            this.Name = name;
-            this.TypeExpr = typeExpr;
-        }
-
-        public AstFunctionParameter Clone() => new AstFunctionParameter(Name.Clone() as AstIdExpr, TypeExpr.Clone() as AstTypeExpr, Location);
-    }
-
     public interface ITempVariable
     {
         AstIdExpr Name { get; } // can be null
@@ -81,17 +58,12 @@ namespace Cheez.Compiler.Ast
         public Scope HeaderScope { get; set; }
         public Scope SubScope { get; set; }
 
-        public List<AstFunctionParameter> Parameters { get; }
-        public AstTypeExpr ReturnTypeExpr { get; set; }
-        public CheezType ReturnType { get; set; }
-
-        //public List<AstIdentifierExpr> Generics { get; }
+        public List<AstParameter> Parameters { get; }
+        public List<AstParameter> ReturnValues { get; }
 
         public FunctionType FunctionType => Type as FunctionType;
 
         public AstBlockStmt Body { get; private set; }
-
-        //public List<ITempVariable> LocalVariables { get; } = new List<ITempVariable>();
 
         public List<AstFunctionDecl> PolymorphicInstances { get; } = new List<AstFunctionDecl>();
 
@@ -109,15 +81,15 @@ namespace Cheez.Compiler.Ast
 
         public AstFunctionDecl(AstIdExpr name,
             List<AstIdExpr> generics,
-            List<AstFunctionParameter> parameters,
-            AstTypeExpr returnTypeExpr,
+            List<AstParameter> parameters,
+            List<AstParameter> returns,
             AstBlockStmt body = null, 
             List<AstDirective> Directives = null, 
             bool refSelf = false, ILocation Location = null)
             : base(name, Directives, Location)
         {
             this.Parameters = parameters;
-            this.ReturnTypeExpr = returnTypeExpr;
+            this.ReturnValues = returns ?? new List<AstParameter>();
             this.Body = body;
             this.RefSelf = refSelf;
         }
@@ -128,7 +100,7 @@ namespace Cheez.Compiler.Ast
         public override AstStatement Clone() => CopyValuesTo(new AstFunctionDecl(Name.Clone() as AstIdExpr,
                 null,
                 Parameters.Select(p => p.Clone()).ToList(),
-                ReturnTypeExpr?.Clone() as AstTypeExpr,
+                ReturnValues.Select(p => p.Clone()).ToList(),
                 Body?.Clone() as AstBlockStmt));
     }
 

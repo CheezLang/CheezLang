@@ -81,20 +81,20 @@ namespace Cheez.Compiler
 
                 case AstFunctionTypeExpr func:
                     {
-                        CheezType returnType = CheezType.Void;
-                        if (func.ReturnType != null)
-                        {
-                            func.ReturnType.Scope = func.Scope;
-                            returnType = ResolveTypeHelper(func.ReturnType, deps, instances);
-                        }
-
                         CheezType[] par = new CheezType[func.ParameterTypes.Count];
                         for (int i = 0; i < par.Length; i++) {
                             func.ParameterTypes[i].Scope = func.Scope;
                             par[i] = ResolveTypeHelper(func.ParameterTypes[i], deps, instances);
                         }
 
-                        return FunctionType.GetFunctionType(returnType, par);
+                        CheezType[] ret = new CheezType[func.ReturnTypes.Count];
+                        for (int i = 0; i < par.Length; i++)
+                        {
+                            func.ParameterTypes[i].Scope = func.Scope;
+                            par[i] = ResolveTypeHelper(func.ParameterTypes[i], deps, instances);
+                        }
+
+                        return FunctionType.GetFunctionType(par, ret);
                     }
 
                 case AstPolyStructTypeExpr @struct:
@@ -142,8 +142,7 @@ namespace Cheez.Compiler
                     break;
 
                 case AstFunctionTypeExpr func:
-                    if (func.ReturnType != null)
-                        CollectPolyTypes(func.ReturnType, types);
+                    foreach (var p in func.ReturnTypes) CollectPolyTypes(p, types);
                     foreach (var p in func.ParameterTypes) CollectPolyTypes(p, types);
                     break;
 

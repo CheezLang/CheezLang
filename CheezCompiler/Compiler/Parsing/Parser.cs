@@ -73,6 +73,13 @@ namespace Cheez.Compiler.Parsing
 
         [SkipInStackFrame]
         [DebuggerStepThrough]
+        private void UndoTokens(int count)
+        {
+            mLexer.UndoTokens(count);
+        }
+
+        [SkipInStackFrame]
+        [DebuggerStepThrough]
         private (string function, string file, int line)? GetCallingFunction()
         {
             try
@@ -566,12 +573,15 @@ namespace Cheez.Compiler.Parsing
             return new AstDirective(name, args, new Location(name.Beginning, end));
         }
 
-        private List<AstParameter> ParseParameterList()
+        private List<AstParameter> ParseParameterList(bool ParseParenthesis = true)
         {
             var parameters = new List<AstParameter>();
 
-            Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of parameter list"));
-            SkipNewlines();
+            if (ParseParenthesis)
+            {
+                Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of parameter list"));
+                SkipNewlines();
+            }
 
             while (true)
             {
@@ -582,24 +592,46 @@ namespace Cheez.Compiler.Parsing
                 AstIdExpr pname = null;
                 AstTypeExpr ptype = null;
 
-                if (next.type != TokenType.Colon)
+                TokenLocation beg = null;
+
+                if (next.type == TokenType.Identifier)
                 {
-                    pname = ParseIdentifierExpr(ErrMsg("identifier"));
+                    NextToken();
                     SkipNewlines();
+
+                    var maybeColon = PeekToken();
+                    if (maybeColon.type == TokenType.Colon)
+                    {
+                        pname = new AstIdExpr((string)next.data, false, new Location(next.location));
+                        beg = pname.Beginning;
+
+                        Consume(TokenType.Colon, ErrMsg(":", "after name in parameter list"));
+                        SkipNewlines();
+
+                        ptype = ParseTypeExpr();
+                    }
+                    else
+                    {
+                        UndoTokens(2);
+                        ptype = ParseTypeExpr();
+                        beg = ptype.Beginning;
+                    }
+                }
+                else
+                {
+                    ptype = ParseTypeExpr();
+                    beg = ptype.Beginning;
                 }
 
-                Consume(TokenType.Colon, ErrMsg(":", "after name in parameter list"));
-                SkipNewlines();
-
-                ptype = ParseTypeExpr();
-
-                parameters.Add(new AstParameter(pname, ptype, new Location(pname.Beginning)));
+                parameters.Add(new AstParameter(pname, ptype, new Location(beg, ptype.End)));
 
                 SkipNewlines();
                 next = PeekToken();
                 if (next.type == TokenType.Comma)
                     NextToken();
                 else if (next.type == TokenType.ClosingParen)
+                    break;
+                else if (!ParseParenthesis && (next.type == TokenType.HashIdentifier || next.type == TokenType.OpenBrace || next.type == TokenType.Semicolon))
                     break;
                 else
                 {
@@ -609,7 +641,10 @@ namespace Cheez.Compiler.Parsing
                 }
             }
 
-            Consume(TokenType.ClosingParen, ErrMsg(")", "at end of parameter list"));
+            if (ParseParenthesis)
+            {
+                Consume(TokenType.ClosingParen, ErrMsg(")", "at end of parameter list"));
+            }
 
             return parameters;
         }
@@ -936,10 +971,10 @@ namespace Cheez.Compiler.Parsing
         {
             TokenLocation beginning = null, end = null;
             AstBlockStmt body = null;
-            var parameters = new List<AstFunctionParameter>();
+            var parameters = new List<AstParameter>();
+            var returnValues = new List<AstParameter>();
             var directives = new List<AstDirective>();
             var generics = new List<AstIdExpr>();
-            AstTypeExpr returnType = null;
 
             beginning = NextToken().location;
             SkipNewlines();
@@ -948,46 +983,8 @@ namespace Cheez.Compiler.Parsing
             SkipNewlines();
 
             // parameters
-            Consume(TokenType.OpenParen, ErrMsg("(", "after name in function declaration"));
             SkipNewlines();
-
-            while (true)
-            {
-                var next = PeekToken();
-                if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
-                    break;
-
-                AstIdExpr pname = null;
-                AstTypeExpr ptype = null;
-
-                if (next.type != TokenType.Colon)
-                    pname = ParseIdentifierExpr(ErrMsg("identifier"));
-
-                SkipNewlines();
-                Consume(TokenType.Colon, ErrMsg(":", "after name in parameter list"));
-
-                SkipNewlines();
-                ptype = ParseTypeExpr();
-
-                var beg = pname?.Beginning ?? ptype.Beginning;
-
-                parameters.Add(new AstFunctionParameter(pname, ptype, new Location(beg, ptype.End)));
-
-                SkipNewlines();
-                next = PeekToken();
-                if (next.type == TokenType.Comma)
-                    NextToken();
-                else if (next.type == TokenType.ClosingParen)
-                    break;
-                else
-                {
-                    NextToken();
-                    SkipNewlines();
-                    ReportError(next.location, "Expected ',' or ')'");
-                }
-                SkipNewlines();
-            }
-            Consume(TokenType.ClosingParen, ErrMsg(")", "at end of parameter list"));
+            parameters = ParseParameterList();
 
             SkipNewlines();
 
@@ -996,7 +993,7 @@ namespace Cheez.Compiler.Parsing
             {
                 NextToken();
                 SkipNewlines();
-                returnType = ParseTypeExpr();
+                returnValues = ParseParameterList(false);
                 SkipNewlines();
             }
 
@@ -1011,22 +1008,25 @@ namespace Cheez.Compiler.Parsing
             else
                 body = ParseBlockStatement();
 
-            return new AstFunctionDecl(name, generics, parameters, returnType, body, directives, Location: new Location(beginning, end));
+            return new AstFunctionDecl(name, generics, parameters, returnValues, body, directives, Location: new Location(beginning, end));
         }
 
         #region Expression Parsing
 
         private AstTypeExpr ParseFunctionTypeExpr()
         {
+            var args = new List<AstTypeExpr>();
+            var returnTypes = new List<AstTypeExpr>();
+
             var beginning = Consume(TokenType.KwFn, ErrMsg("keyword 'fn'", "at beginning of function type")).location;
             SkipNewlines();
 
             Consume(TokenType.OpenParen, ErrMsg("(", "after keyword 'fn'"));
             SkipNewlines();
 
-            List<AstTypeExpr> args = new List<AstTypeExpr>();
             while (true)
             {
+                SkipNewlines();
                 var next = PeekToken();
                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                     break;
@@ -1047,15 +1047,42 @@ namespace Cheez.Compiler.Parsing
             }
 
             var end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of function type parameter list")).location;
+
             AstTypeExpr returnType = null;
             if (CheckToken(TokenType.Arrow))
             {
                 NextToken();
-                returnType = ParseTypeExpr();
+
+                while (true)
+                {
+                    SkipNewlines();
+                    var next = PeekToken();
+                    if (next.type == TokenType.OpenBrace || next.type == TokenType.EOF)
+                        break;
+
+                    args.Add(ParseTypeExpr());
+                    SkipNewlines();
+
+                    next = PeekToken();
+                    if (next.type == TokenType.Comma)
+                        NextToken();
+                    else if (next.type == TokenType.OpenBrace || next.type == TokenType.EOF)
+                        break;
+                    else
+                    {
+                        ReportError(next.location, $"Failed to parse function return types, expected comma or open brace, got {next.data} ({next.type})");
+                        NextToken();
+                    }
+                }
+
                 end = returnType.End;
             }
 
-            return new AstFunctionTypeExpr(args, returnType, new Location(beginning, end));
+            Consume(TokenType.OpenBrace, ErrMsg("{", "at end of function type return type list"));
+            SkipNewlines();
+            end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of function type return type list")).location;
+
+            return new AstFunctionTypeExpr(args, returnTypes, new Location(beginning, end));
         }
 
         private AstExpression ParseExpression(ErrorMessageResolver errorMessage = null)

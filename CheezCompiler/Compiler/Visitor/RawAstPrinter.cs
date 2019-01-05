@@ -46,9 +46,17 @@ namespace Cheez.Compiler.Visitor
 
             head += $"({pars})";
 
-            if (function.ReturnTypeExpr != null)
+            if (function.ReturnValues.Count > 0)
             {
-                head += $" -> {function.ReturnTypeExpr.Accept(this)}";
+                head += $" -> ";
+
+                head += string.Join(", ", function.ReturnValues.Select(rv =>
+                {
+                    if (rv.Name != null)
+                        return $"{rv.Name.Accept(this)}: {rv.TypeExpr.Accept(this)}";
+                    else
+                        return rv.TypeExpr.Accept(this);
+                }));
             }
 
             sb.Append($"{head} {body}".Indent(indentLevel));
@@ -365,8 +373,9 @@ namespace Cheez.Compiler.Visitor
         public override string VisitFunctionTypeExpr(AstFunctionTypeExpr type, int data = 0)
         {
             var args = string.Join(", ", type.ParameterTypes.Select(p => p.Accept(this)));
-            if (type.ReturnType != null)
-                return $"fn({args}) -> {type.ReturnType.Accept(this)}";
+            var rets = string.Join(", ", type.ReturnTypes.Select(p => p.Accept(this)));
+            if (type.ReturnTypes.Count > 0)
+                return $"fn({args}) -> {rets}";
             else
                 return $"fn({args})";
         }
