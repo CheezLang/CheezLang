@@ -105,11 +105,9 @@ namespace Cheez.Compiler
 
         private void Pass1VariableDeclaration(AstVariableDecl var)
         {
-            var decls = new List<AstSingleVariableDecl>();
+            MatchPatternWithTypeExpr(var, var.Pattern, var.TypeExpr);
 
-            MatchPatternWithTypeExpr(var, var.Pattern, var.TypeExpr, decls);
-
-            foreach (var decl in decls)
+            foreach (var decl in var.SubDeclarations)
             {
                 var res = var.Scope.DefineSymbol(decl);
                 if (!res.ok)
@@ -125,12 +123,14 @@ namespace Cheez.Compiler
             }
         }
 
-        private void MatchPatternWithTypeExpr(AstVariableDecl parent, AstExpression pattern, AstTypeExpr type, List<AstSingleVariableDecl> out_decls)
+        private void MatchPatternWithTypeExpr(AstVariableDecl parent, AstExpression pattern, AstTypeExpr type)
         {
             if (pattern is AstIdExpr id)
             {
                 var decl = new AstSingleVariableDecl(id, type, parent, pattern);
-                out_decls.Add(decl);
+                decl.Type = new VarDeclType(decl);
+                parent.SubDeclarations.Add(decl);
+                id.Symbol = decl;
             }
             else
             {

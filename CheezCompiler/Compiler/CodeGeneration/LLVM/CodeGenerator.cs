@@ -263,12 +263,13 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
                     varPtr = module.AddGlobal(type, v.Name.Name);
                     LLVM.SetLinkage(varPtr, LLVMLinkage.LLVMInternalLinkage);
+                    LLVM.SetLinkage(varPtr, LLVMLinkage.LLVMExternalLinkage);
 
                     var dExtern = decl.GetDirective("extern");
                     if (dExtern != null) LLVM.SetLinkage(varPtr, LLVMLinkage.LLVMExternalLinkage);
 
                     LLVM.SetInitializer(varPtr, GetDefaultLLVMValue(decl.Type));
-                    valueMap[decl] = varPtr;
+                    valueMap[v] = varPtr;
                 }
 
                 // do initialization

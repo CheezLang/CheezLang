@@ -100,28 +100,43 @@ namespace Cheez.Compiler
 
                 var allDeps = new HashSet<AstSingleVariableDecl>();
 
+                InferTypes(v.Initializer, v.TypeExpr?.Type, deps, allDeps);
+
+                if (allDeps.Count > 0)
+                    v.Dependencies = new List<AstSingleVariableDecl>(allDeps);
+
                 if (v.TypeExpr != null)
                 {
-                    InferTypes(v.Initializer, v.TypeExpr.Type, deps, allDeps);
-
-                    if (allDeps.Count > 0)
-                        v.Dependencies = new List<AstSingleVariableDecl>(allDeps);
-
                     // TODO: check if can assign
+                }
 
-                    ConvertLiteralTypeToDefaultType(v.Initializer);
-                    var newType = v.Initializer.Type;
+                ConvertLiteralTypeToDefaultType(v.Initializer);
+                var newType = v.Initializer.Type;
 
-                    if (newType != v.Type && !(newType is AbstractType))
-                    {
-                        v.Type = newType;
-                    }
+                if (newType != v.Type && !(newType is AbstractType))
+                {
                     v.Type = newType;
                 }
-                
+                v.Type = newType;
+
+                // assign types to sub declarations
+                AssignTypesToSubdecls(v.Pattern, v.Type);
             }
 
             return deps;
+        }
+
+        private void AssignTypesToSubdecls(AstExpression pattern, CheezType type)
+        {
+            if (pattern is AstIdExpr id)
+            {
+                var decl = id.Symbol as AstSingleVariableDecl;
+                decl.Type = type;
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }
