@@ -62,8 +62,8 @@ fn glfwPollEvents();
 fn glfwSwapBuffers(window: *GLFWwindow);
 
 fn glfwMakeContextCurrent(window: *GLFWwindow);
-fn glfwSetKeyCallback(window: *GLFWwindow, callback: fn (*GLFWwindow, int, int, int, int));
-fn glfwSetWindowSizeCallback(window: *GLFWwindow, callback: fn (*GLFWwindow, int, int));
+fn glfwSetKeyCallback(window: *GLFWwindow, callback: fn (*GLFWwindow, int, int, int, int) {});
+fn glfwSetWindowSizeCallback(window: *GLFWwindow, callback: fn (*GLFWwindow, int, int) {});
 fn glfwWindowHint(hint: int, value: int);
 
 let GLFW_RELEASE                : int = 0
