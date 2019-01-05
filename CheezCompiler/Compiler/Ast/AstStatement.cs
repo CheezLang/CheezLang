@@ -141,18 +141,18 @@ namespace Cheez.Compiler.Ast
 
     public class AstReturnStmt : AstStatement
     {
-        public AstExpression ReturnValue { get; set; }
+        public List<AstExpression> ReturnValues { get; set; }
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
 
-        public AstReturnStmt(AstExpression value, ILocation Location = null)
+        public AstReturnStmt(List<AstExpression> values, ILocation Location = null)
             : base(Location: Location)
         {
-            ReturnValue = value;
+            ReturnValues = values;
         }
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitReturnStmt(this, data);
-        public override AstStatement Clone() => CopyValuesTo(new AstReturnStmt(ReturnValue?.Clone()));
+        public override AstStatement Clone() => CopyValuesTo(new AstReturnStmt(ReturnValues.Select(rv => rv.Clone()).ToList()));
     }
 
     public class AstIfStmt : AstStatement

@@ -126,6 +126,8 @@
     <Compile Include="Compiler\CodeGeneration\LLVMCodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVM\AttributeKind.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVM\CodeGenerator.cs" />
+    <Compile Include="Compiler\CodeGeneration\LLVM\CodeGeneratorMain.cs" />
+    <Compile Include="Compiler\CodeGeneration\LLVM\CodeGeneratorHelpers.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVM\Extensions.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVM\Linker.cs" />
     <Compile Include="Compiler\CodeGeneration\OS.cs" />

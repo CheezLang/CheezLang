@@ -76,8 +76,8 @@ namespace Cheez.Compiler.Visitor
             }
 
             sb.Append("return");
-            if (ret.ReturnValue != null)
-                sb.Append(" ").Append(ret.ReturnValue.Accept(this));
+            if (ret.ReturnValues.Count != 0)
+                sb.Append(" ").Append(string.Join(", ", ret.ReturnValues.Select(rv => rv.Accept(this))));
             return sb.ToString();
         }
 

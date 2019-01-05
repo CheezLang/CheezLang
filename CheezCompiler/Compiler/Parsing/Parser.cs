@@ -512,17 +512,34 @@ namespace Cheez.Compiler.Parsing
         private AstReturnStmt ParseReturnStatement()
         {
             var beg = Consume(TokenType.KwReturn, ErrMsg("keyword 'return'", "at beginning of return statement")).location;
-            AstExpression returnValue = null;
+            var returnValues = new List<AstExpression>();
 
-            if (IsExprToken())
+            while (true)
             {
-                returnValue = ParseExpression();
+                var next = PeekToken();
+                if (next.type == TokenType.NewLine || next.type == TokenType.EOF)
+                    break;
+
+                var expr = ParseExpression();
+                if (expr != null)
+                    returnValues.Add(expr);
+
+                next = PeekToken();
+                if (next.type == TokenType.Comma)
+                {
+                    NextToken();
+                    SkipNewlines();
+                }
+                else if (next.type == TokenType.NewLine || next.type == TokenType.EOF)
+                    break;
+                else
+                {
+                    NextToken();
+                    ReportError(next.location, $"Unexpected token '{next}'");
+                }
             }
 
-            //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "at end of return statement")))
-            //    RecoverStatement();
-
-            return new AstReturnStmt(returnValue, new Location(beg));
+            return new AstReturnStmt(returnValues, new Location(beg));
         }
 
         private AstDirectiveStatement ParseDirectiveStatement()

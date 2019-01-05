@@ -1093,35 +1093,35 @@ namespace Cheez.Compiler.CodeGeneration
             return lfunc;
         }
 
-        public override LLVMValueRef VisitReturnStmt(AstReturnStmt ret, LLVMCodeGeneratorData data = null)
-        {
-            var prevBB = data.BasicBlock;
-            var nextBB = prevBB;
+        //public override LLVMValueRef VisitReturnStmt(AstReturnStmt ret, LLVMCodeGeneratorData data = null)
+        //{
+        //    var prevBB = data.BasicBlock;
+        //    var nextBB = prevBB;
 
-            nextBB = LLVM.AppendBasicBlock(data.LFunction, "ret");
+        //    nextBB = LLVM.AppendBasicBlock(data.LFunction, "ret");
 
-            var retVal = ret.ReturnValue?.Accept(this, data);
+        //    var retVal = ret.ReturnValues.count?.Accept(this, data);
 
-            foreach (var d in ret.DeferredStatements)
-            {
-                d.Accept(this, data);
-            }
+        //    foreach (var d in ret.DeferredStatements)
+        //    {
+        //        d.Accept(this, data);
+        //    }
 
-            LLVMValueRef? retInts = null;
-            if (ret.ReturnValue != null)
-            {
-                retInts = LLVM.BuildRet(data.Builder, retVal.Value);
-            }
-            else
-            {
-                retInts = LLVM.BuildRetVoid(data.Builder);
-            }
+        //    LLVMValueRef? retInts = null;
+        //    if (ret.ReturnValue != null)
+        //    {
+        //        retInts = LLVM.BuildRet(data.Builder, retVal.Value);
+        //    }
+        //    else
+        //    {
+        //        retInts = LLVM.BuildRetVoid(data.Builder);
+        //    }
 
-            LLVM.PositionBuilderAtEnd(data.Builder, nextBB);
-            data.BasicBlock = nextBB;
+        //    LLVM.PositionBuilderAtEnd(data.Builder, nextBB);
+        //    data.BasicBlock = nextBB;
 
-            return retInts.Value;
-        }
+        //    return retInts.Value;
+        //}
 
         public override LLVMValueRef VisitExpressionStmt(AstExprStmt stmt, LLVMCodeGeneratorData data = null)
         {
