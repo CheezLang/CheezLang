@@ -35,6 +35,13 @@ namespace Cheez.Compiler.Visitor
 
         #region Statements
 
+        public override string VisitParameter(AstParameter param, int data = 0)
+        {
+            if (param.Name != null)
+                return $"{param.Name.Accept(this)}: {param.TypeExpr.Accept(this)}";
+            return param.TypeExpr.Accept(this);
+        }
+
         public override string VisitFunctionDecl(AstFunctionDecl function, int indentLevel = 0)
         {
             var sb = new StringBuilder();
@@ -46,18 +53,8 @@ namespace Cheez.Compiler.Visitor
 
             head += $"({pars})";
 
-            if (function.ReturnValues.Count > 0)
-            {
-                head += $" -> ";
-
-                head += string.Join(", ", function.ReturnValues.Select(rv =>
-                {
-                    if (rv.Name != null)
-                        return $"{rv.Name.Accept(this)}: {rv.TypeExpr.Accept(this)}";
-                    else
-                        return rv.TypeExpr.Accept(this);
-                }));
-            }
+            if (function.ReturnValue != null)
+                head += $" -> {function.ReturnValue.Accept(this)}";
 
             sb.Append($"{head} {body}".Indent(indentLevel));
 
@@ -374,9 +371,8 @@ namespace Cheez.Compiler.Visitor
         public override string VisitFunctionTypeExpr(AstFunctionTypeExpr type, int data = 0)
         {
             var args = string.Join(", ", type.ParameterTypes.Select(p => p.Accept(this)));
-            var rets = string.Join(", ", type.ReturnTypes.Select(p => p.Accept(this)));
-            if (type.ReturnTypes.Count > 0)
-                return $"fn({args}) -> {rets}";
+            if (type.ReturnType != null)
+                return $"fn({args}) -> {type.ReturnType.Accept(this)}";
             else
                 return $"fn({args})";
         }

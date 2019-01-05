@@ -87,11 +87,12 @@ namespace Cheez.Compiler
                             par[i] = ResolveTypeHelper(func.ParameterTypes[i], deps, instances);
                         }
 
-                        CheezType[] ret = new CheezType[func.ReturnTypes.Count];
-                        for (int i = 0; i < par.Length; i++)
+                        CheezType ret = CheezType.Void;
+
+                        if (func.ReturnType != null)
                         {
-                            func.ParameterTypes[i].Scope = func.Scope;
-                            par[i] = ResolveTypeHelper(func.ParameterTypes[i], deps, instances);
+                            func.ReturnType.Scope = func.Scope;
+                            ret = ResolveTypeHelper(func.ReturnType, deps, instances);
                         }
 
                         return FunctionType.GetFunctionType(par, ret);
@@ -142,7 +143,7 @@ namespace Cheez.Compiler
                     break;
 
                 case AstFunctionTypeExpr func:
-                    foreach (var p in func.ReturnTypes) CollectPolyTypes(p, types);
+                    if (func.ReturnType != null) CollectPolyTypes(func.ReturnType, types);
                     foreach (var p in func.ParameterTypes) CollectPolyTypes(p, types);
                     break;
 

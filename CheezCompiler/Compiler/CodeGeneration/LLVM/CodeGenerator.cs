@@ -52,7 +52,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
             { // call main function
                 var cheezMain = valueMap[workspace.MainFunction];
-                if (workspace.MainFunction.ReturnValues.Count == 0)
+                if (workspace.MainFunction.ReturnValue == null)
                 {
                     builder.CreateCall(cheezMain, new LLVMValueRef[0], "");
                     builder.CreateRet(LLVM.ConstInt(LLVM.Int32Type(), 0, false));
@@ -157,17 +157,11 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                     valueMap[param] = p;
                 }
 
-                if (function.ReturnValues.Count > 1)
+                if (function.ReturnValue != null)
                 {
-                    int offset = function.Parameters.Count;
-                    for (int i = 0; i < function.ReturnValues.Count; i++)
-                    {
-                        var param = function.ReturnValues[i];
-                        var p = lfunc.GetParam((uint)(i + offset));
-                        var ptype = LLVM.TypeOf(p);
-                        p = builder.CreateAlloca(ptype, $"ret_{param.Name?.Name ?? i.ToString()}");
-                        valueMap[param] = p;
-                    }
+                    var ptype = CheezTypeToLLVMType(function.ReturnValue.Type);
+                    var p = builder.CreateAlloca(ptype, $"ret_{function.ReturnValue.Name?.Name}");
+                    valueMap[function.ReturnValue] = p;
                 }
 
                 // store params and rets in local variables
@@ -176,17 +170,6 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                     var param = function.Parameters[i];
                     var p = lfunc.GetParam((uint)i);
                     builder.CreateStore(p, valueMap[param]);
-                }
-
-                if (function.ReturnValues.Count > 1)
-                {
-                    int offset = function.Parameters.Count;
-                    for (int i = 0; i < function.ReturnValues.Count; i++)
-                    {
-                        var param = function.ReturnValues[i];
-                        var p = lfunc.GetParam((uint)(i + offset));
-                        builder.CreateStore(p, valueMap[param]);
-                    }
                 }
 
                 builder.CreateBr(bbLocals);
@@ -208,7 +191,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                 function.Body.Accept(this);
 
                 // ret if void
-                if (function.ReturnValues.Count == 0)
+                if (function.ReturnValue == null)
                     builder.CreateRetVoid();
                 builder.Dispose();
             }

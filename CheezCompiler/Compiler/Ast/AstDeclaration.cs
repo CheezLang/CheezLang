@@ -43,6 +43,9 @@ namespace Cheez.Compiler.Ast
         }
 
         public AstParameter Clone() => new AstParameter(Name?.Clone() as AstIdExpr, TypeExpr.Clone() as AstTypeExpr);
+
+        [DebuggerStepThrough]
+        public T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitParameter(this, data);
     }
 
     #region Function Declaration
@@ -59,7 +62,7 @@ namespace Cheez.Compiler.Ast
         public Scope SubScope { get; set; }
 
         public List<AstParameter> Parameters { get; }
-        public List<AstParameter> ReturnValues { get; }
+        public AstParameter ReturnValue { get; }
 
         public FunctionType FunctionType => Type as FunctionType;
 
@@ -82,14 +85,14 @@ namespace Cheez.Compiler.Ast
         public AstFunctionDecl(AstIdExpr name,
             List<AstIdExpr> generics,
             List<AstParameter> parameters,
-            List<AstParameter> returns,
+            AstParameter returns,
             AstBlockStmt body = null, 
             List<AstDirective> Directives = null, 
             bool refSelf = false, ILocation Location = null)
             : base(name, Directives, Location)
         {
             this.Parameters = parameters;
-            this.ReturnValues = returns ?? new List<AstParameter>();
+            this.ReturnValue = returns;
             this.Body = body;
             this.RefSelf = refSelf;
         }
@@ -100,7 +103,7 @@ namespace Cheez.Compiler.Ast
         public override AstStatement Clone() => CopyValuesTo(new AstFunctionDecl(Name.Clone() as AstIdExpr,
                 null,
                 Parameters.Select(p => p.Clone()).ToList(),
-                ReturnValues.Select(p => p.Clone()).ToList(),
+                ReturnValue.Clone(),
                 Body?.Clone() as AstBlockStmt));
     }
 

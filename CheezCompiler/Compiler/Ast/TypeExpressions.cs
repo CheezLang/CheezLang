@@ -91,13 +91,13 @@ namespace Cheez.Compiler.Ast
     {
         public override bool IsPolymorphic => ParameterTypes.Any(p => p.IsPolymorphic) || ParameterTypes.Any(p => p.IsPolymorphic);
 
-        public List<AstTypeExpr> ReturnTypes { get; set; }
+        public AstTypeExpr ReturnType { get; set; }
         public List<AstTypeExpr> ParameterTypes { get; set; }
 
-        public AstFunctionTypeExpr(List<AstTypeExpr> parTypes, List<AstTypeExpr> returnType, ILocation Location = null) : base(Location)
+        public AstFunctionTypeExpr(List<AstTypeExpr> parTypes, AstTypeExpr returnType, ILocation Location = null) : base(Location)
         {
             this.ParameterTypes = parTypes;
-            this.ReturnTypes = returnType;
+            this.ReturnType = returnType;
         }
 
         [DebuggerStepThrough]
@@ -107,7 +107,7 @@ namespace Cheez.Compiler.Ast
         public override AstExpression Clone()
             => CopyValuesTo(new AstFunctionTypeExpr(
                 ParameterTypes.Select(p => p.Clone() as AstTypeExpr).ToList(),
-                ReturnTypes.Select(p => p.Clone() as AstTypeExpr).ToList()));
+                ReturnType.Clone() as AstTypeExpr));
     }
 
     public class AstIdTypeExpr : AstTypeExpr

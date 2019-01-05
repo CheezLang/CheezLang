@@ -18,6 +18,13 @@ namespace Cheez.Compiler.Visitor
 
         #region Statements
 
+        public override string VisitParameter(AstParameter param, int data = 0)
+        {
+            if (param.Name != null)
+                return $"{param.Name.Accept(this)}: {param.Type}";
+            return param.Type?.ToString();
+        }
+
         public override string VisitFunctionDecl(AstFunctionDecl function, int indentLevel = 0)
         {
             var sb = new StringBuilder();
@@ -29,18 +36,8 @@ namespace Cheez.Compiler.Visitor
 
             head += $"({pars})";
 
-            if (function.ReturnValues.Count > 0)
-            {
-                head += $" -> ";
-
-                head += string.Join(", ", function.ReturnValues.Select(rv =>
-                {
-                    if (rv.Name != null)
-                        return $"{rv.Name.Accept(this)}: {rv.Type}";
-                    else
-                        return rv.Type.ToString();
-                }));
-            }
+            if (function.ReturnValue != null)
+                head += $" -> {function.ReturnValue.Accept(this)}";
 
             sb.Append($"{head} {body}".Indent(indentLevel));
 

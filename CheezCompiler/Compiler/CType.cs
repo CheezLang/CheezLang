@@ -472,39 +472,37 @@ namespace Cheez.Compiler
         private static List<FunctionType> sTypes = new List<FunctionType>();
                 
         public CheezType[] ParameterTypes { get; private set; }
-        public CheezType[] ReturnTypes { get; private set; }
+        public CheezType ReturnType { get; private set; }
         public bool VarArgs { get; set; } = false;
 
-        private FunctionType(CheezType[] parameterTypes, CheezType[] returnTypes)
+        private FunctionType(CheezType[] parameterTypes, CheezType returnType)
         {
             this.ParameterTypes = parameterTypes;
-            this.ReturnTypes = returnTypes;
+            this.ReturnType = returnType;
         }
 
         public static FunctionType GetFunctionType(AstFunctionDecl decl)
         {
             var pt = decl.Parameters.Select(p => p.Type).ToArray();
-            var rt = decl.ReturnValues.Select(p => p.Type).ToArray();
-            return GetFunctionType(pt, rt);
+            return GetFunctionType(pt, decl.ReturnValue?.Type ?? CheezType.Void);
         }
 
-        public static FunctionType GetFunctionType(CheezType[] parameterTypes, CheezType[] returnTypes)
+        public static FunctionType GetFunctionType(CheezType[] parameterTypes, CheezType returnType)
         {
             var f = sTypes.FirstOrDefault(ft =>
             {
-                if (ft.ReturnTypes.Length != returnTypes.Length)
+                if (ft.ReturnType != returnType)
                     return false;
                 if (ft.ParameterTypes.Length != parameterTypes.Length)
                     return false;
 
-                if (!ft.ParameterTypes.Zip(parameterTypes, (a, b) => a == b).All(b => b)) return false;
-                return ft.ReturnTypes.Zip(returnTypes, (a, b) => a == b).All(b => b);
+                return ft.ParameterTypes.Zip(parameterTypes, (a, b) => a == b).All(b => b);
             });
 
             if (f != null)
                 return f;
 
-            var type = new FunctionType(parameterTypes, returnTypes);
+            var type = new FunctionType(parameterTypes, returnType);
             sTypes.Add(type);
             return type;
         }
@@ -512,9 +510,8 @@ namespace Cheez.Compiler
         public override string ToString()
         {
             var args = string.Join(", ", ParameterTypes.ToList());
-            var rts = string.Join(", ", ReturnTypes.ToList());
-            if (ReturnTypes.Length != 0)
-                return $"fn({args}) -> {rts}";
+            if (ReturnType != CheezType.Void)
+                return $"fn({args}) -> {ReturnType}";
             else
                 return $"fn({args})";
         }
