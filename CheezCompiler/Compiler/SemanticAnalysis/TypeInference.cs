@@ -14,7 +14,7 @@ namespace Cheez.Compiler
             else if (expr.Type == CheezType.StringLiteral) expr.Type = CheezType.String;
         }
 
-        private void InferTypes(AstExpression expr, CheezType expected, HashSet<AstVariableDecl> unresolvedDependencies = null, HashSet<AstVariableDecl> allDependencies = null)
+        private void InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null)
         {
             switch (expr)
             {
@@ -58,15 +58,15 @@ namespace Cheez.Compiler
             }
         }
 
-        private void InferTypeCallExpr(AstCallExpr expr, CheezType expected, HashSet<AstVariableDecl> unresolvedDependencies, HashSet<AstVariableDecl> allDependencies)
+        private void InferTypeCallExpr(AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
         {
         }
 
-        private void InferTypeUnaryExpr(AstUnaryExpr expr, CheezType expected, HashSet<AstVariableDecl> unresolvedDependencies, HashSet<AstVariableDecl> allDependencies)
+        private void InferTypeUnaryExpr(AstUnaryExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
         {
         }
 
-        private void InferTypeStructValueExpr(AstStructValueExpr expr, CheezType expected, HashSet<AstVariableDecl> unresolvedDependencies, HashSet<AstVariableDecl> allDependencies)
+        private void InferTypeStructValueExpr(AstStructValueExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
         {
             if (expr.TypeExpr != null)
             {
@@ -93,7 +93,7 @@ namespace Cheez.Compiler
 
         }
 
-        private void InferTypesBinaryExpr(AstBinaryExpr b, CheezType expected, HashSet<AstVariableDecl> unresolvedDependencies, HashSet<AstVariableDecl> allDependencies)
+        private void InferTypesBinaryExpr(AstBinaryExpr b, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
         {
             b.Left.Scope = b.Scope;
             b.Right.Scope = b.Scope;
@@ -117,7 +117,7 @@ namespace Cheez.Compiler
             }
         }
 
-        private void InferTypesIdExpr(AstIdExpr i, CheezType expected, HashSet<AstVariableDecl> unresolvedDependencies, HashSet<AstVariableDecl> allDependencies)
+        private void InferTypesIdExpr(AstIdExpr i, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
         {
             var sym = i.Scope.GetSymbol(i.Name);
             if (sym == null)
@@ -129,7 +129,7 @@ namespace Cheez.Compiler
 
             i.Symbol = sym;
 
-            if (sym is AstVariableDecl var)
+            if (sym is AstSingleVariableDecl var)
             {
                 i.Type = var.Type;
                 if (i.Type is AbstractType)

@@ -20,7 +20,7 @@ namespace Cheez.Compiler
 
             List<AstVariableDecl> waitingList = new List<AstVariableDecl>();
 
-            var dependencies = new Dictionary<AstVariableDecl, HashSet<AstVariableDecl>>();
+            var dependencies = new Dictionary<AstVariableDecl, HashSet<AstSingleVariableDecl>>();
 
             while (true)
             {
@@ -77,45 +77,48 @@ namespace Cheez.Compiler
             }
         }
 
-        private HashSet<AstVariableDecl> Pass6VariableDeclaration(AstVariableDecl v)
+        private HashSet<AstSingleVariableDecl> Pass6VariableDeclaration(AstVariableDecl v)
         {
             if (v.TypeExpr == null && v.Initializer == null)
             {
                 ReportError(v, $"A variable needs to have at least a type annotation or an initializer");
-                return new HashSet<AstVariableDecl>();
+                return new HashSet<AstSingleVariableDecl>();
             }
-            var deps = new HashSet<AstVariableDecl>();
+
+            var deps = new HashSet<AstSingleVariableDecl>();
 
             if (v.TypeExpr != null)
             {
-                v.TypeExpr.Scope = v.Scope;
-                v.Type = ResolveType(v.TypeExpr);
+                 v.TypeExpr.Scope = v.Scope;
+                 v.TypeExpr.Type = ResolveType(v.TypeExpr);
+                // TODO: tuple
             }
 
             if (v.Initializer != null)
             {
                 v.Initializer.Scope = v.Scope;
 
-                var allDeps = new HashSet<AstVariableDecl>();
-                InferTypes(v.Initializer, v.Type, deps, allDeps);
+                var allDeps = new HashSet<AstSingleVariableDecl>();
 
-                if (allDeps.Count > 0)
-                    v.Dependencies = new List<AstVariableDecl>(allDeps);
-
-                if (v.Type != null)
+                if (v.TypeExpr != null)
                 {
+                    InferTypes(v.Initializer, v.TypeExpr.Type, deps, allDeps);
+
+                    if (allDeps.Count > 0)
+                        v.Dependencies = new List<AstSingleVariableDecl>(allDeps);
+
                     // TODO: check if can assign
-                }
 
-                ConvertLiteralTypeToDefaultType(v.Initializer);
-                var newType = v.Initializer.Type;
+                    ConvertLiteralTypeToDefaultType(v.Initializer);
+                    var newType = v.Initializer.Type;
 
-                if (newType != v.Type && !(newType is AbstractType))
-                {
+                    if (newType != v.Type && !(newType is AbstractType))
+                    {
+                        v.Type = newType;
+                    }
                     v.Type = newType;
-                    v.Scope.ChangeTypeOfVarDecl(v);
                 }
-                v.Type = newType;
+                
             }
 
             return deps;

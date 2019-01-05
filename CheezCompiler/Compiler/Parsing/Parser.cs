@@ -869,7 +869,7 @@ namespace Cheez.Compiler.Parsing
         {
             TokenLocation beg = null, end = null;
             var directives = new List<AstDirective>();
-            AstIdExpr name = null;
+            AstExpression pattern = null;
             AstTypeExpr type = null;
             AstExpression init = null;
 
@@ -882,8 +882,8 @@ namespace Cheez.Compiler.Parsing
                 SkipNewlines();
             }
 
-            name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'let'"));
-            end = name.End;
+            pattern = ParseExpression();
+            end = pattern.End;
 
             if (CheckToken(TokenType.Colon))
             {
@@ -904,7 +904,7 @@ namespace Cheez.Compiler.Parsing
             //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after variable declaration")))
             //    RecoverStatement();
 
-            return new AstVariableDecl(name, type, init, directives, new Location(beg, end));
+            return new AstVariableDecl(pattern, type, init, directives, new Location(beg, end));
         }
 
         private AstWhileStmt ParseWhileStatement()

@@ -218,19 +218,50 @@ namespace Cheez.Compiler.Ast
 
     #region Variable Declarion
 
-    public class AstVariableDecl : AstDecl, ITypedSymbol
+    public class AstSingleVariableDecl : AstDecl, ITypedSymbol
     {
+        public bool IsConstant => false;
+        public AstTypeExpr TypeExpr { get; set; }
+
+        public AstVariableDecl VarDeclaration { get; set; }
+
+        public AstSingleVariableDecl(AstIdExpr name, AstTypeExpr typeExpr, AstVariableDecl parent, ILocation Location) : base(name, Location: Location)
+        {
+            TypeExpr = typeExpr;
+            VarDeclaration = parent;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override AstStatement Clone()
+        {
+            throw new System.NotImplementedException();
+        }
+    }
+
+
+    public class AstVariableDecl : AstStatement
+    {
+        public AstExpression Pattern { get; set; }
         public AstTypeExpr TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
         public Scope SubScope { get; set; }
 
         public bool IsConstant { get; set; } = false;
 
-        public List<AstVariableDecl> Dependencies { get; set; }
+        public CheezType Type { get; set; } = null;
 
-        public AstVariableDecl(AstIdExpr name, AstTypeExpr typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null) 
-            : base(name, Directives, Location)
+        public List<AstSingleVariableDecl> Dependencies { get; set; }
+
+        public List<AstSingleVariableDecl> SubDeclarations = new List<AstSingleVariableDecl>();
+
+        public AstVariableDecl(AstExpression pattern, AstTypeExpr typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null) 
+            : base(Directives, Location)
         {
+            this.Pattern = pattern;
             this.TypeExpr = typeExpr;
             this.Initializer = init;
         }
@@ -238,7 +269,11 @@ namespace Cheez.Compiler.Ast
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitVariableDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstVariableDecl(Name.Clone() as AstIdExpr, TypeExpr?.Clone() as AstTypeExpr, Initializer?.Clone()));
+        public override AstStatement Clone()
+            => CopyValuesTo(new AstVariableDecl(
+                Pattern.Clone(),
+                TypeExpr?.Clone() as AstTypeExpr,
+                Initializer?.Clone()));
     }
 
     #endregion
@@ -286,9 +321,11 @@ namespace Cheez.Compiler.Ast
 
     #region Type Alias
 
-    public class AstTypeAliasDecl : AstDecl
+    public class AstTypeAliasDecl : AstDecl, ITypedSymbol
     {
         public AstTypeExpr TypeExpr { get; set; }
+
+        public bool IsConstant => false;
 
         public AstTypeAliasDecl(AstIdExpr name, AstTypeExpr typeExpr, List<AstDirective> Directives = null, ILocation Location = null)
             : base(name, Directives, Location)

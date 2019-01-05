@@ -501,16 +501,10 @@ namespace Cheez.Compiler
             return (true, null);
         }
 
-        public void ChangeTypeOfDeclaration(AstDecl decl)
+        public void ChangeTypeOfDeclaration(ITypedSymbol decl)
         {
             var ctv = mSymbolTable[decl.Name.Name] as CompTimeVariable;
             ctv.Value = decl.Type;
-        }
-
-        public void ChangeTypeOfVarDecl(AstDecl decl)
-        {
-            var ctv = mSymbolTable[decl.Name.Name] as AstVariableDecl;
-            ctv.Type = decl.Type;
         }
 
         public ISymbol GetSymbol(string name)

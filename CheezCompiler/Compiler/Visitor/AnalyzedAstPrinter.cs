@@ -156,7 +156,8 @@ namespace Cheez.Compiler.Visitor
         public override string VisitVariableDecl(AstVariableDecl variable, int indentLevel = 0)
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("let ").Append(variable.Name.Accept(this));
+            sb.Append("let ");
+            sb.Append(variable.Pattern.Accept(this));
             sb.Append($": {variable.Type}");
             if (variable.Initializer != null)
                 sb.Append($" = {variable.Initializer.Accept(this)}");

@@ -250,30 +250,33 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             {
                 foreach (var dep in decl.Dependencies)
                 {
-                    InitGlobalVariable(dep, visited);
+                    InitGlobalVariable(dep.VarDeclaration, visited);
                 }
             }
 
-            // create var
-            LLVMValueRef varPtr;
+            foreach (var v in decl.SubDeclarations)
             {
-                var type = CheezTypeToLLVMType(decl.Type);
+                // create var
+                LLVMValueRef varPtr;
+                {
+                    var type = CheezTypeToLLVMType(decl.Type);
 
-                varPtr = module.AddGlobal(type, decl.Name.Name);
-                LLVM.SetLinkage(varPtr, LLVMLinkage.LLVMInternalLinkage);
+                    varPtr = module.AddGlobal(type, v.Name.Name);
+                    LLVM.SetLinkage(varPtr, LLVMLinkage.LLVMInternalLinkage);
 
-                var dExtern = decl.GetDirective("extern");
-                if (dExtern != null) LLVM.SetLinkage(varPtr, LLVMLinkage.LLVMExternalLinkage);
+                    var dExtern = decl.GetDirective("extern");
+                    if (dExtern != null) LLVM.SetLinkage(varPtr, LLVMLinkage.LLVMExternalLinkage);
 
-                LLVM.SetInitializer(varPtr, GetDefaultLLVMValue(decl.Type));
-                valueMap[decl] = varPtr;
-            }
+                    LLVM.SetInitializer(varPtr, GetDefaultLLVMValue(decl.Type));
+                    valueMap[decl] = varPtr;
+                }
 
-            // do initialization
-            if (decl.Initializer != null)
-            {
-                var val = decl.Initializer.Accept(this);
-                builder.CreateStore(val, varPtr);
+                // do initialization
+                if (decl.Initializer != null)
+                {
+                    var val = decl.Initializer.Accept(this);
+                    builder.CreateStore(val, varPtr);
+                }
             }
 
             visited.Add(decl);
@@ -301,23 +304,23 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             if (variable.IsConstant)
                 return default;
 
-            if (variable.GetFlag(StmtFlags.GlobalScope))
-                {
-                throw new NotImplementedException();
-                }
-                else
-                {
-                var ptr = CreateLocalVariable(variable);
-                if (variable.Initializer != null)
-                {
+            //if (variable.GetFlag(StmtFlags.GlobalScope))
+            //    {
+            //    throw new NotImplementedException();
+            //    }
+            //    else
+            //    {
+            //    var ptr = CreateLocalVariable(variable);
+            //    if (variable.Initializer != null)
+            //    {
 
-                    var val = variable.Initializer.Accept(this);
-                    CastIfAny(variable.Type, variable.Initializer.Type, ref val);
-                    return builder.CreateStore(val, ptr);
-                }
-                return default;
-            }
-            }
+            //        var val = variable.Initializer.Accept(this);
+            //        CastIfAny(variable.Type, variable.Initializer.Type, ref val);
+            //        return builder.CreateStore(val, ptr);
+            //    }
+            //    return default;
+            //}
+        }
 
         //public override LLVMValueRef VisitReturnStatement(AstReturnStmt ret, object data = null)
         //{

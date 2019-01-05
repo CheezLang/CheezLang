@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Cheez.Compiler.Ast;
 
 namespace Cheez.Compiler
@@ -104,17 +105,36 @@ namespace Cheez.Compiler
 
         private void Pass1VariableDeclaration(AstVariableDecl var)
         {
-            var.Type = new VarDeclType(var);
-            var res = var.Scope.DefineSymbol(var);
-            if (!res.ok)
+            var decls = new List<AstSingleVariableDecl>();
+
+            MatchPatternWithTypeExpr(var, var.Pattern, var.TypeExpr, decls);
+
+            foreach (var decl in decls)
             {
-                (string, ILocation)? detail = null;
-                if (res.other != null) detail = ("Other declaration here:", res.other);
-                ReportError(var.Name, $"A symbol with name '{var.Name.Name}' already exists in current scope", detail);
+                var res = var.Scope.DefineSymbol(decl);
+                if (!res.ok)
+                {
+                    (string, ILocation)? detail = null;
+                    if (res.other != null) detail = ("Other declaration here:", res.other);
+                    ReportError(decl.Name, $"A symbol with name '{decl.Name.Name}' already exists in current scope", detail);
+                }
+                else
+                {
+                    var.Scope.VariableDeclarations.Add(var);
+                }
+            }
+        }
+
+        private void MatchPatternWithTypeExpr(AstVariableDecl parent, AstExpression pattern, AstTypeExpr type, List<AstSingleVariableDecl> out_decls)
+        {
+            if (pattern is AstIdExpr id)
+            {
+                var decl = new AstSingleVariableDecl(id, type, parent, pattern);
+                out_decls.Add(decl);
             }
             else
             {
-                var.Scope.VariableDeclarations.Add(var);
+                throw new NotImplementedException();
             }
         }
 
