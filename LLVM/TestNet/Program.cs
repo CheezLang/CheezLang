@@ -8,7 +8,7 @@ namespace Test
     {
         static void Main(string[] args)
         {
-            var module = new Module("deine mudda");
+            var module = new Module("test module");
 
             module.SetTargetTriple("i386-pc-win32");
 
