@@ -231,3 +231,7 @@ _Pvt_Extensions
 /Linker/Win32
 /Linker/int
 */**.dll
+*.tlog
+*.lastbuildstate
+*
+*.idb

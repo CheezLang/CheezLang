@@ -22,6 +22,7 @@ namespace Cheez.Compiler
                 foreach (var f in i.Functions)
                 {
                     f.Scope = i.SubScope;
+                    f.SubScope = new Scope("fn", f.Scope);
                     f.ImplBlock = i;
                     Pass4ResolveFunctionSignature(f);
                 }
@@ -32,6 +33,7 @@ namespace Cheez.Compiler
                 foreach (var f in i.Functions)
                 {
                     f.Scope = i.SubScope;
+                    f.SubScope = new Scope("fn", f.Scope);
                     f.ImplBlock = i;
                     Pass4ResolveFunctionSignature(f);
                 }

@@ -1,9 +1,9 @@
-﻿using System;
+﻿using LLVMCS;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
@@ -30,8 +30,6 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
     public class LLVMLinker
     {
-        [DllImport("Linker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private extern static bool llvm_link_coff(string[] argv, int argc);
 
         public static bool Link(Workspace workspace, string targetFile, string objFile, IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
         {
@@ -124,7 +122,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             // generated object files
             lldArgs.Add(objFile);
 
-            var result = llvm_link_coff(lldArgs.ToArray(), lldArgs.Count);
+            var result = Linker.llvm_link_coff(lldArgs.ToArray(), lldArgs.Count);
             if (result)
             {
                 Console.WriteLine($"Generated {filename}.exe");

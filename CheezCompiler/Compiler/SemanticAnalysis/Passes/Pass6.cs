@@ -113,11 +113,14 @@ namespace Cheez.Compiler
                 ConvertLiteralTypeToDefaultType(v.Initializer);
                 var newType = v.Initializer.Type;
 
-                if (newType != v.Type && !(newType is AbstractType))
+                if (newType != null)
                 {
+                    if (newType != v.Type && !(newType is AbstractType))
+                    {
+                        v.Type = newType;
+                    }
                     v.Type = newType;
                 }
-                v.Type = newType;
 
                 // assign types to sub declarations
                 AssignTypesToSubdecls(v.Pattern, v.Type);

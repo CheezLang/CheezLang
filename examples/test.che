@@ -3,28 +3,35 @@
 // #load("examples/glfw3_example")
 // #load("examples/signed_distance_field_renderer")
 
+struct List {
+    item: int
+    next: *List
+}
 
-// fn Main() {
-//     // trait_function_call_performance()
-//     // glfw3_example()
-//     signed_distance_field_renderer()
-
-//     // let x: int          // int
-//     // let x: &int         // int reference
-//     // let x: []&int       // slice of int references
-//     // let x: ptr int      // int ptr
-//     // let x: []ptr int    // slice of int pointers
+// fn swap1(a: int, b: int) -> (int, int) {
+//     return b, a
 // }
 
-let a: int = c
-let b: int = a
-let c: int = b
+// fn swap2(a: int, b: int) -> (a_out: int, b_out: int) {
+//     a_out = b
+//     b_out = a
+// }
 
-let resolved: int = a
+let a: int = 5
 
-let x: int = y
-let y: int = z
-let z: int = x + y * c / b % a - resolved
+let n: int = r
+let r: int = t
+let t: int = a
+
+
+fn foo() -> int {
+
+}
+
+fn bar() -> List {
+
+}
 
 fn Main() {
+    // let a, b = swap1(1, 2)
 }
