@@ -156,18 +156,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\constant_values.cpp" />
     <ClCompile Include="src\context.cpp" />
     <ClCompile Include="src\data_layout.cpp" />
-    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\ir_builder.cpp" />
     <ClCompile Include="src\module.cpp" />
     <ClCompile Include="src\linker.cpp" />
-    <ClCompile Include="src\static_functions.cpp" />
-    <ClCompile Include="src\string_container.cpp" />
+    <ClCompile Include="src\target_machine.cpp" />
     <ClCompile Include="src\types.cpp" />
+    <ClCompile Include="src\value.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h" />
-    <ClInclude Include="src\string_container.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

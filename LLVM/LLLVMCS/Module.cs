@@ -7,7 +7,7 @@ namespace LLVMCS
     public class Module
     {
         [DllImport(DLL.LLVM_DLL_NAME, CallingConvention = DLL.LLVM_DLL_CALLING_CONVENTION, CharSet = DLL.LLVM_DLL_CHAR_SET)]
-        private unsafe extern static void* llvm_create_module(string name, void* contextPtr);
+        private unsafe extern static void* llvm_create_module(string name);
 
         [DllImport(DLL.LLVM_DLL_NAME, CallingConvention = DLL.LLVM_DLL_CALLING_CONVENTION, CharSet = DLL.LLVM_DLL_CHAR_SET)]
         private unsafe extern static void llvm_delete_module(void* ptr);
@@ -21,36 +21,29 @@ namespace LLVMCS
         [DllImport(DLL.LLVM_DLL_NAME, CallingConvention = DLL.LLVM_DLL_CALLING_CONVENTION, CharSet = DLL.LLVM_DLL_CHAR_SET)]
         private unsafe extern static bool llvm_module_print_to_file(void* ptr, string path);
 
+        [DllImport(DLL.LLVM_DLL_NAME, CallingConvention = DLL.LLVM_DLL_CALLING_CONVENTION, CharSet = DLL.LLVM_DLL_CHAR_SET)]
+        private unsafe extern static void* llvm_module_get_or_add_global(void* mod, string name, void* type);
+
+        [DllImport(DLL.LLVM_DLL_NAME, CallingConvention = DLL.LLVM_DLL_CALLING_CONVENTION, CharSet = DLL.LLVM_DLL_CHAR_SET)]
+        private unsafe extern static void* llvm_module_get_or_add_function(void* mod, string name, void* type);
+
         unsafe internal void* instance;
-        public Context Context { get; private set; }
 
         public string Name { get; }
 
         public Module(string name)
         {
             this.Name = name;
-            Context = new Context();
 
             unsafe
             {
-                instance = llvm_create_module(name, Context.instance);
+                instance = llvm_create_module(name);
             }
         }
-
-        public Module(string name, Context context)
-        {
-            this.Name = name;
-            this.Context = context;
-            unsafe
-            {
-                instance = llvm_create_module(name, context.instance);
-            }
-        }
-
+        
         ~Module()
         {
             Dispose();
-            Context.Dispose();
         }
 
         public void Dispose()
@@ -97,14 +90,19 @@ namespace LLVMCS
             }
         }
 
-        public ValueRef AddFunction(string v, TypeRef ltype)
+        public ValueRef AddFunction(string name, TypeRef type)
         {
-            throw new NotImplementedException();
+            unsafe
+            {
+                return new ValueRef(llvm_module_get_or_add_function(instance, name, type.instance));
+            }
         }
 
         public ValueRef AddGlobal(TypeRef type, string name)
         {
-            throw new NotImplementedException();
+            unsafe {
+                return new ValueRef(llvm_module_get_or_add_global(instance, name, type.instance));
+            }
         }
     }
 }

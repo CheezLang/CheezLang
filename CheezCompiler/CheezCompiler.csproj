@@ -121,7 +121,6 @@
     <Compile Include="Compiler\CheezValue.cs" />
     <Compile Include="Compiler\CodeGeneration\ICodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVMCodeGenerator.cs" />
-    <Compile Include="Compiler\CodeGeneration\LLVM\AttributeKind.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVM\CodeGenerator.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVM\CodeGeneratorMain.cs" />
     <Compile Include="Compiler\CodeGeneration\LLVM\CodeGeneratorHelpers.cs" />

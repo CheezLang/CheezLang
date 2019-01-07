@@ -15,7 +15,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             {
                 if (t is AstStructDecl s)
                 {
-                    var llvmType = context.GetNamedStruct($"struct.{s.Name.Name}");
+                    var llvmType = TypeRef.GetNamedStruct($"struct.{s.Name.Name}");
                     typeMap[s.Type] = llvmType;
                 }
             }
@@ -26,19 +26,18 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                 {
                     var llvmType = typeMap[s.Type];
                     var memTypes = s.Members.Select(m => CheezTypeToLLVMType(m.Type)).ToArray();
-                    context.SetStructBody(llvmType, memTypes);
+                    TypeRef.SetStructBody(llvmType, memTypes);
                 }
             }
         }
 
         private void GenerateMainFunction()
         {
-            var ltype = context.GetFunctionType(context.GetIntType(32));
+            var ltype = TypeRef.GetFunctionType(TypeRef.GetIntType(32));
             var lfunc = module.AddFunction("main", ltype);
             var entry = lfunc.AppendBasicBlock("entry");
 
-            builder = new IRBuilder(context);
-            builder.PositionAtEnd(entry);
+            builder = IRBuilder.Create(entry);
 
             {
                 var visited = new HashSet<AstVariableDecl>();
@@ -55,7 +54,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                 if (workspace.MainFunction.ReturnValue == null)
                 {
                     builder.Call(cheezMain);
-                    builder.Ret(LLVM.ConstUInt(context.GetIntType(32), 0));
+                    builder.Ret(ValueRef.ConstUInt(TypeRef.GetIntType(32), 0));
                 }
                 else
                 {
@@ -64,7 +63,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                 }
             }
 
-            if (lfunc.VerifyFunction(LLVMVerifierFailureAction.LLVMPrintMessageAction))
+            if (lfunc.VerifyFunction())
             {
                 Console.Error.WriteLine($"in function {lfunc}");
             }
@@ -105,13 +104,14 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             var ltype = CheezTypeToLLVMType(function.Type);
             var lfunc = module.AddFunction(name, ltype);
 
-            lfunc.AddFunctionAttribute(context, AttributeKind.NoInline);
-            lfunc.AddFunctionAttribute(context, AttributeKind.NoUnwind);
+            // TODO
+            //lfunc.AddFunctionAttribute(context, LLVMAttributeKind.NoInline);
+            //lfunc.AddFunctionAttribute(context, LLVMAttributeKind.NoUnwind);
 
             var ccDir = function.GetDirective("stdcall");
             if (ccDir != null)
             {
-                lfunc.SetCallConv(LLVMCallConv.LLVMX86StdcallCallConv);
+                lfunc.SetCallConv(LLVMCallConv.X86Stdcall);
             }
 
             valueMap[function] = lfunc;
@@ -135,7 +135,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
             // generate body
             {
-                var builder = new IRBuilder();
+                var builder = IRBuilder.Create();
                 this.builder = builder;
                 
                 var bbParams = lfunc.AppendBasicBlock("params");
@@ -196,22 +196,22 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             }
 
             // remove empty basic blocks
-            
-            var bb = lfunc.GetFirstBasicBlock();
-            while (!bb.IsNull())
-            {
-                var first = bb.GetFirstInstruction();
+            // TODO
+            //var bb = lfunc.GetFirstBasicBlock();
+            //while (!bb.IsNull())
+            //{
+            //    var first = bb.GetFirstInstruction();
 
-                if (bb.GetTerminator().IsNull())
-                {
-                    var b = new IRBuilder();
-                    b.PositionAtEnd(bb);
-                    b.Unreachable();
-                    b.Dispose();
-                }
+            //    if (bb.GetTerminator().IsNull())
+            //    {
+            //        var b = IRBuilder.Create();
+            //        b.PositionAtEnd(bb);
+            //        b.Unreachable();
+            //        b.Dispose();
+            //    }
 
-                bb = bb.GetNextBasicBlock();
-            }
+            //    bb = bb.GetNextBasicBlock();
+            //}
 
             // TODO
             //if (lfunc.VerifyFunction(LLVMVerifierFailureAction.LLVMPrintMessageAction))
@@ -226,6 +226,8 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
         private void InitGlobalVariable(AstVariableDecl decl, HashSet<AstVariableDecl> visited)
         {
+            return; // TODO
+
             if (visited.Contains(decl))
                 return;
 
@@ -245,10 +247,10 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                     var type = CheezTypeToLLVMType(decl.Type);
 
                     varPtr = module.AddGlobal(type, v.Name.Name);
-                    varPtr.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
+                    varPtr.SetLinkage(LinkageTypes.InternalLinkage);
 
                     var dExtern = decl.GetDirective("extern");
-                    if (dExtern != null) varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
+                    if (dExtern != null) varPtr.SetLinkage(LinkageTypes.ExternalLinkage);
 
                     varPtr.SetInitializer(GetDefaultLLVMValue(decl.Type));
                     valueMap[v] = varPtr;
@@ -355,7 +357,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
         public override ValueRef VisitCharLiteralExpr(AstCharLiteral expr, LLVMCodeGeneratorNewContext data = default)
         {
             var ch = expr.CharValue;
-            var val = LLVM.ConstInt(context.GetIntType(8), ch);
+            var val = ValueRef.ConstInt(TypeRef.GetIntType(8), ch);
             return val;
         }
 
@@ -370,12 +372,12 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             if (num.Type is IntType)
             {
                 var val = num.Data.ToUlong();
-                return LLVM.ConstInt(llvmType, val, false);
+                return ValueRef.ConstUInt(llvmType, val);
             }
             else
             {
                 var val = num.Data.ToDouble();
-                var result = LLVM.ConstReal(llvmType, val);
+                var result = ValueRef.ConstFloat(llvmType, val);
                 return result;
             }
         }

@@ -6,18 +6,13 @@
 
 #include <fstream>
 
-DLL_API llvm::Module* llvm_create_module(const char* name, llvm::LLVMContext* context) {
-    auto modPtr = new llvm::Module(name, *context);
-#if DEBUG
-    std::cout << "llvm_create_module() => " << (long long)modPtr << std::endl;
-#endif
+DLL_API llvm::Module* llvm_create_module(const char* name) {
+    auto modPtr = new llvm::Module(name, get_global_context());
     return modPtr;
 }
 
 DLL_API void llvm_delete_module(llvm::Module* mod) {
-#if DEBUG
-    std::cout << "llvm_delete_module(" << (long long)modPtr << ")" << std::endl;
-#endif
+    delete mod;
 }
 
 DLL_API void llvm_module_set_target_triple(llvm::Module* mod, const char* targetTriple) {
@@ -28,6 +23,14 @@ DLL_API void llvm_module_get_target_triple(llvm::Module* mod, const char** data,
     auto& tt = mod->getTargetTriple();
     *data = tt.data();
     *length = tt.size();
+}
+
+DLL_API llvm::Constant* llvm_module_get_or_add_global(llvm::Module* mod, const char* name, llvm::Type* type) {
+    return mod->getOrInsertGlobal(name, type);
+}
+
+DLL_API llvm::Constant* llvm_module_get_or_add_function(llvm::Module* mod, const char* name, llvm::FunctionType* type) {
+    return mod->getOrInsertFunction(name, type);
 }
 
 DLL_API bool llvm_module_print_to_file(llvm::Module* mod, const char* path) {
@@ -44,10 +47,4 @@ DLL_API bool llvm_module_print_to_file(llvm::Module* mod, const char* path) {
     pmp.run(*mod, am);
 
     return true;
-}
-
-void test() {
-    llvm::LLVMContext context;
-    llvm::Module m("test", context);
-    //m.set
 }

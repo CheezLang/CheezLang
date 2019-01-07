@@ -2,21 +2,11 @@
 
 #include "llvm\IR\LLVMContext.h"
 
-#if DEBUG
-#include <iostream>
-#endif
+llvm::LLVMContext& get_global_context() {
+    static llvm::LLVMContext* global_context = nullptr;
+    if (global_context == nullptr) {
+        global_context = new llvm::LLVMContext();
+    }
 
-DLL_API void* llvm_create_context() {
-    auto conPtr =  new llvm::LLVMContext();
-#if DEBUG
-    std::cout << "llvm_create_context() => " << (long long)conPtr << std::endl;
-#endif
-    return (void*)conPtr;
-}
-
-DLL_API void llvm_delete_context(void* conPtr) {
-#if DEBUG
-    std::cout << "llvm_delete_context(" << (long long)conPtr << ")" << std::endl;
-#endif
-    delete static_cast<llvm::LLVMContext*>(conPtr);
+    return *global_context;
 }

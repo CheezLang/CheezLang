@@ -21,8 +21,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
         private string outDir;
 
         private bool emitDebugInfo = false;
-
-        private Context context;
+        
         private Module module;
         private DataLayout targetData;
 
@@ -138,13 +137,12 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             this.emitDebugInfo = !optimize;
 
             module = new Module("test-module");
-            context = module.Context;
             targetTriple = "i386-pc-win32";
             module.SetTargetTriple(targetTriple);
             targetData = new DataLayout(module);
 
             
-            pointerType = context.GetIntType(8).GetPointerTo();
+            pointerType = TypeRef.GetIntType(8).GetPointerTo();
             // generate code
             {
                 GenerateTypes();
@@ -173,15 +171,15 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             }
 
             // emit machine code to object file
-            //TargetExt.InitializeX86Target();
-            //{
-            //    var objFile = Path.Combine(intDir, targetFile + ".obj");
+            Target.InitializeAll();
+            {
+                var objFile = Path.Combine(intDir, targetFile + ".obj");
 
-            //    var targetMachine = TargetMachineExt.FromTriple(targetTriple);
-            //    targetMachine.EmitToFile(module, objFile);
-
-            //    targetMachine.Dispose();
-            //}
+                var target = Target.FromTargetTriple(targetTriple);
+                var targetMachine = new TargetMachine(target, targetTriple);
+                targetMachine.EmitModule(module, objFile);
+                targetMachine.Dispose();
+            }
 
             module.Dispose();
             return true;

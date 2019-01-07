@@ -1,12 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace LLVMCS
 {
     public class BasicBlockRef
     {
-        unsafe private void* instance;
+        unsafe internal void* instance;
+
+        unsafe public BasicBlockRef(void* instance)
+        {
+            this.instance = instance;
+        }
 
         public bool IsNull()
         {

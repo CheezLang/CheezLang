@@ -16,14 +16,17 @@ namespace Test
 
             var dl = new DataLayout(module);
 
-            var str = module.Context.GetNamedStruct("test_struct");
-            module.Context.SetStructBody(str, new TypeRef[]
+            var str = TypeRef.GetNamedStruct("test_struct");
+            TypeRef.SetStructBody(str, new TypeRef[]
             {
-                module.Context.GetIntType(32),
-                module.Context.GetIntType(64),
-                module.Context.GetIntType(1),
-                module.Context.GetFloatType(32).GetPointerTo()
+                TypeRef.GetIntType(32),
+                TypeRef.GetIntType(64),
+                TypeRef.GetIntType(1),
+                TypeRef.GetFloatType(32).GetPointerTo()
             });
+
+            var test = module.AddGlobal(str, "test");
+            test.SetLinkage(LinkageTypes.CommonLinkage);
 
             module.PrintToFile("test.ll");
 
