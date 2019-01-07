@@ -171,14 +171,9 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             }
 
             // emit machine code to object file
-            Target.InitializeAll();
             {
                 var objFile = Path.Combine(intDir, targetFile + ".obj");
-
-                var target = Target.FromTargetTriple(targetTriple);
-                var targetMachine = new TargetMachine(target, targetTriple);
-                targetMachine.EmitModule(module, objFile);
-                targetMachine.Dispose();
+                module.EmitToObj(objFile);
             }
 
             module.Dispose();

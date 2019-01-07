@@ -63,7 +63,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                 }
             }
 
-            if (lfunc.VerifyFunction())
+            if (!lfunc.VerifyFunction())
             {
                 Console.Error.WriteLine($"in function {lfunc}");
             }

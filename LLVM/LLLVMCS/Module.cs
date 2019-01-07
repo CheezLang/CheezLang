@@ -27,6 +27,9 @@ namespace LLVMCS
         [DllImport(DLL.LLVM_DLL_NAME, CallingConvention = DLL.LLVM_DLL_CALLING_CONVENTION, CharSet = DLL.LLVM_DLL_CHAR_SET)]
         private unsafe extern static void* llvm_module_get_or_add_function(void* mod, string name, void* type);
 
+        [DllImport(DLL.LLVM_DLL_NAME, CallingConvention = DLL.LLVM_DLL_CALLING_CONVENTION, CharSet = DLL.LLVM_DLL_CHAR_SET)]
+        private unsafe extern static bool llvm_module_emit_to_obj(void* module, string filepath, string cpu, string features);
+
         unsafe internal void* instance;
 
         public string Name { get; }
@@ -76,6 +79,14 @@ namespace LLVMCS
                 
                 var targetTriple = new string(data, 0, length, Encoding.ASCII);
                 return targetTriple;
+            }
+        }
+
+        public bool EmitToObj(string filename, string cpu = "generic", string features = "")
+        {
+            unsafe
+            {
+                return llvm_module_emit_to_obj(instance, filename, cpu, features);
             }
         }
 
