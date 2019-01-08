@@ -216,6 +216,12 @@ namespace Cheez.Visitors
 
         #region Expressions
 
+        public override string VisitTupleExpr(AstTupleExpr expr, int data = 0)
+        {
+            var members = string.Join(", ", expr.Values.Select(v => v.Accept(this)));
+            return "(" + members + ")";
+        }
+
         public override string VisitArrayExpr(AstArrayExpr arr, int data = 0)
         {
             var vals = string.Join(", ", arr.Values.Select(v => v.Accept(this)));
@@ -365,6 +371,12 @@ namespace Cheez.Visitors
         #endregion
 
         #region Type expressions
+
+        public override string VisitTupleTypeExpr(AstTupleTypeExpr expr, int data = 0)
+        {
+            var members = string.Join(", ", expr.Members.Select(m => m.Accept(this)));
+            return "(" + members + ")";
+        }
 
         public override string VisitSliceTypeExpr(AstSliceTypeExpr type, int data = 0)
         {

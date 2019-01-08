@@ -6,6 +6,7 @@ using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types;
 using Cheez.Types.Abstract;
+using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 
 namespace Cheez
@@ -58,9 +59,34 @@ namespace Cheez
                     InferTypeCallExpr(c, expected, unresolvedDependencies, allDependencies);
                     break;
 
+                case AstTupleExpr t:
+                    InferTypeTupleExpr(t, expected, unresolvedDependencies, allDependencies);
+                    break;
+
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private void InferTypeTupleExpr(AstTupleExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        {
+            TupleType tupleType = expected as TupleType;
+            if (tupleType?.Members?.Length != expr.Values.Count) tupleType = null;
+
+            var members = new (string, CheezType type)[expr.Values.Count];
+            for (int i = 0; i < expr.Values.Count; i++)
+            {
+                var v = expr.Values[i];
+                var e = tupleType?.Members[i].type;
+                InferTypes(v, e, unresolvedDependencies, allDependencies);
+
+                // TODO: do somewhere else
+                ConvertLiteralTypeToDefaultType(v);
+
+                members[i].type = v.Type;
+            }
+
+            expr.Type = TupleType.GetTuple(members);
         }
 
         private void InferTypeCallExpr(AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
@@ -166,13 +192,13 @@ namespace Cheez
             {
                 if (expected != null && (expected is IntType || expected is FloatType)) expr.Type = expected;
                 else expr.Type = IntType.LiteralType;
-                expr.Value = expr.Data.ToLong();
+                expr.Value = expr.Data;
             }
             else
             {
                 if (expected != null && expected is FloatType) expr.Type = expected;
                 else expr.Type = FloatType.LiteralType;
-                expr.Value = expr.Data.ToDouble();
+                expr.Value = expr.Data;
             }
         }
     }

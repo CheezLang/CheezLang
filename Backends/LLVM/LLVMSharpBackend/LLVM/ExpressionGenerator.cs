@@ -8,15 +8,51 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
     public partial class LLVMCodeGenerator
     {
 
-        private LLVMValueRef GenerateExpression(AstExpression stmt, bool deref)
+        private LLVMValueRef? GenerateExpression(AstExpression stmt, LLVMValueRef? target, bool deref)
         {
             switch (stmt)
             {
                 case AstNumberExpr n: return GenerateNumberExpr(n);
                 case AstIdExpr i: return GenerateIdExpr(i, deref);
                 case AstCharLiteral ch: return GenerateCharLiteralExpr(ch);
+                case AstTupleExpr t: return GenerateTupleExpr(t, target, deref);
             }
             return default;
+        }
+
+        public LLVMValueRef? GenerateTupleExpr(AstTupleExpr expr, LLVMValueRef? maybeTarget, bool deref)
+        {
+            if (maybeTarget != null)
+            {
+                var target = maybeTarget.Value;
+                for (int i = 0; i < expr.Values.Count; i++)
+                {
+                    var memberPtr = builder.CreateStructGEP(target, (uint)i, "");
+                    var v = GenerateExpression(expr.Values[i], memberPtr, true);
+                    if (v != null)
+                    {
+                        builder.CreateStore(v.Value, memberPtr);
+                    }
+                }
+                return null;
+            }
+            else
+            {
+                var tempVar = CreateLocalVariable(expr.Type);
+                for (int i = 0; i < expr.Values.Count; i++)
+                {
+                    var memberPtr = builder.CreateStructGEP(tempVar, (uint)i, "");
+                    var v = GenerateExpression(expr.Values[i], memberPtr, true);
+                    if (v != null)
+                    {
+                        builder.CreateStore(v.Value, memberPtr);
+                    }
+                }
+
+                if (deref)
+                    tempVar = builder.CreateLoad(tempVar, "");
+                return tempVar;
+            }
         }
 
         public LLVMValueRef GenerateCharLiteralExpr(AstCharLiteral expr)

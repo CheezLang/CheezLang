@@ -1,4 +1,5 @@
-﻿using Cheez.Types;
+﻿using Cheez.Extras;
+using Cheez.Types;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using LLVMSharp;
@@ -74,7 +75,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             var bb = currentLLVMFunction.GetFirstBasicBlock();
             var brInst = bb.GetLastInstruction();
-            builder.PositionBuilderBefore(brInst);
+            if (brInst.Pointer.ToInt64() == 0)
+                builder.PositionBuilderAtEnd(bb);
+            else
+                builder.PositionBuilderBefore(brInst);
 
             var type = CheezTypeToLLVMType(exprType);
             var result = builder.CreateAlloca(type, "");
@@ -216,6 +220,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             switch (type)
             {
                 case CharType _: return LLVM.ConstInt(CheezTypeToLLVMType(type), (char)v, false);
+                case IntType i: return LLVM.ConstInt(CheezTypeToLLVMType(type), ((NumberData)v).ToUlong(), i.Signed);
             }
 
             throw new NotImplementedException();

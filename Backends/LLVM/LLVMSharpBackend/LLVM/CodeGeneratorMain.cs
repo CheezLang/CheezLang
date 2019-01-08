@@ -184,6 +184,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var lfunc = module.AddFunction("main", ltype);
             var entry = lfunc.AppendBasicBlock("entry");
 
+            currentLLVMFunction = lfunc;
+
             builder = new IRBuilder();
             builder.PositionBuilderAtEnd(entry);
 
@@ -210,12 +212,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     builder.CreateRet(exitCode);
                 }
             }
-
-
-            //if (LLVM.VerifyFunction(lfunc, LLVMVerifierFailureAction.LLVMPrintMessageAction))
-            //{
-            //    Console.Error.WriteLine($"in function {lfunc}");
-            //}
 
             builder.Dispose();
         }

@@ -218,8 +218,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 // do initialization TODO: other patterns
                 if (decl.Initializer != null && v.Value == null)
                 {
-                    var val = GenerateExpression(decl.Initializer, true);
-                    builder.CreateStore(val, varPtr);
+                    var val = GenerateExpression(decl.Initializer, varPtr, true);
+                    if (val != null) builder.CreateStore(val.Value, varPtr);
                 }
             }
 

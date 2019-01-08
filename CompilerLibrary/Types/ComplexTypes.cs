@@ -34,27 +34,28 @@ namespace Cheez.Types.Complex
 
         public static TupleType GetTuple((string name, CheezType type)[] members)
         {
-            var f = sTypes.FirstOrDefault(ft =>
-            {
-                if (ft.Members.Length != members.Length)
-                    return false;
+            return new TupleType(members);
+            //var f = sTypes.FirstOrDefault(ft =>
+            //{
+            //    if (ft.Members.Length != members.Length)
+            //        return false;
 
-                return ft.Members.Zip(members, (a, b) => a.type == b.type).All(b => b);
-            });
+            //    return ft.Members.Zip(members, (a, b) => a.type == b.type).All(b => b);
+            //});
 
-            if (f != null)
-                return f;
+            //if (f != null)
+            //    return f;
 
-            var type = new TupleType(members);
-            sTypes.Add(type);
-            return type;
+            //var type = new TupleType(members);
+            //sTypes.Add(type);
+            //return type;
         }
 
-        public static TupleType GetTuple(CheezType[] types)
-        {
-            var members = types.Select(t => (null as string, t)).ToArray();
-            return GetTuple(members);
-        }
+        //public static TupleType GetTuple(CheezType[] types)
+        //{
+        //    var members = types.Select(t => (null as string, t)).ToArray();
+        //    return GetTuple(members);
+        //}
 
         public override string ToString()
         {

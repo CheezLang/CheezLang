@@ -365,6 +365,23 @@ namespace Cheez.Ast.Expressions
         public override AstExpression Clone() => CopyValuesTo(new AstNullExpr());
     }
 
+    public class AstTupleExpr : AstExpression
+    {
+        public override bool IsPolymorphic => false;
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTupleExpr(this, data);
+
+        public List<AstExpression> Values { get; set; }
+
+        public AstTupleExpr(List<AstExpression> values, ILocation Location)
+            : base(Location)
+        {
+            this.Values = values;
+        }
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstTupleExpr(Values.Select(v => v.Clone()).ToList(), Location));
+    }
+
     public class AstNumberExpr : AstExpression
     {
         private NumberData mData;

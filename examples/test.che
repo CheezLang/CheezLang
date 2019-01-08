@@ -8,13 +8,13 @@
 //     return b, a
 // }
 
-// fn swap2(a: int, b: int) -> (a_out: int, b_out: int) {
-//     a_out = b
-//     b_out = a
-// }
+fn swap2(a: int, b: int) -> (a_out: int, b_out: int) {
+    a_out = b
+    b_out = a
+}
 
 
-let a: (int, int) = (1, 2)
+let a: (int, int) = (5, 6)
 
 
 fn Main() {

@@ -1532,8 +1532,37 @@ namespace Cheez.Parsing
                         SkipNewlines();
                         var sub = ParseExpression(errorMessage);
                         SkipNewlines();
-                        Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression"));
-                        return sub;
+
+                        if (CheckToken(TokenType.ClosingParen))
+                        {
+                            Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression"));
+                            return sub;
+                        }
+
+                        var tupleValues = new List<AstExpression>() { sub };
+                        while (true)
+                        {
+                            var next = PeekToken();
+                            if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
+                                break;
+                            else if (next.type == TokenType.Comma)
+                            {
+                                NextToken();
+                                SkipNewlines();
+                            }
+                            else
+                            {
+                                ReportError(next.location, $"Unexpected token ({next})");
+                                NextToken();
+                            }
+                            var expr = ParseExpression();
+                            if (expr != null)
+                                tupleValues.Add(expr);
+                            SkipNewlines();
+                        }
+
+                        var end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression")).location;
+                        return new AstTupleExpr(tupleValues, new Location(token.location, end));
                     }
 
                 default:

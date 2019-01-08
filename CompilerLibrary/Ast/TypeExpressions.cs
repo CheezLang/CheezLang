@@ -159,7 +159,7 @@ namespace Cheez.Ast.Expressions.Types
             this.Members = members;
         }
 
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => throw new System.NotImplementedException();
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTupleTypeExpr(this, data);
 
         public override AstExpression Clone()
             => CopyValuesTo(new AstTupleTypeExpr(Members.Select(m => m.Clone()).ToList(), Location));
