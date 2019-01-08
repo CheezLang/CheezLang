@@ -7,7 +7,7 @@ using Cheez.Ast.Statements;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 
-namespace Cheez.Compiler
+namespace Cheez
 {
     public partial class Workspace
     {

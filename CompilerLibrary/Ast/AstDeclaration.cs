@@ -1,6 +1,5 @@
 ﻿using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
-using Cheez.Compiler;
 using Cheez.Types;
 using Cheez.Types.Complex;
 using Cheez.Visitors;

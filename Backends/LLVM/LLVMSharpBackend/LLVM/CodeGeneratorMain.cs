@@ -1,6 +1,4 @@
 ﻿using Cheez.Ast.Statements;
-using Cheez.Compiler;
-using Cheez.Compiler.CodeGeneration;
 using Cheez.Types;
 using LLVMSharp;
 using System;
@@ -14,7 +12,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         public List<LLVMValueRef> Targets;
     }
 
-    public partial class LLVMCodeGenerator : Visitors.VisitorBase<LLVMValueRef, LLVMCodeGeneratorNewContext>, ICodeGenerator
+    public partial class LLVMCodeGenerator : ICodeGenerator
     {
 
         private Workspace workspace;
@@ -87,11 +85,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 Directory.CreateDirectory(intDir);
 
             // run optimizations
-            if (optimize)
+            if (optimize) // TODO
             {
                 Console.WriteLine("[LLVM] Running optimizations...");
                 var (modifiedFunctions, modifiedModule) = RunOptimizations(3);
-                //RunOptimizationsCustom();
 
                 Console.WriteLine($"[LLVM] {modifiedFunctions} functions where modified during optimization.");
                 if (!modifiedModule) Console.WriteLine($"[LLVM] Module was not modified during optimization.");
@@ -184,6 +181,48 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var modPM = LLVM.CreatePassManager();
             var r = LLVM.RunPassManager(modPM, module.GetModuleRef());
             return (modifiedFunctions, r);
+        }
+
+        private void GenerateMainFunction()
+        {
+            var ltype = LLVM.FunctionType(LLVM.Int32Type(), new LLVMTypeRef[0], false);
+            var lfunc = module.AddFunction("main", ltype);
+            var entry = lfunc.AppendBasicBlock("entry");
+
+            builder = new IRBuilder();
+            builder.PositionBuilderAtEnd(entry);
+
+            {
+                var visited = new HashSet<AstVariableDecl>();
+
+                // init global variables
+                foreach (var gv in workspace.GlobalScope.VariableDeclarations)
+                {
+                    InitGlobalVariable(gv, visited);
+                }
+            }
+
+            { // call main function
+                var cheezMain = valueMap[workspace.MainFunction];
+                if (workspace.MainFunction.ReturnValue == null)
+                {
+                    builder.CreateCall(cheezMain, new LLVMValueRef[0], "");
+                    builder.CreateRet(LLVM.ConstInt(LLVM.Int32Type(), 0, false));
+                }
+                else
+                {
+                    var exitCode = builder.CreateCall(cheezMain, new LLVMValueRef[0], "exitCode");
+                    builder.CreateRet(exitCode);
+                }
+            }
+
+
+            if (LLVM.VerifyFunction(lfunc, LLVMVerifierFailureAction.LLVMPrintMessageAction))
+            {
+                Console.Error.WriteLine($"in function {lfunc}");
+            }
+
+            builder.Dispose();
         }
     }
 }

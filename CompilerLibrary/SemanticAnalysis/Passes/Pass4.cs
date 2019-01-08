@@ -3,7 +3,7 @@ using Cheez.Ast.Statements;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 
-namespace Cheez.Compiler
+namespace Cheez
 {
     /// <summary>
     /// This pass resolves function signatures

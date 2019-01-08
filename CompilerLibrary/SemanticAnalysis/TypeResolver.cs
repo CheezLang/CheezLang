@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace Cheez.Compiler
+namespace Cheez
 {
     public partial class Workspace
     {

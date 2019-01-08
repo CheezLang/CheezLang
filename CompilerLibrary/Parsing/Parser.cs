@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace Cheez.Compiler.Parsing
+namespace Cheez.Parsing
 {
     public class Parser
     {

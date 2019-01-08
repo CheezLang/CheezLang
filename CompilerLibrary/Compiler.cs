@@ -1,14 +1,14 @@
 ﻿using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
-using Cheez.Compiler.Parsing;
+using Cheez.Parsing;
 using Cheez.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-namespace Cheez.Compiler
+namespace Cheez
 {
     public class PTFile : IText
     {
@@ -37,7 +37,7 @@ namespace Cheez.Compiler
         }
     }
 
-    public class Compiler : ITextProvider
+    public class CheezCompiler : ITextProvider
     {
         private Dictionary<string, PTFile> mFiles = new Dictionary<string, PTFile>();
         private Dictionary<string, Lexer> mLoadingFiles = new Dictionary<string, Lexer>();
@@ -48,7 +48,7 @@ namespace Cheez.Compiler
         private Workspace mMainWorkspace;
         public Workspace DefaultWorkspace => mMainWorkspace;
 
-        public Compiler(IErrorHandler errorHandler, string stdlib)
+        public CheezCompiler(IErrorHandler errorHandler, string stdlib)
         {
             ErrorHandler = errorHandler;
             mMainWorkspace = new Workspace(this);

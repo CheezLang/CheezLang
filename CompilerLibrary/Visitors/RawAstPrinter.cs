@@ -4,7 +4,6 @@ using System.Text;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
-using Cheez.Compiler;
 using Cheez.Util;
 
 namespace Cheez.Visitors

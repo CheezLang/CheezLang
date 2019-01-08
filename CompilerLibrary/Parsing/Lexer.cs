@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using Cheez.Ast;
 using Cheez.Extras;
 
-namespace Cheez.Compiler.Parsing
+namespace Cheez.Parsing
 {
     public enum TokenType
     {

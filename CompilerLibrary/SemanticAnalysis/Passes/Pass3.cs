@@ -2,7 +2,7 @@
 using Cheez.Types.Complex;
 using System.Collections.Generic;
 
-namespace Cheez.Compiler
+namespace Cheez
 {
     /// <summary>
     /// This pass resolves the types of struct members

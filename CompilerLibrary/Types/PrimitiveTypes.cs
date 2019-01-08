@@ -1,5 +1,4 @@
-﻿using Cheez.Compiler;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Cheez.Types.Primitive

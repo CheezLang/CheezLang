@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Cheez.Compiler.CodeGeneration
+namespace Cheez.CodeGeneration
 {
     public interface ICodeGenerator
     {

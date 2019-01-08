@@ -3,7 +3,6 @@ using System.Linq;
 using System.Text;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
-using Cheez.Compiler;
 using Cheez.Util;
 
 namespace Cheez.Visitors

@@ -1,9 +1,9 @@
 ﻿using Cheez.Ast;
-using Cheez.Compiler.Parsing;
+using Cheez.Parsing;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Cheez.Compiler
+namespace Cheez
 {
     public interface ITextProvider
     {

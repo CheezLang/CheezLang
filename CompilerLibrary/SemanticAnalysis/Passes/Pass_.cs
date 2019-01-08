@@ -1,4 +1,4 @@
-﻿namespace Cheez.Compiler
+﻿namespace Cheez
 {
     public partial class Workspace
     {

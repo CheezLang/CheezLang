@@ -6,12 +6,12 @@ using Cheez.Util;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Cheez.Compiler
+namespace Cheez
 {
     public partial class Workspace
     {
         private Dictionary<string, PTFile> mFiles = new Dictionary<string, PTFile>();
-        private Compiler mCompiler;
+        private CheezCompiler mCompiler;
 
         public IEnumerable<PTFile> Files => mFiles.Select(kv => kv.Value);
 
@@ -29,7 +29,7 @@ namespace Cheez.Compiler
         public int MaxPolyStructResolveStepCount { get; set; } = 10;
         public int MaxPolyFuncResolveStepCount { get; set; } = 10;
 
-        public Workspace(Compiler comp)
+        public Workspace(CheezCompiler comp)
         {
             mCompiler = comp;
         }

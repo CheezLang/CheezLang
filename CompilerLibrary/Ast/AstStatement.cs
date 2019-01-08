@@ -1,5 +1,4 @@
 ﻿using Cheez.Ast.Expressions;
-using Cheez.Compiler;
 using Cheez.Visitors;
 using System.Collections.Generic;
 using System.Diagnostics;

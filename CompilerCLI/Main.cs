@@ -1,5 +1,4 @@
-﻿using Cheez.Compiler.CodeGeneration;
-using Cheez.Compiler;
+﻿using Cheez.CodeGeneration;
 using System.Diagnostics;
 using System.IO;
 using System;
@@ -10,6 +9,7 @@ using System.Linq;
 using Cheez.Visitors;
 using Cheez.Util;
 using Cheez.CodeGeneration.LLVMCodeGen;
+using Cheez;
 
 namespace CheezCLI
 {
@@ -163,7 +163,7 @@ namespace CheezCLI
 
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var compiler = new Compiler(errorHandler, options.Stdlib);
+            var compiler = new CheezCompiler(errorHandler, options.Stdlib);
             foreach (string mod in options.Modules)
             {
                 var parts = mod.Split(':');

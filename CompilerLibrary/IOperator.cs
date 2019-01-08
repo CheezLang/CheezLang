@@ -2,7 +2,7 @@
 using Cheez.Types.Primitive;
 using System;
 
-namespace Cheez.Compiler
+namespace Cheez
 {
     public interface IOperator
     {

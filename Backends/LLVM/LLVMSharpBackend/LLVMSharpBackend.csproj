@@ -111,9 +111,10 @@
   <ItemGroup>
     <Compile Include="LLVMCodeGenerator.cs" />
     <Compile Include="LLVM\AttributeKind.cs" />
-    <Compile Include="LLVM\CodeGenerator.cs" />
+    <Compile Include="LLVM\StatementGenerator.cs" />
     <Compile Include="LLVM\CodeGeneratorHelpers.cs" />
     <Compile Include="LLVM\CodeGeneratorMain.cs" />
+    <Compile Include="LLVM\ExpressionGenerator.cs" />
     <Compile Include="LLVM\Extensions.cs" />
     <Compile Include="LLVM\Linker.cs" />
     <Compile Include="OS.cs" />

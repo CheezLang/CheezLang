@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using Cheez.Compiler;
-using Cheez.Compiler.CodeGeneration;
+using Cheez.CodeGeneration;
 using Cheez.Visitors;
+using Cheez;
 
 namespace DummyBackend
 {

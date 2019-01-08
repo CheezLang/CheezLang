@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Cheez.Compiler
+namespace Cheez
 {
     public interface INamed
     {
