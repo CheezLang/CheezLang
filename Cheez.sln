@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheezCompiler", "CheezCompi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompilerCLI", "CompilerCLI\CompilerCLI.csproj", "{7E8D323A-959C-4387-8405-184081032D62}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheezLanguageServer", "LanguageServer\Server\CheezLanguageServer.csproj", "{B43C7AC6-EAF2-4B9A-B44F-87513E089FB5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheezLanguageServer", "Tools\LanguageServer\Server\CheezLanguageServer.csproj", "{B43C7AC6-EAF2-4B9A-B44F-87513E089FB5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LLVMWrapper", "Backends\LLVM\LLVMWrapper\LLVMWrapper.vcxproj", "{8DE55F05-064D-4861-8361-CF3F72665788}"
 EndProject
