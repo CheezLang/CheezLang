@@ -5,7 +5,6 @@ using System.Linq;
 
 namespace Cheez.Types.Complex
 {
-
     public class TraitType : CheezType
     {
         public AstTraitDeclaration Declaration { get; }
@@ -19,6 +18,53 @@ namespace Cheez.Types.Complex
         }
 
         public override string ToString() => Declaration.Name.Name;
+    }
+
+    public class TupleType : CheezType
+    {
+        private static List<TupleType> sTypes = new List<TupleType>();
+
+        public (string name, CheezType type)[] Members { get; }
+        public override bool IsPolyType => false;
+
+        private TupleType((string name, CheezType type)[] members)
+        {
+            Members = members;
+        }
+
+        public static TupleType GetTuple((string name, CheezType type)[] members)
+        {
+            var f = sTypes.FirstOrDefault(ft =>
+            {
+                if (ft.Members.Length != members.Length)
+                    return false;
+
+                return ft.Members.Zip(members, (a, b) => a.type == b.type).All(b => b);
+            });
+
+            if (f != null)
+                return f;
+
+            var type = new TupleType(members);
+            sTypes.Add(type);
+            return type;
+        }
+
+        public static TupleType GetTuple(CheezType[] types)
+        {
+            var members = types.Select(t => (null as string, t)).ToArray();
+            return GetTuple(members);
+        }
+
+        public override string ToString()
+        {
+            var members = string.Join(", ", Members.Select(m =>
+            {
+                if (m.name != null) return m.name + ": " + m.type.ToString();
+                return m.type.ToString();
+            }));
+            return "(" + members + ")";
+        }
     }
 
     public class StructType : CheezType
