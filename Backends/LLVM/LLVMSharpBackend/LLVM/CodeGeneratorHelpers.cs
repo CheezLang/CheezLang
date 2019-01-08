@@ -1,29 +1,32 @@
-﻿using LLVMCS;
+﻿using Cheez.Types;
+using Cheez.Types.Complex;
+using Cheez.Types.Primitive;
+using LLVMSharp;
 using System;
 using System.Linq;
 
-namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
+namespace Cheez.CodeGeneration.LLVMCodeGen
 {
-    public partial class LLVMCodeGeneratorNew
+    public partial class LLVMCodeGenerator
     {
         private void GenerateIntrinsicDeclarations()
         {
-            memcpy32 = GenerateIntrinsicDeclaration("llvm.memcpy.p0i8.p0i8.i32", TypeRef.GetVoidType(),
-                TypeRef.GetIntType(8).GetPointerTo(),
-                TypeRef.GetIntType(8).GetPointerTo(),
-                TypeRef.GetIntType(32),
-                TypeRef.GetIntType(1));
+            memcpy32 = GenerateIntrinsicDeclaration("llvm.memcpy.p0i8.p0i8.i32", LLVM.VoidType(),
+                LLVM.Int8Type().GetPointerTo(),
+                LLVM.Int8Type().GetPointerTo(),
+                LLVM.Int32Type(),
+                LLVM.Int1Type());
 
-            memcpy64 = GenerateIntrinsicDeclaration("llvm.memcpy.p0i8.p0i8.i64", TypeRef.GetVoidType(),
-                TypeRef.GetIntType(8).GetPointerTo(),
-                TypeRef.GetIntType(8).GetPointerTo(),
-                TypeRef.GetIntType(64),
-                TypeRef.GetIntType(1));
+            memcpy64 = GenerateIntrinsicDeclaration("llvm.memcpy.p0i8.p0i8.i64", LLVM.VoidType(),
+                LLVM.Int8Type().GetPointerTo(),
+                LLVM.Int8Type().GetPointerTo(),
+                LLVM.Int64Type(),
+                LLVM.Int1Type());
         }
 
-        private ValueRef GenerateIntrinsicDeclaration(string name, TypeRef retType, params TypeRef[] paramTypes)
+        private LLVMValueRef GenerateIntrinsicDeclaration(string name, LLVMTypeRef retType, params LLVMTypeRef[] paramTypes)
         {
-            var ltype = TypeRef.GetFunctionType(retType, paramTypes);
+            var ltype = LLVM.FunctionType(retType, paramTypes, false);
             var lfunc = module.AddFunction(name, ltype);
             return lfunc;
         }
@@ -47,7 +50,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             }
         }
 
-        private TypeRef ParamTypeToLLVMType(CheezType ct)
+        private LLVMTypeRef ParamTypeToLLVMType(CheezType ct)
         {
             var t = CheezTypeToLLVMType(ct);
             if (!CanPassByValue(ct))
@@ -55,7 +58,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             return t;
         }
 
-        private ValueRef CreateLocalVariable(ITypedSymbol sym)
+        private LLVMValueRef CreateLocalVariable(ITypedSymbol sym)
         {
             if (valueMap.ContainsKey(sym))
                 return valueMap[sym];
@@ -65,40 +68,40 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             return t;
         }
 
-        private ValueRef CreateLocalVariable(CheezType exprType)
+        private LLVMValueRef CreateLocalVariable(CheezType exprType)
         {
             var builder = new IRBuilder();
 
             var bb = currentLLVMFunction.GetFirstBasicBlock();
             var brInst = bb.GetLastInstruction();
-            builder.PositionBefore(brInst);
+            builder.PositionBuilderBefore(brInst);
 
             var type = CheezTypeToLLVMType(exprType);
-            var result = builder.Alloca(type);
-            var alignment = targetData.GetAlignmentOf(type);
+            var result = builder.CreateAlloca(type, "");
+            var alignment = targetData.AlignmentOfType(type);
             result.SetAlignment(alignment);
 
             builder.Dispose();
             return result;
         }
 
-        private void CastIfAny(CheezType targetType, CheezType sourceType, ref ValueRef value)
+        private void CastIfAny(CheezType targetType, CheezType sourceType, ref LLVMValueRef value)
         {
             if (targetType == CheezType.Any && sourceType != CheezType.Any)
             {
                 var type = CheezTypeToLLVMType(targetType);
                 if (sourceType is IntType)
-                    value = builder.IntCast(value, type);
+                    value = builder.CreateIntCast(value, type, "");
                 else if (sourceType is BoolType)
-                    value = builder.ZExtOrBitCast(value, type);
+                    value = builder.CreateZExtOrBitCast(value, type, "");
                 else if (sourceType is PointerType || sourceType is ArrayType)
-                    value = builder.PtrToInt(value, type);
+                    value = builder.CreatePtrToInt(value, type, "");
                 else
                     throw new NotImplementedException("any cast");
             }
         }
 
-        private TypeRef CheezTypeToLLVMType(CheezType ct)
+        private LLVMTypeRef CheezTypeToLLVMType(CheezType ct)
         {
             if (typeMap.TryGetValue(ct, out var tt)) return tt;
             var t = CheezTypeToLLVMTypeHelper(ct);
@@ -106,48 +109,54 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             return t;
         }
 
-        private TypeRef CheezTypeToLLVMTypeHelper(CheezType ct)
+        private LLVMTypeRef CheezTypeToLLVMTypeHelper(CheezType ct)
         {
             switch (ct)
             {
                 case TraitType t:
                     {
-                        var str = TypeRef.GetNamedStruct(t.ToString());
-                        TypeRef.SetStructBody(str,
-                            TypeRef.GetIntType(8).GetPointerTo(),
-                            TypeRef.GetIntType(8).GetPointerTo());
+                        var str = LLVM.StructCreateNamed(context, t.ToString());
+                        LLVM.StructSetBody(str, new LLVMTypeRef[] {
+                            LLVM.Int8Type().GetPointerTo(),
+                            LLVM.Int8Type().GetPointerTo()
+                        }, false);
                         return str;
                     }
 
                 case AnyType a:
-                    return TypeRef.GetIntType(64);
+                    return LLVM.Int64Type();
 
                 case BoolType b:
-                    return TypeRef.GetIntType(1);
+                    return LLVM.Int1Type();
 
                 case IntType i:
-                    return TypeRef.GetIntType(i.Size * 8);
+                    return LLVM.IntType((uint)i.Size * 8);
 
                 case FloatType f:
-                    return TypeRef.GetFloatType(f.Size * 8);
+                    if (f.Size == 32)
+                        return LLVMTypeRef.FloatType();
+                    else if (f.Size == 64)
+                        return LLVMTypeRef.FloatType();
+                    else throw new NotImplementedException();
 
                 case CharType c:
-                    return TypeRef.GetIntType(8);
+                    return LLVM.Int8Type();
 
                 case PointerType p:
                     if (p.TargetType == VoidType.Intance)
-                        return TypeRef.GetIntType(8).GetPointerTo();
+                        return LLVM.Int8Type().GetPointerTo();
                     return CheezTypeToLLVMType(p.TargetType).GetPointerTo();
 
                 case ArrayType a:
-                    return TypeRef.GetArrayType(CheezTypeToLLVMType(a.TargetType), a.Length);
+                    return LLVMTypeRef.ArrayType(CheezTypeToLLVMType(a.TargetType), (uint)a.Length);
 
                 case SliceType s:
                     {
-                        var str = TypeRef.GetNamedStruct(s.ToString());
-                        TypeRef.SetStructBody(str,
+                        var str = LLVM.StructCreateNamed(context, s.ToString());
+                        LLVM.StructSetBody(str, new LLVMTypeRef[] {
                             CheezTypeToLLVMType(s.TargetType).GetPointerTo(),
-                            TypeRef.GetIntType(32));
+                            LLVM.Int32Type()
+                        }, false);
                         return str;
                     }
 
@@ -155,17 +164,13 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                     return CheezTypeToLLVMType(r.TargetType).GetPointerTo();
 
                 case VoidType _:
-                    return TypeRef.GetVoidType();
+                    return LLVM.VoidType();
 
                 case FunctionType f:
                     {
                         var paramTypes = f.ParameterTypes.Select(rt => CheezTypeToLLVMType(rt)).ToList();
                         var returnType = CheezTypeToLLVMType(f.ReturnType);
-
-                        if (f.VarArgs)
-                            return TypeRef.GetFunctionTypeVarargs(returnType, paramTypes.ToArray());
-                        else
-                            return TypeRef.GetFunctionType(returnType, paramTypes.ToArray());
+                        return LLVMTypeRef.FunctionType(returnType, paramTypes.ToArray(), f.VarArgs);
                     }
 
                 case EnumType e:
@@ -176,8 +181,8 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
                 case StructType s:
                     {
                         var memTypes = s.Declaration.Members.Select(m => CheezTypeToLLVMType(m.Type)).ToArray();
-                        var str = TypeRef.GetNamedStruct(s.Declaration.Name.Name);
-                        TypeRef.SetStructBody(str, memTypes);
+                        var str = LLVM.StructCreateNamed(context, s.Declaration.Name.Name);
+                        LLVM.StructSetBody(str, memTypes, false);
                         return str;
                     }
 
@@ -186,70 +191,70 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             }
         }
 
-        private ValueRef GetDefaultLLVMValue(CheezType type)
+        private LLVMValueRef GetDefaultLLVMValue(CheezType type)
         {
             switch (type)
             {
                 case PointerType p:
-                    return ValueRef.ConstIntToPtr(ValueRef.ConstUInt(TypeRef.GetIntType(pointerSize * 8), 0), CheezTypeToLLVMType(type));
+                    return LLVM.ConstIntToPtr(LLVM.ConstInt(LLVM.IntType((uint)pointerSize * 8), 0, false), CheezTypeToLLVMType(type));
 
                 case IntType i:
                     if (i.Signed)
-                        return ValueRef.ConstInt(CheezTypeToLLVMType(type), 0);
+                        return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, true);
                     else
-                        return ValueRef.ConstUInt(CheezTypeToLLVMType(type), 0);
+                        return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
 
                 case BoolType b:
-                    return ValueRef.ConstUInt(CheezTypeToLLVMType(type), 0);
+                    return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
 
                 case FloatType f:
-                    return ValueRef.ConstFloat(CheezTypeToLLVMType(type), 0.0);
+                    return LLVM.ConstReal(CheezTypeToLLVMType(type), 0.0);
 
                 case CharType c:
-                    return ValueRef.ConstUInt(CheezTypeToLLVMType(type), 0);
+                    return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
 
                 case StructType p:
-                    return ValueRef.ConstStruct(p.Declaration.Members.Select(m => GetDefaultLLVMValue(m.Type)).ToArray());
+                    return LLVM.ConstStruct(p.Declaration.Members.Select(m => GetDefaultLLVMValue(m.Type)).ToArray(), false);
 
                 case TraitType t:
-                    return ValueRef.ConstStruct(
-                        ValueRef.ConstNullPointer(TypeRef.GetIntType(8).GetPointerTo()),
-                        ValueRef.ConstNullPointer(TypeRef.GetIntType(8).GetPointerTo())
-                    );
+                    return LLVMValueRef.ConstStruct(new LLVMValueRef[] {
+                        LLVM.ConstPointerNull(LLVM.Int8Type().GetPointerTo()),
+                        LLVM.ConstPointerNull(LLVM.Int8Type().GetPointerTo())
+                    }, false);
 
                 case AnyType a:
-                    return ValueRef.ConstUInt(TypeRef.GetIntType(64), 0);
+                    return LLVM.ConstInt(LLVM.Int64Type(), 0, false);
 
                 case ArrayType a:
                     {
-                        //ValueRef[] vals = new ValueRef[a.Length];
-                        //ValueRef def = GetDefaultLLVMValue(a.TargetType);
-                        //for (int i = 0; i < vals.Length; ++i)
-                        //    vals[i] = def;
+                        LLVMValueRef[] vals = new LLVMValueRef[a.Length];
+                        LLVMValueRef def = GetDefaultLLVMValue(a.TargetType);
+                        for (int i = 0; i < vals.Length; ++i)
+                            vals[i] = def;
 
-                        return ValueRef.ConstZeroArray(CheezTypeToLLVMType(a.TargetType));
+                        return LLVM.ConstArray(CheezTypeToLLVMType(a.TargetType), vals);
                     }
 
                 case SliceType s:
-                    return ValueRef.ConstStruct(
+                    return LLVM.ConstStruct(new LLVMValueRef[] {
                         GetDefaultLLVMValue(s.ToPointerType()),
-                        ValueRef.ConstInt(TypeRef.GetIntType(32), 0)
-                    );
+                        LLVM.ConstInt(LLVM.Int32Type(), 0, true)
+                    }, false);
 
                 default:
                     throw new NotImplementedException();
             }
         }
 
-        private ValueRef GetTempValue(CheezType exprType)
+        private LLVMValueRef GetTempValue(CheezType exprType)
         {
             var builder = new IRBuilder();
 
             var brInst = currentTempBasicBlock.GetLastInstruction();
-            builder.PositionBefore(brInst);
+            builder.PositionBuilderBefore(brInst);
 
             var type = CheezTypeToLLVMType(exprType);
-            var result = builder.Alloca(type);
+            var result = builder.CreateAlloca(type, "");
 
             builder.Dispose();
 

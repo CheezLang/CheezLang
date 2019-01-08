@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\CheezCompiler\CompilerLibrary.csproj" />
+    <ProjectReference Include="..\..\CompilerLibrary\CompilerLibrary.csproj" />
   </ItemGroup>
 
 </Project>

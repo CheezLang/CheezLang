@@ -1,18 +1,20 @@
-﻿using Cheez.Compiler.Ast;
-using Cheez.Compiler.Visitor;
-using LLVMCS;
+﻿using Cheez.Ast.Statements;
+using Cheez.Compiler;
+using Cheez.Compiler.CodeGeneration;
+using Cheez.Types;
+using LLVMSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
+namespace Cheez.CodeGeneration.LLVMCodeGen
 {
     public struct LLVMCodeGeneratorNewContext
     {
-        public List<ValueRef> Targets;
+        public List<LLVMValueRef> Targets;
     }
 
-    public partial class LLVMCodeGeneratorNew : VisitorBase<ValueRef, LLVMCodeGeneratorNewContext>, ICodeGenerator
+    public partial class LLVMCodeGenerator : ICodeGenerator
     {
 
         private Workspace workspace;
@@ -23,29 +25,30 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
         private bool emitDebugInfo = false;
         
         private Module module;
-        private DataLayout targetData;
+        private LLVMContextRef context;
+        private LLVMTargetDataRef targetData;
 
         // <arch><sub>-<vendor>-<sys>-<abi>
         // arch = x86_64, i386, arm, thumb, mips, etc.
         private string targetTriple;
 
-        private Dictionary<CheezType, TypeRef> typeMap = new Dictionary<CheezType, TypeRef>();
-        private Dictionary<object, ValueRef> valueMap = new Dictionary<object, ValueRef>();
+        private Dictionary<CheezType, LLVMTypeRef> typeMap = new Dictionary<CheezType, LLVMTypeRef>();
+        private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
 
         // intrinsics
-        private ValueRef memcpy32;
-        private ValueRef memcpy64;
+        private LLVMValueRef memcpy32;
+        private LLVMValueRef memcpy64;
 
         //
-        private TypeRef pointerType;
+        private LLVMTypeRef pointerType;
         private int pointerSize = 4;
 
         // context
         private AstFunctionDecl currentFunction;
-        private ValueRef currentLLVMFunction;
+        private LLVMValueRef currentLLVMFunction;
         private IRBuilder builder;
-        private Dictionary<object, ValueRef> returnValuePointer = new Dictionary<object, ValueRef>();
-        private BasicBlockRef currentTempBasicBlock;
+        private Dictionary<object, LLVMValueRef> returnValuePointer = new Dictionary<object, LLVMValueRef>();
+        private LLVMBasicBlockRef currentTempBasicBlock;
 
         //private void RunOptimizations(uint level)
         //{
@@ -137,18 +140,18 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             this.emitDebugInfo = !optimize;
 
             module = new Module("test-module");
+            context = module.GetModuleContext();
             targetTriple = "i386-pc-win32";
-            module.SetTargetTriple(targetTriple);
-            targetData = new DataLayout(module);
-
+            module.SetTarget(targetTriple);
+            targetData = module.GetTargetData();
             
-            pointerType = TypeRef.GetIntType(8).GetPointerTo();
+            pointerType = LLVM.Int8Type().GetPointerTo();
             // generate code
             {
-                GenerateTypes();
-                GenerateIntrinsicDeclarations();
-                GenerateFunctions();
-                GenerateMainFunction();
+                //GenerateTypes();
+                //GenerateIntrinsicDeclarations();
+                //GenerateFunctions();
+                //GenerateMainFunction();
             }
 
             // generate int dir
@@ -172,11 +175,13 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
             // emit machine code to object file
             {
+                TargetExt.InitializeX86Target();
+                var targetMachine = TargetMachineExt.FromTriple(targetTriple);
                 var objFile = Path.Combine(intDir, targetFile + ".obj");
-                module.EmitToObj(objFile);
+                targetMachine.EmitToFile(module, objFile);
             }
 
-            module.Dispose();
+            module.DisposeModule();
             return true;
         }
 

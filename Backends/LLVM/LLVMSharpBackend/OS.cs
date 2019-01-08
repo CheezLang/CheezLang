@@ -1,9 +1,10 @@
-﻿using Microsoft.Win32;
+﻿using Cheez.Util;
+using Microsoft.Win32;
 using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
 
-namespace Cheez.Compiler.CodeGeneration
+namespace Cheez.CodeGeneration.OS
 {
     public static class OS
     {

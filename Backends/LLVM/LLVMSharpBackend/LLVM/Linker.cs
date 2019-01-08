@@ -1,12 +1,14 @@
-﻿using LLVMCS;
+﻿using Cheez.Compiler;
+using Cheez.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
+namespace Cheez.CodeGeneration.LLVMCodeGen
 {
     class VsWhere
     {
@@ -30,6 +32,11 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
 
     public class LLVMLinker
     {
+        [DllImport("LLVMLinker", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private extern static bool llvm_link_coff(string[] argv, int argc);
+
+        [DllImport("LLVMLinker", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private extern static bool llvm_link_elf(string[] argv, int argc);
 
         public static bool Link(Workspace workspace, string targetFile, string objFile, IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
         {
@@ -39,7 +46,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             }
             libraries = libraries.Distinct();
 
-            var winSdk = OS.FindWindowsSdk();
+            var winSdk = OS.OS.FindWindowsSdk();
             if (winSdk == null)
             {
                 errorHandler.ReportError("Couldn't find windows sdk");
@@ -122,7 +129,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             // generated object files
             lldArgs.Add(objFile);
 
-            var result = Linker.llvm_link_coff(lldArgs.ToArray(), lldArgs.Count);
+            var result = llvm_link_coff(lldArgs.ToArray(), lldArgs.Count);
             if (result)
             {
                 Console.WriteLine($"Generated {filename}.exe");
@@ -142,7 +149,7 @@ namespace Cheez.Compiler.CodeGeneration.LLVMCodeGen
             {
                 StringBuilder sb = new StringBuilder();
                 var programFilesX86 = Environment.ExpandEnvironmentVariables("%ProgramFiles(x86)%");
-                var p = Util.StartProcess($@"{programFilesX86}\Microsoft Visual Studio\Installer\vswhere.exe", "-nologo -latest -format json", stdout:
+                var p = Utilities.StartProcess($@"{programFilesX86}\Microsoft Visual Studio\Installer\vswhere.exe", "-nologo -latest -format json", stdout:
                     (sender, e) =>
                     {
                         sb.AppendLine(e.Data);

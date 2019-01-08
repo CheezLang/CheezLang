@@ -65,7 +65,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CheezCompiler\CompilerLibrary.csproj">
+    <ProjectReference Include="..\CompilerLibrary\CompilerLibrary.csproj">
       <Project>{18994e2f-310a-460f-ab2f-3af665ce7f67}</Project>
       <Name>CompilerLibrary</Name>
     </ProjectReference>
