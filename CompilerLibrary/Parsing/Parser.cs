@@ -382,7 +382,7 @@ namespace Cheez.Parsing
 
             if (CheckToken(TokenType.OpenParen))
             {
-                parameters = ParseParameterList();
+                parameters = ParseParameterList(out var _);
                 SkipNewlines();
             }
 
@@ -635,7 +635,7 @@ namespace Cheez.Parsing
             return new AstParameter(pname, ptype, new Location(beg, ptype.End));
         }
 
-        private List<AstParameter> ParseParameterList(params TokenType[] delimiters)
+        private List<AstParameter> ParseParameterList(out TokenLocation end, params TokenType[] delimiters)
         {
             var parameters = new List<AstParameter>();
 
@@ -665,7 +665,7 @@ namespace Cheez.Parsing
                 }
             }
 
-            Consume(TokenType.ClosingParen, ErrMsg(")", "at end of parameter list"));
+            end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of parameter list")).location;
 
             return parameters;
         }
@@ -685,7 +685,7 @@ namespace Cheez.Parsing
 
             if (CheckToken(TokenType.OpenParen))
             {
-                parameters = ParseParameterList();
+                parameters = ParseParameterList(out var _);
                 SkipNewlines();
             }
 
@@ -1005,7 +1005,7 @@ namespace Cheez.Parsing
 
             // parameters
             SkipNewlines();
-            parameters = ParseParameterList();
+            parameters = ParseParameterList(out var _);
 
             SkipNewlines();
 
@@ -1098,6 +1098,12 @@ namespace Cheez.Parsing
             {
                 var sub = ParseExpression();
                 return new AstExprTypeExpr(sub);
+            }
+
+            if (token.type == TokenType.OpenParen)
+            {
+                var p = ParseParameterList(out var end);
+                return new AstTupleTypeExpr(p, new Location(token.location, end));
             }
 
             if (token.type == TokenType.OpenBracket)

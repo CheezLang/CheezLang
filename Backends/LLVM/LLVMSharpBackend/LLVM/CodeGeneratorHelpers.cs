@@ -199,6 +199,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         return llvmType;
                     }
 
+                case TupleType t:
+                    {
+                        var memTypes = t.Members.Select(m => CheezTypeToLLVMType(m.type)).ToArray();
+                        return LLVM.StructType(memTypes, false);
+                    }
+
+
                 default:
                     throw new NotImplementedException();
             }
@@ -237,9 +244,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
 
                 case StructType p:
-                    //return LLVM.ConstPointerNull(CheezTypeToLLVMType(p));
-                    var members = p.Declaration.Members.Select(m => GetDefaultLLVMValue(m.Type));
-                    return LLVM.ConstStruct(members.ToArray(), false);
+                    {
+                        //return LLVM.ConstPointerNull(CheezTypeToLLVMType(p));
+                        var members = p.Declaration.Members.Select(m => GetDefaultLLVMValue(m.Type));
+                        return LLVM.ConstStruct(members.ToArray(), false);
+                    }
 
                 case TraitType t:
                     return LLVMValueRef.ConstStruct(new LLVMValueRef[] {
@@ -265,6 +274,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         GetDefaultLLVMValue(s.ToPointerType()),
                         LLVM.ConstInt(LLVM.Int32Type(), 0, true)
                     }, false);
+
+                case TupleType t:
+                    {
+                        var members = t.Members.Select(m => GetDefaultLLVMValue(m.type));
+                        return LLVM.ConstStruct(members.ToArray(), false);
+                    }
 
                 default:
                     throw new NotImplementedException();

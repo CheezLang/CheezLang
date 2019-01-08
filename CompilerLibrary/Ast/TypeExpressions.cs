@@ -1,4 +1,5 @@
-﻿using Cheez.Visitors;
+﻿using Cheez.Ast.Statements;
+using Cheez.Visitors;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -145,6 +146,23 @@ namespace Cheez.Ast.Expressions.Types
 
         [DebuggerStepThrough]
         public override AstExpression Clone() => CopyValuesTo(new AstPointerTypeExpr(Target));
+    }
+
+    public class AstTupleTypeExpr : AstTypeExpr
+    {
+        public override bool IsPolymorphic => Members.Any(m => m.TypeExpr.IsPolymorphic);
+        public List<AstParameter> Members { get; set; }
+
+        public AstTupleTypeExpr(List<AstParameter> members, ILocation Location = null)
+            : base(Location)
+        {
+            this.Members = members;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => throw new System.NotImplementedException();
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstTupleTypeExpr(Members.Select(m => m.Clone()).ToList(), Location));
     }
 
     public class AstPolyStructTypeExpr : AstTypeExpr

@@ -122,6 +122,22 @@ namespace Cheez
                         var instance = InstantiatePolyStruct(@struct, instances);
                         return instance?.Type ?? CheezType.Error;
                     }
+
+                case AstTupleTypeExpr tuple:
+                    {
+                        var members = new(string name, CheezType type)[tuple.Members.Count];
+                        for (int i = 0; i < members.Length; i++)
+                        {
+                            var m = tuple.Members[i];
+                            m.Scope = tuple.Scope;
+                            m.TypeExpr.Scope = tuple.Scope;
+                            m.Type = ResolveTypeHelper(m.TypeExpr, deps, instances);
+
+                            members[i] = (m.Name?.Name, m.Type);
+                        }
+
+                        return TupleType.GetTuple(members);
+                    }
             }
 
             ReportError(typeExpr, $"Expected type");

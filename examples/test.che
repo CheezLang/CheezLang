@@ -3,11 +3,6 @@
 // #load("examples/glfw3_example")
 // #load("examples/signed_distance_field_renderer")
 
-struct List(T: type) {
-    item: T
-    test: int
-    // next: *List(T)
-}
 
 // fn swap1(a: int, b: int) -> (int, int) {
 //     return b, a
@@ -18,22 +13,9 @@ struct List(T: type) {
 //     b_out = a
 // }
 
-let c = 'l'
-let c2 = '`n'
-let c3 = c2
-let l: List(int)
 
-fn test() -> char {
-    return 'l'
-}
+let a: (int, int) = (1, 2)
 
-fn foo() -> List(string) {
-
-}
-
-fn bar() -> List(int) {
-
-}
 
 fn Main() {
     // let a, b = swap1(1, 2)
