@@ -137,9 +137,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     return LLVM.IntType((uint)i.Size * 8);
 
                 case FloatType f:
-                    if (f.Size == 32)
+                    if (f.Size == 4)
                         return LLVMTypeRef.FloatType();
-                    else if (f.Size == 64)
+                    else if (f.Size == 8)
                         return LLVMTypeRef.FloatType();
                     else throw new NotImplementedException();
 

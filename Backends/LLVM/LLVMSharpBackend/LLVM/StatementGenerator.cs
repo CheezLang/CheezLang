@@ -226,8 +226,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 foreach (var v in decl.SubDeclarations)
                 {
                     var varPtr = valueMap[v];
-                    var val = GenerateExpression(v.Initializer, varPtr, true);
-                    if (val != null) builder.CreateStore(val.Value, varPtr);
+                    var val = GenerateExpression(varPtr, v.Initializer, varPtr, true);
                 }
             }
 

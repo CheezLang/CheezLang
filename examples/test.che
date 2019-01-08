@@ -1,14 +1,22 @@
-// #load("std:io/io.che")
+//#load("std:io/io")
 // #load("examples/trait_function_call_performance")
 // #load("examples/glfw3_example")
 // #load("examples/signed_distance_field_renderer")
 
-let z = (true, false)
-let (a, b) = z
-let (f, g) = (true, false)
-let c = z
-let d = (false, true)
+struct Foo {
+    a: int
+    b: int
+}
+
+let a = new Foo {1, 2}
+let b = (1, 2, 3)
+let (c, e, d) = b
 
 fn Main() {
     // let a, b = swap1(1, 2)
 }
+
+/*
+  %3 = load i32, i32* @e
+  ret i32 %3
+*/

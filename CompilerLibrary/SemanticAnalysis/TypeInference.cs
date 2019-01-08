@@ -178,7 +178,72 @@ namespace Cheez
                 return;
             }
 
+            var type = expr.Type as StructType;
+            if (type == null)
+            {
+                ReportError(expr.TypeExpr, $"This expression is not a struct but a '{expr.Type}'");
+                return;
+            }
 
+
+            // 
+            int namesProvided = 0;
+            foreach (var m in expr.MemberInitializers)
+            {
+                if (m.Name != null)
+                {
+                    if (!type.Declaration.Members.Any(m2 => m2.Name.Name == m.Name.Name))
+                    {
+                        ReportError(m.Name, $"'{m.Name}' is not a member of struct {type.Declaration.Name}");
+                    }
+                    namesProvided++;
+                }
+            }
+
+            if (namesProvided == 0)
+            {
+                for (int i = 0; i < expr.MemberInitializers.Count; i++)
+                {
+                    var mi = expr.MemberInitializers[i];
+                    var mem = type.Declaration.Members[i];
+
+                    mi.Value.Scope = expr.Scope;
+                    InferTypes(mi.Value, mem.Type, unresolvedDependencies, allDependencies);
+                    ConvertLiteralTypeToDefaultType(mi.Value);
+
+                    mi.Name = new AstIdExpr(mem.Name.Name, false, mi.Value);
+                    mi.Index = i;
+
+                    // TODO: check types match
+                }
+            }
+            else if (namesProvided == expr.MemberInitializers.Count)
+            {
+                for (int i = 0; i < expr.MemberInitializers.Count; i++)
+                {
+                    var mi = expr.MemberInitializers[i];
+                    var memIndex = type.Declaration.Members.FindIndex(m => m.Name.Name == mi.Name.Name);
+
+                    if (memIndex < 0)
+                    {
+                        ReportError(mi.Name, $"Struct '{type}' has no member '{mi.Name.Name}'");
+                        continue;
+                    }
+
+                    var mem = type.Declaration.Members[memIndex];
+                    mi.Index = memIndex;
+
+                    mi.Value.Scope = expr.Scope;
+                    InferTypes(mi.Value, mem.Type, unresolvedDependencies, allDependencies);
+                    ConvertLiteralTypeToDefaultType(mi.Value);
+
+                    // TODO: check types match
+                }
+            }
+            else
+            {
+                ReportError(expr, $"Either all or no values must have a name");
+            }
         }
 
         private void InferTypesBinaryExpr(AstBinaryExpr b, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)

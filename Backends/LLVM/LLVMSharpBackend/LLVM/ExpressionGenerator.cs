@@ -9,6 +9,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
     public partial class LLVMCodeGenerator
     {
 
+        private LLVMValueRef? GenerateExpression(LLVMValueRef ptr, AstExpression stmt, LLVMValueRef? target, bool deref)
+        {
+            var v = GenerateExpression(stmt, target, true);
+            if (v != null)
+                builder.CreateStore(v.Value, ptr);
+
+            return target ?? v;
+        }
+
         private LLVMValueRef? GenerateExpression(AstExpression stmt, LLVMValueRef? target, bool deref)
         {
             switch (stmt)
@@ -19,8 +28,26 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstCharLiteral ch: return GenerateCharLiteralExpr(ch);
                 case AstTupleExpr t: return GenerateTupleExpr(t, target, deref);
                 case AstDotExpr t: return GenerateDotExpr(t, target, deref);
+                case AstStructValueExpr t: return GenerateStructValueExpr(t, target, deref);
+                case AstCallExpr c: return null;
             }
-            return default;
+            throw new NotImplementedException();
+        }
+
+        public LLVMValueRef? GenerateStructValueExpr(AstStructValueExpr expr, LLVMValueRef? target, bool deref)
+        {
+            if (target != null)
+            {
+                foreach (var mem in expr.MemberInitializers)
+                {
+                    var ptr = builder.CreateStructGEP(target.Value, (uint)mem.Index, "");
+                    GenerateExpression(ptr, mem.Value, target, false);
+                }
+
+                return null;
+            }
+
+            throw new NotImplementedException();
         }
 
         public LLVMValueRef? GenerateDotExpr(AstDotExpr expr, LLVMValueRef? maybeTarget, bool deref)

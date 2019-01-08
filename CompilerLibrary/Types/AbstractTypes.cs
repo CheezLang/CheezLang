@@ -44,7 +44,7 @@ namespace Cheez.Types.Abstract
         public override string ToString() => $"<type alias> {Declaration.Name.Name}";
     }
 
-    public class GenericFunctionType : AbstractType
+    public class GenericFunctionType : CheezType
     {
         public AstFunctionDecl Declaration { get; }
 
@@ -56,7 +56,7 @@ namespace Cheez.Types.Abstract
         }
     }
 
-    public class GenericStructType : AbstractType
+    public class GenericStructType : CheezType
     {
         public AstStructDecl Declaration { get; }
 
@@ -68,7 +68,7 @@ namespace Cheez.Types.Abstract
         }
     }
 
-    public class GenericTraitType : AbstractType
+    public class GenericTraitType : CheezType
     {
         public AstTraitDeclaration Declaration { get; }
 
@@ -80,14 +80,14 @@ namespace Cheez.Types.Abstract
         }
     }
 
-    public class ErrorType : AbstractType
+    public class ErrorType : CheezType
     {
         public static ErrorType Instance { get; } = new ErrorType { Size = 0 };
         public override bool IsPolyType => false;
         public override string ToString() => "<Error Type>";
     }
 
-    public class PolyType : AbstractType
+    public class PolyType : CheezType
     {
         public string Name { get; }
         public override bool IsPolyType => true;
