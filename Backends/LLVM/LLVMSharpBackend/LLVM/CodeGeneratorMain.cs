@@ -14,7 +14,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         public List<LLVMValueRef> Targets;
     }
 
-    public partial class LLVMCodeGenerator : ICodeGenerator
+    public partial class LLVMCodeGenerator : Visitors.VisitorBase<LLVMValueRef, LLVMCodeGeneratorNewContext>, ICodeGenerator
     {
 
         private Workspace workspace;
@@ -50,87 +50,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private Dictionary<object, LLVMValueRef> returnValuePointer = new Dictionary<object, LLVMValueRef>();
         private LLVMBasicBlockRef currentTempBasicBlock;
 
-        //private void RunOptimizations(uint level)
-        //{
-        //    module.PrintToFile(Path.Combine(intDir, targetFile + ".debug.ll"));
-
-        //    var pmBuilder = LLVM.PassManagerBuilderCreate();
-        //    LLVM.PassManagerBuilderSetOptLevel(pmBuilder, level);
-
-        //    var funcPM = module.CreateFunctionPassManagerForModule();
-        //    LLVM.PassManagerBuilderPopulateFunctionPassManager(pmBuilder, funcPM);
-        //    bool r = LLVM.InitializeFunctionPassManager(funcPM);
-
-        //    // optimize functions
-        //    var func = module.GetFirstFunction();
-
-        //    int modifiedFunctions = 0;
-        //    while (func.Pointer != IntPtr.Zero)
-        //    {
-        //        if (!func.IsDeclaration())
-        //        {
-        //            var modified = LLVM.RunFunctionPassManager(funcPM, func);
-        //            if (modified) modifiedFunctions++;
-        //        }
-        //        func = func.GetNextFunction();
-        //    }
-        //    r = LLVM.FinalizeFunctionPassManager(funcPM);
-
-        //    Console.WriteLine($"[LLVM] {modifiedFunctions} functions where modified during optimization.");
-
-        //    var modPM = LLVM.CreatePassManager();
-        //    LLVM.PassManagerBuilderPopulateModulePassManager(pmBuilder, modPM);
-        //    r = LLVM.RunPassManager(modPM, module.GetModuleRef());
-        //    if (!r) Console.WriteLine($"[LLVM] Module was not modified during optimization.");
-
-
-        //    // verify module
-        //    {
-        //        module.VerifyModule(LLVMVerifierFailureAction.LLVMPrintMessageAction, out string llvmErrors);
-        //        if (!string.IsNullOrWhiteSpace(llvmErrors))
-        //            Console.Error.WriteLine($"[LLVM-validate-module] {llvmErrors}");
-        //    }
-        //}
-
-        //private void RunOptimizationsCustom()
-        //{
-        //    module.PrintToFile(Path.Combine(intDir, targetFile + ".debug.ll"));
-
-        //    var funcPM = module.CreateFunctionPassManagerForModule();
-        //    LLVM.AddCFGSimplificationPass(funcPM);
-
-        //    bool r = false;
-        //    //bool r = LLVM.InitializeFunctionPassManager(funcPM); // needed?
-
-        //    // optimize functions
-        //    var func = module.GetFirstFunction();
-
-        //    int modifiedFunctions = 0;
-        //    while (func.Pointer != IntPtr.Zero)
-        //    {
-        //        if (!func.IsDeclaration())
-        //        {
-        //            var modified = LLVM.RunFunctionPassManager(funcPM, func);
-        //            if (modified) modifiedFunctions++;
-        //        }
-        //        func = func.GetNextFunction();
-        //    }
-        //    r = LLVM.FinalizeFunctionPassManager(funcPM);
-
-        //    Console.WriteLine($"[LLVM] {modifiedFunctions} functions where modified during optimization.");
-
-        //    var modPM = LLVM.CreatePassManager();
-        //    r = LLVM.RunPassManager(modPM, module.GetModuleRef());
-        //    if (!r) Console.WriteLine($"[LLVM] Module was not modified during optimization.");
-
-        //    // verify module
-        //    {
-        //        module.VerifyModule(LLVMVerifierFailureAction.LLVMPrintMessageAction, out string llvmErrors);
-        //        if (!string.IsNullOrWhiteSpace(llvmErrors))
-        //            Console.Error.WriteLine($"[LLVM-validate-module] {llvmErrors}");
-        //    }
-        //}
-
         public bool GenerateCode(Workspace workspace, string intDir, string outDir, string targetFile, bool optimize, bool outputIntermediateFile)
         {
             this.workspace = workspace;
@@ -139,19 +58,28 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             this.targetFile = targetFile;
             this.emitDebugInfo = !optimize;
 
-            module = new Module("test-module");
-            context = module.GetModuleContext();
             targetTriple = "i386-pc-win32";
+
+            module = new Module("test-module");
             module.SetTarget(targetTriple);
+
+            context = module.GetModuleContext();
             targetData = module.GetTargetData();
-            
+
             pointerType = LLVM.Int8Type().GetPointerTo();
             // generate code
             {
-                //GenerateTypes();
-                //GenerateIntrinsicDeclarations();
-                //GenerateFunctions();
-                //GenerateMainFunction();
+                GenerateIntrinsicDeclarations();
+                GenerateFunctions();
+                GenerateMainFunction();
+            }
+
+            // verify module
+            {
+                if (module.VerifyModule(LLVMVerifierFailureAction.LLVMPrintMessageAction, out string message))
+                {
+                    Console.Error.WriteLine($"[LLVM-validate-module] {message}");
+                }
             }
 
             // generate int dir
@@ -162,9 +90,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (optimize)
             {
                 Console.WriteLine("[LLVM] Running optimizations...");
-                //RunOptimizations(3);
+                var (modifiedFunctions, modifiedModule) = RunOptimizations(3);
                 //RunOptimizationsCustom();
-                Console.WriteLine("[LLVM] Done.");
+
+                Console.WriteLine($"[LLVM] {modifiedFunctions} functions where modified during optimization.");
+                if (!modifiedModule) Console.WriteLine($"[LLVM] Module was not modified during optimization.");
+                Console.WriteLine("[LLVM] Optimizations done.");
             }
 
             // create .ll file
@@ -196,5 +127,63 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return LLVMLinker.Link(workspace, exeFile, objFile, libraryIncludeDirectories, libraries, subsystem, errorHandler);
         }
 
+        private (int, bool) RunOptimizations(uint level)
+        {
+            module.PrintToFile(Path.Combine(intDir, targetFile + ".debug.ll"));
+
+            var pmBuilder = LLVM.PassManagerBuilderCreate();
+            LLVM.PassManagerBuilderSetOptLevel(pmBuilder, level);
+
+            var funcPM = module.CreateFunctionPassManagerForModule();
+            LLVM.PassManagerBuilderPopulateFunctionPassManager(pmBuilder, funcPM);
+            LLVM.InitializeFunctionPassManager(funcPM);
+
+            // optimize functions
+            var func = module.GetFirstFunction();
+
+            int modifiedFunctions = 0;
+            while (func.Pointer != IntPtr.Zero)
+            {
+                if (!func.IsDeclaration())
+                {
+                    var modified = LLVM.RunFunctionPassManager(funcPM, func);
+                    if (modified) modifiedFunctions++;
+                }
+                func = func.GetNextFunction();
+            }
+            LLVM.FinalizeFunctionPassManager(funcPM);
+
+            var modPM = LLVM.CreatePassManager();
+            LLVM.PassManagerBuilderPopulateModulePassManager(pmBuilder, modPM);
+            var r = LLVM.RunPassManager(modPM, module.GetModuleRef());
+            return (modifiedFunctions, r);
+        }
+
+        private (int, bool) RunOptimizationsCustom()
+        {
+            module.PrintToFile(Path.Combine(intDir, targetFile + ".debug.ll"));
+
+            var funcPM = module.CreateFunctionPassManagerForModule();
+            LLVM.AddCFGSimplificationPass(funcPM);
+
+            // optimize functions
+            var func = module.GetFirstFunction();
+
+            int modifiedFunctions = 0;
+            while (func.Pointer != IntPtr.Zero)
+            {
+                if (!func.IsDeclaration())
+                {
+                    var modified = LLVM.RunFunctionPassManager(funcPM, func);
+                    if (modified) modifiedFunctions++;
+                }
+                func = func.GetNextFunction();
+            }
+            LLVM.FinalizeFunctionPassManager(funcPM);
+
+            var modPM = LLVM.CreatePassManager();
+            var r = LLVM.RunPassManager(modPM, module.GetModuleRef());
+            return (modifiedFunctions, r);
+        }
     }
 }

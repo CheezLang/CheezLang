@@ -180,10 +180,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case StructType s:
                     {
+                        var name = $"struct.{s.Declaration.Name.Name}";
+
+                        if (s.Declaration.IsPolyInstance)
+                        {
+                            var types = string.Join(".", s.Declaration.Parameters.Select(p => p.Value.ToString()));
+                            name += "." + types;
+                        }
+
+                        var llvmType = LLVM.StructCreateNamed(context, name);
+                        typeMap[s] = llvmType;
+
                         var memTypes = s.Declaration.Members.Select(m => CheezTypeToLLVMType(m.Type)).ToArray();
-                        var str = LLVM.StructCreateNamed(context, s.Declaration.Name.Name);
-                        LLVM.StructSetBody(str, memTypes, false);
-                        return str;
+                        LLVM.StructSetBody(llvmType, memTypes, false);
+                        return llvmType;
                     }
 
                 default:

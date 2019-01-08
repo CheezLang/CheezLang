@@ -12,6 +12,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         }
     }
 
+    public static class BasicBlockExt
+    {
+        public static bool IsNull(this LLVMBasicBlockRef self)
+        {
+            return self.Pointer.ToInt64() == 0;
+        }
+    }
+
     public static class TypeExt
     {
         public static LLVMTypeRef GetPointerTo(this LLVMTypeRef self)

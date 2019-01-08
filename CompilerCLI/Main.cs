@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cheez.Visitors;
 using Cheez.Util;
+using Cheez.CodeGeneration.LLVMCodeGen;
 
 namespace CheezCLI
 {
@@ -255,7 +256,7 @@ namespace CheezCLI
         private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace, IErrorHandler errorHandler)
         {
 
-            ICodeGenerator generator = new DummyBackend.DummyCodeGenerator();
+            ICodeGenerator generator = new LLVMCodeGenerator();
             bool success = generator.GenerateCode(workspace, options.IntDir, options.OutDir, options.OutName, options.Optimize, options.EmitLLVMIR);
             if (!success)
                 return false;

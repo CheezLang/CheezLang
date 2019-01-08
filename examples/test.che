@@ -25,7 +25,7 @@ let t: int = a
 
 let l: List(string)
 
-fn foo() -> int {
+fn foo() -> List(string) {
 
 }
 

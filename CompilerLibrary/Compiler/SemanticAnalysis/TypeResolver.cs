@@ -205,6 +205,7 @@ namespace Cheez.Compiler
                 instance.IsPolyInstance = true;
                 instance.IsPolymorphic = false;
                 @struct.Declaration.PolymorphicInstances.Add(instance);
+                instance.Scope.TypeDeclarations.Add(instance);
 
                 Debug.Assert(instance.Parameters.Count == expr.Arguments.Count);
 
