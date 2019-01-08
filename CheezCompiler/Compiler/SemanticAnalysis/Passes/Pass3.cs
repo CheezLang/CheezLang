@@ -1,4 +1,5 @@
-﻿using Cheez.Compiler.Ast;
+﻿using Cheez.Ast.Statements;
+using Cheez.Types.Complex;
 using System.Collections.Generic;
 
 namespace Cheez.Compiler

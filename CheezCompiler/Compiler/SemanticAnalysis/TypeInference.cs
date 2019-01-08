@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cheez.Compiler.Ast;
-using Cheez.Compiler.Parsing;
+using Cheez.Ast.Expressions;
+using Cheez.Ast.Expressions.Types;
+using Cheez.Ast.Statements;
+using Cheez.Extras;
+using Cheez.Types;
+using Cheez.Types.Abstract;
+using Cheez.Types.Primitive;
 
 namespace Cheez.Compiler
 {

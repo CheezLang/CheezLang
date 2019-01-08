@@ -1,4 +1,7 @@
-﻿using Cheez.Compiler.Ast;
+﻿using Cheez.Ast;
+using Cheez.Ast.Statements;
+using Cheez.Types.Abstract;
+using Cheez.Types.Complex;
 
 namespace Cheez.Compiler
 {

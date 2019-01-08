@@ -1,4 +1,11 @@
-﻿using Cheez.Compiler.Ast;
+﻿using Cheez.Ast.Expressions;
+using Cheez.Ast.Expressions.Types;
+using Cheez.Ast.Statements;
+using Cheez.Extras;
+using Cheez.Types;
+using Cheez.Types.Abstract;
+using Cheez.Types.Complex;
+using Cheez.Types.Primitive;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -69,7 +76,7 @@ namespace Cheez.Compiler
                         arr.Target.Scope = typeExpr.Scope;
                         var subType = ResolveTypeHelper(arr.Target, deps, instances);
 
-                        if (arr.SizeExpr is AstNumberExpr num && num.Data.Type == Parsing.NumberData.NumberType.Int)
+                        if (arr.SizeExpr is AstNumberExpr num && num.Data.Type == NumberData.NumberType.Int)
                         {
                             int v = (int)num.Data.IntValue;
                             // TODO: check size of num.Data.IntValue

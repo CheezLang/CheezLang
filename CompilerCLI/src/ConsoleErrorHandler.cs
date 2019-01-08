@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Cheez.Ast;
 using Cheez.Compiler;
-using Cheez.Compiler.Ast;
 using Cheez.Compiler.Parsing;
 
 namespace CheezCLI

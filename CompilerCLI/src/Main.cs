@@ -7,8 +7,8 @@ using System.Text;
 using CommandLine;
 using System.Collections.Generic;
 using System.Linq;
-using Cheez.Compiler.Visitor;
-using Cheez.Compiler.CodeGeneration.LLVMCodeGen;
+using Cheez.Visitors;
+using Cheez.Util;
 
 namespace CheezCLI
 {
@@ -236,7 +236,7 @@ namespace CheezCLI
                 {
                     Console.WriteLine($"Running code:");
                     Console.WriteLine("=====================================");
-                    var testProc = Util.StartProcess(
+                    var testProc = Utilities.StartProcess(
                         Path.Combine(options.OutDir, options.OutName + ".exe"),
                         "",
                         workingDirectory: options.OutDir,
@@ -255,7 +255,7 @@ namespace CheezCLI
         private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace, IErrorHandler errorHandler)
         {
 
-            ICodeGenerator generator = new LLVMCodeGeneratorNew();
+            ICodeGenerator generator = new DummyBackend.DummyCodeGenerator();
             bool success = generator.GenerateCode(workspace, options.IntDir, options.OutDir, options.OutName, options.Optimize, options.EmitLLVMIR);
             if (!success)
                 return false;

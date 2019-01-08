@@ -1,4 +1,8 @@
-﻿using Cheez.Compiler.Ast;
+﻿using Cheez.Ast;
+using Cheez.Ast.Statements;
+using Cheez.Types;
+using Cheez.Types.Abstract;
+using Cheez.Types.Primitive;
 using System.Collections.Generic;
 using System.Linq;
 

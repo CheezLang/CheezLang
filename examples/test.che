@@ -3,9 +3,9 @@
 // #load("examples/glfw3_example")
 // #load("examples/signed_distance_field_renderer")
 
-struct List {
-    item: int
-    next: *List
+struct List(T: type) {
+    item: T
+    next: *List(T)
 }
 
 // fn swap1(a: int, b: int) -> (int, int) {
@@ -23,12 +23,13 @@ let n: int = r
 let r: int = t
 let t: int = a
 
+let l: List(string)
 
 fn foo() -> int {
 
 }
 
-fn bar() -> List {
+fn bar() -> List(int) {
 
 }
 

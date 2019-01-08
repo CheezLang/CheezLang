@@ -1,4 +1,6 @@
-﻿namespace Cheez.Compiler
+﻿using Cheez.Types;
+
+namespace Cheez.Compiler
 {
     public struct CheezValue
     {

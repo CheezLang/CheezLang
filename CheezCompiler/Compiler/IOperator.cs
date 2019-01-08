@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Cheez.Types;
+using Cheez.Types.Primitive;
+using System;
 
 namespace Cheez.Compiler
 {
