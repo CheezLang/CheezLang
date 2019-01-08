@@ -1,4 +1,4 @@
-param([string]$path, [string]$outputFile = "loc.csv", [string]$include = "*.*", [string]$exclude = "")
+param([string]$path, [string]$outputFile = "loc.csv", [string[]]$include = "*.*", [string]$exclude = "")
 Write-Host "Counting lines in" $path
 if ($exclude) { Write-Host "Excluding:" $exclude }
 Write-Host ""

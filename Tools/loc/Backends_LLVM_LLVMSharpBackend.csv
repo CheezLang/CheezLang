@@ -1,0 +1,12 @@
+File Name,Lines
+LLVMCodeGenerator.cs,1930
+CodeGeneratorHelpers.cs,254
+StatementGenerator.cs,242
+Linker.cs,205
+CodeGeneratorMain.cs,184
+Extensions.cs,155
+ExpressionGenerator.cs,147
+AttributeKind.cs,72
+OS.cs,65
+AssemblyInfo.cs,32
+Total,3286

@@ -1,0 +1,18 @@
+File Name,Lines
+ValueRef.cs,126
+IRBuilder.cs,117
+TypeRef.cs,115
+Module.cs,100
+AttributeKind.cs,72
+TargetMachine.cs,58
+DataLayout.cs,42
+BasicBlockRef.cs,32
+LLVMRef.cs,23
+LLVMCS.AssemblyInfo.cs,19
+LLVMCS.AssemblyInfo.cs,19
+Linkage.cs,18
+Linker.cs,11
+DLL.cs,10
+CallConv.cs,8
+Static.cs,7
+Total,777
