@@ -1,5 +1,4 @@
 File Name,Lines
-Semanticer.cs,3251
 Parser.cs,1366
 Lexer.cs,677
 Scope.cs,531
@@ -34,4 +33,4 @@ CheezType.cs,26
 AstDirective.cs,19
 ICodeGenerator.cs,9
 Pass_.cs,6
-Total,10503
+Total,7252
