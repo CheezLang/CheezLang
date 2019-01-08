@@ -183,11 +183,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var ltype = LLVM.FunctionType(LLVM.Int32Type(), new LLVMTypeRef[0], false);
             var lfunc = module.AddFunction("main", ltype);
             var entry = lfunc.AppendBasicBlock("entry");
+            var init = lfunc.AppendBasicBlock("init");
+            var main = lfunc.AppendBasicBlock("main");
 
             currentLLVMFunction = lfunc;
 
             builder = new IRBuilder();
             builder.PositionBuilderAtEnd(entry);
+            builder.CreateBr(init);
+
+            builder.PositionBuilderAtEnd(init);
 
             {
                 var visited = new HashSet<AstVariableDecl>();
@@ -198,6 +203,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     InitGlobalVariable(gv, visited);
                 }
             }
+
+            builder.CreateBr(main);
+            builder.PositionBuilderAtEnd(main);
 
             { // call main function
                 var cheezMain = valueMap[workspace.MainFunction];

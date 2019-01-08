@@ -3,6 +3,7 @@ using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Abstract;
+using Cheez.Types.Complex;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -96,7 +97,6 @@ namespace Cheez
                  v.TypeExpr.Scope = v.Scope;
                  v.TypeExpr.Type = ResolveType(v.TypeExpr);
                  v.Type = v.TypeExpr.Type;
-                // TODO: tuple
             }
 
             if (v.Initializer != null)
@@ -118,18 +118,12 @@ namespace Cheez
                 ConvertLiteralTypeToDefaultType(v.Initializer);
                 var newType = v.Initializer.Type;
 
-                if (newType != null)
-                {
-                    if (newType != v.Type && !(newType is AbstractType))
-                    {
-                        v.Type = newType;
-                    }
+                if (v.Type == null || v.Type is AbstractType)
                     v.Type = newType;
-                }
-
-                // assign types to sub declarations
-                AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
             }
+
+            if (deps.Count == 0)
+                AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
 
             return deps;
         }
@@ -140,11 +134,39 @@ namespace Cheez
             {
                 var decl = id.Symbol as AstSingleVariableDecl;
                 decl.Type = type;
-                decl.Value = initializer.Value;
+                decl.Value = initializer?.Value;
+
+                if (decl.Initializer != null)
+                    InferTypes(decl.Initializer, type);
             }
-            else
+            else if (pattern is AstTupleExpr tuple)
             {
-                throw new NotImplementedException();
+                if (type is TupleType tupleType)
+                {
+                    if (tuple.Values.Count != tupleType.Members.Length)
+                    {
+                        ReportError(pattern, $"Pattern does not match declared type: {type}");
+                        return;
+                    }
+
+                    for (int i = 0; i < tuple.Values.Count; i++)
+                    {
+                        var tid = tuple.Values[i];
+                        var tty = tupleType.Members[i].type;
+
+                        AstExpression tin = null;
+                        if (initializer is AstTupleExpr tupleInit)
+                        {
+                            tin = tupleInit.Values[i];
+                        }
+
+                        AssignTypesAndValuesToSubdecls(tid, tty, tin);
+                    }
+                }
+                else
+                {
+                    ReportError(pattern, $"Pattern does not match declared type: {type}");
+                }
             }
         }
     }

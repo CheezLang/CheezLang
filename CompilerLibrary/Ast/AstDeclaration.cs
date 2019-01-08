@@ -226,6 +226,7 @@ namespace Cheez.Ast.Statements
     {
         public bool IsConstant => false;
         public AstTypeExpr TypeExpr { get; set; }
+        public AstExpression Initializer { get; set; }
 
         public AstVariableDecl VarDeclaration { get; set; }
 

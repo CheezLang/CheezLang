@@ -219,6 +219,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             switch (type)
             {
+                case BoolType _: return LLVM.ConstInt(CheezTypeToLLVMType(type), (bool)v ? 1ul : 0ul, false);
                 case CharType _: return LLVM.ConstInt(CheezTypeToLLVMType(type), (char)v, false);
                 case IntType i: return LLVM.ConstInt(CheezTypeToLLVMType(type), ((NumberData)v).ToUlong(), i.Signed);
             }

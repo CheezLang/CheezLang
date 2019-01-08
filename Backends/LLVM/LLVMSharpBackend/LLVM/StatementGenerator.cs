@@ -190,35 +190,43 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 }
             }
 
+            bool generateInitializer = false;
+
+            // create vars
             foreach (var v in decl.SubDeclarations)
             {
-                // create var
-                LLVMValueRef varPtr;
+                var type = CheezTypeToLLVMType(v.Type);
+
+                var varPtr = module.AddGlobal(type, v.Name.Name);
+                varPtr.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
+                varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
+
+                var uiae = LLVM.TypeOf(varPtr);
+
+                var dExtern = decl.GetDirective("extern");
+                if (dExtern != null) varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
+
+                LLVMValueRef initializer = default;
+                if (v.Value != null)
+                    initializer = CheezValueToLLVMValue(v.Type, v.Value);
+                else
+                    initializer = GetDefaultLLVMValue(v.Type);
+
+                varPtr.SetInitializer(initializer);
+                valueMap[v] = varPtr;
+
+                if (v.Value == null)
+                    generateInitializer = true;
+            }
+
+            // do initialization TODO: other patterns
+            if (decl.Initializer != null && generateInitializer)
+            {
+                // assign to single variables
+                foreach (var v in decl.SubDeclarations)
                 {
-                    var type = CheezTypeToLLVMType(decl.Type);
-
-                    varPtr = module.AddGlobal(type, v.Name.Name);
-                    varPtr.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
-
-                    var uiae = LLVM.TypeOf(varPtr);
-
-                    var dExtern = decl.GetDirective("extern");
-                    if (dExtern != null) varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
-
-                    LLVMValueRef initializer = default;
-                    if (v.Value != null)
-                        initializer = CheezValueToLLVMValue(v.Type, v.Value);
-                    else
-                        initializer = GetDefaultLLVMValue(decl.Type);
-
-                    varPtr.SetInitializer(initializer);
-                    valueMap[v] = varPtr;
-                }
-
-                // do initialization TODO: other patterns
-                if (decl.Initializer != null && v.Value == null)
-                {
-                    var val = GenerateExpression(decl.Initializer, varPtr, true);
+                    var varPtr = valueMap[v];
+                    var val = GenerateExpression(v.Initializer, varPtr, true);
                     if (val != null) builder.CreateStore(val.Value, varPtr);
                 }
             }

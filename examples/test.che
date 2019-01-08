@@ -3,19 +3,11 @@
 // #load("examples/glfw3_example")
 // #load("examples/signed_distance_field_renderer")
 
-
-// fn swap1(a: int, b: int) -> (int, int) {
-//     return b, a
-// }
-
-fn swap2(a: int, b: int) -> (a_out: int, b_out: int) {
-    a_out = b
-    b_out = a
-}
-
-
-let a: (int, int) = (5, 6)
-
+let z = (true, false)
+let (a, b) = z
+let (f, g) = (true, false)
+let c = z
+let d = (false, true)
 
 fn Main() {
     // let a, b = swap1(1, 2)

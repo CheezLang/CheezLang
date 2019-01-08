@@ -1,4 +1,5 @@
 ﻿using Cheez.Ast.Expressions;
+using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using LLVMSharp;
 using System;
@@ -13,11 +14,35 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             switch (stmt)
             {
                 case AstNumberExpr n: return GenerateNumberExpr(n);
+                case AstBoolExpr n: return GenerateBoolExpr(n);
                 case AstIdExpr i: return GenerateIdExpr(i, deref);
                 case AstCharLiteral ch: return GenerateCharLiteralExpr(ch);
                 case AstTupleExpr t: return GenerateTupleExpr(t, target, deref);
+                case AstDotExpr t: return GenerateDotExpr(t, target, deref);
             }
             return default;
+        }
+
+        public LLVMValueRef? GenerateDotExpr(AstDotExpr expr, LLVMValueRef? maybeTarget, bool deref)
+        {
+            switch (expr.Left.Type)
+            {
+                case TupleType t:
+                    {
+                        int index = (int)expr.Right.Value;
+                        var left = GenerateExpression(expr.Left, null, false);
+                        var ptr = builder.CreateStructGEP(left.Value, (uint)index, "");
+                        if (deref)
+                        {
+                            ptr = builder.CreateLoad(ptr, "");
+                        }
+
+                        return ptr;
+                    }
+
+                default:
+                    throw new NotImplementedException();
+            }
         }
 
         public LLVMValueRef? GenerateTupleExpr(AstTupleExpr expr, LLVMValueRef? maybeTarget, bool deref)
@@ -65,6 +90,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         public LLVMValueRef VisitStringLiteralExpr(AstStringLiteral expr)
         {
             throw new NotImplementedException();
+        }
+
+        public LLVMValueRef GenerateBoolExpr(AstBoolExpr expr)
+        {
+            var llvmType = CheezTypeToLLVMType(expr.Type);
+            return LLVM.ConstInt(llvmType, expr.BoolValue ? 1u : 0u, false);
         }
 
         public LLVMValueRef GenerateNumberExpr(AstNumberExpr num)

@@ -160,6 +160,16 @@ namespace Cheez.Visitors
             sb.Append($": {variable.Type}");
             if (variable.Initializer != null)
                 sb.Append($" = {variable.Initializer.Accept(this)}");
+
+            foreach (var sub in variable.SubDeclarations)
+            {
+                if (sub.Initializer != null)
+                {
+                    sb.AppendLine();
+                    sb.Append($"    // {sub.Name.Accept(this)} = {sub.Initializer.Accept(this)}");
+                }
+            }
+
             return sb.ToString();
         }
 

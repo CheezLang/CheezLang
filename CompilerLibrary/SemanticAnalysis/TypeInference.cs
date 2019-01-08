@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
@@ -24,6 +25,13 @@ namespace Cheez
         {
             switch (expr)
             {
+                case AstBoolExpr b:
+                    {
+                        b.Type = CheezType.Bool;
+                        b.Value = b.BoolValue;
+                        break;
+                    }
+                
                 case AstTypeExpr t:
                     throw new NotImplementedException();
 
@@ -63,8 +71,55 @@ namespace Cheez
                     InferTypeTupleExpr(t, expected, unresolvedDependencies, allDependencies);
                     break;
 
+                case AstDotExpr d:
+                    InferTypeDotExpr(d, expected, unresolvedDependencies, allDependencies);
+                    break;
+
                 default:
                     throw new NotImplementedException();
+            }
+        }
+
+        private void InferTypeDotExpr(AstDotExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        {
+            expr.Left.Scope = expr.Scope;
+            InferTypes(expr.Left, null, unresolvedDependencies, allDependencies);
+
+            if (expr.Left.Type is ErrorType)
+                return;
+
+            var sub = expr.Right.Name;
+            switch (expr.Left.Type)
+            {
+                case TupleType tuple:
+                    {
+                        int index = -1;
+                        for (int i = 0; i < tuple.Members.Length; i++)
+                        {
+                            if (tuple.Members[i].name == sub)
+                            {
+                                index = i;
+                                break;
+                            }
+                        }
+
+                        if (index == -1 && int.TryParse(sub, out int i2))
+                        {
+                            index = i2;
+                        }
+
+                        if (index < 0 || index >= tuple.Members.Length)
+                        {
+                            ReportError(expr, $"The tuple does not contain an item '{sub}', tuple type is {tuple}");
+                            return;
+                        }
+
+                        expr.Type = tuple.Members[index].type;
+                        expr.Right.Value = index;
+                        break;
+                    }
+
+                default: throw new NotImplementedException();
             }
         }
 
@@ -77,6 +132,8 @@ namespace Cheez
             for (int i = 0; i < expr.Values.Count; i++)
             {
                 var v = expr.Values[i];
+                v.Scope = expr.Scope;
+
                 var e = tupleType?.Members[i].type;
                 InferTypes(v, e, unresolvedDependencies, allDependencies);
 
@@ -164,8 +221,9 @@ namespace Cheez
             {
                 i.Type = var.Type;
                 if (i.Type is AbstractType)
-                    unresolvedDependencies.Add(var);
-                allDependencies.Add(var);
+                    unresolvedDependencies?.Add(var);
+
+                allDependencies?.Add(var);
             }
             else
             {
