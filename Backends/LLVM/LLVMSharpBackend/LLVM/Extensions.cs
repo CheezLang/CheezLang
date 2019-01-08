@@ -87,7 +87,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         public static bool VerifyModule(this Module self, LLVMVerifierFailureAction Action, out string OutMessage)
         {
-            return LLVM.VerifyModule(self.GetModuleRef(), LLVMVerifierFailureAction.LLVMPrintMessageAction, out OutMessage);
+            return LLVM.VerifyModule(self.GetModuleRef(), Action, out OutMessage);
         }
     }
 

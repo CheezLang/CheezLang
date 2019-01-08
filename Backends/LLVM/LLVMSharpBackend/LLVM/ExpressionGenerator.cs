@@ -14,18 +14,19 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 case AstNumberExpr n: return GenerateNumberExpr(n);
                 case AstIdExpr i: return GenerateIdExpr(i, deref);
+                case AstCharLiteral ch: return GenerateCharLiteralExpr(ch);
             }
             return default;
         }
 
-        public LLVMValueRef VisitCharLiteralExpr(AstCharLiteral expr, LLVMCodeGeneratorNewContext data = default)
+        public LLVMValueRef GenerateCharLiteralExpr(AstCharLiteral expr)
         {
             var ch = expr.CharValue;
             var val = LLVM.ConstInt(LLVMTypeRef.Int8Type(), ch, true);
             return val;
         }
 
-        public LLVMValueRef VisitStringLiteralExpr(AstStringLiteral expr, LLVMCodeGeneratorNewContext data = default)
+        public LLVMValueRef VisitStringLiteralExpr(AstStringLiteral expr)
         {
             throw new NotImplementedException();
         }
@@ -54,7 +55,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return v;
         }
 
-        //public override LLVMLLVMValueRef VisitStructValueExpression(AstStructValueExpr str, object data = null)
+        //public override LLVMValueRef VisitStructValueExpression(AstStructValueExpr str)
         //{
         //    var value = GetTempValue(str.Type);
 

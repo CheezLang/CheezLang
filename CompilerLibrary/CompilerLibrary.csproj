@@ -118,7 +118,6 @@
     <Compile Include="Ast\DesugaredExpressions.cs" />
     <Compile Include="Ast\Location.cs" />
     <Compile Include="Ast\TypeExpressions.cs" />
-    <Compile Include="CheezValue.cs" />
     <Compile Include="CodeGeneration\ICodeGenerator.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="ErrorHandler.cs" />

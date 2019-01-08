@@ -148,10 +148,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
 
             // TODO
-            if (lfunc.VerifyFunction(LLVMVerifierFailureAction.LLVMPrintMessageAction))
-            {
-                Console.Error.WriteLine($"in function {lfunc}");
-            }
+            //if (lfunc.VerifyFunction(LLVMVerifierFailureAction.LLVMPrintMessageAction))
+            //{
+            //    Console.Error.WriteLine($"in function {lfunc}");
+            //}
 
             currentFunction = null;
         }
@@ -200,15 +200,23 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     varPtr = module.AddGlobal(type, v.Name.Name);
                     varPtr.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
 
+                    var uiae = LLVM.TypeOf(varPtr);
+
                     var dExtern = decl.GetDirective("extern");
                     if (dExtern != null) varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
 
-                    varPtr.SetInitializer(GetDefaultLLVMValue(decl.Type));
+                    LLVMValueRef initializer = default;
+                    if (v.Value != null)
+                        initializer = CheezValueToLLVMValue(v.Type, v.Value);
+                    else
+                        initializer = GetDefaultLLVMValue(decl.Type);
+
+                    varPtr.SetInitializer(initializer);
                     valueMap[v] = varPtr;
                 }
 
-                // do initialization
-                if (decl.Initializer != null)
+                // do initialization TODO: other patterns
+                if (decl.Initializer != null && v.Value == null)
                 {
                     var val = GenerateExpression(decl.Initializer, true);
                     builder.CreateStore(val, varPtr);
@@ -218,7 +226,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             visited.Add(decl);
         }
 
-        public LLVMValueRef VisitVariableDecl(AstVariableDecl variable, LLVMCodeGeneratorNewContext data = default)
+        public LLVMValueRef VisitVariableDecl(AstVariableDecl variable)
         {
             // TODO
             return default;

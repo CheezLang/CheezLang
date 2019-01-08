@@ -5,7 +5,8 @@
 
 struct List(T: type) {
     item: T
-    next: *List(T)
+    test: int
+    // next: *List(T)
 }
 
 // fn swap1(a: int, b: int) -> (int, int) {
@@ -17,13 +18,14 @@ struct List(T: type) {
 //     b_out = a
 // }
 
-let a: int = 5
+let c = 'l'
+let c2 = '`n'
+let c3 = c2
+let l: List(int)
 
-let n: int = r
-let r: int = t
-let t: int = a
-
-let l: List(string)
+fn test() -> char {
+    return 'l'
+}
 
 fn foo() -> List(string) {
 

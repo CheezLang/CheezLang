@@ -166,13 +166,13 @@ namespace Cheez
             {
                 if (expected != null && (expected is IntType || expected is FloatType)) expr.Type = expected;
                 else expr.Type = IntType.LiteralType;
-                expr.Value = new CheezValue(expr.Type, expr.Data.ToLong());
+                expr.Value = expr.Data.ToLong();
             }
             else
             {
                 if (expected != null && expected is FloatType) expr.Type = expected;
                 else expr.Type = FloatType.LiteralType;
-                expr.Value = new CheezValue(expr.Type, expr.Data.ToDouble());
+                expr.Value = expr.Data.ToDouble();
             }
         }
     }

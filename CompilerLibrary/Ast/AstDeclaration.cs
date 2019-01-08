@@ -229,6 +229,8 @@ namespace Cheez.Ast.Statements
 
         public AstVariableDecl VarDeclaration { get; set; }
 
+        public object Value { get; set; } = null;
+
         public AstSingleVariableDecl(AstIdExpr name, AstTypeExpr typeExpr, AstVariableDecl parent, ILocation Location) : base(name, Location: Location)
         {
             TypeExpr = typeExpr;

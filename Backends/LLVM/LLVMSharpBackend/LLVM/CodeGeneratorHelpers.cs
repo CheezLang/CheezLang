@@ -180,6 +180,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case StructType s:
                     {
+                        //var memTypes2 = s.Declaration.Members.Select(m => CheezTypeToLLVMType(m.Type)).ToArray();
+                        //return LLVM.StructType(memTypes2, false);
+
                         var name = $"struct.{s.Declaration.Name.Name}";
 
                         if (s.Declaration.IsPolyInstance)
@@ -199,6 +202,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private LLVMValueRef CheezValueToLLVMValue(CheezType type, object v)
+        {
+            switch (type)
+            {
+                case CharType _: return LLVM.ConstInt(CheezTypeToLLVMType(type), (char)v, false);
+            }
+
+            throw new NotImplementedException();
         }
 
         private LLVMValueRef GetDefaultLLVMValue(CheezType type)
@@ -224,7 +237,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
 
                 case StructType p:
-                    return LLVM.ConstStruct(p.Declaration.Members.Select(m => GetDefaultLLVMValue(m.Type)).ToArray(), false);
+                    //return LLVM.ConstPointerNull(CheezTypeToLLVMType(p));
+                    var members = p.Declaration.Members.Select(m => GetDefaultLLVMValue(m.Type));
+                    return LLVM.ConstStruct(members.ToArray(), false);
 
                 case TraitType t:
                     return LLVMValueRef.ConstStruct(new LLVMValueRef[] {

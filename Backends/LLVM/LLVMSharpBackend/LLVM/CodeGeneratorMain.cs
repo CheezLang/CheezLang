@@ -7,11 +7,6 @@ using System.IO;
 
 namespace Cheez.CodeGeneration.LLVMCodeGen
 {
-    public struct LLVMCodeGeneratorNewContext
-    {
-        public List<LLVMValueRef> Targets;
-    }
-
     public partial class LLVMCodeGenerator : ICodeGenerator
     {
 
@@ -74,7 +69,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             // verify module
             {
-                if (module.VerifyModule(LLVMVerifierFailureAction.LLVMPrintMessageAction, out string message))
+                if (module.VerifyModule(LLVMVerifierFailureAction.LLVMReturnStatusAction, out string message))
                 {
                     Console.Error.WriteLine($"[LLVM-validate-module] {message}");
                 }
@@ -217,10 +212,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
 
 
-            if (LLVM.VerifyFunction(lfunc, LLVMVerifierFailureAction.LLVMPrintMessageAction))
-            {
-                Console.Error.WriteLine($"in function {lfunc}");
-            }
+            //if (LLVM.VerifyFunction(lfunc, LLVMVerifierFailureAction.LLVMPrintMessageAction))
+            //{
+            //    Console.Error.WriteLine($"in function {lfunc}");
+            //}
 
             builder.Dispose();
         }

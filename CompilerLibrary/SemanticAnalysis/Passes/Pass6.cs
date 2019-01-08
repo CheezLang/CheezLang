@@ -95,6 +95,7 @@ namespace Cheez
             {
                  v.TypeExpr.Scope = v.Scope;
                  v.TypeExpr.Type = ResolveType(v.TypeExpr);
+                 v.Type = v.TypeExpr.Type;
                 // TODO: tuple
             }
 
@@ -127,18 +128,19 @@ namespace Cheez
                 }
 
                 // assign types to sub declarations
-                AssignTypesToSubdecls(v.Pattern, v.Type);
+                AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
             }
 
             return deps;
         }
 
-        private void AssignTypesToSubdecls(AstExpression pattern, CheezType type)
+        private void AssignTypesAndValuesToSubdecls(AstExpression pattern, CheezType type, AstExpression initializer)
         {
             if (pattern is AstIdExpr id)
             {
                 var decl = id.Symbol as AstSingleVariableDecl;
                 decl.Type = type;
+                decl.Value = initializer.Value;
             }
             else
             {
