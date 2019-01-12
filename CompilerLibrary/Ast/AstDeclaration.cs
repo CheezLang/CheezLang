@@ -82,6 +82,7 @@ namespace Cheez.Ast.Statements
 
         public AstImplBlock ImplBlock { get; set; }
         public AstFunctionDecl TraitFunction { get; internal set; }
+        public ILocation ParameterLocation { get; internal set; }
 
         public AstFunctionDecl(AstIdExpr name,
             List<AstIdExpr> generics,
@@ -89,13 +90,16 @@ namespace Cheez.Ast.Statements
             AstParameter returns,
             AstBlockStmt body = null,
             List<AstDirective> Directives = null,
-            bool refSelf = false, ILocation Location = null)
+            bool refSelf = false,
+            ILocation Location = null,
+            ILocation ParameterLocation = null)
             : base(name, Directives, Location)
         {
             this.Parameters = parameters;
             this.ReturnValue = returns;
             this.Body = body;
             this.RefSelf = refSelf;
+            this.ParameterLocation = ParameterLocation;
         }
 
         [DebuggerStepThrough]
@@ -105,7 +109,7 @@ namespace Cheez.Ast.Statements
                 null,
                 Parameters.Select(p => p.Clone()).ToList(),
                 ReturnValue.Clone(),
-                Body?.Clone() as AstBlockStmt));
+                Body?.Clone() as AstBlockStmt, ParameterLocation: ParameterLocation));
     }
 
     #endregion

@@ -54,6 +54,7 @@ namespace Cheez.Ast
 
         public Location(TokenLocation beg, TokenLocation end)
         {
+            if (beg == null || end == null) throw new System.Exception("Arguments can't be null");
             this.Beginning = beg;
             this.End = end;
         }

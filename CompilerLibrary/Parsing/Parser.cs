@@ -382,7 +382,7 @@ namespace Cheez.Parsing
 
             if (CheckToken(TokenType.OpenParen))
             {
-                parameters = ParseParameterList(out var _);
+                parameters = ParseParameterList(out var _, out var _);
                 SkipNewlines();
             }
 
@@ -616,11 +616,11 @@ namespace Cheez.Parsing
             return new AstParameter(pname, ptype, new Location(beg, ptype.End));
         }
 
-        private List<AstParameter> ParseParameterList(out TokenLocation end, params TokenType[] delimiters)
+        private List<AstParameter> ParseParameterList(out TokenLocation beg, out TokenLocation end)
         {
             var parameters = new List<AstParameter>();
 
-            Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of parameter list"));
+            beg = Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of parameter list")).location;
             SkipNewlines();
 
             while (true)
@@ -636,7 +636,7 @@ namespace Cheez.Parsing
                 next = PeekToken();
                 if (next.type == TokenType.Comma)
                     NextToken();
-                else if (next.type == TokenType.ClosingParen || delimiters.Any(d => d == next.type))
+                else if (next.type == TokenType.ClosingParen)
                     break;
                 else
                 {
@@ -666,7 +666,7 @@ namespace Cheez.Parsing
 
             if (CheckToken(TokenType.OpenParen))
             {
-                parameters = ParseParameterList(out var _);
+                parameters = ParseParameterList(out var _, out var _);
                 SkipNewlines();
             }
 
@@ -971,7 +971,10 @@ namespace Cheez.Parsing
 
         private AstFunctionDecl ParseFunctionDeclaration()
         {
-            TokenLocation beginning = null, end = null;
+            TokenLocation beginning = null,
+                end = null,
+                pbeg = null,
+                pend = null;
             AstBlockStmt body = null;
             var parameters = new List<AstParameter>();
             AstParameter returnValue = null;
@@ -986,7 +989,7 @@ namespace Cheez.Parsing
 
             // parameters
             SkipNewlines();
-            parameters = ParseParameterList(out var _);
+            parameters = ParseParameterList(out pbeg, out pend);
 
             SkipNewlines();
 
@@ -1008,9 +1011,12 @@ namespace Cheez.Parsing
             if (CheckToken(TokenType.Semicolon))
                 end = NextToken().location;
             else
+            {
                 body = ParseBlockStatement();
+                end = body.End;
+            }
 
-            return new AstFunctionDecl(name, generics, parameters, returnValue, body, directives, Location: new Location(beginning, end));
+            return new AstFunctionDecl(name, generics, parameters, returnValue, body, directives, Location: new Location(beginning, end), ParameterLocation: new Location(pbeg, pend));
         }
 
         #region Expression Parsing
@@ -1083,7 +1089,7 @@ namespace Cheez.Parsing
 
             if (token.type == TokenType.OpenParen)
             {
-                var p = ParseParameterList(out var end);
+                var p = ParseParameterList(out var _, out var end);
                 return new AstTupleTypeExpr(p, new Location(token.location, end));
             }
 
@@ -1314,6 +1320,45 @@ namespace Cheez.Parsing
             return ParsePostUnaryExpression(errorMessage);
         }
 
+        private AstArgument ParseArgumentExpression()
+        {
+            TokenLocation beg;
+            AstExpression expr;
+            AstIdExpr name = null;
+
+            var next = PeekToken();
+            if (next.type == TokenType.Identifier)
+            {
+                NextToken();
+                SkipNewlines();
+
+                var maybeColon = PeekToken();
+                if (maybeColon.type == TokenType.Equal)
+                {
+                    name = new AstIdExpr((string)next.data, false, new Location(next.location));
+                    beg = name.Beginning;
+
+                    Consume(TokenType.Equal, ErrMsg("=", "after name in argument"));
+                    SkipNewlines();
+
+                    expr = ParseExpression();
+                }
+                else
+                {
+                    UndoTokens(2);
+                    expr = ParseExpression();
+                    beg = expr.Beginning;
+                }
+            }
+            else
+            {
+                expr = ParseExpression();
+                beg = expr.Beginning;
+            }
+
+            return new AstArgument(expr, name, new Location(beg, expr.End));
+        }
+
         private AstExpression ParsePostUnaryExpression(ErrorMessageResolver errorMessage)
         {
             var expr = ParseAtomicExpression(errorMessage);
@@ -1326,13 +1371,13 @@ namespace Cheez.Parsing
                         {
                             NextToken();
                             SkipNewlines();
-                            List<AstExpression> args = new List<AstExpression>();
+                            var args = new List<AstArgument>();
                             while (true)
                             {
                                 var next = PeekToken();
                                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                                     break;
-                                args.Add(ParseExpression());
+                                args.Add(ParseArgumentExpression());
                                 SkipNewlines();
 
                                 next = PeekToken();

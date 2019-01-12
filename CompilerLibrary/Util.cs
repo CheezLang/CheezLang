@@ -27,6 +27,15 @@ namespace Cheez.Util
 
     public static class Utilities
     {
+        public static int IndexOf<T>(this T[] arr, Predicate<T> pred)
+        {
+            for (int i = 0; i < arr.Length; i++)
+            {
+                if (pred(arr[i])) return i;
+            }
+            return -1;
+        }
+
         public static bool Xor(bool a, bool b)
         {
             return (a && !b) || (!a && b);

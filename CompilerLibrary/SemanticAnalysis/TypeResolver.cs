@@ -88,10 +88,10 @@ namespace Cheez
 
                 case AstFunctionTypeExpr func:
                     {
-                        CheezType[] par = new CheezType[func.ParameterTypes.Count];
+                        (string name, CheezType type)[] par = new (string, CheezType)[func.ParameterTypes.Count];
                         for (int i = 0; i < par.Length; i++) {
                             func.ParameterTypes[i].Scope = func.Scope;
-                            par[i] = ResolveTypeHelper(func.ParameterTypes[i], deps, instances);
+                            par[i].type = ResolveTypeHelper(func.ParameterTypes[i], deps, instances);
                         }
 
                         CheezType ret = CheezType.Void;
@@ -102,7 +102,7 @@ namespace Cheez
                             ret = ResolveTypeHelper(func.ReturnType, deps, instances);
                         }
 
-                        return FunctionType.GetFunctionType(par, ret);
+                        return new FunctionType(par, ret);
                     }
 
                 case AstPolyStructTypeExpr @struct:

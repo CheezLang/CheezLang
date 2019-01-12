@@ -317,6 +317,13 @@ namespace Cheez.Visitors
             return $"@{call.Name.Accept(this)}({argsStr})";
         }
 
+        public override string VisitArgumentExpr(AstArgument expr, int data = 0)
+        {
+            if (expr.Name != null)
+                return $"{expr.Name.Accept(this)} = {expr.Expr.Accept(this)}";
+            return $"{expr.Expr.Accept(this)}";
+        }
+
         public override string VisitCallExpr(AstCallExpr call, int data = 0)
         {
             var args = call.Arguments.Select(a => a.Accept(this));

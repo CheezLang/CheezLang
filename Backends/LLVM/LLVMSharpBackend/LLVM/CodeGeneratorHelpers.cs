@@ -172,7 +172,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case FunctionType f:
                     {
-                        var paramTypes = f.ParameterTypes.Select(rt => CheezTypeToLLVMType(rt)).ToList();
+                        var paramTypes = f.Parameters.Select(rt => CheezTypeToLLVMType(rt.type)).ToList();
                         var returnType = CheezTypeToLLVMType(f.ReturnType);
                         return LLVMTypeRef.FunctionType(returnType, paramTypes.ToArray(), f.VarArgs);
                     }

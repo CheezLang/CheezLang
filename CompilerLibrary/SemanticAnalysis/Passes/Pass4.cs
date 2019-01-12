@@ -81,7 +81,7 @@ namespace Cheez
                     p.Type = ResolveType(p.TypeExpr);
                 }
 
-                func.Type = FunctionType.GetFunctionType(func);
+                func.Type = new FunctionType(func);
             }
 
             var res = func.Scope.DefineDeclaration(func);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
@@ -9,6 +10,7 @@ using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
+using Cheez.Util;
 
 namespace Cheez
 {
@@ -21,19 +23,16 @@ namespace Cheez
             else if (expr.Type == CheezType.StringLiteral) expr.Type = CheezType.String;
         }
 
-        private void InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null)
+        private bool InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null)
         {
+            var previousType = expr.Type;
+
             switch (expr)
             {
                 case AstBoolExpr b:
-                    {
-                        b.Type = CheezType.Bool;
-                        b.Value = b.BoolValue;
-                        break;
-                    }
-                
-                case AstTypeExpr t:
-                    throw new NotImplementedException();
+                    b.Type = CheezType.Bool;
+                    b.Value = b.BoolValue;
+                    return false;
 
                 case AstNumberExpr n:
                     InferTypesNumberExpr(n, expected);
@@ -82,6 +81,8 @@ namespace Cheez
                 default:
                     throw new NotImplementedException();
             }
+
+            return previousType != expr.Type;
         }
 
         private void InferTypeIndexExpr(AstArrayAccessExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
@@ -170,10 +171,90 @@ namespace Cheez
             {
                 case FunctionType f:
                     {
-                        expr.Type = f.ReturnType;
+                        InferRegularFunctionCall(f, expr, expected, unresolvedDependencies, allDependencies);
                         break;
                     }
                 case ErrorType _: return;
+                default: throw new NotImplementedException();
+            }
+        }
+
+        private void InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        {
+            expr.Type = func.ReturnType;
+
+            if (expr.Arguments.Count > func.Parameters.Length)
+            {
+                (string, ILocation)? detail = null;
+                if (expr.Function is AstIdExpr id)
+                {
+                    ILocation loc = id.Symbol.Location;
+                    if (id.Symbol is CompTimeVariable ct && ct.Declaration is AstFunctionDecl fd)
+                        loc = new Location(fd.Name.Beginning, fd.ParameterLocation.End);
+                    detail = ("Function defined here:", loc);
+                }
+                ReportError(expr, $"Too many arguments. Expected {func.Parameters.Length}, got {expr.Arguments.Count}", detail);
+                return;
+            }
+
+            // match arguments to parameters
+            var map = new Dictionary<int, AstArgument>();
+            bool allowUnnamed = true;
+            bool ok = true;
+            for (int i = 0; i < expr.Arguments.Count; i++)
+            {
+                var arg = expr.Arguments[i];
+                if (arg.Name == null)
+                {
+                    if (!allowUnnamed)
+                    {
+                        ok = false;
+                        ReportError(arg, $"Unnamed arguments are not allowed after named arguments");
+                        break;
+                    }
+
+                    var param = func.Parameters[i];
+                    map[i] = arg;
+                    arg.Index = i;
+                }
+                else
+                {
+                    var index = func.Parameters.IndexOf(p => p.name == arg.Name.Name);
+                    if (map.TryGetValue(index, out var other))
+                    {
+
+                        ReportError(arg, $"This argument maps to the same parameter ({i}) as '{other}'");
+                        ok = false;
+                        break;
+                    }
+
+                    map[index] = arg;
+                    arg.Index = index;
+                }
+            }
+            if (!ok) return;
+
+            // TODO: create missing arguments
+
+            //
+            if (map.Count < func.Parameters.Length)
+            {
+                ReportError(expr, $"Not enough arguments");
+                return;
+            }
+
+            expr.Arguments.Sort((a, b) => a.Index - b.Index);
+
+            var pairs = expr.Arguments.Select(arg => (func.Parameters[arg.Index].type, arg));
+            // TODO: return type
+            (CheezType type, AstArgument arg)[] args = pairs.ToArray();
+
+            // match arguments and parameter types
+            foreach (var (type, arg) in args)
+            {
+                InferTypes(arg.Expr, type, unresolvedDependencies, allDependencies);
+                arg.Type = arg.Expr.Type;
+                // TODO: check types
             }
         }
 

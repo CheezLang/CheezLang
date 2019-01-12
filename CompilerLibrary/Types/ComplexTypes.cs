@@ -151,53 +151,37 @@ namespace Cheez.Types.Complex
 
     public class FunctionType : CheezType
     {
-        private static List<FunctionType> sTypes = new List<FunctionType>();
+        //private static List<FunctionType> sTypes = new List<FunctionType>();
 
-        public CheezType[] ParameterTypes { get; private set; }
+        public override bool IsPolyType => false;
+        public bool VarArgs { get; set; }
+        public (string name, CheezType type)[] Parameters { get; private set; }
         public CheezType ReturnType { get; private set; }
-        public bool VarArgs { get; set; } = false;
 
-        private FunctionType(CheezType[] parameterTypes, CheezType returnType)
+        public FunctionType((string, CheezType)[] parameterTypes, CheezType returnType)
         {
-            this.ParameterTypes = parameterTypes;
+            this.Parameters = parameterTypes;
             this.ReturnType = returnType;
         }
 
-        public static FunctionType GetFunctionType(AstFunctionDecl decl)
+        public FunctionType(AstFunctionDecl func)
         {
-            var pt = decl.Parameters.Select(p => p.Type).ToArray();
-            return GetFunctionType(pt, decl.ReturnValue?.Type ?? CheezType.Void);
-        }
-
-        public static FunctionType GetFunctionType(CheezType[] parameterTypes, CheezType returnType)
-        {
-            var f = sTypes.FirstOrDefault(ft =>
-            {
-                if (ft.ReturnType != returnType)
-                    return false;
-                if (ft.ParameterTypes.Length != parameterTypes.Length)
-                    return false;
-
-                return ft.ParameterTypes.Zip(parameterTypes, (a, b) => a == b).All(b => b);
-            });
-
-            if (f != null)
-                return f;
-
-            var type = new FunctionType(parameterTypes, returnType);
-            sTypes.Add(type);
-            return type;
+            this.ReturnType = func.ReturnValue?.Type ?? CheezType.Void;
+            this.Parameters = func.Parameters.Select(p => (p.Name?.Name, p.Type)).ToArray();
         }
 
         public override string ToString()
         {
-            var args = string.Join(", ", ParameterTypes.ToList());
+            var args = string.Join(", ", Parameters.Select(p =>
+            {
+                if (p.name != null)
+                    return $"{p.name}: {p.type}";
+                return p.type.ToString();
+            }));
             if (ReturnType != CheezType.Void)
                 return $"fn({args}) -> {ReturnType}";
             else
                 return $"fn({args})";
         }
-
-        public override bool IsPolyType => false;
     }
 }

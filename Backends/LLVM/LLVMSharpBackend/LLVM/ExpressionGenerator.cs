@@ -4,6 +4,7 @@ using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using LLVMSharp;
 using System;
+using System.Linq;
 
 namespace Cheez.CodeGeneration.LLVMCodeGen
 {
@@ -23,6 +24,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             switch (stmt)
             {
+                case AstArgument a: return GenerateExpression(a.Expr, target, deref);
                 case AstNumberExpr n: return GenerateNumberExpr(n);
                 case AstBoolExpr n: return GenerateBoolExpr(n);
                 case AstIdExpr i: return GenerateIdExpr(i, deref);
@@ -39,7 +41,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef? GenerateCallExpr(AstCallExpr c, LLVMValueRef? target, bool deref)
         {
             var f = GenerateExpression(c.Function, target, false);
-            return builder.CreateCall(f.Value, new LLVMValueRef[0], "");
+
+            // arguments
+            var args = c.Arguments.Select(a => GenerateExpression(a, null, true).Value).ToArray();
+
+            return builder.CreateCall(f.Value, args, "");
         }
 
         private LLVMValueRef? GenerateIndexExpr(AstArrayAccessExpr expr, LLVMValueRef? target, bool deref)

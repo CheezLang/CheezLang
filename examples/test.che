@@ -3,10 +3,10 @@
 // #load("examples/glfw3_example")
 // #load("examples/signed_distance_field_renderer")
 
-fn test() -> int {
-    return 456
+fn test(p: int, a: int, b: int) -> int {
+    return 123
 }
 
 fn Main() -> int {
-    return test()
+    return test(123, 456, 789)
 }

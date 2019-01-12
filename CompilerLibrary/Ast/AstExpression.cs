@@ -156,14 +156,34 @@ namespace Cheez.Ast.Expressions
             => CopyValuesTo(new AstDotExpr(Left.Clone(), Right.Clone() as AstIdExpr, IsDoubleColon));
     }
 
+    public class AstArgument : AstExpression
+    {
+        public override bool IsPolymorphic => Expr.IsPolymorphic;
+        public AstExpression Expr { get; set; }
+        public AstIdExpr Name { get; set; }
+        public int Index = -1;
+
+        public AstArgument(AstExpression expr, AstIdExpr name = null, ILocation Location = null)
+            : base(Location)
+        {
+            this.Expr = expr;
+            this.Name = name;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitArgumentExpr(this, data);
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstArgument(Expr.Clone(), Name?.Clone() as AstIdExpr));
+    }
+
     public class AstCallExpr : AstExpression
     {
         public AstExpression Function { get; set; }
-        public List<AstExpression> Arguments { get; set; }
+        public List<AstArgument> Arguments { get; set; }
         public override bool IsPolymorphic => Function.IsPolymorphic || Arguments.Any(a => a.IsPolymorphic);
 
         [DebuggerStepThrough]
-        public AstCallExpr(AstExpression func, List<AstExpression> args, ILocation Location = null) : base(Location)
+        public AstCallExpr(AstExpression func, List<AstArgument> args, ILocation Location = null) : base(Location)
         {
             Function = func;
             Arguments = args;
@@ -174,7 +194,7 @@ namespace Cheez.Ast.Expressions
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstCallExpr(Function.Clone(),  Arguments.Select(a => a.Clone()).ToList()));
+            => CopyValuesTo(new AstCallExpr(Function.Clone(),  Arguments.Select(a => a.Clone() as AstArgument).ToList()));
     }
 
     public class AstCompCallExpr : AstExpression
