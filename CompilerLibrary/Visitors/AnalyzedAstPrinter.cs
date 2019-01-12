@@ -75,8 +75,8 @@ namespace Cheez.Visitors
             }
 
             sb.Append("return");
-            if (ret.ReturnValues.Count != 0)
-                sb.Append(" ").Append(string.Join(", ", ret.ReturnValues.Select(rv => rv.Accept(this))));
+            if (ret.ReturnValue != null)
+                sb.Append(" ").Append(ret.ReturnValue.Accept(this));
             return sb.ToString();
         }
 

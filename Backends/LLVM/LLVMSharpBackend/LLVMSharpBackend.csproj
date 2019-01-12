@@ -109,7 +109,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LLVMCodeGenerator.cs" />
     <Compile Include="LLVM\AttributeKind.cs" />
     <Compile Include="LLVM\StatementGenerator.cs" />
     <Compile Include="LLVM\CodeGeneratorHelpers.cs" />

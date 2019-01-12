@@ -173,8 +173,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             switch (stmt)
             {
-
+                case AstReturnStmt ret: GenerateReturnStatement(ret); break;
+                default: throw new NotImplementedException();
             }
+
         }
 
         private void InitGlobalVariable(AstVariableDecl decl, HashSet<AstVariableDecl> visited)
@@ -258,35 +260,17 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             //}
         }
 
-        //public override LLVMLLVMValueRef VisitReturnStatement(AstReturnStmt ret, object data = null)
-        //{
-        //    if (ret.ReturnValue != null)
-        //    {
-        //        var retval = ret.ReturnValue.Accept(this);
-
-        //        if (CanPassByValue(ret.ReturnValue.Type))
-        //        {
-        //            return builder.CreateRet(retval);
-        //        }
-        //        else
-        //        {
-        //            var type = CheezTypeToLLVMType(ret.ReturnValue.Type);
-        //            ulong size = targetData.SizeOfTypeInBits(type);
-        //            var sizeInBytes = LLVM.ConstInt(LLVM.Int32Type(), size, false);
-        //            var retPtr = returnValuePointer[currentFunction];
-
-        //            var dst = builder.CreatePointerCast(retPtr, pointerType, "");
-        //            var src = builder.CreatePointerCast(retval, pointerType, "");
-
-
-        //            var call = builder.CallIntrinsic(memcpy32, dst, src, sizeInBytes, LLVM.ConstInt(LLVM.Int1Type(), 0, false));
-        //            return builder.CreateRetVoid();
-        //        }
-        //    }
-        //    else
-        //    {
-        //        return builder.CreateRetVoid();
-        //    }
-        //}
+        public void GenerateReturnStatement(AstReturnStmt ret)
+        {
+            if (ret.ReturnValue != null)
+            {
+                var retval = GenerateExpression(ret.ReturnValue, null, true);
+                builder.CreateRet(retval.Value);
+            }
+            else
+            {
+                builder.CreateRetVoid();
+            }
+        }
     }
 }

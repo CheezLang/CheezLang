@@ -118,8 +118,7 @@ namespace Cheez
                 ConvertLiteralTypeToDefaultType(v.Initializer);
                 var newType = v.Initializer.Type;
 
-                if (v.Type == null || v.Type is AbstractType)
-                    v.Type = newType;
+                v.Type = newType;
             }
 
             if (deps.Count == 0)

@@ -158,12 +158,16 @@ namespace Cheez
                     }
                     else if (initializer != null)
                     {
-                        tin = new AstDotExpr(initializer, new AstIdExpr(i.ToString(), false), false);
+                        tin = new AstArrayAccessExpr(initializer, new AstNumberExpr(new Extras.NumberData(i)));
                         tin.Scope = initializer.Scope;
                     }
 
                     MatchPatternWithTypeExpr(parent, tid, tty?.TypeExpr, tin);
                 }
+            }
+            else
+            {
+                ReportError(pattern, $"This pattern is not valid here");
             }
         }
 

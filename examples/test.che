@@ -3,20 +3,10 @@
 // #load("examples/glfw3_example")
 // #load("examples/signed_distance_field_renderer")
 
-struct Foo {
-    a: int
-    b: int
+fn test() -> int {
+    return 456
 }
 
-let a = new Foo {1, 2}
-let b = (1, 2, 3)
-let (c, e, d) = b
-
-fn Main() {
-    // let a, b = swap1(1, 2)
+fn Main() -> int {
+    return test()
 }
-
-/*
-  %3 = load i32, i32* @e
-  ret i32 %3
-*/

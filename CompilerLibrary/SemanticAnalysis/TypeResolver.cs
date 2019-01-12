@@ -352,38 +352,5 @@ namespace Cheez
 
         //    return instance;
         //}
-
-
-        private void AnalyzeFunction(AstFunctionDecl func, List<AstFunctionDecl> instances = null)
-        {
-            // TODO
-        }
-
-        private void AnalyzeFunctions(List<AstFunctionDecl> newInstances)
-        {
-            var nextInstances = new List<AstFunctionDecl>();
-
-            int i = 0;
-            while (i < MaxPolyFuncResolveStepCount && newInstances.Count != 0)
-            {
-                foreach (var instance in newInstances)
-                {
-                    AnalyzeFunction(instance, nextInstances);
-                }
-                newInstances.Clear();
-
-                var t = newInstances;
-                newInstances = nextInstances;
-                nextInstances = t;
-
-                i++;
-            }
-
-            if (i == MaxPolyFuncResolveStepCount)
-            {
-                var details = newInstances.Select(str => ("Here:", str.Location)).ToList();
-                ReportError($"Detected a potential infinite loop in polymorphic function declarations after {MaxPolyFuncResolveStepCount} steps", details);
-            }
-        }
     }
 }

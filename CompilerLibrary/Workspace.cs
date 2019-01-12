@@ -72,7 +72,8 @@ namespace Cheez
             Pass4(); // resolve function signatures
             // Pass5(); // impls
             // Pass6(); // match impl functions with trait functions
-            Pass6(); // function bodies and variables
+            Pass6(); // variables
+            Pass7(); // function bodies
 
 
             var main = GlobalScope.GetSymbol("Main");

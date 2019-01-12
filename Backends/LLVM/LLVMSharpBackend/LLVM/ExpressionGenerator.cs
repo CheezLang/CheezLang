@@ -1,4 +1,5 @@
 ﻿using Cheez.Ast.Expressions;
+using Cheez.Extras;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using LLVMSharp;
@@ -28,10 +29,39 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstCharLiteral ch: return GenerateCharLiteralExpr(ch);
                 case AstTupleExpr t: return GenerateTupleExpr(t, target, deref);
                 case AstDotExpr t: return GenerateDotExpr(t, target, deref);
+                case AstArrayAccessExpr t: return GenerateIndexExpr(t, target, deref);
                 case AstStructValueExpr t: return GenerateStructValueExpr(t, target, deref);
-                case AstCallExpr c: return null;
+                case AstCallExpr c: return GenerateCallExpr(c, target, deref);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef? GenerateCallExpr(AstCallExpr c, LLVMValueRef? target, bool deref)
+        {
+            var f = GenerateExpression(c.Function, target, false);
+            return builder.CreateCall(f.Value, new LLVMValueRef[0], "");
+        }
+
+        private LLVMValueRef? GenerateIndexExpr(AstArrayAccessExpr expr, LLVMValueRef? target, bool deref)
+        {
+            switch (expr.SubExpression.Type)
+            {
+                case TupleType t:
+                    {
+                        var index = ((NumberData)expr.Indexer.Value).ToLong();
+                        var left = GenerateExpression(expr.SubExpression, null, false);
+                        var ptr = builder.CreateStructGEP(left.Value, (uint)index, "");
+                        if (deref)
+                        {
+                            ptr = builder.CreateLoad(ptr, "");
+                        }
+
+                        return ptr;
+                    }
+
+                default:
+                    throw new NotImplementedException();
+            }
         }
 
         public LLVMValueRef? GenerateStructValueExpr(AstStructValueExpr expr, LLVMValueRef? target, bool deref)
@@ -54,19 +84,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             switch (expr.Left.Type)
             {
-                case TupleType t:
-                    {
-                        int index = (int)expr.Right.Value;
-                        var left = GenerateExpression(expr.Left, null, false);
-                        var ptr = builder.CreateStructGEP(left.Value, (uint)index, "");
-                        if (deref)
-                        {
-                            ptr = builder.CreateLoad(ptr, "");
-                        }
-
-                        return ptr;
-                    }
-
                 default:
                     throw new NotImplementedException();
             }
@@ -143,7 +160,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         public LLVMValueRef GenerateIdExpr(AstIdExpr expr, bool deref)
         {
-            var v = valueMap[expr.Symbol];
+            LLVMValueRef v;
+            if (expr.Symbol is CompTimeVariable ct)
+            {
+                v = valueMap[ct.Declaration];
+            }
+            else
+            {
+                v = valueMap[expr.Symbol];
+            }
             if (deref)
                 return builder.CreateLoad(v, "");
             return v;

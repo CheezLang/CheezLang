@@ -124,14 +124,15 @@
     <Compile Include="IOperator.cs" />
     <Compile Include="Parsing\Lexer.cs" />
     <Compile Include="Parsing\Parser.cs" />
+    <Compile Include="SemanticAnalysis\FunctionAnalysis.cs" />
     <Compile Include="SemanticAnalysis\Passes\Pass1.cs" />
     <Compile Include="SemanticAnalysis\Passes\Pass2.cs" />
     <Compile Include="SemanticAnalysis\Passes\Pass3.cs" />
     <Compile Include="SemanticAnalysis\Passes\Pass4.cs" />
     <Compile Include="SemanticAnalysis\Passes\Pass6.cs" />
+    <Compile Include="SemanticAnalysis\Passes\Pass7.cs" />
     <Compile Include="SemanticAnalysis\Passes\Pass_.cs" />
     <Compile Include="SemanticAnalysis\TypeResolver.cs" />
-    <Compile Include="SemanticAnalysis\Semanticer.cs" />
     <Compile Include="SemanticAnalysis\TypeInference.cs" />
     <Compile Include="UniqueNameDecorator.cs" />
     <Compile Include="Extras\NumberData.cs" />

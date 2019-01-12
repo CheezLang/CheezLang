@@ -75,8 +75,50 @@ namespace Cheez
                     InferTypeDotExpr(d, expected, unresolvedDependencies, allDependencies);
                     break;
 
+                case AstArrayAccessExpr d:
+                    InferTypeIndexExpr(d, expected, unresolvedDependencies, allDependencies);
+                    break;
+
                 default:
                     throw new NotImplementedException();
+            }
+        }
+
+        private void InferTypeIndexExpr(AstArrayAccessExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        {
+            expr.SubExpression.Scope = expr.Scope;
+            InferTypes(expr.SubExpression, null, unresolvedDependencies, allDependencies);
+
+            expr.Indexer.Scope = expr.Scope;
+            InferTypes(expr.Indexer, null, unresolvedDependencies, allDependencies);
+
+            ConvertLiteralTypeToDefaultType(expr.Indexer);
+
+            if (expr.SubExpression.Type is ErrorType || expr.Indexer.Type is ErrorType)
+                return;
+
+            switch (expr.SubExpression.Type)
+            {
+                case TupleType tuple:
+                    {
+                        if (!(expr.Indexer.Type is IntType) || expr.Indexer.Value == null)
+                        {
+                            ReportError(expr.Indexer, $"The index must be a constant int");
+                            return;
+                        }
+
+                        var index = ((NumberData)expr.Indexer.Value).ToLong();
+                        if (index < 0 || index >= tuple.Members.Length)
+                        {
+                            ReportError(expr.Indexer, $"The index is out of range");
+                            return;
+                        }
+
+                        expr.Type = tuple.Members[index].type;
+                        break;
+                    }
+
+                default: throw new NotImplementedException();
             }
         }
 
@@ -91,33 +133,6 @@ namespace Cheez
             var sub = expr.Right.Name;
             switch (expr.Left.Type)
             {
-                case TupleType tuple:
-                    {
-                        int index = -1;
-                        for (int i = 0; i < tuple.Members.Length; i++)
-                        {
-                            if (tuple.Members[i].name == sub)
-                            {
-                                index = i;
-                                break;
-                            }
-                        }
-
-                        if (index == -1 && int.TryParse(sub, out int i2))
-                        {
-                            index = i2;
-                        }
-
-                        if (index < 0 || index >= tuple.Members.Length)
-                        {
-                            ReportError(expr, $"The tuple does not contain an item '{sub}', tuple type is {tuple}");
-                            return;
-                        }
-
-                        expr.Type = tuple.Members[index].type;
-                        expr.Right.Value = index;
-                        break;
-                    }
 
                 default: throw new NotImplementedException();
             }
@@ -148,10 +163,23 @@ namespace Cheez
 
         private void InferTypeCallExpr(AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
         {
+            expr.Function.Scope = expr.Scope;
+            InferTypes(expr.Function, null, unresolvedDependencies, allDependencies);
+
+            switch (expr.Function.Type)
+            {
+                case FunctionType f:
+                    {
+                        expr.Type = f.ReturnType;
+                        break;
+                    }
+                case ErrorType _: return;
+            }
         }
 
         private void InferTypeUnaryExpr(AstUnaryExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
         {
+            throw new NotImplementedException();
         }
 
         private void InferTypeStructValueExpr(AstStructValueExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
@@ -289,6 +317,10 @@ namespace Cheez
                     unresolvedDependencies?.Add(var);
 
                 allDependencies?.Add(var);
+            }
+            else if (sym is CompTimeVariable ct)
+            {
+                i.Type = ct.Value as CheezType;
             }
             else
             {

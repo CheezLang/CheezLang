@@ -63,8 +63,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // generate code
             {
                 GenerateIntrinsicDeclarations();
-                GenerateFunctions();
+
+                // create declarations
+                foreach (var function in workspace.GlobalScope.FunctionDeclarations)
+                {
+                    GenerateFunctionHeader(function);
+                }
+
                 GenerateMainFunction();
+
+                // create implementations
+                foreach (var f in workspace.GlobalScope.FunctionDeclarations)
+                {
+                    GenerateFunctionImplementation(f);
+                }
             }
 
             // verify module
