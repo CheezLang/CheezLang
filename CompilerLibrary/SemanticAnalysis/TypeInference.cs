@@ -93,6 +93,11 @@ namespace Cheez
             expr.Indexer.Scope = expr.Scope;
             InferTypes(expr.Indexer, null, unresolvedDependencies, allDependencies);
 
+            if ((unresolvedDependencies?.Count ?? 0) != 0)
+            {
+                return;
+            }
+
             ConvertLiteralTypeToDefaultType(expr.Indexer);
 
             if (expr.SubExpression.Type is ErrorType || expr.Indexer.Type is ErrorType)
@@ -260,7 +265,7 @@ namespace Cheez
             }
 
             // :hack
-            expr.SetFlag(ExprFlags.IsLValue, !(func.ReturnType is PointerType));
+            expr.SetFlag(ExprFlags.IsLValue, func.ReturnType is PointerType);
         }
 
         private void InferTypeUnaryExpr(AstUnaryExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
@@ -395,6 +400,7 @@ namespace Cheez
             }
 
             i.Symbol = sym;
+            i.SetFlag(ExprFlags.IsLValue, true);
 
             if (sym is AstSingleVariableDecl var)
             {

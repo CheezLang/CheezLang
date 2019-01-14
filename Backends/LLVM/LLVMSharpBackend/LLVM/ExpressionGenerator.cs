@@ -40,7 +40,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef? GenerateCallExpr(AstCallExpr c, LLVMValueRef? target, bool deref)
         {
-            var f = GenerateExpression(c.Function, target, false);
+            var f = GenerateExpression(c.Function, null, false);
 
             // arguments
             var args = c.Arguments.Select(a => GenerateExpression(a, null, true).Value).ToArray();
@@ -57,18 +57,25 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         var index = ((NumberData)expr.Indexer.Value).ToLong();
                         var left = GenerateExpression(expr.SubExpression, null, false);
 
-                        if (expr.SubExpression.GetFlag(ExprFlags.IsLValue))
+                        LLVMValueRef? result;
+                        if (!expr.SubExpression.GetFlag(ExprFlags.IsLValue))
                         {
-                            return builder.CreateExtractValue(left.Value, (uint)index, "");
+                            result = builder.CreateExtractValue(left.Value, (uint)index, "");
+                        }
+                        else
+                        {
+                            result = builder.CreateStructGEP(left.Value, (uint)index, "");
+                            if (deref)
+                                result = builder.CreateLoad(result.Value, "");
                         }
 
-                        var ptr = builder.CreateStructGEP(left.Value, (uint)index, "");
-                        if (deref)
+                        if (target != null)
                         {
-                            ptr = builder.CreateLoad(ptr, "");
+                            builder.CreateStore(result.Value, target.Value);
+                            return null;
                         }
 
-                        return ptr;
+                        return result;
                     }
 
                 default:
