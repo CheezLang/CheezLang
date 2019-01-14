@@ -27,7 +27,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstArgument a: return GenerateExpression(a.Expr, target, deref);
                 case AstNumberExpr n: return GenerateNumberExpr(n);
                 case AstBoolExpr n: return GenerateBoolExpr(n);
-                case AstIdExpr i: return GenerateIdExpr(i, deref);
+                case AstIdExpr i: return GenerateIdExpr(i, target, deref);
                 case AstCharLiteral ch: return GenerateCharLiteralExpr(ch);
                 case AstTupleExpr t: return GenerateTupleExpr(t, target, deref);
                 case AstDotExpr t: return GenerateDotExpr(t, target, deref);
@@ -56,6 +56,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         var index = ((NumberData)expr.Indexer.Value).ToLong();
                         var left = GenerateExpression(expr.SubExpression, null, false);
+
+                        if (expr.SubExpression.GetFlag(ExprFlags.IsLValue))
+                        {
+                            return builder.CreateExtractValue(left.Value, (uint)index, "");
+                        }
+
                         var ptr = builder.CreateStructGEP(left.Value, (uint)index, "");
                         if (deref)
                         {
@@ -164,7 +170,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
-        public LLVMValueRef GenerateIdExpr(AstIdExpr expr, bool deref)
+        public LLVMValueRef? GenerateIdExpr(AstIdExpr expr, LLVMValueRef? maybeTarget, bool deref)
         {
             LLVMValueRef v;
             if (expr.Symbol is CompTimeVariable ct)
@@ -175,6 +181,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 v = valueMap[expr.Symbol];
             }
+
+            if (maybeTarget != null)
+            {
+                v = builder.CreateLoad(v, "");
+                builder.CreateStore(v, maybeTarget.Value);
+                return null;
+            }
+
             if (deref)
                 return builder.CreateLoad(v, "");
             return v;

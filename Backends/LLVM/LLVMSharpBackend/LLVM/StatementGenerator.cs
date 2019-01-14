@@ -264,7 +264,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             if (ret.ReturnValue != null)
             {
-                var retval = GenerateExpression(ret.ReturnValue, null, true);
+                var return_var = valueMap[currentFunction.ReturnValue];
+                var retval = GenerateExpression(ret.ReturnValue, return_var, false);
+                if (retval != null)
+                {
+                    builder.CreateStore(retval.Value, return_var);
+                }
+
+                retval = builder.CreateLoad(return_var, "");
                 builder.CreateRet(retval.Value);
             }
             else

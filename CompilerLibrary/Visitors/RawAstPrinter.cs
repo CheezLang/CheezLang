@@ -28,12 +28,12 @@ namespace Cheez.Visitors
 
         public void PrintStatement(AstStatement statement)
         {
-            _writer.WriteLine(statement.Accept(this));
+            _writer.Write(statement.Accept(this));
         }
 
         public void PrintExpression(AstExpression expr)
         {
-            _writer.WriteLine(expr.Accept(this));
+            _writer.Write(expr.Accept(this));
         }
 
         #region Statements

@@ -36,6 +36,16 @@ namespace Cheez
 
         private void AnalyzeFunction(AstFunctionDecl func, List<AstFunctionDecl> instances = null)
         {
+            // define parameters
+            foreach (var p in func.Parameters)
+            {
+                var (ok, other) = func.SubScope.DefineSymbol(p);
+                if (!ok)
+                {
+                    ReportError(p, $"Duplicate parameter '{p.Name}'", ("Other parameter here:", other));
+                }
+            }
+
             if (func.Body != null)
             {
                 func.Body.Scope = func.SubScope;

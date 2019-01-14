@@ -37,10 +37,16 @@ namespace Cheez.Ast.Expressions
             this.Location = Location;
         }
 
-        [DebuggerStepThrough]
-        public void SetFlag(ExprFlags f)
+        public void SetFlag(ExprFlags f, bool b)
         {
-            mFlags |= 1 << (int)f;
+            if (b)
+            {
+                mFlags |= 1 << (int)f;
+            }
+            else
+            {
+                mFlags &= ~(1 << (int)f);
+            }
         }
 
         [DebuggerStepThrough]

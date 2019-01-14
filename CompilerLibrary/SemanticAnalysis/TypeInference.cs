@@ -252,10 +252,15 @@ namespace Cheez
             // match arguments and parameter types
             foreach (var (type, arg) in args)
             {
+                arg.Scope = expr.Scope;
+                arg.Expr.Scope = arg.Scope;
                 InferTypes(arg.Expr, type, unresolvedDependencies, allDependencies);
                 arg.Type = arg.Expr.Type;
                 // TODO: check types
             }
+
+            // :hack
+            expr.SetFlag(ExprFlags.IsLValue, !(func.ReturnType is PointerType));
         }
 
         private void InferTypeUnaryExpr(AstUnaryExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
@@ -398,6 +403,10 @@ namespace Cheez
                     unresolvedDependencies?.Add(var);
 
                 allDependencies?.Add(var);
+            }
+            else if (sym is AstParameter p)
+            {
+                i.Type = p.Type;
             }
             else if (sym is CompTimeVariable ct)
             {
