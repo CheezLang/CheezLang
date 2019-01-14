@@ -3,10 +3,17 @@
 // #load("examples/glfw3_example")
 // #load("examples/signed_distance_field_renderer")
 
-fn test(p: int, a: int, b: int) -> int {
-    return 123
+let a = swap(1, 2)
+let (b, c) = swap(a[0], a[1])
+
+fn swap(a: int, b: int) -> (int, int) {
+    return (b, a)
+}
+
+fn first(t: (int, int)) -> int {
+    return t[0]
 }
 
 fn Main() -> int {
-    return test(123, 456, 789)
+    return swap(b, c)[1]
 }
