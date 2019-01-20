@@ -20,10 +20,19 @@ namespace Cheez
         {
             if (expr.Type == IntType.LiteralType) expr.Type = IntType.DefaultType;
             else if (expr.Type == FloatType.LiteralType) expr.Type = FloatType.DefaultType;
-            else if (expr.Type == CheezType.StringLiteral) expr.Type = CheezType.String;
+            else if (expr.Type == CheezType.StringLiteral) expr.Type = CheezType.CString; // TODO: change default back to CheezType.String
         }
 
-        private bool InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null, Dictionary<string, CheezType> polyTypeMap = null)
+        private bool InferType(AstExpression expr, CheezType expected, Dictionary<string, CheezType> polyTypeMap = null)
+        {
+            List<AstFunctionDecl> newInstances = new List<AstFunctionDecl>();
+            bool changes = InferTypes(expr, null, newInstances: newInstances, polyTypeMap: polyTypeMap);
+            // TODO
+
+            return changes;
+        }
+
+        private bool InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null, List<AstFunctionDecl> newInstances = null, Dictionary<string, CheezType> polyTypeMap = null)
         {
             var previousType = expr.Type;
 
@@ -192,7 +201,8 @@ namespace Cheez
 
                 case GenericFunctionType g:
                     {
-                        InferGenericFunctionCall(g, expr, expected, unresolvedDependencies, allDependencies);
+                        throw new NotImplementedException();
+                        //InferGenericFunctionCall(g, expr, expected, unresolvedDependencies, allDependencies);
                         break;
                     }
 
@@ -201,9 +211,9 @@ namespace Cheez
             }
         }
 
-        private bool CheckAndMatchArgsToParams(AstCallExpr expr, (string name, CheezType type)[] parameters)
+        private bool CheckAndMatchArgsToParams(AstCallExpr expr, (string name, CheezType type)[] parameters, bool varArgs)
         {
-            if (expr.Arguments.Count > parameters.Length)
+            if (expr.Arguments.Count > parameters.Length && !varArgs)
             {
                 (string, ILocation)? detail = null;
                 if (expr.Function is AstIdExpr id)
@@ -233,7 +243,6 @@ namespace Cheez
                         break;
                     }
 
-                    var param = parameters[i];
                     map[i] = arg;
                     arg.Index = i;
                 }
@@ -247,6 +256,7 @@ namespace Cheez
                         ok = false;
                         break;
                     }
+                    // TODO: check if index != -1
 
                     map[index] = arg;
                     arg.Index = index;
@@ -268,56 +278,56 @@ namespace Cheez
             return true;
         }
 
-        private void InferGenericFunctionCall(GenericFunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
-        {
-            if (!CheckAndMatchArgsToParams(expr, func.Parameters))
-                return;
+        //private void InferGenericFunctionCall(GenericFunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        //{
+        //    if (!CheckAndMatchArgsToParams(expr, func.Parameters))
+        //        return;
 
-            expr.Arguments.Sort((a, b) => a.Index - b.Index);
+        //    expr.Arguments.Sort((a, b) => a.Index - b.Index);
 
-            // TODO: types and such
-            var pairs = expr.Arguments.Select(arg => (func.Parameters[arg.Index].type, arg));
-            // TODO: return type
-            (CheezType type, AstArgument arg)[] args = pairs.ToArray();
+        //    // TODO: types and such
+        //    var pairs = expr.Arguments.Select(arg => (func.Parameters[arg.Index].type, arg));
+        //    // TODO: return type
+        //    (CheezType type, AstArgument arg)[] args = pairs.ToArray();
 
-            // match arguments and parameter types
-            var polyTypeMap = new Dictionary<string, CheezType>();
+        //    // match arguments and parameter types
+        //    var polyTypeMap = new Dictionary<string, CheezType>();
 
-            while (true)
-            {
-                bool changes = false;
+        //    while (true)
+        //    {
+        //        bool changes = false;
 
-                foreach (var (type, arg) in args)
-                {
-                    arg.Scope = expr.Scope;
-                    arg.Expr.Scope = arg.Scope;
+        //        foreach (var (type, arg) in args)
+        //        {
+        //            arg.Scope = expr.Scope;
+        //            arg.Expr.Scope = arg.Scope;
 
-                    changes |= InferTypes(arg.Expr, type, unresolvedDependencies, allDependencies, polyTypeMap);
+        //            //changes |= InferTypes(arg.Expr, type, unresolvedDependencies, allDependencies, , polyTypeMap);
 
-                    arg.Type = arg.Expr.Type;
-                    // TODO: check types
-                }
+        //            arg.Type = arg.Expr.Type;
+        //            // TODO: check types
+        //        }
 
-                if (!changes)
-                    break;
-            }
+        //        if (!changes)
+        //            break;
+        //    }
 
-            // find or create instance
-            var instance = InstantiatePolyFunction(polyTypeMap, func);
+        //    // find or create instance
+        //    var instance = InstantiatePolyFunction(polyTypeMap, func);
 
-            expr.Declaration = instance;
-            expr.SetFlag(ExprFlags.IsLValue, instance.FunctionType.ReturnType is PointerType);
-        }
+        //    expr.Declaration = instance;
+        //    expr.SetFlag(ExprFlags.IsLValue, instance.FunctionType.ReturnType is PointerType);
+        //}
 
         private void InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
         {
             expr.Type = func.ReturnType;
-            if (!CheckAndMatchArgsToParams(expr, func.Parameters))
+            if (!CheckAndMatchArgsToParams(expr, func.Parameters, func.VarArgs))
                 return;
 
             expr.Arguments.Sort((a, b) => a.Index - b.Index);
 
-            var pairs = expr.Arguments.Select(arg => (func.Parameters[arg.Index].type, arg));
+            var pairs = expr.Arguments.Select(arg => (arg.Index < func.Parameters.Length ? func.Parameters[arg.Index].type : null, arg));
             // TODO: return type
             (CheezType type, AstArgument arg)[] args = pairs.ToArray();
 
@@ -327,7 +337,9 @@ namespace Cheez
                 arg.Scope = expr.Scope;
                 arg.Expr.Scope = arg.Scope;
                 InferTypes(arg.Expr, type, unresolvedDependencies, allDependencies);
+                ConvertLiteralTypeToDefaultType(arg.Expr);
                 arg.Type = arg.Expr.Type;
+
                 // TODO: check types
             }
 

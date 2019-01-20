@@ -112,6 +112,15 @@ namespace Cheez
                 }
 
                 func.Type = new FunctionType(func);
+
+                if (func.TryGetDirective("varargs", out var varargs))
+                {
+                    if (varargs.Arguments.Count != 0)
+                    {
+                        ReportError(varargs, $"#varargs takes no arguments!");
+                    }
+                    func.FunctionType.VarArgs = true;
+                }
             }
 
             var res = func.Scope.DefineDeclaration(func);

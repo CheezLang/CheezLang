@@ -106,6 +106,6 @@ namespace Cheez.Types.Abstract
             IsDeclaring = is_declaring;
         }
 
-        public override string ToString() => "$" + Name;
+        public override string ToString() => IsDeclaring ? "$" + Name : Name;
     }
 }

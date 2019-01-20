@@ -3,17 +3,14 @@
 // #load("examples/glfw3_example")
 // #load("examples/signed_distance_field_renderer")
 
-let a = swap(1, 2)
-let (b, c) = swap(a[0], a[1])
+fn c_printf(format: c_string) #varargs #linkname("printf");
+fn c_puts(str: c_string) #linkname("puts");
 
-fn swap(a: int, b: int) -> (int, int) {
-    return (b, a)
+fn println(str: c_string) {
+    c_puts(str)
 }
 
-fn first(t: (int, int)) -> int {
-    return t[0]
-}
-
-fn Main() -> int {
-    return swap(b, c)[1]
+fn Main() {
+    c_printf("test %d, %s`n", 1, "lol")
+    println("uiae")
 }

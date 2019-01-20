@@ -54,6 +54,12 @@ namespace Cheez.Ast.Statements
             return Directives.FirstOrDefault(d => d.Name.Name == name);
         }
 
+        public bool TryGetDirective(string name, out AstDirective dir)
+        {
+            dir = Directives.FirstOrDefault(d => d.Name.Name == name);
+            return dir != null;
+        }
+
         [DebuggerStepThrough]
         public abstract T Accept<T, D>(IVisitor<T, D> visitor, D data = default);
 

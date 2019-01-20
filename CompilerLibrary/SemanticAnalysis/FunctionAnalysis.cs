@@ -36,6 +36,23 @@ namespace Cheez
 
         private void AnalyzeFunction(AstFunctionDecl func, List<AstFunctionDecl> instances = null)
         {
+            if (func.TryGetDirective("linkname", out var ln))
+            {
+                if (ln.Arguments.Count != 1)
+                {
+                    ReportError(ln, $"#linkname requires exactly one argument!");
+                }
+                else
+                {
+                    var arg = ln.Arguments[0];
+                    InferType(arg, null);
+                    if (!(arg.Value is string))
+                    {
+                        ReportError(arg, $"Argument to #linkname must be a constant string!");
+                    }
+                }
+            }
+
             // define parameters
             foreach (var p in func.Parameters)
             {

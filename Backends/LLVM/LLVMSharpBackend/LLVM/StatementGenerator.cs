@@ -28,17 +28,17 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void GenerateFunctionHeader(AstFunctionDecl function)
         {
-            var varargs = function.GetDirective("varargs");
-            if (varargs != null)
-            {
-                function.FunctionType.VarArgs = true;
-            }
-
             var name = function.Name.Name;
             if (function.IsPolyInstance)
             {
                 name += ".";
                 name += string.Join(".", function.PolymorphicTypes.Select(p => $"{p.Key}.{p.Value}"));
+            }
+
+            var linkname = function.GetDirective("linkname");
+            if (linkname != null)
+            {
+                name = linkname.Arguments[0].Value as string;
             }
 
             var ltype = CheezTypeToLLVMType(function.Type);

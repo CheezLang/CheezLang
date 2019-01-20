@@ -1,5 +1,6 @@
 ﻿using Cheez.Ast.Expressions;
 using Cheez.Extras;
+using Cheez.Types;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using LLVMSharp;
@@ -29,6 +30,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstBoolExpr n: return GenerateBoolExpr(n);
                 case AstIdExpr i: return GenerateIdExpr(i, target, deref);
                 case AstCharLiteral ch: return GenerateCharLiteralExpr(ch);
+                case AstStringLiteral ch: return GenerateStringLiteralExpr(ch);
                 case AstTupleExpr t: return GenerateTupleExpr(t, target, deref);
                 case AstDotExpr t: return GenerateDotExpr(t, target, deref);
                 case AstArrayAccessExpr t: return GenerateIndexExpr(t, target, deref);
@@ -156,6 +158,26 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var ch = expr.CharValue;
             var val = LLVM.ConstInt(LLVMTypeRef.Int8Type(), ch, true);
             return val;
+        }
+
+        public LLVMValueRef? GenerateStringLiteralExpr(AstStringLiteral expr)
+        {
+            var ch = expr.StringValue;
+
+            if (expr.Type == CheezType.CString)
+            {
+                return builder.CreateGlobalStringPtr(ch, "");
+            }
+            else if (expr.Type == CheezType.String)
+            {
+                throw new NotImplementedException();
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+            
+            return null;
         }
 
         public LLVMValueRef VisitStringLiteralExpr(AstStringLiteral expr)

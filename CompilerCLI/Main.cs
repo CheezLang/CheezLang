@@ -235,14 +235,14 @@ namespace CheezCLI
                 stopwatch.Restart();
                 if (options.RunCode && codeGenOk)
                 {
-                    Console.WriteLine($"Running code:");
+                    Console.WriteLine($"\nRunning code:");
                     Console.WriteLine("=====================================");
                     var testProc = Utilities.StartProcess(
                         Path.Combine(options.OutDir, options.OutName + ".exe"),
                         "",
                         workingDirectory: options.OutDir,
-                        stdout: (s, e) => System.Console.WriteLine(e.Data),
-                        stderr: (s, e) => System.Console.Error.WriteLine(e.Data));
+                        stdout: (s, e) => { if (e.Data != null) System.Console.WriteLine(e.Data); },
+                        stderr: (s, e) => { if (e.Data != null) System.Console.Error.WriteLine(e.Data); });
                     testProc.WaitForExit();
                     Console.WriteLine("=====================================");
                     Console.WriteLine("Program exited with code " + testProc.ExitCode);

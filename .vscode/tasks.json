@@ -4,7 +4,7 @@
         {
             "label": "run",
             "type": "shell",
-            "command": "./gen/TestProgram.exe"
+            "command": "./gen/test.exe"
         },
         {
             "label": "build_and_run",
@@ -18,54 +18,6 @@
                 "showReuseMessage": true,
                 "clear": true
             }
-        },
-        {
-            "label": "Build Cheez Test Program",
-            "identifier": "build_cheez_test_program",
-            "command": "cheezc",
-            "args": [
-                "examples/example_1.che",
-                "--out",
-                "gen",
-                "--name",
-                "TestProgram",
-                "--print-ast-file",
-                "gen/ast.txt",
-                "--subsystem",
-                "console"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "type": "shell",
-            "problemMatcher": [],
-            "isBackground": false
-        },
-        {
-            "label": "Run Cheez Test Program",
-            "identifier": "run_cheez_test_program",
-            "command": "gen/TestProgram.exe",
-            "type": "shell",
-            "problemMatcher": [],
-            "isBackground": false
-        },
-        {
-            "label": "Build and Run Cheez Test Program",
-            "identifier": "build_and_run_cheez_test_program",
-            "command": "gen/TestProgram.exe",
-            "type": "shell",
-            "problemMatcher": [],
-            "dependsOn": "build_cheez_test_program",
-            "isBackground": false
-        },
-        {
-            "label": "compile",
-            "dependsOn": [
-                "compile:client",
-                "compile:server"
-            ],
-            "problemMatcher": []
         },
         {
             "label": "compile:client",
