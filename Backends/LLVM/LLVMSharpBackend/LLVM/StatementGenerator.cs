@@ -57,7 +57,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             valueMap[function] = lfunc;
         }
 
-        [DebuggerStepThrough]
         private void GenerateFunctionImplementation(AstFunctionDecl function)
         {
             if (function.Body == null)
@@ -174,9 +173,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             switch (stmt)
             {
                 case AstReturnStmt ret: GenerateReturnStatement(ret); break;
+                case AstExprStmt expr: GenerateExprStatement(expr); break;
                 default: throw new NotImplementedException();
             }
 
+        }
+
+        private void GenerateExprStatement(AstExprStmt expr)
+        {
+            GenerateExpression(expr.Expr, null, false);
         }
 
         private void InitGlobalVariable(AstVariableDecl decl, HashSet<AstVariableDecl> visited)

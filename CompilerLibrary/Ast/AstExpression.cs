@@ -188,6 +188,8 @@ namespace Cheez.Ast.Expressions
         public List<AstArgument> Arguments { get; set; }
         public override bool IsPolymorphic => Function.IsPolymorphic || Arguments.Any(a => a.IsPolymorphic);
 
+        public AstFunctionDecl Declaration { get; internal set; }
+
         [DebuggerStepThrough]
         public AstCallExpr(AstExpression func, List<AstArgument> args, ILocation Location = null) : base(Location)
         {

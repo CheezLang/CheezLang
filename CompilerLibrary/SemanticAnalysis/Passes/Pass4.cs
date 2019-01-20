@@ -1,7 +1,9 @@
 ﻿using Cheez.Ast;
+using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
+using System.Collections.Generic;
 
 namespace Cheez
 {
@@ -62,6 +64,34 @@ namespace Cheez
 
             if (func.IsGeneric)
             {
+                var polyTypes = new HashSet<string>();
+
+                if (func.ReturnValue != null)
+                    CollectPolyTypes(func.ReturnValue.TypeExpr, polyTypes);
+
+                foreach (var p in func.Parameters)
+                    CollectPolyTypes(p.TypeExpr, polyTypes);
+
+                foreach (var pt in polyTypes)
+                {
+                    func.SubScope.DefineTypeSymbol(pt, new PolyType(pt, false));
+                }
+
+                // return types
+                if (func.ReturnValue != null)
+                {
+                    func.ReturnValue.Scope = func.SubScope;
+                    func.ReturnValue.TypeExpr.Scope = func.SubScope;
+                    func.ReturnValue.Type = ResolveType(func.ReturnValue.TypeExpr);
+                }
+
+                // parameter types
+                foreach (var p in func.Parameters)
+                {
+                    p.TypeExpr.Scope = func.SubScope;
+                    p.Type = ResolveType(p.TypeExpr);
+                }
+
                 func.Type = new GenericFunctionType(func);
             }
             else

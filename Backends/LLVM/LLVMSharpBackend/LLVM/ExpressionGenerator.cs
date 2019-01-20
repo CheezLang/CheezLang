@@ -40,12 +40,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef? GenerateCallExpr(AstCallExpr c, LLVMValueRef? target, bool deref)
         {
-            var f = GenerateExpression(c.Function, null, false);
+            LLVMValueRef? func = null;
+            if (c.Declaration != null)
+            {
+                func = valueMap[c.Declaration];
+            }
+            else
+            {
+                func = GenerateExpression(c.Function, null, false);
+            }
 
             // arguments
             var args = c.Arguments.Select(a => GenerateExpression(a, null, true).Value).ToArray();
 
-            return builder.CreateCall(f.Value, args, "");
+            return builder.CreateCall(func.Value, args, "");
         }
 
         private LLVMValueRef? GenerateIndexExpr(AstArrayAccessExpr expr, LLVMValueRef? target, bool deref)

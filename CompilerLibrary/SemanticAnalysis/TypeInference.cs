@@ -23,16 +23,21 @@ namespace Cheez
             else if (expr.Type == CheezType.StringLiteral) expr.Type = CheezType.String;
         }
 
-        private bool InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null)
+        private bool InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null, Dictionary<string, CheezType> polyTypeMap = null)
         {
             var previousType = expr.Type;
+
+            if (expected is PolyType pt && polyTypeMap.TryGetValue(pt.Name, out var concreteType))
+            {
+                expected = concreteType;
+            }
 
             switch (expr)
             {
                 case AstBoolExpr b:
                     b.Type = CheezType.Bool;
                     b.Value = b.BoolValue;
-                    return false;
+                    break;
 
                 case AstNumberExpr n:
                     InferTypesNumberExpr(n, expected);
@@ -80,6 +85,11 @@ namespace Cheez
 
                 default:
                     throw new NotImplementedException();
+            }
+
+            if (expected is PolyType p && p.IsDeclaring)
+            {
+                polyTypeMap[p.Name] = expr.Type;
             }
 
             return previousType != expr.Type;
@@ -179,16 +189,21 @@ namespace Cheez
                         InferRegularFunctionCall(f, expr, expected, unresolvedDependencies, allDependencies);
                         break;
                     }
+
+                case GenericFunctionType g:
+                    {
+                        InferGenericFunctionCall(g, expr, expected, unresolvedDependencies, allDependencies);
+                        break;
+                    }
+
                 case ErrorType _: return;
                 default: throw new NotImplementedException();
             }
         }
 
-        private void InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        private bool CheckAndMatchArgsToParams(AstCallExpr expr, (string name, CheezType type)[] parameters)
         {
-            expr.Type = func.ReturnType;
-
-            if (expr.Arguments.Count > func.Parameters.Length)
+            if (expr.Arguments.Count > parameters.Length)
             {
                 (string, ILocation)? detail = null;
                 if (expr.Function is AstIdExpr id)
@@ -198,8 +213,8 @@ namespace Cheez
                         loc = new Location(fd.Name.Beginning, fd.ParameterLocation.End);
                     detail = ("Function defined here:", loc);
                 }
-                ReportError(expr, $"Too many arguments. Expected {func.Parameters.Length}, got {expr.Arguments.Count}", detail);
-                return;
+                ReportError(expr, $"Too many arguments. Expected {parameters.Length}, got {expr.Arguments.Count}", detail);
+                return false;
             }
 
             // match arguments to parameters
@@ -218,13 +233,13 @@ namespace Cheez
                         break;
                     }
 
-                    var param = func.Parameters[i];
+                    var param = parameters[i];
                     map[i] = arg;
                     arg.Index = i;
                 }
                 else
                 {
-                    var index = func.Parameters.IndexOf(p => p.name == arg.Name.Name);
+                    var index = parameters.IndexOf(p => p.name == arg.Name.Name);
                     if (map.TryGetValue(index, out var other))
                     {
 
@@ -237,16 +252,68 @@ namespace Cheez
                     arg.Index = index;
                 }
             }
-            if (!ok) return;
+
+            if (!ok)
+                return false;
 
             // TODO: create missing arguments
 
             //
-            if (map.Count < func.Parameters.Length)
+            if (map.Count < parameters.Length)
             {
                 ReportError(expr, $"Not enough arguments");
-                return;
+                return false;
             }
+
+            return true;
+        }
+
+        private void InferGenericFunctionCall(GenericFunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        {
+            if (!CheckAndMatchArgsToParams(expr, func.Parameters))
+                return;
+
+            expr.Arguments.Sort((a, b) => a.Index - b.Index);
+
+            // TODO: types and such
+            var pairs = expr.Arguments.Select(arg => (func.Parameters[arg.Index].type, arg));
+            // TODO: return type
+            (CheezType type, AstArgument arg)[] args = pairs.ToArray();
+
+            // match arguments and parameter types
+            var polyTypeMap = new Dictionary<string, CheezType>();
+
+            while (true)
+            {
+                bool changes = false;
+
+                foreach (var (type, arg) in args)
+                {
+                    arg.Scope = expr.Scope;
+                    arg.Expr.Scope = arg.Scope;
+
+                    changes |= InferTypes(arg.Expr, type, unresolvedDependencies, allDependencies, polyTypeMap);
+
+                    arg.Type = arg.Expr.Type;
+                    // TODO: check types
+                }
+
+                if (!changes)
+                    break;
+            }
+
+            // find or create instance
+            var instance = InstantiatePolyFunction(polyTypeMap, func);
+
+            expr.Declaration = instance;
+            expr.SetFlag(ExprFlags.IsLValue, instance.FunctionType.ReturnType is PointerType);
+        }
+
+        private void InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        {
+            expr.Type = func.ReturnType;
+            if (!CheckAndMatchArgsToParams(expr, func.Parameters))
+                return;
 
             expr.Arguments.Sort((a, b) => a.Index - b.Index);
 

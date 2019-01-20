@@ -14,15 +14,15 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        private CheezType ResolveType(AstTypeExpr typeExpr)
+        private CheezType ResolveType(AstTypeExpr typeExpr, bool poly_from_scope = false)
         {
             List<AstStructDecl> newInstances = new List<AstStructDecl>();
-            var t = ResolveTypeHelper(typeExpr, null, newInstances);
+            var t = ResolveTypeHelper(typeExpr, null, newInstances, poly_from_scope);
             ResolveStructs(newInstances);
             return t;
         }
 
-        private CheezType ResolveTypeHelper(AstTypeExpr typeExpr, HashSet<AstDecl> deps = null, List<AstStructDecl> instances = null)
+        private CheezType ResolveTypeHelper(AstTypeExpr typeExpr, HashSet<AstDecl> deps = null, List<AstStructDecl> instances = null, bool poly_from_scope = false)
         {
             switch (typeExpr)
             {
@@ -31,8 +31,8 @@ namespace Cheez
 
                 case AstIdTypeExpr i:
                     {
-                        if (i.IsPolymorphic)
-                            return new PolyType(i.Name);
+                        if (i.IsPolymorphic && !poly_from_scope)
+                            return new PolyType(i.Name, true);
 
                         var sym = typeExpr.Scope.GetSymbol(i.Name);
 
@@ -144,13 +144,13 @@ namespace Cheez
             return CheezType.Error;
         }
 
-        private void CollectPolyTypes(AstTypeExpr typeExpr, HashSet<AstIdTypeExpr> types)
+        private void CollectPolyTypes(AstTypeExpr typeExpr, HashSet<string> types)
         {
             switch (typeExpr)
             {
                 case AstIdTypeExpr i:
                     if (i.IsPolymorphic)
-                        types.Add(i);
+                        types.Add(i.Name);
                     break;
 
                 case AstPointerTypeExpr p:
@@ -352,5 +352,54 @@ namespace Cheez
 
         //    return instance;
         //}
+
+        // struct
+        private AstFunctionDecl InstantiatePolyFunction(Dictionary<string, CheezType> polyTypes, GenericFunctionType func, List<AstFunctionDecl> instances = null)
+        {
+            AstFunctionDecl instance = null;
+
+            // check if instance already exists
+            // TODO:
+
+            // instatiate type
+            if (instance == null)
+            {
+                instance = func.Declaration.Clone() as AstFunctionDecl;
+                instance.SubScope = new Scope($"func {func.Declaration.Name.Name}<poly>", instance.Scope);
+                instance.IsPolyInstance = true;
+                instance.IsGeneric = false;
+                instance.PolymorphicTypes = polyTypes;
+                func.Declaration.PolymorphicInstances.Add(instance);
+
+                instance.Scope.FunctionDeclarations.Add(instance);
+
+                foreach (var pt in polyTypes)
+                {
+                    instance.SubScope.DefineTypeSymbol(pt.Key, pt.Value);
+                }
+
+                // return types
+                if (instance.ReturnValue != null)
+                {
+                    instance.ReturnValue.Scope = instance.SubScope;
+                    instance.ReturnValue.TypeExpr.Scope = instance.SubScope;
+                    instance.ReturnValue.Type = ResolveType(instance.ReturnValue.TypeExpr, true);
+                }
+
+                // parameter types
+                foreach (var p in instance.Parameters)
+                {
+                    p.TypeExpr.Scope = instance.SubScope;
+                    p.Type = ResolveType(p.TypeExpr, true);
+                }
+
+                instance.Type = new FunctionType(instance);
+
+                if (instances != null)
+                    instances.Add(instance);
+            }
+
+            return instance;
+        }
     }
 }

@@ -59,7 +59,14 @@ namespace Cheez
             {
                 case AstBlockStmt block: AnalyzeBlockStatement(block); break;
                 case AstReturnStmt ret: AnalyzeReturnStatement(ret); break;
+                case AstExprStmt expr: AnalyseExprStatement(expr); break;
             }
+        }
+
+        private void AnalyseExprStatement(AstExprStmt expr)
+        {
+            expr.Expr.Scope = expr.Scope;
+            InferTypes(expr.Expr, null);
         }
 
         private void AnalyzeReturnStatement(AstReturnStmt ret)

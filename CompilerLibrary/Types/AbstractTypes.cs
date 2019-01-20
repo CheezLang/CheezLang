@@ -1,5 +1,6 @@
 ﻿using Cheez.Ast.Statements;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cheez.Types.Abstract
 {
@@ -47,12 +48,14 @@ namespace Cheez.Types.Abstract
     public class GenericFunctionType : CheezType
     {
         public AstFunctionDecl Declaration { get; }
+        public (string name, CheezType type)[] Parameters { get; private set; }
 
         public override bool IsPolyType => false;
 
         public GenericFunctionType(AstFunctionDecl decl)
         {
             Declaration = decl;
+            Parameters = decl.Parameters.Select(p => (p.Name.Name, p.Type)).ToArray();
         }
     }
 
@@ -92,9 +95,15 @@ namespace Cheez.Types.Abstract
         public string Name { get; }
         public override bool IsPolyType => true;
 
-        public PolyType(string name)
+        /// <summary>
+        /// Wether or not the symbol with this type has declared this poly type with $ or not
+        /// </summary>
+        public bool IsDeclaring = false;
+
+        public PolyType(string name, bool is_declaring)
         {
             this.Name = name;
+            IsDeclaring = is_declaring;
         }
 
         public override string ToString() => "$" + Name;

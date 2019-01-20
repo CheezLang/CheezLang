@@ -108,7 +108,7 @@ namespace Cheez.Ast.Statements
         public override AstStatement Clone() => CopyValuesTo(new AstFunctionDecl(Name.Clone() as AstIdExpr,
                 null,
                 Parameters.Select(p => p.Clone()).ToList(),
-                ReturnValue.Clone(),
+                ReturnValue?.Clone(),
                 Body?.Clone() as AstBlockStmt, ParameterLocation: ParameterLocation));
     }
 

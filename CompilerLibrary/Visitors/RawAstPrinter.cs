@@ -417,6 +417,8 @@ namespace Cheez.Visitors
 
         public override string VisitIdTypeExpr(AstIdTypeExpr type, int data = 0)
         {
+            if (type.IsPolymorphic)
+                return $"${type.Name}";
             return type.Name;
         }
         #endregion
