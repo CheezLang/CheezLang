@@ -97,7 +97,6 @@ namespace Cheez
             if (newType != alias.Type && !(newType is AliasType))
             {
                 alias.Type = newType;
-                alias.Scope.ChangeTypeOfDeclaration(alias);
             }
 
             alias.Type = newType;

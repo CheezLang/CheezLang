@@ -85,36 +85,9 @@ namespace Cheez.Parsing
 
         [SkipInStackFrame]
         [DebuggerStepThrough]
-        private (string function, string file, int line)? GetCallingFunction()
-        {
-            try
-            {
-                var trace = new StackTrace(true);
-                var frames = trace.GetFrames();
-
-                foreach (var frame in frames)
-                {
-                    var method = frame.GetMethod();
-                    var attribute = method.GetCustomAttributesData().FirstOrDefault(d => d.AttributeType == typeof(SkipInStackFrame));
-                    if (attribute != null)
-                        continue;
-
-                    return (method.Name, frame.GetFileName(), frame.GetFileLineNumber());
-                }
-            }
-            catch (Exception)
-            { }
-
-            return null;
-        }
-
-        [SkipInStackFrame]
-        [DebuggerStepThrough]
         private void ReportError(TokenLocation location, string message)
         {
-            string callingFunctionFile, callingFunctionName;
-            int callLineNumber;
-            (callingFunctionFile, callingFunctionName, callLineNumber) = GetCallingFunction().GetValueOrDefault(("", "", -1));
+            var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
             mErrorHandler.ReportError(mLexer, new Location(location), message, null, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
@@ -122,9 +95,7 @@ namespace Cheez.Parsing
         [DebuggerStepThrough]
         private void ReportError(ILocation location, string message)
         {
-            string callingFunctionFile, callingFunctionName;
-            int callLineNumber;
-            (callingFunctionFile, callingFunctionName, callLineNumber) = GetCallingFunction().GetValueOrDefault(("", "", -1));
+            var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
             mErrorHandler.ReportError(mLexer, location, message, null, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 

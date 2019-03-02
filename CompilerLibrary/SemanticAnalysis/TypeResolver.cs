@@ -42,12 +42,15 @@ namespace Cheez
                             return CheezType.Error;
                         }
 
-                        if (sym is CompTimeVariable c && c.Type == CheezType.Type)
+                        if (sym is TypeSymbol ts)
                         {
-                            var type = c.Value as CheezType;
-                            if (deps != null && c.Declaration != null && type is AbstractType)
-                                deps.Add(c.Declaration);
-                            return type;
+                            return ts.Type;
+                        }
+                        else if (sym is AstDecl decl)
+                        {
+                            if (deps != null && decl.Type is AbstractType)
+                                deps.Add(decl);
+                            return decl.Type;
                         }
                         else
                         {

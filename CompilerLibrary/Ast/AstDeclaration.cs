@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace Cheez.Ast.Statements
 {
-    public abstract class AstDecl : AstStatement
+    public abstract class AstDecl : AstStatement, ISymbol
     {
         public AstIdExpr Name { get; set; }
         public CheezType Type { get; set; }

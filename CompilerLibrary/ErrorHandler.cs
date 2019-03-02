@@ -45,7 +45,7 @@ namespace Cheez
 
         void ReportError(string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
         void ReportError(IText text, ILocation location, string message, List<Error> subErrors = null, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
-        void ReportError(Error error, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0);
+        void ReportError(Error error);
     }
 
     public class SilentErrorHandler : IErrorHandler
@@ -80,7 +80,7 @@ namespace Cheez
             });
         }
         
-        public void ReportError(Error error, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        public void ReportError(Error error)
         {
             HasErrors = true;
             Errors.Add(error);

@@ -16,13 +16,26 @@ namespace Cheez
     public interface ISymbol : INamed
     {
         //CheezType Type { get; }
-        bool IsConstant { get; }
         ILocation Location { get; }
     }
 
     public interface ITypedSymbol : ISymbol
     {
         CheezType Type { get; }
+    }
+
+    public class TypeSymbol : ITypedSymbol
+    {
+        public ILocation Location => null;
+        public AstIdExpr Name { get; private set; }
+
+        public CheezType Type { get; private set; }
+
+        public TypeSymbol(string name, CheezType type)
+        {
+            this.Name = new AstIdExpr(name, false);
+            this.Type = type;
+        }
     }
 
     public class Using : ITypedSymbol
@@ -49,36 +62,6 @@ namespace Cheez
         }
     }
 
-    public class CompTimeVariable : ITypedSymbol
-    {
-        public AstIdExpr Name { get; }
-        public CheezType Type { get; }
-        public bool IsConstant => true;
-        public object Value { get; set; }
-
-        public ILocation Location { get; set; }
-
-        public AstDecl Declaration { get; }
-
-        public CompTimeVariable(string name, CheezType type, object value, ILocation location, AstDecl decl = null)
-        {
-            this.Name = new AstIdExpr(name, false);
-            this.Type = type;
-            this.Value = value;
-            this.Location = location;
-            this.Declaration = decl;
-        }
-
-        public CompTimeVariable(string name, CheezType type, AstDecl decl)
-        {
-            this.Name = new AstIdExpr(name, false);
-            this.Type = type;
-            this.Value = decl.Type;
-            this.Location = decl;
-            this.Declaration = decl;
-        }
-    }
-
     public class FunctionList : ISymbol
     {
         public CheezType Type => throw new System.NotImplementedException();
@@ -89,22 +72,6 @@ namespace Cheez
 
         public ILocation Location => throw new NotImplementedException();
     }
-
-    //public class CheezTypeSymbol : ISymbol
-    //{
-    //    public AstIdentifierExpr Name { get; }
-    //    public CheezType Type { get; }
-    //    public CheezType Value { get; set; }
-
-    //    public bool IsConstant => true;
-
-    //    public CheezTypeSymbol(AstIdentifierExpr name, CheezType type)
-    //    {
-    //        this.Name = name;
-    //        this.Value = type;
-    //        this.Type = CheezType.Type;
-    //    }
-    //}
 
     public class Scope
     {
@@ -494,7 +461,7 @@ namespace Cheez
             if (mSymbolTable.ContainsKey(name))
                 return false;
 
-            mSymbolTable[name] = new CompTimeVariable(name, CheezType.Type, symbol, null);
+            mSymbolTable[name] = new TypeSymbol(name, symbol);
             return true;
         }
 
@@ -504,14 +471,8 @@ namespace Cheez
             if (mSymbolTable.TryGetValue(name, out var other))
                 return (false, other.Location);
 
-            mSymbolTable[name] = new CompTimeVariable(name, CheezType.Type, decl);
+            mSymbolTable[name] = decl;
             return (true, null);
-        }
-
-        public void ChangeTypeOfDeclaration(ITypedSymbol decl)
-        {
-            var ctv = mSymbolTable[decl.Name.Name] as CompTimeVariable;
-            ctv.Value = decl.Type;
         }
 
         public ISymbol GetSymbol(string name)

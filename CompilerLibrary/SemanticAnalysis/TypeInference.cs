@@ -219,7 +219,7 @@ namespace Cheez
                 if (expr.Function is AstIdExpr id)
                 {
                     ILocation loc = id.Symbol.Location;
-                    if (id.Symbol is CompTimeVariable ct && ct.Declaration is AstFunctionDecl fd)
+                    if (id.Symbol is AstFunctionDecl fd)
                         loc = new Location(fd.Name.Beginning, fd.ParameterLocation.End);
                     detail = ("Function defined here:", loc);
                 }
@@ -493,10 +493,14 @@ namespace Cheez
             {
                 i.Type = p.Type;
             }
-            else if (sym is CompTimeVariable ct)
+            else if (sym is TypeSymbol ct)
             {
-                i.Type = ct.Value as CheezType;
+                i.Type = ct.Type;
             }
+            else if (sym is AstDecl decl)
+            {
+                i.Type = decl.Type;
+            } 
             else
             {
                 ReportError(i, $"'{i.Name}' is not a valid variable");

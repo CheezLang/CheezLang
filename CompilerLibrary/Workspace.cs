@@ -76,9 +76,7 @@ namespace Cheez
             Pass7(); // function bodies
 
 
-            var main = GlobalScope.GetSymbol("Main");
-            if (main != null && main is CompTimeVariable ctv && ctv.Value is FunctionType f)
-                MainFunction = ctv.Declaration as AstFunctionDecl;
+            MainFunction = GlobalScope.GetSymbol("Main") as AstFunctionDecl;
             if (MainFunction == null)
             {
                 mCompiler.ErrorHandler.ReportError("No main function was specified");
@@ -94,32 +92,38 @@ namespace Cheez
         [SkipInStackFrame]
         public void ReportError(string errorMessage)
         {
-            var (callingFunctionFile, callingFunctionName, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
+            var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
             mCompiler.ErrorHandler.ReportError(errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
         [SkipInStackFrame]
         public void ReportError(string errorMessage, List<(string, ILocation)> details)
         {
-            var (callingFunctionFile, callingFunctionName, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
+            var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
             mCompiler.ErrorHandler.ReportError(new Error
             {
                 Message = errorMessage,
-                Details = details
-            }, callingFunctionFile, callingFunctionName, callLineNumber);
+                Details = details,
+                File = callingFunctionFile,
+                Function = callingFunctionName,
+                LineNumber = callLineNumber,
+            });
         }
 
         [SkipInStackFrame]
         public void ReportError(ILocation lc, string message, (string, ILocation)? detail = null)
         {
-            var (callingFunctionFile, callingFunctionName, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
+            var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
             var details = detail != null ? new List<(string, ILocation)> { detail.Value } : null;
             mCompiler.ErrorHandler.ReportError(new Error
             {
                 Location = lc,
                 Message = message,
-                Details = details
-            }, callingFunctionFile, callingFunctionName, callLineNumber);
+                Details = details,
+                File = callingFunctionFile,
+                Function = callingFunctionName,
+                LineNumber = callLineNumber,
+            });
         }
 
         public IEnumerable<AstImplBlock> GetTraitImplementations(CheezType type)

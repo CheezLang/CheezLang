@@ -1,0 +1,13 @@
+#test_expect_output("5, 6, 5, 6, 5, 6 | 7, 8, 7, 8, 7, 8")
+
+let a = (5, 6)
+let b = a
+let (x, y) = b
+
+let (x2, y2) = b2
+let b2 = a2
+let a2 = (7, 8)
+
+fn Main() {
+    c_printf("%d, %d, %d, %d, %d, %d | %d, %d, %d, %d, %d, %d`n", a[0], a[1], b[0], b[1], x, y, a2[0], a2[1], b2[0], b2[1], x2, y2)
+}

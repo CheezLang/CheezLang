@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Cheez;
@@ -15,22 +14,38 @@ namespace CheezCLI
 
         public ITextProvider TextProvider { get; set; }
 
+        public int LinesBeforeError { get; set; } = 1;
+        public int LinesAfterError { get; set; } = 1;
+
         public void ReportError(IText text, ILocation location, string message, List<Error> subErrors, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             ReportError(new Error
             {
                 Location = location,
                 Message = message,
-                SubErrors = subErrors
-            }, callingFunctionFile, callingFunctionName, callLineNumber);
+                SubErrors = subErrors,
+                File = callingFunctionFile,
+                LineNumber = callLineNumber,
+                Function = callingFunctionName
+            });
         }
 
-        public void ReportError(Error error, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        public void ReportError(string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        {
+            HasErrors = true;
+#if DEBUG
+            Log($"{callingFunctionFile}:{callLineNumber} - {callingFunctionName}()", ConsoleColor.DarkYellow);
+#endif
+
+            Log(message, ConsoleColor.Red);
+        }
+
+        public void ReportError(Error error)
         {
             HasErrors = true;
 
 #if DEBUG
-            Log($"{Path.GetFileName(callingFunctionFile)}:{callingFunctionName}():{callLineNumber}", ConsoleColor.DarkYellow);
+            Log($"{error.File}:{error.LineNumber} - {error.Function}()", ConsoleColor.DarkYellow);
 #endif
 
             if (error.Location != null)
@@ -41,8 +56,9 @@ namespace CheezCLI
                 TokenLocation end = error.Location.End;
 
                 // location, message
-                Log($"{beginning}: {error.Message}", ConsoleColor.Red);
-                PrintLocation(text, error.Location, linesBefore: 0);
+                LogInline($"{beginning}: ", ConsoleColor.White);
+                Log(error.Message, ConsoleColor.Red);
+                PrintLocation(text, error.Location, linesBefore: LinesBeforeError, linesAfter: LinesAfterError);
             }
             else
             {
@@ -78,19 +94,9 @@ namespace CheezCLI
 
                 foreach (var e in error.SubErrors)
                 {
-                    ReportError(e, callingFunctionFile, callingFunctionName, callLineNumber);
+                    ReportError(e);
                 }
             }
-        }
-
-        public void ReportError(string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
-        {
-            HasErrors = true;
-#if DEBUG
-            Log($"{Path.GetFileName(callingFunctionFile)}:{callingFunctionName}():{callLineNumber}", ConsoleColor.DarkYellow);
-#endif
-
-            Log(message, ConsoleColor.Red);
         }
 
         private void PrintLocation(IText text, ILocation location, bool underline = true, int linesBefore = 2, int linesAfter = 0, ConsoleColor highlightColor = ConsoleColor.Red, ConsoleColor textColor = ConsoleColor.DarkGreen)
@@ -177,7 +183,7 @@ namespace CheezCLI
                     if (lineEnd >= text.Text.Length)
                         break;
                     var str = text.Text.Substring(lineBegin, lineEnd - lineBegin);
-                    Log(string.Format($"{{0,{lineNumberWidth}}}> "), ConsoleColor.White);
+                    LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", line), ConsoleColor.White);
                     Log(str, textColor);
                     lineBegin = lineEnd + 1;
                 }

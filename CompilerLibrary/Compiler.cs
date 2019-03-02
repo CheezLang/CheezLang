@@ -105,9 +105,16 @@ namespace Cheez
         private bool ValidateFilePath(string dir, string filePath, bool isRel, IErrorHandler eh, (IText file, ILocation loc)? from, out string path)
         {
             path = filePath;
-            if (!path.EndsWith(".che"))
+
+            var extension = Path.GetExtension(path);
+            if (extension == "")
             {
                 path += ".che";
+            }
+            else if (extension != ".che")
+            {
+                eh.ReportError($"Invalid extension '{extension}'. Cheez source files must have the extension .che");
+                return false;
             }
 
             if (isRel)

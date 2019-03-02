@@ -20,70 +20,72 @@
             }
         },
         {
-            "label": "compile:client",
-            "type": "npm",
-            "script": "compile:client",
-            "group": "build",
+            "label": "build",
+            "type": "shell",
+            "command": "./examples/build_file.ps1 ${file}",
             "presentation": {
-                "panel": "dedicated",
-                "reveal": "never"
-            },
-            "problemMatcher": [
-                "$tsc"
-            ]
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            }
         },
-        {
-            "label": "compile:server",
-            "type": "npm",
-            "script": "compile:server",
-            "group": "build",
-            "presentation": {
-                "panel": "dedicated",
-                "reveal": "never"
-            },
-            "problemMatcher": [
-                "$tsc"
-            ]
-        },
-        {
-            "label": "watch",
-            "dependsOn": [
-                "watch:client",
-                "watch:server"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "watch:client",
-            "type": "npm",
-            "script": "watch:client",
-            "isBackground": true,
-            "group": "build",
-            "presentation": {
-                "panel": "dedicated",
-                "reveal": "never"
-            },
-            "problemMatcher": [
-                "$tsc-watch"
-            ]
-        },
-        {
-            "label": "watch:server",
-            "type": "npm",
-            "script": "watch:server",
-            "isBackground": true,
-            "group": "build",
-            "presentation": {
-                "panel": "dedicated",
-                "reveal": "never"
-            },
-            "problemMatcher": [
-                "$tsc-watch"
-            ]
-        }
+
+        // {
+        //     "label": "compile:client",
+        //     "type": "npm",
+        //     "script": "compile:client",
+        //     "group": "build",
+        //     "presentation": {
+        //         "panel": "dedicated",
+        //         "reveal": "never"
+        //     },
+        //     "problemMatcher": [
+        //         "$tsc"
+        //     ]
+        // },
+        // {
+        //     "label": "compile:server",
+        //     "type": "npm",
+        //     "script": "compile:server",
+        //     "group": "build",
+        //     "presentation": {
+        //         "panel": "dedicated",
+        //         "reveal": "never"
+        //     },
+        //     "problemMatcher": [
+        //         "$tsc"
+        //     ]
+        // },
+        // {
+        //     "label": "watch:client",
+        //     "type": "npm",
+        //     "script": "watch:client",
+        //     "isBackground": true,
+        //     "group": "build",
+        //     "presentation": {
+        //         "panel": "dedicated",
+        //         "reveal": "never"
+        //     },
+        //     "problemMatcher": [
+        //         "$tsc-watch"
+        //     ]
+        // },
+        // {
+        //     "label": "watch:server",
+        //     "type": "npm",
+        //     "script": "watch:server",
+        //     "isBackground": true,
+        //     "group": "build",
+        //     "presentation": {
+        //         "panel": "dedicated",
+        //         "reveal": "never"
+        //     },
+        //     "problemMatcher": [
+        //         "$tsc-watch"
+        //     ]
+        // }
     ]
 }

@@ -1,4 +1,5 @@
 ﻿using Cheez.Ast.Expressions;
+using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types;
 using Cheez.Types.Complex;
@@ -210,9 +211,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         public LLVMValueRef? GenerateIdExpr(AstIdExpr expr, LLVMValueRef? maybeTarget, bool deref)
         {
             LLVMValueRef v;
-            if (expr.Symbol is CompTimeVariable ct)
+            if (expr.Symbol is AstDecl decl)
             {
-                v = valueMap[ct.Declaration];
+                v = valueMap[decl];
             }
             else
             {
