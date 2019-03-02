@@ -10,6 +10,8 @@ using Cheez.Visitors;
 using Cheez.Util;
 using Cheez.CodeGeneration.LLVMCodeGen;
 using Cheez;
+using Cheez.Ast.Expressions;
+using Cheez.Ast;
 
 namespace CheezCLI
 {
@@ -72,6 +74,8 @@ namespace CheezCLI
         [Option("time", Default = false, HelpText = "Print how long the compilation takes: --time")]
         public bool PrintTime { get; set; }
 
+        [Option("test", Default = false, HelpText = "Run the program as a test.")]
+        public bool RunAsTest { get; set; }
     }
 
     class Prog
@@ -232,21 +236,72 @@ namespace CheezCLI
                 bool codeGenOk = GenerateAndCompileCode(options, compiler.DefaultWorkspace, errorHandler);
                 result.BackEnd = stopwatch.Elapsed;
 
-                stopwatch.Restart();
                 if (options.RunCode && codeGenOk)
                 {
-                    Console.WriteLine($"\nRunning code:");
-                    Console.WriteLine("=====================================");
-                    var testProc = Utilities.StartProcess(
-                        Path.Combine(options.OutDir, options.OutName + ".exe"),
-                        "",
-                        workingDirectory: options.OutDir,
-                        stdout: (s, e) => { if (e.Data != null) System.Console.WriteLine(e.Data); },
-                        stderr: (s, e) => { if (e.Data != null) System.Console.Error.WriteLine(e.Data); });
-                    testProc.WaitForExit();
-                    Console.WriteLine("=====================================");
-                    Console.WriteLine("Program exited with code " + testProc.ExitCode);
-                    result.Execution = stopwatch.Elapsed;
+                    if (options.RunAsTest)
+                    {
+                        stopwatch.Restart();
+                        string StringLiteralToString(AstExpression e) => (e as AstStringLiteral).StringValue;
+                        IEnumerable<string> DirectiveToStrings(AstDirective d) => d.Arguments.Select(StringLiteralToString);
+                        string[] expectedOutputs = compiler.TestOutputs.Select(DirectiveToStrings).SelectMany(x => x).ToArray();
+                        int currentExpectedOutput = 0;
+                        int linesFailed = 0;
+
+                        var testProc = Utilities.StartProcess(
+                            Path.Combine(options.OutDir, options.OutName + ".exe"),
+                            "",
+                            workingDirectory: options.OutDir,
+                            stdout: (s, e) => {
+                                if (e.Data != null)
+                                {
+                                    var expectedOutput = currentExpectedOutput < expectedOutputs.Length ? expectedOutputs[currentExpectedOutput] : "";
+                                    if (expectedOutput != e.Data)
+                                    {
+                                        Console.WriteLine($"[TEST] Expected: '{expectedOutput}', got: '{e.Data}'");
+                                        linesFailed++;
+                                    }
+                                    currentExpectedOutput++;
+                                }
+                            },
+                            stderr: (s, e) => { if (e.Data != null) Console.Error.WriteLine(e.Data); });
+                        testProc.WaitForExit();
+                        result.Execution = stopwatch.Elapsed;
+                        
+                        if (linesFailed == 0 && currentExpectedOutput == expectedOutputs.Length)
+                        {
+                            Console.WriteLine($"[TEST] {options.OutName} ok");
+                        }
+                        else
+                        {
+                            if (linesFailed > 0)
+                            {
+                                Console.WriteLine($"[TEST] {linesFailed} error(s).");
+                            }
+                            if (currentExpectedOutput != expectedOutputs.Length)
+                            {
+                                Console.WriteLine($"[TEST] Not enough output.");
+                            }
+
+                            result.ExitCode = 69;
+                            return result;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"\nRunning code:");
+                        Console.WriteLine("=====================================");
+                        stopwatch.Restart();
+                        var testProc = Utilities.StartProcess(
+                            Path.Combine(options.OutDir, options.OutName + ".exe"),
+                            "",
+                            workingDirectory: options.OutDir,
+                            stdout: (s, e) => { if (e.Data != null) Console.WriteLine(e.Data); },
+                            stderr: (s, e) => { if (e.Data != null) Console.Error.WriteLine(e.Data); });
+                        testProc.WaitForExit();
+                        result.Execution = stopwatch.Elapsed;
+                        Console.WriteLine("=====================================");
+                        Console.WriteLine("Program exited with code " + testProc.ExitCode);
+                    }
                 }
             }
 

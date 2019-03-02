@@ -1,0 +1,12 @@
+#test_expect_output("Test printf 1")
+#test_expect_output("Test printf 2")
+#test_expect_output("Test printf 3")
+#test_expect_output("Test printf 4")
+
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+fn Main() {
+    c_printf("Test printf 1`nTest printf 2`n")
+    c_printf("Test printf 3`n")
+    c_printf("Test printf 4")
+}

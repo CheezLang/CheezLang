@@ -48,6 +48,8 @@ namespace Cheez
         private Workspace mMainWorkspace;
         public Workspace DefaultWorkspace => mMainWorkspace;
 
+        public List<AstDirective> TestOutputs { get; } = new List<AstDirective>();
+
         public CheezCompiler(IErrorHandler errorHandler, string stdlib)
         {
             ErrorHandler = errorHandler;
@@ -239,6 +241,19 @@ namespace Cheez
                 }
 
                 file.Libraries.Add(libFile);
+            }
+            else if (directive.Directive.Name.Name == "test_expect_output")
+            {
+                var d = directive.Directive;
+                foreach (var a in d.Arguments)
+                {
+                    if (!(a is AstStringLiteral))
+                    {
+                        eh.ReportError(lexer, a, "Arguments to #test_expect_output must be string literals.");
+                    }
+                }
+
+                TestOutputs.Add(directive.Directive);
             }
             else
             {
