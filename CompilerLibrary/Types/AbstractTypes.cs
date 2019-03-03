@@ -55,7 +55,7 @@ namespace Cheez.Types.Abstract
         public GenericFunctionType(AstFunctionDecl decl)
         {
             Declaration = decl;
-            Parameters = decl.Parameters.Select(p => (p.Name.Name, p.Type)).ToArray();
+            Parameters = decl.Parameters.Select(p => (p.Name?.Name, p.Type)).ToArray();
         }
     }
 

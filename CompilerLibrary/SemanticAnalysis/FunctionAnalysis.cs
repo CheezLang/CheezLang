@@ -56,10 +56,13 @@ namespace Cheez
             // define parameters
             foreach (var p in func.Parameters)
             {
-                var (ok, other) = func.SubScope.DefineSymbol(p);
-                if (!ok)
+                if (p.Name != null)
                 {
-                    ReportError(p, $"Duplicate parameter '{p.Name}'", ("Other parameter here:", other));
+                    var (ok, other) = func.SubScope.DefineSymbol(p);
+                    if (!ok)
+                    {
+                        ReportError(p, $"Duplicate parameter '{p.Name}'", ("Other parameter here:", other));
+                    }
                 }
             }
 
@@ -74,9 +77,21 @@ namespace Cheez
         {
             switch (stmt)
             {
+                case AstVariableDecl vardecl: AnalyzeVariableDecl(vardecl); break;
                 case AstBlockStmt block: AnalyzeBlockStatement(block); break;
                 case AstReturnStmt ret: AnalyzeReturnStatement(ret); break;
                 case AstExprStmt expr: AnalyseExprStatement(expr); break;
+                default: throw new NotImplementedException();
+            }
+        }
+
+        private void AnalyzeVariableDecl(AstVariableDecl vardecl)
+        {
+            // TODO
+            if (vardecl.TypeExpr != null)
+            {
+                vardecl.TypeExpr.Scope = vardecl.Scope;
+                vardecl.Type = ResolveType(vardecl.TypeExpr);
             }
         }
 

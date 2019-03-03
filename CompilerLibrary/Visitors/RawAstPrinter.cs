@@ -51,7 +51,7 @@ namespace Cheez.Visitors
 
             var body = function.Body?.Accept(this) ?? ";";
 
-            var pars = string.Join(", ", function.Parameters.Select(p => $"{p.Name.Accept(this)}: {p.TypeExpr.Accept(this)}"));
+            var pars = string.Join(", ", function.Parameters.Select(p => p.Name != null ? $"{p.Name.Accept(this)}: {p.TypeExpr.Accept(this)}" : p.TypeExpr.Accept(this)));
             var head = $"fn {function.Name.Accept(this)}";
 
             head += $"({pars})";
