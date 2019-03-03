@@ -27,9 +27,10 @@ namespace Cheez.Ast.Expressions
         public object Value { get; set; }
         public Scope Scope { get; set; }
 
+        // TODO: still necessary?
         public abstract bool IsPolymorphic { get; }
 
-        public bool IsCompTimeValue { get; set; } = false;
+        protected bool IsCompTimeValue { get; set; } = false;
 
         [DebuggerStepThrough]
         public AstExpression(ILocation Location = null)

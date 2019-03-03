@@ -16,10 +16,18 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        private void ConvertLiteralTypeToDefaultType(AstExpression expr)
+        private void ConvertLiteralTypeToDefaultType(AstExpression expr, CheezType expected = null)
         {
-            if (expr.Type == IntType.LiteralType) expr.Type = IntType.DefaultType;
-            else if (expr.Type == FloatType.LiteralType) expr.Type = FloatType.DefaultType;
+            if (expr.Type == IntType.LiteralType)
+            {
+                if (expected != null && !(expected is IntType)) throw new Exception("Can't convert int to non-int type");
+                expr.Type = expected ?? IntType.DefaultType;
+            }
+            else if (expr.Type == FloatType.LiteralType)
+            {
+                if (expected != null && !(expected is FloatType)) throw new Exception("Can't convert float to non-float type");
+                expr.Type = expected ?? FloatType.DefaultType;
+            }
             else if (expr.Type == CheezType.StringLiteral) expr.Type = CheezType.CString; // TODO: change default back to CheezType.String
         }
 
@@ -349,7 +357,19 @@ namespace Cheez
 
         private void InferTypeUnaryExpr(AstUnaryExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
         {
-            throw new NotImplementedException();
+            // TODO: return changes
+            InferType(expr.SubExpr, null);
+
+            // unary minus with constant number
+            if (expr.Operator == "-")
+            {
+                if (expr.SubExpr.Type is IntType || expr.SubExpr.Type is FloatType)
+                {
+                    ConvertLiteralTypeToDefaultType(expr.SubExpr, expected);
+                    expr.Type = expr.SubExpr.Type;
+                    expr.Value = ((NumberData)expr.SubExpr.Value).Negate();
+                }
+            }
         }
 
         private void InferTypeStructValueExpr(AstStructValueExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)

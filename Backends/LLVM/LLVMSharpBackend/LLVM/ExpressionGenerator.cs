@@ -22,9 +22,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return target ?? v;
         }
 
-        private LLVMValueRef? GenerateExpression(AstExpression stmt, LLVMValueRef? target, bool deref)
+        private LLVMValueRef? GenerateExpression(AstExpression expr, LLVMValueRef? target, bool deref)
         {
-            switch (stmt)
+            switch (expr)
             {
                 case AstArgument a: return GenerateExpression(a.Expr, target, deref);
                 case AstNumberExpr n: return GenerateNumberExpr(n);
@@ -37,8 +37,27 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstArrayAccessExpr t: return GenerateIndexExpr(t, target, deref);
                 case AstStructValueExpr t: return GenerateStructValueExpr(t, target, deref);
                 case AstCallExpr c: return GenerateCallExpr(c, target, deref);
+                case AstUnaryExpr u: return GenerateUnaryExpr(u, target, deref);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef? GenerateUnaryExpr(AstUnaryExpr expr, LLVMValueRef? target, bool deref)
+        {
+            if (expr.Operator == "-")
+            {
+                var val = GenerateExpression(expr.SubExpr, null, true);
+                if (val == null) throw new Exception("Bug! this should not be null");
+                if (expr.Type is IntType)
+                {
+                    return builder.CreateNeg(val.Value, "");
+                }
+                else if (expr.Type is FloatType)
+                {
+                    return builder.CreateFNeg(val.Value, "");
+                }
+            }
+            return null;
         }
 
         private LLVMValueRef? GenerateCallExpr(AstCallExpr c, LLVMValueRef? target, bool deref)
