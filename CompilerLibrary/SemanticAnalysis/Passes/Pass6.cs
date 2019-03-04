@@ -105,7 +105,7 @@ namespace Cheez
 
                 var allDeps = new HashSet<AstSingleVariableDecl>();
 
-                InferTypes(v.Initializer, v.TypeExpr?.Type, deps, allDeps);
+                InferType(v.Initializer, v.TypeExpr?.Type, deps, allDeps);
 
                 if (allDeps.Count > 0)
                     v.Dependencies = new List<AstSingleVariableDecl>(allDeps);
@@ -136,7 +136,7 @@ namespace Cheez
                 decl.Value = initializer?.Value;
 
                 if (decl.Initializer != null)
-                    InferTypes(decl.Initializer, type);
+                    InferType(decl.Initializer, type);
             }
             else if (pattern is AstTupleExpr tuple)
             {

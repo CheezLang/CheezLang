@@ -6,7 +6,10 @@
         {
             foreach (var func in mFunctions)
             {
-                AnalyzeFunction(func);
+                if (!func.IsGeneric)
+                {
+                    AnalyzeFunction(func);
+                }
             }
         }
     }

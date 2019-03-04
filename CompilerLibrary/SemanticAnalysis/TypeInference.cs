@@ -31,11 +31,16 @@ namespace Cheez
             else if (expr.Type == CheezType.StringLiteral) expr.Type = CheezType.CString; // TODO: change default back to CheezType.String
         }
 
-        private bool InferType(AstExpression expr, CheezType expected, Dictionary<string, CheezType> polyTypeMap = null)
+        private bool InferType(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null, Dictionary<string, CheezType> polyTypeMap = null)
         {
             List<AstFunctionDecl> newInstances = new List<AstFunctionDecl>();
-            bool changes = InferTypes(expr, null, newInstances: newInstances, polyTypeMap: polyTypeMap);
+            bool changes = InferTypes(expr, expected, newInstances: newInstances, polyTypeMap: polyTypeMap);
             // TODO
+
+            if (newInstances.Count > 0)
+            {
+                AnalyzeFunctions(newInstances);
+            }
 
             return changes;
         }
@@ -86,7 +91,7 @@ namespace Cheez
                     break;
 
                 case AstCallExpr c:
-                    InferTypeCallExpr(c, expected, unresolvedDependencies, allDependencies);
+                    InferTypeCallExpr(c, expected, unresolvedDependencies, allDependencies, newInstances);
                     break;
 
                 case AstTupleExpr t:
@@ -195,7 +200,7 @@ namespace Cheez
             expr.Type = TupleType.GetTuple(members);
         }
 
-        private void InferTypeCallExpr(AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        private void InferTypeCallExpr(AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             expr.Function.Scope = expr.Scope;
             InferTypes(expr.Function, null, unresolvedDependencies, allDependencies);
@@ -210,7 +215,7 @@ namespace Cheez
 
                 case GenericFunctionType g:
                     {
-                        InferGenericFunctionCall(g, expr, expected, unresolvedDependencies, allDependencies);
+                        InferGenericFunctionCall(g, expr, expected, unresolvedDependencies, allDependencies, newInstances);
                         break;
                     }
 
@@ -287,7 +292,7 @@ namespace Cheez
             return true;
         }
 
-        private void InferGenericFunctionCall(GenericFunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        private void InferGenericFunctionCall(GenericFunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             if (!CheckAndMatchArgsToParams(expr, func.Parameters, false))
                 return;
@@ -306,7 +311,7 @@ namespace Cheez
                 var expectedType = type;
                 if (expectedType.IsPolyType) expectedType = null;
 
-                InferTypes(arg.Expr, expectedType, unresolvedDependencies, allDependencies);
+                InferTypes(arg.Expr, expectedType, unresolvedDependencies, allDependencies, newInstances);
                 ConvertLiteralTypeToDefaultType(arg.Expr);
                 arg.Type = arg.Expr.Type;
 
@@ -315,7 +320,7 @@ namespace Cheez
 
 
             // find or create instance
-            var instance = InstantiatePolyFunction(polyTypeMap, func);
+            var instance = InstantiatePolyFunction(polyTypeMap, func, newInstances);
 
             expr.Declaration = instance;
             expr.SetFlag(ExprFlags.IsLValue, instance.FunctionType.ReturnType is PointerType);

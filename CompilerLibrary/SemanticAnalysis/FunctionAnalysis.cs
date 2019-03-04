@@ -98,7 +98,7 @@ namespace Cheez
         private void AnalyseExprStatement(AstExprStmt expr)
         {
             expr.Expr.Scope = expr.Scope;
-            InferTypes(expr.Expr, null);
+            InferType(expr.Expr, null);
         }
 
         private void AnalyzeReturnStatement(AstReturnStmt ret)
@@ -106,7 +106,7 @@ namespace Cheez
             if (ret.ReturnValue != null)
             {
                 ret.ReturnValue.Scope = ret.Scope;
-                InferTypes(ret.ReturnValue, null);
+                InferType(ret.ReturnValue, null);
 
                 ConvertLiteralTypeToDefaultType(ret.ReturnValue);
             }

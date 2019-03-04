@@ -158,8 +158,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         var str = LLVM.StructCreateNamed(context, s.ToString());
                         LLVM.StructSetBody(str, new LLVMTypeRef[] {
-                            CheezTypeToLLVMType(s.TargetType).GetPointerTo(),
-                            LLVM.Int32Type()
+                            LLVM.Int32Type(),
+                            CheezTypeToLLVMType(s.TargetType).GetPointerTo()
                         }, false);
                         return str;
                     }
@@ -222,9 +222,18 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case BoolType _: return LLVM.ConstInt(CheezTypeToLLVMType(type), (bool)v ? 1ul : 0ul, false);
                 case CharType _: return LLVM.ConstInt(CheezTypeToLLVMType(type), (char)v, false);
                 case IntType i: return LLVM.ConstInt(CheezTypeToLLVMType(type), ((NumberData)v).ToUlong(), i.Signed);
+                default:
+                    if (type == CheezType.String)
+                    {
+                        var s = v as string;
+                        return LLVM.ConstStruct(new LLVMValueRef[] {
+                            LLVM.ConstInt(LLVM.Int32Type(), (ulong)s.Length, true),
+                            LLVM.ConstPointerCast(LLVM.ConstString(s, (uint)s.Length, true), LLVM.PointerType(LLVM.Int8Type(), 0))
+                        }, false);
+                    }
+                    throw new NotImplementedException();
             }
 
-            throw new NotImplementedException();
         }
 
         private LLVMValueRef GetDefaultLLVMValue(CheezType type)
@@ -277,8 +286,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case SliceType s:
                     return LLVM.ConstStruct(new LLVMValueRef[] {
-                        GetDefaultLLVMValue(s.ToPointerType()),
-                        LLVM.ConstInt(LLVM.Int32Type(), 0, true)
+                        LLVM.ConstInt(LLVM.Int32Type(), 0, true),
+                        GetDefaultLLVMValue(s.ToPointerType())
                     }, false);
 
                 case TupleType t:

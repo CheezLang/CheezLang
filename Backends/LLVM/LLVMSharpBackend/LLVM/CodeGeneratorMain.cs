@@ -75,7 +75,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 // create implementations
                 foreach (var f in workspace.GlobalScope.FunctionDeclarations)
                 {
-                    GenerateFunctionImplementation(f);
+                    if (!f.IsGeneric)
+                        GenerateFunctionImplementation(f);
                 }
             }
 
