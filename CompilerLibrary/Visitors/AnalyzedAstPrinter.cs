@@ -46,11 +46,14 @@ namespace Cheez.Visitors
             // polies
             if (function.PolymorphicInstances?.Count > 0)
             {
-                sb.AppendLine($"// Polymorphic instances for {head}");
+                sb.AppendLine($"\n// Polymorphic instances for {head}");
                 foreach (var pi in function.PolymorphicInstances)
                 {
-                    var args = string.Join(", ", pi.PolymorphicTypes.Select(kv => $"{kv.Key} = {kv.Value}"));
-                    sb.AppendLine($"// {args}".Indent(4));
+                    if (pi.PolymorphicTypes != null)
+                    {
+                        var args = string.Join(", ", pi.PolymorphicTypes.Select(kv => $"{kv.Key} = {kv.Value}"));
+                        sb.AppendLine($"// {args}".Indent(4));
+                    }
                     sb.AppendLine(pi.Accept(this).Indent(4));
                 }
             }

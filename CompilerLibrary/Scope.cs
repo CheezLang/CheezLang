@@ -24,6 +24,25 @@ namespace Cheez
         CheezType Type { get; }
     }
 
+    public class ConstSymbol : ITypedSymbol
+    {
+        private static int _id_counter = 0;
+
+        public ILocation Location => null;
+        public AstIdExpr Name { get; private set; }
+
+        public CheezType Type { get; private set; }
+        public object Value { get; private set; }
+        public readonly int Id = _id_counter++;
+
+        public ConstSymbol(string name, CheezType type, object value)
+        {
+            this.Name = new AstIdExpr(name, false);
+            this.Type = type;
+            this.Value = value;
+        }
+    }
+
     public class TypeSymbol : ITypedSymbol
     {
         public ILocation Location => null;
@@ -104,7 +123,10 @@ namespace Cheez
         {
             return new Scope(Name, Parent)
             {
-                // @Todo: clone everything?
+                mSymbolTable = new Dictionary<string, ISymbol>(mSymbolTable),
+                mOperatorTable = new Dictionary<string, List<IOperator>>(mOperatorTable),
+                mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>(mUnaryOperatorTable)
+                // TODO: mImplTable?, rest?
             };
         }
 
@@ -453,6 +475,15 @@ namespace Cheez
                 return (false, other.Location);
 
             mSymbolTable[name] = symbol;
+            return (true, null);
+        }
+
+        public (bool ok, ILocation other) DefineConstant(string name, CheezType type, object value)
+        {
+            if (mSymbolTable.TryGetValue(name, out var other))
+                return (false, other.Location);
+
+            mSymbolTable[name] = new ConstSymbol(name, type, value);
             return (true, null);
         }
 

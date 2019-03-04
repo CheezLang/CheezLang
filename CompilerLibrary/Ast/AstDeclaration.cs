@@ -59,10 +59,10 @@ namespace Cheez.Ast.Statements
 
     public class AstFunctionDecl : AstDecl, ITypedSymbol
     {
-        public Scope HeaderScope { get; set; }
+        public Scope ConstScope { get; set; }
         public Scope SubScope { get; set; }
 
-        public List<AstParameter> Parameters { get; }
+        public List<AstParameter> Parameters { get; set; }
         public AstParameter ReturnValue { get; }
 
         public FunctionType FunctionType => Type as FunctionType;
@@ -73,6 +73,7 @@ namespace Cheez.Ast.Statements
 
         public bool RefSelf { get; set; }
         public bool IsGeneric { get; set; }
+        public bool HasConstantParameters { get; set; }
 
         public bool IsConstant => true;
 
@@ -105,11 +106,17 @@ namespace Cheez.Ast.Statements
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitFunctionDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstFunctionDecl(Name.Clone() as AstIdExpr,
+        public override AstStatement Clone()
+        {
+            var copy = CopyValuesTo(new AstFunctionDecl(Name.Clone() as AstIdExpr,
                 null,
                 Parameters.Select(p => p.Clone()).ToList(),
                 ReturnValue?.Clone(),
                 Body?.Clone() as AstBlockStmt, ParameterLocation: ParameterLocation));
+            copy.ConstScope = ConstScope.Clone();
+            copy.SubScope = new Scope("fn", copy.ConstScope);
+            return copy;
+        }
     }
 
     #endregion

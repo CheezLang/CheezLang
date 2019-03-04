@@ -555,7 +555,7 @@ namespace Cheez.Parsing
             TokenLocation beg = null;
 
             var next = PeekToken();
-            if (next.type == TokenType.Identifier)
+            if (next.type == TokenType.Identifier || next.type == TokenType.DollarIdentifier)
             {
                 NextToken();
                 SkipNewlines();
@@ -563,7 +563,7 @@ namespace Cheez.Parsing
                 var maybeColon = PeekToken();
                 if (maybeColon.type == TokenType.Colon)
                 {
-                    pname = new AstIdExpr((string)next.data, false, new Location(next.location));
+                    pname = new AstIdExpr((string)next.data, next.type == TokenType.DollarIdentifier, new Location(next.location));
                     beg = pname.Beginning;
 
                     Consume(TokenType.Colon, ErrMsg(":", "after name in parameter"));

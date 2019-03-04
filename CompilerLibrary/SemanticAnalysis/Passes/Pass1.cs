@@ -79,7 +79,8 @@ namespace Cheez
                     case AstFunctionDecl func:
                         {
                             func.Scope = GlobalScope;
-                            func.SubScope = new Scope("fn", func.Scope);
+                            func.ConstScope = new Scope("$", func.Scope);
+                            func.SubScope = new Scope("fn", func.ConstScope);
                             mFunctions.Add(func);
                             break;
                         }

@@ -1,8 +1,10 @@
 ﻿using Cheez.Ast;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
+using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
+using Cheez.Types.Primitive;
 using System.Collections.Generic;
 
 namespace Cheez
@@ -27,7 +29,8 @@ namespace Cheez
                 foreach (var f in i.Functions)
                 {
                     f.Scope = i.SubScope;
-                    f.SubScope = new Scope("fn", f.Scope);
+                    f.ConstScope = new Scope("$", f.Scope);
+                    f.SubScope = new Scope("fn", f.ConstScope);
                     f.ImplBlock = i;
                     Pass4ResolveFunctionSignature(f);
                 }
@@ -38,7 +41,8 @@ namespace Cheez
                 foreach (var f in i.Functions)
                 {
                     f.Scope = i.SubScope;
-                    f.SubScope = new Scope("fn", f.Scope);
+                    f.ConstScope = new Scope("$", f.Scope);
+                    f.SubScope = new Scope("fn", f.ConstScope);
                     f.ImplBlock = i;
                     Pass4ResolveFunctionSignature(f);
                 }
@@ -47,6 +51,23 @@ namespace Cheez
 
         private void Pass4ResolveFunctionSignature(AstFunctionDecl func)
         {
+            ResolveFunctionSignature(func);
+
+            var res = func.Scope.DefineDeclaration(func);
+            if (!res.ok)
+            {
+                (string, ILocation)? detail = null;
+                if (res.other != null) detail = ("Other declaration here:", res.other);
+                ReportError(func.Name, $"A symbol with name '{func.Name.Name}' already exists in current scope", detail);
+            }
+            else if (!func.IsGeneric && !func.HasConstantParameters)
+            {
+                func.Scope.FunctionDeclarations.Add(func);
+            }
+        }
+
+        private void ResolveFunctionSignature(AstFunctionDecl func)
+        {
             if (func.ReturnValue?.TypeExpr?.IsPolymorphic ?? false)
             {
                 ReportError(func.ReturnValue, "The return type of a function can't be polymorphic");
@@ -54,22 +75,57 @@ namespace Cheez
 
             foreach (var p in func.Parameters)
             {
+                if (p.TypeExpr.IsPolymorphic && (p.Name?.IsPolymorphic ?? false))
+                {
+                    ReportError(p, "A parameter can't be both constant and polymorphic");
+                }
                 if (p.TypeExpr.IsPolymorphic)
                 {
                     func.IsGeneric = true;
-                    break;
+                }
+                if (p.Name?.IsPolymorphic ?? false)
+                {
+                    func.HasConstantParameters = true;
                 }
             }
 
-            if (func.IsGeneric)
+            if (func.HasConstantParameters)
+            {
+                foreach (var p in func.Parameters)
+                {
+                    p.TypeExpr.Scope = func.SubScope;
+                    if (p.Name.IsPolymorphic)
+                    {
+                        p.Type = ResolveType(p.TypeExpr);
+                        switch (p.Type)
+                        {
+                            case IntType _:
+                            case FloatType _:
+                            case CheezTypeType _:
+                            case BoolType _:
+                            case CharType _:
+                                break;
+
+                            case ErrorType _:
+                                break;
+
+                            default:
+                                ReportError(p.TypeExpr, $"The type '{p.Type}' is not allowed here.");
+                                break;
+                        }
+                    }
+                }
+
+                func.Type = new ConstParamFunctionType(func);
+            }
+            else if (func.IsGeneric)
             {
                 var polyTypes = new HashSet<string>();
 
-                if (func.ReturnValue != null)
-                    CollectPolyTypes(func.ReturnValue.TypeExpr, polyTypes);
-
                 foreach (var p in func.Parameters)
+                {
                     CollectPolyTypes(p.TypeExpr, polyTypes);
+                }
 
                 foreach (var pt in polyTypes)
                 {
@@ -120,18 +176,6 @@ namespace Cheez
                     }
                     func.FunctionType.VarArgs = true;
                 }
-            }
-
-            var res = func.Scope.DefineDeclaration(func);
-            if (!res.ok)
-            {
-                (string, ILocation)? detail = null;
-                if (res.other != null) detail = ("Other declaration here:", res.other);
-                ReportError(func.Name, $"A symbol with name '{func.Name.Name}' already exists in current scope", detail);
-            }
-            else if (!func.IsGeneric)
-            {
-                func.Scope.FunctionDeclarations.Add(func);
             }
         }
     }

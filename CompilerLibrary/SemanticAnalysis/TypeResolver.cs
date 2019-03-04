@@ -52,6 +52,10 @@ namespace Cheez
                                 deps.Add(decl);
                             return decl.Type;
                         }
+                        else if (sym is ConstSymbol s && s.Type == CheezType.Type)
+                        {
+                            return s.Value as CheezType;
+                        }
                         else
                         {
                             ReportError(typeExpr, $"'{typeExpr}' is not a valid type");
@@ -79,13 +83,19 @@ namespace Cheez
                         arr.Target.Scope = typeExpr.Scope;
                         var subType = ResolveTypeHelper(arr.Target, deps, instances);
 
-                        if (arr.SizeExpr is AstNumberExpr num && num.Data.Type == NumberData.NumberType.Int)
+                        arr.SizeExpr.Scope = typeExpr.Scope;
+                        InferType(arr.SizeExpr, IntType.DefaultType);
+
+                        if (arr.SizeExpr.Value == null || !(arr.SizeExpr.Type is IntType))
                         {
-                            int v = (int)num.Data.IntValue;
+                            ReportError(arr.SizeExpr, "Index must be a constant int");
+                        }
+                        else
+                        {
+                            int v = (int)((NumberData)arr.SizeExpr.Value).IntValue;
                             // TODO: check size of num.Data.IntValue
                             return ArrayType.GetArrayType(subType, v);
                         }
-                        ReportError(arr.SizeExpr, "Index must be a constant int");
                         return CheezType.Error;
                     }
 
@@ -356,7 +366,45 @@ namespace Cheez
         //    return instance;
         //}
 
-        // struct
+        // functions
+        private AstFunctionDecl InstantiateConstParamFunction(Dictionary<string, (CheezType type, object values)> constArgs, ConstParamFunctionType func, List<AstFunctionDecl> instances = null)
+        {
+            // check if instance already exists
+            // TODO:
+
+            AstFunctionDecl instance = null;
+            if (instance == null)
+            {
+                instance = func.Declaration.Clone() as AstFunctionDecl;
+                //instance.ConstScope = new Scope("$", instance.Scope);
+                //instance.SubScope = new Scope($"func {func.Declaration.Name.Name}<cp>", instance.ConstScope);
+                instance.HasConstantParameters = false;
+                func.Declaration.PolymorphicInstances.Add(instance);
+
+                // TODO: add to declaration const instances and scope
+
+                // remove constant params
+                instance.Parameters = instance.Parameters.Where(p => !constArgs.ContainsKey(p.Name.Name)).ToList();
+
+                // define constants
+                foreach (var pt in constArgs)
+                {
+                    instance.ConstScope.DefineConstant(pt.Key, pt.Value.type, pt.Value.values);
+                }
+
+                ResolveFunctionSignature(instance);
+
+                if (!instance.IsGeneric)
+                {
+                    if (instances != null)
+                        instances.Add(instance);
+                    instance.Scope.FunctionDeclarations.Add(instance);
+                }
+            }
+
+            return instance;
+        }
+
         private AstFunctionDecl InstantiatePolyFunction(Dictionary<string, CheezType> polyTypes, GenericFunctionType func, List<AstFunctionDecl> instances = null)
         {
             AstFunctionDecl instance = null;
@@ -368,7 +416,7 @@ namespace Cheez
             if (instance == null)
             {
                 instance = func.Declaration.Clone() as AstFunctionDecl;
-                instance.SubScope = new Scope($"func {func.Declaration.Name.Name}<poly>", instance.Scope);
+                //instance.SubScope = new Scope($"func {func.Declaration.Name.Name}<poly>", instance.Scope);
                 instance.IsPolyInstance = true;
                 instance.IsGeneric = false;
                 instance.PolymorphicTypes = polyTypes;

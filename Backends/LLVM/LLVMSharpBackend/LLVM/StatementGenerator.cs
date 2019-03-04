@@ -1,5 +1,6 @@
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
+using Cheez.Types;
 using Cheez.Types.Primitive;
 using LLVMSharp;
 using System;
@@ -88,6 +89,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     var ptype = LLVM.TypeOf(p);
                     p = builder.CreateAlloca(ptype, $"p_{param.Name?.Name}");
                     valueMap[param] = p;
+                }
+
+                foreach (var c in function.ConstScope.Symbols)
+                {
+                    if (c.Value is ConstSymbol s && s.Type != CheezType.Type)
+                    {
+                        valueMap[s] = CheezValueToLLVMValue(s.Type, s.Value);
+                    }
                 }
 
                 if (function.ReturnValue != null)

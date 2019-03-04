@@ -158,6 +158,8 @@ namespace Cheez.Types.Complex
         public (string name, CheezType type)[] Parameters { get; private set; }
         public CheezType ReturnType { get; private set; }
 
+        public AstFunctionDecl Declaration { get; set; } = null;
+
         public FunctionType((string, CheezType)[] parameterTypes, CheezType returnType)
         {
             this.Parameters = parameterTypes;
@@ -166,6 +168,7 @@ namespace Cheez.Types.Complex
 
         public FunctionType(AstFunctionDecl func)
         {
+            this.Declaration = func;
             this.ReturnType = func.ReturnValue?.Type ?? CheezType.Void;
             this.Parameters = func.Parameters.Select(p => (p.Name?.Name, p.Type)).ToArray();
         }

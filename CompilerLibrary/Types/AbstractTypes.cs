@@ -45,6 +45,20 @@ namespace Cheez.Types.Abstract
         public override string ToString() => $"<type alias> {Declaration.Name.Name}";
     }
 
+    public class ConstParamFunctionType : CheezType
+    {
+        public AstFunctionDecl Declaration { get; }
+        public (string name, CheezType type)[] Parameters { get; private set; }
+
+        public override bool IsPolyType => false;
+
+        public ConstParamFunctionType(AstFunctionDecl decl)
+        {
+            Declaration = decl;
+            Parameters = decl.Parameters.Select(p => (p.Name?.Name, p.Type)).ToArray();
+        }
+    }
+
     public class GenericFunctionType : CheezType
     {
         public AstFunctionDecl Declaration { get; }

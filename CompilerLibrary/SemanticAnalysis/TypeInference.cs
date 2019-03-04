@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Cheez.Ast;
 using Cheez.Ast.Expressions;
@@ -34,8 +35,7 @@ namespace Cheez
         private bool InferType(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null, Dictionary<string, CheezType> polyTypeMap = null)
         {
             List<AstFunctionDecl> newInstances = new List<AstFunctionDecl>();
-            bool changes = InferTypes(expr, expected, newInstances: newInstances, polyTypeMap: polyTypeMap);
-            // TODO
+            bool changes = InferTypes(expr, expected, unresolvedDependencies, allDependencies, newInstances, polyTypeMap);
 
             if (newInstances.Count > 0)
             {
@@ -45,7 +45,7 @@ namespace Cheez
             return changes;
         }
 
-        private bool InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null, List<AstFunctionDecl> newInstances = null, Dictionary<string, CheezType> polyTypeMap = null)
+        private bool InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances, Dictionary<string, CheezType> polyTypeMap = null)
         {
             var previousType = expr.Type;
             expr.Type = CheezType.Error;
@@ -79,15 +79,15 @@ namespace Cheez
                     break;
 
                 case AstBinaryExpr b:
-                    InferTypesBinaryExpr(b, expected, unresolvedDependencies, allDependencies);
+                    InferTypesBinaryExpr(b, expected, unresolvedDependencies, allDependencies, newInstances);
                     break;
 
                 case AstStructValueExpr s:
-                    InferTypeStructValueExpr(s, expected, unresolvedDependencies, allDependencies);
+                    InferTypeStructValueExpr(s, expected, unresolvedDependencies, allDependencies, newInstances);
                     break;
 
                 case AstUnaryExpr u:
-                    InferTypeUnaryExpr(u, expected, unresolvedDependencies, allDependencies);
+                    InferTypeUnaryExpr(u, expected, unresolvedDependencies, allDependencies, newInstances);
                     break;
 
                 case AstCallExpr c:
@@ -95,15 +95,15 @@ namespace Cheez
                     break;
 
                 case AstTupleExpr t:
-                    InferTypeTupleExpr(t, expected, unresolvedDependencies, allDependencies);
+                    InferTypeTupleExpr(t, expected, unresolvedDependencies, allDependencies, newInstances);
                     break;
 
                 case AstDotExpr d:
-                    InferTypeDotExpr(d, expected, unresolvedDependencies, allDependencies);
+                    InferTypeDotExpr(d, expected, unresolvedDependencies, allDependencies, newInstances);
                     break;
 
                 case AstArrayAccessExpr d:
-                    InferTypeIndexExpr(d, expected, unresolvedDependencies, allDependencies);
+                    InferTypeIndexExpr(d, expected, unresolvedDependencies, allDependencies, newInstances);
                     break;
 
                 default:
@@ -118,13 +118,13 @@ namespace Cheez
             return previousType != expr.Type;
         }
 
-        private void InferTypeIndexExpr(AstArrayAccessExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        private void InferTypeIndexExpr(AstArrayAccessExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             expr.SubExpression.Scope = expr.Scope;
-            InferTypes(expr.SubExpression, null, unresolvedDependencies, allDependencies);
+            InferTypes(expr.SubExpression, null, unresolvedDependencies, allDependencies, newInstances);
 
             expr.Indexer.Scope = expr.Scope;
-            InferTypes(expr.Indexer, null, unresolvedDependencies, allDependencies);
+            InferTypes(expr.Indexer, null, unresolvedDependencies, allDependencies, newInstances);
 
             if ((unresolvedDependencies?.Count ?? 0) != 0)
             {
@@ -161,10 +161,10 @@ namespace Cheez
             }
         }
 
-        private void InferTypeDotExpr(AstDotExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        private void InferTypeDotExpr(AstDotExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             expr.Left.Scope = expr.Scope;
-            InferTypes(expr.Left, null, unresolvedDependencies, allDependencies);
+            InferTypes(expr.Left, null, unresolvedDependencies, allDependencies, newInstances);
 
             if (expr.Left.Type is ErrorType)
                 return;
@@ -177,7 +177,7 @@ namespace Cheez
             }
         }
 
-        private void InferTypeTupleExpr(AstTupleExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        private void InferTypeTupleExpr(AstTupleExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             TupleType tupleType = expected as TupleType;
             if (tupleType?.Members?.Length != expr.Values.Count) tupleType = null;
@@ -189,7 +189,7 @@ namespace Cheez
                 v.Scope = expr.Scope;
 
                 var e = tupleType?.Members[i].type;
-                InferTypes(v, e, unresolvedDependencies, allDependencies);
+                InferTypes(v, e, unresolvedDependencies, allDependencies, newInstances);
 
                 // TODO: do somewhere else
                 ConvertLiteralTypeToDefaultType(v);
@@ -203,13 +203,13 @@ namespace Cheez
         private void InferTypeCallExpr(AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             expr.Function.Scope = expr.Scope;
-            InferTypes(expr.Function, null, unresolvedDependencies, allDependencies);
+            InferTypes(expr.Function, null, unresolvedDependencies, allDependencies, newInstances);
 
             switch (expr.Function.Type)
             {
                 case FunctionType f:
                     {
-                        InferRegularFunctionCall(f, expr, expected, unresolvedDependencies, allDependencies);
+                        InferRegularFunctionCall(f, expr, expected, unresolvedDependencies, allDependencies, newInstances);
                         break;
                     }
 
@@ -218,6 +218,72 @@ namespace Cheez
                         InferGenericFunctionCall(g, expr, expected, unresolvedDependencies, allDependencies, newInstances);
                         break;
                     }
+
+                case ConstParamFunctionType c:
+                    {
+                        InferConstParamFunctionCall(c, expr, expected, unresolvedDependencies, allDependencies, newInstances);
+                        break;
+                    }
+
+                case ErrorType _: return;
+                default: throw new NotImplementedException();
+            }
+        }
+
+        private void InferConstParamFunctionCall(ConstParamFunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
+        {
+            if (!CheckAndMatchArgsToParams(expr, func.Parameters, false))
+                return;
+
+            expr.Arguments.Sort((a, b) => a.Index - b.Index);
+
+            if (expr.Arguments.Count != func.Declaration.Parameters.Count) throw new NotImplementedException();
+
+            var constArgs = new Dictionary<string, (CheezType, object)>();
+            var newArgs = new List<AstArgument>();
+
+            for (int i = 0; i < expr.Arguments.Count; i++)
+            {
+                var a = expr.Arguments[i];
+                var p = func.Declaration.Parameters[i];
+
+                if (p.Name?.IsPolymorphic ?? false)
+                {
+                    Debug.Assert(p.Type != null);
+
+                    a.Scope = expr.Scope;
+                    a.Expr.Scope = a.Scope;
+
+                    InferTypes(a.Expr, p.Type, unresolvedDependencies, allDependencies, newInstances);
+                    ConvertLiteralTypeToDefaultType(a.Expr);
+                    a.Type = a.Expr.Type;
+
+                    if (a.Expr.Value == null)
+                    {
+                        ReportError(a, $"Argument must be a constant {p.Type}");
+                    }
+
+                    constArgs[p.Name.Name] = (p.Type, a.Expr.Value);
+                }
+                else
+                {
+                    newArgs.Add(a);
+                }
+            }
+
+            expr.Arguments = newArgs;
+
+            var instance = InstantiateConstParamFunction(constArgs, func, newInstances);
+
+            switch (instance.Type)
+            {
+                case FunctionType f:
+                        InferRegularFunctionCall(f, expr, expected, unresolvedDependencies, allDependencies, newInstances);
+                        break;
+
+                case GenericFunctionType g:
+                        InferGenericFunctionCall(g, expr, expected, unresolvedDependencies, allDependencies, newInstances);
+                        break;
 
                 case ErrorType _: return;
                 default: throw new NotImplementedException();
@@ -326,7 +392,7 @@ namespace Cheez
             expr.SetFlag(ExprFlags.IsLValue, instance.FunctionType.ReturnType is PointerType);
         }
 
-        private void InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        private void InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             if (!CheckAndMatchArgsToParams(expr, func.Parameters, func.VarArgs))
                 return;
@@ -340,7 +406,7 @@ namespace Cheez
             {
                 arg.Scope = expr.Scope;
                 arg.Expr.Scope = arg.Scope;
-                InferTypes(arg.Expr, type, unresolvedDependencies, allDependencies);
+                InferTypes(arg.Expr, type, unresolvedDependencies, allDependencies, newInstances);
                 ConvertLiteralTypeToDefaultType(arg.Expr);
                 arg.Type = arg.Expr.Type;
 
@@ -350,9 +416,10 @@ namespace Cheez
             // :hack
             expr.SetFlag(ExprFlags.IsLValue, func.ReturnType is PointerType);
             expr.Type = func.ReturnType;
+            expr.Declaration = func.Declaration;
         }
 
-        private void InferTypeUnaryExpr(AstUnaryExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        private void InferTypeUnaryExpr(AstUnaryExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             // TODO: return changes
             InferType(expr.SubExpr, null);
@@ -369,7 +436,7 @@ namespace Cheez
             }
         }
 
-        private void InferTypeStructValueExpr(AstStructValueExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        private void InferTypeStructValueExpr(AstStructValueExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             if (expr.TypeExpr != null)
             {
@@ -423,7 +490,7 @@ namespace Cheez
                     var mem = type.Declaration.Members[i];
 
                     mi.Value.Scope = expr.Scope;
-                    InferTypes(mi.Value, mem.Type, unresolvedDependencies, allDependencies);
+                    InferTypes(mi.Value, mem.Type, unresolvedDependencies, allDependencies, newInstances);
                     ConvertLiteralTypeToDefaultType(mi.Value);
 
                     mi.Name = new AstIdExpr(mem.Name.Name, false, mi.Value);
@@ -449,7 +516,7 @@ namespace Cheez
                     mi.Index = memIndex;
 
                     mi.Value.Scope = expr.Scope;
-                    InferTypes(mi.Value, mem.Type, unresolvedDependencies, allDependencies);
+                    InferTypes(mi.Value, mem.Type, unresolvedDependencies, allDependencies, newInstances);
                     ConvertLiteralTypeToDefaultType(mi.Value);
 
                     // TODO: check types match
@@ -461,13 +528,13 @@ namespace Cheez
             }
         }
 
-        private void InferTypesBinaryExpr(AstBinaryExpr b, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies)
+        private void InferTypesBinaryExpr(AstBinaryExpr b, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             b.Left.Scope = b.Scope;
             b.Right.Scope = b.Scope;
 
-            InferTypes(b.Left, null, unresolvedDependencies, allDependencies);
-            InferTypes(b.Right, null, unresolvedDependencies, allDependencies);
+            InferTypes(b.Left, null, unresolvedDependencies, allDependencies, newInstances);
+            InferTypes(b.Right, null, unresolvedDependencies, allDependencies, newInstances);
 
             var at = new List<AbstractType>();
             if (b.Left.Type is AbstractType at1) at.Add(at1);
@@ -512,12 +579,18 @@ namespace Cheez
             }
             else if (sym is TypeSymbol ct)
             {
-                i.Type = ct.Type;
+                i.Type = CheezType.Type;
+                i.Value = ct.Type;
             }
             else if (sym is AstDecl decl)
             {
                 i.Type = decl.Type;
-            } 
+            }
+            else if (sym is ConstSymbol c)
+            {
+                i.Type = c.Type;
+                i.Value = c.Value;
+            }
             else
             {
                 ReportError(i, $"'{i.Name}' is not a valid variable");

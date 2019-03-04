@@ -241,7 +241,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             if (maybeTarget != null)
             {
-                v = builder.CreateLoad(v, "");
+                if (!LLVM.IsConstant(v))
+                    v = builder.CreateLoad(v, "");
                 builder.CreateStore(v, maybeTarget.Value);
                 return null;
             }

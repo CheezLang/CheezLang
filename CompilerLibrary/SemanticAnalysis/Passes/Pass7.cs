@@ -6,7 +6,7 @@
         {
             foreach (var func in mFunctions)
             {
-                if (!func.IsGeneric)
+                if (!func.IsGeneric && !func.HasConstantParameters)
                 {
                     AnalyzeFunction(func);
                 }
