@@ -38,7 +38,7 @@ namespace Cheez
 
                         if (sym == null)
                         {
-                            ReportError(typeExpr, $"Unknown symbol");
+                            ReportError(typeExpr, $"Unknown symbol '{i.Name}'");
                             return CheezType.Error;
                         }
 

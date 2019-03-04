@@ -49,12 +49,14 @@ namespace Cheez.Types.Abstract
     {
         public AstFunctionDecl Declaration { get; }
         public (string name, CheezType type)[] Parameters { get; private set; }
+        public CheezType ReturnType { get; private set; }
 
         public override bool IsPolyType => false;
 
         public GenericFunctionType(AstFunctionDecl decl)
         {
             Declaration = decl;
+            ReturnType = decl.ReturnValue?.Type ?? CheezType.Void;
             Parameters = decl.Parameters.Select(p => (p.Name?.Name, p.Type)).ToArray();
         }
     }

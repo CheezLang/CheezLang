@@ -47,18 +47,17 @@ namespace Cheez
 
         private void Pass4ResolveFunctionSignature(AstFunctionDecl func)
         {
-            if (func.ReturnValue != null)
-                func.IsGeneric = func.ReturnValue.TypeExpr.IsPolymorphic;
-
-            if (!func.IsGeneric)
+            if (func.ReturnValue?.TypeExpr?.IsPolymorphic ?? false)
             {
-                foreach (var p in func.Parameters)
+                ReportError(func.ReturnValue, "The return type of a function can't be polymorphic");
+            }
+
+            foreach (var p in func.Parameters)
+            {
+                if (p.TypeExpr.IsPolymorphic)
                 {
-                    if (p.TypeExpr.IsPolymorphic)
-                    {
-                        func.IsGeneric = true;
-                        break;
-                    }
+                    func.IsGeneric = true;
+                    break;
                 }
             }
 

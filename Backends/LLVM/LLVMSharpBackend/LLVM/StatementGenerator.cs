@@ -86,7 +86,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     var param = function.Parameters[i];
                     var p = lfunc.GetParam((uint)i);
                     var ptype = LLVM.TypeOf(p);
-                    p = builder.CreateAlloca(ptype, $"p_{param.Name.Name}");
+                    p = builder.CreateAlloca(ptype, $"p_{param.Name?.Name}");
                     valueMap[param] = p;
                 }
 
