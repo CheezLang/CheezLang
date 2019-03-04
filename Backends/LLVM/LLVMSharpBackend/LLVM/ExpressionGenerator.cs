@@ -241,7 +241,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             if (maybeTarget != null)
             {
-                if (!LLVM.IsConstant(v))
+                if (!(expr.Symbol is ConstSymbol)) // :hack
                     v = builder.CreateLoad(v, "");
                 builder.CreateStore(v, maybeTarget.Value);
                 return null;
