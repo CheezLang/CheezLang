@@ -160,10 +160,6 @@ namespace Cheez
                         }
 
                         AssignTypesAndValuesToSubdecls(tid, tty, tin);
-
-
-                        //if (decl.Initializer != null)
-                        //    InferType(decl.Initializer, type);
                     }
                 }
                 else

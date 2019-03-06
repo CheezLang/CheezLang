@@ -183,9 +183,25 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstReturnStmt ret: GenerateReturnStatement(ret); break;
                 case AstExprStmt expr: GenerateExprStatement(expr); break;
                 case AstVariableDecl decl: GenerateVariableDecl(decl); break;
+                case AstAssignment ass: GenerateAssignment(ass); break;
                 default: throw new NotImplementedException();
             }
 
+        }
+
+        private void GenerateAssignment(AstAssignment ass)
+        {
+            if (ass.SubAssignments?.Count > 0)
+            {
+                foreach (var sub in ass.SubAssignments)
+                {
+                    GenerateAssignment(sub);
+                }
+                return;
+            }
+
+            var ptr = GenerateExpression(ass.Pattern, null, false);
+            GenerateExpression(ptr.Value, ass.Value, ptr, true);
         }
 
         private void GenerateExprStatement(AstExprStmt expr)

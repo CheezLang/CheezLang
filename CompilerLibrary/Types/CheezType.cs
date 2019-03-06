@@ -18,6 +18,18 @@ namespace Cheez.Types
         public abstract bool IsPolyType { get; }
         public int Size { get; set; } = 0;
         public int Alignment { get; set; } = 1;
+
+        public static bool operator ==(CheezType a, CheezType b)
+        {
+            if (a is null && b is null) return true;
+            if (a is null || b is null) return false;
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(CheezType a, CheezType b)
+        {
+            return !(a == b);
+        }
     }
 
     public class CheezTypeType : CheezType

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
+using Cheez.Types.Complex;
 
 namespace Cheez
 {
@@ -81,6 +83,88 @@ namespace Cheez
                 case AstBlockStmt block: AnalyzeBlockStatement(func, block); break;
                 case AstReturnStmt ret: AnalyzeReturnStatement(func, ret); break;
                 case AstExprStmt expr: AnalyseExprStatement(expr); break;
+                case AstAssignment ass: AnalyseAssignStatement(ass); break;
+                default: throw new NotImplementedException();
+            }
+        }
+
+        private void AnalyseAssignStatement(AstAssignment ass)
+        {
+            //ass.Value.Scope = ass.Scope;
+            //InferType(ass.Value, null);
+
+            MatchPatternWithExpression(ass, ass.Pattern, ass.Value);
+        }
+
+        private void MatchPatternWithExpression(AstAssignment ass, AstExpression pattern, AstExpression value)
+        {
+            switch (pattern)
+            {
+                case AstIdExpr id:
+                    {
+                        id.Scope = ass.Scope;
+                        InferType(id, null);
+                        // TODO: check if can be assigned to id (e.g. not const)
+
+                        value.Scope = ass.Scope;
+                        InferType(value, id.Type);
+
+                        if (value.Type != id.Type)
+                        {
+                            ReportError(ass, $"Can't assign a value of type {value.Type} to the variable '{id.Name}' of type {id.Type}");
+                        }
+                        break;
+                    }
+
+                case AstTupleExpr t:
+                    {
+                        if (value is AstTupleExpr v)
+                        {
+                            if (t.Values.Count != v.Values.Count)
+                            {
+                                ReportError(ass, $"Can't assign the tuple '{v}' to the pattern '{t}' because the amount of values does not match");
+                                return;
+                            }
+
+                            // create new assignments for all sub values
+                            for (int i = 0; i < t.Values.Count; i++)
+                            {
+                                var subPat = t.Values[i];
+                                var subVal = v.Values[i];
+                                var subAss = new AstAssignment(subPat, subVal, null, ass.Location);
+                                subAss.Scope = ass.Scope;
+                                MatchPatternWithExpression(subAss, subPat, subVal);
+                                ass.AddSubAssignment(subAss);
+                            }
+                        }
+                        else
+                        {
+                            t.Scope = ass.Scope;
+                            InferType(t, null);
+                            value.Scope = ass.Scope;
+                            InferType(value, t.Type);
+
+                            if (value.Type != t.Type)
+                            {
+                                ReportError(ass, $"Can't assign a value of type {value.Type} to the pattern '{t}' of type {t.Type}");
+                                return;
+                            }
+
+                            
+
+                            // create new assignments for all sub values
+                            for (int i = 0; i < t.Values.Count; i++)
+                            {
+                                var subVal = new AstArrayAccessExpr(value, new AstNumberExpr(new Extras.NumberData(i)));
+                                subVal.Scope = ass.Scope;
+                                InferType(subVal, null);
+                                var subAss = new AstAssignment(t.Values[i], subVal);
+                                ass.AddSubAssignment(subAss);
+                            }
+                        }
+                        break;
+                    }
+
                 default: throw new NotImplementedException();
             }
         }

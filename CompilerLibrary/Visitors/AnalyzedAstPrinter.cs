@@ -275,7 +275,15 @@ namespace Cheez.Visitors
 
         public override string VisitAssignmentStmt(AstAssignment ass, int indentLevel = 0)
         {
-            return ass.Target.Accept(this) + $" {ass.Operator}= " + ass.Value.Accept(this);
+            var sb = new StringBuilder();
+            sb.Append(ass.Pattern.Accept(this) + $" {ass.Operator}= " + ass.Value.Accept(this));
+
+            if (ass.SubAssignments != null)
+            {
+                sb.AppendLine().AppendLine("// sub assignments").Append(string.Join("\n", ass.SubAssignments.Select(sa => sa.Accept(this, indentLevel))));
+            }
+
+            return sb.ToString();
         }
 
         public override string VisitExpressionStmt(AstExprStmt stmt, int indentLevel = 0)

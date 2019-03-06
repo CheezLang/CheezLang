@@ -35,28 +35,8 @@ namespace Cheez.Types.Complex
         public static TupleType GetTuple((string name, CheezType type)[] members)
         {
             return new TupleType(members);
-            //var f = sTypes.FirstOrDefault(ft =>
-            //{
-            //    if (ft.Members.Length != members.Length)
-            //        return false;
-
-            //    return ft.Members.Zip(members, (a, b) => a.type == b.type).All(b => b);
-            //});
-
-            //if (f != null)
-            //    return f;
-
-            //var type = new TupleType(members);
-            //sTypes.Add(type);
-            //return type;
         }
-
-        //public static TupleType GetTuple(CheezType[] types)
-        //{
-        //    var members = types.Select(t => (null as string, t)).ToArray();
-        //    return GetTuple(members);
-        //}
-
+        
         public override string ToString()
         {
             var members = string.Join(", ", Members.Select(m =>
@@ -65,6 +45,20 @@ namespace Cheez.Types.Complex
                 return m.type.ToString();
             }));
             return "(" + members + ")";
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is TupleType t)
+            {
+                if (Members.Length != t.Members.Length) return false;
+                for (int i = 0; i < Members.Length; i++)
+                    if (Members[i] != t.Members[i]) return false;
+
+                return true;
+            }
+
+            return false;
         }
     }
 

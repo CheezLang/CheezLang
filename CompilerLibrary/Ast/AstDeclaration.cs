@@ -259,7 +259,6 @@ namespace Cheez.Ast.Statements
         }
     }
 
-
     public class AstVariableDecl : AstStatement
     {
         public AstExpression Pattern { get; set; }

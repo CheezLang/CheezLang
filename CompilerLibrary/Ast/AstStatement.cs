@@ -206,23 +206,31 @@ namespace Cheez.Ast.Statements
 
     public class AstAssignment : AstStatement
     {
-        public AstExpression Target { get; set; }
+        public AstExpression Pattern { get; set; }
         public AstExpression Value { get; set; }
         public string Operator { get; set; }
 
-        public AstAssignment(AstExpression target, AstExpression value, string op, ILocation Location = null)
+        public List<AstAssignment> SubAssignments { get; set; }
+
+        public AstAssignment(AstExpression target, AstExpression value, string op = null, ILocation Location = null)
             : base(Location: Location)
         {
-            this.Target = target;
+            this.Pattern = target;
             this.Value = value;
             this.Operator = op;
+        }
+
+        public void AddSubAssignment(AstAssignment ass)
+        {
+            if (SubAssignments == null) SubAssignments = new List<AstAssignment>();
+            SubAssignments.Add(ass);
         }
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitAssignmentStmt(this, data);
 
         public override AstStatement Clone()
-            => CopyValuesTo(new AstAssignment(Target.Clone(), Value.Clone(), Operator));
+            => CopyValuesTo(new AstAssignment(Pattern.Clone(), Value.Clone(), Operator));
     }
 
     public class AstExprStmt : AstStatement

@@ -193,7 +193,7 @@ namespace Cheez.Visitors
 
         public override string VisitAssignmentStmt(AstAssignment ass, int indentLevel = 0)
         {
-            return ass.Target.Accept(this) + $" {ass.Operator}= " + ass.Value.Accept(this);
+            return ass.Pattern.Accept(this) + $" {ass.Operator}= " + ass.Value.Accept(this);
         }
 
         public override string VisitExpressionStmt(AstExprStmt stmt, int indentLevel = 0)
