@@ -182,6 +182,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 case AstReturnStmt ret: GenerateReturnStatement(ret); break;
                 case AstExprStmt expr: GenerateExprStatement(expr); break;
+                case AstVariableDecl decl: GenerateVariableDecl(decl); break;
                 default: throw new NotImplementedException();
             }
 
@@ -216,8 +217,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 varPtr.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
                 varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
 
-                var uiae = LLVM.TypeOf(varPtr);
-
                 var dExtern = decl.GetDirective("extern");
                 if (dExtern != null) varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
 
@@ -248,29 +247,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             visited.Add(decl);
         }
 
-        public LLVMValueRef VisitVariableDecl(AstVariableDecl variable)
+        public void GenerateVariableDecl(AstVariableDecl decl)
         {
-            // TODO
-            return default;
-            if (variable.IsConstant)
-                return default;
+            foreach (var v in decl.SubDeclarations)
+            {
+                var type = CheezTypeToLLVMType(v.Type);
 
-            //if (variable.GetFlag(StmtFlags.GlobalScope))
-            //    {
-            //    throw new NotImplementedException();
-            //    }
-            //    else
-            //    {
-            //    var ptr = CreateLocalVariable(variable);
-            //    if (variable.Initializer != null)
-            //    {
+                var varPtr = CreateLocalVariable(v.Type, v.Name.Name);
+                valueMap[v] = varPtr;
 
-            //        var val = variable.Initializer.Accept(this);
-            //        CastIfAny(variable.Type, variable.Initializer.Type, ref val);
-            //        return builder.CreateStore(val, ptr);
-            //    }
-            //    return default;
-            //}
+                if (v.Initializer != null)
+                {
+                    GenerateExpression(varPtr, v.Initializer, varPtr, true);
+                }
+            }
         }
 
         public void GenerateReturnStatement(AstReturnStmt ret)

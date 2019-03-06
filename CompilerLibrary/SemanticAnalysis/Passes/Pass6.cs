@@ -135,7 +135,7 @@ namespace Cheez
                 decl.Type = type;
                 decl.Value = initializer?.Value;
 
-                if (decl.Initializer != null)
+                if (decl.Initializer != null && decl.Initializer != initializer)
                     InferType(decl.Initializer, type);
             }
             else if (pattern is AstTupleExpr tuple)
@@ -160,6 +160,10 @@ namespace Cheez
                         }
 
                         AssignTypesAndValuesToSubdecls(tid, tty, tin);
+
+
+                        //if (decl.Initializer != null)
+                        //    InferType(decl.Initializer, type);
                     }
                 }
                 else

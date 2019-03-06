@@ -69,7 +69,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return t;
         }
 
-        private LLVMValueRef CreateLocalVariable(CheezType exprType)
+        private LLVMValueRef CreateLocalVariable(CheezType exprType, string name = "")
         {
             var builder = new IRBuilder();
 
@@ -81,7 +81,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 builder.PositionBuilderBefore(brInst);
 
             var type = CheezTypeToLLVMType(exprType);
-            var result = builder.CreateAlloca(type, "");
+            var result = builder.CreateAlloca(type, name);
             var alignment = targetData.AlignmentOfType(type);
             result.SetAlignment(alignment);
 

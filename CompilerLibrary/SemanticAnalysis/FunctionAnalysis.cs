@@ -69,17 +69,17 @@ namespace Cheez
             if (func.Body != null)
             {
                 func.Body.Scope = func.SubScope;
-                AnalyzeStatement(func.Body);
+                AnalyzeStatement(func, func.Body);
             }
         }
 
-        private void AnalyzeStatement(AstStatement stmt)
+        private void AnalyzeStatement(AstFunctionDecl func, AstStatement stmt)
         {
             switch (stmt)
             {
                 case AstVariableDecl vardecl: AnalyzeVariableDecl(vardecl); break;
-                case AstBlockStmt block: AnalyzeBlockStatement(block); break;
-                case AstReturnStmt ret: AnalyzeReturnStatement(ret); break;
+                case AstBlockStmt block: AnalyzeBlockStatement(func, block); break;
+                case AstReturnStmt ret: AnalyzeReturnStatement(func, ret); break;
                 case AstExprStmt expr: AnalyseExprStatement(expr); break;
                 default: throw new NotImplementedException();
             }
@@ -87,12 +87,8 @@ namespace Cheez
 
         private void AnalyzeVariableDecl(AstVariableDecl vardecl)
         {
-            // TODO
-            if (vardecl.TypeExpr != null)
-            {
-                vardecl.TypeExpr.Scope = vardecl.Scope;
-                vardecl.Type = ResolveType(vardecl.TypeExpr);
-            }
+            Pass1VariableDeclaration(vardecl);
+            Pass6VariableDeclaration(vardecl);
         }
 
         private void AnalyseExprStatement(AstExprStmt expr)
@@ -101,7 +97,7 @@ namespace Cheez
             InferType(expr.Expr, null);
         }
 
-        private void AnalyzeReturnStatement(AstReturnStmt ret)
+        private void AnalyzeReturnStatement(AstFunctionDecl func, AstReturnStmt ret)
         {
             if (ret.ReturnValue != null)
             {
@@ -109,15 +105,21 @@ namespace Cheez
                 InferType(ret.ReturnValue, null);
 
                 ConvertLiteralTypeToDefaultType(ret.ReturnValue);
+
+                if (ret.ReturnValue.Type != func.FunctionType.ReturnType)
+                {
+                    ReportError(ret.ReturnValue,
+                        $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({func.FunctionType.ReturnType})");
+                }
             }
         }
 
-        private void AnalyzeBlockStatement(AstBlockStmt block)
+        private void AnalyzeBlockStatement(AstFunctionDecl func, AstBlockStmt block)
         {
             foreach (var stmt in block.Statements)
             {
                 stmt.Scope = block.Scope;
-                AnalyzeStatement(stmt);
+                AnalyzeStatement(func, stmt);
             }
 
             if (block.Statements.LastOrDefault() is AstExprStmt expr)

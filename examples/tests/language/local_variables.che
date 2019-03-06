@@ -1,0 +1,21 @@
+#test_expect_output("a: 123")
+#test_expect_output("b: 1")
+#test_expect_output("c: 123, d: 1")
+#test_expect_output("f[0]: 123, f[1]: 1")
+#test_expect_output("g: 123, h: 1")
+
+// required for printing
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+fn Main() {
+    let a = 123
+    let b: bool = true
+    let (c, d): (int, bool) = (a, b)
+    let f = (c, d)
+    let (g, h) = f
+    c_printf("a: %d`n", a)
+    c_printf("b: %d`n", b)
+    c_printf("c: %d, d: %d`n", c, d)
+    c_printf("f[0]: %d, f[1]: %d`n", f[0], f[1])
+    c_printf("g: %d, h: %d`n", g, h)
+}
