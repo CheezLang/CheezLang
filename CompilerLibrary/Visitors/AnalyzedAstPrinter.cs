@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using Cheez.Ast.Expressions;
+using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Util;
 
@@ -29,36 +30,61 @@ namespace Cheez.Visitors
 
         public override string VisitFunctionDecl(AstFunctionDecl function, int indentLevel = 0)
         {
-            var sb = new StringBuilder();
-
-            var body = function.Body?.Accept(this) ?? ";";
-
-            var pars = string.Join(", ", function.Parameters.Select(p => p.Name != null ? $"{p.Name.Accept(this)}: {p.Type}" : p.Type.ToString()));
-            var head = $"fn {function.Name.Accept(this)}";
-
-            head += $"({pars})";
-
-            if (function.ReturnValue != null)
-                head += $" -> {function.ReturnValue.Accept(this)}";
-
-            sb.Append($"{head} {body}".Indent(indentLevel));
-
-            // polies
-            if (function.PolymorphicInstances?.Count > 0)
+            if (function.IsGeneric)
             {
-                sb.AppendLine($"\n// Polymorphic instances for {head}");
-                foreach (var pi in function.PolymorphicInstances)
-                {
-                    if (pi.PolymorphicTypes != null)
-                    {
-                        var args = string.Join(", ", pi.PolymorphicTypes.Select(kv => $"{kv.Key} = {kv.Value}"));
-                        sb.AppendLine($"// {args}".Indent(4));
-                    }
-                    sb.AppendLine(pi.Accept(this).Indent(4));
-                }
-            }
+                var sb = new StringBuilder();
 
-            return sb.ToString();
+                var body = function.Body?.Accept(this) ?? ";";
+
+                var pars = string.Join(", ", function.Parameters.Select(p => p.Name != null ? $"{p.Name.Accept(this)}: {p.TypeExpr}" : p.Type.ToString()));
+                var head = $"fn {function.Name.Accept(this)}";
+
+                head += $"({pars})";
+
+                if (function.ReturnValue != null)
+                    head += $" -> {function.ReturnValue.TypeExpr.Accept(this)}";
+
+                sb.Append($"{head} {body}".Indent(indentLevel));
+
+                // polies
+                if (function.PolymorphicInstances?.Count > 0)
+                {
+                    sb.AppendLine($"\n// Polymorphic instances for {head}");
+                    foreach (var pi in function.PolymorphicInstances)
+                    {
+                        if (pi.PolymorphicTypes != null)
+                        {
+                            var args = string.Join(", ", pi.PolymorphicTypes.Select(kv => $"{kv.Key} = {kv.Value}"));
+                            sb.AppendLine($"// {args}".Indent(4));
+                        }
+                        if (pi.ConstParameters != null)
+                        {
+                            var args = string.Join(", ", pi.ConstParameters.Select(kv => $"{kv.Key} = {kv.Value.value}"));
+                            sb.AppendLine($"// {args}".Indent(4));
+                        }
+                        sb.AppendLine(pi.Accept(this).Indent(4));
+                    }
+                }
+
+                return sb.ToString();
+            }
+            else
+            {
+                var sb = new StringBuilder();
+
+                var body = function.Body?.Accept(this) ?? ";";
+
+                var pars = string.Join(", ", function.Parameters.Select(p => p.Name != null ? $"{p.Name.Accept(this)}: {p.Type}" : p.Type.ToString()));
+                var head = $"fn {function.Name.Accept(this)}";
+
+                head += $"({pars})";
+
+                if (function.ReturnValue != null)
+                    head += $" -> {function.ReturnValue.Accept(this)}";
+
+                sb.Append($"{head} {body}".Indent(indentLevel));
+                return sb.ToString();
+            }
         }
 
         public override string VisitReturnStmt(AstReturnStmt ret, int data = 0)
@@ -453,6 +479,52 @@ namespace Cheez.Visitors
             return new string('§', len);
         }
 
+        #endregion
+
+        #region Type expressions
+
+        public override string VisitTupleTypeExpr(AstTupleTypeExpr expr, int data = 0)
+        {
+            var members = string.Join(", ", expr.Members.Select(m => m.Accept(this)));
+            return "(" + members + ")";
+        }
+
+        public override string VisitSliceTypeExpr(AstSliceTypeExpr type, int data = 0)
+        {
+            return $"[]{type.Target.Accept(this)}";
+        }
+
+        public override string VisitFunctionTypeExpr(AstFunctionTypeExpr type, int data = 0)
+        {
+            var args = string.Join(", ", type.ParameterTypes.Select(p => p.Accept(this)));
+            if (type.ReturnType != null)
+                return $"fn({args}) -> {type.ReturnType.Accept(this)}";
+            else
+                return $"fn({args})";
+        }
+
+        public override string VisitArrayTypeExpr(AstArrayTypeExpr type, int data = 0)
+        {
+            return $"[{type.SizeExpr.Accept(this)}]{type.Target.Accept(this)}";
+        }
+
+        public override string VisitPointerTypeExpr(AstPointerTypeExpr type, int data = 0)
+        {
+            return $"*{type.Target.Accept(this)}";
+        }
+
+        public override string VisitPolyStructTypeExpr(AstPolyStructTypeExpr type, int data = 0)
+        {
+            string args = string.Join(", ", type.Arguments.Select(a => a.Accept(this)));
+            return $"{type.Struct.Accept(this)}({args})";
+        }
+
+        public override string VisitIdTypeExpr(AstIdTypeExpr type, int data = 0)
+        {
+            if (type.IsPolymorphic)
+                return $"${type.Name}";
+            return type.Name;
+        }
         #endregion
     }
 }

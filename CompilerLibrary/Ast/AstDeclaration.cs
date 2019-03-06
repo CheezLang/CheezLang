@@ -73,13 +73,12 @@ namespace Cheez.Ast.Statements
 
         public bool RefSelf { get; set; }
         public bool IsGeneric { get; set; }
-        public bool HasConstantParameters { get; set; }
 
         public bool IsConstant => true;
 
         public bool IsPolyInstance { get; set; } = false;
-        public Dictionary<string, AstExpression> PolymorphicTypeExprs { get; internal set; }
         public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
+        public Dictionary<string, (CheezType type, object value)> ConstParameters { get; internal set; }
 
         public AstImplBlock ImplBlock { get; set; }
         public AstFunctionDecl TraitFunction { get; internal set; }

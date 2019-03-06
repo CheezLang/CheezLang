@@ -132,5 +132,23 @@ namespace Cheez.Extras
                     throw new NotImplementedException();
             }
         }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is NumberData o) return this == o;
+            return false;
+        }
+
+        public static bool operator==(NumberData a, NumberData b)
+        {
+            if (a.Type != b.Type) return false;
+            if (a.Type == NumberType.Int) return a.IntValue == b.IntValue;
+            return a.DoubleValue == b.DoubleValue;
+        }
+
+        public static bool operator!=(NumberData a, NumberData b)
+        {
+            return !(a == b);
+        }
     }
 }

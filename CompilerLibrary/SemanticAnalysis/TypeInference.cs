@@ -219,80 +219,80 @@ namespace Cheez
                         break;
                     }
 
-                case ConstParamFunctionType c:
-                    {
-                        InferConstParamFunctionCall(c, expr, expected, unresolvedDependencies, allDependencies, newInstances);
-                        break;
-                    }
+                //case ConstParamFunctionType c:
+                //    {
+                //        InferConstParamFunctionCall(c, expr, expected, unresolvedDependencies, allDependencies, newInstances);
+                //        break;
+                //    }
 
                 case ErrorType _: return;
                 default: throw new NotImplementedException();
             }
         }
 
-        private void InferConstParamFunctionCall(ConstParamFunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
+        //private void InferConstParamFunctionCall(ConstParamFunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
+        //{
+        //    if (!CheckAndMatchArgsToParams(expr, func.Parameters, false))
+        //        return;
+
+        //    expr.Arguments.Sort((a, b) => a.Index - b.Index);
+
+        //    if (expr.Arguments.Count != func.Declaration.Parameters.Count) throw new NotImplementedException();
+
+        //    var constArgs = new Dictionary<string, (CheezType, object)>();
+        //    var newArgs = new List<AstArgument>();
+
+        //    for (int i = 0; i < expr.Arguments.Count; i++)
+        //    {
+        //        var a = expr.Arguments[i];
+        //        var p = func.Declaration.Parameters[i];
+
+        //        if (p.Name?.IsPolymorphic ?? false)
+        //        {
+        //            Debug.Assert(p.Type != null);
+
+        //            a.Scope = expr.Scope;
+        //            a.Expr.Scope = a.Scope;
+
+        //            InferTypes(a.Expr, p.Type, unresolvedDependencies, allDependencies, newInstances);
+        //            ConvertLiteralTypeToDefaultType(a.Expr);
+        //            a.Type = a.Expr.Type;
+
+        //            if (a.Expr.Value == null)
+        //            {
+        //                ReportError(a, $"Argument must be a constant {p.Type}");
+        //            }
+
+        //            constArgs[p.Name.Name] = (p.Type, a.Expr.Value);
+        //        }
+        //        else
+        //        {
+        //            newArgs.Add(a);
+        //        }
+        //    }
+
+        //    expr.Arguments = newArgs;
+
+        //    var instance = InstantiateConstParamFunction(constArgs, func, newInstances);
+
+        //    switch (instance.Type)
+        //    {
+        //        case FunctionType f:
+        //                InferRegularFunctionCall(f, expr, expected, unresolvedDependencies, allDependencies, newInstances);
+        //                break;
+
+        //        case GenericFunctionType g:
+        //                InferGenericFunctionCall(g, expr, expected, unresolvedDependencies, allDependencies, newInstances);
+        //                break;
+
+        //        case ErrorType _: return;
+        //        default: throw new NotImplementedException();
+        //    }
+        //}
+
+        private bool CheckAndMatchArgsToParams(AstCallExpr expr, List<AstParameter> parameters, bool varArgs)
         {
-            if (!CheckAndMatchArgsToParams(expr, func.Parameters, false))
-                return;
-
-            expr.Arguments.Sort((a, b) => a.Index - b.Index);
-
-            if (expr.Arguments.Count != func.Declaration.Parameters.Count) throw new NotImplementedException();
-
-            var constArgs = new Dictionary<string, (CheezType, object)>();
-            var newArgs = new List<AstArgument>();
-
-            for (int i = 0; i < expr.Arguments.Count; i++)
-            {
-                var a = expr.Arguments[i];
-                var p = func.Declaration.Parameters[i];
-
-                if (p.Name?.IsPolymorphic ?? false)
-                {
-                    Debug.Assert(p.Type != null);
-
-                    a.Scope = expr.Scope;
-                    a.Expr.Scope = a.Scope;
-
-                    InferTypes(a.Expr, p.Type, unresolvedDependencies, allDependencies, newInstances);
-                    ConvertLiteralTypeToDefaultType(a.Expr);
-                    a.Type = a.Expr.Type;
-
-                    if (a.Expr.Value == null)
-                    {
-                        ReportError(a, $"Argument must be a constant {p.Type}");
-                    }
-
-                    constArgs[p.Name.Name] = (p.Type, a.Expr.Value);
-                }
-                else
-                {
-                    newArgs.Add(a);
-                }
-            }
-
-            expr.Arguments = newArgs;
-
-            var instance = InstantiateConstParamFunction(constArgs, func, newInstances);
-
-            switch (instance.Type)
-            {
-                case FunctionType f:
-                        InferRegularFunctionCall(f, expr, expected, unresolvedDependencies, allDependencies, newInstances);
-                        break;
-
-                case GenericFunctionType g:
-                        InferGenericFunctionCall(g, expr, expected, unresolvedDependencies, allDependencies, newInstances);
-                        break;
-
-                case ErrorType _: return;
-                default: throw new NotImplementedException();
-            }
-        }
-
-        private bool CheckAndMatchArgsToParams(AstCallExpr expr, (string name, CheezType type)[] parameters, bool varArgs)
-        {
-            if (expr.Arguments.Count > parameters.Length && !varArgs)
+            if (expr.Arguments.Count > parameters.Count && !varArgs)
             {
                 (string, ILocation)? detail = null;
                 if (expr.Function is AstIdExpr id)
@@ -302,7 +302,7 @@ namespace Cheez
                         loc = new Location(fd.Name.Beginning, fd.ParameterLocation.End);
                     detail = ("Function defined here:", loc);
                 }
-                ReportError(expr, $"Too many arguments. Expected {parameters.Length}, got {expr.Arguments.Count}", detail);
+                ReportError(expr, $"Too many arguments. Expected {parameters.Count}, got {expr.Arguments.Count}", detail);
                 return false;
             }
 
@@ -327,7 +327,7 @@ namespace Cheez
                 }
                 else
                 {
-                    var index = parameters.IndexOf(p => p.name == arg.Name.Name);
+                    var index = parameters.FindIndex(p => p.Name?.Name == arg.Name.Name);
                     if (map.TryGetValue(index, out var other))
                     {
 
@@ -348,7 +348,7 @@ namespace Cheez
             // TODO: create missing arguments
 
             //
-            if (map.Count < parameters.Length)
+            if (map.Count < parameters.Count)
             {
                 // TODO: report missing arguments
                 ReportError(expr, $"Not enough arguments");
@@ -360,33 +360,70 @@ namespace Cheez
 
         private void InferGenericFunctionCall(GenericFunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
-            if (!CheckAndMatchArgsToParams(expr, func.Parameters, false))
+            var decl = func.Declaration;
+
+            if (!CheckAndMatchArgsToParams(expr, decl.Parameters, false))
                 return;
 
             expr.Arguments.Sort((a, b) => a.Index - b.Index);
 
             // match arguments and parameter types
-            var pairs = expr.Arguments.Select(arg => (arg.Index < func.Parameters.Length ? func.Parameters[arg.Index].type : null, arg));
-            (CheezType type, AstArgument arg)[] args = pairs.ToArray();
-            var polyTypeMap = new Dictionary<string, CheezType>();
-            foreach (var (type, arg) in args)
+            var pairs = expr.Arguments.Select(arg => (arg.Index < decl.Parameters.Count ? decl.Parameters[arg.Index] : null, arg));
+            (AstParameter param, AstArgument arg)[] args = pairs.ToArray();
+
+            // infer types of arguments
+            foreach (var (param, arg) in args)
             {
                 arg.Scope = expr.Scope;
                 arg.Expr.Scope = arg.Scope;
 
-                var expectedType = type;
-                if (expectedType.IsPolyType) expectedType = null;
-
-                InferTypes(arg.Expr, expectedType, unresolvedDependencies, allDependencies, newInstances);
+                InferTypes(arg.Expr, null, unresolvedDependencies, allDependencies, newInstances);
                 ConvertLiteralTypeToDefaultType(arg.Expr);
                 arg.Type = arg.Expr.Type;
-
-                if (type.IsPolyType) ExtractPolyTypes(arg.Expr, type, polyTypeMap);
             }
 
+            // collect polymorphic types and const arguments
+            var polyTypes = new Dictionary<string, CheezType>();
+            var constArgs = new Dictionary<string, (CheezType type, object value)>();
+            var newArgs = new List<AstArgument>();
+            foreach (var (param, arg) in args)
+            {
+                CollectPolyTypes(arg, param.TypeExpr, arg.Type, polyTypes);
 
+                if (param.Name?.IsPolymorphic ?? false)
+                {
+                    if (arg.Expr.Value == null)
+                    {
+                        ReportError(arg, $"The expression must be a compile time constant");
+                    }
+                    else
+                    {
+                        constArgs[param.Name.Name] = (arg.Expr.Type, arg.Expr.Value);
+                    }
+                }
+                else
+                {
+                    newArgs.Add(arg);
+                }
+            }
+
+            expr.Arguments = newArgs;
+            
             // find or create instance
-            var instance = InstantiatePolyFunction(polyTypeMap, func, newInstances);
+            var instance = InstantiatePolyFunction(func, polyTypes, constArgs, newInstances);
+
+            // check parameter types
+            Debug.Assert(expr.Arguments.Count == instance.Parameters.Count);
+
+            for (int i = 0; i < expr.Arguments.Count; i++)
+            {
+                var a = expr.Arguments[i];
+                var p = instance.Parameters[i];
+                if (a.Type != p.Type)
+                {
+                    ReportError(a, $"Type of argument ({a.Type}) does not match type of parameter ({p.Type})");
+                }
+            }
 
             expr.Declaration = instance;
             expr.SetFlag(ExprFlags.IsLValue, instance.FunctionType.ReturnType is PointerType);
@@ -394,7 +431,7 @@ namespace Cheez
 
         private void InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
-            if (!CheckAndMatchArgsToParams(expr, func.Parameters, func.VarArgs))
+            if (!CheckAndMatchArgsToParams(expr, func.Declaration.Parameters, func.VarArgs))
                 return;
 
             expr.Arguments.Sort((a, b) => a.Index - b.Index);
@@ -411,6 +448,10 @@ namespace Cheez
                 arg.Type = arg.Expr.Type;
 
                 // TODO: check types
+                if (arg.Type != type)
+                {
+                    ReportError(arg, $"Type of argument ({arg.Type}) does not match type of parameter ({type})");
+                }
             }
 
             // :hack

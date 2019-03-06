@@ -1,11 +1,7 @@
 ﻿using Cheez.Ast;
-using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
-using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
-using Cheez.Types.Primitive;
-using System.Collections.Generic;
 
 namespace Cheez
 {
@@ -60,7 +56,7 @@ namespace Cheez
                 if (res.other != null) detail = ("Other declaration here:", res.other);
                 ReportError(func.Name, $"A symbol with name '{func.Name.Name}' already exists in current scope", detail);
             }
-            else if (!func.IsGeneric && !func.HasConstantParameters)
+            else if (!func.IsGeneric)
             {
                 func.Scope.FunctionDeclarations.Add(func);
             }
@@ -75,78 +71,15 @@ namespace Cheez
 
             foreach (var p in func.Parameters)
             {
-                if (p.TypeExpr.IsPolymorphic && (p.Name?.IsPolymorphic ?? false))
-                {
-                    ReportError(p, "A parameter can't be both constant and polymorphic");
-                }
-                if (p.TypeExpr.IsPolymorphic)
+                if (p.TypeExpr.IsPolymorphic || (p.Name?.IsPolymorphic ?? false))
                 {
                     func.IsGeneric = true;
-                }
-                if (p.Name?.IsPolymorphic ?? false)
-                {
-                    func.HasConstantParameters = true;
+                    break;
                 }
             }
 
-            if (func.HasConstantParameters)
+            if (func.IsGeneric)
             {
-                foreach (var p in func.Parameters)
-                {
-                    p.TypeExpr.Scope = func.SubScope;
-                    if (p.Name.IsPolymorphic)
-                    {
-                        p.Type = ResolveType(p.TypeExpr);
-                        switch (p.Type)
-                        {
-                            case IntType _:
-                            case FloatType _:
-                            case CheezTypeType _:
-                            case BoolType _:
-                            case CharType _:
-                                break;
-
-                            case ErrorType _:
-                                break;
-
-                            default:
-                                ReportError(p.TypeExpr, $"The type '{p.Type}' is not allowed here.");
-                                break;
-                        }
-                    }
-                }
-
-                func.Type = new ConstParamFunctionType(func);
-            }
-            else if (func.IsGeneric)
-            {
-                var polyTypes = new HashSet<string>();
-
-                foreach (var p in func.Parameters)
-                {
-                    CollectPolyTypes(p.TypeExpr, polyTypes);
-                }
-
-                foreach (var pt in polyTypes)
-                {
-                    func.SubScope.DefineTypeSymbol(pt, new PolyType(pt, false));
-                }
-
-                // return types
-                if (func.ReturnValue != null)
-                {
-                    func.ReturnValue.Scope = func.SubScope;
-                    func.ReturnValue.TypeExpr.Scope = func.SubScope;
-                    func.ReturnValue.Type = ResolveType(func.ReturnValue.TypeExpr);
-                }
-
-                // parameter types
-                foreach (var p in func.Parameters)
-                {
-                    p.TypeExpr.Scope = func.SubScope;
-                    p.Type = ResolveType(p.TypeExpr);
-                }
-
                 func.Type = new GenericFunctionType(func);
             }
             else

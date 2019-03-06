@@ -6,6 +6,7 @@ using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -157,35 +158,51 @@ namespace Cheez
             return CheezType.Error;
         }
 
-        private void CollectPolyTypes(AstTypeExpr typeExpr, HashSet<string> types)
+        private void CollectPolyTypes(AstExpression expr, AstTypeExpr typeExpr, CheezType type, Dictionary<string, CheezType> result)
         {
             switch (typeExpr)
             {
                 case AstIdTypeExpr i:
                     if (i.IsPolymorphic)
-                        types.Add(i.Name);
+                        result[i.Name] = type;
                     break;
 
                 case AstPointerTypeExpr p:
-                    CollectPolyTypes(p.Target, types);
-                    break;
+                    {
+                        if (type is PointerType t)
+                            CollectPolyTypes(expr, p.Target, t.TargetType, result);
+                        else
+                            ReportError(expr, $"The type of the expression does not match the type pattern '{typeExpr}'");
+                        break;
+                    }
 
                 case AstSliceTypeExpr p:
-                    CollectPolyTypes(p.Target, types);
-                    break;
+                    {
+                        if (type is SliceType t)
+                            CollectPolyTypes(expr, p.Target, t.TargetType, result);
+                        else
+                            ReportError(expr, $"The type of the expression does not match the type pattern '{typeExpr}'");
+                        break;
+                    }
 
                 case AstArrayTypeExpr p:
-                    CollectPolyTypes(p.Target, types);
-                    break;
+                    {
+                        if (type is ArrayType t)
+                            CollectPolyTypes(expr, p.Target, t.TargetType, result);
+                        else
+                            ReportError(expr, $"The type of the expression does not match the type pattern '{typeExpr}'");
+                        break;
+                    }
 
-                case AstFunctionTypeExpr func:
-                    if (func.ReturnType != null) CollectPolyTypes(func.ReturnType, types);
-                    foreach (var p in func.ParameterTypes) CollectPolyTypes(p, types);
-                    break;
+                default: throw new NotImplementedException();
+                //case AstFunctionTypeExpr func:
+                //    if (func.ReturnType != null) CollectPolyTypes(func.ReturnType, types);
+                //    foreach (var p in func.ParameterTypes) CollectPolyTypes(p, types);
+                //    break;
 
-                case AstPolyStructTypeExpr @struct:
-                    foreach (var p in @struct.Arguments) CollectPolyTypes(p, types);
-                    break;
+                //case AstPolyStructTypeExpr @struct:
+                //    foreach (var p in @struct.Arguments) CollectPolyTypes(p, types);
+                //    break;
             }
         }
 
@@ -366,67 +383,106 @@ namespace Cheez
         //    return instance;
         //}
 
-        // functions
-        private AstFunctionDecl InstantiateConstParamFunction(Dictionary<string, (CheezType type, object values)> constArgs, ConstParamFunctionType func, List<AstFunctionDecl> instances = null)
+        private AstFunctionDecl InstantiatePolyFunction(
+            GenericFunctionType func,
+            Dictionary<string, CheezType> polyTypes,
+            Dictionary<string, (CheezType type, object value)> constArgs,
+            List<AstFunctionDecl> instances = null)
         {
-            // check if instance already exists
-            // TODO:
-
             AstFunctionDecl instance = null;
-            if (instance == null)
+
+            // check if instance already exists
+            foreach (var pi in func.Declaration.PolymorphicInstances)
             {
-                instance = func.Declaration.Clone() as AstFunctionDecl;
-                //instance.ConstScope = new Scope("$", instance.Scope);
-                //instance.SubScope = new Scope($"func {func.Declaration.Name.Name}<cp>", instance.ConstScope);
-                instance.HasConstantParameters = false;
-                func.Declaration.PolymorphicInstances.Add(instance);
+                bool eq = true;
 
-                // TODO: add to declaration const instances and scope
-
-                // remove constant params
-                instance.Parameters = instance.Parameters.Where(p => !constArgs.ContainsKey(p.Name.Name)).ToList();
-
-                // define constants
-                foreach (var pt in constArgs)
+                if (pi.ConstParameters.Count == constArgs.Count && pi.PolymorphicTypes.Count == polyTypes.Count)
                 {
-                    instance.ConstScope.DefineConstant(pt.Key, pt.Value.type, pt.Value.values);
+                    foreach (var ca in constArgs)
+                    {
+                        if (!(pi.ConstParameters.TryGetValue(ca.Key, out var a) && a.type == ca.Value.type && a.value.Equals(ca.Value.value)))
+                        {
+                            eq = false;
+                            break;
+                        }
+
+                    }
+                    foreach (var pt in polyTypes)
+                    {
+                        if (!(pi.PolymorphicTypes.TryGetValue(pt.Key, out var t) && t == pt.Value))
+                        {
+                            eq = false;
+                            break;
+                        }
+                    }
                 }
-
-                ResolveFunctionSignature(instance);
-
-                if (!instance.IsGeneric)
+                else
                 {
-                    if (instances != null)
-                        instances.Add(instance);
-                    instance.Scope.FunctionDeclarations.Add(instance);
+                    eq = false;
+                }
+                
+                if (eq)
+                {
+                    instance = pi;
+                    break;
                 }
             }
-
-            return instance;
-        }
-
-        private AstFunctionDecl InstantiatePolyFunction(Dictionary<string, CheezType> polyTypes, GenericFunctionType func, List<AstFunctionDecl> instances = null)
-        {
-            AstFunctionDecl instance = null;
-
-            // check if instance already exists
-            // TODO:
 
             // instatiate type
             if (instance == null)
             {
                 instance = func.Declaration.Clone() as AstFunctionDecl;
-                //instance.SubScope = new Scope($"func {func.Declaration.Name.Name}<poly>", instance.Scope);
                 instance.IsPolyInstance = true;
                 instance.IsGeneric = false;
                 instance.PolymorphicTypes = polyTypes;
+                instance.ConstParameters = constArgs;
                 func.Declaration.PolymorphicInstances.Add(instance);
 
                 instance.Scope.FunctionDeclarations.Add(instance);
 
+                foreach (var pt in constArgs)
+                {
+                    instance.ConstScope.DefineConstant(pt.Key, pt.Value.type, pt.Value.value);
+                }
+
                 foreach (var pt in polyTypes)
                 {
-                    instance.SubScope.DefineTypeSymbol(pt.Key, pt.Value);
+                    instance.ConstScope.DefineTypeSymbol(pt.Key, pt.Value);
+                }
+
+                foreach (var p in instance.Parameters)
+                {
+                    p.Scope = instance.SubScope;
+                    p.TypeExpr.Scope = p.Scope;
+                    p.Type = ResolveType(p.TypeExpr, true);
+
+                    if (p.Name?.IsPolymorphic ?? false)
+                    {
+                        var (type, value) = constArgs[p.Name.Name];
+                        if (type != p.Type)
+                        {
+                            ReportError(p, $"Type of const argument ({type}) does not match type of parameter ({p.Type})");
+                        }
+                        else
+                        {
+                            switch (p.Type)
+                            {
+                                case IntType _:
+                                case FloatType _:
+                                case CheezTypeType _:
+                                case BoolType _:
+                                case CharType _:
+                                    break;
+
+                                case ErrorType _:
+                                    break;
+
+                                default:
+                                    ReportError(p.TypeExpr, $"The type '{p.Type}' is not allowed here.");
+                                    break;
+                            }
+                        }
+                    }
                 }
 
                 // return types
@@ -437,12 +493,8 @@ namespace Cheez
                     instance.ReturnValue.Type = ResolveType(instance.ReturnValue.TypeExpr, true);
                 }
 
-                // parameter types
-                foreach (var p in instance.Parameters)
-                {
-                    p.TypeExpr.Scope = instance.SubScope;
-                    p.Type = ResolveType(p.TypeExpr, true);
-                }
+                //remove constant params
+                instance.Parameters = instance.Parameters.Where(p => !(p.Name?.IsPolymorphic ?? false)).ToList();
 
                 instance.Type = new FunctionType(instance);
 

@@ -30,11 +30,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private void GenerateFunctionHeader(AstFunctionDecl function)
         {
             var name = function.Name.Name;
-            if (function.IsPolyInstance)
-            {
-                name += ".";
-                name += string.Join(".", function.PolymorphicTypes.Select(p => $"{p.Key}.{p.Value}"));
-            }
+            if (function.PolymorphicTypes != null && function.PolymorphicTypes.Count > 0)
+                name += "." + string.Join(".", function.PolymorphicTypes.Select(p => $"{p.Key}.{p.Value}"));
+            if (function.ConstParameters != null && function.ConstParameters.Count > 0)
+                name += "." + string.Join(".", function.ConstParameters.Select(p => $"{p.Key}.{p.Value.type}.{p.Value.value}"));
 
             var linkname = function.GetDirective("linkname");
             if (linkname != null)
