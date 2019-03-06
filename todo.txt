@@ -1,0 +1,23 @@
+The following prints test(...) four times instead of two times
+because of assignment of a non-tuple to a tuple pattern
+    (a, b) = test()
+turns into
+    a = test()[0]
+    b = test()[1]
+but shoud turn into
+    _temp = test()
+    a = _temp[0]
+    b = _temp[1]
+this is the code:
+fn test(a: int, b: int) -> (int, int) {
+    c_printf("test(%d, %d)`n", a, b)
+    return (a, b)
+}
+
+fn Main() {
+    let (a, b) = test(1, 2)
+    (a, b) = test(3, 4)
+}
+
+==================================
+
