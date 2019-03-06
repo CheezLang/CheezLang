@@ -691,7 +691,7 @@ namespace Cheez.Parsing
 
                 var memberEnd = init?.End ?? mType.End;
 
-                members.Add(new AstMemberDecl(mName, mType, init, new Location(mName.Beginning, end)));
+                members.Add(new AstMemberDecl(mName, mType, init, new Location(mName.Beginning, memberEnd)));
             }
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct declaration")).location;

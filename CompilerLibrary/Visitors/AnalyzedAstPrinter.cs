@@ -121,33 +121,43 @@ namespace Cheez.Visitors
 
         public override string VisitStructDecl(AstStructDecl str, int data = 0)
         {
-            var body = string.Join("\n", str.Members.Select(m => $"{m.Name.Accept(this)}: {m.Type}"));
-            var head = $"struct {str.Name.Accept(this)}";
-
-            if (str.Parameters?.Count > 0)
+            if (str.IsPolymorphic)
             {
+                var body = string.Join("\n", str.Members.Select(m => $"{m.Name.Accept(this)}: {m.TypeExpr}"));
+                var head = $"struct {str.Name.Accept(this)}";
+
                 head += "(";
                 head += string.Join(", ", str.Parameters.Select(p => $"{p.Name.Accept(this)}: {p.Type}"));
                 head += ")";
-            }
 
-            var sb = new StringBuilder();
-            sb.Append($"{head} {{\n{body.Indent(4)}\n}}");
+                var sb = new StringBuilder();
+                sb.Append($"{head} {{\n{body.Indent(4)}\n}}");
 
-            // polies
-            if (str.PolymorphicInstances?.Count > 0)
-            {
-                sb.AppendLine();
-                sb.AppendLine($"// Polymorphic instances for {head}");
-                foreach (var pi in str.PolymorphicInstances)
+                // polies
+                if (str.PolymorphicInstances?.Count > 0)
                 {
-                    var args = string.Join(", ", pi.Parameters.Select(p => $"{p.Name.Accept(this)} = {p.Value}"));
-                    sb.AppendLine($"// {args}".Indent(4));
-                    sb.AppendLine(pi.Accept(this).Indent(4));
+                    sb.AppendLine();
+                    sb.AppendLine($"// Polymorphic instances for {head}");
+                    foreach (var pi in str.PolymorphicInstances)
+                    {
+                        var args = string.Join(", ", pi.Parameters.Select(p => $"{p.Name.Accept(this)} = {p.Value}"));
+                        sb.AppendLine($"// {args}".Indent(4));
+                        sb.AppendLine(pi.Accept(this).Indent(4));
+                    }
                 }
-            }
 
-            return sb.ToString();
+                return sb.ToString();
+            }
+            else
+            {
+                var body = string.Join("\n", str.Members.Select(m => $"{m.Name.Accept(this)}: {m.Type}"));
+                var head = $"struct {str.Name.Accept(this)}";
+
+                var sb = new StringBuilder();
+                sb.Append($"{head} {{\n{body.Indent(4)}\n}}");
+
+                return sb.ToString();
+            }
         }
 
         public override string VisitTraitDecl(AstTraitDeclaration trait, int data = 0)
