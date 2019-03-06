@@ -219,12 +219,6 @@ namespace Cheez
                         break;
                     }
 
-                //case ConstParamFunctionType c:
-                //    {
-                //        InferConstParamFunctionCall(c, expr, expected, unresolvedDependencies, allDependencies, newInstances);
-                //        break;
-                //    }
-
                 case ErrorType _: return;
                 default: throw new NotImplementedException();
             }
@@ -426,6 +420,7 @@ namespace Cheez
             }
 
             expr.Declaration = instance;
+            expr.Type = instance.FunctionType.ReturnType;
             expr.SetFlag(ExprFlags.IsLValue, instance.FunctionType.ReturnType is PointerType);
         }
 
@@ -447,8 +442,7 @@ namespace Cheez
                 ConvertLiteralTypeToDefaultType(arg.Expr);
                 arg.Type = arg.Expr.Type;
 
-                // TODO: check types
-                if (arg.Type != type)
+                if ((!func.VarArgs || arg.Index < func.Parameters.Length) && arg.Type != type)
                 {
                     ReportError(arg, $"Type of argument ({arg.Type}) does not match type of parameter ({type})");
                 }
