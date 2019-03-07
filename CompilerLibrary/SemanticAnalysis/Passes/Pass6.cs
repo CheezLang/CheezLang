@@ -110,12 +110,13 @@ namespace Cheez
                 if (allDeps.Count > 0)
                     v.Dependencies = new List<AstSingleVariableDecl>(allDeps);
 
-                if (v.TypeExpr != null)
+                ConvertLiteralTypeToDefaultType(v.Initializer);
+
+                if (v.TypeExpr != null && v.Initializer.Type != v.Type)
                 {
-                    // TODO: check if can assign
+                    ReportError(v, $"Can't initialize a variable of type {v.Type} with a value of type {v.Initializer.Type}");
                 }
 
-                ConvertLiteralTypeToDefaultType(v.Initializer);
                 var newType = v.Initializer.Type;
 
                 v.Type = newType;
