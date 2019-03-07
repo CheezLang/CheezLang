@@ -106,6 +106,13 @@ namespace Cheez
                     InferTypeIndexExpr(d, expected, unresolvedDependencies, allDependencies, newInstances);
                     break;
 
+                case AstTempVarExpr d:
+                    if (d.Expr.Type == null)
+                        InferType(d.Expr, expected, unresolvedDependencies, allDependencies, polyTypeMap);
+                    d.Type = d.Expr.Type;
+                    // TODO: do something?
+                    break;
+
                 default:
                     throw new NotImplementedException();
             }

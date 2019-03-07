@@ -145,6 +145,9 @@ namespace Cheez
             }
             else if (pattern is AstTupleExpr tuple)
             {
+                var tmp = new AstTempVarExpr(initializer);
+                tmp.SetFlag(ExprFlags.IsLValue, true);
+
                 AstTupleTypeExpr tupleType = type as AstTupleTypeExpr;
 
                 for (int i = 0; i < tuple.Values.Count; i++)
@@ -159,8 +162,8 @@ namespace Cheez
                     }
                     else if (initializer != null)
                     {
-                        tin = new AstArrayAccessExpr(initializer, new AstNumberExpr(new Extras.NumberData(i)));
-                        tin.Scope = initializer.Scope;
+                        tin = new AstArrayAccessExpr(tmp, new AstNumberExpr(new Extras.NumberData(i)));
+                        tin.Scope = tmp.Scope;
                     }
 
                     MatchPatternWithTypeExpr(parent, tid, tty?.TypeExpr, tin);

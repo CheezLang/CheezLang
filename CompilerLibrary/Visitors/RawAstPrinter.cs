@@ -216,6 +216,11 @@ namespace Cheez.Visitors
 
         #region Expressions
 
+        public override string VisitTempVarExpr(AstTempVarExpr te, int data = 0)
+        {
+            return $"@tempvar({te.Id})";
+        }
+
         public override string VisitTupleExpr(AstTupleExpr expr, int data = 0)
         {
             var members = string.Join(", ", expr.Values.Select(v => v.Accept(this)));

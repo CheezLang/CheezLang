@@ -17,7 +17,7 @@ namespace Cheez.Ast.Expressions
 
     public abstract class AstExpression : IVisitorAcceptor, ILocation
     {
-        private int mFlags = 0;
+        protected int mFlags = 0;
 
         public ILocation Location { get; private set; }
         public TokenLocation Beginning => Location?.Beginning;
@@ -67,6 +67,14 @@ namespace Cheez.Ast.Expressions
             to.mFlags = this.mFlags;
             to.Value = this.Value;
             return to;
+        }
+
+        protected void CopyValuesFrom(AstExpression from)
+        {
+            this.Location = from.Location;
+            this.Scope = from.Scope;
+            this.mFlags = from.mFlags;
+            this.Value = from.Value;
         }
 
         public override string ToString()

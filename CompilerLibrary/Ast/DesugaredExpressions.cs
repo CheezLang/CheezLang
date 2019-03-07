@@ -1,10 +1,31 @@
 ﻿using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Visitors;
+using System;
 using System.Diagnostics;
 
 namespace Cheez.Ast.Expressions
 {
+    public class AstTempVarExpr : AstExpression
+    {
+        private static int _id_gen = 0;
+
+        public override bool IsPolymorphic => false;
+
+        public AstExpression Expr { get; set; }
+        public readonly int Id = ++_id_gen;
+
+        public AstTempVarExpr(AstExpression expr) : base(null)
+        {
+            this.Expr = expr;
+            CopyValuesFrom(expr);
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTempVarExpr(this, data);
+
+        public override AstExpression Clone() => CopyValuesTo(new AstTempVarExpr(Expr));
+    }
+
     public class AstTypeRef : AstExpression
     {
         public override bool IsPolymorphic => false;

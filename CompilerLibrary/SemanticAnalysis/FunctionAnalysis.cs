@@ -93,6 +93,9 @@ namespace Cheez
             //ass.Value.Scope = ass.Scope;
             //InferType(ass.Value, null);
 
+            ass.Pattern.Scope = ass.Scope;
+            InferType(ass.Pattern, null);
+
             MatchPatternWithExpression(ass, ass.Pattern, ass.Value);
         }
 
@@ -102,8 +105,6 @@ namespace Cheez
             {
                 case AstIdExpr id:
                     {
-                        id.Scope = ass.Scope;
-                        InferType(id, null);
                         // TODO: check if can be assigned to id (e.g. not const)
 
                         value.Scope = ass.Scope;
@@ -139,10 +140,11 @@ namespace Cheez
                         }
                         else
                         {
-                            t.Scope = ass.Scope;
-                            InferType(t, null);
                             value.Scope = ass.Scope;
                             InferType(value, t.Type);
+
+                            var tmp = new AstTempVarExpr(value);
+                            tmp.SetFlag(ExprFlags.IsLValue, true);
 
                             if (value.Type != t.Type)
                             {
@@ -150,15 +152,13 @@ namespace Cheez
                                 return;
                             }
 
-                            
-
                             // create new assignments for all sub values
                             for (int i = 0; i < t.Values.Count; i++)
                             {
-                                var subVal = new AstArrayAccessExpr(value, new AstNumberExpr(new Extras.NumberData(i)));
-                                subVal.Scope = ass.Scope;
-                                InferType(subVal, null);
+                                var subVal = new AstArrayAccessExpr(tmp, new AstNumberExpr(new Extras.NumberData(i)));
                                 var subAss = new AstAssignment(t.Values[i], subVal);
+                                subAss.Scope = ass.Scope;
+                                MatchPatternWithExpression(subAss, t.Values[i], subVal);
                                 ass.AddSubAssignment(subAss);
                             }
                         }

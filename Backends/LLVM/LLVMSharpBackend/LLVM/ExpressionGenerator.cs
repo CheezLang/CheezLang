@@ -13,9 +13,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
     public partial class LLVMCodeGenerator
     {
 
-        private LLVMValueRef? GenerateExpression(LLVMValueRef ptr, AstExpression stmt, LLVMValueRef? target, bool deref)
+        private LLVMValueRef? GenerateExpression(LLVMValueRef ptr, AstExpression expr, LLVMValueRef? target, bool deref)
         {
-            var v = GenerateExpression(stmt, target, true);
+            var v = GenerateExpression(expr, target, true);
             if (v != null)
                 builder.CreateStore(v.Value, ptr);
 
@@ -38,8 +38,34 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstStructValueExpr t: return GenerateStructValueExpr(t, target, deref);
                 case AstCallExpr c: return GenerateCallExpr(c, target, deref);
                 case AstUnaryExpr u: return GenerateUnaryExpr(u, target, deref);
+                case AstTempVarExpr t: return GenerateTempVarExpr(t, target, deref);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef? GenerateTempVarExpr(AstTempVarExpr t, LLVMValueRef? target, bool deref)
+        {
+            if (!valueMap.ContainsKey(t))
+            {
+                var x = CreateLocalVariable(t.Type);
+                valueMap[t] = x;
+                GenerateExpression(x, t.Expr, x, true);
+            }
+
+            var tmp = valueMap[t];
+
+            if (deref)
+            {
+                tmp = builder.CreateLoad(tmp, "");
+            }
+
+            if (target != null)
+            {
+                builder.CreateStore(tmp, target.Value);
+                return null;
+            }
+
+            return tmp;
         }
 
         private LLVMValueRef? GenerateUnaryExpr(AstUnaryExpr expr, LLVMValueRef? target, bool deref)
