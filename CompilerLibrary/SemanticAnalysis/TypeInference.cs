@@ -32,22 +32,19 @@ namespace Cheez
             else if (expr.Type == CheezType.StringLiteral) expr.Type = CheezType.CString; // TODO: change default back to CheezType.String
         }
 
-        private bool InferType(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null, Dictionary<string, CheezType> polyTypeMap = null)
+        private void InferType(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null, Dictionary<string, CheezType> polyTypeMap = null)
         {
             List<AstFunctionDecl> newInstances = new List<AstFunctionDecl>();
-            bool changes = InferTypes(expr, expected, unresolvedDependencies, allDependencies, newInstances, polyTypeMap);
+            InferTypes(expr, expected, unresolvedDependencies, allDependencies, newInstances, polyTypeMap);
 
             if (newInstances.Count > 0)
-            {
                 AnalyzeFunctions(newInstances);
-            }
-
-            return changes;
         }
 
-        private bool InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances, Dictionary<string, CheezType> polyTypeMap = null)
+        private void InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances, Dictionary<string, CheezType> polyTypeMap = null)
         {
-            var previousType = expr.Type;
+            if (expr.Type != null && !(expr.Type is AbstractType)) return;
+
             expr.Type = CheezType.Error;
 
             if (expected is PolyType pt && polyTypeMap.TryGetValue(pt.Name, out var concreteType))
@@ -121,8 +118,6 @@ namespace Cheez
             {
                 polyTypeMap[p.Name] = expr.Type;
             }
-
-            return previousType != expr.Type;
         }
 
         private void InferTypeIndexExpr(AstArrayAccessExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
