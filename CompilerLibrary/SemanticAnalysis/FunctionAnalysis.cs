@@ -252,16 +252,11 @@ namespace Cheez
                 var missing = new List<ILocation>();
                 if (func.ReturnValue.Name == null)
                 {
-                    // TODO: check for named tuple
                     if (func.ReturnValue.TypeExpr is AstTupleTypeExpr t)
                     {
                         foreach (var m in t.Members)
-                        {
                             if (!ret.Scope.IsInitialized(m.Symbol))
-                            {
                                 missing.Add(m);
-                            }
-                        }
                     }
                     else
                     {
@@ -272,7 +267,16 @@ namespace Cheez
                 {
                     if (!ret.Scope.IsInitialized(func.ReturnValue))
                     {
-                        missing.Add(func.ReturnValue);
+                        if (func.ReturnValue.TypeExpr is AstTupleTypeExpr t)
+                        {
+                            foreach (var m in t.Members)
+                                if (!ret.Scope.IsInitialized(m.Symbol))
+                                    missing.Add(m);
+                        }
+                        else
+                        {
+                            missing.Add(func.ReturnValue);
+                        }
                     }
                 }
 
