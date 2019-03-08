@@ -226,10 +226,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     if (type == CheezType.String)
                     {
                         var s = v as string;
-                        return LLVM.ConstStruct(new LLVMValueRef[] {
+                        return LLVM.ConstNamedStruct(CheezTypeToLLVMType(type), new LLVMValueRef[] {
                             LLVM.ConstInt(LLVM.Int32Type(), (ulong)s.Length, true),
-                            LLVM.ConstPointerCast(LLVM.ConstString(s, (uint)s.Length, true), LLVM.PointerType(LLVM.Int8Type(), 0))
-                        }, false);
+                            LLVM.ConstPointerCast(builder.CreateGlobalStringPtr(s, ""), LLVM.PointerType(LLVM.Int8Type(), 0))
+                        });
+                    }
+                    if (type == CheezType.CString)
+                    {
+                        var s = v as string;
+                        return builder.CreateGlobalStringPtr(s, "");
                     }
                     throw new NotImplementedException();
             }

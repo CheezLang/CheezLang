@@ -29,7 +29,7 @@ namespace Cheez
                 if (expected != null && !(expected is FloatType)) throw new Exception("Can't convert float to non-float type");
                 expr.Type = expected ?? FloatType.DefaultType;
             }
-            else if (expr.Type == CheezType.StringLiteral) expr.Type = CheezType.CString; // TODO: change default back to CheezType.String
+            else if (expr.Type == CheezType.StringLiteral) expr.Type = CheezType.String;
         }
 
         private void InferType(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null, Dictionary<string, CheezType> polyTypeMap = null)
@@ -43,7 +43,10 @@ namespace Cheez
 
         private void InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances, Dictionary<string, CheezType> polyTypeMap = null)
         {
-            if (expr.Type != null && !(expr.Type is AbstractType)) return;
+            // :fix
+            // does not work because tuple containing abstract types does currently not count as an abstract type
+            // - 08.03.2019
+            //if (expr.Type != null && !(expr.Type is AbstractType)) return;
 
             expr.Type = CheezType.Error;
 
