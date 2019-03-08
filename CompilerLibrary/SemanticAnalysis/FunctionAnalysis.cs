@@ -83,26 +83,17 @@ namespace Cheez
             }
             if (func.ReturnValue?.TypeExpr is AstTupleTypeExpr t)
             {
-                bool allNamesProvided = true;
+                int index = 0;
                 foreach (var m in t.Members)
                 {
-                    if (m.Name == null)
-                        allNamesProvided = false;
-                }
-
-                if (allNamesProvided)
-                {
-                    int index = 0;
-                    foreach (var m in t.Members)
-                    {
-                        var access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnValue), new AstNumberExpr(new Extras.NumberData(index)));
-                        InferType(access, null);
-                        var (ok, other) = func.SubScope.DefineUse(m.Name, access, out var use);
-                        if (!ok)
-                            ReportError(m, $"A symbol with name '{m.Name.Name}' already exists in current scope", ("Other symbol here:", other));
-                        m.Symbol = use;
-                        ++index;
-                    }
+                    if (m.Name == null) continue;
+                    var access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnValue), new AstNumberExpr(new Extras.NumberData(index)));
+                    InferType(access, null);
+                    var (ok, other) = func.SubScope.DefineUse(m.Name, access, out var use);
+                    if (!ok)
+                        ReportError(m, $"A symbol with name '{m.Name.Name}' already exists in current scope", ("Other symbol here:", other));
+                    m.Symbol = use;
+                    ++index;
                 }
             }
 
@@ -267,7 +258,7 @@ namespace Cheez
                 {
                     if (!ret.Scope.IsInitialized(func.ReturnValue))
                     {
-                        if (func.ReturnValue.TypeExpr is AstTupleTypeExpr t)
+                        if (func.ReturnValue.TypeExpr is AstTupleTypeExpr t && t.IsFullyNamed)
                         {
                             foreach (var m in t.Members)
                                 if (!ret.Scope.IsInitialized(m.Symbol))

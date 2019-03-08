@@ -152,11 +152,13 @@ namespace Cheez.Ast.Expressions.Types
     {
         public override bool IsPolymorphic => Members.Any(m => m.TypeExpr.IsPolymorphic);
         public List<AstParameter> Members { get; set; }
+        public bool IsFullyNamed { get; }
 
         public AstTupleTypeExpr(List<AstParameter> members, ILocation Location = null)
             : base(Location)
         {
             this.Members = members;
+            IsFullyNamed = members.All(m => m.Name != null);
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTupleTypeExpr(this, data);
