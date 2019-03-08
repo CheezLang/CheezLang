@@ -288,7 +288,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
             else if (expr.Type == CheezType.String)
             {
-                throw new NotImplementedException();
+                var str = builder.CreateGlobalString(ch, "");
+                return LLVM.ConstNamedStruct(CheezTypeToLLVMType(expr.Type), new LLVMValueRef[]
+                {
+                    LLVM.ConstInt(LLVM.Int32Type(), (ulong)ch.Length, true),
+                    LLVM.ConstPointerCast(str, LLVM.PointerType(LLVM.Int8Type(), 0))
+                });
             }
             else
             {
