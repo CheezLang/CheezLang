@@ -76,7 +76,7 @@ namespace Cheez.Ast.Statements
 
         public FunctionType FunctionType => Type as FunctionType;
 
-        public AstBlockStmt Body { get; private set; }
+        public AstBlockExpr Body { get; private set; }
 
         public List<AstFunctionDecl> PolymorphicInstances { get; } = new List<AstFunctionDecl>();
 
@@ -97,7 +97,7 @@ namespace Cheez.Ast.Statements
             List<AstIdExpr> generics,
             List<AstParameter> parameters,
             AstParameter returns,
-            AstBlockStmt body = null,
+            AstBlockExpr body = null,
             List<AstDirective> Directives = null,
             bool refSelf = false,
             ILocation Location = null,
@@ -120,7 +120,7 @@ namespace Cheez.Ast.Statements
                 null,
                 Parameters.Select(p => p.Clone()).ToList(),
                 ReturnValue?.Clone(),
-                Body?.Clone() as AstBlockStmt, ParameterLocation: ParameterLocation));
+                Body?.Clone() as AstBlockExpr, ParameterLocation: ParameterLocation));
             copy.ConstScope = ConstScope.Clone();
             copy.SubScope = new Scope("fn", copy.ConstScope);
             return copy;

@@ -97,29 +97,36 @@ namespace Cheez
                 }
             }
 
+            if (func.FunctionType.IsErrorType)
+                return;
+
+            var prevCurrentFunction = currentFunction;
+            currentFunction = func;
             if (func.Body != null)
             {
                 func.Body.Scope = func.SubScope;
-                AnalyzeStatement(func, func.Body);
+                //AnalyzeStatement(func, func.Body);
+                InferType(func.Body, func.FunctionType.ReturnType);
 
-                if (func.ReturnValue != null && !func.Body.GetFlag(StmtFlags.Returns))
+                if (func.ReturnValue != null && !func.Body.GetFlag(ExprFlags.Returns))
                 {
                     // TODO: check that all return values are set
                     var ret = new AstReturnStmt(null, new Location(func.Body.End));
                     ret.Scope = func.Body.SubScope;
-                    AnalyzeStatement(func, ret);
+                    AnalyzeStatement(ret);
                     func.Body.Statements.Add(ret);
                 }
             }
+
+            currentFunction = prevCurrentFunction;
         }
 
-        private void AnalyzeStatement(AstFunctionDecl func, AstStatement stmt)
+        private void AnalyzeStatement(AstStatement stmt)
         {
             switch (stmt)
             {
                 case AstVariableDecl vardecl: AnalyzeVariableDecl(vardecl); break;
-                case AstBlockStmt block: AnalyzeBlockStatement(func, block); break;
-                case AstReturnStmt ret: AnalyzeReturnStatement(func, ret); break;
+                case AstReturnStmt ret: AnalyzeReturnStatement(ret); break;
                 case AstExprStmt expr: AnalyseExprStatement(expr); break;
                 case AstAssignment ass: AnalyseAssignStatement(ass); break;
                 default: throw new NotImplementedException();
@@ -222,7 +229,7 @@ namespace Cheez
             InferType(expr.Expr, null);
         }
 
-        private void AnalyzeReturnStatement(AstFunctionDecl func, AstReturnStmt ret)
+        private void AnalyzeReturnStatement(AstReturnStmt ret)
         {
             if (ret.ReturnValue != null)
             {
@@ -231,19 +238,19 @@ namespace Cheez
 
                 ConvertLiteralTypeToDefaultType(ret.ReturnValue);
 
-                if (ret.ReturnValue.Type != func.FunctionType.ReturnType)
+                if (ret.ReturnValue.Type != currentFunction.FunctionType.ReturnType)
                 {
                     ReportError(ret.ReturnValue,
-                        $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({func.FunctionType.ReturnType})");
+                        $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
                 }
             }
-            else if (func.ReturnValue != null)
+            else if (currentFunction.ReturnValue != null)
             {
                 // TODO: check wether all return values have been assigned
                 var missing = new List<ILocation>();
-                if (func.ReturnValue.Name == null)
+                if (currentFunction.ReturnValue.Name == null)
                 {
-                    if (func.ReturnValue.TypeExpr is AstTupleTypeExpr t)
+                    if (currentFunction.ReturnValue.TypeExpr is AstTupleTypeExpr t)
                     {
                         foreach (var m in t.Members)
                             if (m.Symbol == null || !ret.Scope.IsInitialized(m.Symbol))
@@ -256,9 +263,9 @@ namespace Cheez
                 }
                 else
                 {
-                    if (!ret.Scope.IsInitialized(func.ReturnValue))
+                    if (!ret.Scope.IsInitialized(currentFunction.ReturnValue))
                     {
-                        if (func.ReturnValue.TypeExpr is AstTupleTypeExpr t && t.IsFullyNamed)
+                        if (currentFunction.ReturnValue.TypeExpr is AstTupleTypeExpr t && t.IsFullyNamed)
                         {
                             foreach (var m in t.Members)
                                 if (!ret.Scope.IsInitialized(m.Symbol))
@@ -266,7 +273,7 @@ namespace Cheez
                         }
                         else
                         {
-                            missing.Add(func.ReturnValue);
+                            missing.Add(currentFunction.ReturnValue);
                         }
                     }
                 }
@@ -279,30 +286,6 @@ namespace Cheez
             }
 
             ret.SetFlag(StmtFlags.Returns);
-        }
-
-        private void AnalyzeBlockStatement(AstFunctionDecl func, AstBlockStmt block)
-        {
-            block.SubScope = new Scope("{}", block.Scope);
-            foreach (var stmt in block.Statements)
-            {
-                stmt.Scope = block.SubScope;
-                stmt.Parent = block;
-                AnalyzeStatement(func, stmt);
-
-                if (stmt.GetFlag(StmtFlags.Returns))
-                    block.SetFlag(StmtFlags.Returns);
-            }
-
-            foreach (var symbol in block.SubScope.InitializedSymbols)
-            {
-                block.Scope.SetInitialized(symbol);
-            }
-
-            if (block.Statements.LastOrDefault() is AstExprStmt expr)
-            {
-                // TODO
-            }
         }
     }
 }

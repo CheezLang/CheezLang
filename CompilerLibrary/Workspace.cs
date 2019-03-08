@@ -29,6 +29,8 @@ namespace Cheez
         public int MaxPolyStructResolveStepCount { get; set; } = 10;
         public int MaxPolyFuncResolveStepCount { get; set; } = 10;
 
+        private AstFunctionDecl currentFunction = null;
+
         public Workspace(CheezCompiler comp)
         {
             mCompiler = comp;

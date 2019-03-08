@@ -47,7 +47,7 @@ namespace Cheez.Ast.Expressions.Types
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstExprTypeExpr(Expression));
+            => CopyValuesTo(new AstExprTypeExpr(Expression.Clone()));
     }
 
     public class AstSliceTypeExpr : AstTypeExpr

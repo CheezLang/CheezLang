@@ -27,7 +27,7 @@ namespace Cheez.Ast.Statements
         public Scope Scope { get; set; }
         public List<AstDirective> Directives { get; protected set; }
 
-        public AstStatement Parent { get; set; }
+        public AstBlockExpr Parent { get; set; }
 
         public AstStatement(List<AstDirective> dirs = null, ILocation Location = null)
         {
@@ -123,14 +123,14 @@ namespace Cheez.Ast.Statements
     public class AstWhileStmt : AstStatement
     {
         public AstExpression Condition { get; set; }
-        public AstBlockStmt Body { get; set; }
+        public AstBlockExpr Body { get; set; }
 
         public AstVariableDecl PreAction { get; set; }
         public AstStatement PostAction { get; set; }
 
         public Scope SubScope { get; set; }
 
-        public AstWhileStmt(AstExpression cond, AstBlockStmt body, AstVariableDecl pre, AstStatement post, ILocation Location = null)
+        public AstWhileStmt(AstExpression cond, AstBlockExpr body, AstVariableDecl pre, AstStatement post, ILocation Location = null)
             : base(Location: Location)
         {
             this.Condition = cond;
@@ -142,7 +142,7 @@ namespace Cheez.Ast.Statements
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitWhileStmt(this, data);
         public override AstStatement Clone() 
-            => CopyValuesTo(new AstWhileStmt(Condition.Clone(), Body.Clone() as AstBlockStmt, PreAction?.Clone() as AstVariableDecl, PostAction?.Clone()));
+            => CopyValuesTo(new AstWhileStmt(Condition.Clone(), Body.Clone() as AstBlockExpr, PreAction?.Clone() as AstVariableDecl, PostAction?.Clone()));
     }
 
     public class AstReturnStmt : AstStatement
@@ -183,25 +183,6 @@ namespace Cheez.Ast.Statements
 
         public override AstStatement Clone()
             => CopyValuesTo(new AstIfStmt(Condition.Clone(), IfCase.Clone(), ElseCase?.Clone(), PreAction?.Clone() as AstVariableDecl));
-    }
-
-    public class AstBlockStmt : AstStatement
-    {
-        public List<AstStatement> Statements { get; }
-        public Scope SubScope { get; set; }
-
-        public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
-
-        public AstBlockStmt(List<AstStatement> statements, ILocation Location = null) : base(Location: Location)
-        {
-            this.Statements = statements;
-        }
-
-        [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBlockStmt(this, data);
-
-        public override AstStatement Clone()
-         => CopyValuesTo(new AstBlockStmt(Statements.Select(s => s.Clone()).ToList()));
     }
 
     public class AstAssignment : AstStatement

@@ -751,7 +751,13 @@ namespace Cheez.Parsing
             return new AstImplBlock(target, trait, functions, new Location(beg, end));
         }
 
-        private AstBlockStmt ParseBlockStatement()
+        private AstExprStmt ParseBlockStatement()
+        {
+            var expr = ParseBlockExpr();
+            return new AstExprStmt(expr, expr.Location);
+        }
+
+        private AstBlockExpr ParseBlockExpr()
         {
             var statements = new List<AstStatement>();
             var beg = Consume(TokenType.OpenBrace, ErrMsg("{", "at beginning of block statement")).location;
@@ -776,7 +782,7 @@ namespace Cheez.Parsing
                     switch (s.stmt)
                     {
                         case AstIfStmt _:
-                        case AstBlockStmt _:
+                        case AstExprStmt es when es.Expr is AstBlockExpr:
                             break;
 
                         default:
@@ -791,7 +797,7 @@ namespace Cheez.Parsing
 
             var end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of block statement")).location;
 
-            return new AstBlockStmt(statements, new Location(beg, end));
+            return new AstBlockExpr(statements, new Location(beg, end));
         }
 
         private AstExprStmt ParseExpressionStatement()
@@ -867,7 +873,7 @@ namespace Cheez.Parsing
         {
             TokenLocation beg = null;
             AstExpression condition = null;
-            AstBlockStmt body = null;
+            AstBlockExpr body = null;
             AstVariableDecl init = null;
             AstStatement post = null;
 
@@ -894,7 +900,7 @@ namespace Cheez.Parsing
                 SkipNewlines();
             }
 
-            body = ParseBlockStatement();
+            body = ParseBlockExpr();
 
             return new AstWhileStmt(condition, body, init, post, new Location(beg, body.End));
         }
@@ -946,7 +952,7 @@ namespace Cheez.Parsing
                 end = null,
                 pbeg = null,
                 pend = null;
-            AstBlockStmt body = null;
+            AstBlockExpr body = null;
             var parameters = new List<AstParameter>();
             AstParameter returnValue = null;
             var directives = new List<AstDirective>();
@@ -983,7 +989,7 @@ namespace Cheez.Parsing
                 end = NextToken().location;
             else
             {
-                body = ParseBlockStatement();
+                body = ParseBlockExpr();
                 end = body.End;
             }
 
@@ -1055,7 +1061,7 @@ namespace Cheez.Parsing
             if (token.type == TokenType.AtSignIdentifier)
             {
                 var sub = ParseExpression();
-                return new AstExprTypeExpr(sub);
+                return new AstExprTypeExpr(sub, sub.Location);
             }
 
             if (token.type == TokenType.OpenParen)
@@ -1457,7 +1463,7 @@ namespace Cheez.Parsing
                         NextToken();
                         var args = ParseArgumentList(out var end);
                         var name = new AstIdExpr((string)token.data, false, new Location(token.location));
-                        return new AstCompCallExpr(name, args, new Location(end));
+                        return new AstCompCallExpr(name, args, new Location(token.location, end));
                     }
 
                 case TokenType.OpenBracket:
@@ -1522,6 +1528,9 @@ namespace Cheez.Parsing
                 case TokenType.KwFalse:
                     NextToken();
                     return new AstBoolExpr(false, new Location(token.location));
+
+                case TokenType.OpenBrace:
+                    return ParseBlockExpr();
 
                 case TokenType.OpenParen:
                     {

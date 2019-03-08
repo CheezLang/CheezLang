@@ -115,6 +115,14 @@ namespace Cheez
                     s.SetFlag(ExprFlags.IsLValue, true);
                     break;
 
+                case AstBlockExpr b:
+                    InferTypeBlock(b, expected, unresolvedDependencies, allDependencies, newInstances);
+                    break;
+
+                case AstCompCallExpr c:
+                    InferTypeCompCall(c, expected, unresolvedDependencies, allDependencies, newInstances);
+                    break;
+
                 default:
                     throw new NotImplementedException();
             }
@@ -123,6 +131,90 @@ namespace Cheez
             {
                 polyTypeMap[p.Name] = expr.Type;
             }
+        }
+
+        private void InferTypeCompCall(AstCompCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
+        {
+            switch (expr.Name.Name)
+            {
+                case "tuple_type_member":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr, $"@tuple_type_member requires two arguments (tuple type, int)");
+                            return;
+                        }
+
+                        expr.Arguments[0].Scope = expr.Scope;
+                        expr.Arguments[1].Scope = expr.Scope;
+                        InferTypes(expr.Arguments[0], CheezType.Type, unresolvedDependencies, allDependencies, newInstances);
+                        InferTypes(expr.Arguments[1], IntType.DefaultType, unresolvedDependencies, allDependencies, newInstances);
+
+                        if (expr.Arguments[0].Type != CheezType.Type || !(expr.Arguments[0].Value is TupleType))
+                        {
+                            ReportError(expr.Arguments[0], $"This argument must be a tuple type, got {expr.Arguments[0].Type} '{expr.Arguments[0].Value}'");
+                            return;
+                        }
+                        if (!(expr.Arguments[1].Type is IntType) || expr.Arguments[1].Value == null)
+                        {
+                            ReportError(expr.Arguments[1], $"This argument must be a constant int, got {expr.Arguments[1].Type} '{expr.Arguments[1].Value}'");
+                            return;
+                        }
+
+                        var tuple = expr.Arguments[0].Value as TupleType;
+                        var index = ((NumberData)expr.Arguments[1].Value).ToLong();
+
+                        if (index < 0 || index >= tuple.Members.Length)
+                        {
+                            ReportError(expr.Arguments[1], $"Index '{index}' is out of range. Index must be between [0, {tuple.Members.Length})");
+                            return;
+                        }
+
+                        expr.Type = CheezType.Type;
+                        expr.Value = tuple.Members[index].type;
+
+                        break;
+                    }
+
+                default: ReportError(expr.Name, $"Unknown intrinsic '{expr.Name.Name}'"); break;
+            }
+        }
+
+        private void InferTypeBlock(AstBlockExpr block, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
+        {
+            block.SubScope = new Scope("{}", block.Scope);
+
+            int end = block.Statements.Count;
+            if (block.Statements.LastOrDefault() is AstExprStmt) --end;
+
+            for (int i = 0; i < end; i++)
+            {
+                var stmt = block.Statements[i];
+                stmt.Scope = block.SubScope;
+                stmt.Parent = block;
+                AnalyzeStatement(stmt);
+
+                if (stmt.GetFlag(StmtFlags.Returns))
+                    block.SetFlag(ExprFlags.Returns, true);
+            }
+
+            if (block.Statements.LastOrDefault() is AstExprStmt expr)
+            {
+                expr.Expr.Scope = block.SubScope;
+                InferTypes(expr.Expr, expected, unresolvedDependencies, allDependencies, newInstances);
+                ConvertLiteralTypeToDefaultType(expr.Expr, expected);
+                block.Type = expr.Expr.Type;
+            }
+            else
+            {
+                block.Type = CheezType.Void;
+            }
+
+            foreach (var symbol in block.SubScope.InitializedSymbols)
+            {
+                block.Scope.SetInitialized(symbol);
+            }
+
         }
 
         private void InferTypeIndexExpr(AstArrayAccessExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
@@ -156,7 +248,7 @@ namespace Cheez
                         var index = ((NumberData)expr.Indexer.Value).ToLong();
                         if (index < 0 || index >= tuple.Members.Length)
                         {
-                            ReportError(expr.Indexer, $"The index is out of range");
+                            ReportError(expr.Indexer, $"The index '{index}' is out of range. Index must be between [0, {tuple.Members.Length})");
                             return;
                         }
 
@@ -164,7 +256,10 @@ namespace Cheez
                         break;
                     }
 
-                default: throw new NotImplementedException();
+                default:
+                    // TODO: seach for overloaded operator
+                    ReportError(expr.SubExpression, $"Type {expr.SubExpression.Type} has no operator []");
+                    break;
             }
         }
 
@@ -179,6 +274,19 @@ namespace Cheez
             var sub = expr.Right.Name;
             switch (expr.Left.Type)
             {
+                // TODO:
+                //case TupleType tuple:
+                //    {
+                //        var index = ((NumberData)expr.Indexer.Value).ToLong();
+                //        if (index < 0 || index >= tuple.Members.Length)
+                //        {
+                //            ReportError(expr.Indexer, $"The index is out of range");
+                //            return;
+                //        }
+
+                //        expr.Type = tuple.Members[index].type;
+                //        break;
+                //    }
 
                 default: throw new NotImplementedException();
             }

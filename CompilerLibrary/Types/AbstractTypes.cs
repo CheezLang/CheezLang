@@ -5,7 +5,9 @@ using System.Linq;
 
 namespace Cheez.Types.Abstract
 {
-    public abstract class AbstractType : CheezType { }
+    public abstract class AbstractType : CheezType {
+        public override bool IsErrorType => false;
+    }
 
     public class VarDeclType : AbstractType
     {
@@ -50,6 +52,7 @@ namespace Cheez.Types.Abstract
     {
         public AstFunctionDecl Declaration { get; }
         public override bool IsPolyType => false;
+        public override bool IsErrorType => false;
 
         public GenericFunctionType(AstFunctionDecl decl)
         {
@@ -60,8 +63,8 @@ namespace Cheez.Types.Abstract
     public class GenericStructType : CheezType
     {
         public AstStructDecl Declaration { get; }
-
         public override bool IsPolyType => false;
+        public override bool IsErrorType => false;
 
         public GenericStructType(AstStructDecl decl)
         {
@@ -72,8 +75,8 @@ namespace Cheez.Types.Abstract
     public class GenericTraitType : CheezType
     {
         public AstTraitDeclaration Declaration { get; }
-
         public override bool IsPolyType => false;
+        public override bool IsErrorType => false;
 
         public GenericTraitType(AstTraitDeclaration decl)
         {
@@ -86,12 +89,14 @@ namespace Cheez.Types.Abstract
         public static ErrorType Instance { get; } = new ErrorType { Size = 0 };
         public override bool IsPolyType => false;
         public override string ToString() => "<Error Type>";
+        public override bool IsErrorType => true;
     }
 
     public class PolyType : CheezType
     {
         public string Name { get; }
         public override bool IsPolyType => true;
+        public override bool IsErrorType => false;
 
         /// <summary>
         /// Wether or not the symbol with this type has declared this poly type with $ or not

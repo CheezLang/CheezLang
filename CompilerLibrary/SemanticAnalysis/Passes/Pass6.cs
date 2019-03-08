@@ -138,6 +138,12 @@ namespace Cheez
 
                 if (decl.Initializer != null && decl.Initializer != initializer)
                     InferType(decl.Initializer, type);
+
+
+                if (decl.Type == CheezType.Void)
+                {
+                    ReportError(decl.Name, $"A variable can't have type void");
+                }
             }
             else if (pattern is AstTupleExpr tuple)
             {

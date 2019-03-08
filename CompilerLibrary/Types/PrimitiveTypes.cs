@@ -8,6 +8,7 @@ namespace Cheez.Types.Primitive
         public static VoidType Intance { get; } = new VoidType();
         public override string ToString() => "void";
         public override bool IsPolyType => false;
+        public override bool IsErrorType => false;
     }
 
     public class AnyType : CheezType
@@ -15,6 +16,7 @@ namespace Cheez.Types.Primitive
         public static AnyType Intance { get; } = new AnyType { Size = 8, Alignment = 8 };
         public override string ToString() => "any";
         public override bool IsPolyType => false;
+        public override bool IsErrorType => false;
     }
 
     public class BoolType : CheezType
@@ -23,6 +25,7 @@ namespace Cheez.Types.Primitive
         private BoolType() { }
         public override string ToString() => "bool";
         public override bool IsPolyType => false;
+        public override bool IsErrorType => false;
     }
 
     public class IntType : CheezType
@@ -32,6 +35,7 @@ namespace Cheez.Types.Primitive
         public static IntType DefaultType => GetIntType(4, true);
 
         public bool Signed { get; private set; }
+        public override bool IsErrorType => false;
 
         public static IntType GetIntType(int sizeInBytes, bool signed)
         {
@@ -66,6 +70,7 @@ namespace Cheez.Types.Primitive
         private static Dictionary<int, FloatType> sTypes = new Dictionary<int, FloatType>();
         public static FloatType LiteralType = new FloatType { Size = 0 };
         public static FloatType DefaultType => GetFloatType(4);
+        public override bool IsErrorType => false;
 
         public static FloatType GetFloatType(int bytes)
         {
@@ -100,6 +105,7 @@ namespace Cheez.Types.Primitive
         private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
 
         public CheezType TargetType { get; set; }
+        public override bool IsErrorType => TargetType.IsErrorType;
 
         public static PointerType GetPointerType(CheezType targetType)
         {
@@ -136,6 +142,7 @@ namespace Cheez.Types.Primitive
         private static Dictionary<CheezType, ReferenceType> sTypes = new Dictionary<CheezType, ReferenceType>();
 
         public CheezType TargetType { get; set; }
+        public override bool IsErrorType => TargetType.IsErrorType;
 
         public static ReferenceType GetRefType(CheezType targetType)
         {
@@ -174,6 +181,7 @@ namespace Cheez.Types.Primitive
 
         public CheezType TargetType { get; set; }
         public int Length { get; set; }
+        public override bool IsErrorType => TargetType.IsErrorType;
 
         public static ArrayType GetArrayType(CheezType targetType, int length)
         {
@@ -213,6 +221,7 @@ namespace Cheez.Types.Primitive
         private static Dictionary<CheezType, SliceType> sTypes = new Dictionary<CheezType, SliceType>();
 
         public CheezType TargetType { get; set; }
+        public override bool IsErrorType => TargetType.IsErrorType;
 
         public static SliceType GetSliceType(CheezType targetType)
         {
@@ -251,6 +260,7 @@ namespace Cheez.Types.Primitive
         public static StringLiteralType Instance = new StringLiteralType();
         public override bool IsPolyType => false;
         public override string ToString() => "string_literal";
+        public override bool IsErrorType => false;
     }
 
     public class CharType : CheezType
@@ -258,6 +268,6 @@ namespace Cheez.Types.Primitive
         public static CharType Instance = new CharType { Size = 1, Alignment = 1 };
         public override bool IsPolyType => false;
         public override string ToString() => "char";
-
+        public override bool IsErrorType => false;
     }
 }

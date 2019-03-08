@@ -152,6 +152,21 @@ namespace Cheez
 
                         return TupleType.GetTuple(members);
                     }
+
+                case AstExprTypeExpr expr:
+                    expr.Expression.Scope = expr.Scope;
+                    InferType(expr.Expression, CheezType.Type);
+
+                    if (expr.Expression.Type == CheezType.Error) return CheezType.Error;
+
+                    if (expr.Expression.Type != CheezType.Type)
+                    {
+                        ReportError(expr, $"Expected a type, got '{expr.Type}'");
+                        return CheezType.Error;
+                    }
+
+                    Debug.Assert(expr.Expression.Value != null);
+                    return expr.Expression.Value as CheezType;
             }
 
             ReportError(typeExpr, $"Expected type");

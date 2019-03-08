@@ -40,8 +40,34 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstUnaryExpr u: return GenerateUnaryExpr(u, target, deref);
                 case AstTempVarExpr t: return GenerateTempVarExpr(t, target, deref);
                 case AstSymbolExpr s: return GenerateSymbolExpr(s, target, deref);
+                case AstBlockExpr block: return GenerateBlock(block, target, deref);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef? GenerateBlock(AstBlockExpr block, LLVMValueRef? target, bool deref)
+        {
+            LLVMValueRef? result = null;
+
+            int end = block.Statements.Count;
+            if (block.Statements.LastOrDefault() is AstExprStmt) --end;
+
+            for (int i = 0; i < end; i++)
+            {
+                GenerateStatement(block.Statements[i]);
+            }
+
+            if (block.Statements.LastOrDefault() is AstExprStmt expr)
+            {
+                result = GenerateExpression(expr.Expr, target, deref);
+            }
+
+            for (int i = block.DeferredStatements.Count - 1; i >= 0; i--)
+            {
+                GenerateStatement(block.DeferredStatements[i]);
+            }
+
+            return result;
         }
 
         private LLVMValueRef? GenerateSymbolExpr(AstSymbolExpr s, LLVMValueRef? target, bool deref)

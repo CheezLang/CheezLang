@@ -12,7 +12,8 @@ namespace Cheez.Ast.Expressions
 {
     public enum ExprFlags
     {
-        IsLValue = 0
+        IsLValue = 0,
+        Returns = 1
     }
 
     public abstract class AstExpression : IVisitorAcceptor, ILocation
@@ -83,6 +84,27 @@ namespace Cheez.Ast.Expressions
             new RawAstPrinter(sb).PrintExpression(this);
             return sb.GetStringBuilder().ToString();
         }
+    }
+
+    public class AstBlockExpr : AstExpression
+    {
+        public List<AstStatement> Statements { get; }
+        public Scope SubScope { get; set; }
+
+        public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
+
+        public override bool IsPolymorphic => false;
+
+        public AstBlockExpr(List<AstStatement> statements, ILocation Location = null) : base(Location: Location)
+        {
+            this.Statements = statements;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBlockStmt(this, data);
+
+        public override AstExpression Clone()
+         => CopyValuesTo(new AstBlockExpr(Statements.Select(s => s.Clone()).ToList()));
     }
 
     public class AstEmptyExpr : AstExpression

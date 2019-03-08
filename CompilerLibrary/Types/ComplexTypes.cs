@@ -9,6 +9,7 @@ namespace Cheez.Types.Complex
     {
         public AstTraitDeclaration Declaration { get; }
         public override bool IsPolyType => false;
+        public override bool IsErrorType => false;
 
         public TraitType(AstTraitDeclaration decl)
         {
@@ -26,6 +27,7 @@ namespace Cheez.Types.Complex
 
         public (string name, CheezType type)[] Members { get; }
         public override bool IsPolyType => false;
+        public override bool IsErrorType => Members.Any(m => m.type.IsErrorType);
 
         private TupleType((string name, CheezType type)[] members)
         {
@@ -67,6 +69,7 @@ namespace Cheez.Types.Complex
         public AstStructDecl Declaration { get; }
         public CheezType[] Arguments { get; }
         public int[] MemberOffsets { get; private set; }
+        public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
 
         public StructType(AstStructDecl decl)
         {
@@ -120,6 +123,7 @@ namespace Cheez.Types.Complex
         public Dictionary<string, int> Members { get; }
 
         public CheezType MemberType { get; set; }
+        public override bool IsErrorType => MemberType.IsErrorType;
 
         public EnumType(AstEnumDecl en, CheezType memberType = null)
         {
@@ -153,6 +157,7 @@ namespace Cheez.Types.Complex
         public CheezType ReturnType { get; private set; }
 
         public AstFunctionDecl Declaration { get; set; } = null;
+        public override bool IsErrorType => ReturnType.IsErrorType || Parameters.Any(p => p.type.IsErrorType);
 
         public FunctionType((string, CheezType)[] parameterTypes, CheezType returnType)
         {

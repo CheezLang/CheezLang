@@ -19,6 +19,8 @@ namespace Cheez.Types
         public int Size { get; set; } = 0;
         public int Alignment { get; set; } = 1;
 
+        public abstract bool IsErrorType { get; }
+
         public static bool operator ==(CheezType a, CheezType b)
         {
             if (a is null && b is null) return true;
@@ -30,6 +32,16 @@ namespace Cheez.Types
         {
             return !(a == b);
         }
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 
     public class CheezTypeType : CheezType
@@ -37,5 +49,6 @@ namespace Cheez.Types
         public static CheezTypeType Instance { get; } = new CheezTypeType();
         public override bool IsPolyType => false;
         public override string ToString() => "type";
+        public override bool IsErrorType => false;
     }
 }

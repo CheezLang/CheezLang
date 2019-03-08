@@ -200,15 +200,6 @@ namespace Cheez.Visitors
             if (variable.Initializer != null)
                 sb.Append($" = {variable.Initializer.Accept(this)}");
 
-            foreach (var sub in variable.SubDeclarations)
-            {
-                if (sub.Initializer != null)
-                {
-                    sb.AppendLine();
-                    sb.Append($"    // {sub.Name.Accept(this)} = {sub.Initializer.Accept(this)}");
-                }
-            }
-
             return sb.ToString();
         }
 
@@ -243,7 +234,7 @@ namespace Cheez.Visitors
             return $"defer {def.Deferred.Accept(this)}".Indent(data);
         }
 
-        public override string VisitBlockStmt(AstBlockStmt block, int indentLevel = 0)
+        public override string VisitBlockStmt(AstBlockExpr block, int indentLevel = 0)
         {
             var sb = new StringBuilder();
             {
@@ -405,6 +396,10 @@ namespace Cheez.Visitors
 
         public override string VisitIdExpr(AstIdExpr ident, int indentLevel = 0)
         {
+            if (ident.Symbol is ConstSymbol c)
+            {
+                return c.Value.ToString();
+            }
             if (ident.IsPolymorphic)
                 return '$' + ident.Name;
             return ident.Name;
@@ -503,6 +498,7 @@ namespace Cheez.Visitors
         }
 
         #endregion
+
 
         #region Type expressions
 

@@ -129,7 +129,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 // body
                 builder.PositionBuilderAtEnd(bbBody);
-                GenerateBlockStmt(function.Body);
+                GenerateExpression(function.Body, null, false);
 
                 // ret if void
                 if (function.ReturnValue == null)
@@ -163,19 +163,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             currentFunction = null;
         }
 
-        private void GenerateBlockStmt(AstBlockStmt block)
-        {
-            foreach (var s in block.Statements)
-            {
-                GenerateStatement(s);
-            }
-
-            for (int i = block.DeferredStatements.Count - 1; i >= 0; i--)
-            {
-                GenerateStatement(block.DeferredStatements[i]);
-            }
-        }
-
         private void GenerateStatement(AstStatement stmt)
         {
             switch (stmt)
@@ -184,7 +171,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstExprStmt expr: GenerateExprStatement(expr); break;
                 case AstVariableDecl decl: GenerateVariableDecl(decl); break;
                 case AstAssignment ass: GenerateAssignment(ass); break;
-                case AstBlockStmt block: GenerateBlockStmt(block); break;
                 default: throw new NotImplementedException();
             }
 
@@ -268,8 +254,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             foreach (var v in decl.SubDeclarations)
             {
-                var type = CheezTypeToLLVMType(v.Type);
-
                 var varPtr = CreateLocalVariable(v.Type, v.Name.Name);
                 valueMap[v] = varPtr;
 
