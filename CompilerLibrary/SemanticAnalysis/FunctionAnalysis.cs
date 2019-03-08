@@ -238,7 +238,7 @@ namespace Cheez
 
                 ConvertLiteralTypeToDefaultType(ret.ReturnValue);
 
-                if (ret.ReturnValue.Type != currentFunction.FunctionType.ReturnType)
+                if (ret.ReturnValue.Type != currentFunction.FunctionType.ReturnType && !ret.ReturnValue.Type.IsErrorType)
                 {
                     ReportError(ret.ReturnValue,
                         $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");

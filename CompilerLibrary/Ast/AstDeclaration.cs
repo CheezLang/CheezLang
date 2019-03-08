@@ -45,7 +45,7 @@ namespace Cheez.Ast.Statements
             this.TypeExpr = typeExpr;
         }
 
-        public AstParameter Clone() => new AstParameter(Name?.Clone() as AstIdExpr, TypeExpr.Clone() as AstTypeExpr);
+        public AstParameter Clone() => new AstParameter(Name?.Clone() as AstIdExpr, TypeExpr.Clone() as AstTypeExpr, Location);
 
         [DebuggerStepThrough]
         public T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitParameter(this, data);
