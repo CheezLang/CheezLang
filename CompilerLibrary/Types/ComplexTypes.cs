@@ -53,7 +53,7 @@ namespace Cheez.Types.Complex
             {
                 if (Members.Length != t.Members.Length) return false;
                 for (int i = 0; i < Members.Length; i++)
-                    if (Members[i] != t.Members[i]) return false;
+                    if (Members[i].type != t.Members[i].type) return false;
 
                 return true;
             }

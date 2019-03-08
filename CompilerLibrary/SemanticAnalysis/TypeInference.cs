@@ -110,6 +110,11 @@ namespace Cheez
                     // TODO: do something?
                     break;
 
+                case AstSymbolExpr s:
+                    s.Type = s.Symbol.Type;
+                    s.SetFlag(ExprFlags.IsLValue, true);
+                    break;
+
                 default:
                     throw new NotImplementedException();
             }
@@ -225,66 +230,6 @@ namespace Cheez
                 default: throw new NotImplementedException();
             }
         }
-
-        //private void InferConstParamFunctionCall(ConstParamFunctionType func, AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
-        //{
-        //    if (!CheckAndMatchArgsToParams(expr, func.Parameters, false))
-        //        return;
-
-        //    expr.Arguments.Sort((a, b) => a.Index - b.Index);
-
-        //    if (expr.Arguments.Count != func.Declaration.Parameters.Count) throw new NotImplementedException();
-
-        //    var constArgs = new Dictionary<string, (CheezType, object)>();
-        //    var newArgs = new List<AstArgument>();
-
-        //    for (int i = 0; i < expr.Arguments.Count; i++)
-        //    {
-        //        var a = expr.Arguments[i];
-        //        var p = func.Declaration.Parameters[i];
-
-        //        if (p.Name?.IsPolymorphic ?? false)
-        //        {
-        //            Debug.Assert(p.Type != null);
-
-        //            a.Scope = expr.Scope;
-        //            a.Expr.Scope = a.Scope;
-
-        //            InferTypes(a.Expr, p.Type, unresolvedDependencies, allDependencies, newInstances);
-        //            ConvertLiteralTypeToDefaultType(a.Expr);
-        //            a.Type = a.Expr.Type;
-
-        //            if (a.Expr.Value == null)
-        //            {
-        //                ReportError(a, $"Argument must be a constant {p.Type}");
-        //            }
-
-        //            constArgs[p.Name.Name] = (p.Type, a.Expr.Value);
-        //        }
-        //        else
-        //        {
-        //            newArgs.Add(a);
-        //        }
-        //    }
-
-        //    expr.Arguments = newArgs;
-
-        //    var instance = InstantiateConstParamFunction(constArgs, func, newInstances);
-
-        //    switch (instance.Type)
-        //    {
-        //        case FunctionType f:
-        //                InferRegularFunctionCall(f, expr, expected, unresolvedDependencies, allDependencies, newInstances);
-        //                break;
-
-        //        case GenericFunctionType g:
-        //                InferGenericFunctionCall(g, expr, expected, unresolvedDependencies, allDependencies, newInstances);
-        //                break;
-
-        //        case ErrorType _: return;
-        //        default: throw new NotImplementedException();
-        //    }
-        //}
 
         private bool CheckAndMatchArgsToParams(AstCallExpr expr, List<AstParameter> parameters, bool varArgs)
         {
@@ -627,6 +572,12 @@ namespace Cheez
             {
                 i.Type = c.Type;
                 i.Value = c.Value;
+            }
+            else if (sym is Using u)
+            {
+                // TODO:
+                i.Type = u.Type;
+                //throw new NotImplementedException();
             }
             else
             {

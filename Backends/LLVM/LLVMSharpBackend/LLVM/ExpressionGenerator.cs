@@ -39,8 +39,27 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstCallExpr c: return GenerateCallExpr(c, target, deref);
                 case AstUnaryExpr u: return GenerateUnaryExpr(u, target, deref);
                 case AstTempVarExpr t: return GenerateTempVarExpr(t, target, deref);
+                case AstSymbolExpr s: return GenerateSymbolExpr(s, target, deref);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef? GenerateSymbolExpr(AstSymbolExpr s, LLVMValueRef? target, bool deref)
+        {
+            var v = valueMap[s.Symbol];
+
+            if (deref)
+            {
+                v = builder.CreateLoad(v, "");
+            }
+
+            if (target != null)
+            {
+                builder.CreateStore(v, target.Value);
+                return null;
+            }
+
+            return v;
         }
 
         private LLVMValueRef? GenerateTempVarExpr(AstTempVarExpr t, LLVMValueRef? target, bool deref)
@@ -259,6 +278,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (expr.Symbol is AstDecl decl)
             {
                 v = valueMap[decl];
+            }
+            else if (expr.Symbol is Using u)
+            {
+                v = GenerateExpression(u.Expr, null, false).Value;
             }
             else
             {

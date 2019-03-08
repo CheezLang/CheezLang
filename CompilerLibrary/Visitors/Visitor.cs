@@ -74,6 +74,7 @@ namespace Cheez.Visitors
         ReturnType VisitVariableRef(AstVariableRef re, DataType data = default);
         ReturnType VisitTypeExpr(AstTypeRef re, DataType data = default);
         ReturnType VisitTempVarExpr(AstTempVarExpr te, DataType data = default);
+        ReturnType VisitSymbolExpr(AstSymbolExpr te, DataType data = default);
 
         // other
         ReturnType VisitParameter(AstParameter param, DataType data = default);
@@ -145,6 +146,7 @@ namespace Cheez.Visitors
         public virtual ReturnType VisitTypeExpr(AstTypeRef re, DataType data = default) => default;
         public virtual ReturnType VisitVariableRef(AstVariableRef re, DataType data = default) => default;
         public virtual ReturnType VisitTempVarExpr(AstTempVarExpr te, DataType data = default) => default;
+        public virtual ReturnType VisitSymbolExpr(AstSymbolExpr te, DataType data = default) => default;
 
         // other
         public virtual ReturnType VisitParameter(AstParameter param, DataType data = default) => default;

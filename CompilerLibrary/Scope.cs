@@ -65,11 +65,12 @@ namespace Cheez
         public AstExpression Expr { get; }
         public bool IsConstant => true;
 
-        public ILocation Location => throw new NotImplementedException();
+        public ILocation Location { get; set; }
 
         [DebuggerStepThrough]
         public Using(AstIdExpr name, AstExpression expr)
         {
+            this.Location = name.Location;
             this.Name = name;
             this.Expr = expr;
         }
@@ -468,13 +469,22 @@ namespace Cheez
             return false;
         }
 
-        public (bool ok, ILocation other) DefineSymbol(ISymbol symbol)
+        public (bool ok, ILocation other) DefineSymbol(ISymbol symbol, string name = null)
         {
-            string name = symbol.Name.Name;
+            name = name ?? symbol.Name.Name;
             if (mSymbolTable.TryGetValue(name, out var other))
                 return (false, other.Location);
 
             mSymbolTable[name] = symbol;
+            return (true, null);
+        }
+
+        public (bool ok, ILocation other) DefineUse(AstIdExpr name, AstExpression expr)
+        {
+            if (mSymbolTable.TryGetValue(name.Name, out var other))
+                return (false, other.Location);
+
+            mSymbolTable[name.Name] = new Using(name, expr);
             return (true, null);
         }
 

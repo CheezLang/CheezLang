@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cheez.Ast.Expressions;
+using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
+using Cheez.Types;
 using Cheez.Types.Complex;
 
 namespace Cheez
@@ -68,10 +70,50 @@ namespace Cheez
                 }
             }
 
+            if (func.ReturnValue?.Name != null)
+            {
+                var (ok, other) = func.SubScope.DefineSymbol(func.ReturnValue);
+                if (!ok)
+                    ReportError(func.ReturnValue, $"A symbol with name '{func.ReturnValue.Name.Name}' already exists in current scope", ("Other symbol here:", other));
+            }
+            else
+            {
+                func.SubScope.DefineSymbol(func.ReturnValue, ".ret");
+            }
+            if (func.ReturnValue?.TypeExpr is AstTupleTypeExpr t)
+            {
+                bool allNamesProvided = true;
+                foreach (var m in t.Members)
+                {
+                    if (m.Name == null)
+                        allNamesProvided = false;
+                }
+
+                if (allNamesProvided)
+                {
+                    int index = 0;
+                    foreach (var m in t.Members)
+                    {
+                        var access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnValue), new AstNumberExpr(new Extras.NumberData(index)));
+                        InferType(access, null);
+                        var (ok, other) = func.SubScope.DefineUse(m.Name, access);
+                        if (!ok)
+                            ReportError(m, $"A symbol with name '{m.Name.Name}' already exists in current scope", ("Other symbol here:", other));
+                        ++index;
+                    }
+                }
+            }
+
             if (func.Body != null)
             {
                 func.Body.Scope = func.SubScope;
                 AnalyzeStatement(func, func.Body);
+
+                if (func.ReturnValue != null && !func.Body.GetFlag(StmtFlags.Returns))
+                {
+                    // TODO: check that all return values are set
+                    func.Body.Statements.Add(new AstReturnStmt(null));
+                }
             }
         }
 
@@ -90,13 +132,12 @@ namespace Cheez
 
         private void AnalyseAssignStatement(AstAssignment ass)
         {
-            //ass.Value.Scope = ass.Scope;
-            //InferType(ass.Value, null);
-
             ass.Pattern.Scope = ass.Scope;
             InferType(ass.Pattern, null);
-
-            MatchPatternWithExpression(ass, ass.Pattern, ass.Value);
+            if (ass.Pattern.Type != CheezType.Error)
+            {
+                MatchPatternWithExpression(ass, ass.Pattern, ass.Value);
+            }
         }
 
         private void MatchPatternWithExpression(AstAssignment ass, AstExpression pattern, AstExpression value)
@@ -109,6 +150,8 @@ namespace Cheez
 
                         value.Scope = ass.Scope;
                         InferType(value, id.Type);
+                        if (value.Type == CheezType.Error)
+                            break;
 
                         if (value.Type != id.Type)
                         {
@@ -196,6 +239,8 @@ namespace Cheez
                         $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({func.FunctionType.ReturnType})");
                 }
             }
+
+            ret.SetFlag(StmtFlags.Returns);
         }
 
         private void AnalyzeBlockStatement(AstFunctionDecl func, AstBlockStmt block)
@@ -204,6 +249,9 @@ namespace Cheez
             {
                 stmt.Scope = block.Scope;
                 AnalyzeStatement(func, stmt);
+
+                if (stmt.GetFlag(StmtFlags.Returns))
+                    block.SetFlag(StmtFlags.Returns);
             }
 
             if (block.Statements.LastOrDefault() is AstExprStmt expr)

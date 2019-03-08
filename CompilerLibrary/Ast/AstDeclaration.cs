@@ -5,6 +5,7 @@ using Cheez.Types.Complex;
 using Cheez.Visitors;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 
 namespace Cheez.Ast.Statements
@@ -47,6 +48,13 @@ namespace Cheez.Ast.Statements
 
         [DebuggerStepThrough]
         public T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitParameter(this, data);
+
+        public override string ToString()
+        {
+            var sb = new StringWriter();
+            new RawAstPrinter(sb).VisitParameter(this);
+            return sb.GetStringBuilder().ToString();
+        }
     }
 
     #region Function Declaration

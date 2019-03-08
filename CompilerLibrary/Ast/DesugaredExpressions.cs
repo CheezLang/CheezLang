@@ -6,6 +6,22 @@ using System.Diagnostics;
 
 namespace Cheez.Ast.Expressions
 {
+    public class AstSymbolExpr : AstExpression
+    {
+        public override bool IsPolymorphic => false;
+
+        public ITypedSymbol Symbol { get; set; }
+
+        public AstSymbolExpr(ITypedSymbol sym) : base(null)
+        {
+            this.Symbol = sym;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitSymbolExpr(this, data);
+
+        public override AstExpression Clone() => CopyValuesTo(new AstSymbolExpr(Symbol));
+    }
+
     public class AstTempVarExpr : AstExpression
     {
         private static int _id_gen = 0;

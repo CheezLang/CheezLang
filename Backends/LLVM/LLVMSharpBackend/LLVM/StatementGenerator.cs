@@ -293,6 +293,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 retval = builder.CreateLoad(return_var, "");
                 builder.CreateRet(retval.Value);
             }
+            else if (currentFunction.ReturnValue != null)
+            {
+                var retVal = valueMap[currentFunction.ReturnValue];
+                retVal = builder.CreateLoad(retVal, "");
+                builder.CreateRet(retVal);
+            }
             else
             {
                 builder.CreateRetVoid();

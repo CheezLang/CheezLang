@@ -216,6 +216,11 @@ namespace Cheez.Visitors
 
         #region Expressions
 
+        public override string VisitSymbolExpr(AstSymbolExpr te, int data = 0)
+        {
+            return $"@symbol({te.Symbol.Name?.Accept(this) ?? te.Symbol.ToString()})";
+        }
+
         public override string VisitTempVarExpr(AstTempVarExpr te, int data = 0)
         {
             return $"@tempvar({te.Id})";
