@@ -41,7 +41,7 @@ fn test4() -> a: int {
 }
 
 // (int, int)
-fn test5() -> (int,int) {
+fn test5() -> (int, int) {
     return (0, 1)
 }
 
@@ -69,7 +69,7 @@ fn test9() -> (a: int, b: int) {
 }
 
 // ret: (int, int)
-fn test10() -> ret: (int,int) {
+fn test10() -> ret: (int, int) {
     return (1, 2)
 }
 

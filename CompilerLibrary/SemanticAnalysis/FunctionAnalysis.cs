@@ -246,7 +246,7 @@ namespace Cheez
                     if (func.ReturnValue.TypeExpr is AstTupleTypeExpr t)
                     {
                         foreach (var m in t.Members)
-                            if (!ret.Scope.IsInitialized(m.Symbol))
+                            if (m.Symbol == null || !ret.Scope.IsInitialized(m.Symbol))
                                 missing.Add(m);
                     }
                     else
