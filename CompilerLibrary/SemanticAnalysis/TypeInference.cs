@@ -268,27 +268,27 @@ namespace Cheez
             expr.Left.Scope = expr.Scope;
             InferTypes(expr.Left, null, unresolvedDependencies, allDependencies, newInstances);
 
-            if (expr.Left.Type is ErrorType)
+            if (expr.Left.Type.IsErrorType)
                 return;
 
             var sub = expr.Right.Name;
             switch (expr.Left.Type)
             {
-                // TODO:
-                //case TupleType tuple:
-                //    {
-                //        var index = ((NumberData)expr.Indexer.Value).ToLong();
-                //        if (index < 0 || index >= tuple.Members.Length)
-                //        {
-                //            ReportError(expr.Indexer, $"The index is out of range");
-                //            return;
-                //        }
+                case TupleType tuple:
+                    {
+                        var memName = expr.Right.Name;
+                        var memberIndex = tuple.Members.IndexOf(m => m.name == memName);
+                        if (memberIndex == -1)
+                        {
+                            ReportError(expr, $"The tuple '{tuple}' has no member '{memName}'");
+                            return;
+                        }
 
-                //        expr.Type = tuple.Members[index].type;
-                //        break;
-                //    }
+                        expr.Type = tuple.Members[memberIndex].type;
+                        break;
+                    }
 
-                default: throw new NotImplementedException();
+            default: throw new NotImplementedException();
             }
         }
 

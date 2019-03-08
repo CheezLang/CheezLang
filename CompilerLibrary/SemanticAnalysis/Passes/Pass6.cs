@@ -117,9 +117,8 @@ namespace Cheez
                     ReportError(v, $"Can't initialize a variable of type {v.Type} with a value of type {v.Initializer.Type}");
                 }
 
-                var newType = v.Initializer.Type;
-
-                v.Type = newType;
+                if (v.TypeExpr == null)
+                    v.Type = v.Initializer.Type;
             }
 
             if (deps.Count == 0)

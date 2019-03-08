@@ -1,0 +1,20 @@
+#test_expect_output("1, 2, 3, 4")
+
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+fn Main() {
+    let a = { 1 }
+    let b = {
+        2
+    }
+    let c = {
+        let x = 3
+        x
+    }
+    let d = {
+        let d = 4
+        d
+    }
+
+    c_printf("%d, %d, %d, %d", a, b, c, d)
+}

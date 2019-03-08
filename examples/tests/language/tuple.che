@@ -1,0 +1,30 @@
+#test_expect_output("3, 4")
+#test_expect_output("2, test")
+#test_expect_output("1, 6")
+#test_expect_output("2, 6")
+
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+fn get_tuple() -> (one: bool, two: int) {
+    one = true
+    two = 6
+}
+
+fn get_tuple_value(tuple: $T, $Index: int) -> @tuple_type_member(T, Index) {
+    return tuple[Index]
+}
+
+fn Main() {
+    let a = (3, 4)
+    c_printf("%d, %d`n", a[0], a[1])
+    
+    let b: (first: int, second: c_string) = (2, "test")
+    c_printf("%d, %s`n", b.first, b.second)
+    
+    let c = get_tuple()
+    c_printf("%d, %d`n", c.one, c.two)
+
+    let d = get_tuple_value(b, 0)
+    let e = get_tuple_value(c, 1)
+    c_printf("%d, %d`n", d, e)
+}

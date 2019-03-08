@@ -4,6 +4,7 @@ using Cheez.Extras;
 using Cheez.Types;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
+using Cheez.Util;
 using LLVMSharp;
 using System;
 using System.Linq;
@@ -200,10 +201,36 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             throw new NotImplementedException();
         }
 
-        public LLVMValueRef? GenerateDotExpr(AstDotExpr expr, LLVMValueRef? maybeTarget, bool deref)
+        public LLVMValueRef? GenerateDotExpr(AstDotExpr expr, LLVMValueRef? target, bool deref)
         {
             switch (expr.Left.Type)
             {
+                case TupleType t:
+                    {
+                        var index = t.Members.IndexOf(m => m.name == expr.Right.Name);
+                        var left = GenerateExpression(expr.Left, null, false);
+
+                        LLVMValueRef? result;
+                        if (!expr.Left.GetFlag(ExprFlags.IsLValue))
+                        {
+                            result = builder.CreateExtractValue(left.Value, (uint)index, "");
+                        }
+                        else
+                        {
+                            result = builder.CreateStructGEP(left.Value, (uint)index, "");
+                            if (deref)
+                                result = builder.CreateLoad(result.Value, "");
+                        }
+
+                        if (target != null)
+                        {
+                            builder.CreateStore(result.Value, target.Value);
+                            return null;
+                        }
+
+                        return result;
+                    }
+
                 default:
                     throw new NotImplementedException();
             }
