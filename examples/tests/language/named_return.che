@@ -1,0 +1,93 @@
+#test_expect_output("0, 0, 2, 3, 4")
+#test_expect_output("0, 1, 7, 8, 9, 1, 2, 8, 9, 10")
+#test_expect_output("1, 3, 12, 13, 14, 2, 4, 13, 14, 15")
+
+// required for printing
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+fn Main() {
+    c_printf("%d, %d, %d, %d, %d`n",
+        test0(), test1(), test2(), test3(), test4())
+
+    c_printf("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d`n",
+        test5()[0], test6()[0], test7()[0], test8()[0], test9()[0], test5()[1], test6()[1], test7()[1], test8()[1], test9()[1])
+
+    c_printf("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d`n", 
+        test10()[0], test11()[0], test12()[0], test13()[0], test14()[0], test10()[1], test11()[1], test12()[1], test13()[1], test14()[1])
+}
+
+// int
+fn test0() -> int {
+    return 0
+}
+
+fn test1() -> a: int {
+    a = 1
+    return 0
+}
+
+fn test2() -> a: int {
+    a = 2
+    return a
+}
+
+fn test3() -> a: int {
+    a = 3
+    return
+}
+
+fn test4() -> a: int {
+    a = 4
+}
+
+// (int, int)
+fn test5() -> (int,int) {
+    return (0, 1)
+}
+
+fn test6() -> (a: int, b: int) {
+    a = 6
+    b = 7
+    return (1, 2)
+}
+
+fn test7() -> (a: int, b: int) {
+    a = 7
+    b = 8
+    return (a, b)
+}
+
+fn test8() -> (a: int, b: int) {
+    a = 8
+    b = 9
+    return
+}
+
+fn test9() -> (a: int, b: int) {
+    a = 9
+    b = 10
+}
+
+// ret: (int, int)
+fn test10() -> ret: (int,int) {
+    return (1, 2)
+}
+
+fn test11() -> ret: (a: int, b: int) {
+    ret = (11, 12)
+    return (3, 4)
+}
+
+fn test12() -> ret: (a: int, b: int) {
+    ret = (12, 13)
+    return ret
+}
+
+fn test13() -> ret: (a: int, b: int) {
+    ret = (13, 14)
+    return
+}
+
+fn test14() -> ret: (a: int, b: int) {
+    ret = (14, 15)
+}
