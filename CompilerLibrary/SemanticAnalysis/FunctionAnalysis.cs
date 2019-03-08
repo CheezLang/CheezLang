@@ -97,9 +97,10 @@ namespace Cheez
                     {
                         var access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnValue), new AstNumberExpr(new Extras.NumberData(index)));
                         InferType(access, null);
-                        var (ok, other) = func.SubScope.DefineUse(m.Name, access);
+                        var (ok, other) = func.SubScope.DefineUse(m.Name, access, out var use);
                         if (!ok)
                             ReportError(m, $"A symbol with name '{m.Name.Name}' already exists in current scope", ("Other symbol here:", other));
+                        m.Symbol = use;
                         ++index;
                     }
                 }
@@ -252,7 +253,20 @@ namespace Cheez
                 if (func.ReturnValue.Name == null)
                 {
                     // TODO: check for named tuple
-                    ReportError(ret, $"Return value has to be provided in non void function");
+                    if (func.ReturnValue.TypeExpr is AstTupleTypeExpr t)
+                    {
+                        foreach (var m in t.Members)
+                        {
+                            if (!ret.Scope.IsInitialized(m.Symbol))
+                            {
+                                missing.Add(m);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ReportError(ret, $"Return value has to be provided in non void function");
+                    }
                 }
                 else
                 {

@@ -27,11 +27,12 @@ namespace Cheez.Ast.Statements
         public TokenLocation Beginning => Location?.Beginning;
         public TokenLocation End => Location?.End;
 
-
         public AstIdExpr Name { get; }
         public CheezType Type { get; set; }
         public AstTypeExpr TypeExpr { get; set; }
         public Scope Scope { get; set; }
+
+        public ISymbol Symbol { get; set; } = null;
 
         public object Value { get; set; }
 

@@ -184,6 +184,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstExprStmt expr: GenerateExprStatement(expr); break;
                 case AstVariableDecl decl: GenerateVariableDecl(decl); break;
                 case AstAssignment ass: GenerateAssignment(ass); break;
+                case AstBlockStmt block: GenerateBlockStmt(block); break;
                 default: throw new NotImplementedException();
             }
 

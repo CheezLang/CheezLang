@@ -491,12 +491,14 @@ namespace Cheez
             return (true, null);
         }
 
-        public (bool ok, ILocation other) DefineUse(AstIdExpr name, AstExpression expr)
+        public (bool ok, ILocation other) DefineUse(AstIdExpr name, AstExpression expr, out Using use)
         {
+            use = null;
             if (mSymbolTable.TryGetValue(name.Name, out var other))
                 return (false, other.Location);
 
-            mSymbolTable[name.Name] = new Using(name, expr);
+            use = new Using(name, expr);
+            mSymbolTable[name.Name] = use;
             return (true, null);
         }
 
