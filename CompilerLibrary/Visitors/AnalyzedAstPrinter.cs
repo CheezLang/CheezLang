@@ -502,6 +502,11 @@ namespace Cheez.Visitors
 
         #region Type expressions
 
+        public override string VisitExprTypeExpression(AstExprTypeExpr type, int data = 0)
+        {
+            return type.Expression.Accept(this);
+        }
+
         public override string VisitTupleTypeExpr(AstTupleTypeExpr expr, int data = 0)
         {
             var members = string.Join(", ", expr.Members.Select(m => m.Accept(this)));
