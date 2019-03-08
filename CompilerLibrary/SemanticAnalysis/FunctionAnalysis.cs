@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
@@ -112,7 +113,10 @@ namespace Cheez
                 if (func.ReturnValue != null && !func.Body.GetFlag(StmtFlags.Returns))
                 {
                     // TODO: check that all return values are set
-                    func.Body.Statements.Add(new AstReturnStmt(null));
+                    var ret = new AstReturnStmt(null, new Location(func.Body.End));
+                    ret.Scope = func.Body.SubScope;
+                    AnalyzeStatement(func, ret);
+                    func.Body.Statements.Add(ret);
                 }
             }
         }
@@ -157,6 +161,8 @@ namespace Cheez
                         {
                             ReportError(ass, $"Can't assign a value of type {value.Type} to the variable '{id.Name}' of type {id.Type}");
                         }
+
+                        ass.Scope.SetInitialized(id.Symbol);
                         break;
                     }
 
@@ -239,19 +245,49 @@ namespace Cheez
                         $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({func.FunctionType.ReturnType})");
                 }
             }
+            else if (func.ReturnValue != null)
+            {
+                // TODO: check wether all return values have been assigned
+                var missing = new List<ILocation>();
+                if (func.ReturnValue.Name == null)
+                {
+                    // TODO: check for named tuple
+                    ReportError(ret, $"Return value has to be provided in non void function");
+                }
+                else
+                {
+                    if (!ret.Scope.IsInitialized(func.ReturnValue))
+                    {
+                        missing.Add(func.ReturnValue);
+                    }
+                }
+
+
+                if (missing.Count > 0)
+                {
+                    ReportError(ret, $"Not all return values have been initialized", missing.Select(l => ("This one is not initialized:", l)));
+                }
+            }
 
             ret.SetFlag(StmtFlags.Returns);
         }
 
         private void AnalyzeBlockStatement(AstFunctionDecl func, AstBlockStmt block)
         {
+            block.SubScope = new Scope("{}", block.Scope);
             foreach (var stmt in block.Statements)
             {
-                stmt.Scope = block.Scope;
+                stmt.Scope = block.SubScope;
+                stmt.Parent = block;
                 AnalyzeStatement(func, stmt);
 
                 if (stmt.GetFlag(StmtFlags.Returns))
                     block.SetFlag(StmtFlags.Returns);
+            }
+
+            foreach (var symbol in block.SubScope.InitializedSymbols)
+            {
+                block.Scope.SetInitialized(symbol);
             }
 
             if (block.Statements.LastOrDefault() is AstExprStmt expr)

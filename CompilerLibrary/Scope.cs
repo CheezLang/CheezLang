@@ -104,6 +104,7 @@ namespace Cheez
         public List<AstStatement> TypeDeclarations { get; } = new List<AstStatement>();
         public List<AstImplBlock> ImplBlocks { get; } = new List<AstImplBlock>();
 
+        public IEnumerable<ISymbol> InitializedSymbols => mInitializedSymbols.Keys;
 
         //private CTypeFactory types = new CTypeFactory();
 
@@ -111,6 +112,7 @@ namespace Cheez
         private Dictionary<string, List<IOperator>> mOperatorTable = new Dictionary<string, List<IOperator>>();
         private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
         private Dictionary<AstImplBlock, List<AstFunctionDecl>> mImplTable = new Dictionary<AstImplBlock, List<AstFunctionDecl>>();
+        private Dictionary<ISymbol, int> mInitializedSymbols = new Dictionary<ISymbol, int>();
 
         public IEnumerable<KeyValuePair<string, ISymbol>> Symbols => mSymbolTable.AsEnumerable();
 
@@ -140,6 +142,16 @@ namespace Cheez
         //{
         //    return types.GetCheezType(name) ?? Parent?.GetCheezType(name);
         //}
+
+        public bool IsInitialized(ISymbol symbol)
+        {
+            return mInitializedSymbols.ContainsKey(symbol);
+        }
+
+        public void SetInitialized(ISymbol symbol, int location = -1)
+        {
+            mInitializedSymbols[symbol] = location;
+        }
 
         public List<IOperator> GetOperators(string name, CheezType lhs, CheezType rhs)
         {

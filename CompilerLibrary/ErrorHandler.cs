@@ -19,7 +19,7 @@ namespace Cheez
         public int LineNumber { get; set; }
 
         public List<Error> SubErrors { get; set; } = new List<Error>();
-        public List<(string message, ILocation location)> Details { get; set; }
+        public IEnumerable<(string message, ILocation location)> Details { get; set; }
 
         public Error([CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {

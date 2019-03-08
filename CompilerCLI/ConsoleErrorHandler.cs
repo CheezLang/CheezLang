@@ -66,7 +66,7 @@ namespace CheezCLI
             }
 
             // details
-            if (error.Details?.Count > 0)
+            if (error.Details != null)
             {
                 foreach (var d in error.Details)
                 {

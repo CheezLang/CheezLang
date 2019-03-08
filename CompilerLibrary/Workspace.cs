@@ -126,6 +126,21 @@ namespace Cheez
             });
         }
 
+        [SkipInStackFrame]
+        public void ReportError(ILocation lc, string message, IEnumerable<(string, ILocation)> details)
+        {
+            var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
+            mCompiler.ErrorHandler.ReportError(new Error
+            {
+                Location = lc,
+                Message = message,
+                Details = details,
+                File = callingFunctionFile,
+                Function = callingFunctionName,
+                LineNumber = callLineNumber,
+            });
+        }
+
         public IEnumerable<AstImplBlock> GetTraitImplementations(CheezType type)
         {
             if (Implementations.TryGetValue(type, out var impls))
