@@ -422,6 +422,11 @@ namespace Cheez.Ast.Expressions
 
         [DebuggerStepThrough]
         public override AstExpression Clone() => CopyValuesTo(new AstNullExpr());
+
+        public override string ToString()
+        {
+            return "<null>";
+        }
     }
 
     public class AstTupleExpr : AstExpression

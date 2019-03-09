@@ -57,6 +57,13 @@ namespace Cheez
 
             switch (expr)
             {
+                case AstNullExpr n:
+                    if (expected is PointerType)
+                        n.Type = expected;
+                    else
+                        n.Type = PointerType.GetPointerType(CheezType.Any);
+                    break;
+
                 case AstBoolExpr b:
                     b.Type = CheezType.Bool;
                     b.Value = b.BoolValue;
@@ -126,6 +133,10 @@ namespace Cheez
                     InferTypeCompCall(c, expected, unresolvedDependencies, allDependencies, newInstances);
                     break;
 
+                case AstAddressOfExpr ao:
+                    InferTypeAddressOf(ao, expected, unresolvedDependencies, allDependencies, newInstances);
+                    break;
+
                 default:
                     throw new NotImplementedException();
             }
@@ -134,6 +145,22 @@ namespace Cheez
             {
                 polyTypeMap[p.Name] = expr.Type;
             }
+        }
+
+        private void InferTypeAddressOf(AstAddressOfExpr ao, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
+        {
+            CheezType subExpected = null;
+            if (expected is PointerType p)
+            {
+                subExpected = p.TargetType;
+            }
+
+            ao.SubExpression.Scope = ao.Scope;
+            InferTypes(ao.SubExpression, subExpected, unresolvedDependencies, allDependencies, newInstances);
+
+            // check wether sub is an lvalue
+
+            ao.Type = PointerType.GetPointerType(ao.SubExpression.Type);
         }
 
         private void InferTypeCompCall(AstCompCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
@@ -288,6 +315,25 @@ namespace Cheez
                         }
 
                         expr.Type = tuple.Members[memberIndex].type;
+                        break;
+                    }
+
+                case SliceType slice:
+                    {
+                        var name = expr.Right.Name;
+                        if (name == "data")
+                        {
+                            expr.Type = slice.ToPointerType();
+                        }
+                        else if (name == "length")
+                        {
+                            expr.Type = IntType.GetIntType(4, true);
+                        }
+                        else
+                        {
+                            // TODO: check for impl functions
+                            ReportError(expr, $"No subscript '{name}' exists for slice type {slice}");
+                        }
                         break;
                     }
 
@@ -507,7 +553,7 @@ namespace Cheez
                 ConvertLiteralTypeToDefaultType(arg.Expr);
                 arg.Type = arg.Expr.Type;
 
-                if ((!func.VarArgs || arg.Index < func.Parameters.Length) && arg.Type != type)
+                if ((!func.VarArgs || arg.Index < func.Parameters.Length) && arg.Type != type && !arg.Type.IsErrorType)
                 {
                     ReportError(arg, $"Type of argument ({arg.Type}) does not match type of parameter ({type})");
                 }

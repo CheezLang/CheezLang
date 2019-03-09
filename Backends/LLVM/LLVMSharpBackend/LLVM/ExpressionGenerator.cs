@@ -42,8 +42,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstTempVarExpr t: return GenerateTempVarExpr(t, target, deref);
                 case AstSymbolExpr s: return GenerateSymbolExpr(s, target, deref);
                 case AstBlockExpr block: return GenerateBlock(block, target, deref);
+                case AstNullExpr nll: return LLVM.ConstPointerNull(CheezTypeToLLVMType(nll.Type));
+                case AstAddressOfExpr ao: return GenerateAddressOf(ao, target, deref);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef? GenerateAddressOf(AstAddressOfExpr ao, LLVMValueRef? target, bool deref)
+        {
+            var ptr = GenerateExpression(ao.SubExpression, null, false);
+            return ptr;
         }
 
         private LLVMValueRef? GenerateBlock(AstBlockExpr block, LLVMValueRef? target, bool deref)
@@ -147,7 +155,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // arguments
             var args = c.Arguments.Select(a => GenerateExpression(a, null, true).Value).ToArray();
 
-            return builder.CreateCall(func.Value, args, "");
+            var call = builder.CreateCall(func.Value, args, "");
+            var callConv = LLVM.GetFunctionCallConv(func.Value);
+            LLVM.SetInstructionCallConv(call, callConv);
+
+            return call;
         }
 
         private LLVMValueRef? GenerateIndexExpr(AstArrayAccessExpr expr, LLVMValueRef? target, bool deref)
@@ -231,9 +243,26 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         return result;
                     }
 
-                default:
-                    throw new NotImplementedException();
+                case SliceType slice:
+                    {
+                        if (expr.Right.Name == "data")
+                        {
+                            var left = GenerateExpression(expr.Left, null, false);
+                            var dataPtrPtr = builder.CreateStructGEP(left.Value, 1, "");
+                            var dataPtr = builder.CreateLoad(dataPtrPtr, "");
+                            return dataPtr;
+                        }
+                        else if (expr.Right.Name == "length")
+                        {
+                            var left = GenerateExpression(expr.Left, null, false);
+                            var lengthPtrPtr = builder.CreateStructGEP(left.Value, 0, "");
+                            var lengthPtr = builder.CreateLoad(lengthPtrPtr, "");
+                            return lengthPtr;
+                        }
+                        break;
+                    }
             }
+            throw new NotImplementedException();
         }
 
         public LLVMValueRef? GenerateTupleExpr(AstTupleExpr expr, LLVMValueRef? maybeTarget, bool deref)
