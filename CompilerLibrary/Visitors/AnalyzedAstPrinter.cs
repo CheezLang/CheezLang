@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Text;
+using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
@@ -17,6 +18,16 @@ namespace Cheez.Visitors
                 writer.WriteLine(s.Accept(this, 0));
                 writer.WriteLine();
             }
+        }
+
+        public string VisitDirective(AstDirective dir)
+        {
+            var name = "#" + dir.Name.Accept(this);
+            if (dir.Arguments.Count > 0)
+            {
+                name += $"({string.Join(", ", dir.Arguments.Select(a => a.Accept(this)))})";
+            }
+            return name;
         }
 
         #region Statements
@@ -81,6 +92,9 @@ namespace Cheez.Visitors
 
                 if (function.ReturnValue != null)
                     head += $" -> {function.ReturnValue.Accept(this)}";
+
+                if (function.Directives.Count > 0)
+                    head += " " + string.Join(" ", function.Directives.Select(d => VisitDirective(d)));
 
                 sb.Append($"{head} {body}".Indent(indentLevel));
                 return sb.ToString();
