@@ -97,7 +97,7 @@ namespace Cheez
                 }
             }
 
-            if (func.FunctionType.IsErrorType)
+            if (func.FunctionType.IsErrorType || func.FunctionType.IsPolyType)
                 return;
 
             var prevCurrentFunction = currentFunction;

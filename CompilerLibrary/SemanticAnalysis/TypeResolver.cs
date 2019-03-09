@@ -68,21 +68,21 @@ namespace Cheez
                 case AstPointerTypeExpr p:
                     {
                         p.Target.Scope = typeExpr.Scope;
-                        var subType = ResolveTypeHelper(p.Target, deps, instances);
+                        var subType = ResolveTypeHelper(p.Target, deps, instances, poly_from_scope);
                         return PointerType.GetPointerType(subType);
                     }
 
                 case AstSliceTypeExpr a:
                     {
                         a.Target.Scope = typeExpr.Scope;
-                        var subType = ResolveTypeHelper(a.Target, deps, instances);
+                        var subType = ResolveTypeHelper(a.Target, deps, instances, poly_from_scope);
                         return SliceType.GetSliceType(subType);
                     }
 
                 case AstArrayTypeExpr arr:
                     {
                         arr.Target.Scope = typeExpr.Scope;
-                        var subType = ResolveTypeHelper(arr.Target, deps, instances);
+                        var subType = ResolveTypeHelper(arr.Target, deps, instances, poly_from_scope);
 
                         arr.SizeExpr.Scope = typeExpr.Scope;
                         InferType(arr.SizeExpr, IntType.DefaultType);
@@ -105,7 +105,7 @@ namespace Cheez
                         (string name, CheezType type)[] par = new (string, CheezType)[func.ParameterTypes.Count];
                         for (int i = 0; i < par.Length; i++) {
                             func.ParameterTypes[i].Scope = func.Scope;
-                            par[i].type = ResolveTypeHelper(func.ParameterTypes[i], deps, instances);
+                            par[i].type = ResolveTypeHelper(func.ParameterTypes[i], deps, instances, poly_from_scope);
                         }
 
                         CheezType ret = CheezType.Void;
@@ -113,7 +113,7 @@ namespace Cheez
                         if (func.ReturnType != null)
                         {
                             func.ReturnType.Scope = func.Scope;
-                            ret = ResolveTypeHelper(func.ReturnType, deps, instances);
+                            ret = ResolveTypeHelper(func.ReturnType, deps, instances, poly_from_scope);
                         }
 
                         return new FunctionType(par, ret);
@@ -123,13 +123,13 @@ namespace Cheez
                     {
                         @struct.Struct.Scope = @struct.Scope;
                         @struct.Struct.Type = CheezType.Type;
-                        @struct.Struct.Value = ResolveTypeHelper(@struct.Struct, deps, instances);
+                        @struct.Struct.Value = ResolveTypeHelper(@struct.Struct, deps, instances, poly_from_scope);
 
                         foreach (var arg in @struct.Arguments)
                         {
                             arg.Scope = @struct.Scope;
                             arg.Type = CheezType.Type;
-                            arg.Value = ResolveTypeHelper(arg, deps, instances);
+                            arg.Value = ResolveTypeHelper(arg, deps, instances, poly_from_scope);
                         }
 
                         // instantiate struct
@@ -145,7 +145,7 @@ namespace Cheez
                             var m = tuple.Members[i];
                             m.Scope = tuple.Scope;
                             m.TypeExpr.Scope = tuple.Scope;
-                            m.Type = ResolveTypeHelper(m.TypeExpr, deps, instances);
+                            m.Type = ResolveTypeHelper(m.TypeExpr, deps, instances, poly_from_scope);
 
                             members[i] = (m.Name?.Name, m.Type);
                         }
@@ -204,6 +204,27 @@ namespace Cheez
                     {
                         if (type is ArrayType t)
                             CollectPolyTypes(expr, p.Target, t.TargetType, result);
+                        else
+                            ReportError(expr, $"The type of the expression does not match the type pattern '{typeExpr}'");
+                        break;
+                    }
+
+                case AstTupleTypeExpr te:
+                    {
+                        if (type is TupleType tt)
+                        {
+                            if (te.Members.Count != tt.Members.Length)
+                            {
+                                ReportError(expr, $"The type of the expression does not match the tuple pattern '{typeExpr}'");
+                            }
+                            else
+                            {
+                                for (var i = 0; i < te.Members.Count; i++)
+                                {
+                                    CollectPolyTypes(expr, te.Members[i].TypeExpr, tt.Members[i].type, result);
+                                }
+                            }
+                        }
                         else
                             ReportError(expr, $"The type of the expression does not match the type pattern '{typeExpr}'");
                         break;

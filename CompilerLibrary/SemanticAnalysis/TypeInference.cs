@@ -467,6 +467,13 @@ namespace Cheez
             // check parameter types
             Debug.Assert(expr.Arguments.Count == instance.Parameters.Count);
 
+            if (instance.Type.IsPolyType)
+            {
+                // error in function declaration
+                expr.Type = CheezType.Error;
+                return;
+            }
+
             for (int i = 0; i < expr.Arguments.Count; i++)
             {
                 var a = expr.Arguments[i];

@@ -26,7 +26,7 @@ namespace Cheez.Types.Complex
         private static List<TupleType> sTypes = new List<TupleType>();
 
         public (string name, CheezType type)[] Members { get; }
-        public override bool IsPolyType => false;
+        public override bool IsPolyType => Members.Any(m => m.type.IsPolyType);
         public override bool IsErrorType => Members.Any(m => m.type.IsErrorType);
 
         private TupleType((string name, CheezType type)[] members)
@@ -151,7 +151,7 @@ namespace Cheez.Types.Complex
     {
         //private static List<FunctionType> sTypes = new List<FunctionType>();
 
-        public override bool IsPolyType => false;
+        public override bool IsPolyType => ReturnType.IsPolyType || Parameters.Any(p => p.type.IsPolyType);
         public bool VarArgs { get; set; }
         public (string name, CheezType type)[] Parameters { get; private set; }
         public CheezType ReturnType { get; private set; }

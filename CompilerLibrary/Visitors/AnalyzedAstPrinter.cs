@@ -509,7 +509,7 @@ namespace Cheez.Visitors
 
         public override string VisitTupleTypeExpr(AstTupleTypeExpr expr, int data = 0)
         {
-            var members = string.Join(", ", expr.Members.Select(m => m.Accept(this)));
+            var members = string.Join(", ", expr.Members.Select(m => m.TypeExpr.Accept(this)));
             return "(" + members + ")";
         }
 
