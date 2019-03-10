@@ -14,11 +14,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
     public partial class LLVMCodeGenerator
     {
 
-        private LLVMValueRef? GenerateExpression(LLVMValueRef ptr, AstExpression expr, LLVMValueRef? target, bool deref)
+        private LLVMValueRef? GenerateExpressionHelper(AstExpression expr, LLVMValueRef? target, bool deref)
         {
             var v = GenerateExpression(expr, target, true);
-            if (v != null)
-                builder.CreateStore(v.Value, ptr);
+            if (v != null && target != null)
+                builder.CreateStore(v.Value, target.Value);
 
             return target ?? v;
         }
@@ -44,8 +44,35 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstBlockExpr block: return GenerateBlock(block, target, deref);
                 case AstNullExpr nll: return LLVM.ConstPointerNull(CheezTypeToLLVMType(nll.Type));
                 case AstAddressOfExpr ao: return GenerateAddressOf(ao, target, deref);
+                case AstIfExpr iff: return GenerateIfExpr(iff, target, deref);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef? GenerateIfExpr(AstIfExpr iff, LLVMValueRef? target, bool deref)
+        {
+            LLVMValueRef? result = target;
+            if (iff.Type != CheezType.Void && result == null) result = CreateLocalVariable(iff.Type);
+
+            var cond = GenerateExpression(iff.Condition, null, true);
+
+            var bbIf = LLVM.AppendBasicBlock(currentLLVMFunction, "_if");
+            var bbElse = LLVM.AppendBasicBlock(currentLLVMFunction, "_else");
+            var bbEnd = LLVM.AppendBasicBlock(currentLLVMFunction, "_end");
+
+            builder.CreateCondBr(cond.Value, bbIf, bbElse);
+
+            builder.PositionBuilderAtEnd(bbIf);
+            GenerateExpressionHelper(iff.IfCase, result, true);
+            builder.CreateBr(bbEnd);
+
+            builder.PositionBuilderAtEnd(bbElse);
+            GenerateExpressionHelper(iff.ElseCase, result, true);
+            builder.CreateBr(bbEnd);
+
+            builder.PositionBuilderAtEnd(bbEnd);
+
+            return null;
         }
 
         private LLVMValueRef? GenerateAddressOf(AstAddressOfExpr ao, LLVMValueRef? target, bool deref)
@@ -103,7 +130,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 var x = CreateLocalVariable(t.Type);
                 valueMap[t] = x;
-                GenerateExpression(x, t.Expr, x, true);
+                GenerateExpressionHelper(t.Expr, x, true);
             }
 
             var tmp = valueMap[t];
@@ -204,7 +231,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 foreach (var mem in expr.MemberInitializers)
                 {
                     var ptr = builder.CreateStructGEP(target.Value, (uint)mem.Index, "");
-                    GenerateExpression(ptr, mem.Value, target, false);
+                    GenerateExpressionHelper(mem.Value, ptr, false);
                 }
 
                 return null;

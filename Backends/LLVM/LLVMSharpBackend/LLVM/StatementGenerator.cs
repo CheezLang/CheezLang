@@ -191,7 +191,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
 
             var ptr = GenerateExpression(ass.Pattern, null, false);
-            GenerateExpression(ptr.Value, ass.Value, ptr, true);
+            GenerateExpressionHelper(ass.Value, ptr, true);
         }
 
         private void GenerateExprStatement(AstExprStmt expr)
@@ -246,7 +246,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 foreach (var v in decl.SubDeclarations)
                 {
                     var varPtr = valueMap[v];
-                    var val = GenerateExpression(varPtr, v.Initializer, varPtr, true);
+                    var val = GenerateExpressionHelper(v.Initializer, varPtr, true);
                 }
             }
 
@@ -262,7 +262,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 if (v.Initializer != null)
                 {
-                    GenerateExpression(varPtr, v.Initializer, varPtr, true);
+                    GenerateExpressionHelper(v.Initializer, varPtr, true);
                 }
             }
         }

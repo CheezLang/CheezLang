@@ -284,8 +284,6 @@ namespace Cheez.Parsing
                     return (false, ParseVariableDeclaration(TokenType.ClosingBrace));
                 case TokenType.KwTypedef:
                     return (false, ParseTypedefDeclaration());
-                case TokenType.KwIf:
-                    return (false, ParseIfStatement());
                 case TokenType.KwWhile:
                     return (false, ParseWhileStatement());
                 case TokenType.KwEnum:
@@ -794,8 +792,7 @@ namespace Cheez.Parsing
 
                     switch (s.stmt)
                     {
-                        case AstIfStmt _:
-                        case AstExprStmt es when es.Expr is AstBlockExpr:
+                        case AstExprStmt es when es.Expr is AstBlockExpr || es.Expr is AstIfExpr:
                             break;
 
                         default:
@@ -918,12 +915,12 @@ namespace Cheez.Parsing
             return new AstWhileStmt(condition, body, init, post, new Location(beg, body.End));
         }
 
-        private AstIfStmt ParseIfStatement()
+        private AstIfExpr ParseIfExpr()
         {
             TokenLocation beg = null, end = null;
             AstExpression condition = null;
-            AstStatement ifCase = null;
-            AstStatement elseCase = null;
+            AstExpression ifCase = null;
+            AstExpression elseCase = null;
             AstVariableDecl pre = null;
 
             beg = Consume(TokenType.KwIf, ErrMsg("keyword 'if'", "at beginning of if statement")).location;
@@ -940,7 +937,7 @@ namespace Cheez.Parsing
             condition = ParseExpression(ErrMsg("expression", "after keyword 'if'"));
 
             SkipNewlines();
-            ifCase = ParseBlockStatement();
+            ifCase = ParseBlockExpr();
             end = ifCase.End;
 
             SkipNewlines();
@@ -950,13 +947,13 @@ namespace Cheez.Parsing
                 SkipNewlines();
 
                 if (CheckToken(TokenType.KwIf))
-                    elseCase = ParseIfStatement();
+                    elseCase = ParseIfExpr();
                 else
-                    elseCase = ParseBlockStatement();
+                    elseCase = ParseBlockExpr();
                 end = elseCase.End;
             }
 
-            return new AstIfStmt(condition, ifCase, elseCase, pre, new Location(beg, end));
+            return new AstIfExpr(condition, ifCase, elseCase, pre, new Location(beg, end));
         }
 
         private AstFunctionDecl ParseFunctionDeclaration()
@@ -1544,6 +1541,9 @@ namespace Cheez.Parsing
 
                 case TokenType.OpenBrace:
                     return ParseBlockExpr();
+
+                case TokenType.KwIf:
+                    return ParseIfExpr();
 
                 case TokenType.OpenParen:
                     {

@@ -86,6 +86,32 @@ namespace Cheez.Ast.Expressions
         }
     }
 
+    public class AstIfExpr : AstExpression
+    {
+        public Scope SubScope { get; set; }
+        public AstExpression Condition { get; set; }
+        public AstExpression IfCase { get; set; }
+        public AstExpression ElseCase { get; set; }
+        public AstVariableDecl PreAction { get; set; }
+
+        public override bool IsPolymorphic => false;
+
+        public AstIfExpr(AstExpression cond, AstExpression ifCase, AstExpression elseCase = null, AstVariableDecl pre = null, ILocation Location = null)
+            : base(Location: Location)
+        {
+            this.Condition = cond;
+            this.IfCase = ifCase;
+            this.ElseCase = elseCase;
+            this.PreAction = pre;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitIfExpr(this, data);
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstIfExpr(Condition.Clone(), IfCase.Clone(), ElseCase?.Clone(), PreAction?.Clone() as AstVariableDecl));
+    }
+
     public class AstBlockExpr : AstExpression
     {
         public List<AstStatement> Statements { get; }
@@ -101,7 +127,7 @@ namespace Cheez.Ast.Expressions
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBlockStmt(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBlockExpr(this, data);
 
         public override AstExpression Clone()
          => CopyValuesTo(new AstBlockExpr(Statements.Select(s => s.Clone()).ToList()));

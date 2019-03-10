@@ -19,6 +19,10 @@ namespace Cheez
     {
         private void ConvertLiteralTypeToDefaultType(AstExpression expr, CheezType expected = null)
         {
+            // :hack
+            if (expected == CheezType.Void) expected = null;
+
+
             if (expr.Type == IntType.LiteralType)
             {
                 if (expected != null && !(expected is IntType)) throw new Exception("Can't convert int to non-int type");
@@ -35,13 +39,13 @@ namespace Cheez
         private void InferType(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies = null, HashSet<AstSingleVariableDecl> allDependencies = null, Dictionary<string, CheezType> polyTypeMap = null)
         {
             List<AstFunctionDecl> newInstances = new List<AstFunctionDecl>();
-            InferTypes(expr, expected, unresolvedDependencies, allDependencies, newInstances, polyTypeMap);
+            InferTypeHelper(expr, expected, unresolvedDependencies, allDependencies, newInstances, polyTypeMap);
 
             if (newInstances.Count > 0)
                 AnalyseFunctions(newInstances);
         }
 
-        private void InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances, Dictionary<string, CheezType> polyTypeMap = null)
+        private void InferTypeHelper(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances, Dictionary<string, CheezType> polyTypeMap = null)
         {
             // :fix
             // does not work because tuple containing abstract types does currently not count as an abstract type
@@ -129,6 +133,10 @@ namespace Cheez
                     InferTypeBlock(b, expected, unresolvedDependencies, allDependencies, newInstances);
                     break;
 
+                case AstIfExpr i:
+                    InferTypeIfExpr(i, expected, unresolvedDependencies, allDependencies, newInstances);
+                    break;
+
                 case AstCompCallExpr c:
                     InferTypeCompCall(c, expected, unresolvedDependencies, allDependencies, newInstances);
                     break;
@@ -147,6 +155,47 @@ namespace Cheez
             }
         }
 
+        private void InferTypeIfExpr(AstIfExpr iff, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
+        {
+            iff.Condition.Scope = iff.Scope;
+            InferTypeHelper(iff.Condition, CheezType.Bool, unresolvedDependencies, allDependencies, newInstances);
+            ConvertLiteralTypeToDefaultType(iff.Condition);
+
+            if (iff.Condition.Type != CheezType.Bool && !(iff.Condition.Type is PointerType))
+            {
+                ReportError(iff.Condition, $"Condition of if statement must be either a bool or a pointer but is {iff.Condition.Type}");
+            }
+
+            iff.IfCase.Scope = iff.Scope;
+            InferTypeHelper(iff.IfCase, expected, unresolvedDependencies, allDependencies, newInstances);
+            ConvertLiteralTypeToDefaultType(iff.IfCase, expected);
+
+            if (iff.ElseCase != null)
+            {
+                iff.ElseCase.Scope = iff.Scope;
+                InferTypeHelper(iff.ElseCase, expected, unresolvedDependencies, allDependencies, newInstances);
+                ConvertLiteralTypeToDefaultType(iff.ElseCase, expected);
+                
+                if (iff.IfCase.Type == iff.ElseCase.Type)
+                {
+                    iff.Type = iff.IfCase.Type;
+                }
+                else
+                {
+                    iff.Type = new SumType(iff.IfCase.Type, iff.ElseCase.Type);
+                }
+
+                if (iff.IfCase.GetFlag(ExprFlags.Returns) && iff.ElseCase.GetFlag(ExprFlags.Returns))
+                {
+                    iff.SetFlag(ExprFlags.Returns, true);
+                }
+            }
+            else
+            {
+                iff.Type = CheezType.Void;
+            }
+        }
+
         private void InferTypeAddressOf(AstAddressOfExpr ao, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             CheezType subExpected = null;
@@ -156,7 +205,7 @@ namespace Cheez
             }
 
             ao.SubExpression.Scope = ao.Scope;
-            InferTypes(ao.SubExpression, subExpected, unresolvedDependencies, allDependencies, newInstances);
+            InferTypeHelper(ao.SubExpression, subExpected, unresolvedDependencies, allDependencies, newInstances);
 
             // check wether sub is an lvalue
 
@@ -177,8 +226,8 @@ namespace Cheez
 
                         expr.Arguments[0].Scope = expr.Scope;
                         expr.Arguments[1].Scope = expr.Scope;
-                        InferTypes(expr.Arguments[0], CheezType.Type, unresolvedDependencies, allDependencies, newInstances);
-                        InferTypes(expr.Arguments[1], IntType.DefaultType, unresolvedDependencies, allDependencies, newInstances);
+                        InferTypeHelper(expr.Arguments[0], CheezType.Type, unresolvedDependencies, allDependencies, newInstances);
+                        InferTypeHelper(expr.Arguments[1], IntType.DefaultType, unresolvedDependencies, allDependencies, newInstances);
 
                         if (expr.Arguments[0].Type != CheezType.Type || !(expr.Arguments[0].Value is TupleType))
                         {
@@ -231,7 +280,7 @@ namespace Cheez
             if (block.Statements.LastOrDefault() is AstExprStmt expr)
             {
                 expr.Expr.Scope = block.SubScope;
-                InferTypes(expr.Expr, expected, unresolvedDependencies, allDependencies, newInstances);
+                InferTypeHelper(expr.Expr, expected, unresolvedDependencies, allDependencies, newInstances);
                 ConvertLiteralTypeToDefaultType(expr.Expr, expected);
                 block.Type = expr.Expr.Type;
             }
@@ -250,10 +299,10 @@ namespace Cheez
         private void InferTypeIndexExpr(AstArrayAccessExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             expr.SubExpression.Scope = expr.Scope;
-            InferTypes(expr.SubExpression, null, unresolvedDependencies, allDependencies, newInstances);
+            InferTypeHelper(expr.SubExpression, null, unresolvedDependencies, allDependencies, newInstances);
 
             expr.Indexer.Scope = expr.Scope;
-            InferTypes(expr.Indexer, null, unresolvedDependencies, allDependencies, newInstances);
+            InferTypeHelper(expr.Indexer, null, unresolvedDependencies, allDependencies, newInstances);
 
             if ((unresolvedDependencies?.Count ?? 0) != 0)
             {
@@ -296,7 +345,7 @@ namespace Cheez
         private void InferTypeDotExpr(AstDotExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             expr.Left.Scope = expr.Scope;
-            InferTypes(expr.Left, null, unresolvedDependencies, allDependencies, newInstances);
+            InferTypeHelper(expr.Left, null, unresolvedDependencies, allDependencies, newInstances);
 
             if (expr.Left.Type.IsErrorType)
                 return;
@@ -353,7 +402,7 @@ namespace Cheez
                 v.Scope = expr.Scope;
 
                 var e = tupleType?.Members[i].type;
-                InferTypes(v, e, unresolvedDependencies, allDependencies, newInstances);
+                InferTypeHelper(v, e, unresolvedDependencies, allDependencies, newInstances);
 
                 // TODO: do somewhere else
                 ConvertLiteralTypeToDefaultType(v);
@@ -367,7 +416,7 @@ namespace Cheez
         private void InferTypeCallExpr(AstCallExpr expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
             expr.Function.Scope = expr.Scope;
-            InferTypes(expr.Function, null, unresolvedDependencies, allDependencies, newInstances);
+            InferTypeHelper(expr.Function, null, unresolvedDependencies, allDependencies, newInstances);
 
             switch (expr.Function.Type)
             {
@@ -485,7 +534,7 @@ namespace Cheez
                 arg.Scope = expr.Scope;
                 arg.Expr.Scope = arg.Scope;
 
-                InferTypes(arg.Expr, null, unresolvedDependencies, allDependencies, newInstances);
+                InferTypeHelper(arg.Expr, null, unresolvedDependencies, allDependencies, newInstances);
                 ConvertLiteralTypeToDefaultType(arg.Expr);
                 arg.Type = arg.Expr.Type;
             }
@@ -557,7 +606,7 @@ namespace Cheez
             {
                 arg.Scope = expr.Scope;
                 arg.Expr.Scope = arg.Scope;
-                InferTypes(arg.Expr, type, unresolvedDependencies, allDependencies, newInstances);
+                InferTypeHelper(arg.Expr, type, unresolvedDependencies, allDependencies, newInstances);
                 ConvertLiteralTypeToDefaultType(arg.Expr);
                 arg.Type = arg.Expr.Type;
 
@@ -644,7 +693,7 @@ namespace Cheez
                     var mem = type.Declaration.Members[i];
 
                     mi.Value.Scope = expr.Scope;
-                    InferTypes(mi.Value, mem.Type, unresolvedDependencies, allDependencies, newInstances);
+                    InferTypeHelper(mi.Value, mem.Type, unresolvedDependencies, allDependencies, newInstances);
                     ConvertLiteralTypeToDefaultType(mi.Value);
 
                     mi.Name = new AstIdExpr(mem.Name.Name, false, mi.Value);
@@ -670,7 +719,7 @@ namespace Cheez
                     mi.Index = memIndex;
 
                     mi.Value.Scope = expr.Scope;
-                    InferTypes(mi.Value, mem.Type, unresolvedDependencies, allDependencies, newInstances);
+                    InferTypeHelper(mi.Value, mem.Type, unresolvedDependencies, allDependencies, newInstances);
                     ConvertLiteralTypeToDefaultType(mi.Value);
 
                     // TODO: check types match
@@ -687,8 +736,8 @@ namespace Cheez
             b.Left.Scope = b.Scope;
             b.Right.Scope = b.Scope;
 
-            InferTypes(b.Left, null, unresolvedDependencies, allDependencies, newInstances);
-            InferTypes(b.Right, null, unresolvedDependencies, allDependencies, newInstances);
+            InferTypeHelper(b.Left, null, unresolvedDependencies, allDependencies, newInstances);
+            InferTypeHelper(b.Right, null, unresolvedDependencies, allDependencies, newInstances);
 
             var at = new List<AbstractType>();
             if (b.Left.Type is AbstractType at1) at.Add(at1);
@@ -766,8 +815,7 @@ namespace Cheez
 
         private void InferTypesStringLiteral(AstStringLiteral s, CheezType expected)
         {
-            if (expected == CheezType.String || expected == CheezType.CString) s.Type = expected;
-            else if (s.Suffix != null)
+            if (s.Suffix != null)
             {
                 if (s.Suffix == "c") s.Type = CheezType.CString;
                 else
@@ -776,6 +824,7 @@ namespace Cheez
                     ReportError(s, $"Unknown suffix '{s.Suffix}'");
                 }
             }
+            else if (expected == CheezType.String || expected == CheezType.CString) s.Type = expected;
             else s.Type = CheezType.StringLiteral;
         }
 

@@ -21,6 +21,24 @@ namespace Cheez.Types.Complex
         public override string ToString() => Declaration.Name.Name;
     }
 
+    public class SumType : CheezType
+    {
+        public override bool IsPolyType => Variations.Any(v => v.IsPolyType);
+        public override bool IsErrorType => Variations.Any(v => v.IsErrorType);
+
+        public CheezType[] Variations { get; }
+
+        public SumType(params CheezType[] vars)
+        {
+            Variations = vars;
+        }
+
+        public override string ToString()
+        {
+            return string.Join(" | ", Variations.Select(v => v.ToString()));
+        }
+    }
+
     public class TupleType : CheezType
     {
         private static List<TupleType> sTypes = new List<TupleType>();

@@ -152,7 +152,7 @@ namespace Cheez.Visitors
             return sb.ToString();
         }
 
-        public override string VisitIfStmt(AstIfStmt ifs, int indentLevel = 0)
+        public override string VisitIfExpr(AstIfExpr ifs, int indentLevel = 0)
         {
             var sb = new StringBuilder();
             sb.Append("if ");
@@ -183,7 +183,7 @@ namespace Cheez.Visitors
             return $"defer {def.Deferred.Accept(this)}".Indent(data);
         }
 
-        public override string VisitBlockStmt(AstBlockExpr block, int indentLevel = 0)
+        public override string VisitBlockExpr(AstBlockExpr block, int indentLevel = 0)
         {
             var sb = new StringBuilder();
             {

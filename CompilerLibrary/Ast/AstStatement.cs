@@ -161,30 +161,6 @@ namespace Cheez.Ast.Statements
         public override AstStatement Clone() => CopyValuesTo(new AstReturnStmt(ReturnValue.Clone()));
     }
 
-    public class AstIfStmt : AstStatement
-    {
-        public Scope SubScope { get; set; }
-        public AstExpression Condition { get; set; }
-        public AstStatement IfCase { get; set; }
-        public AstStatement ElseCase { get; set; }
-        public AstVariableDecl PreAction { get; set; }
-
-        public AstIfStmt(AstExpression cond, AstStatement ifCase, AstStatement elseCase = null, AstVariableDecl pre = null, ILocation Location = null)
-            : base(Location: Location)
-        {
-            this.Condition = cond;
-            this.IfCase = ifCase;
-            this.ElseCase = elseCase;
-            this.PreAction = pre;
-        }
-
-        [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitIfStmt(this, data);
-
-        public override AstStatement Clone()
-            => CopyValuesTo(new AstIfStmt(Condition.Clone(), IfCase.Clone(), ElseCase?.Clone(), PreAction?.Clone() as AstVariableDecl));
-    }
-
     public class AstAssignment : AstStatement
     {
         public AstExpression Pattern { get; set; }

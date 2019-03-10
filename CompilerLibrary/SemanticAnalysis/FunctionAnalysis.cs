@@ -7,6 +7,7 @@ using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Complex;
+using Cheez.Types.Primitive;
 
 namespace Cheez
 {
@@ -233,6 +234,11 @@ namespace Cheez
         {
             Pass1VariableDeclaration(vardecl);
             Pass6VariableDeclaration(vardecl);
+
+            if (vardecl.Type is SumType)
+            {
+                ReportError(vardecl.Pattern, $"Invalid type for variable declaration: {vardecl.Type}");
+            }
         }
 
         private void AnalyseExprStatement(AstExprStmt expr)
