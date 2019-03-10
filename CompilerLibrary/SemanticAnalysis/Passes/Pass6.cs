@@ -105,7 +105,8 @@ namespace Cheez
 
                 var allDeps = new HashSet<AstSingleVariableDecl>();
 
-                InferType(v.Initializer, v.TypeExpr?.Type, deps, allDeps);
+                InferType(v.Initializer, v.TypeExpr?.Type);
+                CollectDependencies(v.Initializer, deps, allDeps);
 
                 if (allDeps.Count > 0)
                     v.Dependencies = new List<AstSingleVariableDecl>(allDeps);
@@ -172,6 +173,73 @@ namespace Cheez
                 {
                     ReportError(pattern, $"Pattern does not match declared type: {type}");
                 }
+            }
+        }
+
+        private void CollectDependencies(AstExpression initializer, HashSet<AstSingleVariableDecl> deps, HashSet<AstSingleVariableDecl> allDeps)
+        {
+            switch (initializer)
+            {
+                case AstIdExpr id:
+                    if (id.Symbol is AstSingleVariableDecl sv)
+                    {
+                        if (sv.Type is AbstractType)
+                            deps.Add(sv);
+                        allDeps.Add(sv);
+                    }
+                    break;
+
+                case AstCallExpr c:
+                    CollectDependencies(c.Function, deps, allDeps);
+                    foreach (var a in c.Arguments) CollectDependencies(a, deps, allDeps);
+                    break;
+
+                case AstUnaryExpr u:
+                    CollectDependencies(u.SubExpr, deps, allDeps);
+                    break;
+
+                case AstArgument a:
+                    CollectDependencies(a.Expr, deps, allDeps);
+                    break;
+
+                case AstLiteral _:
+                    break;
+
+                case AstBlockExpr b:
+                    foreach (var s in b.Statements) CollectDependencies(s, deps, allDeps);
+                    break;
+
+                case AstIfExpr iff:
+                    if (iff.PreAction != null)
+                        CollectDependencies(iff.PreAction, deps, allDeps);
+                    CollectDependencies(iff.Condition, deps, allDeps);
+                    CollectDependencies(iff.IfCase, deps, allDeps);
+                    if (iff.ElseCase != null)
+                        CollectDependencies(iff.ElseCase, deps, allDeps);
+                    break;
+
+                case AstTupleExpr t:
+                    foreach (var m in t.Values)
+                        CollectDependencies(m, deps, allDeps);
+                    break;
+
+                default: throw new NotImplementedException();
+            }
+        }
+
+        private void CollectDependencies(AstStatement s, HashSet<AstSingleVariableDecl> deps, HashSet<AstSingleVariableDecl> allDeps)
+        {
+            switch (s)
+            {
+                case AstVariableDecl vd:
+                    if (vd.Initializer != null) CollectDependencies(vd.Initializer, deps, allDeps);
+                    break;
+
+                case AstExprStmt es:
+                    CollectDependencies(es.Expr, deps, allDeps);
+                    break;
+
+                default: throw new NotImplementedException();
             }
         }
     }

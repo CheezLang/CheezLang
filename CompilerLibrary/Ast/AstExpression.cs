@@ -333,7 +333,7 @@ namespace Cheez.Ast.Expressions
             => CopyValuesTo(new AstUnaryExpr(Operator, SubExpr.Clone()));
     }
 
-    public class AstBoolExpr : AstExpression
+    public class AstBoolExpr : AstLiteral
     {
         public override bool IsPolymorphic => false;
 
@@ -474,7 +474,7 @@ namespace Cheez.Ast.Expressions
             => CopyValuesTo(new AstTupleExpr(Values.Select(v => v.Clone()).ToList(), Location));
     }
 
-    public class AstNumberExpr : AstExpression
+    public class AstNumberExpr : AstLiteral
     {
         private NumberData mData;
         public NumberData Data => mData;

@@ -148,6 +148,11 @@ namespace Cheez
 
         private void AnalyseAssignStatement(AstAssignment ass)
         {
+            if (ass.Operator != null)
+            {
+                ReportError(ass, $"Operators in assignments are not implemeted yet!");
+            }
+
             ass.Pattern.Scope = ass.Scope;
             InferType(ass.Pattern, null);
             if (ass.Pattern.Type != CheezType.Error)
