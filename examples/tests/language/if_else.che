@@ -86,8 +86,8 @@ fn Main() {
         c_printf("%s`n", "error"c)
     }
 
-    if let (ok, str) = test4(true); ok {
-        c_printf("%s`n", str)
+    if let res = test4(true); res.ok {
+        c_printf("%s`n", res.value)
     } else {
         c_printf("%s`n", "error"c)
     }

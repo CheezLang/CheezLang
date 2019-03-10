@@ -241,10 +241,28 @@ namespace Cheez
             }
         }
 
-        private void AnalyseExprStatement(AstExprStmt expr)
+        private void AnalyseExprStatement(AstExprStmt expr, bool allow_any_expr = false, bool infer_types = true)
         {
-            expr.Expr.Scope = expr.Scope;
-            InferType(expr.Expr, null);
+            if (infer_types)
+            {
+                expr.Expr.Scope = expr.Scope;
+                InferType(expr.Expr, null);
+            }
+
+            if (!allow_any_expr)
+            {
+                switch (expr.Expr)
+                {
+                    case AstIfExpr _:
+                    case AstBlockExpr _:
+                    case AstCallExpr _:
+                        break;
+
+                    default:
+                        ReportError(expr.Expr, $"This type of expression is not allowed here");
+                        break;
+                }
+            }
 
             if (expr.Expr.GetFlag(ExprFlags.Returns))
             {

@@ -291,8 +291,7 @@ namespace Cheez
                 ConvertLiteralTypeToDefaultType(expr.Expr, expected);
                 block.Type = expr.Expr.Type;
 
-                if (expr.Expr.GetFlag(ExprFlags.Returns))
-                    block.SetFlag(ExprFlags.Returns, true);
+                AnalyseExprStatement(expr, true, false);
             }
             else
             {
