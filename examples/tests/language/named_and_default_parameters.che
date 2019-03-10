@@ -1,0 +1,29 @@
+#test_expect_output("1, 2")
+#test_expect_output("3, 4")
+#test_expect_output("123, 456")
+#test_expect_output("5, 456")
+#test_expect_output("123, 6")
+#test_expect_output("7, 8")
+#test_expect_output("9, 10")
+
+// required for printing
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+fn foo(a: int, b: int) {
+    c_printf("%d, %d`n", a, b)
+}
+
+fn bar(a: int = 123, b: int = 456) {
+    c_printf("%d, %d`n", a, b)
+}
+
+fn Main() {
+    foo(1, 2)
+    foo(b = 4, a = 3)
+
+    bar()
+    bar(5)
+    bar(b = 6)
+    bar(7, 8)
+    bar(b = 10, a = 9)
+}

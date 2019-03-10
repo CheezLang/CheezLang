@@ -252,7 +252,7 @@ namespace Cheez
             if (ret.ReturnValue != null)
             {
                 ret.ReturnValue.Scope = ret.Scope;
-                InferType(ret.ReturnValue, null);
+                InferType(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
 
                 ConvertLiteralTypeToDefaultType(ret.ReturnValue);
 

@@ -1,0 +1,75 @@
+#test_expect_output("true, true")
+#test_expect_output("false, true")
+#test_expect_output("true, false")
+#test_expect_output("false, false")
+#test_expect_output("1")
+#test_expect_output("3")
+#test_expect_output("2")
+#test_expect_output("4")
+#test_expect_output("true")
+#test_expect_output("false")
+
+// required for printing
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+fn bool_to_string(b: bool) -> c_string {
+    return if b {"true"} else {"false"}
+}
+
+fn test(b1: bool, b2: bool) {
+    if b1 {
+        if b2 {
+            c_printf("true, true`n")
+        } else {
+            c_printf("true, false`n")
+        }
+    } else {
+        if b2 {
+            c_printf("false, true`n")
+        } else {
+            c_printf("false, false`n")
+        }
+    }
+}
+
+fn test2(b1: bool, b2: bool) {
+    let num = if b1 {
+        if b2 {
+            1
+        } else {
+            2
+        }
+    } else {
+        if b2 {
+            3
+        } else {
+            4
+        }
+    }
+
+    c_printf("%d`n", num)
+}
+
+fn test3(b: bool) {
+    if b {
+        c_printf("true`n")
+        return
+    }
+
+    c_printf("false`n")
+}
+
+fn Main() {
+    test(true, true)
+    test(false, true)
+    test(true, false)
+    test(false, false)
+    
+    test2(true, true)
+    test2(false, true)
+    test2(true, false)
+    test2(false, false)
+
+    test3(true)
+    test3(false)
+}
