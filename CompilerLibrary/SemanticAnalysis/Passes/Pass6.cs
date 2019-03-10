@@ -38,7 +38,7 @@ namespace Cheez
                     var decl = varDeclarations[i];
                     varDeclarations.RemoveAt(i);
 
-                    var deps = Pass6VariableDeclaration(decl);
+                    var deps = Pass6VariableDeclaration(decl, true);
 
                     if (deps.Count != 0)
                     {
@@ -82,7 +82,7 @@ namespace Cheez
             }
         }
 
-        private HashSet<AstSingleVariableDecl> Pass6VariableDeclaration(AstVariableDecl v)
+        private HashSet<AstSingleVariableDecl> Pass6VariableDeclaration(AstVariableDecl v, bool collectDependencies)
         {
             if (v.TypeExpr == null && v.Initializer == null)
             {
@@ -106,7 +106,9 @@ namespace Cheez
                 var allDeps = new HashSet<AstSingleVariableDecl>();
 
                 InferType(v.Initializer, v.TypeExpr?.Type);
-                CollectDependencies(v.Initializer, deps, allDeps);
+
+                if (collectDependencies)
+                    CollectDependencies(v.Initializer, deps, allDeps);
 
                 if (allDeps.Count > 0)
                     v.Dependencies = new List<AstSingleVariableDecl>(allDeps);
