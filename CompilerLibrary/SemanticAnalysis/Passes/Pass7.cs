@@ -8,7 +8,7 @@
             {
                 if (!func.IsGeneric)
                 {
-                    AnalyzeFunction(func);
+                    AnalyseFunction(func);
                 }
             }
         }

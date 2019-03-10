@@ -12,7 +12,7 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        private void AnalyzeFunctions(List<AstFunctionDecl> newInstances)
+        private void AnalyseFunctions(List<AstFunctionDecl> newInstances)
         {
             var nextInstances = new List<AstFunctionDecl>();
 
@@ -21,7 +21,7 @@ namespace Cheez
             {
                 foreach (var instance in newInstances)
                 {
-                    AnalyzeFunction(instance, nextInstances);
+                    AnalyseFunction(instance, nextInstances);
                 }
                 newInstances.Clear();
 
@@ -39,7 +39,7 @@ namespace Cheez
             }
         }
 
-        private void AnalyzeFunction(AstFunctionDecl func, List<AstFunctionDecl> instances = null)
+        private void AnalyseFunction(AstFunctionDecl func, List<AstFunctionDecl> instances = null)
         {
             if (func.TryGetDirective("linkname", out var ln))
             {
@@ -75,7 +75,7 @@ namespace Cheez
                     p.DefaultValue.Scope = func.Scope;
                     InferType(p.DefaultValue, p.Type);
                     ConvertLiteralTypeToDefaultType(p.DefaultValue, p.Type);
-                    if (p.DefaultValue.Type != p.Type)
+                    if (p.DefaultValue.Type != p.Type && !p.DefaultValue.Type.IsErrorType)
                     {
                         ReportError(p.DefaultValue,
                             $"The type of the default value ({p.DefaultValue.Type}) does not match the type of the parameter ({p.Type})");
@@ -118,7 +118,6 @@ namespace Cheez
             if (func.Body != null)
             {
                 func.Body.Scope = func.SubScope;
-                //AnalyzeStatement(func, func.Body);
                 InferType(func.Body, func.FunctionType.ReturnType);
 
                 if (func.ReturnValue != null && !func.Body.GetFlag(ExprFlags.Returns))
@@ -126,7 +125,7 @@ namespace Cheez
                     // TODO: check that all return values are set
                     var ret = new AstReturnStmt(null, new Location(func.Body.End));
                     ret.Scope = func.Body.SubScope;
-                    AnalyzeStatement(ret);
+                    AnalyseStatement(ret);
                     func.Body.Statements.Add(ret);
                 }
             }
@@ -134,12 +133,12 @@ namespace Cheez
             currentFunction = prevCurrentFunction;
         }
 
-        private void AnalyzeStatement(AstStatement stmt)
+        private void AnalyseStatement(AstStatement stmt)
         {
             switch (stmt)
             {
-                case AstVariableDecl vardecl: AnalyzeVariableDecl(vardecl); break;
-                case AstReturnStmt ret: AnalyzeReturnStatement(ret); break;
+                case AstVariableDecl vardecl: AnalyseVariableDecl(vardecl); break;
+                case AstReturnStmt ret: AnalyseReturnStatement(ret); break;
                 case AstExprStmt expr: AnalyseExprStatement(expr); break;
                 case AstAssignment ass: AnalyseAssignStatement(ass); break;
                 default: throw new NotImplementedException();
@@ -230,7 +229,7 @@ namespace Cheez
             }
         }
 
-        private void AnalyzeVariableDecl(AstVariableDecl vardecl)
+        private void AnalyseVariableDecl(AstVariableDecl vardecl)
         {
             Pass1VariableDeclaration(vardecl);
             Pass6VariableDeclaration(vardecl);
@@ -242,7 +241,7 @@ namespace Cheez
             InferType(expr.Expr, null);
         }
 
-        private void AnalyzeReturnStatement(AstReturnStmt ret)
+        private void AnalyseReturnStatement(AstReturnStmt ret)
         {
             if (ret.ReturnValue != null)
             {

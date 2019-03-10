@@ -41,8 +41,8 @@ namespace CheezCLI
         [Option("print-ast-raw", Default = null, HelpText = "Print the raw abstract syntax tree to a file: --print-ast-raw <filepath>")]
         public string PrintRawAst { get; set; }
 
-        [Option("print-ast-analyzed", Default = null, HelpText = "Print the analyzed abstract syntax tree to a file: --print-ast-analyzed <filepath>")]
-        public string PrintAnalyzedAst { get; set; }
+        [Option("print-ast-analysed", Default = null, HelpText = "Print the analysed abstract syntax tree to a file: --print-ast-analysed <filepath>")]
+        public string PrintAnalysedAst { get; set; }
 
         [Option("no-code", Default = false, HelpText = "Don't generate exe")]
         public bool DontEmitCode { get; set; }
@@ -142,7 +142,7 @@ namespace CheezCLI
             else options.IntDir = Path.Combine(options.OutDir, "int");
 
             if (options.PrintRawAst != null) options.PrintRawAst = Path.GetFullPath(options.PrintRawAst);
-            if (options.PrintAnalyzedAst != null) options.PrintAnalyzedAst = Path.GetFullPath(options.PrintAnalyzedAst);
+            if (options.PrintAnalysedAst != null) options.PrintAnalysedAst = Path.GetFullPath(options.PrintAnalysedAst);
 
             if (options.Stdlib != null) options.Stdlib = Path.GetFullPath(options.Stdlib);
 
@@ -210,13 +210,13 @@ namespace CheezCLI
             result.SemanticAnalysis = stopwatch.Elapsed;
             result.FrontEnd = result.LexAndParse + result.SemanticAnalysis;
 
-            if (options.PrintAnalyzedAst != null)
+            if (options.PrintAnalysedAst != null)
             {
-                var dir = Path.GetDirectoryName(options.PrintAnalyzedAst);
+                var dir = Path.GetDirectoryName(options.PrintAnalysedAst);
                 if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
-                var printer = new AnalyzedAstPrinter();
-                using (var file = File.Open(options.PrintAnalyzedAst, FileMode.Create))
+                var printer = new AnalysedAstPrinter();
+                using (var file = File.Open(options.PrintAnalysedAst, FileMode.Create))
                 using (var writer = new StreamWriter(file))
                 {
                     printer.PrintWorkspace(compiler.DefaultWorkspace, writer);

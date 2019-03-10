@@ -38,7 +38,7 @@ namespace Cheez
             InferTypes(expr, expected, unresolvedDependencies, allDependencies, newInstances, polyTypeMap);
 
             if (newInstances.Count > 0)
-                AnalyzeFunctions(newInstances);
+                AnalyseFunctions(newInstances);
         }
 
         private void InferTypes(AstExpression expr, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances, Dictionary<string, CheezType> polyTypeMap = null)
@@ -222,7 +222,7 @@ namespace Cheez
                 var stmt = block.Statements[i];
                 stmt.Scope = block.SubScope;
                 stmt.Parent = block;
-                AnalyzeStatement(stmt);
+                AnalyseStatement(stmt);
 
                 if (stmt.GetFlag(StmtFlags.Returns))
                     block.SetFlag(ExprFlags.Returns, true);
@@ -455,7 +455,7 @@ namespace Cheez
                     ok = false;
                     continue;
                 }
-                var arg = new AstArgument(p.DefaultValue);
+                var arg = new AstArgument(p.DefaultValue, Location: p.DefaultValue.Location);
                 arg.Index = i;
                 expr.Arguments.Add(arg);
             }
@@ -534,7 +534,7 @@ namespace Cheez
             {
                 var a = expr.Arguments[i];
                 var p = instance.Parameters[i];
-                if (a.Type != p.Type)
+                if (a.Type != p.Type && !a.Type.IsErrorType)
                 {
                     ReportError(a, $"Type of argument ({a.Type}) does not match type of parameter ({p.Type})");
                 }

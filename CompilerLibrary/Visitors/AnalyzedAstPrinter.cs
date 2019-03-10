@@ -9,7 +9,7 @@ using Cheez.Util;
 
 namespace Cheez.Visitors
 {
-    public class AnalyzedAstPrinter : VisitorBase<string, int>
+    public class AnalysedAstPrinter : VisitorBase<string, int>
     {
         public void PrintWorkspace(Workspace workspace, TextWriter writer)
         {
