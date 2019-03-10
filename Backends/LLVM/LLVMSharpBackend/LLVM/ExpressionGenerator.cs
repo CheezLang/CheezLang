@@ -7,6 +7,7 @@ using Cheez.Types.Primitive;
 using Cheez.Util;
 using LLVMSharp;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Cheez.CodeGeneration.LLVMCodeGen
@@ -25,6 +26,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef? GenerateExpression(AstExpression expr, LLVMValueRef? target, bool deref)
         {
+            if (expr.Value != null)
+            {
+                return CheezValueToLLVMValue(expr.Type, expr.Value);
+            }
+
             switch (expr)
             {
                 case AstArgument a: return GenerateExpression(a.Expr, target, deref);
@@ -45,8 +51,94 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstNullExpr nll: return LLVM.ConstPointerNull(CheezTypeToLLVMType(nll.Type));
                 case AstAddressOfExpr ao: return GenerateAddressOf(ao, target, deref);
                 case AstIfExpr iff: return GenerateIfExpr(iff, target, deref);
+                case AstBinaryExpr bin: return GenerateBinaryExpr(bin, target, deref);
             }
             throw new NotImplementedException();
+        }
+
+        private Dictionary<(string, CheezType), Func<LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string, LLVMValueRef>> builtInOperators
+            = new Dictionary<(string, CheezType), Func<LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string, LLVMValueRef>>
+            {
+                { ("+", IntType.GetIntType(1, true)), LLVM.BuildAdd },
+                { ("+", IntType.GetIntType(2, true)), LLVM.BuildAdd },
+                { ("+", IntType.GetIntType(4, true)), LLVM.BuildAdd },
+                { ("+", IntType.GetIntType(8, true)), LLVM.BuildAdd },
+
+                { ("+", IntType.GetIntType(1, false)), LLVM.BuildAdd },
+                { ("+", IntType.GetIntType(2, false)), LLVM.BuildAdd },
+                { ("+", IntType.GetIntType(4, false)), LLVM.BuildAdd },
+                { ("+", IntType.GetIntType(8, false)), LLVM.BuildAdd },
+
+                { ("-", IntType.GetIntType(1, true)), LLVM.BuildSub },
+                { ("-", IntType.GetIntType(2, true)), LLVM.BuildSub },
+                { ("-", IntType.GetIntType(4, true)), LLVM.BuildSub },
+                { ("-", IntType.GetIntType(8, true)), LLVM.BuildSub },
+
+                { ("-", IntType.GetIntType(1, false)), LLVM.BuildSub },
+                { ("-", IntType.GetIntType(2, false)), LLVM.BuildSub },
+                { ("-", IntType.GetIntType(4, false)), LLVM.BuildSub },
+                { ("-", IntType.GetIntType(8, false)), LLVM.BuildSub },
+
+                { ("*", IntType.GetIntType(1, true)), LLVM.BuildMul },
+                { ("*", IntType.GetIntType(2, true)), LLVM.BuildMul },
+                { ("*", IntType.GetIntType(4, true)), LLVM.BuildMul },
+                { ("*", IntType.GetIntType(8, true)), LLVM.BuildMul },
+
+                { ("*", IntType.GetIntType(1, false)), LLVM.BuildMul },
+                { ("*", IntType.GetIntType(2, false)), LLVM.BuildMul },
+                { ("*", IntType.GetIntType(4, false)), LLVM.BuildMul },
+                { ("*", IntType.GetIntType(8, false)), LLVM.BuildMul },
+
+                { ("/", IntType.GetIntType(1, true)), LLVM.BuildSDiv },
+                { ("/", IntType.GetIntType(2, true)), LLVM.BuildSDiv },
+                { ("/", IntType.GetIntType(4, true)), LLVM.BuildSDiv },
+                { ("/", IntType.GetIntType(8, true)), LLVM.BuildSDiv },
+
+                { ("/", IntType.GetIntType(1, false)), LLVM.BuildUDiv },
+                { ("/", IntType.GetIntType(2, false)), LLVM.BuildUDiv },
+                { ("/", IntType.GetIntType(4, false)), LLVM.BuildUDiv },
+                { ("/", IntType.GetIntType(8, false)), LLVM.BuildUDiv },
+
+                { ("%", IntType.GetIntType(1, true)), LLVM.BuildSRem },
+                { ("%", IntType.GetIntType(2, true)), LLVM.BuildSRem },
+                { ("%", IntType.GetIntType(4, true)), LLVM.BuildSRem },
+                { ("%", IntType.GetIntType(8, true)), LLVM.BuildSRem },
+
+                { ("%", IntType.GetIntType(1, false)), LLVM.BuildURem },
+                { ("%", IntType.GetIntType(2, false)), LLVM.BuildURem },
+                { ("%", IntType.GetIntType(4, false)), LLVM.BuildURem },
+                { ("%", IntType.GetIntType(8, false)), LLVM.BuildURem },
+
+                { ("+", FloatType.GetFloatType(4)), LLVM.BuildFAdd },
+                { ("+", FloatType.GetFloatType(8)), LLVM.BuildFAdd },
+
+                { ("-", FloatType.GetFloatType(4)), LLVM.BuildFSub },
+                { ("-", FloatType.GetFloatType(8)), LLVM.BuildFSub },
+
+                { ("*", FloatType.GetFloatType(4)), LLVM.BuildFMul },
+                { ("*", FloatType.GetFloatType(8)), LLVM.BuildFMul },
+
+                { ("/", FloatType.GetFloatType(4)), LLVM.BuildFDiv },
+                { ("/", FloatType.GetFloatType(8)), LLVM.BuildFDiv },
+
+                { ("%", FloatType.GetFloatType(4)), LLVM.BuildFRem },
+                { ("%", FloatType.GetFloatType(8)), LLVM.BuildFRem },
+            };
+        private LLVMValueRef? GenerateBinaryExpr(AstBinaryExpr bin, LLVMValueRef? target, bool deref)
+        {
+            var left = GenerateExpression(bin.Left, null, true);
+            var right = GenerateExpression(bin.Right, null, true);
+
+            if (bin.ActualOperator is BuiltInOperator)
+            {
+                var bo = builtInOperators[(bin.Operator, bin.Type)];
+                var val = bo(GetRawBuilder(), left.Value, right.Value, "");
+                return val;
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
         private LLVMValueRef? GenerateIfExpr(AstIfExpr iff, LLVMValueRef? target, bool deref)

@@ -1529,7 +1529,7 @@ namespace Cheez.Parsing
 
                 case TokenType.NumberLiteral:
                     NextToken();
-                    return new AstNumberExpr((NumberData)token.data, new Location(token.location));
+                    return new AstNumberExpr((NumberData)token.data, token.suffix, new Location(token.location));
 
                 case TokenType.KwTrue:
                     NextToken();

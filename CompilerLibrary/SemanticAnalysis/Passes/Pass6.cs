@@ -178,9 +178,9 @@ namespace Cheez
             }
         }
 
-        private void CollectDependencies(AstExpression initializer, HashSet<AstSingleVariableDecl> deps, HashSet<AstSingleVariableDecl> allDeps)
+        private void CollectDependencies(AstExpression expr, HashSet<AstSingleVariableDecl> deps, HashSet<AstSingleVariableDecl> allDeps)
         {
-            switch (initializer)
+            switch (expr)
             {
                 case AstIdExpr id:
                     if (id.Symbol is AstSingleVariableDecl sv)
@@ -225,13 +225,18 @@ namespace Cheez
                         CollectDependencies(m, deps, allDeps);
                     break;
 
+                case AstBinaryExpr b:
+                    CollectDependencies(b.Left, deps, allDeps);
+                    CollectDependencies(b.Right, deps, allDeps);
+                    break;
+
                 default: throw new NotImplementedException();
             }
         }
 
-        private void CollectDependencies(AstStatement s, HashSet<AstSingleVariableDecl> deps, HashSet<AstSingleVariableDecl> allDeps)
+        private void CollectDependencies(AstStatement stmt, HashSet<AstSingleVariableDecl> deps, HashSet<AstSingleVariableDecl> allDeps)
         {
-            switch (s)
+            switch (stmt)
             {
                 case AstVariableDecl vd:
                     if (vd.Initializer != null) CollectDependencies(vd.Initializer, deps, allDeps);

@@ -17,23 +17,43 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        private void ConvertLiteralTypeToDefaultType(AstExpression expr, CheezType expected = null)
+        private bool IsLiteralType(CheezType t)
+        {
+            return t == IntType.LiteralType || t == FloatType.LiteralType || t == CheezType.StringLiteral;
+        }
+
+        private CheezType UnifyTypes(CheezType concrete, CheezType literal)
+        {
+            if (concrete is IntType && literal is IntType) return concrete;
+            if (concrete is FloatType && literal is IntType) return concrete;
+            if (concrete is FloatType && literal is FloatType) return concrete;
+            if ((concrete == CheezType.String || concrete == CheezType.CString) && literal == CheezType.StringLiteral) return concrete;
+            return LiteralTypeToDefaultType(literal);
+        }
+
+        private CheezType LiteralTypeToDefaultType(CheezType literalType, CheezType expected = null)
         {
             // :hack
             if (expected == CheezType.Void) expected = null;
 
-
-            if (expr.Type == IntType.LiteralType)
+            if (literalType == IntType.LiteralType)
             {
                 if (expected != null && !(expected is IntType)) throw new Exception("Can't convert int to non-int type");
-                expr.Type = expected ?? IntType.DefaultType;
+                return expected ?? IntType.DefaultType;
             }
-            else if (expr.Type == FloatType.LiteralType)
+            else if (literalType == FloatType.LiteralType)
             {
                 if (expected != null && !(expected is FloatType)) throw new Exception("Can't convert float to non-float type");
-                expr.Type = expected ?? FloatType.DefaultType;
+                return expected ?? FloatType.DefaultType;
             }
-            else if (expr.Type == CheezType.StringLiteral) expr.Type = CheezType.String;
+            else if (literalType == CheezType.StringLiteral) return CheezType.String;
+
+            return literalType;
+        }
+
+        private void ConvertLiteralTypeToDefaultType(AstExpression expr, CheezType expected = null)
+        {
+            expr.Type = LiteralTypeToDefaultType(expr.Type, expected);
         }
 
         private void InferType(AstExpression expr, CheezType expected)
@@ -751,10 +771,42 @@ namespace Cheez
             }
             else
             {
-                // TODO: find matching operator
+                // convert literal types to concrete types
+                if (IsLiteralType(b.Left.Type) && IsLiteralType(b.Right.Type))
+                {
+
+                }
+                else if (IsLiteralType(b.Left.Type))
+                {
+                    b.Left.Type = UnifyTypes(b.Right.Type, b.Left.Type);
+                }
+                else if (IsLiteralType(b.Right.Type))
+                {
+                    b.Right.Type = UnifyTypes(b.Left.Type, b.Right.Type);
+                }
+
+                var ops = b.Scope.GetOperators(b.Operator, b.Left.Type, b.Right.Type);
+
+                if (ops.Count == 0)
+                {
+                    ReportError(b, $"No operator matches the types {b.Left.Type} and {b.Right.Type}");
+                    return;
+                }
+                else if (ops.Count > 1)
+                {
+                    // TODO: show matching operators
+                    ReportError(b, $"Multiple operators match the types {b.Left.Type} and {b.Right.Type}");
+                    return;
+                }
+
+                var op = ops[0];
+                b.ActualOperator = op;
+
+                if (b.Left.Value != null && b.Right.Value != null)
+                    b.Value = op.Execute(b.Left.Value, b.Right.Value);
 
                 // @hack
-                b.Type = expected;
+                b.Type = op.ResultType;
             }
         }
 
@@ -837,7 +889,15 @@ namespace Cheez
             }
             else
             {
-                if (expected != null && expected is FloatType) expr.Type = expected;
+                if (expr.Suffix != null)
+                {
+                    if (expr.Suffix == "d")
+                        expr.Type = FloatType.GetFloatType(8);
+                    else if (expr.Suffix == "f")
+                        expr.Type = FloatType.GetFloatType(4);
+                    else ReportError(expr, $"Unknown suffix '{expr.Suffix}'");
+                }
+                else if (expected != null && expected is FloatType) expr.Type = expected;
                 else expr.Type = FloatType.LiteralType;
                 expr.Value = expr.Data;
             }

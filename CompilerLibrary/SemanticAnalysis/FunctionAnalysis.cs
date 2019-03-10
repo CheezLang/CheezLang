@@ -101,7 +101,7 @@ namespace Cheez
                 foreach (var m in t.Members)
                 {
                     if (m.Name == null) continue;
-                    var access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnValue), new AstNumberExpr(new Extras.NumberData(index)));
+                    var access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnValue), new AstNumberExpr(index));
                     InferType(access, null);
                     var (ok, other) = func.SubScope.DefineUse(m.Name, access, out var use);
                     if (!ok)
@@ -221,7 +221,7 @@ namespace Cheez
                             // create new assignments for all sub values
                             for (int i = 0; i < t.Values.Count; i++)
                             {
-                                var subVal = new AstArrayAccessExpr(tmp, new AstNumberExpr(new Extras.NumberData(i)));
+                                var subVal = new AstArrayAccessExpr(tmp, new AstNumberExpr(i));
                                 var subAss = new AstAssignment(t.Values[i], subVal);
                                 subAss.Scope = ass.Scope;
                                 MatchPatternWithExpression(subAss, t.Values[i], subVal);

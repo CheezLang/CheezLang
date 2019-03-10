@@ -40,8 +40,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private AstFunctionDecl currentFunction;
         private LLVMValueRef currentLLVMFunction;
         private IRBuilder builder;
+        private LLVMBuilderRef rawBuilder;
         private Dictionary<object, LLVMValueRef> returnValuePointer = new Dictionary<object, LLVMValueRef>();
         private LLVMBasicBlockRef currentTempBasicBlock;
+
+        private LLVMBuilderRef GetRawBuilder()
+        {
+            LLVM.PositionBuilderAtEnd(rawBuilder, builder.GetInsertBlock());
+            return rawBuilder;
+        }
 
         public bool GenerateCode(Workspace workspace, string intDir, string outDir, string targetFile, bool optimize, bool outputIntermediateFile)
         {
@@ -58,6 +65,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             context = module.GetModuleContext();
             targetData = module.GetTargetData();
+
+            rawBuilder = LLVM.CreateBuilder();
 
             pointerType = LLVM.Int8Type().GetPointerTo();
             // generate code

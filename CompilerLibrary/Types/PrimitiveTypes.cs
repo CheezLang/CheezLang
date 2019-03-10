@@ -69,7 +69,7 @@ namespace Cheez.Types.Primitive
     {
         private static Dictionary<int, FloatType> sTypes = new Dictionary<int, FloatType>();
         public static FloatType LiteralType = new FloatType { Size = 0 };
-        public static FloatType DefaultType => GetFloatType(4);
+        public static FloatType DefaultType => GetFloatType(8);
         public override bool IsErrorType => false;
 
         public static FloatType GetFloatType(int bytes)

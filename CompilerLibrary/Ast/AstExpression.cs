@@ -195,7 +195,7 @@ namespace Cheez.Ast.Expressions
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstStringLiteral(Value as string));
+            => CopyValuesTo(new AstStringLiteral(Value as string, Suffix));
     }
 
     public class AstDotExpr : AstExpression
@@ -295,6 +295,8 @@ namespace Cheez.Ast.Expressions
 
         public AstIdExpr Name => null;
         public override bool IsPolymorphic => Left.IsPolymorphic || Right.IsPolymorphic;
+
+        public IOperator ActualOperator { get; set; }
 
         [DebuggerStepThrough]
         public AstBinaryExpr(string op, AstExpression lhs, AstExpression rhs, ILocation Location = null) : base(Location)
@@ -479,19 +481,21 @@ namespace Cheez.Ast.Expressions
         private NumberData mData;
         public NumberData Data => mData;
         public override bool IsPolymorphic => false;
+        public string Suffix { get; set; }
 
         [DebuggerStepThrough]
-        public AstNumberExpr(NumberData data, ILocation Location = null) : base(Location)
+        public AstNumberExpr(NumberData data, string suffix = null, ILocation Location = null) : base(Location)
         {
             mData = data;
             IsCompTimeValue = true;
+            this.Suffix = suffix;
         }
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitNumberExpr(this, data);
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstNumberExpr(Data));
+        public override AstExpression Clone() => CopyValuesTo(new AstNumberExpr(Data, Suffix));
     }
 
     public class AstIdExpr : AstExpression

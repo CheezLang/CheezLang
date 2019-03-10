@@ -423,7 +423,6 @@ namespace Cheez.Parsing
         {
             token.type = TokenType.NumberLiteral;
             var dataIntBase = 10;
-            var dataSuffix = "";
             var dataStringValue = "";
             var dataType = NumberData.NumberType.Int;
 
@@ -489,11 +488,6 @@ namespace Cheez.Parsing
                                 dataStringValue += c;
                                 state = StateDecimalDigit;
                             }
-                            else if (IsIdentBegin(c))
-                            {
-                                dataSuffix += c;
-                                state = StatePostfix;
-                            }
                             else if (c == '.')
                             {
                                 dataStringValue += c;
@@ -507,28 +501,10 @@ namespace Cheez.Parsing
                             break;
                         }
 
-                    case StatePostfix:
-                        {
-                            if (IsIdent(c))
-                            {
-                                dataSuffix += c;
-                            }
-                            else
-                            {
-                                state = StateDone;
-                            }
-                            break;
-                        }
-
                     case StateDecimalDigit:
                         {
                             if (IsDigit(c))
                                 dataStringValue += c;
-                            else if (IsIdentBegin(c))
-                            {
-                                dataSuffix += c;
-                                state = StatePostfix;
-                            }
                             else if (c == '.')
                             {
                                 dataStringValue += c;
@@ -564,11 +540,6 @@ namespace Cheez.Parsing
                             {
                                 dataStringValue += c;
                             }
-                            else if (IsIdentBegin(c))
-                            {
-                                dataSuffix += c;
-                                state = StatePostfix;
-                            }
                             else
                             {
                                 state = StateDone;
@@ -595,11 +566,6 @@ namespace Cheez.Parsing
                         {
                             if (IsHexDigit(c))
                                 dataStringValue += c;
-                            else if (IsIdentBegin(c))
-                            {
-                                dataSuffix += c;
-                                state = StatePostfix;
-                            }
                             else
                             {
                                 state = StateDone;
@@ -635,11 +601,6 @@ namespace Cheez.Parsing
                                 error = "Invalid character, expected binary digit";
                                 state = -1;
                             }
-                            else if (IsIdentBegin(c))
-                            {
-                                dataSuffix += c;
-                                state = StatePostfix;
-                            }
                             else
                             {
                                 state = StateDone;
@@ -663,7 +624,7 @@ namespace Cheez.Parsing
 
 
 
-            token.data = new NumberData(dataType, dataStringValue, dataSuffix, dataIntBase);
+            token.data = new NumberData(dataType, dataStringValue, dataIntBase);
         }
 
         private bool IsBinaryDigit(char c)

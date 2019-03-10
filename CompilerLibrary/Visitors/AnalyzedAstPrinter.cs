@@ -419,7 +419,9 @@ namespace Cheez.Visitors
         {
             string v = str.StringValue;
             v = v.Replace("`", "``").Replace("\r", "`r").Replace("\n", "`n").Replace("\0", "`0");
-            return $"\"{v.Replace("\"", "`\"")}\"";
+            v = $"\"{v.Replace("\"", "`\"")}\"";
+            if (str.Suffix != null) v += str.Suffix;
+            return v;
         }
 
         public override string VisitIdExpr(AstIdExpr ident, int indentLevel = 0)
@@ -456,7 +458,8 @@ namespace Cheez.Visitors
             else if (num.Data.IntBase == 16)
                 sb.Append("0x");
             sb.Append(num.Data.StringValue);
-            sb.Append(num.Data.Suffix);
+            if (num.Suffix != null)
+                sb.Append(num.Suffix);
             return sb.ToString();
         }
 

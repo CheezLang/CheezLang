@@ -162,7 +162,7 @@ namespace Cheez
                     }
                     else if (initializer != null)
                     {
-                        tin = new AstArrayAccessExpr(tmp, new AstNumberExpr(new Extras.NumberData(i)));
+                        tin = new AstArrayAccessExpr(tmp, new AstNumberExpr(i));
                         tin.Scope = tmp.Scope;
                     }
 

@@ -140,7 +140,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     if (f.Size == 4)
                         return LLVMTypeRef.FloatType();
                     else if (f.Size == 8)
-                        return LLVMTypeRef.FloatType();
+                        return LLVMTypeRef.DoubleType();
                     else throw new NotImplementedException();
 
                 case CharType c:
@@ -222,6 +222,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case BoolType _: return LLVM.ConstInt(CheezTypeToLLVMType(type), (bool)v ? 1ul : 0ul, false);
                 case CharType _: return LLVM.ConstInt(CheezTypeToLLVMType(type), (char)v, false);
                 case IntType i: return LLVM.ConstInt(CheezTypeToLLVMType(type), ((NumberData)v).ToUlong(), i.Signed);
+                case FloatType f: return LLVM.ConstReal(CheezTypeToLLVMType(type), ((NumberData)v).ToDouble());
                 default:
                     if (type == CheezType.String)
                     {
