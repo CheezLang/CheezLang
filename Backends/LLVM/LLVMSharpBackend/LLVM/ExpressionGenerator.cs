@@ -64,11 +64,21 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             builder.PositionBuilderAtEnd(bbIf);
             GenerateExpressionHelper(iff.IfCase, result, true);
-            builder.CreateBr(bbEnd);
+
+            if (!iff.IfCase.GetFlag(ExprFlags.Returns))
+                builder.CreateBr(bbEnd);
 
             builder.PositionBuilderAtEnd(bbElse);
-            GenerateExpressionHelper(iff.ElseCase, result, true);
-            builder.CreateBr(bbEnd);
+            if (iff.ElseCase != null)
+            {
+                GenerateExpressionHelper(iff.ElseCase, result, true);
+                if (!iff.ElseCase.GetFlag(ExprFlags.Returns))
+                    builder.CreateBr(bbEnd);
+            }
+            else
+            {
+                builder.CreateBr(bbEnd);
+            }
 
             builder.PositionBuilderAtEnd(bbEnd);
 
