@@ -69,6 +69,19 @@ namespace Cheez
                         ReportError(p, $"Duplicate parameter '{p.Name}'", ("Other parameter here:", other));
                     }
                 }
+
+                if (p.DefaultValue != null)
+                {
+                    p.DefaultValue.Scope = func.Scope;
+                    InferType(p.DefaultValue, p.Type);
+                    ConvertLiteralTypeToDefaultType(p.DefaultValue, p.Type);
+                    if (p.DefaultValue.Type != p.Type)
+                    {
+                        ReportError(p.DefaultValue,
+                            $"The type of the default value ({p.DefaultValue.Type}) does not match the type of the parameter ({p.Type})");
+                    }
+
+                }
             }
 
             if (func.ReturnValue?.Name != null)

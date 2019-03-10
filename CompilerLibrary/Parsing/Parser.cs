@@ -551,8 +551,9 @@ namespace Cheez.Parsing
         {
             AstIdExpr pname = null;
             AstTypeExpr ptype = null;
+            AstExpression defaultValue = null;
 
-            TokenLocation beg = null;
+            TokenLocation beg = null, end = null;
 
             var next = PeekToken();
             if (next.type == TokenType.Identifier || next.type == TokenType.DollarIdentifier)
@@ -584,7 +585,19 @@ namespace Cheez.Parsing
                 beg = ptype.Beginning;
             }
 
-            return new AstParameter(pname, ptype, new Location(beg, ptype.End));
+            end = ptype.End;
+
+            // optional default value
+            SkipNewlines();
+            if (CheckToken(TokenType.Equal))
+            {
+                NextToken();
+                SkipNewlines();
+                defaultValue = ParseExpression();
+                end = defaultValue.End;
+            }
+
+            return new AstParameter(pname, ptype, defaultValue, new Location(beg, end));
         }
 
         private List<AstParameter> ParseParameterList(out TokenLocation beg, out TokenLocation end)

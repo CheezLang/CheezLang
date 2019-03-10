@@ -30,6 +30,8 @@ namespace Cheez.Ast.Statements
         public AstIdExpr Name { get; }
         public CheezType Type { get; set; }
         public AstTypeExpr TypeExpr { get; set; }
+        public AstExpression DefaultValue { get; set; }
+
         public Scope Scope { get; set; }
 
         public ISymbol Symbol { get; set; } = null;
@@ -38,14 +40,15 @@ namespace Cheez.Ast.Statements
 
         public bool IsConstant => true;
 
-        public AstParameter(AstIdExpr name, AstTypeExpr typeExpr, ILocation Location = null)
+        public AstParameter(AstIdExpr name, AstTypeExpr typeExpr, AstExpression defaultValue, ILocation Location = null)
         {
             this.Location = Location;
-            Name = name;
+            this.Name = name;
             this.TypeExpr = typeExpr;
+            this.DefaultValue = defaultValue;
         }
 
-        public AstParameter Clone() => new AstParameter(Name?.Clone() as AstIdExpr, TypeExpr.Clone() as AstTypeExpr, Location);
+        public AstParameter Clone() => new AstParameter(Name?.Clone() as AstIdExpr, TypeExpr.Clone() as AstTypeExpr, DefaultValue?.Clone(), Location);
 
         [DebuggerStepThrough]
         public T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitParameter(this, data);

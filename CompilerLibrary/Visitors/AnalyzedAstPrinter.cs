@@ -34,9 +34,17 @@ namespace Cheez.Visitors
 
         public override string VisitParameter(AstParameter param, int data = 0)
         {
+            StringBuilder result = new StringBuilder();
+
             if (param.Name != null)
-                return $"{param.Name.Accept(this)}: {param.Type}";
-            return param.Type?.ToString();
+                result.Append(param.Name.Accept(this)).Append(": ");
+
+            result.Append(param.Type?.ToString());
+
+            if (param.DefaultValue != null)
+                result.Append(" = ").Append(param.DefaultValue.Accept(this));
+
+            return result.ToString();
         }
 
         public override string VisitFunctionDecl(AstFunctionDecl function, int indentLevel = 0)
@@ -85,7 +93,7 @@ namespace Cheez.Visitors
 
                 var body = function.Body?.Accept(this) ?? ";";
 
-                var pars = string.Join(", ", function.Parameters.Select(p => p.Name != null ? $"{p.Name.Accept(this)}: {p.Type}" : p.Type.ToString()));
+                var pars = string.Join(", ", function.Parameters.Select(p => p.Accept(this)));
                 var head = $"fn {function.Name.Accept(this)}";
 
                 head += $"({pars})";
