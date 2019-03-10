@@ -428,6 +428,11 @@ namespace Cheez.Visitors
         {
             if (ident.Symbol is ConstSymbol c)
             {
+                if (c.Value is string v)
+                {
+                    v = v.Replace("`", "``").Replace("\r", "`r").Replace("\n", "`n").Replace("\0", "`0");
+                    return $"\"{v.Replace("\"", "`\"")}\"";
+                }
                 return c.Value.ToString();
             }
             if (ident.IsPolymorphic)

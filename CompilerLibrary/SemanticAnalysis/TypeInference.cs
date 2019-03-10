@@ -883,7 +883,22 @@ namespace Cheez
         {
             if (expr.Data.Type == NumberData.NumberType.Int)
             {
-                if (expected != null && (expected is IntType || expected is FloatType)) expr.Type = expected;
+                if (expr.Suffix != null)
+                {
+                    switch (expr.Suffix)
+                    {
+                        case "u8": expr.Type = IntType.GetIntType(1, false); break;
+                        case "u16": expr.Type = IntType.GetIntType(2, false); break;
+                        case "u32": expr.Type = IntType.GetIntType(4, false); break;
+                        case "u64": expr.Type = IntType.GetIntType(8, false); break;
+                        case "i8": expr.Type = IntType.GetIntType(1, true); break;
+                        case "i16": expr.Type = IntType.GetIntType(2, true); break;
+                        case "i32": expr.Type = IntType.GetIntType(4, true); break;
+                        case "i64": expr.Type = IntType.GetIntType(8, true); break;
+                        default: ReportError(expr, $"Unknown suffix '{expr.Suffix}'"); break;
+                    }
+                }
+                else if (expected != null && (expected is IntType || expected is FloatType)) expr.Type = expected;
                 else expr.Type = IntType.LiteralType;
                 expr.Value = expr.Data;
             }

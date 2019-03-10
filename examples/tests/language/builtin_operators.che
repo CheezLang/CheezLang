@@ -1,0 +1,99 @@
+#test_expect_output("14, 4, 45, 1, 4")
+#test_expect_output("0, 1, 1, 1, 0, 0")
+#test_expect_output("1, 0, 0, 1, 0, 1")
+
+#test_expect_output("14, 4, 45, 1, 4")
+#test_expect_output("0, 1, 1, 1, 0, 0")
+#test_expect_output("1, 0, 0, 1, 0, 1")
+
+#test_expect_output("14, 4, 45, 1, 4")
+#test_expect_output("0, 1, 1, 1, 0, 0")
+#test_expect_output("1, 0, 0, 1, 0, 1")
+
+#test_expect_output("14, 4, 45, 1, 4")
+#test_expect_output("0, 1, 1, 1, 0, 0")
+#test_expect_output("1, 0, 0, 1, 0, 1")
+
+#test_expect_output("14, 4, 45, 1, 4")
+#test_expect_output("0, 1, 1, 1, 0, 0")
+#test_expect_output("1, 0, 0, 1, 0, 1")
+
+#test_expect_output("14, 4, 45, 1, 4")
+#test_expect_output("0, 1, 1, 1, 0, 0")
+#test_expect_output("1, 0, 0, 1, 0, 1")
+
+#test_expect_output("14, 4, 45, 1, 4")
+#test_expect_output("0, 1, 1, 1, 0, 0")
+#test_expect_output("1, 0, 0, 1, 0, 1")
+
+#test_expect_output("14, 4, 45, 1, 4")
+#test_expect_output("0, 1, 1, 1, 0, 0")
+#test_expect_output("1, 0, 0, 1, 0, 1")
+
+#test_expect_output("0, 1, 1, 1, 0, 0")
+#test_expect_output("1, 0, 0, 1, 0, 1")
+
+#test_expect_output("14.000000, 4.000000, 45.000000, 1.800000, 4.000000")
+#test_expect_output("0, 1, 1, 1, 0, 0")
+#test_expect_output("1, 0, 0, 1, 0, 1")
+
+#test_expect_output("1, 0")
+#test_expect_output("0, 1")
+#test_expect_output("0, 1")
+#test_expect_output("1, 0")
+
+#test_expect_output("1, 0")
+#test_expect_output("1, 0")
+#test_expect_output("0, 1")
+
+
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+fn test_numbers($T: type, a: T, b: T, c: T, $test_arith: bool = true, $arith_string: c_string = "%d, %d, %d, %d, %d`n"c) {
+    if test_arith {
+        c_printf(arith_string, (a + b), (a - b), (a * b), (a / b), (a % b))
+    }
+    c_printf("%d, %d, %d, %d, %d, %d`n", (a == b), (a != b), (a > b), (a >= b), (a < b), (a <= b))
+    a = c
+    b = c
+    c_printf("%d, %d, %d, %d, %d, %d`n", (a == b), (a != b), (a > b), (a >= b), (a < b), (a <= b))
+}
+
+fn test_bool(a: bool, b: bool) {
+    c_printf("%d, %d`n", (a == b), (a != b))
+}
+
+fn test_pointers(a: *int, b: *int) {
+    c_printf("%d, %d`n", (a == b), (a != b))
+}
+
+fn Main() {
+    // signed ints
+    test_numbers(i8,  9i8,  5i8,  3i8)
+    test_numbers(i16, 9i16, 5i16, 3i16)
+    test_numbers(i32, 9i32, 5i32, 3i32)
+    test_numbers(i64, 9i64, 5i64, 3i64, arith_string = "%lld, %lld, %lld, %lld, %lld`n"c)
+
+    // unsigned ints
+    test_numbers(u8,  9u8,  5u8,  3u8)
+    test_numbers(u16, 9u16, 5u16, 3u16)
+    test_numbers(u32, 9u32, 5u32, 3u32)
+    test_numbers(u64, 9u64, 5u64, 3u64, arith_string = "%llu, %llu, %llu, %llu, %lld`n"c)
+
+    // floats
+    test_numbers(f32, 9.0f, 5.0f, 3.0f, false)
+    test_numbers(f64, 9.0d, 5.0d, 3.0d, arith_string = "%f, %f, %f, %f, %f`n"c)
+
+    // bool
+    test_bool(true, true)
+    test_bool(true, false)
+    test_bool(false, true)
+    test_bool(false, false)
+
+    // pointer
+    let a = 5
+    let b = 6
+    test_pointers(null, null)
+    test_pointers(&a, &a)
+    test_pointers(&a, &b)
+}

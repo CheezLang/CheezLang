@@ -1,388 +1,388 @@
 {
-	"name": "cheezlang",
-	"scopeName": "source.cheezlang",
-	"patterns": [
-		{
-			"comment": "Implementation",
-			"begin": "\\b(impl)\\b",
-			"end": "\\{",
-			"beginCaptures": {
-				"1": {
-					"name": "storage.type.cheezlang"
-				}
-			},
-			"patterns": [
-				{
-					"include": "#block_comment"
-				},
-				{
-					"include": "#line_comment"
-				},
-				{
-					"include": "#ref_lifetime"
-				},
-				{
-					"include": "#core_types"
-				},
-				{
-					"name": "storage.type.cheezlang",
-					"match": "\\bfor\\b"
-				},
-				{
-					"include": "#type"
-				}
-			]
-		},
-		{
-			"include": "#block_comment"
-		},
-		{
-			"include": "#line_comment"
-		},
-		{
-			"comment": "Attribute",
-			"name": "meta.attribute.cheezlang",
-			"begin": "#\\!?\\[",
-			"end": "\\]",
-			"patterns": [
-				{
-					"include": "#string_literal"
-				},
-				{
-					"include": "#block_comment"
-				},
-				{
-					"include": "#line_comment"
-				}
-			]
-		},
-		{
-			"include": "#null_literal"
-		},
-		{
-			"include": "#string_literal"
-		},
-		{
-			"include": "#raw_string_literal"
-		},
-		{
-			"include": "#char_literal"
-		},
-		{
-			"comment": "Floating point literal (fraction)",
-			"name": "constant.numeric.float.cheezlang",
-			"match": "\\b[0-9][0-9_]*\\.[0-9][0-9_]*([eE][+-]?[0-9_]+)?(f32|f64)?\\b"
-		},
-		{
-			"comment": "Floating point literal (exponent)",
-			"name": "constant.numeric.float.cheezlang",
-			"match": "\\b[0-9][0-9_]*(\\.[0-9][0-9_]*)?[eE][+-]?[0-9_]+(f32|f64)?\\b"
-		},
-		{
-			"comment": "Floating point literal (typed)",
-			"name": "constant.numeric.float.cheezlang",
-			"match": "\\b[0-9][0-9_]*(\\.[0-9][0-9_]*)?([eE][+-]?[0-9_]+)?(f32|f64)\\b"
-		},
-		{
-			"comment": "Integer literal (decimal)",
-			"name": "constant.numeric.integer.decimal.cheezlang",
-			"match": "\\b[0-9][0-9_]*([ui](8|16|32|64|128|s|size))?\\b"
-		},
-		{
-			"comment": "Integer literal (hexadecimal)",
-			"name": "constant.numeric.integer.hexadecimal.cheezlang",
-			"match": "\\b0x[a-fA-F0-9_]+([ui](8|16|32|64|128|s|size))?\\b"
-		},
-		{
-			"comment": "Integer literal (octal)",
-			"name": "constant.numeric.integer.octal.cheezlang",
-			"match": "\\b0o[0-7_]+([ui](8|16|32|64|128|s|size))?\\b"
-		},
-		{
-			"comment": "Integer literal (binary)",
-			"name": "constant.numeric.integer.binary.cheezlang",
-			"match": "\\b0b[01_]+([ui](8|16|32|64|128|s|size))?\\b"
-		},
-		{
-			"comment": "Boolean constant",
-			"name": "constant.language.boolean.cheezlang",
-			"match": "\\b(true|false)\\b"
-		},
-		{
-			"comment": "Null literal",
-			"name": "constant.language.pointer.cheezlang",
-			"match": "\\b(null)\\b"
-		},
-		{
-			"comment": "Control keyword",
-			"name": "keyword.control.cheezlang",
-			"match": "\\b(break|continue|else|if|return|while|defer|match)\\b"
-		},
-		{
-			"comment": "Keyword",
-			"name": "keyword.other.cheezlang",
-			"match": "\\b(let|using|use|new)\\b"
-		},
-		{
-			"comment": "Print Keyword",
-			"name": "keyword.print.cheezlang",
-			"match": "\\b(print|println)\\b"
-		},
-		{
-			"comment": "Comparison operator",
-			"name": "keyword.operator.comparison.cheezlang",
-			"match": "(==|!=)"
-		},
-		{
-			"comment": "Comparison operator",
-			"name": "keyword.operator.andor.cheezlang",
-			"match": "\\b(and|or)\\b"
-		},
-		{
-			"comment": "Assignment operator",
-			"name": "keyword.operator.assignment.cheezlang",
-			"match": "(=|:|->)"
-		},
-		{
-			"comment": "Arithmetic operator",
-			"name": "keyword.operator.arithmetic.cheezlang",
-			"match": "(\\+|-|/|\\*|%|&|\\||\\.)"
-		},
-		{
-			"comment": "Comparison operator (second group because of regex precedence)",
-			"name": "keyword.operator.comparison.cheezlang",
-			"match": "(<=|>=|<|>)"
-		},
-		{
-			"include": "#core_types"
-		},
-		{
-			"comment": "Load directive",
-			"match": "(#)(load)\\(\"([a-zA-Z]+)\"\\)",
-			"captures": {
-				"1": {
-					"name": "keyword.operator.other.cheezlang"
-				},
-				"2": {
-					"name": "keyword.other.cheezlang"
-				},
-				"3": {
-					"name": "string.quoted.double.cheezlang"
-				}
-			}
-		},
-		{
-			"comment": "new struct",
-			"begin": "\\b(new)\\b",
-			"end": "\\{",
-			"captures": {
-				"1": {
-					"name": "keyword.other.new.cheezlang"
-				}
-			}
-		},
-		{
-			"comment": "Function call",
-			"match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*\\(",
-			"captures": {
-				"1": {
-					"name": "entity.name.function.cheezlang"
-				}
-			}
-		},
-		{
-			"comment": "Comptime Function call",
-			"match": "\\b(\\@[A-Za-z_][A-Za-z0-9_]*)\\s*\\(",
-			"captures": {
-				"1": {
-					"name": "keyword.other.fn.cheezlang"
-				}
-			}
-		},
-		{
-			"comment": "Function definition",
-			"begin": "\\b(ref[\\s\\n]+)?(fn)[\\s\\n]+([A-Za-z][A-Za-z0-9_]*)",
-			"end": "[\\{;]",
-			"beginCaptures": {
-				"1": {
-					"name": "keyword.modifier.cheezlang"
-				},
-				"2": {
-					"name": "storage.type.cheezlang"
-				},
-				"3": {
-					"name": "entity.name.function.cheezlang"
-				}
-			},
-			"patterns": [
-				{
-					"include": "#block_comment"
-				},
-				{
-					"include": "#line_comment"
-				},
-				{
-					"include": "#core_types"
-				},
-				{
-					"include": "#other_operators"
-				}
-			]
-		},
-		{
-			"comment": "Trait declaration",
-			"begin": "\\b(trait)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
-			"end": "[\\{\\(;]",
-			"beginCaptures": {
-				"1": {
-					"name": "storage.type.cheezlang"
-				},
-				"2": {
-					"name": "entity.name.type.cheezlang"
-				}
-			},
-			"patterns": [
-				{
-					"include": "#block_comment"
-				},
-				{
-					"include": "#line_comment"
-				},
-				{
-					"include": "#core_types"
-				}
-			]
-		},
-		{
-			"comment": "Type declaration",
-			"begin": "\\b(struct)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
-			"end": "[\\{\\(;]",
-			"beginCaptures": {
-				"1": {
-					"name": "storage.type.cheezlang"
-				},
-				"2": {
-					"name": "entity.name.type.cheezlang"
-				}
-			},
-			"patterns": [
-				{
-					"include": "#block_comment"
-				},
-				{
-					"include": "#line_comment"
-				},
-				{
-					"include": "#core_types"
-				}
-			]
-		},
-		{
-			"comment": "Enum declaration",
-			"begin": "\\b(enum)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
-			"end": "[\\{]",
-			"beginCaptures": {
-				"1": {
-					"name": "storage.type.cheezlang"
-				},
-				"2": {
-					"name": "entity.name.type.cheezlang"
-				}
-			},
-			"patterns": [
-				{
-					"include": "#block_comment"
-				},
-				{
-					"include": "#line_comment"
-				},
-				{
-					"include": "#core_types"
-				}
-			]
-		}
-	],
-	"repository": {
-		"block_comment": {
-			"comment": "Block comment",
-			"name": "comment.block.cheezlang",
-			"begin": "/\\*",
-			"end": "\\*/",
-			"patterns": [
-				{
-					"include": "#block_comment"
-				}
-			]
-		},
-		"line_comment": {
-			"comment": "Single-line comment",
-			"name": "comment.line.double-slash.cheezlang",
-			"begin": "//",
-			"end": "$"
-		},
-		"escaped_character": {
-			"name": "constant.character.escape.cheezlang",
-			"match": "`(x[0-9A-Fa-f]{2}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.)"
-		},
-		"string_literal": {
-			"comment": "Double-quote string literal",
-			"name": "string.quoted.double.cheezlang",
-			"begin": "b?\"",
-			"end": "\"",
-			"patterns": [
-				{
-					"include": "#escaped_character"
-				}
-			]
-		},
-		"char_literal": {
-			"comment": "Single-quote char literal",
-			"name": "string.quoted.single.cheezlang",
-			"begin": "b?'",
-			"end": "'",
-			"patterns": [
-				{
-					"include": "#escaped_character"
-				}
-			]
-		},
-		"raw_string_literal": {
-			"comment": "Raw double-quote string literal",
-			"name": "string.quoted.double.raw.cheezlang",
-			"begin": "b?r(#*)\"",
-			"end": "\"\\1"
-		},
-		"ref_lifetime": {
-			"comment": "Reference with named lifetime",
-			"match": "&('([a-zA-Z_][a-zA-Z0-9_]*))\\b",
-			"captures": {
-				"1": {
-					"name": "storage.modifier.lifetime.cheezlang"
-				},
-				"2": {
-					"name": "entity.name.lifetime.cheezlang"
-				}
-			}
-		},
-		"core_types": {
-			"comment": "Built-in/core type",
-			"name": "storage.type.core.cheezlang",
-			"match": "\\b(bool|char|u8|u16|u32|u64|i8|i16|i32|i64|f32|f64|string|byte|short|int|long|ubyte|ushort|uint|ulong|float|double|void|self|any)\\b"
-		},
-		"modifiers": {
-			"comment": "Modifiers",
-			"name": "keyword.modifier.cheezlang",
-			"match": "\\b(pub|ref)\\b"
-		},
-		"type": {
-			"comment": "A type",
-			"name": "entity.name.type.cheezlang",
-			"match": "\\b([A-Za-z][_A-Za-z0-9]*|_[_A-Za-z0-9]+)\\b"
-		},
-		"other_operators": {
-			"comment": "Other operator",
-			"name": "keyword.operator.other.cheezlang",
-			"match": "(#|@|\\[|\\]|\\^|\\$|:|->)"
-		}
-	}
+    "name": "cheezlang",
+    "scopeName": "source.cheezlang",
+    "patterns": [
+        {
+            "comment": "Implementation",
+            "begin": "\\b(impl)\\b",
+            "end": "\\{",
+            "beginCaptures": {
+                "1": {
+                    "name": "storage.type.cheezlang"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#block_comment"
+                },
+                {
+                    "include": "#line_comment"
+                },
+                {
+                    "include": "#ref_lifetime"
+                },
+                {
+                    "include": "#core_types"
+                },
+                {
+                    "name": "storage.type.cheezlang",
+                    "match": "\\bfor\\b"
+                },
+                {
+                    "include": "#type"
+                }
+            ]
+        },
+        {
+            "include": "#block_comment"
+        },
+        {
+            "include": "#line_comment"
+        },
+        {
+            "comment": "Attribute",
+            "name": "meta.attribute.cheezlang",
+            "begin": "#\\!?\\[",
+            "end": "\\]",
+            "patterns": [
+                {
+                    "include": "#string_literal"
+                },
+                {
+                    "include": "#block_comment"
+                },
+                {
+                    "include": "#line_comment"
+                }
+            ]
+        },
+        {
+            "include": "#null_literal"
+        },
+        {
+            "include": "#string_literal"
+        },
+        {
+            "include": "#raw_string_literal"
+        },
+        {
+            "include": "#char_literal"
+        },
+        {
+            "comment": "Floating point literal (fraction)",
+            "name": "constant.numeric.float.cheezlang",
+            "match": "\\b[0-9][0-9_]*\\.[0-9][0-9_]*([eE][+-]?[0-9_]+)?([a-zA-Z][a-zA-Z0-9_]*)?\\b"
+        },
+        {
+            "comment": "Integer literal (decimal)",
+            "name": "constant.numeric.integer.decimal.cheezlang",
+            "match": "\\b[0-9][0-9_]*([a-zA-Z][a-zA-Z0-9_]*)?\\b"
+        },
+        {
+            "comment": "Integer literal (hexadecimal)",
+            "name": "constant.numeric.integer.hexadecimal.cheezlang",
+            "match": "\\b0x[a-fA-F0-9_]+([a-zA-Z][a-zA-Z0-9_]*)?\\b"
+        },
+        {
+            "comment": "Integer literal (octal)",
+            "name": "constant.numeric.integer.octal.cheezlang",
+            "match": "\\b0o[0-7_]+([a-zA-Z][a-zA-Z0-9_]*)?\\b"
+        },
+        {
+            "comment": "Integer literal (binary)",
+            "name": "constant.numeric.integer.binary.cheezlang",
+            "match": "\\b0b[01_]+([a-zA-Z][a-zA-Z0-9_]*)?\\b"
+        },
+        {
+            "comment": "Boolean constant",
+            "name": "constant.language.boolean.cheezlang",
+            "match": "\\b(true|false)\\b"
+        },
+        {
+            "comment": "Null literal",
+            "name": "constant.language.pointer.cheezlang",
+            "match": "\\b(null)\\b"
+        },
+        {
+            "comment": "Control keyword",
+            "name": "keyword.control.cheezlang",
+            "match": "\\b(break|continue|else|if|return|while|defer|match)\\b"
+        },
+        {
+            "comment": "Keyword",
+            "name": "keyword.other.cheezlang",
+            "match": "\\b(let|use|new)\\b"
+        },
+        {
+            "comment": "Comparison operator",
+            "name": "keyword.operator.comparison.cheezlang",
+            "match": "(==|!=)"
+        },
+        {
+            "comment": "Comparison operator",
+            "name": "keyword.operator.andor.cheezlang",
+            "match": "\\b(and|or)\\b"
+        },
+        {
+            "comment": "Assignment operator",
+            "name": "keyword.operator.assignment.cheezlang",
+            "match": "(=|:|->)"
+        },
+        {
+            "comment": "Arithmetic operator",
+            "name": "keyword.operator.arithmetic.cheezlang",
+            "match": "(\\+|-|/|\\*|%|&|\\||\\.)"
+        },
+        {
+            "comment": "Comparison operator (second group because of regex precedence)",
+            "name": "keyword.operator.comparison.cheezlang",
+            "match": "(<=|>=|<|>)"
+        },
+        {
+            "include": "#core_types"
+        },
+        {
+            "comment": "Load directive",
+            "match": "(#)(load)\\(\"([a-zA-Z]+)\"\\)",
+            "captures": {
+                "1": {
+                    "name": "keyword.operator.other.cheezlang"
+                },
+                "2": {
+                    "name": "keyword.other.cheezlang"
+                },
+                "3": {
+                    "name": "string.quoted.double.cheezlang"
+                }
+            }
+        },
+        {
+            "comment": "new struct",
+            "begin": "\\b(new)\\b",
+            "end": "\\{",
+            "captures": {
+                "1": {
+                    "name": "keyword.other.new.cheezlang"
+                }
+            }
+        },
+        {
+            "comment": "Function call",
+            "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*\\(",
+            "captures": {
+                "1": {
+                    "name": "entity.name.function.cheezlang"
+                }
+            }
+        },
+        {
+            "comment": "Comptime Function call",
+            "match": "\\b(\\@[A-Za-z_][A-Za-z0-9_]*)\\s*\\(",
+            "captures": {
+                "1": {
+                    "name": "keyword.other.fn.cheezlang"
+                }
+            }
+        },
+        {
+            "comment": "Function definition",
+            "begin": "\\b(ref[\\s\\n]+)?(fn)[\\s\\n]+([A-Za-z][A-Za-z0-9_]*)",
+            "end": "[\\{;]",
+            "beginCaptures": {
+                "1": {
+                    "name": "keyword.modifier.cheezlang"
+                },
+                "2": {
+                    "name": "storage.type.cheezlang"
+                },
+                "3": {
+                    "name": "entity.name.function.cheezlang"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#block_comment"
+                },
+                {
+                    "include": "#line_comment"
+                },
+                {
+                    "include": "#core_types"
+                },
+                {
+                    "include": "#other_operators"
+                },
+                {
+                    "include": "#string_literal"
+                },
+                {
+                    "include": "#poly_name"
+                },
+                {
+                    "include": "#type"
+                },
+                {
+                    "include": "#int_literal"
+                },
+                {
+                    "include": "#float_literal"
+                },
+                {
+                    "include": "#core_types"
+                }
+            ]
+        },
+        {
+            "comment": "Trait declaration",
+            "begin": "\\b(trait)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+            "end": "[\\{\\(;]",
+            "beginCaptures": {
+                "1": {
+                    "name": "storage.type.cheezlang"
+                },
+                "2": {
+                    "name": "entity.name.type.cheezlang"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#block_comment"
+                },
+                {
+                    "include": "#line_comment"
+                },
+                {
+                    "include": "#core_types"
+                }
+            ]
+        },
+        {
+            "comment": "Type declaration",
+            "begin": "\\b(struct)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+            "end": "[\\{\\(;]",
+            "beginCaptures": {
+                "1": {
+                    "name": "storage.type.cheezlang"
+                },
+                "2": {
+                    "name": "entity.name.type.cheezlang"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#block_comment"
+                },
+                {
+                    "include": "#line_comment"
+                },
+                {
+                    "include": "#core_types"
+                }
+            ]
+        },
+        {
+            "comment": "Enum declaration",
+            "begin": "\\b(enum)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+            "end": "[\\{]",
+            "beginCaptures": {
+                "1": {
+                    "name": "storage.type.cheezlang"
+                },
+                "2": {
+                    "name": "entity.name.type.cheezlang"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#block_comment"
+                },
+                {
+                    "include": "#line_comment"
+                },
+                {
+                    "include": "#core_types"
+                }
+            ]
+        }
+    ],
+    "repository": {
+        "block_comment": {
+            "comment": "Block comment",
+            "name": "comment.block.cheezlang",
+            "begin": "/\\*",
+            "end": "\\*/",
+            "patterns": [
+                {
+                    "include": "#block_comment"
+                }
+            ]
+        },
+        "line_comment": {
+            "comment": "Single-line comment",
+            "name": "comment.line.double-slash.cheezlang",
+            "begin": "//",
+            "end": "$"
+        },
+        "escaped_character": {
+            "name": "constant.character.escape.cheezlang",
+            "match": "`(x[0-9A-Fa-f]{2}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.)"
+        },
+        "string_literal": {
+            "comment": "Double-quote string literal",
+            "name": "string.quoted.double.cheezlang",
+            "begin": "b?\"",
+            "end": "\"([a-zA-Z][a-zA-Z0-9_]*)?",
+            "patterns": [
+                {
+                    "include": "#escaped_character"
+                }
+            ]
+        },
+        "char_literal": {
+            "comment": "Single-quote char literal",
+            "name": "string.quoted.single.cheezlang",
+            "begin": "b?'",
+            "end": "'([a-zA-Z][a-zA-Z0-9_]*)?",
+            "patterns": [
+                {
+                    "include": "#escaped_character"
+                }
+            ]
+        },
+        "int_literal": {
+            "comment": "Number literal",
+            "name": "constant.numeric.int.cheezlang",
+            "match": "\\b(0x|0b)?[0-9][0-9_]*([a-zA-Z][a-zA-Z0-9_]*)?\\b"
+        },
+        "float_literal": {
+            "comment": "Number literal",
+            "name": "constant.numeric.float.cheezlang",
+            "match": "\\b[0-9][0-9_]*\\.[0-9][0-9_]*([eE][+-]?[0-9_]+)?([a-zA-Z][a-zA-Z0-9_]*)?\\b"
+        },
+        "core_types": {
+            "comment": "Built-in/core type",
+            "name": "storage.type.core.cheezlang",
+            "match": "\\b(bool|char|u8|u16|u32|u64|i8|i16|i32|i64|f32|f64|string|c_string|byte|short|int|long|ubyte|ushort|uint|ulong|float|double|void|self|any)\\b"
+        },
+        "poly_name": {
+            "comment": "",
+            "name": "keyword.poly.cheezlang",
+            "match": "\\b\\$([A-Za-z][_A-Za-z0-9]*)\\b"
+        },
+        "modifiers": {
+            "comment": "Modifiers",
+            "name": "keyword.modifier.cheezlang",
+            "match": "\\b(pub|ref)\\b"
+        },
+        "type": {
+            "comment": "A type",
+            "name": "entity.name.type.cheezlang",
+            "match": "\\b([A-Za-z][_A-Za-z0-9]*|_[_A-Za-z0-9]+)\\b"
+        },
+        "other_operators": {
+            "comment": "Other operator",
+            "name": "keyword.operator.other.cheezlang",
+            "match": "(#|@|\\[|\\]|\\^|\\$|:|->)"
+        }
+    }
 }
