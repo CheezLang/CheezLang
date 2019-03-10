@@ -245,6 +245,11 @@ namespace Cheez
         {
             expr.Expr.Scope = expr.Scope;
             InferType(expr.Expr, null);
+
+            if (expr.Expr.GetFlag(ExprFlags.Returns))
+            {
+                expr.SetFlag(StmtFlags.Returns);
+            }
         }
 
         private void AnalyseReturnStatement(AstReturnStmt ret)

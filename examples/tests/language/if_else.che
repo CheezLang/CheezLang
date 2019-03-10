@@ -8,6 +8,8 @@
 #test_expect_output("4")
 #test_expect_output("true")
 #test_expect_output("false")
+#test_expect_output("error")
+#test_expect_output("yey")
 
 // required for printing
 fn c_printf(format: c_string) #varargs #linkname("printf");
@@ -59,6 +61,11 @@ fn test3(b: bool) {
     c_printf("false`n")
 }
 
+fn test4(b: bool) -> (ok: bool, value: c_string) {
+    ok = b
+    value = if ok {"yey"} else {null}
+}
+
 fn Main() {
     test(true, true)
     test(false, true)
@@ -72,4 +79,16 @@ fn Main() {
 
     test3(true)
     test3(false)
+
+    if let (ok, str) = test4(false); ok {
+        c_printf("%s`n", str)
+    } else {
+        c_printf("%s`n", "error"c)
+    }
+
+    if let (ok, str) = test4(true); ok {
+        c_printf("%s`n", str)
+    } else {
+        c_printf("%s`n", "error"c)
+    }
 }

@@ -51,6 +51,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef? GenerateIfExpr(AstIfExpr iff, LLVMValueRef? target, bool deref)
         {
+            if (iff.PreAction != null)
+            {
+                GenerateVariableDecl(iff.PreAction);
+            }
+
             LLVMValueRef? result = target;
             if (iff.Type != CheezType.Void && result == null) result = CreateLocalVariable(iff.Type);
 

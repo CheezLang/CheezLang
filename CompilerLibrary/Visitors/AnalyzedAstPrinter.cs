@@ -229,6 +229,12 @@ namespace Cheez.Visitors
         {
             var sb = new StringBuilder();
             sb.Append("if ");
+
+            if (ifs.PreAction != null)
+            {
+                sb.Append(ifs.PreAction.Accept(this)).Append("; ");
+            }
+
             sb.Append(ifs.Condition.Accept(this));
             sb.Append(" ");
             sb.Append(ifs.IfCase.Accept(this));

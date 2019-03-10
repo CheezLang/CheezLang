@@ -157,22 +157,29 @@ namespace Cheez
 
         private void InferTypeIfExpr(AstIfExpr iff, CheezType expected, HashSet<AstSingleVariableDecl> unresolvedDependencies, HashSet<AstSingleVariableDecl> allDependencies, List<AstFunctionDecl> newInstances)
         {
-            iff.Condition.Scope = iff.Scope;
+            iff.SubScope = new Scope("if", iff.Scope);
+            if (iff.PreAction != null)
+            {
+                iff.PreAction.Scope = iff.SubScope;
+                AnalyseVariableDecl(iff.PreAction);
+            }
+
+            iff.Condition.Scope = iff.SubScope;
             InferTypeHelper(iff.Condition, CheezType.Bool, unresolvedDependencies, allDependencies, newInstances);
             ConvertLiteralTypeToDefaultType(iff.Condition);
 
-            if (iff.Condition.Type != CheezType.Bool && !(iff.Condition.Type is PointerType))
+            if (iff.Condition.Type != CheezType.Bool && !(iff.Condition.Type is PointerType) && !iff.Condition.Type.IsErrorType)
             {
                 ReportError(iff.Condition, $"Condition of if statement must be either a bool or a pointer but is {iff.Condition.Type}");
             }
 
-            iff.IfCase.Scope = iff.Scope;
+            iff.IfCase.Scope = iff.SubScope;
             InferTypeHelper(iff.IfCase, expected, unresolvedDependencies, allDependencies, newInstances);
             ConvertLiteralTypeToDefaultType(iff.IfCase, expected);
 
             if (iff.ElseCase != null)
             {
-                iff.ElseCase.Scope = iff.Scope;
+                iff.ElseCase.Scope = iff.SubScope;
                 InferTypeHelper(iff.ElseCase, expected, unresolvedDependencies, allDependencies, newInstances);
                 ConvertLiteralTypeToDefaultType(iff.ElseCase, expected);
                 
@@ -283,6 +290,9 @@ namespace Cheez
                 InferTypeHelper(expr.Expr, expected, unresolvedDependencies, allDependencies, newInstances);
                 ConvertLiteralTypeToDefaultType(expr.Expr, expected);
                 block.Type = expr.Expr.Type;
+
+                if (expr.Expr.GetFlag(ExprFlags.Returns))
+                    block.SetFlag(ExprFlags.Returns, true);
             }
             else
             {
