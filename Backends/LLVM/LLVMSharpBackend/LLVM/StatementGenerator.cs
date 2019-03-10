@@ -94,7 +94,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 {
                     if (c.Value is ConstSymbol s && s.Type != CheezType.Type)
                     {
-                        valueMap[s] = CheezValueToLLVMValue(s.Type, s.Value);
+                        var val = CheezValueToLLVMValue(s.Type, s.Value);
+                        var cnst = builder.CreateAlloca(CheezTypeToLLVMType(s.Type), $"c_");
+                        builder.CreateStore(val, cnst);
+                        valueMap[s] = cnst;
                     }
                 }
 

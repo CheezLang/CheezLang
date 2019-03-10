@@ -443,15 +443,27 @@ namespace Cheez
             if (!ok)
                 return false;
 
-            // TODO: create missing arguments
-
-            //
-            if (map.Count < parameters.Count)
+            // create missing arguments
+            for (int i = 0; i < parameters.Count; i++)
             {
-                // TODO: report missing arguments
-                ReportError(expr, $"Not enough arguments");
-                return false;
+                if (map.ContainsKey(i))
+                    continue;
+                var p = parameters[i];
+                if (p.DefaultValue == null)
+                {
+                    ReportError(expr, $"Call misses parameter {i} ({p.ToString()}).");
+                    ok = false;
+                    continue;
+                }
+                var arg = new AstArgument(p.DefaultValue);
+                arg.Index = i;
+                expr.Arguments.Add(arg);
             }
+
+            expr.Arguments.Sort((a, b) => a.Index - b.Index);
+
+            if (expr.Arguments.Count < parameters.Count)
+                return false;
 
             return true;
         }
@@ -462,8 +474,6 @@ namespace Cheez
 
             if (!CheckAndMatchArgsToParams(expr, decl.Parameters, false))
                 return;
-
-            expr.Arguments.Sort((a, b) => a.Index - b.Index);
 
             // match arguments and parameter types
             var pairs = expr.Arguments.Select(arg => (arg.Index < decl.Parameters.Count ? decl.Parameters[arg.Index] : null, arg));
@@ -539,8 +549,6 @@ namespace Cheez
         {
             if (!CheckAndMatchArgsToParams(expr, func.Declaration.Parameters, func.VarArgs))
                 return;
-
-            expr.Arguments.Sort((a, b) => a.Index - b.Index);
 
             // match arguments and parameter types
             var pairs = expr.Arguments.Select(arg => (arg.Index < func.Parameters.Length ? func.Parameters[arg.Index].type : null, arg));
@@ -759,6 +767,15 @@ namespace Cheez
         private void InferTypesStringLiteral(AstStringLiteral s, CheezType expected)
         {
             if (expected == CheezType.String || expected == CheezType.CString) s.Type = expected;
+            else if (s.Suffix != null)
+            {
+                if (s.Suffix == "c") s.Type = CheezType.CString;
+                else
+                {
+                    // TODO: overridable suffixes
+                    ReportError(s, $"Unknown suffix '{s.Suffix}'");
+                }
+            }
             else s.Type = CheezType.StringLiteral;
         }
 

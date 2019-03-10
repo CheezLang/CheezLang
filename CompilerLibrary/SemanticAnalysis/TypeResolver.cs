@@ -510,6 +510,9 @@ namespace Cheez
                                 case CharType _:
                                     break;
 
+                                case CheezType t when t == CheezType.String || t == CheezType.CString:
+                                    break;
+
                                 case ErrorType _:
                                     break;
 

@@ -55,9 +55,7 @@ namespace Cheez.Ast.Statements
 
         public override string ToString()
         {
-            var sb = new StringWriter();
-            new RawAstPrinter(sb).VisitParameter(this);
-            return sb.GetStringBuilder().ToString();
+            return new RawAstPrinter(null).VisitParameter(this);
         }
     }
 

@@ -1524,7 +1524,7 @@ namespace Cheez.Parsing
 
                 case TokenType.StringLiteral:
                     NextToken();
-                    return new AstStringLiteral((string)token.data, new Location(token.location));
+                    return new AstStringLiteral((string)token.data, token.suffix, new Location(token.location));
 
                 case TokenType.CharLiteral:
                     NextToken();

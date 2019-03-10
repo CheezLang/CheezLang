@@ -375,16 +375,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 v = valueMap[expr.Symbol];
             }
 
+            if (deref)
+                v = builder.CreateLoad(v, "");
+
             if (maybeTarget != null)
             {
-                if (!(expr.Symbol is ConstSymbol)) // :hack
-                    v = builder.CreateLoad(v, "");
                 builder.CreateStore(v, maybeTarget.Value);
                 return null;
             }
-
-            if (deref)
-                return builder.CreateLoad(v, "");
             return v;
         }
 

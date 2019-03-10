@@ -100,6 +100,8 @@ namespace Cheez.Parsing
         public TokenLocation location;
         public object data;
 
+        public string suffix;
+
         public override string ToString()
         {
             return $"({location.line}:{location.index - location.lineStartIndex}) ({type}) {data}";
@@ -280,6 +282,21 @@ namespace Cheez.Parsing
                     token.type = TokenType.Unknown;
                     mLocation.index += 1;
                     break;
+            }
+
+            if (token.type == TokenType.StringLiteral || token.type == TokenType.NumberLiteral || token.type == TokenType.CharLiteral)
+            {
+                if (IsAlpha(Current))
+                {
+                    token.suffix = "" + Current;
+                    mLocation.index++;
+
+                    while (IsIdent(Current))
+                    {
+                        token.suffix += Current;
+                        mLocation.index++;
+                    }
+                }
             }
 
             token.location.end = mLocation.index;

@@ -154,11 +154,13 @@ namespace Cheez.Ast.Expressions
     {
         public override bool IsPolymorphic => false;
         public string StringValue => (string)Value;
+        public string Suffix { get; set; }
 
         [DebuggerStepThrough]
-        public AstStringLiteral(string value, ILocation Location = null) : base(Location)
+        public AstStringLiteral(string value, string suffix = null, ILocation Location = null) : base(Location)
         {
             this.Value = value;
+            this.Suffix = suffix;
             this.IsCompTimeValue = true;
         }
 
