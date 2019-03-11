@@ -162,9 +162,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstVariableDecl decl: GenerateVariableDecl(decl); break;
                 case AstAssignment ass: GenerateAssignment(ass); break;
                 case AstWhileStmt whl: GenerateWhile(whl); break;
+                case AstBreakStmt br: GenerateBreak(br); break;
                 default: throw new NotImplementedException();
             }
 
+        }
+
+        private void GenerateBreak(AstBreakStmt br)
+        {
+            // TODO: deferred statements
+            var end = loopEndMap[br.Loop];
+            builder.CreateBr(end);
+
+            var bbNext = LLVM.AppendBasicBlock(currentLLVMFunction, "_br_next");
+            builder.PositionBuilderAtEnd(bbNext);
         }
 
         private void GenerateWhile(AstWhileStmt whl)
@@ -172,9 +183,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (whl.PreAction != null)
                 GenerateStatement(whl.PreAction);
 
-            var bbCond = LLVM.AppendBasicBlock(currentLLVMFunction, "_cond");
-            var bbBody = LLVM.AppendBasicBlock(currentLLVMFunction, "_body");
-            var bbEnd = LLVM.AppendBasicBlock(currentLLVMFunction, "_end");
+            var bbCond = LLVM.AppendBasicBlock(currentLLVMFunction, "_loop_cond");
+            var bbBody = LLVM.AppendBasicBlock(currentLLVMFunction, "_loop_body");
+            var bbEnd = LLVM.AppendBasicBlock(currentLLVMFunction, "_loop_end");
+
+            loopEndMap[whl] = bbEnd;
 
             builder.CreateBr(bbCond);
 

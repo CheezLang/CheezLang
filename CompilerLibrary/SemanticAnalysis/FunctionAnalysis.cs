@@ -119,6 +119,7 @@ namespace Cheez
             if (func.Body != null)
             {
                 func.Body.Scope = func.SubScope;
+                func.Body.Parent = func;
                 InferType(func.Body, func.FunctionType.ReturnType);
 
                 if (func.ReturnValue != null && !func.Body.GetFlag(ExprFlags.Returns))
@@ -143,8 +144,33 @@ namespace Cheez
                 case AstExprStmt expr: AnalyseExprStatement(expr); break;
                 case AstAssignment ass: AnalyseAssignStatement(ass); break;
                 case AstWhileStmt whl: AnalyseWhileStatement(whl); break;
+                case AstBreakStmt br: AnalyseBreakStatement(br); break;
                 default: throw new NotImplementedException();
             }
+        }
+
+        private void AnalyseBreakStatement(AstBreakStmt br)
+        {
+            AstWhileStmt loop = null;
+
+            // find corresponding loop
+            var parent = br.Parent;
+            while (parent != null)
+            {
+                if (parent is AstWhileStmt whl)
+                {
+                    loop = whl;
+                    break;
+                }
+                parent = parent.Parent;
+            }
+            
+            if (loop == null)
+            {
+                ReportError(br, $"Break can only occur inside of loops");
+            }
+
+            br.Loop = loop;
         }
 
         private void AnalyseWhileStatement(AstWhileStmt whl)
@@ -155,10 +181,12 @@ namespace Cheez
             {
                 // TODO
                 whl.PreAction.Scope = whl.Scope;
+                whl.PreAction.Parent = whl;
                 AnalyseStatement(whl.PreAction);
             }
 
             whl.Condition.Scope = whl.SubScope;
+            whl.Condition.Parent = whl;
             InferType(whl.Condition, CheezType.Bool);
             ConvertLiteralTypeToDefaultType(whl.Condition);
             if (whl.Condition.Type != CheezType.Bool && !whl.Condition.Type.IsErrorType)
@@ -167,10 +195,12 @@ namespace Cheez
             if (whl.PostAction != null)
             {
                 whl.PostAction.Scope = whl.SubScope;
+                whl.PostAction.Parent = whl;
                 AnalyseStatement(whl.PostAction);
             }
 
             whl.Body.Scope = whl.SubScope;
+            whl.Body.Parent = whl;
             InferType(whl.Body, CheezType.Void);
         }
 
@@ -181,7 +211,10 @@ namespace Cheez
                 ReportError(ass, $"Operators in assignments are not implemeted yet!");
             }
 
+            ass.Value.Parent = ass;
+
             ass.Pattern.Scope = ass.Scope;
+            ass.Pattern.Parent = ass;
             InferType(ass.Pattern, null);
             if (ass.Pattern.Type != CheezType.Error)
             {
@@ -292,6 +325,8 @@ namespace Cheez
 
         private void AnalyseExprStatement(AstExprStmt expr, bool allow_any_expr = false, bool infer_types = true)
         {
+            expr.Expr.Parent = expr;
+
             if (infer_types)
             {
                 expr.Expr.Scope = expr.Scope;
@@ -324,6 +359,7 @@ namespace Cheez
             if (ret.ReturnValue != null)
             {
                 ret.ReturnValue.Scope = ret.Scope;
+                ret.ReturnValue.Parent = ret;
                 InferType(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
 
                 ConvertLiteralTypeToDefaultType(ret.ReturnValue);

@@ -306,9 +306,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             var cond = GenerateExpression(iff.Condition, null, true);
 
-            var bbIf = LLVM.AppendBasicBlock(currentLLVMFunction, "_if");
-            var bbElse = LLVM.AppendBasicBlock(currentLLVMFunction, "_else");
-            var bbEnd = LLVM.AppendBasicBlock(currentLLVMFunction, "_end");
+            var bbIf = LLVM.AppendBasicBlock(currentLLVMFunction, "_if_true");
+            var bbElse = LLVM.AppendBasicBlock(currentLLVMFunction, "_if_false");
+            var bbEnd = LLVM.AppendBasicBlock(currentLLVMFunction, "_if_end");
 
             builder.CreateCondBr(cond.Value, bbIf, bbElse);
 

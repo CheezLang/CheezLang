@@ -14,7 +14,11 @@ namespace Cheez.Ast.Statements
         IsLastStatementInBlock
     }
 
-    public abstract class AstStatement : IVisitorAcceptor, ILocation
+    public interface IAstNode {
+        IAstNode Parent { get; }
+    }
+
+    public abstract class AstStatement : IVisitorAcceptor, ILocation, IAstNode
     {
         protected int mFlags = 0;
 
@@ -27,7 +31,7 @@ namespace Cheez.Ast.Statements
         public Scope Scope { get; set; }
         public List<AstDirective> Directives { get; protected set; }
 
-        public AstBlockExpr Parent { get; set; }
+        public IAstNode Parent { get; set; }
 
         public AstStatement(List<AstDirective> dirs = null, ILocation Location = null)
         {
@@ -265,7 +269,7 @@ namespace Cheez.Ast.Statements
     public class AstBreakStmt : AstStatement
     {
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
-        public AstStatement Loop { get; set; }
+        public AstWhileStmt Loop { get; set; }
 
         public AstBreakStmt(ILocation Location = null) : base(Location: Location)
         { }

@@ -16,7 +16,7 @@ namespace Cheez.Ast.Expressions
         Returns = 1
     }
 
-    public abstract class AstExpression : IVisitorAcceptor, ILocation
+    public abstract class AstExpression : IVisitorAcceptor, ILocation, IAstNode
     {
         protected int mFlags = 0;
 
@@ -32,6 +32,8 @@ namespace Cheez.Ast.Expressions
         public abstract bool IsPolymorphic { get; }
 
         protected bool IsCompTimeValue { get; set; } = false;
+
+        public IAstNode Parent { get; set; }
 
         [DebuggerStepThrough]
         public AstExpression(ILocation Location = null)

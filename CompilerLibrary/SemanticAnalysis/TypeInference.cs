@@ -247,10 +247,12 @@ namespace Cheez
             if (iff.PreAction != null)
             {
                 iff.PreAction.Scope = iff.SubScope;
+                iff.PreAction.Parent = iff;
                 AnalyseVariableDecl(iff.PreAction);
             }
 
             iff.Condition.Scope = iff.SubScope;
+            iff.Condition.Parent = iff;
             InferTypeHelper(iff.Condition, CheezType.Bool, newInstances);
             ConvertLiteralTypeToDefaultType(iff.Condition);
 
@@ -260,12 +262,14 @@ namespace Cheez
             }
 
             iff.IfCase.Scope = iff.SubScope;
+            iff.IfCase.Parent = iff;
             InferTypeHelper(iff.IfCase, expected, newInstances);
             ConvertLiteralTypeToDefaultType(iff.IfCase, expected);
 
             if (iff.ElseCase != null)
             {
                 iff.ElseCase.Scope = iff.SubScope;
+                iff.ElseCase.Parent = iff;
                 InferTypeHelper(iff.ElseCase, expected, newInstances);
                 ConvertLiteralTypeToDefaultType(iff.ElseCase, expected);
                 
