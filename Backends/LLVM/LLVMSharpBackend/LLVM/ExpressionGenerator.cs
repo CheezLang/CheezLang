@@ -52,8 +52,26 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstAddressOfExpr ao: return GenerateAddressOf(ao, target, deref);
                 case AstIfExpr iff: return GenerateIfExpr(iff, target, deref);
                 case AstBinaryExpr bin: return GenerateBinaryExpr(bin, target, deref);
+                case AstDereferenceExpr de: return GenerateDerefExpr(de, target, deref);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef? GenerateDerefExpr(AstDereferenceExpr de, LLVMValueRef? target, bool deref)
+        {
+            var sub = GenerateExpression(de.SubExpression, null, true);
+
+            if (!deref) return sub;
+
+            var val = builder.CreateLoad(sub.Value, "");
+
+            if (target != null)
+            {
+                builder.CreateStore(val, target.Value);
+                return null;
+            }
+
+            return val;
         }
 
         private static Func<LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string, LLVMValueRef> GetICompare(LLVMIntPredicate pred)

@@ -1,0 +1,44 @@
+#test_expect_output("123")
+#test_expect_output("123")
+#test_expect_output("456")
+#test_expect_output("456")
+#test_expect_output("789")
+#test_expect_output("789")
+#test_expect_output("5, 9")
+#test_expect_output("9, 5")
+
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+fn swap(pa: *int, pb: *int) {
+    let a = <<pa
+    let b = <<pb
+    (<<pa, <<pb) = (b, a)
+}
+
+fn Main() {
+    {
+        let a = 123
+        let pa = &a
+
+        c_printf("%d`n", a)
+        c_printf("%d`n", <<pa)
+
+        a = 456
+
+        c_printf("%d`n", a)
+        c_printf("%d`n", <<pa)
+
+        <<pa = 789
+
+        c_printf("%d`n", a)
+        c_printf("%d`n", <<pa)
+    }
+
+    {
+        let a = 5
+        let b = 9
+        c_printf("%d, %d`n", a, b)
+        swap(&a, &b)
+        c_printf("%d, %d`n", a, b)
+    }
+}

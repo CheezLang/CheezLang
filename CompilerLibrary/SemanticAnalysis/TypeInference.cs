@@ -164,6 +164,10 @@ namespace Cheez
                     InferTypeAddressOf(ao, expected, newInstances);
                     break;
 
+                case AstDereferenceExpr de:
+                    InferTypeDeref(de, expected, newInstances);
+                    break;
+
                 default:
                     throw new NotImplementedException();
             }
@@ -172,6 +176,24 @@ namespace Cheez
             //{
             //    polyTypeMap[p.Name] = expr.Type;
             //}
+        }
+
+        private void InferTypeDeref(AstDereferenceExpr de, CheezType expected, List<AstFunctionDecl> newInstances)
+        {
+            CheezType subExpect = null;
+            if (expected != null) subExpect = PointerType.GetPointerType(expected);
+
+            de.SubExpression.Scope = de.Scope;
+            InferTypeHelper(de.SubExpression, subExpect, newInstances);
+
+            if (de.SubExpression.Type is PointerType p)
+            {
+                de.Type = p.TargetType;
+            }
+            else if (!de.SubExpression.Type.IsErrorType)
+            {
+                ReportError(de, $"Can't dereference non pointer type {de.SubExpression.Type}");
+            }
         }
 
         private void InferTypeIfExpr(AstIfExpr iff, CheezType expected, List<AstFunctionDecl> newInstances)

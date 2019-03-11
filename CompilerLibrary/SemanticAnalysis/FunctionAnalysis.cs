@@ -231,7 +231,23 @@ namespace Cheez
                         break;
                     }
 
-                default: throw new NotImplementedException();
+                case AstDereferenceExpr de:
+                    {
+                        value.Scope = ass.Scope;
+                        InferType(value, de.Type);
+                        if (value.Type == CheezType.Error)
+                            break;
+
+                        if (value.Type != de.Type)
+                        {
+                            ReportError(ass, $"Can't assign a value of type {value.Type} to the expression '{de}' of type {de.Type}");
+                        }
+
+                        //ass.Scope.SetInitialized(id.Symbol);
+                        break;
+                    }
+
+                default: ReportError(pattern, $"Can't assign to the pattern '{pattern}', not an lvalue"); break;
             }
         }
 
