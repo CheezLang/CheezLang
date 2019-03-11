@@ -158,7 +158,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         var str = LLVM.StructCreateNamed(context, s.ToString());
                         LLVM.StructSetBody(str, new LLVMTypeRef[] {
-                            LLVM.Int32Type(),
+                            LLVM.Int64Type(),
                             CheezTypeToLLVMType(s.TargetType).GetPointerTo()
                         }, false);
                         return str;
@@ -292,7 +292,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case SliceType s:
                     return LLVM.ConstStruct(new LLVMValueRef[] {
-                        LLVM.ConstInt(LLVM.Int32Type(), 0, true),
+                        LLVM.ConstInt(LLVM.Int64Type(), 0, true),
                         GetDefaultLLVMValue(s.ToPointerType())
                     }, false);
 

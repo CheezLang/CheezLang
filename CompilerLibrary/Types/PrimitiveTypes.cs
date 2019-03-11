@@ -234,7 +234,7 @@ namespace Cheez.Types.Primitive
             var type = new SliceType
             {
                 TargetType = targetType,
-                Size = PointerType.PointerSize + 4,
+                Size = PointerType.PointerSize * 2,
                 Alignment = PointerType.PointerAlignment
             };
 

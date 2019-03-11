@@ -76,6 +76,7 @@ namespace Cheez.Parsing
         KwConstant,
         KwLet,
         KwTypedef,
+        KwType,
         KwIf,
         KwElse,
         KwFor,
@@ -375,6 +376,7 @@ namespace Cheez.Parsing
                 case "constant": token.type = TokenType.KwConstant; break;
                 case "let": token.type = TokenType.KwLet; break;
                 case "typedef": token.type = TokenType.KwTypedef; break;
+                case "type": token.type = TokenType.KwType; break;
                 case "if": token.type = TokenType.KwIf; break;
                 case "else": token.type = TokenType.KwElse; break;
                 case "for": token.type = TokenType.KwFor; break;

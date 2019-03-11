@@ -157,6 +157,12 @@ namespace Cheez
                 case AstCastExpr cast:
                     return InferTypeCast(cast, expected, newInstances);
 
+                case AstTypeExpr type:
+                    return InferTypeTypeExpr(type, expected, newInstances);
+
+                case AstEmptyExpr e:
+                    return e;
+
                 default:
                     throw new NotImplementedException();
             }
@@ -166,6 +172,13 @@ namespace Cheez
             //    polyTypeMap[p.Name] = expr.Type;
             //}
 
+            return expr;
+        }
+
+        private AstExpression InferTypeTypeExpr(AstTypeExpr expr, CheezType expected, List<AstFunctionDecl> newInstances)
+        {
+            expr.Type = CheezType.Type;
+            expr.Value = ResolveType(expr);
             return expr;
         }
 
@@ -331,9 +344,7 @@ namespace Cheez
 
                         var type = (CheezType)arg.Value;
 
-                        expr.Type = IntType.LiteralType;
-                        expr.Value = NumberData.FromBigInt(type.Size);
-                        break;
+                        return InferTypeHelper(new AstNumberExpr(type.Size, Location: expr.Location), null, null);
                     }
 
                 case "tuple_type_member":
@@ -509,7 +520,7 @@ namespace Cheez
                         }
                         else if (name == "length")
                         {
-                            expr.Type = IntType.GetIntType(4, true);
+                            expr.Type = IntType.GetIntType(8, true);
                         }
                         else
                         {
@@ -814,7 +825,7 @@ namespace Cheez
 
             if (expr.Type == null)
             {
-                ReportError(expr, $"Failed to infer type for expression");
+                ReportError(expr, $"Failed to infer type for struct expression");
                 expr.Type = CheezType.Error;
                 return expr;
             }

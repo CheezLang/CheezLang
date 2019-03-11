@@ -1,28 +1,31 @@
-#test_expect_output("a: 123")
-#test_expect_output("b: 1")
-#test_expect_output("c: 123, d: 1")
-#test_expect_output("f[0]: 123, f[1]: 1")
-#test_expect_output("g: 123, h: 1")
+// #load("tests/language/builtin_operators.che")
+#load("test2")
 
-// required for printing
-fn c_printf(format: c_string) #varargs #linkname("printf");
+// struct Foo {
+//     a: int
+//     b: double
+//     c: c_string
+// }
+
+// fn c_malloc(size: int) -> *any #linkname("malloc");
+// fn c_free(mem: *any) #linkname("free");
+// fn c_memset(mem: *any, value: int, num: usize) -> *any #linkname("memset");
+
+// fn alloc($T: type) -> *T {
+//     let ptr = c_malloc(@sizeof(T))
+//     return cast c_memset(ptr, 0, @sizeof(T))
+// }
+
+// fn delete(ptr: *$T) {
+//     c_free(cast ptr)
+// }
 
 fn Main() {
-    let a = 123
-    let b: bool = true
-    let (c, d): (int, bool) = (a, b)
-    let f = (c, d)
-    let (g, h) = f
-
-    a = 456
-    b = false
-    (d, c) = (b, a)
-    f = (c, d)
-    (g, h) = f
-
-    c_printf("a: %d`n", a)
-    c_printf("b: %d`n", b)
-    c_printf("c: %d, d: %d`n", c, d)
-    c_printf("f[0]: %d, f[1]: %d`n", f[0], f[1])
-    c_printf("g: %d, h: %d`n", g, h)
+    print_string("test`n")
+    print_cstring("lol`n")
+    
+    // let a: []int
+    // c_printf("lol`n")
+    // c_printf("%d`n", @sizeof(int))
+    // c_printf("%d`n", @sizeof(type []int))
 }

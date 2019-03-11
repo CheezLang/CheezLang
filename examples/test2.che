@@ -1,0 +1,44 @@
+fn c_printf(format: c_string) #varargs #linkname("printf");
+fn c_strlen(str: c_string) -> int #linkname("strlen");
+fn puts(str: c_string);
+
+typedef HANDLE = int
+
+fn GetStdHandle(h: int) -> int #stdcall;
+fn WriteFile(handle: HANDLE, str: c_string, length: int, bytes_written: *int = null, reserved: int = 0) #stdcall;
+
+
+let __std_in_handle: int = GetStdHandle(-10)
+let __std_out_handle: int = GetStdHandle(-11)
+let __std_err_handle: int = GetStdHandle(-12)
+
+fn print_string(str: string) {
+    WriteFile(__std_out_handle, str.data, cast str.length)
+}
+
+fn print_cstring(str: c_string) {
+    let len = c_strlen(str)
+    WriteFile(__std_out_handle, str, len)
+}
+
+fn print_number(n: $T) {
+    c_printf("%d`n", n)
+}
+
+fn bool_to_string(b: bool) -> string {
+    return if b { "true" } else { "false" }
+}
+
+fn bool_to_cstring(b: bool) -> c_string {
+    return if b { "true" } else { "false" }
+}
+
+fn println(str: string) {
+    print_string(str)
+    print_string("`n")
+}
+
+fn printlnc(str: c_string) {
+    print_cstring(str)
+    print_string("`n")
+}

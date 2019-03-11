@@ -164,14 +164,18 @@ namespace Cheez.Parsing
                 case TokenType.Minus:
                 case TokenType.LessLess:
                 case TokenType.OpenParen:
+                case TokenType.OpenBracket:
+                case TokenType.OpenBrace:
                 case TokenType.StringLiteral:
                 case TokenType.CharLiteral:
                 case TokenType.NumberLiteral:
                 case TokenType.KwNull:
                 case TokenType.KwTrue:
                 case TokenType.KwFalse:
+                case TokenType.KwType:
                 case TokenType.KwCast:
                 case TokenType.Ampersand:
+                case TokenType.Asterisk:
                 case TokenType.Identifier:
                     return true;
 
@@ -1068,6 +1072,12 @@ namespace Cheez.Parsing
         {
             var token = PeekToken();
 
+            if (token.type == TokenType.KwType)
+            {
+                NextToken();
+                return new AstIdTypeExpr("type", false, new Location(token.location));
+            }
+
             if (token.type == TokenType.AtSignIdentifier)
             {
                 var sub = ParseExpression();
@@ -1545,6 +1555,20 @@ namespace Cheez.Parsing
 
                 case TokenType.KwIf:
                     return ParseIfExpr();
+
+                case TokenType.KwType:
+                    {
+                        NextToken();
+                        if (IsExprToken())
+                        {
+                            var sub = ParseTypeExpr();
+                            return sub;
+                        }
+                        else
+                        {
+                            return new AstIdExpr("type", false, new Location(token.location));
+                        }
+                    }
 
                 case TokenType.OpenParen:
                     {
