@@ -289,13 +289,12 @@ namespace Cheez.Ast.Expressions
             => CopyValuesTo(new AstCompCallExpr(Name.Clone() as AstIdExpr, Arguments.Select(a => a.Clone()).ToList()));
     }
 
-    public class AstBinaryExpr : AstExpression, ITempVariable
+    public class AstBinaryExpr : AstExpression
     {
         public string Operator { get; set; }
         public AstExpression Left { get; set; }
         public AstExpression Right { get; set; }
 
-        public AstIdExpr Name => null;
         public override bool IsPolymorphic => Left.IsPolymorphic || Right.IsPolymorphic;
 
         public IOperator ActualOperator { get; set; }
@@ -397,7 +396,7 @@ namespace Cheez.Ast.Expressions
             => CopyValuesTo(new AstDereferenceExpr(SubExpression.Clone()));
     }
 
-    public class AstCastExpr : AstExpression, ITempVariable
+    public class AstCastExpr : AstExpression
     {
         public AstExpression SubExpression { get; set; }
         public AstTypeExpr TypeExpr { get; set; }
@@ -546,7 +545,7 @@ namespace Cheez.Ast.Expressions
         }
     }
 
-    public class AstStructValueExpr : AstExpression, ITempVariable
+    public class AstStructValueExpr : AstExpression
     {
         public AstTypeExpr TypeExpr { get; set; }
         public List<AstStructMemberInitialization> MemberInitializers { get; }
@@ -568,7 +567,7 @@ namespace Cheez.Ast.Expressions
         public override AstExpression Clone() => CopyValuesTo(new AstStructValueExpr(TypeExpr, MemberInitializers));
     }
 
-    public class AstArrayExpr : AstExpression, ITempVariable
+    public class AstArrayExpr : AstExpression
     {
         public override bool IsPolymorphic => false;
 

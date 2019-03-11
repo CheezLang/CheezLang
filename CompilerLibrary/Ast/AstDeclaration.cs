@@ -61,12 +61,6 @@ namespace Cheez.Ast.Statements
 
     #region Function Declaration
 
-    public interface ITempVariable
-    {
-        AstIdExpr Name { get; } // can be null
-        CheezType Type { get; }
-    }
-
     public class AstFunctionDecl : AstDecl, ITypedSymbol
     {
         public Scope ConstScope { get; set; }

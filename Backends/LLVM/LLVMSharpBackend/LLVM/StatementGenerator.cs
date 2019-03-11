@@ -205,7 +205,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.CreateBr(bbCond);
 
             builder.PositionBuilderAtEnd(bbCond);
-            var cond = GenerateExpressionHelper(whl.Condition, null, true);
+            var cond = GenerateExpression(whl.Condition, null, true);
             builder.CreateCondBr(cond.Value, bbBody, bbEnd);
 
             builder.PositionBuilderAtEnd(bbBody);
@@ -289,7 +289,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 foreach (var v in decl.SubDeclarations)
                 {
                     var varPtr = valueMap[v];
-                    var val = GenerateExpressionHelper(v.Initializer, varPtr, true);
+                    GenerateExpressionHelper(v.Initializer, varPtr, true);
                 }
             }
 

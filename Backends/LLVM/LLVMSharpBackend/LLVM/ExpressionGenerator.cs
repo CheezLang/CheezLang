@@ -15,13 +15,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
     public partial class LLVMCodeGenerator
     {
 
-        private LLVMValueRef? GenerateExpressionHelper(AstExpression expr, LLVMValueRef? target, bool deref)
+        private void GenerateExpressionHelper(AstExpression expr, LLVMValueRef? target, bool deref)
         {
             var v = GenerateExpression(expr, target, true);
             if (v != null && target != null)
                 builder.CreateStore(v.Value, target.Value);
-
-            return target ?? v;
         }
 
         private LLVMValueRef? GenerateExpression(AstExpression expr, LLVMValueRef? target, bool deref)
@@ -271,19 +269,29 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             };
         private LLVMValueRef? GenerateBinaryExpr(AstBinaryExpr bin, LLVMValueRef? target, bool deref)
         {
-            var left = GenerateExpression(bin.Left, null, true);
-            var right = GenerateExpression(bin.Right, null, true);
-
             if (bin.ActualOperator is BuiltInOperator)
             {
-                var bo = builtInOperators[(bin.Operator, bin.Left.Type)];
-                var val = bo(GetRawBuilder(), left.Value, right.Value, "");
-                return val;
+                if (bin.Operator == "and")
+                {
+                    return GenerateAndExpr(bin);
+                }
+                else if (bin.Operator == "or")
+                {
+                    return GenerateOrExpr(bin);
+                }
+                else
+                {
+                    var left = GenerateExpression(bin.Left, null, true);
+                    var right = GenerateExpression(bin.Right, null, true);
+                    var bo = builtInOperators[(bin.Operator, bin.Left.Type)];
+                    var val = bo(GetRawBuilder(), left.Value, right.Value, "");
+                    return val;
+                }
             }
             else if (bin.ActualOperator is BuiltInPointerOperator)
             {
-                //var p1 = builder.CreateCast(LLVMOpcode.LLVMPtrToInt, left.Value, LLVM.Int64Type(), "");
-                //var p2 = builder.CreateCast(LLVMOpcode.LLVMPtrToInt, right.Value, LLVM.Int64Type(), "");
+                var left = GenerateExpression(bin.Left, null, true);
+                var right = GenerateExpression(bin.Right, null, true);
                 var bo = builtInPointerOperators[bin.Operator];
                 var val = bo(GetRawBuilder(), left.Value, right.Value, "");
                 return val;
@@ -292,6 +300,46 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 throw new NotImplementedException();
             }
+        }
+
+        private LLVMValueRef GenerateAndExpr(AstBinaryExpr bin)
+        {
+            var result = CreateLocalVariable(CheezType.Bool);
+
+            var bbRight = LLVM.AppendBasicBlock(currentLLVMFunction, "_and_right");
+            var bbEnd = LLVM.AppendBasicBlock(currentLLVMFunction, "_and_end");
+
+            GenerateExpressionHelper(bin.Left, result, true);
+            builder.CreateCondBr(builder.CreateLoad(result, ""), bbRight, bbEnd);
+
+            builder.PositionBuilderAtEnd(bbRight);
+            GenerateExpressionHelper(bin.Right, result, true);
+            builder.CreateBr(bbEnd);
+
+            builder.PositionBuilderAtEnd(bbEnd);
+
+            result = builder.CreateLoad(result, "");
+            return result;
+        }
+
+        private LLVMValueRef GenerateOrExpr(AstBinaryExpr bin)
+        {
+            var result = CreateLocalVariable(CheezType.Bool);
+
+            var bbRight = LLVM.AppendBasicBlock(currentLLVMFunction, "_or_right");
+            var bbEnd = LLVM.AppendBasicBlock(currentLLVMFunction, "_or_end");
+
+            GenerateExpressionHelper(bin.Left, result, true);
+            builder.CreateCondBr(builder.CreateLoad(result, ""), bbEnd, bbRight);
+
+            builder.PositionBuilderAtEnd(bbRight);
+            GenerateExpressionHelper(bin.Right, result, true);
+            builder.CreateBr(bbEnd);
+
+            builder.PositionBuilderAtEnd(bbEnd);
+
+            result = builder.CreateLoad(result, "");
+            return result;
         }
 
         private LLVMValueRef? GenerateIfExpr(AstIfExpr iff, LLVMValueRef? target, bool deref)

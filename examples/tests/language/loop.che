@@ -18,14 +18,11 @@ fn Main() {
 
 fn fizz_buzz(n: int) {
     while let a = 1; a < n; a = a + 1 {
-        if a % 5 == 0 {
-            if a % 3 == 0 {
-                c_printf("FizzBuzz ")
-            } else {
-                c_printf("Buzz ")
-            }
-        }
-        else if a % 3 == 0 {
+        if a % 5 == 0 and a % 3 == 0 {
+            c_printf("FizzBuzz ")
+        } else if a % 5 == 0 {
+            c_printf("Buzz ")
+        } else if a % 3 == 0 {
             c_printf("Fizz ")
         } else {
             c_printf("%d ", a)
