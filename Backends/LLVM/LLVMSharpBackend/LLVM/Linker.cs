@@ -39,6 +39,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         public static bool Link(Workspace workspace, string targetFile, string objFile, IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
         {
+            string target = null;
+            switch (workspace.TargetArch)
+            {
+                case TargetArchitecture.X86: target = "x86"; break;
+                case TargetArchitecture.X64: target = "x64"; break;
+            }
+
             foreach (var f in workspace.Files)
             {
                 libraries = libraries.Concat(f.Libraries);
@@ -70,16 +77,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             // library paths
             if (winSdk.UcrtPath != null)
-                lldArgs.Add($@"-libpath:{winSdk.UcrtPath}\x86");
+                lldArgs.Add($@"-libpath:{winSdk.UcrtPath}\{target}");
 
             if (winSdk.UmPath != null)
-                lldArgs.Add($@"-libpath:{winSdk.UmPath}\x86");
+                lldArgs.Add($@"-libpath:{winSdk.UmPath}\{target}");
 
             var exePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             lldArgs.Add($"-libpath:{exePath}");
 
             if (msvcLibPath != null)
-                lldArgs.Add($@"-libpath:{msvcLibPath}\x86");
+                lldArgs.Add($@"-libpath:{msvcLibPath}\{target}");
 
             foreach (var linc in libraryIncludeDirectories)
             {
@@ -90,12 +97,17 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             lldArgs.Add($@"-libpath:{exePath}\lib");
 
             // other options
-            lldArgs.Add("/entry:mainCRTStartup");
-            lldArgs.Add("/machine:X86");
+            switch (workspace.TargetArch)
+            {
+                case TargetArchitecture.X86: lldArgs.Add("/entry:mainCRTStartup"); break;
+                case TargetArchitecture.X64: lldArgs.Add("/entry:__main"); break;
+            }
+            lldArgs.Add($"/machine:{target}");
             lldArgs.Add($"/subsystem:{subsystem}");
 
             // runtime
-            lldArgs.Add("clang_rt.builtins-i386.lib");
+            if (workspace.TargetArch == TargetArchitecture.X86)
+                lldArgs.Add("clang_rt.builtins-i386.lib");
 
             // windows and c libs
             lldArgs.Add("libucrtd.lib");

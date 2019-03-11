@@ -228,7 +228,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         var s = v as string;
                         return LLVM.ConstNamedStruct(CheezTypeToLLVMType(type), new LLVMValueRef[] {
-                            LLVM.ConstInt(LLVM.Int32Type(), (ulong)s.Length, true),
+                            LLVM.ConstInt(LLVM.Int64Type(), (ulong)s.Length, true),
                             LLVM.ConstPointerCast(builder.CreateGlobalStringPtr(s, ""), LLVM.PointerType(LLVM.Int8Type(), 0))
                         });
                     }

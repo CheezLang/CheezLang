@@ -8,6 +8,12 @@ using System.Linq;
 
 namespace Cheez
 {
+    public enum TargetArchitecture
+    {
+        X86,
+        X64
+    }
+
     public partial class Workspace
     {
         private Dictionary<string, PTFile> mFiles = new Dictionary<string, PTFile>();
@@ -30,6 +36,8 @@ namespace Cheez
         public int MaxPolyFuncResolveStepCount { get; set; } = 10;
 
         private AstFunctionDecl currentFunction = null;
+
+        public TargetArchitecture TargetArch = TargetArchitecture.X86;
 
         public Workspace(CheezCompiler comp)
         {

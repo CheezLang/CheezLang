@@ -60,7 +60,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             this.targetFile = targetFile;
             this.emitDebugInfo = !optimize;
 
-            targetTriple = "i386-pc-win32";
+            switch (workspace.TargetArch)
+            {
+                case TargetArchitecture.X64: 
+                    targetTriple = "x86_64-pc-windows-gnu";
+                    break;
+
+                case TargetArchitecture.X86:
+                    targetTriple = "i386-pc-win32";
+                    break;
+            }
 
             module = new Module("test-module");
             module.SetTarget(targetTriple);
@@ -207,8 +216,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void GenerateMainFunction()
         {
+            string mainFuncName = null;
+            switch (workspace.TargetArch)
+            {
+                case TargetArchitecture.X86: mainFuncName = "main"; break;
+                case TargetArchitecture.X64: mainFuncName = "__main"; break;
+            }
+
             var ltype = LLVM.FunctionType(LLVM.Int32Type(), new LLVMTypeRef[0], false);
-            var lfunc = module.AddFunction("main", ltype);
+            var lfunc = module.AddFunction(mainFuncName, ltype);
             var entry = lfunc.AppendBasicBlock("entry");
             var init = lfunc.AppendBasicBlock("init");
             var main = lfunc.AppendBasicBlock("main");
