@@ -168,6 +168,10 @@ namespace Cheez
                     InferTypeDeref(de, expected, newInstances);
                     break;
 
+                case AstCastExpr cast:
+                    InferTypeCast(cast, expected, newInstances);
+                    break;
+
                 default:
                     throw new NotImplementedException();
             }
@@ -176,6 +180,47 @@ namespace Cheez
             //{
             //    polyTypeMap[p.Name] = expr.Type;
             //}
+        }
+
+        private void InferTypeCast(AstCastExpr cast, CheezType expected, List<AstFunctionDecl> newInstances)
+        {
+            if (cast.TypeExpr != null)
+            {
+                cast.TypeExpr.Scope = cast.Scope;
+                cast.Type = ResolveType(cast.TypeExpr);
+            }
+            else if (expected != null)
+            {
+                cast.Type = expected;
+            }
+            else
+            {
+                ReportError(cast, $"Auto cast not possible here");
+            }
+
+            cast.SubExpression.Scope = cast.Scope;
+            InferTypeHelper(cast.SubExpression, cast.Type, newInstances);
+
+            if (cast.SubExpression.Type.IsErrorType)
+                return;
+
+            // TODO: check if cast possible
+            var to = cast.Type;
+            var from = cast.SubExpression.Type;
+            if ((to is PointerType && from is PointerType) ||
+                (to is IntType && from is PointerType) ||
+                (to is PointerType && from is IntType) ||
+                (to is IntType && from is IntType) ||
+                (to is FloatType && from is FloatType) ||
+                (to is FloatType && from is IntType) ||
+                (to is IntType && from is FloatType))
+            {
+                // ok
+            }
+            else
+            {
+                ReportError(cast, $"Can't convert from type {from} to type {to}");
+            }
         }
 
         private void InferTypeDeref(AstDereferenceExpr de, CheezType expected, List<AstFunctionDecl> newInstances)

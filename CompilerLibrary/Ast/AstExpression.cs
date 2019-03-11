@@ -398,13 +398,13 @@ namespace Cheez.Ast.Expressions
     public class AstCastExpr : AstExpression, ITempVariable
     {
         public AstExpression SubExpression { get; set; }
-        public AstExpression TypeExpr { get; set; }
+        public AstTypeExpr TypeExpr { get; set; }
         public override bool IsPolymorphic => SubExpression.IsPolymorphic || Type.IsPolyType;
 
         public AstIdExpr Name => null;
 
         [DebuggerStepThrough]
-        public AstCastExpr(AstExpression typeExpr, AstExpression sub, ILocation Location = null) : base(Location)
+        public AstCastExpr(AstTypeExpr typeExpr, AstExpression sub, ILocation Location = null) : base(Location)
         {
             this.TypeExpr = typeExpr;
             SubExpression = sub;
@@ -414,7 +414,7 @@ namespace Cheez.Ast.Expressions
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitCastExpr(this, data);
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstCastExpr(TypeExpr.Clone(), SubExpression.Clone()));
+        public override AstExpression Clone() => CopyValuesTo(new AstCastExpr(TypeExpr.Clone() as AstTypeExpr, SubExpression.Clone()));
     }
 
     public class AstArrayAccessExpr : AstExpression

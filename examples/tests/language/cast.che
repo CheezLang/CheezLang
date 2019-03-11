@@ -1,0 +1,72 @@
+#test_expect_output("-65, -65, -65")
+#test_expect_output("65, 65, 65")
+#test_expect_output("123456, 123456")
+#test_expect_output("456789, 456789")
+#test_expect_output("0.500000, 3.700000")
+#test_expect_output("3.700000, 3")
+#test_expect_output("7, 7.000000")
+
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+fn Main() {
+    // int <- int
+    test1(-65)
+
+    // uint <- uint
+    test2(65)
+
+    // * <- int
+    test3(123456)
+
+    // int <- *
+    test4(cast(*int)456789)
+
+    // float <- float
+    test5(0.5f, 3.7d)
+
+    // int <- float
+    test6(3.7d)
+
+    // float <- int
+    test7(7)
+}
+
+fn test1(a: int) { 
+    let b: long = cast a
+    let c = cast(byte) a
+
+    c_printf("%d, %lld, %hhd`n", a, b, c)
+}
+fn test2(a: uint) {
+    let b: ulong = cast a
+    let c = cast(ubyte) a
+
+    c_printf("%u, %llu, %hhu`n", a, b, c)
+}
+
+fn test3(a: usize) {
+    let b: *any = cast a
+
+    c_printf("%u, %u`n", a, b)
+}
+
+fn test4(a: *int) {
+    let b: usize = cast a
+
+    c_printf("%u, %u`n", a, b)
+}
+
+fn test5(f: float, d: double) {
+    let a = cast(double) f
+    let b = cast(float) d
+    c_printf("%f, %f`n", a, cast(double) b)
+}
+
+fn test6(d: double) {
+    c_printf("%f, %d`n", d, cast(int) d)
+}
+
+fn test7(i: int) {
+    c_printf("%d, %f`n", i, cast(double) i)
+}
+

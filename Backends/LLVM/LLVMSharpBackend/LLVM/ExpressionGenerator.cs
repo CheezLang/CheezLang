@@ -53,7 +53,37 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstIfExpr iff: return GenerateIfExpr(iff, target, deref);
                 case AstBinaryExpr bin: return GenerateBinaryExpr(bin, target, deref);
                 case AstDereferenceExpr de: return GenerateDerefExpr(de, target, deref);
+                case AstCastExpr cast: return GenerateCastExpr(cast, target, deref);
             }
+            throw new NotImplementedException();
+        }
+
+        private LLVMValueRef? GenerateCastExpr(AstCastExpr cast, LLVMValueRef? target, bool deref)
+        {
+            var to = cast.Type;
+            var from = cast.SubExpression.Type;
+
+            var sub = GenerateExpression(cast.SubExpression, null, true);
+
+            if (to == from) return sub;
+
+            var toLLVM = CheezTypeToLLVMType(to);
+
+            if (to is IntType && from is IntType) // int <- int
+                return builder.CreateIntCast(sub.Value, toLLVM, "");
+            if (to is PointerType && from is IntType) // * <- int
+                return builder.CreateCast(LLVMOpcode.LLVMIntToPtr, sub.Value, toLLVM, "");
+            if (to is IntType && from is PointerType) // int <- *
+                return builder.CreateCast(LLVMOpcode.LLVMPtrToInt, sub.Value, toLLVM, "");
+            if (to is PointerType && from is PointerType) // * <- *
+                return builder.CreatePointerCast(sub.Value, toLLVM, "");
+            if (to is FloatType && from is FloatType) // float <- float
+                return builder.CreateFPCast(sub.Value, toLLVM, "");
+            if (to is IntType i && from is FloatType) // int <- float
+                return builder.CreateCast(i.Signed ? LLVMOpcode.LLVMFPToSI : LLVMOpcode.LLVMFPToUI, sub.Value, toLLVM, "");
+            if (to is FloatType && from is IntType i2) // float <- int
+                return builder.CreateCast(i2.Signed ? LLVMOpcode.LLVMSIToFP : LLVMOpcode.LLVMUIToFP, sub.Value, toLLVM, "");
+
             throw new NotImplementedException();
         }
 

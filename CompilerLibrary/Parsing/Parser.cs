@@ -1257,6 +1257,7 @@ namespace Cheez.Parsing
             }
             else if (next.type == TokenType.KwCast)
             {
+                var beg = next.location;
                 AstTypeExpr type = null;
 
                 NextToken();
@@ -1274,7 +1275,7 @@ namespace Cheez.Parsing
                 }
 
                 var sub = ParseUnaryExpression(errorMessage);
-                return new AstCastExpr(null, sub, new Location(next.location, sub.End));
+                return new AstCastExpr(type, sub, new Location(beg, sub.End));
             }
             else if (next.type == TokenType.LessLess)
             {
