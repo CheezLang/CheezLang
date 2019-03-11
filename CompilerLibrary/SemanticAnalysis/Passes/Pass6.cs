@@ -105,7 +105,7 @@ namespace Cheez
 
                 var allDeps = new HashSet<AstSingleVariableDecl>();
 
-                InferType(v.Initializer, v.TypeExpr?.Type);
+                v.Initializer = InferType(v.Initializer, v.TypeExpr?.Type);
 
                 if (collectDependencies)
                     CollectDependencies(v.Initializer, deps, allDeps);
@@ -139,7 +139,7 @@ namespace Cheez
                 decl.Value = initializer?.Value;
 
                 if (decl.Initializer != null && decl.Initializer != initializer)
-                    InferType(decl.Initializer, type);
+                    decl.Initializer = InferType(decl.Initializer, type);
 
 
                 if (decl.Type == CheezType.Void)

@@ -85,7 +85,7 @@ namespace Cheez
                         var subType = ResolveTypeHelper(arr.Target, deps, instances, poly_from_scope);
 
                         arr.SizeExpr.Scope = typeExpr.Scope;
-                        InferType(arr.SizeExpr, IntType.DefaultType);
+                        arr.SizeExpr = InferType(arr.SizeExpr, IntType.DefaultType);
 
                         if (arr.SizeExpr.Value == null || !(arr.SizeExpr.Type is IntType))
                         {
@@ -155,7 +155,7 @@ namespace Cheez
 
                 case AstExprTypeExpr expr:
                     expr.Expression.Scope = expr.Scope;
-                    InferType(expr.Expression, CheezType.Type);
+                    expr.Expression = InferType(expr.Expression, CheezType.Type);
 
                     if (expr.Expression.Type == CheezType.Error) return CheezType.Error;
 

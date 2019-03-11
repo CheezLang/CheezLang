@@ -47,7 +47,7 @@ fn test2(a: uint) {
 fn test3(a: usize) {
     let b: *any = cast a
 
-    c_printf("%u, %u`n", a, b)
+    c_printf("%llu, %u`n", a, b)
 }
 
 fn test4(a: *int) {

@@ -51,7 +51,7 @@ namespace Cheez
                 else
                 {
                     var arg = ln.Arguments[0];
-                    InferType(arg, null);
+                    arg = ln.Arguments[0] = InferType(arg, null);
                     if (!(arg.Value is string))
                     {
                         ReportError(arg, $"Argument to #linkname must be a constant string!");
@@ -74,7 +74,7 @@ namespace Cheez
                 if (p.DefaultValue != null)
                 {
                     p.DefaultValue.Scope = func.Scope;
-                    InferType(p.DefaultValue, p.Type);
+                    p.DefaultValue = InferType(p.DefaultValue, p.Type);
                     ConvertLiteralTypeToDefaultType(p.DefaultValue, p.Type);
                     if (p.DefaultValue.Type != p.Type && !p.DefaultValue.Type.IsErrorType)
                     {
@@ -101,8 +101,8 @@ namespace Cheez
                 foreach (var m in t.Members)
                 {
                     if (m.Name == null) continue;
-                    var access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnValue), new AstNumberExpr(index));
-                    InferType(access, null);
+                    AstExpression access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnValue), new AstNumberExpr(index));
+                    access = InferType(access, null);
                     var (ok, other) = func.SubScope.DefineUse(m.Name, access, out var use);
                     if (!ok)
                         ReportError(m, $"A symbol with name '{m.Name.Name}' already exists in current scope", ("Other symbol here:", other));
@@ -200,7 +200,7 @@ namespace Cheez
 
             whl.Condition.Scope = whl.SubScope;
             whl.Condition.Parent = whl;
-            InferType(whl.Condition, CheezType.Bool);
+            whl.Condition = InferType(whl.Condition, CheezType.Bool);
             ConvertLiteralTypeToDefaultType(whl.Condition);
             if (whl.Condition.Type != CheezType.Bool && !whl.Condition.Type.IsErrorType)
                 ReportError(whl.Condition, $"The condition of a while statement must be a bool but is a {whl.Condition.Type}");
@@ -228,14 +228,14 @@ namespace Cheez
 
             ass.Pattern.Scope = ass.Scope;
             ass.Pattern.Parent = ass;
-            InferType(ass.Pattern, null);
+            ass.Pattern = InferType(ass.Pattern, null);
             if (ass.Pattern.Type != CheezType.Error)
             {
-                MatchPatternWithExpression(ass, ass.Pattern, ass.Value);
+                ass.Value = MatchPatternWithExpression(ass, ass.Pattern, ass.Value);
             }
         }
 
-        private void MatchPatternWithExpression(AstAssignment ass, AstExpression pattern, AstExpression value)
+        private AstExpression MatchPatternWithExpression(AstAssignment ass, AstExpression pattern, AstExpression value)
         {
             switch (pattern)
             {
@@ -244,7 +244,7 @@ namespace Cheez
                         // TODO: check if can be assigned to id (e.g. not const)
 
                         value.Scope = ass.Scope;
-                        InferType(value, id.Type);
+                        value = InferType(value, id.Type);
                         if (value.Type == CheezType.Error)
                             break;
 
@@ -264,7 +264,7 @@ namespace Cheez
                             if (t.Values.Count != v.Values.Count)
                             {
                                 ReportError(ass, $"Can't assign the tuple '{v}' to the pattern '{t}' because the amount of values does not match");
-                                return;
+                                return value;
                             }
 
                             // create new assignments for all sub values
@@ -274,14 +274,14 @@ namespace Cheez
                                 var subVal = v.Values[i];
                                 var subAss = new AstAssignment(subPat, subVal, null, ass.Location);
                                 subAss.Scope = ass.Scope;
-                                MatchPatternWithExpression(subAss, subPat, subVal);
+                                subVal = v.Values[i] = MatchPatternWithExpression(subAss, subPat, subVal);
                                 ass.AddSubAssignment(subAss);
                             }
                         }
                         else
                         {
                             value.Scope = ass.Scope;
-                            InferType(value, t.Type);
+                            value = InferType(value, t.Type);
 
                             var tmp = new AstTempVarExpr(value);
                             tmp.SetFlag(ExprFlags.IsLValue, true);
@@ -289,7 +289,7 @@ namespace Cheez
                             if (value.Type != t.Type)
                             {
                                 ReportError(ass, $"Can't assign a value of type {value.Type} to the pattern '{t}' of type {t.Type}");
-                                return;
+                                return value;
                             }
 
                             // create new assignments for all sub values
@@ -298,7 +298,7 @@ namespace Cheez
                                 var subVal = new AstArrayAccessExpr(tmp, new AstNumberExpr(i));
                                 var subAss = new AstAssignment(t.Values[i], subVal);
                                 subAss.Scope = ass.Scope;
-                                MatchPatternWithExpression(subAss, t.Values[i], subVal);
+                                t.Values[i] = MatchPatternWithExpression(subAss, t.Values[i], subVal);
                                 ass.AddSubAssignment(subAss);
                             }
                         }
@@ -308,7 +308,7 @@ namespace Cheez
                 case AstDereferenceExpr de:
                     {
                         value.Scope = ass.Scope;
-                        InferType(value, de.Type);
+                        value = InferType(value, de.Type);
                         if (value.Type == CheezType.Error)
                             break;
 
@@ -324,7 +324,7 @@ namespace Cheez
                 case AstDotExpr dot:
                     {
                         value.Scope = ass.Scope;
-                        InferType(value, dot.Type);
+                        value = InferType(value, dot.Type);
                         if (value.Type == CheezType.Error)
                             break;
 
@@ -338,6 +338,8 @@ namespace Cheez
 
                 default: ReportError(pattern, $"Can't assign to the pattern '{pattern}', not an lvalue"); break;
             }
+
+            return value;
         }
 
         private void AnalyseVariableDecl(AstVariableDecl vardecl)
@@ -358,7 +360,7 @@ namespace Cheez
             if (infer_types)
             {
                 expr.Expr.Scope = expr.Scope;
-                InferType(expr.Expr, null);
+                expr.Expr = InferType(expr.Expr, null);
             }
 
             if (!allow_any_expr)
@@ -388,7 +390,7 @@ namespace Cheez
             {
                 ret.ReturnValue.Scope = ret.Scope;
                 ret.ReturnValue.Parent = ret;
-                InferType(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
+                ret.ReturnValue = InferType(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
 
                 ConvertLiteralTypeToDefaultType(ret.ReturnValue);
 
