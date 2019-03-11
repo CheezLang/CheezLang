@@ -161,9 +161,35 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstExprStmt expr: GenerateExprStatement(expr); break;
                 case AstVariableDecl decl: GenerateVariableDecl(decl); break;
                 case AstAssignment ass: GenerateAssignment(ass); break;
+                case AstWhileStmt whl: GenerateWhile(whl); break;
                 default: throw new NotImplementedException();
             }
 
+        }
+
+        private void GenerateWhile(AstWhileStmt whl)
+        {
+            if (whl.PreAction != null)
+                GenerateStatement(whl.PreAction);
+
+            var bbCond = LLVM.AppendBasicBlock(currentLLVMFunction, "_cond");
+            var bbBody = LLVM.AppendBasicBlock(currentLLVMFunction, "_body");
+            var bbEnd = LLVM.AppendBasicBlock(currentLLVMFunction, "_end");
+
+            builder.CreateBr(bbCond);
+
+            builder.PositionBuilderAtEnd(bbCond);
+            var cond = GenerateExpressionHelper(whl.Condition, null, true);
+            builder.CreateCondBr(cond.Value, bbBody, bbEnd);
+
+            builder.PositionBuilderAtEnd(bbBody);
+            GenerateExpression(whl.Body, null, false);
+
+            if (whl.PostAction != null)
+                GenerateStatement(whl.PostAction);
+            builder.CreateBr(bbCond);
+
+            builder.PositionBuilderAtEnd(bbEnd);
         }
 
         private void GenerateAssignment(AstAssignment ass)

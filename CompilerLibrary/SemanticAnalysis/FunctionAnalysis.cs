@@ -142,8 +142,36 @@ namespace Cheez
                 case AstReturnStmt ret: AnalyseReturnStatement(ret); break;
                 case AstExprStmt expr: AnalyseExprStatement(expr); break;
                 case AstAssignment ass: AnalyseAssignStatement(ass); break;
+                case AstWhileStmt whl: AnalyseWhileStatement(whl); break;
                 default: throw new NotImplementedException();
             }
+        }
+
+        private void AnalyseWhileStatement(AstWhileStmt whl)
+        {
+            whl.SubScope = new Scope("while", whl.Scope);
+
+            if (whl.PreAction != null)
+            {
+                // TODO
+                whl.PreAction.Scope = whl.Scope;
+                AnalyseStatement(whl.PreAction);
+            }
+
+            whl.Condition.Scope = whl.SubScope;
+            InferType(whl.Condition, CheezType.Bool);
+            ConvertLiteralTypeToDefaultType(whl.Condition);
+            if (whl.Condition.Type != CheezType.Bool && !whl.Condition.Type.IsErrorType)
+                ReportError(whl.Condition, $"The condition of a while statement must be a bool but is a {whl.Condition.Type}");
+
+            if (whl.PostAction != null)
+            {
+                whl.PostAction.Scope = whl.SubScope;
+                AnalyseStatement(whl.PostAction);
+            }
+
+            whl.Body.Scope = whl.SubScope;
+            InferType(whl.Body, CheezType.Void);
         }
 
         private void AnalyseAssignStatement(AstAssignment ass)
