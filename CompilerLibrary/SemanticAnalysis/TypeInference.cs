@@ -213,7 +213,8 @@ namespace Cheez
                 (to is IntType && from is IntType) ||
                 (to is FloatType && from is FloatType) ||
                 (to is FloatType && from is IntType) ||
-                (to is IntType && from is FloatType))
+                (to is IntType && from is FloatType) ||
+                (to is IntType && from is BoolType))
             {
                 // ok
             }

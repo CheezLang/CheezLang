@@ -37,7 +37,7 @@ namespace Cheez
 
         private AstFunctionDecl currentFunction = null;
 
-        public TargetArchitecture TargetArch = TargetArchitecture.X86;
+        public TargetArchitecture TargetArch = TargetArchitecture.X64;
 
         public Workspace(CheezCompiler comp)
         {

@@ -1,6 +1,6 @@
 fn c_printf(format: c_string) #varargs #linkname("printf");
 fn c_strlen(str: c_string) -> int #linkname("strlen");
-fn puts(str: c_string);
+fn c_puts(str: c_string) #linkname("puts");
 
 typedef HANDLE = int
 

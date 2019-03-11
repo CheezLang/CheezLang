@@ -64,16 +64,16 @@ fn c_printf(format: c_string) #varargs #linkname("printf");
 
 fn Main() {
     // signed ints
-    test_numbers(i8,  9i8,  5i8,  3i8)
-    test_numbers(i16, 9i16, 5i16, 3i16)
-    test_numbers(i32, 9i32, 5i32, 3i32)
+    test_numbers(i8,  9i8,  5i8,  3i8, arith_string = "%hhd, %hhd, %hhd, %hhd, %hhd`n"c)
+    test_numbers(i16, 9i16, 5i16, 3i16, arith_string = "%hd, %hd, %hd, %hd, %hd`n"c)
+    test_numbers(i32, 9i32, 5i32, 3i32, arith_string = "%d, %d, %d, %d, %d`n"c)
     test_numbers(i64, 9i64, 5i64, 3i64, arith_string = "%lld, %lld, %lld, %lld, %lld`n"c)
 
     // unsigned ints
-    test_numbers(u8,  9u8,  5u8,  3u8)
-    test_numbers(u16, 9u16, 5u16, 3u16)
-    test_numbers(u32, 9u32, 5u32, 3u32)
-    test_numbers(u64, 9u64, 5u64, 3u64, arith_string = "%llu, %llu, %llu, %llu, %lld`n"c)
+    test_numbers(u8,  9u8,  5u8,  3u8, arith_string = "%hhu, %hhu, %hhu, %hhu, %hhu`n"c)
+    test_numbers(u16, 9u16, 5u16, 3u16, arith_string = "%hu, %hu, %hu, %hu, %hu`n"c)
+    test_numbers(u32, 9u32, 5u32, 3u32, arith_string = "%u, %u, %u, %u, %u`n"c)
+    test_numbers(u64, 9u64, 5u64, 3u64, arith_string = "%llu, %llu, %llu, %llu, %llu`n"c)
 
     // floats
     test_numbers(f32, 9.0f, 5.0f, 3.0f, false)
@@ -125,7 +125,7 @@ fn test_numbers($T: type, a: T, b: T, c: T, $test_arith: bool = true, $arith_str
 }
 
 fn test_bool(a: bool, b: bool) {
-    c_printf("%d, %d`n", (a == b), (a != b))
+    c_printf("%d, %d`n", cast(int) (a == b), cast(int) (a != b))
 }
 
 fn test_pointers(a: *int, b: *int) {

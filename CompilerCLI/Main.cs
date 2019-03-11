@@ -257,7 +257,7 @@ namespace CheezCLI
                                     var expectedOutput = currentExpectedOutput < expectedOutputs.Length ? expectedOutputs[currentExpectedOutput] : "";
                                     if (expectedOutput != e.Data)
                                     {
-                                        Console.WriteLine($"[TEST] Expected: '{expectedOutput}', got: '{e.Data}'");
+                                        Console.WriteLine($"[TEST] ({currentExpectedOutput}) Expected: '{expectedOutput}', got: '{e.Data}'");
                                         linesFailed++;
                                     }
                                     currentExpectedOutput++;

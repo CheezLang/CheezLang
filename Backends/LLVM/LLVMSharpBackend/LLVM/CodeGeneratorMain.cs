@@ -220,7 +220,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             switch (workspace.TargetArch)
             {
                 case TargetArchitecture.X86: mainFuncName = "main"; break;
-                case TargetArchitecture.X64: mainFuncName = "__main"; break;
+                case TargetArchitecture.X64: mainFuncName = "WinMain"; break;
             }
 
             var ltype = LLVM.FunctionType(LLVM.Int32Type(), new LLVMTypeRef[0], false);

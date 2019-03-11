@@ -81,7 +81,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return builder.CreateCast(i.Signed ? LLVMOpcode.LLVMFPToSI : LLVMOpcode.LLVMFPToUI, sub.Value, toLLVM, "");
             if (to is FloatType && from is IntType i2) // float <- int
                 return builder.CreateCast(i2.Signed ? LLVMOpcode.LLVMSIToFP : LLVMOpcode.LLVMUIToFP, sub.Value, toLLVM, "");
-
+            if (to is IntType && from is BoolType)
+                return builder.CreateZExt(sub.Value, toLLVM, "");
+            
             throw new NotImplementedException();
         }
 

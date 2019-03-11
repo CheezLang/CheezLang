@@ -100,7 +100,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             switch (workspace.TargetArch)
             {
                 case TargetArchitecture.X86: lldArgs.Add("/entry:mainCRTStartup"); break;
-                case TargetArchitecture.X64: lldArgs.Add("/entry:__main"); break;
+                case TargetArchitecture.X64: lldArgs.Add("/entry:WinMainCRTStartup"); break;
             }
             lldArgs.Add($"/machine:{target}");
             lldArgs.Add($"/subsystem:{subsystem}");

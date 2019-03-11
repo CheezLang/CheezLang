@@ -21,11 +21,7 @@
 // }
 
 fn Main() {
-    print_string("test`n")
-    print_cstring("lol`n")
-    
-    // let a: []int
-    // c_printf("lol`n")
-    // c_printf("%d`n", @sizeof(int))
-    // c_printf("%d`n", @sizeof(type []int))
+    // print_string("test`n")
+    // print_cstring("lol`n")
+    c_printf("uiaeuiae`n")
 }
