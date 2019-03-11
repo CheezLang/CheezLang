@@ -1,2 +1,7 @@
 - move map of initialized symbols from scope to block
 - improve error messages when type of const argument doesn't match type of const parameter (location shown is from param)
+
+
+Thoughts:
+- even in 32 bit mode pointers in llvm are 8 byte
+- llvm structs are padded this StructType adds padding so that all members are 8 byte aligned

@@ -99,8 +99,8 @@ namespace Cheez.Types.Primitive
 
     public class PointerType : CheezType
     {
-        public static int PointerSize = 4;
-        public static int PointerAlignment = 4;
+        public static int PointerSize = 8;
+        public static int PointerAlignment = 8;
 
         private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
 

@@ -322,6 +322,8 @@ namespace Cheez
                 member.TypeExpr.Scope = @struct.SubScope;
                 member.Type = ResolveTypeHelper(member.TypeExpr, instances: instances);
             }
+
+            ((StructType)@struct.Type).CalculateSize();
         }
 
         private void ResolveStructs(List<AstStructDecl> newInstances)

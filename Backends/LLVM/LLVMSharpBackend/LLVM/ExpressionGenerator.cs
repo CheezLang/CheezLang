@@ -550,21 +550,32 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         public LLVMValueRef? GenerateDotExpr(AstDotExpr expr, LLVMValueRef? target, bool deref)
         {
-            switch (expr.Left.Type)
+            var type = expr.Left.Type;
+            var value = GenerateExpression(expr.Left, null, false).Value;
+
+            if (!expr.IsDoubleColon)
+            {
+                while (type is PointerType p)
+                {
+                    type = p.TargetType;
+                    value = builder.CreateLoad(value, "");
+                }
+            }
+
+            switch (type)
             {
                 case TupleType t:
                     {
                         var index = t.Members.IndexOf(m => m.name == expr.Right.Name);
-                        var left = GenerateExpression(expr.Left, null, false);
 
                         LLVMValueRef? result;
                         if (!expr.Left.GetFlag(ExprFlags.IsLValue))
                         {
-                            result = builder.CreateExtractValue(left.Value, (uint)index, "");
+                            result = builder.CreateExtractValue(value, (uint)index, "");
                         }
                         else
                         {
-                            result = builder.CreateStructGEP(left.Value, (uint)index, "");
+                            result = builder.CreateStructGEP(value, (uint)index, "");
                             if (deref)
                                 result = builder.CreateLoad(result.Value, "");
                         }
@@ -582,19 +593,29 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         if (expr.Right.Name == "data")
                         {
-                            var left = GenerateExpression(expr.Left, null, false);
-                            var dataPtrPtr = builder.CreateStructGEP(left.Value, 1, "");
+                            var dataPtrPtr = builder.CreateStructGEP(value, 1, "");
                             var dataPtr = builder.CreateLoad(dataPtrPtr, "");
                             return dataPtr;
                         }
                         else if (expr.Right.Name == "length")
                         {
-                            var left = GenerateExpression(expr.Left, null, false);
-                            var lengthPtrPtr = builder.CreateStructGEP(left.Value, 0, "");
-                            var lengthPtr = builder.CreateLoad(lengthPtrPtr, "");
-                            return lengthPtr;
+                            var lengthPtr = builder.CreateStructGEP(value, 0, "");
+                            var length = builder.CreateLoad(lengthPtr, "");
+                            return length;
                         }
                         break;
+                    }
+
+                case StructType @struct:
+                    {
+                        var index = @struct.GetIndexOfMember(expr.Right.Name);
+                        
+                        var dataPtr = builder.CreateStructGEP(value, (uint)index, "");
+
+                        var result = dataPtr;
+                        if (deref) result = builder.CreateLoad(dataPtr, "");
+
+                        return result;
                     }
             }
             throw new NotImplementedException();

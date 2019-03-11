@@ -313,6 +313,34 @@ namespace Cheez
         {
             switch (expr.Name.Name)
             {
+                case "sizeof":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr, $"@sizeof takes one argument");
+                            return;
+                        }
+
+                        var arg = expr.Arguments[0];
+                        arg.Scope = expr.Scope;
+                        arg.Parent = expr;
+                        InferTypeHelper(arg, CheezType.Type, newInstances);
+                        if (arg.Type.IsErrorType)
+                            return;
+
+                        if (arg.Type != CheezType.Type)
+                        {
+                            ReportError(arg, $"Argument must be a type but is '{arg.Type}'");
+                            return;
+                        }
+
+                        var type = (CheezType)arg.Value;
+
+                        expr.Type = IntType.LiteralType;
+                        expr.Value = NumberData.FromBigInt(type.Size);
+                        break;
+                    }
+
                 case "tuple_type_member":
                     {
                         if (expr.Arguments.Count != 2)
@@ -444,8 +472,20 @@ namespace Cheez
             if (expr.Left.Type.IsErrorType)
                 return;
 
+            var type = expr.Left.Type;
+
+            if (expr.IsDoubleColon) throw new NotImplementedException();
+            else
+            {
+                while (type is PointerType p)
+                {
+                    type = p.TargetType;
+                    expr.DerefCount++;
+                }
+            }
+
             var sub = expr.Right.Name;
-            switch (expr.Left.Type)
+            switch (type)
             {
                 case TupleType tuple:
                     {
@@ -477,6 +517,21 @@ namespace Cheez
                             // TODO: check for impl functions
                             ReportError(expr, $"No subscript '{name}' exists for slice type {slice}");
                         }
+                        break;
+                    }
+
+                case StructType s:
+                    {
+                        var name = expr.Right.Name;
+                        var index = s.GetIndexOfMember(name);
+                        if (index == -1)
+                        {
+                            ReportError(expr.Right, $"Struct '{s.Declaration.Name.Name}' has no field '{name}'");
+                            break;
+                        }
+
+                        expr.Type = s.Declaration.Members[index].Type;
+                        expr.SetFlag(ExprFlags.IsLValue, true);
                         break;
                     }
 
@@ -646,6 +701,7 @@ namespace Cheez
                     if (arg.Expr.Value == null)
                     {
                         ReportError(arg, $"The expression must be a compile time constant");
+                        return; // :hack
                     }
                     else
                     {
@@ -906,6 +962,11 @@ namespace Cheez
             {
                 i.Type = CheezType.Type;
                 i.Value = ct.Type;
+            }
+            else if (sym is AstStructDecl str)
+            {
+                i.Type = CheezType.Type;
+                i.Value = str.Type;
             }
             else if (sym is AstDecl decl)
             {

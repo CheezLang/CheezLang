@@ -1,5 +1,6 @@
 ﻿using Cheez.Ast.Statements;
 using Cheez.Types.Primitive;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -101,7 +102,7 @@ namespace Cheez.Types.Complex
             Arguments = args;
         }
 
-        private void CalculateSize()
+        public void CalculateSize()
         {
             Size = 0;
             MemberOffsets = new int[Declaration.Members.Count];
@@ -109,7 +110,9 @@ namespace Cheez.Types.Complex
             {
                 var m = Declaration.Members[i];
                 MemberOffsets[i] = Size;
-                Size += m.Type.Size;
+
+
+                Size += Math.Max(PointerType.PointerSize, m.Type.Size);
             }
 
             Alignment = Size;

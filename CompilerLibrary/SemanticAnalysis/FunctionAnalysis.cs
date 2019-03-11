@@ -321,6 +321,21 @@ namespace Cheez
                         break;
                     }
 
+                case AstDotExpr dot:
+                    {
+                        value.Scope = ass.Scope;
+                        InferType(value, dot.Type);
+                        if (value.Type == CheezType.Error)
+                            break;
+
+                        if (value.Type != dot.Type)
+                        {
+                            ReportError(ass, $"Can't assign a value of type {value.Type} to the expression '{dot}' of type {dot.Type}");
+                        }
+
+                        break;
+                    }
+
                 default: ReportError(pattern, $"Can't assign to the pattern '{pattern}', not an lvalue"); break;
             }
         }
@@ -397,7 +412,7 @@ namespace Cheez
                     }
                     else
                     {
-                        ReportError(ret, $"Return value has to be provided in non void function");
+                        ReportError(ret, $"Not all code paths return a value");
                     }
                 }
                 else

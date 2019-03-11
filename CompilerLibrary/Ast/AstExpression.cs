@@ -207,6 +207,8 @@ namespace Cheez.Ast.Expressions
         public bool IsDoubleColon { get; set; }
         public override bool IsPolymorphic => Left.IsPolymorphic;
 
+        public int DerefCount { get; set; } = 0;
+
         [DebuggerStepThrough]
         public AstDotExpr(AstExpression left, AstIdExpr right, bool isDC, ILocation Location = null) : base(Location)
         {
@@ -415,7 +417,7 @@ namespace Cheez.Ast.Expressions
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitCastExpr(this, data);
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstCastExpr(TypeExpr.Clone() as AstTypeExpr, SubExpression.Clone()));
+        public override AstExpression Clone() => CopyValuesTo(new AstCastExpr(TypeExpr?.Clone() as AstTypeExpr, SubExpression.Clone()));
     }
 
     public class AstArrayAccessExpr : AstExpression

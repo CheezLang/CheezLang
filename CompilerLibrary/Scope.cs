@@ -274,8 +274,8 @@ namespace Cheez
             DefineTypeSymbol("ulong", IntType.GetIntType(8, false));
 
             // TODO: these should be 8 bytes on x64
-            DefineTypeSymbol("size", IntType.GetIntType(4, true));
-            DefineTypeSymbol("usize", IntType.GetIntType(4, false));
+            DefineTypeSymbol("size", IntType.GetIntType(PointerType.PointerSize, true));
+            DefineTypeSymbol("usize", IntType.GetIntType(PointerType.PointerSize, false));
 
             DefineTypeSymbol("f32", FloatType.GetFloatType(4));
             DefineTypeSymbol("float", FloatType.GetFloatType(4));

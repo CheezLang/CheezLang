@@ -71,6 +71,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             rawBuilder = LLVM.CreateBuilder();
 
             pointerType = LLVM.Int8Type().GetPointerTo();
+            var pointerSize = pointerType.SizeOf();
+            var size = LLVM.SizeOfTypeInBits(targetData, pointerType);
+            
             // generate code
             {
                 GenerateIntrinsicDeclarations();
