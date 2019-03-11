@@ -283,7 +283,7 @@ namespace Cheez.Ast.Statements
     public class AstContinueStmt : AstStatement
     {
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
-        public AstStatement Loop { get; set; }
+        public AstWhileStmt Loop { get; set; }
 
         public AstContinueStmt(ILocation Location = null) : base(Location: Location)
         { }

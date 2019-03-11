@@ -145,29 +145,42 @@ namespace Cheez
                 case AstAssignment ass: AnalyseAssignStatement(ass); break;
                 case AstWhileStmt whl: AnalyseWhileStatement(whl); break;
                 case AstBreakStmt br: AnalyseBreakStatement(br); break;
+                case AstContinueStmt cont: AnalyseContinueStatement(cont); break;
                 default: throw new NotImplementedException();
             }
         }
 
-        private void AnalyseBreakStatement(AstBreakStmt br)
+        private AstWhileStmt FindFirstLoop(IAstNode node)
         {
-            AstWhileStmt loop = null;
-
-            // find corresponding loop
-            var parent = br.Parent;
-            while (parent != null)
+            while (node != null)
             {
-                if (parent is AstWhileStmt whl)
+                if (node is AstWhileStmt whl)
                 {
-                    loop = whl;
-                    break;
+                    return whl;
                 }
-                parent = parent.Parent;
+                node = node.Parent;
             }
-            
+
+            return null;
+        }
+
+        private void AnalyseContinueStatement(AstContinueStmt cont)
+        {
+            AstWhileStmt loop = FindFirstLoop(cont);
             if (loop == null)
             {
-                ReportError(br, $"Break can only occur inside of loops");
+                ReportError(cont, $"continue can only occur inside of loops");
+            }
+
+            cont.Loop = loop;
+        }
+
+        private void AnalyseBreakStatement(AstBreakStmt br)
+        {
+            AstWhileStmt loop = FindFirstLoop(br);
+            if (loop == null)
+            {
+                ReportError(br, $"break can only occur inside of loops");
             }
 
             br.Loop = loop;

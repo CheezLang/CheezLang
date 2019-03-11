@@ -28,6 +28,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private Dictionary<CheezType, LLVMTypeRef> typeMap = new Dictionary<CheezType, LLVMTypeRef>();
         private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
         private Dictionary<AstWhileStmt, LLVMBasicBlockRef> loopEndMap = new Dictionary<AstWhileStmt, LLVMBasicBlockRef>();
+        private Dictionary<AstWhileStmt, LLVMBasicBlockRef> loopPostActionMap = new Dictionary<AstWhileStmt, LLVMBasicBlockRef>();
 
         // intrinsics
         private LLVMValueRef memcpy32;

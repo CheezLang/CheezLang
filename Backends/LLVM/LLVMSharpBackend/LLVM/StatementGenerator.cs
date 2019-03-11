@@ -163,9 +163,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstAssignment ass: GenerateAssignment(ass); break;
                 case AstWhileStmt whl: GenerateWhile(whl); break;
                 case AstBreakStmt br: GenerateBreak(br); break;
+                case AstContinueStmt cont: GenerateContinue(cont); break;
                 default: throw new NotImplementedException();
             }
 
+        }
+
+        private void GenerateContinue(AstContinueStmt cont)
+        {
+            // TODO: deferred statements
+            var postAction = loopPostActionMap[cont.Loop];
+            builder.CreateBr(postAction);
+
+            var bbNext = LLVM.AppendBasicBlock(currentLLVMFunction, "_cont_next");
+            builder.PositionBuilderAtEnd(bbNext);
         }
 
         private void GenerateBreak(AstBreakStmt br)
@@ -185,9 +196,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             var bbCond = LLVM.AppendBasicBlock(currentLLVMFunction, "_loop_cond");
             var bbBody = LLVM.AppendBasicBlock(currentLLVMFunction, "_loop_body");
+            var bbPost = LLVM.AppendBasicBlock(currentLLVMFunction, "_loop_post");
             var bbEnd = LLVM.AppendBasicBlock(currentLLVMFunction, "_loop_end");
 
             loopEndMap[whl] = bbEnd;
+            loopPostActionMap[whl] = bbPost;
 
             builder.CreateBr(bbCond);
 
@@ -198,8 +211,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.PositionBuilderAtEnd(bbBody);
             GenerateExpression(whl.Body, null, false);
 
+            builder.CreateBr(bbPost);
+            builder.PositionBuilderAtEnd(bbPost);
+
             if (whl.PostAction != null)
                 GenerateStatement(whl.PostAction);
+
             builder.CreateBr(bbCond);
 
             builder.PositionBuilderAtEnd(bbEnd);
