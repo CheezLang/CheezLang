@@ -1,27 +1,6 @@
-// #load("tests/language/builtin_operators.che")
+//#load("tests/language/builtin_operators.che")
 #load("test2")
 
-// struct Foo {
-//     a: int
-//     b: double
-//     c: c_string
-// }
-
-// fn c_malloc(size: int) -> *any #linkname("malloc");
-// fn c_free(mem: *any) #linkname("free");
-// fn c_memset(mem: *any, value: int, num: usize) -> *any #linkname("memset");
-
-// fn alloc($T: type) -> *T {
-//     let ptr = c_malloc(@sizeof(T))
-//     return cast c_memset(ptr, 0, @sizeof(T))
-// }
-
-// fn delete(ptr: *$T) {
-//     c_free(cast ptr)
-// }
-
 fn Main() {
-    // print_string("test`n")
-    // print_cstring("lol`n")
-    c_printf("uiaeuiae`n")
+    
 }
