@@ -229,7 +229,16 @@ namespace Cheez
             ass.Pattern.Scope = ass.Scope;
             ass.Pattern.Parent = ass;
             ass.Pattern = InferType(ass.Pattern, null);
-            if (ass.Pattern.Type != CheezType.Error)
+
+            ass.Value.Scope = ass.Scope;
+            ass.Value = InferType(ass.Value, ass.Pattern.Type);
+
+            if (ass.Value.Type != ass.Pattern.Type)
+            {
+                ReportError(ass, $"Can't assign a value of type {ass.Value.Type} to a pattern of type {ass.Pattern.Type}");
+            }
+
+            if (ass.Pattern.Type != CheezType.Error && ass.Value.Type != CheezType.Error)
             {
                 ass.Value = MatchPatternWithExpression(ass, ass.Pattern, ass.Value);
             }
@@ -243,17 +252,12 @@ namespace Cheez
                     {
                         // TODO: check if can be assigned to id (e.g. not const)
 
-                        value.Scope = ass.Scope;
-                        value = InferType(value, id.Type);
-                        if (value.Type == CheezType.Error)
-                            break;
-
-                        if (value.Type != id.Type)
-                        {
-                            ReportError(ass, $"Can't assign a value of type {value.Type} to the variable '{id.Name}' of type {id.Type}");
-                        }
-
                         ass.Scope.SetInitialized(id.Symbol);
+
+                        //if (ass.Operator != null)
+                        //{
+
+                        //}
                         break;
                     }
 
@@ -280,22 +284,16 @@ namespace Cheez
                         }
                         else
                         {
-                            value.Scope = ass.Scope;
-                            value = InferType(value, t.Type);
-
                             var tmp = new AstTempVarExpr(value);
                             tmp.SetFlag(ExprFlags.IsLValue, true);
-
-                            if (value.Type != t.Type)
-                            {
-                                ReportError(ass, $"Can't assign a value of type {value.Type} to the pattern '{t}' of type {t.Type}");
-                                return value;
-                            }
 
                             // create new assignments for all sub values
                             for (int i = 0; i < t.Values.Count; i++)
                             {
-                                var subVal = new AstArrayAccessExpr(tmp, new AstNumberExpr(i));
+                                AstExpression subVal = new AstArrayAccessExpr(tmp, new AstNumberExpr(i));
+                                subVal.Scope = ass.Scope;
+                                subVal = InferType(subVal, t.Values[i].Type);
+
                                 var subAss = new AstAssignment(t.Values[i], subVal);
                                 subAss.Scope = ass.Scope;
                                 t.Values[i] = MatchPatternWithExpression(subAss, t.Values[i], subVal);
@@ -307,32 +305,11 @@ namespace Cheez
 
                 case AstDereferenceExpr de:
                     {
-                        value.Scope = ass.Scope;
-                        value = InferType(value, de.Type);
-                        if (value.Type == CheezType.Error)
-                            break;
-
-                        if (value.Type != de.Type)
-                        {
-                            ReportError(ass, $"Can't assign a value of type {value.Type} to the expression '{de}' of type {de.Type}");
-                        }
-
-                        //ass.Scope.SetInitialized(id.Symbol);
                         break;
                     }
 
                 case AstDotExpr dot:
                     {
-                        value.Scope = ass.Scope;
-                        value = InferType(value, dot.Type);
-                        if (value.Type == CheezType.Error)
-                            break;
-
-                        if (value.Type != dot.Type)
-                        {
-                            ReportError(ass, $"Can't assign a value of type {value.Type} to the expression '{dot}' of type {dot.Type}");
-                        }
-
                         break;
                     }
 
