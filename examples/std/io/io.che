@@ -4,7 +4,7 @@
 
 typedef isize = i32
 
-fn c_sprintf(buff: *char, f: c_string, a: double) -> i32 #varargs #linkname("sprintf");
+fn c_sprintf(buff: *char, f: c_string, a: f64) -> i32 #varargs #linkname("sprintf");
 
 let NEW_LINE: char = '`n'
 
@@ -34,9 +34,9 @@ fn print_char(c: char) {
 fn print_float(val: $T) {
     let buff: [32]char
     let buff: string = buff
-    if @typeseq(T, float) {
-        c_sprintf(buff.data, "%f", cast(double)val)
-    } else if @typeseq(T, double) {
+    if @typeseq(T, f32) {
+        c_sprintf(buff.data, "%f", cast(f64)val)
+    } else if @typeseq(T, f64) {
         c_sprintf(buff.data, "%f", val)
     } else {
         @error(@concat("print_float can't be called with value of type ", @typename(T)))
@@ -333,7 +333,7 @@ impl Printable for f32 {
     fn print(str: *String, format: string) {
         let buff: [32]char
         let buff: string = buff
-        buff.length = c_sprintf(buff.data, "%f", cast(double)<<self)
+        buff.length = c_sprintf(buff.data, "%f", cast(f64)<<self)
         str.append_string(buff)
     }
 }

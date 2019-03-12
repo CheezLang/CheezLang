@@ -1,20 +1,20 @@
-fn sqrtf(f: float) -> float;
-fn sqrt(f: double) -> double;
+fn sqrtf(f: f32) -> f32;
+fn sqrt(f: f64) -> f64;
 
-fn fabsf(f: float) -> float;
-fn fabs(f: double) -> double;
+fn fabsf(f: f32) -> f32;
+fn fabs(f: f64) -> f64;
 
-fn fmaxf(f1: float, f2: float) -> float;
-fn fmax(f1: double, f2: double) -> double;
+fn fmaxf(f1: f32, f2: f32) -> f32;
+fn fmax(f1: f64, f2: f64) -> f64;
 
-fn fminf(f1: float, f2: float) -> float;
-fn fmin(f1: double, f2: double) -> double;
+fn fminf(f1: f32, f2: f32) -> f32;
+fn fmin(f1: f64, f2: f64) -> f64;
 
-fn sinf(f: float) -> float;
-fn sin(f: double) -> double;
+fn sinf(f: f32) -> f32;
+fn sin(f: f64) -> f64;
 
-fn cosf(f: float) -> float;
-fn cos(f: double) -> double;
+fn cosf(f: f32) -> f32;
+fn cos(f: f64) -> f64;
 
 fn u8_max() -> u8 {
     return cast(u8)-1
@@ -46,19 +46,19 @@ impl LinearCongruentialGenerator {
         return cast(u32) seed
     }
 
-    ref fn nextDouble() -> double {
-        return cast(double) self.next() / cast(double) u32_max()
+    ref fn nextDouble() -> f64 {
+        return cast(f64) self.next() / cast(f64) u32_max()
     }
 }
 
 struct Vec3 {
-    x: double
-    y: double
-    z: double
+    x: f64
+    y: f64
+    z: f64
 }
 
 impl Vec3 {
-    fn mul(f: double) -> Vec3 {
+    fn mul(f: f64) -> Vec3 {
         return new Vec3 { x * f, y * f, z * f }
     }
 
@@ -74,7 +74,7 @@ impl Vec3 {
         return new Vec3 { x - v.x, y - v.y, z - v.z }
     }
 
-    fn mag() -> double {
+    fn mag() -> f64 {
         let sum = x * x + y * y + z * z
         return sqrt(sum)
     }
@@ -84,7 +84,7 @@ impl Vec3 {
         return self.mul(1 / m)
     }
     
-    fn dot(v: Vec3) -> double {
+    fn dot(v: Vec3) -> f64 {
         return x * v.x + y * v.y + z * v.z
     }
 }

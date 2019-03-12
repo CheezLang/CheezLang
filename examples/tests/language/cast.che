@@ -9,25 +9,25 @@
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
 fn Main() {
-    // i32 <- i32
+    // int <- int
     test1(-65)
 
-    // u32 <- u32
+    // uint <- uint
     test2(65)
 
-    // * <- i32
+    // * <- int
     test3(123456)
 
-    // i32 <- *
+    // int <- *
     test4(cast(*i32)456789)
 
     // float <- float
     test5(0.5f, 3.7d)
 
-    // i32 <- float
+    // int <- float
     test6(3.7d)
 
-    // float <- i32
+    // float <- int
     test7(7)
 }
 
@@ -56,17 +56,17 @@ fn test4(a: *i32) {
     c_printf("%u, %u`n", a, b)
 }
 
-fn test5(f: float, d: double) {
-    let a = cast(double) f
-    let b = cast(float) d
-    c_printf("%f, %f`n", a, cast(double) b)
+fn test5(f: f32, d: f64) {
+    let a = cast(f64) f
+    let b = cast(f32) d
+    c_printf("%f, %f`n", a, cast(f64) b)
 }
 
-fn test6(d: double) {
+fn test6(d: f64) {
     c_printf("%f, %d`n", d, cast(i32) d)
 }
 
 fn test7(i: i32) {
-    c_printf("%d, %f`n", i, cast(double) i)
+    c_printf("%d, %f`n", i, cast(f64) i)
 }
 

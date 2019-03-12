@@ -26,7 +26,7 @@ struct Entry(T: type) {
 }
 
 struct Table(T: type) {
-    max_load: float
+    max_load: f32
     count: u32
     entries: Entry(T)[]
     allocator: Allocator
@@ -63,7 +63,7 @@ impl Table($T) {
     }
 
     ref fn set(key: c_string, value: T) -> bool {
-        if (float)count + 1 > (float)entries.length * max_load {
+        if (f32)count + 1 > (f32)entries.length * max_load {
             self.adjust_capacity((u32)entries.length * 2)
         }
 
