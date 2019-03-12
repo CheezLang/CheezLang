@@ -6,9 +6,28 @@
         {
             foreach (var func in mFunctions)
             {
-                if (!func.IsGeneric)
+                if (func.IsGeneric) continue;
+
+                AnalyseFunction(func);
+            }
+
+            foreach (var i in mImpls)
+            {
+                foreach (var f in i.Functions)
                 {
-                    AnalyseFunction(func);
+                    if (f.IsGeneric) continue;
+
+                    AnalyseFunction(f);
+                }
+            }
+
+            foreach (var i in mTraitImpls)
+            {
+                foreach (var f in i.Functions)
+                {
+                    if (f.IsGeneric) continue;
+
+                    AnalyseFunction(f);
                 }
             }
         }

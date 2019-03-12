@@ -61,18 +61,18 @@ namespace Cheez
     public class Using : ITypedSymbol
     {
         public CheezType Type => Expr.Type;
-        public AstIdExpr Name { get; }
+        public AstIdExpr Name => throw new NotImplementedException();
 
         public AstExpression Expr { get; }
         public bool IsConstant => true;
 
         public ILocation Location { get; set; }
 
+
         [DebuggerStepThrough]
-        public Using(AstIdExpr name, AstExpression expr)
+        public Using(AstExpression expr)
         {
-            this.Location = name.Location;
-            this.Name = name;
+            this.Location = expr.Location;
             this.Expr = expr;
         }
 
@@ -498,14 +498,14 @@ namespace Cheez
             return (true, null);
         }
 
-        public (bool ok, ILocation other) DefineUse(AstIdExpr name, AstExpression expr, out Using use)
+        public (bool ok, ILocation other) DefineUse(string name, AstExpression expr, out Using use)
         {
             use = null;
-            if (mSymbolTable.TryGetValue(name.Name, out var other))
+            if (mSymbolTable.TryGetValue(name, out var other))
                 return (false, other.Location);
 
-            use = new Using(name, expr);
-            mSymbolTable[name.Name] = use;
+            use = new Using(expr);
+            mSymbolTable[name] = use;
             return (true, null);
         }
 

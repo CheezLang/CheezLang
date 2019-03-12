@@ -259,6 +259,8 @@ namespace Cheez.Ast.Expressions
 
         public AstFunctionDecl Declaration { get; internal set; }
 
+        public bool UnifiedFunctionCall { get; set; }
+
         [DebuggerStepThrough]
         public AstCallExpr(AstExpression func, List<AstArgument> args, ILocation Location = null) : base(Location)
         {

@@ -42,6 +42,35 @@ namespace Cheez
 
         private void AnalyseFunction(AstFunctionDecl func, List<AstFunctionDecl> instances = null)
         {
+            if (func.ImplBlock != null && func.Parameters.Count > 0 && (
+                func.Parameters[0].Type == func.ImplBlock.TargetType ||
+                func.Parameters[0].Type == PointerType.GetPointerType(func.ImplBlock.TargetType)
+                ))
+            {
+                var p = func.Parameters[0];
+                if (p.Name == null)
+                {
+                    p.Name = new AstIdExpr("self", false, p.Location);
+                }
+
+                if (func.ImplBlock.TargetType is StructType @struct)
+                {
+
+                    foreach (var m in @struct.Declaration.Members)
+                    {
+                        AstExpression expr = new AstDotExpr(new AstSymbolExpr(p), new AstIdExpr(m.Name.Name, false), false);
+                        expr = InferType(expr, m.Type);
+
+                        var (ok, other) = func.SubScope.DefineUse(m.Name.Name, expr, out var use);
+
+                        if (!ok)
+                        {
+                            ReportError(p, $"A symbol with name '{m.Name.Name}' already exists", ("Other here:", other));
+                        }
+                    }
+                }
+            }
+
             if (func.TryGetDirective("linkname", out var ln))
             {
                 if (ln.Arguments.Count != 1)
@@ -103,7 +132,7 @@ namespace Cheez
                     if (m.Name == null) continue;
                     AstExpression access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnValue), new AstNumberExpr(index));
                     access = InferType(access, null);
-                    var (ok, other) = func.SubScope.DefineUse(m.Name, access, out var use);
+                    var (ok, other) = func.SubScope.DefineUse(m.Name.Name, access, out var use);
                     if (!ok)
                         ReportError(m, $"A symbol with name '{m.Name.Name}' already exists in current scope", ("Other symbol here:", other));
                     m.Symbol = use;
@@ -233,13 +262,13 @@ namespace Cheez
             ass.Value.Scope = ass.Scope;
             ass.Value = InferType(ass.Value, ass.Pattern.Type);
 
-            if (ass.Value.Type != ass.Pattern.Type)
-            {
-                ReportError(ass, $"Can't assign a value of type {ass.Value.Type} to a pattern of type {ass.Pattern.Type}");
-            }
 
             if (ass.Pattern.Type != CheezType.Error && ass.Value.Type != CheezType.Error)
             {
+                if (ass.Value.Type != ass.Pattern.Type)
+                {
+                    ReportError(ass, $"Can't assign a value of type {ass.Value.Type} to a pattern of type {ass.Pattern.Type}");
+                }
                 ass.Value = MatchPatternWithExpression(ass, ass.Pattern, ass.Value);
             }
         }

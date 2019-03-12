@@ -37,7 +37,7 @@ struct LinearCongruentialGenerator {
 }
 
 impl LinearCongruentialGenerator {
-    ref fn next() -> u32 {
+    fn next(*self) -> u32 {
         let M: u64 = cast(u64) u32_max()
         let A: u64 = 1664525
         let B: u64 = 1013904223
@@ -46,7 +46,7 @@ impl LinearCongruentialGenerator {
         return cast(u32) seed
     }
 
-    ref fn nextDouble() -> f64 {
+    fn nextDouble(*self) -> f64 {
         return cast(f64) self.next() / cast(f64) u32_max()
     }
 }
@@ -57,34 +57,34 @@ struct Vec3 {
     z: f64
 }
 
-impl Vec3 {
-    fn mul(f: f64) -> Vec3 {
-        return new Vec3 { x * f, y * f, z * f }
-    }
+// impl Vec3 {
+//     fn mul(f: f64) -> Vec3 {
+//         return new Vec3 { x * f, y * f, z * f }
+//     }
 
-    fn mul3(v: Vec3) -> Vec3 {
-        return new Vec3 { x * v.x, y * v.y, z * v.z }
-    }
+//     fn mul3(v: Vec3) -> Vec3 {
+//         return new Vec3 { x * v.x, y * v.y, z * v.z }
+//     }
 
-    fn add(v: Vec3) -> Vec3 {
-        return new Vec3 { x + v.x, y + v.y, z + v.z }
-    }
+//     fn add(v: Vec3) -> Vec3 {
+//         return new Vec3 { x + v.x, y + v.y, z + v.z }
+//     }
 
-    fn sub(v: Vec3) -> Vec3 {
-        return new Vec3 { x - v.x, y - v.y, z - v.z }
-    }
+//     fn sub(v: Vec3) -> Vec3 {
+//         return new Vec3 { x - v.x, y - v.y, z - v.z }
+//     }
 
-    fn mag() -> f64 {
-        let sum = x * x + y * y + z * z
-        return sqrt(sum)
-    }
+//     fn mag() -> f64 {
+//         let sum = x * x + y * y + z * z
+//         return sqrt(sum)
+//     }
 
-    fn normaziled() -> Vec3 {
-        let m = self.mag()
-        return self.mul(1 / m)
-    }
+//     fn normaziled() -> Vec3 {
+//         let m = self.mag()
+//         return self.mul(1 / m)
+//     }
     
-    fn dot(v: Vec3) -> f64 {
-        return x * v.x + y * v.y + z * v.z
-    }
-}
+//     fn dot(v: Vec3) -> f64 {
+//         return x * v.x + y * v.y + z * v.z
+//     }
+// }

@@ -537,7 +537,17 @@ namespace Cheez
                         var index = s.GetIndexOfMember(name);
                         if (index == -1)
                         {
-                            ReportError(expr.Right, $"Struct '{s.Declaration.Name.Name}' has no field '{name}'");
+                            // check if function exists
+
+                            var func = expr.Scope.GetImplFunction(s, name);
+
+                            if (func == null)
+                            {
+                                ReportError(expr.Right, $"Struct '{s.Declaration.Name.Name}' has no field or function '{name}'");
+                                break;
+                            }
+
+                            expr.Type = func.FunctionType;
                             break;
                         }
 
@@ -764,6 +774,25 @@ namespace Cheez
 
         private AstExpression InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, List<AstFunctionDecl> newInstances)
         {
+            if (func.Declaration != null && func.Declaration.ImplBlock != null && func.Declaration.SelfParameter)
+            {
+                var val = expr.Function as AstDotExpr;
+
+                AstArgument selfArg = null;
+                // add left side as first parameter
+                if (func.Declaration.RefSelf)
+                {
+                    selfArg = new AstArgument(new AstAddressOfExpr(val.Left, val.Left.Location), Location: val.Left.Location);
+                }
+                else
+                {
+                    selfArg = new AstArgument(val.Left, Location: val.Left.Location);
+                }
+
+                expr.Arguments.Insert(0, selfArg);
+                expr.UnifiedFunctionCall = true;
+            }
+
             if (!CheckAndMatchArgsToParams(expr, func.Declaration.Parameters, func.VarArgs))
                 return expr;
 

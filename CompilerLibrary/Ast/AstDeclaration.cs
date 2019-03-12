@@ -27,7 +27,7 @@ namespace Cheez.Ast.Statements
         public TokenLocation Beginning => Location?.Beginning;
         public TokenLocation End => Location?.End;
 
-        public AstIdExpr Name { get; }
+        public AstIdExpr Name { get; set; }
         public CheezType Type { get; set; }
         public AstTypeExpr TypeExpr { get; set; }
         public AstExpression DefaultValue { get; set; }
@@ -75,8 +75,9 @@ namespace Cheez.Ast.Statements
 
         public List<AstFunctionDecl> PolymorphicInstances { get; } = new List<AstFunctionDecl>();
 
-        public bool RefSelf { get; set; }
-        public bool IsGeneric { get; set; }
+        public bool SelfParameter { get; set; } = false;
+        public bool RefSelf { get; set; } = false;
+        public bool IsGeneric { get; set; } = false;
 
         public bool IsConstant => true;
 

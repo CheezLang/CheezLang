@@ -12,21 +12,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 {
     public partial class LLVMCodeGenerator
     {
-        private void GenerateFunctions()
-        {
-            // create declarations
-            foreach (var function in workspace.GlobalScope.FunctionDeclarations)
-            {
-                GenerateFunctionHeader(function);
-            }
-
-            // create implementations
-            foreach (var f in workspace.GlobalScope.FunctionDeclarations)
-            {
-                GenerateFunctionImplementation(f);
-            }
-        }
-
         private void GenerateFunctionHeader(AstFunctionDecl function)
         {
             var name = function.Name.Name;

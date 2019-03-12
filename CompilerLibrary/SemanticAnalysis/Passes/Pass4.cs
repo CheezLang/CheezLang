@@ -2,6 +2,7 @@
 using Cheez.Ast.Statements;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
+using Cheez.Types.Primitive;
 
 namespace Cheez
 {
@@ -22,13 +23,17 @@ namespace Cheez
 
             foreach (var i in mImpls)
             {
+                i.Scope.ImplBlocks.Add(i);
                 foreach (var f in i.Functions)
                 {
                     f.Scope = i.SubScope;
                     f.ConstScope = new Scope("$", f.Scope);
                     f.SubScope = new Scope("fn", f.ConstScope);
                     f.ImplBlock = i;
+                    f.ConstScope.DefineTypeSymbol("self", i.TargetType);
+
                     Pass4ResolveFunctionSignature(f);
+                    i.Scope.DefineImplFunction(f);
                 }
             }
 
@@ -59,6 +64,17 @@ namespace Cheez
             else if (!func.IsGeneric)
             {
                 func.Scope.FunctionDeclarations.Add(func);
+
+
+                if (func.ImplBlock != null && func.Parameters.Count > 0 && (
+                    func.Parameters[0].Type == func.ImplBlock.TargetType ||
+                    func.Parameters[0].Type == PointerType.GetPointerType(func.ImplBlock.TargetType)
+                    ))
+                {
+                    func.SelfParameter = true;
+                    if (func.Parameters[0].Type == PointerType.GetPointerType(func.ImplBlock.TargetType))
+                        func.RefSelf = true;
+                }
             }
         }
 

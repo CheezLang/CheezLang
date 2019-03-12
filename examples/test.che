@@ -1,24 +1,29 @@
 // #load("tests/language/local_variables.che")
 #load("test2")
-#load("std:util")
+// #load("std:math")
 
-fn foo() -> int {
-    let a = getCurrentTimeInMilliseconds()
-    let b = getCurrentTimeInMilliseconds()
-    return b - a
+struct Test {
+    a: int
+}
+
+impl Test {
+    fn foo(self) {
+        self.a += 1
+        a += 1
+    }
+
+    fn bar(*self) {
+        self.a += 1
+        a += 1
+    }
 }
 
 fn Main() {
-    let t1 = getCurrentTimeInMilliseconds()
+    let t = new Test { 0 }
 
-    let result = 0
-    while let a = 0; a < 10000000; a += 1 {
-        let x = foo()
-        let y = foo()
-        result += x + y
-    }
-
-    let t2 = getCurrentTimeInMilliseconds()
-    c_printf("%lld`n", t2 - t1)
-    c_printf("%lld`n", result)
+    c_printf("%lld`n", t.a)
+    t.foo()
+    c_printf("%lld`n", t.a)
+    t.bar()
+    c_printf("%lld`n", t.a)
 }
