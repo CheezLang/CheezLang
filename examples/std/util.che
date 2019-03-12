@@ -8,11 +8,11 @@ fn pointerAdd(ptr: *$T, amount: $OffsetType) -> *T {
     return cast(*T)(cast(OffsetType) ptr + amount)
 }
 
-fn getCurrentTimeInMicroseconds() -> u64 {
-    let freq: u64
+fn getCurrentTimeInMicroseconds() -> int {
+    let freq: int
     QueryPerformanceFrequency(&freq)
 
-    let time: u64
+    let time: int
     QueryPerformanceCounter(&time)
 
     time *= 1000000
@@ -21,11 +21,11 @@ fn getCurrentTimeInMicroseconds() -> u64 {
     return time
 }
 
-fn getCurrentTimeInMilliseconds() -> u64 {
-    let freq: u64
+fn getCurrentTimeInMilliseconds() -> int {
+    let freq: int
     QueryPerformanceFrequency(&freq)
 
-    let time: u64
+    let time: int
     QueryPerformanceCounter(&time)
 
     time *= 1000000

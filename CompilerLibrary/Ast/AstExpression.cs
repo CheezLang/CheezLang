@@ -86,6 +86,12 @@ namespace Cheez.Ast.Expressions
             new RawAstPrinter(sb).PrintExpression(this);
             return sb.GetStringBuilder().ToString();
         }
+
+        public void AttachTo(AstExpression expr)
+        {
+            this.Scope = expr.Scope;
+            this.Parent = expr;
+        }
     }
 
     public class AstIfExpr : AstExpression

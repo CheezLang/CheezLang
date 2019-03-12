@@ -31,6 +31,8 @@ namespace Cheez.Ast.Expressions
         public AstExpression Expr { get; set; }
         public readonly int Id = ++_id_gen;
 
+        public bool StorePointer { get; set; } = false;
+
         public AstTempVarExpr(AstExpression expr) : base(null)
         {
             this.Expr = expr;

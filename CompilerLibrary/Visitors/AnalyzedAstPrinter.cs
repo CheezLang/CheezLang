@@ -295,11 +295,16 @@ namespace Cheez.Visitors
         public override string VisitAssignmentStmt(AstAssignment ass, int indentLevel = 0)
         {
             var sb = new StringBuilder();
-            sb.Append(ass.Pattern.Accept(this) + $" {ass.Operator}= " + ass.Value.Accept(this));
 
             if (ass.SubAssignments != null)
             {
-                sb.AppendLine().AppendLine("// sub assignments").Append(string.Join("\n", ass.SubAssignments.Select(sa => sa.Accept(this, indentLevel))));
+                sb.Append("// ");
+                sb.Append(ass.Pattern.Accept(this) + $" {ass.Operator}= " + ass.Value.Accept(this));
+                sb.AppendLine().Append(string.Join("\n", ass.SubAssignments.Select(sa => sa.Accept(this, indentLevel))).Indent(4));
+            }
+            else
+            {
+                sb.Append(ass.Pattern.Accept(this) + $" = " + ass.Value.Accept(this));
             }
 
             return sb.ToString();

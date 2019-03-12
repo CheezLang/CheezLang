@@ -438,9 +438,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             if (!valueMap.ContainsKey(t))
             {
+                var type = t.Type;
+                if (t.StorePointer) type = PointerType.GetPointerType(type);
+
                 var x = CreateLocalVariable(t.Type);
                 valueMap[t] = x;
-                GenerateExpressionHelper(t.Expr, x, true);
+                GenerateExpressionHelper(t.Expr, x, !t.StorePointer);
             }
 
             var tmp = valueMap[t];

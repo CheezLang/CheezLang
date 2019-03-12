@@ -219,10 +219,10 @@ namespace Cheez
 
         private void AnalyseAssignStatement(AstAssignment ass)
         {
-            if (ass.Operator != null)
-            {
-                ReportError(ass, $"Operators in assignments are not implemeted yet!");
-            }
+            //if (ass.Operator != null)
+            //{
+            //    ReportError(ass, $"Operators in assignments are not implemeted yet!");
+            //}
 
             ass.Value.Parent = ass;
 
@@ -251,13 +251,17 @@ namespace Cheez
                 case AstIdExpr id:
                     {
                         // TODO: check if can be assigned to id (e.g. not const)
-
                         ass.Scope.SetInitialized(id.Symbol);
 
-                        //if (ass.Operator != null)
-                        //{
 
-                        //}
+                        if (ass.Operator != null)
+                        {
+                            AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
+                            newVal.Scope = value.Scope;
+                            newVal.Parent = value.Parent;
+                            newVal = InferType(newVal, pattern.Type);
+                            return newVal;
+                        }
                         break;
                     }
 
@@ -276,9 +280,9 @@ namespace Cheez
                             {
                                 var subPat = t.Values[i];
                                 var subVal = v.Values[i];
-                                var subAss = new AstAssignment(subPat, subVal, null, ass.Location);
+                                var subAss = new AstAssignment(subPat, subVal, ass.Operator, ass.Location);
                                 subAss.Scope = ass.Scope;
-                                subVal = v.Values[i] = MatchPatternWithExpression(subAss, subPat, subVal);
+                                subAss.Value = MatchPatternWithExpression(subAss, subPat, subVal);
                                 ass.AddSubAssignment(subAss);
                             }
                         }
@@ -294,9 +298,9 @@ namespace Cheez
                                 subVal.Scope = ass.Scope;
                                 subVal = InferType(subVal, t.Values[i].Type);
 
-                                var subAss = new AstAssignment(t.Values[i], subVal);
+                                var subAss = new AstAssignment(t.Values[i], subVal, ass.Operator, ass.Location);
                                 subAss.Scope = ass.Scope;
-                                t.Values[i] = MatchPatternWithExpression(subAss, t.Values[i], subVal);
+                                subAss.Value = MatchPatternWithExpression(subAss, t.Values[i], subVal);
                                 ass.AddSubAssignment(subAss);
                             }
                         }
@@ -305,11 +309,39 @@ namespace Cheez
 
                 case AstDereferenceExpr de:
                     {
+                        if (ass.Operator != null)
+                        {
+                            AstExpression tmp = new AstTempVarExpr(de.SubExpression);
+                            tmp.SetFlag(ExprFlags.IsLValue, true);
+                            tmp = InferType(tmp, de.SubExpression.Type);
+
+                            de.SubExpression = tmp;
+
+                            AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
+                            newVal.Scope = value.Scope;
+                            newVal.Parent = value.Parent;
+                            newVal = InferType(newVal, pattern.Type);
+                            return newVal;
+                        }
                         break;
                     }
 
                 case AstDotExpr dot:
                     {
+                        if (ass.Operator != null)
+                        {
+                            AstExpression tmp = new AstTempVarExpr(dot.Left);
+                            tmp.SetFlag(ExprFlags.IsLValue, true);
+                            tmp = InferType(tmp, dot.Left.Type);
+
+                            dot.Left = tmp;
+
+                            AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
+                            newVal.Scope = value.Scope;
+                            newVal.Parent = value.Parent;
+                            newVal = InferType(newVal, pattern.Type);
+                            return newVal;
+                        }
                         break;
                     }
 

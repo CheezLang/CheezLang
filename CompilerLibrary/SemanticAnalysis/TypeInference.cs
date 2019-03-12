@@ -940,13 +940,13 @@ namespace Cheez
 
                 if (ops.Count == 0)
                 {
-                    ReportError(expr, $"No operator matches the types {expr.Left.Type} and {expr.Right.Type}");
+                    ReportError(expr, $"No operator '{expr.Operator}' matches the types {expr.Left.Type} and {expr.Right.Type}");
                     return expr;
                 }
                 else if (ops.Count > 1)
                 {
                     // TODO: show matching operators
-                    ReportError(expr, $"Multiple operators match the types {expr.Left.Type} and {expr.Right.Type}");
+                    ReportError(expr, $"Multiple operators '{expr.Operator}' match the types {expr.Left.Type} and {expr.Right.Type}");
                     return expr;
                 }
 
