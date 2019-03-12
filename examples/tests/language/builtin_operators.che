@@ -95,7 +95,7 @@ fn Main() {
     test_and_or()
 }
 
-fn foo(b: bool, i: int) -> bool {
+fn foo(b: bool, i: i32) -> bool {
     c_printf("%d`n", i)
     return b
 }
@@ -125,9 +125,9 @@ fn test_numbers($T: type, a: T, b: T, c: T, $test_arith: bool = true, $arith_str
 }
 
 fn test_bool(a: bool, b: bool) {
-    c_printf("%d, %d`n", cast(int) (a == b), cast(int) (a != b))
+    c_printf("%d, %d`n", cast(i32) (a == b), cast(i32) (a != b))
 }
 
-fn test_pointers(a: *int, b: *int) {
+fn test_pointers(a: *i32, b: *i32) {
     c_printf("%d, %d`n", (a == b), (a != b))
 }

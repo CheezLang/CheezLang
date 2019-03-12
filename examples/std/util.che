@@ -8,11 +8,11 @@ fn pointerAdd(ptr: *$T, amount: $OffsetType) -> *T {
     return cast(*T)(cast(OffsetType) ptr + amount)
 }
 
-fn getCurrentTimeInMicroseconds() -> ulong {
-    let freq: ulong
+fn getCurrentTimeInMicroseconds() -> u64 {
+    let freq: u64
     QueryPerformanceFrequency(&freq)
 
-    let time: ulong
+    let time: u64
     QueryPerformanceCounter(&time)
 
     time *= 1000000
@@ -21,11 +21,11 @@ fn getCurrentTimeInMicroseconds() -> ulong {
     return time
 }
 
-fn getCurrentTimeInMilliseconds() -> ulong {
-    let freq: ulong
+fn getCurrentTimeInMilliseconds() -> u64 {
+    let freq: u64
     QueryPerformanceFrequency(&freq)
 
-    let time: ulong
+    let time: u64
     QueryPerformanceCounter(&time)
 
     time *= 1000000

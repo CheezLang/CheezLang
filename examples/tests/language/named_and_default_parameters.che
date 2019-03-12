@@ -9,11 +9,11 @@
 // required for printing
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
-fn foo(a: int, b: int) {
+fn foo(a: i32, b: i32) {
     c_printf("%d, %d`n", a, b)
 }
 
-fn bar(a: int = 123, b: int = 456) {
+fn bar(a: i32 = 123, b: i32 = 456) {
     c_printf("%d, %d`n", a, b)
 }
 

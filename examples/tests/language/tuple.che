@@ -5,12 +5,12 @@
 
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
-fn get_tuple() -> (one: bool, two: int) {
+fn get_tuple() -> (one: bool, two: i32) {
     one = true
     two = 6
 }
 
-fn get_tuple_value(tuple: $T, $Index: int) -> @tuple_type_member(T, Index) {
+fn get_tuple_value(tuple: $T, $Index: i32) -> @tuple_type_member(T, Index) {
     return tuple[Index]
 }
 
@@ -18,7 +18,7 @@ fn Main() {
     let a = (3, 4)
     c_printf("%d, %d`n", a[0], a[1])
     
-    let b: (first: int, second: c_string) = (2, "test")
+    let b: (first: i32, second: c_string) = (2, "test")
     c_printf("%d, %s`n", b.first, b.second)
     
     let c = get_tuple()

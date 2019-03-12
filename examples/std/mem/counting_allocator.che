@@ -3,8 +3,8 @@
 
 struct CountingAllocator {
     parent: Allocator
-    allocated: ulong
-    freed: ulong
+    allocated: u64
+    freed: u64
 }
 
 fn newCountingAllocator() -> CountingAllocator {
@@ -26,38 +26,38 @@ impl CountingAllocator {
 }
 
 impl Allocator for CountingAllocator {
-    fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> any& {
+    fn allocate(count: u64, elementSize: u64, alignment: u64) -> any& {
         let size = count * elementSize
         allocated += size
 
-        let mem = parent.allocate(size + @sizeof(ulong), 1, alignment)
+        let mem = parent.allocate(size + @sizeof(u64), 1, alignment)
 
         // store size before allocated memory
-        let sizePtr = (ulong&)mem
+        let sizePtr = (u64&)mem
         <<sizePtr = size
 
-        return pointerAdd(mem, @sizeof(ulong))
+        return pointerAdd(mem, @sizeof(u64))
     }
 
-    fn reallocate(mem: any&, count: ulong, elementSize: ulong, alignment: ulong) -> any& {
+    fn reallocate(mem: any&, count: u64, elementSize: u64, alignment: u64) -> any& {
         let size = count * elementSize
-        let actualMem = pointerAdd(mem, -@sizeof(ulong))
+        let actualMem = pointerAdd(mem, -@sizeof(u64))
         
         {
-            let sizePtr = (ulong&)actualMem
+            let sizePtr = (u64&)actualMem
             allocated += size - <<sizePtr
         }
 
-        mem = parent.reallocate(actualMem, size + @sizeof(ulong), 1, alignment)
+        mem = parent.reallocate(actualMem, size + @sizeof(u64), 1, alignment)
 
-        let sizePtr = (ulong&)mem
+        let sizePtr = (u64&)mem
         <<sizePtr = size
-        return pointerAdd(mem, @sizeof(ulong))
+        return pointerAdd(mem, @sizeof(u64))
     }
 
     fn free(mem: any&) {
-        let actualMem = pointerAdd(mem, -@sizeof(ulong))
-        let sizePtr = (ulong&)actualMem
+        let actualMem = pointerAdd(mem, -@sizeof(u64))
+        let sizePtr = (u64&)actualMem
         freed += <<sizePtr
         parent.free(actualMem)
     }

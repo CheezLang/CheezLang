@@ -4,8 +4,8 @@
 
 struct Array(ElementType: type) {
     data: *ElementType
-    length: uint
-    capacity: uint
+    length: u32
+    capacity: u32
     allocator: Allocator
 }
 
@@ -20,14 +20,14 @@ impl Array($ElementType) {
         allocator = new StdHeapAllocator{}
         length = 0
         capacity = 10
-        data = allocator.allocate(cast(ulong) capacity, @sizeof(ElementType), @alignof(ElementType))
+        data = allocator.allocate(cast(u64) capacity, @sizeof(ElementType), @alignof(ElementType))
     }
     
-    ref fn initSize(size: uint) {
+    ref fn initSize(size: u32) {
         allocator = new StdHeapAllocator{}
         length = 0
         capacity = size
-        data = allocator.allocate(cast(ulong) capacity, @sizeof(ElementType), @alignof(ElementType))
+        data = allocator.allocate(cast(u64) capacity, @sizeof(ElementType), @alignof(ElementType))
     }
 
     ref fn dispose() {
@@ -38,15 +38,15 @@ impl Array($ElementType) {
         return data
     }
 
-    ref fn reserve(s: uint) {
+    ref fn reserve(s: u32) {
         if s <= capacity {
             return
         }
         capacity = s
-        data = allocator.reallocate(data, cast(ulong) capacity, @sizeof(ElementType), @alignof(ElementType))
+        data = allocator.reallocate(data, cast(u64) capacity, @sizeof(ElementType), @alignof(ElementType))
     }
 
-    ref fn resize(s: uint) {
+    ref fn resize(s: u32) {
         self.reserve(s)
         length = s
     }
@@ -54,7 +54,7 @@ impl Array($ElementType) {
     ref fn add(val: ElementType) {
         if capacity <= length {
             capacity = capacity * 2
-            data = allocator.reallocate(data, cast(ulong) capacity, @sizeof(ElementType), @alignof(ElementType))
+            data = allocator.reallocate(data, cast(u64) capacity, @sizeof(ElementType), @alignof(ElementType))
         }
 
         data[length] = val
@@ -63,7 +63,7 @@ impl Array($ElementType) {
 
     ref fn get(index: $IndexType) -> ElementType {
         if !@isint(IndexType) {
-            @error("Index must be an int")
+            @error("Index must be an i32")
             return data[0]
         }
         else {
@@ -73,7 +73,7 @@ impl Array($ElementType) {
 
     ref fn set(index: $IndexType, value: ElementType) {
         if !@isint(IndexType) {
-            @error("Index must be an int")
+            @error("Index must be an i32")
             return
         }
         else {

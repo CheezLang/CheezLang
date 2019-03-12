@@ -3,8 +3,8 @@
 #load("std:array")
 #load("std:util")
 
-fn nextAligned(add: *$T, align: ulong) -> *T {
-    let add = cast(ulong) add
+fn nextAligned(add: *$T, align: u64) -> *T {
+    let add = cast(u64) add
     let mul = add + align - 1
     mul -= (mul % align)
     
@@ -12,8 +12,8 @@ fn nextAligned(add: *$T, align: ulong) -> *T {
 }
 
 struct StackAllocation {
-    offset: ulong
-    size: ulong
+    offset: u64
+    size: u64
 }
 
 impl Printable for StackAllocation {
@@ -25,8 +25,8 @@ impl Printable for StackAllocation {
 struct StackAllocator {
     parent: Allocator
 
-    memory: *byte
-    capacity: ulong
+    memory: *i8
+    capacity: u64
 
     allocations: Array(StackAllocation)
 }
@@ -34,7 +34,7 @@ struct StackAllocator {
 impl Printable for StackAllocator {
     fn print(s: *String, format: []char) {
         s.append_string("( [")
-        while let i: uint = 0; i < allocations.length; i += 1 {
+        while let i: u32 = 0; i < allocations.length; i += 1 {
             if i > 0 {
                 s.append_string(", ")
             }
@@ -42,7 +42,7 @@ impl Printable for StackAllocator {
         }
         s.append_string("]")
 
-        let free: ulong = capacity
+        let free: u64 = capacity
         if let lastAllocation = self.getLastAllocation(); lastAllocation != null {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
         }
@@ -50,7 +50,7 @@ impl Printable for StackAllocator {
     }
 }
 
-fn newStackAllocator(size: ulong) -> StackAllocator {
+fn newStackAllocator(size: u64) -> StackAllocator {
     let a = new StackAllocator {
         parent = new StdHeapAllocator {}
         memory = null
@@ -61,7 +61,7 @@ fn newStackAllocator(size: ulong) -> StackAllocator {
     return a
 }
 
-fn newStackAllocator2(size: ulong, alloc: Allocator) -> StackAllocator {
+fn newStackAllocator2(size: u64, alloc: Allocator) -> StackAllocator {
     let a = new StackAllocator {
         parent = alloc
         memory = null
@@ -73,17 +73,17 @@ fn newStackAllocator2(size: ulong, alloc: Allocator) -> StackAllocator {
 }
 
 impl StackAllocator {
-    ref fn reserve(s: ulong) {
+    ref fn reserve(s: u64) {
         if s <= capacity {
             return
         }
         capacity = s
 
         if memory == null {
-            memory = parent.allocate(capacity, @sizeof(byte), 8)
+            memory = parent.allocate(capacity, @sizeof(i8), 8)
         }
         else {
-            memory = parent.reallocate(memory, capacity, @sizeof(byte), 8)
+            memory = parent.reallocate(memory, capacity, @sizeof(i8), 8)
         }
     }
 
@@ -101,7 +101,7 @@ impl StackAllocator {
         let s = new_string()
         defer s.dispose()
         s.append_string("( [")
-        while let i: uint = 0; i < allocations.length; i += 1 {
+        while let i: u32 = 0; i < allocations.length; i += 1 {
             if i > 0 {
                 s.append_string(", ")
             }
@@ -109,7 +109,7 @@ impl StackAllocator {
         }
         s.append_string("]")
 
-        let free: ulong = capacity
+        let free: u64 = capacity
         
         if let lastAllocation = self.getLastAllocation(); lastAllocation != null {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
@@ -126,7 +126,7 @@ impl StackAllocator {
         }
     }
 
-    ref fn getNextAllocationOffset() -> ulong {
+    ref fn getNextAllocationOffset() -> u64 {
         if let last = self.getLastAllocation(); last == null {
             return 0
         } else {
@@ -136,12 +136,12 @@ impl StackAllocator {
 }
 
 impl Allocator for StackAllocator {
-    fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> *any {
-        let nextAddress = pointerAdd(memory, cast(long) self.getNextAllocationOffset())
+    fn allocate(count: u64, elementSize: u64, alignment: u64) -> *any {
+        let nextAddress = pointerAdd(memory, cast(i64) self.getNextAllocationOffset())
         nextAddress = nextAligned(nextAddress, alignment)
 
         let newAllocation = new StackAllocation {
-            offset = cast(ulong) (cast(ulong) nextAddress - cast(ulong) memory)
+            offset = cast(u64) (cast(u64) nextAddress - cast(u64) memory)
             size = count * elementSize
         }
 
@@ -155,7 +155,7 @@ impl Allocator for StackAllocator {
         return nextAddress
     }
 
-    fn reallocate(mem: *any, count: ulong, elementSize: ulong, alignment: ulong) -> *any {
+    fn reallocate(mem: *any, count: u64, elementSize: u64, alignment: u64) -> *any {
         let size = count * elementSize
 
         let lastAllocation = self.getLastAllocation()
@@ -174,7 +174,7 @@ impl Allocator for StackAllocator {
             return mem
         } else {
             let newMem = self.allocate(count, elementSize, 8)
-            c_memcpy(newMem, mem, cast(int) size)
+            c_memcpy(newMem, mem, cast(i32) size)
             return newMem
         }
     }

@@ -16,7 +16,7 @@ fn c_printf(format: c_string) #varargs #linkname("printf");
 fn Main() {
     let a = 123
     let b: bool = true
-    let (c, d): (int, bool) = (a, b)
+    let (c, d): (i32, bool) = (a, b)
     let f = (c, d)
     let (g, h) = f
 

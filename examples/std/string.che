@@ -1,17 +1,17 @@
 #load("std:mem/allocator")
 #load("std:mem/std_heap_allocator")
 
-fn strlen(s: c_string) -> int {
-    let len: int = 0
+fn strlen(s: c_string) -> i32 {
+    let len: i32 = 0
     while s[len] != '`0' {
         len += 1
     }
     return len
 }
 
-fn streql(a: $T, b: $T2, len: ulong) -> bool {
-    let alen: ulong = cast a.getLength()
-    let blen: ulong = cast b.getLength()
+fn streql(a: $T, b: $T2, len: u64) -> bool {
+    let alen: u64 = cast a.getLength()
+    let blen: u64 = cast b.getLength()
     if len > alen {
         len = alen
     }
@@ -19,7 +19,7 @@ fn streql(a: $T, b: $T2, len: ulong) -> bool {
         len = blen
     }
 
-    while let i: ulong = 0; i < len; i += 1 {
+    while let i: u64 = 0; i < len; i += 1 {
         if a.charAt(i) != b.charAt(i) {
             return false
         }
@@ -28,14 +28,14 @@ fn streql(a: $T, b: $T2, len: ulong) -> bool {
 }
 
 fn streq(a: $T, b: $T2) -> bool {
-    let len: ulong = cast a.getLength()
-    let blen: ulong = cast b.getLength()
+    let len: u64 = cast a.getLength()
+    let blen: u64 = cast b.getLength()
 
     if len != blen {
         return false
     }
 
-    while let i: ulong = 0; i < len; i += 1 {
+    while let i: u64 = 0; i < len; i += 1 {
         if a.charAt(i) != b.charAt(i) {
             return false
         }
@@ -44,7 +44,7 @@ fn streq(a: $T, b: $T2) -> bool {
 }
 
 impl c_string {
-    fn getLength() -> int {
+    fn getLength() -> i32 {
         return strlen(self)
     }
     
@@ -60,7 +60,7 @@ impl c_string {
 }
 
 impl string {
-    fn getLength() -> int {
+    fn getLength() -> i32 {
         return self.length
     }
     
@@ -89,16 +89,16 @@ impl Printable for string {
 
 struct StringBase(CharType: type) {
     data: *CharType         = null
-    length: int             = 0
-    capacity: int           = 0
+    length: i32             = 0
+    capacity: i32           = 0
     allocator: Allocator    = null
 }
 
 typedef String = StringBase(char)
-typedef Utf32String = StringBase(int)
+typedef Utf32String = StringBase(i32)
 
 impl StringBase($CharType) {
-    ref fn getLength() -> int {
+    ref fn getLength() -> i32 {
         return length
     }
 
@@ -114,7 +114,7 @@ impl StringBase($CharType) {
         self.reserve(10)
     }
 
-    ref fn reserve(size: int) {
+    ref fn reserve(size: i32) {
         capacity = size
         if data == null {
             length = 0
@@ -128,7 +128,7 @@ impl StringBase($CharType) {
         }
     }
     
-    ref fn resize(size: int) {
+    ref fn resize(size: i32) {
         length = size
         capacity = size
         if data == null {
@@ -140,7 +140,7 @@ impl StringBase($CharType) {
     }
 
     ref fn fromString(str: c_string) -> *StringBase(CharType) {
-        if cast(ulong) data != 0 {
+        if cast(u64) data != 0 {
             // @Todo:
             //self.dispose()
             allocator.free(data)
@@ -235,7 +235,7 @@ impl StringBase($CharType) {
                 return false
             }
             
-            while let i: ulong = 0; i < len; i += 1 {
+            while let i: u64 = 0; i < len; i += 1 {
 
                 if data[i] != other[i] {
                     return false
@@ -258,21 +258,21 @@ impl StringBase($CharType) {
         return self.sliceFL(0, length)
     }
 
-    ref fn sliceFL(from: int, len: int) -> []CharType {
+    ref fn sliceFL(from: i32, len: i32) -> []CharType {
         let slice: []CharType = &data[from]
         slice.length = len
         return slice
     }
 
-    ref fn sliceF(from: int) -> []CharType {
+    ref fn sliceF(from: i32) -> []CharType {
         return self.sliceFL(from, length - from)
     }
     
-    ref fn sliceL(len: int) -> []CharType {
+    ref fn sliceL(len: i32) -> []CharType {
         return self.sliceFL(0, len)
     }
 
-    ref fn indexOf(ch: CharType) -> int {
+    ref fn indexOf(ch: CharType) -> i32 {
         let i = 0
         while i < length {
             if data[i] == ch {

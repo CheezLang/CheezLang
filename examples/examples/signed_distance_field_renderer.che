@@ -381,11 +381,11 @@ impl PerspectiveCamera {
 }
 
 struct Film {
-    width: uint
-    height: uint
+    width: u32
+    height: u32
     pixels: []Vec3
 
-    antiAliasingSteps: uint
+    antiAliasingSteps: u32
 }
 
 impl Film {
@@ -406,12 +406,12 @@ impl Film {
             getCurrentTimeInMicroseconds()
         }
 
-        while let y: uint = 0; y < height; y += 1 {
+        while let y: u32 = 0; y < height; y += 1 {
             if antiAliasingSteps >= 0 {
                 print_f("Rendering row {}/{}`n", [(y + 1), height])
             }
 
-            while let x: uint = 0; x < width; x += 1 {
+            while let x: u32 = 0; x < width; x += 1 {
 
                 let fx = cast(double) x
                 let fy = cast(double) y
@@ -423,7 +423,7 @@ impl Film {
                     color= scene.project(ray)
                 }
                 else {
-                    while let i: uint = 0; i < antiAliasingSteps; i += 1 {
+                    while let i: u32 = 0; i < antiAliasingSteps; i += 1 {
                         let ray = camera.project((fx + r.nextDouble()) * fw, (fy + r.nextDouble()) * fh)
                         let c = scene.project(ray)
                         color = color.add(c)
@@ -612,10 +612,10 @@ fn renderImage(film: *Film)
 fn signed_distance_field_renderer()
 {
     //
-    let scale: uint = 5
-    let width: uint = 192 * scale
-    let height: uint = 128 * scale
-    let antiAliasingSteps: uint = 1
+    let scale: u32 = 5
+    let width: u32 = 192 * scale
+    let height: u32 = 128 * scale
+    let antiAliasingSteps: u32 = 1
 
     let imageArr: Array(Vec3) = newArray()
     defer imageArr.dispose()
@@ -634,5 +634,5 @@ fn signed_distance_field_renderer()
 ", [dur])
 
     // // store image as bmp
-    write_bmp(cast(int) width, cast(int) height, cast(*double) imageArr.data, "test.bmp")
+    write_bmp(cast(i32) width, cast(i32) height, cast(*double) imageArr.data, "test.bmp")
 }

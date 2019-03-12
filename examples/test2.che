@@ -1,20 +1,20 @@
 fn c_printf(format: c_string) #varargs #linkname("printf");
-fn c_strlen(str: c_string) -> int #linkname("strlen");
+fn c_strlen(str: c_string) -> i32 #linkname("strlen");
 fn c_puts(str: c_string) #linkname("puts");
 
-fn c_malloc(size: int) -> *any #linkname("malloc");
+fn c_malloc(size: i32) -> *any #linkname("malloc");
 fn c_free(mem: *any) #linkname("free");
-fn c_memset(mem: *any, value: int, num: usize) -> *any #linkname("memset");
+fn c_memset(mem: *any, value: i32, num: usize) -> *any #linkname("memset");
 
-typedef HANDLE = int
+typedef HANDLE = i32
 
-fn GetStdHandle(h: int) -> int #stdcall;
-fn WriteFile(handle: HANDLE, str: c_string, length: int, bytes_written: *int = null, reserved: int = 0) #stdcall;
+fn GetStdHandle(h: i32) -> i32 #stdcall;
+fn WriteFile(handle: HANDLE, str: c_string, length: i32, bytes_written: *i32 = null, reserved: i32 = 0) #stdcall;
 
 
-let __std_in_handle: int = GetStdHandle(-10)
-let __std_out_handle: int = GetStdHandle(-11)
-let __std_err_handle: int = GetStdHandle(-12)
+let __std_in_handle: i32 = GetStdHandle(-10)
+let __std_out_handle: i32 = GetStdHandle(-11)
+let __std_err_handle: i32 = GetStdHandle(-12)
 
 fn print_string(str: string) {
     WriteFile(__std_out_handle, str.data, cast str.length)

@@ -1,6 +1,6 @@
 trait Allocator {
-    fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> *any;
-    fn reallocate(mem: *any, count: ulong, elementSize: ulong, alignment: ulong) -> *any;
+    fn allocate(count: u64, elementSize: u64, alignment: u64) -> *any;
+    fn reallocate(mem: *any, count: u64, elementSize: u64, alignment: u64) -> *any;
     fn free(mem: *any);
 }
 
@@ -8,17 +8,17 @@ fn alloc(allocator: Allocator) -> *$T {
     return alloc_raw(allocator, 1)
 }
 
-fn alloc_raw(allocator: Allocator, count: uint) -> *$T {
+fn alloc_raw(allocator: Allocator, count: u32) -> *$T {
     return cast(*T)allocator.allocate(cast count, @sizeof(T), @alignof(T))
 }
 
-fn alloc_n(allocator: Allocator, count: uint) -> []$T {
+fn alloc_n(allocator: Allocator, count: u32) -> []$T {
     let mem: []T = cast(*T) allocator.allocate(cast count, @sizeof(T), @alignof(T))
     mem.length = cast count
     return mem
 }
 
-fn realloc_n(allocator: Allocator, mem: *$T, count: uint) -> *T {
+fn realloc_n(allocator: Allocator, mem: *$T, count: u32) -> *T {
     return cast allocator.reallocate(cast mem, cast count, @sizeof(T), @alignof(T))
 }
 

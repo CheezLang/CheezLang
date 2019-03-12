@@ -8,7 +8,7 @@ fn loadFile(filename: c_string, str: String&) -> bool {
     }
     let size = GetFileSize((HANDLE)handle, null)
 
-    str.resize((int)size)
+    str.resize((i32)size)
     
     let bytesRead = 0
     ReadFile((HANDLE)handle, str.data, size, &bytesRead, null)

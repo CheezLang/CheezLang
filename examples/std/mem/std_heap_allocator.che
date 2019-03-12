@@ -2,16 +2,16 @@
 #load("std:mem/memory")
 
 struct StdHeapAllocator {
-    _unused: int = 0
+    _unused: i32 = 0
 }
 
 impl Allocator for StdHeapAllocator {
-    fn allocate(count: ulong, elementSize: ulong, alignment: ulong) -> *any {
-        return c_malloc((int)(count * elementSize))
+    fn allocate(count: u64, elementSize: u64, alignment: u64) -> *any {
+        return c_malloc((i32)(count * elementSize))
     }
 
-    fn reallocate(mem: *any, count: ulong, elementSize: ulong, alignment: ulong) -> *any {
-        return c_realloc(mem, (int)(count * elementSize))
+    fn reallocate(mem: *any, count: u64, elementSize: u64, alignment: u64) -> *any {
+        return c_realloc(mem, (i32)(count * elementSize))
     }
 
     fn free(mem: *any) {

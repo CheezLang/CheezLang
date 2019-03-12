@@ -2,9 +2,9 @@
 
 struct TokenLocation {
     file: c_string
-    line: int
-    start: int
-    end: int
+    line: i32
+    start: i32
+    end: i32
 }
 
 impl TokenLocation {

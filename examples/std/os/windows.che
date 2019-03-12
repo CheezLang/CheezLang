@@ -1,27 +1,27 @@
 
 struct _OFSTRUCT {
-    cBytes: byte
-    fFixedDisk: byte
-    nErrCode: short
-    Reserved1: short
-    Reserved2: short
-    szPathName: [128]byte
+    cBytes: i8
+    fFixedDisk: i8
+    nErrCode: i16
+    Reserved1: i16
+    Reserved2: i16
+    szPathName: [128]i8
 }
 
-typedef HFILE = int
+typedef HFILE = i32
 typedef HANDLE = *any
 
-fn GetStdHandle(h: int) -> int #stdcall;
-fn WriteFile(handle: int, str: c_string, length: int, bw: *int, res: int) #stdcall;
-fn ReadFile(hFile: HANDLE, lpBuffer: *any, nNumberOfBytesToRead: int, lpNumberOfBytesRead: *int, lpOverlapped: *any) -> bool #stdcall;
+fn GetStdHandle(h: i32) -> i32 #stdcall;
+fn WriteFile(handle: i32, str: c_string, length: i32, bw: *i32, res: i32) #stdcall;
+fn ReadFile(hFile: HANDLE, lpBuffer: *any, nNumberOfBytesToRead: i32, lpNumberOfBytesRead: *i32, lpOverlapped: *any) -> bool #stdcall;
 
-let __std_in_handle: int = GetStdHandle(-10)
-let __std_out_handle: int = GetStdHandle(-11)
-let __std_err_handle: int = GetStdHandle(-12)
+let __std_in_handle: i32 = GetStdHandle(-10)
+let __std_out_handle: i32 = GetStdHandle(-11)
+let __std_err_handle: i32 = GetStdHandle(-12)
 
-fn OpenFile(lpFileName: c_string, lpReOpenBuff: *_OFSTRUCT, uStyle: uint) -> HFILE #stdcall;
+fn OpenFile(lpFileName: c_string, lpReOpenBuff: *_OFSTRUCT, uStyle: u32) -> HFILE #stdcall;
 fn CloseHandle(hObject: HANDLE) -> bool #stdcall;
-fn GetFileSize(hObject: HANDLE, lpFileSizeHigh: *int) -> int #stdcall;
+fn GetFileSize(hObject: HANDLE, lpFileSizeHigh: *i32) -> i32 #stdcall;
 
-fn QueryPerformanceCounter(lpPerformanceCount: *ulong) -> bool #stdcall;
-fn QueryPerformanceFrequency(lpPerformanceCount: *ulong) -> bool #stdcall;
+fn QueryPerformanceCounter(lpPerformanceCount: *u64) -> bool #stdcall;
+fn QueryPerformanceFrequency(lpPerformanceCount: *u64) -> bool #stdcall;

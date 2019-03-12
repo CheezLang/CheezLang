@@ -33,17 +33,17 @@ fn u64_max() -> u64 {
 }
 
 struct LinearCongruentialGenerator {
-    seed: ulong
+    seed: u64
 }
 
 impl LinearCongruentialGenerator {
-    ref fn next() -> uint {
-        let M: ulong = cast(ulong) u32_max()
-        let A: ulong = 1664525
-        let B: ulong = 1013904223
+    ref fn next() -> u32 {
+        let M: u64 = cast(u64) u32_max()
+        let A: u64 = 1664525
+        let B: u64 = 1013904223
         seed = (A * seed + B) % M
 
-        return cast(uint) seed
+        return cast(u32) seed
     }
 
     ref fn nextDouble() -> double {

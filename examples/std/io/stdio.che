@@ -2,7 +2,7 @@ struct FILE {
     _Placeholder: any&
 }
 
-fn __acrt_iob_func(_: uint) -> FILE&;
+fn __acrt_iob_func(_: u32) -> FILE&;
 
 let stdin = __acrt_iob_func(1)
 let stdout = __acrt_iob_func(1)
@@ -12,16 +12,16 @@ fn fflush(file: FILE&);
 
 ///
 
-let errno_t = int
-let size_t = long
+let errno_t = i32
+let size_t = i64
 
 fn clearerr_s(_Stream: FILE&) -> errno_t;
 fn fopen_s(_Stream: FILE&&, _FileName: c_string, _Mode: c_string) -> errno_t;
 fn fopen(_Stream: FILE&&, _FileName: c_string, _Mode: c_string) -> errno_t;
 fn fread_s(_Buffer: any&, _BufferSize: size_t, _ElementSize: size_t, _ElementCount: size_t, _Stream: FILE&) -> size_t;
-fn fseek(_Stream: FILE&, _Offset: long, _Rel: int);
-fn ftell(_Stream: FILE&) -> long;
-fn fclose(_Stream: FILE&) -> int;
+fn fseek(_Stream: FILE&, _Offset: i64, _Rel: i32);
+fn ftell(_Stream: FILE&) -> i64;
+fn fclose(_Stream: FILE&) -> i32;
 
 
 /*

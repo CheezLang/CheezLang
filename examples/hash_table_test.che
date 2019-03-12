@@ -11,8 +11,8 @@ impl Hashable for c_string {
         let self = <<self
         let h: u32 = 2166136261
 
-        while let i = 0; (int)self[i] != 0; i += 1 {
-            h += (uint)self[i]
+        while let i = 0; (i32)self[i] != 0; i += 1 {
+            h += (u32)self[i]
             h *= 16777619
         }
 
@@ -27,7 +27,7 @@ struct Entry(T: type) {
 
 struct Table(T: type) {
     max_load: float
-    count: uint
+    count: u32
     entries: Entry(T)[]
     allocator: Allocator
 }
@@ -46,7 +46,7 @@ impl Table($T) {
     }
 
     ref fn find_entry(the_entries: Entry(T)[], key: c_string) -> Entry(T)& {
-        let index = key.hash() % (uint)the_entries.length
+        let index = key.hash() % (u32)the_entries.length
 
         while true {
             let entry: Entry(T)& = &the_entries[index]
@@ -55,7 +55,7 @@ impl Table($T) {
                 return entry
             }
 
-            index = (index + 1) % (uint)the_entries.length
+            index = (index + 1) % (u32)the_entries.length
         }
 
         // unreachable
@@ -64,7 +64,7 @@ impl Table($T) {
 
     ref fn set(key: c_string, value: T) -> bool {
         if (float)count + 1 > (float)entries.length * max_load {
-            self.adjust_capacity((uint)entries.length * 2)
+            self.adjust_capacity((u32)entries.length * 2)
         }
 
         let entry = self.find_entry(entries, key)
@@ -94,7 +94,7 @@ impl Table($T) {
         return true
     }
 
-    ref fn adjust_capacity(cap: uint) {
+    ref fn adjust_capacity(cap: u32) {
         let entries_new: Entry(T)[] = alloc_n(allocator, cap)
 
         while let i = 0; i < entries_new.length; i += 1 {
@@ -119,9 +119,9 @@ impl Table($T) {
     }
 }
 
-fn test(t: Table(int)&) {
+fn test(t: Table(i32)&) {
     println("testing...")
-    let v: int = -1
+    let v: i32 = -1
     print_f("t[`"{}`"] = {} : {}`n", ["lol", t.get("lol", &v), v])
     print_f("t[`"{}`"] = {} : {}`n", ["one", t.get("one", &v), v])
     print_f("t[`"{}`"] = {} : {}`n", ["two", t.get("two", &v), v])
@@ -132,7 +132,7 @@ fn test(t: Table(int)&) {
 }
 
 fn Main() {
-    let t: Table(int)
+    let t: Table(i32)
     t.init(new StdHeapAllocator{})
     defer t.dispose()
 

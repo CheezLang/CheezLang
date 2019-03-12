@@ -168,7 +168,7 @@ impl Lexer {
         token.location.end = token.location.start + 1
     }
 
-    ref fn peekChar(offset: int) -> char {
+    ref fn peekChar(offset: i32) -> char {
         let index = location.start + offset
         if index >= text.length {
             return '`0'

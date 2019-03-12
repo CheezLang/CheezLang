@@ -9,37 +9,37 @@
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
 fn Main() {
-    // int <- int
+    // i32 <- i32
     test1(-65)
 
-    // uint <- uint
+    // u32 <- u32
     test2(65)
 
-    // * <- int
+    // * <- i32
     test3(123456)
 
-    // int <- *
-    test4(cast(*int)456789)
+    // i32 <- *
+    test4(cast(*i32)456789)
 
     // float <- float
     test5(0.5f, 3.7d)
 
-    // int <- float
+    // i32 <- float
     test6(3.7d)
 
-    // float <- int
+    // float <- i32
     test7(7)
 }
 
-fn test1(a: int) { 
-    let b: long = cast a
-    let c = cast(byte) a
+fn test1(a: i32) { 
+    let b: i64 = cast a
+    let c = cast(i8) a
 
     c_printf("%d, %lld, %hhd`n", a, b, c)
 }
-fn test2(a: uint) {
-    let b: ulong = cast a
-    let c = cast(ubyte) a
+fn test2(a: u32) {
+    let b: u64 = cast a
+    let c = cast(u8) a
 
     c_printf("%u, %llu, %hhu`n", a, b, c)
 }
@@ -50,7 +50,7 @@ fn test3(a: usize) {
     c_printf("%llu, %u`n", a, b)
 }
 
-fn test4(a: *int) {
+fn test4(a: *i32) {
     let b: usize = cast a
 
     c_printf("%u, %u`n", a, b)
@@ -63,10 +63,10 @@ fn test5(f: float, d: double) {
 }
 
 fn test6(d: double) {
-    c_printf("%f, %d`n", d, cast(int) d)
+    c_printf("%f, %d`n", d, cast(i32) d)
 }
 
-fn test7(i: int) {
+fn test7(i: i32) {
     c_printf("%d, %f`n", i, cast(double) i)
 }
 

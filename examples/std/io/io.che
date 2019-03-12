@@ -2,19 +2,19 @@
 #load("std:mem/memory")
 #load("std:os/windows")
 
-typedef isize = int
+typedef isize = i32
 
-fn c_sprintf(buff: *char, f: c_string, a: double) -> int #varargs #linkname("sprintf");
+fn c_sprintf(buff: *char, f: c_string, a: double) -> i32 #varargs #linkname("sprintf");
 
 let NEW_LINE: char = '`n'
 
 fn print_string(s: *$T) {
     if @typeseq(c_string, T) {
         let len = strlen(s)
-        let bytesWritten: int
+        let bytesWritten: i32
         WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
     } else if @typeseq(string, T) {
-        let bytesWritten: int
+        let bytesWritten: i32
         WriteFile(__std_out_handle, s.data, s.length, &bytesWritten, 0)
     } else {
         @error(@concat("Can't call printString($T) with type ", @typename(T)))
@@ -22,12 +22,12 @@ fn print_string(s: *$T) {
 }
 
 fn print_stringl(s: *String) {
-    let bytesWritten: int
+    let bytesWritten: i32
     WriteFile(__std_out_handle, s.data, s.length, &bytesWritten, 0)
 }
 
 fn print_char(c: char) { 
-    let bytesWritten: int
+    let bytesWritten: i32
     WriteFile(__std_out_handle, &c, 1, &bytesWritten, 0)
 }
 
@@ -209,12 +209,12 @@ trait Printable {
     fn print(str: *String, format: string);
 }
 
-fn parseInt(str: *String) -> int {
+fn parseInt(str: *String) -> i32 {
     let val = 0
 
     while let i = 0; i < str::getLength(); i += 1 {
         val *= 10
-        val += cast(int)str::charAt(i) - cast(int)'0'
+        val += cast(i32)str::charAt(i) - cast(i32)'0'
     }
 
     return val
@@ -233,11 +233,11 @@ fn sprint_f(buffer: *String, format: string, args: []Printable) {
     defer formatSpecifier.dispose()
     formatSpecifier.reserve(5)
 
-    let len = cast(ulong)format.length
+    let len = cast(u64)format.length
     let state = 0
     let argIndex = 0
 
-    while let i: ulong = 0; i < len; i += 1 {
+    while let i: u64 = 0; i < len; i += 1 {
         let c = format[i]
 
         if state == 0 {
