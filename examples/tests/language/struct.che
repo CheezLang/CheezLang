@@ -1,0 +1,59 @@
+#test_expect_output("2, 5.500000")
+
+#test_expect_output("6, 5.500000")
+
+#test_expect_output("9, 1.234560")
+
+#test_expect_output("1, 2.000000")
+#test_expect_output("1, 2.000000")
+#test_expect_output("3, 4.500000")
+
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+
+struct Test {
+    a: int
+    b: double
+}
+
+impl Test {
+    fn create(a: int = 2, b: double = 5.5) -> self {
+        return new { a, b }
+    }
+
+    fn set_val(self, x: int, y: double) {
+        a = x
+        b = y
+    }
+
+    fn set_ref(*self, x: int, y: double) {
+        a = x
+        b = y
+    }
+}
+
+fn Main() {
+    {
+        let t = Test::create()
+        c_printf("%lld, %f`n", t.a, t.b)
+    }
+
+    {
+        let t = Test::create(6)
+        c_printf("%lld, %f`n", t.a, t.b)
+    }
+
+    {
+        let t = Test::create(b = 1.23456, a = 9)
+        c_printf("%lld, %f`n", t.a, t.b)
+    }
+
+    {
+        let t = Test::create(1, 2)
+        c_printf("%lld, %f`n", t.a, t.b)
+        t.set_val(3, 4.5)
+        c_printf("%lld, %f`n", t.a, t.b)
+        t.set_ref(3, 4.5)
+        c_printf("%lld, %f`n", t.a, t.b)
+    }
+}

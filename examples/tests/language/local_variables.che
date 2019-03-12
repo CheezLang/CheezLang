@@ -10,6 +10,12 @@
 #test_expect_output("f[0]: 456, f[1]: 0")
 #test_expect_output("g: 456, h: 0")
 
+#test_expect_output("a: 479")
+#test_expect_output("b: 0")
+#test_expect_output("c: 454, d: 0")
+#test_expect_output("f[0]: 456, f[1]: 0")
+#test_expect_output("g: 456, h: 0")
+
 // required for printing
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
@@ -32,6 +38,17 @@ fn Main() {
     f = (c, d)
     (g, h) = f
     
+    c_printf("a: %lld`n", a)
+    c_printf("b: %lld`n", b)
+    c_printf("c: %lld, d: %lld`n", c, d)
+    c_printf("f[0]: %lld, f[1]: %lld`n", f[0], f[1])
+    c_printf("g: %lld, h: %lld`n", g, h)
+
+    a += 11
+    (a, c) += (3, 3)
+    let x = (9, -5)
+    (a, c) += x
+
     c_printf("a: %lld`n", a)
     c_printf("b: %lld`n", b)
     c_printf("c: %lld, d: %lld`n", c, d)
