@@ -1,8 +1,11 @@
 ﻿using Cheez.Ast;
+using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
+using System;
+using System.Collections.Generic;
 
 namespace Cheez
 {
@@ -24,13 +27,14 @@ namespace Cheez
             foreach (var i in mImpls)
             {
                 i.Scope.ImplBlocks.Add(i);
+                i.SubScope.DefineTypeSymbol("self", i.TargetType);
+
                 foreach (var f in i.Functions)
                 {
                     f.Scope = i.SubScope;
                     f.ConstScope = new Scope("$", f.Scope);
                     f.SubScope = new Scope("fn", f.ConstScope);
                     f.ImplBlock = i;
-                    f.ConstScope.DefineTypeSymbol("self", i.TargetType);
 
                     Pass4ResolveFunctionSignature(f);
                     i.Scope.DefineImplFunction(f);
@@ -54,6 +58,18 @@ namespace Cheez
         {
             ResolveFunctionSignature(func);
 
+            // check for existance of self param
+            if (func.ImplBlock != null && func.Parameters.Count > 0 && (
+                func.Parameters[0].Type == func.ImplBlock.TargetType ||
+                func.Parameters[0].Type == PointerType.GetPointerType(func.ImplBlock.TargetType)
+                ))
+            {
+                func.SelfParameter = true;
+                if (func.Parameters[0].Type == PointerType.GetPointerType(func.ImplBlock.TargetType))
+                    func.RefSelf = true;
+            }
+
+
             var res = func.Scope.DefineDeclaration(func);
             if (!res.ok)
             {
@@ -64,17 +80,6 @@ namespace Cheez
             else if (!func.IsGeneric)
             {
                 func.Scope.FunctionDeclarations.Add(func);
-
-
-                if (func.ImplBlock != null && func.Parameters.Count > 0 && (
-                    func.Parameters[0].Type == func.ImplBlock.TargetType ||
-                    func.Parameters[0].Type == PointerType.GetPointerType(func.ImplBlock.TargetType)
-                    ))
-                {
-                    func.SelfParameter = true;
-                    if (func.Parameters[0].Type == PointerType.GetPointerType(func.ImplBlock.TargetType))
-                        func.RefSelf = true;
-                }
             }
         }
 
@@ -96,6 +101,34 @@ namespace Cheez
 
             if (func.IsGeneric)
             {
+                var polyNames = new List<string>();
+                foreach (var p in func.Parameters)
+                {
+                    CollectPolyTypeNames(p.TypeExpr, polyNames);
+                    if (p.Name?.IsPolymorphic ?? false)
+                        polyNames.Add(p.Name.Name);
+                }
+
+                foreach (var pn in polyNames)
+                {
+                    func.SubScope.DefineTypeSymbol(pn, new PolyType(pn));
+                }
+
+                // return types
+                if (func.ReturnValue != null)
+                {
+                    func.ReturnValue.Scope = func.SubScope;
+                    func.ReturnValue.TypeExpr.Scope = func.SubScope;
+                    func.ReturnValue.Type = ResolveType(func.ReturnValue.TypeExpr);
+                }
+
+                // parameter types
+                foreach (var p in func.Parameters)
+                {
+                    p.TypeExpr.Scope = func.SubScope;
+                    p.Type = ResolveType(p.TypeExpr);
+                }
+
                 func.Type = new GenericFunctionType(func);
             }
             else
@@ -125,6 +158,47 @@ namespace Cheez
                     }
                     func.FunctionType.VarArgs = true;
                 }
+            }
+        }
+
+        private void CollectPolyTypeNames(AstTypeExpr typeExpr, List<string> result)
+        {
+            switch (typeExpr)
+            {
+                case AstIdTypeExpr i:
+                    if (i.IsPolymorphic)
+                        result.Add(i.Name);
+                    break;
+
+                case AstPointerTypeExpr p:
+                    {
+                        CollectPolyTypeNames(p.Target, result);
+                        break;
+                    }
+
+                case AstSliceTypeExpr p:
+                    {
+                        CollectPolyTypeNames(p.Target, result);
+                        break;
+                    }
+
+                case AstArrayTypeExpr p:
+                    {
+                        CollectPolyTypeNames(p.Target, result);
+                        break;
+                    }
+
+                case AstTupleTypeExpr te:
+                    {
+                        foreach (var m in te.Members)
+                        {
+                            CollectPolyTypeNames(m.TypeExpr, result);
+                        }
+
+                        break;
+                    }
+
+                default: throw new NotImplementedException();
             }
         }
     }

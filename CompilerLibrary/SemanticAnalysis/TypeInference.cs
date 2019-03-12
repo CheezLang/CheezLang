@@ -363,6 +363,12 @@ namespace Cheez
 
                         if (expr.Arguments[0].Type != CheezType.Type || !(expr.Arguments[0].Value is TupleType))
                         {
+                            if (expr.Arguments[0].Value is PolyType)
+                            {
+                                expr.Type = CheezType.Type;
+                                expr.Value = expr.Arguments[0].Type;
+                                return expr;
+                            }
                             ReportError(expr.Arguments[0], $"This argument must be a tuple type, got {expr.Arguments[0].Type} '{expr.Arguments[0].Value}'");
                             return expr;
                         }
@@ -546,7 +552,7 @@ namespace Cheez
                                 break;
                             }
 
-                            expr.Type = func.FunctionType;
+                            expr.Type = func.Type;
                             break;
                         }
 
@@ -629,8 +635,29 @@ namespace Cheez
             return expr;
         }
 
-        private bool CheckAndMatchArgsToParams(AstCallExpr expr, List<AstParameter> parameters, bool varArgs)
+        private bool CheckAndMatchArgsToParams(AstFunctionDecl decl, AstCallExpr expr, List<AstParameter> parameters, bool varArgs)
         {
+            // create self argument for ufc
+            if (decl != null && decl.ImplBlock != null && decl.SelfParameter)
+            {
+                var val = expr.Function as AstDotExpr;
+
+                AstArgument selfArg = null;
+                // add left side as first parameter
+                if (decl.RefSelf)
+                {
+                    selfArg = new AstArgument(new AstAddressOfExpr(val.Left, val.Left.Location), Location: val.Left.Location);
+                }
+                else
+                {
+                    selfArg = new AstArgument(val.Left, Location: val.Left.Location);
+                }
+
+                expr.Arguments.Insert(0, selfArg);
+                expr.UnifiedFunctionCall = true;
+            }
+
+            // check for too many arguments
             if (expr.Arguments.Count > parameters.Count && !varArgs)
             {
                 (string, ILocation)? detail = null;
@@ -713,7 +740,7 @@ namespace Cheez
         {
             var decl = func.Declaration;
 
-            if (!CheckAndMatchArgsToParams(expr, decl.Parameters, false))
+            if (!CheckAndMatchArgsToParams(decl, expr, decl.Parameters, false))
                 return expr;
 
             // match arguments and parameter types
@@ -791,26 +818,8 @@ namespace Cheez
 
         private AstExpression InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, List<AstFunctionDecl> newInstances)
         {
-            if (func.Declaration != null && func.Declaration.ImplBlock != null && func.Declaration.SelfParameter)
-            {
-                var val = expr.Function as AstDotExpr;
 
-                AstArgument selfArg = null;
-                // add left side as first parameter
-                if (func.Declaration.RefSelf)
-                {
-                    selfArg = new AstArgument(new AstAddressOfExpr(val.Left, val.Left.Location), Location: val.Left.Location);
-                }
-                else
-                {
-                    selfArg = new AstArgument(val.Left, Location: val.Left.Location);
-                }
-
-                expr.Arguments.Insert(0, selfArg);
-                expr.UnifiedFunctionCall = true;
-            }
-
-            if (!CheckAndMatchArgsToParams(expr, func.Declaration.Parameters, func.VarArgs))
+            if (!CheckAndMatchArgsToParams(func.Declaration, expr, func.Declaration.Parameters, func.VarArgs))
                 return expr;
 
             // match arguments and parameter types
@@ -1139,28 +1148,6 @@ namespace Cheez
             }
 
             return expr;
-        }
-
-        private void ExtractPolyTypes(AstExpression expr, CheezType type, Dictionary<string, CheezType> map)
-        {
-            switch (type)
-            {
-                case PolyType p:
-                    if (map.TryGetValue(p.Name, out var current))
-                    {
-                        if (expr.Type != current)
-                        {
-                            ReportError(expr, $"This expression has type '{expr.Type}' which doesn't match '${p.Name}' of type '{current}'");
-                        }
-                    }
-                    else
-                    {
-                        map[p.Name] = expr.Type;
-                    }
-                    break;
-
-                default: throw new NotImplementedException();
-            }
         }
     }
 }

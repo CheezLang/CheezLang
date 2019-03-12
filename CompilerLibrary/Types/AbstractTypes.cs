@@ -98,17 +98,11 @@ namespace Cheez.Types.Abstract
         public override bool IsPolyType => true;
         public override bool IsErrorType => false;
 
-        /// <summary>
-        /// Wether or not the symbol with this type has declared this poly type with $ or not
-        /// </summary>
-        public bool IsDeclaring = false;
-
-        public PolyType(string name, bool is_declaring)
+        public PolyType(string name)
         {
             this.Name = name;
-            IsDeclaring = is_declaring;
         }
 
-        public override string ToString() => IsDeclaring ? "$" + Name : Name;
+        public override string ToString() => "$" + Name;
     }
 }

@@ -55,7 +55,6 @@ namespace Cheez
 
                 if (func.ImplBlock.TargetType is StructType @struct)
                 {
-
                     foreach (var m in @struct.Declaration.Members)
                     {
                         AstExpression expr = new AstDotExpr(new AstSymbolExpr(p), new AstIdExpr(m.Name.Name, false), false);
@@ -72,6 +71,9 @@ namespace Cheez
                     }
                 }
             }
+
+            if (func.IsGeneric)
+                return;
 
             if (func.TryGetDirective("linkname", out var ln))
             {

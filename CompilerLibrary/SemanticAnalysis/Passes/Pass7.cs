@@ -6,8 +6,6 @@
         {
             foreach (var func in mFunctions)
             {
-                if (func.IsGeneric) continue;
-
                 AnalyseFunction(func);
             }
 
@@ -15,8 +13,6 @@
             {
                 foreach (var f in i.Functions)
                 {
-                    if (f.IsGeneric) continue;
-
                     AnalyseFunction(f);
                 }
             }
@@ -25,8 +21,6 @@
             {
                 foreach (var f in i.Functions)
                 {
-                    if (f.IsGeneric) continue;
-
                     AnalyseFunction(f);
                 }
             }

@@ -33,7 +33,7 @@ namespace Cheez
                 case AstIdTypeExpr i:
                     {
                         if (i.IsPolymorphic && !poly_from_scope)
-                            return new PolyType(i.Name, true);
+                            return new PolyType(i.Name);
 
                         var sym = typeExpr.Scope.GetSymbol(i.Name);
 
@@ -474,6 +474,7 @@ namespace Cheez
                 instance.IsGeneric = false;
                 instance.PolymorphicTypes = polyTypes;
                 instance.ConstParameters = constArgs;
+                instance.ImplBlock = func.Declaration.ImplBlock;
                 func.Declaration.PolymorphicInstances.Add(instance);
 
                 instance.Scope.FunctionDeclarations.Add(instance);
