@@ -483,22 +483,21 @@ namespace Cheez
             if (expr.Left.Type.IsErrorType)
                 return expr;
 
-            var type = expr.Left.Type;
-
-            if (expr.IsDoubleColon) throw new NotImplementedException();
-            else
+            if (!expr.IsDoubleColon)
             {
-                while (type is PointerType p)
+                while (expr.Left.Type is PointerType p)
                 {
-                    type = p.TargetType;
-                    expr.DerefCount++;
+                    var newLeft = new AstDereferenceExpr(expr.Left, expr.Left.Location);
+                    newLeft.Scope = expr.Left.Scope;
+                    newLeft.Parent = expr.Left;
+                    expr.Left = InferType(newLeft, p.TargetType);
                 }
             }
 
             var sub = expr.Right.Name;
-            switch (type)
+            switch (expr.Left.Type)
             {
-                case TupleType tuple:
+                case TupleType tuple when !expr.IsDoubleColon:
                     {
                         var memName = expr.Right.Name;
                         var memberIndex = tuple.Members.IndexOf(m => m.name == memName);
@@ -512,7 +511,7 @@ namespace Cheez
                         break;
                     }
 
-                case SliceType slice:
+                case SliceType slice when !expr.IsDoubleColon:
                     {
                         var name = expr.Right.Name;
                         if (name == "data")
@@ -531,7 +530,7 @@ namespace Cheez
                         break;
                     }
 
-                case StructType s:
+                case StructType s when !expr.IsDoubleColon:
                     {
                         var name = expr.Right.Name;
                         var index = s.GetIndexOfMember(name);
@@ -555,6 +554,24 @@ namespace Cheez
                         expr.SetFlag(ExprFlags.IsLValue, true);
                         break;
                     }
+
+                case CheezTypeType _ when expr.IsDoubleColon:
+                    {
+                        var t = expr.Left.Value as CheezType;
+                        var func = expr.Scope.GetImplFunction(t, expr.Right.Name);
+
+                        if (func == null)
+                        {
+                            ReportError(expr.Right, $"Type '{t}' has no function '{expr.Right.Name}'");
+                            break;
+                        }
+
+                        expr.Type = func.FunctionType;
+                        break;
+                    }
+                case CheezTypeType _:
+                    ReportError(expr.Left, $"Invalid value on left side of '.': '{expr.Left.Value}'");
+                    break;
 
                 default: throw new NotImplementedException();
             }
@@ -942,6 +959,9 @@ namespace Cheez
             expr.Left = InferTypeHelper(expr.Left, null, newInstances);
             expr.Right = InferTypeHelper(expr.Right, null, newInstances);
 
+            if (expr.Left.Type.IsErrorType || expr.Right.Type.IsErrorType)
+                return expr;
+
             var at = new List<AbstractType>();
             if (expr.Left.Type is AbstractType at1) at.Add(at1);
             if (expr.Right.Type is AbstractType at2) at.Add(at2);
@@ -1022,7 +1042,16 @@ namespace Cheez
                 expr.Type = CheezType.Type;
                 expr.Value = str.Type;
             }
-            else if (sym is AstDecl decl)
+            else if (sym is AstTypeAliasDecl typedef)
+            {
+                expr.Type = CheezType.Type;
+                expr.Value = typedef.Type;
+            }
+            else if (sym is AstFunctionDecl func)
+            {
+                expr.Type = func.Type;
+            }
+            else if (sym is AstSingleVariableDecl decl)
             {
                 expr.Type = decl.Type;
             }

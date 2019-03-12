@@ -21,13 +21,13 @@ fn Main() {
     // int <- *
     test4(cast(*i32)456789)
 
-    // float <- float
+    // double <- double
     test5(0.5f, 3.7d)
 
-    // int <- float
+    // int <- double
     test6(3.7d)
 
-    // float <- int
+    // double <- int
     test7(7)
 }
 
@@ -56,17 +56,17 @@ fn test4(a: *i32) {
     c_printf("%u, %u`n", a, b)
 }
 
-fn test5(f: f32, d: f64) {
-    let a = cast(f64) f
-    let b = cast(f32) d
-    c_printf("%f, %f`n", a, cast(f64) b)
+fn test5(f: float, d: double) {
+    let a = cast(double) f
+    let b = cast(float) d
+    c_printf("%f, %f`n", a, cast(double) b)
 }
 
-fn test6(d: f64) {
+fn test6(d: double) {
     c_printf("%f, %d`n", d, cast(i32) d)
 }
 
 fn test7(i: i32) {
-    c_printf("%d, %f`n", i, cast(f64) i)
+    c_printf("%d, %f`n", i, cast(double) i)
 }
 

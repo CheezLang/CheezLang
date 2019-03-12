@@ -268,7 +268,8 @@ namespace Cheez
 
             DefineTypeSymbol("f32", FloatType.GetFloatType(4));
             DefineTypeSymbol("f64", FloatType.GetFloatType(8));
-            DefineTypeSymbol("float", FloatType.GetFloatType(8));
+            DefineTypeSymbol("float", FloatType.GetFloatType(4));
+            DefineTypeSymbol("double", FloatType.GetFloatType(8));
 
             DefineTypeSymbol("char", CheezType.Char);
             DefineTypeSymbol("bool", CheezType.Bool);

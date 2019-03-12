@@ -59,6 +59,8 @@ namespace Cheez
                     foreach (var m in @struct.Declaration.Members)
                     {
                         AstExpression expr = new AstDotExpr(new AstSymbolExpr(p), new AstIdExpr(m.Name.Name, false), false);
+                        expr.Scope = func.SubScope;
+                        expr.Parent = func;
                         expr = InferType(expr, m.Type);
 
                         var (ok, other) = func.SubScope.DefineUse(m.Name.Name, expr, out var use);

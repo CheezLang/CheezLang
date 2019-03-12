@@ -504,7 +504,7 @@ namespace Cheez.Visitors
 
         public override string VisitDotExpr(AstDotExpr dot, int data = 0)
         {
-            return $"{dot.Left.Accept(this, 0)}.{dot.Right.Accept(this)}";
+            return $"{dot.Left.Accept(this, 0)}{(dot.IsDoubleColon ? "::" : ".")}{dot.Right.Accept(this)}";
         }
 
         public override string VisitStructValueExpr(AstStructValueExpr str, int data = 0)

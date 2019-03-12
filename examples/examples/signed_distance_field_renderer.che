@@ -21,7 +21,7 @@ struct Ray {
 }
 
 struct DistanceShaderPair {
-    distance: f64
+    distance: double
     shader: Shader
 }
 
@@ -33,7 +33,7 @@ trait SDF {
 }
 
 struct Sphere {
-    radius: f64
+    radius: double
     shader: Shader
 }
 
@@ -47,7 +47,7 @@ impl SDF for Sphere {
 }
 
 struct PlaneY {
-    location: f64
+    location: double
     shader: Shader
 }
 
@@ -61,7 +61,7 @@ impl SDF for PlaneY {
 }
 
 struct Cube {
-    radius: f64
+    radius: double
     shader: Shader
 }
 
@@ -71,7 +71,7 @@ impl SDF for Cube {
         let dy = fabs(v.y) - radius
         let dz = fabs(v.z) - radius
 
-        let d: f64 = 0
+        let d: double = 0
 
         if dx > 0 and dy > 0 and dz > 0 { // corner
             let r = new Vec3 {
@@ -129,17 +129,17 @@ impl SDF for TranslatedSDF {
 
 struct RotatedXSDF {
     sdf: SDF
-    angle: f64
+    angle: double
 }
 
 struct RotatedYSDF {
     sdf: SDF
-    angle: f64
+    angle: double
 }
 
 struct RotatedZSDF {
     sdf: SDF
-    angle: f64
+    angle: double
 }
 
 impl SDF for RotatedXSDF {
@@ -271,7 +271,7 @@ impl Shader for LambertianShader {
             distance = raymarcher.sdf.distance(shadowRay.origin).distance
         }
 
-        let shadow: f64 = 1.0
+        let shadow: double = 1.0
         if shadowRay.origin.mag() < raymarcher.backgroundDistance {
             shadow = 0.3
         }
@@ -282,7 +282,7 @@ impl Shader for LambertianShader {
 }
 
 struct CheckerBoardShader {
-    size: f64
+    size: double
     shader1: Shader
     shader2: Shader
 }
@@ -318,7 +318,7 @@ impl Background {
 struct Raymarcher {
     sdf: SDF
     background: Background
-    backgroundDistance: f64 = 1000
+    backgroundDistance: double = 1000
 }
 
 impl Raymarcher {
@@ -346,7 +346,7 @@ impl Raymarcher {
     }
 
     ref fn normal(p: Vec3) -> Vec3 {
-        let off: f64 = 0.001
+        let off: double = 0.001
 
         let n = new Vec3 {
             x = sdf.distance(new Vec3{p.x + off, p.y, p.z}).distance - sdf.distance(new Vec3{p.x - off, p.y, p.z}).distance
@@ -362,13 +362,13 @@ impl Raymarcher {
 
 
 struct PerspectiveCamera {
-    focalLength: f64
-    sensorWidth: f64
-    sensorHeight: f64
+    focalLength: double
+    sensorWidth: double
+    sensorHeight: double
 }
 
 impl PerspectiveCamera {
-    ref fn project(x: f64, y: f64) -> Ray {
+    ref fn project(x: double, y: double) -> Ray {
         return new Ray {
             origin = new Vec3 {0, 0, 0}
             direction = new Vec3 {
@@ -393,8 +393,8 @@ impl Film {
 
         print_f("({}, {})`n", [width, height])
 
-        let fw = 1 / cast(f64) width
-        let fh = 1 / cast(f64) height
+        let fw = 1 / cast(double) width
+        let fh = 1 / cast(double) height
 
         print_f("Rendering image with {} anti-aliasing step(s)`n", [antiAliasingSteps])
         if antiAliasingSteps < 1 {
@@ -413,8 +413,8 @@ impl Film {
 
             while let x: u32 = 0; x < width; x += 1 {
 
-                let fx = cast(f64) x
-                let fy = cast(f64) y
+                let fx = cast(double) x
+                let fy = cast(double) y
 
                 let color = new Vec3{0, 0, 0}
 
@@ -428,7 +428,7 @@ impl Film {
                         let c = scene.project(ray)
                         color = color.add(c)
                     }
-                    color = color.mul(1 / cast(f64) antiAliasingSteps)
+                    color = color.mul(1 / cast(double) antiAliasingSteps)
                 }
 
                 pixels[x + y * width] = color
@@ -459,32 +459,32 @@ impl SDFAllocator {
         return t
     }
 
-    ref fn sphere(radius: f64, shader: Shader) -> SDF {
+    ref fn sphere(radius: double, shader: Shader) -> SDF {
         let s: *Sphere = self.allocate()
         s.radius = radius
         s.shader = shader
         return cast(SDF) s
     }
 
-    ref fn sphereT(position: Vec3, radius: f64, shader: Shader) -> SDF {
+    ref fn sphereT(position: Vec3, radius: double, shader: Shader) -> SDF {
         return self.translate(self.sphere(radius, shader), position)
     }
 
-    ref fn planeY(location: f64, shader: Shader) -> SDF {
+    ref fn planeY(location: double, shader: Shader) -> SDF {
         let s: *PlaneY = self.allocate()
         s.location = location
         s.shader = shader
         return cast(SDF) s
     }
 
-    ref fn cube(radius: f64, shader: Shader) -> SDF {
+    ref fn cube(radius: double, shader: Shader) -> SDF {
         let s: *Cube = self.allocate()
         s.radius = radius
         s.shader = shader
         return cast(SDF) s
     }
 
-    ref fn cubeT(position: Vec3, radius: f64, shader: Shader) -> SDF {
+    ref fn cubeT(position: Vec3, radius: double, shader: Shader) -> SDF {
         return self.translate(self.cube(radius, shader), position)
     }
 
@@ -495,21 +495,21 @@ impl SDFAllocator {
         return cast(SDF) t
     }
 
-    ref fn rotateX(sdf: SDF, angle: f64) -> SDF {
+    ref fn rotateX(sdf: SDF, angle: double) -> SDF {
         let t: *RotatedXSDF = self.allocate()
         t.sdf = sdf
         t.angle = angle
         return cast(SDF) t
     }
 
-    ref fn rotateY(sdf: SDF, angle: f64) -> SDF {
+    ref fn rotateY(sdf: SDF, angle: double) -> SDF {
         let t: *RotatedYSDF = self.allocate()
         t.sdf = sdf
         t.angle = angle
         return cast(SDF) t
     }
 
-    ref fn rotateZ(sdf: SDF, angle: f64) -> SDF {
+    ref fn rotateZ(sdf: SDF, angle: double) -> SDF {
         let t: *RotatedZSDF = self.allocate()
         t.sdf = sdf
         t.angle = angle
@@ -551,7 +551,7 @@ fn renderImage(film: *Film)
         film.pixels[i] = new Vec3 { 0, 0, 0 }
     }
 
-    let as = cast(f64) film.width / cast(f64) film.height
+    let as = cast(double) film.width / cast(double) film.height
     let camera = new PerspectiveCamera {
         focalLength = 50
         sensorWidth = as * 24
@@ -628,11 +628,11 @@ fn signed_distance_field_renderer()
     renderImage(&film)
     let end = getCurrentTimeInMilliseconds()
     let dur = end - start
-    let dur = cast(f64) dur / cast(f64) 1000
+    let dur = cast(double) dur / cast(double) 1000
 
     print_f("Rendering took {} seconds
 ", [dur])
 
     // // store image as bmp
-    write_bmp(cast(i32) width, cast(i32) height, cast(*f64) imageArr.data, "test.bmp")
+    write_bmp(cast(i32) width, cast(i32) height, cast(*double) imageArr.data, "test.bmp")
 }

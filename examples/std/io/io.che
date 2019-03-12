@@ -4,7 +4,7 @@
 
 typedef isize = i32
 
-fn c_sprintf(buff: *char, f: c_string, a: f64) -> i32 #varargs #linkname("sprintf");
+fn c_sprintf(buff: *char, f: c_string, a: double) -> i32 #varargs #linkname("sprintf");
 
 let NEW_LINE: char = '`n'
 
@@ -34,9 +34,9 @@ fn print_char(c: char) {
 fn print_float(val: $T) {
     let buff: [32]char
     let buff: string = buff
-    if @typeseq(T, f32) {
-        c_sprintf(buff.data, "%f", cast(f64)val)
-    } else if @typeseq(T, f64) {
+    if @typeseq(T, float) {
+        c_sprintf(buff.data, "%f", cast(double)val)
+    } else if @typeseq(T, double) {
         c_sprintf(buff.data, "%f", val)
     } else {
         @error(@concat("print_float can't be called with value of type ", @typename(T)))
@@ -172,9 +172,9 @@ fn print(v: $T) {
         print_string(v)
     } else if @isint(T) {
         print_int(v)
-    } else if @typeseq(T, f64) {
+    } else if @typeseq(T, double) {
         print_float(v)
-    } else if @typeseq(T, f32) {
+    } else if @typeseq(T, float) {
         print_float(v)
     } else if @isstring(T) {
         print_string(v)
@@ -329,16 +329,16 @@ impl Printable for i64 {
     }
 }
 
-impl Printable for f32 {
+impl Printable for float {
     fn print(str: *String, format: string) {
         let buff: [32]char
         let buff: string = buff
-        buff.length = c_sprintf(buff.data, "%f", cast(f64)<<self)
+        buff.length = c_sprintf(buff.data, "%f", cast(double)<<self)
         str.append_string(buff)
     }
 }
 
-impl Printable for f64 {
+impl Printable for double {
     fn print(str: *String, format: string) {
         let buff: [32]char
         let buff: string = buff

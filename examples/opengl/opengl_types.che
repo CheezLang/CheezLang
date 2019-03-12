@@ -1,66 +1,66 @@
-// f32 vectors
+// float vectors
 struct Vec2f {
-    x: f32
-    y: f32
+    x: float
+    y: float
 }
 
 struct Vec3f {
-    x: f32
-    y: f32
-    z: f32
+    x: float
+    y: float
+    z: float
 }
 
 struct Vec4f {
-    x: f32
-    y: f32
-    z: f32
-    w: f32
+    x: float
+    y: float
+    z: float
+    w: float
 }
 
-// f64 vectors
+// double vectors
 struct Vec2d {
-    x: f64
-    y: f64
+    x: double
+    y: double
 }
 
 struct Vec3d {
-    x: f64
-    y: f64
-    z: f64
+    x: double
+    y: double
+    z: double
 }
 
 struct Vec4d {
-    x: f64
-    y: f64
-    z: f64
-    w: f64
+    x: double
+    y: double
+    z: double
+    w: double
 }
 
 // colors
 struct Color3f {
-    r: f32
-    g: f32
-    b: f32
+    r: float
+    g: float
+    b: float
 }
 
 struct Color4f {
-    r: f32
-    g: f32
-    b: f32
-    a: f32
+    r: float
+    g: float
+    b: float
+    a: float
 }
 
 struct Color3d {
-    r: f64
-    g: f64
-    b: f64
+    r: double
+    g: double
+    b: double
 }
 
 struct Color4d {
-    r: f64
-    g: f64
-    b: f64
-    a: f64
+    r: double
+    g: double
+    b: double
+    a: double
 }
 
 //
@@ -74,8 +74,8 @@ typedef GLsizei    = i32
 typedef GLubyte    = u8
 typedef GLushort   = u16
 typedef GLuint     = u32
-typedef GLfloat    = f32
-typedef GLclampf   = f32
-typedef GLdouble   = f64
-typedef GLclampd   = f64
+typedef GLfloat    = float
+typedef GLclampf   = float
+typedef GLdouble   = double
+typedef GLclampd   = double
 typedef GLvoid     = void

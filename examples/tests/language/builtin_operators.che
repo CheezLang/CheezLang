@@ -76,8 +76,8 @@ fn Main() {
     test_numbers(u64, 9u64, 5u64, 3u64, arith_string = "%llu, %llu, %llu, %llu, %llu`n"c)
 
     // floats
-    test_numbers(f32, 9.0f, 5.0f, 3.0f, false)
-    test_numbers(f64, 9.0d, 5.0d, 3.0d, arith_string = "%f, %f, %f, %f, %f`n"c)
+    test_numbers(float, 9.0f, 5.0f, 3.0f, false)
+    test_numbers(double, 9.0d, 5.0d, 3.0d, arith_string = "%f, %f, %f, %f, %f`n"c)
 
     // bool
     test_bool(true, true)
