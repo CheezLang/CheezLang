@@ -44,6 +44,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var ltype = CheezTypeToLLVMType(function.Type);
             var lfunc = module.AddFunction(name, ltype);
 
+            // :temporary
+            if (function.Body != null)
+                lfunc.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
+
             // TODO
             lfunc.AddFunctionAttribute(context, LLVMAttributeKind.NoInline);
             lfunc.AddFunctionAttribute(context, LLVMAttributeKind.NoUnwind);
@@ -264,7 +268,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 var varPtr = module.AddGlobal(type, v.Name.Name);
                 varPtr.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
-                varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
+                varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);// TODO?
 
                 var dExtern = decl.GetDirective("extern");
                 if (dExtern != null) varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
