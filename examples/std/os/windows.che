@@ -1,3 +1,6 @@
+let __std_in_handle = GetStdHandle(-10)
+let __std_out_handle = GetStdHandle(-11)
+let __std_err_handle = GetStdHandle(-12)
 
 struct _OFSTRUCT {
     cBytes: i8
@@ -8,20 +11,22 @@ struct _OFSTRUCT {
     szPathName: [128]i8
 }
 
-typedef HFILE = i32
-typedef HANDLE = *any
+typedef DWORD   = u32
+typedef LPDWORD = *DWORD
+typedef LPCVOID = *any
+typedef PVOID   = *any
+typedef HANDLE  = PVOID
+typedef HFILE   = i32
+typedef LPOVERLAPPED = *any
+typedef BOOL    = i32
 
-fn GetStdHandle(h: i32) -> i32 #stdcall;
-fn WriteFile(handle: i32, str: c_string, length: i32, bw: *i32, res: i32) #stdcall;
-fn ReadFile(hFile: HANDLE, lpBuffer: *any, nNumberOfBytesToRead: i32, lpNumberOfBytesRead: *i32, lpOverlapped: *any) -> bool #stdcall;
-
-let __std_in_handle: i32 = GetStdHandle(-10)
-let __std_out_handle: i32 = GetStdHandle(-11)
-let __std_err_handle: i32 = GetStdHandle(-12)
+fn GetStdHandle(nStdHandle: DWORD) -> HANDLE #stdcall;
+fn WriteFile(hFile: HANDLE, lpBuffer: LPCVOID, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: LPDWORD, lpOverlapped: LPOVERLAPPED) -> BOOL #stdcall;
+fn ReadFile(hFile: HANDLE, lpBuffer: LPVOID, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: LPDWORD, lpOverlapped: LPOVERLAPPED) -> BOOL #stdcall;
 
 fn OpenFile(lpFileName: c_string, lpReOpenBuff: *_OFSTRUCT, uStyle: u32) -> HFILE #stdcall;
 fn CloseHandle(hObject: HANDLE) -> bool #stdcall;
 fn GetFileSize(hObject: HANDLE, lpFileSizeHigh: *i32) -> i32 #stdcall;
 
-fn QueryPerformanceCounter(lpPerformanceCount: *u64) -> bool #stdcall;
-fn QueryPerformanceFrequency(lpPerformanceCount: *u64) -> bool #stdcall;
+fn QueryPerformanceCounter(lpPerformanceCount: *i64) -> BOOL #stdcall;
+fn QueryPerformanceFrequency(lpPerformanceCount: *i64) -> BOOL #stdcall;

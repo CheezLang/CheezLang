@@ -4,25 +4,30 @@ fn c_puts(str: c_string) #linkname("puts");
 
 fn c_malloc(size: i32) -> *any #linkname("malloc");
 fn c_free(mem: *any) #linkname("free");
-fn c_memset(mem: *any, value: i32, num: usize) -> *any #linkname("memset");
-
-typedef HANDLE = i32
-
-fn GetStdHandle(h: i32) -> i32 #stdcall;
-fn WriteFile(handle: HANDLE, str: c_string, length: i32, bytes_written: *i32 = null, reserved: i32 = 0) #stdcall;
-
-
-let __std_in_handle: i32 = GetStdHandle(-10)
-let __std_out_handle: i32 = GetStdHandle(-11)
-let __std_err_handle: i32 = GetStdHandle(-12)
+fn c_memset(mem: *any, value: i32, num: u64) -> *any #linkname("memset");
 
 fn print_string(str: string) {
-    WriteFile(__std_out_handle, str.data, cast str.length)
+    let bytesWritten: DWORD = 0
+    WriteFile(__std_out_handle, cast str.data, cast str.length, &bytesWritten, null)
+}
+
+fn println(str: string) {
+    let bytesWritten: DWORD = 0
+    WriteFile(__std_out_handle, cast str.data, cast str.length, &bytesWritten, null)
+    WriteFile(__std_out_handle, cast "`n"c, 1, &bytesWritten, null)
 }
 
 fn print_cstring(str: c_string) {
+    let bytesWritten: DWORD = 0
     let len = c_strlen(str)
-    WriteFile(__std_out_handle, str, len)
+    WriteFile(__std_out_handle, cast str, cast len, &bytesWritten, null)
+}
+
+fn printlnc(str: c_string) {
+    let bytesWritten: DWORD = 0
+    let len = c_strlen(str)
+    WriteFile(__std_out_handle, cast str, cast len, &bytesWritten, null)
+    WriteFile(__std_out_handle, cast "`n"c, 1, &bytesWritten, null)
 }
 
 fn print_number(n: $T) {
@@ -35,16 +40,6 @@ fn bool_to_string(b: bool) -> string {
 
 fn bool_to_cstring(b: bool) -> c_string {
     return if b { "true" } else { "false" }
-}
-
-fn println(str: string) {
-    print_string(str)
-    print_string("`n")
-}
-
-fn printlnc(str: c_string) {
-    print_cstring(str)
-    print_string("`n")
 }
 
 fn alloc($T: type) -> *T {

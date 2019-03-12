@@ -1,6 +1,7 @@
-//#load("tests/language/builtin_operators.che")
 #load("test2")
+#load("std:os/windows")
 
 fn Main() {
-    
+    println("uiae")
+    printlnc("test")
 }
