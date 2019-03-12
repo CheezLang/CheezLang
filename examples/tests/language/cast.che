@@ -44,14 +44,14 @@ fn test2(a: u32) {
     c_printf("%u, %llu, %hhu`n", a, b, c)
 }
 
-fn test3(a: usize) {
+fn test3(a: u64) {
     let b: *any = cast a
 
     c_printf("%llu, %u`n", a, b)
 }
 
 fn test4(a: *i32) {
-    let b: usize = cast a
+    let b: u64 = cast a
 
     c_printf("%u, %u`n", a, b)
 }

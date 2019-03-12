@@ -9,7 +9,7 @@
 
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
-fn swap(pa: *i32, pb: *i32) {
+fn swap(pa: *int, pb: *int) {
     let a = <<pa
     let b = <<pb
     (<<pa, <<pb) = (b, a)

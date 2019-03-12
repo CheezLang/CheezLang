@@ -32,7 +32,7 @@ namespace Cheez.Types.Primitive
     {
         private static Dictionary<(int, bool), IntType> sTypes = new Dictionary<(int, bool), IntType>();
         public static IntType LiteralType = new IntType { Signed = false, Size = 0 };
-        public static IntType DefaultType => GetIntType(4, true);
+        public static IntType DefaultType => GetIntType(8, true);
 
         public bool Signed { get; private set; }
         public override bool IsErrorType => false;

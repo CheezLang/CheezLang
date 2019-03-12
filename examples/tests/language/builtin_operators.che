@@ -95,8 +95,8 @@ fn Main() {
     test_and_or()
 }
 
-fn foo(b: bool, i: i32) -> bool {
-    c_printf("%d`n", i)
+fn foo(b: bool, i: int) -> bool {
+    c_printf("%lld`n", i)
     return b
 }
 
@@ -111,23 +111,23 @@ fn test_and_or() {
     let g = foo(false, 12) or foo(true, 13)
     let h = foo(false, 14) or foo(false, 15)
 
-    c_printf("%d %d %d %d %d %d %d %d`n", a, b, c, d, e, f, g, h)
+    c_printf("%hhd %hhd %hhd %hhd %hhd %hhd %hhd %hhd`n", a, b, c, d, e, f, g, h)
 }
 
 fn test_numbers($T: type, a: T, b: T, c: T, $test_arith: bool = true, $arith_string: c_string = "%d, %d, %d, %d, %d`n"c) {
     if test_arith {
         c_printf(arith_string, (a + b), (a - b), (a * b), (a / b), (a % b))
     }
-    c_printf("%d, %d, %d, %d, %d, %d`n", (a == b), (a != b), (a > b), (a >= b), (a < b), (a <= b))
+    c_printf("%hhd, %hhd, %hhd, %hhd, %hhd, %hhd`n", (a == b), (a != b), (a > b), (a >= b), (a < b), (a <= b))
     a = c
     b = c
-    c_printf("%d, %d, %d, %d, %d, %d`n", (a == b), (a != b), (a > b), (a >= b), (a < b), (a <= b))
+    c_printf("%hhd, %hhd, %hhd, %hhd, %hhd, %hhd`n", (a == b), (a != b), (a > b), (a >= b), (a < b), (a <= b))
 }
 
 fn test_bool(a: bool, b: bool) {
-    c_printf("%d, %d`n", cast(i32) (a == b), cast(i32) (a != b))
+    c_printf("%lld, %lld`n", cast(int) (a == b), cast(int) (a != b))
 }
 
-fn test_pointers(a: *i32, b: *i32) {
-    c_printf("%d, %d`n", (a == b), (a != b))
+fn test_pointers(a: *int, b: *int) {
+    c_printf("%lld, %lld`n", cast(int) (a == b), cast(int) (a != b))
 }

@@ -258,29 +258,17 @@ namespace Cheez
             DefineTypeSymbol("i32", IntType.GetIntType(4, true));
             DefineTypeSymbol("i64", IntType.GetIntType(8, true));
 
-            DefineTypeSymbol("byte", IntType.GetIntType(1, true));
-            DefineTypeSymbol("short", IntType.GetIntType(2, true));
-            DefineTypeSymbol("int", IntType.GetIntType(4, true));
-            DefineTypeSymbol("long", IntType.GetIntType(8, true));
-
             DefineTypeSymbol("u8", IntType.GetIntType(1, false));
             DefineTypeSymbol("u16", IntType.GetIntType(2, false));
             DefineTypeSymbol("u32", IntType.GetIntType(4, false));
             DefineTypeSymbol("u64", IntType.GetIntType(8, false));
 
-            DefineTypeSymbol("ubyte", IntType.GetIntType(1, false));
-            DefineTypeSymbol("ushort", IntType.GetIntType(2, false));
-            DefineTypeSymbol("uint", IntType.GetIntType(4, false));
-            DefineTypeSymbol("ulong", IntType.GetIntType(8, false));
-
-            // TODO: these should be 8 bytes on x64
-            DefineTypeSymbol("size", IntType.GetIntType(PointerType.PointerSize, true));
-            DefineTypeSymbol("usize", IntType.GetIntType(PointerType.PointerSize, false));
+            DefineTypeSymbol("int", IntType.GetIntType(8, true));
+            DefineTypeSymbol("uint", IntType.GetIntType(8, false));
 
             DefineTypeSymbol("f32", FloatType.GetFloatType(4));
-            DefineTypeSymbol("float", FloatType.GetFloatType(4));
             DefineTypeSymbol("f64", FloatType.GetFloatType(8));
-            DefineTypeSymbol("double", FloatType.GetFloatType(8));
+            DefineTypeSymbol("float", FloatType.GetFloatType(8));
 
             DefineTypeSymbol("char", CheezType.Char);
             DefineTypeSymbol("bool", CheezType.Bool);

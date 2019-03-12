@@ -16,15 +16,15 @@ fn c_printf(format: c_string) #varargs #linkname("printf");
 fn Main() {
     let a = 123
     let b: bool = true
-    let (c, d): (i32, bool) = (a, b)
+    let (c, d): (int, bool) = (a, b)
     let f = (c, d)
     let (g, h) = f
 
-    c_printf("a: %d`n", a)
-    c_printf("b: %d`n", b)
-    c_printf("c: %d, d: %d`n", c, d)
-    c_printf("f[0]: %d, f[1]: %d`n", f[0], f[1])
-    c_printf("g: %d, h: %d`n", g, h)
+    c_printf("a: %lld`n", a)
+    c_printf("b: %lld`n", b)
+    c_printf("c: %lld, d: %lld`n", c, d)
+    c_printf("f[0]: %lld, f[1]: %lld`n", f[0], f[1])
+    c_printf("g: %lld, h: %lld`n", g, h)
     
     a = 456
     b = false
@@ -32,9 +32,9 @@ fn Main() {
     f = (c, d)
     (g, h) = f
     
-    c_printf("a: %d`n", a)
-    c_printf("b: %d`n", b)
-    c_printf("c: %d, d: %d`n", c, d)
-    c_printf("f[0]: %d, f[1]: %d`n", f[0], f[1])
-    c_printf("g: %d, h: %d`n", g, h)
+    c_printf("a: %lld`n", a)
+    c_printf("b: %lld`n", b)
+    c_printf("c: %lld, d: %lld`n", c, d)
+    c_printf("f[0]: %lld, f[1]: %lld`n", f[0], f[1])
+    c_printf("g: %lld, h: %lld`n", g, h)
 }

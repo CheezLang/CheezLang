@@ -38,12 +38,12 @@ namespace Cheez
 
             if (literalType == IntType.LiteralType)
             {
-                if (expected != null && !(expected is IntType)) throw new Exception("Can't convert int to non-int type");
+                if (expected != null && !(expected is IntType)) return IntType.DefaultType;
                 return expected ?? IntType.DefaultType;
             }
             else if (literalType == FloatType.LiteralType)
             {
-                if (expected != null && !(expected is FloatType)) throw new Exception("Can't convert float to non-float type");
+                if (expected != null && !(expected is FloatType)) return FloatType.DefaultType;
                 return expected ?? FloatType.DefaultType;
             }
             else if (literalType == CheezType.StringLiteral) return CheezType.String;

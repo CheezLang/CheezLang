@@ -10,7 +10,7 @@ fn get_tuple() -> (one: bool, two: i32) {
     two = 6
 }
 
-fn get_tuple_value(tuple: $T, $Index: i32) -> @tuple_type_member(T, Index) {
+fn get_tuple_value(tuple: $T, $Index: int) -> @tuple_type_member(T, Index) {
     return tuple[Index]
 }
 

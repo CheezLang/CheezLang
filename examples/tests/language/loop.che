@@ -16,7 +16,7 @@ fn Main() {
     fizz_buzz(20)
 }
 
-fn fizz_buzz(n: i32) {
+fn fizz_buzz(n: int) {
     while let a = 1; a < n; a = a + 1 {
         if a % 5 == 0 and a % 3 == 0 {
             c_printf("FizzBuzz ")
@@ -25,12 +25,12 @@ fn fizz_buzz(n: i32) {
         } else if a % 3 == 0 {
             c_printf("Fizz ")
         } else {
-            c_printf("%d ", a)
+            c_printf("%lld ", a)
         }
     }
 }
 
-fn test5(n: i32) {
+fn test5(n: int) {
     while true; n = n - 1 {
         if n == 0 {
             break
@@ -40,44 +40,44 @@ fn test5(n: i32) {
             continue
         }
 
-        c_printf("%d,", n)
+        c_printf("%lld,", n)
     }
     c_printf("`n")
 }
 
-fn test4(n: i32) {
+fn test4(n: int) {
     while let a = 0; a < n; a = a + 1 {
         if a % 2 == 0 {
             continue
         }
 
-        c_printf("%d", a)
+        c_printf("%lld", a)
     }
     c_printf("`n")
 }
 
-fn test3(n: i32) {
+fn test3(n: int) {
     while let a = 0; true; a = a + 1 {
         if a == n {
             break
         }
 
-        c_printf("%d", a)
+        c_printf("%lld", a)
     }
     c_printf("`n")
 }
 
-fn test2(n: i32) {
+fn test2(n: int) {
     while let a = 0; a < n; a = a + 1 {
-        c_printf("%d", a)
+        c_printf("%lld", a)
     }
     c_printf("`n")
 }
 
-fn test1(n: i32) {
+fn test1(n: int) {
     let a = 0
     while a < n {
-        c_printf("%d", a)
+        c_printf("%lld", a)
         a = a + 1
     }
     c_printf("`n")

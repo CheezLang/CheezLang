@@ -3,7 +3,7 @@
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
 fn Main() {
-    c_printf("%d, %d, %d, %d", foo(i32), bar(1), baz(i32, 2), uiae(3, i32))
+    c_printf("%lld, %lld, %lld, %lld", foo(int), bar(1), baz(int, 2), uiae(3, int))
 }
 
 fn foo($T: type) -> T {
@@ -18,6 +18,6 @@ fn baz($T: type, x: $T2) -> T {
     return x
 }
 
-fn uiae($X: i32, $T: type) -> T {
+fn uiae($X: int, $T: type) -> T {
     return X
 }
