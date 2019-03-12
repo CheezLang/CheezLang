@@ -41,6 +41,11 @@ namespace Cheez
                 }
             }
 
+            foreach (var i in mPolyImpls)
+            {
+                ReportError(i.TargetTypeExpr, $"Poly impls not implemented yet.");
+            }
+
             foreach (var i in mTraitImpls)
             {
                 foreach (var f in i.Functions)

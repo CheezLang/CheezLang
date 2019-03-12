@@ -64,6 +64,7 @@ namespace Cheez
 
             if (impl.TargetTypeExpr.IsPolymorphic)
             {
+                mPolyImpls.Add(impl);
             }
             else
             {

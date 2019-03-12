@@ -548,7 +548,7 @@ namespace Cheez
 
                             if (func == null)
                             {
-                                ReportError(expr.Right, $"Struct '{s.Declaration.Name.Name}' has no field or function '{name}'");
+                                ReportError(expr.Right, $"Struct '{s}' has no field or function '{name}'");
                                 break;
                             }
 

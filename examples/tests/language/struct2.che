@@ -1,0 +1,31 @@
+#test_expect_output("0")
+#test_expect_output("3")
+#test_expect_output("6")
+#test_expect_output("6.000000")
+
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+struct Test {
+    x: int
+}
+
+impl Test {
+    fn foo(*self, a: $T) {
+        self.x = cast a
+    }
+
+    fn bar(self, $T: type) -> T {
+        return cast self.x
+    }
+}
+
+fn Main() {
+    let t = new Test{0}
+    c_printf("%lld`n", t.x)
+    t.foo(3)
+    c_printf("%lld`n", t.x)
+    t.foo(6)
+    c_printf("%lld`n", t.x)
+    let d = t.bar(double)
+    c_printf("%f`n", d)
+}
