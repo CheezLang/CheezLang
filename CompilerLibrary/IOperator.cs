@@ -1,4 +1,5 @@
-﻿using Cheez.Types;
+﻿using Cheez.Ast.Statements;
+using Cheez.Types;
 using Cheez.Types.Primitive;
 using System;
 
@@ -50,8 +51,8 @@ namespace Cheez
         public int Accepts(CheezType lhs, CheezType rhs)
         {
             if (lhs is PointerType lt && rhs is PointerType rt && lt == rt)
-                return 1;
-            return 0;
+                return 2;
+            return -1;
         }
 
         public object Execute(object left, object right)
@@ -82,9 +83,12 @@ namespace Cheez
 
         public int Accepts(CheezType lhs, CheezType rhs)
         {
-            if (CheckType(LhsType, lhs) && CheckType(RhsType, rhs))
-                return 1;
-            return 0;
+            var ml = LhsType.Match(lhs);
+            var mr = RhsType.Match(rhs);
+            if (ml == -1 || mr == -1)
+                return -1;
+
+            return ml + mr;
         }
 
         private bool CheckType(CheezType needed, CheezType got)
@@ -146,6 +150,44 @@ namespace Cheez
         public object Execute(object value)
         {
             return Execution?.Invoke(value);
+        }
+    }
+
+    public class UserDefinedBinaryOperator : IOperator
+    {
+        public CheezType LhsType { get; set; }
+
+        public CheezType RhsType { get; set; }
+
+        public CheezType ResultType { get; set; }
+
+        public string Name { get; set; }
+
+        public AstFunctionDecl Declaration { get; set; }
+
+        public UserDefinedBinaryOperator(string name, AstFunctionDecl func)
+        {
+            this.Name = name;
+            this.LhsType = func.Parameters[0].Type;
+            this.RhsType = func.Parameters[1].Type;
+            this.ResultType = func.ReturnValue.Type;
+            this.Declaration = func;
+        }
+
+        public int Accepts(CheezType lhs, CheezType rhs)
+        {
+            // TODO: poly functions
+            var ml = LhsType.Match(lhs);
+            var mr = RhsType.Match(rhs);
+            if (ml == -1 || mr == -1)
+                return -1;
+
+            return ml + mr;
+        }
+
+        public object Execute(object left, object right)
+        {
+            throw new NotImplementedException();
         }
     }
 }

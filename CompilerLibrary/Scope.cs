@@ -157,7 +157,7 @@ namespace Cheez
         public List<IOperator> GetOperators(string name, CheezType lhs, CheezType rhs)
         {
             var result = new List<IOperator>();
-            int level = 0;
+            int level = int.MaxValue;
             GetOperator(name, lhs, rhs, result, ref level);
             return result;
         }
@@ -175,31 +175,19 @@ namespace Cheez
             foreach (var op in ops)
             {
                 var l = op.Accepts(lhs, rhs);
-                if (l > 0)
+                if (l == -1)
+                    continue;
+
+                if (l < level)
+                {
+                    level = l;
+                    result.Clear();
+                    result.Add(op);
+                }
+                else if (l == level)
                 {
                     result.Add(op);
                 }
-                //if (CheckType(op.LhsType, lhs) && CheckType(op.RhsType, rhs))
-                //{
-                //    if (level < 2)
-                //        result.Clear();
-                //    result.Add(op);
-                //    level = 2;
-                //}
-                //else if (level < 2 && CheckType(op.LhsType, lhs))
-                //{
-                //    if (level < 1)
-                //        result.Clear();
-                //    result.Add(op);
-                //    level = 1;
-                //}
-                //else if (level < 2 && CheckType(op.RhsType, rhs))
-                //{
-                //    if (level < 1)
-                //        result.Clear();
-                //    result.Add(op);
-                //    level = 1;
-                //}
             }
 
             Parent?.GetOperator(name, lhs, rhs, result, ref level);
@@ -249,6 +237,11 @@ namespace Cheez
             }
 
             Parent?.GetOperator(name, sub, result, ref level);
+        }
+
+        public void DefineBinaryOperator(string op, AstFunctionDecl func)
+        {
+            DefineOperator(new UserDefinedBinaryOperator(op, func));
         }
 
         internal void DefineBuiltInTypes()

@@ -107,5 +107,10 @@ namespace Cheez.Types.Abstract
         }
 
         public override string ToString() => "$" + Name;
+
+        public override int Match(CheezType concrete)
+        {
+            return 1;
+        }
     }
 }

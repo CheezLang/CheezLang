@@ -42,6 +42,13 @@ namespace Cheez.Types
         {
             return base.GetHashCode();
         }
+
+        public virtual int Match(CheezType concrete)
+        {
+            if (this == concrete)
+                return 0;
+            return -1;
+        }
     }
 
     public class CheezTypeType : CheezType
@@ -49,6 +56,7 @@ namespace Cheez.Types
         public static CheezTypeType Instance { get; } = new CheezTypeType();
         public override bool IsPolyType => false;
         public override string ToString() => "type";
+
         public override bool IsErrorType => false;
     }
 }

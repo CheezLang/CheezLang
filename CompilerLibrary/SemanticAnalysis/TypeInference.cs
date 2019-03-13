@@ -1032,6 +1032,18 @@ namespace Cheez
                 }
 
                 var op = ops[0];
+                if (op is UserDefinedBinaryOperator user)
+                {
+                    var args = new List<AstArgument>() {
+                        new AstArgument(expr.Left, Location: expr.Left.Location),
+                        new AstArgument(expr.Right, Location: expr.Right.Location)
+                    };
+                    var func = new AstSymbolExpr(user.Declaration);
+                    var call = new AstCallExpr(func, args, expr.Location);
+                    return InferType(call, expected);
+                }
+
+
                 expr.ActualOperator = op;
 
                 if (expr.Left.Value != null && expr.Right.Value != null)

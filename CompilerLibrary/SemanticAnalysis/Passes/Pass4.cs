@@ -1,6 +1,7 @@
 ﻿using Cheez.Ast;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
+using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
@@ -152,6 +153,42 @@ namespace Cheez
                         ReportError(varargs, $"#varargs takes no arguments!");
                     }
                     func.FunctionType.VarArgs = true;
+                }
+            }
+
+            if (func.TryGetDirective("operator", out var op))
+            {
+                if (op.Arguments.Count != 1)
+                {
+                    ReportError(op, $"#operator requires exactly one argument!");
+                }
+                else
+                {
+                    var arg = op.Arguments[0];
+                    arg = op.Arguments[0] = InferType(arg, null);
+                    if (arg.Value is string v)
+                    {
+                        if (func.ReturnValue.Type == CheezType.Void)
+                        {
+                            ReportError(op, $"This function cannot be used as operator because it returns void");
+                        }
+                        else if (func.Parameters.Count == 1)
+                        {
+                            //func.Scope.DefineUnaryOperator(v, func);
+                        }
+                        else if (func.Parameters.Count == 2)
+                        {
+                            func.Scope.DefineBinaryOperator(v, func);
+                        }
+                        else
+                        {
+                            ReportError(op, $"This function cannot be used as operator because it takes {func.Parameters.Count} parameters");
+                        }
+                    }
+                    else
+                    {
+                        ReportError(arg, $"Argument to #op must be a constant string!");
+                    }
                 }
             }
         }

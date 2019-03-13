@@ -429,6 +429,11 @@ namespace Cheez.Visitors
             return v;
         }
 
+        public override string VisitSymbolExpr(AstSymbolExpr te, int data = 0)
+        {
+            return $"@symbol({te.Symbol.Name?.Accept(this) ?? te.Symbol.ToString()})";
+        }
+
         public override string VisitIdExpr(AstIdExpr ident, int indentLevel = 0)
         {
             if (ident.Symbol is ConstSymbol c)
