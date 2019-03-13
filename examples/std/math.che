@@ -55,40 +55,115 @@ impl LinearCongruentialGenerator {
     }
 }
 
-struct Vec3 {
-    x: double
-    y: double
-    z: double
+struct Vector2(T: type) {
+    x: T
+    y: T
 }
 
-impl Vec3 {
-    fn mul(self, f: double) -> Vec3 {
-        return new Vec3 { x * f, y * f, z * f }
+struct Vector3(T: type) {
+    x: T
+    y: T
+    y: T
+}
+
+struct Vector4(T: type) {
+    x: T
+    y: T
+    y: T
+    w: T
+}
+
+impl Vector2($T) {
+    // ref
+    fn addv(*self, other: Vector2(T)) -> *Vector2(T) #operator("+=") {
+        x += other.x
+        y += other.y
+        return self
     }
 
-    fn mul3(self, v: Vec3) -> Vec3 {
-        return new Vec3 { x * v.x, y * v.y, z * v.z }
+    fn subv(*self, other: Vector2(T)) -> *Vector2(T) #operator("-=") {
+        x -= other.x
+        y -= other.y
+        return self
     }
 
-    fn add(self, v: Vec3) -> Vec3 {
-        return new Vec3 { x + v.x, y + v.y, z + v.z }
+    fn mulv(*self, other: Vector2(T)) -> *Vector2(T) #operator("*=") {
+        x *= other.x
+        y *= other.y
+        return self
     }
 
-    fn sub(self, v: Vec3) -> Vec3 {
-        return new Vec3 { x - v.x, y - v.y, z - v.z }
+    fn muls(*self, other: T) -> *Vector2(T) #operator("*=") {
+        x *= other
+        y *= other
+        return self
     }
 
-    fn mag(self) -> double {
-        let sum = x * x + y * y + z * z
-        return sqrt(sum)
+    fn divv(*self, other: Vector2(T)) -> *Vector2(T) #operator("/=") {
+        x /= other.x
+        y /= other.y
+        return self
     }
 
-    fn normaziled(self) -> Vec3 {
-        let m = self.mag()
-        return self.mul(1 / m)
+    fn normalize(*self) -> *Vector2(T) {
+        let mag = self.mag()
+        if mag != 0 {
+            x /= mag
+            y /= mag
+        }
+
+        return self
     }
-    
-    fn dot(self, v: Vec3) -> double {
-        return x * v.x + y * v.y + z * v.z
+
+    fn mag(self) -> T {
+        return cast(T) sqrt(cast(double) (x*x + y*y))
+    }
+
+    fn magsq(self) -> T {
+        return cast(T) (x*x + y*y)
+    }
+
+    fn neg(self) -> self #operator("-") {
+        return new {-x, -y}
+    }
+
+    // static
+    fn addvv(a: Vector2(T), b: Vector2(T)) -> Vector2(T) #operator("+") {
+        return new {
+            a.x + b.x
+            a.y + b.y
+        }
+    }
+
+    fn subvv(a: Vector2(T), b: Vector2(T)) -> Vector2(T) #operator("-") {
+        return new {
+            a.x - b.x
+            a.y - b.y
+        }
+    }
+
+    fn mulvv(a: Vector2(T), b: Vector2(T)) -> Vector2(T) #operator("*") {
+        return new {
+            a.x * b.x
+            a.y * b.y
+        }
+    }
+
+    fn mulvs(a: Vector2(T), b: T) -> Vector2(T) #operator("*") {
+        return new {
+            a.x * b
+            a.y * b
+        }
+    }
+
+    fn divvv(a: Vector2(T), b: Vector2(T)) -> Vector2(T) #operator("/") {
+        return new {
+            a.x / b.x
+            a.y / b.y
+        }
+    }
+
+    fn dot(a: Vector2(T), b : Vector2(T)) -> T {
+        return a.x * b.x + a.y * b.y
     }
 }

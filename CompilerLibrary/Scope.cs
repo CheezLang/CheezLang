@@ -196,7 +196,7 @@ namespace Cheez
         public List<IUnaryOperator> GetOperators(string name, CheezType sub)
         {
             var result = new List<IUnaryOperator>();
-            int level = 0;
+            int level = int.MaxValue;
             GetOperator(name, sub, result, ref level);
             return result;
         }
@@ -230,6 +230,11 @@ namespace Cheez
             }
 
             Parent?.GetOperator(name, sub, result, ref level);
+        }
+
+        public void DefineUnaryOperator(string op, AstFunctionDecl func)
+        {
+            DefineUnaryOperator(new UserDefinedUnaryOperator(op, func));
         }
 
         public void DefineBinaryOperator(string op, AstFunctionDecl func)
@@ -323,16 +328,21 @@ namespace Cheez
 
         private void DefineUnaryOperator(string name, CheezType type, BuiltInUnaryOperator.ComptimeExecution exe)
         {
+            DefineUnaryOperator(new BuiltInUnaryOperator(name, type, type, exe));
+        }
+
+        private void DefineUnaryOperator(IUnaryOperator op)
+        {
             List<IUnaryOperator> list = null;
-            if (mUnaryOperatorTable.ContainsKey(name))
-                list = mUnaryOperatorTable[name];
+            if (mUnaryOperatorTable.ContainsKey(op.Name))
+                list = mUnaryOperatorTable[op.Name];
             else
             {
                 list = new List<IUnaryOperator>();
-                mUnaryOperatorTable[name] = list;
+                mUnaryOperatorTable[op.Name] = list;
             }
 
-            list.Add(new BuiltInUnaryOperator(name, type, type, exe));
+            list.Add(op);
         }
 
         private void DefineLogicOperators(CheezType[] types, params (string name, BuiltInOperator.ComptimeExecution exe)[] ops)

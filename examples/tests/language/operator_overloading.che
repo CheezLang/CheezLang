@@ -16,6 +16,7 @@
 #test_expect_output("2.000000, 4.000000")
 #test_expect_output("0.500000, 2.000000")
 #test_expect_output("1.500000, 4.000000")
+#test_expect_output("-1.500000, -4.000000")
 
 #load("../../std/math")
 
@@ -79,6 +80,9 @@ fn Main() {
         c_printf("%f, %f`n", a.x, a.y)
 
         a *= new Vec2{3, 2}
+        c_printf("%f, %f`n", a.x, a.y)
+
+        a = -a
         c_printf("%f, %f`n", a.x, a.y)
     }
 }

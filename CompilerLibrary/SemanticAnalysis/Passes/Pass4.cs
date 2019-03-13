@@ -181,8 +181,7 @@ namespace Cheez
                         }
                         else if (func.Parameters.Count == 1)
                         {
-                            ReportError(op, $"Unary operator not implemented yet!");
-                            //func.Scope.DefineUnaryOperator(v, func);
+                            targetScope.DefineUnaryOperator(v, func);
                         }
                         else if (func.Parameters.Count == 2)
                         {
