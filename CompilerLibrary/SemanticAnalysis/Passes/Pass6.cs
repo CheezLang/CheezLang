@@ -117,15 +117,10 @@ namespace Cheez
                 var decl = id.Symbol as AstSingleVariableDecl;
                 decl.Type = type;
                 decl.Value = initializer?.Value;
-
-                if (decl.Initializer != null && decl.Initializer != initializer)
-                    decl.Initializer = InferType(decl.Initializer, type);
-
+                decl.Initializer = initializer;
 
                 if (decl.Type == CheezType.Void)
-                {
                     ReportError(decl.Name, $"A variable can't have type void");
-                }
             }
             else if (pattern is AstTupleExpr tuple)
             {
@@ -137,6 +132,9 @@ namespace Cheez
                         return;
                     }
 
+                    var tmp = new AstTempVarExpr(initializer);
+                    tmp.SetFlag(ExprFlags.IsLValue, true);
+
                     for (int i = 0; i < tuple.Values.Count; i++)
                     {
                         var tid = tuple.Values[i];
@@ -146,6 +144,11 @@ namespace Cheez
                         if (initializer is AstTupleExpr tupleInit)
                         {
                             tin = tupleInit.Values[i];
+                        }
+                        else if (initializer != null)
+                        {
+                            tin = new AstArrayAccessExpr(tmp, new AstNumberExpr(i));
+                            tin.Scope = tmp.Scope;
                         }
 
                         AssignTypesAndValuesToSubdecls(tid, tty, tin);

@@ -128,7 +128,7 @@ namespace Cheez
                 var.Initializer.Scope = var.Scope;
             }
 
-            MatchPatternWithTypeExpr(var, var.Pattern, var.TypeExpr, var.Initializer);
+            MatchPatternWithTypeExpr(var, var.Pattern, var.TypeExpr);
 
             foreach (var decl in var.SubDeclarations)
             {
@@ -146,40 +146,25 @@ namespace Cheez
             }
         }
 
-        private void MatchPatternWithTypeExpr(AstVariableDecl parent, AstExpression pattern, AstTypeExpr type, AstExpression initializer)
+        private void MatchPatternWithTypeExpr(AstVariableDecl parent, AstExpression pattern, AstTypeExpr type)
         {
             if (pattern is AstIdExpr id)
             {
                 var decl = new AstSingleVariableDecl(id, type, parent, pattern);
                 decl.Type = new VarDeclType(decl);
-                decl.Initializer = initializer;
                 parent.SubDeclarations.Add(decl);
                 id.Symbol = decl;
             }
             else if (pattern is AstTupleExpr tuple)
             {
-                var tmp = new AstTempVarExpr(initializer);
-                tmp.SetFlag(ExprFlags.IsLValue, true);
-
                 AstTupleTypeExpr tupleType = type as AstTupleTypeExpr;
 
                 for (int i = 0; i < tuple.Values.Count; i++)
                 {
                     var tid = tuple.Values[i];
                     var tty = (i < tupleType?.Members?.Count) ? tupleType.Members[i] : null;
-                    AstExpression tin = null;
 
-                    if (initializer is AstTupleExpr tupleInit)
-                    {
-                        tin = tupleInit.Values[i];
-                    }
-                    else if (initializer != null)
-                    {
-                        tin = new AstArrayAccessExpr(tmp, new AstNumberExpr(i));
-                        tin.Scope = tmp.Scope;
-                    }
-
-                    MatchPatternWithTypeExpr(parent, tid, tty?.TypeExpr, tin);
+                    MatchPatternWithTypeExpr(parent, tid, tty?.TypeExpr);
                 }
             }
             else
