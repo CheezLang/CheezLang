@@ -768,6 +768,23 @@ namespace Cheez
             var polyTypes = new Dictionary<string, CheezType>();
             var constArgs = new Dictionary<string, (CheezType type, object value)>();
             var newArgs = new List<AstArgument>();
+
+            if (func.Declaration.ImplBlock != null)
+            {
+                if (expr.Function is AstDotExpr dot)
+                {
+                    if (dot.IsDoubleColon && dot.Left.Type is CheezType)
+                    {
+                        var type = dot.Left.Value as CheezType;
+                        CollectPolyTypes(null, func.Declaration.ImplBlock.TargetType, type, polyTypes);
+                    }
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+            }
+
             foreach (var (param, arg) in args)
             {
                 CollectPolyTypes(arg, param.Type, arg.Type, polyTypes);
