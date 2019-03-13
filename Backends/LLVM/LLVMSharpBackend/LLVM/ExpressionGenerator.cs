@@ -549,8 +549,19 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 return null;
             }
+            else
+            {
+                var temp = CreateLocalVariable(expr.Type);
 
-            throw new NotImplementedException();
+                foreach (var mem in expr.MemberInitializers)
+                {
+                    var ptr = builder.CreateStructGEP(temp, (uint)mem.Index, "");
+                    GenerateExpressionHelper(mem.Value, ptr, false);
+                }
+
+                temp = builder.CreateLoad(temp, "");
+                return temp;
+            }
         }
 
         public LLVMValueRef? GenerateDotExpr(AstDotExpr expr, LLVMValueRef? target, bool deref)
