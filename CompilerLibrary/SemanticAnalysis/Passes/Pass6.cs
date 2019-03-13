@@ -76,8 +76,6 @@ namespace Cheez
                 return;
             }
 
-            var deps = new HashSet<AstSingleVariableDecl>();
-
             if (v.TypeExpr != null)
             {
                  v.TypeExpr.Scope = v.Scope;
@@ -104,8 +102,7 @@ namespace Cheez
                     v.Type = v.Initializer.Type;
             }
 
-            if (deps.Count == 0)
-                AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
+            AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
 
             path?.RemoveAt(path.Count - 1);
         }
@@ -132,9 +129,6 @@ namespace Cheez
                         return;
                     }
 
-                    var tmp = new AstTempVarExpr(initializer);
-                    tmp.SetFlag(ExprFlags.IsLValue, true);
-
                     for (int i = 0; i < tuple.Values.Count; i++)
                     {
                         var tid = tuple.Values[i];
@@ -147,8 +141,11 @@ namespace Cheez
                         }
                         else if (initializer != null)
                         {
+                            var tmp = new AstTempVarExpr(initializer);
+                            tmp.SetFlag(ExprFlags.IsLValue, true);
                             tin = new AstArrayAccessExpr(tmp, new AstNumberExpr(i));
                             tin.Scope = tmp.Scope;
+                            tin = InferType(tin, tty);
                         }
 
                         AssignTypesAndValuesToSubdecls(tid, tty, tin);
