@@ -203,6 +203,8 @@ namespace Cheez
                         break;
                     }
 
+                case AstErrorTypeExpr _: break;
+
                 default: throw new NotImplementedException();
             }
         }

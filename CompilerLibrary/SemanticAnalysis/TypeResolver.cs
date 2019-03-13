@@ -126,6 +126,9 @@ namespace Cheez
                         @struct.Struct.Type = CheezType.Type;
                         @struct.Struct.Value = ResolveTypeHelper(@struct.Struct, deps, instances, poly_from_scope);
 
+                        if (((CheezType)@struct.Struct.Value).IsErrorType)
+                            return CheezType.Error;
+
                         var strType = @struct.Struct.Value as GenericStructType;
 
                         if (strType == null)
