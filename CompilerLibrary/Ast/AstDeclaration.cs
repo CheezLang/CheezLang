@@ -275,7 +275,7 @@ namespace Cheez.Ast.Statements
 
         public CheezType Type { get; set; } = null;
 
-        public List<AstSingleVariableDecl> Dependencies { get; set; }
+        public HashSet<AstSingleVariableDecl> Dependencies { get; set; }
 
         public List<AstSingleVariableDecl> SubDeclarations = new List<AstSingleVariableDecl>();
 

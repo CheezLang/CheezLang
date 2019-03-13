@@ -108,12 +108,25 @@ namespace Cheez
             {
                 Pass1TypeAlias(t);
             }
+
+            // variable declaration dependencies
+            foreach (var gv in mVariables)
+            {
+                if (gv.Initializer != null)
+                {
+                    var deps = new HashSet<AstSingleVariableDecl>();
+                    CollectDependencies(gv.Initializer, deps);
+                    gv.Dependencies = deps;
+                }
+            }
         }
 
         private void Pass1VariableDeclaration(AstVariableDecl var)
         {
             if (var.Initializer != null)
+            {
                 var.Initializer.Scope = var.Scope;
+            }
 
             MatchPatternWithTypeExpr(var, var.Pattern, var.TypeExpr, var.Initializer);
 
@@ -172,6 +185,89 @@ namespace Cheez
             else
             {
                 ReportError(pattern, $"This pattern is not valid here");
+            }
+        }
+
+        private void CollectDependencies(AstExpression expr, HashSet<AstSingleVariableDecl> deps)
+        {
+            switch (expr)
+            {
+                case AstIdExpr id:
+                    var sym = expr.Scope.GetSymbol(id.Name);
+                    if (sym is AstSingleVariableDecl sv)
+                    {
+                        deps.Add(sv);
+                    }
+                    break;
+
+                case AstCallExpr c:
+                    c.Function.Scope = expr.Scope;
+                    CollectDependencies(c.Function, deps);
+                    foreach (var a in c.Arguments)
+                    {
+                        a.Scope = expr.Scope;
+                        CollectDependencies(a, deps);
+                    }
+                    break;
+
+                case AstUnaryExpr u:
+                    u.SubExpr.Scope = expr.Scope;
+                    CollectDependencies(u.SubExpr, deps);
+                    break;
+
+                case AstArgument a:
+                    a.Expr.Scope = expr.Scope;
+                    CollectDependencies(a.Expr, deps);
+                    break;
+
+                case AstLiteral _:
+                    break;
+
+                case AstBlockExpr b:
+                    foreach (var s in b.Statements) CollectDependencies(s, deps);
+                    break;
+
+                case AstIfExpr iff:
+                    if (iff.PreAction != null)
+                        CollectDependencies(iff.PreAction, deps);
+                    CollectDependencies(iff.Condition, deps);
+                    CollectDependencies(iff.IfCase, deps);
+                    if (iff.ElseCase != null)
+                        CollectDependencies(iff.ElseCase, deps);
+                    break;
+
+                case AstTupleExpr t:
+                    foreach (var m in t.Values)
+                    {
+                        m.Scope = expr.Scope;
+                        CollectDependencies(m, deps);
+                    }
+                    break;
+
+                case AstBinaryExpr b:
+                    b.Left.Scope = expr.Scope;
+                    b.Right.Scope = expr.Scope;
+                    CollectDependencies(b.Left, deps);
+                    CollectDependencies(b.Right, deps);
+                    break;
+
+                default: throw new NotImplementedException();
+            }
+        }
+
+        private void CollectDependencies(AstStatement stmt, HashSet<AstSingleVariableDecl> deps)
+        {
+            switch (stmt)
+            {
+                case AstVariableDecl vd:
+                    if (vd.Initializer != null) CollectDependencies(vd.Initializer, deps);
+                    break;
+
+                case AstExprStmt es:
+                    CollectDependencies(es.Expr, deps);
+                    break;
+
+                default: throw new NotImplementedException();
             }
         }
 

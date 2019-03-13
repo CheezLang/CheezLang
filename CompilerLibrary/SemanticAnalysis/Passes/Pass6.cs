@@ -16,63 +16,32 @@ namespace Cheez
     public partial class Workspace
     {
         /// <summary>
-        /// function bodies and variables
+        /// function bodies and global variables
         /// </summary>
         private void Pass6()
         {
-            List<AstVariableDecl> varDeclarations = new List<AstVariableDecl>();
-            varDeclarations.AddRange(mVariables);
-
-            List<AstVariableDecl> waitingList = new List<AstVariableDecl>();
-
-            var dependencies = new Dictionary<AstVariableDecl, HashSet<AstSingleVariableDecl>>();
-
-            while (true)
+            var done = new HashSet<AstVariableDecl>();
+            foreach (var v in mVariables)
             {
-                waitingList.Clear();
-                dependencies.Clear();
-
-                bool processedDecls = false;
-                for (int i = varDeclarations.Count - 1; i >= 0; i--)
-                {
-                    var decl = varDeclarations[i];
-                    varDeclarations.RemoveAt(i);
-
-                    var deps = Pass6VariableDeclaration(decl, true);
-
-                    if (deps.Count != 0)
-                    {
-                        waitingList.Add(decl);
-                        dependencies.Add(decl, deps);
-                    }
-                    else
-                    {
-                        processedDecls = true;
-                    }
-                }
-
-                if (!processedDecls || waitingList.Count == 0)
-                    break;
-
-                varDeclarations.AddRange(waitingList);
+                var path = new List<AstVariableDecl>();
+                Pass6VariableDeclaration(v, done, path);
             }
+        }
 
-            if (waitingList.Count > 0)
+        private void Pass6VariableDeclaration(AstVariableDecl v, HashSet<AstVariableDecl> done = null, List<AstVariableDecl> path = null)
+        {
+            if (path?.FirstOrDefault() == v)
             {
                 var details = new List<(string, ILocation)>();
-                foreach (var decl in waitingList)
+
+                for (int i = 0; i < path.Count; i++)
                 {
-                    if (dependencies.TryGetValue(decl, out var deps))
-                    {
-                        string locations = string.Join("\n", deps.Select(d => $" - {d.Name.Name} ({d.Location.Beginning})"));
-                        string message = $"{decl.Location.Beginning} depends on\n{locations}";
-                        details.Add((message, decl.Location));
-                    }
-                    else
-                    {
-                        details.Add(("Depends on other declarations", decl.Location));
-                    }
+                    var v1 = path[i];
+                    var v2 = path[(i + 1) % path.Count];
+
+                    details.Add(($"{v1.Pattern} depends on {v2.Pattern}", v1.Pattern));
                 }
+
                 var error = new Error
                 {
                     Message = "Cyclic dependencies in global variable declarations:",
@@ -80,14 +49,31 @@ namespace Cheez
                 };
                 ReportError(error);
             }
-        }
 
-        private HashSet<AstSingleVariableDecl> Pass6VariableDeclaration(AstVariableDecl v, bool collectDependencies)
-        {
+            path?.Add(v);
+
+
+            // check for cyclic dependencies
+            if (done?.Contains(v) ?? false)
+            {
+                path.RemoveAt(path.Count - 1);
+                return;
+            }
+            done?.Add(v);
+
+            if (v.Dependencies != null)
+            {
+                foreach (var d in v.Dependencies)
+                {
+                    Pass6VariableDeclaration(d.VarDeclaration, done, path);
+                }
+            }
+
             if (v.TypeExpr == null && v.Initializer == null)
             {
                 ReportError(v, $"A variable needs to have at least a type annotation or an initializer");
-                return new HashSet<AstSingleVariableDecl>();
+                path?.RemoveAt(path.Count - 1);
+                return;
             }
 
             var deps = new HashSet<AstSingleVariableDecl>();
@@ -107,12 +93,6 @@ namespace Cheez
 
                 v.Initializer = InferType(v.Initializer, v.TypeExpr?.Type);
 
-                if (collectDependencies)
-                    CollectDependencies(v.Initializer, deps, allDeps);
-
-                if (allDeps.Count > 0)
-                    v.Dependencies = new List<AstSingleVariableDecl>(allDeps);
-
                 ConvertLiteralTypeToDefaultType(v.Initializer);
 
                 if (v.TypeExpr != null && v.Initializer.Type != v.Type && !v.Initializer.Type.IsErrorType)
@@ -127,7 +107,7 @@ namespace Cheez
             if (deps.Count == 0)
                 AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
 
-            return deps;
+            path?.RemoveAt(path.Count - 1);
         }
 
         private void AssignTypesAndValuesToSubdecls(AstExpression pattern, CheezType type, AstExpression initializer)
@@ -175,78 +155,6 @@ namespace Cheez
                 {
                     ReportError(pattern, $"Pattern does not match declared type: {type}");
                 }
-            }
-        }
-
-        private void CollectDependencies(AstExpression expr, HashSet<AstSingleVariableDecl> deps, HashSet<AstSingleVariableDecl> allDeps)
-        {
-            switch (expr)
-            {
-                case AstIdExpr id:
-                    if (id.Symbol is AstSingleVariableDecl sv)
-                    {
-                        if (sv.Type is AbstractType)
-                            deps.Add(sv);
-                        allDeps.Add(sv);
-                    }
-                    break;
-
-                case AstCallExpr c:
-                    CollectDependencies(c.Function, deps, allDeps);
-                    foreach (var a in c.Arguments) CollectDependencies(a, deps, allDeps);
-                    break;
-
-                case AstUnaryExpr u:
-                    CollectDependencies(u.SubExpr, deps, allDeps);
-                    break;
-
-                case AstArgument a:
-                    CollectDependencies(a.Expr, deps, allDeps);
-                    break;
-
-                case AstLiteral _:
-                    break;
-
-                case AstBlockExpr b:
-                    foreach (var s in b.Statements) CollectDependencies(s, deps, allDeps);
-                    break;
-
-                case AstIfExpr iff:
-                    if (iff.PreAction != null)
-                        CollectDependencies(iff.PreAction, deps, allDeps);
-                    CollectDependencies(iff.Condition, deps, allDeps);
-                    CollectDependencies(iff.IfCase, deps, allDeps);
-                    if (iff.ElseCase != null)
-                        CollectDependencies(iff.ElseCase, deps, allDeps);
-                    break;
-
-                case AstTupleExpr t:
-                    foreach (var m in t.Values)
-                        CollectDependencies(m, deps, allDeps);
-                    break;
-
-                case AstBinaryExpr b:
-                    CollectDependencies(b.Left, deps, allDeps);
-                    CollectDependencies(b.Right, deps, allDeps);
-                    break;
-
-                default: throw new NotImplementedException();
-            }
-        }
-
-        private void CollectDependencies(AstStatement stmt, HashSet<AstSingleVariableDecl> deps, HashSet<AstSingleVariableDecl> allDeps)
-        {
-            switch (stmt)
-            {
-                case AstVariableDecl vd:
-                    if (vd.Initializer != null) CollectDependencies(vd.Initializer, deps, allDeps);
-                    break;
-
-                case AstExprStmt es:
-                    CollectDependencies(es.Expr, deps, allDeps);
-                    break;
-
-                default: throw new NotImplementedException();
             }
         }
     }

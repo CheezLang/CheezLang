@@ -384,7 +384,7 @@ namespace Cheez
         private void AnalyseVariableDecl(AstVariableDecl vardecl)
         {
             Pass1VariableDeclaration(vardecl);
-            Pass6VariableDeclaration(vardecl, false);
+            Pass6VariableDeclaration(vardecl);
 
             if (vardecl.Type is SumType)
             {
