@@ -213,27 +213,20 @@ namespace Cheez
 
             foreach (var op in ops)
             {
-                if (CheckType(op.SubExprType, sub))
+                var l = op.Accepts(sub);
+                if (l == -1)
+                    continue;
+
+                if (l < level)
                 {
-                    if (level < 2)
-                        result.Clear();
+                    level = l;
+                    result.Clear();
                     result.Add(op);
-                    level = 2;
                 }
-                //else if (level < 2 && CheckType(op.LhsType, lhs))
-                //{
-                //    if (level < 1)
-                //        result.Clear();
-                //    result.Add(op);
-                //    level = 1;
-                //}
-                //else if (level < 2 && CheckType(op.RhsType, rhs))
-                //{
-                //    if (level < 1)
-                //        result.Clear();
-                //    result.Add(op);
-                //    level = 1;
-                //}
+                else if (l == level)
+                {
+                    result.Add(op);
+                }
             }
 
             Parent?.GetOperator(name, sub, result, ref level);
@@ -324,8 +317,6 @@ namespace Cheez
             DefineArithmeticUnaryOperators(intTypes, "-", "+");
             DefineArithmeticUnaryOperators(floatTypes, "-", "+");
 
-            DefineUnaryOperator("!", CheezType.Bool, b => !(bool)b);
-
             //DefineBuiltIn
             DefinePointerOperators();
         }
@@ -383,6 +374,10 @@ namespace Cheez
 
         private void DefineLiteralOperators()
         {
+            DefineUnaryOperator("!", CheezType.Bool, b => !(bool)b);
+            DefineUnaryOperator("-", IntType.LiteralType, a => ((NumberData)a).Negate());
+            DefineUnaryOperator("-", FloatType.LiteralType, a => ((NumberData)a).Negate());
+
             DefineOperator(new BuiltInOperator("+", IntType.LiteralType, IntType.LiteralType, IntType.LiteralType, (a, b) => (NumberData)a + (NumberData)b));
             DefineOperator(new BuiltInOperator("-", IntType.LiteralType, IntType.LiteralType, IntType.LiteralType, (a, b) => (NumberData)a - (NumberData)b));
             DefineOperator(new BuiltInOperator("*", IntType.LiteralType, IntType.LiteralType, IntType.LiteralType, (a, b) => (NumberData)a * (NumberData)b));

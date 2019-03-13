@@ -60,6 +60,9 @@
 #test_expect_output("15")
 #test_expect_output("1 0 0 0 1 1 1 0")
 
+#test_expect_output("0, -1, -2.500000")
+#test_expect_output("1, 3, 7.300000")
+
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
 fn Main() {
@@ -93,6 +96,13 @@ fn Main() {
     test_pointers(&a, &b)
 
     test_and_or()
+
+    test_unary(true, 1, 2.5)
+    test_unary(false, -3, -7.3)
+}
+
+fn test_unary(a: bool, b: int, c: double) {
+    c_printf("%lld, %lld, %f`n", cast(int) !a, -b, -c)
 }
 
 fn foo(b: bool, i: int) -> bool {

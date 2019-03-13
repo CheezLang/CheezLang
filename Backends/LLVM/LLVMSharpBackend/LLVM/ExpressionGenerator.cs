@@ -304,6 +304,40 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
+
+        private Dictionary<(string, CheezType), Func<LLVMBuilderRef, LLVMValueRef, string, LLVMValueRef>> builtInUnaryOperators
+            = new Dictionary<(string, CheezType), Func<LLVMBuilderRef, LLVMValueRef, string, LLVMValueRef>>
+            {
+                { ("-", FloatType.GetFloatType(4)), LLVM.BuildFNeg },
+                { ("-", FloatType.GetFloatType(8)), LLVM.BuildFNeg },
+
+                { ("-", IntType.GetIntType(1, true)), LLVM.BuildNeg },
+                { ("-", IntType.GetIntType(2, true)), LLVM.BuildNeg },
+                { ("-", IntType.GetIntType(4, true)), LLVM.BuildNeg },
+                { ("-", IntType.GetIntType(8, true)), LLVM.BuildNeg },
+
+                { ("-", IntType.GetIntType(1, false)), LLVM.BuildNeg },
+                { ("-", IntType.GetIntType(2, false)), LLVM.BuildNeg },
+                { ("-", IntType.GetIntType(4, false)), LLVM.BuildNeg },
+                { ("-", IntType.GetIntType(8, false)), LLVM.BuildNeg },
+
+                { ("!", CheezType.Bool), LLVM.BuildNot },
+            };
+        private LLVMValueRef? GenerateUnaryExpr(AstUnaryExpr expr, LLVMValueRef? target, bool deref)
+        {
+            if (expr.ActualOperator is BuiltInUnaryOperator)
+            {
+                var left = GenerateExpression(expr.SubExpr, null, true);
+                var bo = builtInUnaryOperators[(expr.Operator, expr.SubExpr.Type)];
+                var val = bo(GetRawBuilder(), left.Value, "");
+                return val;
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         private LLVMValueRef GenerateAndExpr(AstBinaryExpr bin)
         {
             var result = CreateLocalVariable(CheezType.Bool);
@@ -465,24 +499,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
 
             return tmp;
-        }
-
-        private LLVMValueRef? GenerateUnaryExpr(AstUnaryExpr expr, LLVMValueRef? target, bool deref)
-        {
-            if (expr.Operator == "-")
-            {
-                var val = GenerateExpression(expr.SubExpr, null, true);
-                if (val == null) throw new Exception("Bug! this should not be null");
-                if (expr.Type is IntType)
-                {
-                    return builder.CreateNeg(val.Value, "");
-                }
-                else if (expr.Type is FloatType)
-                {
-                    return builder.CreateFNeg(val.Value, "");
-                }
-            }
-            return null;
         }
 
         private LLVMValueRef? GenerateCallExpr(AstCallExpr c, LLVMValueRef? target, bool deref)

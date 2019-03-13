@@ -333,6 +333,8 @@ namespace Cheez.Ast.Expressions
         public AstExpression SubExpr { get; set; }
         public override bool IsPolymorphic => SubExpr.IsPolymorphic;
 
+        public IUnaryOperator ActualOperator { get; internal set; } = null;
+
         [DebuggerStepThrough]
         public AstUnaryExpr(string op, AstExpression sub, ILocation Location = null) : base(Location)
         {

@@ -905,24 +905,6 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression InferTypeUnaryExpr(AstUnaryExpr expr, CheezType expected, List<AstFunctionDecl> newInstances)
-        {
-            // TODO: return changes
-            expr.SubExpr = InferType(expr.SubExpr, null);
-
-            // unary minus with constant number
-            if (expr.Operator == "-")
-            {
-                if (expr.SubExpr.Type is IntType || expr.SubExpr.Type is FloatType)
-                {
-                    ConvertLiteralTypeToDefaultType(expr.SubExpr, expected);
-                    expr.Type = expr.SubExpr.Type;
-                    expr.Value = ((NumberData)expr.SubExpr.Value).Negate();
-                }
-            }
-
-            return expr;
-        }
 
         private AstExpression InferTypeStructValueExpr(AstStructValueExpr expr, CheezType expected, List<AstFunctionDecl> newInstances)
         {
@@ -1013,6 +995,58 @@ namespace Cheez
             else
             {
                 ReportError(expr, $"Either all or no values must have a name");
+            }
+
+            return expr;
+        }
+
+        private AstExpression InferTypeUnaryExpr(AstUnaryExpr expr, CheezType expected, List<AstFunctionDecl> newInstances)
+        {
+            expr.SubExpr.Scope = expr.Scope;
+
+            expr.SubExpr = InferTypeHelper(expr.SubExpr, null, newInstances);
+
+            if (expr.SubExpr.Type.IsErrorType)
+                return expr;
+            
+            if (expr.SubExpr.Type is AbstractType at1)
+            {
+                expr.Type = expr.SubExpr.Type;
+            }
+            else
+            {
+                var ops = expr.Scope.GetOperators(expr.Operator, expr.SubExpr.Type);
+
+                if (ops.Count == 0)
+                {
+                    ReportError(expr, $"No operator '{expr.Operator}' matches the type {expr.SubExpr.Type}");
+                    return expr;
+                }
+                else if (ops.Count > 1)
+                {
+                    // TODO: show matching operators
+                    ReportError(expr, $"Multiple operators '{expr.Operator}' match the type {expr.SubExpr.Type}");
+                    return expr;
+                }
+
+                var op = ops[0];
+                if (op is UserDefinedUnaryOperator user)
+                {
+                    var args = new List<AstArgument>() {
+                        new AstArgument(expr.SubExpr, Location: expr.SubExpr.Location),
+                    };
+                    var func = new AstSymbolExpr(user.Declaration);
+                    var call = new AstCallExpr(func, args, expr.Location);
+                    return InferType(call, expected);
+                }
+
+                expr.ActualOperator = op;
+
+                if (expr.SubExpr.Value != null)
+                    expr.Value = op.Execute(expr.SubExpr.Value);
+
+                // @hack
+                expr.Type = op.ResultType;
             }
 
             return expr;

@@ -4,6 +4,20 @@
 #test_expect_output("3")
 #test_expect_output("2")
 #test_expect_output("8")
+#test_expect_output("")
+
+#test_expect_output("1.000000, 2.000000")
+#test_expect_output("3.000000, 4.000000")
+#test_expect_output("4.000000, 6.000000")
+#test_expect_output("9.000000, 12.000000")
+#test_expect_output("")
+
+#test_expect_output("0.500000, 1.000000")
+#test_expect_output("2.000000, 4.000000")
+#test_expect_output("0.500000, 2.000000")
+#test_expect_output("1.500000, 4.000000")
+
+#load("../../std/math")
 
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
@@ -19,18 +33,52 @@ fn num_inc(a: *Num, b: Num) #operator("+=") {
     a.x += b.x
 }
 
+typedef Vec2 = Vector2(double)
+
 fn Main() {
-    let a = new Num{1}
-    let b = new Num{2}
-    let c = a + b
+    {
+        let a = new Num{1}
+        let b = new Num{2}
+        let c = a + b
 
-    c_printf("%lld`n", a.x)
-    c_printf("%lld`n", b.x)
-    c_printf("%lld`n", c.x)
+        c_printf("%lld`n", a.x)
+        c_printf("%lld`n", b.x)
+        c_printf("%lld`n", c.x)
 
-    (a, c) += (b, new Num{5})
-    
-    c_printf("%lld`n", a.x)
-    c_printf("%lld`n", b.x)
-    c_printf("%lld`n", c.x)
+        (a, c) += (b, new Num{5})
+        
+        c_printf("%lld`n", a.x)
+        c_printf("%lld`n", b.x)
+        c_printf("%lld`n", c.x)
+        c_printf("`n")
+    }
+
+    {
+        let a = new Vec2{1, 2}
+        let b = new Vec2{3, 4}
+        let c = a + b
+
+        let d = new Vec2{5, 6}
+        d += c
+
+        c_printf("%f, %f`n", a.x, a.y)
+        c_printf("%f, %f`n", b.x, b.y)
+        c_printf("%f, %f`n", c.x, c.y)
+        c_printf("%f, %f`n", d.x, d.y)
+
+        
+        c_printf("`n")
+
+        a -= new Vec2{0.5, 1}
+        c_printf("%f, %f`n", a.x, a.y)
+
+        a *= 4.0
+        c_printf("%f, %f`n", a.x, a.y)
+
+        a /= new Vec2{4, 2}
+        c_printf("%f, %f`n", a.x, a.y)
+
+        a *= new Vec2{3, 2}
+        c_printf("%f, %f`n", a.x, a.y)
+    }
 }

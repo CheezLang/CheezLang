@@ -128,7 +128,7 @@ namespace Cheez
 
         public int Accepts(CheezType sub)
         {
-            throw new System.NotImplementedException();
+            return SubExprType.Match(sub, null);
         }
 
         public object Execute(object value)
@@ -137,16 +137,49 @@ namespace Cheez
         }
     }
 
+    public class UserDefinedUnaryOperator : IUnaryOperator
+    {
+        public CheezType SubExprType { get; set; }
+        public CheezType ResultType { get; set; }
+        public string Name { get; set; }
+
+        public AstFunctionDecl Declaration { get; set; }
+
+        public UserDefinedUnaryOperator(string name, AstFunctionDecl func)
+        {
+            this.Name = name;
+            this.SubExprType = func.Parameters[0].Type;
+            this.ResultType = func.ReturnValue?.Type;
+            this.Declaration = func;
+        }
+
+        public int Accepts(CheezType sub)
+        {
+            Dictionary<string, CheezType> polyTypes = null;
+
+            // TODO: necessary?
+            //if (SubExprType.IsPolyType)
+            //{
+            //    polyTypes = new Dictionary<string, CheezType>();
+            //    Workspace.CollectPolyTypes(SubExprType, lhs, polyTypes);
+            //}
+
+
+            return SubExprType.Match(sub, polyTypes);
+        }
+
+        public object Execute(object value)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class UserDefinedBinaryOperator : IOperator
     {
         public CheezType LhsType { get; set; }
-
         public CheezType RhsType { get; set; }
-
         public CheezType ResultType { get; set; }
-
         public string Name { get; set; }
-
         public AstFunctionDecl Declaration { get; set; }
 
         public UserDefinedBinaryOperator(string name, AstFunctionDecl func)
