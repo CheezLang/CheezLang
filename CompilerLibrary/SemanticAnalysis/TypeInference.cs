@@ -576,12 +576,14 @@ namespace Cheez
                             break;
                         }
 
-                        expr.Type = func.FunctionType;
+                        expr.Type = func.Type;
                         break;
                     }
                 case CheezTypeType _:
                     ReportError(expr.Left, $"Invalid value on left side of '.': '{expr.Left.Value}'");
                     break;
+
+                case ErrorType _: return expr;
 
                 default: throw new NotImplementedException();
             }
@@ -633,7 +635,7 @@ namespace Cheez
 
                 case ErrorType _: return expr;
 
-                default: throw new NotImplementedException();
+                default: ReportError(expr.Function, $"This is not a callable value"); break;
             }
 
             return expr;
