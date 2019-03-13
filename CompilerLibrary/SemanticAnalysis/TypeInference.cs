@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -69,6 +69,10 @@ namespace Cheez
 
         private AstExpression InferTypeHelper(AstExpression expr, CheezType expected, List<AstFunctionDecl> newInstances)
         {
+            if (expr.TypeInferred)
+                return expr;
+            expr.TypeInferred = true;
+
             // :fix
             // does not work because tuple containing abstract types does currently not count as an abstract type
             // - 08.03.2019

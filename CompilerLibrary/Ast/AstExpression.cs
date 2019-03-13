@@ -1,4 +1,4 @@
-﻿using Cheez.Ast.Expressions.Types;
+using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types;
@@ -34,6 +34,8 @@ namespace Cheez.Ast.Expressions
         protected bool IsCompTimeValue { get; set; } = false;
 
         public IAstNode Parent { get; set; }
+
+        public bool TypeInferred { get; set; } = false;
 
         [DebuggerStepThrough]
         public AstExpression(ILocation Location = null)
