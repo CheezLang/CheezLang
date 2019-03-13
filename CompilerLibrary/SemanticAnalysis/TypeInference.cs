@@ -238,6 +238,12 @@ namespace Cheez
             de.SubExpression.Scope = de.Scope;
             de.SubExpression = InferTypeHelper(de.SubExpression, subExpect, newInstances);
 
+            if (!de.SubExpression.GetFlag(ExprFlags.IsLValue))
+            {
+                ReportError(de, $"Can't dereference non lvalue");
+                return de;
+            }
+
             if (de.SubExpression.Type is PointerType p)
             {
                 de.Type = p.TargetType;
@@ -247,6 +253,7 @@ namespace Cheez
                 ReportError(de, $"Can't dereference non pointer type {de.SubExpression.Type}");
             }
 
+            de.SetFlag(ExprFlags.IsLValue, true);
             return de;
         }
 
