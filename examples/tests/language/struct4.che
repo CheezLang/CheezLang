@@ -1,0 +1,47 @@
+#test_expect_output("1.000000, 2.000000")
+#test_expect_output("3.000000, 4.000000")
+#test_expect_output("9.000000, 11.000000")
+#test_expect_output("3.000000, 4.000000")
+#test_expect_output("-2.000000, -2.000000")
+
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+struct Vector(T: type) {
+    x: T
+    y: T
+}
+
+impl Vector($T) {
+    fn add(*self, other: Vector(T)) -> *Vector(T) {
+        x += other.x
+        y += other.y
+
+        return self
+    }
+
+    fn sub(a: Vector(T), b: Vector(T)) -> Vector(T) {
+        return new {
+            a.x - b.x
+            a.y - b.y
+        }
+    }
+}
+
+typedef Vec3 = Vector(double)
+typedef Vec3f = Vector(float)
+typedef Vec3i = Vector(int)
+
+fn Main() {
+    let a = new Vec3{1, 2}
+    let b = new Vec3{3, 4}
+    
+    c_printf("%f, %f`n", a.x, a.y)
+    c_printf("%f, %f`n", b.x, b.y)
+
+    let c = Vec3::sub(a, b)
+    a.add(b).add(new Vec3{5, 5})
+
+    c_printf("%f, %f`n", a.x, a.y)
+    c_printf("%f, %f`n", b.x, b.y)
+    c_printf("%f, %f`n", c.x, c.y)
+}
