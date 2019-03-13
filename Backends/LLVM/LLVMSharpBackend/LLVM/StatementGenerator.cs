@@ -222,6 +222,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return;
             }
 
+            if (ass.OnlyGenerateValue)
+            {
+                GenerateExpressionHelper(ass.Value, null, false);
+                return;
+            }
+
             var ptr = GenerateExpression(ass.Pattern, null, false);
             GenerateExpressionHelper(ass.Value, ptr, true);
         }

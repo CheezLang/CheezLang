@@ -17,7 +17,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void GenerateExpressionHelper(AstExpression expr, LLVMValueRef? target, bool deref)
         {
-            var v = GenerateExpression(expr, target, true);
+            var v = GenerateExpression(expr, target, deref);
             if (v != null && target != null)
                 builder.CreateStore(v.Value, target.Value);
         }
@@ -441,12 +441,17 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var type = t.Type;
                 if (t.StorePointer) type = PointerType.GetPointerType(type);
 
-                var x = CreateLocalVariable(t.Type);
+                var x = CreateLocalVariable(type);
                 valueMap[t] = x;
                 GenerateExpressionHelper(t.Expr, x, !t.StorePointer);
             }
 
             var tmp = valueMap[t];
+
+            if (t.StorePointer)
+            {
+                tmp = builder.CreateLoad(tmp, "");
+            }
 
             if (deref)
             {
@@ -544,7 +549,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 foreach (var mem in expr.MemberInitializers)
                 {
                     var ptr = builder.CreateStructGEP(target.Value, (uint)mem.Index, "");
-                    GenerateExpressionHelper(mem.Value, ptr, false);
+                    GenerateExpressionHelper(mem.Value, ptr, true);
                 }
 
                 return null;
@@ -556,7 +561,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 foreach (var mem in expr.MemberInitializers)
                 {
                     var ptr = builder.CreateStructGEP(temp, (uint)mem.Index, "");
-                    GenerateExpressionHelper(mem.Value, ptr, false);
+                    GenerateExpressionHelper(mem.Value, ptr, true);
                 }
 
                 temp = builder.CreateLoad(temp, "");

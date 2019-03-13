@@ -175,6 +175,7 @@ namespace Cheez.Ast.Statements
         public string Operator { get; set; }
 
         public List<AstAssignment> SubAssignments { get; set; }
+        public bool OnlyGenerateValue { get; internal set; } = false;
 
         public AstAssignment(AstExpression target, AstExpression value, string op = null, ILocation Location = null)
             : base(Location: Location)

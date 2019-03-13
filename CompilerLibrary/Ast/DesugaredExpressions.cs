@@ -33,9 +33,10 @@ namespace Cheez.Ast.Expressions
 
         public bool StorePointer { get; set; } = false;
 
-        public AstTempVarExpr(AstExpression expr) : base(null)
+        public AstTempVarExpr(AstExpression expr, bool storePointer = false) : base(null)
         {
             this.Expr = expr;
+            this.StorePointer = storePointer;
             CopyValuesFrom(expr);
         }
 

@@ -249,11 +249,6 @@ namespace Cheez
 
         private void AnalyseAssignStatement(AstAssignment ass)
         {
-            //if (ass.Operator != null)
-            //{
-            //    ReportError(ass, $"Operators in assignments are not implemeted yet!");
-            //}
-
             ass.Value.Parent = ass;
 
             ass.Pattern.Scope = ass.Scope;
@@ -276,6 +271,24 @@ namespace Cheez
 
         private AstExpression MatchPatternWithExpression(AstAssignment ass, AstExpression pattern, AstExpression value)
         {
+            if (ass.Operator != null)
+            {
+                var assOp = ass.Operator + "=";
+                var ops = ass.Scope.GetOperators(assOp, PointerType.GetPointerType(pattern.Type), value.Type);
+                if (ops.Count == 1)
+                {
+                    var left = new AstAddressOfExpr(pattern, pattern.Location);
+                    var opCall = new AstBinaryExpr(assOp, left, value, value.Location);
+                    opCall.Scope = value.Scope;
+                    ass.OnlyGenerateValue = true;
+                    return InferType(opCall, null);
+                }
+                else if (ops.Count > 1)
+                {
+                    ReportError(ass, $"Multiple operators '{assOp}' match the types {PointerType.GetPointerType(pattern.Type)} and {value.Type}");
+                }
+            }
+
             switch (pattern)
             {
                 case AstIdExpr id:
@@ -360,8 +373,9 @@ namespace Cheez
                     {
                         if (ass.Operator != null)
                         {
-                            AstExpression tmp = new AstTempVarExpr(dot.Left);
+                            AstExpression tmp = new AstTempVarExpr(dot.Left, true);
                             tmp.SetFlag(ExprFlags.IsLValue, true);
+                            //tmp = new AstDereferenceExpr(tmp, tmp.Location);
                             tmp = InferType(tmp, dot.Left.Type);
 
                             dot.Left = tmp;

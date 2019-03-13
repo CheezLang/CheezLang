@@ -170,7 +170,7 @@ namespace Cheez
             this.Name = name;
             this.LhsType = func.Parameters[0].Type;
             this.RhsType = func.Parameters[1].Type;
-            this.ResultType = func.ReturnValue.Type;
+            this.ResultType = func.ReturnValue?.Type;
             this.Declaration = func;
         }
 

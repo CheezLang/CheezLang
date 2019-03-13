@@ -168,12 +168,17 @@ namespace Cheez
                     arg = op.Arguments[0] = InferType(arg, null);
                     if (arg.Value is string v)
                     {
-                        if (func.ReturnValue.Type == CheezType.Void)
+                        bool assOp = false;
+                        if (v.EndsWith("="))
+                            assOp = true;
+
+                        if (!assOp && (func.ReturnValue == null || func.ReturnValue.Type == CheezType.Void))
                         {
                             ReportError(op, $"This function cannot be used as operator because it returns void");
                         }
                         else if (func.Parameters.Count == 1)
                         {
+                            ReportError(op, $"Unary operator not implemented yet!");
                             //func.Scope.DefineUnaryOperator(v, func);
                         }
                         else if (func.Parameters.Count == 2)
