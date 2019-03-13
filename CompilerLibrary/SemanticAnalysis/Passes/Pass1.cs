@@ -236,6 +236,14 @@ namespace Cheez
                     CollectDependencies(b.Right, deps);
                     break;
 
+                case AstStructValueExpr s:
+                    foreach (var v in s.MemberInitializers)
+                    {
+                        v.Value.Scope = expr.Scope;
+                        CollectDependencies(v.Value, deps);
+                    }
+                    break;
+
                 default: throw new NotImplementedException();
             }
         }

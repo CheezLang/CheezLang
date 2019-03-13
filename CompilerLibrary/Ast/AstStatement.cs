@@ -165,7 +165,7 @@ namespace Cheez.Ast.Statements
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitReturnStmt(this, data);
-        public override AstStatement Clone() => CopyValuesTo(new AstReturnStmt(ReturnValue.Clone()));
+        public override AstStatement Clone() => CopyValuesTo(new AstReturnStmt(ReturnValue?.Clone()));
     }
 
     public class AstAssignment : AstStatement

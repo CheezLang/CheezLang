@@ -511,7 +511,7 @@ namespace Cheez
                 instance.SelfParameter = func.Declaration.SelfParameter;
                 func.Declaration.PolymorphicInstances.Add(instance);
 
-                if (instance.SelfParameter)
+                if (instance.ImplBlock != null)
                 {
                     var targetType = instance.ImplBlock.TargetType;
                     var inst = InstantiatePolyType(targetType, polyTypes, location);

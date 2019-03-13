@@ -3,3 +3,4 @@ fn c_realloc(mem: *any, size: i32) -> *any #linkname("realloc");
 fn c_free(mem: *any) #linkname("free");
 
 fn c_memcpy(dest: *any, src: *any, size: i32) #linkname("memcpy");
+fn c_memset(mem: *any, value: i32, num: u64) -> *any #linkname("memset");

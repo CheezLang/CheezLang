@@ -51,7 +51,7 @@ namespace Cheez
 
         public int Accepts(CheezType lhs, CheezType rhs)
         {
-            if (lhs is PointerType lt && rhs is PointerType rt && lt == rt)
+            if (lhs is PointerType lt && rhs is PointerType rt)
                 return 0;
             return -1;
         }

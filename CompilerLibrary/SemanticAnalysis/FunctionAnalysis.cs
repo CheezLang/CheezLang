@@ -270,7 +270,8 @@ namespace Cheez
             if (ass.Operator != null)
             {
                 var assOp = ass.Operator + "=";
-                var ops = ass.Scope.GetOperators(assOp, PointerType.GetPointerType(pattern.Type), value.Type);
+                var valType = LiteralTypeToDefaultType(value.Type);
+                var ops = ass.Scope.GetOperators(assOp, PointerType.GetPointerType(pattern.Type), valType);
                 if (ops.Count == 1)
                 {
                     var left = new AstAddressOfExpr(pattern, pattern.Location);

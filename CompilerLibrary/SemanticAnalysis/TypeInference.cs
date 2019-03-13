@@ -90,6 +90,8 @@ namespace Cheez
                 case AstNullExpr n:
                     if (expected is PointerType)
                         n.Type = expected;
+                    else if (expected is SliceType)
+                        n.Type = expected;
                     else
                         n.Type = PointerType.GetPointerType(CheezType.Any);
                     return expr;
@@ -483,6 +485,48 @@ namespace Cheez
                         break;
                     }
 
+                case PointerType ptr:
+                    {
+                        if (expr.Indexer.Type is IntType)
+                        {
+                            expr.SetFlag(ExprFlags.IsLValue, true);
+                            expr.Type = ptr.TargetType;
+                        }
+                        else
+                        {
+                            ReportError(expr.Indexer, $"The index of into a pointer must be a int but is '{expr.Indexer.Type}'");
+                        }
+                        break;
+                    }
+
+                case SliceType slice:
+                    {
+                        if (expr.Indexer.Type is IntType)
+                        {
+                            expr.SetFlag(ExprFlags.IsLValue, true);
+                            expr.Type = slice.TargetType;
+                        }
+                        else
+                        {
+                            ReportError(expr.Indexer, $"The index of into a slice must be a int but is '{expr.Indexer.Type}'");
+                        }
+                        break;
+                    }
+
+                case ArrayType arr:
+                    {
+                        if (expr.Indexer.Type is IntType)
+                        {
+                            expr.SetFlag(ExprFlags.IsLValue, true);
+                            expr.Type = arr.TargetType;
+                        }
+                        else
+                        {
+                            ReportError(expr.Indexer, $"The index of into an array must be a int but is '{expr.Indexer.Type}'");
+                        }
+                        break;
+                    }
+
                 default:
                     // TODO: seach for overloaded operator
                     ReportError(expr.SubExpression, $"Type {expr.SubExpression.Type} has no operator []");
@@ -530,6 +574,7 @@ namespace Cheez
 
                 case SliceType slice when !expr.IsDoubleColon:
                     {
+                        expr.SetFlag(ExprFlags.IsLValue, true);
                         var name = expr.Right.Name;
                         if (name == "data")
                         {
@@ -544,6 +589,36 @@ namespace Cheez
                             // TODO: check for impl functions
                             ReportError(expr, $"No subscript '{name}' exists for slice type {slice}");
                         }
+                        break;
+                    }
+
+                case SliceType slice when expr.IsDoubleColon:
+                    {
+                        var name = expr.Right.Name;
+                        var func = expr.Scope.GetImplFunction(slice, name);
+
+                        if (func == null)
+                        {
+                            ReportError(expr.Right, $"Type '{slice}' has no impl function '{name}'");
+                            break;
+                        }
+
+                        expr.Type = func.Type;
+                        break;
+                    }
+
+                case PointerType ptr when expr.IsDoubleColon:
+                    {
+                        var name = expr.Right.Name;
+                        var func = expr.Scope.GetImplFunction(ptr, name);
+
+                        if (func == null)
+                        {
+                            ReportError(expr.Right, $"Type '{ptr}' has no impl function '{name}'");
+                            break;
+                        }
+
+                        expr.Type = func.Type;
                         break;
                     }
 
@@ -966,7 +1041,11 @@ namespace Cheez
                     mi.Name = new AstIdExpr(mem.Name.Name, false, mi.Value);
                     mi.Index = i;
 
-                    // TODO: check types match
+                    if (mi.Value.Type.IsErrorType) continue;
+                    if (mi.Value.Type != mem.Type)
+                    {
+                        ReportError(mi.Value, $"Can't convert a value of type {mi.Value.Type} to type {mem.Type}");
+                    }
                 }
             }
             else if (namesProvided == expr.MemberInitializers.Count)
@@ -989,7 +1068,11 @@ namespace Cheez
                     mi.Value = InferTypeHelper(mi.Value, mem.Type, newInstances);
                     ConvertLiteralTypeToDefaultType(mi.Value);
 
-                    // TODO: check types match
+                    if (mi.Value.Type.IsErrorType) continue;
+                    if (mi.Value.Type != mem.Type)
+                    {
+                        ReportError(mi.Value, $"Can't convert a value of type {mi.Value.Type} to type {mem.Type}");
+                    }
                 }
             }
             else
@@ -1253,5 +1336,10 @@ namespace Cheez
 
             return expr;
         }
+
+        //private bool CreateImplicitCast()
+        //{
+
+        //}
     }
 }

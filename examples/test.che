@@ -1,13 +1,68 @@
-// #load("tests/language/local_variables.che")
 #load("test2")
-#load("std:math")
-
-typedef LCG = LinearCongruentialGenerator
+// #load("std:util")
+// #load("std:math")
+#load("std:string")
 
 fn Main() {
-    let rand = LCG::create()
+    // {
+    //     let s = "test"
+    //     c_printf("%lld`n", s::get_length())
+    //     c_printf("%c`n", s::char_at(1))
 
-    while let i = 0; i < 10; i += 1 {
-        c_printf("%f`n", rand.next_double())
+    //     let s2 = "hallo"c
+    //     c_printf("%lld`n", s2::get_length())
+    //     c_printf("%c`n", s2::char_at(1))
+
+    //     c_printf("%d`n", streq(s, s2))
+    //     c_printf("%d`n", streq(s, s))
+    //     c_printf("%d`n", streq(s2, s2))
+    // }
+
+    {
+        let s = String::empty()
+        
+        c_printf("capaci: %lld`n", s.data.length)
+        c_printf("datapt: %lld`n", cast(int) s.data.data)
+        c_printf("length: %lld`n", s.get_length())
+        c_printf("string: `"%.*s`"`n", s.length, s.data.data)
+        c_printf("`n")
+
+        s.reserve(10)
+        c_printf("capaci: %lld`n", s.data.length)
+        c_printf("datapt: %lld`n", cast(int) s.data.data)
+        c_printf("length: %lld`n", s.get_length())
+        c_printf("string: `"%.*s`"`n", s.length, s.data.data)
+        c_printf("`n")
+        
+        s.reserve(12)
+        c_printf("capaci: %lld`n", s.data.length)
+        c_printf("datapt: %lld`n", cast(int) s.data.data)
+        c_printf("length: %lld`n", s.get_length())
+        c_printf("string: `"%.*s`"`n", s.length, s.data.data)
+        c_printf("`n")
+        
+        s += "Hello "
+        // s.append_string("Hello ")
+        c_printf("capaci: %lld`n", s.data.length)
+        c_printf("datapt: %lld`n", cast(int) s.data.data)
+        c_printf("length: %lld`n", s.get_length())
+        c_printf("string: `"%.*s`"`n", s.length, s.data.data)
+        c_printf("`n")
+
+        s += "World"
+        // s.append_string("World")
+        c_printf("capaci: %lld`n", s.data.length)
+        c_printf("datapt: %lld`n", cast(int) s.data.data)
+        c_printf("length: %lld`n", s.get_length())
+        c_printf("string: `"%.*s`"`n", s.length, s.data.data)
+        c_printf("`n")
+
+        s += "! Wassup?"
+        // s.append_string("! Wassup?")
+        c_printf("capaci: %lld`n", s.data.length)
+        c_printf("datapt: %lld`n", cast(int) s.data.data)
+        c_printf("length: %lld`n", s.get_length())
+        c_printf("string: `"%.*s`"`n", s.length, s.data.data)
+        c_printf("`n")
     }
 }
