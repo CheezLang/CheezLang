@@ -91,16 +91,12 @@ namespace Cheez.Types.Complex
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
         public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
 
-        public StructType(AstStructDecl decl)
-        {
-            Declaration = decl;
-            Arguments = decl.Parameters.Select(p => p.Value as CheezType).ToArray();
-        }
+        public AstStructDecl DeclarationTemplate => Declaration.Template ?? Declaration;
 
-        public StructType(AstStructDecl decl, CheezType[] args)
+        public StructType(AstStructDecl decl, CheezType[] args = null)
         {
             Declaration = decl;
-            Arguments = args;
+            Arguments = args ?? decl.Parameters.Select(p => p.Value as CheezType).ToArray();
         }
 
         public void CalculateSize()
@@ -156,6 +152,27 @@ namespace Cheez.Types.Complex
             }
 
             return false;
+        }
+
+        public override int Match(CheezType concrete)
+        {
+            if (concrete is StructType str)
+            {
+                if (this.DeclarationTemplate != str.DeclarationTemplate)
+                    return -1;
+
+                int score = 0;
+                for (int i = 0; i < Arguments.Length; i++)
+                {
+                    int s = this.Arguments[i].Match(str.Arguments[i]);
+                    if (s == -1)
+                        return -1;
+                    score += s;
+                }
+                return score;
+            }
+
+            return -1;
         }
     }
 

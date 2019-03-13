@@ -172,6 +172,9 @@ namespace Cheez
                         if (v.EndsWith("="))
                             assOp = true;
 
+                        var targetScope = func.Scope;
+                        if (func.ImplBlock != null) targetScope = func.ImplBlock.Scope;
+
                         if (!assOp && (func.ReturnValue == null || func.ReturnValue.Type == CheezType.Void))
                         {
                             ReportError(op, $"This function cannot be used as operator because it returns void");
@@ -183,7 +186,7 @@ namespace Cheez
                         }
                         else if (func.Parameters.Count == 2)
                         {
-                            func.Scope.DefineBinaryOperator(v, func);
+                            targetScope.DefineBinaryOperator(v, func);
                         }
                         else
                         {

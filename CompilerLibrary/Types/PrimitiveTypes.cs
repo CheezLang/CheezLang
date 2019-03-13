@@ -140,6 +140,13 @@ namespace Cheez.Types.Primitive
                 return TargetType == p.TargetType;
             return false;
         }
+
+        public override int Match(CheezType concrete)
+        {
+            if (concrete is PointerType p)
+                return this.TargetType.Match(p.TargetType);
+            return -1;
+        }
     }
 
     public class ReferenceType : CheezType
@@ -187,6 +194,7 @@ namespace Cheez.Types.Primitive
         public CheezType TargetType { get; set; }
         public int Length { get; set; }
         public override bool IsErrorType => TargetType.IsErrorType;
+        public override bool IsPolyType => TargetType.IsPolyType;
 
         public static ArrayType GetArrayType(CheezType targetType, int length)
         {
@@ -218,7 +226,12 @@ namespace Cheez.Types.Primitive
             return PointerType.GetPointerType(TargetType);
         }
 
-        public override bool IsPolyType => TargetType.IsPolyType;
+        public override int Match(CheezType concrete)
+        {
+            if (concrete is ArrayType p)
+                return this.TargetType.Match(p.TargetType);
+            return -1;
+        }
     }
 
     public class SliceType : CheezType
@@ -227,6 +240,7 @@ namespace Cheez.Types.Primitive
 
         public CheezType TargetType { get; set; }
         public override bool IsErrorType => TargetType.IsErrorType;
+        public override bool IsPolyType => TargetType.IsPolyType;
 
         public static SliceType GetSliceType(CheezType targetType)
         {
@@ -257,7 +271,12 @@ namespace Cheez.Types.Primitive
             return PointerType.GetPointerType(TargetType);
         }
 
-        public override bool IsPolyType => TargetType.IsPolyType;
+        public override int Match(CheezType concrete)
+        {
+            if (concrete is SliceType p)
+                return this.TargetType.Match(p.TargetType);
+            return -1;
+        }
     }
 
     public class StringLiteralType : CheezType

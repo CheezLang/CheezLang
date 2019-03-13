@@ -197,7 +197,7 @@ namespace Cheez
             return CheezType.Error;
         }
 
-        private void CollectPolyTypes(AstExpression expr, CheezType param, CheezType arg, Dictionary<string, CheezType> result)
+        private void CollectPolyTypes(CheezType param, CheezType arg, Dictionary<string, CheezType> result)
         {
             switch (param)
             {
@@ -209,27 +209,21 @@ namespace Cheez
                 case PointerType p:
                     {
                         if (arg is PointerType t)
-                            CollectPolyTypes(expr, p.TargetType, t.TargetType, result);
-                        else
-                            ReportError(expr, $"The type of the expression does not match the type pattern '{param}'");
+                            CollectPolyTypes(p.TargetType, t.TargetType, result);
                         break;
                     }
 
                 case SliceType p:
                     {
                         if (arg is SliceType t)
-                            CollectPolyTypes(expr, p.TargetType, t.TargetType, result);
-                        else
-                            ReportError(expr, $"The type of the expression does not match the type pattern '{param}'");
+                            CollectPolyTypes(p.TargetType, t.TargetType, result);
                         break;
                     }
 
                 case ArrayType p:
                     {
                         if (arg is ArrayType t)
-                            CollectPolyTypes(expr, p.TargetType, t.TargetType, result);
-                        else
-                            ReportError(expr, $"The type of the expression does not match the type pattern '{param}'");
+                            CollectPolyTypes(p.TargetType, t.TargetType, result);
                         break;
                     }
 
@@ -237,20 +231,14 @@ namespace Cheez
                     {
                         if (arg is TupleType tt)
                         {
-                            if (te.Members.Length != tt.Members.Length)
-                            {
-                                ReportError(expr, $"The type of the expression does not match the tuple pattern '{param}'");
-                            }
-                            else
+                            if (te.Members.Length == tt.Members.Length)
                             {
                                 for (var i = 0; i < te.Members.Length; i++)
                                 {
-                                    CollectPolyTypes(expr, te.Members[i].type, tt.Members[i].type, result);
+                                    CollectPolyTypes(te.Members[i].type, tt.Members[i].type, result);
                                 }
                             }
                         }
-                        else
-                            ReportError(expr, $"The type of the expression does not match the type pattern '{param}'");
                         break;
                     }
 
@@ -258,20 +246,14 @@ namespace Cheez
                     {
                         if (arg is StructType tt)
                         {
-                            if (str.Arguments.Length != tt.Arguments.Length)
-                            {
-                                ReportError(expr, $"The type of the expression does not match the struct pattern '{param}'");
-                            }
-                            else
+                            if (str.Arguments.Length == tt.Arguments.Length)
                             {
                                 for (var i = 0; i < str.Arguments.Length; i++)
                                 {
-                                    CollectPolyTypes(expr, str.Arguments[i], tt.Arguments[i], result);
+                                    CollectPolyTypes(str.Arguments[i], tt.Arguments[i], result);
                                 }
                             }
                         }
-                        else
-                            ReportError(expr, $"The type of the expression does not match the type pattern '{param}'");
                         break;
                     }
 
@@ -332,6 +314,7 @@ namespace Cheez
                 instance.SubScope = new Scope($"struct {decl.Name.Name}<poly>", instance.Scope);
                 instance.IsPolyInstance = true;
                 instance.IsPolymorphic = false;
+                instance.Template = decl;
                 decl.PolymorphicInstances.Add(instance);
                 instance.Scope.TypeDeclarations.Add(instance);
 

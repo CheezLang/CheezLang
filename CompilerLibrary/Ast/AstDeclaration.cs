@@ -155,6 +155,8 @@ namespace Cheez.Ast.Statements
         public List<AstMemberDecl> Members { get; }
         public List<AstParameter> Parameters { get; set; }
 
+        public AstStructDecl Template { get; set; } = null;
+
         public Scope SubScope { get; set; }
 
         public bool IsPolymorphic { get; set; }

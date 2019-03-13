@@ -261,7 +261,7 @@ namespace Cheez
 
             if (ass.Pattern.Type != CheezType.Error && ass.Value.Type != CheezType.Error)
             {
-                if (ass.Value.Type != ass.Pattern.Type)
+                if (ass.Value.Type != ass.Pattern.Type && !ass.Pattern.Type.IsErrorType)
                 {
                     ReportError(ass, $"Can't assign a value of type {ass.Value.Type} to a pattern of type {ass.Pattern.Type}");
                 }
