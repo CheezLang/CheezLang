@@ -154,7 +154,7 @@ namespace Cheez.Types.Complex
             return false;
         }
 
-        public override int Match(CheezType concrete)
+        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {
             if (concrete is StructType str)
             {
@@ -164,7 +164,7 @@ namespace Cheez.Types.Complex
                 int score = 0;
                 for (int i = 0; i < Arguments.Length; i++)
                 {
-                    int s = this.Arguments[i].Match(str.Arguments[i]);
+                    int s = this.Arguments[i].Match(str.Arguments[i], polyTypes);
                     if (s == -1)
                         return -1;
                     score += s;

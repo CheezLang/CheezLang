@@ -261,10 +261,6 @@ namespace Cheez
 
             if (ass.Pattern.Type != CheezType.Error && ass.Value.Type != CheezType.Error)
             {
-                if (ass.Value.Type != ass.Pattern.Type && !ass.Pattern.Type.IsErrorType)
-                {
-                    ReportError(ass, $"Can't assign a value of type {ass.Value.Type} to a pattern of type {ass.Pattern.Type}");
-                }
                 ass.Value = MatchPatternWithExpression(ass, ass.Pattern, ass.Value);
             }
         }
@@ -296,7 +292,6 @@ namespace Cheez
                         // TODO: check if can be assigned to id (e.g. not const)
                         ass.Scope.SetInitialized(id.Symbol);
 
-
                         if (ass.Operator != null)
                         {
                             AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
@@ -304,6 +299,11 @@ namespace Cheez
                             newVal.Parent = value.Parent;
                             newVal = InferType(newVal, pattern.Type);
                             return newVal;
+                        }
+
+                        if (ass.Value.Type != ass.Pattern.Type && !ass.Pattern.Type.IsErrorType)
+                        {
+                            ReportError(ass, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                         }
                         break;
                     }

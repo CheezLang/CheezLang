@@ -108,8 +108,10 @@ namespace Cheez.Types.Abstract
 
         public override string ToString() => "$" + Name;
 
-        public override int Match(CheezType concrete)
+        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {
+            if (polyTypes != null && polyTypes.TryGetValue(Name, out var v))
+                return v.Match(concrete, polyTypes);
             return 1;
         }
     }

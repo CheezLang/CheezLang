@@ -197,12 +197,12 @@ namespace Cheez
             return CheezType.Error;
         }
 
-        private void CollectPolyTypes(CheezType param, CheezType arg, Dictionary<string, CheezType> result)
+        public static void CollectPolyTypes(CheezType param, CheezType arg, Dictionary<string, CheezType> result)
         {
             switch (param)
             {
                 case PolyType i:
-                    if (i.IsDeclaring)
+                    if (i.IsDeclaring && !result.ContainsKey(i.Name))
                         result[i.Name] = arg;
                     break;
 

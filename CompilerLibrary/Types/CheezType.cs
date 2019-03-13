@@ -1,5 +1,6 @@
 ﻿using Cheez.Types.Abstract;
 using Cheez.Types.Primitive;
+using System.Collections.Generic;
 
 namespace Cheez.Types
 {
@@ -43,7 +44,7 @@ namespace Cheez.Types
             return base.GetHashCode();
         }
 
-        public virtual int Match(CheezType concrete)
+        public virtual int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {
             if (this == concrete)
                 return 0;

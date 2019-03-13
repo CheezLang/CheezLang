@@ -36,6 +36,7 @@ namespace Cheez.Types.Primitive
 
         public bool Signed { get; private set; }
         public override bool IsErrorType => false;
+        public override bool IsPolyType => false;
 
         public static IntType GetIntType(int sizeInBytes, bool signed)
         {
@@ -62,7 +63,21 @@ namespace Cheez.Types.Primitive
             return (Signed ? "i" : "u") + (Size * 8);
         }
 
-        public override bool IsPolyType => false;
+        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        {
+            if (concrete is IntType t)
+            {
+                if (t.Signed != this.Signed)
+                    return -1;
+
+                if (concrete.Size > this.Size)
+                    return -1;
+                if (concrete.Size < this.Size)
+                    return 1;
+                return 0;
+            }
+            return -1;
+        }
     }
 
     public class FloatType : CheezType
@@ -71,6 +86,7 @@ namespace Cheez.Types.Primitive
         public static FloatType LiteralType = new FloatType { Size = 0 };
         public static FloatType DefaultType => GetFloatType(8);
         public override bool IsErrorType => false;
+        public override bool IsPolyType => false;
 
         public static FloatType GetFloatType(int bytes)
         {
@@ -94,7 +110,18 @@ namespace Cheez.Types.Primitive
             return "f" + (Size * 8);
         }
 
-        public override bool IsPolyType => false;
+        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        {
+            if (concrete is FloatType t)
+            {
+                if (concrete.Size > this.Size)
+                    return -1;
+                if (concrete.Size < this.Size)
+                    return 1;
+                return 0;
+            }
+            return -1;
+        }
     }
 
     public class PointerType : CheezType
@@ -141,10 +168,10 @@ namespace Cheez.Types.Primitive
             return false;
         }
 
-        public override int Match(CheezType concrete)
+        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {
             if (concrete is PointerType p)
-                return this.TargetType.Match(p.TargetType);
+                return this.TargetType.Match(p.TargetType, polyTypes);
             return -1;
         }
     }
@@ -226,10 +253,10 @@ namespace Cheez.Types.Primitive
             return PointerType.GetPointerType(TargetType);
         }
 
-        public override int Match(CheezType concrete)
+        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {
             if (concrete is ArrayType p)
-                return this.TargetType.Match(p.TargetType);
+                return this.TargetType.Match(p.TargetType, polyTypes);
             return -1;
         }
     }
@@ -271,10 +298,10 @@ namespace Cheez.Types.Primitive
             return PointerType.GetPointerType(TargetType);
         }
 
-        public override int Match(CheezType concrete)
+        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {
             if (concrete is SliceType p)
-                return this.TargetType.Match(p.TargetType);
+                return this.TargetType.Match(p.TargetType, polyTypes);
             return -1;
         }
     }

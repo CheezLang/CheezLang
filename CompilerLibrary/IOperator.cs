@@ -2,6 +2,7 @@
 using Cheez.Types;
 using Cheez.Types.Primitive;
 using System;
+using System.Collections.Generic;
 
 namespace Cheez
 {
@@ -83,29 +84,12 @@ namespace Cheez
 
         public int Accepts(CheezType lhs, CheezType rhs)
         {
-            var ml = LhsType.Match(lhs);
-            var mr = RhsType.Match(rhs);
+            var ml = LhsType.Match(lhs, null);
+            var mr = RhsType.Match(rhs, null);
             if (ml == -1 || mr == -1)
                 return -1;
 
             return ml + mr;
-        }
-
-        private bool CheckType(CheezType needed, CheezType got)
-        {
-            if (needed == got)
-                return true;
-
-            //if (got == IntType.LiteralType)
-            //{
-            //    return needed is IntType || needed is FloatType;
-            //}
-            //if (got == FloatType.LiteralType)
-            //{
-            //    return needed is FloatType;
-            //}
-
-            return false;
         }
 
         public override string ToString()
@@ -176,12 +160,20 @@ namespace Cheez
 
         public int Accepts(CheezType lhs, CheezType rhs)
         {
-            // TODO: poly functions
-            var ml = LhsType.Match(lhs);
-            var mr = RhsType.Match(rhs);
+            Dictionary<string, CheezType> polyTypes = null;
+
+            if (LhsType.IsPolyType || RhsType.IsPolyType)
+            {
+                polyTypes = new Dictionary<string, CheezType>();
+                Workspace.CollectPolyTypes(LhsType, lhs, polyTypes);
+                Workspace.CollectPolyTypes(RhsType, rhs, polyTypes);
+            }
+            
+
+            var ml = LhsType.Match(lhs, polyTypes);
+            var mr = RhsType.Match(rhs, polyTypes);
             if (ml == -1 || mr == -1)
                 return -1;
-
             return ml + mr;
         }
 
