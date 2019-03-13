@@ -106,6 +106,7 @@ namespace Cheez.Types.Primitive
 
         public CheezType TargetType { get; set; }
         public override bool IsErrorType => TargetType.IsErrorType;
+        public override bool IsPolyType => TargetType.IsPolyType;
 
         public static PointerType GetPointerType(CheezType targetType)
         {
@@ -133,8 +134,12 @@ namespace Cheez.Types.Primitive
             return $"*{TargetType}";
         }
 
-        public override bool IsPolyType => TargetType.IsPolyType;
-
+        public override bool Equals(object obj)
+        {
+            if (obj is PointerType p)
+                return TargetType == p.TargetType;
+            return false;
+        }
     }
 
     public class ReferenceType : CheezType

@@ -1,4 +1,5 @@
 ﻿using Cheez.Ast.Statements;
+using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using System.Collections.Generic;
 
@@ -62,11 +63,20 @@ namespace Cheez
             impl.TargetTypeExpr.Scope = impl.Scope;
             impl.TargetType = ResolveType(impl.TargetTypeExpr);
 
-            if (impl.TargetTypeExpr.IsPolymorphic)
+            var polyNames = new List<string>();
+            CollectPolyTypeNames(impl.TargetTypeExpr, polyNames);
+
+            foreach (var pn in polyNames)
             {
-                mPolyImpls.Add(impl);
+                impl.SubScope.DefineTypeSymbol(pn, new PolyType(pn));
             }
-            else
+
+            // TODO:
+            //if (impl.TargetTypeExpr.IsPolymorphic)
+            //{
+            //    mPolyImpls.Add(impl);
+            //}
+            //else
             {
                 mImpls.Add(impl);
             }

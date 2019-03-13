@@ -20,6 +20,9 @@ namespace Cheez.Ast.Statements
 
     public abstract class AstStatement : IVisitorAcceptor, ILocation, IAstNode
     {
+        private static int _id_gen = 0;
+        public readonly int Id = ++_id_gen;
+
         protected int mFlags = 0;
 
         public ILocation Location { get; private set; }

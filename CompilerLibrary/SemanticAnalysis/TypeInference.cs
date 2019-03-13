@@ -764,7 +764,7 @@ namespace Cheez
             var newArgs = new List<AstArgument>();
             foreach (var (param, arg) in args)
             {
-                CollectPolyTypes(arg, param.TypeExpr, arg.Type, polyTypes);
+                CollectPolyTypes(arg, param.Type, arg.Type, polyTypes);
 
                 if (param.Name?.IsPolymorphic ?? false)
                 {
@@ -787,7 +787,7 @@ namespace Cheez
             expr.Arguments = newArgs;
             
             // find or create instance
-            var instance = InstantiatePolyFunction(func, polyTypes, constArgs, newInstances);
+            var instance = InstantiatePolyFunction(func, polyTypes, constArgs, newInstances, expr);
 
             // check parameter types
             Debug.Assert(expr.Arguments.Count == instance.Parameters.Count);

@@ -89,6 +89,7 @@ namespace Cheez.Types.Complex
         public CheezType[] Arguments { get; }
         public int[] MemberOffsets { get; private set; }
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
+        public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
 
         public StructType(AstStructDecl decl)
         {
@@ -122,9 +123,9 @@ namespace Cheez.Types.Complex
 
         public override string ToString()
         {
-            if (Declaration.IsPolyInstance)
+            if (Arguments?.Length > 0)
             {
-                var args = string.Join(", ", Declaration.Parameters.Select(p => $"{p.Value}"));
+                var args = string.Join(", ", Arguments.Select(a => a.ToString()));
                 return $"{Declaration.Name.Name}({args})";
             }
             return $"{Declaration.Name.Name}";
@@ -135,7 +136,27 @@ namespace Cheez.Types.Complex
             return Declaration.Members.FindIndex(m => m.Name.Name == right);
         }
 
-        public override bool IsPolyType => false;
+        public override bool Equals(object obj)
+        {
+            if (obj is StructType s)
+            {
+                if (Declaration != s.Declaration)
+                    return false;
+
+                if (Arguments.Length != s.Arguments.Length)
+                    return false;
+
+                for (int i = 0; i < Arguments.Length; i++)
+                {
+                    if (Arguments[i] != s.Arguments[i])
+                        return false;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
     }
 
     public class EnumType : CheezType

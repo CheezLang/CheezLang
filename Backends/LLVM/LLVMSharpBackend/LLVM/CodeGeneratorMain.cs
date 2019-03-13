@@ -89,23 +89,25 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 // create declarations
                 foreach (var function in workspace.GlobalScope.FunctionDeclarations)
-                    GenerateFunctionHeader(function);
+                    if (!function.IsGeneric)
+                        GenerateFunctionHeader(function);
 
                 foreach (var i in workspace.GlobalScope.ImplBlocks)
                     foreach (var function in i.SubScope.FunctionDeclarations)
-                        GenerateFunctionHeader(function);
+                        if (!function.IsGeneric)
+                            GenerateFunctionHeader(function);
 
                 GenerateMainFunction();
 
                 // create implementations
-                foreach (var f in workspace.GlobalScope.FunctionDeclarations)
-                    if (!f.IsGeneric)
-                        GenerateFunctionImplementation(f);
+                foreach (var function in workspace.GlobalScope.FunctionDeclarations)
+                    if (!function.IsGeneric)
+                        GenerateFunctionImplementation(function);
 
                 foreach (var i in workspace.GlobalScope.ImplBlocks)
-                    foreach (var f in i.SubScope.FunctionDeclarations)
-                        if (!f.IsGeneric)
-                            GenerateFunctionImplementation(f);
+                    foreach (var function in i.SubScope.FunctionDeclarations)
+                        if (!function.IsGeneric)
+                            GenerateFunctionImplementation(function);
             }
 
             // verify module

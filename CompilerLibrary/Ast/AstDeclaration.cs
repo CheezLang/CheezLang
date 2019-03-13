@@ -117,7 +117,7 @@ namespace Cheez.Ast.Statements
                 Parameters.Select(p => p.Clone()).ToList(),
                 ReturnValue?.Clone(),
                 Body?.Clone() as AstBlockExpr, ParameterLocation: ParameterLocation));
-            copy.ConstScope = ConstScope.Clone();
+            copy.ConstScope = new Scope("fn$", copy.Scope);
             copy.SubScope = new Scope("fn", copy.ConstScope);
             return copy;
         }

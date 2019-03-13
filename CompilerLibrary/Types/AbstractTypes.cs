@@ -98,9 +98,12 @@ namespace Cheez.Types.Abstract
         public override bool IsPolyType => true;
         public override bool IsErrorType => false;
 
-        public PolyType(string name)
+        public bool IsDeclaring = false;
+
+        public PolyType(string name, bool declaring = false)
         {
             this.Name = name;
+            this.IsDeclaring = declaring;
         }
 
         public override string ToString() => "$" + Name;

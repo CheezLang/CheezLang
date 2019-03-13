@@ -42,10 +42,7 @@ namespace Cheez
 
         private void AnalyseFunction(AstFunctionDecl func, List<AstFunctionDecl> instances = null)
         {
-            if (func.ImplBlock != null && func.Parameters.Count > 0 && (
-                func.Parameters[0].Type == func.ImplBlock.TargetType ||
-                func.Parameters[0].Type == PointerType.GetPointerType(func.ImplBlock.TargetType)
-                ))
+            if (func.SelfParameter)
             {
                 var p = func.Parameters[0];
                 if (p.Name == null)

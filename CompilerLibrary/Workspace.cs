@@ -121,6 +121,20 @@ namespace Cheez
         }
 
         [SkipInStackFrame]
+        public void ReportError(string errorMessage, (string, ILocation) details)
+        {
+            var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
+            mCompiler.ErrorHandler.ReportError(new Error
+            {
+                Message = errorMessage,
+                Details = new List<(string, ILocation)> { details },
+                File = callingFunctionFile,
+                Function = callingFunctionName,
+                LineNumber = callLineNumber,
+            });
+        }
+
+        [SkipInStackFrame]
         public void ReportError(ILocation lc, string message, (string, ILocation)? detail = null)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));

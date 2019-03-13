@@ -1,4 +1,5 @@
-﻿using Cheez.Ast.Expressions;
+﻿using Cheez.Ast;
+using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Extras;
@@ -33,7 +34,7 @@ namespace Cheez
                 case AstIdTypeExpr i:
                     {
                         if (i.IsPolymorphic && !poly_from_scope)
-                            return new PolyType(i.Name);
+                            return new PolyType(i.Name, true);
 
                         var sym = typeExpr.Scope.GetSymbol(i.Name);
 
@@ -125,15 +126,35 @@ namespace Cheez
                         @struct.Struct.Type = CheezType.Type;
                         @struct.Struct.Value = ResolveTypeHelper(@struct.Struct, deps, instances, poly_from_scope);
 
+                        var strType = @struct.Struct.Value as GenericStructType;
+
+                        if (strType == null)
+                        {
+                            ReportError(@struct.Struct, $"This type must be a poly struct type but is '{@struct.Struct.Value}'");
+                            return CheezType.Error;
+                        }
+
+                        bool anyArgIsPoly = false;
+
                         foreach (var arg in @struct.Arguments)
                         {
                             arg.Scope = @struct.Scope;
                             arg.Type = CheezType.Type;
-                            arg.Value = ResolveTypeHelper(arg, deps, instances, poly_from_scope);
+                            var argType = ResolveTypeHelper(arg, deps, instances, poly_from_scope);
+                            arg.Value = argType;
+
+                            if (argType.IsPolyType) anyArgIsPoly = true;
+                        }
+
+
+                        if (anyArgIsPoly)
+                        {
+                            return new StructType(strType.Declaration, @struct.Arguments.Select(a => a.Value as CheezType).ToArray());
                         }
 
                         // instantiate struct
-                        var instance = InstantiatePolyStruct(@struct, instances);
+                        var args = @struct.Arguments.Select(a => (a.Type, a.Value)).ToList();
+                        var instance = InstantiatePolyStruct(strType.Declaration, args, instances, @struct);
                         return instance?.Type ?? CheezType.Error;
                     }
 
@@ -173,64 +194,85 @@ namespace Cheez
             return CheezType.Error;
         }
 
-        private void CollectPolyTypes(AstExpression expr, AstTypeExpr typeExpr, CheezType type, Dictionary<string, CheezType> result)
+        private void CollectPolyTypes(AstExpression expr, CheezType param, CheezType arg, Dictionary<string, CheezType> result)
         {
-            switch (typeExpr)
+            switch (param)
             {
-                case AstIdTypeExpr i:
-                    if (i.IsPolymorphic)
-                        result[i.Name] = type;
+                case PolyType i:
+                    if (i.IsDeclaring)
+                        result[i.Name] = arg;
                     break;
 
-                case AstPointerTypeExpr p:
+                case PointerType p:
                     {
-                        if (type is PointerType t)
-                            CollectPolyTypes(expr, p.Target, t.TargetType, result);
+                        if (arg is PointerType t)
+                            CollectPolyTypes(expr, p.TargetType, t.TargetType, result);
                         else
-                            ReportError(expr, $"The type of the expression does not match the type pattern '{typeExpr}'");
+                            ReportError(expr, $"The type of the expression does not match the type pattern '{param}'");
                         break;
                     }
 
-                case AstSliceTypeExpr p:
+                case SliceType p:
                     {
-                        if (type is SliceType t)
-                            CollectPolyTypes(expr, p.Target, t.TargetType, result);
+                        if (arg is SliceType t)
+                            CollectPolyTypes(expr, p.TargetType, t.TargetType, result);
                         else
-                            ReportError(expr, $"The type of the expression does not match the type pattern '{typeExpr}'");
+                            ReportError(expr, $"The type of the expression does not match the type pattern '{param}'");
                         break;
                     }
 
-                case AstArrayTypeExpr p:
+                case ArrayType p:
                     {
-                        if (type is ArrayType t)
-                            CollectPolyTypes(expr, p.Target, t.TargetType, result);
+                        if (arg is ArrayType t)
+                            CollectPolyTypes(expr, p.TargetType, t.TargetType, result);
                         else
-                            ReportError(expr, $"The type of the expression does not match the type pattern '{typeExpr}'");
+                            ReportError(expr, $"The type of the expression does not match the type pattern '{param}'");
                         break;
                     }
 
-                case AstTupleTypeExpr te:
+                case TupleType te:
                     {
-                        if (type is TupleType tt)
+                        if (arg is TupleType tt)
                         {
-                            if (te.Members.Count != tt.Members.Length)
+                            if (te.Members.Length != tt.Members.Length)
                             {
-                                ReportError(expr, $"The type of the expression does not match the tuple pattern '{typeExpr}'");
+                                ReportError(expr, $"The type of the expression does not match the tuple pattern '{param}'");
                             }
                             else
                             {
-                                for (var i = 0; i < te.Members.Count; i++)
+                                for (var i = 0; i < te.Members.Length; i++)
                                 {
-                                    CollectPolyTypes(expr, te.Members[i].TypeExpr, tt.Members[i].type, result);
+                                    CollectPolyTypes(expr, te.Members[i].type, tt.Members[i].type, result);
                                 }
                             }
                         }
                         else
-                            ReportError(expr, $"The type of the expression does not match the type pattern '{typeExpr}'");
+                            ReportError(expr, $"The type of the expression does not match the type pattern '{param}'");
                         break;
                     }
 
-                default: throw new NotImplementedException();
+                case StructType str:
+                    {
+                        if (arg is StructType tt)
+                        {
+                            if (str.Arguments.Length != tt.Arguments.Length)
+                            {
+                                ReportError(expr, $"The type of the expression does not match the struct pattern '{param}'");
+                            }
+                            else
+                            {
+                                for (var i = 0; i < str.Arguments.Length; i++)
+                                {
+                                    CollectPolyTypes(expr, str.Arguments[i], tt.Arguments[i], result);
+                                }
+                            }
+                        }
+                        else
+                            ReportError(expr, $"The type of the expression does not match the type pattern '{param}'");
+                        break;
+                    }
+
+                //default: throw new NotImplementedException();
                 //case AstFunctionTypeExpr func:
                 //    if (func.ReturnType != null) CollectPolyTypes(func.ReturnType, types);
                 //    foreach (var p in func.ParameterTypes) CollectPolyTypes(p, types);
@@ -243,29 +285,30 @@ namespace Cheez
         }
 
         // struct
-        private AstStructDecl InstantiatePolyStruct(AstPolyStructTypeExpr expr, List<AstStructDecl> instances = null)
+        private AstStructDecl InstantiatePolyStruct(AstStructDecl decl, List<(CheezType type, object value)> args, List<AstStructDecl> instances = null, ILocation location = null)
         {
-            var @struct = expr.Struct.Value as GenericStructType;
-
-            if (expr.Arguments.Count != @struct.Declaration.Parameters.Count)
+            if (args.Count != decl.Parameters.Count)
             {
-                ReportError(expr, "Polymorphic struct instantiation has wrong number of arguments.", ("Declaration here:", @struct.Declaration));
+                if (location != null)
+                    ReportError(location, "Polymorphic struct instantiation has wrong number of arguments.", ("Declaration here:", decl));
+                else
+                    ReportError("Polymorphic struct instantiation has wrong number of arguments.", ("Declaration here:", decl));
                 return null;
             }
 
             AstStructDecl instance = null;
 
             // check if instance already exists
-            foreach (var pi in @struct.Declaration.PolymorphicInstances)
+            foreach (var pi in decl.PolymorphicInstances)
             {
-                Debug.Assert(pi.Parameters.Count == expr.Arguments.Count);
+                Debug.Assert(pi.Parameters.Count == args.Count);
 
                 bool eq = true;
                 for (int i = 0; i < pi.Parameters.Count; i++)
                 {
                     var param = pi.Parameters[i];
-                    var arg = expr.Arguments[i];
-                    if (param.Value != arg.Value)
+                    var arg = args[i];
+                    if (param.Value != arg.value)
                     {
                         eq = false;
                         break;
@@ -282,27 +325,29 @@ namespace Cheez
             // instatiate type
             if (instance == null)
             {
-                instance = @struct.Declaration.Clone() as AstStructDecl;
-                instance.SubScope = new Scope($"struct {@struct.Declaration.Name.Name}<poly>", instance.Scope);
+                instance = decl.Clone() as AstStructDecl;
+                instance.SubScope = new Scope($"struct {decl.Name.Name}<poly>", instance.Scope);
                 instance.IsPolyInstance = true;
                 instance.IsPolymorphic = false;
-                @struct.Declaration.PolymorphicInstances.Add(instance);
+                decl.PolymorphicInstances.Add(instance);
                 instance.Scope.TypeDeclarations.Add(instance);
 
-                Debug.Assert(instance.Parameters.Count == expr.Arguments.Count);
+                Debug.Assert(instance.Parameters.Count == args.Count);
 
                 for (int i = 0; i < instance.Parameters.Count; i++)
                 {
                     var param = instance.Parameters[i];
-                    var arg = expr.Arguments[i];
-                    param.Type = arg.Type;
-                    param.Value = arg.Value;
+                    var arg = args[i];
+                    param.Type = arg.type;
+                    param.Value = arg.value;
                 }
 
                 instance.Type = new StructType(instance);
 
                 if (instances != null)
                     instances.Add(instance);
+                else
+                    ResolveStructs(new List<AstStructDecl> { instance });
             }
 
             return instance;
@@ -425,7 +470,8 @@ namespace Cheez
             GenericFunctionType func,
             Dictionary<string, CheezType> polyTypes,
             Dictionary<string, (CheezType type, object value)> constArgs,
-            List<AstFunctionDecl> instances = null)
+            List<AstFunctionDecl> instances = null,
+            ILocation location = null)
         {
             AstFunctionDecl instance = null;
 
@@ -475,7 +521,16 @@ namespace Cheez
                 instance.PolymorphicTypes = polyTypes;
                 instance.ConstParameters = constArgs;
                 instance.ImplBlock = func.Declaration.ImplBlock;
+                instance.RefSelf = func.Declaration.RefSelf;
+                instance.SelfParameter = func.Declaration.SelfParameter;
                 func.Declaration.PolymorphicInstances.Add(instance);
+
+                if (instance.SelfParameter)
+                {
+                    var targetType = instance.ImplBlock.TargetType;
+                    var inst = InstantiatePolyType(targetType, polyTypes, location);
+                    instance.ConstScope.DefineTypeSymbol("self", inst);
+                }
 
                 instance.Scope.FunctionDeclarations.Add(instance);
 
@@ -494,6 +549,7 @@ namespace Cheez
                     p.Scope = instance.SubScope;
                     p.TypeExpr.Scope = p.Scope;
                     p.Type = ResolveType(p.TypeExpr, true);
+                    //p.Type = InstantiatePolyType(p.Type, polyTypes);
 
                     if (p.Name?.IsPolymorphic ?? false)
                     {
@@ -533,6 +589,7 @@ namespace Cheez
                     instance.ReturnValue.Scope = instance.SubScope;
                     instance.ReturnValue.TypeExpr.Scope = instance.SubScope;
                     instance.ReturnValue.Type = ResolveType(instance.ReturnValue.TypeExpr, true);
+                    //instance.ReturnValue.Type = InstantiatePolyType(instance.ReturnValue.Type, polyTypes);
                 }
 
                 //remove constant params
@@ -545,6 +602,31 @@ namespace Cheez
             }
 
             return instance;
+        }
+
+        private CheezType InstantiatePolyType(CheezType poly, Dictionary<string, CheezType> concreteTypes, ILocation location)
+        {
+            if (!poly.IsPolyType)
+                return poly;
+
+            switch (poly)
+            {
+                case PolyType p:
+                    if (concreteTypes.TryGetValue(p.Name, out var t)) return t;
+                    return p;
+
+                case StructType s:
+                    {
+                        var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
+                        var instance = InstantiatePolyStruct(s.Declaration, args, location: location);
+                        return instance.Type;
+                    }
+
+                case PointerType p:
+                    return PointerType.GetPointerType(InstantiatePolyType(p.TargetType, concreteTypes, location));
+
+                default: throw new NotImplementedException();
+            }
         }
     }
 }

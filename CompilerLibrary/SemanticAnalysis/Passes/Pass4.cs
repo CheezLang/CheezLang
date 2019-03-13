@@ -59,15 +59,23 @@ namespace Cheez
             }
         }
 
+        private bool IsSelfParameter(AstParameter param)
+        {
+            if (param.TypeExpr is AstIdTypeExpr i && i.Name == "self")
+                return true;
+
+            if (param.TypeExpr is AstPointerTypeExpr p && p.Target is AstIdTypeExpr i2 && i2.Name == "self")
+                return true;
+
+            return false;
+        }
+
         private void Pass4ResolveFunctionSignature(AstFunctionDecl func)
         {
             ResolveFunctionSignature(func);
 
             // check for existance of self param
-            if (func.ImplBlock != null && func.Parameters.Count > 0 && (
-                func.Parameters[0].Type == func.ImplBlock.TargetType ||
-                func.Parameters[0].Type == PointerType.GetPointerType(func.ImplBlock.TargetType)
-                ))
+            if (func.ImplBlock != null && func.Parameters.Count > 0 && IsSelfParameter(func.Parameters[0]))
             {
                 func.SelfParameter = true;
                 if (func.Parameters[0].Type == PointerType.GetPointerType(func.ImplBlock.TargetType))
@@ -95,64 +103,46 @@ namespace Cheez
                 ReportError(func.ReturnValue, "The return type of a function can't be polymorphic");
             }
 
+            var polyNames = new List<string>();
             foreach (var p in func.Parameters)
             {
-                if (p.TypeExpr.IsPolymorphic || (p.Name?.IsPolymorphic ?? false))
-                {
+                CollectPolyTypeNames(p.TypeExpr, polyNames);
+                if (p.Name?.IsPolymorphic ?? false)
+                    polyNames.Add(p.Name.Name);
+            }
+
+            foreach (var pn in polyNames)
+            {
+                func.ConstScope.DefineTypeSymbol(pn, new PolyType(pn));
+            }
+
+            // return types
+            if (func.ReturnValue != null)
+            {
+                func.ReturnValue.Scope = func.SubScope;
+                func.ReturnValue.TypeExpr.Scope = func.SubScope;
+                func.ReturnValue.Type = ResolveType(func.ReturnValue.TypeExpr);
+
+                if (func.ReturnValue.Type.IsPolyType)
                     func.IsGeneric = true;
-                    break;
-                }
+            }
+
+            // parameter types
+            foreach (var p in func.Parameters)
+            {
+                p.TypeExpr.Scope = func.SubScope;
+                p.Type = ResolveType(p.TypeExpr);
+
+                if (p.Type.IsPolyType || (p.Name?.IsPolymorphic ?? false))
+                    func.IsGeneric = true;
             }
 
             if (func.IsGeneric)
             {
-                var polyNames = new List<string>();
-                foreach (var p in func.Parameters)
-                {
-                    CollectPolyTypeNames(p.TypeExpr, polyNames);
-                    if (p.Name?.IsPolymorphic ?? false)
-                        polyNames.Add(p.Name.Name);
-                }
-
-                foreach (var pn in polyNames)
-                {
-                    func.SubScope.DefineTypeSymbol(pn, new PolyType(pn));
-                }
-
-                // return types
-                if (func.ReturnValue != null)
-                {
-                    func.ReturnValue.Scope = func.SubScope;
-                    func.ReturnValue.TypeExpr.Scope = func.SubScope;
-                    func.ReturnValue.Type = ResolveType(func.ReturnValue.TypeExpr);
-                }
-
-                // parameter types
-                foreach (var p in func.Parameters)
-                {
-                    p.TypeExpr.Scope = func.SubScope;
-                    p.Type = ResolveType(p.TypeExpr);
-                }
-
                 func.Type = new GenericFunctionType(func);
             }
             else
             {
-                // return types
-                if (func.ReturnValue != null)
-                {
-                    func.ReturnValue.Scope = func.SubScope;
-                    func.ReturnValue.TypeExpr.Scope = func.SubScope;
-                    func.ReturnValue.Type = ResolveType(func.ReturnValue.TypeExpr);
-                }
-
-                // parameter types
-                foreach (var p in func.Parameters)
-                {
-                    p.TypeExpr.Scope = func.SubScope;
-                    p.Type = ResolveType(p.TypeExpr);
-                }
-
                 func.Type = new FunctionType(func);
 
                 if (func.TryGetDirective("varargs", out var varargs))
@@ -198,6 +188,16 @@ namespace Cheez
                         foreach (var m in te.Members)
                         {
                             CollectPolyTypeNames(m.TypeExpr, result);
+                        }
+
+                        break;
+                    }
+
+                case AstPolyStructTypeExpr ps:
+                    {
+                        foreach (var m in ps.Arguments)
+                        {
+                            CollectPolyTypeNames(m, result);
                         }
 
                         break;

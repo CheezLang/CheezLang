@@ -1,0 +1,32 @@
+#test_expect_output("2")
+#test_expect_output("3.600000")
+#test_expect_output("5")
+#test_expect_output("3.600000")
+#test_expect_output("5")
+
+fn c_printf(format: c_string) #varargs #linkname("printf");
+
+struct Test(T: type) {
+    x: T
+}
+
+impl Test($T) {
+    fn foo(*self, a: int) -> Test(T) {
+        self.x = cast a
+        return new Test(T) { cast a }
+    }
+}
+
+fn Main() {
+    let t = new Test(int) {2}
+    let t2 = new Test(double) {3.6}
+
+    c_printf("%lld`n", t.x)
+    c_printf("%f`n", t2.x)
+
+    let uiae = t.foo(5)
+
+    c_printf("%lld`n", t.x)
+    c_printf("%f`n", t2.x)
+    c_printf("%lld`n", uiae.x)
+}
