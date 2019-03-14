@@ -73,28 +73,12 @@ namespace Cheez
                 return expr;
             expr.TypeInferred = true;
 
-            // :fix
-            // does not work because tuple containing abstract types does currently not count as an abstract type
-            // - 08.03.2019
-            //if (expr.Type != null && !(expr.Type is AbstractType)) return;
-
             expr.Type = CheezType.Error;
-
-            //if (expected is PolyType pt && polyTypeMap.TryGetValue(pt.Name, out var concreteType))
-            //{
-            //    expected = concreteType;
-            //}
 
             switch (expr)
             {
                 case AstNullExpr n:
-                    if (expected is PointerType)
-                        n.Type = expected;
-                    else if (expected is SliceType)
-                        n.Type = expected;
-                    else
-                        n.Type = PointerType.GetPointerType(CheezType.Any);
-                    return expr;
+                    return InferTypesNullExpr(n, expected);
 
                 case AstBoolExpr b:
                     b.Type = CheezType.Bool;
@@ -112,6 +96,12 @@ namespace Cheez
 
                 case AstIdExpr i:
                     return InferTypesIdExpr(i, expected);
+
+                case AstAddressOfExpr ao:
+                    return InferTypeAddressOf(ao, expected, newInstances);
+
+                case AstDereferenceExpr de:
+                    return InferTypeDeref(de, expected, newInstances);
 
                 case AstBinaryExpr b:
                     return InferTypesBinaryExpr(b, expected, newInstances);
@@ -154,12 +144,6 @@ namespace Cheez
                 case AstCompCallExpr c:
                     return InferTypeCompCall(c, expected, newInstances);
 
-                case AstAddressOfExpr ao:
-                    return InferTypeAddressOf(ao, expected, newInstances);
-
-                case AstDereferenceExpr de:
-                    return InferTypeDeref(de, expected, newInstances);
-
                 case AstCastExpr cast:
                     return InferTypeCast(cast, expected, newInstances);
 
@@ -172,12 +156,16 @@ namespace Cheez
                 default:
                     throw new NotImplementedException();
             }
+        }
 
-            //if (expected is PolyType p && p.IsDeclaring)
-            //{
-            //    polyTypeMap[p.Name] = expr.Type;
-            //}
-
+        private AstExpression InferTypesNullExpr(AstNullExpr expr, CheezType expected)
+        {
+            if (expected is PointerType)
+                expr.Type = expected;
+            else if (expected is SliceType)
+                expr.Type = expected;
+            else
+                expr.Type = PointerType.GetPointerType(CheezType.Any);
             return expr;
         }
 
@@ -235,31 +223,32 @@ namespace Cheez
             return cast;
         }
 
-        private AstExpression InferTypeDeref(AstDereferenceExpr de, CheezType expected, List<AstFunctionDecl> newInstances)
+        private AstExpression InferTypeDeref(AstDereferenceExpr expr, CheezType expected, List<AstFunctionDecl> newInstances)
         {
             CheezType subExpect = null;
             if (expected != null) subExpect = PointerType.GetPointerType(expected);
 
-            de.SubExpression.Scope = de.Scope;
-            de.SubExpression = InferTypeHelper(de.SubExpression, subExpect, newInstances);
+            expr.SubExpression.AttachTo(expr);
+            expr.SubExpression = InferTypeHelper(expr.SubExpression, subExpect, newInstances);
 
-            if (!de.SubExpression.GetFlag(ExprFlags.IsLValue))
+            var subType = expr.SubExpression.Type;
+
+            if (expr.SubExpression.Type is ReferenceType r)
             {
-                ReportError(de, $"Can't dereference non lvalue");
-                return de;
+                subType = r.TargetType;
             }
 
-            if (de.SubExpression.Type is PointerType p)
+            if (subType is PointerType p)
             {
-                de.Type = p.TargetType;
+                expr.Type = p.TargetType;
             }
-            else if (!de.SubExpression.Type.IsErrorType)
+            else if (!expr.SubExpression.Type.IsErrorType)
             {
-                ReportError(de, $"Can't dereference non pointer type {de.SubExpression.Type}");
+                ReportError(expr, $"Can't dereference non pointer type {expr.SubExpression.Type}");
             }
 
-            de.SetFlag(ExprFlags.IsLValue, true);
-            return de;
+            expr.SetFlag(ExprFlags.IsLValue, true);
+            return expr;
         }
 
         private AstExpression InferTypeIfExpr(AstIfExpr expr, CheezType expected, List<AstFunctionDecl> newInstances)
@@ -334,9 +323,18 @@ namespace Cheez
             }
 
             expr.SubExpression.Scope = expr.Scope;
+            expr.SubExpression.Parent = expr;
             expr.SubExpression = InferTypeHelper(expr.SubExpression, subExpected, newInstances);
 
-            // check wether sub is an lvalue
+            if (expr.SubExpression.Type.IsErrorType)
+                return expr;
+
+            if (!expr.SubExpression.GetFlag(ExprFlags.IsLValue))
+            {
+                ReportError(expr, $"Can't take the address of non lvalue");
+                expr.Type = CheezType.Error;
+                return expr;
+            }
 
             expr.Type = PointerType.GetPointerType(expr.SubExpression.Type);
 
@@ -1353,15 +1351,16 @@ namespace Cheez
             }
 
             expr.Symbol = sym;
-            expr.SetFlag(ExprFlags.IsLValue, true);
 
             if (sym is AstSingleVariableDecl var)
             {
                 expr.Type = var.Type;
+                expr.SetFlag(ExprFlags.IsLValue, true);
             }
             else if (sym is AstParameter p)
             {
                 expr.Type = p.Type;
+                expr.SetFlag(ExprFlags.IsLValue, true);
             }
             else if (sym is TypeSymbol ct)
             {
@@ -1382,10 +1381,6 @@ namespace Cheez
             {
                 expr.Type = func.Type;
             }
-            else if (sym is AstSingleVariableDecl decl)
-            {
-                expr.Type = decl.Type;
-            }
             else if (sym is ConstSymbol c)
             {
                 expr.Type = c.Type;
@@ -1393,9 +1388,7 @@ namespace Cheez
             }
             else if (sym is Using u)
             {
-                // TODO:
                 expr.Type = u.Type;
-                //throw new NotImplementedException();
             }
             else
             {
