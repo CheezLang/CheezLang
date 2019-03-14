@@ -105,6 +105,12 @@ namespace Cheez.Parsing
             return t => $"Expected {expect} {where}";
         }
 
+        [DebuggerStepThrough]
+        private ErrorMessageResolver ErrMsgUnexpected(string expect, string where = null)
+        {
+            return t => $"Unexpected token {t} at {where}. Expected {expect}";
+        }
+
 
         [SkipInStackFrame]
         [DebuggerStepThrough]
@@ -127,6 +133,23 @@ namespace Cheez.Parsing
         [DebuggerStepThrough]
         private Token Consume(TokenType type, ErrorMessageResolver customErrorMessage)
         {
+            if (!Expect(type, customErrorMessage))
+                NextToken();
+            return CurrentToken;
+        }
+
+        [SkipInStackFrame]
+        [DebuggerStepThrough]
+        private Token ConsumeUntil(TokenType type, ErrorMessageResolver customErrorMessage)
+        {
+            var tok = PeekToken();
+            while (tok.type != type)
+            {
+                ReportError(tok.location, customErrorMessage?.Invoke(tok));
+                NextToken();
+                tok = PeekToken();
+            }
+
             if (!Expect(type, customErrorMessage))
                 NextToken();
             return CurrentToken;
@@ -745,17 +768,8 @@ namespace Cheez.Parsing
 
                 if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
                     break;
-
-                bool isRef = false;
-                if (CheckToken(TokenType.KwRef))
-                {
-                    isRef = true;
-                    NextToken();
-                    SkipNewlines();
-                }
-
+                
                 var f = ParseFunctionDeclaration();
-                f.RefSelf = isRef;
                 functions.Add(f);
 
                 SkipNewlines();
@@ -972,7 +986,7 @@ namespace Cheez.Parsing
             var directives = new List<AstDirective>();
             var generics = new List<AstIdExpr>();
 
-            beginning = NextToken().location;
+            beginning = ConsumeUntil(TokenType.KwFn, ErrMsgUnexpected("keyword 'fn'", "beginning of function declaration")).location;
             SkipNewlines();
 
             var name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'fn' in function declaration"));
