@@ -14,6 +14,33 @@
 // required for printing
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
+fn Main() {
+    test(true, true)
+    test(false, true)
+    test(true, false)
+    test(false, false)
+    
+    test2(true, true)
+    test2(false, true)
+    test2(true, false)
+    test2(false, false)
+
+    test3(true)
+    test3(false)
+
+    if let (ok, str) = test4(false); ok {
+        c_printf("%s`n", str)
+    } else {
+        c_printf("%s`n", "error"c)
+    }
+
+    if let res = test4(true); res.ok {
+        c_printf("%s`n", res.value)
+    } else {
+        c_printf("%s`n", "error"c)
+    }
+}
+
 fn bool_to_string(b: bool) -> c_string {
     return if b {"true"} else {"false"}
 }
@@ -64,31 +91,4 @@ fn test3(b: bool) {
 fn test4(b: bool) -> (ok: bool, value: c_string) {
     ok = b
     value = if ok {"yey"} else {null}
-}
-
-fn Main() {
-    test(true, true)
-    test(false, true)
-    test(true, false)
-    test(false, false)
-    
-    test2(true, true)
-    test2(false, true)
-    test2(true, false)
-    test2(false, false)
-
-    test3(true)
-    test3(false)
-
-    if let (ok, str) = test4(false); ok {
-        c_printf("%s`n", str)
-    } else {
-        c_printf("%s`n", "error"c)
-    }
-
-    if let res = test4(true); res.ok {
-        c_printf("%s`n", res.value)
-    } else {
-        c_printf("%s`n", "error"c)
-    }
 }

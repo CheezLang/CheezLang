@@ -108,7 +108,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 // body
                 builder.PositionBuilderAtEnd(bbBody);
-                GenerateExpression(function.Body, null, false);
+                GenerateExpression(function.Body, false);
 
                 // ret if void
                 if (function.ReturnValue == null)
@@ -194,11 +194,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.CreateBr(bbCond);
 
             builder.PositionBuilderAtEnd(bbCond);
-            var cond = GenerateExpression(whl.Condition, null, true);
-            builder.CreateCondBr(cond.Value, bbBody, bbEnd);
+            var cond = GenerateExpression(whl.Condition, true);
+            builder.CreateCondBr(cond, bbBody, bbEnd);
 
             builder.PositionBuilderAtEnd(bbBody);
-            GenerateExpression(whl.Body, null, false);
+            GenerateExpression(whl.Body, false);
 
             builder.CreateBr(bbPost);
             builder.PositionBuilderAtEnd(bbPost);
@@ -224,20 +224,21 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             if (ass.OnlyGenerateValue)
             {
-                GenerateExpressionHelper(ass.Value, null, false);
+                GenerateExpression(ass.Value, false);
                 return;
             }
 
 
             bool deref = ass.Pattern.Type is ReferenceType;
-            var ptr = GenerateExpression(ass.Pattern, null, deref);
+            var ptr = GenerateExpression(ass.Pattern, deref);
 
-            GenerateExpressionHelper(ass.Value, ptr, true);
+            var v = GenerateExpression(ass.Value, true);
+            builder.CreateStore(v, ptr);
         }
 
         private void GenerateExprStatement(AstExprStmt expr)
         {
-            GenerateExpression(expr.Expr, null, false);
+            GenerateExpression(expr.Expr, false);
         }
 
         private void InitGlobalVariable(AstVariableDecl decl, HashSet<AstVariableDecl> visited)
@@ -287,7 +288,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 foreach (var v in decl.SubDeclarations)
                 {
                     var varPtr = valueMap[v];
-                    GenerateExpressionHelper(v.Initializer, varPtr, true);
+                    var x = GenerateExpression(v.Initializer, true);
+                    builder.CreateStore(x, varPtr);
                 }
             }
 
@@ -303,7 +305,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 if (v.Initializer != null)
                 {
-                    GenerateExpressionHelper(v.Initializer, varPtr, true);
+                    var x = GenerateExpression(v.Initializer, true);
+                    builder.CreateStore(x, varPtr);
                 }
             }
         }
@@ -313,14 +316,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (ret.ReturnValue != null)
             {
                 var return_var = valueMap[currentFunction.ReturnValue];
-                var retval = GenerateExpression(ret.ReturnValue, return_var, true);
-                if (retval != null)
-                {
-                    builder.CreateStore(retval.Value, return_var);
-                }
-
-                retval = builder.CreateLoad(return_var, "");
-                builder.CreateRet(retval.Value);
+                var retval = GenerateExpression(ret.ReturnValue, true);
+                builder.CreateRet(retval);
             }
             else if (currentFunction.ReturnValue != null)
             {

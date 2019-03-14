@@ -146,6 +146,9 @@ namespace Cheez.Types.Primitive
             if (targetType == null)
                 return null;
 
+            if (targetType is ReferenceType r)
+                targetType = r.TargetType;
+
             if (sTypes.ContainsKey(targetType))
             {
                 return sTypes[targetType];

@@ -6,8 +6,6 @@ typedef isize = i32
 
 fn c_sprintf(buff: *char, f: c_string, a: double) -> i32 #varargs #linkname("sprintf");
 
-let NEW_LINE: char = '`n'
-
 fn print_string(s: *$T) {
     if @typeseq(c_string, T) {
         let len = strlen(s)
@@ -158,7 +156,7 @@ fn b_print_i(buffer: *String, val: $T) {
 
 fn println(v: $T) {
     print(v)
-    print_char(NEW_LINE)
+    print_char('`n')
 }
 
 fn print(v: $T) {
