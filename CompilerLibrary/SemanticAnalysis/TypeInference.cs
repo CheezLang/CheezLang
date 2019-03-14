@@ -1297,6 +1297,8 @@ namespace Cheez
                     return InferType(call, expected);
                 }
 
+                expr.Left = Cast(expr.Left, op.LhsType);
+                expr.Right = Cast(expr.Right, op.LhsType);
 
                 expr.ActualOperator = op;
 
@@ -1469,6 +1471,8 @@ namespace Cheez
             if (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType)
                 return InferType(cast, to);
 
+            if (to is PointerType p2 && p2.TargetType == CheezType.Any && from is PointerType)
+                return InferType(cast, to);
 
             ReportError(expr, errorMsg ?? $"Can't implicitly convert {from} to {to}");
             return expr;

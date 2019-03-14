@@ -229,6 +229,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
 
             var ptr = GenerateExpression(ass.Pattern, null, false);
+
+            if (ass.Pattern.Type is ReferenceType)
+            {
+                ptr = builder.CreateLoad(ptr.Value, "");
+            }
+
             GenerateExpressionHelper(ass.Value, ptr, true);
         }
 

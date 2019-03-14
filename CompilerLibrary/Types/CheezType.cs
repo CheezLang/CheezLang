@@ -46,6 +46,9 @@ namespace Cheez.Types
 
         public virtual int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {
+            if (concrete is ReferenceType r)
+                concrete = r.TargetType;
+
             if (this == concrete)
                 return 0;
             return -1;

@@ -65,6 +65,9 @@ namespace Cheez.Types.Primitive
 
         public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {
+            if (concrete is ReferenceType r)
+                concrete = r.TargetType;
+
             if (concrete is IntType t)
             {
                 if (t.Signed != this.Signed)
@@ -112,6 +115,9 @@ namespace Cheez.Types.Primitive
 
         public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {
+            if (concrete is ReferenceType r)
+                concrete = r.TargetType;
+
             if (concrete is FloatType t)
             {
                 if (concrete.Size > this.Size)
@@ -170,6 +176,9 @@ namespace Cheez.Types.Primitive
 
         public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {
+            if (concrete is ReferenceType r)
+                concrete = r.TargetType;
+
             if (concrete is PointerType p)
                 return this.TargetType.Match(p.TargetType, polyTypes);
             return -1;

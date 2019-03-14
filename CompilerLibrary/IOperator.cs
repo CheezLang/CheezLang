@@ -31,8 +31,8 @@ namespace Cheez
 
     public class BuiltInPointerOperator : IOperator
     {
-        public CheezType LhsType => throw new NotImplementedException();
-        public CheezType RhsType => throw new NotImplementedException();
+        public CheezType LhsType => PointerType.GetPointerType(CheezType.Any);
+        public CheezType RhsType => PointerType.GetPointerType(CheezType.Any);
         public CheezType ResultType { get; private set; }
 
         public string Name { get; private set; }

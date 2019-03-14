@@ -302,10 +302,10 @@ namespace Cheez
                             return newVal;
                         }
 
-                        if (ass.Value.Type != ass.Pattern.Type && !ass.Pattern.Type.IsErrorType)
-                        {
-                            ReportError(ass, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
-                        }
+                        if (ass.Pattern.Type.IsErrorType)
+                            break;
+
+                        ass.Value = Cast(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                         break;
                     }
 

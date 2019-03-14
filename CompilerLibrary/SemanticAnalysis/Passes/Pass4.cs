@@ -258,6 +258,10 @@ namespace Cheez
                         break;
                     }
 
+                case AstReferenceTypeExpr r:
+                    CollectPolyTypeNames(r.Target, result);
+                    break;
+
                 default: throw new NotImplementedException();
             }
         }
