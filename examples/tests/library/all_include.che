@@ -1,0 +1,18 @@
+#test_expect_output("test")
+
+#load("std:util")
+#load("std:string")
+#load("std:math")
+#load("std:c")
+#load("std:array")
+#load("std:os/windows")
+
+fn println(str: string) {
+    let bytesWritten: DWORD = 0
+    WriteFile(__std_out_handle, cast str.data, cast str.length, &bytesWritten, null)
+    WriteFile(__std_out_handle, cast "`n"c, 1, &bytesWritten, null)
+}
+
+fn Main() {
+    println("test")
+}
