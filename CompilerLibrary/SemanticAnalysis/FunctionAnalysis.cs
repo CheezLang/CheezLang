@@ -409,7 +409,7 @@ namespace Cheez
                         break;
                     }
 
-                default: ReportError(pattern, $"Can't assign to the pattern '{pattern}', not an lvalue"); break;
+                default: ReportError(pattern, $"Can't assign to '{pattern.Type}', not an lvalue"); break;
             }
 
             return value;
@@ -468,10 +468,9 @@ namespace Cheez
 
                 ConvertLiteralTypeToDefaultType(ret.ReturnValue);
 
-                if (ret.ReturnValue.Type != currentFunction.FunctionType.ReturnType && !ret.ReturnValue.Type.IsErrorType)
+                if (!ret.ReturnValue.Type.IsErrorType)
                 {
-                    ReportError(ret.ReturnValue,
-                        $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
+                    ret.ReturnValue = Cast(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
                 }
             }
             else if (currentFunction.ReturnValue != null)

@@ -221,7 +221,9 @@ namespace Cheez
                 (to is FloatType && from is IntType) ||
                 (to is IntType && from is FloatType) ||
                 (to is IntType && from is BoolType) ||
-                (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType))
+                (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
+                (to is ReferenceType r && r.TargetType == from) ||
+                (from is ReferenceType r2 && r2.TargetType == to))
             {
                 // ok
             }
@@ -1056,9 +1058,19 @@ namespace Cheez
                 ConvertLiteralTypeToDefaultType(arg.Expr, type);
                 arg.Type = arg.Expr.Type;
 
-                if ((!func.VarArgs || arg.Index < func.Parameters.Length) && arg.Type != type && !arg.Type.IsErrorType)
+                if (arg.Type.IsErrorType)
+                    continue;
+
+                if (func.VarArgs && arg.Index >= func.Parameters.Length)
                 {
-                    ReportError(arg, $"Type of argument ({arg.Type}) does not match type of parameter ({type})");
+                    if (arg.Type is ReferenceType r)
+                    {
+                        arg.Expr = Cast(arg.Expr, r.TargetType);
+                    }
+                }
+                else
+                {
+                    arg.Expr = Cast(arg.Expr, type, $"Type of argument ({arg.Type}) does not match type of parameter ({type})");
                 }
             }
 
@@ -1427,15 +1439,39 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression Cast(AstExpression expr, CheezType to)
+        private AstExpression Cast(AstExpression expr, CheezType to, string errorMsg = null)
         {
             var from = expr.Type;
 
             if (from == to)
                 return expr;
 
+            var cast = new AstCastExpr(new AstTypeRef(to), expr, expr.Location);
+            cast.Scope = expr.Scope;
+
+            if (to is ReferenceType r)
+            {
+                if (r.TargetType == from)
+                {
+                    return InferType(cast, to);
+                }
+            }
+
+            if (from is ReferenceType r2)
+            {
+                if (r2.TargetType == to)
+                {
+                    return InferType(cast, to);
+                }
+            }
+
             // TODO: only do this for implicit casts
-            return InferType(new AstCastExpr(new AstTypeRef(to), expr, expr.Location), to);
+            if (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType)
+                return InferType(cast, to);
+
+
+            ReportError(expr, errorMsg ?? $"Can't implicitly convert {from} to {to}");
+            return expr;
         }
     }
 }

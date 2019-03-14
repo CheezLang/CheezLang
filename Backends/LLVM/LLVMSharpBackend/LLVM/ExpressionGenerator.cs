@@ -78,6 +78,18 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var to = cast.Type;
             var from = cast.SubExpression.Type;
 
+            if (to is ReferenceType)
+            {
+                return GenerateExpression(cast.SubExpression, null, false);
+            }
+
+            if (from is ReferenceType)
+            {
+                var uiae = GenerateExpression(cast.SubExpression, null, true);
+                uiae = builder.CreateLoad(uiae.Value, "");
+                return uiae;
+            }
+
             var sub = GenerateExpression(cast.SubExpression, null, true);
 
             if (to == from) return sub;
@@ -845,21 +857,5 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
             return v;
         }
-
-        //public override LLVMValueRef VisitStructValueExpression(AstStructValueExpr str)
-        //{
-        //    var value = GetTempValue(str.Type);
-
-        //    var llvmType = CheezTypeToLLVMType(str.Type);
-
-        //    foreach (var m in str.MemberInitializers)
-        //    {
-        //        var v = m.Value.Accept(this, data);
-        //        var memberPtr = builder.CreateStructGEP(value, (uint)m.Index, "");
-        //        var s = builder.CreateStore(v, memberPtr);
-        //    }
-
-        //    return value;
-        //}
     }
 }
