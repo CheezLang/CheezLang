@@ -75,32 +75,9 @@ impl Array($T) {
         }
     }
 
-    fn get_unchecked(ref Self, index: int) -> ref T #operator("[]") {
+    fn access_unchecked(ref Self, index: int) -> ref T #operator("[]") {
         return data[index]
     }
-
-    // ref fn set(index: $IndexType, value: T) {
-    //     if !@isint(IndexType) {
-    //         @error("Index must be an i32")
-    //         return
-    //     }
-    //     else {
-    //         data[index] = value
-    //     }
-    // }
-
-    // ref fn convert() -> Array($X) {
-    //     let r: Array(X)
-    //     r.init()
-    //     r.reserve(length)
-
-    //     while r.length < length {
-    //         r.data[r.length] = cast(X) data[r.length]
-    //         r.length += 1
-    //     }
-
-    //     return r
-    // }
 
     // ref fn slice() -> []T {
     //     let slice: []T = self.data

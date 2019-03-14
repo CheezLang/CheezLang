@@ -1,0 +1,94 @@
+#test_expect_output("1
+5
+
+len: 0
+cap: 10
+arr: []
+
+len: 15
+cap: 15
+arr: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+len: 18
+cap: 30
+arr: [5, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3]
+
+len: 21
+cap: 30
+arr: [5, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 6, 7, 8]
+
+a[5] = 3
+a[20] = 8
+
+len: 0
+cap: 0
+arr: []
+")
+
+#load("std:c")
+#load("std:array")
+
+fn print_array(a: ref Array(int)) {
+    c_printf("len: %lld`n", a.get_length())
+    c_printf("cap: %lld`n", a.get_capacity())
+    c_printf("arr: [")
+
+    while let i = 0; i < a.get_length(); i += 1 {
+        if i > 0 {
+            c_printf(", ")
+        }
+        c_printf("%lld", a[i])
+    }
+
+    c_printf("]`n`n")
+}
+
+struct Foo {
+    x: int
+}
+
+impl Foo {
+    fn bar(ref Self) {
+        self.x += 10
+    }
+}
+
+fn test(a: ref int) {
+    a = 5
+}
+
+fn Main() {
+    let x = 1
+    c_printf("%lld`n", x)
+    test(x)
+    c_printf("%lld`n", x)
+    c_printf("`n", x)
+
+    let a = type Array(int)::create()
+
+    print_array(a)
+
+    a.resize(15)
+    print_array(a)
+
+    a[0] = 5
+    a[5] = 3
+
+    a.add(1)
+    a.add(2)
+    a.add(3)
+    print_array(a)
+
+    a += 1 + 5
+    a += 2 + 5
+    a += 3 + 5
+    print_array(a)
+
+    if let (ok, value) = a.get(-1); ok { c_printf("a[%lld] = %lld`n", -1, value) }
+    if let (ok, value) = a.get(5); ok { c_printf("a[%lld] = %lld`n", 5, value) }
+    if let (ok, value) = a.get(20); ok { c_printf("a[%lld] = %lld`n", 20, value) }
+    c_printf("`n")
+    
+    a.free()
+    print_array(a)
+}

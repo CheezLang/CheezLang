@@ -304,6 +304,7 @@ namespace Cheez
                         if (ass.Pattern.Type.IsErrorType)
                             break;
 
+                        ConvertLiteralTypeToDefaultType(ass.Value);
                         ass.Value = Cast(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                         break;
                     }
@@ -405,6 +406,26 @@ namespace Cheez
                             newVal = InferType(newVal, pattern.Type);
                             return newVal;
                         }
+                        break;
+                    }
+
+                case AstExpression e when e.Type is ReferenceType r:
+                    {
+                        // TODO: check if can be assigned to id (e.g. not const)
+                        if (ass.Operator != null)
+                        {
+                            AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
+                            newVal.Scope = value.Scope;
+                            newVal.Parent = value.Parent;
+                            newVal = InferType(newVal, pattern.Type);
+                            return newVal;
+                        }
+
+                        if (ass.Pattern.Type.IsErrorType)
+                            break;
+
+                        ConvertLiteralTypeToDefaultType(ass.Value);
+                        ass.Value = Cast(ass.Value, r.TargetType, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                         break;
                     }
 
