@@ -18,7 +18,7 @@
 #test_expect_output("1.500000, 4.000000")
 #test_expect_output("-1.500000, -4.000000")
 
-#load("../../std/math")
+#load("std:math")
 
 fn c_printf(format: c_string) #varargs #linkname("printf");
 

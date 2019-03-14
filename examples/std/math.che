@@ -78,7 +78,7 @@ impl Vector2($T) {
     fn addv(*Self, other: Vector2(T)) -> *Vector2(T) #operator("+=") {
         x += other.x
         y += other.y
-        return Self
+        return self
     }
 
     fn subv(*Self, other: Vector2(T)) -> *Vector2(T) #operator("-=") {
@@ -105,7 +105,7 @@ impl Vector2($T) {
         return self
     }
 
-    fn normalize(*self) -> *Vector2(T) {
+    fn normalize(*Self) -> *Vector2(T) {
         let mag = self.mag()
         if mag != 0 {
             x /= mag
@@ -115,15 +115,15 @@ impl Vector2($T) {
         return self
     }
 
-    fn mag(self) -> T {
+    fn mag(Self) -> T {
         return cast(T) sqrt(cast(double) (x*x + y*y))
     }
 
-    fn magsq(self) -> T {
+    fn magsq(Self) -> T {
         return cast(T) (x*x + y*y)
     }
 
-    fn neg(self) -> self #operator("-") {
+    fn neg(Self) -> Self #operator("-") {
         return new {-x, -y}
     }
 

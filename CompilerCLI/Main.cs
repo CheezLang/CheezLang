@@ -241,8 +241,8 @@ namespace CheezCLI
                     if (options.RunAsTest)
                     {
                         stopwatch.Restart();
-                        string StringLiteralToString(AstExpression e) => (e as AstStringLiteral).StringValue;
-                        IEnumerable<string> DirectiveToStrings(AstDirective d) => d.Arguments.Select(StringLiteralToString);
+                        string[] StringLiteralToString(AstExpression e) => (e as AstStringLiteral).StringValue.Split('\n');
+                        IEnumerable<string> DirectiveToStrings(AstDirective d) => d.Arguments.SelectMany(StringLiteralToString);
                         string[] expectedOutputs = compiler.TestOutputs.Select(DirectiveToStrings).SelectMany(x => x).ToArray();
                         int currentExpectedOutput = 0;
                         int linesFailed = 0;

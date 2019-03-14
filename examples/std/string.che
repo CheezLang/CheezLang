@@ -91,10 +91,7 @@ typedef Utf32String = StringBase(i32)
 
 impl StringBase($CharType) {
     fn empty() -> Self {
-        return new {
-            data = null
-            length = 0
-        }
+        return new { null, 0 }
     }
 
     fn from_string(str: string) -> Self {
@@ -117,6 +114,14 @@ impl StringBase($CharType) {
 
     fn get_length(*Self) -> int {
         return length
+    }
+
+    fn get_capacity(*Self) -> int {
+        return data.length
+    }
+
+    fn get_raw(*Self) -> *CharType {
+        return data.data
     }
 
     fn char_at(*Self, i: int) -> CharType {
