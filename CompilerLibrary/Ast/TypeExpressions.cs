@@ -130,6 +130,24 @@ namespace Cheez.Ast.Expressions.Types
         public override AstExpression Clone() => CopyValuesTo(new AstIdTypeExpr(Name, IsPolymorphic));
     }
 
+    public class AstReferenceTypeExpr : AstTypeExpr
+    {
+        public override bool IsPolymorphic => Target.IsPolymorphic;
+        public AstTypeExpr Target { get; set; }
+
+        [DebuggerStepThrough]
+        public AstReferenceTypeExpr(AstTypeExpr target, ILocation Location = null) : base(Location)
+        {
+            this.Target = target;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitReferenceTypeExpr(this, data);
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone() => CopyValuesTo(new AstReferenceTypeExpr(Target));
+    }
+
     public class AstPointerTypeExpr : AstTypeExpr
     {
         public override bool IsPolymorphic => Target.IsPolymorphic;

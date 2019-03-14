@@ -182,6 +182,7 @@ namespace Cheez.Types.Primitive
 
         public CheezType TargetType { get; set; }
         public override bool IsErrorType => TargetType.IsErrorType;
+        public override bool IsPolyType => TargetType.IsPolyType;
 
         public static ReferenceType GetRefType(CheezType targetType)
         {
@@ -211,7 +212,12 @@ namespace Cheez.Types.Primitive
             return $"ref {TargetType}";
         }
 
-        public override bool IsPolyType => TargetType.IsPolyType;
+        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        {
+            if (concrete is ReferenceType p)
+                return this.TargetType.Match(p.TargetType, polyTypes);
+            return TargetType.Match(concrete, polyTypes);
+        }
     }
 
     public class ArrayType : CheezType

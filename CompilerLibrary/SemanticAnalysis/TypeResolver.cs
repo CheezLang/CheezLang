@@ -73,6 +73,13 @@ namespace Cheez
                         return PointerType.GetPointerType(subType);
                     }
 
+                case AstReferenceTypeExpr p:
+                    {
+                        p.Target.Scope = typeExpr.Scope;
+                        var subType = ResolveTypeHelper(p.Target, deps, instances, poly_from_scope);
+                        return ReferenceType.GetRefType(subType);
+                    }
+
                 case AstSliceTypeExpr a:
                     {
                         a.Target.Scope = typeExpr.Scope;

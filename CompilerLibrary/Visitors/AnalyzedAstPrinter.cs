@@ -583,6 +583,11 @@ namespace Cheez.Visitors
             return $"*{type.Target.Accept(this)}";
         }
 
+        public override string VisitReferenceTypeExpr(AstReferenceTypeExpr type, int data = 0)
+        {
+            return $"ref {type.Target.Accept(this)}";
+        }
+
         public override string VisitPolyStructTypeExpr(AstPolyStructTypeExpr type, int data = 0)
         {
             string args = string.Join(", ", type.Arguments.Select(a => a.Accept(this)));

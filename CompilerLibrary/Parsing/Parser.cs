@@ -1092,6 +1092,14 @@ namespace Cheez.Parsing
                 return new AstIdTypeExpr("type", false, new Location(token.location));
             }
 
+            if (token.type == TokenType.KwRef)
+            {
+                NextToken();
+                SkipNewlines();
+                var target = ParseTypeExpr();
+                return new AstReferenceTypeExpr(target, new Location(token.location, target.End));
+            }
+
             if (token.type == TokenType.AtSignIdentifier)
             {
                 var sub = ParseExpression();
