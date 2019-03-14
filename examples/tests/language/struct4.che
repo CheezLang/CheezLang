@@ -12,7 +12,7 @@ struct Vector(T: type) {
 }
 
 impl Vector($T) {
-    fn add(*self, other: Vector(T)) -> *Vector(T) {
+    fn add(*Self, other: Vector(T)) -> *Vector(T) {
         x += other.x
         y += other.y
 

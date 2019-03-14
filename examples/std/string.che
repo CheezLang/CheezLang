@@ -41,35 +41,31 @@ fn streq(a: $T, b: $T2) -> bool {
 }
 
 impl c_string {
-    fn get_length(self) -> int {
+    fn get_length(Self) -> int {
         return cast c_strlen(self)
     }
     
-    fn char_at(self, i: int) -> char {
+    fn char_at(Self, i: int) -> char {
         return self[i]
     }
 
-    // fn to_string() -> String {
-    //     let s = new_string()
-    //     s.append_cstring(self)
-    //     return s
-    // }
+    fn to_string(Self) -> String {
+        return String::from_cstring(self)
+    }
 }
 
 impl string {
-    fn get_length(self) -> int {
+    fn get_length(Self) -> int {
         return self.length
     }
     
-    fn char_at(self, i: int) -> char {
+    fn char_at(Self, i: int) -> char {
         return self[i]
     }
 
-    // fn to_string() -> String {
-    //     let s = new_string()
-    //     s.append_string(self)
-    //     return s
-    // }
+    fn to_string(Self) -> String {
+        return String::from_string(self)
+    }
 }
 
 // impl Printable for c_string {
@@ -94,22 +90,40 @@ typedef String = StringBase(char)
 typedef Utf32String = StringBase(i32)
 
 impl StringBase($CharType) {
-    fn empty() -> self {
+    fn empty() -> Self {
         return new {
             data = null
             length = 0
         }
     }
 
-    fn get_length(*self) -> int {
+    fn from_string(str: string) -> Self {
+        let s = Self::empty()
+        s.append_string(str)
+        return s
+    }
+
+    fn from_cstring(str: c_string) -> Self {
+        let s = Self::empty()
+        s.append_cstring(str)
+        return s
+    }
+
+    fn free(*Self) {
+        c_free(cast data.data)
+        data = null
+        length = 0
+    }
+
+    fn get_length(*Self) -> int {
         return length
     }
 
-    fn char_at(*self, i: int) -> CharType {
+    fn char_at(*Self, i: int) -> CharType {
         return data[i]
     }
 
-    fn reserve(*self, size: int) {
+    fn reserve(*Self, size: int) {
         if data.length > size {
             return
         }
@@ -118,95 +132,29 @@ impl StringBase($CharType) {
         if data.data == null {
             length = 0
             data.data = cast c_malloc(cast(i32) (size * @sizeof(CharType)))
-            // data = allocator.allocate(cast capacity, @sizeof(CharType), @alignof(CharType))
         }
         else {
             data.data = cast c_realloc(cast data.data, cast(i32) (size * @sizeof(CharType)))
-            // data = allocator.reallocate(data, cast capacity, @sizeof(CharType), @alignof(CharType))
             if length > data.length {
                 length = data.length
             }
         }
     }
 
-//     ref fn init(alloc: Allocator) {
-//         allocator = alloc
-//         data = null
-//         length = 0
-//         capacity = 0
-//         self.reserve(10)
-//     }
-    
-//     ref fn resize(size: i32) {
-//         length = size
-//         capacity = size
-//         if data == null {
-//             data = allocator.allocate(cast capacity, @sizeof(CharType), @alignof(CharType))
-//         }
-//         else {
-//             data = allocator.reallocate(data, cast capacity, @sizeof(CharType), @alignof(CharType))
-//         }
-//     }
+    fn resize(*Self, size: int) {
+        self.reserve(size)
+        length = size
+    }
 
-//     ref fn fromString(str: c_string) -> *StringBase(CharType) {
-//         if cast(u64) data != 0 {
-//             // @Todo:
-//             //self.dispose()
-//             allocator.free(data)
-//             data = null
-//             length = 0
-//             capacity = 0
-//         }
+    fn append(*Self, other: Self) -> *Self #operator("+=") {
+        let newLength = length + other.length
+        self.reserve(newLength)
+        c_memcpy(cast &data.data[length], cast other.data.data, cast(i32) (other.length * @sizeof(CharType)))
+        length = newLength
+        return self
+    }
 
-//         length = strlen(str)
-//         capacity = length
-//         data = allocator.allocate(cast capacity, @sizeof(CharType), @alignof(CharType))
-
-//         if @sizeof(CharType) == 1 {
-//             c_memcpy(data, str, length)
-//         } else {
-//             while let i = 0; i < length; i += 1 {
-//                 data[i] = cast(CharType) str[i]
-//             }
-//         }
-
-//         return &self
-//     }
-
-//     ref fn append(other: *StringBase(CharType)) -> *StringBase(CharType) {
-//         let newLength = length + other.length
-
-//         if newLength >= capacity {
-//             capacity = newLength * 2
-//             data = allocator.reallocate(data, cast capacity, @sizeof(CharType), @alignof(CharType))
-//         }
-        
-//         let end = &data[length]
-//         c_memcpy(end, other.data, other.length * @sizeof(CharType))
-
-//         length = newLength
-
-//         return &self
-//     }
-
-//     ref fn append_cstring(other: c_string) -> *StringBase(CharType) {
-//         let otherLength = strlen(other)
-//         let newLength = length + otherLength
-                
-//         if newLength >= capacity {
-//             capacity = newLength * 2
-//             data = allocator.reallocate(data, cast capacity, @sizeof(CharType), @alignof(CharType))
-//         }
-        
-//         let end = &data[length]
-//         c_memcpy(end, other, otherLength)
-
-//         length = newLength
-
-//         return &self
-//     }
-
-    fn append_string(*self, other: string) -> *self #operator("+=") {
+    fn append_string(*Self, other: string) -> *Self #operator("+=") {
         let newLength = length + other.length
         self.reserve(newLength)
         c_memcpy(cast &data.data[length], cast other.data, cast other.length)
@@ -214,87 +162,48 @@ impl StringBase($CharType) {
         return self
     }
 
-//     ref fn append_char(ch: CharType) -> *StringBase(CharType) {
-//         let newLength = length + 1
-        
-//         if newLength >= capacity {
-//             capacity = newLength * 2
-//             data = allocator.reallocate(data, cast capacity, @sizeof(CharType), @alignof(CharType))
-//         }
-        
-        
-//         data[length] = ch
-//         length = newLength
+    fn append_cstring(*Self, other: c_string) -> *Self #operator("+=") {
+        let otherLen = cast(int) c_strlen(other)
+        let newLength = length + otherLen
+        self.reserve(newLength)
+        c_memcpy(cast &data.data[length], cast other, cast otherLen)
+        length = newLength
+        return self
+    }
 
-//         return &self
-//     }
+    fn append_char(*Self, ch: CharType) -> *Self #operator("+=") {
+        let newLength = length + 1
+        self.reserve(newLength)
+        data[length] = ch
+        length = newLength
+        return self
+    }
 
-//     ref fn equals(other: $T) -> bool {
-//         if @isstring(T) { 
-//             let len: @typeof(length) = strlen(other)
-//             if len != length {
-//                 return false
-//             }
-            
-//             while let i: u64 = 0; i < len; i += 1 {
+    fn sliceFL(*Self, from: int, len: int) -> []CharType {
+        let slice: []CharType = &data[from]
+        slice.length = len
+        return slice
+    }
 
-//                 if data[i] != other[i] {
-//                     return false
-//                 }
-//             }
-//             return true
-//         }
-//         else {
-//             @error("Not implemented")
-//         }
-//     }
+    fn slice(*Self) -> []CharType {
+        return self.sliceFL(0, length)
+    }
 
-//     ref fn dispose() {
-//         allocator.free(data)
-//         data = null
-//         length = 0
-//     }
-
-//     ref fn slice() -> []CharType {
-//         return self.sliceFL(0, length)
-//     }
-
-//     ref fn sliceFL(from: i32, len: i32) -> []CharType {
-//         let slice: []CharType = &data[from]
-//         slice.length = len
-//         return slice
-//     }
-
-//     ref fn sliceF(from: i32) -> []CharType {
-//         return self.sliceFL(from, length - from)
-//     }
+    fn sliceF(*Self, from: int) -> []CharType {
+        return self.sliceFL(from, length - from)
+    }
     
-//     ref fn sliceL(len: i32) -> []CharType {
-//         return self.sliceFL(0, len)
-//     }
+    fn sliceL(*Self, len: int) -> []CharType {
+        return self.sliceFL(0, len)
+    }
 
-//     ref fn indexOf(ch: CharType) -> i32 {
-//         let i = 0
-//         while i < length {
-//             if data[i] == ch {
-//                 return i
-//             }
+    fn index_of(*Self, ch: CharType) -> int {
+        while let i = 0; i < length; i += 1 {
+            if data[i] == ch {
+                return i
+            }
+        }
 
-//             i += 1
-//         }
-
-//         return -1
-//     }
+        return -1
+    }
 }
-
-// fn new_string() -> String {
-//     let t = new String { allocator = DEFAULT_STD_HEAP_ALLOCATOR }
-//     t.reserve(10)
-//     return t
-// }
-
-// fn new_string2(alloc: Allocator) -> String {
-//     let t = new String { allocator = alloc }
-//     t.reserve(10)
-//     return t
-// }

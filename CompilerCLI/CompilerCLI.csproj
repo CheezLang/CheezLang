@@ -47,7 +47,9 @@
     <Reference Include="System.Reflection.TypeExtensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Reflection.TypeExtensions.4.1.0\lib\net46\System.Reflection.TypeExtensions.dll</HintPath>
     </Reference>
-    <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net461\System.ValueTuple.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -65,10 +67,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Backends\DummyBackend\DummyBackend.csproj">
-      <Project>{00f7ad1b-95c1-4763-9987-fbe755247490}</Project>
-      <Name>DummyBackend</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Backends\LLVM\LLVMSharpBackend\LLVMSharpBackend.csproj">
       <Project>{e004796f-bed0-4b24-b09b-f2c1ddd4115c}</Project>
       <Name>LLVMSharpBackend</Name>

@@ -518,7 +518,7 @@ namespace Cheez
                 {
                     var targetType = instance.ImplBlock.TargetType;
                     var inst = InstantiatePolyType(targetType, polyTypes, location);
-                    instance.ConstScope.DefineTypeSymbol("self", inst);
+                    instance.ConstScope.DefineTypeSymbol("Self", inst);
                 }
 
                 instance.Scope.FunctionDeclarations.Add(instance);

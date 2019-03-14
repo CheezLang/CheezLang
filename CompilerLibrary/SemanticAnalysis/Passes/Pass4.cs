@@ -28,7 +28,7 @@ namespace Cheez
             foreach (var i in mImpls)
             {
                 i.Scope.ImplBlocks.Add(i);
-                i.SubScope.DefineTypeSymbol("self", i.TargetType);
+                i.SubScope.DefineTypeSymbol("Self", i.TargetType);
 
                 foreach (var f in i.Functions)
                 {
@@ -62,10 +62,10 @@ namespace Cheez
 
         private bool IsSelfParameter(AstParameter param)
         {
-            if (param.TypeExpr is AstIdTypeExpr i && i.Name == "self")
+            if (param.TypeExpr is AstIdTypeExpr i && i.Name == "Self")
                 return true;
 
-            if (param.TypeExpr is AstPointerTypeExpr p && p.Target is AstIdTypeExpr i2 && i2.Name == "self")
+            if (param.TypeExpr is AstPointerTypeExpr p && p.Target is AstIdTypeExpr i2 && i2.Name == "Self")
                 return true;
 
             return false;

@@ -11,7 +11,7 @@ struct Test(T: type) {
 }
 
 impl Test($T) {
-    fn foo(*self, a: int) -> Test(T) {
+    fn foo(*Self, a: int) -> Test(T) {
         self.x = cast a
         return new Test(T) { cast a }
     }

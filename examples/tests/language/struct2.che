@@ -10,11 +10,11 @@ struct Test {
 }
 
 impl Test {
-    fn foo(*self, a: $T) {
+    fn foo(*Self, a: $T) {
         self.x = cast a
     }
 
-    fn bar(self, $T: type) -> T {
+    fn bar(Self, $T: type) -> T {
         return cast self.x
     }
 }

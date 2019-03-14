@@ -541,6 +541,7 @@ namespace Cheez
         {
             expr.Left.Scope = expr.Scope;
             expr.Left = InferTypeHelper(expr.Left, null, newInstances);
+            ConvertLiteralTypeToDefaultType(expr.Left);
 
             if (expr.Left.Type.IsErrorType)
                 return expr;
@@ -608,21 +609,6 @@ namespace Cheez
                         break;
                     }
 
-                case PointerType ptr when expr.IsDoubleColon:
-                    {
-                        var name = expr.Right.Name;
-                        var func = expr.Scope.GetImplFunction(ptr, name);
-
-                        if (func == null)
-                        {
-                            ReportError(expr.Right, $"Type '{ptr}' has no impl function '{name}'");
-                            break;
-                        }
-
-                        expr.Type = func.Type;
-                        break;
-                    }
-
                 case StructType s when !expr.IsDoubleColon:
                     {
                         var name = expr.Right.Name;
@@ -667,6 +653,21 @@ namespace Cheez
                     break;
 
                 case ErrorType _: return expr;
+
+                case CheezType c when expr.IsDoubleColon:
+                    {
+                        var name = expr.Right.Name;
+                        var func = expr.Scope.GetImplFunction(c, name);
+
+                        if (func == null)
+                        {
+                            ReportError(expr.Right, $"Type '{c}' has no impl function '{name}'");
+                            break;
+                        }
+
+                        expr.Type = func.Type;
+                        break;
+                    }
 
                 default: throw new NotImplementedException();
             }

@@ -17,16 +17,16 @@ struct Test {
 }
 
 impl Test {
-    fn create(a: int = 2, b: double = 5.5) -> self {
+    fn create(a: int = 2, b: double = 5.5) -> Self {
         return new { a, b }
     }
 
-    fn set_val(self, x: int, y: double) {
+    fn set_val(Self, x: int, y: double) {
         a = x
         b = y
     }
 
-    fn set_ref(*self, x: int, y: double) {
+    fn set_ref(*Self, x: int, y: double) {
         a = x
         b = y
     }
