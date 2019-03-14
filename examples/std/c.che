@@ -1,0 +1,3 @@
+fn c_strlen(str: c_string) -> i32 #linkname("strlen");
+fn c_printf(format: c_string) #varargs #linkname("printf");
+fn c_puts(str: c_string) #linkname("puts");

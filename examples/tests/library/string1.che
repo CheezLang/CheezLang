@@ -35,9 +35,7 @@ capaci: 0
 length: 0
 string: `"`"")
 
-fn c_printf(format: c_string) #varargs #linkname("printf");
 #load("std:string")
-
 
 fn Main() {
     let s = String::from_cstring("lol: "c)

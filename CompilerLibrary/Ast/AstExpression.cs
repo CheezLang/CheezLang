@@ -96,17 +96,26 @@ namespace Cheez.Ast.Expressions
         }
     }
 
-    public class AstIfExpr : AstExpression
+    public abstract class AstNestedExpression : AstExpression
     {
         public Scope SubScope { get; set; }
+
+        public AstNestedExpression(ILocation Location = null)
+            : base(Location: Location)
+        {
+        }
+    }
+
+    public class AstIfExpr : AstNestedExpression
+    {
         public AstExpression Condition { get; set; }
-        public AstExpression IfCase { get; set; }
-        public AstExpression ElseCase { get; set; }
+        public AstNestedExpression IfCase { get; set; }
+        public AstNestedExpression ElseCase { get; set; }
         public AstVariableDecl PreAction { get; set; }
 
         public override bool IsPolymorphic => false;
 
-        public AstIfExpr(AstExpression cond, AstExpression ifCase, AstExpression elseCase = null, AstVariableDecl pre = null, ILocation Location = null)
+        public AstIfExpr(AstExpression cond, AstNestedExpression ifCase, AstNestedExpression elseCase = null, AstVariableDecl pre = null, ILocation Location = null)
             : base(Location: Location)
         {
             this.Condition = cond;
@@ -119,13 +128,12 @@ namespace Cheez.Ast.Expressions
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitIfExpr(this, data);
 
         public override AstExpression Clone()
-            => CopyValuesTo(new AstIfExpr(Condition.Clone(), IfCase.Clone(), ElseCase?.Clone(), PreAction?.Clone() as AstVariableDecl));
+            => CopyValuesTo(new AstIfExpr(Condition.Clone(), IfCase.Clone() as AstNestedExpression, ElseCase?.Clone() as AstNestedExpression, PreAction?.Clone() as AstVariableDecl));
     }
 
-    public class AstBlockExpr : AstExpression
+    public class AstBlockExpr : AstNestedExpression
     {
         public List<AstStatement> Statements { get; }
-        public Scope SubScope { get; set; }
 
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
 

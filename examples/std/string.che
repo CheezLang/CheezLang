@@ -1,10 +1,7 @@
 // #load("std:mem/allocator")
 // #load("std:mem/std_heap_allocator")
 #load("std:mem/memory")
-
-
-
-fn c_strlen(str: c_string) -> i32 #linkname("strlen");
+#load("std:c")
 
 fn streql(a: $T, b: $T2, len: int) -> bool {
     let alen: int = cast a.getLength()

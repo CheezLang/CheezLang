@@ -923,8 +923,8 @@ namespace Cheez.Parsing
         {
             TokenLocation beg = null, end = null;
             AstExpression condition = null;
-            AstExpression ifCase = null;
-            AstExpression elseCase = null;
+            AstNestedExpression ifCase = null;
+            AstNestedExpression elseCase = null;
             AstVariableDecl pre = null;
 
             beg = Consume(TokenType.KwIf, ErrMsg("keyword 'if'", "at beginning of if statement")).location;

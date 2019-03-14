@@ -282,14 +282,14 @@ namespace Cheez
 
             expr.IfCase.Scope = expr.SubScope;
             expr.IfCase.Parent = expr;
-            expr.IfCase = InferTypeHelper(expr.IfCase, expected, newInstances);
+            expr.IfCase = InferTypeHelper(expr.IfCase, expected, newInstances) as AstNestedExpression;
             ConvertLiteralTypeToDefaultType(expr.IfCase, expected);
 
             if (expr.ElseCase != null)
             {
                 expr.ElseCase.Scope = expr.SubScope;
                 expr.ElseCase.Parent = expr;
-                expr.ElseCase = InferTypeHelper(expr.ElseCase, expected, newInstances);
+                expr.ElseCase = InferTypeHelper(expr.ElseCase, expected, newInstances) as AstNestedExpression;
                 ConvertLiteralTypeToDefaultType(expr.ElseCase, expected);
                 
                 if (expr.IfCase.Type == expr.ElseCase.Type)
@@ -309,6 +309,15 @@ namespace Cheez
             else
             {
                 expr.Type = CheezType.Void;
+            }
+
+            if (expr.ElseCase != null)
+            {
+                foreach (var symbol in expr.IfCase.SubScope.InitializedSymbols)
+                {
+                    if (expr.ElseCase.SubScope.IsInitialized(symbol))
+                        expr.Scope.SetInitialized(symbol);
+                }
             }
 
             return expr;
@@ -802,7 +811,9 @@ namespace Cheez
                 }
                 else
                 {
-                    throw new NotImplementedException();
+                    // add left side as first parameter
+                    AstArgument selfArg = new AstArgument(new AstIdExpr("self", false, expr.Function), Location: expr.Function);
+                    expr.Arguments.Insert(0, selfArg);
                 }
 
                 expr.UnifiedFunctionCall = true;
