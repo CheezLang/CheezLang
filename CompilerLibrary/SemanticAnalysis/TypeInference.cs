@@ -590,8 +590,33 @@ namespace Cheez
                     }
 
                 default:
-                    // TODO: seach for overloaded operator
-                    ReportError(expr.SubExpression, $"Type {expr.SubExpression.Type} has no operator []");
+                    {
+                        var left = expr.SubExpression;
+                        var right = expr.Indexer;
+
+                        var ops = expr.Scope.GetOperators("[]", left.Type, right.Type);
+
+                        // :temp
+                        // check if an operator is defined in an impl with *Self
+                        if (ops.Count == 0)
+                        {
+                            ops = expr.Scope.GetOperators("[]", PointerType.GetPointerType(left.Type), right.Type);
+                            left = new AstAddressOfExpr(left, left);
+                        }
+
+                        if (ops.Count == 1)
+                        {
+                            var opCall = new AstBinaryExpr("[]", left, right, expr);
+                            opCall.Scope = expr.Scope;
+                            return InferType(opCall, expected);
+                        }
+                        else if (ops.Count > 1)
+                        {
+                            ReportError(expr, $"Multiple operators '[]' match the types {left.Type} and {right.Type}");
+                        }
+                    }
+
+                    ReportError(expr, $"Type {expr.SubExpression.Type} has no operator []");
                     break;
             }
 
