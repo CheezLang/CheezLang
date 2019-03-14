@@ -249,6 +249,15 @@ namespace Cheez
 
                 case AstErrorTypeExpr _: break;
 
+                case AstFunctionTypeExpr func:
+                    {
+                        foreach (var v in func.ParameterTypes)
+                            CollectPolyTypeNames(v, result);
+                        if (func.ReturnType != null)
+                            CollectPolyTypeNames(func.ReturnType, result);
+                        break;
+                    }
+
                 default: throw new NotImplementedException();
             }
         }

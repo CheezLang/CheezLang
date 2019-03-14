@@ -95,7 +95,6 @@ namespace Cheez.Ast.Statements
             AstParameter returns,
             AstBlockExpr body = null,
             List<AstDirective> Directives = null,
-            bool refSelf = false,
             ILocation Location = null,
             ILocation ParameterLocation = null)
             : base(name, Directives, Location)
@@ -103,7 +102,6 @@ namespace Cheez.Ast.Statements
             this.Parameters = parameters;
             this.ReturnValue = returns;
             this.Body = body;
-            this.RefSelf = refSelf;
             this.ParameterLocation = ParameterLocation;
         }
 
