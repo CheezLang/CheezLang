@@ -41,7 +41,7 @@ impl LinearCongruentialGenerator {
         return new Self { seed }
     }
 
-    fn next(*Self) -> u32 {
+    fn next(ref Self) -> u32 {
         let M: u64 = cast(u64) u32_max()
         let A: u64 = 1664525
         let B: u64 = 1013904223
@@ -50,7 +50,7 @@ impl LinearCongruentialGenerator {
         return cast(u32) seed
     }
 
-    fn next_double(*Self) -> double {
+    fn next_double(ref Self) -> double {
         return cast(double) self.next() / cast(double) u32_max()
     }
 }
@@ -75,37 +75,37 @@ struct Vector4(T: type) {
 
 impl Vector2($T) {
     // ref
-    fn addv(*Self, other: Vector2(T)) -> *Vector2(T) #operator("+=") {
+    fn addv(ref Self, other: Self) -> ref Self #operator("+=") {
         x += other.x
         y += other.y
         return self
     }
 
-    fn subv(*Self, other: Vector2(T)) -> *Vector2(T) #operator("-=") {
+    fn subv(ref Self, other: Self) -> ref Self #operator("-=") {
         x -= other.x
         y -= other.y
         return self
     }
 
-    fn mulv(*Self, other: Vector2(T)) -> *Vector2(T) #operator("*=") {
+    fn mulv(ref Self, other: Self) -> ref Self #operator("*=") {
         x *= other.x
         y *= other.y
         return self
     }
 
-    fn muls(*Self, other: T) -> *Vector2(T) #operator("*=") {
+    fn muls(ref Self, other: T) -> ref Self #operator("*=") {
         x *= other
         y *= other
         return self
     }
 
-    fn divv(*Self, other: Vector2(T)) -> *Vector2(T) #operator("/=") {
+    fn divv(ref Self, other: Self) -> ref Self #operator("/=") {
         x /= other.x
         y /= other.y
         return self
     }
 
-    fn normalize(*Self) -> *Vector2(T) {
+    fn normalize(ref Self) -> ref Self {
         let mag = self.mag()
         if mag != 0 {
             x /= mag
@@ -128,42 +128,42 @@ impl Vector2($T) {
     }
 
     // static
-    fn addvv(a: Vector2(T), b: Vector2(T)) -> Vector2(T) #operator("+") {
+    fn addvv(a: Self, b: Self) -> Self #operator("+") {
         return new {
             a.x + b.x
             a.y + b.y
         }
     }
 
-    fn subvv(a: Vector2(T), b: Vector2(T)) -> Vector2(T) #operator("-") {
+    fn subvv(a: Self, b: Self) -> Self #operator("-") {
         return new {
             a.x - b.x
             a.y - b.y
         }
     }
 
-    fn mulvv(a: Vector2(T), b: Vector2(T)) -> Vector2(T) #operator("*") {
+    fn mulvv(a: Self, b: Self) -> Self #operator("*") {
         return new {
             a.x * b.x
             a.y * b.y
         }
     }
 
-    fn mulvs(a: Vector2(T), b: T) -> Vector2(T) #operator("*") {
+    fn mulvs(a: Self, b: T) -> Self #operator("*") {
         return new {
             a.x * b
             a.y * b
         }
     }
 
-    fn divvv(a: Vector2(T), b: Vector2(T)) -> Vector2(T) #operator("/") {
+    fn divvv(a: Self, b: Self) -> Self #operator("/") {
         return new {
             a.x / b.x
             a.y / b.y
         }
     }
 
-    fn dot(a: Vector2(T), b : Vector2(T)) -> T {
+    fn dot(a: Self, b : Self) -> T {
         return a.x * b.x + a.y * b.y
     }
 }

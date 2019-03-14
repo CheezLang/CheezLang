@@ -1,68 +1,61 @@
+// #load("tests/other/string1")
 #load("test2")
 // #load("std:util")
 // #load("std:math")
-#load("std:string")
+// #load("std:string")
+#load("std:array")
+
+
+fn print_array(a: ref Array(int)) {
+    c_printf("len: %lld`n", a.get_length())
+    c_printf("cap: %lld`n", a.get_capacity())
+    c_printf("ptr: %lld`n", a.get_raw())
+    c_printf("arr: [")
+
+    while let i = 0; i < a.get_length(); i += 1 {
+        if i > 0 {
+            c_printf(", ")
+        }
+        c_printf("%lld", a[i])
+    }
+
+    c_printf("]`n`n")
+}
+
+struct Foo {
+    x: int
+}
+
+impl Foo {
+    fn bar(ref Self) {
+        self.x += 10
+    }
+}
 
 fn Main() {
-    // {
-    //     let s = "test"
-    //     c_printf("%lld`n", s::get_length())
-    //     c_printf("%c`n", s::char_at(1))
+    let a = type Array(int)::create()
 
-    //     let s2 = "hallo"c
-    //     c_printf("%lld`n", s2::get_length())
-    //     c_printf("%c`n", s2::char_at(1))
+    print_array(a)
 
-    //     c_printf("%d`n", streq(s, s2))
-    //     c_printf("%d`n", streq(s, s))
-    //     c_printf("%d`n", streq(s2, s2))
-    // }
+    a.resize(15)
+    print_array(a)
 
-    {
-        let s = String::empty()
-        
-        c_printf("capaci: %lld`n", s.data.length)
-        c_printf("datapt: %lld`n", cast(int) s.data.data)
-        c_printf("length: %lld`n", s.get_length())
-        c_printf("string: `"%.*s`"`n", s.length, s.data.data)
-        c_printf("`n")
+    // a[0] = 0
 
-        s.reserve(10)
-        c_printf("capaci: %lld`n", s.data.length)
-        c_printf("datapt: %lld`n", cast(int) s.data.data)
-        c_printf("length: %lld`n", s.get_length())
-        c_printf("string: `"%.*s`"`n", s.length, s.data.data)
-        c_printf("`n")
-        
-        s.reserve(12)
-        c_printf("capaci: %lld`n", s.data.length)
-        c_printf("datapt: %lld`n", cast(int) s.data.data)
-        c_printf("length: %lld`n", s.get_length())
-        c_printf("string: `"%.*s`"`n", s.length, s.data.data)
-        c_printf("`n")
-        
-        s += "Hello "
-        // s.append_string("Hello ")
-        c_printf("capaci: %lld`n", s.data.length)
-        c_printf("datapt: %lld`n", cast(int) s.data.data)
-        c_printf("length: %lld`n", s.get_length())
-        c_printf("string: `"%.*s`"`n", s.length, s.data.data)
-        c_printf("`n")
+    a.add(1)
+    a.add(2)
+    a.add(3)
+    print_array(a)
 
-        s += "World"
-        // s.append_string("World")
-        c_printf("capaci: %lld`n", s.data.length)
-        c_printf("datapt: %lld`n", cast(int) s.data.data)
-        c_printf("length: %lld`n", s.get_length())
-        c_printf("string: `"%.*s`"`n", s.length, s.data.data)
-        c_printf("`n")
+    a += 1 + 5
+    // a += 2 + 5
+    // a += 3 + 5
+    print_array(a)
 
-        s += "! Wassup?"
-        // s.append_string("! Wassup?")
-        c_printf("capaci: %lld`n", s.data.length)
-        c_printf("datapt: %lld`n", cast(int) s.data.data)
-        c_printf("length: %lld`n", s.get_length())
-        c_printf("string: `"%.*s`"`n", s.length, s.data.data)
-        c_printf("`n")
-    }
+    if let (ok, value) = a.get(-1); ok { c_printf("a[%lld] = %lld`n", -1, value) }
+    if let (ok, value) = a.get(5); ok { c_printf("a[%lld] = %lld`n", 5, value) }
+    if let (ok, value) = a.get(20); ok { c_printf("a[%lld] = %lld`n", 20, value) }
+
+    a.free()
+    print_array(a)
 }

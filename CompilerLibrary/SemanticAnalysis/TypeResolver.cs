@@ -267,6 +267,17 @@ namespace Cheez
                         break;
                     }
 
+                case ReferenceType r:
+                    {
+                        if (arg is ReferenceType r2)
+                            CollectPolyTypes(r.TargetType, r2.TargetType, result);
+                        else
+                            CollectPolyTypes(r.TargetType, arg, result);
+                        break;
+                    }
+
+                case IntType _: break;
+
                 //default: throw new NotImplementedException();
                 //case AstFunctionTypeExpr func:
                 //    if (func.ReturnType != null) CollectPolyTypes(func.ReturnType, types);
@@ -276,6 +287,8 @@ namespace Cheez
                 //case AstPolyStructTypeExpr @struct:
                 //    foreach (var p in @struct.Arguments) CollectPolyTypes(p, types);
                 //    break;
+
+                //default: throw new NotImplementedException();
             }
         }
 
@@ -517,7 +530,7 @@ namespace Cheez
                 instance.PolymorphicTypes = polyTypes;
                 instance.ConstParameters = constArgs;
                 instance.ImplBlock = func.Declaration.ImplBlock;
-                instance.RefSelf = func.Declaration.RefSelf;
+                instance.SelfType = func.Declaration.SelfType;
                 instance.SelfParameter = func.Declaration.SelfParameter;
                 func.Declaration.PolymorphicInstances.Add(instance);
 

@@ -68,6 +68,9 @@ namespace Cheez
             if (param.TypeExpr is AstPointerTypeExpr p && p.Target is AstIdTypeExpr i2 && i2.Name == "Self")
                 return true;
 
+            if (param.TypeExpr is AstReferenceTypeExpr p2 && p2.Target is AstIdTypeExpr i3 && i3.Name == "Self")
+                return true;
+
             return false;
         }
 
@@ -80,7 +83,11 @@ namespace Cheez
             {
                 func.SelfParameter = true;
                 if (func.Parameters[0].Type == PointerType.GetPointerType(func.ImplBlock.TargetType))
-                    func.RefSelf = true;
+                    func.SelfType = SelfParamType.Pointer;
+                else if (func.Parameters[0].Type == ReferenceType.GetRefType(func.ImplBlock.TargetType))
+                    func.SelfType = SelfParamType.Reference;
+                else
+                    func.SelfType = SelfParamType.Value;
             }
 
 

@@ -271,11 +271,10 @@ namespace Cheez
             {
                 var assOp = ass.Operator + "=";
                 var valType = LiteralTypeToDefaultType(value.Type);
-                var ops = ass.Scope.GetOperators(assOp, PointerType.GetPointerType(pattern.Type), valType);
+                var ops = ass.Scope.GetOperators(assOp, pattern.Type, valType);
                 if (ops.Count == 1)
                 {
-                    var left = new AstAddressOfExpr(pattern, pattern.Location);
-                    var opCall = new AstBinaryExpr(assOp, left, value, value.Location);
+                    var opCall = new AstBinaryExpr(assOp, pattern, value, value.Location);
                     opCall.Scope = value.Scope;
                     ass.OnlyGenerateValue = true;
                     return InferType(opCall, null);

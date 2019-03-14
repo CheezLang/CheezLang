@@ -643,6 +643,11 @@ namespace Cheez
                     newLeft.Parent = expr.Left;
                     expr.Left = InferType(newLeft, p.TargetType);
                 }
+
+                if (expr.Left.Type is ReferenceType r)
+                {
+                    expr.Left = Cast(expr.Left, r.TargetType);
+                }
             }
 
             var sub = expr.Right.Name;
@@ -822,13 +827,21 @@ namespace Cheez
                 {
                     // add left side as first parameter
                     AstArgument selfArg = null;
-                    if (decl.RefSelf)
+                    switch (decl.SelfType)
                     {
-                        selfArg = new AstArgument(new AstAddressOfExpr(val.Left, val.Left.Location), Location: val.Left.Location);
-                    }
-                    else
-                    {
-                        selfArg = new AstArgument(val.Left, Location: val.Left.Location);
+                        case SelfParamType.Pointer:
+                            selfArg = new AstArgument(new AstAddressOfExpr(val.Left, val.Left.Location), Location: val.Left.Location);
+                            break;
+
+                        case SelfParamType.Value:
+                            selfArg = new AstArgument(val.Left, Location: val.Left.Location);
+                            break;
+
+                        case SelfParamType.Reference:
+                            selfArg = new AstArgument(val.Left, Location: val.Left.Location);
+                            break;
+
+                        default: throw new NotImplementedException();
                     }
                     expr.Arguments.Insert(0, selfArg);
                 }
@@ -967,14 +980,26 @@ namespace Cheez
                     if (expr.UnifiedFunctionCall)
                     {
                         var selfType = expr.Arguments[0].Type;
-                        if (func.Declaration.RefSelf)
+
+                        switch (func.Declaration.SelfType)
                         {
-                            selfType = ((PointerType)selfType).TargetType;
-                            CollectPolyTypes(func.Declaration.ImplBlock.TargetType, selfType, polyTypes);
-                        }
-                        else
-                        {
-                            CollectPolyTypes(func.Declaration.ImplBlock.TargetType, selfType, polyTypes);
+                            case SelfParamType.Pointer:
+                                selfType = ((PointerType)selfType).TargetType;
+                                CollectPolyTypes(func.Declaration.ImplBlock.TargetType, selfType, polyTypes);
+                                break;
+
+                            case SelfParamType.Reference:
+                                if (selfType is ReferenceType r)
+                                    CollectPolyTypes(func.Declaration.ImplBlock.TargetType, r, polyTypes);
+                                else
+                                    CollectPolyTypes(func.Declaration.ImplBlock.TargetType, selfType, polyTypes);
+                                break;
+
+                            case SelfParamType.Value:
+                                CollectPolyTypes(func.Declaration.ImplBlock.TargetType, selfType, polyTypes);
+                                break;
+
+                            default: throw new NotImplementedException();
                         }
                     }
                     else
@@ -1010,6 +1035,8 @@ namespace Cheez
             }
 
             expr.Arguments = newArgs;
+
+            // TODO: check if all poly types have been found
             
             // find or create instance
             var instance = InstantiatePolyFunction(func, polyTypes, constArgs, newInstances, expr);
@@ -1028,10 +1055,11 @@ namespace Cheez
             {
                 var a = expr.Arguments[i];
                 var p = instance.Parameters[i];
-                if (a.Type != p.Type && !a.Type.IsErrorType)
-                {
-                    ReportError(a, $"Type of argument ({a.Type}) does not match type of parameter ({p.Type})");
-                }
+
+                if (a.Type.IsErrorType)
+                    continue;
+
+                expr.Arguments[i].Expr = Cast(expr.Arguments[i].Expr, p.Type, $"Type of argument ({a.Type}) does not match type of parameter ({p.Type})");
             }
 
             expr.Declaration = instance;
@@ -1286,6 +1314,12 @@ namespace Cheez
                 }
 
                 var op = ops[0];
+
+                if (!op.LhsType.IsPolyType)
+                    expr.Left = Cast(expr.Left, op.LhsType);
+                if (!op.RhsType.IsPolyType)
+                expr.Right = Cast(expr.Right, op.RhsType);
+
                 if (op is UserDefinedBinaryOperator user)
                 {
                     var args = new List<AstArgument>() {
@@ -1296,9 +1330,6 @@ namespace Cheez
                     var call = new AstCallExpr(func, args, expr.Location);
                     return InferType(call, expected);
                 }
-
-                expr.Left = Cast(expr.Left, op.LhsType);
-                expr.Right = Cast(expr.Right, op.LhsType);
 
                 expr.ActualOperator = op;
 

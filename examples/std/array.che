@@ -1,102 +1,110 @@
 #load("std:mem/memory")
-#load("std:mem/allocator")
-#load("std:mem/std_heap_allocator")
+// #load("std:mem/allocator")
+// #load("std:mem/std_heap_allocator")
 
-struct Array(ElementType: type) {
-    data: *ElementType
-    length: u32
-    capacity: u32
-    allocator: Allocator
+struct Array(T: type) {
+    data: []T
+    length: int
+    // allocator: Allocator
 }
 
-fn newArray() -> Array($T) {
-    let a: Array(T)
-    a.init()
-    return a
-}
-
-impl Array($ElementType) {
-    ref fn init() {
-        allocator = new StdHeapAllocator{}
-        length = 0
-        capacity = 10
-        data = allocator.allocate(cast(u64) capacity, @sizeof(ElementType), @alignof(ElementType))
-    }
-    
-    ref fn initSize(size: u32) {
-        allocator = new StdHeapAllocator{}
-        length = 0
-        capacity = size
-        data = allocator.allocate(cast(u64) capacity, @sizeof(ElementType), @alignof(ElementType))
+impl Array($T) {
+    fn create() -> Self {
+        let s = new Array(T) { null, 0 }
+        s.reserve(10)
+        c_memset(cast s.get_raw(), 0, cast(uint) (s.get_capacity() * @sizeof(T)))
+        return s
     }
 
-    ref fn dispose() {
-        allocator.free(data)
-    }
-
-    ref fn rawData() -> *ElementType {
-        return data
-    }
-
-    ref fn reserve(s: u32) {
-        if s <= capacity {
+    fn reserve(ref Self, size: int) {
+        if data.length > size {
             return
         }
-        capacity = s
-        data = allocator.reallocate(data, cast(u64) capacity, @sizeof(ElementType), @alignof(ElementType))
+
+        data.length = size
+        data.data = cast c_realloc(cast data.data, cast(i32) (size * @sizeof(T)))
+
+        if size > length {
+            c_memset(cast &data[length], 0, cast(uint) ((size - length) * @sizeof(T)))
+        }
+
+        if length > data.length {
+            length = data.length
+        }
     }
 
-    ref fn resize(s: u32) {
-        self.reserve(s)
-        length = s
+    fn free(ref Self) {
+        c_free(cast data.data)
+        data = null
+        length = 0
     }
 
-    ref fn add(val: ElementType) {
-        if capacity <= length {
-            capacity = capacity * 2
-            data = allocator.reallocate(data, cast(u64) capacity, @sizeof(ElementType), @alignof(ElementType))
+    fn get_length(ref Self) -> int {
+        return length
+    }
+
+    fn get_capacity(ref Self) -> int {
+        return data.length
+    }
+
+    fn get_raw(ref Self) -> *T {
+        return data.data
+    }
+
+    fn resize(ref Self, size: int) {
+        reserve(size)
+        length = size
+    }
+
+    fn add(ref Self, val: T) #operator("+=") {
+        if get_capacity() <= get_length() {
+            reserve(get_capacity() * 2)
         }
 
         data[length] = val
         length += 1
     }
 
-    ref fn get(index: $IndexType) -> ElementType {
-        if !@isint(IndexType) {
-            @error("Index must be an i32")
-            return data[0]
-        }
-        else {
-            return data[index]
-        }
-    }
-
-    ref fn set(index: $IndexType, value: ElementType) {
-        if !@isint(IndexType) {
-            @error("Index must be an i32")
-            return
-        }
-        else {
-            data[index] = value
+    fn get(ref Self, index: int) -> (ok: bool, value: T) {
+        if index < 0 or index >= length {
+            ok = false
+            value = 0
+        } else {
+            ok = true
+            value = data[index]
         }
     }
 
-    ref fn convert() -> Array($X) {
-        let r: Array(X)
-        r.init()
-        r.reserve(length)
-
-        while r.length < length {
-            r.data[r.length] = cast(X) data[r.length]
-            r.length += 1
-        }
-
-        return r
+    fn get_unchecked(ref Self, index: int) -> ref T #operator("[]") {
+        return data[index]
     }
 
-    ref fn slice() -> []ElementType {
-        let slice: []ElementType = self.data
-        slice.length = cast(i32) self.length
-        return slice
-    }
+    // ref fn set(index: $IndexType, value: T) {
+    //     if !@isint(IndexType) {
+    //         @error("Index must be an i32")
+    //         return
+    //     }
+    //     else {
+    //         data[index] = value
+    //     }
+    // }
+
+    // ref fn convert() -> Array($X) {
+    //     let r: Array(X)
+    //     r.init()
+    //     r.reserve(length)
+
+    //     while r.length < length {
+    //         r.data[r.length] = cast(X) data[r.length]
+    //         r.length += 1
+    //     }
+
+    //     return r
+    // }
+
+    // ref fn slice() -> []T {
+    //     let slice: []T = self.data
+    //     slice.length = cast(i32) self.length
+    //     return slice
+    // }
 }

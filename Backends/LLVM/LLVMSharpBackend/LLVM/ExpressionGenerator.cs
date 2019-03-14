@@ -86,7 +86,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (from is ReferenceType)
             {
                 var uiae = GenerateExpression(cast.SubExpression, null, true);
-                uiae = builder.CreateLoad(uiae.Value, "");
+                if (deref)
+                    uiae = builder.CreateLoad(uiae.Value, "");
                 return uiae;
             }
 

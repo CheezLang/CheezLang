@@ -61,6 +61,13 @@ namespace Cheez.Ast.Statements
 
     #region Function Declaration
 
+    public enum SelfParamType
+    {
+        Value,
+        Pointer,
+        Reference
+    }
+
     public class AstFunctionDecl : AstDecl, ITypedSymbol
     {
         public Scope ConstScope { get; set; }
@@ -76,7 +83,7 @@ namespace Cheez.Ast.Statements
         public List<AstFunctionDecl> PolymorphicInstances { get; } = new List<AstFunctionDecl>();
 
         public bool SelfParameter { get; set; } = false;
-        public bool RefSelf { get; set; } = false;
+        public SelfParamType SelfType { get; set; }
         public bool IsGeneric { get; set; } = false;
 
         public bool IsConstant => true;

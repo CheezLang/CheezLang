@@ -103,29 +103,29 @@ impl StringBase($CharType) {
         return s
     }
 
-    fn free(*Self) {
+    fn free(ref Self) {
         c_free(cast data.data)
         data = null
         length = 0
     }
 
-    fn get_length(*Self) -> int {
+    fn get_length(ref Self) -> int {
         return length
     }
 
-    fn get_capacity(*Self) -> int {
+    fn get_capacity(ref Self) -> int {
         return data.length
     }
 
-    fn get_raw(*Self) -> *CharType {
+    fn get_raw(ref Self) -> *CharType {
         return data.data
     }
 
-    fn char_at(*Self, i: int) -> CharType {
+    fn char_at(ref Self, i: int) -> CharType {
         return data[i]
     }
 
-    fn reserve(*Self, size: int) {
+    fn reserve(ref Self, size: int) {
         if data.length > size {
             return
         }
@@ -143,12 +143,12 @@ impl StringBase($CharType) {
         }
     }
 
-    fn resize(*Self, size: int) {
+    fn resize(ref Self, size: int) {
         self.reserve(size)
         length = size
     }
 
-    fn append(*Self, other: Self) -> *Self #operator("+=") {
+    fn append(ref Self, other: Self) -> ref Self #operator("+=") {
         let newLength = length + other.length
         self.reserve(newLength)
         c_memcpy(cast &data.data[length], cast other.data.data, cast(i32) (other.length * @sizeof(CharType)))
@@ -156,7 +156,7 @@ impl StringBase($CharType) {
         return self
     }
 
-    fn append_string(*Self, other: string) -> *Self #operator("+=") {
+    fn append_string(ref Self, other: string) -> ref Self #operator("+=") {
         let newLength = length + other.length
         self.reserve(newLength)
         c_memcpy(cast &data.data[length], cast other.data, cast other.length)
@@ -164,7 +164,7 @@ impl StringBase($CharType) {
         return self
     }
 
-    fn append_cstring(*Self, other: c_string) -> *Self #operator("+=") {
+    fn append_cstring(ref Self, other: c_string) -> ref Self #operator("+=") {
         let otherLen = cast(int) c_strlen(other)
         let newLength = length + otherLen
         self.reserve(newLength)
@@ -173,7 +173,7 @@ impl StringBase($CharType) {
         return self
     }
 
-    fn append_char(*Self, ch: CharType) -> *Self #operator("+=") {
+    fn append_char(ref Self, ch: CharType) -> ref Self #operator("+=") {
         let newLength = length + 1
         self.reserve(newLength)
         data[length] = ch
@@ -181,25 +181,25 @@ impl StringBase($CharType) {
         return self
     }
 
-    fn sliceFL(*Self, from: int, len: int) -> []CharType {
+    fn sliceFL(ref Self, from: int, len: int) -> []CharType {
         let slice: []CharType = &data[from]
         slice.length = len
         return slice
     }
 
-    fn slice(*Self) -> []CharType {
+    fn slice(ref Self) -> []CharType {
         return self.sliceFL(0, length)
     }
 
-    fn sliceF(*Self, from: int) -> []CharType {
+    fn sliceF(ref Self, from: int) -> []CharType {
         return self.sliceFL(from, length - from)
     }
     
-    fn sliceL(*Self, len: int) -> []CharType {
+    fn sliceL(ref Self, len: int) -> []CharType {
         return self.sliceFL(0, len)
     }
 
-    fn index_of(*Self, ch: CharType) -> int {
+    fn index_of(ref Self, ch: CharType) -> int {
         while let i = 0; i < length; i += 1 {
             if data[i] == ch {
                 return i
