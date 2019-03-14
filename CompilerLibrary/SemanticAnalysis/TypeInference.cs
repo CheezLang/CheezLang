@@ -336,6 +336,58 @@ namespace Cheez
         {
             switch (expr.Name.Name)
             {
+                case "static_assert":
+                    {
+                        AstExpression cond = null, message = null;
+                        if (expr.Arguments.Count >= 1)
+                            cond = expr.Arguments[0];
+                        if (expr.Arguments.Count >= 2)
+                            message = expr.Arguments[1];
+
+                        if (cond == null || expr.Arguments.Count > 2)
+                        {
+                            ReportError(expr, $"Wrong number of arguments");
+                            return expr;
+                        }
+
+                        // infer types of arguments
+                        cond.Scope = expr.Scope;
+                        cond.Parent = expr;
+                        cond = InferType(cond, CheezType.Bool);
+
+                        if (message != null)
+                        {
+                            message.Scope = expr.Scope;
+                            message.Parent = expr;
+                            message = InferType(message, CheezType.Bool);
+                        }
+
+                        // check types of arguments
+                        if (cond.Type.IsErrorType || (message?.Type?.IsErrorType ?? false))
+                            return expr;
+
+                        if (cond.Type != CheezType.Bool || cond.Value == null)
+                        {
+                            ReportError(cond, $"Condition of @static_assert must be a constant bool");
+                            return expr;
+                        }
+
+                        if (message != null && !(message.Value is string v))
+                        {
+                            ReportError(message, $"Message of @static_assert must be a constant string");
+                            return expr;
+                        }
+
+                        var actualMessage = (message?.Value as string) ?? "Static assertion failed";
+
+                        // check condition
+                        if (!(bool)cond.Value)
+                            ReportError(expr, actualMessage);
+
+                        expr.Type = CheezType.Void;
+                        return expr;
+                    }
+
                 case "sizeof":
                     {
                         if (expr.Arguments.Count != 1)

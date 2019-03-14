@@ -443,6 +443,7 @@ namespace Cheez
                     case AstIfExpr _:
                     case AstBlockExpr _:
                     case AstCallExpr _:
+                    case AstCompCallExpr _:
                         break;
 
                     default:
