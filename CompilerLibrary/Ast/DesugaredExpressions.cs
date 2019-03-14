@@ -1,4 +1,5 @@
-﻿using Cheez.Ast.Statements;
+﻿using Cheez.Ast.Expressions.Types;
+using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Visitors;
 using System;
@@ -45,7 +46,7 @@ namespace Cheez.Ast.Expressions
         public override AstExpression Clone() => CopyValuesTo(new AstTempVarExpr(Expr));
     }
 
-    public class AstTypeRef : AstExpression
+    public class AstTypeRef : AstTypeExpr
     {
         public override bool IsPolymorphic => false;
 

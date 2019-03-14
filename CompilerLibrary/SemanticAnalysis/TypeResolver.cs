@@ -191,6 +191,9 @@ namespace Cheez
 
                     Debug.Assert(expr.Expression.Value != null);
                     return expr.Expression.Value as CheezType;
+
+                case AstTypeRef typeRef:
+                    return typeRef.Value as CheezType;
             }
 
             ReportError(typeExpr, $"Expected type");

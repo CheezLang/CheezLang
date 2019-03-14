@@ -390,6 +390,25 @@ namespace Cheez
                         break;
                     }
 
+                case AstArrayAccessExpr index:
+                    {
+                        if (ass.Operator != null)
+                        {
+                            AstExpression tmp = new AstTempVarExpr(index.SubExpression, true);
+                            tmp.SetFlag(ExprFlags.IsLValue, true);
+                            tmp = InferType(tmp, index.SubExpression.Type);
+
+                            index.SubExpression = tmp;
+
+                            AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
+                            newVal.Scope = value.Scope;
+                            newVal.Parent = value.Parent;
+                            newVal = InferType(newVal, pattern.Type);
+                            return newVal;
+                        }
+                        break;
+                    }
+
                 default: ReportError(pattern, $"Can't assign to the pattern '{pattern}', not an lvalue"); break;
             }
 

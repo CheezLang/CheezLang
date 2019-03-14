@@ -220,7 +220,8 @@ namespace Cheez
                 (to is FloatType && from is FloatType) ||
                 (to is FloatType && from is IntType) ||
                 (to is IntType && from is FloatType) ||
-                (to is IntType && from is BoolType))
+                (to is IntType && from is BoolType) ||
+                (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType))
             {
                 // ok
             }
@@ -1337,9 +1338,15 @@ namespace Cheez
             return expr;
         }
 
-        //private bool CreateImplicitCast()
-        //{
+        private AstExpression Cast(AstExpression expr, CheezType to)
+        {
+            var from = expr.Type;
 
-        //}
+            if (from == to)
+                return expr;
+
+            // TODO: only do this for implicit casts
+            return InferType(new AstCastExpr(new AstTypeRef(to), expr, expr.Location), to);
+        }
     }
 }

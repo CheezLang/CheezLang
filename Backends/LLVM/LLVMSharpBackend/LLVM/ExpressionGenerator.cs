@@ -98,9 +98,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return builder.CreateCast(i.Signed ? LLVMOpcode.LLVMFPToSI : LLVMOpcode.LLVMFPToUI, sub.Value, toLLVM, "");
             if (to is FloatType && from is IntType i2) // float <- int
                 return builder.CreateCast(i2.Signed ? LLVMOpcode.LLVMSIToFP : LLVMOpcode.LLVMUIToFP, sub.Value, toLLVM, "");
-            if (to is IntType && from is BoolType)
+            if (to is IntType && from is BoolType) // int <- bool
                 return builder.CreateZExt(sub.Value, toLLVM, "");
-            
+            if (to is SliceType s && from is PointerType p) // [] <- *
+            {
+                var withLen = builder.CreateInsertValue(LLVM.GetUndef(CheezTypeToLLVMType(s)), LLVM.ConstInt(LLVM.Int64Type(), 0, false), 0, "");
+                var result = builder.CreateInsertValue(withLen, sub.Value, 1, "");
+
+                return result;
+            }
+
             throw new NotImplementedException();
         }
 

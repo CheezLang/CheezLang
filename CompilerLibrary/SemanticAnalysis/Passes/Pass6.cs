@@ -93,9 +93,9 @@ namespace Cheez
 
                 ConvertLiteralTypeToDefaultType(v.Initializer);
 
-                if (v.TypeExpr != null && v.Initializer.Type != v.Type && !v.Initializer.Type.IsErrorType)
+                if (v.TypeExpr != null && !v.Initializer.Type.IsErrorType)
                 {
-                    ReportError(v, $"Can't initialize a variable of type {v.Type} with a value of type {v.Initializer.Type}");
+                    v.Initializer = Cast(v.Initializer, v.TypeExpr.Type);
                 }
 
                 if (v.TypeExpr == null)
