@@ -29,6 +29,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstStringLiteral ch: return GenerateStringLiteralExpr(ch);
                 case AstCharLiteral ch: return GenerateCharLiteralExpr(ch);
                 case AstIdExpr i: return GenerateIdExpr(i, deref);
+                case AstAddressOfExpr ao: return GenerateAddressOf(ao);
+                case AstDereferenceExpr de: return GenerateDerefExpr(de, deref);
                 case AstArgument a: return GenerateArgumentExpr(a);
                 case AstTupleExpr t: return GenerateTupleExpr(t);
                 case AstDotExpr t: return GenerateDotExpr(t, deref);
@@ -39,10 +41,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstTempVarExpr t: return GenerateTempVarExpr(t, deref);
                 case AstSymbolExpr s: return GenerateSymbolExpr(s, deref);
                 case AstBlockExpr block: return GenerateBlock(block, deref);
-                case AstAddressOfExpr ao: return GenerateAddressOf(ao);
                 case AstIfExpr iff: return GenerateIfExpr(iff);
                 case AstBinaryExpr bin: return GenerateBinaryExpr(bin);
-                case AstDereferenceExpr de: return GenerateDerefExpr(de, deref);
                 case AstCastExpr cast: return GenerateCastExpr(cast, deref);
             }
             throw new NotImplementedException();
@@ -123,16 +123,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateDerefExpr(AstDereferenceExpr de, bool deref)
         {
-            var sub = GenerateExpression(de.SubExpression, true);
+            var ptr = GenerateExpression(de.SubExpression, true);
 
             if (de.SubExpression.Type is ReferenceType)
-                sub = builder.CreateLoad(sub, "");
+                ptr = builder.CreateLoad(ptr, "");
 
-            if (!deref) return sub;
+            if (!deref) return ptr;
 
-            var val = builder.CreateLoad(sub, "");
+            var sub = builder.CreateLoad(ptr, "");
 
-            return val;
+            return sub;
         }
 
         private static Func<LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string, LLVMValueRef> GetICompare(LLVMIntPredicate pred)
@@ -488,7 +488,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateAddressOf(AstAddressOfExpr ao)
         {
-            var ptr = GenerateExpression(ao.SubExpression, ao.SubExpression.Type is ReferenceType);
+            var ptr = GenerateExpression(ao.SubExpression, false);
+            if (ao.SubExpression.Type is ReferenceType)
+                ptr = builder.CreateLoad(ptr, "");
             return ptr;
         }
 

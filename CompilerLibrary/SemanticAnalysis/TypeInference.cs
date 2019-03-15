@@ -103,6 +103,9 @@ namespace Cheez
                 case AstDereferenceExpr de:
                     return InferTypeDeref(de, expected, newInstances);
 
+                case AstTupleExpr t:
+                    return InferTypeTupleExpr(t, expected, newInstances);
+
                 case AstBinaryExpr b:
                     return InferTypesBinaryExpr(b, expected, newInstances);
 
@@ -114,9 +117,6 @@ namespace Cheez
 
                 case AstCallExpr c:
                     return InferTypeCallExpr(c, expected, newInstances);
-
-                case AstTupleExpr t:
-                    return InferTypeTupleExpr(t, expected, newInstances);
 
                 case AstDotExpr d:
                     return InferTypeDotExpr(d, expected, newInstances);
