@@ -4,6 +4,7 @@ using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
+using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -87,15 +88,21 @@ namespace Cheez
             {
                 v.Initializer.Scope = v.Scope;
 
-                var allDeps = new HashSet<AstSingleVariableDecl>();
-
                 v.Initializer = InferType(v.Initializer, v.TypeExpr?.Type);
-
                 ConvertLiteralTypeToDefaultType(v.Initializer);
 
-                if (v.TypeExpr != null && !v.Initializer.Type.IsErrorType)
+                if (!v.Initializer.Type.IsErrorType)
                 {
-                    v.Initializer = Cast(v.Initializer, v.TypeExpr.Type);
+                    if (v.TypeExpr != null)
+                    {
+                        v.Initializer = HandleReference(v.Initializer, v.TypeExpr.Type);
+                        v.Initializer = Cast(v.Initializer, v.TypeExpr.Type);
+                    }
+                    else
+                    {
+                        if (v.Initializer.Type is ReferenceType)
+                            v.Initializer = Deref(v.Initializer);
+                    }
                 }
 
                 if (v.TypeExpr == null)
