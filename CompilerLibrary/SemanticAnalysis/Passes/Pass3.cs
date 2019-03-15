@@ -1,6 +1,7 @@
 ﻿using Cheez.Ast.Statements;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
+using System;
 using System.Collections.Generic;
 
 namespace Cheez
@@ -27,7 +28,11 @@ namespace Cheez
             ResolveStructs(newInstances);
 
             // impls
-            foreach (var impl in mAllImpls)
+            foreach (var trait in mTraits)
+            {
+                Pass3Trait(trait);
+            }
+            foreach (var impl in mImpls)
             {
                 Pass3Impl(impl);
             }
@@ -37,9 +42,38 @@ namespace Cheez
             }
         }
 
+        private void Pass3Trait(AstTraitDeclaration trait)
+        {
+            trait.SubScope.DefineTypeSymbol("Self", trait.Type);
+
+            foreach (var f in trait.Functions)
+            {
+                f.IsTraitFunction = true;
+                f.Scope = trait.SubScope;
+                f.ConstScope = new Scope("$", f.Scope);
+                f.SubScope = new Scope("fn", f.ConstScope);
+
+                Pass4ResolveFunctionSignature(f);
+                CheckForSelfParam(f);
+
+                if (!f.SelfParameter || f.SelfType == SelfParamType.Value)
+                {
+                    ReportError(f.Name, $"Trait functions must take a self parameter by reference");
+                }
+
+                // TODO: for now don't allow default implemenation
+                if (f.Body != null)
+                {
+                    ReportError(f.Name, $"Trait functions can't have an implementation");
+                }
+            }
+        }
+
         private void Pass3TraitImpl(AstImplBlock impl)
         {
             impl.TraitExpr.Scope = impl.Scope;
+            impl.Scope.ImplBlocks.Add(impl);
+
             var type = ResolveType(impl.TraitExpr);
             if (type is TraitType tt)
             {
@@ -47,7 +81,8 @@ namespace Cheez
             }
             else
             {
-                ReportError(impl.TraitExpr, $"Has to be a trait, but is {type}");
+                ReportError(impl.TraitExpr, $"{type} is not a trait");
+                return;
             }
 
             impl.TargetTypeExpr.Scope = impl.Scope;
@@ -55,6 +90,76 @@ namespace Cheez
             if (impl.TargetTypeExpr.IsPolymorphic)
             {
                 ReportError(impl.TargetTypeExpr, $"Polymorphic type is not allowed here");
+                return;
+            }
+            impl.SubScope.DefineTypeSymbol("Self", impl.TargetType);
+
+
+            // register impl in trait
+            if (impl.Trait.Declaration.Implementations.TryGetValue(impl.TargetType, out var otherImpl))
+            {
+                ReportError(impl.TargetTypeExpr, $"There already exists an implementation of trait {impl.Trait} for type {impl.TargetType}",
+                    ("Other implementation here:", otherImpl.TargetTypeExpr));
+            }
+            impl.Trait.Declaration.Implementations[impl.TargetType] = impl;
+            AddTraitForType(impl.TargetType, impl);
+
+            // handle functions
+            foreach (var f in impl.Functions)
+            {
+                f.Scope = impl.SubScope;
+                f.ConstScope = new Scope("$", f.Scope);
+                f.SubScope = new Scope("fn", f.ConstScope);
+                f.ImplBlock = impl;
+
+                Pass4ResolveFunctionSignature(f);
+                CheckForSelfParam(f);
+                impl.Scope.DefineImplFunction(f);
+
+                if (f.Body == null)
+                {
+                    ReportError(f.Name, $"Function must have an implementation");
+                }
+            }
+
+            // match functions against trait functions
+            foreach (var traitFunc in impl.Trait.Declaration.Functions)
+            {
+                // find matching function
+                bool found = false;
+                foreach (var func in impl.Functions)
+                {
+                    if (func.Name.Name != traitFunc.Name.Name)
+                        continue;
+
+                    func.TraitFunction = traitFunc;
+                    found = true;
+
+                    if (func.Parameters.Count != traitFunc.Parameters.Count)
+                    {
+                        ReportError(func.ParameterLocation, $"This function must take the same parameters as the corresponding trait function", ("Trait function defined here:", traitFunc));
+                        continue;
+                    }
+
+                    // skip first parameter since it is the self parameter
+                    for (int i = 1; i < func.Parameters.Count; i++)
+                    {
+                        var fp = func.Parameters[i];
+                        var tp = traitFunc.Parameters[i];
+
+                        if (fp.Type != tp.Type)
+                        {
+                            ReportError(fp.TypeExpr, $"Type of parameter must match the type of the trait functions parameter", ("Trait function parameter type defined here:", tp.TypeExpr));
+                        }
+                    }
+
+                    // check return type
+                }
+
+                if (!found)
+                {
+                    ReportError(impl.TargetTypeExpr, $"Missing implementation for trait function '{traitFunc.Name.Name}'", ("Trait function defined here:", traitFunc));
+                }
             }
         }
 
@@ -62,6 +167,7 @@ namespace Cheez
         {
             impl.TargetTypeExpr.Scope = impl.Scope;
             impl.TargetType = ResolveType(impl.TargetTypeExpr);
+            impl.Scope.ImplBlocks.Add(impl);
 
             var polyNames = new List<string>();
             CollectPolyTypeNames(impl.TargetTypeExpr, polyNames);
@@ -70,15 +176,18 @@ namespace Cheez
             {
                 impl.SubScope.DefineTypeSymbol(pn, new PolyType(pn));
             }
+            impl.SubScope.DefineTypeSymbol("Self", impl.TargetType);
 
-            // TODO:
-            //if (impl.TargetTypeExpr.IsPolymorphic)
-            //{
-            //    mPolyImpls.Add(impl);
-            //}
-            //else
+            foreach (var f in impl.Functions)
             {
-                mImpls.Add(impl);
+                f.Scope = impl.SubScope;
+                f.ConstScope = new Scope("$", f.Scope);
+                f.SubScope = new Scope("fn", f.ConstScope);
+                f.ImplBlock = impl;
+
+                Pass4ResolveFunctionSignature(f);
+                CheckForSelfParam(f);
+                impl.Scope.DefineImplFunction(f);
             }
         }
     }

@@ -82,8 +82,7 @@ namespace CheezCLI
                     {
                         var detailText = TextProvider.GetText(d.location);
 
-                        if (d.location.Beginning.file != error.Location.Beginning.file)
-                            Log($"{d.location.Beginning}: ", ConsoleColor.White);
+                        Log($"{d.location.Beginning}: ", ConsoleColor.White);
                         PrintLocation(detailText, d.location, linesBefore: 0, highlightColor: ConsoleColor.Green);
                     }
                 }

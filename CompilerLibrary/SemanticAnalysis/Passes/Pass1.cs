@@ -20,14 +20,14 @@ namespace Cheez
         private List<AstEnumDecl> mEnums = new List<AstEnumDecl>();
         private List<AstVariableDecl> mVariables = new List<AstVariableDecl>();
         private List<AstTypeAliasDecl> mTypeDefs = new List<AstTypeAliasDecl>();
-        private List<AstImplBlock> mAllImpls = new List<AstImplBlock>();
-        private List<AstImplBlock> mTraitImpls = new List<AstImplBlock>();
-        private List<AstImplBlock> mPolyImpls = new List<AstImplBlock>();
         private List<AstImplBlock> mImpls = new List<AstImplBlock>();
+        private List<AstImplBlock> mTraitImpls = new List<AstImplBlock>();
 
         private List<AstFunctionDecl> mFunctions = new List<AstFunctionDecl>();
         private List<AstFunctionDecl> mPolyFunctions = new List<AstFunctionDecl>();
         private List<AstFunctionDecl> mFunctionInstances = new List<AstFunctionDecl>();
+
+        public IEnumerable<AstTraitDeclaration> Traits => mTraits;
         //
 
         /// <summary>
@@ -55,6 +55,7 @@ namespace Cheez
                     case AstTraitDeclaration @trait:
                         {
                             trait.Scope = GlobalScope;
+                            trait.SubScope = new Scope("trait", trait.Scope);
                             Pass1TraitDeclaration(@trait);
                             mTraits.Add(@trait);
                             break;
@@ -90,7 +91,7 @@ namespace Cheez
                             impl.Scope = GlobalScope;
                             impl.SubScope = new Scope($"impl", impl.Scope);
                             if (impl.TraitExpr != null) mTraitImpls.Add(impl);
-                            else mAllImpls.Add(impl);
+                            else mImpls.Add(impl);
                             break;
                         }
 

@@ -44,8 +44,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstIfExpr iff: return GenerateIfExpr(iff);
                 case AstBinaryExpr bin: return GenerateBinaryExpr(bin);
                 case AstCastExpr cast: return GenerateCastExpr(cast, deref);
+                case AstUfcFuncExpr ufc: return GenerateUfcFuncExpr(ufc, deref);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GenerateUfcFuncExpr(AstUfcFuncExpr ufc, bool deref)
+        {
+            if (ufc.FunctionDecl.TraitFunction != null)
+            {
+                // call to a trait function
+                // get function pointer from trait object
+
+            }
+
+            // normal function call
+            return valueMap[ufc.FunctionDecl];
         }
 
         private LLVMValueRef GenerateArgumentExpr(AstArgument a)
@@ -74,12 +88,25 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             var to = cast.Type;
             var from = cast.SubExpression.Type;
+            var toLLVM = CheezTypeToLLVMType(to);
+
+            if (to is TraitType trait)
+            {
+                var ptr = GenerateExpression(cast.SubExpression, false);
+                ptr = builder.CreatePointerCast(ptr, pointerType, "");
+
+                var vtablePtr = vtableMap[from];
+
+                var traitObject = LLVM.GetUndef(toLLVM);
+                traitObject = builder.CreateInsertValue(traitObject, vtablePtr, 0, "");
+                traitObject = builder.CreateInsertValue(traitObject, ptr, 1, "");
+                return traitObject;
+            }
 
             var sub = GenerateExpression(cast.SubExpression, true);
 
             if (to == from) return sub;
 
-            var toLLVM = CheezTypeToLLVMType(to);
 
             if (to is IntType && from is IntType) // int <- int
                 return builder.CreateIntCast(sub, toLLVM, "");
@@ -543,6 +570,41 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateCallExpr(AstCallExpr c)
         {
+            if (c.Declaration?.IsTraitFunction ?? false)
+            {
+                // call to a trait function
+                // get function pointer from trait object
+                var functionIndex = vtableIndices[c.Declaration];
+                var funcType = CheezTypeToLLVMType(c.Declaration.Type);
+
+                var selfArg = GenerateExpression(c.Arguments[0], true);
+                selfArg = builder.CreateLoad(selfArg, "");
+
+                var vtablePtr = builder.CreateExtractValue(selfArg, 0, "");
+                var toPointer = builder.CreateExtractValue(selfArg, 1, "");
+                toPointer = builder.CreatePointerCast(toPointer, funcType.GetParamTypes()[0], "");
+
+                // load function pointer
+                vtablePtr = builder.CreatePointerCast(vtablePtr, vtableType.GetPointerTo(), "");
+
+                var funcPointer = builder.CreateStructGEP(vtablePtr, (uint)functionIndex, "");
+                funcPointer = builder.CreateLoad(funcPointer, "");
+
+                var arguments = new List<LLVMValueRef>();
+                // self arg
+                arguments.Add(toPointer);
+
+                // rest of arguments
+                foreach (var a in c.Arguments.Skip(1))
+                    arguments.Add(GenerateExpression(a, true));
+
+                var traitCall = builder.CreateCall(funcPointer, arguments.ToArray(), "");
+                LLVM.SetInstructionCallConv(traitCall, LLVM.GetFunctionCallConv(funcPointer));
+
+                return traitCall;
+            }
+
+
             LLVMValueRef func;
             if (c.Declaration != null)
             {

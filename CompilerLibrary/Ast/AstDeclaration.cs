@@ -84,10 +84,10 @@ namespace Cheez.Ast.Statements
         public bool SelfParameter { get; set; } = false;
         public SelfParamType SelfType { get; set; }
         public bool IsGeneric { get; set; } = false;
-
         public bool IsConstant => true;
-
         public bool IsPolyInstance { get; set; } = false;
+        public bool IsTraitFunction { get; set; } = false;
+
         public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
         public Dictionary<string, (CheezType type, object value)> ConstParameters { get; internal set; }
 
@@ -195,12 +195,14 @@ namespace Cheez.Ast.Statements
         public List<AstParameter> Parameters { get; set; }
 
         public List<AstFunctionDecl> Functions { get; }
-        public List<AstFunctionDecl> FunctionInstances { get; }
+
+        public Dictionary<CheezType, AstImplBlock> Implementations { get; } = new Dictionary<CheezType, AstImplBlock>();
 
         public bool IsConstant => true;
 
         public bool IsPolymorphic { get; set; }
         public bool IsPolyInstance { get; set; }
+        public Scope SubScope { get; set; }
 
         public AstTraitDeclaration(AstIdExpr name, List<AstParameter> parameters, List<AstFunctionDecl> functions, ILocation Location = null)
             : base(name, Location: Location)
@@ -223,7 +225,6 @@ namespace Cheez.Ast.Statements
         public TraitType Trait { get; set; }
 
         public List<AstFunctionDecl> Functions { get; }
-        public List<AstFunctionDecl> FunctionInstances { get; } = new List<AstFunctionDecl>();
 
         public Scope SubScope { get; set; }
 

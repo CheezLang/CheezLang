@@ -24,66 +24,29 @@ namespace Cheez
             {
                 Pass4ResolveFunctionSignature(f);
             }
-
-            foreach (var i in mImpls)
-            {
-                i.Scope.ImplBlocks.Add(i);
-                i.SubScope.DefineTypeSymbol("Self", i.TargetType);
-
-                foreach (var f in i.Functions)
-                {
-                    f.Scope = i.SubScope;
-                    f.ConstScope = new Scope("$", f.Scope);
-                    f.SubScope = new Scope("fn", f.ConstScope);
-                    f.ImplBlock = i;
-
-                    Pass4ResolveFunctionSignature(f);
-                    i.Scope.DefineImplFunction(f);
-                }
-            }
-
-            foreach (var i in mPolyImpls)
-            {
-                ReportError(i.TargetTypeExpr, $"Poly impls not implemented yet.");
-            }
-
-            foreach (var i in mTraitImpls)
-            {
-                foreach (var f in i.Functions)
-                {
-                    f.Scope = i.SubScope;
-                    f.ConstScope = new Scope("$", f.Scope);
-                    f.SubScope = new Scope("fn", f.ConstScope);
-                    f.ImplBlock = i;
-                    Pass4ResolveFunctionSignature(f);
-                }
-            }
         }
 
-        private bool IsSelfParameter(AstParameter param)
+        private void CheckForSelfParam(AstFunctionDecl func)
         {
-            if (param.TypeExpr is AstIdTypeExpr i && i.Name == "Self")
-                return true;
-
-            if (param.TypeExpr is AstReferenceTypeExpr p2 && p2.Target is AstIdTypeExpr i3 && i3.Name == "Self")
-                return true;
-
-            return false;
+            if (func.Parameters.Count > 0)
+            {
+                var param = func.Parameters[0];
+                if (param.TypeExpr is AstIdTypeExpr i && i.Name == "Self")
+                {
+                    func.SelfParameter = true;
+                    func.SelfType = SelfParamType.Value;
+                }
+                else if (param.TypeExpr is AstReferenceTypeExpr p2 && p2.Target is AstIdTypeExpr i3 && i3.Name == "Self")
+                {
+                    func.SelfParameter = true;
+                    func.SelfType = SelfParamType.Reference;
+                }
+            }
         }
 
         private void Pass4ResolveFunctionSignature(AstFunctionDecl func)
         {
             ResolveFunctionSignature(func);
-
-            // check for existance of self param
-            if (func.ImplBlock != null && func.Parameters.Count > 0 && IsSelfParameter(func.Parameters[0]))
-            {
-                func.SelfParameter = true;
-                if (func.Parameters[0].Type == ReferenceType.GetRefType(func.ImplBlock.TargetType))
-                    func.SelfType = SelfParamType.Reference;
-                else
-                    func.SelfType = SelfParamType.Value;
-            }
 
 
             var res = func.Scope.DefineDeclaration(func);

@@ -207,7 +207,6 @@ namespace Cheez
             if (cast.SubExpression.Type.IsErrorType)
                 return cast;
 
-            // TODO: check if cast possible
             var to = cast.Type;
             var from = cast.SubExpression.Type;
             if ((to is PointerType && from is PointerType) ||
@@ -218,7 +217,8 @@ namespace Cheez
                 (to is FloatType && from is IntType) ||
                 (to is IntType && from is FloatType) ||
                 (to is IntType && from is BoolType) ||
-                (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType))
+                (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
+                (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from)))
             {
                 // ok
             }
@@ -751,6 +751,21 @@ namespace Cheez
                         expr.Type = s.Declaration.Members[index].Type;
                         expr.SetFlag(ExprFlags.IsLValue, true);
                         break;
+                    }
+
+                case TraitType t when !expr.IsDoubleColon:
+                    {
+                        var name = expr.Right.Name;
+                        var func = t.Declaration.Functions.FirstOrDefault(f => f.Name.Name == name);
+
+                        if (func == null)
+                        {
+                            ReportError(expr.Right, $"Trait '{t.Declaration.Name}' has no function '{name}'");
+                            break;
+                        }
+
+                        var ufc = new AstUfcFuncExpr(expr.Left, func);
+                        return InferTypeHelper(ufc, null, null);
                     }
 
                 case CheezTypeType _ when expr.IsDoubleColon:
@@ -1509,6 +1524,13 @@ namespace Cheez
 
             if (to is FloatType f1 && from is FloatType f2 && f1.Size >= f2.Size)
                 return InferType(cast, to);
+
+            if (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from))
+            {
+                var tmp = new AstTempVarExpr(expr);
+                cast.SubExpression = tmp;
+                return InferType(cast, to);
+            }
 
             ReportError(expr, errorMsg ?? $"Can't implicitly convert {from} to {to}");
             return expr;

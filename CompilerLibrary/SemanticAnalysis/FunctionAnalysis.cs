@@ -59,11 +59,15 @@ namespace Cheez
                         expr.Parent = func;
                         expr = InferType(expr, m.Type);
 
-                        var (ok, other) = func.SubScope.DefineUse(m.Name.Name, expr, out var use);
-
-                        if (!ok)
+                        // define use if no parameter has the same name
+                        if (!func.Parameters.Any(pa => pa.Name?.Name == m.Name.Name))
                         {
-                            ReportError(p, $"A symbol with name '{m.Name.Name}' already exists", ("Other here:", other));
+                            var (ok, other) = func.SubScope.DefineUse(m.Name.Name, expr, out var use);
+
+                            if (!ok)
+                            {
+                                ReportError(p, $"A symbol with name '{m.Name.Name}' already exists", ("Other here:", other));
+                            }
                         }
                     }
                 }

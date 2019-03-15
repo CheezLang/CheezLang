@@ -30,6 +30,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private Dictionary<AstWhileStmt, LLVMBasicBlockRef> loopEndMap = new Dictionary<AstWhileStmt, LLVMBasicBlockRef>();
         private Dictionary<AstWhileStmt, LLVMBasicBlockRef> loopPostActionMap = new Dictionary<AstWhileStmt, LLVMBasicBlockRef>();
 
+        // vtable stuff
+        private LLVMTypeRef vtableType;
+        private Dictionary<object, int> vtableIndices = new Dictionary<object, int>();
+        private Dictionary<CheezType, LLVMValueRef> vtableMap = new Dictionary<CheezType, LLVMValueRef>();
+
         // intrinsics
         private LLVMValueRef memcpy32;
         private LLVMValueRef memcpy64;
@@ -87,6 +92,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 GenerateIntrinsicDeclarations();
 
+                GenerateVTables();
+
                 // create declarations
                 foreach (var function in workspace.GlobalScope.FunctionDeclarations)
                     if (!function.IsGeneric)
@@ -96,6 +103,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     foreach (var function in i.SubScope.FunctionDeclarations)
                         if (!function.IsGeneric)
                             GenerateFunctionHeader(function);
+
+                SetVTables();
 
                 GenerateMainFunction();
 

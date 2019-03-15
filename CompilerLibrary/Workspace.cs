@@ -29,8 +29,7 @@ namespace Cheez
 
         public AstFunctionDecl MainFunction { get; set; }
 
-        public Dictionary<CheezType, List<TraitType>> TypeTraitMap = new Dictionary<CheezType, List<TraitType>>();
-        public Dictionary<CheezType, List<AstImplBlock>> Implementations = new Dictionary<CheezType, List<AstImplBlock>>();
+        public Dictionary<CheezType, List<AstImplBlock>> TypeTraitMap = new Dictionary<CheezType, List<AstImplBlock>>();
 
         public int MaxPolyStructResolveStepCount { get; set; } = 10;
         public int MaxPolyFuncResolveStepCount { get; set; } = 10;
@@ -165,14 +164,16 @@ namespace Cheez
             });
         }
 
-        public IEnumerable<AstImplBlock> GetTraitImplementations(CheezType type)
+        private void AddTraitForType(CheezType type, AstImplBlock impl)
         {
-            if (Implementations.TryGetValue(type, out var impls))
+            List<AstImplBlock> traits = null;
+            if (!TypeTraitMap.TryGetValue(type, out traits))
             {
-                return impls.Where(i => i.Trait != null);
+                traits = new List<AstImplBlock>();
+                TypeTraitMap.Add(type, traits);
             }
 
-            return new AstImplBlock[0];
+            traits.Add(impl);
         }
     }
 }
