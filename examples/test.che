@@ -1,8 +1,49 @@
-// #load("tests/other/string1")
+//#load("tests/language/if_else")
 
 // #load("std:util")
 
-#load("test2")
+// #load("test2")
 
 fn Main() {
+    test1()
+    test2()
+}
+
+struct Foo3 {
+    a: int
+    b: double
+    c: string
+}
+
+fn test3() {
+    let c = "uiae"
+
+    let f = new Foo3 {
+        1i8
+        0.0f
+        c
+    }
+    let f2 = new Foo3 {
+        a = 2i8
+        b = 1.2
+        c = c
+    }
+}
+
+fn test2() {
+    let a = 5
+    let t = (1, 2, a, "lol")
+}
+
+fn help1(a: ref *int) {
+    let b = <<&<<a
+}
+
+fn test1() {
+    let a = 5
+    let pa = &a
+    let b = <<pa
+    let c = <<&<<&a
+
+    help1(pa)
 }
