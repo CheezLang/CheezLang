@@ -31,8 +31,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstIdExpr i: return GenerateIdExpr(i, deref);
                 case AstAddressOfExpr ao: return GenerateAddressOf(ao);
                 case AstDereferenceExpr de: return GenerateDerefExpr(de, deref);
-                case AstArgument a: return GenerateArgumentExpr(a);
                 case AstTupleExpr t: return GenerateTupleExpr(t);
+                case AstArgument a: return GenerateArgumentExpr(a);
                 case AstDotExpr t: return GenerateDotExpr(t, deref);
                 case AstArrayAccessExpr t: return GenerateIndexExpr(t, deref);
                 case AstStructValueExpr t: return GenerateStructValueExpr(t);
@@ -641,17 +641,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         public LLVMValueRef GenerateStructValueExpr(AstStructValueExpr expr)
         {
-            var temp = CreateLocalVariable(expr.Type);
+            var str = LLVM.GetUndef(CheezTypeToLLVMType(expr.Type));
 
             foreach (var mem in expr.MemberInitializers)
             {
-                var ptr = builder.CreateStructGEP(temp, (uint)mem.Index, "");
                 var v = GenerateExpression(mem.Value, true);
-                builder.CreateStore(v, ptr);
+                str = builder.CreateInsertValue(str, v, (uint)mem.Index, "");
             }
 
-            temp = builder.CreateLoad(temp, "");
-            return temp;
+            return str;
         }
 
         public LLVMValueRef GenerateDotExpr(AstDotExpr expr, bool deref)

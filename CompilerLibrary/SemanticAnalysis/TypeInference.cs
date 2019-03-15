@@ -106,11 +106,11 @@ namespace Cheez
                 case AstTupleExpr t:
                     return InferTypeTupleExpr(t, expected, newInstances);
 
-                case AstBinaryExpr b:
-                    return InferTypesBinaryExpr(b, expected, newInstances);
-
                 case AstStructValueExpr s:
                     return InferTypeStructValueExpr(s, expected, newInstances);
+
+                case AstBinaryExpr b:
+                    return InferTypesBinaryExpr(b, expected, newInstances);
 
                 case AstUnaryExpr u:
                     return InferTypeUnaryExpr(u, expected, newInstances);
@@ -1137,6 +1137,7 @@ namespace Cheez
             if (type == null)
             {
                 ReportError(expr.TypeExpr, $"This expression is not a struct but a '{expr.Type}'");
+                expr.Type = CheezType.Error;
                 return expr;
             }
 
@@ -1162,7 +1163,7 @@ namespace Cheez
                     var mi = expr.MemberInitializers[i];
                     var mem = type.Declaration.Members[i];
 
-                    mi.Value.Scope = expr.Scope;
+                    mi.Value.AttachTo(expr);
                     mi.Value = InferTypeHelper(mi.Value, mem.Type, newInstances);
                     ConvertLiteralTypeToDefaultType(mi.Value);
 
@@ -1170,10 +1171,7 @@ namespace Cheez
                     mi.Index = i;
 
                     if (mi.Value.Type.IsErrorType) continue;
-                    if (mi.Value.Type != mem.Type)
-                    {
-                        ReportError(mi.Value, $"Can't convert a value of type {mi.Value.Type} to type {mem.Type}");
-                    }
+                    mi.Value = Cast(mi.Value, mem.Type);
                 }
             }
             else if (namesProvided == expr.MemberInitializers.Count)
@@ -1183,24 +1181,15 @@ namespace Cheez
                     var mi = expr.MemberInitializers[i];
                     var memIndex = type.Declaration.Members.FindIndex(m => m.Name.Name == mi.Name.Name);
 
-                    if (memIndex < 0)
-                    {
-                        ReportError(mi.Name, $"Struct '{type}' has no member '{mi.Name.Name}'");
-                        continue;
-                    }
-
                     var mem = type.Declaration.Members[memIndex];
                     mi.Index = memIndex;
 
-                    mi.Value.Scope = expr.Scope;
+                    mi.Value.AttachTo(expr);
                     mi.Value = InferTypeHelper(mi.Value, mem.Type, newInstances);
                     ConvertLiteralTypeToDefaultType(mi.Value);
 
                     if (mi.Value.Type.IsErrorType) continue;
-                    if (mi.Value.Type != mem.Type)
-                    {
-                        ReportError(mi.Value, $"Can't convert a value of type {mi.Value.Type} to type {mem.Type}");
-                    }
+                    mi.Value = Cast(mi.Value, mem.Type);
                 }
             }
             else
@@ -1496,6 +1485,12 @@ namespace Cheez
                 return InferType(cast, to);
 
             if (to is PointerType p2 && p2.TargetType == CheezType.Any && from is PointerType)
+                return InferType(cast, to);
+
+            if (to is IntType i1 && from is IntType i2 && i1.Signed == i2.Signed && i1.Size >= i2.Size)
+                return InferType(cast, to);
+
+            if (to is FloatType f1 && from is FloatType f2 && f1.Size >= f2.Size)
                 return InferType(cast, to);
 
             ReportError(expr, errorMsg ?? $"Can't implicitly convert {from} to {to}");
