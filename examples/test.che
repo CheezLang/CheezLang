@@ -1,12 +1,44 @@
-//#load("tests/language/if_else")
+// #load("tests/library/array1")
 
 // #load("std:util")
+#load("std:c")
 
 // #load("test2")
 
 fn Main() {
     test1()
     test2()
+    test3()
+    test4()
+}
+
+fn test4() {
+    let a = 5
+    let ra: ref int = a
+    let b = ra
+    
+    c_printf("%lld`n", a)
+    c_printf("%lld`n", ra)
+    c_printf("%lld`n", b)
+    c_printf("`n")
+
+    a = 10
+    c_printf("%lld`n", a)
+    c_printf("%lld`n", ra)
+    c_printf("%lld`n", b)
+    c_printf("`n")
+
+    ra = 15
+    c_printf("%lld`n", a)
+    c_printf("%lld`n", ra)
+    c_printf("%lld`n", b)
+    c_printf("`n")
+
+    b = 20
+    c_printf("%lld`n", a)
+    c_printf("%lld`n", ra)
+    c_printf("%lld`n", b)
+    c_printf("`n")
 }
 
 struct Foo3 {

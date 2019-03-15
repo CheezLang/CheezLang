@@ -486,6 +486,8 @@ namespace Cheez
 
         private void AnalyseReturnStatement(AstReturnStmt ret)
         {
+            ret.SetFlag(StmtFlags.Returns);
+
             if (ret.ReturnValue != null)
             {
                 ret.ReturnValue.Scope = ret.Scope;
@@ -539,8 +541,6 @@ namespace Cheez
                     ReportError(ret, $"Not all return values have been initialized", missing.Select(l => ("This one is not initialized:", l)));
                 }
             }
-
-            ret.SetFlag(StmtFlags.Returns);
         }
     }
 }

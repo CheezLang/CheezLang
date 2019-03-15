@@ -366,9 +366,14 @@ namespace Cheez.Visitors
 
         #region Expressions
 
+        public override string VisitUfcFuncExpr(AstUfcFuncExpr expr, int data = 0)
+        {
+            return $"{expr.FunctionDecl.Name.Accept(this)}";
+        }
+
         public override string VisitTempVarExpr(AstTempVarExpr te, int data = 0)
         {
-            return $"@tempvar({te.Id})";
+            return $"@tempvar_{te.Id}({te.Expr.Accept(this)})";
         }
 
         public override string VisitTupleExpr(AstTupleExpr expr, int data = 0)

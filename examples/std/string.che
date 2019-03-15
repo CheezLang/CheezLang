@@ -148,7 +148,7 @@ impl StringBase($CharType) {
         length = size
     }
 
-    fn append(ref Self, other: Self) -> ref Self #operator("+=") {
+    fn append(ref Self, other: ref Self) -> ref Self #operator("+=") {
         let newLength = length + other.length
         self.reserve(newLength)
         c_memcpy(cast &data.data[length], cast other.data.data, cast(i32) (other.length * @sizeof(CharType)))

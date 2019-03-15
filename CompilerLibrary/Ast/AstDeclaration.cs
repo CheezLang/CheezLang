@@ -64,7 +64,6 @@ namespace Cheez.Ast.Statements
     public enum SelfParamType
     {
         Value,
-        Pointer,
         Reference
     }
 

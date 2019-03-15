@@ -26,7 +26,7 @@ impl Test {
         b = y
     }
 
-    fn set_ref(*Self, x: int, y: double) {
+    fn set_ref(ref Self, x: int, y: double) {
         a = x
         b = y
     }

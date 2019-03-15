@@ -1,12 +1,31 @@
 ﻿using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Types;
+using Cheez.Types.Complex;
 using Cheez.Visitors;
 using System;
 using System.Diagnostics;
 
 namespace Cheez.Ast.Expressions
 {
+    public class AstUfcFuncExpr : AstExpression
+    {
+        public override bool IsPolymorphic => false;
+
+        public AstExpression SelfArg { get; }
+        public AstFunctionDecl FunctionDecl { get; }
+
+        public AstUfcFuncExpr(AstExpression self, AstFunctionDecl func) : base(null)
+        {
+            this.SelfArg = self;
+            this.FunctionDecl = func;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitUfcFuncExpr(this, data);
+
+        public override AstExpression Clone() => CopyValuesTo(new AstUfcFuncExpr(SelfArg, FunctionDecl));
+    }
+
     public class AstSymbolExpr : AstExpression
     {
         public override bool IsPolymorphic => false;

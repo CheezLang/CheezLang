@@ -224,9 +224,14 @@ namespace Cheez.Visitors
 
         #region Expressions
 
+        public override string VisitUfcFuncExpr(AstUfcFuncExpr expr, int data = 0)
+        {
+            return $"{expr.FunctionDecl.Name.Accept(this)}";
+        }
+
         public override string VisitSymbolExpr(AstSymbolExpr te, int data = 0)
         {
-            return $"@symbol({te.Symbol.Name?.Accept(this) ?? te.Symbol.ToString()})";
+            return te.Symbol.Name?.Accept(this) ?? te.Symbol.ToString();
         }
 
         public override string VisitTempVarExpr(AstTempVarExpr te, int data = 0)

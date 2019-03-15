@@ -10,7 +10,7 @@ struct Test {
 }
 
 impl Test {
-    fn foo(*Self, a: $T) {
+    fn foo(ref Self, a: $T) {
         self.x = cast a
     }
 
