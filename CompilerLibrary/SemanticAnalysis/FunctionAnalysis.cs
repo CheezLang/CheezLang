@@ -305,6 +305,12 @@ namespace Cheez
                             break;
 
                         ConvertLiteralTypeToDefaultType(ass.Value);
+                        
+                        if (ass.Pattern.Type is ReferenceType)
+                        {
+                            ass.Pattern = Deref(ass.Pattern);
+                        }
+
                         ass.Value = Cast(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                         break;
                     }
@@ -488,14 +494,14 @@ namespace Cheez
 
                 ConvertLiteralTypeToDefaultType(ret.ReturnValue);
 
-                if (!ret.ReturnValue.Type.IsErrorType)
-                {
-                    ret.ReturnValue = Cast(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
-                }
+                if (ret.ReturnValue.Type.IsErrorType)
+                    return;
+
+                ret.ReturnValue = HandleReference(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
+                ret.ReturnValue = Cast(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
             }
             else if (currentFunction.ReturnValue != null)
             {
-                // TODO: check wether all return values have been assigned
                 var missing = new List<ILocation>();
                 if (currentFunction.ReturnValue.Name == null)
                 {

@@ -326,11 +326,15 @@ namespace Cheez.Visitors
 
         public override string VisitAddressOfExpr(AstAddressOfExpr add, int data = 0)
         {
+            if (add.Reference)
+                return $"@ref({add.SubExpression.Accept(this)})";
             return "&" + add.SubExpression.Accept(this);
         }
 
         public override string VisitDerefExpr(AstDereferenceExpr deref, int data = 0)
         {
+            if (deref.Reference)
+                return $"@deref({deref.SubExpression.Accept(this)})";
             return "<<" + deref.SubExpression.Accept(this);
         }
 

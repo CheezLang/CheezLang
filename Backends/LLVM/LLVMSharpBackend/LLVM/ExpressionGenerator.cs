@@ -32,10 +32,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstAddressOfExpr ao: return GenerateAddressOf(ao);
                 case AstDereferenceExpr de: return GenerateDerefExpr(de, deref);
                 case AstTupleExpr t: return GenerateTupleExpr(t);
+                case AstStructValueExpr t: return GenerateStructValueExpr(t);
                 case AstArgument a: return GenerateArgumentExpr(a);
                 case AstDotExpr t: return GenerateDotExpr(t, deref);
                 case AstArrayAccessExpr t: return GenerateIndexExpr(t, deref);
-                case AstStructValueExpr t: return GenerateStructValueExpr(t);
                 case AstCallExpr c: return GenerateCallExpr(c);
                 case AstUnaryExpr u: return GenerateUnaryExpr(u);
                 case AstTempVarExpr t: return GenerateTempVarExpr(t, deref);
@@ -75,19 +75,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var to = cast.Type;
             var from = cast.SubExpression.Type;
 
-            if (to is ReferenceType)
-            {
-                return GenerateExpression(cast.SubExpression, false);
-            }
-
-            if (from is ReferenceType)
-            {
-                var uiae = GenerateExpression(cast.SubExpression, true);
-                if (deref)
-                    uiae = builder.CreateLoad(uiae, "");
-                return uiae;
-            }
-
             var sub = GenerateExpression(cast.SubExpression, true);
 
             if (to == from) return sub;
@@ -124,9 +111,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef GenerateDerefExpr(AstDereferenceExpr de, bool deref)
         {
             var ptr = GenerateExpression(de.SubExpression, true);
-
-            if (de.SubExpression.Type is ReferenceType)
-                ptr = builder.CreateLoad(ptr, "");
 
             if (!deref) return ptr;
 
@@ -489,8 +473,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef GenerateAddressOf(AstAddressOfExpr ao)
         {
             var ptr = GenerateExpression(ao.SubExpression, false);
-            if (ao.SubExpression.Type is ReferenceType)
-                ptr = builder.CreateLoad(ptr, "");
             return ptr;
         }
 

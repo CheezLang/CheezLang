@@ -383,7 +383,7 @@ namespace Cheez.Ast.Expressions
     {
         public AstExpression SubExpression { get; set; }
         public override bool IsPolymorphic => SubExpression.IsPolymorphic;
-        public bool IsReference = false;
+        public bool Reference = false;
 
         [DebuggerStepThrough]
         public AstAddressOfExpr(AstExpression sub, ILocation Location = null) : base(Location)
@@ -396,13 +396,15 @@ namespace Cheez.Ast.Expressions
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstAddressOfExpr(SubExpression.Clone()) { IsReference = this.IsReference });
+            => CopyValuesTo(new AstAddressOfExpr(SubExpression.Clone()));
     }
 
     public class AstDereferenceExpr : AstExpression
     {
         public AstExpression SubExpression { get; set; }
         public override bool IsPolymorphic => SubExpression.IsPolymorphic;
+
+        public bool Reference { get; set; } = false;
 
         [DebuggerStepThrough]
         public AstDereferenceExpr(AstExpression sub, ILocation Location = null) : base(Location)

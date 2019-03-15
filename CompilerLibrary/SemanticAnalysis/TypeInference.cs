@@ -209,9 +209,7 @@ namespace Cheez
                 (to is FloatType && from is IntType) ||
                 (to is IntType && from is FloatType) ||
                 (to is IntType && from is BoolType) ||
-                (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
-                (to is ReferenceType r && r.TargetType == from) ||
-                (from is ReferenceType r2 && r2.TargetType == to))
+                (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType))
             {
                 // ok
             }
@@ -231,21 +229,33 @@ namespace Cheez
             expr.SubExpression.AttachTo(expr);
             expr.SubExpression = InferTypeHelper(expr.SubExpression, subExpect, newInstances);
 
-            var subType = expr.SubExpression.Type;
-
-            if (expr.SubExpression.Type is ReferenceType r)
+            if (expr.Reference)
             {
-                subType = r.TargetType;
+                if (expr.SubExpression.Type is ReferenceType r)
+                {
+                    expr.Type = r.TargetType;
+                }
+                else
+                {
+                    ReportError(expr, $"Can't dereference non reference type {expr.SubExpression.Type}");
+                }
+            }
+            else
+            {
+                if (expr.SubExpression.Type is ReferenceType r)
+                {
+                    expr.SubExpression = Deref(expr.SubExpression);
+                }
+                if (expr.SubExpression.Type is PointerType p)
+                {
+                    expr.Type = p.TargetType;
+                }
+                else if (!expr.SubExpression.Type.IsErrorType)
+                {
+                    ReportError(expr, $"Can't dereference non pointer type {expr.SubExpression.Type}");
+                }
             }
 
-            if (subType is PointerType p)
-            {
-                expr.Type = p.TargetType;
-            }
-            else if (!expr.SubExpression.Type.IsErrorType)
-            {
-                ReportError(expr, $"Can't dereference non pointer type {expr.SubExpression.Type}");
-            }
 
             expr.SetFlag(ExprFlags.IsLValue, true);
             return expr;
@@ -321,22 +331,41 @@ namespace Cheez
             {
                 subExpected = p.TargetType;
             }
-
-            expr.SubExpression.Scope = expr.Scope;
-            expr.SubExpression.Parent = expr;
+            
+            expr.SubExpression.AttachTo(expr);
             expr.SubExpression = InferTypeHelper(expr.SubExpression, subExpected, newInstances);
 
             if (expr.SubExpression.Type.IsErrorType)
                 return expr;
 
-            if (!expr.SubExpression.GetFlag(ExprFlags.IsLValue))
+            if (expr.Reference)
             {
-                ReportError(expr, $"Can't take the address of non lvalue");
-                expr.Type = CheezType.Error;
-                return expr;
-            }
+                if (!expr.SubExpression.GetFlag(ExprFlags.IsLValue))
+                {
+                    ReportError(expr, $"Can't create a reference to the value '{expr.SubExpression}'");
+                    expr.Type = CheezType.Error;
+                    return expr;
+                }
 
-            expr.Type = PointerType.GetPointerType(expr.SubExpression.Type);
+                expr.Type = ReferenceType.GetRefType(expr.SubExpression.Type);
+                expr.SetFlag(ExprFlags.IsLValue, true);
+            }
+            else
+            {
+                if (expr.SubExpression.Type is ReferenceType)
+                {
+                    expr.SubExpression = Deref(expr.SubExpression);
+                }
+
+                if (!expr.SubExpression.GetFlag(ExprFlags.IsLValue))
+                {
+                    ReportError(expr, $"Can't take the address of non lvalue");
+                    expr.Type = CheezType.Error;
+                    return expr;
+                }
+
+                expr.Type = PointerType.GetPointerType(expr.SubExpression.Type);
+            }
 
             return expr;
         }
@@ -644,7 +673,7 @@ namespace Cheez
 
                 if (expr.Left.Type is ReferenceType r)
                 {
-                    expr.Left = Cast(expr.Left, r.TargetType);
+                    expr.Left = Deref(expr.Left);
                 }
             }
 
@@ -1057,7 +1086,10 @@ namespace Cheez
                 if (a.Type.IsErrorType)
                     continue;
 
-                expr.Arguments[i].Expr = Cast(expr.Arguments[i].Expr, p.Type, $"Type of argument ({a.Type}) does not match type of parameter ({p.Type})");
+                a.Expr = HandleReference(a.Expr, p.Type);
+                a.Type = a.Expr.Type;
+
+                a.Expr = Cast(a.Expr, p.Type, $"Type of argument ({a.Type}) does not match type of parameter ({p.Type})");
             }
 
             expr.Declaration = instance;
@@ -1069,7 +1101,6 @@ namespace Cheez
 
         private AstExpression InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, List<AstFunctionDecl> newInstances)
         {
-
             if (!CheckAndMatchArgsToParams(func.Declaration, expr, func.Declaration.Parameters, func.VarArgs))
                 return expr;
 
@@ -1091,17 +1122,19 @@ namespace Cheez
                 {
                     if (arg.Type is ReferenceType r)
                     {
-                        arg.Expr = Cast(arg.Expr, r.TargetType);
+                        arg.Expr = Deref(arg.Expr);
                     }
                 }
                 else
                 {
+                    arg.Expr = HandleReference(arg.Expr, type);
                     arg.Expr = Cast(arg.Expr, type, $"Type of argument ({arg.Type}) does not match type of parameter ({type})");
+                    arg.Type = arg.Expr.Type;
                 }
             }
 
             // :hack
-            expr.SetFlag(ExprFlags.IsLValue, func.ReturnType is PointerType);
+            expr.SetFlag(ExprFlags.IsLValue, func.ReturnType is ReferenceType);
             expr.Type = func.ReturnType;
             expr.Declaration = func.Declaration;
 
@@ -1454,6 +1487,34 @@ namespace Cheez
             return expr;
         }
 
+        private AstExpression HandleReference(AstExpression expr, CheezType expected)
+        {
+            var fromIsRef = expr.Type is ReferenceType;
+            var toIsRef = expected is ReferenceType;
+            if (toIsRef && !fromIsRef)
+                return Ref(expr);
+            if (!toIsRef && fromIsRef)
+                return Deref(expr);
+
+            return expr;
+        }
+
+        private AstExpression Deref(AstExpression expr)
+        {
+            var deref = new AstDereferenceExpr(expr, expr);
+            deref.Reference = true;
+            deref.AttachTo(expr);
+            return InferTypeHelper(deref, null, null);
+        }
+
+        private AstExpression Ref(AstExpression expr)
+        {
+            var deref = new AstAddressOfExpr(expr, expr);
+            deref.Reference = true;
+            deref.AttachTo(expr);
+            return InferTypeHelper(deref, null, null);
+        }
+
         private AstExpression Cast(AstExpression expr, CheezType to, string errorMsg = null)
         {
             var from = expr.Type;
@@ -1463,22 +1524,6 @@ namespace Cheez
 
             var cast = new AstCastExpr(new AstTypeRef(to), expr, expr.Location);
             cast.Scope = expr.Scope;
-
-            if (to is ReferenceType r)
-            {
-                if (r.TargetType == from)
-                {
-                    return InferType(cast, to);
-                }
-            }
-
-            if (from is ReferenceType r2)
-            {
-                if (r2.TargetType == to)
-                {
-                    return InferType(cast, to);
-                }
-            }
 
             // TODO: only do this for implicit casts
             if (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType)

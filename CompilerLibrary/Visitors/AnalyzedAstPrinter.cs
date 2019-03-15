@@ -304,6 +304,8 @@ namespace Cheez.Visitors
             }
             else
             {
+                if (ass.OnlyGenerateValue)
+                    return ass.Value.Accept(this);
                 sb.Append(ass.Pattern.Accept(this) + $" = " + ass.Value.Accept(this));
             }
 
@@ -431,7 +433,7 @@ namespace Cheez.Visitors
 
         public override string VisitSymbolExpr(AstSymbolExpr te, int data = 0)
         {
-            return $"@symbol({te.Symbol.Name?.Accept(this) ?? te.Symbol.ToString()})";
+            return te.Symbol.Name?.Accept(this) ?? te.Symbol.ToString();
         }
 
         public override string VisitIdExpr(AstIdExpr ident, int indentLevel = 0)
@@ -480,11 +482,15 @@ namespace Cheez.Visitors
 
         public override string VisitAddressOfExpr(AstAddressOfExpr add, int data = 0)
         {
+            if (add.Reference)
+                return $"@ref({add.SubExpression.Accept(this)})";
             return "&" + add.SubExpression.Accept(this);
         }
 
         public override string VisitDerefExpr(AstDereferenceExpr deref, int data = 0)
         {
+            if (deref.Reference)
+                return $"@deref({deref.SubExpression.Accept(this)})";
             return "<<" + deref.SubExpression.Accept(this);
         }
 
