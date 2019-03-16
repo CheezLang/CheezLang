@@ -3,6 +3,7 @@ hello
 true")
 
 #load("std:c")
+// #load("std:string")
 
 trait Printable {
     fn print(ref Self);

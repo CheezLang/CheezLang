@@ -17,6 +17,7 @@ Test::print(S2{zwei})
 ")
 
 #load("std:c")
+#load("std:string")
 
 trait Test {
     fn foo(ref Self, a: int);

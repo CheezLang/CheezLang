@@ -1,86 +1,13 @@
 // #load("std:mem/allocator")
 // #load("std:mem/std_heap_allocator")
 #load("std:mem/memory")
+#load("std:io/io")
+#load("std:printable")
 #load("std:c")
-
-fn streql(a: $T, b: $T2, len: int) -> bool {
-    let alen: int = cast a.getLength()
-    let blen: int = cast b.getLength()
-    if len > alen {
-        len = alen
-    }
-    if len > blen {
-        len = blen
-    }
-
-    while let i: int = 0; i < len; i += 1 {
-        if a.charAt(i) != b.charAt(i) {
-            return false
-        }
-    }
-    return true
-}
-
-fn streq(a: $T, b: $T2) -> bool {
-    let len: int = cast a::get_length()
-    let blen: int = cast b::get_length()
-
-    if len != blen {
-        return false
-    }
-
-    while let i: int = 0; i < len; i += 1 {
-        if a::char_at(i) != b::char_at(i) {
-            return false
-        }
-    }
-    return true
-}
-
-impl c_string {
-    fn get_length(Self) -> int {
-        return cast c_strlen(self)
-    }
-    
-    fn char_at(Self, i: int) -> char {
-        return self[i]
-    }
-
-    fn to_string(Self) -> String {
-        return String::from_cstring(self)
-    }
-}
-
-impl string {
-    fn get_length(Self) -> int {
-        return self.length
-    }
-    
-    fn char_at(Self, i: int) -> char {
-        return self[i]
-    }
-
-    fn to_string(Self) -> String {
-        return String::from_string(self)
-    }
-}
-
-// impl Printable for c_string {
-//     fn print(str: *String, format: string) {
-//         str.append_cstring(<<self)
-//     }
-// }
-
-// impl Printable for string {
-//     fn print(str: *String, format: string) {
-//         str.append_string(<<self)
-//     }
-// }
 
 struct StringBase(CharType: type) {
     data: []CharType
     length: int
-    // allocator: Allocator    = null
 }
 
 typedef String = StringBase(char)
@@ -165,7 +92,7 @@ impl StringBase($CharType) {
     }
 
     fn append_cstring(ref Self, other: c_string) -> ref Self #operator("+=") {
-        let otherLen = cast(int) c_strlen(other)
+        let otherLen = other::get_length()
         let newLength = length + otherLen
         self.reserve(newLength)
         c_memcpy(cast &data.data[length], cast other, cast otherLen)
@@ -207,5 +134,134 @@ impl StringBase($CharType) {
         }
 
         return -1
+    }
+
+    fn appendf(ref Self, format: string, args: []Printable) {
+        let formatSpecifier = String::empty()
+        formatSpecifier.reserve(10)
+
+        let len = format.length
+        let state = 0
+        let argIndex = 0
+
+        // state    - desc
+        // 0        - normal
+        // 1        - in format
+
+        while let i = 0; i < len; i += 1 {
+            let c = format[i]
+
+            if state == 0 {
+                if c == '{' {
+                    state = 1
+                }
+                else {
+                    self += c
+                }
+            }
+            else if state == 1 {
+                if c == '}' {
+                    state = 0
+                    
+                    let format: string = null
+
+                    let colon = formatSpecifier.index_of(':')
+                    if colon >= 1 {
+                        // colon -> arg index before colon
+                        argIndex = parse_int(formatSpecifier.sliceL(colon))
+                    }
+                    else if colon == -1 and formatSpecifier.get_length() > 0 {
+                        // no colon but non empty -> arg index
+                        argIndex = parse_int(formatSpecifier.slice())
+                    }
+                    if colon != -1 {
+                        // colon -> format after colon
+                        format = formatSpecifier.sliceF(colon + 1)
+                    }
+
+                    if argIndex >= args.length {
+                        c_printf("[%lld] `"%.*s`": arg index to out of bounds: %lld, args: %lld`n", i, format.length, format.data, argIndex, args.length)
+                        return
+                    }
+
+                    args[argIndex].print(self, format)
+                    argIndex += 1
+                    formatSpecifier.length = 0
+
+                } else {
+                    formatSpecifier += c
+                }
+            }
+        }
+
+        formatSpecifier.free()
+    }
+}
+
+impl Printable for String {
+    fn print(ref Self, str: ref String, format: string) {
+        str += self
+    }
+}
+
+fn streql(a: $T, b: $T2, len: int) -> bool {
+    let alen = cast a::get_length()
+    let blen = cast b::get_length()
+    if len > alen {
+        len = alen
+    }
+    if len > blen {
+        len = blen
+    }
+
+    while let i = 0; i < len; i += 1 {
+        if a::char_at(i) != b::char_at(i) {
+            return false
+        }
+    }
+    return true
+}
+
+fn streq(a: $T, b: $T2) -> bool {
+    let len = a::get_length()
+    let blen = b::get_length()
+
+    if len != blen {
+        return false
+    }
+
+    while let i = 0; i < len; i += 1 {
+        if a::char_at(i) != b::char_at(i) {
+            return false
+        }
+    }
+    return true
+}
+
+impl string {
+    fn get_length(Self) -> int {
+        return self.length
+    }
+    
+    fn char_at(Self, i: int) -> char {
+        return self[i]
+    }
+
+    fn to_string(Self) -> String {
+        return String::from_string(self)
+    }
+}
+
+impl c_string {
+    fn get_length(Self) -> int {
+        return cast c_strlen(self)
+    }
+    
+    fn char_at(Self, i: int) -> char {
+        return self[i]
+    }
+
+    fn to_string(Self) -> String {
+        return String::from_cstring(self)
     }
 }

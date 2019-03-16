@@ -27,6 +27,7 @@ arr: []
 
 #load("std:c")
 #load("std:array")
+#load("std:string")
 
 fn print_array(a: ref Array(int)) {
     c_printf("len: %lld`n", a.get_length())

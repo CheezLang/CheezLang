@@ -5,3 +5,4 @@ fn c_puts(str: c_string) #linkname("puts");
 fn c_scanf(format: c_string) -> i32 #varargs #linkname("scanf");
 fn c_gets(string: c_string) -> c_string #linkname("gets");
 fn c_getchar() -> i32 #linkname("getchar");
+

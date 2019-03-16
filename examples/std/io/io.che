@@ -1,356 +1,220 @@
 #load("std:string")
+#load("std:printable")
 #load("std:mem/memory")
 #load("std:os/windows")
 
-typedef isize = i32
-
-fn c_sprintf(buff: *char, f: c_string, a: double) -> i32 #varargs #linkname("sprintf");
-
-fn print_string(s: *$T) {
-    if @typeseq(c_string, T) {
-        let len = strlen(s)
-        let bytesWritten: i32
-        WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
-    } else if @typeseq(string, T) {
-        let bytesWritten: i32
-        WriteFile(__std_out_handle, s.data, s.length, &bytesWritten, 0)
-    } else {
-        @error(@concat("Can't call printString($T) with type ", @typename(T)))
-    }
+fn printf(format: string, args: []Printable) {
+    let s = String::empty()
+    s.appendf(format, args)
+    print_stringl(s)
+    s.free()
 }
 
-fn print_stringl(s: *String) {
-    let bytesWritten: i32
-    WriteFile(__std_out_handle, s.data, s.length, &bytesWritten, 0)
+fn print_stringl(s: ref String) {
+    let bytesWritten: u32
+    WriteFile(__std_out_handle, cast s.get_raw(), cast s.get_length(), &bytesWritten, null)
 }
 
-fn print_char(c: char) { 
-    let bytesWritten: i32
-    WriteFile(__std_out_handle, &c, 1, &bytesWritten, 0)
-}
+// fn print_string(s: *$T) {
+//     if @typeseq(c_string, T) {
+//         let len = strlen(s)
+//         let bytesWritten: i32
+//         WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
+//     } else if @typeseq(string, T) {
+//         let bytesWritten: i32
+//         WriteFile(__std_out_handle, s.data, s.length, &bytesWritten, 0)
+//     } else {
+//         @error(@concat("Can't call printString($T) with type ", @typename(T)))
+//     }
+// }
 
-fn print_float(val: $T) {
-    let buff: [32]char
-    let buff: string = buff
-    if @typeseq(T, float) {
-        c_sprintf(buff.data, "%f", cast(double)val)
-    } else if @typeseq(T, double) {
-        c_sprintf(buff.data, "%f", val)
-    } else {
-        @error(@concat("print_float can't be called with value of type ", @typename(T)))
-    }
-    print_string(buff.data)
-}
+// fn print_char(c: char) { 
+//     let bytesWritten: i32
+//     WriteFile(__std_out_handle, &c, 1, &bytesWritten, 0)
+// }
 
-fn print_int(val: $T) {
-    let v = val
-    let len = 0
+// fn print_float(val: $T) {
+//     let buff: [32]char
+//     let buff: string = buff
+//     if @typeseq(T, float) {
+//         c_sprintf(buff.data, "%f", cast(double)val)
+//     } else if @typeseq(T, double) {
+//         c_sprintf(buff.data, "%f", val)
+//     } else {
+//         @error(@concat("print_float can't be called with value of type ", @typename(T)))
+//     }
+//     print_string(buff.data)
+// }
 
-    let neg = false
-    if v < 0 {
-        neg = true
-        len = 1
-        v = -v
-        val = -val
-    }
-    else if v == 0 {
-        len = 1
-    }
+// fn print_int(val: $T) {
+//     let v = val
+//     let len = 0
 
-    while v != 0 {
-        v = v / 10
-        len = len + 1
-    }
+//     let neg = false
+//     if v < 0 {
+//         neg = true
+//         len = 1
+//         v = -v
+//         val = -val
+//     }
+//     else if v == 0 {
+//         len = 1
+//     }
+
+//     while v != 0 {
+//         v = v / 10
+//         len = len + 1
+//     }
 
 
-    let buffer: String = new_string()
-    defer buffer.dispose()
-    buffer.resize(len)
+//     let buffer: String = new_string()
+//     defer buffer.dispose()
+//     buffer.resize(len)
 
-    if val == 0 {
-        buffer.data[0] = '0'
-    }
-    else {
-        let minimum = false
-        if neg and val < 0 {
-            // val is minimum value
-            val = -(val + 1)
-            minimum = true
-        }
+//     if val == 0 {
+//         buffer.data[0] = '0'
+//     }
+//     else {
+//         let minimum = false
+//         if neg and val < 0 {
+//             // val is minimum value
+//             val = -(val + 1)
+//             minimum = true
+//         }
 
-        let i = len - 1
-        while val != 0 {
-            defer i -= 1
+//         let i = len - 1
+//         while val != 0 {
+//             defer i -= 1
 
-            let lastDigit = val % 10
-            if i == len - 1 and minimum {
-                lastDigit = lastDigit + 1
-            }
+//             let lastDigit = val % 10
+//             if i == len - 1 and minimum {
+//                 lastDigit = lastDigit + 1
+//             }
 
-            val = val / 10
-            buffer.data[i] = cast(char) (lastDigit + 48)
-        }
+//             val = val / 10
+//             buffer.data[i] = cast(char) (lastDigit + 48)
+//         }
 
-        if (neg) {
-            buffer.data[0] = '-'
-        }
-    }
+//         if (neg) {
+//             buffer.data[0] = '-'
+//         }
+//     }
 
-    print_stringl(&buffer)
-}
+//     print_stringl(&buffer)
+// }
 
-fn b_print_i(buffer: *String, val: $T) {
-    let v = val
-    let len = 0
+// fn b_print_i(buffer: *String, val: $T) {
+//     let v = val
+//     let len = 0
 
-    let neg = false
-    if v < 0 {
-        neg = true
-        len = 1
-        v = -v
-    }
-    else if v == 0 {
-        len = 1
-    }
+//     let neg = false
+//     if v < 0 {
+//         neg = true
+//         len = 1
+//         v = -v
+//     }
+//     else if v == 0 {
+//         len = 1
+//     }
 
-    while v != 0 {
-        v = v / 10
-        len = len + 1
-    }
+//     while v != 0 {
+//         v = v / 10
+//         len = len + 1
+//     }
 
-    if buffer.length + len > buffer.capacity {
-        buffer.reserve(buffer.length + len)
-    }
+//     if buffer.length + len > buffer.capacity {
+//         buffer.reserve(buffer.length + len)
+//     }
 
-    buffer.length = buffer.length + len
+//     buffer.length = buffer.length + len
     
-    if val == 0 {
-        buffer.data[buffer.length - 1] = '0'
-    }
-    else {
-        let minimum = false
-        if neg and val < 0 {
-            // val is minimum value
-            val = -(val + 1)
-            minimum = true
-        }
+//     if val == 0 {
+//         buffer.data[buffer.length - 1] = '0'
+//     }
+//     else {
+//         let minimum = false
+//         if neg and val < 0 {
+//             // val is minimum value
+//             val = -(val + 1)
+//             minimum = true
+//         }
 
-        let i = buffer.length - 1
-        while val != 0 {
-            defer i -= 1
-            let lastDigit = val % 10
-            if i == len - 1 and minimum {
-                lastDigit = lastDigit + 1
-            }
+//         let i = buffer.length - 1
+//         while val != 0 {
+//             defer i -= 1
+//             let lastDigit = val % 10
+//             if i == len - 1 and minimum {
+//                 lastDigit = lastDigit + 1
+//             }
 
-            val = val / 10
-            buffer.data[i] = cast(char) (lastDigit + 48)
-        }
+//             val = val / 10
+//             buffer.data[i] = cast(char) (lastDigit + 48)
+//         }
 
-        if (neg) {
-            buffer.data[i] = '-'
-            i -= 1
-        }
-    }
-}
+//         if (neg) {
+//             buffer.data[i] = '-'
+//             i -= 1
+//         }
+//     }
+// }
 
-fn println(v: $T) {
-    print(v)
-    print_char('`n')
-}
+// fn println(v: $T) {
+//     print(v)
+//     print_char('`n')
+// }
 
-fn print(v: $T) {
-    if @isbool(T) {
-        if v {
-            print_string("true")
-        } else {
-            print_string("false")
-        }
-    } else if (@typeseq(string, T)) {
-        print_string(v)
-    } else if @isint(T) {
-        print_int(v)
-    } else if @typeseq(T, double) {
-        print_float(v)
-    } else if @typeseq(T, float) {
-        print_float(v)
-    } else if @isstring(T) {
-        print_string(v)
-    } else if @typeseq(String, T) {
-        print_stringl(&v)
-    // } else if @typeseq(*String, T) {
-    //     print_stringl(v)
-    } else if @isenum(T) {
-        print_int(cast v)
-    } else if @typeseq(T, char) {
-        print_char(v)
-    // } else if @typeseq(T, $X[]) {
-    //     print_slice(v)
-    } else {
-        @error(@concat("print() can't be called with type ", @typename(T)))
-    }
-}
+// fn print(v: $T) {
+//     if @isbool(T) {
+//         if v {
+//             print_string("true")
+//         } else {
+//             print_string("false")
+//         }
+//     } else if (@typeseq(string, T)) {
+//         print_string(v)
+//     } else if @isint(T) {
+//         print_int(v)
+//     } else if @typeseq(T, double) {
+//         print_float(v)
+//     } else if @typeseq(T, float) {
+//         print_float(v)
+//     } else if @isstring(T) {
+//         print_string(v)
+//     } else if @typeseq(String, T) {
+//         print_stringl(&v)
+//     // } else if @typeseq(*String, T) {
+//     //     print_stringl(v)
+//     } else if @isenum(T) {
+//         print_int(cast v)
+//     } else if @typeseq(T, char) {
+//         print_char(v)
+//     // } else if @typeseq(T, $X[]) {
+//     //     print_slice(v)
+//     } else {
+//         @error(@concat("print() can't be called with type ", @typename(T)))
+//     }
+// }
 
-fn print_slice(slice: []$T) {
-    print("[")
-    while let i = 0; i < slice.length; i += 1 {
-        if i > 0 {
-            print(", ")
-        }
-        print(slice[i])
-    }
-    print("]")
-}
-/////////////////////////// new functions ///////////////////////////
+// fn print_slice(slice: []$T) {
+//     print("[")
+//     while let i = 0; i < slice.length; i += 1 {
+//         if i > 0 {
+//             print(", ")
+//         }
+//         print(slice[i])
+//     }
+//     print("]")
+// }
 
-trait Printable {
-    fn print(str: *String, format: string);
-}
 
-fn parseInt(str: *String) -> i32 {
+// helper functions
+fn parse_int(str: string) -> int {
     let val = 0
 
-    while let i = 0; i < str::getLength(); i += 1 {
+    while let i = 0; i < str.length; i += 1 {
         val *= 10
-        val += cast(i32)str::charAt(i) - cast(i32)'0'
+        val += cast(int)str[i] - cast(int)'0'
     }
 
     return val
-}
-
-fn print_f(format: string, args: []Printable) {
-    let s = new_string()
-    defer s.dispose()
-
-    sprint_f(&s, format, args)
-    print(s)
-}
-
-fn sprint_f(buffer: *String, format: string, args: []Printable) {
-    let formatSpecifier = new_string()
-    defer formatSpecifier.dispose()
-    formatSpecifier.reserve(5)
-
-    let len = cast(u64)format.length
-    let state = 0
-    let argIndex = 0
-
-    while let i: u64 = 0; i < len; i += 1 {
-        let c = format[i]
-
-        if state == 0 {
-            if (c == '{') {
-                state = 1
-            }
-            else {
-                buffer.appendChar(c)
-            }
-        }
-        else if state == 1 {
-            if (c == '}') {
-                let format: []char = []
-
-                let colon = formatSpecifier.indexOf(':')
-                if colon >= 1 {
-                    argIndex = parseInt(formatSpecifier.sliceL(colon))
-                }
-                else if colon == -1 and formatSpecifier.getLength() > 0 {
-                    argIndex = parseInt(formatSpecifier)
-                }
-                if (colon != -1) {
-                    format = formatSpecifier.sliceF(colon + 1)
-                }
-
-                if argIndex >= args.length {
-                    println("argindex to large")
-                    argIndex = 0
-                    return
-                }
-
-                state = 0
-                args[argIndex].print(buffer, format)
-                argIndex += 1
-                formatSpecifier.length = 0
-
-            } else {
-                formatSpecifier.appendChar(c)
-            }
-        }
-    }
-}
-
-impl Printable for u8 {
-    fn print(str: *String, format: string) {
-        b_print_i(str, <<self)
-    }
-}
-
-impl Printable for u16 {
-    fn print(str: *String, format: string) {
-        b_print_i(str, <<self)
-    }
-}
-
-impl Printable for u32 {
-    fn print(str: *String, format: string) {
-        b_print_i(str, <<self)
-    }
-}
-
-impl Printable for u64 {
-    fn print(str: *String, format: string) {
-        b_print_i(str, <<self)
-    }
-}
-
-impl Printable for i8 {
-    fn print(str: *String, format: string) {
-        b_print_i(str, <<self)
-    }
-}
-
-impl Printable for i16 {
-    fn print(str: *String, format: string) {
-        b_print_i(str, <<self)
-    }
-}
-
-impl Printable for i32 {
-    fn print(str: *String, format: string) {
-        b_print_i(str, <<self)
-    }
-}
-
-impl Printable for i64 {
-    fn print(str: *String, format: string) {
-        b_print_i(str, <<self)
-    }
-}
-
-impl Printable for float {
-    fn print(str: *String, format: string) {
-        let buff: [32]char
-        let buff: string = buff
-        buff.length = c_sprintf(buff.data, "%f", cast(double)<<self)
-        str.append_string(buff)
-    }
-}
-
-impl Printable for double {
-    fn print(str: *String, format: string) {
-        let buff: [32]char
-        let buff: string = buff
-        buff.length = c_sprintf(buff.data, "%f", <<self)
-        str.append_string(buff)
-    }
-}
-
-impl Printable for bool {
-    fn print(str: *String, format: string) {
-        if <<self {
-            str.append_string("true")
-        } else {
-            str.append_string("false")
-        }
-    }
 }

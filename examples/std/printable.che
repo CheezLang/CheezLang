@@ -1,0 +1,99 @@
+#load("std:string")
+
+trait Printable {
+    fn print(ref Self, str: ref String, format: string);
+}
+
+impl Printable for c_string {
+    fn print(ref Self, str: ref String, format: string) {
+        str += self
+    }
+}
+
+impl Printable for string {
+    fn print(ref Self, str: ref String, format: string) {
+        str += self
+    }
+}
+
+impl Printable for float {
+    fn print(ref Self, str: ref String, format: string) {
+        let buff: string = {
+            let buff: [32]char
+            buff
+        }
+        buff.length = c_sprintf(buff.data, "%f", cast(double) self)
+        str += buff
+    }
+}
+
+impl Printable for double {
+    fn print(ref Self, str: ref String, format: string) {
+        let buff: string = {
+            let buff: [32]char
+            buff
+        }
+        buff.length = c_sprintf(buff.data, "%f", self)
+        str += buff
+    }
+}
+
+impl Printable for bool {
+    fn print(ref Self, str: ref String, format: string) {
+        str += if streq(format, "b") {
+            if self {"1"} else {"0"}
+        } else if streq(format, "s") {
+            if self {"t"} else {"f"}
+        } else {
+            if self {"true"} else {"false"}
+        }
+    }
+}
+
+// impl Printable for u8 {
+//     fn print(str: *String, format: string) {
+//         b_print_i(str, <<self)
+//     }
+// }
+
+// impl Printable for u16 {
+//     fn print(str: *String, format: string) {
+//         b_print_i(str, <<self)
+//     }
+// }
+
+// impl Printable for u32 {
+//     fn print(str: *String, format: string) {
+//         b_print_i(str, <<self)
+//     }
+// }
+
+// impl Printable for u64 {
+//     fn print(str: *String, format: string) {
+//         b_print_i(str, <<self)
+//     }
+// }
+
+// impl Printable for i8 {
+//     fn print(str: *String, format: string) {
+//         b_print_i(str, <<self)
+//     }
+// }
+
+// impl Printable for i16 {
+//     fn print(str: *String, format: string) {
+//         b_print_i(str, <<self)
+//     }
+// }
+
+// impl Printable for i32 {
+//     fn print(str: *String, format: string) {
+//         b_print_i(str, <<self)
+//     }
+// }
+
+// impl Printable for i64 {
+//     fn print(str: *String, format: string) {
+//         b_print_i(str, <<self)
+//     }
+// }

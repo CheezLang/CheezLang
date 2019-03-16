@@ -16,6 +16,7 @@
 ")
 
 #load("std:c")
+#load("std:string")
 
 fn Main() {
     test1()
