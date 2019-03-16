@@ -103,33 +103,42 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return traitObject;
             }
 
-            var sub = GenerateExpression(cast.SubExpression, true);
-
-            if (to == from) return sub;
-
-
+            if (to == from) return GenerateExpression(cast.SubExpression, true);
+            
             if (to is IntType && from is IntType) // int <- int
-                return builder.CreateIntCast(sub, toLLVM, "");
+                return builder.CreateIntCast(GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is PointerType && from is IntType) // * <- int
-                return builder.CreateCast(LLVMOpcode.LLVMIntToPtr, sub, toLLVM, "");
+                return builder.CreateCast(LLVMOpcode.LLVMIntToPtr, GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is IntType && from is PointerType) // int <- *
-                return builder.CreateCast(LLVMOpcode.LLVMPtrToInt, sub, toLLVM, "");
+                return builder.CreateCast(LLVMOpcode.LLVMPtrToInt, GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is PointerType && from is PointerType) // * <- *
-                return builder.CreatePointerCast(sub, toLLVM, "");
+                return builder.CreatePointerCast(GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is FloatType && from is FloatType) // float <- float
-                return builder.CreateFPCast(sub, toLLVM, "");
+                return builder.CreateFPCast(GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is IntType i && from is FloatType) // int <- float
-                return builder.CreateCast(i.Signed ? LLVMOpcode.LLVMFPToSI : LLVMOpcode.LLVMFPToUI, sub, toLLVM, "");
+                return builder.CreateCast(i.Signed ? LLVMOpcode.LLVMFPToSI : LLVMOpcode.LLVMFPToUI, GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is FloatType && from is IntType i2) // float <- int
-                return builder.CreateCast(i2.Signed ? LLVMOpcode.LLVMSIToFP : LLVMOpcode.LLVMUIToFP, sub, toLLVM, "");
+                return builder.CreateCast(i2.Signed ? LLVMOpcode.LLVMSIToFP : LLVMOpcode.LLVMUIToFP, GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is IntType && from is BoolType) // int <- bool
-                return builder.CreateZExt(sub, toLLVM, "");
+                return builder.CreateZExt(GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is SliceType s && from is PointerType p) // [] <- *
             {
                 var withLen = builder.CreateInsertValue(LLVM.GetUndef(CheezTypeToLLVMType(s)), LLVM.ConstInt(LLVM.Int64Type(), 0, false), 0, "");
-                var result = builder.CreateInsertValue(withLen, sub, 1, "");
+                var result = builder.CreateInsertValue(withLen, GenerateExpression(cast.SubExpression, true), 1, "");
 
                 return result;
+            }
+
+            if (to is SliceType s2 && from is ArrayType a)
+            {
+                var slice = LLVM.GetUndef(CheezTypeToLLVMType(s2));
+                slice = builder.CreateInsertValue(slice, LLVM.ConstInt(LLVM.Int64Type(), (ulong)a.Length, false), 0, "");
+
+                var sub = GenerateExpression(cast.SubExpression, false);
+                var ptr = builder.CreatePointerCast(sub, CheezTypeToLLVMType(s2.ToPointerType()), "");
+                slice = builder.CreateInsertValue(slice, ptr, 1, "");
+
+                return slice;
             }
 
             throw new NotImplementedException();

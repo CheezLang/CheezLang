@@ -180,6 +180,8 @@ namespace Cheez
                 case AstWhileStmt whl: AnalyseWhileStatement(whl); break;
                 case AstBreakStmt br: AnalyseBreakStatement(br); break;
                 case AstContinueStmt cont: AnalyseContinueStatement(cont); break;
+
+                case AstFunctionDecl func: ReportError(func, $"Local functions not supported yet."); break;
                 default: throw new NotImplementedException();
             }
         }
@@ -305,9 +307,6 @@ namespace Cheez
                             return newVal;
                         }
 
-                        if (ass.Pattern.Type.IsErrorType)
-                            break;
-
                         ConvertLiteralTypeToDefaultType(ass.Value);
                         
                         if (ass.Pattern.Type is ReferenceType)
@@ -315,8 +314,7 @@ namespace Cheez
                             ass.Pattern = Deref(ass.Pattern);
                         }
 
-                        ass.Value = Cast(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
-                        break;
+                        return Cast(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
                 case AstTupleExpr t:
@@ -377,7 +375,13 @@ namespace Cheez
                             newVal = InferType(newVal, pattern.Type);
                             return newVal;
                         }
-                        break;
+
+                        ConvertLiteralTypeToDefaultType(ass.Value);
+
+                        if (ass.Pattern.Type is ReferenceType)
+                            ass.Pattern = Deref(ass.Pattern);
+
+                        return Cast(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
                 case AstDotExpr dot:
@@ -397,7 +401,13 @@ namespace Cheez
                             newVal = InferType(newVal, pattern.Type);
                             return newVal;
                         }
-                        break;
+
+                        ConvertLiteralTypeToDefaultType(ass.Value);
+
+                        if (ass.Pattern.Type is ReferenceType)
+                            ass.Pattern = Deref(ass.Pattern);
+
+                        return Cast(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
                 case AstArrayAccessExpr index:
@@ -416,7 +426,13 @@ namespace Cheez
                             newVal = InferType(newVal, pattern.Type);
                             return newVal;
                         }
-                        break;
+
+                        ConvertLiteralTypeToDefaultType(ass.Value);
+
+                        if (ass.Pattern.Type is ReferenceType)
+                            ass.Pattern = Deref(ass.Pattern);
+
+                        return Cast(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
                 case AstExpression e when e.Type is ReferenceType r:
@@ -431,12 +447,8 @@ namespace Cheez
                             return newVal;
                         }
 
-                        if (ass.Pattern.Type.IsErrorType)
-                            break;
-
                         ConvertLiteralTypeToDefaultType(ass.Value);
-                        ass.Value = Cast(ass.Value, r.TargetType, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
-                        break;
+                        return Cast(ass.Value, r.TargetType, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
                 default: ReportError(pattern, $"Can't assign to '{pattern.Type}', not an lvalue"); break;

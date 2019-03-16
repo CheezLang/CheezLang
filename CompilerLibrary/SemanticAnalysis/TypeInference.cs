@@ -207,6 +207,8 @@ namespace Cheez
             if (cast.SubExpression.Type.IsErrorType)
                 return cast;
 
+            cast.SubExpression = HandleReference(cast.SubExpression, cast.Type);
+
             var to = cast.Type;
             var from = cast.SubExpression.Type;
             if ((to is PointerType && from is PointerType) ||
@@ -218,7 +220,8 @@ namespace Cheez
                 (to is IntType && from is FloatType) ||
                 (to is IntType && from is BoolType) ||
                 (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
-                (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from)))
+                (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from)) ||
+                (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType))
             {
                 // ok
             }
@@ -1545,6 +1548,9 @@ namespace Cheez
                 return InferType(cast, to);
 
             if (to is FloatType f1 && from is FloatType f2 && f1.Size >= f2.Size)
+                return InferType(cast, to);
+
+            if (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType)
                 return InferType(cast, to);
 
             if (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from))
