@@ -113,7 +113,7 @@ namespace Cheez.Util
             return StartProcess(exe, args, workingDirectory, stdout, stderr);
         }
 
-        public static Process StartProcess(string exe, string args = null, string workingDirectory = null, DataReceivedEventHandler stdout = null, DataReceivedEventHandler stderr = null)
+        public static Process StartProcess(string exe, string args = null, string workingDirectory = null, DataReceivedEventHandler stdout = null, DataReceivedEventHandler stderr = null, bool useShellExecute = false, bool createNoWindow = true)
         {
             //Console.WriteLine($"{exe} {args}");
 
@@ -123,9 +123,9 @@ namespace Cheez.Util
                 process.StartInfo.WorkingDirectory = workingDirectory;
             if (args != null)
                 process.StartInfo.Arguments = args;
-            process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
+            process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
+            process.StartInfo.UseShellExecute = useShellExecute;
+            process.StartInfo.CreateNoWindow = createNoWindow;
 
             if (stdout != null)
             {

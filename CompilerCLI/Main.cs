@@ -297,6 +297,12 @@ namespace CheezCLI
                             workingDirectory: options.OutDir,
                             stdout: (s, e) => { if (e.Data != null) Console.WriteLine(e.Data); },
                             stderr: (s, e) => { if (e.Data != null) Console.Error.WriteLine(e.Data); });
+                        //var testProc = Utilities.StartProcess(
+                        //    Path.Combine(options.OutDir, options.OutName + ".exe"),
+                        //    "",
+                        //    workingDirectory: options.OutDir,
+                        //    useShellExecute: true,
+                        //    createNoWindow: true);
                         testProc.WaitForExit();
                         result.Execution = stopwatch.Elapsed;
                         Console.WriteLine("=====================================");
