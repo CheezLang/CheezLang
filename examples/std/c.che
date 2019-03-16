@@ -2,3 +2,6 @@ fn c_strlen(str: c_string) -> i32 #linkname("strlen");
 fn c_printf(format: c_string) #varargs #linkname("printf");
 fn c_sprintf(buff: c_string, f: c_string, a: double) -> i32 #varargs #linkname("sprintf");
 fn c_puts(str: c_string) #linkname("puts");
+fn c_scanf(format: c_string) -> i32 #varargs #linkname("scanf");
+fn c_gets(string: c_string) -> c_string #linkname("gets");
+fn c_getchar() -> i32 #linkname("getchar");

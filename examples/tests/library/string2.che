@@ -1,0 +1,37 @@
+#test_expect_output("`"uiae true 0.500000`"
+`"uiae true 0.500000test1 `"
+`"uiae true 0.500000test1 test2 `"
+`"uiae true 0.500000test1 test2 true `"
+`"uiae true 0.500000test1 test2 true 1.230000 `"
+`"uiae true 0.500000test1 test2 true 1.230000 6.597150 `"")
+
+#load("std:string")
+#load("std:c")
+#load("std:io/io")
+
+fn Main() {
+    let s = String::empty()
+    s.appendf("uiae {} {}", [true, 0.5])
+
+    c_printf("`"%.*s`"`n", s.get_length(), s.get_raw())
+
+    "test1 "::print(s, "")
+    c_printf("`"%.*s`"`n", s.get_length(), s.get_raw())
+
+    "test2 "c::print(s, "")
+    c_printf("`"%.*s`"`n", s.get_length(), s.get_raw())
+
+    true::print(s, "")
+    " "c::print(s, "")
+    c_printf("`"%.*s`"`n", s.get_length(), s.get_raw())
+
+    1.23::print(s, "")
+    " "c::print(s, "")
+    c_printf("`"%.*s`"`n", s.get_length(), s.get_raw())
+
+    (3.1415f * 2.1f)::print(s, "")
+    " "c::print(s, "")
+    c_printf("`"%.*s`"`n", s.get_length(), s.get_raw())
+
+    s.free()
+}
