@@ -1,81 +1,11 @@
-// #load("tests/library/array1")
+// #load("tests/library/traits1")
+// #load("tests/language/traits")
 
 // #load("std:util")
-#load("std:c")
-
+// #load("std:c")
+#load("std:io/io")
 // #load("test2")
 
 fn Main() {
-    test1()
-    test2()
-    test3()
-    test4()
-}
-
-fn test4() {
-    let a = 5
-    let ra: ref int = a
-    let b = ra
-    
-    c_printf("%lld`n", a)
-    c_printf("%lld`n", ra)
-    c_printf("%lld`n", b)
-    c_printf("`n")
-
-    a = 10
-    c_printf("%lld`n", a)
-    c_printf("%lld`n", ra)
-    c_printf("%lld`n", b)
-    c_printf("`n")
-
-    ra = 15
-    c_printf("%lld`n", a)
-    c_printf("%lld`n", ra)
-    c_printf("%lld`n", b)
-    c_printf("`n")
-
-    b = 20
-    c_printf("%lld`n", a)
-    c_printf("%lld`n", ra)
-    c_printf("%lld`n", b)
-    c_printf("`n")
-}
-
-struct Foo3 {
-    a: int
-    b: double
-    c: string
-}
-
-fn test3() {
-    let c = "uiae"
-
-    let f = new Foo3 {
-        1i8
-        0.0f
-        c
-    }
-    let f2 = new Foo3 {
-        a = 2i8
-        b = 1.2
-        c = c
-    }
-}
-
-fn test2() {
-    let a = 5
-    let t = (1, 2, a, "lol")
-}
-
-fn help1(a: ref *int) {
-    let b = <<&<<a
-}
-
-fn test1() {
-    let a = 5
-    let pa = &a
-    let b = <<pa
-    let c = <<&<<&a
-
-    help1(pa)
+    printf("{} {:s} {:b} {} {:s} {:b}`n", [true, true, true, false, false, false])
 }
