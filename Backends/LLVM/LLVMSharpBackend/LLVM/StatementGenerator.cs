@@ -20,6 +20,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (function.ConstParameters != null && function.ConstParameters.Count > 0)
                 name += "." + string.Join(".", function.ConstParameters.Select(p => $"{p.Key}.{p.Value.type}.{p.Value.value}"));
 
+            if (function.ImplBlock != null)
+            {
+                if (function.ImplBlock.Trait != null)
+                    name += "." + function.ImplBlock.Trait;
+                if (!function.ImplBlock.TargetType.IsPolyType)
+                    name += "." + function.ImplBlock.TargetType;
+            }
+            if (function.Body != null)
+                name += ".che";
+
             var linkname = function.GetDirective("linkname");
             if (linkname != null)
             {

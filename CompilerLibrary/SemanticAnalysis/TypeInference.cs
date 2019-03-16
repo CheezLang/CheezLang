@@ -249,7 +249,7 @@ namespace Cheez
             cast.SubExpression.Scope = cast.Scope;
             cast.SubExpression = InferTypeHelper(cast.SubExpression, cast.Type, newInstances);
 
-            if (cast.SubExpression.Type.IsErrorType)
+            if (cast.SubExpression.Type.IsErrorType || cast.Type.IsErrorType)
                 return cast;
 
             cast.SubExpression = HandleReference(cast.SubExpression, cast.Type);
