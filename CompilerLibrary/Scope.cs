@@ -588,7 +588,7 @@ namespace Cheez
             return false;
         }
 
-        public AstFunctionDecl GetImplFunction(CheezType targetType, string name)
+        public List<AstFunctionDecl> GetImplFunction(CheezType targetType, string name)
         {
             var impls = mImplTable.Where(kv =>
             {
@@ -611,9 +611,13 @@ namespace Cheez
             }
 
             if (candidates.Count == 0)
-                return Parent?.GetImplFunction(targetType, name);
+            {
+                if (Parent != null)
+                    return Parent.GetImplFunction(targetType, name);
+                return candidates;
+            }
 
-            return candidates[0];
+            return candidates;
         }
 
         public AstFunctionDecl GetImplFunctionWithDirective(CheezType targetType, string attribute)

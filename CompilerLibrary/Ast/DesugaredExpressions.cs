@@ -58,6 +58,7 @@ namespace Cheez.Ast.Expressions
             this.Expr = expr;
             this.StorePointer = storePointer;
             CopyValuesFrom(expr);
+            Value = null;
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTempVarExpr(this, data);

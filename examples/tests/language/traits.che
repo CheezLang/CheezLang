@@ -1,0 +1,107 @@
+#test_expect_output("Test::foo(S{10}, 23)
+
+Test::foo(S{5}, 7)
+Test::print(S{5})
+
+Test2::bar(S{5})
+Test2::print(S{5})
+
+Test::foo(S2{hello}, 23)
+Test::print(S2{hello})
+
+Test::foo(S{1}, 123)
+Test::print(S{1})
+
+Test::foo(S2{zwei}, 123)
+Test::print(S2{zwei})
+")
+
+#load("std:c")
+
+trait Test {
+    fn foo(ref Self, a: int);
+    fn print(ref Self);
+}
+
+trait Test2 {
+    fn bar(ref Self);
+    fn print(ref Self);
+}
+
+struct S {
+    a: int
+}
+
+struct S2 {
+    x: c_string
+}
+
+impl Test for S {
+    fn foo(ref Self, a: int) {
+        c_printf("Test::foo(S{%lld}, %lld)`n", self.a, a)
+    }
+
+    fn print(ref Self) {
+        c_printf("Test::print(S{%lld})`n", a)
+    }
+}
+
+impl Test2 for S {
+    fn bar(ref Self) {
+        c_printf("Test2::bar(S{%lld})`n", a)
+    }
+
+    fn print(ref Self) {
+        c_printf("Test2::print(S{%lld})`n", a)
+    }
+}
+
+impl Test for S2 {
+    fn foo(ref Self, a: int) {
+        c_printf("Test::foo(S2{%s}, %lld)`n", x, a)
+    }
+
+    fn print(ref Self) {
+        c_printf("Test::print(S2{%s})`n", x)
+    }
+}
+
+fn test(t: Test) {
+    t.foo(123)
+    t.print()
+    c_puts("")
+}
+
+fn Main() {
+    {
+        let t = new S{10}
+        t.foo(23)
+        c_puts("")
+    }
+
+    {
+        let t: Test = new S{5}
+        t.foo(7)
+        t.print()
+        c_puts("")
+    }
+    
+    {
+        let t: Test2 = new S{5}
+        t.bar()
+        t.print()
+        c_puts("")
+    }
+    
+    {
+        let t: Test = new S2{"hello"}
+        t.foo(23)
+        t.print()
+        c_puts("")
+    }
+    
+    {
+        test(new S{1})
+        test(new S2{"zwei"})
+    }
+}

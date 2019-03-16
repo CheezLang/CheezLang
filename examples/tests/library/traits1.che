@@ -1,0 +1,38 @@
+#test_expect_output("5
+hello
+true")
+
+#load("std:c")
+
+trait Printable {
+    fn print(ref Self);
+}
+
+impl Printable for int {
+    fn print(ref Self) {
+        c_printf("%lld", self)
+    }
+}
+
+impl Printable for bool {
+    fn print(ref Self) {
+        c_printf("%s", if self {"true"c} else {"false"c})
+    }
+}
+
+impl Printable for string {
+    fn print(ref Self) {
+        c_printf("%.*s", self.length, self.data)
+    }
+}
+
+fn println(p: Printable) {
+    p.print()
+    c_puts("")
+}
+
+fn Main() {
+    println(5)
+    println("hello")
+    println(true)
+}

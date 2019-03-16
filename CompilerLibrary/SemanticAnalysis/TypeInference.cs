@@ -285,6 +285,9 @@ namespace Cheez
             expr.Condition = InferTypeHelper(expr.Condition, CheezType.Bool, newInstances);
             ConvertLiteralTypeToDefaultType(expr.Condition);
 
+            if (expr.Condition.Type is ReferenceType)
+                expr.Condition = Deref(expr.Condition);
+
             if (expr.Condition.Type != CheezType.Bool && !(expr.Condition.Type is PointerType) && !expr.Condition.Type.IsErrorType)
             {
                 ReportError(expr.Condition, $"Condition of if statement must be either a bool or a pointer but is {expr.Condition.Type}");
@@ -736,15 +739,21 @@ namespace Cheez
                         {
                             // check if function exists
 
-                            var func = expr.Scope.GetImplFunction(s, name);
+                            var funcs = expr.Scope.GetImplFunction(s, name);
 
-                            if (func == null)
+                            if (funcs.Count == 0)
                             {
                                 ReportError(expr.Right, $"Struct '{s}' has no field or function '{name}'");
                                 break;
                             }
+                            else if (funcs.Count > 1)
+                            {
+                                var details = funcs.Select(f => ("Possible candidate:", f.Name.Location));
+                                ReportError(expr.Right, $"Ambigious call to impl function '{name}'", details);
+                                break;
+                            }
 
-                            var ufc = new AstUfcFuncExpr(expr.Left, func);
+                            var ufc = new AstUfcFuncExpr(expr.Left, funcs[0]);
                             return InferTypeHelper(ufc, null, null);
                         }
 
@@ -771,15 +780,21 @@ namespace Cheez
                 case CheezTypeType _ when expr.IsDoubleColon:
                     {
                         var t = expr.Left.Value as CheezType;
-                        var func = expr.Scope.GetImplFunction(t, expr.Right.Name);
+                        var funcs = expr.Scope.GetImplFunction(t, expr.Right.Name);
 
-                        if (func == null)
+                        if (funcs.Count == 0)
                         {
                             ReportError(expr.Right, $"Type '{t}' has no function '{expr.Right.Name}'");
                             break;
                         }
+                        else if (funcs.Count > 1)
+                        {
+                            var details = funcs.Select(f => ("Possible candidate:", f.Name.Location));
+                            ReportError(expr.Right, $"Ambigious call to function '{expr.Right.Name}'", details);
+                            break;
+                        }
 
-                        expr.Type = func.Type;
+                        expr.Type = funcs[0].Type;
                         break;
                     }
 
@@ -792,15 +807,21 @@ namespace Cheez
                 case CheezType c when expr.IsDoubleColon:
                     {
                         var name = expr.Right.Name;
-                        var func = expr.Scope.GetImplFunction(c, name);
+                        var funcs = expr.Scope.GetImplFunction(c, name);
 
-                        if (func == null)
+                        if (funcs.Count == 0)
                         {
                             ReportError(expr.Right, $"Type '{c}' has no impl function '{name}'");
                             break;
                         }
+                        else if (funcs.Count > 1)
+                        {
+                            var details = funcs.Select(f => ("Possible candidate:", f.Name.Location));
+                            ReportError(expr.Right, $"Ambigious call to function '{expr.Right.Name}'", details);
+                            break;
+                        }
 
-                        var ufc = new AstUfcFuncExpr(expr.Left, func);
+                        var ufc = new AstUfcFuncExpr(expr.Left, funcs[0]);
                         return InferTypeHelper(ufc, null, null);
                     }
 
@@ -1236,7 +1257,6 @@ namespace Cheez
                 }
                 else if (ops.Count > 1)
                 {
-                    // TODO: show matching operators
                     ReportError(expr, $"Multiple operators '{expr.Operator}' match the type {expr.SubExpr.Type}");
                     return expr;
                 }
