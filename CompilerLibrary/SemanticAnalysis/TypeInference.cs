@@ -156,9 +156,54 @@ namespace Cheez
                 case AstUfcFuncExpr ufc:
                     return InferTypeUfcFuncExpr(ufc);
 
+                case AstArrayExpr arr:
+                    return InferTypeArrayExpr(arr, expected, newInstances);
+
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private AstExpression InferTypeArrayExpr(AstArrayExpr expr, CheezType expected, List<AstFunctionDecl> newInstances)
+        {
+            CheezType subExpected = null;
+            if (expected != null)
+            {
+                if (expected is ArrayType arr)
+                    subExpected = arr.TargetType;
+                else if (expected is SliceType s)
+                    subExpected = s.TargetType;
+            }
+
+            var type = subExpected;
+
+            for (int i = 0; i < expr.Values.Count; i++)
+            {
+                expr.Values[i].Scope = expr.Scope;
+                expr.Values[i] = InferType(expr.Values[i], subExpected);
+                ConvertLiteralTypeToDefaultType(expr.Values[i]);
+
+
+                if (type == null)
+                {
+                    type = expr.Values[i].Type;
+                    if (type is ReferenceType r)
+                        type = r.TargetType;
+                }
+
+                expr.Values[i] = HandleReference(expr.Values[i], type);
+                expr.Values[i] = Cast(expr.Values[i], type);
+            }
+
+            if (type == null)
+            {
+                ReportError(expr, $"Failed to infer type for array expression");
+                expr.Type = CheezType.Error;
+                return expr;
+            }
+
+            expr.Type = ArrayType.GetArrayType(type, expr.Values.Count);
+            return expr;
         }
 
         private AstExpression InferTypeUfcFuncExpr(AstUfcFuncExpr expr)
@@ -214,11 +259,13 @@ namespace Cheez
             if ((to is PointerType && from is PointerType) ||
                 (to is IntType && from is PointerType) ||
                 (to is PointerType && from is IntType) ||
+                (to is PointerType p1 && from is ArrayType a1 && p1.TargetType == a1.TargetType) ||
                 (to is IntType && from is IntType) ||
                 (to is FloatType && from is FloatType) ||
                 (to is FloatType && from is IntType) ||
                 (to is IntType && from is FloatType) ||
                 (to is IntType && from is BoolType) ||
+                (to is IntType && from is CharType) ||
                 (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
                 (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from)) ||
                 (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType))
@@ -990,7 +1037,10 @@ namespace Cheez
                 arg.Scope = expr.Scope;
                 arg.Expr.Scope = arg.Scope;
 
-                arg.Expr = InferTypeHelper(arg.Expr, null, newInstances);
+                var ex = param.Type;
+                if (ex.IsPolyType)
+                    ex = null;
+                arg.Expr = InferTypeHelper(arg.Expr, ex, newInstances);
                 ConvertLiteralTypeToDefaultType(arg.Expr);
                 arg.Type = arg.Expr.Type;
             }
