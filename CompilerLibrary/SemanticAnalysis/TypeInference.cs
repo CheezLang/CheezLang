@@ -1334,10 +1334,12 @@ namespace Cheez
 
                 var op = ops[0];
 
+                expr.Left = HandleReference(expr.Left, op.LhsType);
+                expr.Right = HandleReference(expr.Right, op.RhsType);
                 if (!op.LhsType.IsPolyType)
                     expr.Left = Cast(expr.Left, op.LhsType);
                 if (!op.RhsType.IsPolyType)
-                expr.Right = Cast(expr.Right, op.RhsType);
+                    expr.Right = Cast(expr.Right, op.RhsType);
 
                 if (op is UserDefinedBinaryOperator user)
                 {

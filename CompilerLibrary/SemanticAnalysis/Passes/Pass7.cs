@@ -19,6 +19,9 @@
 
             foreach (var i in mTraitImpls)
             {
+                if (i.Trait == null)
+                    continue;
+
                 foreach (var f in i.Functions)
                 {
                     AnalyseFunction(f);

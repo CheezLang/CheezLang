@@ -75,6 +75,9 @@ namespace Cheez
             impl.Scope.ImplBlocks.Add(impl);
 
             var type = ResolveType(impl.TraitExpr);
+            if (type.IsErrorType)
+                return;
+
             if (type is TraitType tt)
             {
                 impl.Trait = tt;

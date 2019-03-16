@@ -318,6 +318,9 @@ namespace Cheez.Types.Primitive
 
         public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {
+            if (concrete is ReferenceType r)
+                concrete = r.TargetType;
+
             if (concrete is SliceType p)
                 return this.TargetType.Match(p.TargetType, polyTypes);
             return -1;
