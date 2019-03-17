@@ -1,9 +1,8 @@
 #load("std:io/io")
 #load("std:util")
 
-
 trait TestTrait {
-    fn traitFunction(n: u64);
+    fn traitFunction(ref Self, n: u64);
 }
 
 struct Test {
@@ -11,30 +10,30 @@ struct Test {
 
     // not used, just so that passing by value will be slow
     // comment out to see performance of pass by value with small structs
-    a0: i32
-    a1: i32
-    a2: i32
-    a3: i32
-    a4: i32
-    a5: i32
-    a6: i32
-    a7: i32
-    a8: i32
-    a9: i32
+    // a0: i32
+    // a1: i32
+    // a2: i32
+    // a3: i32
+    // a4: i32
+    // a5: i32
+    // a6: i32
+    // a7: i32
+    // a8: i32
+    // a9: i32
 }
 
 impl Test {
-    fn normalFunction(n: u64) {
+    fn normalFunction(Self, n: u64) {
         counter += n
     }
 
-    ref fn refFunction(n: u64) {
+    fn refFunction(ref Self, n: u64) {
         counter += n
     }
 }
 
 impl TestTrait for Test {
-    fn traitFunction(n: u64) {
+    fn traitFunction(ref Self, n: u64) {
         counter += n
     }
 }
@@ -44,7 +43,7 @@ fn trait_function_call_performance() {
     let n = 8
 
 
-    print_f("iterations: {}, n: {}`n", [iterations, n])
+    printf("iterations: {}, n: {}`n", [iterations, n])
 
     let t: Test
     let tt: TestTrait = t
@@ -55,58 +54,59 @@ fn trait_function_call_performance() {
         t.counter = 0
 
         let start = getCurrentTimeInMicroseconds()
-        defer {
-            let end = getCurrentTimeInMicroseconds()
-            let diff = end - start
-            let ms = diff / 1000
-
-            print_f("counter: {}`n", [t.counter])
-            print_f("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.normalFunction()", ms, iterations])
-        }   
 
         while let i = 0; i < iterations; i += 1 {
             t.normalFunction(cast(u64)n)
         }
-    }
 
-    // call refFunction() on Test
-    // t is implicitly passed as a pointer 
-    {
-        t.counter = 0
-
-        let start = getCurrentTimeInMicroseconds()
-        defer {
+        {
             let end = getCurrentTimeInMicroseconds()
             let diff = end - start
             let ms = diff / 1000
 
-            print_f("counter: {}`n", [t.counter])
-            print_f("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.refFunction()", ms, iterations])
-        }   
+            printf("counter: {}`n", [t.counter])
+            printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.normalFunction()", ms, iterations])
+        }
+    }
+
+    // call refFunction() on Test
+    // t is implicitly passed as a pointer
+    {
+        t.counter = 0
+
+        let start = getCurrentTimeInMicroseconds()
 
         while let i = 0; i < iterations; i += 1 {
             t.refFunction(cast(u64)n)
         }
-    }
 
-    // call traitFunction() on Test
-    // t is implicitly converted to a trait object (vtable pointer + pointer to object)
-    // and passed to the function
-    {
-        t.counter = 0
-        
-        let start = getCurrentTimeInMicroseconds()
-        defer {
+        {
             let end = getCurrentTimeInMicroseconds()
             let diff = end - start
             let ms = diff / 1000
 
-            print_f("counter: {}`n", [t.counter])
-            print_f("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.traitFunction()", ms, iterations])
-        }   
+            printf("counter: {}`n", [t.counter])
+            printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.refFunction()", ms, iterations])
+        }
+    }
+
+    // call traitFunction() on Test
+    {
+        t.counter = 0
+
+        let start = getCurrentTimeInMicroseconds()
 
         while let i = 0; i < iterations; i += 1 {
             t.traitFunction(cast(u64)n)
+        }
+
+        {
+            let end = getCurrentTimeInMicroseconds()
+            let diff = end - start
+            let ms = diff / 1000
+
+            printf("counter: {}`n", [t.counter])
+            printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.traitFunction()", ms, iterations])
         }
     }
 
@@ -115,19 +115,20 @@ fn trait_function_call_performance() {
     // tt is already a trait object, so no implicit casting for every call
     {
         t.counter = 0
-        
+
         let start = getCurrentTimeInMicroseconds()
-        defer {
+
+        while let i = 0; i < iterations; i += 1 {
+            tt.traitFunction(cast(u64)n)
+        }
+
+        {
             let end = getCurrentTimeInMicroseconds()
             let diff = end - start
             let ms = diff / 1000
 
-            print_f("counter: {}`n", [t.counter])
-            print_f("[{}] Time elapsed: {} ms ({} iterations)`n", ["tt.traitFunction()", ms, iterations])
-        }   
-
-        while let i = 0; i < iterations; i += 1 {
-            tt.traitFunction(cast(u64)n)
+            printf("counter: {}`n", [t.counter])
+            printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["tt.traitFunction()", ms, iterations])
         }
     }
 }
