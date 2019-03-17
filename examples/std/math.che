@@ -63,13 +63,13 @@ struct Vector2(T: type) {
 struct Vector3(T: type) {
     x: T
     y: T
-    y: T
+    z: T
 }
 
 struct Vector4(T: type) {
     x: T
     y: T
-    y: T
+    z: T
     w: T
 }
 
@@ -165,5 +165,124 @@ impl Vector2($T) {
 
     fn dot(a: Self, b : Self) -> T {
         return a.x * b.x + a.y * b.y
+    }
+}
+
+impl Vector3($T) {
+    // ref
+    fn addv(ref Self, other: Self) -> ref Self #operator("+=") {
+        x += other.x
+        y += other.y
+        z += other.z
+        return self
+    }
+
+    fn subv(ref Self, other: Self) -> ref Self #operator("-=") {
+        x -= other.x
+        y -= other.y
+        z -= other.z
+        return self
+    }
+
+    fn mulv(ref Self, other: Self) -> ref Self #operator("*=") {
+        x *= other.x
+        y *= other.y
+        z *= other.z
+        return self
+    }
+
+    fn muls(ref Self, other: T) -> ref Self #operator("*=") {
+        x *= other
+        y *= other
+        z *= other
+        return self
+    }
+
+    fn divv(ref Self, other: Self) -> ref Self #operator("/=") {
+        x /= other.x
+        y /= other.y
+        z /= other.z
+        return self
+    }
+
+    fn normalize(ref Self) -> ref Self {
+        let mag = self.mag()
+        if mag != 0 {
+            x /= mag
+            y /= mag
+            z /= mag
+        }
+
+        return self
+    }
+
+    fn normalized(ref Self) -> Self {
+        let mag = self.mag()
+        if mag != 0 {
+            return new {
+                x / mag
+                y / mag
+                z / mag
+            }
+        } else {
+            return new {0, 0, 0}
+        }
+    }
+
+    fn mag(Self) -> T {
+        return cast(T) sqrt(cast(double) (x*x + y*y + z*z))
+    }
+
+    fn magsq(Self) -> T {
+        return cast(T) (x*x + y*y + z*z)
+    }
+
+    fn neg(Self) -> Self #operator("-") {
+        return new {-x, -y, -z}
+    }
+
+    // static
+    fn addvv(a: Self, b: Self) -> Self #operator("+") {
+        return new {
+            a.x + b.x
+            a.y + b.y
+            a.z + b.z
+        }
+    }
+
+    fn subvv(a: Self, b: Self) -> Self #operator("-") {
+        return new {
+            a.x - b.x
+            a.y - b.y
+            a.z - b.z
+        }
+    }
+
+    fn mulvv(a: Self, b: Self) -> Self #operator("*") {
+        return new {
+            a.x * b.x
+            a.y * b.y
+            a.z * b.z
+        }
+    }
+
+    fn mulvs(a: Self, b: T) -> Self #operator("*") {
+        return new {
+            a.x * b
+            a.y * b
+            a.z * b
+        }
+    }
+
+    fn divvv(a: Self, b: Self) -> Self #operator("/") {
+        return new {
+            a.x / b.x
+            a.y / b.y
+            a.z / b.z
+        }
+    }
+
+    fn dot(a: Self, b : Self) -> T {
+        return a.x * b.x + a.y * b.y + a.z * b.z
     }
 }

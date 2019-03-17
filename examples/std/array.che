@@ -79,9 +79,21 @@ impl Array($T) {
         return data[index]
     }
 
-    // ref fn slice() -> []T {
-    //     let slice: []T = self.data
-    //     slice.length = cast(i32) self.length
-    //     return slice
-    // }
+    fn sliceFL(ref Self, from: int, len: int) -> []T {
+        let slice: []T = &data[from]
+        slice.length = len
+        return slice
+    }
+
+    fn slice(ref Self) -> []T {
+        return self.sliceFL(0, length)
+    }
+
+    fn sliceF(ref Self, from: int) -> []T {
+        return self.sliceFL(from, length - from)
+    }
+    
+    fn sliceL(ref Self, len: int) -> []T {
+        return self.sliceFL(0, len)
+    }
 }

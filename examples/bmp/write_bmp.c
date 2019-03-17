@@ -1,6 +1,24 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <memory.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <memory.h>
+
+#define NULL 0
+struct FILE;
+typedef struct FILE FILE;
+
+typedef int errno_t;
+#if _WIN64
+typedef unsigned long long size_t;
+#else
+typedef unsigned int size_t;
+#endif
+
+errno_t fopen_s(FILE *restrict *restrict streamptr, const char *restrict filename, const char *restrict mode);
+size_t fwrite ( const void * ptr, size_t size, size_t count, FILE * stream );
+int fclose ( FILE * stream );
+void free (void* ptr);
+void * memset ( void * ptr, int value, size_t num );
+void* malloc (size_t size);
 
 void write_bmp(int w, int h, double* data, const char* filename) {
     FILE* f;

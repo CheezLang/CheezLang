@@ -1,11 +1,25 @@
 // #load("tests/library/traits1")
 // #load("tests/language/traits")
+// #load("examples/glfw3_example.che")
+// #load("examples/trait_function_call_performance.che")
+// #load("examples/signed_distance_field_renderer.che")
 
-// #load("std:util")
-// #load("std:c")
 #load("std:io/io")
-// #load("test2")
+// #load("std:io/file")
+
+struct Test {
+    a: int
+    b: bool
+    c: string
+}
+
+let t = new Test {5, true, "hello"}
 
 fn Main() {
-    printf("{} {:s} {:b} {} {:s} {:b}`n", [true, true, true, false, false, false])
+    println(t.a)
+    println(t.b)
+    println(t.c)
+    // glfw3_example()
+    // trait_function_call_performance()
+    // signed_distance_field_renderer()
 }
