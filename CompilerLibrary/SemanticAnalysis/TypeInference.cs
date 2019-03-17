@@ -597,6 +597,54 @@ namespace Cheez
                         break;
                     }
 
+                case "typeof":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr, $"@typeof takes one argument");
+                            return expr;
+                        }
+
+                        var arg = expr.Arguments[0];
+                        arg.Scope = expr.Scope;
+                        arg.Parent = expr;
+                        arg = expr.Arguments[0] = InferTypeHelper(arg, null, newInstances);
+                        if (arg.Type.IsErrorType)
+                            return expr;
+
+                        var result = new AstTypeRef(arg.Type, expr);
+                        result.AttachTo(expr);
+                        return InferTypeHelper(result, null, null);
+                    }
+
+                case "typename":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr, $"@typename takes one argument");
+                            return expr;
+                        }
+
+                        var arg = expr.Arguments[0];
+                        arg.Scope = expr.Scope;
+                        arg.Parent = expr;
+                        arg = expr.Arguments[0] = InferTypeHelper(arg, CheezType.Type, newInstances);
+                        if (arg.Type.IsErrorType)
+                            return expr;
+
+                        if (arg.Type != CheezType.Type)
+                        {
+                            ReportError(arg, $"Argument must be a type but is '{arg.Type}'");
+                            return expr;
+                        }
+
+                        var type = (CheezType)arg.Value;
+
+                        var result = new AstStringLiteral(type.ToString(), Location: expr);
+                        result.AttachTo(expr);
+                        return InferTypeHelper(result, null, null);
+                    }
+
                 default: ReportError(expr.Name, $"Unknown intrinsic '{expr.Name.Name}'"); break;
             }
             return expr;
@@ -818,6 +866,25 @@ namespace Cheez
                         {
                             // TODO: check for impl functions
                             ReportError(expr, $"No subscript '{name}' exists for slice type {slice}");
+                        }
+                        break;
+                    }
+
+                case ArrayType arr when !expr.IsDoubleColon:
+                    {
+                        var name = expr.Right.Name;
+                        if (name == "data")
+                        {
+                            expr.Type = arr.ToPointerType();
+                            expr.SetFlag(ExprFlags.IsLValue, true);
+                        }
+                        else if (name == "length")
+                        {
+                            expr.Type = IntType.GetIntType(8, true);
+                        }
+                        else
+                        {
+                            ReportError(expr, $"No subscript '{name}' exists for array type {arr}");
                         }
                         break;
                     }

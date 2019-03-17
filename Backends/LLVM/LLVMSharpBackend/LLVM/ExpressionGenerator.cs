@@ -725,6 +725,21 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         return val;
                     }
 
+                case ArrayType s:
+                    {
+                        var index = GenerateExpression(expr.Indexer, true);
+                        var arr = GenerateExpression(expr.SubExpression, false);
+
+                        var dataPtr = builder.CreatePointerCast(arr, CheezTypeToLLVMType(s.ToPointerType()), "");
+
+                        var ptr = builder.CreateInBoundsGEP(dataPtr, new LLVMValueRef[] { index }, "");
+
+                        var val = ptr;
+                        if (deref)
+                            val = builder.CreateLoad(ptr, "");
+                        return val;
+                    }
+
                 case PointerType p:
                     {
                         var index = GenerateExpression(expr.Indexer, true);
@@ -806,6 +821,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             if (!deref) return lengthPtr;
                             var length = builder.CreateLoad(lengthPtr, "");
                             return length;
+                        }
+                        break;
+                    }
+
+                case ArrayType arr:
+                    {
+                        if (expr.Right.Name == "data")
+                        {
+                            var dataPtrPtr = builder.CreateStructGEP(value, 1, "");
+                            if (!deref) return dataPtrPtr;
+                            var dataPtr = builder.CreateLoad(dataPtrPtr, "");
+                            return dataPtr;
+                        }
+                        else if (expr.Right.Name == "length")
+                        {
+                            return LLVM.ConstInt(LLVM.Int64Type(), (ulong)arr.Length, false);
                         }
                         break;
                     }

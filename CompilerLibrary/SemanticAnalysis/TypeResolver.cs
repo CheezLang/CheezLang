@@ -232,6 +232,8 @@ namespace Cheez
                     {
                         if (arg is SliceType t)
                             CollectPolyTypes(p.TargetType, t.TargetType, result);
+                        if (arg is ArrayType a)
+                            CollectPolyTypes(p.TargetType, a.TargetType, result);
                         break;
                     }
 
