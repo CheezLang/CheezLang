@@ -1,19 +1,45 @@
 #load("std:os/windows")
+#load("std:string")
 
-fn loadFile(filename: c_string, str: String&) -> bool {
-    let of: _OFSTRUCT
-    let handle = OpenFile(filename, &of, 0)
-    if handle == -1 {
-        return false
+fn load_file(filename: c_string) -> (ok: bool, content: String) {
+    content = String::empty()
+    ok = false
+
+    let handle = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null)
+    if cast(int)handle == -1 {
+        content.appendf("failed to open file: {}", [GetLastError()])
+        return
     }
-    let size = GetFileSize((HANDLE)handle, null)
 
-    str.resize((i32)size)
+    let size: int
+    if GetFileSizeEx(handle, &size) == 0 {
+        content.appendf("failed to get file size: {}", [GetLastError()])
+        return
+    }
+
+    content.resize(size)
     
-    let bytesRead = 0
-    ReadFile((HANDLE)handle, str.data, size, &bytesRead, null)
-    CloseHandle((HANDLE)handle)
+    let bytesRead: u32 = 0
+    if ReadFile(handle, content.get_raw(), cast(u32)size, &bytesRead, null) == 0 {
+        content.appendf("failed to read content: {}", [GetLastError()])
+        content.free()
+        return
+    }
 
-    return true
+    if CloseHandle(handle) == 0 {
+        content.appendf("failed to close handle: {}", [GetLastError()])
+        content.free()
+        return
+    }
+
+    ok = true
 }
 
+// fn get_working_dir() -> wd: String {
+//     let len = cast(int) GetCurrentDirectory(0, null)
+
+//     wd = String::empty()
+//     wd.reserve(len)
+//     wd.resize(len - 1)
+//     GetCurrentDirectory(cast wd.length, wd.get_raw())
+// }

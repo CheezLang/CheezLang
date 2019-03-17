@@ -3,26 +3,41 @@ let __std_out_handle = GetStdHandle(-11)
 let __std_err_handle = GetStdHandle(-12)
 
 typedef DWORD           = u32
-typedef LPDWORD         = *DWORD
-typedef LPCVOID         = *any
-typedef PVOID           = *any
-typedef LPVOID          = *any
-typedef HANDLE          = PVOID
+typedef HANDLE          = *any
 typedef HFILE           = i32
-typedef LPOVERLAPPED    = *any
 typedef BOOL            = i32
-typedef LPCSTR          = *char
 typedef UINT            = u32
 typedef LONGLONG        = i64
 typedef LARGE_INTEGER   = LONGLONG
 
-fn GetStdHandle(nStdHandle: DWORD) -> HANDLE #stdcall;
-fn WriteFile(hFile: HANDLE, lpBuffer: LPCVOID, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: LPDWORD, lpOverlapped: LPOVERLAPPED) -> BOOL #stdcall;
-fn ReadFile(hFile: HANDLE, lpBuffer: LPVOID, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: LPDWORD, lpOverlapped: LPOVERLAPPED) -> BOOL #stdcall;
+let GENERIC_READ        : DWORD = 0x80000000
+let GENERIC_WRITE       : DWORD = 0x40000000
 
-fn OpenFile(lpFileName: LPCSTR, lpReOpenBuff: PVOID, uStyle: UINT) -> HFILE #stdcall;
+let FILE_SHARE_READ     : DWORD = 0x00000001
+let FILE_SHARE_WRITE    : DWORD = 0x00000002
+let FILE_SHARE_DELETE   : DWORD = 0x00000004
+
+let CREATE_NEW          : DWORD = 1
+let CREATE_ALWAYS       : DWORD = 2
+let OPEN_EXISTING       : DWORD = 3
+let OPEN_ALWAYS         : DWORD = 4
+let TRUNCATE_EXISTING   : DWORD = 5
+
+let FILE_ATTRIBUTE_NORMAL : DWORD = 0x80 
+
+fn GetLastError() -> DWORD #stdcall;
+
+fn GetStdHandle(nStdHandle: DWORD) -> HANDLE #stdcall;
+fn WriteFile(hFile: HANDLE, lpBuffer: *any, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: *DWORD, lpOverlapped: *any) -> BOOL #stdcall;
+fn ReadFile(hFile: HANDLE, lpBuffer: *any, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: *DWORD, lpOverlapped: *any) -> BOOL #stdcall;
+
+fn CreateFileA(lpFileName: c_string, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: *any, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
 fn CloseHandle(hObject: HANDLE) -> BOOL #stdcall;
-fn GetFileSize(hFile: HANDLE, lpFileSizeHigh: LPDWORD) -> DWORD #stdcall;
+fn GetFileSize(hFile: HANDLE, lpFileSizeHigh: *DWORD) -> DWORD #stdcall;
+fn GetFileSizeEx(hFile: HANDLE, lpFileSize: *LARGE_INTEGER) -> BOOL #stdcall;
+
+// somehow not linking
+// fn GetCurrentDirectory(nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;
 
 fn QueryPerformanceCounter(lpPerformanceCount: *LARGE_INTEGER) -> BOOL #stdcall;
 fn QueryPerformanceFrequency(lpPerformanceCount: *LARGE_INTEGER) -> BOOL #stdcall;
