@@ -3,6 +3,7 @@ using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types;
 using Cheez.Visitors;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -567,6 +568,11 @@ namespace Cheez.Ast.Expressions
             this.Name = name;
             this.Value = expr;
         }
+
+        internal AstStructMemberInitialization Clone()
+        {
+            return new AstStructMemberInitialization(Name?.Clone() as AstIdExpr, Value.Clone(), Location);
+        }
     }
 
     public class AstStructValueExpr : AstExpression
@@ -588,7 +594,7 @@ namespace Cheez.Ast.Expressions
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitStructValueExpr(this, data);
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstStructValueExpr(TypeExpr, MemberInitializers));
+        public override AstExpression Clone() => CopyValuesTo(new AstStructValueExpr(TypeExpr?.Clone() as AstTypeExpr, MemberInitializers.Select(m => m.Clone()).ToList()));
     }
 
     public class AstArrayExpr : AstExpression

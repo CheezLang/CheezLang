@@ -276,7 +276,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 var varPtr = module.AddGlobal(type, v.Name.Name);
                 varPtr.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
-                varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);// TODO?
+                //varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);// TODO?
 
                 var dExtern = decl.GetDirective("extern");
                 if (dExtern != null) varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
@@ -285,7 +285,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 if (v.Value != null)
                     initializer = CheezValueToLLVMValue(v.Type, v.Value);
                 else
-                    initializer = GetDefaultLLVMValue(v.Type);
+                {
+                    //var val = GetDefaultLLVMValue(v.Type);
+                    initializer = LLVM.ConstNull(CheezTypeToLLVMType(v.Type));
+                }
 
                 varPtr.SetInitializer(initializer);
                 valueMap[v] = varPtr;

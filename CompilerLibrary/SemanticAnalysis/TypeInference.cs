@@ -268,6 +268,7 @@ namespace Cheez
                 (to is IntType && from is CharType) ||
                 (to is CharType && from is IntType) ||
                 (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
+                (to is TraitType trait2 && from is PointerType p2 && trait2.Declaration.Implementations.ContainsKey(p2.TargetType)) ||
                 (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from)) ||
                 (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType))
             {
@@ -1304,6 +1305,12 @@ namespace Cheez
                 {
                     var mi = expr.MemberInitializers[i];
                     var memIndex = type.Declaration.Members.FindIndex(m => m.Name.Name == mi.Name.Name);
+                    if (memIndex < 0 || memIndex >= type.Declaration.Members.Count)
+                    {
+                        mi.Value.Type = CheezType.Error;
+                        continue;
+                    }
+
 
                     var mem = type.Declaration.Members[memIndex];
                     mi.Index = memIndex;
@@ -1647,14 +1654,23 @@ namespace Cheez
             if (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType)
                 return InferType(cast, to);
 
-            if (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from))
+            if (to is TraitType trait)
             {
-                if (!expr.GetFlag(ExprFlags.IsLValue))
+                var f = from;
+                if (from is PointerType p3)
                 {
-                    var tmp = new AstTempVarExpr(expr);
-                    cast.SubExpression = tmp;
+                    f = p3.TargetType;
                 }
-                return InferType(cast, to);
+
+                if (trait.Declaration.Implementations.ContainsKey(f))
+                {
+                    if (!(from is PointerType) && !expr.GetFlag(ExprFlags.IsLValue))
+                    {
+                        var tmp = new AstTempVarExpr(expr);
+                        cast.SubExpression = tmp;
+                    }
+                    return InferType(cast, to);
+                }
             }
 
             ReportError(expr, errorMsg ?? $"Can't implicitly convert {from} to {to}");

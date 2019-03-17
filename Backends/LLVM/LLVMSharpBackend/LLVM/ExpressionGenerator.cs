@@ -116,15 +116,31 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             if (to is TraitType trait)
             {
-                var ptr = GenerateExpression(cast.SubExpression, false);
-                ptr = builder.CreatePointerCast(ptr, pointerType, "");
+                if (from is PointerType p2)
+                {
 
-                var vtablePtr = vtableMap[from];
+                    var ptr = GenerateExpression(cast.SubExpression, true);
+                    ptr = builder.CreatePointerCast(ptr, pointerType, "");
 
-                var traitObject = LLVM.GetUndef(toLLVM);
-                traitObject = builder.CreateInsertValue(traitObject, vtablePtr, 0, "");
-                traitObject = builder.CreateInsertValue(traitObject, ptr, 1, "");
-                return traitObject;
+                    var vtablePtr = vtableMap[p2.TargetType];
+
+                    var traitObject = LLVM.GetUndef(toLLVM);
+                    traitObject = builder.CreateInsertValue(traitObject, vtablePtr, 0, "");
+                    traitObject = builder.CreateInsertValue(traitObject, ptr, 1, "");
+                    return traitObject;
+                }
+                else
+                {
+                    var ptr = GenerateExpression(cast.SubExpression, false);
+                    ptr = builder.CreatePointerCast(ptr, pointerType, "");
+
+                    var vtablePtr = vtableMap[from];
+
+                    var traitObject = LLVM.GetUndef(toLLVM);
+                    traitObject = builder.CreateInsertValue(traitObject, vtablePtr, 0, "");
+                    traitObject = builder.CreateInsertValue(traitObject, ptr, 1, "");
+                    return traitObject;
+                }
             }
 
             if (to == from) return GenerateExpression(cast.SubExpression, true);
@@ -798,6 +814,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         var index = @struct.GetIndexOfMember(expr.Right.Name);
                         
+                        if (!expr.Left.GetFlag(ExprFlags.IsLValue))
+                        {
+                            var data = builder.CreateExtractValue(value, (uint)index, "");
+                            return data;
+                        }
+
                         var dataPtr = builder.CreateStructGEP(value, (uint)index, "");
 
                         var result = dataPtr;
