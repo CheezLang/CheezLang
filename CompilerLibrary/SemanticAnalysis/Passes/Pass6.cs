@@ -89,7 +89,7 @@ namespace Cheez
                 v.Initializer.Scope = v.Scope;
 
                 v.Initializer = InferType(v.Initializer, v.TypeExpr?.Type);
-                ConvertLiteralTypeToDefaultType(v.Initializer);
+                ConvertLiteralTypeToDefaultType(v.Initializer, v.TypeExpr?.Type);
 
                 if (!v.Initializer.Type.IsErrorType)
                 {

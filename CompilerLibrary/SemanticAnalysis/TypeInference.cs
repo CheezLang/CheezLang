@@ -51,7 +51,7 @@ namespace Cheez
             return literalType;
         }
 
-        private void ConvertLiteralTypeToDefaultType(AstExpression expr, CheezType expected = null)
+        private void ConvertLiteralTypeToDefaultType(AstExpression expr, CheezType expected)
         {
             expr.Type = LiteralTypeToDefaultType(expr.Type, expected);
         }
@@ -181,7 +181,7 @@ namespace Cheez
             {
                 expr.Values[i].Scope = expr.Scope;
                 expr.Values[i] = InferType(expr.Values[i], subExpected);
-                ConvertLiteralTypeToDefaultType(expr.Values[i]);
+                ConvertLiteralTypeToDefaultType(expr.Values[i], subExpected);
 
 
                 if (type == null)
@@ -339,7 +339,7 @@ namespace Cheez
             expr.Condition.Scope = expr.SubScope;
             expr.Condition.Parent = expr;
             expr.Condition = InferTypeHelper(expr.Condition, CheezType.Bool, newInstances);
-            ConvertLiteralTypeToDefaultType(expr.Condition);
+            ConvertLiteralTypeToDefaultType(expr.Condition, CheezType.Bool);
 
             if (expr.Condition.Type is ReferenceType)
                 expr.Condition = Deref(expr.Condition);
@@ -657,7 +657,7 @@ namespace Cheez
             expr.Indexer.Scope = expr.Scope;
             expr.Indexer = InferTypeHelper(expr.Indexer, null, newInstances);
 
-            ConvertLiteralTypeToDefaultType(expr.Indexer);
+            ConvertLiteralTypeToDefaultType(expr.Indexer, null);
 
             if (expr.SubExpression.Type is ErrorType || expr.Indexer.Type is ErrorType)
                 return expr;
@@ -763,7 +763,7 @@ namespace Cheez
         {
             expr.Left.Scope = expr.Scope;
             expr.Left = InferTypeHelper(expr.Left, null, newInstances);
-            ConvertLiteralTypeToDefaultType(expr.Left);
+            ConvertLiteralTypeToDefaultType(expr.Left, null);
 
             if (expr.Left.Type.IsErrorType)
                 return expr;
@@ -934,9 +934,7 @@ namespace Cheez
 
                 var e = tupleType?.Members[i].type;
                 v = expr.Values[i] = InferTypeHelper(v, e, newInstances);
-
-                // TODO: do somewhere else
-                ConvertLiteralTypeToDefaultType(v);
+                ConvertLiteralTypeToDefaultType(v, e);
 
                 members[i].type = v.Type;
             }
@@ -1081,7 +1079,7 @@ namespace Cheez
                 if (ex.IsPolyType)
                     ex = null;
                 arg.Expr = InferTypeHelper(arg.Expr, ex, newInstances);
-                ConvertLiteralTypeToDefaultType(arg.Expr);
+                ConvertLiteralTypeToDefaultType(arg.Expr, ex);
                 arg.Type = arg.Expr.Type;
             }
 
@@ -1291,7 +1289,7 @@ namespace Cheez
 
                     mi.Value.AttachTo(expr);
                     mi.Value = InferTypeHelper(mi.Value, mem.Type, newInstances);
-                    ConvertLiteralTypeToDefaultType(mi.Value);
+                    ConvertLiteralTypeToDefaultType(mi.Value, mem.Type);
 
                     mi.Name = new AstIdExpr(mem.Name.Name, false, mi.Value);
                     mi.Index = i;
@@ -1312,7 +1310,7 @@ namespace Cheez
 
                     mi.Value.AttachTo(expr);
                     mi.Value = InferTypeHelper(mi.Value, mem.Type, newInstances);
-                    ConvertLiteralTypeToDefaultType(mi.Value);
+                    ConvertLiteralTypeToDefaultType(mi.Value, mem.Type);
 
                     if (mi.Value.Type.IsErrorType) continue;
                     mi.Value = Cast(mi.Value, mem.Type);

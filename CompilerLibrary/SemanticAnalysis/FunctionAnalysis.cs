@@ -238,7 +238,7 @@ namespace Cheez
             whl.Condition.Scope = whl.SubScope;
             whl.Condition.Parent = whl;
             whl.Condition = InferType(whl.Condition, CheezType.Bool);
-            ConvertLiteralTypeToDefaultType(whl.Condition);
+            ConvertLiteralTypeToDefaultType(whl.Condition, CheezType.Bool);
             if (whl.Condition.Type != CheezType.Bool && !whl.Condition.Type.IsErrorType)
                 ReportError(whl.Condition, $"The condition of a while statement must be a bool but is a {whl.Condition.Type}");
 
@@ -308,7 +308,7 @@ namespace Cheez
                             return newVal;
                         }
 
-                        ConvertLiteralTypeToDefaultType(ass.Value);
+                        ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
                         
                         if (ass.Pattern.Type is ReferenceType)
                         {
@@ -377,7 +377,7 @@ namespace Cheez
                             return newVal;
                         }
 
-                        ConvertLiteralTypeToDefaultType(ass.Value);
+                        ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 
                         if (ass.Pattern.Type is ReferenceType)
                             ass.Pattern = Deref(ass.Pattern);
@@ -403,7 +403,7 @@ namespace Cheez
                             return newVal;
                         }
 
-                        ConvertLiteralTypeToDefaultType(ass.Value);
+                        ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 
                         if (ass.Pattern.Type is ReferenceType)
                             ass.Pattern = Deref(ass.Pattern);
@@ -428,7 +428,7 @@ namespace Cheez
                             return newVal;
                         }
 
-                        ConvertLiteralTypeToDefaultType(ass.Value);
+                        ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 
                         if (ass.Pattern.Type is ReferenceType)
                             ass.Pattern = Deref(ass.Pattern);
@@ -448,7 +448,7 @@ namespace Cheez
                             return newVal;
                         }
 
-                        ConvertLiteralTypeToDefaultType(ass.Value);
+                        ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
                         return Cast(ass.Value, r.TargetType, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
@@ -511,7 +511,7 @@ namespace Cheez
                 ret.ReturnValue.Parent = ret;
                 ret.ReturnValue = InferType(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
 
-                ConvertLiteralTypeToDefaultType(ret.ReturnValue);
+                ConvertLiteralTypeToDefaultType(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
 
                 if (ret.ReturnValue.Type.IsErrorType)
                     return;

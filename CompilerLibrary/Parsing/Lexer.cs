@@ -636,7 +636,7 @@ namespace Cheez.Parsing
 
         private bool IsHexDigit(char c)
         {
-            return IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c >= 'F');
+            return IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
         }
 
         private bool IsDigit(char c)

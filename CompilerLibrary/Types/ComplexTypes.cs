@@ -244,5 +244,25 @@ namespace Cheez.Types.Complex
             else
                 return $"fn({args})";
         }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is FunctionType f)
+            {
+                if (ReturnType != f.ReturnType)
+                    return false;
+
+                if (Parameters.Length != f.Parameters.Length)
+                    return false;
+
+                for (int i = 0; i < Parameters.Length; i++)
+                    if (this.Parameters[i].type != f.Parameters[i].type)
+                        return false;
+
+                return true;
+            }
+
+            return false;
+        }
     }
 }

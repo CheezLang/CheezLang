@@ -107,6 +107,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
+        private LLVMTypeRef FuncTypeToLLVMType(FunctionType f)
+        {
+            var paramTypes = f.Parameters.Select(rt => CheezTypeToLLVMType(rt.type)).ToList();
+            var returnType = CheezTypeToLLVMType(f.ReturnType);
+            return LLVMTypeRef.FunctionType(returnType, paramTypes.ToArray(), f.VarArgs);
+        }
+
         private LLVMTypeRef CheezTypeToLLVMType(CheezType ct)
         {
             if (typeMap.TryGetValue(ct, out var tt)) return tt;
@@ -176,7 +183,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         var paramTypes = f.Parameters.Select(rt => CheezTypeToLLVMType(rt.type)).ToList();
                         var returnType = CheezTypeToLLVMType(f.ReturnType);
-                        return LLVMTypeRef.FunctionType(returnType, paramTypes.ToArray(), f.VarArgs);
+                        var funcType = LLVMTypeRef.FunctionType(returnType, paramTypes.ToArray(), f.VarArgs);
+                        return funcType.GetPointerTo();
                     }
 
                 case EnumType e:
@@ -349,7 +357,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 vtableIndices[func] = funcTypes.Count;
 
                 var funcType = CheezTypeToLLVMType(func.Type);
-                funcTypes.Add(funcType.GetPointerTo());
+                funcTypes.Add(funcType);
             }
 
             vtableType = LLVM.StructCreateNamed(context, "__vtable_type");

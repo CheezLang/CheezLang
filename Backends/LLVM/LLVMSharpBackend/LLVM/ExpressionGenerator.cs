@@ -619,7 +619,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 // call to a trait function
                 // get function pointer from trait object
                 var functionIndex = vtableIndices[c.Declaration];
-                var funcType = CheezTypeToLLVMType(c.Declaration.Type);
+                var funcType = FuncTypeToLLVMType(c.Declaration.FunctionType);
 
                 var selfArg = GenerateExpression(c.Arguments[0], true);
                 selfArg = builder.CreateLoad(selfArg, "");
@@ -882,7 +882,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         public LLVMValueRef GenerateIdExpr(AstIdExpr expr, bool deref)
         {
             LLVMValueRef v;
-            if (expr.Symbol is AstDecl decl)
+            if (expr.Symbol is AstFunctionDecl func)
+            {
+                //v =
+                v = valueMap[func];
+                return v;
+            }
+            else if (expr.Symbol is AstDecl decl)
             {
                 v = valueMap[decl];
             }

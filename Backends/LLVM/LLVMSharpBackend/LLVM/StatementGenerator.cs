@@ -39,7 +39,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 name = linkname.Arguments[0].Value as string;
             }
 
-            var ltype = CheezTypeToLLVMType(function.Type);
+            LLVMTypeRef ltype = FuncTypeToLLVMType(function.FunctionType);
             var lfunc = module.AddFunction(name, ltype);
 
             // :temporary
