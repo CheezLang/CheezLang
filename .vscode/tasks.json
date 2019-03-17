@@ -22,7 +22,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "./examples/build_file.ps1 ${file}",
+            "command": "./examples/build_file.ps1 ./examples/test.che",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
