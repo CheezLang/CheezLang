@@ -324,6 +324,11 @@ namespace Cheez
         private AstExpression InferTypeIfExpr(AstIfExpr expr, CheezType expected, List<AstFunctionDecl> newInstances)
         {
             expr.SubScope = new Scope("if", expr.Scope);
+
+            // copy initialized symbols
+            foreach (var symbol in expr.Scope.InitializedSymbols)
+                expr.SubScope.SetInitialized(symbol);
+
             if (expr.PreAction != null)
             {
                 expr.PreAction.Scope = expr.SubScope;
@@ -600,6 +605,10 @@ namespace Cheez
         {
             expr.SubScope = new Scope("{}", expr.Scope);
 
+            // copy initialized symbols
+            foreach (var symbol in expr.Scope.InitializedSymbols)
+                expr.SubScope.SetInitialized(symbol);
+
             int end = expr.Statements.Count;
             if (expr.Statements.LastOrDefault() is AstExprStmt) --end;
 
@@ -631,6 +640,7 @@ namespace Cheez
                 expr.Type = CheezType.Void;
             }
 
+            // copy initialized symbols
             foreach (var symbol in expr.SubScope.InitializedSymbols)
             {
                 expr.Scope.SetInitialized(symbol);

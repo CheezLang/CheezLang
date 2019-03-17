@@ -136,6 +136,9 @@ namespace Cheez
                         return;
                     }
 
+                    var tmp = new AstTempVarExpr(initializer);
+                    tmp.SetFlag(ExprFlags.IsLValue, true);
+
                     for (int i = 0; i < tuple.Values.Count; i++)
                     {
                         var tid = tuple.Values[i];
@@ -148,8 +151,6 @@ namespace Cheez
                         }
                         else if (initializer != null)
                         {
-                            var tmp = new AstTempVarExpr(initializer);
-                            tmp.SetFlag(ExprFlags.IsLValue, true);
                             tin = new AstArrayAccessExpr(tmp, new AstNumberExpr(i));
                             tin.Scope = tmp.Scope;
                             tin = InferType(tin, tty);
