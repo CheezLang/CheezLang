@@ -31,9 +31,9 @@ namespace Cheez.Extras
             if (type == NumberType.Int)
             {
                 if (b == 10)
-                    IntValue = BigInteger.Parse(val);
+                    IntValue = BigInteger.Parse("0" + val);
                 else if (b == 16)
-                    IntValue = BigInteger.Parse(val, NumberStyles.HexNumber);
+                    IntValue = BigInteger.Parse("0" + val, NumberStyles.HexNumber);
                 else if (b == 2)
                 {
                     BigInteger currentDigit = 1;
