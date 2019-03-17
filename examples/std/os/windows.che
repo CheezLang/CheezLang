@@ -23,7 +23,7 @@ let OPEN_EXISTING       : DWORD = 3
 let OPEN_ALWAYS         : DWORD = 4
 let TRUNCATE_EXISTING   : DWORD = 5
 
-let FILE_ATTRIBUTE_NORMAL : DWORD = 0x80 
+let FILE_ATTRIBUTE_NORMAL : DWORD = 0x80
 
 fn GetLastError() -> DWORD #stdcall;
 
