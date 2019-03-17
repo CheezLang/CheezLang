@@ -14,19 +14,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
     {
         private void GenerateFunctionHeader(AstFunctionDecl function)
         {
-            var name = function.Name.Name;
+            var name = "";
+
+            if (function.ImplBlock != null)
+            {
+                name += function.ImplBlock.TargetType + ".";
+                if (function.ImplBlock.Trait != null)
+                    name += function.ImplBlock.Trait + ".";
+            }
+
+            name += function.Name.Name;
+
             if (function.PolymorphicTypes != null && function.PolymorphicTypes.Count > 0)
                 name += "." + string.Join(".", function.PolymorphicTypes.Select(p => $"{p.Key}.{p.Value}"));
             if (function.ConstParameters != null && function.ConstParameters.Count > 0)
                 name += "." + string.Join(".", function.ConstParameters.Select(p => $"{p.Key}.{p.Value.type}.{p.Value.value}"));
 
-            if (function.ImplBlock != null)
-            {
-                if (function.ImplBlock.Trait != null)
-                    name += "." + function.ImplBlock.Trait;
-                if (!function.ImplBlock.TargetType.IsPolyType)
-                    name += "." + function.ImplBlock.TargetType;
-            }
             if (function.Body != null)
                 name += ".che";
 
