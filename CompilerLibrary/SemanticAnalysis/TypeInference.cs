@@ -622,6 +622,9 @@ namespace Cheez
                 expr.Type = exprStmt.Expr.Type;
 
                 AnalyseExprStatement(exprStmt, true, false);
+
+                if (exprStmt.GetFlag(StmtFlags.Returns))
+                    expr.SetFlag(ExprFlags.Returns, true);
             }
             else
             {
@@ -1502,6 +1505,7 @@ namespace Cheez
             else if (sym is Using u)
             {
                 expr.Type = u.Type;
+                expr.SetFlag(ExprFlags.IsLValue, true);
             }
             else
             {

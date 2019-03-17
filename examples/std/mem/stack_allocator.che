@@ -3,8 +3,8 @@
 #load("std:array")
 #load("std:util")
 
-fn nextAligned(add: *$T, align: u64) -> *T {
-    let add = cast(u64) add
+fn nextAligned(_add: *$T, align: u64) -> *T {
+    let add = cast(u64) _add
     let mul = add + align - 1
     mul -= (mul % align)
     
@@ -17,63 +17,52 @@ struct StackAllocation {
 }
 
 impl Printable for StackAllocation {
-    fn print(str: *String, format: []char) {
-        sprint_f(str, "({}:{})", [offset, size])
+    fn print(ref Self, str: ref String, format: string) {
+        str.appendf("({}:{})", [offset, size])
     }
 }
 
 struct StackAllocator {
     parent: Allocator
 
-    memory: *i8
+    memory: *any
     capacity: u64
 
     allocations: Array(StackAllocation)
 }
 
 impl Printable for StackAllocator {
-    fn print(s: *String, format: []char) {
-        s.append_string("( [")
-        while let i: u32 = 0; i < allocations.length; i += 1 {
+    fn print(ref Self, s: ref String, format: string) {
+        s += "( ["
+        while let i = 0; i < allocations.length; i += 1 {
             if i > 0 {
-                s.append_string(", ")
+                s += ", "
             }
-            sprint_f(s, "{}", [allocations.get(i)])
+            s.appendf("{}", [allocations[i]])
         }
-        s.append_string("]")
+        s += "]"
 
         let free: u64 = capacity
         if let lastAllocation = self.getLastAllocation(); lastAllocation != null {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
         }
-        sprint_f(s, ", Free: {} )", [free])
+        s.appendf(", Free: {} )", [free])
     }
-}
-
-fn newStackAllocator(size: u64) -> StackAllocator {
-    let a = new StackAllocator {
-        parent = new StdHeapAllocator {}
-        memory = null
-        capacity = 0
-        allocations = cast(Array(StackAllocation)) newArray()
-    }
-    a.reserve(size)
-    return a
-}
-
-fn newStackAllocator2(size: u64, alloc: Allocator) -> StackAllocator {
-    let a = new StackAllocator {
-        parent = alloc
-        memory = null
-        capacity = 0
-        allocations = cast(Array(StackAllocation)) newArray()
-    }
-    a.reserve(size)
-    return a
 }
 
 impl StackAllocator {
-    ref fn reserve(s: u64) {
+    fn create(size: u64, alloc: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+        let a = new StackAllocator {
+            parent = alloc
+            memory = null
+            capacity = 0
+            allocations = type Array(StackAllocation)::create()
+        }
+        a.reserve(size)
+        return a
+    }
+
+    fn reserve(ref Self, s: u64) {
         if s <= capacity {
             return
         }
@@ -87,46 +76,47 @@ impl StackAllocator {
         }
     }
 
-    ref fn clear() {
+    fn clear(ref Self) {
         allocations.length = 0
     }
 
-    ref fn dispose() {
-        self.clear()
+    fn dispose(ref Self) {
+        clear()
         parent.free(memory)
-        allocations.dispose()
+        allocations.free()
     }
 
-    ref fn printDiagnostics() {
-        let s = new_string()
-        defer s.dispose()
-        s.append_string("( [")
-        while let i: u32 = 0; i < allocations.length; i += 1 {
+    fn print_diagnostics(ref Self) {
+        let s = String::empty()
+        s += "( ["
+        while let i = 0; i < allocations.length; i += 1 {
             if i > 0 {
-                s.append_string(", ")
+                s += ", "
             }
-            sprint_f(&s, "{}", [allocations.get(i)])
+            s.appendf("{}", [allocations[i]])
         }
-        s.append_string("]")
+        s += "]"
 
         let free: u64 = capacity
         
         if let lastAllocation = self.getLastAllocation(); lastAllocation != null {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
         }
-        sprint_f(&s, ", Free: {} )", [free])
-        println(s)
+        s.appendf(", Free: {} )`n", [free])
+        print_stringl(s)
+
+        s.free()
     }
 
-    ref fn getLastAllocation() -> *StackAllocation {
+    fn getLastAllocation(ref Self) -> *StackAllocation {
         if allocations.length == 0 {
             return null
         } else {
-            return &allocations.data[allocations.length - 1]
+            return &allocations[allocations.length - 1]
         }
     }
 
-    ref fn getNextAllocationOffset() -> u64 {
+    fn getNextAllocationOffset(ref Self) -> u64 {
         if let last = self.getLastAllocation(); last == null {
             return 0
         } else {
@@ -136,8 +126,8 @@ impl StackAllocator {
 }
 
 impl Allocator for StackAllocator {
-    fn allocate(count: u64, elementSize: u64, alignment: u64) -> *any {
-        let nextAddress = pointerAdd(memory, cast(i64) self.getNextAllocationOffset())
+    fn allocate(ref Self, count: u64, elementSize: u64, alignment: u64) -> *any {
+        let nextAddress = pointer_add(memory, cast(i64) self.getNextAllocationOffset())
         nextAddress = nextAligned(nextAddress, alignment)
 
         let newAllocation = new StackAllocation {
@@ -152,10 +142,11 @@ impl Allocator for StackAllocator {
         }
 
         allocations.add(newAllocation)
+
         return nextAddress
     }
 
-    fn reallocate(mem: *any, count: u64, elementSize: u64, alignment: u64) -> *any {
+    fn reallocate(ref Self, mem: *any, count: u64, elementSize: u64, alignment: u64) -> *any {
         let size = count * elementSize
 
         let lastAllocation = self.getLastAllocation()
@@ -163,7 +154,7 @@ impl Allocator for StackAllocator {
             return null
         }
 
-        let lastAllocationAddress = pointerAdd(memory, lastAllocation.offset)
+        let lastAllocationAddress = pointer_add(memory, cast(i64) lastAllocation.offset)
         if mem == lastAllocationAddress {
             let newEnd = lastAllocation.offset + size
             if newEnd > capacity {
@@ -179,12 +170,12 @@ impl Allocator for StackAllocator {
         }
     }
 
-    fn free(mem: *any) {
+    fn free(ref Self, mem: *any) {
         let lastAllocation = self.getLastAllocation()
         if lastAllocation == null {
             return
         }
-        if mem == pointerAdd(memory, lastAllocation.offset) {
+        if mem == pointer_add(memory, cast(i64) lastAllocation.offset) {
             allocations.length -= 1
         }
     }
