@@ -520,6 +520,32 @@ namespace Cheez
                         return InferTypeHelper(new AstNumberExpr(type.Size, Location: expr.Location), null, null);
                     }
 
+                case "alignof":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr, $"@alignof takes one argument");
+                            return expr;
+                        }
+
+                        var arg = expr.Arguments[0];
+                        arg.Scope = expr.Scope;
+                        arg.Parent = expr;
+                        arg = expr.Arguments[0] = InferTypeHelper(arg, CheezType.Type, newInstances);
+                        if (arg.Type.IsErrorType)
+                            return expr;
+
+                        if (arg.Type != CheezType.Type)
+                        {
+                            ReportError(arg, $"Argument must be a type but is '{arg.Type}'");
+                            return expr;
+                        }
+
+                        var type = (CheezType)arg.Value;
+
+                        return InferTypeHelper(new AstNumberExpr(type.Alignment, Location: expr.Location), null, null);
+                    }
+
                 case "tuple_type_member":
                     {
                         if (expr.Arguments.Count != 2)
@@ -1611,8 +1637,11 @@ namespace Cheez
 
             if (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from))
             {
-                var tmp = new AstTempVarExpr(expr);
-                cast.SubExpression = tmp;
+                if (!expr.GetFlag(ExprFlags.IsLValue))
+                {
+                    var tmp = new AstTempVarExpr(expr);
+                    cast.SubExpression = tmp;
+                }
                 return InferType(cast, to);
             }
 

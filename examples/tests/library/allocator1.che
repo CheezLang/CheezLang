@@ -1,0 +1,84 @@
+#test_expect_output("0
+5
+
+0, 0, 0, 0, 0
+0, 2, 4, 6, 8
+
+0, 0, 0, 0, 0
+1, 2, 3, 4, 5
+
+1, 2, 3
+1, 2, 3, 0, 0
+
+1, 2, 3
+1, 2, 3, 0, 0
+")
+
+#load("std:mem/allocator")
+#load("std:io/io")
+
+
+fn Main() {
+    {
+        let a = alloc(int)
+        <<a = 0
+        printf("{}`n", [<<a])
+        <<a = 5
+        printf("{}`n`n", [<<a])
+        free(a)
+    }
+
+    {
+        let a = alloc_raw(int, 5)
+        while let i = 0; i < 5; i += 1 { a[i] = 0 }
+        printf("{}, {}, {}, {}, {}`n", [a[0], a[1], a[2], a[3], a[4]])
+
+        while let i = 0; i < 5; i += 1 {
+            a[i] = i * 2
+        }
+        printf("{}, {}, {}, {}, {}`n`n", [a[0], a[1], a[2], a[3], a[4]])
+        free(a)
+    }
+
+    {
+        let a = alloc_n(int, 5)
+        while let i = 0; i < a.length; i += 1 { a[i] = 0 }
+        printf("{}, {}, {}, {}, {}`n", [a[0], a[1], a[2], a[3], a[4]])
+
+        while let i = 0; i < a.length; i += 1 {
+            a[i] = i + 1
+        }
+        printf("{}, {}, {}, {}, {}`n`n", [a[0], a[1], a[2], a[3], a[4]])
+        free_n(a)
+    }
+
+    {
+        let a = alloc_n(int, 3)
+        while let i = 0; i < a.length; i += 1 {
+            a[i] = i + 1
+        }
+        printf("{}, {}, {}`n", [a[0], a[1], a[2]])
+
+        a = realloc_n(a, 5)
+        while let i = 3; i < a.length; i += 1 {
+            a[i] = 0
+        }
+        printf("{}, {}, {}, {}, {}`n`n", [a[0], a[1], a[2], a[3], a[4]])
+        free_n(a)
+    }
+
+    {
+        let a = alloc_raw(int, 3)
+        while let i = 0; i < 3; i += 1 {
+            a[i] = i + 1
+        }
+        printf("{}, {}, {}`n", [a[0], a[1], a[2]])
+
+        a = realloc_raw(a, 5)
+        while let i = 3; i < 5; i += 1 {
+            a[i] = 0
+        }
+        printf("{}, {}, {}, {}, {}`n`n", [a[0], a[1], a[2], a[3], a[4]])
+        free(a)
+    }
+}

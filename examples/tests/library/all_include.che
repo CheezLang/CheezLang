@@ -1,11 +1,13 @@
 #test_expect_output("test")
 
-#load("std:util")
-#load("std:string")
-#load("std:math")
-#load("std:c")
-#load("std:array")
+// #load("std:mem/")
 #load("std:os/windows")
+#load("std:array")
+#load("std:c")
+#load("std:math")
+#load("std:printable")
+#load("std:string")
+#load("std:util")
 
 fn println(str: string) {
     let bytesWritten: DWORD = 0

@@ -6,17 +6,17 @@ struct StdHeapAllocator {
 }
 
 impl Allocator for StdHeapAllocator {
-    fn allocate(count: u64, elementSize: u64, alignment: u64) -> *any {
-        return c_malloc((i32)(count * elementSize))
+    fn allocate(ref Self, count: uint, elementSize: uint, alignment: uint) -> *any {
+        return c_malloc(cast(i32) (count * elementSize))
     }
 
-    fn reallocate(mem: *any, count: u64, elementSize: u64, alignment: u64) -> *any {
-        return c_realloc(mem, (i32)(count * elementSize))
+    fn reallocate(ref Self, mem: *any, count: uint, elementSize: uint, alignment: uint) -> *any {
+        return c_realloc(mem, cast(i32) (count * elementSize))
     }
 
-    fn free(mem: *any) {
+    fn free(ref Self, mem: *any) {
         c_free(mem)
     }
 }
 
-let DEFAULT_STD_HEAP_ALLOCATOR = new StdHeapAllocator {}
+let DEFAULT_STD_HEAP_ALLOCATOR = new StdHeapAllocator { 0 }

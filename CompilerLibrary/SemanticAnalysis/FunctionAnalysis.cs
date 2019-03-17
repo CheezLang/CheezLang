@@ -110,6 +110,7 @@ namespace Cheez
                     p.DefaultValue.Scope = func.Scope;
                     p.DefaultValue = InferType(p.DefaultValue, p.Type);
                     ConvertLiteralTypeToDefaultType(p.DefaultValue, p.Type);
+                    p.DefaultValue = Cast(p.DefaultValue, p.Type);
                     if (p.DefaultValue.Type != p.Type && !p.DefaultValue.Type.IsErrorType)
                     {
                         ReportError(p.DefaultValue,
@@ -229,7 +230,7 @@ namespace Cheez
             if (whl.PreAction != null)
             {
                 // TODO
-                whl.PreAction.Scope = whl.Scope;
+                whl.PreAction.Scope = whl.SubScope;
                 whl.PreAction.Parent = whl;
                 AnalyseStatement(whl.PreAction);
             }
