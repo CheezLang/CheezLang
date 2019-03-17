@@ -103,61 +103,6 @@ fn print_stringl(s: ref String) {
 //     print_stringl(&buffer)
 // }
 
-// fn b_print_i(buffer: *String, val: $T) {
-//     let v = val
-//     let len = 0
-
-//     let neg = false
-//     if v < 0 {
-//         neg = true
-//         len = 1
-//         v = -v
-//     }
-//     else if v == 0 {
-//         len = 1
-//     }
-
-//     while v != 0 {
-//         v = v / 10
-//         len = len + 1
-//     }
-
-//     if buffer.length + len > buffer.capacity {
-//         buffer.reserve(buffer.length + len)
-//     }
-
-//     buffer.length = buffer.length + len
-    
-//     if val == 0 {
-//         buffer.data[buffer.length - 1] = '0'
-//     }
-//     else {
-//         let minimum = false
-//         if neg and val < 0 {
-//             // val is minimum value
-//             val = -(val + 1)
-//             minimum = true
-//         }
-
-//         let i = buffer.length - 1
-//         while val != 0 {
-//             defer i -= 1
-//             let lastDigit = val % 10
-//             if i == len - 1 and minimum {
-//                 lastDigit = lastDigit + 1
-//             }
-
-//             val = val / 10
-//             buffer.data[i] = cast(char) (lastDigit + 48)
-//         }
-
-//         if (neg) {
-//             buffer.data[i] = '-'
-//             i -= 1
-//         }
-//     }
-// }
-
 // fn println(v: $T) {
 //     print(v)
 //     print_char('`n')
@@ -217,4 +162,56 @@ fn parse_int(str: string) -> int {
     }
 
     return val
+}
+
+fn digit_to_char(i: $T) -> char {
+    let c = cast(char) i
+    return if i < 10 { c + '0' } else { (c - cast(char)10) + 'A' }
+}
+
+fn format_int(buffer: ref String, val: $T, _base: int = 10) {
+    let base = cast(T) _base
+    let v = val
+    let len = 0
+    let neg = false
+
+    // calculate length and sign
+    if v < 0 {
+        neg = true
+        len = 1
+        v = -v
+    }
+    else if v == 0 {
+        len = 1
+    }
+
+    while v != 0 {
+        v = v / base
+        len += 1
+    }
+
+    // reserve memory
+    buffer.resize(buffer.length + len)
+    
+    if val == 0 {
+        buffer.data[buffer.length - 1] = '0'
+    }
+    else {
+        if neg {
+            val = -val
+        }
+
+        let i = buffer.length - 1
+        while val != 0; i -= 1 {
+            let lastDigit = val % base
+
+            val = val / base
+            buffer.data[i] = digit_to_char(lastDigit)
+        }
+
+        if neg {
+            buffer.data[i] = '-'
+            i -= 1
+        }
+    }
 }

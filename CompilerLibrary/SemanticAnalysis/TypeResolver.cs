@@ -213,7 +213,12 @@ namespace Cheez
             {
                 case PolyType i:
                     if (i.IsDeclaring && !result.ContainsKey(i.Name))
-                        result[i.Name] = arg;
+                    {
+                        if (arg is ReferenceType r)
+                            result[i.Name] = r.TargetType;
+                        else
+                            result[i.Name] = arg;
+                    }
                     break;
 
                 case PointerType p:

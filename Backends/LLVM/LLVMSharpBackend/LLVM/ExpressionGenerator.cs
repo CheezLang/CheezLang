@@ -147,6 +147,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return builder.CreateZExt(GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is IntType && from is CharType) // int <- char
                 return builder.CreateSExt(GenerateExpression(cast.SubExpression, true), toLLVM, "");
+            if (to is CharType && from is IntType) // char <- int
+                return builder.CreateTrunc(GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is SliceType s && from is PointerType p) // [] <- *
             {
                 var withLen = builder.CreateInsertValue(LLVM.GetUndef(CheezTypeToLLVMType(s)), LLVM.ConstInt(LLVM.Int64Type(), 0, false), 0, "");
@@ -343,6 +345,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 { ("!=", CheezType.Bool), GetICompare(LLVMIntPredicate.LLVMIntNE) },
 
                 //
+                { ("+", CheezType.Char), LLVM.BuildAdd },
+                { ("-", CheezType.Char), LLVM.BuildSub },
                 { ("==", CheezType.Char), GetICompare(LLVMIntPredicate.LLVMIntEQ) },
                 { ("!=", CheezType.Char), GetICompare(LLVMIntPredicate.LLVMIntNE) },
                 { (">", CheezType.Char), GetICompare(LLVMIntPredicate.LLVMIntSGT) },

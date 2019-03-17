@@ -50,50 +50,57 @@ impl Printable for bool {
     }
 }
 
-// impl Printable for u8 {
-//     fn print(str: *String, format: string) {
-//         b_print_i(str, <<self)
-//     }
-// }
+impl Printable for i8 {
+    fn print(ref Self, str: ref String, format: string) {
+        printf_int_to_string(str, self, format)
+    }
+}
 
-// impl Printable for u16 {
-//     fn print(str: *String, format: string) {
-//         b_print_i(str, <<self)
-//     }
-// }
+impl Printable for i16 {
+    fn print(ref Self, str: ref String, format: string) {
+        printf_int_to_string(str, self, format)
+    }
+}
 
-// impl Printable for u32 {
-//     fn print(str: *String, format: string) {
-//         b_print_i(str, <<self)
-//     }
-// }
+impl Printable for i32 {
+    fn print(ref Self, str: ref String, format: string) {
+        printf_int_to_string(str, self, format)
+    }
+}
 
-// impl Printable for u64 {
-//     fn print(str: *String, format: string) {
-//         b_print_i(str, <<self)
-//     }
-// }
+impl Printable for i64 {
+    fn print(ref Self, str: ref String, format: string) {
+        printf_int_to_string(str, self, format)
+    }
+}
 
-// impl Printable for i8 {
-//     fn print(str: *String, format: string) {
-//         b_print_i(str, <<self)
-//     }
-// }
+impl Printable for u8 {
+    fn print(ref Self, str: ref String, format: string) {
+        printf_int_to_string(str, self, format)
+    }
+}
 
-// impl Printable for i16 {
-//     fn print(str: *String, format: string) {
-//         b_print_i(str, <<self)
-//     }
-// }
+impl Printable for u16 {
+    fn print(ref Self, str: ref String, format: string) {
+        printf_int_to_string(str, self, format)
+    }
+}
 
-// impl Printable for i32 {
-//     fn print(str: *String, format: string) {
-//         b_print_i(str, <<self)
-//     }
-// }
+impl Printable for u32 {
+    fn print(ref Self, str: ref String, format: string) {
+        printf_int_to_string(str, self, format)
+    }
+}
 
-// impl Printable for i64 {
-//     fn print(str: *String, format: string) {
-//         b_print_i(str, <<self)
-//     }
-// }
+impl Printable for u64 {
+    fn print(ref Self, str: ref String, format: string) {
+        printf_int_to_string(str, self, format)
+    }
+}
+
+fn printf_int_to_string(str: ref String, i: $T, format: string) {
+    let base = if streq("b", format) { 2 }
+    else if streq("x", format) { 16 }
+    else { 10 }
+    format_int(str, i, base)
+}

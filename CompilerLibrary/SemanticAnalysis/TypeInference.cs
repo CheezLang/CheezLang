@@ -266,6 +266,7 @@ namespace Cheez
                 (to is IntType && from is FloatType) ||
                 (to is IntType && from is BoolType) ||
                 (to is IntType && from is CharType) ||
+                (to is CharType && from is IntType) ||
                 (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
                 (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from)) ||
                 (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType))
@@ -1315,6 +1316,11 @@ namespace Cheez
                 }
 
                 var op = ops[0];
+
+                expr.SubExpr = HandleReference(expr.SubExpr, op.SubExprType);
+                if (!op.SubExprType.IsPolyType)
+                    expr.SubExpr = Cast(expr.SubExpr, op.SubExprType);
+
                 if (op is UserDefinedUnaryOperator user)
                 {
                     var args = new List<AstArgument>() {
