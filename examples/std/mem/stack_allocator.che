@@ -103,7 +103,7 @@ impl StackAllocator {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
         }
         s.appendf(", Free: {} )`n", [free])
-        print_stringl(s)
+        print_string(s)
 
         s.free()
     }

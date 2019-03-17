@@ -16,6 +16,12 @@ impl Printable for string {
     }
 }
 
+impl Printable for char {
+    fn print(ref Self, str: ref String, format: string) {
+        str += self
+    }
+}
+
 impl Printable for float {
     fn print(ref Self, str: ref String, format: string) {
         let buff: string = {

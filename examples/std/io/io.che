@@ -6,151 +6,28 @@
 fn printf(format: string, args: []Printable) {
     let s = String::empty()
     s.appendf(format, args)
-    print_stringl(s)
+    print_string(s)
     s.free()
 }
 
-fn print_stringl(s: ref String) {
+fn print_string(s: ref String) {
     let bytesWritten: u32
     WriteFile(__std_out_handle, cast s.get_raw(), cast s.get_length(), &bytesWritten, null)
 }
 
-// fn print_string(s: *$T) {
-//     if @typeseq(c_string, T) {
-//         let len = strlen(s)
-//         let bytesWritten: i32
-//         WriteFile(__std_out_handle, s, len, &bytesWritten, 0)
-//     } else if @typeseq(string, T) {
-//         let bytesWritten: i32
-//         WriteFile(__std_out_handle, s.data, s.length, &bytesWritten, 0)
-//     } else {
-//         @error(@concat("Can't call printString($T) with type ", @typename(T)))
-//     }
-// }
+fn println(v: $T) {
+    let s = String::empty()
+    s.appendf("{}`n", [v])
+    print_string(s)
+    s.free()
+}
 
-// fn print_char(c: char) { 
-//     let bytesWritten: i32
-//     WriteFile(__std_out_handle, &c, 1, &bytesWritten, 0)
-// }
-
-// fn print_float(val: $T) {
-//     let buff: [32]char
-//     let buff: string = buff
-//     if @typeseq(T, float) {
-//         c_sprintf(buff.data, "%f", cast(double)val)
-//     } else if @typeseq(T, double) {
-//         c_sprintf(buff.data, "%f", val)
-//     } else {
-//         @error(@concat("print_float can't be called with value of type ", @typename(T)))
-//     }
-//     print_string(buff.data)
-// }
-
-// fn print_int(val: $T) {
-//     let v = val
-//     let len = 0
-
-//     let neg = false
-//     if v < 0 {
-//         neg = true
-//         len = 1
-//         v = -v
-//         val = -val
-//     }
-//     else if v == 0 {
-//         len = 1
-//     }
-
-//     while v != 0 {
-//         v = v / 10
-//         len = len + 1
-//     }
-
-
-//     let buffer: String = new_string()
-//     defer buffer.dispose()
-//     buffer.resize(len)
-
-//     if val == 0 {
-//         buffer.data[0] = '0'
-//     }
-//     else {
-//         let minimum = false
-//         if neg and val < 0 {
-//             // val is minimum value
-//             val = -(val + 1)
-//             minimum = true
-//         }
-
-//         let i = len - 1
-//         while val != 0 {
-//             defer i -= 1
-
-//             let lastDigit = val % 10
-//             if i == len - 1 and minimum {
-//                 lastDigit = lastDigit + 1
-//             }
-
-//             val = val / 10
-//             buffer.data[i] = cast(char) (lastDigit + 48)
-//         }
-
-//         if (neg) {
-//             buffer.data[0] = '-'
-//         }
-//     }
-
-//     print_stringl(&buffer)
-// }
-
-// fn println(v: $T) {
-//     print(v)
-//     print_char('`n')
-// }
-
-// fn print(v: $T) {
-//     if @isbool(T) {
-//         if v {
-//             print_string("true")
-//         } else {
-//             print_string("false")
-//         }
-//     } else if (@typeseq(string, T)) {
-//         print_string(v)
-//     } else if @isint(T) {
-//         print_int(v)
-//     } else if @typeseq(T, double) {
-//         print_float(v)
-//     } else if @typeseq(T, float) {
-//         print_float(v)
-//     } else if @isstring(T) {
-//         print_string(v)
-//     } else if @typeseq(String, T) {
-//         print_stringl(&v)
-//     // } else if @typeseq(*String, T) {
-//     //     print_stringl(v)
-//     } else if @isenum(T) {
-//         print_int(cast v)
-//     } else if @typeseq(T, char) {
-//         print_char(v)
-//     // } else if @typeseq(T, $X[]) {
-//     //     print_slice(v)
-//     } else {
-//         @error(@concat("print() can't be called with type ", @typename(T)))
-//     }
-// }
-
-// fn print_slice(slice: []$T) {
-//     print("[")
-//     while let i = 0; i < slice.length; i += 1 {
-//         if i > 0 {
-//             print(", ")
-//         }
-//         print(slice[i])
-//     }
-//     print("]")
-// }
-
+fn print(v: $T) {
+    let s = String::empty()
+    s.appendf("{}", [v])
+    print_string(s)
+    s.free()
+}
 
 // helper functions
 fn parse_int(str: string) -> int {
