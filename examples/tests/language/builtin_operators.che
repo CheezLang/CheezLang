@@ -138,6 +138,6 @@ fn test_bool(a: bool, b: bool) {
     c_printf("%lld, %lld`n", cast(int) (a == b), cast(int) (a != b))
 }
 
-fn test_pointers(a: *int, b: *int) {
+fn test_pointers(a: &int, b: &int) {
     c_printf("%lld, %lld`n", cast(int) (a == b), cast(int) (a != b))
 }

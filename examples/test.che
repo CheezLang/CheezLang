@@ -1,14 +1,31 @@
-// #load("tests/library/traits1")
-// #load("tests/language/traits")
-#load("examples/glfw3_example.che")
-// #load("examples/trait_function_call_performance.che")
-// #load("examples/signed_distance_field_renderer.che")
+struct Vec2 {
+    x: float
+    y: float
+}
 
-#load("std:io/io")
-// #load("std:io/file")
+impl Vec2 {
+    fn add(Self, other: Self) -> Self {
+        return new Vec2 {
+            self.x + other.x,
+            self.y + other.y
+        }
+    }
+    
+    fn add_to_this(ref Self, other: Self) {
+        self.x += other.x
+        self.y += other.y
+    }
+
+    fn create(x: float = 0, y: float = 0) -> Self {
+        return new {x, y}
+    }
+}
 
 fn Main() {
-    glfw3_example()
-    // trait_function_call_performance()
-    // signed_distance_field_renderer()
+    let v1 = Vec2::create(1, 2)
+    let v2 = Vec2::create(3, 4)
+
+    let v3 = v1.add(v2)
+
+    v3.add(Vec2::create(5, 6))
 }

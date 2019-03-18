@@ -15,11 +15,11 @@ fn Main() {
     // uint <- uint
     test2(65)
 
-    // * <- int
+    // & <- int
     test3(123456)
 
-    // int <- *
-    test4(cast(*i32)456789)
+    // int <- &
+    test4(cast(&i32)456789)
 
     // double <- double
     test5(0.5f, 3.7d)
@@ -45,12 +45,12 @@ fn test2(a: u32) {
 }
 
 fn test3(a: u64) {
-    let b: *any = cast a
+    let b: &any = cast a
 
     c_printf("%llu, %u`n", a, b)
 }
 
-fn test4(a: *i32) {
+fn test4(a: &i32) {
     let b: u64 = cast a
 
     c_printf("%u, %u`n", a, b)

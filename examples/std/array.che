@@ -47,7 +47,7 @@ impl Array($T) {
         return data.length
     }
 
-    fn get_raw(ref Self) -> *T {
+    fn get_raw(ref Self) -> &T {
         return data.data
     }
 

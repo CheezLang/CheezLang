@@ -1,25 +1,25 @@
 #load("std:mem/std_heap_allocator")
 
 trait Allocator {
-    fn allocate(ref Self, count: uint, elementSize: uint, alignment: uint) -> *any;
-    fn reallocate(ref Self, mem: *any, count: uint, elementSize: uint, alignment: uint) -> *any;
-    fn free(ref Self, mem: *any);
+    fn allocate(ref Self, count: uint, elementSize: uint, alignment: uint) -> &any;
+    fn reallocate(ref Self, mem: &any, count: uint, elementSize: uint, alignment: uint) -> &any;
+    fn free(ref Self, mem: &any);
 }
 
-fn alloc($T: type, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> *T {
+fn alloc($T: type, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> &T {
     return alloc_raw(T, 1, allocator)
 }
 
-fn alloc_raw($T: type, count: uint, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> *T {
-    return cast(*T)allocator.allocate(cast count, @sizeof(T), @alignof(T))
+fn alloc_raw($T: type, count: uint, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> &T {
+    return cast(&T)allocator.allocate(cast count, @sizeof(T), @alignof(T))
 }
 
-fn realloc_raw(mem: *$T, count: uint, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> *T {
+fn realloc_raw(mem: &$T, count: uint, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> &T {
     return cast allocator.reallocate(cast mem, count, @sizeof(T), @alignof(T))
 }
 
 fn alloc_n($T: type, count: uint, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> []T {
-    let mem: []T = cast(*T) allocator.allocate(count, @sizeof(T), @alignof(T))
+    let mem: []T = cast(&T) allocator.allocate(count, @sizeof(T), @alignof(T))
     mem.length = cast count
     return mem
 }
@@ -30,7 +30,7 @@ fn realloc_n(mem: []$T, count: uint, allocator: Allocator = DEFAULT_STD_HEAP_ALL
     return mem
 }
 
-fn free(mem: *$T, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) {
+fn free(mem: &$T, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) {
     allocator.free(cast mem)
 }
 

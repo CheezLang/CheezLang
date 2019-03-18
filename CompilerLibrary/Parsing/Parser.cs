@@ -1179,8 +1179,10 @@ namespace Cheez.Parsing
                 return result;
             }
 
-            if (token.type == TokenType.Asterisk)
+            if (token.type == TokenType.Asterisk || token.type == TokenType.Ampersand)
             {
+                if (token.type == TokenType.Asterisk)
+                    ReportError(token.location, "POINTER");
                 NextToken();
                 SkipNewlines();
                 var target = ParseTypeExpr();

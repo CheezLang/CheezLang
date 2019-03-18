@@ -591,7 +591,7 @@ namespace Cheez.Visitors
 
         public override string VisitPointerTypeExpr(AstPointerTypeExpr type, int data = 0)
         {
-            return $"*{type.Target.Accept(this)}";
+            return $"&{type.Target.Accept(this)}";
         }
 
         public override string VisitReferenceTypeExpr(AstReferenceTypeExpr type, int data = 0)

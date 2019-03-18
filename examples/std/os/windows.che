@@ -3,7 +3,7 @@ let __std_out_handle = GetStdHandle(-11)
 let __std_err_handle = GetStdHandle(-12)
 
 typedef DWORD           = u32
-typedef HANDLE          = *any
+typedef HANDLE          = &any
 typedef HFILE           = i32
 typedef BOOL            = i32
 typedef UINT            = u32
@@ -28,16 +28,16 @@ let FILE_ATTRIBUTE_NORMAL : DWORD = 0x80
 fn GetLastError() -> DWORD #stdcall;
 
 fn GetStdHandle(nStdHandle: DWORD) -> HANDLE #stdcall;
-fn WriteFile(hFile: HANDLE, lpBuffer: *any, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: *DWORD, lpOverlapped: *any) -> BOOL #stdcall;
-fn ReadFile(hFile: HANDLE, lpBuffer: *any, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: *DWORD, lpOverlapped: *any) -> BOOL #stdcall;
+fn WriteFile(hFile: HANDLE, lpBuffer: &any, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: &DWORD, lpOverlapped: &any) -> BOOL #stdcall;
+fn ReadFile(hFile: HANDLE, lpBuffer: &any, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: &DWORD, lpOverlapped: &any) -> BOOL #stdcall;
 
-fn CreateFileA(lpFileName: c_string, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: *any, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
+fn CreateFileA(lpFileName: c_string, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &any, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
 fn CloseHandle(hObject: HANDLE) -> BOOL #stdcall;
-fn GetFileSize(hFile: HANDLE, lpFileSizeHigh: *DWORD) -> DWORD #stdcall;
-fn GetFileSizeEx(hFile: HANDLE, lpFileSize: *LARGE_INTEGER) -> BOOL #stdcall;
+fn GetFileSize(hFile: HANDLE, lpFileSizeHigh: &DWORD) -> DWORD #stdcall;
+fn GetFileSizeEx(hFile: HANDLE, lpFileSize: &LARGE_INTEGER) -> BOOL #stdcall;
 
 // somehow not linking
 // fn GetCurrentDirectory(nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;
 
-fn QueryPerformanceCounter(lpPerformanceCount: *LARGE_INTEGER) -> BOOL #stdcall;
-fn QueryPerformanceFrequency(lpPerformanceCount: *LARGE_INTEGER) -> BOOL #stdcall;
+fn QueryPerformanceCounter(lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
+fn QueryPerformanceFrequency(lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;

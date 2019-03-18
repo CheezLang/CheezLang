@@ -44,7 +44,7 @@ impl StringBase($CharType) {
         return data.length
     }
 
-    fn get_raw(ref Self) -> *CharType {
+    fn get_raw(ref Self) -> &CharType {
         return data.data
     }
 

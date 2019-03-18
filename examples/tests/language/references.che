@@ -80,7 +80,7 @@ fn test2() {
     let t = (1, 2, a, "lol")
 }
 
-fn help1(a: ref *int) {
+fn help1(a: ref &int) {
     let b = <<&<<a
 }
 
