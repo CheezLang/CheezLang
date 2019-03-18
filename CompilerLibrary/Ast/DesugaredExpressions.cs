@@ -66,7 +66,7 @@ namespace Cheez.Ast.Expressions
         public override AstExpression Clone() => CopyValuesTo(new AstTempVarExpr(Expr));
     }
 
-    public class AstTypeRef : AstTypeExpr
+    public class AstTypeRef : AstExpression
     {
         public override bool IsPolymorphic => false;
 

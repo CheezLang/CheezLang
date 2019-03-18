@@ -1,4 +1,5 @@
 ﻿using Cheez.Ast;
+using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Types;
@@ -31,12 +32,12 @@ namespace Cheez
             if (func.Parameters.Count > 0)
             {
                 var param = func.Parameters[0];
-                if (param.TypeExpr is AstIdTypeExpr i && i.Name == "Self")
+                if (param.TypeExpr is AstIdExpr i && i.Name == "Self")
                 {
                     func.SelfParameter = true;
                     func.SelfType = SelfParamType.Value;
                 }
-                else if (param.TypeExpr is AstReferenceTypeExpr p2 && p2.Target is AstIdTypeExpr i3 && i3.Name == "Self")
+                else if (param.TypeExpr is AstReferenceTypeExpr p2 && p2.Target is AstIdExpr i3 && i3.Name == "Self")
                 {
                     func.SelfParameter = true;
                     func.SelfType = SelfParamType.Reference;
@@ -165,18 +166,18 @@ namespace Cheez
             }
         }
 
-        private void CollectPolyTypeNames(AstTypeExpr typeExpr, List<string> result)
+        private void CollectPolyTypeNames(AstExpression typeExpr, List<string> result)
         {
             switch (typeExpr)
             {
-                case AstIdTypeExpr i:
+                case AstIdExpr i:
                     if (i.IsPolymorphic)
                         result.Add(i.Name);
                     break;
 
-                case AstPointerTypeExpr p:
+                case AstAddressOfExpr p:
                     {
-                        CollectPolyTypeNames(p.Target, result);
+                        CollectPolyTypeNames(p.SubExpression, result);
                         break;
                     }
 
@@ -192,9 +193,9 @@ namespace Cheez
                         break;
                     }
 
-                case AstTupleTypeExpr te:
+                case AstTupleExpr te:
                     {
-                        foreach (var m in te.Members)
+                        foreach (var m in te.Types)
                         {
                             CollectPolyTypeNames(m.TypeExpr, result);
                         }
@@ -202,11 +203,11 @@ namespace Cheez
                         break;
                     }
 
-                case AstPolyStructTypeExpr ps:
+                case AstCallExpr ps:
                     {
                         foreach (var m in ps.Arguments)
                         {
-                            CollectPolyTypeNames(m, result);
+                            CollectPolyTypeNames(m.Expr, result);
                         }
 
                         break;

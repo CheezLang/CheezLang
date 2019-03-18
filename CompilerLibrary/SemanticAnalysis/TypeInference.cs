@@ -147,9 +147,6 @@ namespace Cheez
                 case AstCastExpr cast:
                     return InferTypeCast(cast, expected, newInstances);
 
-                case AstTypeExpr type:
-                    return InferTypeTypeExpr(type, expected, newInstances);
-
                 case AstEmptyExpr e:
                     return e;
 
@@ -220,13 +217,6 @@ namespace Cheez
                 expr.Type = expected;
             else
                 expr.Type = PointerType.GetPointerType(CheezType.Any);
-            return expr;
-        }
-
-        private AstExpression InferTypeTypeExpr(AstTypeExpr expr, CheezType expected, List<AstFunctionDecl> newInstances)
-        {
-            expr.Type = CheezType.Type;
-            expr.Value = ResolveType(expr);
             return expr;
         }
 
@@ -1029,9 +1019,16 @@ namespace Cheez
                         return InferGenericFunctionCall(g, expr, expected, newInstances);
                     }
 
+                case CheezTypeType type:
+                    {
+                        expr.Type = CheezType.Type;
+                        expr.Value = ResolveType(expr);
+                        break;
+                    }
+
                 case ErrorType _: return expr;
 
-                default: ReportError(expr.Function, $"This is not a callable value"); break;
+                default: ReportError(expr.Function, $"Type '{expr.Function.Type}' is not callable"); break;
             }
 
             return expr;
@@ -1694,7 +1691,7 @@ namespace Cheez
 
         private AstExpression Cast(AstExpression expr, CheezType to, string errorMsg = null)
         {
-            if (expr.Type.IsErrorType)
+            if (expr.Type.IsErrorType || to.IsErrorType)
                 return expr;
 
             var from = expr.Type;

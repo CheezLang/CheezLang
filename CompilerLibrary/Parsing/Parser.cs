@@ -78,13 +78,6 @@ namespace Cheez.Parsing
 
         [SkipInStackFrame]
         [DebuggerStepThrough]
-        private void UndoTokens(int count)
-        {
-            mLexer.UndoTokens(count);
-        }
-
-        [SkipInStackFrame]
-        [DebuggerStepThrough]
         private void ReportError(TokenLocation location, string message)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
@@ -175,6 +168,24 @@ namespace Cheez.Parsing
         }
 
         //[DebuggerStepThrough]
+        private bool IsTypeExprToken()
+        {
+            var next = PeekToken();
+            switch (next.type)
+            {
+                case TokenType.OpenParen:
+                case TokenType.OpenBracket:
+                case TokenType.Ampersand:
+                case TokenType.Identifier:
+                case TokenType.DollarIdentifier:
+                case TokenType.KwFn:
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
         private bool IsExprToken(params TokenType[] exclude)
         {
             var next = PeekToken();
@@ -195,7 +206,6 @@ namespace Cheez.Parsing
                 case TokenType.KwNull:
                 case TokenType.KwTrue:
                 case TokenType.KwFalse:
-                case TokenType.KwType:
                 case TokenType.KwCast:
                 case TokenType.Ampersand:
                 case TokenType.Asterisk:
@@ -572,60 +582,59 @@ namespace Cheez.Parsing
             return new AstDirective(name, args, new Location(name.Beginning, end));
         }
 
-        private AstParameter ParseParameter()
+        private AstParameter ParseParameter(bool allowDefaultValue = true)
         {
             AstIdExpr pname = null;
-            AstTypeExpr ptype = null;
+            AstExpression ptype = null;
             AstExpression defaultValue = null;
 
             TokenLocation beg = null, end = null;
 
-            var next = PeekToken();
-            if (next.type == TokenType.Identifier || next.type == TokenType.DollarIdentifier)
+            var e = ParseExpression();
+            beg = e.Beginning;
+            SkipNewlines();
+
+            // if next token is : then e is the name of the parameter
+            if (CheckToken(TokenType.Colon))
             {
-                NextToken();
-                SkipNewlines();
-
-                var maybeColon = PeekToken();
-                if (maybeColon.type == TokenType.Colon)
+                if (e is AstIdExpr i)
                 {
-                    pname = new AstIdExpr((string)next.data, next.type == TokenType.DollarIdentifier, new Location(next.location));
-                    beg = pname.Beginning;
-
-                    Consume(TokenType.Colon, ErrMsg(":", "after name in parameter"));
-                    SkipNewlines();
-
-                    ptype = ParseTypeExpr();
+                    pname = i;
                 }
                 else
                 {
-                    UndoTokens(2);
-                    ptype = ParseTypeExpr();
-                    beg = ptype.Beginning;
+                    ReportError(e, $"Name of parameter must be an identifier");
                 }
+
+                Consume(TokenType.Colon, ErrMsg(":", "after name in parameter"));
+                SkipNewlines();
+
+                ptype = ParseExpression();
             }
             else
             {
-                ptype = ParseTypeExpr();
-                beg = ptype.Beginning;
+                ptype = e;
             }
 
             end = ptype.End;
 
-            // optional default value
-            SkipNewlines();
-            if (CheckToken(TokenType.Equal))
+            if (allowDefaultValue)
             {
-                NextToken();
+                // optional default value
                 SkipNewlines();
-                defaultValue = ParseExpression();
-                end = defaultValue.End;
+                if (CheckToken(TokenType.Equal))
+                {
+                    NextToken();
+                    SkipNewlines();
+                    defaultValue = ParseExpression();
+                    end = defaultValue.End;
+                }
             }
 
             return new AstParameter(pname, ptype, defaultValue, new Location(beg, end));
         }
 
-        private List<AstParameter> ParseParameterList(out TokenLocation beg, out TokenLocation end)
+        private List<AstParameter> ParseParameterList(out TokenLocation beg, out TokenLocation end, bool allowDefaultValue = true)
         {
             var parameters = new List<AstParameter>();
 
@@ -638,7 +647,7 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                     break;
 
-                var a = ParseParameter();
+                var a = ParseParameter(allowDefaultValue);
                 parameters.Add(a);
 
                 SkipNewlines();
@@ -702,7 +711,7 @@ namespace Cheez.Parsing
                 Consume(TokenType.Colon, ErrMsg(":", "after struct member name"));
                 SkipNewlines();
 
-                var mType = ParseTypeExpr();
+                var mType = ParseExpression();
                 AstExpression init = null;
 
                 next = PeekToken();
@@ -741,13 +750,13 @@ namespace Cheez.Parsing
         {
             TokenLocation beg = null, end = null;
             var functions = new List<AstFunctionDecl>();
-            AstTypeExpr target = null;
-            AstTypeExpr trait = null;
+            AstExpression target = null;
+            AstExpression trait = null;
 
             beg = Consume(TokenType.KwImpl, ErrMsg("keyword 'impl'", "at beginning of impl statement")).location;
             SkipNewlines();
 
-            target = ParseTypeExpr();
+            target = ParseExpression();
             SkipNewlines();
 
             if (CheckToken(TokenType.KwFor))
@@ -755,7 +764,7 @@ namespace Cheez.Parsing
                 NextToken();
                 SkipNewlines();
                 trait = target;
-                target = ParseTypeExpr();
+                target = ParseExpression();
                 SkipNewlines();
             }
 
@@ -838,7 +847,7 @@ namespace Cheez.Parsing
         {
             TokenLocation beg = null, end = null;
             AstIdExpr name = null;
-            AstTypeExpr value = null;
+            AstExpression value = null;
 
             beg = Consume(TokenType.KwTypedef, ErrMsg("keyword 'typedef'", "at beginning of type alias declaration")).location;
             SkipNewlines();
@@ -849,7 +858,7 @@ namespace Cheez.Parsing
             Consume(TokenType.Equal, ErrMsg("type expression", "after '=' in type alias declaration"));
             SkipNewlines();
 
-            value = ParseTypeExpr();
+            value = ParseExpression();
             end = value.End;
 
             return new AstTypeAliasDecl(name, value, Location: new Location(beg, end));
@@ -860,7 +869,7 @@ namespace Cheez.Parsing
             TokenLocation beg = null, end = null;
             var directives = new List<AstDirective>();
             AstExpression pattern = null;
-            AstTypeExpr type = null;
+            AstExpression type = null;
             AstExpression init = null;
 
             beg = Consume(TokenType.KwLet, ErrMsg("keyword 'let'", "at beginning of variable declaration")).location;
@@ -879,7 +888,7 @@ namespace Cheez.Parsing
             {
                 NextToken();
                 SkipNewlines();
-                type = ParseTypeExpr();
+                type = ParseExpression();
                 end = type.End;
             }
 
@@ -1026,10 +1035,10 @@ namespace Cheez.Parsing
 
         #region Expression Parsing
 
-        private AstTypeExpr ParseFunctionTypeExpr()
+        private AstExpression ParseFunctionTypeExpr()
         {
-            var args = new List<AstTypeExpr>();
-            AstTypeExpr returnType = null;
+            var args = new List<AstExpression>();
+            AstExpression returnType = null;
 
             var beginning = Consume(TokenType.KwFn, ErrMsg("keyword 'fn'", "at beginning of function type")).location;
             SkipNewlines();
@@ -1044,7 +1053,7 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                     break;
 
-                args.Add(ParseTypeExpr());
+                args.Add(ParseExpression());
                 SkipNewlines();
 
                 next = PeekToken();
@@ -1064,7 +1073,7 @@ namespace Cheez.Parsing
             if (CheckToken(TokenType.Arrow))
             {
                 NextToken();
-                returnType = ParseTypeExpr();
+                returnType = ParseExpression();
                 end = returnType.End;
             }
 
@@ -1080,123 +1089,6 @@ namespace Cheez.Parsing
             errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
 
             return ParseOrExpression(errorMessage);
-        }
-
-        private AstTypeExpr ParseTypeExpr()
-        {
-            var token = PeekToken();
-
-            if (token.type == TokenType.KwType)
-            {
-                NextToken();
-                return new AstIdTypeExpr("type", false, new Location(token.location));
-            }
-
-            if (token.type == TokenType.KwRef)
-            {
-                NextToken();
-                SkipNewlines();
-                var target = ParseTypeExpr();
-                return new AstReferenceTypeExpr(target, new Location(token.location, target.End));
-            }
-
-            if (token.type == TokenType.AtSignIdentifier)
-            {
-                var sub = ParseExpression();
-                return new AstExprTypeExpr(sub, sub.Location);
-            }
-
-            if (token.type == TokenType.OpenParen)
-            {
-                var p = ParseParameterList(out var _, out var end);
-                return new AstTupleTypeExpr(p, new Location(token.location, end));
-            }
-
-            if (token.type == TokenType.OpenBracket)
-            {
-                NextToken();
-                SkipNewlines();
-
-                var next = PeekToken();
-                if (next.type == TokenType.ClosingBracket)
-                {
-                    NextToken();
-                    SkipNewlines();
-
-                    var target = ParseTypeExpr();
-                    return new AstSliceTypeExpr(target, new Location(token.location, target.End));
-                }
-
-                var size = ParseExpression();
-                SkipNewlines();
-
-                Consume(TokenType.ClosingBracket, ErrMsg("']'", "at end of array type expression"));
-                SkipNewlines();
-
-                {
-                    var target = ParseTypeExpr();
-                    return new AstArrayTypeExpr(target, size, new Location(token.location, target.End));
-                }
-            }
-
-            if (token.type == TokenType.Identifier || token.type == TokenType.DollarIdentifier)
-            {
-                NextToken();
-                AstTypeExpr result = new AstIdTypeExpr(token.data as string, token.type == TokenType.DollarIdentifier, new Location(token.location));
-
-                var next = PeekToken();
-                if (next.type == TokenType.OpenParen)
-                {
-                    NextToken();
-                    SkipNewlines();
-
-                    var args = new List<AstTypeExpr>();
-
-                    next = PeekToken();
-                    while (next.type != TokenType.ClosingParen)
-                    {
-                        var a = ParseTypeExpr();
-                        if (a != null) args.Add(a);
-                        SkipNewlines();
-
-                        next = PeekToken();
-                        if (next.type == TokenType.Comma)
-                        {
-                            NextToken();
-                            SkipNewlines();
-                        }
-                        else if (next.type != TokenType.ClosingParen)
-                        {
-                            NextToken();
-                            ReportError(next.location, $"Unexpected token '{next}' in poly struct type expression. Expected ',' or ')'");
-                        }
-                    }
-
-                    var end = Consume(TokenType.ClosingParen, ErrMsg("')'", "at end of poly struct type expressino")).location;
-                    result = new AstPolyStructTypeExpr(result, args, new Location(result.Beginning, end));
-                }
-
-                return result;
-            }
-
-            if (token.type == TokenType.Asterisk || token.type == TokenType.Ampersand)
-            {
-                if (token.type == TokenType.Asterisk)
-                    ReportError(token.location, "POINTER");
-                NextToken();
-                SkipNewlines();
-                var target = ParseTypeExpr();
-                return new AstPointerTypeExpr(target, new Location(token.location, target.End));
-            }
-
-            if (token.type == TokenType.KwFn)
-            {
-                return ParseFunctionTypeExpr();
-            }
-
-            NextToken();
-            ReportError(token.location, $"Unexpected token in type expression: '{token}'");
-            return new AstErrorTypeExpr(new Location(token.location));
         }
 
         [DebuggerStepThrough]
@@ -1292,7 +1184,7 @@ namespace Cheez.Parsing
             else if (next.type == TokenType.KwCast)
             {
                 var beg = next.location;
-                AstTypeExpr type = null;
+                AstExpression type = null;
 
                 NextToken();
                 SkipNewlines();
@@ -1302,7 +1194,7 @@ namespace Cheez.Parsing
                 {
                     NextToken();
                     SkipNewlines();
-                    type = ParseTypeExpr();
+                    type = ParseExpression();
                     SkipNewlines();
                     Consume(TokenType.ClosingParen, ErrMsg("')'", "after type in cast expression"));
                     SkipNewlines();
@@ -1348,34 +1240,30 @@ namespace Cheez.Parsing
             AstExpression expr;
             AstIdExpr name = null;
 
-            var next = PeekToken();
-            if (next.type == TokenType.Identifier)
+            var e = ParseExpression();
+            beg = e.Beginning;
+            SkipNewlines();
+
+            // if next token is : then e is the name of the parameter
+            if (CheckToken(TokenType.Equal))
             {
-                NextToken();
-                SkipNewlines();
-
-                var maybeColon = PeekToken();
-                if (maybeColon.type == TokenType.Equal)
+                if (e is AstIdExpr i && !i.IsPolymorphic)
                 {
-                    name = new AstIdExpr((string)next.data, false, new Location(next.location));
-                    beg = name.Beginning;
-
-                    Consume(TokenType.Equal, ErrMsg("=", "after name in argument"));
-                    SkipNewlines();
-
-                    expr = ParseExpression();
+                    name = i;
                 }
                 else
                 {
-                    UndoTokens(2);
-                    expr = ParseExpression();
-                    beg = expr.Beginning;
+                    ReportError(e, $"Name of argument must be an identifier");
                 }
+
+                Consume(TokenType.Equal, ErrMsg("=", "after name in argument"));
+                SkipNewlines();
+
+                expr = ParseExpression();
             }
             else
             {
-                expr = ParseExpression();
-                beg = expr.Beginning;
+                expr = e;
             }
 
             return new AstArgument(expr, name, new Location(beg, expr.End));
@@ -1491,160 +1379,11 @@ namespace Cheez.Parsing
             return args;
         }
 
-        private AstExpression ParseAtomicExpression(ErrorMessageResolver errorMessage)
-        {
-            var token = PeekToken();
-            switch (token.type)
-            {
-                case TokenType.KwNew:
-                    return ParseStructValue();
-
-                case TokenType.KwNull:
-                    NextToken();
-                    return new AstNullExpr(new Location(token.location));
-
-                case TokenType.AtSignIdentifier:
-                    {
-                        NextToken();
-                        var args = ParseArgumentList(out var end);
-                        var name = new AstIdExpr((string)token.data, false, new Location(token.location));
-                        return new AstCompCallExpr(name, args, new Location(token.location, end));
-                    }
-
-                case TokenType.OpenBracket:
-                    {
-                        NextToken();
-                        var values = new List<AstExpression>();
-
-                        while (true)
-                        {
-                            SkipNewlines();
-                            var next = PeekToken();
-
-                            if (next.type == TokenType.ClosingBracket || next.type == TokenType.EOF)
-                                break;
-
-                            values.Add(ParseExpression());
-
-                            next = PeekToken();
-
-                            if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
-                            {
-                                NextToken();
-                            }
-                            else if (next.type == TokenType.ClosingBracket)
-                            {
-                                break;
-                            }
-                            else
-                            {
-                                ReportError(next.location, "Unexpected token in array expression");
-                            }
-                        }
-
-                        var end = Consume(TokenType.ClosingBracket, ErrMsg("]", "at end of array expression")).location;
-                        return new AstArrayExpr(values, new Location(token.location, end));
-                    }
-
-                case TokenType.DollarIdentifier:
-                    NextToken();
-                    return new AstIdExpr((string)token.data, true, new Location(token.location));
-
-                case TokenType.Identifier:
-                    NextToken();
-                    return new AstIdExpr((string)token.data, false, new Location(token.location));
-
-                case TokenType.StringLiteral:
-                    NextToken();
-                    return new AstStringLiteral((string)token.data, token.suffix, new Location(token.location));
-
-                case TokenType.CharLiteral:
-                    NextToken();
-                    return new AstCharLiteral((string)token.data, new Location(token.location));
-
-                case TokenType.NumberLiteral:
-                    NextToken();
-                    return new AstNumberExpr((NumberData)token.data, token.suffix, new Location(token.location));
-
-                case TokenType.KwTrue:
-                    NextToken();
-                    return new AstBoolExpr(true, new Location(token.location));
-
-                case TokenType.KwFalse:
-                    NextToken();
-                    return new AstBoolExpr(false, new Location(token.location));
-
-                case TokenType.OpenBrace:
-                    return ParseBlockExpr();
-
-                case TokenType.KwIf:
-                    return ParseIfExpr();
-
-                case TokenType.KwType:
-                    {
-                        NextToken();
-                        if (IsExprToken())
-                        {
-                            var sub = ParseTypeExpr();
-                            return sub;
-                        }
-                        else
-                        {
-                            return new AstIdExpr("type", false, new Location(token.location));
-                        }
-                    }
-
-                case TokenType.OpenParen:
-                    {
-                        NextToken();
-                        SkipNewlines();
-                        var sub = ParseExpression(errorMessage);
-                        SkipNewlines();
-
-                        if (CheckToken(TokenType.ClosingParen))
-                        {
-                            Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression"));
-                            return sub;
-                        }
-
-                        var tupleValues = new List<AstExpression>() { sub };
-                        while (true)
-                        {
-                            var next = PeekToken();
-                            if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
-                                break;
-                            else if (next.type == TokenType.Comma)
-                            {
-                                NextToken();
-                                SkipNewlines();
-                            }
-                            else
-                            {
-                                ReportError(next.location, $"Unexpected token ({next})");
-                                NextToken();
-                            }
-                            var expr = ParseExpression();
-                            if (expr != null)
-                                tupleValues.Add(expr);
-                            SkipNewlines();
-                        }
-
-                        var end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of () expression")).location;
-                        return new AstTupleExpr(tupleValues, new Location(token.location, end));
-                    }
-
-                default:
-                    //NextToken();
-                    ReportError(token.location, errorMessage?.Invoke(token) ?? $"Failed to parse expression, unpexpected token ({token.type}) {token.data}");
-                    return ParseEmptyExpression();
-            }
-        }
-
         private AstExpression ParseStructValue()
         {
             TokenLocation beg = null, end = null;
             List<AstStructMemberInitialization> members = new List<AstStructMemberInitialization>();
-            AstTypeExpr type = null;
+            AstExpression type = null;
 
             beg = Consume(TokenType.KwNew, ErrMsg("keyword 'new'", "at beginning of struct value expression")).location;
 
@@ -1652,7 +1391,7 @@ namespace Cheez.Parsing
             var maybeOpenBrace = PeekToken();
             if (maybeOpenBrace.type != TokenType.OpenBrace)
             {
-                type = ParseTypeExpr();
+                type = ParseExpression();
                 SkipNewlines();
             }
 
@@ -1717,7 +1456,153 @@ namespace Cheez.Parsing
             var loc = GetWhitespaceLocation();
             return new AstEmptyExpr(new Location(loc.beg, loc.end));
         }
-        #endregion
 
+        private AstExpression ParseTupleExpression()
+        {
+            var list = ParseParameterList(out var beg, out var end, allowDefaultValue: false);
+
+            bool isType = false;
+            foreach (var v in list)
+            {
+                if (v.Name != null)
+                    isType = true;
+            }
+
+            if (!isType)
+            {
+                if (list.Count == 0)
+                    ReportError(new Location(beg, end), $"Invalid expression");
+                else if (list.Count == 1)
+                    return list[0].TypeExpr;
+            }
+
+            return new AstTupleExpr(list, new Location(beg, end));
+        }
+
+        private AstExpression ParseArrayOrSliceExpression()
+        {
+            var token = NextToken();
+            var values = new List<AstExpression>();
+
+            while (true)
+            {
+                SkipNewlines();
+                var next = PeekToken();
+
+                if (next.type == TokenType.ClosingBracket || next.type == TokenType.EOF)
+                    break;
+
+                values.Add(ParseExpression());
+
+                next = PeekToken();
+
+                if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
+                {
+                    NextToken();
+                }
+                else if (next.type == TokenType.ClosingBracket)
+                {
+                    break;
+                }
+                else
+                {
+                    ReportError(next.location, "Unexpected token in array expression");
+                }
+            }
+
+            var end = Consume(TokenType.ClosingBracket, ErrMsg("]", "at end of array expression")).location;
+
+            if (IsTypeExprToken())
+            {
+                var target = ParseExpression();
+                if (values.Count == 0)
+                    return new AstSliceTypeExpr(target, new Location(token.location, target.End));
+                else
+                {
+                    if (values.Count > 1)
+                        ReportError(new Location(values), $"Too many expressions in array type expression");
+                    return new AstArrayTypeExpr(target, values[0], new Location(token.location, target.End));
+                }
+            }
+
+            return new AstArrayExpr(values, new Location(token.location, end));
+        }
+
+        private AstExpression ParseAtomicExpression(ErrorMessageResolver errorMessage)
+        {
+            var token = PeekToken();
+            switch (token.type)
+            {
+                case TokenType.KwNew:
+                    return ParseStructValue();
+
+                case TokenType.KwNull:
+                    NextToken();
+                    return new AstNullExpr(new Location(token.location));
+
+                case TokenType.AtSignIdentifier:
+                    {
+                        NextToken();
+                        var args = ParseArgumentList(out var end);
+                        var name = new AstIdExpr((string)token.data, false, new Location(token.location));
+                        return new AstCompCallExpr(name, args, new Location(token.location, end));
+                    }
+
+                case TokenType.OpenBracket:
+                    return ParseArrayOrSliceExpression();
+
+                case TokenType.DollarIdentifier:
+                    NextToken();
+                    return new AstIdExpr((string)token.data, true, new Location(token.location));
+
+                case TokenType.Identifier:
+                    NextToken();
+                    return new AstIdExpr((string)token.data, false, new Location(token.location));
+
+                case TokenType.StringLiteral:
+                    NextToken();
+                    return new AstStringLiteral((string)token.data, token.suffix, new Location(token.location));
+
+                case TokenType.CharLiteral:
+                    NextToken();
+                    return new AstCharLiteral((string)token.data, new Location(token.location));
+
+                case TokenType.NumberLiteral:
+                    NextToken();
+                    return new AstNumberExpr((NumberData)token.data, token.suffix, new Location(token.location));
+
+                case TokenType.KwTrue:
+                    NextToken();
+                    return new AstBoolExpr(true, new Location(token.location));
+
+                case TokenType.KwFalse:
+                    NextToken();
+                    return new AstBoolExpr(false, new Location(token.location));
+
+                case TokenType.OpenBrace:
+                    return ParseBlockExpr();
+
+                case TokenType.KwIf:
+                    return ParseIfExpr();
+
+                case TokenType.OpenParen:
+                    return ParseTupleExpression();
+
+                case TokenType.KwRef:
+                    NextToken();
+                    SkipNewlines();
+                    var target = ParseExpression();
+                    return new AstReferenceTypeExpr(target, new Location(token.location, target.End));
+
+                case TokenType.KwFn:
+                    return ParseFunctionTypeExpr();
+
+                default:
+                    //NextToken();
+                    ReportError(token.location, errorMessage?.Invoke(token) ?? $"Failed to parse expression, unpexpected token ({token.type}) {token.data}");
+                    return ParseEmptyExpression();
+            }
+        }
+        #endregion
     }
 }

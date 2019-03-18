@@ -56,7 +56,7 @@ impl StackAllocator {
             parent = alloc
             memory = null
             capacity = 0
-            allocations = type Array(StackAllocation)::create()
+            allocations = Array(StackAllocation)::create()
         }
         a.reserve(size)
         return a

@@ -16,7 +16,7 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        private CheezType ResolveType(AstTypeExpr typeExpr, bool poly_from_scope = false)
+        private CheezType ResolveType(AstExpression typeExpr, bool poly_from_scope = false)
         {
             List<AstStructDecl> newInstances = new List<AstStructDecl>();
             var t = ResolveTypeHelper(typeExpr, null, newInstances, poly_from_scope);
@@ -24,14 +24,24 @@ namespace Cheez
             return t;
         }
 
-        private CheezType ResolveTypeHelper(AstTypeExpr typeExpr, HashSet<AstDecl> deps = null, List<AstStructDecl> instances = null, bool poly_from_scope = false)
+        private CheezType ResolveTypeHelper(AstExpression typeExpr, HashSet<AstDecl> deps = null, List<AstStructDecl> instances = null, bool poly_from_scope = false)
         {
             switch (typeExpr)
             {
                 case AstErrorTypeExpr _:
                     return CheezType.Error;
 
-                case AstIdTypeExpr i:
+                case AstCompCallExpr cc:
+                    InferType(cc, CheezType.Type);
+                    if (cc.Type == CheezType.Type)
+                        return cc.Value as CheezType;
+                    break;
+
+                case AstArgument arg:
+                    arg.Expr.AttachTo(arg);
+                    return ResolveTypeHelper(arg.Expr, deps, instances, poly_from_scope);
+
+                case AstIdExpr i:
                     {
                         if (i.IsPolymorphic && !poly_from_scope)
                             return new PolyType(i.Name, true);
@@ -66,10 +76,10 @@ namespace Cheez
                         break;
                     }
 
-                case AstPointerTypeExpr p:
+                case AstAddressOfExpr p:
                     {
-                        p.Target.Scope = typeExpr.Scope;
-                        var subType = ResolveTypeHelper(p.Target, deps, instances, poly_from_scope);
+                        p.SubExpression.Scope = typeExpr.Scope;
+                        var subType = ResolveTypeHelper(p.SubExpression, deps, instances, poly_from_scope);
                         return PointerType.GetPointerType(subType);
                     }
 
@@ -127,20 +137,20 @@ namespace Cheez
                         return new FunctionType(par, ret);
                     }
 
-                case AstPolyStructTypeExpr @struct:
+                case AstCallExpr @struct:
                     {
-                        @struct.Struct.Scope = @struct.Scope;
-                        @struct.Struct.Type = CheezType.Type;
-                        @struct.Struct.Value = ResolveTypeHelper(@struct.Struct, deps, instances, poly_from_scope);
+                        @struct.Function.Scope = @struct.Scope;
+                        @struct.Function.Type = CheezType.Type;
+                        @struct.Function.Value = ResolveTypeHelper(@struct.Function, deps, instances, poly_from_scope);
 
-                        if (((CheezType)@struct.Struct.Value).IsErrorType)
+                        if (((CheezType)@struct.Function.Value).IsErrorType)
                             return CheezType.Error;
 
-                        var strType = @struct.Struct.Value as GenericStructType;
+                        var strType = @struct.Function.Value as GenericStructType;
 
                         if (strType == null)
                         {
-                            ReportError(@struct.Struct, $"This type must be a poly struct type but is '{@struct.Struct.Value}'");
+                            ReportError(@struct.Function, $"This type must be a poly struct type but is '{@struct.Function.Value}'");
                             return CheezType.Error;
                         }
 
@@ -168,12 +178,12 @@ namespace Cheez
                         return instance?.Type ?? CheezType.Error;
                     }
 
-                case AstTupleTypeExpr tuple:
+                case AstTupleExpr tuple:
                     {
-                        var members = new(string name, CheezType type)[tuple.Members.Count];
+                        var members = new(string name, CheezType type)[tuple.Types.Count];
                         for (int i = 0; i < members.Length; i++)
                         {
-                            var m = tuple.Members[i];
+                            var m = tuple.Types[i];
                             m.Scope = tuple.Scope;
                             m.TypeExpr.Scope = tuple.Scope;
                             m.Type = ResolveTypeHelper(m.TypeExpr, deps, instances, poly_from_scope);
@@ -183,21 +193,6 @@ namespace Cheez
 
                         return TupleType.GetTuple(members);
                     }
-
-                case AstExprTypeExpr expr:
-                    expr.Expression.Scope = expr.Scope;
-                    expr.Expression = InferType(expr.Expression, CheezType.Type);
-
-                    if (expr.Expression.Type == CheezType.Error) return CheezType.Error;
-
-                    if (expr.Expression.Type != CheezType.Type)
-                    {
-                        ReportError(expr, $"Expected a type, got '{expr.Type}'");
-                        return CheezType.Error;
-                    }
-
-                    Debug.Assert(expr.Expression.Value != null);
-                    return expr.Expression.Value as CheezType;
 
                 case AstTypeRef typeRef:
                     return typeRef.Value as CheezType;

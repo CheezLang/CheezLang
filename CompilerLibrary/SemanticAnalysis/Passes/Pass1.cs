@@ -147,7 +147,7 @@ namespace Cheez
             }
         }
 
-        private void MatchPatternWithTypeExpr(AstVariableDecl parent, AstExpression pattern, AstTypeExpr type)
+        private void MatchPatternWithTypeExpr(AstVariableDecl parent, AstExpression pattern, AstExpression type)
         {
             if (pattern is AstIdExpr id)
             {
@@ -158,12 +158,12 @@ namespace Cheez
             }
             else if (pattern is AstTupleExpr tuple)
             {
-                AstTupleTypeExpr tupleType = type as AstTupleTypeExpr;
+                AstTupleExpr tupleType = type as AstTupleExpr;
 
                 for (int i = 0; i < tuple.Values.Count; i++)
                 {
                     var tid = tuple.Values[i];
-                    var tty = (i < tupleType?.Members?.Count) ? tupleType.Members[i] : null;
+                    var tty = (i < tupleType?.Types?.Count) ? tupleType.Types[i] : null;
 
                     MatchPatternWithTypeExpr(parent, tid, tty?.TypeExpr);
                 }

@@ -130,10 +130,10 @@ namespace Cheez
             {
                 func.SubScope.DefineSymbol(func.ReturnValue, ".ret");
             }
-            if (func.ReturnValue?.TypeExpr is AstTupleTypeExpr t)
+            if (func.ReturnValue?.TypeExpr is AstTupleExpr t)
             {
                 int index = 0;
-                foreach (var m in t.Members)
+                foreach (var m in t.Types)
                 {
                     if (m.Name == null) continue;
                     AstExpression access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnValue), new AstNumberExpr(index));
@@ -524,9 +524,9 @@ namespace Cheez
                 var missing = new List<ILocation>();
                 if (currentFunction.ReturnValue.Name == null)
                 {
-                    if (currentFunction.ReturnValue.TypeExpr is AstTupleTypeExpr t)
+                    if (currentFunction.ReturnValue.TypeExpr is AstTupleExpr t)
                     {
-                        foreach (var m in t.Members)
+                        foreach (var m in t.Types)
                             if (m.Symbol == null || !ret.Scope.IsInitialized(m.Symbol))
                                 missing.Add(m);
                     }
@@ -539,9 +539,9 @@ namespace Cheez
                 {
                     if (!ret.Scope.IsInitialized(currentFunction.ReturnValue))
                     {
-                        if (currentFunction.ReturnValue.TypeExpr is AstTupleTypeExpr t && t.IsFullyNamed)
+                        if (currentFunction.ReturnValue.TypeExpr is AstTupleExpr t && t.IsFullyNamed)
                         {
-                            foreach (var m in t.Members)
+                            foreach (var m in t.Types)
                                 if (!ret.Scope.IsInitialized(m.Symbol))
                                     missing.Add(m);
                         }

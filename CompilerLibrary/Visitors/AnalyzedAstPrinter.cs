@@ -558,18 +558,6 @@ namespace Cheez.Visitors
 
 
         #region Type expressions
-
-        public override string VisitExprTypeExpression(AstExprTypeExpr type, int data = 0)
-        {
-            return type.Expression.Accept(this);
-        }
-
-        public override string VisitTupleTypeExpr(AstTupleTypeExpr expr, int data = 0)
-        {
-            var members = string.Join(", ", expr.Members.Select(m => m.TypeExpr.Accept(this)));
-            return "(" + members + ")";
-        }
-
         public override string VisitSliceTypeExpr(AstSliceTypeExpr type, int data = 0)
         {
             return $"[]{type.Target.Accept(this)}";
@@ -589,27 +577,9 @@ namespace Cheez.Visitors
             return $"[{type.SizeExpr.Accept(this)}]{type.Target.Accept(this)}";
         }
 
-        public override string VisitPointerTypeExpr(AstPointerTypeExpr type, int data = 0)
-        {
-            return $"&{type.Target.Accept(this)}";
-        }
-
         public override string VisitReferenceTypeExpr(AstReferenceTypeExpr type, int data = 0)
         {
             return $"ref {type.Target.Accept(this)}";
-        }
-
-        public override string VisitPolyStructTypeExpr(AstPolyStructTypeExpr type, int data = 0)
-        {
-            string args = string.Join(", ", type.Arguments.Select(a => a.Accept(this)));
-            return $"{type.Struct.Accept(this)}({args})";
-        }
-
-        public override string VisitIdTypeExpr(AstIdTypeExpr type, int data = 0)
-        {
-            if (type.IsPolymorphic)
-                return $"${type.Name}";
-            return type.Name;
         }
         #endregion
     }

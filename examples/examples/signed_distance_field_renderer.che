@@ -613,7 +613,7 @@ fn signed_distance_field_renderer()
     let height: int = 128 * scale
     let antiAliasingSteps: int = 1
 
-    let imageArr = type Array(Vec3)::create()
+    let imageArr = Array(Vec3)::create()
 
     imageArr.resize(width * height)
 

@@ -424,13 +424,13 @@ namespace Cheez.Ast.Expressions
     public class AstCastExpr : AstExpression
     {
         public AstExpression SubExpression { get; set; }
-        public AstTypeExpr TypeExpr { get; set; }
+        public AstExpression TypeExpr { get; set; }
         public override bool IsPolymorphic => SubExpression.IsPolymorphic || Type.IsPolyType;
 
         public AstIdExpr Name => null;
 
         [DebuggerStepThrough]
-        public AstCastExpr(AstTypeExpr typeExpr, AstExpression sub, ILocation Location = null) : base(Location)
+        public AstCastExpr(AstExpression typeExpr, AstExpression sub, ILocation Location = null) : base(Location)
         {
             this.TypeExpr = typeExpr;
             SubExpression = sub;
@@ -440,7 +440,8 @@ namespace Cheez.Ast.Expressions
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitCastExpr(this, data);
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstCastExpr(TypeExpr?.Clone() as AstTypeExpr, SubExpression.Clone()));
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstCastExpr(TypeExpr?.Clone(), SubExpression.Clone()));
     }
 
     public class AstArrayAccessExpr : AstExpression
@@ -490,16 +491,20 @@ namespace Cheez.Ast.Expressions
         public override bool IsPolymorphic => false;
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTupleExpr(this, data);
 
+        public bool IsTypeExpr = false;
+        public bool IsFullyNamed = false;
         public List<AstExpression> Values { get; set; }
+        public List<AstParameter> Types { get; set; }
 
-        public AstTupleExpr(List<AstExpression> values, ILocation Location)
+        public AstTupleExpr(List<AstParameter> values, ILocation Location)
             : base(Location)
         {
-            this.Values = values;
+            this.Types = values;
+            this.Values = Types.Select(t => t.TypeExpr).ToList();
         }
 
         public override AstExpression Clone()
-            => CopyValuesTo(new AstTupleExpr(Values.Select(v => v.Clone()).ToList(), Location));
+            => CopyValuesTo(new AstTupleExpr(Types.Select(v => v.Clone()).ToList(), Location));
     }
 
     public class AstNumberExpr : AstLiteral
@@ -577,14 +582,14 @@ namespace Cheez.Ast.Expressions
 
     public class AstStructValueExpr : AstExpression
     {
-        public AstTypeExpr TypeExpr { get; set; }
+        public AstExpression TypeExpr { get; set; }
         public List<AstStructMemberInitialization> MemberInitializers { get; }
         public override bool IsPolymorphic => false;
 
         public AstIdExpr Name => null;
 
         [DebuggerStepThrough]
-        public AstStructValueExpr(AstTypeExpr type, List<AstStructMemberInitialization> inits, ILocation Location = null) : base(Location)
+        public AstStructValueExpr(AstExpression type, List<AstStructMemberInitialization> inits, ILocation Location = null) : base(Location)
         {
             this.TypeExpr = type;
             this.MemberInitializers = inits;
@@ -594,7 +599,8 @@ namespace Cheez.Ast.Expressions
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitStructValueExpr(this, data);
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstStructValueExpr(TypeExpr?.Clone() as AstTypeExpr, MemberInitializers.Select(m => m.Clone()).ToList()));
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstStructValueExpr(TypeExpr?.Clone(), MemberInitializers.Select(m => m.Clone()).ToList()));
     }
 
     public class AstArrayExpr : AstExpression
