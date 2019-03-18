@@ -452,8 +452,8 @@ impl SDFAllocator {
         allocator.dispose()
     }
 
-    fn allocate(ref Self, $T: type) -> *T {
-        let t = cast(*T) allocator.allocate(1, @sizeof(T), @alignof(T))
+    fn allocate(ref Self, $T: type) -> &T {
+        let t = cast(&T) allocator.allocate(1, @sizeof(T), @alignof(T))
         // printf("{}`n", [allocator])
         return t
     }
@@ -627,7 +627,7 @@ fn signed_distance_field_renderer()
     printf("Rendering took {} seconds`n", [dur])
 
     // store image as bmp
-    write_bmp(cast(i32) width, cast(i32) height, cast(*double) imageArr.data.data, "gen/test.bmp")
+    write_bmp(cast(i32) width, cast(i32) height, cast(&double) imageArr.data.data, "gen/test.bmp")
 
     imageArr.free()
 }
