@@ -1,0 +1,169 @@
+#load("std:mem/std_heap_allocator")
+#load("std:hash")
+
+// // use this to create a hash table with a std heap allocator
+// fn create_table(comp: fn(K, K) -> bool) -> Table($K, $V) {
+//     let table: Table(K, V)
+//     table.allocator = new StdHeapAllocator{}
+//     table.comparer = comp
+//     table.max_load = 0.75
+//     table.count = 0
+//     table.entries = (Entry(K, V)&)null
+//     return table
+// }
+
+// // use this to create a hash table with the specified allocator
+// fn create_table_with_alloc(allocator: Allocator, comp: fn(K, K) -> bool) -> Table($K, $V) {
+//     let table: Table(K, V)
+//     table.allocator = allocator
+//     table.comparer = comp
+//     table.max_load = 0.75
+//     table.count = 0
+//     table.entries = (Entry(K, V)&)null
+//     return table
+// }
+
+struct Table(K: type, V: type) {
+    max_load: double
+    count: uint
+    entries: []Entry(K, V)
+    allocator: Allocator
+    comparer: fn (K, K) -> bool {}
+}
+
+struct Entry(K: type, V: type) {
+    key: K
+    value: V
+    filled: bool
+    is_tombstone: bool
+}
+
+impl Table($K, $V) {
+    fn create(comp: fn(K, K) -> bool {}, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+        let table: Table(K, V)
+        table.allocator = allocator
+        table.comparer = comp
+        table.max_load = 0.75
+        table.count = 0
+        table.entries = null
+        return table
+    }
+
+    fn dispose(ref Self) {
+        if entries.data != null {
+            free_n(entries, allocator)
+        }
+    }
+
+    fn find_entry(ref Self, the_entries: []Entry(K, V), key: K) -> &Entry(K, V) {
+        let index = key::hash() % cast(uint) the_entries.length
+        let tombstone: &Entry(K, V) = null
+
+        while true {
+            let entry = &the_entries[index]
+
+            if !entry.filled {
+                if !entry.is_tombstone {
+                    if tombstone != null {
+                        return tombstone
+                    }
+                    else {
+                        return entry
+                    }
+                } else if tombstone == null {
+                    tombstone = entry
+                }
+            }
+            else if comparer(entry.key, key) {
+                return entry
+            }
+
+            index = (index + 1) % cast(uint) the_entries.length
+        }
+
+        // unreachable
+        return null
+    }
+
+    fn set(ref Self, key: K, value: V) -> bool {
+        if entries.data == null {
+            adjust_capacity(13)
+        }
+        if cast(double) count + 1 > cast(double)entries.length * max_load {
+            adjust_capacity(cast(uint) entries.length * 2)
+        }
+
+        let entry = find_entry(entries, key)
+
+        let is_new_key = !entry.filled
+        entry.key = key
+        entry.value = value
+        entry.filled = true
+        entry.is_tombstone = false
+
+        if is_new_key {
+            count += 1
+        }
+
+        return is_new_key
+    }
+
+    fn try_get(ref Self, key: K, value: &V) -> bool {
+        if entries.data == null {
+            return false
+        }
+
+        let entry = find_entry(entries, key)
+        if !entry.filled {
+            return false
+        }
+
+        <<value = entry.value
+        return true
+    }
+
+    fn get(ref Self, key: K) -> V {
+        let entry = find_entry(entries, key)
+        return entry.value
+    }
+
+    fn delete(ref Self, key: K) -> bool {
+        if count == 0 or entries.data == null { return false }
+
+        let entry = find_entry(entries, key)
+        if !entry.filled { return false }
+
+        entry.filled = false
+        entry.is_tombstone = true
+
+        return true
+    }
+
+    fn adjust_capacity(ref Self, cap: uint) {
+        let entries_new = alloc_n(Entry(K, V), cap, allocator)
+
+        while let i = 0; i < entries_new.length; i += 1 {
+            entries_new[i].filled = false
+            entries_new[i].is_tombstone = false
+        }
+
+        // copy entries to new array
+        if entries.data != null {
+            count = 0
+            while let i = 0; i < entries.length; i += 1 {
+                let entry = &entries[i]
+                if entry.filled {
+                    let dest = find_entry(entries_new, entry.key)
+                    dest.key = entry.key
+                    dest.value = entry.value
+                    dest.filled = true
+                    count += 1
+                }
+            }
+
+            free_n(entries, allocator)
+        }
+
+        entries = entries_new
+    }
+}

@@ -1,0 +1,128 @@
+#test_expect_output("first name = nico
+last name = ot
+gender = m
+test1 is empty
+test2 is empty
+0 = zero
+1 = one
+2 = two
+3 = three
+4 = four
+5 = five
+6 is empty
+7 is empty
+
+--------------------------
+
+first name = nico
+last name is empty
+gender = m
+test1 is empty
+test2 is empty
+0 = zero
+1 = one
+2 = two
+3 is empty
+4 = four
+5 is empty
+6 is empty
+7 is empty
+
+--------------------------
+
+first name = Markenikon
+last name = The One
+gender = M
+test1 is empty
+test2 is empty
+0 = zerrrro
+1 = unos
+2 = dos
+3 = traes?
+4 = quat...
+5 = fuennef
+6 is empty
+7 is empty")
+
+#load("std:hash_table")
+#load("std:hash")
+#load("std:string")
+#load("std:io/io")
+
+// won't be necessary as soon as we have polymorphic traits
+    fn compare_ints(a: int, b: int) -> bool {
+        return b == a
+    }
+
+    fn compare_c_strings(a: c_string, b: c_string) -> bool {
+        return streq(a, b)
+    }
+
+fn get_and_print(table: Table($K, $V), key: K) {
+    let val: V
+    if table.try_get(key, &val) {
+        printf("{} = {}`n", [key, val])
+    } else {
+        printf("{} is empty`n", [key])
+    }
+}
+
+fn test(t1: $T1, t2: $T2) {
+    get_and_print(t2, "first name"c)
+    get_and_print(t2, "last name"c)
+    get_and_print(t2, "gender"c)
+    get_and_print(t2, "test1"c)
+    get_and_print(t2, "test2"c)
+
+    get_and_print(t1, 0)
+    get_and_print(t1, 1)
+    get_and_print(t1, 2)
+    get_and_print(t1, 3)
+    get_and_print(t1, 4)
+    get_and_print(t1, 5)
+    get_and_print(t1, 6)
+    get_and_print(t1, 7)
+}
+
+fn Main() {
+    let t1 = Table(int, c_string)::create(compare_ints)
+    let t2 = Table(c_string, c_string)::create(compare_c_strings, new StdHeapAllocator{})
+
+    t2.set("first name"c, "nico"c)
+    t2.set("last name"c, "ot"c)
+    t2.set("gender"c, "m"c)
+
+    t1.set(0, "zero"c)
+    t1.set(1, "one"c)
+    t1.set(2, "two"c)
+    t1.set(3, "three"c)
+    t1.set(4, "four"c)
+    t1.set(5, "five"c)
+
+    test(t1, t2)
+
+    println("`n--------------------------`n")
+
+    t2.delete("last name"c)
+    t1.delete(3)
+    t1.delete(5)
+
+    test(t1, t2)
+    println("`n--------------------------`n")
+
+    t2.set("first name"c, "Markenikon"c)
+    t2.set("last name"c, "The One"c)
+    t2.set("gender"c, "M"c)
+
+    t1.set(0, "zerrrro"c)
+    t1.set(1, "unos"c)
+    t1.set(2, "dos"c)
+    t1.set(3, "traes?"c)
+    t1.set(4, "quat..."c)
+    t1.set(5, "fuennef"c)
+
+    test(t1, t2)
+
+    t1.dispose()
+    t2.dispose()
+}

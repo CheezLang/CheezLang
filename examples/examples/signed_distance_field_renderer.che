@@ -462,7 +462,7 @@ impl SDFAllocator {
         let s = alloc(Sphere, allocator)
         s.radius = radius
         s.shader = shader
-        return cast(SDF) s
+        return cast(SDF) ref <<s
     }
 
     fn sphereT(ref Self, position: Vec3, radius: double, shader: Shader) -> SDF {
@@ -473,14 +473,14 @@ impl SDFAllocator {
         let s = alloc(PlaneY, allocator)
         s.location = location
         s.shader = shader
-        return cast(SDF) s
+        return cast(SDF) ref <<s
     }
 
     fn cube(ref Self, radius: double, shader: Shader) -> SDF {
         let s = alloc(Cube, allocator)
         s.radius = radius
         s.shader = shader
-        return cast(SDF) s
+        return cast(SDF) ref <<s
     }
 
     fn cubeT(ref Self, position: Vec3, radius: double, shader: Shader) -> SDF {
@@ -491,49 +491,49 @@ impl SDFAllocator {
         let t = alloc(TranslatedSDF, allocator)
         t.sdf = sdf
         t.translation = translation
-        return cast(SDF) t
+        return cast(SDF) ref <<t
     }
 
     fn rotateX(ref Self, sdf: SDF, angle: double) -> SDF {
         let t = alloc(RotatedXSDF, allocator)
         t.sdf = sdf
         t.angle = angle
-        return cast(SDF) t
+        return cast(SDF) ref <<t
     }
 
     fn rotateY(ref Self, sdf: SDF, angle: double) -> SDF {
         let t = alloc(RotatedYSDF, allocator)
         t.sdf = sdf
         t.angle = angle
-        return cast(SDF) t
+        return cast(SDF) ref <<t
     }
 
     fn rotateZ(ref Self, sdf: SDF, angle: double) -> SDF {
         let t = alloc(RotatedZSDF, allocator)
         t.sdf = sdf
         t.angle = angle
-        return cast(SDF) t
+        return cast(SDF) ref <<t
     }
 
     fn add(ref Self, sdf1: SDF, sdf2: SDF) -> SDF {
         let t = alloc(UnionSDF, allocator)
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return cast(SDF) t
+        return cast(SDF) ref <<t
     }
 
     fn intersect(ref Self, sdf1: SDF, sdf2: SDF) -> SDF {
         let t = alloc(IntersectionSDF, allocator)
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return cast(SDF) t
+        return cast(SDF) ref <<t
     }
 
     fn subtract(ref Self, sdf1: SDF, sdf2: SDF) -> SDF {
         let t = alloc(SubtractionSDF, allocator)
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return cast(SDF) t
+        return cast(SDF) ref <<t
     }
 }
 
@@ -608,7 +608,7 @@ fn renderImage(film: ref Film)
 fn signed_distance_field_renderer()
 {
     //
-    let scale: int = 5
+    let scale: int = 1
     let width: int = 192 * scale
     let height: int = 128 * scale
     let antiAliasingSteps: int = 1
