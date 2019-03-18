@@ -237,7 +237,10 @@ namespace Cheez
             }
             else
             {
-                ReportError(p, $"Can't create a reference type to non type.");
+                var r = new AstAddressOfExpr(p.Target, p);
+                r.Replace(p);
+                r.Reference = true;
+                return InferTypeHelper(r, p.Target.Type, context);
             }
             return p;
         }
@@ -297,12 +300,7 @@ namespace Cheez
             for (int i = 0; i < func.ParameterTypes.Count; i++)
             {
                 func.ParameterTypes[i].AttachTo(func);
-                func.ParameterTypes[i] = InferTypeHelper(func.ParameterTypes[i], CheezType.Type, context);
-                if (func.ParameterTypes[i].Type != CheezType.Type)
-                {
-                    ReportError(func.ParameterTypes[i], $"Parameter type is not a type");
-                    ok = false;
-                }
+                func.ParameterTypes[i] = ResolveType(func.ParameterTypes[i], context, out var t);
             }
 
             CheezType ret = CheezType.Void;
@@ -310,18 +308,15 @@ namespace Cheez
             if (func.ReturnType != null)
             {
                 func.ReturnType.AttachTo(func);
-                func.ReturnType = InferTypeHelper(func.ReturnType, CheezType.Type, context);
-                if (func.ReturnType.Type != CheezType.Type)
-                {
-                    ReportError(func.ReturnType, $"Function return type must be a type");
-                    ok = false;
-                }
+                func.ReturnType = ResolveType(func.ReturnType, context, out var t);
+                ret = t;
             }
 
             if (!ok)
                 return func;
 
-            var paramTypes = func.ParameterTypes.Select(p => ((string)null, p.Value as CheezType)).ToArray();
+            var paramTypes = func.ParameterTypes.Select(
+                p => ((string)null, p.Value as CheezType, (AstExpression)null)).ToArray();
 
             func.Type = CheezType.Type;
             func.Value = new FunctionType(paramTypes, ret);
@@ -426,7 +421,6 @@ namespace Cheez
                 (to is IntType && from is CharType) ||
                 (to is CharType && from is IntType) ||
                 (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
-                (to is TraitType trait2 && from is PointerType p2 && trait2.Declaration.Implementations.ContainsKey(p2.TargetType)) ||
                 (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from)) ||
                 (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType))
             {
@@ -878,6 +872,11 @@ namespace Cheez
             if (expr.SubExpression.Type is ErrorType || expr.Indexer.Type is ErrorType)
                 return expr;
 
+            if (expr.SubExpression.Type is ReferenceType)
+            {
+                expr.SubExpression = Deref(expr.SubExpression);
+            }
+
             switch (expr.SubExpression.Type)
             {
                 case TupleType tuple:
@@ -1150,7 +1149,7 @@ namespace Cheez
                         return InferTypeHelper(ufc, null, context);
                     }
 
-                default: throw new NotImplementedException();
+                default: ReportError(expr, $"Invalid expression on left side of '.'"); break;
             }
 
             return expr;
@@ -1219,48 +1218,49 @@ namespace Cheez
 
                 case CheezTypeType type:
                     {
-                        var strType = expr.Function.Value as GenericStructType;
+                        if (expr.Function.Value is GenericStructType strType)
+                        {
 
-                        if (strType == null)
+                            bool anyArgIsPoly = false;
+
+                            foreach (var arg in expr.Arguments)
+                            {
+                                arg.AttachTo(expr);
+                                arg.Expr.AttachTo(arg);
+                                arg.Expr = InferTypeHelper(arg.Expr, CheezType.Type, context);
+                                arg.Type = arg.Expr.Type;
+                                arg.Value = arg.Expr.Value;
+
+                                if (arg.Type == CheezType.Type)
+                                {
+                                    var argType = arg.Value as CheezType;
+                                    if (argType.IsPolyType) anyArgIsPoly = true;
+                                }
+                                else
+                                {
+                                    ReportError(arg, $"Non type arguments in poly struct type not implemented yet.");
+                                }
+                            }
+
+                            if (anyArgIsPoly)
+                            {
+                                expr.Type = CheezType.Type;
+                                expr.Value = new StructType(strType.Declaration, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
+                                return expr;
+                            }
+
+                            // instantiate struct
+                            var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
+                            var instance = InstantiatePolyStruct(strType.Declaration, args, context.newPolyStructs, expr);
+                            expr.Type = CheezType.Type;
+                            expr.Value = instance?.Type ?? CheezType.Error;
+                            return expr;
+                        }
+                        else
                         {
                             ReportError(expr.Function, $"This type must be a poly struct type but is '{expr.Function.Value}'");
                             return expr;
                         }
-
-                        bool anyArgIsPoly = false;
-
-                        foreach (var arg in expr.Arguments)
-                        {
-                            arg.AttachTo(expr);
-                            arg.Expr.AttachTo(arg);
-                            arg.Expr = InferTypeHelper(arg.Expr, CheezType.Type, context);
-                            arg.Type = arg.Expr.Type;
-                            arg.Value = arg.Expr.Value;
-
-                            if (arg.Type == CheezType.Type)
-                            {
-                                var argType = arg.Value as CheezType;
-                                if (argType.IsPolyType) anyArgIsPoly = true;
-                            }
-                            else
-                            {
-                                ReportError(arg, $"Non type arguments in poly struct type not implemented yet.");
-                            }
-                        }
-
-                        if (anyArgIsPoly)
-                        {
-                            expr.Type = CheezType.Type;
-                            expr.Value = new StructType(strType.Declaration, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
-                            return expr;
-                        }
-
-                        // instantiate struct
-                        var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
-                        var instance = InstantiatePolyStruct(strType.Declaration, args, context.newPolyStructs, expr);
-                        expr.Type = CheezType.Type;
-                        expr.Value = instance?.Type ?? CheezType.Error;
-                        return expr;
                     }
 
                 case ErrorType _: return expr;
@@ -1271,7 +1271,10 @@ namespace Cheez
             return expr;
         }
 
-        private bool CheckAndMatchArgsToParams(AstFunctionDecl decl, AstCallExpr expr, List<AstParameter> parameters, bool varArgs)
+        private bool CheckAndMatchArgsToParams(
+            AstCallExpr expr, 
+            (string Name, CheezType Type, AstExpression DefaultValue)[] parameters, 
+            bool varArgs)
         {
             // create self argument for ufc
             if (expr.Function is AstUfcFuncExpr ufc)
@@ -1282,7 +1285,7 @@ namespace Cheez
             }
 
             // check for too many arguments
-            if (expr.Arguments.Count > parameters.Count && !varArgs)
+            if (expr.Arguments.Count > parameters.Length && !varArgs)
             {
                 (string, ILocation)? detail = null;
                 if (expr.Function is AstIdExpr id)
@@ -1292,7 +1295,7 @@ namespace Cheez
                         loc = new Location(fd.Name.Beginning, fd.ParameterLocation.End);
                     detail = ("Function defined here:", loc);
                 }
-                ReportError(expr, $"Too many arguments. Expected {parameters.Count}, got {expr.Arguments.Count}", detail);
+                ReportError(expr, $"Too many arguments. Expected {parameters.Length}, got {expr.Arguments.Count}", detail);
                 return false;
             }
 
@@ -1317,7 +1320,7 @@ namespace Cheez
                 }
                 else
                 {
-                    var index = parameters.FindIndex(p => p.Name?.Name == arg.Name.Name);
+                    var index = parameters.IndexOf(p => p.Name == arg.Name.Name);
                     if (map.TryGetValue(index, out var other))
                     {
 
@@ -1336,7 +1339,7 @@ namespace Cheez
                 return false;
 
             // create missing arguments
-            for (int i = 0; i < parameters.Count; i++)
+            for (int i = 0; i < parameters.Length; i++)
             {
                 if (map.ContainsKey(i))
                     continue;
@@ -1354,7 +1357,7 @@ namespace Cheez
 
             expr.Arguments.Sort((a, b) => a.Index - b.Index);
 
-            if (expr.Arguments.Count < parameters.Count)
+            if (expr.Arguments.Count < parameters.Length)
                 return false;
 
             return true;
@@ -1364,7 +1367,8 @@ namespace Cheez
         {
             var decl = func.Declaration;
 
-            if (!CheckAndMatchArgsToParams(decl, expr, decl.Parameters, false))
+            var par = func.Declaration.Parameters.Select(p => (p.Name?.Name, p.Type, p.DefaultValue));
+            if (!CheckAndMatchArgsToParams(expr, par.ToArray(), false))
                 return expr;
 
             // match arguments and parameter types
@@ -1494,7 +1498,9 @@ namespace Cheez
 
         private AstExpression InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, TypeInferenceContext context)
         {
-            if (!CheckAndMatchArgsToParams(func.Declaration, expr, func.Declaration.Parameters, func.VarArgs))
+            //var par = func.Declaration.Parameters.Select(p => (p.Name?.Name, p.Type, p.DefaultValue)).ToArray();
+            var par = func.Parameters;
+            if (!CheckAndMatchArgsToParams(expr, par, func.VarArgs))
                 return expr;
 
             // match arguments and parameter types
@@ -1975,15 +1981,9 @@ namespace Cheez
 
             if (to is TraitType trait)
             {
-                var f = from;
-                if (from is PointerType p3)
+                if (trait.Declaration.Implementations.ContainsKey(from))
                 {
-                    f = p3.TargetType;
-                }
-
-                if (trait.Declaration.Implementations.ContainsKey(f))
-                {
-                    if (!(from is PointerType) && !expr.GetFlag(ExprFlags.IsLValue))
+                    if (!expr.GetFlag(ExprFlags.IsLValue))
                     {
                         var tmp = new AstTempVarExpr(expr);
                         cast.SubExpression = tmp;

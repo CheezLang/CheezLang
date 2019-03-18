@@ -1,4 +1,5 @@
-﻿using Cheez.Ast.Statements;
+﻿using Cheez.Ast.Expressions;
+using Cheez.Ast.Statements;
 using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
@@ -222,13 +223,13 @@ namespace Cheez.Types.Complex
 
         public override bool IsPolyType => ReturnType.IsPolyType || Parameters.Any(p => p.type.IsPolyType);
         public bool VarArgs { get; set; }
-        public (string name, CheezType type)[] Parameters { get; private set; }
+        public (string name, CheezType type, AstExpression defaultValue)[] Parameters { get; private set; }
         public CheezType ReturnType { get; private set; }
 
         public AstFunctionDecl Declaration { get; set; } = null;
         public override bool IsErrorType => ReturnType.IsErrorType || Parameters.Any(p => p.type.IsErrorType);
 
-        public FunctionType((string, CheezType)[] parameterTypes, CheezType returnType)
+        public FunctionType((string, CheezType, AstExpression defaultValue)[] parameterTypes, CheezType returnType)
         {
             this.Parameters = parameterTypes;
             this.ReturnType = returnType;
@@ -238,7 +239,7 @@ namespace Cheez.Types.Complex
         {
             this.Declaration = func;
             this.ReturnType = func.ReturnValue?.Type ?? CheezType.Void;
-            this.Parameters = func.Parameters.Select(p => (p.Name?.Name, p.Type)).ToArray();
+            this.Parameters = func.Parameters.Select(p => (p.Name?.Name, p.Type, p.DefaultValue)).ToArray();
         }
 
         public override string ToString()
