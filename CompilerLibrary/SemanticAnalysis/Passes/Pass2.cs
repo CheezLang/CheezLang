@@ -92,12 +92,12 @@ namespace Cheez
         private HashSet<AstDecl> Pass2TypeAlias(AstTypeAliasDecl alias)
         {
             var deps = new HashSet<AstDecl>();
-            
-            var newType = ResolveTypeHelper(alias.TypeExpr, deps);
+
+            alias.TypeExpr.TypeInferred = false;
+            alias.TypeExpr.Scope = alias.Scope;
+            alias.TypeExpr = ResolveType(alias.TypeExpr, out var newType, dependencies: deps);
             if (newType != alias.Type && !(newType is AliasType))
-            {
                 alias.Type = newType;
-            }
 
             alias.Type = newType;
             return deps;
@@ -109,8 +109,9 @@ namespace Cheez
 
             foreach (var param in @struct.Parameters)
             {
+                param.TypeExpr.TypeInferred = false;
                 param.TypeExpr.Scope = @struct.Scope;
-                var newType = ResolveTypeHelper(param.TypeExpr, deps);
+                param.TypeExpr = ResolveType(param.TypeExpr, out var newType, dependencies: deps);
 
                 if (newType is AbstractType)
                 {

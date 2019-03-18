@@ -74,7 +74,7 @@ namespace Cheez
             impl.TraitExpr.Scope = impl.Scope;
             impl.Scope.ImplBlocks.Add(impl);
 
-            var type = ResolveType(impl.TraitExpr);
+            impl.TraitExpr = ResolveType(impl.TraitExpr, out var type);
             if (type.IsErrorType)
                 return;
 
@@ -89,7 +89,8 @@ namespace Cheez
             }
 
             impl.TargetTypeExpr.Scope = impl.Scope;
-            impl.TargetType = ResolveType(impl.TargetTypeExpr);
+            impl.TargetTypeExpr = ResolveType(impl.TargetTypeExpr, out var t);
+            impl.TargetType = t;
             if (impl.TargetTypeExpr.IsPolymorphic)
             {
                 ReportError(impl.TargetTypeExpr, $"Polymorphic type is not allowed here");
@@ -169,7 +170,8 @@ namespace Cheez
         private void Pass3Impl(AstImplBlock impl)
         {
             impl.TargetTypeExpr.Scope = impl.Scope;
-            impl.TargetType = ResolveType(impl.TargetTypeExpr);
+            impl.TargetTypeExpr = ResolveType(impl.TargetTypeExpr, out var t);
+            impl.TargetType = t;
             impl.Scope.ImplBlocks.Add(impl);
 
             var polyNames = new List<string>();

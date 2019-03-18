@@ -167,7 +167,7 @@ namespace Cheez.Types.Primitive
 
         public override string ToString()
         {
-            return $"*{TargetType}";
+            return $"&{TargetType}";
         }
 
         public override bool Equals(object obj)
@@ -229,6 +229,15 @@ namespace Cheez.Types.Primitive
             if (concrete is ReferenceType p)
                 return this.TargetType.Match(p.TargetType, polyTypes);
             return TargetType.Match(concrete, polyTypes);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is ReferenceType r)
+            {
+                return TargetType == r.TargetType;
+            }
+            return false;
         }
     }
 

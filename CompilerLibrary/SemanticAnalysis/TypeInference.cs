@@ -17,10 +17,12 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        struct TypeInferenceContext
+        public struct TypeInferenceContext
         {
             public List<AstFunctionDecl> newPolyFunctions;
             public List<AstStructDecl> newPolyStructs;
+            public HashSet<AstDecl> dependencies;
+            public bool poly_from_scope;
         }
 
         private bool IsLiteralType(CheezType t)
@@ -62,20 +64,22 @@ namespace Cheez
             expr.Type = LiteralTypeToDefaultType(expr.Type, expected);
         }
 
-        private AstExpression InferType(AstExpression expr, CheezType expected)
+        private AstExpression InferType(AstExpression expr, CheezType expected, bool poly_from_scope = false, HashSet<AstDecl> dependencies = null)
         {
             var context = new TypeInferenceContext
             {
                 newPolyFunctions = new List<AstFunctionDecl>(),
-                newPolyStructs = new List<AstStructDecl>()
+                newPolyStructs = new List<AstStructDecl>(),
+                poly_from_scope = poly_from_scope,
+                dependencies = dependencies
             };
             var newExpr = InferTypeHelper(expr, expected, context);
 
-            if (context.newPolyFunctions.Count > 0)
-                AnalyseFunctions(context.newPolyFunctions);
-
             if (context.newPolyStructs.Count > 0)
                 ResolveStructs(context.newPolyStructs);
+
+            if (context.newPolyFunctions.Count > 0)
+                AnalyseFunctions(context.newPolyFunctions);
 
             return newExpr;
         }
@@ -94,9 +98,7 @@ namespace Cheez
                     return InferTypesNullExpr(n, expected);
 
                 case AstBoolExpr b:
-                    b.Type = CheezType.Bool;
-                    b.Value = b.BoolValue;
-                    return expr;
+                    return InferTypeBoolExpr(b);
 
                 case AstNumberExpr n:
                     return InferTypesNumberExpr(n, expected);
@@ -108,7 +110,7 @@ namespace Cheez
                     return InferTypesCharLiteral(ch, expected);
 
                 case AstIdExpr i:
-                    return InferTypesIdExpr(i, expected);
+                    return InferTypesIdExpr(i, expected, context);
 
                 case AstAddressOfExpr ao:
                     return InferTypeAddressOf(ao, expected, context);
@@ -138,15 +140,10 @@ namespace Cheez
                     return InferTypeIndexExpr(d, expected, context);
 
                 case AstTempVarExpr d:
-                    if (d.Expr.Type == null)
-                        d.Expr = InferTypeHelper(d.Expr, expected, context);
-                    d.Type = d.Expr.Type;
-                    return expr;
+                    return InferTypeTempVarExpr(d, expected, context);
 
                 case AstSymbolExpr s:
-                    s.Type = s.Symbol.Type;
-                    s.SetFlag(ExprFlags.IsLValue, true);
-                    return expr;
+                    return InferTypeSymbolExpr(s);
 
                 case AstBlockExpr b:
                     return InferTypeBlock(b, expected, context);
@@ -169,9 +166,166 @@ namespace Cheez
                 case AstArrayExpr arr:
                     return InferTypeArrayExpr(arr, expected, context);
 
+                case AstArgument arg:
+                    return InferTypeArgExpr(arg, expected, context);
+
+                case AstReferenceTypeExpr p:
+                    return InferTypeReferenceTypeExpr(p, context);
+
+                case AstSliceTypeExpr p:
+                    return InferTypeSliceTypeExpr(p, context);
+
+                case AstArrayTypeExpr p:
+                    return InferTypeArrayTypeExpr(p, context);
+
+                case AstFunctionTypeExpr func:
+                    return InferTypeFunctionTypeExpr(func, context);
+
+                case AstTypeRef typeRef:
+                    return InferTypeTypeRefExpr(typeRef);
+
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private AstExpression InferTypeTypeRefExpr(AstTypeRef expr)
+        {
+            expr.Type = CheezType.Type;
+            return expr;
+        }
+
+        private AstExpression InferTypeSymbolExpr(AstSymbolExpr s)
+        {
+            s.Type = s.Symbol.Type;
+            s.SetFlag(ExprFlags.IsLValue, true);
+            return s;
+        }
+
+        private AstExpression InferTypeTempVarExpr(AstTempVarExpr expr, CheezType expected, TypeInferenceContext context)
+        {
+            if (expr.Expr.Type == null)
+                expr.Expr = InferTypeHelper(expr.Expr, expected, context);
+            expr.Type = expr.Expr.Type;
+            return expr;
+        }
+
+        private AstExpression InferTypeBoolExpr(AstBoolExpr expr)
+        {
+            expr.Type = CheezType.Bool;
+            expr.Value = expr.BoolValue;
+            return expr;
+        }
+
+        private AstExpression InferTypeArgExpr(AstArgument arg, CheezType expected, TypeInferenceContext context)
+        {
+            arg.Expr.AttachTo(arg);
+            arg.Expr = InferTypeHelper(arg, expected, context);
+            arg.Type = arg.Expr.Type;
+            arg.Value = arg.Expr.Value;
+            return arg;
+        }
+
+        private AstExpression InferTypeReferenceTypeExpr(AstReferenceTypeExpr p, TypeInferenceContext context)
+        {
+            p.Target.AttachTo(p);
+            p.Target = InferTypeHelper(p.Target, CheezType.Type, context);
+            if (p.Target.Type == CheezType.Type)
+            {
+                p.Type = CheezType.Type;
+                p.Value = ReferenceType.GetRefType(p.Target.Value as CheezType);
+            }
+            else
+            {
+                ReportError(p, $"Can't create a reference type to non type.");
+            }
+            return p;
+        }
+
+        private AstExpression InferTypeSliceTypeExpr(AstSliceTypeExpr p, TypeInferenceContext context)
+        {
+            p.Target.AttachTo(p);
+            p.Target = InferTypeHelper(p.Target, CheezType.Type, context);
+            if (p.Target.Type == CheezType.Type)
+            {
+                p.Type = CheezType.Type;
+                p.Value = SliceType.GetSliceType(p.Target.Value as CheezType);
+            }
+            else
+            {
+                ReportError(p, $"Can't create a reference type to non type.");
+            }
+            return p;
+        }
+
+        private AstExpression InferTypeArrayTypeExpr(AstArrayTypeExpr p, TypeInferenceContext context)
+        {
+            p.Target.AttachTo(p);
+            p.Target = InferTypeHelper(p.Target, CheezType.Type, context);
+            if (p.Target.Type == CheezType.Type)
+            {
+                p.Type = CheezType.Type;
+                p.Value = SliceType.GetSliceType(p.Target.Value as CheezType);
+            }
+            else
+            {
+                ReportError(p, $"Can't create a reference type to non type.");
+                return p;
+            }
+
+            p.SizeExpr.AttachTo(p);
+            p.SizeExpr = InferType(p.SizeExpr, IntType.DefaultType);
+            ConvertLiteralTypeToDefaultType(p.SizeExpr, IntType.DefaultType);
+
+            if (p.SizeExpr.Value == null || !(p.SizeExpr.Type is IntType))
+            {
+                ReportError(p.SizeExpr, "Index must be a constant int");
+                return p;
+            }
+            else
+            {
+                int v = (int)((NumberData)p.SizeExpr.Value).IntValue;
+                p.Type = CheezType.Type;
+                p.Value = ArrayType.GetArrayType(p.Target.Value as CheezType, v);
+                return p;
+            }
+        }
+
+        private AstExpression InferTypeFunctionTypeExpr(AstFunctionTypeExpr func, TypeInferenceContext context)
+        {
+            var ok = true;
+            for (int i = 0; i < func.ParameterTypes.Count; i++)
+            {
+                func.ParameterTypes[i].AttachTo(func);
+                func.ParameterTypes[i] = InferTypeHelper(func.ParameterTypes[i], CheezType.Type, context);
+                if (func.ParameterTypes[i].Type != CheezType.Type)
+                {
+                    ReportError(func.ParameterTypes[i], $"Parameter type is not a type");
+                    ok = false;
+                }
+            }
+
+            CheezType ret = CheezType.Void;
+
+            if (func.ReturnType != null)
+            {
+                func.ReturnType.AttachTo(func);
+                func.ReturnType = InferTypeHelper(func.ReturnType, CheezType.Type, context);
+                if (func.ReturnType.Type != CheezType.Type)
+                {
+                    ReportError(func.ReturnType, $"Function return type must be a type");
+                    ok = false;
+                }
+            }
+
+            if (!ok)
+                return func;
+
+            var paramTypes = func.ParameterTypes.Select(p => ((string)null, p.Value as CheezType)).ToArray();
+
+            func.Type = CheezType.Type;
+            func.Value = new FunctionType(paramTypes, ret);
+            return func;
         }
 
         private AstExpression InferTypeArrayExpr(AstArrayExpr expr, CheezType expected, TypeInferenceContext context)
@@ -237,8 +391,9 @@ namespace Cheez
         {
             if (cast.TypeExpr != null)
             {
-                cast.TypeExpr.Scope = cast.Scope;
-                cast.Type = ResolveType(cast.TypeExpr);
+                cast.TypeExpr.AttachTo(cast);
+                cast.TypeExpr = ResolveType(cast.TypeExpr, out var type);
+                cast.Type = type;
             }
             else if (expected != null)
             {
@@ -400,15 +555,24 @@ namespace Cheez
         {
             CheezType subExpected = null;
             if (expected is PointerType p)
-            {
                 subExpected = p.TargetType;
-            }
+            else if (expected == CheezType.Type)
+                subExpected = expected;
             
             expr.SubExpression.AttachTo(expr);
             expr.SubExpression = InferTypeHelper(expr.SubExpression, subExpected, context);
 
             if (expr.SubExpression.Type.IsErrorType)
                 return expr;
+
+            // handle type expression
+            if (expr.SubExpression.Type == CheezType.Type)
+            {
+                var subType = expr.SubExpression.Value as CheezType;
+                expr.Type = CheezType.Type;
+                expr.Value = PointerType.GetPointerType(subType);
+                return expr;
+            }
 
             if (expr.Reference)
             {
@@ -997,27 +1161,48 @@ namespace Cheez
             TupleType tupleType = expected as TupleType;
             if (tupleType?.Members?.Length != expr.Values.Count) tupleType = null;
 
-            var members = new (string, CheezType type)[expr.Values.Count];
+            int typeMembers = 0;
+
+            var members = new (string name, CheezType type)[expr.Values.Count];
             for (int i = 0; i < expr.Values.Count; i++)
             {
                 var v = expr.Values[i];
-                v.Scope = expr.Scope;
+                v.AttachTo(expr);
 
                 var e = tupleType?.Members[i].type;
                 v = expr.Values[i] = InferTypeHelper(v, e, context);
                 ConvertLiteralTypeToDefaultType(v, e);
 
                 members[i].type = v.Type;
+
+                if (v.Type == CheezType.Type)
+                {
+                    typeMembers++;
+                    members[i].type = v.Value as CheezType;
+                    members[i].name = expr.Types[i].Name?.Name;
+                }
             }
 
-            expr.Type = TupleType.GetTuple(members);
+            if (typeMembers == expr.Values.Count)
+            {
+                expr.Type = CheezType.Type;
+                expr.Value = TupleType.GetTuple(members);
+            }
+            else if (typeMembers != 0)
+            {
+                ReportError(expr, $"A tuple can't have types as members");
+            }
+            else
+            {
+                expr.Type = TupleType.GetTuple(members);
+            }
 
             return expr;
         }
 
         private AstExpression InferTypeCallExpr(AstCallExpr expr, CheezType expected, TypeInferenceContext context)
         {
-            expr.Function.Scope = expr.Scope;
+            expr.Function.AttachTo(expr);
             expr.Function = InferTypeHelper(expr.Function, null, context);
 
             switch (expr.Function.Type)
@@ -1034,9 +1219,48 @@ namespace Cheez
 
                 case CheezTypeType type:
                     {
+                        var strType = expr.Function.Value as GenericStructType;
+
+                        if (strType == null)
+                        {
+                            ReportError(expr.Function, $"This type must be a poly struct type but is '{expr.Function.Value}'");
+                            return expr;
+                        }
+
+                        bool anyArgIsPoly = false;
+
+                        foreach (var arg in expr.Arguments)
+                        {
+                            arg.AttachTo(expr);
+                            arg.Expr.AttachTo(arg);
+                            arg.Expr = InferTypeHelper(arg.Expr, CheezType.Type, context);
+                            arg.Type = arg.Expr.Type;
+                            arg.Value = arg.Expr.Value;
+
+                            if (arg.Type == CheezType.Type)
+                            {
+                                var argType = arg.Value as CheezType;
+                                if (argType.IsPolyType) anyArgIsPoly = true;
+                            }
+                            else
+                            {
+                                ReportError(arg, $"Non type arguments in poly struct type not implemented yet.");
+                            }
+                        }
+
+                        if (anyArgIsPoly)
+                        {
+                            expr.Type = CheezType.Type;
+                            expr.Value = new StructType(strType.Declaration, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
+                            return expr;
+                        }
+
+                        // instantiate struct
+                        var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
+                        var instance = InstantiatePolyStruct(strType.Declaration, args, context.newPolyStructs, expr);
                         expr.Type = CheezType.Type;
-                        expr.Value = ResolveType(expr);
-                        break;
+                        expr.Value = instance?.Type ?? CheezType.Error;
+                        return expr;
                     }
 
                 case ErrorType _: return expr;
@@ -1297,7 +1521,7 @@ namespace Cheez
                 else
                 {
                     arg.Expr = HandleReference(arg.Expr, type);
-                    arg.Expr = Cast(arg.Expr, type, $"Type of argument ({arg.Type}) does not match type of parameter ({type})");
+                    arg.Expr = Cast(arg.Expr, type, $"Type of argument ({arg.Expr.Type}) does not match type of parameter ({type})");
                     arg.Type = arg.Expr.Type;
                 }
             }
@@ -1315,9 +1539,9 @@ namespace Cheez
         {
             if (expr.TypeExpr != null)
             {
-                expr.TypeExpr.Scope = expr.Scope;
-                expr.TypeExpr.Type = ResolveType(expr.TypeExpr);
-                expr.Type = expr.TypeExpr.Type;
+                expr.TypeExpr.AttachTo(expr);
+                expr.TypeExpr = ResolveType(expr.TypeExpr, out var t);
+                expr.Type = t;
             }
             else
             {
@@ -1529,6 +1753,7 @@ namespace Cheez
                     };
                     var func = new AstSymbolExpr(user.Declaration);
                     var call = new AstCallExpr(func, args, expr.Location);
+                    call.Replace(expr);
                     return InferType(call, expected);
                 }
 
@@ -1544,8 +1769,15 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression InferTypesIdExpr(AstIdExpr expr, CheezType expected)
+        private AstExpression InferTypesIdExpr(AstIdExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            if (expr.IsPolymorphic && !context.poly_from_scope)
+            {
+                expr.Type = CheezType.Type;
+                expr.Value = new PolyType(expr.Name, true);
+                return expr;
+            }
+
             var sym = expr.Scope.GetSymbol(expr.Name);
             if (sym == null)
             {
@@ -1554,6 +1786,11 @@ namespace Cheez
             }
 
             expr.Symbol = sym;
+
+            if (context.dependencies != null && sym is AstDecl decl && decl.Type is AbstractType)
+            {
+                context.dependencies.Add(decl);
+            }
 
             if (sym is AstSingleVariableDecl var)
             {
@@ -1574,6 +1811,11 @@ namespace Cheez
             {
                 expr.Type = CheezType.Type;
                 expr.Value = str.Type;
+            }
+            else if (sym is AstTraitDeclaration trait)
+            {
+                expr.Type = CheezType.Type;
+                expr.Value = trait.Type;
             }
             else if (sym is AstTypeAliasDecl typedef)
             {

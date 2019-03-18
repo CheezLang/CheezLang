@@ -1,36 +1,10 @@
-﻿using Cheez.Ast.Statements;
-using Cheez.Visitors;
+﻿using Cheez.Visitors;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
 namespace Cheez.Ast.Expressions.Types
 {
-    //public abstract class AstTypeExpr : AstExpression
-    //{
-    //    [DebuggerStepThrough]
-    //    public AstTypeExpr(ILocation Location = null) : base(Location)
-    //    {
-    //        IsCompTimeValue = true;
-    //    }
-    //}
-
-    public class AstErrorTypeExpr : AstExpression
-    {
-        public override bool IsPolymorphic => false;
-
-        [DebuggerStepThrough]
-        public AstErrorTypeExpr(ILocation Location = null) : base(Location)
-        { }
-
-        [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitErrorTypeExpression(this, data);
-
-        [DebuggerStepThrough]
-        public override AstExpression Clone()
-            => CopyValuesTo(new AstErrorTypeExpr());
-    }
-
     public class AstSliceTypeExpr : AstExpression
     {
         public override bool IsPolymorphic => Target.IsPolymorphic;

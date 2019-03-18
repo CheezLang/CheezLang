@@ -95,6 +95,18 @@ namespace Cheez.Ast.Expressions
             this.Scope = expr.Scope;
             this.Parent = expr;
         }
+
+        public void Replace(AstExpression expr)
+        {
+            this.Scope = expr.Scope;
+            this.Parent = expr.Parent;
+        }
+
+        public void AttachTo(AstStatement stmt)
+        {
+            this.Scope = stmt.Scope;
+            this.Parent = stmt;
+        }
     }
 
     public abstract class AstNestedExpression : AstExpression
