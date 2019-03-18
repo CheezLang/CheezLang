@@ -433,7 +433,6 @@ namespace Cheez.Parsing
             const int StateDecimalDigit = 5;
             const int StateBinaryDigit = 6;
             const int StateHexDigit = 7;
-            const int StatePostfix = 8;
             const int StateDone = 9;
             const int StateFloatPoint = 10;
             const int StateFloatDigit = 11;

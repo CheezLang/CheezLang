@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 
@@ -43,7 +44,7 @@ namespace Cheez.Extras
                     {
                         if (val[i] == '1')
                             IntValue += currentDigit;
-                        else if (val[i] == '0') ;  // do nothing
+                        else if (val[i] == '0') { }  // do nothing
                         else throw new NotImplementedException();
                         currentDigit *= 2;
                     }
@@ -155,6 +156,15 @@ namespace Cheez.Extras
                 DoubleValue = num,
                 Error = null
             };
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 1753786285;
+            hashCode = hashCode * -1521134295 + Type.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<BigInteger>.Default.GetHashCode(IntValue);
+            hashCode = hashCode * -1521134295 + DoubleValue.GetHashCode();
+            return hashCode;
         }
 
         public static implicit operator NumberData(BigInteger bi) => FromBigInt(bi);

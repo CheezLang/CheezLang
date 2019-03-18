@@ -121,18 +121,6 @@ namespace Cheez
                     }
 
                 case IntType _: break;
-
-                //default: throw new NotImplementedException();
-                //case AstFunctionTypeExpr func:
-                //    if (func.ReturnType != null) CollectPolyTypes(func.ReturnType, types);
-                //    foreach (var p in func.ParameterTypes) CollectPolyTypes(p, types);
-                //    break;
-
-                //case AstPolyStructTypeExpr @struct:
-                //    foreach (var p in @struct.Arguments) CollectPolyTypes(p, types);
-                //    break;
-
-                //default: throw new NotImplementedException();
             }
         }
 

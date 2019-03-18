@@ -186,6 +186,14 @@ namespace Cheez.Types.Primitive
                 return this.TargetType.Match(p.TargetType, polyTypes);
             return -1;
         }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -1663075914;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<CheezType>.Default.GetHashCode(TargetType);
+            return hashCode;
+        }
     }
 
     public class ReferenceType : CheezType
@@ -212,7 +220,8 @@ namespace Cheez.Types.Primitive
             var type = new ReferenceType
             {
                 TargetType = targetType,
-                Size = PointerType.PointerSize
+                Size = PointerType.PointerSize,
+                Alignment = PointerType.PointerAlignment
             };
 
             sTypes[targetType] = type;
@@ -239,6 +248,14 @@ namespace Cheez.Types.Primitive
             }
             return false;
         }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -1663075914;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<CheezType>.Default.GetHashCode(TargetType);
+            return hashCode;
+        }
     }
 
     public class ArrayType : CheezType
@@ -263,6 +280,7 @@ namespace Cheez.Types.Primitive
             {
                 TargetType = targetType,
                 Size = length * targetType.Size,
+                Alignment = targetType.Alignment,
                 Length = length
             };
 
@@ -285,6 +303,24 @@ namespace Cheez.Types.Primitive
             if (concrete is ArrayType p)
                 return this.TargetType.Match(p.TargetType, polyTypes);
             return -1;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is ArrayType r)
+            {
+                return TargetType == r.TargetType;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -687864485;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<CheezType>.Default.GetHashCode(TargetType);
+            hashCode = hashCode * -1521134295 + Length.GetHashCode();
+            return hashCode;
         }
     }
 
@@ -333,6 +369,23 @@ namespace Cheez.Types.Primitive
             if (concrete is SliceType p)
                 return this.TargetType.Match(p.TargetType, polyTypes);
             return -1;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is SliceType r)
+            {
+                return TargetType == r.TargetType;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -1663075914;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<CheezType>.Default.GetHashCode(TargetType);
+            return hashCode;
         }
     }
 

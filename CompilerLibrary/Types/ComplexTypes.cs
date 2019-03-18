@@ -81,13 +81,19 @@ namespace Cheez.Types.Complex
 
             return false;
         }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 309225798;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            return hashCode;
+        }
     }
 
     public class StructType : CheezType
     {
         public AstStructDecl Declaration { get; }
         public CheezType[] Arguments { get; }
-        public int[] MemberOffsets { get; private set; }
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
         public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
 
@@ -102,13 +108,9 @@ namespace Cheez.Types.Complex
         public void CalculateSize()
         {
             Size = 0;
-            MemberOffsets = new int[Declaration.Members.Count];
             for (int i = 0; i < Declaration.Members.Count; i++)
             {
                 var m = Declaration.Members[i];
-                MemberOffsets[i] = Size;
-
-
                 Size += Math.Max(PointerType.PointerSize, m.Type.Size);
             }
 
@@ -173,6 +175,14 @@ namespace Cheez.Types.Complex
             }
 
             return -1;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 1624555593;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<CheezType[]>.Default.GetHashCode(Arguments);
+            return hashCode;
         }
     }
 
@@ -263,6 +273,15 @@ namespace Cheez.Types.Complex
             }
 
             return false;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -1451483643;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + VarArgs.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<CheezType>.Default.GetHashCode(ReturnType);
+            return hashCode;
         }
     }
 }
