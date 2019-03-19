@@ -6,7 +6,7 @@ using System.Linq;
 namespace Cheez.Types.Abstract
 {
     public abstract class AbstractType : CheezType {
-        public override bool IsErrorType => false;
+        public override bool IsErrorType => true;
     }
 
     public class VarDeclType : AbstractType

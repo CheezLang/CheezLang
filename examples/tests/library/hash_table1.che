@@ -59,9 +59,8 @@ test2 is empty
     }
 
 fn get_and_print(table: Table($K, $V), key: K) {
-    let val: V
-    if table.try_get(key, &val) {
-        printf("{} = {}`n", [key, val])
+    if let (ok, val) = table.try_get(key); ok {
+        printf("{} = {}`n", [key, <<val])
     } else {
         printf("{} is empty`n", [key])
     }

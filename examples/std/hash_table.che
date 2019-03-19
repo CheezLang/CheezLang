@@ -108,18 +108,17 @@ impl Table($K, $V) {
         return is_new_key
     }
 
-    fn try_get(ref Self, key: K, value: &V) -> bool {
+    fn try_get(ref Self, key: K) -> (ok: bool, value: &V) {
         if entries.data == null {
-            return false
+            return (false, null)
         }
 
         let entry = find_entry(entries, key)
         if !entry.filled {
-            return false
+            return (false, null)
         }
 
-        <<value = entry.value
-        return true
+        return (true, &entry.value)
     }
 
     fn get(ref Self, key: K) -> V #operator("[]") {

@@ -164,7 +164,8 @@ namespace Cheez
                 }
                 else
                 {
-                    ReportError(pattern, $"Pattern does not match declared type: {type}");
+                    if (!type.IsErrorType)
+                        ReportError(pattern, $"Pattern does not match declared type: {type}");
                 }
             }
         }
