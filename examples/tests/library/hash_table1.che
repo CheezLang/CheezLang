@@ -88,16 +88,16 @@ fn Main() {
     let t1 = Table(int, c_string)::create(compare_ints)
     let t2 = Table(c_string, c_string)::create(compare_c_strings, new StdHeapAllocator{})
 
-    t2.set("first name"c, "nico"c)
-    t2.set("last name"c, "ot"c)
-    t2.set("gender"c, "m"c)
+    t2["first name"c] = "nico"c
+    t2["last name"c] = "ot"c
+    t2["gender"c] = "m"c
 
-    t1.set(0, "zero"c)
-    t1.set(1, "one"c)
-    t1.set(2, "two"c)
-    t1.set(3, "three"c)
-    t1.set(4, "four"c)
-    t1.set(5, "five"c)
+    t1[0] = "zero"c
+    t1[1] = "one"c
+    t1[2] = "two"c
+    t1[3] = "three"c
+    t1[4] = "four"c
+    t1[5] = "five"c
 
     test(t1, t2)
 
@@ -110,16 +110,16 @@ fn Main() {
     test(t1, t2)
     println("`n--------------------------`n")
 
-    t2.set("first name"c, "Markenikon"c)
-    t2.set("last name"c, "The One"c)
-    t2.set("gender"c, "M"c)
+    t2["first name"c] = "Markenikon"c
+    t2["last name"c] = "The One"c
+    t2["gender"c] = "M"c
 
-    t1.set(0, "zerrrro"c)
-    t1.set(1, "unos"c)
-    t1.set(2, "dos"c)
-    t1.set(3, "traes?"c)
-    t1.set(4, "quat..."c)
-    t1.set(5, "fuennef"c)
+    t1[0] = "zerrrro"c
+    t1[1] = "unos"c
+    t1[2] = "dos"c
+    t1[3] = "traes?"c
+    t1[4] = "quat..."c
+    t1[5] = "fuennef"c
 
     test(t1, t2)
 

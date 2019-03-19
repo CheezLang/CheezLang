@@ -77,6 +77,7 @@ namespace Cheez.Ast.Statements
         public AstParameter ReturnValue { get; }
 
         public FunctionType FunctionType => Type as FunctionType;
+        public CheezType ReturnType => ReturnValue?.Type ?? CheezType.Void;
 
         public AstBlockExpr Body { get; private set; }
 

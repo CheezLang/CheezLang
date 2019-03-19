@@ -14,7 +14,8 @@ namespace Cheez.Ast.Expressions
     public enum ExprFlags
     {
         IsLValue = 0,
-        Returns = 1
+        Returns = 1,
+        AssignmentTarget = 2
     }
 
     public abstract class AstExpression : IVisitorAcceptor, ILocation, IAstNode
@@ -322,6 +323,30 @@ namespace Cheez.Ast.Expressions
             => CopyValuesTo(new AstCompCallExpr(Name.Clone() as AstIdExpr, Arguments.Select(a => a.Clone()).ToList()));
     }
 
+    public class AstNaryOpExpr : AstExpression
+    {
+        public string Operator { get; set; }
+        public List<AstExpression> Arguments { get; set; }
+
+        public override bool IsPolymorphic => Arguments.Any(a => a.IsPolymorphic);
+
+        public INaryOperator ActualOperator { get; set; }
+
+        [DebuggerStepThrough]
+        public AstNaryOpExpr(string op, List<AstExpression> args, ILocation Location = null) : base(Location)
+        {
+            Operator = op;
+            Arguments = args;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitNaryOpExpr(this, data);
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstNaryOpExpr(Operator, Arguments.Select(a => a.Clone()).ToList()));
+    }
+
     public class AstBinaryExpr : AstExpression
     {
         public string Operator { get; set; }
@@ -330,7 +355,7 @@ namespace Cheez.Ast.Expressions
 
         public override bool IsPolymorphic => Left.IsPolymorphic || Right.IsPolymorphic;
 
-        public IOperator ActualOperator { get; set; }
+        public IBinaryOperator ActualOperator { get; set; }
 
         [DebuggerStepThrough]
         public AstBinaryExpr(string op, AstExpression lhs, AstExpression rhs, ILocation Location = null) : base(Location)

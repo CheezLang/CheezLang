@@ -291,7 +291,7 @@ namespace Cheez.Parsing
                 case TokenType.HashIdentifier:
                     {
                         var dir = ParseDirectiveStatement();
-                        if (expectNewline && !Expect(TokenType.NewLine, ErrMsg("\\n", "after directive statement")))
+                        if (!CheckToken(TokenType.EOF) && expectNewline && !Expect(TokenType.NewLine, ErrMsg("\\n", "after directive statement")))
                             RecoverStatement();
                         return (false, dir);
                     }

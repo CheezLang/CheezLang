@@ -17,7 +17,7 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        public struct TypeInferenceContext
+        public class TypeInferenceContext
         {
             public List<AstFunctionDecl> newPolyFunctions;
             public List<AstStructDecl> newPolyStructs;
@@ -124,6 +124,9 @@ namespace Cheez
                 case AstStructValueExpr s:
                     return InferTypeStructValueExpr(s, expected, context);
 
+                case AstNaryOpExpr b:
+                    return InferTypesNaryExpr(b, expected, context);
+
                 case AstBinaryExpr b:
                     return InferTypesBinaryExpr(b, expected, context);
 
@@ -186,6 +189,60 @@ namespace Cheez
 
                 default:
                     throw new NotImplementedException();
+            }
+        }
+
+        private AstExpression InferTypesNaryExpr(AstNaryOpExpr expr, CheezType expected, TypeInferenceContext context)
+        {
+            if (expr.ActualOperator == null)
+            {
+                for (int i = 0; i < expr.Arguments.Count; i++)
+                {
+                    expr.Arguments[i].AttachTo(expr);
+                    expr.Arguments[i] = InferTypeHelper(expr.Arguments[i], null, context);
+                    ConvertLiteralTypeToDefaultType(expr.Arguments[i], null);
+                }
+
+                var argTypes = expr.Arguments.Select(a => a.Type);
+                var ops = expr.Scope.GetNaryOperators(expr.Operator, argTypes.ToArray());
+
+
+                if (ops.Count == 0)
+                {
+                    ReportError(expr,
+                        $"No operator '{expr.Operator}' matches the types ({string.Join(", ", argTypes)})");
+                    return expr;
+                }
+                else if (ops.Count > 1)
+                {
+                    // TODO: show matching operators
+                    ReportError(expr, $"Multiple operators '{expr.Operator}' match the types ({string.Join(", ", argTypes)})");
+                    return expr;
+                }
+
+                var op = ops[0];
+
+                for (int i = 0; i < expr.Arguments.Count; i++)
+                {
+                    expr.Arguments[i] = HandleReference(expr.Arguments[i], op.ArgTypes[i]);
+                    expr.Arguments[i] = Cast(expr.Arguments[i], op.ArgTypes[i]);
+                }
+
+                expr.ActualOperator = op;
+            }
+
+            if (expr.ActualOperator is UserDefinedNaryOperator user)
+            {
+                var args = expr.Arguments.Select(a =>
+                    new AstArgument(a, Location: a)).ToList();
+                var func = new AstSymbolExpr(user.Declaration);
+                var call = new AstCallExpr(func, args, expr.Location);
+                call.Replace(expr);
+                return InferType(call, expected);
+            }
+            else
+            {
+                throw new NotImplementedException();
             }
         }
 
@@ -942,16 +999,23 @@ namespace Cheez
 
                 default:
                     {
+                        if (expr.GetFlag(ExprFlags.AssignmentTarget))
+                        {
+                            expr.TypeInferred = false;
+                            expr.Type = CheezType.Void;
+                            return expr;
+                        }
+
                         var left = expr.SubExpression;
                         var right = expr.Indexer;
 
-                        var ops = expr.Scope.GetOperators("[]", left.Type, right.Type);
+                        var ops = expr.Scope.GetBinaryOperators("[]", left.Type, right.Type);
 
                         // :temp
                         // check if an operator is defined in an impl with *Self
                         if (ops.Count == 0)
                         {
-                            ops = expr.Scope.GetOperators("[]", PointerType.GetPointerType(left.Type), right.Type);
+                            ops = expr.Scope.GetBinaryOperators("[]", PointerType.GetPointerType(left.Type), right.Type);
                             left = new AstAddressOfExpr(left, left);
                         }
 
@@ -1653,7 +1717,7 @@ namespace Cheez
             }
             else
             {
-                var ops = expr.Scope.GetOperators(expr.Operator, expr.SubExpr.Type);
+                var ops = expr.Scope.GetUnaryOperators(expr.Operator, expr.SubExpr.Type);
 
                 if (ops.Count == 0)
                 {
@@ -1728,7 +1792,7 @@ namespace Cheez
                     expr.Right.Type = UnifyTypes(expr.Left.Type, expr.Right.Type);
                 }
 
-                var ops = expr.Scope.GetOperators(expr.Operator, expr.Left.Type, expr.Right.Type);
+                var ops = expr.Scope.GetBinaryOperators(expr.Operator, expr.Left.Type, expr.Right.Type);
 
                 if (ops.Count == 0)
                 {

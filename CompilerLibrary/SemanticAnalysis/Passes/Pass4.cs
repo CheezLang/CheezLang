@@ -136,35 +136,89 @@ namespace Cheez
                     arg = op.Arguments[0] = InferType(arg, null);
                     if (arg.Value is string v)
                     {
-                        bool assOp = false;
-                        if (v.EndsWith("="))
-                            assOp = true;
-
                         var targetScope = func.Scope;
                         if (func.ImplBlock != null) targetScope = func.ImplBlock.Scope;
 
-                        if (!assOp && (func.ReturnValue == null || func.ReturnValue.Type == CheezType.Void))
-                        {
-                            ReportError(op, $"This function cannot be used as operator because it returns void");
-                        }
-                        else if (func.Parameters.Count == 1)
-                        {
-                            targetScope.DefineUnaryOperator(v, func);
-                        }
-                        else if (func.Parameters.Count == 2)
-                        {
-                            targetScope.DefineBinaryOperator(v, func);
-                        }
-                        else
-                        {
-                            ReportError(op, $"This function cannot be used as operator because it takes {func.Parameters.Count} parameters");
-                        }
+                        CheckForValidOperator(v, func, op, targetScope);
                     }
                     else
                     {
                         ReportError(arg, $"Argument to #op must be a constant string!");
                     }
                 }
+            }
+        }
+
+        private void CheckForValidOperator(string op, AstFunctionDecl func, AstDirective directive, Scope targetScope)
+        {
+            switch (op)
+            {
+                case "!":
+                case "-" when func.Parameters.Count == 1:
+                    if (func.ReturnType == CheezType.Void)
+                        ReportError(func.Name, $"This function must return a value in order to use it as operator '{op}'");
+                    else if (func.Parameters.Count != 1)
+                        ReportError(func.Name, $"This function must take one parameter in order to use it as operator '{op}'");
+                    else
+                        targetScope.DefineUnaryOperator(op, func);
+                    break;
+
+                case "+":
+                case "-":
+                case "*":
+                case "/":
+                case "%":
+                case "==":
+                case "!=":
+                case ">":
+                case ">=":
+                case "<":
+                case "<=":
+                case "and":
+                case "or":
+                    if (func.ReturnType == CheezType.Void)
+                        ReportError(func.Name, $"This function must return a value in order to use it as operator '{op}'");
+                    else if (func.Parameters.Count != 2)
+                        ReportError(func.Name, $"This function must take two parameters in order to use it as operator '{op}'");
+                    else
+                        targetScope.DefineBinaryOperator(op, func);
+                    break;
+
+                case "+=":
+                case "-=":
+                case "*=":
+                case "/=":
+                case "%=":
+                    if (func.Parameters.Count != 2)
+                    {
+                        ReportError(func.Name, $"This function must take two parameters in order to use it as operator '{op}'");
+                    }
+                    else
+                    {
+                        targetScope.DefineBinaryOperator(op, func);
+                    }
+                    break;
+
+                case "[]":
+                    if (func.ReturnType == CheezType.Void)
+                        ReportError(func.Name, $"This function must return a value in order to use it as operator '{op}'");
+                    else if (func.Parameters.Count != 2)
+                        ReportError(func.Name, $"This function must take two parameters in order to use it as operator '{op}'");
+                    else
+                        targetScope.DefineBinaryOperator(op, func);
+                    break;
+
+
+                case "set[]":
+                    if (func.Parameters.Count != 3)
+                        ReportError(func.Name, $"This function must take three parameters in order to use it as operator '{op}'");
+                    else
+                        targetScope.DefineOperator(op, func);
+                    break;
+
+                default:
+                    ReportError(directive, $"'{op}' is not an overridable operator");
+                    break;
             }
         }
 

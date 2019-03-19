@@ -3,10 +3,22 @@ using Cheez.Types;
 using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cheez
 {
-    public interface IOperator
+    public interface INaryOperator
+    {
+        CheezType[] ArgTypes { get; }
+        CheezType ResultType { get; }
+        string Name { get; }
+
+        int Accepts(params CheezType[] types);
+
+        object Execute(params object[] args);
+    }
+
+    public interface IBinaryOperator
     {
         CheezType LhsType { get; }
         CheezType RhsType { get; }
@@ -29,7 +41,7 @@ namespace Cheez
         object Execute(object value);
     }
 
-    public class BuiltInPointerOperator : IOperator
+    public class BuiltInPointerOperator : IBinaryOperator
     {
         public CheezType LhsType => PointerType.GetPointerType(CheezType.Any);
         public CheezType RhsType => PointerType.GetPointerType(CheezType.Any);
@@ -62,7 +74,7 @@ namespace Cheez
         }
     }
 
-    public class BuiltInOperator : IOperator
+    public class BuiltInOperator : IBinaryOperator
     {
         public CheezType LhsType { get; private set; }
         public CheezType RhsType { get; private set; }
@@ -149,7 +161,7 @@ namespace Cheez
         {
             this.Name = name;
             this.SubExprType = func.Parameters[0].Type;
-            this.ResultType = func.ReturnValue?.Type;
+            this.ResultType = func.ReturnType;
             this.Declaration = func;
         }
 
@@ -174,7 +186,7 @@ namespace Cheez
         }
     }
 
-    public class UserDefinedBinaryOperator : IOperator
+    public class UserDefinedBinaryOperator : IBinaryOperator
     {
         public CheezType LhsType { get; set; }
         public CheezType RhsType { get; set; }
@@ -187,7 +199,7 @@ namespace Cheez
             this.Name = name;
             this.LhsType = func.Parameters[0].Type;
             this.RhsType = func.Parameters[1].Type;
-            this.ResultType = func.ReturnValue?.Type;
+            this.ResultType = func.ReturnType;
             this.Declaration = func;
         }
 
@@ -211,6 +223,52 @@ namespace Cheez
         }
 
         public object Execute(object left, object right)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class UserDefinedNaryOperator : INaryOperator
+    {
+        public CheezType[] ArgTypes { get; }
+        public CheezType ResultType { get; }
+        public string Name { get; set; }
+        public AstFunctionDecl Declaration { get; set; }
+
+
+        public UserDefinedNaryOperator(string name, AstFunctionDecl func)
+        {
+            this.Name = name;
+            this.ArgTypes = func.Parameters.Select(p => p.Type).ToArray();
+            this.ResultType = func.ReturnType;
+            this.Declaration = func;
+        }
+
+        public int Accepts(params CheezType[] types)
+        {
+            if (types.Length != ArgTypes.Length)
+                return -1;
+
+            var polyTypes = new Dictionary<string, CheezType>();
+
+            for (int i = 0; i < ArgTypes.Length; i++)
+            {
+                Workspace.CollectPolyTypes(ArgTypes[i], types[i], polyTypes);
+            }
+
+            var match = 0;
+            for (int i = 0; i < ArgTypes.Length; i++)
+            {
+                var m = ArgTypes[i].Match(types[i], polyTypes);
+                if (m == -1)
+                    return -1;
+                match += m;
+            }
+
+            return match;
+        }
+
+        public object Execute(params object[] args)
         {
             throw new NotImplementedException();
         }

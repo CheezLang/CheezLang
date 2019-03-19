@@ -260,6 +260,7 @@ namespace Cheez
 
             ass.Pattern.Scope = ass.Scope;
             ass.Pattern.Parent = ass;
+            ass.Pattern.SetFlag(ExprFlags.AssignmentTarget, true);
             ass.Pattern = InferType(ass.Pattern, null);
 
             ass.Value.Scope = ass.Scope;
@@ -274,11 +275,41 @@ namespace Cheez
 
         private AstExpression MatchPatternWithExpression(AstAssignment ass, AstExpression pattern, AstExpression value)
         {
+            // check for operator set[]
+            if (ass.Pattern is AstArrayAccessExpr arr)
+            {
+                var ops = ass.Scope.GetNaryOperators("set[]", arr.SubExpression.Type, arr.Indexer.Type, value.Type);
+                if (ops.Count == 0)
+                {
+                    if (!pattern.TypeInferred)
+                    {
+                        pattern.SetFlag(ExprFlags.AssignmentTarget, false);
+                        ass.Pattern = pattern = InferType(pattern, null);
+                    }
+                }
+                else if (ops.Count == 1)
+                {
+                    var args = new List<AstExpression>
+                    {
+                        arr.SubExpression, arr.Indexer, value
+                    };
+                    var opCall = new AstNaryOpExpr("set[]", args, value.Location);
+                    opCall.ActualOperator = ops[0];
+                    opCall.Replace(value);
+                    ass.OnlyGenerateValue = true;
+                    return InferType(opCall, null);
+                }
+                else
+                {
+                    ReportError(ass, $"Multiple operators 'set[]' match the types ({arr.SubExpression.Type}, {arr.Indexer.Type}, {value.Type})");
+                }
+            }
+
             if (ass.Operator != null)
             {
                 var assOp = ass.Operator + "=";
                 var valType = LiteralTypeToDefaultType(value.Type);
-                var ops = ass.Scope.GetOperators(assOp, pattern.Type, valType);
+                var ops = ass.Scope.GetBinaryOperators(assOp, pattern.Type, valType);
                 if (ops.Count == 1)
                 {
                     var opCall = new AstBinaryExpr(assOp, pattern, value, value.Location);

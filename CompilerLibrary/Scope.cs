@@ -110,7 +110,8 @@ namespace Cheez
         //private CTypeFactory types = new CTypeFactory();
 
         private Dictionary<string, ISymbol> mSymbolTable = new Dictionary<string, ISymbol>();
-        private Dictionary<string, List<IOperator>> mOperatorTable = new Dictionary<string, List<IOperator>>();
+        private Dictionary<string, List<INaryOperator>> mNaryOperatorTable = new Dictionary<string, List<INaryOperator>>();
+        private Dictionary<string, List<IBinaryOperator>> mBinaryOperatorTable = new Dictionary<string, List<IBinaryOperator>>();
         private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
         private Dictionary<AstImplBlock, List<AstFunctionDecl>> mImplTable = new Dictionary<AstImplBlock, List<AstFunctionDecl>>();
         private Dictionary<ISymbol, int> mInitializedSymbols = new Dictionary<ISymbol, int>();
@@ -128,7 +129,7 @@ namespace Cheez
             return new Scope(Name, Parent)
             {
                 mSymbolTable = new Dictionary<string, ISymbol>(mSymbolTable),
-                mOperatorTable = new Dictionary<string, List<IOperator>>(mOperatorTable),
+                mBinaryOperatorTable = new Dictionary<string, List<IBinaryOperator>>(mBinaryOperatorTable),
                 mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>(mUnaryOperatorTable)
                 // TODO: mImplTable?, rest?
             };
@@ -154,23 +155,62 @@ namespace Cheez
             mInitializedSymbols[symbol] = location;
         }
 
-        public List<IOperator> GetOperators(string name, CheezType lhs, CheezType rhs)
+        public List<INaryOperator> GetNaryOperators(string name, params CheezType[] types)
         {
-            var result = new List<IOperator>();
+            var result = new List<INaryOperator>();
+            int level = int.MaxValue;
+            GetOperator(name, result, ref level, types);
+            return result;
+        }
+
+        private void GetOperator(string name, List<INaryOperator> result, ref int level, params CheezType[] types)
+        {
+            if (!mNaryOperatorTable.ContainsKey(name))
+            {
+                Parent?.GetOperator(name, result, ref level, types);
+                return;
+            }
+
+            var ops = mNaryOperatorTable[name];
+
+            foreach (var op in ops)
+            {
+                var l = op.Accepts(types);
+                if (l == -1)
+                    continue;
+
+                if (l < level)
+                {
+                    level = l;
+                    result.Clear();
+                    result.Add(op);
+                }
+                else if (l == level)
+                {
+                    result.Add(op);
+                }
+            }
+
+            Parent?.GetOperator(name, result, ref level, types);
+        }
+
+        public List<IBinaryOperator> GetBinaryOperators(string name, CheezType lhs, CheezType rhs)
+        {
+            var result = new List<IBinaryOperator>();
             int level = int.MaxValue;
             GetOperator(name, lhs, rhs, result, ref level);
             return result;
         }
 
-        private void GetOperator(string name, CheezType lhs, CheezType rhs, List<IOperator> result, ref int level)
+        private void GetOperator(string name, CheezType lhs, CheezType rhs, List<IBinaryOperator> result, ref int level)
         {
-            if (!mOperatorTable.ContainsKey(name))
+            if (!mBinaryOperatorTable.ContainsKey(name))
             {
                 Parent?.GetOperator(name, lhs, rhs, result, ref level);
                 return;
             }
 
-            var ops = mOperatorTable[name];
+            var ops = mBinaryOperatorTable[name];
 
             foreach (var op in ops)
             {
@@ -193,7 +233,7 @@ namespace Cheez
             Parent?.GetOperator(name, lhs, rhs, result, ref level);
         }
 
-        public List<IUnaryOperator> GetOperators(string name, CheezType sub)
+        public List<IUnaryOperator> GetUnaryOperators(string name, CheezType sub)
         {
             var result = new List<IUnaryOperator>();
             int level = int.MaxValue;
@@ -240,6 +280,11 @@ namespace Cheez
         public void DefineBinaryOperator(string op, AstFunctionDecl func)
         {
             DefineOperator(new UserDefinedBinaryOperator(op, func));
+        }
+
+        public void DefineOperator(string op, AstFunctionDecl func)
+        {
+            DefineOperator(new UserDefinedNaryOperator(op, func));
         }
 
         internal void DefineBuiltInTypes()
@@ -349,13 +394,13 @@ namespace Cheez
         {
             foreach (var op in ops)
             {
-                List<IOperator> list = null;
-                if (mOperatorTable.ContainsKey(op.name))
-                    list = mOperatorTable[op.name];
+                List<IBinaryOperator> list = null;
+                if (mBinaryOperatorTable.ContainsKey(op.name))
+                    list = mBinaryOperatorTable[op.name];
                 else
                 {
-                    list = new List<IOperator>();
-                    mOperatorTable[op.name] = list;
+                    list = new List<IBinaryOperator>();
+                    mBinaryOperatorTable[op.name] = list;
                 }
 
                 foreach (var t in types)
@@ -369,13 +414,13 @@ namespace Cheez
         {
             foreach (var op in new string[] { "==", "!=" })
             {
-                List<IOperator> list = null;
-                if (mOperatorTable.ContainsKey(op))
-                    list = mOperatorTable[op];
+                List<IBinaryOperator> list = null;
+                if (mBinaryOperatorTable.ContainsKey(op))
+                    list = mBinaryOperatorTable[op];
                 else
                 {
-                    list = new List<IOperator>();
-                    mOperatorTable[op] = list;
+                    list = new List<IBinaryOperator>();
+                    mBinaryOperatorTable[op] = list;
                 }
                 
                 list.Add(new BuiltInPointerOperator(op));
@@ -420,13 +465,13 @@ namespace Cheez
         {
             foreach (var name in ops)
             {
-                List<IOperator> list = null;
-                if (mOperatorTable.ContainsKey(name))
-                    list = mOperatorTable[name];
+                List<IBinaryOperator> list = null;
+                if (mBinaryOperatorTable.ContainsKey(name))
+                    list = mBinaryOperatorTable[name];
                 else
                 {
-                    list = new List<IOperator>();
-                    mOperatorTable[name] = list;
+                    list = new List<IBinaryOperator>();
+                    mBinaryOperatorTable[name] = list;
                 }
 
                 foreach (var t in types)
@@ -456,15 +501,29 @@ namespace Cheez
             }
         }
 
-        private void DefineOperator(IOperator op)
+        private void DefineOperator(IBinaryOperator op)
         {
-            List<IOperator> list = null;
-            if (mOperatorTable.ContainsKey(op.Name))
-                list = mOperatorTable[op.Name];
+            List<IBinaryOperator> list = null;
+            if (mBinaryOperatorTable.ContainsKey(op.Name))
+                list = mBinaryOperatorTable[op.Name];
             else
             {
-                list = new List<IOperator>();
-                mOperatorTable[op.Name] = list;
+                list = new List<IBinaryOperator>();
+                mBinaryOperatorTable[op.Name] = list;
+            }
+
+            list.Add(op);
+        }
+
+        private void DefineOperator(INaryOperator op)
+        {
+            List<INaryOperator> list = null;
+            if (mNaryOperatorTable.ContainsKey(op.Name))
+                list = mNaryOperatorTable[op.Name];
+            else
+            {
+                list = new List<INaryOperator>();
+                mNaryOperatorTable[op.Name] = list;
             }
 
             list.Add(op);

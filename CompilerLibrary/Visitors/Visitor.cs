@@ -44,6 +44,7 @@ namespace Cheez.Visitors
         ReturnType VisitDotExpr(AstDotExpr expr, DataType data = default);
         ReturnType VisitCallExpr(AstCallExpr expr, DataType data = default);
         ReturnType VisitCompCallExpr(AstCompCallExpr expr, DataType data = default);
+        ReturnType VisitNaryOpExpr(AstNaryOpExpr expr, DataType data = default);
         ReturnType VisitBinaryExpr(AstBinaryExpr expr, DataType data = default);
         ReturnType VisitUnaryExpr(AstUnaryExpr expr, DataType data = default);
         ReturnType VisitBoolExpr(AstBoolExpr expr, DataType data = default);
@@ -109,11 +110,12 @@ namespace Cheez.Visitors
         public virtual ReturnType VisitStringLiteralExpr(AstStringLiteral expr, DataType data = default) => default;
         public virtual ReturnType VisitCharLiteralExpr(AstCharLiteral expr, DataType data = default) => default;
         public virtual ReturnType VisitStructValueExpr(AstStructValueExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitNaryOpExpr(AstNaryOpExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitBinaryExpr(AstBinaryExpr bexprin, DataType data = default) => default;
         public virtual ReturnType VisitUnaryExpr(AstUnaryExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitArrayExpr(AstArrayExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitAddressOfExpr(AstAddressOfExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitArrayAccessExpr(AstArrayAccessExpr expr, DataType data = default) => default;
-        public virtual ReturnType VisitBinaryExpr(AstBinaryExpr bexprin, DataType data = default) => default;
         public virtual ReturnType VisitBoolExpr(AstBoolExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitCallExpr(AstCallExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitCastExpr(AstCastExpr expr, DataType data = default) => default;
