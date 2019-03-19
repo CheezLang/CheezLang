@@ -35,9 +35,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private Dictionary<object, int> vtableIndices = new Dictionary<object, int>();
         private Dictionary<CheezType, LLVMValueRef> vtableMap = new Dictionary<CheezType, LLVMValueRef>();
 
-        // struct init
-        private Dictionary<CheezType, LLVMValueRef> structInitializers = new Dictionary<CheezType, LLVMValueRef>();
-
         // intrinsics
         private LLVMValueRef memcpy32;
         private LLVMValueRef memcpy64;
