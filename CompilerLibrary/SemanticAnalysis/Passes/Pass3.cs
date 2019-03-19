@@ -25,7 +25,8 @@ namespace Cheez
                 newInstances.AddRange(@struct.PolymorphicInstances);
             }
 
-            ResolveStructs(newInstances);
+            ResolveStructs(new List<AstStructDecl>(newInstances));
+            ResolveStructMembers(newInstances);
 
             // impls
             foreach (var trait in mTraits)

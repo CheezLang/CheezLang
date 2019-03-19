@@ -76,7 +76,10 @@ namespace Cheez
             var newExpr = InferTypeHelper(expr, expected, context);
 
             if (context.newPolyStructs.Count > 0)
-                ResolveStructs(context.newPolyStructs);
+            {
+                ResolveStructs(new List<AstStructDecl>(context.newPolyStructs));
+                ResolveStructMembers(context.newPolyStructs);
+            }
 
             if (context.newPolyFunctions.Count > 0)
                 AnalyseFunctions(context.newPolyFunctions);
@@ -218,15 +221,15 @@ namespace Cheez
 
             expr.Type = expected;
 
-            switch (expr.Type)
-            {
-                case StructType s:
-                    {
-                        var sv = new AstStructValueExpr(new AstTypeRef(s, expr.Location), new List<AstStructMemberInitialization>(), expr.Location);
-                        sv.Replace(expr);
-                        return InferTypeHelper(sv, expected, context);
-                    }
-            }
+            //switch (expr.Type)
+            //{
+            //    case StructType s:
+            //        {
+            //            var sv = new AstStructValueExpr(new AstTypeRef(s, expr.Location), new List<AstStructMemberInitialization>(), expr.Location);
+            //            sv.Replace(expr);
+            //            return InferTypeHelper(sv, expected, context);
+            //        }
+            //}
 
             return expr;
         }
@@ -1748,7 +1751,7 @@ namespace Cheez
             {
                 if (!inits.Contains(mem.Name.Name))
                 {
-                    var mi = new AstStructMemberInitialization(new AstIdExpr(mem.Name.Name, false), mem.Initializer);
+                    var mi = new AstStructMemberInitialization(new AstIdExpr(mem.Name.Name, false, expr.Location), mem.Initializer, expr.Location);
                     mi.Index = mem.Index;
                     expr.MemberInitializers.Add(mi);
                 }

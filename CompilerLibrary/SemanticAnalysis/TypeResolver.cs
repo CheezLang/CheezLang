@@ -188,10 +188,39 @@ namespace Cheez
                 if (instances != null)
                     instances.Add(instance);
                 else
+                {
                     ResolveStructs(new List<AstStructDecl> { instance });
+                    ResolveStructMembers(instance);
+                }
             }
 
             return instance;
+        }
+
+        private void ResolveStructMembers(List<AstStructDecl> @structs)
+        {
+            foreach (var s in @structs)
+            {
+                ResolveStructMembers(s);
+            }
+        }
+
+        private void ResolveStructMembers(AstStructDecl @struct)
+        {
+            foreach (var member in @struct.Members)
+            {
+                if (member.Initializer == null)
+                {
+                    member.Initializer = new AstDefaultExpr(member.Name.Location);
+                }
+
+                member.Initializer = InferType(member.Initializer, member.Type);
+                ConvertLiteralTypeToDefaultType(member.Initializer, member.Type);
+                member.Initializer = Cast(member.Initializer, member.Type);
+
+                if (member.Initializer.Type.IsErrorType)
+                    continue;
+            }
         }
 
         private void ResolveStruct(AstStructDecl @struct, List<AstStructDecl> instances = null)
@@ -213,27 +242,6 @@ namespace Cheez
             }
 
             ((StructType)@struct.Type).CalculateSize();
-
-            // :hack
-            foreach (var member in @struct.Members)
-            {
-                if (member.Initializer == null)
-                {
-                    member.Initializer = new AstDefaultExpr(member.Name.Location);
-                }
-
-                member.Initializer = InferType(member.Initializer, member.Type);
-                ConvertLiteralTypeToDefaultType(member.Initializer, member.Type);
-                member.Initializer = Cast(member.Initializer, member.Type);
-
-                if (member.Initializer.Type.IsErrorType)
-                    continue;
-
-                //if (!member.Initializer.IsCompTimeValue)
-                //{
-                //    ReportError(member.Initializer, $"Struct member initializer must be a constant expression");
-                //}
-            }
         }
 
         private void ResolveStructs(List<AstStructDecl> newInstances)

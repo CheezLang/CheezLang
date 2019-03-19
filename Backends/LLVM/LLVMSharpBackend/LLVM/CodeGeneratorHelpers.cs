@@ -276,16 +276,24 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case StructType p:
                     {
+                        var str = LLVM.GetUndef(CheezTypeToLLVMType(p));
+                        foreach (var m in p.Declaration.Members)
+                        {
+                            var v = GenerateExpression(m.Initializer, true);
+                            str = builder.CreateInsertValue(str, v, (uint)m.Index, "");
+                        }
+
+                        return str;
                         //return LLVM.ConstPointerNull(CheezTypeToLLVMType(p));
-                        var members = p.Declaration.Members.Select(m => GetDefaultLLVMValue(m.Type));
-                        return LLVM.ConstStruct(members.ToArray(), false);
+                        //var members = p.Declaration.Members.Select(m => GetDefaultLLVMValue(m.Type));
+                        //return LLVM.ConstStruct(members.ToArray(), false);
                     }
 
                 case TraitType t:
-                    return LLVMValueRef.ConstStruct(new LLVMValueRef[] {
+                    return LLVM.ConstNamedStruct(CheezTypeToLLVMType(t), new LLVMValueRef[] {
                         LLVM.ConstPointerNull(LLVM.Int8Type().GetPointerTo()),
                         LLVM.ConstPointerNull(LLVM.Int8Type().GetPointerTo())
-                    }, false);
+                    });
 
                 case AnyType a:
                     return LLVM.ConstInt(LLVM.Int64Type(), 0, false);
