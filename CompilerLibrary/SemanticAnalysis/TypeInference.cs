@@ -502,6 +502,7 @@ namespace Cheez
 
             cast.SubExpression.Scope = cast.Scope;
             cast.SubExpression = InferTypeHelper(cast.SubExpression, cast.Type, context);
+            ConvertLiteralTypeToDefaultType(cast.SubExpression, cast.Type);
 
             if (cast.SubExpression.Type.IsErrorType || cast.Type.IsErrorType)
                 return cast;

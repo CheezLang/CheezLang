@@ -135,8 +135,26 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             if (to == from) return GenerateExpression(cast.SubExpression, true);
             
-            if (to is IntType && from is IntType) // int <- int
-                return builder.CreateIntCast(GenerateExpression(cast.SubExpression, true), toLLVM, "");
+            if (to is IntType t1 && from is IntType f1) // int <- int
+            {
+                var v = GenerateExpression(cast.SubExpression, true);
+                if (t1.Signed == f1.Signed)
+                    return builder.CreateIntCast(v, toLLVM, "");
+                if (t1.Signed) // s <- u
+                {
+                    if (t1.Size > f1.Size)
+                        return builder.CreateZExtOrBitCast(v, toLLVM, "");
+                    else
+                        return builder.CreateTruncOrBitCast(v, toLLVM, "");
+                }
+                if (f1.Signed) // u <- s
+                {
+                    if (t1.Size > f1.Size)
+                        return builder.CreateZExtOrBitCast(v, toLLVM, "");
+                    else
+                        return builder.CreateTruncOrBitCast(v, toLLVM, "");
+                }
+            }
             if (to is PointerType && from is IntType) // * <- int
                 return builder.CreateCast(LLVMOpcode.LLVMIntToPtr, GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is IntType && from is PointerType) // int <- *

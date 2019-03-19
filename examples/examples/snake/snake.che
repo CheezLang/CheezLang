@@ -1,0 +1,154 @@
+#load("std:io/io")
+#load("std:array")
+#load("std:util")
+#load("glfw:glfw3")
+#load("opengl:opengl")
+
+#load("quad")
+
+let ACTION_UP    = 0
+let ACTION_RIGHT = 1
+let ACTION_DOWN  = 2
+let ACTION_LEFT  = 3
+
+let action = -1
+
+fn onKeyDown(window: &GLFWwindow, key: i32, scancode: i32, a: i32, mods: i32) {
+    if a == GLFW_PRESS {
+        if key == 86 { action = ACTION_UP }
+        if key == 73 { action = ACTION_DOWN }
+        if key == 85 { action = ACTION_LEFT }
+        if key == 65 { action = ACTION_RIGHT }
+    }
+}
+
+fn onResize(window: &GLFWwindow, w: i32, h: i32) {
+    glViewport(0, 0, w, h)
+}
+
+let timePerStep = 0.1
+
+fn Main()
+{
+    if !glfwInit() {
+        println("Failed to initialize GLFW")
+        return
+    }
+    // defer glfwTerminate()
+
+    let window = glfwCreateWindow(640, 480, "Hello World", null, null)
+    if window == null {
+        println("Failed to create window")
+        glfwTerminate()
+        return
+    }
+
+    glfwSetKeyCallback(window, onKeyDown)
+    glfwSetWindowSizeCallback(window, onResize)
+
+    glfwMakeContextCurrent(window)
+    glViewport(0, 0, 640, 480)
+
+    glClearColor(0, 0, 0, 1)
+
+    glTranslated(-1.0, -1.0, 0.0)
+    glScaled(1.0 / 320.0, 1.0 / 240.0, 1.0)
+
+    glfwSwapInterval(0)
+
+    //
+    let rand = LinearCongruentialGenerator::create(cast getCurrentTimeInMilliseconds())
+
+    let gridSize = 10.0
+    let xMax = cast(int)(640 / gridSize)
+    let yMax = cast(int)(480 / gridSize)
+
+    let snake = Array(Quad)::create()
+
+    let startCount = 5
+    while let i = 0; i < startCount; i += 1 {
+        let intesity = cast(double)i / cast(double)(startCount - 1)
+        snake.add(new Quad {
+            new Vec2i{10, 15},
+            new Vec2{gridSize, gridSize},
+            new Vec3{1, intesity, intesity}
+        })
+    }
+
+    let target = new Quad {
+        new Vec2i{rand.next_int(max=xMax), rand.next_int(max=yMax)},
+        new Vec2{gridSize, gridSize},
+        new Vec3{0, 1, 0}
+    }
+
+    let dir = 0
+
+    let timer = 0.0
+    let fpsTimer = 0.0
+    let fpsCounter = 0
+
+    let lastTime = glfwGetTime()
+    while !glfwWindowShouldClose(window) {
+        glClear(GL_COLOR_BUFFER_BIT)
+
+        //
+        let now = glfwGetTime()
+        let deltaTime = now - lastTime
+        lastTime = now
+
+        //
+        fpsTimer += deltaTime
+        fpsCounter += 1
+        if fpsTimer >= 1.0 {
+            printf("FPS: {}`n", [fpsCounter])
+            fpsTimer -= 1.0
+            fpsCounter = 0
+        }
+
+        //
+        timer += deltaTime
+
+        if timer >= timePerStep {
+            timer -= timePerStep
+            if action != -1 {
+                if !((dir == 0 and action == 2) or
+                    (dir == 1 and action == 3) or
+                    (dir == 2 and action == 0) or
+                    (dir == 3 and action == 1)) {
+                    dir = action
+                }
+            }
+            action = -1
+
+            // move snake
+            while let i = snake.length - 1; i > 0; i -= 1 {
+                snake[i].pos = snake[i - 1].pos
+            }
+
+            if dir == 0 { snake[0].pos += new Vec2i{0, 1} }
+            if dir == 1 { snake[0].pos += new Vec2i{1, 0} }
+            if dir == 2 { snake[0].pos += new Vec2i{0, -1} }
+            if dir == 3 { snake[0].pos += new Vec2i{-1, 0} }
+
+            if snake[0].pos == target.pos {
+                snake.add(snake[snake.length - 1])
+                target.pos.x = rand.next_int(max=xMax)
+                target.pos.y = rand.next_int(max=yMax)
+            }
+        }
+
+        snake[0].draw()
+        while let i = 0; i < snake.length; i += 1 {
+            snake[i].draw()
+        }
+
+        target.draw()
+
+        // present image
+        glfwSwapBuffers(window)
+        //
+        glfwPollEvents()
+    }
+    
+    glfwTerminate()
+}

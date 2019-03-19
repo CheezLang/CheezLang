@@ -1,0 +1,47 @@
+#load("std:math")
+
+typedef Vec2i = Vector2(int)
+typedef Vec2 = Vector2(double)
+typedef Vec3 = Vector3(double)
+
+struct Quad {
+    pos: Vec2i
+    size: Vec2
+    col: Vec3
+}
+
+impl Quad {
+    fn draw(ref Self) {
+        glBegin(GL_TRIANGLES)
+
+        {
+            // v1
+            glColor3d(col.x, col.y, col.z)
+            glVertex2d(cast(double)pos.x * size.x, cast(double)pos.y * size.y)
+
+            // v2
+            glColor3d(col.x, col.y, col.z)
+            glVertex2d(cast(double)pos.x * size.x + size.x, cast(double)pos.y * size.y)
+
+            // v3
+            glColor3d(col.x, col.y, col.z)
+            glVertex2d(cast(double)pos.x * size.x + size.x, cast(double)pos.y * size.y + size.y)
+        }
+
+        {
+            // v1
+            glColor3d(col.x, col.y, col.z)
+            glVertex2d(cast(double)pos.x * size.x, cast(double)pos.y * size.y)
+
+            // v3
+            glColor3d(col.x, col.y, col.z)
+            glVertex2d(cast(double)pos.x * size.x + size.x, cast(double)pos.y * size.y + size.y)
+
+            // v4
+            glColor3d(col.x, col.y, col.z)
+            glVertex2d(cast(double)pos.x * size.x, cast(double)pos.y * size.y + size.y)
+        }
+
+        glEnd()
+    }
+}

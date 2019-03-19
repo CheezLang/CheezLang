@@ -9,9 +9,9 @@ struct Array(T: type) {
 }
 
 impl Array($T) {
-    fn create() -> Self {
+    fn create(initial_capicity: int = 10) -> Self {
         let s = new Array(T) { null, 0 }
-        s.reserve(10)
+        s.reserve(initial_capicity)
         c_memset(cast s.get_raw(), 0, cast(uint) (s.get_capacity() * @sizeof(T)))
         return s
     }

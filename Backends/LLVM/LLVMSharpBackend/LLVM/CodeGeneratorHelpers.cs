@@ -227,6 +227,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef CheezValueToLLVMValue(CheezType type, object v)
         {
+            if (type == IntType.LiteralType || type == FloatType.LiteralType)
+                throw new Exception();
+
             switch (type)
             {
                 case BoolType _: return LLVM.ConstInt(CheezTypeToLLVMType(type), (bool)v ? 1ul : 0ul, false);

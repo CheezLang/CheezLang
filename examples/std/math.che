@@ -53,6 +53,10 @@ impl LinearCongruentialGenerator {
     fn next_double(ref Self) -> double {
         return cast(double) self.next() / cast(double) u32_max()
     }
+
+    fn next_int(ref Self, min: int = 0, max: int = cast u32_max()) -> int {
+        return cast(int)next() % (max - min) + min
+    }
 }
 
 struct Vector2(T: type) {
@@ -165,6 +169,10 @@ impl Vector2($T) {
 
     fn dot(a: Self, b : Self) -> T {
         return a.x * b.x + a.y * b.y
+    }
+
+    fn eq(a: ref Self, b: ref Self) -> bool #operator("==") {
+        return a.x == b.x and a.y == b.y
     }
 }
 

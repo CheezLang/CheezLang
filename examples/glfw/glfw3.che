@@ -60,11 +60,14 @@ fn glfwCreateWindow(widht: i32, height: i32, title: c_string, monitor: &GLFWmoni
 fn glfwWindowShouldClose(window: &GLFWwindow) -> bool;
 fn glfwPollEvents();
 fn glfwSwapBuffers(window: &GLFWwindow);
+fn glfwSwapInterval(interval: i32);
 
 fn glfwMakeContextCurrent(window: &GLFWwindow);
 fn glfwSetKeyCallback(window: &GLFWwindow, callback: fn (&GLFWwindow, i32, i32, i32, i32) {});
 fn glfwSetWindowSizeCallback(window: &GLFWwindow, callback: fn (&GLFWwindow, i32, i32) {});
 fn glfwWindowHint(hint: i32, value: i32);
+
+fn glfwGetTime() -> double;
 
 let GLFW_RELEASE                : i32 = 0
 let GLFW_PRESS                  : i32 = 1
