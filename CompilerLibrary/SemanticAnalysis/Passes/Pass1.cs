@@ -124,10 +124,11 @@ namespace Cheez
 
         private void Pass1VariableDeclaration(AstVariableDecl var)
         {
-            if (var.Initializer != null)
+            if (var.Initializer == null)
             {
-                var.Initializer.Scope = var.Scope;
+                var.Initializer = new AstDefaultExpr(var.Pattern.Location);
             }
+            var.Initializer.AttachTo(var);
 
             MatchPatternWithTypeExpr(var, var.Pattern, var.TypeExpr);
 

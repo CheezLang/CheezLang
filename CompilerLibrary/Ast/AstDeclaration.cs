@@ -139,11 +139,12 @@ namespace Cheez.Ast.Statements
         public TokenLocation Beginning => Location?.Beginning;
         public TokenLocation End => Location?.End;
 
-
         public AstIdExpr Name { get; }
         public AstExpression Initializer { get; set; }
         public AstExpression TypeExpr { get; set; }
         public CheezType Type { get; set; }
+
+        public int Index { get; set; }
 
         public AstMemberDecl(AstIdExpr name, AstExpression typeExpr, AstExpression init, ILocation Location = null)
         {

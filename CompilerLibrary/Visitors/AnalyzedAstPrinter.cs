@@ -141,6 +141,14 @@ namespace Cheez.Visitors
             return $"using {use.Value.Accept(this)}";
         }
 
+        public string VisitStructMember(AstMemberDecl m)
+        {
+            var v = $"{m.Name.Accept(this)}: {m.TypeExpr.Accept(this)}";
+            if (m.Initializer != null)
+                v += $" = {m.Initializer.Accept(this)}";
+            return v;
+        }
+
         public override string VisitStructDecl(AstStructDecl str, int data = 0)
         {
             if (str.IsPolymorphic)
@@ -172,7 +180,7 @@ namespace Cheez.Visitors
             }
             else
             {
-                var body = string.Join("\n", str.Members.Select(m => $"{m.Name.Accept(this)}: {m.Type}"));
+                var body = string.Join("\n", str.Members.Select(m => VisitStructMember(m)));
                 var head = $"struct {str.Name.Accept(this)}";
 
                 var sb = new StringBuilder();
@@ -365,6 +373,11 @@ namespace Cheez.Visitors
 
 
         #region Expressions
+
+        public override string VisitDefaultExpr(AstDefaultExpr expr, int data = 0)
+        {
+            return "default";
+        }
 
         public override string VisitUfcFuncExpr(AstUfcFuncExpr expr, int data = 0)
         {

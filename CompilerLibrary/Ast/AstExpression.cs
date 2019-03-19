@@ -27,13 +27,21 @@ namespace Cheez.Ast.Expressions
         public TokenLocation End => Location?.End;
 
         public CheezType Type { get; set; }
-        public object Value { get; set; }
+
+        private object _value;
+        public object Value {
+            get => _value;
+            set {
+                _value = value;
+                IsCompTimeValue = _value != null;
+            }
+        }
         public Scope Scope { get; set; }
 
         // TODO: still necessary?
         public abstract bool IsPolymorphic { get; }
 
-        protected bool IsCompTimeValue { get; set; } = false;
+        public bool IsCompTimeValue { get; set; } = false;
 
         public IAstNode Parent { get; set; }
 
@@ -73,6 +81,7 @@ namespace Cheez.Ast.Expressions
             to.Scope = this.Scope;
             to.mFlags = this.mFlags;
             to.Value = this.Value;
+            to.IsCompTimeValue = this.IsCompTimeValue;
             return to;
         }
 
@@ -82,6 +91,7 @@ namespace Cheez.Ast.Expressions
             this.Scope = from.Scope;
             this.mFlags = from.mFlags;
             this.Value = from.Value;
+            this.IsCompTimeValue = from.IsCompTimeValue;
         }
 
         public override string ToString()
@@ -181,6 +191,22 @@ namespace Cheez.Ast.Expressions
             => CopyValuesTo(new AstEmptyExpr());
     }
 
+    public class AstDefaultExpr : AstExpression
+    {
+        public override bool IsPolymorphic => false;
+
+        [DebuggerStepThrough]
+        public AstDefaultExpr(ILocation Location) : base(Location)
+        { }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitDefaultExpr(this, data);
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstDefaultExpr(Location));
+    }
+
     public abstract class AstLiteral : AstExpression
     {
         public AstLiteral(ILocation Location = null) : base(Location)
@@ -197,7 +223,6 @@ namespace Cheez.Ast.Expressions
         public AstCharLiteral(string rawValue, ILocation Location = null) : base(Location)
         {
             this.RawValue = rawValue;
-            this.IsCompTimeValue = true;
         }
 
         [DebuggerStepThrough]
@@ -219,7 +244,6 @@ namespace Cheez.Ast.Expressions
         {
             this.Value = value;
             this.Suffix = suffix;
-            this.IsCompTimeValue = true;
         }
 
         [DebuggerStepThrough]
@@ -312,7 +336,6 @@ namespace Cheez.Ast.Expressions
         {
             Name = func;
             Arguments = args;
-            IsCompTimeValue = true;
         }
 
         [DebuggerStepThrough]
@@ -406,7 +429,6 @@ namespace Cheez.Ast.Expressions
         public AstBoolExpr(bool value, ILocation Location = null) : base(Location)
         {
             this.Value = value;
-            IsCompTimeValue = true;
         }
 
         [DebuggerStepThrough]
@@ -508,7 +530,6 @@ namespace Cheez.Ast.Expressions
         [DebuggerStepThrough]
         public AstNullExpr(ILocation Location = null) : base(Location)
         {
-            IsCompTimeValue = true;
         }
 
         [DebuggerStepThrough]
@@ -555,7 +576,7 @@ namespace Cheez.Ast.Expressions
         public AstNumberExpr(NumberData data, string suffix = null, ILocation Location = null) : base(Location)
         {
             mData = data;
-            IsCompTimeValue = true;
+            Value = data;
             this.Suffix = suffix;
         }
 

@@ -114,11 +114,45 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return LLVMTypeRef.FunctionType(returnType, paramTypes.ToArray(), f.VarArgs);
         }
 
+        //private void GenerateStructInitializer(AstStructDecl decl, LLVMTypeRef llvmType)
+        //{
+        //    var fnType = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { llvmType.GetPointerTo() }, false);
+        //    var fn = module.AddFunction($"{decl.Name.Name}.ctor", fnType);
+
+        //    var entry = fn.AppendBasicBlock("entry");
+
+        //    var b = new IRBuilder();
+        //    b.PositionBuilderAtEnd(entry);
+
+        //    var param = fn.GetParam(0);
+
+        //    for (int i = 0; i < decl.Members.Count; i++)
+        //    {
+        //        var m = decl.Members[i];
+        //        if (m.Initializer != null)
+        //        {
+        //            var ptr = b.CreateStructGEP(param, (uint)i, "");
+        //            var val = GenerateExpression(m.Initializer, true);
+        //            b.CreateStore(val, ptr);
+        //        }
+        //    }
+
+        //    b.CreateRetVoid();
+        //    b.Dispose();
+
+        //    structInitializers[decl.Type] = fn;
+        //}
+
         private LLVMTypeRef CheezTypeToLLVMType(CheezType ct)
         {
             if (typeMap.TryGetValue(ct, out var tt)) return tt;
             var t = CheezTypeToLLVMTypeHelper(ct);
             typeMap[ct] = t;
+
+            //if (ct is StructType s)
+            //{
+            //    GenerateStructInitializer(s.Declaration, t);
+            //}
             return t;
         }
 
@@ -311,6 +345,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         var members = t.Members.Select(m => GetDefaultLLVMValue(m.type));
                         return LLVM.ConstStruct(members.ToArray(), false);
                     }
+
+                case FunctionType f:
+                    return LLVM.ConstNull(CheezTypeToLLVMType(f));
 
                 default:
                     throw new NotImplementedException();

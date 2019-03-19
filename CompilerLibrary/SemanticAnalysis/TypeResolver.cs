@@ -203,14 +203,37 @@ namespace Cheez
             }
 
             // resolve member types
+            int index = 0;
             foreach (var member in @struct.Members)
             {
+                member.Index = index++;
                 member.TypeExpr.Scope = @struct.SubScope;
                 member.TypeExpr = ResolveType(member.TypeExpr, out var t);
                 member.Type = t;
             }
 
             ((StructType)@struct.Type).CalculateSize();
+
+            // :hack
+            foreach (var member in @struct.Members)
+            {
+                if (member.Initializer == null)
+                {
+                    member.Initializer = new AstDefaultExpr(member.Name.Location);
+                }
+
+                member.Initializer = InferType(member.Initializer, member.Type);
+                ConvertLiteralTypeToDefaultType(member.Initializer, member.Type);
+                member.Initializer = Cast(member.Initializer, member.Type);
+
+                if (member.Initializer.Type.IsErrorType)
+                    continue;
+
+                //if (!member.Initializer.IsCompTimeValue)
+                //{
+                //    ReportError(member.Initializer, $"Struct member initializer must be a constant expression");
+                //}
+            }
         }
 
         private void ResolveStructs(List<AstStructDecl> newInstances)

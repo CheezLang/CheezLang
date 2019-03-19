@@ -46,8 +46,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstCastExpr cast: return GenerateCastExpr(cast, deref);
                 case AstUfcFuncExpr ufc: return GenerateUfcFuncExpr(ufc, deref);
                 case AstArrayExpr arr: return GenerateArrayExpr(arr, deref);
+                case AstDefaultExpr def: return GenerateDefaultExpr(def);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GenerateDefaultExpr(AstDefaultExpr def)
+        {
+            return GetDefaultLLVMValue(def.Type);
         }
 
         private LLVMValueRef GenerateArrayExpr(AstArrayExpr arr, bool deref)

@@ -187,9 +187,48 @@ namespace Cheez
                 case AstTypeRef typeRef:
                     return InferTypeTypeRefExpr(typeRef);
 
+                case AstDefaultExpr def:
+                    return InferTypeDefaultExpr(def, expected, context);
+
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private AstExpression InferTypeDefaultExpr(AstDefaultExpr expr, CheezType expected, TypeInferenceContext context)
+        {
+            expr.IsCompTimeValue = true;
+            if (expected == null)
+            {
+                ReportError(expr, $"Can't infer type of default expression");
+                return expr;
+            }
+
+            if (expected is ReferenceType r)
+            {
+                ReportError(expr, $"Can't default initialize a reference");
+                return expr;
+            }
+
+            //if (expected is ArrayType a)
+            //{
+            //    ReportError(expr, $"Can't default initialize an array");
+            //    return expr;
+            //}
+
+            expr.Type = expected;
+
+            switch (expr.Type)
+            {
+                case StructType s:
+                    {
+                        var sv = new AstStructValueExpr(new AstTypeRef(s, expr.Location), new List<AstStructMemberInitialization>(), expr.Location);
+                        sv.Replace(expr);
+                        return InferTypeHelper(sv, expected, context);
+                    }
+            }
+
+            return expr;
         }
 
         private AstExpression InferTypesNaryExpr(AstNaryOpExpr expr, CheezType expected, TypeInferenceContext context)
@@ -280,6 +319,7 @@ namespace Cheez
             arg.Expr = InferTypeHelper(arg, expected, context);
             arg.Type = arg.Expr.Type;
             arg.Value = arg.Expr.Value;
+            arg.IsCompTimeValue = arg.Expr.IsCompTimeValue;
             return arg;
         }
 
@@ -337,7 +377,7 @@ namespace Cheez
             p.SizeExpr = InferType(p.SizeExpr, IntType.DefaultType);
             ConvertLiteralTypeToDefaultType(p.SizeExpr, IntType.DefaultType);
 
-            if (p.SizeExpr.Value == null || !(p.SizeExpr.Type is IntType))
+            if (!p.SizeExpr.IsCompTimeValue || !(p.SizeExpr.Type is IntType))
             {
                 ReportError(p.SizeExpr, "Index must be a constant int");
                 return p;
@@ -430,6 +470,7 @@ namespace Cheez
 
         private AstExpression InferTypesNullExpr(AstNullExpr expr, CheezType expected)
         {
+            expr.IsCompTimeValue = true;
             if (expected is PointerType)
                 expr.Type = expected;
             else if (expected is SliceType)
@@ -696,7 +737,7 @@ namespace Cheez
                         if (cond.Type.IsErrorType || (message?.Type?.IsErrorType ?? false))
                             return expr;
 
-                        if (cond.Type != CheezType.Bool || cond.Value == null)
+                        if (cond.Type != CheezType.Bool || !cond.IsCompTimeValue)
                         {
                             ReportError(cond, $"Condition of @static_assert must be a constant bool");
                             return expr;
@@ -794,7 +835,7 @@ namespace Cheez
                             ReportError(expr.Arguments[0], $"This argument must be a tuple type, got {expr.Arguments[0].Type} '{expr.Arguments[0].Value}'");
                             return expr;
                         }
-                        if (!(expr.Arguments[1].Type is IntType) || expr.Arguments[1].Value == null)
+                        if (!(expr.Arguments[1].Type is IntType) || !expr.Arguments[1].IsCompTimeValue)
                         {
                             ReportError(expr.Arguments[1], $"This argument must be a constant int, got {expr.Arguments[1].Type} '{expr.Arguments[1].Value}'");
                             return expr;
@@ -1637,7 +1678,6 @@ namespace Cheez
                 return expr;
             }
 
-
             // 
             int namesProvided = 0;
             foreach (var m in expr.MemberInitializers)
@@ -1652,12 +1692,14 @@ namespace Cheez
                 }
             }
 
+            var inits = new HashSet<string>();
             if (namesProvided == 0)
             {
                 for (int i = 0; i < expr.MemberInitializers.Count; i++)
                 {
                     var mi = expr.MemberInitializers[i];
                     var mem = type.Declaration.Members[i];
+                    inits.Add(mem.Name.Name);
 
                     mi.Value.AttachTo(expr);
                     mi.Value = InferTypeHelper(mi.Value, mem.Type, context);
@@ -1684,6 +1726,8 @@ namespace Cheez
 
 
                     var mem = type.Declaration.Members[memIndex];
+                    inits.Add(mem.Name.Name);
+
                     mi.Index = memIndex;
 
                     mi.Value.AttachTo(expr);
@@ -1697,6 +1741,17 @@ namespace Cheez
             else
             {
                 ReportError(expr, $"Either all or no values must have a name");
+            }
+
+            // create missing values
+            foreach (var mem in type.Declaration.Members)
+            {
+                if (!inits.Contains(mem.Name.Name))
+                {
+                    var mi = new AstStructMemberInitialization(new AstIdExpr(mem.Name.Name, false), mem.Initializer);
+                    mi.Index = mem.Index;
+                    expr.MemberInitializers.Add(mi);
+                }
             }
 
             return expr;
@@ -1748,8 +1803,10 @@ namespace Cheez
 
                 expr.ActualOperator = op;
 
-                if (expr.SubExpr.Value != null)
+                if (expr.SubExpr.IsCompTimeValue)
+                {
                     expr.Value = op.Execute(expr.SubExpr.Value);
+                }
 
                 // @hack
                 expr.Type = op.ResultType;
