@@ -62,6 +62,7 @@ fn glfwPollEvents();
 fn glfwSwapBuffers(window: &GLFWwindow);
 fn glfwSwapInterval(interval: i32);
 
+fn glfwSetWindowTitle(window: &GLFWwindow, title: c_string);
 fn glfwMakeContextCurrent(window: &GLFWwindow);
 fn glfwSetKeyCallback(window: &GLFWwindow, callback: fn (&GLFWwindow, i32, i32, i32, i32) {});
 fn glfwSetWindowSizeCallback(window: &GLFWwindow, callback: fn (&GLFWwindow, i32, i32) {});

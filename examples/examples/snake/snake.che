@@ -15,10 +15,10 @@ let action = -1
 
 fn onKeyDown(window: &GLFWwindow, key: i32, scancode: i32, a: i32, mods: i32) {
     if a == GLFW_PRESS {
-        if key == 86 { action = ACTION_UP }
-        if key == 73 { action = ACTION_DOWN }
-        if key == 85 { action = ACTION_LEFT }
-        if key == 65 { action = ACTION_RIGHT }
+        if key == 265 { action = ACTION_UP }
+        if key == 262 { action = ACTION_RIGHT }
+        if key == 264 { action = ACTION_DOWN }
+        if key == 263 { action = ACTION_LEFT }
     }
 }
 
@@ -26,7 +26,11 @@ fn onResize(window: &GLFWwindow, w: i32, h: i32) {
     glViewport(0, 0, w, h)
 }
 
-let timePerStep = 0.1
+let timePerStep = 0.05
+let gridSize = 10.0
+
+let width = 640.0
+let height = 480.0
 
 fn Main()
 {
@@ -36,7 +40,10 @@ fn Main()
     }
     // defer glfwTerminate()
 
-    let window = glfwCreateWindow(640, 480, "Hello World", null, null)
+    let windowTitle = String::empty()
+    windowTitle.appendf("Snake     {} FPS`0" , [0])
+
+    let window = glfwCreateWindow(cast width, cast height, windowTitle.get_raw(), null, null)
     if window == null {
         println("Failed to create window")
         glfwTerminate()
@@ -47,21 +54,20 @@ fn Main()
     glfwSetWindowSizeCallback(window, onResize)
 
     glfwMakeContextCurrent(window)
-    glViewport(0, 0, 640, 480)
+    glViewport(0, 0, cast width, cast height)
 
     glClearColor(0, 0, 0, 1)
 
     glTranslated(-1.0, -1.0, 0.0)
-    glScaled(1.0 / 320.0, 1.0 / 240.0, 1.0)
+    glScaled(2.0 / width, 2.0 / height, 1.0)
 
     glfwSwapInterval(0)
 
     //
     let rand = LinearCongruentialGenerator::create(cast getCurrentTimeInMilliseconds())
 
-    let gridSize = 10.0
-    let xMax = cast(int)(640 / gridSize)
-    let yMax = cast(int)(480 / gridSize)
+    let xMax = cast(int)(width / gridSize)
+    let yMax = cast(int)(height / gridSize)
 
     let snake = Array(Quad)::create()
 
@@ -101,6 +107,11 @@ fn Main()
         fpsCounter += 1
         if fpsTimer >= 1.0 {
             printf("FPS: {}`n", [fpsCounter])
+
+            windowTitle.length = 0
+            windowTitle.appendf("Snake     {} FPS`0" , [fpsCounter])
+            glfwSetWindowTitle(window, windowTitle.get_raw())
+
             fpsTimer -= 1.0
             fpsCounter = 0
         }
@@ -125,19 +136,24 @@ fn Main()
                 snake[i].pos = snake[i - 1].pos
             }
 
-            if dir == 0 { snake[0].pos += new Vec2i{0, 1} }
-            if dir == 1 { snake[0].pos += new Vec2i{1, 0} }
-            if dir == 2 { snake[0].pos += new Vec2i{0, -1} }
-            if dir == 3 { snake[0].pos += new Vec2i{-1, 0} }
+            let head: ref Quad = snake[0]
+            if dir == 0 { head.pos += new Vec2i{0, 1} }
+            if dir == 1 { head.pos += new Vec2i{1, 0} }
+            if dir == 2 { head.pos += new Vec2i{0, -1} }
+            if dir == 3 { head.pos += new Vec2i{-1, 0} }
 
-            if snake[0].pos == target.pos {
+            if head.pos.x < 0 { head.pos.x = xMax - 1 }
+            if head.pos.y < 0 { head.pos.y = yMax - 1 }
+            if head.pos.x >= xMax { head.pos.x = 0 }
+            if head.pos.y >= yMax { head.pos.y = 0 }
+
+            if head.pos == target.pos {
                 snake.add(snake[snake.length - 1])
                 target.pos.x = rand.next_int(max=xMax)
                 target.pos.y = rand.next_int(max=yMax)
             }
         }
 
-        snake[0].draw()
         while let i = 0; i < snake.length; i += 1 {
             snake[i].draw()
         }
