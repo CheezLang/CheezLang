@@ -110,7 +110,7 @@ namespace Cheez
                     p.DefaultValue.Scope = func.Scope;
                     p.DefaultValue = InferType(p.DefaultValue, p.Type);
                     ConvertLiteralTypeToDefaultType(p.DefaultValue, p.Type);
-                    p.DefaultValue = Cast(p.DefaultValue, p.Type);
+                    p.DefaultValue = CheckType(p.DefaultValue, p.Type);
                     if (p.DefaultValue.Type != p.Type && !p.DefaultValue.Type.IsErrorType)
                     {
                         ReportError(p.DefaultValue,
@@ -346,7 +346,7 @@ namespace Cheez
                             ass.Pattern = Deref(ass.Pattern);
                         }
 
-                        return Cast(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
+                        return CheckType(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
                 case AstTupleExpr t:
@@ -413,7 +413,7 @@ namespace Cheez
                         if (ass.Pattern.Type is ReferenceType)
                             ass.Pattern = Deref(ass.Pattern);
 
-                        return Cast(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
+                        return CheckType(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
                 case AstDotExpr dot:
@@ -439,7 +439,7 @@ namespace Cheez
                         if (ass.Pattern.Type is ReferenceType)
                             ass.Pattern = Deref(ass.Pattern);
 
-                        return Cast(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
+                        return CheckType(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
                 case AstArrayAccessExpr index:
@@ -464,7 +464,7 @@ namespace Cheez
                         if (ass.Pattern.Type is ReferenceType)
                             ass.Pattern = Deref(ass.Pattern);
 
-                        return Cast(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
+                        return CheckType(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
                 case AstExpression e when e.Type is ReferenceType r:
@@ -480,7 +480,7 @@ namespace Cheez
                         }
 
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
-                        return Cast(ass.Value, r.TargetType, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
+                        return CheckType(ass.Value, r.TargetType, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
                 default: ReportError(pattern, $"Can't assign to '{pattern.Type}', not an lvalue"); break;
@@ -548,7 +548,7 @@ namespace Cheez
                     return;
 
                 ret.ReturnValue = HandleReference(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
-                ret.ReturnValue = Cast(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
+                ret.ReturnValue = CheckType(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
             }
             else if (currentFunction.ReturnValue != null)
             {

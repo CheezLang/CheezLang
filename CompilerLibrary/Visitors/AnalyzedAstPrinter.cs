@@ -374,6 +374,35 @@ namespace Cheez.Visitors
 
         #region Expressions
 
+        private string VisitMatchCase(AstMatchCase c)
+        {
+            var result = "";
+
+            result += c.Pattern.Accept(this);
+            if (c.Condition != null)
+            {
+                result += " if " + c.Condition.Accept(this);
+            }
+
+            result += " -> " + c.Body.Accept(this);
+
+            return result;
+        }
+
+        public override string VisitMatchExpr(AstMatchExpr expr, int data = 0)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"match {expr.SubExpression.Accept(this)} {{");
+            foreach (var c in expr.Cases)
+            {
+                sb.AppendLine(VisitMatchCase(c).Indent(4));
+            }
+            sb.Append("}");
+
+            return sb.ToString();
+        }
+
         public override string VisitDefaultExpr(AstDefaultExpr expr, int data = 0)
         {
             return "default";

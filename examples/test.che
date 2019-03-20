@@ -1,9 +1,19 @@
-#load("examples/trait_function_call_performance")
-#load("examples/glfw3_example")
-#load("examples/signed_distance_field_renderer")
+// #load("examples/snake/snake.che")
+
+#load("std:io/io")
 
 fn Main() {
-    trait_function_call_performance()
-    glfw3_example()
-    signed_distance_field_renderer()
+    while let i = 0; i < 10; i += 1 {
+        let c = match i {
+            0 -> 1
+            1 -> 2
+            2 -> 3
+            3 -> 4
+            x if x == 4 -> x * 2
+            x if x % 2 == 0 -> x * 3
+            x -> x * 4
+        }
+
+        printf("{} -> {}`n", [i, c])
+    }
 }

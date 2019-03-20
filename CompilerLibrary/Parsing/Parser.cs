@@ -277,9 +277,6 @@ namespace Cheez.Parsing
                 case TokenType.EOF:
                     return (true, null);
 
-                case TokenType.KwMatch:
-                    return (false, ParseMatchStatement());
-
                 case TokenType.KwBreak:
                     NextToken();
                     return (false, new AstBreakStmt(new Location(token.location)));
@@ -410,7 +407,7 @@ namespace Cheez.Parsing
             return new AstTraitDeclaration(name, parameters, functions, new Location(beg, end));
         }
 
-        private AstStatement ParseMatchStatement()
+        private AstExpression ParseMatchExpr()
         {
             TokenLocation beg = null, end = null;
             AstExpression value = null;
@@ -433,15 +430,21 @@ namespace Cheez.Parsing
                     break;
 
                 var v = ParseExpression();
+                SkipNewlines();
+
+                AstExpression cond = null;
+                if (CheckToken(TokenType.KwIf))
+                {
+                    NextToken();
+                    cond = ParseExpression();
+                    SkipNewlines();
+                }
 
                 Consume(TokenType.Arrow, ErrMsg("->", "after value in match case"));
 
-                var s = ParseStatement(false);
-
-                if (s.stmt != null)
-                {
-                    cases.Add(new AstMatchCase(v, s.stmt, new Location(v.Beginning, s.stmt.End)));
-                }
+                SkipNewlines();
+                var body = ParseExpression();
+                cases.Add(new AstMatchCase(v, cond, body, new Location(v.Beginning, body.End)));
 
                 next = PeekToken();
                 if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
@@ -460,7 +463,7 @@ namespace Cheez.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of match statement")).location;
 
-            return new AstMatchStmt(value, cases, Location: new Location(beg, end));
+            return new AstMatchExpr(value, cases, Location: new Location(beg, end));
         }
 
         private AstStatement ParseEnumDeclaration()
@@ -1584,6 +1587,9 @@ namespace Cheez.Parsing
 
                 case TokenType.KwIf:
                     return ParseIfExpr();
+
+                case TokenType.KwMatch:
+                    return ParseMatchExpr();
 
                 case TokenType.OpenParen:
                     return ParseTupleExpression();

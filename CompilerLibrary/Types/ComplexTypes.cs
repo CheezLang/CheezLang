@@ -30,9 +30,20 @@ namespace Cheez.Types.Complex
 
         public CheezType[] Variations { get; }
 
-        public SumType(params CheezType[] vars)
+        private SumType(params CheezType[] vars)
         {
             Variations = vars;
+        }
+
+        public static CheezType GetSumType(params CheezType[] types)
+        {
+            var unique = new HashSet<CheezType>(types);
+            if (unique.Count == 1)
+            {
+                return unique.First();
+            }
+
+            return new SumType(unique.ToArray());
         }
 
         public override string ToString()

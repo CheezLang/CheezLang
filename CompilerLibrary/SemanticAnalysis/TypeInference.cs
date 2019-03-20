@@ -193,8 +193,165 @@ namespace Cheez
                 case AstDefaultExpr def:
                     return InferTypeDefaultExpr(def, expected, context);
 
+                case AstMatchExpr m:
+                    return InferTypeMatchExpr(m, expected, context);
+
                 default:
                     throw new NotImplementedException();
+            }
+        }
+
+        private class Pattern
+        {
+            public enum PatternType
+            {
+                Identifier,
+                NumberLiteral,
+                Tuple
+            }
+
+            public PatternType Type;
+            public Pattern[] SubPatterns;
+
+            public static Pattern Number() => new Pattern { Type = PatternType.NumberLiteral };
+            public static Pattern Identifier() => new Pattern { Type = PatternType.Identifier };
+            public static Pattern Tuple(Pattern[] sub) => new Pattern { Type = PatternType.Tuple, SubPatterns = sub };
+
+            public override bool Equals(object obj)
+            {
+                if (this == obj)
+                    return true;
+
+                if (obj is Pattern p)
+                {
+                    if (Type != p.Type)
+                        return false;
+
+                    if (SubPatterns == null && p.SubPatterns == null)
+                        return true;
+
+                    if (SubPatterns?.Length != p.SubPatterns?.Length)
+                        return false;
+
+                    for (int i = 0; i < SubPatterns.Length; i++)
+                        if (!SubPatterns[i].Equals(p.SubPatterns[i]))
+                            return false;
+                    return true;
+                }
+                return false;
+            }
+
+            public override int GetHashCode()
+            {
+                return 2049151605 + Type.GetHashCode();
+            }
+
+            public override string ToString()
+            {
+                if (SubPatterns == null)
+                    return Type.ToString();
+                return $"{Type}({string.Join(", ", SubPatterns.Select(s => s.ToString()))})";
+            }
+        }
+
+        private AstExpression InferTypeMatchExpr(AstMatchExpr expr, CheezType expected, TypeInferenceContext context)
+        {
+            expr.SubExpression.AttachTo(expr);
+            expr.SubExpression = InferTypeHelper(expr.SubExpression, null, context);
+
+            if (expr.SubExpression.Type.IsErrorType)
+                return expr;
+
+            ConvertLiteralTypeToDefaultType(expr.SubExpression, null);
+            if (expr.SubExpression.Type is ReferenceType)
+                expr.SubExpression = Deref(expr.SubExpression);
+
+            var tmp = new AstTempVarExpr(expr.SubExpression);
+            tmp.AttachTo(expr);
+            expr.SubExpression = InferTypeHelper(tmp, null, context);
+
+            var caseMap = new Dictionary<Pattern, List<AstMatchCase>>();
+
+            foreach (var c in expr.Cases)
+            {
+                c.SubScope = new Scope("case", expr.Scope);
+
+                // TODO: pattern
+                c.Pattern.AttachTo(expr);
+                c.Pattern.Scope = c.SubScope;
+                MatchPatternWithType(c, c.Pattern, expr.SubExpression, caseMap, isTopLevel: true);
+
+                // condition
+                if (c.Condition != null)
+                {
+                    c.Condition.AttachTo(expr);
+                    c.Condition.Scope = c.SubScope;
+                    c.Condition = InferTypeHelper(c.Condition, CheezType.Bool, context);
+                    ConvertLiteralTypeToDefaultType(c.Condition, CheezType.Bool);
+                    if (c.Condition.Type is ReferenceType)
+                        c.Condition = Deref(c.Condition);
+                    c.Condition = CheckType(c.Condition, CheezType.Bool);
+                }
+
+                // body
+                c.Body.AttachTo(expr);
+                c.Body.Scope = c.SubScope;
+                c.Body = InferTypeHelper(c.Body, expected, context);
+                ConvertLiteralTypeToDefaultType(c.Body, expected);
+
+                if (expected != null)
+                {
+                    c.Body = HandleReference(c.Body, expected);
+                    c.Body = CheckType(c.Body, expected);
+                }
+            }
+
+            expr.Type = SumType.GetSumType(expr.Cases.Select(c => c.Body.Type).ToArray());
+            if (caseMap.Count == 1 && caseMap.First().Key.Type == Pattern.PatternType.NumberLiteral && expr.Type is IntType)
+            {
+                expr.IsSimpleIntMatch = true;
+            }
+
+
+            // transform match
+
+
+            return expr;
+        }
+
+        private void MatchPatternWithType(
+            AstMatchCase cas,
+            AstExpression pattern, 
+            AstExpression value, 
+            Dictionary<Pattern, List<AstMatchCase>> caseMap,
+            bool isTopLevel = false)
+        {
+            switch (pattern)
+            {
+                case AstIdExpr id:
+                    {
+                        id.Type = value.Type;
+                        id.Scope.DefineUse(id.Name, value, out var use);
+                        id.Symbol = use;
+                        caseMap.MultiMapInsert(Pattern.Identifier(), cas);
+                        break;
+                    }
+
+                case AstNumberExpr n:
+                    {
+                        InferType(n, value.Type);
+                        ConvertLiteralTypeToDefaultType(n, value.Type);
+
+                        if (n.Type != value.Type)
+                        {
+                            ReportError(pattern, $"Can't match type {value.Type} to pattern '{pattern}'"); break;
+                        }
+
+                        caseMap.MultiMapInsert(Pattern.Number(), cas);
+                        break;
+                    }
+
+                default: ReportError(pattern, $"Can't match type {value.Type} to pattern '{pattern}'"); break;
             }
         }
 
@@ -267,7 +424,7 @@ namespace Cheez
                 for (int i = 0; i < expr.Arguments.Count; i++)
                 {
                     expr.Arguments[i] = HandleReference(expr.Arguments[i], op.ArgTypes[i]);
-                    expr.Arguments[i] = Cast(expr.Arguments[i], op.ArgTypes[i]);
+                    expr.Arguments[i] = CheckType(expr.Arguments[i], op.ArgTypes[i]);
                 }
 
                 expr.ActualOperator = op;
@@ -451,7 +608,7 @@ namespace Cheez
                 }
 
                 expr.Values[i] = HandleReference(expr.Values[i], type);
-                expr.Values[i] = Cast(expr.Values[i], type);
+                expr.Values[i] = CheckType(expr.Values[i], type);
             }
 
             if (type == null)
@@ -622,7 +779,7 @@ namespace Cheez
                 }
                 else
                 {
-                    expr.Type = new SumType(expr.IfCase.Type, expr.ElseCase.Type);
+                    expr.Type = SumType.GetSumType(expr.IfCase.Type, expr.ElseCase.Type);
                 }
 
                 if (expr.IfCase.GetFlag(ExprFlags.Returns) && expr.ElseCase.GetFlag(ExprFlags.Returns))
@@ -1595,7 +1752,7 @@ namespace Cheez
                 a.Expr = HandleReference(a.Expr, p.Type);
                 a.Type = a.Expr.Type;
 
-                a.Expr = Cast(a.Expr, p.Type, $"Type of argument ({a.Type}) does not match type of parameter ({p.Type})");
+                a.Expr = CheckType(a.Expr, p.Type, $"Type of argument ({a.Type}) does not match type of parameter ({p.Type})");
             }
 
             expr.Declaration = instance;
@@ -1636,7 +1793,7 @@ namespace Cheez
                 else
                 {
                     arg.Expr = HandleReference(arg.Expr, type);
-                    arg.Expr = Cast(arg.Expr, type, $"Type of argument ({arg.Expr.Type}) does not match type of parameter ({type})");
+                    arg.Expr = CheckType(arg.Expr, type, $"Type of argument ({arg.Expr.Type}) does not match type of parameter ({type})");
                     arg.Type = arg.Expr.Type;
                 }
             }
@@ -1713,7 +1870,7 @@ namespace Cheez
                     mi.Index = i;
 
                     if (mi.Value.Type.IsErrorType) continue;
-                    mi.Value = Cast(mi.Value, mem.Type);
+                    mi.Value = CheckType(mi.Value, mem.Type);
                 }
             }
             else if (namesProvided == expr.MemberInitializers.Count)
@@ -1739,7 +1896,7 @@ namespace Cheez
                     ConvertLiteralTypeToDefaultType(mi.Value, mem.Type);
 
                     if (mi.Value.Type.IsErrorType) continue;
-                    mi.Value = Cast(mi.Value, mem.Type);
+                    mi.Value = CheckType(mi.Value, mem.Type);
                 }
             }
             else
@@ -1793,7 +1950,7 @@ namespace Cheez
 
                 expr.SubExpr = HandleReference(expr.SubExpr, op.SubExprType);
                 if (!op.SubExprType.IsPolyType)
-                    expr.SubExpr = Cast(expr.SubExpr, op.SubExprType);
+                    expr.SubExpr = CheckType(expr.SubExpr, op.SubExprType);
 
                 if (op is UserDefinedUnaryOperator user)
                 {
@@ -1872,9 +2029,9 @@ namespace Cheez
                 expr.Left = HandleReference(expr.Left, op.LhsType);
                 expr.Right = HandleReference(expr.Right, op.RhsType);
                 if (!op.LhsType.IsPolyType)
-                    expr.Left = Cast(expr.Left, op.LhsType);
+                    expr.Left = CheckType(expr.Left, op.LhsType);
                 if (!op.RhsType.IsPolyType)
-                    expr.Right = Cast(expr.Right, op.RhsType);
+                    expr.Right = CheckType(expr.Right, op.RhsType);
 
                 if (op is UserDefinedBinaryOperator user)
                 {
@@ -2075,7 +2232,7 @@ namespace Cheez
             return InferTypeHelper(deref, null, default);
         }
 
-        private AstExpression Cast(AstExpression expr, CheezType to, string errorMsg = null)
+        private AstExpression CheckType(AstExpression expr, CheezType to, string errorMsg = null)
         {
             if (expr.Type.IsErrorType || to.IsErrorType)
                 return expr;

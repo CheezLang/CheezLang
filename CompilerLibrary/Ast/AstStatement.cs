@@ -233,43 +233,6 @@ namespace Cheez.Ast.Statements
             => CopyValuesTo(new AstUsingStmt(Value.Clone()));
     }
 
-    public class AstMatchCase : ILocation
-    {
-        public ILocation Location { get; private set; }
-        public TokenLocation Beginning => Location?.Beginning;
-        public TokenLocation End => Location?.End;
-        
-        public AstExpression Value { get; set; }
-        public AstStatement Body { get; set; }
-
-        public AstMatchCase(AstExpression value, AstStatement body, ILocation Location = null)
-        {
-            this.Location = Location;
-            this.Value = value;
-            this.Body = body;
-        }
-
-        public AstMatchCase Clone() => new AstMatchCase(Value.Clone(), Body.Clone(), Location);
-    }
-
-    public class AstMatchStmt : AstStatement
-    {
-        public AstExpression Value { get; set; }
-        public List<AstMatchCase> Cases { get; set; }
-
-        public AstMatchStmt(AstExpression value, List<AstMatchCase> cases, List<AstDirective> Directives = null, ILocation Location = null)
-            : base(Directives, Location)
-        {
-            this.Value = value;
-            this.Cases = cases;
-        }
-
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitMatchStmt(this, data);
-
-        public override AstStatement Clone()
-            => CopyValuesTo(new AstMatchStmt(Value.Clone(), Cases.Select(c => c.Clone()).ToList()));
-    }
-
     public class AstBreakStmt : AstStatement
     {
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();

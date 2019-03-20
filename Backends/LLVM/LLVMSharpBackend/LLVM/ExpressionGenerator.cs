@@ -47,6 +47,104 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstUfcFuncExpr ufc: return GenerateUfcFuncExpr(ufc, deref);
                 case AstArrayExpr arr: return GenerateArrayExpr(arr, deref);
                 case AstDefaultExpr def: return GenerateDefaultExpr(def);
+                case AstMatchExpr m: return GenerateMatchExpr(m);
+            }
+            throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GenerateMatchExpr(AstMatchExpr m)
+        {
+            // TODO: check if m can be a simple switch
+            if (m.IsSimpleIntMatch)
+            {
+                var result = CreateLocalVariable(m.Type);
+                var bbElse = currentLLVMFunction.AppendBasicBlock("_switch_else");
+                var cond = GenerateExpression(m.SubExpression, true);
+                var sw = builder.CreateSwitch(cond, bbElse, (uint)m.Cases.Count);
+
+                foreach (var c in m.Cases)
+                {
+                    var patt = GenerateExpression(c.Pattern, true);
+                    var bb = currentLLVMFunction.AppendBasicBlock($"_switch_case_{c.Pattern}");
+
+                    builder.PositionBuilderAtEnd(bb);
+                    var b = GenerateExpression(c.Body, true);
+                    if (c.Body.Type != CheezType.Void)
+                        builder.CreateStore(b, result);
+
+                    builder.CreateBr(bbElse);
+
+                    sw.AddCase(patt, bb);
+                }
+
+                builder.PositionBuilderAtEnd(bbElse);
+
+                result = builder.CreateLoad(result, "");
+                return result;
+            }
+            else
+            {
+                var result = CreateLocalVariable(m.Type);
+                LLVMBasicBlockRef bbElse = currentLLVMFunction.AppendBasicBlock($"_switch_else");
+                LLVMBasicBlockRef bbNext = default;
+                GenerateExpression(m.SubExpression, true);
+
+                foreach (var c in m.Cases)
+                {
+                    var patt = GeneratePatternCondition(c.Pattern, m.SubExpression);
+
+                    if (c.Condition != null)
+                    {
+                        var v = GenerateExpression(c.Condition, true);
+                        patt = builder.CreateAnd(patt, v, "");
+                    }
+
+                    var bb = currentLLVMFunction.AppendBasicBlock($"_switch_case_{c.Pattern}");
+                    bbNext = currentLLVMFunction.AppendBasicBlock($"_switch_next");
+
+                    builder.CreateCondBr(patt, bb, bbNext);
+
+
+                    builder.PositionBuilderAtEnd(bb);
+                    var b = GenerateExpression(c.Body, true);
+                    if (c.Body.Type != CheezType.Void)
+                        builder.CreateStore(b, result);
+
+                    builder.CreateBr(bbElse);
+
+                    builder.PositionBuilderAtEnd(bbNext);
+                }
+
+                builder.CreateBr(bbElse);
+                builder.PositionBuilderAtEnd(bbElse);
+
+                result = builder.CreateLoad(result, "");
+                return result;
+            }
+        }
+
+        private LLVMValueRef GeneratePatternCondition(AstExpression pattern, AstExpression cond)
+        {
+            switch (pattern)
+            {
+                case AstNumberExpr n:
+                    {
+                        var v = GenerateExpression(pattern, true);
+                        var c = GenerateExpression(cond, true);
+                        if (pattern.Type is IntType)
+                            return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, c, v, "");
+                        if (pattern.Type is FloatType)
+                            return builder.CreateFCmp(LLVMRealPredicate.LLVMRealOEQ, c, v, "");
+                        break;
+                    }
+
+                case AstIdExpr n:
+                    {
+                        //var c = GenerateExpression(cond, false);
+                        //var s = valueMap[n.Symbol];
+                        //builder.CreateStore(c, s);
+                        return LLVM.ConstInt(LLVM.Int1Type(), 1, false);
+                    }
             }
             throw new NotImplementedException();
         }

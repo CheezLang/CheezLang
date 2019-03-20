@@ -27,6 +27,14 @@ namespace Cheez.Util
 
     public static class Utilities
     {
+        public static void MultiMapInsert<K, V>(this Dictionary<K, List<V>> map, K key, V value)
+        {
+            if (map.TryGetValue(key, out var l))
+                l.Add(value);
+            else
+                map[key] = new List<V> { value };
+        }
+
         public static int IndexOf<T>(this T[] arr, Predicate<T> pred)
         {
             for (int i = 0; i < arr.Length; i++)

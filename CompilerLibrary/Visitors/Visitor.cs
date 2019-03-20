@@ -17,7 +17,6 @@ namespace Cheez.Visitors
         ReturnType VisitWhileStmt(AstWhileStmt stmt, DataType data = default);
         ReturnType VisitDirectiveStmt(AstDirectiveStatement stmt, DataType data = default);
         ReturnType VisitDeferStmt(AstDeferStmt stmt, DataType data = default);
-        ReturnType VisitMatchStmt(AstMatchStmt stmt, DataType data = default);
         ReturnType VisitBreakStmt(AstBreakStmt stmt, DataType data = default);
         ReturnType VisitContinueStmt(AstContinueStmt stmt, DataType data = default);
         ReturnType VisitReturnStmt(AstReturnStmt stmt, DataType data = default);
@@ -58,6 +57,7 @@ namespace Cheez.Visitors
         ReturnType VisitTupleExpr(AstTupleExpr expr, DataType data = default);
         ReturnType VisitArgumentExpr(AstArgument expr, DataType data = default);
         ReturnType VisitDefaultExpr(AstDefaultExpr expr, DataType data = default);
+        ReturnType VisitMatchExpr(AstMatchExpr expr, DataType data = default);
 
         ReturnType VisitEmptyExpression(AstEmptyExpr expr, DataType data = default);
 
@@ -88,7 +88,6 @@ namespace Cheez.Visitors
         public virtual ReturnType VisitBreakStmt(AstBreakStmt stmt, DataType data = default) => default;
         public virtual ReturnType VisitContinueStmt(AstContinueStmt stmt, DataType data = default) => default;
         public virtual ReturnType VisitExpressionStmt(AstExprStmt stmt, DataType data = default) => default;
-        public virtual ReturnType VisitMatchStmt(AstMatchStmt stmt, DataType data = default) => default;
         public virtual ReturnType VisitDeferStmt(AstDeferStmt stmt, DataType data = default) => default;
         public virtual ReturnType VisitReturnStmt(AstReturnStmt stmt, DataType data = default) => default;
         public virtual ReturnType VisitUsingStmt(AstUsingStmt stmt, DataType data = default) => default;
@@ -128,6 +127,7 @@ namespace Cheez.Visitors
         public virtual ReturnType VisitNumberExpr(AstNumberExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitTupleExpr(AstTupleExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitDefaultExpr(AstDefaultExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitMatchExpr(AstMatchExpr expr, DataType data = default) => default;
 
         public virtual ReturnType VisitEmptyExpression(AstEmptyExpr expr, DataType data = default) => default;
 

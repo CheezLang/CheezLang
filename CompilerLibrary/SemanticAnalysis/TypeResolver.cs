@@ -216,7 +216,7 @@ namespace Cheez
 
                 member.Initializer = InferType(member.Initializer, member.Type);
                 ConvertLiteralTypeToDefaultType(member.Initializer, member.Type);
-                member.Initializer = Cast(member.Initializer, member.Type);
+                member.Initializer = CheckType(member.Initializer, member.Type);
 
                 if (member.Initializer.Type.IsErrorType)
                     continue;

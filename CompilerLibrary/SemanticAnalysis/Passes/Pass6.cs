@@ -99,7 +99,7 @@ namespace Cheez
                     if (v.TypeExpr != null)
                     {
                         v.Initializer = HandleReference(v.Initializer, v.TypeExpr.Type);
-                        v.Initializer = Cast(v.Initializer, v.TypeExpr.Type);
+                        v.Initializer = CheckType(v.Initializer, v.TypeExpr.Type);
                     }
                     else
                     {

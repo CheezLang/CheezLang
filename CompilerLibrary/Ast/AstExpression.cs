@@ -130,6 +130,56 @@ namespace Cheez.Ast.Expressions
         }
     }
 
+    public class AstMatchCase : ILocation
+    {
+        public ILocation Location { get; private set; }
+        public TokenLocation Beginning => Location?.Beginning;
+        public TokenLocation End => Location?.End;
+
+        public AstExpression Pattern { get; set; }
+        public AstExpression Condition { get; set; }
+        public AstExpression Body { get; set; }
+
+        public Scope SubScope { get; set; }
+
+        public AstMatchCase(AstExpression pattern, AstExpression condition, AstExpression body, ILocation Location = null)
+        {
+            this.Location = Location;
+            this.Pattern = pattern;
+            this.Body = body;
+            this.Condition = condition;
+        }
+
+        public AstMatchCase Clone() => new AstMatchCase(Pattern.Clone(), Condition?.Clone(), Body.Clone(), Location);
+
+        public override string ToString()
+        {
+            return new RawAstPrinter(null).VisitMatchCase(this);
+        }
+    }
+
+    public class AstMatchExpr : AstExpression
+    {
+        public AstExpression SubExpression { get; set; }
+        public List<AstMatchCase> Cases { get; set; }
+
+        public override bool IsPolymorphic => false;
+
+        public bool IsSimpleIntMatch { get; internal set; } = false;
+
+        public AstMatchExpr(AstExpression value, List<AstMatchCase> cases, ILocation Location = null)
+            : base(Location)
+        {
+            this.SubExpression = value;
+            this.Cases = cases;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitMatchExpr(this, data);
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstMatchExpr(SubExpression.Clone(), Cases.Select(c => c.Clone()).ToList()));
+    }
+
     public class AstIfExpr : AstNestedExpression
     {
         public AstExpression Condition { get; set; }
