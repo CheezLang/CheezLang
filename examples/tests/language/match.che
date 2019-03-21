@@ -1,0 +1,66 @@
+#test_expect_output("hello world, this is a sentence in lower case letters
+Hello World, This Is A Sentence In Lower Case Letters
+
+one
+even 2
+3")
+
+#load("std:io/io")
+#load("std:mem/allocator")
+
+fn Main() {
+    test1()
+
+    println("")
+    test2()
+}
+
+fn test2() {
+    let x = 1
+    match x {
+        0 -> println("zero")
+        1 -> println("one")
+        $x if x % 2 == 0 -> printf("even {}`n", [x])
+        $z -> println(z)
+    }
+    
+    x = 2
+    match x {
+        0 -> println("zero")
+        1 -> println("one")
+        $x if x % 2 == 0 -> printf("even {}`n", [x])
+        $z -> println(z)
+    }
+    
+    x = 3
+    match x {
+        0 -> println("zero")
+        1 -> println("one")
+        $x if x % 2 == 0 -> printf("even {}`n", [x])
+        $z -> println(z)
+    }
+}
+
+fn test1() {
+    let str = "hello world, this is a sentence in lower case letters"
+
+    let newStr = alloc_n(char, cast str.length)
+
+
+    if str[0] >= 'a' and str[0] <= 'z' {
+        newStr[0] = str[0] - 'a' + 'A'
+    }
+
+    while let i = 1; i < str.length; i += 1 {
+        let c = str[i]
+        c = match (str[i - 1], str[i]) {
+            (' ', $x) if x >= 'a' and x <= 'z' -> x - 'a' + 'A'
+            $x -> x[1]
+        }
+
+        newStr[i] = c
+    }
+
+    println(str)
+    println(newStr)
+}
