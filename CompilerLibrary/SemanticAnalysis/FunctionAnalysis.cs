@@ -518,6 +518,7 @@ namespace Cheez
                     case AstBlockExpr _:
                     case AstCallExpr _:
                     case AstCompCallExpr _:
+                    case AstMatchExpr _:
                         break;
 
                     default:

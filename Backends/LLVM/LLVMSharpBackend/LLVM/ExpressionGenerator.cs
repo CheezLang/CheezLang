@@ -57,7 +57,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // TODO: check if m can be a simple switch
             if (m.IsSimpleIntMatch)
             {
-                var result = CreateLocalVariable(m.Type);
+                LLVMValueRef result = default;
+                if (m.Type != CheezType.Void) result = CreateLocalVariable(m.Type);
                 var bbElse = currentLLVMFunction.AppendBasicBlock("_switch_else");
                 var cond = GenerateExpression(m.SubExpression, true);
                 var sw = builder.CreateSwitch(cond, bbElse, (uint)m.Cases.Count);
@@ -69,7 +70,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                     builder.PositionBuilderAtEnd(bb);
                     var b = GenerateExpression(c.Body, true);
-                    if (c.Body.Type != CheezType.Void)
+                    if (m.Type != CheezType.Void)
                         builder.CreateStore(b, result);
 
                     builder.CreateBr(bbElse);
@@ -79,12 +80,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 builder.PositionBuilderAtEnd(bbElse);
 
-                result = builder.CreateLoad(result, "");
+                if (m.Type != CheezType.Void)
+                    result = builder.CreateLoad(result, "");
                 return result;
             }
             else
             {
-                var result = CreateLocalVariable(m.Type);
+                LLVMValueRef result = default;
+                if (m.Type != CheezType.Void) result = CreateLocalVariable(m.Type);
                 LLVMBasicBlockRef bbElse = currentLLVMFunction.AppendBasicBlock($"_switch_else");
                 LLVMBasicBlockRef bbNext = default;
                 var cond = GenerateExpression(m.SubExpression, true);
@@ -107,7 +110,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                     builder.PositionBuilderAtEnd(bb);
                     var b = GenerateExpression(c.Body, true);
-                    if (c.Body.Type != CheezType.Void)
+                    if (m.Type != CheezType.Void)
                         builder.CreateStore(b, result);
 
                     builder.CreateBr(bbElse);
@@ -118,7 +121,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 builder.CreateBr(bbElse);
                 builder.PositionBuilderAtEnd(bbElse);
 
-                result = builder.CreateLoad(result, "");
+                if (m.Type != CheezType.Void)
+                    result = builder.CreateLoad(result, "");
                 return result;
             }
         }
