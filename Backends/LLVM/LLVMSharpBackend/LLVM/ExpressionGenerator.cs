@@ -87,11 +87,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var result = CreateLocalVariable(m.Type);
                 LLVMBasicBlockRef bbElse = currentLLVMFunction.AppendBasicBlock($"_switch_else");
                 LLVMBasicBlockRef bbNext = default;
-                GenerateExpression(m.SubExpression, true);
+                var cond = GenerateExpression(m.SubExpression, true);
 
                 foreach (var c in m.Cases)
                 {
-                    var patt = GeneratePatternCondition(c.Pattern, m.SubExpression);
+                    var patt = GeneratePatternCondition(c.Pattern, cond);
 
                     if (c.Condition != null)
                     {
@@ -123,26 +123,42 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
-        private LLVMValueRef GeneratePatternCondition(AstExpression pattern, AstExpression cond)
+        private LLVMValueRef GeneratePatternCondition(AstExpression pattern, LLVMValueRef cond)
         {
             switch (pattern)
             {
-                case AstNumberExpr n:
+                case AstTupleExpr t:
+                    {
+                        var result = LLVM.ConstInt(LLVM.Int1Type(), 1, false);
+
+                        for (int i = 0; i < t.Values.Count; i++)
+                        {
+                            var c = builder.CreateExtractValue(cond, (uint)i, "");
+                            var v = GeneratePatternCondition(t.Values[i], c);
+                            result = builder.CreateAnd(result, v, "");
+                        }
+
+                        return result;
+                    }
+
+                case AstNumberExpr _:
                     {
                         var v = GenerateExpression(pattern, true);
-                        var c = GenerateExpression(cond, true);
                         if (pattern.Type is IntType)
-                            return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, c, v, "");
+                            return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, cond, v, "");
                         if (pattern.Type is FloatType)
-                            return builder.CreateFCmp(LLVMRealPredicate.LLVMRealOEQ, c, v, "");
+                            return builder.CreateFCmp(LLVMRealPredicate.LLVMRealOEQ, cond, v, "");
                         break;
+                    }
+
+                case AstCharLiteral _:
+                    {
+                        var v = GenerateExpression(pattern, true);
+                        return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, cond, v, "");
                     }
 
                 case AstIdExpr n:
                     {
-                        //var c = GenerateExpression(cond, false);
-                        //var s = valueMap[n.Symbol];
-                        //builder.CreateStore(c, s);
                         return LLVM.ConstInt(LLVM.Int1Type(), 1, false);
                     }
             }

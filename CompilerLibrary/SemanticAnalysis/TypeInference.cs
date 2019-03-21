@@ -201,59 +201,6 @@ namespace Cheez
             }
         }
 
-        private class Pattern
-        {
-            public enum PatternType
-            {
-                Identifier,
-                NumberLiteral,
-                Tuple
-            }
-
-            public PatternType Type;
-            public Pattern[] SubPatterns;
-
-            public static Pattern Number() => new Pattern { Type = PatternType.NumberLiteral };
-            public static Pattern Identifier() => new Pattern { Type = PatternType.Identifier };
-            public static Pattern Tuple(Pattern[] sub) => new Pattern { Type = PatternType.Tuple, SubPatterns = sub };
-
-            public override bool Equals(object obj)
-            {
-                if (this == obj)
-                    return true;
-
-                if (obj is Pattern p)
-                {
-                    if (Type != p.Type)
-                        return false;
-
-                    if (SubPatterns == null && p.SubPatterns == null)
-                        return true;
-
-                    if (SubPatterns?.Length != p.SubPatterns?.Length)
-                        return false;
-
-                    for (int i = 0; i < SubPatterns.Length; i++)
-                        if (!SubPatterns[i].Equals(p.SubPatterns[i]))
-                            return false;
-                    return true;
-                }
-                return false;
-            }
-
-            public override int GetHashCode()
-            {
-                return 2049151605 + Type.GetHashCode();
-            }
-
-            public override string ToString()
-            {
-                if (SubPatterns == null)
-                    return Type.ToString();
-                return $"{Type}({string.Join(", ", SubPatterns.Select(s => s.ToString()))})";
-            }
-        }
-
         private AstExpression InferTypeMatchExpr(AstMatchExpr expr, CheezType expected, TypeInferenceContext context)
         {
             expr.SubExpression.AttachTo(expr);
@@ -268,9 +215,10 @@ namespace Cheez
 
             var tmp = new AstTempVarExpr(expr.SubExpression);
             tmp.AttachTo(expr);
+            tmp.SetFlag(ExprFlags.IsLValue, true);
             expr.SubExpression = InferTypeHelper(tmp, null, context);
-
-            var caseMap = new Dictionary<Pattern, List<AstMatchCase>>();
+            
+            expr.IsSimpleIntMatch = true;
 
             foreach (var c in expr.Cases)
             {
@@ -279,7 +227,7 @@ namespace Cheez
                 // TODO: pattern
                 c.Pattern.AttachTo(expr);
                 c.Pattern.Scope = c.SubScope;
-                MatchPatternWithType(c, c.Pattern, expr.SubExpression, caseMap, isTopLevel: true);
+                MatchPatternWithType(c, c.Pattern, expr.SubExpression, isTopLevel: true);
 
                 // condition
                 if (c.Condition != null)
@@ -304,37 +252,56 @@ namespace Cheez
                     c.Body = HandleReference(c.Body, expected);
                     c.Body = CheckType(c.Body, expected);
                 }
+
+                if (!(c.Pattern is AstNumberExpr || c.Pattern is AstCharLiteral) || c.Condition != null)
+                    expr.IsSimpleIntMatch = false;
             }
 
             expr.Type = SumType.GetSumType(expr.Cases.Select(c => c.Body.Type).ToArray());
-            if (caseMap.Count == 1 && caseMap.First().Key.Type == Pattern.PatternType.NumberLiteral && expr.Type is IntType)
-            {
-                expr.IsSimpleIntMatch = true;
-            }
+            if (!(expr.Type is IntType || expr.Type is CharType))
+                expr.IsSimpleIntMatch = false;
 
 
             // transform match
-
 
             return expr;
         }
 
         private void MatchPatternWithType(
             AstMatchCase cas,
-            AstExpression pattern, 
-            AstExpression value, 
-            Dictionary<Pattern, List<AstMatchCase>> caseMap,
+            AstExpression pattern,
+            AstExpression value,
             bool isTopLevel = false)
         {
             switch (pattern)
             {
                 case AstIdExpr id:
                     {
-                        id.Type = value.Type;
-                        id.Scope.DefineUse(id.Name, value, out var use);
-                        id.Symbol = use;
-                        caseMap.MultiMapInsert(Pattern.Identifier(), cas);
-                        break;
+                        if (id.IsPolymorphic)
+                        {
+                            id.Type = value.Type;
+                            id.Scope.DefineUse(id.Name, value, out var use);
+                            id.Symbol = use;
+                        }
+                        else
+                        {
+                            InferType(id, value.Type);
+                            if (id.Type != value.Type)
+                                ReportError(pattern, $"Can't match type {value.Type} to pattern '{pattern}'"); break;
+                        }
+                        return;
+                    }
+
+                case AstCharLiteral n:
+                    {
+                        InferType(n, value.Type);
+                        ConvertLiteralTypeToDefaultType(n, value.Type);
+
+                        if (n.Type != value.Type)
+                        {
+                            ReportError(pattern, $"Can't match type {value.Type} to pattern '{pattern}'"); break;
+                        }
+                        return;
                     }
 
                 case AstNumberExpr n:
@@ -346,13 +313,32 @@ namespace Cheez
                         {
                             ReportError(pattern, $"Can't match type {value.Type} to pattern '{pattern}'"); break;
                         }
+                        return;
+                    }
 
-                        caseMap.MultiMapInsert(Pattern.Number(), cas);
+                case AstTupleExpr te:
+                    {
+                        if (value.Type is TupleType tt)
+                        {
+                            if (te.Values.Count != tt.Members.Length)
+                                break;
+                            for (int i = 0; i < tt.Members.Length; i++)
+                            {
+                                var p = te.Values[i];
+                                p.AttachTo(te);
+                                AstExpression v = new AstArrayAccessExpr(value, new AstNumberExpr(i, Location: value.Location), value.Location);
+                                v.AttachTo(value);
+                                v = InferType(v, tt.Members[i].type);
+                                MatchPatternWithType(cas, p, v);
+                            }
+
+                            return;
+                        }
                         break;
                     }
 
-                default: ReportError(pattern, $"Can't match type {value.Type} to pattern '{pattern}'"); break;
             }
+            ReportError(pattern, $"Can't match type {value.Type} to pattern '{pattern}'");
         }
 
         private AstExpression InferTypeDefaultExpr(AstDefaultExpr expr, CheezType expected, TypeInferenceContext context)

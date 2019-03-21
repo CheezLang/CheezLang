@@ -38,6 +38,10 @@ namespace Cheez.Types.Complex
         public static CheezType GetSumType(params CheezType[] types)
         {
             var unique = new HashSet<CheezType>(types);
+
+            if (unique.Any(x => x.IsErrorType))
+                return CheezType.Error;
+
             if (unique.Count == 1)
             {
                 return unique.First();
