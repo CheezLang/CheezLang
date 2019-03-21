@@ -217,9 +217,19 @@ namespace Cheez.Visitors
             return stmt.Expr.Accept(this);
         }
 
+        public string VisitEnumMember(AstEnumMember m)
+        {
+            var str = m.Name.Accept(this);
+            if (m.AssociatedType != null)
+                str += " : " + m.AssociatedType.Accept(this);
+            if (m.Value != null)
+                str += " = " + m.Value.Accept(this);
+            return str;
+        }
+
         public override string VisitEnumDecl(AstEnumDecl en, int data = 0)
         {
-            var body = string.Join("\n", en.Members.Select(m => m.Name.Accept(this)));
+            var body = string.Join("\n", en.Members.Select(m => VisitEnumMember(m)));
             return $"enum {en.Name.Accept(this)} {{\n{body.Indent(4)}\n}}";
         }
 

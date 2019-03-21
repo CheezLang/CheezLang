@@ -1,8 +1,10 @@
 ﻿using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
+using Cheez.Extras;
 using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Cheez.Types.Complex
@@ -67,6 +69,26 @@ namespace Cheez.Types.Complex
         private TupleType((string name, CheezType type)[] members)
         {
             Members = members;
+
+            Size = 0;
+            for (int i = 0; i < Members.Length; i++)
+            {
+                var m = Members[i];
+
+                var ms = m.type.Size;
+                var ma = m.type.Alignment;
+                
+                if (Size % ma != 0)
+                {
+                    var ps = Members[i - 1].type.Size;
+                    var missing = ma / ps;
+                    Size += (missing - 1) * ps;
+                }
+
+                Debug.Assert(Size % ma == 0);
+
+                Size += ms;
+            }
         }
 
         public static TupleType GetTuple((string name, CheezType type)[] members)
@@ -205,30 +227,39 @@ namespace Cheez.Types.Complex
     public class EnumType : CheezType
     {
         public string Name { get; }
-        public Dictionary<string, int> Members { get; }
+        public Dictionary<string, long> Members { get; private set; }
 
         public CheezType MemberType { get; set; }
         public override bool IsErrorType => MemberType.IsErrorType;
 
-        public EnumType(AstEnumDecl en, CheezType memberType = null)
+        public AstEnumDecl Declaration { get; set; }
+
+        public EnumType(AstEnumDecl en)
         {
-            if (memberType == null)
-                memberType = IntType.DefaultType;
-
-            Alignment = memberType.Alignment;
-
             Name = en.Name.Name;
-            Members = new Dictionary<string, int>();
-            MemberType = memberType;
-
-            int value = 0;
-            foreach (var m in en.Members)
-            {
-                Members.Add(m.Name.Name, value++);
-            }
+            Declaration = en;
         }
 
-        public override string ToString() => $"enum {Name}";
+        public void CalculateSize()
+        {
+            Alignment = Declaration.TagType.Alignment;
+            
+            Members = new Dictionary<string, long>();
+            MemberType = Declaration.TagType;
+
+            var maxMemberSize = 0;
+
+            foreach (var m in Declaration.Members)
+            {
+                Members.Add(m.Name.Name, ((NumberData)m.Value.Value).ToLong());
+                if (m.AssociatedType != null)
+                    maxMemberSize = Math.Max(maxMemberSize, ((CheezType)m.AssociatedType.Value).Size);
+            }
+
+            Size = MemberType.Size + maxMemberSize;
+        }
+
+        public override string ToString() => $"{Name}";
         public override bool IsPolyType => false;
     }
 

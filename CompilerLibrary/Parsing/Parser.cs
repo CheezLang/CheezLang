@@ -489,10 +489,31 @@ namespace Cheez.Parsing
                     break;
 
                 var memberName = ParseIdentifierExpr(ErrMsg("identifier", "at enum member"));
+                next = PeekToken();
 
-                members.Add(new AstEnumMember(memberName, null, memberName.Location));
+                AstExpression associatedType = null;
+                AstExpression value = null;
+                TokenLocation e = memberName.End;
+
+                if (next.type == TokenType.Colon)
+                {
+                    NextToken();
+                    SkipNewlines();
+                    associatedType = ParseExpression();
+                    e = associatedType.End;
+                }
 
                 next = PeekToken();
+                if (next.type == TokenType.Equal)
+                {
+                    NextToken();
+                    SkipNewlines();
+                    value = ParseExpression();
+                    e = value.End;
+                }
+
+                members.Add(new AstEnumMember(memberName, associatedType, value, new Location(memberName.Location.Beginning, e)));
+
                 if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
                 {
                     NextToken();

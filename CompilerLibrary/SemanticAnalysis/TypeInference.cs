@@ -356,6 +356,12 @@ namespace Cheez
                 return expr;
             }
 
+            if (expected is EnumType e)
+            {
+                ReportError(expr, $"Can't default initialize an enum");
+                return expr;
+            }
+
             //if (expected is ArrayType a)
             //{
             //    ReportError(expr, $"Can't default initialize an array");
@@ -1353,6 +1359,19 @@ namespace Cheez
                         return InferTypeHelper(ufc, null, context);
                     }
 
+                case CheezTypeType _ when !expr.IsDoubleColon && expr.Left.Value is EnumType @enum:
+                    {
+                        if (@enum.Members.TryGetValue(expr.Right.Name, out var m))
+                        {
+                            expr.Type = @enum;
+                        }
+                        else
+                        {
+                            ReportError(expr, $"Enum {@enum} has no member '{expr.Right}'");
+                        }
+                        break;
+                    }
+
                 case CheezTypeType _ when expr.IsDoubleColon:
                     {
                         var t = expr.Left.Value as CheezType;
@@ -2085,6 +2104,11 @@ namespace Cheez
             {
                 expr.Type = CheezType.Type;
                 expr.Value = str.Type;
+            }
+            else if (sym is AstEnumDecl @enum)
+            {
+                expr.Type = CheezType.Type;
+                expr.Value = @enum.Type;
             }
             else if (sym is AstTraitDeclaration trait)
             {

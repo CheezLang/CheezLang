@@ -1,6 +1,9 @@
-﻿using Cheez.Ast.Statements;
+﻿using Cheez.Ast.Expressions;
+using Cheez.Ast.Statements;
+using Cheez.Extras;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
+using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
 
@@ -12,10 +15,17 @@ namespace Cheez
     public partial class Workspace
     {
         /// <summary>
-        /// pass 3: resolve the types of struct members
+        /// pass 3: resolve the types of struct members, enum members and impl blocks
         /// </summary>
         private void Pass3()
         {
+            // enums
+            foreach (var @enum in mEnums)
+            {
+                Pass3Enum(@enum);
+            }
+
+            // structs
             var newInstances = new List<AstStructDecl>();
 
             newInstances.AddRange(mStructs);
@@ -41,6 +51,55 @@ namespace Cheez
             {
                 Pass3TraitImpl(impl);
             }
+        }
+
+        private void Pass3Enum(AstEnumDecl @enum)
+        {
+            @enum.SubScope = new Scope("enum", @enum.Scope);
+
+            var names = new HashSet<string>();
+
+            @enum.TagType = IntType.DefaultType;
+
+            int value = 0;
+            bool hasAssociatedTypes = false;
+            foreach (var mem in @enum.Members)
+            {
+                if (names.Contains(mem.Name.Name))
+                    ReportError(mem.Name, $"Duplicate enum member '{mem.Name}'");
+
+                if (mem.AssociatedType != null)
+                {
+                    hasAssociatedTypes = true;
+                    mem.AssociatedType.Scope = @enum.SubScope;
+                    mem.AssociatedType = ResolveType(mem.AssociatedType, out var t);
+                }
+
+                if (mem.Value == null)
+                {
+                    mem.Value = new AstNumberExpr(value, Location: mem.Name);
+                }
+
+                mem.Value.Scope = @enum.SubScope;
+                mem.Value = InferType(mem.Value, @enum.TagType);
+                ConvertLiteralTypeToDefaultType(mem.Value, @enum.TagType);
+                if (!mem.Value.IsCompTimeValue || !(mem.Value.Type is IntType))
+                {
+                    ReportError(mem.Value, $"The value of an enum member must be a compile time integer");
+                }
+                else
+                {
+                    value = (int)((NumberData)mem.Value.Value).IntValue + 1;
+                }
+            }
+
+            if (hasAssociatedTypes)
+            {
+                // TODO: check if all values are unique
+            }
+
+            //@enum.Type = new EnumType(@enum);
+            ((EnumType)@enum.Type).CalculateSize();
         }
 
         private void Pass3Trait(AstTraitDeclaration trait)
