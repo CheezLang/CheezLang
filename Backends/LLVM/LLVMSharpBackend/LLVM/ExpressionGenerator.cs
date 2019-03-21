@@ -151,6 +151,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GeneratePatternCondition(AstExpression pattern, LLVMValueRef value)
         {
+            if (pattern.GetFlag(ExprFlags.PatternRefersToReference))
+            {
+                value = builder.CreateLoad(value, "");
+            }
+
             switch (pattern)
             {
                 case AstTupleExpr t:
@@ -193,6 +198,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstEnumValueExpr e:
                     {
                         var tag = LLVM.ConstInt(LLVM.Int64Type(), ((NumberData)e.Member.Value.Value).ToUlong(), true);
+
                         var valueTagPtr = builder.CreateStructGEP(value, 0, "");
                         var valueTag = builder.CreateLoad(valueTagPtr, "");
 

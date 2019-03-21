@@ -246,6 +246,13 @@ namespace Cheez
                     }
                     break;
 
+                case AstDotExpr d:
+                    {
+                        d.Left.Scope = d.Scope;
+                        CollectDependencies(d.Left, deps);
+                        break;
+                    }
+
                 default: throw new NotImplementedException();
             }
         }

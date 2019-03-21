@@ -308,6 +308,11 @@ namespace Cheez
             AstExpression value,
             bool isTopLevel = false)
         {
+            if (value.Type is ReferenceType)
+            {
+                pattern.SetFlag(ExprFlags.PatternRefersToReference, true);
+            }
+
             switch (pattern)
             {
                 case AstIdExpr id:
@@ -360,7 +365,7 @@ namespace Cheez
                                 AstExpression v = new AstArrayAccessExpr(value, new AstNumberExpr(i, Location: value.Location), value.Location);
                                 v.AttachTo(value);
                                 v = InferType(v, tt.Members[i].type);
-                                MatchPatternWithType(cas, p, v);
+                                te.Values[i] = MatchPatternWithType(cas, p, v);
                             }
 
                             return te;

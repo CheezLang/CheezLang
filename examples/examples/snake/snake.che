@@ -6,19 +6,24 @@
 
 #load("quad")
 
-let ACTION_UP    = 0
-let ACTION_RIGHT = 1
-let ACTION_DOWN  = 2
-let ACTION_LEFT  = 3
+enum Direction {
+    None
+    Up
+    Right
+    Down
+    Left
+}
 
-let action = -1
+let action = Direction.None
 
 fn onKeyDown(window: &GLFWwindow, key: i32, scancode: i32, a: i32, mods: i32) {
     if a == GLFW_PRESS {
-        if key == 265 { action = ACTION_UP }
-        if key == 262 { action = ACTION_RIGHT }
-        if key == 264 { action = ACTION_DOWN }
-        if key == 263 { action = ACTION_LEFT }
+        action = match key {
+            265 -> Direction.Up
+            262 -> Direction.Right
+            264 -> Direction.Down
+            263 -> Direction.Left
+        }
     }
 }
 
@@ -31,6 +36,17 @@ let gridSize = 10.0
 
 let width = 640.0
 let height = 480.0
+
+fn action_to_dir(dir: ref Direction, action: Direction) {
+    dir = match (dir, action) {
+        (Direction.Up,      Direction.Down) -> dir
+        (Direction.Right,   Direction.Left) -> dir
+        (Direction.Down,    Direction.Up)   -> dir
+        (Direction.Left,    Direction.Right)-> dir
+        ($x, Direction.None)                -> dir
+        $x -> action
+    }
+}
 
 fn Main()
 {
@@ -87,7 +103,7 @@ fn Main()
         new Vec3{0, 1, 0}
     }
 
-    let dir = 0
+    let dir = Direction.Up
 
     let timer = 0.0
     let fpsTimer = 0.0
@@ -121,15 +137,8 @@ fn Main()
 
         if timer >= timePerStep {
             timer -= timePerStep
-            if action != -1 {
-                if !((dir == 0 and action == 2) or
-                    (dir == 1 and action == 3) or
-                    (dir == 2 and action == 0) or
-                    (dir == 3 and action == 1)) {
-                    dir = action
-                }
-            }
-            action = -1
+            action_to_dir(dir, action)
+            action = Direction.None
 
             // move snake
             while let i = snake.length - 1; i > 0; i -= 1 {
@@ -137,10 +146,13 @@ fn Main()
             }
 
             let head: ref Quad = snake[0]
-            if dir == 0 { head.pos += new Vec2i{0, 1} }
-            if dir == 1 { head.pos += new Vec2i{1, 0} }
-            if dir == 2 { head.pos += new Vec2i{0, -1} }
-            if dir == 3 { head.pos += new Vec2i{-1, 0} }
+
+            head.pos += match dir {
+                Direction.Up    -> new Vec2i{0, 1}
+                Direction.Right -> new Vec2i{1, 0}
+                Direction.Down  -> new Vec2i{0, -1}
+                Direction.Left  -> new Vec2i{-1, 0}
+            }
 
             if head.pos.x < 0 { head.pos.x = xMax - 1 }
             if head.pos.y < 0 { head.pos.y = yMax - 1 }

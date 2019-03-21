@@ -15,7 +15,8 @@ namespace Cheez.Ast.Expressions
     {
         IsLValue = 0,
         Returns = 1,
-        AssignmentTarget = 2
+        AssignmentTarget = 2,
+        PatternRefersToReference = 3
     }
 
     public abstract class AstExpression : IVisitorAcceptor, ILocation, IAstNode
@@ -111,6 +112,7 @@ namespace Cheez.Ast.Expressions
         {
             this.Scope = expr.Scope;
             this.Parent = expr.Parent;
+            this.mFlags = expr.mFlags;
         }
 
         public void AttachTo(AstStatement stmt)

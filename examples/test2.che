@@ -1,47 +1,9 @@
-#load("std:os/windows")
-#load("std:c")
+#load("examples/trait_function_call_performance")
+#load("examples/glfw3_example")
+#load("examples/signed_distance_field_renderer")
 
-fn print_string(str: string) {
-    let bytesWritten: DWORD = 0
-    WriteFile(__std_out_handle, cast str.data, cast str.length, &bytesWritten, null)
-}
-
-fn println(str: string) {
-    let bytesWritten: DWORD = 0
-    WriteFile(__std_out_handle, cast str.data, cast str.length, &bytesWritten, null)
-    WriteFile(__std_out_handle, cast "`n"c, 1, &bytesWritten, null)
-}
-
-fn print_cstring(str: c_string) {
-    let bytesWritten: DWORD = 0
-    let len = c_strlen(str)
-    WriteFile(__std_out_handle, cast str, cast len, &bytesWritten, null)
-}
-
-fn printlnc(str: c_string) {
-    let bytesWritten: DWORD = 0
-    let len = c_strlen(str)
-    WriteFile(__std_out_handle, cast str, cast len, &bytesWritten, null)
-    WriteFile(__std_out_handle, cast "`n"c, 1, &bytesWritten, null)
-}
-
-fn print_number(n: $T) {
-    c_printf("%d`n", n)
-}
-
-fn bool_to_string(b: bool) -> string {
-    return if b { "true" } else { "false" }
-}
-
-fn bool_to_cstring(b: bool) -> c_string {
-    return if b { "true" } else { "false" }
-}
-
-fn alloc($T: type) -> *T {
-    let ptr = c_malloc(@sizeof(T))
-    return cast c_memset(ptr, 0, @sizeof(T))
-}
-
-fn free(ptr: *$T) {
-    c_free(cast ptr)
+fn Main() {
+    trait_function_call_performance()
+    glfw3_example()
+    signed_distance_field_renderer()
 }

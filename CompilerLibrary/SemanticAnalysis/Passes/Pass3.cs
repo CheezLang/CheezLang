@@ -97,6 +97,9 @@ namespace Cheez
                 // TODO: check if all values are unique
             }
 
+            //@enum.Scope.DefineBinaryOperator("==", );
+            //@enum.Scope.DefineBinaryOperator("!=", );
+
             //@enum.Type = new EnumType(@enum);
             ((EnumType)@enum.Type).CalculateSize();
         }
