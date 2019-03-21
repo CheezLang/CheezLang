@@ -229,8 +229,8 @@ namespace Cheez.Types.Complex
         public string Name { get; }
         public Dictionary<string, long> Members { get; private set; }
 
-        public CheezType MemberType { get; set; }
-        public override bool IsErrorType => MemberType.IsErrorType;
+        public CheezType TagType { get; set; }
+        public override bool IsErrorType => TagType.IsErrorType;
 
         public AstEnumDecl Declaration { get; set; }
 
@@ -245,7 +245,7 @@ namespace Cheez.Types.Complex
             Alignment = Declaration.TagType.Alignment;
             
             Members = new Dictionary<string, long>();
-            MemberType = Declaration.TagType;
+            TagType = Declaration.TagType;
 
             var maxMemberSize = 0;
 
@@ -256,7 +256,7 @@ namespace Cheez.Types.Complex
                     maxMemberSize = Math.Max(maxMemberSize, ((CheezType)m.AssociatedType.Value).Size);
             }
 
-            Size = MemberType.Size + maxMemberSize;
+            Size = TagType.Size + maxMemberSize;
         }
 
         public override string ToString() => $"{Name}";

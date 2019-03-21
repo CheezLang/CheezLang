@@ -4,10 +4,41 @@ using Cheez.Types;
 using Cheez.Types.Complex;
 using Cheez.Visitors;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Cheez.Ast.Expressions
 {
+    public class AstEnumValueExpr : AstExpression
+    {
+        public override bool IsPolymorphic => false;
+
+        public EnumType Enum { get; set; }
+        public AstEnumMember Member { get; set; }
+        public AstExpression Argument { get; set; }
+
+        public AstExpression Original { get; }
+
+        public AstEnumValueExpr(AstExpression original, EnumType type, AstEnumMember member, AstExpression arg = null)
+            : base(original.Location)
+        {
+            Member = member;
+            Type = Enum = type;
+            Argument = arg;
+            Original = original;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
+        {
+            return Original.Accept(visitor, data);
+        }
+
+        public override AstExpression Clone()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class AstUfcFuncExpr : AstExpression
     {
         public override bool IsPolymorphic => false;

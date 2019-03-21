@@ -341,6 +341,7 @@ namespace Cheez.Ast.Statements
         public List<AstEnumMember> Members { get; }
 
         public CheezType TagType { get; set; }
+        public bool HasAssociatedTypes { get; set; } = false;
 
         public AstEnumDecl(AstIdExpr name, List<AstEnumMember> members, List<AstDirective> Directive = null, ILocation Location = null)
             : base(name, Directive, Location)

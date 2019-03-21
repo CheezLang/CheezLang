@@ -189,7 +189,26 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case EnumType e:
                     {
-                        return CheezTypeToLLVMType(e.MemberType);
+                        var llvmType = LLVM.StructCreateNamed(context, $"enum.{e.Name}");
+
+                        if (e.Declaration.HasAssociatedTypes)
+                        {
+                            var restSize = e.Size - e.TagType.Size;
+                            llvmType.StructSetBody(new LLVMTypeRef[]
+                            {
+                                CheezTypeToLLVMType(e.TagType),
+                                LLVM.ArrayType(LLVM.Int8Type(), (uint)restSize)
+                            }, false);
+                        }
+                        else
+                        {
+                            llvmType.StructSetBody(new LLVMTypeRef[]
+                            {
+                                CheezTypeToLLVMType(e.TagType)
+                            }, false);
+                        }
+
+                        return llvmType;
                     }
 
                 case StructType s:

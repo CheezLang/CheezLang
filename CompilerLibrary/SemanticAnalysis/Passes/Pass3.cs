@@ -62,7 +62,6 @@ namespace Cheez
             @enum.TagType = IntType.DefaultType;
 
             int value = 0;
-            bool hasAssociatedTypes = false;
             foreach (var mem in @enum.Members)
             {
                 if (names.Contains(mem.Name.Name))
@@ -70,7 +69,7 @@ namespace Cheez
 
                 if (mem.AssociatedType != null)
                 {
-                    hasAssociatedTypes = true;
+                    @enum.HasAssociatedTypes = true;
                     mem.AssociatedType.Scope = @enum.SubScope;
                     mem.AssociatedType = ResolveType(mem.AssociatedType, out var t);
                 }
@@ -93,7 +92,7 @@ namespace Cheez
                 }
             }
 
-            if (hasAssociatedTypes)
+            if (@enum.HasAssociatedTypes)
             {
                 // TODO: check if all values are unique
             }

@@ -495,6 +495,7 @@ namespace Cheez.Parsing
                 AstExpression value = null;
                 TokenLocation e = memberName.End;
 
+                next = PeekToken();
                 if (next.type == TokenType.Colon)
                 {
                     NextToken();
@@ -514,6 +515,7 @@ namespace Cheez.Parsing
 
                 members.Add(new AstEnumMember(memberName, associatedType, value, new Location(memberName.Location.Beginning, e)));
 
+                next = PeekToken();
                 if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
                 {
                     NextToken();

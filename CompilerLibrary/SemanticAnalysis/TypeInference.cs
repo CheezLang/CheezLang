@@ -196,9 +196,44 @@ namespace Cheez
                 case AstMatchExpr m:
                     return InferTypeMatchExpr(m, expected, context);
 
+                case AstEnumValueExpr e:
+                    return InferTypeEnumValueExpr(e, expected, context);
+
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private AstExpression InferTypeEnumValueExpr(AstEnumValueExpr e, CheezType expected, TypeInferenceContext context)
+        {
+            if (e.Argument != null)
+            {
+                if (e.Member.AssociatedType == null)
+                {
+                    ReportError(e, $"The enum member '{e.Member.Name}' does not take an argument");
+                    return e;
+                }
+
+                var at = e.Member.AssociatedType.Value as CheezType;
+
+                e.Argument.AttachTo(e);
+                e.Argument = InferType(e.Argument, at);
+                ConvertLiteralTypeToDefaultType(e.Argument, at);
+                e.Argument = HandleReference(e.Argument, at);
+                e.Argument = CheckType(e.Argument, at);
+            }
+            else
+            {
+                if (e.Member.AssociatedType != null)
+                {
+                    ReportError(e, $"The enum member '{e.Member.Name}' requires an argument of type {e.Member.AssociatedType.Value}");
+                    return e;
+                }
+                // TODO:
+            }
+
+            e.Type = e.Enum;
+            return e;
         }
 
         private AstExpression InferTypeMatchExpr(AstMatchExpr expr, CheezType expected, TypeInferenceContext context)
@@ -227,7 +262,7 @@ namespace Cheez
                 // TODO: pattern
                 c.Pattern.AttachTo(expr);
                 c.Pattern.Scope = c.SubScope;
-                MatchPatternWithType(c, c.Pattern, expr.SubExpression, isTopLevel: true);
+                c.Pattern = MatchPatternWithType(c, c.Pattern, expr.SubExpression, isTopLevel: true);
 
                 // condition
                 if (c.Condition != null)
@@ -267,7 +302,7 @@ namespace Cheez
             return expr;
         }
 
-        private void MatchPatternWithType(
+        private AstExpression MatchPatternWithType(
             AstMatchCase cas,
             AstExpression pattern,
             AstExpression value,
@@ -287,9 +322,9 @@ namespace Cheez
                         {
                             InferType(id, value.Type);
                             if (id.Type != value.Type)
-                                ReportError(pattern, $"Can't match type {value.Type} to pattern '{pattern}'"); break;
+                                break;
                         }
-                        return;
+                        return id;
                     }
 
                 case AstCharLiteral n:
@@ -298,10 +333,8 @@ namespace Cheez
                         ConvertLiteralTypeToDefaultType(n, value.Type);
 
                         if (n.Type != value.Type)
-                        {
-                            ReportError(pattern, $"Can't match type {value.Type} to pattern '{pattern}'"); break;
-                        }
-                        return;
+                            break;
+                        return n;
                     }
 
                 case AstNumberExpr n:
@@ -310,10 +343,8 @@ namespace Cheez
                         ConvertLiteralTypeToDefaultType(n, value.Type);
 
                         if (n.Type != value.Type)
-                        {
-                            ReportError(pattern, $"Can't match type {value.Type} to pattern '{pattern}'"); break;
-                        }
-                        return;
+                            break;
+                        return n;
                     }
 
                 case AstTupleExpr te:
@@ -332,13 +363,59 @@ namespace Cheez
                                 MatchPatternWithType(cas, p, v);
                             }
 
-                            return;
+                            return te;
                         }
                         break;
                     }
 
+                case AstDotExpr dot:
+                    {
+                        var d = InferType(dot, null);
+                        if (d is AstEnumValueExpr e)
+                        {
+                            return d;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                case AstCallExpr call:
+                    {
+                        call.Function.AttachTo(call);
+                        var d = InferType(call.Function, null);
+                        if (d is AstEnumValueExpr e)
+                        {
+                            if (call.Arguments.Count == 1)
+                            { 
+                                e.Argument = call.Arguments[0].Expr;
+                                AstExpression sub = new AstDotExpr(value, new AstIdExpr(e.Member.Name.Name, false), false);
+                                sub.AttachTo(value);
+                                sub = InferType(sub, null);
+                                e.Argument.AttachTo(e);
+                                e.Argument = MatchPatternWithType(cas, e.Argument, sub);
+                            }
+                            else if (call.Arguments.Count > 1)
+                            {
+                                e.Argument = new AstTupleExpr(
+                                    call.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList(),
+                                    call.Location);
+
+                                //e.Argument = MatchPatternWithType(cas, e.Argument, ...);
+                            }
+
+                            return d;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
             }
             ReportError(pattern, $"Can't match type {value.Type} to pattern '{pattern}'");
+            return pattern;
         }
 
         private AstExpression InferTypeDefaultExpr(AstDefaultExpr expr, CheezType expected, TypeInferenceContext context)
@@ -1260,6 +1337,27 @@ namespace Cheez
             var sub = expr.Right.Name;
             switch (expr.Left.Type)
             {
+                case EnumType @enum when !expr.IsDoubleColon:
+                    {
+                        var memName = expr.Right.Name;
+                        var mem = @enum.Declaration.Members.FirstOrDefault(m => m.Name.Name == memName);
+
+                        if (mem == null)
+                        {
+                            ReportError(expr, $"Type {@enum} has no member '{memName}'");
+                            return expr;
+                        }
+
+                        if (mem.AssociatedType == null)
+                        {
+                            ReportError(expr, $"Enum member '{memName}' of enum {@enum} has no associated value");
+                            return expr;
+                        }
+
+                        expr.Type = mem.AssociatedType.Value as CheezType;
+                        break;
+                    }
+
                 case TupleType tuple when !expr.IsDoubleColon:
                     {
                         var memName = expr.Right.Name;
@@ -1364,6 +1462,10 @@ namespace Cheez
                         if (@enum.Members.TryGetValue(expr.Right.Name, out var m))
                         {
                             expr.Type = @enum;
+
+                            var eve = new AstEnumValueExpr(expr, @enum, @enum.Declaration.Members.First(x => x.Name.Name == expr.Right.Name));
+                            eve.Replace(expr);
+                            return eve;
                         }
                         else
                         {
@@ -1485,6 +1587,21 @@ namespace Cheez
                 case GenericFunctionType g:
                     {
                         return InferGenericFunctionCall(g, expr, expected, context);
+                    }
+
+                case EnumType @enum:
+                    {
+                        var e = expr.Function as AstEnumValueExpr;
+                        Debug.Assert(e != null);
+
+                        if (expr.Arguments.Count == 1)
+                            e.Argument = expr.Arguments[0].Expr;
+                        else if (expr.Arguments.Count > 1)
+                        {
+                            var p = expr.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList();
+                            e.Argument = new AstTupleExpr(p, new Location(expr.Arguments));
+                        }
+                        return InferType(e, null);
                     }
 
                 case CheezTypeType type:

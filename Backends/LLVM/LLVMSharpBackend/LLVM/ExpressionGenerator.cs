@@ -48,8 +48,30 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstArrayExpr arr: return GenerateArrayExpr(arr, deref);
                 case AstDefaultExpr def: return GenerateDefaultExpr(def);
                 case AstMatchExpr m: return GenerateMatchExpr(m);
+                case AstEnumValueExpr eve: return GenerateEnumValueExpr(eve);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GenerateEnumValueExpr(AstEnumValueExpr eve)
+        {
+            var v = CreateLocalVariable(eve.Type);
+
+            var ptr = builder.CreateStructGEP(v, 0, "");
+            var val = GenerateExpression(eve.Member.Value, true);
+            builder.CreateStore(val, ptr);
+
+            if (eve.Argument != null)
+            {
+                ptr = builder.CreateStructGEP(v, 1, "");
+                ptr = builder.CreatePointerCast(ptr, CheezTypeToLLVMType(eve.Argument.Type).GetPointerTo(), "");
+
+                val = GenerateExpression(eve.Argument, true);
+                builder.CreateStore(val, ptr);
+            }
+
+            v = builder.CreateLoad(v, "");
+            return v;
         }
 
         private LLVMValueRef GenerateMatchExpr(AstMatchExpr m)
@@ -60,7 +82,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 LLVMValueRef result = default;
                 if (m.Type != CheezType.Void) result = CreateLocalVariable(m.Type);
                 var bbElse = currentLLVMFunction.AppendBasicBlock("_switch_else");
-                var cond = GenerateExpression(m.SubExpression, true);
+                var cond = GenerateExpression(m.SubExpression, false);
                 var sw = builder.CreateSwitch(cond, bbElse, (uint)m.Cases.Count);
 
                 foreach (var c in m.Cases)
@@ -90,7 +112,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 if (m.Type != CheezType.Void) result = CreateLocalVariable(m.Type);
                 LLVMBasicBlockRef bbElse = currentLLVMFunction.AppendBasicBlock($"_switch_else");
                 LLVMBasicBlockRef bbNext = default;
-                var cond = GenerateExpression(m.SubExpression, true);
+                var cond = GenerateExpression(m.SubExpression, false);
 
                 foreach (var c in m.Cases)
                 {
@@ -127,7 +149,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
-        private LLVMValueRef GeneratePatternCondition(AstExpression pattern, LLVMValueRef cond)
+        private LLVMValueRef GeneratePatternCondition(AstExpression pattern, LLVMValueRef value)
         {
             switch (pattern)
             {
@@ -137,7 +159,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                         for (int i = 0; i < t.Values.Count; i++)
                         {
-                            var c = builder.CreateExtractValue(cond, (uint)i, "");
+                            var c = builder.CreateStructGEP(value, (uint)i, "");
                             var v = GeneratePatternCondition(t.Values[i], c);
                             result = builder.CreateAnd(result, v, "");
                         }
@@ -147,24 +169,45 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case AstNumberExpr _:
                     {
+                        value = builder.CreateLoad(value, "");
                         var v = GenerateExpression(pattern, true);
                         if (pattern.Type is IntType)
-                            return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, cond, v, "");
+                            return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, value, v, "");
                         if (pattern.Type is FloatType)
-                            return builder.CreateFCmp(LLVMRealPredicate.LLVMRealOEQ, cond, v, "");
+                            return builder.CreateFCmp(LLVMRealPredicate.LLVMRealOEQ, value, v, "");
                         break;
                     }
 
                 case AstCharLiteral _:
                     {
+                        value = builder.CreateLoad(value, "");
                         var v = GenerateExpression(pattern, true);
-                        return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, cond, v, "");
+                        return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, value, v, "");
                     }
 
                 case AstIdExpr n:
                     {
                         return LLVM.ConstInt(LLVM.Int1Type(), 1, false);
                     }
+
+                case AstEnumValueExpr e:
+                    {
+                        var tag = LLVM.ConstInt(LLVM.Int64Type(), ((NumberData)e.Member.Value.Value).ToUlong(), true);
+                        var valueTagPtr = builder.CreateStructGEP(value, 0, "");
+                        var valueTag = builder.CreateLoad(valueTagPtr, "");
+
+                        var comp1 = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, valueTag, tag, "");
+
+                        if (e.Argument == null)
+                            return comp1;
+
+                        var valPtr = builder.CreateStructGEP(value, 1, "");
+                        valPtr = builder.CreatePointerCast(valPtr, CheezTypeToLLVMType(e.Argument.Type).GetPointerTo(), "");
+                        var comp2 = GeneratePatternCondition(e.Argument, valPtr);
+
+                        return builder.CreateAnd(comp1, comp2, "");
+                    }
+
             }
             throw new NotImplementedException();
         }
@@ -913,6 +956,25 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             switch (type)
             {
+                case EnumType @enum:
+                    {
+                        var memName = expr.Right.Name;
+                        var mem = @enum.Declaration.Members.FirstOrDefault(m => m.Name.Name == memName);
+
+                        var assType = CheezTypeToLLVMType(mem.AssociatedType.Value as CheezType);
+
+                        var subPtr = builder.CreateStructGEP(value, 1, "");
+                        subPtr = builder.CreatePointerCast(subPtr, assType.GetPointerTo(), "");
+
+                        if (deref)
+                        {
+                            var v = builder.CreateLoad(subPtr, "");
+                            return v;
+                        }
+
+                        return subPtr;
+                    }
+
                 case TupleType t:
                     {
                         var index = t.Members.IndexOf(m => m.name == expr.Right.Name);

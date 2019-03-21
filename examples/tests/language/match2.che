@@ -1,0 +1,114 @@
+#test_expect_output("None
+Some 123
+five
+None
+None
+
+None
+Some 1
+Some 2
+five
+Some 7
+ten
+Some 14
+fifteen
+Some 16
+
+Test.A
+Test.B
+Test.C
+Test.D
+Test.E
+Test.F
+Test.D
+Test.H")
+
+#load("std:io/io")
+#load("std:util")
+
+enum OptionInt {
+    Some : i64
+    None
+}
+
+enum Test {
+    A = 10
+    B
+    C = 3
+    D = 7
+    E = 5
+    F
+    G
+    H
+}
+
+fn Main() {
+    {
+        let a = OptionInt.None
+        print_enum(a)
+        
+        a = OptionInt.Some(123)
+        print_enum(a)
+        a.Some = 5
+        print_enum(a)
+        
+        a = OptionInt.None
+        print_enum(a)
+        a.Some = 3
+        print_enum(a)
+
+        println("")
+
+        print_enum(OptionInt.None)
+        print_enum(OptionInt.Some(1))
+        print_enum(OptionInt.Some(2))
+        print_enum(OptionInt.Some(5))
+        print_enum(OptionInt.Some(7))
+        print_enum(OptionInt.Some(10))
+        print_enum(OptionInt.Some(14))
+        print_enum(OptionInt.Some(15))
+        print_enum(OptionInt.Some(16))
+        println("")
+    }
+
+    {
+        print_enum2(Test.A)
+        print_enum2(Test.B)
+        print_enum2(Test.C)
+        print_enum2(Test.D)
+        print_enum2(Test.E)
+        print_enum2(Test.F)
+        print_enum2(Test.G)
+        print_enum2(Test.H)
+    }
+}
+
+fn print_enum2(e: Test) {
+    match e {
+        Test.A -> println("Test.A")
+        Test.B -> println("Test.B")
+        Test.C -> println("Test.C")
+        Test.D -> println("Test.D")
+        Test.E -> println("Test.E")
+        Test.F -> println("Test.F")
+        Test.G -> println("Test.G")
+        Test.H -> println("Test.H")
+    }
+}
+
+fn print_enum(e: OptionInt) {
+    match e {
+        OptionInt.Some(5) -> println("five")
+        OptionInt.Some(10) -> println("ten")
+        OptionInt.Some(15) -> println("fifteen")
+        OptionInt.Some($x) -> printf("Some {}`n", [x])
+        OptionInt.None -> println("None")
+    }
+}
+
+fn print_value(e: $T, $VT: type) {
+    let ptr_raw = cast(&i8)&e
+    let ptr_val_raw = pointer_add(ptr_raw, 8)
+    let ptr_val = cast(&VT)ptr_val_raw
+    println(<<ptr_val)
+}
