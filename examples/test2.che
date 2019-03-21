@@ -1,9 +1,11 @@
 #load("examples/trait_function_call_performance")
 #load("examples/glfw3_example")
 #load("examples/signed_distance_field_renderer")
+#load("examples/snake/snake")
 
 fn Main() {
     trait_function_call_performance()
     glfw3_example()
     signed_distance_field_renderer()
+    snake()
 }

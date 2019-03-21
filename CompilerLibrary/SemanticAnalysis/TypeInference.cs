@@ -325,8 +325,8 @@ namespace Cheez
                         }
                         else
                         {
-                            InferType(id, value.Type);
-                            if (id.Type != value.Type)
+                            //InferType(id, value.Type);
+                            //if (id.Type != value.Type)
                                 break;
                         }
                         return id;

@@ -48,7 +48,7 @@ fn action_to_dir(dir: ref Direction, action: Direction) {
     }
 }
 
-fn Main()
+fn snake()
 {
     if !glfwInit() {
         println("Failed to initialize GLFW")

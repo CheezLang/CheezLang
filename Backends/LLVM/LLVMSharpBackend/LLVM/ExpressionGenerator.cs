@@ -192,7 +192,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case AstIdExpr n:
                     {
-                        return LLVM.ConstInt(LLVM.Int1Type(), 1, false);
+                        if (n.IsPolymorphic)
+                            return LLVM.ConstInt(LLVM.Int1Type(), 1, false);
+                        break;
                     }
 
                 case AstEnumValueExpr e:
