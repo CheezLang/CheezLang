@@ -47,7 +47,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 lfunc.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
 
             // TODO
-            lfunc.AddFunctionAttribute(context, LLVMAttributeKind.NoInline);
+            //lfunc.AddFunctionAttribute(context, LLVMAttributeKind.NoInline);
             lfunc.AddFunctionAttribute(context, LLVMAttributeKind.NoUnwind);
 
             var ccDir = function.GetDirective("stdcall");
