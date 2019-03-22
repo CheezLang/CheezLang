@@ -2,6 +2,8 @@
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Running..."
-    &.\gen\test.exe
+    cd gen
+    &.\test.exe
+    cd ..
     Write-Host "Program exited with code $LASTEXITCODE"
 }
