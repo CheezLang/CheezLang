@@ -378,6 +378,8 @@ namespace Cheez
                         var d = InferType(dot, null);
                         if (d is AstEnumValueExpr e)
                         {
+                            if (e.Type != value.Type)
+                                break;
                             return d;
                         }
                         else
@@ -737,6 +739,9 @@ namespace Cheez
 
             if (cast.SubExpression.Type.IsErrorType || cast.Type.IsErrorType)
                 return cast;
+
+            if (cast.SubExpression.Type == cast.Type)
+                return cast.SubExpression;
 
             cast.SubExpression = HandleReference(cast.SubExpression, cast.Type);
 
@@ -1137,6 +1142,36 @@ namespace Cheez
                         var result = new AstStringLiteral(type.ToString(), Location: expr);
                         result.AttachTo(expr);
                         return InferTypeHelper(result, null, context);
+                    }
+
+                case "alloca":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr, $"@alloca takes two arguments");
+                            return expr;
+                        }
+
+                        var argType = expr.Arguments[0];
+                        argType.AttachTo(expr);
+                        argType = expr.Arguments[0] = InferTypeHelper(argType, CheezType.Type, context);
+
+                        var argSize = expr.Arguments[1];
+                        argSize.AttachTo(expr);
+                        argSize = expr.Arguments[1] = InferTypeHelper(argSize, IntType.DefaultType, context);
+
+                        if (argSize.Type.IsErrorType || argType.Type.IsErrorType)
+                            return expr;
+
+                        if (argType.Type is CheezType)
+                            expr.Type = PointerType.GetPointerType(argType.Value as CheezType);
+                        else
+                            ReportError(argSize, $"Argument must be a type");
+
+                        if (!(argSize.Type is IntType))
+                            ReportError(argSize, $"Argument must be an int but is '{argSize.Type}'");
+
+                        return expr;
                     }
 
                 default: ReportError(expr.Name, $"Unknown intrinsic '{expr.Name.Name}'"); break;

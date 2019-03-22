@@ -25,6 +25,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 LLVM.Int8Type().GetPointerTo(),
                 LLVM.Int64Type(),
                 LLVM.Int1Type());
+
+
+            // :hack
+            // TODO: if a function uses more than 4 kb of stack mem this won't work
+            var __chkstk_ms = GenerateIntrinsicDeclaration("___chkstk_ms", LLVM.VoidType());
+            __chkstk_ms.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
+            var b = new IRBuilder();
+            b.PositionBuilderAtEnd(__chkstk_ms.AppendBasicBlock("entry"));
+            b.CreateRetVoid();
+            b.Dispose();
         }
 
         private LLVMValueRef GenerateIntrinsicDeclaration(string name, LLVMTypeRef retType, params LLVMTypeRef[] paramTypes)

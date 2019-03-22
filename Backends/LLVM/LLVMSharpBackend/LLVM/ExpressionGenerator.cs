@@ -49,7 +49,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstDefaultExpr def: return GenerateDefaultExpr(def);
                 case AstMatchExpr m: return GenerateMatchExpr(m);
                 case AstEnumValueExpr eve: return GenerateEnumValueExpr(eve);
+                case AstCompCallExpr cc: return GenerateCompCallExpr(cc);
             }
+            throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GenerateCompCallExpr(AstCompCallExpr cc)
+        {
+            if (cc.Name.Name == "alloca")
+            {
+                var size = GenerateExpression(cc.Arguments[1], true);
+                var mem = builder.CreateArrayAlloca(LLVM.Int8Type(), size, "");
+                mem.SetAlignment(8);
+                var anyPtr = builder.CreatePointerCast(mem, CheezTypeToLLVMType(cc.Type), "");
+                return anyPtr;
+            }
+
             throw new NotImplementedException();
         }
 

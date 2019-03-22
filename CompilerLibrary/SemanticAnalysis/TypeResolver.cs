@@ -214,6 +214,7 @@ namespace Cheez
                     member.Initializer = new AstDefaultExpr(member.Name.Location);
                 }
 
+                member.Initializer.Scope = @struct.SubScope;
                 member.Initializer = InferType(member.Initializer, member.Type);
                 ConvertLiteralTypeToDefaultType(member.Initializer, member.Type);
                 member.Initializer = CheckType(member.Initializer, member.Type);
@@ -362,7 +363,23 @@ namespace Cheez
                             eq = false;
                             break;
                         }
-
+                        else if (a.value is TupleType t1 && ca.Value.value is TupleType t2 && t1.Members.Length == t2.Members.Length)
+                        {
+                            bool e = true;
+                            for (int i = 0; i < t1.Members.Length; i++)
+                            {
+                                if (t1.Members[i].name != t2.Members[i].name)
+                                {
+                                    e = false;
+                                    break;
+                                }
+                            }
+                            if (!e)
+                            {
+                                eq = false;
+                                break;
+                            }
+                        }
                     }
                     foreach (var pt in polyTypes)
                     {

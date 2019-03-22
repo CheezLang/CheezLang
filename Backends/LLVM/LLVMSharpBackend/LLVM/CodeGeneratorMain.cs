@@ -177,7 +177,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             var pmBuilder = LLVM.PassManagerBuilderCreate();
             LLVM.PassManagerBuilderSetOptLevel(pmBuilder, level);
-            LLVM.PassManagerBuilderUseInlinerWithThreshold(pmBuilder, 100);
+            //LLVM.PassManagerBuilderUseInlinerWithThreshold(pmBuilder, 10);
 
             var funcPM = module.CreateFunctionPassManagerForModule();
             LLVM.PassManagerBuilderPopulateFunctionPassManager(pmBuilder, funcPM);
