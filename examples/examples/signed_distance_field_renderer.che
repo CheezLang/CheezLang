@@ -22,10 +22,7 @@ struct Ray {
     direction: Vec3
 }
 
-struct DistanceShaderPair {
-    distance: double
-    shader: Shader
-}
+typedef DistanceShaderPair = (distance: double, shader: Shader)
 
 ////////////////////////////////// SDF //////////////////////////////////////////////
 
@@ -41,10 +38,7 @@ struct Sphere {
 
 impl SDF for Sphere {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
-        return new {
-            distance = v.mag() - radius
-            shader = shader
-        }
+        return (v.mag() - radius, shader)
     }
 }
 
@@ -55,10 +49,7 @@ struct PlaneY {
 
 impl SDF for PlaneY {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
-        return new {
-            distance = v.y - location
-            shader = shader
-        }
+        return (v.y - location, shader)
     }
 }
 
@@ -109,10 +100,7 @@ impl SDF for Cube {
             d = fmax(dx, fmax(dy, dz))
         }
 
-        return new {
-            distance = d
-            shader = shader
-        }
+        return (d, shader)
     }
 }
 
@@ -126,6 +114,17 @@ struct TranslatedSDF {
 impl SDF for TranslatedSDF {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
         return sdf.distance(v - translation)
+    }
+}
+
+struct ScaledSDF {
+    sdf: SDF
+    scale: Vec3
+}
+
+impl SDF for ScaledSDF {
+    fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
+        return sdf.distance(v / scale)
     }
 }
 
@@ -515,6 +514,13 @@ impl SDFAllocator {
         return cast(SDF) ref <<t
     }
 
+    fn scale(ref Self, sdf: SDF, x: double = 1, y: double = 1, z: double = 1) -> SDF {
+        let t = alloc(ScaledSDF, allocator)
+        t.sdf = sdf
+        t.scale = new {x, y, z}
+        return cast(SDF) ref <<t
+    }
+
     fn add(ref Self, sdf1: SDF, sdf2: SDF) -> SDF {
         let t = alloc(UnionSDF, allocator)
         t.sdf1 = sdf1
@@ -562,7 +568,7 @@ fn renderImage(film: ref Film)
     let sWhite    = new LambertianShader{new Vec3{1, 1, 1}}
     let sBlack    = new LambertianShader{new Vec3{0, 0, 0}}
     let sRed    = new LambertianShader{new Vec3{1, 0, 0}}
-    let sGreen  = new LambertianShader{new Vec3{0, 1, 0}}
+    let sGreen  = new LambertianShader{new Vec3{1, 1, 0}}
     let sBlue   = new LambertianShader{new Vec3{0, 0, 1}}
 
     //
@@ -591,11 +597,13 @@ fn renderImage(film: ref Film)
 
             all.add(sdf, ground)
         }
-        all.translate(sdf, new Vec3{0, 0, -7.5})
+        sdf
     }
+    
+    let finalSDF = all.translate(sdf, new Vec3{0, 0, -7.5})
 
     let raymarcher = new Raymarcher {
-        sdf = sdf
+        sdf = finalSDF
         background = bg
         backgroundDistance = 15
     }
@@ -608,7 +616,7 @@ fn renderImage(film: ref Film)
 fn signed_distance_field_renderer()
 {
     //
-    let scale: int = 1
+    let scale: int = 5
     let width: int = 192 * scale
     let height: int = 128 * scale
     let antiAliasingSteps: int = 1
@@ -627,7 +635,7 @@ fn signed_distance_field_renderer()
     printf("Rendering took {} seconds`n", [dur])
 
     // store image as bmp
-    write_bmp(cast(i32) width, cast(i32) height, cast(&double) imageArr.data.data, "gen/test.bmp")
+    write_bmp(cast(i32) width, cast(i32) height, cast(&double) imageArr.data.data, "img.bmp")
 
     imageArr.free()
 }
