@@ -1,37 +1,104 @@
-#load("../io.che")
+#load("std:io/io")
 
 struct TokenLocation {
-    file: c_string
-    line: i32
-    start: i32
-    end: i32
-}
-
-impl TokenLocation {
-    ref fn clone() -> TokenLocation {
-        return new TokenLocation {
-            file,
-            line,
-            start,
-            end
-        }
-    }
+    file            : string
+    line            : int
+    index           : int
+    end             : int
+    lineStartIndex  : int
 }
 
 struct Token {
-    type: TokenType
+    type: TokenType = TokenType.Unknown
     location: TokenLocation
-
-    data: TokenData
+    suffix: string
+    data: TokenData = TokenData.None
 }
 
-struct TokenData {
-    stringValue: char[]
+enum TokenData {
+    None
+    String : string
 }
 
-impl Token {
-    ref fn print() {
-        printfn("{s}:{i32}: {s}", [ (any)location.file, location.line, type.toString() ])
+
+impl Printable for Token {
+    fn print(ref Self, str: ref String, format: string) {
+        str.appendf("{} ({}:{}:{})", [type, location.file, location.line, location.index - location.lineStartIndex])
+    }
+}
+
+impl Printable for TokenType {
+    fn print(ref Self, str: ref String, format: string) {
+        str += cast(string)match self {
+            TokenType.Unknown -> "Unknown"
+            TokenType.NewLine -> "NewLine"
+            TokenType.EOF -> "EOF"
+            TokenType.StringLiteral -> "StringLiteral"
+            TokenType.CharLiteral -> "CharLiteral"
+            TokenType.NumberLiteral -> "NumberLiteral"
+            TokenType.Identifier -> "Identifier"
+            TokenType.DollarIdentifier -> "DollarIdentifier"
+            TokenType.HashIdentifier -> "HashIdentifier"
+            TokenType.AtSignIdentifier -> "AtSignIdentifier"
+            TokenType.Semicolon -> "Semicolon"
+            TokenType.DoubleColon -> "DoubleColon"
+            TokenType.Colon -> "Colon"
+            TokenType.Comma -> "Comma"
+            TokenType.Period -> "Period"
+            TokenType.Equal -> "Equal"
+            TokenType.Ampersand -> "Ampersand"
+            TokenType.Bang -> "Bang"
+            TokenType.Plus -> "Plus"
+            TokenType.Minus -> "Minus"
+            TokenType.Asterisk -> "Asterisk"
+            TokenType.ForwardSlash -> "ForwardSlash"
+            TokenType.Percent -> "Percent"
+            TokenType.AddEq -> "AddEq"
+            TokenType.SubEq -> "SubEq"
+            TokenType.MulEq -> "MulEq"
+            TokenType.DivEq -> "DivEq"
+            TokenType.ModEq -> "ModEq"
+            TokenType.Less -> "Less"
+            TokenType.LessEqual -> "LessEqual"
+            TokenType.Greater -> "Greater"
+            TokenType.Greater -> "GreaterEqual"
+            TokenType.DoubleEqual -> "DoubleEqual"
+            TokenType.NotEqual -> "NotEqual"
+            TokenType.Arrow -> "Arrow"
+            TokenType.Less -> "LessLess"
+            TokenType.OpenParen -> "OpenParen"
+            TokenType.ClosingParen -> "ClosingParen"
+            TokenType.OpenBrace -> "OpenBrace"
+            TokenType.ClosingBrace -> "ClosingBrace"
+            TokenType.OpenBracket -> "OpenBracket"
+            TokenType.ClosingBracket -> "ClosingBracket"
+            TokenType.KwReturn -> "KwReturn"
+            TokenType.KwNew -> "KwNew"
+            TokenType.KwRef -> "KwRef"
+            TokenType.KwFn -> "KwFn"
+            TokenType.KwStruct -> "KwStruct"
+            TokenType.KwEnum -> "KwEnum"
+            TokenType.KwImpl -> "KwImpl"
+            TokenType.KwConstant -> "KwConstant"
+            TokenType.KwLet -> "KwLet"
+            TokenType.KwTypedef -> "KwTypedef"
+            TokenType.KwIf -> "KwIf"
+            TokenType.KwElse -> "KwElse"
+            TokenType.KwFor -> "KwFor"
+            TokenType.KwWhile -> "KwWhile"
+            TokenType.KwAnd -> "KwAnd"
+            TokenType.KwOr -> "KwOr"
+            TokenType.KwTrue -> "KwTrue"
+            TokenType.KwFalse -> "KwFalse"
+            TokenType.KwNull -> "KwNull"
+            TokenType.KwUsing -> "KwUsing"
+            TokenType.KwDefer -> "KwDefer"
+            TokenType.KwMatch -> "KwMatch"
+            TokenType.KwBreak -> "KwBreak"
+            TokenType.KwContinue -> "KwContinue"
+            TokenType.KwTrait -> "KwTrait"
+            TokenType.KwCast -> "KwCast"
+        }
     }
 }
 
@@ -66,6 +133,12 @@ enum TokenType {
     ForwardSlash,
     Percent,
 
+    AddEq,
+    SubEq,
+    MulEq,
+    DivEq,
+    ModEq,
+
     Less,
     LessEqual,
     Greater,
@@ -74,6 +147,7 @@ enum TokenType {
     NotEqual,
 
     Arrow,
+    LessLess,
 
     OpenParen,
     ClosingParen,
@@ -93,6 +167,7 @@ enum TokenType {
     KwImpl,
     KwConstant,
     KwLet,
+    KwTypedef,
     KwIf,
     KwElse,
     KwFor,
@@ -104,70 +179,9 @@ enum TokenType {
     KwNull,
     KwUsing,
     KwDefer,
-    KwMatch
-}
-
-impl TokenType {
-    fn toString() -> c_string {
-        match self {
-            TokenType.Unknown -> return "Unknown",
-            TokenType.NewLine -> return "NewLine",
-            TokenType.EOF -> return "EOF",
-            TokenType.StringLiteral -> return "StringLiteral",
-            TokenType.CharLiteral -> return "CharLiteral",
-            TokenType.NumberLiteral -> return "NumberLiteral",
-            TokenType.Identifier -> return "Identifier",
-            TokenType.DollarIdentifier -> return "DollarIdentifier",
-            TokenType.HashIdentifier -> return "HashIdentifier",
-            TokenType.AtSignIdentifier -> return "AtSignIdentifier",
-            TokenType.Semicolon -> return "Semicolon",
-            TokenType.DoubleColon -> return "DoubleColon",
-            TokenType.Colon -> return "Colon",
-            TokenType.Comma -> return "Comma",
-            TokenType.Period -> return "Period",
-            TokenType.Equal -> return "Equal",
-            TokenType.Ampersand -> return "Ampersand",
-            TokenType.Bang -> return "Bang",
-            TokenType.Plus -> return "Plus",
-            TokenType.Minus -> return "Minus",
-            TokenType.Asterisk -> return "Asterisk",
-            TokenType.ForwardSlash -> return "ForwardSlash",
-            TokenType.Percent -> return "Percent",
-            TokenType.Less -> return "Less",
-            TokenType.LessEqual -> return "LessEqual",
-            TokenType.Greater -> return "Greater",
-            TokenType.GreaterEqual -> return "GreaterEqual",
-            TokenType.DoubleEqual -> return "DoubleEqual",
-            TokenType.NotEqual -> return "NotEqual",
-            TokenType.Arrow -> return "Arrow",
-            TokenType.OpenParen -> return "OpenParen",
-            TokenType.ClosingParen -> return "ClosingParen",
-            TokenType.OpenBrace -> return "OpenBrace",
-            TokenType.ClosingBrace -> return "ClosingBrace",
-            TokenType.OpenBracket -> return "OpenBracket",
-            TokenType.ClosingBracket -> return "ClosingBracket",
-            TokenType.KwReturn -> return "KwReturn",
-            TokenType.KwNew -> return "KwNew",
-            TokenType.KwRef -> return "KwRef",
-            TokenType.KwFn -> return "KwFn",
-            TokenType.KwStruct -> return "KwStruct",
-            TokenType.KwEnum -> return "KwEnum",
-            TokenType.KwImpl -> return "KwImpl",
-            TokenType.KwConstant -> return "KwConstant",
-            TokenType.KwLet -> return "KwLet",
-            TokenType.KwIf -> return "KwIf",
-            TokenType.KwElse -> return "KwElse",
-            TokenType.KwFor -> return "KwFor",
-            TokenType.KwWhile -> return "KwWhile",
-            TokenType.KwAnd -> return "KwAnd",
-            TokenType.KwOr -> return "KwOr",
-            TokenType.KwTrue -> return "KwTrue",
-            TokenType.KwFalse -> return "KwFalse",
-            TokenType.KwNull -> return "KwNull",
-            TokenType.KwUsing -> return "KwUsing",
-            TokenType.KwDefer -> return "KwDefer",
-            TokenType.KwMatch -> return "KwMatch",
-        }
-        return "UNKNOWN"
-    }
+    KwMatch,
+    KwBreak,
+    KwContinue,
+    KwTrait,
+    KwCast
 }

@@ -1,11 +1,14 @@
-#load("../c_string.che")
 #load("token.che")
+
+enum OptionalToken {
+    Some : Token
+    None
+}
 
 struct Lexer {
     text: String
     location: TokenLocation
-    peek: Token
-    hasPeeked: bool
+    peek: OptionalToken
 }
 
 fn isIdentBegin(c: char) -> bool {    
@@ -17,6 +20,10 @@ fn isIdentChar(c: char) -> bool {
 }
 
 impl Lexer {
+    fn from_file(filename: string) -> Self {
+        
+    }
+
     ref fn init(filename: c_string) -> bool {
         text = newString()
         if loadFile(filename, &text) == false { return false }
