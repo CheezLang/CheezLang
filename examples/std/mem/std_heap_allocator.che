@@ -7,11 +7,11 @@ struct StdHeapAllocator {
 
 impl Allocator for StdHeapAllocator {
     fn allocate(ref Self, count: uint, elementSize: uint, alignment: uint) -> &any {
-        return c_malloc(cast(i32) (count * elementSize))
+        return c_malloc(cast(uint) (count * elementSize))
     }
 
     fn reallocate(ref Self, mem: &any, count: uint, elementSize: uint, alignment: uint) -> &any {
-        return c_realloc(mem, cast(i32) (count * elementSize))
+        return c_realloc(mem, cast(uint) (count * elementSize))
     }
 
     fn free(ref Self, mem: &any) {

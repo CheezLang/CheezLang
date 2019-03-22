@@ -1,6 +1,7 @@
-fn c_malloc(size: i32) -> &any #linkname("malloc");
-fn c_realloc(mem: &any, size: i32) -> &any #linkname("realloc");
+fn c_alloca(size: uint) -> &any #linkname("alloca");
+fn c_malloc(size: uint) -> &any #linkname("malloc");
+fn c_realloc(mem: &any, size: uint) -> &any #linkname("realloc");
 fn c_free(mem: &any) #linkname("free");
 
-fn c_memcpy(dest: &any, src: &any, size: i32) #linkname("memcpy");
-fn c_memset(mem: &any, value: i32, num: u64) -> &any #linkname("memset");
+fn c_memcpy(dest: &any, src: &any, size: uint) #linkname("memcpy");
+fn c_memset(mem: &any, value: i32, num: uint) -> &any #linkname("memset");

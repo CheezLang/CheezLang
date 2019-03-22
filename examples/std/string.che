@@ -60,10 +60,10 @@ impl StringBase($CharType) {
         data.length = size
         if data.data == null {
             length = 0
-            data.data = cast c_malloc(cast(i32) (size * @sizeof(CharType)))
+            data.data = cast c_malloc(cast(uint) (size * @sizeof(CharType)))
         }
         else {
-            data.data = cast c_realloc(cast data.data, cast(i32) (size * @sizeof(CharType)))
+            data.data = cast c_realloc(cast data.data, cast(uint) (size * @sizeof(CharType)))
             if length > data.length {
                 length = data.length
             }
@@ -78,7 +78,7 @@ impl StringBase($CharType) {
     fn append(ref Self, other: ref Self) -> ref Self #operator("+=") {
         let newLength = length + other.length
         self.reserve(newLength)
-        c_memcpy(cast &data.data[length], cast other.data.data, cast(i32) (other.length * @sizeof(CharType)))
+        c_memcpy(cast &data.data[length], cast other.data.data, cast(uint) (other.length * @sizeof(CharType)))
         length = newLength
         return self
     }

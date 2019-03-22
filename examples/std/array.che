@@ -22,7 +22,7 @@ impl Array($T) {
         }
 
         data.length = size
-        data.data = cast c_realloc(cast data.data, cast(i32) (size * @sizeof(T)))
+        data.data = cast c_realloc(cast data.data, cast(uint) (size * @sizeof(T)))
 
         if size > length {
             c_memset(cast &data[length], 0, cast(uint) ((size - length) * @sizeof(T)))

@@ -2,6 +2,7 @@
 #load("std:mem/std_heap_allocator")
 #load("std:array")
 #load("std:util")
+#load("std:printable")
 
 fn nextAligned(_add: &$T, align: u64) -> &T {
     let add = cast(u64) _add
@@ -165,7 +166,7 @@ impl Allocator for StackAllocator {
             return mem
         } else {
             let newMem = self.allocate(count, elementSize, 8)
-            c_memcpy(newMem, mem, cast(i32) size)
+            c_memcpy(newMem, mem, cast(uint) size)
             return newMem
         }
     }
