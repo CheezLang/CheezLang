@@ -139,6 +139,7 @@ namespace Cheez.Types.Complex
 
         public StructType(AstStructDecl decl, CheezType[] args = null)
         {
+            Size = -1;
             Declaration = decl;
             Arguments = args ?? decl.Parameters.Select(p => p.Value as CheezType).ToArray();
         }
@@ -236,6 +237,7 @@ namespace Cheez.Types.Complex
 
         public EnumType(AstEnumDecl en)
         {
+            Size = -1;
             Name = en.Name.Name;
             Declaration = en;
         }
@@ -243,9 +245,9 @@ namespace Cheez.Types.Complex
         public void CalculateSize()
         {
             Alignment = Declaration.TagType.Alignment;
-            
-            Members = new Dictionary<string, long>();
+
             TagType = Declaration.TagType;
+            Members = new Dictionary<string, long>();
 
             var maxMemberSize = 0;
 

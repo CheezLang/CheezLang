@@ -6,6 +6,7 @@ using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cheez
 {
@@ -38,6 +39,9 @@ namespace Cheez
             ResolveStructs(new List<AstStructDecl>(newInstances));
             ResolveStructMembers(newInstances);
 
+            // calculate sizes of types (enums and structs)
+            CalculateEnumAndStructSizes();
+
             // impls
             foreach (var trait in mTraits)
             {
@@ -50,6 +54,70 @@ namespace Cheez
             foreach (var impl in mTraitImpls)
             {
                 Pass3TraitImpl(impl);
+            }
+        }
+
+        private void CalculateSizeOfDecl(AstDecl decl, HashSet<AstDecl> done, HashSet<AstDecl> path)
+        {
+            if (done.Contains(decl))
+                return;
+
+            if (path.Contains(decl))
+            {
+                ReportError(decl.Name, $"Failed to calculate the size of {decl.Name}");
+                path.Remove(decl);
+                done.Add(decl);
+                return;
+            }
+
+            path.Add(decl);
+
+            if (decl is AstEnumDecl @enum)
+            {
+                foreach (var em in @enum.Members)
+                {
+                    if (em.AssociatedType != null)
+                    {
+                        if (em.AssociatedType.Value is StructType s)
+                            CalculateSizeOfDecl(s.Declaration, done, path);
+                        else if (em.AssociatedType.Value is EnumType e)
+                            CalculateSizeOfDecl(e.Declaration, done, path);
+                    }
+                }
+
+                ((EnumType)@enum.Type).CalculateSize();
+            }
+            else if (decl is AstStructDecl @struct)
+            {
+                foreach (var em in @struct.Members)
+                {
+                    if (em.Type is StructType s)
+                        CalculateSizeOfDecl(s.Declaration, done, path);
+                    else if (em.Type is EnumType e)
+                        CalculateSizeOfDecl(e.Declaration, done, path);
+                }
+
+                ((StructType)@struct.Type).CalculateSize();
+            }
+
+            path.Remove(decl);
+            done.Add(decl);
+        }
+
+        private void CalculateEnumAndStructSizes()
+        {
+            // detect cycles
+            var whiteSet = new HashSet<AstDecl>();
+
+            whiteSet.UnionWith(mEnums);
+            whiteSet.UnionWith(mStructs);
+            whiteSet.UnionWith(mPolyStructs.SelectMany(ps => ps.PolymorphicInstances));
+
+
+            var done = new HashSet<AstDecl>();
+            foreach (var decl in whiteSet)
+            {
+                CalculateSizeOfDecl(decl, done, new HashSet<AstDecl>());
             }
         }
 
@@ -100,7 +168,6 @@ namespace Cheez
             //@enum.Scope.DefineBinaryOperator("==", );
             //@enum.Scope.DefineBinaryOperator("!=", );
 
-            //@enum.Type = new EnumType(@enum);
             ((EnumType)@enum.Type).CalculateSize();
         }
 

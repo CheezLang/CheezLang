@@ -242,7 +242,7 @@ namespace Cheez
                 member.Type = t;
             }
 
-            ((StructType)@struct.Type).CalculateSize();
+           ((StructType)@struct.Type).CalculateSize();
         }
 
         private void ResolveStructs(List<AstStructDecl> newInstances)
