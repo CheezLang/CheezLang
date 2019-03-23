@@ -166,6 +166,7 @@ xcopy $(TargetDir)$(TargetName).pdb $(SolutionDir) /F /Y</Command>
     <ClCompile Include="src\target_machine.cpp" />
     <ClCompile Include="src\types.cpp" />
     <ClCompile Include="src\value.cpp" />
+    <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h" />
