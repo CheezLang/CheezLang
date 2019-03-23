@@ -146,9 +146,22 @@ impl PixelGameEngine {
     }
 }
 
+let pixel_game_engine_ptr: &PixelGameEngine = null
 fn olc_window_event(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT #stdcall {
     match msg {
-        0x0002 -> PostQuitMessage(0) // destroy
+        WM_DESTROY -> PostQuitMessage(0)
+
+        WM_MOUSEMOVE -> {
+            let x = cast(i16) @bin_and(lparam, 0xFFFF)
+            let y = cast(i16) @bin_and(@bin_lsr(lparam, 16), 0xFFFF)
+            pixel_game_engine_ptr.olc_update_mouse(x, y)
+        }
+
+        WM_SIZE -> {
+            let x = cast(i16) @bin_and(lparam, 0xFFFF)
+            let y = cast(i16) @bin_and(@bin_lsr(lparam, 16), 0xFFFF)
+            pixel_game_engine_ptr.olc_update_window_size(x, y)
+        }
     }
 
     return DefWindowProcA(hwnd, msg, wparam, lparam)

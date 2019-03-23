@@ -48,9 +48,13 @@ let CS_OWNDC            : UINT  = 0x0020
 let WS_EX_APPWINDOW     : DWORD = 0x00040000
 let WS_EX_WINDOWEDGE    : DWORD = 0x00000100
 
-let WS_SYSMENU          : DWORD = 0x00080000
-let WS_CAPTION          : DWORD = 0x00C00000
-let WS_VISIBLE          : DWORD = 0x10000000
+let const WS_SYSMENU    : DWORD = 0x00080000
+let const WS_CAPTION    : DWORD = 0x00C00000
+let const WS_VISIBLE    : DWORD = 0x10000000
+
+let const WM_DESTROY    : UINT  = 0x0002
+let const WM_MOUSEMOVE  : UINT  = 0x0200
+let const WM_SIZE       : UINT  = 0x0005
 
 fn MAKEINTRESOURCE(i: uint) -> &char {
     return cast(&char) cast(u32) cast(u16)i

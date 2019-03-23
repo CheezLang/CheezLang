@@ -15,18 +15,24 @@ enum OptionPGE {
 struct PixelGameEngine {
     game: Game
 
-    screen_width: int
-    screen_height: int
-    pixel_width: int
-    pixel_height: int
-    pixel_x: float = 1.0f
-    pixel_y: float = 1.0f
 
     default_draw_target: &Sprite = null
     draw_target: &Sprite = null
 
     // windows specific
     olc_hWnd: HWND = null
+
+    // other stuff
+    nMousePosXcache: int
+    nMousePosYcache: int
+    window_width: int = -1
+    window_height: int = -1
+    screen_width: int
+    screen_height: int
+    pixel_width: int
+    pixel_height: int
+    pixel_x: float = 1.0f
+    pixel_y: float = 1.0f
 }
 
 impl PixelGameEngine {
@@ -59,6 +65,8 @@ impl PixelGameEngine {
     }
 
     fn start(ref Self) {
+        pixel_game_engine_ptr = &self
+
         let wnd = self.olc_window_create()
         if wnd == null {
             return
@@ -76,6 +84,23 @@ impl PixelGameEngine {
 
     fn set_draw_target(ref Self, target: &Sprite) {
         draw_target = if target == null { default_draw_target } else { target }
+    }
+
+    //
+    fn olc_update_window_size(ref Self, x: int, y: int) {
+        window_width = x
+        window_height = y
+    }
+    
+    fn olc_update_mouse(ref Self, x: int, y: int) {
+        nMousePosXcache = cast(int) (cast(float)x) / (cast(float) window_width) * (cast(float)screen_width)
+        nMousePosYcache = cast(int) (cast(float)y) / (cast(float) window_height) * (cast(float)screen_height)
+
+        if nMousePosXcache >= screen_width { nMousePosXcache = screen_width - 1 }
+        if nMousePosYcache >= screen_height { nMousePosYcache = screen_height - 1 }
+
+        if nMousePosXcache < 0 { nMousePosXcache = 0 }
+        if nMousePosYcache < 0 { nMousePosYcache = 0 }
     }
 
     // hardware interfaces
