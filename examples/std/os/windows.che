@@ -4,11 +4,24 @@ let __std_err_handle = GetStdHandle(-12)
 
 typedef DWORD           = u32
 typedef HANDLE          = &any
+typedef HWND            = HANDLE
+typedef HINSTANCE       = HANDLE
+typedef HMODULE         = HANDLE
+typedef HICON           = HANDLE
+typedef HMENU           = HANDLE
+typedef HCURSOR         = HICON
+typedef HBRUSH          = HANDLE
 typedef HFILE           = i32
 typedef BOOL            = i32
 typedef UINT            = u32
 typedef LONGLONG        = i64
 typedef LARGE_INTEGER   = LONGLONG
+typedef UINT_PTR        = u64
+typedef LONG_PTR        = i64
+typedef WPARAM          = UINT_PTR
+typedef LPARAM          = LONG_PTR
+typedef LRESULT         = LONG_PTR
+typedef ATOM            = u16
 
 let GENERIC_READ        : DWORD = 0x80000000
 let GENERIC_WRITE       : DWORD = 0x40000000
@@ -25,6 +38,24 @@ let TRUNCATE_EXISTING   : DWORD = 5
 
 let FILE_ATTRIBUTE_NORMAL : DWORD = 0x80
 
+let IDI_APPLICATION     = MAKEINTRESOURCE(32512)
+let IDC_ARROW           = MAKEINTRESOURCE(32512)
+
+let CS_VREDRAW          : UINT  = 0x0001
+let CS_HREDRAW          : UINT  = 0x0002
+let CS_OWNDC            : UINT  = 0x0020
+
+let WS_EX_APPWINDOW     : DWORD = 0x00040000
+let WS_EX_WINDOWEDGE    : DWORD = 0x00000100
+
+let WS_SYSMENU          : DWORD = 0x00080000
+let WS_CAPTION          : DWORD = 0x00C00000
+let WS_VISIBLE          : DWORD = 0x10000000
+
+fn MAKEINTRESOURCE(i: uint) -> &char {
+    return cast(&char) cast(u32) cast(u16)i
+}
+
 fn GetLastError() -> DWORD #stdcall;
 
 fn GetStdHandle(nStdHandle: DWORD) -> HANDLE #stdcall;
@@ -36,8 +67,56 @@ fn CloseHandle(hObject: HANDLE) -> BOOL #stdcall;
 fn GetFileSize(hFile: HANDLE, lpFileSizeHigh: &DWORD) -> DWORD #stdcall;
 fn GetFileSizeEx(hFile: HANDLE, lpFileSize: &LARGE_INTEGER) -> BOOL #stdcall;
 
+fn GetMessageA(lpMsg: &MSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT) -> BOOL #stdcall;
+fn TranslateMessage(lpMsg: &MSG) -> BOOL #stdcall;
+fn DispatchMessageA(lpMsg: &MSG) -> LRESULT #stdcall;
+fn LoadIconA(hInstance: HINSTANCE, lpIconName: c_string) -> HICON #stdcall;
+fn LoadCursorA(hInstance: HINSTANCE, lpIconName: c_string) -> HCURSOR #stdcall;
+fn GetModuleHandleA(lpModuleName: c_string) -> HMODULE #stdcall;
+fn DefWindowProcA(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT #stdcall;
+fn RegisterClassA(wndClass: &WNDCLASSA) -> ATOM #stdcall;
+fn AdjustWindowRectEx(lpRect: &RECT, dwStyle: DWORD, bMenu: BOOL, dwExStyle: DWORD) -> BOOL #stdcall;
+fn CreateWindowExA(dwExStyle: DWORD, lpClassNa: c_string, lpWindowName : c_string, dwSty: DWORD, X: i32, Y: i32, nWidt: i32, nHeig: i32, hWndParen: HWND, hMenu: HMENU, hInstance: HINSTANCE, lpPar: &any) -> HWND #stdcall;
+fn PostQuitMessage(exitCode: i32) #stdcall;
 // somehow not linking
 // fn GetCurrentDirectory(nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;
 
 fn QueryPerformanceCounter(lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
 fn QueryPerformanceFrequency(lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
+
+struct POINT {
+    x: i32
+    y: i32
+}
+
+struct MSG {
+    hwnd        : HWND
+    message     : UINT
+    wParam      : WPARAM
+    lParam      : LPARAM
+    time        : DWORD
+    pt          : POINT
+    lPrivate    : DWORD
+}
+
+struct RECT {
+    left    : i32
+    top     : i32
+    right   : i32
+    bottom  : i32
+}
+
+struct WNDCLASSA {
+    style           : UINT
+    lpfnWndProc     : fn(HWND, UINT, WPARAM, LPARAM) -> LRESULT {}
+    cbClsExtra      : i32
+    cbWndExtra      : i32
+    hInstance       : HINSTANCE
+    hIcon           : HICON
+    hCursor         : HCURSOR
+    hbrBackground   : HBRUSH
+    lpszMenuName    : c_string
+    lpszClassName   : c_string
+}
+
+typedef WNDCLASS = WNDCLASSA

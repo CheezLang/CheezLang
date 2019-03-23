@@ -1,0 +1,29 @@
+#load("std:printable")
+
+struct Pixel {
+    r: u8
+    g: u8
+    b: u8
+    a: u8 = 255
+}
+
+impl Pixel {
+    fn rgba(r: u8, g: u8, b: u8, a: u8 = 255) -> Self {
+        return new Pixel{r, g, b, a}
+    }
+}
+
+impl Printable for Pixel {
+    fn print(ref Self, str: ref String, fmt: string) { 
+        str.appendf("({}, {}, {}, {})", [r, g, b, a])
+    }
+}
+
+enum PixelMode {
+    Normal
+    Mask
+    Alpha
+    Custom
+}
+
+let WHITE = Pixel::rgba(255, 255, 255)

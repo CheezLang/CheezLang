@@ -1,7 +1,23 @@
 #load("std:os/windows")
 #load("std:string")
 
-fn load_file(filename: c_string) -> (ok: bool, content: String) {
+enum OptionFile {
+    Some : String
+    None
+}
+
+fn load_file(filename: string) -> OptionFile {
+    let str_c = @alloca(char, filename.length + 1)
+    str_c[filename.length] = cast 0
+    c_memcpy(cast str_c, cast filename.data, cast filename.length)
+    if let (ok, content) = load_filec(str_c); ok {
+        return OptionFile.Some(content)
+    } else {
+        return OptionFile.None
+    }
+}
+
+fn load_filec(filename: c_string) -> (ok: bool, content: String) {
     content = String::empty()
     ok = false
 

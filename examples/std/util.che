@@ -1,11 +1,11 @@
 #load("std:os/windows")
 
 fn pointer_add_sized(ptr: &$T, amount: int) -> &T {
-    return cast(&T)(cast(int) ptr + amount * @sizeof(T))
+    return cast(&T)((cast(int) ptr) + amount * @sizeof(T))
 }
 
 fn pointer_add(ptr: &$T, amount: int) -> &T {
-    return cast(&T)(cast(int) ptr + amount)
+    return cast(&T)((cast(int) ptr) + amount)
 }
 
 fn getCurrentTimeInMicroseconds() -> int {

@@ -1,0 +1,101 @@
+#load("pixel.che")
+#load("key.che")
+#load("sprite.che")
+#load("olc_win.che")
+
+trait Game {
+
+}
+
+enum OptionPGE {
+    Some: PixelGameEngine
+    None
+}
+
+struct PixelGameEngine {
+    game: Game
+
+    screen_width: int
+    screen_height: int
+    pixel_width: int
+    pixel_height: int
+    pixel_x: float = 1.0f
+    pixel_y: float = 1.0f
+
+    default_draw_target: &Sprite = null
+    draw_target: &Sprite = null
+
+    // windows specific
+    olc_hWnd: HWND = null
+}
+
+impl PixelGameEngine {
+    fn create(game: Game, screen_w: int, screen_h: int, pixel_w: int = 1, pixel_h: int = 1) -> OptionPGE {
+        if screen_w <= 0 or screen_h <= 0 or pixel_w <= 0 or pixel_h <= 0 {
+            return OptionPGE.None
+        }
+
+        let pge = new PixelGameEngine {
+            game = game
+            screen_width = screen_w
+            screen_height = screen_h
+            pixel_width = pixel_w
+            pixel_height = pixel_h
+            pixel_x = 2.0f / cast(float) screen_w
+            pixel_y = 2.0f / cast(float) screen_h
+        }
+
+        pge.default_draw_target = alloc(Sprite)
+        <<pge.default_draw_target = Sprite::create(screen_w, screen_h)
+        pge.set_draw_target(null)
+
+        return OptionPGE.Some(pge)
+    }
+
+    fn dispose(ref Self) {
+        default_draw_target.dispose()
+        free(default_draw_target)
+        default_draw_target = null
+    }
+
+    fn start(ref Self) {
+        let wnd = self.olc_window_create()
+        if wnd == null {
+            return
+        }
+        println("window created")
+
+        let msg: MSG
+        while GetMessageA(&msg, null, 0, 0) > 0 {
+            TranslateMessage(&msg)
+            DispatchMessageA(&msg)
+        }
+
+        println("done")
+    }
+
+    fn set_draw_target(ref Self, target: &Sprite) {
+        draw_target = if target == null { default_draw_target } else { target }
+    }
+
+    // hardware interfaces
+    fn is_focused(ref Self) -> bool {
+        return false
+    }
+
+    fn get_key(ref Self, key: Key) -> HWButton {
+        return (false, false, false)
+    }
+
+    fn get_mouse(ref Self, b: int) -> HWButton {
+        return (false, false, false)
+    }
+
+    fn get_mouse_pos(ref Self) -> (x: int, y: int) {
+        return (0, 0)
+    }
+
+    fn get_mouse_wheel(ref Self) -> int {
+        return 0
+    }
+}

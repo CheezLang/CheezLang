@@ -132,7 +132,7 @@ impl Allocator for StackAllocator {
         nextAddress = nextAligned(nextAddress, alignment)
 
         let newAllocation = new StackAllocation {
-            offset = cast(u64) (cast(u64) nextAddress - cast(u64) memory)
+            offset = (cast(u64) nextAddress) - (cast(u64) memory)
             size = count * elementSize
         }
 

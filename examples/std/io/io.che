@@ -35,7 +35,7 @@ fn parse_int(str: string) -> int {
 
     while let i = 0; i < str.length; i += 1 {
         val *= 10
-        val += cast(int)str[i] - cast(int)'0'
+        val += cast(int) str[i] - '0'
     }
 
     return val

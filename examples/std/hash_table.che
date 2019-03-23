@@ -89,7 +89,7 @@ impl Table($K, $V) {
         if entries.data == null {
             adjust_capacity(13)
         }
-        if cast(double) count + 1 > cast(double)entries.length * max_load {
+        if (cast(double) count + 1) > ((cast(double)entries.length) * max_load) {
             adjust_capacity(cast(uint) entries.length * 2)
         }
 

@@ -32,6 +32,10 @@ fn u64_max() -> u64 {
     return cast(u64)-1
 }
 
+fn mod_pos(a: $T, b: T) -> T {
+    return ((a % b) + b) % b
+}
+
 struct LinearCongruentialGenerator {
     seed: u64
 }
@@ -51,11 +55,11 @@ impl LinearCongruentialGenerator {
     }
 
     fn next_double(ref Self) -> double {
-        return cast(double) self.next() / cast(double) u32_max()
+        return (cast(double) self.next()) / (cast(double) u32_max())
     }
 
     fn next_int(ref Self, min: int = 0, max: int = cast u32_max()) -> int {
-        return cast(int)next() % (max - min) + min
+        return (cast(int)next()) % (max - min) + min
     }
 }
 
