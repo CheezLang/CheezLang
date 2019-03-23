@@ -3,12 +3,14 @@
 #load("sprite.che")
 #load("olc_win.che")
 
+#load("std:hash_table")
+
 trait Game {
 
 }
 
 enum OptionPGE {
-    Some: PixelGameEngine
+    Some: &PixelGameEngine
     None
 }
 
@@ -35,7 +37,25 @@ struct PixelGameEngine {
     pixel_height        : int
     pixel_x             : float     = 1.0f
     pixel_y             : float     = 1.0f
+
+    bHasMouseFocus      : bool      = false
+    bHasInputFocus      : bool      = false
+
+    pKeyNewState        : [256]bool
+    pKeyOldState        : [256]bool
+    pKeyboardState      : [256]HWButton
+
+    pMouseState         : [5]HWButton
+    pMouseOldState      : [5]bool
+    pMouseNewState      : [5]bool
+
+    mapKeys             : Table(int, Key)
 }
+
+fn compare_ints(a: int, b: int) -> bool {
+    return b == a
+}
+
 
 impl PixelGameEngine {
     fn create(game: Game, screen_w: int, screen_h: int, pixel_w: int = 1, pixel_h: int = 1) -> OptionPGE {
@@ -43,7 +63,9 @@ impl PixelGameEngine {
             return OptionPGE.None
         }
 
-        let pge = new PixelGameEngine {
+        let pge = alloc(PixelGameEngine)
+
+        <<pge = new PixelGameEngine {
             game = game
             screen_width = screen_w
             screen_height = screen_h
@@ -51,6 +73,7 @@ impl PixelGameEngine {
             pixel_height = pixel_h
             pixel_x = 2.0f / cast(float) screen_w
             pixel_y = 2.0f / cast(float) screen_h
+            mapKeys = Table(int, Key)::create(compare_ints)
         }
 
         pge.default_draw_target = alloc(Sprite)
@@ -64,24 +87,23 @@ impl PixelGameEngine {
         default_draw_target.dispose()
         free(default_draw_target)
         default_draw_target = null
+
+        mapKeys.dispose()
     }
 
     fn start(ref Self) {
-        pixel_game_engine_ptr = &self
+        // pixel_game_engine_ptr = &self
 
         let wnd = self.olc_window_create()
         if wnd == null {
             return
         }
-        println("window created")
 
         let msg: MSG
         while GetMessageA(&msg, null, 0, 0) > 0 {
             TranslateMessage(&msg)
             DispatchMessageA(&msg)
         }
-
-        println("done")
     }
 
     fn set_draw_target(ref Self, target: &Sprite) {
