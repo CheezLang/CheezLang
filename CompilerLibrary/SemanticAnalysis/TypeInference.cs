@@ -325,9 +325,13 @@ namespace Cheez
                         }
                         else
                         {
-                            //InferType(id, value.Type);
-                            //if (id.Type != value.Type)
+                            InferType(id, value.Type);
+                            if (id.Type != value.Type)
                                 break;
+                            if (!id.IsCompTimeValue)
+                            {
+                                ReportError(id, $"Must be constant");
+                            }
                         }
                         return id;
                     }
@@ -1219,6 +1223,126 @@ namespace Cheez
                         }
 
                         expr.Type = IntType.GetIntType(minSize, false);
+                        return expr;
+                    }
+
+                case "bin_and":
+                    {
+                        if (expr.Arguments.Count == 0)
+                        {
+                            ReportError(expr, $"@bin_and requires at least one argument");
+                            return expr;
+                        }
+
+                        var minSize = 1;
+                        var ok = true;
+                        for (int i = 0; i < expr.Arguments.Count; i++)
+                        {
+                            var arg = expr.Arguments[i];
+                            arg.AttachTo(expr);
+                            arg = expr.Arguments[i] = InferType(arg, null);
+                            ConvertLiteralTypeToDefaultType(arg, null);
+                            if (arg.Type.IsErrorType)
+                            {
+                                ok = false;
+                                continue;
+                            }
+
+                            if (arg.Type is IntType it)
+                            {
+                                if (it.Size > minSize)
+                                    minSize = it.Size;
+                            }
+                            else
+                            {
+                                ReportError(arg, $"Argument to @bin_and must be ints");
+                            }
+                        }
+
+                        if (!ok)
+                        {
+                            return expr;
+                        }
+
+                        for (int i = 0; i < expr.Arguments.Count; i++)
+                        {
+                            var to = IntType.GetIntType(minSize, (expr.Arguments[i].Type as IntType).Signed);
+                            expr.Arguments[i] = CheckType(expr.Arguments[i], to);
+                        }
+
+                        expr.Type = IntType.GetIntType(minSize, false);
+                        return expr;
+                    }
+
+                case "bin_lsl":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr, $"@bin_lsl requires two arguments");
+                            return expr;
+                        }
+
+                        var ok = true;
+                        for (int i = 0; i < expr.Arguments.Count; i++)
+                        {
+                            var arg = expr.Arguments[i];
+                            arg.AttachTo(expr);
+                            arg = expr.Arguments[i] = InferType(arg, null);
+                            ConvertLiteralTypeToDefaultType(arg, null);
+                            if (arg.Type.IsErrorType)
+                            {
+                                ok = false;
+                                continue;
+                            }
+
+                            if (!(arg.Type is IntType it))
+                            {
+                                ReportError(arg, $"Argument must be ints");
+                            }
+                        }
+
+                        if (!ok)
+                        {
+                            return expr;
+                        }
+
+                        expr.Type = expr.Arguments[0].Type;
+                        return expr;
+                    }
+
+                case "bin_lsr":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr, $"@bin_lsr requires two arguments");
+                            return expr;
+                        }
+
+                        var ok = true;
+                        for (int i = 0; i < expr.Arguments.Count; i++)
+                        {
+                            var arg = expr.Arguments[i];
+                            arg.AttachTo(expr);
+                            arg = expr.Arguments[i] = InferType(arg, null);
+                            ConvertLiteralTypeToDefaultType(arg, null);
+                            if (arg.Type.IsErrorType)
+                            {
+                                ok = false;
+                                continue;
+                            }
+
+                            if (!(arg.Type is IntType it))
+                            {
+                                ReportError(arg, $"Argument must be ints");
+                            }
+                        }
+
+                        if (!ok)
+                        {
+                            return expr;
+                        }
+
+                        expr.Type = expr.Arguments[0].Type;
                         return expr;
                     }
 
@@ -2294,6 +2418,12 @@ namespace Cheez
             {
                 expr.Type = var.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
+
+                if (var.Constant)
+                {
+                    expr.IsCompTimeValue = true;
+                    expr.Value = var.Value;
+                }
             }
             else if (sym is AstParameter p)
             {

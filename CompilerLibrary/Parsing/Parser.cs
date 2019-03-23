@@ -897,6 +897,7 @@ namespace Cheez.Parsing
             AstExpression pattern = null;
             AstExpression type = null;
             AstExpression init = null;
+            bool isConst = false;
 
             beg = Consume(TokenType.KwLet, ErrMsg("keyword 'let'", "at beginning of variable declaration")).location;
 
@@ -904,6 +905,13 @@ namespace Cheez.Parsing
             while (CheckToken(TokenType.HashIdentifier))
             {
                 directives.Add(ParseDirective());
+                SkipNewlines();
+            }
+
+            if (CheckToken(TokenType.KwConst))
+            {
+                isConst = true;
+                NextToken();
                 SkipNewlines();
             }
 
@@ -929,7 +937,7 @@ namespace Cheez.Parsing
             //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after variable declaration")))
             //    RecoverStatement();
 
-            return new AstVariableDecl(pattern, type, init, directives, new Location(beg, end));
+            return new AstVariableDecl(pattern, type, init, isConst, directives, new Location(beg, end));
         }
 
         private AstWhileStmt ParseWhileStatement()

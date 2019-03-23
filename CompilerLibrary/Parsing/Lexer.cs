@@ -91,7 +91,8 @@ namespace Cheez.Parsing
         KwBreak,
         KwContinue,
         KwTrait,
-        KwCast
+        KwCast,
+        KwConst
     }
 
     public class Token
@@ -392,6 +393,7 @@ namespace Cheez.Parsing
                 case "continue": token.type = TokenType.KwContinue; break;
                 case "trait": token.type = TokenType.KwTrait; break;
                 case "cast": token.type = TokenType.KwCast; break;
+                case "const": token.type = TokenType.KwConst; break;
             }
         }
 

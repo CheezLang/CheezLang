@@ -251,7 +251,6 @@ namespace Cheez.Ast.Statements
 
     public class AstSingleVariableDecl : AstDecl, ITypedSymbol
     {
-        public bool IsConstant => false;
         public AstExpression TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
 
@@ -259,10 +258,13 @@ namespace Cheez.Ast.Statements
 
         public object Value { get; set; } = null;
 
-        public AstSingleVariableDecl(AstIdExpr name, AstExpression typeExpr, AstVariableDecl parent, ILocation Location) : base(name, Location: Location)
+        public bool Constant = false;
+
+        public AstSingleVariableDecl(AstIdExpr name, AstExpression typeExpr, AstVariableDecl parent, bool isConst, ILocation Location) : base(name, Location: Location)
         {
             TypeExpr = typeExpr;
             VarDeclaration = parent;
+            this.Constant = isConst;
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
@@ -283,20 +285,21 @@ namespace Cheez.Ast.Statements
         public AstExpression Initializer { get; set; }
         public Scope SubScope { get; set; }
 
-        public bool IsConstant { get; set; } = false;
-
         public CheezType Type { get; set; } = null;
+
+        public bool Constant = false;
 
         public HashSet<AstSingleVariableDecl> Dependencies { get; set; }
 
         public List<AstSingleVariableDecl> SubDeclarations = new List<AstSingleVariableDecl>();
 
-        public AstVariableDecl(AstExpression pattern, AstExpression typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null)
+        public AstVariableDecl(AstExpression pattern, AstExpression typeExpr, AstExpression init, bool isConst, List<AstDirective> Directives = null, ILocation Location = null)
             : base(Directives, Location)
         {
             this.Pattern = pattern;
             this.TypeExpr = typeExpr;
             this.Initializer = init;
+            this.Constant = isConst;
         }
 
         [DebuggerStepThrough]
@@ -306,7 +309,8 @@ namespace Cheez.Ast.Statements
             => CopyValuesTo(new AstVariableDecl(
                 Pattern.Clone(),
                 TypeExpr?.Clone(),
-                Initializer?.Clone()));
+                Initializer?.Clone(),
+                Constant));
     }
 
     #endregion

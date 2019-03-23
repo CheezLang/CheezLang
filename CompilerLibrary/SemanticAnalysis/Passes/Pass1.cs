@@ -152,7 +152,7 @@ namespace Cheez
         {
             if (pattern is AstIdExpr id)
             {
-                var decl = new AstSingleVariableDecl(id, type, parent, pattern);
+                var decl = new AstSingleVariableDecl(id, type, parent, parent.Constant, pattern);
                 decl.Type = new VarDeclType(decl);
                 parent.SubDeclarations.Add(decl);
                 id.Symbol = decl;
@@ -253,7 +253,8 @@ namespace Cheez
                         break;
                     }
 
-                case AstDefaultExpr d: break;
+                case AstNullExpr _: break;
+                case AstDefaultExpr _: break;
 
                 default: throw new NotImplementedException();
             }

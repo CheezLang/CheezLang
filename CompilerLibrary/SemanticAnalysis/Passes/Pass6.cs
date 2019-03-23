@@ -108,6 +108,11 @@ namespace Cheez
                     }
                 }
 
+                if (v.Constant && !v.Initializer.IsCompTimeValue)
+                {
+                    ReportError(v.Initializer, $"Initializer must be a constant");
+                }
+
                 if (v.TypeExpr == null)
                     v.Type = v.Initializer.Type;
             }

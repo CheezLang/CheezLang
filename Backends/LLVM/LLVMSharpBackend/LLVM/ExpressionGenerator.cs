@@ -77,6 +77,34 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return result;
             }
 
+            if (cc.Name.Name == "bin_or")
+            {
+                var result = GenerateExpression(cc.Arguments[0], true);
+                for (int i = 1; i < cc.Arguments.Count; i++)
+                {
+                    var v = GenerateExpression(cc.Arguments[i], true);
+                    result = builder.CreateAnd(result, v, "");
+                }
+
+                return result;
+            }
+
+            if (cc.Name.Name == "bin_lsl")
+            {
+                var val = GenerateExpression(cc.Arguments[0], true);
+                var shift_count = GenerateExpression(cc.Arguments[1], true);
+                var result = builder.CreateShl(val, shift_count, "");
+                return result;
+            }
+
+            if (cc.Name.Name == "bin_lsr")
+            {
+                var val = GenerateExpression(cc.Arguments[0], true);
+                var shift_count = GenerateExpression(cc.Arguments[1], true);
+                var result = builder.CreateLShr(val, shift_count, "");
+                return result;
+            }
+
             throw new NotImplementedException();
         }
 
@@ -220,8 +248,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstIdExpr n:
                     {
                         if (n.IsPolymorphic)
+                        {
                             return LLVM.ConstInt(LLVM.Int1Type(), 1, false);
-                        break;
+                        }
+                        else
+                        {
+                            value = builder.CreateLoad(value, "");
+                            var v = GenerateExpression(pattern, true);
+                            return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, value, v, "");
+                        }
                     }
 
                 case AstEnumValueExpr e:
