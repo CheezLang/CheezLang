@@ -55,6 +55,7 @@ let const WS_VISIBLE    : DWORD = 0x10000000
 let const WM_DESTROY    : UINT  = 0x0002
 let const WM_MOUSEMOVE  : UINT  = 0x0200
 let const WM_SIZE       : UINT  = 0x0005
+let const WM_MOUSEWHEEL : UINT  = 0x020A
 
 fn MAKEINTRESOURCE(i: uint) -> &char {
     return cast(&char) cast(u32) cast(u16)i

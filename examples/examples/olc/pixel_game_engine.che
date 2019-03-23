@@ -13,26 +13,28 @@ enum OptionPGE {
 }
 
 struct PixelGameEngine {
-    game: Game
+    game                : Game
 
 
-    default_draw_target: &Sprite = null
-    draw_target: &Sprite = null
+    default_draw_target : &Sprite   = null
+    draw_target         : &Sprite   = null
 
     // windows specific
-    olc_hWnd: HWND = null
+    olc_hWnd            : HWND      = null
 
     // other stuff
-    nMousePosXcache: int
-    nMousePosYcache: int
-    window_width: int = -1
-    window_height: int = -1
-    screen_width: int
-    screen_height: int
-    pixel_width: int
-    pixel_height: int
-    pixel_x: float = 1.0f
-    pixel_y: float = 1.0f
+    nMousePosXcache     : int
+    nMousePosYcache     : int
+    nMouseWheelDeltaCache : int
+
+    window_width        : int       = -1
+    window_height       : int       = -1
+    screen_width        : int
+    screen_height       : int
+    pixel_width         : int
+    pixel_height        : int
+    pixel_x             : float     = 1.0f
+    pixel_y             : float     = 1.0f
 }
 
 impl PixelGameEngine {
@@ -90,6 +92,10 @@ impl PixelGameEngine {
     fn olc_update_window_size(ref Self, x: int, y: int) {
         window_width = x
         window_height = y
+    }
+    
+    fn olc_update_mouse_wheel(ref Self, delta: int) {
+        nMouseWheelDeltaCache += delta
     }
     
     fn olc_update_mouse(ref Self, x: int, y: int) {
