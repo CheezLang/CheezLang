@@ -190,7 +190,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     if (m.Type != CheezType.Void)
                         builder.CreateStore(b, result);
 
-                    builder.CreateBr(bbElse);
+                    if (!c.Body.GetFlag(ExprFlags.Returns))
+                        builder.CreateBr(bbElse);
 
                     builder.PositionBuilderAtEnd(bbNext);
                 }
