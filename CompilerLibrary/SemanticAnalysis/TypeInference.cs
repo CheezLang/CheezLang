@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
@@ -444,11 +445,11 @@ namespace Cheez
                 return expr;
             }
 
-            if (expected is EnumType e)
-            {
-                ReportError(expr, $"Can't default initialize an enum");
-                return expr;
-            }
+            //if (expected is EnumType e)
+            //{
+            //    ReportError(expr, $"Can't default initialize an enum");
+            //    return expr;
+            //}
 
             //if (expected is ArrayType a)
             //{
@@ -764,7 +765,8 @@ namespace Cheez
                 (to is CharType && from is IntType) ||
                 (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
                 (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from)) ||
-                (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType))
+                (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType) ||
+                (to is IntType && from is EnumType))
             {
                 // ok
             }
@@ -1188,6 +1190,7 @@ namespace Cheez
 
                         var minSize = 1;
                         var ok = true;
+                        bool allConstant = true;
                         for (int i = 0; i < expr.Arguments.Count; i++)
                         {
                             var arg = expr.Arguments[i];
@@ -1199,6 +1202,9 @@ namespace Cheez
                                 ok = false;
                                 continue;
                             }
+
+                            if (!arg.IsCompTimeValue)
+                                allConstant = false;
 
                             if (arg.Type is IntType it)
                             {
@@ -1212,8 +1218,19 @@ namespace Cheez
                         }
 
                         if (!ok)
-                        {
                             return expr;
+
+                        if (allConstant)
+                        {
+                            BigInteger result = 0;
+                            foreach (var a in expr.Arguments)
+                            {
+                                var v = ((NumberData)a.Value);
+                                result |= v.IntValue;
+                            }
+
+                            expr.Value = NumberData.FromBigInt(result);
+                            expr.IsCompTimeValue = true;
                         }
 
                         for (int i = 0; i < expr.Arguments.Count; i++)

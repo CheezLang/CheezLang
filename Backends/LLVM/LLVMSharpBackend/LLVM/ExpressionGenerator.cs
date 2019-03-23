@@ -346,6 +346,37 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             else throw new NotImplementedException();
         }
 
+        private LLVMValueRef CreateIntCast(IntType from, IntType to, LLVMValueRef value)
+        {
+            var toLLVM = CheezTypeToLLVMType(to);
+
+            if (to.Signed && from.Signed)
+            {
+                return builder.CreateIntCast(value, toLLVM, "");
+            }
+            else if (to.Signed) // s <- u
+            {
+                if (to.Size > from.Size)
+                    return builder.CreateZExtOrBitCast(value, toLLVM, "");
+                else
+                    return builder.CreateTruncOrBitCast(value, toLLVM, "");
+            }
+            else if (from.Signed) // u <- s
+            {
+                if (to.Size > from.Size)
+                    return builder.CreateZExtOrBitCast(value, toLLVM, "");
+                else
+                    return builder.CreateTruncOrBitCast(value, toLLVM, "");
+            }
+            else // u <- u
+            {
+                if (to.Size > from.Size)
+                    return builder.CreateZExtOrBitCast(value, toLLVM, "");
+                else
+                    return builder.CreateTruncOrBitCast(value, toLLVM, "");
+            }
+        }
+
         private LLVMValueRef GenerateCastExpr(AstCastExpr cast, bool deref)
         {
             var to = cast.Type;
@@ -370,29 +401,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (to is IntType t1 && from is IntType f1) // int <- int
             {
                 var v = GenerateExpression(cast.SubExpression, true);
-                if (t1.Signed && f1.Signed)
-                    return builder.CreateIntCast(v, toLLVM, "");
-                else if (t1.Signed) // s <- u
-                {
-                    if (t1.Size > f1.Size)
-                        return builder.CreateZExtOrBitCast(v, toLLVM, "");
-                    else
-                        return builder.CreateTruncOrBitCast(v, toLLVM, "");
-                }
-                else if (f1.Signed) // u <- s
-                {
-                    if (t1.Size > f1.Size)
-                        return builder.CreateZExtOrBitCast(v, toLLVM, "");
-                    else
-                        return builder.CreateTruncOrBitCast(v, toLLVM, "");
-                }
-                else // u <- u
-                {
-                    if (t1.Size > f1.Size)
-                        return builder.CreateZExtOrBitCast(v, toLLVM, "");
-                    else
-                        return builder.CreateTruncOrBitCast(v, toLLVM, "");
-                }
+                return CreateIntCast(f1, t1, v);
             }
             if (to is PointerType && from is IntType) // * <- int
                 return builder.CreateCast(LLVMOpcode.LLVMIntToPtr, GenerateExpression(cast.SubExpression, true), toLLVM, "");
@@ -419,6 +428,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 return result;
             }
+
+            if (to is IntType i3 && from is EnumType e)
+            {
+                var v = GenerateExpression(cast.SubExpression, true);
+                var tag = builder.CreateExtractValue(v, 0, "");
+                return CreateIntCast(i3, e.TagType, tag);
+            }
+
             if (to is PointerType && from is ArrayType) // * <- [x]
             {
                 var sub = GenerateExpression(cast.SubExpression, false);

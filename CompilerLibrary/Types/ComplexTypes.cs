@@ -230,7 +230,7 @@ namespace Cheez.Types.Complex
         public string Name { get; }
         public Dictionary<string, long> Members { get; private set; }
 
-        public CheezType TagType { get; set; }
+        public IntType TagType { get; set; }
         public override bool IsErrorType => TagType.IsErrorType;
 
         public AstEnumDecl Declaration { get; set; }

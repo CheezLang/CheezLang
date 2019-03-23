@@ -2,6 +2,7 @@
 using Cheez.Ast.Expressions.Types;
 using Cheez.Types;
 using Cheez.Types.Complex;
+using Cheez.Types.Primitive;
 using Cheez.Visitors;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -344,7 +345,7 @@ namespace Cheez.Ast.Statements
         public Scope SubScope { get; set; }
         public List<AstEnumMember> Members { get; }
 
-        public CheezType TagType { get; set; }
+        public IntType TagType { get; set; }
         public bool HasAssociatedTypes { get; set; } = false;
 
         public AstEnumDecl(AstIdExpr name, List<AstEnumMember> members, List<AstDirective> Directive = null, ILocation Location = null)

@@ -253,6 +253,14 @@ namespace Cheez
                         break;
                     }
 
+                case AstCompCallExpr c:
+                    foreach (var a in c.Arguments)
+                    {
+                        a.Scope = c.Scope;
+                        CollectDependencies(a, deps);
+                    }
+                    break;
+
                 case AstNullExpr _: break;
                 case AstDefaultExpr _: break;
 

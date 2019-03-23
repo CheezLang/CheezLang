@@ -121,7 +121,7 @@ namespace Cheez.Parsing
         private string mText;
         private TokenLocation mLocation;
 
-        private char Current => mText[mLocation.index];
+        private char Current => mLocation.index < mText.Length ? mText[mLocation.index] : (char)0;
         private char Next => mLocation.index < mText.Length - 1 ? mText[mLocation.index + 1] : (char)0;
         private char Prev => mLocation.index > 0 ? mText[mLocation.index - 1] : (char)0;
         private Token peek = null;
