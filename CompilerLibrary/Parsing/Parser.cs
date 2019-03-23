@@ -1207,28 +1207,6 @@ namespace Cheez.Parsing
                 var sub = ParseUnaryExpression(errorMessage);
                 return new AstAddressOfExpr(sub, new Location(next.location, sub.End));
             }
-            else if (next.type == TokenType.KwCast)
-            {
-                var beg = next.location;
-                AstExpression type = null;
-
-                NextToken();
-                SkipNewlines();
-
-                next = PeekToken();
-                if (next.type == TokenType.OpenParen)
-                {
-                    NextToken();
-                    SkipNewlines();
-                    type = ParseExpression();
-                    SkipNewlines();
-                    Consume(TokenType.ClosingParen, ErrMsg("')'", "after type in cast expression"));
-                    SkipNewlines();
-                }
-
-                var sub = ParseUnaryExpression(errorMessage);
-                return new AstCastExpr(type, sub, new Location(beg, sub.End));
-            }
             else if (next.type == TokenType.LessLess)
             {
                 NextToken();
@@ -1625,6 +1603,30 @@ namespace Cheez.Parsing
 
                 case TokenType.KwFn:
                     return ParseFunctionTypeExpr();
+
+
+                case TokenType.KwCast:
+                    {
+                        var beg = token.location;
+                        AstExpression type = null;
+
+                        NextToken();
+                        SkipNewlines();
+
+                        var next = PeekToken();
+                        if (next.type == TokenType.OpenParen)
+                        {
+                            NextToken();
+                            SkipNewlines();
+                            type = ParseExpression();
+                            SkipNewlines();
+                            Consume(TokenType.ClosingParen, ErrMsg("')'", "after type in cast expression"));
+                            SkipNewlines();
+                        }
+
+                        var sub = ParseExpression();
+                        return new AstCastExpr(type, sub, new Location(beg, sub.End));
+                    }
 
                 default:
                     //NextToken();

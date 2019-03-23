@@ -65,6 +65,18 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return anyPtr;
             }
 
+            if (cc.Name.Name == "bin_or")
+            {
+                var result = GenerateExpression(cc.Arguments[0], true);
+                for (int i = 1; i < cc.Arguments.Count; i++)
+                {
+                    var v = GenerateExpression(cc.Arguments[i], true);
+                    result = builder.CreateOr(result, v, "");
+                }
+
+                return result;
+            }
+
             throw new NotImplementedException();
         }
 
@@ -322,16 +334,23 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (to is IntType t1 && from is IntType f1) // int <- int
             {
                 var v = GenerateExpression(cast.SubExpression, true);
-                if (t1.Signed == f1.Signed)
+                if (t1.Signed && f1.Signed)
                     return builder.CreateIntCast(v, toLLVM, "");
-                if (t1.Signed) // s <- u
+                else if (t1.Signed) // s <- u
                 {
                     if (t1.Size > f1.Size)
                         return builder.CreateZExtOrBitCast(v, toLLVM, "");
                     else
                         return builder.CreateTruncOrBitCast(v, toLLVM, "");
                 }
-                if (f1.Signed) // u <- s
+                else if (f1.Signed) // u <- s
+                {
+                    if (t1.Size > f1.Size)
+                        return builder.CreateZExtOrBitCast(v, toLLVM, "");
+                    else
+                        return builder.CreateTruncOrBitCast(v, toLLVM, "");
+                }
+                else // u <- u
                 {
                     if (t1.Size > f1.Size)
                         return builder.CreateZExtOrBitCast(v, toLLVM, "");

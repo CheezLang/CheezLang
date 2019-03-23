@@ -1174,6 +1174,54 @@ namespace Cheez
                         return expr;
                     }
 
+                case "bin_or":
+                    {
+                        if (expr.Arguments.Count == 0)
+                        {
+                            ReportError(expr, $"@bin_or requires at least one argument");
+                            return expr;
+                        }
+
+                        var minSize = 1;
+                        var ok = true;
+                        for (int i = 0; i < expr.Arguments.Count; i++)
+                        {
+                            var arg = expr.Arguments[i];
+                            arg.AttachTo(expr);
+                            arg = expr.Arguments[i] = InferType(arg, null);
+                            ConvertLiteralTypeToDefaultType(arg, null);
+                            if (arg.Type.IsErrorType)
+                            {
+                                ok = false;
+                                continue;
+                            }
+
+                            if (arg.Type is IntType it)
+                            {
+                                if (it.Size > minSize)
+                                    minSize = it.Size;
+                            }
+                            else
+                            {
+                                ReportError(arg, $"Argument to @bin_or must be ints");
+                            }
+                        }
+
+                        if (!ok)
+                        {
+                            return expr;
+                        }
+
+                        for (int i = 0; i < expr.Arguments.Count; i++)
+                        {
+                            var to = IntType.GetIntType(minSize, (expr.Arguments[i].Type as IntType).Signed);
+                            expr.Arguments[i] = CheckType(expr.Arguments[i], to);
+                        }
+
+                        expr.Type = IntType.GetIntType(minSize, false);
+                        return expr;
+                    }
+
                 default: ReportError(expr.Name, $"Unknown intrinsic '{expr.Name.Name}'"); break;
             }
             return expr;
