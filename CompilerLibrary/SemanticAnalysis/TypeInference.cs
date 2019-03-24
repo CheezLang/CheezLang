@@ -656,8 +656,13 @@ namespace Cheez
             var paramTypes = func.ParameterTypes.Select(
                 p => ((string)null, p.Value as CheezType, (AstExpression)null)).ToArray();
 
+            var cc = FunctionType.CallingConvention.Default;
+
+            if (func.HasDirective("stdcall"))
+                cc = FunctionType.CallingConvention.Stdcall;
+
             func.Type = CheezType.Type;
-            func.Value = new FunctionType(paramTypes, ret);
+            func.Value = new FunctionType(paramTypes, ret, cc);
             return func;
         }
 
@@ -766,7 +771,9 @@ namespace Cheez
                 (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
                 (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from)) ||
                 (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType) ||
-                (to is IntType && from is EnumType))
+                (to is IntType && from is EnumType) ||
+                (to is FunctionType && from is FunctionType) ||
+                (to is BoolType && from is FunctionType))
             {
                 // ok
             }
@@ -841,10 +848,7 @@ namespace Cheez
             if (expr.Condition.Type is ReferenceType)
                 expr.Condition = Deref(expr.Condition);
 
-            if (expr.Condition.Type != CheezType.Bool && !(expr.Condition.Type is PointerType) && !expr.Condition.Type.IsErrorType)
-            {
-                ReportError(expr.Condition, $"Condition of if statement must be either a bool or a pointer but is {expr.Condition.Type}");
-            }
+            expr.Condition = CheckType(expr.Condition, CheezType.Bool, $"Condition of if statement must be either a bool or a pointer but is {expr.Condition.Type}");
 
             expr.IfCase.Scope = expr.SubScope;
             expr.IfCase.Parent = expr;
@@ -2207,7 +2211,7 @@ namespace Cheez
             var inits = new HashSet<string>();
             if (namesProvided == 0)
             {
-                for (int i = 0; i < expr.MemberInitializers.Count; i++)
+                for (int i = 0; i < expr.MemberInitializers.Count && i < type.Declaration.Members.Count; i++)
                 {
                     var mi = expr.MemberInitializers[i];
                     var mem = type.Declaration.Members[i];
@@ -2226,7 +2230,7 @@ namespace Cheez
             }
             else if (namesProvided == expr.MemberInitializers.Count)
             {
-                for (int i = 0; i < expr.MemberInitializers.Count; i++)
+                for (int i = 0; i < expr.MemberInitializers.Count && i < type.Declaration.Members.Count; i++)
                 {
                     var mi = expr.MemberInitializers[i];
                     var memIndex = type.Declaration.Members.FindIndex(m => m.Name.Name == mi.Name.Name);
@@ -2621,6 +2625,9 @@ namespace Cheez
                 return InferType(cast, to);
 
             if (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType)
+                return InferType(cast, to);
+
+            if (to is BoolType && from is FunctionType)
                 return InferType(cast, to);
 
             if (to is TraitType trait)

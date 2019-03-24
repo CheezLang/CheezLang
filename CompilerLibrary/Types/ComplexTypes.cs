@@ -267,6 +267,12 @@ namespace Cheez.Types.Complex
 
     public class FunctionType : CheezType
     {
+        public enum CallingConvention
+        {
+            Default,
+            Stdcall,
+        }
+
         //private static List<FunctionType> sTypes = new List<FunctionType>();
 
         public override bool IsPolyType => ReturnType.IsPolyType || Parameters.Any(p => p.type.IsPolyType);
@@ -277,10 +283,13 @@ namespace Cheez.Types.Complex
         public AstFunctionDecl Declaration { get; set; } = null;
         public override bool IsErrorType => ReturnType.IsErrorType || Parameters.Any(p => p.type.IsErrorType);
 
-        public FunctionType((string, CheezType, AstExpression defaultValue)[] parameterTypes, CheezType returnType)
+        public CallingConvention CC = CallingConvention.Default;
+
+        public FunctionType((string, CheezType, AstExpression defaultValue)[] parameterTypes, CheezType returnType, CallingConvention cc)
         {
             this.Parameters = parameterTypes;
             this.ReturnType = returnType;
+            this.CC = cc;
         }
 
         public FunctionType(AstFunctionDecl func)
@@ -288,6 +297,9 @@ namespace Cheez.Types.Complex
             this.Declaration = func;
             this.ReturnType = func.ReturnValue?.Type ?? CheezType.Void;
             this.Parameters = func.Parameters.Select(p => (p.Name?.Name, p.Type, p.DefaultValue)).ToArray();
+
+            if (func.TryGetDirective("stdcall", out var dir))
+                this.CC = CallingConvention.Stdcall;
         }
 
         public override string ToString()

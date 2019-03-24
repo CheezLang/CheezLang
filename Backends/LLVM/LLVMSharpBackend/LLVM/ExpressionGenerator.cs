@@ -436,6 +436,21 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return CreateIntCast(i3, e.TagType, tag);
             }
 
+            if (to is BoolType && from is FunctionType)
+            {
+                var func = GenerateExpression(cast.SubExpression, true);
+                var ptr = builder.CreatePtrToInt(func, LLVM.Int64Type(), "");
+                var res = builder.CreateICmp(LLVMIntPredicate.LLVMIntNE, ptr, LLVM.ConstInt(LLVM.Int64Type(), 0, false), "");
+                return res;
+            }
+
+            if (to is FunctionType && from is FunctionType)
+            {
+                var func = GenerateExpression(cast.SubExpression, true);
+                var res = builder.CreatePointerCast(func, toLLVM, "");
+                return res;
+            }
+
             if (to is PointerType && from is ArrayType) // * <- [x]
             {
                 var sub = GenerateExpression(cast.SubExpression, false);
@@ -937,6 +952,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             else
             {
                 func = GenerateExpression(c.Function, true);
+                var ftype = c.Function.Type as FunctionType;
+                if (ftype.CC == FunctionType.CallingConvention.Stdcall)
+                {
+                    func.SetFunctionCallConv((uint)LLVMCallConv.LLVMX86StdcallCallConv);
+                }
             }
 
             // arguments

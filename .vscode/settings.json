@@ -12,10 +12,5 @@
         "xstring": "cpp",
         "cstdio": "cpp"
     },
-    "editor.wordBasedSuggestions": false,
-    "editor.quickSuggestions": {
-        "other": false,
-        "comments": false,
-        "strings": false
-    }
+    "editor.wordBasedSuggestions": true
 }

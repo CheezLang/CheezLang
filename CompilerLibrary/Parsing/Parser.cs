@@ -566,6 +566,19 @@ namespace Cheez.Parsing
             return new AstDirectiveStatement(dir, dir.Location);
         }
 
+        private List<AstDirective> ParseDirectives()
+        {
+            var result = new List<AstDirective>();
+
+            while (CheckToken(TokenType.HashIdentifier))
+            {
+                result.Add(ParseDirective());
+                SkipNewlines();
+            }
+
+            return result;
+        }
+
         private AstDirective ParseDirective()
         {
             TokenLocation end = null;
@@ -1111,11 +1124,13 @@ namespace Cheez.Parsing
                 end = returnType.End;
             }
 
+            var dirs = ParseDirectives();
+
             Consume(TokenType.OpenBrace, ErrMsg("{", "at end of function type return type list"));
             SkipNewlines();
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of function type return type list")).location;
 
-            return new AstFunctionTypeExpr(args, returnType, new Location(beginning, end));
+            return new AstFunctionTypeExpr(args, returnType, dirs, new Location(beginning, end));
         }
 
         private AstExpression ParseExpression(ErrorMessageResolver errorMessage = null)

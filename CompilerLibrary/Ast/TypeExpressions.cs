@@ -50,10 +50,13 @@ namespace Cheez.Ast.Expressions.Types
         public AstExpression ReturnType { get; set; }
         public List<AstExpression> ParameterTypes { get; set; }
 
-        public AstFunctionTypeExpr(List<AstExpression> parTypes, AstExpression returnType, ILocation Location = null) : base(Location)
+        public List<AstDirective> Directives { get; set; }
+
+        public AstFunctionTypeExpr(List<AstExpression> parTypes, AstExpression returnType, List<AstDirective> dirs, ILocation Location = null) : base(Location)
         {
             this.ParameterTypes = parTypes;
             this.ReturnType = returnType;
+            this.Directives = dirs;
         }
 
         [DebuggerStepThrough]
@@ -63,7 +66,21 @@ namespace Cheez.Ast.Expressions.Types
         public override AstExpression Clone()
             => CopyValuesTo(new AstFunctionTypeExpr(
                 ParameterTypes.Select(p => p.Clone()).ToList(),
-                ReturnType.Clone()));
+                ReturnType.Clone(),
+                Directives));
+
+        public bool HasDirective(string name) => Directives.Find(d => d.Name.Name == name) != null;
+
+        public AstDirective GetDirective(string name)
+        {
+            return Directives.FirstOrDefault(d => d.Name.Name == name);
+        }
+
+        public bool TryGetDirective(string name, out AstDirective dir)
+        {
+            dir = Directives.FirstOrDefault(d => d.Name.Name == name);
+            return dir != null;
+        }
     }
 
     public class AstReferenceTypeExpr : AstExpression
