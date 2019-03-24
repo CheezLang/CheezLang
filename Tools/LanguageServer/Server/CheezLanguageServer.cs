@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Cheez.Compiler;
-using Cheez.Compiler.Ast;
-using Cheez.Compiler.ParseTree;
-using Cheez.Compiler.Visitor;
+using Cheez;
+using Cheez.Ast;
+using Cheez.Ast.Expressions;
+using Cheez.Ast.Statements;
+using Cheez.Types.Complex;
+using Cheez.Types.Primitive;
 using LanguageServer;
 using LanguageServer.Json;
 using LanguageServer.Parameters;
@@ -22,7 +24,7 @@ namespace CheezLanguageServer
         private TextDocumentManager _documents;
 
         private SilentErrorHandler _errorHandler;
-        private Compiler _compiler;
+        private CheezCompiler _compiler;
 
         public CheezLanguageServer(Stream input, Stream output) : base(input, output)
         {
@@ -35,7 +37,7 @@ namespace CheezLanguageServer
             _documents.Changed += Documents_Changed;
 
             _errorHandler = new SilentErrorHandler();
-            _compiler = new Compiler(_errorHandler);
+            _compiler = new CheezCompiler(_errorHandler, "");
             return Result<dynamic, ResponseError>.Success(true);
         }
 
@@ -61,14 +63,6 @@ namespace CheezLanguageServer
             {
                 var filePath = GetFilePath(document.uri);
                 file = _compiler.AddFile(filePath, document.text, reparse: true);
-
-                var astFilePath = Path.Combine(Path.GetDirectoryName(filePath), Path.GetFileNameWithoutExtension(filePath) + ".ast");
-                
-                using (var astFile = new StreamWriter(File.Open(astFilePath, FileMode.Truncate, FileAccess.Write, FileShare.Write)))
-                {
-                    var printer = new AstPrinter();
-                    printer.PrintWorkspace(_compiler.DefaultWorkspace, astFile);
-                }
 
                 if (!_errorHandler.HasErrors)
                 {
@@ -165,11 +159,6 @@ namespace CheezLanguageServer
                     {
                         commands = new string[] { "reload_language_server" }
                     },
-                    hoverProvider = true,
-                    //completionProvider = new CompletionOptions
-                    //{
-                    //    resolveProvider = false
-                    //}
                 }
             };
 
@@ -250,7 +239,7 @@ namespace CheezLanguageServer
         {
             switch (sym)
             {
-                case AstFunctionParameter _:
+                case AstParameter _:
                 case AstVariableDecl _:
                     return CompletionItemKind.Variable;
 
@@ -362,7 +351,7 @@ namespace CheezLanguageServer
                             while (t is PointerType p)
                                 t = p.TargetType;
                             if (dot.Left.Type is StructType s)
-                                return $"{dot.Left.Type}.{dot.Right}: {s.Declaration.Members.FirstOrDefault(m => m.Name.Name == dot.Right)?.Type}";
+                                return $"{dot.Left.Type}.{dot.Right}: {s.Declaration.Members.FirstOrDefault(m => m.Name.Name == dot.Right.Name)?.Type}";
                             else
                                 return "";
                         }
@@ -377,7 +366,7 @@ namespace CheezLanguageServer
                 switch (s)
                 {
                     case AstVariableDecl v:
-                        return $"{v.Name} : {v.Type}";
+                        return $"{v.Pattern} : {v.Type}";
 
                     case AstFunctionDecl f:
                         return $"fn {f.Name}({string.Join(", ", f.Parameters.Select(p => p.Type))}): {f.ReturnType}";

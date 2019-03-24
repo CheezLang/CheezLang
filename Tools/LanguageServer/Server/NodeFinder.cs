@@ -1,8 +1,11 @@
-﻿using Cheez.Compiler;
-using Cheez.Compiler.Ast;
-using Cheez.Compiler.ParseTree;
-using Cheez.Compiler.Parsing;
-using Cheez.Compiler.Visitor;
+﻿using Cheez;
+using Cheez.Ast;
+using Cheez.Ast.Expressions;
+using Cheez.Ast.Statements;
+using Cheez.Parsing;
+using Cheez.Types;
+using Cheez.Types.Complex;
+using Cheez.Visitors;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -67,20 +70,13 @@ namespace CheezLanguageServer
         {
             var syms = base.GetSymbols();
             var funcType = Call.Function.Type as FunctionType;
-            var pars = funcType?.ParameterTypes;
+            var pars = funcType?.Parameters;
             if (pars == null || ArgIndex >= pars.Length)
                 return syms;
 
             var paramType = pars[ArgIndex];
 
-            syms = syms.Where(kv =>
-            {
-                if (kv.Value.Type is FunctionType f && f.ReturnType == paramType)
-                    return true;
-                if (kv.Value.Type == paramType)
-                    return true;
-                return true;
-            }).ToDictionary(kv => kv.Key, kv => kv.Value);
+            syms = syms.ToDictionary(kv => kv.Key, kv => kv.Value);
             return syms;
         }
     }
@@ -99,9 +95,9 @@ namespace CheezLanguageServer
         {
             int index = GetPosition(file, line, character);
 
-            foreach (var s in w.Statements.Where(s => s.GenericParseTreeNode.SourceFile == file))
+            foreach (var s in w.Statements.Where(s => s.Location.Beginning.file == file.Name))
             {
-                var loc = GetRelativeLocation(s.GenericParseTreeNode, index);
+                var loc = GetRelativeLocation(s.Location, index);
                 if (loc == RelativeLocation.Same)
                 {
                     return s.Accept(this, index);
@@ -154,22 +150,22 @@ namespace CheezLanguageServer
 
         #region Visitors
 
-        public override NodeFinderResult VisitFunctionDeclaration(AstFunctionDecl function, int index = 0)
+        public override NodeFinderResult VisitFunctionDecl(AstFunctionDecl function, int index = 0)
         {
-            if (GetRelativeLocation(function.Body.GenericParseTreeNode, index) == RelativeLocation.Same)
+            if (GetRelativeLocation(function.Body.Location, index) == RelativeLocation.Same)
                 return function.Body.Accept(this, index);
 
             return new NodeFinderResult(function.Scope, stmt: function);
         }
 
-        public override NodeFinderResult VisitVariableDeclaration(AstVariableDecl variable, int index = 0)
+        public override NodeFinderResult VisitVariableDecl(AstVariableDecl variable, int index = 0)
         {
-            if (GetRelativeLocation(variable.Initializer?.GenericParseTreeNode, index) == RelativeLocation.Same)
+            if (GetRelativeLocation(variable.Initializer?.Location, index) == RelativeLocation.Same)
             {
                 return variable.Initializer.Accept(this, index);
             }
 
-            if (GetRelativeLocation(variable.TypeExpr.GenericParseTreeNode, index) == RelativeLocation.Same)
+            if (GetRelativeLocation(variable.TypeExpr.Location, index) == RelativeLocation.Same)
             {
                 return new NodeFinderResult(variable.Scope, type: variable.Type);
             }
@@ -177,79 +173,79 @@ namespace CheezLanguageServer
             return new NodeFinderResult(variable.Scope, stmt: variable);
         }
 
-        public override NodeFinderResult VisitReturnStatement(AstReturnStmt ret, int index = 0)
+        public override NodeFinderResult VisitReturnStmt(AstReturnStmt ret, int index = 0)
         {
-            if (ret.ReturnValue != null && GetRelativeLocation(ret.ReturnValue.GenericParseTreeNode, index) == RelativeLocation.Same)
+            if (ret.ReturnValue != null && GetRelativeLocation(ret.ReturnValue.Location, index) == RelativeLocation.Same)
                 return ret.ReturnValue.Accept(this, index);
 
             return new NodeFinderResult(ret.Scope, stmt: ret);
         }
 
-        public override NodeFinderResult VisitIfStatement(AstIfStmt ifs, int i = 0)
+        public override NodeFinderResult VisitIfExpr(AstIfExpr ifs, int i = 0)
         {
-            if (GetRelativeLocation(ifs.Condition.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(ifs.Condition.Location, i) == RelativeLocation.Same)
                 return ifs.Condition.Accept(this, i);
 
-            if (GetRelativeLocation(ifs.IfCase.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(ifs.IfCase.Location, i) == RelativeLocation.Same)
                 return ifs.IfCase.Accept(this, i);
-            if (ifs.ElseCase != null && GetRelativeLocation(ifs.ElseCase.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (ifs.ElseCase != null && GetRelativeLocation(ifs.ElseCase.Location, i) == RelativeLocation.Same)
                 return ifs.ElseCase.Accept(this, i);
 
-            return new NodeFinderResult(ifs.Scope, stmt: ifs);
+            return new NodeFinderResult(ifs.Scope, expr: ifs);
         }
 
-        public override NodeFinderResult VisitBlockStatement(AstBlockStmt block, int i = 0)
+        public override NodeFinderResult VisitBlockExpr(AstBlockExpr block, int i = 0)
         {
             foreach (var s in block.Statements)
             {
-                if (GetRelativeLocation(s.GenericParseTreeNode, i) == RelativeLocation.Same)
+                if (GetRelativeLocation(s.Location, i) == RelativeLocation.Same)
                     return s.Accept(this, i);
             }
 
-            return new NodeFinderResult(block.Scope, stmt: block);
+            return new NodeFinderResult(block.Scope, expr: block);
         }
 
-        public override NodeFinderResult VisitExpressionStatement(AstExprStmt stmt, int data = 0)
+        public override NodeFinderResult VisitExpressionStmt(AstExprStmt stmt, int data = 0)
         {
             return stmt.Expr.Accept(this, data);
         }
 
-        public override NodeFinderResult VisitAssignment(AstAssignment ass, int i = 0)
+        public override NodeFinderResult VisitAssignmentStmt(AstAssignment ass, int i = 0)
         {
-            if (GetRelativeLocation(ass.Value.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(ass.Value.Location, i) == RelativeLocation.Same)
                 return ass.Value.Accept(this, i);
 
-            if (GetRelativeLocation(ass.Target.GenericParseTreeNode, i) == RelativeLocation.Same)
-                return ass.Target.Accept(this, i);
+            if (GetRelativeLocation(ass.Pattern.Location, i) == RelativeLocation.Same)
+                return ass.Pattern.Accept(this, i);
 
             return new NodeFinderResult(ass.Scope, stmt: ass);
         }
 
-        public override NodeFinderResult VisitUsingStatement(AstUsingStmt use, int i = 0)
+        public override NodeFinderResult VisitUsingStmt(AstUsingStmt use, int i = 0)
         {
-            if (GetRelativeLocation(use.Value.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(use.Value.Location, i) == RelativeLocation.Same)
                 return use.Value.Accept(this, i);
 
             return new NodeFinderResult(use.Scope, stmt: use);
         }
 
-        public override NodeFinderResult VisitImplBlock(AstImplBlock impl, int i = 0)
+        public override NodeFinderResult VisitImplDecl(AstImplBlock impl, int i = 0)
         {
             foreach (var s in impl.Functions)
             {
-                if (GetRelativeLocation(s.GenericParseTreeNode, i) == RelativeLocation.Same)
+                if (GetRelativeLocation(s.Location, i) == RelativeLocation.Same)
                     return s.Accept(this, i);
             }
 
             return new NodeFinderResult(impl.Scope, stmt: impl);
         }
 
-        public override NodeFinderResult VisitWhileStatement(AstWhileStmt ws, int i = 0)
+        public override NodeFinderResult VisitWhileStmt(AstWhileStmt ws, int i = 0)
         {
-            if (GetRelativeLocation(ws.Condition.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(ws.Condition.Location, i) == RelativeLocation.Same)
                 return ws.Condition.Accept(this, i);
 
-            if (GetRelativeLocation(ws.Body.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(ws.Body.Location, i) == RelativeLocation.Same)
                 return ws.Body.Accept(this, i);
 
             return new NodeFinderResult(ws.Scope, stmt: ws);
@@ -257,91 +253,91 @@ namespace CheezLanguageServer
 
         #region Expressions
 
-        public override NodeFinderResult VisitArrayAccessExpression(AstArrayAccessExpr arr, int index = 0)
+        public override NodeFinderResult VisitArrayAccessExpr(AstArrayAccessExpr arr, int index = 0)
         {
-            if (GetRelativeLocation(arr.SubExpression.GenericParseTreeNode, index) == RelativeLocation.Same)
+            if (GetRelativeLocation(arr.SubExpression.Location, index) == RelativeLocation.Same)
                 return arr.SubExpression.Accept(this, index);
 
-            if (GetRelativeLocation(arr.Indexer.GenericParseTreeNode, index) == RelativeLocation.Same)
+            if (GetRelativeLocation(arr.Indexer.Location, index) == RelativeLocation.Same)
                 return arr.Indexer.Accept(this, index);
 
             return new NodeFinderResult(arr.Scope, expr: arr);
         }
 
-        public override NodeFinderResult VisitCastExpression(AstCastExpr cast, int i = 0)
+        public override NodeFinderResult VisitCastExpr(AstCastExpr cast, int i = 0)
         {
-            if (GetRelativeLocation(cast.SubExpression.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(cast.SubExpression.Location, i) == RelativeLocation.Same)
                 return cast.SubExpression.Accept(this, i);
 
-            if (GetRelativeLocation(cast.TypeExpr.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(cast.TypeExpr.Location, i) == RelativeLocation.Same)
                 return new NodeFinderResult(cast.Scope, type: cast.Type);
 
             return new NodeFinderResult(cast.Scope, expr: cast);
         }
 
-        public override NodeFinderResult VisitCallExpression(AstCallExpr call, int i = 0)
+        public override NodeFinderResult VisitCallExpr(AstCallExpr call, int i = 0)
         {
             foreach (var arg in call.Arguments)
             {
-                if (GetRelativeLocation(arg.GenericParseTreeNode, i) == RelativeLocation.Same)
+                if (GetRelativeLocation(arg.Location, i) == RelativeLocation.Same)
                     return arg.Accept(this, i);
             }
 
-            if (GetRelativeLocation(call.Function.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(call.Function.Location, i) == RelativeLocation.Same)
                 return call.Function.Accept(this, i);
 
             return new NodeFinderResultCallExpr(call, 0);
         }
 
-        public override NodeFinderResult VisitBinaryExpression(AstBinaryExpr bin, int index = 0)
+        public override NodeFinderResult VisitBinaryExpr(AstBinaryExpr bin, int index = 0)
         {
-            if (GetRelativeLocation(bin.Left.GenericParseTreeNode, index) == RelativeLocation.Same)
+            if (GetRelativeLocation(bin.Left.Location, index) == RelativeLocation.Same)
                 return bin.Left.Accept(this, index);
             
-            if (GetRelativeLocation(bin.Right.GenericParseTreeNode, index) == RelativeLocation.Same)
+            if (GetRelativeLocation(bin.Right.Location, index) == RelativeLocation.Same)
                 return bin.Right.Accept(this, index);
 
             return new NodeFinderResult(bin.Scope, expr: bin);
         }
 
-        public override NodeFinderResult VisitDotExpression(AstDotExpr dot, int i = 0)
+        public override NodeFinderResult VisitDotExpr(AstDotExpr dot, int i = 0)
         {
-            if (GetRelativeLocation(dot.Left.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(dot.Left.Location, i) == RelativeLocation.Same)
                 return dot.Left.Accept(this, i);
 
             return new NodeFinderResult(dot.Scope, expr: dot);
         }
 
-        public override NodeFinderResult VisitAddressOfExpression(AstAddressOfExpr add, int i = 0)
+        public override NodeFinderResult VisitAddressOfExpr(AstAddressOfExpr add, int i = 0)
         {
-            if (GetRelativeLocation(add.SubExpression.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(add.SubExpression.Location, i) == RelativeLocation.Same)
                 return add.SubExpression.Accept(this, i);
             return new NodeFinderResult(add.Scope, expr: add);
         }
 
-        public override NodeFinderResult VisitDereferenceExpression(AstDereferenceExpr deref, int i = 0)
+        public override NodeFinderResult VisitDerefExpr(AstDereferenceExpr deref, int i = 0)
         {
-            if (GetRelativeLocation(deref.SubExpression.GenericParseTreeNode, i) == RelativeLocation.Same)
+            if (GetRelativeLocation(deref.SubExpression.Location, i) == RelativeLocation.Same)
                 return deref.SubExpression.Accept(this, i);
             return new NodeFinderResult(deref.Scope, expr: deref);
         }
 
-        public override NodeFinderResult VisitBoolExpression(AstBoolExpr bo, int data = 0)
+        public override NodeFinderResult VisitBoolExpr(AstBoolExpr bo, int data = 0)
         {
             return new NodeFinderResult(bo.Scope, expr: bo);
         }
 
-        public override NodeFinderResult VisitNumberExpression(AstNumberExpr num, int data = 0)
+        public override NodeFinderResult VisitNumberExpr(AstNumberExpr num, int data = 0)
         {
             return new NodeFinderResult(num.Scope, expr: num);
         }
 
-        public override NodeFinderResult VisitIdentifierExpression(AstIdentifierExpr ident, int data = 0)
+        public override NodeFinderResult VisitIdExpr(AstIdExpr ident, int data = 0)
         {
             return new NodeFinderResult(ident.Scope, expr: ident);
         }
 
-        public override NodeFinderResult VisitStringLiteral(AstStringLiteral str, int data = 0)
+        public override NodeFinderResult VisitStringLiteralExpr(AstStringLiteral str, int data = 0)
         {
             return new NodeFinderResult(str.Scope, expr: str);
         }
