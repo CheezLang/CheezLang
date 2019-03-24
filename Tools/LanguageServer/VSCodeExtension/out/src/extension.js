@@ -4,10 +4,13 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-const os = require("os");
-const net = require("net");
-const vscode_1 = require("vscode");
-const vscode_languageclient_1 = require("vscode-languageclient");
+// import * as os from 'os';
+// import * as net from 'net';
+// The module 'vscode' contains the VS Code extensibility API
+// Import the module and reference it with the alias vscode in your code below
+const vscode = require("vscode");
+// import { workspace, ExtensionContext, window } from 'vscode';
+// import { LanguageClient, LanguageClientOptions, ServerOptions, StreamInfo } from 'vscode-languageclient';
 function startedInDebugMode() {
     let args = process.execArgv;
     if (args) {
@@ -16,62 +19,63 @@ function startedInDebugMode() {
     return false;
 }
 function activate(context) {
-    const debugPort = vscode_1.workspace.getConfiguration().get('cheezls.debug.languageServerPort');
-    let serverOptions = null;
+    startedInDebugMode();
+    // const debugPort: number = workspace.getConfiguration().get('cheezls.debug.languageServerPort');
+    // let serverOptions: ServerOptions = null;
     if (!startedInDebugMode()) {
-        vscode_1.window.showInformationMessage("Cheez extension started in release mode");
-        // The server is implemented in C#
-        let serverCommand = vscode_1.workspace.getConfiguration().get('cheezls.languageServerPath');
-        if (serverCommand === null || serverCommand === undefined) {
-            vscode_1.window.showErrorMessage("Cheez language server location was not specified. Please configure the path to the language server executable under 'cheezls.languageServerPath', then restart Visual Studio Code");
-            return;
-        }
-        let commandOptions = { stdio: 'pipe' };
-        serverOptions = (os.platform() === 'win32') ? {
-            run: { command: serverCommand, options: commandOptions },
-            debug: { command: serverCommand, options: commandOptions }
-        } : {
-            run: { command: 'mono', args: [serverCommand], options: commandOptions },
-            debug: { command: 'mono', args: [serverCommand], options: commandOptions }
-        };
+        vscode.window.showInformationMessage("Cheez extension started in release mode");
+        //     // The server is implemented in C#
+        //     let serverCommand: string = workspace.getConfiguration().get('cheezls.languageServerPath');
+        //     if (serverCommand === null || serverCommand === undefined) {
+        //         window.showErrorMessage("Cheez language server location was not specified. Please configure the path to the language server executable under 'cheezls.languageServerPath', then restart Visual Studio Code");
+        //         return;
+        //     }
+        //     let commandOptions = { stdio: 'pipe' };
+        //     serverOptions = (os.platform() === 'win32') ? {
+        //             run: { command: serverCommand, options: commandOptions },
+        //             debug: { command: serverCommand, options: commandOptions }
+        //         } : {
+        //             run: { command: 'mono', args: [serverCommand], options: commandOptions },
+        //             debug: { command: 'mono', args: [serverCommand], options: commandOptions }
+        //         }
     }
     else {
-        vscode_1.window.showInformationMessage("Cheez extension started in debug mode");
-        serverOptions = () => {
-            let socket = net.createConnection({
-                port: debugPort,
-                localAddress: "127.0.0.1"
-            });
-            let result = {
-                writer: socket,
-                reader: socket
-            };
-            return Promise.resolve(result);
-        };
+        vscode.window.showInformationMessage("Cheez extension started in debug mode");
+        //     serverOptions = () => {
+        //         let socket = net.createConnection({
+        //             port: debugPort,
+        //             localAddress: "127.0.0.1"
+        //         });
+        //         let result: StreamInfo = {
+        //             writer: socket,
+        //             reader: socket
+        //         };
+        //         return Promise.resolve(result);
+        //     };
     }
-    // Options to control the language client
-    let clientOptions = {
-        // Register the server for plain text documents
-        documentSelector: [
-            {
-                scheme: 'file',
-                language: 'cheezlang'
-            }
-        ],
-        //documentSelector: [{scheme: 'file', language: 'che'}],
-        synchronize: {
-            // Synchronize the setting section 'languageServerExample' to the server
-            configurationSection: 'cheezls',
-            // Notify the server about file changes to '.clientrc files contain in the workspace
-            fileEvents: vscode_1.workspace.createFileSystemWatcher('**/.clientrc')
-        }
-    };
-    // Create the language client and start the client.
-    let lclient = new vscode_languageclient_1.LanguageClient('cheezls', 'CheezLang Language Server', serverOptions, clientOptions);
-    let disposable = lclient.start();
-    // Push the disposable to the context's subscriptions so that the 
-    // client can be deactivated on extension deactivation
-    context.subscriptions.push(disposable);
+    // // Options to control the language client
+    // let clientOptions: LanguageClientOptions = {
+    //     // Register the server for plain text documents
+    //     documentSelector: [
+    //         {
+    //             scheme: 'file',
+    //             language: 'cheezlang'
+    //         }
+    //     ],
+    //     //documentSelector: [{scheme: 'file', language: 'che'}],
+    //     synchronize: {
+    //         // Synchronize the setting section 'languageServerExample' to the server
+    //         configurationSection: 'cheezls',
+    //         // Notify the server about file changes to '.clientrc files contain in the workspace
+    //         fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
+    //     }
+    // }
+    // // Create the language client and start the client.
+    // let lclient = new LanguageClient('cheezls', 'CheezLang Language Server', serverOptions, clientOptions);
+    // let disposable = lclient.start();
+    // // Push the disposable to the context's subscriptions so that the
+    // // client can be deactivated on extension deactivation
+    // context.subscriptions.push(disposable);
 }
 exports.activate = activate;
 //# sourceMappingURL=extension.js.map

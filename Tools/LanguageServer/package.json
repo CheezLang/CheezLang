@@ -1,24 +1,26 @@
 {
-	"name": "cheezlangls",
-	"description": "A language server for CheezLang",
-	"author": "Nimaoth",
-	"license": "MIT",
-	"version": "0.0.1",
-	"publisher": "Nimaoth",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Nimaoth/CheezLang"
-	},
-	"scripts": {
-		"postinstall": "cd VSCodeExtension && npm install && cd ..",
-		"compile": "tsc -p VSCodeExtension/tsconfig.json && cd server && npm run compile && cd ..",
-		"compile:client": "tsc -p VSCodeExtension/tsconfig.json",
-		"watch:client": "tsc -w -p VSCodeExtension/tsconfig.json",
-		"compile:server": "cd server && npm run compile && cd .."
-	},
-	"devDependencies": {
-		"@types/mocha": "^2.2.42",
-		"@types/node": "^6.0.88",
-		"typescript": "^2.5.2"
-	}
+    "name": "cheezlangls",
+    "description": "A language server for CheezLang",
+    "author": "Nimaoth",
+    "license": "MIT",
+    "version": "0.0.1",
+    "publisher": "Nimaoth",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Nimaoth/CheezLang"
+    },
+    "scripts": {
+        "postinstall": "cd VSCodeExtension && npm install && cd ..",
+        "compile": "tsc -p VSCodeExtension/tsconfig.json && cd server && npm run compile && cd ..",
+        "compile:client": "tsc -p VSCodeExtension/tsconfig.json",
+        "watch:client": "tsc -w -p VSCodeExtension/tsconfig.json",
+        "compile:server": "cd server && npm run compile && cd .."
+    },
+    "devDependencies": {
+        "@types/mocha": "^2.2.42",
+        "@types/node": "^6.0.88",
+        "vscode": "^1.1.22",
+        "tslint": "^5.8.0",
+        "typescript": "^2.5.2"
+    }
 }

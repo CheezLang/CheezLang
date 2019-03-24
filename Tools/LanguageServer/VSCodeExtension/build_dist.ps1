@@ -30,10 +30,10 @@ function copy-stuff {
     Copy-Item $path $targetDir -Recurse
 }
 
-copy-stuff .\node_modules
 copy-stuff .\out
 copy-stuff .\package.json
 copy-stuff .\syntaxes
 copy-stuff .\language-configuration.json
+copy-stuff .\node_modules
 
 Write-Host "Done."
