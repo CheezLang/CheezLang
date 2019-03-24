@@ -224,29 +224,42 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.PositionBuilderAtEnd(bbEnd);
         }
 
-        private void GenerateAssignment(AstAssignment ass)
+        private void GenerateAssignmentValue(AstAssignment ass)
         {
             if (ass.SubAssignments?.Count > 0)
             {
                 foreach (var sub in ass.SubAssignments)
-                {
-                    GenerateAssignment(sub);
-                }
+                    GenerateAssignmentValue(sub);
+                return;
+            }
+
+            var v = GenerateExpression(ass.Value, true);
+            valueMap[ass] = v;
+        }
+
+        private void GenerateAssignmentStore(AstAssignment ass)
+        {
+            if (ass.SubAssignments?.Count > 0)
+            {
+                foreach (var sub in ass.SubAssignments)
+                    GenerateAssignmentStore(sub);
                 return;
             }
 
             if (ass.OnlyGenerateValue)
-            {
-                GenerateExpression(ass.Value, false);
                 return;
-            }
-
+            var v = valueMap[ass];
 
             bool deref = ass.Pattern.Type is ReferenceType;
             var ptr = GenerateExpression(ass.Pattern, deref);
 
-            var v = GenerateExpression(ass.Value, true);
             builder.CreateStore(v, ptr);
+        }
+
+        private void GenerateAssignment(AstAssignment ass)
+        {
+            GenerateAssignmentValue(ass);
+            GenerateAssignmentStore(ass);
         }
 
         private void GenerateExprStatement(AstExprStmt expr)
