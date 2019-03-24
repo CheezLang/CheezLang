@@ -150,6 +150,7 @@ let pixel_game_engine_ptr: &PixelGameEngine = null
 fn olc_window_event(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT #stdcall {
     match msg {
         WM_DESTROY -> PostQuitMessage(0)
+        WM_CLOSE   -> { pixel_game_engine_ptr.active = false }
 
         WM_CREATE -> {
             pixel_game_engine_ptr = cast(&PixelGameEngine) (cast(&CREATESTRUCTA)lparam).lpCreateParams
@@ -175,14 +176,28 @@ fn olc_window_event(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LR
         WM_MOUSELEAVE   -> { pixel_game_engine_ptr.bHasMouseFocus = false }
         WM_SETFOCUS     -> { pixel_game_engine_ptr.bHasInputFocus = true }
         WM_KILLFOCUS    -> { pixel_game_engine_ptr.bHasInputFocus = false }
-        WM_KEYDOWN      -> { pixel_game_engine_ptr.pKeyNewState[cast(int)pixel_game_engine_ptr.mapKeys[cast(int)wparam]] = true }
-        WM_KEYUP        -> { pixel_game_engine_ptr.pKeyNewState[cast(int)pixel_game_engine_ptr.mapKeys[cast(int)wparam]] = false }
+
         WM_LBUTTONDOWN  -> { pixel_game_engine_ptr.pMouseNewState[0] = true }
         WM_LBUTTONUP    -> { pixel_game_engine_ptr.pMouseNewState[0] = false }
         WM_RBUTTONDOWN  -> { pixel_game_engine_ptr.pMouseNewState[1] = true }
         WM_RBUTTONUP    -> { pixel_game_engine_ptr.pMouseNewState[1] = false }
         WM_MBUTTONDOWN  -> { pixel_game_engine_ptr.pMouseNewState[2] = true }
         WM_MBUTTONUP    -> { pixel_game_engine_ptr.pMouseNewState[2] = false }
+
+        WM_KEYDOWN      -> {
+            if let (ok, key) = pixel_game_engine_ptr.mapKeys.try_get(cast(int)wparam); ok {
+                pixel_game_engine_ptr.pKeyNewState[cast(int)<<key] = true
+            } else {
+                printf("[WNDPROC] failed to get key {} from keymap´`n", [wparam])
+            }
+        }
+        WM_KEYUP        -> { 
+            if let (ok, key) = pixel_game_engine_ptr.mapKeys.try_get(cast(int)wparam); ok {
+                pixel_game_engine_ptr.pKeyNewState[cast(int)<<key] = false
+            } else {
+                printf("[WNDPROC] failed to get key {} from keymap´`n", [wparam])
+            }
+        }
         
         $_ -> {
             return DefWindowProcA(hwnd, msg, wparam, lparam)

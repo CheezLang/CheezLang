@@ -11,6 +11,8 @@ fn CloseHandle(hObject: HANDLE) -> BOOL #stdcall;
 fn GetFileSize(hFile: HANDLE, lpFileSizeHigh: &DWORD) -> DWORD #stdcall;
 fn GetFileSizeEx(hFile: HANDLE, lpFileSize: &LARGE_INTEGER) -> BOOL #stdcall;
 
+fn PostMessageA(hWnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> BOOL #stdcall;
+fn PeekMessageA(lpMsg: &MSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT, wRemoveMsg: UINT) -> BOOL #stdcall;
 fn GetMessageA(lpMsg: &MSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT) -> BOOL #stdcall;
 fn TranslateMessage(lpMsg: &MSG) -> BOOL #stdcall;
 fn DispatchMessageA(lpMsg: &MSG) -> LRESULT #stdcall;
@@ -22,8 +24,10 @@ fn RegisterClassA(wndClass: &WNDCLASSA) -> ATOM #stdcall;
 fn AdjustWindowRectEx(lpRect: &RECT, dwStyle: DWORD, bMenu: BOOL, dwExStyle: DWORD) -> BOOL #stdcall;
 fn CreateWindowExA(dwExStyle: DWORD, lpClassNa: c_string, lpWindowName : c_string, dwSty: DWORD, X: i32, Y: i32, nWidt: i32, nHeig: i32, hWndParen: HWND, hMenu: HMENU, hInstance: HINSTANCE, lpPar: &any) -> HWND #stdcall;
 fn PostQuitMessage(exitCode: i32) #stdcall;
-// somehow not linking
-// fn GetCurrentDirectory(nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;
-
 fn QueryPerformanceCounter(lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
 fn QueryPerformanceFrequency(lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
+fn Sleep(millis: DWORD) #stdcall;
+
+
+// somehow not linking
+// fn GetCurrentDirectory(nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;

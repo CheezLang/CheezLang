@@ -4,9 +4,12 @@
 #load("olc_win.che")
 
 #load("std:hash_table")
+#load("std:util")
 
 trait Game {
-
+    fn on_create(ref Self) -> bool;
+    fn on_destroy(ref Self) -> bool;
+    fn on_update(ref Self, dt: float) -> bool;
 }
 
 enum OptionPGE {
@@ -25,8 +28,12 @@ struct PixelGameEngine {
     olc_hWnd            : HWND      = null
 
     // other stuff
+    nMousePosX          : int
+    nMousePosY          : int
     nMousePosXcache     : int
     nMousePosYcache     : int
+
+    nMouseWheelDelta    : int
     nMouseWheelDeltaCache : int
 
     window_width        : int       = -1
@@ -50,6 +57,8 @@ struct PixelGameEngine {
     pMouseNewState      : [5]bool
 
     mapKeys             : Table(int, Key)
+
+    active              : bool
 }
 
 fn compare_ints(a: int, b: int) -> bool {
@@ -92,18 +101,143 @@ impl PixelGameEngine {
     }
 
     fn start(ref Self) {
-        // pixel_game_engine_ptr = &self
-
         let wnd = self.olc_window_create()
         if wnd == null {
             return
         }
 
-        let msg: MSG
-        while GetMessageA(&msg, null, 0, 0) > 0 {
-            TranslateMessage(&msg)
-            DispatchMessageA(&msg)
+        active = true
+        engine_thread()
+    }
+
+    fn engine_thread(ref Self) {
+        // Start OpenGL, the context is owned by the game thread
+        // olc_OpenGLCreate();
+
+        // // Create Screen Texture - disable filtering
+        // glEnable(GL_TEXTURE_2D);
+        // glGenTextures(1, &glBuffer);
+        // glBindTexture(GL_TEXTURE_2D, glBuffer);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        // glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+
+        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, nScreenWidth, nScreenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pDefaultDrawTarget->GetData());
+
+
+        // Create user resources as part of this thread
+        if !game.on_create() {
+            active = false
         }
+
+        let tp1 = getCurrentTimeInMicroseconds()
+        let tp2 = getCurrentTimeInMicroseconds()
+
+        while active {
+            // Run as fast as possible
+            while active {
+                let msg: MSG
+                while PeekMessageA(&msg, null, 0, 0, 0x0001) > 0 {
+                    TranslateMessage(&msg)
+                    DispatchMessageA(&msg)
+                }
+                // Handle Timing
+                tp2 = getCurrentTimeInMicroseconds()
+                let fElapsedTime = cast(float) (cast(double) tp2 - tp1) * 0.000001
+                tp1 = tp2
+
+                // Handle User Input - Keyboard
+                while let i = 0; i < 256; i += 1 {
+                    pKeyboardState[i].pressed = false
+                    pKeyboardState[i].released = false
+
+                    if pKeyNewState[i] != pKeyOldState[i] {
+                        if (pKeyNewState[i]) {
+                            pKeyboardState[i].pressed = !pKeyboardState[i].held
+                            pKeyboardState[i].held = true
+                        } else {
+                            pKeyboardState[i].released = true
+                            pKeyboardState[i].held = false
+                        }
+                    }
+
+                    pKeyOldState[i] = pKeyNewState[i]
+                }
+
+                // Handle User Input - Mouse
+                while let i = 0; i < 5; i += 1 {
+                    pMouseState[i].pressed = false
+                    pMouseState[i].released = false
+
+                    if (pMouseNewState[i] != pMouseOldState[i])
+                    {
+                        if (pMouseNewState[i])
+                        {
+                            pMouseState[i].pressed = !pMouseState[i].held
+                            pMouseState[i].held = true
+                        }
+                        else
+                        {
+                            pMouseState[i].released = true
+                            pMouseState[i].held = false
+                        }
+                    }
+
+                    pMouseOldState[i] = pMouseNewState[i]
+                }
+
+                // Cache mouse coordinates so they remain
+                // consistent during frame
+                nMousePosX = nMousePosXcache
+                nMousePosY = nMousePosYcache
+
+                nMouseWheelDelta = nMouseWheelDeltaCache
+                nMouseWheelDeltaCache = 0
+
+                // Handle Frame Update
+                if !game.on_update(fElapsedTime) {
+                    active = false
+                }
+
+                // Display Graphics
+
+        //         // TODO: This is a bit slow (especially in debug, but 100x faster in release mode???)
+        //         // Copy pixel array into texture
+        //         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, nScreenWidth, nScreenHeight, GL_RGBA, GL_UNSIGNED_BYTE, pDefaultDrawTarget->GetData());
+
+        //         // Display texture on screen
+        //         glBegin(GL_QUADS);
+        //             glTexCoord2f(0.0, 1.0); glVertex3f(-1.0f + (fSubPixelOffsetX), -1.0f + (fSubPixelOffsetY), 0.0f);
+        //             glTexCoord2f(0.0, 0.0); glVertex3f(-1.0f + (fSubPixelOffsetX),  1.0f + (fSubPixelOffsetY), 0.0f);
+        //             glTexCoord2f(1.0, 0.0); glVertex3f( 1.0f + (fSubPixelOffsetX),  1.0f + (fSubPixelOffsetY), 0.0f);
+        //             glTexCoord2f(1.0, 1.0); glVertex3f( 1.0f + (fSubPixelOffsetX), -1.0f + (fSubPixelOffsetY), 0.0f);
+        //         glEnd();
+
+        //         // Present Graphics to screen
+        //         SwapBuffers(glDeviceContext);
+
+        //         // Update Title Bar
+        //         fFrameTimer += fElapsedTime;
+        //         nFrameCount++;
+        //         if (fFrameTimer >= 1.0f)
+        //         {
+        //             fFrameTimer -= 1.0f;
+
+        //             std::string sTitle = "OneLoneCoder.com - Pixel Game Engine - " + sAppName + " - FPS: " + std::to_string(nFrameCount);
+        //             SetWindowText(olc_hWnd, sTitle.c_str());
+        //             nFrameCount = 0;
+        //         }
+            }
+
+            // Allow the user to free resources if they have overrided the destroy function
+            if !game.on_destroy() {
+                // User denied destroy for some reason, so continue running
+                active = true
+            }
+        }
+
+        // wglDeleteContext(glRenderContext);
+        PostMessageA(olc_hWnd, WM_DESTROY, 0, 0)
     }
 
     fn set_draw_target(ref Self, target: &Sprite) {
@@ -115,11 +249,11 @@ impl PixelGameEngine {
         window_width = x
         window_height = y
     }
-    
+
     fn olc_update_mouse_wheel(ref Self, delta: int) {
         nMouseWheelDeltaCache += delta
     }
-    
+
     fn olc_update_mouse(ref Self, x: int, y: int) {
         nMousePosXcache = cast(int) (cast(float)x) / (cast(float) window_width) * (cast(float)screen_width)
         nMousePosYcache = cast(int) (cast(float)y) / (cast(float) window_height) * (cast(float)screen_height)
