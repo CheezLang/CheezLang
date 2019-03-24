@@ -84,33 +84,33 @@ impl PixelGameEngine {
         mapKeys[VK_F11]      = Key.F11
         mapKeys[VK_F12]      = Key.F12
 
-        mapKeys[VK_DOWN]     = Key.DOWN
-        mapKeys[VK_LEFT]     = Key.LEFT
-        mapKeys[VK_RIGHT]    = Key.RIGHT
-        mapKeys[VK_UP]       = Key.UP
+        mapKeys[VK_DOWN]     = Key.Down
+        mapKeys[VK_LEFT]     = Key.Left
+        mapKeys[VK_RIGHT]    = Key.Right
+        mapKeys[VK_UP]       = Key.Up
 
-        mapKeys[VK_RETURN]   = Key.ENTER
+        mapKeys[VK_RETURN]   = Key.Enter
         //mapKeys[VK_RETURN] = Key.RETURN
 
-        mapKeys[VK_BACK]     = Key.BACK
-        mapKeys[VK_ESCAPE]   = Key.ESCAPE
-        mapKeys[VK_RETURN]   = Key.ENTER
-        mapKeys[VK_PAUSE]    = Key.PAUSE
+        mapKeys[VK_BACK]     = Key.Back
+        mapKeys[VK_ESCAPE]   = Key.Escape
+        mapKeys[VK_RETURN]   = Key.Enter
+        mapKeys[VK_PAUSE]    = Key.Pause
 
-        mapKeys[VK_SCROLL]   = Key.SCROLL
-        mapKeys[VK_TAB]      = Key.TAB
-        mapKeys[VK_DELETE]   = Key.DEL
-        mapKeys[VK_HOME]     = Key.HOME
+        mapKeys[VK_SCROLL]   = Key.Scroll
+        mapKeys[VK_TAB]      = Key.Tab
+        mapKeys[VK_DELETE]   = Key.Del
+        mapKeys[VK_HOME]     = Key.Home
 
-        mapKeys[VK_END]      = Key.END
+        mapKeys[VK_END]      = Key.End
         mapKeys[VK_PRIOR]    = Key.PGUP
         mapKeys[VK_NEXT]     = Key.PGDN
-        mapKeys[VK_INSERT]   = Key.INS
+        mapKeys[VK_INSERT]   = Key.Ins
 
-        mapKeys[VK_SHIFT]    = Key.SHIFT
-        mapKeys[VK_CONTROL]  = Key.CTRL
+        mapKeys[VK_SHIFT]    = Key.Shift
+        mapKeys[VK_CONTROL]  = Key.Ctrl
 
-        mapKeys[VK_SPACE]    = Key.SPACE
+        mapKeys[VK_SPACE]    = Key.Space
 
         mapKeys[0x30]        = Key.K0
         mapKeys[0x31]        = Key.K1
@@ -136,11 +136,11 @@ impl PixelGameEngine {
         mapKeys[VK_NUMPAD8]  = Key.NP8
         mapKeys[VK_NUMPAD9]  = Key.NP9
 
-        mapKeys[VK_MULTIPLY] = Key.NP_MUL
-        mapKeys[VK_ADD]      = Key.NP_ADD
-        mapKeys[VK_DIVIDE]   = Key.NP_DIV
-        mapKeys[VK_SUBTRACT] = Key.NP_SUB
-        mapKeys[VK_DECIMAL]  = Key.NP_DECIMAL
+        mapKeys[VK_MULTIPLY] = Key.NpMul
+        mapKeys[VK_ADD]      = Key.NpAdd
+        mapKeys[VK_DIVIDE]   = Key.NpDiv
+        mapKeys[VK_SUBTRACT] = Key.NpSub
+        mapKeys[VK_DECIMAL]  = Key.NpDecimal
 
         return olc_hWnd
     }

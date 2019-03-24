@@ -3,11 +3,11 @@ enum Key {
     A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
     K0, K1, K2, K3, K4, K5, K6, K7, K8, K9,
     F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
-    UP, DOWN, LEFT, RIGHT,
-    SPACE, TAB, SHIFT, CTRL, INS, DEL, HOME, END, PGUP, PGDN,
-    BACK, ESCAPE, RETURN, ENTER, PAUSE, SCROLL,
+    Up, Down, Left, Right,
+    Space, Tab, Shift, Ctrl, Ins, Del, Home, End, PGUP, PGDN,
+    Back, Escape, Return, Enter, Pause, Scroll,
     NP0, NP1, NP2, NP3, NP4, NP5, NP6, NP7, NP8, NP9,
-    NP_MUL, NP_DIV, NP_ADD, NP_SUB, NP_DECIMAL,
+    NpMul, NpDiv, NpAdd, NpSub, NpDecimal,
 }
 
 typedef HWButton = (pressed: bool, released: bool, held: bool)
@@ -64,26 +64,26 @@ impl Printable for Key {
             Key.F10 -> "F10"
             Key.F11 -> "F11"
             Key.F12 -> "F12"
-            Key.UP      -> "UP"
-            Key.DOWN    -> "DOWN"
-            Key.LEFT    -> "LEFT"
-            Key.RIGHT   -> "RIGHT"
-            Key.SPACE   -> "SPACE"
-            Key.TAB     -> "TAB"
-            Key.SHIFT   -> "SHIFT"
-            Key.CTRL    -> "CTRL"
-            Key.INS     -> "INS"
-            Key.DEL     -> "DEL"
-            Key.HOME    -> "HOME"
-            Key.END     -> "END"
+            Key.Up      -> "Up"
+            Key.Down    -> "Down"
+            Key.Left    -> "Left"
+            Key.Right   -> "Right"
+            Key.Space   -> "Space"
+            Key.Tab     -> "Tab"
+            Key.Shift   -> "Shift"
+            Key.Ctrl    -> "Ctrl"
+            Key.Ins     -> "Ins"
+            Key.Del     -> "Del"
+            Key.Home    -> "Home"
+            Key.End     -> "END"
             Key.PGUP    -> "PGUP"
             Key.PGDN    -> "PGDN"
-            Key.BACK    -> "BACK"
-            Key.ESCAPE  -> "ESCAPE"
-            Key.RETURN  -> "RETURN"
-            Key.ENTER   -> "ENTER"
-            Key.PAUSE   -> "PAUSE"
-            Key.SCROLL  -> "SCROLL"
+            Key.Back    -> "Back"
+            Key.Escape  -> "Escape"
+            Key.Return  -> "Return"
+            Key.Enter   -> "Enter"
+            Key.Pause   -> "Pause"
+            Key.Scroll  -> "Scroll"
             Key.NP0 -> "NP0"
             Key.NP1 -> "NP1"
             Key.NP2 -> "NP2"
@@ -94,11 +94,11 @@ impl Printable for Key {
             Key.NP7 -> "NP7"
             Key.NP8 -> "NP8"
             Key.NP9 -> "NP9"
-            Key.NP_MUL  -> "NP_MUL"
-            Key.NP_DIV  -> "NP_DIV"
-            Key.NP_ADD  -> "NP_ADD"
-            Key.NP_SUB  -> "NP_SUB"
-            Key.NP_DECIMAL  -> "NP_DECIMAL"
+            Key.NpMul  -> "NpMul"
+            Key.NpDiv  -> "NpDiv"
+            Key.NpAdd  -> "NpAdd"
+            Key.NpSub  -> "NpSub"
+            Key.NpDecimal  -> "NpDecimal"
             $_ -> "<unknown key>"
         }
 
