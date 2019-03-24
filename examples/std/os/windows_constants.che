@@ -1,6 +1,32 @@
 #load("windows_types")
 
 
+let const PFD_MAIN_PLANE            : u8    = 0
+let const PFD_OVERLAY_PLANE         : u8    = 1
+let const PFD_UNDERLAY_PLANE        : u8    = (-1)
+
+let const PFD_TYPE_RGBA             : u8    = 0
+let const PFD_TYPE_COLORINDEX       : u8    = 1
+
+let const PFD_DOUBLEBUFFER          : u32   = 0x00000001
+let const PFD_STEREO                : u32   = 0x00000002
+let const PFD_DRAW_TO_WINDOW        : u32   = 0x00000004
+let const PFD_DRAW_TO_BITMAP        : u32   = 0x00000008
+let const PFD_SUPPORT_GDI           : u32   = 0x00000010
+let const PFD_SUPPORT_OPENGL        : u32   = 0x00000020
+let const PFD_GENERIC_FORMAT        : u32   = 0x00000040
+let const PFD_NEED_PALETTE          : u32   = 0x00000080
+let const PFD_NEED_SYSTEM_PALETTE   : u32   = 0x00000100
+let const PFD_SWAP_EXCHANGE         : u32   = 0x00000200
+let const PFD_SWAP_COPY             : u32   = 0x00000400
+let const PFD_SWAP_LAYER_BUFFERS    : u32   = 0x00000800
+let const PFD_GENERIC_ACCELERATED   : u32   = 0x00001000
+let const PFD_SUPPORT_DIRECTDRAW    : u32   = 0x00002000
+let const PFD_DIRECT3D_ACCELERATED  : u32   = 0x00004000
+let const PFD_SUPPORT_COMPOSITION   : u32   = 0x00008000
+let const PFD_DEPTH_DONTCARE        : u32   = 0x20000000
+let const PFD_DOUBLEBUFFER_DONTCARE : u32   = 0x40000000
+let const PFD_STEREO_DONTCARE       : u32   = 0x80000000
 
 fn MAKEINTRESOURCE(i: uint) -> &char {
     return cast(&char) cast(u32) cast(u16)i

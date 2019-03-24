@@ -5,6 +5,8 @@ typedef HINSTANCE       = HANDLE
 typedef HMODULE         = HANDLE
 typedef HICON           = HANDLE
 typedef HMENU           = HANDLE
+typedef HDC             = HANDLE
+typedef HGLRC           = HANDLE
 typedef HCURSOR         = HICON
 typedef HBRUSH          = HANDLE
 typedef HFILE           = i32
@@ -107,6 +109,35 @@ struct CREATESTRUCTA {
     lpszName        : c_string
     lpszClass       : c_string
     dwExStyle       : DWORD
+}
+
+struct PIXELFORMATDESCRIPTOR {
+  nSize : WORD
+  nVersion  : WORD
+  dwFlags   : DWORD
+  iPixelType    : BYTE
+  cColorBits    : BYTE
+  cRedBits  : BYTE
+  cRedShift : BYTE
+  cGreenBits    : BYTE
+  cGreenShift   : BYTE
+  cBlueBits : BYTE
+  cBlueShift    : BYTE
+  cAlphaBits    : BYTE
+  cAlphaShift   : BYTE
+  cAccumBits    : BYTE
+  cAccumRedBits : BYTE
+  cAccumGreenBits   : BYTE
+  cAccumBlueBits    : BYTE
+  cAccumAlphaBits   : BYTE
+  cDepthBits    : BYTE
+  cStencilBits  : BYTE
+  cAuxBuffers   : BYTE
+  iLayerType    : BYTE
+  bReserved : BYTE
+  dwLayerMask   : DWORD
+  dwVisibleMask : DWORD
+  dwDamageMask  : DWORD
 }
 
 

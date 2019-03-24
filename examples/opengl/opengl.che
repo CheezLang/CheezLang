@@ -3,3 +3,21 @@
 #load("opengl_types")
 #load("opengl_constants")
 #load("opengl_functions")
+
+#load("std:c")
+
+fn gl_check_error() {
+    let err = glGetError()
+    while err != GL_NO_ERROR {
+        match err {
+            GL_INVALID_OPERATION -> c_puts("GL_INVALID_OPERATION")
+            GL_INVALID_ENUM -> c_puts("GL_INVALID_ENUM")
+            GL_INVALID_VALUE -> c_puts("GL_INVALID_VALUE")
+            GL_OUT_OF_MEMORY -> c_puts("GL_OUT_OF_MEMORY")
+            // GL_INVALID_FRAMEBUFFER_OPERATION -> c_puts("GL_INVALID_FRAMEBUFFER_OPERATION")
+            $_ -> c_printf("GL_ERROR(%d)`n", err)
+        }
+
+        err = glGetError()
+    }
+}

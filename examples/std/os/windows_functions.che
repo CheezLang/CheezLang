@@ -1,16 +1,27 @@
 #load("windows_types")
 
+// general stuff
 fn GetLastError() -> DWORD #stdcall;
+fn CloseHandle(hObject: HANDLE) -> BOOL #stdcall;
+fn QueryPerformanceCounter(lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
+fn QueryPerformanceFrequency(lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
+fn Sleep(millis: DWORD) #stdcall;
 
+// file stuff
 fn GetStdHandle(nStdHandle: DWORD) -> HANDLE #stdcall;
 fn WriteFile(hFile: HANDLE, lpBuffer: &any, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: &DWORD, lpOverlapped: &any) -> BOOL #stdcall;
 fn ReadFile(hFile: HANDLE, lpBuffer: &any, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: &DWORD, lpOverlapped: &any) -> BOOL #stdcall;
-
 fn CreateFileA(lpFileName: c_string, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &any, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
-fn CloseHandle(hObject: HANDLE) -> BOOL #stdcall;
 fn GetFileSize(hFile: HANDLE, lpFileSizeHigh: &DWORD) -> DWORD #stdcall;
 fn GetFileSizeEx(hFile: HANDLE, lpFileSize: &LARGE_INTEGER) -> BOOL #stdcall;
 
+// window stuff
+fn GetModuleHandleA(lpModuleName: c_string) -> HMODULE #stdcall;
+fn SetWindowTextA(hWnd: HWND, lpString: c_string) -> BOOL #stdcall;
+fn DefWindowProcA(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT #stdcall;
+fn RegisterClassA(wndClass: &WNDCLASSA) -> ATOM #stdcall;
+fn AdjustWindowRectEx(lpRect: &RECT, dwStyle: DWORD, bMenu: BOOL, dwExStyle: DWORD) -> BOOL #stdcall;
+fn CreateWindowExA(dwExStyle: DWORD, lpClassNa: c_string, lpWindowName : c_string, dwSty: DWORD, X: i32, Y: i32, nWidt: i32, nHeig: i32, hWndParen: HWND, hMenu: HMENU, hInstance: HINSTANCE, lpPar: &any) -> HWND #stdcall;
 fn PostMessageA(hWnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> BOOL #stdcall;
 fn PeekMessageA(lpMsg: &MSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT, wRemoveMsg: UINT) -> BOOL #stdcall;
 fn GetMessageA(lpMsg: &MSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT) -> BOOL #stdcall;
@@ -18,16 +29,17 @@ fn TranslateMessage(lpMsg: &MSG) -> BOOL #stdcall;
 fn DispatchMessageA(lpMsg: &MSG) -> LRESULT #stdcall;
 fn LoadIconA(hInstance: HINSTANCE, lpIconName: c_string) -> HICON #stdcall;
 fn LoadCursorA(hInstance: HINSTANCE, lpIconName: c_string) -> HCURSOR #stdcall;
-fn GetModuleHandleA(lpModuleName: c_string) -> HMODULE #stdcall;
-fn DefWindowProcA(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT #stdcall;
-fn RegisterClassA(wndClass: &WNDCLASSA) -> ATOM #stdcall;
-fn AdjustWindowRectEx(lpRect: &RECT, dwStyle: DWORD, bMenu: BOOL, dwExStyle: DWORD) -> BOOL #stdcall;
-fn CreateWindowExA(dwExStyle: DWORD, lpClassNa: c_string, lpWindowName : c_string, dwSty: DWORD, X: i32, Y: i32, nWidt: i32, nHeig: i32, hWndParen: HWND, hMenu: HMENU, hInstance: HINSTANCE, lpPar: &any) -> HWND #stdcall;
 fn PostQuitMessage(exitCode: i32) #stdcall;
-fn QueryPerformanceCounter(lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
-fn QueryPerformanceFrequency(lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
-fn Sleep(millis: DWORD) #stdcall;
 
+fn GetDC(hwnd: HWND) -> HDC #stdcall;
+fn ChoosePixelFormat(hdc: HDC, ppfd: &PIXELFORMATDESCRIPTOR) -> i32 #stdcall;
+fn SetPixelFormat(hdc: HDC, format: i32, ppfd: &PIXELFORMATDESCRIPTOR) -> BOOL #stdcall;
+fn SwapBuffers(HDC) -> BOOL #stdcall;
+
+// wgl
+fn wglCreateContext(hdc: HDC) -> HGLRC #stdcall;
+fn wglMakeCurrent(HDC, HGLRC) -> BOOL #stdcall;
+fn wglGetProcAddress(c_string) -> (fn() #stdcall {}) #stdcall;
 
 // somehow not linking
 // fn GetCurrentDirectory(nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;

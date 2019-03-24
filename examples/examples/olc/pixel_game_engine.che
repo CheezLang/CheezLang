@@ -5,11 +5,13 @@
 
 #load("std:hash_table")
 #load("std:util")
+#load("opengl:opengl")
 
 trait Game {
-    fn on_create(ref Self) -> bool;
+    fn on_create(ref Self, pge: &PixelGameEngine) -> bool;
     fn on_destroy(ref Self) -> bool;
     fn on_update(ref Self, dt: float) -> bool;
+    fn on_gl(ref Self);
 }
 
 enum OptionPGE {
@@ -42,8 +44,11 @@ struct PixelGameEngine {
     screen_height       : int
     pixel_width         : int
     pixel_height        : int
+
     pixel_x             : float     = 1.0f
     pixel_y             : float     = 1.0f
+    fSubPixelOffsetX    : float     = 0.0f
+    fSubPixelOffsetY    : float     = 0.0f
 
     bHasMouseFocus      : bool      = false
     bHasInputFocus      : bool      = false
@@ -56,9 +61,17 @@ struct PixelGameEngine {
     pMouseOldState      : [5]bool
     pMouseNewState      : [5]bool
 
+    fFrameTimer         : float
+    nFrameCount         : int
+
     mapKeys             : Table(int, Key)
 
     active              : bool
+
+    // gl stuff
+    glBuffer            : GLuint
+    glDeviceContext     : HDC   = null
+    glRenderContext     : HGLRC = null
 }
 
 fn compare_ints(a: int, b: int) -> bool {
@@ -87,6 +100,7 @@ impl PixelGameEngine {
 
         pge.default_draw_target = alloc(Sprite)
         <<pge.default_draw_target = Sprite::create(screen_w, screen_h)
+
         pge.set_draw_target(null)
 
         return OptionPGE.Some(pge)
@@ -112,26 +126,30 @@ impl PixelGameEngine {
 
     fn engine_thread(ref Self) {
         // Start OpenGL, the context is owned by the game thread
-        // olc_OpenGLCreate();
+        olc_OpenGLCreate()
 
-        // // Create Screen Texture - disable filtering
-        // glEnable(GL_TEXTURE_2D);
-        // glGenTextures(1, &glBuffer);
-        // glBindTexture(GL_TEXTURE_2D, glBuffer);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        // glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+        // Create Screen Texture - disable filtering
+        glEnable(GL_TEXTURE_2D)
+        glGenTextures(1, &glBuffer)
+        glBindTexture(GL_TEXTURE_2D, glBuffer)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, cast GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, cast GL_NEAREST)
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, cast GL_DECAL) // glTexEnvf?
+        gl_check_error()
 
-        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, nScreenWidth, nScreenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pDefaultDrawTarget->GetData());
+        glTexImage2D(GL_TEXTURE_2D, 0, cast GL_RGBA, cast screen_width, cast screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, default_draw_target.get_data())
+        gl_check_error()
 
 
         // Create user resources as part of this thread
-        if !game.on_create() {
+        if !game.on_create(&self) {
             active = false
         }
 
         let tp1 = getCurrentTimeInMicroseconds()
         let tp2 = getCurrentTimeInMicroseconds()
+
+        let fps_string = String::empty()
 
         while active {
             // Run as fast as possible
@@ -200,33 +218,43 @@ impl PixelGameEngine {
                 }
 
                 // Display Graphics
+                glClear(GL_COLOR_BUFFER_BIT)
 
-        //         // TODO: This is a bit slow (especially in debug, but 100x faster in release mode???)
-        //         // Copy pixel array into texture
-        //         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, nScreenWidth, nScreenHeight, GL_RGBA, GL_UNSIGNED_BYTE, pDefaultDrawTarget->GetData());
+                // TODO: This is a bit slow (especially in debug, but 100x faster in release mode???)
+                // Copy pixel array into texture
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cast screen_width, cast screen_height, GL_RGBA, GL_UNSIGNED_BYTE, default_draw_target.get_data())
 
-        //         // Display texture on screen
-        //         glBegin(GL_QUADS);
-        //             glTexCoord2f(0.0, 1.0); glVertex3f(-1.0f + (fSubPixelOffsetX), -1.0f + (fSubPixelOffsetY), 0.0f);
-        //             glTexCoord2f(0.0, 0.0); glVertex3f(-1.0f + (fSubPixelOffsetX),  1.0f + (fSubPixelOffsetY), 0.0f);
-        //             glTexCoord2f(1.0, 0.0); glVertex3f( 1.0f + (fSubPixelOffsetX),  1.0f + (fSubPixelOffsetY), 0.0f);
-        //             glTexCoord2f(1.0, 1.0); glVertex3f( 1.0f + (fSubPixelOffsetX), -1.0f + (fSubPixelOffsetY), 0.0f);
-        //         glEnd();
 
-        //         // Present Graphics to screen
-        //         SwapBuffers(glDeviceContext);
+                // Display texture on screen
+                glBegin(GL_QUADS)
+                    glTexCoord2f(0.0f, 1.0f)
+                    glVertex3f(-1.0f + (fSubPixelOffsetX), -1.0f + (fSubPixelOffsetY), 0.0f)
+                    glTexCoord2f(0.0f, 0.0f)
+                    glVertex3f(-1.0f + (fSubPixelOffsetX),  1.0f + (fSubPixelOffsetY), 0.0f)
+                    glTexCoord2f(1.0f, 0.0f)
+                    glVertex3f( 1.0f + (fSubPixelOffsetX),  1.0f + (fSubPixelOffsetY), 0.0f)
+                    glTexCoord2f(1.0f, 1.0f)
+                    glVertex3f( 1.0f + (fSubPixelOffsetX), -1.0f + (fSubPixelOffsetY), 0.0f)
+                glEnd()
 
-        //         // Update Title Bar
-        //         fFrameTimer += fElapsedTime;
-        //         nFrameCount++;
-        //         if (fFrameTimer >= 1.0f)
-        //         {
-        //             fFrameTimer -= 1.0f;
+                game.on_gl()
 
-        //             std::string sTitle = "OneLoneCoder.com - Pixel Game Engine - " + sAppName + " - FPS: " + std::to_string(nFrameCount);
-        //             SetWindowText(olc_hWnd, sTitle.c_str());
-        //             nFrameCount = 0;
-        //         }
+                // Present Graphics to screen
+                SwapBuffers(glDeviceContext)
+
+                // Update Title Bar
+                fFrameTimer += fElapsedTime
+                nFrameCount += 1
+                if fFrameTimer >= 1.0f {
+                    fFrameTimer -= 1.0f
+
+                    fps_string.length = 0
+                    fps_string.appendf("OneLoneCoder.com - Pixel Game Engine - FPS: {}", [nFrameCount])
+                    fps_string += cast(char) 0
+
+                    SetWindowTextA(olc_hWnd, fps_string.get_raw())
+                    nFrameCount = 0
+                }
             }
 
             // Allow the user to free resources if they have overrided the destroy function
@@ -248,6 +276,7 @@ impl PixelGameEngine {
     fn olc_update_window_size(ref Self, x: int, y: int) {
         window_width = x
         window_height = y
+        glViewport(0, 0, cast x, cast y)
     }
 
     fn olc_update_mouse_wheel(ref Self, delta: int) {
@@ -263,6 +292,47 @@ impl PixelGameEngine {
 
         if nMousePosXcache < 0 { nMousePosXcache = 0 }
         if nMousePosYcache < 0 { nMousePosYcache = 0 }
+    }
+
+    fn olc_OpenGLCreate(ref Self) -> bool {
+        glDeviceContext = GetDC(olc_hWnd)
+
+        let pfd = new PIXELFORMATDESCRIPTOR {
+            @sizeof(PIXELFORMATDESCRIPTOR), 1,
+            @bin_or(PFD_DRAW_TO_WINDOW, PFD_SUPPORT_OPENGL, PFD_DOUBLEBUFFER),
+            PFD_TYPE_RGBA, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            PFD_MAIN_PLANE, 0, 0, 0, 0
+        }
+
+        let pf = ChoosePixelFormat(glDeviceContext, &pfd)
+        if pf == 0 {
+            return false
+        }
+        SetPixelFormat(glDeviceContext, pf, &pfd)
+
+        glRenderContext = wglCreateContext(glDeviceContext)
+        if glRenderContext == null {
+            return false
+        }
+        wglMakeCurrent(glDeviceContext, glRenderContext)
+
+        // Remove Frame cap
+        let wglSwapInterval = cast(fn(i32) #stdcall {})wglGetProcAddress("wglSwapIntervalEXT")
+        if wglSwapInterval {
+            wglSwapInterval(0)
+        }
+        return true
+    }
+
+    // draw functions
+    fn draw(ref Self, x: int, y: int, p: Pixel) -> bool {
+        if draw_target == null {
+            return false
+        }
+
+        draw_target.set_pixel(x, y, p)
+
+        return true
     }
 
     // hardware interfaces
