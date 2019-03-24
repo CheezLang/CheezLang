@@ -1,0 +1,71 @@
+#load("pixel_game_engine.che")
+
+impl PixelGameEngine {
+    
+
+    // hardware interfaces
+    fn is_focused(ref Self) -> bool {
+        return bHasInputFocus
+    }
+
+    fn get_key(ref Self, key: Key) -> HWButton {
+        return pKeyboardState[cast(int)key]
+    }
+
+    fn get_mouse(ref Self, b: int) -> HWButton {
+        return pMouseState[b]
+    }
+
+    fn get_mouse_pos(ref Self) -> (x: int, y: int) {
+        return (nMousePosX, nMousePosY)
+    }
+
+    fn get_mouse_wheel(ref Self) -> int {
+        return nMouseWheelDelta
+    }
+
+    fn get_width(ref Self) -> int { return screen_width }
+    fn get_height(ref Self) -> int { return screen_height }
+
+    //
+    fn set_draw_target(ref Self, target: &Sprite) {
+        draw_target = if target == null { default_draw_target } else { target }
+    }
+
+    fn set_pixel_blend(ref Self, fBlend: float) {
+        fBlendFactor = fBlend
+        if fBlendFactor < 0.0f { fBlendFactor = 0.0f }
+        if fBlendFactor > 1.0f { fBlendFactor = 1.0f }
+    }
+
+    fn set_pixel_mode(ref Self, m: PixelMode) {
+        nPixelMode = m
+    }
+
+    fn get_pixel_mode(ref Self) -> PixelMode {
+        return nPixelMode
+    }
+
+    //
+    fn olc_update_window_size(ref Self, x: int, y: int) {
+        window_width = x
+        window_height = y
+        glViewport(0, 0, cast x, cast y)
+    }
+
+    fn olc_update_mouse_wheel(ref Self, delta: int) {
+        nMouseWheelDeltaCache += delta
+    }
+
+    fn olc_update_mouse(ref Self, x: int, y: int) {
+        nMousePosXcache = cast(int) (cast(float)x) / (cast(float) window_width) * (cast(float)screen_width)
+        nMousePosYcache = cast(int) (cast(float)y) / (cast(float) window_height) * (cast(float)screen_height)
+
+        if nMousePosXcache >= screen_width { nMousePosXcache = screen_width - 1 }
+        if nMousePosYcache >= screen_height { nMousePosYcache = screen_height - 1 }
+
+        if nMousePosXcache < 0 { nMousePosXcache = 0 }
+        if nMousePosYcache < 0 { nMousePosYcache = 0 }
+    }
+}
+

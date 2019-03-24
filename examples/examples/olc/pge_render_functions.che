@@ -1,0 +1,190 @@
+#load("pixel_game_engine.che")
+#load("pixel.che")
+
+impl PixelGameEngine {
+    fn clear(ref Self, p: Pixel = new Pixel{}) {
+        let count = draw_target.width * draw_target.height
+        let pixels = draw_target.get_data()
+        while let i = 0; i < count; i += 1 {
+            pixels[i] = p
+        }
+    }
+
+    fn draw(ref Self, x: int, y: int, p: Pixel) -> bool {
+        if draw_target == null {
+            return false
+        }
+
+        return match nPixelMode {
+            PixelMode.Normal -> draw_target.set_pixel(x, y, p)
+
+            PixelMode.Mask if p.a == 255 -> draw_target.set_pixel(x, y, p)
+
+            PixelMode.Alpha -> {
+                let d = draw_target.get_pixel(x, y)
+                let a = (cast(float)p.a) / 255.0f * fBlendFactor
+                let c = 1.0f - a
+                let r = a * (cast(float)p.r) + c * (cast(float)d.r)
+                let g = a * (cast(float)p.g) + c * (cast(float)d.g)
+                let b = a * (cast(float)p.b) + c * (cast(float)d.b)
+                draw_target.set_pixel(x, y, Pixel::rgba(cast r, cast g, cast b))
+            }
+        }
+    }
+
+    fn draw_circle(ref Self, x: int, y: int, r: int, p: Pixel, mask: u32 = 0xFFFFFFFF) {
+        if r == 0 {
+            return
+        }
+
+        let x0 = 0
+        let y0 = r
+        let d = 3 - 2 * r
+        while y0 >= x0 {
+            if @bin_and(mask, 0x01u32) != 0 { draw(x + x0, y - y0, p) }
+            if @bin_and(mask, 0x02u32) != 0 { draw(x + y0, y - x0, p) }
+            if @bin_and(mask, 0x04u32) != 0 { draw(x + y0, y + x0, p) }
+            if @bin_and(mask, 0x08u32) != 0 { draw(x + x0, y + y0, p) }
+            if @bin_and(mask, 0x10u32) != 0 { draw(x - x0, y + y0, p) }
+            if @bin_and(mask, 0x20u32) != 0 { draw(x - y0, y + x0, p) }
+            if @bin_and(mask, 0x40u32) != 0 { draw(x - y0, y - x0, p) }
+            if @bin_and(mask, 0x80u32) != 0 { draw(x - x0, y - y0, p) }
+
+            if d < 0 {
+                d += 4 * x0 + 6
+                x0 += 1
+            } else {
+                d += 4 * (x0 - y0) + 10
+                x0 += 1
+                y0 -= 1
+            }
+        }
+    }
+
+    fn draw_rect(ref Self, x: int, y: int, w: int, h: int, p: Pixel) {
+        draw_line(x, y, x+w, y, p)
+        draw_line(x+w, y, x+w, y+h, p)
+        draw_line(x+w, y+h, x, y+h, p)
+        draw_line(x, y+h, x, y, p)
+    }
+
+    fn fill_rect(ref Self, x: int, y: int, w: int, h: int, p: Pixel) {
+        let x2 = x + w
+        let y2 = y + h
+
+        if x < 0 { x = 0 }
+        if x >= screen_width { x = screen_width }
+        if y < 0 { y = 0 }
+        if y >= screen_height { y = screen_height }
+
+        
+        if x2 < 0 { x2 = 0 }
+        if x2 >= screen_width { x2 = screen_width }
+        if y2 < 0 { y2 = 0 }
+        if y2 >= screen_height { y2 = screen_height }
+
+        while let i = x; i < x2; i += 1 {
+            while let k = y; k < y2; k += 1 {
+                draw(i, k, p)
+            }
+        }
+    }
+
+    fn rol(pattern: ref u32) -> bool {
+        let p = pattern
+        pattern = @bin_or(@bin_lsl(p, 1u32), @bin_lsr(p, 31u32))
+        p = pattern
+        return @bin_and(p, 1u32) != 0
+    }
+
+    fn draw_line(ref Self, x1: int, y1: int, x2: int, y2: int, p: Pixel, pattern: u32 = 0xFFFFFFFF) {
+        let dx = x2 - x1
+        let dy = y2 - y1
+
+        // vertical line
+        if dx == 0 {
+            if y2 < y1 {
+                (y1, y2) = (y2, y1)
+            }
+            while let y = y1; y <= y2; y += 1 {
+                if rol(pattern) {
+                    draw(x1, y, p)
+                }
+            }
+            return
+        }
+
+        // horizontal line
+        if dy == 0 {
+            if x2 < x1 {
+                (x1, x2) = (x2, x1)
+            }
+            while let x = x1; x <= x2; x += 1 {
+                if rol(pattern) {
+                    draw(x, y1, p)
+                }
+            }
+            return
+        }
+
+        let dx1 = abs(dx)
+        let dy1 = abs(dy)
+        let px = 2 * dy1 - dx1
+        let py = 2 * dx1 - dy1
+        if dy1 <= dx1 {
+            let (x, y, xe) = if dx >= 0 {
+                (x1, y1, x2)
+            } else {
+                (x2, y2, x1)
+            }
+
+            if rol(pattern) {
+                draw(x, y, p)
+            }
+
+            while x < xe {
+                x += 1
+                if px < 0 {
+                    px += 2 * dy1
+                } else {
+                    if (dx < 0 and dy < 0) or (dx > 0 and dy > 0) {
+                        y += 1
+                    } else {
+                        y -= 1
+                    }
+                    px += 2 * (dy1 - dx1)
+                }
+                if rol(pattern) {
+                    draw(x, y, p)
+                }
+            }
+        } else {
+            let (x, y, ye) = if dy >= 0 {
+                (x1, y1, y2)
+            } else {
+                (x2, y2, y1)
+            }
+
+            if rol(pattern) {
+                draw(x, y, p)
+            }
+
+            while y < ye {
+                y += 1
+                if py < 0 {
+                    py += 2 * dx1
+                } else {
+                    if (dx < 0 and dy < 0) or (dx > 0 and dy > 0) {
+                        x += 1
+                    } else {
+                        x -= 1
+                    }
+                    py += 2 * (dx1 - dy1)
+                }
+                if rol(pattern) {
+                    draw(x, y, p)
+                }
+            }
+        }
+    }
+}

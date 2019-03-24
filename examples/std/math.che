@@ -1,6 +1,7 @@
 fn sqrtf(f: float) -> float;
 fn sqrt(f: double) -> double;
 
+fn abs(i: $T) -> T { return if i < 0 {-i} else {i} }
 fn fabsf(f: float) -> float;
 fn fabs(f: double) -> double;
 

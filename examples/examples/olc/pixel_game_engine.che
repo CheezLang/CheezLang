@@ -2,6 +2,8 @@
 #load("key.che")
 #load("sprite.che")
 #load("olc_win.che")
+#load("pge_render_functions.che")
+#load("pge_helper_functions.che")
 
 #load("std:hash_table")
 #load("std:util")
@@ -11,7 +13,6 @@ trait Game {
     fn on_create(ref Self, pge: &PixelGameEngine) -> bool;
     fn on_destroy(ref Self) -> bool;
     fn on_update(ref Self, dt: float) -> bool;
-    fn on_gl(ref Self);
 }
 
 enum OptionPGE {
@@ -49,6 +50,9 @@ struct PixelGameEngine {
     pixel_y             : float     = 1.0f
     fSubPixelOffsetX    : float     = 0.0f
     fSubPixelOffsetY    : float     = 0.0f
+
+    nPixelMode          : PixelMode = PixelMode.Normal
+    fBlendFactor        : float     = 1.0f
 
     bHasMouseFocus      : bool      = false
     bHasInputFocus      : bool      = false
@@ -237,8 +241,6 @@ impl PixelGameEngine {
                     glVertex3f( 1.0f + (fSubPixelOffsetX), -1.0f + (fSubPixelOffsetY), 0.0f)
                 glEnd()
 
-                game.on_gl()
-
                 // Present Graphics to screen
                 SwapBuffers(glDeviceContext)
 
@@ -266,32 +268,6 @@ impl PixelGameEngine {
 
         // wglDeleteContext(glRenderContext);
         PostMessageA(olc_hWnd, WM_DESTROY, 0, 0)
-    }
-
-    fn set_draw_target(ref Self, target: &Sprite) {
-        draw_target = if target == null { default_draw_target } else { target }
-    }
-
-    //
-    fn olc_update_window_size(ref Self, x: int, y: int) {
-        window_width = x
-        window_height = y
-        glViewport(0, 0, cast x, cast y)
-    }
-
-    fn olc_update_mouse_wheel(ref Self, delta: int) {
-        nMouseWheelDeltaCache += delta
-    }
-
-    fn olc_update_mouse(ref Self, x: int, y: int) {
-        nMousePosXcache = cast(int) (cast(float)x) / (cast(float) window_width) * (cast(float)screen_width)
-        nMousePosYcache = cast(int) (cast(float)y) / (cast(float) window_height) * (cast(float)screen_height)
-
-        if nMousePosXcache >= screen_width { nMousePosXcache = screen_width - 1 }
-        if nMousePosYcache >= screen_height { nMousePosYcache = screen_height - 1 }
-
-        if nMousePosXcache < 0 { nMousePosXcache = 0 }
-        if nMousePosYcache < 0 { nMousePosYcache = 0 }
     }
 
     fn olc_OpenGLCreate(ref Self) -> bool {
@@ -322,37 +298,5 @@ impl PixelGameEngine {
             wglSwapInterval(0)
         }
         return true
-    }
-
-    // draw functions
-    fn draw(ref Self, x: int, y: int, p: Pixel) -> bool {
-        if draw_target == null {
-            return false
-        }
-
-        draw_target.set_pixel(x, y, p)
-
-        return true
-    }
-
-    // hardware interfaces
-    fn is_focused(ref Self) -> bool {
-        return false
-    }
-
-    fn get_key(ref Self, key: Key) -> HWButton {
-        return (false, false, false)
-    }
-
-    fn get_mouse(ref Self, b: int) -> HWButton {
-        return (false, false, false)
-    }
-
-    fn get_mouse_pos(ref Self) -> (x: int, y: int) {
-        return (0, 0)
-    }
-
-    fn get_mouse_wheel(ref Self) -> int {
-        return 0
     }
 }
