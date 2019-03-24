@@ -1,14 +1,20 @@
 #load("examples/olc/pixel_game_engine")
 #load("std:io/io")
 
+typedef Vec2 = Vector2(float)
+
 struct MyGame {
     pge: &PixelGameEngine
+
+    pos: Vec2
 }
 
 impl Game for MyGame {
     fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
         self.pge = pge
         println("on_create()")
+
+        pos = new Vec2{0, 0}
         return true
     }
 
@@ -18,25 +24,37 @@ impl Game for MyGame {
     }
 
     fn on_update(ref Self, dt: float) -> bool {
-        return true
-    }
+        pge.clear()
 
-    fn on_gl(ref Self) {
-        while let x = 0; x < pge.screen_width; x += 14 {
-            while let y = 1; y < pge.screen_height; y += 14 {
-                let fx = (cast(float)x) / (cast(float)pge.screen_width) * 255.0f
-                let fy = (cast(float)y) / (cast(float)pge.screen_height) * 255.0f
-
-
-                pge.draw(x, y, Pixel::rgba(255 - cast(u8)fx, 255 - cast(u8)fy, cast(u8)fy))
-            }
+        let speed = 10.0f
+        if pge.get_key(Key.RIGHT).held {
+            pos.x += dt * speed
         }
+        if pge.get_key(Key.LEFT).held {
+            pos.x -= dt * speed
+        }
+        if pge.get_key(Key.DOWN).held {
+            pos.y += dt * speed
+        }
+        if pge.get_key(Key.UP).held {
+            pos.y -= dt * speed
+        }
+
+        pos.x = cast pge.get_mouse_pos().x
+        pos.y = cast pge.get_mouse_pos().y
+
+        pge.fill_rect(50, 50, 150, 200, Pixel::rgba(255, 255, 0))
+        pge.draw_circle(400, 200, 50, Pixel::rgba(0, 255, 0))
+
+        pge.draw_line(100, 100, cast pos.x, cast pos.y, Pixel::rgba(0, 255, 255), 0xf0f0f0f0)
+
+        return true
     }
 }
 
 fn Main() {
     let myGame = new MyGame{}
-    let pge = PixelGameEngine::create(myGame, 1280, 720, 1, 1)
+    let pge = PixelGameEngine::create(myGame, 720, 400, 2, 2)
     match pge {
         OptionPGE.Some($pge) -> {
             pge.start()
