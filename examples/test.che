@@ -1,19 +1,51 @@
-// #load("examples/snake/snake.che")
-
+#load("examples/olc/pixel_game_engine")
 #load("std:io/io")
 
+struct MyGame {
+    pge: &PixelGameEngine
+}
+
+impl Game for MyGame {
+    fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
+        self.pge = pge
+        println("on_create()")
+        return true
+    }
+
+    fn on_destroy(ref Self) -> bool {
+        println("on_destroy()")
+        return true
+    }
+
+    fn on_update(ref Self, dt: float) -> bool {
+        return true
+    }
+
+    fn on_gl(ref Self) {
+        while let x = 0; x < pge.screen_width; x += 14 {
+            while let y = 1; y < pge.screen_height; y += 14 {
+                let fx = (cast(float)x) / (cast(float)pge.screen_width) * 255.0f
+                let fy = (cast(float)y) / (cast(float)pge.screen_height) * 255.0f
+
+
+                pge.draw(x, y, Pixel::rgba(255 - cast(u8)fx, 255 - cast(u8)fy, cast(u8)fy))
+            }
+        }
+    }
+}
+
 fn Main() {
-    while let i = 0; i < 10; i += 1 {
-        let c = match i {
-            0 -> 1
-            1 -> 2
-            2 -> 3
-            3 -> 4
-            x if x == 4 -> x * 2
-            x if x % 2 == 0 -> x * 3
-            x -> x * 4
+    let myGame = new MyGame{}
+    let pge = PixelGameEngine::create(myGame, 1280, 720, 1, 1)
+    match pge {
+        OptionPGE.Some($pge) -> {
+            pge.start()
+            pge.dispose()
+            free(pge)
         }
 
-        printf("{} -> {}`n", [i, c])
+        OptionPGE.None -> {
+            println("failed to create pixel game engine")
+        }
     }
 }
