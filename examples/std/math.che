@@ -17,6 +17,12 @@ fn sin(f: double) -> double;
 fn cosf(f: float) -> float;
 fn cos(f: double) -> double;
 
+fn floorf(float) -> float;
+fn floor(double) -> double;
+
+fn ceilf(float) -> float;
+fn ceil(double) -> double;
+
 fn u8_max() -> u8 {
     return cast(u8)-1
 }
@@ -169,6 +175,13 @@ impl Vector2($T) {
         return new {
             a.x / b.x
             a.y / b.y
+        }
+    }
+
+    fn divvs(a: Self, b: T) -> Self #operator("/") {
+        return new {
+            a.x / b
+            a.y / b
         }
     }
 

@@ -163,7 +163,7 @@ fn olc_window_event(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LR
         }
 
         WM_MOUSEWHEEL -> {
-            let delta = cast(i16) @bin_and(@bin_lsr(lparam, 16), 0xFFFF)
+            let delta = cast(i16) @bin_and(@bin_lsr(wparam, 16), 0xFFFF)
             pixel_game_engine_ptr.olc_update_mouse_wheel(delta)
         }
 

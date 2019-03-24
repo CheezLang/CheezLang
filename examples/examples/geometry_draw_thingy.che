@@ -1,0 +1,394 @@
+#load("olc_pge/pixel_game_engine")
+#load("std:io/io")
+#load("std:array")
+
+typedef float2 = Vector2(float)
+
+struct Node {
+    parent  : &BaseShape
+    pos     : float2
+}
+
+trait Shape {
+    fn draw(ref Self, pge: ref MyGame);
+    fn next_node(ref Self, p: float2) -> &Node;
+    fn hit_node(ref Self, p: float2) -> &Node;
+}
+
+struct BaseShape {
+    max_nodes   : int
+    nodes       : Array(Node)
+    color       : Pixel = new Pixel{0, 255, 0}
+}
+
+impl BaseShape {
+    fn create(max_nodes: int) -> BaseShape {
+        return new {
+            max_nodes
+            Array(Node)::create(max_nodes)
+        }
+    }
+
+    fn next_node(ref Self, p: float2) -> &Node {
+        if nodes.get_length() >= max_nodes {
+            color = Pixel::rgba(255, 255, 255)
+            return null
+        }
+        nodes.add(new Node { &self, p })
+        return &nodes[nodes.get_length() - 1]
+    }
+
+    fn draw_nodes(ref Self, g: ref MyGame) {
+        while let i = 0; i < nodes.get_length(); i += 1 {
+            let (sx, sy) = g.world_to_screen(nodes[i].pos)
+            g.pge.draw_circle(sx, sy, 3, Pixel::rgba(255, 0, 0))
+        }
+    }
+
+    fn hit_node(ref Self, p: float2) -> &Node {
+        while let i = 0; i < nodes.get_length(); i += 1 {
+            if (p - nodes[i].pos).magsq() < 0.01f {
+                return &nodes[i]
+            }
+        }
+
+        return null
+    }
+}
+
+struct LineShape {
+    base    : BaseShape
+}
+
+impl LineShape {
+    fn create() -> &Self {
+        let l = alloc(LineShape)
+        <<l = new { BaseShape::create(2) }
+        return l
+    }
+}
+
+impl Shape for LineShape {
+    fn draw(ref Self, g: ref MyGame) {
+        let (sx, sy) = g.world_to_screen(base.nodes[0].pos)
+        let (ex, ey) = g.world_to_screen(base.nodes[1].pos)
+        g.pge.draw_line(sx, sy, ex, ey, base.color)
+
+        base.draw_nodes(g)
+    }
+
+    fn next_node(ref Self, p: float2) -> &Node {
+        return base.next_node(p)
+    }
+
+    fn hit_node(ref Self, p: float2) -> &Node {
+        return base.hit_node(p)
+    }
+}
+
+struct BoxShape {
+    base    : BaseShape
+}
+
+impl BoxShape {
+    fn create() -> &Self {
+        let l = alloc(BoxShape)
+        <<l = new { BaseShape::create(2) }
+        return l
+    }
+}
+
+impl Shape for BoxShape {
+    fn draw(ref Self, g: ref MyGame) {
+        let (sx, sy) = g.world_to_screen(base.nodes[0].pos)
+        let (ex, ey) = g.world_to_screen(base.nodes[1].pos)
+        g.pge.draw_rect(sx, sy, ex - sx, ey - sy, base.color)
+
+        base.draw_nodes(g)
+    }
+
+    fn next_node(ref Self, p: float2) -> &Node {
+        return base.next_node(p)
+    }
+
+    fn hit_node(ref Self, p: float2) -> &Node {
+        return base.hit_node(p)
+    }
+}
+
+struct CircleShape {
+    base    : BaseShape
+}
+
+impl CircleShape {
+    fn create() -> &Self {
+        let l = alloc(CircleShape)
+        <<l = new { BaseShape::create(2) }
+        return l
+    }
+}
+
+impl Shape for CircleShape {
+    fn draw(ref Self, g: ref MyGame) {
+        let (sx, sy) = g.world_to_screen(base.nodes[0].pos)
+        let (ex, ey) = g.world_to_screen(base.nodes[1].pos)
+
+        let dx = cast(float) ex - sx
+        let dy = cast(float) ey - sy
+        let r = cast(int) sqrtf(dx * dx + dy * dy)
+
+        g.pge.draw_circle(sx, sy, r, base.color)
+
+        let ac = base.color
+        ac.a = 75
+        g.pge.set_pixel_mode(PixelMode.Alpha)
+        g.pge.draw_line(sx, sy, ex, ey, ac, 0xFF00FF00)
+        g.pge.set_pixel_mode(PixelMode.Normal)
+
+        base.draw_nodes(g)
+    }
+
+    fn next_node(ref Self, p: float2) -> &Node {
+        return base.next_node(p)
+    }
+
+    fn hit_node(ref Self, p: float2) -> &Node {
+        return base.hit_node(p)
+    }
+}
+
+struct CurveShape {
+    base    : BaseShape
+}
+
+impl CurveShape {
+    fn create() -> &Self {
+        let l = alloc(CurveShape)
+        <<l = new { BaseShape::create(3) }
+        return l
+    }
+}
+
+impl Shape for CurveShape {
+    fn draw(ref Self, g: ref MyGame) {
+        let ac = base.color
+        ac.a = 75
+
+        let (sx, sy) = g.world_to_screen(base.nodes[0].pos)
+        let (ex, ey) = g.world_to_screen(base.nodes[1].pos)
+        g.pge.set_pixel_mode(PixelMode.Alpha)
+        g.pge.draw_line(sx, sy, ex, ey, ac, 0xFF00FF00)
+        g.pge.set_pixel_mode(PixelMode.Normal)
+        
+
+        if base.nodes.get_length() == 3 {
+            let (sx, sy) = g.world_to_screen(base.nodes[1].pos)
+            let (ex, ey) = g.world_to_screen(base.nodes[2].pos)
+            g.pge.set_pixel_mode(PixelMode.Alpha)
+            g.pge.draw_line(sx, sy, ex, ey, ac, 0xFF00FF00)
+            g.pge.set_pixel_mode(PixelMode.Normal)
+
+
+            // bezier curve
+            let op = base.nodes[0].pos
+            let np = op
+            while let t = 0.0f; t < 1.0f; t += 0.01f {
+                np =    base.nodes[0].pos * (1 - t) * (1 - t) +
+                        base.nodes[1].pos * 2.0f * (1 - t) * t +
+                        base.nodes[2].pos * t * t
+                let (sx, sy) = g.world_to_screen(op)
+                let (ex, ey) = g.world_to_screen(np)
+                g.pge.draw_line(sx, sy, ex, ey, base.color)
+                op = np
+            }
+        }
+
+        base.draw_nodes(g)
+    }
+
+    fn next_node(ref Self, p: float2) -> &Node {
+        return base.next_node(p)
+    }
+
+    fn hit_node(ref Self, p: float2) -> &Node {
+        return base.hit_node(p)
+    }
+}
+
+struct MyGame {
+    pge: &PixelGameEngine
+
+    // panning and zooming
+    vOffset : float2
+    vStart  : float2
+    vStartPan : float2
+    vCursor : float2
+
+    fScale  : float = 10
+    fGrid   : float = 1
+
+    shapes          : Array(Shape)
+    temp_shape      : &Shape    = null
+    selectedNode    : &Node     = null
+}
+
+impl Game for MyGame {
+    fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
+        self.pge = pge
+        vOffset.x = -(cast(float)pge.get_width()) * 0.5 / fScale
+        vOffset.y = -(cast(float)pge.get_height()) * 0.5 / fScale
+
+        shapes = Array(Shape)::create()
+        return true
+    }
+
+    fn on_destroy(ref Self) -> bool {
+        return true
+    }
+
+    fn on_update(ref Self, dt: float) -> bool {
+        pge.clear()
+
+        let vMouse = new float2{cast pge.get_mouse_pos().x, cast pge.get_mouse_pos().y}
+
+        // pan
+        if pge.get_mouse(2).pressed {
+            vStartPan = vMouse
+        }
+
+        if pge.get_mouse(2).held {
+            vOffset -= (vMouse - vStartPan) / fScale
+            vStartPan = vMouse
+        }
+
+        // zoom
+        let vMouseBeforeZoom    : float2 = screen_to_world(cast vMouse.x, cast vMouse.y)
+        if pge.get_mouse_wheel() > 0 {
+            fScale *= 1.1f
+        }
+        if pge.get_mouse_wheel() < 0 {
+            fScale /= 1.1f
+        }
+        let vMouseAfterZoom = screen_to_world(cast vMouse.x, cast vMouse.y)
+        vOffset += vMouseBeforeZoom - vMouseAfterZoom
+
+        // snap cursor to grid
+        vCursor.x = floorf((vMouseAfterZoom.x + 0.5f) * fGrid)
+        vCursor.y = floorf((vMouseAfterZoom.y + 0.5f) * fGrid)
+
+        if temp_shape == null {
+            if pge.get_key(Key.F1).pressed {
+                shapes.add(ref <<LineShape::create())
+                temp_shape   = &shapes[shapes.get_length() - 1]
+                selectedNode = temp_shape.next_node(vCursor)
+                selectedNode = temp_shape.next_node(vCursor)
+            }
+            else if pge.get_key(Key.F2).pressed {
+                shapes.add(ref <<BoxShape::create())
+                temp_shape   = &shapes[shapes.get_length() - 1]
+                selectedNode = temp_shape.next_node(vCursor)
+                selectedNode = temp_shape.next_node(vCursor)
+            }
+            else if pge.get_key(Key.F3).pressed {
+                shapes.add(ref <<CircleShape::create())
+                temp_shape   = &shapes[shapes.get_length() - 1]
+                selectedNode = temp_shape.next_node(vCursor)
+                selectedNode = temp_shape.next_node(vCursor)
+            }
+            else if pge.get_key(Key.F4).pressed {
+                shapes.add(ref <<CurveShape::create())
+                temp_shape   = &shapes[shapes.get_length() - 1]
+                selectedNode = temp_shape.next_node(vCursor)
+                selectedNode = temp_shape.next_node(vCursor)
+            }
+            else if pge.get_key(Key.F5).pressed {
+                while let i = 0; selectedNode == null and i < shapes.get_length(); i += 1 {
+                    selectedNode = shapes[i].hit_node(vCursor)
+                }
+            }
+        }
+
+        if selectedNode != null {
+            selectedNode.pos = vCursor
+        }
+
+        if pge.get_mouse(0).released {
+            if temp_shape != null {
+                selectedNode = temp_shape.next_node(vCursor)
+            } else {
+                selectedNode = null
+            }
+
+            if selectedNode == null {
+                temp_shape = null
+            }
+        }
+
+        while let i = 0; i < shapes.get_length(); i += 1 {
+            shapes[i].draw(self)
+        }
+
+        // draw grid
+        let vWorldTopLeft       : float2 = screen_to_world(0, 0)
+        let vWorldBottomRight   : float2 = screen_to_world(pge.get_width(), pge.get_height())
+
+        vWorldTopLeft.x = floorf(vWorldTopLeft.x)
+        vWorldTopLeft.y = floorf(vWorldTopLeft.y)
+        vWorldBottomRight.x = ceilf(vWorldBottomRight.x)
+        vWorldBottomRight.y = ceilf(vWorldBottomRight.y)
+
+        while let x = vWorldTopLeft.x; x < vWorldBottomRight.x; x += fGrid {
+            while let y = vWorldTopLeft.y; y < vWorldBottomRight.y; y += fGrid {
+                let (sx, sy) = world_to_screen(new float2{x, y})
+                pge.draw(sx, sy, Pixel::rgba(100, 100, 255))
+            }
+        }
+
+        // draw axis
+        {
+            let (sx, sy) = world_to_screen(new float2{0, vWorldTopLeft.y})
+            let (ex, ey) = world_to_screen(new float2{0, vWorldBottomRight.y})
+            pge.draw_line(sx, sy, ex, ey, Pixel::rgba(200, 200, 200), 0xF0F0F0F0)
+
+            (sx, sy) = world_to_screen(new float2{vWorldTopLeft.x, 0})
+            (ex, ey) = world_to_screen(new float2{vWorldBottomRight.x, 0})
+            pge.draw_line(sx, sy, ex, ey, Pixel::rgba(200, 200, 200), 0xF0F0F0F0)
+        }
+
+        // draw cursor
+        {
+            let (sx, sy) = world_to_screen(vCursor)
+            pge.draw_circle(sx, sy, 3, Pixel::rgba(255, 255, 0))
+        }
+
+        return true
+    }
+
+    fn world_to_screen(ref Self, v: ref float2) -> (x: int, y: int) {
+        x = cast(int) (v.x - vOffset.x) * fScale
+        y = cast(int) (v.y - vOffset.y) * fScale
+    }
+
+    fn screen_to_world(ref Self, nScreenX: int, nScreenY: int) -> float2 {
+        return new {
+            (cast(float)nScreenX) / fScale + vOffset.x
+            (cast(float)nScreenY) / fScale + vOffset.y
+        }
+    }
+}
+
+fn Main() {
+    let myGame = new MyGame{}
+    let pge = PixelGameEngine::create(myGame, 1600, 960)
+    match pge {
+        OptionPGE.Some($pge) -> {
+            pge.start()
+            pge.dispose()
+            free(pge)
+        }
+
+        OptionPGE.None -> {
+            println("failed to create pixel game engine")
+        }
+    }
+}

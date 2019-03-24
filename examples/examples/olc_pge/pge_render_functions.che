@@ -69,6 +69,15 @@ impl PixelGameEngine {
     }
 
     fn fill_rect(ref Self, x: int, y: int, w: int, h: int, p: Pixel) {
+        if w < 0 {
+            x += w
+            w *= -1
+        }
+        if h < 0 {
+            y += h
+            h *= -1
+        }
+
         let x2 = x + w
         let y2 = y + h
 
