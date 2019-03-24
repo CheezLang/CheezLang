@@ -1,10 +1,10 @@
 File Name,Lines
-CheezLanguageServer.cs,345
-NodeFinder.cs,287
+CheezLanguageServer.cs,335
+NodeFinder.cs,283
 TextDocumentManager.cs,106
-SymbolFinder.cs,88
+SymbolFinder.cs,89
 Program.cs,72
 Logger.cs,35
 AssemblyInfo.cs,32
 TextDocumentChangedEventArgs.cs,14
-Total,979
+Total,966

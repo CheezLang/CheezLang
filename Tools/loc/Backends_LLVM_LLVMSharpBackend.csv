@@ -1,11 +1,11 @@
 File Name,Lines
 ExpressionGenerator.cs,1058
 CodeGeneratorHelpers.cs,379
-StatementGenerator.cs,287
+StatementGenerator.cs,298
 CodeGeneratorMain.cs,232
 Linker.cs,216
 Extensions.cs,155
 AttributeKind.cs,72
 OS.cs,65
 AssemblyInfo.cs,32
-Total,2496
+Total,2507
