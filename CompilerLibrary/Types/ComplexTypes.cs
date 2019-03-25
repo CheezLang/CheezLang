@@ -227,19 +227,21 @@ namespace Cheez.Types.Complex
 
     public class EnumType : CheezType
     {
-        public string Name { get; }
-        public Dictionary<string, long> Members { get; private set; }
-
-        public IntType TagType { get; set; }
-        public override bool IsErrorType => TagType.IsErrorType;
-
         public AstEnumDecl Declaration { get; set; }
 
-        public EnumType(AstEnumDecl en)
+        public Dictionary<string, long> Members { get; private set; }
+        public CheezType[] Arguments { get; }
+        public IntType TagType { get; set; }
+        public override bool IsErrorType => TagType.IsErrorType || Arguments.Any(a => a.IsErrorType);
+        public override bool IsPolyType => TagType.IsPolyType || Arguments.Any(a => a.IsPolyType);
+
+        public AstEnumDecl DeclarationTemplate => Declaration.Template ?? Declaration;
+
+        public EnumType(AstEnumDecl en, CheezType[] args = null)
         {
             Size = -1;
-            Name = en.Name.Name;
             Declaration = en;
+            Arguments = args ?? en.Parameters.Select(p => p.Value as CheezType).ToArray();
         }
 
         public void CalculateSize()
@@ -261,8 +263,37 @@ namespace Cheez.Types.Complex
             Size = TagType.Size + maxMemberSize;
         }
 
-        public override string ToString() => $"{Name}";
-        public override bool IsPolyType => false;
+
+        public override string ToString()
+        {
+            if (Arguments?.Length > 0)
+            {
+                var args = string.Join(", ", Arguments.Select(a => a.ToString()));
+                return $"{Declaration.Name.Name}({args})";
+            }
+            return $"{Declaration.Name.Name}";
+        }
+
+        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        {
+            if (concrete is EnumType str)
+            {
+                if (this.DeclarationTemplate != str.DeclarationTemplate)
+                    return -1;
+
+                int score = 0;
+                for (int i = 0; i < Arguments.Length; i++)
+                {
+                    int s = this.Arguments[i].Match(str.Arguments[i], polyTypes);
+                    if (s == -1)
+                        return -1;
+                    score += s;
+                }
+                return score;
+            }
+
+            return -1;
+        }
     }
 
     public class FunctionType : CheezType

@@ -72,6 +72,18 @@ namespace Cheez.Types.Abstract
         }
     }
 
+    public class GenericEnumType : CheezType
+    {
+        public AstEnumDecl Declaration { get; }
+        public override bool IsPolyType => false;
+        public override bool IsErrorType => false;
+
+        public GenericEnumType(AstEnumDecl decl)
+        {
+            Declaration = decl;
+        }
+    }
+
     public class GenericTraitType : CheezType
     {
         public AstTraitDeclaration Declaration { get; }

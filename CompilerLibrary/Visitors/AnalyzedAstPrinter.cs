@@ -143,7 +143,15 @@ namespace Cheez.Visitors
 
         public string VisitStructMember(AstMemberDecl m)
         {
-            var v = $"{m.Name.Accept(this)}: {m.TypeExpr.Accept(this)}";
+            var v = $"{m.Name.Accept(this)} : {m.Type}";
+            if (m.Initializer != null)
+                v += $" = {m.Initializer.Accept(this)}";
+            return v;
+        }
+
+        public string VisitStructMemberRaw(AstMemberDecl m)
+        {
+            var v = $"{m.Name.Accept(this)} : {m.TypeExpr.Accept(this)}";
             if (m.Initializer != null)
                 v += $" = {m.Initializer.Accept(this)}";
             return v;
@@ -153,7 +161,7 @@ namespace Cheez.Visitors
         {
             if (str.IsPolymorphic)
             {
-                var body = string.Join("\n", str.Members.Select(m => $"{m.Name.Accept(this)}: {m.TypeExpr}"));
+                var body = string.Join("\n", str.Members.Select(m => VisitStructMemberRaw(m)));
                 var head = $"struct {str.Name.Accept(this)}";
 
                 head += "(";
@@ -329,6 +337,16 @@ namespace Cheez.Visitors
         {
             var str = m.Name.Accept(this);
             if (m.AssociatedType != null)
+                str += " : " + m.AssociatedType.Value;
+            if (m.Value != null)
+                str += " = " + m.Value.Accept(this);
+            return str;
+        }
+
+        public string VisitEnumMemberRaw(AstEnumMember m)
+        {
+            var str = m.Name.Accept(this);
+            if (m.AssociatedType != null)
                 str += " : " + m.AssociatedType.Accept(this);
             if (m.Value != null)
                 str += " = " + m.Value.Accept(this);
@@ -337,13 +355,39 @@ namespace Cheez.Visitors
 
         public override string VisitEnumDecl(AstEnumDecl en, int data = 0)
         {
-            var body = string.Join("\n", en.Members.Select(m => VisitEnumMember(m)));
-            var head = $"enum {en.Name.Accept(this)}";
-            if (en.Parameters != null)
+            if (en.IsPolymorphic)
             {
-                head += $"({string.Join(", ", en.Parameters.Select(p => p.Accept(this)))})";
+                var body = string.Join("\n", en.Members.Select(m => VisitEnumMemberRaw(m)));
+                var head = $"enum {en.Name.Accept(this)}";
+
+                head += "(";
+                head += string.Join(", ", en.Parameters.Select(p => p.Accept(this)));
+                head += ")";
+
+                var sb = new StringBuilder();
+                sb.Append($"{head} {{\n{body.Indent(4)}\n}}");
+
+                // polies
+                if (en.PolymorphicInstances?.Count > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"// Polymorphic instances for {head}");
+                    foreach (var pi in en.PolymorphicInstances)
+                    {
+                        var args = string.Join(", ", pi.Parameters.Select(p => $"{p.Name.Accept(this)} = {p.Value}"));
+                        sb.AppendLine($"// {args}".Indent(4));
+                        sb.AppendLine(pi.Accept(this).Indent(4));
+                    }
+                }
+
+                return sb.ToString();
             }
-            return $"{head} {{\n{body.Indent(4)}\n}}";
+            else
+            {
+                var body = string.Join("\n", en.Members.Select(m => VisitEnumMember(m)));
+                var head = $"enum {en.Name.Accept(this)}";
+                return $"{head} {{\n{body.Indent(4)}\n}}";
+            }
         }
 
         public override string VisitBreakStmt(AstBreakStmt br, int data = 0)

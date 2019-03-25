@@ -155,7 +155,7 @@ namespace Cheez
             {
                 func.Body.Scope = func.SubScope;
                 func.Body.Parent = func;
-                InferType(func.Body, func.FunctionType.ReturnType);
+                InferType(func.Body, null);
 
                 if (func.ReturnValue != null && !func.Body.GetFlag(ExprFlags.Returns))
                 {

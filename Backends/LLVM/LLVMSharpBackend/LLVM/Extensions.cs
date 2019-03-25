@@ -163,6 +163,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     throw new Exception(error);
                 }
             }
+            catch (System.AccessViolationException e)
+            {
+                Console.WriteLine("===================================");
+                module.Dump();
+                Console.WriteLine("===================================");
+                throw new Exception($"Failed to emit module '{module}' to file '{filename}': {e.Message}");
+            }
             catch (Exception e)
             {
                 throw new Exception($"Failed to emit module '{module}' to file '{filename}': {e.Message}");

@@ -578,6 +578,9 @@ namespace Cheez
 
         public bool DefineTypeSymbol(string name, CheezType symbol)
         {
+            if (symbol is null)
+                throw new ArgumentNullException(nameof(symbol));
+
             if (mSymbolTable.ContainsKey(name))
                 return false;
 

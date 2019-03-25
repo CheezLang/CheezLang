@@ -348,12 +348,17 @@ namespace Cheez.Ast.Statements
 
         public IntType TagType { get; set; }
         public bool HasAssociatedTypes { get; set; } = false;
+        public bool IsPolymorphic { get; internal set; }
+        public bool IsPolyInstance { get; set; }
+
+        public List<AstEnumDecl> PolymorphicInstances { get; } = new List<AstEnumDecl>();
+        public AstEnumDecl Template { get; set; } = null;
 
         public AstEnumDecl(AstIdExpr name, List<AstEnumMember> members, List<AstParameter> parameters, List<AstDirective> Directive = null, ILocation Location = null)
             : base(name, Directive, Location)
         {
             this.Members = members;
-            this.Parameters = parameters;
+            this.Parameters = parameters ?? new List<AstParameter>();
         }
 
         [DebuggerStepThrough]

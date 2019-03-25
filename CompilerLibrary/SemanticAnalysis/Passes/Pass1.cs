@@ -13,11 +13,12 @@ namespace Cheez
     {
         // for semantic analysis
         private List<AstStructDecl> mPolyStructs = new List<AstStructDecl>();
-        private List<AstStructDecl> mPolyStructInstances = new List<AstStructDecl>();
         private List<AstStructDecl> mStructs = new List<AstStructDecl>();
 
         private List<AstTraitDeclaration> mTraits = new List<AstTraitDeclaration>();
         private List<AstEnumDecl> mEnums = new List<AstEnumDecl>();
+        private List<AstEnumDecl> mPolyEnums = new List<AstEnumDecl>();
+        
         private List<AstVariableDecl> mVariables = new List<AstVariableDecl>();
         private List<AstTypeAliasDecl> mTypeDefs = new List<AstTypeAliasDecl>();
         private List<AstImplBlock> mImpls = new List<AstImplBlock>();
@@ -45,7 +46,7 @@ namespace Cheez
                             @struct.Scope = GlobalScope;
                             Pass1StructDeclaration(@struct);
 
-                            if (@struct.Parameters.Count > 0)
+                            if (@struct.IsPolymorphic)
                                 mPolyStructs.Add(@struct);
                             else
                                 mStructs.Add(@struct);
@@ -65,7 +66,10 @@ namespace Cheez
                         {
                             @enum.Scope = GlobalScope;
                             Pass1EnumDeclaration(@enum);
-                            mEnums.Add(@enum);
+                            if (@enum.IsPolymorphic)
+                                mPolyEnums.Add(@enum);
+                            else
+                                mEnums.Add(@enum);
                             break;
                         }
 
@@ -300,8 +304,17 @@ namespace Cheez
 
         private void Pass1EnumDeclaration(AstEnumDecl @enum)
         {
-            @enum.Scope.TypeDeclarations.Add(@enum);
-            @enum.Type = new EnumType(@enum);
+            if (@enum.Parameters?.Count > 0)
+            {
+                @enum.IsPolymorphic = true;
+                @enum.Type = new GenericEnumType(@enum);
+            }
+            else
+            {
+                @enum.Scope.TypeDeclarations.Add(@enum);
+                @enum.Type = new EnumType(@enum);
+            }
+            @enum.SubScope = new Scope($"enum {@enum.Name.Name}", @enum.Scope);
 
 
             var res = @enum.Scope.DefineDeclaration(@enum);
@@ -319,14 +332,13 @@ namespace Cheez
             {
                 @struct.IsPolymorphic = true;
                 @struct.Type = new GenericStructType(@struct);
-                @struct.SubScope = new Scope($"struct {@struct.Name.Name}", @struct.Scope);
             }
             else
             {
                 @struct.Scope.TypeDeclarations.Add(@struct);
                 @struct.Type = new StructType(@struct);
-                @struct.SubScope = new Scope($"struct {@struct.Name.Name}", @struct.Scope);
             }
+            @struct.SubScope = new Scope($"struct {@struct.Name.Name}", @struct.Scope);
 
             var res = @struct.Scope.DefineDeclaration(@struct);
             if (!res.ok)

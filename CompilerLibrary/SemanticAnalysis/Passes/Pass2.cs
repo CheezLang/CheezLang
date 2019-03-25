@@ -3,6 +3,7 @@ using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Primitive;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -18,6 +19,7 @@ namespace Cheez
             List<AstDecl> typeDeclarations = new List<AstDecl>();
             typeDeclarations.AddRange(mTypeDefs);
             typeDeclarations.AddRange(mPolyStructs);
+            typeDeclarations.AddRange(mPolyEnums);
             // typeDeclarations.AddRange(mConsts); // TODO
 
             List<AstDecl> waitingList = new List<AstDecl>();
@@ -44,6 +46,10 @@ namespace Cheez
 
                         case AstStructDecl @struct:
                             deps = Pass2PolyStruct(@struct);
+                            break;
+
+                        case AstEnumDecl @enum:
+                            deps = Pass2PolyEnum(@enum);
                             break;
                     }
 
@@ -100,6 +106,44 @@ namespace Cheez
                 alias.Type = newType;
 
             alias.Type = newType;
+            return deps;
+        }
+
+        private HashSet<AstDecl> Pass2PolyEnum(AstEnumDecl @enum)
+        {
+            var deps = new HashSet<AstDecl>();
+
+            foreach (var param in @enum.Parameters)
+            {
+                param.TypeExpr.TypeInferred = false;
+                param.TypeExpr.Scope = @enum.Scope;
+                param.TypeExpr = ResolveType(param.TypeExpr, out var newType, dependencies: deps);
+
+                if (newType is AbstractType)
+                {
+                    continue;
+                }
+
+                param.Type = newType;
+
+                switch (param.Type)
+                {
+                    case IntType _:
+                    case FloatType _:
+                    case CheezTypeType _:
+                    case BoolType _:
+                    case CharType _:
+                        break;
+
+                    case ErrorType _:
+                        break;
+
+                    default:
+                        ReportError(param.TypeExpr, $"The type '{param.Type}' is not allowed here.");
+                        break;
+                }
+            }
+
             return deps;
         }
 

@@ -21,7 +21,7 @@ namespace Cheez
         public class TypeInferenceContext
         {
             public List<AstFunctionDecl> newPolyFunctions;
-            public List<AstStructDecl> newPolyStructs;
+            public List<AstDecl> newPolyDeclarations;
             public HashSet<AstDecl> dependencies;
             public bool poly_from_scope;
         }
@@ -70,16 +70,15 @@ namespace Cheez
             var context = new TypeInferenceContext
             {
                 newPolyFunctions = new List<AstFunctionDecl>(),
-                newPolyStructs = new List<AstStructDecl>(),
+                //newPolyDeclarations = new List<AstDecl>(),
                 poly_from_scope = poly_from_scope,
                 dependencies = dependencies
             };
             var newExpr = InferTypeHelper(expr, expected, context);
 
-            if (context.newPolyStructs.Count > 0)
+            if (context.newPolyDeclarations?.Count > 0)
             {
-                ResolveStructs(new List<AstStructDecl>(context.newPolyStructs));
-                ResolveStructMembers(context.newPolyStructs);
+                ResolveTypeDeclarations(context.newPolyDeclarations);
             }
 
             if (context.newPolyFunctions.Count > 0)
@@ -445,11 +444,11 @@ namespace Cheez
                 return expr;
             }
 
-            //if (expected is EnumType e)
-            //{
-            //    ReportError(expr, $"Can't default initialize an enum");
-            //    return expr;
-            //}
+            if (expected is EnumType e)
+            {
+                ReportError(expr, $"Can't default initialize an enum");
+                return expr;
+            }
 
             //if (expected is ArrayType a)
             //{
@@ -1872,7 +1871,44 @@ namespace Cheez
 
                             // instantiate struct
                             var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
-                            var instance = InstantiatePolyStruct(strType.Declaration, args, context.newPolyStructs, expr);
+                            var instance = InstantiatePolyStruct(strType.Declaration, args, context.newPolyDeclarations, expr);
+                            expr.Type = CheezType.Type;
+                            expr.Value = instance?.Type ?? CheezType.Error;
+                            return expr;
+                        }
+                        else if (expr.Function.Value is GenericEnumType @enum)
+                        {
+                            bool anyArgIsPoly = false;
+
+                            foreach (var arg in expr.Arguments)
+                            {
+                                arg.AttachTo(expr);
+                                arg.Expr.AttachTo(arg);
+                                arg.Expr = InferTypeHelper(arg.Expr, CheezType.Type, context);
+                                arg.Type = arg.Expr.Type;
+                                arg.Value = arg.Expr.Value;
+
+                                if (arg.Type == CheezType.Type)
+                                {
+                                    var argType = arg.Value as CheezType;
+                                    if (argType.IsPolyType) anyArgIsPoly = true;
+                                }
+                                else
+                                {
+                                    ReportError(arg, $"Non type arguments in poly enum type not implemented yet.");
+                                }
+                            }
+
+                            if (anyArgIsPoly)
+                            {
+                                expr.Type = CheezType.Type;
+                                expr.Value = new EnumType(@enum.Declaration, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
+                                return expr;
+                            }
+
+                            // instantiate enum
+                            var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
+                            var instance = InstantiatePolyEnum(@enum.Declaration, args, context.newPolyDeclarations, expr);
                             expr.Type = CheezType.Type;
                             expr.Value = instance?.Type ?? CheezType.Error;
                             return expr;

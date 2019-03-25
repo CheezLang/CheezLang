@@ -124,8 +124,180 @@ namespace Cheez
             }
         }
 
+        private void ResolveTypeDeclaration(AstDecl decl)
+        {
+            ResolveTypeDeclarations(new List<AstDecl> { decl });
+        }
+
+        private void ResolveTypeDeclarations(List<AstDecl> declarations)
+        {
+            var done = new List<AstDecl>();
+
+            // make a copy of declarations
+            declarations = new List<AstDecl>(declarations);
+
+            var nextInstances = new List<AstDecl>();
+
+            int i = 0;
+            while (i < MaxPolyStructResolveStepCount && declarations.Count != 0)
+            {
+                foreach (var instance in declarations)
+                {
+                    switch (instance)
+                    {
+                        case AstEnumDecl e:
+                            ResolveEnum(e, nextInstances);
+                            break;
+
+                        case AstStructDecl s:
+                            ResolveStruct(s, nextInstances);
+                            break;
+                    }
+                }
+                done.AddRange(declarations);
+                declarations.Clear();
+
+                var t = declarations;
+                declarations = nextInstances;
+                nextInstances = t;
+
+                i++;
+            }
+
+            if (i == MaxPolyStructResolveStepCount)
+            {
+                var details = declarations.Select(str => ("Here:", str.Location)).ToList();
+                ReportError($"Detected a potential infinite loop in polymorphic declarations after {MaxPolyStructResolveStepCount} steps", details);
+            }
+
+            CalculateEnumAndStructSizes(done);
+        }
+
+        // enum
+
+        private AstEnumDecl InstantiatePolyEnum(AstEnumDecl decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
+        {
+            if (args.Count != decl.Parameters.Count)
+            {
+                if (location != null)
+                    ReportError(location, "Polymorphic instantiation has wrong number of arguments.", ("Declaration here:", decl));
+                else
+                    ReportError("Polymorphic instantiation has wrong number of arguments.", ("Declaration here:", decl));
+                return null;
+            }
+
+            AstEnumDecl instance = null;
+
+            // check if instance already exists
+            foreach (var pi in decl.PolymorphicInstances)
+            {
+                Debug.Assert(pi.Parameters.Count == args.Count);
+
+                bool eq = true;
+                for (int i = 0; i < pi.Parameters.Count; i++)
+                {
+                    var param = pi.Parameters[i];
+                    var arg = args[i];
+                    if (param.Value != arg.value)
+                    {
+                        eq = false;
+                        break;
+                    }
+                }
+
+                if (eq)
+                {
+                    instance = pi;
+                    break;
+                }
+            }
+
+            // instatiate type
+            if (instance == null)
+            {
+                instance = decl.Clone() as AstEnumDecl;
+                instance.SubScope = new Scope($"enum {decl.Name.Name}<poly>", instance.Scope);
+                instance.IsPolyInstance = true;
+                instance.IsPolymorphic = false;
+                instance.Template = decl;
+                decl.PolymorphicInstances.Add(instance);
+                instance.Scope.TypeDeclarations.Add(instance);
+
+                Debug.Assert(instance.Parameters.Count == args.Count);
+
+                for (int i = 0; i < instance.Parameters.Count; i++)
+                {
+                    var param = instance.Parameters[i];
+                    var arg = args[i];
+                    param.Type = arg.type;
+                    param.Value = arg.value;
+
+                    // TODO: non type parameters
+                    instance.SubScope.DefineTypeSymbol(param.Name.Name, param.Value as CheezType);
+                }
+
+                instance.Type = new EnumType(instance);
+
+                if (instances != null)
+                    instances.Add(instance);
+                else
+                {
+                    ResolveTypeDeclaration(instance);
+                }
+            }
+
+            return instance;
+        }
+
+        private void ResolveEnum(AstEnumDecl @enum, List<AstDecl> instances = null)
+        {
+            //
+            var names = new HashSet<string>();
+
+            @enum.TagType = IntType.DefaultType;
+
+            int value = 0;
+            foreach (var mem in @enum.Members)
+            {
+                if (names.Contains(mem.Name.Name))
+                    ReportError(mem.Name, $"Duplicate enum member '{mem.Name}'");
+
+                if (mem.AssociatedType != null)
+                {
+                    @enum.HasAssociatedTypes = true;
+                    mem.AssociatedType.Scope = @enum.SubScope;
+                    mem.AssociatedType = ResolveType(mem.AssociatedType, out var t);
+                }
+
+                if (mem.Value == null)
+                {
+                    mem.Value = new AstNumberExpr(value, Location: mem.Name);
+                }
+
+                mem.Value.Scope = @enum.SubScope;
+                mem.Value = InferType(mem.Value, @enum.TagType);
+                ConvertLiteralTypeToDefaultType(mem.Value, @enum.TagType);
+                if (!mem.Value.IsCompTimeValue || !(mem.Value.Type is IntType))
+                {
+                    ReportError(mem.Value, $"The value of an enum member must be a compile time integer");
+                }
+                else
+                {
+                    value = (int)((NumberData)mem.Value.Value).IntValue + 1;
+                }
+            }
+
+            if (@enum.HasAssociatedTypes)
+            {
+                // TODO: check if all values are unique
+            }
+
+            //@enum.Scope.DefineBinaryOperator("==", );
+            //@enum.Scope.DefineBinaryOperator("!=", );
+        }
+
         // struct
-        private AstStructDecl InstantiatePolyStruct(AstStructDecl decl, List<(CheezType type, object value)> args, List<AstStructDecl> instances = null, ILocation location = null)
+        private AstStructDecl InstantiatePolyStruct(AstStructDecl decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
         {
             if (args.Count != decl.Parameters.Count)
             {
@@ -181,6 +353,9 @@ namespace Cheez
                     var arg = args[i];
                     param.Type = arg.type;
                     param.Value = arg.value;
+
+                    // TODO: what if arg.value is not a type?
+                    instance.SubScope.DefineTypeSymbol(param.Name.Name, param.Value as CheezType);
                 }
 
                 instance.Type = new StructType(instance);
@@ -189,26 +364,25 @@ namespace Cheez
                     instances.Add(instance);
                 else
                 {
-                    ResolveStructs(new List<AstStructDecl> { instance });
-                    ResolveStructMembers(instance);
+                    ResolveTypeDeclaration(instance);
                 }
             }
 
             return instance;
         }
+        
 
-        private void ResolveStructMembers(List<AstStructDecl> @structs)
+        private void ResolveStruct(AstStructDecl @struct, List<AstDecl> instances = null)
         {
-            foreach (var s in @structs)
-            {
-                ResolveStructMembers(s);
-            }
-        }
-
-        private void ResolveStructMembers(AstStructDecl @struct)
-        {
+            // resolve member types
+            int index = 0;
             foreach (var member in @struct.Members)
             {
+                member.Index = index++;
+                member.TypeExpr.Scope = @struct.SubScope;
+                member.TypeExpr = ResolveType(member.TypeExpr, out var t);
+                member.Type = t;
+
                 if (member.Initializer == null)
                 {
                     member.Initializer = new AstDefaultExpr(member.Name.Location);
@@ -223,122 +397,6 @@ namespace Cheez
                     continue;
             }
         }
-
-        private void ResolveStruct(AstStructDecl @struct, List<AstStructDecl> instances = null)
-        {
-            // define parameter types
-            foreach (var p in @struct.Parameters)
-            {
-                @struct.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
-            }
-
-            // resolve member types
-            int index = 0;
-            foreach (var member in @struct.Members)
-            {
-                member.Index = index++;
-                member.TypeExpr.Scope = @struct.SubScope;
-                member.TypeExpr = ResolveType(member.TypeExpr, out var t);
-                member.Type = t;
-            }
-
-           ((StructType)@struct.Type).CalculateSize();
-        }
-
-        private void ResolveStructs(List<AstStructDecl> newInstances)
-        {
-            var nextInstances = new List<AstStructDecl>();
-
-            int i = 0;
-            while (i < MaxPolyStructResolveStepCount && newInstances.Count != 0)
-            {
-                foreach (var instance in newInstances)
-                {
-                    ResolveStruct(instance, nextInstances);
-                }
-                newInstances.Clear();
-
-                var t = newInstances;
-                newInstances = nextInstances;
-                nextInstances = t;
-
-                i++;
-            }
-
-            if (i == MaxPolyStructResolveStepCount)
-            {
-                var details = newInstances.Select(str => ("Here:", str.Location)).ToList();
-                ReportError($"Detected a potential infinite loop in polymorphic struct declarations after {MaxPolyStructResolveStepCount} steps", details);
-            }
-        }
-
-        // impl
-        //private AstStructDecl InstantiatePolyImpl(AstImplBlock impl, List<AstImplBlock> instances = null)
-        //{
-        //    var target = impl.TargetType;
-
-        //    //if (expr.Arguments.Count != @struct.Declaration.Parameters.Count)
-        //    //{
-        //    //    ReportError(expr, "Polymorphic struct instantiation has wrong number of arguments.", ("Declaration here:", @struct.Declaration));
-        //    //    return null;
-        //    //}
-
-        //    // check if instance already exists
-        //    AstStructDecl instance = null;
-        //    //foreach (var pi in @struct.Declaration.PolymorphicInstances)
-        //    //{
-        //    //    Debug.Assert(pi.Parameters.Count == expr.Arguments.Count);
-
-        //    //    bool eq = true;
-        //    //    for (int i = 0; i < pi.Parameters.Count; i++)
-        //    //    {
-        //    //        var param = pi.Parameters[i];
-        //    //        var ptype = param.Type;
-        //    //        var pvalue = param.Value;
-
-        //    //        var arg = expr.Arguments[i];
-        //    //        var atype = arg.Type;
-        //    //        var avalue = arg.Value;
-
-        //    //        if (pvalue != avalue)
-        //    //        {
-        //    //            eq = false;
-        //    //            break;
-        //    //        }
-        //    //    }
-
-        //    //    if (eq)
-        //    //    {
-        //    //        instance = pi;
-        //    //        break;
-        //    //    }
-        //    //}
-
-        //    // instatiate type
-        //    if (instance == null)
-        //    {
-        //        instance = impl.Clone() as AstImplBlock;
-        //        instance.SubScope = new Scope($"impl {impl.TargetTypeExpr}<poly>", instance.Scope);
-        //        impl..PolymorphicInstances.Add(instance);
-
-        //        Debug.Assert(instance.Parameters.Count == expr.Arguments.Count);
-
-        //        for (int i = 0; i < instance.Parameters.Count; i++)
-        //        {
-        //            var param = instance.Parameters[i];
-        //            var arg = expr.Arguments[i];
-        //            param.Type = arg.Type;
-        //            param.Value = arg.Value;
-        //        }
-
-        //        instance.Type = new StructType(instance);
-
-        //        if (instances != null)
-        //            instances.Add(instance);
-        //    }
-
-        //    return instance;
-        //}
 
         private AstFunctionDecl InstantiatePolyFunction(
             GenericFunctionType func,

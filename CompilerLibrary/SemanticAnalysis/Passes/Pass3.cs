@@ -20,27 +20,15 @@ namespace Cheez
         /// </summary>
         private void Pass3()
         {
-            // enums
-            foreach (var @enum in mEnums)
-            {
-                Pass3Enum(@enum);
-            }
+            // structs and enums
+            var declarations = new List<AstDecl>();
 
-            // structs
-            var newInstances = new List<AstStructDecl>();
+            declarations.AddRange(mStructs);
+            declarations.AddRange(mEnums);
+            declarations.AddRange(mStructs.SelectMany(s => s.PolymorphicInstances));
+            declarations.AddRange(mEnums.SelectMany(e => e.PolymorphicInstances));
 
-            newInstances.AddRange(mStructs);
-
-            foreach (var @struct in mPolyStructs)
-            {
-                newInstances.AddRange(@struct.PolymorphicInstances);
-            }
-
-            ResolveStructs(new List<AstStructDecl>(newInstances));
-            ResolveStructMembers(newInstances);
-
-            // calculate sizes of types (enums and structs)
-            CalculateEnumAndStructSizes();
+            ResolveTypeDeclarations(declarations);
 
             // impls
             foreach (var trait in mTraits)
@@ -104,71 +92,13 @@ namespace Cheez
             done.Add(decl);
         }
 
-        private void CalculateEnumAndStructSizes()
+        private void CalculateEnumAndStructSizes(List<AstDecl> declarations)
         {
-            // detect cycles
-            var whiteSet = new HashSet<AstDecl>();
-
-            whiteSet.UnionWith(mEnums);
-            whiteSet.UnionWith(mStructs);
-            whiteSet.UnionWith(mPolyStructs.SelectMany(ps => ps.PolymorphicInstances));
-
-
             var done = new HashSet<AstDecl>();
-            foreach (var decl in whiteSet)
+            foreach (var decl in declarations)
             {
                 CalculateSizeOfDecl(decl, done, new HashSet<AstDecl>());
             }
-        }
-
-        private void Pass3Enum(AstEnumDecl @enum)
-        {
-            @enum.SubScope = new Scope("enum", @enum.Scope);
-
-            var names = new HashSet<string>();
-
-            @enum.TagType = IntType.DefaultType;
-
-            int value = 0;
-            foreach (var mem in @enum.Members)
-            {
-                if (names.Contains(mem.Name.Name))
-                    ReportError(mem.Name, $"Duplicate enum member '{mem.Name}'");
-
-                if (mem.AssociatedType != null)
-                {
-                    @enum.HasAssociatedTypes = true;
-                    mem.AssociatedType.Scope = @enum.SubScope;
-                    mem.AssociatedType = ResolveType(mem.AssociatedType, out var t);
-                }
-
-                if (mem.Value == null)
-                {
-                    mem.Value = new AstNumberExpr(value, Location: mem.Name);
-                }
-
-                mem.Value.Scope = @enum.SubScope;
-                mem.Value = InferType(mem.Value, @enum.TagType);
-                ConvertLiteralTypeToDefaultType(mem.Value, @enum.TagType);
-                if (!mem.Value.IsCompTimeValue || !(mem.Value.Type is IntType))
-                {
-                    ReportError(mem.Value, $"The value of an enum member must be a compile time integer");
-                }
-                else
-                {
-                    value = (int)((NumberData)mem.Value.Value).IntValue + 1;
-                }
-            }
-
-            if (@enum.HasAssociatedTypes)
-            {
-                // TODO: check if all values are unique
-            }
-
-            //@enum.Scope.DefineBinaryOperator("==", );
-            //@enum.Scope.DefineBinaryOperator("!=", );
-
-            ((EnumType)@enum.Type).CalculateSize();
         }
 
         private void Pass3Trait(AstTraitDeclaration trait)

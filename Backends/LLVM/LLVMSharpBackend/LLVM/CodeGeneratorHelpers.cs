@@ -199,7 +199,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case EnumType e:
                     {
-                        var llvmType = LLVM.StructCreateNamed(context, $"enum.{e.Name}");
+                        var llvmType = LLVM.StructCreateNamed(context, $"enum.{e}");
 
                         if (e.Declaration.HasAssociatedTypes)
                         {
