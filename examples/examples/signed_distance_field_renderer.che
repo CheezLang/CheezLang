@@ -549,7 +549,7 @@ fn renderImage(film: ref Film)
         film.pixels[i] = new Vec3 { 0, 0, 0 }
     }
 
-    let as = cast(double) film.width / cast(double) film.height
+    let as = (cast(double) film.width) / (cast(double) film.height)
     let camera = new PerspectiveCamera {
         focalLength = 50
         sensorWidth = as * 24
@@ -613,7 +613,7 @@ fn renderImage(film: ref Film)
     all.dispose()
 }
 
-fn signed_distance_field_renderer()
+fn Main()
 {
     //
     let scale: int = 5
@@ -630,7 +630,7 @@ fn signed_distance_field_renderer()
     let start = getCurrentTimeInMilliseconds()
     renderImage(film)
     let end = getCurrentTimeInMilliseconds()
-    let dur = cast(double) (end - start) / cast(double) 1000
+    let dur = (cast(double) end - start) / 1000.0
 
     printf("Rendering took {} seconds`n", [dur])
 

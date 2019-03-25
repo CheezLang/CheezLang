@@ -2,12 +2,16 @@
 
 #load("std:io/io")
 #load("glfw:glfw3")
+#load("std:math")
 #load("opengl:opengl")
 
+typedef Vec2 = Vector2(float)
+typedef Vec3 = Vector3(float)
+
 struct Quad {
-    pos: Vec2f
-    size: Vec2f
-    col: Color3f
+    pos: Vec2
+    size: Vec2
+    col: Vec3
 }
 
 impl Quad {
@@ -16,29 +20,29 @@ impl Quad {
 
         {
             // v1
-            glColor3f(col.r, col.g, col.b)
+            glColor3f(col.x, col.y, col.z)
             glVertex2f(pos.x, pos.y)
 
             // v2
-            glColor3f(col.r, col.g, col.b)
+            glColor3f(col.x, col.y, col.z)
             glVertex2f(pos.x + size.x, pos.y)
 
             // v3
-            glColor3f(col.r, col.g, col.b)
+            glColor3f(col.x, col.y, col.z)
             glVertex2f(pos.x + size.x, pos.y + size.y)
         }
 
         {
             // v1
-            glColor3f(col.r, col.g, col.b)
+            glColor3f(col.x, col.y, col.z)
             glVertex2f(pos.x, pos.y)
 
             // v3
-            glColor3f(col.r, col.g, col.b)
+            glColor3f(col.x, col.y, col.z)
             glVertex2f(pos.x + size.x, pos.y + size.y)
 
             // v4
-            glColor3f(col.r, col.g, col.b)
+            glColor3f(col.x, col.y, col.z)
             glVertex2f(pos.x, pos.y + size.y)
         }
 
@@ -47,9 +51,9 @@ impl Quad {
 }
 
 let q = new Quad {
-    pos = new Vec2f { -0.5f, -0.5f }
-    size = new Vec2f { 1, 1 }
-    col = new Color3f { 1, 0, 1 }
+    pos = new Vec2 { -0.5f, -0.5f }
+    size = new Vec2 { 1, 1 }
+    col = new Vec3 { 1, 0, 1 }
 }
 
 fn onKeyDown(window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
@@ -71,7 +75,7 @@ fn onResize(window: &GLFWwindow, w: i32, h: i32) {
     glViewport(0, 0, w, h)
 }
 
-fn glfw3_example()
+fn Main()
 {
     if !glfwInit() {
         println("Failed to initialize GLFW")

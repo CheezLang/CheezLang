@@ -38,7 +38,7 @@ impl TestTrait for Test {
     }
 }
 
-fn trait_function_call_performance() {
+fn Main() {
     let iterations = 100000000
     let n = 8
 
