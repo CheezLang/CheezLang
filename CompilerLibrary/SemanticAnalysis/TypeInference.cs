@@ -320,10 +320,16 @@ namespace Cheez
             {
                 c.SubScope = new Scope("case", expr.Scope);
 
-                // TODO: pattern
+                // pattern
                 c.Pattern.AttachTo(expr);
                 c.Pattern.Scope = c.SubScope;
                 c.Pattern = MatchPatternWithType(c, c.Pattern, expr.SubExpression);
+
+                if (c.Pattern.Type?.IsErrorType ?? false)
+                {
+                    c.Body.Type = CheezType.Error;
+                    continue;
+                }
 
                 // condition
                 if (c.Condition != null)
@@ -388,6 +394,10 @@ namespace Cheez
                             var newPattern = InferType(id, value.Type);
                             if (newPattern != pattern)
                                 return MatchPatternWithType(cas, newPattern, value);
+
+                            if (pattern.Type.IsErrorType)
+                                return id;
+
                             if (id.Type != value.Type)
                                 break;
                             if (!id.IsCompTimeValue)
@@ -402,6 +412,8 @@ namespace Cheez
                     {
                         InferType(n, value.Type);
                         ConvertLiteralTypeToDefaultType(n, value.Type);
+                        if (pattern.Type.IsErrorType)
+                            return pattern;
 
                         if (n.Type != value.Type)
                             break;
@@ -412,6 +424,8 @@ namespace Cheez
                     {
                         InferType(n, value.Type);
                         ConvertLiteralTypeToDefaultType(n, value.Type);
+                        if (pattern.Type.IsErrorType)
+                            return pattern;
 
                         if (n.Type != value.Type)
                             break;
@@ -436,6 +450,7 @@ namespace Cheez
 
                             return te;
                         }
+                        pattern.Type = CheezType.Error;
                         break;
                     }
 
@@ -444,18 +459,20 @@ namespace Cheez
                         var d = InferType(dot, null);
                         if (d is AstEnumValueExpr e)
                         {
+                            if (pattern.Type.IsErrorType)
+                                return pattern;
                             if (e.Type != value.Type)
                                 break;
                             return d;
                         }
                         else
-                        {
                             break;
-                        }
                     }
 
                 case AstEnumValueExpr ev:
                     {
+                        if (pattern.Type.IsErrorType)
+                            return pattern;
                         if (ev.Type != value.Type)
                             break;
                         return ev;
@@ -498,7 +515,10 @@ namespace Cheez
                     }
 
             }
-            ReportError(pattern, $"Can't match type {value.Type} to pattern of type {pattern.Type}");
+
+            if (pattern.Type?.IsErrorType ?? false)
+                ReportError(pattern, $"Can't match type {value.Type} to pattern {pattern}");
+            pattern.Type = CheezType.Error;
             return pattern;
         }
 

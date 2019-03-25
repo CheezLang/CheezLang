@@ -281,7 +281,14 @@ namespace Cheez
                 var result = parser.ParseStatement();
                 var s = result.stmt;
 
-                if (s is AstFunctionDecl || s is AstStructDecl || s is AstImplBlock || s is AstEnumDecl || s is AstVariableDecl || s is AstTypeAliasDecl || s is AstTraitDeclaration)
+                if (s is AstFunctionDecl || 
+                    s is AstStructDecl || 
+                    s is AstImplBlock || 
+                    s is AstEnumDecl || 
+                    s is AstVariableDecl || 
+                    s is AstTypeAliasDecl || 
+                    s is AstTraitDeclaration ||
+                    s is AstUsingStmt)
                 {
                     s.SourceFile = file;
                     file.Statements.Add(s);
@@ -292,7 +299,7 @@ namespace Cheez
                 }
                 else if (s != null)
                 {
-                    eh.ReportError(lexer, s, "Only variable and function declarations are allowed on in global scope");
+                    eh.ReportError(lexer, s, "This type of statement is not allowed in global scope");
                 }
 
                 if (result.done)
