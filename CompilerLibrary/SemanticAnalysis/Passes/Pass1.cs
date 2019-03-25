@@ -28,6 +28,8 @@ namespace Cheez
         private List<AstFunctionDecl> mPolyFunctions = new List<AstFunctionDecl>();
         private List<AstFunctionDecl> mFunctionInstances = new List<AstFunctionDecl>();
 
+        private List<AstUsingStmt> mGlobalUses = new List<AstUsingStmt>();
+
         public IEnumerable<AstTraitDeclaration> Traits => mTraits;
         //
 
@@ -41,6 +43,13 @@ namespace Cheez
             {
                 switch (s)
                 {
+                    case AstUsingStmt use:
+                        {
+                            use.Scope = GlobalScope;
+                            mGlobalUses.Add(use);
+                            break;
+                        }
+
                     case AstStructDecl @struct:
                         {
                             @struct.Scope = GlobalScope;

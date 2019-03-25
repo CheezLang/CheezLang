@@ -80,7 +80,11 @@ namespace Cheez
 
             // at this points all concrete types are known
 
-            Pass3(); // resolve struct members and enum bodies
+            PassResolveGlobalTypeDeclarations();
+            PassResolveImpls();
+
+            PassResolveGlobalUses();
+
             Pass4(); // resolve function signatures
             // Pass5(); // impls
             // Pass6(); // match impl functions with trait functions
