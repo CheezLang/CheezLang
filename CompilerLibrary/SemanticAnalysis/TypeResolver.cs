@@ -40,6 +40,12 @@ namespace Cheez
         public AstExpression ResolveTypeHelper(AstExpression expr, out CheezType type)
         {
             expr = InferType(expr, CheezType.Type);
+            if (expr.Type.IsErrorType)
+            {
+                type = CheezType.Error;
+                return expr;
+            }
+
             if (expr.Type != CheezType.Type)
             {
                 ReportError(expr, $"Expected type");
@@ -270,7 +276,17 @@ namespace Cheez
             var names = new HashSet<string>();
 
             @enum.TagType = IntType.DefaultType;
-            @enum.EnumType.TagType = @enum.TagType;
+
+            if (@enum.EnumType != null)
+            {
+                // regular enum (not poly)
+                @enum.EnumType.TagType = @enum.TagType;
+            }
+
+            foreach (var p in @enum.Parameters)
+            {
+                @enum.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
+            }
 
             int value = 0;
             foreach (var mem in @enum.Members)
@@ -278,11 +294,11 @@ namespace Cheez
                 if (names.Contains(mem.Name.Name))
                     ReportError(mem.Name, $"Duplicate enum member '{mem.Name}'");
 
-                if (mem.AssociatedType != null)
+                if (mem.AssociatedTypeExpr != null)
                 {
                     @enum.HasAssociatedTypes = true;
-                    mem.AssociatedType.Scope = @enum.SubScope;
-                    mem.AssociatedType = ResolveType(mem.AssociatedType, instances, out var t);
+                    mem.AssociatedTypeExpr.Scope = @enum.SubScope;
+                    mem.AssociatedTypeExpr = ResolveType(mem.AssociatedTypeExpr, instances, out var t);
                 }
 
                 if (mem.Value == null)
@@ -390,6 +406,11 @@ namespace Cheez
 
         private void ResolveStruct(AstStructDecl @struct, List<AstDecl> instances = null)
         {
+            foreach (var p in @struct.Parameters)
+            {
+                @struct.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
+            }
+
             // resolve member types
             int index = 0;
             foreach (var member in @struct.Members)

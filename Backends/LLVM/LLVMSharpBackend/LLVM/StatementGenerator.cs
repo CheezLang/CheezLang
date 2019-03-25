@@ -166,9 +166,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstWhileStmt whl: GenerateWhile(whl); break;
                 case AstBreakStmt br: GenerateBreak(br); break;
                 case AstContinueStmt cont: GenerateContinue(cont); break;
+                case AstUsingStmt _: break;
                 default: throw new NotImplementedException();
             }
-
         }
 
         private void GenerateContinue(AstContinueStmt cont)

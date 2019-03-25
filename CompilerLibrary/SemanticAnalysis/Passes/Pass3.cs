@@ -25,8 +25,10 @@ namespace Cheez
 
             declarations.AddRange(mStructs);
             declarations.AddRange(mEnums);
-            declarations.AddRange(mStructs.SelectMany(s => s.PolymorphicInstances));
-            declarations.AddRange(mEnums.SelectMany(e => e.PolymorphicInstances));
+            declarations.AddRange(mPolyStructs.SelectMany(s => s.PolymorphicInstances));
+            declarations.AddRange(mPolyStructs);
+            declarations.AddRange(mPolyEnums.SelectMany(e => e.PolymorphicInstances));
+            declarations.AddRange(mPolyEnums);
 
             ResolveTypeDeclarations(declarations);
 
@@ -64,16 +66,17 @@ namespace Cheez
             {
                 foreach (var em in @enum.Members)
                 {
-                    if (em.AssociatedType != null)
+                    if (em.AssociatedTypeExpr != null)
                     {
-                        if (em.AssociatedType.Value is StructType s)
+                        if (em.AssociatedTypeExpr.Value is StructType s)
                             CalculateSizeOfDecl(s.Declaration, done, path);
-                        else if (em.AssociatedType.Value is EnumType e)
+                        else if (em.AssociatedTypeExpr.Value is EnumType e)
                             CalculateSizeOfDecl(e.Declaration, done, path);
                     }
                 }
 
-                ((EnumType)@enum.Type).CalculateSize();
+                if (@enum.Type is EnumType str)
+                    str.CalculateSize();
             }
             else if (decl is AstStructDecl @struct)
             {
@@ -85,7 +88,8 @@ namespace Cheez
                         CalculateSizeOfDecl(e.Declaration, done, path);
                 }
 
-                ((StructType)@struct.Type).CalculateSize();
+                if (@struct.Type is StructType str)
+                    str.CalculateSize();
             }
 
             path.Remove(decl);

@@ -6,6 +6,7 @@ using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Types;
+using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 
@@ -62,7 +63,7 @@ namespace Cheez
                         // define use if no parameter has the same name
                         if (!func.Parameters.Any(pa => pa.Name?.Name == m.Name.Name))
                         {
-                            var (ok, other) = func.SubScope.DefineUse(m.Name.Name, expr, out var use);
+                            var (ok, other) = func.SubScope.DefineUse(m.Name.Name, expr, false, out var use);
 
                             if (!ok)
                             {
@@ -138,7 +139,7 @@ namespace Cheez
                     if (m.Name == null) continue;
                     AstExpression access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnValue), new AstNumberExpr(index));
                     access = InferType(access, null);
-                    var (ok, other) = func.SubScope.DefineUse(m.Name.Name, access, out var use);
+                    var (ok, other) = func.SubScope.DefineUse(m.Name.Name, access, false, out var use);
                     if (!ok)
                         ReportError(m, $"A symbol with name '{m.Name.Name}' already exists in current scope", ("Other symbol here:", other));
                     m.Symbol = use;
@@ -181,9 +182,62 @@ namespace Cheez
                 case AstWhileStmt whl: AnalyseWhileStatement(whl); break;
                 case AstBreakStmt br: AnalyseBreakStatement(br); break;
                 case AstContinueStmt cont: AnalyseContinueStatement(cont); break;
+                case AstUsingStmt use: AnalyseUseStatement(use); break;
 
                 case AstFunctionDecl func: ReportError(func, $"Local functions not supported yet."); break;
                 default: throw new NotImplementedException();
+            }
+        }
+
+        private void AnalyseUseStatement(AstUsingStmt use)
+        {
+            use.Value.AttachTo(use);
+            use.Value = InferType(use.Value, null);
+
+            if (use.Value.Type.IsErrorType)
+                return;
+
+            switch (use.Value.Type)
+            {
+                case CheezTypeType type:
+                    HandleUseType(use, type);
+                    break;
+
+                default:
+                    ReportError(use, $"Can't use value of type '{use.Value.Type}'");
+                    break;
+            }
+        }
+
+        private void HandleUseType(AstUsingStmt use, CheezTypeType type)
+        {
+            switch (use.Value.Value as CheezType)
+            {
+                case EnumType e:
+                    {
+                        var decl = e.Declaration;
+                        foreach (var m in decl.Members)
+                        {
+                            var eve = new AstEnumValueExpr(e.Declaration, m);
+                            use.Scope.DefineUse(m.Name.Name, eve, true, out var u);
+                        }
+                        break;
+                    }
+
+                case GenericEnumType e:
+                    {
+                        var decl = e.Declaration;
+                        foreach (var m in decl.Members)
+                        {
+                            var eve = new AstEnumValueExpr(decl, m);
+                            use.Scope.DefineUse(m.Name.Name, eve, true, out var u);
+                        }
+                        break;
+                    }
+
+                default:
+                    ReportError(use, $"Can't use type '{use.Value.Value}'");
+                    break;
             }
         }
 

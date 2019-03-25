@@ -138,7 +138,7 @@ namespace Cheez.Visitors
 
         public override string VisitUsingStmt(AstUsingStmt use, int data = 0)
         {
-            return $"using {use.Value.Accept(this)}";
+            return $"use {use.Value.Accept(this)}";
         }
 
         public string VisitStructMember(AstStructMember m)
@@ -161,7 +161,7 @@ namespace Cheez.Visitors
         {
             if (str.IsPolymorphic)
             {
-                var body = string.Join("\n", str.Members.Select(m => VisitStructMemberRaw(m)));
+                var body = string.Join("\n", str.Members.Select(m => VisitStructMember(m)));
                 var head = $"struct {str.Name.Accept(this)}";
 
                 head += "(";
@@ -336,8 +336,8 @@ namespace Cheez.Visitors
         public string VisitEnumMember(AstEnumMember m)
         {
             var str = m.Name.Accept(this);
-            if (m.AssociatedType != null)
-                str += " : " + m.AssociatedType.Value;
+            if (m.AssociatedTypeExpr != null)
+                str += " : " + m.AssociatedTypeExpr.Value;
             if (m.Value != null)
                 str += " = " + m.Value.Accept(this);
             return str;
@@ -346,8 +346,8 @@ namespace Cheez.Visitors
         public string VisitEnumMemberRaw(AstEnumMember m)
         {
             var str = m.Name.Accept(this);
-            if (m.AssociatedType != null)
-                str += " : " + m.AssociatedType.Accept(this);
+            if (m.AssociatedTypeExpr != null)
+                str += " : " + m.AssociatedTypeExpr.Accept(this);
             if (m.Value != null)
                 str += " = " + m.Value.Accept(this);
             return str;
@@ -357,7 +357,7 @@ namespace Cheez.Visitors
         {
             if (en.IsPolymorphic)
             {
-                var body = string.Join("\n", en.Members.Select(m => VisitEnumMemberRaw(m)));
+                var body = string.Join("\n", en.Members.Select(m => VisitEnumMember(m)));
                 var head = $"enum {en.Name.Accept(this)}";
 
                 head += "(";
@@ -432,6 +432,13 @@ namespace Cheez.Visitors
 
 
         #region Expressions
+
+        public override string VisitEnumValueExpr(AstEnumValueExpr expr, int data = 0)
+        {
+            if (expr.Argument != null)
+                return $"{expr.Type}.{expr.Member.Name.Name}({expr.Argument.Accept(this)})";
+            return $"{expr.Type}.{expr.Member.Name.Name}";
+        }
 
         private string VisitMatchCase(AstMatchCase c)
         {

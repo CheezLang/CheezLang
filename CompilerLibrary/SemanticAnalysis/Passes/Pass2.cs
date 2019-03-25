@@ -128,9 +128,12 @@ namespace Cheez
 
                 switch (param.Type)
                 {
+                    case CheezTypeType _:
+                        param.Value = new PolyType(param.Name.Name, true);
+                        break;
+
                     case IntType _:
                     case FloatType _:
-                    case CheezTypeType _:
                     case BoolType _:
                     case CharType _:
                         break;
@@ -166,9 +169,12 @@ namespace Cheez
 
                 switch (param.Type)
                 {
+                    case CheezTypeType _:
+                        param.Value = new PolyType(param.Name.Name, true);
+                        break;
+
                     case IntType _:
                     case FloatType _:
-                    case CheezTypeType _:
                     case BoolType _:
                     case CharType _:
                         break;

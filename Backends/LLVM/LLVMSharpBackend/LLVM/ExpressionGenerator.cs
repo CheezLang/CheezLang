@@ -1076,7 +1076,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         var memName = expr.Right.Name;
                         var mem = @enum.Declaration.Members.FirstOrDefault(m => m.Name.Name == memName);
 
-                        var assType = CheezTypeToLLVMType(mem.AssociatedType.Value as CheezType);
+                        var assType = CheezTypeToLLVMType(mem.AssociatedTypeExpr.Value as CheezType);
 
                         var subPtr = builder.CreateStructGEP(value, 1, "");
                         subPtr = builder.CreatePointerCast(subPtr, assType.GetPointerTo(), "");

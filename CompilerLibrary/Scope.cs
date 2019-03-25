@@ -67,13 +67,15 @@ namespace Cheez
         public bool IsConstant => true;
 
         public ILocation Location { get; set; }
+        public bool Replace = false;
 
 
         [DebuggerStepThrough]
-        public Using(AstExpression expr)
+        public Using(AstExpression expr, bool replace)
         {
             this.Location = expr.Location;
             this.Expr = expr;
+            this.Replace = replace;
         }
 
         [DebuggerStepThrough]
@@ -556,13 +558,13 @@ namespace Cheez
             return (true, null);
         }
 
-        public (bool ok, ILocation other) DefineUse(string name, AstExpression expr, out Using use)
+        public (bool ok, ILocation other) DefineUse(string name, AstExpression expr, bool replace, out Using use)
         {
             use = null;
             if (mSymbolTable.TryGetValue(name, out var other))
                 return (false, other.Location);
 
-            use = new Using(expr);
+            use = new Using(expr, replace);
             mSymbolTable[name] = use;
             return (true, null);
         }

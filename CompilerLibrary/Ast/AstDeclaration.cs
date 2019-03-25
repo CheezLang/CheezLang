@@ -331,7 +331,8 @@ namespace Cheez.Ast.Statements
 
         public AstIdExpr Name { get; }
         public AstExpression Value { get; set; }
-        public AstExpression AssociatedType { get; set; }
+        public AstExpression AssociatedTypeExpr { get; set; }
+        public CheezType AssociatedType => AssociatedTypeExpr?.Value as CheezType;
         public CheezType Type { get; set; }
 
         public AstEnumMember(AstIdExpr name, AstExpression assType, AstExpression value, ILocation Location = null)
@@ -339,10 +340,10 @@ namespace Cheez.Ast.Statements
             this.Location = Location;
             this.Name = name;
             this.Value = value;
-            this.AssociatedType = assType;
+            this.AssociatedTypeExpr = assType;
         }
 
-        public AstEnumMember Clone() => new AstEnumMember(Name.Clone() as AstIdExpr, AssociatedType?.Clone(), Value?.Clone());
+        public AstEnumMember Clone() => new AstEnumMember(Name.Clone() as AstIdExpr, AssociatedTypeExpr?.Clone(), Value?.Clone());
     }
 
     public class AstEnumDecl : AstDecl, INamed

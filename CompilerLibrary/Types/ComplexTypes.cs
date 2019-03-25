@@ -256,8 +256,8 @@ namespace Cheez.Types.Complex
             foreach (var m in Declaration.Members)
             {
                 Members.Add(m.Name.Name, ((NumberData)m.Value.Value).ToLong());
-                if (m.AssociatedType != null)
-                    maxMemberSize = Math.Max(maxMemberSize, ((CheezType)m.AssociatedType.Value).Size);
+                if (m.AssociatedTypeExpr != null)
+                    maxMemberSize = Math.Max(maxMemberSize, ((CheezType)m.AssociatedTypeExpr.Value).Size);
             }
 
             Size = TagType.Size + maxMemberSize;

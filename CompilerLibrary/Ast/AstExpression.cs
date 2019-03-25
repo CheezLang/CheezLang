@@ -23,7 +23,7 @@ namespace Cheez.Ast.Expressions
     {
         protected int mFlags = 0;
 
-        public ILocation Location { get; private set; }
+        public ILocation Location { get; set; }
         public TokenLocation Beginning => Location?.Beginning;
         public TokenLocation End => Location?.End;
 
@@ -508,7 +508,10 @@ namespace Cheez.Ast.Expressions
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstAddressOfExpr(SubExpression.Clone()));
+            => CopyValuesTo(new AstAddressOfExpr(SubExpression.Clone())
+            {
+                Reference = Reference
+            });
     }
 
     public class AstDereferenceExpr : AstExpression
@@ -529,7 +532,10 @@ namespace Cheez.Ast.Expressions
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstDereferenceExpr(SubExpression.Clone()));
+            => CopyValuesTo(new AstDereferenceExpr(SubExpression.Clone())
+            {
+                Reference = Reference
+            });
     }
 
     public class AstCastExpr : AstExpression

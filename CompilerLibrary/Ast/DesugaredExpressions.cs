@@ -13,30 +13,24 @@ namespace Cheez.Ast.Expressions
     {
         public override bool IsPolymorphic => false;
 
-        public EnumType Enum { get; set; }
+        public bool IsComplete => !(Member.AssociatedTypeExpr != null && Argument == null);
+        
+        public AstEnumDecl EnumDecl { get; set; }
         public AstEnumMember Member { get; set; }
         public AstExpression Argument { get; set; }
 
-        public AstExpression Original { get; }
-
-        public AstEnumValueExpr(AstExpression original, EnumType type, AstEnumMember member, AstExpression arg = null)
-            : base(original.Location)
+        public AstEnumValueExpr(AstEnumDecl ed, AstEnumMember member, AstExpression arg = null, ILocation loc = null)
+            : base(loc)
         {
             Member = member;
-            Type = Enum = type;
+            Type = ed.Type;
             Argument = arg;
-            Original = original;
+            EnumDecl = ed;
         }
 
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
-        {
-            return Original.Accept(visitor, data);
-        }
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitEnumValueExpr(this, data);
 
-        public override AstExpression Clone()
-        {
-            throw new NotImplementedException();
-        }
+        public override AstExpression Clone() => CopyValuesTo(new AstEnumValueExpr(EnumDecl, Member, Argument));
     }
 
     public class AstUfcFuncExpr : AstExpression

@@ -204,36 +204,88 @@ namespace Cheez
             }
         }
 
-        private AstExpression InferTypeEnumValueExpr(AstEnumValueExpr e, CheezType expected, TypeInferenceContext context)
+        private AstExpression InferTypeEnumValueExpr(AstEnumValueExpr expr, CheezType expected, TypeInferenceContext context)
         {
-            if (e.Argument != null)
+            if (expr.Argument != null)
             {
-                if (e.Member.AssociatedType == null)
+                if (expr.Member.AssociatedTypeExpr == null)
                 {
-                    ReportError(e, $"The enum member '{e.Member.Name}' does not take an argument");
-                    return e;
+                    ReportError(expr, $"The enum member '{expr.Member.Name}' does not take an argument");
+                    return expr;
                 }
 
-                var at = e.Member.AssociatedType.Value as CheezType;
+                var at = expr.Member.AssociatedTypeExpr.Value as CheezType;
 
-                e.Argument.AttachTo(e);
-                e.Argument = InferType(e.Argument, at);
-                ConvertLiteralTypeToDefaultType(e.Argument, at);
-                e.Argument = HandleReference(e.Argument, at);
-                e.Argument = CheckType(e.Argument, at);
+                expr.Argument.AttachTo(expr);
+                expr.Argument = InferType(expr.Argument, at);
+                ConvertLiteralTypeToDefaultType(expr.Argument, at);
+
+                if (expr.EnumDecl.Type is GenericEnumType g)
+                {
+                    if (expected is EnumType enumType && enumType.DeclarationTemplate == g.Declaration)
+                    {
+                        expr.EnumDecl = enumType.Declaration;
+                        expr.Member = enumType.Declaration.Members.First(m => m.Name.Name == expr.Member.Name.Name);
+                        at = expr.Member.AssociatedTypeExpr.Value as CheezType;
+                    }
+                    else
+                    {
+                        // create instance
+                        var args = new List<(CheezType type, object value)>();
+
+                        // collect poly types
+                        var pt = new Dictionary<string, CheezType>();
+                        CollectPolyTypes(expr.Member.AssociatedType, expr.Argument.Type, pt);
+
+                        foreach (var param in g.Declaration.Parameters)
+                        {
+                            if (pt.TryGetValue(param.Name.Name, out var t))
+                            {
+                                args.Add((CheezType.Type, t));
+                            }
+                        }
+
+                        var instance = InstantiatePolyEnum(g.Declaration, args, context.newPolyDeclarations, expr.Location);
+                        if (instance != null)
+                        {
+                            expr.EnumDecl = instance;
+                            expr.Member = instance.Members.First(m => m.Name.Name == expr.Member.Name.Name);
+                            at = expr.Member.AssociatedTypeExpr.Value as CheezType;
+                        }
+                    }
+                }
+
+                if (at != null)
+                {
+                    expr.Argument = HandleReference(expr.Argument, at);
+                    expr.Argument = CheckType(expr.Argument, at);
+                }
             }
             else
             {
-                if (e.Member.AssociatedType != null)
+                if (expr.IsComplete && expr.Member.AssociatedTypeExpr != null)
                 {
-                    ReportError(e, $"The enum member '{e.Member.Name}' requires an argument of type {e.Member.AssociatedType.Value}");
-                    return e;
+                    ReportError(expr, $"The enum member '{expr.Member.Name}' requires an argument of type {expr.Member.AssociatedTypeExpr.Value}");
+                    return expr;
                 }
-                // TODO:
+
+                if (expr.EnumDecl.Type is GenericEnumType g)
+                {
+                    if (expected is EnumType enumType && enumType.DeclarationTemplate == g.Declaration)
+                    {
+                        expr.EnumDecl = enumType.Declaration;
+                        expr.Member = enumType.Declaration.Members.First(m => m.Name.Name == expr.Member.Name.Name);
+                    }
+                    else if (expr.IsComplete)
+                    {
+                        ReportError(expr, $"Can't infer type of enum value");
+                    }
+                }
             }
 
-            e.Type = e.Enum;
-            return e;
+            expr.Type = expr.EnumDecl.Type;
+
+            return expr;
         }
 
         private AstExpression InferTypeMatchExpr(AstMatchExpr expr, CheezType expected, TypeInferenceContext context)
@@ -262,7 +314,7 @@ namespace Cheez
                 // TODO: pattern
                 c.Pattern.AttachTo(expr);
                 c.Pattern.Scope = c.SubScope;
-                c.Pattern = MatchPatternWithType(c, c.Pattern, expr.SubExpression, isTopLevel: true);
+                c.Pattern = MatchPatternWithType(c, c.Pattern, expr.SubExpression);
 
                 // condition
                 if (c.Condition != null)
@@ -305,8 +357,7 @@ namespace Cheez
         private AstExpression MatchPatternWithType(
             AstMatchCase cas,
             AstExpression pattern,
-            AstExpression value,
-            bool isTopLevel = false)
+            AstExpression value)
         {
             if (value.Type is ReferenceType)
             {
@@ -320,12 +371,14 @@ namespace Cheez
                         if (id.IsPolymorphic)
                         {
                             id.Type = value.Type;
-                            id.Scope.DefineUse(id.Name, value, out var use);
+                            id.Scope.DefineUse(id.Name, value, false, out var use);
                             id.Symbol = use;
                         }
                         else
                         {
-                            InferType(id, value.Type);
+                            var newPattern = InferType(id, value.Type);
+                            if (newPattern != pattern)
+                                return MatchPatternWithType(cas, newPattern, value);
                             if (id.Type != value.Type)
                                 break;
                             if (!id.IsCompTimeValue)
@@ -392,12 +445,23 @@ namespace Cheez
                         }
                     }
 
+                case AstEnumValueExpr ev:
+                    {
+                        if (ev.Type != value.Type)
+                            break;
+                        return ev;
+                    }
+
                 case AstCallExpr call:
                     {
                         call.Function.AttachTo(call);
-                        var d = InferType(call.Function, null);
+                        var d = InferType(call.Function, value.Type);
                         if (d is AstEnumValueExpr e)
                         {
+                            call.Type = e.Type;
+                            if (e.Type != value.Type)
+                                break;
+
                             if (call.Arguments.Count == 1)
                             { 
                                 e.Argument = call.Arguments[0].Expr;
@@ -425,7 +489,7 @@ namespace Cheez
                     }
 
             }
-            ReportError(pattern, $"Can't match type {value.Type} to pattern '{pattern}'");
+            ReportError(pattern, $"Can't match type {value.Type} to pattern of type {pattern.Type}");
             return pattern;
         }
 
@@ -1580,13 +1644,13 @@ namespace Cheez
                             return expr;
                         }
 
-                        if (mem.AssociatedType == null)
+                        if (mem.AssociatedTypeExpr == null)
                         {
                             ReportError(expr, $"Enum member '{memName}' of enum {@enum} has no associated value");
                             return expr;
                         }
 
-                        expr.Type = mem.AssociatedType.Value as CheezType;
+                        expr.Type = mem.AssociatedTypeExpr.Value as CheezType;
                         break;
                     }
 
@@ -1695,7 +1759,8 @@ namespace Cheez
                         {
                             expr.Type = @enum;
 
-                            var eve = new AstEnumValueExpr(expr, @enum, @enum.Declaration.Members.First(x => x.Name.Name == expr.Right.Name));
+                            var mem = @enum.Declaration.Members.First(x => x.Name.Name == expr.Right.Name);
+                            var eve = new AstEnumValueExpr(@enum.Declaration, mem, loc: expr.Location);
                             eve.Replace(expr);
                             return eve;
                         }
@@ -1821,19 +1886,57 @@ namespace Cheez
                         return InferGenericFunctionCall(g, expr, expected, context);
                     }
 
-                case EnumType @enum:
+                case GenericEnumType @enum:
                     {
                         var e = expr.Function as AstEnumValueExpr;
                         Debug.Assert(e != null);
 
+                        var assType = e.Member.AssociatedType;
+
                         if (expr.Arguments.Count == 1)
+                        {
                             e.Argument = expr.Arguments[0].Expr;
+
+                        }
                         else if (expr.Arguments.Count > 1)
                         {
                             var p = expr.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList();
                             e.Argument = new AstTupleExpr(p, new Location(expr.Arguments));
                         }
-                        return InferType(e, null);
+
+                        e.TypeInferred = false;
+                        return InferTypeHelper(e, expected, context);
+                    }
+
+                case EnumType @enum:
+                    {
+                        var e = expr.Function as AstEnumValueExpr;
+                        Debug.Assert(e != null);
+
+                        var assType = e.Member.AssociatedType;
+
+                        if (expr.Arguments.Count == 1)
+                        {
+                            e.Argument = expr.Arguments[0].Expr;
+
+                        }
+                        else if (expr.Arguments.Count > 1)
+                        {
+                            var p = expr.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList();
+                            e.Argument = new AstTupleExpr(p, new Location(expr.Arguments));
+                        }
+
+                        if (e.Argument != null)
+                        {
+                            e.Argument.AttachTo(e);
+                            e.Argument = InferTypeHelper(e.Argument, assType, context);
+                            ConvertLiteralTypeToDefaultType(e.Argument, assType);
+                            e.Argument = HandleReference(e.Argument, assType);
+                            e.Argument = CheckType(e.Argument, assType);
+                            
+                        }
+
+                        return e;
                     }
 
                 case CheezTypeType type:
@@ -2534,6 +2637,15 @@ namespace Cheez
             }
             else if (sym is Using u)
             {
+                if (u.Replace)
+                {
+                    var e = u.Expr.Clone();
+                    e.Replace(expr);
+                    e.Location = expr.Location;
+                    e = InferTypeHelper(e, expected, context);
+                    return e;
+                }
+
                 expr.Type = u.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
             }
