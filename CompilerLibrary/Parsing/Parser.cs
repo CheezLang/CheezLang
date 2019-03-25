@@ -471,12 +471,21 @@ namespace Cheez.Parsing
             TokenLocation beginning = null, end = null;
             AstIdExpr name;
             var members = new List<AstEnumMember>();
+            List<AstParameter> parameters = null;
 
             beginning = NextToken().location;
             SkipNewlines();
             name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'enum'"));
 
+
+
             SkipNewlines();
+            if (CheckToken(TokenType.OpenParen))
+            {
+                parameters = ParseParameterList(out var _, out var _);
+                SkipNewlines();
+            }
+
             Consume(TokenType.OpenBrace, ErrMsg("{", "after name in enum declaration"));
 
             while (true)
@@ -532,7 +541,7 @@ namespace Cheez.Parsing
             }
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}")).location;
-            return new AstEnumDecl(name, members, Location: new Location(beginning, end));
+            return new AstEnumDecl(name, members, parameters, Location: new Location(beginning, end));
         }
 
         private AstStatement ParseUsingStatement()

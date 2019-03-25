@@ -344,20 +344,26 @@ namespace Cheez.Ast.Statements
     {
         public Scope SubScope { get; set; }
         public List<AstEnumMember> Members { get; }
+        public List<AstParameter> Parameters { get; set; }
 
         public IntType TagType { get; set; }
         public bool HasAssociatedTypes { get; set; } = false;
 
-        public AstEnumDecl(AstIdExpr name, List<AstEnumMember> members, List<AstDirective> Directive = null, ILocation Location = null)
+        public AstEnumDecl(AstIdExpr name, List<AstEnumMember> members, List<AstParameter> parameters, List<AstDirective> Directive = null, ILocation Location = null)
             : base(name, Directive, Location)
         {
             this.Members = members;
+            this.Parameters = parameters;
         }
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitEnumDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstEnumDecl(Name.Clone() as AstIdExpr, Members.Select(m => m.Clone()).ToList()));
+        public override AstStatement Clone()
+            => CopyValuesTo(new AstEnumDecl(
+                Name.Clone() as AstIdExpr, 
+                Members.Select(m => m.Clone()).ToList(),
+                Parameters?.Select(p => p.Clone())?.ToList()));
     }
 
     #endregion

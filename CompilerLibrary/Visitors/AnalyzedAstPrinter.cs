@@ -338,7 +338,12 @@ namespace Cheez.Visitors
         public override string VisitEnumDecl(AstEnumDecl en, int data = 0)
         {
             var body = string.Join("\n", en.Members.Select(m => VisitEnumMember(m)));
-            return $"enum {en.Name.Accept(this)} {{\n{body.Indent(4)}\n}}";
+            var head = $"enum {en.Name.Accept(this)}";
+            if (en.Parameters != null)
+            {
+                head += $"({string.Join(", ", en.Parameters.Select(p => p.Accept(this)))})";
+            }
+            return $"{head} {{\n{body.Indent(4)}\n}}";
         }
 
         public override string VisitBreakStmt(AstBreakStmt br, int data = 0)
