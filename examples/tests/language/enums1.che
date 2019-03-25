@@ -1,5 +1,8 @@
-
-// #load("tests/language/if_else")
+#test_expect_output("Some(123)
+Some(789)
+None
+Some(1.414214)
+Err(`"argument is negative`")")
 
 #load("std:c")
 #load("std:math")
