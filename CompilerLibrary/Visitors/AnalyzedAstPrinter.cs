@@ -141,7 +141,7 @@ namespace Cheez.Visitors
             return $"using {use.Value.Accept(this)}";
         }
 
-        public string VisitStructMember(AstMemberDecl m)
+        public string VisitStructMember(AstStructMember m)
         {
             var v = $"{m.Name.Accept(this)} : {m.Type}";
             if (m.Initializer != null)
@@ -149,7 +149,7 @@ namespace Cheez.Visitors
             return v;
         }
 
-        public string VisitStructMemberRaw(AstMemberDecl m)
+        public string VisitStructMemberRaw(AstStructMember m)
         {
             var v = $"{m.Name.Accept(this)} : {m.TypeExpr.Accept(this)}";
             if (m.Initializer != null)

@@ -88,7 +88,7 @@ namespace Cheez
             {
                 func.ReturnValue.Scope = func.SubScope;
                 func.ReturnValue.TypeExpr.Scope = func.SubScope;
-                func.ReturnValue.TypeExpr = ResolveType(func.ReturnValue.TypeExpr, out var t);
+                func.ReturnValue.TypeExpr = ResolveTypeNow(func.ReturnValue.TypeExpr, out var t);
                 func.ReturnValue.Type = t;
 
                 if (func.ReturnValue.Type.IsPolyType)
@@ -99,7 +99,7 @@ namespace Cheez
             foreach (var p in func.Parameters)
             {
                 p.TypeExpr.Scope = func.SubScope;
-                p.TypeExpr = ResolveType(p.TypeExpr, out var t);
+                p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
                 p.Type = t;
 
                 if (p.Type.IsPolyType || (p.Name?.IsPolymorphic ?? false))

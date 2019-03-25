@@ -730,7 +730,7 @@ namespace Cheez
             if (cast.TypeExpr != null)
             {
                 cast.TypeExpr.AttachTo(cast);
-                cast.TypeExpr = ResolveType(cast.TypeExpr, out var type);
+                cast.TypeExpr = ResolveTypeNow(cast.TypeExpr, out var type);
                 cast.Type = type;
             }
             else if (expected != null)
@@ -2203,7 +2203,7 @@ namespace Cheez
             if (expr.TypeExpr != null)
             {
                 expr.TypeExpr.AttachTo(expr);
-                expr.TypeExpr = ResolveType(expr.TypeExpr, out var t);
+                expr.TypeExpr = ResolveTypeNow(expr.TypeExpr, out var t);
                 expr.Type = t;
             }
             else
@@ -2300,6 +2300,12 @@ namespace Cheez
             {
                 if (!inits.Contains(mem.Name.Name))
                 {
+                    if (mem.Initializer == null)
+                    {
+                        ReportError(expr, $"You must provide an initial value for member {mem.Name.Name} because it can't be default initialized");
+                        continue;
+                    }
+
                     var mi = new AstStructMemberInitialization(new AstIdExpr(mem.Name.Name, false, expr.Location), mem.Initializer, expr.Location);
                     mi.Index = mem.Index;
                     expr.MemberInitializers.Add(mi);

@@ -232,8 +232,8 @@ namespace Cheez.Types.Complex
         public Dictionary<string, long> Members { get; private set; }
         public CheezType[] Arguments { get; }
         public IntType TagType { get; set; }
-        public override bool IsErrorType => TagType.IsErrorType || Arguments.Any(a => a.IsErrorType);
-        public override bool IsPolyType => TagType.IsPolyType || Arguments.Any(a => a.IsPolyType);
+        public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
+        public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
 
         public AstEnumDecl DeclarationTemplate => Declaration.Template ?? Declaration;
 

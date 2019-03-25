@@ -22,7 +22,16 @@ namespace Cheez
             return ResolveTypeHelper(expr, out type);
         }
 
-        public AstExpression ResolveType(AstExpression expr, out CheezType type, bool poly_from_scope = false, HashSet<AstDecl> dependencies = null)
+        public AstExpression ResolveType(AstExpression expr, List<AstDecl> newPolyDecls, out CheezType type)
+        {
+            expr = InferTypeHelper(expr, CheezType.Type, new TypeInferenceContext
+            {
+                newPolyDeclarations = newPolyDecls
+            });
+            return ResolveTypeHelper(expr, out type);
+        }
+
+        public AstExpression ResolveTypeNow(AstExpression expr, out CheezType type, bool poly_from_scope = false, HashSet<AstDecl> dependencies = null)
         {
             expr = InferType(expr, CheezType.Type, poly_from_scope, dependencies);
             return ResolveTypeHelper(expr, out type);
@@ -171,6 +180,12 @@ namespace Cheez
             }
 
             CalculateEnumAndStructSizes(done);
+
+            foreach (var d in done)
+            {
+                if (d is AstStructDecl s)
+                    ResolveStructMemberInitializers(s);
+            }
         }
 
         // enum
@@ -255,6 +270,7 @@ namespace Cheez
             var names = new HashSet<string>();
 
             @enum.TagType = IntType.DefaultType;
+            @enum.EnumType.TagType = @enum.TagType;
 
             int value = 0;
             foreach (var mem in @enum.Members)
@@ -266,7 +282,7 @@ namespace Cheez
                 {
                     @enum.HasAssociatedTypes = true;
                     mem.AssociatedType.Scope = @enum.SubScope;
-                    mem.AssociatedType = ResolveType(mem.AssociatedType, out var t);
+                    mem.AssociatedType = ResolveType(mem.AssociatedType, instances, out var t);
                 }
 
                 if (mem.Value == null)
@@ -380,21 +396,35 @@ namespace Cheez
             {
                 member.Index = index++;
                 member.TypeExpr.Scope = @struct.SubScope;
-                member.TypeExpr = ResolveType(member.TypeExpr, out var t);
+                member.TypeExpr = ResolveType(member.TypeExpr, instances, out var t);
                 member.Type = t;
+            }
+        }
 
+        private void ResolveStructMemberInitializers(AstStructDecl @struct)
+        {
+            foreach (var member in @struct.Members)
+            {
                 if (member.Initializer == null)
                 {
-                    member.Initializer = new AstDefaultExpr(member.Name.Location);
+                    switch (member.Type)
+                    {
+                        case EnumType _:
+                            break;
+
+                        default:
+                            member.Initializer = new AstDefaultExpr(member.Name.Location);
+                            break;
+                    }
                 }
 
-                member.Initializer.Scope = @struct.SubScope;
-                member.Initializer = InferType(member.Initializer, member.Type);
-                ConvertLiteralTypeToDefaultType(member.Initializer, member.Type);
-                member.Initializer = CheckType(member.Initializer, member.Type);
-
-                if (member.Initializer.Type.IsErrorType)
-                    continue;
+                if (member.Initializer != null)
+                {
+                    member.Initializer.Scope = @struct.SubScope;
+                    member.Initializer = InferType(member.Initializer, member.Type);
+                    ConvertLiteralTypeToDefaultType(member.Initializer, member.Type);
+                    member.Initializer = CheckType(member.Initializer, member.Type);
+                }
             }
         }
 
@@ -496,7 +526,7 @@ namespace Cheez
                 {
                     p.Scope = instance.SubScope;
                     p.TypeExpr.Scope = p.Scope;
-                    p.TypeExpr = ResolveType(p.TypeExpr, out var t, true);
+                    p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t, true);
                     p.Type = t;
                     //p.Type = InstantiatePolyType(p.Type, polyTypes);
 
@@ -537,7 +567,7 @@ namespace Cheez
                 {
                     instance.ReturnValue.Scope = instance.SubScope;
                     instance.ReturnValue.TypeExpr.Scope = instance.SubScope;
-                    instance.ReturnValue.TypeExpr = ResolveType(instance.ReturnValue.TypeExpr, out var t, true);
+                    instance.ReturnValue.TypeExpr = ResolveTypeNow(instance.ReturnValue.TypeExpr, out var t, true);
                     instance.ReturnValue.Type = t;
                 }
 

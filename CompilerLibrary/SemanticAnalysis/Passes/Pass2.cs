@@ -101,7 +101,7 @@ namespace Cheez
 
             alias.TypeExpr.TypeInferred = false;
             alias.TypeExpr.Scope = alias.Scope;
-            alias.TypeExpr = ResolveType(alias.TypeExpr, out var newType, dependencies: deps);
+            alias.TypeExpr = ResolveTypeNow(alias.TypeExpr, out var newType, dependencies: deps);
             if (newType != alias.Type && !(newType is AliasType))
                 alias.Type = newType;
 
@@ -117,7 +117,7 @@ namespace Cheez
             {
                 param.TypeExpr.TypeInferred = false;
                 param.TypeExpr.Scope = @enum.Scope;
-                param.TypeExpr = ResolveType(param.TypeExpr, out var newType, dependencies: deps);
+                param.TypeExpr = ResolveTypeNow(param.TypeExpr, out var newType, dependencies: deps);
 
                 if (newType is AbstractType)
                 {
@@ -155,7 +155,7 @@ namespace Cheez
             {
                 param.TypeExpr.TypeInferred = false;
                 param.TypeExpr.Scope = @struct.Scope;
-                param.TypeExpr = ResolveType(param.TypeExpr, out var newType, dependencies: deps);
+                param.TypeExpr = ResolveTypeNow(param.TypeExpr, out var newType, dependencies: deps);
 
                 if (newType is AbstractType)
                 {

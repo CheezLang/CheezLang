@@ -134,7 +134,7 @@ namespace Cheez.Ast.Statements
 
     #region Struct Declaration
 
-    public class AstMemberDecl : ILocation
+    public class AstStructMember : ILocation
     {
         public ILocation Location { get; private set; }
         public TokenLocation Beginning => Location?.Beginning;
@@ -147,7 +147,7 @@ namespace Cheez.Ast.Statements
 
         public int Index { get; set; }
 
-        public AstMemberDecl(AstIdExpr name, AstExpression typeExpr, AstExpression init, ILocation Location = null)
+        public AstStructMember(AstIdExpr name, AstExpression typeExpr, AstExpression init, ILocation Location = null)
         {
             this.Location = Location;
             this.Name = name;
@@ -155,13 +155,18 @@ namespace Cheez.Ast.Statements
             this.Initializer = init;
         }
 
-        public AstMemberDecl Clone()
-            => new AstMemberDecl(Name.Clone() as AstIdExpr, TypeExpr.Clone(), Initializer?.Clone());
+        public AstStructMember Clone()
+            => new AstStructMember(Name.Clone() as AstIdExpr, TypeExpr.Clone(), Initializer?.Clone());
+
+        public override string ToString()
+        {
+            return new RawAstPrinter(null).VisitStructMember(this);
+        }
     }
 
     public class AstStructDecl : AstDecl, ITypedSymbol
     {
-        public List<AstMemberDecl> Members { get; }
+        public List<AstStructMember> Members { get; }
         public List<AstParameter> Parameters { get; set; }
 
         public AstStructDecl Template { get; set; } = null;
@@ -178,7 +183,7 @@ namespace Cheez.Ast.Statements
         //public List<AstImplBlock> Implementations { get; } = new List<AstImplBlock>();
         public List<TraitType> Traits { get; } = new List<TraitType>();
 
-        public AstStructDecl(AstIdExpr name, List<AstParameter> param, List<AstMemberDecl> members, List<AstDirective> Directives = null, ILocation Location = null)
+        public AstStructDecl(AstIdExpr name, List<AstParameter> param, List<AstStructMember> members, List<AstDirective> Directives = null, ILocation Location = null)
             : base(name, Directives, Location)
         {
             this.Parameters = param ?? new List<AstParameter>();
@@ -346,6 +351,7 @@ namespace Cheez.Ast.Statements
         public List<AstEnumMember> Members { get; }
         public List<AstParameter> Parameters { get; set; }
 
+        public EnumType EnumType => Type as EnumType;
         public IntType TagType { get; set; }
         public bool HasAssociatedTypes { get; set; } = false;
         public bool IsPolymorphic { get; internal set; }

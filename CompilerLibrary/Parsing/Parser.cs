@@ -720,7 +720,7 @@ namespace Cheez.Parsing
         private AstStructDecl ParseStructDeclaration()
         {
             TokenLocation beg = null, end = null;
-            var members = new List<AstMemberDecl>();
+            var members = new List<AstStructMember>();
             var directives = new List<AstDirective>();
             AstIdExpr name = null;
             List<AstParameter> parameters = null;
@@ -786,7 +786,7 @@ namespace Cheez.Parsing
 
                 var memberEnd = init?.End ?? mType.End;
 
-                members.Add(new AstMemberDecl(mName, mType, init, new Location(mName.Beginning, memberEnd)));
+                members.Add(new AstStructMember(mName, mType, init, new Location(mName.Beginning, memberEnd)));
             }
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct declaration")).location;

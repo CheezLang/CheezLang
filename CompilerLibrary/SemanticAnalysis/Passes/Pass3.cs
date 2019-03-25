@@ -133,7 +133,7 @@ namespace Cheez
             impl.TraitExpr.Scope = impl.Scope;
             impl.Scope.ImplBlocks.Add(impl);
 
-            impl.TraitExpr = ResolveType(impl.TraitExpr, out var type);
+            impl.TraitExpr = ResolveTypeNow(impl.TraitExpr, out var type);
             if (type.IsErrorType)
                 return;
 
@@ -148,7 +148,7 @@ namespace Cheez
             }
 
             impl.TargetTypeExpr.Scope = impl.Scope;
-            impl.TargetTypeExpr = ResolveType(impl.TargetTypeExpr, out var t);
+            impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t);
             impl.TargetType = t;
             if (impl.TargetTypeExpr.IsPolymorphic)
             {
@@ -229,7 +229,7 @@ namespace Cheez
         private void Pass3Impl(AstImplBlock impl)
         {
             impl.TargetTypeExpr.Scope = impl.Scope;
-            impl.TargetTypeExpr = ResolveType(impl.TargetTypeExpr, out var t);
+            impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t);
             impl.TargetType = t;
             impl.Scope.ImplBlocks.Add(impl);
 

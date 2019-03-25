@@ -80,7 +80,7 @@ namespace Cheez
             if (v.TypeExpr != null)
             {
                  v.TypeExpr.Scope = v.Scope;
-                 v.TypeExpr = ResolveType(v.TypeExpr, out var t);
+                 v.TypeExpr = ResolveTypeNow(v.TypeExpr, out var t);
                 // TODO:
                 v.TypeExpr.Type = t;
                 v.Type = v.TypeExpr.Type;
