@@ -451,6 +451,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return res;
             }
 
+            if (to is FunctionType && from is PointerType)
+            {
+                var func = GenerateExpression(cast.SubExpression, true);
+                var res = builder.CreatePointerCast(func, toLLVM, "");
+                return res;
+            }
+
             if (to is PointerType && from is ArrayType) // * <- [x]
             {
                 var sub = GenerateExpression(cast.SubExpression, false);

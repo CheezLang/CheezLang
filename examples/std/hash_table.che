@@ -1,3 +1,4 @@
+#load("std:preload")
 #load("std:mem/std_heap_allocator")
 #load("std:hash")
 
@@ -39,13 +40,15 @@ struct Entry(K: type, V: type) {
 }
 
 impl Table($K, $V) {
-    fn create(comp: fn(K, K) -> bool {}, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    fn create(comp: fn(K, K) -> bool {} = null, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         let table: Table(K, V)
         table.allocator = allocator
         table.comparer = comp
         table.max_load = 0.75
         table.count = 0
         table.entries = null
+
+        // println(<<cast(&int)&table.comparer)
         return table
     }
 
@@ -56,12 +59,15 @@ impl Table($K, $V) {
     }
 
     fn find_entry(ref Self, the_entries: []Entry(K, V), key: K) -> &Entry(K, V) {
+
         let index = key::hash() % cast(uint) the_entries.length
         let tombstone: &Entry(K, V) = null
 
         while true {
             let entry = &the_entries[index]
-
+            
+            // println(<<cast(&int)&table.comparer)
+            // println(<<cast(&int)&table.comparer)
             if !entry.filled {
                 if !entry.is_tombstone {
                     if tombstone != null {
@@ -73,8 +79,11 @@ impl Table($K, $V) {
                 } else if tombstone == null {
                     tombstone = entry
                 }
-            }
-            else if comparer(entry.key, key) {
+            } else if comparer {
+                if comparer(entry.key, key) {
+                    return entry
+                }
+            } else if entry.key == key {
                 return entry
             }
 
@@ -94,7 +103,6 @@ impl Table($K, $V) {
         }
 
         let entry = find_entry(entries, key)
-
         let is_new_key = !entry.filled
         entry.key = key
         entry.value = value
@@ -108,20 +116,20 @@ impl Table($K, $V) {
         return is_new_key
     }
 
-    fn try_get(ref Self, key: K) -> (ok: bool, value: &V) {
+    fn get(ref Self, key: K) -> Option(ref V) {
         if entries.data == null {
-            return (false, null)
+            return None
         }
 
         let entry = find_entry(entries, key)
         if !entry.filled {
-            return (false, null)
+            return None
         }
 
-        return (true, &entry.value)
+        return Some(entry.value)
     }
 
-    fn get(ref Self, key: K) -> V #operator("[]") {
+    fn get_unchecked(ref Self, key: K) -> ref V #operator("[]") {
         let entry = find_entry(entries, key)
         return entry.value
     }

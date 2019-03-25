@@ -319,7 +319,7 @@ namespace Cheez
 
             ass.Value.Scope = ass.Scope;
             ass.Value = InferType(ass.Value, ass.Pattern.Type);
-
+            ConvertLiteralTypeToDefaultType(ass.Value, ass.Pattern.Type);
 
             if (ass.Pattern.Type != CheezType.Error && ass.Value.Type != CheezType.Error)
             {

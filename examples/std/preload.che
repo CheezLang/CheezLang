@@ -4,7 +4,7 @@ enum Option(T: type) {
 }
 
 enum Result(V: type, E: type) {
-    Ok : V
+    Ok  : V
     Err : E
 }
 

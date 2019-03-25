@@ -865,7 +865,8 @@ namespace Cheez
                 (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType) ||
                 (to is IntType && from is EnumType) ||
                 (to is FunctionType && from is FunctionType) ||
-                (to is BoolType && from is FunctionType))
+                (to is BoolType && from is FunctionType) ||
+                (to is FunctionType && from is PointerType p2 && p2.TargetType == CheezType.Any))
             {
                 // ok
             }
@@ -2811,6 +2812,9 @@ namespace Cheez
                 return InferType(cast, to);
 
             if (to is BoolType && from is FunctionType)
+                return InferType(cast, to);
+
+            if (to is FunctionType && from is PointerType p3 && p3.TargetType == CheezType.Any)
                 return InferType(cast, to);
 
             if (to is TraitType trait)

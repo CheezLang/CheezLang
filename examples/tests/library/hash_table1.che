@@ -50,19 +50,14 @@ test2 is empty
 #load("std:io/io")
 
 // won't be necessary as soon as we have polymorphic traits
-    fn compare_ints(a: int, b: int) -> bool {
-        return b == a
-    }
-
     fn compare_c_strings(a: c_string, b: c_string) -> bool {
         return streq(a, b)
     }
 
 fn get_and_print(table: Table($K, $V), key: K) {
-    if let (ok, val) = table.try_get(key); ok {
-        printf("{} = {}`n", [key, <<val])
-    } else {
-        printf("{} is empty`n", [key])
+    match table.get(key) {
+        Some($v) -> printf("{} = {}`n", [key, v])
+        None -> printf("{} is empty`n", [key])
     }
 }
 
@@ -84,7 +79,7 @@ fn test(t1: $T1, t2: $T2) {
 }
 
 fn Main() {
-    let t1 = Table(int, c_string)::create(compare_ints)
+    let t1 = Table(int, c_string)::create()
     let t2 = Table(c_string, c_string)::create(compare_c_strings, new StdHeapAllocator{})
 
     t2["first name"c] = "nico"c

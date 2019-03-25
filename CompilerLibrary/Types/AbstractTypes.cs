@@ -1,5 +1,6 @@
 ﻿using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
+using Cheez.Visitors;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -57,6 +58,11 @@ namespace Cheez.Types.Abstract
         public GenericFunctionType(AstFunctionDecl decl)
         {
             Declaration = decl;
+        }
+
+        public override string ToString()
+        {
+            return new RawAstPrinter(null).VisitFunctionSignature(Declaration);
         }
     }
 

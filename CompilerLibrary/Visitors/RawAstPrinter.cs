@@ -53,23 +53,25 @@ namespace Cheez.Visitors
             return result.ToString();
         }
 
-        public override string VisitFunctionDecl(AstFunctionDecl function, int indentLevel = 0)
+        public string VisitFunctionSignature(AstFunctionDecl function)
         {
-            var sb = new StringBuilder();
-
-            var body = function.Body?.Accept(this) ?? ";";
-
-            var pars = string.Join(", ", function.Parameters.Select(p => p.Accept(this)));
             var head = $"fn {function.Name.Accept(this)}";
 
+            var pars = string.Join(", ", function.Parameters.Select(p => p.Accept(this)));
             head += $"({pars})";
 
             if (function.ReturnValue != null)
                 head += $" -> {function.ReturnValue.Accept(this)}";
 
-            sb.Append($"{head} {body}".Indent(indentLevel));
+            return head;
+        }
 
-            return sb.ToString();
+        public override string VisitFunctionDecl(AstFunctionDecl function, int indentLevel = 0)
+        {
+            var head = VisitFunctionSignature(function);
+            var body = function.Body?.Accept(this) ?? ";";
+            
+            return $"{head} {body}".Indent(indentLevel);
         }
 
         public override string VisitReturnStmt(AstReturnStmt ret, int data = 0)
