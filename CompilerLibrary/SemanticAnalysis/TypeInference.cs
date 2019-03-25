@@ -245,12 +245,20 @@ namespace Cheez
                             }
                         }
 
-                        var instance = InstantiatePolyEnum(g.Declaration, args, context.newPolyDeclarations, expr.Location);
-                        if (instance != null)
+                        if (args.Count == g.Declaration.Parameters.Count)
                         {
-                            expr.EnumDecl = instance;
-                            expr.Member = instance.Members.First(m => m.Name.Name == expr.Member.Name.Name);
-                            at = expr.Member.AssociatedTypeExpr.Value as CheezType;
+                            var instance = InstantiatePolyEnum(g.Declaration, args, context.newPolyDeclarations, expr.Location);
+                            if (instance != null)
+                            {
+                                expr.EnumDecl = instance;
+                                expr.Member = instance.Members.First(m => m.Name.Name == expr.Member.Name.Name);
+                                at = expr.Member.AssociatedTypeExpr.Value as CheezType;
+                            }
+                        }
+                        else
+                        {
+                            ReportError(expr, $"Can't infer type of enum value");
+                            return expr;
                         }
                     }
                 }
@@ -279,6 +287,7 @@ namespace Cheez
                     else if (expr.IsComplete)
                     {
                         ReportError(expr, $"Can't infer type of enum value");
+                        return expr;
                     }
                 }
             }
