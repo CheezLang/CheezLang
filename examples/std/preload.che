@@ -1,0 +1,12 @@
+enum Option(T: type) {
+    Some : T
+    None
+}
+
+enum Result(V: type, E: type) {
+    Ok : V
+    Err : E
+}
+
+use Option
+use Result
