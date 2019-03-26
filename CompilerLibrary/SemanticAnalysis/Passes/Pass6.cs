@@ -98,13 +98,13 @@ namespace Cheez
                 {
                     if (v.TypeExpr != null)
                     {
-                        v.Initializer = HandleReference(v.Initializer, v.TypeExpr.Type);
+                        v.Initializer = HandleReference(v.Initializer, v.TypeExpr.Type, null);
                         v.Initializer = CheckType(v.Initializer, v.TypeExpr.Type);
                     }
                     else
                     {
                         if (v.Initializer.Type is ReferenceType)
-                            v.Initializer = Deref(v.Initializer);
+                            v.Initializer = Deref(v.Initializer, null);
                     }
                 }
 

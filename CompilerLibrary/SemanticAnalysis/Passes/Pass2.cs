@@ -98,10 +98,9 @@ namespace Cheez
         private HashSet<AstDecl> Pass2TypeAlias(AstTypeAliasDecl alias)
         {
             var deps = new HashSet<AstDecl>();
-
-            alias.TypeExpr.TypeInferred = false;
+            
             alias.TypeExpr.Scope = alias.Scope;
-            alias.TypeExpr = ResolveTypeNow(alias.TypeExpr, out var newType, dependencies: deps);
+            alias.TypeExpr = ResolveTypeNow(alias.TypeExpr, out var newType, dependencies: deps, forceInfer: true);
             if (newType != alias.Type && !(newType is AliasType))
                 alias.Type = newType;
 
@@ -115,9 +114,8 @@ namespace Cheez
 
             foreach (var param in @enum.Parameters)
             {
-                param.TypeExpr.TypeInferred = false;
                 param.TypeExpr.Scope = @enum.Scope;
-                param.TypeExpr = ResolveTypeNow(param.TypeExpr, out var newType, dependencies: deps);
+                param.TypeExpr = ResolveTypeNow(param.TypeExpr, out var newType, dependencies: deps, forceInfer: true);
 
                 if (newType is AbstractType)
                 {
@@ -156,9 +154,8 @@ namespace Cheez
 
             foreach (var param in @struct.Parameters)
             {
-                param.TypeExpr.TypeInferred = false;
                 param.TypeExpr.Scope = @struct.Scope;
-                param.TypeExpr = ResolveTypeNow(param.TypeExpr, out var newType, dependencies: deps);
+                param.TypeExpr = ResolveTypeNow(param.TypeExpr, out var newType, dependencies: deps, forceInfer: true);
 
                 if (newType is AbstractType)
                 {

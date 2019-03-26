@@ -788,7 +788,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 GenerateVariableDecl(iff.PreAction);
             }
 
-            LLVMValueRef result = LLVM.GetUndef(CheezTypeToLLVMType(iff.Type));
+            LLVMValueRef result = default;
             if (iff.Type != CheezType.Void) result = CreateLocalVariable(iff.Type);
 
             var cond = GenerateExpression(iff.Condition, true);
@@ -851,7 +851,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateBlock(AstBlockExpr block, bool deref)
         {
-            LLVMValueRef result = LLVM.GetUndef(CheezTypeToLLVMType(block.Type));
+            LLVMValueRef result = default;
 
             int end = block.Statements.Count;
             if (block.Statements.LastOrDefault() is AstExprStmt) --end;

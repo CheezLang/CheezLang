@@ -24,6 +24,7 @@ namespace Cheez
             public List<AstDecl> newPolyDeclarations;
             public HashSet<AstDecl> dependencies;
             public bool poly_from_scope;
+            public bool forceInfer = false;
         }
 
         private bool IsLiteralType(CheezType t)
@@ -65,14 +66,15 @@ namespace Cheez
             expr.Type = LiteralTypeToDefaultType(expr.Type, expected);
         }
 
-        private AstExpression InferType(AstExpression expr, CheezType expected, bool poly_from_scope = false, HashSet<AstDecl> dependencies = null)
+        private AstExpression InferType(AstExpression expr, CheezType expected, bool poly_from_scope = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
         {
             var context = new TypeInferenceContext
             {
                 newPolyFunctions = new List<AstFunctionDecl>(),
                 //newPolyDeclarations = new List<AstDecl>(),
                 poly_from_scope = poly_from_scope,
-                dependencies = dependencies
+                dependencies = dependencies,
+                forceInfer = forceInfer
             };
             var newExpr = InferTypeHelper(expr, expected, context);
 
@@ -89,7 +91,7 @@ namespace Cheez
 
         private AstExpression InferTypeHelper(AstExpression expr, CheezType expected, TypeInferenceContext context)
         {
-            if (expr.TypeInferred)
+            if (!(context?.forceInfer ?? false) && expr.TypeInferred)
                 return expr;
             expr.TypeInferred = true;
 
@@ -265,7 +267,7 @@ namespace Cheez
 
                 if (at != null)
                 {
-                    expr.Argument = HandleReference(expr.Argument, at);
+                    expr.Argument = HandleReference(expr.Argument, at, context);
                     expr.Argument = CheckType(expr.Argument, at);
                 }
             }
@@ -307,7 +309,7 @@ namespace Cheez
 
             ConvertLiteralTypeToDefaultType(expr.SubExpression, null);
             if (expr.SubExpression.Type is ReferenceType)
-                expr.SubExpression = Deref(expr.SubExpression);
+                expr.SubExpression = Deref(expr.SubExpression, context);
 
             var tmp = new AstTempVarExpr(expr.SubExpression);
             tmp.AttachTo(expr);
@@ -339,7 +341,7 @@ namespace Cheez
                     c.Condition = InferTypeHelper(c.Condition, CheezType.Bool, context);
                     ConvertLiteralTypeToDefaultType(c.Condition, CheezType.Bool);
                     if (c.Condition.Type is ReferenceType)
-                        c.Condition = Deref(c.Condition);
+                        c.Condition = Deref(c.Condition, context);
                     c.Condition = CheckType(c.Condition, CheezType.Bool);
                 }
 
@@ -351,7 +353,7 @@ namespace Cheez
 
                 if (expected != null)
                 {
-                    c.Body = HandleReference(c.Body, expected);
+                    c.Body = HandleReference(c.Body, expected, context);
                     c.Body = CheckType(c.Body, expected);
                 }
 
@@ -596,7 +598,7 @@ namespace Cheez
 
                 for (int i = 0; i < expr.Arguments.Count; i++)
                 {
-                    expr.Arguments[i] = HandleReference(expr.Arguments[i], op.ArgTypes[i]);
+                    expr.Arguments[i] = HandleReference(expr.Arguments[i], op.ArgTypes[i], context);
                     expr.Arguments[i] = CheckType(expr.Arguments[i], op.ArgTypes[i]);
                 }
 
@@ -785,7 +787,7 @@ namespace Cheez
                         type = r.TargetType;
                 }
 
-                expr.Values[i] = HandleReference(expr.Values[i], type);
+                expr.Values[i] = HandleReference(expr.Values[i], type, context);
                 expr.Values[i] = CheckType(expr.Values[i], type);
             }
 
@@ -845,7 +847,7 @@ namespace Cheez
             if (cast.SubExpression.Type == cast.Type)
                 return cast.SubExpression;
 
-            cast.SubExpression = HandleReference(cast.SubExpression, cast.Type);
+            cast.SubExpression = HandleReference(cast.SubExpression, cast.Type, context);
 
             var to = cast.Type;
             var from = cast.SubExpression.Type;
@@ -901,7 +903,7 @@ namespace Cheez
             {
                 if (expr.SubExpression.Type is ReferenceType r)
                 {
-                    expr.SubExpression = Deref(expr.SubExpression);
+                    expr.SubExpression = Deref(expr.SubExpression, context);
                 }
                 if (expr.SubExpression.Type is PointerType p)
                 {
@@ -939,7 +941,7 @@ namespace Cheez
             ConvertLiteralTypeToDefaultType(expr.Condition, CheezType.Bool);
 
             if (expr.Condition.Type is ReferenceType)
-                expr.Condition = Deref(expr.Condition);
+                expr.Condition = Deref(expr.Condition, context);
 
             expr.Condition = CheckType(expr.Condition, CheezType.Bool, $"Condition of if statement must be either a bool or a pointer but is {expr.Condition.Type}");
 
@@ -1030,7 +1032,7 @@ namespace Cheez
             {
                 if (expr.SubExpression.Type is ReferenceType)
                 {
-                    expr.SubExpression = Deref(expr.SubExpression);
+                    expr.SubExpression = Deref(expr.SubExpression, context);
                 }
 
                 if (!expr.SubExpression.GetFlag(ExprFlags.IsLValue))
@@ -1528,7 +1530,7 @@ namespace Cheez
 
             if (expr.SubExpression.Type is ReferenceType)
             {
-                expr.SubExpression = Deref(expr.SubExpression);
+                expr.SubExpression = Deref(expr.SubExpression, context);
             }
 
             switch (expr.SubExpression.Type)
@@ -1656,7 +1658,7 @@ namespace Cheez
 
                 if (expr.Left.Type is ReferenceType r)
                 {
-                    expr.Left = Deref(expr.Left);
+                    expr.Left = Deref(expr.Left, context);
                 }
             }
 
@@ -1961,7 +1963,7 @@ namespace Cheez
                             e.Argument.AttachTo(e);
                             e.Argument = InferTypeHelper(e.Argument, assType, context);
                             ConvertLiteralTypeToDefaultType(e.Argument, assType);
-                            e.Argument = HandleReference(e.Argument, assType);
+                            e.Argument = HandleReference(e.Argument, assType, context);
                             e.Argument = CheckType(e.Argument, assType);
                             
                         }
@@ -2273,7 +2275,7 @@ namespace Cheez
                 if (a.Type.IsErrorType)
                     continue;
 
-                a.Expr = HandleReference(a.Expr, p.Type);
+                a.Expr = HandleReference(a.Expr, p.Type, context);
                 a.Type = a.Expr.Type;
 
                 a.Expr = CheckType(a.Expr, p.Type, $"Type of argument ({a.Type}) does not match type of parameter ({p.Type})");
@@ -2311,12 +2313,12 @@ namespace Cheez
                 {
                     if (arg.Type is ReferenceType r)
                     {
-                        arg.Expr = Deref(arg.Expr);
+                        arg.Expr = Deref(arg.Expr, context);
                     }
                 }
                 else
                 {
-                    arg.Expr = HandleReference(arg.Expr, type);
+                    arg.Expr = HandleReference(arg.Expr, type, context);
                     arg.Expr = CheckType(arg.Expr, type, $"Type of argument ({arg.Expr.Type}) does not match type of parameter ({type})");
                     arg.Type = arg.Expr.Type;
                 }
@@ -2478,7 +2480,7 @@ namespace Cheez
 
                 var op = ops[0];
 
-                expr.SubExpr = HandleReference(expr.SubExpr, op.SubExprType);
+                expr.SubExpr = HandleReference(expr.SubExpr, op.SubExprType, context);
                 if (!op.SubExprType.IsPolyType)
                     expr.SubExpr = CheckType(expr.SubExpr, op.SubExprType);
 
@@ -2556,8 +2558,8 @@ namespace Cheez
 
                 var op = ops[0];
 
-                expr.Left = HandleReference(expr.Left, op.LhsType);
-                expr.Right = HandleReference(expr.Right, op.RhsType);
+                expr.Left = HandleReference(expr.Left, op.LhsType, context);
+                expr.Right = HandleReference(expr.Right, op.RhsType, context);
                 if (!op.LhsType.IsPolyType)
                     expr.Left = CheckType(expr.Left, op.LhsType);
                 if (!op.RhsType.IsPolyType)
@@ -2754,32 +2756,32 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression HandleReference(AstExpression expr, CheezType expected)
+        private AstExpression HandleReference(AstExpression expr, CheezType expected, TypeInferenceContext context)
         {
             var fromIsRef = expr.Type is ReferenceType;
             var toIsRef = expected is ReferenceType;
             if (toIsRef && !fromIsRef)
-                return Ref(expr);
+                return Ref(expr, context);
             if (!toIsRef && fromIsRef)
-                return Deref(expr);
+                return Deref(expr, context);
 
             return expr;
         }
 
-        private AstExpression Deref(AstExpression expr)
+        private AstExpression Deref(AstExpression expr, TypeInferenceContext context)
         {
             var deref = new AstDereferenceExpr(expr, expr);
             deref.Reference = true;
             deref.AttachTo(expr);
-            return InferTypeHelper(deref, null, default);
+            return InferTypeHelper(deref, null, context);
         }
 
-        private AstExpression Ref(AstExpression expr)
+        private AstExpression Ref(AstExpression expr, TypeInferenceContext context)
         {
             var deref = new AstAddressOfExpr(expr, expr);
             deref.Reference = true;
             deref.AttachTo(expr);
-            return InferTypeHelper(deref, null, default);
+            return InferTypeHelper(deref, null, context);
         }
 
         private AstExpression CheckType(AstExpression expr, CheezType to, string errorMsg = null)

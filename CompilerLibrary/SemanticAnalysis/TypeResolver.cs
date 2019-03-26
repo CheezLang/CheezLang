@@ -31,9 +31,9 @@ namespace Cheez
             return ResolveTypeHelper(expr, out type);
         }
 
-        public AstExpression ResolveTypeNow(AstExpression expr, out CheezType type, bool poly_from_scope = false, HashSet<AstDecl> dependencies = null)
+        public AstExpression ResolveTypeNow(AstExpression expr, out CheezType type, bool poly_from_scope = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
         {
-            expr = InferType(expr, CheezType.Type, poly_from_scope, dependencies);
+            expr = InferType(expr, CheezType.Type, poly_from_scope, dependencies, forceInfer);
             return ResolveTypeHelper(expr, out type);
         }
 

@@ -397,10 +397,10 @@ namespace Cheez
                         
                         if (ass.Pattern.Type is ReferenceType)
                         {
-                            ass.Pattern = Deref(ass.Pattern);
+                            ass.Pattern = Deref(ass.Pattern, null);
                         }
 
-                        var val = HandleReference(ass.Value, ass.Pattern.Type);
+                        var val = HandleReference(ass.Value, ass.Pattern.Type, null);
                         return CheckType(val, ass.Pattern.Type, $"Can't assign a value of type {val} to a pattern of type {ass.Pattern.Type}");
                     }
 
@@ -466,7 +466,7 @@ namespace Cheez
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 
                         if (ass.Pattern.Type is ReferenceType)
-                            ass.Pattern = Deref(ass.Pattern);
+                            ass.Pattern = Deref(ass.Pattern, null);
 
                         return CheckType(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
@@ -492,7 +492,7 @@ namespace Cheez
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 
                         if (ass.Pattern.Type is ReferenceType)
-                            ass.Pattern = Deref(ass.Pattern);
+                            ass.Pattern = Deref(ass.Pattern, null);
 
                         return CheckType(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
@@ -517,7 +517,7 @@ namespace Cheez
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 
                         if (ass.Pattern.Type is ReferenceType)
-                            ass.Pattern = Deref(ass.Pattern);
+                            ass.Pattern = Deref(ass.Pattern, null);
 
                         return CheckType(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
@@ -603,7 +603,7 @@ namespace Cheez
                 if (ret.ReturnValue.Type.IsErrorType)
                     return;
 
-                ret.ReturnValue = HandleReference(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
+                ret.ReturnValue = HandleReference(ret.ReturnValue, currentFunction.FunctionType.ReturnType, null);
                 ret.ReturnValue = CheckType(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
             }
             else if (currentFunction.ReturnValue != null)
