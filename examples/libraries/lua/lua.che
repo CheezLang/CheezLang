@@ -1,0 +1,100 @@
+#lib("./lua53.lib")
+
+struct lua_State { }
+
+
+typedef lua_KContext    = i64
+typedef lua_Integer     = i64
+typedef lua_Unsigned    = u64
+typedef lua_Number      = double
+
+typedef lua_KFunction   = fn(&lua_State, i32, lua_KContext) -> i32 {}
+typedef lua_CFunction   = fn(&lua_State) -> i32 {}
+typedef lua_Alloc       = fn(&any, &any, int, int) -> &any {}
+typedef lua_Reader      = fn(&lua_State, &any, int) -> c_string {}
+typedef lua_Writer      = fn(&lua_State, &any, int, &any) -> i32 {}
+
+
+let const LUA_MULTRET   : i32   = -1
+let const LUA_OK        : i32   = 0
+let LUA_YIELD           : i32   = 1
+let LUA_ERRRUN          : i32   = 2
+let LUA_ERRSYNTAX       : i32   = 3
+let LUA_ERRMEM          : i32   = 4
+let LUA_ERRGCMM         : i32   = 5
+let LUA_ERRERR          : i32   = 6
+
+// #defines
+fn lua_tostring(L: &lua_State, idx: i32) -> c_string {
+    return lua_tolstring(L, idx, null)
+}
+
+fn lua_tonumber(L: &lua_State, idx: i32) -> lua_Number {
+    return lua_tonumberx(L, idx, null)
+}
+
+/*
+** state manipulation
+*/
+fn lua_newstate(f: lua_Alloc, ud: &any) -> &lua_State;
+fn lua_close(L: &lua_State);
+fn lua_newthread(L: &lua_State) -> &lua_State;
+fn lua_atpanic(L: &lua_State, panicf: lua_CFunction) -> lua_CFunction;
+fn lua_version(L: &lua_State) -> &lua_Number;
+
+/*
+** get functions (Lua -> stack)
+*/
+fn lua_getglobal    (L: &lua_State, name: c_string) -> i32;
+fn lua_gettable     (L: &lua_State, idx: i32) -> i32;
+fn lua_getfield     (L: &lua_State, idx: i32, k: c_string) -> i32;
+fn lua_geti         (L: &lua_State, idx: i32, n: lua_Integer) -> i32;
+fn lua_rawget       (L: &lua_State, idx: i32) -> i32;
+fn lua_rawgeti      (L: &lua_State, idx: i32, n: lua_Integer) -> i32;
+fn lua_rawgetp      (L: &lua_State, idx: i32, p: &any) -> i32;
+fn lua_createtable  (L: &lua_State, narr: i32, nrec: i32) -> void ;
+fn lua_newuserdata  (L: &lua_State, sz: int) -> &any;
+fn lua_getmetatable (L: &lua_State, objindex: i32) -> i32;
+fn lua_getuservalue (L: &lua_State, idx: i32) -> i32;
+
+/*
+** set functions (stack -> Lua)
+*/
+fn lua_setglobal(L: &lua_State, name: c_string) -> void;
+fn lua_settable(L: &lua_State, idx: i32) -> void;
+fn lua_setfield(L: &lua_State, idx: i32, k: c_string) -> void;
+fn lua_seti(L: &lua_State, idx: i32, n: lua_Integer) -> void;
+fn lua_rawset(L: &lua_State, idx: i32) -> void;
+fn lua_rawseti(L: &lua_State, idx: i32, n: lua_Integer) -> void;
+fn lua_rawsetp(L: &lua_State, idx: i32, p: &any) -> void;
+fn lua_setmetatable(L: &lua_State, objindex: i32) -> int;
+fn lua_setuservalue(L: &lua_State, idx: i32) -> void;
+
+/*
+** access functions (stack -> C)
+*/
+fn lua_isnumber(L: &lua_State, idx: i32) -> i32;
+fn lua_isstring(L: &lua_State, idx: i32) -> i32;
+fn lua_iscfunction(L: &lua_State, idx: i32) -> i32;
+fn lua_isinteger(L: &lua_State, idx: i32) -> i32;
+fn lua_isuserdata(L: &lua_State, idx: i32) -> i32;
+fn lua_type(L: &lua_State, idx: i32) -> i32;
+fn lua_typename(L: &lua_State, tp: i32) -> c_string;
+fn lua_tonumberx(L: &lua_State, idx: i32, isnum: &i32) -> lua_Number;
+fn lua_tointegerx(L: &lua_State, idx: i32, isnum: &i32) -> lua_Integer;
+fn lua_toboolean(L: &lua_State, idx: i32) -> i32;
+fn lua_tolstring(L: &lua_State, idx: i32, len: &int) -> c_string;
+fn lua_rawlen(L: &lua_State, idx: i32) -> i32;
+fn lua_tocfunction(L: &lua_State, idx: i32) -> lua_CFunction;
+fn lua_touserdata(L: &lua_State, idx: i32) -> &any;
+fn lua_tothread(L: &lua_State, idx: i32) -> &lua_State;
+fn lua_topointer(L: &lua_State, idx: i32) -> &any;
+
+/*
+** 'load' and 'call' functions (load and run Lua code)
+*/
+fn lua_callk(L: &lua_State, nargs: i32, nresults: i32, ctx: lua_KContext, k: lua_KFunction);
+fn lua_pcallk(L: &lua_State, nargs: i32, nresults: i32, errfunc: i32, ctx: lua_KContext, k: lua_KFunction) -> int;
+fn lua_load(L: &lua_State, reader: lua_Reader, dt: &any, chunkname: c_string, mode: c_string) -> i32;
+fn lua_dump(L: &lua_State, writer: lua_Writer, data: &any, strip: int) -> i32;
+
