@@ -1,61 +1,46 @@
+// #load("tests/language/match")
+#load("std:io/io")
+#load("libraries/lua/lua.che")
+#load("libraries/lua/lauxlib.che")
+#load("libraries/lua/lualib.che")
 
-// #load("tests/language/if_else")
-
-#load("std:c")
-#load("std:math")
-
-enum Option(T: type) {
-    Some : T
-    None
-}
-
-enum Result(V: type, E: type) {
-    Ok : V
-    Err : E
-}
-
-struct PolyStruct(T: type) {
-    x: T
-}
-
-fn try_sqrt(f: double) -> Result(double, string) {
-    use Result
-    if f < 0 {
-        return Err("argument is negative")
-    } else {
-        return Ok(sqrt(f))
+fn check_lua(L: &lua_State, r: i32) -> bool {
+    if r != LUA_OK {
+        let errormsg = lua_tostring(L, -1)
+        printf("[LUA ERROR] {}`n", [errormsg])
+        return false
     }
+
+    return true
 }
 
-enum Test {
-    A
-    B
-    C
+fn lua_HostFunction(L: &lua_State) -> i32 {
+    let a = lua_tonumber(L, 1)
+    let b = lua_tonumber(L, 2)
+    printf("[CHEEZ] HostFunction({}, {}) has been called`n", [a, b])
+    let c = a * b
+    lua_pushnumber(L, c)
+    return 1
 }
 
 fn Main() {
-    use Option
+    let L = luaL_newstate()
+    luaL_openlibs(L)
 
-    test1(Some(123))
-    test1(Some(789))
-    test1(None)
+    lua_register(L, "HostFunction", lua_HostFunction)
 
-    test2(try_sqrt(2.0))
-    test2(try_sqrt(-1.0))
-}
+    if check_lua(L, luaL_dofile(L, "test.lua")) {
+        lua_getglobal(L, "DoAThing")
+        if lua_isfunction(L, -1) {
+            lua_pushnumber(L, 5)
+            lua_pushnumber(L, 6)
 
-fn test1(x: Option(int)) {
-    use Option
-    match x {
-        Some($v)    -> c_printf("Some(%lld)`n", cast(int)v)
-        None        -> c_puts("None")
+            if check_lua(L, lua_pcall(L, 2, 1, 0)) {
+                let result = lua_tonumber(L, -1)
+                printf("[CHEEZ] got {}`n", [result])
+            }
+        }
     }
-}
 
-fn test2(r: Result(double, string)) {
-    use Result
-    match r {
-        Ok($v)      -> c_printf("Some(%f)`n", v)
-        Err($msg)   -> c_printf("Err(`"%.*s`")`n", msg.length, msg.data)
-    }
+    lua_close(L)
 }
