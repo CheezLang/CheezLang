@@ -19,10 +19,10 @@ namespace DummyBackend
             if (!Directory.Exists(outDir)) Directory.CreateDirectory(outDir);
             var outPath = Path.Combine(outDir, targetFile + ".che");
 
-            var printer = new AnalyzedAstPrinter();
             using (var file = File.Open(outPath, FileMode.Create))
             using (var writer = new StreamWriter(file))
             {
+                var printer = new AnalysedAstPrinter();
                 printer.PrintWorkspace(workspace, writer);
             }
             return true;

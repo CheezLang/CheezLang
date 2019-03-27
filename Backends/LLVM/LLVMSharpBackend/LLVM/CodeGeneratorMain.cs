@@ -234,13 +234,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private void GenerateMainFunction()
         {
             string mainFuncName = null;
+            LLVMTypeRef returnType = LLVM.VoidType();
             switch (workspace.TargetArch)
             {
-                case TargetArchitecture.X86: mainFuncName = "main"; break;
-                case TargetArchitecture.X64: mainFuncName = "WinMain"; break;
+                case TargetArchitecture.X86:
+                    mainFuncName = "main";
+                    returnType = LLVM.Int32Type();
+                    break;
+                case TargetArchitecture.X64:
+                    mainFuncName = "WinMain";
+                    returnType = LLVM.Int64Type();
+                    break;
             }
 
-            var ltype = LLVM.FunctionType(LLVM.Int32Type(), new LLVMTypeRef[0], false);
+            var ltype = LLVM.FunctionType(returnType, new LLVMTypeRef[0], false);
             var lfunc = module.AddFunction(mainFuncName, ltype);
             var entry = lfunc.AppendBasicBlock("entry");
             var init = lfunc.AppendBasicBlock("init");
@@ -272,7 +279,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 if (workspace.MainFunction.ReturnValue == null)
                 {
                     builder.CreateCall(cheezMain, new LLVMValueRef[0], "");
-                    builder.CreateRet(LLVM.ConstInt(LLVM.Int32Type(), 0, false));
+                    builder.CreateRet(LLVM.ConstInt(returnType, 0, false));
                 }
                 else
                 {

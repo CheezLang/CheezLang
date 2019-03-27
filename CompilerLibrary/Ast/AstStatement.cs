@@ -11,7 +11,8 @@ namespace Cheez.Ast.Statements
     {
         GlobalScope,
         Returns,
-        IsLastStatementInBlock
+        IsLastStatementInBlock,
+        NoDefaultInitializer
     }
 
     public interface IAstNode {

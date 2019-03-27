@@ -317,6 +317,11 @@ namespace Cheez
             ass.Pattern.SetFlag(ExprFlags.AssignmentTarget, true);
             ass.Pattern = InferType(ass.Pattern, null);
 
+            if (ass.Pattern.Type is ReferenceType)
+            {
+                ass.Pattern = Deref(ass.Pattern, null);
+            }
+
             ass.Value.Scope = ass.Scope;
             ass.Value = InferType(ass.Value, ass.Pattern.Type);
             ConvertLiteralTypeToDefaultType(ass.Value, ass.Pattern.Type);
@@ -390,15 +395,11 @@ namespace Cheez
                             newVal.Scope = value.Scope;
                             newVal.Parent = value.Parent;
                             newVal = InferType(newVal, pattern.Type);
+
                             return newVal;
                         }
 
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
-                        
-                        if (ass.Pattern.Type is ReferenceType)
-                        {
-                            ass.Pattern = Deref(ass.Pattern, null);
-                        }
 
                         var val = HandleReference(ass.Value, ass.Pattern.Type, null);
                         return CheckType(val, ass.Pattern.Type, $"Can't assign a value of type {val} to a pattern of type {ass.Pattern.Type}");
@@ -450,11 +451,14 @@ namespace Cheez
                     {
                         if (ass.Operator != null)
                         {
-                            AstExpression tmp = new AstTempVarExpr(de.SubExpression);
-                            tmp.SetFlag(ExprFlags.IsLValue, true);
-                            tmp = InferType(tmp, de.SubExpression.Type);
+                            if (!de.SubExpression.GetFlag(ExprFlags.IsLValue))
+                            {
+                                AstExpression tmp = new AstTempVarExpr(de.SubExpression);
+                                tmp.SetFlag(ExprFlags.IsLValue, true);
+                                tmp = InferType(tmp, de.SubExpression.Type);
 
-                            de.SubExpression = tmp;
+                                de.SubExpression = tmp;
+                            }
 
                             AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
                             newVal.Scope = value.Scope;

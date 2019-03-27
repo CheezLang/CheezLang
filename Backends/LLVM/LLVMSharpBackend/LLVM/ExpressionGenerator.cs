@@ -1,4 +1,5 @@
 ﻿using Cheez.Ast.Expressions;
+using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types;
@@ -8,12 +9,14 @@ using Cheez.Util;
 using LLVMSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Cheez.CodeGeneration.LLVMCodeGen
 {
     public partial class LLVMCodeGenerator
     {
+        //[DebuggerStepThrough()]
         private LLVMValueRef GenerateExpression(AstExpression expr, bool deref)
         {
             if (expr.Value != null)
@@ -207,10 +210,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GeneratePatternCondition(AstExpression pattern, LLVMValueRef value)
         {
-            if (pattern.GetFlag(ExprFlags.PatternRefersToReference))
-            {
-                value = builder.CreateLoad(value, "");
-            }
+            //if (pattern.GetFlag(ExprFlags.PatternRefersToReference))
+            //{
+            //    value = builder.CreateLoad(value, "");
+            //}
 
             switch (pattern)
             {
@@ -273,10 +276,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             return comp1;
 
                         var valPtr = builder.CreateStructGEP(value, 1, "");
+                        
                         valPtr = builder.CreatePointerCast(valPtr, CheezTypeToLLVMType(e.Argument.Type).GetPointerTo(), "");
                         var comp2 = GeneratePatternCondition(e.Argument, valPtr);
 
                         return builder.CreateAnd(comp1, comp2, "");
+                    }
+
+                case AstReferenceTypeExpr r:
+                    {
+                        if (r.Target is AstIdExpr id && id.IsPolymorphic)
+                        {
+                            return LLVM.ConstInt(LLVM.Int1Type(), 1, false);
+                        }
+                        break;
                     }
 
             }
@@ -893,7 +906,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var type = t.Type;
                 if (t.StorePointer) type = PointerType.GetPointerType(type);
 
-                var x = CreateLocalVariable(type);
+                var x = CreateLocalVariable(type, $"tempvar_{t.Id}");
                 valueMap[t] = x;
                 var v = GenerateExpression(t.Expr, !t.StorePointer);
                 builder.CreateStore(v, x);

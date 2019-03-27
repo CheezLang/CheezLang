@@ -287,7 +287,7 @@ namespace Cheez.Parsing
 
             if (token.type == TokenType.StringLiteral || token.type == TokenType.NumberLiteral || token.type == TokenType.CharLiteral)
             {
-                if (IsAlpha(Current))
+                if (IsIdentBegin(Current))
                 {
                     token.suffix = "" + Current;
                     mLocation.index++;

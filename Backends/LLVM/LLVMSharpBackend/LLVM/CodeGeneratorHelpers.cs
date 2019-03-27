@@ -341,10 +341,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     }
 
                 case SliceType s:
-                    return LLVM.ConstStruct(new LLVMValueRef[] {
+                    return LLVM.ConstNamedStruct(CheezTypeToLLVMType(s), new LLVMValueRef[] {
                         LLVM.ConstInt(LLVM.Int64Type(), 0, true),
                         GetDefaultLLVMValue(s.ToPointerType())
-                    }, false);
+                    });
 
                 case TupleType t:
                     {
@@ -354,6 +354,18 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case FunctionType f:
                     return LLVM.ConstNull(CheezTypeToLLVMType(f));
+
+                //case EnumType e:
+                //    {
+                //        var v = new LLVMValueRef[e.Size - e.TagType.Size];
+                //        for (int i = 0; i < v.Length; i++)
+                //            v[i] = LLVM.ConstInt(LLVM.Int8Type(), 0, false);
+                //        return LLVM.ConstNamedStruct(CheezTypeToLLVMType(e), new LLVMValueRef[]
+                //        {
+                //            GetDefaultLLVMValue(e.TagType),
+                //            LLVM.ConstArray(LLVM.Int8Type(), v),
+                //        });
+                //    }
 
                 default:
                     throw new NotImplementedException();

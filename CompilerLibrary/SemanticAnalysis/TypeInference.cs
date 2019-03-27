@@ -311,10 +311,20 @@ namespace Cheez
             if (expr.SubExpression.Type is ReferenceType)
                 expr.SubExpression = Deref(expr.SubExpression, context);
 
-            var tmp = new AstTempVarExpr(expr.SubExpression);
-            tmp.AttachTo(expr);
-            tmp.SetFlag(ExprFlags.IsLValue, true);
-            expr.SubExpression = InferTypeHelper(tmp, null, context);
+            if (expr.SubExpression.GetFlag(ExprFlags.IsLValue))
+            {
+                var tmp = new AstTempVarExpr(expr.SubExpression, true);
+                tmp.AttachTo(expr);
+                tmp.SetFlag(ExprFlags.IsLValue, true);
+                expr.SubExpression = InferTypeHelper(tmp, null, context);
+            }
+            else
+            {
+                var tmp = new AstTempVarExpr(expr.SubExpression);
+                tmp.AttachTo(expr);
+                tmp.SetFlag(ExprFlags.IsLValue, true);
+                expr.SubExpression = InferTypeHelper(tmp, null, context);
+            }
             
             expr.IsSimpleIntMatch = true;
 
@@ -378,7 +388,7 @@ namespace Cheez
         {
             if (value.Type is ReferenceType)
             {
-                pattern.SetFlag(ExprFlags.PatternRefersToReference, true);
+                //pattern.SetFlag(ExprFlags.PatternRefersToReference, true);
             }
 
             switch (pattern)
@@ -387,8 +397,12 @@ namespace Cheez
                     {
                         if (id.IsPolymorphic)
                         {
+                            AstExpression tmpVar = new AstTempVarExpr(value, false);
+                            tmpVar.Replace(value);
+                            tmpVar = InferType(tmpVar, null);
+
                             id.Type = value.Type;
-                            id.Scope.DefineUse(id.Name, value, false, out var use);
+                            id.Scope.DefineUse(id.Name, tmpVar, false, out var use);
                             id.Symbol = use;
                         }
                         else
@@ -516,9 +530,36 @@ namespace Cheez
                         }
                     }
 
+                    case AstReferenceTypeExpr r:
+                    {
+                        r.Target.AttachTo(r);
+
+                        if (r.Target is AstIdExpr id && id.IsPolymorphic)
+                        {
+                            var val = new AstAddressOfExpr(value, value.Location);
+                            val.Reference = true;
+
+                            AstExpression tmpVar = new AstTempVarExpr(val, false);
+                            tmpVar.Replace(r);
+                            tmpVar = InferType(tmpVar, null);
+
+                            id.Type = tmpVar.Type;
+                            id.Scope.DefineUse(id.Name, tmpVar, false, out var use);
+                            id.Symbol = use;
+
+                            r.Type = id.Type;
+                            return r;
+                        }
+                        else
+                        {
+                            ReportError(r, $"invalid pattern");
+                        }
+                        return r;
+                    }
+
             }
 
-            if (pattern.Type?.IsErrorType ?? false)
+            //if (pattern.Type?.IsErrorType ?? false)
                 ReportError(pattern, $"Can't match type {value.Type} to pattern {pattern}");
             pattern.Type = CheezType.Error;
             return pattern;
@@ -543,6 +584,15 @@ namespace Cheez
             {
                 ReportError(expr, $"Can't default initialize an enum");
                 return expr;
+            }
+
+            if (expected is StructType s)
+            {
+                if (s.Declaration.GetFlag(StmtFlags.NoDefaultInitializer))
+                {
+                    ReportError(expr, $"Can't default initialize struct {s}");
+                    return expr;
+                }
             }
 
             //if (expected is ArrayType a)
@@ -1492,6 +1542,8 @@ namespace Cheez
             if (expr.Statements.LastOrDefault() is AstExprStmt exprStmt)
             {
                 exprStmt.Expr.Scope = expr.SubScope;
+                exprStmt.Expr.Parent = exprStmt;
+                exprStmt.Parent = expr;
                 exprStmt.Expr = InferTypeHelper(exprStmt.Expr, expected, context);
                 ConvertLiteralTypeToDefaultType(exprStmt.Expr, expected);
                 expr.Type = exprStmt.Expr.Type;
@@ -1683,6 +1735,7 @@ namespace Cheez
                         }
 
                         expr.Type = mem.AssociatedTypeExpr.Value as CheezType;
+                        expr.SetFlag(ExprFlags.IsLValue, true);
                         break;
                     }
 
@@ -2360,7 +2413,7 @@ namespace Cheez
             var type = expr.Type as StructType;
             if (type == null)
             {
-                ReportError(expr.TypeExpr, $"This expression is not a struct but a '{expr.Type}'");
+                ReportError(expr, $"This expression is not a struct but a '{expr.Type}'");
                 expr.Type = CheezType.Error;
                 return expr;
             }
@@ -2437,7 +2490,7 @@ namespace Cheez
                 {
                     if (mem.Initializer == null)
                     {
-                        ReportError(expr, $"You must provide an initial value for member {mem.Name.Name} because it can't be default initialized");
+                        ReportError(expr, $"You must provide an initial value for member '{mem.Name.Name}' because it can't be default initialized");
                         continue;
                     }
 
