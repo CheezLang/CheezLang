@@ -253,6 +253,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         if (n.IsPolymorphic)
                         {
+                            GenerateExpression(n, false);
                             return LLVM.ConstInt(LLVM.Int1Type(), 1, false);
                         }
                         else
@@ -287,6 +288,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         if (r.Target is AstIdExpr id && id.IsPolymorphic)
                         {
+                            GenerateExpression(id, false);
                             return LLVM.ConstInt(LLVM.Int1Type(), 1, false);
                         }
                         break;
