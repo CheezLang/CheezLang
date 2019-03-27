@@ -25,6 +25,10 @@
       {
         "command": "reload_language_server",
         "title": "Reset Cheez Language Server"
+      },
+      {
+        "command": "cheez.test",
+        "title": "Cheez Test"
       }
     ],
     "languages": [

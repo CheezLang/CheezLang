@@ -27,7 +27,12 @@ export function activate(context: vscode.ExtensionContext) {
     startedInDebugMode();
     // const debugPort: number = workspace.getConfiguration().get('cheezls.debug.languageServerPort');
 
+    context.subscriptions.push(vscode.commands.registerCommand("cheez.test", () => {
+        vscode.window.showInformationMessage("cheez command");
+    }));
+
     // let serverOptions: ServerOptions = null;
+    vscode.window.showInformationMessage("Cheez extension started");
 
     if (!startedInDebugMode())
     {

@@ -1,46 +1,21 @@
 // #load("tests/language/match")
+// #load("examples/lua_example.che")
+
 #load("std:io/io")
-#load("libraries/lua/lua.che")
-#load("libraries/lua/lauxlib.che")
-#load("libraries/lua/lualib.che")
 
-fn check_lua(L: &lua_State, r: i32) -> bool {
-    if r != LUA_OK {
-        let errormsg = lua_tostring(L, -1)
-        printf("[LUA ERROR] {}`n", [errormsg])
-        return false
-    }
+typedef X = (int, int)
 
-    return true
-}
+struct S {}
 
-fn lua_HostFunction(L: &lua_State) -> i32 {
-    let a = lua_tonumber(L, 1)
-    let b = lua_tonumber(L, 2)
-    printf("[CHEEZ] HostFunction({}, {}) has been called`n", [a, b])
-    let c = a * b
-    lua_pushnumber(L, c)
-    return 1
-}
+trait T {}
+
+enum E {}
+
 
 fn Main() {
-    let L = luaL_newstate()
-    luaL_openlibs(L)
+    let a = 5
 
-    lua_register(L, "HostFunction", lua_HostFunction)
-
-    if check_lua(L, luaL_dofile(L, "test.lua")) {
-        lua_getglobal(L, "DoAThing")
-        if lua_isfunction(L, -1) {
-            lua_pushnumber(L, 5)
-            lua_pushnumber(L, 6)
-
-            if check_lua(L, lua_pcall(L, 2, 1, 0)) {
-                let result = lua_tonumber(L, -1)
-                printf("[CHEEZ] got {}`n", [result])
-            }
-        }
-    }
-
-    lua_close(L)
+    println(a)
+    println("test")
+    0xfxvlcxa0
 }
