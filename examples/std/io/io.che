@@ -3,13 +3,6 @@
 #load("std:mem/memory")
 #load("std:os/windows")
 
-fn printf(format: string, args: []Printable) {
-    let s = String::empty()
-    s.appendf(format, args)
-    print_string(s)
-    s.free()
-}
-
 fn print_string(s: ref String) {
     let bytesWritten: u32
     WriteFile(__std_out_handle, cast s.get_raw(), cast s.get_length(), &bytesWritten, null)
@@ -25,6 +18,21 @@ fn println(v: $T) {
 fn print(v: $T) {
     let s = String::empty()
     s.appendf("{}", [v])
+    print_string(s)
+    s.free()
+}
+
+fn printf(format: string, args: []Printable) {
+    let s = String::empty()
+    s.appendf(format, args)
+    print_string(s)
+    s.free()
+}
+
+fn printfln(format: string, args: []Printable) {
+    let s = String::empty()
+    s.appendf(format, args)
+    s += '`n'
     print_string(s)
     s.free()
 }

@@ -5,4 +5,6 @@ fn c_puts(str: c_string) #linkname("puts");
 fn c_scanf(format: c_string) -> i32 #varargs #linkname("scanf");
 fn c_gets(string: c_string) -> c_string #linkname("gets");
 fn c_getchar() -> i32 #linkname("getchar");
+fn c_strtol(str: c_string, endptr: &&char, base: i32) -> int #linkname("strtol");
+fn c_strtod(str: c_string, endptr: &&char) -> double #linkname("strtod");
 

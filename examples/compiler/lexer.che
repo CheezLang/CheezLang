@@ -1,182 +1,444 @@
 #load("token.che")
-
-enum OptionalToken {
-    Some : Token
-    None
-}
+#load("std:io/file")
+#load("std:preload")
 
 struct Lexer {
-    text: String
+    text    : String
     location: TokenLocation
-    peek: OptionalToken
+    peek    : Option(Token)
 }
 
-fn isIdentBegin(c: char) -> bool {    
-    return (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z')
+fn is_ident_begin(c: char) -> bool {    
+    return (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z') or (c == '_')
 }
 
-fn isIdentChar(c: char) -> bool {
-    return isIdentBegin(c) or (c >= '0' and c <= '9')
+fn is_ident_char(c: char) -> bool {
+    return is_ident_begin(c) or (c >= '0' and c <= '9')
+}
+
+fn is_digit(c: char) -> bool {
+    return c >= '0' and c <= '9'
+}
+
+fn is_hex_digit(c: char) -> bool {
+    return (c >= '0' and c <= '9') or (c >= 'a' and c <= 'f') or (c >= 'A' and c <= 'F')
+}
+
+fn is_binary_digit(c: char) -> bool {
+    return c >= '0' and c <= '1'
+}
+
+enum LexerNumberState {
+    Error
+    Init
+    Z
+    X
+    B
+    DecDigit
+    BinDigit
+    HexDigit
+    Done
+    FloatPoint
+    FloatDigit
 }
 
 impl Lexer {
-    fn from_file(filename: string) -> Self {
-        
+    fn from_file(filename: string) -> Result(Lexer, String) {
+        return match load_file(filename) {
+            Ok($content) -> Ok(new Lexer {
+                text = content
+                location = new {
+                    file = filename
+                    line = 1
+                }
+                peek = None
+            })
+
+            Err($msg) -> Err(msg)
+        }
     }
 
-    ref fn init(filename: c_string) -> bool {
-        text = newString()
-        if loadFile(filename, &text) == false { return false }
+    fn dispose(ref Self) {
+        text.free()
+    }
 
-        location = new TokenLocation {
-            filename, 1, 0, 0
+    fn next_token(ref Self) -> Token {
+        match peek {
+            Some($t) -> {
+                peek = None
+                return t
+            }
         }
 
-        hasPeeked = false
-
-        return true
-    }
-
-    ref fn cleanup() {
-        text.dispose()
-    }
-
-    ref fn nextToken() -> Token {
-        if hasPeeked {
-            peek = self.readToken()
-            hasPeeked = false
-            return peek
+        match skip_newlines_and_comments() {
+            Some($loc) -> {
+                loc.end = loc.index
+                return new Token {
+                    ttype = TokenType.NewLine
+                    location = loc
+                    suffix = None
+                    data = TokenData.None
+                }
+            }
         }
 
-        let loc: TokenLocation
-        if self.skipNewlinesAndComments(&loc) {
-            loc.end = loc.start
-            let tok: Token
-            tok.location = loc
-            tok.type = TokenType.NewLine
-            return tok
-        }
-
-        return self.readToken()
+        return read_token()
     }
 
-    ref fn readToken() -> Token {
+    fn read_token(ref Self) -> Token {
         let token = new Token {
-            TokenType.Unknown
-            location.clone()
+            ttype = TokenType.EOF
+            data = TokenData.None
+            location = location
+            suffix = None
         }
+        token.location.end = token.location.index
 
-        if location.start >= text.length {
-            token.type = TokenType.EOF
+        if location.index >= text.length {
             return token
         }
 
-        let c = self.peekChar(0)
-        
-        match c {
-            ':' -> self.makeSimpleToken(&token, TokenType.Colon),
-            ';' -> self.makeSimpleToken(&token, TokenType.Semicolon),
-            '.' -> self.makeSimpleToken(&token, TokenType.Period),
-            '=' -> self.makeSimpleToken(&token, TokenType.Equal),
-            '(' -> self.makeSimpleToken(&token, TokenType.OpenParen),
-            ')' -> self.makeSimpleToken(&token, TokenType.ClosingParen),
-            '{' -> self.makeSimpleToken(&token, TokenType.OpenBrace),
-            '}' -> self.makeSimpleToken(&token, TokenType.ClosingBrace),
-            '[' -> self.makeSimpleToken(&token, TokenType.OpenBracket),
-            ']' -> self.makeSimpleToken(&token, TokenType.ClosingBracket),
-            ',' -> self.makeSimpleToken(&token, TokenType.Comma),
-            '&' -> self.makeSimpleToken(&token, TokenType.Ampersand),
-            '*' -> self.makeSimpleToken(&token, TokenType.Asterisk),
-            '/' -> self.makeSimpleToken(&token, TokenType.ForwardSlash),
-            '+' -> self.makeSimpleToken(&token, TokenType.Plus),
-            '%' -> self.makeSimpleToken(&token, TokenType.Percent),
-            '-' -> self.makeSimpleToken(&token, TokenType.Minus),
-            '<' -> self.makeSimpleToken(&token, TokenType.Less),
-            '>' -> self.makeSimpleToken(&token, TokenType.Greater),
-            '!' -> self.makeSimpleToken(&token, TokenType.Bang),
+        let curr = peek_char(0)
+        let next = peek_char(1)
+        match curr {
+            '=' if next == '=' -> simple_token(token, TokenType.DoubleEqual, 2)
+            '!' if next == '=' -> simple_token(token, TokenType.NotEqual, 2)
+            '<' if next == '=' -> simple_token(token, TokenType.LessEqual, 2)
+            '<' if next == '<' -> simple_token(token, TokenType.LessLess, 2)
+            '>' if next == '=' -> simple_token(token, TokenType.GreaterEqual, 2)
+            ':' if next == ':' -> simple_token(token, TokenType.DoubleColon, 2)
+            '-' if next == '>' -> simple_token(token, TokenType.Arrow, 2)
+            '+' if next == '=' -> simple_token(token, TokenType.AddEq, 2)
+            '-' if next == '=' -> simple_token(token, TokenType.SubEq, 2)
+            '*' if next == '=' -> simple_token(token, TokenType.MulEq, 2)
+            '/' if next == '=' -> simple_token(token, TokenType.DivEq, 2)
+            '%' if next == '=' -> simple_token(token, TokenType.ModEq, 2)
+            ':' -> simple_token(token, TokenType.Colon)
+            ';' -> simple_token(token, TokenType.Semicolon)
+            '.' -> simple_token(token, TokenType.Period)
+            '=' -> simple_token(token, TokenType.Equal)
+            '(' -> simple_token(token, TokenType.OpenParen)
+            ')' -> simple_token(token, TokenType.ClosingParen)
+            '{' -> simple_token(token, TokenType.OpenBrace)
+            '}' -> simple_token(token, TokenType.ClosingBrace)
+            '[' -> simple_token(token, TokenType.OpenBracket)
+            ']' -> simple_token(token, TokenType.ClosingBracket)
+            ',' -> simple_token(token, TokenType.Comma)
+            '&' -> simple_token(token, TokenType.Ampersand)
+            '*' -> simple_token(token, TokenType.Asterisk)
+            '/' -> simple_token(token, TokenType.ForwardSlash)
+            '+' -> simple_token(token, TokenType.Plus)
+            '%' -> simple_token(token, TokenType.Percent)
+            '-' -> simple_token(token, TokenType.Minus)
+            '<' -> simple_token(token, TokenType.Less)
+            '>' -> simple_token(token, TokenType.Greater)
+            '!' -> simple_token(token, TokenType.Bang)
+
+            '"' -> {
+                parse_string_literal(token, TokenType.StringLiteral, '"')
+                parse_suffix(token)
+            }
+            '`'' -> {
+                parse_string_literal(token, TokenType.CharLiteral, '`'')
+                parse_suffix(token)
+            }
+
+            // identifiers and keywords
+            '$' -> {
+                location.index += 1
+                parse_identifier(token, TokenType.DollarIdentifier)
+            }
+            '#' ->  {
+                location.index += 1
+                parse_identifier(token, TokenType.HashIdentifier)
+            }
+            '@' ->  {
+                location.index += 1
+                parse_identifier(token, TokenType.AtSignIdentifier)
+            }
+            $x if is_ident_begin(x) -> {
+                parse_identifier(token, TokenType.Identifier)
+                check_keywords(token)
+            }
+
+            // number literal
+            $x if is_digit(x) -> {
+                parse_number_literal(token)
+                parse_suffix(token)
+            }
+
+            $_ -> {
+                token.ttype = TokenType.Unknown
+                location.index += 1
+            }
         }
 
-        if token.type == TokenType.Unknown {
-            if isIdentBegin(c) {
-                self.parseIdentifier(&token, TokenType.Identifier)
-            }
-            else if c == '$' {
-                location.start = location.start + 1
-                self.parseIdentifier(&token, TokenType.DollarIdentifier)
-            }
-            else if c == '#' {
-                location.start = location.start + 1
-                self.parseIdentifier(&token, TokenType.HashIdentifier)
-            }
-            else if c == '@' {
-                location.start = location.start + 1
-                self.parseIdentifier(&token, TokenType.AtSignIdentifier)
-            }
-            else if c == '"' {
-                self.parseStringLiteral(&token, TokenType.StringLiteral, '"')
-            }
-            else if c == '`'' {
-                self.parseStringLiteral(&token, TokenType.CharLiteral, '`'')
-            }
-            else {
-                location.start = location.start + 1
-            }
-        }
-
-        token.location.end = location.start
+        token.location.end = location.index
 
         return token
     }
 
-    ref fn parseStringLiteral(token: Token&, type: TokenType, end: char) {
-        token.type = TokenType.StringLiteral
-        location.start = location.start + 1
-        let start = location.start
+    fn parse_number_literal(ref Self, token: ref Token) {
+        token.ttype = TokenType.NumberLiteral
+        let base = 10
+        let str = {
+            let const cap = 32
+            let raw = @alloca(char, cap)
+            let str = String::from_raw_ptr(raw, cap)
+            str
+        }
+
+        let isFloat = false
+
+        use LexerNumberState
+
+        let state = Init
+        while location.index < text.length {
+            let c = peek_char(0)
+            match state {
+                Error -> {break}
+                Done  -> {break}
+
+                Init  -> {
+                    if c == '0' {
+                        str += c
+                        state = Z
+                    } else if is_digit(c) {
+                        str += c
+                        state = DecDigit
+                    }
+                }
+
+                Z -> match c {
+                    'x' -> {
+                        base = 16
+                        str.length = 0
+                        state = X
+                    }
+                    'b' -> {
+                        base = 2
+                        str.length = 0
+                        state = B
+                    }
+                    '.' -> {
+                        str += c
+                        state = FloatPoint
+                    }
+                    $x if is_digit(x) -> {
+                        str += x
+                        state = DecDigit
+                    }
+                    $_ -> {
+                        state = Done
+                    }
+                }
+
+                DecDigit -> match c {
+                    '.' -> {
+                        str += c
+                        state = FloatPoint
+                    }
+                    $x if is_digit(x) -> {
+                        str += c
+                    }
+                    $_ -> {
+                        state = Done
+                    }
+                }
+
+                FloatPoint -> {
+                    isFloat = true
+                    if is_digit(c) {
+                        str += c
+                        state = FloatDigit
+                    } else {
+                        state = Error
+                    }
+                }
+
+                FloatDigit -> match c {
+                    $c if is_digit(c) -> {
+                        str += c
+                    }
+                    $_ -> {
+                        state = Done
+                    }
+                }
+
+                X -> match c {
+                    $c if is_hex_digit(c) -> {
+                        str += c
+                        state = HexDigit
+                    }
+                    $_ -> {
+                        state = Error
+                    }
+                }
+
+                HexDigit -> match c {
+                    $c if is_hex_digit(c) -> {
+                        str += c
+                    }
+                    $_ -> {
+                        state = Done
+                    }
+                }
+
+                B -> match c {
+                    $c if is_binary_digit(c) -> {
+                        str += c
+                        state = BinDigit
+                    }
+                    $_ -> {
+                        state = Error
+                    }
+                }
+
+                BinDigit -> match c {
+                    $c if is_binary_digit(c) -> {
+                        str += c
+                    }
+                    $_ -> {
+                        state = Done
+                    }
+                }
+            }
+
+            match state {
+                Done -> {}
+                $_   -> {
+                    location.index += 1
+                }
+            }
+        }
+
+        match state {
+            Error -> {
+                // TODO: report error
+                token.ttype = TokenType.Unknown
+                return
+            }
+        }
+
+        str += '`0'
+
+        if isFloat {
+            let d = c_strtod(str.get_raw(), null)
+            token.data = TokenData.Double(d)
+        } else {
+            let i = c_strtol(str.get_raw(), null, cast base)
+            token.data = TokenData.Integer(i)
+        }
+    }
+
+    fn parse_suffix(ref Self, token: ref Token) {
+        if is_ident_begin(peek_char(0)) {
+            let start = location.index
+            while location.index < text.length and is_ident_char(peek_char(0)) {
+                location.index += 1
+            }
+
+            token.suffix = Some(text.sliceFL(start, location.index - start))
+        }
+    }
+
+    fn simple_token(ref Self, token: ref Token, ttype: TokenType, len: int = 1) {
+        token.ttype = ttype
+        location.index += len
+    }
+
+    fn parse_identifier(ref Self, token: ref Token, ttype: TokenType) {
+        token.ttype = ttype
+        let start = location.index
+
+        while location.index < text.length and is_ident_char(peek_char(0)) {
+            location.index += 1
+        }
+
+        token.data = TokenData.String(text.sliceFL(start, location.index - start))
+    }
+
+    fn parse_string_literal(ref Self, token: ref Token, ttype: TokenType, end: char) {
+        token.ttype = ttype
+        location.index += 1
+        let start = location.index
 
         let foundEnd = false
-        while location.start < text.length {
-            let c = self.peekChar(0)
-            location.start += 1
+        while location.index < text.length {
+            let c = peek_char(0)
+            location.index += 1
 
             if c == end {
                 foundEnd = true
                 break
             }
             else if c == '``' {
-                if location.start >= text.length {
+                if location.index >= text.length {
+                    // TODO: report error
                     break
                 }
 
-                location.start += 1
+                location.index += 1
+            }
+
+            if c == '`n' {
+                location.line += 1
+                location.line_start = location.index
             }
         }
 
-        
-        token.data.stringValue = &text.data[start]
-        token.data.stringValue.length = location.start - start - 1
-    }
-
-    ref fn parseIdentifier(token: Token&, type: TokenType) {
-        token.type = type
-        let start = location.start
-
-        while location.start < text.length and isIdentChar(self.peekChar(0)) {
-            location.start += 1
+        if !foundEnd {
+            // TODO: report
         }
 
-        token.data.stringValue = &text.data[start]
-        token.data.stringValue.length = location.start - start
+        
+        token.data = TokenData.String(text.sliceFL(start, location.index - start - 1))
     }
 
-    ref fn makeSimpleToken(token: Token&, type: TokenType) {
-        location.start += 1
+    fn skip_newlines_and_comments(ref Self) -> loc: Option(TokenLocation) {
+        loc = None
 
-        token.type = type
-        token.location.end = token.location.start + 1
+        while location.index < text.length {
+            let c = peek_char(0)
+            let next = peek_char(1)
+            
+
+            if c == '/' and next == '*' {
+                parse_multi_line_comment()
+            }
+
+            else if c == '/' and next == '/' {
+                parse_single_line_comment()
+            }
+
+            else if c == ' ' or c == '`t' {
+                location.index += 1
+            }
+
+            else if c == '`r' {
+                location.index += 1
+            }
+
+            else if c == '`n' {
+                match loc {
+                    None -> {
+                        loc = Some(location)
+                    }
+                }
+
+                location.line += 1
+                location.index += 1
+                location.line_start = location.index
+            }
+
+            else {
+                break
+            }
+        }
     }
 
-    ref fn peekChar(offset: i32) -> char {
-        let index = location.start + offset
+    fn peek_char(ref Self, offset: int) -> char {
+        let index = location.index + offset
         if index >= text.length {
             return '`0'
         }
@@ -184,60 +446,69 @@ impl Lexer {
         return text.data[index]
     }
 
-    ref fn skipNewlinesAndComments(loc: TokenLocation&) -> bool {
-        let locExists = false
+    fn parse_multi_line_comment(ref Self) {
+        let level = 0
+        while location.index < text.length; location.index += 1 {
+            let curr = peek_char(0)
+            let next = peek_char(1)
 
-        while location.start < text.length {
-            let c = self.peekChar(0)
-            let next = self.peekChar(1)
-            
+            if curr == '/' and next == '*' {
+                location.index += 1
+                level += 1
+            } else if curr == '*' and next == '/' {
+                location.index += 1
+                level -= 1
 
-            if c == '/' and next == '*' {
-                //parseMultiLineComment()
-            }
-
-            else if c == '/' and next == '/' {
-                self.parseSingleLineComment()
-            }
-
-            else if c == ' ' or c == '`t' {
-                location.start += 1
-            }
-
-            else if c == '`r' {
-                location.start += 1
-            }
-
-            else if c == '`n' {
-                if !locExists {
-                    <<loc = location.clone()
-                    locExists = true
+                if level == 0 {
+                    break
                 }
-
+            } else if curr == '\n' {
                 location.line += 1
-                location.start += 1
-            }
-
-            else {
-                break
+                location.line_start = location.index
             }
         }
-
-        if locExists {
-            loc.end = location.start
-            return true
-        }
-
-        return false
     }
 
-    ref fn parseSingleLineComment() {
-        while location.start < text.length {
-            if self.peekChar(0) == '`n' {
+    fn parse_single_line_comment(ref Self) {
+        while location.index < text.length {
+            if peek_char(0) == '`n' {
                 break
             }
 
-            location.start += 1
+            location.index += 1
+        }
+    }
+
+    fn check_keywords(ref Self, token: ref Token) {
+        match token.data {
+            TokenData.String($str) -> {
+                if streq(str, "return")         { token.ttype = TokenType.KwReturn}
+                else if streq(str, "new")       { token.ttype = TokenType.KwNew}
+                else if streq(str, "ref")       { token.ttype = TokenType.KwRef}
+                else if streq(str, "fn")        { token.ttype = TokenType.KwFn}
+                else if streq(str, "struct")    { token.ttype = TokenType.KwStruct}
+                else if streq(str, "enum")      { token.ttype = TokenType.KwEnum}
+                else if streq(str, "impl")      { token.ttype = TokenType.KwImpl}
+                else if streq(str, "constant")  { token.ttype = TokenType.KwConstant}
+                else if streq(str, "let")       { token.ttype = TokenType.KwLet}
+                else if streq(str, "typedef")   { token.ttype = TokenType.KwTypedef}
+                else if streq(str, "if")        { token.ttype = TokenType.KwIf}
+                else if streq(str, "else")      { token.ttype = TokenType.KwElse}
+                else if streq(str, "for")       { token.ttype = TokenType.KwFor}
+                else if streq(str, "while")     { token.ttype = TokenType.KwWhile}
+                else if streq(str, "and")       { token.ttype = TokenType.KwAnd}
+                else if streq(str, "or")        { token.ttype = TokenType.KwOr}
+                else if streq(str, "true")      { token.ttype = TokenType.KwTrue}
+                else if streq(str, "false")     { token.ttype = TokenType.KwFalse}
+                else if streq(str, "null")      { token.ttype = TokenType.KwNull}
+                else if streq(str, "using")     { token.ttype = TokenType.KwUsing}
+                else if streq(str, "defer")     { token.ttype = TokenType.KwDefer}
+                else if streq(str, "match")     { token.ttype = TokenType.KwMatch}
+                else if streq(str, "break")     { token.ttype = TokenType.KwBreak}
+                else if streq(str, "continue")  { token.ttype = TokenType.KwContinue}
+                else if streq(str, "trait")     { token.ttype = TokenType.KwTrait}
+                else if streq(str, "cast")      { token.ttype = TokenType.KwCast}
+            }
         }
     }
 }

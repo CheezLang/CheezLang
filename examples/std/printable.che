@@ -1,4 +1,5 @@
 #load("std:string")
+#load("std:preload")
 
 trait Printable {
     fn print(ref Self, str: ref String, format: string);

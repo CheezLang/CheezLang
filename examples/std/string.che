@@ -18,6 +18,12 @@ impl StringBase($CharType) {
         return new { null, 0 }
     }
 
+    fn from_raw_ptr(ptr: &CharType, cap: int) -> Self {
+        let sl: []CharType = ptr
+        sl.length = cap
+        return new { sl, 0 }
+    }
+
     fn from_string(str: string) -> Self {
         let s = Self::empty()
         s.append_string(str)
@@ -195,6 +201,12 @@ impl StringBase($CharType) {
         }
 
         formatSpecifier.free()
+    }
+
+    fn format(format: string, args: []Printable) -> Self {
+        let s = Self::empty()
+        s.appendf(format, args)
+        return s
     }
 }
 

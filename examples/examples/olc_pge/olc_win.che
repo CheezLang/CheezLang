@@ -185,17 +185,19 @@ fn olc_window_event(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LR
         WM_MBUTTONUP    -> { pixel_game_engine_ptr.pMouseNewState[2] = false }
 
         WM_KEYDOWN      -> {
-            if let (ok, key) = pixel_game_engine_ptr.mapKeys.try_get(cast(int)wparam); ok {
-                pixel_game_engine_ptr.pKeyNewState[cast(int)<<key] = true
-            } else {
-                printf("[WNDPROC] failed to get key {} from keymap´`n", [wparam])
+            match pixel_game_engine_ptr.mapKeys.get(cast(int)wparam) {
+                Some($key) -> {
+                    pixel_game_engine_ptr.pKeyNewState[cast(int)key] = true
+                }
+                None -> printf("[WNDPROC] failed to get key {} from keymap´`n", [wparam])
             }
         }
-        WM_KEYUP        -> { 
-            if let (ok, key) = pixel_game_engine_ptr.mapKeys.try_get(cast(int)wparam); ok {
-                pixel_game_engine_ptr.pKeyNewState[cast(int)<<key] = false
-            } else {
-                printf("[WNDPROC] failed to get key {} from keymap´`n", [wparam])
+        WM_KEYUP        -> {
+            match pixel_game_engine_ptr.mapKeys.get(cast(int)wparam) {
+                Some($key) -> {
+                    pixel_game_engine_ptr.pKeyNewState[cast(int)key] = false
+                }
+                None -> printf("[WNDPROC] failed to get key {} from keymap´`n", [wparam])
             }
         }
         
