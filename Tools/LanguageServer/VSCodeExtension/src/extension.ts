@@ -32,11 +32,10 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     // let serverOptions: ServerOptions = null;
-    vscode.window.showInformationMessage("Cheez extension started");
 
     if (!startedInDebugMode())
     {
-        vscode.window.showInformationMessage("Cheez extension started in release mode");
+        // vscode.window.showInformationMessage("Cheez extension started in release mode");
 
     //     // The server is implemented in C#
     //     let serverCommand: string = workspace.getConfiguration().get('cheezls.languageServerPath');

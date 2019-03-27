@@ -232,5 +232,5 @@ FakesAssemblies/
 **/*.Server/GeneratedArtifacts
 **/*.Server/ModelManifest.xml
 _Pvt_Extensions
-Tools/LanguageServer/VSCodeExtension/out/src/extension.js
 Tools/LanguageServer/VSCodeExtension/out/src/extension.js.map
+Tools/LanguageServer/VSCodeExtension/out/src/extension.js
