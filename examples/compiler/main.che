@@ -1,35 +1,48 @@
-#load("../stdio.che")
-#load("../string.che")
-#load("../file.che")
-#load("lexer.che")
-#load("token.che")
+// #load("tests/library/hash_table1")
+// #load("examples/lua_example.che")
 
-fn runCompiler(filename: c_string) {
-    let lexer: Lexer
-    lexer.init(filename)
+#load("std:preload")
+#load("std:io/io")
+#load("std:util")
+#load("std:mem/arena_allocator")
 
-    let cond = true
-    while cond {
-        let t = lexer.nextToken()
+#load("compiler/token")
+#load("compiler/lexer")
+#load("compiler/string_database")
+#load("compiler/cheez_compiler")
+#load("compiler/parser")
 
-        t.print()
-        match t.type {
-            TokenType.Identifier -> print_f(" ({c[]})", &t.data.stringValue)
-            TokenType.AtSignIdentifier -> print_f(" ({c[]})", &t.data.stringValue)
-            TokenType.HashIdentifier -> print_f(" ({c[]})", &t.data.stringValue)
-            TokenType.DollarIdentifier -> print_f(" ({c[]})", &t.data.stringValue)
-            TokenType.StringLiteral -> {
-                print_f(" (`"{c[]}`")", &t.data.stringValue)
+fn Main() {
+    let compiler = CheezCompiler::create()
+
+    match Lexer::from_file("test.che", compiler) {
+        Ok($l) -> {
+            let parser = Parser::create(compiler, l)
+            let start = getCurrentTimeInMilliseconds()
+            while true {
+                let stmt = parser.parse_statement()
+                match stmt {
+                    Some($stmt) -> {
+                        // println(<<stmt)
+                    }
+
+                    None -> {
+                        break
+                    }
+                }
             }
-        }
-        println("")
 
-        if t.type == TokenType.EOF {
-            cond = false
+            let end = getCurrentTimeInMilliseconds()
+            let elapsed = ((cast(double)end) - (cast(double)start)) / 1000.0
+            printfln("elapsed: {}", [elapsed])
+            l.dispose()
+        }
+
+        Err($msg) -> {
+            println(msg)
+            msg.free()
         }
     }
 
-    println("`ndone")
-
-    lexer.cleanup()
+    compiler.dispose()
 }
