@@ -1,0 +1,25 @@
+#load("std:preload")
+#load("std:mem/allocator")
+#load("std:mem/stack_allocator")
+
+struct CheezCompiler {
+    string_database : StringDatabase
+    ast_allocator   : &StackAllocator
+}
+
+impl CheezCompiler {
+    fn create() -> CheezCompiler {
+        let ast_a = alloc(StackAllocator)
+        <<ast_a = StackAllocator::create(1024 * 100)
+        
+        return new {
+            string_database     = StringDatabase::create()
+            ast_allocator       = ast_a
+        }
+    }
+
+    fn dispose(ref Self) {
+        ast_allocator.dispose()
+        free(ast_allocator)
+    }
+}

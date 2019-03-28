@@ -1,0 +1,102 @@
+#load("std:preload")
+
+#load("ast")
+#load("cheez_compiler")
+#load("lexer")
+
+struct Parser {
+    compiler    : ref CheezCompiler
+    lexer       : ref Lexer
+}
+
+impl Parser {
+    fn create(c: ref CheezCompiler, l: ref Lexer) -> Self {
+        return new {
+            compiler = c
+            lexer = l
+        }
+    }
+
+    fn parse_statement(ref Self) -> Option(&Stmt) {
+        skip_ws()
+        let token = lexer.peek_token()
+        return match token.ttype {
+            TokenType.EOF -> None
+
+            TokenType.KwFn -> parse_function_decl()
+
+            $_ -> {
+                printfln("{}: unexpeted token {}", [token.location, token.ttype])
+                None
+            }
+        }
+    }
+
+    fn parse_function_decl(ref Self) -> Option(&Stmt) {
+        let _fn = consume(TokenType.KwFn)
+        skip_ws()
+
+        let name = consume(TokenType.Identifier)
+        let name_id = match name.data {
+            TokenData.String($id)   -> id
+            $_                      -> ""
+        }
+        skip_ws()
+
+        // TODO: param list
+        consume(TokenType.OpenParen)
+        skip_ws()
+
+        consume(TokenType.ClosingParen)
+        skip_ws()
+
+        consume(TokenType.OpenBrace)
+        skip_ws()
+
+        let end = consume(TokenType.ClosingBrace)
+        skip_ws()
+
+        let func = alloc(Stmt)
+        <<func = new Stmt {
+            concrete = StmtType.FunctionDecl(new FunctionDecl {
+                name = name_id
+            })
+        }
+        return Some(func)
+    }
+
+    // helpers
+    fn skip_ws(ref Self) {
+        while true {
+            let tok = lexer.peek_token()
+
+            match tok.ttype {
+                TokenType.NewLine -> {
+                    lexer.next_token()
+                }
+
+                $_ -> {
+                    break
+                }
+            }
+        }
+    }
+
+    fn consume(ref Self, ttype: TokenType) -> Token {
+        let tok = lexer.peek_token()
+        while (cast(int)tok.ttype) != (cast(int)ttype) {
+            match tok.ttype {
+                TokenType.EOF -> {
+                    break
+                }
+            }
+
+            // TODO: report error
+            printfln("{}: unexpeted token {}", [tok.location, tok.ttype])
+            lexer.next_token()
+            tok = lexer.peek_token()
+        }
+
+        return lexer.next_token()
+    }
+}

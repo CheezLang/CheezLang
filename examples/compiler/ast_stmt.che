@@ -1,0 +1,26 @@
+#load("std:preload")
+
+#load("ast_expr")
+
+struct Stmt {
+    concrete    : StmtType
+}
+
+enum StmtType {
+    FunctionDecl    : FunctionDecl
+}
+
+impl Printable for Stmt {
+    fn print(ref Self, str: ref String, format: string) {
+        use StmtType
+        match concrete {
+            FunctionDecl($func) -> {
+                str.appendf("fn {}() ``{``}", [func.name])
+            }
+        }
+    }
+}
+
+struct FunctionDecl {
+    name    : string
+}

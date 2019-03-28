@@ -1,14 +1,49 @@
-#load("token.che")
-#load("std:io/file")
 #load("std:preload")
+#load("std:io/file")
+
+#load("token")
+#load("string_database")
+#load("cheez_compiler")
+
 
 struct Lexer {
-    text    : String
-    location: TokenLocation
-    peek    : Option(Token)
+    text        : String
+    location    : TokenLocation
+    peek        : Option(Token)
+    compiler    : ref CheezCompiler
+    string_db   : ref StringDatabase
+
+    
+    // interned keywords
+    KwReturn    : string
+    KwNew       : string
+    KwRef       : string
+    KwFn        : string
+    KwStruct    : string
+    KwEnum      : string
+    KwImpl      : string
+    KwConst     : string
+    KwLet       : string
+    KwTypedef   : string
+    KwIf        : string
+    KwElse      : string
+    KwFor       : string
+    KwWhile     : string
+    KwAnd       : string
+    KwOr        : string
+    KwTrue      : string
+    KwFalse     : string
+    KwNull      : string
+    KwUsing     : string
+    KwDefer     : string
+    KwMatch     : string
+    KwBreak     : string
+    KwContinue  : string
+    KwTrait     : string
+    KwCast      : string
 }
 
-fn is_ident_begin(c: char) -> bool {    
+fn is_ident_begin(c: char) -> bool {
     return (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z') or (c == '_')
 }
 
@@ -43,7 +78,7 @@ enum LexerNumberState {
 }
 
 impl Lexer {
-    fn from_file(filename: string) -> Result(Lexer, String) {
+    fn from_file(filename: string, comp: ref CheezCompiler) -> Result(Lexer, String) {
         return match load_file(filename) {
             Ok($content) -> Ok(new Lexer {
                 text = content
@@ -52,6 +87,35 @@ impl Lexer {
                     line = 1
                 }
                 peek = None
+                compiler = comp
+                string_db = comp.string_database
+
+                KwReturn    = comp.string_database.intern("return")
+                KwNew       = comp.string_database.intern("new")
+                KwRef       = comp.string_database.intern("ref")
+                KwFn        = comp.string_database.intern("fn")
+                KwStruct    = comp.string_database.intern("struct")
+                KwEnum      = comp.string_database.intern("enum")
+                KwImpl      = comp.string_database.intern("impl")
+                KwConst     = comp.string_database.intern("const")
+                KwLet       = comp.string_database.intern("let")
+                KwTypedef   = comp.string_database.intern("typedef")
+                KwIf        = comp.string_database.intern("if")
+                KwElse      = comp.string_database.intern("else")
+                KwFor       = comp.string_database.intern("for")
+                KwWhile     = comp.string_database.intern("while")
+                KwAnd       = comp.string_database.intern("and")
+                KwOr        = comp.string_database.intern("or")
+                KwTrue      = comp.string_database.intern("true")
+                KwFalse     = comp.string_database.intern("false")
+                KwNull      = comp.string_database.intern("null")
+                KwUsing     = comp.string_database.intern("using")
+                KwDefer     = comp.string_database.intern("defer")
+                KwMatch     = comp.string_database.intern("match")
+                KwBreak     = comp.string_database.intern("break")
+                KwContinue  = comp.string_database.intern("continue")
+                KwTrait     = comp.string_database.intern("trait")
+                KwCast      = comp.string_database.intern("cast")
             })
 
             Err($msg) -> Err(msg)
@@ -60,6 +124,18 @@ impl Lexer {
 
     fn dispose(ref Self) {
         text.free()
+    }
+
+    fn peek_token(ref Self) -> Token {
+        return match peek {
+            Some($tok) -> tok
+
+            None -> {
+                let tok = next_token()
+                peek = Some(tok)
+                tok
+            }
+        }
     }
 
     fn next_token(ref Self) -> Token {
@@ -100,6 +176,7 @@ impl Lexer {
 
         let curr = peek_char(0)
         let next = peek_char(1)
+
         match curr {
             '=' if next == '=' -> simple_token(token, TokenType.DoubleEqual, 2)
             '!' if next == '=' -> simple_token(token, TokenType.NotEqual, 2)
@@ -159,6 +236,7 @@ impl Lexer {
             $x if is_ident_begin(x) -> {
                 parse_identifier(token, TokenType.Identifier)
                 check_keywords(token)
+                // check_keywords_raw(token)
             }
 
             // number literal
@@ -182,7 +260,7 @@ impl Lexer {
         token.ttype = TokenType.NumberLiteral
         let base = 10
         let str = {
-            let const cap = 32
+            let const cap = 64
             let raw = @alloca(char, cap)
             let str = String::from_raw_ptr(raw, cap)
             str
@@ -355,7 +433,8 @@ impl Lexer {
             location.index += 1
         }
 
-        token.data = TokenData.String(text.sliceFL(start, location.index - start))
+        let str = text.sliceFL(start, location.index - start)
+        token.data = TokenData.String(string_db.intern(str))
     }
 
     fn parse_string_literal(ref Self, token: ref Token, ttype: TokenType, end: char) {
@@ -391,8 +470,8 @@ impl Lexer {
             // TODO: report
         }
 
-        
-        token.data = TokenData.String(text.sliceFL(start, location.index - start - 1))
+        let str = text.sliceFL(start, location.index - start - 1)
+        token.data = TokenData.String(string_db.intern(str))
     }
 
     fn skip_newlines_and_comments(ref Self) -> loc: Option(TokenLocation) {
@@ -401,7 +480,6 @@ impl Lexer {
         while location.index < text.length {
             let c = peek_char(0)
             let next = peek_char(1)
-            
 
             if c == '/' and next == '*' {
                 parse_multi_line_comment()
@@ -482,32 +560,32 @@ impl Lexer {
     fn check_keywords(ref Self, token: ref Token) {
         match token.data {
             TokenData.String($str) -> {
-                if streq(str, "return")         { token.ttype = TokenType.KwReturn}
-                else if streq(str, "new")       { token.ttype = TokenType.KwNew}
-                else if streq(str, "ref")       { token.ttype = TokenType.KwRef}
-                else if streq(str, "fn")        { token.ttype = TokenType.KwFn}
-                else if streq(str, "struct")    { token.ttype = TokenType.KwStruct}
-                else if streq(str, "enum")      { token.ttype = TokenType.KwEnum}
-                else if streq(str, "impl")      { token.ttype = TokenType.KwImpl}
-                else if streq(str, "constant")  { token.ttype = TokenType.KwConstant}
-                else if streq(str, "let")       { token.ttype = TokenType.KwLet}
-                else if streq(str, "typedef")   { token.ttype = TokenType.KwTypedef}
-                else if streq(str, "if")        { token.ttype = TokenType.KwIf}
-                else if streq(str, "else")      { token.ttype = TokenType.KwElse}
-                else if streq(str, "for")       { token.ttype = TokenType.KwFor}
-                else if streq(str, "while")     { token.ttype = TokenType.KwWhile}
-                else if streq(str, "and")       { token.ttype = TokenType.KwAnd}
-                else if streq(str, "or")        { token.ttype = TokenType.KwOr}
-                else if streq(str, "true")      { token.ttype = TokenType.KwTrue}
-                else if streq(str, "false")     { token.ttype = TokenType.KwFalse}
-                else if streq(str, "null")      { token.ttype = TokenType.KwNull}
-                else if streq(str, "using")     { token.ttype = TokenType.KwUsing}
-                else if streq(str, "defer")     { token.ttype = TokenType.KwDefer}
-                else if streq(str, "match")     { token.ttype = TokenType.KwMatch}
-                else if streq(str, "break")     { token.ttype = TokenType.KwBreak}
-                else if streq(str, "continue")  { token.ttype = TokenType.KwContinue}
-                else if streq(str, "trait")     { token.ttype = TokenType.KwTrait}
-                else if streq(str, "cast")      { token.ttype = TokenType.KwCast}
+                if      str == KwReturn     { token.ttype = TokenType.KwReturn }
+                else if str == KwNew        { token.ttype = TokenType.KwNew }
+                else if str == KwRef        { token.ttype = TokenType.KwRef }
+                else if str == KwFn         { token.ttype = TokenType.KwFn }
+                else if str == KwStruct     { token.ttype = TokenType.KwStruct }
+                else if str == KwEnum       { token.ttype = TokenType.KwEnum }
+                else if str == KwImpl       { token.ttype = TokenType.KwImpl }
+                else if str == KwConst      { token.ttype = TokenType.KwConst }
+                else if str == KwLet        { token.ttype = TokenType.KwLet }
+                else if str == KwTypedef    { token.ttype = TokenType.KwTypedef }
+                else if str == KwIf         { token.ttype = TokenType.KwIf }
+                else if str == KwElse       { token.ttype = TokenType.KwElse }
+                else if str == KwFor        { token.ttype = TokenType.KwFor }
+                else if str == KwWhile      { token.ttype = TokenType.KwWhile }
+                else if str == KwAnd        { token.ttype = TokenType.KwAnd }
+                else if str == KwOr         { token.ttype = TokenType.KwOr }
+                else if str == KwTrue       { token.ttype = TokenType.KwTrue }
+                else if str == KwFalse      { token.ttype = TokenType.KwFalse }
+                else if str == KwNull       { token.ttype = TokenType.KwNull }
+                else if str == KwUsing      { token.ttype = TokenType.KwUsing }
+                else if str == KwDefer      { token.ttype = TokenType.KwDefer }
+                else if str == KwMatch      { token.ttype = TokenType.KwMatch }
+                else if str == KwBreak      { token.ttype = TokenType.KwBreak }
+                else if str == KwContinue   { token.ttype = TokenType.KwContinue }
+                else if str == KwTrait      { token.ttype = TokenType.KwTrait }
+                else if str == KwCast       { token.ttype = TokenType.KwCast }
             }
         }
     }

@@ -1,0 +1,61 @@
+#load("std:preload")
+#load("std:hash_table")
+#load("std:mem/arena_allocator")
+
+impl string {
+    fn equal(a: Self, b: Self) -> bool #operator("==") {
+        return a.length == b.length and a.data == b.data
+    }
+}
+
+struct StringDatabase {
+    pool    : ArenaAllocator
+    db      : Table(string, string)
+}
+
+fn sdb_compare_strings(a: string, b: string) -> bool {
+    return streq(a, b)
+}
+
+impl Hashable for string {
+    fn hash(ref Self) -> u32 {
+        let h: u32 = 2166136261
+
+        while let i = 0; i < self.length; i += 1 {
+            h += cast(u32)self[i]
+            h *= 16777619
+        }
+
+        return h
+    }
+}
+
+impl StringDatabase {
+    fn create() -> Self {
+        let sdb = new Self {
+            pool    = ArenaAllocator::create(1024)
+            db      = Table(string, string)::create(sdb_compare_strings)
+        }
+
+        return sdb
+    }
+
+    fn dispose(ref Self) {
+        db.dispose()
+    }
+
+    fn intern(ref Self, str: string) -> string {
+        return match db.get(str) {
+            Some($s) -> {
+                s
+            }
+            None -> {
+                // create string in pool
+                let str_in_pool = alloc_n(char, cast str.length, pool)
+                c_memcpy(str_in_pool.data, str.data, cast str.length)
+                db[str_in_pool] = str_in_pool
+                str_in_pool
+            }
+        }
+    }
+}

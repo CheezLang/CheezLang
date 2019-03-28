@@ -1,0 +1,21 @@
+#load("std:preload")
+
+#load("ast_stmt")
+
+struct Expr {
+    location    : Location
+    concrete    : ExprType
+}
+
+enum ExprType {
+    Id      : IdExpr
+    Number  : NumberExpr
+}
+
+struct NumberExpr {
+
+}
+
+struct IdExpr {
+
+}
