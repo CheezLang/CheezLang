@@ -1,0 +1,64 @@
+#test_expect_output("ArenaAllocator (0 buckets)
+lol
+lol
+5
+5
+ArenaAllocator (8 buckets)
+  Bucket 0: 40/48 bytes
+    0: 16 bytes
+    24: 8 bytes
+  Bucket 1: 26/32 bytes
+    0: 4 bytes
+    16: 2 bytes
+  Bucket 2: 25/32 bytes
+    0: 1 bytes
+    16: 1 bytes
+  Bucket 3: 28/32 bytes
+    0: 2 bytes
+    16: 4 bytes
+  Bucket 4: 16/32 bytes
+    0: 8 bytes
+  Bucket 5: 24/48 bytes
+    0: 16 bytes
+  Bucket 6: 40/80 bytes
+    0: 32 bytes
+  Bucket 7: 48/96 bytes
+    0: 40 bytes")
+    
+#load("std:preload")
+#load("std:io/io")
+#load("std:util")
+#load("std:mem/arena_allocator")
+
+
+fn Main() {
+    let a = ArenaAllocator::create(32)
+
+    a.dump(true)
+
+    alloc(string, a)
+    let x = alloc(i64, a)
+    alloc(i32, a)
+    alloc(i16, a)
+    alloc(i8, a)
+    alloc(i8, a)
+    alloc(i16, a)
+    alloc(i32, a)
+    alloc(i64, a)
+    let s = alloc(string, a)
+
+    <<s = "lol"
+    println(<<s)
+    s = realloc_raw(s, 2, a)
+    println(<<s)
+    
+    <<x = 5
+    println(<<x)
+    x = realloc_raw(x, 5, a)
+    println(<<x)
+
+    a.dump(true)
+
+
+    a.dispose()
+}
