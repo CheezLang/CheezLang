@@ -1,21 +1,8 @@
-// #load("tests/language/match")
+// #load("tests/library/hash_table1")
 // #load("examples/lua_example.che")
 
+#load("std:preload")
 #load("std:io/io")
 
-typedef X = (int, int)
-
-struct S {}
-
-trait T {}
-
-enum E {}
-
-
 fn Main() {
-    let a = 5
-
-    println(a)
-    println("test")
-    0xfxvlcxa0
 }
