@@ -1,6 +1,8 @@
 #load("std:io/io")
 #load("std:preload")
 
+typedef Location = (beg: TokenLocation, end: TokenLocation)
+
 struct TokenLocation {
     file            : string
     line            : int
@@ -23,12 +25,17 @@ enum TokenData {
     Double  : double
 }
 
+impl Printable for TokenLocation {
+    fn print(ref Self, str: ref String, format: string) {
+        str.appendf("{}:{}:{}", [file, line, index - line_start])
+    }
+}
 
 impl Printable for Token {
     fn print(ref Self, str: ref String, format: string) {
-        str.appendf("{} ({}:{}:{})", [ttype, location.file, location.line, location.index - location.line_start])
+        str.appendf("{} ({})", [ttype, location])
         match data {
-            TokenData.String($s) -> str.appendf(" String(`"{}`")", [s])
+            TokenData.String($s) -> str.appendf(" String({})", [s])
             TokenData.Integer($s) -> str.appendf(" Int({})", [s])
             TokenData.Double($s) -> str.appendf(" Double({})", [s])
         }
@@ -93,7 +100,7 @@ impl Printable for TokenType {
             KwStruct        -> "KwStruct"
             KwEnum          -> "KwEnum"
             KwImpl          -> "KwImpl"
-            KwConstant      -> "KwConstant"
+            KwConst         -> "const"
             KwLet           -> "KwLet"
             KwTypedef       -> "KwTypedef"
             KwIf            -> "KwIf"
@@ -179,7 +186,7 @@ enum TokenType {
     KwStruct
     KwEnum
     KwImpl
-    KwConstant
+    KwConst
     KwLet
     KwTypedef
     KwIf
