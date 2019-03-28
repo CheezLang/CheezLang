@@ -27,6 +27,13 @@ namespace Cheez.Util
 
     public static class Utilities
     {
+        public static int GetNextAligned(int size, int align)
+        {
+            int mul = size + align - 1;
+            mul -= (mul % align);
+            return mul;
+        }
+
         public static void MultiMapInsert<K, V>(this Dictionary<K, List<V>> map, K key, V value)
         {
             if (map.TryGetValue(key, out var l))

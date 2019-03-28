@@ -431,6 +431,7 @@ namespace Cheez
                     switch (member.Type)
                     {
                         case EnumType _:
+                        case ReferenceType _:
                             @struct.SetFlag(StmtFlags.NoDefaultInitializer);
                             break;
 

@@ -2,6 +2,7 @@
 using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types.Primitive;
+using Cheez.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -55,6 +56,7 @@ namespace Cheez.Types.Complex
         {
             Members = members;
 
+            Alignment = 1;
             Size = 0;
             for (int i = 0; i < Members.Length; i++)
             {
@@ -62,18 +64,13 @@ namespace Cheez.Types.Complex
 
                 var ms = m.type.Size;
                 var ma = m.type.Alignment;
-                
-                if (Size % ma != 0)
-                {
-                    var ps = Members[i - 1].type.Size;
-                    var missing = ma / ps;
-                    Size += (missing - 1) * ps;
-                }
 
-                Debug.Assert(Size % ma == 0);
-
+                Alignment = Math.Max(Alignment, ma);
                 Size += ms;
+                Size = Utilities.GetNextAligned(Size, ma);
             }
+
+            Size = Utilities.GetNextAligned(Size, Alignment);
         }
 
         public static TupleType GetTuple((string name, CheezType type)[] members)
@@ -131,16 +128,21 @@ namespace Cheez.Types.Complex
 
         public void CalculateSize()
         {
+            Alignment = 1;
             Size = 0;
             for (int i = 0; i < Declaration.Members.Count; i++)
             {
                 var m = Declaration.Members[i];
-                Size += Math.Max(PointerType.PointerSize, m.Type.Size);
+
+                var ms = m.Type.Size;
+                var ma = m.Type.Alignment;
+
+                Alignment = Math.Max(Alignment, ma);
+                Size += ms;
+                Size = Utilities.GetNextAligned(Size, ma);
             }
 
-            Alignment = Size;
-            if (Alignment == 0)
-                Alignment = 4;
+            Size = Utilities.GetNextAligned(Size, Alignment);
         }
 
         public override string ToString()
@@ -246,8 +248,8 @@ namespace Cheez.Types.Complex
             }
 
             Size = TagType.Size + maxMemberSize;
+            Size = Utilities.GetNextAligned(Size, Alignment);
         }
-
 
         public override string ToString()
         {
@@ -306,6 +308,9 @@ namespace Cheez.Types.Complex
             this.Parameters = parameterTypes;
             this.ReturnType = returnType;
             this.CC = cc;
+
+            Size = PointerType.PointerSize;
+            Alignment = PointerType.PointerAlignment;
         }
 
         public FunctionType(AstFunctionDecl func)
@@ -316,6 +321,9 @@ namespace Cheez.Types.Complex
 
             if (func.TryGetDirective("stdcall", out var dir))
                 this.CC = CallingConvention.Stdcall;
+
+            Size = PointerType.PointerSize;
+            Alignment = PointerType.PointerAlignment;
         }
 
         public override string ToString()
