@@ -305,7 +305,7 @@ namespace Cheez
 
             whl.Body.Scope = whl.SubScope;
             whl.Body.Parent = whl;
-            InferType(whl.Body, CheezType.Void);
+            InferType(whl.Body, null);
         }
 
         private void AnalyseAssignStatement(AstAssignment ass)
