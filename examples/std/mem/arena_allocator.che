@@ -4,14 +4,6 @@
 #load("std:util")
 #load("std:printable")
 
-fn nextAligned(_add: &$T, align: uint) -> &T {
-    let add = cast(uint) _add
-    let mul = add + align - 1
-    mul -= (mul % align)
-    
-    return cast mul
-}
-
 fn align(add: uint, align: uint) -> uint {
     let mul = add + align - 1
     mul -= (mul % align)

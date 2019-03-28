@@ -1,5 +1,13 @@
 #load("std:os/windows")
 
+fn nextAligned(_add: &$T, align: u64) -> &T {
+    let add = cast(u64) _add
+    let mul = add + align - 1
+    mul -= (mul % align)
+    
+    return cast mul
+}
+
 fn pointer_add_sized(ptr: &$T, amount: int) -> &T {
     return cast(&T)((cast(int) ptr) + amount * @sizeof(T))
 }

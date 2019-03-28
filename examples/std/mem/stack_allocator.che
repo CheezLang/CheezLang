@@ -4,14 +4,6 @@
 #load("std:util")
 #load("std:printable")
 
-fn nextAligned(_add: &$T, align: u64) -> &T {
-    let add = cast(u64) _add
-    let mul = add + align - 1
-    mul -= (mul % align)
-    
-    return cast mul
-}
-
 struct StackAllocation {
     offset: u64
     size: u64
