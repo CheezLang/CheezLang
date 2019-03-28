@@ -2,28 +2,6 @@
 #load("std:mem/std_heap_allocator")
 #load("std:hash")
 
-// // use this to create a hash table with a std heap allocator
-// fn create_table(comp: fn(K, K) -> bool) -> Table($K, $V) {
-//     let table: Table(K, V)
-//     table.allocator = new StdHeapAllocator{}
-//     table.comparer = comp
-//     table.max_load = 0.75
-//     table.count = 0
-//     table.entries = (Entry(K, V)&)null
-//     return table
-// }
-
-// // use this to create a hash table with the specified allocator
-// fn create_table_with_alloc(allocator: Allocator, comp: fn(K, K) -> bool) -> Table($K, $V) {
-//     let table: Table(K, V)
-//     table.allocator = allocator
-//     table.comparer = comp
-//     table.max_load = 0.75
-//     table.count = 0
-//     table.entries = (Entry(K, V)&)null
-//     return table
-// }
-
 struct Table(K: type, V: type) {
     max_load: double
     count: uint
@@ -40,7 +18,7 @@ struct Entry(K: type, V: type) {
 }
 
 impl Table($K, $V) {
-    fn create(comp: fn(K, K) -> bool {} = null, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    fn create(comp: fn(K, K) -> bool {}, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         let table: Table(K, V)
         table.allocator = allocator
         table.comparer = comp
@@ -48,7 +26,6 @@ impl Table($K, $V) {
         table.count = 0
         table.entries = null
 
-        // println(<<cast(&int)&table.comparer)
         return table
     }
 
@@ -65,9 +42,7 @@ impl Table($K, $V) {
 
         while true {
             let entry = &the_entries[index]
-            
-            // println(<<cast(&int)&table.comparer)
-            // println(<<cast(&int)&table.comparer)
+
             if !entry.filled {
                 if !entry.is_tombstone {
                     if tombstone != null {
@@ -79,11 +54,7 @@ impl Table($K, $V) {
                 } else if tombstone == null {
                     tombstone = entry
                 }
-            } else if comparer {
-                if comparer(entry.key, key) {
-                    return entry
-                }
-            } else if entry.key == key {
+            } else if comparer(entry.key, key) {
                 return entry
             }
 

@@ -50,6 +50,10 @@ test2 is empty
 #load("std:io/io")
 
 // won't be necessary as soon as we have polymorphic traits
+    fn compare_ints(a: int, b: int) -> bool {
+        return a == b
+    }
+
     fn compare_c_strings(a: c_string, b: c_string) -> bool {
         return streq(a, b)
     }
@@ -79,7 +83,7 @@ fn test(t1: $T1, t2: $T2) {
 }
 
 fn Main() {
-    let t1 = Table(int, c_string)::create()
+    let t1 = Table(int, c_string)::create(compare_ints)
     let t2 = Table(c_string, c_string)::create(compare_c_strings, new StdHeapAllocator{})
 
     t2["first name"c] = "nico"c

@@ -128,8 +128,11 @@ impl StackAllocator {
 
 impl Allocator for StackAllocator {
     fn allocate(ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
-        let nextAddress = pointer_add(memory, cast(i64) self.getNextAllocationOffset())
-        nextAddress = nextAligned(nextAddress, alignment)
+
+        let nextAddress = {
+            let unaligned = pointer_add(memory, cast(i64) self.getNextAllocationOffset())
+            nextAligned(unaligned, alignment)
+        }
 
         let newAllocation = new StackAllocation {
             offset = (cast(u64) nextAddress) - (cast(u64) memory)
