@@ -153,17 +153,25 @@ impl StringBase($CharType) {
         // state    - desc
         // 0        - normal
         // 1        - in format
+        // 2        - escape
 
         while let i = 0; i < len; i += 1 {
             let c = format[i]
 
             if state == 0 {
-                if c == '{' {
+                if c == '``' {
+                    state = 2
+                }
+                else if c == '{' {
                     state = 1
                 }
                 else {
                     self += c
                 }
+            }
+            else if state == 2 {
+                self += c
+                state = 0
             }
             else if state == 1 {
                 if c == '}' {
