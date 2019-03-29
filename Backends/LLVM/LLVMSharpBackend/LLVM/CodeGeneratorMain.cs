@@ -9,7 +9,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 {
     public partial class LLVMCodeGenerator : ICodeGenerator
     {
+        // temp
+        private bool genDebugInfo = true;
+        private LLVMDIBuilderRef dibuilder;
 
+        //
         private Workspace workspace;
         private string targetFile;
         private string intDir;
@@ -88,6 +92,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var pointerSize = pointerType.SizeOf();
             var size = LLVM.SizeOfTypeInBits(targetData, pointerType);
             
+            // create dibuilder for debug info
+            if (genDebugInfo)
+            {
+                //dibuilder = LLVM.NewDIBuilder(module.GetModuleRef());
+                //var file = LLVM.DIBuilderCreateFile(dibuilder, "test.che", ".");
+                //var cu = LLVM.DIBuilderCreateCompileUnit(dibuilder, Dwarf.LANG_C, "test.che", ".", "Cheez Compiler", 0, "", 0);
+
+            }
+
             // generate code
             {
                 GenerateIntrinsicDeclarations();
