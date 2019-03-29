@@ -23,6 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -110,6 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="LLVM\AttributeKind.cs" />
+    <Compile Include="LLVM\DIBuilder.cs" />
     <Compile Include="LLVM\DwarfATE.cs" />
     <Compile Include="LLVM\StatementGenerator.cs" />
     <Compile Include="LLVM\CodeGeneratorHelpers.cs" />

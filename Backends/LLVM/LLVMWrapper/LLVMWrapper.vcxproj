@@ -158,15 +158,7 @@ xcopy $(TargetDir)$(TargetName).pdb $(SolutionDir) /F /Y</Command>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\constant_values.cpp" />
-    <ClCompile Include="src\context.cpp" />
-    <ClCompile Include="src\data_layout.cpp" />
-    <ClCompile Include="src\ir_builder.cpp" />
-    <ClCompile Include="src\module.cpp" />
-    <ClCompile Include="src\target_machine.cpp" />
-    <ClCompile Include="src\types.cpp" />
-    <ClCompile Include="src\value.cpp" />
-    <ClCompile Include="test.cpp" />
+    <ClCompile Include="src\dibuilder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h" />

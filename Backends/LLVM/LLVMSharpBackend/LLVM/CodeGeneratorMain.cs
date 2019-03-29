@@ -11,7 +11,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
     {
         // temp
         private bool genDebugInfo = true;
-        private LLVMDIBuilderRef dibuilder;
+        private DIBuilder dibuilder;
 
         //
         private Workspace workspace;
@@ -95,10 +95,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // create dibuilder for debug info
             if (genDebugInfo)
             {
-                //dibuilder = LLVM.NewDIBuilder(module.GetModuleRef());
-                //var file = LLVM.DIBuilderCreateFile(dibuilder, "test.che", ".");
-                //var cu = LLVM.DIBuilderCreateCompileUnit(dibuilder, Dwarf.LANG_C, "test.che", ".", "Cheez Compiler", 0, "", 0);
+                //dibuilder = new DIBuilder(module);
+                //var file = dibuilder.CreateFile("test.che", "examples/test.che");
+                //var cu = dibuilder.CreateCompileUnit(file, "Cheez Compiler", false);
 
+                //dibuilder.FinalizeBuilder();
             }
 
             // generate code
