@@ -27,10 +27,10 @@ fn Main() {
     let (g, h) = f
 
     c_printf("a: %lld`n", a)
-    c_printf("b: %lld`n", b)
-    c_printf("c: %lld, d: %lld`n", c, d)
-    c_printf("f[0]: %lld, f[1]: %lld`n", f[0], f[1])
-    c_printf("g: %lld, h: %lld`n", g, h)
+    c_printf("b: %lld`n", cast(int)b)
+    c_printf("c: %lld, d: %lld`n", c, cast(int)d)
+    c_printf("f[0]: %lld, f[1]: %lld`n", f[0], cast(int)f[1])
+    c_printf("g: %lld, h: %lld`n", g, cast(int)h)
     
     a = 456
     b = false
@@ -39,10 +39,10 @@ fn Main() {
     (g, h) = f
     
     c_printf("a: %lld`n", a)
-    c_printf("b: %lld`n", b)
-    c_printf("c: %lld, d: %lld`n", c, d)
-    c_printf("f[0]: %lld, f[1]: %lld`n", f[0], f[1])
-    c_printf("g: %lld, h: %lld`n", g, h)
+    c_printf("b: %lld`n", cast(int)b)
+    c_printf("c: %lld, d: %lld`n", c, cast(int)d)
+    c_printf("f[0]: %lld, f[1]: %lld`n", f[0], cast(int)f[1])
+    c_printf("g: %lld, h: %lld`n", g, cast(int)h)
 
     a += 11
     (a, c) += (3, 3)
@@ -50,8 +50,8 @@ fn Main() {
     (a, c) += x
 
     c_printf("a: %lld`n", a)
-    c_printf("b: %lld`n", b)
-    c_printf("c: %lld, d: %lld`n", c, d)
-    c_printf("f[0]: %lld, f[1]: %lld`n", f[0], f[1])
-    c_printf("g: %lld, h: %lld`n", g, h)
+    c_printf("b: %lld`n", cast(int)b)
+    c_printf("c: %lld, d: %lld`n", c, cast(int)d)
+    c_printf("f[0]: %lld, f[1]: %lld`n", f[0], cast(int)f[1])
+    c_printf("g: %lld, h: %lld`n", g, cast(int)h)
 }
