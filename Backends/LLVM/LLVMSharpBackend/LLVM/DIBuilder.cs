@@ -11,27 +11,41 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         [DllImport("LLVMWrapper", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private extern static IntPtr dibuilder_create_compile_unit(IntPtr dibuilder, IntPtr file, string producer, bool isOptimized);
-        
-        private LLVMDIBuilderRef builderRef;
+
+        [DllImport("LLVMWrapper", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private extern static IntPtr dibuilder_new(IntPtr module);
+
+        [DllImport("LLVMWrapper", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private extern static void dibuilder_delete(IntPtr dibuilder);
+
+        [DllImport("LLVMWrapper", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private extern static void dibuilder_finalize(IntPtr dibuilder);
+
+        private IntPtr builderRef;
 
         public DIBuilder(Module module)
         {
-            builderRef = LLVM.NewDIBuilder(module.GetModuleRef());
+            builderRef = dibuilder_new(module.GetModuleRef().Pointer);
+        }
+
+        public void DisposeBuilder()
+        {
+            dibuilder_delete(builderRef);
         }
 
         public void FinalizeBuilder()
         {
-            LLVM.DIBuilderFinalize(builderRef);
+            dibuilder_finalize(builderRef);
         }
 
         public LLVMMetadataRef CreateFile(string filename, string directory)
         {
-            return new LLVMMetadataRef(dibuilder_create_file(builderRef.Pointer, filename, directory));
+            return new LLVMMetadataRef(dibuilder_create_file(builderRef, filename, directory));
         }
 
         public LLVMMetadataRef CreateCompileUnit(LLVMMetadataRef file, string producer, bool isOptimized)
         {
-            return new LLVMMetadataRef(dibuilder_create_compile_unit(builderRef.Pointer, file.Pointer, producer, isOptimized));
+            return new LLVMMetadataRef(dibuilder_create_compile_unit(builderRef, file.Pointer, producer, isOptimized));
         }
     }
 }

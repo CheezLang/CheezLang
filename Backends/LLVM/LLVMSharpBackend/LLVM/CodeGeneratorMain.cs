@@ -107,6 +107,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 //var cu = dibuilder.CreateCompileUnit(file, "Cheez Compiler", false);
 
                 //dibuilder.FinalizeBuilder();
+                //dibuilder.DisposeBuilder();
 
                 //var dibuilder = LLVM.NewDIBuilder(module.GetModuleRef());
                 //LLVM.DIBuilderCreateCompileUnit(dibuilder, Dwarf.LANG_C, "test.che", ".", "Cheez Compiler", 0, "", 0);
