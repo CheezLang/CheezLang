@@ -45,12 +45,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             // :hack
             // TODO: if a function uses more than 4 kb of stack mem this won't work
-            var __chkstk_ms = GenerateIntrinsicDeclaration("___chkstk_ms", LLVM.VoidType());
-            __chkstk_ms.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
-            var b = new IRBuilder();
-            b.PositionBuilderAtEnd(__chkstk_ms.AppendBasicBlock("entry"));
-            b.CreateRetVoid();
-            b.Dispose();
+            //var __chkstk_ms = GenerateIntrinsicDeclaration("___chkstk_ms", LLVM.VoidType());
+            //__chkstk_ms.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
+            //var b = new IRBuilder();
+            //b.PositionBuilderAtEnd(__chkstk_ms.AppendBasicBlock("entry"));
+            //b.CreateRetVoid();
+            //b.Dispose();
         }
 
         private void CreateExit(string msg, int exitCode, params LLVMValueRef[] p)

@@ -224,9 +224,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
             LLVM.FinalizeFunctionPassManager(funcPM);
 
+            // optimize module
+            bool r = false;
             var modPM = LLVM.CreatePassManager();
             LLVM.PassManagerBuilderPopulateModulePassManager(pmBuilder, modPM);
-            var r = LLVM.RunPassManager(modPM, module.GetModuleRef());
+            r = LLVM.RunPassManager(modPM, module.GetModuleRef());
+
+
             return (modifiedFunctions, r);
         }
 
@@ -276,16 +280,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var ltype = LLVM.FunctionType(returnType, new LLVMTypeRef[0], false);
             var lfunc = module.AddFunction(mainFuncName, ltype);
             var entry = lfunc.AppendBasicBlock("entry");
-            var init = lfunc.AppendBasicBlock("init");
             var main = lfunc.AppendBasicBlock("main");
 
             currentLLVMFunction = lfunc;
 
             builder = new IRBuilder();
             builder.PositionBuilderAtEnd(entry);
-            builder.CreateBr(init);
-
-            builder.PositionBuilderAtEnd(init);
 
             {
                 var visited = new HashSet<AstVariableDecl>();
