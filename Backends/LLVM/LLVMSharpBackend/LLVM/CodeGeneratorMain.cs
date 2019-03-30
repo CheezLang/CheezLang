@@ -43,6 +43,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef memcpy32;
         private LLVMValueRef memcpy64;
 
+        // c lib
+        private LLVMValueRef exit;
+        private LLVMValueRef printf;
+
         //
         private LLVMTypeRef pointerType;
         private int pointerSize = 4;
@@ -83,6 +87,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             module = new Module("test-module");
             module.SetTarget(targetTriple);
 
+
+            LLVM.EnablePrettyStackTrace();
+
             context = module.GetModuleContext();
             targetData = module.GetTargetData();
 
@@ -117,6 +124,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     foreach (var function in i.SubScope.FunctionDeclarations)
                         if (!function.IsGeneric)
                             GenerateFunctionHeader(function);
+
+                CreateCLibFunctions();
 
                 SetVTables();
 

@@ -93,6 +93,13 @@ namespace Cheez.Util
             return string.Join("\n", s.Split('\n').Select(line => $"{new string(' ', level)}{line}"));
         }
 
+        public static string Indent(this string s, string indent)
+        {
+            if (s == null)
+                return "";
+            return string.Join("\n", s.Split('\n').Select(line => $"{indent}{line}"));
+        }
+
         public static string Indent(int level)
         {
             if (level == 0)

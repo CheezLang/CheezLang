@@ -708,7 +708,7 @@ namespace Cheez.Parsing
                 {
                     NextToken();
                     SkipNewlines();
-                    ReportError(next.location, "Expected ',' or ')'");
+                    ReportError(next.location, $"Expected ',' or ')', got '{next}'");
                 }
             }
 

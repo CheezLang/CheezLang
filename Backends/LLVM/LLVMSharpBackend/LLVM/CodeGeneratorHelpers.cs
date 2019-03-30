@@ -1,4 +1,5 @@
-﻿using Cheez.Ast.Statements;
+﻿using Cheez.Ast;
+using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types;
 using Cheez.Types.Complex;
@@ -12,6 +13,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 {
     public partial class LLVMCodeGenerator
     {
+        private void CreateCLibFunctions()
+        {
+            exit = module.GetNamedFunction("exit");
+            if (exit.Pointer.ToInt64() == 0)
+                exit = GenerateIntrinsicDeclaration("exit", LLVM.VoidType(), LLVM.Int32Type());
+
+            printf = module.GetNamedFunction("printf");
+            if (printf.Pointer.ToInt64() == 0)
+            {
+                var ltype = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] {
+                    LLVM.PointerType(LLVM.Int8Type(), 0)
+                }, true);
+                printf = module.AddFunction("printf", ltype);
+            }
+        }
+
         private void GenerateIntrinsicDeclarations()
         {
             memcpy32 = GenerateIntrinsicDeclaration("llvm.memcpy.p0i8.p0i8.i32", LLVM.VoidType(),
@@ -26,7 +43,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 LLVM.Int64Type(),
                 LLVM.Int1Type());
 
-
             // :hack
             // TODO: if a function uses more than 4 kb of stack mem this won't work
             var __chkstk_ms = GenerateIntrinsicDeclaration("___chkstk_ms", LLVM.VoidType());
@@ -35,6 +51,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             b.PositionBuilderAtEnd(__chkstk_ms.AppendBasicBlock("entry"));
             b.CreateRetVoid();
             b.Dispose();
+        }
+
+        private void CreateExit(string msg, int exitCode, params LLVMValueRef[] p)
+        {
+            var args = new List<LLVMValueRef>
+            {
+                builder.CreateGlobalStringPtr(msg, "")
+            };
+            args.AddRange(p);
+            var pf = builder.CreateCall(printf, args.ToArray(), "");
+
+            builder.CreateCall(exit, new LLVMValueRef[] {
+                LLVM.ConstInt(LLVM.Int32Type(), (uint)exitCode, true)
+            }, "");
         }
 
         private LLVMValueRef GenerateIntrinsicDeclaration(string name, LLVMTypeRef retType, params LLVMTypeRef[] paramTypes)

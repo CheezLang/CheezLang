@@ -108,6 +108,33 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return result;
             }
 
+            if (cc.Name.Name == "panic")
+            {
+                var message = GenerateExpression(cc.Arguments[0], true);
+                var len = builder.CreateExtractValue(message, 0, "");
+                var str = builder.CreateExtractValue(message, 1, "");
+
+                CreateExit($"[PANIC] {cc.Location.Beginning}: %.*s\n", 1, len, str);
+                return default;
+            }
+
+            if (cc.Name.Name == "assert")
+            {
+                var msg = cc.Arguments[1].Value as string;
+                var cond = GenerateExpression(cc.Arguments[0], true);
+
+                var bbTrue = currentLLVMFunction.AppendBasicBlock("assert_true");
+                var bbFalse = currentLLVMFunction.AppendBasicBlock("assert_false");
+                builder.CreateCondBr(cond, bbTrue, bbFalse);
+
+                builder.PositionBuilderAtEnd(bbFalse);
+                CreateExit($"[ASSERT] {cc.Location.Beginning}: {msg}\n{cc.Arguments[0].ToString().Indent("> ")}\n", 1);
+                builder.CreateUnreachable();
+
+                builder.PositionBuilderAtEnd(bbTrue);
+                return default;
+            }
+
             throw new NotImplementedException();
         }
 

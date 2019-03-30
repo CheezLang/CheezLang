@@ -1100,8 +1100,62 @@ namespace Cheez
 
         private AstExpression InferTypeCompCall(AstCompCallExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            AstExpression InferArg(int index, CheezType e)
+            {
+                var arg = expr.Arguments[index];
+                arg.AttachTo(expr);
+                arg = InferTypeHelper(arg, e, context);
+                ConvertLiteralTypeToDefaultType(arg, e);
+                arg = HandleReference(arg, e, context);
+                arg = CheckType(arg, e);
+
+                return expr.Arguments[index] = arg;
+            }
+
             switch (expr.Name.Name)
             {
+                case "panic":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr, $"@panic requires one argument");
+                            return expr;
+                        }
+
+                        InferArg(0, CheezType.String);
+
+                        expr.Type = CheezType.Void;
+                        break;
+                    }
+
+                case "assert":
+                    {
+                        string msg = "Assertion failed";
+
+                        if (expr.Arguments.Count < 1 || expr.Arguments.Count > 2)
+                        {
+                            ReportError(expr, $"Wrong number of arguments to @assert(condition: bool, message: string = \"{msg}\")");
+                            return expr;
+                        }
+
+                        InferArg(0, CheezType.Bool);
+
+                        if (expr.Arguments.Count >= 1)
+                        {
+                            var arg = InferArg(1, CheezType.String);
+                            if (!arg.IsCompTimeValue)
+                            {
+                                ReportError(arg, $"Argument must be a compile time constant");
+                                return expr;
+                            }
+                            msg = arg.Value as string;
+                        }
+
+                        expr.Type = CheezType.Void;
+                        break;
+                    }
+
+
                 case "static_assert":
                     {
                         AstExpression cond = null, message = null;
