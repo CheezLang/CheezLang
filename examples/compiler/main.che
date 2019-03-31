@@ -6,11 +6,11 @@
 #load("std:util")
 #load("std:mem/arena_allocator")
 
-#load("compiler/token")
-#load("compiler/lexer")
-#load("compiler/string_database")
-#load("compiler/cheez_compiler")
-#load("compiler/parser")
+#load("token")
+#load("lexer")
+#load("string_database")
+#load("cheez_compiler")
+#load("parser")
 
 fn Main() {
     let compiler = CheezCompiler::create()
