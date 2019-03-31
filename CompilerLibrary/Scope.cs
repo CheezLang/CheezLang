@@ -14,8 +14,9 @@ using System.Linq;
 
 namespace Cheez
 {
-    public interface ISymbol : INamed
+    public interface ISymbol
     {
+        AstIdExpr Name { get; }
         //CheezType Type { get; }
         ILocation Location { get; }
     }

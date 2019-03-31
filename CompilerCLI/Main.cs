@@ -76,6 +76,9 @@ namespace CheezCLI
 
         [Option("test", Default = false, HelpText = "Run the program as a test.")]
         public bool RunAsTest { get; set; }
+
+        [Option("trace-stack", Default = false, HelpText = "Enable stacktrace (potentially big impact on performance): --trace-stack")]
+        public bool EnableStackTrace { get; set; }
     }
 
     class Prog
@@ -157,7 +160,7 @@ namespace CheezCLI
             if (options.OutName == null)
                 options.OutName = Path.GetFileNameWithoutExtension(options.Files.First());
 
-            //Console.WriteLine(Parser.Default.FormatCommandLine(options));
+            Console.WriteLine(Parser.Default.FormatCommandLine(options));
 
             IErrorHandler errorHandler = new ConsoleErrorHandler();
             if (options.NoErrors)
@@ -317,7 +320,7 @@ namespace CheezCLI
         private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace, IErrorHandler errorHandler)
         {
 
-            ICodeGenerator generator = new LLVMCodeGenerator();
+            ICodeGenerator generator = new LLVMCodeGenerator(options.EnableStackTrace);
             bool success = generator.GenerateCode(workspace, options.IntDir, options.OutDir, options.OutName, options.Optimize, options.EmitLLVMIR);
             if (!success)
                 return false;

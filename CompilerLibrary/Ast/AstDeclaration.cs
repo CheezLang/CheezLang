@@ -346,7 +346,7 @@ namespace Cheez.Ast.Statements
         public AstEnumMember Clone() => new AstEnumMember(Name.Clone() as AstIdExpr, AssociatedTypeExpr?.Clone(), Value?.Clone());
     }
 
-    public class AstEnumDecl : AstDecl, INamed
+    public class AstEnumDecl : AstDecl
     {
         public Scope SubScope { get; set; }
         public List<AstEnumMember> Members { get; }

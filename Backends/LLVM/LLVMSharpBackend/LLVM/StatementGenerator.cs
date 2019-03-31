@@ -71,6 +71,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             currentFunction = function;
 
+            keepTrackOfStackTrace = !function.HasDirective("nostacktrace") && enableStackTrace;
+
             var lfunc = valueMap[function];
             currentLLVMFunction = lfunc;
 

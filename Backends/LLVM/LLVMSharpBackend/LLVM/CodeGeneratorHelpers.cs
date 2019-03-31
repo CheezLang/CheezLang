@@ -30,6 +30,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private void PushStackTrace(AstFunctionDecl function)
         {
             var stackEntry = builder.CreateAlloca(stackTraceType, "stack_entry");
+            stackEntry.SetAlignment(8);
+
             var previousPointer = builder.CreateStructGEP(stackEntry, 0, "stack_entry.previous.ptr");
             var functionNamePointer = builder.CreateStructGEP(stackEntry, 1, "stack_entry.function.ptr");
             var locationPointer = builder.CreateStructGEP(stackEntry, 2, "stack_entry.location.ptr");
