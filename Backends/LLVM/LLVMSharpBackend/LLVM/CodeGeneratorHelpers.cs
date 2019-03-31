@@ -13,6 +13,105 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 {
     public partial class LLVMCodeGenerator
     {
+        private void CreateStackTraceFunctions()
+        {
+            stackTraceType = LLVM.StructCreateNamed(module.GetModuleContext(), "stacktrace.type");
+            stackTraceType.StructSetBody(new LLVMTypeRef[]
+            {
+                LLVM.PointerType(stackTraceType, 0),
+                LLVM.PointerType(LLVM.Int8Type(), 0),
+                LLVM.PointerType(LLVM.Int8Type(), 0)
+            }, false);
+
+            stackTraceTop = module.AddGlobal(LLVM.PointerType(stackTraceType, 0), "stacktrace.top");
+            stackTraceTop.SetInitializer(LLVM.ConstPointerNull(LLVM.PointerType(stackTraceType, 0)));
+
+            //var push = module.AddFunction("st.push", LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { LLVM.PointerType(LLVM.Int8Type(), 0) }, false));
+            //var pop = module.AddFunction("st.pop", LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[0], false));
+
+            //var builder = new IRBuilder(module.GetModuleContext());
+
+            //// push
+            //{
+            //    var entry = push.AppendBasicBlock("entry");
+            //}
+        }
+
+        private void PushStackTrace(AstFunctionDecl function)
+        {
+            var stackEntry = builder.CreateAlloca(stackTraceType, "stack_entry");
+            var previousPointer = builder.CreateStructGEP(stackEntry, 0, "stack_entry.previous.ptr");
+            var functionNamePointer = builder.CreateStructGEP(stackEntry, 1, "stack_entry.function.ptr");
+            var locationPointer = builder.CreateStructGEP(stackEntry, 2, "stack_entry.location.ptr");
+
+            var previous = builder.CreateLoad(stackTraceTop, "stack_trace.top");
+            builder.CreateStore(previous, previousPointer);
+
+            builder.CreateStore(builder.CreateGlobalStringPtr($"{function.Name.Name}", ""), functionNamePointer);
+            builder.CreateStore(builder.CreateGlobalStringPtr($"{function.Beginning}", ""), locationPointer);
+
+            // save current global
+            builder.CreateStore(stackEntry, stackTraceTop);
+        }
+
+        private void UpdateStackTracePosition(ILocation location)
+        {
+            var current = builder.CreateLoad(stackTraceTop, "");
+            var locationPtr = builder.CreateStructGEP(current, 2, "");
+            builder.CreateStore(builder.CreateGlobalStringPtr(location.Beginning.ToString(), ""), locationPtr);
+        }
+
+        private void PopStackTrace()
+        {
+            var current = builder.CreateLoad(stackTraceTop, "stack_trace.top");
+            var previousPtr = builder.CreateStructGEP(current, 0, "stack_trace.previous.ptr");
+            var previous = builder.CreateLoad(previousPtr, "stack_trace.previous");
+            builder.CreateStore(previous, stackTraceTop);
+        }
+
+        private void PrintStackTrace()
+        {
+            builder.CreateCall(printf, new LLVMValueRef[] { builder.CreateGlobalStringPtr("at\n", "") }, "");
+
+            var bbCond = currentLLVMFunction.AppendBasicBlock("stack_trace.print.cond");
+            var bbBody = currentLLVMFunction.AppendBasicBlock("stack_trace.print.body");
+            var bbEnd = currentLLVMFunction.AppendBasicBlock("stack_trace.print.end");
+
+            var currentTop = CreateLocalVariable(LLVM.PointerType(stackTraceType, 0), "stack_trace.print.current");
+            {
+                var v = builder.CreateLoad(stackTraceTop, "");
+                builder.CreateStore(v, currentTop);
+            }
+
+            builder.CreateBr(bbCond);
+            builder.PositionBuilderAtEnd(bbCond);
+
+            // get current stack top
+            var current = builder.CreateLoad(currentTop, "");
+            var isNull = builder.CreateIsNull(current, "");
+            builder.CreateCondBr(isNull, bbEnd, bbBody);
+
+            builder.PositionBuilderAtEnd(bbBody);
+            // print current entry
+            {
+                var namePtr = builder.CreateStructGEP(current, 1, "");
+                var name = builder.CreateLoad(namePtr, "");
+                var locationPtr = builder.CreateStructGEP(current, 2, "");
+                var location = builder.CreateLoad(locationPtr, "");
+                LLVMValueRef[] args = { builder.CreateGlobalStringPtr("  %s (%s)\n", ""), name, location };
+                builder.CreateCall(printf, args, "");
+            }
+            // load previous entry
+            {
+                var previousPtr = builder.CreateStructGEP(current, 0, "");
+                var previous = builder.CreateLoad(previousPtr, "");
+                builder.CreateStore(previous, currentTop);
+            }
+            builder.CreateBr(bbCond);
+
+            builder.PositionBuilderAtEnd(bbEnd);
+        }
+
         private void CreateCLibFunctions()
         {
             exit = module.GetNamedFunction("exit");
@@ -42,15 +141,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 LLVM.Int8Type().GetPointerTo(),
                 LLVM.Int64Type(),
                 LLVM.Int1Type());
-
-            // :hack
-            // TODO: if a function uses more than 4 kb of stack mem this won't work
-            //var __chkstk_ms = GenerateIntrinsicDeclaration("___chkstk_ms", LLVM.VoidType());
-            //__chkstk_ms.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
-            //var b = new IRBuilder();
-            //b.PositionBuilderAtEnd(__chkstk_ms.AppendBasicBlock("entry"));
-            //b.CreateRetVoid();
-            //b.Dispose();
         }
 
         private void CreateExit(string msg, int exitCode, params LLVMValueRef[] p)
@@ -61,6 +151,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             };
             args.AddRange(p);
             var pf = builder.CreateCall(printf, args.ToArray(), "");
+
+            if (keepTrackOfStackTrace)
+                PrintStackTrace();
 
             builder.CreateCall(exit, new LLVMValueRef[] {
                 LLVM.ConstInt(LLVM.Int32Type(), (uint)exitCode, true)
@@ -113,6 +206,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef CreateLocalVariable(CheezType exprType, string name = "")
         {
+            return CreateLocalVariable(CheezTypeToLLVMType(exprType));
+        }
+
+        private LLVMValueRef CreateLocalVariable(LLVMTypeRef type, string name = "")
+        {
             var builder = new IRBuilder();
 
             var bb = currentLLVMFunction.GetFirstBasicBlock();
@@ -121,8 +219,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 builder.PositionBuilderAtEnd(bb);
             else
                 builder.PositionBuilderBefore(brInst);
-
-            var type = CheezTypeToLLVMType(exprType);
+            
             var result = builder.CreateAlloca(type, name);
             var alignment = targetData.AlignmentOfType(type);
             result.SetAlignment(alignment);

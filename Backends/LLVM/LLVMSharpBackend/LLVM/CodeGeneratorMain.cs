@@ -11,7 +11,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
     {
         // temp
         private bool genDebugInfo = true;
-        private DIBuilder dibuilder;
 
         //
         private Workspace workspace;
@@ -33,6 +32,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
         private Dictionary<AstWhileStmt, LLVMBasicBlockRef> loopEndMap = new Dictionary<AstWhileStmt, LLVMBasicBlockRef>();
         private Dictionary<AstWhileStmt, LLVMBasicBlockRef> loopPostActionMap = new Dictionary<AstWhileStmt, LLVMBasicBlockRef>();
+
+        // stack trace
+        private bool keepTrackOfStackTrace = false;
+        private LLVMTypeRef stackTraceType;
+        private LLVMValueRef stackTraceTop;
 
         // vtable stuff
         private LLVMTypeRef vtableType;
@@ -130,6 +134,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             GenerateFunctionHeader(function);
 
                 CreateCLibFunctions();
+                CreateStackTraceFunctions();
 
                 SetVTables();
 

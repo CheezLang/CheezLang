@@ -80,6 +80,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 // allocate space for parameters and return values on stack
                 builder.PositionBuilderAtEnd(bbParams);
+
+                if (keepTrackOfStackTrace)
+                {
+                    PushStackTrace(function);
+                }
+
                 for (int i = 0; i < function.Parameters.Count; i++)
                 {
                     var param = function.Parameters[i];
@@ -125,7 +131,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 // ret if void
                 if (function.ReturnValue == null)
+                {
+                    if (keepTrackOfStackTrace)
+                        PopStackTrace();
                     builder.CreateRetVoid();
+                }
                 builder.Dispose();
             }
 
@@ -346,16 +356,24 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 var return_var = valueMap[currentFunction.ReturnValue];
                 var retval = GenerateExpression(ret.ReturnValue, true);
+
+                if (keepTrackOfStackTrace)
+                    PopStackTrace();
                 builder.CreateRet(retval);
             }
             else if (currentFunction.ReturnValue != null)
             {
                 var retVal = valueMap[currentFunction.ReturnValue];
                 retVal = builder.CreateLoad(retVal, "");
+
+                if (keepTrackOfStackTrace)
+                    PopStackTrace();
                 builder.CreateRet(retVal);
             }
             else
             {
+                if (keepTrackOfStackTrace)
+                    PopStackTrace();
                 builder.CreateRetVoid();
             }
         }

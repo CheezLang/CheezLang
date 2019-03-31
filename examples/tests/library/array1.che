@@ -85,9 +85,9 @@ fn Main() {
     a += 3 + 5
     print_array(a)
 
-    if let (ok, value) = a.get(-1); ok { c_printf("a[%lld] = %lld`n", -1, value) }
-    if let (ok, value) = a.get(5); ok { c_printf("a[%lld] = %lld`n", 5, value) }
-    if let (ok, value) = a.get(20); ok { c_printf("a[%lld] = %lld`n", 20, value) }
+    match a.get(-1) { Some($value)  -> c_printf("a[%lld] = %lld`n", -1, value) }
+    match a.get(5)  { Some($value)  -> c_printf("a[%lld] = %lld`n", 5, value) }
+    match a.get(20) { Some($value)  -> c_printf("a[%lld] = %lld`n", 20, value) }
     c_printf("`n")
     
     a.free()

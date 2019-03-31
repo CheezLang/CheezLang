@@ -114,6 +114,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var len = builder.CreateExtractValue(message, 0, "");
                 var str = builder.CreateExtractValue(message, 1, "");
 
+                if (keepTrackOfStackTrace)
+                    UpdateStackTracePosition(cc);
                 CreateExit($"[PANIC] {cc.Location.Beginning}: %.*s\n", 1, len, str);
                 return default;
             }
@@ -128,8 +130,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 builder.CreateCondBr(cond, bbTrue, bbFalse);
 
                 builder.PositionBuilderAtEnd(bbFalse);
+
+                if (keepTrackOfStackTrace)
+                    UpdateStackTracePosition(cc);
                 CreateExit($"[ASSERT] {cc.Location.Beginning}: {msg}\n{cc.Arguments[0].ToString().Indent("> ")}\n", 1);
-                builder.CreateUnreachable();
 
                 builder.PositionBuilderAtEnd(bbTrue);
                 return default;
@@ -989,6 +993,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var traitCall = builder.CreateCall(funcPointer, arguments.ToArray(), "");
                 LLVM.SetInstructionCallConv(traitCall, LLVM.GetFunctionCallConv(funcPointer));
 
+                if (keepTrackOfStackTrace)
+                    UpdateStackTracePosition(c);
                 return traitCall;
             }
 
@@ -1011,6 +1017,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // arguments
             var args = c.Arguments.Select(a => GenerateExpression(a, true)).ToArray();
 
+            if (keepTrackOfStackTrace)
+                UpdateStackTracePosition(c);
             var call = builder.CreateCall(func, args, "");
             var callConv = LLVM.GetFunctionCallConv(func);
             LLVM.SetInstructionCallConv(call, callConv);

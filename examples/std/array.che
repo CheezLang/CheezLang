@@ -1,16 +1,16 @@
 #load("std:mem/memory")
-// #load("std:mem/allocator")
-// #load("std:mem/std_heap_allocator")
+#load("std:mem/allocator")
+#load("std:mem/std_heap_allocator")
 
 struct Array(T: type) {
     data: []T
     length: int
-    // allocator: Allocator
+    allocator: Allocator
 }
 
 impl Array($T) {
-    fn create(initial_capacity: int = 10) -> Self {
-        let s = new Array(T) { null, 0 }
+    fn create(initial_capacity: int = 10, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+        let s = new Array(T) { null, 0, allocator }
         s.reserve(initial_capacity)
         c_memset(cast s.get_raw(), 0, cast(uint) (s.get_capacity() * @sizeof(T)))
         return s
@@ -22,7 +22,7 @@ impl Array($T) {
         }
 
         data.length = size
-        data.data = cast c_realloc(cast data.data, cast(uint) (size * @sizeof(T)))
+        data = realloc_n(data, cast size)
 
         if size > length {
             c_memset(cast &data[length], 0, cast(uint) ((size - length) * @sizeof(T)))
@@ -34,7 +34,7 @@ impl Array($T) {
     }
 
     fn free(ref Self) {
-        c_free(cast data.data)
+        free_n(data)
         data = null
         length = 0
     }
@@ -65,13 +65,11 @@ impl Array($T) {
         length += 1
     }
 
-    fn get(ref Self, index: int) -> (ok: bool, value: T) {
+    fn get(ref Self, index: int) -> Option(T) {
         if index < 0 or index >= length {
-            ok = false
-            value = 0
+            return None
         } else {
-            ok = true
-            value = data[index]
+            return Some(data[index])
         }
     }
 
@@ -81,6 +79,7 @@ impl Array($T) {
     }
 
     fn sliceFL(ref Self, from: int, len: int) -> []T {
+        @assert(from >= 0 and len >= 0 and from + len < length, "Invalid range")
         let slice: []T = &data[from]
         slice.length = len
         return slice
