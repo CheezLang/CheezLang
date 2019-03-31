@@ -18,7 +18,7 @@ fn Main() {
     match Lexer::from_file("test.che", compiler) {
         Ok($l) -> {
             let parser = Parser::create(compiler, l)
-            let start = getCurrentTimeInMilliseconds()
+            let start = get_time_milliseconds()
             while true {
                 let stmt = parser.parse_statement()
                 match stmt {
@@ -32,7 +32,7 @@ fn Main() {
                 }
             }
 
-            let end = getCurrentTimeInMilliseconds()
+            let end = get_time_milliseconds()
             let elapsed = ((cast(double)end) - (cast(double)start)) / 1000.0
             printfln("elapsed: {}", [elapsed])
             l.dispose()

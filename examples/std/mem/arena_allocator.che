@@ -19,14 +19,14 @@ struct Bucket {
 
 impl Bucket {
     fn can_store(ref Self, size: uint, align: uint) -> bool {
-        let next_address = nextAligned(pointer_add(memory.data, cast(int)filled), align)
+        let next_address = next_aligned(pointer_add(memory.data, cast(int)filled), align)
         let next_offset = (cast(uint)next_address) - (cast(uint)memory.data)
         let free = (cast(uint)memory.length) - next_offset
         return free >= size
     }
 
     fn allocate(ref Self, size: uint, align: uint) -> &u8 {
-        let next_address = nextAligned(pointer_add(memory.data, cast(int)filled), align)
+        let next_address = next_aligned(pointer_add(memory.data, cast(int)filled), align)
         let next_offset = (cast(uint)next_address) - (cast(uint)memory.data)
         filled = next_offset + size
         return next_address

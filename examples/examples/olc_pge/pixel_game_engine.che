@@ -146,8 +146,8 @@ impl PixelGameEngine {
             active = false
         }
 
-        let tp1 = getCurrentTimeInMicroseconds()
-        let tp2 = getCurrentTimeInMicroseconds()
+        let tp1 = get_time_microseconds()
+        let tp2 = get_time_microseconds()
 
         let fps_string = String::empty()
 
@@ -160,7 +160,7 @@ impl PixelGameEngine {
                     DispatchMessageA(&msg)
                 }
                 // Handle Timing
-                tp2 = getCurrentTimeInMicroseconds()
+                tp2 = get_time_microseconds()
                 let fElapsedTime = cast(float) (cast(double) tp2 - tp1) * 0.000001
                 tp1 = tp2
 

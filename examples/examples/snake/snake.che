@@ -80,7 +80,7 @@ fn snake()
     glfwSwapInterval(0)
 
     //
-    let rand = LinearCongruentialGenerator::create(cast getCurrentTimeInMilliseconds())
+    let rand = LinearCongruentialGenerator::create(cast get_time_milliseconds())
 
     let xMax = cast(int)(width / gridSize)
     let yMax = cast(int)(height / gridSize)

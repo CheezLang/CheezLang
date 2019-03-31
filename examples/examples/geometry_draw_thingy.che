@@ -1,8 +1,7 @@
 #load("olc_pge/pixel_game_engine")
 #load("std:io/io")
 #load("std:array")
-
-fn ___chkstk_ms() #extern #linkname("___chkstk_ms") {}
+#load("std:alloca")
 
 typedef float2 = Vector2(float)
 

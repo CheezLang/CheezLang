@@ -400,7 +400,7 @@ impl Film {
         
 
         let r = new LinearCongruentialGenerator{
-            cast getCurrentTimeInMicroseconds()
+            cast get_time_microseconds()
         }
 
         while let y = 0; y < height; y += 1 {
@@ -627,9 +627,9 @@ fn Main()
 
     let film = new Film { width, height, imageArr.slice(), antiAliasingSteps }
 
-    let start = getCurrentTimeInMilliseconds()
+    let start = get_time_milliseconds()
     renderImage(film)
-    let end = getCurrentTimeInMilliseconds()
+    let end = get_time_milliseconds()
     let dur = (cast(double) end - start) / 1000.0
 
     printf("Rendering took {} seconds`n", [dur])

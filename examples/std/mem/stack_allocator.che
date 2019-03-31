@@ -123,7 +123,7 @@ impl Allocator for StackAllocator {
 
         let nextAddress = {
             let unaligned = pointer_add(memory, cast(i64) self.getNextAllocationOffset())
-            nextAligned(unaligned, alignment)
+            next_aligned(unaligned, alignment)
         }
 
         let newAllocation = new StackAllocation {

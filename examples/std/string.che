@@ -6,6 +6,7 @@
 #load("std:c")
 #load("std:mem/allocator")
 #load("std:mem/std_heap_allocator")
+#load("std:alloca")
 
 struct StringBase(CharType: type) {
     data: []CharType
@@ -24,7 +25,7 @@ impl StringBase($CharType) {
     fn from_raw_ptr(ptr: &CharType, cap: int) -> Self {
         let sl: []CharType = ptr
         sl.length = cap
-        return new { sl, 0, null }
+        return new { sl, 0, DEFAULT_STD_HEAP_ALLOCATOR }
     }
 
     fn from_string(str: string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
@@ -146,8 +147,10 @@ impl StringBase($CharType) {
     }
 
     fn appendf(ref Self, format: string, args: []Printable) {
-        let formatSpecifier = String::empty()
-        formatSpecifier.reserve(10)
+        let formatSpecifier = {
+            let const len = 64
+            String::from_raw_ptr(@alloca(char, len), len)
+        }
 
         let len = format.length
         let state = 0
@@ -210,8 +213,6 @@ impl StringBase($CharType) {
                 }
             }
         }
-
-        formatSpecifier.free()
     }
 
     fn format(format: string, args: []Printable) -> Self {

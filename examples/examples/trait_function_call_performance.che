@@ -53,14 +53,14 @@ fn Main() {
     {
         t.counter = 0
 
-        let start = getCurrentTimeInMicroseconds()
+        let start = get_time_microseconds()
 
         while let i = 0; i < iterations; i += 1 {
             t.normalFunction(cast(u64)n)
         }
 
         {
-            let end = getCurrentTimeInMicroseconds()
+            let end = get_time_microseconds()
             let diff = end - start
             let ms = diff / 1000
 
@@ -74,14 +74,14 @@ fn Main() {
     {
         t.counter = 0
 
-        let start = getCurrentTimeInMicroseconds()
+        let start = get_time_microseconds()
 
         while let i = 0; i < iterations; i += 1 {
             t.refFunction(cast(u64)n)
         }
 
         {
-            let end = getCurrentTimeInMicroseconds()
+            let end = get_time_microseconds()
             let diff = end - start
             let ms = diff / 1000
 
@@ -94,14 +94,14 @@ fn Main() {
     {
         t.counter = 0
 
-        let start = getCurrentTimeInMicroseconds()
+        let start = get_time_microseconds()
 
         while let i = 0; i < iterations; i += 1 {
             t.traitFunction(cast(u64)n)
         }
 
         {
-            let end = getCurrentTimeInMicroseconds()
+            let end = get_time_microseconds()
             let diff = end - start
             let ms = diff / 1000
 
@@ -116,14 +116,14 @@ fn Main() {
     {
         t.counter = 0
 
-        let start = getCurrentTimeInMicroseconds()
+        let start = get_time_microseconds()
 
         while let i = 0; i < iterations; i += 1 {
             tt.traitFunction(cast(u64)n)
         }
 
         {
-            let end = getCurrentTimeInMicroseconds()
+            let end = get_time_microseconds()
             let diff = end - start
             let ms = diff / 1000
 
