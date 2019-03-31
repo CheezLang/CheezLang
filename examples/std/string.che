@@ -4,40 +4,43 @@
 #load("std:io/io")
 #load("std:printable")
 #load("std:c")
+#load("std:mem/allocator")
+#load("std:mem/std_heap_allocator")
 
 struct StringBase(CharType: type) {
     data: []CharType
     length: int
+    allocator: Allocator
 }
 
 typedef String = StringBase(char)
 typedef Utf32String = StringBase(i32)
 
 impl StringBase($CharType) {
-    fn empty() -> Self {
-        return new { null, 0 }
+    fn empty(allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+        return new { null, 0, allocator }
     }
 
     fn from_raw_ptr(ptr: &CharType, cap: int) -> Self {
         let sl: []CharType = ptr
         sl.length = cap
-        return new { sl, 0 }
+        return new { sl, 0, null }
     }
 
-    fn from_string(str: string) -> Self {
-        let s = Self::empty()
+    fn from_string(str: string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+        let s = Self::empty(allocator)
         s.append_string(str)
         return s
     }
 
-    fn from_cstring(str: c_string) -> Self {
-        let s = Self::empty()
+    fn from_cstring(str: c_string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+        let s = Self::empty(allocator)
         s.append_cstring(str)
         return s
     }
 
     fn free(ref Self) {
-        c_free(cast data.data)
+        free_n(data)
         data = null
         length = 0
     }
@@ -66,10 +69,10 @@ impl StringBase($CharType) {
         data.length = size
         if data.data == null {
             length = 0
-            data.data = cast c_malloc(cast(uint) (size * @sizeof(CharType)))
+            data = alloc_n(CharType, cast size, allocator)
         }
         else {
-            data.data = cast c_realloc(cast data.data, cast(uint) (size * @sizeof(CharType)))
+            data = realloc_n(data, cast size, allocator)
             if length > data.length {
                 length = data.length
             }

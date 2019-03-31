@@ -22,7 +22,7 @@ impl Array($T) {
         }
 
         data.length = size
-        data = realloc_n(data, cast size)
+        data = realloc_n(data, cast size, allocator)
 
         if size > length {
             c_memset(cast &data[length], 0, cast(uint) ((size - length) * @sizeof(T)))
@@ -34,7 +34,7 @@ impl Array($T) {
     }
 
     fn free(ref Self) {
-        free_n(data)
+        free_n(data, allocator)
         data = null
         length = 0
     }
