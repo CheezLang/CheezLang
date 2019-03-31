@@ -79,7 +79,7 @@ impl Array($T) {
     }
 
     fn sliceFL(ref Self, from: int, len: int) -> []T {
-        @assert(from >= 0 and len >= 0 and from + len < length, "Invalid range")
+        @assert(from >= 0 and len >= 0 and from + len <= length, "Invalid range")
         let slice: []T = &data[from]
         slice.length = len
         return slice

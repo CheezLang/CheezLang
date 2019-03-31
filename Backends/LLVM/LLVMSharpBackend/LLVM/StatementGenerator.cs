@@ -46,6 +46,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (function.Body != null)
                 lfunc.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
 
+            if (function.HasDirective("extern"))
+            {
+                lfunc.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
+            }
+
             // TODO
             //lfunc.AddFunctionAttribute(context, LLVMAttributeKind.NoInline);
             lfunc.AddFunctionAttribute(context, LLVMAttributeKind.NoUnwind);

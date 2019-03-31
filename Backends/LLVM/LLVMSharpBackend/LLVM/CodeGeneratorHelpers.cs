@@ -13,7 +13,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 {
     public partial class LLVMCodeGenerator
     {
-        private void CreateStackTraceFunctions()
+        private void SetupStackTraceStuff()
         {
             stackTraceType = LLVM.StructCreateNamed(module.GetModuleContext(), "stacktrace.type");
             stackTraceType.StructSetBody(new LLVMTypeRef[]
@@ -25,16 +25,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             stackTraceTop = module.AddGlobal(LLVM.PointerType(stackTraceType, 0), "stacktrace.top");
             stackTraceTop.SetInitializer(LLVM.ConstPointerNull(LLVM.PointerType(stackTraceType, 0)));
-
-            //var push = module.AddFunction("st.push", LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { LLVM.PointerType(LLVM.Int8Type(), 0) }, false));
-            //var pop = module.AddFunction("st.pop", LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[0], false));
-
-            //var builder = new IRBuilder(module.GetModuleContext());
-
-            //// push
-            //{
-            //    var entry = push.AppendBasicBlock("entry");
-            //}
         }
 
         private void PushStackTrace(AstFunctionDecl function)
@@ -54,19 +44,33 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.CreateStore(stackEntry, stackTraceTop);
         }
 
-        private void UpdateStackTracePosition(ILocation location)
-        {
-            var current = builder.CreateLoad(stackTraceTop, "");
-            var locationPtr = builder.CreateStructGEP(current, 2, "");
-            builder.CreateStore(builder.CreateGlobalStringPtr(location.Beginning.ToString(), ""), locationPtr);
-        }
-
         private void PopStackTrace()
         {
             var current = builder.CreateLoad(stackTraceTop, "stack_trace.top");
             var previousPtr = builder.CreateStructGEP(current, 0, "stack_trace.previous.ptr");
             var previous = builder.CreateLoad(previousPtr, "stack_trace.previous");
             builder.CreateStore(previous, stackTraceTop);
+        }
+
+        private void UpdateStackTracePosition(ILocation location)
+        {
+            // right now we're checking if the current stack entry is not null, 
+            // but this should not be necessary. I think there's a bug somewhere else related to that.
+            // Maybe we generate this code in places where the current stack top pointer can point to null.
+            var current = builder.CreateLoad(stackTraceTop, "");
+
+            var bbDo = currentLLVMFunction.AppendBasicBlock("stack_trace.update.do");
+            var bbEnd = currentLLVMFunction.AppendBasicBlock("stack_trace.update.end");
+
+            var isNull = builder.CreateIsNull(current, "");
+            builder.CreateCondBr(isNull, bbEnd, bbDo);
+
+            builder.PositionBuilderAtEnd(bbDo);
+            var locationPtr = builder.CreateStructGEP(current, 2, "");
+            builder.CreateStore(builder.CreateGlobalStringPtr(location.Beginning.ToString(), ""), locationPtr);
+            builder.CreateBr(bbEnd);
+
+            builder.PositionBuilderAtEnd(bbEnd);
         }
 
         private void PrintStackTrace()

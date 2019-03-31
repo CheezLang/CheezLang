@@ -2,6 +2,8 @@
 #load("std:io/io")
 #load("std:array")
 
+fn ___chkstk_ms() #extern #linkname("___chkstk_ms") {}
+
 typedef float2 = Vector2(float)
 
 struct Node {

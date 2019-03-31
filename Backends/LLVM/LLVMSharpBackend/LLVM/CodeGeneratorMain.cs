@@ -34,7 +34,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private Dictionary<AstWhileStmt, LLVMBasicBlockRef> loopPostActionMap = new Dictionary<AstWhileStmt, LLVMBasicBlockRef>();
 
         // stack trace
-        private bool keepTrackOfStackTrace = false;
+        private bool keepTrackOfStackTrace = true;
         private LLVMTypeRef stackTraceType;
         private LLVMValueRef stackTraceTop;
 
@@ -134,7 +134,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             GenerateFunctionHeader(function);
 
                 CreateCLibFunctions();
-                CreateStackTraceFunctions();
+                SetupStackTraceStuff();
 
                 SetVTables();
 
