@@ -29,6 +29,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void PushStackTrace(AstFunctionDecl function)
         {
+            if (!keepTrackOfStackTrace)
+                return;
             var stackEntry = builder.CreateAlloca(stackTraceType, "stack_entry");
             stackEntry.SetAlignment(8);
 
@@ -48,6 +50,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void PopStackTrace()
         {
+            if (!keepTrackOfStackTrace)
+                return;
             var current = builder.CreateLoad(stackTraceTop, "stack_trace.top");
             var previousPtr = builder.CreateStructGEP(current, 0, "stack_trace.previous.ptr");
             var previous = builder.CreateLoad(previousPtr, "stack_trace.previous");
@@ -56,6 +60,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void UpdateStackTracePosition(ILocation location)
         {
+            if (!keepTrackOfStackTrace)
+                return;
+
             // right now we're checking if the current stack entry is not null, 
             // but this should not be necessary. I think there's a bug somewhere else related to that.
             // Maybe we generate this code in places where the current stack top pointer can point to null.
@@ -77,6 +84,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void PrintStackTrace()
         {
+            if (!keepTrackOfStackTrace)
+                return;
+
             builder.CreateCall(printf, new LLVMValueRef[] { builder.CreateGlobalStringPtr("at\n", "") }, "");
 
             var bbCond = currentLLVMFunction.AppendBasicBlock("stack_trace.print.cond");
@@ -118,6 +128,23 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.PositionBuilderAtEnd(bbEnd);
         }
 
+        private void CheckPointerNull(LLVMValueRef pointer, ILocation location, string message)
+        {
+            var bbNull = currentLLVMFunction.AppendBasicBlock("cpn.null");
+            var bbEnd = currentLLVMFunction.AppendBasicBlock("cpn.end");
+
+            var isNull = builder.CreateIsNull(pointer, "");
+            builder.CreateCondBr(isNull, bbNull, bbEnd);
+
+            builder.PositionBuilderAtEnd(bbNull);
+
+            UpdateStackTracePosition(location);
+            CreateExit($"[{location.Beginning}] {message}", 2);
+            builder.CreateUnreachable();
+
+            builder.PositionBuilderAtEnd(bbEnd);
+        }
+
         private void CreateCLibFunctions()
         {
             exit = module.GetNamedFunction("exit");
@@ -153,13 +180,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             var args = new List<LLVMValueRef>
             {
-                builder.CreateGlobalStringPtr(msg, "")
+                builder.CreateGlobalStringPtr(msg + "\n", "")
             };
             args.AddRange(p);
             var pf = builder.CreateCall(printf, args.ToArray(), "");
 
-            if (keepTrackOfStackTrace)
-                PrintStackTrace();
+            PrintStackTrace();
 
             builder.CreateCall(exit, new LLVMValueRef[] {
                 LLVM.ConstInt(LLVM.Int32Type(), (uint)exitCode, true)

@@ -57,6 +57,13 @@ namespace Cheez
                 return expected ?? FloatType.DefaultType;
             }
             else if (literalType == CheezType.StringLiteral) return CheezType.String;
+            else if (literalType == PointerType.NullLiteralType)
+            {
+                if (expected is TraitType)
+                    return expected;
+
+                return PointerType.GetPointerType(CheezType.Any);
+            }
 
             return literalType;
         }
@@ -866,7 +873,7 @@ namespace Cheez
             else if (expected is SliceType)
                 expr.Type = expected;
             else
-                expr.Type = PointerType.GetPointerType(CheezType.Any);
+                expr.Type = PointerType.NullLiteralType;// PointerType.GetPointerType(CheezType.Any);
             return expr;
         }
 

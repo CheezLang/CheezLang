@@ -136,10 +136,16 @@ namespace Cheez.Types.Primitive
         public static int PointerAlignment = 8;
 
         private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
+        public static PointerType NullLiteralType = new PointerType
+        {
+            TargetType = null,
+            Size = PointerSize,
+            Alignment = PointerAlignment
+        };
 
         public CheezType TargetType { get; set; }
-        public override bool IsErrorType => TargetType.IsErrorType;
-        public override bool IsPolyType => TargetType.IsPolyType;
+        public override bool IsErrorType => TargetType?.IsErrorType ?? false;
+        public override bool IsPolyType => TargetType?.IsPolyType ?? false;
 
         public static PointerType GetPointerType(CheezType targetType)
         {

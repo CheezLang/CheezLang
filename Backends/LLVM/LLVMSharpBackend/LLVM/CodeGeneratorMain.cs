@@ -40,6 +40,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef stackTraceTop;
 
         // vtable stuff
+        private bool checkForNullTraitObjects = true;
         private LLVMTypeRef vtableType;
         private Dictionary<object, int> vtableIndices = new Dictionary<object, int>();
         private Dictionary<CheezType, LLVMValueRef> vtableMap = new Dictionary<CheezType, LLVMValueRef>();

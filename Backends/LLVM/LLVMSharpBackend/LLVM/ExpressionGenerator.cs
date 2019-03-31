@@ -114,9 +114,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var len = builder.CreateExtractValue(message, 0, "");
                 var str = builder.CreateExtractValue(message, 1, "");
 
-                if (keepTrackOfStackTrace)
-                    UpdateStackTracePosition(cc);
-                CreateExit($"[PANIC] {cc.Location.Beginning}: %.*s\n", 1, len, str);
+                UpdateStackTracePosition(cc);
+                CreateExit($"[PANIC] {cc.Location.Beginning}: %.*s", 1, len, str);
                 return default;
             }
 
@@ -131,9 +130,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 builder.PositionBuilderAtEnd(bbFalse);
 
-                if (keepTrackOfStackTrace)
-                    UpdateStackTracePosition(cc);
-                CreateExit($"[ASSERT] {cc.Location.Beginning}: {msg}\n{cc.Arguments[0].ToString().Indent("> ")}\n", 1);
+                UpdateStackTracePosition(cc);
+                CreateExit($"[ASSERT] {cc.Location.Beginning}: {msg}\n{cc.Arguments[0].ToString().Indent("> ")}", 1);
 
                 builder.PositionBuilderAtEnd(bbTrue);
                 return default;
@@ -381,7 +379,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 return LLVM.ConstPointerNull(CheezTypeToLLVMType(expr.Type));
             }
-            else if (expr.Type is SliceType s)
+            if (expr.Type is TraitType t)
+            {
+                return LLVM.ConstNamedStruct(CheezTypeToLLVMType(expr.Type), new LLVMValueRef[]
+                {
+                    LLVM.ConstPointerNull(pointerType),
+                    LLVM.ConstPointerNull(pointerType)
+                });
+            }
+            if (expr.Type is SliceType s)
             {
                 return LLVM.ConstNamedStruct(CheezTypeToLLVMType(expr.Type), new LLVMValueRef[]
                 {
@@ -976,6 +982,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var toPointer = builder.CreateExtractValue(selfArg, 1, "");
                 toPointer = builder.CreatePointerCast(toPointer, funcType.GetParamTypes()[0], "");
 
+                // check if pointer is null
+                if (checkForNullTraitObjects)
+                {
+                    CheckPointerNull(vtablePtr, c.Arguments[0].Expr, "vtable pointer of trait object is null");
+                    CheckPointerNull(toPointer, c.Arguments[0].Expr, "object pointer of trait object is null");
+                }
+
                 // load function pointer
                 vtablePtr = builder.CreatePointerCast(vtablePtr, vtableType.GetPointerTo(), "");
 
@@ -990,14 +1003,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 foreach (var a in c.Arguments.Skip(1))
                     arguments.Add(GenerateExpression(a, true));
 
+                UpdateStackTracePosition(c);
                 var traitCall = builder.CreateCall(funcPointer, arguments.ToArray(), "");
                 LLVM.SetInstructionCallConv(traitCall, LLVM.GetFunctionCallConv(funcPointer));
 
-                if (keepTrackOfStackTrace)
-                    UpdateStackTracePosition(c);
                 return traitCall;
             }
-
 
             LLVMValueRef func;
             if (c.Declaration != null)
@@ -1017,8 +1028,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // arguments
             var args = c.Arguments.Select(a => GenerateExpression(a, true)).ToArray();
 
-            if (keepTrackOfStackTrace)
-                UpdateStackTracePosition(c);
+            UpdateStackTracePosition(c);
             var call = builder.CreateCall(func, args, "");
             var callConv = LLVM.GetFunctionCallConv(func);
             LLVM.SetInstructionCallConv(call, callConv);
