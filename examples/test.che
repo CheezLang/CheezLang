@@ -1,8 +1,15 @@
-// #load("tests/library/hash_table1")
+// // #load("tests/library/hash_table1")
+// #load("test2")
+// #load("tests/language/local_variables")
 // #load("examples/lua_example.che")
 
 #load("std:preload")
+#load("std:array")
 #load("std:io/io")
+#load("std:string")
+#load("std:util")
 
 fn Main() {
+    printfln("test {}", ["hi"])
+    printfln("test {}", [null])
 }
