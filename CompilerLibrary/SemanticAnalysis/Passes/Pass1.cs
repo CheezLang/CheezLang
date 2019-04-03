@@ -120,7 +120,7 @@ namespace Cheez
             // typedefs
             foreach (var t in mTypeDefs)
             {
-                Pass1TypeAlias(t);
+                Pass1Typedef(t);
             }
 
             // variable declaration dependencies
@@ -166,6 +166,7 @@ namespace Cheez
             if (pattern is AstIdExpr id)
             {
                 var decl = new AstSingleVariableDecl(id, type, parent, parent.Constant, pattern);
+                decl.Scope = parent.Scope;
                 decl.Type = new VarDeclType(decl);
                 parent.SubDeclarations.Add(decl);
                 id.Symbol = decl;
@@ -299,8 +300,22 @@ namespace Cheez
 
         private void Pass1TraitDeclaration(AstTraitDeclaration trait)
         {
-            trait.Scope.TypeDeclarations.Add(trait);
-            trait.Type = new TraitType(trait);
+            if (trait.Parameters.Count > 0)
+            {
+                trait.IsPolymorphic = true;
+                trait.Type = new GenericTraitType(trait);
+
+                foreach (var p in trait.Parameters)
+                {
+                    p.Scope = trait.Scope;
+                    p.TypeExpr.Scope = trait.Scope;
+                }
+            }
+            else
+            {
+                trait.Scope.TypeDeclarations.Add(trait);
+                trait.Type = new TraitType(trait);
+            }
 
             var res = trait.Scope.DefineDeclaration(trait);
             if (!res.ok)
@@ -317,6 +332,12 @@ namespace Cheez
             {
                 @enum.IsPolymorphic = true;
                 @enum.Type = new GenericEnumType(@enum);
+
+                foreach (var p in @enum.Parameters)
+                {
+                    p.Scope = @enum.Scope;
+                    p.TypeExpr.Scope = @enum.Scope;
+                }
             }
             else
             {
@@ -341,6 +362,12 @@ namespace Cheez
             {
                 @struct.IsPolymorphic = true;
                 @struct.Type = new GenericStructType(@struct);
+
+                foreach (var p in @struct.Parameters)
+                {
+                    p.Scope = @struct.Scope;
+                    p.TypeExpr.Scope = @struct.Scope;
+                }
             }
             else
             {
@@ -358,7 +385,7 @@ namespace Cheez
             }
         }
 
-        private void Pass1TypeAlias(AstTypeAliasDecl alias)
+        private void Pass1Typedef(AstTypeAliasDecl alias)
         {
             alias.TypeExpr.Scope = alias.Scope;
             alias.Type = new AliasType(alias);

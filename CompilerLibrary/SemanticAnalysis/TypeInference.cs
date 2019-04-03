@@ -2108,6 +2108,7 @@ namespace Cheez
                                 else
                                 {
                                     ReportError(arg, $"Non type arguments in poly struct type not implemented yet.");
+                                    return expr;
                                 }
                             }
 

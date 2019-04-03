@@ -16,6 +16,8 @@ namespace Cheez.Ast.Statements
         public AstIdExpr Name { get; set; }
         public CheezType Type { get; set; }
 
+        public List<AstDecl> Dependencies { get; set; } = new List<AstDecl>();
+
         public AstDecl(AstIdExpr name, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
         {
             this.Name = name;
@@ -281,6 +283,11 @@ namespace Cheez.Ast.Statements
         public override AstStatement Clone()
         {
             throw new System.NotImplementedException();
+        }
+
+        public override string ToString()
+        {
+            return $"@singlevar({Name.Name}, {VarDeclaration})";
         }
     }
 

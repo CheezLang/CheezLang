@@ -109,15 +109,25 @@ namespace Cheez
         public List<AstImplBlock> ImplBlocks { get; } = new List<AstImplBlock>();
 
         public IEnumerable<ISymbol> InitializedSymbols => mInitializedSymbols.Keys;
-
-        //private CTypeFactory types = new CTypeFactory();
-
+        
         private Dictionary<string, ISymbol> mSymbolTable = new Dictionary<string, ISymbol>();
         private Dictionary<string, List<INaryOperator>> mNaryOperatorTable = new Dictionary<string, List<INaryOperator>>();
         private Dictionary<string, List<IBinaryOperator>> mBinaryOperatorTable = new Dictionary<string, List<IBinaryOperator>>();
         private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
         private Dictionary<AstImplBlock, List<AstFunctionDecl>> mImplTable = new Dictionary<AstImplBlock, List<AstFunctionDecl>>();
         private Dictionary<ISymbol, int> mInitializedSymbols = new Dictionary<ISymbol, int>();
+
+        //
+        public List<AstStructDecl> StructDeclarations = new List<AstStructDecl>();
+        public List<AstTraitDeclaration> TraitDeclarations = new List<AstTraitDeclaration>();
+        public List<AstEnumDecl> EnumDeclarations = new List<AstEnumDecl>();
+        public List<AstTypeAliasDecl> Typedefs = new List<AstTypeAliasDecl>();
+        public List<AstUsingStmt> Uses = new List<AstUsingStmt>();
+
+        public List<AstVariableDecl> Variables = new List<AstVariableDecl>();
+        public List<AstFunctionDecl> Functions = new List<AstFunctionDecl>();
+        public List<AstImplBlock> Impls = new List<AstImplBlock>();
+        //
 
         public IEnumerable<KeyValuePair<string, ISymbol>> Symbols => mSymbolTable.AsEnumerable();
 
@@ -137,16 +147,6 @@ namespace Cheez
                 // TODO: mImplTable?, rest?
             };
         }
-
-        //public CheezType GetCheezType(PTTypeExpr expr)
-        //{
-        //    return types.GetCheezType(expr) ?? Parent?.GetCheezType(expr);
-        //}
-
-        //public CheezType GetCheezType(string name)
-        //{
-        //    return types.GetCheezType(name) ?? Parent?.GetCheezType(name);
-        //}
 
         public bool IsInitialized(ISymbol symbol)
         {
