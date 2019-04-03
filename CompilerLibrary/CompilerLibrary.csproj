@@ -127,6 +127,7 @@
     <Compile Include="SemanticAnalysis\FunctionAnalysis.cs" />
     <Compile Include="SemanticAnalysis\Passes\Pass1.cs" />
     <Compile Include="SemanticAnalysis\Passes\Pass2.cs" />
+    <Compile Include="SemanticAnalysis\Passes\PassResolveDeclatarions.cs" />
     <Compile Include="SemanticAnalysis\Passes\ResolveGlobalUses.cs" />
     <Compile Include="SemanticAnalysis\Passes\ResolveImpls.cs" />
     <Compile Include="SemanticAnalysis\Passes\ResolveTypeDeclarations.cs" />
