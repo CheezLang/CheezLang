@@ -316,7 +316,7 @@ namespace Cheez.Types.Complex
         public FunctionType(AstFunctionDecl func)
         {
             this.Declaration = func;
-            this.ReturnType = func.ReturnValue?.Type ?? CheezType.Void;
+            this.ReturnType = func.ReturnTypeExpr?.Type ?? CheezType.Void;
             this.Parameters = func.Parameters.Select(p => (p.Name?.Name, p.Type, p.DefaultValue)).ToArray();
 
             if (func.TryGetDirective("stdcall", out var dir))

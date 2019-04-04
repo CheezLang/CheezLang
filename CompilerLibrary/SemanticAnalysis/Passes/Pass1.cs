@@ -130,8 +130,54 @@ namespace Cheez
                 {
                     var deps = new HashSet<AstSingleVariableDecl>();
                     CollectDependencies(gv.Initializer, deps);
-                    gv.Dependencies = deps;
+                    gv.VarDependencies = deps;
                 }
+            }
+        }
+
+        private void Pass1FunctionDeclaration(AstFunctionDecl func)
+        {
+            var polyNames = new List<string>();
+            foreach (var p in func.Parameters)
+            {
+                CollectPolyTypeNames(p.TypeExpr, polyNames);
+                if (p.Name != null)
+                    CollectPolyTypeNames(p.Name, polyNames);
+            }
+
+            if (func.ReturnTypeExpr != null)
+            {
+                CollectPolyTypeNames(func.ReturnTypeExpr.TypeExpr, polyNames);
+            }
+
+            if (polyNames.Count > 0)
+            {
+                func.Type = new GenericFunctionType(func);
+            }
+            else
+            {
+                func.Type = new FunctionType(func);
+
+                if (func.TryGetDirective("varargs", out var varargs))
+                {
+                    if (varargs.Arguments.Count != 0)
+                    {
+                        ReportError(varargs, $"#varargs takes no arguments!");
+                    }
+                    func.FunctionType.VarArgs = true;
+                }
+            }
+
+            var res = func.Scope.DefineDeclaration(func);
+            if (!res.ok)
+            {
+                (string, ILocation)? detail = null;
+                if (res.other != null) detail = ("Other declaration here:", res.other);
+                ReportError(func.Name, $"A symbol with name '{func.Name.Name}' already exists in current scope", detail);
+            }
+            else if (!func.IsGeneric)
+            {
+                func.Scope.FunctionDeclarations.Add(func);
             }
         }
 
@@ -143,6 +189,7 @@ namespace Cheez
             }
             var.Initializer.AttachTo(var);
 
+            var.TypeExpr.AttachTo(var);
             MatchPatternWithTypeExpr(var, var.Pattern, var.TypeExpr);
 
             foreach (var decl in var.SubDeclarations)
@@ -165,6 +212,7 @@ namespace Cheez
         {
             if (pattern is AstIdExpr id)
             {
+
                 var decl = new AstSingleVariableDecl(id, type, parent, parent.Constant, pattern);
                 decl.Scope = parent.Scope;
                 decl.Type = new VarDeclType(decl);

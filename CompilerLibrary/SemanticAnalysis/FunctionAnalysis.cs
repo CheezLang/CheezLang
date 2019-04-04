@@ -121,23 +121,23 @@ namespace Cheez
                 }
             }
 
-            if (func.ReturnValue?.Name != null)
+            if (func.ReturnTypeExpr?.Name != null)
             {
-                var (ok, other) = func.SubScope.DefineSymbol(func.ReturnValue);
+                var (ok, other) = func.SubScope.DefineSymbol(func.ReturnTypeExpr);
                 if (!ok)
-                    ReportError(func.ReturnValue, $"A symbol with name '{func.ReturnValue.Name.Name}' already exists in current scope", ("Other symbol here:", other));
+                    ReportError(func.ReturnTypeExpr, $"A symbol with name '{func.ReturnTypeExpr.Name.Name}' already exists in current scope", ("Other symbol here:", other));
             }
             else
             {
-                func.SubScope.DefineSymbol(func.ReturnValue, ".ret");
+                func.SubScope.DefineSymbol(func.ReturnTypeExpr, ".ret");
             }
-            if (func.ReturnValue?.TypeExpr is AstTupleExpr t)
+            if (func.ReturnTypeExpr?.TypeExpr is AstTupleExpr t)
             {
                 int index = 0;
                 foreach (var m in t.Types)
                 {
                     if (m.Name == null) continue;
-                    AstExpression access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnValue), new AstNumberExpr(index));
+                    AstExpression access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnTypeExpr), new AstNumberExpr(index));
                     access = InferType(access, null);
                     var (ok, other) = func.SubScope.DefineUse(m.Name.Name, access, false, out var use);
                     if (!ok)
@@ -158,7 +158,7 @@ namespace Cheez
                 func.Body.Parent = func;
                 InferType(func.Body, null);
 
-                if (func.ReturnValue != null && !func.Body.GetFlag(ExprFlags.Returns))
+                if (func.ReturnTypeExpr != null && !func.Body.GetFlag(ExprFlags.Returns))
                 {
                     // TODO: check that all return values are set
                     var ret = new AstReturnStmt(null, new Location(func.Body.End));
@@ -610,12 +610,12 @@ namespace Cheez
                 ret.ReturnValue = HandleReference(ret.ReturnValue, currentFunction.FunctionType.ReturnType, null);
                 ret.ReturnValue = CheckType(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
             }
-            else if (currentFunction.ReturnValue != null)
+            else if (currentFunction.ReturnTypeExpr != null)
             {
                 var missing = new List<ILocation>();
-                if (currentFunction.ReturnValue.Name == null)
+                if (currentFunction.ReturnTypeExpr.Name == null)
                 {
-                    if (currentFunction.ReturnValue.TypeExpr is AstTupleExpr t)
+                    if (currentFunction.ReturnTypeExpr.TypeExpr is AstTupleExpr t)
                     {
                         foreach (var m in t.Types)
                             if (m.Symbol == null || !ret.Scope.IsInitialized(m.Symbol))
@@ -628,9 +628,9 @@ namespace Cheez
                 }
                 else
                 {
-                    if (!ret.Scope.IsInitialized(currentFunction.ReturnValue))
+                    if (!ret.Scope.IsInitialized(currentFunction.ReturnTypeExpr))
                     {
-                        if (currentFunction.ReturnValue.TypeExpr is AstTupleExpr t && t.IsFullyNamed)
+                        if (currentFunction.ReturnTypeExpr.TypeExpr is AstTupleExpr t && t.IsFullyNamed)
                         {
                             foreach (var m in t.Types)
                                 if (!ret.Scope.IsInitialized(m.Symbol))
@@ -638,7 +638,7 @@ namespace Cheez
                         }
                         else
                         {
-                            missing.Add(currentFunction.ReturnValue);
+                            missing.Add(currentFunction.ReturnTypeExpr);
                         }
                     }
                 }

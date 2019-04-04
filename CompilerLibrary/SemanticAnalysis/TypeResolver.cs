@@ -586,12 +586,12 @@ namespace Cheez
                 }
 
                 // return types
-                if (instance.ReturnValue != null)
+                if (instance.ReturnTypeExpr != null)
                 {
-                    instance.ReturnValue.Scope = instance.SubScope;
-                    instance.ReturnValue.TypeExpr.Scope = instance.SubScope;
-                    instance.ReturnValue.TypeExpr = ResolveTypeNow(instance.ReturnValue.TypeExpr, out var t, true);
-                    instance.ReturnValue.Type = t;
+                    instance.ReturnTypeExpr.Scope = instance.SubScope;
+                    instance.ReturnTypeExpr.TypeExpr.Scope = instance.SubScope;
+                    instance.ReturnTypeExpr.TypeExpr = ResolveTypeNow(instance.ReturnTypeExpr.TypeExpr, out var t, true);
+                    instance.ReturnTypeExpr.Type = t;
                 }
 
                 //remove constant params

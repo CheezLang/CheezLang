@@ -60,8 +60,8 @@ namespace Cheez.Visitors
             var pars = string.Join(", ", function.Parameters.Select(p => p.Accept(this)));
             head += $"({pars})";
 
-            if (function.ReturnValue != null)
-                head += $" -> {function.ReturnValue.Accept(this)}";
+            if (function.ReturnTypeExpr != null)
+                head += $" -> {function.ReturnTypeExpr.Accept(this)}";
 
             return head;
         }

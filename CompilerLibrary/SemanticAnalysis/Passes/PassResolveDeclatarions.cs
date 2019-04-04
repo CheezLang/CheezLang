@@ -3,6 +3,7 @@ using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Types;
+using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,10 +18,8 @@ namespace Cheez
             InsertDeclarationsIntoScope(scope, statements);
 
             // 2. go through all type declarations (structs, traits, enums, typedefs) and define them in the scope
+            // go through all constant declarations and define them in the scope
             DefineTypeDeclarations(scope);
-
-            // 2. go through all constant declarations and define them in the scope
-            DefineConstantDeclarations(scope);
 
             // 3. go through all type declarations again and build the dependencies
             BuildDependencies(scope);
@@ -46,21 +45,36 @@ namespace Cheez
             AstDecl decl,
             HashSet<AstDecl> whiteSet, 
             HashSet<AstDecl> greySet, 
-            HashSet<AstDecl> blackSet)
+            HashSet<AstDecl> blackSet,
+            Dictionary<AstDecl, AstDecl> chain)
         {
             whiteSet.Remove(decl);
             greySet.Add(decl);
 
-            foreach (var dep in decl.Dependencies)
+            foreach (var (kind, dep) in decl.Dependencies)
             {
                 if (greySet.Contains(dep))
                 {
-                    ReportError(decl.Name, $"Cyclic dependency not allowed", ("Here is the next declaration in the cycle", dep.Name));
+                    // cyclic dependency, report error
+                    var c = new List<AstDecl> { decl, dep };
+                    var current = dep;
+                    while (chain.TryGetValue(current, out var d))
+                    {
+                        c.Add(d);
+                        current = d;
+                    }
+
+                    var detail1 = string.Join(" -> ", c.Select(x => x.Name.Name));
+
+                    var details = new List<(string, ILocation)> { (detail1, null) };
+                    details.AddRange(c.Skip(1).Take(c.Count - 2).Select(x => ("Here is the next declaration in the cycle", x.Name.Location)));
+                    ReportError(decl.Name, $"Cyclic dependency not allowed", details);
                     return;
                 }
                 else if (whiteSet.Contains(dep))
                 {
-                    ResolveMissingTypesOfDeclarationsHelper(scope, dep, whiteSet, greySet, blackSet);
+                    chain[decl] = dep;
+                    ResolveMissingTypesOfDeclarationsHelper(scope, dep, whiteSet, greySet, blackSet, chain);
                 }
             }
 
@@ -68,6 +82,56 @@ namespace Cheez
 
             switch (decl)
             {
+                case AstVariableDecl v:
+                    {
+                        CheezType type = null;
+                        v.Type = CheezType.Error;
+
+                        // type ex
+                        if (v.TypeExpr != null)
+                        {
+                            v.TypeExpr = ResolveType(v.TypeExpr, newPolyDecls, out var t);
+                            type = v.Type = t;
+                        }
+
+                        v.Initializer = InferType(v.Initializer, type);
+                        ConvertLiteralTypeToDefaultType(v.Initializer, type);
+
+                        if (v.Initializer.Type.IsErrorType)
+                            break;
+
+                        if (v.TypeExpr != null)
+                        {
+                            v.Initializer = HandleReference(v.Initializer, type, null);
+                            v.Initializer = CheckType(v.Initializer, type);
+                        }
+                        else
+                        {
+                            if (v.Initializer.Type is ReferenceType)
+                                v.Initializer = Deref(v.Initializer, null);
+                        }
+
+                        if (v.Constant && !v.Initializer.IsCompTimeValue)
+                        { 
+                            ReportError(v.Initializer, $"Initializer must be a constant");
+                            break;
+                        }
+
+                        AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
+
+                        if (v.TypeExpr == null)
+                            v.Type = v.Initializer.Type;
+                        break;
+                    }
+
+                case AstFunctionDecl func:
+                    {
+                        func.ConstScope = new Scope("$", func.Scope);
+                        func.SubScope = new Scope("fn", func.ConstScope);
+                        ResolveFunctionSignature(func);
+                        break;
+                    }
+
                 case AstTypeAliasDecl typedef:
                     {
                         typedef.TypeExpr = ResolveType(typedef.TypeExpr, newPolyDecls, out var type);
@@ -118,17 +182,19 @@ namespace Cheez
             var whiteSet = new HashSet<AstDecl>();
             var greySet = new HashSet<AstDecl>();
             var blackSet = new HashSet<AstDecl>();
+            var chain = new Dictionary<AstDecl, AstDecl>();
 
             whiteSet.UnionWith(scope.StructDeclarations);
             whiteSet.UnionWith(scope.EnumDeclarations);
             whiteSet.UnionWith(scope.TraitDeclarations);
             whiteSet.UnionWith(scope.Typedefs);
-            whiteSet.UnionWith(scope.Variables.Where(v => v.Constant).SelectMany(v => v.SubDeclarations));
+            whiteSet.UnionWith(scope.Variables);
+            whiteSet.UnionWith(scope.Functions);
 
             while (whiteSet.Count > 0)
             {
                 var x = whiteSet.First();
-                ResolveMissingTypesOfDeclarationsHelper(scope, x, whiteSet, greySet, blackSet);
+                ResolveMissingTypesOfDeclarationsHelper(scope, x, whiteSet, greySet, blackSet, chain);
             }
         }
 
@@ -138,111 +204,58 @@ namespace Cheez
             {
                 foreach (var param in @struct.Parameters)
                 {
-                    CollectTypeDependencies(@struct, param.TypeExpr);
+                    CollectTypeDependencies(@struct, param.TypeExpr, DependencyKind.Type);
                 }
-                PrintDependencies(@struct);
             }
 
             foreach (var @enum in scope.EnumDeclarations)
             {
                 foreach (var param in @enum.Parameters)
                 {
-                    CollectTypeDependencies(@enum, param.TypeExpr);
+                    CollectTypeDependencies(@enum, param.TypeExpr, DependencyKind.Type);
                 }
-                PrintDependencies(@enum);
             }
 
             foreach (var @trait in scope.TraitDeclarations)
             {
                 foreach (var param in @trait.Parameters)
                 {
-                    CollectTypeDependencies(@trait, param.TypeExpr);
+                    CollectTypeDependencies(@trait, param.TypeExpr, DependencyKind.Type);
                 }
-                PrintDependencies(@trait);
             }
 
             foreach (var typedef in scope.Typedefs)
             {
-                CollectTypeDependencies(typedef, typedef.TypeExpr);
-                PrintDependencies(typedef);
+                CollectTypeDependencies(typedef, typedef.TypeExpr, DependencyKind.Type);
             }
 
             foreach (var @var in scope.Variables)
             {
-                if (!@var.Constant)
-                    continue;
+                CollectTypeDependencies(@var, @var.TypeExpr, DependencyKind.Type);
+                CollectTypeDependencies(@var, @var.Initializer, DependencyKind.Value);
+                //PrintDependencies(@var);
+            }
 
-                foreach (var sv in @var.SubDeclarations)
+            foreach (var func in scope.Functions)
+            {
+                if (func.ReturnTypeExpr != null)
+                    CollectTypeDependencies(func, func.ReturnTypeExpr.TypeExpr, DependencyKind.Type);
+                foreach (var p in func.Parameters)
                 {
-                    CollectTypeDependencies(sv, @var.TypeExpr);
-                    PrintDependencies(sv);
+                    CollectTypeDependencies(func, p.TypeExpr, DependencyKind.Type);
+                    if (p.DefaultValue != null)
+                        CollectTypeDependencies(func, p.DefaultValue, DependencyKind.Value);
                 }
+                //PrintDependencies(func);
             }
         }
 
         private void PrintDependencies(AstDecl decl)
         {
-            //Console.WriteLine($"Dependencies of {decl.Name.Name}");
-            //foreach (var d in decl.Dependencies)
-            //{
-            //    Console.WriteLine($"    {d.Name.Name}");
-            //}
-        }
-
-        private void CollectTypeDependencies(AstDecl decl, AstExpression typeExpr)
-        {
-            switch (typeExpr)
+            Console.WriteLine($"Dependencies of {decl.Name.Name}");
+            foreach (var d in decl.Dependencies)
             {
-                case AstIdExpr id:
-                    var sym = decl.Scope.GetSymbol(id.Name);
-                    if (sym is AstDecl d)
-                        decl.Dependencies.Add(d);
-                    break;
-
-                case AstAddressOfExpr add:
-                    CollectTypeDependencies(decl, add.SubExpression);
-                    break;
-
-                case AstSliceTypeExpr expr:
-                    CollectTypeDependencies(decl, expr.Target);
-                    break;
-
-                case AstArrayTypeExpr expr:
-                    CollectTypeDependencies(decl, expr.Target);
-                    break;
-
-                case AstReferenceTypeExpr expr:
-                    CollectTypeDependencies(decl, expr.Target);
-                    break;
-
-                case AstFunctionTypeExpr expr:
-                    if (expr.ReturnType != null)
-                        CollectTypeDependencies(decl, expr.ReturnType);
-                    foreach (var p in expr.ParameterTypes)
-                        CollectTypeDependencies(decl, p);
-                    break;
-
-                case AstCallExpr expr:
-                    CollectTypeDependencies(decl, expr.Function);
-                    foreach (var p in expr.Arguments)
-                        CollectTypeDependencies(decl, p.Expr);
-                    break;
-
-                case AstTupleExpr expr:
-                    foreach (var p in expr.Values)
-                        CollectTypeDependencies(decl, p);
-                    break;
-            }
-        }
-
-        private void DefineConstantDeclarations(Scope scope)
-        {
-            foreach (var @const in scope.Variables)
-            {
-                if (@const.Constant)
-                {
-                    Pass1VariableDeclaration(@const);
-                }
+                Console.WriteLine($"    {d.kind}: {d.decl.Name.Name}");
             }
         }
 
@@ -256,6 +269,10 @@ namespace Cheez
                 Pass1TraitDeclaration(@trait);
             foreach (var @typedef in scope.Typedefs)
                 Pass1Typedef(@typedef);
+            foreach (var v in scope.Functions)
+                Pass1FunctionDeclaration(v);
+            foreach (var v in scope.Variables)
+                Pass1VariableDeclaration(v);
         }
 
         public void InsertDeclarationsIntoScope(Scope scope, List<AstStatement> statements)

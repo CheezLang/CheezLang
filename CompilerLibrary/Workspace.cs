@@ -22,7 +22,7 @@ namespace Cheez
         public IEnumerable<PTFile> Files => mFiles.Select(kv => kv.Value);
 
         private List<AstStatement> mStatements = new List<AstStatement>();
-        public IReadOnlyList<AstStatement> Statements => mStatements;
+        public List<AstStatement> Statements => mStatements;
 
         public Scope GlobalScope { get; private set; }
         public List<Scope> AllScopes { get; private set; }
@@ -75,21 +75,28 @@ namespace Cheez
 
             GlobalScope = new Scope("Global", preludeScope);
 
-            Pass1(); // collect declarations
-            Pass2(); // resolve types
+            // new
+            ResolveDeclarations(GlobalScope, Statements);
 
-            // at this points all concrete types are known
+            if (mCompiler.ErrorHandler.HasErrors)
+                return;
 
-            PassResolveGlobalTypeDeclarations();
-            PassResolveImpls();
+            // old
+            //Pass1(); // collect declarations
+            //Pass2(); // resolve types
 
-            PassResolveGlobalUses();
+            //// at this points all concrete types are known
 
-            Pass4(); // resolve function signatures
-            // Pass5(); // impls
-            // Pass6(); // match impl functions with trait functions
-            Pass6(); // variables
-            Pass7(); // function bodies
+            //PassResolveGlobalTypeDeclarations();
+            //PassResolveImpls();
+
+            //PassResolveGlobalUses();
+
+            //Pass4(); // resolve function signatures
+            //// Pass5(); // impls
+            //// Pass6(); // match impl functions with trait functions
+            //Pass6(); // variables
+            //Pass7(); // function bodies
 
 
             MainFunction = GlobalScope.GetSymbol("Main") as AstFunctionDecl;
@@ -97,6 +104,8 @@ namespace Cheez
             {
                 mCompiler.ErrorHandler.ReportError("No main function was specified");
             }
+
+            ReportError("error");
         }
 
         [SkipInStackFrame]

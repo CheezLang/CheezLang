@@ -315,7 +315,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             { // call main function
                 var cheezMain = valueMap[workspace.MainFunction];
-                if (workspace.MainFunction.ReturnValue == null)
+                if (workspace.MainFunction.ReturnTypeExpr == null)
                 {
                     builder.CreateCall(cheezMain, new LLVMValueRef[0], "");
                     builder.CreateRet(LLVM.ConstInt(returnType, 0, false));

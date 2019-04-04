@@ -62,9 +62,9 @@ namespace Cheez
             }
             done?.Add(v);
 
-            if (v.Dependencies != null)
+            if (v.VarDependencies != null)
             {
-                foreach (var d in v.Dependencies)
+                foreach (var d in v.VarDependencies)
                 {
                     Pass6VariableDeclaration(d.VarDeclaration, done, path);
                 }

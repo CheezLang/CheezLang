@@ -11,12 +11,18 @@ using System.Linq;
 
 namespace Cheez.Ast.Statements
 {
+    public enum DependencyKind
+    {
+        Type,
+        Value
+    }
+
     public abstract class AstDecl : AstStatement, ISymbol
     {
         public AstIdExpr Name { get; set; }
         public CheezType Type { get; set; }
 
-        public List<AstDecl> Dependencies { get; set; } = new List<AstDecl>();
+        public HashSet<(DependencyKind kind, AstDecl decl)> Dependencies { get; set; } = new HashSet<(DependencyKind, AstDecl)>();
 
         public AstDecl(AstIdExpr name, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
         {
@@ -77,10 +83,10 @@ namespace Cheez.Ast.Statements
         public Scope SubScope { get; set; }
 
         public List<AstParameter> Parameters { get; set; }
-        public AstParameter ReturnValue { get; }
+        public AstParameter ReturnTypeExpr { get; }
 
         public FunctionType FunctionType => Type as FunctionType;
-        public CheezType ReturnType => ReturnValue?.Type ?? CheezType.Void;
+        public CheezType ReturnType => ReturnTypeExpr?.Type ?? CheezType.Void;
 
         public AstBlockExpr Body { get; private set; }
 
@@ -111,7 +117,7 @@ namespace Cheez.Ast.Statements
             : base(name, Directives, Location)
         {
             this.Parameters = parameters;
-            this.ReturnValue = returns;
+            this.ReturnTypeExpr = returns;
             this.Body = body;
             this.ParameterLocation = ParameterLocation;
         }
@@ -124,7 +130,7 @@ namespace Cheez.Ast.Statements
             var copy = CopyValuesTo(new AstFunctionDecl(Name.Clone() as AstIdExpr,
                 null,
                 Parameters.Select(p => p.Clone()).ToList(),
-                ReturnValue?.Clone(),
+                ReturnTypeExpr?.Clone(),
                 Body?.Clone() as AstBlockExpr, ParameterLocation: ParameterLocation));
             copy.ConstScope = new Scope("fn$", copy.Scope);
             copy.SubScope = new Scope("fn", copy.ConstScope);
@@ -291,23 +297,21 @@ namespace Cheez.Ast.Statements
         }
     }
 
-    public class AstVariableDecl : AstStatement
+    public class AstVariableDecl : AstDecl
     {
         public AstExpression Pattern { get; set; }
         public AstExpression TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
         public Scope SubScope { get; set; }
 
-        public CheezType Type { get; set; } = null;
-
         public bool Constant = false;
 
-        public HashSet<AstSingleVariableDecl> Dependencies { get; set; }
+        public HashSet<AstSingleVariableDecl> VarDependencies { get; set; }
 
         public List<AstSingleVariableDecl> SubDeclarations = new List<AstSingleVariableDecl>();
 
         public AstVariableDecl(AstExpression pattern, AstExpression typeExpr, AstExpression init, bool isConst, List<AstDirective> Directives = null, ILocation Location = null)
-            : base(Directives, Location)
+            : base(pattern is AstIdExpr ? (pattern as AstIdExpr) : (new AstIdExpr(pattern.ToString(), false, pattern.Location)), Directives, Location)
         {
             this.Pattern = pattern;
             this.TypeExpr = typeExpr;

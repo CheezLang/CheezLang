@@ -110,11 +110,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     }
                 }
 
-                if (function.ReturnValue != null)
+                if (function.ReturnTypeExpr != null)
                 {
-                    var ptype = CheezTypeToLLVMType(function.ReturnValue.Type);
-                    var p = builder.CreateAlloca(ptype, $"ret_{function.ReturnValue.Name?.Name}");
-                    valueMap[function.ReturnValue] = p;
+                    var ptype = CheezTypeToLLVMType(function.ReturnTypeExpr.Type);
+                    var p = builder.CreateAlloca(ptype, $"ret_{function.ReturnTypeExpr.Name?.Name}");
+                    valueMap[function.ReturnTypeExpr] = p;
                 }
 
                 // store params and rets in local variables
@@ -134,7 +134,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 GenerateExpression(function.Body, false);
 
                 // ret if void
-                if (function.ReturnValue == null)
+                if (function.ReturnTypeExpr == null)
                 {
                     PopStackTrace();
                     builder.CreateRetVoid();
@@ -285,9 +285,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (visited.Contains(decl))
                 return;
 
-            if (decl.Dependencies != null)
+            if (decl.VarDependencies != null)
             {
-                foreach (var dep in decl.Dependencies)
+                foreach (var dep in decl.VarDependencies)
                 {
                     InitGlobalVariable(dep.VarDeclaration, visited);
                 }
@@ -357,15 +357,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             if (ret.ReturnValue != null)
             {
-                var return_var = valueMap[currentFunction.ReturnValue];
+                var return_var = valueMap[currentFunction.ReturnTypeExpr];
                 var retval = GenerateExpression(ret.ReturnValue, true);
                 
                 PopStackTrace();
                 builder.CreateRet(retval);
             }
-            else if (currentFunction.ReturnValue != null)
+            else if (currentFunction.ReturnTypeExpr != null)
             {
-                var retVal = valueMap[currentFunction.ReturnValue];
+                var retVal = valueMap[currentFunction.ReturnTypeExpr];
                 retVal = builder.CreateLoad(retVal, "");
 
                 PopStackTrace();

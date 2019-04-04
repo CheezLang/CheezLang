@@ -60,8 +60,8 @@ namespace Cheez.Visitors
 
                 head += $"({pars})";
 
-                if (function.ReturnValue != null)
-                    head += $" -> {function.ReturnValue.TypeExpr.Accept(this)}";
+                if (function.ReturnTypeExpr != null)
+                    head += $" -> {function.ReturnTypeExpr.TypeExpr.Accept(this)}";
 
                 sb.Append($"{head} {body}".Indent(indentLevel));
 
@@ -98,8 +98,8 @@ namespace Cheez.Visitors
 
                 head += $"({pars})";
 
-                if (function.ReturnValue != null)
-                    head += $" -> {function.ReturnValue.Accept(this)}";
+                if (function.ReturnTypeExpr != null)
+                    head += $" -> {function.ReturnTypeExpr.Accept(this)}";
 
                 if (function.Directives.Count > 0)
                     head += " " + string.Join(" ", function.Directives.Select(d => VisitDirective(d)));

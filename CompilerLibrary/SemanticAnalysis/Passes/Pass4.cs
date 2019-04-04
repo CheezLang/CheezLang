@@ -5,7 +5,6 @@ using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
-using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
 
@@ -65,9 +64,9 @@ namespace Cheez
 
         private void ResolveFunctionSignature(AstFunctionDecl func)
         {
-            if (func.ReturnValue?.TypeExpr?.IsPolymorphic ?? false)
+            if (func.ReturnTypeExpr?.TypeExpr?.IsPolymorphic ?? false)
             {
-                ReportError(func.ReturnValue, "The return type of a function can't be polymorphic");
+                ReportError(func.ReturnTypeExpr, "The return type of a function can't be polymorphic");
             }
 
             var polyNames = new List<string>();
@@ -84,14 +83,14 @@ namespace Cheez
             }
 
             // return types
-            if (func.ReturnValue != null)
+            if (func.ReturnTypeExpr != null)
             {
-                func.ReturnValue.Scope = func.SubScope;
-                func.ReturnValue.TypeExpr.Scope = func.SubScope;
-                func.ReturnValue.TypeExpr = ResolveTypeNow(func.ReturnValue.TypeExpr, out var t);
-                func.ReturnValue.Type = t;
+                func.ReturnTypeExpr.Scope = func.SubScope;
+                func.ReturnTypeExpr.TypeExpr.Scope = func.SubScope;
+                func.ReturnTypeExpr.TypeExpr = ResolveTypeNow(func.ReturnTypeExpr.TypeExpr, out var t);
+                func.ReturnTypeExpr.Type = t;
 
-                if (func.ReturnValue.Type.IsPolyType)
+                if (func.ReturnTypeExpr.Type.IsPolyType)
                     func.IsGeneric = true;
             }
 
@@ -282,7 +281,10 @@ namespace Cheez
                     CollectPolyTypeNames(r.Target, result);
                     break;
 
-                default: throw new NotImplementedException();
+                case AstCompCallExpr _:
+                    break;
+
+                default: throw new NotImplementedException($"Type {typeExpr}");
             }
         }
     }
