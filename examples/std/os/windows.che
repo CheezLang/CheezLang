@@ -2,6 +2,6 @@
 #load("windows_constants")
 #load("windows_functions")
 
-let __std_in_handle = GetStdHandle(-10)
-let __std_out_handle = GetStdHandle(-11)
-let __std_err_handle = GetStdHandle(-12)
+let __std_in_handle     : HANDLE    = GetStdHandle(-10)
+let __std_out_handle    : HANDLE    = GetStdHandle(-11)
+let __std_err_handle    : HANDLE    = GetStdHandle(-12)

@@ -19,4 +19,4 @@ impl Allocator for StdHeapAllocator {
     }
 }
 
-let DEFAULT_STD_HEAP_ALLOCATOR = new StdHeapAllocator { 0 }
+let DEFAULT_STD_HEAP_ALLOCATOR : StdHeapAllocator = new StdHeapAllocator { 0 }
