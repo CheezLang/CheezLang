@@ -189,7 +189,14 @@ namespace Cheez
             }
             var.Initializer.AttachTo(var);
 
-            var.TypeExpr.AttachTo(var);
+            if (var.TypeExpr != null)
+            {
+                var.TypeExpr.AttachTo(var);
+            }
+            else if (var.GetFlag(StmtFlags.GlobalScope))
+            {
+                ReportError(var, $"Global variables must have a type annotation");
+            }
             MatchPatternWithTypeExpr(var, var.Pattern, var.TypeExpr);
 
             foreach (var decl in var.SubDeclarations)
@@ -364,6 +371,7 @@ namespace Cheez
                 trait.Scope.TypeDeclarations.Add(trait);
                 trait.Type = new TraitType(trait);
             }
+            trait.SubScope = new Scope($"trait {trait.Name.Name}", trait.Scope);
 
             var res = trait.Scope.DefineDeclaration(trait);
             if (!res.ok)

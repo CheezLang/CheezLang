@@ -3,6 +3,7 @@ using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Types;
+using Cheez.Types.Abstract;
 using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
@@ -26,17 +27,99 @@ namespace Cheez
 
             // 4. check for cyclic dependencies and resolve types of typedefs and constant variables
             ResolveMissingTypesOfDeclarations(scope);
+
+            // 5. compute types of struct members, enum members, trait members
+            ComputeTypeMembers(scope);
+
+            // resolve impls
+            foreach (var impl in scope.Impls)
+            {
+                if (impl.TraitExpr == null)
+                    Pass3Impl(impl);
+                else
+                    Pass3TraitImpl(impl);
+            }
+
+            // check initializers of non-constant variables declarations
+            CheckInitializersOfNonConstantVars(scope);
         }
-        private void ValidatePolymorphicParameterType(ILocation location, CheezType type)
+
+        private void CheckInitializersOfNonConstantVars(Scope scope)
+        {
+            foreach (var v in scope.Variables.Where(x => !x.Constant && !x.Type.IsErrorType))
+            {
+                var type = v.Type;
+                v.Initializer = InferType(v.Initializer, type);
+                ConvertLiteralTypeToDefaultType(v.Initializer, type);
+
+                if (v.Initializer.Type.IsErrorType)
+                {
+                    if (v.Constant && !v.Initializer.IsCompTimeValue)
+                        ReportError(v.Initializer, $"Initializer must be a constant");
+                    break;
+                }
+
+                if (v.TypeExpr != null)
+                {
+                    v.Initializer = HandleReference(v.Initializer, type, null);
+                    v.Initializer = CheckType(v.Initializer, type);
+                }
+                else
+                {
+                    if (v.Initializer.Type is ReferenceType)
+                        v.Initializer = Deref(v.Initializer, null);
+                }
+
+                if (v.Constant && !v.Initializer.IsCompTimeValue)
+                {
+                    ReportError(v.Initializer, $"Initializer must be a constant");
+                    break;
+                }
+
+                AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
+
+                if (v.TypeExpr == null)
+                    v.Type = v.Initializer.Type;
+            }
+        }
+
+        private void ComputeTypeMembers(Scope scope)
+        {
+            var declarations = new List<AstDecl>();
+
+            foreach (var @struct in scope.StructDeclarations)
+            {
+                if (@struct.IsPolymorphic)
+                    declarations.AddRange(@struct.PolymorphicInstances);
+                declarations.Add(@struct);
+            }
+
+            foreach (var @enum in scope.EnumDeclarations)
+            {
+                if (@enum.IsPolymorphic)
+                    declarations.AddRange(@enum.PolymorphicInstances);
+                declarations.Add(@enum);
+            }
+
+            foreach (var trait in scope.TraitDeclarations)
+            {
+                if (trait.IsPolymorphic)
+                    declarations.AddRange(trait.PolymorphicInstances);
+                declarations.Add(trait);
+            }
+
+            ResolveTypeDeclarations(declarations);
+        }
+
+        private bool ValidatePolymorphicParameterType(ILocation location, CheezType type)
         {
             switch (type)
             {
-                case CheezTypeType _:
-                    break;
+                case CheezTypeType _: return true;
 
                 default:
                     ReportError(location, $"The type {type} is not allowed here");
-                    break;
+                    return false;
             }
         }
 
@@ -94,11 +177,23 @@ namespace Cheez
                             type = v.Type = t;
                         }
 
+                        // this must happen later after we computed the types of struct/enum/trait members
+                        // except for const variables, compute them now
+                        if (!v.Constant)
+                        {
+                            AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
+                            break;
+                        }
+
                         v.Initializer = InferType(v.Initializer, type);
                         ConvertLiteralTypeToDefaultType(v.Initializer, type);
 
                         if (v.Initializer.Type.IsErrorType)
+                        {
+                            if (v.Constant && !v.Initializer.IsCompTimeValue)
+                                ReportError(v.Initializer, $"Initializer must be a constant");
                             break;
+                        }
 
                         if (v.TypeExpr != null)
                         {
@@ -112,7 +207,7 @@ namespace Cheez
                         }
 
                         if (v.Constant && !v.Initializer.IsCompTimeValue)
-                        { 
+                        {
                             ReportError(v.Initializer, $"Initializer must be a constant");
                             break;
                         }
@@ -145,7 +240,18 @@ namespace Cheez
                         {
                             p.TypeExpr = ResolveType(p.TypeExpr, newPolyDecls, out var type);
                             p.Type = type;
-                            ValidatePolymorphicParameterType(p.TypeExpr, p.Type);
+                            if (!ValidatePolymorphicParameterType(p.TypeExpr, p.Type))
+                                continue;
+
+                            switch (p.Type)
+                            {
+                                case CheezTypeType _:
+                                    p.Value = new PolyType(p.Name.Name, true);
+                                    break;
+
+                                default:
+                                    throw new NotImplementedException();
+                            }
                         }
                         break;
                     }
@@ -156,7 +262,18 @@ namespace Cheez
                         {
                             p.TypeExpr = ResolveType(p.TypeExpr, newPolyDecls, out var type);
                             p.Type = type;
-                            ValidatePolymorphicParameterType(p.TypeExpr, p.Type);
+                            if (!ValidatePolymorphicParameterType(p.TypeExpr, p.Type))
+                                continue;
+
+                            switch (p.Type)
+                            {
+                                case CheezTypeType _:
+                                    p.Value = new PolyType(p.Name.Name, true);
+                                    break;
+
+                                default:
+                                    throw new NotImplementedException();
+                            }
                         }
                         break;
                     }
@@ -167,7 +284,18 @@ namespace Cheez
                         {
                             p.TypeExpr = ResolveType(p.TypeExpr, newPolyDecls, out var type);
                             p.Type = type;
-                            ValidatePolymorphicParameterType(p.TypeExpr, p.Type);
+                            if (!ValidatePolymorphicParameterType(p.TypeExpr, p.Type))
+                                continue;
+
+                            switch (p.Type)
+                            {
+                                case CheezTypeType _:
+                                    p.Value = new PolyType(p.Name.Name, true);
+                                    break;
+
+                                default:
+                                    throw new NotImplementedException();
+                            }
                         }
                         break;
                     }
@@ -321,6 +449,7 @@ namespace Cheez
 
                     case AstImplBlock impl:
                         {
+                            impl.SubScope = new Scope($"impl", impl.Scope);
                             scope.Impls.Add(impl);
                             break;
                         }

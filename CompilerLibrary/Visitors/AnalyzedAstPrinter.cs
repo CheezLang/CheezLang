@@ -192,6 +192,7 @@ namespace Cheez.Visitors
                 var head = $"struct {str.Name.Accept(this)}";
 
                 var sb = new StringBuilder();
+                sb.AppendLine($"// size: {str.Type?.Size}, alignment: {str.Type?.Alignment}");
                 sb.Append($"{head} {{\n{body.Indent(4)}\n}}");
 
                 return sb.ToString();
@@ -215,18 +216,17 @@ namespace Cheez.Visitors
                 sb.Append("}");
 
                 // polies
-                // TODO
-                //if (trait.PolymorphicInstances?.Count > 0)
-                //{
-                //    sb.AppendLine();
-                //    sb.AppendLine($"// Polymorphic instances for {trait.Name}");
-                //    foreach (var pi in trait.PolymorphicInstances)
-                //    {
-                //        var args = string.Join(", ", pi.Parameters.Select(p => $"{p.Name.Accept(this)} = {p.Value}"));
-                //        sb.AppendLine($"// {args}".Indent(4));
-                //        sb.AppendLine(pi.Accept(this).Indent(4));
-                //    }
-                //}
+                if (trait.PolymorphicInstances?.Count > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"// Polymorphic instances for {trait.Name}");
+                    foreach (var pi in trait.PolymorphicInstances)
+                    {
+                        var args = string.Join(", ", pi.Parameters.Select(p => $"{p.Name.Accept(this)} = {p.Value}"));
+                        sb.AppendLine($"// {args}".Indent(4));
+                        sb.AppendLine(pi.Accept(this).Indent(4));
+                    }
+                }
 
                 return sb.ToString().Indent(data);
             }
@@ -419,7 +419,7 @@ namespace Cheez.Visitors
             {
                 var body = string.Join("\n", en.Members.Select(m => VisitEnumMember(m)));
                 var head = $"enum {en.Name.Accept(this)}";
-                return $"{head} {{\n{body.Indent(4)}\n}}";
+                return $"// size: {en.Type?.Size}, alignment: {en.Type?.Alignment}\n{head} {{\n{body.Indent(4)}\n}}";
             }
         }
 

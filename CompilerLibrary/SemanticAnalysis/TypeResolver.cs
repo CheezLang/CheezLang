@@ -167,6 +167,10 @@ namespace Cheez
                         case AstStructDecl s:
                             ResolveStruct(s, nextInstances);
                             break;
+
+                        case AstTraitDeclaration trait:
+                            Pass3Trait(trait);
+                            break;
                     }
                 }
                 done.AddRange(declarations);
@@ -192,6 +196,81 @@ namespace Cheez
                 if (d is AstStructDecl s)
                     ResolveStructMemberInitializers(s);
             }
+        }
+
+        // trait
+        private AstTraitDeclaration InstantiatePolyTrait(AstTraitDeclaration decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
+        {
+            if (args.Count != decl.Parameters.Count)
+            {
+                if (location != null)
+                    ReportError(location, "Polymorphic instantiation has wrong number of arguments.", ("Declaration here:", decl));
+                else
+                    ReportError("Polymorphic instantiation has wrong number of arguments.", ("Declaration here:", decl));
+                return null;
+            }
+
+            AstTraitDeclaration instance = null;
+
+            // check if instance already exists
+            foreach (var pi in decl.PolymorphicInstances)
+            {
+                Debug.Assert(pi.Parameters.Count == args.Count);
+
+                bool eq = true;
+                for (int i = 0; i < pi.Parameters.Count; i++)
+                {
+                    var param = pi.Parameters[i];
+                    var arg = args[i];
+                    if (param.Value != arg.value)
+                    {
+                        eq = false;
+                        break;
+                    }
+                }
+
+                if (eq)
+                {
+                    instance = pi;
+                    break;
+                }
+            }
+
+            // instatiate type
+            if (instance == null)
+            {
+                instance = decl.Clone() as AstTraitDeclaration;
+                instance.SubScope = new Scope($"trait {decl.Name.Name}<poly>", instance.Scope);
+                instance.IsPolyInstance = true;
+                instance.IsPolymorphic = false;
+                instance.Template = decl;
+                decl.PolymorphicInstances.Add(instance);
+                instance.Scope.TypeDeclarations.Add(instance);
+
+                Debug.Assert(instance.Parameters.Count == args.Count);
+
+                for (int i = 0; i < instance.Parameters.Count; i++)
+                {
+                    var param = instance.Parameters[i];
+                    var arg = args[i];
+                    param.Type = arg.type;
+                    param.Value = arg.value;
+
+                    // TODO: non type parameters
+                    instance.SubScope.DefineTypeSymbol(param.Name.Name, param.Value as CheezType);
+                }
+
+                instance.Type = new TraitType(instance);
+
+                if (instances != null)
+                    instances.Add(instance);
+                else
+                {
+                    ResolveTypeDeclaration(instance);
+                }
+            }
+
+            return instance;
         }
 
         // enum

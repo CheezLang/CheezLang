@@ -13,7 +13,11 @@ namespace Cheez
                 case AstIdExpr id:
                     var sym = decl.Scope.GetSymbol(id.Name);
                     if (sym is AstDecl d)
+                    {
+                        if (d is AstSingleVariableDecl sv)
+                            d = sv.VarDeclaration;
                         decl.Dependencies.Add((type, d));
+                    }
                     break;
 
                 case AstAddressOfExpr add:

@@ -220,6 +220,10 @@ namespace Cheez.Ast.Statements
 
         public bool IsPolymorphic { get; set; }
         public bool IsPolyInstance { get; set; }
+
+        public List<AstTraitDeclaration> PolymorphicInstances { get; } = new List<AstTraitDeclaration>();
+        public AstTraitDeclaration Template { get; set; } = null;
+
         public Scope SubScope { get; set; }
 
         public AstTraitDeclaration(AstIdExpr name, List<AstParameter> parameters, List<AstFunctionDecl> functions, ILocation Location = null)

@@ -1509,7 +1509,11 @@ namespace Cheez.Parsing
                 if (list.Count == 0)
                     ReportError(new Location(beg, end), $"Invalid expression");
                 else if (list.Count == 1)
-                    return list[0].TypeExpr;
+                {
+                    var expr = list[0].TypeExpr;
+                    expr.Location = new Location(beg, end);
+                    return expr;
+                }
             }
 
             return new AstTupleExpr(list, new Location(beg, end));

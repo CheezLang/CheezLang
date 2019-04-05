@@ -2087,87 +2087,7 @@ namespace Cheez
 
                 case CheezTypeType type:
                     {
-                        if (expr.Function.Value is GenericStructType strType)
-                        {
-
-                            bool anyArgIsPoly = false;
-
-                            foreach (var arg in expr.Arguments)
-                            {
-                                arg.AttachTo(expr);
-                                arg.Expr.AttachTo(arg);
-                                arg.Expr = InferTypeHelper(arg.Expr, CheezType.Type, context);
-                                arg.Type = arg.Expr.Type;
-                                arg.Value = arg.Expr.Value;
-
-                                if (arg.Type == CheezType.Type)
-                                {
-                                    var argType = arg.Value as CheezType;
-                                    if (argType.IsPolyType) anyArgIsPoly = true;
-                                }
-                                else
-                                {
-                                    ReportError(arg, $"Non type arguments in poly struct type not implemented yet.");
-                                    return expr;
-                                }
-                            }
-
-                            if (anyArgIsPoly)
-                            {
-                                expr.Type = CheezType.Type;
-                                expr.Value = new StructType(strType.Declaration, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
-                                return expr;
-                            }
-
-                            // instantiate struct
-                            var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
-                            var instance = InstantiatePolyStruct(strType.Declaration, args, context.newPolyDeclarations, expr);
-                            expr.Type = CheezType.Type;
-                            expr.Value = instance?.Type ?? CheezType.Error;
-                            return expr;
-                        }
-                        else if (expr.Function.Value is GenericEnumType @enum)
-                        {
-                            bool anyArgIsPoly = false;
-
-                            foreach (var arg in expr.Arguments)
-                            {
-                                arg.AttachTo(expr);
-                                arg.Expr.AttachTo(arg);
-                                arg.Expr = InferTypeHelper(arg.Expr, CheezType.Type, context);
-                                arg.Type = arg.Expr.Type;
-                                arg.Value = arg.Expr.Value;
-
-                                if (arg.Type == CheezType.Type)
-                                {
-                                    var argType = arg.Value as CheezType;
-                                    if (argType.IsPolyType) anyArgIsPoly = true;
-                                }
-                                else
-                                {
-                                    ReportError(arg, $"Non type arguments in poly enum type not implemented yet.");
-                                }
-                            }
-
-                            if (anyArgIsPoly)
-                            {
-                                expr.Type = CheezType.Type;
-                                expr.Value = new EnumType(@enum.Declaration, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
-                                return expr;
-                            }
-
-                            // instantiate enum
-                            var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
-                            var instance = InstantiatePolyEnum(@enum.Declaration, args, context.newPolyDeclarations, expr);
-                            expr.Type = CheezType.Type;
-                            expr.Value = instance?.Type ?? CheezType.Error;
-                            return expr;
-                        }
-                        else
-                        {
-                            ReportError(expr.Function, $"This type must be a poly struct type but is '{expr.Function.Value}'");
-                            return expr;
-                        }
+                        return InferTypeGenericTypeCallExpr(expr, context);
                     }
 
                 case ErrorType _: return expr;
@@ -2176,6 +2096,85 @@ namespace Cheez
             }
 
             return expr;
+        }
+
+        private AstExpression InferTypeGenericTypeCallExpr(AstCallExpr expr, TypeInferenceContext context)
+        {
+            bool anyArgIsPoly = false;
+
+            foreach (var arg in expr.Arguments)
+            {
+                arg.AttachTo(expr);
+                arg.Expr.AttachTo(arg);
+                arg.Expr = InferTypeHelper(arg.Expr, CheezType.Type, context);
+                arg.Type = arg.Expr.Type;
+                arg.Value = arg.Expr.Value;
+
+                if (arg.Type == CheezType.Type)
+                {
+                    var argType = arg.Value as CheezType;
+                    if (argType.IsPolyType) anyArgIsPoly = true;
+                }
+                else
+                {
+                    ReportError(arg, $"Non type arguments in poly struct type not implemented yet.");
+                    return expr;
+                }
+            }
+
+            if (expr.Function.Value is GenericStructType strType)
+            {
+                if (anyArgIsPoly)
+                {
+                    expr.Type = CheezType.Type;
+                    expr.Value = new StructType(strType.Declaration, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
+                    return expr;
+                }
+
+                // instantiate struct
+                var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
+                var instance = InstantiatePolyStruct(strType.Declaration, args, context.newPolyDeclarations, expr);
+                expr.Type = CheezType.Type;
+                expr.Value = instance?.Type ?? CheezType.Error;
+                return expr;
+            }
+            else if (expr.Function.Value is GenericEnumType @enum)
+            {
+                if (anyArgIsPoly)
+                {
+                    expr.Type = CheezType.Type;
+                    expr.Value = new EnumType(@enum.Declaration, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
+                    return expr;
+                }
+
+                // instantiate enum
+                var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
+                var instance = InstantiatePolyEnum(@enum.Declaration, args, context.newPolyDeclarations, expr);
+                expr.Type = CheezType.Type;
+                expr.Value = instance?.Type ?? CheezType.Error;
+                return expr;
+            }
+            else if (expr.Function.Value is GenericTraitType trait)
+            {
+                if (anyArgIsPoly)
+                {
+                    expr.Type = CheezType.Type;
+                    expr.Value = new TraitType(trait.Declaration, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
+                    return expr;
+                }
+
+                // instantiate trait
+                var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
+                var instance = InstantiatePolyTrait(trait.Declaration, args, context.newPolyDeclarations, expr);
+                expr.Type = CheezType.Type;
+                expr.Value = instance?.Type ?? CheezType.Error;
+                return expr;
+            }
+            else
+            {
+                ReportError(expr.Function, $"This type must be a polymorphic type but is '{expr.Function.Value}'");
+                return expr;
+            }
         }
 
         private bool CheckAndMatchArgsToParams(
@@ -2476,6 +2475,14 @@ namespace Cheez
             if (type == null)
             {
                 ReportError(expr, $"This expression is not a struct but a '{expr.Type}'");
+                expr.Type = CheezType.Error;
+                return expr;
+            }
+
+            if (type.Size == -1)
+            {
+                ReportError(expr, 
+                    $"Can't create an instance of this struct because the member types have not yet been computed. This may be a bug in the compiler. This error can happen if you use a struct literal in a constant context which is not allowed.");
                 expr.Type = CheezType.Error;
                 return expr;
             }

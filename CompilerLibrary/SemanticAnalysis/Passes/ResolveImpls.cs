@@ -1,4 +1,5 @@
 ﻿using Cheez.Ast.Statements;
+using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using System.Collections.Generic;
@@ -31,6 +32,10 @@ namespace Cheez
         
         private void Pass3Trait(AstTraitDeclaration trait)
         {
+            foreach (var p in trait.Parameters)
+            {
+                trait.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
+            }
             trait.SubScope.DefineTypeSymbol("Self", trait.Type);
 
             foreach (var f in trait.Functions)

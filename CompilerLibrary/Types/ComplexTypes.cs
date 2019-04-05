@@ -13,17 +13,51 @@ namespace Cheez.Types.Complex
     public class TraitType : CheezType
     {
         public AstTraitDeclaration Declaration { get; }
+        public AstTraitDeclaration DeclarationTemplate => Declaration.Template ?? Declaration;
+
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
 
-        public TraitType(AstTraitDeclaration decl)
+        public CheezType[] Arguments { get; }
+
+        public TraitType(AstTraitDeclaration decl, CheezType[] args = null)
         {
             Size = 2 * PointerType.PointerSize;
             Alignment = PointerType.PointerAlignment;
             Declaration = decl;
+            Arguments = args ?? decl.Parameters.Select(p => p.Value as CheezType).ToArray();
+        }
+        
+        public override string ToString()
+        {
+            if (Arguments?.Length > 0)
+            {
+                var args = string.Join(", ", Arguments.Select(a => a.ToString()));
+                return $"{Declaration.Name.Name}({args})";
+            }
+            return $"{Declaration.Name.Name}";
         }
 
-        public override string ToString() => Declaration.Name.Name;
+        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        {
+            if (concrete is TraitType str)
+            {
+                if (this.DeclarationTemplate != str.DeclarationTemplate)
+                    return -1;
+
+                int score = 0;
+                for (int i = 0; i < Arguments.Length; i++)
+                {
+                    int s = this.Arguments[i].Match(str.Arguments[i], polyTypes);
+                    if (s == -1)
+                        return -1;
+                    score += s;
+                }
+                return score;
+            }
+
+            return -1;
+        }
     }
 
     public abstract class SumType : CheezType

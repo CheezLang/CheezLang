@@ -291,6 +291,7 @@ namespace Cheez
                     s is AstUsingStmt)
                 {
                     s.SourceFile = file;
+                    s.SetFlag(StmtFlags.GlobalScope);
                     file.Statements.Add(s);
                 }
                 else if (s is AstDirectiveStatement directive)
