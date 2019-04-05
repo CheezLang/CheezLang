@@ -103,11 +103,6 @@ namespace Cheez
 
         public Scope Parent { get; }
 
-        public List<AstFunctionDecl> FunctionDeclarations { get; } = new List<AstFunctionDecl>();
-        public List<AstVariableDecl> VariableDeclarations { get; } = new List<AstVariableDecl>();
-        public List<AstStatement> TypeDeclarations { get; } = new List<AstStatement>();
-        public List<AstImplBlock> ImplBlocks { get; } = new List<AstImplBlock>();
-
         public IEnumerable<ISymbol> InitializedSymbols => mInitializedSymbols.Keys;
         
         private Dictionary<string, ISymbol> mSymbolTable = new Dictionary<string, ISymbol>();

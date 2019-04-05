@@ -10,26 +10,7 @@ namespace Cheez
     /// This pass resolves the types of struct members
     /// </summary>
     public partial class Workspace
-    {
-        /// <summary>
-        /// pass 3: resolve the types of struct members, enum members and impl blocks
-        /// </summary>
-        private void PassResolveImpls()
-        {
-            foreach (var trait in mTraits)
-            {
-                Pass3Trait(trait);
-            }
-            foreach (var impl in mImpls)
-            {
-                Pass3Impl(impl);
-            }
-            foreach (var impl in mTraitImpls)
-            {
-                Pass3TraitImpl(impl);
-            }
-        }
-        
+    {        
         private void Pass3Trait(AstTraitDeclaration trait)
         {
             foreach (var p in trait.Parameters)
@@ -64,7 +45,6 @@ namespace Cheez
         private void Pass3TraitImpl(AstImplBlock impl)
         {
             impl.TraitExpr.Scope = impl.Scope;
-            impl.Scope.ImplBlocks.Add(impl);
 
             impl.TraitExpr = ResolveTypeNow(impl.TraitExpr, out var type);
             if (type.IsErrorType)
@@ -164,7 +144,6 @@ namespace Cheez
             impl.TargetTypeExpr.Scope = impl.Scope;
             impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t);
             impl.TargetType = t;
-            impl.Scope.ImplBlocks.Add(impl);
 
             var polyNames = new List<string>();
             CollectPolyTypeNames(impl.TargetTypeExpr, polyNames);

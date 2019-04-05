@@ -131,14 +131,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 GenerateVTables();
 
                 // create declarations
-                foreach (var function in workspace.GlobalScope.FunctionDeclarations)
+                foreach (var function in workspace.mFunctions)
                     if (!function.IsGeneric)
                         GenerateFunctionHeader(function);
 
-                foreach (var i in workspace.GlobalScope.ImplBlocks)
-                    foreach (var function in i.SubScope.FunctionDeclarations)
-                        if (!function.IsGeneric)
-                            GenerateFunctionHeader(function);
+                //foreach (var i in workspace.mImpls)
+                //    foreach (var function in i.SubScope.FunctionDeclarations)
+                //        if (!function.IsGeneric)
+                //            GenerateFunctionHeader(function);
 
                 CreateCLibFunctions();
                 SetupStackTraceStuff();
@@ -148,14 +148,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 GenerateMainFunction();
 
                 // create implementations
-                foreach (var function in workspace.GlobalScope.FunctionDeclarations)
+                foreach (var function in workspace.mFunctions)
                     if (!function.IsGeneric)
                         GenerateFunctionImplementation(function);
 
-                foreach (var i in workspace.GlobalScope.ImplBlocks)
-                    foreach (var function in i.SubScope.FunctionDeclarations)
-                        if (!function.IsGeneric)
-                            GenerateFunctionImplementation(function);
+                //foreach (var i in workspace.mImpls)
+                //    foreach (var function in i.SubScope.FunctionDeclarations)
+                //        if (!function.IsGeneric)
+                //            GenerateFunctionImplementation(function);
             }
 
             // verify module
@@ -304,7 +304,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var visited = new HashSet<AstVariableDecl>();
 
                 // init global variables
-                foreach (var gv in workspace.GlobalScope.VariableDeclarations)
+                foreach (var gv in workspace.mVariables)
                 {
                     InitGlobalVariable(gv, visited);
                 }

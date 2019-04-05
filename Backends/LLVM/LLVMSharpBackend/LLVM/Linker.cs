@@ -60,7 +60,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
 
             var msvcLibPath = FindVisualStudioLibraryDirectory();
-            if (winSdk == null)
+            if (msvcLibPath == null)
             {
                 errorHandler.ReportError("Couldn't find Visual Studio library directory");
                 return false;
@@ -154,7 +154,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         }
 
 
-        private static (int, string) FindVSInstallDirWithVsWhere()
+        private static (int, string) FindVSInstallDirWithVsWhere(int skipLatest = 0)
         {
             try
             {
@@ -170,6 +170,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var versions = Newtonsoft.Json.JsonConvert.DeserializeObject<VsWhere[]>(sb.ToString());
 
                 if (versions?.Length == 0)
+                    return (-1, null);
+
+
+                if (versions.Length <= skipLatest)
                     return (-1, null);
 
                 var latest = versions[0];
@@ -199,7 +203,52 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             switch (version)
             {
+                // visual studio 2017
                 case 15:
+                    {
+                        var MSVC = Path.Combine(installDir, "VC", "Tools", "MSVC");
+                        if (!Directory.Exists(MSVC))
+                            return null;
+
+                        SortedList<int[], string> versions = new SortedList<int[], string>(Comparer<int[]>.Create((a, b) =>
+                        {
+                            for (int i = 0; i < a.Length && i < b.Length; i++)
+                            {
+                                if (a[i] > b[i])
+                                    return -1;
+                                else if (a[i] < b[i])
+                                    return 1;
+                            }
+
+                            return 0;
+                        }));
+
+                        foreach (var sub in Directory.EnumerateDirectories(MSVC))
+                        {
+                            var name = sub.Substring(sub.LastIndexOfAny(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }) + 1);
+                            var v = name.Scan1(@"(\d+)\.(\d+)\.(\d+)").Select(s => int.TryParse(s, out int i) ? i : 0).ToArray();
+
+                            if (v.Length != 3)
+                                continue;
+
+                            versions.Add(v, sub);
+                        }
+
+                        foreach (var kv in versions)
+                        {
+                            var libDir = Path.Combine(kv.Value, "lib");
+
+                            if (!Directory.Exists(libDir))
+                                continue;
+
+                            return libDir;
+                        }
+
+                        return null;
+                    }
+
+                    // visual studio 2019
+                case 16:
                     {
                         var MSVC = Path.Combine(installDir, "VC", "Tools", "MSVC");
                         if (!Directory.Exists(MSVC))

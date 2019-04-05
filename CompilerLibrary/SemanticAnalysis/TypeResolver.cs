@@ -161,14 +161,20 @@ namespace Cheez
                     switch (instance)
                     {
                         case AstEnumDecl e:
+                            if (!e.IsPolymorphic)
+                                mEnums.Add(e);
                             ResolveEnum(e, nextInstances);
                             break;
 
                         case AstStructDecl s:
+                            if (!s.IsPolymorphic)
+                                mStructs.Add(s);
                             ResolveStruct(s, nextInstances);
                             break;
 
                         case AstTraitDeclaration trait:
+                            if (!trait.IsPolymorphic)
+                                mTraits.Add(trait);
                             Pass3Trait(trait);
                             break;
                     }
@@ -245,7 +251,6 @@ namespace Cheez
                 instance.IsPolymorphic = false;
                 instance.Template = decl;
                 decl.PolymorphicInstances.Add(instance);
-                instance.Scope.TypeDeclarations.Add(instance);
 
                 Debug.Assert(instance.Parameters.Count == args.Count);
 
@@ -321,7 +326,6 @@ namespace Cheez
                 instance.IsPolymorphic = false;
                 instance.Template = decl;
                 decl.PolymorphicInstances.Add(instance);
-                instance.Scope.TypeDeclarations.Add(instance);
 
                 Debug.Assert(instance.Parameters.Count == args.Count);
 
@@ -454,7 +458,6 @@ namespace Cheez
                 instance.IsPolymorphic = false;
                 instance.Template = decl;
                 decl.PolymorphicInstances.Add(instance);
-                instance.Scope.TypeDeclarations.Add(instance);
 
                 Debug.Assert(instance.Parameters.Count == args.Count);
 
@@ -611,8 +614,6 @@ namespace Cheez
                     var inst = InstantiatePolyType(targetType, polyTypes, location);
                     instance.ConstScope.DefineTypeSymbol("Self", inst);
                 }
-
-                instance.Scope.FunctionDeclarations.Add(instance);
 
                 foreach (var pt in constArgs)
                 {

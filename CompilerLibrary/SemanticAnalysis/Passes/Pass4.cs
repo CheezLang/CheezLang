@@ -56,10 +56,6 @@ namespace Cheez
                 if (res.other != null) detail = ("Other declaration here:", res.other);
                 ReportError(func.Name, $"A symbol with name '{func.Name.Name}' already exists in current scope", detail);
             }
-            else if (!func.IsGeneric)
-            {
-                func.Scope.FunctionDeclarations.Add(func);
-            }
         }
 
         private void ResolveFunctionSignature(AstFunctionDecl func)

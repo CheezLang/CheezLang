@@ -15,24 +15,6 @@ namespace Cheez
     /// </summary>
     public partial class Workspace
     {
-        /// <summary>
-        /// pass 3: resolve the types of struct members, enum members and impl blocks
-        /// </summary>
-        private void PassResolveGlobalTypeDeclarations()
-        {
-            // structs and enums
-            var declarations = new List<AstDecl>();
-
-            declarations.AddRange(mStructs);
-            declarations.AddRange(mEnums);
-            declarations.AddRange(mPolyStructs.SelectMany(s => s.PolymorphicInstances));
-            declarations.AddRange(mPolyStructs);
-            declarations.AddRange(mPolyEnums.SelectMany(e => e.PolymorphicInstances));
-            declarations.AddRange(mPolyEnums);
-
-            ResolveTypeDeclarations(declarations);
-        }
-
         private void CalculateSizeOfDecl(AstDecl decl, HashSet<AstDecl> done, HashSet<AstDecl> path)
         {
             if (done.Contains(decl))

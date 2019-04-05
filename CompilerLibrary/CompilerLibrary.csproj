@@ -134,7 +134,6 @@
     <Compile Include="SemanticAnalysis\Passes\ResolveTypeDeclarations.cs" />
     <Compile Include="SemanticAnalysis\Passes\Pass4.cs" />
     <Compile Include="SemanticAnalysis\Passes\Pass6.cs" />
-    <Compile Include="SemanticAnalysis\Passes\Pass7.cs" />
     <Compile Include="SemanticAnalysis\Passes\Pass_.cs" />
     <Compile Include="SemanticAnalysis\TypeResolver.cs" />
     <Compile Include="SemanticAnalysis\TypeInference.cs" />

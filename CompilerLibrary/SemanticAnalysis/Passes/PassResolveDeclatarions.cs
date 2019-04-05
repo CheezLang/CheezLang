@@ -40,8 +40,33 @@ namespace Cheez
                     Pass3TraitImpl(impl);
             }
 
+            // handle uses
+            foreach (var use in scope.Uses)
+            {
+                AnalyseUseStatement(use);
+            }
+
             // check initializers of non-constant variables declarations
             CheckInitializersOfNonConstantVars(scope);
+
+            // resolve function bodies
+            ResolveFunctionBodies(scope);
+        }
+
+        private void ResolveFunctionBodies(Scope scope)
+        {
+            foreach (var func in scope.Functions)
+            {
+                AnalyseFunction(func);
+            }
+
+            foreach (var i in scope.Impls)
+            {
+                foreach (var f in i.Functions)
+                {
+                    AnalyseFunction(f);
+                }
+            }
         }
 
         private void CheckInitializersOfNonConstantVars(Scope scope)

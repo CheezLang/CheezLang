@@ -98,6 +98,35 @@ namespace Cheez
             //Pass6(); // variables
             //Pass7(); // function bodies
 
+            mVariables.AddRange(GlobalScope.Variables);
+            mTypeDefs.AddRange(GlobalScope.Typedefs);
+
+            // print stuff
+            { 
+                //System.Console.WriteLine("Traits: ");
+                //foreach (var t in Traits)
+                //    System.Console.WriteLine($"  {t.Type}");
+
+                //System.Console.WriteLine("Enums: ");
+                //foreach (var t in mEnums)
+                //    System.Console.WriteLine($"  {t.Type}");
+
+                //System.Console.WriteLine("Structs: ");
+                //foreach (var t in mStructs)
+                //    System.Console.WriteLine($"  {t.Type}");
+
+                //System.Console.WriteLine("Functions: ");
+                //foreach (var t in mFunctions)
+                //    System.Console.WriteLine($"  {t.Name}: {t.Type}");
+
+                //System.Console.WriteLine("Variables: ");
+                //foreach (var t in mVariables)
+                //    System.Console.WriteLine($"  {t.Pattern}: {t.Type}");
+
+                //System.Console.WriteLine("Typedefs: ");
+                //foreach (var t in mTypeDefs)
+                //    System.Console.WriteLine($"  {t.Name} = {t.Type}");
+            }
 
             MainFunction = GlobalScope.GetSymbol("Main") as AstFunctionDecl;
             if (MainFunction == null)
@@ -105,7 +134,7 @@ namespace Cheez
                 mCompiler.ErrorHandler.ReportError("No main function was specified");
             }
 
-            ReportError("error");
+            //ReportError("error");
         }
 
         [SkipInStackFrame]

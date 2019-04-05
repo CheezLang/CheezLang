@@ -285,11 +285,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (visited.Contains(decl))
                 return;
 
-            if (decl.VarDependencies != null)
+            if (decl.Dependencies != null)
             {
-                foreach (var dep in decl.VarDependencies)
+                foreach (var (kind, dep) in decl.Dependencies)
                 {
-                    InitGlobalVariable(dep.VarDeclaration, visited);
+                    if (dep is AstVariableDecl v)
+                        InitGlobalVariable(v, visited);
                 }
             }
 

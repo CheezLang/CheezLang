@@ -25,6 +25,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             stackTraceTop = module.AddGlobal(LLVM.PointerType(stackTraceType, 0), "stacktrace.top");
             stackTraceTop.SetInitializer(LLVM.ConstPointerNull(LLVM.PointerType(stackTraceType, 0)));
+            stackTraceTop.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
         }
 
         private void PushStackTrace(AstFunctionDecl function)

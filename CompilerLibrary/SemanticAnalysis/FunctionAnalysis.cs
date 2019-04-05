@@ -43,6 +43,7 @@ namespace Cheez
 
         private void AnalyseFunction(AstFunctionDecl func, List<AstFunctionDecl> instances = null)
         {
+
             if (func.SelfParameter)
             {
                 var p = func.Parameters[0];
@@ -76,6 +77,8 @@ namespace Cheez
 
             if (func.IsGeneric)
                 return;
+
+            mFunctions.Add(func);
 
             if (func.TryGetDirective("linkname", out var ln))
             {
