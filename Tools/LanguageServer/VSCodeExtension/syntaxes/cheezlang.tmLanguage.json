@@ -39,9 +39,9 @@
             "name": "keyword.modifier.cheezlang",
             "match": "\\b(pub|const)\\b"
         },
-        "self": {
+        "special_values": {
             "name": "variable.language.cheezlang",
-            "match": "\\b(self)\\b"
+            "match": "\\b(self|default)\\b"
         },
         "identifier": {
             "patterns": [
@@ -109,7 +109,7 @@
         },
         "type_keywords": {
             "name": "storage.type.cheezlang",
-            "match": "\\b(enum|struct|trait|impl|for|typedef|let)\\b"
+            "match": "\\b(use|enum|struct|trait|impl|for|typedef|let)\\b"
         },
         "escaped_character": {
             "name": "constant.character.escape.cheezlang",
@@ -185,7 +185,7 @@
                 { "include": "#core_types" },
                 { "include": "#control_keywords" },
                 { "include": "#type_keywords" },
-                { "include": "#self" },
+                { "include": "#special_values" },
                 { "include": "#literals" },
                 { "include": "#type_modifiers" },
                 { "include": "#operators" },
