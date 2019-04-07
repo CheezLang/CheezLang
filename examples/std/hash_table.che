@@ -8,7 +8,7 @@ struct Table(K: type, V: type) {
     count: uint
     entries: []Entry(K, V)
     allocator: Allocator
-    comparer: fn (K, K) -> bool {}
+    comparer: fn (K, K) -> bool
 }
 
 struct Entry(K: type, V: type) {
@@ -19,7 +19,7 @@ struct Entry(K: type, V: type) {
 }
 
 impl Table($K, $V) {
-    fn create(comp: fn(K, K) -> bool {}, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    fn create(comp: fn(K, K) -> bool, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         let table: Table(K, V)
         table.allocator = allocator
         table.comparer = comp

@@ -61,7 +61,7 @@ impl ArenaAllocator {
             parent.free(buckets[i].memory.data)
         }
 
-        buckets.free()
+        buckets.dispose()
     }
 
     fn dump(ref Self, dump_buckets: bool = false) {

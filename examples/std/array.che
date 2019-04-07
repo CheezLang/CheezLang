@@ -97,13 +97,13 @@ impl Array($T) {
         return self.sliceFL(0, len)
     }
 
-    fn sort(ref Self, cmp: fn (ref T, ref T) -> int{}) -> ref Self {
+    fn sort(ref Self, cmp: fn (ref T, ref T) -> int) -> ref Self {
         quick_sort(0, length - 1, cmp)
 
         return self
     }
 
-    fn quick_sort(ref Self, from: int, to: int, cmp: fn (ref T, ref T) -> int{}) {
+    fn quick_sort(ref Self, from: int, to: int, cmp: fn (ref T, ref T) -> int) {
         if from >= to {
             return
         }

@@ -39,7 +39,7 @@ fn SwapBuffers(HDC) -> BOOL #stdcall;
 // wgl
 fn wglCreateContext(hdc: HDC) -> HGLRC #stdcall;
 fn wglMakeCurrent(HDC, HGLRC) -> BOOL #stdcall;
-fn wglGetProcAddress(c_string) -> (fn() #stdcall {}) #stdcall;
+fn wglGetProcAddress(c_string) -> (fn() #stdcall) #stdcall;
 
 // somehow not linking
 // fn GetCurrentDirectory(nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;

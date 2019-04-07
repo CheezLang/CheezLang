@@ -50,7 +50,7 @@ struct RECT {
 
 struct WNDCLASSA {
     style           : UINT
-    lpfnWndProc     : fn(HWND, UINT, WPARAM, LPARAM) -> LRESULT {}
+    lpfnWndProc     : fn(HWND, UINT, WPARAM, LPARAM) -> LRESULT
     cbClsExtra      : i32
     cbWndExtra      : i32
     hInstance       : HINSTANCE

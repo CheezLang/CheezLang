@@ -76,7 +76,7 @@ impl StackAllocator {
     fn dispose(ref Self) {
         clear()
         parent.free(memory)
-        allocations.free()
+        allocations.dispose()
     }
 
     fn print_diagnostics(ref Self) {

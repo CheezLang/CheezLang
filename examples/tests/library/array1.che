@@ -90,6 +90,6 @@ fn Main() {
     match a.get(20) { Some($value)  -> c_printf("a[%lld] = %lld`n", 20, value) }
     c_printf("`n")
     
-    a.free()
+    a.dispose()
     print_array(a)
 }

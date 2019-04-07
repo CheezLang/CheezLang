@@ -13,7 +13,7 @@ struct TakeIterator(T: type) {
 
 struct MapIterator(T: type, X: type) {
     it      : Iterator(T)
-    mapFunc : fn(T) -> X {}
+    mapFunc : fn(T) -> X
 }
 
 // impl Iterator($T) for TakeIterator(T) {
@@ -130,7 +130,7 @@ impl Iterator($T) {
         return <<it
     }
 
-    fn map(ref Self, mapFunc: fn (T) -> $X {}) -> Iterator(X) {
+    fn map(ref Self, mapFunc: fn (T) -> $X) -> Iterator(X) {
         let it = alloc(MapIterator(T, X))
         <<it = new {self, mapFunc}
         return <<it

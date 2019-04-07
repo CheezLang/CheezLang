@@ -1135,10 +1135,6 @@ namespace Cheez.Parsing
 
             var dirs = ParseDirectives();
 
-            Consume(TokenType.OpenBrace, ErrMsg("{", "at end of function type return type list"));
-            SkipNewlines();
-            end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of function type return type list")).location;
-
             return new AstFunctionTypeExpr(args, returnType, dirs, new Location(beginning, end));
         }
 

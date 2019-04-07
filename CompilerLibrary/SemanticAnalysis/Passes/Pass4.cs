@@ -280,6 +280,9 @@ namespace Cheez
                 case AstCompCallExpr _:
                     break;
 
+                case AstEmptyExpr _:
+                    break;
+
                 default: throw new NotImplementedException($"Type {typeExpr}");
             }
         }
