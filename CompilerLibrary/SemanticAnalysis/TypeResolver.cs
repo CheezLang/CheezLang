@@ -165,7 +165,28 @@ namespace Cheez
                         break;
                     }
 
+                case FunctionType f:
+                    {
+                        if (arg is FunctionType f2 && f.Parameters.Length == f2.Parameters.Length)
+                        {
+                            for (int i = 0; i < f.Parameters.Length; i++)
+                            {
+                                CollectPolyTypes(f.Parameters[i].type, f2.Parameters[i].type, result);
+                            }
+
+                            if (f.ReturnType != null && f2.ReturnType != null)
+                                CollectPolyTypes(f.ReturnType, f2.ReturnType, result);
+                        }
+                        break;
+                    }
+
+                case BoolType _:
+                case CheezTypeType _:
+                case CharType _:
                 case IntType _: break;
+
+                case CheezType t:
+                    throw new NotImplementedException();
             }
         }
 
@@ -258,7 +279,7 @@ namespace Cheez
                 {
                     var param = pi.Parameters[i];
                     var arg = args[i];
-                    if (param.Value != arg.value)
+                    if (!param.Value.Equals(arg.value))
                     {
                         eq = false;
                         break;

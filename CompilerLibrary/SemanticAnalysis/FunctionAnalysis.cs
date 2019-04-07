@@ -405,7 +405,7 @@ namespace Cheez
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 
                         var val = HandleReference(ass.Value, ass.Pattern.Type, null);
-                        return CheckType(val, ass.Pattern.Type, $"Can't assign a value of type {val} to a pattern of type {ass.Pattern.Type}");
+                        return CheckType(val, ass.Pattern.Type, $"Can't assign a value of type {val.Type} to a pattern of type {ass.Pattern.Type}");
                     }
 
                 case AstTupleExpr t:
