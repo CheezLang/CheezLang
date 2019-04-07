@@ -73,25 +73,6 @@ impl IDistribution(double) for StandardContinuousUniform {
     }
 }
 
-// standard discrete uniform distribution
-struct StandardDiscreteUniform {
-    min: int
-    max: int
-}
-impl IDiscreteDistribution(int) for StandardDiscreteUniform {
-    fn get_weight(ref Self, i: int) -> int {
-        return if i >= min and i <= max {1} else {0}
-    }
-}
-impl IDistribution(int) for StandardDiscreteUniform {
-    fn sample(ref Self) -> int {
-        let d = PseudoRandom::next_double()
-        let mi = cast(double)min
-        let ma = cast(double)max
-        return cast(int) d * (1.0 + ma - mi) + mi
-    }
-}
-
 // normal distribution
 struct NormalDistribution {
     mean    : double
@@ -115,7 +96,59 @@ impl IDistribution(double) for NormalDistribution {
     }
 }
 
-// histogram
+// standard discrete uniform distribution
+struct StandardDiscreteUniform {
+    min: int
+    max: int
+}
+impl IDiscreteDistribution(int) for StandardDiscreteUniform {
+    fn get_weight(ref Self, i: int) -> int {
+        return if i >= min and i <= max {1} else {0}
+    }
+}
+impl IDistribution(int) for StandardDiscreteUniform {
+    fn sample(ref Self) -> int {
+        let d = PseudoRandom::next_double()
+        let mi = cast(double)min
+        let ma = cast(double)max
+        return cast(int) d * (1.0 + ma - mi) + mi
+    }
+}
+
+// singleton distribution
+struct SingletonDistribution(T: type) {
+    value: T
+}
+
+impl IDistribution(int) for SingletonDistribution(int) {
+    fn sample(ref Self) -> int {
+        return value
+    }
+}
+
+// bernoulli
+struct BernoulliDistribution {
+    zero: int
+    one : int
+}
+
+impl IDistribution(int) for BernoulliDistribution {
+    fn sample(ref Self) -> int {
+        let z = cast(double)zero
+        let o = cast(double)one
+        let d = PseudoRandom::next_double()
+        return if d <= (z / (z + o)) {0} else {1}
+    }
+}
+
+impl BernoulliDistribution {
+    fn create(zero: int, one: int) -> Self {
+        @assert(zero >= 0 and one >= 0 and (zero != 0 or one != 0))
+        return new BernoulliDistribution{zero, one}
+    }
+}
+
+// histograms
 fn print_histogram(dist: IDistribution($T), low: double, high: double){
     let const width : int = 160
     let const height: int = 30
@@ -213,7 +246,7 @@ fn tuple_get(t: (int, int)) -> int {
 
 fn print_discrete_histogram(dist: IDistribution($T)){
     let const width : int = 40
-    let const samples   : int = 1000000
+    let const samples   : int = 100000
     let it = dist::samples()::take(samples)
 
     let map = Table(int, int)::create(compare_ints)

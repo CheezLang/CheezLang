@@ -1147,7 +1147,7 @@ namespace Cheez
 
                         InferArg(0, CheezType.Bool);
 
-                        if (expr.Arguments.Count >= 1)
+                        if (expr.Arguments.Count > 1)
                         {
                             var arg = InferArg(1, CheezType.String);
                             if (!arg.IsCompTimeValue)
@@ -1155,7 +1155,9 @@ namespace Cheez
                                 ReportError(arg, $"Argument must be a compile time constant");
                                 return expr;
                             }
-                            msg = arg.Value as string;
+                        } else
+                        {
+                            expr.Arguments.Add(new AstStringLiteral("Assertion failed!"));
                         }
 
                         expr.Type = CheezType.Void;
