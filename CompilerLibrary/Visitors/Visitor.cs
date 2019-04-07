@@ -34,6 +34,7 @@ namespace Cheez.Visitors
         ReturnType VisitTraitDecl(AstTraitDeclaration decl, DataType data = default);
 
         // expressions
+        ReturnType VisitLambdaExpr(AstLambdaExpr expr, DataType data = default);
         ReturnType VisitBlockExpr(AstBlockExpr expr, DataType data = default);
         ReturnType VisitIfExpr(AstIfExpr expr, DataType data = default);
         ReturnType VisitIdExpr(AstIdExpr expr, DataType data = default);
@@ -106,6 +107,7 @@ namespace Cheez.Visitors
         public virtual ReturnType VisitImplDecl(AstImplBlock decl, DataType data = default) => default;
 
         // expressions
+        public virtual ReturnType VisitLambdaExpr(AstLambdaExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitBlockExpr(AstBlockExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitIfExpr(AstIfExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitStringLiteralExpr(AstStringLiteral expr, DataType data = default) => default;

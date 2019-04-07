@@ -66,6 +66,8 @@ namespace Cheez.Parsing
         OpenBracket,
         ClosingBracket,
 
+        Pipe,
+
         KwReturn,
         KwNew,
         KwRef,
@@ -256,6 +258,7 @@ namespace Cheez.Parsing
                 case '<': SimpleToken(ref token, TokenType.Less); break;
                 case '>': SimpleToken(ref token, TokenType.Greater); break;
                 case '!': SimpleToken(ref token, TokenType.Bang); break;
+                case '|': SimpleToken(ref token, TokenType.Pipe); break;
 
 
                 case '"': ParseStringLiteral(ref token, '"'); break;

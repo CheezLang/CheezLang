@@ -232,24 +232,12 @@ fn print_histogram(dist: IDistribution($T), low: double, high: double){
     it.dispose()
 }
 
-fn compare_ints(a: int, b: int) -> bool {
-    return a == b
-}
-
-fn cmp_tuples(a: ref (int, int), b: ref (int, int)) -> int {
-    return b[0] - a[0]
-}
-
-fn tuple_get(t: (int, int)) -> int {
-    return t[1]
-}
-
 fn print_discrete_histogram(dist: IDistribution($T)){
     let const width : int = 40
     let const samples   : int = 100000
     let it = dist::samples()::take(samples)
 
-    let map = Table(int, int)::create(compare_ints)
+    let map = Table(int, int)::create(|a: int, b: int| a == b)
 
     while match it.next() {
         Some($c) -> {
@@ -266,9 +254,10 @@ fn print_discrete_histogram(dist: IDistribution($T)){
         $_ -> false
     } {}
 
-    let arr = map.iterator()::to_array().sort(cmp_tuples)
+    let cmp: fn(ref(int, int), ref(int, int)) -> int = |a, b| b[0] - a[0]
+    let arr = map.iterator()::to_array().sort(cmp)
 
-    let max = map.iterator()::map(tuple_get)::max()
+    let max = map.iterator()::map(|t: (int, int)| t[1])::max()
     let scale = if max < width {1.0} else {(cast(double)width)/(cast(double)max)}
     while let i = 0; i < arr.length; i += 1 {
         printf("{}|", [arr[i][0]])

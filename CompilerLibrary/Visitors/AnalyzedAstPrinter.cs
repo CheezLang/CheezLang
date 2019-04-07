@@ -5,6 +5,7 @@ using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
+using Cheez.Types;
 using Cheez.Util;
 
 namespace Cheez.Visitors
@@ -318,7 +319,7 @@ namespace Cheez.Visitors
                 foreach (var s in block.Statements)
                 {
                     if (i > 0) sb.AppendLine();
-                    sb.Append($"/* {s.Position} */ ").Append(s.Accept(this));
+                    sb.Append(s.Accept(this));
                     ++i;
                 }
             }
@@ -464,6 +465,21 @@ namespace Cheez.Visitors
 
 
         #region Expressions
+
+        public override string VisitLambdaExpr(AstLambdaExpr expr, int data = 0)
+        {
+            var sb = new StringBuilder();
+            sb.Append("|");
+            sb.Append(string.Join(", ", expr.Parameters.Select(p => p.Accept(this))));
+            sb.Append("| ");
+
+            if (expr.FunctionType?.ReturnType != null && expr.FunctionType.ReturnType != CheezType.Void)
+                sb.Append($"-> {expr.FunctionType.ReturnType} ");
+
+            sb.Append(expr.Body);
+
+            return sb.ToString();
+        }
 
         public override string VisitEnumValueExpr(AstEnumValueExpr expr, int data = 0)
         {

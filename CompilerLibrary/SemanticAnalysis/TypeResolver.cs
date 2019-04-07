@@ -180,6 +180,7 @@ namespace Cheez
                         break;
                     }
 
+                case FloatType _:
                 case BoolType _:
                 case CheezTypeType _:
                 case CharType _:

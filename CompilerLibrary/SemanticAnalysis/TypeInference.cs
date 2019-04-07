@@ -208,9 +208,65 @@ namespace Cheez
                 case AstEnumValueExpr e:
                     return InferTypeEnumValueExpr(e, expected, context);
 
+                case AstLambdaExpr l:
+                    return InferTypeLambdaExpr(l, expected, context);
+
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private AstExpression InferTypeLambdaExpr(AstLambdaExpr expr, CheezType expected, TypeInferenceContext context)
+        {
+            var paramScope = new Scope("||", expr.Scope);
+            var subScope = new Scope("lambda", paramScope);
+
+            var funcType = expected as FunctionType;
+
+            for (int i = 0; i < expr.Parameters.Count; i++)
+            {
+                var param = expr.Parameters[i];
+                CheezType ex = (funcType != null && i < funcType.Parameters.Length) ? funcType.Parameters[i].type : null;
+
+                param.Scope = paramScope;
+                if (param.TypeExpr != null)
+                {
+                    param.TypeExpr.Scope = paramScope;
+                    param.TypeExpr = ResolveType(param.TypeExpr, context, out var t);
+                    param.Type = t;
+                }
+                else
+                {
+                    param.Type = ex;
+                }
+
+                if (param.Type == null)
+                {
+                    ReportError(param, $"Failed to infer type of lambda parameter");
+                }
+
+                param.Scope.DefineSymbol(param);
+            }
+
+            var expectedRetType = funcType?.ReturnType;
+            if (expectedRetType == CheezType.Void)
+                expectedRetType = null;
+
+            expr.Body.AttachTo(expr);
+            expr.Body.Scope = subScope;
+            expr.Body = InferTypeHelper(expr.Body, expectedRetType, context);
+            ConvertLiteralTypeToDefaultType(expr.Body, funcType?.ReturnType);
+
+            var retType = expr.Body.Type;
+            if (funcType?.ReturnType == CheezType.Void)
+                retType = CheezType.Void;
+
+            expr.Type = new FunctionType(
+                expr.Parameters.Select(p => (p.Name.Name, p.Type, (AstExpression)null)).ToArray(),
+                retType,
+                FunctionType.CallingConvention.Default);
+
+            return expr;
         }
 
         private AstExpression InferTypeEnumValueExpr(AstEnumValueExpr expr, CheezType expected, TypeInferenceContext context)

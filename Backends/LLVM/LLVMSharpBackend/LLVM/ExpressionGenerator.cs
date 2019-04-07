@@ -53,8 +53,51 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstMatchExpr m: return GenerateMatchExpr(m);
                 case AstEnumValueExpr eve: return GenerateEnumValueExpr(eve);
                 case AstCompCallExpr cc: return GenerateCompCallExpr(cc);
+                case AstLambdaExpr l: return GenerateLambdaExpr(l);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GenerateLambdaExpr(AstLambdaExpr lambda)
+        {
+            var name = $"lambda.{lambda.Type}.che";
+
+            var funcType = FuncTypeToLLVMType(lambda.FunctionType);
+            var func = module.AddFunction(name, funcType);
+            var locals = func.AppendBasicBlock("locals");
+            var entry = func.AppendBasicBlock("entry");
+
+            var prevBuilder = builder;
+            var prevLLVMFunc = currentLLVMFunction;
+            currentLLVMFunction = func;
+            builder = new IRBuilder();
+            builder.PositionBuilderAtEnd(locals);
+            builder.CreateBr(entry);
+            builder.PositionBuilderAtEnd(entry);
+
+            for (int i = 0; i < lambda.Parameters.Count; i++)
+            {
+                var p = CreateLocalVariable(lambda.Parameters[i]);
+                builder.CreateStore(func.GetParam((uint)i), p);
+                valueMap[lambda.Parameters[i]] = p;
+            }
+
+            var val = GenerateExpression(lambda.Body, true);
+            if (!lambda.Body.GetFlag(ExprFlags.Returns))
+            {
+                if (lambda.FunctionType.ReturnType == CheezType.Void)
+                {
+                    builder.CreateRetVoid();
+                }
+                else
+                {
+                    builder.CreateRet(val);
+                }
+            }
+
+            builder = prevBuilder;
+            currentLLVMFunction = prevLLVMFunc;
+            return func;
         }
 
         private LLVMValueRef GenerateCompCallExpr(AstCompCallExpr cc)

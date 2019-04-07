@@ -1564,11 +1564,76 @@ namespace Cheez.Parsing
             return new AstArrayExpr(values, new Location(token.location, end));
         }
 
+        private AstExpression ParseLambdaExpr()
+        {
+            var beg = ConsumeUntil(TokenType.Pipe, ErrMsg("|", "at beginning of lambda")).location;
+            var parameters = new List<AstParameter>();
+            AstExpression retType = null;
+
+            SkipNewlines();
+            while (true)
+            {
+                var next = PeekToken();
+
+                if (next.type == TokenType.Identifier)
+                {
+                    NextToken();
+                    var name = new AstIdExpr(next.data as string, false, new Location(next.location));
+                    AstExpression type = null;
+                    var end = name.End;
+
+                    SkipNewlines();
+                    if (CheckToken(TokenType.Colon))
+                    {
+                        NextToken();
+                        SkipNewlines();
+                        type = ParseExpression();
+                        end = type.End;
+                        SkipNewlines();
+                    }
+
+                    parameters.Add(new AstParameter(name, type, null, new Location(name.Beginning, end)));
+
+                    next = PeekToken();
+                    if (next.type == TokenType.Comma)
+                    {
+                        NextToken();
+                        SkipNewlines();
+                    }
+                }
+                else if (next.type == TokenType.Pipe || next.type == TokenType.EOF)
+                {
+                    break;
+                }
+                else
+                {
+                    NextToken();
+                    ReportError(next.location, $"Unexpected token {next.type} in parameter list of lamda");
+                }
+            }
+
+            ConsumeUntil(TokenType.Pipe, ErrMsg("|", "in lambda"));
+
+            if (CheckToken(TokenType.Arrow))
+            {
+                NextToken();
+                SkipNewlines();
+                retType = ParseExpression();
+            }
+
+            var body = ParseExpression();
+
+            return new AstLambdaExpr(parameters, body, retType, new Location(beg, body.End));
+        }
+
         private AstExpression ParseAtomicExpression(ErrorMessageResolver errorMessage)
         {
             var token = PeekToken();
             switch (token.type)
             {
+                case TokenType.Pipe:
+                    return ParseLambdaExpr();
+
                 case TokenType.KwNew:
                     return ParseStructValue();
 
