@@ -126,6 +126,36 @@ namespace Cheez
                         break;
                     }
 
+                case TraitType str:
+                    {
+                        if (arg is TraitType tt)
+                        {
+                            if (str.Arguments.Length == tt.Arguments.Length)
+                            {
+                                for (var i = 0; i < str.Arguments.Length; i++)
+                                {
+                                    CollectPolyTypes(str.Arguments[i], tt.Arguments[i], result);
+                                }
+                            }
+                        }
+                        break;
+                    }
+
+                case EnumType str:
+                    {
+                        if (arg is EnumType tt)
+                        {
+                            if (str.Arguments.Length == tt.Arguments.Length)
+                            {
+                                for (var i = 0; i < str.Arguments.Length; i++)
+                                {
+                                    CollectPolyTypes(str.Arguments[i], tt.Arguments[i], result);
+                                }
+                            }
+                        }
+                        break;
+                    }
+
                 case ReferenceType r:
                     {
                         if (arg is ReferenceType r2)
@@ -703,6 +733,24 @@ namespace Cheez
                             throw new Exception("must be null");
                         var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
                         var instance = InstantiatePolyStruct(s.Declaration, args, location: location);
+                        return instance.Type;
+                    }
+
+                case TraitType s:
+                    {
+                        if (s.Declaration.Template != null)
+                            throw new Exception("must be null");
+                        var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
+                        var instance = InstantiatePolyTrait(s.Declaration, args, location: location);
+                        return instance.Type;
+                    }
+
+                case EnumType s:
+                    {
+                        if (s.Declaration.Template != null)
+                            throw new Exception("must be null");
+                        var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
+                        var instance = InstantiatePolyEnum(s.Declaration, args, location: location);
                         return instance.Type;
                     }
 

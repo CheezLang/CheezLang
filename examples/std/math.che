@@ -17,6 +17,9 @@ fn sin(f: double) -> double;
 fn cosf(f: float) -> float;
 fn cos(f: double) -> double;
 
+fn logf(f: float) -> float;
+fn log(f: double) -> double;
+
 fn floorf(float) -> float;
 fn floor(double) -> double;
 

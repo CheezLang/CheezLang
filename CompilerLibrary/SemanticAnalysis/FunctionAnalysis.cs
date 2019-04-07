@@ -188,7 +188,7 @@ namespace Cheez
                 case AstUsingStmt use: AnalyseUseStatement(use); break;
 
                 case AstFunctionDecl func: ReportError(func, $"Local functions not supported yet."); break;
-                default: throw new NotImplementedException();
+                //default: throw new NotImplementedException();
             }
         }
 

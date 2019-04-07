@@ -433,6 +433,7 @@ namespace Cheez
             foreach (var decl in statements)
             {
                 decl.Scope = scope;
+                decl.Position = scope.NextPosition();
 
                 switch (decl)
                 {

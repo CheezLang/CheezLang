@@ -37,6 +37,8 @@ namespace Cheez.Ast.Statements
 
         public IAstNode Parent { get; set; }
 
+        public int Position { get; set; } = 0;
+
         public AstStatement(List<AstDirective> dirs = null, ILocation Location = null)
         {
             this.Directives = dirs ?? new List<AstDirective>();

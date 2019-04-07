@@ -180,7 +180,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstBreakStmt br: GenerateBreak(br); break;
                 case AstContinueStmt cont: GenerateContinue(cont); break;
                 case AstUsingStmt _: break;
-                default: throw new NotImplementedException();
+
+                //default: throw new NotImplementedException();
             }
         }
 

@@ -1,0 +1,98 @@
+#load("std:preload")
+
+trait Iterator(T: type) {
+    fn next(ref Self) -> Option(T);
+    fn dispose(ref Self);
+}
+
+struct TakeIterator(T: type) {
+    it      : Iterator(T)
+    count   : int
+}
+
+// impl Iterator($T) for TakeIterator(T) {
+//     fn next(ref Self) -> Option(T) {
+//         if count > 0 {
+//             count -= 1
+//             return it.next()
+//         } else {
+//             return None
+//         }
+//     }
+// }
+
+impl Iterator(int) for TakeIterator(int) {
+    fn next(ref Self) -> Option(int) {
+        if count > 0 {
+            count -= 1
+            return it.next()
+        } else {
+            return None
+        }
+    }
+
+    fn dispose(ref Self) {
+        it.dispose()
+        free(&self)
+    }
+}
+
+impl Iterator(double) for TakeIterator(double) {
+    fn next(ref Self) -> Option(double) {
+        if count > 0 {
+            count -= 1
+            return it.next()
+        } else {
+            return None
+        }
+    }
+
+    fn dispose(ref Self) {
+        it.dispose()
+        free(&self)
+    }
+}
+
+impl Iterator($T) {
+    fn max(ref Self) -> T {
+        let max: T
+
+        while true {
+            match self.next() {
+                Some($v) if v > max -> {
+                    max = v
+                }
+
+                None -> {
+                    break
+                }
+            }
+        }
+
+        return max
+    }
+
+    fn sum(ref Self) -> T {
+        let sum: T
+
+        while true {
+            match self.next() {
+                Some($v) -> {
+                    sum += v
+                }
+
+                None -> {
+                    break
+                }
+            }
+        }
+
+        return sum
+    }
+
+    fn take(ref Self, count: int) -> Iterator(T) {
+        let it = alloc(TakeIterator(T))
+        <<it = new {self, count}
+        return <<it
+    }
+}

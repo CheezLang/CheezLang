@@ -48,7 +48,7 @@ namespace Cheez
 
             if (literalType == IntType.LiteralType)
             {
-                if (expected != null && !(expected is IntType)) return IntType.DefaultType;
+                if (expected != null && !(expected is IntType || expected is FloatType)) return IntType.DefaultType;
                 return expected ?? IntType.DefaultType;
             }
             else if (literalType == FloatType.LiteralType)
@@ -1585,6 +1585,10 @@ namespace Cheez
             // copy initialized symbols
             foreach (var symbol in expr.Scope.InitializedSymbols)
                 expr.SubScope.SetInitialized(symbol);
+
+            // test
+            //ResolveDeclarations(expr.SubScope, expr.Statements);
+
 
             int end = expr.Statements.Count;
             if (expr.Statements.LastOrDefault() is AstExprStmt) --end;

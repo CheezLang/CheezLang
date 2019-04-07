@@ -100,8 +100,9 @@ namespace Cheez
     public class Scope
     {
         public string Name { get; set; }
-
         public Scope Parent { get; }
+        public bool IsOrdered { get; set; } = true;
+        private int nextPosition = 1;
 
         public IEnumerable<ISymbol> InitializedSymbols => mInitializedSymbols.Keys;
         
@@ -459,6 +460,17 @@ namespace Cheez
             DefineOperator(new BuiltInOperator(">=", CheezType.Bool, FloatType.LiteralType, FloatType.LiteralType, (a, b) => (NumberData)a >= (NumberData)b));
         }
 
+        internal int NextPosition()
+        {
+            if (IsOrdered)
+            {
+                if (Parent != null && Parent.nextPosition > nextPosition)
+                    nextPosition = Parent.nextPosition;
+                return nextPosition++;
+            }
+            return 0;
+        }
+
         private void DefineArithmeticOperators(CheezType[] types, params string[] ops)
         {
             foreach (var name in ops)
@@ -639,6 +651,34 @@ namespace Cheez
                 for (int i = 0; i < sa.Arguments.Length; i++)
                 {
                     if (!TypesMatch(sa.Arguments[i], sb.Arguments[i]))
+                        return false;
+                }
+
+                return true;
+            }
+            else if (a is TraitType ta && b is TraitType tb)
+            {
+                if (ta.Declaration.Name.Name != tb.Declaration.Name.Name)
+                    return false;
+                if (ta.Arguments.Length != tb.Arguments.Length)
+                    return false;
+                for (int i = 0; i < ta.Arguments.Length; i++)
+                {
+                    if (!TypesMatch(ta.Arguments[i], tb.Arguments[i]))
+                        return false;
+                }
+
+                return true;
+            }
+            else if (a is EnumType ea && b is EnumType eb)
+            {
+                if (ea.Declaration.Name.Name != eb.Declaration.Name.Name)
+                    return false;
+                if (ea.Arguments.Length != eb.Arguments.Length)
+                    return false;
+                for (int i = 0; i < ea.Arguments.Length; i++)
+                {
+                    if (!TypesMatch(ea.Arguments[i], eb.Arguments[i]))
                         return false;
                 }
 

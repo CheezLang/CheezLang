@@ -15,8 +15,8 @@ namespace Cheez.Types.Complex
         public AstTraitDeclaration Declaration { get; }
         public AstTraitDeclaration DeclarationTemplate => Declaration.Template ?? Declaration;
 
-        public override bool IsPolyType => false;
-        public override bool IsErrorType => false;
+        public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
+        public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
 
         public CheezType[] Arguments { get; }
 

@@ -74,29 +74,13 @@ namespace Cheez
             preludeScope.DefineBuiltInOperators();
 
             GlobalScope = new Scope("Global", preludeScope);
+            GlobalScope.IsOrdered = false;
 
             // new
             ResolveDeclarations(GlobalScope, Statements);
 
             if (mCompiler.ErrorHandler.HasErrors)
                 return;
-
-            // old
-            //Pass1(); // collect declarations
-            //Pass2(); // resolve types
-
-            //// at this points all concrete types are known
-
-            //PassResolveGlobalTypeDeclarations();
-            //PassResolveImpls();
-
-            //PassResolveGlobalUses();
-
-            //Pass4(); // resolve function signatures
-            //// Pass5(); // impls
-            //// Pass6(); // match impl functions with trait functions
-            //Pass6(); // variables
-            //Pass7(); // function bodies
 
             mVariables.AddRange(GlobalScope.Variables);
             mTypeDefs.AddRange(GlobalScope.Typedefs);

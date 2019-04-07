@@ -1,0 +1,165 @@
+#load("std:math")
+#load("std:iterator")
+#load("std:util")
+
+let lcg: LinearCongruentialGenerator = {
+    let a = LinearCongruentialGenerator::create(cast get_time_microseconds())
+    while let i = 0; i < 100; i += 1 {
+        a.next()
+    }
+    a
+}
+struct PseudoRandom {}
+
+impl PseudoRandom {
+    fn next_int() -> i32 {
+        return cast lcg.next()
+    }
+
+    fn next_double() -> double {
+        return lcg.next_double()
+    }
+}
+
+// distributions
+trait IDistribution(T: type) {
+    fn sample(ref Self) -> T;
+}
+
+// iterator
+struct IDistributionIterator(T: type) {
+    dist: IDistribution(T)
+}
+
+impl Iterator(double) for IDistributionIterator(double) {
+    fn next(ref Self) -> Option(double) {
+        return Some(dist.sample())
+    }
+
+    fn dispose(ref Self) {
+        free(&self)
+    }
+}
+
+impl IDistribution($T) {
+    fn samples(ref Self) -> Iterator(T) {
+        let it = alloc(IDistributionIterator(T))
+        <<it = new {self}
+        return <<it
+    }
+}
+
+// Standard Continuous Uniform distribution
+struct StandardContinuousUniform {}
+impl IDistribution(double) for StandardContinuousUniform {
+    fn sample(ref Self) -> double {
+        return PseudoRandom::next_double()
+    }
+}
+
+// normal distribution
+struct NormalDistribution {
+    mean    : double
+    sigma   : double
+    scu     : StandardContinuousUniform
+}
+
+impl NormalDistribution {
+    fn create(mean: double, sigma: double) -> Self {
+        return new{mean, sigma, new StandardContinuousUniform{}}
+    }
+}
+
+impl IDistribution(double) for NormalDistribution {
+    fn sample(ref Self) -> double {
+        let a = scu.sample()
+        let b = scu.sample()
+        return mean + sigma * (
+            sqrt(-2.0 * log(a)) * cos(2.0 * 3.1415 * b)
+        )
+    }
+}
+
+// histogram
+fn print_histogram(dist: IDistribution($T), low: double, high: double){
+    let const width : int = 160
+    let const height: int = 30
+    let const samples   : int = 1000000
+    let it = dist::samples()::take(samples)
+
+    let buckets = alloc_n(int, cast width)
+    c_memset(buckets.data, 0, cast width * @sizeof(int))
+
+    while match it.next() {
+        Some($c) -> {
+            let bucket = cast(int) floor((cast(double)buckets.length) * (c - low) / (high - low))
+            if bucket >= 0 and bucket < buckets.length {
+                buckets[bucket] += 1
+            }
+            true
+        }
+        $_ -> false
+    } {}
+
+    let max = 0
+    while let i = 0; i < buckets.length; i += 1 {
+        if buckets[i] > max {
+            max = buckets[i]
+        }
+    }
+
+    let scale = if max < height {1.0} else {(cast(double)height) / (cast(double)max)}
+
+
+    // top line
+    let max_str = String::empty()
+    max_str.appendf("{}  ", [max])
+    print(max_str)
+    while let i = 0; i < width - max_str.length; i += 1 {
+        print("-")
+    }
+    println("")
+
+    // histogram
+    while let h = 0; h < height; h += 1 {
+
+        while let w = 0; w < width; w += 1 {
+            let b = cast(double)buckets[w]
+            if b * scale >= cast(double)height - h {
+                print("*")
+            } else {
+                print(" ")
+            }
+        }
+        println("")
+    }
+
+
+    // bottom line
+    let left_str = String::empty()
+    left_str.appendf("{}  ", [low])
+    let right_str = String::empty()
+    right_str.appendf("  {}", [high])
+    let mid_str = String::empty()
+    mid_str.appendf("  {}  ", [0.5 * (low + high)])
+    let p1 = width / 2
+    let p2 = width - p1
+
+    print(left_str)
+    while let i = 0; i < p1 - left_str.length - mid_str.length / 2; i += 1 {
+        print("-")
+    }
+    print(mid_str)
+    while let i = 0; i < p2 - right_str.length - (mid_str.length - mid_str.length / 2); i += 1 {
+        print("-")
+    }
+    print(right_str)
+    println("")
+
+    max_str.free()
+    left_str.free()
+    mid_str.free()
+    right_str.free()
+    free_n(buckets)
+    it.dispose()
+}
