@@ -1,4 +1,5 @@
 #load("std:preload")
+#load("std:array")
 
 trait Iterator(T: type) {
     fn next(ref Self) -> Option(T);
@@ -8,6 +9,11 @@ trait Iterator(T: type) {
 struct TakeIterator(T: type) {
     it      : Iterator(T)
     count   : int
+}
+
+struct MapIterator(T: type, X: type) {
+    it      : Iterator(T)
+    mapFunc : fn(T) -> X {}
 }
 
 // impl Iterator($T) for TakeIterator(T) {
@@ -20,6 +26,34 @@ struct TakeIterator(T: type) {
 //         }
 //     }
 // }
+
+impl Iterator(int) for MapIterator((int, int), int) {
+    fn next(ref Self) -> Option(int) {
+        return match it.next() {
+            Some($v) -> Some(mapFunc(v))
+            None -> None
+        }
+    }
+
+    fn dispose(ref Self) {
+        it.dispose()
+        free(&self)
+    }
+}
+
+impl Iterator(String) for MapIterator(int, String) {
+    fn next(ref Self) -> Option(String) {
+        return match it.next() {
+            Some($v) -> Some(mapFunc(v))
+            None -> None
+        }
+    }
+
+    fn dispose(ref Self) {
+        it.dispose()
+        free(&self)
+    }
+}
 
 impl Iterator(int) for TakeIterator(int) {
     fn next(ref Self) -> Option(int) {
@@ -94,5 +128,23 @@ impl Iterator($T) {
         let it = alloc(TakeIterator(T))
         <<it = new {self, count}
         return <<it
+    }
+
+    fn map(ref Self, mapFunc: fn (T) -> $X {}) -> Iterator(X) {
+        let it = alloc(MapIterator(T, X))
+        <<it = new {self, mapFunc}
+        return <<it
+    }
+
+    fn to_array(ref Self) -> Array(T) {
+        let a = Array(T)::create()
+        while match self.next() {
+            Some($v) -> {
+                a.add(v)
+                true
+            }
+            None -> false
+        }{}
+        return a
     }
 }

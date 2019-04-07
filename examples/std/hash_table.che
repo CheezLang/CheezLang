@@ -1,6 +1,7 @@
 #load("std:preload")
 #load("std:mem/std_heap_allocator")
 #load("std:hash")
+#load("std:iterator")
 
 struct Table(K: type, V: type) {
     max_load: double
@@ -143,5 +144,36 @@ impl Table($K, $V) {
         }
 
         entries = entries_new
+    }
+
+    fn iterator(ref Self) -> Iterator((K, V)) {
+        let it = alloc(TableIterator(K, V))
+        <<it = new {self, 0}
+        return cast ref <<it
+    }
+}
+
+// iterator
+struct TableIterator(K: type, V: type) {
+    table: ref Table(K, V)
+    index: int
+}
+
+impl Iterator((int, int)) for TableIterator(int, int) {
+    fn next(ref Self) -> Option((int, int)) {
+        while index < table.entries.length {
+            let e = ref table.entries[index]
+            index += 1
+
+            if e.filled {
+                return Some((e.key, e.value))
+            }
+        }
+
+        return None
+    }
+
+    fn dispose(ref Self) {
+        free(&self)
     }
 }

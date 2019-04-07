@@ -33,7 +33,7 @@ impl Array($T) {
         }
     }
 
-    fn free(ref Self) {
+    fn dispose(ref Self) {
         free_n(data, allocator)
         data = null
         length = 0
@@ -95,5 +95,30 @@ impl Array($T) {
     
     fn sliceL(ref Self, len: int) -> []T {
         return self.sliceFL(0, len)
+    }
+
+    fn sort(ref Self, cmp: fn (ref T, ref T) -> int{}) -> ref Self {
+        quick_sort(0, length - 1, cmp)
+
+        return self
+    }
+
+    fn quick_sort(ref Self, from: int, to: int, cmp: fn (ref T, ref T) -> int{}) {
+        if from >= to {
+            return
+        }
+
+        let idx = from
+        let pivot = data[to]
+        while let i = from; i < to; i += 1 {
+            if cmp(data[i], pivot) > 0 {
+                (data[idx], data[i]) = (data[i], data[idx])
+                idx += 1
+            }
+        }
+        (data[idx], data[to]) = (data[to], data[idx])
+
+        quick_sort(from, idx - 1, cmp)
+        quick_sort(idx + 1, to, cmp)
     }
 }
