@@ -2318,7 +2318,8 @@ namespace Cheez
                     ok = false;
                     continue;
                 }
-                var arg = new AstArgument(p.DefaultValue, Location: p.DefaultValue.Location);
+                var arg = new AstArgument(p.DefaultValue.Clone(), Location: p.DefaultValue.Location);
+                arg.IsDefaultArg = true;
                 arg.Index = i;
                 expr.Arguments.Add(arg);
             }
@@ -2352,6 +2353,11 @@ namespace Cheez
                 var ex = param.Type;
                 if (ex.IsPolyType)
                     ex = null;
+                
+                arg.IsConstArg = param.Name?.IsPolymorphic ?? false;
+                if (arg.IsDefaultArg && !arg.IsConstArg)
+                    continue;
+
                 arg.Expr = InferTypeHelper(arg.Expr, ex, context);
                 ConvertLiteralTypeToDefaultType(arg.Expr, ex);
                 arg.Type = arg.Expr.Type;
@@ -2406,7 +2412,8 @@ namespace Cheez
 
             foreach (var (param, arg) in args)
             {
-                CollectPolyTypes(param.Type, arg.Type, polyTypes);
+                if (!arg.IsDefaultArg)
+                    CollectPolyTypes(param.Type, arg.Type, polyTypes);
 
                 if (param.Name?.IsPolymorphic ?? false)
                 {
@@ -2433,9 +2440,10 @@ namespace Cheez
             // find or create instance
             var instance = InstantiatePolyFunction(func, polyTypes, constArgs, context.newPolyFunctions, expr);
 
+
             // check parameter types
             Debug.Assert(expr.Arguments.Count == instance.Parameters.Count);
-
+            
             if (instance.Type.IsPolyType)
             {
                 // error in function declaration
@@ -2447,6 +2455,16 @@ namespace Cheez
             {
                 var a = expr.Arguments[i];
                 var p = instance.Parameters[i];
+
+
+                if (a.IsDefaultArg && !a.IsConstArg)
+                {
+                    var ex = p.Type;
+                    a.Expr = InferTypeHelper(a.Expr, ex, context);
+                    ConvertLiteralTypeToDefaultType(a.Expr, ex);
+                    a.Type = a.Expr.Type;
+                }
+
 
                 if (a.Type.IsErrorType)
                     continue;

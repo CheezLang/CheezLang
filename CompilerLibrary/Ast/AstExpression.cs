@@ -363,6 +363,9 @@ namespace Cheez.Ast.Expressions
         public AstIdExpr Name { get; set; }
         public int Index = -1;
 
+        public bool IsDefaultArg = false;
+        public bool IsConstArg = false;
+
         public AstArgument(AstExpression expr, AstIdExpr name = null, ILocation Location = null)
             : base(Location)
         {
