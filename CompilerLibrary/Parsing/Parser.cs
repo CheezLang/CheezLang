@@ -1631,6 +1631,10 @@ namespace Cheez.Parsing
             var token = PeekToken();
             switch (token.type)
             {
+                case TokenType.KwDefault:
+                    NextToken();
+                    return new AstDefaultExpr(new Location(token.location));
+
                 case TokenType.Pipe:
                     return ParseLambdaExpr();
 
