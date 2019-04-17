@@ -20,7 +20,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 LLVM.PointerType(stackTraceType, 0),
                 LLVM.PointerType(LLVM.Int8Type(), 0),
-                LLVM.PointerType(LLVM.Int8Type(), 0)
+                LLVM.PointerType(LLVM.Int8Type(), 0),
+                LLVM.Int64Type(),
+                LLVM.Int64Type(),
             }, false);
 
             stackTraceTop = module.AddGlobal(LLVM.PointerType(stackTraceType, 0), "stacktrace.top");
@@ -38,12 +40,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var previousPointer = builder.CreateStructGEP(stackEntry, 0, "stack_entry.previous.ptr");
             var functionNamePointer = builder.CreateStructGEP(stackEntry, 1, "stack_entry.function.ptr");
             var locationPointer = builder.CreateStructGEP(stackEntry, 2, "stack_entry.location.ptr");
+            var linePointer = builder.CreateStructGEP(stackEntry, 3, "stack_entry.line.ptr");
+            var columnPointer = builder.CreateStructGEP(stackEntry, 4, "stack_entry.col.ptr");
 
             var previous = builder.CreateLoad(stackTraceTop, "stack_trace.top");
             builder.CreateStore(previous, previousPointer);
 
-            builder.CreateStore(builder.CreateGlobalStringPtr($"{function.Name.Name}", ""), functionNamePointer);
-            builder.CreateStore(builder.CreateGlobalStringPtr($"{function.Beginning}", ""), locationPointer);
+            builder.CreateStore(builder.CreateGlobalStringPtr(function.Name.Name, ""), functionNamePointer);
+            builder.CreateStore(builder.CreateGlobalStringPtr(function.Beginning.file, ""), locationPointer);
+            builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)function.Beginning.line, true), linePointer);
+            builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)(function.Beginning.index - function.Beginning.lineStartIndex + 1), true), columnPointer);
 
             // save current global
             builder.CreateStore(stackEntry, stackTraceTop);
@@ -76,8 +82,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.CreateCondBr(isNull, bbEnd, bbDo);
 
             builder.PositionBuilderAtEnd(bbDo);
-            var locationPtr = builder.CreateStructGEP(current, 2, "");
-            builder.CreateStore(builder.CreateGlobalStringPtr(location.Beginning.ToString(), ""), locationPtr);
+            var linePtr = builder.CreateStructGEP(current, 3, "");
+            var colPtr = builder.CreateStructGEP(current, 4, "");
+            builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)location.Beginning.line, true), linePtr);
+            builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)(location.Beginning.index - location.Beginning.lineStartIndex + 1), true), colPtr);
             builder.CreateBr(bbEnd);
 
             builder.PositionBuilderAtEnd(bbEnd);
@@ -115,7 +123,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var name = builder.CreateLoad(namePtr, "");
                 var locationPtr = builder.CreateStructGEP(current, 2, "");
                 var location = builder.CreateLoad(locationPtr, "");
-                LLVMValueRef[] args = { builder.CreateGlobalStringPtr("  %s (%s)\n", ""), name, location };
+                var line = builder.CreateLoad(builder.CreateStructGEP(current, 3, ""), "");
+                var col = builder.CreateLoad(builder.CreateStructGEP(current, 4, ""), "");
+                LLVMValueRef[] args = { builder.CreateGlobalStringPtr("  %s (%s:%lld:%lld)\n", ""), name, location, line, col };
                 builder.CreateCall(printf, args, "");
             }
             // load previous entry
