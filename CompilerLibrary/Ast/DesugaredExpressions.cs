@@ -88,7 +88,7 @@ namespace Cheez.Ast.Expressions
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTempVarExpr(this, data);
 
-        public override AstExpression Clone() => CopyValuesTo(new AstTempVarExpr(Expr));
+        public override AstExpression Clone() => this;// CopyValuesTo(new AstTempVarExpr(Expr));
     }
 
     public class AstTypeRef : AstExpression

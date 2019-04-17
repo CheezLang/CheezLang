@@ -3,8 +3,8 @@
 #load("std:mem/stack_allocator")
 
 struct CheezCompiler {
-    string_database : StringDatabase
-    ast_allocator   : &StackAllocator
+    pub const string_database : StringDatabase
+    pub const ast_allocator   : &StackAllocator
 }
 
 impl CheezCompiler {

@@ -12,10 +12,10 @@ struct Table(K: type, V: type) {
 }
 
 struct Entry(K: type, V: type) {
-    key: K
-    value: V
-    filled: bool
-    is_tombstone: bool
+    pub key: K
+    pub value: V
+    pub filled: bool
+    pub is_tombstone: bool
 }
 
 impl Table($K, $V) {
@@ -28,6 +28,10 @@ impl Table($K, $V) {
         table.entries = null
 
         return table
+    }
+
+    fn get_entries(ref Self) -> []Entry(K, V) {
+        return entries
     }
 
     fn dispose(ref Self) {
@@ -161,8 +165,9 @@ struct TableIterator(K: type, V: type) {
 
 impl Iterator((int, int)) for TableIterator(int, int) {
     fn next(ref Self) -> Option((int, int)) {
-        while index < table.entries.length {
-            let e = ref table.entries[index]
+        let entries = table.get_entries()
+        while index < entries.length {
+            let e = ref entries[index]
             index += 1
 
             if e.filled {

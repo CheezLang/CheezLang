@@ -43,135 +43,140 @@ namespace Cheez
 
         private void AnalyseFunction(AstFunctionDecl func, List<AstFunctionDecl> instances = null)
         {
-
-            if (func.SelfParameter)
+            var prevCurrentFunction = currentFunction;
+            currentFunction = func;
+            try
             {
-                var p = func.Parameters[0];
-                if (p.Name == null)
-                {
-                    p.Name = new AstIdExpr("self", false, p.Location);
-                }
 
-                if (func.ImplBlock.TargetType is StructType @struct)
+                if (func.SelfParameter)
                 {
-                    foreach (var m in @struct.Declaration.Members)
+                    var p = func.Parameters[0];
+                    if (p.Name == null)
                     {
-                        AstExpression expr = new AstDotExpr(new AstSymbolExpr(p), new AstIdExpr(m.Name.Name, false), false);
-                        expr.Scope = func.SubScope;
-                        expr.Parent = func;
-                        expr = InferType(expr, m.Type);
+                        p.Name = new AstIdExpr("self", false, p.Location);
+                    }
 
-                        // define use if no parameter has the same name
-                        if (!func.Parameters.Any(pa => pa.Name?.Name == m.Name.Name))
+                    if (func.ImplBlock.TargetType is StructType @struct)
+                    {
+                        foreach (var m in @struct.Declaration.Members)
                         {
-                            var (ok, other) = func.SubScope.DefineUse(m.Name.Name, expr, false, out var use);
+                            AstExpression expr = new AstDotExpr(new AstSymbolExpr(p), new AstIdExpr(m.Name.Name, false), false);
+                            expr.Scope = func.SubScope;
+                            expr.Parent = func;
+                            expr = InferType(expr, m.Type);
 
-                            if (!ok)
+                            // define use if no parameter has the same name
+                            if (!func.Parameters.Any(pa => pa.Name?.Name == m.Name.Name))
                             {
-                                ReportError(p, $"A symbol with name '{m.Name.Name}' already exists", ("Other here:", other));
+                                var (ok, other) = func.SubScope.DefineUse(m.Name.Name, expr, false, out var use);
+
+                                if (!ok)
+                                {
+                                    ReportError(p, $"A symbol with name '{m.Name.Name}' already exists", ("Other here:", other));
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            if (func.IsGeneric)
-                return;
+                if (func.IsGeneric)
+                    return;
 
-            mFunctions.Add(func);
+                mFunctions.Add(func);
 
-            if (func.TryGetDirective("linkname", out var ln))
-            {
-                if (ln.Arguments.Count != 1)
+                if (func.TryGetDirective("linkname", out var ln))
                 {
-                    ReportError(ln, $"#linkname requires exactly one argument!");
+                    if (ln.Arguments.Count != 1)
+                    {
+                        ReportError(ln, $"#linkname requires exactly one argument!");
+                    }
+                    else
+                    {
+                        var arg = ln.Arguments[0];
+                        arg = ln.Arguments[0] = InferType(arg, null);
+                        if (!(arg.Value is string))
+                        {
+                            ReportError(arg, $"Argument to #linkname must be a constant string!");
+                        }
+                    }
+                }
+
+                // define parameters
+                foreach (var p in func.Parameters)
+                {
+                    if (p.Name != null)
+                    {
+                        var (ok, other) = func.SubScope.DefineSymbol(p);
+                        if (!ok)
+                        {
+                            ReportError(p, $"Duplicate parameter '{p.Name}'", ("Other parameter here:", other));
+                        }
+                    }
+
+                    if (p.DefaultValue != null)
+                    {
+                        p.DefaultValue.Scope = func.Scope;
+                        p.DefaultValue = InferType(p.DefaultValue, p.Type);
+                        ConvertLiteralTypeToDefaultType(p.DefaultValue, p.Type);
+                        p.DefaultValue = CheckType(p.DefaultValue, p.Type);
+                        if (p.DefaultValue.Type != p.Type && !p.DefaultValue.Type.IsErrorType)
+                        {
+                            ReportError(p.DefaultValue,
+                                $"The type of the default value ({p.DefaultValue.Type}) does not match the type of the parameter ({p.Type})");
+                        }
+
+                    }
+                }
+
+                if (func.ReturnTypeExpr?.Name != null)
+                {
+                    var (ok, other) = func.SubScope.DefineSymbol(func.ReturnTypeExpr);
+                    if (!ok)
+                        ReportError(func.ReturnTypeExpr, $"A symbol with name '{func.ReturnTypeExpr.Name.Name}' already exists in current scope", ("Other symbol here:", other));
                 }
                 else
                 {
-                    var arg = ln.Arguments[0];
-                    arg = ln.Arguments[0] = InferType(arg, null);
-                    if (!(arg.Value is string))
-                    {
-                        ReportError(arg, $"Argument to #linkname must be a constant string!");
-                    }
+                    func.SubScope.DefineSymbol(func.ReturnTypeExpr, ".ret");
                 }
-            }
-
-            // define parameters
-            foreach (var p in func.Parameters)
-            {
-                if (p.Name != null)
+                if (func.ReturnTypeExpr?.TypeExpr is AstTupleExpr t)
                 {
-                    var (ok, other) = func.SubScope.DefineSymbol(p);
-                    if (!ok)
+                    int index = 0;
+                    foreach (var m in t.Types)
                     {
-                        ReportError(p, $"Duplicate parameter '{p.Name}'", ("Other parameter here:", other));
+                        if (m.Name == null) continue;
+                        AstExpression access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnTypeExpr), new AstNumberExpr(index));
+                        access = InferType(access, null);
+                        var (ok, other) = func.SubScope.DefineUse(m.Name.Name, access, false, out var use);
+                        if (!ok)
+                            ReportError(m, $"A symbol with name '{m.Name.Name}' already exists in current scope", ("Other symbol here:", other));
+                        m.Symbol = use;
+                        ++index;
                     }
                 }
 
-                if (p.DefaultValue != null)
+                if (func.FunctionType.IsErrorType || func.FunctionType.IsPolyType)
+                    return;
+
+                if (func.Body != null)
                 {
-                    p.DefaultValue.Scope = func.Scope;
-                    p.DefaultValue = InferType(p.DefaultValue, p.Type);
-                    ConvertLiteralTypeToDefaultType(p.DefaultValue, p.Type);
-                    p.DefaultValue = CheckType(p.DefaultValue, p.Type);
-                    if (p.DefaultValue.Type != p.Type && !p.DefaultValue.Type.IsErrorType)
+                    func.Body.Scope = func.SubScope;
+                    func.Body.Parent = func;
+                    InferType(func.Body, null);
+
+                    if (func.ReturnTypeExpr != null && !func.Body.GetFlag(ExprFlags.Returns))
                     {
-                        ReportError(p.DefaultValue,
-                            $"The type of the default value ({p.DefaultValue.Type}) does not match the type of the parameter ({p.Type})");
+                        // TODO: check that all return values are set
+                        var ret = new AstReturnStmt(null, new Location(func.Body.End));
+                        ret.Scope = func.Body.SubScope;
+                        AnalyseStatement(ret);
+                        func.Body.Statements.Add(ret);
                     }
-
                 }
             }
-
-            if (func.ReturnTypeExpr?.Name != null)
+            finally
             {
-                var (ok, other) = func.SubScope.DefineSymbol(func.ReturnTypeExpr);
-                if (!ok)
-                    ReportError(func.ReturnTypeExpr, $"A symbol with name '{func.ReturnTypeExpr.Name.Name}' already exists in current scope", ("Other symbol here:", other));
+                currentFunction = prevCurrentFunction;
             }
-            else
-            {
-                func.SubScope.DefineSymbol(func.ReturnTypeExpr, ".ret");
-            }
-            if (func.ReturnTypeExpr?.TypeExpr is AstTupleExpr t)
-            {
-                int index = 0;
-                foreach (var m in t.Types)
-                {
-                    if (m.Name == null) continue;
-                    AstExpression access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnTypeExpr), new AstNumberExpr(index));
-                    access = InferType(access, null);
-                    var (ok, other) = func.SubScope.DefineUse(m.Name.Name, access, false, out var use);
-                    if (!ok)
-                        ReportError(m, $"A symbol with name '{m.Name.Name}' already exists in current scope", ("Other symbol here:", other));
-                    m.Symbol = use;
-                    ++index;
-                }
-            }
-
-            if (func.FunctionType.IsErrorType || func.FunctionType.IsPolyType)
-                return;
-
-            var prevCurrentFunction = currentFunction;
-            currentFunction = func;
-            if (func.Body != null)
-            {
-                func.Body.Scope = func.SubScope;
-                func.Body.Parent = func;
-                InferType(func.Body, null);
-
-                if (func.ReturnTypeExpr != null && !func.Body.GetFlag(ExprFlags.Returns))
-                {
-                    // TODO: check that all return values are set
-                    var ret = new AstReturnStmt(null, new Location(func.Body.End));
-                    ret.Scope = func.Body.SubScope;
-                    AnalyseStatement(ret);
-                    func.Body.Statements.Add(ret);
-                }
-            }
-
-            currentFunction = prevCurrentFunction;
         }
 
         private void AnalyseStatement(AstStatement stmt)
@@ -204,6 +209,26 @@ namespace Cheez
             {
                 case CheezTypeType type:
                     HandleUseType(use, type);
+                    break;
+
+                case StructType str:
+                    {
+                        var tempVar = use.Value;
+                        //if (!tempVar.GetFlag(ExprFlags.IsLValue))
+                        {
+                            tempVar = new AstTempVarExpr(use.Value, use.Value.GetFlag(ExprFlags.IsLValue));
+                            tempVar.Replace(use.Value);
+                            tempVar.SetFlag(ExprFlags.IsLValue, true);
+                            tempVar = InferType(tempVar, use.Value.Type);
+                            use.Value = tempVar;
+                        }
+                        foreach (var mem in str.Declaration.Members)
+                        {
+                            AstExpression expr = new AstDotExpr(tempVar, new AstIdExpr(mem.Name.Name, false, use.Location), false, use.Location);
+                            //expr = InferType(expr, null);
+                            use.Scope.DefineUse(mem.Name.Name, expr, true, out var u);
+                        }
+                    }
                     break;
 
                 default:
@@ -318,6 +343,7 @@ namespace Cheez
             ass.Pattern.Scope = ass.Scope;
             ass.Pattern.Parent = ass;
             ass.Pattern.SetFlag(ExprFlags.AssignmentTarget, true);
+            ass.Pattern.SetFlag(ExprFlags.SetAccess, true);
             ass.Pattern = InferType(ass.Pattern, null);
 
             if (ass.Pattern.Type is ReferenceType)

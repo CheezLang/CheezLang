@@ -13,8 +13,8 @@ fn align(add: uint, align: uint) -> uint {
 
 
 struct Bucket {
-    memory  : []u8
-    filled  : uint
+    pub memory  : []u8
+    pub filled  : uint
 }
 
 impl Bucket {

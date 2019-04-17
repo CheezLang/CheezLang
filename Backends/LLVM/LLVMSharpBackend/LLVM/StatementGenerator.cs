@@ -1,6 +1,7 @@
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Types;
+using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using LLVMSharp;
 using System;
@@ -179,7 +180,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstWhileStmt whl: GenerateWhile(whl); break;
                 case AstBreakStmt br: GenerateBreak(br); break;
                 case AstContinueStmt cont: GenerateContinue(cont); break;
-                case AstUsingStmt _: break;
+                case AstUsingStmt use:
+                    if (use.Value.Type is StructType)
+                        GenerateExpression(use.Value, true);
+                    break;
 
                 //default: throw new NotImplementedException();
             }

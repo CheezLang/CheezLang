@@ -1,0 +1,22 @@
+#load("std:mem/allocator")
+
+struct Box(T: type) {
+    _value: &T
+}
+
+impl Box($T) {
+    fn create(v: T = default) -> Box(T) {
+        let p = alloc(T)
+        <<p = v
+        return new {p}
+    }
+
+    fn value(ref Self) -> ref T {
+        return <<_value
+    }
+
+    fn dispose(ref Self) #destructor {
+        free(_value)
+        _value = null
+    }
+}

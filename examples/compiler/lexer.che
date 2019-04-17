@@ -290,12 +290,12 @@ impl Lexer {
                 Z -> match c {
                     'x' -> {
                         base = 16
-                        str.length = 0
+                        str.resize(0)
                         state = X
                     }
                     'b' -> {
                         base = 2
-                        str.length = 0
+                        str.resize(0)
                         state = B
                     }
                     '.' -> {
@@ -521,7 +521,7 @@ impl Lexer {
             return '`0'
         }
 
-        return text.data[index]
+        return text[index]
     }
 
     fn parse_multi_line_comment(ref Self) {

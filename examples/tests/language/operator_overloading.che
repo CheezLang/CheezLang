@@ -23,7 +23,7 @@
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
 struct Num {
-    x: int
+    pub x: int
 }
 
 fn num_add(a: Num, b: Num) -> Num #operator("+") {

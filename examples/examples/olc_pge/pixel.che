@@ -1,10 +1,10 @@
 #load("std:printable")
 
 struct Pixel {
-    r: u8
-    g: u8
-    b: u8
-    a: u8 = 255
+    pub r: u8
+    pub g: u8
+    pub b: u8
+    pub a: u8 = 255
 }
 
 impl Pixel {
@@ -26,4 +26,4 @@ enum PixelMode {
     Custom
 }
 
-let WHITE = Pixel::rgba(255, 255, 255)
+let WHITE: Pixel = Pixel::rgba(255, 255, 255)

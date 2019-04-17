@@ -4,7 +4,7 @@
 
 struct Array(T: type) {
     data: []T
-    length: int
+    pub const length: int
     allocator: Allocator
 }
 

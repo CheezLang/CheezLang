@@ -2,4 +2,3 @@
 // #load("examples/trait_function_call_performance")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
-// #load("examples/glfw3_example")

@@ -2,10 +2,10 @@
 #load("std:math")
 
 struct Sprite {
-    width: int
-    height: int
-    mode : SpriteMode = SpriteMode.Normal
-    data: &Pixel = null
+    pub const width: int
+    pub const height: int
+    pub const mode : SpriteMode = SpriteMode.Normal
+    pub const data: &Pixel = null
 }
 
 enum SpriteMode {

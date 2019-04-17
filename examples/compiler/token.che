@@ -4,18 +4,18 @@
 typedef Location = (beg: TokenLocation, end: TokenLocation)
 
 struct TokenLocation {
-    file            : string
-    line            : int
-    index           : int
-    end             : int
-    line_start      : int
+    pub file            : string
+    pub line            : int
+    pub index           : int
+    pub end             : int
+    pub line_start      : int
 }
 
 struct Token {
-    ttype   : TokenType
-    location: TokenLocation
-    suffix  : Option(string)
-    data    : TokenData
+    pub ttype   : TokenType
+    pub location: TokenLocation
+    pub suffix  : Option(string)
+    pub data    : TokenData
 }
 
 enum TokenData {

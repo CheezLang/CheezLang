@@ -248,7 +248,7 @@ namespace Cheez
                     {
                         func.ConstScope = new Scope("$", func.Scope);
                         func.SubScope = new Scope("fn", func.ConstScope);
-                        ResolveFunctionSignature(func);
+                        ResolveFunctionSignature(func, newPolyDecls);
                         break;
                     }
 

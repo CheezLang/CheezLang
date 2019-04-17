@@ -3,7 +3,7 @@
 #load("ast_expr")
 
 struct Stmt {
-    concrete    : StmtType
+    pub concrete    : StmtType
 }
 
 enum StmtType {
@@ -22,5 +22,5 @@ impl Printable for Stmt {
 }
 
 struct FunctionDecl {
-    name    : string
+    pub name    : string
 }

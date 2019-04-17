@@ -5,7 +5,7 @@
 
 fn print_string(s: ref String) {
     let bytesWritten: u32
-    WriteFile(__std_out_handle, cast s.get_raw(), cast s.get_length(), &bytesWritten, null)
+    WriteFile(__std_out_handle, cast s.get_raw(), cast s.length, &bytesWritten, null)
 }
 
 fn println(v: $T) {
@@ -79,7 +79,7 @@ fn format_int(buffer: ref String, val: $T, _base: int = 10) {
     buffer.resize(buffer.length + len)
     
     if val == 0 {
-        buffer.data[buffer.length - 1] = '0'
+        buffer[buffer.length - 1] = '0'
     }
     else {
         if neg {
@@ -91,11 +91,11 @@ fn format_int(buffer: ref String, val: $T, _base: int = 10) {
             let lastDigit = val % base
 
             val = val / base
-            buffer.data[i] = digit_to_char(lastDigit)
+            buffer[i] = digit_to_char(lastDigit)
         }
 
         if neg {
-            buffer.data[i] = '-'
+            buffer[i] = '-'
             i -= 1
         }
     }

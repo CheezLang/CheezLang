@@ -6,7 +6,7 @@ trait TestTrait {
 }
 
 struct Test {
-    counter: u64
+    pub counter: u64
 
     // not used, just so that passing by value will be slow
     // comment out to see performance of pass by value with small structs

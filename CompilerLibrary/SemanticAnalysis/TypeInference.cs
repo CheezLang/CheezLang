@@ -1692,6 +1692,8 @@ namespace Cheez
 
         private AstExpression InferTypeIndexExpr(AstArrayAccessExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            expr.SubExpression.SetFlag(ExprFlags.SetAccess, expr.GetFlag(ExprFlags.SetAccess));
+
             expr.SubExpression.Scope = expr.Scope;
             expr.SubExpression = InferTypeHelper(expr.SubExpression, null, context);
 
@@ -1941,7 +1943,37 @@ namespace Cheez
                             return InferTypeHelper(ufc, null, context);
                         }
 
-                        expr.Type = s.Declaration.Members[index].Type;
+                        var member = s.Declaration.Members[index];
+
+                        // check wether we have private access to this struct
+                        if (currentFunction.ImplBlock?.TargetType is StructType sx && sx.DeclarationTemplate == s.DeclarationTemplate)
+                        {
+                            // we are in an impl block for the struct type
+                            // -> we always have access to all members
+                        }
+                        else
+                        {
+                            // we only have access to public fields
+                            if (expr.GetFlag(ExprFlags.SetAccess))
+                            {
+                                // set
+                                if (!member.IsPublic)
+                                    ReportError(expr, $"The member '{member.Name}' of struct '{s}' is private and can't be accessed from here.",
+                                        ("Member declared here:", member.Location));
+                                else if (member.IsReadOnly)
+                                    ReportError(expr, $"The member '{member.Name}' of struct '{s}' can only be read from here.",
+                                        ("Member declared here:", member.Location));
+                            }
+                            else
+                            {
+                                // get
+                                if (!member.IsPublic)
+                                    ReportError(expr, $"The member '{member.Name}' of struct '{s}' is private and can't be accessed from here.",
+                                        ("Member declared here:", member.Location));
+                            }
+                        }
+
+                        expr.Type = member.Type;
                         expr.SetFlag(ExprFlags.IsLValue, true);
                         break;
                     }

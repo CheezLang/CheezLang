@@ -5,8 +5,8 @@
 #load("std:printable")
 
 struct StackAllocation {
-    offset: u64
-    size: u64
+    pub offset: u64
+    pub size: u64
 }
 
 impl Printable for StackAllocation {
@@ -70,7 +70,7 @@ impl StackAllocator {
     }
 
     fn clear(ref Self) {
-        allocations.length = 0
+        allocations.resize(0)
     }
 
     fn dispose(ref Self) {
@@ -172,7 +172,7 @@ impl Allocator for StackAllocator {
             return
         }
         if mem == pointer_add(memory, cast(i64) lastAllocation.offset) {
-            allocations.length -= 1
+            allocations.resize(allocations.length - 1)
         }
     }
 }

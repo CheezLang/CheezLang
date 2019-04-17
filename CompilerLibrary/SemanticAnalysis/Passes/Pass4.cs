@@ -46,8 +46,7 @@ namespace Cheez
 
         private void Pass4ResolveFunctionSignature(AstFunctionDecl func)
         {
-            ResolveFunctionSignature(func);
-
+            ResolveFunctionSignature(func, null);
 
             var res = func.Scope.DefineDeclaration(func);
             if (!res.ok)
@@ -58,7 +57,7 @@ namespace Cheez
             }
         }
 
-        private void ResolveFunctionSignature(AstFunctionDecl func)
+        private void ResolveFunctionSignature(AstFunctionDecl func, List<AstDecl> newPolyDecls)
         {
             if (func.ReturnTypeExpr?.TypeExpr?.IsPolymorphic ?? false)
             {
@@ -83,7 +82,8 @@ namespace Cheez
             {
                 func.ReturnTypeExpr.Scope = func.SubScope;
                 func.ReturnTypeExpr.TypeExpr.Scope = func.SubScope;
-                func.ReturnTypeExpr.TypeExpr = ResolveTypeNow(func.ReturnTypeExpr.TypeExpr, out var t);
+                func.ReturnTypeExpr.TypeExpr = ResolveType(func.ReturnTypeExpr.TypeExpr, newPolyDecls, out var t);
+                //func.ReturnTypeExpr.TypeExpr = ResolveTypeNow(func.ReturnTypeExpr.TypeExpr, out var t);
                 func.ReturnTypeExpr.Type = t;
 
                 if (func.ReturnTypeExpr.Type.IsPolyType)

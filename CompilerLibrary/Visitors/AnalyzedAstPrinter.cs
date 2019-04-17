@@ -145,6 +145,10 @@ namespace Cheez.Visitors
         public string VisitStructMember(AstStructMember m)
         {
             var v = $"{m.Name.Accept(this)} : {m.Type}";
+            if (m.IsReadOnly)
+                v = "const " + v;
+            if (m.IsPublic)
+                v = "pub " + v;
             if (m.Initializer != null)
                 v += $" = {m.Initializer.Accept(this)}";
             return v;

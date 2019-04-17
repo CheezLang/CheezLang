@@ -754,7 +754,26 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
                     break;
 
+                TokenLocation memberBeg = null;
+
+                bool pub = false;
+                bool get = false;
+                if (next.type == TokenType.KwPub)
+                {
+                    memberBeg = next.location;
+                    NextToken();
+                    pub = true;
+                    if (CheckToken(TokenType.KwConst))
+                    {
+                        get = true;
+                        NextToken();
+                    }
+                }
+
                 var mName = ParseIdentifierExpr(ErrMsg("identifier", "in struct member"));
+                if (memberBeg == null)
+                    memberBeg = mName.Location.Beginning;
+
                 SkipNewlines();
                 Consume(TokenType.Colon, ErrMsg(":", "after struct member name"));
                 SkipNewlines();
@@ -786,7 +805,10 @@ namespace Cheez.Parsing
 
                 var memberEnd = init?.End ?? mType.End;
 
-                members.Add(new AstStructMember(mName, mType, init, new Location(mName.Beginning, memberEnd)));
+                var mem = new AstStructMember(mName, mType, init, new Location(memberBeg, memberEnd));
+                mem.IsPublic = pub;
+                mem.IsReadOnly = get;
+                members.Add(mem);
             }
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct declaration")).location;

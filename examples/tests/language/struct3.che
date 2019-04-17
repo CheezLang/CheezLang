@@ -7,7 +7,7 @@
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
 struct Test(T: type) {
-    x: T
+    pub x: T
 }
 
 impl Test($T) {

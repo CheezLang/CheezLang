@@ -41,38 +41,38 @@ fn Main() {
     let s = String::from_cstring("lol: "c)
     
     c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.get_length())
-    c_printf("string: `"%.*s`"`n", s.get_length(), s.get_raw())
+    c_printf("length: %lld`n", s.length)
+    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
     c_printf("`n")
 
     s.reserve(10)
     c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.get_length())
-    c_printf("string: `"%.*s`"`n", s.get_length(), s.get_raw())
+    c_printf("length: %lld`n", s.length)
+    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
     c_printf("`n")
     
     s += "Hello "
     c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.get_length())
-    c_printf("string: `"%.*s`"`n", s.get_length(), s.get_raw())
+    c_printf("length: %lld`n", s.length)
+    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
     c_printf("`n")
 
     s += "World"c
     c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.get_length())
-    c_printf("string: `"%.*s`"`n", s.get_length(), s.get_raw())
+    c_printf("length: %lld`n", s.length)
+    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
     c_printf("`n")
 
     s += '!'
     c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.get_length())
-    c_printf("string: `"%.*s`"`n", s.get_length(), s.get_raw())
+    c_printf("length: %lld`n", s.length)
+    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
     c_printf("`n")
 
     s += " This is another string =)"::to_string()
     c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.get_length())
-    c_printf("string: `"%.*s`"`n", s.get_length(), s.get_raw())
+    c_printf("length: %lld`n", s.length)
+    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
     c_printf("`n")
 
     let sub = s.slice()
@@ -92,6 +92,6 @@ fn Main() {
 
     s.free()
     c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.get_length())
-    c_printf("string: `"%.*s`"`n", s.get_length(), s.get_raw())
+    c_printf("length: %lld`n", s.length)
+    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
 }

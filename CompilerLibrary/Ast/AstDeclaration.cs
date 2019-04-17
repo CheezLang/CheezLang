@@ -144,6 +144,9 @@ namespace Cheez.Ast.Statements
 
     public class AstStructMember : ILocation
     {
+        internal bool IsPublic;
+        internal bool IsReadOnly;
+
         public ILocation Location { get; private set; }
         public TokenLocation Beginning => Location?.Beginning;
         public TokenLocation End => Location?.End;
@@ -164,7 +167,12 @@ namespace Cheez.Ast.Statements
         }
 
         public AstStructMember Clone()
-            => new AstStructMember(Name.Clone() as AstIdExpr, TypeExpr.Clone(), Initializer?.Clone());
+            => new AstStructMember(Name.Clone() as AstIdExpr, TypeExpr.Clone(), Initializer?.Clone())
+            {
+                IsPublic = IsPublic,
+                IsReadOnly = IsReadOnly,
+                Location = Location
+            };
 
         public override string ToString()
         {

@@ -6,8 +6,8 @@
 typedef float2 = Vector2(float)
 
 struct Node {
-    parent  : &BaseShape
-    pos     : float2
+    pub parent  : &BaseShape
+    pub pos     : float2
 }
 
 trait Shape {
@@ -17,9 +17,9 @@ trait Shape {
 }
 
 struct BaseShape {
-    max_nodes   : int
-    nodes       : Array(Node)
-    color       : Pixel = new Pixel{0, 255, 0}
+    pub max_nodes   : int
+    pub nodes       : Array(Node)
+    pub color       : Pixel = new Pixel{0, 255, 0}
 }
 
 impl BaseShape {
@@ -217,7 +217,7 @@ impl Shape for CurveShape {
 }
 
 struct MyGame {
-    pge: &PixelGameEngine
+    pub pge: &PixelGameEngine
 
     // panning and zooming
     vOffset : float2

@@ -12,8 +12,8 @@ fn c_printf(format: c_string) #varargs #linkname("printf");
 
 
 struct Test {
-    a: int
-    b: double
+    pub a: int
+    pub b: double
 }
 
 impl Test {

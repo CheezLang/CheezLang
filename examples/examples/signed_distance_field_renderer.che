@@ -18,8 +18,8 @@ fn mod(a: $T, b: T) -> T {
 ///////////////////////////////////////////////////////////
 
 struct Ray {
-    origin: Vec3
-    direction: Vec3
+    pub origin: Vec3
+    pub direction: Vec3
 }
 
 typedef DistanceShaderPair = (distance: double, shader: Shader)
@@ -32,8 +32,8 @@ trait SDF {
 }
 
 struct Sphere {
-    radius: double
-    shader: Shader
+    pub radius: double
+    pub shader: Shader
 }
 
 impl SDF for Sphere {
@@ -43,8 +43,8 @@ impl SDF for Sphere {
 }
 
 struct PlaneY {
-    location: double
-    shader: Shader
+    pub location: double
+    pub shader: Shader
 }
 
 impl SDF for PlaneY {
@@ -54,8 +54,8 @@ impl SDF for PlaneY {
 }
 
 struct Cube {
-    radius: double
-    shader: Shader
+    pub radius: double
+    pub shader: Shader
 }
 
 impl SDF for Cube {
@@ -107,8 +107,8 @@ impl SDF for Cube {
 ///////////////////// transformations //////////////////////////
 
 struct TranslatedSDF {
-    sdf: SDF
-    translation: Vec3
+    pub sdf: SDF
+    pub translation: Vec3
 }
 
 impl SDF for TranslatedSDF {
@@ -118,8 +118,8 @@ impl SDF for TranslatedSDF {
 }
 
 struct ScaledSDF {
-    sdf: SDF
-    scale: Vec3
+    pub sdf: SDF
+    pub scale: Vec3
 }
 
 impl SDF for ScaledSDF {
@@ -129,18 +129,18 @@ impl SDF for ScaledSDF {
 }
 
 struct RotatedXSDF {
-    sdf: SDF
-    angle: double
+    pub sdf: SDF
+    pub angle: double
 }
 
 struct RotatedYSDF {
-    sdf: SDF
-    angle: double
+    pub sdf: SDF
+    pub angle: double
 }
 
 struct RotatedZSDF {
-    sdf: SDF
-    angle: double
+    pub sdf: SDF
+    pub angle: double
 }
 
 impl SDF for RotatedXSDF {
@@ -178,8 +178,8 @@ impl SDF for RotatedZSDF {
 
 ////////////////////// combinations ///////////////////////
 struct UnionSDF {
-    sdf1: SDF
-    sdf2: SDF
+    pub sdf1: SDF
+    pub sdf2: SDF
 }
 
 impl SDF for UnionSDF {
@@ -195,8 +195,8 @@ impl SDF for UnionSDF {
 }
 
 struct IntersectionSDF {
-    sdf1: SDF
-    sdf2: SDF
+    pub sdf1: SDF
+    pub sdf2: SDF
 }
 
 impl SDF for IntersectionSDF {
@@ -212,8 +212,8 @@ impl SDF for IntersectionSDF {
 }
 
 struct SubtractionSDF {
-    sdf1: SDF
-    sdf2: SDF
+    pub sdf1: SDF
+    pub sdf2: SDF
 }
 
 impl SDF for SubtractionSDF {
@@ -313,9 +313,9 @@ impl Background {
 }
 
 struct Raymarcher {
-    sdf: SDF
-    background: Background
-    backgroundDistance: double = 1000
+    pub sdf: SDF
+    pub background: Background
+    pub backgroundDistance: double = 1000
 }
 
 impl Raymarcher {
@@ -378,11 +378,11 @@ impl PerspectiveCamera {
 }
 
 struct Film {
-    width: int
-    height: int
-    pixels: []Vec3
+    pub width: int
+    pub height: int
+    pub pixels: []Vec3
 
-    antiAliasingSteps: int
+    pub antiAliasingSteps: int
 }
 
 impl Film {
@@ -635,7 +635,7 @@ fn Main()
     printf("Rendering took {} seconds`n", [dur])
 
     // store image as bmp
-    write_bmp(cast(i32) width, cast(i32) height, cast(&double) imageArr.data.data, "img.bmp")
+    write_bmp(cast(i32) width, cast(i32) height, cast(&double) imageArr.get_raw(), "uiae.bmp")
 
-    imageArr.free()
+    imageArr.dispose()
 }

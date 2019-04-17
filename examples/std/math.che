@@ -74,21 +74,21 @@ impl LinearCongruentialGenerator {
 }
 
 struct Vector2(T: type) {
-    x: T
-    y: T
+    pub x: T
+    pub y: T
 }
 
 struct Vector3(T: type) {
-    x: T
-    y: T
-    z: T
+    pub x: T
+    pub y: T
+    pub z: T
 }
 
 struct Vector4(T: type) {
-    x: T
-    y: T
-    z: T
-    w: T
+    pub x: T
+    pub y: T
+    pub z: T
+    pub w: T
 }
 
 impl Vector2($T) {

@@ -27,47 +27,47 @@ typedef BYTE            = u8
 typedef WORD            = u16
 
 struct POINT {
-    x: i32
-    y: i32
+    pub x: i32
+    pub y: i32
 }
 
 struct MSG {
-    hwnd        : HWND
-    message     : UINT
-    wParam      : WPARAM
-    lParam      : LPARAM
-    time        : DWORD
-    pt          : POINT
-    lPrivate    : DWORD
+    pub hwnd        : HWND
+    pub message     : UINT
+    pub wParam      : WPARAM
+    pub lParam      : LPARAM
+    pub time        : DWORD
+    pub pt          : POINT
+    pub lPrivate    : DWORD
 }
 
 struct RECT {
-    left    : i32
-    top     : i32
-    right   : i32
-    bottom  : i32
+    pub left    : i32
+    pub top     : i32
+    pub right   : i32
+    pub bottom  : i32
 }
 
 struct WNDCLASSA {
-    style           : UINT
-    lpfnWndProc     : fn(HWND, UINT, WPARAM, LPARAM) -> LRESULT
-    cbClsExtra      : i32
-    cbWndExtra      : i32
-    hInstance       : HINSTANCE
-    hIcon           : HICON
-    hCursor         : HCURSOR
-    hbrBackground   : HBRUSH
-    lpszMenuName    : c_string
-    lpszClassName   : c_string
+    pub style           : UINT
+    pub lpfnWndProc     : fn(HWND, UINT, WPARAM, LPARAM) -> LRESULT
+    pub cbClsExtra      : i32
+    pub cbWndExtra      : i32
+    pub hInstance       : HINSTANCE
+    pub hIcon           : HICON
+    pub hCursor         : HCURSOR
+    pub hbrBackground   : HBRUSH
+    pub lpszMenuName    : c_string
+    pub lpszClassName   : c_string
 }
 
 
 struct MINMAXINFO {
-    ptReserved      : POINT
-    ptMaxSize       : POINT
-    ptMaxPosition   : POINT
-    ptMinTrackSize  : POINT
-    ptMaxTrackSize  : POINT
+    pub ptReserved      : POINT
+    pub ptMaxSize       : POINT
+    pub ptMaxPosition   : POINT
+    pub ptMinTrackSize  : POINT
+    pub ptMaxTrackSize  : POINT
 }
 
 // struct COPYDATASTRUCT {
@@ -77,67 +77,67 @@ struct MINMAXINFO {
 // } 
 
 struct MDINEXTMENU {
-    hmenuIn     : HMENU
-    hmenuNext   : HMENU
-    hwndNext    : HWND
+    pub hmenuIn     : HMENU
+    pub hmenuNext   : HMENU
+    pub hwndNext    : HWND
 }
 
 struct GUID {
-    Data1   : DWORD
-    Data2   : WORD
-    Data3   : WORD
-    Data4   : [8]BYTE
+    pub Data1   : DWORD
+    pub Data2   : WORD
+    pub Data3   : WORD
+    pub Data4   : [8]BYTE
 }
 
 
 struct POWERBROADCAST_SETTING {
-    PowerSetting    : GUID
-    DataLength      : DWORD
-    Data            : [1]UCHAR
+    pub PowerSetting    : GUID
+    pub DataLength      : DWORD
+    pub Data            : [1]UCHAR
 }
 
 struct CREATESTRUCTA {
-    lpCreateParams  : &any
-    hInstance       : HINSTANCE
-    hMenu           : HMENU
-    hwndParent      : HWND
-    cy              : i32
-    cx              : i32
-    y               : i32
-    x               : i32
-    style           : LONG
-    lpszName        : c_string
-    lpszClass       : c_string
-    dwExStyle       : DWORD
+    pub lpCreateParams  : &any
+    pub hInstance       : HINSTANCE
+    pub hMenu           : HMENU
+    pub hwndParent      : HWND
+    pub cy              : i32
+    pub cx              : i32
+    pub y               : i32
+    pub x               : i32
+    pub style           : LONG
+    pub lpszName        : c_string
+    pub lpszClass       : c_string
+    pub dwExStyle       : DWORD
 }
 
 struct PIXELFORMATDESCRIPTOR {
-  nSize : WORD
-  nVersion  : WORD
-  dwFlags   : DWORD
-  iPixelType    : BYTE
-  cColorBits    : BYTE
-  cRedBits  : BYTE
-  cRedShift : BYTE
-  cGreenBits    : BYTE
-  cGreenShift   : BYTE
-  cBlueBits : BYTE
-  cBlueShift    : BYTE
-  cAlphaBits    : BYTE
-  cAlphaShift   : BYTE
-  cAccumBits    : BYTE
-  cAccumRedBits : BYTE
-  cAccumGreenBits   : BYTE
-  cAccumBlueBits    : BYTE
-  cAccumAlphaBits   : BYTE
-  cDepthBits    : BYTE
-  cStencilBits  : BYTE
-  cAuxBuffers   : BYTE
-  iLayerType    : BYTE
-  bReserved : BYTE
-  dwLayerMask   : DWORD
-  dwVisibleMask : DWORD
-  dwDamageMask  : DWORD
+    pub nSize           : WORD
+    pub nVersion        : WORD
+    pub dwFlags         : DWORD
+    pub iPixelType      : BYTE
+    pub cColorBits      : BYTE
+    pub cRedBits        : BYTE
+    pub cRedShift       : BYTE
+    pub cGreenBits      : BYTE
+    pub cGreenShift     : BYTE
+    pub cBlueBits       : BYTE
+    pub cBlueShift      : BYTE
+    pub cAlphaBits      : BYTE
+    pub cAlphaShift     : BYTE
+    pub cAccumBits      : BYTE
+    pub cAccumRedBits   : BYTE
+    pub cAccumGreenBits : BYTE
+    pub cAccumBlueBits  : BYTE
+    pub cAccumAlphaBits : BYTE
+    pub cDepthBits      : BYTE
+    pub cStencilBits    : BYTE
+    pub cAuxBuffers     : BYTE
+    pub iLayerType      : BYTE
+    pub bReserved       : BYTE
+    pub dwLayerMask     : DWORD
+    pub dwVisibleMask   : DWORD
+    pub dwDamageMask    : DWORD
 }
 
 
