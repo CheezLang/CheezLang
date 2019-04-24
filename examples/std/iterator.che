@@ -55,6 +55,20 @@ impl Iterator(String) for MapIterator(int, String) {
     }
 }
 
+impl Iterator(double) for MapIterator(double, double) {
+    fn next(ref Self) -> Option(double) {
+        return match it.next() {
+            Some($v) -> Some(mapFunc(v))
+            None -> None
+        }
+    }
+
+    fn dispose(ref Self) {
+        it.dispose()
+        free(&self)
+    }
+}
+
 impl Iterator(int) for TakeIterator(int) {
     fn next(ref Self) -> Option(int) {
         if count > 0 {

@@ -61,13 +61,14 @@ namespace Cheez.Ast.Expressions.Types
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitFunctionTypeExpr(this, data);
-
-        [DebuggerStepThrough]
+        
         public override AstExpression Clone()
-            => CopyValuesTo(new AstFunctionTypeExpr(
+        {
+            return CopyValuesTo(new AstFunctionTypeExpr(
                 ParameterTypes.Select(p => p.Clone()).ToList(),
-                ReturnType.Clone(),
+                ReturnType?.Clone(),
                 Directives));
+        }
 
         public bool HasDirective(string name) => Directives.Find(d => d.Name.Name == name) != null;
 

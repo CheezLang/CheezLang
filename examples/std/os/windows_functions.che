@@ -1,4 +1,5 @@
 #load("windows_types")
+#load("windows_macros")
 
 // general stuff
 fn GetLastError() -> DWORD #stdcall;
@@ -40,6 +41,11 @@ fn SwapBuffers(HDC) -> BOOL #stdcall;
 fn wglCreateContext(hdc: HDC) -> HGLRC #stdcall;
 fn wglMakeCurrent(HDC, HGLRC) -> BOOL #stdcall;
 fn wglGetProcAddress(c_string) -> (fn() #stdcall) #stdcall;
+
+// fiber
+fn ConvertThreadToFiber(lpParameter: &any) -> &any #stdcall;
+fn SwitchToFiber(fiber: &any) #stdcall;
+fn CreateFiber(dwStackSize: int, lpStartAddress: fn(&any) #stdcall, lpParameter: &any) -> &any #stdcall;
 
 // somehow not linking
 // fn GetCurrentDirectory(nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;

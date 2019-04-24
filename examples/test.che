@@ -1,70 +1,33 @@
+// #load("test2")
 // #load("std:random")
-#load("std:io/io")
+// #load("std:io/io")
 // #load("std:iterator")
 
-// fn int_to_string(i: int) -> String {
-//     // let s = String::empty()
-//     // s.appendf("number: {}", [i])
-//     // println(s)
-//     // return s
-// }
+#load("std:fiber")
+#load("std:iterator")
+#load("std:io/io")
 
-fn loop(count: int, body: fn(int)) {
-    while let i = 0; i < count; i+=1 {
-        body(i)
-    }
-}
-
-fn loop_arr(arr: []int, body: fn(int, int)) {
-    while let i = 0; i < arr.length; i+=1 {
-        body(i, arr[i])
+fn generator(start: double, gen: ref GeneratorWithArg(double, double)) {
+    while let i: double = start; true; i += 1 {
+        gen.yield(i)
     }
 }
 
 fn Main() {
-    loop(3, |i| println(i + 1))
-    loop_arr([123, 465, 789, 147, 258, 369], |i, v| printfln("{}: {}", [i, v]))
+    let gen = GeneratorWithArg(double, double)::create(generator, 1.0)
 
-    // let dist: IDistribution(double) = NormalDistribution::create(0.5, 0.125)
-    // let dist: IDistribution(int) = BernoulliDistribution::create(1, 3)
+    let it : Iterator(double) = ref <<gen
+    it = it::take(5)
+    it = it::map(|a: double| a * 2)
 
-    // print_histogram(dist, 0, 1)
+    while true {
+        let i = it.next()
+        match i {
+            Some($v) -> println(v)
+            None -> {
+                break
+            }
+        }
+    }
+    println("done")
 }
-
-
-// // // #load("test2")
-// // // #load("tests/library/hash_table1")
-// // #load("tests/language/traits")
-// // // #load("examples/lua_example.che")
-
-// // #load("std:preload")
-// // // #load("std:array")
-// #load("std:io/io")
-// // // #load("std:string")
-// // // #load("std:util")
-
-// fn Main() {
-//     // struct Test {
-//     //     a: int
-//     //     b: [10]bool
-//     // }
-
-//     // let a: int = b
-//     // let b: int = 5
-
-//     // {
-//     //     let x = 10
-//     //     let y = x
-//     // }
-
-//     // let a2: int = b
-//     // let b2: int = 5
-
-//     // {
-//     //     let x = 10
-//     //     let y = x
-//     // }
-
-//     printfln("test {}", ["hi"])
-//     printfln("test {}", [null])
-// }
