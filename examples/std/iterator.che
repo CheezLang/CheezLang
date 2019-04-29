@@ -16,19 +16,8 @@ struct MapIterator(T: type, X: type) {
     mapFunc : fn(T) -> X
 }
 
-// impl Iterator($T) for TakeIterator(T) {
-//     fn next(ref Self) -> Option(T) {
-//         if count > 0 {
-//             count -= 1
-//             return it.next()
-//         } else {
-//             return None
-//         }
-//     }
-// }
-
-impl Iterator(int) for MapIterator((int, int), int) {
-    fn next(ref Self) -> Option(int) {
+impl Iterator($T) for MapIterator($T2, T) {
+    fn next(ref Self) -> Option(T) {
         return match it.next() {
             Some($v) -> Some(mapFunc(v))
             None -> None
@@ -41,52 +30,8 @@ impl Iterator(int) for MapIterator((int, int), int) {
     }
 }
 
-impl Iterator(String) for MapIterator(int, String) {
-    fn next(ref Self) -> Option(String) {
-        return match it.next() {
-            Some($v) -> Some(mapFunc(v))
-            None -> None
-        }
-    }
-
-    fn dispose(ref Self) {
-        it.dispose()
-        free(&self)
-    }
-}
-
-impl Iterator(double) for MapIterator(double, double) {
-    fn next(ref Self) -> Option(double) {
-        return match it.next() {
-            Some($v) -> Some(mapFunc(v))
-            None -> None
-        }
-    }
-
-    fn dispose(ref Self) {
-        it.dispose()
-        free(&self)
-    }
-}
-
-impl Iterator(int) for TakeIterator(int) {
-    fn next(ref Self) -> Option(int) {
-        if count > 0 {
-            count -= 1
-            return it.next()
-        } else {
-            return None
-        }
-    }
-
-    fn dispose(ref Self) {
-        it.dispose()
-        free(&self)
-    }
-}
-
-impl Iterator(double) for TakeIterator(double) {
-    fn next(ref Self) -> Option(double) {
+impl Iterator($T) for TakeIterator(T) {
+    fn next(ref Self) -> Option(T) {
         if count > 0 {
             count -= 1
             return it.next()
@@ -148,6 +93,15 @@ impl Iterator($T) {
         let it = alloc(MapIterator(T, X))
         <<it = new {self, mapFunc}
         return <<it
+    }
+
+    fn foreach(ref Self, func: fn (T)) {
+        while true {
+            match self.next() {
+                Some($v) -> func(v)
+                None -> {break}
+            }
+        }
     }
 
     fn to_array(ref Self) -> Array(T) {

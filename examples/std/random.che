@@ -37,18 +37,8 @@ struct DistributionIterator(T: type) {
     dist: IDistribution(T)
 }
 
-impl Iterator(double) for DistributionIterator(double) {
-    fn next(ref Self) -> Option(double) {
-        return Some(dist.sample())
-    }
-
-    fn dispose(ref Self) {
-        free(&self)
-    }
-}
-
-impl Iterator(int) for DistributionIterator(int) {
-    fn next(ref Self) -> Option(int) {
+impl Iterator($T) for DistributionIterator(T) {
+    fn next(ref Self) -> Option(T) {
         return Some(dist.sample())
     }
 
