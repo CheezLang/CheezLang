@@ -964,7 +964,37 @@ namespace Cheez
 
             var to = cast.Type;
             var from = cast.SubExpression.Type;
-            if ((to is PointerType && from is PointerType) ||
+
+            // check for trait cast
+            if (to is TraitType t)
+            {
+                if (t.Declaration.Implementations.ContainsKey(from))
+                    return cast;
+
+                if (t.Declaration.IsPolyInstance)
+                {
+                    var template = t.Declaration.Template.FindMatchingImplementation(from);
+                    if (template == null)
+                    {
+                        ReportError(cast, $"Can't cast {from} to {to} because it doesn't implement the trait");
+                        return cast;
+                    }
+
+                    var polyTypes = new Dictionary<string, CheezType>();
+                    CollectPolyTypes(template.Trait, to, polyTypes);
+                    CollectPolyTypes(template.TargetType, from, polyTypes);
+
+                    var impl = InstantiatePolyImpl(template, polyTypes);
+                    return cast;
+                }
+                else
+                {
+                    ReportError(cast, $"Can't cast {from} to {to} because it doesn't implement the trait");
+                    return cast;
+                }
+            }
+
+            else if ((to is PointerType && from is PointerType) ||
                 (to is IntType && from is PointerType) ||
                 (to is PointerType && from is IntType) ||
                 (to is PointerType p1 && from is ArrayType a1 && p1.TargetType == a1.TargetType) ||
@@ -976,19 +1006,16 @@ namespace Cheez
                 (to is IntType && from is CharType) ||
                 (to is CharType && from is IntType) ||
                 (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
-                (to is TraitType trait && trait.Declaration.Implementations.ContainsKey(from)) ||
                 (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType) ||
                 (to is IntType && from is EnumType) ||
                 (to is FunctionType && from is FunctionType) ||
                 (to is BoolType && from is FunctionType) ||
                 (to is FunctionType && from is PointerType p2 && p2.TargetType == CheezType.Any))
             {
-                // ok
+                return cast;
             }
-            else
-            {
-                ReportError(cast, $"Can't convert from type {from} to type {to}");
-            }
+
+            ReportError(cast, $"Can't convert from type {from} to type {to}");
 
             return cast;
         }
@@ -3057,15 +3084,12 @@ namespace Cheez
 
             if (to is TraitType trait)
             {
-                if (trait.Declaration.Implementations.ContainsKey(from))
+                if (!expr.GetFlag(ExprFlags.IsLValue))
                 {
-                    if (!expr.GetFlag(ExprFlags.IsLValue))
-                    {
-                        var tmp = new AstTempVarExpr(expr);
-                        cast.SubExpression = tmp;
-                    }
-                    return InferType(cast, to);
+                    var tmp = new AstTempVarExpr(expr);
+                    cast.SubExpression = tmp;
                 }
+                return InferType(cast, to);
             }
 
             ReportError(expr, errorMsg ?? $"Can't implicitly convert {from} to {to}");

@@ -62,6 +62,18 @@ namespace Cheez
 
             foreach (var i in scope.Impls)
             {
+                if (i.IsPolymorphic)
+                {
+                    //foreach (var instance in i.PolyInstances)
+                    //{
+                    //    foreach (var f in i.Functions)
+                    //    {
+                    //        AnalyseFunction(f);
+                    //    }
+                    //}
+                    continue;
+                }
+
                 foreach (var f in i.Functions)
                 {
                     AnalyseFunction(f);

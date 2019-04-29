@@ -246,6 +246,21 @@ namespace Cheez.Ast.Statements
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTraitDecl(this, data);
 
         public override AstStatement Clone() => CopyValuesTo(new AstTraitDeclaration(Name.Clone() as AstIdExpr, Parameters.Select(p => p.Clone()).ToList(), Functions.Select(f => f.Clone() as AstFunctionDecl).ToList()));
+
+        public AstImplBlock FindMatchingImplementation(CheezType from)
+        {
+            foreach (var kv in Implementations)
+            {
+                var type = kv.Key;
+                var impl = kv.Value;
+                if (CheezType.TypesMatch(type, from))
+                {
+                    return impl;
+                }
+            }
+
+            return null;
+        }
     }
 
     public class AstImplBlock : AstStatement
@@ -259,6 +274,10 @@ namespace Cheez.Ast.Statements
         public List<AstFunctionDecl> Functions { get; }
 
         public Scope SubScope { get; set; }
+
+        public List<AstImplBlock> PolyInstances { get; set; } = new List<AstImplBlock>();
+        public bool IsPolyInstance = false;
+        public bool IsPolymorphic = false;
 
         public AstImplBlock(AstExpression targetTypeExpr, AstExpression traitExpr, List<AstFunctionDecl> functions, ILocation Location = null) : base(Location: Location)
         {

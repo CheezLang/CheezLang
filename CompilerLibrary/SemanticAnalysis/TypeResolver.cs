@@ -257,6 +257,38 @@ namespace Cheez
             }
         }
 
+        // impl
+        private AstImplBlock InstantiatePolyImpl(AstImplBlock decl, Dictionary<string, CheezType> args, ILocation location = null)
+        {
+            AstImplBlock instance = null;
+
+            // TODO: check for existing instance
+
+            if (instance == null)
+            {
+                instance = decl.Clone() as AstImplBlock;
+                instance.SubScope = new Scope($"impl <poly>", instance.Scope);
+                instance.IsPolyInstance = true;
+                instance.IsPolymorphic = false;
+                //instance.Template = decl;
+                decl.PolyInstances.Add(instance);
+
+                foreach (var kv in args)
+                {
+                    instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value);
+                }
+
+                Pass3TraitImpl(instance);
+
+                foreach (var f in instance.Functions)
+                {
+                    AnalyseFunction(f);
+                }
+            }
+
+            return instance;
+        }
+
         // trait
         private AstTraitDeclaration InstantiatePolyTrait(AstTraitDeclaration decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
         {

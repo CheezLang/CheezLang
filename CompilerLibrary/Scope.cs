@@ -634,66 +634,12 @@ namespace Cheez
             return true;
         }
 
-        private bool TypesMatch(CheezType a, CheezType b)
-        {
-            if (a == b)
-                return true;
-
-            if (Utilities.Xor(a is PolyType, b is PolyType))
-                return true;
-
-            if (a is StructType sa && b is StructType sb)
-            {
-                if (sa.Declaration.Name.Name != sb.Declaration.Name.Name)
-                    return false;
-                if (sa.Arguments.Length != sb.Arguments.Length)
-                    return false;
-                for (int i = 0; i < sa.Arguments.Length; i++)
-                {
-                    if (!TypesMatch(sa.Arguments[i], sb.Arguments[i]))
-                        return false;
-                }
-
-                return true;
-            }
-            else if (a is TraitType ta && b is TraitType tb)
-            {
-                if (ta.Declaration.Name.Name != tb.Declaration.Name.Name)
-                    return false;
-                if (ta.Arguments.Length != tb.Arguments.Length)
-                    return false;
-                for (int i = 0; i < ta.Arguments.Length; i++)
-                {
-                    if (!TypesMatch(ta.Arguments[i], tb.Arguments[i]))
-                        return false;
-                }
-
-                return true;
-            }
-            else if (a is EnumType ea && b is EnumType eb)
-            {
-                if (ea.Declaration.Name.Name != eb.Declaration.Name.Name)
-                    return false;
-                if (ea.Arguments.Length != eb.Arguments.Length)
-                    return false;
-                for (int i = 0; i < ea.Arguments.Length; i++)
-                {
-                    if (!TypesMatch(ea.Arguments[i], eb.Arguments[i]))
-                        return false;
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
         public List<AstFunctionDecl> GetImplFunction(CheezType targetType, string name)
         {
             var impls = mImplTable.Where(kv =>
             {
                 var implType = kv.Key.TargetType;
-                if (TypesMatch(implType, targetType))
+                if (CheezType.TypesMatch(implType, targetType))
                     return true;
                 return false;
             });
@@ -725,7 +671,7 @@ namespace Cheez
             var impls = mImplTable.Where(kv =>
             {
                 var implType = kv.Key.TargetType;
-                if (TypesMatch(implType, targetType))
+                if (CheezType.TypesMatch(implType, targetType))
                     return true;
                 return false;
             });

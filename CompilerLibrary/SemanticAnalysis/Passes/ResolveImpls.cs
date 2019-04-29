@@ -44,9 +44,23 @@ namespace Cheez
 
         private void Pass3TraitImpl(AstImplBlock impl)
         {
-            impl.TraitExpr.Scope = impl.Scope;
+            impl.TraitExpr.Scope = impl.SubScope;
 
-            impl.TraitExpr = ResolveTypeNow(impl.TraitExpr, out var type);
+            CheezType type = null;
+            if (!impl.IsPolyInstance)
+            {
+                var polyNames = new List<string>();
+                CollectPolyTypeNames(impl.TargetTypeExpr, polyNames);
+                CollectPolyTypeNames(impl.TraitExpr, polyNames);
+                foreach (var pn in polyNames)
+                    impl.SubScope.DefineTypeSymbol(pn, new PolyType(pn));
+                impl.TraitExpr = ResolveTypeNow(impl.TraitExpr, out type);
+            }
+            else
+            {
+                impl.TraitExpr = ResolveTypeNow(impl.TraitExpr, out type, poly_from_scope: true);
+            }
+
             if (type.IsErrorType)
                 return;
 
@@ -60,14 +74,18 @@ namespace Cheez
                 return;
             }
 
-            impl.TargetTypeExpr.Scope = impl.Scope;
-            impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t);
-            impl.TargetType = t;
-            if (impl.TargetTypeExpr.IsPolymorphic)
+            impl.TargetTypeExpr.Scope = impl.SubScope;
+            if (!impl.IsPolyInstance)
             {
-                ReportError(impl.TargetTypeExpr, $"Polymorphic type is not allowed here");
-                return;
+                impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t);
+                impl.TargetType = t;
             }
+            else
+            {
+                impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t, poly_from_scope: true);
+                impl.TargetType = t;
+            }
+
             impl.SubScope.DefineTypeSymbol("Self", impl.TargetType);
 
 
@@ -78,6 +96,11 @@ namespace Cheez
                     ("Other implementation here:", otherImpl.TargetTypeExpr));
             }
             impl.Trait.Declaration.Implementations[impl.TargetType] = impl;
+
+            impl.IsPolymorphic = impl.Trait.IsPolyType || impl.TargetType.IsPolyType;
+            if (impl.IsPolymorphic)
+                return;
+
             AddTraitForType(impl.TargetType, impl);
 
             // handle functions

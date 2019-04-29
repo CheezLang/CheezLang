@@ -252,18 +252,41 @@ namespace Cheez.Visitors
 
         public override string VisitImplDecl(AstImplBlock impl, int data = 0)
         {
-            var body = string.Join("\n\n", impl.Functions.Select(f => f.Accept(this, 0)));
-
-            var header = "impl ";
-
-            if (impl.TraitExpr != null)
+            if (impl.IsPolymorphic)
             {
-                header += impl.Trait + " for ";
+                var body = string.Join("\n\n", impl.Functions.Select(f => f.Accept(this, 0)));
+                var header = "impl ";
+                if (impl.TraitExpr != null)
+                    header += impl.Trait + " for ";
+                header += impl.TargetType;
+
+                var sb = new StringBuilder();
+                sb.Append($"{header} {{\n{body.Indent(4)}\n}}");
+
+                // polies
+                if (impl.PolyInstances?.Count > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"// Polymorphic instances for {header}");
+                    foreach (var pi in impl.PolyInstances)
+                    {
+                        sb.AppendLine(pi.Accept(this).Indent(4));
+                    }
+                }
+
+                return sb.ToString();
             }
+            else
+            {
+                var body = string.Join("\n\n", impl.Functions.Select(f => f.Accept(this, 0)));
+                var header = "impl ";
 
-            header += impl.TargetType;
+                if (impl.TraitExpr != null)
+                    header += impl.Trait + " for ";
 
-            return $"{header} {{\n{body.Indent(4)}\n}}";
+                header += impl.TargetType;
+                return $"{header} {{\n{body.Indent(4)}\n}}";
+            }
         }
 
         public override string VisitVariableDecl(AstVariableDecl variable, int indentLevel = 0)
