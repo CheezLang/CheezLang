@@ -989,7 +989,17 @@ namespace Cheez
                 }
                 else
                 {
-                    ReportError(cast, $"Can't cast {from} to {to} because it doesn't implement the trait");
+                    var template = t.Declaration.FindMatchingImplementation(from);
+                    if (template == null)
+                    {
+                        ReportError(cast, $"Can't cast {from} to {to} because it doesn't implement the trait");
+                        return cast;
+                    }
+
+                    var polyTypes = new Dictionary<string, CheezType>();
+                    CollectPolyTypes(template.TargetType, from, polyTypes);
+
+                    var impl = InstantiatePolyImpl(template, polyTypes);
                     return cast;
                 }
             }
