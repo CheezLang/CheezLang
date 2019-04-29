@@ -968,6 +968,12 @@ namespace Cheez
             // check for trait cast
             if (to is TraitType t)
             {
+                if (!cast.SubExpression.GetFlag(ExprFlags.IsLValue))
+                {
+                    var tmp = new AstTempVarExpr(cast.SubExpression);
+                    cast.SubExpression = InferTypeHelper(tmp, cast.SubExpression.Type, context);
+                }
+
                 if (t.Declaration.Implementations.ContainsKey(from))
                     return cast;
 
@@ -3094,11 +3100,6 @@ namespace Cheez
 
             if (to is TraitType trait)
             {
-                if (!expr.GetFlag(ExprFlags.IsLValue))
-                {
-                    var tmp = new AstTempVarExpr(expr);
-                    cast.SubExpression = tmp;
-                }
                 return InferType(cast, to);
             }
 
