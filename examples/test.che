@@ -1,33 +1,36 @@
 // #load("test2")
 // #load("std:random")
-// #load("std:io/io")
-// #load("std:iterator")
-
-#load("std:fiber")
+// // #load("std:io/io")
 #load("std:iterator")
+
 #load("std:io/io")
 
-fn generator(start: double, gen: ref GeneratorWithArg(double, double)) {
-    while let i: double = start; true; i += 1 {
-        gen.yield(i)
+struct Seq(T: type) {
+    current: T
+}
+impl Iterator($T) for Seq(T) {
+    fn next(ref Self) -> Option(T) {
+        let c = current
+        current += 1
+        return Some(c)
     }
+
+    fn dispose(ref Self) {}
 }
 
-fn Main() {
-    let gen = GeneratorWithArg(double, double)::create(generator, 1.0)
+fn Main() -> int {
+    // let scu: IDistribution(double) = new StandardContinuousUniform{}
+    // scu::samples()::take(10)::foreach(|d: double| {
+    //     println(d)
+    // })
 
-    let it : Iterator(double) = ref <<gen
-    it = it::take(5)
-    it = it::map(|a: double| a * 2)
+    // println(scu::samples()::take(10)::sum())
+    // println(scu::samples()::take(10)::map(|d: double| d*2)::sum())
 
-    while true {
-        let i = it.next()
-        match i {
-            Some($v) -> println(v)
-            None -> {
-                break
-            }
-        }
-    }
-    println("done")
+    let it = cast(Iterator(int)) new Seq(int){1}
+
+    let sum = it::take(5)::sum()
+    // println(sum)
+
+    return sum
 }
