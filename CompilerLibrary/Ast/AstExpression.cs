@@ -1,6 +1,7 @@
 ﻿using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Extras;
+using Cheez.Parsing;
 using Cheez.Types;
 using Cheez.Types.Complex;
 using Cheez.Visitors;
@@ -121,6 +122,26 @@ namespace Cheez.Ast.Expressions
             this.Scope = stmt.Scope;
             this.Parent = stmt;
         }
+    }
+
+    public class AstMacroExpr : AstExpression
+    {
+        public override bool IsPolymorphic => false;
+
+        public AstIdExpr Name { get; set; }
+        public List<Token> Tokens { get; set; } = new List<Token>();
+
+        public AstMacroExpr(AstIdExpr name, List<Token> tokens, ILocation Location = null)
+            : base(Location)
+        {
+            Name = name;
+            Tokens = tokens;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitMacroExpr(this, data);
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstMacroExpr(Name.Clone() as AstIdExpr, Tokens));
     }
 
     public abstract class AstNestedExpression : AstExpression

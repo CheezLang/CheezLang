@@ -9,6 +9,12 @@ using Cheez.Extras;
 
 namespace Cheez.Parsing
 {
+    public interface ILexer : IText
+    {
+        Token PeekToken();
+        Token NextToken();
+    }
+
     public enum TokenType
     {
         Unknown,
@@ -24,6 +30,7 @@ namespace Cheez.Parsing
         DollarIdentifier,
         HashIdentifier,
         AtSignIdentifier,
+        ReplaceIdentifier,
 
         Semicolon,
         DoubleColon,
@@ -120,7 +127,7 @@ namespace Cheez.Parsing
         string Text { get; }
     }
 
-    public class Lexer : IText
+    public class Lexer : ILexer
     {
         private string mText;
         private TokenLocation mLocation;
@@ -278,6 +285,7 @@ namespace Cheez.Parsing
                 case '$': ParseIdentifier(ref token, TokenType.DollarIdentifier); break;
                 case '#': ParseIdentifier(ref token, TokenType.HashIdentifier); break;
                 case '@': ParseIdentifier(ref token, TokenType.AtSignIdentifier); break;
+                case '§': ParseIdentifier(ref token, TokenType.ReplaceIdentifier); break;
 
                 case char cc when IsIdentBegin(cc):
                     ParseIdentifier(ref token, TokenType.Identifier);
@@ -415,6 +423,7 @@ namespace Cheez.Parsing
                 case TokenType.AtSignIdentifier:
                 case TokenType.DollarIdentifier:
                 case TokenType.HashIdentifier:
+                case TokenType.ReplaceIdentifier:
                     mLocation.index++;
                     start++;
                     break;

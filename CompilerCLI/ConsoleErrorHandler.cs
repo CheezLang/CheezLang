@@ -58,7 +58,9 @@ namespace CheezCLI
                 // location, message
                 LogInline($"{beginning}: ", ConsoleColor.White);
                 Log(error.Message, ConsoleColor.Red);
-                PrintLocation(text, error.Location, linesBefore: LinesBeforeError, linesAfter: LinesAfterError);
+
+                if (text != null)
+                    PrintLocation(text, error.Location, linesBefore: LinesBeforeError, linesAfter: LinesAfterError);
             }
             else
             {

@@ -1,36 +1,29 @@
 // #load("test2")
-// #load("std:random")
-// // #load("std:io/io")
-#load("std:iterator")
-
 #load("std:io/io")
+#load("std:iterator")
+#load("std:random")
 
-struct Seq(T: type) {
-    current: T
-}
-impl Iterator($T) for Seq(T) {
-    fn next(ref Self) -> Option(T) {
-        let c = current
-        current += 1
-        return Some(c)
+fn Main() {
+    // new style
+    foreach! v in range(1, 3) {
+        //println(v)
     }
+    println("")
 
-    fn dispose(ref Self) {}
-}
+    let rand = cast(IDistribution(double)) new StandardContinuousUniform{}
+    foreach! x in rand::samples()::take(5) {
+//        println(x)
+    }
+    println("")
 
-fn Main() -> int {
-    // let scu: IDistribution(double) = new StandardContinuousUniform{}
-    // scu::samples()::take(10)::foreach(|d: double| {
-    //     println(d)
-    // })
+    let arr = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+    //foreach! i in range(0, arr.length - 1) println(arr[i])
 
-    // println(scu::samples()::take(10)::sum())
-    // println(scu::samples()::take(10)::map(|d: double| d*2)::sum())
+    //foreach! i in range(1, 10) println(i)
 
-    let it = cast(Iterator(int)) new Seq(int){1}
+    let a = 5
+    let b = "lol"
+    let c = true
 
-    let sum = it::take(5)::sum()
-    // println(sum)
-
-    return sum
+    print! "hello " a ", lol: " b ", true: " c
 }

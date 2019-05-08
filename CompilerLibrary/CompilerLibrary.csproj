@@ -122,7 +122,9 @@
     <Compile Include="Compiler.cs" />
     <Compile Include="ErrorHandler.cs" />
     <Compile Include="IOperator.cs" />
+    <Compile Include="Macro.cs" />
     <Compile Include="Parsing\Lexer.cs" />
+    <Compile Include="Parsing\ListLexer.cs" />
     <Compile Include="Parsing\Parser.cs" />
     <Compile Include="SemanticAnalysis\FunctionAnalysis.cs" />
     <Compile Include="SemanticAnalysis\Passes\Pass1.cs" />

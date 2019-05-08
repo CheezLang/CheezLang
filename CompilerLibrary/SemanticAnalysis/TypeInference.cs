@@ -8,6 +8,7 @@ using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Extras;
+using Cheez.Parsing;
 using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
@@ -211,9 +212,37 @@ namespace Cheez
                 case AstLambdaExpr l:
                     return InferTypeLambdaExpr(l, expected, context);
 
+                case AstMacroExpr m:
+                    return InferTypeMacro(m, expected, context);
+
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private AstExpression InferTypeMacro(AstMacroExpr expr, CheezType expected, TypeInferenceContext context)
+        {
+            var macro = expr.Scope.GetMacro(expr.Name.Name);
+
+            if (macro is BuiltInMacro b)
+            {
+                var lexer = new ListLexer(mCompiler.GetText(expr), expr.Tokens);
+                var e = b.Execute(expr, lexer, mCompiler.ErrorHandler);
+
+                if (e == null)
+                {
+                    return expr;
+                }
+
+                e.Replace(expr);
+                return InferTypeHelper(e, expected, context);
+            }
+            else
+            {
+                ReportError(expr.Name, $"'{expr.Name.Name}' is not a macro.");
+            }
+
+            return expr;
         }
 
         private AstExpression InferTypeLambdaExpr(AstLambdaExpr expr, CheezType expected, TypeInferenceContext context)

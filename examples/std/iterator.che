@@ -6,46 +6,6 @@ trait Iterator(T: type) {
     fn dispose(ref Self);
 }
 
-struct TakeIterator(T: type) {
-    it      : Iterator(T)
-    count   : int
-}
-
-struct MapIterator(T: type, X: type) {
-    it      : Iterator(T)
-    mapFunc : fn(T) -> X
-}
-
-impl Iterator($T) for MapIterator($T2, T) {
-    fn next(ref Self) -> Option(T) {
-        return match it.next() {
-            Some($v) -> Some(mapFunc(v))
-            None -> None
-        }
-    }
-
-    fn dispose(ref Self) {
-        it.dispose()
-        free(&self)
-    }
-}
-
-impl Iterator($T) for TakeIterator(T) {
-    fn next(ref Self) -> Option(T) {
-        if count > 0 {
-            count -= 1
-            return it.next()
-        } else {
-            return None
-        }
-    }
-
-    fn dispose(ref Self) {
-        it.dispose()
-        free(&self)
-    }
-}
-
 impl Iterator($T) {
     fn max(ref Self) -> T {
         let max: T
@@ -115,4 +75,74 @@ impl Iterator($T) {
         }{}
         return a
     }
+}
+
+// take
+struct TakeIterator(T: type) {
+    it      : Iterator(T)
+    count   : int
+}
+
+impl Iterator($T) for TakeIterator(T) {
+    fn next(ref Self) -> Option(T) {
+        if count > 0 {
+            count -= 1
+            return it.next()
+        } else {
+            return None
+        }
+    }
+
+    fn dispose(ref Self) {
+        it.dispose()
+        free(&self)
+    }
+}
+
+// map
+struct MapIterator(T: type, X: type) {
+    it      : Iterator(T)
+    mapFunc : fn(T) -> X
+}
+
+impl Iterator($T) for MapIterator($T2, T) {
+    fn next(ref Self) -> Option(T) {
+        return match it.next() {
+            Some($v) -> Some(mapFunc(v))
+            None -> None
+        }
+    }
+
+    fn dispose(ref Self) {
+        it.dispose()
+        free(&self)
+    }
+}
+
+// range
+struct RangeIterator {
+    from    : int
+    to      : int
+}
+
+impl Iterator(int) for RangeIterator {
+    fn next(ref Self) -> Option(int) {
+        if from > to {
+            return None
+        }
+
+        let n = from
+        from += 1
+        return Some(n)
+    }
+
+    fn dispose(ref Self) {
+        free(&self)
+    }
+}
+
+fn range(start: int, end: int) -> Iterator(int) {
+    let it = alloc(RangeIterator)
+    <<it = new {start, end}
+    return <<it
 }

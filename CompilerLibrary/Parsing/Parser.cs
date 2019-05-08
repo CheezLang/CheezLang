@@ -13,23 +13,33 @@ namespace Cheez.Parsing
 {
     public class Parser
     {
-        private delegate string ErrorMessageResolver(Token t);
+        public delegate string ErrorMessageResolver(Token t);
         private delegate AstExpression ExpressionParser(ErrorMessageResolver e);
 
-        private Lexer mLexer;
+        private ILexer mLexer;
         private IErrorHandler mErrorHandler;
+
+        private Dictionary<string, AstExpression> Replacements;
 
         private Token lastNonWhitespace = null;
         private Token mCurrentToken = null;
         private Token CurrentToken => mCurrentToken;
 
-        public Parser(Lexer lex, IErrorHandler errHandler)
+        public Parser(ILexer lex, IErrorHandler errHandler)
         {
             mLexer = lex;
             mErrorHandler = errHandler;
         }
 
-#region Helpers
+        internal static AstExpression ParseExpression(string v, Dictionary<string, AstExpression> dictionary, IErrorHandler errorHandler)
+        {
+            var l = Lexer.FromString(v, errorHandler);
+            var p = new Parser(l, errorHandler);
+            p.Replacements = dictionary;
+            return p.ParseExpression();
+        }
+
+        #region Helpers
 
         [DebuggerStepThrough]
         private (TokenLocation beg, TokenLocation end) GetWhitespaceLocation()
@@ -47,7 +57,7 @@ namespace Cheez.Parsing
 
         [SkipInStackFrame]
         [DebuggerStepThrough]
-        private void SkipNewlines()
+        public void SkipNewlines()
         {
             while (true)
             {
@@ -93,7 +103,7 @@ namespace Cheez.Parsing
         }
 
         [DebuggerStepThrough]
-        private ErrorMessageResolver ErrMsg(string expect, string where = null)
+        public static ErrorMessageResolver ErrMsg(string expect, string where = null)
         {
             return t => $"Expected {expect} {where}";
         }
@@ -124,7 +134,7 @@ namespace Cheez.Parsing
 
         [SkipInStackFrame]
         [DebuggerStepThrough]
-        private Token Consume(TokenType type, ErrorMessageResolver customErrorMessage)
+        public Token Consume(TokenType type, ErrorMessageResolver customErrorMessage)
         {
             if (!Expect(type, customErrorMessage))
                 NextToken();
@@ -133,7 +143,7 @@ namespace Cheez.Parsing
 
         [SkipInStackFrame]
         [DebuggerStepThrough]
-        private Token ConsumeUntil(TokenType type, ErrorMessageResolver customErrorMessage)
+        public Token ConsumeUntil(TokenType type, ErrorMessageResolver customErrorMessage)
         {
             var tok = PeekToken();
             while (tok.type != type)
@@ -1160,7 +1170,7 @@ namespace Cheez.Parsing
             return new AstFunctionTypeExpr(args, returnType, dirs, new Location(beginning, end));
         }
 
-        private AstExpression ParseExpression(ErrorMessageResolver errorMessage = null)
+        public AstExpression ParseExpression(ErrorMessageResolver errorMessage = null)
         {
             errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
 
@@ -1648,6 +1658,68 @@ namespace Cheez.Parsing
             return new AstLambdaExpr(parameters, body, retType, new Location(beg, body.End));
         }
 
+        private AstExpression ParseMacro(Token name)
+        {
+            if (name == null)
+            {
+                name = ConsumeUntil(TokenType.Identifier, ErrMsg("name", "at beginning of macro"));
+            }
+
+            var beg = name.location;
+            TokenLocation end;
+
+            end = ConsumeUntil(TokenType.Bang, ErrMsg("!", "after name of macro")).location;
+
+            var tokens = new List<Token>();
+            var stack = new Stack<TokenType>();
+
+            while (true) {
+                var next = PeekToken();
+                switch (next.type)
+                {
+                    case TokenType.OpenBrace:
+                    case TokenType.OpenBracket:
+                    case TokenType.OpenParen:
+                        stack.Push(next.type);
+                        break;
+
+                    case TokenType.ClosingBrace:
+                    case TokenType.ClosingBracket:
+                    case TokenType.ClosingParen:
+                        if (stack.Count == 0)
+                        {
+                            goto end;
+                        }
+                        else if ((stack.Peek() == TokenType.OpenBrace && next.type == TokenType.ClosingBrace) ||
+                            (stack.Peek() == TokenType.OpenBracket && next.type == TokenType.ClosingBracket) ||
+                            (stack.Peek() == TokenType.OpenParen && next.type == TokenType.ClosingParen))
+                        {
+                            stack.Pop();
+                        }
+                        else
+                        {
+                            ReportError(next.location, $"Unexpected token {next.type} in macro. Parenthesis have to be balanced!");
+                        }
+                        break;
+
+                    case TokenType.NewLine:
+                        if (stack.Count == 0)
+                        {
+                            goto end;
+                        }
+                        break;
+                }
+
+                tokens.Add(NextToken());
+            }
+
+            end:
+
+            end = tokens.LastOrDefault()?.location ?? end;
+
+            return new AstMacroExpr(new AstIdExpr(name.data as string, false, new Location(name.location)), tokens, new Location(beg, end));
+        }
+
         private AstExpression ParseAtomicExpression(ErrorMessageResolver errorMessage)
         {
             var token = PeekToken();
@@ -1667,6 +1739,23 @@ namespace Cheez.Parsing
                     NextToken();
                     return new AstNullExpr(new Location(token.location));
 
+                case TokenType.ReplaceIdentifier:
+                    NextToken();
+                    if (Replacements == null)
+                    {
+                        ReportError(token.location, $"No replacements defined");
+                        return ParseEmptyExpression();
+                    }
+                    else if (Replacements.ContainsKey(token.data as string))
+                    {
+                        return Replacements[token.data as string];
+                    }
+                    else
+                    {
+                        ReportError(token.location, $"No replacement '{token.data as string}' defined");
+                        return ParseEmptyExpression();
+                    }
+
                 case TokenType.AtSignIdentifier:
                     {
                         NextToken();
@@ -1684,6 +1773,10 @@ namespace Cheez.Parsing
 
                 case TokenType.Identifier:
                     NextToken();
+                    if (CheckToken(TokenType.Bang))
+                    {
+                        return ParseMacro(token);
+                    }
                     return new AstIdExpr((string)token.data, false, new Location(token.location));
 
                 case TokenType.StringLiteral:
