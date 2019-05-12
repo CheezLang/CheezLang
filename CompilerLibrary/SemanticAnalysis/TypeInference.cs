@@ -1745,6 +1745,8 @@ namespace Cheez
 
                 AnalyseExprStatement(exprStmt, true, false);
 
+                expr.SetFlag(ExprFlags.IsLValue, exprStmt.Expr.GetFlag(ExprFlags.IsLValue));
+
                 if (exprStmt.GetFlag(StmtFlags.Returns))
                     expr.SetFlag(ExprFlags.Returns, true);
             }

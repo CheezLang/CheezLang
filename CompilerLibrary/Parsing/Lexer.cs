@@ -9,8 +9,9 @@ using Cheez.Extras;
 
 namespace Cheez.Parsing
 {
-    public interface ILexer : IText
+    public interface ILexer
     {
+        string Text { get; }
         Token PeekToken();
         Token NextToken();
     }
@@ -118,13 +119,6 @@ namespace Cheez.Parsing
         {
             return $"({location.line}:{location.index - location.lineStartIndex}) ({type}) {data}";
         }
-    }
-
-    
-
-    public interface IText
-    {
-        string Text { get; }
     }
 
     public class Lexer : ILexer
@@ -337,7 +331,7 @@ namespace Cheez.Parsing
                 {
                     if (mLocation.index >= mText.Length)
                     {
-                        mErrorHandler.ReportError(this, new Location(mLocation), $"Unexpected end of file while parsing string literal");
+                        mErrorHandler.ReportError(mText, new Location(mLocation), $"Unexpected end of file while parsing string literal");
                         token.data = sb.ToString();
                         return;
                     }
@@ -364,7 +358,7 @@ namespace Cheez.Parsing
 
             if (!foundEnd)
             {
-                mErrorHandler.ReportError(this, new Location(mLocation), $"Unexpected end of string literal");
+                mErrorHandler.ReportError(mText, new Location(mLocation), $"Unexpected end of string literal");
             }
 
             token.data = sb.ToString();

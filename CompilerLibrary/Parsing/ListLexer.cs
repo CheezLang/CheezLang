@@ -14,9 +14,9 @@ namespace Cheez.Parsing
         private List<Token> tokens;
         private Token eof;
 
-        public ListLexer(IText text, List<Token> tokens)
+        public ListLexer(string text, List<Token> tokens)
         {
-            this.Text = text.Text;
+            this.Text = text;
             this.tokens = tokens;
 
             eof = new Token

@@ -72,7 +72,7 @@ namespace Cheez
             var preludeScope = new Scope("prelude");
             preludeScope.DefineBuiltInTypes();
             preludeScope.DefineBuiltInOperators();
-            preludeScope.DefineBuiltInMacros();
+            preludeScope.DefineBuiltInMacros(mCompiler);
 
             GlobalScope = new Scope("Global", preludeScope);
             GlobalScope.IsOrdered = false;

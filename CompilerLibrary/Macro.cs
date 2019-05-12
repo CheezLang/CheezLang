@@ -17,11 +17,22 @@ namespace Cheez
         public AstIdExpr Name => throw new NotImplementedException();
         public ILocation Location => throw new NotImplementedException();
 
+        public CheezCompiler compiler;
+
         public abstract AstExpression Execute(AstMacroExpr original, ILexer lexer, IErrorHandler errorHandler);
+
+        public BuiltInMacro(CheezCompiler comp)
+        {
+            compiler = comp;
+        }
     }
 
-    public class BuiltInMacroPrint : BuiltInMacro
+    public class BuiltInMacroFormat : BuiltInMacro
     {
+        public BuiltInMacroFormat(CheezCompiler comp) : base(comp)
+        {
+        }
+
         public override AstExpression Execute(AstMacroExpr original, ILexer lexer, IErrorHandler errorHandler)
         {
             var parser = new Parser(lexer, errorHandler);
@@ -29,53 +40,66 @@ namespace Cheez
             var statements = new List<AstStatement>();
 
             // let result = String::empty()
-            statements.Add(new AstVariableDecl(
-                new AstIdExpr("result", false, original.Location),
-                null,
-                new AstCallExpr(
-                    new AstDotExpr(
-                        new AstIdExpr("String", false, original.Location),
-                        new AstIdExpr("empty", false, original.Location),
-                        true,
-                        original.Location
-                    ),
-                    new List<AstArgument>(),
-                    original.Location
-                ),
-                false,
-                Location: original.Location
-            ));
-
+            statements.Add(compiler.ParseStatement("let result = String::empty()"));
 
             // result.appendf("{}", [...])
             while (lexer.PeekToken().type != TokenType.EOF)
             {
-                var expr = parser.ParseExpression();
+                AstExpression expr;
+                string format = "";
 
-                var call = Parser.ParseExpression("result.appendf(\"{}\", [§expr])", new Dictionary<string, AstExpression>
+                var next = lexer.PeekToken();
+                if (next.type == TokenType.StringLiteral)
+                {
+                    expr = parser.ParseExpression();
+                }
+                else if (next.type == TokenType.OpenBrace)
+                {
+                    lexer.NextToken();
+                    expr = parser.ParseExpression();
+
+                    // check for format
+                    next = lexer.PeekToken();
+                    if (next.type == TokenType.Colon)
+                    {
+                        lexer.NextToken();
+
+                        var start = lexer.PeekToken().location;
+
+                        // skip tokens until }
+                        while (lexer.PeekToken().type != TokenType.ClosingBrace)
+                            lexer.NextToken();
+
+                        var end = lexer.PeekToken().location;
+
+                        format = lexer.Text.Substring(start.index, end.index - start.index).Trim();
+                    }
+
+                    // consume }
+                    next = lexer.NextToken();
+                    if (next.type != TokenType.ClosingBrace)
+                    {
+                        errorHandler.ReportError(lexer.Text, new Location(next.location), $"Unexpected token {next.type}, expected '}}'");
+                    }
+                }
+                else
+                {
+                    errorHandler.ReportError(lexer.Text, new Location(next.location), $"Unexpected token {next.type}, expected '{{'");
+                    lexer.NextToken();
+                    continue;
+                }
+
+
+                var call = compiler.ParseExpression($"§expr::print(result, \"{format}\")", new Dictionary<string, AstExpression>
                 {
                     { "expr", expr }
-                }, errorHandler);
+                });
 
                 statements.Add(new AstExprStmt(call, call.Location));
             }
 
-            // println
-            statements.Add(new AstExprStmt(
-                new AstCallExpr(
-                    new AstIdExpr("println", false, original.Location),
-                    new List<AstArgument>
-                    {
-                        new AstArgument(
-                            new AstIdExpr("result", false, original.Location),
-                            null,
-                            original.Location
-                        )
-                    },
-                    original.Location
-                ),
-                original.Location
-            ));
+            // result
+            statements.Add(compiler.ParseStatement("result"));
 
             var result = new AstBlockExpr(statements, original.Location);
             return result;
@@ -84,6 +108,10 @@ namespace Cheez
 
     public class BuiltInMacroForeach : BuiltInMacro
     {
+        public BuiltInMacroForeach(CheezCompiler comp) : base(comp)
+        {
+        }
+
         public override AstExpression Execute(AstMacroExpr original, ILexer lexer, IErrorHandler errorHandler)
         {
             var parser = new Parser(lexer, errorHandler);
@@ -96,7 +124,7 @@ namespace Cheez
 
             if (kwIn.data as string != "in")
             {
-                errorHandler.ReportError(lexer, new Location(kwIn.location), $"Expected 'in' after name in foreach loop");
+                errorHandler.ReportError(lexer.Text, new Location(kwIn.location), $"Expected 'in' after name in foreach loop");
                 return null;
             }
 

@@ -31,12 +31,20 @@ namespace Cheez.Parsing
             mErrorHandler = errHandler;
         }
 
-        internal static AstExpression ParseExpression(string v, Dictionary<string, AstExpression> dictionary, IErrorHandler errorHandler)
+        internal static AstExpression ParseExpression(string v, Dictionary<string, AstExpression> dictionary, IErrorHandler errorHandler, string id)
         {
-            var l = Lexer.FromString(v, errorHandler);
+            var l = Lexer.FromString(v, errorHandler, id);
             var p = new Parser(l, errorHandler);
             p.Replacements = dictionary;
             return p.ParseExpression();
+        }
+
+        internal static AstStatement ParseStatement(string v, Dictionary<string, AstExpression> dictionary, IErrorHandler errorHandler, string id)
+        {
+            var l = Lexer.FromString(v, errorHandler, id);
+            var p = new Parser(l, errorHandler);
+            p.Replacements = dictionary;
+            return p.ParseStatement().stmt;
         }
 
         #region Helpers
@@ -91,7 +99,7 @@ namespace Cheez.Parsing
         private void ReportError(TokenLocation location, string message)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
-            mErrorHandler.ReportError(mLexer, new Location(location), message, null, callingFunctionFile, callingFunctionName, callLineNumber);
+            mErrorHandler.ReportError(mLexer.Text, new Location(location), message, null, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
         [SkipInStackFrame]
@@ -99,7 +107,7 @@ namespace Cheez.Parsing
         private void ReportError(ILocation location, string message)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
-            mErrorHandler.ReportError(mLexer, location, message, null, callingFunctionFile, callingFunctionName, callLineNumber);
+            mErrorHandler.ReportError(mLexer.Text, location, message, null, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
         [DebuggerStepThrough]
@@ -372,8 +380,11 @@ namespace Cheez.Parsing
                         }
                         else
                         {
-                            if (expectNewline && !Expect(TokenType.NewLine, ErrMsg("\\n", "after expression statement")))
+                            var next = PeekToken();
+                            if (expectNewline && next.type != TokenType.NewLine && next.type != TokenType.EOF) {
+                                ReportError(next.location, $"Expected newline after expression statement");
                                 RecoverStatement();
+                            }
                             return (false, new AstExprStmt(expr, new Location(expr.Beginning, expr.End)));
                         }
                     }
@@ -1673,6 +1684,8 @@ namespace Cheez.Parsing
             var tokens = new List<Token>();
             var stack = new Stack<TokenType>();
 
+            bool startsWithParen = false;
+
             while (true) {
                 var next = PeekToken();
                 switch (next.type)
@@ -1681,6 +1694,9 @@ namespace Cheez.Parsing
                     case TokenType.OpenBracket:
                     case TokenType.OpenParen:
                         stack.Push(next.type);
+
+                        if (tokens.Count == 0)
+                            startsWithParen = true;
                         break;
 
                     case TokenType.ClosingBrace:
@@ -1695,6 +1711,12 @@ namespace Cheez.Parsing
                             (stack.Peek() == TokenType.OpenParen && next.type == TokenType.ClosingParen))
                         {
                             stack.Pop();
+
+                            if (startsWithParen && stack.Count == 0)
+                            {
+                                tokens.Add(NextToken());
+                                goto end;
+                            }
                         }
                         else
                         {
@@ -1716,6 +1738,12 @@ namespace Cheez.Parsing
             end:
 
             end = tokens.LastOrDefault()?.location ?? end;
+
+            if (startsWithParen)
+            {
+                tokens.RemoveAt(tokens.Count - 1);
+                tokens.RemoveAt(0);
+            }
 
             return new AstMacroExpr(new AstIdExpr(name.data as string, false, new Location(name.location)), tokens, new Location(beg, end));
         }

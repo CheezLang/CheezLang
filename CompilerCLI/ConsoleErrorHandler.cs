@@ -17,7 +17,7 @@ namespace CheezCLI
         public int LinesBeforeError { get; set; } = 1;
         public int LinesAfterError { get; set; } = 1;
 
-        public void ReportError(IText text, ILocation location, string message, List<Error> subErrors, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
+        public void ReportError(string text, ILocation location, string message, List<Error> subErrors, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             ReportError(new Error
             {
@@ -59,8 +59,7 @@ namespace CheezCLI
                 LogInline($"{beginning}: ", ConsoleColor.White);
                 Log(error.Message, ConsoleColor.Red);
 
-                if (text != null)
-                    PrintLocation(text, error.Location, linesBefore: LinesBeforeError, linesAfter: LinesAfterError);
+                PrintLocation(text, error.Location, linesBefore: LinesBeforeError, linesAfter: LinesAfterError);
             }
             else
             {
@@ -103,7 +102,7 @@ namespace CheezCLI
             }
         }
 
-        private void PrintLocation(IText text, ILocation location, bool underline = true, int linesBefore = 2, int linesAfter = 0, ConsoleColor highlightColor = ConsoleColor.Red, ConsoleColor textColor = ConsoleColor.DarkGreen)
+        private void PrintLocation(string text, ILocation location, bool underline = true, int linesBefore = 2, int linesAfter = 0, ConsoleColor highlightColor = ConsoleColor.Red, ConsoleColor textColor = ConsoleColor.DarkGreen)
         {
             TokenLocation beginning = location.Beginning;
             TokenLocation end = location.End;
@@ -125,7 +124,7 @@ namespace CheezCLI
                 {
                     var prevLineEnd = startIndex - 1;
                     var prevLineStart = GetLineStartIndex(text, prevLineEnd);
-                    previousLines.Add(text.Text.Substring(prevLineStart, prevLineEnd - prevLineStart));
+                    previousLines.Add(text.Substring(prevLineStart, prevLineEnd - prevLineStart));
 
                     startIndex = prevLineStart;
                 }
@@ -148,9 +147,9 @@ namespace CheezCLI
 
                 for (var line = 0; line < linesSpread; ++line)
                 {
-                    var part1 = text.Text.Substring(ls, i - ls);
-                    var part2 = text.Text.Substring(i, ei - i);
-                    var part3 = text.Text.Substring(ei, le - ei);
+                    var part1 = text.Substring(ls, i - ls);
+                    var part2 = text.Substring(i, ei - i);
+                    var part3 = text.Substring(ei, le - ei);
 
                     LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", line + firstLine), ConsoleColor.White);
 
@@ -184,9 +183,9 @@ namespace CheezCLI
                 {
                     int line = end.line + i + 1;
                     lineEnd = GetLineEndIndex(text, lineBegin);
-                    if (lineEnd >= text.Text.Length)
+                    if (lineEnd >= text.Length)
                         break;
-                    var str = text.Text.Substring(lineBegin, lineEnd - lineBegin);
+                    var str = text.Substring(lineBegin, lineEnd - lineBegin);
                     LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", line), ConsoleColor.White);
                     Log(str, textColor);
                     lineBegin = lineEnd + 1;
@@ -209,40 +208,40 @@ namespace CheezCLI
             }
         }
 
-        private int CountLines(IText text, int start, int end)
+        private int CountLines(string text, int start, int end)
         {
             int lines = 1;
-            for (; start < end && start < text.Text.Length; start++)
+            for (; start < end && start < text.Length; start++)
             {
-                if (text.Text[start] == '\n')
+                if (text[start] == '\n')
                     lines++;
             }
 
             return lines;
         }
 
-        private int GetLineEndIndex(IText text, int currentIndex)
+        private int GetLineEndIndex(string text, int currentIndex)
         {
-            for (; currentIndex < text.Text.Length; currentIndex++)
+            for (; currentIndex < text.Length; currentIndex++)
             {
-                if (text.Text[currentIndex] == '\n')
+                if (text[currentIndex] == '\n')
                     break;
             }
 
             return currentIndex;
         }
 
-        private int GetLineStartIndex(IText text, int currentIndex)
+        private int GetLineStartIndex(string text, int currentIndex)
         {
-            if (currentIndex >= text.Text.Length)
-                currentIndex = text.Text.Length - 1;
+            if (currentIndex >= text.Length)
+                currentIndex = text.Length - 1;
 
-            if (text.Text[currentIndex] == '\n')
+            if (text[currentIndex] == '\n')
                 currentIndex--;
 
             for (; currentIndex >= 0; currentIndex--)
             {
-                if (text.Text[currentIndex] == '\n')
+                if (text[currentIndex] == '\n')
                     return currentIndex + 1;
             }
 

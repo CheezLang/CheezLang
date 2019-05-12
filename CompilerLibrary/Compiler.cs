@@ -10,7 +10,7 @@ using System.Reflection;
 
 namespace Cheez
 {
-    public class PTFile : IText
+    public class PTFile
     {
         public string Name { get; }
         public string Text { get; }
@@ -49,6 +49,10 @@ namespace Cheez
         public Workspace DefaultWorkspace => mMainWorkspace;
 
         public List<AstDirective> TestOutputs { get; } = new List<AstDirective>();
+
+        //
+        private Dictionary<string, string> strings = new Dictionary<string, string>();
+        private int stringId = 0;
 
         public CheezCompiler(IErrorHandler errorHandler, string stdlib)
         {
@@ -104,7 +108,7 @@ namespace Cheez
             return file;
         }
 
-        private bool ValidateFilePath(string dir, string filePath, bool isRel, IErrorHandler eh, (IText file, ILocation loc)? from, out string path)
+        private bool ValidateFilePath(string dir, string filePath, bool isRel, IErrorHandler eh, (string file, ILocation loc)? from, out string path)
         {
             path = filePath;
 
@@ -167,7 +171,7 @@ namespace Cheez
                 var d = directive.Directive;
                 if (!RequireDirectiveArguments(d.Arguments, typeof(AstStringLiteral), typeof(AstStringLiteral)))
                 {
-                    eh.ReportError(lexer, d, $"Invalid arguments for with_module directive");
+                    eh.ReportError(lexer.Text, d, $"Invalid arguments for with_module directive");
                     return;
                 }
 
@@ -187,7 +191,7 @@ namespace Cheez
                 var d = directive.Directive;
                 if (d.Arguments.Count != 1 || !(d.Arguments[0] is AstStringLiteral f))
                 {
-                    eh.ReportError(lexer, d, "#load takes one string as argument");
+                    eh.ReportError(lexer.Text, d, "#load takes one string as argument");
                     return;
                 }
 
@@ -195,7 +199,7 @@ namespace Cheez
                 int colon = path.IndexOf(':');
                 if (colon >= path.Length - 1)
                 {
-                    eh.ReportError(lexer, d, "Invalid load: path can not be empty");
+                    eh.ReportError(lexer.Text, d, "Invalid load: path can not be empty");
                     return;
                 }
 
@@ -205,21 +209,21 @@ namespace Cheez
 
                     if (module.Length == 0)
                     {
-                        eh.ReportError(lexer, d, "empty module name is not allowed");
+                        eh.ReportError(lexer.Text, d, "empty module name is not allowed");
                         return;
                     }
 
                     if (!ModulePaths.TryGetValue(module, out string modulePath))
                     {
-                        eh.ReportError(lexer, d, $"The module '{module}' is not defined.");
+                        eh.ReportError(lexer.Text, d, $"The module '{module}' is not defined.");
                         return;
                     }
 
                     string libPath = path.Substring(colon + 1);
-                    if (ValidateFilePath(modulePath, libPath, true, eh, (lexer, d), out string pp))
+                    if (ValidateFilePath(modulePath, libPath, true, eh, (lexer.Text, d), out string pp))
                         loadedFiles.Add(pp);
                 }
-                else if (ValidateFilePath(Path.GetDirectoryName(file.Name), f.StringValue, true, eh, (lexer, d), out string pp))
+                else if (ValidateFilePath(Path.GetDirectoryName(file.Name), f.StringValue, true, eh, (lexer.Text, d), out string pp))
                 {
                     loadedFiles.Add(pp);
                 }
@@ -229,7 +233,7 @@ namespace Cheez
                 var d = directive.Directive;
                 if (d.Arguments.Count != 1 || !(d.Arguments[0] is AstStringLiteral f))
                 {
-                    eh.ReportError(lexer, d, "#lib takes one string as argument");
+                    eh.ReportError(lexer.Text, d, "#lib takes one string as argument");
                     return;
                 }
 
@@ -249,7 +253,7 @@ namespace Cheez
                 {
                     if (!(a is AstStringLiteral))
                     {
-                        eh.ReportError(lexer, a, "Arguments to #test_expect_output must be string literals.");
+                        eh.ReportError(lexer.Text, a, "Arguments to #test_expect_output must be string literals.");
                     }
                 }
 
@@ -257,7 +261,7 @@ namespace Cheez
             }
             else
             {
-                eh.ReportError(lexer, directive, "Invalid directive at this location");
+                eh.ReportError(lexer.Text, directive, "Invalid directive at this location");
             }
         }
 
@@ -300,7 +304,7 @@ namespace Cheez
                 }
                 else if (s != null)
                 {
-                    eh.ReportError(lexer, s, "This type of statement is not allowed in global scope");
+                    eh.ReportError(lexer.Text, s, "This type of statement is not allowed in global scope");
                 }
 
                 if (result.done)
@@ -319,16 +323,35 @@ namespace Cheez
             return mFiles[normalizedPath];
         }
 
-        public IText GetText(ILocation location)
+        public string GetText(ILocation location)
         {
             var normalizedPath = Path.GetFullPath(location.Beginning.file).PathNormalize();
 
+            // files
             if (mFiles.TryGetValue(normalizedPath, out var f))
-                return f;
+                return f.Text;
             if (mLoadingFiles.TryGetValue(normalizedPath, out var f2))
-                return f2;
+                return f2.Text;
+
+            // strings
+            if (strings.TryGetValue(location.Beginning.file, out var f3))
+                return f3;
 
             return null;
+        }
+
+        public AstStatement ParseStatement(string str, Dictionary<string, AstExpression> dictionary = null)
+        {
+            var id = $"string{stringId++}";
+            strings[id] = str;
+            return Parser.ParseStatement(str, dictionary, ErrorHandler, id);
+        }
+
+        public AstExpression ParseExpression(string str, Dictionary<string, AstExpression> dictionary = null)
+        {
+            var id = $"string{stringId++}";
+            strings[id] = str;
+            return Parser.ParseExpression(str, dictionary, ErrorHandler, id);
         }
     }
 }

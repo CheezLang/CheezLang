@@ -323,10 +323,10 @@ namespace Cheez
             return Parent?.GetMacro(name);
         }
 
-        internal void DefineBuiltInMacros()
+        internal void DefineBuiltInMacros(CheezCompiler comp)
         {
-            mMacros["foreach"] = new BuiltInMacroForeach();
-            mMacros["print"] = new BuiltInMacroPrint();
+            mMacros["foreach"] = new BuiltInMacroForeach(comp);
+            mMacros["format"] = new BuiltInMacroFormat(comp);
         }
 
         internal void DefineBuiltInOperators()
