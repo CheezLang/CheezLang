@@ -1,31 +1,25 @@
+#load("examples/image_processing")
+
 // #load("test2")
-#load("std:io/io")
-#load("std:iterator")
-#load("std:random")
+// #load("std:io/io")
+// #load("std:iterator")
+// #load("std:random")
 
-fn Main() {
-    // new style
-    // foreach! v in range(1, 3) {
-        //println(v)
-    // }
-    // println("")
+// fn Main() {
+//     foreach! i in range(1, 3) println(i)
+//     println("")
 
-    // let rand = cast(IDistribution(double)) new StandardContinuousUniform{}
-    // foreach! x in rand::samples()::take(5) {
+//     let arr = [789, 456, 123]
+//     foreach! i in range(0, arr.length - 1) println(arr[i])
+//     println("")
+
+//     let rand = new StandardContinuousUniform{}
+//     // foreach! x in (cast(IDistribution(double))rand)::samples()::take(3) {
+//     foreach! x in rand::samples()::take(3) {
 //        println(x)
-    // }
-    // println("")
+//     }
+//     println("")
 
-    // let arr = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-    //foreach! i in range(0, arr.length - 1) println(arr[i])
-
-    // foreach! i in range(1, 3) println(i)
-
-    let a = 123
-    println(format! "dec: "{a}"`nhex: "{a:x}"`nbin: "{a:b})
-}
-
-fn foo(a: $T, b: $T2) {
-    println(a)
-    println(b)
-}
+//     let a = 123
+//     println(format! "dec: "{a}"`nhex: "{a:x}"`nbin: "{a:b})
+// }

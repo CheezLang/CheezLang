@@ -1,0 +1,111 @@
+#load("std:io/io")
+#load("std:iterator")
+
+#load("olc_pge/pixel_game_engine.che")
+#load("../libraries/libcurl/libcurl")
+
+let const image_width   : int = 320
+let const image_height  : int = 240
+let const num_images_x  : int = 2
+let const num_images_y  : int = 2
+let const border_width  : int = 10
+
+struct Slot {
+    pub x: int
+    pub y: int
+}
+
+let slots: [num_images_x * num_images_y]Slot = {
+    let slots: [num_images_x * num_images_y]Slot
+
+    foreach! x in range(0, num_images_x - 1) {
+        foreach! y in range(0, num_images_y - 1) {
+            let index = x + y * num_images_x
+            slots[index] = new {
+                x = (x + 1) * border_width + x * image_width
+                y = (y + 1) * border_width + y * image_height
+            }
+        }
+    }
+
+    slots
+}
+
+struct Frame {
+    pixels: [image_width * image_height]double
+}
+
+impl Frame {
+    fn get(ref Self, x: int, y: int) -> double {
+        if x < 0 or y < 0 or x >= image_width or y >= image_height {
+            return 0
+        }
+
+        return pixels[x + y * image_width]
+    }
+
+    fn set(ref Self, x: int, y: int, value: double) {
+        if x < 0 or y < 0 or x >= image_width or y >= image_height {
+            return
+        }
+
+        pixels[x + y * image_width] = value
+    }
+}
+
+struct ImageProcessingGame {
+    pge: &PixelGameEngine
+    frames: [num_images_x * num_images_y]Frame
+}
+
+impl Game for ImageProcessingGame {
+    fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
+        self.pge = pge
+
+        // clear images to black
+        foreach! i in range(0, (num_images_x - 1) * (num_images_y - 1)) {
+            foreach! x in range(0, image_width - 1) {
+                foreach! y in range(0, image_height - 1) {
+                    frames[i].set(x, y, 0)
+                }
+            }
+        }
+
+        return true
+    }
+
+    fn on_destroy(ref Self) -> bool {
+        return true
+    }
+
+    fn draw_frame(ref Self, x: int, y: int, frame: ref Frame) {
+        let slot = ref slots[x + y * num_images_x]
+        foreach! x in range(0, image_width - 1) {
+            foreach! y in range(0, image_height - 1) {
+                pge.draw(x + slot.x, y + slot.y, Pixel::rgba(255, 0, 255))
+            }
+        }
+    }
+    
+    fn on_update(ref Self, dt: float) -> bool {
+        pge.clear(Pixel::rgba(0, 0, 100))
+
+        foreach! x in range(0, num_images_x - 1) {
+            foreach! y in range(0, num_images_y - 1) {
+                draw_frame(x, y, frames[x + y * num_images_x])
+            }
+        }
+
+        return true
+    }
+}
+
+fn Main() {
+    let ipg: Game = ref <<alloc(ImageProcessingGame)
+    let engine = PixelGameEngine::create(
+        ipg,
+        num_images_x * image_width + (num_images_x + 1) * border_width,
+        num_images_y * image_height + (num_images_y + 1) * border_width,
+        2, 2)
+    engine.start()
+}

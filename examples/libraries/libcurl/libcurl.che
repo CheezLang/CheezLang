@@ -1,0 +1,1 @@
+#lib("./curl-7.64.1-win64-mingw/lib/libcurl.a")
