@@ -331,56 +331,14 @@ namespace Cheez
 
         internal void DefineBuiltInOperators()
         {
-            CheezType[] intTypes = new CheezType[]
-            {
-                IntType.GetIntType(1, true),
-                IntType.GetIntType(2, true),
-                IntType.GetIntType(4, true),
-                IntType.GetIntType(8, true),
-                IntType.GetIntType(1, false),
-                IntType.GetIntType(2, false),
-                IntType.GetIntType(4, false),
-                IntType.GetIntType(8, false),
-                CheezType.Char
-            };
-            CheezType[] floatTypes = new CheezType[]
-            {
-                FloatType.GetFloatType(4),
-                FloatType.GetFloatType(8)
-            };
-
-            DefineArithmeticOperators(intTypes, "+", "-", "*", "/", "%");
-            DefineArithmeticOperators(floatTypes, "+", "-", "*", "/", "%");
-
             DefineLiteralOperators();
-
-            // 
-            DefineLogicOperators(intTypes, 
-                (">", null), 
-                (">=", null), 
-                ("<", null), 
-                ("<=", null), 
-                ("==", null), 
-                ("!=", null));
-            DefineLogicOperators(floatTypes,
-                (">", null),
-                (">=", null),
-                ("<", null),
-                ("<=", null),
-                ("==", null),
-                ("!=", null));
 
             DefineLogicOperators(new CheezType[] { BoolType.Instance }, 
                 ("and", (a, b) => (bool)a && (bool)b), 
                 ("or", (a, b) => (bool)a || (bool)b),
                 ("==", (a, b) => (bool)a == (bool)b),
                 ("!=", (a, b) => (bool)a != (bool)b));
-
-            //
-            DefineArithmeticUnaryOperators(intTypes, "-", "+");
-            DefineArithmeticUnaryOperators(floatTypes, "-", "+");
-
-            //DefineBuiltIn
+            
             DefinePointerOperators();
         }
 
@@ -442,6 +400,7 @@ namespace Cheez
 
         private void DefineLiteralOperators()
         {
+            // literal types
             DefineUnaryOperator("!", CheezType.Bool, b => !(bool)b);
             DefineUnaryOperator("-", IntType.LiteralType, a => ((NumberData)a).Negate());
             DefineUnaryOperator("-", FloatType.LiteralType, a => ((NumberData)a).Negate());
@@ -472,6 +431,56 @@ namespace Cheez
             DefineOperator(new BuiltInOperator("<=", CheezType.Bool, FloatType.LiteralType, FloatType.LiteralType, (a, b) => (NumberData)a <= (NumberData)b));
             DefineOperator(new BuiltInOperator(">", CheezType.Bool, FloatType.LiteralType, FloatType.LiteralType, (a, b) => (NumberData)a > (NumberData)b));
             DefineOperator(new BuiltInOperator(">=", CheezType.Bool, FloatType.LiteralType, FloatType.LiteralType, (a, b) => (NumberData)a >= (NumberData)b));
+
+
+            // basic types
+
+            foreach (var type in new CheezType[]
+            {
+                IntType.GetIntType(1, true),
+                IntType.GetIntType(2, true),
+                IntType.GetIntType(4, true),
+                IntType.GetIntType(8, true),
+                IntType.GetIntType(1, false),
+                IntType.GetIntType(2, false),
+                IntType.GetIntType(4, false),
+                IntType.GetIntType(8, false),
+                CheezType.Char
+            })
+            {
+                DefineUnaryOperator("-", type, a => ((NumberData)a).Negate());
+
+                DefineOperator(new BuiltInOperator("+", type, type, type, (a, b) => (NumberData)a + (NumberData)b));
+                DefineOperator(new BuiltInOperator("-", type, type, type, (a, b) => (NumberData)a - (NumberData)b));
+                DefineOperator(new BuiltInOperator("*", type, type, type, (a, b) => (NumberData)a * (NumberData)b));
+                DefineOperator(new BuiltInOperator("/", type, type, type, (a, b) => (NumberData)a / (NumberData)b));
+                DefineOperator(new BuiltInOperator("%", type, type, type, (a, b) => (NumberData)a % (NumberData)b));
+
+                DefineOperator(new BuiltInOperator("==", CheezType.Bool, type, type, (a, b) => (NumberData)a == (NumberData)b));
+                DefineOperator(new BuiltInOperator("!=", CheezType.Bool, type, type, (a, b) => (NumberData)a != (NumberData)b));
+                DefineOperator(new BuiltInOperator("<", CheezType.Bool, type, type, (a, b) => (NumberData)a < (NumberData)b));
+                DefineOperator(new BuiltInOperator("<=", CheezType.Bool, type, type, (a, b) => (NumberData)a <= (NumberData)b));
+                DefineOperator(new BuiltInOperator(">", CheezType.Bool, type, type, (a, b) => (NumberData)a > (NumberData)b));
+                DefineOperator(new BuiltInOperator(">=", CheezType.Bool, type, type, (a, b) => (NumberData)a >= (NumberData)b));
+            }
+
+            foreach (var type in new FloatType[] { FloatType.GetFloatType(4), FloatType.GetFloatType(8) })
+            {
+                DefineUnaryOperator("-", type, a => ((NumberData)a).Negate());
+
+                DefineOperator(new BuiltInOperator("+", type, type, type, (a, b) => (NumberData)a + (NumberData)b));
+                DefineOperator(new BuiltInOperator("-", type, type, type, (a, b) => (NumberData)a - (NumberData)b));
+                DefineOperator(new BuiltInOperator("*", type, type, type, (a, b) => (NumberData)a * (NumberData)b));
+                DefineOperator(new BuiltInOperator("/", type, type, type, (a, b) => (NumberData)a / (NumberData)b));
+                DefineOperator(new BuiltInOperator("%", type, type, type, (a, b) => (NumberData)a % (NumberData)b));
+
+                DefineOperator(new BuiltInOperator("==", CheezType.Bool, type, type, (a, b) => (NumberData)a == (NumberData)b));
+                DefineOperator(new BuiltInOperator("!=", CheezType.Bool, type, type, (a, b) => (NumberData)a != (NumberData)b));
+                DefineOperator(new BuiltInOperator("<", CheezType.Bool, type, type, (a, b) => (NumberData)a < (NumberData)b));
+                DefineOperator(new BuiltInOperator("<=", CheezType.Bool, type, type, (a, b) => (NumberData)a <= (NumberData)b));
+                DefineOperator(new BuiltInOperator(">", CheezType.Bool, type, type, (a, b) => (NumberData)a > (NumberData)b));
+                DefineOperator(new BuiltInOperator(">=", CheezType.Bool, type, type, (a, b) => (NumberData)a >= (NumberData)b));
+            }
         }
 
         internal int NextPosition()

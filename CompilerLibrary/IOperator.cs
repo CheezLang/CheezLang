@@ -83,7 +83,7 @@ namespace Cheez
         public string Name { get; private set; }
 
         public delegate object ComptimeExecution(object left, object right);
-        public ComptimeExecution Execution { get; set; }
+        public ComptimeExecution Execution { get; }
 
         public BuiltInOperator(string name, CheezType resType, CheezType lhs, CheezType rhs, ComptimeExecution exe = null)
         {

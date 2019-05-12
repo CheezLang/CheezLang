@@ -2119,8 +2119,44 @@ namespace Cheez
 
                         if (funcs.Count == 0)
                         {
-                            ReportError(expr.Right, $"Type '{c}' has no impl function '{name}'");
-                            break;
+                            // search for trait impl
+                            if (TypeTraitMap.TryGetValue(c, out var traits))
+                            {
+                                foreach (var t in traits)
+                                {
+                                    foreach (var f in t.Functions)
+                                    {
+                                        if (f.Name.Name == name)
+                                        {
+                                            funcs.Add(f);
+                                        }
+                                    }
+
+                                    // check for impls of the trait
+                                    var implFuncs = expr.Scope.GetImplFunction(t.Trait, name);
+                                    funcs.AddRange(implFuncs);
+                                }
+                            }
+                            if (funcs.Count == 0)
+                            {
+                                ReportError(expr.Right, $"Type '{c}' has no impl function '{name}'");
+                                break;
+                            }
+                            else if (funcs.Count > 1)
+                            {
+                                var details = funcs.Select(f => ("Possible candidate:", f.Name.Location));
+                                ReportError(expr.Right, $"Ambigious call to function '{expr.Right.Name}'", details);
+                                break;
+                            }
+                            else
+                            {
+                                var func = funcs[0];
+                                var targetType = funcs[0].ImplBlock.Trait ?? funcs[0].ImplBlock.TargetType;
+
+                                var ufc = new AstUfcFuncExpr(expr.Left, funcs[0]);
+                                var casted = CheckType(ufc, targetType);
+                                return InferTypeHelper(casted, null, context);
+                            }
                         }
                         else if (funcs.Count > 1)
                         {
@@ -2129,10 +2165,11 @@ namespace Cheez
                             break;
                         }
 
-                        var ufc = new AstUfcFuncExpr(expr.Left, funcs[0]);
-                        return InferTypeHelper(ufc, null, context);
+                        {
+                            var ufc = new AstUfcFuncExpr(expr.Left, funcs[0]);
+                            return InferTypeHelper(ufc, null, context);
+                        }
                     }
-
                 default: ReportError(expr, $"Invalid expression on left side of '.'"); break;
             }
 

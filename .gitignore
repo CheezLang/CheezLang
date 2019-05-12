@@ -234,3 +234,5 @@ FakesAssemblies/
 _Pvt_Extensions
 Tools/LanguageServer/VSCodeExtension/out/src/extension.js.map
 Tools/LanguageServer/VSCodeExtension/out/src/extension.js
+examples/libraries/libcurl/curl-7.64.1-win64-mingw
+examples/libraries/libhttp/libhttp-1.8

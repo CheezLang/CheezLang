@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Cheez.Types.Primitive
@@ -269,6 +270,9 @@ namespace Cheez.Types.Primitive
         public int Length { get; set; }
         public override bool IsErrorType => TargetType.IsErrorType;
         public override bool IsPolyType => TargetType.IsPolyType;
+
+        public override int Size => Length * TargetType.Size;
+        public override int Alignment => TargetType.Alignment;
 
         public static ArrayType GetArrayType(CheezType targetType, int length)
         {

@@ -89,22 +89,7 @@ namespace Cheez.Types.Complex
         private TupleType((string name, CheezType type)[] members)
         {
             Members = members;
-
-            Alignment = 1;
-            Size = 0;
-            for (int i = 0; i < Members.Length; i++)
-            {
-                var m = Members[i];
-
-                var ms = m.type.Size;
-                var ma = m.type.Alignment;
-
-                Alignment = Math.Max(Alignment, ma);
-                Size += ms;
-                Size = Utilities.GetNextAligned(Size, ma);
-            }
-
-            Size = Utilities.GetNextAligned(Size, Alignment);
+            CalculateSize();
         }
 
         public static TupleType GetTuple((string name, CheezType type)[] members)
@@ -141,6 +126,25 @@ namespace Cheez.Types.Complex
             var hashCode = 309225798;
             hashCode = hashCode * -1521134295 + base.GetHashCode();
             return hashCode;
+        }
+
+        public void CalculateSize()
+        {
+            Alignment = 1;
+            Size = 0;
+            for (int i = 0; i < Members.Length; i++)
+            {
+                var m = Members[i];
+
+                var ms = m.type.Size;
+                var ma = m.type.Alignment;
+
+                Alignment = Math.Max(Alignment, ma);
+                Size += ms;
+                Size = Utilities.GetNextAligned(Size, ma);
+            }
+
+            Size = Utilities.GetNextAligned(Size, Alignment);
         }
     }
 

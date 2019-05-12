@@ -19,8 +19,8 @@ namespace Cheez.Types
         public static CheezType Any => AnyType.Intance;
 
         public abstract bool IsPolyType { get; }
-        public int Size { get; set; } = 0;
-        public int Alignment { get; set; } = 1;
+        public virtual int Size { get; set; } = 0;
+        public virtual int Alignment { get; set; } = 8;
 
         public abstract bool IsErrorType { get; }
 
