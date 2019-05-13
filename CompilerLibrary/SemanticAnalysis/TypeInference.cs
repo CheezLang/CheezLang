@@ -1531,6 +1531,8 @@ namespace Cheez
                         var minSize = 1;
                         var ok = true;
                         bool allConstant = true;
+                        bool anySigned = false;
+                        bool anyUnsigned = false;
                         for (int i = 0; i < expr.Arguments.Count; i++)
                         {
                             var arg = expr.Arguments[i];
@@ -1550,6 +1552,11 @@ namespace Cheez
                             {
                                 if (it.Size > minSize)
                                     minSize = it.Size;
+
+                                if (it.Signed)
+                                    anySigned = true;
+                                else
+                                    anyUnsigned = true;
                             }
                             else
                             {
@@ -1573,13 +1580,18 @@ namespace Cheez
                             expr.IsCompTimeValue = true;
                         }
 
+                        if (anySigned && anyUnsigned)
+                        {
+                            ReportError(expr, $"All argument types need to have the same sign");
+                        }
+
                         for (int i = 0; i < expr.Arguments.Count; i++)
                         {
                             var to = IntType.GetIntType(minSize, (expr.Arguments[i].Type as IntType).Signed);
                             expr.Arguments[i] = CheckType(expr.Arguments[i], to);
                         }
 
-                        expr.Type = IntType.GetIntType(minSize, false);
+                        expr.Type = IntType.GetIntType(minSize, anySigned);
                         return expr;
                     }
 

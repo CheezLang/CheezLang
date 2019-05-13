@@ -38,6 +38,54 @@ fn load_filec(filename: c_string) -> Result(String, String) {
     return Ok(content)
 }
 
+fn load_filecb(filename: c_string) -> Option([]u8) {
+    let handle = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null)
+    if (cast(int)handle) == -1 {
+        return None
+    }
+
+    let size: int
+    if GetFileSizeEx(handle, &size) == 0 {
+        return None
+    }
+
+    let content = alloc_n(u8, cast size)
+    
+    let bytesRead: u32 = 0
+    if ReadFile(handle, cast content.data, cast(u32)size, &bytesRead, null) == 0 {
+        free_n(content)
+        return None
+    }
+
+    if CloseHandle(handle) == 0 {
+        free_n(content)
+        return None
+    }
+
+    return Some(content)
+}
+
+fn write_filecb(filename: c_string, data: []u8) -> bool {
+    let handle = CreateFileA(filename, GENERIC_WRITE, FILE_SHARE_WRITE, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null)
+    if (cast(int)handle) == -1 {
+        println("failed to create file")
+        return false
+    }
+
+    let bytesRead: u32 = 0
+    if WriteFile(handle, cast data.data, cast(u32)data.length, &bytesRead, null) == 0 {
+        println("failed to write data")
+        return false
+    }
+
+    if CloseHandle(handle) == 0 {
+        println("failed to close handle")
+        return false
+    }
+
+    return true
+}
+
 // fn get_working_dir() -> wd: String {
 //     let len = cast(int) GetCurrentDirectory(0, null)
 
