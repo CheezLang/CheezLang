@@ -2,7 +2,6 @@
 #load("std:iterator")
 
 #load("olc_pge/pixel_game_engine.che")
-#load("../libraries/libcurl/libcurl")
 
 let const image_width   : int = 320
 let const image_height  : int = 240
