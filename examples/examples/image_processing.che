@@ -2,10 +2,12 @@
 #load("std:iterator")
 
 #load("olc_pge/pixel_game_engine.che")
+// #load("../libraries/escapi/escapi")
+#load("../libraries/opencv/opencv")
 
 let const image_width   : int = 320
 let const image_height  : int = 240
-let const num_images_x  : int = 2
+let const num_images_x  : int = 3
 let const num_images_y  : int = 2
 let const border_width  : int = 10
 
@@ -50,11 +52,18 @@ impl Frame {
 
         pixels[x + y * image_width] = value
     }
+
+    fn copy_to(ref Self, target: ref Frame) {
+        c_memcpy(cast &target.pixels, cast &pixels, cast image_width * image_height * @sizeof(double))
+    }
 }
 
 struct ImageProcessingGame {
-    pge: &PixelGameEngine
-    frames: [num_images_x * num_images_y]Frame
+    pge     : &PixelGameEngine
+    frames  : [num_images_x * num_images_y]Frame
+    last_frame : Frame
+    capture : &CvCapture
+    primer  : bool = false
 }
 
 impl Game for ImageProcessingGame {
@@ -62,18 +71,28 @@ impl Game for ImageProcessingGame {
         self.pge = pge
 
         // clear images to black
-        foreach! i in range(0, (num_images_x - 1) * (num_images_y - 1)) {
+        foreach! i in range(0, num_images_x * num_images_y - 1) {
+            printfln("clearing frame {}", [i])
             foreach! x in range(0, image_width - 1) {
                 foreach! y in range(0, image_height - 1) {
-                    frames[i].set(x, y, 0)
+                    frames[i].set(x, y, 0.5)
                 }
             }
         }
+
+        foreach! x in range(0, image_width - 1) {
+            foreach! y in range(0, image_height - 1) {
+                last_frame.set(x, y, 0)
+            }
+        }
+
+        capture = cvCreateCameraCapture(0)
 
         return true
     }
 
     fn on_destroy(ref Self) -> bool {
+        cvReleaseCapture(&capture)
         return true
     }
 
@@ -81,13 +100,76 @@ impl Game for ImageProcessingGame {
         let slot = ref slots[x + y * num_images_x]
         foreach! x in range(0, image_width - 1) {
             foreach! y in range(0, image_height - 1) {
-                pge.draw(x + slot.x, y + slot.y, Pixel::rgba(255, 0, 255))
+                let col_d = frame.get(x, y)
+                let col = (cast(u8) col_d * 255)
+                pge.draw(x + slot.x, y + slot.y, Pixel::rgba(col, col, col))
             }
         }
     }
-    
+
+    fn capture_webcam(ref Self, targetFrame: ref Frame) {
+        let res = cvQueryFrame(capture)
+        if res != null {
+            let xScale = (cast(double)image_width) / (cast(double)res.width)
+            let yScale = (cast(double)image_height) / (cast(double)res.height)
+            foreach! x in range(0, res.width - 1) {
+                foreach! y in range(0, res.height - 1) {
+                    let index = (x + y * res.width) * 3
+                    let r = (cast(double) res.imageData[index + 0]) / 255
+                    let g = (cast(double) res.imageData[index + 1]) / 255
+                    let b = (cast(double) res.imageData[index + 2]) / 255
+                    let col = (r + g + b) / 3
+                    let targetX = cast(int) (cast(double)x) * xScale
+                    let targetY = cast(int) (cast(double)y) * yScale
+                    targetFrame.set(targetX, targetY, col)
+                }
+            }
+        }
+    }
+
+    fn move_detection(ref Self, source_frame: ref Frame, last_frame: ref Frame, target_frame: ref Frame) {
+        foreach! x in range(0, image_width - 1) {
+            foreach! y in range(0, image_height - 1) {
+                let last = last_frame.get(x, y)
+                let now = source_frame.get(x, y)
+                let col = abs(last - now)
+                target_frame.set(x, y, col)
+            }
+        }
+    }
+
+    fn temporal_low_pass_filter(ref Self, source_frame: ref Frame, last_frame: ref Frame, target_frame: ref Frame, activity_frame: ref Frame) {
+        foreach! x in range(0, image_width - 1) {
+            foreach! y in range(0, image_height - 1) {
+                let dl = source_frame.get(x, y) - activity_frame.get(x, y)
+                dl *= 0.1
+                activity_frame.set(x, y, dl + activity_frame.get(x, y))
+                target_frame.set(x, y, abs(source_frame.get(x, y) - activity_frame.get(x, y)))
+            }
+        }
+    }
+
     fn on_update(ref Self, dt: float) -> bool {
         pge.clear(Pixel::rgba(0, 0, 100))
+
+        let webcam: ref Frame = frames[0]
+        let target1: ref Frame = frames[1]
+        let target2: ref Frame = frames[2]
+        let target3: ref Frame = frames[3]
+        let target4: ref Frame = frames[4]
+        let target5: ref Frame = frames[5]
+
+        capture_webcam(webcam)
+
+        if !primer {
+            webcam.copy_to(target3)
+            primer = true
+        }
+
+        move_detection(webcam, last_frame, target1)
+        temporal_low_pass_filter(webcam, last_frame, target2, target3)
+
+        webcam.copy_to(last_frame)
 
         foreach! x in range(0, num_images_x - 1) {
             foreach! y in range(0, num_images_y - 1) {
