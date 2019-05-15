@@ -11,27 +11,6 @@ let const num_images_x  : int = 3
 let const num_images_y  : int = 2
 let const border_width  : int = 10
 
-struct Slot {
-    pub x: int
-    pub y: int
-}
-
-let slots: [num_images_x * num_images_y]Slot = {
-    let slots: [num_images_x * num_images_y]Slot
-
-    foreach! x in range(0, num_images_x - 1) {
-        foreach! y in range(0, num_images_y - 1) {
-            let index = x + y * num_images_x
-            slots[index] = new {
-                x = (x + 1) * border_width + x * image_width
-                y = (y + 1) * border_width + y * image_height
-            }
-        }
-    }
-
-    slots
-}
-
 struct Frame {
     pixels: [image_width * image_height]double
 }
@@ -96,13 +75,16 @@ impl Game for ImageProcessingGame {
         return true
     }
 
-    fn draw_frame(ref Self, x: int, y: int, frame: ref Frame) {
-        let slot = ref slots[x + y * num_images_x]
+    fn draw_frame(ref Self, slot_x: int, slot_y: int, frame: ref Frame) {
         foreach! x in range(0, image_width - 1) {
             foreach! y in range(0, image_height - 1) {
                 let col_d = frame.get(x, y)
                 let col = (cast(u8) col_d * 255)
-                pge.draw(x + slot.x, y + slot.y, Pixel::rgba(col, col, col))
+
+                let offset_x = (slot_x + 1) * border_width + slot_x * image_width
+                let offset_y = (slot_y + 1) * border_width + slot_y * image_height
+
+                pge.draw(x + offset_x, y + offset_y, Pixel::rgba(col, col, col))
             }
         }
     }
