@@ -86,7 +86,7 @@ namespace Cheez.Parsing
 
         [SkipInStackFrame]
         [DebuggerStepThrough]
-        private Token NextToken()
+        public Token NextToken()
         {
             mCurrentToken = mLexer.NextToken();
             if (mCurrentToken.type != TokenType.NewLine)
@@ -96,7 +96,7 @@ namespace Cheez.Parsing
 
         [SkipInStackFrame]
         [DebuggerStepThrough]
-        private void ReportError(TokenLocation location, string message)
+        public void ReportError(TokenLocation location, string message)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
             mErrorHandler.ReportError(mLexer.Text, new Location(location), message, null, callingFunctionFile, callingFunctionName, callLineNumber);
@@ -104,7 +104,7 @@ namespace Cheez.Parsing
 
         [SkipInStackFrame]
         [DebuggerStepThrough]
-        private void ReportError(ILocation location, string message)
+        public void ReportError(ILocation location, string message)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
             mErrorHandler.ReportError(mLexer.Text, location, message, null, callingFunctionFile, callingFunctionName, callLineNumber);
@@ -117,7 +117,7 @@ namespace Cheez.Parsing
         }
 
         [DebuggerStepThrough]
-        private ErrorMessageResolver ErrMsgUnexpected(string expect, string where = null)
+        public ErrorMessageResolver ErrMsgUnexpected(string expect, string where = null)
         {
             return t => $"Unexpected token {t} at {where}. Expected {expect}";
         }
@@ -125,7 +125,7 @@ namespace Cheez.Parsing
 
         [SkipInStackFrame]
         [DebuggerStepThrough]
-        private bool Expect(TokenType type, ErrorMessageResolver customErrorMessage)
+        public bool Expect(TokenType type, ErrorMessageResolver customErrorMessage)
         {
             var tok = PeekToken();
 
@@ -167,14 +167,14 @@ namespace Cheez.Parsing
         }
 
         [DebuggerStepThrough]
-        private bool CheckToken(TokenType type)
+        public bool CheckToken(TokenType type)
         {
             var next = PeekToken();
             return next.type == type;
         }
 
         [DebuggerStepThrough]
-        private bool CheckTokens(params TokenType[] types)
+        public bool CheckTokens(params TokenType[] types)
         {
             var next = PeekToken();
             foreach (var t in types)
@@ -186,7 +186,7 @@ namespace Cheez.Parsing
         }
 
         //[DebuggerStepThrough]
-        private bool IsTypeExprToken()
+        public bool IsTypeExprToken()
         {
             var next = PeekToken();
             switch (next.type)
@@ -204,7 +204,7 @@ namespace Cheez.Parsing
             }
         }
 
-        private bool IsExprToken(params TokenType[] exclude)
+        public bool IsExprToken(params TokenType[] exclude)
         {
             var next = PeekToken();
             if (exclude.Contains(next.type))
@@ -236,13 +236,13 @@ namespace Cheez.Parsing
         }
 
         [DebuggerStepThrough]
-        private Token PeekToken()
+        public Token PeekToken()
         {
             return mLexer.PeekToken();
         }
 
         [SkipInStackFrame]
-        private Token ReadToken(bool SkipNewLines = false)
+        public Token ReadToken(bool SkipNewLines = false)
         {
             while (true)
             {
@@ -1526,7 +1526,7 @@ namespace Cheez.Parsing
             return new AstIdExpr((string)next.data, false, new Location(next.location));
         }
 
-        private AstExpression ParseEmptyExpression()
+        public AstExpression ParseEmptyExpression()
         {
             var loc = GetWhitespaceLocation();
             return new AstEmptyExpr(new Location(loc.beg, loc.end));

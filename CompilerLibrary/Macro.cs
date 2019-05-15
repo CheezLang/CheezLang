@@ -27,6 +27,87 @@ namespace Cheez
         }
     }
 
+    public class BuiltInMacroDo : BuiltInMacro
+    {
+        public BuiltInMacroDo(CheezCompiler comp) : base(comp)
+        {}
+
+        public override AstExpression Execute(AstMacroExpr original, ILexer lexer, IErrorHandler errorHandler)
+        {
+            var parser = new Parser(lexer, errorHandler);
+
+            var value = parser.ParseExpression();
+
+            var next = lexer.PeekToken();
+            if (next.type == TokenType.KwIf)
+            {
+                parser.ReadToken();
+                parser.SkipNewlines();
+                var condition = parser.ParseExpression();
+
+                if (parser.CheckToken(TokenType.KwElse))
+                {
+                    parser.ReadToken();
+                    parser.SkipNewlines();
+                    var elseValue = parser.ParseExpression();
+                    return compiler.ParseExpression(@"if let _ = §value; §condition {_} else {§else}", new Dictionary<string, AstExpression>
+                    {
+                        { "value", value },
+                        { "condition", condition },
+                        { "else", elseValue }
+                    });
+                }
+                else
+                {
+                    parser.ReportError(parser.PeekToken().location, $"Expected keyword 'else'");
+                    return parser.ParseEmptyExpression();
+                }
+            }
+            else if (next.type == TokenType.KwElse)
+            {
+                parser.ReadToken();
+                parser.SkipNewlines();
+                var elseValue = parser.ParseExpression();
+
+                if (parser.CheckToken(TokenType.KwIf))
+                {
+                    parser.ReadToken();
+                    parser.SkipNewlines();
+                    var condition = parser.ParseExpression();
+                    return compiler.ParseExpression(@"if let _ = §value; §condition {_} else {§else}", new Dictionary<string, AstExpression>
+                    {
+                        { "value", value },
+                        { "condition", condition },
+                        { "else", elseValue }
+                    });
+                }
+                else
+                {
+                    parser.ReportError(parser.PeekToken().location, $"Expected keyword 'if'");
+                    return parser.ParseEmptyExpression();
+                }
+            }
+            else if (next.type == TokenType.KwFor)
+            {
+                parser.ReadToken();
+                parser.SkipNewlines();
+                var expr = parser.ParseExpression();
+                return compiler.ParseExpression(@"{
+    let _ = §value
+    §expr
+}", new Dictionary<string, AstExpression>
+                {
+                    { "value", value },
+                    { "expr", expr}
+                });
+            }
+            else
+            {
+                return parser.ParseEmptyExpression();
+            }
+        }
+    }
+
     public class BuiltInMacroFormat : BuiltInMacro
     {
         public BuiltInMacroFormat(CheezCompiler comp) : base(comp)
