@@ -66,6 +66,11 @@ impl Game for ImageProcessingGame {
         }
 
         capture = cvCreateCameraCapture(0)
+        // capture = cvCreateFileCapture("http://192.168.2.100:8080/video"c)
+
+        if capture == null {
+            // return false
+        }
 
         return true
     }
@@ -131,6 +136,56 @@ impl Game for ImageProcessingGame {
         }
     }
 
+    fn dilation_erosion(ref Self, input: ref Frame, last: ref Frame, activity: ref Frame, output: ref Frame) {
+        // activity
+        foreach! x in range(0, image_width - 1) {
+            foreach! y in range(0, image_height - 1) {
+                activity.set(x, y, if input.get(x, y) > 0.5 {1} else {0})
+            }
+        }
+
+        // dilation
+        foreach! n in range(1, 0) {
+            activity.copy_to(output)
+            foreach! x in range(0, image_width - 1) {
+                foreach! y in range(0, image_height - 1) {
+                    if activity.get(x, y) > 0.5 {
+                        output.set(x    , y    , 1)
+                        output.set(x - 1, y    , 1)
+                        output.set(x + 1, y    , 1)
+                        output.set(x    , y - 1, 1)
+                        output.set(x    , y + 1, 1)
+                    }
+                }
+            }
+        }
+
+        // erorios
+        foreach! n in range(1, 1) {
+            activity.copy_to(output)
+
+            foreach! x in range(0, image_width - 1) {
+                foreach! y in range(0, image_height - 1) {
+
+                    let sum =   activity.get(x - 1, y) +
+                                activity.get(x + 1, y) +
+                                activity.get(x, y + 1) +
+                                activity.get(x, y - 1)
+
+                    if activity.get(x, y) == 1 and sum == 4 {
+                        output.set(x    , y    , 0)
+                        // output.set(x - 1, y    , 0)
+                        // output.set(x + 1, y    , 0)
+                        // output.set(x    , y - 1, 0)
+                        // output.set(x    , y + 1, 0)
+                    }
+                }
+            }
+
+            // output.copy_to(activity)
+        }
+    }
+
     fn on_update(ref Self, dt: float) -> bool {
         pge.clear(Pixel::rgba(0, 0, 100))
 
@@ -150,6 +205,7 @@ impl Game for ImageProcessingGame {
 
         move_detection(webcam, last_frame, target1)
         temporal_low_pass_filter(webcam, last_frame, target2, target3)
+        dilation_erosion(webcam, last_frame, target4, target5)
 
         webcam.copy_to(last_frame)
 
