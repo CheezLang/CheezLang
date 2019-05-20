@@ -3,12 +3,23 @@
 // #load("test2")
 #load("std:io/io")
 #load("std:iterator")
+#load("std:util")
 // #load("std:random")
 
-fn p_it(n: int, k: int) -> int {
+fn p_it1(n: int, k: int) -> int {
     let result = 1
     let n2 = n * n
     foreach! i in range(1, k) {
+        result *= (n2 - 2 * i + 2) * (n2 - 2 * i + 1)
+    }
+
+    return if result < 0 { -1 } else { result }
+}
+
+fn p_it2(n: int, k: int) -> int {
+    let result = 1
+    let n2 = n * n
+    while let i = 1; i <= k; i += 1 {
         result *= (n2 - 2 * i + 2) * (n2 - 2 * i + 1)
     }
 
@@ -59,14 +70,57 @@ fn p_rec(n: int, k: int) -> int {
 }
 
 fn Main() {
-    foreach! n in range(1, 9) {
-        foreach! k in range(1, n * n / 2 + 1) {
-            let it = p_it(n, k)
-            let rec = p_rec(n, k)
+    // foreach! n in range(1, 9) {
+    //     foreach! k in range(1, n * n / 2 + 1) {
+    //         let it = p_it(n, k)
+    //         let rec = p_rec(n, k)
 
-            printfln("n = {0}, k = {1} (n*n={4})
-    p_it ({0}, {1}) = {2}
-    p_rec({0}, {1}) = {3}", [n, k, it, rec, n*n])
+    //         printfln("n = {0}, k = {1} (n*n={4})
+    // p_it ({0}, {1}) = {2}
+    // p_rec({0}, {1}) = {3}", [n, k, it, rec, n*n])
+    //     }
+    // }
+
+    let iterations = 10000000
+    let n = 10
+    let k = 10
+
+    c_scanf("%d", &n)
+    c_scanf("%d", &k)
+
+    {
+        let counter = 0
+
+        let start = get_time_microseconds()
+        while let i = 0; i < iterations; i += 1 {
+            counter += p_it1(n, k)
         }
+        let end = get_time_microseconds()
+        let ms = (end - start) / 1000
+        printfln("p_it1({}, {}) = {}           : {} ms", [n, k, counter, ms])
+    }
+
+    {
+        let counter = 0
+
+        let start = get_time_microseconds()
+        while let i = 0; i < iterations; i += 1 {
+            counter += p_it2(n, k)
+        }
+        let end = get_time_microseconds()
+        let ms = (end - start) / 1000
+        printfln("p_it2({}, {}) = {}           : {} ms", [n, k, counter, ms])
+    }
+
+    {
+        let counter = 0
+
+        let start = get_time_microseconds()
+        while let i = 0; i < iterations; i += 1 {
+            counter += p_rec(n, k)
+        }
+        let end = get_time_microseconds()
+        let ms = (end - start) / 1000
+        printfln("p_rec({}, {}) = {}           : {} ms", [n, k, counter, ms])
     }
 }

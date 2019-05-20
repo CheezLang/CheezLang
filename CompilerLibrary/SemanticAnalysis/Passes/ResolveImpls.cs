@@ -53,7 +53,7 @@ namespace Cheez
                 CollectPolyTypeNames(impl.TargetTypeExpr, polyNames);
                 CollectPolyTypeNames(impl.TraitExpr, polyNames);
                 foreach (var pn in polyNames)
-                    impl.SubScope.DefineTypeSymbol(pn, new PolyType(pn));
+                    impl.SubScope.DefineTypeSymbol(pn, new PolyType(pn, true));
                 impl.TraitExpr = ResolveTypeNow(impl.TraitExpr, out type);
             }
             else
@@ -71,6 +71,7 @@ namespace Cheez
             else
             {
                 ReportError(impl.TraitExpr, $"{type} is not a trait");
+                impl.Trait = new TraitErrorType();
                 return;
             }
 
@@ -98,10 +99,8 @@ namespace Cheez
             impl.Trait.Declaration.Implementations[impl.TargetType] = impl;
 
             impl.IsPolymorphic = impl.Trait.IsPolyType || impl.TargetType.IsPolyType;
-            if (impl.IsPolymorphic)
-                return;
-
-            AddTraitForType(impl.TargetType, impl);
+            if (!impl.IsPolymorphic)
+                AddTraitForType(impl.TargetType, impl);
 
             // handle functions
             foreach (var f in impl.Functions)
@@ -146,7 +145,7 @@ namespace Cheez
                         var fp = func.Parameters[i];
                         var tp = traitFunc.Parameters[i];
 
-                        if (fp.Type != tp.Type)
+                        if (!CheezType.TypesMatch(fp.Type, tp.Type))
                         {
                             ReportError(fp.TypeExpr, $"Type of parameter must match the type of the trait functions parameter", ("Trait function parameter type defined here:", tp.TypeExpr));
                         }
@@ -173,7 +172,7 @@ namespace Cheez
 
             foreach (var pn in polyNames)
             {
-                impl.SubScope.DefineTypeSymbol(pn, new PolyType(pn));
+                impl.SubScope.DefineTypeSymbol(pn, new PolyType(pn, true));
             }
             impl.SubScope.DefineTypeSymbol("Self", impl.TargetType);
 

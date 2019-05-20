@@ -61,7 +61,7 @@ namespace Cheez.Types
             if (a == b)
                 return true;
 
-            if (Utilities.Xor(a is PolyType, b is PolyType))
+            if (a is PolyType || b is PolyType)
                 return true;
 
             if (a is StructType sa && b is StructType sb)
