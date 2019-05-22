@@ -326,6 +326,7 @@ namespace Cheez
         internal void DefineBuiltInMacros(CheezCompiler comp)
         {
             mMacros["foreach"] = new BuiltInMacroForeach(comp);
+            mMacros["loop"] = new BuiltInMacroLoop(comp);
             mMacros["format"] = new BuiltInMacroFormat(comp);
             mMacros["do"] = new BuiltInMacroDo(comp);
         }

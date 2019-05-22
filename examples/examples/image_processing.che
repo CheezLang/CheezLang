@@ -169,12 +169,12 @@ impl Game for ImageProcessingGame {
                 let now = source_frame.get(x, y)
                 let diff = last - now
 
-                // let r = do! diff if _ > 0 else 0
-                // let g = do! -diff if _ > 0 else 0
-
-                let r = if diff > 0 {diff} else {0.0}
-                let g = if diff < 0 {-diff} else {0.0}
+                let r = do!  diff if _ > 0 else 0.0
+                let g = do! -diff if _ > 0 else 0.0
                 let b = abs(diff)
+
+                // let r = if diff > 0 {diff} else {0.0}
+                // let g = if diff < 0 {-diff} else {0.0}
 
                 target_frame.set_rgb(x, y, (r, g, b))
             }
@@ -248,11 +248,11 @@ impl Game for ImageProcessingGame {
     fn adaptive_threshold(input: ref Frame, output: ref Frame) {
         let adaptive_bias = 1.0
 
-        foreach! x in range(0, image_width - 1) {
-            foreach! y in range(0, image_height - 1) {
+        loop! x in 0->image_width {
+            loop! y in 0->image_height {
                 let region_sum = 0.0
-                foreach! xx in range(x - 2, x + 2) {
-                    foreach! yy in range(y - 2, y + 2) {
+                loop! xx in (x - 2)->>(x + 2) {
+                    loop! yy in (y - 2)->>(y + 2) {
                         region_sum += input.get(xx, yy)
                     }
                 }
@@ -283,8 +283,8 @@ impl Game for ImageProcessingGame {
 
         webcam.copy_to(last_frame)
 
-        foreach! x in range(0, num_images_x - 1) {
-            foreach! y in range(0, num_images_y - 1) {
+        loop! x in 0->num_images_x {
+            loop! y in 0->num_images_y {
                 draw_frame(x, y, frames[x + y * num_images_x])
             }
         }

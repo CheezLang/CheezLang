@@ -249,4 +249,55 @@ namespace Cheez
             return result;
         }
     }
+
+    public class BuiltInMacroLoop : BuiltInMacro
+    {
+        public BuiltInMacroLoop(CheezCompiler comp) : base(comp)
+        {
+        }
+
+        public override AstExpression Execute(AstMacroExpr original, ILexer lexer, IErrorHandler errorHandler)
+        {
+            var parser = new Parser(lexer, errorHandler);
+
+            var name = parser.ConsumeUntil(TokenType.Identifier, Parser.ErrMsg("identifier", "at beginning of foreach loop"));
+            parser.SkipNewlines();
+
+            var kwIn = parser.ConsumeUntil(TokenType.Identifier, Parser.ErrMsg("keyword 'in'", "after name in foreach loop"));
+            parser.SkipNewlines();
+
+            if (kwIn.data as string != "in")
+            {
+                errorHandler.ReportError(lexer.Text, new Location(kwIn.location), $"Expected 'in' after name in foreach loop");
+                return null;
+            }
+
+            bool isInclusive = false;
+            var start = parser.ParseExpression();
+
+            parser.ConsumeUntil(TokenType.Arrow, Parser.ErrMsg("->", "in loop! macro"));
+            if (parser.CheckToken(TokenType.Greater))
+            {
+                parser.NextToken();
+                isInclusive = true;
+            }
+
+            var end = parser.ParseExpression();
+
+            var body = parser.ParseExpression();
+
+            var result = compiler.ParseExpression($@"{{
+    while let {name.data} = §start; {name.data} {(isInclusive ? "<=" : "<")} §end; {name.data} += 1 {{
+        §body
+    }}
+}}", new Dictionary<string, AstExpression>
+                {
+                    { "start", start },
+                    { "end", end },
+                    { "body", body }
+                });
+
+            return result;
+        }
+    }
 }
