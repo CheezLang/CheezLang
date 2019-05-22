@@ -1,72 +1,72 @@
-// #load("examples/image_processing")
+#load("examples/image_processing")
 
-// #load("test2")
-#load("std:io/io")
-#load("std:iterator")
-// #load("std:random")
+// // #load("test2")
+// #load("std:io/io")
+// #load("std:iterator")
+// // #load("std:random")
 
-fn p_it(n: int, k: int) -> int {
-    let result = 1
-    let n2 = n * n
-    foreach! i in range(1, k) {
-        result *= (n2 - 2 * i + 2) * (n2 - 2 * i + 1)
-    }
+// fn p_it(n: int, k: int) -> int {
+//     let result = 1
+//     let n2 = n * n
+//     foreach! i in range(1, k) {
+//         result *= (n2 - 2 * i + 2) * (n2 - 2 * i + 1)
+//     }
 
-    return if result < 0 { -1 } else { result }
-}
+//     return if result < 0 { -1 } else { result }
+// }
 
-fn p_rec_helper(n: int, k: int) -> int {
-    return if n < 2 * k { 0 }
-        else if k == 0 { 1 }
-        else { n * (n - 1) * p_rec_helper(n - 2, k - 1) }
-}
+// fn p_rec_helper(n: int, k: int) -> int {
+//     return if n < 2 * k { 0 }
+//         else if k == 0 { 1 }
+//         else { n * (n - 1) * p_rec_helper(n - 2, k - 1) }
+// }
 
-fn p_rec(n: int, k: int) -> int {
-    return do! p_rec_helper(n * n, k) if _ >= 0 else -1
-    // 1. bad
-    // if p_rec_helper(n * n, k) >= 0 {
-    //     return p_rec_helper(n * n, k)
-    // } else {
-    //     return -1
-    // }
+// fn p_rec(n: int, k: int) -> int {
+//     return do! p_rec_helper(n * n, k) if _ >= 0 else -1
+//     // 1. bad
+//     // if p_rec_helper(n * n, k) >= 0 {
+//     //     return p_rec_helper(n * n, k)
+//     // } else {
+//     //     return -1
+//     // }
 
-    // 2. bad
-    // return if p_rec_helper(n * n, k) >= 0 {p_rec_helper(n * n, k)} else {-1}
+//     // 2. bad
+//     // return if p_rec_helper(n * n, k) >= 0 {p_rec_helper(n * n, k)} else {-1}
 
-    // 2. traditionall
-    // {
-    //     let _ = p_rec_helper(n * n, k)
-    //     if _ >= 0 {
-    //         return _
-    //     } else {
-    //         return -1
-    //     }
-    // }
+//     // 2. traditionall
+//     // {
+//     //     let _ = p_rec_helper(n * n, k)
+//     //     if _ >= 0 {
+//     //         return _
+//     //     } else {
+//     //         return -1
+//     //     }
+//     // }
 
-    // 3. alternative
-    // {
-    //     let _ = p_rec_helper(n * n, k)
-    //     return if _ >= 0 {_} else {-1}
-    // }
+//     // 3. alternative
+//     // {
+//     //     let _ = p_rec_helper(n * n, k)
+//     //     return if _ >= 0 {_} else {-1}
+//     // }
 
-    // 4. if let
-    // return if let _ = p_rec_helper(n * n, k); _  >= 0 {_} else {-1}
+//     // 4. if let
+//     // return if let _ = p_rec_helper(n * n, k); _  >= 0 {_} else {-1}
 
-    // 5. macro
-    // return do! p_rec_helper(n * n, k) if _ >= 0 else -1
-    // return do! p_rec_helper(n * n, k) else -1 if _ >= 0
-    // return do! p_rec_helper(n * n, k) for if _ >= 0 {_} else {-1}
-}
+//     // 5. macro
+//     // return do! p_rec_helper(n * n, k) if _ >= 0 else -1
+//     // return do! p_rec_helper(n * n, k) else -1 if _ >= 0
+//     // return do! p_rec_helper(n * n, k) for if _ >= 0 {_} else {-1}
+// }
 
-fn Main() {
-    foreach! n in range(1, 9) {
-        foreach! k in range(1, n * n / 2 + 1) {
-            let it = p_it(n, k)
-            let rec = p_rec(n, k)
+// fn Main() {
+//     foreach! n in range(1, 9) {
+//         foreach! k in range(1, n * n / 2 + 1) {
+//             let it = p_it(n, k)
+//             let rec = p_rec(n, k)
 
-            printfln("n = {0}, k = {1} (n*n={4})
-    p_it ({0}, {1}) = {2}
-    p_rec({0}, {1}) = {3}", [n, k, it, rec, n*n])
-        }
-    }
-}
+//             printfln("n = {0}, k = {1} (n*n={4})
+//     p_it ({0}, {1}) = {2}
+//     p_rec({0}, {1}) = {3}", [n, k, it, rec, n*n])
+//         }
+//     }
+// }
