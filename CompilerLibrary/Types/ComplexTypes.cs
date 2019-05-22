@@ -10,6 +10,18 @@ using System.Linq;
 
 namespace Cheez.Types.Complex
 {
+    public class TraitErrorType : TraitType
+    {
+        public override bool IsErrorType => true;
+        public TraitErrorType() : base(null, new CheezType[0])
+        {
+        }
+
+        public override string ToString() {
+            return "<Error Trait>";
+        }
+    }
+
     public class TraitType : CheezType
     {
         public AstTraitDeclaration Declaration { get; }

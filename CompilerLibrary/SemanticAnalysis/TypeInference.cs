@@ -2009,24 +2009,7 @@ namespace Cheez
                         var index = s.GetIndexOfMember(name);
                         if (index == -1)
                         {
-                            // check if function exists
-
-                            var funcs = expr.Scope.GetImplFunction(s, name);
-
-                            if (funcs.Count == 0)
-                            {
-                                ReportError(expr.Right, $"Struct '{s}' has no field or function '{name}'");
-                                break;
-                            }
-                            else if (funcs.Count > 1)
-                            {
-                                var details = funcs.Select(f => ("Possible candidate:", f.Name.Location));
-                                ReportError(expr.Right, $"Ambigious call to impl function '{name}'", details);
-                                break;
-                            }
-
-                            var ufc = new AstUfcFuncExpr(expr.Left, funcs[0]);
-                            return InferTypeHelper(ufc, null, context);
+                            return GetImplFunctions(expr, s, name, context);
                         }
 
                         var member = s.Declaration.Members[index];
@@ -2127,60 +2110,7 @@ namespace Cheez
                 case CheezType c when expr.IsDoubleColon:
                     {
                         var name = expr.Right.Name;
-                        var funcs = expr.Scope.GetImplFunction(c, name);
-
-                        if (funcs.Count == 0)
-                        {
-                            // search for trait impl
-                            if (TypeTraitMap.TryGetValue(c, out var traits))
-                            {
-                                foreach (var t in traits)
-                                {
-                                    foreach (var f in t.Functions)
-                                    {
-                                        if (f.Name.Name == name)
-                                        {
-                                            funcs.Add(f);
-                                        }
-                                    }
-
-                                    // check for impls of the trait
-                                    var implFuncs = expr.Scope.GetImplFunction(t.Trait, name);
-                                    funcs.AddRange(implFuncs);
-                                }
-                            }
-                            if (funcs.Count == 0)
-                            {
-                                ReportError(expr.Right, $"Type '{c}' has no impl function '{name}'");
-                                break;
-                            }
-                            else if (funcs.Count > 1)
-                            {
-                                var details = funcs.Select(f => ("Possible candidate:", f.Name.Location));
-                                ReportError(expr.Right, $"Ambigious call to function '{expr.Right.Name}'", details);
-                                break;
-                            }
-                            else
-                            {
-                                var func = funcs[0];
-                                var targetType = funcs[0].ImplBlock.Trait ?? funcs[0].ImplBlock.TargetType;
-
-                                var ufc = new AstUfcFuncExpr(expr.Left, funcs[0]);
-                                var casted = CheckType(ufc, targetType);
-                                return InferTypeHelper(casted, null, context);
-                            }
-                        }
-                        else if (funcs.Count > 1)
-                        {
-                            var details = funcs.Select(f => ("Possible candidate:", f.Name.Location));
-                            ReportError(expr.Right, $"Ambigious call to function '{expr.Right.Name}'", details);
-                            break;
-                        }
-
-                        {
-                            var ufc = new AstUfcFuncExpr(expr.Left, funcs[0]);
-                            return InferTypeHelper(ufc, null, context);
-                        }
+                        return GetImplFunctions(expr, c, name, context);
                     }
                 default: ReportError(expr, $"Invalid expression on left side of '.'"); break;
             }
@@ -3185,6 +3115,99 @@ namespace Cheez
 
             ReportError(expr, errorMsg ?? $"Can't implicitly convert {from} to {to}");
             return expr;
+        }
+
+        private AstImplBlock GetTraitImpl(Scope scope, CheezType trait)
+        {
+            while (scope != null)
+            {
+                foreach (var impl in scope.Impls)
+                {
+                    if (impl.Trait == null &&
+                        CheezType.TypesMatch(impl.TargetType, trait))
+                    {
+
+                        return impl;
+                    }
+                }
+
+                scope = scope.Parent;
+            }
+
+            return null;
+        }
+
+        private AstExpression GetImplFunctions(AstDotExpr expr, CheezType type, string functionName, TypeInferenceContext context)
+        {
+            var result = new List<AstFunctionDecl>();
+
+            var scope = expr.Scope;
+            while (result.Count == 0 && scope != null)
+            {
+                foreach (var impl in scope.Impls)
+                {
+                    if (!CheezType.TypesMatch(type, impl.TargetType))
+                        continue;
+
+                    if (impl.Trait == null)
+                    {
+                        // normal impl
+
+                        var func = impl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
+                        if (func == null)
+                            continue; // goto next impl block
+
+                        result.Add(func);
+                    }
+                    else
+                    {
+                        // trait impl
+
+                        // check if function exists
+                        var func = impl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
+                        if (func == null)
+                        {
+                            var trait = impl.Trait;
+                            if (trait.IsPolyType)
+                            {
+                                var args = new Dictionary<string, CheezType>();
+                                CollectPolyTypes(impl.TargetType, type, args);
+                                var args2 = trait.Declaration.Parameters.Select(p => (CheezType.Type, (object)args[p.Name.Name])).ToList();
+                                var instance = InstantiatePolyTrait(trait.DeclarationTemplate, args2, context.newPolyDeclarations);
+                                trait = instance.Type as TraitType;
+                            }
+
+                            var traitImpl = GetTraitImpl(scope, trait);
+                            if (traitImpl != null)
+                            {
+                                expr.Left = CheckType(expr.Left, trait);
+                                func = traitImpl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
+                            }
+                        }
+                        if (func == null)
+                            continue; // goto next impl block
+
+                        result.Add(func);
+                    }
+                }
+
+                scope = scope.Parent;
+            }
+            
+            if (result.Count == 0)
+            {
+                ReportError(expr.Right, $"Type '{type}' has no impl function '{functionName}'");
+                return null;
+            }
+            else if (result.Count > 1)
+            {
+                var details = result.Select(f => ("Possible candidate:", f.Name.Location));
+                ReportError(expr.Right, $"Ambigious call to impl function '{functionName}'", details);
+                return null;
+            }
+
+            var ufc = new AstUfcFuncExpr(expr.Left, result[0]);
+            return InferTypeHelper(ufc, null, context);
         }
     }
 }

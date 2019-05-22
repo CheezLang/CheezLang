@@ -262,7 +262,17 @@ namespace Cheez
         {
             AstImplBlock instance = null;
 
-            // TODO: check for existing instance
+            // check for existing instance
+            var concreteTrait = InstantiatePolyType(decl.Trait, args, location);
+            var concreteTarget = InstantiatePolyType(decl.TargetType, args, location);
+            foreach (var pi in decl.PolyInstances)
+            {
+                if (pi.Trait == concreteTrait && pi.TargetType == concreteTarget)
+                {
+                    instance = pi;
+                    break;
+                }
+            }
 
             if (instance == null)
             {
@@ -618,6 +628,18 @@ namespace Cheez
             }
         }
 
+        private AstFunctionDecl InstantiatePolyImplFunction(
+            GenericFunctionType func,
+            Dictionary<string, CheezType> polyTypes,
+            Dictionary<string, (CheezType type, object value)> constArgs,
+            List<AstFunctionDecl> instances = null,
+            ILocation location = null)
+        {
+            var impl = func.Declaration.ImplBlock;
+            var implInstance = InstantiatePolyImpl(impl, polyTypes, location);
+            return implInstance.Functions.FirstOrDefault(f => f.Name.Name == func.Declaration.Name.Name);
+        }
+
         private AstFunctionDecl InstantiatePolyFunction(
             GenericFunctionType func,
             Dictionary<string, CheezType> polyTypes,
@@ -626,6 +648,11 @@ namespace Cheez
             ILocation location = null)
         {
             AstFunctionDecl instance = null;
+
+            if (func.Declaration.ImplBlock != null && func.Declaration.ImplBlock.Trait != null)
+            {
+                return InstantiatePolyImplFunction(func, polyTypes, constArgs, instances, location);
+            }
 
             // check if instance already exists
             foreach (var pi in func.Declaration.PolymorphicInstances)

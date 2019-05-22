@@ -3,7 +3,6 @@
 
 trait Iterator(T: type) {
     fn next(ref Self) -> Option(T);
-    fn dispose(ref Self);
 }
 
 impl Iterator($T) {
@@ -43,16 +42,12 @@ impl Iterator($T) {
         return sum
     }
 
-    fn take(ref Self, count: int) -> Iterator(T) {
-        let it = alloc(TakeIterator(T))
-        <<it = new {self, count}
-        return <<it
+    fn take(ref Self, count: int) -> TakeIterator(T) {
+        return new {self, count}
     }
 
-    fn map(ref Self, mapFunc: fn (T) -> $X) -> Iterator(X) {
-        let it = alloc(MapIterator(T, X))
-        <<it = new {self, mapFunc}
-        return <<it
+    fn map(ref Self, mapFunc: fn (T) -> $X) -> MapIterator(T, X) {
+        return new {self, mapFunc}
     }
 
     fn foreach(ref Self, func: fn (T)) {
@@ -92,11 +87,6 @@ impl Iterator($T) for TakeIterator(T) {
             return None
         }
     }
-
-    fn dispose(ref Self) {
-        it.dispose()
-        free(&self)
-    }
 }
 
 // map
@@ -105,17 +95,12 @@ struct MapIterator(T: type, X: type) {
     mapFunc : fn(T) -> X
 }
 
-impl Iterator($T) for MapIterator($T2, T) {
-    fn next(ref Self) -> Option(T) {
+impl Iterator($X) for MapIterator($T, X) {
+    fn next(ref Self) -> Option(X) {
         return match it.next() {
             Some($v) -> Some(mapFunc(v))
             None -> None
         }
-    }
-
-    fn dispose(ref Self) {
-        it.dispose()
-        free(&self)
     }
 }
 
@@ -135,14 +120,8 @@ impl Iterator(int) for RangeIterator {
         from += 1
         return Some(n)
     }
-
-    fn dispose(ref Self) {
-        free(&self)
-    }
 }
 
-fn range(start: int, end: int) -> Iterator(int) {
-    let it = alloc(RangeIterator)
-    <<it = new {start, end}
-    return <<it
+fn range(start: int, end: int) -> RangeIterator {
+    return new {start, end}
 }

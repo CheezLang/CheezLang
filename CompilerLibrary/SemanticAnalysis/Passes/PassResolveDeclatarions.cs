@@ -62,6 +62,13 @@ namespace Cheez
 
             foreach (var i in scope.Impls)
             {
+                //if (i.TraitExpr != null && i.Trait == null)
+                if (i.Trait?.IsErrorType ?? false)
+                {
+                    // an error has been reported elsewhere, we don't need to analyse the functions
+                    continue;
+                }
+
                 if (i.IsPolymorphic)
                 {
                     //foreach (var instance in i.PolyInstances)
