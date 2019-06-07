@@ -103,7 +103,7 @@ namespace Cheez
                     }
                     else
                     {
-                        if (v.Initializer.Type is ReferenceType)
+                        if (v.Initializer.Type is ReferenceType && !(v.Initializer is AstAddressOfExpr a))
                             v.Initializer = Deref(v.Initializer, null);
                     }
                 }

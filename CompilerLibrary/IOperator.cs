@@ -74,7 +74,7 @@ namespace Cheez
         }
     }
 
-    public class BuiltInOperator : IBinaryOperator
+    public class BuiltInBinaryOperator : IBinaryOperator
     {
         public CheezType LhsType { get; private set; }
         public CheezType RhsType { get; private set; }
@@ -85,7 +85,7 @@ namespace Cheez
         public delegate object ComptimeExecution(object left, object right);
         public ComptimeExecution Execution { get; }
 
-        public BuiltInOperator(string name, CheezType resType, CheezType lhs, CheezType rhs, ComptimeExecution exe = null)
+        public BuiltInBinaryOperator(string name, CheezType resType, CheezType lhs, CheezType rhs, ComptimeExecution exe = null)
         {
             Name = name;
             ResultType = resType;

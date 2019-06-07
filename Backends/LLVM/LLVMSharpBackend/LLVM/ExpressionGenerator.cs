@@ -761,7 +761,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateBinaryExpr(AstBinaryExpr bin)
         {
-            if (bin.ActualOperator is BuiltInOperator)
+            if (bin.ActualOperator is BuiltInBinaryOperator)
             {
                 if (bin.Operator == "and")
                 {

@@ -1240,9 +1240,13 @@ namespace Cheez
                 var arg = expr.Arguments[index];
                 arg.AttachTo(expr);
                 arg = InferTypeHelper(arg, e, context);
+
                 ConvertLiteralTypeToDefaultType(arg, e);
-                arg = HandleReference(arg, e, context);
-                arg = CheckType(arg, e);
+                if (e != null)
+                {
+                    arg = HandleReference(arg, e, context);
+                    arg = CheckType(arg, e);
+                }
 
                 return expr.Arguments[index] = arg;
             }
@@ -1259,6 +1263,17 @@ namespace Cheez
 
                         InferArg(0, CheezType.String);
 
+                        expr.Type = CheezType.Void;
+                        break;
+                    }
+
+                case "log":
+                    {
+                        for (int i = 0; i < expr.Arguments.Count; i++)
+                            InferArg(i, null);
+
+                        var text = string.Join("", expr.Arguments.Select(a => a.Value?.ToString()));
+                        Console.WriteLine($"[@log] {text}");
                         expr.Type = CheezType.Void;
                         break;
                     }
