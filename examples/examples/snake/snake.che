@@ -14,7 +14,7 @@ enum Direction {
     Left
 }
 
-let action = Direction.None
+let action  : Direction = Direction.None
 
 fn onKeyDown(window: &GLFWwindow, key: i32, scancode: i32, a: i32, mods: i32) {
     if a == GLFW_PRESS {
@@ -31,14 +31,14 @@ fn onResize(window: &GLFWwindow, w: i32, h: i32) {
     glViewport(0, 0, w, h)
 }
 
-let timePerStep = 0.05
-let gridSize = 10.0
+let timePerStep : double = 0.05
+let gridSize    : double = 10.0
 
-let width = 640.0
-let height = 480.0
+let width       : double = 640.0
+let height      : double = 480.0
 
 fn action_to_dir(dir: ref Direction, action: Direction) {
-    dir = match (dir, action) {
+    dir = match (<<&dir, action) {
         (Direction.Up,      Direction.Down) -> dir
         (Direction.Right,   Direction.Left) -> dir
         (Direction.Down,    Direction.Up)   -> dir
@@ -89,7 +89,7 @@ fn snake()
 
     let startCount = 5
     while let i = 0; i < startCount; i += 1 {
-        let intesity = cast(double)i / cast(double)(startCount - 1)
+        let intesity = (cast(double)i) / cast(double)(startCount - 1)
         snake.add(new Quad {
             new Vec2i{10, 15},
             new Vec2{gridSize, gridSize},
@@ -124,7 +124,7 @@ fn snake()
         if fpsTimer >= 1.0 {
             printf("FPS: {}`n", [fpsCounter])
 
-            windowTitle.length = 0
+            windowTitle.resize(0)
             windowTitle.appendf("Snake     {} FPS`0" , [fpsCounter])
             glfwSetWindowTitle(window, windowTitle.get_raw())
 

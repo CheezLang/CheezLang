@@ -5,9 +5,9 @@ typedef Vec2 = Vector2(double)
 typedef Vec3 = Vector3(double)
 
 struct Quad {
-    pos: Vec2i
-    size: Vec2
-    col: Vec3
+    pub pos: Vec2i
+    pub size: Vec2
+    pub col: Vec3
 }
 
 impl Quad {
@@ -17,29 +17,29 @@ impl Quad {
         {
             // v1
             glColor3d(col.x, col.y, col.z)
-            glVertex2d(cast(double)pos.x * size.x, cast(double)pos.y * size.y)
+            glVertex2d((cast(double)pos.x) * size.x, (cast(double)pos.y) * size.y)
 
             // v2
             glColor3d(col.x, col.y, col.z)
-            glVertex2d(cast(double)pos.x * size.x + size.x, cast(double)pos.y * size.y)
+            glVertex2d((cast(double)pos.x) * size.x + size.x, (cast(double)pos.y) * size.y)
 
             // v3
             glColor3d(col.x, col.y, col.z)
-            glVertex2d(cast(double)pos.x * size.x + size.x, cast(double)pos.y * size.y + size.y)
+            glVertex2d((cast(double)pos.x) * size.x + size.x, (cast(double)pos.y) * size.y + size.y)
         }
 
         {
             // v1
             glColor3d(col.x, col.y, col.z)
-            glVertex2d(cast(double)pos.x * size.x, cast(double)pos.y * size.y)
+            glVertex2d((cast(double)pos.x) * size.x, (cast(double)pos.y) * size.y)
 
             // v3
             glColor3d(col.x, col.y, col.z)
-            glVertex2d(cast(double)pos.x * size.x + size.x, cast(double)pos.y * size.y + size.y)
+            glVertex2d((cast(double)pos.x) * size.x + size.x, (cast(double)pos.y) * size.y + size.y)
 
             // v4
             glColor3d(col.x, col.y, col.z)
-            glVertex2d(cast(double)pos.x * size.x, cast(double)pos.y * size.y + size.y)
+            glVertex2d((cast(double)pos.x) * size.x, (cast(double)pos.y) * size.y + size.y)
         }
 
         glEnd()
