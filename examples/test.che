@@ -1,24 +1,300 @@
+#load("examples/olc_pge/pixel_game_engine")
 #load("std:io/io")
+#load("std:mem/arena_allocator")
+#load("std:array")
+#load("std:math")
+#load("std:random")
 
-fn foo() -> &int {
-    return null
+typedef Vec3 = Vector3(double)
+let const width : int = 800
+let const height: int = 600
+let const max_depth: int = 4
+let const pi: double = 3.14159265359
+
+fn clamp(value: double, min: double, max: double) -> double {
+    if value < min { return min }
+    if value > max { return max }
+    return value
+}
+
+fn create(val: $T, allocator: Allocator) -> &T {
+    let ptr = alloc(T, allocator)
+    <<ptr = val
+    return ptr
+}
+
+impl double {
+    fn to_radians(Self) -> Self {
+        return self / 180.0 * pi
+    }
+}
+
+impl Printable for Vec3 {
+    fn print(ref Self, str: ref String, format: string) {
+        str.appendf("{}, {}, {}", [x, y, z])
+    }
+}
+
+struct Ray {
+    pub pos: Vec3
+    pub dir: Vec3
+}
+
+impl Ray {
+    fn from_pos_and_dir(pos: Vec3, dir: Vec3) -> Self {
+        return new {pos, dir}
+    }
+}
+
+struct HitInfo {
+    pub distance: double
+    pub pos     : Vec3
+    pub normal  : Vec3
+    pub material: &Material
+}
+
+struct Material {
+    pub diffuse     : Vec3
+    pub emission    : Vec3
+    pub reflection  : Vec3
+}
+
+trait Object {
+    fn intersect(ref Self, ray: Ray) -> Option(HitInfo);
+}
+
+struct Sphere {
+    pos: Vec3
+    rad: double
+    mat: &Material
+}
+
+impl Object for Sphere {
+    fn intersect(ref Self, ray: Ray) -> Option(HitInfo) {
+        let op = pos - ray.pos
+        let r2 = rad * rad
+        let b = op.dot(ray.dir)
+        let det = b * b - op.magsq() + r2
+        if det < 0 {
+            return None
+        }
+
+        let epsilon = 0.0001
+        det = sqrt(det)
+        let minusT = b - det
+        let plusT = b + det
+        if minusT < epsilon and plusT < epsilon {
+            return None
+        }
+
+        let t = if minusT > epsilon {minusT} else {plusT}
+        let hitPos = ray.pos + ray.dir * t
+        let normal = (hitPos - pos).normalized()
+        return Some(new HitInfo{t, hitPos, normal, mat})
+    }
+}
+
+struct PathTracer {
+    pge         : &PixelGameEngine
+    allocator   : ArenaAllocator
+    objects     : Array(Object)
+    current_y   : int
+    cam_fov     : double
+    cam_pos     : Vec3
+    cam_dir     : Vec3
+    cam_right   : Vec3
+    cam_up      : Vec3
+    sample      : int
+    scene       : Object
+}
+
+impl PathTracer {
+    fn create() -> PathTracer {
+        return new {null, ArenaAllocator::create(1024), Array(Object)::create()}
+    }
+
+    fn dispose(ref Self) {
+        allocator.dispose()
+    }
+
+    fn add_object(ref Self, obj: $T) {
+        let dyn = alloc(T, allocator)
+        <<dyn = obj
+        objects.add(ref <<dyn)
+    }
+}
+
+impl PathTracer {
+    fn intersect(ref Self, ray: Ray) -> Option(HitInfo) {
+        let nearest: Option(HitInfo) = None
+
+        loop! n in 0 -> objects.get_length() {
+            let hit = objects[n].intersect(ray)
+            nearest = match (nearest, hit) {
+                (None, Some($hit)) -> Some(hit)
+                (Some($n), Some($hit)) if hit.distance < n.distance -> Some(hit)
+                $_ -> nearest
+            }
+        }
+
+        return nearest
+    }
+
+    fn calc_color(ref Self, ray: Ray, depth: int = 0) -> Vec3 {
+        if depth >= max_depth {
+            return new{}
+        }
+
+        return match self.intersect(ray) {
+            None -> new{}
+            Some($hit) -> {
+                let result = new Vec3{}
+
+                // emission
+                result += hit.material.emission
+
+                // diffuse
+                if hit.material.diffuse.max_component() > 0 {
+                    let rand = new StandardContinuousUniform{}
+                    let r1 = rand.sample() * 2.0 * pi
+                    let r2 = rand.sample()
+                    let r2s = sqrt(r2)
+
+                    let w = hit.normal
+                    let u = if abs(w.x) > 0.01 {new Vec3{0, 1, 0}} else {new Vec3{1, 0, 0}}
+                    let v = w.cross(u)
+                    let newDir = u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)
+                    let newRay = new Ray{hit.pos, newDir}
+
+                    result += hit.material.diffuse * calc_color(newRay, depth + 1)
+                }
+
+                // reflection
+                if hit.material.reflection.max_component() > 0 {
+                    let newDir = hit.normal * 2.0 + ray.dir
+                    let newRay = new Ray{hit.pos, newDir}
+                    result += hit.material.reflection * calc_color(newRay, depth + 1)
+                }
+
+                result
+            }
+        }
+    }
+}
+
+impl Game for PathTracer {
+    fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
+        self.pge = pge
+
+        self.cam_fov = 60.0::to_radians()
+        let aspect_ratio = double(width) / double(height)
+
+        let size = 10.0
+
+        // calculate cam rays (forward, right, up)
+        self.cam_pos = new{0, 4, 0}
+        self.cam_dir = new{0, 0, 1}
+
+        self.cam_right = new Vec3{0, 1, 0}.cross(self.cam_dir)
+        self.cam_up    = self.cam_dir.cross(self.cam_right)
+
+        let up_mag = tan(self.cam_fov / 2)
+        let right_mag = up_mag * aspect_ratio
+
+        self.cam_up     = self.cam_up.normalized() * up_mag
+        self.cam_right  = self.cam_right.normalized() * right_mag
+
+        printfln("  dir: {}", [self.cam_dir])
+        printfln("   up: {}", [self.cam_up])
+        printfln("right: {}", [self.cam_right])
+
+        // create objects
+        let m_red   = create(new Material{new{0.9, 0.2, 0.2}, new{}}, allocator)
+        let m_green = create(new Material{new{0.2, 0.9, 0.2}, new{}}, allocator)
+        let m_blue  = create(new Material{new{0.2, 0.2, 0.9}, new{}}, allocator)
+        let m_mirror  = create(new Material{new{}, new{}, new{1, 1, 1}}, allocator)
+        let m_grey  = create(new Material{new{0.75, 0.75, 0.75}, new{}}, allocator)
+        let m_light = create(new Material{new{1, 1, 1}, new{5, 5, 5}}, allocator)
+
+        self.add_object(new Sphere{new{-1000.0 - size / 2, 0, 0}, 1000, m_red}) // left
+        self.add_object(new Sphere{new{1000.0 + size / 2, 0, 0}, 1000, m_green}) // right
+
+        self.add_object(new Sphere{new{0, 0, 1000.0 + size / 2 + 10}, 1000, m_grey}) // back
+        self.add_object(new Sphere{new{0, 0, -1000.0 - size / 2 * 5}, 1000, m_grey}) // front
+
+        self.add_object(new Sphere{new{0, -1000.0, 0}, 1000, m_grey}) // bot
+        self.add_object(new Sphere{new{0, 1000.0 + size, 0}, 1000, m_grey}) // top
+
+        // spheres
+        self.add_object(new Sphere{new{3, 2, 13}, 2, m_mirror})
+        self.add_object(new Sphere{new{-2.5, 1, 10}, 1, m_green})
+        self.add_object(new Sphere{new{1, 1, 10}, 1, m_blue})
+
+        // light
+        self.add_object(new Sphere{new{0, size + 9.75, 10}, 10, m_light})
+        return true
+    }
+
+    fn on_destroy(ref Self) -> bool { return true }
+
+    fn on_update(ref Self, dt: float) -> bool {
+        if pge.get_key(Key.Escape).pressed {
+            return false
+        }// y coordinate in range [-1; 1]
+        let y = double(height - current_y - 1) / double(height) * 2 - 1
+
+        // loop through current line
+        loop! current_x in 0->width {
+            // x coordinate in range [-1; 1]
+            let x = double(current_x) / double(width) * 2 - 1
+
+            // calculate ray for current pixel
+            let dir = self.cam_dir + self.cam_right * x + self.cam_up * y
+            dir.normalize()
+
+            // shoot ray into scene and calculate color
+            let color = self.calc_color(new{cam_pos, dir})
+
+            if sample == 0 {
+                color.x = clamp(color.x, 0, 1)
+                color.y = clamp(color.y, 0, 1)
+                color.z = clamp(color.z, 0, 1)
+                let r = u8(color.x * 255.0)
+                let g = u8(color.y * 255.0)
+                let b = u8(color.z * 255.0)
+                pge.draw(current_x, current_y, Pixel::rgba(r, g, b))
+            } else {
+                let old_color = {
+                    let o = pge.get_pixel(current_x, current_y)
+                    new Vec3{double(o.r) / 255.0, double(o.g) / 255.0, double(o.b) / 255.0 }
+                }
+                let s = double(sample)
+                color = old_color * (s / (s + 1)) + color * (1.0 / (s + 1))
+                color.x = clamp(color.x, 0, 1)
+                color.y = clamp(color.y, 0, 1)
+                color.z = clamp(color.z, 0, 1)
+                let r = u8(color.x * 255.0)
+                let g = u8(color.y * 255.0)
+                let b = u8(color.z * 255.0)
+                pge.draw(current_x, current_y, Pixel::rgba(r, g, b))
+            }
+        }
+
+        current_y += 1
+        if current_y >= height {
+            current_y = 0
+            sample += 1
+        }
+
+        return true
+    }
 }
 
 fn Main() {
-    let a = 5
-    let b = 5.5
-
-    let c = (cast(double)a) + b
-    let d = double(a) + b
-    let e = @cast(double, a) + b
-
-    let x1 = cast(fn() -> &any)foo
-    let y1 = (fn() -> &any)(foo)
-    let z1 = @cast(fn() -> &any, foo)
-
-    let x2 = (cast(fn() -> &any)foo)()
-    let y2 = (fn() -> &any)(foo)()
-    let z2 = @cast(fn() -> &any, foo)()
-
-    println("Main")
+    let game = PathTracer::create()
+    let pge = PixelGameEngine::create(game, width, height, 1, 1)
+    if pge != null {
+        pge.start()
+    }
+    game.dispose()
 }

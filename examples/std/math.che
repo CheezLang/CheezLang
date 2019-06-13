@@ -17,6 +17,9 @@ fn sin(f: double) -> double;
 fn cosf(f: float) -> float;
 fn cos(f: double) -> double;
 
+fn tanf(f: float) -> float;
+fn tan(f: double) -> double;
+
 fn logf(f: float) -> float;
 fn log(f: double) -> double;
 
@@ -311,7 +314,27 @@ impl Vector3($T) {
         }
     }
 
-    fn dot(a: Self, b : Self) -> T {
+    // fn divvs(a: Self, b: T) -> Self #operator("/") {
+    //     return new {
+    //         a.x / b
+    //         a.y / b
+    //         a.z / b
+    //     }
+    // }
+
+    fn dot(a: Self, b: Self) -> T {
         return a.x * b.x + a.y * b.y + a.z * b.z
+    }
+
+    fn cross(ref Self, other: Self) -> Self {
+        return new {
+            y * other.z - z * other.y
+            z * other.x - x * other.z
+            x * other.y - y * other.x
+        }
+    }
+
+    fn max_component(ref Self) -> T {
+        return fmax(x, fmax(y, z))
     }
 }

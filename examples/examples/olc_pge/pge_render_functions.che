@@ -10,6 +10,10 @@ impl PixelGameEngine {
         }
     }
 
+    fn get_pixel(ref Self, x: int, y: int) -> Pixel {
+        return draw_target.get_pixel(x, y)
+    }
+
     fn draw(ref Self, x: int, y: int, p: Pixel) -> bool {
         if draw_target == null {
             return false
