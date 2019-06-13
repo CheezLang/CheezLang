@@ -317,9 +317,9 @@ namespace Cheez.Visitors
             return $"[{vals}]";
         }
 
-        public override string VisitTypeExpr(AstTypeRef astArrayTypeExpr, int data = 0)
+        public override string VisitTypeExpr(AstTypeRef type, int data = 0)
         {
-            return astArrayTypeExpr.Type.ToString();
+            return type.Value.ToString();
         }
 
         public override string VisitCompCallExpr(AstCompCallExpr call, int data = 0)
