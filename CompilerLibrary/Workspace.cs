@@ -113,10 +113,24 @@ namespace Cheez
                 //    System.Console.WriteLine($"  {t.Name} = {t.Type}");
             }
 
-            MainFunction = GlobalScope.GetSymbol("Main") as AstFunctionDecl;
-            if (MainFunction == null)
+            var mains = GlobalScope.GetFunctionsWithDirective("main");
+            if (mains.Count() > 1)
             {
-                mCompiler.ErrorHandler.ReportError("No main function was specified");
+                ReportError("Only one main function is allowed", 
+                    mains.Select(f => ("Main function defined here:", f.Name.Location)).ToList());
+            }
+            else if (mains.Count() == 0)
+            {
+                MainFunction = GlobalScope.GetSymbol("Main") as AstFunctionDecl;
+
+                if (MainFunction == null)
+                {
+                    mCompiler.ErrorHandler.ReportError("No main function was specified");
+                }
+            }
+            else
+            {
+                MainFunction = mains.First();
             }
 
             //ReportError("error");
