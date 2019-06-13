@@ -2,3 +2,79 @@
 // #load("examples/trait_function_call_performance")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
+
+// #load("test2")
+// #load("std:io/io")
+// #load("std:iterator")
+// #load("std:random")
+
+fn foo() -> int #coroutine {
+    return 0
+    return 1
+    return 2
+}
+
+fn mul(a: int) -> int #coroutine(b: int) {
+    while true {
+        return a * b
+    }
+}
+
+fn mul2(a: int) -> Fn(int) -> int {
+    return |b| a * b
+}
+
+fn bar(x: int) #fiber {
+    printfln("x = {}", [x])
+
+    println("bar: a")
+    yield
+    println("bar: b")
+    yield
+    baz()
+    yield
+    println("bar: c")
+    yield
+    println("bar: d")
+}
+
+fn baz() {
+    println("   baz: a")
+    yield
+    println("   baz: b")
+    yield
+    println("   baz: c")
+    yield
+    println("   baz: d")
+}
+
+fn Main() {
+    let b: Fiber = bar()
+    b() // bar: a
+    b() // bar: b
+    b() //    baz: a
+    b() //    baz: b
+    b() //    baz: c
+    b() //    baz: d
+    b() // bar: c
+    b() // bar: d
+    b() //
+
+    let f: Fn() -> int = foo()
+
+    println(f())
+    println(f())
+    println(f())
+    println(f()) // panics
+
+    let doubl: Fn(int) -> int = mul(2)
+    println(doubl(1))
+    println(doubl(2))
+    println(doubl(3))
+
+    let triple: Fn(int) -> int = mul2(3)
+    println(triple(1))
+    println(triple(2))
+    println(triple(3))
+}
+
