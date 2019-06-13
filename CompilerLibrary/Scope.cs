@@ -646,6 +646,17 @@ namespace Cheez
             return Parent?.GetSymbol(name);
         }
 
+        public IEnumerable<AstFunctionDecl> GetFunctionsWithDirective(string directive)
+        {
+            foreach (var f in Functions)
+                if (f.HasDirective(directive))
+                    yield return f;
+
+            if (Parent != null)
+                foreach (var f in Parent.GetFunctionsWithDirective(directive))
+                    yield return f;
+        }
+
         public bool DefineImplFunction(AstFunctionDecl f)
         {
             if (!mImplTable.TryGetValue(f.ImplBlock, out var list))
