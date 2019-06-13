@@ -1253,6 +1253,33 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "cast":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr.Location, "@cast requires two arguments (type and value)");
+                            return expr;
+                        }
+
+                        var targetTypeExpr = InferArg(0, null);
+                        if (targetTypeExpr.Type != CheezType.Type)
+                        {
+                            ReportError(targetTypeExpr.Location, $"First argument of @cast has to be a type but is {targetTypeExpr.Type}");
+                            return expr;
+                        }
+
+                        var targetType = (CheezType)targetTypeExpr.Value;
+                        var value = InferArg(1, null);
+
+                        var cast = new AstCastExpr(
+                            new AstTypeRef(targetType, targetTypeExpr.Location),
+                            value,
+                            expr.Location);
+                        cast.Replace(expr);
+
+                        return InferTypeHelper(cast, expected, context);
+                    }
+
                 case "panic":
                     {
                         if (expr.Arguments.Count != 1)
@@ -2247,9 +2274,28 @@ namespace Cheez
                         return e;
                     }
 
-                case CheezTypeType type:
+                case CheezTypeType type when expr.Function.Value is GenericStructType ||
+                                        expr.Function.Value is GenericTraitType ||
+                                        expr.Function.Value is GenericEnumType:
                     {
                         return InferTypeGenericTypeCallExpr(expr, context);
+                    }
+
+                    // this is a cast
+                case CheezTypeType _:
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "Cast requires exactly one argument!");
+                            return expr;
+                        }
+
+                        var targetType = (CheezType)expr.Function.Value;
+                        var cast = new AstCastExpr(new AstTypeRef(targetType, expr.Function.Location),
+                            expr.Arguments[0].Expr,
+                            expr.Location);
+                        cast.Replace(expr);
+                        return InferTypeHelper(cast, expected, context);
                     }
 
                 case ErrorType _: return expr;
