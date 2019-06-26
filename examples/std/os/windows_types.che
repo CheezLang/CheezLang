@@ -25,6 +25,8 @@ typedef WNDCLASS        = WNDCLASSA
 typedef UCHAR           = u8
 typedef BYTE            = u8
 typedef WORD            = u16
+typedef SIZE_T          = u64
+typedef THREAD_START_ROUTINE = fn(&any) -> DWORD #stdcall
 
 struct POINT {
     pub x: i32
@@ -138,6 +140,12 @@ struct PIXELFORMATDESCRIPTOR {
     pub dwLayerMask     : DWORD
     pub dwVisibleMask   : DWORD
     pub dwDamageMask    : DWORD
+}
+
+struct SECURITY_ATTRIBUTES {
+  pub nLength               : DWORD
+  pub lpSecurityDescriptor  : &any
+  pub bInheritHandle        : BOOL
 }
 
 

@@ -1,5 +1,7 @@
 #load("windows_types")
 
+let const CREATE_SUSPENDED                  : DWORD = 0x00000004
+let const STACK_SIZE_PARAM_IS_A_RESERVATION : DWORD = 0x00010000
 
 let const PFD_MAIN_PLANE            : u8    = 0
 let const PFD_OVERLAY_PLANE         : u8    = 1

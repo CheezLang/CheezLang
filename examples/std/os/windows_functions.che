@@ -47,5 +47,10 @@ fn ConvertThreadToFiber(lpParameter: &any) -> &any #stdcall;
 fn SwitchToFiber(fiber: &any) #stdcall;
 fn CreateFiber(dwStackSize: int, lpStartAddress: fn(&any) #stdcall, lpParameter: &any) -> &any #stdcall;
 
+// threads
+fn CreateThread(lpThreadAttributes: &SECURITY_ATTRIBUTES, dwStackSize: SIZE_T, lpStartAddress: THREAD_START_ROUTINE, lpParameter: &any, dwCreationFlags: DWORD, lpThreadId: &DWORD) -> HANDLE #stdcall;
+fn ResumeThread(hThread: HANDLE) -> DWORD #stdcall;
+// fn ExitThread(hThread: HANDLE) -> DWORD #stdcall;
+fn TerminateThread(hThread: HANDLE, dwExitCode: DWORD) -> BOOL #stdcall;
 // somehow not linking
 // fn GetCurrentDirectory(nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;

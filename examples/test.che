@@ -13,6 +13,8 @@ let const height: int = 450 / scale
 let const max_depth: int = 4
 let const pi: double = 3.14159265359
 
+let const thread_count: int = 4
+
 fn clamp(value: double, min: double, max: double) -> double {
     if value < min { return min }
     if value > max { return max }
@@ -100,18 +102,18 @@ struct PathTracer(PRNG: type) {
     pge         : &PixelGameEngine
     allocator   : ArenaAllocator
     objects     : Array(Object)
-    current_y   : int
     cam_fov     : double
-    cam_pos     : Vec3
-    cam_dir     : Vec3
-    cam_right   : Vec3
-    cam_up      : Vec3
-    sample      : int
+    pub cam_pos     : Vec3
+    pub cam_dir     : Vec3
+    pub cam_right   : Vec3
+    pub cam_up      : Vec3
     sample_t    : double
     total_t     : double
     scene       : Object
-    buffer      : []Vec3
-    prngs       : []PRNG
+    pub buffer  : []Vec3
+    pub prngs   : []PRNG
+    threads     : [thread_count]HANDLE
+    pub thread_datas: [thread_count](id: int, pt: &PathTracer(PRNG), samples: int)
 }
 
 impl PathTracer($PRNG) {
@@ -202,6 +204,48 @@ impl PathTracer($PRNG) {
     }
 }
 
+fn pathtracer_thread(_data: &any) -> u32 #stdcall {
+    let data = @cast(&(index: int, pt: &PathTracer(MTwister)), _data)
+
+    let y_range = height / thread_count
+    let start_y = data.index * y_range
+    let end_y   = (data.index + 1) * y_range - 1
+    if height - end_y < y_range {
+        end_y = height - 1
+    }
+
+    printfln("{}: {} -> {}", [data.index, start_y, end_y])
+
+    while true {
+        loop! current_y in start_y ->> end_y {
+            // loop through current line
+            loop! current_x in 0 -> width {
+                let index = current_x + current_y * width
+                let prng = &data.pt.prngs[index]
+
+                // x coordinate in range [-1; 1]
+                // y coordinate in range [-1; 1]
+                let blur_radius: double = 0.5
+                let x = (double(current_x) + prng.next_double() * blur_radius * 2 - blur_radius) / double(width) * 2 - 1
+                let y = (double(height - current_y - 1) + prng.next_double() * blur_radius * 2 - blur_radius) / double(height) * 2 - 1
+
+
+
+                // calculate ray for current pixel
+                let dir = data.pt.cam_dir + data.pt.cam_right * x + data.pt.cam_up * y
+                dir.normalize()
+
+                // shoot ray into scene and calculate color
+                let color = data.pt.calc_color(new{data.pt.cam_pos, dir}, prng)
+                data.pt.buffer[index] += color
+            }
+        }
+
+        data.pt.thread_datas[data.index].samples += 1
+    }
+    return 0
+}
+
 impl Game for PathTracer($PRNG) {
     fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
         self.pge = pge
@@ -212,7 +256,7 @@ impl Game for PathTracer($PRNG) {
         let size = 10.0
 
         // calculate cam rays (forward, right, up)
-        self.cam_pos = new{0, 4, 0}
+        self.cam_pos = new{0, 3, 0}
         self.cam_dir = new{0, 0, 1}
 
         self.cam_right = new Vec3{0, 1, 0}.cross(self.cam_dir)
@@ -234,7 +278,7 @@ impl Game for PathTracer($PRNG) {
         let m_blue  = create(new Material{new{0.2, 0.2, 0.9}, new{}}, allocator)
         let m_mirror  = create(new Material{new{}, new{}, new{1, 1, 1}}, allocator)
         let m_grey  = create(new Material{new{0.75, 0.75, 0.75}, new{}}, allocator)
-        let m_light = create(new Material{new{1, 1, 1}, new{5, 5, 5}}, allocator)
+        let m_light = create(new Material{new{1, 1, 1}, new{10, 10, 10}}, allocator)
 
         self.add_object(new Sphere{new{-1000.0 - size / 2, 0, 0}, 1000, m_red}) // left
         self.add_object(new Sphere{new{1000.0 + size / 2, 0, 0}, 1000, m_green}) // right
@@ -252,75 +296,94 @@ impl Game for PathTracer($PRNG) {
 
         // light
         self.add_object(new Sphere{new{0, size + 9.75, 10}, 10, m_light})
+
+        // create threads
+        loop! i in 0 -> thread_count {
+            thread_datas[i] = (i, &self, 0)
+            threads[i] = CreateThread(null, 0, pathtracer_thread, &thread_datas[i], 0, null)
+        }
         return true
     }
 
-    fn on_destroy(ref Self) -> bool { return true }
+    fn on_destroy(ref Self) -> bool {
+        loop! i in 0 -> thread_count {
+            TerminateThread(threads[i], 0)
+            CloseHandle(threads[i])
+        }
+        return true
+    }
 
     fn on_update(ref Self, dt: float) -> bool {
         if pge.get_key(Key.Escape).pressed {
             return false
         }
 
-        // loop through current line
-        loop! current_x in 0 -> width {
-            let index = current_x + current_y * width
-            let prng = &prngs[index]
+        //
+        loop! current_y in 0 -> height {
+            loop! current_x in 0 -> width {
+                let index = current_x + current_y * width
+                let thread_id = current_y / thread_count
+                if thread_id >= thread_count {
+                    thread_id = thread_count - 1
+                }
 
-            // x coordinate in range [-1; 1]
-            // y coordinate in range [-1; 1]
-            let blur_radius: double = 0.5
-            let x = (double(current_x) + prng.next_double() * blur_radius * 2 - blur_radius) / double(width) * 2 - 1
-            let y = (double(height - current_y - 1) + prng.next_double() * blur_radius * 2 - blur_radius) / double(height) * 2 - 1
+                let sample = thread_datas[thread_id].samples
 
+                // calculate color of pixel by taking the average of the color
+                // in the buffer
+                let pixel = {
+                    let bufferColor = buffer[index] / double(sample + 1)
+                    let c = Vec3::change_type(
+                        bufferColor.clamped(0.0, 1.0) * 255.0,
+                        u8)
+                    Pixel::rgba(c.x, c.y, c.z)
+                }
 
-
-            // calculate ray for current pixel
-            let dir = self.cam_dir + self.cam_right * x + self.cam_up * y
-            dir.normalize()
-
-            // shoot ray into scene and calculate color
-            let color = self.calc_color(new{cam_pos, dir}, prng)
-            buffer[index] += color
-
-            // calculate color of pixel by taking the average of the color
-            // in the buffer
-            let pixel = {
-                let bufferColor = buffer[index] / double(sample + 1)
-                let c = Vec3::change_type(
-                    bufferColor.clamped(0.0, 1.0) * 255.0,
-                    u8)
-                Pixel::rgba(c.x, c.y, c.z)
+                pge.draw(current_x, current_y, pixel)
             }
-
-            pge.draw(current_x, current_y, pixel)
         }
 
         sample_t += double(dt)
-        total_t += double(dt)
-        current_y += 1
-        if current_y >= height {
-            current_y = 0
-            sample += 1
+        if sample_t >= 1 {
+            total_t += 1
 
-            let s = String::format("Samples: {}, Time: {}s, Total: {}s", [sample, sample_t, int(total_t)])
+            let sps = double(thread_datas[0].samples) / total_t
+
+            let s = String::format("Samples: {}, Total: {}s, Samples per second: {}", [thread_datas[0].samples, int(total_t + 0.1), sps])
             pge.set_window_title(s)
             s.free()
-            sample_t = 0
+
+            sample_t -= 1
         }
 
         return true
     }
 }
 
+fn test_thread(data: &any) -> u32 #stdcall {
+    let index = int(data)
+    println(index)
+
+    return 0
+}
+
+fn test() {
+    let t1 = CreateThread(null, 0, test_thread, @cast(&any, 123), CREATE_SUSPENDED, null)
+    let t2 = CreateThread(null, 0, test_thread, @cast(&any, 456), CREATE_SUSPENDED, null)
+    let t3 = CreateThread(null, 0, test_thread, @cast(&any, 789), CREATE_SUSPENDED, null)
+
+    ResumeThread(t1)
+    ResumeThread(t2)
+    ResumeThread(t3)
+
+    while true {}
+
+    CloseHandle(t1)
+    CloseHandle(t2)
+    CloseHandle(t3)
+}
+
 fn Main() {
-    // let mt = MTwister::create(1)
-
-    // loop! x in 0 -> 10 {
-    //     // println(mt.next_int())
-    //     println(mt.next_double())
-    // }
-
     let game = PathTracer(MTwister)::create()
     // let game = PathTracer(LinearCongruentialGenerator)::create()
     let pge = PixelGameEngine::create(game, width, height, 1, 1)
