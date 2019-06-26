@@ -1637,6 +1637,81 @@ namespace Cheez
                         return expr;
                     }
 
+                case "bin_xor":
+                    {
+                        if (expr.Arguments.Count == 0)
+                        {
+                            ReportError(expr, $"@bin_xor requires at least one argument");
+                            return expr;
+                        }
+
+                        var minSize = 1;
+                        var ok = true;
+                        bool allConstant = true;
+                        bool anySigned = false;
+                        bool anyUnsigned = false;
+                        for (int i = 0; i < expr.Arguments.Count; i++)
+                        {
+                            var arg = expr.Arguments[i];
+                            arg.AttachTo(expr);
+                            arg = expr.Arguments[i] = InferType(arg, null);
+                            ConvertLiteralTypeToDefaultType(arg, null);
+                            if (arg.Type.IsErrorType)
+                            {
+                                ok = false;
+                                continue;
+                            }
+
+                            if (!arg.IsCompTimeValue)
+                                allConstant = false;
+
+                            if (arg.Type is IntType it)
+                            {
+                                if (it.Size > minSize)
+                                    minSize = it.Size;
+
+                                if (it.Signed)
+                                    anySigned = true;
+                                else
+                                    anyUnsigned = true;
+                            }
+                            else
+                            {
+                                ReportError(arg, $"Argument to @bin_xor must be ints");
+                            }
+                        }
+
+                        if (!ok)
+                            return expr;
+
+                        if (allConstant)
+                        {
+                            BigInteger result = 0;
+                            foreach (var a in expr.Arguments)
+                            {
+                                var v = ((NumberData)a.Value);
+                                result |= v.IntValue;
+                            }
+
+                            expr.Value = NumberData.FromBigInt(result);
+                            expr.IsCompTimeValue = true;
+                        }
+
+                        if (anySigned && anyUnsigned)
+                        {
+                            ReportError(expr, $"All argument types need to have the same sign");
+                        }
+
+                        for (int i = 0; i < expr.Arguments.Count; i++)
+                        {
+                            var to = IntType.GetIntType(minSize, (expr.Arguments[i].Type as IntType).Signed);
+                            expr.Arguments[i] = CheckType(expr.Arguments[i], to);
+                        }
+
+                        expr.Type = IntType.GetIntType(minSize, anySigned);
+                        return expr;
+                    }
+
                 case "bin_and":
                     {
                         if (expr.Arguments.Count == 0)

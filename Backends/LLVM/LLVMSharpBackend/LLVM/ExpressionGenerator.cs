@@ -123,6 +123,18 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return result;
             }
 
+            if (cc.Name.Name == "bin_xor")
+            {
+                var result = GenerateExpression(cc.Arguments[0], true);
+                for (int i = 1; i < cc.Arguments.Count; i++)
+                {
+                    var v = GenerateExpression(cc.Arguments[i], true);
+                    result = builder.CreateXor(result, v, "");
+                }
+
+                return result;
+            }
+
             if (cc.Name.Name == "bin_and")
             {
                 var result = GenerateExpression(cc.Arguments[0], true);

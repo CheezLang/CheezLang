@@ -71,6 +71,9 @@ namespace Cheez.Extras
 
         public ulong ToUlong()
         {
+            if (IntValue > long.MaxValue)
+                return (ulong)IntValue;
+
             unsafe
             {
                 long p = (long)IntValue;

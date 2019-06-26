@@ -606,6 +606,8 @@ namespace Cheez.Visitors
                 case '\r': return "'`r'";
                 case '\n': return "'`n'";
                 case '\t': return "'`t'";
+                case '\'': return "'`''";
+                case '`': return "'``'";
                 default: return $"'{expr.CharValue.ToString()}'";
             }
         }
