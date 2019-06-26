@@ -1431,6 +1431,7 @@ namespace Cheez.Parsing
             List<AstExpression> args = new List<AstExpression>();
             while (true)
             {
+                SkipNewlines();
                 var next = PeekToken();
                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                     break;
