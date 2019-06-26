@@ -64,6 +64,17 @@ struct Material {
     pub diffuse     : Vec3
     pub emission    : Vec3
     pub reflection  : Vec3
+    pub refraction  : Vec3
+    pub ior         : double
+}
+
+impl Material {
+    fn refrective(color: Vec3, ior: double) -> Self {
+        return new {
+            refraction = color
+            ior = ior
+        }
+    }
 }
 
 trait Object {
@@ -189,13 +200,70 @@ impl PathTracer {
 
                 // reflection
                 if hit.material.reflection.max_component() > 0 {
-                    let newDir = hit.normal * 2.0 + ray.dir
+                    let newDir = ray.dir.reflect(hit.normal)
                     let newRay = new Ray{hit.pos, newDir}
                     result += hit.material.reflection * calc_color(newRay, prng, contribution * hit.material.reflection.max_component(), depth + 1)
                 }
 
+                // refraction
+                let refract_max = hit.material.refraction.max_component()
+                if refract_max > 0 {
+                    let I = ray.dir.normalized()
+                    let n = hit.normal.normalized()
+
+                    let n1 = 1.0
+                    let n2 = hit.material.ior
+
+
+                    let outside = Vec3::dot(hit.normal, ray.dir) < 0
+                    if !outside {
+                        // coming from inside
+                        (n1, n2) = (n2, n1)
+                        n = -n
+                    }
+
+                    let kr = fresnel(I, n, hit.material.ior)
+                    let color_refracted = if kr >= 1 {new Vec3{}} else {
+                        let r = n1 / n2
+                        let c = -Vec3::dot(n, I)
+
+                        let f = r * c - sqrt(1 - r * r * (1 - c * c))
+                        let newDir = I * r + n * f
+                        let newRay = new Ray{hit.pos + newDir * 0.01, newDir}
+                        calc_color(newRay, prng, contribution * refract_max, depth + 1)
+                    }
+
+                    let color_reflected = {
+                        let newDir = I.reflect(n)
+                        let newRay = new Ray{hit.pos + newDir * 0.01, newDir}
+                        calc_color(newRay, prng, contribution * refract_max, depth + 1)
+                    }
+
+                    let color = color_reflected * kr + color_refracted * (1 - kr)
+                    result += hit.material.refraction * color
+                }
+
                 result
             }
+        }
+    }
+
+    fn fresnel(I: Vec3, N: Vec3, ior: double) -> kr: double {
+        let cosi = clamp(Vec3::dot(I, N), -1.0, 1.0, )
+        let etai = 1.0
+        let etat = ior
+        if cosi > 0 { (etai, etat) = (etat, etai) }
+        // Compute sini using Snell's law
+        let sint = etai / etat * sqrt(fmax(0.0, 1.0 - cosi * cosi))
+        // Total internal reflection
+        if sint >= 1 {
+            kr = 1
+        } else {
+            let cost = sqrt(fmax(0.0, 1.0 - sint * sint))
+            cosi = fabs(cosi)
+            let Rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost))
+            let Rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost))
+            kr = (Rs * Rs + Rp * Rp) / 2.0
         }
     }
 }
@@ -273,9 +341,10 @@ impl Game for PathTracer {
         let m_red   = create(new Material{new{0.9, 0.2, 0.2}, new{}}, allocator)
         let m_green = create(new Material{new{0.2, 0.9, 0.2}, new{}}, allocator)
         let m_blue  = create(new Material{new{0.2, 0.2, 0.9}, new{}}, allocator)
-        let m_mirror  = create(new Material{new{}, new{}, new{1, 1, 1}}, allocator)
+        let m_mirror= create(new Material{new{}, new{}, new{1, 1, 1}}, allocator)
         let m_grey  = create(new Material{new{0.75, 0.75, 0.75}, new{}}, allocator)
         let m_light = create(new Material{new{1, 1, 1}, new{10, 10, 10}}, allocator)
+        let m_glass = create(Material::refrective(new{1, 1, 1}, 1.95), allocator)
 
         self.add_object(new Sphere{new{-1000.0 - size / 2, 0, 0}, 1000, m_red}) // left
         self.add_object(new Sphere{new{1000.0 + size / 2, 0, 0}, 1000, m_green}) // right
@@ -287,9 +356,10 @@ impl Game for PathTracer {
         self.add_object(new Sphere{new{0, 1000.0 + size, 0}, 1000, m_grey}) // top
 
         // spheres
+        self.add_object(new Sphere{new{-0.25, 2.25, 8.5}, 1.75, m_glass})
         self.add_object(new Sphere{new{3, 2, 13}, 2, m_mirror})
-        self.add_object(new Sphere{new{-2.5, 1, 10}, 1, m_green})
-        self.add_object(new Sphere{new{1, 1, 10}, 1, m_blue})
+        self.add_object(new Sphere{new{-2.5, 1, 12}, 1, m_green})
+        self.add_object(new Sphere{new{1.75, 1, 10}, 1, m_blue})
 
         // light
         self.add_object(new Sphere{new{0, size + 9.75, 10}, 10, m_light})
@@ -319,7 +389,7 @@ impl Game for PathTracer {
         loop! current_y in 0 -> height {
             loop! current_x in 0 -> width {
                 let index = current_x + current_y * width
-                let thread_id = current_y / thread_count
+                let thread_id = current_y / (height / thread_count)
                 if thread_id >= thread_count {
                     thread_id = thread_count - 1
                 }
