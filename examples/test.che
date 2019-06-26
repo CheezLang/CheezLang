@@ -7,13 +7,16 @@
 #load("std:random/mt")
 
 typedef Vec3 = Vector3(double)
+
 let const scale : int = 1
 let const width : int = 800 / scale
 let const height: int = 450 / scale
-let const max_depth: int = 4
-let const pi: double = 3.14159265359
-
 let const thread_count: int = 4
+
+let const max_depth         : int       = 5
+let const min_contribution  : double    = 0.2
+
+let const pi: double = 3.14159265359
 
 fn clamp(value: double, min: double, max: double) -> double {
     if value < min { return min }
@@ -98,7 +101,7 @@ impl Object for Sphere {
     }
 }
 
-struct PathTracer(PRNG: type) {
+struct PathTracer {
     pge         : &PixelGameEngine
     allocator   : ArenaAllocator
     objects     : Array(Object)
@@ -111,26 +114,19 @@ struct PathTracer(PRNG: type) {
     total_t     : double
     scene       : Object
     pub buffer  : []Vec3
-    pub prngs   : []PRNG
     threads     : [thread_count]HANDLE
-    pub thread_datas: [thread_count](id: int, pt: &PathTracer(PRNG), samples: int)
+    pub thread_datas: [thread_count](id: int, pt: &PathTracer, samples: int)
 }
 
-impl PathTracer($PRNG) {
+impl PathTracer {
     fn create() -> Self {
         let b = alloc_n(Vec3, u64(width * height))
         c_memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
-
-        let prngs = alloc_n(PRNG, u64(width * height))
-        loop! i in 0 -> (width * height) {
-            prngs[i] = PRNG::create(u32(i * 123456))
-        }
 
         return new {
             allocator   = ArenaAllocator::create(1024)
             objects     = Array(Object)::create()
             buffer      = b
-            prngs       = prngs
         }
     }
 
@@ -161,8 +157,8 @@ impl PathTracer($PRNG) {
         return nearest
     }
 
-    fn calc_color(ref Self, ray: Ray, prng: &PRNG, depth: int = 0) -> Vec3 {
-        if depth >= max_depth {
+    fn calc_color(ref Self, ray: Ray, prng: &MTwister, contribution: double, depth: int = 0) -> Vec3 {
+        if depth >= max_depth or contribution < min_contribution {
             return new{}
         }
 
@@ -176,7 +172,7 @@ impl PathTracer($PRNG) {
 
                 // diffuse
                 if hit.material.diffuse.max_component() > 0 {
-                    let rand = new StandardContinuousUniform(PRNG) { prng }
+                    let rand = new StandardContinuousUniform(MTwister) { prng }
                     let r1 = rand.sample() * 2.0 * pi
                     let r2 = rand.sample()
                     let r2s = sqrt(r2)
@@ -188,14 +184,14 @@ impl PathTracer($PRNG) {
                     let newDir = u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)
                     let newRay = new Ray{hit.pos, newDir}
 
-                    result += hit.material.diffuse * calc_color(newRay, prng, depth + 1)
+                    result += hit.material.diffuse * calc_color(newRay, prng, contribution * hit.material.diffuse.max_component(), depth + 1)
                 }
 
                 // reflection
                 if hit.material.reflection.max_component() > 0 {
                     let newDir = hit.normal * 2.0 + ray.dir
                     let newRay = new Ray{hit.pos, newDir}
-                    result += hit.material.reflection * calc_color(newRay, prng, depth + 1)
+                    result += hit.material.reflection * calc_color(newRay, prng, contribution * hit.material.reflection.max_component(), depth + 1)
                 }
 
                 result
@@ -205,7 +201,7 @@ impl PathTracer($PRNG) {
 }
 
 fn pathtracer_thread(_data: &any) -> u32 #stdcall {
-    let data = @cast(&(index: int, pt: &PathTracer(MTwister)), _data)
+    let data = @cast(&(index: int, pt: &PathTracer), _data)
 
     let y_range = height / thread_count
     let start_y = data.index * y_range
@@ -215,38 +211,38 @@ fn pathtracer_thread(_data: &any) -> u32 #stdcall {
     }
 
     printfln("{}: {} -> {}", [data.index, start_y, end_y])
+    let seed = PseudoRandom::next_int()
+    let prng = MTwister::create(cast seed)
 
     while true {
         loop! current_y in start_y ->> end_y {
             // loop through current line
             loop! current_x in 0 -> width {
                 let index = current_x + current_y * width
-                let prng = &data.pt.prngs[index]
 
                 // x coordinate in range [-1; 1]
                 // y coordinate in range [-1; 1]
-                let blur_radius: double = 0.5
+                let blur_radius: double = 1
                 let x = (double(current_x) + prng.next_double() * blur_radius * 2 - blur_radius) / double(width) * 2 - 1
                 let y = (double(height - current_y - 1) + prng.next_double() * blur_radius * 2 - blur_radius) / double(height) * 2 - 1
-
-
 
                 // calculate ray for current pixel
                 let dir = data.pt.cam_dir + data.pt.cam_right * x + data.pt.cam_up * y
                 dir.normalize()
 
                 // shoot ray into scene and calculate color
-                let color = data.pt.calc_color(new{data.pt.cam_pos, dir}, prng)
+                let color = data.pt.calc_color(new{data.pt.cam_pos, dir}, &prng, 1)
                 data.pt.buffer[index] += color
             }
         }
 
         data.pt.thread_datas[data.index].samples += 1
+        // data.pt.thread_datas[data.index].samples = 0
     }
     return 0
 }
 
-impl Game for PathTracer($PRNG) {
+impl Game for PathTracer {
     fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
         self.pge = pge
 
@@ -256,8 +252,9 @@ impl Game for PathTracer($PRNG) {
         let size = 10.0
 
         // calculate cam rays (forward, right, up)
-        self.cam_pos = new{0, 3, 0}
-        self.cam_dir = new{0, 0, 1}
+        self.cam_pos = new{0, 5, 3}
+        self.cam_dir = new{0, -0.25, 1}
+        self.cam_dir.normalize()
 
         self.cam_right = new Vec3{0, 1, 0}.cross(self.cam_dir)
         self.cam_up    = self.cam_dir.cross(self.cam_right)
@@ -367,25 +364,8 @@ fn test_thread(data: &any) -> u32 #stdcall {
     return 0
 }
 
-fn test() {
-    let t1 = CreateThread(null, 0, test_thread, @cast(&any, 123), CREATE_SUSPENDED, null)
-    let t2 = CreateThread(null, 0, test_thread, @cast(&any, 456), CREATE_SUSPENDED, null)
-    let t3 = CreateThread(null, 0, test_thread, @cast(&any, 789), CREATE_SUSPENDED, null)
-
-    ResumeThread(t1)
-    ResumeThread(t2)
-    ResumeThread(t3)
-
-    while true {}
-
-    CloseHandle(t1)
-    CloseHandle(t2)
-    CloseHandle(t3)
-}
-
 fn Main() {
-    let game = PathTracer(MTwister)::create()
-    // let game = PathTracer(LinearCongruentialGenerator)::create()
+    let game = PathTracer::create()
     let pge = PixelGameEngine::create(game, width, height, 1, 1)
     if pge != null {
         pge.start()

@@ -9,6 +9,18 @@ struct MTwister {
     index   : u32
 }
 
+impl PseudoRandomGen for MTwister {
+    fn next_u32(ref Self) -> u32 {
+        return self.next()
+    }
+
+    fn next_double(ref Self) -> double {
+        let r = double(self.next())
+        let m = double(u32_max())
+        return r / m
+    }
+}
+
 impl MTwister {
     fn create(seed: u32) -> Self {
         let result = new MTwister { index = STATE_VECTOR_LENGTH }
@@ -19,28 +31,56 @@ impl MTwister {
         return result
     }
 
+    fn m32(x: u32) -> u32 {
+        return @bin_and(0x80000000u32, x)
+    }
+
+    fn l31(x: u32) -> u32 {
+        return @bin_and(0x7FFFFFFFu32, x)
+    }
+
+    fn unroll(ref Self, y: ref u32, i: ref u64, expr: u64) {
+        y = @bin_or(m32(mt[i+0u64]), l31(mt[i + 1u64]))
+        mt[i+0u64] = @bin_xor(
+            mt[expr],
+            @bin_lsr(<<&y, 1u32),
+            @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31i32), 31i32)), 0x9908b0dfu32)
+        )
+        i += 1
+    }
+
     fn generate_numbers(ref Self) {
         let i: u64 = 0
         let y: u32 = 0
-        
-        // @bin_and(mt[i], 0x80000000u32)
-        // @bin_and(mt[i], 0x7FFFFFFFu32)
 
         while i < STATE_VECTOR_DIFF {
-            y = @bin_or(@bin_and(mt[i], 0x80000000u32), @bin_and(mt[i + 1], 0x7FFFFFFFu32))
-            mt[i] = @bin_xor(mt[i + STATE_VECTOR_M], @bin_lsr(y, 1u32), @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31i32), 31i32)), 0x9908b0dfu32))
-            i += 1
+            unroll(y, i, i + STATE_VECTOR_M)
+            unroll(y, i, i + STATE_VECTOR_M)
         }
 
         while i < STATE_VECTOR_LENGTH - 1 {
-            y = @bin_or(@bin_and(mt[i], 0x80000000u32), @bin_and(mt[i + 1], 0x7FFFFFFFu32))
-            mt[i] = @bin_xor(mt[i - STATE_VECTOR_DIFF], @bin_lsr(y, 1u32), @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31i32), 31i32)), 0x9908b0dfu32))
-            i += 1
+            unroll(y, i, i - STATE_VECTOR_DIFF)
+            unroll(y, i, i - STATE_VECTOR_DIFF)
+            unroll(y, i, i - STATE_VECTOR_DIFF)
+            unroll(y, i, i - STATE_VECTOR_DIFF)
+            unroll(y, i, i - STATE_VECTOR_DIFF)
+            unroll(y, i, i - STATE_VECTOR_DIFF)
+            unroll(y, i, i - STATE_VECTOR_DIFF)
+            unroll(y, i, i - STATE_VECTOR_DIFF)
+            unroll(y, i, i - STATE_VECTOR_DIFF)
+            unroll(y, i, i - STATE_VECTOR_DIFF)
+            unroll(y, i, i - STATE_VECTOR_DIFF)
         }
 
-        y = @bin_or(@bin_and(mt[STATE_VECTOR_LENGTH - 1], 0x80000000u32), @bin_and(mt[0], 0x7FFFFFFFu32))
-        mt[STATE_VECTOR_LENGTH - 1] = @bin_xor(mt[STATE_VECTOR_M - 1], @bin_lsr(y, 1u32), @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31i32), 31i32)), 0x9908b0dfu32))
-        i += 1
+        {
+            y = @bin_or(m32(mt[STATE_VECTOR_LENGTH - 1]), l31(mt[0]))
+            mt[STATE_VECTOR_LENGTH - 1] = @bin_xor(
+                mt[STATE_VECTOR_M - 1],
+                @bin_lsr(<<&y, 1u32),
+                @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31i32), 31i32)), 0x9908b0dfu32)
+            )
+            i += 1
+        }
 
         loop! i in 0 -> int(STATE_VECTOR_LENGTH) {
             y = mt[i]
@@ -54,32 +94,26 @@ impl MTwister {
         index = 0
     }
 
-    fn next_u32(ref Self) -> u32 {
+    fn next(ref Self) -> u32 {
         if index >= STATE_VECTOR_LENGTH {
             generate_numbers()
             index = 0
         }
 
         index += 1
-        return mt[index - 1]
-    }
-
-    fn next_double(ref Self) -> double {
-        let r = double(next_uint())
-        let m = double(u64_max())
-        return r / m
+        return mt_temp[index - 1]
     }
 
     fn next_uint(ref Self, min: u64 = 0, max: u64 = cast u64_max()) -> u64 {
-        let a = u64(next_u32())
-        let b = u64(next_u32())
+        let a = u64(next())
+        let b = u64(next())
         let rand = @bin_or(@bin_lsl(b, 32), a)
         return rand % (max - min) + min
     }
 
     fn next_int(ref Self, min: int = 0, max: int = cast i64_max()) -> int {
-        let a = u64(next_u32())
-        let b = u64(next_u32())
+        let a = u64(next())
+        let b = u64(next())
         let rand = @bin_or(@bin_lsl(b, 32), a)
         return int(rand) % (max - min) + min
     }

@@ -3,12 +3,27 @@
 #load("std:util")
 #load("std:hash_table")
 
+impl PseudoRandomGen for LinearCongruentialGenerator {
+    fn next_u32(ref Self) -> u32 {
+        return self.next()
+    }
+
+    fn next_double(ref Self) -> double {
+        let r = double(self.next())
+        let m = double(u32_max())
+        return r / m
+    }
+}
+
 let lcg: LinearCongruentialGenerator = {
     let a = LinearCongruentialGenerator::create(cast get_time_microseconds())
-    while let i = 0; i < 100; i += 1 {
-        a.next()
-    }
+    loop! _ in 0 -> 1000 { a.next() }
     a
+}
+
+trait PseudoRandomGen {
+    fn next_u32(ref Self) -> u32;
+    fn next_double(ref Self) -> double;
 }
 
 struct PseudoRandom {}
