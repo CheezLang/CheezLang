@@ -45,6 +45,10 @@ fn u64_max() -> u64 {
     return cast(u64)-1
 }
 
+fn i64_max() -> i64 {
+    return @bin_lsr(0xFFFFFFFFFFFFFFFF, 1)
+}
+
 fn mod_pos(a: $T, b: T) -> T {
     return ((a % b) + b) % b
 }
@@ -314,13 +318,13 @@ impl Vector3($T) {
         }
     }
 
-    // fn divvs(a: Self, b: T) -> Self #operator("/") {
-    //     return new {
-    //         a.x / b
-    //         a.y / b
-    //         a.z / b
-    //     }
-    // }
+    fn divvs(a: Self, b: T) -> Self #operator("/") {
+        return new {
+            a.x / b
+            a.y / b
+            a.z / b
+        }
+    }
 
     fn dot(a: Self, b: Self) -> T {
         return a.x * b.x + a.y * b.y + a.z * b.z
@@ -336,5 +340,17 @@ impl Vector3($T) {
 
     fn max_component(ref Self) -> T {
         return fmax(x, fmax(y, z))
+    }
+
+    fn clamped(ref Self, min: T, max: T) -> Self {
+        return new {
+            clamp(x, min, max)
+            clamp(y, min, max)
+            clamp(z, min, max)
+        }
+    }
+
+    fn change_type(ref Self, $TargetType: type) -> Vector3(TargetType) {
+        return new { TargetType(x), TargetType(y), TargetType(z) }
     }
 }

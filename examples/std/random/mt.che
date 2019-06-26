@@ -1,0 +1,86 @@
+
+let const STATE_VECTOR_LENGTH   : u32 = 624
+let const STATE_VECTOR_M        : u32 = 397
+let const STATE_VECTOR_DIFF     : u32 = STATE_VECTOR_LENGTH - STATE_VECTOR_M
+
+struct MTwister {
+    mt      : [STATE_VECTOR_LENGTH]u32
+    mt_temp : [STATE_VECTOR_LENGTH]u32
+    index   : u32
+}
+
+impl MTwister {
+    fn create(seed: u32) -> Self {
+        let result = new MTwister { index = STATE_VECTOR_LENGTH }
+        result.mt[0] = seed
+        loop! i in 1 -> int(STATE_VECTOR_LENGTH) {
+            result.mt[i] = 0x6c078965 * @bin_xor(result.mt[i - 1], @bin_lsr(result.mt[i - 1], 30u32)) + u32(i)
+        }
+        return result
+    }
+
+    fn generate_numbers(ref Self) {
+        let i: u64 = 0
+        let y: u32 = 0
+        
+        // @bin_and(mt[i], 0x80000000u32)
+        // @bin_and(mt[i], 0x7FFFFFFFu32)
+
+        while i < STATE_VECTOR_DIFF {
+            y = @bin_or(@bin_and(mt[i], 0x80000000u32), @bin_and(mt[i + 1], 0x7FFFFFFFu32))
+            mt[i] = @bin_xor(mt[i + STATE_VECTOR_M], @bin_lsr(y, 1u32), @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31i32), 31i32)), 0x9908b0dfu32))
+            i += 1
+        }
+
+        while i < STATE_VECTOR_LENGTH - 1 {
+            y = @bin_or(@bin_and(mt[i], 0x80000000u32), @bin_and(mt[i + 1], 0x7FFFFFFFu32))
+            mt[i] = @bin_xor(mt[i - STATE_VECTOR_DIFF], @bin_lsr(y, 1u32), @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31i32), 31i32)), 0x9908b0dfu32))
+            i += 1
+        }
+
+        y = @bin_or(@bin_and(mt[STATE_VECTOR_LENGTH - 1], 0x80000000u32), @bin_and(mt[0], 0x7FFFFFFFu32))
+        mt[STATE_VECTOR_LENGTH - 1] = @bin_xor(mt[STATE_VECTOR_M - 1], @bin_lsr(y, 1u32), @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31i32), 31i32)), 0x9908b0dfu32))
+        i += 1
+
+        loop! i in 0 -> int(STATE_VECTOR_LENGTH) {
+            y = mt[i]
+            y = @bin_xor(y, @bin_lsr(y, 11u32))
+            y = @bin_xor(y, @bin_and(@bin_lsl(y, 7u32), 0x9d2c5680u32))
+            y = @bin_xor(y, @bin_and(@bin_lsl(y, 15u32), 0xefc60000u32))
+            y = @bin_xor(y, @bin_lsr(y, 18u32))
+            mt_temp[i] = y
+        }
+
+        index = 0
+    }
+
+    fn next_u32(ref Self) -> u32 {
+        if index >= STATE_VECTOR_LENGTH {
+            generate_numbers()
+            index = 0
+        }
+
+        index += 1
+        return mt[index - 1]
+    }
+
+    fn next_double(ref Self) -> double {
+        let r = double(next_uint())
+        let m = double(u64_max())
+        return r / m
+    }
+
+    fn next_uint(ref Self, min: u64 = 0, max: u64 = cast u64_max()) -> u64 {
+        let a = u64(next_u32())
+        let b = u64(next_u32())
+        let rand = @bin_or(@bin_lsl(b, 32), a)
+        return rand % (max - min) + min
+    }
+
+    fn next_int(ref Self, min: int = 0, max: int = cast i64_max()) -> int {
+        let a = u64(next_u32())
+        let b = u64(next_u32())
+        let rand = @bin_or(@bin_lsl(b, 32), a)
+        return int(rand) % (max - min) + min
+    }
+}

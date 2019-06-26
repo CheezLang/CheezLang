@@ -72,6 +72,10 @@ struct PixelGameEngine {
     glBuffer            : GLuint
     glDeviceContext     : HDC   = null
     glRenderContext     : HGLRC = null
+
+    // other
+    auto_title          : bool = true
+    fps_string          : String
 }
 
 fn compare_ints(a: int, b: int) -> bool {
@@ -96,6 +100,7 @@ impl PixelGameEngine {
             pixel_x = 2.0f / cast(float) screen_w
             pixel_y = 2.0f / cast(float) screen_h
             mapKeys = Table(int, Key)::create(compare_ints)
+            fps_string = String::empty()
         }
 
         pge.default_draw_target = alloc(Sprite)
@@ -148,8 +153,6 @@ impl PixelGameEngine {
 
         let tp1 = get_time_microseconds()
         let tp2 = get_time_microseconds()
-
-        let fps_string = String::empty()
 
         while active {
             // Run as fast as possible
@@ -246,11 +249,13 @@ impl PixelGameEngine {
                 if fFrameTimer >= 1.0f {
                     fFrameTimer -= 1.0f
 
-                    fps_string.resize(0)
-                    fps_string.appendf("OneLoneCoder.com - Pixel Game Engine - FPS: {}", [nFrameCount])
-                    fps_string += cast(char) 0
+                    if auto_title {
+                        fps_string.resize(0)
+                        fps_string.appendf("OneLoneCoder.com - Pixel Game Engine - FPS: {}", [nFrameCount])
+                        fps_string += cast(char) 0
 
-                    SetWindowTextA(olc_hWnd, fps_string.get_raw())
+                        SetWindowTextA(olc_hWnd, fps_string.get_raw())
+                    }
                     nFrameCount = 0
                 }
             }

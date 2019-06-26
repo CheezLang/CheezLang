@@ -67,5 +67,16 @@ impl PixelGameEngine {
         if nMousePosXcache < 0 { nMousePosXcache = 0 }
         if nMousePosYcache < 0 { nMousePosYcache = 0 }
     }
+
+    //
+    fn set_window_title(ref Self, title: ref String) {
+        auto_title = false
+        
+        fps_string.resize(0)
+        fps_string.append(title)
+        fps_string += char(0)
+
+        SetWindowTextA(olc_hWnd, fps_string.get_raw())
+    }
 }
 

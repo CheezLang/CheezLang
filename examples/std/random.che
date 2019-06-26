@@ -10,6 +10,7 @@ let lcg: LinearCongruentialGenerator = {
     }
     a
 }
+
 struct PseudoRandom {}
 
 impl PseudoRandom {
@@ -56,10 +57,12 @@ impl IDistribution($T) {
 }
 
 // Standard Continuous Uniform distribution
-struct StandardContinuousUniform {}
-impl IDistribution(double) for StandardContinuousUniform {
+struct StandardContinuousUniform(T: type) {
+    prng: &T
+}
+impl IDistribution(double) for StandardContinuousUniform($T) {
     fn sample(ref Self) -> double {
-        return PseudoRandom::next_double()
+        return prng.next_double()
     }
 }
 
@@ -67,12 +70,12 @@ impl IDistribution(double) for StandardContinuousUniform {
 struct NormalDistribution {
     mean    : double
     sigma   : double
-    scu     : StandardContinuousUniform
+    scu     : StandardContinuousUniform(LinearCongruentialGenerator)
 }
 
 impl NormalDistribution {
     fn create(mean: double, sigma: double) -> Self {
-        return new{mean, sigma, new StandardContinuousUniform{}}
+        return new{mean, sigma, new StandardContinuousUniform(LinearCongruentialGenerator) {&lcg}}
     }
 }
 

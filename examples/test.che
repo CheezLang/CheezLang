@@ -4,10 +4,12 @@
 #load("std:array")
 #load("std:math")
 #load("std:random")
+#load("std:random/mt")
 
 typedef Vec3 = Vector3(double)
-let const width : int = 800
-let const height: int = 600
+let const scale : int = 1
+let const width : int = 800 / scale
+let const height: int = 450 / scale
 let const max_depth: int = 4
 let const pi: double = 3.14159265359
 
@@ -94,7 +96,7 @@ impl Object for Sphere {
     }
 }
 
-struct PathTracer {
+struct PathTracer(PRNG: type) {
     pge         : &PixelGameEngine
     allocator   : ArenaAllocator
     objects     : Array(Object)
@@ -105,16 +107,35 @@ struct PathTracer {
     cam_right   : Vec3
     cam_up      : Vec3
     sample      : int
+    sample_t    : double
+    total_t     : double
     scene       : Object
+    buffer      : []Vec3
+    prngs       : []PRNG
 }
 
-impl PathTracer {
-    fn create() -> PathTracer {
-        return new {null, ArenaAllocator::create(1024), Array(Object)::create()}
+impl PathTracer($PRNG) {
+    fn create() -> Self {
+        let b = alloc_n(Vec3, u64(width * height))
+        c_memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
+
+        let prngs = alloc_n(PRNG, u64(width * height))
+        loop! i in 0 -> (width * height) {
+            prngs[i] = PRNG::create(u32(i * 123456))
+        }
+
+        return new {
+            allocator   = ArenaAllocator::create(1024)
+            objects     = Array(Object)::create()
+            buffer      = b
+            prngs       = prngs
+        }
     }
 
     fn dispose(ref Self) {
         allocator.dispose()
+        objects.dispose()
+        free_n(buffer)
     }
 
     fn add_object(ref Self, obj: $T) {
@@ -122,9 +143,7 @@ impl PathTracer {
         <<dyn = obj
         objects.add(ref <<dyn)
     }
-}
 
-impl PathTracer {
     fn intersect(ref Self, ray: Ray) -> Option(HitInfo) {
         let nearest: Option(HitInfo) = None
 
@@ -140,7 +159,7 @@ impl PathTracer {
         return nearest
     }
 
-    fn calc_color(ref Self, ray: Ray, depth: int = 0) -> Vec3 {
+    fn calc_color(ref Self, ray: Ray, prng: &PRNG, depth: int = 0) -> Vec3 {
         if depth >= max_depth {
             return new{}
         }
@@ -155,25 +174,26 @@ impl PathTracer {
 
                 // diffuse
                 if hit.material.diffuse.max_component() > 0 {
-                    let rand = new StandardContinuousUniform{}
+                    let rand = new StandardContinuousUniform(PRNG) { prng }
                     let r1 = rand.sample() * 2.0 * pi
                     let r2 = rand.sample()
                     let r2s = sqrt(r2)
 
                     let w = hit.normal
-                    let u = if abs(w.x) > 0.01 {new Vec3{0, 1, 0}} else {new Vec3{1, 0, 0}}
-                    let v = w.cross(u)
+                    let u = if abs(w.x) > abs(w.z) {new Vec3{-w.y, w.x, 0}} else {new Vec3{0, -w.z, w.y}}
+                    u.normalize()
+                    let v = u.cross(w)
                     let newDir = u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)
                     let newRay = new Ray{hit.pos, newDir}
 
-                    result += hit.material.diffuse * calc_color(newRay, depth + 1)
+                    result += hit.material.diffuse * calc_color(newRay, prng, depth + 1)
                 }
 
                 // reflection
                 if hit.material.reflection.max_component() > 0 {
                     let newDir = hit.normal * 2.0 + ray.dir
                     let newRay = new Ray{hit.pos, newDir}
-                    result += hit.material.reflection * calc_color(newRay, depth + 1)
+                    result += hit.material.reflection * calc_color(newRay, prng, depth + 1)
                 }
 
                 result
@@ -182,7 +202,7 @@ impl PathTracer {
     }
 }
 
-impl Game for PathTracer {
+impl Game for PathTracer($PRNG) {
     fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
         self.pge = pge
 
@@ -240,50 +260,53 @@ impl Game for PathTracer {
     fn on_update(ref Self, dt: float) -> bool {
         if pge.get_key(Key.Escape).pressed {
             return false
-        }// y coordinate in range [-1; 1]
-        let y = double(height - current_y - 1) / double(height) * 2 - 1
+        }
 
         // loop through current line
-        loop! current_x in 0->width {
+        loop! current_x in 0 -> width {
+            let index = current_x + current_y * width
+            let prng = &prngs[index]
+
             // x coordinate in range [-1; 1]
-            let x = double(current_x) / double(width) * 2 - 1
+            // y coordinate in range [-1; 1]
+            let blur_radius: double = 0.5
+            let x = (double(current_x) + prng.next_double() * blur_radius * 2 - blur_radius) / double(width) * 2 - 1
+            let y = (double(height - current_y - 1) + prng.next_double() * blur_radius * 2 - blur_radius) / double(height) * 2 - 1
+
+
 
             // calculate ray for current pixel
             let dir = self.cam_dir + self.cam_right * x + self.cam_up * y
             dir.normalize()
 
             // shoot ray into scene and calculate color
-            let color = self.calc_color(new{cam_pos, dir})
+            let color = self.calc_color(new{cam_pos, dir}, prng)
+            buffer[index] += color
 
-            if sample == 0 {
-                color.x = clamp(color.x, 0, 1)
-                color.y = clamp(color.y, 0, 1)
-                color.z = clamp(color.z, 0, 1)
-                let r = u8(color.x * 255.0)
-                let g = u8(color.y * 255.0)
-                let b = u8(color.z * 255.0)
-                pge.draw(current_x, current_y, Pixel::rgba(r, g, b))
-            } else {
-                let old_color = {
-                    let o = pge.get_pixel(current_x, current_y)
-                    new Vec3{double(o.r) / 255.0, double(o.g) / 255.0, double(o.b) / 255.0 }
-                }
-                let s = double(sample)
-                color = old_color * (s / (s + 1)) + color * (1.0 / (s + 1))
-                color.x = clamp(color.x, 0, 1)
-                color.y = clamp(color.y, 0, 1)
-                color.z = clamp(color.z, 0, 1)
-                let r = u8(color.x * 255.0)
-                let g = u8(color.y * 255.0)
-                let b = u8(color.z * 255.0)
-                pge.draw(current_x, current_y, Pixel::rgba(r, g, b))
+            // calculate color of pixel by taking the average of the color
+            // in the buffer
+            let pixel = {
+                let bufferColor = buffer[index] / double(sample + 1)
+                let c = Vec3::change_type(
+                    bufferColor.clamped(0.0, 1.0) * 255.0,
+                    u8)
+                Pixel::rgba(c.x, c.y, c.z)
             }
+
+            pge.draw(current_x, current_y, pixel)
         }
 
+        sample_t += double(dt)
+        total_t += double(dt)
         current_y += 1
         if current_y >= height {
             current_y = 0
             sample += 1
+
+            let s = String::format("Samples: {}, Time: {}s, Total: {}s", [sample, sample_t, int(total_t)])
+            pge.set_window_title(s)
+            s.free()
+            sample_t = 0
         }
 
         return true
@@ -291,7 +314,15 @@ impl Game for PathTracer {
 }
 
 fn Main() {
-    let game = PathTracer::create()
+    // let mt = MTwister::create(1)
+
+    // loop! x in 0 -> 10 {
+    //     // println(mt.next_int())
+    //     println(mt.next_double())
+    // }
+
+    let game = PathTracer(MTwister)::create()
+    // let game = PathTracer(LinearCongruentialGenerator)::create()
     let pge = PixelGameEngine::create(game, width, height, 1, 1)
     if pge != null {
         pge.start()
