@@ -26,25 +26,25 @@ impl MTwister {
         let result = new MTwister { index = STATE_VECTOR_LENGTH }
         result.mt[0] = seed
         loop! i in 1 -> int(STATE_VECTOR_LENGTH) {
-            result.mt[i] = 0x6c078965 * @bin_xor(result.mt[i - 1], @bin_lsr(result.mt[i - 1], 30u32)) + u32(i)
+            result.mt[i] = 0x6c078965 * @bin_xor(result.mt[i - 1], @bin_lsr(result.mt[i - 1], 30)) + u32(i)
         }
         return result
     }
 
     fn m32(x: u32) -> u32 {
-        return @bin_and(0x80000000u32, x)
+        return @bin_and(x, 0x80000000)
     }
 
     fn l31(x: u32) -> u32 {
-        return @bin_and(0x7FFFFFFFu32, x)
+        return @bin_and(x, 0x7FFFFFFF)
     }
 
     fn unroll(ref Self, y: ref u32, i: ref u64, expr: u64) {
-        y = @bin_or(m32(mt[i+0u64]), l31(mt[i + 1u64]))
-        mt[i+0u64] = @bin_xor(
+        y = @bin_or(m32(mt[i]), l31(mt[i + 1]))
+        mt[i] = @bin_xor(
             mt[expr],
-            @bin_lsr(<<&y, 1u32),
-            @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31i32), 31i32)), 0x9908b0dfu32)
+            @bin_lsr(y, 1),
+            @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31), 31)), 0x9908b0df)
         )
         i += 1
     }
@@ -76,18 +76,18 @@ impl MTwister {
             y = @bin_or(m32(mt[STATE_VECTOR_LENGTH - 1]), l31(mt[0]))
             mt[STATE_VECTOR_LENGTH - 1] = @bin_xor(
                 mt[STATE_VECTOR_M - 1],
-                @bin_lsr(<<&y, 1u32),
-                @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31i32), 31i32)), 0x9908b0dfu32)
+                @bin_lsr(y, 1),
+                @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31), 31)), 0x9908b0df)
             )
             i += 1
         }
 
         loop! i in 0 -> int(STATE_VECTOR_LENGTH) {
             y = mt[i]
-            y = @bin_xor(y, @bin_lsr(y, 11u32))
-            y = @bin_xor(y, @bin_and(@bin_lsl(y, 7u32), 0x9d2c5680u32))
-            y = @bin_xor(y, @bin_and(@bin_lsl(y, 15u32), 0xefc60000u32))
-            y = @bin_xor(y, @bin_lsr(y, 18u32))
+            y = @bin_xor(y, @bin_lsr(y, 11))
+            y = @bin_xor(y, @bin_and(@bin_lsl(y, 7), 0x9d2c5680))
+            y = @bin_xor(y, @bin_and(@bin_lsl(y, 15), 0xefc60000))
+            y = @bin_xor(y, @bin_lsr(y, 18))
             mt_temp[i] = y
         }
 
