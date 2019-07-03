@@ -47,12 +47,6 @@ struct Ray {
     pub dir: Vec3
 }
 
-impl Ray {
-    fn from_pos_and_dir(pos: Vec3, dir: Vec3) -> Self {
-        return new {pos, dir}
-    }
-}
-
 struct HitInfo {
     pub distance: double
     pub pos     : Vec3
@@ -113,31 +107,31 @@ impl Object for Sphere {
 }
 
 struct PathTracer {
-    pge         : &PixelGameEngine
-    allocator   : ArenaAllocator
-    objects     : Array(Object)
-    cam_fov     : double
+    pge             : &PixelGameEngine
+    allocator       : ArenaAllocator
+    objects         : Array(Object)
+    cam_fov         : double
     pub cam_pos     : Vec3
     pub cam_dir     : Vec3
     pub cam_right   : Vec3
     pub cam_up      : Vec3
-    sample_t    : double
-    total_t     : double
-    scene       : Object
-    pub buffer  : []Vec3
-    threads     : [thread_count]HANDLE
+    sample_t        : double
+    total_t         : double
+    pub buffer      : []Vec3
+    threads         : [thread_count]HANDLE
     pub thread_datas: [thread_count](id: int, pt: &PathTracer, samples: int)
 }
 
 impl PathTracer {
     fn create() -> Self {
-        let b = alloc_n(Vec3, u64(width * height))
-        c_memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
-
         return new {
             allocator   = ArenaAllocator::create(1024)
             objects     = Array(Object)::create()
-            buffer      = b
+            buffer      = {
+                let b = alloc_n(Vec3, u64(width * height))
+                c_memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
+                b
+            }
         }
     }
 
@@ -343,7 +337,7 @@ impl Game for PathTracer {
         let m_blue  = create(new Material{new{0.2, 0.2, 0.9}, new{}}, allocator)
         let m_mirror= create(new Material{new{}, new{}, new{1, 1, 1}}, allocator)
         let m_grey  = create(new Material{new{0.75, 0.75, 0.75}, new{}}, allocator)
-        let m_light = create(new Material{new{1, 1, 1}, new{10, 10, 10}}, allocator)
+        let m_light = create(new Material{new{}, new{10, 10, 10}}, allocator)
         let m_glass = create(Material::refrective(new{1, 1, 1}, 1.95), allocator)
 
         self.add_object(new Sphere{new{-1000.0 - size / 2, 0, 0}, 1000, m_red}) // left
