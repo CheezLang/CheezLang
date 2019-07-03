@@ -5,6 +5,7 @@ using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
+using Cheez.Extras;
 using Cheez.Types;
 using Cheez.Util;
 
@@ -635,6 +636,10 @@ namespace Cheez.Visitors
                     v = v.Replace("`", "``").Replace("\r", "`r").Replace("\n", "`n").Replace("\0", "`0");
                     return $"\"{v.Replace("\"", "`\"")}\"";
                 }
+                else if (c.Value is NumberData nd)
+                {
+                    return VisitNumberData(nd);
+                }
                 return c.Value.ToString();
             }
             if (ident.IsPolymorphic)
@@ -657,17 +662,22 @@ namespace Cheez.Visitors
 
         public override string VisitNullExpr(AstNullExpr nul, int data = 0) => "null";
 
-        public override string VisitNumberExpr(AstNumberExpr num, int indentLevel = 0)
+        private string VisitNumberData(NumberData data)
         {
             var sb = new StringBuilder();
-            if (num.Data.IntBase == 2)
+            if (data.IntBase == 2)
                 sb.Append("0b");
-            else if (num.Data.IntBase == 16)
+            else if (data.IntBase == 16)
                 sb.Append("0x");
-            sb.Append(num.Data.StringValue);
-            if (num.Suffix != null)
-                sb.Append(num.Suffix);
+            else if (data.IntBase != 10)
+                sb.Append($"0base({data.IntBase})");
+            sb.Append(data.StringValue);
             return sb.ToString();
+        }
+
+        public override string VisitNumberExpr(AstNumberExpr num, int indentLevel = 0)
+        {
+            return VisitNumberData(num.Data) + (num.Suffix ?? "");
         }
 
         public override string VisitAddressOfExpr(AstAddressOfExpr add, int data = 0)
