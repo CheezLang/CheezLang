@@ -8,10 +8,10 @@
 
 typedef Vec3 = Vector3(double)
 
-let const scale : int = 1
-let const width : int = 800 / scale
-let const height: int = 450 / scale
-let const thread_count: int = 4
+let const scale             : int = 1
+let const width             : int = 800 / scale
+let const height            : int = 450 / scale
+let const thread_count      : int = 4
 
 let const max_depth         : int       = 5
 let const min_contribution  : double    = 0.2
