@@ -1,1 +1,129 @@
-#load("compiler/main")
+#load("compiler/lexer")
+
+#load("std:stack")
+
+impl TokenType {
+    fn get_precedence(Self) -> int {
+        use TokenType
+        return match self {
+            Plus        -> 5
+            Minus       -> 5
+            Asterisk    -> 10
+            ForwardSlash -> 10
+            OpenParen   -> 2
+
+            $_          -> {
+                @panic("called with non operator")
+                -1
+            }
+        }
+    }
+}
+
+impl Token {
+    fn get_text(ref Self) -> String {
+        use TokenType
+        return match self.ttype {
+            Plus        -> "+"::to_string()
+            Minus       -> "-"::to_string()
+            Asterisk    -> "*"::to_string()
+            ForwardSlash -> "/"::to_string()
+
+            NumberLiteral -> {
+                match data {
+                    TokenData.Integer($val) -> String::format("{}", [val])
+                    TokenData.Double($val) -> String::format("{}", [val])
+                    $_ -> {
+                        @panic("TokenData was neither Integer nor Double")
+                        String::empty()
+                    }
+                }
+            }
+
+            $_          -> "?"::to_string()
+        }
+    }
+}
+
+fn pop_ops_while(new_order: ref Array(Token), stack: ref Stack(Token), precedence: int = -1) {
+    while !stack.empty() and stack.peek().ttype::get_precedence() >= precedence {
+        new_order.add(stack.pop())
+    }
+}
+
+fn infix_to_postfix(str: String) -> String {
+    let string_db = StringDatabase::create()
+    let lexer = Lexer::from_string(str, string_db)
+
+    let stack = Stack(Token)::create()
+    let new_order = Array(Token)::create()
+
+    while true {
+        let token = lexer.next_token()
+
+        use TokenType
+        match token.ttype {
+            NumberLiteral -> {
+                new_order.add(token)
+            }
+
+            Plus -> {
+                pop_ops_while(new_order, stack, token.ttype::get_precedence())
+                stack.push(token)
+            }
+
+            Minus -> {
+                pop_ops_while(new_order, stack, token.ttype::get_precedence())
+                stack.push(token)
+            }
+
+            Asterisk -> {
+                pop_ops_while(new_order, stack, token.ttype::get_precedence())
+                stack.push(token)
+            }
+
+            ForwardSlash -> {
+                pop_ops_while(new_order, stack, token.ttype::get_precedence())
+                stack.push(token)
+            }
+
+            OpenParen -> {
+                stack.push(token)
+            }
+
+            ClosingParen -> {
+                while !stack.empty() and int(stack.peek().ttype) != int(OpenParen) {
+                    new_order.add(stack.pop())
+                }
+                stack.pop()
+            }
+
+            EOF -> { 
+                break
+            }
+        }
+    }
+    pop_ops_while(new_order, stack)
+
+    let result = String::empty()
+    loop! i in 0 -> new_order.length {
+        let tok = new_order[i]
+        let txt = tok.get_text()
+        result.appendf("{} ", [txt])
+        txt.dispose()
+    }
+
+    new_order.dispose()
+    stack.dispose()
+    lexer.dispose()
+    string_db.dispose()
+
+    return result
+}
+
+fn Main() {
+    println(infix_to_postfix("1 + 2 * 3"::to_string()))
+    println(infix_to_postfix("(1 + 2) * 3"::to_string()))
+    println(infix_to_postfix("1 * (2 + 3)"::to_string()))
+    println(infix_to_postfix("1 * 2 + 3"::to_string()))
+}
