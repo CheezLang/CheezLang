@@ -1,0 +1,41 @@
+#load("std:array")
+
+struct Stack(T: type) {
+    array: Array(T)
+}
+
+impl Stack($T) {
+    fn create(initial_capacity: int = 10, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+        return new {
+            array = Array(T)::create(initial_capacity, allocator)
+        }
+    }
+
+    fn dispose(ref Self) {
+        array.dispose()
+    }
+
+    fn reserve(ref Self, size: int) {
+        array.reserve(size)
+    }
+
+    fn push(ref Self, item: T) {
+        array.add(item)
+    }
+
+    fn pop(ref Self) -> T {
+        @assert(array.length > 0)
+        let item = array[array.length - 1]
+        array.resize(array.length - 1)
+        return item
+    }
+
+    fn peek(ref Self) -> ref T {
+        @assert(array.length > 0)
+        return array[array.length - 1]
+    }
+
+    fn empty(ref Self) -> bool {
+        return array.length == 0
+    }
+}

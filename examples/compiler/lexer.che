@@ -3,14 +3,12 @@
 
 #load("token")
 #load("string_database")
-#load("cheez_compiler")
 
 
 struct Lexer {
     text        : String
     location    : TokenLocation
     peek        : Option(Token)
-    compiler    : ref CheezCompiler
     string_db   : ref StringDatabase
 
     
@@ -78,46 +76,52 @@ enum LexerNumberState {
 }
 
 impl Lexer {
-    fn from_file(filename: string, comp: ref CheezCompiler) -> Result(Lexer, String) {
+    fn from_string(content: String, string_db: ref StringDatabase) -> Lexer {
+        return new {
+            text = content
+            location = new {
+                file = "string"
+                line = 1
+            }
+            peek = None
+            string_db = string_db
+
+            KwReturn    = string_db.intern("return")
+            KwNew       = string_db.intern("new")
+            KwRef       = string_db.intern("ref")
+            KwFn        = string_db.intern("fn")
+            KwStruct    = string_db.intern("struct")
+            KwEnum      = string_db.intern("enum")
+            KwImpl      = string_db.intern("impl")
+            KwConst     = string_db.intern("const")
+            KwLet       = string_db.intern("let")
+            KwTypedef   = string_db.intern("typedef")
+            KwIf        = string_db.intern("if")
+            KwElse      = string_db.intern("else")
+            KwFor       = string_db.intern("for")
+            KwWhile     = string_db.intern("while")
+            KwAnd       = string_db.intern("and")
+            KwOr        = string_db.intern("or")
+            KwTrue      = string_db.intern("true")
+            KwFalse     = string_db.intern("false")
+            KwNull      = string_db.intern("null")
+            KwUsing     = string_db.intern("using")
+            KwDefer     = string_db.intern("defer")
+            KwMatch     = string_db.intern("match")
+            KwBreak     = string_db.intern("break")
+            KwContinue  = string_db.intern("continue")
+            KwTrait     = string_db.intern("trait")
+            KwCast      = string_db.intern("cast")
+        }
+    }
+
+    fn from_file(filename: string, string_db: ref StringDatabase) -> Result(Lexer, String) {
         return match load_file(filename) {
-            Ok($content) -> Ok(new Lexer {
-                text = content
-                location = new {
-                    file = filename
-                    line = 1
-                }
-                peek = None
-                compiler = comp
-                string_db = comp.string_database
-
-                KwReturn    = comp.string_database.intern("return")
-                KwNew       = comp.string_database.intern("new")
-                KwRef       = comp.string_database.intern("ref")
-                KwFn        = comp.string_database.intern("fn")
-                KwStruct    = comp.string_database.intern("struct")
-                KwEnum      = comp.string_database.intern("enum")
-                KwImpl      = comp.string_database.intern("impl")
-                KwConst     = comp.string_database.intern("const")
-                KwLet       = comp.string_database.intern("let")
-                KwTypedef   = comp.string_database.intern("typedef")
-                KwIf        = comp.string_database.intern("if")
-                KwElse      = comp.string_database.intern("else")
-                KwFor       = comp.string_database.intern("for")
-                KwWhile     = comp.string_database.intern("while")
-                KwAnd       = comp.string_database.intern("and")
-                KwOr        = comp.string_database.intern("or")
-                KwTrue      = comp.string_database.intern("true")
-                KwFalse     = comp.string_database.intern("false")
-                KwNull      = comp.string_database.intern("null")
-                KwUsing     = comp.string_database.intern("using")
-                KwDefer     = comp.string_database.intern("defer")
-                KwMatch     = comp.string_database.intern("match")
-                KwBreak     = comp.string_database.intern("break")
-                KwContinue  = comp.string_database.intern("continue")
-                KwTrait     = comp.string_database.intern("trait")
-                KwCast      = comp.string_database.intern("cast")
-            })
-
+            Ok($content) -> {
+                let l = Lexer::from_string(content, string_db)
+                l.location.file = filename
+                Ok(l)
+            }
             Err($msg) -> Err(msg)
         }
     }
