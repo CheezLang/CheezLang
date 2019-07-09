@@ -172,6 +172,25 @@ impl PathTracer {
             Some($hit) -> {
                 let result = new Vec3{}
 
+                if hit.material.emission.max_component() > 0 {
+                    let l = double(depth) / double(1)
+                    return new{l, l, l}
+                } else {
+                    let rand = new StandardContinuousUniform(MTwister) { prng }
+                    let r1 = rand.sample() * 2.0 * pi
+                    let r2 = rand.sample()
+                    let r2s = sqrt(r2)
+
+                    let w = hit.normal
+                    let u = if abs(w.x) > abs(w.z) {new Vec3{-w.y, w.x, 0}} else {new Vec3{0, -w.z, w.y}}
+                    u.normalize()
+                    let v = u.cross(w)
+                    let newDir = u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)
+                    let newRay = new Ray{hit.pos, newDir}
+
+                    return calc_color(newRay, prng, contribution * hit.material.diffuse.max_component(), depth + 1)
+                }
+
                 // emission
                 result += hit.material.emission
 
@@ -335,10 +354,12 @@ impl Game for PathTracer {
         let m_red   = create(new Material{new{0.9, 0.2, 0.2}, new{}}, allocator)
         let m_green = create(new Material{new{0.2, 0.9, 0.2}, new{}}, allocator)
         let m_blue  = create(new Material{new{0.2, 0.2, 0.9}, new{}}, allocator)
-        let m_mirror= create(new Material{new{}, new{}, new{1, 1, 1}}, allocator)
         let m_grey  = create(new Material{new{0.75, 0.75, 0.75}, new{}}, allocator)
-        let m_light = create(new Material{new{}, new{10, 10, 10}}, allocator)
+
+        let m_mirror= create(new Material{new{}, new{}, new{1, 1, 1}}, allocator)
         let m_glass = create(Material::refrective(new{1, 1, 1}, 1.95), allocator)
+
+        let m_light = create(new Material{new{}, new{10, 10, 10}}, allocator)
 
         self.add_object(new Sphere{new{-1000.0 - size / 2, 0, 0}, 1000, m_red}) // left
         self.add_object(new Sphere{new{1000.0 + size / 2, 0, 0}, 1000, m_green}) // right
@@ -350,8 +371,8 @@ impl Game for PathTracer {
         self.add_object(new Sphere{new{0, 1000.0 + size, 0}, 1000, m_grey}) // top
 
         // spheres
-        self.add_object(new Sphere{new{-0.25, 2.25, 8.5}, 1.75, m_glass})
-        self.add_object(new Sphere{new{3, 2, 13}, 2, m_mirror})
+        self.add_object(new Sphere{new{-0.25, 2.25, 8.5}, 1.75, m_green})
+        self.add_object(new Sphere{new{3, 2, 13}, 2, m_green})
         self.add_object(new Sphere{new{-2.5, 1, 12}, 1, m_green})
         self.add_object(new Sphere{new{1.75, 1, 10}, 1, m_blue})
 
