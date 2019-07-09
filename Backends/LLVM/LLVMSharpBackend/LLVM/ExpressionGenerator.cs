@@ -192,7 +192,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return default;
             }
 
-            throw new NotImplementedException();
+            if (cc.Name.Name == "static_assert")
+            {
+                // do nothing
+                return default;
+            }
+
+            throw new NotImplementedException($"{nameof(GenerateCompCallExpr)}: {cc.Name.Name} is not implemented yet");
         }
 
         private LLVMValueRef GenerateEnumValueExpr(AstEnumValueExpr eve)

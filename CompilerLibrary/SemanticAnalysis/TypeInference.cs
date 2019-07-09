@@ -35,6 +35,9 @@ namespace Cheez
 
         private CheezType UnifyTypes(CheezType concrete, CheezType literal)
         {
+            if (concrete is ReferenceType r)
+                concrete = r.TargetType;
+                
             if (concrete is IntType && literal is IntType) return concrete;
             if (concrete is FloatType && literal is IntType) return concrete;
             if (concrete is FloatType && literal is FloatType) return concrete;
@@ -1563,277 +1566,123 @@ namespace Cheez
                     }
 
                 case "bin_or":
+                    return HandleComptimeBitwiseOperator(expr.Name.Name, expr, context, -1, values =>
                     {
-                        if (expr.Arguments.Count == 0)
-                        {
-                            ReportError(expr, $"@bin_or requires at least one argument");
-                            return expr;
-                        }
-
-                        var minSize = 1;
-                        var ok = true;
-                        bool allConstant = true;
-                        bool anySigned = false;
-                        bool anyUnsigned = false;
-                        for (int i = 0; i < expr.Arguments.Count; i++)
-                        {
-                            var arg = expr.Arguments[i];
-                            arg.AttachTo(expr);
-                            arg = expr.Arguments[i] = InferType(arg, null);
-                            ConvertLiteralTypeToDefaultType(arg, null);
-                            if (arg.Type.IsErrorType)
-                            {
-                                ok = false;
-                                continue;
-                            }
-
-                            if (!arg.IsCompTimeValue)
-                                allConstant = false;
-
-                            if (arg.Type is IntType it)
-                            {
-                                if (it.Size > minSize)
-                                    minSize = it.Size;
-
-                                if (it.Signed)
-                                    anySigned = true;
-                                else
-                                    anyUnsigned = true;
-                            }
-                            else
-                            {
-                                ReportError(arg, $"Argument to @bin_or must be ints");
-                            }
-                        }
-
-                        if (!ok)
-                            return expr;
-
-                        if (allConstant)
-                        {
-                            BigInteger result = 0;
-                            foreach (var a in expr.Arguments)
-                            {
-                                var v = ((NumberData)a.Value);
-                                result |= v.IntValue;
-                            }
-
-                            expr.Value = NumberData.FromBigInt(result);
-                            expr.IsCompTimeValue = true;
-                        }
-
-                        if (anySigned && anyUnsigned)
-                        {
-                            ReportError(expr, $"All argument types need to have the same sign");
-                        }
-
-                        for (int i = 0; i < expr.Arguments.Count; i++)
-                        {
-                            var to = IntType.GetIntType(minSize, (expr.Arguments[i].Type as IntType).Signed);
-                            expr.Arguments[i] = CheckType(expr.Arguments[i], to);
-                        }
-
-                        expr.Type = IntType.GetIntType(minSize, anySigned);
-                        return expr;
-                    }
+                        BigInteger result = 0;
+                        foreach (var v in values)
+                            result |= v.IntValue;
+                        return result;
+                    });
 
                 case "bin_xor":
+                    return HandleComptimeBitwiseOperator(expr.Name.Name, expr, context, -1, values =>
                     {
-                        if (expr.Arguments.Count == 0)
-                        {
-                            ReportError(expr, $"@bin_xor requires at least one argument");
-                            return expr;
-                        }
-
-                        var minSize = 1;
-                        var ok = true;
-                        bool allConstant = true;
-                        bool anySigned = false;
-                        bool anyUnsigned = false;
-                        for (int i = 0; i < expr.Arguments.Count; i++)
-                        {
-                            var arg = expr.Arguments[i];
-                            arg.AttachTo(expr);
-                            arg = expr.Arguments[i] = InferType(arg, null);
-                            ConvertLiteralTypeToDefaultType(arg, null);
-                            if (arg.Type.IsErrorType)
-                            {
-                                ok = false;
-                                continue;
-                            }
-
-                            if (!arg.IsCompTimeValue)
-                                allConstant = false;
-
-                            if (arg.Type is IntType it)
-                            {
-                                if (it.Size > minSize)
-                                    minSize = it.Size;
-
-                                if (it.Signed)
-                                    anySigned = true;
-                                else
-                                    anyUnsigned = true;
-                            }
-                            else
-                            {
-                                ReportError(arg, $"Argument to @bin_xor must be ints");
-                            }
-                        }
-
-                        if (!ok)
-                            return expr;
-
-                        if (allConstant)
-                        {
-                            BigInteger result = 0;
-                            foreach (var a in expr.Arguments)
-                            {
-                                var v = ((NumberData)a.Value);
-                                result |= v.IntValue;
-                            }
-
-                            expr.Value = NumberData.FromBigInt(result);
-                            expr.IsCompTimeValue = true;
-                        }
-
-                        if (anySigned && anyUnsigned)
-                        {
-                            ReportError(expr, $"All argument types need to have the same sign");
-                        }
-
-                        for (int i = 0; i < expr.Arguments.Count; i++)
-                        {
-                            var to = IntType.GetIntType(minSize, (expr.Arguments[i].Type as IntType).Signed);
-                            expr.Arguments[i] = CheckType(expr.Arguments[i], to);
-                        }
-
-                        expr.Type = IntType.GetIntType(minSize, anySigned);
-                        return expr;
-                    }
+                        BigInteger result = 0;
+                        foreach (var v in values)
+                            result ^= v.IntValue;
+                        return result;
+                    });
 
                 case "bin_and":
+                    return HandleComptimeBitwiseOperator(expr.Name.Name, expr, context, -1, values =>
                     {
-                        if (expr.Arguments.Count == 0)
-                        {
-                            ReportError(expr, $"@bin_and requires at least one argument");
-                            return expr;
-                        }
-
-                        var minSize = 1;
-                        var ok = true;
-                        for (int i = 0; i < expr.Arguments.Count; i++)
-                        {
-                            var arg = expr.Arguments[i];
-                            arg.AttachTo(expr);
-                            arg = expr.Arguments[i] = InferType(arg, null);
-                            ConvertLiteralTypeToDefaultType(arg, null);
-                            if (arg.Type.IsErrorType)
-                            {
-                                ok = false;
-                                continue;
-                            }
-
-                            if (arg.Type is IntType it)
-                            {
-                                if (it.Size > minSize)
-                                    minSize = it.Size;
-                            }
-                            else
-                            {
-                                ReportError(arg, $"Argument to @bin_and must be ints");
-                            }
-                        }
-
-                        if (!ok)
-                        {
-                            return expr;
-                        }
-
-                        for (int i = 0; i < expr.Arguments.Count; i++)
-                        {
-                            var to = IntType.GetIntType(minSize, (expr.Arguments[i].Type as IntType).Signed);
-                            expr.Arguments[i] = CheckType(expr.Arguments[i], to);
-                        }
-
-                        expr.Type = IntType.GetIntType(minSize, false);
-                        return expr;
-                    }
+                        BigInteger result = 0;
+                        foreach (var v in values)
+                            result &= v.IntValue;
+                        return result;
+                    });
 
                 case "bin_lsl":
+                    return HandleComptimeBitwiseOperator(expr.Name.Name, expr, context, 2, values =>
                     {
-                        if (expr.Arguments.Count != 2)
-                        {
-                            ReportError(expr, $"@bin_lsl requires two arguments");
-                            return expr;
-                        }
-
-                        var ok = true;
-                        for (int i = 0; i < expr.Arguments.Count; i++)
-                        {
-                            var arg = expr.Arguments[i];
-                            arg.AttachTo(expr);
-                            arg = expr.Arguments[i] = InferType(arg, null);
-                            ConvertLiteralTypeToDefaultType(arg, null);
-                            if (arg.Type.IsErrorType)
-                            {
-                                ok = false;
-                                continue;
-                            }
-
-                            if (!(arg.Type is IntType it))
-                            {
-                                ReportError(arg, $"Argument must be ints");
-                            }
-                        }
-
-                        if (!ok)
-                        {
-                            return expr;
-                        }
-
-                        expr.Type = expr.Arguments[0].Type;
-                        return expr;
-                    }
+                        BigInteger result = values.First().IntValue;
+                        int shift = (int)values.Skip(1).First().ToLong();
+                        return result << shift;
+                    });
 
                 case "bin_lsr":
+                    return HandleComptimeBitwiseOperator(expr.Name.Name, expr, context, 2, values =>
                     {
-                        if (expr.Arguments.Count != 2)
-                        {
-                            ReportError(expr, $"@bin_lsr requires two arguments");
-                            return expr;
-                        }
-
-                        var ok = true;
-                        for (int i = 0; i < expr.Arguments.Count; i++)
-                        {
-                            var arg = expr.Arguments[i];
-                            arg.AttachTo(expr);
-                            arg = expr.Arguments[i] = InferType(arg, null);
-                            ConvertLiteralTypeToDefaultType(arg, null);
-                            if (arg.Type.IsErrorType)
-                            {
-                                ok = false;
-                                continue;
-                            }
-
-                            if (!(arg.Type is IntType it))
-                            {
-                                ReportError(arg, $"Argument must be ints");
-                            }
-                        }
-
-                        if (!ok)
-                        {
-                            return expr;
-                        }
-
-                        expr.Type = expr.Arguments[0].Type;
-                        return expr;
-                    }
+                        BigInteger result = values.First().IntValue;
+                        int shift = (int)values.Skip(1).First().ToLong();
+                        return result >> shift;
+                    });
 
                 default: ReportError(expr.Name, $"Unknown intrinsic '{expr.Name.Name}'"); break;
             }
+            return expr;
+        }
+
+        private AstExpression HandleComptimeBitwiseOperator(string name, AstCompCallExpr expr, TypeInferenceContext context, int requiredArgs, Func<IEnumerable<NumberData>, NumberData> compute = null)
+        {
+            if (requiredArgs >= 0 && expr.Arguments.Count != requiredArgs)
+            {
+                ReportError(expr, $"@{name} requires {requiredArgs} arguments");
+                return expr;
+            }
+            else if (requiredArgs < 0 && expr.Arguments.Count == 0)
+            {
+                ReportError(expr, $"@{name} requires at least one argument");
+                return expr;
+            }
+
+            var ok = true;
+
+            CheezType expectedArgType = null;
+            for (int i = 0; i < expr.Arguments.Count; i++)
+            {
+                var arg = expr.Arguments[i];
+                arg.AttachTo(expr);
+                arg = expr.Arguments[i] = InferType(arg, null);
+
+                if (arg.Type != IntType.LiteralType && expectedArgType == null)
+                    expectedArgType = arg.Type;
+            }
+
+            if (expectedArgType is ReferenceType r)
+                expectedArgType = r.TargetType;
+
+            for (int i = 0; i < expr.Arguments.Count; i++)
+            {
+                var arg = expr.Arguments[i];
+                ConvertLiteralTypeToDefaultType(arg, expectedArgType);
+                arg = expr.Arguments[i] = Deref(arg, context);
+                if (arg.Type.IsErrorType)
+                {
+                    ok = false;
+                    continue;
+                }
+
+                if (!(arg.Type is IntType it))
+                {
+                    ReportError(arg, $"Argument must be of type int");
+                    return expr;
+                }
+            }
+
+            if (!ok)
+                return expr;
+
+            // check if all args have the same type
+            foreach (var arg in expr.Arguments)
+            {
+                if (expectedArgType == null)
+                    expectedArgType = arg.Type;
+                if (arg.Type != expectedArgType)
+                {
+                    ReportError(arg.Location, $"Argument is of type '{arg.Type}' but must be of type '{expectedArgType}' (determined from first argument)");
+                }
+            }
+
+            // calculate value if all args are comptime values
+            if (expr.Arguments.All(arg => arg.IsCompTimeValue))
+            {
+                var values = from arg in expr.Arguments select (NumberData)arg.Value;
+                var result = compute(values);
+                return InferTypeHelper(new AstNumberExpr(result, Location: expr.Location), expectedArgType, context);
+            }
+
+            expr.Type = expr.Arguments[0].Type;
             return expr;
         }
 
@@ -1936,6 +1785,7 @@ namespace Cheez
 
                 case PointerType ptr:
                     {
+                        expr.Indexer = Deref(expr.Indexer, context);
                         if (expr.Indexer.Type is IntType)
                         {
                             expr.SetFlag(ExprFlags.IsLValue, true);
@@ -1943,13 +1793,14 @@ namespace Cheez
                         }
                         else
                         {
-                            ReportError(expr.Indexer, $"The index of into a pointer must be a int but is '{expr.Indexer.Type}'");
+                            ReportError(expr.Indexer, $"The index into a pointer must be an int but is '{expr.Indexer.Type}'");
                         }
                         break;
                     }
 
                 case SliceType slice:
                     {
+                        expr.Indexer = Deref(expr.Indexer, context);
                         if (expr.Indexer.Type is IntType)
                         {
                             expr.SetFlag(ExprFlags.IsLValue, true);
@@ -1957,13 +1808,14 @@ namespace Cheez
                         }
                         else
                         {
-                            ReportError(expr.Indexer, $"The index of into a slice must be a int but is '{expr.Indexer.Type}'");
+                            ReportError(expr.Indexer, $"The index into a slice must be an int but is '{expr.Indexer.Type}'");
                         }
                         break;
                     }
 
                 case ArrayType arr:
                     {
+                        expr.Indexer = Deref(expr.Indexer, context);
                         if (expr.Indexer.Type is IntType)
                         {
                             expr.SetFlag(ExprFlags.IsLValue, true);
@@ -1971,7 +1823,7 @@ namespace Cheez
                         }
                         else
                         {
-                            ReportError(expr.Indexer, $"The index of into an array must be a int but is '{expr.Indexer.Type}'");
+                            ReportError(expr.Indexer, $"The index into an array must be an int but is '{expr.Indexer.Type}'", ($"'{expr.SubExpression}' is of type '{arr}'", null));
                         }
                         break;
                     }
@@ -3195,10 +3047,14 @@ namespace Cheez
 
         private AstExpression Deref(AstExpression expr, TypeInferenceContext context)
         {
-            var deref = new AstDereferenceExpr(expr, expr);
-            deref.Reference = true;
-            deref.AttachTo(expr);
-            return InferTypeHelper(deref, null, context);
+            if (expr.Type is ReferenceType)
+            {
+                var deref = new AstDereferenceExpr(expr, expr);
+                deref.Reference = true;
+                deref.AttachTo(expr);
+                return InferTypeHelper(deref, null, context);
+            }
+            return expr;
         }
 
         private AstExpression Ref(AstExpression expr, TypeInferenceContext context)
