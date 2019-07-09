@@ -90,7 +90,7 @@ fn Main() {
     c_printf("indexo: %lld`n", s.index_of('z'))
     c_printf("`n")
 
-    s.free()
+    s.dispose()
     c_printf("capaci: %lld`n", s.get_capacity())
     c_printf("length: %lld`n", s.length)
     c_printf("string: `"%.*s`"`n", s.length, s.get_raw())

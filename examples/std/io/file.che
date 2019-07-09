@@ -26,12 +26,12 @@ fn load_filec(filename: c_string) -> Result(String, String) {
     
     let bytesRead: u32 = 0
     if ReadFile(handle, content.get_raw(), cast(u32)size, &bytesRead, null) == 0 {
-        content.free()
+        content.dispose()
         return Err(String::format("failed to read content: {}", [GetLastError()]))
     }
 
     if CloseHandle(handle) == 0 {
-        content.free()
+        content.dispose()
         return Err(String::format("failed to close handle: {}", [GetLastError()]))
     }
 

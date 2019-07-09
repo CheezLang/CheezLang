@@ -33,5 +33,5 @@ fn Main() {
     " "c::print(s, "")
     c_printf("`"%.*s`"`n", s.length, s.get_raw())
 
-    s.free()
+    s.dispose()
 }

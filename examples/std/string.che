@@ -40,7 +40,7 @@ impl StringBase($CharType) {
         return s
     }
 
-    fn free(ref Self) {
+    fn dispose(ref Self) {
         free_n(data)
         data = null
         length = 0

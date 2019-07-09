@@ -98,7 +98,7 @@ impl StackAllocator {
         s.appendf(", Free: {} )`n", [free])
         print_string(s)
 
-        s.free()
+        s.dispose()
     }
 
     fn getLastAllocation(ref Self) -> &StackAllocation {

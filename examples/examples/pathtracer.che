@@ -1,0 +1,459 @@
+#load("examples/olc_pge/pixel_game_engine")
+#load("std:io/io")
+#load("std:mem/arena_allocator")
+#load("std:array")
+#load("std:math")
+#load("std:random")
+#load("std:random/mt")
+
+typedef Vec3 = Vector3(double)
+
+let const scale             : int = 1
+let const width             : int = 800 / scale
+let const height            : int = 450 / scale
+let const thread_count      : int = 4
+
+let const max_depth         : int       = 5
+let const min_contribution  : double    = 0.2
+
+let const pi: double = 3.14159265359
+
+fn clamp(value: double, min: double, max: double) -> double {
+    if value < min { return min }
+    if value > max { return max }
+    return value
+}
+
+fn create(val: $T, allocator: Allocator) -> &T {
+    let ptr = alloc(T, allocator)
+    <<ptr = val
+    return ptr
+}
+
+impl double {
+    fn to_radians(Self) -> Self {
+        return self / 180.0 * pi
+    }
+}
+
+impl Printable for Vec3 {
+    fn print(ref Self, str: ref String, format: string) {
+        str.appendf("{}, {}, {}", [x, y, z])
+    }
+}
+
+struct Ray {
+    pub pos: Vec3
+    pub dir: Vec3
+}
+
+struct HitInfo {
+    pub distance: double
+    pub pos     : Vec3
+    pub normal  : Vec3
+    pub material: &Material
+}
+
+struct Material {
+    pub diffuse     : Vec3
+    pub emission    : Vec3
+    pub reflection  : Vec3
+    pub refraction  : Vec3
+    pub ior         : double
+}
+
+impl Material {
+    fn refrective(color: Vec3, ior: double) -> Self {
+        return new {
+            refraction = color
+            ior = ior
+        }
+    }
+}
+
+trait Object {
+    fn intersect(ref Self, ray: Ray) -> Option(HitInfo);
+}
+
+struct Sphere {
+    pos: Vec3
+    rad: double
+    mat: &Material
+}
+
+impl Object for Sphere {
+    fn intersect(ref Self, ray: Ray) -> Option(HitInfo) {
+        let op = pos - ray.pos
+        let r2 = rad * rad
+        let b = op.dot(ray.dir)
+        let det = b * b - op.magsq() + r2
+        if det < 0 {
+            return None
+        }
+
+        let epsilon = 0.0001
+        det = sqrt(det)
+        let minusT = b - det
+        let plusT = b + det
+        if minusT < epsilon and plusT < epsilon {
+            return None
+        }
+
+        let t = if minusT > epsilon {minusT} else {plusT}
+        let hitPos = ray.pos + ray.dir * t
+        let normal = (hitPos - pos).normalized()
+        return Some(new HitInfo{t, hitPos, normal, mat})
+    }
+}
+
+struct PathTracer {
+    pge             : &PixelGameEngine
+    allocator       : ArenaAllocator
+    objects         : Array(Object)
+    cam_fov         : double
+    pub cam_pos     : Vec3
+    pub cam_dir     : Vec3
+    pub cam_right   : Vec3
+    pub cam_up      : Vec3
+    sample_t        : double
+    total_t         : double
+    pub buffer      : []Vec3
+    threads         : [thread_count]HANDLE
+    pub thread_datas: [thread_count](id: int, pt: &PathTracer, samples: int)
+}
+
+impl PathTracer {
+    fn create() -> Self {
+        return new {
+            allocator   = ArenaAllocator::create(1024)
+            objects     = Array(Object)::create()
+            buffer      = {
+                let b = alloc_n(Vec3, u64(width * height))
+                c_memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
+                b
+            }
+        }
+    }
+
+    fn dispose(ref Self) {
+        allocator.dispose()
+        objects.dispose()
+        free_n(buffer)
+    }
+
+    fn add_object(ref Self, obj: $T) {
+        let dyn = alloc(T, allocator)
+        <<dyn = obj
+        objects.add(ref <<dyn)
+    }
+
+    fn intersect(ref Self, ray: Ray) -> Option(HitInfo) {
+        let nearest: Option(HitInfo) = None
+
+        loop! n in 0 -> objects.get_length() {
+            let hit = objects[n].intersect(ray)
+            nearest = match (nearest, hit) {
+                (None, Some($hit)) -> Some(hit)
+                (Some($n), Some($hit)) if hit.distance < n.distance -> Some(hit)
+                $_ -> nearest
+            }
+        }
+
+        return nearest
+    }
+
+    fn calc_color(ref Self, ray: Ray, prng: &MTwister, contribution: double, depth: int = 0) -> Vec3 {
+        if depth >= max_depth or contribution < min_contribution {
+            return new{}
+        }
+
+        return match self.intersect(ray) {
+            None -> new{}
+            Some($hit) -> {
+                let result = new Vec3{}
+
+                if hit.material.emission.max_component() > 0 {
+                    let l = double(depth) / double(1)
+                    return new{l, l, l}
+                } else {
+                    let rand = new StandardContinuousUniform(MTwister) { prng }
+                    let r1 = rand.sample() * 2.0 * pi
+                    let r2 = rand.sample()
+                    let r2s = sqrt(r2)
+
+                    let w = hit.normal
+                    let u = if abs(w.x) > abs(w.z) {new Vec3{-w.y, w.x, 0}} else {new Vec3{0, -w.z, w.y}}
+                    u.normalize()
+                    let v = u.cross(w)
+                    let newDir = u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)
+                    let newRay = new Ray{hit.pos, newDir}
+
+                    return calc_color(newRay, prng, contribution * hit.material.diffuse.max_component(), depth + 1)
+                }
+
+                // emission
+                result += hit.material.emission
+
+                // diffuse
+                if hit.material.diffuse.max_component() > 0 {
+                    let rand = new StandardContinuousUniform(MTwister) { prng }
+                    let r1 = rand.sample() * 2.0 * pi
+                    let r2 = rand.sample()
+                    let r2s = sqrt(r2)
+
+                    let w = hit.normal
+                    let u = if abs(w.x) > abs(w.z) {new Vec3{-w.y, w.x, 0}} else {new Vec3{0, -w.z, w.y}}
+                    u.normalize()
+                    let v = u.cross(w)
+                    let newDir = u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)
+                    let newRay = new Ray{hit.pos, newDir}
+
+                    result += hit.material.diffuse * calc_color(newRay, prng, contribution * hit.material.diffuse.max_component(), depth + 1)
+                }
+
+                // reflection
+                if hit.material.reflection.max_component() > 0 {
+                    let newDir = ray.dir.reflect(hit.normal)
+                    let newRay = new Ray{hit.pos, newDir}
+                    result += hit.material.reflection * calc_color(newRay, prng, contribution * hit.material.reflection.max_component(), depth + 1)
+                }
+
+                // refraction
+                let refract_max = hit.material.refraction.max_component()
+                if refract_max > 0 {
+                    let I = ray.dir.normalized()
+                    let n = hit.normal.normalized()
+
+                    let n1 = 1.0
+                    let n2 = hit.material.ior
+
+
+                    let outside = Vec3::dot(hit.normal, ray.dir) < 0
+                    if !outside {
+                        // coming from inside
+                        (n1, n2) = (n2, n1)
+                        n = -n
+                    }
+
+                    let kr = fresnel(I, n, hit.material.ior)
+                    let color_refracted = if kr >= 1 {new Vec3{}} else {
+                        let r = n1 / n2
+                        let c = -Vec3::dot(n, I)
+
+                        let f = r * c - sqrt(1 - r * r * (1 - c * c))
+                        let newDir = I * r + n * f
+                        let newRay = new Ray{hit.pos + newDir * 0.01, newDir}
+                        calc_color(newRay, prng, contribution * refract_max, depth + 1)
+                    }
+
+                    let color_reflected = {
+                        let newDir = I.reflect(n)
+                        let newRay = new Ray{hit.pos + newDir * 0.01, newDir}
+                        calc_color(newRay, prng, contribution * refract_max, depth + 1)
+                    }
+
+                    let color = color_reflected * kr + color_refracted * (1 - kr)
+                    result += hit.material.refraction * color
+                }
+
+                result
+            }
+        }
+    }
+
+    fn fresnel(I: Vec3, N: Vec3, ior: double) -> kr: double {
+        let cosi = clamp(Vec3::dot(I, N), -1.0, 1.0, )
+        let etai = 1.0
+        let etat = ior
+        if cosi > 0 { (etai, etat) = (etat, etai) }
+        // Compute sini using Snell's law
+        let sint = etai / etat * sqrt(fmax(0.0, 1.0 - cosi * cosi))
+        // Total internal reflection
+        if sint >= 1 {
+            kr = 1
+        } else {
+            let cost = sqrt(fmax(0.0, 1.0 - sint * sint))
+            cosi = fabs(cosi)
+            let Rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost))
+            let Rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost))
+            kr = (Rs * Rs + Rp * Rp) / 2.0
+        }
+    }
+}
+
+fn pathtracer_thread(_data: &any) -> u32 #stdcall {
+    let data = @cast(&(index: int, pt: &PathTracer), _data)
+
+    let y_range = height / thread_count
+    let start_y = data.index * y_range
+    let end_y   = (data.index + 1) * y_range - 1
+    if height - end_y < y_range {
+        end_y = height - 1
+    }
+
+    printfln("{}: {} -> {}", [data.index, start_y, end_y])
+    let seed = PseudoRandom::next_int()
+    let prng = MTwister::create(cast seed)
+
+    while true {
+        loop! current_y in start_y ->> end_y {
+            // loop through current line
+            loop! current_x in 0 -> width {
+                let index = current_x + current_y * width
+
+                // x coordinate in range [-1; 1]
+                // y coordinate in range [-1; 1]
+                let blur_radius: double = 1
+                let x = (double(current_x) + prng.next_double() * blur_radius * 2 - blur_radius) / double(width) * 2 - 1
+                let y = (double(height - current_y - 1) + prng.next_double() * blur_radius * 2 - blur_radius) / double(height) * 2 - 1
+
+                // calculate ray for current pixel
+                let dir = data.pt.cam_dir + data.pt.cam_right * x + data.pt.cam_up * y
+                dir.normalize()
+
+                // shoot ray into scene and calculate color
+                let color = data.pt.calc_color(new{data.pt.cam_pos, dir}, &prng, 1)
+                data.pt.buffer[index] += color
+            }
+        }
+
+        data.pt.thread_datas[data.index].samples += 1
+        // data.pt.thread_datas[data.index].samples = 0
+    }
+    return 0
+}
+
+impl Game for PathTracer {
+    fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
+        self.pge = pge
+
+        self.cam_fov = 60.0::to_radians()
+        let aspect_ratio = double(width) / double(height)
+
+        let size = 10.0
+
+        // calculate cam rays (forward, right, up)
+        self.cam_pos = new{0, 5, 3}
+        self.cam_dir = new{0, -0.25, 1}
+        self.cam_dir.normalize()
+
+        self.cam_right = new Vec3{0, 1, 0}.cross(self.cam_dir)
+        self.cam_up    = self.cam_dir.cross(self.cam_right)
+
+        let up_mag = tan(self.cam_fov / 2)
+        let right_mag = up_mag * aspect_ratio
+
+        self.cam_up     = self.cam_up.normalized() * up_mag
+        self.cam_right  = self.cam_right.normalized() * right_mag
+
+        printfln("  dir: {}", [self.cam_dir])
+        printfln("   up: {}", [self.cam_up])
+        printfln("right: {}", [self.cam_right])
+
+        // create objects
+        let m_red   = create(new Material{new{0.9, 0.2, 0.2}, new{}}, allocator)
+        let m_green = create(new Material{new{0.2, 0.9, 0.2}, new{}}, allocator)
+        let m_blue  = create(new Material{new{0.2, 0.2, 0.9}, new{}}, allocator)
+        let m_grey  = create(new Material{new{0.75, 0.75, 0.75}, new{}}, allocator)
+
+        let m_mirror= create(new Material{new{}, new{}, new{1, 1, 1}}, allocator)
+        let m_glass = create(Material::refrective(new{1, 1, 1}, 1.95), allocator)
+
+        let m_light = create(new Material{new{}, new{10, 10, 10}}, allocator)
+
+        self.add_object(new Sphere{new{-1000.0 - size / 2, 0, 0}, 1000, m_red}) // left
+        self.add_object(new Sphere{new{1000.0 + size / 2, 0, 0}, 1000, m_green}) // right
+
+        self.add_object(new Sphere{new{0, 0, 1000.0 + size / 2 + 10}, 1000, m_grey}) // back
+        self.add_object(new Sphere{new{0, 0, -1000.0 - size / 2 * 5}, 1000, m_grey}) // front
+
+        self.add_object(new Sphere{new{0, -1000.0, 0}, 1000, m_grey}) // bot
+        self.add_object(new Sphere{new{0, 1000.0 + size, 0}, 1000, m_grey}) // top
+
+        // spheres
+        self.add_object(new Sphere{new{-0.25, 2.25, 8.5}, 1.75, m_green})
+        self.add_object(new Sphere{new{3, 2, 13}, 2, m_green})
+        self.add_object(new Sphere{new{-2.5, 1, 12}, 1, m_green})
+        self.add_object(new Sphere{new{1.75, 1, 10}, 1, m_blue})
+
+        // light
+        self.add_object(new Sphere{new{0, size + 9.75, 10}, 10, m_light})
+
+        // create threads
+        loop! i in 0 -> thread_count {
+            thread_datas[i] = (i, &self, 0)
+            threads[i] = CreateThread(null, 0, pathtracer_thread, &thread_datas[i], 0, null)
+        }
+        return true
+    }
+
+    fn on_destroy(ref Self) -> bool {
+        loop! i in 0 -> thread_count {
+            TerminateThread(threads[i], 0)
+            CloseHandle(threads[i])
+        }
+        return true
+    }
+
+    fn on_update(ref Self, dt: float) -> bool {
+        if pge.get_key(Key.Escape).pressed {
+            return false
+        }
+
+        //
+        loop! current_y in 0 -> height {
+            loop! current_x in 0 -> width {
+                let index = current_x + current_y * width
+                let thread_id = current_y / (height / thread_count)
+                if thread_id >= thread_count {
+                    thread_id = thread_count - 1
+                }
+
+                let sample = thread_datas[thread_id].samples
+
+                // calculate color of pixel by taking the average of the color
+                // in the buffer
+                let pixel = {
+                    let bufferColor = buffer[index] / double(sample + 1)
+                    let c = Vec3::change_type(
+                        bufferColor.clamped(0.0, 1.0) * 255.0,
+                        u8)
+                    Pixel::rgba(c.x, c.y, c.z)
+                }
+
+                pge.draw(current_x, current_y, pixel)
+            }
+        }
+
+        sample_t += double(dt)
+        if sample_t >= 1 {
+            total_t += 1
+
+            let sps = double(thread_datas[0].samples) / total_t
+
+            let s = String::format("Samples: {}, Total: {}s, Samples per second: {}", [thread_datas[0].samples, int(total_t + 0.1), sps])
+            pge.set_window_title(s)
+            s.dispose()
+
+            sample_t -= 1
+        }
+
+        return true
+    }
+}
+
+fn test_thread(data: &any) -> u32 #stdcall {
+    let index = int(data)
+    println(index)
+
+    return 0
+}
+
+fn Main() {
+    let game = PathTracer::create()
+    let pge = PixelGameEngine::create(game, width, height, 1, 1)
+    if pge != null {
+        pge.start()
+    }
+    game.dispose()
+}

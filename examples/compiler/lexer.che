@@ -123,7 +123,7 @@ impl Lexer {
     }
 
     fn dispose(ref Self) {
-        text.free()
+        text.dispose()
     }
 
     fn peek_token(ref Self) -> Token {

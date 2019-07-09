@@ -232,10 +232,10 @@ fn print_histogram(dist: IDistribution($T), low: double, high: double){
     print(right_str)
     println("")
 
-    max_str.free()
-    left_str.free()
-    mid_str.free()
-    right_str.free()
+    max_str.dispose()
+    left_str.dispose()
+    mid_str.dispose()
+    right_str.dispose()
     free_n(buckets)
     it.dispose()
 }
