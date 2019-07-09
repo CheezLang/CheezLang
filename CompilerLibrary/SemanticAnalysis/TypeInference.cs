@@ -602,7 +602,7 @@ namespace Cheez
                             if (call.Arguments.Count == 1)
                             { 
                                 e.Argument = call.Arguments[0].Expr;
-                                AstExpression sub = new AstDotExpr(value, new AstIdExpr(e.Member.Name.Name, false), false);
+                                AstExpression sub = new AstDotExpr(value, new AstIdExpr(e.Member.Name.Name, false, call.Location), false, call.Location);
                                 sub.AttachTo(value);
                                 sub = InferType(sub, null);
                                 e.Argument.AttachTo(e);
@@ -1904,7 +1904,7 @@ namespace Cheez
 
                         if (mem == null)
                         {
-                            ReportError(expr, $"Type {@enum} has no member '{memName}'");
+                            ReportError(expr, $"Type '{@enum}' has no member '{memName}'", ("Maybe use :: instead of . if you want to call a function", null));
                             return expr;
                         }
 
@@ -2387,7 +2387,7 @@ namespace Cheez
                 var p = parameters[i];
                 if (p.DefaultValue == null)
                 {
-                    ReportError(expr, $"Call misses parameter {i} ({p.ToString()}).");
+                    ReportError(expr, $"Call misses parameter ({i}) '{p.Name}' of type  '{p.Type}'.");
                     ok = false;
                     continue;
                 }
@@ -3132,6 +3132,10 @@ namespace Cheez
         private AstExpression GetImplFunctions(AstDotExpr expr, CheezType type, string functionName, TypeInferenceContext context)
         {
             var result = new List<AstFunctionDecl>();
+
+            // only search for non reference types
+            if (type is ReferenceType r)
+                type = r.TargetType;
 
             var scope = expr.Scope;
             while (result.Count == 0 && scope != null)
