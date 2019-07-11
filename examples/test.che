@@ -51,7 +51,7 @@ fn pop_ops_while(new_order: ref Array(Token), stack: ref Stack(Token), precedenc
     }
 }
 
-fn infix_to_postfix(str: String) -> String {
+fn infix_to_postfix(str: String, calculate: bool) -> (postfix: String, result: double) {
     let string_db = StringDatabase::create()
     let lexer = Lexer::from_string(str, string_db)
 
@@ -105,25 +105,126 @@ fn infix_to_postfix(str: String) -> String {
     }
     pop_ops_while(new_order, stack)
 
-    let result = String::empty()
+    postfix = String::empty()
     loop! i in 0 -> new_order.length {
         let tok = new_order[i]
         let txt = tok.get_text()
-        result.appendf("{} ", [txt])
+        postfix.appendf("{} ", [txt])
         txt.dispose()
+    }
+
+    result = 0
+
+    if calculate {
+        let numbers = Stack(double)::create()
+        foreach! t in new_order.iterator() {
+            use TokenType
+            match t.ttype {
+                NumberLiteral -> {
+                    use TokenData
+                    match t.data {
+                        Integer($val) -> numbers.push(double(val))
+                        Double($val) -> numbers.push(val)
+                        $_ -> @panic("not a number")
+                    }
+                }
+
+                Plus -> {
+                    let b = numbers.pop()
+                    let a = numbers.pop()
+                    numbers.push(a + b)
+                }
+
+                Minus -> {
+                    let b = numbers.pop()
+                    let a = numbers.pop()
+                    numbers.push(a - b)
+                }
+
+                Asterisk -> {
+                    let b = numbers.pop()
+                    let a = numbers.pop()
+                    numbers.push(a * b)
+                }
+
+                ForwardSlash -> {
+                    let b = numbers.pop()
+                    let a = numbers.pop()
+                    numbers.push(a / b)
+                }
+            }
+        }
+
+        result = numbers.peek()
+
+        numbers.dispose()
     }
 
     new_order.dispose()
     stack.dispose()
     lexer.dispose()
     string_db.dispose()
+}
 
-    return result
+impl Printable for &u16 {
+    fn print(ref Self, str: ref String, format: string) {
+        while let i = 0; self[i] != 0; i += 1 {
+            str += char(self[i])
+        }
+    }
+}
+
+fn to_ascii_strings(argv: &&u16, argc: int) -> Array(String) {
+    let array = Array(String)::create(argc)
+    loop! i in 0 -> argc {
+        let str = String::empty()
+        while let k = 0; argv[i][k] != 0; k += 1 {
+            str += char(argv[i][k])
+        }
+
+        array.add(str)
+    }
+    return array
+}
+
+fn get_cmd_args() -> Array(String) {
+    let cmdLineArgs = GetCommandLineW()
+    let count = 0i32
+    let args = CommandLineToArgvW(cmdLineArgs, &count)
+    return to_ascii_strings(args, int(count))
 }
 
 fn Main() {
-    println(infix_to_postfix("1 + 2 * 3"::to_string()))
-    println(infix_to_postfix("(1 + 2) * 3"::to_string()))
-    println(infix_to_postfix("1 * (2 + 3)"::to_string()))
-    println(infix_to_postfix("1 * 2 + 3"::to_string()))
+    let args = get_cmd_args()
+
+    let (start_index, calculate) = if streq(args[1], "-e") { (2, true) } else { (1, false) }
+
+    foreach! infix in @cast(Iterator(String), args.iterator())::skip(start_index) {
+        print(infix)
+        let (postfix, result) = infix_to_postfix(infix, calculate)
+        printf(" -> {}", [postfix])
+        if calculate {
+            printfln(" = {}", [result])
+        } else {
+            println("")
+        }
+
+        postfix.dispose()
+    }
+
+    // printfln("argc: {:x}, argv: {}", [int(args), count])
+
+    // loop! i in 1 -> count {
+    //     let str = String::empty()
+    //     str.appendf("{}", [args[i]])
+    //     // printfln("infix: {}", [str])
+    //     let result = infix_to_postfix(str)
+    //     printfln("{}", [result])
+    //     result.dispose()
+    // }
+
+    // println(infix_to_postfix("1 + 2 * 3"::to_string()))
+    // println(infix_to_postfix("(1 + 2) * 3"::to_string()))
+    // println(infix_to_postfix("1 * (2 + 3)"::to_string()))
+    // println(infix_to_postfix("1 * 2 + 3"::to_string()))
 }
