@@ -1752,6 +1752,7 @@ namespace Cheez
             expr.Indexer.Scope = expr.Scope;
             expr.Indexer = InferTypeHelper(expr.Indexer, null, context);
 
+            ConvertLiteralTypeToDefaultType(expr.SubExpression, null);
             ConvertLiteralTypeToDefaultType(expr.Indexer, null);
 
             if (expr.SubExpression.Type is ErrorType || expr.Indexer.Type is ErrorType)
@@ -3193,13 +3194,13 @@ namespace Cheez
             if (result.Count == 0)
             {
                 ReportError(expr.Right, $"Type '{type}' has no impl function '{functionName}'");
-                return null;
+                return expr;
             }
             else if (result.Count > 1)
             {
                 var details = result.Select(f => ("Possible candidate:", f.Name.Location));
                 ReportError(expr.Right, $"Ambigious call to impl function '{functionName}'", details);
-                return null;
+                return expr;
             }
 
             var ufc = new AstUfcFuncExpr(expr.Left, result[0]);
