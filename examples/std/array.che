@@ -1,6 +1,7 @@
 #load("std:mem/memory")
 #load("std:mem/allocator")
 #load("std:mem/std_heap_allocator")
+#load("std:iterator")
 
 struct Array(T: type) {
     data: []T
@@ -120,5 +121,21 @@ impl Array($T) {
 
         quick_sort(from, idx - 1, cmp)
         quick_sort(idx + 1, to, cmp)
+    }
+
+    fn iterator(ref Self) -> ArrayIterator(T) {
+        return new { self, 0 }
+    }
+}
+
+struct ArrayIterator(T: type) {
+    array: ref Array(T)
+    index: int
+}
+
+impl Iterator($T) for ArrayIterator(T) {
+    fn next(ref Self) -> Option(T) {
+        index += 1
+        return if index > array.length { None } else { Some(array[index - 1]) }
     }
 }

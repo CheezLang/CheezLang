@@ -42,6 +42,14 @@ impl Iterator($T) {
         return sum
     }
 
+    fn skip(ref Self, count: int) -> Self {
+        loop! i in 0 -> count {
+            self.next()
+        }
+
+        return self
+    }
+
     fn take(ref Self, count: int) -> TakeIterator(T) {
         return new {self, count}
     }

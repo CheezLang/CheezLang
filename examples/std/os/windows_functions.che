@@ -1,6 +1,11 @@
 #load("windows_types")
 #load("windows_macros")
 
+// command line
+fn GetCommandLineA() -> c_string #stdcall;
+fn GetCommandLineW() -> &u16 #stdcall;
+fn CommandLineToArgvW(lpCmdLine: &u16, pNumArgs: &i32) -> &&u16 #stdcall;
+
 // general stuff
 fn GetLastError() -> DWORD #stdcall;
 fn CloseHandle(hObject: HANDLE) -> BOOL #stdcall;
