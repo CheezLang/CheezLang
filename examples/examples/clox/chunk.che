@@ -1,0 +1,77 @@
+#load("value")
+#load("common")
+
+struct Chunk {
+    code: Array(u8)
+    lines: Array(int)
+    constants: Array(Value)
+}
+
+impl Chunk {
+    fn create() -> Chunk {
+        return new {
+            code        = Array(u8)::create()
+            lines       = Array(int)::create()
+            constants   = Array(Value)::create()
+        }
+    }
+
+    fn dispose(ref Self) {
+        code.dispose()
+        lines.dispose()
+        constants.dispose()
+    }
+
+    fn write(ref Self, byte: u8, line: int) {
+        code.add(byte)
+        lines.add(line)
+    }
+
+    fn add_constant(ref Self, value: Value) {
+        // gc
+        // push(value)
+        constants.add(value)
+        // gc
+        // pop()
+    }
+}
+
+enum OpCode {
+    Constant
+    Nil
+    True
+    False
+    Pop
+    GetLocal
+    SetLocal
+    GetGlobal
+    DefineGlobal
+    SetGlobal
+    GetUpvalue
+    SetUpvalue
+    GetProperty
+    SetProperty
+    GetSuper
+    Equal
+    Greater
+    Less
+    Add
+    Subtract
+    Multiply
+    Divide
+    Not
+    Negate
+    Print
+    Jump
+    JumpIfFalse
+    Loop
+    Call
+    Invoke
+    Super
+    Closure
+    CloseUpvalue
+    Return
+    Class
+    Inherit
+    Method
+}

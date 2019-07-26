@@ -1,0 +1,23 @@
+#load("object")
+#load("compiler")
+
+enum InterpretResult {
+    Ok
+    CompileError
+    RuntimeError
+}
+
+fn run() -> InterpretResult {
+    return InterpretResult.RuntimeError
+}
+
+fn interpret(source: string) -> InterpretResult {
+    let function = compile(source)
+    if function == null {
+        return InterpretResult.CompileError
+    }
+
+    println("ok")
+    return run()
+}
+
