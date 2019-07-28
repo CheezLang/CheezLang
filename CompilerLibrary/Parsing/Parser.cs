@@ -159,6 +159,9 @@ namespace Cheez.Parsing
                 ReportError(tok.location, customErrorMessage?.Invoke(tok));
                 NextToken();
                 tok = PeekToken();
+
+                if (tok.type == TokenType.EOF)
+                    break;
             }
 
             if (!Expect(type, customErrorMessage))
@@ -880,7 +883,7 @@ namespace Cheez.Parsing
             return new AstImplBlock(target, trait, functions, new Location(beg, end));
         }
 
-        private AstExprStmt ParseBlockStatement()
+        public AstExprStmt ParseBlockStatement()
         {
             var expr = ParseBlockExpr();
             return new AstExprStmt(expr, expr.Location);

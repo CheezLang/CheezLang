@@ -329,6 +329,7 @@ namespace Cheez
             mMacros["loop"] = new BuiltInMacroLoop(comp);
             mMacros["format"] = new BuiltInMacroFormat(comp);
             mMacros["do"] = new BuiltInMacroDo(comp);
+            mMacros["do_while"] = new BuiltInMacroDoWhile(comp);
         }
 
         internal void DefineBuiltInOperators()
