@@ -23,6 +23,26 @@ namespace Cheez.Ast.Expressions.Types
         public override AstExpression Clone() => CopyValuesTo(new AstSliceTypeExpr(Target.Clone()));
     }
 
+    public class AstImplTraitTypeExpr : AstExpression
+    {
+        public override bool IsPolymorphic => Target.IsPolymorphic || Trait.IsPolymorphic;
+
+        public AstExpression Target { get; set; }
+        public AstExpression Trait { get; set; }
+
+        public AstImplTraitTypeExpr(AstExpression target, AstExpression trait, ILocation Location = null) : base(Location)
+        {
+            this.Target = target;
+            this.Trait = trait;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitImplTraitTypeExpr(this, data);
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone() => CopyValuesTo(new AstArrayTypeExpr(Target.Clone(), Trait.Clone()));
+    }
+
     public class AstArrayTypeExpr : AstExpression
     {
         public override bool IsPolymorphic => Target.IsPolymorphic;

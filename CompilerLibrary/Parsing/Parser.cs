@@ -44,7 +44,7 @@ namespace Cheez.Parsing
             var l = Lexer.FromString(v, errorHandler, id);
             var p = new Parser(l, errorHandler);
             p.Replacements = dictionary;
-            return p.ParseStatement().stmt;
+            return p.ParseStatement();
         }
 
         #region Helpers
@@ -287,32 +287,65 @@ namespace Cheez.Parsing
             }
         }
 
-#endregion
+        #endregion
 
-        public (bool done, AstStatement stmt) ParseStatement(bool expectNewline = true)
+        public AstStatement ParseStatement(bool expectNewline = true)
+        {
+            var stmt = ParseStatementHelper();
+
+            if (stmt == null)
+                return null;
+
+            if (CheckToken(TokenType.Semicolon))
+            {
+                var stmts = new List<AstStatement> { stmt };
+                while (CheckToken(TokenType.Semicolon))
+                {
+                    NextToken();
+                    SkipNewlines();
+                    var s = ParseStatementHelper();
+                    if (s == null)
+                        break;
+
+                    stmts.Add(s);
+                }
+
+                var location = new Location(stmts.First().Beginning, stmts.Last().End);
+
+                // @temporary, these statements should not create a new scope
+                var block = new AstBlockExpr(stmts, location);
+                stmt = new AstExprStmt(block, location);
+            }
+
+            var next = PeekToken();
+            if (expectNewline && next.type != TokenType.NewLine && next.type != TokenType.EOF)
+            {
+                ReportError(next.location, $"Expected newline after statement");
+                RecoverStatement();
+            }
+
+            return stmt;
+        }
+
+        public AstStatement ParseStatementHelper()
         {
             SkipNewlines();
             var token = PeekToken();
             switch (token.type)
             {
                 case TokenType.EOF:
-                    return (true, null);
+                    return null;
 
                 case TokenType.KwBreak:
                     NextToken();
-                    return (false, new AstBreakStmt(new Location(token.location)));
+                    return new AstBreakStmt(new Location(token.location));
 
                 case TokenType.KwContinue:
                     NextToken();
-                    return (false, new AstContinueStmt(new Location(token.location)));
+                    return new AstContinueStmt(new Location(token.location));
 
                 case TokenType.HashIdentifier:
-                    {
-                        var dir = ParseDirectiveStatement();
-                        if (!CheckToken(TokenType.EOF) && expectNewline && !Expect(TokenType.NewLine, ErrMsg("\\n", "after directive statement")))
-                            RecoverStatement();
-                        return (false, dir);
-                    }
+                        return ParseDirectiveStatement();
 
                 case TokenType.KwDefer:
                     {
@@ -321,39 +354,43 @@ namespace Cheez.Parsing
                         if (next.type == TokenType.NewLine || next.type == TokenType.EOF)
                         {
                             ReportError(token.location, "Expected statement after keyword 'defer'");
-                            return (false, null);
+                            return new AstEmptyStatement(new Location(token.location));
                         }
 
-                        var s = ParseStatement(expectNewline);
-                        if (s.stmt != null)
-                            return (false, new AstDeferStmt(s.stmt, Location: new Location(token.location)));
+                        var s = ParseStatement();
+                        if (s != null)
+                            return new AstDeferStmt(s, Location: new Location(token.location));
+                        else
+                        {
+                            ReportError(token.location, $"Expected statement after keyword 'defer'");
+                        }
 
-                        return (false, null);
+                        return new AstEmptyStatement(new Location(token.location));
                     }
 
                 case TokenType.KwReturn:
-                    return (false, ParseReturnStatement());
+                    return ParseReturnStatement();
                 case TokenType.KwFn:
-                    return (false, ParseFunctionDeclaration());
+                    return ParseFunctionDeclaration();
                 case TokenType.KwLet:
-                    return (false, ParseVariableDeclaration(TokenType.ClosingBrace));
+                    return ParseVariableDeclaration(TokenType.ClosingBrace);
                 case TokenType.KwTypedef:
-                    return (false, ParseTypedefDeclaration());
+                    return ParseTypedefDeclaration();
                 case TokenType.KwWhile:
-                    return (false, ParseWhileStatement());
+                    return ParseWhileStatement();
                 case TokenType.KwEnum:
-                    return (false, ParseEnumDeclaration());
+                    return ParseEnumDeclaration();
                 case TokenType.KwStruct:
-                    return (false, ParseStructDeclaration());
+                    return ParseStructDeclaration();
                 case TokenType.KwImpl:
-                    return (false, ParseImplBlock());
+                    return ParseImplBlock();
                 case TokenType.KwTrait:
-                    return (false, ParseTraitDeclaration());
+                    return ParseTraitDeclaration();
                 case TokenType.OpenBrace:
-                    return (false, ParseBlockStatement());
+                    return ParseBlockStatement();
 
                 case TokenType.KwUsing:
-                    return (false, ParseUsingStatement());
+                    return ParseUsingStatement();
 
                 default:
                     {
@@ -361,7 +398,7 @@ namespace Cheez.Parsing
                         if (expr is AstEmptyExpr)
                         {
                             NextToken();
-                            return (false, null);
+                            return new AstEmptyStatement(expr.Location);
                         }
                         if (CheckTokens(TokenType.Equal, TokenType.AddEq, TokenType.SubEq, TokenType.MulEq, TokenType.DivEq, TokenType.ModEq))
                         {
@@ -377,18 +414,11 @@ namespace Cheez.Parsing
                             }
                             SkipNewlines();
                             var val = ParseExpression();
-                            if (expectNewline && !Expect(TokenType.NewLine, ErrMsg("\\n", "after assignment")))
-                                RecoverStatement();
-                            return (false, new AstAssignment(expr, val, op, new Location(expr.Beginning, val.End)));
+                            return new AstAssignment(expr, val, op, new Location(expr.Beginning, val.End));
                         }
                         else
                         {
-                            var next = PeekToken();
-                            if (expectNewline && next.type != TokenType.NewLine && next.type != TokenType.EOF) {
-                                ReportError(next.location, $"Expected newline after expression statement");
-                                RecoverStatement();
-                            }
-                            return (false, new AstExprStmt(expr, new Location(expr.Beginning, expr.End)));
+                            return new AstExprStmt(expr, new Location(expr.Beginning, expr.End));
                         }
                     }
             }
@@ -606,7 +636,6 @@ namespace Cheez.Parsing
             while (CheckToken(TokenType.HashIdentifier))
             {
                 result.Add(ParseDirective());
-                SkipNewlines();
             }
 
             return result;
@@ -902,16 +931,16 @@ namespace Cheez.Parsing
                     break;
 
                 var s = ParseStatement(false);
-                if (s.stmt != null)
+                if (s != null)
                 {
-                    statements.Add(s.stmt);
+                    statements.Add(s);
 
                     next = PeekToken();
 
                     if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
                         break;
 
-                    switch (s.stmt)
+                    switch (s)
                     {
                         case AstExprStmt es when es.Expr is AstBlockExpr || es.Expr is AstIfExpr:
                             break;
@@ -1034,8 +1063,7 @@ namespace Cheez.Parsing
             {
                 NextToken();
                 SkipNewlines();
-                var p = ParseStatement(false);
-                post = p.stmt;
+                post = ParseStatement(false);
                 SkipNewlines();
             }
 
@@ -1066,8 +1094,20 @@ namespace Cheez.Parsing
             condition = ParseExpression(ErrMsg("expression", "after keyword 'if'"));
 
             SkipNewlines();
-            ifCase = ParseBlockExpr();
+
+            if (CheckToken(TokenType.KwThen))
+            {
+                NextToken();
+                SkipNewlines();
+                var stmt = ParseStatement(false);
+                ifCase = new AstBlockExpr(new List<AstStatement> { stmt }, stmt.Location);
+            }
+            else
+            {
+                ifCase = ParseBlockExpr();
+            }
             end = ifCase.End;
+
 
             SkipNewlines();
             if (CheckToken(TokenType.KwElse))
@@ -1075,10 +1115,16 @@ namespace Cheez.Parsing
                 NextToken();
                 SkipNewlines();
 
+
                 if (CheckToken(TokenType.KwIf))
                     elseCase = ParseIfExpr();
-                else
+                else if (CheckToken(TokenType.OpenBrace))
                     elseCase = ParseBlockExpr();
+                else
+                {
+                    var stmt = ParseStatement(false);
+                    elseCase = new AstBlockExpr(new List<AstStatement> { stmt }, stmt.Location);
+                }
                 end = elseCase.End;
             }
 
@@ -1188,7 +1234,17 @@ namespace Cheez.Parsing
         {
             errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
 
-            return ParseOrExpression(errorMessage);
+            var expr = ParseOrExpression(errorMessage);
+
+            if (CheckToken(TokenType.KwImpl))
+            {
+                NextToken();
+                SkipNewlines();
+                var trait = ParseExpression();
+                return new AstImplTraitTypeExpr(expr, trait, new Location(expr.Beginning, trait.End));
+            }
+
+            return expr;
         }
 
         [DebuggerStepThrough]
@@ -1806,9 +1862,7 @@ namespace Cheez.Parsing
                 case TokenType.Identifier:
                     NextToken();
                     if (CheckToken(TokenType.Bang))
-                    {
                         return ParseMacro(token);
-                    }
                     return new AstIdExpr((string)token.data, false, new Location(token.location));
 
                 case TokenType.StringLiteral:

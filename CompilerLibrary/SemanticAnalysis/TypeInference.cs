@@ -200,6 +200,9 @@ namespace Cheez
                 case AstFunctionTypeExpr func:
                     return InferTypeFunctionTypeExpr(func, context);
 
+                case AstImplTraitTypeExpr implTrait:
+                    return InferTypeImplTraitTypeExpr(implTrait, context);
+
                 case AstTypeRef typeRef:
                     return InferTypeTypeRefExpr(typeRef);
 
@@ -221,6 +224,11 @@ namespace Cheez
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private AstExpression InferTypeImplTraitTypeExpr(AstImplTraitTypeExpr implTrait, TypeInferenceContext context)
+        {
+            throw new NotImplementedException();
         }
 
         private AstExpression InferTypeMacro(AstMacroExpr expr, CheezType expected, TypeInferenceContext context)
