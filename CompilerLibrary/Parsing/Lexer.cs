@@ -131,8 +131,6 @@ namespace Cheez.Parsing
         private char Prev => mLocation.index > 0 ? mText[mLocation.index - 1] : (char)0;
         private Token peek = null;
 
-        private List<TokenLocation> previous = new List<TokenLocation>();
-
         public string Text => mText;
 
         private IErrorHandler mErrorHandler;
@@ -172,14 +170,6 @@ namespace Cheez.Parsing
             };
         }
 
-        public void UndoTokens(int count)
-        {
-            if (previous.Count == 0 || count > previous.Count) throw new NotImplementedException();
-            previous.RemoveRange(0, count - 1);
-            mLocation = previous[0];
-            peek = null;
-        }
-
         public Token PeekToken()
         {
             if (peek == null)
@@ -214,12 +204,6 @@ namespace Cheez.Parsing
 
         private Token ReadToken()
         {
-            previous.Insert(0, mLocation.Clone());
-            if (previous.Count > 2)
-            {
-                previous.RemoveAt(previous.Count - 1);
-            }
-
             var token = new Token();
             token.location = mLocation.Clone();
             token.location.end = token.location.index;
