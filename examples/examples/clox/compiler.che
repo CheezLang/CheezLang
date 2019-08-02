@@ -52,6 +52,18 @@ struct Compiler {
     scope_depth : int
 }
 
+impl Compiler {
+    fn create(kind: FunctionType) -> Self {
+        // return new {
+        //     enclosing = parent
+        //     function = null
+        //     kind = kind
+        //     local_count = 0
+        //     scope_depth = 0
+        // }
+    }
+}
+
 struct ClassCompiler {
     enclosing   : &ClassCompiler
     name        : Token
@@ -62,14 +74,28 @@ struct ClassCompiler {
 
 fn compile(source: string) -> &ObjFunction {
     let lexer = Lexer::create(source)
-    while true {
-        let token = lexer.next_token()
+    let compiler = Compiler::create(FunctionType.Script)
 
-        printfln("{}> ({}) '{}'", [token.line, token.kind, token.text])
+    let had_error = false
+    let panic_mode = false
 
-        if int(token.kind) == int(TokenKind.Eof) {
-            break
-        }
+    advance()
+    while !match_token(TokenKind.Eof) {
+        declaration()
     }
+
+    let function = end_compiler()
+    return if had_error {null} else {function}
+
+    // print tokens
+    // while true {
+    //     let token = lexer.next_token()
+
+    //     printfln("{}> ({}) '{}'", [token.line, token.kind, token.text])
+
+    //     if int(token.kind) == int(TokenKind.Eof) {
+    //         break
+    //     }
+    // }
     return null
 }

@@ -1,1 +1,16 @@
-#load("examples/clox/main")
+//#load("examples/clox/main")
+
+#load("std:io/io")
+
+fn Main() {
+    let a = 10
+
+    let is_even = if a % 2 == 0 then true else false
+    println(if is_even then "even" else "odd")
+
+    if true then let x = "test"; x else false
+
+    let b = { let b = 5; b * 2 }
+
+    println(b)
+}
