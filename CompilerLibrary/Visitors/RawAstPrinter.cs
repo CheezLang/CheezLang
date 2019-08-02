@@ -138,14 +138,21 @@ namespace Cheez.Visitors
         {
             var body = string.Join("\n\n", impl.Functions.Select(f => f.Accept(this, 0)));
 
-            var header = "impl ";
+            var header = "impl";
+
+            // parameters
+            if (impl.Parameters != null)
+                header += "(" + string.Join(", ", impl.Parameters.Select(p => p.Accept(this, 0))) + ")";
+
+            header += " ";
 
             if (impl.TraitExpr != null)
-            {
                 header += impl.TraitExpr.Accept(this) + " for ";
-            }
 
             header += impl.TargetTypeExpr.Accept(this);
+
+            if (impl.Conditions != null)
+                header += " if " + string.Join(", ", impl.Conditions.Select(c => $"{c.type} : {c.trait}"));
 
             return $"{header} {{\n{body.Indent(4)}\n}}";
         }

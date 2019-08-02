@@ -1,4 +1,4 @@
-cd gen
+Set-Location gen
 &.\test.exe test.lox
-cd ..
+Set-Location ..
 Write-Host "Program exited with code $LASTEXITCODE"

@@ -445,6 +445,8 @@ namespace Cheez
                 Pass1FunctionDeclaration(v);
             foreach (var v in scope.Variables)
                 Pass1VariableDeclaration(v);
+            foreach (var v in scope.Impls)
+                Pass1Impl(v);
         }
 
         public void InsertDeclarationsIntoScope(Scope scope, List<AstStatement> statements)

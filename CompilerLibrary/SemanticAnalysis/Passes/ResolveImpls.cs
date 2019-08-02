@@ -1,8 +1,11 @@
-﻿using Cheez.Ast.Statements;
+﻿using Cheez.Ast;
+using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
+using Cheez.Types.Primitive;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cheez
 {
@@ -163,17 +166,75 @@ namespace Cheez
 
         private void Pass3Impl(AstImplBlock impl)
         {
-            impl.TargetTypeExpr.Scope = impl.Scope;
+            // check if there are parameters
+            if (impl.IsPolymorphic)
+            {
+                // setup scopes
+                foreach (var param in impl.Parameters)
+                {
+                    impl.SubScope.DefineTypeSymbol(param.Name.Name, new PolyType(param.Name.Name, true));
+
+                    param.Scope = impl.Scope;
+                    param.TypeExpr.Scope = impl.Scope;
+                    param.TypeExpr = ResolveTypeNow(param.TypeExpr, out var newType, forceInfer: true);
+
+                    if (newType is AbstractType)
+                    {
+                        continue;
+                    }
+
+                    param.Type = newType;
+
+                    switch (param.Type)
+                    {
+                        case CheezTypeType _:
+                            param.Value = new PolyType(param.Name.Name, true);
+                            break;
+
+                        case IntType _:
+                        case FloatType _:
+                        case BoolType _:
+                        case CharType _:
+                            break;
+
+                        case ErrorType _:
+                            break;
+
+                        default:
+                            ReportError(param.TypeExpr, $"The type '{param.Type}' is not allowed here.");
+                            break;
+                    }
+                }
+            }
+
+            impl.TargetTypeExpr.Scope = impl.SubScope;
             impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t);
             impl.TargetType = t;
 
-            var polyNames = new List<string>();
-            CollectPolyTypeNames(impl.TargetTypeExpr, polyNames);
-
-            foreach (var pn in polyNames)
+            // @TODO: check if target type expr contains poly names such as '$T', these are not allowed
+            if (false)
             {
-                impl.SubScope.DefineTypeSymbol(pn, new PolyType(pn, true));
+                ReportError(impl.TargetTypeExpr, $"Target type of impl can't be polymorphic");
             }
+
+            // @TODO: does it make sense to allow conditions on impl blocks without parameters?
+            // for now don't allow these
+
+            if (impl.Conditions != null)
+            {
+                if (impl.Parameters == null)
+                    ReportError(new Location(impl.Conditions.First().type.Beginning, impl.Conditions.Last().trait.End), $"An impl block can't have a condition without parameters");
+                
+                foreach (var cond in impl.Conditions)
+                {
+                    cond.type.Scope = impl.SubScope;
+                    cond.trait.Scope = impl.SubScope;
+                }
+            }
+
+            if (impl.IsPolymorphic)
+                return;
+
             impl.SubScope.DefineTypeSymbol("Self", impl.TargetType);
 
             foreach (var f in impl.Functions)
@@ -185,7 +246,6 @@ namespace Cheez
 
                 Pass4ResolveFunctionSignature(f);
                 CheckForSelfParam(f);
-                impl.Scope.DefineImplFunction(f);
             }
         }
     }

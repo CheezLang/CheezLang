@@ -265,11 +265,15 @@ namespace Cheez.Ast.Statements
 
     public class AstImplBlock : AstStatement
     {
-        public CheezType TargetType { get; set; }
-        public AstExpression TargetTypeExpr { get; set; }
-        public AstExpression TraitExpr { get; set; }
+        public List<AstParameter> Parameters { get; set; }
 
+        public AstExpression TargetTypeExpr { get; set; }
+        public CheezType TargetType { get; set; }
+
+        public AstExpression TraitExpr { get; set; }
         public TraitType Trait { get; set; }
+
+        public List<(AstExpression type, AstExpression trait)> Conditions { get; set; }
 
         public List<AstFunctionDecl> Functions { get; }
 
@@ -279,17 +283,31 @@ namespace Cheez.Ast.Statements
         public bool IsPolyInstance = false;
         public bool IsPolymorphic = false;
 
-        public AstImplBlock(AstExpression targetTypeExpr, AstExpression traitExpr, List<AstFunctionDecl> functions, ILocation Location = null) : base(Location: Location)
+        public AstImplBlock(
+            List<AstParameter> parameters,
+            AstExpression targetTypeExpr,
+            AstExpression traitExpr,
+            List<(AstExpression type, AstExpression trait)> conditions,
+            List<AstFunctionDecl> functions,
+            ILocation Location = null) : base(Location: Location)
         {
+            this.Parameters = parameters;
             this.TargetTypeExpr = targetTypeExpr;
-            this.Functions = functions;
             this.TraitExpr = traitExpr;
+            this.Conditions = conditions;
+            this.Functions = functions;
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitImplDecl(this, data);
 
         public override AstStatement Clone()
-            => CopyValuesTo(new AstImplBlock(TargetTypeExpr.Clone(), TraitExpr.Clone(), Functions.Select(f => f.Clone() as AstFunctionDecl).ToList()));
+            => CopyValuesTo(new AstImplBlock(
+                Parameters?.Select(p => p.Clone()).ToList(),
+                TargetTypeExpr.Clone(),
+                TraitExpr?.Clone(),
+                Conditions?.Select(c => (c.type.Clone(), c.trait.Clone())).ToList(),
+                Functions.Select(f => f.Clone() as AstFunctionDecl).ToList()
+                ));
     }
 
     #endregion

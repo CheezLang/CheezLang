@@ -256,10 +256,19 @@ namespace Cheez.Visitors
             if (impl.IsPolymorphic)
             {
                 var body = string.Join("\n\n", impl.Functions.Select(f => f.Accept(this, 0)));
-                var header = "impl ";
+                var header = "impl";
+
+                // parameters
+                if (impl.Parameters != null)
+                    header += "(" + string.Join(", ", impl.Parameters.Select(p => p.Accept(this, 0))) + ")";
+
+                header += " ";
                 if (impl.TraitExpr != null)
                     header += impl.Trait + " for ";
                 header += impl.TargetType;
+
+                if (impl.Conditions != null)
+                    header += " if " + string.Join(", ", impl.Conditions.Select(c => $"{c.type} : {c.trait}"));
 
                 var sb = new StringBuilder();
                 sb.Append($"{header} {{\n{body.Indent(4)}\n}}");
@@ -280,12 +289,21 @@ namespace Cheez.Visitors
             else
             {
                 var body = string.Join("\n\n", impl.Functions.Select(f => f.Accept(this, 0)));
-                var header = "impl ";
+                var header = "impl";
 
+                // parameters
+                if (impl.Parameters != null)
+                    header += "(" + string.Join(", ", impl.Parameters.Select(p => p.Accept(this, 0))) + ")";
+
+                header += " ";
                 if (impl.TraitExpr != null)
                     header += impl.Trait + " for ";
 
                 header += impl.TargetType;
+
+                if (impl.Conditions != null)
+                    header += " if " + string.Join(", ", impl.Conditions.Select(c => $"{c.type} : {c.trait}"));
+
                 return $"{header} {{\n{body.Indent(4)}\n}}";
             }
         }
@@ -552,7 +570,7 @@ namespace Cheez.Visitors
 
         public override string VisitUfcFuncExpr(AstUfcFuncExpr expr, int data = 0)
         {
-            return $"{expr.FunctionDecl.Name.Accept(this)}";
+            return $"{expr.SelfArg.Type}::{expr.FunctionDecl.Name.Accept(this)}";
         }
 
         public override string VisitTempVarExpr(AstTempVarExpr te, int data = 0)
@@ -642,6 +660,7 @@ namespace Cheez.Visitors
                 }
                 return c.Value.ToString();
             }
+
             if (ident.IsPolymorphic)
                 return '$' + ident.Name;
             return ident.Name;

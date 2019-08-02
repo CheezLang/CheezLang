@@ -64,5 +64,11 @@ namespace Cheez.Ast
             this.Beginning = locations.First().Beginning;
             this.End = locations.Last().End;
         }
+
+        public static Location FromLocations<T>(IEnumerable<T> expressions)
+            where T : ILocation
+        {
+            return new Location(expressions.First().Beginning, expressions.Last().End);
+        }
     }
 }

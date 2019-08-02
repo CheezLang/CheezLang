@@ -3138,6 +3138,78 @@ namespace Cheez
             return null;
         }
 
+        private AstImplBlock ImplAppliesToType(AstImplBlock impl, CheezType type)
+        {
+            if (impl.IsPolymorphic)
+            {
+                if (!CheezType.TypesMatch(impl.TargetType, type))
+                    return null;
+
+                var polies = new Dictionary<string, CheezType>();
+                CollectPolyTypes(impl.TargetType, type, polies);
+
+                // @TODO: check conditions
+                if (impl.Conditions != null)
+                {
+                    foreach (var cond in impl.Conditions)
+                    {
+                        var ty_expr = cond.type.Clone();
+                        var tr_expr = cond.trait.Clone();
+
+                        ty_expr.Scope = new Scope("temp", ty_expr.Scope);
+                        tr_expr.Scope = new Scope("temp", tr_expr.Scope);
+
+                        foreach (var p in polies)
+                        {
+                            ty_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
+                            tr_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
+                        }
+
+                        var ty = InferType(ty_expr, null, forceInfer: true).Value as CheezType;
+                        var tr = InferType(tr_expr, null, forceInfer: true).Value as CheezType;
+
+                        bool isImplemented = false;
+                        foreach (var ti in impl.Scope.Impls)
+                        {
+                            if (ti.Trait == null)
+                                continue;
+
+                            var traitImpl = ImplAppliesToType(ti, ty);
+                            if (traitImpl == null)
+                                continue;
+
+                            if (CheezType.TypesMatch(traitImpl.Trait, tr))
+                            {
+                                isImplemented = true;
+                                break;
+                            }
+                        }
+
+                        if (!isImplemented)
+                        {
+                            return null;
+                        }
+                    }
+                }
+
+                // @TODO: check if all arguments were provided
+                if (impl.Parameters.Count != polies.Count)
+                {
+                    // @TODO: provide location
+                    ReportError("failed to infer all impl parameters");
+                }
+
+                var result = InstantiatePolyImplNew(impl, polies);
+                return result;
+            }
+            else
+            {
+                return CheezType.TypesMatch(impl.TargetType, type) ? impl : null;
+            }
+
+            return null;
+        }
+        
         private AstExpression GetImplFunctions(AstDotExpr expr, CheezType type, string functionName, TypeInferenceContext context)
         {
             var result = new List<AstFunctionDecl>();
@@ -3149,9 +3221,10 @@ namespace Cheez
             var scope = expr.Scope;
             while (result.Count == 0 && scope != null)
             {
-                foreach (var impl in scope.Impls)
+                foreach (var i in scope.Impls)
                 {
-                    if (!CheezType.TypesMatch(type, impl.TargetType))
+                    var impl = ImplAppliesToType(i, type);
+                    if (impl == null)
                         continue;
 
                     if (impl.Trait == null)
@@ -3170,25 +3243,27 @@ namespace Cheez
 
                         // check if function exists
                         var func = impl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
-                        if (func == null)
-                        {
-                            var trait = impl.Trait;
-                            if (trait.IsPolyType)
-                            {
-                                var args = new Dictionary<string, CheezType>();
-                                CollectPolyTypes(impl.TargetType, type, args);
-                                var args2 = trait.Declaration.Parameters.Select(p => (CheezType.Type, (object)args[p.Name.Name])).ToList();
-                                var instance = InstantiatePolyTrait(trait.DeclarationTemplate, args2, context.newPolyDeclarations);
-                                trait = instance.Type as TraitType;
-                            }
 
-                            var traitImpl = GetTraitImpl(scope, trait);
-                            if (traitImpl != null)
-                            {
-                                expr.Left = CheckType(expr.Left, trait);
-                                func = traitImpl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
-                            }
-                        }
+                        // search for a impl for that trait with the required function
+                        //if (func == null)
+                        //{
+                        //    var trait = impl.Trait;
+                        //    if (trait.IsPolyType)
+                        //    {
+                        //        var args = new Dictionary<string, CheezType>();
+                        //        CollectPolyTypes(impl.TargetType, type, args);
+                        //        var args2 = trait.Declaration.Parameters.Select(p => (CheezType.Type, (object)args[p.Name.Name])).ToList();
+                        //        var instance = InstantiatePolyTrait(trait.DeclarationTemplate, args2, context.newPolyDeclarations);
+                        //        trait = instance.Type as TraitType;
+                        //    }
+
+                        //    var traitImpl = GetTraitImpl(scope, trait);
+                        //    if (traitImpl != null)
+                        //    {
+                        //        expr.Left = CheckType(expr.Left, trait);
+                        //        func = traitImpl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
+                        //    }
+                        //}
                         if (func == null)
                             continue; // goto next impl block
 

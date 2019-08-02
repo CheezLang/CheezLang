@@ -183,6 +183,15 @@ namespace Cheez
             }
         }
 
+        private void Pass1Impl(AstImplBlock impl)
+        {
+            // check if there are parameters
+            if (impl.Parameters != null)
+            {
+                impl.IsPolymorphic = true;
+            }
+        }
+
         private void Pass1StructDeclaration(AstStructDecl @struct)
         {
             if (@struct.Parameters.Count > 0)

@@ -258,6 +258,55 @@ namespace Cheez
         }
 
         // impl
+        private AstImplBlock InstantiatePolyImplNew(AstImplBlock decl, Dictionary<string, CheezType> args, ILocation location = null)
+        {
+            AstImplBlock instance = null;
+
+            // check for existing instance
+            var concreteTrait = decl.Trait != null ? InstantiatePolyType(decl.Trait, args, location) : null;
+            var concreteTarget = InstantiatePolyType(decl.TargetType, args, location);
+
+            foreach (var pi in decl.PolyInstances)
+            {
+                if (pi.Trait == concreteTrait && pi.TargetType == concreteTarget)
+                {
+                    instance = pi;
+                    break;
+                }
+            }
+
+            if (instance == null)
+            {
+                instance = decl.Clone() as AstImplBlock;
+                instance.SubScope = new Scope($"impl <poly>", instance.Scope);
+                instance.IsPolyInstance = true;
+                instance.IsPolymorphic = false;
+                instance.Parameters = null;
+                instance.Conditions = null;
+                //instance.Template = decl;
+                decl.PolyInstances.Add(instance);
+
+                foreach (var kv in args)
+                {
+                    instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value);
+                }
+
+
+                if (instance.Trait != null)
+                    Pass3TraitImpl(instance);
+                else
+                    Pass3Impl(instance);
+
+                foreach (var f in instance.Functions)
+                {
+                    AnalyseFunction(f);
+                }
+            }
+
+            return instance;
+        }
+
+
         private AstImplBlock InstantiatePolyImpl(AstImplBlock decl, Dictionary<string, CheezType> args, ILocation location = null)
         {
             AstImplBlock instance = null;

@@ -875,9 +875,22 @@ namespace Cheez.Parsing
             var functions = new List<AstFunctionDecl>();
             AstExpression target = null;
             AstExpression trait = null;
+            List<AstParameter> parameters = null;
+            List<(AstExpression, AstExpression)> conditions = null;
 
             beg = Consume(TokenType.KwImpl, ErrMsg("keyword 'impl'", "at beginning of impl statement")).location;
             SkipNewlines();
+
+            if (CheckToken(TokenType.OpenParen))
+            {
+                parameters = ParseParameterList(out var pbeg, out var pend, false);
+                if (parameters.Count == 0)
+                {
+                    ReportError(new Location(pbeg, pend), $"impl parameter list can't be empty");
+                    parameters = null;
+                }
+                SkipNewlines();
+            }
 
             target = ParseExpression();
             SkipNewlines();
@@ -888,6 +901,45 @@ namespace Cheez.Parsing
                 SkipNewlines();
                 trait = target;
                 target = ParseExpression();
+                SkipNewlines();
+            }
+
+            if (CheckToken(TokenType.KwIf))
+            {
+                NextToken();
+                SkipNewlines();
+
+                conditions = new List<(AstExpression, AstExpression)>();
+
+                if (!CheckToken(TokenType.OpenBrace))
+                {
+                    while (true)
+                    {
+                        var typ = ParseExpression();
+                        SkipNewlines();
+                        ConsumeUntil(TokenType.Colon, ErrMsg("':'", "after type in impl condition"));
+                        SkipNewlines();
+                        var trt = ParseExpression();
+                        SkipNewlines();
+
+                        conditions.Add((typ, trt));
+
+                        if (CheckToken(TokenType.Comma))
+                        {
+                            NextToken();
+                            SkipNewlines();
+                        }
+                        else if (CheckToken(TokenType.OpenBrace))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            ReportError(PeekToken().location, $"Unexpected token {PeekToken()}, expected ',' or '{{'");
+                        }
+                    }
+                }
+
                 SkipNewlines();
             }
 
@@ -909,7 +961,7 @@ namespace Cheez.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of impl statement")).location;
 
-            return new AstImplBlock(target, trait, functions, new Location(beg, end));
+            return new AstImplBlock(parameters, target, trait, conditions, functions, new Location(beg, end));
         }
 
         public AstExprStmt ParseBlockStatement()
