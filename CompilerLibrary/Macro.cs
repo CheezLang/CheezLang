@@ -300,4 +300,46 @@ namespace Cheez
             return result;
         }
     }
+
+    public class BuiltInMacroDoWhile : BuiltInMacro
+    {
+        public BuiltInMacroDoWhile(CheezCompiler comp) : base(comp)
+        {
+        }
+
+        public override AstExpression Execute(AstMacroExpr original, ILexer lexer, IErrorHandler errorHandler)
+        {
+            var parser = new Parser(lexer, errorHandler);
+
+            var kwDo = parser.ConsumeUntil(TokenType.Identifier, Parser.ErrMsg("identifier", "at beginning of foreach loop"));
+            parser.SkipNewlines();
+
+            if (kwDo.data as string != "do")
+            {
+                errorHandler.ReportError(lexer.Text, new Location(kwDo.location), "Expected keyword 'do' at beginning of do-while loop");
+            }
+
+            var body = parser.ParseExpression();
+            parser.SkipNewlines();
+            parser.Consume(TokenType.KwWhile, Parser.ErrMsg("keyword 'while'", "after end of body of do-while loop"));
+
+            var condition = parser.ParseExpression();
+
+            var firstId = new AstIdExpr("§first", false, new Location(kwDo.location));
+
+            var result = compiler.ParseExpression($@"{{
+    while let §first = true; §first or §condition {{
+        §body
+        §first = false
+    }}
+}}", new Dictionary<string, AstExpression>
+            {
+                { "first", firstId },
+                { "condition", condition },
+                { "body", body }
+            });
+
+            return result;
+        }
+    }
 }

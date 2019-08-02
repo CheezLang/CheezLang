@@ -64,6 +64,7 @@ namespace Cheez.Visitors
         ReturnType VisitEmptyExpression(AstEmptyExpr expr, DataType data = default);
 
         // type expressions
+        ReturnType VisitImplTraitTypeExpr(AstImplTraitTypeExpr type, DataType data = default);
         ReturnType VisitReferenceTypeExpr(AstReferenceTypeExpr type, DataType data = default);
         ReturnType VisitSliceTypeExpr(AstSliceTypeExpr type, DataType data = default);
         ReturnType VisitArrayTypeExpr(AstArrayTypeExpr type, DataType data = default);
@@ -137,6 +138,7 @@ namespace Cheez.Visitors
         public virtual ReturnType VisitEmptyExpression(AstEmptyExpr expr, DataType data = default) => default;
 
         // type expressions
+        public virtual ReturnType VisitImplTraitTypeExpr(AstImplTraitTypeExpr type, DataType data = default) => default;
         public virtual ReturnType VisitReferenceTypeExpr(AstReferenceTypeExpr type, DataType data = default) => default;
         public virtual ReturnType VisitSliceTypeExpr(AstSliceTypeExpr type, DataType data = default) => default;
         public virtual ReturnType VisitArrayTypeExpr(AstArrayTypeExpr type, DataType data = default) => default;

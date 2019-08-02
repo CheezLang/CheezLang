@@ -3,3 +3,4 @@
 
 - move map of initialized symbols from scope to block
 - improve error messages when type of const argument doesn't match type of const parameter (location shown is from param)
+- return in match as expression

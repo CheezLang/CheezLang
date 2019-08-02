@@ -1,0 +1,10 @@
+enum Value {
+    Nil
+    Bool    : bool
+    Num     : double
+    Obj     : &Object
+}
+
+struct Object {
+
+}

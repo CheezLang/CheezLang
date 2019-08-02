@@ -1,0 +1,66 @@
+#load("std:io/io")
+#load("std:io/file")
+#load("std:array")
+#load("chunk")
+#load("vm")
+
+fn to_ascii_strings(argv: &&u16, argc: int) -> Array(String) {
+    let array = Array(String)::create(argc)
+    loop! i in 0 -> argc {
+        let str = String::empty()
+        while let k = 0; argv[i][k] != 0; k += 1 {
+            str += char(argv[i][k])
+        }
+
+        array.add(str)
+    }
+    return array
+}
+
+fn get_cmd_args() -> Array(String) {
+    let cmdLineArgs = GetCommandLineW()
+    let count = 0i32
+    let args = CommandLineToArgvW(cmdLineArgs, &count)
+    return to_ascii_strings(args, int(count))
+}
+
+fn repl() -> int {
+    println("Repl not implemented yet.")
+    return -1
+}
+
+fn run_file(file_name: ref String) -> int {
+    return match load_file(file_name.slice()) {
+        Ok($text) -> {
+            use InterpretResult
+            let result = match interpret(text.slice()) {
+                Ok           -> 0
+                CompileError -> 65
+                RuntimeError -> 70
+            }
+            text.dispose()
+
+            result
+        }
+
+        Err($msg) -> {
+            printfln("[RUN FILE] {}", [msg])
+            msg.dispose()
+
+            60
+        }
+    }
+}
+
+fn Main() -> int {
+    let args = get_cmd_args()
+
+    return match args.get_length() {
+        1 -> repl()
+        2 -> run_file(args[1])
+        $_-> {
+            println("Usage: clox [path]")
+            0
+        }
+    }
+}

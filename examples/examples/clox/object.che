@@ -1,0 +1,30 @@
+
+enum ObjKind {
+    BoundMethod
+    Class
+    Closure
+    Function
+    Instance
+    Native
+    String
+    UpValue
+}
+
+struct Obj {
+    kind    : ObjKind
+    is_dark : bool
+    next    : &Obj
+}
+
+struct ObjFunction {
+    obj     : Obj   = new {kind = ObjKind.Function}
+    arity   : int
+    chunk   : Chunk
+    name    : ObjString
+}
+
+struct ObjString {
+    obj     : Obj   = new {kind = ObjKind.String}
+    chars   : []char
+    hash    : u32
+}

@@ -607,6 +607,8 @@ namespace Cheez
                     case AstCallExpr _:
                     case AstCompCallExpr _:
                     case AstMatchExpr _:
+                    case AstEmptyExpr _:
+                    case AstMacroExpr _:
                         break;
 
                     default:

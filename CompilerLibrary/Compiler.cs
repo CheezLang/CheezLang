@@ -282,8 +282,9 @@ namespace Cheez
             while (true)
             {
 
-                var result = parser.ParseStatement();
-                var s = result.stmt;
+                var s = parser.ParseStatement();
+                if (s == null)
+                    break;
 
                 if (s is AstFunctionDecl || 
                     s is AstStructDecl || 
@@ -306,9 +307,6 @@ namespace Cheez
                 {
                     eh.ReportError(lexer.Text, s, "This type of statement is not allowed in global scope");
                 }
-
-                if (result.done)
-                    break;
             }
 
             mLoadingFiles.Remove(fileName);

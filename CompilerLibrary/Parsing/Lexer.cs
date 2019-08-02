@@ -104,7 +104,8 @@ namespace Cheez.Parsing
         KwCast,
         KwConst,
         KwDefault,
-        KwPub
+        KwPub,
+        KwThen
     }
 
     public class Token
@@ -387,6 +388,7 @@ namespace Cheez.Parsing
                 case "const": token.type = TokenType.KwConst; break;
                 case "default": token.type = TokenType.KwDefault; break;
                 case "pub": token.type = TokenType.KwPub; break;
+                case "then": token.type = TokenType.KwThen; break;
             }
         }
 

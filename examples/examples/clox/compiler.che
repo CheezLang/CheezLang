@@ -1,0 +1,101 @@
+#load("object")
+#load("lexer")
+
+
+enum Precedence {
+    None
+    Assignment
+    Or
+    And
+    Equality
+    Comparison
+    Term
+    Factor
+    Unary
+    Call
+    Primary
+}
+
+typedef ParseFn = fn(bool)
+
+struct ParseRule {
+    prefix      : ParseFn
+    infix       : ParseFn
+    precedence  : Precedence
+}
+
+struct Local {
+    name        : Token
+    depth       : int
+    is_upvalue  : bool
+}
+
+struct Upvalue {
+    index   : u8
+    is_local: bool
+}
+
+enum FunctionType {
+    Function
+    Initializer
+    Method
+    Script
+}
+
+struct Compiler {
+    enclosing   : &Compiler
+    function    : &ObjFunction
+    kind        : FunctionType
+    locals      : [256]Local
+    local_count : int
+    upvalues    : [256]Upvalue
+    scope_depth : int
+}
+
+impl Compiler {
+    fn create(kind: FunctionType) -> Self {
+        // return new {
+        //     enclosing = parent
+        //     function = null
+        //     kind = kind
+        //     local_count = 0
+        //     scope_depth = 0
+        // }
+    }
+}
+
+struct ClassCompiler {
+    enclosing   : &ClassCompiler
+    name        : Token
+    has_super   : bool
+}
+
+
+
+fn compile(source: string) -> &ObjFunction {
+    let lexer = Lexer::create(source)
+    let compiler = Compiler::create(FunctionType.Script)
+
+    let had_error = false
+    let panic_mode = false
+
+    advance()
+    while !match_token(TokenKind.Eof) {
+        declaration()
+    }
+
+    let function = end_compiler()
+    return if had_error {null} else {function}
+
+    // print tokens
+    // while true {
+    //     let token = lexer.next_token()
+
+    //     printfln("{}> ({}) '{}'", [token.line, token.kind, token.text])
+
+    //     if int(token.kind) == int(TokenKind.Eof) {
+    //         break
+    //     }
+    // }
+    return null
+}

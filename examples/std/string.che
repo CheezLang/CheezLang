@@ -7,6 +7,7 @@
 #load("std:mem/allocator")
 #load("std:mem/std_heap_allocator")
 #load("std:alloca")
+#load("std:util")
 
 struct StringBase(CharType: type) {
     data: []CharType
@@ -277,6 +278,18 @@ impl string {
 
     fn to_string(Self) -> String {
         return String::from_string(self)
+    }
+
+    fn slice(Self, from: int = 0, length: int = -1) -> string {
+        if length < 0 {
+            length = self.length - from
+        }
+
+        let result = self
+        result.data = pointer_add_sized(result.data, from)
+        result.length = length
+
+        return result
     }
 }
 
