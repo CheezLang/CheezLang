@@ -5,7 +5,7 @@ trait Iterator(T: type) {
     fn next(ref Self) -> Option(T);
 }
 
-impl Iterator($T) {
+impl(T: type) Iterator(T) {
     fn max(ref Self) -> T {
         let max: T
 
@@ -86,7 +86,7 @@ struct TakeIterator(T: type) {
     count   : int
 }
 
-impl Iterator($T) for TakeIterator(T) {
+impl(T: type) Iterator(T) for TakeIterator(T) {
     fn next(ref Self) -> Option(T) {
         if count > 0 {
             count -= 1
@@ -103,7 +103,7 @@ struct MapIterator(T: type, X: type) {
     mapFunc : fn(T) -> X
 }
 
-impl Iterator($X) for MapIterator($T, X) {
+impl(T: type, X: type) Iterator(X) for MapIterator(T, X) {
     fn next(ref Self) -> Option(X) {
         return match it.next() {
             Some($v) -> Some(mapFunc(v))

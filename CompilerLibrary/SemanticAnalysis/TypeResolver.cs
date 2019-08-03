@@ -31,9 +31,9 @@ namespace Cheez
             return ResolveTypeHelper(expr, out type);
         }
 
-        public AstExpression ResolveTypeNow(AstExpression expr, out CheezType type, bool poly_from_scope = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
+        public AstExpression ResolveTypeNow(AstExpression expr, out CheezType type, bool resolve_poly_expr_to_concrete_type = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
         {
-            expr = InferType(expr, CheezType.Type, poly_from_scope, dependencies, forceInfer);
+            expr = InferType(expr, CheezType.Type, resolve_poly_expr_to_concrete_type, dependencies, forceInfer);
             return ResolveTypeHelper(expr, out type);
         }
 
@@ -187,6 +187,8 @@ namespace Cheez
                 case CharType _:
                 case IntType _: break;
 
+                case ErrorType _: break;
+
                 case CheezType t:
                     throw new NotImplementedException();
             }
@@ -283,7 +285,7 @@ namespace Cheez
                 instance.IsPolymorphic = false;
                 instance.Parameters = null;
                 instance.Conditions = null;
-                //instance.Template = decl;
+                instance.Template = decl;
                 decl.PolyInstances.Add(instance);
 
                 foreach (var kv in args)
@@ -292,7 +294,7 @@ namespace Cheez
                 }
 
 
-                if (instance.Trait != null)
+                if (instance.TraitExpr != null)
                     Pass3TraitImpl(instance);
                 else
                     Pass3Impl(instance);
@@ -329,7 +331,7 @@ namespace Cheez
                 instance.SubScope = new Scope($"impl <poly>", instance.Scope);
                 instance.IsPolyInstance = true;
                 instance.IsPolymorphic = false;
-                //instance.Template = decl;
+                instance.Template = decl;
                 decl.PolyInstances.Add(instance);
 
                 foreach (var kv in args)
@@ -858,6 +860,12 @@ namespace Cheez
                     if (concreteTypes.TryGetValue(p.Name, out var t)) return t;
                     return p;
 
+                case TupleType tuple:
+                    {
+                        var args = tuple.Members.Select(m => (m.name, InstantiatePolyType(m.type, concreteTypes, location)));
+                        return TupleType.GetTuple(args.ToArray());
+                    }
+
                 case StructType s:
                     {
                         if (s.Declaration.Template != null)
@@ -871,8 +879,14 @@ namespace Cheez
                     {
                         if (s.Declaration.Template != null)
                             throw new Exception("must be null");
-                        var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
-                        var instance = InstantiatePolyTrait(s.Declaration, args, location: location);
+
+                        if (s.Arguments.Count() != s.Declaration.Parameters.Count())
+                            throw new Exception("argument count must match");
+
+                        var args = s.Arguments.Select(a => InstantiatePolyType(a, concreteTypes, location)).ToList();
+                        var zipped = args.Zip(s.Declaration.Parameters, (type, param) => (param.Type, (object)type)).ToList();
+
+                        var instance = InstantiatePolyTrait(s.Declaration, zipped, location: location);
                         return instance.Type;
                     }
 

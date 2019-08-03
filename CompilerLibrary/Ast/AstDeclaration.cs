@@ -104,7 +104,15 @@ namespace Cheez.Ast.Statements
         public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
         public Dictionary<string, (CheezType type, object value)> ConstParameters { get; internal set; }
 
-        public AstImplBlock ImplBlock { get; set; }
+        private AstImplBlock _ImplBlock;
+        public AstImplBlock ImplBlock
+        {
+            get => _ImplBlock;
+            set
+            {
+                _ImplBlock = value;
+            }
+        }
         public AstFunctionDecl TraitFunction { get; internal set; }
         public ILocation ParameterLocation { get; internal set; }
 
@@ -279,6 +287,7 @@ namespace Cheez.Ast.Statements
 
         public Scope SubScope { get; set; }
 
+        public AstImplBlock Template { get; set; } = null;
         public List<AstImplBlock> PolyInstances { get; set; } = new List<AstImplBlock>();
         public bool IsPolyInstance = false;
         public bool IsPolymorphic = false;

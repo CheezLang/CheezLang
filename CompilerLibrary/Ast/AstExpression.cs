@@ -99,9 +99,10 @@ namespace Cheez.Ast.Expressions
 
         public override string ToString()
         {
-            var sb = new StringWriter();
-            new RawAstPrinter(sb).PrintExpression(this);
-            return sb.GetStringBuilder().ToString();
+            if (TypeInferred)
+                return Accept(new AnalysedAstPrinter());
+            else
+                return Accept(new RawAstPrinter(new StringWriter()));
         }
 
         public void AttachTo(AstExpression expr)

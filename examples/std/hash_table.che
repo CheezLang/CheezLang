@@ -18,7 +18,7 @@ struct Entry(K: type, V: type) {
     pub is_tombstone: bool
 }
 
-impl Table($K, $V) {
+impl(K: type, V: type) Table(K, V) {
     fn create(comp: fn(K, K) -> bool, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         let table: Table(K, V)
         table.allocator = allocator
@@ -163,8 +163,8 @@ struct TableIterator(K: type, V: type) {
     index: int
 }
 
-impl Iterator((int, int)) for TableIterator(int, int) {
-    fn next(ref Self) -> Option((int, int)) {
+impl(K: type, V: type) Iterator((K, V)) for TableIterator(K, V) {
+    fn next(ref Self) -> Option((K, V)) {
         let entries = table.get_entries()
         while index < entries.length {
             let e = ref entries[index]

@@ -10,7 +10,7 @@ struct Test(T: type) {
     pub x: T
 }
 
-impl Test($T) {
+impl(T: type) Test(T) {
     fn foo(ref Self, a: int) -> Test(T) {
         self.x = cast a
         return new Test(T) { cast a }

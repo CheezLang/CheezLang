@@ -1,106 +1,65 @@
-//#load("examples/clox/main")
-// #load("std:io/io")
+// #load("tests/language\operator_overloading.che")
 
-#load("std:preload")
-#load("std:c")
-
-trait Iterator {
-    fn next(ref Self) -> Option(int);
+struct Num(T: type) {
+    pub val: T
 }
 
-struct Range {
-    start: int
-    end: int
-}
-
-struct Foo {}
-
-impl Iterator for Foo {
-    fn next(ref Self) -> Option(int) {
-        return None
-    }
-}
-
-impl Iterator for Range {
-    fn next(ref Self) -> Option(int) {
-        if start > end {
-            return None
-        }
-        start += 1
-        return Some(start - 1)
-    }
-}
-
-impl(T: type) T if T : Iterator {
-    fn sum(ref Self) -> int {
-        let s = 0
-        while let i = self.next(); int(i) == int(Option(int).Some); i = self.next() {
-            s += i.Some
-        }
-        return s
-    }
-}
-
-trait From(T: type) {
-    fn from(value: T) -> Self;
-}
-
-trait Into(T: type) {
-    fn into(ref Self) -> T;
-}
-
-impl(F: type, T: type) From(F) for T if F : Into(T) {
-    fn from(ref Self) -> T {
-        return self.into()
-    }
-}
-
-impl(F: type, T: type) Into(T) for F if T : From(F) {
-    fn into(ref Self) -> T {
-        return T::from(self)
-    }
-}
-
-impl From(bool) for int {
-    fn from(b: bool) -> int {
-        return if b then 1 else 0
-    }
-}
-
-impl From(bool) for string {
-    fn from(b: bool) -> string {
-        return if b then "true" else "false"
-    }
-}
-
-let b: int = true.into()
-
-
-impl(T: type) Into(T) for bool if T : From(bool) {
-    fn into(ref Self) -> T {
-        return T::from(self)
-    }
-}
-
-impl Into(int) for bool {
-    fn into(ref Self) -> int {
-        return int::from(self)
-    }
-}
-impl Into(string) for bool {
-    fn into(ref Self) -> string {
-        return string::from(self)
+impl(T: type) Num(T) {
+    fn add(a: Num(T), b: Num(T)) -> Num(T) #operator("+") {
+        return new {a.val + b.val}
     }
 }
 
 fn Main() {
-    let r = new Range{1, 10}
-    let r2 = new Range{1, 10}
-    let r3 = new Foo{}
-    // while let i = r.next(); int(i) == int(Option(int).Some); i = r.next() {
-    //     c_printf("%d`n", i.Some)
-    // }
-
-    c_printf("%d`n", r2.sum())
-    c_printf("%d`n", r3.sum())
+    let a = new Num(int){1}
+    let b = new Num(int){2}
+    // let c = Num(int)::add(a, b)
+    let d = a + b
 }
+
+// //#load("examples/clox/main")
+// // #load("std:io/io")
+
+// #load("std:preload")
+// #load("std:c")
+
+// #load("std:string")
+// #load("std:array")
+
+// struct Range(T: type) {
+//     start   : T
+//     end     : T
+// }
+
+// impl(T: type) Iterator(T) for Range(T) {
+//     fn next(ref Self) -> Option(T) {
+//         if start > end {
+//             return None
+//         }
+//         start += 1
+//         return Some(start - 1)
+//     }
+// }
+
+// impl(It: type, T: type) It if It : Iterator(T) {
+//     fn sum(ref Self) -> T {
+//         let s: T = 0
+//         while let i = self.next(); int(i) == int(Option(T).Some); i = self.next() {
+//             s += i.Some
+//         }
+//         return s
+//     }
+// }
+
+// fn Main() {
+//     let r = new Range(int){1, 5}
+//     let r2 = new Range(double){1, 10}
+//     // r.next()
+//     // r2.next()
+//     // while let i = r.next(); int(i) == int(Option(int).Some); i = r.next() {
+//     //     c_printf("%d`n", i.Some)
+//     // }
+
+//     println(r.sum())
+//     println(r2.sum())
+// }

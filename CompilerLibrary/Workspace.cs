@@ -80,6 +80,12 @@ namespace Cheez
             // new
             ResolveDeclarations(GlobalScope, Statements);
 
+            // print debug info
+            if (true)
+            {
+                // global impls
+            }
+
             if (mCompiler.ErrorHandler.HasErrors)
                 return;
 
@@ -87,7 +93,7 @@ namespace Cheez
             mTypeDefs.AddRange(GlobalScope.Typedefs);
 
             // print stuff
-            { 
+            {
                 //System.Console.WriteLine("Traits: ");
                 //foreach (var t in Traits)
                 //    System.Console.WriteLine($"  {t.Type}");
@@ -116,7 +122,7 @@ namespace Cheez
             var mains = GlobalScope.GetFunctionsWithDirective("main");
             if (mains.Count() > 1)
             {
-                ReportError("Only one main function is allowed", 
+                ReportError("Only one main function is allowed",
                     mains.Select(f => ("Main function defined here:", f.Name.Location)).ToList());
             }
             else if (mains.Count() == 0)
@@ -218,6 +224,35 @@ namespace Cheez
             }
 
             traits.Add(impl);
+        }
+
+        private int logScope = 0;
+        private void Log(string message, params string[] comments)
+        {
+            var indent = new string(' ', logScope * 4);
+
+            var cc = System.Console.ForegroundColor;
+
+            System.Console.ForegroundColor = System.ConsoleColor.DarkCyan;
+            System.Console.WriteLine($"[LOG] {indent}{message}");
+
+
+            System.Console.ForegroundColor = System.ConsoleColor.Blue;
+            foreach (var comment in comments)
+            {
+                System.Console.WriteLine($"      {indent}{comment}");
+            }
+            System.Console.ForegroundColor = cc;
+        }
+
+        private void PushLogScope()
+        {
+            logScope++;
+        }
+
+        private void PopLogScope()
+        {
+            logScope--;
         }
     }
 }

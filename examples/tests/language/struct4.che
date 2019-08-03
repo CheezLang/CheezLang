@@ -11,7 +11,7 @@ struct Vector(T: type) {
     pub y: T
 }
 
-impl Vector($T) {
+impl(T: type) Vector(T) {
     fn add(ref Self, other: Vector(T)) -> ref Vector(T) {
         x += other.x
         y += other.y

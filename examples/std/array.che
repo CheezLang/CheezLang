@@ -9,7 +9,7 @@ struct Array(T: type) {
     allocator: Allocator
 }
 
-impl Array($T) {
+impl(T: type) Array(T) {
     fn create(initial_capacity: int = 10, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         let s = new Array(T) { null, 0, allocator }
         s.reserve(initial_capacity)
@@ -133,7 +133,7 @@ struct ArrayIterator(T: type) {
     index: int
 }
 
-impl Iterator($T) for ArrayIterator(T) {
+impl(T: type) Iterator(T) for ArrayIterator(T) {
     fn next(ref Self) -> Option(T) {
         index += 1
         return if index > array.length { None } else { Some(array[index - 1]) }

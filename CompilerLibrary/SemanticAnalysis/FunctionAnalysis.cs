@@ -9,6 +9,7 @@ using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
+using Cheez.Visitors;
 
 namespace Cheez
 {
@@ -43,6 +44,9 @@ namespace Cheez
 
         private void AnalyseFunction(AstFunctionDecl func, List<AstFunctionDecl> instances = null)
         {
+            Log($"Analysing function {func.Name}", $"impl = {func.ImplBlock?.Accept(new SignatureAstPrinter())}", $"poly = {func.IsGeneric}");
+            PushLogScope();
+
             var prevCurrentFunction = currentFunction;
             currentFunction = func;
             try
@@ -176,6 +180,8 @@ namespace Cheez
             finally
             {
                 currentFunction = prevCurrentFunction;
+                PopLogScope();
+                Log($"Finished function {func.Name.Name}");
             }
         }
 

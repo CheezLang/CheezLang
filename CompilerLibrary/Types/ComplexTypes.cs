@@ -353,8 +353,13 @@ namespace Cheez.Types.Complex
 
         public CallingConvention CC = CallingConvention.Default;
 
-        public FunctionType((string, CheezType, AstExpression defaultValue)[] parameterTypes, CheezType returnType, CallingConvention cc)
+        public FunctionType((string name, CheezType type, AstExpression defaultValue)[] parameterTypes, CheezType returnType, CallingConvention cc)
         {
+            if (parameterTypes.Any(p => p.type == null))
+            {
+                throw new ArgumentNullException();
+            }
+
             this.Parameters = parameterTypes;
             this.ReturnType = returnType;
             this.CC = cc;

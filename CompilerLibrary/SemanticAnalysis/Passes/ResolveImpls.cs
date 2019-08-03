@@ -4,6 +4,7 @@ using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
+using Cheez.Visitors;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -49,23 +50,48 @@ namespace Cheez
         {
             impl.TraitExpr.Scope = impl.SubScope;
 
-            CheezType type = null;
-            if (!impl.IsPolyInstance)
+            if (impl.IsPolymorphic)
             {
-                var polyNames = new List<string>();
-                CollectPolyTypeNames(impl.TargetTypeExpr, polyNames);
-                CollectPolyTypeNames(impl.TraitExpr, polyNames);
-                foreach (var pn in polyNames)
-                    impl.SubScope.DefineTypeSymbol(pn, new PolyType(pn, true));
-                impl.TraitExpr = ResolveTypeNow(impl.TraitExpr, out type);
-            }
-            else
-            {
-                impl.TraitExpr = ResolveTypeNow(impl.TraitExpr, out type, poly_from_scope: true);
+                // setup scopes
+                foreach (var param in impl.Parameters)
+                {
+                    impl.SubScope.DefineTypeSymbol(param.Name.Name, new PolyType(param.Name.Name, true));
+
+                    param.Scope = impl.Scope;
+                    param.TypeExpr.Scope = impl.Scope;
+                    param.TypeExpr = ResolveTypeNow(param.TypeExpr, out var newType, forceInfer: true);
+
+                    if (newType is AbstractType)
+                    {
+                        continue;
+                    }
+
+                    param.Type = newType;
+
+                    switch (param.Type)
+                    {
+                        case CheezTypeType _:
+                            param.Value = new PolyType(param.Name.Name, true);
+                            break;
+
+                        case IntType _:
+                        case FloatType _:
+                        case BoolType _:
+                        case CharType _:
+                            break;
+
+                        case ErrorType _:
+                            break;
+
+                        default:
+                            ReportError(param.TypeExpr, $"The type '{param.Type}' is not allowed here.");
+                            break;
+                    }
+                }
             }
 
-            if (type.IsErrorType)
-                return;
+            impl.TraitExpr = ResolveTypeNow(impl.TraitExpr, out var type, resolve_poly_expr_to_concrete_type: true);
+
 
             if (type is TraitType tt)
             {
@@ -73,25 +99,20 @@ namespace Cheez
             }
             else
             {
-                ReportError(impl.TraitExpr, $"{type} is not a trait");
+                if (!type.IsErrorType)
+                    ReportError(impl.TraitExpr, $"{type} is not a trait");
                 impl.Trait = new TraitErrorType();
                 return;
             }
 
             impl.TargetTypeExpr.Scope = impl.SubScope;
-            if (!impl.IsPolyInstance)
-            {
-                impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t);
-                impl.TargetType = t;
-            }
-            else
-            {
-                impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t, poly_from_scope: true);
-                impl.TargetType = t;
-            }
+            impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t, resolve_poly_expr_to_concrete_type: !impl.IsPolymorphic);
+            impl.TargetType = t;
+
+            if (impl.IsPolymorphic)
+                return;
 
             impl.SubScope.DefineTypeSymbol("Self", impl.TargetType);
-
 
             // register impl in trait
             if (impl.Trait.Declaration.Implementations.TryGetValue(impl.TargetType, out var otherImpl))
@@ -101,9 +122,7 @@ namespace Cheez
             }
             impl.Trait.Declaration.Implementations[impl.TargetType] = impl;
 
-            impl.IsPolymorphic = impl.Trait.IsPolyType || impl.TargetType.IsPolyType;
-            if (!impl.IsPolymorphic)
-                AddTraitForType(impl.TargetType, impl);
+            AddTraitForType(impl.TargetType, impl);
 
             // handle functions
             foreach (var f in impl.Functions)
@@ -155,6 +174,10 @@ namespace Cheez
                     }
 
                     // check return type
+                    if (!CheezType.TypesMatch(func.ReturnType, traitFunc.ReturnType))
+                    {
+                        ReportError(func.ReturnTypeExpr?.Location ?? func.Name.Location, $"Return type must match the trait functions returntype", ("Trait function parameter type defined here:", traitFunc.ReturnTypeExpr?.Location ?? traitFunc.Name.Location));
+                    }
                 }
 
                 if (!found)
@@ -166,86 +189,99 @@ namespace Cheez
 
         private void Pass3Impl(AstImplBlock impl)
         {
-            // check if there are parameters
-            if (impl.IsPolymorphic)
+            Log($"Pass3Impl {impl.Accept(new SignatureAstPrinter())}", $"poly = {impl.IsPolymorphic}");
+            PushLogScope();
+
+            try
             {
-                // setup scopes
-                foreach (var param in impl.Parameters)
+
+                // check if there are parameters
+                if (impl.IsPolymorphic)
                 {
-                    impl.SubScope.DefineTypeSymbol(param.Name.Name, new PolyType(param.Name.Name, true));
-
-                    param.Scope = impl.Scope;
-                    param.TypeExpr.Scope = impl.Scope;
-                    param.TypeExpr = ResolveTypeNow(param.TypeExpr, out var newType, forceInfer: true);
-
-                    if (newType is AbstractType)
+                    // setup scopes
+                    foreach (var param in impl.Parameters)
                     {
-                        continue;
-                    }
+                        impl.SubScope.DefineTypeSymbol(param.Name.Name, new PolyType(param.Name.Name, true));
 
-                    param.Type = newType;
+                        param.Scope = impl.Scope;
+                        param.TypeExpr.Scope = impl.Scope;
+                        param.TypeExpr = ResolveTypeNow(param.TypeExpr, out var newType, forceInfer: true);
 
-                    switch (param.Type)
-                    {
-                        case CheezTypeType _:
-                            param.Value = new PolyType(param.Name.Name, true);
-                            break;
+                        if (newType is AbstractType)
+                        {
+                            continue;
+                        }
 
-                        case IntType _:
-                        case FloatType _:
-                        case BoolType _:
-                        case CharType _:
-                            break;
+                        param.Type = newType;
 
-                        case ErrorType _:
-                            break;
+                        switch (param.Type)
+                        {
+                            case CheezTypeType _:
+                                param.Value = new PolyType(param.Name.Name, true);
+                                break;
 
-                        default:
-                            ReportError(param.TypeExpr, $"The type '{param.Type}' is not allowed here.");
-                            break;
+                            case IntType _:
+                            case FloatType _:
+                            case BoolType _:
+                            case CharType _:
+                                break;
+
+                            case ErrorType _:
+                                break;
+
+                            default:
+                                ReportError(param.TypeExpr, $"The type '{param.Type}' is not allowed here.");
+                                break;
+                        }
                     }
                 }
-            }
 
-            impl.TargetTypeExpr.Scope = impl.SubScope;
-            impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t);
-            impl.TargetType = t;
+                impl.TargetTypeExpr.Scope = impl.SubScope;
+                impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t, resolve_poly_expr_to_concrete_type: !impl.IsPolymorphic);
+                impl.TargetType = t;
 
-            // @TODO: check if target type expr contains poly names such as '$T', these are not allowed
-            if (false)
-            {
-                ReportError(impl.TargetTypeExpr, $"Target type of impl can't be polymorphic");
-            }
-
-            // @TODO: does it make sense to allow conditions on impl blocks without parameters?
-            // for now don't allow these
-
-            if (impl.Conditions != null)
-            {
-                if (impl.Parameters == null)
-                    ReportError(new Location(impl.Conditions.First().type.Beginning, impl.Conditions.Last().trait.End), $"An impl block can't have a condition without parameters");
-                
-                foreach (var cond in impl.Conditions)
+                // @TODO: check if target type expr contains poly names such as '$T', these are not allowed
+                if (false)
                 {
-                    cond.type.Scope = impl.SubScope;
-                    cond.trait.Scope = impl.SubScope;
+                    ReportError(impl.TargetTypeExpr, $"Target type of impl can't be polymorphic");
+                }
+
+                // @TODO: does it make sense to allow conditions on impl blocks without parameters?
+                // for now don't allow these
+
+                if (impl.Conditions != null)
+                {
+                    if (impl.Parameters == null)
+                        ReportError(new Location(impl.Conditions.First().type.Beginning, impl.Conditions.Last().trait.End), $"An impl block can't have a condition without parameters");
+
+                    foreach (var cond in impl.Conditions)
+                    {
+                        cond.type.Scope = impl.SubScope;
+                        cond.trait.Scope = impl.SubScope;
+                    }
+                }
+
+                if (impl.IsPolymorphic)
+                    return;
+
+                impl.SubScope.DefineTypeSymbol("Self", impl.TargetType);
+
+                foreach (var f in impl.Functions)
+                {
+                    f.Scope = impl.SubScope;
+                    f.ConstScope = new Scope("$", f.Scope);
+                    f.SubScope = new Scope("fn", f.ConstScope);
+                    f.ImplBlock = impl;
+
+                    Pass4ResolveFunctionSignature(f);
+                    CheckForSelfParam(f);
+                    impl.Scope.DefineImplFunction(f);
                 }
             }
-
-            if (impl.IsPolymorphic)
-                return;
-
-            impl.SubScope.DefineTypeSymbol("Self", impl.TargetType);
-
-            foreach (var f in impl.Functions)
+            finally
             {
-                f.Scope = impl.SubScope;
-                f.ConstScope = new Scope("$", f.Scope);
-                f.SubScope = new Scope("fn", f.ConstScope);
-                f.ImplBlock = impl;
-
-                Pass4ResolveFunctionSignature(f);
-                CheckForSelfParam(f);
+                PopLogScope();
+                Log($"Finished Pass3Impl {impl.Accept(new SignatureAstPrinter())}", $"poly = {impl.IsPolymorphic}");
             }
         }
     }

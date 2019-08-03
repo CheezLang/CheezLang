@@ -24,7 +24,7 @@ namespace Cheez
             public List<AstFunctionDecl> newPolyFunctions;
             public List<AstDecl> newPolyDeclarations;
             public HashSet<AstDecl> dependencies;
-            public bool poly_from_scope;
+            public bool resolve_poly_expr_to_concrete_type;
             public bool forceInfer = false;
         }
 
@@ -77,13 +77,13 @@ namespace Cheez
             expr.Type = LiteralTypeToDefaultType(expr.Type, expected);
         }
 
-        private AstExpression InferType(AstExpression expr, CheezType expected, bool poly_from_scope = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
+        private AstExpression InferType(AstExpression expr, CheezType expected, bool resolve_poly_expr_to_concrete_type = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
         {
             var context = new TypeInferenceContext
             {
                 newPolyFunctions = new List<AstFunctionDecl>(),
                 //newPolyDeclarations = new List<AstDecl>(),
-                poly_from_scope = poly_from_scope,
+                resolve_poly_expr_to_concrete_type = resolve_poly_expr_to_concrete_type,
                 dependencies = dependencies,
                 forceInfer = forceInfer
             };
@@ -881,11 +881,11 @@ namespace Cheez
 
         private AstExpression InferTypeFunctionTypeExpr(AstFunctionTypeExpr func, TypeInferenceContext context)
         {
-            var ok = true;
             for (int i = 0; i < func.ParameterTypes.Count; i++)
             {
                 func.ParameterTypes[i].AttachTo(func);
                 func.ParameterTypes[i] = ResolveType(func.ParameterTypes[i], context, out var t);
+
             }
 
             CheezType ret = CheezType.Void;
@@ -896,9 +896,11 @@ namespace Cheez
                 func.ReturnType = ResolveType(func.ReturnType, context, out var t);
                 ret = t;
             }
-
-            if (!ok)
+            
+            if ((func.ReturnType?.Type?.IsErrorType ?? false) || func.ParameterTypes.Any(t => t.Type.IsErrorType))
+            {
                 return func;
+            }
 
             var paramTypes = func.ParameterTypes.Select(
                 p => ((string)null, p.Value as CheezType, (AstExpression)null)).ToArray();
@@ -1019,18 +1021,18 @@ namespace Cheez
 
                 if (t.Declaration.IsPolyInstance)
                 {
-                    var template = t.Declaration.Template.FindMatchingImplementation(from);
-                    if (template == null)
+                    var impls = GetMatchingImplBlocks(cast.Scope, from, t);
+
+                    if (impls.Count == 0)
                     {
                         ReportError(cast, $"Can't cast {from} to {to} because it doesn't implement the trait");
                         return cast;
                     }
+                    else if (impls.Count > 1)
+                    {
+                        throw new Exception("Shouldn't happen i guess?");
+                    }
 
-                    var polyTypes = new Dictionary<string, CheezType>();
-                    CollectPolyTypes(template.Trait, to, polyTypes);
-                    CollectPolyTypes(template.TargetType, from, polyTypes);
-
-                    var impl = InstantiatePolyImpl(template, polyTypes);
                     return cast;
                 }
                 else
@@ -2061,7 +2063,7 @@ namespace Cheez
                 case CheezTypeType _ when expr.IsDoubleColon:
                     {
                         var t = expr.Left.Value as CheezType;
-                        var funcs = expr.Scope.GetImplFunction(t, expr.Right.Name);
+                        var funcs = GetImplFunctions(expr.Scope, t, expr.Right.Name);
 
                         if (funcs.Count == 0)
                         {
@@ -2877,7 +2879,7 @@ namespace Cheez
 
         private AstExpression InferTypesIdExpr(AstIdExpr expr, CheezType expected, TypeInferenceContext context)
         {
-            if (expr.IsPolymorphic && !context.poly_from_scope)
+            if (expr.IsPolymorphic && !context.resolve_poly_expr_to_concrete_type)
             {
                 expr.Type = CheezType.Type;
                 expr.Value = new PolyType(expr.Name, true);
@@ -3181,6 +3183,7 @@ namespace Cheez
                             if (CheezType.TypesMatch(traitImpl.Trait, tr))
                             {
                                 isImplemented = true;
+                                CollectPolyTypes(tr, traitImpl.Trait, polies);
                                 break;
                             }
                         }
@@ -3206,11 +3209,53 @@ namespace Cheez
             {
                 return CheezType.TypesMatch(impl.TargetType, type) ? impl : null;
             }
-
-            return null;
         }
-        
+
         private AstExpression GetImplFunctions(AstDotExpr expr, CheezType type, string functionName, TypeInferenceContext context)
+        {
+            var result = GetImplFunctions(expr.Scope, type, functionName);
+            
+            if (result.Count == 0)
+            {
+                ReportError(expr.Right, $"Type '{type}' has no impl function '{functionName}'");
+                return expr;
+            }
+            else if (result.Count > 1)
+            {
+                var details = result.Select(f => ("Possible candidate:", f.Name.Location));
+                ReportError(expr.Right, $"Ambigious call to impl function '{functionName}'", details);
+                return expr;
+            }
+
+            var ufc = new AstUfcFuncExpr(expr.Left, result[0]);
+            return InferTypeHelper(ufc, null, context);
+        }
+
+        private List<AstImplBlock> GetMatchingImplBlocks(Scope scope, CheezType type, CheezType trait = null)
+        {
+            var result = new List<AstImplBlock>();
+
+            // only search for non reference types
+            if (type is ReferenceType r)
+                type = r.TargetType;
+
+            while (scope != null)
+            {
+                foreach (var i in scope.Impls)
+                {
+                    var impl = ImplAppliesToType(i, type);
+
+                    if (impl != null && impl.Trait == trait)
+                        result.Add(impl);
+                }
+
+                scope = scope.Parent;
+            }
+
+            return result;
+        }
+
+        private List<AstFunctionDecl> GetImplFunctions(Scope scope, CheezType type, string functionName)
         {
             var result = new List<AstFunctionDecl>();
 
@@ -3218,7 +3263,6 @@ namespace Cheez
             if (type is ReferenceType r)
                 type = r.TargetType;
 
-            var scope = expr.Scope;
             while (result.Count == 0 && scope != null)
             {
                 foreach (var i in scope.Impls)
@@ -3244,26 +3288,6 @@ namespace Cheez
                         // check if function exists
                         var func = impl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
 
-                        // search for a impl for that trait with the required function
-                        //if (func == null)
-                        //{
-                        //    var trait = impl.Trait;
-                        //    if (trait.IsPolyType)
-                        //    {
-                        //        var args = new Dictionary<string, CheezType>();
-                        //        CollectPolyTypes(impl.TargetType, type, args);
-                        //        var args2 = trait.Declaration.Parameters.Select(p => (CheezType.Type, (object)args[p.Name.Name])).ToList();
-                        //        var instance = InstantiatePolyTrait(trait.DeclarationTemplate, args2, context.newPolyDeclarations);
-                        //        trait = instance.Type as TraitType;
-                        //    }
-
-                        //    var traitImpl = GetTraitImpl(scope, trait);
-                        //    if (traitImpl != null)
-                        //    {
-                        //        expr.Left = CheckType(expr.Left, trait);
-                        //        func = traitImpl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
-                        //    }
-                        //}
                         if (func == null)
                             continue; // goto next impl block
 
@@ -3273,21 +3297,8 @@ namespace Cheez
 
                 scope = scope.Parent;
             }
-            
-            if (result.Count == 0)
-            {
-                ReportError(expr.Right, $"Type '{type}' has no impl function '{functionName}'");
-                return expr;
-            }
-            else if (result.Count > 1)
-            {
-                var details = result.Select(f => ("Possible candidate:", f.Name.Location));
-                ReportError(expr.Right, $"Ambigious call to impl function '{functionName}'", details);
-                return expr;
-            }
 
-            var ufc = new AstUfcFuncExpr(expr.Left, result[0]);
-            return InferTypeHelper(ufc, null, context);
+            return result;
         }
     }
 }

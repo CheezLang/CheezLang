@@ -94,7 +94,7 @@ struct Vector4(T: type) {
     pub w: T
 }
 
-impl Vector2($T) {
+impl(T: type) Vector2(T) {
     // ref
     fn addv(ref Self, other: Self) -> ref Self #operator("+=") {
         x += other.x
@@ -200,7 +200,7 @@ impl Vector2($T) {
     }
 }
 
-impl Vector3($T) {
+impl(T: type) Vector3(T) {
     // ref
     fn addv(ref Self, other: Self) -> ref Self #operator("+=") {
         x += other.x

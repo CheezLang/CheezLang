@@ -148,6 +148,7 @@
     <Compile Include="Types\PrimitiveTypes.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Visitors\AnalyzedAstPrinter.cs" />
+    <Compile Include="Visitors\SignatureAstPrinter.cs" />
     <Compile Include="Visitors\RawAstPrinter.cs" />
     <Compile Include="Visitors\Visitor.cs" />
     <Compile Include="Workspace.cs" />

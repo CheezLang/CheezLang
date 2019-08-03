@@ -185,6 +185,8 @@ namespace Cheez
 
         private void Pass1Impl(AstImplBlock impl)
         {
+            impl.TargetTypeExpr.Scope = impl.SubScope;
+
             // check if there are parameters
             if (impl.Parameters != null)
             {
