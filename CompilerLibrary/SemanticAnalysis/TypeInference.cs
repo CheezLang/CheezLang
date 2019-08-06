@@ -1012,8 +1012,10 @@ namespace Cheez
             {
                 if (!cast.SubExpression.GetFlag(ExprFlags.IsLValue))
                 {
-                    var tmp = new AstTempVarExpr(cast.SubExpression);
-                    cast.SubExpression = InferTypeHelper(tmp, cast.SubExpression.Type, context);
+                    //var tmp = new AstTempVarExpr(cast.SubExpression);
+                    //cast.SubExpression = InferTypeHelper(tmp, cast.SubExpression.Type, context);
+                    ReportError(cast.Location, $"Can't cast a non-lvalue to a trait");
+                    return cast;
                 }
 
                 if (t.Declaration.Implementations.ContainsKey(from))
@@ -1021,7 +1023,7 @@ namespace Cheez
 
                 if (t.Declaration.IsPolyInstance)
                 {
-                    var impls = GetMatchingImplBlocks(cast.Scope, from, t);
+                    var impls = GetImplsForType(from, t);
 
                     if (impls.Count == 0)
                     {
@@ -1047,7 +1049,7 @@ namespace Cheez
                     var polyTypes = new Dictionary<string, CheezType>();
                     CollectPolyTypes(template.TargetType, from, polyTypes);
 
-                    var impl = InstantiatePolyImpl(template, polyTypes);
+                    var impl = InstantiatePolyImplNew(template, polyTypes);
                     return cast;
                 }
             }
@@ -2063,7 +2065,7 @@ namespace Cheez
                 case CheezTypeType _ when expr.IsDoubleColon:
                     {
                         var t = expr.Left.Value as CheezType;
-                        var funcs = GetImplFunctions(expr.Scope, t, expr.Right.Name);
+                        var funcs = GetImplFunctions(t, expr.Right.Name);
 
                         if (funcs.Count == 0)
                         {
@@ -3170,25 +3172,7 @@ namespace Cheez
                         var ty = InferType(ty_expr, null, forceInfer: true).Value as CheezType;
                         var tr = InferType(tr_expr, null, forceInfer: true).Value as CheezType;
 
-                        bool isImplemented = false;
-                        foreach (var ti in impl.Scope.Impls)
-                        {
-                            if (ti.Trait == null)
-                                continue;
-
-                            var traitImpl = ImplAppliesToType(ti, ty);
-                            if (traitImpl == null)
-                                continue;
-
-                            if (CheezType.TypesMatch(traitImpl.Trait, tr))
-                            {
-                                isImplemented = true;
-                                CollectPolyTypes(tr, traitImpl.Trait, polies);
-                                break;
-                            }
-                        }
-
-                        if (!isImplemented)
+                        if (!GetTraitImplForType(ty, tr, polies))
                         {
                             return null;
                         }
@@ -3213,7 +3197,7 @@ namespace Cheez
 
         private AstExpression GetImplFunctions(AstDotExpr expr, CheezType type, string functionName, TypeInferenceContext context)
         {
-            var result = GetImplFunctions(expr.Scope, type, functionName);
+            var result = GetImplFunctions(type, functionName);
             
             if (result.Count == 0)
             {
@@ -3231,74 +3215,34 @@ namespace Cheez
             return InferTypeHelper(ufc, null, context);
         }
 
-        private List<AstImplBlock> GetMatchingImplBlocks(Scope scope, CheezType type, CheezType trait = null)
+        private List<AstFunctionDecl> GetImplFunctions(CheezType type, string functionName)
         {
-            var result = new List<AstImplBlock>();
+            var resultNormal = new List<AstFunctionDecl>();
+            var resultTrait = new List<AstFunctionDecl>();
 
             // only search for non reference types
             if (type is ReferenceType r)
                 type = r.TargetType;
 
-            while (scope != null)
+            foreach (var impl in GetImplsForType(type))
             {
-                foreach (var i in scope.Impls)
+                if (impl.Trait == null)
                 {
-                    var impl = ImplAppliesToType(i, type);
-
-                    if (impl != null && impl.Trait == trait)
-                        result.Add(impl);
+                    var func = impl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
+                    if (func != null)
+                        resultNormal.Add(func);
                 }
-
-                scope = scope.Parent;
+                else
+                {
+                    var func = impl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
+                    if (func != null)
+                        resultTrait.Add(func);
+                }
             }
 
-            return result;
-        }
-
-        private List<AstFunctionDecl> GetImplFunctions(Scope scope, CheezType type, string functionName)
-        {
-            var result = new List<AstFunctionDecl>();
-
-            // only search for non reference types
-            if (type is ReferenceType r)
-                type = r.TargetType;
-
-            while (result.Count == 0 && scope != null)
-            {
-                foreach (var i in scope.Impls)
-                {
-                    var impl = ImplAppliesToType(i, type);
-                    if (impl == null)
-                        continue;
-
-                    if (impl.Trait == null)
-                    {
-                        // normal impl
-
-                        var func = impl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
-                        if (func == null)
-                            continue; // goto next impl block
-
-                        result.Add(func);
-                    }
-                    else
-                    {
-                        // trait impl
-
-                        // check if function exists
-                        var func = impl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
-
-                        if (func == null)
-                            continue; // goto next impl block
-
-                        result.Add(func);
-                    }
-                }
-
-                scope = scope.Parent;
-            }
-
-            return result;
+            if (resultNormal.Count > 0)
+                return resultNormal;
+            return resultTrait;
         }
     }
 }

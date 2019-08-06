@@ -1,55 +1,95 @@
 // #load("tests/language\operator_overloading.che")
 
-struct Num(T: type) {
-    pub val: T
+#load("std:preload")
+#load("std:c")
+
+trait Iterator(T: type) {
+    fn next(ref Self) -> Option(T);
 }
 
-impl(T: type) Num(T) {
-    fn add(a: Num(T), b: Num(T)) -> Num(T) #operator("+") {
-        return new {a.val + b.val}
+trait TraitFoo {}
+trait TraitBar {}
+
+struct Range(T: type) {
+    start   : T
+    end     : T
+}
+
+impl(T: type) Iterator(T) for Range(T) {
+    fn next(ref Self) -> Option(T) {
+        if start > end {
+            return None
+        }
+        start += 1
+        return Some(start - 1)
     }
 }
 
+impl(It: type, T: type) It if It : Iterator(T) {
+    fn sum(ref Self) -> T {
+        let s: T = 0
+        while let i = self.next(); int(i) == int(Option(T).Some); i = self.next() {
+            s += i.Some
+        }
+        return s
+    }
+}
+
+//
+// struct Num(T: type) {
+//     pub val: T
+// }
+
+// impl(T: type) Num(T) {
+//     fn add(a: Num(T), b: Num(T)) -> Num(T) #operator("+") {
+//         return new {a.val + b.val}
+//     }
+// }
+
+//
+// struct S(T: type) {}
+// typedef Sint = S(int)
+// impl Sint {}
+
+//
+
+impl(F: type, T: type) From(F) for T if F : Into(T) {}
+impl(F: type, T: type) Into(T) for F if T : From(F) {}
+
+
+struct S2(T: type) {}
+typedef R = S2(int)
+
+impl S2(float) {}
+impl(T: type) S2(T) {}
+impl(T: type) S2(T) if T : TraitFoo {}
+impl(T: type) S2(T) if T : TraitBar {}
+impl TraitFoo for int {}
+impl TraitFoo for float {}
+impl TraitFoo for bool {}
+
+impl(T: type) T if T : TraitFoo {}
+
+impl(X: type) X {}
+
+impl(T: type) T if S2(T) : TraitBar {}
+
 fn Main() {
-    let a = new Num(int){1}
-    let b = new Num(int){2}
-    // let c = Num(int)::add(a, b)
-    let d = a + b
+    // let a = new Num(int){1}
+    // let b = new Num(int){2}
+    // // let c = Num(int)::add(a, b)
+    // let d = a + b
+    let r = new Range(int){1, 5}
+    r.sum()
+
+    let s = new S2(bool){}
 }
 
 // //#load("examples/clox/main")
 // // #load("std:io/io")
 
-// #load("std:preload")
-// #load("std:c")
-
 // #load("std:string")
 // #load("std:array")
-
-// struct Range(T: type) {
-//     start   : T
-//     end     : T
-// }
-
-// impl(T: type) Iterator(T) for Range(T) {
-//     fn next(ref Self) -> Option(T) {
-//         if start > end {
-//             return None
-//         }
-//         start += 1
-//         return Some(start - 1)
-//     }
-// }
-
-// impl(It: type, T: type) It if It : Iterator(T) {
-//     fn sum(ref Self) -> T {
-//         let s: T = 0
-//         while let i = self.next(); int(i) == int(Option(T).Some); i = self.next() {
-//             s += i.Some
-//         }
-//         return s
-//     }
-// }
 
 // fn Main() {
 //     let r = new Range(int){1, 5}

@@ -84,9 +84,10 @@ namespace Cheez.Visitors
         {
             var header = "impl";
 
-            // parameters
-            if (impl.Parameters != null)
-                header += "(" + string.Join(", ", impl.Parameters.Select(p => p.Accept(rawPrinter, 0))) + ")";
+            // parametersu
+            var parameters = impl.IsPolyInstance ? impl.Template.Parameters : impl.Parameters;
+            if (parameters != null)
+                header += "(" + string.Join(", ", parameters.Select(p => p.Accept(rawPrinter, 0))) + ")";
 
             header += " ";
 
@@ -95,8 +96,9 @@ namespace Cheez.Visitors
 
             header += impl.TargetTypeExpr.Accept(rawPrinter);
 
-            if (impl.Conditions != null)
-                header += " if " + string.Join(", ", impl.Conditions.Select(c => $"{c.type} : {c.trait}"));
+            var conditions = impl.IsPolyInstance ? impl.Template.Conditions : impl.Conditions;
+            if (conditions != null)
+                header += " if " + string.Join(", ", conditions.Select(c => $"{c.type} : {c.trait}"));
 
             return header;
         }

@@ -122,7 +122,8 @@ namespace Cheez
             }
             impl.Trait.Declaration.Implementations[impl.TargetType] = impl;
 
-            AddTraitForType(impl.TargetType, impl);
+            // @TODO: should not be necessary
+            // AddTraitForType(impl.TargetType, impl);
 
             // handle functions
             foreach (var f in impl.Functions)

@@ -4,6 +4,7 @@ using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Abstract;
+using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
@@ -13,25 +14,108 @@ namespace Cheez
 {
     public partial class Workspace
     {
+        private Dictionary<CheezType, List<AstImplBlock>> m_typeImplMap = new Dictionary<CheezType, List<AstImplBlock>>();
+
+        private void AddImplForType(CheezType type, AstImplBlock impl)
+        {
+            if (m_typeImplMap.TryGetValue(type, out var _list))
+                _list.Add(impl);
+            else
+                m_typeImplMap[type] = new List<AstImplBlock> { impl };
+        }
+
+        private bool GetTraitImplForType(CheezType type, CheezType trait, Dictionary<string, CheezType> polies)
+        {
+            if (m_typeImplMap.TryGetValue(type, out var _list))
+            {
+                bool found = false;
+                foreach (var impl in _list)
+                {
+                    if (CheezType.TypesMatch(impl.Trait, trait))
+                    {
+                        if (found)
+                        {
+                            ReportError($"multiple trait implementations for the same type match conditional impl block");
+                            continue;
+                        }
+
+                        found = true;
+                        CollectPolyTypes(trait, impl.Trait, polies);
+                    }
+                }
+
+                return found;
+            }
+
+            return false;
+        }
+
+        private List<AstImplBlock> GetImplsForType(CheezType type, CheezType trait = null)
+        {
+            var impls = GetImplsForTypeHelper(type);
+            if (trait != null)
+                impls = impls.Where(i => i.Trait == trait).ToList();
+            return impls;
+        }
+
+        private List<AstImplBlock> GetImplsForTypeHelper(CheezType type)
+        {
+            if (m_typeImplMap.TryGetValue(type, out var _list))
+                return _list;
+
+            // calculate all impls that apply to this type
+            var list1 = new List<AstImplBlock>(GlobalScope.Impls);
+            var list2 = new List<AstImplBlock>();
+
+            var changes = true;
+            while (changes)
+            {
+                changes = false;
+
+                foreach (var impl in list1)
+                {
+                    var concreteImpl = ImplAppliesToType(impl, type);
+                    if (concreteImpl != null)
+                    {
+                        AddImplForType(type, concreteImpl);
+                        changes = true;
+                    }
+                    else if (impl.Conditions?.Count > 0)
+                    {
+                        list2.Add(impl);
+                    }
+                }
+
+                list1.Clear();
+
+                // swap lists
+                var tmpList = list1;
+                list1 = list2;
+                list2 = tmpList;
+            }
+
+            if (!m_typeImplMap.ContainsKey(type))
+                m_typeImplMap[type] = new List<AstImplBlock>();
+
+            return m_typeImplMap[type];
+        }
+
         private void ResolveDeclarations(Scope scope, List<AstStatement> statements)
         {
-            // 1. sort all declarations into different lists
+            // sort all declarations into different lists
             InsertDeclarationsIntoScope(scope, statements);
 
-            // 2. go through all type declarations (structs, traits, enums, typedefs) and define them in the scope
+            // go through all type declarations (structs, traits, enums, typedefs) and define them in the scope
             // go through all constant declarations and define them in the scope
             DefineTypeDeclarations(scope);
 
-            // 3. go through all type declarations again and build the dependencies
+            // go through all type declarations again and build the dependencies
             BuildDependencies(scope);
 
-            // 4. check for cyclic dependencies and resolve types of typedefs and constant variables
+            // check for cyclic dependencies and resolve types of typedefs and constant variables
             ResolveMissingTypesOfDeclarations(scope);
 
-            // 5. compute types of struct members, enum members, trait members
-            ComputeTypeMembers(scope);
-
-            // resolve impls
+            // resolve impls (check if is polymorphic, setup scopes, check for self params in functions, etc.)
             foreach (var impl in scope.Impls)
             {
                 if (impl.TraitExpr == null)
@@ -39,6 +123,38 @@ namespace Cheez
                 else
                     Pass3TraitImpl(impl);
             }
+
+            // go through all type declarations and connect impls to types
+
+            bool changes = true;
+
+            while (changes)
+            {
+                changes = false;
+
+                foreach (var td in scope.Typedefs)
+                    GetImplsForType(td.Type);
+
+                foreach (var td in scope.StructDeclarations)
+                    if (!td.IsPolymorphic)
+                        GetImplsForType(td.Type);
+
+                foreach (var td in scope.EnumDeclarations)
+                    if (!td.IsPolymorphic)
+                        GetImplsForType(td.Type);
+
+                foreach (var td in scope.TraitDeclarations)
+                    if (!td.IsPolymorphic)
+                        GetImplsForType(td.Type);
+
+                foreach (var td in scope.Impls)
+                    if (!td.IsPolymorphic)
+                        GetImplsForType(td.TargetType);
+            }
+
+            // compute types of struct members, enum members, trait members
+            ComputeTypeMembers(scope);
+
 
             // handle uses
             foreach (var use in scope.Uses)
@@ -170,9 +286,8 @@ namespace Cheez
         private void ResolveMissingTypesOfDeclarationsHelper(
             Scope scope,
             AstDecl decl,
-            HashSet<AstDecl> whiteSet, 
-            HashSet<AstDecl> greySet, 
-            HashSet<AstDecl> blackSet,
+            HashSet<AstDecl> whiteSet,
+            HashSet<AstDecl> greySet,
             Dictionary<AstDecl, AstDecl> chain)
         {
             whiteSet.Remove(decl);
@@ -201,7 +316,7 @@ namespace Cheez
                 else if (whiteSet.Contains(dep))
                 {
                     chain[decl] = dep;
-                    ResolveMissingTypesOfDeclarationsHelper(scope, dep, whiteSet, greySet, blackSet, chain);
+                    ResolveMissingTypesOfDeclarationsHelper(scope, dep, whiteSet, greySet, chain);
                 }
             }
 
@@ -346,14 +461,12 @@ namespace Cheez
             }
 
             greySet.Remove(decl);
-            blackSet.Add(decl);
         }
 
         private void ResolveMissingTypesOfDeclarations(Scope scope)
         {
             var whiteSet = new HashSet<AstDecl>();
             var greySet = new HashSet<AstDecl>();
-            var blackSet = new HashSet<AstDecl>();
             var chain = new Dictionary<AstDecl, AstDecl>();
 
             whiteSet.UnionWith(scope.StructDeclarations);
@@ -366,7 +479,7 @@ namespace Cheez
             while (whiteSet.Count > 0)
             {
                 var x = whiteSet.First();
-                ResolveMissingTypesOfDeclarationsHelper(scope, x, whiteSet, greySet, blackSet, chain);
+                ResolveMissingTypesOfDeclarationsHelper(scope, x, whiteSet, greySet, chain);
             }
         }
 

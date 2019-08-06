@@ -308,48 +308,6 @@ namespace Cheez
             return instance;
         }
 
-
-        private AstImplBlock InstantiatePolyImpl(AstImplBlock decl, Dictionary<string, CheezType> args, ILocation location = null)
-        {
-            AstImplBlock instance = null;
-
-            // check for existing instance
-            var concreteTrait = InstantiatePolyType(decl.Trait, args, location);
-            var concreteTarget = InstantiatePolyType(decl.TargetType, args, location);
-            foreach (var pi in decl.PolyInstances)
-            {
-                if (pi.Trait == concreteTrait && pi.TargetType == concreteTarget)
-                {
-                    instance = pi;
-                    break;
-                }
-            }
-
-            if (instance == null)
-            {
-                instance = decl.Clone() as AstImplBlock;
-                instance.SubScope = new Scope($"impl <poly>", instance.Scope);
-                instance.IsPolyInstance = true;
-                instance.IsPolymorphic = false;
-                instance.Template = decl;
-                decl.PolyInstances.Add(instance);
-
-                foreach (var kv in args)
-                {
-                    instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value);
-                }
-
-                Pass3TraitImpl(instance);
-
-                foreach (var f in instance.Functions)
-                {
-                    AnalyseFunction(f);
-                }
-            }
-
-            return instance;
-        }
-
         // trait
         private AstTraitDeclaration InstantiatePolyTrait(AstTraitDeclaration decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
         {
@@ -687,7 +645,7 @@ namespace Cheez
             ILocation location = null)
         {
             var impl = func.Declaration.ImplBlock;
-            var implInstance = InstantiatePolyImpl(impl, polyTypes, location);
+            var implInstance = InstantiatePolyImplNew(impl, polyTypes, location);
             return implInstance.Functions.FirstOrDefault(f => f.Name.Name == func.Declaration.Name.Name);
         }
 

@@ -3,6 +3,7 @@ using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Complex;
 using Cheez.Util;
+using Cheez.Visitors;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -83,7 +84,15 @@ namespace Cheez
             // print debug info
             if (true)
             {
-                // global impls
+                // print type to impl map
+                foreach (var kv in m_typeImplMap)
+                {
+                    System.Console.WriteLine($"{kv.Key}:");
+                    foreach (var impl in kv.Value)
+                    {
+                        System.Console.WriteLine($"    {impl.Accept(new SignatureAstPrinter(false))}");
+                    }
+                }
             }
 
             if (mCompiler.ErrorHandler.HasErrors)
@@ -229,6 +238,7 @@ namespace Cheez
         private int logScope = 0;
         private void Log(string message, params string[] comments)
         {
+            return;
             var indent = new string(' ', logScope * 4);
 
             var cc = System.Console.ForegroundColor;
