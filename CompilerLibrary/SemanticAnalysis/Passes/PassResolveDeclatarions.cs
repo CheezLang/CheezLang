@@ -16,13 +16,13 @@ namespace Cheez
     {
         private class TypeImplList
         {
-            public List<AstImplBlock> impls;
+            public HashSet<AstImplBlock> impls;
             public List<AstImplBlock> potentialImpls;
             public List<AstImplBlock> temp;
 
             public TypeImplList(List<AstImplBlock> potentials)
             {
-                impls = new List<AstImplBlock>();
+                impls = new HashSet<AstImplBlock>();
                 potentialImpls = new List<AstImplBlock>(potentials);
                 temp = new List<AstImplBlock>();
             }
@@ -30,41 +30,37 @@ namespace Cheez
 
         private Dictionary<CheezType, TypeImplList> m_typeImplMap;
 
-        private bool GetTraitImplForType(CheezType type, CheezType trait, Dictionary<string, CheezType> polies)
+        private List<Dictionary<string, CheezType>> GetTraitImplForType(CheezType type, CheezType trait, Dictionary<string, CheezType> polies)
         {
             if (m_typeImplMap.TryGetValue(type, out var _list))
             {
-                bool found = false;
+                var result = new List<Dictionary<string, CheezType>>();
+
                 foreach (var impl in _list.impls)
                 {
                     if (CheezType.TypesMatch(impl.Trait, trait))
                     {
-                        if (found)
-                        {
-                            ReportError($"multiple trait implementations for the same type match conditional impl block");
-                            continue;
-                        }
-
-                        found = true;
-                        CollectPolyTypes(trait, impl.Trait, polies);
+                        var p = new Dictionary<string, CheezType>(polies);
+                        CollectPolyTypes(trait, impl.Trait, p);
+                        result.Add(p);
                     }
                 }
 
-                return found;
+                return result;
             }
 
-            return false;
+            return null;
         }
 
         private List<AstImplBlock> GetImplsForType(CheezType type, CheezType trait = null)
         {
             var impls = GetImplsForTypeHelper(type);
             if (trait != null)
-                impls = impls.Where(i => i.Trait == trait).ToList();
-            return impls;
+                return impls.Where(i => i.Trait == trait).ToList();
+            return impls.ToList();
         }
 
-        private List<AstImplBlock> GetImplsForTypeHelper(CheezType type)
+        private HashSet<AstImplBlock> GetImplsForTypeHelper(CheezType type)
         {
             if (m_typeImplMap.TryGetValue(type, out var _list))
                 return _list.impls;
@@ -114,15 +110,16 @@ namespace Cheez
                     var type = kv.Key;
                     var lists = kv.Value;
 
-                    int prevCount = lists.potentialImpls.Count;
-                    //foreach (var impl in lists.potentialImpls)
-                    for (int i = 0; i < lists.potentialImpls.Count; i++)
+                    //int prevCount = lists.potentialImpls.Count;
+                        //for (int i = 0; i < lists.potentialImpls.Count; i++)
+                    foreach (var impl in lists.potentialImpls)
                     {
-                        var impl = lists.potentialImpls[i];
-                        var (concreteImpl, maybeApplies) = ImplAppliesToType(impl, type);
-                        if (concreteImpl != null)
+                        //var impl = lists.potentialImpls[i];
+                        var (concreteImpls, maybeApplies) = ImplAppliesToType(impl, type);
+                        if (concreteImpls != null)
                         {
-                            lists.impls.Add(concreteImpl);
+                            foreach (var concreteImpl in concreteImpls)
+                                lists.impls.Add(concreteImpl);
                             changes = true;
                         }
                         else if (maybeApplies)

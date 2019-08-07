@@ -1,64 +1,42 @@
-// #load("examples/geometry_draw_thingy")
-// #load("examples/trait_function_call_performance")
-// #load("examples/signed_distance_field_renderer")
-// #load("compiler/main")
+#load("std:string")
+#load("std:array")
+#load("std:hash_table")
+
+impl Into(double) for int {
+    fn into(ref Self) -> double {
+        return double(self)
+    }
+}
+
+impl Into(String) for int {
+    fn into(ref Self) -> String {
+        return String::format("{} int", [self])
+    }
+}
+
+fn print_array(arr: ref Array($T)) {
+    let it = arr.iterator()
+    while true {
+        match it.next() {
+            Some($v) -> println(v)
+            None -> {break}
+        }
+    }
+    println("")
+}
+
+fn Main() {
+    let ints = Array(int)::create()
+    ints.add(5)
+    ints.add(1)
+    ints.add(3)
+    ints.add(7)
 
 
-// #load("std:preload")
-// #load("std:c")
+    let doubles: Array(double) = Into(Array(double))(ints).into()
+    let strings: Array(String) = Into(Array(String))(ints).into()
 
-
-// //
-// // struct Num(T: type) {
-// //     pub val: T
-// // }
-
-// // impl(T: type) Num(T) {
-// //     fn add(a: Num(T), b: Num(T)) -> Num(T) #operator("+") {
-// //         return new {a.val + b.val}
-// //     }
-// // }
-// // fn Main() {
-// //     let a = new Num(int){1}
-// //     let b = new Num(int){2}
-// //     let c = Num(int)::add(a, b)
-// //     let d = a + b
-// // }
-
-// // //#load("examples/clox/main")
-// // // #load("std:io/io")
-
-// // #load("std:string")
-// // #load("std:array")
-
-// trait Iterator(T: type) {
-//     fn next(ref Self) -> Option(T);
-// }
-
-// struct Range(T: type) {
-//     start   : T
-//     end     : T
-// }
-
-// impl(T: type) Iterator(T) for Range(T) {
-//     fn next(ref Self) -> Option(T) {
-//         if start > end {
-//             return None
-//         }
-//         start += 1
-//         return Some(start - 1)
-//     }
-// }
-
-// fn Main() {
-//     let r = new Range(int){1, 5}
-//     // let r2 = new Range(double){1, 10}
-//     // r.next()
-//     // r2.next()
-//     // while let i = r.next(); int(i) == int(Option(int).Some); i = r.next() {
-//     //     c_printf("%d`n", i.Some)
-//     // }
-
-//     // println(r.sum())
-//     // println(r2.sum())
-// }
+    print_array(ints)
+    print_array(doubles)
+    print_array(strings)
+}

@@ -150,10 +150,8 @@ impl(K: type, V: type) Table(K, V) {
         entries = entries_new
     }
 
-    fn iterator(ref Self) -> Iterator((K, V)) {
-        let it = alloc(TableIterator(K, V))
-        <<it = new {self, 0}
-        return cast ref <<it
+    fn iterator(ref Self) -> TableIterator(K, V) {
+        return new {self, 0}
     }
 }
 

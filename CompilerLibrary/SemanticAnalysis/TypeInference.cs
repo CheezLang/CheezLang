@@ -567,6 +567,8 @@ namespace Cheez
                                 te.Values[i] = MatchPatternWithType(cas, p, v);
                             }
 
+                            te.Type = tt;
+
                             return te;
                         }
                         pattern.Type = CheezType.Error;
@@ -3168,56 +3170,70 @@ namespace Cheez
             return null;
         }
 
-        private (AstImplBlock impl, bool maybeApplies) ImplAppliesToType(AstImplBlock impl, CheezType type)
+        private (List<AstImplBlock> impls, bool maybeApplies) ImplAppliesToType(AstImplBlock impl, CheezType type)
         {
             if (impl.IsPolymorphic)
             {
                 if (!CheezType.TypesMatch(impl.TargetType, type))
                     return (null, false);
 
-                var polies = new Dictionary<string, CheezType>();
-                CollectPolyTypes(impl.TargetType, type, polies);
+                var poliesList = new List<Dictionary<string, CheezType>>();
+                {
+                    var polies = new Dictionary<string, CheezType>();
+                    CollectPolyTypes(impl.TargetType, type, polies);
+                    poliesList.Add(polies);
+                }
 
                 // @TODO: check conditions
                 if (impl.Conditions != null)
                 {
                     foreach (var cond in impl.Conditions)
                     {
-                        var ty_expr = cond.type.Clone();
-                        var tr_expr = cond.trait.Clone();
-
-                        ty_expr.Scope = new Scope("temp", ty_expr.Scope);
-                        tr_expr.Scope = new Scope("temp", tr_expr.Scope);
-
-                        foreach (var p in polies)
+                        var newPoliesList = new List<Dictionary<string, CheezType>>();
+                        foreach (var polies in poliesList)
                         {
-                            ty_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
-                            tr_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
-                        }
+                            var ty_expr = cond.type.Clone();
+                            var tr_expr = cond.trait.Clone();
 
-                        var ty = InferType(ty_expr, null, forceInfer: true).Value as CheezType;
-                        var tr = InferType(tr_expr, null, forceInfer: true).Value as CheezType;
+                            ty_expr.Scope = new Scope("temp", ty_expr.Scope);
+                            tr_expr.Scope = new Scope("temp", tr_expr.Scope);
 
-                        if (!GetTraitImplForType(ty, tr, polies))
-                        {
-                            return (null, true);
+                            foreach (var p in polies)
+                            {
+                                ty_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
+                                tr_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
+                            }
+
+                            var ty = InferType(ty_expr, null, forceInfer: true).Value as CheezType;
+                            var tr = InferType(tr_expr, null, forceInfer: true).Value as CheezType;
+
+                            var matches = GetTraitImplForType(ty, tr, polies);
+                            if (matches?.Count != 0)
+                            {
+                                newPoliesList.AddRange(matches);
+                            }
                         }
+                        poliesList = newPoliesList;
                     }
                 }
 
-                // @TODO: check if all arguments were provided
-                if (impl.Parameters.Count != polies.Count)
-                {
-                    // @TODO: provide location
-                    ReportError("failed to infer all impl parameters");
-                }
+                if (poliesList.Count == 0)
+                    return (null, true);
 
-                var result = InstantiatePolyImplNew(impl, polies);
+                var result = poliesList.Select(polies =>
+                {
+                    if (impl.Parameters.Count != polies.Count)
+                    {
+                        // @TODO: provide location
+                        ReportError("failed to infer all impl parameters");
+                    }
+                    return InstantiatePolyImplNew(impl, polies);
+                }).ToList();
                 return (result, false);
             }
             else
             {
-                return CheezType.TypesMatch(impl.TargetType, type) ? (impl, false) : (null, false);
+                return CheezType.TypesMatch(impl.TargetType, type) ? (new List<AstImplBlock> { impl }, false) : (null, false);
             }
         }
 

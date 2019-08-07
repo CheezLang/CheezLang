@@ -5,43 +5,43 @@ trait Iterator(T: type) {
     fn next(ref Self) -> Option(T);
 }
 
-impl(T: type) Iterator(T) {
-    fn max(ref Self) -> T {
-        let max: T
+// impl(It: type, T: type) It if It : Iterator(T) {
+//     fn max(ref Self) -> T {
+//         let max: T
 
-        while true {
-            match self.next() {
-                Some($v) if v > max -> {
-                    max = v
-                }
+//         while true {
+//             match self.next() {
+//                 Some($v) if v > max -> {
+//                     max = v
+//                 }
 
-                None -> {
-                    break
-                }
-            }
-        }
+//                 None -> { break }
+//             }
+//         }
 
-        return max
-    }
+//         return max
+//     }
 
-    fn sum(ref Self) -> T {
-        let sum: T
+//     fn sum(ref Self) -> T {
+//         let sum: T
 
-        while true {
-            match self.next() {
-                Some($v) -> {
-                    sum += v
-                }
+//         while true {
+//             match self.next() {
+//                 Some($v) -> {
+//                     sum += v
+//                 }
 
-                None -> {
-                    break
-                }
-            }
-        }
+//                 None -> {
+//                     break
+//                 }
+//             }
+//         }
 
-        return sum
-    }
+//         return sum
+//     }
+// }
 
+impl(It: type, T: type) It if It : Iterator(T) {
     fn skip(ref Self, count: int) -> Self {
         loop! i in 0 -> count {
             self.next()
