@@ -18,7 +18,7 @@ fn sdb_compare_strings(a: string, b: string) -> bool {
 }
 
 impl Hashable for string {
-    fn hash(ref Self) -> u32 {
+    fn hash(ref Self) -> uint {
         let h: u32 = 2166136261
 
         while let i = 0; i < self.length; i += 1 {

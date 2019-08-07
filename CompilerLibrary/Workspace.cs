@@ -82,16 +82,18 @@ namespace Cheez
             ResolveDeclarations(GlobalScope, Statements);
 
             // print debug info
-            if (true)
+            if (false)
             {
                 // print type to impl map
                 foreach (var kv in m_typeImplMap)
                 {
                     System.Console.WriteLine($"{kv.Key}:");
-                    foreach (var impl in kv.Value)
-                    {
-                        System.Console.WriteLine($"    {impl.Accept(new SignatureAstPrinter(false))}");
-                    }
+                    System.Console.WriteLine("    impls");
+                    foreach (var impl in kv.Value.impls)
+                        System.Console.WriteLine($"      {impl.Accept(new SignatureAstPrinter())}");
+                    System.Console.WriteLine("    potential impls");
+                    foreach (var impl in kv.Value.potentialImpls)
+                        System.Console.WriteLine($"      {impl.Accept(new SignatureAstPrinter())}");
                 }
             }
 

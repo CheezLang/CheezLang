@@ -372,6 +372,11 @@ namespace Cheez
             // check for operator set[]
             if (ass.Pattern is AstArrayAccessExpr arr)
             {
+                // before we search for operators, make sure that all impls for both arguments have been matched
+                GetImplsForType(arr.SubExpression.Type);
+                GetImplsForType(arr.Indexer.Type);
+                GetImplsForType(value.Type);
+
                 var ops = ass.Scope.GetNaryOperators("set[]", arr.SubExpression.Type, arr.Indexer.Type, value.Type);
                 if (ops.Count == 0)
                 {
@@ -403,6 +408,11 @@ namespace Cheez
             {
                 var assOp = ass.Operator + "=";
                 var valType = LiteralTypeToDefaultType(value.Type);
+
+                // before we search for operators, make sure that all impls for both arguments have been matched
+                GetImplsForType(pattern.Type);
+                GetImplsForType(valType);
+
                 var ops = ass.Scope.GetBinaryOperators(assOp, pattern.Type, valType);
                 if (ops.Count == 1)
                 {

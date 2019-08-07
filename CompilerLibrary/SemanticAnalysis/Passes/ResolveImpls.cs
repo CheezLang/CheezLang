@@ -17,6 +17,9 @@ namespace Cheez
     {        
         private void Pass3Trait(AstTraitDeclaration trait)
         {
+            if (trait.GetFlag(StmtFlags.MembersComputed))
+                return;
+
             foreach (var p in trait.Parameters)
             {
                 trait.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
@@ -44,6 +47,8 @@ namespace Cheez
                     ReportError(f.Name, $"Trait functions can't have an implementation");
                 }
             }
+
+            trait.SetFlag(StmtFlags.MembersComputed);
         }
 
         private void Pass3TraitImpl(AstImplBlock impl)
@@ -55,7 +60,8 @@ namespace Cheez
                 // setup scopes
                 foreach (var param in impl.Parameters)
                 {
-                    impl.SubScope.DefineTypeSymbol(param.Name.Name, new PolyType(param.Name.Name, true));
+                    if (param.Name != null)
+                        impl.SubScope.DefineTypeSymbol(param.Name.Name, new PolyType(param.Name.Name, true));
 
                     param.Scope = impl.Scope;
                     param.TypeExpr.Scope = impl.Scope;
@@ -109,6 +115,18 @@ namespace Cheez
             impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t, resolve_poly_expr_to_concrete_type: !impl.IsPolymorphic);
             impl.TargetType = t;
 
+            if (impl.Conditions != null)
+            {
+                if (impl.Parameters == null)
+                    ReportError(new Location(impl.Conditions.First().type.Beginning, impl.Conditions.Last().trait.End), $"An impl block can't have a condition without parameters");
+
+                foreach (var cond in impl.Conditions)
+                {
+                    cond.type.Scope = impl.SubScope;
+                    cond.trait.Scope = impl.SubScope;
+                }
+            }
+
             if (impl.IsPolymorphic)
                 return;
 
@@ -123,7 +141,7 @@ namespace Cheez
             impl.Trait.Declaration.Implementations[impl.TargetType] = impl;
 
             // @TODO: should not be necessary
-            // AddTraitForType(impl.TargetType, impl);
+            AddTraitForType(impl.TargetType, impl);
 
             // handle functions
             foreach (var f in impl.Functions)
@@ -177,7 +195,7 @@ namespace Cheez
                     // check return type
                     if (!CheezType.TypesMatch(func.ReturnType, traitFunc.ReturnType))
                     {
-                        ReportError(func.ReturnTypeExpr?.Location ?? func.Name.Location, $"Return type must match the trait functions returntype", ("Trait function parameter type defined here:", traitFunc.ReturnTypeExpr?.Location ?? traitFunc.Name.Location));
+                        ReportError(func.ReturnTypeExpr?.Location ?? func.Name.Location, $"Return type must match the trait functions return type", ("Trait function parameter type defined here:", traitFunc.ReturnTypeExpr?.Location ?? traitFunc.Name.Location));
                     }
                 }
 
@@ -202,7 +220,8 @@ namespace Cheez
                     // setup scopes
                     foreach (var param in impl.Parameters)
                     {
-                        impl.SubScope.DefineTypeSymbol(param.Name.Name, new PolyType(param.Name.Name, true));
+                        if (param.Name != null)
+                            impl.SubScope.DefineTypeSymbol(param.Name.Name, new PolyType(param.Name.Name, true));
 
                         param.Scope = impl.Scope;
                         param.TypeExpr.Scope = impl.Scope;

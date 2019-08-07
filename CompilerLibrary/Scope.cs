@@ -124,6 +124,8 @@ namespace Cheez
         public List<AstVariableDecl> Variables = new List<AstVariableDecl>();
         public List<AstFunctionDecl> Functions = new List<AstFunctionDecl>();
         public List<AstImplBlock> Impls = new List<AstImplBlock>();
+
+        public Queue<AstImplBlock> unresolvedImpls = new Queue<AstImplBlock>();
         //
 
         public IEnumerable<KeyValuePair<string, ISymbol>> Symbols => mSymbolTable.AsEnumerable();

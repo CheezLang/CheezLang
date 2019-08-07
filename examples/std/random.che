@@ -3,6 +3,29 @@
 #load("std:util")
 #load("std:hash_table")
 
+struct LinearCongruentialGenerator {
+    seed: u64
+}
+
+impl LinearCongruentialGenerator {
+    fn create(seed: u64 = 0) -> Self {
+        return new Self { seed }
+    }
+
+    fn next(ref Self) -> u32 {
+        let M: u64 = cast(u64) u32_max()
+        let A: u64 = 1664525
+        let B: u64 = 1013904223
+        seed = (A * seed + B) % M
+
+        return cast(u32) seed
+    }
+
+    fn next_int(ref Self, min: int = 0, max: int = cast u32_max()) -> int {
+        return (cast(int)next()) % (max - min) + min
+    }
+}
+
 impl PseudoRandomGen for LinearCongruentialGenerator {
     fn next_u32(ref Self) -> u32 {
         return self.next()
@@ -53,7 +76,7 @@ struct DistributionIterator(T: type) {
     dist: IDistribution(T)
 }
 
-impl Iterator($T) for DistributionIterator(T) {
+impl(T: type) Iterator(T) for DistributionIterator(T) {
     fn next(ref Self) -> Option(T) {
         return Some(dist.sample())
     }
@@ -63,7 +86,7 @@ impl Iterator($T) for DistributionIterator(T) {
     }
 }
 
-impl IDistribution($T) {
+impl(T: type) IDistribution(T) {
     fn samples(ref Self) -> Iterator(T) {
         let it = alloc(DistributionIterator(T))
         <<it = new {self}
@@ -75,7 +98,7 @@ impl IDistribution($T) {
 struct StandardContinuousUniform(T: type) {
     prng: &T
 }
-impl IDistribution(double) for StandardContinuousUniform($T) {
+impl(T: type) IDistribution(double) for StandardContinuousUniform(T) {
     fn sample(ref Self) -> double {
         return prng.next_double()
     }

@@ -81,28 +81,37 @@ fn Main() {
     }
 
     {
-        let t: Test = new S{5}
+        let tmp = new S{5}
+        let t: Test = tmp
         t.foo(7)
         t.print()
         c_puts("")
     }
     
     {
-        let t: Test2 = new S{5}
+        let tmp = new S{5}
+        let t: Test2 = tmp
         t.bar()
         t.print()
         c_puts("")
     }
     
     {
-        let t: Test = new S2{"hello"}
+        let tmp = new S2{"hello"}
+        let t: Test = tmp
         t.foo(23)
         t.print()
         c_puts("")
     }
     
     {
-        test(new S{1})
-        test(new S2{"zwei"})
+        {
+            let tmp = new S{1}
+            test(tmp)
+        }
+        {
+            let tmp = new S2{"zwei"}
+            test(tmp)
+        }
     }
 }

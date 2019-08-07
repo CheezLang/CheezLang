@@ -299,10 +299,8 @@ namespace Cheez
                 else
                     Pass3Impl(instance);
 
-                foreach (var f in instance.Functions)
-                {
-                    AnalyseFunction(f);
-                }
+                // @TODO: does this work?
+                GlobalScope.unresolvedImpls.Enqueue(instance);
             }
 
             return instance;

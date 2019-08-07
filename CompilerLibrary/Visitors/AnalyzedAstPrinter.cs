@@ -590,11 +590,6 @@ namespace Cheez.Visitors
             return $"[{vals}]";
         }
 
-        public override string VisitTypeExpr(AstTypeRef astArrayTypeExpr, int data = 0)
-        {
-            return astArrayTypeExpr.Type?.ToString();
-        }
-
         public override string VisitCompCallExpr(AstCompCallExpr call, int data = 0)
         {
             var args = call.Arguments.Select(a => a.Accept(this));
@@ -772,6 +767,12 @@ namespace Cheez.Visitors
 
 
         #region Type expressions
+
+        public override string VisitTypeExpr(AstTypeRef astArrayTypeExpr, int data = 0)
+        {
+            return astArrayTypeExpr.Type?.ToString();
+        }
+
         public override string VisitSliceTypeExpr(AstSliceTypeExpr type, int data = 0)
         {
             return $"[]{type.Target.Accept(this)}";

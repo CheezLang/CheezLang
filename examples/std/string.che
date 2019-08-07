@@ -18,7 +18,7 @@ struct StringBase(CharType: type) {
 typedef String = StringBase(char)
 typedef Utf32String = StringBase(i32)
 
-impl(CharType: type) StringBase($CharType) {
+impl(CharType: type) StringBase(CharType) {
     fn empty(allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return new { null, 0, allocator }
     }
@@ -150,7 +150,9 @@ impl(CharType: type) StringBase($CharType) {
 
         return -1
     }
+}
 
+impl String {
     fn appendf(ref Self, format: string, args: []Printable) {
         let formatSpecifier = {
             let const len = 64
@@ -227,11 +229,11 @@ impl(CharType: type) StringBase($CharType) {
     }
 }
 
-// impl Printable for String {
-//     fn print(ref Self, str: ref String, format: string) {
-//         str += self
-//     }
-// }
+impl Printable for String {
+    fn print(ref Self, str: ref String, format: string) {
+        str += self
+    }
+}
 
 fn streql(a: $T, b: $T2, len: int) -> bool {
     let alen = cast a::get_length()

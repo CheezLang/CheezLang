@@ -12,7 +12,8 @@ namespace Cheez.Ast.Statements
         GlobalScope,
         Returns,
         IsLastStatementInBlock,
-        NoDefaultInitializer
+        NoDefaultInitializer,
+        MembersComputed
     }
 
     public interface IAstNode {
@@ -82,7 +83,9 @@ namespace Cheez.Ast.Statements
             to.Parent = this.Parent;
             to.Scope = this.Scope;
             to.Directives = this.Directives;
-            to.mFlags = this.mFlags;
+            
+            // @TODO: i feel like flags should not be copieds
+            //to.mFlags = this.mFlags;
             return to;
         }
 

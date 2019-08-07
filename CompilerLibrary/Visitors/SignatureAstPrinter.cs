@@ -92,13 +92,13 @@ namespace Cheez.Visitors
             header += " ";
 
             if (impl.TraitExpr != null)
-                header += impl.TraitExpr.Accept(rawPrinter) + " for ";
+                header +=  TypeToString(impl.TraitExpr) + " for ";
 
-            header += impl.TargetTypeExpr.Accept(rawPrinter);
+            header += TypeToString(impl.TargetTypeExpr);
 
             var conditions = impl.IsPolyInstance ? impl.Template.Conditions : impl.Conditions;
             if (conditions != null)
-                header += " if " + string.Join(", ", conditions.Select(c => $"{c.type} : {c.trait}"));
+                header += " if " + string.Join(", ", conditions.Select(c => $"{TypeToString(c.type)} : {TypeToString(c.trait)}"));
 
             return header;
         }
@@ -119,6 +119,13 @@ namespace Cheez.Visitors
                 }));
             }
             return head;
+        }
+
+        private string TypeToString(AstExpression typeExpr)
+        {
+            if (rawPrinter is AnalysedAstPrinter)
+                return typeExpr.Value?.ToString() ?? typeExpr.Accept(rawPrinter);
+            return typeExpr.Accept(rawPrinter);
         }
     }
 }

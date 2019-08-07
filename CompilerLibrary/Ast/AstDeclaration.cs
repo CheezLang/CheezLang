@@ -317,6 +317,11 @@ namespace Cheez.Ast.Statements
                 Conditions?.Select(c => (c.type.Clone(), c.trait.Clone())).ToList(),
                 Functions.Select(f => f.Clone() as AstFunctionDecl).ToList()
                 ));
+
+        public override string ToString()
+        {
+            return Accept(new SignatureAstPrinter(true));
+        }
     }
 
     #endregion

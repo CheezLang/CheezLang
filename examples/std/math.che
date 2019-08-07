@@ -53,27 +53,10 @@ fn mod_pos(a: $T, b: T) -> T {
     return ((a % b) + b) % b
 }
 
-struct LinearCongruentialGenerator {
-    seed: u64
-}
-
-impl LinearCongruentialGenerator {
-    fn create(seed: u64 = 0) -> Self {
-        return new Self { seed }
-    }
-
-    fn next(ref Self) -> u32 {
-        let M: u64 = cast(u64) u32_max()
-        let A: u64 = 1664525
-        let B: u64 = 1013904223
-        seed = (A * seed + B) % M
-
-        return cast(u32) seed
-    }
-
-    fn next_int(ref Self, min: int = 0, max: int = cast u32_max()) -> int {
-        return (cast(int)next()) % (max - min) + min
-    }
+fn clamp(value: $T, min: T, max: T) -> T {
+    if value < min { return min }
+    if value > max { return max }
+    return value
 }
 
 struct Vector2(T: type) {

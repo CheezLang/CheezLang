@@ -1012,9 +1012,11 @@ namespace Cheez
             {
                 if (!cast.SubExpression.GetFlag(ExprFlags.IsLValue))
                 {
-                    //var tmp = new AstTempVarExpr(cast.SubExpression);
-                    //cast.SubExpression = InferTypeHelper(tmp, cast.SubExpression.Type, context);
-                    ReportError(cast.Location, $"Can't cast a non-lvalue to a trait");
+                    var tmp = new AstTempVarExpr(cast.SubExpression);
+                    cast.SubExpression = InferTypeHelper(tmp, cast.SubExpression.Type, context);
+
+                    // @TODO: make this an error
+                    // ReportError(cast.Location, $"Can't cast a non-lvalue to a trait");
                     return cast;
                 }
 
@@ -1853,6 +1855,10 @@ namespace Cheez
                         var left = expr.SubExpression;
                         var right = expr.Indexer;
 
+                        // resolve impls
+                        GetImplsForType(left.Type);
+                        GetImplsForType(right.Type);
+
                         var ops = expr.Scope.GetBinaryOperators("[]", left.Type, right.Type);
 
                         // :temp
@@ -2284,6 +2290,11 @@ namespace Cheez
                 var instance = InstantiatePolyStruct(strType.Declaration, args, context.newPolyDeclarations, expr);
                 expr.Type = CheezType.Type;
                 expr.Value = instance?.Type ?? CheezType.Error;
+
+                // this causes impls to be calculated for this type if not done yet
+                //if (instance.Type != null)
+                //    GetImplsForType(instance.Type);
+
                 return expr;
             }
             else if (expr.Function.Value is GenericEnumType @enum)
@@ -2300,6 +2311,11 @@ namespace Cheez
                 var instance = InstantiatePolyEnum(@enum.Declaration, args, context.newPolyDeclarations, expr);
                 expr.Type = CheezType.Type;
                 expr.Value = instance?.Type ?? CheezType.Error;
+
+                // this causes impls to be calculated for this type if not done yet
+                //if (instance.Type != null)
+                //    GetImplsForType(instance.Type);
+
                 return expr;
             }
             else if (expr.Function.Value is GenericTraitType trait)
@@ -2316,6 +2332,11 @@ namespace Cheez
                 var instance = InstantiatePolyTrait(trait.Declaration, args, context.newPolyDeclarations, expr);
                 expr.Type = CheezType.Type;
                 expr.Value = instance?.Type ?? CheezType.Error;
+
+                // this causes impls to be calculated for this type if not done yet
+                //if (instance.Type != null)
+                //    GetImplsForType(instance.Type);
+
                 return expr;
             }
             else
@@ -2832,6 +2853,11 @@ namespace Cheez
                     expr.Right.Type = UnifyTypes(expr.Left.Type, expr.Right.Type);
                 }
 
+                // before we search for operators, make sure that all impls for both arguments have been matched
+                GetImplsForType(expr.Left.Type);
+                GetImplsForType(expr.Right.Type);
+
+
                 var ops = expr.Scope.GetBinaryOperators(expr.Operator, expr.Left.Type, expr.Right.Type);
 
                 if (ops.Count == 0)
@@ -3142,12 +3168,12 @@ namespace Cheez
             return null;
         }
 
-        private AstImplBlock ImplAppliesToType(AstImplBlock impl, CheezType type)
+        private (AstImplBlock impl, bool maybeApplies) ImplAppliesToType(AstImplBlock impl, CheezType type)
         {
             if (impl.IsPolymorphic)
             {
                 if (!CheezType.TypesMatch(impl.TargetType, type))
-                    return null;
+                    return (null, false);
 
                 var polies = new Dictionary<string, CheezType>();
                 CollectPolyTypes(impl.TargetType, type, polies);
@@ -3174,7 +3200,7 @@ namespace Cheez
 
                         if (!GetTraitImplForType(ty, tr, polies))
                         {
-                            return null;
+                            return (null, true);
                         }
                     }
                 }
@@ -3187,11 +3213,11 @@ namespace Cheez
                 }
 
                 var result = InstantiatePolyImplNew(impl, polies);
-                return result;
+                return (result, false);
             }
             else
             {
-                return CheezType.TypesMatch(impl.TargetType, type) ? impl : null;
+                return CheezType.TypesMatch(impl.TargetType, type) ? (impl, false) : (null, false);
             }
         }
 

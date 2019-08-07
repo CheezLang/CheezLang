@@ -2,6 +2,7 @@
 #load("std:math")
 #load("std:array")
 #load("std:mem/stack_allocator")
+#load("std:random")
 #load("bmp:bmp")
 
 typedef Vec3 = Vector3(double)
@@ -399,7 +400,7 @@ impl Film {
         }
         
 
-        let r = new LinearCongruentialGenerator{
+        let r = new LinearCongruentialGenerator {
             cast get_time_microseconds()
         }
 

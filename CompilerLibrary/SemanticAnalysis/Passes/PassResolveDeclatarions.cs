@@ -14,22 +14,28 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        private Dictionary<CheezType, List<AstImplBlock>> m_typeImplMap = new Dictionary<CheezType, List<AstImplBlock>>();
-
-        private void AddImplForType(CheezType type, AstImplBlock impl)
+        private class TypeImplList
         {
-            if (m_typeImplMap.TryGetValue(type, out var _list))
-                _list.Add(impl);
-            else
-                m_typeImplMap[type] = new List<AstImplBlock> { impl };
+            public List<AstImplBlock> impls;
+            public List<AstImplBlock> potentialImpls;
+            public List<AstImplBlock> temp;
+
+            public TypeImplList(List<AstImplBlock> potentials)
+            {
+                impls = new List<AstImplBlock>();
+                potentialImpls = new List<AstImplBlock>(potentials);
+                temp = new List<AstImplBlock>();
+            }
         }
+
+        private Dictionary<CheezType, TypeImplList> m_typeImplMap;
 
         private bool GetTraitImplForType(CheezType type, CheezType trait, Dictionary<string, CheezType> polies)
         {
             if (m_typeImplMap.TryGetValue(type, out var _list))
             {
                 bool found = false;
-                foreach (var impl in _list)
+                foreach (var impl in _list.impls)
                 {
                     if (CheezType.TypesMatch(impl.Trait, trait))
                     {
@@ -61,43 +67,79 @@ namespace Cheez
         private List<AstImplBlock> GetImplsForTypeHelper(CheezType type)
         {
             if (m_typeImplMap.TryGetValue(type, out var _list))
-                return _list;
+                return _list.impls;
 
-            // calculate all impls that apply to this type
-            var list1 = new List<AstImplBlock>(GlobalScope.Impls);
-            var list2 = new List<AstImplBlock>();
+            m_typeImplMap[type] = new TypeImplList(GlobalScope.Impls);
+
+            UpdateTypeImplMap(GlobalScope);
+
+            return m_typeImplMap[type].impls;
+        }
+
+        private void UpdateTypeImplMap(Scope scope)
+        {
+            if (m_typeImplMap == null)
+            {
+                m_typeImplMap = new Dictionary<CheezType, TypeImplList>();
+                foreach (var td in scope.Typedefs)
+                    if (!m_typeImplMap.ContainsKey(td.Type))
+                        m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
+
+                foreach (var td in scope.StructDeclarations)
+                    if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
+                        m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
+
+                foreach (var td in scope.EnumDeclarations)
+                    if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
+                        m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
+
+                foreach (var td in scope.TraitDeclarations)
+                    if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
+                        m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
+
+                foreach (var td in scope.Impls)
+                    if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.TargetType))
+                        m_typeImplMap[td.TargetType] = new TypeImplList(scope.Impls);
+            }
 
             var changes = true;
             while (changes)
             {
                 changes = false;
 
-                foreach (var impl in list1)
+                var mapCopy = new Dictionary<CheezType, TypeImplList>(m_typeImplMap);
+
+                foreach (var kv in mapCopy)
                 {
-                    var concreteImpl = ImplAppliesToType(impl, type);
-                    if (concreteImpl != null)
+                    var type = kv.Key;
+                    var lists = kv.Value;
+
+                    int prevCount = lists.potentialImpls.Count;
+                    //foreach (var impl in lists.potentialImpls)
+                    for (int i = 0; i < lists.potentialImpls.Count; i++)
                     {
-                        AddImplForType(type, concreteImpl);
-                        changes = true;
+                        var impl = lists.potentialImpls[i];
+                        var (concreteImpl, maybeApplies) = ImplAppliesToType(impl, type);
+                        if (concreteImpl != null)
+                        {
+                            lists.impls.Add(concreteImpl);
+                            changes = true;
+                        }
+                        else if (maybeApplies)
+                        {
+                            lists.temp.Add(impl);
+                        }
                     }
-                    else if (impl.Conditions?.Count > 0)
-                    {
-                        list2.Add(impl);
-                    }
+
+
+                    lists.potentialImpls.Clear();
+
+                    // swap lists
+                    var tmpList = lists.temp;
+                    lists.temp = lists.potentialImpls;
+                    lists.potentialImpls = tmpList;
                 }
-
-                list1.Clear();
-
-                // swap lists
-                var tmpList = list1;
-                list1 = list2;
-                list2 = tmpList;
             }
-
-            if (!m_typeImplMap.ContainsKey(type))
-                m_typeImplMap[type] = new List<AstImplBlock>();
-
-            return m_typeImplMap[type];
         }
 
         private void ResolveDeclarations(Scope scope, List<AstStatement> statements)
@@ -115,6 +157,9 @@ namespace Cheez
             // check for cyclic dependencies and resolve types of typedefs and constant variables
             ResolveMissingTypesOfDeclarations(scope);
 
+            // compute types of struct members, enum members, trait members
+            ComputeTypeMembers(scope);
+
             // resolve impls (check if is polymorphic, setup scopes, check for self params in functions, etc.)
             foreach (var impl in scope.Impls)
             {
@@ -125,35 +170,7 @@ namespace Cheez
             }
 
             // go through all type declarations and connect impls to types
-
-            bool changes = true;
-
-            while (changes)
-            {
-                changes = false;
-
-                foreach (var td in scope.Typedefs)
-                    GetImplsForType(td.Type);
-
-                foreach (var td in scope.StructDeclarations)
-                    if (!td.IsPolymorphic)
-                        GetImplsForType(td.Type);
-
-                foreach (var td in scope.EnumDeclarations)
-                    if (!td.IsPolymorphic)
-                        GetImplsForType(td.Type);
-
-                foreach (var td in scope.TraitDeclarations)
-                    if (!td.IsPolymorphic)
-                        GetImplsForType(td.Type);
-
-                foreach (var td in scope.Impls)
-                    if (!td.IsPolymorphic)
-                        GetImplsForType(td.TargetType);
-            }
-
-            // compute types of struct members, enum members, trait members
-            ComputeTypeMembers(scope);
+            UpdateTypeImplMap(GlobalScope);
 
 
             // handle uses
@@ -176,8 +193,13 @@ namespace Cheez
                 AnalyseFunction(func);
             }
 
-            foreach (var i in scope.Impls)
+            foreach (var impl in scope.Impls)
+                scope.unresolvedImpls.Enqueue(impl);
+
+            while (scope.unresolvedImpls.Count > 0)
             {
+                var i = scope.unresolvedImpls.Dequeue();
+
                 //if (i.TraitExpr != null && i.Trait == null)
                 if (i.Trait?.IsErrorType ?? false)
                 {
@@ -187,13 +209,6 @@ namespace Cheez
 
                 if (i.IsPolymorphic)
                 {
-                    //foreach (var instance in i.PolyInstances)
-                    //{
-                    //    foreach (var f in i.Functions)
-                    //    {
-                    //        AnalyseFunction(f);
-                    //    }
-                    //}
                     continue;
                 }
 
