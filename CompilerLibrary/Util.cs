@@ -56,6 +56,11 @@ namespace Cheez.Util
             return (a && !b) || (!a && b);
         }
 
+        public static bool Implies(bool a, bool b)
+        {
+            return !a || b;
+        }
+
         public static string Replace(this string str, params (string from, string to)[] reps)
         {
             foreach (var (f, t) in reps)

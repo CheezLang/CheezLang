@@ -26,6 +26,7 @@ namespace Cheez
             public HashSet<AstDecl> dependencies;
             public bool resolve_poly_expr_to_concrete_type;
             public bool forceInfer = false;
+            public CheezType functionExpectedReturnType = null;
         }
 
         private bool IsLiteralType(CheezType t)
@@ -189,7 +190,7 @@ namespace Cheez
                     return InferTypeArgExpr(arg, expected, context);
 
                 case AstReferenceTypeExpr p:
-                    return InferTypeReferenceTypeExpr(p, context);
+                    return InferTypeReferenceTypeExpr(p, expected, context);
 
                 case AstSliceTypeExpr p:
                     return InferTypeSliceTypeExpr(p, context);
@@ -813,10 +814,10 @@ namespace Cheez
             return arg;
         }
 
-        private AstExpression InferTypeReferenceTypeExpr(AstReferenceTypeExpr p, TypeInferenceContext context)
+        private AstExpression InferTypeReferenceTypeExpr(AstReferenceTypeExpr p, CheezType expected, TypeInferenceContext context)
         {
             p.Target.AttachTo(p);
-            p.Target = InferTypeHelper(p.Target, CheezType.Type, context);
+            p.Target = InferTypeHelper(p.Target, expected, context);
             if (p.Target.Type == CheezType.Type)
             {
                 p.Type = CheezType.Type;
@@ -979,11 +980,13 @@ namespace Cheez
 
         private AstExpression InferTypeCast(AstCastExpr cast, CheezType expected, TypeInferenceContext context)
         {
+            CheezType subExpected = null;
             if (cast.TypeExpr != null)
             {
                 cast.TypeExpr.AttachTo(cast);
                 cast.TypeExpr = ResolveTypeNow(cast.TypeExpr, out var type);
                 cast.Type = type;
+                subExpected = cast.Type;
             }
             else if (expected != null)
             {
@@ -995,7 +998,7 @@ namespace Cheez
             }
 
             cast.SubExpression.Scope = cast.Scope;
-            cast.SubExpression = InferTypeHelper(cast.SubExpression, cast.Type, context);
+            cast.SubExpression = InferTypeHelper(cast.SubExpression, subExpected, context);
             ConvertLiteralTypeToDefaultType(cast.SubExpression, cast.Type);
 
             if (cast.SubExpression.Type.IsErrorType || cast.Type.IsErrorType)
@@ -2073,7 +2076,7 @@ namespace Cheez
                 case CheezTypeType _ when expr.IsDoubleColon:
                     {
                         var t = expr.Left.Value as CheezType;
-                        var funcs = GetImplFunctions(t, expr.Right.Name);
+                        var funcs = GetImplFunctions(t, expr.Right.Name, expected);
 
                         if (funcs.Count == 0)
                         {
@@ -2155,7 +2158,13 @@ namespace Cheez
         private AstExpression InferTypeCallExpr(AstCallExpr expr, CheezType expected, TypeInferenceContext context)
         {
             expr.Function.AttachTo(expr);
-            expr.Function = InferTypeHelper(expr.Function, null, context);
+
+            {
+                var prev = context.functionExpectedReturnType;
+                context.functionExpectedReturnType = expected;
+                expr.Function = InferTypeHelper(expr.Function, null, context);
+                context.functionExpectedReturnType = prev;
+            }
 
             switch (expr.Function.Type)
             {
@@ -3239,7 +3248,7 @@ namespace Cheez
 
         private AstExpression GetImplFunctions(AstDotExpr expr, CheezType type, string functionName, TypeInferenceContext context)
         {
-            var result = GetImplFunctions(type, functionName);
+            var result = GetImplFunctions(type, functionName, context.functionExpectedReturnType);
             
             if (result.Count == 0)
             {
@@ -3257,10 +3266,12 @@ namespace Cheez
             return InferTypeHelper(ufc, null, context);
         }
 
-        private List<AstFunctionDecl> GetImplFunctions(CheezType type, string functionName)
+        private List<AstFunctionDecl> GetImplFunctions(CheezType type, string functionName, CheezType expected)
         {
             var resultNormal = new List<AstFunctionDecl>();
+            var resultNormal2 = new List<AstFunctionDecl>();
             var resultTrait = new List<AstFunctionDecl>();
+            var resultTrait2 = new List<AstFunctionDecl>();
 
             // only search for non reference types
             if (type is ReferenceType r)
@@ -3272,19 +3283,29 @@ namespace Cheez
                 {
                     var func = impl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
                     if (func != null)
-                        resultNormal.Add(func);
+                        if (Utilities.Implies(expected != null, func.ReturnType == expected))
+                            resultNormal.Add(func);
+                        else
+                            resultNormal2.Add(func);
                 }
                 else
                 {
                     var func = impl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
                     if (func != null)
-                        resultTrait.Add(func);
+                        if (Utilities.Implies(expected != null, func.ReturnType == expected))
+                            resultTrait.Add(func);
+                        else
+                            resultTrait2.Add(func);
                 }
             }
 
             if (resultNormal.Count > 0)
                 return resultNormal;
-            return resultTrait;
+            if (resultNormal2.Count > 0)
+                return resultNormal2;
+            if (resultTrait.Count > 0)
+                return resultTrait;
+            return resultTrait2;
         }
     }
 }

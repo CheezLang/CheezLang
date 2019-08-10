@@ -144,8 +144,7 @@ impl(F: type, T: type) Into(Array(T)) for Array(F) if F : Into(T) {
     fn into(ref Self) -> Array(T) {
         let result = Array(T)::create(self.get_length())
         loop! i in 0 -> self.get_length() {
-            let val = ref self.access_unchecked(i)
-            result.add(Into(T)(val).into())
+            result.add(self.access_unchecked(i)::into())
         }
         return result
     }

@@ -1,42 +1,47 @@
-#load("std:string")
-#load("std:array")
-#load("std:hash_table")
+// #load("examples/geometry_draw_thingy")
+// #load("examples/trait_function_call_performance")
+// #load("examples/signed_distance_field_renderer")
+#load("compiler/main")
 
-impl Into(double) for int {
-    fn into(ref Self) -> double {
-        return double(self)
-    }
-}
+// #load("std:string")
+// #load("std:array")
+// #load("std:hash_table")
 
-impl Into(String) for int {
-    fn into(ref Self) -> String {
-        return String::format("{} int", [self])
-    }
-}
+// impl Into(double) for int {
+//     fn into(ref Self) -> double {
+//         return double(self)
+//     }
+// }
 
-fn print_array(arr: ref Array($T)) {
-    let it = arr.iterator()
-    while true {
-        match it.next() {
-            Some($v) -> println(v)
-            None -> {break}
-        }
-    }
-    println("")
-}
+// impl Into(String) for int {
+//     fn into(ref Self) -> String {
+//         return String::format("{} int", [self])
+//     }
+// }
 
-fn Main() {
-    let ints = Array(int)::create()
-    ints.add(5)
-    ints.add(1)
-    ints.add(3)
-    ints.add(7)
+// fn print_array(arr: ref Array($T)) {
+//     let it = arr.iterator()
+//     while true {
+//         match it.next() {
+//             Some($v) -> println(v)
+//             None -> {break}
+//         }
+//     }
+//     println("")
+// }
+
+// fn Main() {
+//     let ints = Array(int)::create()
+//     ints.add(5)
+//     ints.add(1)
+//     ints.add(3)
+//     ints.add(7)
 
 
-    let doubles: Array(double) = Into(Array(double))(ints).into()
-    let strings: Array(String) = Into(Array(String))(ints).into()
+//     let doubles: Array(double) = ints.into()
+//     let strings: Array(String) = ints.into()
 
-    print_array(ints)
-    print_array(doubles)
-    print_array(strings)
-}
+//     print_array(ints)
+//     print_array(doubles)
+//     print_array(strings)
+// }
