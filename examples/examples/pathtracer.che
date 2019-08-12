@@ -1,4 +1,4 @@
-#load("examples/olc_pge/pixel_game_engine")
+#load("olc_pge/pixel_game_engine")
 #load("std:io/io")
 #load("std:mem/arena_allocator")
 #load("std:array")
@@ -17,12 +17,6 @@ let const max_depth         : int       = 5
 let const min_contribution  : double    = 0.2
 
 let const pi: double = 3.14159265359
-
-fn clamp(value: double, min: double, max: double) -> double {
-    if value < min { return min }
-    if value > max { return max }
-    return value
-}
 
 fn create(val: $T, allocator: Allocator) -> &T {
     let ptr = alloc(T, allocator)
@@ -63,6 +57,12 @@ struct Material {
 }
 
 impl Material {
+    fn reflective(color: Vec3) -> Self {
+        return new {
+            reflection = color
+        }
+    }
+
     fn refrective(color: Vec3, ior: double) -> Self {
         return new {
             refraction = color
@@ -172,25 +172,6 @@ impl PathTracer {
             Some($hit) -> {
                 let result = new Vec3{}
 
-                if hit.material.emission.max_component() > 0 {
-                    let l = double(depth) / double(1)
-                    return new{l, l, l}
-                } else {
-                    let rand = new StandardContinuousUniform(MTwister) { prng }
-                    let r1 = rand.sample() * 2.0 * pi
-                    let r2 = rand.sample()
-                    let r2s = sqrt(r2)
-
-                    let w = hit.normal
-                    let u = if abs(w.x) > abs(w.z) {new Vec3{-w.y, w.x, 0}} else {new Vec3{0, -w.z, w.y}}
-                    u.normalize()
-                    let v = u.cross(w)
-                    let newDir = u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)
-                    let newRay = new Ray{hit.pos, newDir}
-
-                    return calc_color(newRay, prng, contribution * hit.material.diffuse.max_component(), depth + 1)
-                }
-
                 // emission
                 result += hit.material.emission
 
@@ -215,7 +196,8 @@ impl PathTracer {
                 if hit.material.reflection.max_component() > 0 {
                     let newDir = ray.dir.reflect(hit.normal)
                     let newRay = new Ray{hit.pos, newDir}
-                    result += hit.material.reflection * calc_color(newRay, prng, contribution * hit.material.reflection.max_component(), depth + 1)
+                    let nextContribution = contribution * hit.material.reflection.max_component()
+                    result += hit.material.reflection * calc_color(newRay, prng, nextContribution, depth + 1)
                 }
 
                 // refraction
@@ -281,8 +263,8 @@ impl PathTracer {
     }
 }
 
-fn pathtracer_thread(_data: &any) -> u32 #stdcall {
-    let data = @cast(&(index: int, pt: &PathTracer), _data)
+fn pathtracer_thread(data: &(index: int, pt: &PathTracer)) -> u32 #stdcall {
+    // let data = @cast(&(index: int, pt: &PathTracer), _data)
 
     let y_range = height / thread_count
     let start_y = data.index * y_range
@@ -313,12 +295,12 @@ fn pathtracer_thread(_data: &any) -> u32 #stdcall {
 
                 // shoot ray into scene and calculate color
                 let color = data.pt.calc_color(new{data.pt.cam_pos, dir}, &prng, 1)
+                // println(color)
                 data.pt.buffer[index] += color
             }
         }
 
         data.pt.thread_datas[data.index].samples += 1
-        // data.pt.thread_datas[data.index].samples = 0
     }
     return 0
 }
@@ -356,7 +338,7 @@ impl Game for PathTracer {
         let m_blue  = create(new Material{new{0.2, 0.2, 0.9}, new{}}, allocator)
         let m_grey  = create(new Material{new{0.75, 0.75, 0.75}, new{}}, allocator)
 
-        let m_mirror= create(new Material{new{}, new{}, new{1, 1, 1}}, allocator)
+        let m_mirror= create(Material::reflective(new{1, 1, 1}), allocator)
         let m_glass = create(Material::refrective(new{1, 1, 1}, 1.95), allocator)
 
         let m_light = create(new Material{new{}, new{10, 10, 10}}, allocator)
@@ -371,8 +353,8 @@ impl Game for PathTracer {
         self.add_object(new Sphere{new{0, 1000.0 + size, 0}, 1000, m_grey}) // top
 
         // spheres
-        self.add_object(new Sphere{new{-0.25, 2.25, 8.5}, 1.75, m_green})
-        self.add_object(new Sphere{new{3, 2, 13}, 2, m_green})
+        self.add_object(new Sphere{new{-0.25, 2.25, 8.5}, 1.75, m_glass})
+        self.add_object(new Sphere{new{3, 2, 13}, 2, m_mirror})
         self.add_object(new Sphere{new{-2.5, 1, 12}, 1, m_green})
         self.add_object(new Sphere{new{1.75, 1, 10}, 1, m_blue})
 
@@ -382,7 +364,7 @@ impl Game for PathTracer {
         // create threads
         loop! i in 0 -> thread_count {
             thread_datas[i] = (i, &self, 0)
-            threads[i] = CreateThread(null, 0, pathtracer_thread, &thread_datas[i], 0, null)
+            threads[i] = CreateThread(null, 0, cast pathtracer_thread, &thread_datas[i], 0, null)
         }
         return true
     }
@@ -415,12 +397,12 @@ impl Game for PathTracer {
                 // in the buffer
                 let pixel = {
                     let bufferColor = buffer[index] / double(sample + 1)
+                    // println(bufferColor)
                     let c = Vec3::change_type(
                         bufferColor.clamped(0.0, 1.0) * 255.0,
                         u8)
                     Pixel::rgba(c.x, c.y, c.z)
                 }
-
                 pge.draw(current_x, current_y, pixel)
             }
         }
