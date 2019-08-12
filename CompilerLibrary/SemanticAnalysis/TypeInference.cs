@@ -2865,8 +2865,11 @@ namespace Cheez
                 }
 
                 // before we search for operators, make sure that all impls for both arguments have been matched
-                GetImplsForType(expr.Left.Type);
-                GetImplsForType(expr.Right.Type);
+
+                if (expr.Left.Type is StructType || expr.Left.Type is EnumType)
+                    GetImplsForType(expr.Left.Type);
+                if (expr.Right.Type is StructType || expr.Right.Type is EnumType)
+                    GetImplsForType(expr.Right.Type);
 
 
                 var ops = expr.Scope.GetBinaryOperators(expr.Operator, expr.Left.Type, expr.Right.Type);

@@ -62,6 +62,9 @@ namespace Cheez
 
         private HashSet<AstImplBlock> GetImplsForTypeHelper(CheezType type)
         {
+            if (m_typeImplMap == null)
+                UpdateTypeImplMap(GlobalScope);
+
             if (m_typeImplMap.TryGetValue(type, out var _list))
                 return _list.impls;
 
@@ -94,7 +97,7 @@ namespace Cheez
                         m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
 
                 foreach (var td in scope.Impls)
-                    if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.TargetType))
+                    if (!td.IsPolymorphic && td.TargetType != null && !m_typeImplMap.ContainsKey(td.TargetType))
                         m_typeImplMap[td.TargetType] = new TypeImplList(scope.Impls);
             }
 
