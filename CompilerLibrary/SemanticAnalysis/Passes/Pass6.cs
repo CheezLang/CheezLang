@@ -87,11 +87,53 @@ namespace Cheez
                 //v.Type = t;
             }
 
+            //void CalcTypeOfPattern(AstExpression pattern, AstExpression type)
+            //{
+            //    switch (pattern)
+            //    {
+            //        case AstTupleExpr tuple:
+            //            {
+            //                AstTupleExpr tupleType = type as AstTupleExpr;
+
+            //                for (int i = 0; i < tuple.Values.Count; i++)
+            //                {
+            //                    AstExpression tid = tuple.Types[i].Name;
+            //                    var tty = tuple.Types?[i];
+
+            //                    if (tid == null)
+            //                    {
+            //                        tid = tuple.Values[i];
+            //                        tty = (i < tupleType?.Types?.Count) ? tupleType.Types[i] : null;
+            //                    }
+
+            //                    var _ = ResolveTypeNow(tuple.Types?[i].TypeExpr, out var t);
+            //                    tuple.Types[i].Type = t;
+
+            //                    CalcTypeOfPattern(tid, tty?.TypeExpr);
+            //                }
+
+            //                //tuple.Type = TupleType.GetTuple(tuple.Types.Select(t => (t.Name t.Type).ToArray());
+
+            //                break;
+            //            }
+            //    }
+            //}
+
+            //if (v.Pattern != null)
+            //{
+            //    v.TypeExpr.Scope = v.Scope;
+            //    v.TypeExpr = ResolveTypeNow(v.TypeExpr, out var t);
+            //    // TODO:
+            //    v.TypeExpr.Type = t;
+            //    v.Type = v.TypeExpr.Type;
+            //    //v.Type = t;
+            //}
+
             if (v.Initializer != null)
             {
                 v.Initializer.Scope = v.Scope;
 
-                v.Initializer = InferType(v.Initializer, v.TypeExpr?.Type);
+                v.Initializer = InferType(v.Initializer, v.TypeExpr?.Type ?? v.Pattern.Type);
                 ConvertLiteralTypeToDefaultType(v.Initializer, v.TypeExpr?.Type);
 
                 if (!v.Initializer.Type.IsErrorType)

@@ -560,76 +560,83 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private void GenerateVTables()
         {
             // create vtable type
-            var vfuncs = new List<AstFunctionDecl>();
             foreach (var trait in workspace.Traits)
             {
+                var funcTypes = new List<LLVMTypeRef>();
                 foreach (var func in trait.Functions)
                 {
                     if (func.IsGeneric)
                     {
                         throw new NotImplementedException();
                     }
-                    else
+                    else if (func.SelfType == SelfParamType.Reference)
                     {
-                        vfuncs.Add(func);
+                        vtableIndices[func] = funcTypes.Count;
+
+                        var funcType = CheezTypeToLLVMType(func.Type);
+                        funcTypes.Add(funcType);
                     }
                 }
+
+                var vtableType = LLVM.StructCreateNamed(context, $"__vtable_type_{trait.Type}");
+                LLVM.StructSetBody(vtableType, funcTypes.ToArray(), false);
+                vtableTypes[trait.Type] = vtableType;
             }
 
-            var funcTypes = new List<LLVMTypeRef>();
-            foreach (var func in vfuncs)
-            {
-                vtableIndices[func] = funcTypes.Count;
-
-                var funcType = CheezTypeToLLVMType(func.Type);
-                funcTypes.Add(funcType);
-            }
-
-            vtableType = LLVM.StructCreateNamed(context, "__vtable_type");
-            LLVM.StructSetBody(vtableType, funcTypes.ToArray(), false);
 
             foreach (var kv in workspace.TypeTraitMap)
             {
                 var type = kv.Key;
 
-                var vtable = module.AddGlobal(vtableType, "__vtable_" + type);
-                LLVM.SetLinkage(vtable, LLVMLinkage.LLVMInternalLinkage);
-                vtableMap[type] = vtable;
+                foreach (var impl in kv.Value)
+                {
+                    var trait = impl.Trait;
+                    var vtableType = vtableTypes[trait];
+                    var vtable = module.AddGlobal(vtableType, $"__vtable_{trait}_for_{type}");
+                    LLVM.SetLinkage(vtable, LLVMLinkage.LLVMInternalLinkage);
+                    vtableMap[(type, trait)] = vtable;
+                }
             }
         }
 
         private void SetVTables()
         {
-            var vfuncTypes = LLVM.GetStructElementTypes(vtableType);
-            var vfuncCount = vfuncTypes.Length;
 
             foreach (var kv in workspace.TypeTraitMap)
             {
                 var type = kv.Key;
                 var traits = kv.Value;
 
-                var functions = new LLVMValueRef[vfuncCount];
-                for (int i = 0; i < functions.Length; i++)
-                {
-                    var funcType = vfuncTypes[i];
-                    functions[i] = LLVM.ConstNull(funcType);
-                }
                 foreach (var impl in traits)
                 {
+                    var trait = impl.Trait;
+                    var vtableType = vtableTypes[trait];
+                    var vfuncTypes = LLVM.GetStructElementTypes(vtableType);
+                    var vfuncCount = vfuncTypes.Length;
+
+
+                    var functions = new LLVMValueRef[vfuncCount];
+                    for (int i = 0; i < functions.Length; i++)
+                    {
+                        var funcType = vfuncTypes[i];
+                        functions[i] = LLVM.ConstNull(funcType);
+                    }
+
                     foreach (var func in impl.Functions)
                     {
                         var traitFunc = func.TraitFunction;
-                        if (traitFunc == null)
+                        if (traitFunc == null || func.SelfType != SelfParamType.Reference)
                             continue;
 
                         var index = vtableIndices[traitFunc];
                         functions[index] = valueMap[func];
                     }
-                }
-                var defValue = LLVM.ConstNamedStruct(vtableType, functions);
 
-                var vtable = vtableMap[type];
-                LLVM.SetInitializer(vtable, defValue);
+                    var defValue = LLVM.ConstNamedStruct(vtableType, functions);
+
+                    var vtable = vtableMap[(type, trait)];
+                    LLVM.SetInitializer(vtable, defValue);
+                }
             }
         }
     }

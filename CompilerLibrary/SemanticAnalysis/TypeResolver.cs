@@ -724,7 +724,6 @@ namespace Cheez
                 instance.ConstParameters = constArgs;
                 instance.ImplBlock = func.Declaration.ImplBlock;
                 instance.SelfType = func.Declaration.SelfType;
-                instance.SelfParameter = func.Declaration.SelfParameter;
                 func.Declaration.PolymorphicInstances.Add(instance);
 
                 if (instance.ImplBlock != null)

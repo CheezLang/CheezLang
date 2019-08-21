@@ -75,6 +75,7 @@ namespace Cheez.Ast.Statements
 
     public enum SelfParamType
     {
+        None,
         Value,
         Reference
     }
@@ -94,12 +95,11 @@ namespace Cheez.Ast.Statements
 
         public List<AstFunctionDecl> PolymorphicInstances { get; } = new List<AstFunctionDecl>();
 
-        public bool SelfParameter { get; set; } = false;
-        public SelfParamType SelfType { get; set; }
+        public SelfParamType SelfType { get; set; } = SelfParamType.None;
         public bool IsGeneric { get; set; } = false;
         public bool IsConstant => true;
         public bool IsPolyInstance { get; set; } = false;
-        public bool IsTraitFunction { get; set; } = false;
+        public AstTraitDeclaration Trait { get; set; } = null;
 
         public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
         public Dictionary<string, (CheezType type, object value)> ConstParameters { get; internal set; }

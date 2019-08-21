@@ -33,12 +33,10 @@ namespace Cheez
                 var param = func.Parameters[0];
                 if (param.TypeExpr is AstIdExpr i && i.Name == "Self")
                 {
-                    func.SelfParameter = true;
                     func.SelfType = SelfParamType.Value;
                 }
                 else if (param.TypeExpr is AstReferenceTypeExpr p2 && p2.Target is AstIdExpr i3 && i3.Name == "Self")
                 {
-                    func.SelfParameter = true;
                     func.SelfType = SelfParamType.Reference;
                 }
             }

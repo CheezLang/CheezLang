@@ -4,6 +4,7 @@ using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
+using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 
@@ -114,8 +115,18 @@ namespace Cheez
 
                 for (int i = 0; i < tuple.Values.Count; i++)
                 {
-                    var tid = tuple.Values[i];
-                    var tty = (i < tupleType?.Types?.Count) ? tupleType.Types[i] : null;
+                    AstExpression tid = tuple.Types[i].Name;
+                    var tty = tuple.Types?[i];
+
+                    if (tid == null)
+                    {
+                        tid = tuple.Values[i];
+                        tty = (i < tupleType?.Types?.Count) ? tupleType.Types[i] : null;
+                    }
+                    else
+                    {
+                        tuple.Values[i] = tid;
+                    }
 
                     MatchPatternWithTypeExpr(parent, tid, tty?.TypeExpr);
                 }

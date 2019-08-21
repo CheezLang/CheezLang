@@ -52,7 +52,7 @@ namespace Cheez
             try
             {
 
-                if (func.SelfParameter)
+                if (func.SelfType != SelfParamType.None)
                 {
                     var p = func.Parameters[0];
                     if (p.Name == null)

@@ -501,7 +501,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var ptr = GenerateExpression(cast.SubExpression, false);
                 ptr = builder.CreatePointerCast(ptr, pointerType, "");
 
-                var vtablePtr = vtableMap[from];
+                var vtablePtr = vtableMap[(from, trait)];
 
                 var traitObject = LLVM.GetUndef(toLLVM);
                 traitObject = builder.CreateInsertValue(traitObject, vtablePtr, 0, "");
@@ -1029,7 +1029,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateCallExpr(AstCallExpr c)
         {
-            if (c.Declaration?.IsTraitFunction ?? false)
+            if (c.Declaration?.Trait != null)
             {
                 // call to a trait function
                 // get function pointer from trait object
@@ -1051,6 +1051,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 }
 
                 // load function pointer
+                var vtableType = vtableTypes[c.Declaration.Trait.Type];
                 vtablePtr = builder.CreatePointerCast(vtablePtr, vtableType.GetPointerTo(), "");
 
                 var funcPointer = builder.CreateStructGEP(vtablePtr, (uint)functionIndex, "");

@@ -28,7 +28,7 @@ namespace Cheez
 
             foreach (var f in trait.Functions)
             {
-                f.IsTraitFunction = true;
+                f.Trait = trait;
                 f.Scope = trait.SubScope;
                 f.ConstScope = new Scope("$", f.Scope);
                 f.SubScope = new Scope("fn", f.ConstScope);
@@ -36,10 +36,12 @@ namespace Cheez
                 Pass4ResolveFunctionSignature(f);
                 CheckForSelfParam(f);
 
-                if (!f.SelfParameter || f.SelfType == SelfParamType.Value)
-                {
-                    ReportError(f.Name, $"Trait functions must take a self parameter by reference");
-                }
+                // this is allowed now
+                // @todo: make sure it compiles
+                //if (!f.SelfParameter && f.SelfType == SelfParamType.Value)
+                //{
+                //    ReportError(f.Name, $"Trait functions must take a self parameter by reference");
+                //}
 
                 // TODO: for now don't allow default implemenation
                 if (f.Body != null)
@@ -174,14 +176,26 @@ namespace Cheez
                     func.TraitFunction = traitFunc;
                     found = true;
 
+                    if (func.SelfType != traitFunc.SelfType)
+                    {
+                        ReportError(func.Name, 
+                            $"The self parameter of this function doesn't match the trait functions self parameter",
+                            ("Trait function defined here:", traitFunc.Name.Location));
+                        continue;
+                    }
+
                     if (func.Parameters.Count != traitFunc.Parameters.Count)
                     {
                         ReportError(func.ParameterLocation, $"This function must take the same parameters as the corresponding trait function", ("Trait function defined here:", traitFunc));
                         continue;
                     }
 
-                    // skip first parameter since it is the self parameter
-                    for (int i = 1; i < func.Parameters.Count; i++)
+                    int i = 0;
+                    // if first param is self param, skip it
+                    if (func.SelfType != SelfParamType.None)
+                        i = 1;
+
+                    for (; i < func.Parameters.Count; i++)
                     {
                         var fp = func.Parameters[i];
                         var tp = traitFunc.Parameters[i];

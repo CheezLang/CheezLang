@@ -2641,6 +2641,15 @@ namespace Cheez
             expr.Type = func.ReturnType;
             expr.Declaration = func.Declaration;
 
+            // check if call is from trait to non ref self param function
+            if (func.Declaration?.Trait != null)
+            {
+                if (func.Declaration.SelfType == SelfParamType.Value)
+                    ReportError(expr, $"Can't call trait function with non ref Self param");
+                if (func.Declaration.SelfType == SelfParamType.None)
+                    ReportError(expr, $"Can't call trait function with non ref Self param");
+            }
+
             return expr;
         }
 
@@ -2986,7 +2995,7 @@ namespace Cheez
             else if (sym is AstFunctionDecl func)
             {
                 expr.Type = func.Type;
-                if (func.SelfParameter)
+                if (func.SelfType != SelfParamType.None)
                 {
                     var ufc = new AstUfcFuncExpr(new AstIdExpr("self", false, expr), func);
                     return InferTypeHelper(ufc, null, default);

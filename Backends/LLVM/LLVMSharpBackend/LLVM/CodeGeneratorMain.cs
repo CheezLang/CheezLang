@@ -41,9 +41,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         // vtable stuff
         private bool checkForNullTraitObjects = true;
-        private LLVMTypeRef vtableType;
+        private Dictionary<CheezType, LLVMTypeRef> vtableTypes = new Dictionary<CheezType, LLVMTypeRef>();
         private Dictionary<object, int> vtableIndices = new Dictionary<object, int>();
-        private Dictionary<CheezType, LLVMValueRef> vtableMap = new Dictionary<CheezType, LLVMValueRef>();
+        private Dictionary<(CheezType, CheezType), LLVMValueRef> vtableMap = new Dictionary<(CheezType, CheezType), LLVMValueRef>();
 
         // intrinsics
         private LLVMValueRef memcpy32;
