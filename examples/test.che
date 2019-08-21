@@ -1,168 +1,168 @@
-// // #load("examples/geometry_draw_thingy")
-// // #load("examples/trait_function_call_performance")
-// // #load("examples/signed_distance_field_renderer")
-// // #load("compiler/main")
-// // #load("examples/pathtracer")
-// // #load("tests/library/stack_allocator")
-#load("tests/language/tuple")
+// #load("examples/geometry_draw_thingy")
+// #load("examples/trait_function_call_performance")
+// #load("examples/signed_distance_field_renderer")
+// #load("compiler/main")
+// #load("examples/pathtracer")
+// #load("tests/library/stack_allocator")
+// #load("tests/language/match2")
 
-// #load("std:io/io")
-// #load("std:array")
+#load("std:io/io")
+#load("std:array")
 
-// impl Into(float) for int {
-//     fn into(ref Self) -> float {
-//         return float(self)
-//     }
-// }
+impl Into(float) for int {
+    fn into(ref Self) -> float {
+        return float(self)
+    }
+}
 
-// // impl From(int) for float {
-// //     fn from(value: int) -> float {
-// //         return float(value)
+impl From(int) for float {
+    fn from(value: int) -> float {
+        return float(value)
+    }
+}
+
+fn test2() {
+    let a: int   = 5
+    let b: float = float::from(a)
+    let c: float = a::into()
+
+    println(a)
+    println(b)
+    println(c)
+}
+
+fn test3() #main {
+    let a = Array(int)::create()
+
+    a.add(1)
+    a.add(3)
+    a.add(5)
+    a.add(8)
+
+    let b = Array(float)::from(a)
+    let c: Array(float) = a.into()
+
+    printfln("{} {} {} {}", [a[0], a[1], a[2], a[3]])
+    printfln("{} {} {} {}", [b[0], b[1], b[2], b[3]])
+    printfln("{} {} {} {}", [c[0], c[1], c[2], c[3]])
+}
+
+trait Test {
+    fn foo(ref Self);
+    fn bar(Self);
+    fn baz();
+    fn test1(ref Self, other: Self);
+    fn test2(ref Self) -> Self;
+}
+
+struct Str {
+    pub a: int
+}
+
+impl Test for Str {
+    fn foo(ref Self) {
+        println("foo(ref Self)")
+    }
+
+    fn bar(Self) {
+        println("bar(Self)")
+    }
+
+    fn baz() {
+        println("baz()")
+    }
+
+    fn test1(ref Self, other: Self) {}
+    fn test2(ref Self) -> Self {return new {}}
+}
+
+fn test() {
+    let str = new Str{5}
+    let test: Test = str
+
+    str.foo()
+    str.bar()
+    // str.baz()
+
+    println("")
+
+    Str::foo(str)
+    Str::bar(str)
+    Str::baz()
+
+    println("")
+
+    test.foo()
+    // test.bar()
+    // test.baz()
+    // test.test1()
+    // test.test2()
+}
+
+// // struct Types {
+// // }
+
+// // fn compare_ints(a: int, b: int) -> bool {
+// //     return a == b
+// // }
+
+// // let pointers: Table(int, &Type)
+
+// // impl Types {
+// //     fn pointer(target: &Type) -> &Type {
+// //         return match pointers.get(int(target)) {
+// //             Some($v) -> v
+// //             None -> {
+// //                 let ptr = alloc(Type)
+// //                 <<ptr = Type.Pointer(target)
+// //                 pointers[int(target)] = ptr
+// //                 ptr
+// //             }
+// //         }
 // //     }
 // // }
 
-// // fn test2() #main {
-// //     let a: int   = 5
-// //     let b: float = float::from(a)
-// //     let c: float = a::into()
-
-// //     println(a)
-// //     println(b)
-// //     println(c)
+// // enum Type {
+// //     Unknown
+// //     Error
+// //     Int     : (signed: bool, size: int)
+// //     Float   : int
+// //     Pointer : &Type
 // // }
 
-// fn test3() #main {
-//     let a = Array(int)::create()
+// // impl Printable for Type {
+// //     fn print(ref Self, str: ref String, format: string) {
+// //         use Self
+// //         match self {
+// //             Unknown -> str.append_string("<Unknown>")
+// //             Error -> str.append_string("<Error>")
+// //             Int(($sign, $size)) -> str.appendf("{}{}", [if sign then "i" else "u", size * 8])
+// //             Float($size) -> str.appendf("f{}", [size * 8])
+// //             Pointer($target) -> str.appendf("&{}", [<<target])
+// //         }
+// //     }
+// // }
 
-//     a.add(1)
-//     a.add(3)
-//     a.add(5)
-//     a.add(8)
+// // struct Expr {
+// //     pub ty : &Type
+// // }
 
-//     let b = Array(float)::from(a)
-//     let c: Array(float) = a.into()
-
-//     printfln("{} {} {} {}", [a[0], a[1], a[2], a[3]])
-//     printfln("{} {} {} {}", [b[0], b[1], b[2], b[3]])
-//     printfln("{} {} {} {}", [c[0], c[1], c[2], c[3]])
-// }
-
-// trait Test {
-//     fn foo(ref Self);
-//     fn bar(Self);
-//     fn baz();
-//     fn test1(ref Self, other: Self);
-//     fn test2(ref Self) -> Self;
-// }
-
-// struct Str {
-//     pub a: int
-// }
-
-// impl Test for Str {
-//     fn foo(ref Self) {
-//         println("foo(ref Self)")
-//     }
-
-//     fn bar(Self) {
-//         println("bar(Self)")
-//     }
-
-//     fn baz() {
-//         println("baz()")
-//     }
-
-//     fn test1(ref Self, other: Self) {}
-//     fn test2(ref Self) -> Self {return new {}}
-// }
-
-// fn test() {
-//     let str = new Str{5}
-//     let test: Test = str
-
-//     str.foo()
-//     str.bar()
-//     // str.baz()
-
-//     println("")
-
-//     Str::foo(str)
-//     Str::bar(str)
-//     Str::baz()
-
-//     println("")
-
-//     test.foo()
-//     // test.bar()
-//     // test.baz()
-//     // test.test1()
-//     // test.test2()
-// }
-
-// // // struct Types {
-// // // }
-
-// // // fn compare_ints(a: int, b: int) -> bool {
-// // //     return a == b
-// // // }
-
-// // // let pointers: Table(int, &Type)
-
-// // // impl Types {
-// // //     fn pointer(target: &Type) -> &Type {
-// // //         return match pointers.get(int(target)) {
-// // //             Some($v) -> v
-// // //             None -> {
-// // //                 let ptr = alloc(Type)
-// // //                 <<ptr = Type.Pointer(target)
-// // //                 pointers[int(target)] = ptr
-// // //                 ptr
-// // //             }
-// // //         }
-// // //     }
-// // // }
-
-// // // enum Type {
-// // //     Unknown
-// // //     Error
-// // //     Int     : (signed: bool, size: int)
-// // //     Float   : int
-// // //     Pointer : &Type
-// // // }
-
-// // // impl Printable for Type {
-// // //     fn print(ref Self, str: ref String, format: string) {
-// // //         use Self
-// // //         match self {
-// // //             Unknown -> str.append_string("<Unknown>")
-// // //             Error -> str.append_string("<Error>")
-// // //             Int(($sign, $size)) -> str.appendf("{}{}", [if sign then "i" else "u", size * 8])
-// // //             Float($size) -> str.appendf("f{}", [size * 8])
-// // //             Pointer($target) -> str.appendf("&{}", [<<target])
-// // //         }
-// // //     }
-// // // }
-
-// // // struct Expr {
-// // //     pub ty : &Type
-// // // }
-
-// // // fn Main() {
+// // fn Main() {
 
 
-// //     // pointers = Table(int, &Type)::create(compare_ints)
-// //     // let int16 = Type.Int(true, 2)
-// //     // let int32 = Type.Int(true, 4)
-// //     // let uint64 = Type.Int(false, 8)
-// //     // let float64 = Type.Float(8)
-// //     // let error = Type.Error
+//     // pointers = Table(int, &Type)::create(compare_ints)
+//     // let int16 = Type.Int(true, 2)
+//     // let int32 = Type.Int(true, 4)
+//     // let uint64 = Type.Int(false, 8)
+//     // let float64 = Type.Float(8)
+//     // let error = Type.Error
 
-// //     // let ptr_int16 = Types::pointer(&int16)
+//     // let ptr_int16 = Types::pointer(&int16)
 
-// //     // println(int16)
-// //     // println(int32)
-// //     // println(<<ptr_int16)
-// //     // println(<<Types::pointer(&uint64))
-// //     // println(<<Types::pointer(&float64))
-// //     // println(<<Types::pointer(&error))
-// // // }
+//     // println(int16)
+//     // println(int32)
+//     // println(<<ptr_int16)
+//     // println(<<Types::pointer(&uint64))
+//     // println(<<Types::pointer(&float64))
+//     // println(<<Types::pointer(&error))
+// // }
