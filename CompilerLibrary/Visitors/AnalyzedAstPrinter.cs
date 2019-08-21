@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Cheez.Ast;
@@ -251,6 +252,19 @@ namespace Cheez.Visitors
             }
         }
 
+        private string VisitImplCondition(ImplCondition cond)
+        {
+            switch (cond)
+            {
+                case ImplConditionImplTrait c:
+                    return $"{c.type.Accept(this)} : {c.trait.Accept(this)}";
+
+                case ImplConditionNotYet c:
+                    return "#notyet";
+                default: throw new NotImplementedException();
+            }
+        }
+
         public override string VisitImplDecl(AstImplBlock impl, int data = 0)
         {
             if (impl.IsPolymorphic)
@@ -268,7 +282,7 @@ namespace Cheez.Visitors
                 header += impl.TargetType;
 
                 if (impl.Conditions != null)
-                    header += " if " + string.Join(", ", impl.Conditions.Select(c => $"{c.type} : {c.trait}"));
+                    header += " if " + string.Join(", ", impl.Conditions.Select(c => VisitImplCondition(c)));
 
                 var sb = new StringBuilder();
                 sb.Append($"{header} {{\n{body.Indent(4)}\n}}");
@@ -302,7 +316,7 @@ namespace Cheez.Visitors
                 header += impl.TargetType;
 
                 if (impl.Conditions != null)
-                    header += " if " + string.Join(", ", impl.Conditions.Select(c => $"{c.type} : {c.trait}"));
+                    header += " if " + string.Join(", ", impl.Conditions.Select(c => VisitImplCondition(c)));
 
                 return $"{header} {{\n{body.Indent(4)}\n}}";
             }

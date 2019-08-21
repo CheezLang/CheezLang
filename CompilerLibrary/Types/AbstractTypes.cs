@@ -1,5 +1,6 @@
 ﻿using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
+using Cheez.Types.Complex;
 using Cheez.Visitors;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,22 @@ namespace Cheez.Types.Abstract
 {
     public abstract class AbstractType : CheezType {
         public override bool IsErrorType => true;
+    }
+
+    public class SelfType : AbstractType
+    {
+        public override bool IsPolyType => false;
+        public CheezType traitType { get; }
+
+        public SelfType(CheezType traitType)
+        {
+            this.traitType = traitType;
+        }
+
+        public override string ToString()
+        {
+            return "<Self>";
+        }
     }
 
     public class VarDeclType : AbstractType

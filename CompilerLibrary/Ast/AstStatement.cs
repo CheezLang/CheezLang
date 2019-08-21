@@ -13,7 +13,8 @@ namespace Cheez.Ast.Statements
         Returns,
         IsLastStatementInBlock,
         NoDefaultInitializer,
-        MembersComputed
+        MembersComputed,
+        ExcludeFromVtable
     }
 
     public interface IAstNode {

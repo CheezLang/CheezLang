@@ -12,21 +12,21 @@ use Option
 use Result
 
 trait From(T: type) {
-    // fn from(value: T) -> Self;
+    fn from(value: T) -> Self;
 }
 
 trait Into(T: type) {
     fn into(ref Self) -> T;
 }
 
-// impl(F: type, T: type) From(F) for T if F : Into(T) {
-//     fn from(ref Self) -> T {
-//         return self.into()
-//     }
-// }
+impl(F: type, T: type) From(F) for T if F : Into(T), #notyet {
+    fn from(value: F) -> T {
+        return value::into()
+    }
+}
 
-// impl(F: type, T: type) Into(T) for F if T : From(F) {
-//     fn into(ref Self) -> T {
-//         return T::from(self)
-//     }
-// }
+impl(F: type, T: type) Into(T) for F if T : From(F), #notyet {
+    fn into(ref Self) -> T {
+        return T::from(self)
+    }
+}

@@ -4,6 +4,7 @@ using Cheez.Types;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using Cheez.Visitors;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -271,6 +272,47 @@ namespace Cheez.Ast.Statements
         }
     }
 
+    public abstract class ImplCondition
+    {
+        public ILocation Location;
+
+        public abstract ImplCondition Clone();
+
+        public Scope Scope { get; set; }
+
+        public ImplCondition(ILocation Location)
+        {
+            this.Location = Location;
+        }
+    }
+
+    public class ImplConditionImplTrait : ImplCondition
+    {
+        public AstExpression type { get; set; }
+        public AstExpression trait { get; set; }
+
+        public ImplConditionImplTrait(AstExpression type, AstExpression trait, ILocation Location)
+            : base(Location)
+        {
+            this.type = type;
+            this.trait = trait;
+        }
+
+        public override ImplCondition Clone()
+        {
+            return new ImplConditionImplTrait(type.Clone(), trait.Clone(), Location);
+        }
+    }
+
+    public class ImplConditionNotYet : ImplCondition
+    {
+        public ImplConditionNotYet(ILocation Location)
+            : base(Location)
+        { }
+
+        public override ImplCondition Clone() => new ImplConditionNotYet(Location);
+    }
+
     public class AstImplBlock : AstStatement
     {
         public List<AstParameter> Parameters { get; set; }
@@ -281,7 +323,7 @@ namespace Cheez.Ast.Statements
         public AstExpression TraitExpr { get; set; }
         public TraitType Trait { get; set; }
 
-        public List<(AstExpression type, AstExpression trait)> Conditions { get; set; }
+        public List<ImplCondition> Conditions { get; set; }
 
         public List<AstFunctionDecl> Functions { get; }
 
@@ -296,7 +338,7 @@ namespace Cheez.Ast.Statements
             List<AstParameter> parameters,
             AstExpression targetTypeExpr,
             AstExpression traitExpr,
-            List<(AstExpression type, AstExpression trait)> conditions,
+            List<ImplCondition> conditions,
             List<AstFunctionDecl> functions,
             ILocation Location = null) : base(Location: Location)
         {
@@ -314,7 +356,7 @@ namespace Cheez.Ast.Statements
                 Parameters?.Select(p => p.Clone()).ToList(),
                 TargetTypeExpr.Clone(),
                 TraitExpr?.Clone(),
-                Conditions?.Select(c => (c.type.Clone(), c.trait.Clone())).ToList(),
+                Conditions?.Select(c => c.Clone()).ToList(),
                 Functions.Select(f => f.Clone() as AstFunctionDecl).ToList()
                 ));
 
@@ -409,7 +451,6 @@ namespace Cheez.Ast.Statements
         public AstExpression Value { get; set; }
         public AstExpression AssociatedTypeExpr { get; set; }
         public CheezType AssociatedType => AssociatedTypeExpr?.Value as CheezType;
-        public CheezType Type { get; set; }
 
         public AstEnumMember(AstIdExpr name, AstExpression assType, AstExpression value, ILocation Location = null)
         {

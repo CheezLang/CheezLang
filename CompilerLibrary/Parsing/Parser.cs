@@ -876,7 +876,7 @@ namespace Cheez.Parsing
             AstExpression target = null;
             AstExpression trait = null;
             List<AstParameter> parameters = null;
-            List<(AstExpression, AstExpression)> conditions = null;
+            List<ImplCondition> conditions = null;
 
             beg = Consume(TokenType.KwImpl, ErrMsg("keyword 'impl'", "at beginning of impl statement")).location;
             SkipNewlines();
@@ -909,20 +909,29 @@ namespace Cheez.Parsing
                 NextToken();
                 SkipNewlines();
 
-                conditions = new List<(AstExpression, AstExpression)>();
+                conditions = new List<ImplCondition>();
 
                 if (!CheckToken(TokenType.OpenBrace))
                 {
                     while (true)
                     {
-                        var typ = ParseExpression();
-                        SkipNewlines();
-                        ConsumeUntil(TokenType.Colon, ErrMsg("':'", "after type in impl condition"));
-                        SkipNewlines();
-                        var trt = ParseExpression();
-                        SkipNewlines();
+                        var next = PeekToken();
+                        if (next.type == TokenType.HashIdentifier && next.data as string == "notyet")
+                        {
+                            NextToken();
+                            conditions.Add(new ImplConditionNotYet(new Location(next.location)));
+                        }
+                        else
+                        {
+                            var typ = ParseExpression();
+                            SkipNewlines();
+                            ConsumeUntil(TokenType.Colon, ErrMsg("':'", "after type in impl condition"));
+                            SkipNewlines();
+                            var trt = ParseExpression();
+                            SkipNewlines();
 
-                        conditions.Add((typ, trt));
+                            conditions.Add(new ImplConditionImplTrait(typ, trt, new Location(typ.Beginning, trt.End)));
+                        }
 
                         if (CheckToken(TokenType.Comma))
                         {

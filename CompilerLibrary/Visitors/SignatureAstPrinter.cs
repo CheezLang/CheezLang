@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Cheez.Ast.Expressions;
@@ -92,13 +93,20 @@ namespace Cheez.Visitors
             header += " ";
 
             if (impl.TraitExpr != null)
-                header +=  TypeToString(impl.TraitExpr) + " for ";
+                header += TypeToString(impl.TraitExpr) + " for ";
 
             header += TypeToString(impl.TargetTypeExpr);
 
             var conditions = impl.IsPolyInstance ? impl.Template.Conditions : impl.Conditions;
             if (conditions != null)
-                header += " if " + string.Join(", ", conditions.Select(c => $"{TypeToString(c.type)} : {TypeToString(c.trait)}"));
+                header += " if " + string.Join(", ", conditions.Select(c => {
+                    switch (c)
+                    {
+                        case ImplConditionImplTrait t: return $"{TypeToString(t.type)} : {TypeToString(t.trait)}";
+                        case ImplConditionNotYet t: return "#notyet";
+                        default: throw new NotImplementedException();
+                    }
+                }));
 
             return header;
         }

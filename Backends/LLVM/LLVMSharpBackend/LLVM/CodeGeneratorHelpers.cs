@@ -2,6 +2,7 @@
 using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types;
+using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using LLVMSharp;
@@ -418,6 +419,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         return LLVM.StructType(memTypes, false);
                     }
 
+                case SelfType self:
+                    return CheezTypeToLLVMType(self.traitType);
 
                 default:
                     throw new NotImplementedException();
@@ -565,6 +568,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var funcTypes = new List<LLVMTypeRef>();
                 foreach (var func in trait.Functions)
                 {
+                    if (func.GetFlag(StmtFlags.ExcludeFromVtable))
+                        continue;
+
                     if (func.IsGeneric)
                     {
                         throw new NotImplementedException();
@@ -626,6 +632,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         var traitFunc = func.TraitFunction;
                         if (traitFunc == null || func.SelfType != SelfParamType.Reference)
+                            continue;
+                        if (traitFunc.GetFlag(StmtFlags.ExcludeFromVtable))
                             continue;
 
                         var index = vtableIndices[traitFunc];

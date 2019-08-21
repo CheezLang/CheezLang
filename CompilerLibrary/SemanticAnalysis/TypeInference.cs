@@ -2602,6 +2602,18 @@ namespace Cheez
 
         private AstExpression InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            // check if call is from trait to non ref self param function
+            if (func.Declaration?.Trait != null)
+            {
+                if (func.Declaration.SelfType == SelfParamType.Value)
+                    ReportError(expr, $"Can't call trait function with non ref Self param");
+                if (func.Declaration.SelfType == SelfParamType.None)
+                    ReportError(expr, $"Can't call trait function with non ref Self param");
+
+                if (func.Declaration.GetFlag(StmtFlags.ExcludeFromVtable))
+                    ReportError(expr, $"Can't call trait function because it is excluded from the vtable");
+            }
+
             //var par = func.Declaration.Parameters.Select(p => (p.Name?.Name, p.Type, p.DefaultValue)).ToArray();
             var par = func.Parameters;
             if (!CheckAndMatchArgsToParams(expr, par, func.VarArgs))
@@ -2640,15 +2652,6 @@ namespace Cheez
             expr.SetFlag(ExprFlags.IsLValue, func.ReturnType is ReferenceType);
             expr.Type = func.ReturnType;
             expr.Declaration = func.Declaration;
-
-            // check if call is from trait to non ref self param function
-            if (func.Declaration?.Trait != null)
-            {
-                if (func.Declaration.SelfType == SelfParamType.Value)
-                    ReportError(expr, $"Can't call trait function with non ref Self param");
-                if (func.Declaration.SelfType == SelfParamType.None)
-                    ReportError(expr, $"Can't call trait function with non ref Self param");
-            }
 
             return expr;
         }
@@ -3189,73 +3192,6 @@ namespace Cheez
             }
 
             return null;
-        }
-
-        private (List<AstImplBlock> impls, bool maybeApplies) ImplAppliesToType(AstImplBlock impl, CheezType type)
-        {
-            if (impl.IsPolymorphic)
-            {
-                if (!CheezType.TypesMatch(impl.TargetType, type))
-                    return (null, false);
-
-                var poliesList = new List<Dictionary<string, CheezType>>();
-                {
-                    var polies = new Dictionary<string, CheezType>();
-                    CollectPolyTypes(impl.TargetType, type, polies);
-                    poliesList.Add(polies);
-                }
-
-                // @TODO: check conditions
-                if (impl.Conditions != null)
-                {
-                    foreach (var cond in impl.Conditions)
-                    {
-                        var newPoliesList = new List<Dictionary<string, CheezType>>();
-                        foreach (var polies in poliesList)
-                        {
-                            var ty_expr = cond.type.Clone();
-                            var tr_expr = cond.trait.Clone();
-
-                            ty_expr.Scope = new Scope("temp", ty_expr.Scope);
-                            tr_expr.Scope = new Scope("temp", tr_expr.Scope);
-
-                            foreach (var p in polies)
-                            {
-                                ty_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
-                                tr_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
-                            }
-
-                            var ty = InferType(ty_expr, null, forceInfer: true).Value as CheezType;
-                            var tr = InferType(tr_expr, null, forceInfer: true).Value as CheezType;
-
-                            var matches = GetTraitImplForType(ty, tr, polies);
-                            if (matches?.Count != 0)
-                            {
-                                newPoliesList.AddRange(matches);
-                            }
-                        }
-                        poliesList = newPoliesList;
-                    }
-                }
-
-                if (poliesList.Count == 0)
-                    return (null, true);
-
-                var result = poliesList.Select(polies =>
-                {
-                    if (impl.Parameters.Count != polies.Count)
-                    {
-                        // @TODO: provide location
-                        ReportError("failed to infer all impl parameters");
-                    }
-                    return InstantiatePolyImplNew(impl, polies);
-                }).ToList();
-                return (result, false);
-            }
-            else
-            {
-                return CheezType.TypesMatch(impl.TargetType, type) ? (new List<AstImplBlock> { impl }, false) : (null, false);
-            }
         }
 
         private AstExpression GetImplFunctions(AstDotExpr expr, CheezType type, string functionName, TypeInferenceContext context)

@@ -5,6 +5,7 @@ using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using Cheez.Visitors;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -15,6 +16,44 @@ namespace Cheez
     /// </summary>
     public partial class Workspace
     {        
+
+        private bool SizeOfTypeDependsOnSelfType(CheezType type)
+        {
+            switch (type)
+            {
+                case SelfType _:
+                    return true;
+
+                case StructType str:
+                    return str.Declaration.Members.Any(m => SizeOfTypeDependsOnSelfType(m.Type));
+
+                case TupleType t:
+                    return t.Members.Any(m => SizeOfTypeDependsOnSelfType(m.type));
+
+                case EnumType en:
+                    return en.Declaration.Members.Any(m => m.AssociatedType != null ? SizeOfTypeDependsOnSelfType(m.AssociatedType) : false);
+
+                case ArrayType t:
+                    return SizeOfTypeDependsOnSelfType(t.TargetType);
+
+                case ReferenceType _:
+                case PointerType _:
+                case SliceType _:
+                case FunctionType _:
+                case TraitType _:
+                case VoidType _:
+                case PolyType _:
+                case IntType _:
+                case FloatType _:
+                case BoolType _:
+                case CharType _:
+                    return false;
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
         private void Pass3Trait(AstTraitDeclaration trait)
         {
             if (trait.GetFlag(StmtFlags.MembersComputed))
@@ -24,7 +63,7 @@ namespace Cheez
             {
                 trait.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
             }
-            trait.SubScope.DefineTypeSymbol("Self", trait.Type);
+            trait.SubScope.DefineTypeSymbol("Self", new SelfType(trait.Type));
 
             foreach (var f in trait.Functions)
             {
@@ -36,12 +75,18 @@ namespace Cheez
                 Pass4ResolveFunctionSignature(f);
                 CheckForSelfParam(f);
 
-                // this is allowed now
-                // @todo: make sure it compiles
-                //if (!f.SelfParameter && f.SelfType == SelfParamType.Value)
-                //{
-                //    ReportError(f.Name, $"Trait functions must take a self parameter by reference");
-                //}
+                foreach (var p in f.Parameters)
+                {
+                    if (SizeOfTypeDependsOnSelfType(p.Type))
+                    {
+                        f.SetFlag(StmtFlags.ExcludeFromVtable);
+                    }
+                }
+
+                if (SizeOfTypeDependsOnSelfType(f.ReturnType))
+                {
+                    f.SetFlag(StmtFlags.ExcludeFromVtable);
+                }
 
                 // TODO: for now don't allow default implemenation
                 if (f.Body != null)
@@ -120,12 +165,11 @@ namespace Cheez
             if (impl.Conditions != null)
             {
                 if (impl.Parameters == null)
-                    ReportError(new Location(impl.Conditions.First().type.Beginning, impl.Conditions.Last().trait.End), $"An impl block can't have a condition without parameters");
+                    ReportError(new Location(impl.Conditions.First().Location.Beginning, impl.Conditions.Last().Location.End), $"An impl block can't have a condition without parameters");
 
                 foreach (var cond in impl.Conditions)
                 {
-                    cond.type.Scope = impl.SubScope;
-                    cond.trait.Scope = impl.SubScope;
+                    cond.Scope = impl.SubScope;
                 }
             }
 
@@ -200,14 +244,23 @@ namespace Cheez
                         var fp = func.Parameters[i];
                         var tp = traitFunc.Parameters[i];
 
-                        if (!CheezType.TypesMatch(fp.Type, tp.Type))
+                        if (tp.Type is SelfType)
                         {
-                            ReportError(fp.TypeExpr, $"Type of parameter must match the type of the trait functions parameter", ("Trait function parameter type defined here:", tp.TypeExpr));
+                            if (fp.Type != impl.TargetType)
+                                ReportError(fp.TypeExpr, $"Type of parameter '{fp.Type}' must be the implemented type '{impl.TargetType}'", ("Trait function parameter type defined here:", tp.TypeExpr));
+                        }
+                        else if (!CheezType.TypesMatch(fp.Type, tp.Type))
+                        {
+                            ReportError(fp.TypeExpr, $"Type of parameter '{fp.Type}' must match the type of the trait functions parameter '{tp.Type}'", ("Trait function parameter type defined here:", tp.TypeExpr));
                         }
                     }
 
                     // check return type
-                    if (!CheezType.TypesMatch(func.ReturnType, traitFunc.ReturnType))
+                    if (traitFunc.ReturnType is SelfType)
+                    {
+                        if (func.ReturnType != impl.TargetType)
+                            ReportError(func.ReturnTypeExpr?.Location ?? func.Name.Location, $"Return type '{func.ReturnType}' must be the implemented type '{impl.TargetType}'", ("Trait function parameter type defined here:", traitFunc.ReturnTypeExpr?.Location ?? traitFunc.Name.Location));
+                    } else if (!CheezType.TypesMatch(func.ReturnType, traitFunc.ReturnType))
                     {
                         ReportError(func.ReturnTypeExpr?.Location ?? func.Name.Location, $"Return type must match the trait functions return type", ("Trait function parameter type defined here:", traitFunc.ReturnTypeExpr?.Location ?? traitFunc.Name.Location));
                     }
@@ -286,12 +339,11 @@ namespace Cheez
                 if (impl.Conditions != null)
                 {
                     if (impl.Parameters == null)
-                        ReportError(new Location(impl.Conditions.First().type.Beginning, impl.Conditions.Last().trait.End), $"An impl block can't have a condition without parameters");
+                        ReportError(new Location(impl.Conditions.First().Location.Beginning, impl.Conditions.Last().Location.End), $"An impl block can't have a condition without parameters");
 
                     foreach (var cond in impl.Conditions)
                     {
-                        cond.type.Scope = impl.SubScope;
-                        cond.trait.Scope = impl.SubScope;
+                        cond.Scope = impl.SubScope;
                     }
                 }
 

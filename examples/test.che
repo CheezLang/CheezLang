@@ -2,15 +2,40 @@
 // #load("examples/trait_function_call_performance")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
-// // #load("examples/pathtracer")
-// // #load("tests/library/stack_allocator")
+// #load("examples/pathtracer")
+// #load("tests/library/stack_allocator")
+// #load("tests/language/match2")
 
 #load("std:io/io")
+
+impl Into(float) for int {
+    fn into(ref Self) -> float {
+        return float(self)
+    }
+}
+
+// impl From(int) for float {
+//     fn from(value: int) -> float {
+//         return float(value)
+//     }
+// }
+
+fn test2() #main {
+    let a: int   = 5
+    let b: float = float::from(a)
+    let c: float = a::into()
+
+    println(a)
+    println(b)
+    println(c)
+}
 
 trait Test {
     fn foo(ref Self);
     fn bar(Self);
     fn baz();
+    fn test1(ref Self, other: Self);
+    fn test2(ref Self) -> Self;
 }
 
 struct Str {
@@ -29,9 +54,12 @@ impl Test for Str {
     fn baz() {
         println("baz()")
     }
+
+    fn test1(ref Self, other: Self) {}
+    fn test2(ref Self) -> Self {return new {}}
 }
 
-fn test() #main {
+fn test() {
     let str = new Str{5}
     let test: Test = str
 
@@ -50,6 +78,8 @@ fn test() #main {
     test.foo()
     // test.bar()
     // test.baz()
+    // test.test1()
+    // test.test2()
 }
 
 // // struct Types {
