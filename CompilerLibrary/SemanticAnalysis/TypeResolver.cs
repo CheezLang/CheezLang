@@ -825,7 +825,8 @@ namespace Cheez
                     {
                         if (s.Declaration.Template != null)
                             throw new Exception("must be null");
-                        var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
+                        var args = s.Arguments.Select(a => (CheezType.Type, (object)InstantiatePolyType(a, concreteTypes, location))).ToList();
+                        //var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
                         var instance = InstantiatePolyStruct(s.Declaration, args, location: location);
                         return instance.Type;
                     }

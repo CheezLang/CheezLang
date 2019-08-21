@@ -1474,12 +1474,20 @@ namespace Cheez
                         expr.Arguments[0] = InferTypeHelper(expr.Arguments[0], CheezType.Type, context);
                         expr.Arguments[1] = InferTypeHelper(expr.Arguments[1], IntType.DefaultType, context);
 
+                        if (expr.Arguments[0].Value is PolyType || expr.Arguments[1].Value is PolyType)
+                        {
+                            expr.Type = CheezType.Type;
+                            expr.Value = new PolyType($"tuple_type_member({expr.Arguments[0].Value}, {expr.Arguments[1].Value})");
+                            return expr;
+                        }
+
                         if (expr.Arguments[0].Type != CheezType.Type || !(expr.Arguments[0].Value is TupleType))
                         {
                             if (expr.Arguments[0].Value is PolyType)
                             {
                                 expr.Type = CheezType.Type;
-                                expr.Value = expr.Arguments[0].Type;
+                                expr.Value = new PolyType($"tuple_type_member({expr.Arguments[0].Value}, {expr.Arguments[1].Value})");
+                                //expr.Value = expr.Arguments[0].Type;
                                 return expr;
                             }
                             ReportError(expr.Arguments[0], $"This argument must be a tuple type, got {expr.Arguments[0].Type} '{expr.Arguments[0].Value}'");

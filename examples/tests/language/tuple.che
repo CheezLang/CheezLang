@@ -5,13 +5,19 @@
 
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
-fn get_tuple() -> (one: bool, two: i32) {
+fn get_tuple() -> (one: bool, two: int) {
     one = true
     two = 6
 }
 
 fn get_tuple_value(tuple: $T, $Index: int) -> @tuple_type_member(T, Index) {
     return tuple[Index]
+}
+
+impl(T: type) T {
+    fn get_tuple_value(ref Self, $Index: int) -> @tuple_type_member(Self, Index) {
+        return self[Index]
+    }
 }
 
 fn Main() {
@@ -25,6 +31,7 @@ fn Main() {
     c_printf("%d, %d`n", c.one, c.two)
 
     let d = get_tuple_value(b, 0)
-    let e = get_tuple_value(c, 1)
+    let e = c::get_tuple_value(1)
+    let f = (bool, int)::get_tuple_value(c, 1)
     c_printf("%d, %d`n", d, e)
 }
