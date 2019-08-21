@@ -2,56 +2,55 @@
 // #load("examples/trait_function_call_performance")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
-// #load("examples/pathtracer")
-// #load("tests/library/stack_allocator")
+// // #load("examples/pathtracer")
+// // #load("tests/library/stack_allocator")
 
-// #load("std:io/io")
-// // #load("std:hash_table")
+#load("std:io/io")
 
-// trait Test {
-//     fn foo(ref Self);
-//     fn bar(Self);
-//     fn baz();
-// }
+trait Test {
+    fn foo(ref Self);
+    fn bar(Self);
+    fn baz();
+}
 
-// struct Str {
-//     pub a: int
-// }
+struct Str {
+    pub a: int
+}
 
-// impl Test for Str {
-//     fn foo(ref Self) {
-//         println("foo(ref Self)")
-//     }
+impl Test for Str {
+    fn foo(ref Self) {
+        println("foo(ref Self)")
+    }
 
-//     fn bar(Self) {
-//         println("bar(Self)")
-//     }
+    fn bar(Self) {
+        println("bar(Self)")
+    }
 
-//     fn baz() {
-//         println("baz()")
-//     }
-// }
+    fn baz() {
+        println("baz()")
+    }
+}
 
-// fn test() #main {
-//     let str = new Str{5}
-//     let test: Test = str
+fn test() #main {
+    let str = new Str{5}
+    let test: Test = str
 
-//     str.foo()
-//     str.bar()
-//     // str.baz()
+    str.foo()
+    str.bar()
+    // str.baz()
 
-//     println("")
+    println("")
 
-//     Str::foo(str)
-//     Str::bar(str)
-//     Str::baz()
+    Str::foo(str)
+    Str::bar(str)
+    Str::baz()
 
-//     println("")
+    println("")
 
-//     test.foo()
-//     // test.bar()
-//     // test.baz()
-// }
+    test.foo()
+    // test.bar()
+    // test.baz()
+}
 
 // // struct Types {
 // // }
