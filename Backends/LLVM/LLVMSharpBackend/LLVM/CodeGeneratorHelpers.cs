@@ -566,6 +566,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             foreach (var trait in workspace.Traits)
             {
                 var funcTypes = new List<LLVMTypeRef>();
+                foreach (var v in trait.Variables)
+                {
+                    vtableIndices[v] = funcTypes.Count;
+                    funcTypes.Add(LLVM.Int64Type());
+                }
                 foreach (var func in trait.Functions)
                 {
                     if (func.GetFlag(StmtFlags.ExcludeFromVtable))
@@ -626,6 +631,18 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         var funcType = vfuncTypes[i];
                         functions[i] = LLVM.ConstNull(funcType);
+                    }
+
+                    if (impl.TargetType is StructType str && impl.Trait.Declaration.Variables.Count > 0)
+                    {
+                        var strType = CheezTypeToLLVMType(str);
+                        foreach (var v in impl.Trait.Declaration.Variables)
+                        {
+                            var mem = str.Declaration.Members.First(m => m.Name.Name == v.Name.Name);
+                            var offset = LLVM.OffsetOfElement(targetData, strType, (uint)mem.Index);
+                            var index = vtableIndices[v];
+                            functions[index] = LLVM.ConstInt(LLVM.Int64Type(), offset, false);
+                        }
                     }
 
                     foreach (var func in impl.Functions)

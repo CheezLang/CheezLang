@@ -146,7 +146,7 @@ namespace Cheez.Visitors
 
         public string VisitStructMember(AstStructMember m)
         {
-            var v = $"{m.Name.Accept(this)} : {m.Type}";
+            var v = $"{m.Name.Accept(this)}: {m.Type}";
             if (m.IsReadOnly)
                 v = "const " + v;
             if (m.IsPublic)
@@ -158,7 +158,7 @@ namespace Cheez.Visitors
 
         public string VisitStructMemberRaw(AstStructMember m)
         {
-            var v = $"{m.Name.Accept(this)} : {m.TypeExpr.Accept(this)}";
+            var v = $"{m.Name.Accept(this)}: {m.TypeExpr.Accept(this)}";
             if (m.Initializer != null)
                 v += $" = {m.Initializer.Accept(this)}";
             return v;
@@ -214,10 +214,11 @@ namespace Cheez.Visitors
                 sb.Append(string.Join(", ", trait.Parameters.Select(p => p.Accept(this))));
                 sb.AppendLine(") {");
 
+                foreach (var f in trait.Variables)
+                    sb.AppendLine(VisitStructMember(f).Indent(4));
+
                 foreach (var f in trait.Functions)
-                {
                     sb.AppendLine(f.Accept(this).Indent(4));
-                }
 
                 sb.Append("}");
 
@@ -241,10 +242,11 @@ namespace Cheez.Visitors
                 var sb = new StringBuilder();
                 sb.AppendLine($"trait {trait.Name.Accept(this)} {{");
 
+                foreach (var f in trait.Variables)
+                    sb.AppendLine(VisitStructMember(f).Indent(4));
+
                 foreach (var f in trait.Functions)
-                {
                     sb.AppendLine(f.Accept(this).Indent(4));
-                }
 
                 sb.Append("}");
 

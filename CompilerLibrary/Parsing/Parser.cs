@@ -429,6 +429,7 @@ namespace Cheez.Parsing
             TokenLocation beg = null, end = null;
             AstIdExpr name = null;
             var functions = new List<AstFunctionDecl>();
+            var variables = new List<AstStructMember>();
             var parameters = new List<AstParameter>();
 
             beg = Consume(TokenType.KwTrait, ErrMsg("keyword 'trait'", "at beginning of trait declaration")).location;
@@ -452,13 +453,23 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
                     break;
 
-                functions.Add(ParseFunctionDeclaration());
+                if (next.type == TokenType.KwFn)
+                    functions.Add(ParseFunctionDeclaration());
+                else if (next.type == TokenType.Identifier)
+                {
+                    var vname = ParseIdentifierExpr(ErrMsg("identifier"));
+                    SkipNewlines();
+                    Consume(TokenType.Colon, ErrMsg("':'"));
+                    SkipNewlines();
+                    var vtype = ParseExpression();
+                    variables.Add(new AstStructMember(vname, vtype, null, new Location(vname.Beginning, vtype.End)));
+                }
                 SkipNewlines();
             }
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of trait")).location;
 
-            return new AstTraitDeclaration(name, parameters, functions, new Location(beg, end));
+            return new AstTraitDeclaration(name, parameters, functions, variables, new Location(beg, end));
         }
 
         private AstExpression ParseMatchExpr()

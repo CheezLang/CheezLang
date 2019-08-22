@@ -125,10 +125,11 @@ namespace Cheez.Visitors
             var sb = new StringBuilder();
             sb.AppendLine($"trait {trait.Name.Accept(this)} {{");
 
+            foreach (var f in trait.Variables)
+                sb.AppendLine(VisitStructMember(f).Indent(4));
+
             foreach (var f in trait.Functions)
-            {
                 sb.AppendLine(f.Accept(this).Indent(4));
-            }
 
             sb.Append("}");
 

@@ -1290,6 +1290,38 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                         return result;
                     }
+
+                case TraitType trait:
+                    {
+                        var decl = trait.Declaration;
+                        var member = trait.Declaration.Variables.First(v => v.Name.Name == expr.Right.Name);
+
+                        var vtablePtr = builder.CreateStructGEP(value, 0, "");
+                        vtablePtr = builder.CreateLoad(vtablePtr, "");
+                        var toPointer = builder.CreateStructGEP(value, 1, "");
+                        toPointer = builder.CreateLoad(toPointer, "");
+
+                        // check if pointer is null
+                        if (checkForNullTraitObjects)
+                        {
+                            CheckPointerNull(vtablePtr, expr.Left, "vtable pointer of trait object is null");
+                            CheckPointerNull(toPointer, expr.Right, "object pointer of trait object is null");
+                        }
+
+                        // load function pointer
+                        var vtableType = vtableTypes[trait];
+                        vtablePtr = builder.CreatePointerCast(vtablePtr, vtableType.GetPointerTo(), "");
+
+                        var memberOffsetIndex = vtableIndices[member];
+                        var memberOffsetPointer = builder.CreateStructGEP(vtablePtr, (uint)memberOffsetIndex, "");
+                        var memberOffset = builder.CreateLoad(memberOffsetPointer, "");
+
+                        toPointer = builder.CreateCast(LLVMOpcode.LLVMPtrToInt, toPointer, LLVM.Int64Type(), "");
+                        var result = builder.CreateAdd(toPointer, memberOffset, "");
+                        result = builder.CreateCast(LLVMOpcode.LLVMIntToPtr, result, CheezTypeToLLVMType(member.Type).GetPointerTo(), "");
+                        if (deref) result = builder.CreateLoad(result, "");
+                        return result;
+                    }
             }
             throw new NotImplementedException();
         }

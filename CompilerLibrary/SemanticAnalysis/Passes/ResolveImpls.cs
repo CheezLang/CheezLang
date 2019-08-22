@@ -65,6 +65,23 @@ namespace Cheez
             }
             trait.SubScope.DefineTypeSymbol("Self", new SelfType(trait.Type));
 
+            int index = 0;
+            foreach (var v in trait.Variables)
+            {
+                v.TypeExpr.Scope = trait.SubScope;
+                v.TypeExpr = ResolveTypeNow(v.TypeExpr, out var type);
+                v.Type = type;
+                v.Index = index++;
+
+                var res = trait.SubScope.DefineSymbol(v);
+                if (!res.ok)
+                {
+                    (string, ILocation)? detail = null;
+                    if (res.other != null) detail = ("Other declaration here:", res.other);
+                    ReportError(v.Name, $"A symbol with name '{v.Name.Name}' already exists in current scope", detail);
+                }
+            }
+
             foreach (var f in trait.Functions)
             {
                 f.Trait = trait;
@@ -206,6 +223,45 @@ namespace Cheez
                     ReportError(f.Name, $"Function must have an implementation");
                 }
             }
+
+
+
+            // check if type has required members
+            if (impl.Trait.Declaration.Variables.Count > 0) do
+            {
+                if (!(impl.TargetType is StructType str))
+                {
+                    ReportError(impl.TargetTypeExpr, $"Can't implement trait '{impl.Trait}' for non struct type '{impl.TargetType}' because the trait requires members",
+                        ("Trait defined here:", impl.Trait.Declaration.Name.Location));
+                    break;
+                }
+
+                var strDecl = str.Declaration;
+
+                foreach (var v in impl.Trait.Declaration.Variables)
+                {
+                    var member = strDecl.Members.FirstOrDefault(m => m.Name.Name == v.Name.Name);
+                    if (member == null)
+                    {
+                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because it misses member '{v.Name.Name}: {v.Type}'",
+                            ("Trait member defined here:", v.Location));
+                        continue;
+                    }
+                    if (!member.IsPublic || member.IsReadOnly)
+                    {
+                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because member '{member.Name.Name}: {member.Type}' is not public",
+                            ("Struct member defined here:", member.Location));
+                        continue;
+                    }
+                    if (member.Type != v.Type)
+                    {
+                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because '{member.Name.Name}' has a different type than the trait member",
+                            ("Struct member defined here:", member.TypeExpr.Location),
+                            ("Trait member defined here:", v.TypeExpr.Location));
+                        continue;
+                    }
+                }
+            } while (false);
 
             // match functions against trait functions
             foreach (var traitFunc in impl.Trait.Declaration.Functions)

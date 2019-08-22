@@ -153,7 +153,7 @@ namespace Cheez.Ast.Statements
 
     #region Struct Declaration
 
-    public class AstStructMember : ILocation
+    public class AstStructMember : ISymbol
     {
         internal bool IsPublic;
         internal bool IsReadOnly;
@@ -232,6 +232,7 @@ namespace Cheez.Ast.Statements
         public List<AstParameter> Parameters { get; set; }
 
         public List<AstFunctionDecl> Functions { get; }
+        public List<AstStructMember> Variables { get; }
 
         public Dictionary<CheezType, AstImplBlock> Implementations { get; } = new Dictionary<CheezType, AstImplBlock>();
 
@@ -245,16 +246,27 @@ namespace Cheez.Ast.Statements
 
         public Scope SubScope { get; set; }
 
-        public AstTraitDeclaration(AstIdExpr name, List<AstParameter> parameters, List<AstFunctionDecl> functions, ILocation Location = null)
+        public AstTraitDeclaration(
+            AstIdExpr name,
+            List<AstParameter> parameters,
+            List<AstFunctionDecl> functions,
+            List<AstStructMember> variables,
+            ILocation Location = null)
             : base(name, Location: Location)
         {
             this.Parameters = parameters;
             this.Functions = functions;
+            this.Variables = variables;
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTraitDecl(this, data);
 
-        public override AstStatement Clone() => CopyValuesTo(new AstTraitDeclaration(Name.Clone() as AstIdExpr, Parameters.Select(p => p.Clone()).ToList(), Functions.Select(f => f.Clone() as AstFunctionDecl).ToList()));
+        public override AstStatement Clone() => CopyValuesTo(
+            new AstTraitDeclaration(
+                Name.Clone() as AstIdExpr,
+                Parameters.Select(p => p.Clone()).ToList(),
+                Functions.Select(f => f.Clone() as AstFunctionDecl).ToList(),
+                Variables.Select(v => v.Clone()).ToList()));
 
         public AstImplBlock FindMatchingImplementation(CheezType from)
         {

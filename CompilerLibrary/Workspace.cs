@@ -181,6 +181,20 @@ namespace Cheez
         }
 
         [SkipInStackFrame]
+        public void ReportError(string errorMessage, params (string, ILocation)[] details)
+        {
+            var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
+            mCompiler.ErrorHandler.ReportError(new Error
+            {
+                Message = errorMessage,
+                Details = details,
+                File = callingFunctionFile,
+                Function = callingFunctionName,
+                LineNumber = callLineNumber,
+            });
+        }
+
+        [SkipInStackFrame]
         public void ReportError(string errorMessage, (string, ILocation) details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
@@ -199,6 +213,21 @@ namespace Cheez
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
             var details = detail != null ? new List<(string, ILocation)> { detail.Value } : null;
+            mCompiler.ErrorHandler.ReportError(new Error
+            {
+                Location = lc,
+                Message = message,
+                Details = details,
+                File = callingFunctionFile,
+                Function = callingFunctionName,
+                LineNumber = callLineNumber,
+            });
+        }
+
+        [SkipInStackFrame]
+        public void ReportError(ILocation lc, string message, params (string, ILocation)[] details)
+        {
+            var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
             mCompiler.ErrorHandler.ReportError(new Error
             {
                 Location = lc,

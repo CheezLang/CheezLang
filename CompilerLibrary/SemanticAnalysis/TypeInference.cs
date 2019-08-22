@@ -2055,8 +2055,16 @@ namespace Cheez
 
                         if (func == null)
                         {
-                            ReportError(expr.Right, $"Trait '{t.Declaration.Name}' has no function '{name}'");
-                            break;
+                            var mem = t.Declaration.Variables.FirstOrDefault(v => v.Name.Name == name);
+
+                            if (mem == null)
+                            {
+                                ReportError(expr.Right, $"Trait '{t.Declaration.Name}' has no function or member '{name}'");
+                                break;
+                            }
+
+                            expr.Type = mem.Type;
+                            return expr;
                         }
 
                         var ufc = new AstUfcFuncExpr(expr.Left, func);
