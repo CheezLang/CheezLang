@@ -9,94 +9,78 @@
 #load("std:io/io")
 #load("std:array")
 
-impl Into(float) for int {
-    fn into(ref Self) -> float {
-        return float(self)
+enum Type {
+    None
+    Bool
+}
+
+typedef Id = string
+
+trait Expr {
+    typ: Type
+    parent: Expr
+    fn debugprint(ref Self);
+}
+
+struct IdExpr {
+    pub id : Id
+    pub typ: Type
+    pub parent: Expr
+}
+
+struct AddExpr {
+    pub left: Expr
+    pub parent: Expr
+    pub right: Expr
+    pub typ: Type
+}
+
+impl Expr for IdExpr {
+    fn debugprint(ref Self) {
+        print(id)
     }
 }
 
-impl From(int) for float {
-    fn from(value: int) -> float {
-        return float(value)
+impl Expr for AddExpr {
+    fn debugprint(ref Self) {
+        print("(")
+        left.debugprint()
+        print(" + ")
+        right.debugprint()
+        print(")")
     }
 }
 
-fn test2() {
-    let a: int   = 5
-    let b: float = float::from(a)
-    let c: float = a::into()
+fn test() #main {
+    let a = new IdExpr{typ=Type.Bool, id="a"}
+    let b = new IdExpr{typ=Type.Bool, id="b"}
+    let c = new AddExpr{typ=Type.Bool, left=a, right=b}
+    a.parent = c
+    b.parent = c
 
-    println(a)
-    println(b)
-    println(c)
-}
 
-fn test3() #main {
-    let a = Array(int)::create()
+    let e: Expr = c
 
-    a.add(1)
-    a.add(3)
-    a.add(5)
-    a.add(8)
-
-    let b = Array(float)::from(a)
-    let c: Array(float) = a.into()
-
-    printfln("{} {} {} {}", [a[0], a[1], a[2], a[3]])
-    printfln("{} {} {} {}", [b[0], b[1], b[2], b[3]])
-    printfln("{} {} {} {}", [c[0], c[1], c[2], c[3]])
-}
-
-trait Test {
-    fn foo(ref Self);
-    fn bar(Self);
-    fn baz();
-    fn test1(ref Self, other: Self);
-    fn test2(ref Self) -> Self;
-}
-
-struct Str {
-    pub a: int
-}
-
-impl Test for Str {
-    fn foo(ref Self) {
-        println("foo(ref Self)")
-    }
-
-    fn bar(Self) {
-        println("bar(Self)")
-    }
-
-    fn baz() {
-        println("baz()")
-    }
-
-    fn test1(ref Self, other: Self) {}
-    fn test2(ref Self) -> Self {return new {}}
-}
-
-fn test() {
-    let str = new Str{5}
-    let test: Test = str
-
-    str.foo()
-    str.bar()
-    // str.baz()
-
+    a.debugprint()
+    println("")
+    b.debugprint()
+    println("")
+    c.debugprint()
     println("")
 
-    Str::foo(str)
-    Str::bar(str)
-    Str::baz()
-
+    println(int(a.typ))
+    println(a.id)
     println("")
 
-    test.foo()
-    // test.bar()
-    // test.baz()
-    // test.test1()
-    // test.test2()
+    println(int(b.typ))
+    println(b.id)
+    println("")
+
+    e.debugprint()
+    println("")
+
+    println(int(e.typ))
+    println("")
 }
 
 // // struct Types {
