@@ -18,7 +18,10 @@ namespace Cheez.Ast.Expressions
         IsLValue = 0,
         Returns = 1,
         AssignmentTarget = 2,
-        SetAccess = 3
+        SetAccess = 3,
+        Anonymous = 4,
+        Link = 5,
+        FromMacroExpansion = 6
     }
 
     public abstract class AstExpression : IVisitorAcceptor, ILocation, IAstNode
@@ -236,23 +239,30 @@ namespace Cheez.Ast.Expressions
         public AstNestedExpression IfCase { get; set; }
         public AstNestedExpression ElseCase { get; set; }
         public AstVariableDecl PreAction { get; set; }
+        public bool IsConstIf { get; set; }
 
         public override bool IsPolymorphic => false;
 
-        public AstIfExpr(AstExpression cond, AstNestedExpression ifCase, AstNestedExpression elseCase = null, AstVariableDecl pre = null, ILocation Location = null)
+        public AstIfExpr(AstExpression cond, AstNestedExpression ifCase, AstNestedExpression elseCase = null, AstVariableDecl pre = null, bool isConstIf = false, ILocation Location = null)
             : base(Location: Location)
         {
             this.Condition = cond;
             this.IfCase = ifCase;
             this.ElseCase = elseCase;
             this.PreAction = pre;
+            this.IsConstIf = isConstIf;
         }
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitIfExpr(this, data);
 
         public override AstExpression Clone()
-            => CopyValuesTo(new AstIfExpr(Condition.Clone(), IfCase.Clone() as AstNestedExpression, ElseCase?.Clone() as AstNestedExpression, PreAction?.Clone() as AstVariableDecl));
+            => CopyValuesTo(new AstIfExpr(
+                Condition.Clone(),
+                IfCase.Clone() as AstNestedExpression,
+                ElseCase?.Clone() as AstNestedExpression,
+                PreAction?.Clone() as AstVariableDecl,
+                IsConstIf));
     }
 
     public class AstBlockExpr : AstNestedExpression
@@ -430,12 +440,12 @@ namespace Cheez.Ast.Expressions
     public class AstCompCallExpr : AstExpression
     {
         public AstIdExpr Name { get; set; }
-        public List<AstExpression> Arguments { get; set; }
+        public List<AstArgument> Arguments { get; set; }
 
         public override bool IsPolymorphic => false;
 
         [DebuggerStepThrough]
-        public AstCompCallExpr(AstIdExpr func, List<AstExpression> args, ILocation Location = null) : base(Location)
+        public AstCompCallExpr(AstIdExpr func, List<AstArgument> args, ILocation Location = null) : base(Location)
         {
             Name = func;
             Arguments = args;
@@ -446,7 +456,7 @@ namespace Cheez.Ast.Expressions
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstCompCallExpr(Name.Clone() as AstIdExpr, Arguments.Select(a => a.Clone()).ToList()));
+            => CopyValuesTo(new AstCompCallExpr(Name.Clone() as AstIdExpr, Arguments.Select(a => a.Clone() as AstArgument).ToList()));
     }
 
     public class AstNaryOpExpr : AstExpression

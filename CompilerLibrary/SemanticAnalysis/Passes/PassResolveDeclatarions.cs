@@ -505,8 +505,8 @@ namespace Cheez
 
                 case AstFunctionDecl func:
                     {
-                        func.ConstScope = new Scope("$", func.Scope);
-                        func.SubScope = new Scope("fn", func.ConstScope);
+                        func.ConstScope = new Scope($"fn$ {func.Name.Name}", func.Scope);
+                        func.SubScope = new Scope($"fn {func.Name.Name}", func.ConstScope);
                         ResolveFunctionSignature(func, newPolyDecls);
                         break;
                     }

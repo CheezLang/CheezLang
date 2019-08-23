@@ -972,6 +972,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             for (int i = 0; i < end; i++)
             {
                 GenerateStatement(block.Statements[i]);
+
+                // check if the current statement returs and there are more statements after that
+                if (block.Statements[i].GetFlag(StmtFlags.Returns) && i < block.Statements.Count - 1)
+                {
+                    // create new basic block
+                    var bbNext = LLVM.AppendBasicBlock(currentLLVMFunction, "_unreachable");
+                    builder.PositionBuilderAtEnd(bbNext);
+                }
             }
 
             if (block.Statements.LastOrDefault() is AstExprStmt expr)

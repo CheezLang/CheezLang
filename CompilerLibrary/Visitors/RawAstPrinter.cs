@@ -198,6 +198,36 @@ namespace Cheez.Visitors
             return sb.ToString().Indent(indentLevel);
         }
 
+        public override string VisitForStmt(AstForStmt stmt, int data = 0)
+        {
+            var result = "";
+            result += "for";
+
+            if (stmt.Arguments != null)
+            {
+                result += "(";
+                result += string.Join(", ", stmt.Arguments.Select(a => a.Accept(this)));
+                result += ")";
+            }
+
+            result += " ";
+
+            if (stmt.VarName != null)
+            {
+                result += stmt.VarName.Accept(this);
+                if (stmt.IndexName != null)
+                    result += $", {stmt.IndexName.Accept(this)} ";
+                else result += " ";
+            }
+
+            result += ": ";
+            result += stmt.Collection.Accept(this);
+            result += " ";
+            result += stmt.Body.Accept(this);
+
+            return result;
+        }
+
         public override string VisitWhileStmt(AstWhileStmt wh, int indentLevel = 0)
         {
             var sb = new StringBuilder();

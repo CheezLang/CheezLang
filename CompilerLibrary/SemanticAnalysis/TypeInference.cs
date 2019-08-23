@@ -103,6 +103,15 @@ namespace Cheez
 
         private AstExpression InferTypeHelper(AstExpression expr, CheezType expected, TypeInferenceContext context)
         {
+            if (expected == CheezType.Code)
+            {
+                expr.Scope = new Scope($"code", expr.Scope);
+                expr.Type = CheezType.Code;
+                expr.Value = expr;
+                return expr;
+            }
+
+
             if (!(context?.forceInfer ?? false) && expr.TypeInferred)
                 return expr;
             expr.TypeInferred = true;
@@ -222,9 +231,18 @@ namespace Cheez
                 case AstMacroExpr m:
                     return InferTypeMacro(m, expected, context);
 
+                case AstFunctionRef f:
+                    return InferTypeFunctionRef(f, expected, context);
+
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private AstExpression InferTypeFunctionRef(AstFunctionRef f, CheezType expected, TypeInferenceContext context)
+        {
+            f.Type = f.Declaration.Type;
+            return f;
         }
 
         private AstExpression InferTypeImplTraitTypeExpr(AstImplTraitTypeExpr implTrait, TypeInferenceContext context)
@@ -1129,11 +1147,16 @@ namespace Cheez
 
         private AstExpression InferTypeIfExpr(AstIfExpr expr, CheezType expected, TypeInferenceContext context)
         {
-            expr.SubScope = new Scope("if", expr.Scope);
+            if (expr.IsConstIf)
+                expr.SubScope = expr.Scope;
+            else
+            {
+                expr.SubScope = new Scope("if", expr.Scope);
 
-            // copy initialized symbols
-            foreach (var symbol in expr.Scope.InitializedSymbols)
-                expr.SubScope.SetInitialized(symbol);
+                // copy initialized symbols
+                foreach (var symbol in expr.Scope.InitializedSymbols)
+                    expr.SubScope.SetInitialized(symbol);
+            }
 
             if (expr.PreAction != null)
             {
@@ -1151,6 +1174,36 @@ namespace Cheez
                 expr.Condition = Deref(expr.Condition, context);
 
             expr.Condition = CheckType(expr.Condition, CheezType.Bool, $"Condition of if statement must be either a bool or a pointer but is {expr.Condition.Type}");
+
+            if (expr.IsConstIf)
+            {
+                if (expr.Condition.Value == null)
+                {
+                    ReportError(expr.Condition, $"Condition must be a compile time constant");
+                    return expr;
+                }
+
+                var cond = (bool)expr.Condition.Value;
+                if (cond)
+                {
+                    expr.IfCase.Replace(expr);
+                    expr.IfCase.SetFlag(ExprFlags.Anonymous, true);
+                    return InferTypeHelper(expr.IfCase, expected, context);
+                }
+                else if (expr.ElseCase != null)
+                {
+                    expr.ElseCase.Replace(expr);
+                    expr.ElseCase.SetFlag(ExprFlags.Anonymous, true);
+                    return InferTypeHelper(expr.ElseCase, expected, context);
+                }
+                else
+                {
+                    var emptyBlock = new AstBlockExpr(
+                            new List<AstStatement>(), expr.Condition.Location);
+                    emptyBlock.Replace(expr);
+                    return InferTypeHelper(emptyBlock, expected, context);
+                }
+            }
 
             expr.IfCase.Scope = expr.SubScope;
             expr.IfCase.Parent = expr;
@@ -1261,20 +1314,67 @@ namespace Cheez
             {
                 var arg = expr.Arguments[index];
                 arg.AttachTo(expr);
-                arg = InferTypeHelper(arg, e, context);
+                arg.Expr.AttachTo(arg);
+                arg.Expr = InferTypeHelper(arg.Expr, e, context);
 
-                ConvertLiteralTypeToDefaultType(arg, e);
+                ConvertLiteralTypeToDefaultType(arg.Expr, e);
                 if (e != null)
                 {
-                    arg = HandleReference(arg, e, context);
-                    arg = CheckType(arg, e);
+                    arg.Expr = HandleReference(arg.Expr, e, context);
+                    arg.Expr = CheckType(arg.Expr, e);
                 }
 
-                return expr.Arguments[index] = arg;
+                return arg.Expr;
             }
 
             switch (expr.Name.Name)
             {
+                case "insert":
+                    {
+                        if (expr.Arguments.Count == 0)
+                        {
+                            ReportError(expr.Location, "@insert takes at least one argument");
+                            return expr;
+                        }
+                        var code = InferArg(0, null);
+
+                        if (code.Value == null)
+                        {
+                            ReportError(expr, $"argument is not constant");
+                            return expr;
+                        }
+
+                        code = code.Value as AstExpression;
+                        code.Scope.LinkedScope = expr.Scope;
+                        code.Value = null;
+                        code = InferTypeHelper(code, expected, context);
+
+                        return code;
+                    }
+
+                case "link":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@link takes exacty one argument");
+                            return expr;
+                        }
+
+                        var arg = expr.Arguments[0].Expr;
+                        arg.Scope = expr.Scope.LinkedScope;
+                        arg.SetFlag(ExprFlags.Anonymous, true);
+                        arg.SetFlag(ExprFlags.Link, true);
+
+                        if (arg.Scope == null)
+                        {
+                            ReportError(expr, "There is no scope linked to the current scope or any of its parents");
+                            return expr;
+                        }
+
+                        arg = InferTypeHelper(arg, null, context);
+                        return arg;
+                    }
+
                 case "cast":
                     {
                         if (expr.Arguments.Count != 2)
@@ -1347,9 +1447,6 @@ namespace Cheez
                                 ReportError(arg, $"Argument must be a compile time constant");
                                 return expr;
                             }
-                        } else
-                        {
-                            expr.Arguments.Add(new AstStringLiteral("Assertion failed!"));
                         }
 
                         expr.Type = CheezType.Void;
@@ -1359,11 +1456,12 @@ namespace Cheez
 
                 case "static_assert":
                     {
+
                         AstExpression cond = null, message = null;
                         if (expr.Arguments.Count >= 1)
-                            cond = expr.Arguments[0];
+                            cond = expr.Arguments[0].Expr;
                         if (expr.Arguments.Count >= 2)
-                            message = expr.Arguments[1];
+                            message = expr.Arguments[1].Expr;
 
                         if (cond == null || expr.Arguments.Count > 2)
                         {
@@ -1416,11 +1514,8 @@ namespace Cheez
                             ReportError(expr, $"@sizeof takes one argument");
                             return expr;
                         }
-
-                        var arg = expr.Arguments[0];
-                        arg.Scope = expr.Scope;
-                        arg.Parent = expr;
-                        arg = expr.Arguments[0] = InferTypeHelper(arg, CheezType.Type, context);
+                        
+                        var arg = InferArg(0, CheezType.Type);
                         if (arg.Type.IsErrorType)
                             return expr;
 
@@ -1443,10 +1538,7 @@ namespace Cheez
                             return expr;
                         }
 
-                        var arg = expr.Arguments[0];
-                        arg.Scope = expr.Scope;
-                        arg.Parent = expr;
-                        arg = expr.Arguments[0] = InferTypeHelper(arg, CheezType.Type, context);
+                        var arg = InferArg(0, CheezType.Type);
                         if (arg.Type.IsErrorType)
                             return expr;
 
@@ -1471,45 +1563,45 @@ namespace Cheez
 
                         expr.Arguments[0].Scope = expr.Scope;
                         expr.Arguments[1].Scope = expr.Scope;
-                        expr.Arguments[0] = InferTypeHelper(expr.Arguments[0], CheezType.Type, context);
-                        expr.Arguments[1] = InferTypeHelper(expr.Arguments[1], IntType.DefaultType, context);
+                        var type = InferArg(0, CheezType.Type);
+                        var index = InferArg(1, IntType.DefaultType);
 
-                        if (expr.Arguments[0].Value is PolyType || expr.Arguments[1].Value is PolyType)
+                        if (type.Value is PolyType || index.Value is PolyType)
                         {
                             expr.Type = CheezType.Type;
-                            expr.Value = new PolyType($"tuple_type_member({expr.Arguments[0].Value}, {expr.Arguments[1].Value})");
+                            expr.Value = new PolyType($"tuple_type_member({type.Value}, {index.Value})");
                             return expr;
                         }
 
-                        if (expr.Arguments[0].Type != CheezType.Type || !(expr.Arguments[0].Value is TupleType))
+                        if (type.Type != CheezType.Type || !(type.Value is TupleType))
                         {
-                            if (expr.Arguments[0].Value is PolyType)
+                            if (type.Value is PolyType)
                             {
                                 expr.Type = CheezType.Type;
-                                expr.Value = new PolyType($"tuple_type_member({expr.Arguments[0].Value}, {expr.Arguments[1].Value})");
+                                expr.Value = new PolyType($"tuple_type_member({type.Value}, {index.Value})");
                                 //expr.Value = expr.Arguments[0].Type;
                                 return expr;
                             }
-                            ReportError(expr.Arguments[0], $"This argument must be a tuple type, got {expr.Arguments[0].Type} '{expr.Arguments[0].Value}'");
+                            ReportError(type, $"This argument must be a tuple type, got {type.Type} '{type.Value}'");
                             return expr;
                         }
-                        if (!(expr.Arguments[1].Type is IntType) || !expr.Arguments[1].IsCompTimeValue)
+                        if (!(index.Type is IntType) || !index.IsCompTimeValue)
                         {
-                            ReportError(expr.Arguments[1], $"This argument must be a constant int, got {expr.Arguments[1].Type} '{expr.Arguments[1].Value}'");
+                            ReportError(index, $"This argument must be a constant int, got {index.Type} '{index.Value}'");
                             return expr;
                         }
 
-                        var tuple = expr.Arguments[0].Value as TupleType;
-                        var index = ((NumberData)expr.Arguments[1].Value).ToLong();
+                        var tuple = type.Value as TupleType;
+                        var indexInt = ((NumberData)index.Value).ToLong();
 
-                        if (index < 0 || index >= tuple.Members.Length)
+                        if (indexInt < 0 || indexInt >= tuple.Members.Length)
                         {
-                            ReportError(expr.Arguments[1], $"Index '{index}' is out of range. Index must be between [0, {tuple.Members.Length})");
+                            ReportError(index, $"Index '{index}' is out of range. Index must be between [0, {tuple.Members.Length})");
                             return expr;
                         }
 
                         expr.Type = CheezType.Type;
-                        expr.Value = tuple.Members[index].type;
+                        expr.Value = tuple.Members[indexInt].type;
 
                         break;
                     }
@@ -1522,10 +1614,7 @@ namespace Cheez
                             return expr;
                         }
 
-                        var arg = expr.Arguments[0];
-                        arg.Scope = expr.Scope;
-                        arg.Parent = expr;
-                        arg = expr.Arguments[0] = InferTypeHelper(arg, null, context);
+                        var arg = InferArg(0, null);
                         if (arg.Type.IsErrorType)
                             return expr;
 
@@ -1542,10 +1631,7 @@ namespace Cheez
                             return expr;
                         }
 
-                        var arg = expr.Arguments[0];
-                        arg.Scope = expr.Scope;
-                        arg.Parent = expr;
-                        arg = expr.Arguments[0] = InferTypeHelper(arg, CheezType.Type, context);
+                        var arg = InferArg(0, CheezType.Type);
                         if (arg.Type.IsErrorType)
                             return expr;
 
@@ -1570,13 +1656,8 @@ namespace Cheez
                             return expr;
                         }
 
-                        var argType = expr.Arguments[0];
-                        argType.AttachTo(expr);
-                        argType = expr.Arguments[0] = InferTypeHelper(argType, CheezType.Type, context);
-
-                        var argSize = expr.Arguments[1];
-                        argSize.AttachTo(expr);
-                        argSize = expr.Arguments[1] = InferTypeHelper(argSize, IntType.DefaultType, context);
+                        var argType = InferArg(0, CheezType.Type);
+                        var argSize = InferArg(1, IntType.DefaultType);
 
                         if (argSize.Type.IsErrorType || argType.Type.IsErrorType)
                             return expr;
@@ -1660,7 +1741,8 @@ namespace Cheez
             {
                 var arg = expr.Arguments[i];
                 arg.AttachTo(expr);
-                arg = expr.Arguments[i] = InferType(arg, null);
+                arg.Expr.AttachTo(arg);
+                expr.Arguments[i].Expr = InferType(arg, null);
 
                 if (arg.Type != IntType.LiteralType && expectedArgType == null)
                     expectedArgType = arg.Type;
@@ -1672,15 +1754,15 @@ namespace Cheez
             for (int i = 0; i < expr.Arguments.Count; i++)
             {
                 var arg = expr.Arguments[i];
-                ConvertLiteralTypeToDefaultType(arg, expectedArgType);
-                arg = expr.Arguments[i] = Deref(arg, context);
-                if (arg.Type.IsErrorType)
+                ConvertLiteralTypeToDefaultType(arg.Expr, expectedArgType);
+                arg.Expr = Deref(arg.Expr, context);
+                if (arg.Expr.Type.IsErrorType)
                 {
                     ok = false;
                     continue;
                 }
 
-                if (!(arg.Type is IntType it))
+                if (!(arg.Expr.Type is IntType it))
                 {
                     ReportError(arg, $"Argument must be of type int");
                     return expr;
@@ -1694,36 +1776,36 @@ namespace Cheez
             foreach (var arg in expr.Arguments)
             {
                 if (expectedArgType == null)
-                    expectedArgType = arg.Type;
-                if (arg.Type != expectedArgType)
+                    expectedArgType = arg.Expr.Type;
+                if (arg.Expr.Type != expectedArgType)
                 {
-                    ReportError(arg.Location, $"Argument is of type '{arg.Type}' but must be of type '{expectedArgType}' (determined from first argument)");
+                    ReportError(arg.Location, $"Argument is of type '{arg.Expr.Type}' but must be of type '{expectedArgType}' (determined from first argument)");
                 }
             }
 
             // calculate value if all args are comptime values
-            if (expr.Arguments.All(arg => arg.IsCompTimeValue))
+            if (expr.Arguments.All(arg => arg.Expr.IsCompTimeValue))
             {
-                var values = from arg in expr.Arguments select (NumberData)arg.Value;
+                var values = from arg in expr.Arguments select (NumberData)arg.Expr.Value;
                 var result = compute(values);
                 return InferTypeHelper(new AstNumberExpr(result, Location: expr.Location), expectedArgType, context);
             }
 
-            expr.Type = expr.Arguments[0].Type;
+            expr.Type = expr.Arguments[0].Expr.Type;
             return expr;
         }
 
         private AstExpression InferTypeBlock(AstBlockExpr expr, CheezType expected, TypeInferenceContext context)
         {
-            expr.SubScope = new Scope("{}", expr.Scope);
-
-            // copy initialized symbols
-            foreach (var symbol in expr.Scope.InitializedSymbols)
-                expr.SubScope.SetInitialized(symbol);
-
-            // test
-            //ResolveDeclarations(expr.SubScope, expr.Statements);
-
+            if (expr.GetFlag(ExprFlags.Anonymous))
+                expr.SubScope = expr.Scope;
+            else
+            {
+                expr.SubScope = new Scope("{}", expr.Scope);
+                // copy initialized symbols
+                foreach (var symbol in expr.Scope.InitializedSymbols)
+                    expr.SubScope.SetInitialized(symbol);
+            }
 
             int end = expr.Statements.Count;
             if (expr.Statements.LastOrDefault() is AstExprStmt) --end;
@@ -1733,7 +1815,7 @@ namespace Cheez
                 var stmt = expr.Statements[i];
                 stmt.Scope = expr.SubScope;
                 stmt.Parent = expr;
-                AnalyseStatement(stmt);
+                expr.Statements[i] = stmt = AnalyseStatement(stmt);
 
                 if (stmt.GetFlag(StmtFlags.Returns))
                     expr.SetFlag(ExprFlags.Returns, true);
@@ -1760,10 +1842,11 @@ namespace Cheez
                 expr.Type = CheezType.Void;
             }
 
-            // copy initialized symbols
-            foreach (var symbol in expr.SubScope.InitializedSymbols)
+            if (!expr.GetFlag(ExprFlags.Anonymous))
             {
-                expr.Scope.SetInitialized(symbol);
+                // copy initialized symbols
+                foreach (var symbol in expr.SubScope.InitializedSymbols)
+                    expr.Scope.SetInitialized(symbol);
             }
 
             return expr;
@@ -2171,6 +2254,39 @@ namespace Cheez
             return expr;
         }
 
+        private AstExpression ExpandMacro(AstCallExpr call, TypeInferenceContext context)
+        {
+            var macro = call.Declaration;
+            var code = macro.Body.Clone() as AstBlockExpr;
+            code.Scope = new Scope("macro {}", macro.ConstScope);
+            code.Scope.LinkedScope = call.Scope;
+            code.SetFlag(ExprFlags.FromMacroExpansion, true);
+
+            // define arguments
+            var links = call.Arguments.Select((arg, index) =>
+            {
+                var param = macro.Parameters[index];
+                var link = new AstCompCallExpr(
+                    new AstIdExpr("link", false, arg.Location),
+                    new List<AstArgument> { arg }, arg.Location);
+                var varDecl = new AstVariableDecl(param.Name, null, link, false, Location: arg.Location);
+                return varDecl;
+            });
+            code.Statements.InsertRange(0, links);
+
+            var errHandler = new SilentErrorHandler();
+            PushErrorHandler(errHandler);
+            var newExpr = InferTypeHelper(code, null, context);
+            PopErrorHandler();
+
+            if (errHandler.HasErrors)
+            {
+                ReportError(call.Location, "Failed to expand macro", errHandler.Errors, ("Macro defined here:", macro.Name.Location));
+            }
+
+            return newExpr;
+        }
+
         private AstExpression InferTypeCallExpr(AstCallExpr expr, CheezType expected, TypeInferenceContext context)
         {
             expr.Function.AttachTo(expr);
@@ -2186,12 +2302,29 @@ namespace Cheez
             {
                 case FunctionType f:
                     {
-                        return InferRegularFunctionCall(f, expr, expected, context);
+                        var newExpr = InferRegularFunctionCall(f, expr, expected, context);
+
+                        // check if it is a macro call
+                        if (!newExpr.Type.IsErrorType && newExpr is AstCallExpr call && call.Declaration != null && call.Declaration.GetFlag(StmtFlags.IsMacroFunction))
+                        {
+                            return ExpandMacro(call, context);
+                        }
+
+                        return newExpr;
                     }
 
                 case GenericFunctionType g:
                     {
-                        return InferGenericFunctionCall(g, expr, expected, context);
+                        var newExpr = InferGenericFunctionCall(g, expr, expected, context);
+
+                        // check if it is a macro call
+                        if (!newExpr.Type.IsErrorType && newExpr is AstCallExpr call
+                            && call.Declaration.Template.GetFlag(StmtFlags.IsMacroFunction))
+                        {
+                            return ExpandMacro(call, context);
+                        }
+
+                        return newExpr;
                     }
 
                 case GenericEnumType @enum:
@@ -2374,6 +2507,78 @@ namespace Cheez
         }
 
         private bool CheckAndMatchArgsToParams(
+            List<AstArgument> arguments,
+            (string Name, CheezType Type, AstExpression DefaultValue)[] parameters,
+            bool varArgs)
+        {
+            // check for too many arguments
+            if (arguments.Count > parameters.Length && !varArgs)
+                return false;
+
+            // match arguments to parameters
+            var map = new Dictionary<int, AstArgument>();
+            bool allowUnnamed = true;
+            bool ok = true;
+            for (int i = 0; i < arguments.Count; i++)
+            {
+                var arg = arguments[i];
+                if (arg.Name == null)
+                {
+                    if (!allowUnnamed)
+                    {
+                        ok = false;
+                        ReportError(arg, $"Unnamed arguments are not allowed after named arguments");
+                        break;
+                    }
+
+                    map[i] = arg;
+                    arg.Index = i;
+                }
+                else
+                {
+                    var index = parameters.IndexOf(p => p.Name == arg.Name.Name);
+                    if (map.TryGetValue(index, out var other))
+                    {
+
+                        ReportError(arg, $"This argument maps to the same parameter ({i}) as '{other}'");
+                        ok = false;
+                        break;
+                    }
+                    // TODO: check if index != -1
+
+                    map[index] = arg;
+                    arg.Index = index;
+                }
+            }
+
+            if (!ok)
+                return false;
+
+            // create missing arguments
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                if (map.ContainsKey(i))
+                    continue;
+                var p = parameters[i];
+                if (p.DefaultValue == null)
+                {
+                    return false;
+                }
+                var arg = new AstArgument(p.DefaultValue.Clone(), Location: p.DefaultValue.Location);
+                arg.IsDefaultArg = true;
+                arg.Index = i;
+                arguments.Add(arg);
+            }
+
+            arguments.Sort((a, b) => a.Index - b.Index);
+
+            if (arguments.Count < parameters.Length)
+                return false;
+
+            return true;
+        }
+
+        private bool CheckAndMatchArgsToParams(
             AstCallExpr expr, 
             (string Name, CheezType Type, AstExpression DefaultValue)[] parameters, 
             bool varArgs)
@@ -2448,7 +2653,7 @@ namespace Cheez
                 var p = parameters[i];
                 if (p.DefaultValue == null)
                 {
-                    ReportError(expr, $"Call misses parameter ({i}) '{p.Name}' of type  '{p.Type}'.");
+                    ReportError(expr, $"Call misses parameter ({i}) '{p.Name}' of type '{p.Type}'.");
                     ok = false;
                     continue;
                 }

@@ -193,7 +193,6 @@ namespace CheezCLI
             }
 
             result.LexAndParse = stopwatch.Elapsed;
-            stopwatch.Restart();
 
             if (options.PrintRawAst != null)
             {
@@ -208,8 +207,8 @@ namespace CheezCLI
                 }
             }
 
+            stopwatch.Restart();
             compiler.DefaultWorkspace.CompileAll();
-
             result.SemanticAnalysis = stopwatch.Elapsed;
             result.FrontEnd = result.LexAndParse + result.SemanticAnalysis;
 

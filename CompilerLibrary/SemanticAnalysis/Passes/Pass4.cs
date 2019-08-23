@@ -57,22 +57,36 @@ namespace Cheez
 
         private void ResolveFunctionSignature(AstFunctionDecl func, List<AstDecl> newPolyDecls)
         {
+            if (func.HasDirective("macro"))
+                func.SetFlag(StmtFlags.IsMacroFunction);
+            if (func.HasDirective("for"))
+            {
+                func.SetFlag(StmtFlags.IsMacroFunction);
+                func.SetFlag(StmtFlags.IsForExtension);
+
+                if (!func.IsPolyInstance)
+                    func.Scope.AddForExtension(func);
+            }
+
             if (func.ReturnTypeExpr?.TypeExpr?.IsPolymorphic ?? false)
             {
                 ReportError(func.ReturnTypeExpr, "The return type of a function can't be polymorphic");
             }
 
-            var polyNames = new List<string>();
-            foreach (var p in func.Parameters)
+            if (!func.IsPolyInstance)
             {
-                CollectPolyTypeNames(p.TypeExpr, polyNames);
-                if (p.Name?.IsPolymorphic ?? false)
-                    polyNames.Add(p.Name.Name);
-            }
+                var polyNames = new List<string>();
+                foreach (var p in func.Parameters)
+                {
+                    CollectPolyTypeNames(p.TypeExpr, polyNames);
+                    if (p.Name?.IsPolymorphic ?? false)
+                        polyNames.Add(p.Name.Name);
+                }
 
-            foreach (var pn in polyNames)
-            {
-                func.ConstScope.DefineTypeSymbol(pn, new PolyType(pn));
+                foreach (var pn in polyNames)
+                {
+                    func.ConstScope.DefineTypeSymbol(pn, new PolyType(pn));
+                }
             }
 
             // return types
@@ -97,6 +111,11 @@ namespace Cheez
 
                 if (p.Type.IsPolyType || (p.Name?.IsPolymorphic ?? false))
                     func.IsGeneric = true;
+
+                if (p.Type.IsComptimeOnly && !(p.Name?.IsPolymorphic ?? false))
+                {
+                    ReportError(p, $"Parameter '{p}' must be constant because the type '{p.Type}' is only available at compiletime");
+                }
             }
 
             if (func.IsGeneric)

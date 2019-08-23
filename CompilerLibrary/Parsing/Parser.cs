@@ -378,6 +378,8 @@ namespace Cheez.Parsing
                     return ParseTypedefDeclaration();
                 case TokenType.KwWhile:
                     return ParseWhileStatement();
+                case TokenType.KwFor:
+                    return ParseForStatement();
                 case TokenType.KwEnum:
                     return ParseEnumDeclaration();
                 case TokenType.KwStruct:
@@ -1109,6 +1111,53 @@ namespace Cheez.Parsing
             return new AstVariableDecl(pattern, type, init, isConst, directives, new Location(beg, end));
         }
 
+        private AstForStmt ParseForStatement()
+        {
+            AstIdExpr varName = null;
+            AstIdExpr indexName = null;
+            List<AstArgument> args = null;
+            AstExpression collection;
+            AstExpression body;
+
+            var beg = Consume(TokenType.KwFor, ErrMsg("keyword 'for'", "at beginning of for loop"));
+            SkipNewlines();
+
+            // parse arguments
+            if (CheckToken(TokenType.OpenParen))
+            {
+                args = ParseArgumentList(out var _);
+                if (args.Count == 0)
+                    args = null;
+                SkipNewlines();
+            }
+
+            // names
+            if (CheckToken(TokenType.Identifier))
+            {
+                varName = ParseIdentifierExpr(ErrMsg("identifier"));
+                SkipNewlines();
+                if (CheckToken(TokenType.Comma))
+                {
+                    NextToken();
+                    SkipNewlines();
+                    indexName = ParseIdentifierExpr(ErrMsg("identifier"));
+                    SkipNewlines();
+                }
+            }
+
+            // :
+            Consume(TokenType.Colon, ErrMsg("':'"));
+            SkipNewlines();
+
+            // collection
+            collection = ParseExpression();
+            SkipNewlines();
+
+            body = ParseExpression();
+
+            return new AstForStmt(varName, indexName, collection, body, args, new Location(beg.location, collection.End));
+        }
+
         private AstWhileStmt ParseWhileStatement()
         {
             TokenLocation beg = null;
@@ -1151,9 +1200,16 @@ namespace Cheez.Parsing
             AstNestedExpression ifCase = null;
             AstNestedExpression elseCase = null;
             AstVariableDecl pre = null;
+            bool isConstIf = false;
 
             beg = Consume(TokenType.KwIf, ErrMsg("keyword 'if'", "at beginning of if statement")).location;
             SkipNewlines();
+
+            if (CheckToken(TokenType.KwConst)) {
+                NextToken();
+                SkipNewlines();
+                isConstIf = true;
+            }
 
             if (CheckToken(TokenType.KwLet))
             {
@@ -1200,7 +1256,7 @@ namespace Cheez.Parsing
                 end = elseCase.End;
             }
 
-            return new AstIfExpr(condition, ifCase, elseCase, pre, new Location(beg, end));
+            return new AstIfExpr(condition, ifCase, elseCase, pre, isConstIf, new Location(beg, end));
         }
 
         private AstFunctionDecl ParseFunctionDeclaration()
@@ -1555,14 +1611,14 @@ namespace Cheez.Parsing
             }
         }
 
-        private List<AstExpression> ParseArgumentList(out TokenLocation end)
+        private List<AstExpression> ParseExpressionList(out TokenLocation end)
         {
             Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of argument list"));
 
-            List<AstExpression> args = new List<AstExpression>();
+            SkipNewlines();
+            var args = new List<AstExpression>();
             while (true)
             {
-                SkipNewlines();
                 var next = PeekToken();
                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                     break;
@@ -1571,14 +1627,49 @@ namespace Cheez.Parsing
 
                 next = PeekToken();
                 if (next.type == TokenType.Comma)
+                {
                     NextToken();
+                    SkipNewlines();
+                }
                 else if (next.type == TokenType.ClosingParen)
                     break;
                 else
                 {
                     NextToken();
                     ReportError(next.location, $"Failed to parse argument list, expected ',' or ')'");
-                    //RecoverExpression();
+                }
+            }
+            end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of argument list")).location;
+
+            return args;
+        }
+
+        private List<AstArgument> ParseArgumentList(out TokenLocation end)
+        {
+            Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of argument list"));
+
+            SkipNewlines();
+            var args = new List<AstArgument>();
+            while (true)
+            {
+                var next = PeekToken();
+                if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
+                    break;
+                args.Add(ParseArgumentExpression());
+                SkipNewlines();
+
+                next = PeekToken();
+                if (next.type == TokenType.Comma)
+                {
+                    NextToken();
+                    SkipNewlines();
+                }
+                else if (next.type == TokenType.ClosingParen)
+                    break;
+                else
+                {
+                    NextToken();
+                    ReportError(next.location, $"Failed to parse argument list, expected ',' or ')'");
                 }
             }
             end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of argument list")).location;

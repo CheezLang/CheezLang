@@ -186,6 +186,7 @@ namespace Cheez
                 case CheezTypeType _:
                 case CharType _:
                 case IntType _: break;
+                case CodeType _: break;
 
                 case ErrorType _: break;
 
@@ -718,6 +719,7 @@ namespace Cheez
             if (instance == null)
             {
                 instance = func.Declaration.Clone() as AstFunctionDecl;
+                instance.Template = func.Declaration;
                 instance.IsPolyInstance = true;
                 instance.IsGeneric = false;
                 instance.PolymorphicTypes = polyTypes;
@@ -764,9 +766,10 @@ namespace Cheez
                             {
                                 case IntType _:
                                 case FloatType _:
-                                case CheezTypeType _:
                                 case BoolType _:
                                 case CharType _:
+                                case CheezTypeType _:
+                                case CodeType _:
                                     break;
 
                                 case CheezType tt when tt == CheezType.String || tt == CheezType.CString:
@@ -784,18 +787,20 @@ namespace Cheez
                 }
 
                 // return types
-                if (instance.ReturnTypeExpr != null)
-                {
-                    instance.ReturnTypeExpr.Scope = instance.SubScope;
-                    instance.ReturnTypeExpr.TypeExpr.Scope = instance.SubScope;
-                    instance.ReturnTypeExpr.TypeExpr = ResolveTypeNow(instance.ReturnTypeExpr.TypeExpr, out var t, true);
-                    instance.ReturnTypeExpr.Type = t;
-                }
+                //if (instance.ReturnTypeExpr != null)
+                //{
+                //    instance.ReturnTypeExpr.Scope = instance.SubScope;
+                //    instance.ReturnTypeExpr.TypeExpr.Scope = instance.SubScope;
+                //    instance.ReturnTypeExpr.TypeExpr = ResolveTypeNow(instance.ReturnTypeExpr.TypeExpr, out var t, true);
+                //    instance.ReturnTypeExpr.Type = t;
+                //}
 
                 //remove constant params
                 instance.Parameters = instance.Parameters.Where(p => !(p.Name?.IsPolymorphic ?? false)).ToList();
+                ResolveFunctionSignature(instance, null);
 
-                instance.Type = new FunctionType(instance);
+                //instance.Type = new FunctionType(instance);
+
 
                 if (instances != null)
                     instances.Add(instance);

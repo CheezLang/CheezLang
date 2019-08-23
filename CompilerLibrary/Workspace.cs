@@ -39,9 +39,22 @@ namespace Cheez
 
         public TargetArchitecture TargetArch = TargetArchitecture.X64;
 
+        private Stack<IErrorHandler> m_errorHandlerReplacements = new Stack<IErrorHandler>();
+        public IErrorHandler CurrentErrorHandler => m_errorHandlerReplacements.Count > 0 ? m_errorHandlerReplacements.Peek() : mCompiler.ErrorHandler;
+
         public Workspace(CheezCompiler comp)
         {
             mCompiler = comp;
+        }
+
+        public void PushErrorHandler(IErrorHandler handler)
+        {
+            m_errorHandlerReplacements.Push(handler);
+        }
+
+        public void PopErrorHandler()
+        {
+            m_errorHandlerReplacements.Pop();
         }
 
         public void AddFile(PTFile file)
@@ -156,21 +169,21 @@ namespace Cheez
         [SkipInStackFrame]
         public void ReportError(Error error)
         {
-            mCompiler.ErrorHandler.ReportError(error);
+            CurrentErrorHandler.ReportError(error);
         }
 
         [SkipInStackFrame]
         public void ReportError(string errorMessage)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
-            mCompiler.ErrorHandler.ReportError(errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
+            CurrentErrorHandler.ReportError(errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
         [SkipInStackFrame]
         public void ReportError(string errorMessage, List<(string, ILocation)> details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
-            mCompiler.ErrorHandler.ReportError(new Error
+            CurrentErrorHandler.ReportError(new Error
             {
                 Message = errorMessage,
                 Details = details,
@@ -184,7 +197,7 @@ namespace Cheez
         public void ReportError(string errorMessage, params (string, ILocation)[] details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
-            mCompiler.ErrorHandler.ReportError(new Error
+            CurrentErrorHandler.ReportError(new Error
             {
                 Message = errorMessage,
                 Details = details,
@@ -198,7 +211,7 @@ namespace Cheez
         public void ReportError(string errorMessage, (string, ILocation) details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
-            mCompiler.ErrorHandler.ReportError(new Error
+            CurrentErrorHandler.ReportError(new Error
             {
                 Message = errorMessage,
                 Details = new List<(string, ILocation)> { details },
@@ -213,7 +226,7 @@ namespace Cheez
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
             var details = detail != null ? new List<(string, ILocation)> { detail.Value } : null;
-            mCompiler.ErrorHandler.ReportError(new Error
+            CurrentErrorHandler.ReportError(new Error
             {
                 Location = lc,
                 Message = message,
@@ -225,10 +238,26 @@ namespace Cheez
         }
 
         [SkipInStackFrame]
+        public void ReportError(ILocation lc, string message, List<Error> subErrors, params (string, ILocation)[] details)
+        {
+            var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
+            CurrentErrorHandler.ReportError(new Error
+            {
+                Location = lc,
+                Message = message,
+                Details = details,
+                File = callingFunctionFile,
+                Function = callingFunctionName,
+                LineNumber = callLineNumber,
+                SubErrors = subErrors
+            });
+        }
+
+        [SkipInStackFrame]
         public void ReportError(ILocation lc, string message, params (string, ILocation)[] details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
-            mCompiler.ErrorHandler.ReportError(new Error
+            CurrentErrorHandler.ReportError(new Error
             {
                 Location = lc,
                 Message = message,
@@ -243,7 +272,7 @@ namespace Cheez
         public void ReportError(ILocation lc, string message, IEnumerable<(string, ILocation)> details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
-            mCompiler.ErrorHandler.ReportError(new Error
+            CurrentErrorHandler.ReportError(new Error
             {
                 Location = lc,
                 Message = message,

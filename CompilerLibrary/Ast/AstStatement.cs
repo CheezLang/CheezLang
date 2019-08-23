@@ -14,7 +14,9 @@ namespace Cheez.Ast.Statements
         IsLastStatementInBlock,
         NoDefaultInitializer,
         MembersComputed,
-        ExcludeFromVtable
+        ExcludeFromVtable,
+        IsMacroFunction,
+        IsForExtension
     }
 
     public interface IAstNode {
@@ -157,6 +159,43 @@ namespace Cheez.Ast.Statements
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitWhileStmt(this, data);
         public override AstStatement Clone() 
             => CopyValuesTo(new AstWhileStmt(Condition.Clone(), Body.Clone() as AstBlockExpr, PreAction?.Clone() as AstVariableDecl, PostAction?.Clone()));
+    }
+
+    public class AstForStmt : AstStatement
+    {
+        public AstIdExpr VarName { get; set; }
+        public AstIdExpr IndexName { get; set; }
+        public AstExpression Collection { get; set; }
+        public AstExpression Body { get; set; }
+        public List<AstArgument> Arguments { get; set; }
+
+        public Scope SubScope { get; set; }
+
+        public AstForStmt(
+            AstIdExpr varName,
+            AstIdExpr indexName,
+            AstExpression collection,
+            AstExpression body,
+            List<AstArgument> arguments,
+            ILocation Location = null)
+            : base(Location: Location)
+        {
+            this.VarName = varName;
+            this.IndexName = indexName;
+            this.Collection = collection;
+            this.Body = body;
+            this.Arguments = arguments;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitForStmt(this, data);
+        public override AstStatement Clone()
+            => CopyValuesTo(new AstForStmt(
+                    VarName?.Clone() as AstIdExpr,
+                    IndexName?.Clone() as AstIdExpr,
+                    Collection.Clone(),
+                    Body.Clone(),
+                    Arguments?.Select(a => a.Clone() as AstArgument)?.ToList()));
     }
 
     public class AstReturnStmt : AstStatement

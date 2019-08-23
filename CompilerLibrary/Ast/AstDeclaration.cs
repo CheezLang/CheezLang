@@ -95,6 +95,7 @@ namespace Cheez.Ast.Statements
         public AstBlockExpr Body { get; private set; }
 
         public List<AstFunctionDecl> PolymorphicInstances { get; } = new List<AstFunctionDecl>();
+        public AstFunctionDecl Template { get; set; } = null;
 
         public SelfParamType SelfType { get; set; } = SelfParamType.None;
         public bool IsGeneric { get; set; } = false;
@@ -143,8 +144,8 @@ namespace Cheez.Ast.Statements
                 Parameters.Select(p => p.Clone()).ToList(),
                 ReturnTypeExpr?.Clone(),
                 Body?.Clone() as AstBlockExpr, ParameterLocation: ParameterLocation));
-            copy.ConstScope = new Scope("fn$", copy.Scope);
-            copy.SubScope = new Scope("fn", copy.ConstScope);
+            copy.ConstScope = new Scope($"fn$ {Name.Name}", copy.Scope);
+            copy.SubScope = new Scope($"fn {Name.Name}", copy.ConstScope);
             return copy;
         }
     }

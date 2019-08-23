@@ -51,7 +51,6 @@ namespace Cheez
             currentFunction = func;
             try
             {
-
                 if (func.SelfType != SelfParamType.None)
                 {
                     var p = func.Parameters[0];
@@ -161,7 +160,7 @@ namespace Cheez
                 if (func.FunctionType.IsErrorType || func.FunctionType.IsPolyType)
                     return;
 
-                if (func.Body != null)
+                if (func.Body != null && !func.GetFlag(StmtFlags.IsMacroFunction))
                 {
                     func.Body.Scope = func.SubScope;
                     func.Body.Parent = func;
@@ -172,7 +171,7 @@ namespace Cheez
                         // TODO: check that all return values are set
                         var ret = new AstReturnStmt(null, new Location(func.Body.End));
                         ret.Scope = func.Body.SubScope;
-                        AnalyseStatement(ret);
+                        ret = AnalyseReturnStatement(ret);
                         func.Body.Statements.Add(ret);
                     }
                 }
@@ -185,31 +184,114 @@ namespace Cheez
             }
         }
 
-        private void AnalyseStatement(AstStatement stmt)
+        private AstStatement AnalyseStatement(AstStatement stmt)
         {
             switch (stmt)
             {
-                case AstVariableDecl vardecl: AnalyseVariableDecl(vardecl); break;
-                case AstReturnStmt ret: AnalyseReturnStatement(ret); break;
-                case AstExprStmt expr: AnalyseExprStatement(expr); break;
-                case AstAssignment ass: AnalyseAssignStatement(ass); break;
-                case AstWhileStmt whl: AnalyseWhileStatement(whl); break;
-                case AstBreakStmt br: AnalyseBreakStatement(br); break;
-                case AstContinueStmt cont: AnalyseContinueStatement(cont); break;
-                case AstUsingStmt use: AnalyseUseStatement(use); break;
+                case AstVariableDecl vardecl: return AnalyseVariableDecl(vardecl); break;
+                case AstReturnStmt ret: return AnalyseReturnStatement(ret); break;
+                case AstExprStmt expr: return AnalyseExprStatement(expr); break;
+                case AstAssignment ass: return AnalyseAssignStatement(ass); break;
+                case AstWhileStmt whl: return AnalyseWhileStatement(whl); break;
+                case AstBreakStmt br: return AnalyseBreakStatement(br); break;
+                case AstContinueStmt cont: return AnalyseContinueStatement(cont); break;
+                case AstUsingStmt use: return AnalyseUseStatement(use); break;
+                case AstForStmt fo: return AnalyseForStatement(fo); break;
 
                 case AstFunctionDecl func: ReportError(func, $"Local functions not supported yet."); break;
                 //default: throw new NotImplementedException();
             }
+
+            return stmt;
         }
 
-        private void AnalyseUseStatement(AstUsingStmt use)
+        private AstStatement AnalyseForStatement(AstForStmt fo)
+        {
+            fo.Collection.AttachTo(fo);
+            fo.Collection = InferType(fo.Collection, null);
+
+            fo.Body = InferType(fo.Body, CheezType.Code);
+
+            var fors = fo.Scope.GetForExtensions(fo.Collection.Type);
+
+
+            var matches = fors.Select(func =>
+            {
+                var args = new List<AstArgument>
+                {
+                    new AstArgument(fo.Collection, Location: fo.Collection),
+                    new AstArgument(fo.Body, Location: fo.Body)
+                };
+                if (fo.Arguments != null)
+                    args.AddRange(fo.Arguments);
+
+                var par = func.Parameters.Select(p => (p.Name?.Name, p.Type, p.DefaultValue)).ToArray();
+                if (CheckAndMatchArgsToParams(args, par, false))
+                    return (func, args);
+                return (null, null);
+            }).Where(a => a.func != null).ToList();
+
+            if (matches.Count == 0)
+            {
+                var candidates = fors.Select(f => ("Tried this candidate:", f.Name.Location));
+                ReportError(fo, $"No for extension matches this for loop", candidates);
+                return fo;
+            }
+            else if (matches.Count > 1)
+            {
+                var candidates = matches.Select(f => ("This matches:", f.func.Name.Location));
+                ReportError(fo, $"Multible for extensions match this for loop", candidates);
+                return fo;
+            }
+            else
+            {
+                AstVariableDecl CreateLink(AstIdExpr name, AstExpression expr, ILocation location)
+                {
+                    var link = new AstCompCallExpr(
+                        new AstIdExpr("link", false, location),
+                        new List<AstArgument> { new AstArgument(expr, Location: expr.Location) },
+                        location);
+                    var varDecl = new AstVariableDecl(name, null, link, false, Location: location);
+                    return varDecl;
+                }
+
+                var (func, args) = matches[0];
+                var code = args[1].Expr;
+                var links = new List<AstStatement>();
+
+                var it = new AstIdExpr("it", false, fo.Location);
+                var it_index = new AstIdExpr("it_index", false, fo.Location);
+
+                if (fo.VarName != null)
+                    links.Add(CreateLink(fo.VarName, it, fo.VarName.Location));
+                else
+                    links.Add(CreateLink(it, it.Clone(), it.Location));
+
+                if (fo.IndexName != null)
+                    links.Add(CreateLink(fo.IndexName, it_index, fo.IndexName.Location));
+                else
+                    links.Add(CreateLink(it_index, it_index.Clone(), it_index.Location));
+
+                // set value to null because it is not a code anymore
+                code.TypeInferred = false;
+                code.Value = null;
+                links.Add(new AstExprStmt(code, code.Location));
+                args[1].Expr = new AstBlockExpr(links, fo.Body.Location);
+
+                var call = new AstCallExpr(new AstFunctionRef(func, null, fo.Location), args, fo.Location);
+                var exprStmt = new AstExprStmt(call, fo.Body.Location);
+                exprStmt.Scope = fo.Scope;
+                return AnalyseStatement(exprStmt);
+            }
+        }
+
+        private AstUsingStmt AnalyseUseStatement(AstUsingStmt use)
         {
             use.Value.AttachTo(use);
             use.Value = InferType(use.Value, null);
 
             if (use.Value.Type.IsErrorType)
-                return;
+                return use;
 
             switch (use.Value.Type)
             {
@@ -241,6 +323,8 @@ namespace Cheez
                     ReportError(use, $"Can't use value of type '{use.Value.Type}'");
                     break;
             }
+
+            return use;
         }
 
         private void HandleUseType(AstUsingStmt use, CheezTypeType type)
@@ -289,7 +373,7 @@ namespace Cheez
             return null;
         }
 
-        private void AnalyseContinueStatement(AstContinueStmt cont)
+        private AstContinueStmt AnalyseContinueStatement(AstContinueStmt cont)
         {
             AstWhileStmt loop = FindFirstLoop(cont);
             if (loop == null)
@@ -298,9 +382,10 @@ namespace Cheez
             }
 
             cont.Loop = loop;
+            return cont;
         }
 
-        private void AnalyseBreakStatement(AstBreakStmt br)
+        private AstBreakStmt AnalyseBreakStatement(AstBreakStmt br)
         {
             AstWhileStmt loop = FindFirstLoop(br);
             if (loop == null)
@@ -309,9 +394,10 @@ namespace Cheez
             }
 
             br.Loop = loop;
+            return br;
         }
 
-        private void AnalyseWhileStatement(AstWhileStmt whl)
+        private AstWhileStmt AnalyseWhileStatement(AstWhileStmt whl)
         {
             whl.SubScope = new Scope("while", whl.Scope);
 
@@ -320,7 +406,7 @@ namespace Cheez
                 // TODO
                 whl.PreAction.Scope = whl.SubScope;
                 whl.PreAction.Parent = whl;
-                AnalyseStatement(whl.PreAction);
+                whl.PreAction = AnalyseVariableDecl(whl.PreAction);
             }
 
             whl.Condition.Scope = whl.SubScope;
@@ -334,15 +420,17 @@ namespace Cheez
             {
                 whl.PostAction.Scope = whl.SubScope;
                 whl.PostAction.Parent = whl;
-                AnalyseStatement(whl.PostAction);
+                whl.PostAction = AnalyseStatement(whl.PostAction);
             }
 
             whl.Body.Scope = whl.SubScope;
             whl.Body.Parent = whl;
             InferType(whl.Body, null);
+
+            return whl;
         }
 
-        private void AnalyseAssignStatement(AstAssignment ass)
+        private AstAssignment AnalyseAssignStatement(AstAssignment ass)
         {
             ass.Value.Parent = ass;
 
@@ -365,6 +453,8 @@ namespace Cheez
             {
                 ass.Value = MatchPatternWithExpression(ass, ass.Pattern, ass.Value);
             }
+
+            return ass;
         }
 
         private AstExpression MatchPatternWithExpression(AstAssignment ass, AstExpression pattern, AstExpression value)
@@ -593,7 +683,7 @@ namespace Cheez
             return value;
         }
 
-        private void AnalyseVariableDecl(AstVariableDecl vardecl)
+        private AstVariableDecl AnalyseVariableDecl(AstVariableDecl vardecl)
         {
             Pass1VariableDeclaration(vardecl);
             Pass6VariableDeclaration(vardecl);
@@ -602,9 +692,11 @@ namespace Cheez
             {
                 ReportError(vardecl.Pattern, $"Invalid type for variable declaration: {vardecl.Type}");
             }
+
+            return vardecl;
         }
 
-        private void AnalyseExprStatement(AstExprStmt expr, bool allow_any_expr = false, bool infer_types = true)
+        private AstExprStmt AnalyseExprStatement(AstExprStmt expr, bool allow_any_expr = false, bool infer_types = true)
         {
             expr.Expr.Parent = expr;
 
@@ -637,9 +729,11 @@ namespace Cheez
             {
                 expr.SetFlag(StmtFlags.Returns);
             }
+
+            return expr;
         }
 
-        private void AnalyseReturnStatement(AstReturnStmt ret)
+        private AstReturnStmt AnalyseReturnStatement(AstReturnStmt ret)
         {
             ret.SetFlag(StmtFlags.Returns);
 
@@ -652,7 +746,7 @@ namespace Cheez
                 ConvertLiteralTypeToDefaultType(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
 
                 if (ret.ReturnValue.Type.IsErrorType)
-                    return;
+                    return ret;
 
                 ret.ReturnValue = HandleReference(ret.ReturnValue, currentFunction.FunctionType.ReturnType, null);
                 ret.ReturnValue = CheckType(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
@@ -696,6 +790,7 @@ namespace Cheez
                     ReportError(ret, $"Not all return values have been initialized", missing.Select(l => ("This one is not initialized:", l)));
                 }
             }
+            return ret;
         }
     }
 }

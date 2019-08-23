@@ -83,7 +83,6 @@ namespace Cheez.Parsing
         KwStruct,
         KwEnum,
         KwImpl,
-        KwConstant,
         KwLet,
         KwTypedef,
         KwIf,
@@ -365,7 +364,6 @@ namespace Cheez.Parsing
                 case "fn": token.type = TokenType.KwFn; break;
                 case "struct": token.type = TokenType.KwStruct; break;
                 case "impl": token.type = TokenType.KwImpl; break;
-                case "constant": token.type = TokenType.KwConstant; break;
                 case "let": token.type = TokenType.KwLet; break;
                 case "typedef": token.type = TokenType.KwTypedef; break;
                 case "if": token.type = TokenType.KwIf; break;

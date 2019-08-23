@@ -104,6 +104,13 @@ namespace Cheez
         public bool IsOrdered { get; set; } = true;
         private int nextPosition = 1;
 
+        private Scope mLinkedScope;
+        public Scope LinkedScope
+        {
+            set { mLinkedScope = value; }
+            get => mLinkedScope ?? Parent?.LinkedScope;
+        }
+
         public IEnumerable<ISymbol> InitializedSymbols => mInitializedSymbols.Keys;
 
         private Dictionary<string, IMacro> mMacros = new Dictionary<string, IMacro>();
@@ -113,6 +120,7 @@ namespace Cheez
         private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
         private Dictionary<AstImplBlock, List<AstFunctionDecl>> mImplTable = new Dictionary<AstImplBlock, List<AstFunctionDecl>>();
         private Dictionary<ISymbol, int> mInitializedSymbols = new Dictionary<ISymbol, int>();
+        private List<AstFunctionDecl> mForExtensions = null;
 
         //
         public List<AstStructDecl> StructDeclarations = new List<AstStructDecl>();
@@ -155,6 +163,24 @@ namespace Cheez
         public void SetInitialized(ISymbol symbol, int location = -1)
         {
             mInitializedSymbols[symbol] = location;
+        }
+
+        public void AddForExtension(AstFunctionDecl func)
+        {
+            if (mForExtensions == null)
+                mForExtensions = new List<AstFunctionDecl>();
+            mForExtensions.Add(func);
+        }
+
+        public List<AstFunctionDecl> GetForExtensions(CheezType type)
+        {
+            return mForExtensions?.Where(func =>
+            {
+                var paramType = func.Parameters[0].Type;
+                if (CheezType.TypesMatch(paramType, type))
+                    return true;
+                return false;
+            })?.ToList() ?? Parent?.GetForExtensions(type) ?? new List<AstFunctionDecl>();
         }
 
         public List<INaryOperator> GetNaryOperators(string name, params CheezType[] types)
@@ -316,6 +342,7 @@ namespace Cheez
             DefineTypeSymbol("void", CheezType.Void);
             DefineTypeSymbol("any", CheezType.Any);
             DefineTypeSymbol("type", CheezType.Type);
+            DefineTypeSymbol("Code", CheezType.Code);
         }
 
         public IMacro GetMacro(string name)

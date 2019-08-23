@@ -16,6 +16,7 @@ namespace Cheez.Types
         public static CheezType Bool => BoolType.Instance;
         public static CheezType Error => ErrorType.Instance;
         public static CheezType Type => CheezTypeType.Instance;
+        public static CheezType Code => CodeType.Instance;
         public static CheezType Any => AnyType.Intance;
 
         public abstract bool IsPolyType { get; }
@@ -23,6 +24,8 @@ namespace Cheez.Types
         public virtual int Alignment { get; set; } = 8;
 
         public abstract bool IsErrorType { get; }
+
+        public virtual bool IsComptimeOnly { get; } = false;
 
         public static bool operator ==(CheezType a, CheezType b)
         {
@@ -64,7 +67,11 @@ namespace Cheez.Types
             if (a is PolyType || b is PolyType)
                 return true;
 
-            if (a is StructType sa && b is StructType sb)
+            if (a is SliceType sla && b is SliceType slb)
+            {
+                return TypesMatch(sla.TargetType, slb.TargetType);
+            }
+            else if (a is StructType sa && b is StructType sb)
             {
                 if (sa.Declaration.Name.Name != sb.Declaration.Name.Name)
                     return false;
@@ -115,8 +122,23 @@ namespace Cheez.Types
     {
         public static CheezTypeType Instance { get; } = new CheezTypeType();
         public override bool IsPolyType => false;
+        public override bool IsErrorType => false;
+        public override bool IsComptimeOnly => true;
         public override string ToString() => "type";
 
+        private CheezTypeType()
+        { }
+    }
+
+    public class CodeType : CheezType
+    {
+        public static CodeType Instance { get; } = new CodeType();
+        public override bool IsPolyType => false;
         public override bool IsErrorType => false;
+        public override bool IsComptimeOnly => true;
+        public override string ToString() => "Code";
+
+        private CodeType()
+        {}
     }
 }

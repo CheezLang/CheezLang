@@ -15,6 +15,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
     {
         private void GenerateFunctionHeader(AstFunctionDecl function)
         {
+            if (function.GetFlag(StmtFlags.IsMacroFunction))
+                return;
+
             var name = "";
 
             if (function.ImplBlock != null)
@@ -67,7 +70,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void GenerateFunctionImplementation(AstFunctionDecl function)
         {
-            if (function.Body == null)
+            if (function.Body == null || function.GetFlag(StmtFlags.IsMacroFunction))
                 return;
 
             currentFunction = function;
@@ -102,7 +105,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 foreach (var c in function.ConstScope.Symbols)
                 {
-                    if (c.Value is ConstSymbol s && s.Type != CheezType.Type)
+                    if (c.Value is ConstSymbol s && !s.Type.IsComptimeOnly)
                     {
                         var val = CheezValueToLLVMValue(s.Type, s.Value);
                         var cnst = builder.CreateAlloca(CheezTypeToLLVMType(s.Type), $"c_");

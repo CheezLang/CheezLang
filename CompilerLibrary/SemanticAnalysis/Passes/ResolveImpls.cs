@@ -86,8 +86,8 @@ namespace Cheez
             {
                 f.Trait = trait;
                 f.Scope = trait.SubScope;
-                f.ConstScope = new Scope("$", f.Scope);
-                f.SubScope = new Scope("fn", f.ConstScope);
+                f.ConstScope = new Scope($"fn$ {f.Name.Name}", f.Scope);
+                f.SubScope = new Scope($"fn {f.Name.Name}", f.ConstScope);
 
                 Pass4ResolveFunctionSignature(f);
                 CheckForSelfParam(f);
@@ -210,8 +210,8 @@ namespace Cheez
             foreach (var f in impl.Functions)
             {
                 f.Scope = impl.SubScope;
-                f.ConstScope = new Scope("$", f.Scope);
-                f.SubScope = new Scope("fn", f.ConstScope);
+                f.ConstScope = new Scope($"fn$ {f.Name.Name}", f.Scope);
+                f.SubScope = new Scope($"fn {f.Name.Name}", f.ConstScope);
                 f.ImplBlock = impl;
 
                 Pass4ResolveFunctionSignature(f);
@@ -411,8 +411,8 @@ namespace Cheez
                 foreach (var f in impl.Functions)
                 {
                     f.Scope = impl.SubScope;
-                    f.ConstScope = new Scope("$", f.Scope);
-                    f.SubScope = new Scope("fn", f.ConstScope);
+                    f.ConstScope = new Scope($"fn$ {f.Name.Name}", f.Scope);
+                    f.SubScope = new Scope($"fn {f.Name.Name}", f.ConstScope);
                     f.ImplBlock = impl;
 
                     Pass4ResolveFunctionSignature(f);
