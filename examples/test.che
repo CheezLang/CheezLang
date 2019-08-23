@@ -4,149 +4,177 @@
 // #load("compiler/main")
 // #load("examples/pathtracer")
 // #load("tests/library/stack_allocator")
-// #load("tests/language/match2")
+// #load("tests/language/tuple")
+
+//*
 
 #load("std:io/io")
-#load("std:array")
+// #load("std:array")
 
-enum Type {
-    None
-    Bool
+// fn for_array(array: ref Array($T), $body: Code, $reverse: bool = false, $reference: bool = false, count: int = -1) #for {
+//     if count < 0 or count > array.get_length() {
+//         count = array.get_length()
+//     }
+
+//     while let i = 0; i < count; i += 1 {
+//         let it #export #for_var = const if reference then ref array[i] else array[i]
+//         let it_index #export #for_index = i
+//         #insert body
+//     }
+// }
+
+fn macro_test(a: int) #macro {
+    // printfln("macro, a = {}, link(x) = {}", [a, @link(x)])
 }
 
-typedef Id = string
-
-trait Expr {
-    typ: Type
-    parent: Expr
-    fn debugprint(ref Self);
+fn macro_test2() #macro {
+    @link({
+        let uiae = 10
+    })
 }
 
-struct IdExpr {
-    pub id : Id
-    pub typ: Type
-    pub parent: Expr
-}
+fn for_extension(arr: []$T, $code: Code, $reverse: bool = false) #macro #for {
+    while let it_index = 0; it_index < arr.length; it_index += 1 {
+        if const reverse {
+            let index = arr.length - it_index - 1
+            let it_index_rev = index
+            
+            let it = arr[index]
+            @insert(code, link=[it_index_rev])
+        } else {
+            let index = it_index
 
-struct AddExpr {
-    pub left: Expr
-    pub parent: Expr
-    pub right: Expr
-    pub typ: Type
-}
-
-impl Expr for IdExpr {
-    fn debugprint(ref Self) {
-        print(id)
-    }
-}
-
-impl Expr for AddExpr {
-    fn debugprint(ref Self) {
-        print("(")
-        left.debugprint()
-        print(" + ")
-        right.debugprint()
-        print(")")
+            let it = arr[index]
+            @insert(code)
+        }
+        // @insert(code)
     }
 }
 
 fn test() #main {
-    let a = new IdExpr{typ=Type.Bool, id="a"}
-    let b = new IdExpr{typ=Type.Bool, id="b"}
-    let c = new AddExpr{typ=Type.Bool, left=a, right=b}
-    a.parent = c
-    b.parent = c
 
+    let arr: []int = [9, 8, 7, 6, 5]
 
-    let e: Expr = c
-
-    a.debugprint()
-    println("")
-    b.debugprint()
-    println("")
-    c.debugprint()
+    for v, i :arr {
+        printfln("[{}] = {}", [i, v])
+    }
     println("")
 
-    println(int(a.typ))
-    println(a.id)
+    for :arr {
+        printfln("[{}] = {}", [it_index, it])
+    }
     println("")
 
-    println(int(b.typ))
-    println(b.id)
+    for(reverse = true) v, i :arr {
+        printfln("[{0}/{2}] = {1}", [i, v, it_index_rev])
+    }
     println("")
 
-    e.debugprint()
+    for(reverse = true) :arr {
+        printfln("[{0}/{2}] = {1}", [it_index, it, it_index_rev])
+    }
     println("")
 
-    println(int(e.typ))
-    println("")
+    // let uiae = "lol"
+    // {
+    //     let arr = [5, 3, 2]
+    //     for_extension(arr, println(@sizeof(@link(T))))
+    //     // macro_test3(arr, {
+    //     //     printfln("arr[{}] = {}", [@link(it_index), @link(it)])
+    //     //     // println(uiae)
+    //     //     // println("test")
+    //     // }, reverse = false)
+    //     println("")
+    // }
+
+    // {
+    //     let x = 123
+    //     macro_test(x)
+    //     macro_test(2 + 3 * x)
+    // }
+
+    // {
+    //     macro_test2()
+    //     println(uiae)
+    // }
+
+    // for i : arr {
+    //     println(i)
+    // }
+
+    // for(count = 5) i, index : arr {
+    //     println(i)
+    //     println(index)
+    // }
+
+    // for #odd (count = 5) i, index : arr {
+    //     println(i)
+    //     println(index)
+    // }
+
+    /*
+    for_array(arr, #code {
+        println(it)
+    })
+
+    for_array(arr, #code {
+        println(i)
+        println(index)
+    })
+
+    for_array(arr, #code {
+        println(i)
+        println(index)
+    }, count = 5)
+
+    #scope_name tmp
+    #scope(parent = #global_scope, array = arr, reverse = false, reference = false, count = -1) {
+        if count < 0 or count > array.get_length() {
+            count = array.get_length()
+        }
+
+        while let i = 0; i < count; i += 1 {
+            let it #export #for_var = const if reference then ref array[i] else array[i]
+            let it_index #export #for_index = i
+            #scope(parent = tmp, it = it) {
+                println(it)
+            }
+        }
+    }
+
+    #scope_name tmp2
+    #scope(parent = #global_scope, array = arr, reverse = false, reference = false, count = -1) {
+        if count < 0 or count > array.get_length() {
+            count = array.get_length()
+        }
+
+        while let i = 0; i < count; i += 1 {
+            let it #export #for_var = const if reference then ref array[i] else array[i]
+            let it_index #export #for_index = i
+            #scope(parent = tmp2, i = it, index = it_index) {
+                println(i)
+                println(index)
+            }
+        }
+    }
+
+    #scope_name tmp3
+    #scope(parent = #global_scope, array = arr, reverse = false, reference = false, count = 5) {
+        if count < 0 or count > array.get_length() {
+            count = array.get_length()
+        }
+
+        while let i = 0; i < count; i += 1 {
+            let it #export #for_var = const if reference then ref array[i] else array[i]
+            let it_index #export #for_index = i
+            #scope(parent = tmp3, i = it, index = it_index) {
+                println(i)
+                println(index)
+            }
+        }
+    }
+
+    // */
 }
 
-// // struct Types {
-// // }
-
-// // fn compare_ints(a: int, b: int) -> bool {
-// //     return a == b
-// // }
-
-// // let pointers: Table(int, &Type)
-
-// // impl Types {
-// //     fn pointer(target: &Type) -> &Type {
-// //         return match pointers.get(int(target)) {
-// //             Some($v) -> v
-// //             None -> {
-// //                 let ptr = alloc(Type)
-// //                 <<ptr = Type.Pointer(target)
-// //                 pointers[int(target)] = ptr
-// //                 ptr
-// //             }
-// //         }
-// //     }
-// // }
-
-// // enum Type {
-// //     Unknown
-// //     Error
-// //     Int     : (signed: bool, size: int)
-// //     Float   : int
-// //     Pointer : &Type
-// // }
-
-// // impl Printable for Type {
-// //     fn print(ref Self, str: ref String, format: string) {
-// //         use Self
-// //         match self {
-// //             Unknown -> str.append_string("<Unknown>")
-// //             Error -> str.append_string("<Error>")
-// //             Int(($sign, $size)) -> str.appendf("{}{}", [if sign then "i" else "u", size * 8])
-// //             Float($size) -> str.appendf("f{}", [size * 8])
-// //             Pointer($target) -> str.appendf("&{}", [<<target])
-// //         }
-// //     }
-// // }
-
-// // struct Expr {
-// //     pub ty : &Type
-// // }
-
-// // fn Main() {
-
-
-//     // pointers = Table(int, &Type)::create(compare_ints)
-//     // let int16 = Type.Int(true, 2)
-//     // let int32 = Type.Int(true, 4)
-//     // let uint64 = Type.Int(false, 8)
-//     // let float64 = Type.Float(8)
-//     // let error = Type.Error
-
-//     // let ptr_int16 = Types::pointer(&int16)
-
-//     // println(int16)
-//     // println(int32)
-//     // println(<<ptr_int16)
-//     // println(<<Types::pointer(&uint64))
-//     // println(<<Types::pointer(&float64))
-//     // println(<<Types::pointer(&error))
-// // }
+// */

@@ -1344,7 +1344,44 @@ namespace Cheez
                             return expr;
                         }
 
+                        AstVariableDecl CreateLink(AstIdExpr name, AstExpression e, ILocation location)
+                        {
+                            var link = new AstCompCallExpr(
+                                new AstIdExpr("link", false, location),
+                                new List<AstArgument> { new AstArgument(e, Location: e.Location) },
+                                location);
+                            var varDecl = new AstVariableDecl(name, null, link, false, Location: location);
+                            return varDecl;
+                        }
                         code = code.Value as AstExpression;
+
+                        var links = expr.Arguments.Where(a => a.Name?.Name == "link").ToList();
+                        foreach (var link in links)
+                        {
+                            if (link.Expr is AstArrayExpr arr)
+                            {
+                                foreach (var varToLink in arr.Values)
+                                {
+                                    if (varToLink is AstIdExpr varName)
+                                    {
+                                        varName.AttachTo(expr);
+                                        InferTypeHelper(varName, null, context);
+                                        //var l = CreateLink(varToLink.Clone(), varToLink.Clone(), varToLink.Location);
+                                        if (varName.Symbol != null)
+                                            code.Scope.DefineSymbol(varName.Symbol);
+                                    }
+                                    else
+                                    {
+                                        ReportError(link.Expr, $"Argument to link array must be an identifier");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                ReportError(link.Expr, $"Argument to link must be an array");
+                            }
+                        }
+
                         code.Scope.LinkedScope = expr.Scope;
                         code.Value = null;
                         code = InferTypeHelper(code, expected, context);
