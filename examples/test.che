@@ -37,16 +37,12 @@ fn for_extension(arr: []$T, $code: Code, $reverse: bool = false) #macro #for {
     while let it_index = 0; it_index < arr.length; it_index += 1 {
         if const reverse {
             let it_index_rev = arr.length - it_index - 1
-            
             let it = arr[it_index_rev]
             @insert(code, link=[it_index_rev])
         } else {
-            let index = it_index
-
-            let it = arr[index]
+            let it = arr[it_index]
             @insert(code)
         }
-        // @insert(code)
     }
 }
 
