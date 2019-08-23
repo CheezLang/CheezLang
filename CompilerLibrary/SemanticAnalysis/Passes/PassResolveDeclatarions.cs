@@ -474,6 +474,7 @@ namespace Cheez
 
                         if (v.Initializer.Type.IsErrorType)
                         {
+                            Console.WriteLine(v.Pattern);
                             if (v.Constant && !v.Initializer.IsCompTimeValue)
                                 ReportError(v.Initializer, $"Initializer must be a constant");
                             break;

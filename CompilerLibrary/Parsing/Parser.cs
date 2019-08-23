@@ -1611,39 +1611,6 @@ namespace Cheez.Parsing
             }
         }
 
-        private List<AstExpression> ParseExpressionList(out TokenLocation end)
-        {
-            Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of argument list"));
-
-            SkipNewlines();
-            var args = new List<AstExpression>();
-            while (true)
-            {
-                var next = PeekToken();
-                if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
-                    break;
-                args.Add(ParseExpression());
-                SkipNewlines();
-
-                next = PeekToken();
-                if (next.type == TokenType.Comma)
-                {
-                    NextToken();
-                    SkipNewlines();
-                }
-                else if (next.type == TokenType.ClosingParen)
-                    break;
-                else
-                {
-                    NextToken();
-                    ReportError(next.location, $"Failed to parse argument list, expected ',' or ')'");
-                }
-            }
-            end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of argument list")).location;
-
-            return args;
-        }
-
         private List<AstArgument> ParseArgumentList(out TokenLocation end)
         {
             Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of argument list"));

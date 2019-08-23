@@ -1561,9 +1561,25 @@ namespace Cheez
                             return expr;
                         }
 
-                        expr.Arguments[0].Scope = expr.Scope;
-                        expr.Arguments[1].Scope = expr.Scope;
                         var type = InferArg(0, CheezType.Type);
+                        if ((type.Value as CheezType)?.IsPolyType ?? false)
+                        {
+                            expr.Type = CheezType.Type;
+                            expr.Value = new PolyType(expr.ToString());
+                            return expr;
+                        }
+                        {
+                            var arg = expr.Arguments[1];
+                            arg.AttachTo(expr);
+                            arg.Expr.AttachTo(arg);
+                            arg.Expr = InferTypeHelper(arg.Expr, IntType.DefaultType, context);
+                            if (arg.Expr.Type is CheezType && arg.Expr.Value is CheezType t && t.IsPolyType)
+                            {
+                                expr.Type = CheezType.Type;
+                                expr.Value = new PolyType(expr.ToString());
+                                return expr;
+                            }
+                        }
                         var index = InferArg(1, IntType.DefaultType);
 
                         if (type.Value is PolyType || index.Value is PolyType)
@@ -1742,10 +1758,10 @@ namespace Cheez
                 var arg = expr.Arguments[i];
                 arg.AttachTo(expr);
                 arg.Expr.AttachTo(arg);
-                expr.Arguments[i].Expr = InferType(arg, null);
+                expr.Arguments[i].Expr = InferType(arg.Expr, null);
 
-                if (arg.Type != IntType.LiteralType && expectedArgType == null)
-                    expectedArgType = arg.Type;
+                if (arg.Expr.Type != IntType.LiteralType && expectedArgType == null)
+                    expectedArgType = arg.Expr.Type;
             }
 
             if (expectedArgType is ReferenceType r)
