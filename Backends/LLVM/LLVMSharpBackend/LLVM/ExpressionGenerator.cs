@@ -176,7 +176,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             if (cc.Name.Name == "assert")
             {
-                var msg = cc.Arguments[1].Value as string;
+                var msg = "Assertion failed";
+                if (cc.Arguments.Count >= 2)
+                    msg = cc.Arguments[1].Value as string;
                 var cond = GenerateExpression(cc.Arguments[0], true);
 
                 var bbTrue = currentLLVMFunction.AppendBasicBlock("assert_true");

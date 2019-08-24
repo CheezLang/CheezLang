@@ -2,14 +2,14 @@
 // #load("examples/trait_function_call_performance")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
-// #load("examples/pathtracer")
+#load("examples/pathtracer")
 // #load("tests/library/stack_allocator")
 // #load("tests/language/tuple")
 
-//*
+/*
 
 #load("std:io/io")
-// #load("std:array")
+#load("std:array")
 
 // fn for_array(array: ref Array($T), $body: Code, $reverse: bool = false, $reference: bool = false, count: int = -1) #for {
 //     if count < 0 or count > array.get_length() {
@@ -47,7 +47,33 @@ fn for_extension(arr: []$T, $code: Code, $reverse: bool = false) #macro #for {
 }
 
 fn test() #main {
+    let arr = Array(string)::create()
+    arr.add("Hello")
+    arr.add(" ")
+    arr.add("world")
+    arr.add("!")
 
+    for(by_reference=false) :arr {
+        print(it)
+    }
+    println("")
+
+    for(by_reference=false, reverse=true) word :arr {
+        print(word)
+        word = "lol "
+    }
+    println("")
+
+    for(by_reference=true) :arr {
+        print(it)
+        it = "bruh "
+    }
+    println("")
+
+    for :arr print(it)
+    println("")
+
+    /*
     let arr: []int = [9, 8, 7, 6, 5]
 
     for v, i :arr {
@@ -69,6 +95,7 @@ fn test() #main {
         printfln("[{0}/{2}] = {1}", [it_index, it, it_index_rev])
     }
     println("")
+    // */
 
     // let uiae = "lol"
     // {
@@ -106,70 +133,6 @@ fn test() #main {
     //     println(i)
     //     println(index)
     // }
-
-    /*
-    for_array(arr, #code {
-        println(it)
-    })
-
-    for_array(arr, #code {
-        println(i)
-        println(index)
-    })
-
-    for_array(arr, #code {
-        println(i)
-        println(index)
-    }, count = 5)
-
-    #scope_name tmp
-    #scope(parent = #global_scope, array = arr, reverse = false, reference = false, count = -1) {
-        if count < 0 or count > array.get_length() {
-            count = array.get_length()
-        }
-
-        while let i = 0; i < count; i += 1 {
-            let it #export #for_var = const if reference then ref array[i] else array[i]
-            let it_index #export #for_index = i
-            #scope(parent = tmp, it = it) {
-                println(it)
-            }
-        }
-    }
-
-    #scope_name tmp2
-    #scope(parent = #global_scope, array = arr, reverse = false, reference = false, count = -1) {
-        if count < 0 or count > array.get_length() {
-            count = array.get_length()
-        }
-
-        while let i = 0; i < count; i += 1 {
-            let it #export #for_var = const if reference then ref array[i] else array[i]
-            let it_index #export #for_index = i
-            #scope(parent = tmp2, i = it, index = it_index) {
-                println(i)
-                println(index)
-            }
-        }
-    }
-
-    #scope_name tmp3
-    #scope(parent = #global_scope, array = arr, reverse = false, reference = false, count = 5) {
-        if count < 0 or count > array.get_length() {
-            count = array.get_length()
-        }
-
-        while let i = 0; i < count; i += 1 {
-            let it #export #for_var = const if reference then ref array[i] else array[i]
-            let it_index #export #for_index = i
-            #scope(parent = tmp3, i = it, index = it_index) {
-                println(i)
-                println(index)
-            }
-        }
-    }
-
-    // */
 }
 
 // */

@@ -767,7 +767,10 @@ namespace Cheez.Parsing
                 SkipNewlines();
                 next = PeekToken();
                 if (next.type == TokenType.Comma)
+                {
                     NextToken();
+                    SkipNewlines();
+                }
                 else if (next.type == TokenType.ClosingParen)
                     break;
                 else
@@ -1966,7 +1969,7 @@ namespace Cheez.Parsing
                     }
                     else if (Replacements.ContainsKey(token.data as string))
                     {
-                        return Replacements[token.data as string];
+                        return Replacements[token.data as string].Clone();
                     }
                     else
                     {

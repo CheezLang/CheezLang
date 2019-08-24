@@ -251,7 +251,13 @@ namespace Cheez
                         new AstIdExpr("link", false, location),
                         new List<AstArgument> { new AstArgument(expr, Location: expr.Location) },
                         location);
-                    var varDecl = new AstVariableDecl(name, null, link, false, Location: location);
+
+                    var type = mCompiler.ParseExpression($"@typeof(@link({expr}))", new Dictionary<string, AstExpression>
+                    {
+                        { "it", name }
+                    });
+
+                    var varDecl = new AstVariableDecl(name, type, link, false, Location: location);
                     return varDecl;
                 }
 
@@ -262,6 +268,7 @@ namespace Cheez
                 var it = new AstIdExpr("it", false, fo.Location);
                 var it_index = new AstIdExpr("it_index", false, fo.Location);
 
+                // create links for it and it_index
                 if (fo.VarName != null)
                     links.Add(CreateLink(fo.VarName, it, fo.VarName.Location));
                 else
@@ -271,6 +278,17 @@ namespace Cheez
                     links.Add(CreateLink(fo.IndexName, it_index, fo.IndexName.Location));
                 else
                     links.Add(CreateLink(it_index, it_index.Clone(), it_index.Location));
+
+                // create links for arguments
+                //if (fo.Arguments != null)
+                //{
+                //    foreach (var arg in fo.Arguments)
+                //    {
+                //        var index = arg.Index;
+                //        var param = func.Parameters[index];
+                //        links.Add(CreateLink(param.Name.Clone() as AstIdExpr, arg.Expr, arg.Location));
+                //    }
+                //}
 
                 // set value to null because it is not a code anymore
                 code.TypeInferred = false;
