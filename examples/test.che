@@ -2,9 +2,28 @@
 // #load("examples/trait_function_call_performance")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
-#load("examples/pathtracer")
+// #load("examples/pathtracer")
 // #load("tests/library/stack_allocator")
 // #load("tests/language/tuple")
+#load("std:random")
+#load("std:io/io")
+
+//*
+fn test_random() #main {
+    let prng = LinearCongruentialGenerator::create()
+    let dist = StandardContinuousUniform(LinearCongruentialGenerator)::create(&prng)
+
+    for :IDistribution(double)(dist) {
+        println(it)
+        if it > 0.95 {
+            continue
+        }
+        if it > 0.94 {
+            break
+        }
+    }
+}
+// */
 
 /*
 

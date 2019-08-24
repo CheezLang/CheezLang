@@ -49,6 +49,12 @@ namespace Cheez
                 case CharType _:
                     return false;
 
+                case GenericStructType _:
+                case GenericEnumType _:
+                case GenericTraitType _:
+                case GenericFunctionType _:
+                    return false;
+
                 default:
                     throw new NotImplementedException();
             }

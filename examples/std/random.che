@@ -86,6 +86,14 @@ impl(T: type) Iterator(T) for DistributionIterator(T) {
     }
 }
 
+fn for_extension_random(dist: IDistribution($T), $code: Code) #for {
+    while let it_index = 0; true; it_index += 1 {
+        let it = dist.sample()
+        @insert(code)
+    }
+}
+
+// i
 impl(T: type) IDistribution(T) {
     fn samples(ref Self) -> Iterator(T) {
         let it = alloc(DistributionIterator(T))
@@ -98,9 +106,15 @@ impl(T: type) IDistribution(T) {
 struct StandardContinuousUniform(T: type) {
     prng: &T
 }
-impl(T: type) IDistribution(double) for StandardContinuousUniform(T) {
+impl(T: type) IDistribution(double) for StandardContinuousUniform(T) if T : PseudoRandomGen {
     fn sample(ref Self) -> double {
         return prng.next_double()
+    }
+}
+
+impl(T: type) StandardContinuousUniform(T) if T : PseudoRandomGen {
+    fn create(prng: &T) -> Self {
+        return new {prng}
     }
 }
 
