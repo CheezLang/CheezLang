@@ -86,8 +86,8 @@ impl(T: type) Iterator(T) for DistributionIterator(T) {
     }
 }
 
-fn for_extension_random(dist: IDistribution($T), $code: Code) #for {
-    while let it_index = 0; true; it_index += 1 {
+fn for_extension_random(dist: IDistribution($T), code: Code) #for {
+    while let it_index = 0, true, it_index += 1 {
         let it = dist.sample()
         @insert(code)
     }
@@ -215,7 +215,7 @@ fn print_histogram(dist: IDistribution($T), low: double, high: double){
     } {}
 
     let max = 0
-    while let i = 0; i < buckets.length; i += 1 {
+    while let i = 0, i < buckets.length, i += 1 {
         if buckets[i] > max {
             max = buckets[i]
         }
@@ -228,15 +228,15 @@ fn print_histogram(dist: IDistribution($T), low: double, high: double){
     let max_str = String::empty()
     max_str.appendf("{}  ", [max])
     print(max_str)
-    while let i = 0; i < width - max_str.length; i += 1 {
+    while let i = 0, i < width - max_str.length, i += 1 {
         print("-")
     }
     println("")
 
     // histogram
-    while let h = 0; h < height; h += 1 {
+    while let h = 0, h < height, h += 1 {
 
-        while let w = 0; w < width; w += 1 {
+        while let w = 0, w < width, w += 1 {
             let b = cast(double)buckets[w]
             if b * scale >= cast(double)height - h {
                 print("*")
@@ -259,11 +259,11 @@ fn print_histogram(dist: IDistribution($T), low: double, high: double){
     let p2 = width - p1
 
     print(left_str)
-    while let i = 0; i < p1 - left_str.length - mid_str.length / 2; i += 1 {
+    while let i = 0, i < p1 - left_str.length - mid_str.length / 2, i += 1 {
         print("-")
     }
     print(mid_str)
-    while let i = 0; i < p2 - right_str.length - (mid_str.length - mid_str.length / 2); i += 1 {
+    while let i = 0, i < p2 - right_str.length - (mid_str.length - mid_str.length / 2), i += 1 {
         print("-")
     }
     print(right_str)
@@ -304,10 +304,10 @@ fn print_discrete_histogram(dist: IDistribution($T)){
 
     let max = map.iterator()::map(|t: (int, int)| t[1])::max()
     let scale = if max < width {1.0} else {(cast(double)width)/(cast(double)max)}
-    while let i = 0; i < arr.length; i += 1 {
+    while let i = 0, i < arr.length, i += 1 {
         printf("{}|", [arr[i][0]])
         let count = cast(int) (cast(double) arr[i][1]) * scale
-        while let c = 0; c < count; c += 1 {
+        while let c = 0, c < count, c += 1 {
             print("*")
         }
 

@@ -27,7 +27,7 @@ struct StackAllocator {
 impl Printable for StackAllocator {
     fn print(ref Self, s: ref String, format: string) {
         s += "( ["
-        while let i = 0; i < allocations.length; i += 1 {
+        while let i = 0, i < allocations.length, i += 1 {
             if i > 0 {
                 s += ", "
             }
@@ -36,7 +36,7 @@ impl Printable for StackAllocator {
         s += "]"
 
         let free: u64 = capacity
-        if let lastAllocation = self.getLastAllocation(); lastAllocation != null {
+        if let lastAllocation = self.getLastAllocation(), lastAllocation != null {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
         }
         s.appendf(", Free: {} )", [free])
@@ -82,7 +82,7 @@ impl StackAllocator {
     fn print_diagnostics(ref Self) {
         let s = String::empty()
         s += "( ["
-        while let i = 0; i < allocations.length; i += 1 {
+        while let i = 0, i < allocations.length, i += 1 {
             if i > 0 {
                 s += ", "
             }
@@ -92,7 +92,7 @@ impl StackAllocator {
 
         let free: u64 = capacity
         
-        if let lastAllocation = self.getLastAllocation(); lastAllocation != null {
+        if let lastAllocation = self.getLastAllocation(), lastAllocation != null {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
         }
         s.appendf(", Free: {} )`n", [free])
@@ -110,7 +110,7 @@ impl StackAllocator {
     }
 
     fn getNextAllocationOffset(ref Self) -> u64 {
-        if let last = self.getLastAllocation(); last == null {
+        if let last = self.getLastAllocation(), last == null {
             return 0
         } else {
             return last.offset + last.size

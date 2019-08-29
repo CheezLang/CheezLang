@@ -168,7 +168,7 @@ impl PixelGameEngine {
                 tp1 = tp2
 
                 // Handle User Input - Keyboard
-                while let i = 0; i < 256; i += 1 {
+                while let i = 0, i < 256, i += 1 {
                     pKeyboardState[i].pressed = false
                     pKeyboardState[i].released = false
 
@@ -186,7 +186,7 @@ impl PixelGameEngine {
                 }
 
                 // Handle User Input - Mouse
-                while let i = 0; i < 5; i += 1 {
+                while let i = 0, i < 5, i += 1 {
                     pMouseState[i].pressed = false
                     pMouseState[i].released = false
 

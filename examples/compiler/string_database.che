@@ -21,7 +21,7 @@ impl Hashable for string {
     fn hash(ref Self) -> uint {
         let h: u32 = 2166136261
 
-        while let i = 0; i < self.length; i += 1 {
+        while let i = 0, i < self.length, i += 1 {
             h += cast(u32)self[i]
             h *= 16777619
         }

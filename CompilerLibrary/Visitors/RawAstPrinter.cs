@@ -175,6 +175,8 @@ namespace Cheez.Visitors
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("let ");
+            if (variable.Constant)
+                sb.Append("const ");
             sb.Append(variable.Pattern.Accept(this));
             if (variable.TypeExpr != null)
                 sb.Append($": {variable.TypeExpr.Accept(this)}");
@@ -187,6 +189,10 @@ namespace Cheez.Visitors
         {
             var sb = new StringBuilder();
             sb.Append("if ");
+
+            if (ifs.PreAction != null)
+                sb.Append(ifs.PreAction.Accept(this)).Append(", ");
+
             sb.Append(ifs.Condition.Accept(this));
             sb.Append(" ");
             sb.Append(ifs.IfCase.Accept(this));
@@ -232,9 +238,9 @@ namespace Cheez.Visitors
         {
             var sb = new StringBuilder();
             sb.Append("while ");
-            if (wh.PreAction != null) sb.Append(wh.PreAction.Accept(this) + "; ");
+            if (wh.PreAction != null) sb.Append(wh.PreAction.Accept(this) + ", ");
             sb.Append(wh.Condition.Accept(this));
-            if (wh.PostAction != null) sb.Append("; " + wh.PostAction.Accept(this));
+            if (wh.PostAction != null) sb.Append(", " + wh.PostAction.Accept(this));
             sb.Append(" " + wh.Body.Accept(this));
             return sb.ToString().Indent(indentLevel);
         }

@@ -125,7 +125,7 @@ impl(K: type, V: type) Table(K, V) {
     fn adjust_capacity(ref Self, cap: uint) {
         let entries_new = alloc_n(Entry(K, V), cap, allocator)
 
-        while let i = 0; i < entries_new.length; i += 1 {
+        while let i = 0, i < entries_new.length, i += 1 {
             entries_new[i].filled = false
             entries_new[i].is_tombstone = false
         }
@@ -133,7 +133,7 @@ impl(K: type, V: type) Table(K, V) {
         // copy entries to new array
         if entries.data != null {
             count = 0
-            while let i = 0; i < entries.length; i += 1 {
+            while let i = 0, i < entries.length, i += 1 {
                 let entry = &entries[i]
                 if entry.filled {
                     let dest = find_entry(entries_new, entry.key)

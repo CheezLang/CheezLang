@@ -112,9 +112,12 @@ namespace Cheez
                 if (p.Type.IsPolyType || (p.Name?.IsPolymorphic ?? false))
                     func.IsGeneric = true;
 
-                if (p.Type.IsComptimeOnly && !(p.Name?.IsPolymorphic ?? false))
+                if (!func.GetFlag(StmtFlags.IsMacroFunction))
                 {
-                    ReportError(p, $"Parameter '{p}' must be constant because the type '{p.Type}' is only available at compiletime");
+                    if (p.Type.IsComptimeOnly && !(p.Name?.IsPolymorphic ?? false))
+                    {
+                        ReportError(p, $"Parameter '{p}' must be constant because the type '{p.Type}' is only available at compiletime");
+                    }
                 }
             }
 

@@ -111,7 +111,7 @@ impl(T: type) Array(T) {
 
         let idx = from
         let pivot = data[to]
-        while let i = from; i < to; i += 1 {
+        while let i = from, i < to, i += 1 {
             if cmp(data[i], pivot) > 0 {
                 (data[idx], data[i]) = (data[i], data[idx])
                 idx += 1
@@ -160,11 +160,9 @@ impl(F: type, T: type) From(Array(F)) for Array(T) if T : From(F), #notyet {
     }
 }
 
-fn for_extension_array_T(arr: Array($T), $code: Code, $reverse: bool = false,
-    $by_reference: bool = true) #for {
-
-
-    while let it_index = 0; it_index < arr.get_length(); it_index += 1 {
+fn for_extension_array_T(arr: Array($T), code: Code, reverse: bool = false,
+                            by_reference: bool = true) #for {
+    while let it_index = 0, it_index < arr.get_length(), it_index += 1 {
         if const reverse {
             let it_index_rev = arr.length - it_index - 1
             if const by_reference {

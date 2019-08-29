@@ -33,7 +33,7 @@
         },
         "type_modifiers": {
             "name": "storage.type.cheezlang",
-            "match": "\\b(ref)\\b"
+            "match": "\\b(ref|const)\\b"
         },
         "modifiers": {
             "name": "keyword.modifier.cheezlang",

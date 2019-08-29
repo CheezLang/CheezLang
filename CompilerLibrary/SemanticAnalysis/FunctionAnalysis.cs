@@ -188,15 +188,15 @@ namespace Cheez
         {
             switch (stmt)
             {
-                case AstVariableDecl vardecl: return AnalyseVariableDecl(vardecl); break;
-                case AstReturnStmt ret: return AnalyseReturnStatement(ret); break;
-                case AstExprStmt expr: return AnalyseExprStatement(expr); break;
-                case AstAssignment ass: return AnalyseAssignStatement(ass); break;
-                case AstWhileStmt whl: return AnalyseWhileStatement(whl); break;
-                case AstBreakStmt br: return AnalyseBreakStatement(br); break;
-                case AstContinueStmt cont: return AnalyseContinueStatement(cont); break;
-                case AstUsingStmt use: return AnalyseUseStatement(use); break;
-                case AstForStmt fo: return AnalyseForStatement(fo); break;
+                case AstVariableDecl vardecl: return AnalyseVariableDecl(vardecl);
+                case AstReturnStmt ret: return AnalyseReturnStatement(ret);
+                case AstExprStmt expr: return AnalyseExprStatement(expr);
+                case AstAssignment ass: return AnalyseAssignStatement(ass);
+                case AstWhileStmt whl: return AnalyseWhileStatement(whl);
+                case AstBreakStmt br: return AnalyseBreakStatement(br);
+                case AstContinueStmt cont: return AnalyseContinueStatement(cont);
+                case AstUsingStmt use: return AnalyseUseStatement(use);
+                case AstForStmt fo: return AnalyseForStatement(fo);
 
                 case AstFunctionDecl func: ReportError(func, $"Local functions not supported yet."); break;
                 //default: throw new NotImplementedException();
@@ -207,9 +207,13 @@ namespace Cheez
 
         private AstStatement AnalyseForStatement(AstForStmt fo)
         {
+            fo.SubScope = new Scope("for", fo.Scope);
+
             fo.Collection.AttachTo(fo);
             fo.Collection = InferType(fo.Collection, null);
 
+            fo.Body.AttachTo(fo);
+            fo.Body.Scope = fo.SubScope;
             fo.Body = InferType(fo.Body, CheezType.Code);
 
             var fors = fo.Scope.GetForExtensions(fo.Collection.Type);
@@ -298,7 +302,7 @@ namespace Cheez
 
                 var call = new AstCallExpr(new AstFunctionRef(func, null, fo.Location), args, fo.Location);
                 var exprStmt = new AstExprStmt(call, fo.Body.Location);
-                exprStmt.Scope = fo.Scope;
+                exprStmt.Scope = fo.SubScope;
                 return AnalyseStatement(exprStmt);
             }
         }
@@ -417,15 +421,15 @@ namespace Cheez
 
         private AstWhileStmt AnalyseWhileStatement(AstWhileStmt whl)
         {
-            whl.SubScope = new Scope("while", whl.Scope);
-
+            whl.PreScope = whl.Scope;
             if (whl.PreAction != null)
             {
-                // TODO
-                whl.PreAction.Scope = whl.SubScope;
+                whl.PreScope = new Scope("while-pre", whl.Scope);
+                whl.PreAction.Scope = whl.PreScope;
                 whl.PreAction.Parent = whl;
                 whl.PreAction = AnalyseVariableDecl(whl.PreAction);
             }
+            whl.SubScope = new Scope("while", whl.PreScope);
 
             whl.Condition.Scope = whl.SubScope;
             whl.Condition.Parent = whl;
@@ -741,6 +745,11 @@ namespace Cheez
                         ReportError(expr.Expr, $"This type of expression is not allowed here");
                         break;
                 }
+            }
+
+            if (expr.Expr.Type.IsComptimeOnly)
+            {
+                ReportError(expr.Expr, $"This type of expression is not allowed here");
             }
 
             if (expr.Expr.GetFlag(ExprFlags.Returns))

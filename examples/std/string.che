@@ -142,7 +142,7 @@ impl(CharType: type) StringBase(CharType) {
     }
 
     fn index_of(ref Self, ch: CharType) -> int {
-        while let i = 0; i < length; i += 1 {
+        while let i = 0, i < length, i += 1 {
             if data[i] == ch {
                 return i
             }
@@ -168,7 +168,7 @@ impl String {
         // 1        - in format
         // 2        - escape
 
-        while let i = 0; i < len; i += 1 {
+        while let i = 0, i < len, i += 1 {
             let c = format[i]
 
             if state == 0 {
@@ -245,7 +245,7 @@ fn streql(a: $T, b: $T2, len: int) -> bool {
         len = blen
     }
 
-    while let i = 0; i < len; i += 1 {
+    while let i = 0, i < len, i += 1 {
         if a::char_at(i) != b::char_at(i) {
             return false
         }
@@ -261,7 +261,7 @@ fn streq(a: $T, b: $T2) -> bool {
         return false
     }
 
-    while let i = 0; i < len; i += 1 {
+    while let i = 0, i < len, i += 1 {
         if a::char_at(i) != b::char_at(i) {
             return false
         }

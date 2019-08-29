@@ -314,6 +314,7 @@ namespace Cheez.Parsing
 
                 // @temporary, these statements should not create a new scope
                 var block = new AstBlockExpr(stmts, location);
+                block.SetFlag(ExprFlags.Anonymous, true);
                 stmt = new AstExprStmt(block, location);
             }
 
@@ -1174,16 +1175,16 @@ namespace Cheez.Parsing
 
             if (CheckToken(TokenType.KwLet))
             {
-                init = ParseVariableDeclaration(TokenType.Semicolon);
+                init = ParseVariableDeclaration(TokenType.Comma);
                 SkipNewlines();
-                Consume(TokenType.Semicolon, ErrMsg(";", "after variable declaration in while statement"));
+                Consume(TokenType.Comma, ErrMsg(",", "after variable declaration in while statement"));
                 SkipNewlines();
             }
 
             condition = ParseExpression(ErrMsg("expression", "after keyword 'while'"));
             SkipNewlines();
 
-            if (CheckToken(TokenType.Semicolon))
+            if (CheckToken(TokenType.Comma))
             {
                 NextToken();
                 SkipNewlines();
@@ -1200,8 +1201,8 @@ namespace Cheez.Parsing
         {
             TokenLocation beg = null, end = null;
             AstExpression condition = null;
-            AstNestedExpression ifCase = null;
-            AstNestedExpression elseCase = null;
+            AstExpression ifCase = null;
+            AstExpression elseCase = null;
             AstVariableDecl pre = null;
             bool isConstIf = false;
 
@@ -1216,9 +1217,9 @@ namespace Cheez.Parsing
 
             if (CheckToken(TokenType.KwLet))
             {
-                pre = ParseVariableDeclaration(TokenType.Semicolon);
+                pre = ParseVariableDeclaration(TokenType.Comma);
                 SkipNewlines();
-                Consume(TokenType.Semicolon, ErrMsg(";", "after variable declaration in if statement"));
+                Consume(TokenType.Comma, ErrMsg(",", "after variable declaration in if statement"));
                 SkipNewlines();
             }
 
@@ -1226,16 +1227,13 @@ namespace Cheez.Parsing
 
             SkipNewlines();
 
-            if (CheckToken(TokenType.KwThen))
-            {
-                NextToken();
-                SkipNewlines();
-                var stmt = ParseStatement(false);
-                ifCase = new AstBlockExpr(new List<AstStatement> { stmt }, stmt.Location);
-            }
+            if (CheckToken(TokenType.OpenBrace))
+                ifCase = ParseExpression();
             else
             {
-                ifCase = ParseBlockExpr();
+                Consume(TokenType.KwThen, ErrMsg("keyword 'then'", "after condition in if expression"));
+                SkipNewlines();
+                ifCase = ParseExpression();
             }
             end = ifCase.End;
 
@@ -1245,17 +1243,7 @@ namespace Cheez.Parsing
             {
                 NextToken();
                 SkipNewlines();
-
-
-                if (CheckToken(TokenType.KwIf))
-                    elseCase = ParseIfExpr();
-                else if (CheckToken(TokenType.OpenBrace))
-                    elseCase = ParseBlockExpr();
-                else
-                {
-                    var stmt = ParseStatement(false);
-                    elseCase = new AstBlockExpr(new List<AstStatement> { stmt }, stmt.Location);
-                }
+                elseCase = ParseExpression();
                 end = elseCase.End;
             }
 

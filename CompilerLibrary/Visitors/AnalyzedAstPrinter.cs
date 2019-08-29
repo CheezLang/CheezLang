@@ -77,12 +77,12 @@ namespace Cheez.Visitors
                         if (pi.PolymorphicTypes != null)
                         {
                             var args = string.Join(", ", pi.PolymorphicTypes.Select(kv => $"{kv.Key} = {kv.Value}"));
-                            sb.AppendLine($"// {args}".Indent(4));
+                            sb.AppendLine($"/* {args} */".Indent(4));
                         }
                         if (pi.ConstParameters != null)
                         {
                             var args = string.Join(", ", pi.ConstParameters.Select(kv => $"{kv.Key} = {kv.Value.value}"));
-                            sb.AppendLine($"// {args}".Indent(4));
+                            sb.AppendLine($"/* {args} */".Indent(4));
                         }
                         sb.AppendLine(pi.Accept(this).Indent(4));
                     }
@@ -328,6 +328,8 @@ namespace Cheez.Visitors
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("let ");
+            if (variable.Constant)
+                sb.Append("const ");
             sb.Append(variable.Pattern.Accept(this));
             sb.Append($": {variable.Type}");
             if (variable.Initializer != null)
@@ -342,9 +344,7 @@ namespace Cheez.Visitors
             sb.Append("if ");
 
             if (ifs.PreAction != null)
-            {
-                sb.Append(ifs.PreAction.Accept(this)).Append("; ");
-            }
+                sb.Append(ifs.PreAction.Accept(this)).Append(", ");
 
             sb.Append(ifs.Condition.Accept(this));
             sb.Append(" ");
@@ -391,9 +391,9 @@ namespace Cheez.Visitors
         {
             var sb = new StringBuilder();
             sb.Append("while ");
-            if (wh.PreAction != null) sb.Append(wh.PreAction.Accept(this) + "; ");
+            if (wh.PreAction != null) sb.Append(wh.PreAction.Accept(this) + ", ");
             sb.Append(wh.Condition.Accept(this));
-            if (wh.PostAction != null) sb.Append("; " + wh.PostAction.Accept(this));
+            if (wh.PostAction != null) sb.Append(", " + wh.PostAction.Accept(this));
             sb.Append(" " + wh.Body.Accept(this));
             return sb.ToString().Indent(indentLevel);
         }

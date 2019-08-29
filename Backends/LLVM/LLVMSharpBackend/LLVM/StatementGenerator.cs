@@ -349,6 +349,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         public void GenerateVariableDecl(AstVariableDecl decl)
         {
+            if (decl.Type.IsComptimeOnly)
+                return;
+
             foreach (var v in decl.SubDeclarations)
             {
                 var varPtr = CreateLocalVariable(v.Type, v.Name.Name);

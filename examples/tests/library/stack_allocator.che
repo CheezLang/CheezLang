@@ -19,7 +19,7 @@ fn Main() {
     <<pa = 10
     println(<<pa)
 
-    while let i = 0; i < 100; i += 1 {
+    while let i = 0, i < 100, i += 1 {
         alloc(int, sa)
     }
     sa.print_diagnostics()

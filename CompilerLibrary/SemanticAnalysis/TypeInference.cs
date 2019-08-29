@@ -103,6 +103,10 @@ namespace Cheez
 
         private AstExpression InferTypeHelper(AstExpression expr, CheezType expected, TypeInferenceContext context)
         {
+            if (!(context?.forceInfer ?? false) && expr.TypeInferred)
+                return expr;
+            expr.TypeInferred = true;
+
             if (expected == CheezType.Code)
             {
                 expr.Scope = new Scope($"code", expr.Scope);
@@ -110,11 +114,6 @@ namespace Cheez
                 expr.Value = expr;
                 return expr;
             }
-
-
-            if (!(context?.forceInfer ?? false) && expr.TypeInferred)
-                return expr;
-            expr.TypeInferred = true;
 
             expr.Type = CheezType.Error;
 
@@ -1207,14 +1206,14 @@ namespace Cheez
 
             expr.IfCase.Scope = expr.SubScope;
             expr.IfCase.Parent = expr;
-            expr.IfCase = InferTypeHelper(expr.IfCase, expected, context) as AstNestedExpression;
+            expr.IfCase = InferTypeHelper(expr.IfCase, expected, context);
             ConvertLiteralTypeToDefaultType(expr.IfCase, expected);
 
             if (expr.ElseCase != null)
             {
                 expr.ElseCase.Scope = expr.SubScope;
                 expr.ElseCase.Parent = expr;
-                expr.ElseCase = InferTypeHelper(expr.ElseCase, expected, context) as AstNestedExpression;
+                expr.ElseCase = InferTypeHelper(expr.ElseCase, expected, context);
                 ConvertLiteralTypeToDefaultType(expr.ElseCase, expected);
                 
                 if (expr.IfCase.Type == expr.ElseCase.Type)
@@ -1236,11 +1235,11 @@ namespace Cheez
                 expr.Type = CheezType.Void;
             }
 
-            if (expr.ElseCase != null)
+            if (expr.ElseCase is AstNestedExpression elseBlock && expr.IfCase is AstNestedExpression ifBlock)
             {
-                foreach (var symbol in expr.IfCase.SubScope.InitializedSymbols)
+                foreach (var symbol in ifBlock.SubScope.InitializedSymbols)
                 {
-                    if (expr.ElseCase.SubScope.IsInitialized(symbol))
+                    if (elseBlock.SubScope.IsInitialized(symbol))
                         expr.Scope.SetInitialized(symbol);
                 }
             }
@@ -1329,6 +1328,21 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "code":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@code takes exactly one argument");
+                            return expr;
+                        }
+
+                        var arg = expr.Arguments[0].Expr;
+                        arg.Scope = new Scope($"code", expr.Scope);
+                        expr.Type = CheezType.Code;
+                        expr.Value = arg;
+                        return expr;
+                    }
+
                 case "insert":
                     {
                         if (expr.Arguments.Count == 0)
@@ -1400,7 +1414,7 @@ namespace Cheez
                             return expr;
                         }
 
-                        arg = InferTypeHelper(arg, null, context);
+                        arg = InferTypeHelper(arg, arg.Type, context);
                         return arg;
                     }
 
@@ -2314,7 +2328,8 @@ namespace Cheez
                 var link = new AstCompCallExpr(
                     new AstIdExpr("link", false, arg.Location),
                     new List<AstArgument> { arg }, arg.Location);
-                var varDecl = new AstVariableDecl(param.Name, null, link, false, Location: arg.Location);
+                bool isConst = arg.Type.IsComptimeOnly || arg.Expr.Value != null;
+                var varDecl = new AstVariableDecl(param.Name, null, link, isConst, Location: arg.Location);
                 return varDecl;
             });
             code.Statements.InsertRange(0, links);
@@ -2820,6 +2835,8 @@ namespace Cheez
             expr.Arguments = newArgs;
 
             // TODO: check if all poly types have been found
+            if (expr.Arguments.Any(a => a.Type?.IsErrorType ?? false))
+                return expr;
             
             // find or create instance
             var instance = InstantiatePolyFunction(func, polyTypes, constArgs, context.newPolyFunctions, expr);

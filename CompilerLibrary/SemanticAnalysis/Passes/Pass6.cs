@@ -159,6 +159,9 @@ namespace Cheez
                     v.Type = v.Initializer.Type;
             }
 
+            if (v.Type.IsComptimeOnly && !v.Constant)
+                ReportError(v, $"Variable declaration must be constant because type '{v.Type}' is only available at compile time");
+
             AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
 
             path?.RemoveAt(path.Count - 1);

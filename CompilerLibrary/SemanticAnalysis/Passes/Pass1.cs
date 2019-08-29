@@ -88,6 +88,10 @@ namespace Cheez
 
             foreach (var decl in var.SubDeclarations)
             {
+                if (decl.Scope.ToString() == "::prelude::Global::fn$ for_extension_products::macro {}::{}")
+                {
+
+                }
                 var res = var.Scope.DefineSymbol(decl);
                 if (!res.ok)
                 {

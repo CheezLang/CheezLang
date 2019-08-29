@@ -28,13 +28,13 @@ fn Main() {
     test3(true)
     test3(false)
 
-    if let (ok, str) = test4(false); ok {
+    if let (ok, str) = test4(false), ok {
         c_printf("%s`n", str)
     } else {
         c_printf("%s`n", "error"c)
     }
 
-    if let res = test4(true); res.ok {
+    if let res = test4(true), res.ok {
         c_printf("%s`n", res.value)
     } else {
         c_printf("%s`n", "error"c)

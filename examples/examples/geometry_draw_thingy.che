@@ -40,14 +40,14 @@ impl BaseShape {
     }
 
     fn draw_nodes(ref Self, g: ref MyGame) {
-        while let i = 0; i < nodes.get_length(); i += 1 {
+        while let i = 0, i < nodes.get_length(), i += 1 {
             let (sx, sy) = g.world_to_screen(nodes[i].pos)
             g.pge.draw_circle(sx, sy, 3, Pixel::rgba(255, 0, 0))
         }
     }
 
     fn hit_node(ref Self, p: float2) -> &Node {
-        while let i = 0; i < nodes.get_length(); i += 1 {
+        while let i = 0, i < nodes.get_length(), i += 1 {
             if (p - nodes[i].pos).magsq() < 0.01f {
                 return &nodes[i]
             }
@@ -193,7 +193,7 @@ impl Shape for CurveShape {
             // bezier curve
             let op = base.nodes[0].pos
             let np = op
-            while let t = 0.0f; t < 1.0f; t += 0.01f {
+            while let t = 0.0f, t < 1.0f, t += 0.01f {
                 np =    base.nodes[0].pos * (1 - t) * (1 - t) +
                         base.nodes[1].pos * 2.0f * (1 - t) * t +
                         base.nodes[2].pos * t * t
@@ -303,7 +303,7 @@ impl Game for MyGame {
                 selectedNode = temp_shape.next_node(vCursor)
             }
             else if pge.get_key(Key.F5).pressed {
-                while let i = 0; selectedNode == null and i < shapes.get_length(); i += 1 {
+                while let i = 0, selectedNode == null and i < shapes.get_length(), i += 1 {
                     selectedNode = shapes[i].hit_node(vCursor)
                 }
             }
@@ -325,7 +325,7 @@ impl Game for MyGame {
             }
         }
 
-        while let i = 0; i < shapes.get_length(); i += 1 {
+        while let i = 0, i < shapes.get_length(), i += 1 {
             shapes[i].draw(self)
         }
 
@@ -338,8 +338,8 @@ impl Game for MyGame {
         vWorldBottomRight.x = ceilf(vWorldBottomRight.x)
         vWorldBottomRight.y = ceilf(vWorldBottomRight.y)
 
-        while let x = vWorldTopLeft.x; x < vWorldBottomRight.x; x += fGrid {
-            while let y = vWorldTopLeft.y; y < vWorldBottomRight.y; y += fGrid {
+        while let x = vWorldTopLeft.x, x < vWorldBottomRight.x, x += fGrid {
+            while let y = vWorldTopLeft.y, y < vWorldBottomRight.y, y += fGrid {
                 let (sx, sy) = world_to_screen(new float2{x, y})
                 pge.draw(sx, sy, Pixel::rgba(100, 100, 255))
             }

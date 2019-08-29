@@ -108,17 +108,17 @@ namespace Cheez.Ast.Expressions
                 return Accept(new RawAstPrinter(new StringWriter()));
         }
 
-        public void AttachTo(AstExpression expr)
-        {
-            this.Scope = expr.Scope;
-            this.Parent = expr;
-        }
-
         public void Replace(AstExpression expr)
         {
             this.Scope = expr.Scope;
             this.Parent = expr.Parent;
             this.mFlags = expr.mFlags;
+        }
+
+        public void AttachTo(AstExpression expr)
+        {
+            this.Scope = expr.Scope;
+            this.Parent = expr;
         }
 
         public void AttachTo(AstStatement stmt)
@@ -236,14 +236,14 @@ namespace Cheez.Ast.Expressions
     public class AstIfExpr : AstNestedExpression
     {
         public AstExpression Condition { get; set; }
-        public AstNestedExpression IfCase { get; set; }
-        public AstNestedExpression ElseCase { get; set; }
+        public AstExpression IfCase { get; set; }
+        public AstExpression ElseCase { get; set; }
         public AstVariableDecl PreAction { get; set; }
         public bool IsConstIf { get; set; }
 
         public override bool IsPolymorphic => false;
 
-        public AstIfExpr(AstExpression cond, AstNestedExpression ifCase, AstNestedExpression elseCase = null, AstVariableDecl pre = null, bool isConstIf = false, ILocation Location = null)
+        public AstIfExpr(AstExpression cond, AstExpression ifCase, AstExpression elseCase = null, AstVariableDecl pre = null, bool isConstIf = false, ILocation Location = null)
             : base(Location: Location)
         {
             this.Condition = cond;
@@ -259,8 +259,8 @@ namespace Cheez.Ast.Expressions
         public override AstExpression Clone()
             => CopyValuesTo(new AstIfExpr(
                 Condition.Clone(),
-                IfCase.Clone() as AstNestedExpression,
-                ElseCase?.Clone() as AstNestedExpression,
+                IfCase.Clone(),
+                ElseCase?.Clone(),
                 PreAction?.Clone() as AstVariableDecl,
                 IsConstIf));
     }

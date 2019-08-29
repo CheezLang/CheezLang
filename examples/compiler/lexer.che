@@ -530,7 +530,7 @@ impl Lexer {
 
     fn parse_multi_line_comment(ref Self) {
         let level = 0
-        while location.index < text.length; location.index += 1 {
+        while location.index < text.length, location.index += 1 {
             let curr = peek_char(0)
             let next = peek_char(1)
 

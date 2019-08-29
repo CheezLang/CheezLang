@@ -50,7 +50,7 @@ namespace Cheez
                     parser.ReadToken();
                     parser.SkipNewlines();
                     var elseValue = parser.ParseExpression();
-                    return compiler.ParseExpression(@"if let _ = §value; §condition {_} else {§else}", new Dictionary<string, AstExpression>
+                    return compiler.ParseExpression(@"if let _ = §value, §condition {_} else {§else}", new Dictionary<string, AstExpression>
                     {
                         { "value", value },
                         { "condition", condition },
@@ -74,7 +74,7 @@ namespace Cheez
                     parser.ReadToken();
                     parser.SkipNewlines();
                     var condition = parser.ParseExpression();
-                    return compiler.ParseExpression(@"if let _ = §value; §condition {_} else {§else}", new Dictionary<string, AstExpression>
+                    return compiler.ParseExpression(@"if let _ = §value, §condition {_} else {§else}", new Dictionary<string, AstExpression>
                     {
                         { "value", value },
                         { "condition", condition },
@@ -287,7 +287,7 @@ namespace Cheez
             var body = parser.ParseExpression();
 
             var result = compiler.ParseExpression($@"{{
-    while let {name.data} = §start; {name.data} {(isInclusive ? "<=" : "<")} §end; {name.data} += 1 {{
+    while let {name.data} = §start, {name.data} {(isInclusive ? "<=" : "<")} §end, {name.data} += 1 {{
         §body
     }}
 }}", new Dictionary<string, AstExpression>
@@ -328,7 +328,7 @@ namespace Cheez
             var firstId = new AstIdExpr("§first", false, new Location(kwDo.location));
 
             var result = compiler.ParseExpression($@"{{
-    while let §first = true; §first or §condition {{
+    while let §first = true, §first or §condition {{
         §body
         §first = false
     }}

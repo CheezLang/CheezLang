@@ -144,6 +144,7 @@ namespace Cheez.Ast.Statements
         public AstVariableDecl PreAction { get; set; }
         public AstStatement PostAction { get; set; }
 
+        public Scope PreScope { get; set; }
         public Scope SubScope { get; set; }
 
         public AstWhileStmt(AstExpression cond, AstBlockExpr body, AstVariableDecl pre, AstStatement post, ILocation Location = null)

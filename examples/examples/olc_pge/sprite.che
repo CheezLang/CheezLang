@@ -20,7 +20,7 @@ impl Sprite {
             height = h
             data = {
                 let ptr = alloc_raw(Pixel, cast(uint) (w * h))
-                while let i = 0; i < w * h; i += 1 {
+                while let i = 0, i < w * h, i += 1 {
                     ptr[i] = new Pixel{}
                 }
                 ptr

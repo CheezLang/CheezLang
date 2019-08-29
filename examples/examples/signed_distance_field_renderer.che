@@ -404,12 +404,12 @@ impl Film {
             cast get_time_microseconds()
         }
 
-        while let y = 0; y < height; y += 1 {
+        while let y = 0, y < height, y += 1 {
             if antiAliasingSteps >= 0 {
                 printf("Rendering row {}/{}`n", [(y + 1), height])
             }
 
-            while let x = 0; x < width; x += 1 {
+            while let x = 0, x < width, x += 1 {
 
                 let fx = cast(double) x
                 let fy = cast(double) y
@@ -421,7 +421,7 @@ impl Film {
                     color= scene.project(ray)
                 }
                 else {
-                    while let i = 0; i < antiAliasingSteps; i += 1 {
+                    while let i = 0, i < antiAliasingSteps, i += 1 {
                         let ray = camera.project((fx + r.next_double()) * fw, (fy + r.next_double()) * fh)
                         let c = scene.project(ray)
                         color += c
@@ -546,7 +546,7 @@ impl SDFAllocator {
 
 fn renderImage(film: ref Film)
 {
-    while let i = 0; i < film.pixels.length; i += 1 {
+    while let i = 0, i < film.pixels.length, i += 1 {
         film.pixels[i] = new Vec3 { 0, 0, 0 }
     }
 

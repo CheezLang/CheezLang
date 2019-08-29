@@ -41,7 +41,7 @@ fn printfln(format: string, args: []Printable) {
 fn parse_int(str: string) -> int {
     let val = 0
 
-    while let i = 0; i < str.length; i += 1 {
+    while let i = 0, i < str.length, i += 1 {
         val *= 10
         val += cast(int) str[i] - '0'
     }
@@ -87,7 +87,7 @@ fn format_int(buffer: ref String, val: $T, _base: int = 10) {
         }
 
         let i = buffer.length - 1
-        while val != 0; i -= 1 {
+        while val != 0, i -= 1 {
             let lastDigit = val % base
 
             val = val / base
