@@ -1151,6 +1151,7 @@ namespace Cheez.Parsing
             List<AstArgument> args = null;
             AstExpression collection;
             AstExpression body;
+            AstIdExpr label = null;
 
             var beg = Consume(TokenType.KwFor, ErrMsg("keyword 'for'", "at beginning of for loop"));
             SkipNewlines();
@@ -1186,9 +1187,24 @@ namespace Cheez.Parsing
             collection = ParseExpression();
             SkipNewlines();
 
+            if (CheckToken(TokenType.HashIdentifier))
+            {
+                var dir = ParseIdentifierExpr(identType: TokenType.HashIdentifier);
+                if (dir.Name == "label")
+                {
+                    label = ParseIdentifierExpr();
+                    SkipNewlines();
+                }
+                else
+                {
+                    ReportError(dir.Location, $"Unknown directive '{dir.Name}'");
+                    RecoverUntil(TokenType.OpenBrace);
+                }
+            }
+
             body = ParseExpression();
 
-            return new AstForStmt(varName, indexName, collection, body, args, new Location(beg.location, collection.End));
+            return new AstForStmt(varName, indexName, collection, body, args, label, new Location(beg.location, collection.End));
         }
 
         private AstWhileStmt ParseWhileStatement()

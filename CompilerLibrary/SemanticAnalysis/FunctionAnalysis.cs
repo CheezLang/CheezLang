@@ -281,16 +281,12 @@ namespace Cheez
                 else
                     links.Add(CreateLink(it_index, it_index.Clone(), it_index.Location));
 
-                // create links for arguments
-                //if (fo.Arguments != null)
-                //{
-                //    foreach (var arg in fo.Arguments)
-                //    {
-                //        var index = arg.Index;
-                //        var param = func.Parameters[index];
-                //        links.Add(CreateLink(param.Name.Clone() as AstIdExpr, arg.Expr, arg.Location));
-                //    }
-                //}
+                // set break and continue
+                if (fo.Label != null)
+                {
+                    var setBreakAndContinue = mCompiler.ParseStatement($"@set_break_and_continue({fo.Label.Name})");
+                    links.Add(setBreakAndContinue);
+                }
 
                 // set value to null because it is not a code anymore
                 code.TypeInferred = false;
@@ -379,54 +375,44 @@ namespace Cheez
             }
         }
 
-        private AstWhileStmt FindFirstLoop(IAstNode node)
+        private AstStatement AnalyseContinueStatement(AstContinueStmt cont)
         {
-            while (node != null)
-            {
-                if (node is AstCompCallExpr cc && cc.Name.Name == "insert")
-                {
-
-                }
-                if (node is AstWhileStmt whl)
-                {
-                    return whl;
-                }
-                node = node.Parent;
-            }
-
-            return null;
-        }
-
-        private AstContinueStmt AnalyseContinueStatement(AstContinueStmt cont)
-        {
-            var name = "'while-loop";
-            if (cont.Label != null)
-                name = cont.Label.Name;
-
-            var sym = cont.Scope.GetSymbol(name);
+            var sym = cont.Scope.GetContinue(cont.Label?.Name);
             if (sym == null)
-                ReportError(cont, $"continue can only occur inside of loops");
+                ReportError(cont, $"Did not find a loop matching this continue");
             else if (sym is AstWhileStmt loop)
                 cont.Loop = loop;
-            else
-                ReportError(cont, $"Can't continue '{sym.Name}' because it is not a loop", ($"'{sym.Name}' defined here: ", sym.Location));
-
+            else if (sym is AstExpression action)
+            {
+                action = action.Clone();
+                action = InferType(action, null);
+                var expr = new AstExprStmt(action, action.Location);
+                return expr;
+            }
+            else WellThatsNotSupposedToHappen();
             return cont;
         }
 
-        private AstBreakStmt AnalyseBreakStatement(AstBreakStmt br)
+        private AstStatement AnalyseBreakStatement(AstBreakStmt br)
         {
-            var name = "'while-loop";
-            if (br.Label != null)
-                name = br.Label.Name;
-
-            var sym = br.Scope.GetSymbol(name);
+            var sym = br.Scope.GetBreak(br.Label?.Name);
             if (sym == null)
-                ReportError(br, $"break can only occur inside of loops");
+                ReportError(br, $"Did not find a loop matching this break");
             else if (sym is AstWhileStmt loop)
                 br.Loop = loop;
-            else
-                ReportError(br, $"Can't break '{sym.Name}' because it is not a loop", ($"'{sym.Name}' defined here: ", sym.Location));
+            else if (sym is AstExpression action)
+            {
+                action = action.Clone();
+                
+                action = InferTypeSilent(action, null, out var errs);
+                if (errs.HasErrors)
+                {
+                    ReportError(br.Location, "Failed to break", errs.Errors, ("break action defined here:", action.Location));
+                }
+                var expr = new AstExprStmt(action, action.Location);
+                return expr;
+            }
+            else WellThatsNotSupposedToHappen();
 
             return br;
         }

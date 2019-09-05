@@ -180,6 +180,7 @@ namespace Cheez.Ast.Statements
         public AstExpression Collection { get; set; }
         public AstExpression Body { get; set; }
         public List<AstArgument> Arguments { get; set; }
+        public AstIdExpr Label { get; set; }
 
         public Scope SubScope { get; set; }
 
@@ -189,6 +190,7 @@ namespace Cheez.Ast.Statements
             AstExpression collection,
             AstExpression body,
             List<AstArgument> arguments,
+            AstIdExpr label,
             ILocation Location = null)
             : base(Location: Location)
         {
@@ -197,6 +199,7 @@ namespace Cheez.Ast.Statements
             this.Collection = collection;
             this.Body = body;
             this.Arguments = arguments;
+            this.Label = label;
         }
 
         [DebuggerStepThrough]
@@ -207,7 +210,8 @@ namespace Cheez.Ast.Statements
                     IndexName?.Clone() as AstIdExpr,
                     Collection.Clone(),
                     Body.Clone(),
-                    Arguments?.Select(a => a.Clone() as AstArgument)?.ToList()));
+                    Arguments?.Select(a => a.Clone() as AstArgument)?.ToList(),
+                    Label?.Clone() as AstIdExpr));
     }
 
     public class AstReturnStmt : AstStatement

@@ -102,6 +102,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateCompCallExpr(AstCompCallExpr cc)
         {
+            if (cc.GetFlag(ExprFlags.IgnoreInCodeGen))
+                return LLVM.GetUndef(CheezTypeToLLVMType(cc.Type));
+
             if (cc.Name.Name == "alloca")
             {
                 var size = GenerateExpression(cc.Arguments[1], true);

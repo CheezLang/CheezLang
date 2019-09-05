@@ -78,6 +78,15 @@ namespace Cheez
             expr.Type = LiteralTypeToDefaultType(expr.Type, expected);
         }
 
+        private AstExpression InferTypeSilent(AstExpression expr, CheezType expected, out SilentErrorHandler errorHandler)
+        {
+            errorHandler = new SilentErrorHandler();
+            PushErrorHandler(errorHandler);
+            expr = InferType(expr, expected);
+            PopErrorHandler();
+            return expr;
+        }
+
         private AstExpression InferType(AstExpression expr, CheezType expected, bool resolve_poly_expr_to_concrete_type = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
         {
             var context = new TypeInferenceContext
@@ -1325,6 +1334,28 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "set_break_and_continue":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@set_break_and_continue takes exactly one argument");
+                            return expr;
+                        }
+
+                        var labelExpr = expr.Arguments[0].Expr;
+                        if (!(labelExpr is AstIdExpr label))
+                        {
+                            ReportError(labelExpr, $"Argument must be an identifier");
+                            return expr;
+                        }
+                        expr.Scope.OverrideBreakName(label.Name);
+                        expr.Scope.OverrideContinueName(label.Name);
+
+                        expr.Type = CheezType.Void;
+                        expr.SetFlag(ExprFlags.IgnoreInCodeGen, true);
+                        return expr;
+                    }
+
                 case "code":
                     {
                         if (expr.Arguments.Count != 1)
@@ -1356,6 +1387,8 @@ namespace Cheez
                         }
 
                         code = code.Value as AstExpression;
+                        code = code.Clone();
+                        code.Scope = new Scope("insert{}", code.Scope);
 
                         var links = expr.Arguments.Where(a => a.Name?.Name == "link").ToList();
                         foreach (var link in links)
@@ -1383,7 +1416,33 @@ namespace Cheez
                             }
                         }
 
-                        code = code.Clone();
+                        var _breaks = expr.Arguments.Where(a => a.Name?.Name == "_break").ToArray();
+                        if (_breaks.Length > 1)
+                        {
+                            ReportError(expr, $"Only one argument can be named '_break'");
+                        }
+                        else if (_breaks.Length == 1)
+                        {
+                            var _break = _breaks[0];
+                            var action = _break.Expr;
+                            action.AttachTo(expr);
+                            code.Scope.DefineBreak(null, action);
+                        }
+
+                        // continue
+                        var _continues = expr.Arguments.Where(a => a.Name?.Name == "_continue").ToArray();
+                        if (_continues.Length > 1)
+                        {
+                            ReportError(expr, $"Only one argument can be named '_continue'");
+                        }
+                        else if (_continues.Length == 1)
+                        {
+                            var _continue = _continues[0];
+                            var action = _continue.Expr;
+                            action.AttachTo(expr);
+                            code.Scope.DefineContinue(null, action);
+                        }
+
                         code.Parent = expr;
                         code.Scope.LinkedScope = expr.Scope;
                         code.Value = null;
@@ -1875,7 +1934,7 @@ namespace Cheez
                     expr.SetFlag(ExprFlags.Returns, true);
             }
 
-            if (expr.Statements.LastOrDefault() is AstExprStmt exprStmt)
+            if (end < expr.Statements.Count && expr.Statements.LastOrDefault() is AstExprStmt exprStmt)
             {
                 exprStmt.Scope = expr.SubScope;
                 exprStmt.Parent = expr;

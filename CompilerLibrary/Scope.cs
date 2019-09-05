@@ -121,6 +121,8 @@ namespace Cheez
         private Dictionary<AstImplBlock, List<AstFunctionDecl>> mImplTable = new Dictionary<AstImplBlock, List<AstFunctionDecl>>();
         private Dictionary<ISymbol, int> mInitializedSymbols = new Dictionary<ISymbol, int>();
         private List<AstFunctionDecl> mForExtensions = null;
+        private (string label, object loopOrAction)? mBreak = null;
+        private (string label, object loopOrAction)? mContinue = null;
 
         //
         public List<AstStructDecl> StructDeclarations = new List<AstStructDecl>();
@@ -616,13 +618,62 @@ namespace Cheez
 
         public void DefineLoop(AstWhileStmt loop)
         {
-            var name = "'while-loop";
-            if (loop.Label != null)
-                name = loop.Label.Name;
-            if (mSymbolTable.TryGetValue(name, out var other))
+            if (mBreak != null)
                 throw new Exception("Well that's not supposed to happen...");
 
-            mSymbolTable[name] = loop;
+            var name = loop.Label?.Name;
+            mBreak = (name, loop);
+            mContinue = (name, loop);
+        }
+
+        public void OverrideBreakName(string label)
+        {
+            if (mBreak == null)
+                throw new Exception("Well that's not supposed to happen...");
+
+            if (mBreak != null)
+                mBreak = (label, mBreak.Value.loopOrAction);
+        }
+
+        public void OverrideContinueName(string label)
+        {
+            if (mContinue == null)
+                throw new Exception("Well that's not supposed to happen...");
+
+            if (mContinue != null)
+                mContinue = (label, mContinue.Value.loopOrAction);
+        }
+
+        public void DefineBreak(string name, AstExpression action)
+        {
+            if (mBreak != null)
+                throw new Exception("Well that's not supposed to happen...");
+
+            mBreak = (name, action);
+        }
+
+        public void DefineContinue(string name, AstExpression action)
+        {
+            if (mContinue != null)
+                throw new Exception("Well that's not supposed to happen...");
+
+            mContinue = (name, action);
+        }
+
+        public object GetBreak(string label = null)
+        {
+            if (mBreak != null && (label == null || mBreak.Value.label == label))
+                return mBreak.Value.loopOrAction;
+
+            return Parent?.GetBreak(label);
+        }
+
+        public object GetContinue(string label = null)
+        {
+            if (mContinue != null && (label == null || mContinue.Value.label == label))
+                return mContinue.Value.loopOrAction;
+
+            return Parent?.GetContinue(label);
         }
 
         public (bool ok, ILocation other) DefineSymbol(ISymbol symbol, string name = null)

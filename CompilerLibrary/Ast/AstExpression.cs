@@ -21,7 +21,8 @@ namespace Cheez.Ast.Expressions
         SetAccess = 3,
         Anonymous = 4,
         Link = 5,
-        FromMacroExpansion = 6
+        FromMacroExpansion = 6,
+        IgnoreInCodeGen = 7
     }
 
     public abstract class AstExpression : IVisitorAcceptor, ILocation, IAstNode

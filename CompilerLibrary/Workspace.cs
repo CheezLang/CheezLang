@@ -4,6 +4,7 @@ using Cheez.Types;
 using Cheez.Types.Complex;
 using Cheez.Util;
 using Cheez.Visitors;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -323,6 +324,11 @@ namespace Cheez
         private void PopLogScope()
         {
             logScope--;
+        }
+
+        private void WellThatsNotSupposedToHappen()
+        {
+            throw new Exception("Well that's not supposed to happen...");
         }
     }
 }
