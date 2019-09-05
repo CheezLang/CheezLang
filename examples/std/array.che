@@ -143,8 +143,8 @@ impl(T: type) Iterator(T) for ArrayIterator(T) {
 impl(F: type, T: type) Into(Array(T)) for Array(F) if F : Into(T), #notyet {
     fn into(ref Self) -> Array(T) {
         let result = Array(T)::create(self.get_length())
-        loop! i in 0 -> self.get_length() {
-            result.add(self.access_unchecked(i)::into())
+        for :0..self.get_length() {
+            result.add(self.access_unchecked(it)::into())
         }
         return result
     }
@@ -153,8 +153,8 @@ impl(F: type, T: type) Into(Array(T)) for Array(F) if F : Into(T), #notyet {
 impl(F: type, T: type) From(Array(F)) for Array(T) if T : From(F), #notyet {
     fn from(value: Array(F)) -> Array(T) {
         let result = Array(T)::create(value.get_length())
-        loop! i in 0 -> value.get_length() {
-            result.add(value.access_unchecked(i)::into())
+        for :0..value.get_length() {
+            result.add(value.access_unchecked(it)::into())
         }
         return result
     }

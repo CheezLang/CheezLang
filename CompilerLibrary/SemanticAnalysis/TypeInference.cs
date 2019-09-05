@@ -236,15 +236,99 @@ namespace Cheez
                 case AstLambdaExpr l:
                     return InferTypeLambdaExpr(l, expected, context);
 
-                case AstMacroExpr m:
-                    return InferTypeMacro(m, expected, context);
-
                 case AstFunctionRef f:
                     return InferTypeFunctionRef(f, expected, context);
+
+                case AstBreakExpr b:
+                    return InferTypeBreak(b);
+
+                case AstContinueExpr b:
+                    return InferTypeContinue(b);
+
+                case AstRangeExpr r:
+                    return InferTypeRangeExpr(r, expected, context);
 
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private AstExpression InferTypeRangeExpr(AstRangeExpr r, CheezType expected, TypeInferenceContext context)
+        {
+            r.From.AttachTo(r);
+            r.To.AttachTo(r);
+
+            r.From = InferTypeHelper(r.From, null, context);
+            ConvertLiteralTypeToDefaultType(r.From, IntType.DefaultType);
+            r.From = Deref(r.From, context);
+
+            r.To = InferTypeHelper(r.To, r.From.Type, context);
+            ConvertLiteralTypeToDefaultType(r.To, IntType.DefaultType);
+            r.To = Deref(r.To, context);
+
+            if (r.From.Type != r.To.Type)
+            {
+                ReportError(r, $"Types of start and end don't match, start: {r.From.Type}, end: {r.To.Type}");
+                return r;
+            }
+
+            if (r.From.Type is CheezTypeType)
+            {
+                r.Type = CheezType.Type;
+                r.Value = RangeType.GetRangeType(r.From.Value as CheezType);
+                return r;
+            }
+
+            if (!(r.From.Type is IntType))
+            {
+                ReportError(r, $"Types of start and end must be int");
+                return r;
+            }
+
+            r.Type = RangeType.GetRangeType(r.From.Type);
+            return r;
+        }
+
+        private AstExpression InferTypeContinue(AstContinueExpr cont)
+        {
+            var sym = cont.Scope.GetContinue(cont.Label?.Name);
+            if (sym == null)
+                ReportError(cont, $"Did not find a loop matching this continue");
+            else if (sym is AstWhileStmt loop)
+                cont.Loop = loop;
+            else if (sym is AstExpression action)
+            {
+                action = action.Clone();
+                action = InferTypeSilent(action, null, out var errs);
+                if (errs.HasErrors)
+                    ReportError(cont.Location, "Failed to continue", errs.Errors, ("continue action defined here:", action.Location));
+                return action;
+            }
+            else WellThatsNotSupposedToHappen();
+
+            cont.Type = CheezType.Void;
+            return cont;
+        }
+
+        private AstExpression InferTypeBreak(AstBreakExpr br)
+        {
+            var sym = br.Scope.GetBreak(br.Label?.Name);
+            if (sym == null)
+                ReportError(br, $"Did not find a loop matching this break");
+            else if (sym is AstWhileStmt loop)
+                br.Loop = loop;
+            else if (sym is AstExpression action)
+            {
+                action = action.Clone();
+                action = InferTypeSilent(action, null, out var errs);
+                if (errs.HasErrors)
+                    ReportError(br.Location, "Failed to break", errs.Errors, ("break action defined here:", action.Location));
+                return action;
+            }
+            else WellThatsNotSupposedToHappen();
+
+            br.Type = CheezType.Void;
+            return br;
         }
 
         private AstExpression InferTypeFunctionRef(AstFunctionRef f, CheezType expected, TypeInferenceContext context)
@@ -256,31 +340,6 @@ namespace Cheez
         private AstExpression InferTypeImplTraitTypeExpr(AstImplTraitTypeExpr implTrait, TypeInferenceContext context)
         {
             throw new NotImplementedException();
-        }
-
-        private AstExpression InferTypeMacro(AstMacroExpr expr, CheezType expected, TypeInferenceContext context)
-        {
-            var macro = expr.Scope.GetMacro(expr.Name.Name);
-
-            if (macro is BuiltInMacro b)
-            {
-                var lexer = new ListLexer(mCompiler.GetText(expr), expr.Tokens);
-                var e = b.Execute(expr, lexer, mCompiler.ErrorHandler);
-
-                if (e == null)
-                {
-                    return expr;
-                }
-
-                e.Replace(expr);
-                return InferTypeHelper(e, expected, context);
-            }
-            else
-            {
-                ReportError(expr.Name, $"'{expr.Name.Name}' is not a macro.");
-            }
-
-            return expr;
         }
 
         private AstExpression InferTypeLambdaExpr(AstLambdaExpr expr, CheezType expected, TypeInferenceContext context)
@@ -2124,6 +2183,24 @@ namespace Cheez
             var sub = expr.Right.Name;
             switch (expr.Left.Type)
             {
+                case RangeType range when !expr.IsDoubleColon:
+                    {
+                        var name = expr.Right.Name;
+
+                        if (name == "start" || name == "end")
+                        {
+                            expr.SetFlag(ExprFlags.IsLValue, expr.Left.GetFlag(ExprFlags.IsLValue));
+
+                            expr.Type = range.TargetType;
+                            return expr;
+                        }
+                        else
+                        {
+                            ReportError(expr, $"type {range} has no field '{name}'");
+                            return expr;
+                        }
+                    }
+
                 case EnumType @enum when !expr.IsDoubleColon:
                     {
                         var memName = expr.Right.Name;

@@ -396,6 +396,65 @@ namespace Cheez.Types.Primitive
         }
     }
 
+    public class RangeType : CheezType
+    {
+        private static Dictionary<CheezType, RangeType> sTypes = new Dictionary<CheezType, RangeType>();
+
+        public CheezType TargetType { get; set; }
+        public override bool IsErrorType => TargetType.IsErrorType;
+        public override bool IsPolyType => TargetType.IsPolyType;
+
+        public static RangeType GetRangeType(CheezType targetType)
+        {
+            if (targetType == null)
+                return null;
+
+            if (sTypes.ContainsKey(targetType))
+                return sTypes[targetType];
+
+            var type = new RangeType
+            {
+                TargetType = targetType,
+                Size = targetType.Size * 2,
+                Alignment = targetType.Alignment
+            };
+
+            sTypes[targetType] = type;
+            return type;
+        }
+
+        public override string ToString()
+        {
+            return $"{TargetType}..{TargetType}";
+        }
+
+        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        {
+            if (concrete is RangeType p)
+                return this.TargetType.Match(p.TargetType, polyTypes);
+            return -1;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is RangeType r)
+            {
+                return TargetType == r.TargetType;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -1576707978;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<CheezType>.Default.GetHashCode(TargetType);
+            hashCode = hashCode * -1521134295 + IsErrorType.GetHashCode();
+            hashCode = hashCode * -1521134295 + IsPolyType.GetHashCode();
+            return hashCode;
+        }
+    }
+
     public class StringLiteralType : CheezType
     {
         public static StringLiteralType Instance = new StringLiteralType();

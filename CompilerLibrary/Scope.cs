@@ -113,7 +113,6 @@ namespace Cheez
 
         public IEnumerable<ISymbol> InitializedSymbols => mInitializedSymbols.Keys;
 
-        private Dictionary<string, IMacro> mMacros = new Dictionary<string, IMacro>();
         private Dictionary<string, ISymbol> mSymbolTable = new Dictionary<string, ISymbol>();
         private Dictionary<string, List<INaryOperator>> mNaryOperatorTable = new Dictionary<string, List<INaryOperator>>();
         private Dictionary<string, List<IBinaryOperator>> mBinaryOperatorTable = new Dictionary<string, List<IBinaryOperator>>();
@@ -345,22 +344,6 @@ namespace Cheez
             DefineTypeSymbol("any", CheezType.Any);
             DefineTypeSymbol("type", CheezType.Type);
             DefineTypeSymbol("Code", CheezType.Code);
-        }
-
-        public IMacro GetMacro(string name)
-        {
-            if (mMacros.TryGetValue(name, out var m))
-                return m;
-            return Parent?.GetMacro(name);
-        }
-
-        internal void DefineBuiltInMacros(CheezCompiler comp)
-        {
-            mMacros["foreach"] = new BuiltInMacroForeach(comp);
-            mMacros["loop"] = new BuiltInMacroLoop(comp);
-            mMacros["format"] = new BuiltInMacroFormat(comp);
-            mMacros["do"] = new BuiltInMacroDo(comp);
-            mMacros["do_while"] = new BuiltInMacroDoWhile(comp);
         }
 
         internal void DefineBuiltInOperators()

@@ -14,10 +14,10 @@ fn for_extension(arr: []$T, code: Code, reverse: bool = false) #for {
         if const reverse {
             let it_index_rev = arr.length - it_index - 1
             let it = arr[it_index_rev]
-            @insert(code, link=[it_index_rev], _break={break}, _continue={continue})
+            @insert(code, link=[it_index_rev], _break=break, _continue=continue)
         } else {
             let it = arr[it_index]
-            @insert(code, _break={break}, _continue={continue})
+            @insert(code, _break=break, _continue=continue)
         }
     }
 }
@@ -42,27 +42,29 @@ fn macro_test(code: Code) #macro {
 
 fn for_extension_true(it: bool, code: Code) #for {
     while let it_index = 0, it, it_index += 1 {
-        @insert(code, _break={break}, _continue={continue})
+        @insert(code, _break=break, _continue=continue)
     }
 }
 
 fn Main() {
-    let ints: []int = [3, 8, 4, 1, 9]
-    for :true #label forever {
-        for(reverse=false) :ints #label test {
-            println(it)
-            if it == 4 {
-                break
-                break test
-                break forever
-                println("test")
-                continue
-                continue test
-                continue forever
-            }
-        }
-        println("")
-    }
+    // let ints: []int = [3, 8, 4, 1, 9]
+    // for :true #label forever {
+    //     for(reverse=false) :ints #label test {
+    //         println(it)
+    //         if it == 4 {
+    //             break
+    //             break test
+    //             break forever
+    //             println("test")
+    //             continue
+    //             continue test
+    //             continue forever
+    //         }
+    //     }
+    //     println("")
+
+    //     break
+    // }
     // while let i = 0, i < 3, i += 1 #label a {
     //     printfln("in loop: {}", [i])
     //     macro_test({

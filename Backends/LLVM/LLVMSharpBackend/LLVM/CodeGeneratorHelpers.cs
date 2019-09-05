@@ -27,6 +27,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }, false);
 
             stackTraceTop = module.AddGlobal(LLVM.PointerType(stackTraceType, 0), "stacktrace.top");
+            stackTraceTop.SetThreadLocal(true);
             stackTraceTop.SetInitializer(LLVM.ConstPointerNull(LLVM.PointerType(stackTraceType, 0)));
             stackTraceTop.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
         }
@@ -421,6 +422,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case SelfType self:
                     return CheezTypeToLLVMType(self.traitType);
+
+                case RangeType r:
+                    {
+                        var name = $"range.{r.TargetType}";
+
+                        var llvmType = LLVM.StructCreateNamed(context, name);
+                        typeMap[r] = llvmType;
+
+                        var memTypes = new LLVMTypeRef[]
+                        {
+                            CheezTypeToLLVMType(r.TargetType),
+                            CheezTypeToLLVMType(r.TargetType)
+                        };
+                        LLVM.StructSetBody(llvmType, memTypes, false);
+                        return llvmType;
+                    }
 
                 default:
                     throw new NotImplementedException();

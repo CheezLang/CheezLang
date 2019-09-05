@@ -180,6 +180,13 @@ namespace Cheez
                         break;
                     }
 
+                case RangeType r:
+                    {
+                        if (arg is RangeType r2)
+                            CollectPolyTypes(r.TargetType, r2.TargetType, result);
+                        break;
+                    }
+
                 case VoidType _:
                 case FloatType _:
                 case BoolType _:

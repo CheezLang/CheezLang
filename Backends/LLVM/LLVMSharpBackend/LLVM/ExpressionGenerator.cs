@@ -54,8 +54,46 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstEnumValueExpr eve: return GenerateEnumValueExpr(eve);
                 case AstCompCallExpr cc: return GenerateCompCallExpr(cc);
                 case AstLambdaExpr l: return GenerateLambdaExpr(l);
+                case AstBreakExpr b: return GenerateBreak(b);
+                case AstContinueExpr c: return GenerateContinue(c);
+                case AstRangeExpr r: return GenerateRangeExpr(r);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GenerateRangeExpr(AstRangeExpr r)
+        {
+            var from = GenerateExpression(r.From, true);
+            var to = GenerateExpression(r.To, true);
+
+            var result = LLVM.GetUndef(CheezTypeToLLVMType(r.Type));
+            result = builder.CreateInsertValue(result, from, 0, "");
+            result = builder.CreateInsertValue(result, to, 1, "");
+            return result;
+        }
+
+        private LLVMValueRef GenerateContinue(AstContinueExpr cont)
+        {
+            // TODO: deferred statements
+            var postAction = loopPostActionMap[cont.Loop];
+            builder.CreateBr(postAction);
+
+            var bbNext = LLVM.AppendBasicBlock(currentLLVMFunction, "_cont_next");
+            builder.PositionBuilderAtEnd(bbNext);
+
+            return LLVM.GetUndef(LLVM.VoidType());
+        }
+
+        private LLVMValueRef GenerateBreak(AstBreakExpr br)
+        {
+            // TODO: deferred statements
+            var end = loopEndMap[br.Loop];
+            builder.CreateBr(end);
+
+            var bbNext = LLVM.AppendBasicBlock(currentLLVMFunction, "_br_next");
+            builder.PositionBuilderAtEnd(bbNext);
+
+            return LLVM.GetUndef(LLVM.VoidType());
         }
 
         private LLVMValueRef GenerateLambdaExpr(AstLambdaExpr lambda)
@@ -1213,6 +1251,32 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             switch (type)
             {
+                case RangeType range:
+                    {
+                        uint index = 0;
+
+                        switch (expr.Right.Name)
+                        {
+                            case "start": index = 0; break;
+                            case "end": index = 1; break;
+                            default: throw new NotImplementedException();
+                        }
+
+                        LLVMValueRef result;
+                        if (!expr.Left.GetFlag(ExprFlags.IsLValue))
+                        {
+                            result = builder.CreateExtractValue(value, index, "");
+                        }
+                        else
+                        {
+                            result = builder.CreateStructGEP(value, index, "");
+                            if (deref)
+                                result = builder.CreateLoad(result, "");
+                        }
+
+                        return result;
+                    }
+
                 case EnumType @enum:
                     {
                         var memName = expr.Right.Name;

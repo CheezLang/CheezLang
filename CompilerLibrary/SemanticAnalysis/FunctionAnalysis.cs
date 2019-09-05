@@ -191,8 +191,6 @@ namespace Cheez
                 case AstExprStmt expr: return AnalyseExprStatement(expr);
                 case AstAssignment ass: return AnalyseAssignStatement(ass);
                 case AstWhileStmt whl: return AnalyseWhileStatement(whl);
-                case AstBreakStmt br: return AnalyseBreakStatement(br);
-                case AstContinueStmt cont: return AnalyseContinueStatement(cont);
                 case AstUsingStmt use: return AnalyseUseStatement(use);
                 case AstForStmt fo: return AnalyseForStatement(fo);
 
@@ -209,6 +207,7 @@ namespace Cheez
 
             fo.Collection.AttachTo(fo);
             fo.Collection = InferType(fo.Collection, null);
+            ConvertLiteralTypeToDefaultType(fo.Collection, null);
 
             fo.Body.AttachTo(fo);
             fo.Body.Scope = fo.SubScope;
@@ -373,48 +372,6 @@ namespace Cheez
                     ReportError(use, $"Can't use type '{use.Value.Value}'");
                     break;
             }
-        }
-
-        private AstStatement AnalyseContinueStatement(AstContinueStmt cont)
-        {
-            var sym = cont.Scope.GetContinue(cont.Label?.Name);
-            if (sym == null)
-                ReportError(cont, $"Did not find a loop matching this continue");
-            else if (sym is AstWhileStmt loop)
-                cont.Loop = loop;
-            else if (sym is AstExpression action)
-            {
-                action = action.Clone();
-                action = InferType(action, null);
-                var expr = new AstExprStmt(action, action.Location);
-                return expr;
-            }
-            else WellThatsNotSupposedToHappen();
-            return cont;
-        }
-
-        private AstStatement AnalyseBreakStatement(AstBreakStmt br)
-        {
-            var sym = br.Scope.GetBreak(br.Label?.Name);
-            if (sym == null)
-                ReportError(br, $"Did not find a loop matching this break");
-            else if (sym is AstWhileStmt loop)
-                br.Loop = loop;
-            else if (sym is AstExpression action)
-            {
-                action = action.Clone();
-                
-                action = InferTypeSilent(action, null, out var errs);
-                if (errs.HasErrors)
-                {
-                    ReportError(br.Location, "Failed to break", errs.Errors, ("break action defined here:", action.Location));
-                }
-                var expr = new AstExprStmt(action, action.Location);
-                return expr;
-            }
-            else WellThatsNotSupposedToHappen();
-
-            return br;
         }
 
         private AstWhileStmt AnalyseWhileStatement(AstWhileStmt whl)
@@ -726,7 +683,8 @@ namespace Cheez
                     case AstCompCallExpr _:
                     case AstMatchExpr _:
                     case AstEmptyExpr _:
-                    case AstMacroExpr _:
+                    case AstBreakExpr _:
+                    case AstContinueExpr _:
                         break;
 
                     default:

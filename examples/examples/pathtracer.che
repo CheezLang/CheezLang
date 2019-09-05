@@ -150,7 +150,7 @@ impl PathTracer {
     fn intersect(ref Self, ray: Ray) -> Option(HitInfo) {
         let nearest: Option(HitInfo) = None
 
-        loop! n in 0 -> objects.get_length() {
+        for n : 0..objects.get_length() {
             let hit = objects[n].intersect(ray)
             nearest = match (nearest, hit) {
                 (None, Some($hit)) -> Some(hit)
@@ -278,9 +278,9 @@ fn pathtracer_thread(data: &(index: int, pt: &PathTracer)) -> u32 #stdcall {
     let prng = MTwister::create(cast seed)
 
     while true {
-        loop! current_y in start_y ->> end_y {
+        for(inclusive=true) current_y : start_y..end_y {
             // loop through current line
-            loop! current_x in 0 -> width {
+            for current_x : 0..width {
                 let index = current_x + current_y * width
 
                 // x coordinate in range [-1; 1]
@@ -362,7 +362,7 @@ impl Game for PathTracer {
         self.add_object(new Sphere{new{0, size + 9.75, 10}, 10, m_light})
 
         // create threads
-        loop! i in 0 -> thread_count {
+        for i : 0..thread_count {
             thread_datas[i] = (i, &self, 0)
             threads[i] = CreateThread(null, 0, cast pathtracer_thread, &thread_datas[i], 0, null)
         }
@@ -370,7 +370,7 @@ impl Game for PathTracer {
     }
 
     fn on_destroy(ref Self) -> bool {
-        loop! i in 0 -> thread_count {
+        for i : 0..thread_count {
             TerminateThread(threads[i], 0)
             CloseHandle(threads[i])
         }
@@ -383,8 +383,8 @@ impl Game for PathTracer {
         }
 
         //
-        loop! current_y in 0 -> height {
-            loop! current_x in 0 -> width {
+        for current_y : 0..height {
+            for current_x : 0..width {
                 let index = current_x + current_y * width
                 let thread_id = current_y / (height / thread_count)
                 if thread_id >= thread_count {

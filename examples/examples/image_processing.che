@@ -103,17 +103,17 @@ impl Game for ImageProcessingGame {
         self.pge = pge
 
         // clear images to black
-        foreach! i in range(0, num_images_x * num_images_y - 1) {
+        for i : 0..num_images_x * num_images_y {
             printfln("clearing frame {}", [i])
-            foreach! x in range(0, image_width - 1) {
-                foreach! y in range(0, image_height - 1) {
+            for x : 0..image_width {
+                for y : 0..image_height {
                     frames[i].set(x, y, 0.5)
                 }
             }
         }
 
-        foreach! x in range(0, image_width - 1) {
-            foreach! y in range(0, image_height - 1) {
+        for x : 0..image_width {
+            for y : 0..image_height {
                 last_frame.set(x, y, 0)
             }
         }
@@ -133,8 +133,8 @@ impl Game for ImageProcessingGame {
     }
 
     fn draw_frame(ref Self, slot_x: int, slot_y: int, frame: ref Frame) {
-        foreach! x in range(0, image_width - 1) {
-            foreach! y in range(0, image_height - 1) {
+        for x : 0..image_width {
+            for y : 0..image_height {
                 let col = frame.get_rgb(x, y)
 
                 let offset_x = (slot_x + 1) * border_width + slot_x * image_width
@@ -150,8 +150,8 @@ impl Game for ImageProcessingGame {
         if res != null {
             let xScale = (cast(double)image_width) / (cast(double)res.width)
             let yScale = (cast(double)image_height) / (cast(double)res.height)
-            foreach! x in range(0, res.width - 1) {
-                foreach! y in range(0, res.height - 1) {
+            for x : 0..res.width {
+                for y : 0..res.height {
                     let index = (x + y * res.width) * 3
                     let col = (cast(double) res.imageData[index + 2], cast(double) res.imageData[index + 1], cast(double) res.imageData[index + 0]) / 255.0
                     let targetX = cast(int) (cast(double)x) * xScale
@@ -163,14 +163,14 @@ impl Game for ImageProcessingGame {
     }
 
     fn move_detection(ref Self, source_frame: ref Frame, last_frame: ref Frame, target_frame: ref Frame) {
-        foreach! x in range(0, image_width - 1) {
-            foreach! y in range(0, image_height - 1) {
+        for x : 0..image_width {
+            for y : 0..image_height {
                 let last = last_frame.get(x, y)
                 let now = source_frame.get(x, y)
                 let diff = last - now
 
-                let r = do!  diff if _ > 0 else 0.0
-                let g = do! -diff if _ > 0 else 0.0
+                let r = if diff > 0 then  diff else 0.0
+                let g = if diff < 0 then -diff else 0.0
                 let b = abs(diff)
 
                 // let r = if diff > 0 {diff} else {0.0}
@@ -182,8 +182,8 @@ impl Game for ImageProcessingGame {
     }
 
     fn temporal_low_pass_filter(ref Self, source_frame: ref Frame, target_frame: ref Frame, activity_frame: ref Frame) {
-        foreach! x in range(0, image_width - 1) {
-            foreach! y in range(0, image_height - 1) {
+        for x : 0..image_width {
+            for y : 0..image_height {
                 let dl = source_frame.get_rgb(x, y) - activity_frame.get_rgb(x, y)
                 dl *= 0.2
                 activity_frame.set_rgb(x, y, dl + activity_frame.get_rgb(x, y))
@@ -195,8 +195,8 @@ impl Game for ImageProcessingGame {
     fn dilation_erosion(ref Self, input: ref Frame, last: ref Frame, activity: ref Frame, output: ref Frame) {
         let steps = 5.0
         // activity
-        foreach! x in range(0, image_width - 1) {
-            foreach! y in range(0, image_height - 1) {
+        for x : 0..image_width {
+            for y : 0..image_height {
                 let i = input.get(x, y)
                 let k = (cast(float) (cast(int)i * steps)) / steps
                 activity.set(x, y, k)
@@ -204,10 +204,10 @@ impl Game for ImageProcessingGame {
         }
 
         // dilation
-        foreach! n in range(1, 1) {
+        for n : 1..1 {
             activity.copy_to(output)
-            foreach! x in range(0, image_width - 1) {
-                foreach! y in range(0, image_height - 1) {
+            for x : 0..image_width {
+                for y : 0..image_height {
                     if activity.get(x, y) > 0.5 {
                         output.set(x    , y    , 1)
                         output.set(x - 1, y    , 1)
@@ -220,11 +220,11 @@ impl Game for ImageProcessingGame {
         }
 
         // erorios
-        foreach! n in range(1, 3) {
+        for n : 1..3 {
             activity.copy_to(output)
 
-            foreach! x in range(0, image_width - 1) {
-                foreach! y in range(0, image_height - 1) {
+            for x : 0..image_width {
+                for y : 0..image_height {
 
                     let sum =   activity.get(x - 1, y) +
                                 activity.get(x + 1, y) +
@@ -248,11 +248,11 @@ impl Game for ImageProcessingGame {
     fn adaptive_threshold(input: ref Frame, output: ref Frame) {
         let adaptive_bias = 1.0
 
-        loop! x in 0->image_width {
-            loop! y in 0->image_height {
+        for x : 0..image_width {
+            for y : 0..image_height {
                 let region_sum = 0.0
-                loop! xx in (x - 2)->>(x + 2) {
-                    loop! yy in (y - 2)->>(y + 2) {
+                for(inclusive=true) xx : (x - 2)..(x + 2) {
+                    for(inclusive=true) yy : (y - 2)..(y + 2) {
                         region_sum += input.get(xx, yy)
                     }
                 }
@@ -283,8 +283,8 @@ impl Game for ImageProcessingGame {
 
         webcam.copy_to(last_frame)
 
-        loop! x in 0->num_images_x {
-            loop! y in 0->num_images_y {
+        for x : 0..num_images_x {
+            for y : 0..num_images_y {
                 draw_frame(x, y, frames[x + y * num_images_x])
             }
         }

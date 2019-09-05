@@ -30,3 +30,26 @@ impl(F: type, T: type) Into(T) for F if T : From(F), #notyet {
         return T::from(self)
     }
 }
+
+// standard for loops
+fn for_extension_range(r: $T..T, code: Code, reverse: bool = false, inclusive: bool = false) #for {
+    let (start, end, inc) = {
+        let end = if const inclusive then r.end else r.end - 1
+        if const reverse then (end, r.start, -1) else (r.start, end, 1)
+    }
+
+    let const compare = @code(if const reverse then it >= end else it <= end)
+
+    while let (it, it_index) = (start, 0),
+        @insert(compare, link=[it]),
+        it_index += 1; it += inc {
+        @insert(code, _break=break, _continue=continue)
+    }
+}
+
+fn for_extension_int(end: int, code: Code) #for {
+    while let it_index = 0, it_index < end, it_index += 1 {
+        let it = it_index
+        @insert(code, _break=break, _continue=continue)
+    }
+}

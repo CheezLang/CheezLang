@@ -181,8 +181,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstVariableDecl decl: GenerateVariableDecl(decl); break;
                 case AstAssignment ass: GenerateAssignment(ass); break;
                 case AstWhileStmt whl: GenerateWhile(whl); break;
-                case AstBreakStmt br: GenerateBreak(br); break;
-                case AstContinueStmt cont: GenerateContinue(cont); break;
                 case AstUsingStmt use:
                     if (use.Value.Type is StructType)
                         GenerateExpression(use.Value, true);
@@ -190,26 +188,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 //default: throw new NotImplementedException();
             }
-        }
-
-        private void GenerateContinue(AstContinueStmt cont)
-        {
-            // TODO: deferred statements
-            var postAction = loopPostActionMap[cont.Loop];
-            builder.CreateBr(postAction);
-
-            var bbNext = LLVM.AppendBasicBlock(currentLLVMFunction, "_cont_next");
-            builder.PositionBuilderAtEnd(bbNext);
-        }
-
-        private void GenerateBreak(AstBreakStmt br)
-        {
-            // TODO: deferred statements
-            var end = loopEndMap[br.Loop];
-            builder.CreateBr(end);
-
-            var bbNext = LLVM.AppendBasicBlock(currentLLVMFunction, "_br_next");
-            builder.PositionBuilderAtEnd(bbNext);
         }
 
         private void GenerateWhile(AstWhileStmt whl)

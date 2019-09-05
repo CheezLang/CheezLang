@@ -71,6 +71,10 @@ namespace Cheez.Types
             {
                 return TypesMatch(sla.TargetType, slb.TargetType);
             }
+            else if (a is RangeType ra && b is RangeType rb)
+            {
+                return TypesMatch(ra.TargetType, rb.TargetType);
+            }
             else if (a is StructType sa && b is StructType sb)
             {
                 if (sa.Declaration.Name.Name != sb.Declaration.Name.Name)

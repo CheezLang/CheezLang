@@ -523,7 +523,7 @@ namespace Cheez.Visitors
             }
         }
 
-        public override string VisitBreakStmt(AstBreakStmt br, int data = 0)
+        public override string VisitBreakExpr(AstBreakExpr br, int data = 0)
         {
             var sb = new StringBuilder();
 
@@ -544,7 +544,7 @@ namespace Cheez.Visitors
             return sb.ToString();
         }
 
-        public override string VisitContinueStmt(AstContinueStmt cont, int data = 0)
+        public override string VisitContinueExpr(AstContinueExpr cont, int data = 0)
         {
             var sb = new StringBuilder();
 
@@ -569,6 +569,11 @@ namespace Cheez.Visitors
 
 
         #region Expressions
+
+        public override string VisitRangeExpr(AstRangeExpr expr, int data = 0)
+        {
+            return $"{expr.From.Accept(this)}..{expr.To.Accept(this)}";
+        }
 
         public override string VisitLambdaExpr(AstLambdaExpr expr, int data = 0)
         {

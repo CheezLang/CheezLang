@@ -348,11 +348,6 @@ namespace Cheez.Parsing
                 case TokenType.EOF:
                     return null;
 
-                case TokenType.KwBreak:
-                    return ParseBreakStatement();
-                case TokenType.KwContinue:
-                    return ParseContinueStatement();
-
                 case TokenType.HashIdentifier:
                         return ParseDirectiveStatement();
 
@@ -433,27 +428,6 @@ namespace Cheez.Parsing
                         }
                     }
             }
-        }
-
-        private AstStatement ParseContinueStatement()
-        {
-            var token = NextToken();
-            AstIdExpr name = null;
-            if (CheckToken(TokenType.Identifier))
-            {
-                name = ParseIdentifierExpr();
-            }
-            return new AstContinueStmt(name, new Location(token.location, name?.Location?.End ?? token.location));
-        }
-
-        private AstStatement ParseBreakStatement()
-        {
-            var token = NextToken();
-            AstIdExpr name = null;
-            if (CheckToken(TokenType.Identifier)) {
-                name = ParseIdentifierExpr();
-            }
-            return new AstBreakStmt(name, new Location(token.location, name?.Location?.End ?? token.location));
         }
 
         private AstStatement ParseTraitDeclaration()
@@ -1416,14 +1390,6 @@ namespace Cheez.Parsing
 
             var expr = ParseOrExpression(errorMessage);
 
-            if (CheckToken(TokenType.KwImpl))
-            {
-                NextToken();
-                SkipNewlines();
-                var trait = ParseExpression();
-                return new AstImplTraitTypeExpr(expr, trait, new Location(expr.Beginning, trait.End));
-            }
-
             return expr;
         }
 
@@ -1444,13 +1410,29 @@ namespace Cheez.Parsing
         [DebuggerStepThrough]
         private AstExpression ParseComparisonExpression(ErrorMessageResolver e)
         {
-            return ParseBinaryLeftAssociativeExpression(ParseAddSubExpression, e,
+            return ParseBinaryLeftAssociativeExpression(ParseRangeExpression, e,
                 (TokenType.Less, "<"),
                 (TokenType.LessEqual, "<="),
                 (TokenType.Greater, ">"),
                 (TokenType.GreaterEqual, ">="),
                 (TokenType.DoubleEqual, "=="),
                 (TokenType.NotEqual, "!="));
+        }
+
+        //[DebuggerStepThrough]
+        private AstExpression ParseRangeExpression(ErrorMessageResolver e)
+        {
+            var lhs = ParseAddSubExpression(e);
+
+            if (CheckToken(TokenType.PeriodPeriod))
+            {
+                NextToken();
+                SkipNewlines();
+                var rhs = ParseAddSubExpression(e);
+                return new AstRangeExpr(lhs, rhs, new Location(lhs.Beginning, rhs.End));
+            }
+
+            return lhs;
         }
 
         [DebuggerStepThrough]
@@ -1485,7 +1467,10 @@ namespace Cheez.Parsing
             });
         }
 
-        private AstExpression ParseLeftAssociativeExpression(ExpressionParser sub, ErrorMessageResolver errorMessage, Func<TokenType, string> tokenMapping)
+        private AstExpression ParseLeftAssociativeExpression(
+            ExpressionParser sub,
+            ErrorMessageResolver errorMessage,
+            Func<TokenType, string> tokenMapping)
         {
             var lhs = sub(errorMessage);
             AstExpression rhs = null;
@@ -1911,83 +1896,22 @@ namespace Cheez.Parsing
             return new AstLambdaExpr(parameters, body, retType, new Location(beg, body.End));
         }
 
-        private AstExpression ParseMacro(Token name)
+        private AstExpression ParseContinueExpr()
         {
-            if (name == null)
-            {
-                name = ConsumeUntil(TokenType.Identifier, ErrMsg("name", "at beginning of macro"));
-            }
+            var token = NextToken();
+            AstIdExpr name = null;
+            if (CheckToken(TokenType.Identifier))
+                name = ParseIdentifierExpr();
+            return new AstContinueExpr(name, new Location(token.location, name?.Location?.End ?? token.location));
+        }
 
-            var beg = name.location;
-            TokenLocation end;
-
-            end = ConsumeUntil(TokenType.Bang, ErrMsg("!", "after name of macro")).location;
-
-            var tokens = new List<Token>();
-            var stack = new Stack<TokenType>();
-
-            bool startsWithParen = false;
-
-            while (true) {
-                var next = PeekToken();
-                switch (next.type)
-                {
-                    case TokenType.OpenBrace:
-                    case TokenType.OpenBracket:
-                    case TokenType.OpenParen:
-                        stack.Push(next.type);
-
-                        if (tokens.Count == 0)
-                            startsWithParen = true;
-                        break;
-
-                    case TokenType.ClosingBrace:
-                    case TokenType.ClosingBracket:
-                    case TokenType.ClosingParen:
-                        if (stack.Count == 0)
-                        {
-                            goto end;
-                        }
-                        else if ((stack.Peek() == TokenType.OpenBrace && next.type == TokenType.ClosingBrace) ||
-                            (stack.Peek() == TokenType.OpenBracket && next.type == TokenType.ClosingBracket) ||
-                            (stack.Peek() == TokenType.OpenParen && next.type == TokenType.ClosingParen))
-                        {
-                            stack.Pop();
-
-                            if (startsWithParen && stack.Count == 0)
-                            {
-                                tokens.Add(NextToken());
-                                goto end;
-                            }
-                        }
-                        else
-                        {
-                            ReportError(next.location, $"Unexpected token {next.type} in macro. Parenthesis have to be balanced!");
-                        }
-                        break;
-
-                    case TokenType.NewLine:
-                        if (stack.Count == 0)
-                        {
-                            goto end;
-                        }
-                        break;
-                }
-
-                tokens.Add(NextToken());
-            }
-
-            end:
-
-            end = tokens.LastOrDefault()?.location ?? end;
-
-            if (startsWithParen)
-            {
-                tokens.RemoveAt(tokens.Count - 1);
-                tokens.RemoveAt(0);
-            }
-
-            return new AstMacroExpr(new AstIdExpr(name.data as string, false, new Location(name.location)), tokens, new Location(beg, end));
+        private AstExpression ParseBreakExpr()
+        {
+            var token = NextToken();
+            AstIdExpr name = null;
+            if (CheckToken(TokenType.Identifier))
+                name = ParseIdentifierExpr();
+            return new AstBreakExpr(name, new Location(token.location, name?.Location?.End ?? token.location));
         }
 
         private AstExpression ParseAtomicExpression(ErrorMessageResolver errorMessage)
@@ -1995,6 +1919,11 @@ namespace Cheez.Parsing
             var token = PeekToken();
             switch (token.type)
             {
+                case TokenType.KwBreak:
+                    return ParseBreakExpr();
+                case TokenType.KwContinue:
+                    return ParseContinueExpr();
+
                 case TokenType.KwDefault:
                     NextToken();
                     return new AstDefaultExpr(new Location(token.location));
@@ -2043,8 +1972,6 @@ namespace Cheez.Parsing
 
                 case TokenType.Identifier:
                     NextToken();
-                    if (CheckToken(TokenType.Bang))
-                        return ParseMacro(token);
                     return new AstIdExpr((string)token.data, false, new Location(token.location));
 
                 case TokenType.StringLiteral:

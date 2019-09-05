@@ -130,26 +130,6 @@ namespace Cheez.Ast.Expressions
         }
     }
 
-    public class AstMacroExpr : AstExpression
-    {
-        public override bool IsPolymorphic => false;
-
-        public AstIdExpr Name { get; set; }
-        public List<Token> Tokens { get; set; } = new List<Token>();
-
-        public AstMacroExpr(AstIdExpr name, List<Token> tokens, ILocation Location = null)
-            : base(Location)
-        {
-            Name = name;
-            Tokens = tokens;
-        }
-
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitMacroExpr(this, data);
-
-        public override AstExpression Clone()
-            => CopyValuesTo(new AstMacroExpr(Name.Clone() as AstIdExpr, Tokens));
-    }
-
     public abstract class AstNestedExpression : AstExpression
     {
         public Scope SubScope { get; set; }
@@ -799,5 +779,66 @@ namespace Cheez.Ast.Expressions
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitArrayExpr(this, data);
 
         public override AstExpression Clone() => CopyValuesTo(new AstArrayExpr(Values.Select(v => v.Clone()).ToList()));
+    }
+
+    public class AstBreakExpr : AstExpression
+    {
+        public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
+        public AstWhileStmt Loop { get; set; }
+
+        public AstIdExpr Label { get; set; }
+
+        public override bool IsPolymorphic => false;
+
+        public AstBreakExpr(AstIdExpr label = null, ILocation Location = null) : base(Location: Location)
+        {
+            this.Label = label;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBreakExpr(this, data);
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstBreakExpr(Label?.Clone() as AstIdExpr));
+    }
+
+    public class AstContinueExpr : AstExpression
+    {
+        public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
+        public AstWhileStmt Loop { get; set; }
+
+        public AstIdExpr Label { get; set; }
+
+        public override bool IsPolymorphic => throw new System.NotImplementedException();
+
+        public AstContinueExpr(AstIdExpr label = null, ILocation Location = null) : base(Location: Location)
+        {
+            this.Label = label;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitContinueExpr(this, data);
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstContinueExpr(Label?.Clone() as AstIdExpr));
+    }
+
+    public class AstRangeExpr : AstExpression
+    {
+        public AstExpression From { get; set; }
+        public AstExpression To { get; set; }
+
+        public override bool IsPolymorphic => false;
+
+        public AstRangeExpr(AstExpression from, AstExpression to, ILocation Location = null) : base(Location: Location)
+        {
+            this.From = from;
+            this.To = to;
+        }
+
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitRangeExpr(this, data);
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstRangeExpr(
+                From.Clone(),
+                To.Clone()));
     }
 }

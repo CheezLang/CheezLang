@@ -106,7 +106,7 @@ fn infix_to_postfix(str: String, calculate: bool) -> (postfix: String, result: d
     pop_ops_while(new_order, stack)
 
     postfix = String::empty()
-    loop! i in 0 -> new_order.length {
+    for i : 0..new_order.length {
         let tok = new_order[i]
         let txt = tok.get_text()
         postfix.appendf("{} ", [txt])
@@ -117,7 +117,8 @@ fn infix_to_postfix(str: String, calculate: bool) -> (postfix: String, result: d
 
     if calculate {
         let numbers = Stack(double)::create()
-        foreach! t in new_order.iterator() {
+        //foreach! t in new_order.iterator() {
+        for t : new_order {
             use TokenType
             match t.ttype {
                 NumberLiteral -> {
@@ -176,7 +177,7 @@ impl Printable for &u16 {
 
 fn to_ascii_strings(argv: &&u16, argc: int) -> Array(String) {
     let array = Array(String)::create(argc)
-    loop! i in 0 -> argc {
+    for i : 0..argc {
         let str = String::empty()
         while let k = 0; argv[i][k] != 0; k += 1 {
             str += char(argv[i][k])
@@ -199,7 +200,9 @@ fn Main() {
 
     let (start_index, calculate) = if streq(args[1], "-e") { (2, true) } else { (1, false) }
 
-    foreach! infix in @cast(Iterator(String), args.iterator())::skip(start_index) {
+    //foreach! infix in @cast(Iterator(String), args.iterator())::skip(start_index) {
+    for infix : args {
+        if it_index < start_index then continue
         print(infix)
         let (postfix, result) = infix_to_postfix(infix, calculate)
         printf(" -> {}", [postfix])
@@ -214,14 +217,6 @@ fn Main() {
 
     // printfln("argc: {:x}, argv: {}", [int(args), count])
 
-    // loop! i in 1 -> count {
-    //     let str = String::empty()
-    //     str.appendf("{}", [args[i]])
-    //     // printfln("infix: {}", [str])
-    //     let result = infix_to_postfix(str)
-    //     printfln("{}", [result])
-    //     result.dispose()
-    // }
 
     // println(infix_to_postfix("1 + 2 * 3"::to_string()))
     // println(infix_to_postfix("(1 + 2) * 3"::to_string()))

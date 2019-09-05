@@ -18,8 +18,6 @@ namespace Cheez.Visitors
         ReturnType VisitForStmt(AstForStmt stmt, DataType data = default);
         ReturnType VisitDirectiveStmt(AstDirectiveStatement stmt, DataType data = default);
         ReturnType VisitDeferStmt(AstDeferStmt stmt, DataType data = default);
-        ReturnType VisitBreakStmt(AstBreakStmt stmt, DataType data = default);
-        ReturnType VisitContinueStmt(AstContinueStmt stmt, DataType data = default);
         ReturnType VisitReturnStmt(AstReturnStmt stmt, DataType data = default);
         ReturnType VisitUsingStmt(AstUsingStmt stmt, DataType data = default);
 
@@ -35,6 +33,9 @@ namespace Cheez.Visitors
         ReturnType VisitTraitDecl(AstTraitDeclaration decl, DataType data = default);
 
         // expressions
+        ReturnType VisitRangeExpr(AstRangeExpr expr, DataType data = default);
+        ReturnType VisitBreakExpr(AstBreakExpr expr, DataType data = default);
+        ReturnType VisitContinueExpr(AstContinueExpr expr, DataType data = default);
         ReturnType VisitLambdaExpr(AstLambdaExpr expr, DataType data = default);
         ReturnType VisitBlockExpr(AstBlockExpr expr, DataType data = default);
         ReturnType VisitIfExpr(AstIfExpr expr, DataType data = default);
@@ -60,7 +61,6 @@ namespace Cheez.Visitors
         ReturnType VisitArgumentExpr(AstArgument expr, DataType data = default);
         ReturnType VisitDefaultExpr(AstDefaultExpr expr, DataType data = default);
         ReturnType VisitMatchExpr(AstMatchExpr expr, DataType data = default);
-        ReturnType VisitMacroExpr(AstMacroExpr expr, DataType data = default);
 
         ReturnType VisitEmptyExpression(AstEmptyExpr expr, DataType data = default);
 
@@ -90,8 +90,6 @@ namespace Cheez.Visitors
         // statements
         public virtual ReturnType VisitDirectiveStmt(AstDirectiveStatement stmt, DataType data = default) => default;
         public virtual ReturnType VisitAssignmentStmt(AstAssignment stmt, DataType data = default) => default;
-        public virtual ReturnType VisitBreakStmt(AstBreakStmt stmt, DataType data = default) => default;
-        public virtual ReturnType VisitContinueStmt(AstContinueStmt stmt, DataType data = default) => default;
         public virtual ReturnType VisitExpressionStmt(AstExprStmt stmt, DataType data = default) => default;
         public virtual ReturnType VisitDeferStmt(AstDeferStmt stmt, DataType data = default) => default;
         public virtual ReturnType VisitReturnStmt(AstReturnStmt stmt, DataType data = default) => default;
@@ -111,6 +109,9 @@ namespace Cheez.Visitors
         public virtual ReturnType VisitImplDecl(AstImplBlock decl, DataType data = default) => default;
 
         // expressions
+        public virtual ReturnType VisitRangeExpr(AstRangeExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitBreakExpr(AstBreakExpr stmt, DataType data = default) => default;
+        public virtual ReturnType VisitContinueExpr(AstContinueExpr stmt, DataType data = default) => default;
         public virtual ReturnType VisitLambdaExpr(AstLambdaExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitBlockExpr(AstBlockExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitIfExpr(AstIfExpr expr, DataType data = default) => default;
@@ -135,7 +136,6 @@ namespace Cheez.Visitors
         public virtual ReturnType VisitTupleExpr(AstTupleExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitDefaultExpr(AstDefaultExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitMatchExpr(AstMatchExpr expr, DataType data = default) => default;
-        public virtual ReturnType VisitMacroExpr(AstMacroExpr expr, DataType data = default) => default;
 
         public virtual ReturnType VisitEmptyExpression(AstEmptyExpr expr, DataType data = default) => default;
 

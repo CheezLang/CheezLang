@@ -40,7 +40,7 @@ impl PseudoRandomGen for LinearCongruentialGenerator {
 
 let lcg: LinearCongruentialGenerator = {
     let a = LinearCongruentialGenerator::create(cast get_time_microseconds())
-    loop! _ in 0 -> 1000 { a.next() }
+    for : 1000 { a.next() }
     a
 }
 

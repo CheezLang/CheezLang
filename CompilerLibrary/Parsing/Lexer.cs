@@ -38,6 +38,7 @@ namespace Cheez.Parsing
         Colon,
         Comma,
         Period,
+        PeriodPeriod,
         Equal,
         Ampersand,
 
@@ -225,6 +226,7 @@ namespace Cheez.Parsing
                 case '*' when Next == '=': SimpleToken(ref token, TokenType.MulEq, 2); break;
                 case '/' when Next == '=': SimpleToken(ref token, TokenType.DivEq, 2); break;
                 case '%' when Next == '=': SimpleToken(ref token, TokenType.ModEq, 2); break;
+                case '.' when Next == '.': SimpleToken(ref token, TokenType.PeriodPeriod, 2); break;
                 case ':': SimpleToken(ref token, TokenType.Colon); break;
                 case ';': SimpleToken(ref token, TokenType.Semicolon); break;
                 case '.': SimpleToken(ref token, TokenType.Period); break;
@@ -483,7 +485,7 @@ namespace Cheez.Parsing
                                 dataStringValue += c;
                                 state = StateDecimalDigit;
                             }
-                            else if (c == '.')
+                            else if (c == '.' && Next != '.')
                             {
                                 dataStringValue += c;
                                 state = StateFloatPoint;
@@ -500,7 +502,7 @@ namespace Cheez.Parsing
                         {
                             if (IsDigit(c))
                                 dataStringValue += c;
-                            else if (c == '.')
+                            else if (c == '.' && Next != '.')
                             {
                                 dataStringValue += c;
                                 state = StateFloatPoint;

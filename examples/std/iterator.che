@@ -43,7 +43,7 @@ trait Iterator(T: type) {
 
 impl(It: type, T: type) It if It : Iterator(T) {
     fn skip(ref Self, count: int) -> Self {
-        loop! i in 0 -> count {
+        for :count {
             self.next()
         }
 

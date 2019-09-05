@@ -303,6 +303,11 @@ namespace Cheez
                 case AstEmptyExpr _:
                     break;
 
+                case AstRangeExpr r:
+                    CollectPolyTypeNames(r.From, result);
+                    CollectPolyTypeNames(r.To, result);
+                    break;
+
                 default: throw new NotImplementedException($"Type {typeExpr}");
             }
         }

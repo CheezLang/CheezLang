@@ -296,40 +296,4 @@ namespace Cheez.Ast.Statements
         public override AstStatement Clone()
             => CopyValuesTo(new AstUsingStmt(Value.Clone()));
     }
-
-    public class AstBreakStmt : AstStatement
-    {
-        public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
-        public AstWhileStmt Loop { get; set; }
-
-        public AstIdExpr Label { get; set; }
-
-        public AstBreakStmt(AstIdExpr label = null, ILocation Location = null) : base(Location: Location)
-        {
-            this.Label = label;
-        }
-
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBreakStmt(this, data);
-
-        public override AstStatement Clone()
-            => CopyValuesTo(new AstBreakStmt(Label?.Clone() as AstIdExpr));
-    }
-
-    public class AstContinueStmt : AstStatement
-    {
-        public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
-        public AstWhileStmt Loop { get; set; }
-
-        public AstIdExpr Label { get; set; }
-
-        public AstContinueStmt(AstIdExpr label = null, ILocation Location = null) : base(Location: Location)
-        {
-            this.Label = label;
-        }
-
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitContinueStmt(this, data);
-
-        public override AstStatement Clone()
-            => CopyValuesTo(new AstContinueStmt(Label?.Clone() as AstIdExpr));
-    }
 }
