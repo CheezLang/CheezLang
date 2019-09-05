@@ -539,6 +539,8 @@ namespace Cheez.Visitors
             }
 
             sb.Append("break");
+            if (br.Label != null)
+                sb.Append($" {br.Label.Accept(this)}");
             return sb.ToString();
         }
 
@@ -558,6 +560,8 @@ namespace Cheez.Visitors
             }
 
             sb.Append("continue");
+            if (cont.Label != null)
+                sb.Append($" {cont.Label.Accept(this)}");
             return sb.ToString();
         }
 

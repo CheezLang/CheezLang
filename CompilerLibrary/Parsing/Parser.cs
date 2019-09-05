@@ -287,6 +287,17 @@ namespace Cheez.Parsing
             }
         }
 
+        private void RecoverUntil(params TokenType[] types)
+        {
+            while (true)
+            {
+                var next = PeekToken();
+                if (types.Contains(next.type))
+                    return;
+                NextToken();
+            }
+        }
+
         #endregion
 
         public AstStatement ParseStatement(bool expectNewline = true)
@@ -338,12 +349,9 @@ namespace Cheez.Parsing
                     return null;
 
                 case TokenType.KwBreak:
-                    NextToken();
-                    return new AstBreakStmt(new Location(token.location));
-
+                    return ParseBreakStatement();
                 case TokenType.KwContinue:
-                    NextToken();
-                    return new AstContinueStmt(new Location(token.location));
+                    return ParseContinueStatement();
 
                 case TokenType.HashIdentifier:
                         return ParseDirectiveStatement();
@@ -425,6 +433,27 @@ namespace Cheez.Parsing
                         }
                     }
             }
+        }
+
+        private AstStatement ParseContinueStatement()
+        {
+            var token = NextToken();
+            AstIdExpr name = null;
+            if (CheckToken(TokenType.Identifier))
+            {
+                name = ParseIdentifierExpr();
+            }
+            return new AstContinueStmt(name, new Location(token.location, name?.Location?.End ?? token.location));
+        }
+
+        private AstStatement ParseBreakStatement()
+        {
+            var token = NextToken();
+            AstIdExpr name = null;
+            if (CheckToken(TokenType.Identifier)) {
+                name = ParseIdentifierExpr();
+            }
+            return new AstBreakStmt(name, new Location(token.location, name?.Location?.End ?? token.location));
         }
 
         private AstStatement ParseTraitDeclaration()
@@ -1169,6 +1198,7 @@ namespace Cheez.Parsing
             AstBlockExpr body = null;
             AstVariableDecl init = null;
             AstStatement post = null;
+            AstIdExpr label = null;
 
             beg = Consume(TokenType.KwWhile, ErrMsg("keyword 'while'", "at beginning of while statement")).location;
             SkipNewlines();
@@ -1192,9 +1222,24 @@ namespace Cheez.Parsing
                 SkipNewlines();
             }
 
+            if (CheckToken(TokenType.HashIdentifier))
+            {
+                var dir = ParseIdentifierExpr(identType: TokenType.HashIdentifier);
+                if (dir.Name == "label")
+                {
+                    label = ParseIdentifierExpr();
+                    SkipNewlines();
+                }
+                else
+                {
+                    ReportError(dir.Location, $"Unknown directive '{dir.Name}'");
+                    RecoverUntil(TokenType.OpenBrace);
+                }
+            }
+
             body = ParseBlockExpr();
 
-            return new AstWhileStmt(condition, body, init, post, new Location(beg, body.End));
+            return new AstWhileStmt(condition, body, init, post, label, new Location(beg, body.End));
         }
 
         private AstIfExpr ParseIfExpr()
@@ -1695,7 +1740,7 @@ namespace Cheez.Parsing
             return new AstStructValueExpr(type, members, new Location(beg, end));
         }
 
-        private AstIdExpr ParseIdentifierExpr(ErrorMessageResolver customErrorMessage, TokenType identType = TokenType.Identifier)
+        private AstIdExpr ParseIdentifierExpr(ErrorMessageResolver customErrorMessage = null, TokenType identType = TokenType.Identifier)
         {
             var next = PeekToken();
             if (next.type != identType)

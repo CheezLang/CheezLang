@@ -297,9 +297,23 @@ namespace Cheez.Visitors
             return $"{head} {{\n{body.Indent(4)}\n}}";
         }
 
-        public override string VisitBreakStmt(AstBreakStmt br, int data = 0) => "break";
+        public override string VisitBreakStmt(AstBreakStmt br, int data = 0)
+        {
+            var sb = new StringBuilder();
+            sb.Append("break");
+            if (br.Label != null)
+                sb.Append($" {br.Label.Accept(this)}");
+            return sb.ToString();
+        }
 
-        public override string VisitContinueStmt(AstContinueStmt cont, int data = 0) => "continue";
+        public override string VisitContinueStmt(AstContinueStmt cont, int data = 0)
+        {
+            var sb = new StringBuilder();
+            sb.Append("continue");
+            if (cont.Label != null)
+                sb.Append($" {cont.Label.Accept(this)}");
+            return sb.ToString();
+        }
 
         #endregion
 

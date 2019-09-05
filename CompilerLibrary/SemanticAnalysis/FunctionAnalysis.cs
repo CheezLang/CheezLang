@@ -64,8 +64,7 @@ namespace Cheez
                         foreach (var m in @struct.Declaration.Members)
                         {
                             AstExpression expr = new AstDotExpr(new AstSymbolExpr(p), new AstIdExpr(m.Name.Name, false), false);
-                            expr.Scope = func.SubScope;
-                            expr.Parent = func;
+                            expr.AttachTo(func, func.SubScope);
                             expr = InferType(expr, m.Type);
 
                             // define use if no parameter has the same name
@@ -162,8 +161,7 @@ namespace Cheez
 
                 if (func.Body != null && !func.GetFlag(StmtFlags.IsMacroFunction))
                 {
-                    func.Body.Scope = func.SubScope;
-                    func.Body.Parent = func;
+                    func.Body.AttachTo(func, func.SubScope);
                     InferType(func.Body, null);
 
                     if (func.ReturnTypeExpr != null && !func.Body.GetFlag(ExprFlags.Returns))
@@ -385,6 +383,10 @@ namespace Cheez
         {
             while (node != null)
             {
+                if (node is AstCompCallExpr cc && cc.Name.Name == "insert")
+                {
+
+                }
                 if (node is AstWhileStmt whl)
                 {
                     return whl;
@@ -397,25 +399,35 @@ namespace Cheez
 
         private AstContinueStmt AnalyseContinueStatement(AstContinueStmt cont)
         {
-            AstWhileStmt loop = FindFirstLoop(cont);
-            if (loop == null)
-            {
-                ReportError(cont, $"continue can only occur inside of loops");
-            }
+            var name = "'while-loop";
+            if (cont.Label != null)
+                name = cont.Label.Name;
 
-            cont.Loop = loop;
+            var sym = cont.Scope.GetSymbol(name);
+            if (sym == null)
+                ReportError(cont, $"continue can only occur inside of loops");
+            else if (sym is AstWhileStmt loop)
+                cont.Loop = loop;
+            else
+                ReportError(cont, $"Can't continue '{sym.Name}' because it is not a loop", ($"'{sym.Name}' defined here: ", sym.Location));
+
             return cont;
         }
 
         private AstBreakStmt AnalyseBreakStatement(AstBreakStmt br)
         {
-            AstWhileStmt loop = FindFirstLoop(br);
-            if (loop == null)
-            {
-                ReportError(br, $"break can only occur inside of loops");
-            }
+            var name = "'while-loop";
+            if (br.Label != null)
+                name = br.Label.Name;
 
-            br.Loop = loop;
+            var sym = br.Scope.GetSymbol(name);
+            if (sym == null)
+                ReportError(br, $"break can only occur inside of loops");
+            else if (sym is AstWhileStmt loop)
+                br.Loop = loop;
+            else
+                ReportError(br, $"Can't break '{sym.Name}' because it is not a loop", ($"'{sym.Name}' defined here: ", sym.Location));
+
             return br;
         }
 
@@ -431,8 +443,7 @@ namespace Cheez
             }
             whl.SubScope = new Scope("while", whl.PreScope);
 
-            whl.Condition.Scope = whl.SubScope;
-            whl.Condition.Parent = whl;
+            whl.Condition.AttachTo(whl, whl.SubScope);
             whl.Condition = InferType(whl.Condition, CheezType.Bool);
             ConvertLiteralTypeToDefaultType(whl.Condition, CheezType.Bool);
             if (whl.Condition.Type != CheezType.Bool && !whl.Condition.Type.IsErrorType)
@@ -445,8 +456,8 @@ namespace Cheez
                 whl.PostAction = AnalyseStatement(whl.PostAction);
             }
 
-            whl.Body.Scope = whl.SubScope;
-            whl.Body.Parent = whl;
+            whl.SubScope.DefineLoop(whl);
+            whl.Body.AttachTo(whl, whl.SubScope);
             InferType(whl.Body, null);
 
             return whl;
@@ -454,10 +465,7 @@ namespace Cheez
 
         private AstAssignment AnalyseAssignStatement(AstAssignment ass)
         {
-            ass.Value.Parent = ass;
-
-            ass.Pattern.Scope = ass.Scope;
-            ass.Pattern.Parent = ass;
+            ass.Pattern.AttachTo(ass);
             ass.Pattern.SetFlag(ExprFlags.AssignmentTarget, true);
             ass.Pattern.SetFlag(ExprFlags.SetAccess, true);
             ass.Pattern = InferType(ass.Pattern, null);
@@ -467,7 +475,7 @@ namespace Cheez
                 ass.Pattern = Deref(ass.Pattern, null);
             }
 
-            ass.Value.Scope = ass.Scope;
+            ass.Value.AttachTo(ass);
             ass.Value = InferType(ass.Value, ass.Pattern.Type);
             ConvertLiteralTypeToDefaultType(ass.Value, ass.Pattern.Type);
 
@@ -549,8 +557,7 @@ namespace Cheez
                         if (ass.Operator != null)
                         {
                             AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
-                            newVal.Scope = value.Scope;
-                            newVal.Parent = value.Parent;
+                            newVal.Replace(value);
                             newVal = InferType(newVal, pattern.Type);
 
                             return newVal;
@@ -618,8 +625,7 @@ namespace Cheez
                             }
 
                             AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
-                            newVal.Scope = value.Scope;
-                            newVal.Parent = value.Parent;
+                            newVal.Replace(value);
                             newVal = InferType(newVal, pattern.Type);
                             return newVal;
                         }
@@ -644,8 +650,7 @@ namespace Cheez
                             dot.Left = tmp;
 
                             AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
-                            newVal.Scope = value.Scope;
-                            newVal.Parent = value.Parent;
+                            newVal.Replace(value);
                             newVal = InferType(newVal, pattern.Type);
                             return newVal;
                         }
@@ -669,8 +674,7 @@ namespace Cheez
                             index.SubExpression = tmp;
 
                             AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
-                            newVal.Scope = value.Scope;
-                            newVal.Parent = value.Parent;
+                            newVal.Replace(value);
                             newVal = InferType(newVal, pattern.Type);
                             return newVal;
                         }
@@ -689,8 +693,7 @@ namespace Cheez
                         if (ass.Operator != null)
                         {
                             AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
-                            newVal.Scope = value.Scope;
-                            newVal.Parent = value.Parent;
+                            newVal.Replace(value);
                             newVal = InferType(newVal, pattern.Type);
                             return newVal;
                         }
@@ -720,11 +723,10 @@ namespace Cheez
 
         private AstExprStmt AnalyseExprStatement(AstExprStmt expr, bool allow_any_expr = false, bool infer_types = true)
         {
-            expr.Expr.Parent = expr;
+            expr.Expr.AttachTo(expr);
 
             if (infer_types)
             {
-                expr.Expr.Scope = expr.Scope;
                 expr.Expr = InferType(expr.Expr, null);
             }
 
@@ -766,8 +768,7 @@ namespace Cheez
 
             if (ret.ReturnValue != null)
             {
-                ret.ReturnValue.Scope = ret.Scope;
-                ret.ReturnValue.Parent = ret;
+                ret.ReturnValue.AttachTo(ret);
                 ret.ReturnValue = InferType(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
 
                 ConvertLiteralTypeToDefaultType(ret.ReturnValue, currentFunction.FunctionType.ReturnType);

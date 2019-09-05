@@ -136,7 +136,7 @@ namespace Cheez.Ast.Statements
         public override AstStatement Clone() => CopyValuesTo(new AstDeferStmt(Deferred.Clone()));
     }
 
-    public class AstWhileStmt : AstStatement
+    public class AstWhileStmt : AstStatement, ISymbol
     {
         public AstExpression Condition { get; set; }
         public AstBlockExpr Body { get; set; }
@@ -147,19 +147,30 @@ namespace Cheez.Ast.Statements
         public Scope PreScope { get; set; }
         public Scope SubScope { get; set; }
 
-        public AstWhileStmt(AstExpression cond, AstBlockExpr body, AstVariableDecl pre, AstStatement post, ILocation Location = null)
+        public AstIdExpr Label { get; set; }
+
+        public AstIdExpr Name => Label;
+
+        public AstWhileStmt(AstExpression cond, AstBlockExpr body, AstVariableDecl pre, AstStatement post, AstIdExpr label, ILocation Location = null)
             : base(Location: Location)
         {
             this.Condition = cond;
             this.Body = body;
             this.PreAction = pre;
             this.PostAction = post;
+            this.Label = label;
         }
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitWhileStmt(this, data);
         public override AstStatement Clone() 
-            => CopyValuesTo(new AstWhileStmt(Condition.Clone(), Body.Clone() as AstBlockExpr, PreAction?.Clone() as AstVariableDecl, PostAction?.Clone()));
+            => CopyValuesTo(new AstWhileStmt(
+                Condition.Clone(),
+                Body.Clone() as AstBlockExpr,
+                PreAction?.Clone() as AstVariableDecl,
+                PostAction?.Clone(),
+                Label?.Clone() as AstIdExpr
+                ));
     }
 
     public class AstForStmt : AstStatement
@@ -260,6 +271,8 @@ namespace Cheez.Ast.Statements
 
         public override AstStatement Clone()
             => CopyValuesTo(new AstExprStmt(Expr.Clone()));
+
+        public override string ToString() => $"#expr {base.ToString()}";
     }
 
     public class AstUsingStmt : AstStatement
@@ -285,13 +298,17 @@ namespace Cheez.Ast.Statements
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
         public AstWhileStmt Loop { get; set; }
 
-        public AstBreakStmt(ILocation Location = null) : base(Location: Location)
-        { }
+        public AstIdExpr Label { get; set; }
+
+        public AstBreakStmt(AstIdExpr label = null, ILocation Location = null) : base(Location: Location)
+        {
+            this.Label = label;
+        }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBreakStmt(this, data);
 
         public override AstStatement Clone()
-            => CopyValuesTo(new AstBreakStmt());
+            => CopyValuesTo(new AstBreakStmt(Label?.Clone() as AstIdExpr));
     }
 
     public class AstContinueStmt : AstStatement
@@ -299,12 +316,16 @@ namespace Cheez.Ast.Statements
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
         public AstWhileStmt Loop { get; set; }
 
-        public AstContinueStmt(ILocation Location = null) : base(Location: Location)
-        { }
+        public AstIdExpr Label { get; set; }
+
+        public AstContinueStmt(AstIdExpr label = null, ILocation Location = null) : base(Location: Location)
+        {
+            this.Label = label;
+        }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitContinueStmt(this, data);
 
         public override AstStatement Clone()
-            => CopyValuesTo(new AstContinueStmt());
+            => CopyValuesTo(new AstContinueStmt(Label?.Clone() as AstIdExpr));
     }
 }

@@ -240,10 +240,10 @@ namespace Cheez
                                     null,
                                     new AstBlockExpr(new List<AstStatement>
                                     {
-                                        new AstBreakStmt(iterator.Location)
+                                        new AstBreakStmt(Location: iterator.Location)
                                     }), iterator.Location)
                             }, body.Location), body.Location)
-                }, original.Location), null, null, original.Location)
+                }, original.Location), null, null, null, original.Location)
             }, original.Location);
 
             return result;

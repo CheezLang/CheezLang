@@ -1164,8 +1164,7 @@ namespace Cheez
                 AnalyseVariableDecl(expr.PreAction);
             }
 
-            expr.Condition.Scope = expr.SubScope;
-            expr.Condition.Parent = expr;
+            expr.Condition.AttachTo(expr, expr.SubScope);
             expr.Condition = InferTypeHelper(expr.Condition, CheezType.Bool, context);
             ConvertLiteralTypeToDefaultType(expr.Condition, CheezType.Bool);
 
@@ -1204,15 +1203,13 @@ namespace Cheez
                 }
             }
 
-            expr.IfCase.Scope = expr.SubScope;
-            expr.IfCase.Parent = expr;
+            expr.IfCase.AttachTo(expr, expr.SubScope);
             expr.IfCase = InferTypeHelper(expr.IfCase, expected, context);
             ConvertLiteralTypeToDefaultType(expr.IfCase, expected);
 
             if (expr.ElseCase != null)
             {
-                expr.ElseCase.Scope = expr.SubScope;
-                expr.ElseCase.Parent = expr;
+                expr.ElseCase.AttachTo(expr, expr.SubScope);
                 expr.ElseCase = InferTypeHelper(expr.ElseCase, expected, context);
                 ConvertLiteralTypeToDefaultType(expr.ElseCase, expected);
                 
@@ -1387,7 +1384,7 @@ namespace Cheez
                         }
 
                         code = code.Clone();
-                        code.Parent = expr.Parent;
+                        code.Parent = expr;
                         code.Scope.LinkedScope = expr.Scope;
                         code.Value = null;
                         code = InferTypeHelper(code, expected, context);
@@ -1513,14 +1510,12 @@ namespace Cheez
                         }
 
                         // infer types of arguments
-                        cond.Scope = expr.Scope;
-                        cond.Parent = expr;
+                        cond.AttachTo(expr);
                         cond = InferType(cond, CheezType.Bool);
 
                         if (message != null)
                         {
-                            message.Scope = expr.Scope;
-                            message.Parent = expr;
+                            message.AttachTo(expr);
                             message = InferType(message, CheezType.Bool);
                         }
 
@@ -1882,9 +1877,9 @@ namespace Cheez
 
             if (expr.Statements.LastOrDefault() is AstExprStmt exprStmt)
             {
-                exprStmt.Expr.Scope = expr.SubScope;
-                exprStmt.Expr.Parent = exprStmt;
+                exprStmt.Scope = expr.SubScope;
                 exprStmt.Parent = expr;
+                exprStmt.Expr.AttachTo(exprStmt);
                 exprStmt.Expr = InferTypeHelper(exprStmt.Expr, expected, context);
                 ConvertLiteralTypeToDefaultType(exprStmt.Expr, expected);
                 expr.Type = exprStmt.Expr.Type;
@@ -2057,8 +2052,7 @@ namespace Cheez
                 while (expr.Left.Type is PointerType p)
                 {
                     var newLeft = new AstDereferenceExpr(expr.Left, expr.Left.Location);
-                    newLeft.Scope = expr.Left.Scope;
-                    newLeft.Parent = expr.Left;
+                    newLeft.AttachTo(expr.Left);
                     expr.Left = InferType(newLeft, p.TargetType);
                 }
 

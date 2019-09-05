@@ -6,10 +6,34 @@
 // #load("tests/library/stack_allocator")
 // #load("tests/language/if_else")
 
+#load("std:io/io")
+
+fn macro_test(code: Code) #macro {
+    while let k = 0, k < 3, k += 1 {
+
+    }
+}
+
+fn Main() {
+    while let i = 0, i < 3, i += 1 #label a {
+        while let k = 0, k < 3, k += 1 #label b {
+
+            if i == 1 {
+                break b
+            }
+            printfln("{}, {}", [i, k])
+        }
+        // printfln("in loop: {}", [i])
+        // macro_test({
+        //     printfln("in code: {}", [i])
+        // })
+    }
+}
 
 /*
 // #load("std:random")
-#load("std:io/io")
+// #load("std:io/io")
+#load("std:c")
 
 struct Products {
     pub to: int
@@ -43,8 +67,10 @@ fn for_extension_products(prods: Products, code: Code) #for {
     for a : range_new(1, prods.to) {
         for b : range_new(1, prods.to) {
             let it = a * b
-            @insert(code)
+            @insert(code, link=[a, b], _break={break a})
             it_index += 1
+
+            break a
         }
     }
 }
@@ -56,18 +82,34 @@ fn macro_test(code: Code) #macro {
 
 fn test_random() #main {
     for :new Products{3} {
-        println(it)
+        //println(it)
+        c_printf("%lld * %lld = %lld`n", a, b, it)
     }
 
-    println("")
+    c_puts("")
 
-    for(reverse=true):range_new(1, 10) {
-        printfln("{}, {}", [it_index, it])
+    for :new Products{3} {
+        if it > 5 {
+            break
+        }
+
+        //println(it)
+        c_printf("%lld * %lld = %lld`n", a, b, it)
+    }
+
+    c_puts("")
+
+    for :new Products{3} {
+        if it > 5 {
+            continue
+        }
+        //println(it)
+        c_printf("%lld * %lld = %lld`n", a, b, it)
     }
 }
 // */
 
-//*
+/*
 
 #load("std:io/io")
 #load("std:array")

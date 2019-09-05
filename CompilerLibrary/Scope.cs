@@ -614,6 +614,17 @@ namespace Cheez
             return false;
         }
 
+        public void DefineLoop(AstWhileStmt loop)
+        {
+            var name = "'while-loop";
+            if (loop.Label != null)
+                name = loop.Label.Name;
+            if (mSymbolTable.TryGetValue(name, out var other))
+                throw new Exception("Well that's not supposed to happen...");
+
+            mSymbolTable[name] = loop;
+        }
+
         public (bool ok, ILocation other) DefineSymbol(ISymbol symbol, string name = null)
         {
             name = name ?? symbol.Name.Name;

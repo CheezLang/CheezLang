@@ -50,6 +50,7 @@ namespace Cheez.Ast.Expressions
         public bool IsCompTimeValue { get; set; } = false;
 
         public IAstNode Parent { get; set; }
+        //public IAstNode LinkParent { get; set; }
 
         public bool TypeInferred { get; set; } = false;
 
@@ -115,15 +116,15 @@ namespace Cheez.Ast.Expressions
             this.mFlags = expr.mFlags;
         }
 
-        public void AttachTo(AstExpression expr)
+        public void AttachTo(AstExpression expr, Scope scope = null)
         {
-            this.Scope = expr.Scope;
+            this.Scope = scope ?? expr.Scope;
             this.Parent = expr;
         }
 
-        public void AttachTo(AstStatement stmt)
+        public void AttachTo(AstStatement stmt, Scope scope = null)
         {
-            this.Scope = stmt.Scope;
+            this.Scope = scope ?? stmt.Scope;
             this.Parent = stmt;
         }
     }
