@@ -25,66 +25,9 @@ fn Main() {
 }
 ```
 
-Generic dynamic array:
-```rust
-#load("std:mem/std_heap_allocator")
-#load("std:io/io")
-
-fn Main() {
-    let ints = IntArray::create()
-
-    ints.add(3)
-    ints.add(2)
-    ints.add(1)
-
-    while let i = 0u64; i < ints.length; i += 1 {
-        let v = ints[i]
-        printf("ints[{}] = {}`n", [i, v])
-    }
-
-    ints.dispose()
-}
-
-struct IntArray {
-    data: *int
-    length: uint
-    capacity: uint
-    allocator: Allocator
-}
-
-impl IntArray {
-    fn create(allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        return new {
-            allocator = allocator
-            length = 0
-            capacity = 10
-            data = alloc_raw(int, 10, allocator)
-        }
-    }
-
-    fn dispose(ref Self) {
-        free(data, allocator)
-    }
-
-    fn add(ref Self, val: int) {
-        if capacity <= length {
-            capacity = capacity * 2
-            data = realloc_raw(data, capacity, allocator)
-        }
-
-        data[length] = val
-        length += 1
-    }
-
-    fn get(ref Self, index: uint) -> int #operator("[]") {
-        return data[index]
-    }
-}
-```
-
 A fibonacci calculator, starting at index 0:
 ```rust
-#load("std:io/io.che")
+#load("std:io/io")
 
 fn fib(x: int) -> int {
     if x <= 1 {
@@ -95,7 +38,7 @@ fn fib(x: int) -> int {
 
 fn Main() {
     let x = fib(5)
-    printf("fib(5) = {}`n", [x])
+    printfln("fib(5) = {}", [x])
 }
 ```
 
@@ -130,8 +73,8 @@ fn gcd_rec(a: int, b: int) -> int {
 }
 
 fn Main() {
-    printf("gcd_it(9, 6) = {}`n", [gcd_it(9, 6)])
-    printf("gcd_rec(9, 6) = {}`n", [gcd_rec(9, 6)])
+    printfln("gcd_it(9, 6) = {}", [gcd_it(9, 6)])
+    printfln("gcd_rec(9, 6) = {}", [gcd_rec(9, 6)])
 }
 ```
 
@@ -140,9 +83,9 @@ Vectors and trait implementation:
 #load("std:io/io")
 
 struct Vec3 {
-    x: double
-    y: double
-    z: double
+    pub x: double
+    pub y: double
+    pub z: double
 }
 
 impl Vec3 {
@@ -156,7 +99,6 @@ impl Vec3 {
 }
 
 impl Printable for Vec3 {
-    // trait functions are ref by default
     fn print(ref Self, str: ref String, format: string) {
         str.appendf("({}, {}, {})", [self.x, self.y, self.z])
     }
@@ -168,17 +110,71 @@ fn Main() {
 
     let c = a + b
 
-    printf("
+    printfln("
   {}
 + {}
   ------------------------------
-= {}
-", [a, b, c])
+= {}", [a, b, c])
+}
+```
+
+Generic dynamic array:
+```rust
+#load("std:mem/std_heap_allocator")
+#load("std:io/io")
+
+fn Main() {
+    let ints = IntArray::create()
+
+    ints.add(3)
+    ints.add(2)
+    ints.add(1)
+
+    while let i = 0u64, i < ints.length, i += 1 {
+        let v = ints[i]
+        printfln("ints[{}] = {}", [i, v])
+    }
+
+    ints.dispose()
+}
+
+struct IntArray {
+    data: &int
+    pub const length: uint
+    capacity: uint
+}
+
+impl IntArray {
+    fn create() -> Self {
+        return new {
+            length = 0
+            capacity = 10
+            data = alloc_raw(int, 10)
+        }
+    }
+
+    fn dispose(ref Self) {
+        free(data)
+    }
+
+    fn add(ref Self, val: int) {
+        if capacity <= length {
+            capacity = capacity * 2
+            data = realloc_raw(data, capacity)
+        }
+
+        data[length] = val
+        length += 1
+    }
+
+    fn get(ref Self, index: uint) -> int #operator("[]") {
+        return data[index]
+    }
 }
 ```
 
 ## Run
-Run the compiler using this command in Window Command Line:
+Run the compiler using this command in Windows Command Line:
 ```bat
 cheezc.exe test.che
 test.exe
