@@ -79,55 +79,12 @@ namespace Cheez
 
             if (v.TypeExpr != null)
             {
-                 v.TypeExpr.Scope = v.Scope;
-                 v.TypeExpr = ResolveTypeNow(v.TypeExpr, out var t);
-                // TODO:
+                v.TypeExpr.Scope = v.Scope;
+                v.TypeExpr = ResolveTypeNow(v.TypeExpr, out var t);
                 v.TypeExpr.Type = t;
                 v.Type = v.TypeExpr.Type;
-                //v.Type = t;
             }
-
-            //void CalcTypeOfPattern(AstExpression pattern, AstExpression type)
-            //{
-            //    switch (pattern)
-            //    {
-            //        case AstTupleExpr tuple:
-            //            {
-            //                AstTupleExpr tupleType = type as AstTupleExpr;
-
-            //                for (int i = 0; i < tuple.Values.Count; i++)
-            //                {
-            //                    AstExpression tid = tuple.Types[i].Name;
-            //                    var tty = tuple.Types?[i];
-
-            //                    if (tid == null)
-            //                    {
-            //                        tid = tuple.Values[i];
-            //                        tty = (i < tupleType?.Types?.Count) ? tupleType.Types[i] : null;
-            //                    }
-
-            //                    var _ = ResolveTypeNow(tuple.Types?[i].TypeExpr, out var t);
-            //                    tuple.Types[i].Type = t;
-
-            //                    CalcTypeOfPattern(tid, tty?.TypeExpr);
-            //                }
-
-            //                //tuple.Type = TupleType.GetTuple(tuple.Types.Select(t => (t.Name t.Type).ToArray());
-
-            //                break;
-            //            }
-            //    }
-            //}
-
-            //if (v.Pattern != null)
-            //{
-            //    v.TypeExpr.Scope = v.Scope;
-            //    v.TypeExpr = ResolveTypeNow(v.TypeExpr, out var t);
-            //    // TODO:
-            //    v.TypeExpr.Type = t;
-            //    v.Type = v.TypeExpr.Type;
-            //    //v.Type = t;
-            //}
+            
 
             if (v.Initializer != null)
             {
@@ -163,6 +120,14 @@ namespace Cheez
                 ReportError(v, $"Variable declaration must be constant because type '{v.Type}' is only available at compile time");
 
             AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
+
+            foreach (var decl in v.SubDeclarations)
+            {
+                if (decl.Initializer != null)
+                {
+                    v.Scope.SetSymbolStatus(decl, true, decl.Location);
+                }
+            }
 
             path?.RemoveAt(path.Count - 1);
         }

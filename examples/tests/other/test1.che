@@ -45,8 +45,8 @@ impl T2(string) for int {
     }
 }
 
-let const (A, B): TUPLE
-let const (C, D): (TD1, DWORD)
+let const (A, B): TUPLE = default
+let const (C, D): (TD1, DWORD) = default
 
 typedef TYPE = type
 typedef TUPLE = (int, string)
@@ -74,7 +74,7 @@ let const S: Z2 = 10
 
 let a : [S]DWORD = b
 let b : [S]DWORD = c
-let c : [S]DWORD
+let c : [S]DWORD = default
 let d : S2(X1) = test(S)
 
 fn test(a: Z2 = get_val()) -> S2(X1) {

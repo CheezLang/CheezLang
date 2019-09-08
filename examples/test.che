@@ -4,272 +4,159 @@
 // #load("compiler/main")
 // #load("examples/pathtracer")
 // #load("tests/library/stack_allocator")
-// #load("tests/language/if_else")
+// #load("tests/language/match3")
+// #load("tests/other/test1")
 
-//*
-#load("std:io/io")
+/*
+#load("std:c")
+// #load("std:util")
 
-fn for_extension(arr: []$T, code: Code, reverse: bool = false) #for {
-    while let it_index = 0, it_index < arr.length, it_index += 1 {
-        if const reverse {
-            let it_index_rev = arr.length - it_index - 1
-            let it = arr[it_index_rev]
-            @insert(code, link=[it_index_rev], _break=break, _continue=continue)
-        } else {
-            let it = arr[it_index]
-            @insert(code, _break=break, _continue=continue)
-        }
-    }
+struct Foo #move {
+    pub val: int
 }
 
-fn macro_test(code: Code) #macro {
-    while let k = 0, k < 3, k += 1
-    {
-        print(k)
-        print(": ")
-        // @insert(code)
-        @insert(code, _break={
-            println("break")
-            break
-            // @link({break})
-        }, _continue={
-            println("continue")
-            continue
-        })
-        // break
-    }
+impl Foo {
+
 }
 
-fn for_extension_true(it: bool, code: Code) #for {
-    while let it_index = 0, it, it_index += 1 {
-        @insert(code, _break=break, _continue=continue)
-    }
+fn take(f: Foo) {
+
 }
 
 fn Main() {
-    // let ints: []int = [3, 8, 4, 1, 9]
-    // for :true #label forever {
-    //     for(reverse=false) :ints #label test {
-    //         println(it)
-    //         if it == 4 {
-    //             break
-    //             break test
-    //             break forever
-    //             println("test")
-    //             continue
-    //             continue test
-    //             continue forever
-    //         }
-    //     }
-    //     println("")
+    let x: Foo
+    take(x)
 
-    //     break
-    // }
-    // while let i = 0, i < 3, i += 1 #label a {
-    //     printfln("in loop: {}", [i])
-    //     macro_test({
-    //         // continue
-    //         printfln("in code: {}", [i])
-    //         break
-    //     })
-    // }
-}
-// */
-
-/*
-// #load("std:random")
-// #load("std:io/io")
-#load("std:c")
-
-struct Products {
-    pub to: int
-}
-
-struct Range {
-    pub from: int
-    pub to  : int
-    pub inc : int
-}
-
-fn range_new(from: int, to: int, inc: int = 1) -> Range {
-    return new {from, to, inc}
-}
-
-fn for_extension_range(range: Range, code: Code, reverse: bool = false) #for {
-    let (start, end, inc) = if const reverse then
-        (range.to, range.from, -range.inc)
-    else
-        (range.from, range.to, range.inc)
-
-    while let (it, it_index) = (start, 0),
-        if const reverse then it >= end else it <= end,
-        it += inc; it_index += 1 {
-        @insert(code)
-    }
-}
-
-fn for_extension_products(prods: Products, code: Code) #for {
-    let it_index = 0
-    for a : range_new(1, prods.to) {
-        for b : range_new(1, prods.to) {
-            let it = a * b
-            @insert(code, link=[a, b], _break={break a})
-            it_index += 1
-
-            break a
-        }
-    }
-}
-
-fn macro_test(code: Code) #macro {
-    let test = "lol"
-    @insert(code, link=[test])
-}
-
-fn test_random() #main {
-    for :new Products{3} {
-        //println(it)
-        c_printf("%lld * %lld = %lld`n", a, b, it)
-    }
-
-    c_puts("")
-
-    for :new Products{3} {
-        if it > 5 {
-            break
-        }
-
-        //println(it)
-        c_printf("%lld * %lld = %lld`n", a, b, it)
-    }
-
-    c_puts("")
-
-    for :new Products{3} {
-        if it > 5 {
-            continue
-        }
-        //println(it)
-        c_printf("%lld * %lld = %lld`n", a, b, it)
-    }
-}
-// */
-
-/*
-
-#load("std:io/io")
-#load("std:array")
-
-fn macro_test(a: int) #macro {
-    // printfln("macro, a = {}, link(x) = {}", [a, @link(x)])
-}
-
-fn macro_test2() #macro {
-    @link({
-        let uiae = 10
-    })
-}
-
-fn for_extension(arr: []$T, code: Code, reverse: bool = false) #for {
-    while let it_index = 0, it_index < arr.length, it_index += 1 {
-        if const reverse {
-            let it_index_rev = arr.length - it_index - 1
-            let it = arr[it_index_rev]
-            @insert(code, link=[it_index_rev])
+    if const false {
+        let a: int
+        @log_symbol_status(a)
+        if true {
+            @log_symbol_status(a)
+            a = 5
+            @log_symbol_status(a)
         } else {
-            let it = arr[it_index]
-            @insert(code)
+            @log_symbol_status(a)
+            a = 10
+            @log_symbol_status(a)
+        }
+        @log_symbol_status(a)
+    }
+
+    if const true {
+        let a: int = 1
+        @log_symbol_status(a)
+        while false {
+            @log_symbol_status(a)
+            a = 5
+            @log_symbol_status(a)
+        }
+        @log_symbol_status(a)
+    }
+}
+
+// fn Main() {
+//     let f = new Foo{5}
+//     c_printf("%lld`n", f.val)
+
+//     f.val = 10
+//     c_printf("%lld`n`n", f.val)
+
+//     {
+//         let g = f
+//         c_printf("%lld`n", f.val)
+//         c_printf("%lld`n`n", g.val)
+
+//         take(g)
+//         c_printf("%lld`n", f.val)
+//         c_printf("%lld`n", g.val)
+//     }
+// }
+// */
+
+
+/*
+#load("std:io/io")
+
+struct Rc(T: type) {
+    pub const count : &int
+    pub const data  : &T
+}
+
+impl(T: type) Rc(T) {
+    fn empty() -> Rc(T) {
+        let count = alloc(int)
+        let data  = alloc(T)
+        <<count = 1
+        return new {count, data}
+    }
+
+    fn create(value: ref T) -> Rc(T) {
+        let count = alloc(int)
+        let data  = alloc(T)
+        <<count = 1
+        <<data = value
+        return new {count, data}
+    }
+
+    fn clone(ref Self) -> Rc(T) {
+        <<count += 1
+        return new {count, data}
+    }
+
+    fn dispose(ref Self) {
+        @assert(<<count > 0)
+        <<count -= 1
+        if <<count == 0 {
+            free(data)
+            data = null
         }
     }
 }
 
-fn test() #main {
-    let arr = Array(string)::create()
-    arr.add("Hello")
-    arr.add(" ")
-    arr.add("world")
-    arr.add("!")
+fn debug_print(rc: ref Rc($T)) {
+    printfln("Rc({}): count={}, data={:x}", [@typename(T), <<rc.count, int(rc.data)])
+}
 
-    for(by_reference=false) :arr {
-        print(it)
-    }
+fn Main() {
+    let test = Rc(int)::create(645)
+    debug_print(test)
     println("")
 
-    for(by_reference=false, reverse=true) word :arr {
-        print(word)
-        word = "lol "
-    }
+    println(<<test.data)
+    <<test.data = 5
+    println(<<test.data)
+    <<test.data = 123
+    println(<<test.data)
     println("")
 
-    for(by_reference=true) :arr {
-        print(it)
-        it = "bruh "
-    }
+    let test2 = test.clone()
+    debug_print(test)
+    debug_print(test2)
     println("")
 
-    for :arr print(it)
+    let test3 = test.clone()
+    debug_print(test)
+    debug_print(test2)
+    debug_print(test3)
     println("")
 
-    /*
-    let arr: []int = [9, 8, 7, 6, 5]
-
-    for v, i :arr {
-        printfln("[{}] = {}", [i, v])
-    }
+    test2.dispose()
+    debug_print(test)
+    debug_print(test2)
+    debug_print(test3)
     println("")
 
-    for :arr {
-        printfln("[{}] = {}", [it_index, it])
-    }
+    test.dispose()
+    debug_print(test)
+    debug_print(test2)
+    debug_print(test3)
     println("")
 
-    for(reverse = true) v, i :arr {
-        printfln("[{0}/{2}] = {1}", [i, v, it_index_rev])
-    }
+    test3.dispose()
+    debug_print(test)
+    debug_print(test2)
+    debug_print(test3)
     println("")
-
-    for(reverse = true) :arr {
-        printfln("[{0}/{2}] = {1}", [it_index, it, it_index_rev])
-    }
-    println("")
-    // */
-
-    // let uiae = "lol"
-    // {
-    //     let arr = [5, 3, 2]
-    //     for_extension(arr, println(@sizeof(@link(T))))
-    //     // macro_test3(arr, {
-    //     //     printfln("arr[{}] = {}", [@link(it_index), @link(it)])
-    //     //     // println(uiae)
-    //     //     // println("test")
-    //     // }, reverse = false)
-    //     println("")
-    // }
-
-    // {
-    //     let x = 123
-    //     macro_test(x)
-    //     macro_test(2 + 3 * x)
-    // }
-
-    // {
-    //     macro_test2()
-    //     println(uiae)
-    // }
-
-    // for i : arr {
-    //     println(i)
-    // }
-
-    // for(count = 5) i, index : arr {
-    //     println(i)
-    //     println(index)
-    // }
-
-    // for #odd (count = 5) i, index : arr {
-    //     println(i)
-    //     println(index)
-    // }
 }
 
 // */

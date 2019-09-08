@@ -617,7 +617,7 @@ fn renderImage(film: ref Film)
 fn Main()
 {
     //
-    let scale: int = 5
+    let scale: int = 2
     let width: int = 192 * scale
     let height: int = 128 * scale
     let antiAliasingSteps: int = 1

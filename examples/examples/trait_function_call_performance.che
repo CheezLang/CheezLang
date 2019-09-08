@@ -45,7 +45,7 @@ fn Main() {
 
     printf("iterations: {}, n: {}`n", [iterations, n])
 
-    let t: Test
+    let t: Test = default
     let tt: TestTrait = t
 
     // call normalFunction() on Test

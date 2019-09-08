@@ -20,14 +20,13 @@ struct Entry(K: type, V: type) {
 
 impl(K: type, V: type) Table(K, V) {
     fn create(comp: fn(K, K) -> bool, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        let table: Table(K, V)
-        table.allocator = allocator
-        table.comparer = comp
-        table.max_load = 0.75
-        table.count = 0
-        table.entries = null
-
-        return table
+        return new {
+            allocator   = allocator
+            comparer    = comp
+            max_load    = 0.75
+            count       = 0
+            entries     = null
+        }
     }
 
     fn get_entries(ref Self) -> []Entry(K, V) {

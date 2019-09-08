@@ -72,9 +72,16 @@ namespace Cheez
         {
             if (var.Initializer == null)
             {
-                var.Initializer = new AstDefaultExpr(var.Pattern.Location);
+                if (var.GetFlag(StmtFlags.GlobalScope))
+                {
+                    ReportError(var, $"Global variables must have an initializer");
+                    var.Initializer = new AstDefaultExpr(var.Pattern.Location);
+                }
             }
-            var.Initializer.AttachTo(var);
+            else
+            {
+                var.Initializer.AttachTo(var);
+            }
 
             if (var.TypeExpr != null)
             {
@@ -89,6 +96,7 @@ namespace Cheez
             foreach (var decl in var.SubDeclarations)
             {
                 var res = var.Scope.DefineSymbol(decl);
+
                 if (!res.ok)
                 {
                     (string, ILocation)? detail = null;
@@ -106,6 +114,7 @@ namespace Cheez
                 var decl = new AstSingleVariableDecl(id, type, parent, parent.Constant, pattern);
                 decl.Scope = parent.Scope;
                 decl.Type = new VarDeclType(decl);
+                decl.SetFlag(StmtFlags.GlobalScope, parent.GetFlag(StmtFlags.GlobalScope));
                 parent.SubDeclarations.Add(decl);
                 id.Symbol = decl;
             }
@@ -223,6 +232,11 @@ namespace Cheez
                 @struct.Type = new StructType(@struct);
             }
             @struct.SubScope = new Scope($"struct {@struct.Name.Name}", @struct.Scope);
+
+            if (@struct.HasDirective("move"))
+            {
+                @struct.SetFlag(StmtFlags.Move);
+            }
 
             var res = @struct.Scope.DefineDeclaration(@struct);
             if (!res.ok)

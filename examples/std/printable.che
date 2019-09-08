@@ -26,7 +26,7 @@ impl Printable for char {
 impl Printable for float {
     fn print(ref Self, str: ref String, format: string) {
         let buff: string = {
-            let buff: [32]char
+            let buff: [32]char = default
             buff
         }
         buff.length = c_sprintf(buff.data, "%f", cast(double) self)
@@ -37,7 +37,7 @@ impl Printable for float {
 impl Printable for double {
     fn print(ref Self, str: ref String, format: string) {
         let buff: string = {
-            let buff: [32]char
+            let buff: [32]char = default
             buff
         }
         buff.length = c_sprintf(buff.data, "%f", self)

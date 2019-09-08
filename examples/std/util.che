@@ -17,10 +17,10 @@ fn pointer_add(ptr: &$T, amount: int) -> &T {
 }
 
 fn get_time_microseconds() -> int {
-    let freq: int
+    let freq: int = 1
     QueryPerformanceFrequency(&freq)
 
-    let time: int
+    let time: int = 0
     QueryPerformanceCounter(&time)
 
     time *= 1000000
@@ -30,10 +30,10 @@ fn get_time_microseconds() -> int {
 }
 
 fn get_time_milliseconds() -> int {
-    let freq: int
+    let freq: int = 1
     QueryPerformanceFrequency(&freq)
 
-    let time: int
+    let time: int = 0
     QueryPerformanceCounter(&time)
 
     time *= 1000000

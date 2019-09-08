@@ -86,15 +86,13 @@ namespace Cheez
         }
     }
 
-    public class FunctionList : ISymbol
+    public struct SymbolStatus
     {
-        public CheezType Type => throw new System.NotImplementedException();
+        public ISymbol symbol;
+        public bool holdsValue;
+        public ILocation lastChange;
 
-        public bool IsConstant => throw new System.NotImplementedException();
-
-        public AstIdExpr Name => throw new System.NotImplementedException();
-
-        public ILocation Location => throw new NotImplementedException();
+        public override string ToString() => $"{symbol.Name}: {holdsValue} @ {lastChange} [{lastChange.Beginning}]";
     }
 
     public class Scope
@@ -119,9 +117,12 @@ namespace Cheez
         private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
         private Dictionary<AstImplBlock, List<AstFunctionDecl>> mImplTable = new Dictionary<AstImplBlock, List<AstFunctionDecl>>();
         private Dictionary<ISymbol, int> mInitializedSymbols = new Dictionary<ISymbol, int>();
+        private Dictionary<ISymbol, SymbolStatus> mSymbolStatus = new Dictionary<ISymbol, SymbolStatus>();
         private List<AstFunctionDecl> mForExtensions = null;
         private (string label, object loopOrAction)? mBreak = null;
         private (string label, object loopOrAction)? mContinue = null;
+
+        public ISymbol[] SymbolStatuses => mSymbolStatus.Keys.ToArray();
 
         //
         public List<AstStructDecl> StructDeclarations = new List<AstStructDecl>();
@@ -143,6 +144,14 @@ namespace Cheez
         {
             this.Name = name;
             this.Parent = parent;
+
+            if (parent != null)
+            {
+                foreach (var symbol in parent.InitializedSymbols)
+                    SetInitialized(symbol);
+                foreach (var symbol in parent.mSymbolStatus)
+                    mSymbolStatus[symbol.Key] = symbol.Value;
+            }
         }
 
         public Scope Clone()
@@ -154,6 +163,35 @@ namespace Cheez
                 mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>(mUnaryOperatorTable)
                 // TODO: mImplTable?, rest?
             };
+        }
+
+        public void SetSymbolStatus(ISymbol symbol, bool holdsValue, ILocation location)
+        {
+            mSymbolStatus[symbol] = new SymbolStatus
+            {
+                symbol = symbol,
+                holdsValue = holdsValue,
+                lastChange = location
+            };
+        }
+
+        public SymbolStatus GetSymbolStatus(ISymbol symbol) => mSymbolStatus[symbol];
+        public bool IsSymbolInitialized(ISymbol symbol) => mSymbolStatus[symbol].holdsValue;
+
+        public void ApplyInitializedSymbolsToParent()
+        {
+            if (Parent == null)
+                return;
+
+            foreach (var s in InitializedSymbols)
+            {
+                Parent.SetInitialized(s);
+            }
+
+            foreach (var s in Parent.mSymbolStatus.Keys.ToArray())
+            {
+                Parent.mSymbolStatus[s] = mSymbolStatus[s];
+            }
         }
 
         public bool IsInitialized(ISymbol symbol)
@@ -582,23 +620,6 @@ namespace Cheez
             list.Add(op);
         }
 
-        private bool CheckType(CheezType needed, CheezType got)
-        {
-            if (needed == got)
-                return true;
-
-            if (got == IntType.LiteralType)
-            {
-                return needed is IntType || needed is FloatType;
-            }
-            if (got == FloatType.LiteralType)
-            {
-                return needed is FloatType;
-            }
-
-            return false;
-        }
-
         public void DefineLoop(AstWhileStmt loop)
         {
             if (mBreak != null)
@@ -666,6 +687,12 @@ namespace Cheez
                 return (false, other.Location);
 
             mSymbolTable[name] = symbol;
+
+            if (symbol is AstSingleVariableDecl var && !var.GetFlag(StmtFlags.GlobalScope))
+            {
+                SetSymbolStatus(symbol, false, var.Location);
+            }
+
             return (true, null);
         }
 

@@ -16,7 +16,8 @@ namespace Cheez.Ast.Statements
         MembersComputed,
         ExcludeFromVtable,
         IsMacroFunction,
-        IsForExtension
+        IsForExtension,
+        Move
     }
 
     public interface IAstNode {
@@ -49,17 +50,14 @@ namespace Cheez.Ast.Statements
             this.Location = Location;
         }
 
-        public void SetFlag(StmtFlags f)
+        public void SetFlag(StmtFlags f, bool b = true)
         {
-            mFlags |= 1 << (int)f;
+            if (b)
+                mFlags |= 1 << (int)f;
+            else
+                mFlags &= ~(1 << (int)f);
         }
         
-        public void ClearFlag(StmtFlags f)
-        {
-            var mask = ~(1 << (int)f);
-            mFlags &= mask;
-        }
-
         public bool GetFlag(StmtFlags f) => (mFlags & (1 << (int)f)) != 0;
         public bool HasDirective(string name) => Directives.Find(d => d.Name.Name == name) != null;
 

@@ -17,7 +17,7 @@ fn load_filec(filename: c_string) -> Result(String, String) {
         return Err(String::format("failed to open file: {}", [GetLastError()]))
     }
 
-    let size: int
+    let size: int = 0
     if GetFileSizeEx(handle, &size) == 0 {
         return Err(String::format("failed to get file size: {}", [GetLastError()]))
     }
@@ -44,7 +44,7 @@ fn load_filecb(filename: c_string) -> Option([]u8) {
         return None
     }
 
-    let size: int
+    let size: int = 0
     if GetFileSizeEx(handle, &size) == 0 {
         return None
     }

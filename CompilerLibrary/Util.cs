@@ -51,11 +51,6 @@ namespace Cheez.Util
             return -1;
         }
 
-        public static bool Xor(bool a, bool b)
-        {
-            return (a && !b) || (!a && b);
-        }
-
         public static bool Implies(bool a, bool b)
         {
             return !a || b;

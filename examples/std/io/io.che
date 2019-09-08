@@ -4,7 +4,7 @@
 #load("std:os/windows")
 
 fn print_string(s: ref String) {
-    let bytesWritten: u32
+    let bytesWritten: u32 = 0
     WriteFile(__std_out_handle, cast s.get_raw(), cast s.length, &bytesWritten, null)
 }
 

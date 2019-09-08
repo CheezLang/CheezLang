@@ -1219,10 +1219,6 @@ namespace Cheez
             else
             {
                 expr.SubScope = new Scope("if", expr.Scope);
-
-                // copy initialized symbols
-                foreach (var symbol in expr.Scope.InitializedSymbols)
-                    expr.SubScope.SetInitialized(symbol);
             }
 
             if (expr.PreAction != null)
@@ -1271,12 +1267,14 @@ namespace Cheez
                 }
             }
 
+            expr.IfCase.SetFlag(ExprFlags.DontApplySymbolStatuses, true);
             expr.IfCase.AttachTo(expr, expr.SubScope);
             expr.IfCase = InferTypeHelper(expr.IfCase, expected, context);
             ConvertLiteralTypeToDefaultType(expr.IfCase, expected);
 
             if (expr.ElseCase != null)
             {
+                expr.IfCase.SetFlag(ExprFlags.DontApplySymbolStatuses, true);
                 expr.ElseCase.AttachTo(expr, expr.SubScope);
                 expr.ElseCase = InferTypeHelper(expr.ElseCase, expected, context);
                 ConvertLiteralTypeToDefaultType(expr.ElseCase, expected);
@@ -1302,6 +1300,24 @@ namespace Cheez
 
             if (expr.ElseCase is AstNestedExpression elseBlock && expr.IfCase is AstNestedExpression ifBlock)
             {
+                foreach (var sym in expr.Scope.SymbolStatuses)
+                {
+                    var ifStat = ifBlock.SubScope.GetSymbolStatus(sym);
+                    var elseStat = elseBlock.SubScope.GetSymbolStatus(sym);
+
+                    if (ifStat.holdsValue != elseStat.holdsValue)
+                    {
+                        string getText(bool b) => b ? "initialized here:" : "uninitialized since here:";
+                        ReportError(expr, $"Symbol '{sym.Name}' is initialized in one case but not the other",
+                            ("if-case: " + getText(ifStat.holdsValue), ifStat.lastChange),
+                            ("else-case: " + getText(elseStat.holdsValue), elseStat.lastChange));
+                    }
+                    else
+                    {
+                        expr.Scope.SetSymbolStatus(sym, ifStat.holdsValue, ifStat.lastChange);
+                    }
+                }
+
                 foreach (var symbol in ifBlock.SubScope.InitializedSymbols)
                 {
                     if (elseBlock.SubScope.IsInitialized(symbol))
@@ -1393,6 +1409,30 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "log_symbol_status":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@log_symbol_status takes exactly one argument");
+                            return expr;
+                        }
+
+                        var arg = expr.Arguments[0].Expr;
+                        if (!(arg is AstIdExpr id))
+                        {
+                            ReportError(arg.Location, $"argument must be an identifier");
+                            return expr;
+                        }
+
+                        var symbol = expr.Scope.GetSymbol(id.Name);
+                        var status = expr.Scope.GetSymbolStatus(symbol);
+                        Console.WriteLine($"[{arg.Location.Beginning}] {status}");
+
+                        expr.SetFlag(ExprFlags.IgnoreInCodeGen, true);
+                        expr.Type = CheezType.Void;
+                        break;
+                    }
+
                 case "set_break_and_continue":
                     {
                         if (expr.Arguments.Count != 1)
@@ -1461,7 +1501,12 @@ namespace Cheez
                                         varName.AttachTo(expr);
                                         InferTypeHelper(varName, null, context);
                                         if (varName.Symbol != null)
+                                        {
                                             code.Scope.DefineSymbol(varName.Symbol);
+
+                                            var status = expr.Scope.GetSymbolStatus(varName.Symbol);
+                                            code.Scope.SetSymbolStatus(varName.Symbol, status.holdsValue, status.lastChange);
+                                        }
                                     }
                                     else
                                     {
@@ -1974,9 +2019,6 @@ namespace Cheez
             else
             {
                 expr.SubScope = new Scope("{}", expr.Scope);
-                // copy initialized symbols
-                foreach (var symbol in expr.Scope.InitializedSymbols)
-                    expr.SubScope.SetInitialized(symbol);
             }
 
             int end = expr.Statements.Count;
@@ -2014,11 +2056,10 @@ namespace Cheez
                 expr.Type = CheezType.Void;
             }
 
-            if (!expr.GetFlag(ExprFlags.Anonymous))
+            if (!expr.GetFlag(ExprFlags.Anonymous) && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
             {
                 // copy initialized symbols
-                foreach (var symbol in expr.SubScope.InitializedSymbols)
-                    expr.Scope.SetInitialized(symbol);
+                expr.SubScope.ApplyInitializedSymbolsToParent();
             }
 
             return expr;
@@ -3372,6 +3413,16 @@ namespace Cheez
                 expr.Type = var.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
 
+                if (!expr.GetFlag(ExprFlags.AssignmentTarget) && !var.GetFlag(StmtFlags.GlobalScope))
+                {
+                    var status = expr.Scope.GetSymbolStatus(sym);
+                    if (!status.holdsValue)
+                    {
+                        ReportError(expr, $"Can't use symbol '{sym.Name}' because it is not yet initialized",
+                            ("Status from here:", status.lastChange));
+                    }
+                }
+
                 if (var.Constant)
                 {
                     expr.IsCompTimeValue = true;
@@ -3530,7 +3581,11 @@ namespace Cheez
                 var deref = new AstDereferenceExpr(expr, expr);
                 deref.Reference = true;
                 deref.AttachTo(expr);
-                return InferTypeHelper(deref, null, context);
+
+                if (context == null)
+                    return InferType(deref, null);
+                else
+                    return InferTypeHelper(deref, null, context);
             }
             return expr;
         }
@@ -3540,7 +3595,11 @@ namespace Cheez
             var deref = new AstAddressOfExpr(expr, expr);
             deref.Reference = true;
             deref.AttachTo(expr);
-            return InferTypeHelper(deref, null, context);
+
+            if (context == null)
+                return InferType(deref, null);
+            else
+                return InferTypeHelper(deref, null, context);
         }
 
         private AstExpression CheckType(AstExpression expr, CheezType to, string errorMsg = null)

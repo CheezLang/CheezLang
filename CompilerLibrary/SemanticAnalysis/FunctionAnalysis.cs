@@ -113,6 +113,11 @@ namespace Cheez
                         {
                             ReportError(p, $"Duplicate parameter '{p.Name}'", ("Other parameter here:", other));
                         }
+                        else
+                        {
+                            // mark param as initialized
+                            func.SubScope.SetSymbolStatus(p, true, p.Location);
+                        }
                     }
 
                     if (p.DefaultValue != null)
@@ -136,7 +141,7 @@ namespace Cheez
                     if (!ok)
                         ReportError(func.ReturnTypeExpr, $"A symbol with name '{func.ReturnTypeExpr.Name.Name}' already exists in current scope", ("Other symbol here:", other));
                 }
-                else
+                else if (func.ReturnTypeExpr != null)
                 {
                     func.SubScope.DefineSymbol(func.ReturnTypeExpr, ".ret");
                 }
@@ -403,6 +408,23 @@ namespace Cheez
             whl.Body.AttachTo(whl, whl.SubScope);
             InferType(whl.Body, null);
 
+            // handle initialized symbols
+            foreach (var sym in whl.Scope.SymbolStatuses)
+            {
+                var oldStat = whl.Scope.GetSymbolStatus(sym);
+                var newStat = whl.Body.SubScope.GetSymbolStatus(sym);
+
+                if (oldStat.holdsValue != newStat.holdsValue)
+                {
+                    string getText(bool b) => b ? "initialized here:" : "uninitialized since here:";
+                    string statusToString(bool b) => b ? "initialized" : "uninitialized";
+                    ReportError(whl,
+                        $"Symbol '{sym.Name}' is {statusToString(oldStat.holdsValue)} before the loop but {statusToString(newStat.holdsValue)} at the end of the loop",
+                        ("before loop: " + getText(oldStat.holdsValue), oldStat.lastChange),
+                        ("in loop: " + getText(newStat.holdsValue), newStat.lastChange));
+                }
+            }
+
             return whl;
         }
 
@@ -499,11 +521,40 @@ namespace Cheez
 
                         if (ass.Operator != null)
                         {
+                            if (id.Symbol is AstSingleVariableDecl && !ass.Scope.IsSymbolInitialized(id.Symbol))
+                            {
+                                ReportError(ass.Location, $"Can't use operator '{ass.Operator}=' on variable {id.Name} because it is not initialized",
+                                    ("Uninitialized here:", ass.Scope.GetSymbolStatus(id.Symbol).lastChange));
+                            }
+
                             AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
                             newVal.Replace(value);
                             newVal = InferType(newVal, pattern.Type);
 
                             return newVal;
+                        }
+                        switch (id.Symbol)
+                        {
+                            case AstSingleVariableDecl var when !var.GetFlag(StmtFlags.GlobalScope):
+                                {
+                                    // @todo: if var is already initialized and the type has a destructor it must be called
+                                    // @todo: move out of value
+                                    // Move(value);
+                                    if (ass.Scope.IsSymbolInitialized(id.Symbol))
+                                    {
+                                    }
+                                    ass.Scope.SetSymbolStatus(id.Symbol, true, ass);
+                                    break;
+                                }
+
+                            case AstSingleVariableDecl _:
+                            case AstParameter _:
+                            case Using _:
+                                break;
+
+                            default:
+                                ReportError(id.Symbol.Location, id.Symbol.GetType().ToString());
+                                break;
                         }
 
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
@@ -578,6 +629,7 @@ namespace Cheez
                         if (ass.Pattern.Type is ReferenceType)
                             ass.Pattern = Deref(ass.Pattern, null);
 
+                        ass.Value = HandleReference(ass.Value, ass.Pattern.Type, null);
                         return CheckType(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
