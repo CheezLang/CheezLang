@@ -584,23 +584,22 @@ namespace Cheez
                 foreach (var cas in expr.Cases)
                 {
                     var caseStat = cas.SubScope.GetSymbolStatus(sym);
-                    allInit &= caseStat.holdsValue;
-                    allDeinit &= !caseStat.holdsValue;
+                    allInit &= caseStat.kind == SymbolStatus.Kind.initialized;
+                    allDeinit &= caseStat.kind != SymbolStatus.Kind.initialized;
 
-                    if (caseStat.holdsValue && firstInit == null)
+                    if (caseStat.kind == SymbolStatus.Kind.initialized && firstInit == null)
                         firstInit = caseStat;
-                    else if (!caseStat.holdsValue && firstDeinit == null)
+                    else if (caseStat.kind != SymbolStatus.Kind.initialized && firstDeinit == null)
                         firstDeinit = caseStat;
                 }
 
                 if (allInit)
                 {
-                    if (isExhaustive)
-                        expr.Scope.SetSymbolStatus(sym, true, firstInit.Value.lastChange);
+                    expr.Scope.SetSymbolStatus(sym, SymbolStatus.Kind.initialized, firstInit.Value.location);
                 }
                 else if (allDeinit)
                 {
-                    expr.Scope.SetSymbolStatus(sym, false, firstDeinit.Value.lastChange);
+                    expr.Scope.SetSymbolStatus(sym, firstDeinit.Value.kind, firstDeinit.Value.location);
                 }
                 else
                 {
@@ -1347,16 +1346,15 @@ namespace Cheez
                     var ifStat = ifBlock.SubScope.GetSymbolStatus(sym);
                     var elseStat = elseBlock.SubScope.GetSymbolStatus(sym);
 
-                    if (ifStat.holdsValue != elseStat.holdsValue)
+                    if (ifStat.kind != elseStat.kind)
                     {
-                        string getText(bool b) => b ? "initialized here:" : "uninitialized since here:";
                         ReportError(expr, $"Symbol '{sym.Name}' is initialized in one case but not the other",
-                            ("if-case: " + getText(ifStat.holdsValue), ifStat.lastChange),
-                            ("else-case: " + getText(elseStat.holdsValue), elseStat.lastChange));
+                            ("if-case: " + ifStat.kind, ifStat.location),
+                            ("else-case: " + elseStat.kind, elseStat.location));
                     }
                     else
                     {
-                        expr.Scope.SetSymbolStatus(sym, ifStat.holdsValue, ifStat.lastChange);
+                        expr.Scope.SetSymbolStatus(sym, ifStat.kind, ifStat.location);
                     }
                 }
 
@@ -1547,7 +1545,7 @@ namespace Cheez
                                             code.Scope.DefineSymbol(varName.Symbol);
 
                                             var status = expr.Scope.GetSymbolStatus(varName.Symbol);
-                                            code.Scope.SetSymbolStatus(varName.Symbol, status.holdsValue, status.lastChange);
+                                            code.Scope.SetSymbolStatus(varName.Symbol, status.kind, status.location);
                                         }
                                     }
                                     else
@@ -3135,12 +3133,17 @@ namespace Cheez
                     {
                         arg.Expr = Deref(arg.Expr, context);
                     }
+
+                    Move(arg.Expr);
                 }
                 else
                 {
                     arg.Expr = HandleReference(arg.Expr, type, context);
                     arg.Expr = CheckType(arg.Expr, type, $"Type of argument ({arg.Expr.Type}) does not match type of parameter ({type})");
                     arg.Type = arg.Expr.Type;
+
+                    if (!(type is ReferenceType))
+                        Move(arg.Expr);
                 }
             }
 
@@ -3321,6 +3324,7 @@ namespace Cheez
                     };
                     var func = new AstSymbolExpr(user.Declaration);
                     var call = new AstCallExpr(func, args, expr.Location);
+                    call.Replace(expr);
                     return InferType(call, expected);
                 }
 
@@ -3458,10 +3462,17 @@ namespace Cheez
                 if (!expr.GetFlag(ExprFlags.AssignmentTarget) && !var.GetFlag(StmtFlags.GlobalScope))
                 {
                     var status = expr.Scope.GetSymbolStatus(sym);
-                    if (!status.holdsValue)
+
+                    switch (status.kind)
                     {
-                        ReportError(expr, $"Can't use symbol '{sym.Name}' because it is not yet initialized",
-                            ("Status from here:", status.lastChange));
+                        case SymbolStatus.Kind.moved:
+                            ReportError(expr, $"Can't use variable '{sym.Name}' because it has been moved",
+                                ("Moved here:", status.location));
+                            break;
+                        case SymbolStatus.Kind.uninitialized:
+                            ReportError(expr, $"Can't use variable '{sym.Name}' because it is not yet initialized",
+                                ("Declared here:", status.location));
+                            break;
                     }
                 }
 
@@ -3479,10 +3490,17 @@ namespace Cheez
                 if (!expr.GetFlag(ExprFlags.AssignmentTarget) && p.IsReturnParam)
                 {
                     var status = expr.Scope.GetSymbolStatus(sym);
-                    if (!status.holdsValue)
+
+                    switch (status.kind)
                     {
-                        ReportError(expr, $"Can't use return parameter '{sym.Name}' because it is not yet initialized",
-                            ("Status from here:", status.lastChange));
+                        case SymbolStatus.Kind.moved:
+                            ReportError(expr, $"Can't use return parameter '{sym.Name}' because it has been moved",
+                                ("Moved here:", status.location));
+                            break;
+                        case SymbolStatus.Kind.uninitialized:
+                            ReportError(expr, $"Can't use return parameter '{sym.Name}' because it is not yet initialized",
+                                ("Declared here:", status.location));
+                            break;
                     }
                 }
             }

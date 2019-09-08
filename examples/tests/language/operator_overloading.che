@@ -22,7 +22,7 @@
 
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
-struct Num {
+struct Num #copy {
     pub x: int
 }
 

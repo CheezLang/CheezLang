@@ -125,7 +125,7 @@ namespace Cheez
             {
                 if (decl.Initializer != null)
                 {
-                    v.Scope.SetSymbolStatus(decl, true, decl.Location);
+                    v.Scope.SetSymbolStatus(decl, SymbolStatus.Kind.initialized, decl.Location);
                 }
             }
 
@@ -143,6 +143,11 @@ namespace Cheez
 
                 if (decl.Type == CheezType.Void)
                     ReportError(decl.Name, $"A variable can't have type void");
+
+                if (initializer != null)
+                {
+                    Move(initializer);
+                }
             }
             else if (pattern is AstTupleExpr tuple)
             {

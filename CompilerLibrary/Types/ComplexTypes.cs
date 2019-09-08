@@ -166,6 +166,7 @@ namespace Cheez.Types.Complex
         public CheezType[] Arguments { get; }
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
         public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
+        public override bool IsCopy => Declaration.GetFlag(StmtFlags.IsCopy);
 
         public AstStructDecl DeclarationTemplate => Declaration.Template ?? Declaration;
 

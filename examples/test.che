@@ -4,14 +4,14 @@
 // #load("compiler/main")
 // #load("examples/pathtracer")
 // #load("tests/library/stack_allocator")
-// #load("tests/language/match3")
+// #load("tests/language/operator_overloading")
 // #load("tests/other/test1")
 
-//*
+/*
 #load("std:c")
 // #load("std:util")
 
-struct Foo #move {
+struct Foo {
     pub val: int
 }
 
@@ -23,72 +23,76 @@ fn take(f: Foo) {
 
 }
 
+
 fn Main() {
-    if const false {
-        let a: int
-        @log_symbol_status(a)
-        match 5 {
-            1 -> {
-                @log_symbol_status(a)
-                a = 5
-                @log_symbol_status(a)
-            }
-            2 -> {
-                @log_symbol_status(a)
-                a = 6
-                @log_symbol_status(a)
-            }
-            3 -> {
-                @log_symbol_status(a)
-                // a = 7
-                @log_symbol_status(a)
-            }
-        }
-        @log_symbol_status(a)
-    }
+    let f = new Foo{5}
+    c_printf("%lld`n", f.val)
 
-    if const false {
-        let a: int
-        @log_symbol_status(a)
-        if true {
-            @log_symbol_status(a)
-            a = 5
-            @log_symbol_status(a)
-        } else {
-            @log_symbol_status(a)
-            a = 10
-            @log_symbol_status(a)
-        }
-        @log_symbol_status(a)
-    }
+    f.val = 10
+    c_printf("%lld`n`n", f.val)
 
-    if const false {
-        let a: int = 1
-        @log_symbol_status(a)
-        while false {
-            @log_symbol_status(a)
-            a = 5
-            @log_symbol_status(a)
-        }
-        @log_symbol_status(a)
+    {
+        let g = f
+        c_printf("%lld`n", f.val)
+        c_printf("%lld`n`n", g.val)
+
+        f = default
+        c_printf("%lld`n", f.val)
+        c_printf("%lld`n", g.val)
+
+        take(g)
+        c_printf("%lld`n", f.val)
+        c_printf("%lld`n", g.val)
     }
 }
-
 // fn Main() {
-//     let f = new Foo{5}
-//     c_printf("%lld`n", f.val)
+//     if const false {
+//         let a: int
+//         @log_symbol_status(a)
+//         match 5 {
+//             1 -> {
+//                 @log_symbol_status(a)
+//                 a = 5
+//                 @log_symbol_status(a)
+//             }
+//             2 -> {
+//                 @log_symbol_status(a)
+//                 a = 6
+//                 @log_symbol_status(a)
+//             }
+//             3 -> {
+//                 @log_symbol_status(a)
+//                 // a = 7
+//                 @log_symbol_status(a)
+//             }
+//         }
+//         @log_symbol_status(a)
+//     }
 
-//     f.val = 10
-//     c_printf("%lld`n`n", f.val)
+//     if const false {
+//         let a: int
+//         @log_symbol_status(a)
+//         if true {
+//             @log_symbol_status(a)
+//             a = 5
+//             @log_symbol_status(a)
+//         } else {
+//             @log_symbol_status(a)
+//             a = 10
+//             @log_symbol_status(a)
+//         }
+//         @log_symbol_status(a)
+//     }
 
-//     {
-//         let g = f
-//         c_printf("%lld`n", f.val)
-//         c_printf("%lld`n`n", g.val)
-
-//         take(g)
-//         c_printf("%lld`n", f.val)
-//         c_printf("%lld`n", g.val)
+//     if const false {
+//         let a: int = 1
+//         @log_symbol_status(a)
+//         while false {
+//             @log_symbol_status(a)
+//             a = 5
+//             @log_symbol_status(a)
+//         }
+//         @log_symbol_status(a)
 //     }
 // }
 // */

@@ -25,6 +25,7 @@ namespace Cheez.Types
 
         public abstract bool IsErrorType { get; }
 
+        public virtual bool IsCopy { get; } = true;
         public virtual bool IsComptimeOnly { get; } = false;
 
         public static bool operator ==(CheezType a, CheezType b)

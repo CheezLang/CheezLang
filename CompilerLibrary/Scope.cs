@@ -86,13 +86,22 @@ namespace Cheez
         }
     }
 
+
+
     public struct SymbolStatus
     {
-        public ISymbol symbol;
-        public bool holdsValue;
-        public ILocation lastChange;
+        public enum Kind
+        {
+            initialized,
+            uninitialized,
+            moved
+        }
 
-        public override string ToString() => $"{symbol.Name}: {holdsValue} @ {lastChange} [{lastChange.Beginning}]";
+        public ISymbol symbol;
+        public Kind kind;
+        public ILocation location;
+
+        public override string ToString() => $"{symbol.Name}: {kind} @ {location} [{location.Beginning}]";
     }
 
     public class Scope
@@ -165,18 +174,18 @@ namespace Cheez
             };
         }
 
-        public void SetSymbolStatus(ISymbol symbol, bool holdsValue, ILocation location)
+        public void SetSymbolStatus(ISymbol symbol, SymbolStatus.Kind holdsValue, ILocation location)
         {
             mSymbolStatus[symbol] = new SymbolStatus
             {
                 symbol = symbol,
-                holdsValue = holdsValue,
-                lastChange = location
+                kind = holdsValue,
+                location = location
             };
         }
 
         public SymbolStatus GetSymbolStatus(ISymbol symbol) => mSymbolStatus[symbol];
-        public bool IsSymbolInitialized(ISymbol symbol) => mSymbolStatus[symbol].holdsValue;
+        public bool IsSymbolInitialized(ISymbol symbol) => mSymbolStatus[symbol].kind == SymbolStatus.Kind.initialized;
 
         public void ApplyInitializedSymbolsToParent()
         {
@@ -692,7 +701,7 @@ namespace Cheez
             {
                 case AstSingleVariableDecl v when !v.GetFlag(StmtFlags.GlobalScope):
                 case AstParameter p when p.IsReturnParam:
-                    SetSymbolStatus(symbol, false, symbol.Location);
+                    SetSymbolStatus(symbol, SymbolStatus.Kind.uninitialized, symbol.Location);
                     break;
             }
 

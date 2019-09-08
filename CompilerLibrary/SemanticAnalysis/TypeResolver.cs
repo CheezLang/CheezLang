@@ -567,6 +567,7 @@ namespace Cheez
                 instance.IsPolyInstance = true;
                 instance.IsPolymorphic = false;
                 instance.Template = decl;
+                instance.SetFlag(StmtFlags.IsCopy, decl.GetFlag(StmtFlags.IsCopy));
                 decl.PolymorphicInstances.Add(instance);
 
                 Debug.Assert(instance.Parameters.Count == args.Count);

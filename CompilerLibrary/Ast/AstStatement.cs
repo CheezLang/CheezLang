@@ -17,7 +17,7 @@ namespace Cheez.Ast.Statements
         ExcludeFromVtable,
         IsMacroFunction,
         IsForExtension,
-        Move
+        IsCopy
     }
 
     public interface IAstNode {

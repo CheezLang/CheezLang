@@ -216,6 +216,11 @@ namespace Cheez
 
         private void Pass1StructDeclaration(AstStructDecl @struct)
         {
+            if (@struct.HasDirective("copy"))
+            {
+                @struct.SetFlag(StmtFlags.IsCopy);
+            }
+
             if (@struct.Parameters.Count > 0)
             {
                 @struct.IsPolymorphic = true;
@@ -232,11 +237,6 @@ namespace Cheez
                 @struct.Type = new StructType(@struct);
             }
             @struct.SubScope = new Scope($"struct {@struct.Name.Name}", @struct.Scope);
-
-            if (@struct.HasDirective("move"))
-            {
-                @struct.SetFlag(StmtFlags.Move);
-            }
 
             var res = @struct.Scope.DefineDeclaration(@struct);
             if (!res.ok)

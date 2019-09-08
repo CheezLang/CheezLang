@@ -1,6 +1,6 @@
 #load("std:printable")
 
-struct Pixel {
+struct Pixel #copy {
     pub r: u8
     pub g: u8
     pub b: u8

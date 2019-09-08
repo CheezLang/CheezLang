@@ -6,7 +6,7 @@
 
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
-struct Vector(T: type) {
+struct Vector(T: type) #copy {
     pub x: T
     pub y: T
 }

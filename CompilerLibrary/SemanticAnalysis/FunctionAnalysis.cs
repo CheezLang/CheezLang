@@ -116,7 +116,7 @@ namespace Cheez
                         else
                         {
                             // mark param as initialized
-                            func.SubScope.SetSymbolStatus(p, true, p.Location);
+                            func.SubScope.SetSymbolStatus(p, SymbolStatus.Kind.initialized, p.Location);
                         }
                     }
 
@@ -415,14 +415,12 @@ namespace Cheez
                 var oldStat = whl.Scope.GetSymbolStatus(sym);
                 var newStat = whl.Body.SubScope.GetSymbolStatus(sym);
 
-                if (oldStat.holdsValue != newStat.holdsValue)
+                if (oldStat.kind != newStat.kind)
                 {
-                    string getText(bool b) => b ? "initialized here:" : "uninitialized since here:";
-                    string statusToString(bool b) => b ? "initialized" : "uninitialized";
                     ReportError(whl,
-                        $"Symbol '{sym.Name}' is {statusToString(oldStat.holdsValue)} before the loop but {statusToString(newStat.holdsValue)} at the end of the loop",
-                        ("before loop: " + getText(oldStat.holdsValue), oldStat.lastChange),
-                        ("in loop: " + getText(newStat.holdsValue), newStat.lastChange));
+                        $"Symbol '{sym.Name}' is {oldStat.kind} before the loop but {newStat.kind} at the end of the loop",
+                        ("before loop: " + oldStat.kind, oldStat.location),
+                        ("in loop: " + newStat.kind, newStat.location));
                 }
             }
 
@@ -527,10 +525,18 @@ namespace Cheez
                             {
                                 case AstSingleVariableDecl v when !v.GetFlag(StmtFlags.GlobalScope):
                                 case AstParameter p when p.IsReturnParam:
-                                    if (!ass.Scope.IsSymbolInitialized(id.Symbol))
                                     {
-                                        ReportError(ass.Location, $"Can't use operator '{ass.Operator}=' on variable '{id.Name}' because it is not initialized",
-                                            ("Uninitialized here:", ass.Scope.GetSymbolStatus(id.Symbol).lastChange));
+                                        var status = ass.Scope.GetSymbolStatus(id.Symbol);
+                                        if (status.kind == SymbolStatus.Kind.moved)
+                                        {
+                                            ReportError(ass.Location, $"Can't use operator '{ass.Operator}=' on variable '{id.Name}' because it has been moved",
+                                                ("Moved here:", ass.Scope.GetSymbolStatus(id.Symbol).location));
+                                        }
+                                        else if (status.kind == SymbolStatus.Kind.uninitialized)
+                                        {
+                                            ReportError(ass.Location, $"Can't use operator '{ass.Operator}=' on variable '{id.Name}' because it is not initialized",
+                                                ("Declared here:", ass.Scope.GetSymbolStatus(id.Symbol).location));
+                                        }
                                     }
                                     break;
                             }
@@ -541,18 +547,18 @@ namespace Cheez
 
                             return newVal;
                         }
+
                         switch (id.Symbol)
                         {
                             case AstSingleVariableDecl var when !var.GetFlag(StmtFlags.GlobalScope):
                             case AstParameter p when p.IsReturnParam:
                                 {
                                     // @todo: if var is already initialized and the type has a destructor it must be called
-                                    // @todo: move out of value
-                                    // Move(value);
+
                                     if (ass.Scope.IsSymbolInitialized(id.Symbol))
                                     {
                                     }
-                                    ass.Scope.SetSymbolStatus(id.Symbol, true, ass);
+                                    ass.Scope.SetSymbolStatus(id.Symbol, SymbolStatus.Kind.initialized, ass);
                                     break;
                                 }
 
@@ -565,6 +571,8 @@ namespace Cheez
                                 ReportError(id.Symbol.Location, id.Symbol.GetType().ToString());
                                 break;
                         }
+                        // @todo: move out of value
+                        //Move(value);
 
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 

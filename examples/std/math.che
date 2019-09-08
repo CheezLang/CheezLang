@@ -59,18 +59,18 @@ fn clamp(value: $T, min: T, max: T) -> T {
     return value
 }
 
-struct Vector2(T: type) {
+struct Vector2(T: type) #copy {
     pub x: T
     pub y: T
 }
 
-struct Vector3(T: type) {
+struct Vector3(T: type) #copy {
     pub x: T
     pub y: T
     pub z: T
 }
 
-struct Vector4(T: type) {
+struct Vector4(T: type) #copy {
     pub x: T
     pub y: T
     pub z: T
