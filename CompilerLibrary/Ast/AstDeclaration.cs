@@ -49,6 +49,7 @@ namespace Cheez.Ast.Statements
         public object Value { get; set; }
 
         public bool IsConstant => true;
+        public bool IsReturnParam { get; set; } = false;
 
         public AstParameter(AstIdExpr name, AstExpression typeExpr, AstExpression defaultValue, ILocation Location = null)
         {

@@ -688,9 +688,12 @@ namespace Cheez
 
             mSymbolTable[name] = symbol;
 
-            if (symbol is AstSingleVariableDecl var && !var.GetFlag(StmtFlags.GlobalScope))
+            switch (symbol)
             {
-                SetSymbolStatus(symbol, false, var.Location);
+                case AstSingleVariableDecl v when !v.GetFlag(StmtFlags.GlobalScope):
+                case AstParameter p when p.IsReturnParam:
+                    SetSymbolStatus(symbol, false, symbol.Location);
+                    break;
             }
 
             return (true, null);

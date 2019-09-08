@@ -137,6 +137,7 @@ namespace Cheez
 
                 if (func.ReturnTypeExpr?.Name != null)
                 {
+                    func.ReturnTypeExpr.IsReturnParam = true;
                     var (ok, other) = func.SubScope.DefineSymbol(func.ReturnTypeExpr);
                     if (!ok)
                         ReportError(func.ReturnTypeExpr, $"A symbol with name '{func.ReturnTypeExpr.Name.Name}' already exists in current scope", ("Other symbol here:", other));
@@ -433,6 +434,7 @@ namespace Cheez
             ass.Pattern.AttachTo(ass);
             ass.Pattern.SetFlag(ExprFlags.AssignmentTarget, true);
             ass.Pattern.SetFlag(ExprFlags.SetAccess, true);
+            ass.Pattern.SetFlag(ExprFlags.RequireInitializedSymbol, ass.Operator != null);
             ass.Pattern = InferType(ass.Pattern, null);
 
             if (ass.Pattern.Type is ReferenceType)
@@ -521,10 +523,16 @@ namespace Cheez
 
                         if (ass.Operator != null)
                         {
-                            if (id.Symbol is AstSingleVariableDecl && !ass.Scope.IsSymbolInitialized(id.Symbol))
+                            switch (id.Symbol)
                             {
-                                ReportError(ass.Location, $"Can't use operator '{ass.Operator}=' on variable {id.Name} because it is not initialized",
-                                    ("Uninitialized here:", ass.Scope.GetSymbolStatus(id.Symbol).lastChange));
+                                case AstSingleVariableDecl v when !v.GetFlag(StmtFlags.GlobalScope):
+                                case AstParameter p when p.IsReturnParam:
+                                    if (!ass.Scope.IsSymbolInitialized(id.Symbol))
+                                    {
+                                        ReportError(ass.Location, $"Can't use operator '{ass.Operator}=' on variable '{id.Name}' because it is not initialized",
+                                            ("Uninitialized here:", ass.Scope.GetSymbolStatus(id.Symbol).lastChange));
+                                    }
+                                    break;
                             }
 
                             AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
@@ -536,6 +544,7 @@ namespace Cheez
                         switch (id.Symbol)
                         {
                             case AstSingleVariableDecl var when !var.GetFlag(StmtFlags.GlobalScope):
+                            case AstParameter p when p.IsReturnParam:
                                 {
                                     // @todo: if var is already initialized and the type has a destructor it must be called
                                     // @todo: move out of value

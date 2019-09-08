@@ -7,7 +7,7 @@
 // #load("tests/language/match3")
 // #load("tests/other/test1")
 
-/*
+//*
 #load("std:c")
 // #load("std:util")
 
@@ -24,8 +24,28 @@ fn take(f: Foo) {
 }
 
 fn Main() {
-    let x: Foo
-    take(x)
+    if const false {
+        let a: int
+        @log_symbol_status(a)
+        match 5 {
+            1 -> {
+                @log_symbol_status(a)
+                a = 5
+                @log_symbol_status(a)
+            }
+            2 -> {
+                @log_symbol_status(a)
+                a = 6
+                @log_symbol_status(a)
+            }
+            3 -> {
+                @log_symbol_status(a)
+                // a = 7
+                @log_symbol_status(a)
+            }
+        }
+        @log_symbol_status(a)
+    }
 
     if const false {
         let a: int
@@ -42,7 +62,7 @@ fn Main() {
         @log_symbol_status(a)
     }
 
-    if const true {
+    if const false {
         let a: int = 1
         @log_symbol_status(a)
         while false {

@@ -517,6 +517,12 @@ namespace Cheez
             
             expr.IsSimpleIntMatch = true;
 
+            if (expr.Cases.Count == 0)
+            {
+                ReportError(expr, $"match expression must have at least one case");
+                return expr;
+            }
+
             foreach (var c in expr.Cases)
             {
                 c.SubScope = new Scope("case", expr.Scope);
@@ -564,7 +570,43 @@ namespace Cheez
             if (!(expr.Type is IntType || expr.Type is CharType))
                 expr.IsSimpleIntMatch = false;
 
+            bool isExhaustive = false;
 
+            // handle initialized symbols
+            foreach (var sym in expr.Scope.SymbolStatuses)
+            {
+                var oldStat = expr.Scope.GetSymbolStatus(sym);
+                bool allInit = true;
+                bool allDeinit = true;
+
+                SymbolStatus? firstInit = null;
+                SymbolStatus? firstDeinit = null;
+                foreach (var cas in expr.Cases)
+                {
+                    var caseStat = cas.SubScope.GetSymbolStatus(sym);
+                    allInit &= caseStat.holdsValue;
+                    allDeinit &= !caseStat.holdsValue;
+
+                    if (caseStat.holdsValue && firstInit == null)
+                        firstInit = caseStat;
+                    else if (!caseStat.holdsValue && firstDeinit == null)
+                        firstDeinit = caseStat;
+                }
+
+                if (allInit)
+                {
+                    if (isExhaustive)
+                        expr.Scope.SetSymbolStatus(sym, true, firstInit.Value.lastChange);
+                }
+                else if (allDeinit)
+                {
+                    expr.Scope.SetSymbolStatus(sym, false, firstDeinit.Value.lastChange);
+                }
+                else
+                {
+                    ReportError(expr, $"Symbol '{sym.Name}' is initialized in some but not all cases");
+                }
+            }
             // transform match
 
             return expr;
@@ -3433,6 +3475,16 @@ namespace Cheez
             {
                 expr.Type = p.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
+
+                if (!expr.GetFlag(ExprFlags.AssignmentTarget) && p.IsReturnParam)
+                {
+                    var status = expr.Scope.GetSymbolStatus(sym);
+                    if (!status.holdsValue)
+                    {
+                        ReportError(expr, $"Can't use return parameter '{sym.Name}' because it is not yet initialized",
+                            ("Status from here:", status.lastChange));
+                    }
+                }
             }
             else if (sym is TypeSymbol ct)
             {
