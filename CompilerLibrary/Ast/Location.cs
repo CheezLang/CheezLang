@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Cheez.Ast
 {
-    public class TokenLocation
+    public class TokenLocation : ILocation
     {
         public string file;
         public int line;
@@ -11,9 +11,11 @@ namespace Cheez.Ast
         public int end;
         public int lineStartIndex;
 
+        public TokenLocation Beginning => this;
+        public TokenLocation End => this;
+
         public TokenLocation()
         {
-
         }
 
         public TokenLocation Clone()

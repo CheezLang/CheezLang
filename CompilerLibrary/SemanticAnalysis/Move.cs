@@ -6,36 +6,31 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        private void Move(AstExpression expr)
+        private bool Move(AstExpression expr)
         {
             switch (expr)
             {
                 case AstIdExpr id:
                     {
-                        switch (id.Symbol)
+                        if (expr.Scope.TryGetSymbolStatus(id.Symbol, out var status))
                         {
-                            case AstSingleVariableDecl var when !var.GetFlag(StmtFlags.GlobalScope):
-                            case AstParameter p when p.IsReturnParam:
+                            if (status.kind != SymbolStatus.Kind.initialized)
+                            {
+                                ReportError(expr, $"Can't move out of '{id.Name}' because it is {status.kind}",
+                                    ("Moved here:", status.location));
+                                return false;
+                            }
+                            else
+                            {
+                                // check if type is move or copy
+                                var type = (id.Symbol as ITypedSymbol).Type;
+                                if (!type.IsCopy)
                                 {
-                                    var status = expr.Scope.GetSymbolStatus(id.Symbol);
-                                    if (status.kind != SymbolStatus.Kind.initialized)
-                                    {
-                                        ReportError(expr, $"Can't move out of '{id.Name}' because it is {status.kind}",
-                                            ("Moved here:", status.location));
-                                    }
-                                    else
-                                    {
-                                        // check if type is move or copy
-                                        var type = (id.Symbol as ITypedSymbol).Type;
-                                        if (!type.IsCopy)
-                                        {
-                                            expr.Scope.SetSymbolStatus(id.Symbol, SymbolStatus.Kind.moved, expr.Location);
-                                        }
-                                    }
-                                    break;
+                                    expr.Scope.SetSymbolStatus(id.Symbol, SymbolStatus.Kind.moved, expr);
                                 }
+                            }
                         }
-                        break;
+                        return true;
                     }
 
                 //case AstStructValueExpr _:
@@ -43,7 +38,7 @@ namespace Cheez
                 //    break;
 
                 default:
-                    break;
+                    return true;
             }
         }
     }

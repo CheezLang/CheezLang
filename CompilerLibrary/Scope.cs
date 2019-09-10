@@ -126,12 +126,12 @@ namespace Cheez
         private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
         private Dictionary<AstImplBlock, List<AstFunctionDecl>> mImplTable = new Dictionary<AstImplBlock, List<AstFunctionDecl>>();
         private Dictionary<ISymbol, int> mInitializedSymbols = new Dictionary<ISymbol, int>();
-        private Dictionary<ISymbol, SymbolStatus> mSymbolStatus = new Dictionary<ISymbol, SymbolStatus>();
+        private Dictionary<ISymbol, SymbolStatus> mSymbolStatus;
         private List<AstFunctionDecl> mForExtensions = null;
         private (string label, object loopOrAction)? mBreak = null;
         private (string label, object loopOrAction)? mContinue = null;
 
-        public ISymbol[] SymbolStatuses => mSymbolStatus.Keys.ToArray();
+        public ISymbol[] SymbolStatuses => mSymbolStatus?.Keys?.ToArray();
 
         //
         public List<AstStructDecl> StructDeclarations = new List<AstStructDecl>();
@@ -158,8 +158,6 @@ namespace Cheez
             {
                 foreach (var symbol in parent.InitializedSymbols)
                     SetInitialized(symbol);
-                foreach (var symbol in parent.mSymbolStatus)
-                    mSymbolStatus[symbol.Key] = symbol.Value;
             }
         }
 
@@ -174,6 +172,16 @@ namespace Cheez
             };
         }
 
+        public void InitSymbolStats()
+        {
+            mSymbolStatus = new Dictionary<ISymbol, SymbolStatus>();
+            if (Parent?.mSymbolStatus != null)
+            {
+                foreach (var symbol in Parent.mSymbolStatus)
+                    mSymbolStatus[symbol.Key] = symbol.Value;
+            }
+        }
+
         public void SetSymbolStatus(ISymbol symbol, SymbolStatus.Kind holdsValue, ILocation location)
         {
             mSymbolStatus[symbol] = new SymbolStatus
@@ -185,7 +193,24 @@ namespace Cheez
         }
 
         public SymbolStatus GetSymbolStatus(ISymbol symbol) => mSymbolStatus[symbol];
-        public bool IsSymbolInitialized(ISymbol symbol) => mSymbolStatus[symbol].kind == SymbolStatus.Kind.initialized;
+        //public SymbolStatus? GetSymbolStatusOpt(ISymbol symbol)
+        //{
+        //    if (TryGetSymbolStatus(symbol, out var v))
+        //        return v;
+        //    return null;
+        //}
+
+        public bool TryGetSymbolStatus(ISymbol symbol, out SymbolStatus status)
+        {
+            if (mSymbolStatus.TryGetValue(symbol, out var s))
+            {
+                status = s;
+                return true;
+            }
+
+            status = default;
+            return false;
+        }
 
         public void ApplyInitializedSymbolsToParent()
         {
@@ -200,6 +225,14 @@ namespace Cheez
             foreach (var s in Parent.mSymbolStatus.Keys.ToArray())
             {
                 Parent.mSymbolStatus[s] = mSymbolStatus[s];
+            }
+        }
+
+        public void ApplyInitializedSymbolsTo(Scope scope)
+        {
+            foreach (var s in scope.mSymbolStatus.Keys.ToArray())
+            {
+                scope.mSymbolStatus[s] = mSymbolStatus[s];
             }
         }
 
@@ -697,13 +730,13 @@ namespace Cheez
 
             mSymbolTable[name] = symbol;
 
-            switch (symbol)
-            {
-                case AstSingleVariableDecl v when !v.GetFlag(StmtFlags.GlobalScope):
-                case AstParameter p when p.IsReturnParam:
-                    SetSymbolStatus(symbol, SymbolStatus.Kind.uninitialized, symbol.Location);
-                    break;
-            }
+            //switch (symbol)
+            //{
+            //    case AstSingleVariableDecl v when !v.GetFlag(StmtFlags.GlobalScope):
+            //    case AstParameter p when p.IsReturnParam:
+            //        SetSymbolStatus(symbol, SymbolStatus.Kind.uninitialized, symbol.Location);
+            //        break;
+            //}
 
             return (true, null);
         }

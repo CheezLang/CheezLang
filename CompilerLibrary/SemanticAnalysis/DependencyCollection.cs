@@ -50,7 +50,7 @@ namespace Cheez
                     break;
 
                 case AstCallExpr expr:
-                    CollectTypeDependencies(decl, expr.Function, type);
+                    CollectTypeDependencies(decl, expr.FunctionExpr, type);
                     foreach (var p in expr.Arguments)
                         CollectTypeDependencies(decl, p.Expr, type);
                     break;

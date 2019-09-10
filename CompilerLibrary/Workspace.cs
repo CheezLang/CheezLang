@@ -325,9 +325,9 @@ namespace Cheez
             logScope--;
         }
 
-        private void WellThatsNotSupposedToHappen()
+        private void WellThatsNotSupposedToHappen(string message = null)
         {
-            throw new Exception("Well that's not supposed to happen...");
+            throw new Exception($"[{message}] Well that's not supposed to happen...");
         }
     }
 }

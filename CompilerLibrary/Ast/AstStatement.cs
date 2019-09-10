@@ -17,7 +17,8 @@ namespace Cheez.Ast.Statements
         ExcludeFromVtable,
         IsMacroFunction,
         IsForExtension,
-        IsCopy
+        IsCopy,
+        Breaks
     }
 
     public interface IAstNode {
@@ -237,6 +238,8 @@ namespace Cheez.Ast.Statements
         public List<AstAssignment> SubAssignments { get; set; }
         public bool OnlyGenerateValue { get; internal set; } = false;
 
+        public List<AstExpression> Destructions { get; private set; } = null;
+
         public AstAssignment(AstExpression target, AstExpression value, string op = null, ILocation Location = null)
             : base(Location: Location)
         {
@@ -249,6 +252,15 @@ namespace Cheez.Ast.Statements
         {
             if (SubAssignments == null) SubAssignments = new List<AstAssignment>();
             SubAssignments.Add(ass);
+        }
+
+        public void AddDestruction(AstExpression dest)
+        {
+            if (dest == null)
+                return;
+            if (Destructions == null)
+                Destructions = new List<AstExpression>();
+            Destructions.Add(dest);
         }
 
         [DebuggerStepThrough]

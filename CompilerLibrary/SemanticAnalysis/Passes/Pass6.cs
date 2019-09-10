@@ -121,14 +121,6 @@ namespace Cheez
 
             AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
 
-            foreach (var decl in v.SubDeclarations)
-            {
-                if (decl.Initializer != null)
-                {
-                    v.Scope.SetSymbolStatus(decl, SymbolStatus.Kind.initialized, decl.Location);
-                }
-            }
-
             path?.RemoveAt(path.Count - 1);
         }
 
@@ -143,11 +135,6 @@ namespace Cheez
 
                 if (decl.Type == CheezType.Void)
                     ReportError(decl.Name, $"A variable can't have type void");
-
-                if (initializer != null)
-                {
-                    Move(initializer);
-                }
             }
             else if (pattern is AstTupleExpr tuple)
             {

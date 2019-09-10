@@ -24,7 +24,8 @@ namespace Cheez.Ast.Expressions
         FromMacroExpansion = 6,
         IgnoreInCodeGen = 7,
         DontApplySymbolStatuses = 8,
-        RequireInitializedSymbol = 9
+        RequireInitializedSymbol = 9,
+        Breaks = 10
     }
 
     public abstract class AstExpression : IVisitorAcceptor, ILocation, IAstNode
@@ -251,9 +252,10 @@ namespace Cheez.Ast.Expressions
 
     public class AstBlockExpr : AstNestedExpression
     {
-        public List<AstStatement> Statements { get; }
+        public List<AstStatement> Statements { get; set; }
 
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
+        public List<AstExpression> Destructions { get; private set; } = null;
 
         public override bool IsPolymorphic => false;
 
@@ -267,6 +269,15 @@ namespace Cheez.Ast.Expressions
 
         public override AstExpression Clone()
          => CopyValuesTo(new AstBlockExpr(Statements.Select(s => s.Clone()).ToList()));
+
+        public void AddDestruction(AstExpression dest)
+        {
+            if (dest == null)
+                return;
+            if (Destructions == null)
+                Destructions = new List<AstExpression>();
+            Destructions.Add(dest);
+        }
     }
 
     public class AstEmptyExpr : AstExpression
@@ -398,18 +409,19 @@ namespace Cheez.Ast.Expressions
 
     public class AstCallExpr : AstExpression
     {
-        public AstExpression Function { get; set; }
+        public AstExpression FunctionExpr { get; set; }
         public List<AstArgument> Arguments { get; set; }
-        public override bool IsPolymorphic => Function.IsPolymorphic || Arguments.Any(a => a.IsPolymorphic);
+        public override bool IsPolymorphic => FunctionExpr.IsPolymorphic || Arguments.Any(a => a.IsPolymorphic);
 
         public AstFunctionDecl Declaration { get; internal set; }
+        public FunctionType FunctionType = null;
 
         public bool UnifiedFunctionCall { get; set; }
 
         [DebuggerStepThrough]
         public AstCallExpr(AstExpression func, List<AstArgument> args, ILocation Location = null) : base(Location)
         {
-            Function = func;
+            FunctionExpr = func;
             Arguments = args;
         }
 
@@ -418,7 +430,7 @@ namespace Cheez.Ast.Expressions
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstCallExpr(Function.Clone(),  Arguments.Select(a => a.Clone() as AstArgument).ToList()));
+            => CopyValuesTo(new AstCallExpr(FunctionExpr.Clone(),  Arguments.Select(a => a.Clone() as AstArgument).ToList()));
     }
 
     public class AstCompCallExpr : AstExpression
@@ -786,6 +798,7 @@ namespace Cheez.Ast.Expressions
     public class AstBreakExpr : AstExpression
     {
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
+        public List<AstExpression> Destructions { get; private set; } = null;
         public AstWhileStmt Loop { get; set; }
 
         public AstIdExpr Label { get; set; }
@@ -801,6 +814,15 @@ namespace Cheez.Ast.Expressions
 
         public override AstExpression Clone()
             => CopyValuesTo(new AstBreakExpr(Label?.Clone() as AstIdExpr));
+
+        public void AddDestruction(AstExpression dest)
+        {
+            if (dest == null)
+                return;
+            if (Destructions == null)
+                Destructions = new List<AstExpression>();
+            Destructions.Add(dest);
+        }
     }
 
     public class AstContinueExpr : AstExpression

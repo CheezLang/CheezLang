@@ -312,6 +312,7 @@ namespace Cheez
 
         private AstExpression InferTypeBreak(AstBreakExpr br)
         {
+            br.SetFlag(ExprFlags.Breaks, true);
             var sym = br.Scope.GetBreak(br.Label?.Name);
             if (sym == null)
                 ReportError(br, $"Did not find a loop matching this break");
@@ -570,44 +571,6 @@ namespace Cheez
             if (!(expr.Type is IntType || expr.Type is CharType))
                 expr.IsSimpleIntMatch = false;
 
-            bool isExhaustive = false;
-
-            // handle initialized symbols
-            foreach (var sym in expr.Scope.SymbolStatuses)
-            {
-                var oldStat = expr.Scope.GetSymbolStatus(sym);
-                bool allInit = true;
-                bool allDeinit = true;
-
-                SymbolStatus? firstInit = null;
-                SymbolStatus? firstDeinit = null;
-                foreach (var cas in expr.Cases)
-                {
-                    var caseStat = cas.SubScope.GetSymbolStatus(sym);
-                    allInit &= caseStat.kind == SymbolStatus.Kind.initialized;
-                    allDeinit &= caseStat.kind != SymbolStatus.Kind.initialized;
-
-                    if (caseStat.kind == SymbolStatus.Kind.initialized && firstInit == null)
-                        firstInit = caseStat;
-                    else if (caseStat.kind != SymbolStatus.Kind.initialized && firstDeinit == null)
-                        firstDeinit = caseStat;
-                }
-
-                if (allInit)
-                {
-                    expr.Scope.SetSymbolStatus(sym, SymbolStatus.Kind.initialized, firstInit.Value.location);
-                }
-                else if (allDeinit)
-                {
-                    expr.Scope.SetSymbolStatus(sym, firstDeinit.Value.kind, firstDeinit.Value.location);
-                }
-                else
-                {
-                    ReportError(expr, $"Symbol '{sym.Name}' is initialized in some but not all cases");
-                }
-            }
-            // transform match
-
             return expr;
         }
 
@@ -728,8 +691,8 @@ namespace Cheez
 
                 case AstCallExpr call:
                     {
-                        call.Function.AttachTo(call);
-                        var d = InferType(call.Function, value.Type);
+                        call.FunctionExpr.AttachTo(call);
+                        var d = InferType(call.FunctionExpr, value.Type);
                         if (d is AstEnumValueExpr e)
                         {
                             call.Type = e.Type;
@@ -1255,6 +1218,9 @@ namespace Cheez
 
         private AstExpression InferTypeIfExpr(AstIfExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            if (expr.ElseCase == null)
+                expr.ElseCase = new AstBlockExpr(new List<AstStatement>(), new Location(expr.IfCase.End));
+
             if (expr.IsConstIf)
                 expr.SubScope = expr.Scope;
             else
@@ -1308,14 +1274,12 @@ namespace Cheez
                 }
             }
 
-            expr.IfCase.SetFlag(ExprFlags.DontApplySymbolStatuses, true);
             expr.IfCase.AttachTo(expr, expr.SubScope);
             expr.IfCase = InferTypeHelper(expr.IfCase, expected, context);
             ConvertLiteralTypeToDefaultType(expr.IfCase, expected);
 
             if (expr.ElseCase != null)
             {
-                expr.IfCase.SetFlag(ExprFlags.DontApplySymbolStatuses, true);
                 expr.ElseCase.AttachTo(expr, expr.SubScope);
                 expr.ElseCase = InferTypeHelper(expr.ElseCase, expected, context);
                 ConvertLiteralTypeToDefaultType(expr.ElseCase, expected);
@@ -1333,36 +1297,13 @@ namespace Cheez
                 {
                     expr.SetFlag(ExprFlags.Returns, true);
                 }
+
+                expr.SetFlag(ExprFlags.Breaks,
+                    expr.IfCase.GetFlag(ExprFlags.Breaks) && expr.ElseCase.GetFlag(ExprFlags.Breaks));
             }
             else
             {
                 expr.Type = CheezType.Void;
-            }
-
-            if (expr.ElseCase is AstNestedExpression elseBlock && expr.IfCase is AstNestedExpression ifBlock)
-            {
-                foreach (var sym in expr.Scope.SymbolStatuses)
-                {
-                    var ifStat = ifBlock.SubScope.GetSymbolStatus(sym);
-                    var elseStat = elseBlock.SubScope.GetSymbolStatus(sym);
-
-                    if (ifStat.kind != elseStat.kind)
-                    {
-                        ReportError(expr, $"Symbol '{sym.Name}' is initialized in one case but not the other",
-                            ("if-case: " + ifStat.kind, ifStat.location),
-                            ("else-case: " + elseStat.kind, elseStat.location));
-                    }
-                    else
-                    {
-                        expr.Scope.SetSymbolStatus(sym, ifStat.kind, ifStat.location);
-                    }
-                }
-
-                foreach (var symbol in ifBlock.SubScope.InitializedSymbols)
-                {
-                    if (elseBlock.SubScope.IsInitialized(symbol))
-                        expr.Scope.SetInitialized(symbol);
-                }
             }
 
             return expr;
@@ -1464,10 +1405,6 @@ namespace Cheez
                             return expr;
                         }
 
-                        var symbol = expr.Scope.GetSymbol(id.Name);
-                        var status = expr.Scope.GetSymbolStatus(symbol);
-                        Console.WriteLine($"[{arg.Location.Beginning}] {status}");
-
                         expr.SetFlag(ExprFlags.IgnoreInCodeGen, true);
                         expr.Type = CheezType.Void;
                         break;
@@ -1544,8 +1481,9 @@ namespace Cheez
                                         {
                                             code.Scope.DefineSymbol(varName.Symbol);
 
-                                            var status = expr.Scope.GetSymbolStatus(varName.Symbol);
-                                            code.Scope.SetSymbolStatus(varName.Symbol, status.kind, status.location);
+                                            // @todo: do this in other pass
+                                            //var status = expr.Scope.GetSymbolStatus(varName.Symbol);
+                                            //code.Scope.SetSymbolStatus(varName.Symbol, status.kind, status.location);
                                         }
                                     }
                                     else
@@ -2073,6 +2011,9 @@ namespace Cheez
 
                 if (stmt.GetFlag(StmtFlags.Returns))
                     expr.SetFlag(ExprFlags.Returns, true);
+
+                if (stmt.GetFlag(StmtFlags.Breaks))
+                    expr.SetFlag(ExprFlags.Breaks, true);
             }
 
             if (end < expr.Statements.Count && expr.Statements.LastOrDefault() is AstExprStmt exprStmt)
@@ -2090,17 +2031,21 @@ namespace Cheez
 
                 if (exprStmt.GetFlag(StmtFlags.Returns))
                     expr.SetFlag(ExprFlags.Returns, true);
+
+                if (exprStmt.GetFlag(StmtFlags.Breaks))
+                    expr.SetFlag(ExprFlags.Breaks, true);
+
             }
             else
             {
                 expr.Type = CheezType.Void;
             }
 
-            if (!expr.GetFlag(ExprFlags.Anonymous) && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
-            {
-                // copy initialized symbols
-                expr.SubScope.ApplyInitializedSymbolsToParent();
-            }
+            //if (!expr.GetFlag(ExprFlags.Anonymous) && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
+            //{
+            //    // copy initialized symbols
+            //    expr.SubScope.ApplyInitializedSymbolsToParent();
+            //}
 
             return expr;
         }
@@ -2397,7 +2342,15 @@ namespace Cheez
                         }
 
                         expr.Type = member.Type;
-                        expr.SetFlag(ExprFlags.IsLValue, true);
+
+                        if (expr.Left.GetFlag(ExprFlags.IsLValue))
+                        {
+                            expr.SetFlag(ExprFlags.IsLValue, true);
+                        }
+                        else
+                        {
+                            expr.SetFlag(ExprFlags.IsLValue, false);
+                        }
                         break;
                     }
 
@@ -2560,16 +2513,16 @@ namespace Cheez
 
         private AstExpression InferTypeCallExpr(AstCallExpr expr, CheezType expected, TypeInferenceContext context)
         {
-            expr.Function.AttachTo(expr);
+            expr.FunctionExpr.AttachTo(expr);
 
             {
                 var prev = context.functionExpectedReturnType;
                 context.functionExpectedReturnType = expected;
-                expr.Function = InferTypeHelper(expr.Function, null, context);
+                expr.FunctionExpr = InferTypeHelper(expr.FunctionExpr, null, context);
                 context.functionExpectedReturnType = prev;
             }
 
-            switch (expr.Function.Type)
+            switch (expr.FunctionExpr.Type)
             {
                 case FunctionType f:
                     {
@@ -2600,7 +2553,7 @@ namespace Cheez
 
                 case GenericEnumType @enum:
                     {
-                        var e = expr.Function as AstEnumValueExpr;
+                        var e = expr.FunctionExpr as AstEnumValueExpr;
                         Debug.Assert(e != null);
 
                         var assType = e.Member.AssociatedType;
@@ -2622,7 +2575,7 @@ namespace Cheez
 
                 case EnumType @enum:
                     {
-                        var e = expr.Function as AstEnumValueExpr;
+                        var e = expr.FunctionExpr as AstEnumValueExpr;
                         Debug.Assert(e != null);
 
                         var assType = e.Member.AssociatedType;
@@ -2651,9 +2604,9 @@ namespace Cheez
                         return e;
                     }
 
-                case CheezTypeType type when expr.Function.Value is GenericStructType ||
-                                        expr.Function.Value is GenericTraitType ||
-                                        expr.Function.Value is GenericEnumType:
+                case CheezTypeType type when expr.FunctionExpr.Value is GenericStructType ||
+                                        expr.FunctionExpr.Value is GenericTraitType ||
+                                        expr.FunctionExpr.Value is GenericEnumType:
                     {
                         return InferTypeGenericTypeCallExpr(expr, context);
                     }
@@ -2667,8 +2620,8 @@ namespace Cheez
                             return expr;
                         }
 
-                        var targetType = (CheezType)expr.Function.Value;
-                        var cast = new AstCastExpr(new AstTypeRef(targetType, expr.Function.Location),
+                        var targetType = (CheezType)expr.FunctionExpr.Value;
+                        var cast = new AstCastExpr(new AstTypeRef(targetType, expr.FunctionExpr.Location),
                             expr.Arguments[0].Expr,
                             expr.Location);
                         cast.Replace(expr);
@@ -2677,7 +2630,7 @@ namespace Cheez
 
                 case ErrorType _: return expr;
 
-                default: ReportError(expr.Function, $"Type '{expr.Function.Type}' is not callable"); break;
+                default: ReportError(expr.FunctionExpr, $"Type '{expr.FunctionExpr.Type}' is not callable"); break;
             }
 
             return expr;
@@ -2707,7 +2660,7 @@ namespace Cheez
                 }
             }
 
-            if (expr.Function.Value is GenericStructType strType)
+            if (expr.FunctionExpr.Value is GenericStructType strType)
             {
                 if (anyArgIsPoly)
                 {
@@ -2728,7 +2681,7 @@ namespace Cheez
 
                 return expr;
             }
-            else if (expr.Function.Value is GenericEnumType @enum)
+            else if (expr.FunctionExpr.Value is GenericEnumType @enum)
             {
                 if (anyArgIsPoly)
                 {
@@ -2749,7 +2702,7 @@ namespace Cheez
 
                 return expr;
             }
-            else if (expr.Function.Value is GenericTraitType trait)
+            else if (expr.FunctionExpr.Value is GenericTraitType trait)
             {
                 if (anyArgIsPoly)
                 {
@@ -2772,7 +2725,7 @@ namespace Cheez
             }
             else
             {
-                ReportError(expr.Function, $"This type must be a polymorphic type but is '{expr.Function.Value}'");
+                ReportError(expr.FunctionExpr, $"This type must be a polymorphic type but is '{expr.FunctionExpr.Value}'");
                 return expr;
             }
         }
@@ -2855,9 +2808,9 @@ namespace Cheez
             bool varArgs)
         {
             // create self argument for ufc
-            if (expr.Function is AstUfcFuncExpr ufc)
+            if (expr.FunctionExpr is AstUfcFuncExpr ufc)
             {
-                AstArgument selfArg = new AstArgument(ufc.SelfArg, Location: expr.Function);
+                AstArgument selfArg = new AstArgument(ufc.SelfArg, Location: expr.FunctionExpr);
                 expr.Arguments.Insert(0, selfArg);
                 expr.UnifiedFunctionCall = true;
             }
@@ -2866,7 +2819,7 @@ namespace Cheez
             if (expr.Arguments.Count > parameters.Length && !varArgs)
             {
                 (string, ILocation)? detail = null;
-                if (expr.Function is AstIdExpr id)
+                if (expr.FunctionExpr is AstIdExpr id)
                 {
                     ILocation loc = id.Symbol.Location;
                     if (id.Symbol is AstFunctionDecl fd)
@@ -2980,7 +2933,7 @@ namespace Cheez
 
             if (func.Declaration.ImplBlock != null)
             {
-                if (expr.Function is AstDotExpr dot)
+                if (expr.FunctionExpr is AstDotExpr dot)
                 {
                     if (dot.IsDoubleColon && dot.Left.Type is CheezType)
                     {
@@ -3088,6 +3041,7 @@ namespace Cheez
             }
 
             expr.Declaration = instance;
+            expr.FunctionType = instance.FunctionType;
             expr.Type = instance.FunctionType.ReturnType;
             expr.SetFlag(ExprFlags.IsLValue, instance.FunctionType.ReturnType is PointerType);
 
@@ -3133,17 +3087,12 @@ namespace Cheez
                     {
                         arg.Expr = Deref(arg.Expr, context);
                     }
-
-                    Move(arg.Expr);
                 }
                 else
                 {
                     arg.Expr = HandleReference(arg.Expr, type, context);
                     arg.Expr = CheckType(arg.Expr, type, $"Type of argument ({arg.Expr.Type}) does not match type of parameter ({type})");
                     arg.Type = arg.Expr.Type;
-
-                    if (!(type is ReferenceType))
-                        Move(arg.Expr);
                 }
             }
 
@@ -3151,6 +3100,7 @@ namespace Cheez
             expr.SetFlag(ExprFlags.IsLValue, func.ReturnType is ReferenceType);
             expr.Type = func.ReturnType;
             expr.Declaration = func.Declaration;
+            expr.FunctionType = func;
 
             return expr;
         }
@@ -3183,7 +3133,7 @@ namespace Cheez
             var type = expr.Type as StructType;
             if (type == null)
             {
-                ReportError(expr, $"This expression is not a struct but a '{expr.Type}'");
+                ReportError(expr, $"Failed to infer type for struct value expression");
                 expr.Type = CheezType.Error;
                 return expr;
             }
@@ -3459,23 +3409,6 @@ namespace Cheez
                 expr.Type = var.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
 
-                if (!expr.GetFlag(ExprFlags.AssignmentTarget) && !var.GetFlag(StmtFlags.GlobalScope))
-                {
-                    var status = expr.Scope.GetSymbolStatus(sym);
-
-                    switch (status.kind)
-                    {
-                        case SymbolStatus.Kind.moved:
-                            ReportError(expr, $"Can't use variable '{sym.Name}' because it has been moved",
-                                ("Moved here:", status.location));
-                            break;
-                        case SymbolStatus.Kind.uninitialized:
-                            ReportError(expr, $"Can't use variable '{sym.Name}' because it is not yet initialized",
-                                ("Declared here:", status.location));
-                            break;
-                    }
-                }
-
                 if (var.Constant)
                 {
                     expr.IsCompTimeValue = true;
@@ -3486,23 +3419,6 @@ namespace Cheez
             {
                 expr.Type = p.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
-
-                if (!expr.GetFlag(ExprFlags.AssignmentTarget) && p.IsReturnParam)
-                {
-                    var status = expr.Scope.GetSymbolStatus(sym);
-
-                    switch (status.kind)
-                    {
-                        case SymbolStatus.Kind.moved:
-                            ReportError(expr, $"Can't use return parameter '{sym.Name}' because it has been moved",
-                                ("Moved here:", status.location));
-                            break;
-                        case SymbolStatus.Kind.uninitialized:
-                            ReportError(expr, $"Can't use return parameter '{sym.Name}' because it is not yet initialized",
-                                ("Declared here:", status.location));
-                            break;
-                    }
-                }
             }
             else if (sym is TypeSymbol ct)
             {

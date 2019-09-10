@@ -113,11 +113,6 @@ namespace Cheez
                         {
                             ReportError(p, $"Duplicate parameter '{p.Name}'", ("Other parameter here:", other));
                         }
-                        else
-                        {
-                            // mark param as initialized
-                            func.SubScope.SetSymbolStatus(p, SymbolStatus.Kind.initialized, p.Location);
-                        }
                     }
 
                     if (p.DefaultValue != null)
@@ -178,6 +173,8 @@ namespace Cheez
                         ret = AnalyseReturnStatement(ret);
                         func.Body.Statements.Add(ret);
                     }
+
+                    PassVariableLifetimes(func);
                 }
             }
             finally
@@ -409,21 +406,6 @@ namespace Cheez
             whl.Body.AttachTo(whl, whl.SubScope);
             InferType(whl.Body, null);
 
-            // handle initialized symbols
-            foreach (var sym in whl.Scope.SymbolStatuses)
-            {
-                var oldStat = whl.Scope.GetSymbolStatus(sym);
-                var newStat = whl.Body.SubScope.GetSymbolStatus(sym);
-
-                if (oldStat.kind != newStat.kind)
-                {
-                    ReportError(whl,
-                        $"Symbol '{sym.Name}' is {oldStat.kind} before the loop but {newStat.kind} at the end of the loop",
-                        ("before loop: " + oldStat.kind, oldStat.location),
-                        ("in loop: " + newStat.kind, newStat.location));
-                }
-            }
-
             return whl;
         }
 
@@ -516,63 +498,20 @@ namespace Cheez
             {
                 case AstIdExpr id:
                     {
+                        if (!id.GetFlag(ExprFlags.IsLValue))
+                            ReportError(pattern, $"Can't assign to '{id}' because it is not an lvalue");
+
                         // TODO: check if can be assigned to id (e.g. not const)
                         ass.Scope.SetInitialized(id.Symbol);
 
                         if (ass.Operator != null)
                         {
-                            switch (id.Symbol)
-                            {
-                                case AstSingleVariableDecl v when !v.GetFlag(StmtFlags.GlobalScope):
-                                case AstParameter p when p.IsReturnParam:
-                                    {
-                                        var status = ass.Scope.GetSymbolStatus(id.Symbol);
-                                        if (status.kind == SymbolStatus.Kind.moved)
-                                        {
-                                            ReportError(ass.Location, $"Can't use operator '{ass.Operator}=' on variable '{id.Name}' because it has been moved",
-                                                ("Moved here:", ass.Scope.GetSymbolStatus(id.Symbol).location));
-                                        }
-                                        else if (status.kind == SymbolStatus.Kind.uninitialized)
-                                        {
-                                            ReportError(ass.Location, $"Can't use operator '{ass.Operator}=' on variable '{id.Name}' because it is not initialized",
-                                                ("Declared here:", ass.Scope.GetSymbolStatus(id.Symbol).location));
-                                        }
-                                    }
-                                    break;
-                            }
-
                             AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
                             newVal.Replace(value);
                             newVal = InferType(newVal, pattern.Type);
 
                             return newVal;
                         }
-
-                        switch (id.Symbol)
-                        {
-                            case AstSingleVariableDecl var when !var.GetFlag(StmtFlags.GlobalScope):
-                            case AstParameter p when p.IsReturnParam:
-                                {
-                                    // @todo: if var is already initialized and the type has a destructor it must be called
-
-                                    if (ass.Scope.IsSymbolInitialized(id.Symbol))
-                                    {
-                                    }
-                                    ass.Scope.SetSymbolStatus(id.Symbol, SymbolStatus.Kind.initialized, ass);
-                                    break;
-                                }
-
-                            case AstSingleVariableDecl _:
-                            case AstParameter _:
-                            case Using _:
-                                break;
-
-                            default:
-                                ReportError(id.Symbol.Location, id.Symbol.GetType().ToString());
-                                break;
-                        }
-                        // @todo: move out of value
-                        //Move(value);
 
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 
@@ -624,6 +563,9 @@ namespace Cheez
 
                 case AstDereferenceExpr de:
                     {
+                        if (!pattern.GetFlag(ExprFlags.IsLValue))
+                            ReportError(pattern, $"Can't assign to '{pattern}' because it is not an lvalue");
+
                         if (ass.Operator != null)
                         {
                             if (!de.SubExpression.GetFlag(ExprFlags.IsLValue))
@@ -652,6 +594,9 @@ namespace Cheez
 
                 case AstDotExpr dot:
                     {
+                        if (!pattern.GetFlag(ExprFlags.IsLValue))
+                            ReportError(pattern, $"Can't assign to '{pattern}' because it is not an lvalue");
+
                         if (ass.Operator != null)
                         {
                             AstExpression tmp = new AstTempVarExpr(dot.Left, true);
@@ -677,6 +622,9 @@ namespace Cheez
 
                 case AstArrayAccessExpr index:
                     {
+                        if (!pattern.GetFlag(ExprFlags.IsLValue))
+                            ReportError(pattern, $"Can't assign to '{pattern}' because it is not an lvalue");
+
                         if (ass.Operator != null)
                         {
                             AstExpression tmp = new AstTempVarExpr(index.SubExpression, true);
@@ -701,6 +649,9 @@ namespace Cheez
 
                 case AstExpression e when e.Type is ReferenceType r:
                     {
+                        if (!pattern.GetFlag(ExprFlags.IsLValue))
+                            ReportError(pattern, $"Can't assign to '{pattern}' because it is not an lvalue");
+
                         // TODO: check if can be assigned to id (e.g. not const)
                         if (ass.Operator != null)
                         {
@@ -767,10 +718,8 @@ namespace Cheez
                 ReportError(expr.Expr, $"This type of expression is not allowed here");
             }
 
-            if (expr.Expr.GetFlag(ExprFlags.Returns))
-            {
-                expr.SetFlag(StmtFlags.Returns);
-            }
+            expr.SetFlag(StmtFlags.Returns, expr.Expr.GetFlag(ExprFlags.Returns)); 
+            expr.SetFlag(StmtFlags.Breaks, expr.Expr.GetFlag(ExprFlags.Breaks));
 
             return expr;
         }

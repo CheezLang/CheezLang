@@ -1080,6 +1080,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateCallExpr(AstCallExpr c)
         {
+            if (c.FunctionExpr.ToString()== "String::from_raw_ptr")
+            {
+
+            }
             if (c.Declaration?.Trait != null)
             {
                 // call to a trait function
@@ -1130,8 +1134,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
             else
             {
-                func = GenerateExpression(c.Function, true);
-                var ftype = c.Function.Type as FunctionType;
+                func = GenerateExpression(c.FunctionExpr, true);
+                var ftype = c.FunctionExpr.Type as FunctionType;
                 if (ftype.CC == FunctionType.CallingConvention.Stdcall)
                 {
                     func.SetFunctionCallConv((uint)LLVMCallConv.LLVMX86StdcallCallConv);

@@ -25,7 +25,7 @@ namespace Cheez
                     break;
 
                 case AstCallExpr e:
-                    ResetExpr(e.Function, hard);
+                    ResetExpr(e.FunctionExpr, hard);
                     foreach (var arg in e.Arguments)
                         ResetExpr(arg, hard);
                     break;

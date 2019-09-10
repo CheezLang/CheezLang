@@ -416,7 +416,7 @@ namespace Cheez.Visitors
         {
             var args = call.Arguments.Select(a => a.Accept(this));
             var argsStr = string.Join(", ", args);
-            var func = call.Function.Accept(this);
+            var func = call.FunctionExpr.Accept(this);
             return $"{func}({argsStr})";
         }
 

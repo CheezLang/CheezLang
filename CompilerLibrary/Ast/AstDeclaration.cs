@@ -423,7 +423,6 @@ namespace Cheez.Ast.Statements
         public AstExpression Pattern { get; set; }
         public AstExpression TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
-        public Scope SubScope { get; set; }
 
         public bool Constant = false;
 

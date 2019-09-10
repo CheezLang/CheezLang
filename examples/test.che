@@ -4,7 +4,7 @@
 // #load("compiler/main")
 // #load("examples/pathtracer")
 // #load("tests/library/stack_allocator")
-// #load("tests/language/operator_overloading")
+#load("tests/language/bitwise_operators")
 // #load("tests/other/test1")
 
 /*
@@ -15,86 +15,158 @@ struct Foo {
     pub val: int
 }
 
+struct Bar {
+    pub foo: Foo
+}
+
 impl Foo {
-
+    fn add(Self, other: Self) -> Self #operator("+") {return new{}}
+    fn add_eq(ref Self, other: Self) #operator("+=") {}
 }
 
-fn take(f: Foo) {
-
+fn get_bar() -> Bar {
+    let a = new Bar{}
+    return a
 }
-
 
 fn Main() {
-    let f = new Foo{5}
-    c_printf("%lld`n", f.val)
+    let n: int = 1
+    n = 1
 
-    f.val = 10
-    c_printf("%lld`n`n", f.val)
+    let a: []int = [1, 2, 3]
+    a.length = 1
 
-    {
-        let g = f
-        c_printf("%lld`n", f.val)
-        c_printf("%lld`n`n", g.val)
+    let b: Bar = new{}
+    b.foo = new{}
 
-        f = default
-        c_printf("%lld`n", f.val)
-        c_printf("%lld`n", g.val)
 
-        take(g)
-        c_printf("%lld`n", f.val)
-        c_printf("%lld`n", g.val)
+    // let a: int
+    // a = 1
+    // a = 2
+    // drop(a)
+    // a = 3
+    // match 1 {
+    //     // 1 -> {a = 5}
+    //     // 1 -> {a = 5}
+    //     // 3 -> {}
+    //     // 3 -> {}
+    //     // 2 -> {let b = a}
+    //     // 2 -> {a = 5; let b = a}
+    // }
+
+
+    // let a: int = 1
+
+    // while false #label l1 {
+    //     let b = a
+
+    //     if true {
+    //         a = 5
+
+    //         while false {
+    //             let f = 1
+    //             break l1
+    //         }
+
+    //         while false {
+    //             let g = 1
+    //             break
+    //         }
+
+    //         break
+    //     } else {
+    //         a = 10
+    //         break
+    //     }
+    //     let d = 5
+    //     // let x = a
+
+    //     // a = 10
+    // }
+
+    // let c = 5
+}
+
+fn drop(d: $T) {
+
+}
+
+// */
+
+/*
+fn Main() {
+    if const true {
+        let a: Foo
+        let (foo, bar) = (true, true)
+        @log_symbol_status(a)
+
+        while true {
+            a = default
+
+            // if bar {
+            //     drop(a)
+            //     break
+            // }
+            // else drop(a)
+
+
+            // drop(a)
+        }
+
+        @log_symbol_status(a)
+    }
+
+
+
+    if const false {
+        let a: int
+        @log_symbol_status(a)
+        match 5 {
+            1 -> {
+                @log_symbol_status(a)
+                a = 5
+                @log_symbol_status(a)
+            }
+            2 -> {
+                @log_symbol_status(a)
+                a = 6
+                @log_symbol_status(a)
+            }
+            3 -> {
+                @log_symbol_status(a)
+                // a = 7
+                @log_symbol_status(a)
+            }
+        }
+        @log_symbol_status(a)
+    }
+
+    if const false {
+        let a: int
+        @log_symbol_status(a)
+        if true {
+            @log_symbol_status(a)
+            a = 5
+            @log_symbol_status(a)
+        } else {
+            @log_symbol_status(a)
+            a = 10
+            @log_symbol_status(a)
+        }
+        @log_symbol_status(a)
+    }
+
+    if const false {
+        let a: int = 1
+        @log_symbol_status(a)
+        while false {
+            @log_symbol_status(a)
+            a = 5
+            @log_symbol_status(a)
+        }
+        @log_symbol_status(a)
     }
 }
-// fn Main() {
-//     if const false {
-//         let a: int
-//         @log_symbol_status(a)
-//         match 5 {
-//             1 -> {
-//                 @log_symbol_status(a)
-//                 a = 5
-//                 @log_symbol_status(a)
-//             }
-//             2 -> {
-//                 @log_symbol_status(a)
-//                 a = 6
-//                 @log_symbol_status(a)
-//             }
-//             3 -> {
-//                 @log_symbol_status(a)
-//                 // a = 7
-//                 @log_symbol_status(a)
-//             }
-//         }
-//         @log_symbol_status(a)
-//     }
-
-//     if const false {
-//         let a: int
-//         @log_symbol_status(a)
-//         if true {
-//             @log_symbol_status(a)
-//             a = 5
-//             @log_symbol_status(a)
-//         } else {
-//             @log_symbol_status(a)
-//             a = 10
-//             @log_symbol_status(a)
-//         }
-//         @log_symbol_status(a)
-//     }
-
-//     if const false {
-//         let a: int = 1
-//         @log_symbol_status(a)
-//         while false {
-//             @log_symbol_status(a)
-//             a = 5
-//             @log_symbol_status(a)
-//         }
-//         @log_symbol_status(a)
-//     }
-// }
 // */
 
 

@@ -430,6 +430,14 @@ namespace Cheez.Visitors
                 }
             }
 
+            if (block.Destructions != null)
+            {
+                foreach (var dest in block.Destructions)
+                {
+                    sb.Append($"\n// {dest.Accept(this)}");
+                }
+            }
+
             var result = $"{{\n{sb.ToString().Indent(4)}\n}}".Indent(indentLevel);
 
             if (block.GetFlag(ExprFlags.Anonymous))
@@ -444,6 +452,14 @@ namespace Cheez.Visitors
         public override string VisitAssignmentStmt(AstAssignment ass, int indentLevel = 0)
         {
             var sb = new StringBuilder();
+
+            if (ass.Destructions != null)
+            {
+                foreach (var dest in ass.Destructions)
+                {
+                    sb.AppendLine($"// {dest.Accept(this)};");
+                }
+            }
 
             if (ass.SubAssignments != null)
             {
@@ -526,6 +542,14 @@ namespace Cheez.Visitors
         public override string VisitBreakExpr(AstBreakExpr br, int data = 0)
         {
             var sb = new StringBuilder();
+
+            if (br.Destructions != null)
+            {
+                foreach (var dest in br.Destructions)
+                {
+                    sb.AppendLine($"// {dest.Accept(this)};");
+                }
+            }
 
             if (br.DeferredStatements.Count > 0)
             {
@@ -671,7 +695,7 @@ namespace Cheez.Visitors
         {
             var args = call.Arguments.Select(a => a.Accept(this));
             var argsStr = string.Join(", ", args);
-            var func = call.Function.Accept(this);
+            var func = call.FunctionExpr.Accept(this);
             return $"{func}({argsStr})";
         }
 

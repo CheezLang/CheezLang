@@ -131,6 +131,7 @@
     <Compile Include="SemanticAnalysis\Passes\PassResolveDeclatarions.cs" />
     <Compile Include="SemanticAnalysis\DependencyCollection.cs" />
     <Compile Include="SemanticAnalysis\Move.cs" />
+    <Compile Include="SemanticAnalysis\Passes\PassVariableLifetimes.cs" />
     <Compile Include="SemanticAnalysis\ResetExpr.cs" />
     <Compile Include="SemanticAnalysis\Passes\ResolveGlobalUses.cs" />
     <Compile Include="SemanticAnalysis\Passes\ResolveImpls.cs" />
