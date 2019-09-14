@@ -36,14 +36,10 @@ fn Main() {
             let end = get_time_milliseconds()
             let elapsed = ((cast(double)end) - (cast(double)start)) / 1000.0
             printfln("elapsed: {}", [elapsed])
-            l.dispose()
         }
 
         Err($msg) -> {
             println(msg)
-            msg.dispose()
         }
     }
-
-    compiler.dispose()
 }

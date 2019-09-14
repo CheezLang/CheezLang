@@ -138,7 +138,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 GenerateExpression(function.Body, false);
 
                 // ret if void
-                if (function.ReturnTypeExpr == null)
+                if (function.ReturnTypeExpr == null && !function.Body.GetFlag(ExprFlags.Returns))
                 {
                     PopStackTrace();
                     builder.CreateRetVoid();
@@ -349,7 +349,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 var return_var = valueMap[currentFunction.ReturnTypeExpr];
                 var retval = GenerateExpression(ret.ReturnValue, true);
-                
+
+                // dtors
+                if (ret.Destructions != null)
+                {
+                    foreach (var dest in ret.Destructions)
+                    {
+                        GenerateExpression(dest, false);
+                    }
+                }
+
                 PopStackTrace();
                 builder.CreateRet(retval);
             }
@@ -358,11 +367,29 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var retVal = valueMap[currentFunction.ReturnTypeExpr];
                 retVal = builder.CreateLoad(retVal, "");
 
+                // dtors
+                if (ret.Destructions != null)
+                {
+                    foreach (var dest in ret.Destructions)
+                    {
+                        GenerateExpression(dest, false);
+                    }
+                }
+
                 PopStackTrace();
                 builder.CreateRet(retVal);
             }
             else
             {
+                // dtors
+                if (ret.Destructions != null)
+                {
+                    foreach (var dest in ret.Destructions)
+                    {
+                        GenerateExpression(dest, false);
+                    }
+                }
+
                 PopStackTrace();
                 builder.CreateRetVoid();
             }

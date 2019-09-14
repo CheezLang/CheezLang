@@ -24,6 +24,13 @@ struct StackAllocator {
     allocations: Array(StackAllocation)
 }
 
+impl Drop for StackAllocator {
+    fn drop(ref Self) {
+        self.clear()
+        parent.free(memory)
+    }
+}
+
 impl Printable for StackAllocator {
     fn print(ref Self, s: ref String, format: string) {
         s += "( ["
@@ -73,12 +80,6 @@ impl StackAllocator {
         allocations.resize(0)
     }
 
-    fn dispose(ref Self) {
-        clear()
-        parent.free(memory)
-        allocations.dispose()
-    }
-
     fn print_diagnostics(ref Self) {
         let s = String::empty()
         s += "( ["
@@ -97,8 +98,6 @@ impl StackAllocator {
         }
         s.appendf(", Free: {} )`n", [free])
         print_string(s)
-
-        s.dispose()
     }
 
     fn getLastAllocation(ref Self) -> &StackAllocation {

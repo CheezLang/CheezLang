@@ -138,6 +138,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     if (!function.IsGeneric)
                         GenerateFunctionHeader(function);
 
+                foreach (var t in workspace.TypesWithDestructor)
+                {
+                    GetDestructor(t);
+                }
+
                 //foreach (var i in workspace.mImpls)
                 //    foreach (var function in i.SubScope.FunctionDeclarations)
                 //        if (!function.IsGeneric)
@@ -154,6 +159,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 foreach (var function in workspace.mFunctions)
                     if (!function.IsGeneric)
                         GenerateFunctionImplementation(function);
+
+                // generate destructors
+                GenerateDestructors();
 
                 //foreach (var i in workspace.mImpls)
                 //    foreach (var function in i.SubScope.FunctionDeclarations)

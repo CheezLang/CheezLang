@@ -291,6 +291,8 @@ namespace Cheez
 
         private AstExpression InferTypeContinue(AstContinueExpr cont)
         {
+            // @todo: maybe add separate flag, but i think this should work
+            cont.SetFlag(ExprFlags.Breaks, true);
             var sym = cont.Scope.GetContinue(cont.Label?.Name);
             if (sym == null)
                 ReportError(cont, $"Did not find a loop matching this continue");
@@ -3346,9 +3348,9 @@ namespace Cheez
 
                 expr.Left = HandleReference(expr.Left, op.LhsType, context);
                 expr.Right = HandleReference(expr.Right, op.RhsType, context);
-                if (!op.LhsType.IsPolyType)
+                if (!op.LhsType?.IsPolyType ?? false)
                     expr.Left = CheckType(expr.Left, op.LhsType);
-                if (!op.RhsType.IsPolyType)
+                if (!op.RhsType?.IsPolyType ?? false)
                     expr.Right = CheckType(expr.Right, op.RhsType);
 
                 if (op is UserDefinedBinaryOperator user)

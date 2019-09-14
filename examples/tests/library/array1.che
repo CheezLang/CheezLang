@@ -18,12 +18,7 @@ cap: 30
 arr: [5, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 6, 7, 8]
 
 a[5] = 3
-a[20] = 8
-
-len: 0
-cap: 0
-arr: []
-")
+a[20] = 8")
 
 #load("std:c")
 #load("std:array")
@@ -88,8 +83,4 @@ fn Main() {
     match a.get(-1) { Some($value)  -> c_printf("a[%lld] = %lld`n", -1, value) }
     match a.get(5)  { Some($value)  -> c_printf("a[%lld] = %lld`n", 5, value) }
     match a.get(20) { Some($value)  -> c_printf("a[%lld] = %lld`n", 20, value) }
-    c_printf("`n")
-    
-    a.dispose()
-    print_array(a)
 }

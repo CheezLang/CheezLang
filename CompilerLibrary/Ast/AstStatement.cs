@@ -217,6 +217,7 @@ namespace Cheez.Ast.Statements
     {
         public AstExpression ReturnValue { get; set; }
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
+        public List<AstExpression> Destructions { get; private set; } = null;
 
         public AstReturnStmt(AstExpression values, ILocation Location = null)
             : base(Location: Location)
@@ -227,6 +228,15 @@ namespace Cheez.Ast.Statements
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitReturnStmt(this, data);
         public override AstStatement Clone() => CopyValuesTo(new AstReturnStmt(ReturnValue?.Clone()));
+
+        public void AddDestruction(AstExpression dest)
+        {
+            if (dest == null)
+                return;
+            if (Destructions == null)
+                Destructions = new List<AstExpression>();
+            Destructions.Add(dest);
+        }
     }
 
     public class AstAssignment : AstStatement

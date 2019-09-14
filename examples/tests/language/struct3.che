@@ -4,6 +4,8 @@
 #test_expect_output("3.600000")
 #test_expect_output("5")
 
+#load("std:preload")
+
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
 struct Test(T: type) {

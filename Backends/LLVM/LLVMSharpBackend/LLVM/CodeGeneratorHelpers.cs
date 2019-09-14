@@ -681,5 +681,81 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 }
             }
         }
+
+        // destructors
+        private LLVMValueRef GetDestructor(CheezType type)
+        {
+            if (mDestructorMap.TryGetValue(type, out var dtor))
+                return dtor;
+
+            var func = CreateDestructorSignature(type);
+            mDestructorMap[type] = func;
+            return func;
+        }
+
+        private LLVMValueRef CreateDestructorSignature(CheezType type)
+        {
+            var llvmType = LLVM.FunctionType(
+                LLVM.VoidType(), new LLVMTypeRef[] { CheezTypeToLLVMType(type).GetPointerTo() }, false);
+            var func = module.AddFunction($"{type}.dtor.che", llvmType);
+
+            // set attributes
+            func.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
+            func.AddFunctionAttribute(context, LLVMAttributeKind.NoUnwind);
+
+            return func;
+        }
+
+        private void GenerateDestructors()
+        {
+            foreach (var kv in mDestructorMap)
+            {
+                GenerateDestructors(kv.Key, kv.Value);
+            }
+        }
+
+        private void GenerateDestructors(CheezType type, LLVMValueRef func)
+        {
+            var self = func.GetParam(0);
+            var builder = new IRBuilder();
+            var entry = func.AppendBasicBlock("entry");
+
+            builder.PositionBuilderAtEnd(entry);
+
+
+            // call drop func
+            var dropFunc = workspace.GetDropFuncForType(type);
+            if (dropFunc != null)
+            {
+                var llvmDropFunc = valueMap[dropFunc];
+                builder.CreateCall(llvmDropFunc, new LLVMValueRef[] { self }, "");
+            }
+
+            // call destructors for members if struct or enum or tuple
+            switch (type)
+            {
+                case StructType @struct:
+                    GenerateDestructorStruct(@struct, builder, self);
+                    break;
+            }
+
+            builder.CreateRetVoid();
+            builder.Dispose();
+        }
+
+        private void GenerateDestructorStruct(StructType type, IRBuilder builder, LLVMValueRef self)
+        {
+            foreach (var mem in type.Declaration.Members)
+            {
+                var memType = mem.Type;
+
+                if (workspace.TypeHasDestructor(memType))
+                {
+                    var memDtor = GetDestructor(memType);
+                    var memPtr = builder.CreateStructGEP(self, (uint)mem.Index, "");
+                    builder.CreateCall(memDtor, new LLVMValueRef[] { memPtr }, "");
+                }
+            }
+        }
     }
 }

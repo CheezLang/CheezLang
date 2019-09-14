@@ -3,6 +3,8 @@
 #test_expect_output("6")
 #test_expect_output("6.000000")
 
+#load("std:preload")
+
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
 struct Test {

@@ -40,6 +40,17 @@ struct ArenaAllocator {
     buckets     : Array(Bucket)
 }
 
+impl Drop for ArenaAllocator {
+    fn drop(ref Self) {
+        for :buckets {
+            parent.free(it.memory.data)
+        }
+        // while let i = 0, i < buckets.length, i += 1 {
+        //     parent.free(buckets[i].memory.data)
+        // }
+    }
+}
+
 impl ArenaAllocator {
     fn create(size: uint, alloc: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         let a = new ArenaAllocator {
@@ -54,14 +65,6 @@ impl ArenaAllocator {
         while let i = 0, i < buckets.length, i += 1 {
             buckets[i].filled = 0
         }
-    }
-
-    fn dispose(ref Self) {
-        while let i = 0, i < buckets.length, i += 1 {
-            parent.free(buckets[i].memory.data)
-        }
-
-        buckets.dispose()
     }
 
     fn dump(ref Self, dump_buckets: bool = false) {

@@ -126,10 +126,6 @@ impl Lexer {
         }
     }
 
-    fn dispose(ref Self) {
-        text.dispose()
-    }
-
     fn peek_token(ref Self) -> Token {
         return match peek {
             Some($tok) -> tok

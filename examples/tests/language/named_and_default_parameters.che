@@ -6,6 +6,8 @@
 #test_expect_output("7, 8")
 #test_expect_output("9, 10")
 
+#load("std:preload")
+
 // required for printing
 fn c_printf(format: c_string) #varargs #linkname("printf");
 

@@ -75,6 +75,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef GenerateContinue(AstContinueExpr cont)
         {
             // TODO: deferred statements
+            if (cont.Destructions != null)
+            {
+                foreach (var dest in cont.Destructions)
+                {
+                    GenerateExpression(dest, false);
+                }
+            }
+
             var postAction = loopPostActionMap[cont.Loop];
             builder.CreateBr(postAction);
 
@@ -87,6 +95,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef GenerateBreak(AstBreakExpr br)
         {
             // TODO: deferred statements
+            if (br.Destructions != null)
+            {
+                foreach (var dest in br.Destructions)
+                {
+                    GenerateExpression(dest, false);
+                }
+            }
+
             var end = loopEndMap[br.Loop];
             builder.CreateBr(end);
 
@@ -244,6 +260,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (cc.Name.Name == "destruct")
             {
                 // @todo
+                var arg = cc.Arguments[0].Expr;
+                var dtor = GetDestructor(arg.Type);
+
+                var argVal = GenerateExpression(arg, false);
+                builder.CreateCall(dtor, new LLVMValueRef[] { argVal }, "");
                 return default;
             }
 
@@ -859,6 +880,29 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var val = bo(GetRawBuilder(), left, right, "");
                 return val;
             }
+            else if (bin.ActualOperator is BuiltInTraitNullOperator tno)
+            {
+                var left = GenerateExpression(bin.Left, true);
+
+                var vtablePtr = builder.CreateExtractValue(left, 0, "");
+                var toPointer = builder.CreateExtractValue(left, 1, "");
+
+                vtablePtr = builder.CreatePtrToInt(vtablePtr, LLVM.Int64Type(), "");
+                toPointer = builder.CreatePtrToInt(toPointer, LLVM.Int64Type(), "");
+
+                var together = builder.CreateAnd(vtablePtr, toPointer, "");
+
+                var op = LLVMIntPredicate.LLVMIntEQ;
+                if (tno.Name == "==")
+                    op = LLVMIntPredicate.LLVMIntEQ;
+                else if (tno.Name == "!=")
+                    op = LLVMIntPredicate.LLVMIntNE;
+                else
+                    throw new NotImplementedException();
+
+                var result = builder.CreateICmp(op, together, LLVM.ConstInt(LLVM.Int64Type(), 0, false), "");
+                return result;
+            }
             else
             {
                 throw new NotImplementedException();
@@ -1034,6 +1078,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (block.Statements.LastOrDefault() is AstExprStmt expr)
             {
                 result = GenerateExpression(expr.Expr, deref);
+            }
+
+            if (block.Destructions != null)
+            {
+                foreach (var dest in block.Destructions)
+                {
+                    GenerateExpression(dest, false);
+                }
             }
 
             for (int i = block.DeferredStatements.Count - 1; i >= 0; i--)

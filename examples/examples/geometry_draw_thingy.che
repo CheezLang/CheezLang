@@ -383,8 +383,6 @@ fn Main() {
     let pge = PixelGameEngine::create(myGame, 1600, 960)
     if pge != null {
         pge.start()
-        pge.dispose()
-        free(pge)
     } else {
         println("failed to create pixel game engine")
     }

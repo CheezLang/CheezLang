@@ -32,6 +32,4 @@ fn Main() {
     (3.1415f * 2.1f)::print(s, "")
     " "c::print(s, "")
     c_printf("`"%.*s`"`n", s.length, s.get_raw())
-
-    s.dispose()
 }

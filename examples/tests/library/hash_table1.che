@@ -58,14 +58,14 @@ test2 is empty
         return streq(a, b)
     }
 
-fn get_and_print(table: Table($K, $V), key: K) {
+fn get_and_print(table: ref Table($K, $V), key: K) {
     match table.get(key) {
         Some($v) -> printf("{} = {}`n", [key, v])
         None -> printf("{} is empty`n", [key])
     }
 }
 
-fn test(t1: $T1, t2: $T2) {
+fn test(t1: ref $T1, t2: ref $T2) {
     get_and_print(t2, "first name"c)
     get_and_print(t2, "last name"c)
     get_and_print(t2, "gender"c)
@@ -120,7 +120,4 @@ fn Main() {
     t1[5] = "fuennef"c
 
     test(t1, t2)
-
-    t1.dispose()
-    t2.dispose()
 }

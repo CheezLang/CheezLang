@@ -7,6 +7,12 @@ struct CheezCompiler {
     pub const ast_allocator   : &StackAllocator
 }
 
+impl Drop for CheezCompiler {
+    fn drop(ref Self) {
+        free(ast_allocator)
+    }
+}
+
 impl CheezCompiler {
     fn create() -> CheezCompiler {
         let ast_a = alloc(StackAllocator)
@@ -16,10 +22,5 @@ impl CheezCompiler {
             string_database     = StringDatabase::create()
             ast_allocator       = ast_a
         }
-    }
-
-    fn dispose(ref Self) {
-        ast_allocator.dispose()
-        free(ast_allocator)
     }
 }

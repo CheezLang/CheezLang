@@ -11,6 +11,8 @@
 #test_expect_output("error")
 #test_expect_output("yey")
 
+#load("std:preload")
+
 // required for printing
 fn c_printf(format: c_string) #varargs #linkname("printf");
 

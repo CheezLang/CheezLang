@@ -29,11 +29,7 @@ string: `"lol: Hello World! This is another string =)`"
 
 indexo: 3
 indexo: 11
-indexo: -1
-
-capaci: 0
-length: 0
-string: `"`"")
+indexo: -1")
 
 #load("std:string")
 
@@ -88,10 +84,4 @@ fn Main() {
     c_printf("indexo: %lld`n", s.index_of(':'))
     c_printf("indexo: %lld`n", s.index_of('W'))
     c_printf("indexo: %lld`n", s.index_of('z'))
-    c_printf("`n")
-
-    s.dispose()
-    c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.length)
-    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
 }

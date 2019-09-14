@@ -12,21 +12,18 @@ fn println(v: $T) {
     let s = String::empty()
     s.appendf("{}`n", [v])
     print_string(s)
-    s.dispose()
 }
 
 fn print(v: $T) {
     let s = String::empty()
     s.appendf("{}", [v])
     print_string(s)
-    s.dispose()
 }
 
 fn printf(format: string, args: []Printable) {
     let s = String::empty()
     s.appendf(format, args)
     print_string(s)
-    s.dispose()
 }
 
 fn printfln(format: string, args: []Printable) {
@@ -34,7 +31,6 @@ fn printfln(format: string, args: []Printable) {
     s.appendf(format, args)
     s += '`n'
     print_string(s)
-    s.dispose()
 }
 
 // helper functions

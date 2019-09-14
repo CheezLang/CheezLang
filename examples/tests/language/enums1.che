@@ -4,18 +4,9 @@ None
 Some(1.414214)
 Err(`"argument is negative`")")
 
+#load("std:preload")
 #load("std:c")
 #load("std:math")
-
-enum Option(T: type) {
-    Some : T
-    None
-}
-
-enum Result(V: type, E: type) {
-    Ok : V
-    Err : E
-}
 
 struct PolyStruct(T: type) {
     x: T

@@ -49,10 +49,16 @@ namespace Cheez
                 case CharType _:
                     return false;
 
+                case CheezTypeType _:
+                    return false;
+
                 case GenericStructType _:
                 case GenericEnumType _:
                 case GenericTraitType _:
                 case GenericFunctionType _:
+                    return false;
+
+                case ErrorType _:
                     return false;
 
                 default:

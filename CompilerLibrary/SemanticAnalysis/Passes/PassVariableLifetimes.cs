@@ -15,7 +15,18 @@ namespace Cheez
             new Dictionary<AstWhileStmt, HashSet<(Scope scope, ILocation location)>>();
         private HashSet<AstTempVarExpr> mMovedTempVars = new HashSet<AstTempVarExpr>();
 
+        private Dictionary<CheezType, AstFunctionDecl> mTypeDropFuncMap = new Dictionary<CheezType, AstFunctionDecl>();
         private AstTraitDeclaration mTraitDrop;
+        private HashSet<CheezType> mTypesWithDestructor = new HashSet<CheezType>();
+        
+        public IEnumerable<CheezType> TypesWithDestructor => mTypesWithDestructor;
+
+        public AstFunctionDecl GetDropFuncForType(CheezType type)
+        {
+            if (mTypeDropFuncMap.TryGetValue(type, out var f))
+                return f;
+            return null;
+        }
 
         private void AddLoopExit(AstWhileStmt whl, Scope s, ILocation location)
         {
@@ -27,7 +38,18 @@ namespace Cheez
             mWhileExits[whl].Add((s, location));
         }
 
-        private bool TypeImplsDrop(CheezType type)
+        public bool TypeHasDestructor(CheezType type)
+        {
+            if (mTypesWithDestructor.Contains(type))
+                return true;
+
+            var b = TypeHasDestructorHelper(type);
+            if (b)
+                mTypesWithDestructor.Add(type);
+            return b;
+        }
+
+        private bool TypeHasDestructorHelper(CheezType type)
         {
             if (mTraitDrop == null)
             {
@@ -37,13 +59,61 @@ namespace Cheez
                 else
                     ReportError("There should be a global trait called Drop");
             }
+
+            if (mTypeDropFuncMap.ContainsKey(type))
+                return true;
+
+            bool memberNeedsDtor = false;
+            if (type is StructType @struct)
+            {
+                // check if any member needs desctructor
+                foreach (var mem in @struct.Declaration.Members)
+                {
+                    if (TypeHasDestructor(mem.Type))
+                        memberNeedsDtor = true;
+                }
+            }
+
+            if (type is TupleType tuple)
+            {
+                // check if any member needs desctructor
+                foreach (var mem in tuple.Members)
+                {
+                    if (TypeHasDestructor(mem.type))
+                        memberNeedsDtor = true;
+                }
+            }
+
+            if (type is EnumType @enum)
+            {
+                // check if any member needs desctructor
+                foreach (var mem in @enum.Declaration.Members)
+                {
+                    if (mem.AssociatedType != null && TypeHasDestructor(mem.AssociatedType))
+                        memberNeedsDtor = true;
+                }
+            }
+
+            // do this last because we want to visit all members
             var impls = GetImplsForType(type, mTraitDrop.Type);
-            return impls.Count > 0;
+            if (impls.Count > 0)
+            {
+                if (impls.Count != 1)
+                    WellThatsNotSupposedToHappen();
+                var impl = impls[0];
+                if (impl.Functions.Count != 1)
+                    WellThatsNotSupposedToHappen();
+                var func = impl.Functions[0];
+                mTypeDropFuncMap[type] = func;
+                return true;
+            }
+
+            return memberNeedsDtor;
         }
 
         private AstExpression Destruct(AstExpression expr)
         {
-            if (!TypeImplsDrop(expr.Type))
+            if (!TypeHasDestructor(expr.Type))
                 return null;
 
             var cc = new AstCompCallExpr(new AstIdExpr("destruct", false, expr.Location), new List<AstArgument>
@@ -51,13 +121,13 @@ namespace Cheez
                 new AstArgument(expr, Location: expr.Location)
             }, expr.Location);
             cc.Type = CheezType.Void;
-            cc.SetFlag(ExprFlags.IgnoreInCodeGen, true);
+            //cc.SetFlag(ExprFlags.IgnoreInCodeGen, true);
             return cc;
         }
 
         private AstExpression Destruct(ITypedSymbol symbol, ILocation location)
         {
-            if (!TypeImplsDrop(symbol.Type))
+            if (!TypeHasDestructor(symbol.Type))
                 return null;
 
             var cc = new AstCompCallExpr(new AstIdExpr("destruct", false, location), new List<AstArgument>
@@ -65,7 +135,7 @@ namespace Cheez
                 new AstArgument(new AstSymbolExpr(symbol), Location: location)
             }, location);
             cc.Type = CheezType.Void;
-            cc.SetFlag(ExprFlags.IgnoreInCodeGen, true);
+            //cc.SetFlag(ExprFlags.IgnoreInCodeGen, true);
             return cc;
         }
 
@@ -96,11 +166,15 @@ namespace Cheez
             PassVLExpr(func.Body);
 
             // destruct params
-            foreach (var p in func.Parameters)
+            if (!func.Body.GetFlag(ExprFlags.Returns))
             {
-                if (func.SubScope.TryGetSymbolStatus(p, out var stat) && stat.kind == SymbolStatus.Kind.initialized)
+                for (int i = func.Parameters.Count - 1; i >= 0; i--)
                 {
-                    func.Body.AddDestruction(Destruct(p as ITypedSymbol, func.Body.End));
+                    var p = func.Parameters[i];
+                    if (func.SubScope.TryGetSymbolStatus(p, out var stat) && stat.kind == SymbolStatus.Kind.initialized)
+                    {
+                        func.Body.AddDestruction(Destruct(p as ITypedSymbol, func.Body.End));
+                    }
                 }
             }
         }
@@ -125,7 +199,7 @@ namespace Cheez
                                     b &= Move(arg.Expr);
                                 }
                                 else if (arg.Index < c.FunctionType.Parameters.Length
-                                    && c.FunctionType.Parameters[arg.Index].type.IsCopy)
+                                    && !c.FunctionType.Parameters[arg.Index].type.IsCopy)
                                 {
                                     b &= Move(arg.Expr);
                                 }
@@ -369,11 +443,11 @@ namespace Cheez
             if (!expr.GetFlag(ExprFlags.Anonymous)
                 && !expr.GetFlag(ExprFlags.Breaks) && !expr.GetFlag(ExprFlags.Returns))
             {
-                foreach (var sym in expr.SubScope.Symbols)
+                foreach (var stat in expr.SubScope.SymbolStatusesReverseOrdered)
                 {
-                    if (expr.SubScope.TryGetSymbolStatus(sym.Value, out var stat) && stat.kind == SymbolStatus.Kind.initialized)
+                    if (stat.kind == SymbolStatus.Kind.initialized)
                     {
-                        expr.AddDestruction(Destruct(sym.Value as ITypedSymbol, expr.End));
+                        expr.AddDestruction(Destruct(stat.symbol as ITypedSymbol, expr.End));
                     }
                 }
             }
@@ -519,11 +593,11 @@ namespace Cheez
 
             while (currentScope != null)
             {
-                foreach (var sym in currentScope.Symbols)
+                foreach (var stat in currentScope.SymbolStatusesReverseOrdered)
                 {
-                    if (currentScope.TryGetSymbolStatus(sym.Value, out var stat) && stat.kind == SymbolStatus.Kind.initialized)
+                    if (stat.kind == SymbolStatus.Kind.initialized)
                     {
-                        br.AddDestruction(Destruct(sym.Value as ITypedSymbol, br));
+                        br.AddDestruction(Destruct(stat.symbol as ITypedSymbol, br));
                     }
                 }
 
@@ -569,11 +643,11 @@ namespace Cheez
 
             while (currentScope != null)
             {
-                foreach (var sym in currentScope.Symbols)
+                foreach (var stat in currentScope.SymbolStatusesReverseOrdered)
                 {
-                    if (currentScope.TryGetSymbolStatus(sym.Value, out var stat) && stat.kind == SymbolStatus.Kind.initialized)
+                    if (stat.kind == SymbolStatus.Kind.initialized)
                     {
-                        cont.AddDestruction(Destruct(sym.Value as ITypedSymbol, cont));
+                        cont.AddDestruction(Destruct(stat.symbol as ITypedSymbol, cont));
                     }
                 }
 
@@ -703,6 +777,25 @@ namespace Cheez
 
         private bool PassVLReturn(AstReturnStmt ret)
         {
+            // move value
+            if (ret.ReturnValue != null)
+            {
+                if (!PassVLExpr(ret.ReturnValue))
+                    return false;
+                if (!Move(ret.ReturnValue))
+                    return false;
+            }
+
+            // add destructors
+            foreach (var stat in ret.Scope.AllSymbolStatusesReverseOrdered)
+            {
+                if (stat.kind == SymbolStatus.Kind.initialized)
+                {
+                    ret.AddDestruction(Destruct(stat.symbol as ITypedSymbol, ret));
+                }
+            }
+
+            // check if all return values have been initialized
             if (ret.ReturnValue == null && currentFunction.ReturnTypeExpr != null)
             {
                 var missing = new List<ILocation>();

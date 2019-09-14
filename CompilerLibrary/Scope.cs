@@ -97,9 +97,18 @@ namespace Cheez
             moved
         }
 
+        public readonly int order;
         public ISymbol symbol;
         public Kind kind;
         public ILocation location;
+
+        public SymbolStatus(int order, ISymbol symbol, Kind kind, ILocation location)
+        {
+            this.order = order;
+            this.symbol = symbol;
+            this.kind = kind;
+            this.location = location;
+        }
 
         public override string ToString() => $"{symbol.Name}: {kind} @ {location} [{location.Beginning}]";
     }
@@ -129,6 +138,10 @@ namespace Cheez
         private (string label, object loopOrAction)? mContinue = null;
 
         public ISymbol[] SymbolStatuses => mSymbolStatus?.Keys?.ToArray();
+        public IEnumerable<SymbolStatus> AllSymbolStatusesReverseOrdered => mSymbolStatus?.Values.OrderByDescending(s => s.order);
+        public IEnumerable<SymbolStatus> SymbolStatusesReverseOrdered => mSymbolStatus.Values
+                                .Where(v => mSymbolTable.ContainsValue(v.symbol))
+                                .OrderByDescending(s => s.order);
 
         //
         public List<AstStructDecl> StructDeclarations = new List<AstStructDecl>();
@@ -180,21 +193,14 @@ namespace Cheez
 
         public void SetSymbolStatus(ISymbol symbol, SymbolStatus.Kind holdsValue, ILocation location)
         {
-            mSymbolStatus[symbol] = new SymbolStatus
-            {
-                symbol = symbol,
-                kind = holdsValue,
-                location = location
-            };
+            var order = mSymbolStatus.Count;
+            if (mSymbolStatus.TryGetValue(symbol, out var stat))
+                order = stat.order;
+
+            mSymbolStatus[symbol] = new SymbolStatus(order, symbol, holdsValue, location);
         }
 
         public SymbolStatus GetSymbolStatus(ISymbol symbol) => mSymbolStatus[symbol];
-        //public SymbolStatus? GetSymbolStatusOpt(ISymbol symbol)
-        //{
-        //    if (TryGetSymbolStatus(symbol, out var v))
-        //        return v;
-        //    return null;
-        //}
 
         public bool TryGetSymbolStatus(ISymbol symbol, out SymbolStatus status)
         {
@@ -421,6 +427,9 @@ namespace Cheez
 
             DefineBinaryOperator(new BuiltInBinaryOperator("==", CheezType.Bool, CheezType.Type, CheezType.Type, (a, b) => a == b));
             DefineBinaryOperator(new BuiltInBinaryOperator("!=", CheezType.Bool, CheezType.Type, CheezType.Type, (a, b) => a != b));
+
+            DefineBinaryOperator(new BuiltInTraitNullOperator("=="));
+            DefineBinaryOperator(new BuiltInTraitNullOperator("!="));
         }
 
         private void DefineUnaryOperator(string name, CheezType type, BuiltInUnaryOperator.ComptimeExecution exe)

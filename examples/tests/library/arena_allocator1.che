@@ -58,7 +58,4 @@ fn Main() {
     println(<<x)
 
     a.dump(true)
-
-
-    a.dispose()
 }

@@ -82,6 +82,13 @@ fn compare_ints(a: int, b: int) -> bool {
     return b == a
 }
 
+impl Drop for PixelGameEngine {
+    fn drop(ref Self) {
+        default_draw_target.dispose()
+        free(default_draw_target)
+        default_draw_target = null
+    }
+}
 
 impl PixelGameEngine {
     fn create(game: Game, screen_w: int, screen_h: int, pixel_w: int = 1, pixel_h: int = 1) -> &PixelGameEngine {
@@ -109,14 +116,6 @@ impl PixelGameEngine {
         pge.set_draw_target(null)
 
         return pge
-    }
-
-    fn dispose(ref Self) {
-        default_draw_target.dispose()
-        free(default_draw_target)
-        default_draw_target = null
-
-        mapKeys.dispose()
     }
 
     fn start(ref Self) {

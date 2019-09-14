@@ -1,33 +1,44 @@
-// #load("examples/trait_function_call_performance")
+#load("examples/trait_function_call_performance")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
 // #load("examples/pathtracer")
 // #load("tests/language/local_variables")
 // #load("tests/library/allocator2")
-// #load("tests/other/test1")
+//#load("tests/other/test1")
 
-//*
+/*
 #load("std:preload")
 #load("std:c")
 // #load("std:util")
 
-struct Foo {
-    pub val: int
-}
+let counter: int = 1
 
-struct Bar {
-    pub foo: Foo
+struct Foo {
+    val: int
+    txt: c_string
 }
 
 impl Foo {
-    fn add(Self, other: Self) -> Self #operator("+") {return new{}}
-    fn add_eq(ref Self, other: Self) #operator("+=") {}
+    fn create(txt: c_string) -> Self {
+        counter += 1
+        return new {counter-1, txt}
+    }
 }
+
+// struct Bar {
+//     pub foo: Foo
+// }
+
+// impl Foo {
+//     fn add(Self, other: Self) -> Self #operator("+") {return new{}}
+//     fn add_eq(ref Self, other: Self) #operator("+=") {}
+// }
+
 
 impl Drop for Foo {
     fn drop(ref Self) {
-        c_printf("drop Foo`n")
+        c_printf("drop Foo(%lld, '%s')`n", val, txt)
     }
 }
 
@@ -37,14 +48,60 @@ impl Drop for Foo {
 //     }
 // }
 
-fn get_bar() -> Bar {
-    let a = new Bar{}
-    return a
-}
+// fn test(f1: Foo, f2: Foo) {
+//     let foo3 = Foo::create("foo3")
+//     let foo4 = Foo::create("foo4")
+//     {
+//         let foo5 = Foo::create("foo5")
+//         let foo6 = Foo::create("foo6")
+//         if false {
+//             let foo7 = Foo::create("foo7")
+//             let foo8 = Foo::create("foo8")
+//             return
+//         }
+//         while let k = 0, k < 1, k += 1 #label l1 {
+//             let foo9 = Foo::create("foo9")
+//             let foo10 = Foo::create("foo10")
+//             while let i = 0, i < 1, i += 1 {
+//                 let foo11 = Foo::create("foo11")
+//                 let foo12 = Foo::create("foo12")
+//                 if false {
+//                     let foo13 = Foo::create("foo13")
+//                     let foo14 = Foo::create("foo14")
+//                     continue
+//                 }
+//                 if false {
+//                     let foo15 = Foo::create("foo15")
+//                     let foo16 = Foo::create("foo16")
+//                     break
+//                 }
+//                 if true {
+//                     let foo17 = Foo::create("foo17")
+//                     let foo18 = Foo::create("foo18")
+//                     continue l1
+//                 }
+//                 if true {
+//                     let foo19 = Foo::create("foo19")
+//                     let foo20 = Foo::create("foo20")
+//                     break l1
+//                 } else {
+//                     return
+//                 }
+
+//                 break
+//             }
+
+//             break
+//         }
+//     }
+//     let foo21 = Foo::create("foo21")
+//     return
+// }
 
 fn Main() {
-    let a = new Foo{}
-    let b = new Bar{}
+    // test(Foo::create("f1"), Foo::create("f2"))
+
+
     // let (c, d) = (a, b)
     // let f = (c, d)
     // let (g, h) = f

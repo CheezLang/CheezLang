@@ -1,5 +1,6 @@
 ﻿using Cheez.Ast.Statements;
 using Cheez.Types;
+using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
@@ -64,6 +65,32 @@ namespace Cheez
         public int Accepts(CheezType lhs, CheezType rhs)
         {
             if (lhs is PointerType lt && rhs is PointerType rt)
+                return 0;
+            return -1;
+        }
+
+        public object Execute(object left, object right)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class BuiltInTraitNullOperator : IBinaryOperator
+    {
+        public CheezType LhsType => null;
+        public CheezType RhsType => PointerType.NullLiteralType;
+        public CheezType ResultType => CheezType.Bool;
+
+        public string Name { get; private set; }
+
+        public BuiltInTraitNullOperator(string name)
+        {
+            this.Name = name;
+        }
+
+        public int Accepts(CheezType lhs, CheezType rhs)
+        {
+            if (lhs is TraitType && rhs == PointerType.NullLiteralType)
                 return 0;
             return -1;
         }

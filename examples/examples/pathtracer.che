@@ -122,6 +122,12 @@ struct PathTracer {
     pub thread_datas: [thread_count](id: int, pt: &PathTracer, samples: int)
 }
 
+impl Drop for PathTracer {
+    fn drop(ref Self) {
+        free_n(buffer)
+    }
+}
+
 impl PathTracer {
     fn create() -> Self {
         return new {
@@ -133,12 +139,6 @@ impl PathTracer {
                 b
             }
         }
-    }
-
-    fn dispose(ref Self) {
-        allocator.dispose()
-        objects.dispose()
-        free_n(buffer)
     }
 
     fn add_object(ref Self, obj: $T) {
@@ -415,7 +415,6 @@ impl Game for PathTracer {
 
             let s = String::format("Samples: {}, Total: {}s, Samples per second: {}", [thread_datas[0].samples, int(total_t + 0.1), sps])
             pge.set_window_title(s)
-            s.dispose()
 
             sample_t -= 1
         }
@@ -437,5 +436,4 @@ fn Main() {
     if pge != null {
         pge.start()
     }
-    game.dispose()
 }

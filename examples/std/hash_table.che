@@ -18,6 +18,14 @@ struct Entry(K: type, V: type) {
     pub is_tombstone: bool
 }
 
+impl(K: type, V: type) Drop for Table(K, V) {
+    fn drop(ref Self) {
+        if entries.data != null {
+            free_n(entries, allocator)
+        }
+    }
+}
+
 impl(K: type, V: type) Table(K, V) {
     fn create(comp: fn(K, K) -> bool, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return new {
@@ -31,12 +39,6 @@ impl(K: type, V: type) Table(K, V) {
 
     fn get_entries(ref Self) -> []Entry(K, V) {
         return entries
-    }
-
-    fn dispose(ref Self) {
-        if entries.data != null {
-            free_n(entries, allocator)
-        }
     }
 
     fn find_entry(ref Self, the_entries: []Entry(K, V), key: K) -> &Entry(K, V) {

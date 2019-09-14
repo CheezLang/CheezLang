@@ -56,6 +56,10 @@ namespace Cheez
 
         private (List<AstImplBlock> impls, bool maybeApplies) ImplAppliesToType(AstImplBlock impl, CheezType type)
         {
+            // can't impl for type 'type', so always return false
+            if (type == CheezType.Type)
+                return (null, false);
+
             if (impl.IsPolymorphic)
             {
                 if (!CheezType.TypesMatch(impl.TargetType, type))

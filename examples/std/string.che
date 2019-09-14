@@ -18,6 +18,16 @@ struct StringBase(CharType: type) {
 typedef String = StringBase(char)
 typedef Utf32String = StringBase(i32)
 
+impl(CharType: type) Drop for StringBase(CharType) {
+    fn drop(ref Self) {
+        if allocator != null {
+            free_n(data, allocator)
+        }
+        data = null
+        length = 0
+    }
+}
+
 impl(CharType: type) StringBase(CharType) {
     fn empty(allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return new { null, 0, allocator }
@@ -26,7 +36,7 @@ impl(CharType: type) StringBase(CharType) {
     fn from_raw_ptr(ptr: &CharType, cap: int) -> Self {
         let sl: []CharType = ptr
         sl.length = cap
-        return new { sl, 0, DEFAULT_STD_HEAP_ALLOCATOR }
+        return new { sl, 0, null }
     }
 
     fn from_string(str: string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
@@ -39,12 +49,6 @@ impl(CharType: type) StringBase(CharType) {
         let s = Self::empty(allocator)
         s.append_cstring(str)
         return s
-    }
-
-    fn dispose(ref Self) {
-        free_n(data)
-        data = null
-        length = 0
     }
 
     fn get_capacity(ref Self) -> int {

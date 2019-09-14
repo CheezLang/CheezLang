@@ -1,3 +1,5 @@
+#load("std:preload")
+
 struct S1 {
     t: DWORD
 }

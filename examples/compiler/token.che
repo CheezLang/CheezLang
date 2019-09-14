@@ -3,7 +3,7 @@
 
 typedef Location = (beg: TokenLocation, end: TokenLocation)
 
-struct TokenLocation {
+struct TokenLocation #copy {
     pub file            : string
     pub line            : int
     pub index           : int
@@ -11,7 +11,7 @@ struct TokenLocation {
     pub line_start      : int
 }
 
-struct Token {
+struct Token #copy {
     pub ttype   : TokenType
     pub location: TokenLocation
     pub suffix  : Option(string)

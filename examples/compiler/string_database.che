@@ -40,10 +40,6 @@ impl StringDatabase {
         return sdb
     }
 
-    fn dispose(ref Self) {
-        db.dispose()
-    }
-
     fn intern(ref Self, str: string) -> string {
         return match db.get(str) {
             Some($s) -> {

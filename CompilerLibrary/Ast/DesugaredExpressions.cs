@@ -60,6 +60,7 @@ namespace Cheez.Ast.Expressions
         public AstSymbolExpr(ITypedSymbol sym) : base(null)
         {
             this.Symbol = sym;
+            this.Type = sym.Type;
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitSymbolExpr(this, data);
