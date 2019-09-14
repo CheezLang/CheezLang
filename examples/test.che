@@ -7,7 +7,7 @@
 // #load("tests/library/allocator2")
 // #load("tests/other/test1")
 
-/*
+//*
 #load("std:preload")
 #load("std:c")
 // #load("std:util")
@@ -25,6 +25,18 @@ impl Foo {
     fn add_eq(ref Self, other: Self) #operator("+=") {}
 }
 
+impl Drop for Foo {
+    fn drop(ref Self) {
+        c_printf("drop Foo`n")
+    }
+}
+
+// impl Drop for Bar {
+//     fn drop(ref Self) {
+//         c_printf("drop Bar`n")
+//     }
+// }
+
 fn get_bar() -> Bar {
     let a = new Bar{}
     return a
@@ -32,10 +44,10 @@ fn get_bar() -> Bar {
 
 fn Main() {
     let a = new Foo{}
-    let b = new Foo{}
-    let (c, d) = (a, b)
-    let f = (c, d)
-    let (g, h) = f
+    let b = new Bar{}
+    // let (c, d) = (a, b)
+    // let f = (c, d)
+    // let (g, h) = f
 
     // let n: int = 1
     // n = 1

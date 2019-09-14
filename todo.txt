@@ -6,3 +6,5 @@
 
 - auto generate Drop implementation for enums if any variant has a value that implements drop
 - call drop for temp values
+- call destructors in correct order
+- generate default destructors for structs

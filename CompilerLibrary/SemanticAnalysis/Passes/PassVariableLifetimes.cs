@@ -15,6 +15,8 @@ namespace Cheez
             new Dictionary<AstWhileStmt, HashSet<(Scope scope, ILocation location)>>();
         private HashSet<AstTempVarExpr> mMovedTempVars = new HashSet<AstTempVarExpr>();
 
+        private AstTraitDeclaration mTraitDrop;
+
         private void AddLoopExit(AstWhileStmt whl, Scope s, ILocation location)
         {
             if (!mWhileExits.ContainsKey(whl))
@@ -25,10 +27,24 @@ namespace Cheez
             mWhileExits[whl].Add((s, location));
         }
 
+        private bool TypeImplsDrop(CheezType type)
+        {
+            if (mTraitDrop == null)
+            {
+                var sym = GlobalScope.GetSymbol("Drop");
+                if (sym is AstTraitDeclaration t)
+                    mTraitDrop = t;
+                else
+                    ReportError("There should be a global trait called Drop");
+            }
+            var impls = GetImplsForType(type, mTraitDrop.Type);
+            return impls.Count > 0;
+        }
+
         private AstExpression Destruct(AstExpression expr)
         {
-            //if (!(expr.Type is StructType))
-            //    return null;
+            if (!TypeImplsDrop(expr.Type))
+                return null;
 
             var cc = new AstCompCallExpr(new AstIdExpr("destruct", false, expr.Location), new List<AstArgument>
             {
@@ -41,8 +57,8 @@ namespace Cheez
 
         private AstExpression Destruct(ITypedSymbol symbol, ILocation location)
         {
-            //if (!(symbol.Type is StructType))
-            //    return null;
+            if (!TypeImplsDrop(symbol.Type))
+                return null;
 
             var cc = new AstCompCallExpr(new AstIdExpr("destruct", false, location), new List<AstArgument>
             {

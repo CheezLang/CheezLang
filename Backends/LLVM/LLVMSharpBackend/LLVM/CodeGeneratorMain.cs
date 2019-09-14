@@ -33,6 +33,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private Dictionary<AstWhileStmt, LLVMBasicBlockRef> loopEndMap = new Dictionary<AstWhileStmt, LLVMBasicBlockRef>();
         private Dictionary<AstWhileStmt, LLVMBasicBlockRef> loopPostActionMap = new Dictionary<AstWhileStmt, LLVMBasicBlockRef>();
 
+        // destructors
+        private Dictionary<CheezType, LLVMValueRef> mDestructorMap = new Dictionary<CheezType, LLVMValueRef>();
+
         // stack trace
         private bool enableStackTrace = false;
         private bool keepTrackOfStackTrace = false;

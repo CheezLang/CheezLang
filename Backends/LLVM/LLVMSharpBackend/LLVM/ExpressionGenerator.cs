@@ -241,6 +241,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return default;
             }
 
+            if (cc.Name.Name == "destruct")
+            {
+                // @todo
+                return default;
+            }
+
             throw new NotImplementedException($"{nameof(GenerateCompCallExpr)}: {cc.Name.Name} is not implemented yet");
         }
 
