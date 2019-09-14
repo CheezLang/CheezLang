@@ -1,13 +1,14 @@
-// #load("examples/geometry_draw_thingy")
 // #load("examples/trait_function_call_performance")
+// #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
 // #load("examples/pathtracer")
-// #load("tests/library/stack_allocator")
-#load("tests/language/bitwise_operators")
+// #load("tests/language/local_variables")
+// #load("tests/library/allocator2")
 // #load("tests/other/test1")
 
 /*
+#load("std:preload")
 #load("std:c")
 // #load("std:util")
 
@@ -30,14 +31,20 @@ fn get_bar() -> Bar {
 }
 
 fn Main() {
-    let n: int = 1
-    n = 1
+    let a = new Foo{}
+    let b = new Foo{}
+    let (c, d) = (a, b)
+    let f = (c, d)
+    let (g, h) = f
 
-    let a: []int = [1, 2, 3]
-    a.length = 1
+    // let n: int = 1
+    // n = 1
 
-    let b: Bar = new{}
-    b.foo = new{}
+    // let a: []int = [1, 2, 3]
+    // a.length = 1
+
+    // let b: Bar = new{}
+    // b.foo = new{}
 
 
     // let a: int
@@ -85,10 +92,6 @@ fn Main() {
     // }
 
     // let c = 5
-}
-
-fn drop(d: $T) {
-
 }
 
 // */

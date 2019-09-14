@@ -13,6 +13,7 @@ namespace Cheez
     {
         private Dictionary<AstWhileStmt, HashSet<(Scope scope, ILocation location)>> mWhileExits =
             new Dictionary<AstWhileStmt, HashSet<(Scope scope, ILocation location)>>();
+        private HashSet<AstTempVarExpr> mMovedTempVars = new HashSet<AstTempVarExpr>();
 
         private void AddLoopExit(AstWhileStmt whl, Scope s, ILocation location)
         {
@@ -54,6 +55,9 @@ namespace Cheez
 
         private void PassVariableLifetimes(AstFunctionDecl func)
         {
+            mWhileExits.Clear();
+            mMovedTempVars.Clear();
+
             func.SubScope.InitSymbolStats();
 
             foreach (var p in func.Parameters)
@@ -65,12 +69,11 @@ namespace Cheez
             {
                 func.SubScope.SetSymbolStatus(func.ReturnTypeExpr, SymbolStatus.Kind.uninitialized, func.ReturnTypeExpr.Name);
             }
-            if (func.ReturnTypeExpr?.TypeExpr is AstTupleExpr t)
+            if (func.ReturnTypeExpr?.TypeExpr is AstTupleExpr t && t.IsFullyNamed)
             {
                 foreach (var m in t.Types)
                 {
-                    if (m.Name == null) continue;
-                    // @todo: 
+                    func.SubScope.SetSymbolStatus(m.Symbol, SymbolStatus.Kind.uninitialized, m.Name);
                 }
             }
 
@@ -162,13 +165,15 @@ namespace Cheez
                     }
 
                 case AstBinaryExpr b:
-                    var l = PassVLExpr(b.Left);
-                    var r = PassVLExpr(b.Right);
+                    {
+                        var l = PassVLExpr(b.Left);
+                        var r = PassVLExpr(b.Right);
 
-                    // no need to move here because the types should be primitive
-                    // Move(b.Left);
-                    // Move(b.Right);
-                    return l && r;
+                        // no need to move here because the types should be primitive
+                        // Move(b.Left);
+                        // Move(b.Right);
+                        return l && r;
+                    }
 
                 case AstUnaryExpr u:
                     return PassVLExpr(u.SubExpr);
@@ -190,6 +195,11 @@ namespace Cheez
 
                 case AstCastExpr c:
                     if (!PassVLExpr(c.SubExpression)) return false;
+
+                    // traits only borrow, so we dont move
+                    if (c.Type is TraitType)
+                        return true;
+
                     return Move(c.SubExpression);
 
                 case AstArrayAccessExpr c:
@@ -218,8 +228,52 @@ namespace Cheez
                         return false;
                     return true;
 
+                case AstRangeExpr r:
+                    {
+                        if (!PassVLExpr(r.From))
+                            return false;
+                        if (!Move(r.From))
+                            return false;
+                        if (!PassVLExpr(r.To))
+                            return false;
+                        if (!Move(r.To))
+                            return false;
+                        return true;
+                    }
+
                 case AstBreakExpr br:
                     return PassVLBreak(br);
+
+                case AstContinueExpr cont:
+                    return PassVLContinue(cont);
+
+                case AstEnumValueExpr e:
+                    return PassVLEnumValueExpr(e);
+
+                case AstTupleExpr t:
+                    {
+                        foreach (var v in t.Values)
+                        {
+                            if (!PassVLExpr(v))
+                                return false;
+                            if (!Move(v))
+                                return false;
+                        }
+
+                        return true;
+                    }
+
+                case AstTempVarExpr t:
+                    {
+                        if (mMovedTempVars.Contains(t))
+                            return true;
+                        mMovedTempVars.Add(t);
+                        if (!PassVLExpr(t.Expr))
+                            return false;
+                        if (!Move(t.Expr))
+                            return false;
+                        return true;
+                    }
 
                 case AstDefaultExpr _:
                 case AstNumberExpr _:
@@ -245,6 +299,10 @@ namespace Cheez
                 switch (stmt)
                 {
                     case AstVariableDecl var:
+                        // dont handle comptime only variables
+                        if (var.Type.IsComptimeOnly)
+                            return true;
+
                         foreach (var sv in var.SubDeclarations)
                         {
                             if (sv.Initializer != null)
@@ -271,9 +329,14 @@ namespace Cheez
                         break;
 
                     case AstExprStmt es:
+                        if (es.Scope != scope)
+                            es.Scope.InitSymbolStats();
                         if (!PassVLExpr(es.Expr))
                             return false;
                         break;
+
+                    case AstReturnStmt ret:
+                        return PassVLReturn(ret);
                 }
 
                 // @todo: should we report errors for code after a break or return?
@@ -479,9 +542,60 @@ namespace Cheez
             return true;
         }
 
+        private bool PassVLContinue(AstContinueExpr cont)
+        {
+            var whl = cont.Loop;
+            AddLoopExit(whl, cont.Scope, cont);
+
+            // @todo: add destructors and deferred expressions
+            var currentScope = cont.Scope;
+            IAstNode currentNode = cont;
+
+            while (currentScope != null)
+            {
+                foreach (var sym in currentScope.Symbols)
+                {
+                    if (currentScope.TryGetSymbolStatus(sym.Value, out var stat) && stat.kind == SymbolStatus.Kind.initialized)
+                    {
+                        cont.AddDestruction(Destruct(sym.Value as ITypedSymbol, cont));
+                    }
+                }
+
+                var newScope = currentScope;
+                while (newScope == currentScope)
+                {
+                    currentNode = currentNode.Parent;
+                    if (currentNode == cont.Loop)
+                    {
+                        newScope = null;
+                        break;
+                    }
+                    if (currentNode == null || currentNode is AstFunctionDecl)
+                    {
+                        WellThatsNotSupposedToHappen();
+                        newScope = null;
+                        break;
+                    }
+                    if (currentNode is AstExpression expr)
+                    {
+                        newScope = expr.Scope;
+                    }
+                    else if (currentNode is AstStatement stmt)
+                    {
+                        newScope = stmt.Scope;
+                    }
+                }
+
+                currentScope = newScope;
+            }
+
+            return true;
+        }
+
         private bool PassVLWhile(AstWhileStmt whl)
         {
-            whl.PreScope.InitSymbolStats();
+            if (whl.PreScope != whl.Scope)
+                whl.PreScope.InitSymbolStats();
             whl.SubScope.InitSymbolStats();
             if (!PassVLExpr(whl.Body))
                 return false;
@@ -558,6 +672,79 @@ namespace Cheez
             if (ass.Operator == null)
                 result &= Move(ass.Value);
             return result;
+        }
+
+        private bool PassVLEnumValueExpr(AstEnumValueExpr e)
+        {
+            if (e.Argument != null)
+            {
+                if (!PassVLExpr(e.Argument))
+                    return false;
+                return Move(e.Argument);
+            }
+            return true;
+        }
+
+        private bool PassVLReturn(AstReturnStmt ret)
+        {
+            if (ret.ReturnValue == null && currentFunction.ReturnTypeExpr != null)
+            {
+                var missing = new List<ILocation>();
+                if (currentFunction.ReturnTypeExpr.Name == null)
+                {
+                    if (currentFunction.ReturnTypeExpr.TypeExpr is AstTupleExpr t && t.IsFullyNamed)
+                    {
+                        foreach (var m in t.Types)
+                        {
+                            if (m.Symbol != null
+                                && ret.Scope.TryGetSymbolStatus(m.Symbol, out var stat)
+                                && stat.kind == SymbolStatus.Kind.initialized)
+                            {
+                                // ok
+                            }
+                            else
+                            {
+                                ReportError(ret, $"Return value has not been fully initialized",
+                                    ("Missing:", m.Location));
+                                return false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ReportError(ret, $"Return value has not been initialized",
+                            ("Missing:", currentFunction.ReturnTypeExpr.Location));
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (ret.Scope.GetSymbolStatus(currentFunction.ReturnTypeExpr).kind != SymbolStatus.Kind.initialized)
+                    {
+                        // check if maybe is tuple and all tuples have been initialized
+                        if (currentFunction.ReturnTypeExpr.TypeExpr is AstTupleExpr t && t.IsFullyNamed)
+                        {
+                            foreach (var m in t.Types)
+                            {
+                                if (m.Symbol != null
+                                    && ret.Scope.TryGetSymbolStatus(m.Symbol, out var stat)
+                                    && stat.kind == SymbolStatus.Kind.initialized)
+                                {
+                                    // ok
+                                }
+                                else
+                                {
+                                    ReportError(ret, $"Return value has not been fully initialized",
+                                        ("Missing:", m.Location));
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return true;
         }
     }
 }

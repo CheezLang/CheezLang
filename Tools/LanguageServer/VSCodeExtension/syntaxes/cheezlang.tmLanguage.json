@@ -41,7 +41,7 @@
         },
         "special_values": {
             "name": "variable.language.cheezlang",
-            "match": "\\b(self|default)\\b"
+            "match": "\\b(self|default|it|it_index)\\b"
         },
         "identifier": {
             "patterns": [

@@ -501,9 +501,6 @@ namespace Cheez
                         if (!id.GetFlag(ExprFlags.IsLValue))
                             ReportError(pattern, $"Can't assign to '{id}' because it is not an lvalue");
 
-                        // TODO: check if can be assigned to id (e.g. not const)
-                        ass.Scope.SetInitialized(id.Symbol);
-
                         if (ass.Operator != null)
                         {
                             AstExpression newVal = new AstBinaryExpr(ass.Operator, pattern, value, value.Location);
@@ -740,45 +737,6 @@ namespace Cheez
 
                 ret.ReturnValue = HandleReference(ret.ReturnValue, currentFunction.FunctionType.ReturnType, null);
                 ret.ReturnValue = CheckType(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
-            }
-            else if (currentFunction.ReturnTypeExpr != null)
-            {
-                var missing = new List<ILocation>();
-                if (currentFunction.ReturnTypeExpr.Name == null)
-                {
-                    if (currentFunction.ReturnTypeExpr.TypeExpr is AstTupleExpr t)
-                    {
-                        foreach (var m in t.Types)
-                            if (m.Symbol == null || !ret.Scope.IsInitialized(m.Symbol))
-                                missing.Add(m);
-                    }
-                    else
-                    {
-                        ReportError(ret, $"Not all code paths return a value");
-                    }
-                }
-                else
-                {
-                    if (!ret.Scope.IsInitialized(currentFunction.ReturnTypeExpr))
-                    {
-                        if (currentFunction.ReturnTypeExpr.TypeExpr is AstTupleExpr t && t.IsFullyNamed)
-                        {
-                            foreach (var m in t.Types)
-                                if (!ret.Scope.IsInitialized(m.Symbol))
-                                    missing.Add(m);
-                        }
-                        else
-                        {
-                            missing.Add(currentFunction.ReturnTypeExpr);
-                        }
-                    }
-                }
-
-
-                if (missing.Count > 0)
-                {
-                    ReportError(ret, $"Not all return values have been initialized", missing.Select(l => ("This one is not initialized:", l)));
-                }
             }
             return ret;
         }

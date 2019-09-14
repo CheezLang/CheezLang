@@ -572,6 +572,14 @@ namespace Cheez.Visitors
         {
             var sb = new StringBuilder();
 
+            if (cont.Destructions != null)
+            {
+                foreach (var dest in cont.Destructions)
+                {
+                    sb.AppendLine($"// {dest.Accept(this)};");
+                }
+            }
+
             if (cont.DeferredStatements.Count > 0)
             {
                 sb.AppendLine();

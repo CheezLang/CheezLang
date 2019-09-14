@@ -118,14 +118,11 @@ namespace Cheez
             get => mLinkedScope ?? Parent?.LinkedScope;
         }
 
-        public IEnumerable<ISymbol> InitializedSymbols => mInitializedSymbols.Keys;
-
         private Dictionary<string, ISymbol> mSymbolTable = new Dictionary<string, ISymbol>();
         private Dictionary<string, List<INaryOperator>> mNaryOperatorTable = new Dictionary<string, List<INaryOperator>>();
         private Dictionary<string, List<IBinaryOperator>> mBinaryOperatorTable = new Dictionary<string, List<IBinaryOperator>>();
         private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
         private Dictionary<AstImplBlock, List<AstFunctionDecl>> mImplTable = new Dictionary<AstImplBlock, List<AstFunctionDecl>>();
-        private Dictionary<ISymbol, int> mInitializedSymbols = new Dictionary<ISymbol, int>();
         private Dictionary<ISymbol, SymbolStatus> mSymbolStatus;
         private List<AstFunctionDecl> mForExtensions = null;
         private (string label, object loopOrAction)? mBreak = null;
@@ -153,12 +150,6 @@ namespace Cheez
         {
             this.Name = name;
             this.Parent = parent;
-
-            if (parent != null)
-            {
-                foreach (var symbol in parent.InitializedSymbols)
-                    SetInitialized(symbol);
-            }
         }
 
         public Scope Clone()
@@ -178,6 +169,11 @@ namespace Cheez
             if (Parent?.mSymbolStatus != null)
             {
                 foreach (var symbol in Parent.mSymbolStatus)
+                    mSymbolStatus[symbol.Key] = symbol.Value;
+            }
+            if (LinkedScope?.mSymbolStatus != null)
+            {
+                foreach (var symbol in LinkedScope.mSymbolStatus)
                     mSymbolStatus[symbol.Key] = symbol.Value;
             }
         }
@@ -217,11 +213,6 @@ namespace Cheez
             if (Parent == null)
                 return;
 
-            foreach (var s in InitializedSymbols)
-            {
-                Parent.SetInitialized(s);
-            }
-
             foreach (var s in Parent.mSymbolStatus.Keys.ToArray())
             {
                 Parent.mSymbolStatus[s] = mSymbolStatus[s];
@@ -234,16 +225,6 @@ namespace Cheez
             {
                 scope.mSymbolStatus[s] = mSymbolStatus[s];
             }
-        }
-
-        public bool IsInitialized(ISymbol symbol)
-        {
-            return mInitializedSymbols.ContainsKey(symbol);
-        }
-
-        public void SetInitialized(ISymbol symbol, int location = -1)
-        {
-            mInitializedSymbols[symbol] = location;
         }
 
         public void AddForExtension(AstFunctionDecl func)

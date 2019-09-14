@@ -2260,6 +2260,7 @@ namespace Cheez
                         }
 
                         expr.Type = tuple.Members[memberIndex].type;
+                        expr.SetFlag(ExprFlags.IsLValue, expr.Left.GetFlag(ExprFlags.IsLValue));
                         break;
                     }
 
@@ -2343,14 +2344,7 @@ namespace Cheez
 
                         expr.Type = member.Type;
 
-                        if (expr.Left.GetFlag(ExprFlags.IsLValue))
-                        {
-                            expr.SetFlag(ExprFlags.IsLValue, true);
-                        }
-                        else
-                        {
-                            expr.SetFlag(ExprFlags.IsLValue, false);
-                        }
+                        expr.SetFlag(ExprFlags.IsLValue, expr.Left.GetFlag(ExprFlags.IsLValue));
                         break;
                     }
 

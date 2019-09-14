@@ -665,7 +665,7 @@ namespace Cheez.Ast.Expressions
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTupleExpr(this, data);
 
         public bool IsTypeExpr = false;
-        public bool IsFullyNamed = false;
+        public bool IsFullyNamed => Types.All(t => t.Name != null);
         public List<AstExpression> Values { get; set; }
         public List<AstParameter> Types { get; set; }
 
@@ -828,6 +828,7 @@ namespace Cheez.Ast.Expressions
     public class AstContinueExpr : AstExpression
     {
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
+        public List<AstExpression> Destructions { get; private set; } = null;
         public AstWhileStmt Loop { get; set; }
 
         public AstIdExpr Label { get; set; }
@@ -843,6 +844,15 @@ namespace Cheez.Ast.Expressions
 
         public override AstExpression Clone()
             => CopyValuesTo(new AstContinueExpr(Label?.Clone() as AstIdExpr));
+
+        public void AddDestruction(AstExpression dest)
+        {
+            if (dest == null)
+                return;
+            if (Destructions == null)
+                Destructions = new List<AstExpression>();
+            Destructions.Add(dest);
+        }
     }
 
     public class AstRangeExpr : AstExpression
