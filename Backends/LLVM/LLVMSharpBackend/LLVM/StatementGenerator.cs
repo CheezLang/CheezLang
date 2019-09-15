@@ -264,6 +264,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private void GenerateExprStatement(AstExprStmt expr)
         {
             GenerateExpression(expr.Expr, false);
+            if (expr.Destructions != null)
+            {
+                foreach (var dest in expr.Destructions)
+                {
+                    GenerateExpression(dest, false);
+                }
+            }
         }
 
         private void InitGlobalVariable(AstVariableDecl decl, HashSet<AstVariableDecl> visited)

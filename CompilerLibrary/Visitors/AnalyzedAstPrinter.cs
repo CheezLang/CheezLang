@@ -487,7 +487,18 @@ namespace Cheez.Visitors
 
         public override string VisitExpressionStmt(AstExprStmt stmt, int indentLevel = 0)
         {
-            return stmt.Expr.Accept(this);
+            var sb = new StringBuilder();
+
+            sb.Append(stmt.Expr.Accept(this));
+
+            if (stmt.Destructions != null)
+            {
+                foreach (var dest in stmt.Destructions)
+                {
+                    sb.Append($";\n// {dest.Accept(this)}");
+                }
+            }
+            return sb.ToString();
         }
 
         public string VisitEnumMember(AstEnumMember m)

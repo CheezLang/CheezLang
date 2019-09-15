@@ -419,11 +419,21 @@ namespace Cheez
                         break;
 
                     case AstExprStmt es:
-                        if (es.Scope != scope)
-                            es.Scope.InitSymbolStats();
-                        if (!PassVLExpr(es.Expr))
-                            return false;
-                        break;
+                        {
+                            if (es.Scope != scope)
+                                es.Scope.InitSymbolStats();
+                            if (!PassVLExpr(es.Expr))
+                                return false;
+
+                            if (TypeHasDestructor(es.Expr.Type))
+                            {
+                                var tempVar = new AstTempVarExpr(es.Expr);
+                                tempVar.Type = es.Expr.Type;
+                                es.Expr = tempVar;
+                                es.AddDestruction(Destruct(tempVar));
+                            }
+                            break;
+                        }
 
                     case AstReturnStmt ret:
                         return PassVLReturn(ret);

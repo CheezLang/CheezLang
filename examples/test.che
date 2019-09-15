@@ -10,6 +10,7 @@
 //*
 #load("std:preload")
 #load("std:c")
+#load("std:io/io")
 // #load("std:util")
 
 let counter: int = 1
@@ -106,8 +107,16 @@ struct Test {
     pub i: ref int
 }
 
+fn lol() -> String {
+    return String::from_string("hi=")
+}
+
 fn Main() {
-    // test(Foo::create("f1"), Foo::create("f2"))
+    Foo::create("f1")
+    Foo::create("f2")
+    Foo::create("f3")
+
+    lol()
 
 
     // let (c, d) = (a, b)

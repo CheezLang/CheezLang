@@ -283,6 +283,7 @@ namespace Cheez.Ast.Statements
     public class AstExprStmt : AstStatement
     {
         public AstExpression Expr { get; set; }
+        public List<AstExpression> Destructions { get; private set; } = null;
 
         [DebuggerStepThrough]
         public AstExprStmt(AstExpression expr, ILocation Location = null) : base(Location: Location)
@@ -297,6 +298,15 @@ namespace Cheez.Ast.Statements
             => CopyValuesTo(new AstExprStmt(Expr.Clone()));
 
         public override string ToString() => $"#expr {base.ToString()}";
+
+        public void AddDestruction(AstExpression dest)
+        {
+            if (dest == null)
+                return;
+            if (Destructions == null)
+                Destructions = new List<AstExpression>();
+            Destructions.Add(dest);
+        }
     }
 
     public class AstUsingStmt : AstStatement

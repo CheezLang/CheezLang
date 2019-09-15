@@ -1078,6 +1078,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (block.Statements.LastOrDefault() is AstExprStmt expr)
             {
                 result = GenerateExpression(expr.Expr, deref);
+                if (expr.Destructions != null)
+                {
+                    foreach (var dest in expr.Destructions)
+                    {
+                        GenerateExpression(dest, false);
+                    }
+                }
             }
 
             if (block.Destructions != null)
