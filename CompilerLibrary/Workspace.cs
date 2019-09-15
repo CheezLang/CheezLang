@@ -53,6 +53,13 @@ namespace Cheez
             m_errorHandlerReplacements.Push(handler);
         }
 
+        public SilentErrorHandler PushSilentErrorHandler()
+        {
+            var errHandler = new SilentErrorHandler();
+            m_errorHandlerReplacements.Push(errHandler);
+            return errHandler;
+        }
+
         public void PopErrorHandler()
         {
             m_errorHandlerReplacements.Pop();

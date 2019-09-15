@@ -65,7 +65,7 @@ fn Main() {
             let ms = diff / 1000
 
             printf("counter: {}`n", [t.counter])
-            printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.normalFunction()", ms, iterations])
+            printf("[t.normalFunction()] Time elapsed: {} ms ({} iterations)`n", [ms, iterations])
         }
     }
 
@@ -86,7 +86,7 @@ fn Main() {
             let ms = diff / 1000
 
             printf("counter: {}`n", [t.counter])
-            printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.refFunction()", ms, iterations])
+            printf("[t.refFunction()] Time elapsed: {} ms ({} iterations)`n", [ms, iterations])
         }
     }
 
@@ -106,7 +106,7 @@ fn Main() {
             let ms = diff / 1000
 
             printf("counter: {}`n", [t.counter])
-            printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["t.traitFunction()", ms, iterations])
+            printf("[t.traitFunction()] Time elapsed: {} ms ({} iterations)`n", [ms, iterations])
         }
     }
 
@@ -128,7 +128,7 @@ fn Main() {
             let ms = diff / 1000
 
             printf("counter: {}`n", [t.counter])
-            printf("[{}] Time elapsed: {} ms ({} iterations)`n", ["tt.traitFunction()", ms, iterations])
+            printf("[tt.traitFunction()] Time elapsed: {} ms ({} iterations)`n", [ms, iterations])
         }
     }
 }

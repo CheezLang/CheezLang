@@ -365,7 +365,7 @@ impl Game for MyGame {
         return true
     }
 
-    fn world_to_screen(ref Self, v: ref float2) -> (x: int, y: int) {
+    fn world_to_screen(ref Self, v: float2) -> (x: int, y: int) {
         x = cast(int) (v.x - vOffset.x) * fScale
         y = cast(int) (v.y - vOffset.y) * fScale
     }

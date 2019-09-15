@@ -1112,7 +1112,7 @@ namespace Cheez
                     cast.SubExpression = InferTypeHelper(tmp, cast.SubExpression.Type, context);
 
                     // @TODO: make this an error
-                    // ReportError(cast.Location, $"Can't cast a non-lvalue to a trait");
+                    ReportError(cast.Location, $"Can't cast a non-lvalue to a trait");
                     return cast;
                 }
 
@@ -1339,13 +1339,13 @@ namespace Cheez
                 if (!expr.SubExpression.GetFlag(ExprFlags.IsLValue))
                 {
                     // create temp variable
-                    var tmpVar = new AstTempVarExpr(expr.SubExpression);
-                    tmpVar.AttachTo(expr);
-                    expr.SubExpression = InferType(tmpVar, null);
+                    //var tmpVar = new AstTempVarExpr(expr.SubExpression);
+                    //tmpVar.AttachTo(expr);
+                    //expr.SubExpression = InferType(tmpVar, null);
 
-                    //ReportError(expr, $"Can't create a reference to the value '{expr.SubExpression}'");
-                    //expr.Type = CheezType.Error;
-                    //return expr;
+                    ReportError(expr, $"Can't create a reference to non l-value");
+                    expr.Type = CheezType.Error;
+                    return expr;
                 }
 
                 expr.Type = ReferenceType.GetRefType(expr.SubExpression.Type);
@@ -1360,7 +1360,7 @@ namespace Cheez
 
                 if (!expr.SubExpression.GetFlag(ExprFlags.IsLValue))
                 {
-                    ReportError(expr, $"Can't take the address of non lvalue");
+                    ReportError(expr, $"Can't take the address of non l-value");
                     expr.Type = CheezType.Error;
                     return expr;
                 }

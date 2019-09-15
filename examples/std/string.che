@@ -16,7 +16,6 @@ struct StringBase(CharType: type) {
 }
 
 typedef String = StringBase(char)
-typedef Utf32String = StringBase(i32)
 
 impl(CharType: type) Drop for StringBase(CharType) {
     fn drop(ref Self) {
@@ -157,6 +156,12 @@ impl(CharType: type) StringBase(CharType) {
 }
 
 impl String {
+
+    fn append_print(ref Self, pr: Printable) -> ref Self #operator("+=") {
+        pr.print(self, "")
+        return self
+    }
+
     fn appendf(ref Self, format: string, args: []Printable) {
         let formatSpecifier = {
             let const len = 64

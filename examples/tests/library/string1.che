@@ -65,7 +65,10 @@ fn Main() {
     c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
     c_printf("`n")
 
-    s += " This is another string =)"::to_string()
+    {
+        let str = " This is another string =)"::to_string()
+        s += str
+    }
     c_printf("capaci: %lld`n", s.get_capacity())
     c_printf("length: %lld`n", s.length)
     c_printf("string: `"%.*s`"`n", s.length, s.get_raw())

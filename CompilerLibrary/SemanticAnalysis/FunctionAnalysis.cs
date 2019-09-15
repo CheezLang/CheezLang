@@ -162,6 +162,7 @@ namespace Cheez
 
                 if (func.Body != null && !func.GetFlag(StmtFlags.IsMacroFunction))
                 {
+                    var errs = PushSilentErrorHandler();
                     func.Body.AttachTo(func, func.SubScope);
                     InferType(func.Body, null);
 
@@ -174,7 +175,13 @@ namespace Cheez
                         func.Body.Statements.Add(ret);
                     }
 
-                    PassVariableLifetimes(func);
+                    PopErrorHandler();
+
+                    if (errs.HasErrors)
+                        errs.ForwardErrors(CurrentErrorHandler);
+                    else
+                        PassVariableLifetimes(func);
+
                 }
             }
             finally

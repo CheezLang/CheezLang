@@ -12,14 +12,26 @@
 #load("std:io/io")
 
 fn Main() {
-    printf("{} {:s} {:b} {} {:s} {:b}`n", [true, true, true, false, false, false])
-    printf("{0}, {0:b}, {0:x}`n", [123456789])
-    printf("{0}, {0:b}, {0:x}`n", [500])
-    printf("{0}, {0:b}, {0:x}`n", [10])
-    printf("{0}, {0:b}, {0:x}`n", [1])
-    printf("{0}, {0:b}, {0:x}`n", [0])
-    printf("{0}, {0:b}, {0:x}`n", [-1])
-    printf("{0}, {0:b}, {0:x}`n", [-10])
-    printf("{0}, {0:b}, {0:x}`n", [-500])
-    printf("{0}, {0:b}, {0:x}`n", [-123456789])
+    let tru = true
+    let fals = false
+    let a = 123456789
+    let b = 500
+    let c = 10
+    let d = 1
+    let e = 0
+    let f = -1
+    let g = -10
+    let h = -500
+    let i = -123456789
+
+    printf("{} {:s} {:b} {} {:s} {:b}`n", [tru, tru, tru, fals, fals, fals])
+    printf("{0}, {0:b}, {0:x}`n", [a])
+    printf("{0}, {0:b}, {0:x}`n", [b])
+    printf("{0}, {0:b}, {0:x}`n", [c])
+    printf("{0}, {0:b}, {0:x}`n", [d])
+    printf("{0}, {0:b}, {0:x}`n", [e])
+    printf("{0}, {0:b}, {0:x}`n", [f])
+    printf("{0}, {0:b}, {0:x}`n", [g])
+    printf("{0}, {0:b}, {0:x}`n", [h])
+    printf("{0}, {0:b}, {0:x}`n", [i])
 }

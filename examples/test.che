@@ -1,13 +1,13 @@
-#load("examples/trait_function_call_performance")
+// #load("examples/trait_function_call_performance")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
 // #load("examples/pathtracer")
 // #load("tests/language/local_variables")
-// #load("tests/library/allocator2")
+// #load("tests/library/string2")
 //#load("tests/other/test1")
 
-/*
+//*
 #load("std:preload")
 #load("std:c")
 // #load("std:util")
@@ -97,6 +97,14 @@ impl Drop for Foo {
 //     let foo21 = Foo::create("foo21")
 //     return
 // }
+
+fn test(i: ref int) {
+
+}
+
+struct Test {
+    pub i: ref int
+}
 
 fn Main() {
     // test(Foo::create("f1"), Foo::create("f2"))

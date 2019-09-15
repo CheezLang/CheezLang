@@ -337,9 +337,8 @@ impl Raymarcher {
     }
 
     fn sampleLightDirection(ref Self) -> (ld: Vec3, lc: Vec3) {
-        ld = new Vec3 {
-            -1.0, 1.5, 1
-        }.normalized()
+        ld = new Vec3 { -1.0, 1.5, 1 }
+        ld.normalize()
         lc = new Vec3 {1, 1, 1}
     }
 
@@ -367,13 +366,14 @@ struct PerspectiveCamera {
 
 impl PerspectiveCamera {
     fn project(ref Self, x: double, y: double) -> Ray {
+        let dir = new Vec3 {
+            x = (x - 0.5) * sensorWidth
+            y = -(y - 0.5) * sensorHeight
+            z = -focalLength
+        }
         return new Ray {
             origin = new Vec3 {0, 0, 0}
-            direction = new Vec3 {
-                x = (x - 0.5) * sensorWidth
-                y = -(y - 0.5) * sensorHeight
-                z = -focalLength
-            }.normalized()
+            direction = dir.normalized()
         }
     }
 }
@@ -406,7 +406,8 @@ impl Film {
 
         while let y = 0, y < height, y += 1 {
             if antiAliasingSteps >= 0 {
-                printf("Rendering row {}/{}`n", [(y + 1), height])
+                let row = y + 1
+                printf("Rendering row {}/{}`n", [row, height])
             }
 
             while let x = 0, x < width, x += 1 {
@@ -630,5 +631,5 @@ fn Main()
     printf("Rendering took {} seconds`n", [dur])
 
     // store image as bmp
-    write_bmp(cast(i32) width, cast(i32) height, cast(&double) imageArr.get_raw(), "uiae.bmp")
+    write_bmp(cast(i32) width, cast(i32) height, cast(&double) imageArr.get_raw(), "sdfr.bmp")
 }

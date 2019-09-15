@@ -101,7 +101,8 @@ impl Object for Sphere {
 
         let t = if minusT > epsilon {minusT} else {plusT}
         let hitPos = ray.pos + ray.dir * t
-        let normal = (hitPos - pos).normalized()
+        let normal = hitPos - pos
+        normal.normalize()
         return Some(new HitInfo{t, hitPos, normal, mat})
     }
 }
@@ -319,7 +320,8 @@ impl Game for PathTracer {
         self.cam_dir = new{0, -0.25, 1}
         self.cam_dir.normalize()
 
-        self.cam_right = new Vec3{0, 1, 0}.cross(self.cam_dir)
+        let up = new Vec3{0, 1, 0}
+        self.cam_right = up.cross(self.cam_dir)
         self.cam_up    = self.cam_dir.cross(self.cam_right)
 
         let up_mag = tan(self.cam_fov / 2)
@@ -398,9 +400,8 @@ impl Game for PathTracer {
                 let pixel = {
                     let bufferColor = buffer[index] / double(sample + 1)
                     // println(bufferColor)
-                    let c = Vec3::change_type(
-                        bufferColor.clamped(0.0, 1.0) * 255.0,
-                        u8)
+                    bufferColor = bufferColor.clamped(0.0, 1.0) * 255.0
+                    let c = Vec3::change_type(bufferColor, u8)
                     Pixel::rgba(c.x, c.y, c.z)
                 }
                 pge.draw(current_x, current_y, pixel)
@@ -412,8 +413,9 @@ impl Game for PathTracer {
             total_t += 1
 
             let sps = double(thread_datas[0].samples) / total_t
-
-            let s = String::format("Samples: {}, Total: {}s, Samples per second: {}", [thread_datas[0].samples, int(total_t + 0.1), sps])
+            let total_seconds = int(total_t + 0.1)
+            let s = String::format("Samples: {}, Total: {}s, Samples per second: {}", 
+                [thread_datas[0].samples, total_seconds, sps])
             pge.set_window_title(s)
 
             sample_t -= 1
