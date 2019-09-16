@@ -219,6 +219,9 @@ namespace Cheez
             if (Parent == null)
                 return;
 
+            if (Parent.mSymbolStatus == null)
+                Parent.InitSymbolStats();
+
             foreach (var s in Parent.mSymbolStatus.Keys.ToArray())
             {
                 Parent.mSymbolStatus[s] = mSymbolStatus[s];
@@ -245,6 +248,8 @@ namespace Cheez
             return mForExtensions?.Where(func =>
             {
                 var paramType = func.Parameters[0].Type;
+                if (paramType is ReferenceType r)
+                    paramType = r.TargetType;
                 if (CheezType.TypesMatch(paramType, type))
                     return true;
                 return false;

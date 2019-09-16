@@ -45,9 +45,6 @@ impl Drop for ArenaAllocator {
         for :buckets {
             parent.free(it.memory.data)
         }
-        // while let i = 0, i < buckets.length, i += 1 {
-        //     parent.free(buckets[i].memory.data)
-        // }
     }
 }
 
@@ -124,6 +121,7 @@ impl Allocator for ArenaAllocator {
                 memory = new_mem
                 filled = 0
             })
+
             free_bucket = &buckets[buckets.length - 1]
         }
 

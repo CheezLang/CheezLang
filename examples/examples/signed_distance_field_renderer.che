@@ -306,7 +306,7 @@ struct Background {
 }
 
 impl Background {
-    fn project(Self, ray: Ray) -> Vec3 {
+    fn project(ref Self, ray: Ray) -> Vec3 {
         let i = ray.direction.y + 0.5
         i *= i
         return new Vec3 { i, i, i }

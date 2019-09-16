@@ -120,9 +120,11 @@ namespace Cheez.Ast.Statements
         public override AstStatement Clone() =>  CopyValuesTo(new AstEmptyStatement());
     }
 
-    public class AstDeferStmt : AstStatement
+    public class AstDeferStmt : AstStatement, ISymbol
     {
         public AstStatement Deferred { get; set; }
+
+        public AstIdExpr Name => throw new System.NotImplementedException();
 
         public AstDeferStmt(AstStatement deferred, List<AstDirective> Directives = null, ILocation Location = null)
             : base(Directives, Location)

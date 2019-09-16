@@ -112,6 +112,18 @@ namespace Cheez
 
         private AstExpression InferTypeHelper(AstExpression expr, CheezType expected, TypeInferenceContext context)
         {
+            if (expected != null)
+                expr.SetFlag(ExprFlags.ValueRequired, true);
+            // @todo: remove, just for testing
+            if (!expr.GetFlag(ExprFlags.ValueRequired)
+                && !(expr.Parent is AstFunctionDecl)
+                && !(expr.Parent is AstExprStmt)
+                && !(expr.Parent is AstWhileStmt))
+            {
+                //expr.Type = CheezType.Void;
+                //return expr;
+            }
+
             if (!(context?.forceInfer ?? false) && expr.TypeInferred)
                 return expr;
             expr.TypeInferred = true;
@@ -258,10 +270,12 @@ namespace Cheez
             r.From.AttachTo(r);
             r.To.AttachTo(r);
 
+            r.From.SetFlag(ExprFlags.ValueRequired, true);
             r.From = InferTypeHelper(r.From, null, context);
             ConvertLiteralTypeToDefaultType(r.From, IntType.DefaultType);
             r.From = Deref(r.From, context);
 
+            r.To.SetFlag(ExprFlags.ValueRequired, true);
             r.To = InferTypeHelper(r.To, r.From.Type, context);
             ConvertLiteralTypeToDefaultType(r.To, IntType.DefaultType);
             r.To = Deref(r.To, context);
@@ -493,6 +507,7 @@ namespace Cheez
 
         private AstExpression InferTypeMatchExpr(AstMatchExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            expr.SubExpression.SetFlag(ExprFlags.ValueRequired, true);
             expr.SubExpression.AttachTo(expr);
             expr.SubExpression = InferTypeHelper(expr.SubExpression, null, context);
 
@@ -533,6 +548,7 @@ namespace Cheez
                 // pattern
                 c.Pattern.AttachTo(expr);
                 c.Pattern.Scope = c.SubScope;
+                c.Pattern.SetFlag(ExprFlags.ValueRequired, true);
                 c.Pattern = MatchPatternWithType(c, c.Pattern, expr.SubExpression);
 
                 if (c.Pattern.Type?.IsErrorType ?? false)
@@ -556,6 +572,7 @@ namespace Cheez
                 // body
                 c.Body.AttachTo(expr);
                 c.Body.Scope = c.SubScope;
+                c.Body.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                 c.Body = InferTypeHelper(c.Body, expected, context);
                 ConvertLiteralTypeToDefaultType(c.Body, expected);
 
@@ -706,6 +723,7 @@ namespace Cheez
                                 e.Argument = call.Arguments[0].Expr;
                                 AstExpression sub = new AstDotExpr(value, new AstIdExpr(e.Member.Name.Name, false, call.Location), false, call.Location);
                                 sub.AttachTo(value);
+                                sub.SetFlag(ExprFlags.ValueRequired, pattern.GetFlag(ExprFlags.ValueRequired));
                                 sub = InferType(sub, null);
                                 e.Argument.AttachTo(e);
                                 e.Argument = MatchPatternWithType(cas, e.Argument, sub);
@@ -927,6 +945,7 @@ namespace Cheez
         private AstExpression InferTypeSliceTypeExpr(AstSliceTypeExpr p, TypeInferenceContext context)
         {
             p.Target.AttachTo(p);
+            p.Target.SetFlag(ExprFlags.ValueRequired, true);
             p.Target = InferTypeHelper(p.Target, CheezType.Type, context);
             if (p.Target.Type == CheezType.Type)
             {
@@ -943,6 +962,7 @@ namespace Cheez
         private AstExpression InferTypeArrayTypeExpr(AstArrayTypeExpr p, TypeInferenceContext context)
         {
             p.Target.AttachTo(p);
+            p.Target.SetFlag(ExprFlags.ValueRequired, true);
             p.Target = InferTypeHelper(p.Target, CheezType.Type, context);
             if (p.Target.Type == CheezType.Type)
             {
@@ -956,6 +976,7 @@ namespace Cheez
             }
 
             p.SizeExpr.AttachTo(p);
+            p.SizeExpr.SetFlag(ExprFlags.ValueRequired, true);
             p.SizeExpr = InferType(p.SizeExpr, IntType.DefaultType);
             ConvertLiteralTypeToDefaultType(p.SizeExpr, IntType.DefaultType);
 
@@ -978,6 +999,7 @@ namespace Cheez
             for (int i = 0; i < func.ParameterTypes.Count; i++)
             {
                 func.ParameterTypes[i].AttachTo(func);
+                func.ParameterTypes[i].SetFlag(ExprFlags.ValueRequired, true);
                 func.ParameterTypes[i] = ResolveType(func.ParameterTypes[i], context, out var t);
 
             }
@@ -986,6 +1008,7 @@ namespace Cheez
 
             if (func.ReturnType != null)
             {
+                func.ReturnType.SetFlag(ExprFlags.ValueRequired, true);
                 func.ReturnType.AttachTo(func);
                 func.ReturnType = ResolveType(func.ReturnType, context, out var t);
                 ret = t;
@@ -1074,6 +1097,7 @@ namespace Cheez
             CheezType subExpected = null;
             if (cast.TypeExpr != null)
             {
+                cast.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                 cast.TypeExpr.AttachTo(cast);
                 cast.TypeExpr = ResolveTypeNow(cast.TypeExpr, out var type);
                 cast.Type = type;
@@ -1088,6 +1112,7 @@ namespace Cheez
                 ReportError(cast, $"Auto cast not possible here");
             }
 
+            cast.SubExpression.SetFlag(ExprFlags.ValueRequired, true);
             cast.SubExpression.Scope = cast.Scope;
             cast.SubExpression = InferTypeHelper(cast.SubExpression, subExpected, context);
             ConvertLiteralTypeToDefaultType(cast.SubExpression, cast.Type);
@@ -1184,6 +1209,7 @@ namespace Cheez
             if (expected != null) subExpect = PointerType.GetPointerType(expected);
 
             expr.SubExpression.AttachTo(expr);
+            expr.SubExpression.SetFlag(ExprFlags.ValueRequired, true);
             expr.SubExpression = InferTypeHelper(expr.SubExpression, subExpect, context);
 
             if (expr.Reference)
@@ -1237,6 +1263,7 @@ namespace Cheez
                 AnalyseVariableDecl(expr.PreAction);
             }
 
+            expr.Condition.SetFlag(ExprFlags.ValueRequired, true);
             expr.Condition.AttachTo(expr, expr.SubScope);
             expr.Condition = InferTypeHelper(expr.Condition, CheezType.Bool, context);
             ConvertLiteralTypeToDefaultType(expr.Condition, CheezType.Bool);
@@ -1276,12 +1303,14 @@ namespace Cheez
                 }
             }
 
+            expr.IfCase.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
             expr.IfCase.AttachTo(expr, expr.SubScope);
             expr.IfCase = InferTypeHelper(expr.IfCase, expected, context);
             ConvertLiteralTypeToDefaultType(expr.IfCase, expected);
 
             if (expr.ElseCase != null)
             {
+                expr.ElseCase.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                 expr.ElseCase.AttachTo(expr, expr.SubScope);
                 expr.ElseCase = InferTypeHelper(expr.ElseCase, expected, context);
                 ConvertLiteralTypeToDefaultType(expr.ElseCase, expected);
@@ -1318,7 +1347,8 @@ namespace Cheez
                 subExpected = p.TargetType;
             else if (expected == CheezType.Type)
                 subExpected = expected;
-            
+
+            expr.SubExpression.SetFlag(ExprFlags.ValueRequired, true);
             expr.SubExpression.AttachTo(expr);
             expr.SubExpression = InferTypeHelper(expr.SubExpression, subExpected, context);
 
@@ -1343,7 +1373,7 @@ namespace Cheez
                     //tmpVar.AttachTo(expr);
                     //expr.SubExpression = InferType(tmpVar, null);
 
-                    ReportError(expr, $"Can't create a reference to non l-value");
+                    ReportError(expr, $"Can't create a reference to non l-value of type '{expr.SubExpression.Type}'");
                     expr.Type = CheezType.Error;
                     return expr;
                 }
@@ -1360,7 +1390,7 @@ namespace Cheez
 
                 if (!expr.SubExpression.GetFlag(ExprFlags.IsLValue))
                 {
-                    ReportError(expr, $"Can't take the address of non l-value");
+                    ReportError(expr, $"Can't take the address of non l-value of type '{expr.SubExpression.Type}'");
                     expr.Type = CheezType.Error;
                     return expr;
                 }
@@ -1376,6 +1406,7 @@ namespace Cheez
             AstExpression InferArg(int index, CheezType e)
             {
                 var arg = expr.Arguments[index];
+                arg.Expr.SetFlag(ExprFlags.ValueRequired, true);
                 arg.AttachTo(expr);
                 arg.Expr.AttachTo(arg);
                 arg.Expr = InferTypeHelper(arg.Expr, e, context);
@@ -1477,6 +1508,7 @@ namespace Cheez
                                 {
                                     if (varToLink is AstIdExpr varName)
                                     {
+                                        varName.SetFlag(ExprFlags.ValueRequired, true);
                                         varName.AttachTo(expr);
                                         InferTypeHelper(varName, null, context);
                                         if (varName.Symbol != null)
@@ -1547,6 +1579,7 @@ namespace Cheez
                         arg.Scope = expr.Scope.LinkedScope;
                         arg.SetFlag(ExprFlags.Anonymous, true);
                         arg.SetFlag(ExprFlags.Link, true);
+                        arg.SetFlag(ExprFlags.ValueRequired, true);
 
                         if (arg.Scope == null)
                         {
@@ -1708,7 +1741,9 @@ namespace Cheez
 
                         var type = (CheezType)arg.Value;
 
-                        return InferTypeHelper(new AstNumberExpr(type.Size, Location: expr.Location), null, context);
+                        var num = new AstNumberExpr(type.Size, Location: expr.Location);
+                        num.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
+                        return InferTypeHelper(num, null, context);
                     }
 
                 case "alignof":
@@ -1731,7 +1766,9 @@ namespace Cheez
 
                         var type = (CheezType)arg.Value;
 
-                        return InferTypeHelper(new AstNumberExpr(type.Alignment, Location: expr.Location), null, context);
+                        var num = new AstNumberExpr(type.Alignment, Location: expr.Location);
+                        num.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
+                        return InferTypeHelper(num, null, context);
                     }
 
                 case "tuple_type_member":
@@ -1817,6 +1854,7 @@ namespace Cheez
 
                         var result = new AstTypeRef(arg.Type, expr);
                         result.AttachTo(expr);
+                        result.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                         return InferTypeHelper(result, null, context);
                     }
 
@@ -1939,6 +1977,7 @@ namespace Cheez
                 var arg = expr.Arguments[i];
                 arg.AttachTo(expr);
                 arg.Expr.AttachTo(arg);
+                arg.Expr.SetFlag(ExprFlags.ValueRequired, true);
                 expr.Arguments[i].Expr = InferType(arg.Expr, null);
 
                 if (arg.Expr.Type != IntType.LiteralType && expectedArgType == null)
@@ -2002,7 +2041,8 @@ namespace Cheez
             }
 
             int end = expr.Statements.Count;
-            if (expr.Statements.LastOrDefault() is AstExprStmt) --end;
+
+            if (expr.GetFlag(ExprFlags.ValueRequired) && expr.Statements.LastOrDefault() is AstExprStmt) --end;
 
             for (int i = 0; i < end; i++)
             {
@@ -2020,6 +2060,8 @@ namespace Cheez
 
             if (end < expr.Statements.Count && expr.Statements.LastOrDefault() is AstExprStmt exprStmt)
             {
+                exprStmt.Expr.SetFlag(ExprFlags.ValueRequired, true);
+
                 exprStmt.Scope = expr.SubScope;
                 exprStmt.Parent = expr;
                 exprStmt.Expr.AttachTo(exprStmt);
@@ -2056,9 +2098,11 @@ namespace Cheez
         {
             expr.SubExpression.SetFlag(ExprFlags.SetAccess, expr.GetFlag(ExprFlags.SetAccess));
 
+            expr.SubExpression.SetFlag(ExprFlags.ValueRequired, true);
             expr.SubExpression.Scope = expr.Scope;
             expr.SubExpression = InferTypeHelper(expr.SubExpression, null, context);
 
+            expr.Indexer.SetFlag(ExprFlags.ValueRequired, true);
             expr.Indexer.Scope = expr.Scope;
             expr.Indexer = InferTypeHelper(expr.Indexer, null, context);
 
@@ -2186,6 +2230,7 @@ namespace Cheez
 
         private AstExpression InferTypeDotExpr(AstDotExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            expr.Left.SetFlag(ExprFlags.ValueRequired, true);
             expr.Left.Scope = expr.Scope;
             expr.Left = InferTypeHelper(expr.Left, null, context);
             ConvertLiteralTypeToDefaultType(expr.Left, null);
@@ -2370,6 +2415,8 @@ namespace Cheez
                         }
 
                         var ufc = new AstUfcFuncExpr(expr.Left, func);
+                        ufc.Replace(expr);
+                        ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                         return InferTypeHelper(ufc, null, context);
                     }
 
@@ -2440,6 +2487,7 @@ namespace Cheez
             for (int i = 0; i < expr.Values.Count; i++)
             {
                 var v = expr.Values[i];
+                v.SetFlag(ExprFlags.ValueRequired, true);
                 v.AttachTo(expr);
 
                 var e = tupleType?.Members[i].type;
@@ -2496,6 +2544,7 @@ namespace Cheez
 
             var errHandler = new SilentErrorHandler();
             PushErrorHandler(errHandler);
+            code.SetFlag(ExprFlags.ValueRequired, true);
             var newExpr = InferTypeHelper(code, null, context);
             PopErrorHandler();
 
@@ -2514,6 +2563,7 @@ namespace Cheez
             {
                 var prev = context.functionExpectedReturnType;
                 context.functionExpectedReturnType = expected;
+                expr.FunctionExpr.SetFlag(ExprFlags.ValueRequired, true);
                 expr.FunctionExpr = InferTypeHelper(expr.FunctionExpr, null, context);
                 context.functionExpectedReturnType = prev;
             }
@@ -2640,6 +2690,7 @@ namespace Cheez
             {
                 arg.AttachTo(expr);
                 arg.Expr.AttachTo(arg);
+                arg.Expr.SetFlag(ExprFlags.ValueRequired, true);
                 arg.Expr = InferTypeHelper(arg.Expr, CheezType.Type, context);
                 arg.Type = arg.Expr.Type;
                 arg.Value = arg.Expr.Value;
@@ -2906,8 +2957,9 @@ namespace Cheez
             // infer types of arguments
             foreach (var (param, arg) in args)
             {
-                arg.Scope = expr.Scope;
-                arg.Expr.Scope = arg.Scope;
+                arg.Expr.SetFlag(ExprFlags.ValueRequired, true);
+                arg.AttachTo(expr);
+                arg.Expr.AttachTo(arg, expr.Scope);
 
                 var ex = param.Type;
                 if (ex.IsPolyType)
@@ -2916,7 +2968,6 @@ namespace Cheez
                 arg.IsConstArg = param.Name?.IsPolymorphic ?? false;
                 if (arg.IsDefaultArg && !arg.IsConstArg)
                     continue;
-
                 arg.Expr = InferTypeHelper(arg.Expr, ex, context);
                 ConvertLiteralTypeToDefaultType(arg.Expr, ex);
                 arg.Type = arg.Expr.Type;
@@ -3068,8 +3119,9 @@ namespace Cheez
             (CheezType type, AstArgument arg)[] args = pairs.ToArray();
             foreach (var (type, arg) in args)
             {
-                arg.Scope = expr.Scope;
-                arg.Expr.Scope = arg.Scope;
+                arg.Expr.SetFlag(ExprFlags.ValueRequired, true);
+                arg.AttachTo(expr);
+                arg.Expr.AttachTo(arg, expr.Scope);
                 arg.Expr = InferTypeHelper(arg.Expr, type, context);
                 ConvertLiteralTypeToDefaultType(arg.Expr, type);
                 arg.Type = arg.Expr.Type;
@@ -3231,8 +3283,8 @@ namespace Cheez
 
         private AstExpression InferTypeUnaryExpr(AstUnaryExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            expr.SubExpr.SetFlag(ExprFlags.ValueRequired, true);
             expr.SubExpr.Scope = expr.Scope;
-
             expr.SubExpr = InferTypeHelper(expr.SubExpr, null, context);
 
             if (expr.SubExpr.Type.IsErrorType)
@@ -3290,6 +3342,9 @@ namespace Cheez
 
         private AstExpression InferTypesBinaryExpr(AstBinaryExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            expr.Left.SetFlag(ExprFlags.ValueRequired, true);
+            expr.Right.SetFlag(ExprFlags.ValueRequired, true);
+
             expr.Left.Scope = expr.Scope;
             expr.Right.Scope = expr.Scope;
 
@@ -3447,6 +3502,8 @@ namespace Cheez
                 if (func.SelfType != SelfParamType.None)
                 {
                     var ufc = new AstUfcFuncExpr(new AstIdExpr("self", false, expr), func);
+                    ufc.Replace(expr);
+                    ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                     return InferTypeHelper(ufc, null, default);
                 }
             }
@@ -3563,6 +3620,7 @@ namespace Cheez
                 var deref = new AstDereferenceExpr(expr, expr);
                 deref.Reference = true;
                 deref.AttachTo(expr);
+                deref.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
 
                 if (context == null)
                     return InferType(deref, null);
@@ -3577,6 +3635,7 @@ namespace Cheez
             var deref = new AstAddressOfExpr(expr, expr);
             deref.Reference = true;
             deref.AttachTo(expr);
+            deref.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
 
             if (context == null)
                 return InferType(deref, null);
@@ -3665,6 +3724,8 @@ namespace Cheez
             }
 
             var ufc = new AstUfcFuncExpr(expr.Left, result[0]);
+            ufc.Replace(expr);
+            ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
             return InferTypeHelper(ufc, null, context);
         }
 

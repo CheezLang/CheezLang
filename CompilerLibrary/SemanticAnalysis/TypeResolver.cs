@@ -491,6 +491,7 @@ namespace Cheez
                 {
                     @enum.HasAssociatedTypes = true;
                     mem.AssociatedTypeExpr.Scope = @enum.SubScope;
+                    mem.AssociatedTypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                     mem.AssociatedTypeExpr = ResolveType(mem.AssociatedTypeExpr, instances, out var t);
                 }
 
@@ -610,6 +611,7 @@ namespace Cheez
             {
                 member.Index = index++;
                 member.TypeExpr.Scope = @struct.SubScope;
+                member.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                 member.TypeExpr = ResolveType(member.TypeExpr, instances, out var t);
                 member.Type = t;
             }
@@ -637,6 +639,7 @@ namespace Cheez
                 if (member.Initializer != null)
                 {
                     member.Initializer.Scope = @struct.SubScope;
+                    member.Initializer.SetFlag(ExprFlags.ValueRequired, true);
                     member.Initializer = InferType(member.Initializer, member.Type);
                     ConvertLiteralTypeToDefaultType(member.Initializer, member.Type);
                     member.Initializer = CheckType(member.Initializer, member.Type);

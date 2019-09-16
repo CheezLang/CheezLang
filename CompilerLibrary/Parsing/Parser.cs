@@ -862,6 +862,12 @@ namespace Cheez.Parsing
                     next = PeekToken();
                 }
 
+                var memberEnd = init?.End ?? mType.End;
+                var mem = new AstStructMember(mName, mType, init, new Location(memberBeg, memberEnd));
+                mem.IsPublic = pub;
+                mem.IsReadOnly = get;
+                members.Add(mem);
+
                 if (next.type == TokenType.NewLine)
                 {
                     SkipNewlines();
@@ -875,13 +881,6 @@ namespace Cheez.Parsing
                     NextToken();
                     ReportError(next.location, $"Unexpected token {next} at end of struct member");
                 }
-
-                var memberEnd = init?.End ?? mType.End;
-
-                var mem = new AstStructMember(mName, mType, init, new Location(memberBeg, memberEnd));
-                mem.IsPublic = pub;
-                mem.IsReadOnly = get;
-                members.Add(mem);
             }
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct declaration")).location;

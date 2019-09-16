@@ -47,7 +47,9 @@ namespace Cheez
                 tr_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
             }
 
+            ty_expr.SetFlag(ExprFlags.ValueRequired, true);
             var ty = InferType(ty_expr, null, forceInfer: true).Value as CheezType;
+            tr_expr.SetFlag(ExprFlags.ValueRequired, true);
             var tr = InferType(tr_expr, null, forceInfer: true).Value as CheezType;
 
             var matches = GetTraitImplForType(ty, tr, polies);
@@ -461,6 +463,7 @@ namespace Cheez
                         // type ex
                         if (v.TypeExpr != null)
                         {
+                            v.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                             v.TypeExpr = ResolveType(v.TypeExpr, newPolyDecls, out var t);
                             type = v.Type = t;
                         }
@@ -473,6 +476,7 @@ namespace Cheez
                             break;
                         }
 
+                        v.Initializer.SetFlag(ExprFlags.ValueRequired, true);
                         v.Initializer = InferType(v.Initializer, type);
                         ConvertLiteralTypeToDefaultType(v.Initializer, type);
 
@@ -518,6 +522,7 @@ namespace Cheez
 
                 case AstTypeAliasDecl typedef:
                     {
+                        typedef.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                         typedef.TypeExpr = ResolveType(typedef.TypeExpr, newPolyDecls, out var type);
                         typedef.Type = type;
                         break;
@@ -527,6 +532,7 @@ namespace Cheez
                     {
                         foreach (var p in @struct.Parameters)
                         {
+                            p.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                             p.TypeExpr = ResolveType(p.TypeExpr, newPolyDecls, out var type);
                             p.Type = type;
                             if (!ValidatePolymorphicParameterType(p.TypeExpr, p.Type))
@@ -549,6 +555,7 @@ namespace Cheez
                     {
                         foreach (var p in @enum.Parameters)
                         {
+                            p.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                             p.TypeExpr = ResolveType(p.TypeExpr, newPolyDecls, out var type);
                             p.Type = type;
                             if (!ValidatePolymorphicParameterType(p.TypeExpr, p.Type))
@@ -571,6 +578,7 @@ namespace Cheez
                     {
                         foreach (var p in trait.Parameters)
                         {
+                            p.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                             p.TypeExpr = ResolveType(p.TypeExpr, newPolyDecls, out var type);
                             p.Type = type;
                             if (!ValidatePolymorphicParameterType(p.TypeExpr, p.Type))

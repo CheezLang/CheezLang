@@ -120,7 +120,7 @@ namespace Cheez.Visitors
             {
                 foreach (var dest in ret.Destructions)
                 {
-                    sb.AppendLine($"// {dest.Accept(this)};");
+                    sb.AppendLine($"{dest.Accept(this)};");
                 }
             }
 
@@ -442,7 +442,7 @@ namespace Cheez.Visitors
             {
                 foreach (var dest in block.Destructions)
                 {
-                    sb.Append($"\n// {dest.Accept(this)}");
+                    sb.Append($"\n{dest.Accept(this)}");
                 }
             }
 
@@ -465,7 +465,7 @@ namespace Cheez.Visitors
             {
                 foreach (var dest in ass.Destructions)
                 {
-                    sb.AppendLine($"// {dest.Accept(this)};");
+                    sb.AppendLine($"{dest.Accept(this)};");
                 }
             }
 
@@ -495,7 +495,7 @@ namespace Cheez.Visitors
             {
                 foreach (var dest in stmt.Destructions)
                 {
-                    sb.Append($";\n// {dest.Accept(this)}");
+                    sb.Append($";\n{dest.Accept(this)}");
                 }
             }
             return sb.ToString();
@@ -566,7 +566,7 @@ namespace Cheez.Visitors
             {
                 foreach (var dest in br.Destructions)
                 {
-                    sb.AppendLine($"// {dest.Accept(this)};");
+                    sb.AppendLine($"{dest.Accept(this)};");
                 }
             }
 
@@ -595,7 +595,7 @@ namespace Cheez.Visitors
             {
                 foreach (var dest in cont.Destructions)
                 {
-                    sb.AppendLine($"// {dest.Accept(this)};");
+                    sb.AppendLine($"{dest.Accept(this)};");
                 }
             }
 

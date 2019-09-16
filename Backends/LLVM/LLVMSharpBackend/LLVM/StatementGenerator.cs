@@ -257,6 +257,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void GenerateAssignment(AstAssignment ass)
         {
+            if (ass.Destructions != null)
+            {
+                foreach (var dest in ass.Destructions)
+                {
+                    GenerateExpression(dest, false);
+                }
+            }
+
             GenerateAssignmentValue(ass);
             GenerateAssignmentStore(ass);
         }

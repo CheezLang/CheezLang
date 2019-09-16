@@ -43,9 +43,16 @@ namespace Cheez
         private Stack<IErrorHandler> m_errorHandlerReplacements = new Stack<IErrorHandler>();
         public IErrorHandler CurrentErrorHandler => m_errorHandlerReplacements.Count > 0 ? m_errorHandlerReplacements.Peek() : mCompiler.ErrorHandler;
 
+        private int mNameGen = 0;
+
         public Workspace(CheezCompiler comp)
         {
             mCompiler = comp;
+        }
+
+        private string GetUniqueName(string str = "")
+        {
+            return $"~{str}~{mNameGen++}";
         }
 
         public void PushErrorHandler(IErrorHandler handler)

@@ -5,6 +5,7 @@ fn abs(i: $T) -> T { return if i < 0 {-i} else {i} }
 fn fabsf(f: float) -> float;
 fn fabs(f: double) -> double;
 
+fn max(a: $T, b: T) -> T { return if a >= b then a else b }
 fn fmaxf(f1: float, f2: float) -> float;
 fn fmax(f1: double, f2: double) -> double;
 
@@ -322,7 +323,7 @@ impl(T: type) Vector3(T) {
     }
 
     fn max_component(ref Self) -> T {
-        return fmax(x, fmax(y, z))
+        return max(x, max(y, z))
     }
 
     fn clamped(ref Self, min: T, max: T) -> Self {

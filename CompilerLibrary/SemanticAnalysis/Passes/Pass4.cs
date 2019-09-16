@@ -92,6 +92,7 @@ namespace Cheez
             // return types
             if (func.ReturnTypeExpr != null)
             {
+                func.ReturnTypeExpr.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                 func.ReturnTypeExpr.Scope = func.SubScope;
                 func.ReturnTypeExpr.TypeExpr.Scope = func.SubScope;
                 func.ReturnTypeExpr.TypeExpr = ResolveType(func.ReturnTypeExpr.TypeExpr, newPolyDecls, out var t);
@@ -106,6 +107,7 @@ namespace Cheez
             foreach (var p in func.Parameters)
             {
                 p.TypeExpr.Scope = func.SubScope;
+                p.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                 p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
                 p.Type = t;
 
@@ -148,6 +150,7 @@ namespace Cheez
                 else
                 {
                     var arg = op.Arguments[0];
+                    arg.SetFlag(ExprFlags.ValueRequired, true);
                     arg = op.Arguments[0] = InferType(arg, null);
                     if (arg.Value is string v)
                     {

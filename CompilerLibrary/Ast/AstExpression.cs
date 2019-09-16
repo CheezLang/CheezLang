@@ -25,7 +25,8 @@ namespace Cheez.Ast.Expressions
         IgnoreInCodeGen = 7,
         DontApplySymbolStatuses = 8,
         RequireInitializedSymbol = 9,
-        Breaks = 10
+        Breaks = 10,
+        ValueRequired = 11
     }
 
     public abstract class AstExpression : IVisitorAcceptor, ILocation, IAstNode

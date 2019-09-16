@@ -4,7 +4,11 @@ trait Drop {
 }
 
 // drops a values
-fn drop(_: $T) {}
+struct Memory {
+}
+impl Memory {
+    fn drop(_: $T) {}
+}
 
 // option and result
 enum Option(T: type) {

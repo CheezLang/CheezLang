@@ -1,4 +1,5 @@
 ﻿using Cheez.Ast;
+using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Abstract;
@@ -35,6 +36,9 @@ namespace Cheez
 
                 case ArrayType t:
                     return SizeOfTypeDependsOnSelfType(t.TargetType);
+
+                case RangeType r:
+                    return SizeOfTypeDependsOnSelfType(r.TargetType);
 
                 case ReferenceType _:
                 case PointerType _:
@@ -141,6 +145,7 @@ namespace Cheez
 
                     param.Scope = impl.Scope;
                     param.TypeExpr.Scope = impl.Scope;
+                    param.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                     param.TypeExpr = ResolveTypeNow(param.TypeExpr, out var newType, forceInfer: true);
 
                     if (newType is AbstractType)
@@ -172,6 +177,7 @@ namespace Cheez
                 }
             }
 
+            impl.TraitExpr.SetFlag(ExprFlags.ValueRequired, true);
             impl.TraitExpr = ResolveTypeNow(impl.TraitExpr, out var type, resolve_poly_expr_to_concrete_type: true);
 
 
@@ -187,6 +193,7 @@ namespace Cheez
                 return;
             }
 
+            impl.TargetTypeExpr.SetFlag(ExprFlags.ValueRequired, true);
             impl.TargetTypeExpr.Scope = impl.SubScope;
             impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t, resolve_poly_expr_to_concrete_type: !impl.IsPolymorphic);
             impl.TargetType = t;
@@ -360,6 +367,7 @@ namespace Cheez
 
                         param.Scope = impl.Scope;
                         param.TypeExpr.Scope = impl.Scope;
+                        param.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                         param.TypeExpr = ResolveTypeNow(param.TypeExpr, out var newType, forceInfer: true);
 
                         if (newType is AbstractType)
@@ -391,6 +399,7 @@ namespace Cheez
                     }
                 }
 
+                impl.TargetTypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                 impl.TargetTypeExpr.Scope = impl.SubScope;
                 impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t, resolve_poly_expr_to_concrete_type: !impl.IsPolymorphic);
                 impl.TargetType = t;

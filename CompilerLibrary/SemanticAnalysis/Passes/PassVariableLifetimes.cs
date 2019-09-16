@@ -125,18 +125,29 @@ namespace Cheez
             return cc;
         }
 
-        private AstExpression Destruct(ITypedSymbol symbol, ILocation location)
+        private AstExpression Destruct(ISymbol symbol, ILocation location)
         {
-            if (!TypeHasDestructor(symbol.Type))
-                return null;
-
-            var cc = new AstCompCallExpr(new AstIdExpr("destruct", false, location), new List<AstArgument>
+            if (symbol is AstDeferStmt def)
             {
-                new AstArgument(new AstSymbolExpr(symbol), Location: location)
-            }, location);
-            cc.Type = CheezType.Void;
-            //cc.SetFlag(ExprFlags.IgnoreInCodeGen, true);
-            return cc;
+                var block = new AstBlockExpr(new List<AstStatement> { def.Deferred }, location);
+                block.Type = CheezType.Void;
+                return block;
+            }
+            else if (symbol is ITypedSymbol tsymbol)
+            {
+                if (!TypeHasDestructor(tsymbol.Type))
+                    return null;
+
+                var cc = new AstCompCallExpr(new AstIdExpr("destruct", false, location), new List<AstArgument>
+                {
+                    new AstArgument(new AstSymbolExpr(tsymbol), Location: location)
+                }, location);
+                cc.Type = CheezType.Void;
+                return cc;
+            }
+
+            WellThatsNotSupposedToHappen();
+            return null;
         }
 
         private void PassVariableLifetimes(AstFunctionDecl func)
@@ -173,7 +184,7 @@ namespace Cheez
                     var p = func.Parameters[i];
                     if (func.SubScope.TryGetSymbolStatus(p, out var stat) && stat.kind == SymbolStatus.Kind.initialized)
                     {
-                        func.Body.AddDestruction(Destruct(p as ITypedSymbol, func.Body.End));
+                        func.Body.AddDestruction(Destruct(p, func.Body.End));
                     }
                 }
             }
@@ -379,6 +390,73 @@ namespace Cheez
                 }
         }
 
+        private bool PassVLStatement(AstStatement stmt, Scope scope)
+        {
+            switch (stmt)
+            {
+                case AstVariableDecl var:
+                    // dont handle comptime only variables
+                    if (var.Type.IsComptimeOnly)
+                        return true;
+
+                    foreach (var sv in var.SubDeclarations)
+                    {
+                        if (sv.Initializer != null)
+                        {
+                            scope.SetSymbolStatus(sv, SymbolStatus.Kind.initialized, sv);
+                            if (!PassVLExpr(sv.Initializer))
+                                return false;
+                            if (!Move(sv.Initializer))
+                                return false;
+                        }
+                        else
+                            scope.SetSymbolStatus(sv, SymbolStatus.Kind.uninitialized, sv.Name);
+                    }
+                    return true;
+
+                case AstWhileStmt whl:
+                    if (!PassVLWhile(whl))
+                        return false;
+                    return true;
+
+                case AstAssignment ass:
+                    if (!PassVLAssignment(ass))
+                        return false;
+                    return true;
+
+                case AstExprStmt es:
+                    {
+                        if (es.Scope != scope)
+                            es.Scope.InitSymbolStats();
+                        if (!PassVLExpr(es.Expr))
+                            return false;
+
+                        if (TypeHasDestructor(es.Expr.Type))
+                        {
+                            var tempVar = new AstTempVarExpr(es.Expr);
+                            tempVar.Type = es.Expr.Type;
+                            es.Expr = tempVar;
+                            es.AddDestruction(Destruct(tempVar));
+                        }
+                        return true;
+                    }
+
+                case AstReturnStmt ret:
+                    return PassVLReturn(ret);
+
+                case AstDeferStmt def:
+                    {
+                        if (!PassVLStatement(def.Deferred, def.Scope))
+                            return false;
+
+                        scope.SetSymbolStatus(def, SymbolStatus.Kind.initialized, def);
+                        return true;
+                    }
+            }
+
+            return true;
+        }
+
         private bool PassVLBlock(AstBlockExpr expr)
         {
             var scope = expr.SubScope;
@@ -386,58 +464,8 @@ namespace Cheez
 
             foreach (var stmt in expr.Statements)
             {
-                switch (stmt)
-                {
-                    case AstVariableDecl var:
-                        // dont handle comptime only variables
-                        if (var.Type.IsComptimeOnly)
-                            return true;
-
-                        foreach (var sv in var.SubDeclarations)
-                        {
-                            if (sv.Initializer != null)
-                            {
-                                scope.SetSymbolStatus(sv, SymbolStatus.Kind.initialized, sv);
-                                if (!PassVLExpr(sv.Initializer))
-                                    return false;
-                                if (!Move(sv.Initializer))
-                                    return false;
-                            }
-                            else
-                                scope.SetSymbolStatus(sv, SymbolStatus.Kind.uninitialized, sv.Name);
-                        }
-                        break;
-
-                    case AstWhileStmt whl:
-                        if (!PassVLWhile(whl))
-                            return false;
-                        break;
-
-                    case AstAssignment ass:
-                        if (!PassVLAssignment(ass))
-                            return false;
-                        break;
-
-                    case AstExprStmt es:
-                        {
-                            if (es.Scope != scope)
-                                es.Scope.InitSymbolStats();
-                            if (!PassVLExpr(es.Expr))
-                                return false;
-
-                            if (TypeHasDestructor(es.Expr.Type))
-                            {
-                                var tempVar = new AstTempVarExpr(es.Expr);
-                                tempVar.Type = es.Expr.Type;
-                                es.Expr = tempVar;
-                                es.AddDestruction(Destruct(tempVar));
-                            }
-                            break;
-                        }
-
-                    case AstReturnStmt ret:
-                        return PassVLReturn(ret);
-                }
+                if (!PassVLStatement(stmt, scope))
+                    return false;
 
                 // @todo: should we report errors for code after a break or return?
                 // right now we do
@@ -445,6 +473,12 @@ namespace Cheez
                 //if (stmt.GetFlag(StmtFlags.Breaks) || stmt.GetFlag(StmtFlags.Returns))
                 //    break;
             }
+
+            //if (expr.Statements.LastOrDefault() is AstExprStmt es && expr.Type != CheezType.Void)
+            //{
+            //    if (!Move(es.Expr))
+            //        return false;
+            //}
 
             if (!expr.GetFlag(ExprFlags.Anonymous) && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
                 expr.SubScope.ApplyInitializedSymbolsToParent();
@@ -457,7 +491,7 @@ namespace Cheez
                 {
                     if (stat.kind == SymbolStatus.Kind.initialized)
                     {
-                        expr.AddDestruction(Destruct(stat.symbol as ITypedSymbol, expr.End));
+                        expr.AddDestruction(Destruct(stat.symbol, expr.End));
                     }
                 }
             }
@@ -607,7 +641,7 @@ namespace Cheez
                 {
                     if (stat.kind == SymbolStatus.Kind.initialized)
                     {
-                        br.AddDestruction(Destruct(stat.symbol as ITypedSymbol, br));
+                        br.AddDestruction(Destruct(stat.symbol, br));
                     }
                 }
 
@@ -657,7 +691,7 @@ namespace Cheez
                 {
                     if (stat.kind == SymbolStatus.Kind.initialized)
                     {
-                        cont.AddDestruction(Destruct(stat.symbol as ITypedSymbol, cont));
+                        cont.AddDestruction(Destruct(stat.symbol, cont));
                     }
                 }
 
@@ -741,18 +775,28 @@ namespace Cheez
                 return false;
 
             // destruct pattern if already initialized
-            {
+            if (ass.Operator == null) {
                 if (ass.Pattern is AstIdExpr id)
                 {
                     // if it is an id pattern it may not be initialized
                     if (ass.Scope.TryGetSymbolStatus(id.Symbol, out var stat)
                         && stat.kind == SymbolStatus.Kind.initialized)
-                        ass.AddDestruction(Destruct(id.Symbol as ITypedSymbol, ass.Pattern));
+                        ass.AddDestruction(Destruct(id.Symbol, ass.Pattern));
                 }
                 else
                 {
                     // otherwise it must be initialized, so always destruct it
-                    ass.AddDestruction(Destruct(ass.Pattern));
+                    // unless it is deref expression
+
+                    if (ass.Pattern is AstDereferenceExpr de && !de.Reference)
+                    {
+                        // do nothing
+                        //ass.AddDestruction(Destruct(ass.Pattern));
+                    }
+                    else
+                    {
+                        ass.AddDestruction(Destruct(ass.Pattern));
+                    }
                 }
             }
 
@@ -801,7 +845,7 @@ namespace Cheez
             {
                 if (stat.kind == SymbolStatus.Kind.initialized)
                 {
-                    ret.AddDestruction(Destruct(stat.symbol as ITypedSymbol, ret));
+                    ret.AddDestruction(Destruct(stat.symbol, ret));
                 }
             }
 

@@ -95,6 +95,7 @@ namespace Cheez
                     else
                     {
                         var arg = ln.Arguments[0];
+                        arg.SetFlag(ExprFlags.ValueRequired, true);
                         arg = ln.Arguments[0] = InferType(arg, null);
                         if (!(arg.Value is string))
                         {
@@ -203,6 +204,7 @@ namespace Cheez
                 case AstWhileStmt whl: return AnalyseWhileStatement(whl);
                 case AstUsingStmt use: return AnalyseUseStatement(use);
                 case AstForStmt fo: return AnalyseForStatement(fo);
+                case AstDeferStmt def: return AnalyseDeferStatement(def);
 
                 case AstFunctionDecl func: ReportError(func, $"Local functions not supported yet."); break;
                 //default: throw new NotImplementedException();
@@ -211,10 +213,23 @@ namespace Cheez
             return stmt;
         }
 
+        private AstStatement AnalyseDeferStatement(AstDeferStmt def)
+        {
+            def.Deferred.Scope = def.Scope;
+            def.Deferred.Parent = def;
+
+            AnalyseStatement(def.Deferred);
+
+            def.Scope.DefineSymbol(def, GetUniqueName("defer"));
+
+            return def;
+        }
+
         private AstStatement AnalyseForStatement(AstForStmt fo)
         {
             fo.SubScope = new Scope("for", fo.Scope);
 
+            fo.Collection.SetFlag(ExprFlags.ValueRequired, true);
             fo.Collection.AttachTo(fo);
             fo.Collection = InferType(fo.Collection, null);
             ConvertLiteralTypeToDefaultType(fo.Collection, null);
@@ -312,6 +327,7 @@ namespace Cheez
 
         private AstUsingStmt AnalyseUseStatement(AstUsingStmt use)
         {
+            use.Value.SetFlag(ExprFlags.ValueRequired, true);
             use.Value.AttachTo(use);
             use.Value = InferType(use.Value, null);
 
@@ -418,6 +434,7 @@ namespace Cheez
 
         private AstAssignment AnalyseAssignStatement(AstAssignment ass)
         {
+            ass.Pattern.SetFlag(ExprFlags.ValueRequired, true);
             ass.Pattern.AttachTo(ass);
             ass.Pattern.SetFlag(ExprFlags.AssignmentTarget, true);
             ass.Pattern.SetFlag(ExprFlags.SetAccess, true);
@@ -429,6 +446,7 @@ namespace Cheez
                 ass.Pattern = Deref(ass.Pattern, null);
             }
 
+            ass.Value.SetFlag(ExprFlags.ValueRequired, true);
             ass.Value.AttachTo(ass);
             ass.Value = InferType(ass.Value, ass.Pattern.Type);
             ConvertLiteralTypeToDefaultType(ass.Value, ass.Pattern.Type);
@@ -490,9 +508,9 @@ namespace Cheez
                 var ops = ass.Scope.GetBinaryOperators(assOp, pattern.Type, valType);
                 if (ops.Count == 1)
                 {
-                    var opCall = new AstBinaryExpr(assOp, pattern, value, value.Location);
-                    opCall.Scope = value.Scope;
                     ass.OnlyGenerateValue = true;
+                    var opCall = new AstBinaryExpr(assOp, pattern, value, value.Location);
+                    opCall.Replace(value);
                     return InferType(opCall, null);
                 }
                 else if (ops.Count > 1)
@@ -734,6 +752,7 @@ namespace Cheez
 
             if (ret.ReturnValue != null)
             {
+                ret.ReturnValue.SetFlag(ExprFlags.ValueRequired, true);
                 ret.ReturnValue.AttachTo(ret);
                 ret.ReturnValue = InferType(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
 

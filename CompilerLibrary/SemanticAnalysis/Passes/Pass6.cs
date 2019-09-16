@@ -79,6 +79,7 @@ namespace Cheez
 
             if (v.TypeExpr != null)
             {
+                v.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                 v.TypeExpr.Scope = v.Scope;
                 v.TypeExpr = ResolveTypeNow(v.TypeExpr, out var t);
                 v.TypeExpr.Type = t;
@@ -90,6 +91,7 @@ namespace Cheez
             {
                 v.Initializer.Scope = v.Scope;
 
+                v.Initializer.SetFlag(ExprFlags.ValueRequired, true);
                 v.Initializer = InferType(v.Initializer, v.TypeExpr?.Type ?? v.Pattern.Type);
                 ConvertLiteralTypeToDefaultType(v.Initializer, v.TypeExpr?.Type);
 
