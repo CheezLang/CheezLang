@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "CompilerCLI": {
+      "commandName": "Project",
+      "commandLineArgs": "examples/test.che --stdlib examples --time --run",
+      "workingDirectory": ".."
+    }
+  }
+}

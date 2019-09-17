@@ -31,11 +31,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
     public class LLVMLinker
     {
-        [DllImport("LLVMLinker", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private extern static bool llvm_link_coff(string[] argv, int argc);
+        //[DllImport("LLVMLinker", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        //private extern static bool llvm_link_coff(string[] argv, int argc);
 
-        [DllImport("LLVMLinker", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private extern static bool llvm_link_elf(string[] argv, int argc);
+        //[DllImport("LLVMLinker", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        //private extern static bool llvm_link_elf(string[] argv, int argc);
 
         public static bool Link(Workspace workspace, string targetFile, string objFile, IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
         {
@@ -72,7 +72,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             filename = Path.Combine(dir, filename);
 
             var lldArgs = new List<string>();
-            lldArgs.Add("lld");
+            //lldArgs.Add("lld");
             lldArgs.Add($"/out:{filename}.exe");
 
             // library paths
@@ -140,7 +140,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // generated object files
             lldArgs.Add(objFile);
 
-            var result = llvm_link_coff(lldArgs.ToArray(), lldArgs.Count);
+            var process = Utilities.StartProcess("lld-link", lldArgs);
+            process.WaitForExit();
+            var result = process.ExitCode == 0;
+            //var result = llvm_link_coff(lldArgs.ToArray(), lldArgs.Count);
             if (result)
             {
                 Console.WriteLine($"Generated {filename}.exe");
