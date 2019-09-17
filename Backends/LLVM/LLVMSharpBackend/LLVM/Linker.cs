@@ -52,20 +52,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
             libraries = libraries.Distinct();
 
-            var winSdk = OS.OS.FindWindowsSdk();
-            if (winSdk == null)
-            {
-                errorHandler.ReportError("Couldn't find windows sdk");
-                return false;
-            }
-
-            var msvcLibPath = FindVisualStudioLibraryDirectory();
-            if (msvcLibPath == null)
-            {
-                errorHandler.ReportError("Couldn't find Visual Studio library directory");
-                return false;
-            }
-
             var filename = Path.GetFileNameWithoutExtension(targetFile + ".x");
             var dir = Path.GetDirectoryName(Path.GetFullPath(targetFile));
 
@@ -76,17 +62,32 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             lldArgs.Add($"/out:{filename}.exe");
 
             // library paths
-            if (winSdk.UcrtPath != null)
-                lldArgs.Add($@"-libpath:{winSdk.UcrtPath}\{target}");
 
-            if (winSdk.UmPath != null)
-                lldArgs.Add($@"-libpath:{winSdk.UmPath}\{target}");
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)){
+                var winSdk = OS.OS.FindWindowsSdk();
+                if (winSdk == null)
+                {
+                    errorHandler.ReportError("Couldn't find windows sdk");
+                    return false;
+                }
+
+                var msvcLibPath = FindVisualStudioLibraryDirectory();
+                if (msvcLibPath == null)
+                {
+                    errorHandler.ReportError("Couldn't find Visual Studio library directory");
+                    return false;
+                }
+                if (winSdk.UcrtPath != null)
+                    lldArgs.Add($@"-libpath:{winSdk.UcrtPath}\{target}");
+
+                if (winSdk.UmPath != null)
+                    lldArgs.Add($@"-libpath:{winSdk.UmPath}\{target}");
+                if (msvcLibPath != null)
+                    lldArgs.Add($@"-libpath:{msvcLibPath}\{target}");
+            }
 
             var exePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             lldArgs.Add($"-libpath:{exePath}");
-
-            if (msvcLibPath != null)
-                lldArgs.Add($@"-libpath:{msvcLibPath}\{target}");
 
             foreach (var linc in libraryIncludeDirectories)
             {

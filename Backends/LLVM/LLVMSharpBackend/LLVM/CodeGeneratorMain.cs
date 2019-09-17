@@ -4,6 +4,7 @@ using LLVMSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Cheez.CodeGeneration.LLVMCodeGen
 {
@@ -79,6 +80,32 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return rawBuilder;
         }
 
+        private string GetTargetTriple(TargetArchitecture arch) {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                switch (arch)
+                {
+                    case TargetArchitecture.X64:
+                        return "x86_64-pc-windows-gnu";
+
+                    case TargetArchitecture.X86:
+                        return "i386-pc-win32";
+                }
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                switch (arch)
+                {
+                    case TargetArchitecture.X64:
+                        return "x86_64-pc-linux-gnu";
+
+                    case TargetArchitecture.X86:
+                        return "i386-pc-linux-gnu";
+                }
+            }
+            throw new NotImplementedException();
+        }
+
         public bool GenerateCode(Workspace workspace, string intDir, string outDir, string targetFile, bool optimize, bool outputIntermediateFile)
         {
             this.workspace = workspace;
@@ -87,16 +114,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             this.targetFile = targetFile;
             this.emitDebugInfo = !optimize;
 
-            switch (workspace.TargetArch)
-            {
-                case TargetArchitecture.X64: 
-                    targetTriple = "x86_64-pc-windows-gnu";
-                    break;
-
-                case TargetArchitecture.X86:
-                    targetTriple = "i386-pc-win32";
-                    break;
-            }
+            this.targetTriple = GetTargetTriple(workspace.TargetArch);
 
             module = new Module("test-module");
             module.SetTarget(targetTriple);

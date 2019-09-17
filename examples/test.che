@@ -2,12 +2,12 @@
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
-#load("examples/pathtracer")
+// #load("examples/pathtracer")
 // #load("tests/language/local_variables")
 // #load("tests/library/arena_allocator1")
 //#load("tests/other/test1")
 
-/*
+//*
 #load("std:preload")
 #load("std:c")
 #load("std:io/io")
