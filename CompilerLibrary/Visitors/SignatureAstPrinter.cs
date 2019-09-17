@@ -104,6 +104,7 @@ namespace Cheez.Visitors
                     {
                         case ImplConditionImplTrait t: return $"{TypeToString(t.type)} : {TypeToString(t.trait)}";
                         case ImplConditionNotYet t: return "#notyet";
+                        case ImplConditionAny a: return a.Expr.Accept(this);
                         default: throw new NotImplementedException();
                     }
                 }));

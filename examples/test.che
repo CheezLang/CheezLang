@@ -1,4 +1,4 @@
-#load("examples/trait_function_call_performance")
+// #load("examples/trait_function_call_performance")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
@@ -12,165 +12,54 @@
 #load("std:c")
 #load("std:io/io")
 #load("std:rc")
+#load("std:array")
 // #load("std:util")
 
-// struct Foo{pub a: string}
-// impl Drop for Foo {
-//     fn drop(ref Self) {
-//         println(a)
-//     }
-// }
-
-// fn test() -> Foo {
-//     return new Foo{"deferred"}
-// }
-
-// fn Main() {
-//     defer println(1)
-//     let f1 = new Foo{"f1"}
-//     defer println(2)
-//     let f2 = new Foo{"f2"}
-//     defer println(3)
-//     let f3 = new Foo{"f3"}
-//     defer println(4)
-//     defer test()
-// }
-
-/*
-fn Main() {
-    if const true {
-        let a: Foo
-        let (foo, bar) = (true, true)
-        @log_symbol_status(a)
-
-        while true {
-            a = default
-
-            // if bar {
-            //     drop(a)
-            //     break
-            // }
-            // else drop(a)
-
-
-            // drop(a)
-        }
-
-        @log_symbol_status(a)
-    }
-
-
-
-    if const false {
-        let a: int
-        @log_symbol_status(a)
-        match 5 {
-            1 -> {
-                @log_symbol_status(a)
-                a = 5
-                @log_symbol_status(a)
-            }
-            2 -> {
-                @log_symbol_status(a)
-                a = 6
-                @log_symbol_status(a)
-            }
-            3 -> {
-                @log_symbol_status(a)
-                // a = 7
-                @log_symbol_status(a)
-            }
-        }
-        @log_symbol_status(a)
-    }
-
-    if const false {
-        let a: int
-        @log_symbol_status(a)
-        if true {
-            @log_symbol_status(a)
-            a = 5
-            @log_symbol_status(a)
-        } else {
-            @log_symbol_status(a)
-            a = 10
-            @log_symbol_status(a)
-        }
-        @log_symbol_status(a)
-    }
-
-    if const false {
-        let a: int = 1
-        @log_symbol_status(a)
-        while false {
-            @log_symbol_status(a)
-            a = 5
-            @log_symbol_status(a)
-        }
-        @log_symbol_status(a)
+struct Foo{
+    pub a: string
+    b: int
+}
+impl Drop for Foo {
+    fn drop(ref Self) {
+        printfln("Foo::drop '{}'", [a])
     }
 }
-// */
 
+enum E {}
+trait T {}
 
-/*
+struct S {
+    pub e: E
+}
 
-struct Foo {
+struct S2 {
     pub a: int
 }
 
-impl Drop for Foo {
-    fn drop(ref Self) {
-        printfln("dropping Foo``{{}}", [a])
-    }
-}
-
-fn debug_print(rc: ref Rc($T)) {
-    let typename = @typename(T)
-    let data = int(rc.data)
-    printfln("Rc({}): count={}, data={:x}", [typename, <<rc.count, data])
-}
-
-fn test(r: Rc(Foo)) -> Rc(Foo) {
-    r.clone()
-
-    let d = r.get()
-    println(d.a)
-
-    r.get().a += 2
-
-    return r.clone()
-}
-
 fn Main() {
-    let r1 = Rc(Foo)::create(new{2})
-    let r2 = r1.clone()
+    let arr = Array(Foo)::create()
+    println("add")
+    arr.add(new Foo{"f1"})
+    arr.add(new Foo{"f2"})
+    arr.add(new Foo{"f3"})
+    arr.add(new Foo{"f4"})
+    println(arr.get_length())
 
-    test(r2.clone())
+    println("resize(2)")
+    arr.clear()
+    println(arr.get_length())
 
-    println(r2.get().a)
+    println("add")
+    arr.add(new Foo{"f5"})
+    arr.add(new Foo{"f6"})
+    println(arr.get_length())
 
-    // let test = Rc(int)::create(645)
-    // debug_print(test)
-    // println("")
+    println("slice")
+    let i: int = 5
+    let s = arr.slice()
+    s[0] = new Foo{"test"}
 
-    // println(<<test.data)
-    // <<test.data = 5
-    // println(<<test.data)
-    // <<test.data = 123
-    // println(<<test.data)
-    // println("")
-
-    // let test2 = test.clone()
-    // debug_print(test)
-    // debug_print(test2)
-    // println("")
-
-    // let test3 = test.clone()
-    // debug_print(test)
-    // debug_print(test2)
-    // debug_print(test3)
-    // println("")
+    println("drop")
 }
 
 // */

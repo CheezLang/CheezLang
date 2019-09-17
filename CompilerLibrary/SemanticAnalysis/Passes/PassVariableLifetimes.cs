@@ -6,6 +6,7 @@ using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Complex;
+using Cheez.Types.Primitive;
 
 namespace Cheez
 {
@@ -788,14 +789,16 @@ namespace Cheez
                     // otherwise it must be initialized, so always destruct it
                     // unless it is deref expression
 
-                    if (ass.Pattern is AstDereferenceExpr de && !de.Reference)
+                    switch (ass.Pattern)
                     {
-                        // do nothing
-                        //ass.AddDestruction(Destruct(ass.Pattern));
-                    }
-                    else
-                    {
-                        ass.AddDestruction(Destruct(ass.Pattern));
+                        //case AstArrayAccessExpr ind when ind.SubExpression.Type is SliceType:
+                        case AstDereferenceExpr de when !de.Reference: // deref a pointer
+                        case AstArrayAccessExpr ind when ind.SubExpression.Type is PointerType: // index access a pointer
+                            break;
+
+                        default:
+                            ass.AddDestruction(Destruct(ass.Pattern));
+                            break;
                     }
                 }
             }

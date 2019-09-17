@@ -4,14 +4,20 @@
 #load("std:iterator")
 
 struct Array(T: type) {
-    data: []T
+    data            : &T
+    capacity        : int
     pub const length: int
-    allocator: Allocator
+    allocator       : Allocator
 }
 
 impl(T: type) Drop for Array(T) {
     fn drop(ref Self) {
-        free_n(data, allocator)
+        // destruct values
+        for :length {
+            Memory::drop(data[it])
+        }
+
+        free(data, allocator)
         data = null
         length = 0
     }
@@ -19,26 +25,26 @@ impl(T: type) Drop for Array(T) {
 
 impl(T: type) Array(T) {
     fn create(initial_capacity: int = 10, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        let s = new Array(T) { null, 0, allocator }
+        let s = new Array(T) { null, 0, 0, allocator }
         s.reserve(initial_capacity)
         c_memset(cast s.get_raw(), 0, cast(uint) (s.get_capacity() * @sizeof(T)))
         return s
     }
 
     fn reserve(ref Self, size: int) {
-        if data.length > size {
+        if capacity > size {
             return
         }
 
-        data.length = size
-        data = realloc_n(data, cast size, allocator)
+        capacity = size
+        data = realloc_raw(data, cast size, allocator)
 
         if size > length {
             c_memset(cast &data[length], 0, cast(uint) ((size - length) * @sizeof(T)))
         }
 
-        if length > data.length {
-            length = data.length
+        if length > capacity {
+            length = capacity
         }
     }
 
@@ -47,16 +53,17 @@ impl(T: type) Array(T) {
     }
 
     fn get_capacity(ref Self) -> int {
-        return data.length
+        return capacity
     }
 
     fn get_raw(ref Self) -> &T {
-        return data.data
+        return data
     }
 
-    fn resize(ref Self, size: int) {
-        reserve(size)
-        length = size
+    fn clear(ref Self) {
+        for :0..length
+            Memory::drop(data[it])
+        length = 0
     }
 
     fn add(ref Self, val: T) #operator("+=") {
@@ -127,6 +134,18 @@ impl(T: type) Array(T) {
 
     fn iterator(ref Self) -> ArrayIterator(T) {
         return new { self, 0 }
+    }
+}
+
+// @todo: only apply this impl if T is default constructable, e.g.:
+// impl(T: type) Array(T) if @is_default_constructable(T) { ...
+impl(T: type) Array(T) if @is_default_constructable(T) {
+    fn resize(ref Self, size: int) {
+        self.reserve(size)
+
+        for :size..length
+            Memory::drop(data[it])
+        length = size
     }
 }
 

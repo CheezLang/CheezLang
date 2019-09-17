@@ -327,6 +327,19 @@ namespace Cheez.Ast.Statements
         public override ImplCondition Clone() => new ImplConditionNotYet(Location);
     }
 
+    public class ImplConditionAny : ImplCondition
+    {
+        public AstExpression Expr { get; set; }
+
+        public ImplConditionAny(AstExpression expr, ILocation Location)
+            : base(Location)
+        {
+            this.Expr = expr;
+        }
+
+        public override ImplCondition Clone() => new ImplConditionAny(Expr.Clone(), Location);
+    }
+
     public class AstImplBlock : AstStatement
     {
         public List<AstParameter> Parameters { get; set; }

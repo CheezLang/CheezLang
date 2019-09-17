@@ -940,6 +940,11 @@ namespace Cheez.Parsing
                             NextToken();
                             conditions.Add(new ImplConditionNotYet(new Location(next.location)));
                         }
+                        else if (next.type == TokenType.AtSignIdentifier)
+                        {
+                            var expr = ParseExpression();
+                            conditions.Add(new ImplConditionAny(expr, new Location(next.location)));
+                        }
                         else
                         {
                             var typ = ParseExpression();

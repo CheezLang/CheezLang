@@ -1423,6 +1423,29 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "is_default_constructable":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@is_default_constructable takes exactly one argument");
+                            return expr;
+                        }
+
+                        var arg = InferArg(0, CheezType.Type);
+                        if (arg.Type is CheezTypeType)
+                        {
+                            var type = arg.Value as CheezType;
+                            expr.Type = CheezType.Bool;
+                            expr.Value = type.IsDefaultConstructable;
+                            return expr;
+                        }
+                        else
+                        {
+                            ReportError(arg, "argument must be a type");
+                            return expr;
+                        }
+                    }
+
                 case "log_symbol_status":
                     {
                         if (expr.Arguments.Count != 1)

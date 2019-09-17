@@ -144,6 +144,8 @@ namespace Cheez.Visitors
                     return $"{c.type.Accept(this)} : {c.trait.Accept(this)}";
                 case ImplConditionNotYet c:
                     return "#notyet";
+                case ImplConditionAny c:
+                    return c.Expr.Accept(this);
                 default: throw new NotImplementedException();
             }
         }

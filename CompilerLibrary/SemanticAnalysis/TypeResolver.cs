@@ -291,10 +291,19 @@ namespace Cheez
                 instance.SubScope = new Scope($"impl <poly>", instance.Scope);
                 instance.IsPolyInstance = true;
                 instance.IsPolymorphic = false;
-                instance.Parameters = null;
                 instance.Conditions = null;
                 instance.Template = decl;
                 decl.PolyInstances.Add(instance);
+
+                Debug.Assert(instance.Parameters.Count == args.Count);
+
+                for (int i = 0; i < instance.Parameters.Count; i++)
+                {
+                    var param = instance.Parameters[i];
+                    var arg = args[param.Name.Name];
+                    param.Type = CheezType.Type;
+                    param.Value = arg;
+                }
 
                 foreach (var kv in args)
                 {

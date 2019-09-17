@@ -99,6 +99,30 @@ namespace Cheez
                                             newPoliesList.Add(polies);
                                         break;
                                     }
+
+                                case ImplConditionAny a:
+                                    {
+                                        var expr = a.Expr.Clone();
+                                        expr.AttachTo(impl, new Scope("temp", impl.Scope));
+
+                                        foreach (var p in polies)
+                                            expr.Scope.DefineTypeSymbol(p.Key, p.Value);
+
+                                        expr = InferType(expr, CheezType.Bool);
+
+                                        if (!expr.IsCompTimeValue)
+                                        {
+                                            ReportError(a.Location, $"Expression must be a compile time constant of type bool");
+                                        }
+                                        else
+                                        {
+                                            bool val = (bool)expr.Value;
+                                            if (val)
+                                                newPoliesList.Add(polies);
+                                        }
+
+                                        break;
+                                    }
                                 default: throw new NotImplementedException();
                             }
                         }

@@ -10,6 +10,7 @@ namespace Cheez.Types.Primitive
         public override string ToString() => "void";
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
+        public override bool IsDefaultConstructable => true;
     }
 
     public class AnyType : CheezType
@@ -18,6 +19,7 @@ namespace Cheez.Types.Primitive
         public override string ToString() => "any";
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
+        public override bool IsDefaultConstructable => false;
     }
 
     public class BoolType : CheezType
@@ -27,6 +29,7 @@ namespace Cheez.Types.Primitive
         public override string ToString() => "bool";
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
+        public override bool IsDefaultConstructable => true;
     }
 
     public class IntType : CheezType
@@ -38,6 +41,7 @@ namespace Cheez.Types.Primitive
         public bool Signed { get; private set; }
         public override bool IsErrorType => false;
         public override bool IsPolyType => false;
+        public override bool IsDefaultConstructable => true;
 
         public static IntType GetIntType(int sizeInBytes, bool signed)
         {
@@ -91,6 +95,7 @@ namespace Cheez.Types.Primitive
         public static FloatType DefaultType => GetFloatType(8);
         public override bool IsErrorType => false;
         public override bool IsPolyType => false;
+        public override bool IsDefaultConstructable => true;
 
         public static FloatType GetFloatType(int bytes)
         {
@@ -147,6 +152,7 @@ namespace Cheez.Types.Primitive
         public CheezType TargetType { get; set; }
         public override bool IsErrorType => TargetType?.IsErrorType ?? false;
         public override bool IsPolyType => TargetType?.IsPolyType ?? false;
+        public override bool IsDefaultConstructable => true;
 
         public static PointerType GetPointerType(CheezType targetType)
         {
@@ -207,6 +213,7 @@ namespace Cheez.Types.Primitive
         public CheezType TargetType { get; set; }
         public override bool IsErrorType => TargetType.IsErrorType;
         public override bool IsPolyType => TargetType.IsPolyType;
+        public override bool IsDefaultConstructable => false;
 
         public static ReferenceType GetRefType(CheezType targetType)
         {
@@ -273,6 +280,7 @@ namespace Cheez.Types.Primitive
 
         public override int Size => Length * TargetType.Size;
         public override int Alignment => TargetType.Alignment;
+        public override bool IsDefaultConstructable => false;
 
         public static ArrayType GetArrayType(CheezType targetType, int length)
         {
@@ -338,6 +346,7 @@ namespace Cheez.Types.Primitive
         public CheezType TargetType { get; set; }
         public override bool IsErrorType => TargetType.IsErrorType;
         public override bool IsPolyType => TargetType.IsPolyType;
+        public override bool IsDefaultConstructable => true;
 
         public static SliceType GetSliceType(CheezType targetType)
         {
@@ -403,6 +412,7 @@ namespace Cheez.Types.Primitive
         public CheezType TargetType { get; set; }
         public override bool IsErrorType => TargetType.IsErrorType;
         public override bool IsPolyType => TargetType.IsPolyType;
+        public override bool IsDefaultConstructable => false;
 
         public static RangeType GetRangeType(CheezType targetType)
         {
@@ -461,6 +471,7 @@ namespace Cheez.Types.Primitive
         public override bool IsPolyType => false;
         public override string ToString() => "string_literal";
         public override bool IsErrorType => false;
+        public override bool IsDefaultConstructable => throw new NotImplementedException();
     }
 
     public class CharType : CheezType
@@ -469,5 +480,6 @@ namespace Cheez.Types.Primitive
         public override bool IsPolyType => false;
         public override string ToString() => "char";
         public override bool IsErrorType => false;
+        public override bool IsDefaultConstructable => true;
     }
 }

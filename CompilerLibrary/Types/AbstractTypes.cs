@@ -2,6 +2,7 @@
 using Cheez.Ast.Statements;
 using Cheez.Types.Complex;
 using Cheez.Visitors;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -16,6 +17,7 @@ namespace Cheez.Types.Abstract
     {
         public override bool IsPolyType => false;
         public CheezType traitType { get; }
+        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public SelfType(CheezType traitType)
         {
@@ -32,6 +34,7 @@ namespace Cheez.Types.Abstract
     {
         public override bool IsPolyType => false;
         public AstSingleVariableDecl Declaration { get; }
+        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public VarDeclType(AstSingleVariableDecl decl)
         {
@@ -45,6 +48,7 @@ namespace Cheez.Types.Abstract
     {
         public override bool IsPolyType => false;
         public List<AbstractType> SubTypes { get; }
+        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public CombiType(List<AbstractType> decls)
         {
@@ -58,6 +62,7 @@ namespace Cheez.Types.Abstract
     {
         public override bool IsPolyType => false;
         public AstTypeAliasDecl Declaration { get; }
+        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public AliasType(AstTypeAliasDecl decl)
         {
@@ -72,6 +77,7 @@ namespace Cheez.Types.Abstract
         public AstFunctionDecl Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
+        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public GenericFunctionType(AstFunctionDecl decl)
         {
@@ -89,6 +95,7 @@ namespace Cheez.Types.Abstract
         public AstStructDecl Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
+        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public GenericStructType(AstStructDecl decl)
         {
@@ -101,6 +108,7 @@ namespace Cheez.Types.Abstract
         public AstEnumDecl Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
+        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public GenericEnumType(AstEnumDecl decl)
         {
@@ -113,6 +121,7 @@ namespace Cheez.Types.Abstract
         public AstTraitDeclaration Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
+        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public GenericTraitType(AstTraitDeclaration decl)
         {
@@ -126,6 +135,7 @@ namespace Cheez.Types.Abstract
         public override bool IsPolyType => false;
         public override string ToString() => "<Error Type>";
         public override bool IsErrorType => true;
+        public override bool IsDefaultConstructable => false;
     }
 
     public class PolyType : CheezType
@@ -133,6 +143,7 @@ namespace Cheez.Types.Abstract
         public string Name { get; }
         public override bool IsPolyType => true;
         public override bool IsErrorType => false;
+        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public bool IsDeclaring = false;
 

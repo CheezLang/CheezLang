@@ -29,6 +29,7 @@ namespace Cheez.Types.Complex
 
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
         public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
+        public override bool IsDefaultConstructable => true;
 
         public CheezType[] Arguments { get; }
 
@@ -98,6 +99,7 @@ namespace Cheez.Types.Complex
         public override bool IsPolyType => Members.Any(m => m.type.IsPolyType);
         public override bool IsErrorType => Members.Any(m => m.type.IsErrorType);
         public override bool IsCopy => Members.All(m => m.type.IsCopy);
+        public override bool IsDefaultConstructable => Members.All(m => m.type.IsDefaultConstructable);
 
         private TupleType((string name, CheezType type)[] members)
         {
@@ -168,6 +170,7 @@ namespace Cheez.Types.Complex
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
         public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
         public override bool IsCopy => Declaration.GetFlag(StmtFlags.IsCopy);
+        public override bool IsDefaultConstructable => Declaration.Members.All(m => m.IsPublic && (m.Type.IsDefaultConstructable || m.Initializer != null));
 
         public AstStructDecl DeclarationTemplate => Declaration.Template ?? Declaration;
 
@@ -273,6 +276,7 @@ namespace Cheez.Types.Complex
         public IntType TagType { get; set; }
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
         public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
+        public override bool IsDefaultConstructable => false;
 
         public AstEnumDecl DeclarationTemplate => Declaration.Template ?? Declaration;
 
@@ -352,6 +356,7 @@ namespace Cheez.Types.Complex
 
         public AstFunctionDecl Declaration { get; set; } = null;
         public override bool IsErrorType => ReturnType.IsErrorType || Parameters.Any(p => p.type.IsErrorType);
+        public override bool IsDefaultConstructable => true;
 
         public CallingConvention CC = CallingConvention.Default;
 

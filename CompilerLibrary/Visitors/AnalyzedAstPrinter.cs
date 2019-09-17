@@ -271,6 +271,10 @@ namespace Cheez.Visitors
 
                 case ImplConditionNotYet c:
                     return "#notyet";
+
+                case ImplConditionAny c:
+                    return c.Expr.Accept(this);
+
                 default: throw new NotImplementedException();
             }
         }
@@ -304,6 +308,8 @@ namespace Cheez.Visitors
                     sb.AppendLine($"// Polymorphic instances for {header}");
                     foreach (var pi in impl.PolyInstances)
                     {
+                        var args = string.Join(", ", pi.Parameters.Select(p => $"{p.Name.Accept(this)} = {p.Value}"));
+                        sb.AppendLine($"// {args}".Indent(4));
                         sb.AppendLine(pi.Accept(this).Indent(4));
                     }
                 }

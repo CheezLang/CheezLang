@@ -20,6 +20,7 @@ namespace Cheez.Types
         public static CheezType Any => AnyType.Intance;
 
         public abstract bool IsPolyType { get; }
+        public abstract bool IsDefaultConstructable { get; }
         public virtual int Size { get; set; } = 0;
         public virtual int Alignment { get; set; } = 8;
 
@@ -129,6 +130,8 @@ namespace Cheez.Types
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
         public override bool IsComptimeOnly => true;
+        public override bool IsDefaultConstructable => false;
+
         public override string ToString() => "type";
 
         private CheezTypeType()
@@ -141,6 +144,8 @@ namespace Cheez.Types
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
         public override bool IsComptimeOnly => true;
+        public override bool IsDefaultConstructable => false;
+
         public override string ToString() => "Code";
 
         private CodeType()
