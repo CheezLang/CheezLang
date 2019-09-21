@@ -1,3 +1,5 @@
+// https://projecteuler.net/problem=6
+
 #test_expect_output("25164150")
 
 #load("std:io/io")
