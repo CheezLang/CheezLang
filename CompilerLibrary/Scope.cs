@@ -138,9 +138,9 @@ namespace Cheez
         private (string label, object loopOrAction)? mContinue = null;
 
         public ISymbol[] SymbolStatuses => mSymbolStatus?.Keys?.ToArray();
-        public IEnumerable<SymbolStatus> AllSymbolStatusesReverseOrdered => mSymbolStatus?.Values.OrderByDescending(s => s.order);
-        public IEnumerable<SymbolStatus> SymbolStatusesReverseOrdered => mSymbolStatus.Values
-                                .Where(v => mSymbolTable.ContainsValue(v.symbol))
+        public IEnumerable<SymbolStatus> AllSymbolStatusesReverseOrdered => mSymbolStatus?.Values?.OrderByDescending(s => s.order);
+        public IEnumerable<SymbolStatus> SymbolStatusesReverseOrdered => mSymbolStatus?.Values?
+                                .Where(v => mSymbolTable.ContainsValue(v.symbol))?
                                 .OrderByDescending(s => s.order);
 
         //

@@ -320,6 +320,7 @@ namespace Cheez
 
                 var call = new AstCallExpr(new AstFunctionRef(func, null, fo.Location), args, fo.Location);
                 var exprStmt = new AstExprStmt(call, fo.Body.Location);
+                exprStmt.Parent = fo.Parent;
                 exprStmt.Scope = fo.SubScope;
                 return AnalyseStatement(exprStmt);
             }

@@ -141,7 +141,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // generated object files
             lldArgs.Add(objFile);
 
-            var process = Utilities.StartProcess("lld-link", lldArgs);
+            //Console.WriteLine("[LINKER] " + string.Join(" ", lldArgs));
+
+            var process = Utilities.StartProcess("lld-link", lldArgs,
+                            stdout: (s, e) => { if (e.Data != null) Console.WriteLine(e.Data); },
+                            stderr: (s, e) => { if (e.Data != null) Console.Error.WriteLine(e.Data); });
             process.WaitForExit();
             var result = process.ExitCode == 0;
             //var result = llvm_link_coff(lldArgs.ToArray(), lldArgs.Count);

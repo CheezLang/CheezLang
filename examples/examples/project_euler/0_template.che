@@ -2,5 +2,5 @@
 #load("std:io/io")
 
 fn Main() {
-    
+    println("")
 }

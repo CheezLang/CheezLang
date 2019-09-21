@@ -2549,6 +2549,7 @@ namespace Cheez
         {
             var macro = call.Declaration;
             var code = macro.Body.Clone() as AstBlockExpr;
+            code.Parent = call.Parent;
             code.Scope = new Scope("macro {}", macro.ConstScope);
             code.Scope.LinkedScope = call.Scope;
             code.SetFlag(ExprFlags.FromMacroExpansion, true);

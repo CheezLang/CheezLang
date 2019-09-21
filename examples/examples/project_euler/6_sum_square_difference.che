@@ -1,0 +1,16 @@
+#test_expect_output("25164150")
+
+#load("std:io/io")
+
+fn Main() {
+    let n = 100
+    let sum = (n * n + n) / 2
+    let sum_squared = sum * sum
+
+    let squared_sum = 0
+    for : n+1 {
+        squared_sum += it * it
+    }
+
+    println(sum_squared - squared_sum)
+}

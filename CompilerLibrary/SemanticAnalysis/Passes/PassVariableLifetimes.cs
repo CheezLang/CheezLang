@@ -700,17 +700,22 @@ namespace Cheez
 
             while (currentScope != null)
             {
-                foreach (var stat in currentScope.SymbolStatusesReverseOrdered)
+                var stats = currentScope.SymbolStatusesReverseOrdered;
+                if (stats != null)
                 {
-                    if (stat.kind == SymbolStatus.Kind.initialized)
+                    foreach (var stat in stats)
                     {
-                        cont.AddDestruction(Destruct(stat.symbol, cont));
+                        if (stat.kind == SymbolStatus.Kind.initialized)
+                        {
+                            cont.AddDestruction(Destruct(stat.symbol, cont));
+                        }
                     }
                 }
 
                 var newScope = currentScope;
                 while (newScope == currentScope)
                 {
+                    var oldCurrent = currentNode;
                     currentNode = currentNode.Parent;
                     if (currentNode == cont.Loop)
                     {
