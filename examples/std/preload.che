@@ -60,12 +60,14 @@ fn for_extension_range(r: $T..T, code: Code, reverse: bool = false, inclusive: b
     }
 }
 
-fn for_extension_int(num: int, code: Code, reverse: bool = false) #for {
-    let (start, end, inc) = if const reverse then
-                                (num - 1, 0, -1)
+fn for_extension_int(num: int, code: Code, inclusive: bool = false, reverse: bool = false) #for {
+    let (start, inc) = if const reverse then
+                                (num - 1, -1)
                             else
-                                (0, num - 1, 1)
-    while let (it, it_index) = (start, 0), it_index < num, it += inc; it_index += 1 {
+                                (0, 1)
+    while let (it, it_index) = (start, 0),
+        if const inclusive then it_index <= num else it_index < num,
+        it += inc; it_index += 1 {
         @insert(code, _break=break, _continue=continue)
     }
 }

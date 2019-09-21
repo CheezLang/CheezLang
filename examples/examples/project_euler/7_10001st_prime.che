@@ -1,0 +1,33 @@
+// https://projecteuler.net/problem=7
+
+#test_expect_output("104743")
+
+#load("std:io/io")
+#load("std:math")
+
+fn is_prime(i: int) -> bool {
+    if i < 2 {
+        return false
+    }
+    for(inclusive=true) : 2..int(sqrt(double(i))) {
+        if i % it == 0 {
+            return false
+        }
+    }
+
+    return true
+}
+
+fn Main() {
+    let count = 0
+    while let i = 0, true, i += 1 {
+        if is_prime(i) {
+            count += 1
+        }
+
+        if count == 10001 {
+            println(i)
+            break
+        }
+    }
+}

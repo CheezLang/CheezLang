@@ -2187,9 +2187,14 @@ namespace Cheez
                             expr.SetFlag(ExprFlags.IsLValue, true);
                             expr.Type = slice.TargetType;
                         }
+                        else if (expr.Indexer.Type is RangeType r && r.TargetType is IntType)
+                        {
+                            expr.SetFlag(ExprFlags.IsLValue, false);
+                            expr.Type = slice;
+                        }
                         else
                         {
-                            ReportError(expr.Indexer, $"The index into a slice must be an int but is '{expr.Indexer.Type}'");
+                            ReportError(expr.Indexer, $"The index into a slice can't be '{expr.Indexer.Type}'");
                         }
                         break;
                     }

@@ -1244,18 +1244,55 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case SliceType s:
                     {
-                        var index = GenerateExpression(expr.Indexer, true);
-                        var slice = GenerateExpression(expr.SubExpression, false);
+                        switch (expr.Indexer.Type)
+                        {
+                            case IntType _:
+                                {
+                                    var index = GenerateExpression(expr.Indexer, true);
+                                    var slice = GenerateExpression(expr.SubExpression, false);
 
-                        var dataPtrPtr = builder.CreateStructGEP(slice, 1, "");
-                        var dataPtr = builder.CreateLoad(dataPtrPtr, "");
+                                    var dataPtrPtr = builder.CreateStructGEP(slice, 1, "");
+                                    var dataPtr = builder.CreateLoad(dataPtrPtr, "");
 
-                        var ptr = builder.CreateInBoundsGEP(dataPtr, new LLVMValueRef[] { index }, "");
+                                    var ptr = builder.CreateInBoundsGEP(dataPtr, new LLVMValueRef[] { index }, "");
 
-                        var val = ptr;
-                        if (deref)
-                            val = builder.CreateLoad(ptr, "");
-                        return val;
+                                    var val = ptr;
+                                    if (deref)
+                                        val = builder.CreateLoad(ptr, "");
+                                    return val;
+                                }
+
+                            case RangeType _:
+                                {
+                                    var range = GenerateExpression(expr.Indexer, true);
+                                    var slice = GenerateExpression(expr.SubExpression, false);
+
+                                    var range_begin = builder.CreateExtractValue(range, 0, "range_begin");
+                                    range_begin = builder.CreateIntCast(range_begin, LLVM.Int64Type(), "range_begin_int");
+
+                                    var range_end = builder.CreateExtractValue(range, 1, "range_end");
+                                    range_end = builder.CreateIntCast(range_end, LLVM.Int64Type(), "range_end_int");
+
+                                    var dataPtrPtr = builder.CreateStructGEP(slice, 1, "slice_data_ptr");
+                                    var dataPtr = builder.CreateLoad(dataPtrPtr, "slice_data");
+
+                                    var length_ptr = builder.CreateStructGEP(slice, 0, "slice_length_ptr");
+                                    length_ptr = builder.CreateLoad(length_ptr, "slice_length");
+
+                                    dataPtr = builder.CreatePtrToInt(dataPtr, LLVM.Int64Type(), "");
+                                    dataPtr = builder.CreateAdd(dataPtr, range_begin, "data_new");
+                                    dataPtr = builder.CreateIntToPtr(dataPtr, CheezTypeToLLVMType(s.TargetType).GetPointerTo(), "data_new_ptr");
+                                    length_ptr = builder.CreateSub(range_end, range_begin, "length_new");
+
+                                    var result = builder.CreateInsertValue(LLVM.GetUndef(CheezTypeToLLVMType(s)), length_ptr, 0, "result");
+                                    result = builder.CreateInsertValue(result, dataPtr, 1, "result");
+
+                                    return result;
+                                }
+
+                            default:
+                                throw new NotImplementedException();
+                        }
                     }
 
                 case ArrayType s:
