@@ -14,11 +14,11 @@ fn Main() {
         a = b
         b = current
 
+        if current > 4000000 then break
+
         if current % 2 == 0 {
             sum += current
         }
-
-        if current > 4000000 then break
     }
 
     println(sum)

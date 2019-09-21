@@ -2,7 +2,6 @@
 
 #test_expect_output("906609")
 
-#load("std:preload")
 #load("std:io/io")
 #load("std:string")
 
@@ -23,13 +22,16 @@ fn Main() {
     let longest = 0
 
     for(reverse=true) a :1000 {
+        if a * 999 < longest then break
+
         for(reverse=true) b :1000 {
             let product = a * b
+            if product < longest then continue
 
             str.clear()
             str.appendf("{}", [product])
 
-            if product > longest and is_palindrome(str) {
+            if is_palindrome(str) {
                 longest = product
             }
         }

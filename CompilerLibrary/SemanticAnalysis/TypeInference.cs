@@ -316,6 +316,7 @@ namespace Cheez
             else if (sym is AstExpression action)
             {
                 action = action.Clone();
+                action.Parent = cont.Parent;
                 action = InferTypeSilent(action, null, out var errs);
                 if (errs.HasErrors)
                     ReportError(cont.Location, "Failed to continue", errs.Errors, ("continue action defined here:", action.Location));
@@ -338,6 +339,7 @@ namespace Cheez
             else if (sym is AstExpression action)
             {
                 action = action.Clone();
+                action.Parent = br.Parent;
                 action = InferTypeSilent(action, null, out var errs);
                 if (errs.HasErrors)
                     ReportError(br.Location, "Failed to break", errs.Errors, ("break action defined here:", action.Location));
