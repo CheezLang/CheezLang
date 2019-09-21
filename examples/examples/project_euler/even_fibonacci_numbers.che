@@ -1,0 +1,23 @@
+#test_expect_output("4613732")
+
+#load("std:io/io")
+
+fn Main() {
+    let a = 0
+    let b = 1
+    let sum = 0
+
+    while true {
+        let current = a + b
+        a = b
+        b = current
+
+        if current % 2 == 0 {
+            sum += current
+        }
+
+        if current > 4000000 then break
+    }
+
+    println(sum)
+}

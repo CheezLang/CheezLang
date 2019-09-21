@@ -52,6 +52,9 @@ namespace Cheez
 
         private bool TypeHasDestructorHelper(CheezType type)
         {
+            if (type.IsErrorType)
+                WellThatsNotSupposedToHappen();
+
             if (mTraitDrop == null)
             {
                 var sym = GlobalScope.GetSymbol("Drop");
@@ -385,6 +388,9 @@ namespace Cheez
                 case AstNullExpr _:
                     return true;
 
+                case AstEmptyExpr _:
+                    return true;
+
                 default:
                     WellThatsNotSupposedToHappen(expr.GetType().ToString());
                     return false;
@@ -439,6 +445,11 @@ namespace Cheez
                             es.Expr = tempVar;
                             es.AddDestruction(Destruct(tempVar));
                         }
+
+                        if (es.Expr.Scope != es.Scope)
+                            es.Expr.Scope.ApplyInitializedSymbolsTo(es.Scope);
+                        if (es.Scope != scope)
+                            es.Scope.ApplyInitializedSymbolsToParent();
                         return true;
                     }
 
@@ -481,7 +492,8 @@ namespace Cheez
             //        return false;
             //}
 
-            if (!expr.GetFlag(ExprFlags.Anonymous) && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
+            //if (!expr.GetFlag(ExprFlags.Anonymous) && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
+            if (expr.SubScope != expr.Scope && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
                 expr.SubScope.ApplyInitializedSymbolsToParent();
 
             // call constructors

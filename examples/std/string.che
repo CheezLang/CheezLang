@@ -88,12 +88,25 @@ impl(CharType: type) StringBase(CharType) {
         }
     }
 
+    fn clone(ref Self) -> Self {
+        let other = String::empty()
+        other.append(self)
+        return other
+    }
+
+    fn clear(ref Self) {
+        length = 0
+    }
+
     fn resize(ref Self, size: int) {
         self.reserve(size)
         length = size
     }
 
     fn append(ref Self, other: ref Self) -> ref Self #operator("+=") {
+        if other.data.data == null {
+            return self
+        }
         let newLength = length + other.length
         self.reserve(newLength)
         c_memcpy(cast &data.data[length], cast other.data.data, cast(uint) (other.length * @sizeof(CharType)))
@@ -198,7 +211,7 @@ impl String {
             else if state == 1 {
                 if c == '}' {
                     state = 0
-                    
+
                     let format: string = null
 
                     let colon = formatSpecifier.index_of(':')

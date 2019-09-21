@@ -27,6 +27,7 @@ namespace Cheez
             public bool resolve_poly_expr_to_concrete_type;
             public bool forceInfer = false;
             public CheezType functionExpectedReturnType = null;
+            public bool is_global = false;
         }
 
         private bool IsLiteralType(CheezType t)
@@ -3482,6 +3483,11 @@ namespace Cheez
             {
                 expr.Type = var.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
+
+                if (var.Type is VarDeclType && !context.is_global)
+                {
+                    ReportError(expr, $"Can't use variable '{var.Name}' before it is declared");
+                }
 
                 if (var.Constant)
                 {

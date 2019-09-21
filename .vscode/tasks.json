@@ -32,60 +32,19 @@
                 "clear": true
             }
         },
-
-        // {
-        //     "label": "compile:client",
-        //     "type": "npm",
-        //     "script": "compile:client",
-        //     "group": "build",
-        //     "presentation": {
-        //         "panel": "dedicated",
-        //         "reveal": "never"
-        //     },
-        //     "problemMatcher": [
-        //         "$tsc"
-        //     ]
-        // },
-        // {
-        //     "label": "compile:server",
-        //     "type": "npm",
-        //     "script": "compile:server",
-        //     "group": "build",
-        //     "presentation": {
-        //         "panel": "dedicated",
-        //         "reveal": "never"
-        //     },
-        //     "problemMatcher": [
-        //         "$tsc"
-        //     ]
-        // },
-        // {
-        //     "label": "watch:client",
-        //     "type": "npm",
-        //     "script": "watch:client",
-        //     "isBackground": true,
-        //     "group": "build",
-        //     "presentation": {
-        //         "panel": "dedicated",
-        //         "reveal": "never"
-        //     },
-        //     "problemMatcher": [
-        //         "$tsc-watch"
-        //     ]
-        // },
-        // {
-        //     "label": "watch:server",
-        //     "type": "npm",
-        //     "script": "watch:server",
-        //     "isBackground": true,
-        //     "group": "build",
-        //     "presentation": {
-        //         "panel": "dedicated",
-        //         "reveal": "never"
-        //     },
-        //     "problemMatcher": [
-        //         "$tsc-watch"
-        //     ]
-        // }
+        {
+            "label": "test",
+            "type": "shell",
+            "command": "./examples/build_file_and_run_as_test.ps1 ${file}",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": []
+        }
     ]
 }

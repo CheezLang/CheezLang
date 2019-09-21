@@ -1,0 +1,6 @@
+#test_expect_output("")
+#load("std:io/io")
+
+fn Main() {
+    
+}

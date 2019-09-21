@@ -1,5 +1,4 @@
 #include "lld/Common/Driver.h"
-#include "llvm/ADT/ArrayRef.h"
 
 extern "C" {
     __declspec(dllexport) bool llvm_link_coff(const char** argv, int argc)

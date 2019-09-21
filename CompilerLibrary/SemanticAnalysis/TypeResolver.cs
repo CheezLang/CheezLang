@@ -326,6 +326,10 @@ namespace Cheez
         // trait
         private AstTraitDeclaration InstantiatePolyTrait(AstTraitDeclaration decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
         {
+
+            if (args.Any(a => a.type == CheezType.Type && (a.value as CheezType).IsErrorType))
+                WellThatsNotSupposedToHappen();
+
             if (args.Count != decl.Parameters.Count)
             {
                 if (location != null)

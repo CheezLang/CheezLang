@@ -7,11 +7,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Backends", "Backends", "{24
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LLVM", "LLVM", "{D88D0A71-2D0E-4D18-A3E9-F00C663C8196}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompilerLibrary", "CompilerLibrary\CompilerLibrary.csproj", "{BBDCB000-95D4-4747-9E69-AE7D260CD401}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CompilerLibrary", "CompilerLibrary\CompilerLibrary.csproj", "{BBDCB000-95D4-4747-9E69-AE7D260CD401}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LLVMSharpBackend", "Backends\LLVM\LLVMSharpBackend\LLVMSharpBackend.csproj", "{3AA41F6B-4465-4D75-812E-AEE52C95A081}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LLVMSharpBackend", "Backends\LLVM\LLVMSharpBackend\LLVMSharpBackend.csproj", "{3AA41F6B-4465-4D75-812E-AEE52C95A081}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompilerCLI", "CompilerCLI\CompilerCLI.csproj", "{06A9B4B8-F07E-4F1E-870E-BB606A0AA91D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CompilerCLI", "CompilerCLI\CompilerCLI.csproj", "{06A9B4B8-F07E-4F1E-870E-BB606A0AA91D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

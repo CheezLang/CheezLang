@@ -31,11 +31,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
     public class LLVMLinker
     {
-        //[DllImport("LLVMLinker", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        //private extern static bool llvm_link_coff(string[] argv, int argc);
+        [DllImport(@"D:\Programming\CheezLang\LLVMLinker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private extern static bool llvm_link_coff(string[] argv, int argc);
 
-        //[DllImport("LLVMLinker", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        //private extern static bool llvm_link_elf(string[] argv, int argc);
+        [DllImport("LLVMLinker", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private extern static bool llvm_link_elf(string[] argv, int argc);
 
         public static bool Link(Workspace workspace, string targetFile, string objFile, IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
         {

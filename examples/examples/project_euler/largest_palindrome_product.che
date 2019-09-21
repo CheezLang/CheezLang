@@ -1,0 +1,37 @@
+#test_expect_output("906609")
+
+#load("std:preload")
+#load("std:io/io")
+#load("std:string")
+
+fn is_palindrome(str: ref String) -> bool {
+    for : str.get_length()/2 {
+        let i1 = it
+        let i2 = str.get_length() - it - 1
+        if str[i1] != str[i2] {
+            return false
+        }
+    }
+    return true
+}
+
+fn Main() {
+    let str = String::empty()
+
+    let longest = 0
+
+    for(reverse=true) a :1000 {
+        for(reverse=true) b :1000 {
+            let product = a * b
+
+            str.clear()
+            str.appendf("{}", [product])
+
+            if product > longest and is_palindrome(str) {
+                longest = product
+            }
+        }
+    }
+
+    println(longest)
+}

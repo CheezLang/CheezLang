@@ -58,6 +58,9 @@ namespace Cheez
 
         private (List<AstImplBlock> impls, bool maybeApplies) ImplAppliesToType(AstImplBlock impl, CheezType type)
         {
+            if (type.IsErrorType)
+                WellThatsNotSupposedToHappen();
+
             // can't impl for type 'type', so always return false
             if (type == CheezType.Type)
                 return (null, false);
@@ -205,6 +208,9 @@ namespace Cheez
 
         private HashSet<AstImplBlock> GetImplsForTypeHelper(CheezType type)
         {
+            if (type.IsErrorType)
+                WellThatsNotSupposedToHappen();
+
             if (m_typeImplMap == null)
                 UpdateTypeImplMap(GlobalScope);
 

@@ -6,8 +6,9 @@
 // #load("tests/language/local_variables")
 // #load("tests/library/arena_allocator1")
 //#load("tests/other/test1")
+#load("examples/project_euler/multiples_of_3_and_5")
 
-//*
+/*
 #load("std:preload")
 #load("std:c")
 #load("std:io/io")

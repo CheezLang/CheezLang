@@ -1,0 +1,18 @@
+#test_expect_output("6857")
+
+#load("std:io/io")
+
+fn Main() {
+    let n = 600851475143
+
+    for :2..n/2 {
+        while n % it == 0 {
+            n /= it
+        }
+        
+        if n == 1 {
+            println(it)
+            break
+        }
+    }
+}
