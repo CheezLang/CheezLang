@@ -1,0 +1,21 @@
+// https://projecteuler.net/problem=9
+
+#test_expect_output("31875000")
+
+#load("std:io/io")
+#load("std:math")
+
+fn Main() {
+    for a : 1..500 #label outer {
+        for b : a+1..500 {
+            let c_squared = a * a + b * b
+            let c = int(sqrt(double(c_squared)))
+
+            if c * c != c_squared then continue
+            if a + b + c == 1000 {
+                println(a * b * c)
+                break outer
+            }
+        }
+    }
+}

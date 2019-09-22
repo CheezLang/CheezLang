@@ -1,0 +1,37 @@
+// https://projecteuler.net/problem=12
+// maybe find a better way, this took linke 30 minutes to run
+
+#test_expect_output("76576500")
+
+#load("std:io/io")
+
+fn count_divisors(num: int) -> int {
+    let count = 0
+
+    for(inclusive=true) : 1..num/2 {
+        if num % it == 0 {
+            count += 1
+        }
+    }
+
+    return count
+}
+
+fn Main() {
+    let current = 0
+    // let max_divisors = 0
+    while let i = 1, true, i += 1 {
+        current += i
+        if current <= 500 then continue
+
+        let divisors = count_divisors(current)
+        // if divisors > max_divisors {
+        //     // printfln("new max_divisors: {} has {}", [current, divisors])
+        //     max_divisors = divisors
+        // }
+
+        if divisors > 500 then break
+    }
+
+    println(current)
+}

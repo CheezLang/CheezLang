@@ -650,11 +650,15 @@ namespace Cheez
 
             while (currentScope != null)
             {
-                foreach (var stat in currentScope.SymbolStatusesReverseOrdered)
+                var stats = currentScope.SymbolStatusesReverseOrdered;
+                if (stats != null)
                 {
-                    if (stat.kind == SymbolStatus.Kind.initialized)
+                    foreach (var stat in stats)
                     {
-                        br.AddDestruction(Destruct(stat.symbol, br));
+                        if (stat.kind == SymbolStatus.Kind.initialized)
+                        {
+                            br.AddDestruction(Destruct(stat.symbol, br));
+                        }
                     }
                 }
 

@@ -455,6 +455,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case CharType _: return LLVM.ConstInt(CheezTypeToLLVMType(type), (char)v, false);
                 case IntType i: return LLVM.ConstInt(CheezTypeToLLVMType(type), ((NumberData)v).ToUlong(), i.Signed);
                 case FloatType f: return LLVM.ConstReal(CheezTypeToLLVMType(type), ((NumberData)v).ToDouble());
+                case ArrayType arr when arr.TargetType == CheezType.Char && v is string s:
+                    return LLVM.ConstArray(CheezTypeToLLVMType(CheezType.Char), s.ToCharArray().Select(c => CheezValueToLLVMValue(CheezType.Char, c)).ToArray());
+
                 default:
                     if (type == CheezType.String)
                     {

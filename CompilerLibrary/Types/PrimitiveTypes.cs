@@ -315,7 +315,7 @@ namespace Cheez.Types.Primitive
 
         public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {
-            if (concrete is ArrayType p)
+            if (concrete is ArrayType p && Length == p.Length)
                 return this.TargetType.Match(p.TargetType, polyTypes);
             return -1;
         }
@@ -324,7 +324,7 @@ namespace Cheez.Types.Primitive
         {
             if (obj is ArrayType r)
             {
-                return TargetType == r.TargetType;
+                return TargetType == r.TargetType && Length == r.Length;
             }
             return false;
         }

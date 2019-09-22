@@ -1,0 +1,29 @@
+// https://projecteuler.net/problem=10
+
+#test_expect_output("142913828922")
+
+#load("std:io/io")
+#load("std:math")
+
+fn is_prime(i: int) -> bool {
+    if i < 2 {
+        return false
+    }
+    for(inclusive=true) : 2..int(sqrt(double(i))) {
+        if i % it == 0 {
+            return false
+        }
+    }
+
+    return true
+}
+
+fn Main() {
+    let sum = 0
+    for : 2000000 {
+        if is_prime(it) {
+            sum += it
+        }
+    }
+    println(sum)
+}

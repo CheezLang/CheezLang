@@ -2206,6 +2206,13 @@ namespace Cheez
                         {
                             expr.SetFlag(ExprFlags.IsLValue, true);
                             expr.Type = arr.TargetType;
+
+                            if (expr.Indexer.IsCompTimeValue)
+                            {
+                                var val = (NumberData)expr.Indexer.Value;
+                                if (val < 0 || val >= arr.Length)
+                                    ReportError(expr.Indexer, $"The index is out of range. Must be in [0, {arr.Length-1}]");
+                            }
                         }
                         else
                         {
@@ -3592,6 +3599,10 @@ namespace Cheez
                 }
             }
             else if (expected == CheezType.String || expected == CheezType.CString) expr.Type = expected;
+            else if (expected is ArrayType arr && arr.TargetType == CheezType.Char)
+            {
+                expr.Type = ArrayType.GetArrayType(CheezType.Char, expr.StringValue.Length);
+            }
             else expr.Type = CheezType.StringLiteral;
 
             return expr;
