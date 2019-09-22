@@ -1,0 +1,32 @@
+// https://projecteuler.net/problem=14
+
+#test_expect_output("837799")
+
+#load("std:io/io")
+
+fn count_steps(n: int) -> int {
+    let count = 1
+    while n != 1, count += 1 {
+        if n % 2 == 0 {
+            n = n / 2
+        } else {
+            n = 3 * n + 1
+        }
+    }
+
+    return count
+}
+
+fn Main() {
+    let max_steps = 0
+    let max_n = 0
+    for n : 1..1000000 {
+        let count = count_steps(n)
+        if count > max_steps {
+            max_steps = count
+            max_n = n
+        }
+    }
+
+    println(max_n)
+}

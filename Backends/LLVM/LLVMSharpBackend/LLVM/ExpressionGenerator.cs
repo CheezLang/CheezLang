@@ -268,6 +268,21 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return default;
             }
 
+            if (cc.Name.Name == "dup")
+            {
+                var type = cc.Type as ArrayType;
+                var arg = cc.Arguments[0].Expr;
+
+                var value = GenerateExpression(arg, true);
+                var vals = new LLVMValueRef[type.Length];
+
+                var arr = LLVM.GetUndef(CheezTypeToLLVMType(type));
+
+                for (int i = 0; i < vals.Length; i++)
+                    arr = builder.CreateInsertValue(arr, value, (uint)i, "");
+                return arr;
+            }
+
             throw new NotImplementedException($"{nameof(GenerateCompCallExpr)}: {cc.Name.Name} is not implemented yet");
         }
 

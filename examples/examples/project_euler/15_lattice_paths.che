@@ -1,0 +1,28 @@
+// https://projecteuler.net/problem=0
+
+#test_expect_output("137846528820")
+
+#load("std:io/io")
+
+let const width: int = 20
+let const height: int = 20
+
+let cache: [width][height]int = @dup(@dup(0))
+
+fn count_routes(w: int, h: int) -> int {
+    if w > 0 and h > 0 and w <= width and h <= height and cache[w-1][h-1] > 0 {
+        return cache[w-1][h-1]
+    }
+
+    if w == 0 or h == 0 {
+        return 1
+    }
+
+    let count = count_routes(w - 1, h) + count_routes(w, h - 1)
+    cache[w-1][h-1] = count
+    return count
+}
+
+fn Main() {
+    println(count_routes(width, width))
+}

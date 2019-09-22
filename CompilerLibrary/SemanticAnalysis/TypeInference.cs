@@ -1426,6 +1426,57 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "dup":
+                    {
+                        if (expr.Arguments.Count < 1 || expr.Arguments.Count > 2)
+                        {
+                            ReportError(expr.Location, "@dup takes one or two argument2");
+                            return expr;
+                        }
+
+                        if (expected is ArrayType arr)
+                        {
+                            var val = InferArg(0, arr.TargetType);
+
+                            var size = arr.Length;
+                            if (expr.Arguments.Count == 2)
+                            {
+                                var sizeExpr = InferArg(1, IntType.DefaultType);
+                                if (!sizeExpr.IsCompTimeValue)
+                                {
+                                    ReportError(expr.Arguments[1], "Argument must be a constant int");
+                                    return expr;
+                                }
+                                size = (int)((NumberData)sizeExpr.Value).IntValue;
+                            }
+
+                            expr.Type = ArrayType.GetArrayType(arr.TargetType, size);
+                        }
+                        else
+                        {
+                            var val = InferArg(0, null);
+
+                            if (expr.Arguments.Count == 2)
+                            {
+                                var sizeExpr = InferArg(1, IntType.DefaultType);
+                                if (!sizeExpr.IsCompTimeValue)
+                                {
+                                    ReportError(expr.Arguments[1], "Argument must be a constant int");
+                                    return expr;
+                                }
+                                var size = (int)((NumberData)sizeExpr.Value).IntValue;
+                                expr.Type = ArrayType.GetArrayType(val.Type, size);
+                            }
+                            else
+                            {
+                                ReportError(expr, $"Failed to infer size from context, please provide the size as a second argument");
+                                return expr;
+                            }
+                        }
+
+                        return expr;
+                    }
+
                 case "is_default_constructable":
                     {
                         if (expr.Arguments.Count != 1)
