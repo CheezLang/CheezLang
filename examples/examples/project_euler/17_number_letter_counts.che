@@ -1,0 +1,95 @@
+// https://projecteuler.net/problem=17
+
+#test_expect_output("21124")
+
+#load("std:io/io")
+#load("std:string")
+
+fn number_to_english_1(n: int) -> string {
+    return match n % 10 {
+        0 -> "zero"
+        1 -> "one"
+        2 -> "two"
+        3 -> "three"
+        4 -> "four"
+        5 -> "five"
+        6 -> "six"
+        7 -> "seven"
+        8 -> "eight"
+        9 -> "nine"
+    }
+}
+
+fn number_to_english_10(n: int) -> string {
+    return match n % 10 {
+        0 -> ""
+        1 -> "ten"
+        2 -> "twenty"
+        3 -> "thirty"
+        4 -> "forty"
+        5 -> "fifty"
+        6 -> "sixty"
+        7 -> "seventy"
+        8 -> "eighty"
+        9 -> "ninety"
+    }
+}
+
+fn number_to_english(n: int) -> String {
+    if n >= 10000 then @panic("Can't convert numbers larger than 10'000")
+
+    let _1000   = n / 1000 % 10
+    let _100    = n / 100  % 10
+    let _10     = n / 10   % 10
+    let _1      = n / 1    % 10
+
+    let result = String::empty()
+    if _1000 != 0 {
+        result += number_to_english_1(_1000)
+        result += "thousand"
+        if _100 == 0 and (_10 != 0 or _1 != 0) {
+            result += "and"
+        }
+    }
+
+    if _100 != 0 {
+        result += number_to_english_1(_100)
+        result += "hundred"
+        if _10 != 0 or _1 != 0 {
+            result += "and"
+        }
+    }
+
+    if _10 == 1 {
+        match _1 {
+            0 -> { result += "ten"         }
+            1 -> { result += "eleven"      }
+            2 -> { result += "twelve"      }
+            3 -> { result += "thirteen"    }
+            4 -> { result += "fourteen"    }
+            5 -> { result += "fifteen"     }
+            6 -> { result += "sixteen"     }
+            7 -> { result += "seventeen"   }
+            8 -> { result += "eighteen"    }
+            9 -> { result += "nineteen"    }
+        }
+    }
+    else if _10 != 0 {
+        result += number_to_english_10(_10)
+    }
+
+    if _1 != 0 and _10 != 1 {
+        result += number_to_english_1(_1)
+    }
+
+    return result
+}
+
+fn Main() {
+    let sum = 0
+    for(inclusive=true) : 1..1000 {
+        let eng = number_to_english(it)
+        sum += eng.get_length()
+    }
+    println(sum)
+}
