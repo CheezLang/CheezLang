@@ -195,7 +195,7 @@ namespace Cheez
                 return result;
             }
 
-            return null;
+            return new List<Dictionary<string, CheezType>>();
         }
 
         private List<AstImplBlock> GetImplsForType(CheezType type, CheezType trait = null)

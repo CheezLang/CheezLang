@@ -139,7 +139,7 @@ namespace Cheez
             }
             else if (symbol is ITypedSymbol tsymbol)
             {
-                if (!TypeHasDestructor(tsymbol.Type))
+                if (!tsymbol.Type.IsErrorType && !TypeHasDestructor(tsymbol.Type))
                     return null;
 
                 var cc = new AstCompCallExpr(new AstIdExpr("destruct", false, location), new List<AstArgument>
