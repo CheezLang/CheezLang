@@ -1,0 +1,159 @@
+#load("std:mem/allocator")
+
+struct Heap(T: type) {
+    allocator: Allocator
+    data    : &T
+    capacity: int
+    length  : int
+}
+
+impl(T: type) Drop for Heap(T) {
+    fn drop(ref Self) {
+        for : length {
+            Memory::drop(data[it])
+        }
+        if allocator != null {
+            free(data, allocator)
+        }
+    }
+}
+
+impl(T: type) Heap(T) {
+    fn create(allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Heap(T) {
+        return new {
+            allocator   = allocator
+            data        = alloc_raw(T, 10, allocator)
+            capacity    = 10
+            length      = 0
+        }
+    }
+
+    fn get_length(ref Self) -> int {
+        return length
+    }
+
+    fn reserve(ref Self, size: int) {
+        if capacity > size {
+            return
+        }
+
+        capacity = size
+        data = realloc_raw(data, cast size, allocator)
+
+        if size > length {
+            c_memset(cast &data[length], 0, cast(uint) ((size - length) * @sizeof(T)))
+        }
+
+        if length > capacity {
+            length = capacity
+        }
+    }
+
+    fn get_child_index(i: int) -> (left: int, right: int) {
+        left = 2 * i + 1
+        right = 2 * i + 2
+    }
+
+    fn get_parent_index(i: int) -> int {
+        return (i - 1) / 2
+    }
+
+    fn insert(ref Self, val: T) {
+        if capacity <= length {
+            reserve(length * 2)
+        }
+
+        data[length] = val
+        length += 1
+        
+        sift_up(length - 1)
+    }
+
+    fn peek(ref Self) -> ref T {
+        @assert(length > 0)
+        return data[0]
+    }
+
+    fn delete_first(ref Self) -> T {
+        @assert(length > 0)
+        let val = data[0]
+        length -= 1
+
+        if length > 0 {
+            data[0] = data[length]
+            sift_down(0)
+        }
+
+        return val
+    }
+
+    fn sift_up(ref Self, i: int) {
+        if i == 0 {
+            return
+        }
+
+
+        let pi = get_parent_index(i)
+        if data[i] < data[pi] {
+            swap(i, pi)
+            sift_up(pi)
+        }
+    }
+
+    fn sift_down(ref Self, i: int) {
+        let ci = get_child_index(i)
+
+        if ci.left >= length {
+            return
+        }
+
+        if ci.right >= length {
+            if !(data[i] < data[ci.left]) {
+                swap(i, ci.left)
+                return
+            }
+        }
+
+        if !(data[i] < data[ci.left]) and data[ci.left] <= data[ci.right] {
+            swap(i, ci.left)
+            sift_down(ci.left)
+        } else if !(data[i] < data[ci.right]) and data[ci.right] <= data[ci.left] {
+            swap(i, ci.right)
+            sift_down(ci.right)
+        }
+    }
+
+    fn swap(ref Self, a: int, b: int) {
+        (data[a], data[b]) = (data[b], data[a])
+    }
+
+    fn slice(ref Self) -> []T {
+        let slc: []T = data
+        slc.length = length
+        return slc
+    }
+
+    fn validate(ref Self) -> bool {
+        for : length {
+            let current = data[it]
+            let ci = get_child_index(it)
+
+            if ci.left < length {
+                if data[ci.left] < data[it] {
+                    printfln("{} < {}", [ci.left, it])
+                    printfln("{} < {}", [<<data[ci.left], <<data[it]])
+                    return false
+                }
+            }
+            if ci.right < length {
+                if data[ci.right] < data[it] {
+                    printfln("{} < {}", [ci.left, it])
+                    printfln("{} < {}", [<<data[ci.left], <<data[it]])
+                    return false
+                }
+            }
+        }
+
+        return true
+    }
+}
