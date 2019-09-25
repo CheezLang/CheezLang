@@ -140,15 +140,11 @@ impl(T: type) Heap(T) {
 
             if ci.left < length {
                 if data[ci.left] < data[it] {
-                    printfln("{} < {}", [ci.left, it])
-                    printfln("{} < {}", [<<data[ci.left], <<data[it]])
                     return false
                 }
             }
             if ci.right < length {
                 if data[ci.right] < data[it] {
-                    printfln("{} < {}", [ci.left, it])
-                    printfln("{} < {}", [<<data[ci.left], <<data[it]])
                     return false
                 }
             }
