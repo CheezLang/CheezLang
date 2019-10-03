@@ -2,7 +2,7 @@
 param (
     [Parameter()]
     [string]
-    $file = ".\gen\test.exe"
+    $file = "./gen/test.exe"
 )
 
 &$file

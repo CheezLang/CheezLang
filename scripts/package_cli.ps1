@@ -36,14 +36,14 @@ mk-dir $targetDir
 &dotnet build -o $targetDir -c release -r $Runtime
 
 # binaries
-copy-stuff ".\lib" $targetDir
-copy-stuff ".\LLVMLinker.dll" $targetDir
+copy-stuff "./lib" $targetDir
+copy-stuff "./LLVMLinker.dll" $targetDir
 
 # libraries
-copy-stuff ".\examples\std" "$targetDir\libraries"
-copy-stuff ".\examples\bmp\bmp.che" "$targetDir\libraries\bmp"
-copy-stuff ".\examples\bmp\bmp64.lib" "$targetDir\libraries\bmp"
-copy-stuff ".\examples\opengl" "$targetDir\libraries"
-copy-stuff ".\examples\glfw" "$targetDir\libraries"
-copy-stuff ".\examples\libraries\lua" "$targetDir\libraries"
-copy-stuff ".\examples\libraries\opencv" "$targetDir\libraries"
+copy-stuff "./examples/std" "$targetDir/libraries"
+copy-stuff "./examples/bmp/bmp.che" "$targetDir/libraries/bmp"
+copy-stuff "./examples/bmp/bmp64.lib" "$targetDir/libraries/bmp"
+copy-stuff "./examples/opengl" "$targetDir/libraries"
+copy-stuff "./examples/glfw" "$targetDir/libraries"
+copy-stuff "./examples/libraries/lua" "$targetDir/libraries"
+copy-stuff "./examples/libraries/opencv" "$targetDir/libraries"
