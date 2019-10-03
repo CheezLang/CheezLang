@@ -6,61 +6,13 @@
 // #load("tests/language/local_variables")
 // #load("tests/library/arena_allocator1")
 //#load("tests/other/test1")
-#load("examples/project_euler/13_large_sum")
+// #load("examples/project_euler/18_maximum_path_sum_1")
 
-/*
-#load("std:preload")
-#load("std:c")
+//*
 #load("std:io/io")
-#load("std:rc")
-#load("std:array")
-// #load("std:util")
-
-struct Foo {
-    pub a: string
-    b: int
-}
-impl Drop for Foo {
-    fn drop(ref Self) {
-        printfln("Foo::drop '{}'", [a])
-    }
-}
-
-enum E {}
-trait T {}
-
-struct S {
-    pub e: E
-}
-
-struct S2 {
-    pub a: int
-}
 
 fn Main() {
-    let arr = Array(Foo)::create()
-    println("add")
-    arr.add(new Foo{"f1"})
-    arr.add(new Foo{"f2"})
-    arr.add(new Foo{"f3"})
-    arr.add(new Foo{"f4"})
-    println(arr.get_length())
-
-    println("resize(2)")
-    arr.clear()
-    println(arr.get_length())
-
-    println("add")
-    arr.add(new Foo{"f5"})
-    arr.add(new Foo{"f6"})
-    println(arr.get_length())
-
-    println("slice")
-    let i: int = 5
-    let s = arr.slice()
-    s[0] = new Foo{"test"}
-
-    println("drop")
+    println("xvlc")
 }
 
 // */

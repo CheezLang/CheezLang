@@ -4,12 +4,12 @@
         {
             "label": "run",
             "type": "shell",
-            "command": "./examples/run_test_program.ps1"
+            "command": "./scripts/run_program.ps1"
         },
         {
             "label": "build_and_run",
             "type": "shell",
-            "command": "./examples/build_and_run_test.ps1",
+            "command": "./scripts/build_and_run_test.ps1",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
@@ -22,7 +22,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "./examples/build_file.ps1 ./examples/test.che",
+            "command": "./scripts/build_file.ps1 ./examples/test.che",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
@@ -35,7 +35,7 @@
         {
             "label": "build_current_file",
             "type": "shell",
-            "command": "./examples/build_file.ps1 ${file}",
+            "command": "./scripts/build_file.ps1 ${file}",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
@@ -49,7 +49,7 @@
         {
             "label": "test",
             "type": "shell",
-            "command": "./examples/build_file_and_run_as_test.ps1 ${file}",
+            "command": "./scripts/build_file_and_run_as_test.ps1 ${file}",
             "presentation": {
                 "echo": true,
                 "reveal": "always",

@@ -27,6 +27,13 @@ namespace Cheez.Util
 
     public static class Utilities
     {
+        public static T[] Populate<T>(this T[] self, T value)
+        {
+            for (int i = 0; i < self.Length; i++)
+                self[i] = value;
+            return self;
+        }
+
         public static int GetNextAligned(int size, int align)
         {
             int mul = size + align - 1;

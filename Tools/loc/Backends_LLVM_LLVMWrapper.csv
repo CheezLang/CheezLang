@@ -6,9 +6,9 @@ ir_builder.cpp,30
 constant_values.cpp,29
 value.cpp,26
 dibuilder.cpp,20
-linker.cpp,14
+linker.cpp,13
 data_layout.cpp,12
 context.cpp,9
 common.h,5
 test.cpp,4
-Total,272
+Total,271

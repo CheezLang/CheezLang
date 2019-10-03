@@ -26,12 +26,14 @@ mk-dir $targetDir
 
 # binaries
 copy-stuff ".\lib" $targetDir
-copy-stuff ".\Linker.dll" $targetDir
-copy-stuff ".\CompilerCLI\bin\Release\*" $targetDir
+copy-stuff ".\LLVMLinker.dll" $targetDir
+copy-stuff ".\CompilerCLI\bin\Release\netcoreapp3.0\win10-x64\*" $targetDir
 
 # libraries
 copy-stuff ".\examples\std" "$targetDir\libraries"
 copy-stuff ".\examples\bmp\bmp.che" "$targetDir\libraries\bmp"
-copy-stuff ".\examples\bmp\bmp.lib" "$targetDir\libraries\bmp"
+copy-stuff ".\examples\bmp\bmp64.lib" "$targetDir\libraries\bmp"
 copy-stuff ".\examples\opengl" "$targetDir\libraries"
 copy-stuff ".\examples\glfw" "$targetDir\libraries"
+copy-stuff ".\examples\libraries\lua" "$targetDir\libraries"
+copy-stuff ".\examples\libraries\opencv" "$targetDir\libraries"

@@ -5,6 +5,7 @@ using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
+using Cheez.Util;
 using LLVMSharp;
 using System;
 using System.Collections.Generic;
@@ -477,108 +478,37 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         }
 
-        private LLVMValueRef GetDefaultLLVMValue(CheezType type)
+        private LLVMValueRef GetDefaultLLVMValue(CheezType type) => type switch
         {
-            switch (type)
-            {
-                case PointerType p:
-                    return LLVM.ConstIntToPtr(LLVM.ConstInt(LLVM.IntType((uint)pointerSize * 8), 0, false), CheezTypeToLLVMType(type));
+            PointerType p => LLVM.ConstIntToPtr(LLVM.ConstInt(LLVM.IntType((uint)pointerSize * 8), 0, false), CheezTypeToLLVMType(type)),
+            IntType i => LLVM.ConstInt(CheezTypeToLLVMType(type), 0, i.Signed),
+            BoolType b => LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false),
+            FloatType f => LLVM.ConstReal(CheezTypeToLLVMType(type), 0.0),
+            CharType c => LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false),
+            AnyType a => LLVM.ConstInt(LLVM.Int64Type(), 0, false),
+            FunctionType f => LLVM.ConstNull(CheezTypeToLLVMType(f)),
+            TupleType t => LLVM.ConstStruct(t.Members.Select(m => GetDefaultLLVMValue(m.type)).ToArray(), false),
 
-                case IntType i:
-                    if (i.Signed)
-                        return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, true);
-                    else
-                        return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
+            StructType p => p.Declaration.Members.Aggregate(
+                LLVM.GetUndef(CheezTypeToLLVMType(p)),
+                (str, m) => builder.CreateInsertValue(str, GenerateExpression(m.Initializer, true), (uint)m.Index, "")),
 
-                case BoolType b:
-                    return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
-
-                case FloatType f:
-                    return LLVM.ConstReal(CheezTypeToLLVMType(type), 0.0);
-
-                case CharType c:
-                    return LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false);
-
-                case StructType p:
-                    {
-                        var str = LLVM.GetUndef(CheezTypeToLLVMType(p));
-                        foreach (var m in p.Declaration.Members)
-                        {
-                            var v = GenerateExpression(m.Initializer, true);
-                            str = builder.CreateInsertValue(str, v, (uint)m.Index, "");
-                        }
-
-                        return str;
-                        //return LLVM.ConstPointerNull(CheezTypeToLLVMType(p));
-                        //var members = p.Declaration.Members.Select(m => GetDefaultLLVMValue(m.Type));
-                        //return LLVM.ConstStruct(members.ToArray(), false);
-                    }
-
-                case TraitType t:
-                    return LLVM.ConstNamedStruct(CheezTypeToLLVMType(t), new LLVMValueRef[] {
+            TraitType t => LLVM.ConstNamedStruct(CheezTypeToLLVMType(t), new LLVMValueRef[] {
                         LLVM.ConstPointerNull(LLVM.Int8Type().GetPointerTo()),
                         LLVM.ConstPointerNull(LLVM.Int8Type().GetPointerTo())
-                    });
+                    }),
 
-                case AnyType a:
-                    return LLVM.ConstInt(LLVM.Int64Type(), 0, false);
-
-                case ArrayType a:
-                    {
-                        LLVMValueRef[] vals = new LLVMValueRef[a.Length];
-                        LLVMValueRef def = GetDefaultLLVMValue(a.TargetType);
-                        for (int i = 0; i < vals.Length; ++i)
-                            vals[i] = def;
-
-                        return LLVM.ConstArray(CheezTypeToLLVMType(a.TargetType), vals);
-                    }
-
-                case SliceType s:
-                    return LLVM.ConstNamedStruct(CheezTypeToLLVMType(s), new LLVMValueRef[] {
+            SliceType s => LLVM.ConstNamedStruct(CheezTypeToLLVMType(s), new LLVMValueRef[] {
                         LLVM.ConstInt(LLVM.Int64Type(), 0, true),
                         GetDefaultLLVMValue(s.ToPointerType())
-                    });
+                    }),
 
-                case TupleType t:
-                    {
-                        var members = t.Members.Select(m => GetDefaultLLVMValue(m.type));
-                        return LLVM.ConstStruct(members.ToArray(), false);
-                    }
+            ArrayType a => LLVM.ConstArray(
+                CheezTypeToLLVMType(a.TargetType),
+                new LLVMValueRef[a.Length].Populate(GetDefaultLLVMValue(a.TargetType))),
 
-                case FunctionType f:
-                    return LLVM.ConstNull(CheezTypeToLLVMType(f));
-
-                //case EnumType e:
-                //    {
-                //        var v = new LLVMValueRef[e.Size - e.TagType.Size];
-                //        for (int i = 0; i < v.Length; i++)
-                //            v[i] = LLVM.ConstInt(LLVM.Int8Type(), 0, false);
-                //        return LLVM.ConstNamedStruct(CheezTypeToLLVMType(e), new LLVMValueRef[]
-                //        {
-                //            GetDefaultLLVMValue(e.TagType),
-                //            LLVM.ConstArray(LLVM.Int8Type(), v),
-                //        });
-                //    }
-
-                default:
-                    throw new NotImplementedException();
-            }
-        }
-
-        private LLVMValueRef GetTempValue(CheezType exprType)
-        {
-            var builder = new IRBuilder();
-
-            var brInst = currentTempBasicBlock.GetLastInstruction();
-            builder.PositionBuilderBefore(brInst);
-
-            var type = CheezTypeToLLVMType(exprType);
-            var result = builder.CreateAlloca(type, "");
-
-            builder.Dispose();
-
-            return result;
-        }
+            _ => throw new NotImplementedException()
+        };
 
         private void GenerateVTables()
         {

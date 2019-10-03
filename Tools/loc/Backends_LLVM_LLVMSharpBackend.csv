@@ -1,13 +1,15 @@
 File Name,Lines
-ExpressionGenerator.cs,1202
-CodeGeneratorHelpers.cs,556
-StatementGenerator.cs,319
-CodeGeneratorMain.cs,268
-Linker.cs,253
+ExpressionGenerator.cs,1355
+CodeGeneratorHelpers.cs,579
+StatementGenerator.cs,340
+CodeGeneratorMain.cs,292
+Linker.cs,261
 Extensions.cs,162
 DwarfATE.cs,78
 AttributeKind.cs,73
 OS.cs,65
 DIBuilder.cs,40
-AssemblyInfo.cs,32
-Total,3048
+LLVMSharpBackend.AssemblyInfo.cs,19
+LLVMSharpBackend.AssemblyInfo.cs,19
+LLVMSharpBackend.AssemblyInfo.cs,19
+Total,3302
