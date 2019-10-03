@@ -7,7 +7,7 @@
 		"type": "coreclr",
 		"request": "launch",
 		// "preLaunchTask": "build",
-		"program": "${workspaceFolder}/CompilerCLI/bin/Debug/netcoreapp3.0/CompilerCLI.dll",
+		"program": "${workspaceFolder}/bin/Debug/cheezc.dll",
 		"args": [],
 		"cwd": "${workspaceFolder}",
 		"stopAtEntry": false,

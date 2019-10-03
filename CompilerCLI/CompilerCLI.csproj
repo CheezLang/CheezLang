@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,15 +8,20 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <NoWarn>1701;1702;NU1701</NoWarn>
+    <OutputPath>../bin/Debug</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <NoWarn>1701;1702;NU1701</NoWarn>
     <Optimize>true</Optimize>
+    <OutputPath>../bin/Release</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup>
-    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <AssemblyName>cheezc</AssemblyName>
     <LangVersion>8.0</LangVersion>
   </PropertyGroup>

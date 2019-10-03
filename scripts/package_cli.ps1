@@ -1,6 +1,11 @@
-param([string]$built_binaries)
+[CmdletBinding()]
+param (
+    [Parameter()]
+    [string]
+    $Runtime = "win10-x64"
+)
 
-$targetDir = ".\dist\cheez"
+$targetDir = "./dist/cheez"
 
 function mk-dir {
     param ([string]$path)
@@ -17,17 +22,22 @@ function copy-stuff {
     Copy-Item $path $targetDir -Recurse
 }
 
+# delete old files if existing
 if (Test-Path $targetDir) {
     Write-Host "Deleting old files..."
     Remove-Item $targetDir -Force -Recurse
+
+    sleep 2
 }
 
 mk-dir $targetDir
 
+# build compiler in release mode
+&dotnet build -o $targetDir -c release -r $Runtime
+
 # binaries
 copy-stuff ".\lib" $targetDir
 copy-stuff ".\LLVMLinker.dll" $targetDir
-copy-stuff ".\CompilerCLI\bin\Release\netcoreapp3.0\win10-x64\*" $targetDir
 
 # libraries
 copy-stuff ".\examples\std" "$targetDir\libraries"
