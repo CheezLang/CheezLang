@@ -59,12 +59,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             var lldArgs = new List<string>();
             //lldArgs.Add("lld");
-            lldArgs.Add($"/out:{filename}.exe");
+            lldArgs.Add($"/out:{filename}{OS.ExecutableFileExtension}");
 
             // library paths
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)){
-                var winSdk = OS.OS.FindWindowsSdk();
+                var winSdk = OS.FindWindowsSdk();
                 if (winSdk == null)
                 {
                     errorHandler.ReportError("Couldn't find windows sdk");
@@ -143,11 +143,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             //Console.WriteLine("[LINKER] " + string.Join(" ", lldArgs));
 
-            var process = Utilities.StartProcess("lld-link", lldArgs,
-                            stdout: (s, e) => { if (e.Data != null) Console.WriteLine(e.Data); },
-                            stderr: (s, e) => { if (e.Data != null) Console.Error.WriteLine(e.Data); });
-            process.WaitForExit();
-            var result = process.ExitCode == 0;
+            var result = true;
+            // var process = Utilities.StartProcess("lld-link", lldArgs,
+            //                 stdout: (s, e) => { if (e.Data != null) Console.WriteLine(e.Data); },
+            //                 stderr: (s, e) => { if (e.Data != null) Console.Error.WriteLine(e.Data); });
+            // process.WaitForExit();
+            // var result = process.ExitCode == 0;
             //var result = llvm_link_coff(lldArgs.ToArray(), lldArgs.Count);
             if (result)
             {

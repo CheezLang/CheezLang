@@ -1,13 +1,45 @@
 ﻿using Cheez.Util;
 using Microsoft.Win32;
+using System;
 using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
+using System.Runtime.InteropServices;
 
-namespace Cheez.CodeGeneration.OS
+namespace Cheez.CodeGeneration
 {
+
+    public interface IOS {
+        string ObjectFileExtension { get; }
+        string ExecutableFileExtension { get; }
+    }
+
+    public class OSWindows : IOS {
+        public string ObjectFileExtension => ".obj";
+        public string ExecutableFileExtension => ".exe";
+    }
+
+    public class OSLinux : IOS {
+        public string ObjectFileExtension => ".o";
+        public string ExecutableFileExtension => "";
+    }
+
     public static class OS
     {
+        private static IOS _os;
+
+        static OS() {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                _os = new OSWindows();
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                _os = new OSLinux();
+            else
+                throw new NotImplementedException();
+        }
+
+        public static string ObjectFileExtension => _os.ObjectFileExtension;
+        public static string ExecutableFileExtension => _os.ExecutableFileExtension;
+
         public class CheezWindowsSdk
         {
             public string Version;
@@ -74,5 +106,7 @@ namespace Cheez.CodeGeneration.OS
                 return sdk;
             }
         }
+
+
     }
 }

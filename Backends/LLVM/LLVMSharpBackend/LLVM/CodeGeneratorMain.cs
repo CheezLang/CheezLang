@@ -220,7 +220,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 TargetExt.InitializeX86Target();
                 var targetMachine = TargetMachineExt.FromTriple(targetTriple);
-                var objFile = Path.Combine(intDir, targetFile + ".obj");
+                var objFile = Path.Combine(intDir, $"{targetFile}{OS.ObjectFileExtension}");
                 targetMachine.EmitToFile(module, objFile);
             }
 
@@ -233,10 +233,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (!string.IsNullOrWhiteSpace(outDir) && !Directory.Exists(outDir))
                 Directory.CreateDirectory(outDir);
 
-            string objFile = Path.Combine(intDir, targetFile + ".obj");
+            string objFile = Path.Combine(intDir, targetFile + OS.ObjectFileExtension);
             string exeFile = Path.Combine(outDir, targetFile);
 
-            return LLVMLinker.Link(workspace, exeFile, objFile, libraryIncludeDirectories, libraries, subsystem, errorHandler);
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return LLVMLinker.Link(workspace, exeFile, objFile, libraryIncludeDirectories, libraries, subsystem, errorHandler);
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                return ClangLinker.Link(workspace, exeFile, objFile, libraryIncludeDirectories, libraries, subsystem, errorHandler);
+            else
+                throw new NotImplementedException();
         }
 
         private (int, bool) RunOptimizations(uint level)
@@ -307,17 +313,31 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             string mainFuncName = null;
             LLVMTypeRef returnType = LLVM.VoidType();
-            switch (workspace.TargetArch)
-            {
-                case TargetArchitecture.X86:
-                    mainFuncName = "main";
-                    returnType = LLVM.Int32Type();
-                    break;
-                case TargetArchitecture.X64:
-                    mainFuncName = "WinMain";
-                    returnType = LLVM.Int64Type();
-                    break;
-            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                switch (workspace.TargetArch)
+                {
+                    case TargetArchitecture.X86:
+                        mainFuncName = "main";
+                        returnType = LLVM.Int32Type();
+                        break;
+                    case TargetArchitecture.X64:
+                        mainFuncName = "WinMain";
+                        returnType = LLVM.Int64Type();
+                        break;
+                }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                switch (workspace.TargetArch)
+                {
+                    case TargetArchitecture.X86:
+                        mainFuncName = "main";
+                        returnType = LLVM.Int32Type();
+                        break;
+                    case TargetArchitecture.X64:
+                        mainFuncName = "main";
+                        returnType = LLVM.Int32Type();
+                        break;
+                }
 
             var ltype = LLVM.FunctionType(returnType, new LLVMTypeRef[0], false);
             var lfunc = module.AddFunction(mainFuncName, ltype);
