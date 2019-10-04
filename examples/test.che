@@ -9,10 +9,17 @@
 // #load("examples/project_euler/18_maximum_path_sum_1")
 
 //*
+//#load("std:io/io")
+#load("std:preload")
 #load("std:io/io")
+//#load("std:c")
 
 fn Main() {
-    println("xvlc")
+    println("lol")
+    
+    for : 5..10 {
+        printfln("{}: {}", [it_index, it])
+    }
 }
 
 // */
