@@ -79,8 +79,7 @@ impl(CharType: type) StringBase(CharType) {
         if data.data == null {
             length = 0
             data = alloc_n(CharType, cast size, allocator)
-        }
-        else {
+        } else {
             data = realloc_n(data, cast size, allocator)
             if length > data.length {
                 length = data.length
@@ -196,19 +195,15 @@ impl String {
             if state == 0 {
                 if c == '``' {
                     state = 2
-                }
-                else if c == '{' {
+                } else if c == '{' {
                     state = 1
-                }
-                else {
+                } else {
                     self += c
                 }
-            }
-            else if state == 2 {
+            } else if state == 2 {
                 self += c
                 state = 0
-            }
-            else if state == 1 {
+            } else if state == 1 {
                 if c == '}' {
                     state = 0
 
@@ -218,8 +213,7 @@ impl String {
                     if colon >= 1 {
                         // colon -> arg index before colon
                         argIndex = parse_int(formatSpecifier.sliceL(colon))
-                    }
-                    else if colon == -1 and formatSpecifier.length > 0 {
+                    } else if colon == -1 and formatSpecifier.length > 0 {
                         // no colon but non empty -> arg index
                         argIndex = parse_int(formatSpecifier.slice())
                     }

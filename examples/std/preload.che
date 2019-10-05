@@ -1,3 +1,21 @@
+// OS
+enum Platform {
+    Unknown
+    Windows
+    Linux
+    OSX
+}
+
+let __platform__: Platform = if const @is_os("Windows") {
+    Platform.Windows
+} else if const @is_os("Linux") {
+    Platform.Linux
+} else if const @is_os("OSX") {
+    Platform.OSX
+} else {
+    Platform.Unknown
+}
+
 // drop
 trait Drop {
     fn drop(ref Self);
@@ -61,10 +79,7 @@ fn for_extension_range(r: $T..T, code: Code, reverse: bool = false, inclusive: b
 }
 
 fn for_extension_int(num: int, code: Code, inclusive: bool = false, reverse: bool = false) #for {
-    let (start, inc) = if const reverse then
-                                (num - 1, -1)
-                            else
-                                (0, 1)
+    let (start, inc) = if const reverse then (num - 1, -1) else (0, 1)
     while let (it, it_index) = (start, 0),
         if const inclusive then it_index <= num else it_index < num,
         it += inc; it_index += 1 {

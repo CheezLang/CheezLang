@@ -63,8 +63,7 @@ fn format_int(buffer: ref String, val: $T, _base: int = 10) {
         neg = true
         len = 1
         v = -v
-    }
-    else if v == 0 {
+    } else if v == 0 {
         len = 1
     }
 
@@ -78,8 +77,7 @@ fn format_int(buffer: ref String, val: $T, _base: int = 10) {
     
     if val == 0 {
         buffer[buffer.length - 1] = '0'
-    }
-    else {
+    } else {
         if neg {
             val = -val
         }

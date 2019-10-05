@@ -1266,6 +1266,7 @@ namespace Cheez.Parsing
 
             SkipNewlines();
 
+            bool allowNewline = false;
             if (CheckToken(TokenType.OpenBrace))
                 ifCase = ParseExpression();
             else
@@ -1273,11 +1274,12 @@ namespace Cheez.Parsing
                 Consume(TokenType.KwThen, ErrMsg("keyword 'then'", "after condition in if expression"));
                 SkipNewlines();
                 ifCase = ParseExpression();
+                allowNewline = true;
             }
             end = ifCase.End;
 
-
-            SkipNewlines();
+            if (allowNewline)
+                SkipNewlines();
             if (CheckToken(TokenType.KwElse))
             {
                 NextToken();

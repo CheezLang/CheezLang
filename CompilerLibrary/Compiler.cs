@@ -2,6 +2,7 @@
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Parsing;
+using Cheez.Types;
 using Cheez.Util;
 using System;
 using System.Collections.Generic;
@@ -54,6 +55,8 @@ namespace Cheez
         private Dictionary<string, string> strings = new Dictionary<string, string>();
         private int stringId = 0;
 
+        private Scope mGlobalConstIfScope = null;
+
         public CheezCompiler(IErrorHandler errorHandler, string stdlib)
         {
             ErrorHandler = errorHandler;
@@ -68,6 +71,11 @@ namespace Cheez
             ModulePaths["opengl"] = Path.Combine(exePath, "opengl");
             ModulePaths["glfw"] = Path.Combine(exePath, "glfw");
             ModulePaths["bmp"] = Path.Combine(exePath, "bmp");
+
+
+            mGlobalConstIfScope = new Scope("global_const_if");
+            mGlobalConstIfScope.DefineBuiltInTypes();
+            mGlobalConstIfScope.DefineBuiltInOperators();
         }
 
         public PTFile AddFile(string fileNameT, string body = null, Workspace workspace = null, bool reparse = false)
@@ -279,19 +287,14 @@ namespace Cheez
 
             List<string> loadedFiles = new List<string>();
 
-            while (true)
+            void HandleStatement(AstStatement s)
             {
-
-                var s = parser.ParseStatement();
-                if (s == null)
-                    break;
-
-                if (s is AstFunctionDecl || 
-                    s is AstStructDecl || 
-                    s is AstImplBlock || 
-                    s is AstEnumDecl || 
-                    s is AstVariableDecl || 
-                    s is AstTypeAliasDecl || 
+                if (s is AstFunctionDecl ||
+                    s is AstStructDecl ||
+                    s is AstImplBlock ||
+                    s is AstEnumDecl ||
+                    s is AstVariableDecl ||
+                    s is AstTypeAliasDecl ||
                     s is AstTraitDeclaration ||
                     s is AstUsingStmt)
                 {
@@ -303,10 +306,53 @@ namespace Cheez
                 {
                     HandleDirective(directive, eh, lexer, loadedFiles, file);
                 }
+                else if (s is AstExprStmt exprStmt && exprStmt.Expr is AstIfExpr @if && @if.IsConstIf)
+                {
+                    @if.Condition.Scope = mGlobalConstIfScope;
+                    var cond = mMainWorkspace.InferType(@if.Condition, CheezType.Bool);
+                    if (!cond.Type.IsErrorType)
+                    {
+                        if (!cond.IsCompTimeValue)
+                        {
+                            eh.ReportError(lexer.Text, exprStmt, "Must be a constant value");
+                        }
+                        else
+                        {
+                            AstExpression expr = null;
+                            if ((bool)cond.Value)
+                                expr = @if.IfCase;
+                            else
+                                expr = @if.ElseCase;
+
+                            if (expr != null)
+                            {
+                                if (expr is AstBlockExpr block)
+                                {
+                                    foreach (var stmt in block.Statements)
+                                    {
+                                        HandleStatement(stmt);
+                                    }
+                                }
+                                else
+                                    eh.ReportError(lexer.Text, expr, "Must be a block");
+                            }
+                        }
+                    }
+                }
                 else if (s != null)
                 {
                     eh.ReportError(lexer.Text, s, "This type of statement is not allowed in global scope");
                 }
+            }
+
+            while (true)
+            {
+
+                var s = parser.ParseStatement();
+                if (s == null)
+                    break;
+
+                HandleStatement(s);
             }
 
             mLoadingFiles.Remove(fileName);

@@ -1,0 +1,6 @@
+struct timeval {
+    tv_sec  : i32 // seconds
+    tv_usec : i32 // and microseconds
+}
+
+fn gettimeofday(tv: &timeval, tz: &any)
