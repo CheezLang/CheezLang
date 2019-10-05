@@ -1789,7 +1789,6 @@ namespace Cheez
 
                 case "static_assert":
                     {
-
                         AstExpression cond = null, message = null;
                         if (expr.Arguments.Count >= 1)
                             cond = expr.Arguments[0].Expr;
@@ -1834,7 +1833,8 @@ namespace Cheez
                         if (!(bool)cond.Value)
                             ReportError(expr, actualMessage);
 
-                        expr.Type = CheezType.Void;
+                        expr.Type = CheezType.Bool;
+                        expr.Value = (bool)cond.Value;
                         return expr;
                     }
 

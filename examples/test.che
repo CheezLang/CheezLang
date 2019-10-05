@@ -10,9 +10,21 @@
 
 //*
 #load("std:io/io")
-
+#load("std:util")
 
 fn Main() {
+    let t1 = get_time_milliseconds()
+
+    if const @is_os("windows") {
+        Sleep(1000)
+    } else {
+        sleep(1)
+    }
+
+    let t2 = get_time_milliseconds()
+    let t = t2 - t1
+    printfln("t1: {}, t2: {}", [t1, t2])
+    printfln("t: {}", [t])
 }
 
 // */
