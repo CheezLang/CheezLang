@@ -10,7 +10,7 @@ param (
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Running..."
     Push-Location gen
-    &"./$file.exe"
+    &"./$file$executable_file_extension"
     Pop-Location
     Write-Host "Program exited with code $LASTEXITCODE"
 }
