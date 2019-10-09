@@ -1,7 +1,9 @@
+if const @static_assert(@is_os("windows"), "windows.che can only be loaded on windows") {}
+
 #load("windows_types")
 #load("windows_constants")
 #load("windows_functions")
 
-let __std_in_handle     : HANDLE    = GetStdHandle(-10)
-let __std_out_handle    : HANDLE    = GetStdHandle(-11)
-let __std_err_handle    : HANDLE    = GetStdHandle(-12)
+//let __std_in_handle     : HANDLE    = GetStdHandle(-10)
+//let __std_out_handle    : HANDLE    = GetStdHandle(-11)
+//let __std_err_handle    : HANDLE    = GetStdHandle(-12)

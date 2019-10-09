@@ -106,9 +106,9 @@ impl Printable for u64 {
 }
 
 fn printf_int_to_string(str: ref String, i: $T, format: string) {
-    let base = if streq("b", format) { 2 }
-    else if streq("x", format) { 16 }
-    else { 10 }
+    let base = if streq("b", format) then 2
+    else if streq("x", format) then 16
+    else 10
     format_int(str, i, base)
 }
 

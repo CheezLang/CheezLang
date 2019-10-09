@@ -4,13 +4,19 @@
 #load("std:mem/memory")
 #load("std:mem/stack_allocator")
 #load("std:mem/std_heap_allocator")
-#load("std:os/windows")
 #load("std:array")
 #load("std:c")
 #load("std:math")
 #load("std:printable")
 #load("std:string")
 #load("std:util")
+
+if const @is_os("windows") {
+    #load("std:os/windows")
+}
+if const @is_os("linux") {
+    #load("std:os/linux")
+}
 
 fn Main() {
 }

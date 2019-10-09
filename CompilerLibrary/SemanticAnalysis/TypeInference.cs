@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
@@ -88,7 +89,7 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression InferType(AstExpression expr, CheezType expected, bool resolve_poly_expr_to_concrete_type = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
+        public AstExpression InferType(AstExpression expr, CheezType expected, bool resolve_poly_expr_to_concrete_type = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
         {
             var context = new TypeInferenceContext
             {
@@ -1280,7 +1281,9 @@ namespace Cheez
             {
                 if (expr.Condition.Value == null)
                 {
-                    ReportError(expr.Condition, $"Condition must be a compile time constant");
+                    // only report error if condition is no error type, otherwise error was already reported
+                    if (!expr.Condition.Type.IsErrorType)
+                        ReportError(expr.Condition, $"Condition must be a compile time constant");
                     return expr;
                 }
 
@@ -1426,11 +1429,48 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "is_os":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@is_os takes one argument");
+                            return expr;
+                        }
+
+                        var arg = InferArg(0, null);
+                        if (!arg.IsCompTimeValue || !(arg.Value is string))
+                        {
+                            ReportError(arg, "Argument must be a compile time string");
+                            return expr;
+                        }
+
+                        var val = arg.Value as string;
+
+                        bool unknownPlatform(string platform)
+                        {
+                            ReportError(expr, $"Unknown platform '{platform}'");
+                            return false;
+                        }
+
+                        bool is_os = val?.ToLowerInvariant() switch
+                        {
+                            "windows" => RuntimeInformation.IsOSPlatform(OSPlatform.Windows),
+                            "linux" => RuntimeInformation.IsOSPlatform(OSPlatform.Linux),
+                            "osx" => RuntimeInformation.IsOSPlatform(OSPlatform.OSX),
+                            _ => unknownPlatform(val)
+                        };
+
+                        expr.Type = CheezType.Bool;
+                        expr.Value = is_os;
+
+                        return expr;
+                    }
+
                 case "dup":
                     {
                         if (expr.Arguments.Count < 1 || expr.Arguments.Count > 2)
                         {
-                            ReportError(expr.Location, "@dup takes one or two argument2");
+                            ReportError(expr.Location, "@dup takes one or two arguments");
                             return expr;
                         }
 
@@ -1749,7 +1789,6 @@ namespace Cheez
 
                 case "static_assert":
                     {
-
                         AstExpression cond = null, message = null;
                         if (expr.Arguments.Count >= 1)
                             cond = expr.Arguments[0].Expr;
@@ -1794,7 +1833,8 @@ namespace Cheez
                         if (!(bool)cond.Value)
                             ReportError(expr, actualMessage);
 
-                        expr.Type = CheezType.Void;
+                        expr.Type = CheezType.Bool;
+                        expr.Value = (bool)cond.Value;
                         return expr;
                     }
 

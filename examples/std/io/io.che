@@ -1,11 +1,13 @@
 #load("std:string")
 #load("std:printable")
 #load("std:mem/memory")
-#load("std:os/windows")
+//#load("std:os/windows")
+#load("std:c")
 
 fn print_string(s: ref String) {
-    let bytesWritten: u32 = 0
-    WriteFile(__std_out_handle, cast s.get_raw(), cast s.length, &bytesWritten, null)
+    //let bytesWritten: u32 = 0
+    //WriteFile(__std_out_handle, cast s.get_raw(), cast s.length, &bytesWritten, null)
+    c_printf("%.*s", cast(i32) s.get_length(), s.get_raw())
 }
 
 fn println(v: $T) {
@@ -61,8 +63,7 @@ fn format_int(buffer: ref String, val: $T, _base: int = 10) {
         neg = true
         len = 1
         v = -v
-    }
-    else if v == 0 {
+    } else if v == 0 {
         len = 1
     }
 
@@ -76,8 +77,7 @@ fn format_int(buffer: ref String, val: $T, _base: int = 10) {
     
     if val == 0 {
         buffer[buffer.length - 1] = '0'
-    }
-    else {
+    } else {
         if neg {
             val = -val
         }

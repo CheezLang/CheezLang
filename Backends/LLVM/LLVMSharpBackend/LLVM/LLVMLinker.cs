@@ -59,12 +59,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             var lldArgs = new List<string>();
             //lldArgs.Add("lld");
-            lldArgs.Add($"/out:{filename}.exe");
+            lldArgs.Add($"/out:{filename}{OS.ExecutableFileExtension}");
 
             // library paths
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)){
-                var winSdk = OS.OS.FindWindowsSdk();
+                var winSdk = OS.FindWindowsSdk();
                 if (winSdk == null)
                 {
                     errorHandler.ReportError("Couldn't find windows sdk");

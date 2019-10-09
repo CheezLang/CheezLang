@@ -1,3 +1,5 @@
+#load("std:preload")
+
 fn c_strlen(str: c_string) -> i32 #linkname("strlen");
 fn c_printf(format: c_string) #varargs #linkname("printf");
 fn c_sprintf(buff: c_string, f: c_string, a: double) -> i32 #varargs #linkname("sprintf");
@@ -10,4 +12,3 @@ fn c_strtod(str: c_string, endptr: &&char) -> double #linkname("strtod");
 fn c_rand() -> i32 #linkname("rand");
 fn c_srand(seed: u32) #linkname("srand");
 fn c_time(timer: &any) -> u32 #linkname("time");
-
