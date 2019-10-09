@@ -31,6 +31,10 @@ struct PixelGameEngine {
     nMousePosY          : int
     nMousePosXcache     : int
     nMousePosYcache     : int
+    nMousePosXPrev      : int
+    nMousePosYPrev      : int
+    nMouseDeltaX        : int
+    nMouseDeltaY        : int
 
     nMouseWheelDelta    : int
     nMouseWheelDeltaCache : int
@@ -153,6 +157,9 @@ impl PixelGameEngine {
         let tp1 = get_time_microseconds()
         let tp2 = get_time_microseconds()
 
+        nMousePosXPrev = nMousePosX
+        nMousePosYPrev = nMousePosY
+        let total_frames = 0
         while active {
             // Run as fast as possible
             while active {
@@ -209,6 +216,13 @@ impl PixelGameEngine {
                 nMousePosX = nMousePosXcache
                 nMousePosY = nMousePosYcache
 
+                if total_frames > 0 {
+                    nMouseDeltaX = nMousePosX - nMousePosXPrev
+                    nMouseDeltaY = nMousePosY - nMousePosYPrev
+                }
+                nMousePosXPrev = nMousePosX
+                nMousePosYPrev = nMousePosY
+
                 nMouseWheelDelta = nMouseWheelDeltaCache
                 nMouseWheelDeltaCache = 0
 
@@ -255,6 +269,8 @@ impl PixelGameEngine {
                     }
                     nFrameCount = 0
                 }
+
+                total_frames += 1
             }
 
             // Allow the user to free resources if they have overrided the destroy function

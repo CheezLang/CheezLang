@@ -20,12 +20,20 @@ impl PixelGameEngine {
         return (nMousePosX, nMousePosY)
     }
 
+    fn get_mouse_delta(ref Self) -> (x: int, y: int) {
+        return (nMouseDeltaX, nMouseDeltaY)
+    }
+
+
     fn get_mouse_wheel(ref Self) -> int {
         return nMouseWheelDelta
     }
 
     fn get_width(ref Self) -> int { return screen_width }
     fn get_height(ref Self) -> int { return screen_height }
+
+    // fn get_window_width(ref Self) -> int { return window_width }
+    // fn get_window_height(ref Self) -> int { return window_height }
 
     //
     fn set_draw_target(ref Self, target: &Sprite) {
@@ -50,7 +58,14 @@ impl PixelGameEngine {
     fn olc_update_window_size(ref Self, x: int, y: int) {
         window_width = x
         window_height = y
+        screen_width = x
+        screen_height = y
+
+        default_draw_target.dispose()
+        <<default_draw_target = Sprite::create(screen_width, screen_height)
+        // glViewport(0, 0, cast x/2, cast y/2)
         glViewport(0, 0, cast x, cast y)
+        glTexImage2D(GL_TEXTURE_2D, 0, cast GL_RGBA, cast screen_width, cast screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, default_draw_target.get_data())
     }
 
     fn olc_update_mouse_wheel(ref Self, delta: int) {

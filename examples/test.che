@@ -10,8 +10,9 @@
 
 //*
 #load("std:io/io")
-#load("complex")
 #load("examples/olc_pge/pixel_game_engine")
+#load("complex")
+#load("functions")
 
 let width: int = 1600
 let height: int = 960
@@ -25,6 +26,8 @@ struct MyGame {
     yr : double = 10.0
 
     func_index: int = 0
+
+    last_mouse_pos: (x: double, y: double)
 }
 
 fn map(x: double, a: double, b: double, c: double, d: double) -> double {
@@ -59,63 +62,21 @@ impl Game for MyGame {
     fn on_update(ref Self, dt: float) -> bool {
         pge.clear()
 
+        // update dimensions
         width = pge.get_width()
         height = pge.get_height()
-
-        let speed = 1.0
-
-        if pge.get_key(Key.NpAdd).held {
-            yr *= 0.99
-        }
-        if pge.get_key(Key.NpSub).held {
-            yr /= 0.99
-        }
-
-        if yr < 5 {
-            yr = 5
-        }
-
-        if pge.get_key(Key.Up).held {
-            yc += dt * speed * yr
-        }
-        if pge.get_key(Key.Down).held {
-            yc -= dt * speed * yr
-        }
-        if pge.get_key(Key.Left).held {
-            xc -= dt * speed * yr
-        }
-        if pge.get_key(Key.Right).held {
-            xc += dt * speed * yr
-        }
-
-        if pge.get_key(Key.Space).pressed {
-            func_index += 1
-        }
 
         // aspect ratio
         xr = yr * double(width) / double(height)
 
+        handle_input(dt)
+        draw_grid()
+        draw_current_function()
 
-        // grid
-        {
-            let lw = 0.15
-            let wmin = to_world(-50, height + 50)
-            let wmax = to_world(width + 50, -50)
+        return true
+    }
 
-            for x: int(wmin.x)..int(wmax.x) {
-                draw_line(double(x), wmin.y, double(x), wmax.y, Pixel::rgba(50, 50, 50))
-                draw_line(double(x), -lw, double(x), lw, Pixel::rgba(200, 200, 200))
-            }
-            for y: int(wmin.y)..int(wmax.y) {
-                draw_line(wmin.x, double(y), wmax.x, double(y), Pixel::rgba(50, 50, 50))
-                draw_line(-lw, double(y), lw, double(y), Pixel::rgba(200, 200, 200))
-            }
-        }
-
-        // axis
-        pge.draw_line(to_pixel(0, 0).x, 0, to_pixel(0, 0).x, height, Pixel::rgba(200, 200, 200))
-        pge.draw_line(0, to_pixel(0, 0).y, width, to_pixel(0, 0).y, Pixel::rgba(200, 200, 200))
-
+    fn draw_current_function(ref Self) {
         let prev = new Complex{}
 
         let first = true
@@ -141,47 +102,87 @@ impl Game for MyGame {
             }
             
         }
-        return true
     }
 
+    fn draw_grid(ref Self) {
+        // grid
+        {
+            let lw = 0.15
+            let wmin = to_world(0, height)
+            let wmax = to_world(width, 0)
+            wmax.x += 1
+            wmax.y += 1
 
-}
+            // vertical
+            for x: int(wmin.x)..int(wmax.x) {
+                let brightness: u8 = if x == 0 then 200
+                    else if x % 10 == 0 then 150
+                    else if x % 5 == 0 then 100
+                    else 50
 
-fn f1(x: double) -> Option(Complex) {
-    return Some(new Complex{x, -x})
-}
+                draw_line(double(x), wmin.y, double(x), wmax.y, Pixel::rgba(brightness, brightness, brightness))
+                draw_line(double(x), -lw, double(x), lw, Pixel::rgba(200, 200, 200))
+            }
 
-fn f2(x: double) -> Option(Complex) {
-    if x == 0 {
-        return None
+            // horizontal
+            for y: int(wmin.y)..int(wmax.y) {
+                let brightness: u8 = if y == 0 then 200
+                    else if y % 10 == 0 then 150
+                    else if y % 5 == 0 then 100
+                    else 50
+
+                draw_line(wmin.x, double(y), wmax.x, double(y), Pixel::rgba(brightness, brightness, brightness))
+                draw_line(-lw, double(y), lw, double(y), Pixel::rgba(200, 200, 200))
+            }
+        }
     }
-    return Some((new Complex{3 * x} + new Complex{2} * Complex::poww(new{-1, 0}, x)) / new Complex{x})
-}
 
-fn f3(n: double) -> Option(Complex) {
-    let x = 5.0
-    let t = new Complex{n} * Complex::poww(new Complex{x}, n)
-    let b = t + new Complex{1}
+    fn handle_input(ref Self, dt: double) {
+        let scroll_speed = 0.001
 
-    if b.r == 0 and b.i == 0 {
-        return None
+        // move
+        {
+            let mouse_pos = pge.get_mouse_pos()
+            let mouse_pos_world = to_world(mouse_pos.x, mouse_pos.y)
+            let mouse_delta: (x: double, y: double) = (mouse_pos_world.x - last_mouse_pos.x, mouse_pos_world.y - last_mouse_pos.y)
+
+            if pge.get_mouse(0).held {
+                xc -= mouse_delta.x
+                yc -= mouse_delta.y
+            }
+            last_mouse_pos = to_world(mouse_pos.x, mouse_pos.y)
+        }
+
+        // zoom
+        {
+            let mouse_pos = pge.get_mouse_pos()
+            let mouse_pos_world = to_world(mouse_pos.x, mouse_pos.y)
+
+            yr *= 1 - double(pge.get_mouse_wheel()) * scroll_speed
+            yr = fmax(yr, 2)
+            // aspect ratio
+            xr = yr * double(width) / double(height)
+
+            let mouse_pos_world2 = to_world(mouse_pos.x, mouse_pos.y)
+            let mouse_delta: (x: double, y: double) = (mouse_pos_world2.x - mouse_pos_world.x, mouse_pos_world2.y - mouse_pos_world.y)
+            xc -= mouse_delta.x
+            yc -= mouse_delta.y
+        }
+
+        // cycle functions
+        if pge.get_key(Key.Space).pressed {
+            func_index += 1
+        }
+
+        let funcs: []Key = [Key.F1, Key.F2, Key.F3, Key.F4, Key.F5, Key.F6, Key.F7, Key.F8, Key.F9]
+
+        for : funcs {
+            if pge.get_key(it).pressed {
+                func_index = clamp(it_index, 0, functions.length - 1)
+            }
+        }
     }
-    return Some(t / b)
 }
-
-fn f4(x: double) -> Option(Complex) {
-    if x == 0 {
-        return None
-    }
-
-    return Some(new Complex{1/x})
-}
-
-fn f5(x: double) -> Option(Complex) {
-    return Some(new Complex{sin(x), cos(x)})
-}
-
-let functions: []fn(double) -> Option(Complex) = [ f1, f2, f3, f4, f5 ]
 
 fn Main() {
     let myGame = new MyGame{}
