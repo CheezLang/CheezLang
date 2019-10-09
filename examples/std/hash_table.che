@@ -53,8 +53,7 @@ impl(K: type, V: type) Table(K, V) {
                 if !entry.is_tombstone {
                     if tombstone != null {
                         return tombstone
-                    }
-                    else {
+                    } else {
                         return entry
                     }
                 } else if tombstone == null {

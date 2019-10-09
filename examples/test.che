@@ -10,21 +10,187 @@
 
 //*
 #load("std:io/io")
-#load("std:util")
+#load("complex")
+#load("examples/olc_pge/pixel_game_engine")
 
-fn Main() {
-    let t1 = get_time_milliseconds()
+let width: int = 1600
+let height: int = 960
 
-    if const @is_os("windows") {
-        Sleep(1000)
-    } else {
-        sleep(1)
+struct MyGame {
+    pge: &PixelGameEngine
+
+    xc : double = 0.0
+    yc : double = 3.0
+    xr : double = 10.0
+    yr : double = 10.0
+
+    func_index: int = 0
+}
+
+fn map(x: double, a: double, b: double, c: double, d: double) -> double {
+    return (x - a) / (b - a) * (d - c) + c
+}
+
+impl Game for MyGame {
+    fn on_create(ref Self, pge: &PixelGameEngine) -> bool{ 
+        self.pge = pge
+        return true
     }
 
-    let t2 = get_time_milliseconds()
-    let t = t2 - t1
-    printfln("t1: {}, t2: {}", [t1, t2])
-    printfln("t: {}", [t])
+    fn on_destroy(ref Self) -> bool {
+        return true
+    }
+
+    fn to_pixel(ref Self, wx: double, wy: double) -> (x: int, y: int) {
+        return (cast map(wx, xc - xr, xc + xr, 0, double(width)), cast map(wy, yc - yr, yc + yr, double(height), 0))
+    }
+
+    fn to_world(ref Self, wx: int, wy: int) -> (x: double, y: double) {
+        return (map(double(wx), 0, double(width), xc - xr, xc + xr), map(double(wy), double(height), 0, yc - yr, yc + yr))
+    }
+
+    fn draw_line(ref Self, x1: double, y1: double, x2: double, y2: double, col: Pixel) {
+        let (px1, py1) = to_pixel(x1, y1)
+        let (px2, py2) = to_pixel(x2, y2)
+
+        pge.draw_line(px1, py1, px2, py2, col)
+    }
+
+    fn on_update(ref Self, dt: float) -> bool {
+        pge.clear()
+
+        width = pge.get_width()
+        height = pge.get_height()
+
+        let speed = 1.0
+
+        if pge.get_key(Key.NpAdd).held {
+            yr *= 0.99
+        }
+        if pge.get_key(Key.NpSub).held {
+            yr /= 0.99
+        }
+
+        if yr < 5 {
+            yr = 5
+        }
+
+        if pge.get_key(Key.Up).held {
+            yc += dt * speed * yr
+        }
+        if pge.get_key(Key.Down).held {
+            yc -= dt * speed * yr
+        }
+        if pge.get_key(Key.Left).held {
+            xc -= dt * speed * yr
+        }
+        if pge.get_key(Key.Right).held {
+            xc += dt * speed * yr
+        }
+
+        if pge.get_key(Key.Space).pressed {
+            func_index += 1
+        }
+
+        // aspect ratio
+        xr = yr * double(width) / double(height)
+
+
+        // grid
+        {
+            let lw = 0.15
+            let wmin = to_world(-50, height + 50)
+            let wmax = to_world(width + 50, -50)
+
+            for x: int(wmin.x)..int(wmax.x) {
+                draw_line(double(x), wmin.y, double(x), wmax.y, Pixel::rgba(50, 50, 50))
+                draw_line(double(x), -lw, double(x), lw, Pixel::rgba(200, 200, 200))
+            }
+            for y: int(wmin.y)..int(wmax.y) {
+                draw_line(wmin.x, double(y), wmax.x, double(y), Pixel::rgba(50, 50, 50))
+                draw_line(-lw, double(y), lw, double(y), Pixel::rgba(200, 200, 200))
+            }
+        }
+
+        // axis
+        pge.draw_line(to_pixel(0, 0).x, 0, to_pixel(0, 0).x, height, Pixel::rgba(200, 200, 200))
+        pge.draw_line(0, to_pixel(0, 0).y, width, to_pixel(0, 0).y, Pixel::rgba(200, 200, 200))
+
+        let prev = new Complex{}
+
+        let first = true
+        for xp: 0..width {
+            let x = map(double(xp), 0, double(width), xc - xr, xc + xr)
+
+            match functions[func_index % functions.length](x) {
+                Some($c) -> {
+                    if first {
+                        prev = c
+                        first = false
+                    }
+
+                    pge.draw_line(xp - 1, cast map(prev.r, yc - yr, yc + yr, double(height), 0), xp, cast map(c.r, yc - yr, yc + yr, double(height), 0), Pixel::rgba(255, 0, 0))
+                    pge.draw_line(xp - 1, cast map(prev.i, yc - yr, yc + yr, double(height), 0), xp, cast map(c.i, yc - yr, yc + yr, double(height), 0), Pixel::rgba(0, 255, 0))
+
+                    prev = c
+                }
+
+                None -> {
+                    first = true
+                }
+            }
+            
+        }
+        return true
+    }
+
+
+}
+
+fn f1(x: double) -> Option(Complex) {
+    return Some(new Complex{x, -x})
+}
+
+fn f2(x: double) -> Option(Complex) {
+    if x == 0 {
+        return None
+    }
+    return Some((new Complex{3 * x} + new Complex{2} * Complex::poww(new{-1, 0}, x)) / new Complex{x})
+}
+
+fn f3(n: double) -> Option(Complex) {
+    let x = 5.0
+    let t = new Complex{n} * Complex::poww(new Complex{x}, n)
+    let b = t + new Complex{1}
+
+    if b.r == 0 and b.i == 0 {
+        return None
+    }
+    return Some(t / b)
+}
+
+fn f4(x: double) -> Option(Complex) {
+    if x == 0 {
+        return None
+    }
+
+    return Some(new Complex{1/x})
+}
+
+fn f5(x: double) -> Option(Complex) {
+    return Some(new Complex{sin(x), cos(x)})
+}
+
+let functions: []fn(double) -> Option(Complex) = [ f1, f2, f3, f4, f5 ]
+
+fn Main() {
+    let myGame = new MyGame{}
+    let pge = PixelGameEngine::create(myGame, width, height)
+    if pge != null {
+        pge.start()
+    } else {
+        println("failed to create pixel game engine")
+    }
 }
 
 // */

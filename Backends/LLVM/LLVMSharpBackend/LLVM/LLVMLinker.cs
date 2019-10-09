@@ -168,7 +168,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 StringBuilder sb = new StringBuilder();
                 var programFilesX86 = Environment.ExpandEnvironmentVariables("%ProgramFiles(x86)%");
-                var p = Utilities.StartProcess($@"{programFilesX86}\Microsoft Visual Studio\Installer\vswhere.exe", "-nologo -latest -format json", stdout:
+                var p = Utilities.StartProcess($@"{programFilesX86}\Microsoft Visual Studio\Installer\vswhere.exe", "-nologo -format json", stdout:
                     (sender, e) =>
                     {
                         sb.AppendLine(e.Data);
@@ -180,11 +180,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 if (versions?.Length == 0)
                     return (-1, null);
 
-
                 if (versions.Length <= skipLatest)
-                    return (-1, null);
+                    skipLatest = versions.Length - 1;
 
-                var latest = versions[0];
+                var latest = versions.Skip(Math.Min(skipLatest, versions.Length - 1)).First();
+                System.Console.WriteLine($"vs version: {latest.installationVersion}");
 
                 var v = latest.installationVersion.Scan1(@"(\d+)\.(\d+)\.(\d+)\.(\d+)").Select(s => int.TryParse(s, out int i) ? i : 0).First();
                 var dir = latest.installationPath;

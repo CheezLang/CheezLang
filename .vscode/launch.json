@@ -8,7 +8,7 @@
 		"request": "launch",
 		// "preLaunchTask": "build",
 		"program": "${workspaceFolder}/bin/Debug/cheezc.dll",
-		"args": [],
+		"args": ["examples/test.che", "--out", "gen", "--stdlib", "examples", "--time", "--run"],
 		"cwd": "${workspaceFolder}",
 		"stopAtEntry": false,
 		"console": "internalConsole"
