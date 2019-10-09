@@ -21,6 +21,9 @@ fn cos(f: double) -> double;
 fn tanf(f: float) -> float;
 fn tan(f: double) -> double;
 
+fn atan2(a: double, b: double) -> double;
+fn pow(a: double, b: double) -> double;
+
 fn logf(f: float) -> float;
 fn log(f: double) -> double;
 
