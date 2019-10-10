@@ -116,9 +116,16 @@ impl PixelGameEngine {
 
         // vertical line
         if dx == 0 {
+            if x1 < 0 or x1 >= screen_width {
+                return
+            }
             if y2 < y1 {
                 (y1, y2) = (y2, y1)
             }
+
+            y1 = max(y1, 0)
+            y2 = min(y2, screen_height - 1)
+
             while let y = y1, y <= y2, y += 1 {
                 if rol(pattern) {
                     draw(x1, y, p)
@@ -129,9 +136,16 @@ impl PixelGameEngine {
 
         // horizontal line
         if dy == 0 {
+            if y1 < 0 or y1 >= screen_height {
+                return
+            }
             if x2 < x1 {
                 (x1, x2) = (x2, x1)
             }
+
+            x1 = max(x1, 0)
+            x2 = min(x2, screen_width - 1)
+
             while let x = x1, x <= x2, x += 1 {
                 if rol(pattern) {
                     draw(x, y1, p)
@@ -139,6 +153,49 @@ impl PixelGameEngine {
             }
             return
         }
+
+        // clamp horizontally
+        if x1 > x2 {
+            (x1, x2) = (x2, x1)
+            (y1, y2) = (y2, y1)
+        }
+        if x2 < 0 or x1 >= screen_width {
+            return
+        }
+        if x1 < 0 {
+            let slope = double(dy) / double(dx)
+            y1 += int(double(-x1) * slope)
+            x1 = 0
+        }
+        if x2 > screen_width - 1 {
+            let slope = double(dy) / double(dx)
+            y2 += int(double(screen_width - 1 - x2) * slope)
+            x2 = screen_width - 1
+        }
+
+        // clamp vertically
+        if y1 > y2 {
+            (x1, x2) = (x2, x1)
+            (y1, y2) = (y2, y1)
+        }
+        if y2 < 0 or y1 >= screen_height {
+            return
+        }
+        if y1 < 0 {
+            let slope = double(dx) / double(dy)
+            x1 += int(double(-y1) * slope)
+            y1 = 0
+        }
+        if y2 > screen_height - 1 {
+            let slope = double(dx) / double(dy)
+            x2 += int(double(screen_height - 1 - y2) * slope)
+            y2 = screen_height - 1
+        }
+
+        // diagonal lines
+        //
+        dx = x2 - x1
+        dy = y2 - y1
 
         let dx1 = abs(dx)
         let dy1 = abs(dy)

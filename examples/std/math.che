@@ -9,6 +9,7 @@ fn max(a: $T, b: T) -> T { return if a >= b then a else b }
 fn fmaxf(f1: float, f2: float) -> float;
 fn fmax(f1: double, f2: double) -> double;
 
+fn min(a: $T, b: T) -> T { return if a <= b then a else b }
 fn fminf(f1: float, f2: float) -> float;
 fn fmin(f1: double, f2: double) -> double;
 

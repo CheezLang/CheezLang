@@ -1,4 +1,4 @@
-let functions: []fn(double) -> Option(Complex) = [ f1, f2, f3, f4, f5, f6 ]
+let functions: []fn(double) -> Option(Complex) = [ f1, f2, f3, f4, f5, f6, f7, f8 ]
 
 fn f1(x: double) -> Option(Complex) {
     return Some(C(x, -x))
@@ -37,5 +37,13 @@ fn f5(x: double) -> Option(Complex) {
 }
 
 fn f6(x: double) -> Option(Complex) {
-    return Some(C(sin(x), cos(x)))
+    return Some(Complex::poww(C(-1), x))
+}
+
+fn f7(x: double) -> Option(Complex) {
+    return Some(C(x*x))
+}
+
+fn f8(x: double) -> Option(Complex) {
+    return Some(Complex::poww(C(2.7), x))
 }
