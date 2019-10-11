@@ -1,7 +1,10 @@
 #load("std:math")
 #load("std:printable")
+#load("std:hash_table")
 
-fn evaluate(x: double, code: []OpCode) -> Option(Complex) {
+typedef Variables = Table(string, Complex)
+
+fn evaluate(code: []OpCode, vars: ref Variables) -> Option(Complex) {
     let stack = @alloca(Complex, 128)
     let sp = 0
 
@@ -15,9 +18,16 @@ fn evaluate(x: double, code: []OpCode) -> Option(Complex) {
                 stack[sp] = new {0.0, val}
                 sp += 1
             }
-            OpCode.Var -> {
-                stack[sp] = new {x, 0.0}
-                sp += 1
+            OpCode.Var($name) -> {
+                match vars.get(name) {
+                    Some($v) -> {
+                        stack[sp] = <<&v
+                        sp += 1
+                    }
+                    None -> {
+                        return None
+                    }
+                }
             }
             OpCode.Neg -> {
                 stack[sp - 1] = Complex::neg(stack[sp - 1])
@@ -65,6 +75,9 @@ fn evaluate(x: double, code: []OpCode) -> Option(Complex) {
             }
             OpCode.Log -> {
                 let (r, p) = stack[sp - 1].polar()
+                if r == 0 {
+                    return None
+                }
                 stack[sp - 1] = new {log(r), p}
             }
             OpCode.Sin -> {
@@ -96,7 +109,7 @@ fn evaluate(x: double, code: []OpCode) -> Option(Complex) {
 enum OpCode {
     Real    : double
     Im      : double
-    Var
+    Var     : string
     Neg
     Con
     Add
@@ -116,9 +129,9 @@ impl Printable for OpCode {
         match self {
             Real($v)    -> str.appendf("Real({})", [v])
             Im($v)      -> str.appendf("Im({})", [v])
-            Var         -> str.append_string("Var")
+            Var($name)  -> str.appendf("Var({})", [name])
             Neg         -> str.append_string("Neg")
-            Con        -> str.append_string("Con")
+            Con         -> str.append_string("Con")
             Add         -> str.append_string("Add")
             Sub         -> str.append_string("Sub")
             Mul         -> str.append_string("Mul")

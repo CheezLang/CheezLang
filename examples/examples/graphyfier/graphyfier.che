@@ -1,34 +1,12 @@
-#load("evaluator")
-#load("compiler")
-
-// fn Main() {
-//     use OpCode
-
-//     let code = compile("(1 + 2) * 3")
-
-//     match code {
-//         Some($code) -> {
-//             println("====================")
-//             for : code.slice() {
-//                 printfln("    {}", [it])
-//             }
-//             println("====================")
-
-//             let res = evaluate(2.0, code.slice())
-//             println(res)
-//         }
-
-//         None -> {
-//             println("compilation failed")
-//         }
-//     }
-// }
-
 //*
 #load("std:io/io")
 #load("std:math")
 #load("../olc_pge/pixel_game_engine")
-#load("functions")
+#load("evaluator")
+#load("compiler")
+
+typedef vec2 = Vector2(double)
+typedef vec3 = Vector3(double)
 
 let width: int = 1600
 let height: int = 960
@@ -46,6 +24,11 @@ struct MyGame {
     last_mouse_pos: (x: double, y: double)
 
     function: Option(Array(OpCode)) = Option(Array(OpCode)).None
+
+    var_name_allocator: ArenaAllocator
+
+    // variables
+    variables       : Variables
 }
 
 fn map(x: double, a: double, b: double, c: double, d: double) -> double {
@@ -58,6 +41,10 @@ impl Game for MyGame {
 
         //function = compile("(3*x + 2*(-1)^x)/x")
         load_function_from_file()
+
+        variables["pi"] = new Complex{3.14159265359}
+        variables["e"]  = new Complex{2.71828182845}
+        variables["t"]  = new Complex{0.0}
         return true
     }
 
@@ -93,7 +80,8 @@ impl Game for MyGame {
 
         match load_file("function.txt") {
             Ok($content) -> {
-                function = compile(content.slice())
+                var_name_allocator.clear()
+                function = compile(content.slice(), var_name_allocator)
             }
 
             Err($msg) -> {
@@ -124,6 +112,17 @@ impl Game for MyGame {
 
         handle_input(dt)
         draw_grid()
+
+        let mouse_pos = pge.get_mouse_pos()
+        variables["mx"] = new Complex{double(mouse_pos.x) / double(width)}
+        variables["my"] = new Complex{1 - double(mouse_pos.y) / double(height)}
+
+        let mouse_pos_w = to_world(mouse_pos.x, mouse_pos.y)
+        variables["mxw"] = new Complex{mouse_pos_w.x}
+        variables["myw"] = new Complex{mouse_pos_w.y}
+
+        variables["t"] = <<&variables["t"] + new Complex{dt}
+
         draw_current_function()
 
         return true
@@ -131,8 +130,9 @@ impl Game for MyGame {
 
     fn evaluate_function(ref Self, x: double) -> Option(Complex) {
         //return functions[func_index % functions.length](x)
+        variables["x"] = new Complex{x, 0.0}
         return match function {
-            Some($f)    -> evaluate(x, f.slice())
+            Some($f)    -> evaluate(f.slice(), variables)
             None        -> None
         }
     }
@@ -262,7 +262,7 @@ impl Game for MyGame {
             let mouse_pos_world = to_world(mouse_pos.x, mouse_pos.y)
 
             yr *= 1 - double(pge.get_mouse_wheel()) * scroll_speed
-            yr = fmax(yr, 2)
+            yr = fmax(yr, 0.1)
             // aspect ratio
             xr = yr * double(width) / double(height)
 
@@ -283,8 +283,15 @@ impl Game for MyGame {
     }
 }
 
+fn compare_strings(a: string, b: string) -> bool {
+    return streq(a, b)
+}
+
 fn Main() {
-    let myGame = new MyGame{}
+    let myGame = new MyGame{
+        var_name_allocator = ArenaAllocator::create(1024)
+        variables = Variables::create(compare_strings)
+    }
     let pge = PixelGameEngine::create(myGame, width, height)
     if pge != null {
         pge.start()
