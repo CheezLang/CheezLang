@@ -1,0 +1,47 @@
+#load("std:preload")
+#load("std:os/windows")
+
+fn thread_func(data: &any) -> u32 #stdcall {
+    let thread = @cast(&ThreadData, data)
+    thread.func(thread.data)
+    return 0
+}
+
+struct Thread {
+    data: &ThreadData
+    handle: HANDLE
+}
+
+struct ThreadData {
+    pub data: &any
+    pub func: fn(&any)
+}
+
+impl Thread {
+    fn create(func: fn(&any), data: &any) -> Thread {
+        let td = alloc(ThreadData)
+        td.func = func
+        td.data = data
+
+        let handle = CreateThread(null, 0, thread_func, cast td, CREATE_SUSPENDED, null)
+        @assert(handle != null)
+        return new Thread {
+            data = td
+            handle = handle
+        }
+    }
+
+    fn start(ref Self) -> bool {
+        let res = ResumeThread(handle)
+        return res != -1
+    }
+
+    fn join(ref Self) {
+        // use INFINITE instead of this
+        WaitForSingleObject(handle, 100000000)
+    }
+
+    fn terminate(ref Self) {
+        TerminateThread(handle, -1)
+    }
+}

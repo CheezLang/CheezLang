@@ -1,5 +1,6 @@
 if const @static_assert(@is_os("windows"), "windows.che can only be loaded on windows") {}
 
+#load("std:preload")
 #load("windows_types")
 #load("windows_constants")
 #load("windows_functions")

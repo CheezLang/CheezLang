@@ -27,6 +27,7 @@ typedef BYTE            = u8
 typedef WORD            = u16
 typedef SIZE_T          = u64
 typedef THREAD_START_ROUTINE = fn(&any) -> DWORD #stdcall
+typedef WAITORTIMERCALLBACK = fn(&any, bool) #stdcall
 
 struct POINT {
     pub x: i32

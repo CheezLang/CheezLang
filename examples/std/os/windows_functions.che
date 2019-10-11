@@ -1,6 +1,40 @@
 #load("windows_types")
 #load("windows_macros")
 
+// new, incomplete
+fn FindFirstChangeNotificationA(
+    lpPathName: c_string,
+    bWatchSubtree: BOOL,
+    dwNotifyFilter: DWORD
+) -> HANDLE #stdcall;
+
+fn FindNextChangeNotification(hChangeHandle: HANDLE) -> BOOL #stdcall;
+fn FindCloseChangeNotification(hChangeHandle: HANDLE) -> BOOL #stdcall;
+fn RegisterWaitForSingleObject(
+  phNewWaitObject   : &HANDLE,
+  hObject           : HANDLE,
+  callback          : WAITORTIMERCALLBACK,
+  context           : &any,
+  dwMilliseconds    : u32,
+  dwFlags           : u32
+) -> BOOL #stdcall;
+
+fn ReadDirectoryChangesW(
+    hDirectory          : HANDLE,
+    lpBuffer            : &any,
+    nBufferLength       : DWORD,
+    bWatchSubtree       : BOOL,
+    dwNotifyFilter      : DWORD,
+    lpBytesReturned     : &DWORD,
+    lpOverlapped        : &any,
+    lpCompletionRoutine : &any
+) -> BOOL #stdcall;
+
+fn WaitForSingleObject(handle: &any, millis: DWORD) -> DWORD #stdcall;
+
+fn UnregisterWait(handle: HANDLE) #stdcall;
+//
+
 // command line
 fn GetCommandLineA() -> c_string #stdcall;
 fn GetCommandLineW() -> &u16 #stdcall;

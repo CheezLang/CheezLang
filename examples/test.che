@@ -11,4 +11,91 @@
 
 
 /*
+#load("std:io/io")
+#load("std:os/windows")
+
+typedef WAITORTIMERCALLBACK = fn(&any, bool) #stdcall
+
+let const FILE_NOTIFY_CHANGE_LAST_WRITE: DWORD = 0x00000010
+let const WT_EXECUTEONLYONCE: DWORD = 0x00000008
+
+fn _fullpath(absPath: &char, relPath: &char, maxLength: int) -> &char;
+
+fn FindFirstChangeNotificationA(
+    lpPathName: c_string,
+    bWatchSubtree: BOOL,
+    dwNotifyFilter: DWORD
+) -> HANDLE #stdcall;
+
+fn FindNextChangeNotification(hChangeHandle: HANDLE) -> BOOL #stdcall;
+fn FindCloseChangeNotification(hChangeHandle: HANDLE) -> BOOL #stdcall;
+fn RegisterWaitForSingleObject(
+  phNewWaitObject   : &HANDLE,
+  hObject           : HANDLE,
+  callback          : WAITORTIMERCALLBACK,
+  context           : &any,
+  dwMilliseconds    : u32,
+  dwFlags           : u32
+) -> BOOL #stdcall;
+
+fn ReadDirectoryChangesW(
+    hDirectory          : HANDLE,
+    lpBuffer            : &any,
+    nBufferLength       : DWORD,
+    bWatchSubtree       : BOOL,
+    dwNotifyFilter      : DWORD,
+    lpBytesReturned     : &DWORD,
+    lpOverlapped        : &any,
+    lpCompletionRoutine : &any
+) -> BOOL #stdcall;
+
+fn WaitForSingleObject(handle: &any, millis: DWORD) -> DWORD #stdcall;
+
+fn UnregisterWait(handle: HANDLE) #stdcall;
+
+fn dir_change_waiter_thread(_: &any) #stdcall {
+}
+
+let running: bool = true
+
+
+
+fn test(data: &any) {
+    println("test")
+    let running = @cast(&bool, data)
+    while <<running {
+        println("waiting...")
+        let res = WaitForSingleObject(handle, 1000)
+        if res == 0 {
+            println("change")
+            FindNextChangeNotification(handle)
+        } else {
+            // printfln("err: 0x{:x}", [res])
+        }
+    }
+}
+
+let handle: HANDLE = null
+
+fn Main() {
+    let fullpath = _fullpath(null, ".", 512)
+    defer free(fullpath)
+    printfln("watching for changes in {}", [fullpath])
+    handle = FindFirstChangeNotificationA(fullpath, 0, FILE_NOTIFY_CHANGE_LAST_WRITE)
+    defer FindCloseChangeNotification(handle)
+
+    let running = true
+    let t = Thread::create(test, &running)
+    // println(t.start())
+    t.start()
+    defer {
+        running = false
+        t.join()
+    }
+
+    Sleep(10 * 1000)
+
+    println("done")
+}
+
 // */

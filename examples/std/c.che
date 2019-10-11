@@ -12,3 +12,4 @@ fn c_strtod(str: c_string, endptr: &&char) -> double #linkname("strtod");
 fn c_rand() -> i32 #linkname("rand");
 fn c_srand(seed: u32) #linkname("srand");
 fn c_time(timer: &any) -> u32 #linkname("time");
+fn c_fullpath(absPath: &char, relPath: &char, maxLength: int) -> &char #linkname("_fullpath");

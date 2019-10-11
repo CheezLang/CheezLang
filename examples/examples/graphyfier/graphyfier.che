@@ -1,6 +1,7 @@
 //*
 #load("std:io/io")
 #load("std:math")
+#load("std:thread")
 #load("../olc_pge/pixel_game_engine")
 #load("evaluator")
 #load("compiler")
@@ -27,8 +28,26 @@ struct MyGame {
 
     var_name_allocator: ArenaAllocator
 
-    // variables
-    variables       : Variables
+    variables : Variables
+    dir_change_thread: Thread
+    pub wait_handle: HANDLE
+
+    last_file_change: double = -1
+}
+
+fn dir_change_thread_func(data: &any) {
+    let game = @cast(&MyGame, data)
+
+    while true {
+        let res = WaitForSingleObject(game.wait_handle, 1000)
+        if res == 0 {
+            // println("change")
+            game.file_changed()
+            FindNextChangeNotification(game.wait_handle)
+        } else {
+            // printfln("err: 0x{:x}", [res])
+        }
+    }
 }
 
 fn map(x: double, a: double, b: double, c: double, d: double) -> double {
@@ -36,20 +55,36 @@ fn map(x: double, a: double, b: double, c: double, d: double) -> double {
 }
 
 impl Game for MyGame {
-    fn on_create(ref Self, pge: &PixelGameEngine) -> bool{ 
+    fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
         self.pge = pge
 
-        //function = compile("(3*x + 2*(-1)^x)/x")
         load_function_from_file()
 
         variables["pi"] = new Complex{3.14159265359}
         variables["e"]  = new Complex{2.71828182845}
         variables["t"]  = new Complex{0.0}
+
+        // start thread for file changes
+        let fullpath = c_fullpath(null, ".", 512)
+        defer free(fullpath)
+        wait_handle = FindFirstChangeNotificationA(fullpath, 0, 0x00000008)
+        if wait_handle == null {
+            printfln("Failed to create file change watcher for file '{}'", [fullpath])
+        } else {
+            dir_change_thread = Thread::create(dir_change_thread_func, &self)
+            dir_change_thread.start()
+        }
         return true
     }
 
     fn on_destroy(ref Self) -> bool {
+        dir_change_thread.terminate()
+        FindCloseChangeNotification(wait_handle)
         return true
+    }
+
+    fn file_changed(ref Self) {
+        last_file_change = 0.1
     }
 
     fn to_pixel(ref Self, wx: double, wy: double) -> (x: int, y: int) {
@@ -102,6 +137,14 @@ impl Game for MyGame {
 
     fn on_update(ref Self, dt: float) -> bool {
         pge.clear()
+
+        // 
+        last_file_change -= dt
+        if last_file_change <= 0 and last_file_change > -1 {
+            load_function_from_file()
+            last_file_change = -2
+        }
+        last_file_change = max(last_file_change, -2.0)
 
         // update dimensions
         width = pge.get_width()
@@ -299,7 +342,7 @@ fn compare_strings(a: string, b: string) -> bool {
 }
 
 fn Main() {
-    let myGame = new MyGame{
+    let myGame = new MyGame {
         var_name_allocator = ArenaAllocator::create(1024)
         variables = Variables::create(compare_strings)
     }
