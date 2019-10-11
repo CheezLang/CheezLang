@@ -76,6 +76,10 @@ enum LexerNumberState {
 }
 
 impl Lexer {
+    fn from_raw_string(content: string, string_db: ref StringDatabase) -> Lexer {
+        return from_string(String::from_string(content), string_db)
+    }
+
     fn from_string(content: String, string_db: ref StringDatabase) -> Lexer {
         return new {
             text = content
@@ -210,6 +214,7 @@ impl Lexer {
             '<' -> simple_token(token, TokenType.Less)
             '>' -> simple_token(token, TokenType.Greater)
             '!' -> simple_token(token, TokenType.Bang)
+            '^' -> simple_token(token, TokenType.Caret)
 
             '"' -> {
                 parse_string_literal(token, TokenType.StringLiteral, '"')
@@ -450,8 +455,7 @@ impl Lexer {
             if c == end {
                 foundEnd = true
                 break
-            }
-            else if c == '``' {
+            } else if c == '``' {
                 if location.index >= text.length {
                     // TODO: report error
                     break
@@ -483,21 +487,13 @@ impl Lexer {
 
             if c == '/' and next == '*' {
                 parse_multi_line_comment()
-            }
-
-            else if c == '/' and next == '/' {
+            } else if c == '/' and next == '/' {
                 parse_single_line_comment()
-            }
-
-            else if c == ' ' or c == '`t' {
+            } else if c == ' ' or c == '`t' {
                 location.index += 1
-            }
-
-            else if c == '`r' {
+            } else if c == '`r' {
                 location.index += 1
-            }
-
-            else if c == '`n' {
+            } else if c == '`n' {
                 match loc {
                     None -> {
                         loc = Some(location)
@@ -507,9 +503,7 @@ impl Lexer {
                 location.line += 1
                 location.index += 1
                 location.line_start = location.index
-            }
-
-            else {
+            } else {
                 break
             }
         }
@@ -560,32 +554,34 @@ impl Lexer {
     fn check_keywords(ref Self, token: ref Token) {
         match token.data {
             TokenData.String($str) -> {
-                if      str == KwReturn     { token.ttype = TokenType.KwReturn }
-                else if str == KwNew        { token.ttype = TokenType.KwNew }
-                else if str == KwRef        { token.ttype = TokenType.KwRef }
-                else if str == KwFn         { token.ttype = TokenType.KwFn }
-                else if str == KwStruct     { token.ttype = TokenType.KwStruct }
-                else if str == KwEnum       { token.ttype = TokenType.KwEnum }
-                else if str == KwImpl       { token.ttype = TokenType.KwImpl }
-                else if str == KwConst      { token.ttype = TokenType.KwConst }
-                else if str == KwLet        { token.ttype = TokenType.KwLet }
-                else if str == KwTypedef    { token.ttype = TokenType.KwTypedef }
-                else if str == KwIf         { token.ttype = TokenType.KwIf }
-                else if str == KwElse       { token.ttype = TokenType.KwElse }
-                else if str == KwFor        { token.ttype = TokenType.KwFor }
-                else if str == KwWhile      { token.ttype = TokenType.KwWhile }
-                else if str == KwAnd        { token.ttype = TokenType.KwAnd }
-                else if str == KwOr         { token.ttype = TokenType.KwOr }
-                else if str == KwTrue       { token.ttype = TokenType.KwTrue }
-                else if str == KwFalse      { token.ttype = TokenType.KwFalse }
-                else if str == KwNull       { token.ttype = TokenType.KwNull }
-                else if str == KwUsing      { token.ttype = TokenType.KwUsing }
-                else if str == KwDefer      { token.ttype = TokenType.KwDefer }
-                else if str == KwMatch      { token.ttype = TokenType.KwMatch }
-                else if str == KwBreak      { token.ttype = TokenType.KwBreak }
-                else if str == KwContinue   { token.ttype = TokenType.KwContinue }
-                else if str == KwTrait      { token.ttype = TokenType.KwTrait }
-                else if str == KwCast       { token.ttype = TokenType.KwCast }
+                token.ttype =
+                    if      str == KwReturn     then TokenType.KwReturn
+                    else if str == KwNew        then TokenType.KwNew
+                    else if str == KwRef        then TokenType.KwRef
+                    else if str == KwFn         then TokenType.KwFn
+                    else if str == KwStruct     then TokenType.KwStruct
+                    else if str == KwEnum       then TokenType.KwEnum
+                    else if str == KwImpl       then TokenType.KwImpl
+                    else if str == KwConst      then TokenType.KwConst
+                    else if str == KwLet        then TokenType.KwLet
+                    else if str == KwTypedef    then TokenType.KwTypedef
+                    else if str == KwIf         then TokenType.KwIf
+                    else if str == KwElse       then TokenType.KwElse
+                    else if str == KwFor        then TokenType.KwFor
+                    else if str == KwWhile      then TokenType.KwWhile
+                    else if str == KwAnd        then TokenType.KwAnd
+                    else if str == KwOr         then TokenType.KwOr
+                    else if str == KwTrue       then TokenType.KwTrue
+                    else if str == KwFalse      then TokenType.KwFalse
+                    else if str == KwNull       then TokenType.KwNull
+                    else if str == KwUsing      then TokenType.KwUsing
+                    else if str == KwDefer      then TokenType.KwDefer
+                    else if str == KwMatch      then TokenType.KwMatch
+                    else if str == KwBreak      then TokenType.KwBreak
+                    else if str == KwContinue   then TokenType.KwContinue
+                    else if str == KwTrait      then TokenType.KwTrait
+                    else if str == KwCast       then TokenType.KwCast
+                    else                             token.ttype
             }
         }
     }

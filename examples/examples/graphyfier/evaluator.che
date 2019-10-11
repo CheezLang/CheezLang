@@ -1,0 +1,133 @@
+#load("std:math")
+#load("std:printable")
+
+fn evaluate(x: double, code: []OpCode) -> Option(Complex) {
+    let stack = @alloca(Complex, 128)
+    let sp = 0
+
+    for op : code {
+        match op {
+            OpCode.Real($val) -> {
+                stack[sp] = new {val, 0.0}
+                sp += 1
+            }
+            OpCode.Im($val) -> {
+                stack[sp] = new {0.0, val}
+                sp += 1
+            }
+            OpCode.Var -> {
+                stack[sp] = new {x, 0.0}
+                sp += 1
+            }
+            OpCode.Neg -> {
+                stack[sp - 1] = Complex::neg(stack[sp - 1])
+            }
+            OpCode.Con -> {
+                stack[sp - 1] = Complex::conj(stack[sp - 1])
+            }
+            OpCode.Add -> {
+                stack[sp - 2] = stack[sp - 2] + stack[sp - 1]
+                sp -= 1
+            }
+            OpCode.Sub -> {
+                stack[sp - 2] = stack[sp - 2] - stack[sp - 1]
+                sp -= 1
+            }
+            OpCode.Mul -> {
+                stack[sp - 2] = stack[sp - 2] * stack[sp - 1]
+                sp -= 1
+            }
+            OpCode.Div -> {
+                let x = stack[sp - 1]
+
+                if (x.r * x.r + x.i * x.i) < 0.0001 {
+                    return None
+                }
+
+                stack[sp - 2] = stack[sp - 2] / x
+                sp -= 1
+            }
+            OpCode.Pow -> {
+                let u = stack[sp - 2]
+                let v = stack[sp - 1]
+
+                if u.r != 0 or u.i != 0 {
+                    let (r, p) = u.polar()
+
+                    let ln_r = log(r)
+                    let res_r = exp(v.r * ln_r - v.i * p)
+                    let res_p = v.i * ln_r + v.r * p
+
+                    stack[sp - 2] = Complex::from_polar(res_r, res_p)
+                }
+
+                sp -= 1
+            }
+            OpCode.Log -> {
+                let (r, p) = stack[sp - 1].polar()
+                stack[sp - 1] = new {log(r), p}
+            }
+            OpCode.Sin -> {
+                let u = stack[sp - 1]
+                stack[sp - 1] = new {
+                    r = sin(u.r) * cosh(u.i)
+                    i = cos(u.r) * sinh(u.i)
+                }
+            }
+            OpCode.Cos -> {
+                let u = stack[sp - 1]
+                stack[sp - 1] = new {
+                    r =  cos(u.r) * cosh(u.i)
+                    i = -sin(u.r) * sinh(u.i)
+                }
+            }
+
+            $_ -> {
+                @assert(false, "not implemented")
+            }
+        }
+    }
+
+    @assert(sp == 1)
+
+    return Some(stack[0])
+}
+
+enum OpCode {
+    Real    : double
+    Im      : double
+    Var
+    Neg
+    Con
+    Add
+    Sub
+    Mul
+    Div
+    Pow
+    Log
+    Sin
+    Cos
+    Grp
+}
+
+impl Printable for OpCode {
+    fn print(ref Self, str: ref String, format: string) {
+        use OpCode
+        match self {
+            Real($v)    -> str.appendf("Real({})", [v])
+            Im($v)      -> str.appendf("Im({})", [v])
+            Var         -> str.append_string("Var")
+            Neg         -> str.append_string("Neg")
+            Con        -> str.append_string("Con")
+            Add         -> str.append_string("Add")
+            Sub         -> str.append_string("Sub")
+            Mul         -> str.append_string("Mul")
+            Div         -> str.append_string("Div")
+            Pow         -> str.append_string("Pow")
+            Log         -> str.append_string("Log")
+            Sin         -> str.append_string("Sin")
+            Cos         -> str.append_string("Cos")
+            Grp         -> str.append_string("Grp")
+        }
+    }
+}

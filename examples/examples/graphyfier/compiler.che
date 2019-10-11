@@ -1,0 +1,198 @@
+#load("std:array")
+#load("evaluator")
+#load("../../compiler/lexer")
+
+fn get_precedence(op: OpCode) -> int {
+    return match op {
+        OpCode.Grp -> 0
+        OpCode.Neg -> 1
+        OpCode.Sin -> 1
+        OpCode.Cos -> 1
+        OpCode.Log -> 1
+        OpCode.Pow -> 2
+        OpCode.Mul -> 3
+        OpCode.Div -> 3
+        OpCode.Add -> 4
+        OpCode.Sub -> 4
+        $_ -> {
+            @assert(false)
+            -1
+        }
+    }
+}
+
+fn compile(expr: string) -> Option(Array(OpCode)) {
+    let res = Array(OpCode)::create()
+    
+    let string_db = StringDatabase::create()
+    let lexer = Lexer::from_raw_string(expr, string_db)
+
+    let op_stack = Array(OpCode)::create()
+
+    let last_was_expression = false
+
+    while true {
+        let tok = lexer.next_token()
+
+        match tok.ttype {
+            TokenType.EOF -> break
+        }
+
+        if last_was_expression {
+            last_was_expression = false
+            match tok.ttype {
+                TokenType.Plus -> {
+                    let p = get_precedence(OpCode.Add)
+                    while op_stack.get_length() > 0 and get_precedence(op_stack.peek_last()) <= p {
+                        if int(op_stack.peek_last()) == int(OpCode.Grp) then break
+                        res.add(op_stack.pop())
+                    }
+                    op_stack.push(OpCode.Add)
+                }
+                TokenType.Minus -> {
+                    let p = get_precedence(OpCode.Sub)
+                    while op_stack.get_length() > 0 and get_precedence(op_stack.peek_last()) <= p {
+                        if int(op_stack.peek_last()) == int(OpCode.Grp) then break
+                        res.add(op_stack.pop())
+                    }
+                    op_stack.push(OpCode.Sub)
+                }
+                TokenType.Asterisk -> {
+                    let p = get_precedence(OpCode.Mul)
+                    while op_stack.get_length() > 0 and get_precedence(op_stack.peek_last()) <= p {
+                        if int(op_stack.peek_last()) == int(OpCode.Grp) then break
+                        res.add(op_stack.pop())
+                    }
+                    op_stack.push(OpCode.Mul)
+                }
+                TokenType.ForwardSlash -> {
+                    let p = get_precedence(OpCode.Div)
+                    while op_stack.get_length() > 0 and get_precedence(op_stack.peek_last()) <= p {
+                        if int(op_stack.peek_last()) == int(OpCode.Grp) then break
+                        res.add(op_stack.pop())
+                    }
+                    op_stack.push(OpCode.Div)
+                }
+                TokenType.Caret -> {
+                    let p = get_precedence(OpCode.Pow)
+                    while op_stack.get_length() > 0 and get_precedence(op_stack.peek_last()) <= p {
+                        if int(op_stack.peek_last()) == int(OpCode.Grp) then break
+                        res.add(op_stack.pop())
+                    }
+                    op_stack.push(OpCode.Pow)
+                }
+                TokenType.ClosingParen -> {
+                    let p = get_precedence(OpCode.Grp)
+                    while op_stack.get_length() > 0 and get_precedence(op_stack.peek_last()) > p {
+                        res.add(op_stack.pop())
+                    }
+                    if op_stack.get_length() == 0 {
+                        println("[ERROR] Mismatched parenthesis")
+                        return None
+                    }
+                    op_stack.pop()
+                    last_was_expression = true
+                }
+
+                $_ -> {
+                    printfln("[ERROR] {}: Unexpected token '{}'", [tok.location, tok.ttype])
+                    return None
+                }
+            }
+        } else {
+            last_was_expression = true
+
+            match tok.ttype {
+                TokenType.NumberLiteral -> {
+                    let is_real = match tok.suffix {
+                        Some($s) -> {
+                            if streq(s, "i") {
+                                false
+                            } else {
+                                printfln("[ERROR] {}: Invalid suffix '{}'", [tok.location, s])
+                                return None
+                            }
+                        }
+                        None -> true
+                    }
+
+                    match tok.data {
+                        TokenData.Integer($v) -> {
+                            if is_real then
+                                res.add(OpCode.Real(double(v)))
+                            else
+                                res.add(OpCode.Im(double(v)))
+                        }
+
+                        TokenData.Double($v) -> {
+                            if is_real then
+                                res.add(OpCode.Real(v))
+                            else
+                                res.add(OpCode.Im(v))
+                        }
+
+                        $_ -> @assert(false)
+                    }
+                }
+
+                TokenType.Identifier -> {
+                    match tok.data {
+                        TokenData.String($v) -> {
+                            if streq(v, "i") {
+                                res.add(OpCode.Im(1.0))
+                            } else if streq(v, "x") {
+                                res.add(OpCode.Var)
+                            } else if streq(v, "sin") {
+                                op_stack.push(OpCode.Sin)
+                                last_was_expression = false
+                            } else if streq(v, "cos") {
+                                op_stack.push(OpCode.Cos)
+                                last_was_expression = false
+                            } else if streq(v, "ln") {
+                                op_stack.push(OpCode.Log)
+                                last_was_expression = false
+                            }
+                        }
+
+                        $_ -> @assert(false)
+                    }
+                }
+
+                TokenType.Minus -> {
+                    op_stack.push(OpCode.Neg)
+                    last_was_expression = false
+                }
+
+                TokenType.OpenParen -> {
+                    op_stack.push(OpCode.Grp)
+                    last_was_expression = false
+                }
+
+                $_ -> {
+                    printfln("[ERROR] {}: Unexpected token '{}'", [tok.location, tok.ttype])
+                    return None
+                }
+            }
+        }
+    }
+
+    while op_stack.get_length() > 0 {
+        if int(op_stack.peek_last()) == int(OpCode.Grp) {
+            println("[ERROR] Mismatched parenthesis")
+            return None
+        }
+        res.add(op_stack.pop())
+    }
+
+    if res.get_length() == 0 {
+        println("[ERROR] Empty input")
+        return None
+    }
+
+    if !last_was_expression {
+        println("[ERROR] Invalid expression")
+        return None
+    }
+
+    return Some(res)
+}
