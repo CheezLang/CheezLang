@@ -1,4 +1,5 @@
 // #load("examples/trait_function_call_performance")
+#load("examples/graphyfier/graphyfier")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
@@ -8,7 +9,6 @@
 //#load("tests/other/test1")
 // #load("examples/project_euler/18_maximum_path_sum_1")
 
-#load("examples/graphyfier/graphyfier")
 
 /*
 // */

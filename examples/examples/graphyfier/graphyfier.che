@@ -280,6 +280,17 @@ impl Game for MyGame {
         if pge.get_key(Key.F5).pressed {
             load_function_from_file()
         }
+
+        if pge.get_mouse(2).pressed {
+            let mouse_x_world = to_world(pge.get_mouse_pos().x, 0).x
+            match evaluate_function(mouse_x_world) {
+                Some($c) -> {
+                    printfln("f({}) = {}", [mouse_x_world, c])
+                }
+
+                None -> printfln("f({}) is undefined", [mouse_x_world])
+            }
+        }
     }
 }
 
