@@ -75,6 +75,27 @@ impl(T: type) Array(T) {
         length += 1
     }
 
+    fn push(ref Self, val: T) {
+        if get_capacity() <= get_length() {
+            reserve(get_capacity() * 2)
+        }
+
+        data[length] = val
+        length += 1
+    }
+
+    fn pop(ref Self) -> T {
+        @assert(length > 0)
+
+        length -= 1
+        return data[length]
+    }
+
+    fn peek_last(ref Self) -> ref T {
+        @assert(length > 0, "Array is empty")
+        return data[length - 1]
+    }
+
     fn get(ref Self, index: int) -> Option(T) {
         if index < 0 or index >= length {
             return None

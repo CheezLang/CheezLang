@@ -1,3 +1,5 @@
+#load("std:preload")
+
 fn sqrtf(f: float) -> float;
 fn sqrt(f: double) -> double;
 
@@ -15,15 +17,18 @@ fn fmin(f1: double, f2: double) -> double;
 
 fn sinf(f: float) -> float;
 fn sin(f: double) -> double;
+fn sinh(f: double) -> double;
 
 fn cosf(f: float) -> float;
 fn cos(f: double) -> double;
+fn cosh(f: double) -> double;
 
 fn tanf(f: float) -> float;
 fn tan(f: double) -> double;
 
 fn atan2(a: double, b: double) -> double;
 fn pow(a: double, b: double) -> double;
+fn exp(a: double) -> double;
 
 fn logf(f: float) -> float;
 fn log(f: double) -> double;
@@ -340,5 +345,117 @@ impl(T: type) Vector3(T) {
 
     fn change_type(ref Self, $TargetType: type) -> Vector3(TargetType) {
         return new { TargetType(x), TargetType(y), TargetType(z) }
+    }
+}
+
+struct Complex #copy {
+    pub r: double
+    pub i: double
+}
+
+impl Complex {
+    fn real(r: double) -> Self {
+        return new {r, 0}
+    }
+
+    fn imaginary(i: double) -> Self {
+        return new {0, i}
+    }
+
+    fn from_polar(m: double, p: double) -> Self {
+        return new { r = m * cos(p), i = m * sin(p) }
+    }
+
+    fn add(a: Complex, b: Complex) -> Self #operator("+") {
+        return new {
+            r = a.r + b.r
+            i = a.i + b.i
+        }
+    }
+
+    fn add2(a: Complex, b: double) -> Self #operator("+") {
+        return new {
+            r = a.r + b
+            i = a.i
+        }
+    }
+
+    fn sub(a: Complex, b: Complex) -> Self #operator("-") {
+        return new {
+            r = a.r - b.r
+            i = a.i - b.i
+        }
+    }
+
+    fn sub2(a: Complex, b: double) -> Self #operator("-") {
+        return new {
+            r = a.r - b
+            i = a.i
+        }
+    }
+
+    fn neg(a: Complex) -> Self #operator("-") {
+        return new {
+            r = -a.r
+            i = -a.i
+        }
+    }
+
+    fn conj(a: Complex) -> Self #operator("!") {
+        return new {
+            r = a.r
+            i = -a.i
+        }
+    }
+
+    fn mul(a: Complex, b: Complex) -> Self #operator("*") {
+        return new {
+            r = a.r * b.r - a.i * b.i
+            i = a.r * b.i + a.i * b.r
+        }
+    }
+
+    fn mul2(a: Complex, b: double) -> Self #operator("*") {
+        return new {
+            r = a.r * b
+            i = a.i * b
+        }
+    }
+
+    fn div(a: Complex, b: Complex) -> Self #operator("/") {
+        let fac = 1 / (b.r * b.r + b.i * b.i)
+        return new {
+            r = fac * (a.r * b.r + a.i * b.i)
+            i = fac * (a.r * b.i - a.i * b.r)
+        }
+    }
+
+    fn div2(a: Complex, b: double) -> Self #operator("/") {
+        return new {
+            r = a.r / b
+            i = a.i / b
+        }
+    }
+
+    fn poww(a: Complex, e: double) -> Self {
+        if a.r == 0 and a.i == 0 {
+            return a
+        }
+
+        let r = sqrt(a.r * a.r + a.i * a.i)
+        let p = atan2(a.i, a.r)
+
+        r = pow(r, e)
+        p = p * e
+
+        return new {
+            r * cos(p)
+            r * sin(p)
+        }
+    }
+
+    fn polar(Self) -> (m: double, p: double) {
+        m = sqrt(self.r * self.r + self.i * self.i)
+        p = atan2(self.i, self.r)
     }
 }
