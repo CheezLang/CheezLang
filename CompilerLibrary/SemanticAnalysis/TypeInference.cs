@@ -1325,6 +1325,14 @@ namespace Cheez
                 {
                     expr.Type = expr.IfCase.Type;
                 }
+                else if ((expr.IfCase.GetFlag(ExprFlags.Returns) || expr.IfCase.GetFlag(ExprFlags.Breaks)) != (expr.ElseCase.GetFlag(ExprFlags.Returns) || expr.ElseCase.GetFlag(ExprFlags.Breaks)))
+                {
+                    // one of both returns or breaks -> type is type of non returning/breaking case
+                    if (expr.IfCase.GetFlag(ExprFlags.Returns) || expr.IfCase.GetFlag(ExprFlags.Breaks))
+                        expr.Type = expr.ElseCase.Type;
+                    else
+                        expr.Type = expr.IfCase.Type;
+                }
                 else
                 {
                     expr.Type = SumType.GetSumType(expr.IfCase.Type, expr.ElseCase.Type);
