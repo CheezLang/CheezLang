@@ -1160,10 +1160,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateCallExpr(AstCallExpr c)
         {
-            if (c.FunctionExpr.ToString()== "String::from_raw_ptr")
-            {
-
-            }
             if (c.Declaration?.Trait != null)
             {
                 // call to a trait function
@@ -1459,9 +1455,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         if (expr.Right.Name == "data")
                         {
-                            var dataPtrPtr = builder.CreateStructGEP(value, 1, "");
-                            if (!deref) return dataPtrPtr;
-                            var dataPtr = builder.CreateLoad(dataPtrPtr, "");
+                            var dataPtr = builder.CreateStructGEP(value, 1, "");
                             return dataPtr;
                         }
                         else if (expr.Right.Name == "length")
