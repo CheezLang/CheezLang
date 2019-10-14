@@ -241,7 +241,7 @@ impl(T: type) Vector3(T) {
         return self
     }
 
-    fn normalized(ref Self) -> Self {
+    fn normalized(Self) -> Self {
         let mag = self.mag()
         if mag != 0 {
             return new {
@@ -275,11 +275,27 @@ impl(T: type) Vector3(T) {
         }
     }
 
+    fn addvs(a: Self, b: T) -> Self #operator("+") {
+        return new {
+            a.x + b
+            a.y + b
+            a.z + b
+        }
+    }
+
     fn subvv(a: Self, b: Self) -> Self #operator("-") {
         return new {
             a.x - b.x
             a.y - b.y
             a.z - b.z
+        }
+    }
+
+    fn subvs(a: Self, b: T) -> Self #operator("-") {
+        return new {
+            a.x - b
+            a.y - b
+            a.z - b
         }
     }
 
@@ -329,6 +345,18 @@ impl(T: type) Vector3(T) {
 
     fn reflect(ref Self, normal: Self) -> Self {
         return normal * -Self::dot(self, normal) * T(2) + <<&self
+    }
+
+    fn refract(ref Self, normal: Self, ior: double) -> Option(Self) {
+        let uv = self
+        let dt = Self::dot(uv, normal)
+        let discriminant = 1.0 - ior * ior * (1 - dt * dt)
+        if discriminant > 0 {
+            let refr = (uv - normal * dt) * ior - normal * sqrt(discriminant)
+            return Some(refr)
+        } else {
+            return None
+        }
     }
 
     fn max_component(ref Self) -> T {

@@ -1,0 +1,75 @@
+#load("std:array")
+#load("std:math")
+#load("misc")
+#load("material")
+
+struct HitRecord {
+    pub const t: double
+    pub const p: vec3
+    pub const n: vec3
+    pub const m: Material
+}
+
+trait Hittable {
+    fn hit(ref Self, r: ref Ray, t_min: double, t_max: double) -> Option(HitRecord);
+}
+
+struct Sphere {
+    pub const center: vec3
+    pub const radius: double
+    pub const material: Material
+}
+
+impl Hittable for Sphere {
+    fn hit(ref Self, r: ref Ray, t_min: double, t_max: double) -> Option(HitRecord) {
+        let oc = r.origin - center
+        let b = vec3::dot(oc, r.direction)
+        let c = vec3::dot(oc, oc) - radius * radius
+        let discriminant = b * b - c
+
+        if discriminant > 0 {
+            let sqrt_dis = sqrt(discriminant)
+
+            let temp = -b - sqrt_dis
+            if temp < t_max and temp > t_min {
+                let point = r.at(temp)
+                return Some(new HitRecord{
+                    t = temp
+                    p = point
+                    n = (point - center) / radius
+                    m = material
+                })
+            }
+
+            temp = -b + sqrt_dis
+            if temp < t_max and temp > t_min {
+                let point = r.at(temp)
+                return Some(new HitRecord{
+                    t = temp
+                    p = point
+                    n = (point - center) / radius
+                    m = material
+                })
+            }
+        }
+        return None
+    }
+}
+
+
+impl Hittable for Array(Hittable) {
+    fn hit(ref Self, r: ref Ray, t_min: double, t_max: double) -> Option(HitRecord) {
+        let hit = Option(HitRecord).None
+        let closest = t_max
+        for : self.slice() {
+            match it.hit(r, t_min, closest) {
+                Some($h) -> {
+                    hit = Some(h)
+                    closest = h.t
+                }
+            }
+        }
+
+        return hit
+    }
+}

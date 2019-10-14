@@ -88,6 +88,34 @@ fn write_filecb(filename: c_string, data: []u8) -> bool {
     return true
 }
 
+fn write_file_string(filename: string, str: string) -> bool {
+    let filename_c = {
+        let str_c = @alloca(char, filename.length + 1)
+        str_c[filename.length] = cast 0
+        c_memcpy(cast str_c, cast filename.data, cast filename.length)
+        str_c
+    }
+
+    let handle = CreateFileA(filename_c, GENERIC_WRITE, FILE_SHARE_WRITE, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null)
+    if (cast(int)handle) == -1 {
+        println("failed to create file")
+        return false
+    }
+
+    let bytesRead: u32 = 0
+    if WriteFile(handle, cast str.data, cast(u32)str.length, &bytesRead, null) == 0 {
+        println("failed to write data")
+        return false
+    }
+
+    if CloseHandle(handle) == 0 {
+        println("failed to close handle")
+        return false
+    }
+
+    return true
+}
+
 // fn get_working_dir() -> wd: String {
 //     let len = cast(int) GetCurrentDirectory(0, null)
 

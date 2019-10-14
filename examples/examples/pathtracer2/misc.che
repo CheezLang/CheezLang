@@ -1,0 +1,104 @@
+#load("std:math")
+
+typedef vec3 = Vector3(double)
+
+let random: MTwister = MTwister::create(0)
+
+fn random_in_unit_sphere() -> vec3 {
+    let p: vec3 = default
+    while true {
+        let r = new vec3{random.next_double(), random.next_double(), random.next_double()}
+        p = r * 2.0 - new vec3{1, 1, 1}
+        if p.magsq() < 1 {
+            break
+        }
+    }
+
+    return p
+}
+
+fn random_in_unit_disk() -> vec3 {
+    let p: vec3 = default
+    while true {
+        let r = new vec3{random.next_double(), random.next_double(), 0.0}
+        p = r * 2.0 - new vec3{1, 1, 0.0}
+        if p.magsq() < 1 {
+            break
+        }
+    }
+
+    return p
+}
+
+struct Ray #copy {
+    pub const origin    : vec3
+    pub const direction : vec3
+}
+
+impl Ray {
+    fn from_to(a: vec3, b: vec3) -> Ray {
+        let dir = b - a
+        return new{a, dir.normalized()}
+    }
+
+    fn from_dir(a: vec3, dir: vec3) -> Ray {
+        return new{a, dir.normalized()}
+    }
+
+    fn at(ref Self, t: double) -> vec3 {
+        return origin + direction * t
+    }
+}
+
+struct Camera {
+    origin              : vec3
+    lower_left_corner   : vec3
+    horizontal          : vec3
+    vertical            : vec3
+
+    u: vec3
+    v: vec3
+    w: vec3
+
+    lens_radius: double
+}
+
+impl Camera {
+    fn create(pos: vec3, lookat: vec3, fov: double, aspect_ratio: double, aperture: double, focus_dist: double) -> Self {
+        let theta = fov * 3.1415 / 180
+        let half_height = tan(theta / 2.0)
+        let half_width = aspect_ratio * half_height
+
+        let up = new vec3{0, 1, 0}
+        let w = vec3::normalized(pos - lookat)
+        let u = vec3::cross(up, w).normalized()
+        let v = vec3::cross(w, u)
+
+        return new {
+            lower_left_corner   = pos - u * half_width * focus_dist - v * half_height * focus_dist - w * focus_dist
+            horizontal          = u * 2.0 * half_width * focus_dist
+            vertical            = v * 2.0 * half_height * focus_dist
+            origin              = pos
+            u = u, v = v, w = w
+            lens_radius = aperture * 0.5
+        }
+    }
+
+    fn get_ray(ref Self, s: double, t: double) -> Ray {
+        let rd = random_in_unit_disk() * lens_radius
+        let offset = u * rd.x + v * rd.y
+        return Ray::from_to(origin + offset, lower_left_corner + horizontal * s + vertical * t)
+    }
+}
+
+impl Printable for vec3 {
+    fn print(ref Self, str: ref String, format: string) {
+        str.appendf("v3({}, {}, {})", [x, y, z])
+    }
+}
+
+impl Printable for Ray {
+    fn print(ref Self, str: ref String, format: string) {
+        str.appendf("ray({}, {})", [origin, direction])
+    }
+}
