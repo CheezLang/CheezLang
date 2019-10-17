@@ -1290,8 +1290,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                                     var length_ptr = builder.CreateStructGEP(slice, 0, "slice_length_ptr");
                                     length_ptr = builder.CreateLoad(length_ptr, "slice_length");
 
+                                    var dataOffset = builder.CreateMul(range_begin, LLVM.ConstInt(LLVM.Int64Type(), (ulong)s.TargetType.Size, false), "");
                                     dataPtr = builder.CreatePtrToInt(dataPtr, LLVM.Int64Type(), "");
-                                    dataPtr = builder.CreateAdd(dataPtr, range_begin, "data_new");
+                                    dataPtr = builder.CreateAdd(dataPtr, dataOffset, "data_new");
                                     dataPtr = builder.CreateIntToPtr(dataPtr, CheezTypeToLLVMType(s.TargetType).GetPointerTo(), "data_new_ptr");
                                     length_ptr = builder.CreateSub(range_end, range_begin, "length_new");
 
