@@ -4,31 +4,35 @@
 #load("material")
 
 struct HitRecord {
-    pub const t: double
-    pub const p: vec3
-    pub const n: vec3
-    pub const m: Material
+    pub t: Real
+    pub p: vec3
+    pub n: vec3
+    pub m: Material
+    pub u: Real
+    pub v: Real
 }
 
 trait Hittable {
-    fn hit(ref Self, r: ref Ray, t_min: double, t_max: double) -> Option(HitRecord);
+    fn hit(ref Self, r: ref Ray, t_min: Real, t_max: Real) -> Option(HitRecord);
+    fn bounding_box(ref Self) -> Option(AABB);
 }
 
+//
 struct Sphere {
     pub const center: vec3
-    pub const radius: double
+    pub const radius: Real
     pub const material: Material
 }
 
 impl Hittable for Sphere {
-    fn hit(ref Self, r: ref Ray, t_min: double, t_max: double) -> Option(HitRecord) {
+    fn hit(ref Self, r: ref Ray, t_min: Real, t_max: Real) -> Option(HitRecord) {
         let oc = r.origin - center
         let b = vec3::dot(oc, r.direction)
         let c = vec3::dot(oc, oc) - radius * radius
         let discriminant = b * b - c
 
         if discriminant > 0 {
-            let sqrt_dis = sqrt(discriminant)
+            let sqrt_dis = Real(sqrt(discriminant))
 
             let temp = -b - sqrt_dis
             if temp < t_max and temp > t_min {
@@ -54,11 +58,18 @@ impl Hittable for Sphere {
         }
         return None
     }
+
+    fn bounding_box(ref Self) -> Option(AABB) {
+        return Some(AABB::create(
+            center - new vec3{radius, radius, radius},
+            center + new vec3{radius, radius, radius}
+        ))
+    }
 }
 
-
+//
 impl Hittable for Array(Hittable) {
-    fn hit(ref Self, r: ref Ray, t_min: double, t_max: double) -> Option(HitRecord) {
+    fn hit(ref Self, r: ref Ray, t_min: Real, t_max: Real) -> Option(HitRecord) {
         let hit = Option(HitRecord).None
         let closest = t_max
         for : self.slice() {
@@ -71,5 +82,290 @@ impl Hittable for Array(Hittable) {
         }
 
         return hit
+    }
+
+    fn bounding_box(ref Self) -> Option(AABB) {
+        if self.get_length() == 0 {
+            return None
+        }
+
+        let box = match self[0].bounding_box() {
+            Some($aabb) -> aabb
+            None -> {
+                return None
+                AABB(default)
+            }
+        }
+
+        for : self.sliceF(1) {
+            box = match it.bounding_box() {
+                Some($aabb) -> AABB::surrounding_box(box, aabb)
+                None -> {
+                    return None
+                    AABB(default)
+                }
+            }
+        }
+
+        return Some(box)
+    }
+}
+
+//
+struct BhvNode {
+    left    : Hittable
+    right   : Hittable
+    box     : AABB
+}
+
+fn test_macro(name: string, arr: []Hittable) {
+    let address = int(arr.data)
+    printfln("{}: [{}] {}", [name, address, arr.length])
+    for : arr {
+        it.bounding_box()
+    }
+}
+
+fn quick_sort(arr: []Hittable, cmp: fn (Hittable, Hittable) -> int) {
+        if arr.length <= 1 {
+            return
+        }
+
+        let idx = 0
+        let pivot = arr[arr.length - 1]
+        while let i = 0, i < arr.length - 1, i += 1 {
+            if cmp(arr[i], pivot) > 0 {
+                (arr[idx], arr[i]) = (arr[i], arr[idx])
+                idx += 1
+            }
+        }
+        (arr[idx], arr[arr.length - 1]) = (arr[arr.length - 1], arr[idx])
+
+        quick_sort(arr[0..idx], cmp)
+        quick_sort(arr[idx+1..arr.length], cmp)
+    }
+
+fn box_compare_x(a: Hittable, b: Hittable) -> int {
+    return match (a.bounding_box(), b.bounding_box()) {
+        (Some($a), Some($b)) -> if a._min.x - b._min.x < 0 then -1 else 1
+
+        $_ -> {
+            println("no bounding box in BhvNode constructor")
+            0
+        }
+    }
+}
+
+fn box_compare_y(a: Hittable, b: Hittable) -> int {
+    return match (a.bounding_box(), b.bounding_box()) {
+        (Some($a), Some($b)) -> if a._min.y - b._min.y < 0 then -1 else 1
+
+        $_ -> {
+            println("no bounding box in BhvNode constructor")
+            0
+        }
+    }
+}
+
+fn box_compare_z(a: Hittable, b: Hittable) -> int {
+    return match (a.bounding_box(), b.bounding_box()) {
+        (Some($a), Some($b)) -> if a._min.z - b._min.z < 0 then -1 else 1
+
+        $_ -> {
+            println("no bounding box in BhvNode constructor")
+            0
+        }
+    }
+}
+
+impl BhvNode {
+    fn create(l: []Hittable) -> BhvNode {
+        let compare_funcs = [box_compare_x, box_compare_y, box_compare_z]
+        quick_sort(l, compare_funcs[int(random_real() * 3)])
+
+        let (left, right) = if l.length == 1 {
+            (l[0], l[0])
+        } else if l.length == 2 {
+            (l[0], l[1])
+        } else {
+            let mid = l.length / 2
+            let a = alloc(BhvNode)
+            <<a = BhvNode::create(l[0..mid])
+            let b = alloc(BhvNode)
+            <<b = BhvNode::create(l[mid..l.length])
+            (Hittable(<<a), Hittable(<<b))
+        }
+
+        let aabb = match (left.bounding_box(), right.bounding_box()) {
+            (Some($a), Some($b)) -> AABB::surrounding_box(a, b)
+            $_ -> {
+                println("no bounding box in BhvNode constructor")
+                AABB(default)
+            }
+        }
+
+        return new{left, right, aabb}
+    }
+}
+
+impl Hittable for BhvNode {
+    fn hit(ref Self, r: ref Ray, t_min: Real, t_max: Real) -> Option(HitRecord) {
+        if box.hit(r, t_min, t_max) {
+            let hit_left = left.hit(r, t_min, t_max)
+            let hit_right = right.hit(r, t_min, t_max)
+
+            return match (hit_left, hit_right) {
+                (None, None)                        -> None
+                (Some($hit), None)                  -> Some(hit)
+                (None, Some($hit))                  -> Some(hit)
+                (Some($hit_left), Some($hit_right)) -> Some(if hit_left.t < hit_right.t then hit_left else hit_right)
+            }
+        }
+
+        return None
+    }
+
+    fn bounding_box(ref Self) -> Option(AABB) {
+        return Some(box)
+    }
+}
+
+//
+struct XYRect {
+    x0  : Real
+    x1  : Real
+    y0  : Real
+    y1  : Real
+    z   : Real
+    mat : Material
+}
+
+impl Hittable for XYRect {
+    fn hit(ref Self, r: ref Ray, t_min: Real, t_max: Real) -> Option(HitRecord) {
+        let t = (z - r.origin.z) / r.direction.z
+        if t < t_min or t > t_max {
+            return None
+        }
+
+        let x = r.origin.x + t * r.direction.x
+        let y = r.origin.y + t * r.direction.y
+        if x < x0 or x > x1 or y < y0 or y > y1 {
+            return None
+        }
+
+        return Some(new HitRecord {
+            t = t
+            p = r.at(t)
+            m = mat
+            n = new vec3{0, 0, 1}
+            u = (x - x0) / (x1 - x0)
+            v = (y - y0) / (y1 - y0)
+        })
+    }
+
+    fn bounding_box(ref Self) -> Option(AABB) {
+        return Some(AABB::create(new vec3{x0, y0, z - Real(0.0001)}, new vec3{x1, y1, z + Real(0.0001)}))
+    }
+}
+
+struct YZRect {
+    y0  : Real
+    y1  : Real
+    z0  : Real
+    z1  : Real
+    x   : Real
+    mat : Material
+}
+
+impl Hittable for YZRect {
+    fn hit(ref Self, r: ref Ray, t_min: Real, t_max: Real) -> Option(HitRecord) {
+        let t = (x - r.origin.x) / r.direction.x
+        if t < t_min or t > t_max {
+            return None
+        }
+
+        let y = r.origin.y + t * r.direction.y
+        let z = r.origin.z + t * r.direction.z
+        if y < y0 or y > y1 or z < z0 or z > z1 {
+            return None
+        }
+
+        return Some(new HitRecord {
+            t = t
+            p = r.at(t)
+            m = mat
+            n = new vec3{1, 0, 0}
+            u = (y - y0) / (y1 - y0)
+            v = (z - z0) / (z1 - z0)
+        })
+    }
+
+    fn bounding_box(ref Self) -> Option(AABB) {
+        return Some(AABB::create(new vec3{x - Real(0.0001), y0, z0}, new vec3{x + Real(0.0001), y1, z1}))
+    }
+}
+
+struct ZXRect {
+    x0  : Real
+    x1  : Real
+    z0  : Real
+    z1  : Real
+    y   : Real
+    mat : Material
+}
+
+impl Hittable for ZXRect {
+    fn hit(ref Self, r: ref Ray, t_min: Real, t_max: Real) -> Option(HitRecord) {
+        let t = (y - r.origin.y) / r.direction.y
+        if t < t_min or t > t_max {
+            return None
+        }
+
+        let z = r.origin.z + t * r.direction.z
+        let x = r.origin.x + t * r.direction.x
+        if z < z0 or z > z1 or x < x0 or x > x1 {
+            return None
+        }
+
+        return Some(new HitRecord {
+            t = t
+            p = r.at(t)
+            m = mat
+            n = new vec3{0, 1, 0}
+            u = (z - z0) / (z1 - z0)
+            v = (x - x0) / (x1 - x0)
+        })
+    }
+
+    fn bounding_box(ref Self) -> Option(AABB) {
+        return Some(AABB::create(new vec3{x0, y - Real(0.0001), z0}, new vec3{x1, y + Real(0.0001), z1}))
+    }
+}
+
+//
+struct FlipNormals {
+    obj: Hittable
+}
+
+impl FlipNormals {
+    fn create(h: Hittable) -> Hittable {
+        return create_object(Hittable, new FlipNormals{h})
+    }
+}
+
+impl Hittable for FlipNormals {
+    fn hit(ref Self, r: ref Ray, t_min: Real, t_max: Real) -> Option(HitRecord) {
+        return match obj.hit(r, t_min, t_max) {
+            Some($hit) -> {
+                hit.n *= Real(-1.0)
+                Some(hit)
+            }
+
+            None -> None
+        }
+    }
+
+    fn bounding_box(ref Self) -> Option(AABB) {
+        return obj.bounding_box()
     }
 }

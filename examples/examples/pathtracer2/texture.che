@@ -1,0 +1,42 @@
+#load("std:math")
+#load("misc")
+
+trait Texture {
+    fn value(ref Self, u: Real, v: Real, p: ref vec3) -> vec3;
+}
+
+//
+struct ConstantTexture {
+    pub const color: vec3
+}
+
+impl ConstantTexture {
+    fn create(color: vec3) -> Texture {
+        return create_object(Texture, new ConstantTexture{color})
+    }
+}
+
+impl Texture for ConstantTexture {
+    fn value(ref Self, u: Real, v: Real, p: ref vec3) -> vec3 {
+        return color
+    }
+}
+
+//
+struct CheckerTexture {
+    even: Texture
+    odd : Texture
+}
+
+impl CheckerTexture {
+    fn create(even: Texture, odd: Texture) -> Texture {
+        return create_object(Texture, new CheckerTexture{even=even, odd=odd})
+    }
+}
+
+impl Texture for CheckerTexture {
+    fn value(ref Self, u: Real, v: Real, p: ref vec3) -> vec3 {
+        let sines = Real(sin(10 * p.x) * sin(10 * p.y) * sin(10 * p.z))
+        return if sines >= 0 then even.value(u, v, p) else odd.value(u, v, p)
+    }
+}

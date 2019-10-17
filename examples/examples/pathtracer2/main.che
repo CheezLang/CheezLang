@@ -6,13 +6,105 @@
 #load("misc")
 #load("objects")
 #load("material")
+#load("texture")
 
 let const report_progress: bool = true
+typedef Real = float
 
-let width       : int = 160 * 3
-let height      : int = 90  * 3
-let samples     : int = 100
+let use_bhv: bool = true
+
+let width       : int = 192 * 2
+let height      : int = 108 * 2
+let samples     : int = 500
 let max_depth   : int = 20
+
+let scenes: []fn(ref Camera) -> Hittable = [simple_light, cornell_box]
+let const scene: int = 1
+
+fn Main() {
+    println(if use_bhv then "bhv enabled" else "bhv disabled")
+
+    let image = alloc_n(double, cast width * height * 3)
+
+    // let world = basic_scene()
+    // let world = random_scene()
+
+    let cam_pos = new vec3{20.0, 2.25, 5.0}
+    let lookat  = new vec3{4.0, 1.0, 1.0}
+    let cam = Camera::create(
+        cam_pos,
+        lookat,
+        10,
+        Real(width) / Real(height),
+        0.0,
+        vec3::mag(cam_pos - lookat))
+
+    let world = scenes[scene](cam)
+
+    let start = get_time_milliseconds()
+    let last_update = 0
+
+    for py: 0..height {
+        for px: 0..width {
+            let col = new vec3{0.0, 0.0, 0.0}
+
+            for s: 0..samples {
+                let u = (Real(px) + random_real()) / Real(width)
+                let v = (Real(height - py - 1) + random_real()) / Real(height)
+                let r = cam.get_ray(u, v)
+                col += color(r, world)
+            }
+
+            col /= Real(samples)
+
+            // gamma correction
+            col = new vec3{Real(sqrt(col.x)), Real(sqrt(col.y)), Real(sqrt(col.z))}
+
+            image[(px + py * width) * 3 + 0] = double(col.x)
+            image[(px + py * width) * 3 + 1] = double(col.y)
+            image[(px + py * width) * 3 + 2] = double(col.z)
+
+            if const report_progress {
+                let current_seconds = (get_time_milliseconds() - start) / 1000
+                if current_seconds > last_update {
+                    let current_pixels = px + py * width
+                    let total_pixels = width * height
+                    let progress = int(100.0 * Real(current_pixels) / Real(total_pixels))
+                    printfln("{}% ({}/{}), {}s", [progress, current_pixels, total_pixels, current_seconds])
+                    last_update = current_seconds
+                }
+            }
+        }
+    }
+    let end = get_time_milliseconds()
+    let dur = double(end - start) / 1000
+
+    printfln("resolution: {}x{}", [width, height])
+    printfln("   samples: {}", [samples])
+    printfln("      time: {}s", [dur])
+
+    write_bmp(cast width, cast height, image.data, "image.bmp")
+}
+
+fn color(r: Ray, world: Hittable, depth: int = 0) -> vec3 {
+    return match world.hit(r, 0.001, 1000000.0) {
+        Some($hit) -> {
+            match hit.m.scatter(r, hit) {
+                Scatter.ColorReflection($m) if depth < max_depth -> color(m.scattered, world, depth + 1) * m.att
+                Scatter.Reflection($ray) if depth < max_depth -> color(ray, world, depth + 1)
+                Scatter.Color($col) -> col
+
+                $_ -> new vec3{0.0, 0.0, 0.0}
+            }
+        }
+
+        None -> {
+            // let t: Real = 0.5 * (r.direction.y + 1)
+            // new vec3{1, 1, 1} * (1 - t) + new vec3{0.5, 0.7, 1.0} * t
+            new vec3{0, 0, 0}
+        }
+    }
+}
 
 fn new_mat(mat: $T) -> Material {
     let mem = alloc(T)
@@ -26,45 +118,60 @@ fn new_hittable(hit: $T) -> Hittable {
     return Hittable(<<mem)
 }
 
-fn random_scene(n: int) -> Hittable {
-    let list = Array(Hittable)::create(n)
+fn random_scene() -> Hittable {
+    let list = Array(Hittable)::create()
     list.add(new_hittable(new Sphere{
         center = new vec3{0, -1000, 0}
         radius = 1000
-        material = new_mat(new Lambertian{new vec3{0.5, 0.5, 0.5}})
+        material = new_mat(new Lambertian{
+            CheckerTexture::create(
+                ConstantTexture::create(new vec3{0.1, 0.1, 0.1}),
+                ConstantTexture::create(new vec3{0.9, 0.9, 0.9})
+            )
+        })
     }))
 
     for a: -11..11 {
         for b: -11..11 {
-            let choose_mat = random.next_double()
+            let choose_mat = random_real()
             let center = new vec3{
-                x = double(a) + 0.9 * random.next_double(),
+                x = Real(a) + Real(0.9) * random_real(),
                 y = 0.2
-                z = double(b) + 0.9 * random.next_double()
+                z = Real(b) + Real(0.9) * random_real()
             }
 
             if vec3::mag(center - new vec3{4, 0.2, 0}) > 0.9 {
-                if choose_mat < 0.8 { // diffuse
+                if choose_mat < 0.65 { // diffuse
                     list.add(new_hittable(new Sphere{
                         center = center
                         radius = 0.2
-                        material = new_mat(new Lambertian{new vec3{
-                            x = random.next_double() * random.next_double()
-                            y = random.next_double() * random.next_double()
-                            z = random.next_double() * random.next_double()
+                        material = new_mat(new Lambertian{ConstantTexture::create(new vec3{
+                            x = random_real() * random_real()
+                            y = random_real() * random_real()
+                            z = random_real() * random_real()
+                        })})
+                    }))
+                } else if choose_mat < 0.75 { // emissive
+                    list.add(new_hittable(new Sphere{
+                        center = center
+                        radius = 0.2
+                        material = new_mat(new Emissive{new vec3{
+                            x = 10 * random_real()
+                            y = 10 * random_real()
+                            z = 10 * random_real()
                         }})
                     }))
-                } else if choose_mat < 0.95 { // metal
+                } else if choose_mat < 0.9 { // metal
                     list.add(new_hittable(new Sphere{
                         center = center
                         radius = 0.2
                         material = new_mat(new Metal{
                             albedo = new vec3{
-                                x = 0.5 * (1.0 + random.next_double())
-                                y = 0.5 * (1.0 + random.next_double())
-                                z = 0.5 * (1.0 + random.next_double())
+                                x = 0.5 * (1.0 + random_real())
+                                y = 0.5 * (1.0 + random_real())
+                                z = 0.5 * (1.0 + random_real())
                             }
-                            roughness = 0.5 * random.next_double()
+                            roughness = 0.5 * random_real()
                         })
                     }))
                 } else { // glass
@@ -86,7 +193,7 @@ fn random_scene(n: int) -> Hittable {
     list.add(new_hittable(new Sphere{
         center = new vec3{-4, 1, 0}
         radius = 1.0
-        material = new_mat(new Lambertian{new vec3{0.4, 0.2, 0.1}})
+        material = new_mat(new Lambertian{ConstantTexture::create(new vec3{0.4, 0.2, 0.1})})
     }))
     list.add(new_hittable(new Sphere{
         center = new vec3{4, 1, 0}
@@ -94,105 +201,121 @@ fn random_scene(n: int) -> Hittable {
         material = new_mat(new Metal{new vec3{0.7, 0.6, 0.5}, 0.0})
     }))
 
-
-    return new_hittable(list)
-}
-
-fn Main() {
-    let image = alloc_n(double, cast width * height * 3)
-
-    let lower_left_corner   = new vec3{-2.0, -1.0, -1.0}
-    let horizontal          = new vec3{4.0, 0.0, 0.0}
-    let vertical            = new vec3{0.0, 2.0, 0.0}
-    let origin              = new vec3{0.0, 0.0, 0.0}
-
-    let m1 = new Lambertian{new vec3{0.8, 0.3, 0.3}}
-    let m2 = new Lambertian{new vec3{0.8, 0.8, 0.1}}
-    let m3 = new Metal{new vec3{0.8, 0.6, 0.2}, 0.3}
-    let m4 = new Dielectric{1.5}
-
-    let s1 = new Sphere{new vec3{0, 0, -1}, 0.5, m1}
-    let s2 = new Sphere{new vec3{0, -100.5, -1}, 100, m2}
-    let s3 = new Sphere{new vec3{1, 0, -1}, 0.5, m3}
-    let s4 = new Sphere{new vec3{-1, 0, -1}, 0.5, m4}
-    let s5 = new Sphere{new vec3{-1, 0, -1}, -0.45, m4}
-
-    // let world = Array(Hittable)::create()
-    // world.add(s1)
-    // world.add(s2)
-    // world.add(s3)
-    // world.add(s4)
-    // world.add(s5)
-
-    let world = random_scene(500)
-
-    let cam_pos = new vec3{20.0, 2.25, 5.0}
-    let lookat  = new vec3{4.0, 1.0, 1.0}
-    let cam = Camera::create(
-        cam_pos,
-        lookat,
-        10,
-        double(width) / double(height),
-        0.0,
-        vec3::mag(cam_pos - lookat))
-
-    let start = get_time_milliseconds()
-    let last_update = 0
-
-    for py: 0..height {
-        for px: 0..width {
-            let col = new vec3{0.0, 0.0, 0.0}
-
-            for s: 0..samples {
-                let u = (double(px) + random.next_double()) / double(width)
-                let v = (double(height - py - 1) + random.next_double()) / double(height)
-                let r = cam.get_ray(u, v)
-                col += color(r, world, 0)
-            }
-
-            col /= double(samples)
-
-            // gamma correction
-            col = new vec3{sqrt(col.x), sqrt(col.y), sqrt(col.z)}
-
-            image[(px + py * width) * 3 + 0] = col.x
-            image[(px + py * width) * 3 + 1] = col.y
-            image[(px + py * width) * 3 + 2] = col.z
-
-            if const report_progress {
-                let current_seconds = (get_time_milliseconds() - start) / 1000
-                if current_seconds > last_update {
-                    let progress = int(100.0 * double(px + py * width) / double(width * height))
-                    printfln("{}% ({}s)", [progress, current_seconds])
-                    last_update = current_seconds
-                }
-            }
-        }
+    if use_bhv {
+        let bhv = BhvNode::create(list.slice())
+        return new_hittable(bhv)
+    } else {
+        return new_hittable(list)
     }
-    let end = get_time_milliseconds()
-    let dur = double(end - start) / 1000
-
-    printfln("resolution: {}x{}", [width, height])
-    printfln("   samples: {}", [samples])
-    printfln("      time: {}s", [dur])
-
-    write_bmp(cast width, cast height, image.data, "image.bmp")
 }
 
-fn color(r: Ray, world: Hittable, depth: int) -> vec3 {
-    return match world.hit(r, 0.001, 1000000.0) {
-        Some($hit) -> {
-            match hit.m.scatter(r, hit) {
-                Some($m) if depth < max_depth ->
-                    color(m.scattered, world, depth + 1) * m.att
+fn basic_scene() -> Hittable {
+    let list = Array(Hittable)::create()
+    list.add(new_hittable(new Sphere{
+        center = new vec3{0, -1000, 0}
+        radius = 1000
+        material = new_mat(new Lambertian{
+            CheckerTexture::create(
+                ConstantTexture::create(new vec3{0.1, 0.1, 0.1}),
+                ConstantTexture::create(new vec3{0.9, 0.9, 0.9})
+            )
+        })
+    }))
 
-                None -> new vec3{0.0, 0.0, 0.0}
-            }
-        }
+    list.add(new_hittable(new Sphere{
+        center = new vec3{0, 1, 0}
+        radius = 1.0
+        material = new_mat(new Dielectric{1.5})
+    }))
+    list.add(new_hittable(new Sphere{
+        center = new vec3{-4, 1, 0}
+        radius = 1.0
+        material = new_mat(new Lambertian{ConstantTexture::create(new vec3{0.4, 0.2, 0.1})})
+    }))
+    list.add(new_hittable(new Sphere{
+        center = new vec3{4, 1, 0}
+        radius = 1.0
+        material = new_mat(new Metal{new vec3{0.7, 0.6, 0.5}, 0.0})
+    }))
 
-        None -> {
-            let t = 0.5 * (r.direction.y + 1)
-            new vec3{1, 1, 1} * (1 - t) + new vec3{0.5, 0.7, 1.0} * t
-        }
+    if use_bhv {
+        let bhv = BhvNode::create(list.slice())
+        return new_hittable(bhv)
+    } else {
+        return new_hittable(list)
+    }
+}
+
+fn simple_light(cam: ref Camera) -> Hittable {
+    cam = Camera::create(
+        new vec3{20.0, 4.0, 5.0},
+        new vec3{4.0, 2.5, 1.0},
+        20,
+        Real(width) / Real(height)
+    )
+
+    let list = Array(Hittable)::create()
+
+    // ground
+    list.add(new_hittable(new Sphere{
+        center = new vec3{0, -1000, 0}
+        radius = 1000
+        material = new_mat(new Lambertian{
+            CheckerTexture::create(
+                ConstantTexture::create(new vec3{0.1, 0.1, 0.1}),
+                ConstantTexture::create(new vec3{0.9, 0.9, 0.9})
+            )
+        })
+    }))
+
+    list.add(create_object(Hittable, new Sphere{
+        center = new vec3{0, 2, 0}
+        radius = 2
+        material = create_object(Material, new Lambertian{ConstantTexture::create(new vec3{0.4, 0.7, 0.3})})
+    }))
+
+    list.add(create_object(Hittable, new XYRect{
+        3, 5, 1, 3, -2
+        create_object(Material, new Emissive{new vec3{4, 4, 4}})
+    }))
+
+    if use_bhv {
+        let bhv = BhvNode::create(list.slice())
+        return new_hittable(bhv)
+    } else {
+        return new_hittable(list)
+    }
+}
+
+fn cornell_box(cam: ref Camera) -> Hittable {
+    cam = Camera::create(
+        new vec3{278, 278, -800},
+        new vec3{278, 278, 0},
+        40,
+        Real(width) / Real(height),
+        0,
+        10
+    )
+
+    // materials
+    let red = create_object(Material, new Lambertian{ConstantTexture::create(new vec3{0.65, 0.05, 0.05})})
+    let white = create_object(Material, new Lambertian{ConstantTexture::create(new vec3{0.73, 0.73, 0.73})})
+    let green = create_object(Material, new Lambertian{ConstantTexture::create(new vec3{0.12, 0.45, 0.15})})
+    let light = create_object(Material, new Emissive{new vec3{15, 15, 15}})
+
+    // objects
+    let list = Array(Hittable)::create()
+    list.add(FlipNormals::create(create_object(Hittable, new YZRect{  0, 555,   0, 555, 555, green})))  // left
+    list.add(                    create_object(Hittable, new YZRect{  0, 555,   0, 555,   0, red}))     // right
+    list.add(                    create_object(Hittable, new ZXRect{213, 343, 227, 332, 554, light}))   // light
+    list.add(FlipNormals::create(create_object(Hittable, new ZXRect{  0, 555,   0, 555, 555, white})))  // ceiling
+    list.add(                    create_object(Hittable, new ZXRect{  0, 555,   0, 555,   0, white}))   // floor
+    list.add(FlipNormals::create(create_object(Hittable, new XYRect{  0, 555,   0, 555, 555, white})))  // back
+
+    if use_bhv {
+        let bhv = BhvNode::create(list.slice())
+        return new_hittable(bhv)
+    } else {
+        return new_hittable(list)
     }
 }

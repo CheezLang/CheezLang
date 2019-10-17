@@ -1,14 +1,24 @@
 #load("std:math")
 
-typedef vec3 = Vector3(double)
+fn create_object($T: type, val: $V) -> T {
+    let mem = alloc(V)
+    <<mem = val
+    return T(<<mem)
+}
+
+typedef vec3 = Vector3(Real)
 
 let random: MTwister = MTwister::create(0)
+
+fn random_real() -> Real {
+    return Real(random.next_double())
+}
 
 fn random_in_unit_sphere() -> vec3 {
     let p: vec3 = default
     while true {
-        let r = new vec3{random.next_double(), random.next_double(), random.next_double()}
-        p = r * 2.0 - new vec3{1, 1, 1}
+        let r = new vec3{random_real(), random_real(), random_real()}
+        p = r * Real(2.0) - new vec3{1, 1, 1}
         if p.magsq() < 1 {
             break
         }
@@ -20,8 +30,8 @@ fn random_in_unit_sphere() -> vec3 {
 fn random_in_unit_disk() -> vec3 {
     let p: vec3 = default
     while true {
-        let r = new vec3{random.next_double(), random.next_double(), 0.0}
-        p = r * 2.0 - new vec3{1, 1, 0.0}
+        let r = new vec3{random_real(), random_real(), 0.0}
+        p = r * Real(2.0) - new vec3{1, 1, 0.0}
         if p.magsq() < 1 {
             break
         }
@@ -45,7 +55,7 @@ impl Ray {
         return new{a, dir.normalized()}
     }
 
-    fn at(ref Self, t: double) -> vec3 {
+    fn at(ref Self, t: Real) -> vec3 {
         return origin + direction * t
     }
 }
@@ -60,13 +70,13 @@ struct Camera {
     v: vec3
     w: vec3
 
-    lens_radius: double
+    lens_radius: Real
 }
 
 impl Camera {
-    fn create(pos: vec3, lookat: vec3, fov: double, aspect_ratio: double, aperture: double, focus_dist: double) -> Self {
+    fn create(pos: vec3, lookat: vec3, fov: Real, aspect_ratio: Real, aperture: Real = 0.0, focus_dist: Real = -1.0) -> Self {
         let theta = fov * 3.1415 / 180
-        let half_height = tan(theta / 2.0)
+        let half_height = Real(tan(theta / 2.0))
         let half_width = aspect_ratio * half_height
 
         let up = new vec3{0, 1, 0}
@@ -74,17 +84,21 @@ impl Camera {
         let u = vec3::cross(up, w).normalized()
         let v = vec3::cross(w, u)
 
+        if focus_dist < 0.0 {
+            focus_dist = vec3::mag(pos - lookat)
+        }
+
         return new {
             lower_left_corner   = pos - u * half_width * focus_dist - v * half_height * focus_dist - w * focus_dist
-            horizontal          = u * 2.0 * half_width * focus_dist
-            vertical            = v * 2.0 * half_height * focus_dist
+            horizontal          = u * Real(2.0) * half_width * focus_dist
+            vertical            = v * Real(2.0) * half_height * focus_dist
             origin              = pos
             u = u, v = v, w = w
             lens_radius = aperture * 0.5
         }
     }
 
-    fn get_ray(ref Self, s: double, t: double) -> Ray {
+    fn get_ray(ref Self, s: Real, t: Real) -> Ray {
         let rd = random_in_unit_disk() * lens_radius
         let offset = u * rd.x + v * rd.y
         return Ray::from_to(origin + offset, lower_left_corner + horizontal * s + vertical * t)
@@ -102,3 +116,57 @@ impl Printable for Ray {
         str.appendf("ray({}, {})", [origin, direction])
     }
 }
+
+struct AABB #copy {
+    pub const _min: vec3
+    pub const _max: vec3
+}
+
+impl AABB {
+    fn create(min: vec3, max: vec3) -> Self {
+        return new {min, max}
+    }
+
+    fn help(min_w: Real, max_w: Real, origin_w: Real, dir_w: Real, t_min: ref Real, t_max: ref Real) -> bool {
+        let inv_d = Real(1.0) / dir_w
+        let t0 = (min_w - origin_w) * inv_d
+        let t1 = (max_w - origin_w) * inv_d
+        if inv_d < Real(0.0) {
+            (t0, t1) = (t1, t0)
+        }
+        t_min = max(t0, t_min)
+        t_max = min(t1, t_max)
+        return t_max <= t_min
+    }
+
+    fn hit(ref Self, r: ref Ray, t_min: Real, t_max: Real) -> bool {
+        if help(_min.x, _max.x, r.origin.x, r.direction.x, t_min, t_max) {
+            return false
+        }
+        if help(_min.y, _max.y, r.origin.y, r.direction.y, t_min, t_max) {
+            return false
+        }
+        if help(_min.z, _max.z, r.origin.z, r.direction.z, t_min, t_max) {
+            return false
+        }
+
+        return true
+    }
+
+    fn surrounding_box(a: ref AABB, b: ref AABB) -> AABB {
+        let small = new vec3{
+            x = min(a._min.x, b._min.x)
+            y = min(a._min.y, b._min.y)
+            z = min(a._min.z, b._min.z)
+        }
+        let big = new vec3{
+            x = max(a._max.x, b._max.x)
+            y = max(a._max.y, b._max.y)
+            z = max(a._max.z, b._max.z)
+        }
+
+        return AABB::create(small, big)
+    }
+}
+
+
