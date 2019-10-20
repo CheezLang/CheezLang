@@ -33,7 +33,7 @@ namespace Cheez
 
         private bool IsLiteralType(CheezType t)
         {
-            return t == IntType.LiteralType || t == FloatType.LiteralType || t == CheezType.StringLiteral;
+            return t == IntType.LiteralType || t == FloatType.LiteralType || t == CheezType.StringLiteral || t == PointerType.NullLiteralType;
         }
 
         private CheezType UnifyTypes(CheezType concrete, CheezType literal)
@@ -45,6 +45,8 @@ namespace Cheez
             if (concrete is FloatType && literal is IntType) return concrete;
             if (concrete is FloatType && literal is FloatType) return concrete;
             if ((concrete == CheezType.String || concrete == CheezType.CString) && literal == CheezType.StringLiteral) return concrete;
+            if (concrete is TraitType && literal == PointerType.NullLiteralType) return literal;
+            if (concrete is FunctionType && literal == PointerType.NullLiteralType) return concrete;
             return LiteralTypeToDefaultType(literal);
         }
 

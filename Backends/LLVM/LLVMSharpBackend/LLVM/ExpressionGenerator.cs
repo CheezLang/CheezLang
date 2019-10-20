@@ -541,6 +541,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     LLVM.ConstPointerNull(CheezTypeToLLVMType(s.TargetType))
                 });
             }
+            if (expr.Type is FunctionType f)
+            {
+                var llvmType = CheezTypeToLLVMType(f);
+                return LLVM.ConstNull(llvmType);
+            }
             else throw new NotImplementedException();
         }
 
@@ -917,6 +922,17 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 var result = builder.CreateICmp(op, together, LLVM.ConstInt(LLVM.Int64Type(), 0, false), "");
                 return result;
+            }
+            else if (bin.ActualOperator is BuiltInFunctionOperator fun)
+            {
+                var left = GenerateExpression(bin.Left, true);
+                var right = GenerateExpression(bin.Right, true);
+                if (fun.Name == "==")
+                    return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, left, right, "");
+                if (fun.Name == "!=")
+                    return builder.CreateICmp(LLVMIntPredicate.LLVMIntNE, left, right, "");
+
+                throw new NotImplementedException();
             }
             else
             {

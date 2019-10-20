@@ -435,6 +435,8 @@ namespace Cheez
 
             DefineBinaryOperator(new BuiltInTraitNullOperator("=="));
             DefineBinaryOperator(new BuiltInTraitNullOperator("!="));
+            DefineBinaryOperator(new BuiltInFunctionOperator("=="));
+            DefineBinaryOperator(new BuiltInFunctionOperator("!="));
         }
 
         private void DefineUnaryOperator(string name, CheezType type, BuiltInUnaryOperator.ComptimeExecution exe)

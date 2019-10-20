@@ -101,6 +101,32 @@ namespace Cheez
         }
     }
 
+    public class BuiltInFunctionOperator : IBinaryOperator
+    {
+        public CheezType LhsType => null;
+        public CheezType RhsType => null;
+        public CheezType ResultType => CheezType.Bool;
+
+        public string Name { get; private set; }
+
+        public BuiltInFunctionOperator(string name)
+        {
+            this.Name = name;
+        }
+
+        public int Accepts(CheezType lhs, CheezType rhs)
+        {
+            if (lhs is FunctionType f1 && rhs is FunctionType f2 && f1 == f2)
+                return 0;
+            return -1;
+        }
+
+        public object Execute(object left, object right)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class BuiltInBinaryOperator : IBinaryOperator
     {
         public CheezType LhsType { get; private set; }
