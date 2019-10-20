@@ -87,7 +87,8 @@ impl Printable for TokenType {
             DoubleEqual     -> "DoubleEqual"
             NotEqual        -> "NotEqual"
             Arrow           -> "Arrow"
-            Less            -> "LessLess"
+            LessLess        -> "LessLess"
+            Caret           -> "Caret"
             OpenParen       -> "OpenParen"
             ClosingParen    -> "ClosingParen"
             OpenBrace       -> "OpenBrace"
@@ -170,6 +171,7 @@ enum TokenType {
 
     Arrow
     LessLess
+    Caret
 
     OpenParen
     ClosingParen

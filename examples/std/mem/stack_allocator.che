@@ -70,8 +70,7 @@ impl StackAllocator {
 
         if memory == null {
             memory = parent.allocate(capacity, @sizeof(i8), 8)
-        }
-        else {
+        } else {
             memory = parent.reallocate(memory, capacity, @sizeof(i8), 8)
         }
     }

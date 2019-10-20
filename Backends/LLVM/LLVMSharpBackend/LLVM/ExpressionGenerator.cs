@@ -1021,7 +1021,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.CreateCondBr(cond, bbIf, bbElse);
 
             builder.PositionBuilderAtEnd(bbIf);
-            if (iff.Type != CheezType.Void)
+            if (iff.IfCase.Type != CheezType.Void)
             {
                 var r = GenerateExpression(iff.IfCase, true);
                 builder.CreateStore(r, result);
@@ -1037,7 +1037,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.PositionBuilderAtEnd(bbElse);
             if (iff.ElseCase != null)
             {
-                if (iff.Type != CheezType.Void)
+                if (iff.ElseCase.Type != CheezType.Void)
                 {
                     var r = GenerateExpression(iff.ElseCase, true);
                     builder.CreateStore(r, result);
@@ -1160,10 +1160,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateCallExpr(AstCallExpr c)
         {
-            if (c.FunctionExpr.ToString()== "String::from_raw_ptr")
-            {
-
-            }
             if (c.Declaration?.Trait != null)
             {
                 // call to a trait function
@@ -1294,8 +1290,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                                     var length_ptr = builder.CreateStructGEP(slice, 0, "slice_length_ptr");
                                     length_ptr = builder.CreateLoad(length_ptr, "slice_length");
 
+                                    var dataOffset = builder.CreateMul(range_begin, LLVM.ConstInt(LLVM.Int64Type(), (ulong)s.TargetType.Size, false), "");
                                     dataPtr = builder.CreatePtrToInt(dataPtr, LLVM.Int64Type(), "");
-                                    dataPtr = builder.CreateAdd(dataPtr, range_begin, "data_new");
+                                    dataPtr = builder.CreateAdd(dataPtr, dataOffset, "data_new");
                                     dataPtr = builder.CreateIntToPtr(dataPtr, CheezTypeToLLVMType(s.TargetType).GetPointerTo(), "data_new_ptr");
                                     length_ptr = builder.CreateSub(range_end, range_begin, "length_new");
 
@@ -1459,9 +1456,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         if (expr.Right.Name == "data")
                         {
-                            var dataPtrPtr = builder.CreateStructGEP(value, 1, "");
-                            if (!deref) return dataPtrPtr;
-                            var dataPtr = builder.CreateLoad(dataPtrPtr, "");
+                            var dataPtr = builder.CreateStructGEP(value, 1, "");
                             return dataPtr;
                         }
                         else if (expr.Right.Name == "length")

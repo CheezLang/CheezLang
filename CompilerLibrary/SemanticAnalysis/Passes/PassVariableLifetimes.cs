@@ -563,6 +563,13 @@ namespace Cheez
 
         private bool PassVLMatch(AstMatchExpr expr)
         {
+            foreach (var cas in expr.Cases)
+            {
+                cas.SubScope.InitSymbolStats();
+                if (!PassVLExpr(cas.Body))
+                    return false;
+            }
+
             bool result = true;
             // handle initialized symbols
             foreach (var sym in expr.Scope.SymbolStatuses)
@@ -575,8 +582,6 @@ namespace Cheez
 
                 foreach (var cas in expr.Cases)
                 {
-                    cas.SubScope.InitSymbolStats();
-                    PassVLExpr(cas.Body);
                     var caseStat = cas.SubScope.GetSymbolStatus(sym);
 
                     switch (caseStat.kind)

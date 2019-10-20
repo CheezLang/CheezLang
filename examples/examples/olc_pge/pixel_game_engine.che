@@ -227,8 +227,11 @@ impl PixelGameEngine {
                 nMouseWheelDeltaCache = 0
 
                 // Handle Frame Update
-                if !game.on_update(fElapsedTime) {
-                    active = false
+                // but only if windows is not minimized (size is not 0)
+                if window_width != 0 and window_height != 0 {
+                    if !game.on_update(fElapsedTime) {
+                        active = false
+                    }
                 }
 
                 // Display Graphics

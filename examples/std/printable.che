@@ -1,5 +1,6 @@
-#load("std:string")
 #load("std:preload")
+#load("std:string")
+#load("std:math")
 
 trait Printable {
     fn print(ref Self, str: ref String, format: string);
@@ -127,5 +128,11 @@ impl(V: type, E: type) Printable for Result(V, E) if V: Printable, E: Printable 
             Ok($v)  -> str.appendf("Ok({})", [v])
             Err($v) -> str.appendf("Err({})", [v])
         }
+    }
+}
+
+impl Printable for Complex {
+    fn print(ref Self, str: ref String, format: string) {
+        str.appendf("{} + {}i", [r, i])
     }
 }

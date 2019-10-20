@@ -1,3 +1,4 @@
+#load("std:random")
 
 let const STATE_VECTOR_LENGTH   : u32 = 624
 let const STATE_VECTOR_M        : u32 = 397

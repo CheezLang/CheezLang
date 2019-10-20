@@ -1,0 +1,117 @@
+#load("misc")
+#load("texture")
+
+
+struct MaterialRecord {
+    pub const att       : vec3
+    pub const scattered : Ray
+}
+
+enum Scatter {
+    ColorReflection: MaterialRecord
+    Reflection: Ray
+    Color: vec3
+    None
+}
+
+trait Material {
+    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord) -> Scatter;
+}
+
+//
+struct Lambertian {
+    pub const albedo: Texture
+}
+
+impl Material for Lambertian {
+    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord) -> Scatter {
+        let target = hit.p + hit.n + random_in_unit_sphere()
+        let ray = Ray::from_to(hit.p, target)
+        let color = albedo.value(0, 0, hit.p)
+        return Scatter.ColorReflection(new MaterialRecord{color, ray})
+    }
+}
+
+//
+struct Emissive {
+    pub const color: vec3
+}
+
+impl Material for Emissive {
+    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord) -> Scatter {
+        return Scatter.Color(color)
+    }
+}
+
+//
+struct Metal {
+    pub const albedo    : vec3
+    pub const roughness : Real = 0.0
+}
+
+impl Material for Metal {
+    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord) -> Scatter {
+        let reflected = r.direction.reflect(hit.n) + random_in_unit_sphere() * roughness
+        return if vec3::dot(reflected, hit.n) > 0 then
+            Scatter.ColorReflection(new MaterialRecord{albedo, Ray::from_dir(hit.p, reflected)})
+        else
+            Scatter.None
+    }
+}
+
+//
+struct Dielectric {
+    pub const ior: Real
+}
+
+impl Material for Dielectric {
+    fn schlick(cosine: Real, ior: Real) -> Real {
+        let r0 = {
+            let r = (1.0 - ior) / (1.0 + ior)
+            r * r
+        }
+
+        return r0 + (1.0 - r0) * Real(pow(1.0 - cosine, 5))
+    }
+
+    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord) -> Scatter {
+        let dir_dot_n = vec3::dot(r.direction, hit.n)
+        let (outward_normal, ni_over_nt, cosine) = if dir_dot_n > 0 then
+            (-hit.n, self.ior, self.ior * dir_dot_n)
+        else
+            (hit.n, 1.0 / self.ior, -dir_dot_n)
+
+        let reflected = r.direction.reflect(hit.n)
+        return match r.direction.refract(outward_normal, ni_over_nt) {
+            Some($refr) ->
+                if random_real() > schlick(cosine, self.ior) then
+                    Scatter.Reflection(Ray::from_dir(hit.p, refr))
+                else
+                    Scatter.Reflection(Ray::from_dir(hit.p, reflected))
+
+            None -> Scatter.Reflection(Ray::from_dir(hit.p, reflected))
+        }
+    }
+}
+
+
+
+//
+struct CheckerMaterial {
+    size: Real
+    even: Material
+    odd : Material
+}
+
+impl CheckerMaterial {
+    fn create(size: Real, even: Material, odd: Material) -> Material {
+        return create_object(Material, new CheckerMaterial{size=size, even=even, odd=odd})
+    }
+}
+
+impl Material for CheckerMaterial {
+    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord) -> Scatter {
+        let sines = Real(sin(size * hit.p.x) * sin(size * hit.p.y) * sin(size * hit.p.z))
+        return if sines >= 0 then even.scatter(r, hit) else odd.scatter(r, hit)
+    }
+}

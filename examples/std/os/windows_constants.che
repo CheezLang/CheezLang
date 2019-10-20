@@ -1,5 +1,11 @@
 #load("windows_types")
 
+// new, incomplete
+let const FILE_NOTIFY_CHANGE_LAST_WRITE : DWORD = 0x00000010
+let const FILE_NOTIFY_CHANGE_SIZE       : DWORD = 0x00000008
+let const WT_EXECUTEONLYONCE            : DWORD = 0x00000008
+//
+
 let const CREATE_SUSPENDED                  : DWORD = 0x00000004
 let const STACK_SIZE_PARAM_IS_A_RESERVATION : DWORD = 0x00010000
 

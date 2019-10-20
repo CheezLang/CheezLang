@@ -1,0 +1,357 @@
+//*
+#load("std:io/io")
+#load("std:math")
+#load("std:thread")
+#load("../olc_pge/pixel_game_engine")
+#load("evaluator")
+#load("compiler")
+
+typedef vec2 = Vector2(double)
+typedef vec3 = Vector3(double)
+
+let width: int = 1600
+let height: int = 960
+
+struct MyGame {
+    pge: &PixelGameEngine
+
+    xc : double = 0.0
+    yc : double = 3.0
+    xr : double = 10.0
+    yr : double = 10.0
+
+    func_index: int = 0
+
+    last_mouse_pos: (x: double, y: double)
+
+    function: Option(Array(OpCode)) = Option(Array(OpCode)).None
+
+    var_name_allocator: ArenaAllocator
+
+    variables : Variables
+    dir_change_thread: Thread
+    pub wait_handle: HANDLE
+
+    last_file_change: double = -1
+}
+
+fn dir_change_thread_func(data: &any) {
+    let game = @cast(&MyGame, data)
+
+    while true {
+        let res = WaitForSingleObject(game.wait_handle, 1000)
+        if res == 0 {
+            // println("change")
+            game.file_changed()
+            FindNextChangeNotification(game.wait_handle)
+        } else {
+            // printfln("err: 0x{:x}", [res])
+        }
+    }
+}
+
+fn map(x: double, a: double, b: double, c: double, d: double) -> double {
+    return (x - a) / (b - a) * (d - c) + c
+}
+
+impl Game for MyGame {
+    fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
+        self.pge = pge
+
+        load_function_from_file()
+
+        variables["pi"] = new Complex{3.14159265359}
+        variables["e"]  = new Complex{2.71828182845}
+        variables["t"]  = new Complex{0.0}
+
+        // start thread for file changes
+        let fullpath = c_fullpath(null, ".", 512)
+        defer free(fullpath)
+        wait_handle = FindFirstChangeNotificationA(fullpath, 0, 0x00000008)
+        if wait_handle == null {
+            printfln("Failed to create file change watcher for file '{}'", [fullpath])
+        } else {
+            dir_change_thread = Thread::create(dir_change_thread_func, &self)
+            dir_change_thread.start()
+        }
+        return true
+    }
+
+    fn on_destroy(ref Self) -> bool {
+        dir_change_thread.terminate()
+        FindCloseChangeNotification(wait_handle)
+        return true
+    }
+
+    fn file_changed(ref Self) {
+        last_file_change = 0.1
+    }
+
+    fn to_pixel(ref Self, wx: double, wy: double) -> (x: int, y: int) {
+        return (cast map(wx, xc - xr, xc + xr, 0, double(width)), cast map(wy, yc - yr, yc + yr, double(height), 0))
+    }
+
+    fn to_world(ref Self, wx: int, wy: int) -> (x: double, y: double) {
+        return (map(double(wx), 0, double(width), xc - xr, xc + xr), map(double(wy), double(height), 0, yc - yr, yc + yr))
+    }
+
+    fn draw_line(ref Self, x1: double, y1: double, x2: double, y2: double, col: Pixel) {
+        let (px1, py1) = to_pixel(x1, y1)
+        let (px2, py2) = to_pixel(x2, y2)
+
+        pge.draw_line(px1, py1, px2, py2, col)
+    }
+
+    fn load_function_from_file(ref Self) {
+        println("reloading...")
+
+        function = match function {
+            Some($f)    -> {
+                Memory::drop(f)
+                None
+            }
+            None -> None
+        }
+
+        match load_file("function.txt") {
+            Ok($content) -> {
+                var_name_allocator.clear()
+                function = compile(content.slice(), var_name_allocator)
+            }
+
+            Err($msg) -> {
+                printfln("Failed to load file: {}", [msg])
+            }
+        }
+
+        match function {
+            Some($f)    -> {
+                println("===================")
+                for : f {
+                    println(it)
+                }
+                println("===================")
+            }
+        }
+    }
+
+    fn on_update(ref Self, dt: float) -> bool {
+        pge.clear()
+
+        // 
+        last_file_change -= dt
+        if last_file_change <= 0 and last_file_change > -1 {
+            load_function_from_file()
+            last_file_change = -2
+        }
+        last_file_change = max(last_file_change, -2.0)
+
+        // update dimensions
+        width = pge.get_width()
+        height = pge.get_height()
+
+        // aspect ratio
+        xr = yr * double(width) / double(height)
+
+        handle_input(dt)
+        draw_grid()
+
+        let mouse_pos = pge.get_mouse_pos()
+        variables["mx"] = new Complex{double(mouse_pos.x) / double(width)}
+        variables["my"] = new Complex{1 - double(mouse_pos.y) / double(height)}
+
+        let mouse_pos_w = to_world(mouse_pos.x, mouse_pos.y)
+        variables["mxw"] = new Complex{mouse_pos_w.x}
+        variables["myw"] = new Complex{mouse_pos_w.y}
+
+        variables["t"] = <<&variables["t"] + new Complex{dt}
+
+        draw_current_function()
+
+        return true
+    }
+
+    fn evaluate_function(ref Self, x: double) -> Option(Complex) {
+        //return functions[func_index % functions.length](x)
+        variables["x"] = new Complex{x, 0.0}
+        return match function {
+            Some($f)    -> evaluate(f.slice(), variables)
+            None        -> None
+        }
+    }
+
+    fn draw_current_function(ref Self) {
+        let prev = new Complex{}
+
+        let first = true
+        for xp: 0..width {
+            let x = map(double(xp), 0, double(width), xc - xr, xc + xr)
+
+            match evaluate_function(x) {
+                Some($c) -> {
+                    if first {
+                        prev = c
+                        first = false
+                    }
+
+                    pge.draw_line(xp - 1, cast map(prev.r, yc - yr, yc + yr, double(height), 0), xp, cast map(c.r, yc - yr, yc + yr, double(height), 0), Pixel::rgba(230, 50, 50))
+                    pge.draw_line(xp - 1, cast map(prev.i, yc - yr, yc + yr, double(height), 0), xp, cast map(c.i, yc - yr, yc + yr, double(height), 0), Pixel::rgba(50, 230, 50))
+
+                    prev = c
+                }
+
+                None -> {
+                    first = true
+                }
+            }
+        }
+
+        let mouse_x = pge.get_mouse_pos().x
+        let mouse_x_world = to_world(mouse_x, 0).x
+        match evaluate_function(mouse_x_world) {
+            Some($c) -> {
+                let pcr = to_pixel(0, c.r).y
+                let pci = to_pixel(0, c.i).y
+
+                pge.draw_circle(mouse_x, pcr, 5, Pixel::rgba(255, 0, 0))
+                pge.draw_circle(mouse_x, pci, 5, Pixel::rgba(0, 255, 0))
+            }
+        }
+    }
+
+    fn draw_grid(ref Self) {
+        // grid
+        {
+            let lw = 0.15
+            let wmin = to_world(0, height)
+            let wmax = to_world(width, 0)
+
+            let dist = 1 / (2 * xr) * double(width)
+            let scale = 1.0
+            while dist < 10 {
+                dist *= 10
+                scale *= 10
+            }
+
+            lw *= scale
+
+            // vertical
+            for(inclusive=true) _x: 0..int(wmax.x / scale) {
+                let brightness: u8 = if _x == 0 then 200
+                    else if _x % 10 == 0 then 150
+                    else if _x % 5 == 0 then 100
+                    else 50
+
+                let x = double(_x) * scale
+                draw_line(x, wmin.y, x, wmax.y, Pixel::rgba(brightness, brightness, brightness))
+                draw_line(x, -lw, x, lw, Pixel::rgba(200, 200, 200))
+            }
+
+            for _x: int(wmin.x / scale)..0 {
+                let brightness: u8 = if _x == 0 then 200
+                    else if _x % 10 == 0 then 150
+                    else if _x % 5 == 0 then 100
+                    else 50
+
+                let x = double(_x) * scale
+                draw_line(x, wmin.y, x, wmax.y, Pixel::rgba(brightness, brightness, brightness))
+                draw_line(x, -lw, x, lw, Pixel::rgba(200, 200, 200))
+            }
+
+            // horizontal
+            for(inclusive=true) _y: 0..int(wmax.y / scale) {
+                let brightness: u8 = if _y == 0 then 200
+                    else if _y % 10 == 0 then 150
+                    else if _y % 5 == 0 then 100
+                    else 50
+
+                let y = double(_y) * scale
+                draw_line(wmin.x, y, wmax.x, y, Pixel::rgba(brightness, brightness, brightness))
+                draw_line(-lw, y, lw, y, Pixel::rgba(200, 200, 200))
+            }
+
+            for _y: int(wmin.y / scale)..0 {
+                let brightness: u8 = if _y == 0 then 200
+                    else if _y % 10 == 0 then 150
+                    else if _y % 5 == 0 then 100
+                    else 50
+
+                let y = double(_y) * scale
+                draw_line(wmin.x, y, wmax.x, y, Pixel::rgba(brightness, brightness, brightness))
+                draw_line(-lw, y, lw, y, Pixel::rgba(200, 200, 200))
+            }
+        }
+    }
+
+    fn handle_input(ref Self, dt: double) {
+        let scroll_speed = 0.001
+
+        // move
+        {
+            let mouse_pos = pge.get_mouse_pos()
+            let mouse_pos_world = to_world(mouse_pos.x, mouse_pos.y)
+            let mouse_delta: (x: double, y: double) = (mouse_pos_world.x - last_mouse_pos.x, mouse_pos_world.y - last_mouse_pos.y)
+
+            if pge.get_mouse(0).held {
+                xc -= mouse_delta.x
+                yc -= mouse_delta.y
+            }
+            last_mouse_pos = to_world(mouse_pos.x, mouse_pos.y)
+        }
+
+        // zoom
+        {
+            let mouse_pos = pge.get_mouse_pos()
+            let mouse_pos_world = to_world(mouse_pos.x, mouse_pos.y)
+
+            yr *= 1 - double(pge.get_mouse_wheel()) * scroll_speed
+            yr = fmax(yr, 0.1)
+            // aspect ratio
+            xr = yr * double(width) / double(height)
+
+            let mouse_pos_world2 = to_world(mouse_pos.x, mouse_pos.y)
+            let mouse_delta: (x: double, y: double) = (mouse_pos_world2.x - mouse_pos_world.x, mouse_pos_world2.y - mouse_pos_world.y)
+            xc -= mouse_delta.x
+            yc -= mouse_delta.y
+        }
+
+        // cycle functions
+        if pge.get_key(Key.Space).pressed {
+            func_index += 1
+        }
+
+        if pge.get_key(Key.F5).pressed {
+            load_function_from_file()
+        }
+
+        if pge.get_mouse(2).pressed {
+            let mouse_x_world = to_world(pge.get_mouse_pos().x, 0).x
+            match evaluate_function(mouse_x_world) {
+                Some($c) -> {
+                    printfln("f({}) = {}", [mouse_x_world, c])
+                }
+
+                None -> printfln("f({}) is undefined", [mouse_x_world])
+            }
+        }
+    }
+}
+
+fn compare_strings(a: string, b: string) -> bool {
+    return streq(a, b)
+}
+
+fn Main() {
+    let myGame = new MyGame {
+        var_name_allocator = ArenaAllocator::create(1024)
+        variables = Variables::create(compare_strings)
+    }
+    let pge = PixelGameEngine::create(myGame, width, height)
+    if pge != null {
+        pge.start()
+    } else {
+        println("failed to create pixel game engine")
+    }
+}
+
+// */

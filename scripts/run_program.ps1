@@ -2,8 +2,11 @@
 param (
     [Parameter()]
     [string]
-    $file = "./gen/test$executable_file_extension"
+    $file = "test"
 )
 
-&$file
+Push-Location gen
+&"./$file$executable_file_extension"
+Pop-Location
+
 Write-Host "Program exited with code $LASTEXITCODE"

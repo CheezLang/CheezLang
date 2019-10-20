@@ -1,4 +1,6 @@
 // #load("examples/trait_function_call_performance")
+// #load("examples/graphyfier/graphyfier")
+#load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
@@ -8,232 +10,93 @@
 //#load("tests/other/test1")
 // #load("examples/project_euler/18_maximum_path_sum_1")
 
-//*
+
+/*
 #load("std:io/io")
-#load("examples/olc_pge/pixel_game_engine")
-#load("complex")
-#load("functions")
+#load("std:os/windows")
 
-let width: int = 1600
-let height: int = 960
+typedef WAITORTIMERCALLBACK = fn(&any, bool) #stdcall
 
-struct MyGame {
-    pge: &PixelGameEngine
+let const FILE_NOTIFY_CHANGE_LAST_WRITE: DWORD = 0x00000010
+let const WT_EXECUTEONLYONCE: DWORD = 0x00000008
 
-    xc : double = 0.0
-    yc : double = 3.0
-    xr : double = 10.0
-    yr : double = 10.0
+fn _fullpath(absPath: &char, relPath: &char, maxLength: int) -> &char;
 
-    func_index: int = 0
+fn FindFirstChangeNotificationA(
+    lpPathName: c_string,
+    bWatchSubtree: BOOL,
+    dwNotifyFilter: DWORD
+) -> HANDLE #stdcall;
 
-    last_mouse_pos: (x: double, y: double)
+fn FindNextChangeNotification(hChangeHandle: HANDLE) -> BOOL #stdcall;
+fn FindCloseChangeNotification(hChangeHandle: HANDLE) -> BOOL #stdcall;
+fn RegisterWaitForSingleObject(
+  phNewWaitObject   : &HANDLE,
+  hObject           : HANDLE,
+  callback          : WAITORTIMERCALLBACK,
+  context           : &any,
+  dwMilliseconds    : u32,
+  dwFlags           : u32
+) -> BOOL #stdcall;
+
+fn ReadDirectoryChangesW(
+    hDirectory          : HANDLE,
+    lpBuffer            : &any,
+    nBufferLength       : DWORD,
+    bWatchSubtree       : BOOL,
+    dwNotifyFilter      : DWORD,
+    lpBytesReturned     : &DWORD,
+    lpOverlapped        : &any,
+    lpCompletionRoutine : &any
+) -> BOOL #stdcall;
+
+fn WaitForSingleObject(handle: &any, millis: DWORD) -> DWORD #stdcall;
+
+fn UnregisterWait(handle: HANDLE) #stdcall;
+
+fn dir_change_waiter_thread(_: &any) #stdcall {
 }
 
-fn map(x: double, a: double, b: double, c: double, d: double) -> double {
-    return (x - a) / (b - a) * (d - c) + c
-}
+let running: bool = true
 
-impl Game for MyGame {
-    fn on_create(ref Self, pge: &PixelGameEngine) -> bool{ 
-        self.pge = pge
-        return true
-    }
 
-    fn on_destroy(ref Self) -> bool {
-        return true
-    }
 
-    fn to_pixel(ref Self, wx: double, wy: double) -> (x: int, y: int) {
-        return (cast map(wx, xc - xr, xc + xr, 0, double(width)), cast map(wy, yc - yr, yc + yr, double(height), 0))
-    }
-
-    fn to_world(ref Self, wx: int, wy: int) -> (x: double, y: double) {
-        return (map(double(wx), 0, double(width), xc - xr, xc + xr), map(double(wy), double(height), 0, yc - yr, yc + yr))
-    }
-
-    fn draw_line(ref Self, x1: double, y1: double, x2: double, y2: double, col: Pixel) {
-        let (px1, py1) = to_pixel(x1, y1)
-        let (px2, py2) = to_pixel(x2, y2)
-
-        pge.draw_line(px1, py1, px2, py2, col)
-    }
-
-    fn on_update(ref Self, dt: float) -> bool {
-        pge.clear()
-
-        // update dimensions
-        width = pge.get_width()
-        height = pge.get_height()
-
-        // aspect ratio
-        xr = yr * double(width) / double(height)
-
-        handle_input(dt)
-        draw_grid()
-        draw_current_function()
-
-        return true
-    }
-
-    fn draw_current_function(ref Self) {
-        let prev = new Complex{}
-
-        let first = true
-        for xp: 0..width {
-            let x = map(double(xp), 0, double(width), xc - xr, xc + xr)
-
-            match functions[func_index % functions.length](x) {
-                Some($c) -> {
-                    if first {
-                        prev = c
-                        first = false
-                    }
-
-                    pge.draw_line(xp - 1, cast map(prev.r, yc - yr, yc + yr, double(height), 0), xp, cast map(c.r, yc - yr, yc + yr, double(height), 0), Pixel::rgba(230, 50, 50))
-                    pge.draw_line(xp - 1, cast map(prev.i, yc - yr, yc + yr, double(height), 0), xp, cast map(c.i, yc - yr, yc + yr, double(height), 0), Pixel::rgba(50, 230, 50))
-
-                    prev = c
-                }
-
-                None -> {
-                    first = true
-                }
-            }
-        }
-
-        let mouse_x = pge.get_mouse_pos().x
-        let mouse_x_world = to_world(mouse_x, 0).x
-        match functions[func_index % functions.length](mouse_x_world) {
-            Some($c) -> {
-                let pcr = to_pixel(0, c.r).y
-                let pci = to_pixel(0, c.i).y
-
-                pge.draw_circle(mouse_x, pcr, 5, Pixel::rgba(255, 0, 0))
-                pge.draw_circle(mouse_x, pci, 5, Pixel::rgba(0, 255, 0))
-            }
-        }
-    }
-
-    fn draw_grid(ref Self) {
-        // grid
-        {
-            let lw = 0.15
-            let wmin = to_world(0, height)
-            let wmax = to_world(width, 0)
-            wmax.x += 1
-            wmax.y += 1
-
-            let dist = 1 / (2 * xr) * double(width)
-            let scale = 1.0
-            while dist < 5 {
-                dist *= 5
-                scale *= 5
-            }
-
-            // vertical
-            for _x: 0..int(wmax.x / scale) {
-                let brightness: u8 = if _x == 0 then 200
-                    else if _x % 10 == 0 then 150
-                    else if _x % 5 == 0 then 100
-                    else 50
-
-                let x = double(_x) * scale
-                draw_line(x, wmin.y, x, wmax.y, Pixel::rgba(brightness, brightness, brightness))
-                draw_line(x, -lw, x, lw, Pixel::rgba(200, 200, 200))
-            }
-
-            for _x: int(wmin.x / scale)..0 {
-                let brightness: u8 = if _x == 0 then 200
-                    else if _x % 10 == 0 then 150
-                    else if _x % 5 == 0 then 100
-                    else 50
-
-                let x = double(_x) * scale
-                draw_line(x, wmin.y, x, wmax.y, Pixel::rgba(brightness, brightness, brightness))
-                draw_line(x, -lw, x, lw, Pixel::rgba(200, 200, 200))
-            }
-
-            // horizontal
-            for _y: 0..int(wmax.y / scale) {
-                let brightness: u8 = if _y == 0 then 200
-                    else if _y % 10 == 0 then 150
-                    else if _y % 5 == 0 then 100
-                    else 50
-
-                let y = double(_y) * scale
-                draw_line(wmin.x, y, wmax.x, y, Pixel::rgba(brightness, brightness, brightness))
-                draw_line(-lw, y, lw, y, Pixel::rgba(200, 200, 200))
-            }
-
-            for _y: int(wmin.y / scale)..0 {
-                let brightness: u8 = if _y == 0 then 200
-                    else if _y % 10 == 0 then 150
-                    else if _y % 5 == 0 then 100
-                    else 50
-
-                let y = double(_y) * scale
-                draw_line(wmin.x, y, wmax.x, y, Pixel::rgba(brightness, brightness, brightness))
-                draw_line(-lw, y, lw, y, Pixel::rgba(200, 200, 200))
-            }
-        }
-    }
-
-    fn handle_input(ref Self, dt: double) {
-        let scroll_speed = 0.001
-
-        // move
-        {
-            let mouse_pos = pge.get_mouse_pos()
-            let mouse_pos_world = to_world(mouse_pos.x, mouse_pos.y)
-            let mouse_delta: (x: double, y: double) = (mouse_pos_world.x - last_mouse_pos.x, mouse_pos_world.y - last_mouse_pos.y)
-
-            if pge.get_mouse(0).held {
-                xc -= mouse_delta.x
-                yc -= mouse_delta.y
-            }
-            last_mouse_pos = to_world(mouse_pos.x, mouse_pos.y)
-        }
-
-        // zoom
-        {
-            let mouse_pos = pge.get_mouse_pos()
-            let mouse_pos_world = to_world(mouse_pos.x, mouse_pos.y)
-
-            yr *= 1 - double(pge.get_mouse_wheel()) * scroll_speed
-            yr = fmax(yr, 2)
-            // aspect ratio
-            xr = yr * double(width) / double(height)
-
-            let mouse_pos_world2 = to_world(mouse_pos.x, mouse_pos.y)
-            let mouse_delta: (x: double, y: double) = (mouse_pos_world2.x - mouse_pos_world.x, mouse_pos_world2.y - mouse_pos_world.y)
-            xc -= mouse_delta.x
-            yc -= mouse_delta.y
-        }
-
-        // cycle functions
-        if pge.get_key(Key.Space).pressed {
-            func_index += 1
-        }
-
-        let funcs: []Key = [Key.F1, Key.F2, Key.F3, Key.F4, Key.F5, Key.F6, Key.F7, Key.F8, Key.F9]
-
-        for : funcs {
-            if pge.get_key(it).pressed {
-                func_index = clamp(it_index, 0, functions.length - 1)
-            }
+fn test(data: &any) {
+    println("test")
+    let running = @cast(&bool, data)
+    while <<running {
+        println("waiting...")
+        let res = WaitForSingleObject(handle, 1000)
+        if res == 0 {
+            println("change")
+            FindNextChangeNotification(handle)
+        } else {
+            // printfln("err: 0x{:x}", [res])
         }
     }
 }
+
+let handle: HANDLE = null
 
 fn Main() {
-    let myGame = new MyGame{}
-    let pge = PixelGameEngine::create(myGame, width, height)
-    if pge != null {
-        pge.start()
-    } else {
-        println("failed to create pixel game engine")
+    let fullpath = _fullpath(null, ".", 512)
+    defer free(fullpath)
+    printfln("watching for changes in {}", [fullpath])
+    handle = FindFirstChangeNotificationA(fullpath, 0, FILE_NOTIFY_CHANGE_LAST_WRITE)
+    defer FindCloseChangeNotification(handle)
+
+    let running = true
+    let t = Thread::create(test, &running)
+    // println(t.start())
+    t.start()
+    defer {
+        running = false
+        t.join()
     }
+
+    Sleep(10 * 1000)
+
+    println("done")
 }
 
 // */
