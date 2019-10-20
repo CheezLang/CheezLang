@@ -352,7 +352,7 @@ impl(T: type) Vector3(T) {
         let dt = Self::dot(uv, normal)
         let discriminant = 1.0 - ior * ior * (1 - dt * dt)
         if discriminant > 0 {
-            let refr = (uv - normal * dt) * ior - normal * Real(sqrt(discriminant))
+            let refr = (uv - normal * dt) * ior - normal * T(sqrt(discriminant))
             return Some(refr)
         } else {
             return None

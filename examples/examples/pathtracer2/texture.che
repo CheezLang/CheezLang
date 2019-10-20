@@ -2,7 +2,7 @@
 #load("misc")
 
 trait Texture {
-    fn value(ref Self, u: Real, v: Real, p: ref vec3) -> vec3;
+    fn value(ref Self, u: real, v: real, p: ref vec3) -> vec3;
 }
 
 //
@@ -17,7 +17,7 @@ impl ConstantTexture {
 }
 
 impl Texture for ConstantTexture {
-    fn value(ref Self, u: Real, v: Real, p: ref vec3) -> vec3 {
+    fn value(ref Self, u: real, v: real, p: ref vec3) -> vec3 {
         return color
     }
 }
@@ -35,8 +35,8 @@ impl CheckerTexture {
 }
 
 impl Texture for CheckerTexture {
-    fn value(ref Self, u: Real, v: Real, p: ref vec3) -> vec3 {
-        let sines = Real(sin(10 * p.x) * sin(10 * p.y) * sin(10 * p.z))
+    fn value(ref Self, u: real, v: real, p: ref vec3) -> vec3 {
+        let sines = real(sin(10 * p.x) * sin(10 * p.y) * sin(10 * p.z))
         return if sines >= 0 then even.value(u, v, p) else odd.value(u, v, p)
     }
 }

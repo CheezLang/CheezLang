@@ -33,6 +33,7 @@ fn ReadDirectoryChangesW(
 fn WaitForSingleObject(handle: &any, millis: DWORD) -> DWORD #stdcall;
 
 fn UnregisterWait(handle: HANDLE) #stdcall;
+
 //
 
 // command line
@@ -91,5 +92,8 @@ fn CreateThread(lpThreadAttributes: &SECURITY_ATTRIBUTES, dwStackSize: SIZE_T, l
 fn ResumeThread(hThread: HANDLE) -> DWORD #stdcall;
 // fn ExitThread(hThread: HANDLE) -> DWORD #stdcall;
 fn TerminateThread(hThread: HANDLE, dwExitCode: DWORD) -> BOOL #stdcall;
+fn ReleaseMutex(handle: HANDLE) -> BOOL #stdcall;
+fn CreateMutexA(lpMutexAttributes: &any, bInitialOwner: BOOL, lpName: &char) -> HANDLE #stdcall;
+
 // somehow not linking
 // fn GetCurrentDirectory(nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;

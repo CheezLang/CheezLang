@@ -6,38 +6,42 @@ fn create_object($T: type, val: $V) -> T {
     return T(<<mem)
 }
 
-typedef vec3 = Vector3(Real)
+typedef vec3 = Vector3(real)
 
-let random: MTwister = MTwister::create(0)
+let global_random: MTwister = MTwister::create(0)
 
-fn random_real() -> Real {
-    return Real(random.next_double())
-}
+typedef Random = MTwister
 
-fn random_in_unit_sphere() -> vec3 {
-    let p: vec3 = default
-    while true {
-        let r = new vec3{random_real(), random_real(), random_real()}
-        p = r * Real(2.0) - new vec3{1, 1, 1}
-        if p.magsq() < 1 {
-            break
-        }
+impl Random {
+    fn random_real(ref Self) -> real {
+        return real(self.next_double())
     }
 
-    return p
-}
-
-fn random_in_unit_disk() -> vec3 {
-    let p: vec3 = default
-    while true {
-        let r = new vec3{random_real(), random_real(), 0.0}
-        p = r * Real(2.0) - new vec3{1, 1, 0.0}
-        if p.magsq() < 1 {
-            break
+    fn random_in_unit_sphere(ref Self) -> vec3 {
+        let p: vec3 = default
+        while true {
+            let r = new vec3{self.random_real(), self.random_real(), self.random_real()}
+            p = r * real(2.0) - new vec3{1, 1, 1}
+            if p.magsq() < 1 {
+                break
+            }
         }
+
+        return p
     }
 
-    return p
+    fn random_in_unit_disk(ref Self) -> vec3 {
+        let p: vec3 = default
+        while true {
+            let r = new vec3{self.random_real(), self.random_real(), 0.0}
+            p = r * real(2.0) - new vec3{1, 1, 0.0}
+            if p.magsq() < 1 {
+                break
+            }
+        }
+
+        return p
+    }
 }
 
 struct Ray #copy {
@@ -55,7 +59,7 @@ impl Ray {
         return new{a, dir.normalized()}
     }
 
-    fn at(ref Self, t: Real) -> vec3 {
+    fn at(ref Self, t: real) -> vec3 {
         return origin + direction * t
     }
 }
@@ -70,13 +74,13 @@ struct Camera {
     v: vec3
     w: vec3
 
-    lens_radius: Real
+    lens_radius: real
 }
 
 impl Camera {
-    fn create(pos: vec3, lookat: vec3, fov: Real, aspect_ratio: Real, aperture: Real = 0.0, focus_dist: Real = -1.0) -> Self {
+    fn create(pos: vec3, lookat: vec3, fov: real, aspect_ratio: real, aperture: real = 0.0, focus_dist: real = -1.0) -> Self {
         let theta = fov * 3.1415 / 180
-        let half_height = Real(tan(theta / 2.0))
+        let half_height = real(tan(theta / 2.0))
         let half_width = aspect_ratio * half_height
 
         let up = new vec3{0, 1, 0}
@@ -90,16 +94,16 @@ impl Camera {
 
         return new {
             lower_left_corner   = pos - u * half_width * focus_dist - v * half_height * focus_dist - w * focus_dist
-            horizontal          = u * Real(2.0) * half_width * focus_dist
-            vertical            = v * Real(2.0) * half_height * focus_dist
+            horizontal          = u * real(2.0) * half_width * focus_dist
+            vertical            = v * real(2.0) * half_height * focus_dist
             origin              = pos
             u = u, v = v, w = w
             lens_radius = aperture * 0.5
         }
     }
 
-    fn get_ray(ref Self, s: Real, t: Real) -> Ray {
-        let rd = random_in_unit_disk() * lens_radius
+    fn get_ray(ref Self, s: real, t: real, random: ref Random) -> Ray {
+        let rd = random.random_in_unit_disk() * lens_radius
         let offset = u * rd.x + v * rd.y
         return Ray::from_to(origin + offset, lower_left_corner + horizontal * s + vertical * t)
     }
@@ -127,11 +131,11 @@ impl AABB {
         return new {min, max}
     }
 
-    fn help(min_w: Real, max_w: Real, origin_w: Real, dir_w: Real, t_min: ref Real, t_max: ref Real) -> bool {
-        let inv_d = Real(1.0) / dir_w
+    fn help(min_w: real, max_w: real, origin_w: real, dir_w: real, t_min: ref real, t_max: ref real) -> bool {
+        let inv_d = real(1.0) / dir_w
         let t0 = (min_w - origin_w) * inv_d
         let t1 = (max_w - origin_w) * inv_d
-        if inv_d < Real(0.0) {
+        if inv_d < real(0.0) {
             (t0, t1) = (t1, t0)
         }
         t_min = max(t0, t_min)
@@ -139,7 +143,7 @@ impl AABB {
         return t_max <= t_min
     }
 
-    fn hit(ref Self, r: ref Ray, t_min: Real, t_max: Real) -> bool {
+    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real) -> bool {
         if help(_min.x, _max.x, r.origin.x, r.direction.x, t_min, t_max) {
             return false
         }

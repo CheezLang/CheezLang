@@ -203,19 +203,18 @@ impl(F: type, T: type) From(Array(F)) for Array(T) if T : From(F), #notyet {
 }
 
 fn for_extension_array_T(arr: ref Array($T), code: Code, reverse: bool = false,
-                            by_reference: bool = true) #for {
+                            by_ref: bool = true) #for {
     while let it_index = 0, it_index < arr.get_length(), it_index += 1 {
         if const reverse {
             let it_index_rev = arr.length - it_index - 1
-            if const by_reference {
+            if const by_ref {
                 let it = ref arr[it_index_rev]
             } else {
                 let it = arr[it_index_rev]
             }
             @insert(code, link=[it_index_rev])
         } else {
-            
-            if const by_reference {
+            if const by_ref {
                 let it = ref arr[it_index]
             } else {
                 let it = arr[it_index]

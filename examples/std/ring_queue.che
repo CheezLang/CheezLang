@@ -1,0 +1,104 @@
+#load("std:preload")
+#load("std:mem/allocator")
+#load("std:util")
+
+struct RingQueue(T: type) {
+    data    : &T
+    capacity: int
+    first   : int
+    last    : int
+    allocator: Allocator
+}
+
+impl(T: type) RingQueue(T) {
+    fn create(init_size: int = 10, allocator: Allocator = null) -> Self {
+        if allocator == null {
+            allocator = DEFAULT_STD_HEAP_ALLOCATOR
+        }
+
+        let data = alloc_raw(T, cast init_size, allocator)
+        return new{
+            data = data
+            capacity = init_size
+            first = 0
+            last = 0
+            allocator = allocator
+        }
+    }
+
+    fn get_length(ref Self) -> int {
+        // return if (last >= first) then (last - first) else (last - first + capacity)
+        return (last - first + capacity) % capacity
+    }
+
+    fn reserve(ref Self, size: int) {
+        if capacity > size {
+            return
+        }
+
+        // copy parts
+        if last >= first {
+            data = realloc_raw(data, cast size, allocator)
+            last = last - first
+            first = 0
+        } else {
+            let data_new = alloc_raw(T, cast size, allocator)
+
+            let l1 = capacity - first
+            let l2 = last
+            // data is split in
+            // first half:  first..capacity -> 0..l1
+            c_memcpy(cast data_new, cast pointer_add_sized(data, first), u64(l1 * @sizeof(T)))
+            // second half: 0..last         -> l1..l1+l2
+            c_memcpy(cast pointer_add_sized(data_new, l1), cast data, u64(l2 * @sizeof(T)))
+            free(data, allocator)
+            data = data_new
+            last = l1 + l2
+            first = 0
+        }
+
+        capacity = size
+
+        if size > get_length() {
+            c_memset(cast &data[get_length()], 0, u64((size - get_length()) * @sizeof(T)))
+        }
+    }
+
+    fn push(ref Self, val: T) {
+        if get_length() == capacity - 1 {
+            reserve(capacity * 2)
+        }
+
+        data[last] = val
+        last = (last + 1) % capacity
+    }
+
+    fn pop(ref Self) -> T {
+        @assert(first != last)
+
+        let val = data[first]
+        data[first] = default
+        first = (first + 1) % capacity
+        return val
+    }
+}
+
+impl(T: type) Drop for RingQueue(T) {
+    fn drop(ref Self) {
+        if first <= last {
+            for : first..last {
+                Memory::drop(data[it])
+            }
+        } else {
+            for : first..capacity {
+                Memory::drop(data[it])
+            }
+            for : 0..last {
+                Memory::drop(data[it])
+            }
+        }
+        if allocator != null {
+            free(data)
+        }
+    }
+}
