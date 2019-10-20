@@ -16,15 +16,16 @@ let use_bhv     : bool = true
 let num_threads : int = 10
 let grid_size   : int = 25
 
-let width       : int = 192 * 10
-let height      : int = 108 * 10
+let scale       : int = 1
+let width       : int = 192 * scale
+let height      : int = 108 * scale
 // let width       : int = 108 * 1
 // let height      : int = 108 * 1
-let samples     : int = 500
+let samples     : int = 50
 let max_depth   : int = 10
 
 let scenes: []fn(ref Camera) -> Hittable = [simple_light, cornell_box, basic_scene, random_scene]
-let const scene: int = 3
+let const scene: int = 2
 
 let file_write_mutex: Mutex = Mutex::create()
 
