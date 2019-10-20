@@ -72,32 +72,28 @@ impl SDF for Cube {
                 dx, dy, dz
             }
             d = r.mag()
-        }
-        else if dx > 0 and dy > 0 {
+        } else if dx > 0 and dy > 0 {
             let r = new Vec3 {
                 x = dx
                 y = dy
                 z = 0
             }
             d = r.mag()
-        }
-        else if dx > 0 and dz > 0 {
+        } else if dx > 0 and dz > 0 {
             let r = new Vec3 {
                 x = dx
                 y = 0
                 z = dz
             }
             d = r.mag()
-        }
-        else if dy > 0 and dz > 0 {
+        } else if dy > 0 and dz > 0 {
             let r = new Vec3 {
                 x = 0
                 y = dy
                 z = dz
             }
             d = r.mag()
-        }
-        else {
+        } else {
             d = fmax(dx, fmax(dy, dz))
         }
 
@@ -420,8 +416,7 @@ impl Film {
                 if antiAliasingSteps == 1 {
                     let ray = camera.project((fx + 0.5) * fw, (fy + 0.5) * fh)
                     color= scene.project(ray)
-                }
-                else {
+                } else {
                     while let i = 0, i < antiAliasingSteps, i += 1 {
                         let ray = camera.project((fx + r.next_double()) * fw, (fy + r.next_double()) * fh)
                         let c = scene.project(ray)

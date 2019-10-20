@@ -1,14 +1,62 @@
 // #load("examples/trait_function_call_performance")
 // #load("examples/graphyfier/graphyfier")
-#load("examples/pathtracer2/main")
+// #load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
-// #load("examples/pathtracer")
+#load("examples/pathtracer")
+
 // #load("tests/language/local_variables")
 // #load("tests/library/arena_allocator1")
 //#load("tests/other/test1")
-// #load("examples/project_euler/18_maximum_path_sum_1")
+// #load("examples/project_euler/009_special_pythagorean_triplet")
+
+/*
+
+#load("std:preload")
+#load("std:io/io")
+
+fn try_catch(r: $T, code: Code) #macro {
+    match r {
+        Ok($v) -> v
+        Err($e) -> {
+            let err = e
+            @insert(code, link=[err])
+        }
+    }
+}
+
+fn try(r: $T) #macro {
+    match r {
+        Ok($v) -> v
+        Err($e) -> {
+            return Err(e)
+        }
+    }
+}
+
+fn test(b: bool) -> Result(int, int) {
+    if b {
+        return Ok(5)
+    } else {
+        return Err(-1)
+    }
+}
+
+fn foo() -> Result(int, int) {
+    let i = try(test(false))
+    println(i)
+    return Ok(0)
+}
+
+fn Main() {
+    println(foo())
+    println("==========")
+    // try_catch(test(false), {})
+    try_catch(test(false), printfln("test1: err: {}", [err]))
+}
+
+// */
 
 /*
 #load("std:io/io")

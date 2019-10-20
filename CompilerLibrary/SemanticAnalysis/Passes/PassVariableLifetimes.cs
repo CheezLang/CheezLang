@@ -435,6 +435,8 @@ namespace Cheez
                     {
                         if (es.Scope != scope)
                             es.Scope.InitSymbolStats();
+                        if (es.Expr.Scope != es.Scope)
+                            es.Expr.Scope.InitSymbolStats(es.Scope);
                         if (!PassVLExpr(es.Expr))
                             return false;
 

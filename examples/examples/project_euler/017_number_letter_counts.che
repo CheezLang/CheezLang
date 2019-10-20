@@ -73,8 +73,7 @@ fn number_to_english(n: int) -> String {
             8 -> { result += "eighteen"    }
             9 -> { result += "nineteen"    }
         }
-    }
-    else if _10 != 0 {
+    } else if _10 != 0 {
         result += number_to_english_10(_10)
     }
 

@@ -16,8 +16,8 @@ let use_bhv     : bool = true
 let num_threads : int = 10
 let grid_size   : int = 25
 
-let width       : int = 192 * 2
-let height      : int = 108 * 2
+let width       : int = 192 * 10
+let height      : int = 108 * 10
 // let width       : int = 108 * 1
 // let height      : int = 108 * 1
 let samples     : int = 500
@@ -217,9 +217,9 @@ fn random_scene(cam: ref Camera) -> Hittable {
                         center = center
                         radius = 0.2
                         material = create_object(Material, new Emissive{new vec3{
-                            x = 40 * global_random.random_real()
-                            y = 40 * global_random.random_real()
-                            z = 40 * global_random.random_real()
+                            x = 50 * global_random.random_real()
+                            y = 50 * global_random.random_real()
+                            z = 50 * global_random.random_real()
                         }})
                     }))
                 } else if choose_mat < 0.9 { // metal
@@ -268,7 +268,7 @@ fn random_scene(cam: ref Camera) -> Hittable {
     ))
 
     let col: real = 1.0
-    let den: real = 0.05
+    let den: real = 0.075
     list.add(ConstantMedium::create(box, den, ConstantTexture::create(new vec3{col, col, col})))
 
     if use_bhv {

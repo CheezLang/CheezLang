@@ -176,9 +176,11 @@ namespace Cheez
             };
         }
 
-        public void InitSymbolStats()
+        public void InitSymbolStats(Scope add = null)
         {
-            mSymbolStatus = new Dictionary<ISymbol, SymbolStatus>();
+            //if (mSymbolStatus != null)
+            //    return;
+            mSymbolStatus ??= new Dictionary<ISymbol, SymbolStatus>();
             if (Parent?.mSymbolStatus != null)
             {
                 foreach (var symbol in Parent.mSymbolStatus)
@@ -187,6 +189,12 @@ namespace Cheez
             if (LinkedScope?.mSymbolStatus != null)
             {
                 foreach (var symbol in LinkedScope.mSymbolStatus)
+                    mSymbolStatus[symbol.Key] = symbol.Value;
+            }
+
+            if (add?.mSymbolStatus != null)
+            {
+                foreach (var symbol in add.mSymbolStatus)
                     mSymbolStatus[symbol.Key] = symbol.Value;
             }
         }
@@ -232,7 +240,8 @@ namespace Cheez
         {
             foreach (var s in scope.mSymbolStatus.Keys.ToArray())
             {
-                scope.mSymbolStatus[s] = mSymbolStatus[s];
+                if (mSymbolStatus.TryGetValue(s, out var stat))
+                    scope.mSymbolStatus[s] = stat;
             }
         }
 

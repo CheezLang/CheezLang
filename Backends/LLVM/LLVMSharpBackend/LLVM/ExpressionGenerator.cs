@@ -365,7 +365,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                     builder.PositionBuilderAtEnd(bb);
                     var b = GenerateExpression(c.Body, true);
-                    if (m.Type != CheezType.Void)
+                    if (m.Type != CheezType.Void && c.Body.Type != CheezType.Void)
                         builder.CreateStore(b, result);
 
                     if (!c.Body.GetFlag(ExprFlags.Returns))

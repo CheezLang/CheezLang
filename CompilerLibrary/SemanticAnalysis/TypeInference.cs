@@ -592,7 +592,12 @@ namespace Cheez
                     expr.IsSimpleIntMatch = false;
             }
 
-            expr.Type = SumType.GetSumType(expr.Cases.Select(c => c.Body.Type).ToArray());
+            expr.Type = SumType.GetSumType(
+                expr.Cases.Where(c => 
+                    !c.Body.GetFlag(ExprFlags.Returns) &&
+                    !c.Body.GetFlag(ExprFlags.Breaks))
+                .Select(c => c.Body.Type)
+                .ToArray());
             if (!(expr.Type is IntType || expr.Type is CharType))
                 expr.IsSimpleIntMatch = false;
 
@@ -2196,7 +2201,12 @@ namespace Cheez
                 ConvertLiteralTypeToDefaultType(exprStmt.Expr, expected);
                 expr.Type = exprStmt.Expr.Type;
 
-                AnalyseExprStatement(exprStmt, true, false);
+                //AnalyseExprStatement(exprStmt, true, false);
+
+                if (exprStmt.Expr.Type.IsComptimeOnly)
+                {
+                    ReportError(exprStmt.Expr, $"This type of expression is not allowed here");
+                }
 
                 expr.SetFlag(ExprFlags.IsLValue, exprStmt.Expr.GetFlag(ExprFlags.IsLValue));
 
