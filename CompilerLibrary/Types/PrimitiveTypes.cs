@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 
 namespace Cheez.Types.Primitive
 {
@@ -86,6 +87,32 @@ namespace Cheez.Types.Primitive
             }
             return -1;
         }
+
+        public BigInteger MinValue => (Signed, Size) switch
+        {
+            (true, 1) => sbyte.MinValue,
+            (true, 2) => short.MinValue,
+            (true, 4) => int.MinValue,
+            (true, 8) => long.MinValue,
+            (false, 1) => byte.MinValue,
+            (false, 2) => ushort.MinValue,
+            (false, 4) => uint.MinValue,
+            (false, 8) => ulong.MinValue,
+            _ => throw new NotImplementedException()
+        };
+
+        public BigInteger MaxValue => (Signed, Size) switch
+        {
+            (true, 1) => sbyte.MaxValue,
+            (true, 2) => short.MaxValue,
+            (true, 4) => int.MaxValue,
+            (true, 8) => long.MaxValue,
+            (false, 1) => byte.MaxValue,
+            (false, 2) => ushort.MaxValue,
+            (false, 4) => uint.MaxValue,
+            (false, 8) => ulong.MaxValue,
+            _ => throw new NotImplementedException()
+        };
     }
 
     public class FloatType : CheezType
@@ -134,6 +161,40 @@ namespace Cheez.Types.Primitive
             }
             return -1;
         }
+
+        public double MinValue => Size switch
+        {
+            4 => float.MinValue,
+            8 => double.MinValue,
+            _ => throw new NotImplementedException()
+        };
+
+        public double MaxValue => Size switch
+        {
+            4 => float.MaxValue,
+            8 => double.MaxValue,
+            _ => throw new NotImplementedException()
+        };
+        public double NaN => Size switch
+        {
+            4 => float.NaN,
+            8 => double.NaN,
+            _ => throw new NotImplementedException()
+        };
+        
+        public double PosInf => Size switch
+        {
+            4 => float.PositiveInfinity,
+            8 => double.PositiveInfinity,
+            _ => throw new NotImplementedException()
+        };
+        
+        public double NegInf => Size switch
+        {
+            4 => float.NegativeInfinity,
+            8 => double.NegativeInfinity,
+            _ => throw new NotImplementedException()
+        };
     }
 
     public class PointerType : CheezType

@@ -2608,6 +2608,36 @@ namespace Cheez
                         break;
                     }
 
+                case CheezTypeType _ when !expr.IsDoubleColon && (expr.Left.Value is IntType || expr.Left.Value is FloatType):
+                    {
+                        expr.Type = expr.Left.Value as CheezType;
+                        switch (expr.Left.Value, expr.Right.Name)
+                        {
+                            case (IntType i, "min"): expr.Value = NumberData.FromBigInt(i.MinValue); break;
+                            case (IntType i, "max"): expr.Value = NumberData.FromBigInt(i.MaxValue); break;
+                            case (IntType i, string att):
+                                ReportError(expr.Right, $"Type {i} has no attribute '{att}'");
+                                expr.Type = CheezType.Error;
+                                break;
+
+                            case (FloatType f, "min"): expr.Value = NumberData.FromDouble(f.MinValue); break;
+                            case (FloatType f, "max"): expr.Value = NumberData.FromDouble(f.MaxValue); break;
+                            case (FloatType f, "nan"): expr.Value = NumberData.FromDouble(f.NaN); break;
+                            case (FloatType f, "pos_inf"): expr.Value = NumberData.FromDouble(f.PosInf); break;
+                            case (FloatType f, "neg_inf"): expr.Value = NumberData.FromDouble(f.NegInf); break;
+                            case (FloatType f, string att):
+                                ReportError(expr.Right, $"Type {f} has no attribute '{att}'");
+                                expr.Type = CheezType.Error;
+                                break;
+
+                            default:
+                                ReportError(expr.Right, $"Type {expr.Left.Value} has no attribute '{expr.Right.Name}'");
+                                expr.Type = CheezType.Error;
+                                break;
+                        }
+                        break;
+                    }
+
                 case CheezTypeType _:
                     ReportError(expr.Left, $"Invalid value on left side of '.': '{expr.Left.Value}'");
                     break;
