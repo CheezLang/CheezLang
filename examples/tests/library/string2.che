@@ -1,4 +1,4 @@
-#test_expect_output("`"uiae true 0.500000`"")
+#test_expect_output("`"uiae true 0.5`"")
 
 #load("std:string")
 #load("std:c")

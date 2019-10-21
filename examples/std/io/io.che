@@ -54,21 +54,13 @@ fn digit_to_char(i: $T) -> char {
 
 fn format_int(buffer: ref String, val: $T, _base: int = 10) {
     let base = cast(T) _base
-    let v = val
-    let len = 0
-    let neg = false
 
     // calculate length and sign
-    if v < 0 {
-        neg = true
-        len = 1
-        v = -v
-    } else if v == 0 {
-        len = 1
-    }
+    let (len, sign): (int, T) = if val < 0 then (1, -1)
+    else if val == 0 then (1, 1)
+    else (0, 1)
 
-    while v != 0 {
-        v = v / base
+    while let v = val, v != 0, v /= base {
         len += 1
     }
 
@@ -78,19 +70,15 @@ fn format_int(buffer: ref String, val: $T, _base: int = 10) {
     if val == 0 {
         buffer[buffer.length - 1] = '0'
     } else {
-        if neg {
-            val = -val
-        }
-
         let i = buffer.length - 1
         while val != 0, i -= 1 {
-            let lastDigit = val % base
+            let lastDigit = (val % base) * sign
 
             val = val / base
             buffer[i] = digit_to_char(lastDigit)
         }
 
-        if neg {
+        if sign < 0 {
             buffer[i] = '-'
             i -= 1
         }

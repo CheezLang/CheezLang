@@ -39,26 +39,6 @@ fn floor(double) -> double;
 fn ceilf(float) -> float;
 fn ceil(double) -> double;
 
-fn u8_max() -> u8 {
-    return cast(u8)-1
-}
-
-fn u16_max() -> u16 {
-    return cast(u16)-1
-}
-
-fn u32_max() -> u32 {
-    return cast(u32)-1
-}
-
-fn u64_max() -> u64 {
-    return cast(u64)-1
-}
-
-fn i64_max() -> i64 {
-    return @bin_lsr(0xFFFFFFFFFFFFFFFF, 1)
-}
-
 fn mod_pos(a: $T, b: T) -> T {
     return ((a % b) + b) % b
 }
