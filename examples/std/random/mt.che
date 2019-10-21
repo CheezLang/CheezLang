@@ -17,7 +17,7 @@ impl PseudoRandomGen for MTwister {
 
     fn next_double(ref Self) -> double {
         let r = double(self.next())
-        let m = double(u32_max())
+        let m = double(u32.max)
         return r / m
     }
 }
@@ -105,14 +105,14 @@ impl MTwister {
         return mt_temp[index - 1]
     }
 
-    fn next_uint(ref Self, min: u64 = 0, max: u64 = cast u64_max()) -> u64 {
+    fn next_uint(ref Self, min: u64 = 0, max: u64 = cast u64.max) -> u64 {
         let a = u64(next())
         let b = u64(next())
         let rand = @bin_or(@bin_lsl(b, 32), a)
         return rand % (max - min) + min
     }
 
-    fn next_int(ref Self, min: int = 0, max: int = cast i64_max()) -> int {
+    fn next_int(ref Self, min: int = 0, max: int = cast i64.max) -> int {
         let a = u64(next())
         let b = u64(next())
         let rand = @bin_or(@bin_lsl(b, 32), a)

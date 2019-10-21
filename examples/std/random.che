@@ -13,7 +13,7 @@ impl LinearCongruentialGenerator {
     }
 
     fn next(ref Self) -> u32 {
-        let M: u64 = cast(u64) u32_max()
+        let M: u64 = cast(u64) u32.max
         let A: u64 = 1664525
         let B: u64 = 1013904223
         seed = (A * seed + B) % M
@@ -21,7 +21,7 @@ impl LinearCongruentialGenerator {
         return cast(u32) seed
     }
 
-    fn next_int(ref Self, min: int = 0, max: int = cast u32_max()) -> int {
+    fn next_int(ref Self, min: int = 0, max: int = cast u32.max) -> int {
         return (cast(int)next()) % (max - min) + min
     }
 }
@@ -33,7 +33,7 @@ impl PseudoRandomGen for LinearCongruentialGenerator {
 
     fn next_double(ref Self) -> double {
         let r = double(self.next())
-        let m = double(u32_max())
+        let m = double(u32.max)
         return r / m
     }
 }
