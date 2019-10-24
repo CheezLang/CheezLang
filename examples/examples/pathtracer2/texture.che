@@ -26,17 +26,18 @@ impl Texture for ConstantTexture {
 struct CheckerTexture {
     even: Texture
     odd : Texture
+    size: real
 }
 
 impl CheckerTexture {
-    fn create(even: Texture, odd: Texture) -> Texture {
-        return create_object(Texture, new CheckerTexture{even=even, odd=odd})
+    fn create(even: Texture, odd: Texture, size: real = 10) -> Texture {
+        return create_object(Texture, new CheckerTexture{even=even, odd=odd, size=size})
     }
 }
 
 impl Texture for CheckerTexture {
     fn value(ref Self, u: real, v: real, p: ref vec3) -> vec3 {
-        let sines = real(sin(10 * p.x) * sin(10 * p.y) * sin(10 * p.z))
+        let sines = real(sin(size * p.x) * sin(size * p.y) * sin(size * p.z))
         return if sines >= 0 then even.value(u, v, p) else odd.value(u, v, p)
     }
 }

@@ -99,19 +99,20 @@ impl Material for Dielectric {
 //
 struct CheckerMaterial {
     size: real
+    off : vec3
     even: Material
     odd : Material
 }
 
 impl CheckerMaterial {
-    fn create(size: real, even: Material, odd: Material) -> Material {
-        return create_object(Material, new CheckerMaterial{size=size, even=even, odd=odd})
+    fn create(size: real, off: vec3, even: Material, odd: Material) -> Material {
+        return create_object(Material, new CheckerMaterial{size=size, off=off, even=even, odd=odd})
     }
 }
 
 impl Material for CheckerMaterial {
     fn scatter(ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
-        let sines = real(sin(size * hit.p.x) * sin(size * hit.p.y) * sin(size * hit.p.z))
+        let sines = real(sin(size * (hit.p.x + off.x)) * sin(size * (hit.p.y + off.y)) * sin(size * (hit.p.z + off.z)))
         return if sines >= 0 then even.scatter(r, hit, random) else odd.scatter(r, hit, random)
     }
 }

@@ -9,23 +9,23 @@
 #load("material")
 #load("texture")
 
-let const report_progress: bool = true
+let const report_progress: bool = false
 typedef real = float
 
 let use_bhv     : bool = true
 let num_threads : int = 10
-let grid_size   : int = 25
+let grid_size   : int = 15
 
-let scale       : int = 1
-let width       : int = 192 * scale
+let scale       : int = 10
+// let width       : int = 192 * scale
+// let height      : int = 108 * scale
+let width       : int = 108 * scale
 let height      : int = 108 * scale
-// let width       : int = 108 * 1
-// let height      : int = 108 * 1
-let samples     : int = 50
+let samples     : int = 2000
 let max_depth   : int = 10
 
-let scenes: []fn(ref Camera) -> Hittable = [simple_light, cornell_box, basic_scene, random_scene]
-let const scene: int = 2
+let scenes: []fn(ref Camera) -> Hittable = [simple_light, cornell_box, basic_scene, random_scene, big_scene]
+let const scene: int = 4
 
 let file_write_mutex: Mutex = Mutex::create()
 
@@ -40,6 +40,8 @@ struct RenderContext {
 }
 
 fn Main() {
+    c_srand(c_time(null))
+
     println(if use_bhv then "bhv enabled" else "bhv disabled")
 
     let image = alloc_n(double, cast width * height * 3)
@@ -78,7 +80,8 @@ fn Main() {
                     image = image
                     world = world
                     cam = cam
-                    random = Random::create(0) // crashes with seed not 0, wtf?
+                    // random = Random::create(0)
+                    random = Random::create(cast c_rand()) // crashes with seed not 0, wtf?
                 }
                 // printfln("thread {}: ({}, {}) -> ({}, {})", [context.id, context.min.x, context.min.y, context.max.x, context.max.y])
 
@@ -141,11 +144,11 @@ fn render_loop(context: &RenderContext) {
     }
     printfln("block {}: finished", [context.id])
 
-    // if const report_progress {
-    //     file_write_mutex.lock()
-    //     write_bmp(cast width, cast height, context.image.data, "image.bmp")
-    //     file_write_mutex.release()
-    // }
+    if const report_progress {
+        file_write_mutex.lock()
+        write_bmp(cast width, cast height, context.image.data, "image.bmp")
+        file_write_mutex.release()
+    }
 }
 
 fn color(r: Ray, world: Hittable, random: ref Random, depth: int = 0) -> vec3 {
@@ -161,9 +164,9 @@ fn color(r: Ray, world: Hittable, random: ref Random, depth: int = 0) -> vec3 {
         }
 
         None -> {
-            let t: real = 0.5 * (r.direction.y + 1)
-            new vec3{1, 1, 1} * (1 - t) + new vec3{0.5, 0.7, 1.0} * t
-            // new vec3{0, 0, 0}
+            // let t: real = 0.5 * (r.direction.y + 1)
+            // new vec3{1, 1, 1} * (1 - t) + new vec3{0.5, 0.7, 1.0} * t
+            new vec3{0.0, 0.0, 0.0}
             // new vec3{1, 1, 1}
         }
     }
@@ -405,6 +408,102 @@ fn cornell_box(cam: ref Camera) -> Hittable {
     // objects
     Box::create_faces(new vec3{130, 0, 65}, new vec3{295, 165, 230}, white, list)
     Box::create_faces(new vec3{265, 0, 295}, new vec3{430, 330, 460}, white, list)
+
+    if use_bhv {
+        let bhv = BhvNode::create(list.slice())
+        return create_object(Hittable, bhv)
+    } else {
+        return create_object(Hittable, list)
+    }
+}
+
+fn big_scene(cam: ref Camera) -> Hittable {
+    cam = Camera::create(
+        new vec3{478, 278, -600},
+        new vec3{278, 278, 0},
+        40,
+        real(width) / real(height),
+        0,
+        10
+    )
+
+    let list = Array(Hittable)::create()
+
+    let nb = 20
+
+    let m_white = create_object(Material, new Lambertian{ConstantTexture::create(new {0.73, 0.73, 0.73})})
+    let m_ground = create_object(Material, new Lambertian{ConstantTexture::create(new {0.48, 0.83, 0.53})})
+
+    // boxes
+    {
+        let boxlist = Array(Hittable)::create()
+        for i: 0..nb {
+            for j : 0..nb {
+                let w = real(100.0)
+                let x0 = -1000.0 + real(i) * w
+                let z0 = -1000.0 + real(j) * w
+                let y0 = real(0)
+                let x1 = x0 + w
+                let y1 = 100.0 * (global_random.random_real() + 0.01)
+                let z1 = z0 + w
+                list.add(create_object(Hittable, Box::create(new{x0, y0, z0}, new{x1, y1, z1}, m_ground)))
+            }
+        }
+        // list.add(create_object(Hittable, BhvNode::create(boxlist.slice())))
+    }
+
+    // light
+    let m_light = create_object(Material, new Emissive{new{7, 7, 7}})
+    list.add(create_object(Hittable, new ZXRect{123, 423, 147, 412, 554, m_light}))
+
+    // spheres
+    // matte
+    list.add(create_object(Hittable, new Sphere{new{400, 400, 200}, 50, create_object(Material, new Lambertian{ConstantTexture::create(new{0.7, 0.3, 0.1})})}))
+
+    // glass
+    list.add(create_object(Hittable, new Sphere{new{260, 150, 45}, 50, create_object(Material, new Dielectric{1.5})}))
+
+    // metal
+    list.add(create_object(Hittable, new Sphere{new{0, 150, 145}, 50, create_object(Material, new Metal{new{0.8, 0.8, 0.9}, 10})}))
+
+    // checker sphere
+    if true {
+        let size = real(80.0)
+        let mat = CheckerMaterial::create(3.1415 / size * 2.0, new{-220, -280, -300},
+            create_object(Material, new Lambertian{ConstantTexture::create(new{0.6, 0.2, 0.4})}),
+            create_object(Material, new Metal{new{1, 1, 1}, 0}))
+
+        list.add(create_object(Hittable, new Sphere{new{220, 280, 300}, size, mat}))
+    }
+
+    // weird blue sphere
+    if true {
+        let boundary = create_object(Hittable, new Sphere{new{360, 150, 145}, 70, create_object(Material, new Dielectric{1.5})})
+
+        list.add(boundary)
+        list.add(create_object(Hittable, ConstantMedium::create(boundary, 0.2, ConstantTexture::create(new{0.2, 0.4, 0.9}))))
+    }
+
+    // fog
+    if true {
+        let boundary = create_object(Hittable, new Sphere{new{0, 0, 0}, 5000, create_object(Material, new Dielectric{1.5})})
+        list.add(create_object(Hittable, ConstantMedium::create(boundary, 0.0001, ConstantTexture::create(new{1, 1, 1}))))
+    }
+
+    // lots of spheres
+    if true {
+        let boxlist = Array(Hittable)::create()
+        for j : 0..1000 {
+            let pos = new vec3{
+                165.0 * global_random.random_real() - 100.0
+                165.0 * global_random.random_real() + 270.0
+                165.0 * global_random.random_real() + 395.0
+            }
+            list.add(create_object(Hittable, new Sphere{pos, 10, m_white}))
+        }
+
+        // list.add(create_object(Hittable, BhvNode::create(boxlist.slice())))
+    }
 
     if use_bhv {
         let bhv = BhvNode::create(list.slice())
