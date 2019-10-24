@@ -16,13 +16,13 @@ let use_bhv     : bool = true
 let num_threads : int = 10
 let grid_size   : int = 15
 
-let scale       : int = 10
-// let width       : int = 192 * scale
-// let height      : int = 108 * scale
-let width       : int = 108 * scale
+let scale       : int = 1
+let width       : int = 192 * scale
 let height      : int = 108 * scale
-let samples     : int = 2000
-let max_depth   : int = 10
+// let width       : int = 108 * scale
+// let height      : int = 108 * scale
+let samples     : int = 50
+let max_depth   : int = 15
 
 let scenes: []fn(ref Camera) -> Hittable = [simple_light, cornell_box, basic_scene, random_scene, big_scene]
 let const scene: int = 4
@@ -418,13 +418,25 @@ fn cornell_box(cam: ref Camera) -> Hittable {
 }
 
 fn big_scene(cam: ref Camera) -> Hittable {
+    // change random number gen for better level gen
+    {
+        global_random.next_double()
+        global_random.next_double()
+    }
+
+    let cam_pos = new vec3{478, 278, -600}
+    let look_at = new vec3{278, 278, 0}
+    let focus_point = new vec3{220, 280, 300}
+    // new vec3 {0, 150, 145},
+    let focus_dist = vec3::dot(vec3::normalized(look_at - cam_pos), focus_point - cam_pos) - 80
+
     cam = Camera::create(
-        new vec3{478, 278, -600},
-        new vec3{278, 278, 0},
-        40,
+        cam_pos,
+        look_at,
+        35,
         real(width) / real(height),
-        0,
-        10
+        15,
+        focus_dist
     )
 
     let list = Array(Hittable)::create()
@@ -454,7 +466,7 @@ fn big_scene(cam: ref Camera) -> Hittable {
 
     // light
     let m_light = create_object(Material, new Emissive{new{7, 7, 7}})
-    list.add(create_object(Hittable, new ZXRect{123, 423, 147, 412, 554, m_light}))
+    list.add(create_object(Hittable, new ZXRect{50, 423, 200, 412, 634, m_light}))
 
     // spheres
     // matte
@@ -464,7 +476,7 @@ fn big_scene(cam: ref Camera) -> Hittable {
     list.add(create_object(Hittable, new Sphere{new{260, 150, 45}, 50, create_object(Material, new Dielectric{1.5})}))
 
     // metal
-    list.add(create_object(Hittable, new Sphere{new{0, 150, 145}, 50, create_object(Material, new Metal{new{0.8, 0.8, 0.9}, 10})}))
+    list.add(create_object(Hittable, new Sphere{new{0, 150, 145}, 50, create_object(Material, new Metal{new{0.8, 0.8, 0.9}, 0.2})}))
 
     // checker sphere
     if true {
@@ -478,7 +490,7 @@ fn big_scene(cam: ref Camera) -> Hittable {
 
     // weird blue sphere
     if true {
-        let boundary = create_object(Hittable, new Sphere{new{360, 150, 145}, 70, create_object(Material, new Dielectric{1.5})})
+        let boundary = create_object(Hittable, new Sphere{new{460, 150, 145}, 70, create_object(Material, new Dielectric{1.5})})
 
         list.add(boundary)
         list.add(create_object(Hittable, ConstantMedium::create(boundary, 0.2, ConstantTexture::create(new{0.2, 0.4, 0.9}))))
@@ -487,19 +499,32 @@ fn big_scene(cam: ref Camera) -> Hittable {
     // fog
     if true {
         let boundary = create_object(Hittable, new Sphere{new{0, 0, 0}, 5000, create_object(Material, new Dielectric{1.5})})
-        list.add(create_object(Hittable, ConstantMedium::create(boundary, 0.0001, ConstantTexture::create(new{1, 1, 1}))))
+        list.add(create_object(Hittable, ConstantMedium::create(boundary, 0.0002, ConstantTexture::create(new{1, 1, 1}))))
     }
 
     // lots of spheres
     if true {
-        let boxlist = Array(Hittable)::create()
+        let mats = [
+            create_object(Material, new Lambertian{ConstantTexture::create(new{0.4, 0.6, 0.8})})
+            create_object(Material, new Lambertian{ConstantTexture::create(new{0.4, 0.6, 0.8})})
+            create_object(Material, new Lambertian{ConstantTexture::create(new{0.4, 0.8, 0.6})})
+            create_object(Material, new Lambertian{ConstantTexture::create(new{0.4, 0.8, 0.6})})
+            create_object(Material, new Lambertian{ConstantTexture::create(new{0.8, 0.6, 0.4})})
+            create_object(Material, new Lambertian{ConstantTexture::create(new{0.8, 0.6, 0.4})})
+            create_object(Material, new Emissive{new{2.0, 2.0, 2.0}})
+            create_object(Material, new Metal{new{1, 0.8, 0.8}, 0.0})
+            create_object(Material, new Metal{new{1, 0.8, 0.8}, 0.0})
+            create_object(Material, new Dielectric{1.5})
+            create_object(Material, new Dielectric{1.5})
+        ]
         for j : 0..1000 {
             let pos = new vec3{
-                165.0 * global_random.random_real() - 100.0
+                165.0 * global_random.random_real() - 200.0
                 165.0 * global_random.random_real() + 270.0
                 165.0 * global_random.random_real() + 395.0
             }
-            list.add(create_object(Hittable, new Sphere{pos, 10, m_white}))
+            let m = mats[int(global_random.random_real() * real(mats.length))]
+            list.add(create_object(Hittable, new Sphere{pos, 10, m}))
         }
 
         // list.add(create_object(Hittable, BhvNode::create(boxlist.slice())))
