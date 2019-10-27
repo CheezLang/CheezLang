@@ -41,15 +41,15 @@ namespace Cheez.Types
             return !(a == b);
         }
 
-        public override bool Equals(object obj)
-        {
-            return base.Equals(obj);
-        }
+        //public override bool Equals(object obj)
+        //{
+        //    return base.Equals(obj);
+        //}
 
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
+        //public override int GetHashCode()
+        //{
+        //    return base.GetHashCode();
+        //}
 
         public virtual int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {

@@ -1,0 +1,59 @@
+#test_expect_output("
+foo(self): 5
+bar()
+
+foo1(self, 3): 15
+15
+bar1(3) -> 3
+3
+")
+
+#load("std:io/io")
+
+struct S {
+    a: int
+}
+
+impl S {
+    fn foo(ref Self) {
+        printfln("foo(self): {}", [a])
+    }
+
+    fn foo1(ref Self, x: int) -> int {
+        let result = a * x
+        printfln("foo1(self, {}): {}", [x, result])
+        return result
+    }
+}
+
+fn bar() {
+    println("bar()")
+}
+
+fn bar1(x: int) -> int {
+    printfln("bar1({}) -> {}", [x, x])
+    return x
+}
+
+fn test(f: Fn()) {
+    f()
+}
+
+fn test1(f: Fn(int) -> int, x: int) {
+    println(f(x))
+}
+
+fn Main() {
+    println("")
+    let s = new S{5}
+
+    test(cast s.foo)
+    test(cast bar)
+
+    println("")
+
+    test1(cast s.foo1, 3)
+    test1(cast bar1, 3)
+
+    println("")
+}

@@ -388,6 +388,9 @@ namespace Cheez
                 case AstNullExpr _:
                     return true;
 
+                case AstUfcFuncExpr _:
+                    return true;
+
                 case AstEmptyExpr _:
                     return true;
 

@@ -413,6 +413,7 @@ namespace Cheez
             expr.Type = new FunctionType(
                 expr.Parameters.Select(p => (p.Name.Name, p.Type, (AstExpression)null)).ToArray(),
                 retType,
+                true,
                 FunctionType.CallingConvention.Default);
 
             return expr;
@@ -1039,7 +1040,7 @@ namespace Cheez
                 cc = FunctionType.CallingConvention.Stdcall;
 
             func.Type = CheezType.Type;
-            func.Value = new FunctionType(paramTypes, ret, cc);
+            func.Value = new FunctionType(paramTypes, ret, func.IsFatFunction, cc);
             return func;
         }
 
@@ -1188,6 +1189,50 @@ namespace Cheez
                 }
             }
 
+            else if (to is FunctionType fto && fto.IsFatFunction && cast.SubExpression is AstUfcFuncExpr ufc)
+            {
+                var ffrom = from as FunctionType;
+                // check for ref self param
+                if (ufc.FunctionDecl.SelfType != SelfParamType.Reference)
+                {
+                    ReportError(cast, $"Can't convert member function '{ufc.FunctionDecl.Name}' to fat function because it doesn't take ref Self as its first parameter");
+                }
+
+                // check return type
+                if (!CheezType.TypesMatch(fto.ReturnType, ffrom.ReturnType))
+                    ReportError(cast, $"Can't convert member function '{ufc.FunctionDecl.Name}' to fat function because the return types don't match");
+
+                // check arg types
+                if (fto.Parameters.Length != ffrom.Parameters.Length - 1)
+                {
+                    ReportError(cast, $"Can't convert member function '{ufc.FunctionDecl.Name}' to fat function because the parameter count doesn't match");
+                }
+                else
+                {
+                    for (int i = 0; i < fto.Parameters.Length; i++)
+                    {
+                        if (!CheezType.TypesMatch(fto.Parameters[i].type, ffrom.Parameters[i + 1].type))
+                        {
+                            ReportError(cast, $"Can't convert member function '{ufc.FunctionDecl.Name}' to fat function because the return parameter types don't match");
+                            break;
+                        }
+                    }
+                }
+
+
+                return cast;
+            }
+
+            else if (to is FunctionType fTo && from is FunctionType fFrom)
+            {
+                if (!fTo.IsFatFunction && fFrom.IsFatFunction)
+                {
+                    ReportError(cast, $"Can't cast from fat function to normal function");
+                }
+
+                return cast;
+            }
+
             else if ((to is PointerType && from is PointerType) ||
                 (to is IntType && from is PointerType) ||
                 (to is PointerType && from is IntType) ||
@@ -1202,7 +1247,6 @@ namespace Cheez
                 (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
                 (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType) ||
                 (to is IntType && from is EnumType) ||
-                (to is FunctionType && from is FunctionType) ||
                 (to is BoolType && from is FunctionType) ||
                 (to is FunctionType && from is PointerType p2 && p2.TargetType == CheezType.Any))
             {

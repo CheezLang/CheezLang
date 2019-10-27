@@ -72,11 +72,14 @@ namespace Cheez.Ast.Expressions.Types
 
         public List<AstDirective> Directives { get; set; }
 
-        public AstFunctionTypeExpr(List<AstExpression> parTypes, AstExpression returnType, List<AstDirective> dirs, ILocation Location = null) : base(Location)
+        public bool IsFatFunction { get; set; }
+
+        public AstFunctionTypeExpr(List<AstExpression> parTypes, AstExpression returnType, bool isFatFunction, List<AstDirective> dirs, ILocation Location = null) : base(Location)
         {
             this.ParameterTypes = parTypes;
             this.ReturnType = returnType;
             this.Directives = dirs;
+            this.IsFatFunction = isFatFunction;
         }
 
         [DebuggerStepThrough]
@@ -87,6 +90,7 @@ namespace Cheez.Ast.Expressions.Types
             return CopyValuesTo(new AstFunctionTypeExpr(
                 ParameterTypes.Select(p => p.Clone()).ToList(),
                 ReturnType?.Clone(),
+                IsFatFunction,
                 Directives));
         }
 

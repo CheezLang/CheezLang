@@ -351,6 +351,7 @@ namespace Cheez.Types.Complex
 
         public override bool IsPolyType => ReturnType.IsPolyType || Parameters.Any(p => p.type.IsPolyType);
         public bool VarArgs { get; set; }
+        public bool IsFatFunction { get; set; }
         public (string name, CheezType type, AstExpression defaultValue)[] Parameters { get; private set; }
         public CheezType ReturnType { get; private set; }
 
@@ -360,7 +361,7 @@ namespace Cheez.Types.Complex
 
         public CallingConvention CC = CallingConvention.Default;
 
-        public FunctionType((string name, CheezType type, AstExpression defaultValue)[] parameterTypes, CheezType returnType, CallingConvention cc)
+        public FunctionType((string name, CheezType type, AstExpression defaultValue)[] parameterTypes, CheezType returnType, bool isFatFunc, CallingConvention cc)
         {
             if (parameterTypes.Any(p => p.type == null))
             {
@@ -369,6 +370,7 @@ namespace Cheez.Types.Complex
 
             this.Parameters = parameterTypes;
             this.ReturnType = returnType;
+            this.IsFatFunction = isFatFunc;
             this.CC = cc;
 
             Size = PointerType.PointerSize;
@@ -380,6 +382,7 @@ namespace Cheez.Types.Complex
             this.Declaration = func;
             this.ReturnType = func.ReturnTypeExpr?.Type ?? CheezType.Void;
             this.Parameters = func.Parameters.Select(p => (p.Name?.Name, p.Type, p.DefaultValue)).ToArray();
+            this.IsFatFunction = false;
 
             if (func.TryGetDirective("stdcall", out var dir))
                 this.CC = CallingConvention.Stdcall;
@@ -396,10 +399,11 @@ namespace Cheez.Types.Complex
                     return $"{p.name}: {p.type}";
                 return p.type.ToString();
             }));
+            var fn = IsFatFunction ? "Fn" : "fn";
             if (ReturnType != CheezType.Void)
-                return $"fn({args}) -> {ReturnType}";
+                return $"{fn}({args}) -> {ReturnType}";
             else
-                return $"fn({args})";
+                return $"{fn}({args})";
         }
 
         public override bool Equals(object obj)
@@ -410,6 +414,9 @@ namespace Cheez.Types.Complex
                     return false;
 
                 if (Parameters.Length != f.Parameters.Length)
+                    return false;
+
+                if (IsFatFunction != f.IsFatFunction)
                     return false;
 
                 for (int i = 0; i < Parameters.Length; i++)
@@ -424,11 +431,23 @@ namespace Cheez.Types.Complex
 
         public override int GetHashCode()
         {
-            var hashCode = -1451483643;
-            hashCode = hashCode * -1521134295 + base.GetHashCode();
-            hashCode = hashCode * -1521134295 + VarArgs.GetHashCode();
-            hashCode = hashCode * -1521134295 + EqualityComparer<CheezType>.Default.GetHashCode(ReturnType);
-            return hashCode;
+            var hash = new HashCode();
+            hash.Add(IsPolyType);
+            hash.Add(VarArgs);
+            hash.Add(IsFatFunction);
+            foreach (var p in Parameters)
+                hash.Add(p.type);
+            hash.Add(ReturnType);
+            return hash.ToHashCode();
         }
+
+        //public override int GetHashCode()
+        //{
+        //    var hashCode = -1451483643;
+        //    hashCode = hashCode * -1521134295 + base.GetHashCode();
+        //    hashCode = hashCode * -1521134295 + VarArgs.GetHashCode();
+        //    hashCode = hashCode * -1521134295 + EqualityComparer<CheezType>.Default.GetHashCode(ReturnType);
+        //    return hashCode;
+        //}
     }
 }

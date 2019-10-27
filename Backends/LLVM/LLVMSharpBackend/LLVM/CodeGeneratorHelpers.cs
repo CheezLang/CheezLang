@@ -362,7 +362,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case VoidType _:
                     return LLVM.VoidType();
 
-                case FunctionType f:
+                case FunctionType f when f.IsFatFunction:
+                    {
+                        var paramTypes = f.Parameters.Select(rt => CheezTypeToLLVMType(rt.type)).ToList();
+                        paramTypes.Insert(0, LLVM.PointerType(LLVM.Int8Type(), 0));
+                        var returnType = CheezTypeToLLVMType(f.ReturnType);
+                        var funcType = LLVMTypeRef.FunctionType(returnType, paramTypes.ToArray(), f.VarArgs);
+
+                        var llvmType = LLVM.StructCreateNamed(context, f.ToString());
+                        llvmType.StructSetBody(new LLVMTypeRef[] {
+                            funcType.GetPointerTo(),
+                            LLVM.PointerType(LLVM.Int8Type(), 0)
+                        }, false);
+                        return llvmType;
+                    }
+
+                case FunctionType f when !f.IsFatFunction:
                     {
                         var paramTypes = f.Parameters.Select(rt => CheezTypeToLLVMType(rt.type)).ToList();
                         var returnType = CheezTypeToLLVMType(f.ReturnType);
@@ -486,7 +501,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             FloatType f => LLVM.ConstReal(CheezTypeToLLVMType(type), 0.0),
             CharType c => LLVM.ConstInt(CheezTypeToLLVMType(type), 0, false),
             AnyType a => LLVM.ConstInt(LLVM.Int64Type(), 0, false),
-            FunctionType f => LLVM.ConstNull(CheezTypeToLLVMType(f)),
+            FunctionType f when f.IsFatFunction => LLVM.ConstNamedStruct(CheezTypeToLLVMType(f), new LLVMValueRef[] {
+                LLVM.ConstNull(CheezTypeToLLVMType(f)),
+                LLVM.ConstPointerNull(LLVM.Int8Type()),
+            }),
+            FunctionType f when !f.IsFatFunction => LLVM.ConstNull(CheezTypeToLLVMType(f)),
             TupleType t => LLVM.ConstStruct(t.Members.Select(m => GetDefaultLLVMValue(m.type)).ToArray(), false),
 
             StructType p => p.Declaration.Members.Aggregate(
@@ -689,6 +708,36 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     builder.CreateCall(memDtor, new LLVMValueRef[] { memPtr }, "");
                 }
             }
+        }
+
+        // fat function stuff
+        private LLVMValueRef CreateFatFuncHelper(FunctionType type)
+        {
+            // TODO: cache functions
+
+            var paramTypes = new List<LLVMTypeRef>() { CheezTypeToLLVMType(type) };
+            paramTypes.AddRange(type.Parameters.Select(p => CheezTypeToLLVMType(p.type)));
+
+            var llvmType = LLVM.FunctionType(CheezTypeToLLVMType(type.ReturnType), paramTypes.ToArray(), false);
+            var func = module.AddFunction($"{type}.ffh.che", llvmType);
+
+            var builder = new IRBuilder();
+            builder.PositionBuilderAtEnd(func.AppendBasicBlock("entry"));
+
+            // call func
+            var funcArg = func.GetParam(0);
+            var args = func.GetParams().Skip(1).ToArray();
+            var res = builder.CreateCall(funcArg, args, "");
+
+            // return
+            if (type.ReturnType == CheezType.Void)
+                builder.CreateRetVoid();
+            else
+                builder.CreateRet(res);
+
+            builder.Dispose();
+
+            return func;
         }
     }
 }

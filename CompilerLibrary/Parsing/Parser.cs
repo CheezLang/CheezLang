@@ -199,6 +199,7 @@ namespace Cheez.Parsing
                 case TokenType.Ampersand:
                 case TokenType.Identifier:
                 case TokenType.DollarIdentifier:
+                case TokenType.Kwfn:
                 case TokenType.KwFn:
                     return true;
 
@@ -374,7 +375,7 @@ namespace Cheez.Parsing
 
                 case TokenType.KwReturn:
                     return ParseReturnStatement();
-                case TokenType.KwFn:
+                case TokenType.Kwfn:
                     return ParseFunctionDeclaration();
                 case TokenType.KwLet:
                     return ParseVariableDeclaration(TokenType.ClosingBrace);
@@ -459,7 +460,7 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
                     break;
 
-                if (next.type == TokenType.KwFn)
+                if (next.type == TokenType.Kwfn)
                     functions.Add(ParseFunctionDeclaration());
                 else if (next.type == TokenType.Identifier)
                 {
@@ -1303,7 +1304,7 @@ namespace Cheez.Parsing
             var directives = new List<AstDirective>();
             var generics = new List<AstIdExpr>();
 
-            beginning = ConsumeUntil(TokenType.KwFn, ErrMsgUnexpected("keyword 'fn'", "beginning of function declaration")).location;
+            beginning = ConsumeUntil(TokenType.Kwfn, ErrMsgUnexpected("keyword 'fn'", "beginning of function declaration")).location;
             SkipNewlines();
 
             var name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'fn' in function declaration"));
@@ -1347,8 +1348,23 @@ namespace Cheez.Parsing
         {
             var args = new List<AstExpression>();
             AstExpression returnType = null;
+            bool isFatFunction = false;
 
-            var beginning = Consume(TokenType.KwFn, ErrMsg("keyword 'fn'", "at beginning of function type")).location;
+            var fn = NextToken();
+            TokenLocation beginning = fn.location;
+            if (fn.type == TokenType.Kwfn)
+            {
+                isFatFunction = false;
+            }
+            else if(fn.type == TokenType.KwFn)
+            {
+                isFatFunction = true;
+            }
+            else
+            {
+                ReportError(fn.location, $"Expected keyword 'fn' or 'Fn' at beginning of function type expression");
+            }
+
             SkipNewlines();
 
             Consume(TokenType.OpenParen, ErrMsg("(", "after keyword 'fn'"));
@@ -1387,7 +1403,7 @@ namespace Cheez.Parsing
 
             var dirs = ParseDirectives();
 
-            return new AstFunctionTypeExpr(args, returnType, dirs, new Location(beginning, end));
+            return new AstFunctionTypeExpr(args, returnType, isFatFunction, dirs, new Location(beginning, end));
         }
 
         public AstExpression ParseExpression(ErrorMessageResolver errorMessage = null)
@@ -2018,6 +2034,7 @@ namespace Cheez.Parsing
                     var target = ParseExpression();
                     return new AstReferenceTypeExpr(target, new Location(token.location, target.End));
 
+                case TokenType.Kwfn:
                 case TokenType.KwFn:
                     return ParseFunctionTypeExpr();
 

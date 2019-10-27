@@ -1,0 +1,70 @@
+#test_expect_output("
+foo()
+test1()
+foo(): ...
+
+baz()
+test2() -> 3
+baz(): 3
+
+bar(9)
+test3(9) -> 14
+bar(9): 14
+")
+
+#load("std:io/io")
+
+fn foo(f: Fn()) {
+    println("foo()")
+    f()
+    println("foo(): ...")
+}
+
+fn baz(f: Fn() -> int) {
+    println("baz()")
+    let result = f()
+    printfln("baz(): {}", [result])
+}
+
+fn bar(f: Fn(int) -> int, x: int) {
+    printfln("bar({})", [x])
+    let result = f(x)
+    printfln("bar({}): {}", [x, result])
+}
+
+fn test1() {
+    println("test1()")
+}
+
+fn test2() -> int {
+    println("test2() -> 3")
+    return 3
+}
+
+fn test3(a: int) -> int {
+    let result = a + 5
+    printfln("test3({}) -> {}", [a, result])
+    return result
+}
+
+fn Main() {
+    println("")
+
+    {
+        let f: Fn() = cast test1
+        foo(f)
+        println("")
+    }
+
+    {
+        let f: Fn() -> int = cast test2
+        baz(f)
+        println("")
+    }
+
+    {
+        let f: Fn(int) -> int = cast test3
+        bar(f, 9)
+        println("")
+    }
+}

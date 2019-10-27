@@ -2,7 +2,7 @@
   "profiles": {
     "CompilerCLI": {
       "commandName": "Project",
-      "commandLineArgs": "examples/test.che --out gen  --stdlib examples --time --run",
+      "commandLineArgs": "examples/test.che --out gen  --stdlib examples --time --opt --run  --print-ast-analysed ./gen/int/ast_analyzed.che",
       "workingDirectory": ".."
     }
   }

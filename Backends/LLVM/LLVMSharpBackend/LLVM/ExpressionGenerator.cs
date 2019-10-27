@@ -647,11 +647,53 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return res;
             }
 
-            if (to is FunctionType && from is FunctionType)
+            if (to is FunctionType fto && fto.IsFatFunction && cast.SubExpression is AstUfcFuncExpr ufc)
             {
                 var func = GenerateExpression(cast.SubExpression, true);
-                var res = builder.CreatePointerCast(func, toLLVM, "");
-                return res;
+                var data = GenerateExpression(ufc.SelfArg, false);
+                data = builder.CreatePointerCast(data, LLVM.Int8Type().GetPointerTo(), "");
+
+                var result = LLVM.GetUndef(CheezTypeToLLVMType(to));
+                result = builder.CreateInsertValue(result, func, 0, "");
+                result = builder.CreateInsertValue(result, data, 1, "");
+                return result;
+            }
+
+            if (to is FunctionType tf && from is FunctionType ff)
+            {
+                switch (tf.IsFatFunction, ff.IsFatFunction)
+                {
+                    case (false, false):
+                        {
+                            var func = GenerateExpression(cast.SubExpression, true);
+                            var res = builder.CreatePointerCast(func, toLLVM, "");
+                            return res;
+                        }
+
+                    case (true, true):
+                        {
+                            throw new NotImplementedException();
+                        }
+
+                    case (true, false):
+                        {
+                            var func = GenerateExpression(cast.SubExpression, true);
+                            func = builder.CreatePointerCast(func, LLVM.Int8Type().GetPointerTo(), "");
+
+                            var helpFunc = CreateFatFuncHelper(ff);
+
+                            var result = LLVM.GetUndef(CheezTypeToLLVMType(to));
+                            result = builder.CreateInsertValue(result, helpFunc, 0, "");
+                            result = builder.CreateInsertValue(result, func, 1, "");
+                            return result;
+                        }
+
+                    case (false, true):
+                        {
+                            // not possible
+                            throw new NotImplementedException();
+                        }
+                }
             }
 
             if (to is FunctionType && from is PointerType)
@@ -1223,26 +1265,47 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (c.Declaration != null)
             {
                 func = valueMap[c.Declaration];
+
+                // arguments
+                var args = c.Arguments.Select(a => GenerateExpression(a, true)).ToArray();
+
+                UpdateStackTracePosition(c);
+                var call = builder.CreateCall(func, args, "");
+                var callConv = LLVM.GetFunctionCallConv(func);
+                LLVM.SetInstructionCallConv(call, callConv);
+                return call;
             }
             else
             {
                 func = GenerateExpression(c.FunctionExpr, true);
                 var ftype = c.FunctionExpr.Type as FunctionType;
+
+                // arguments
+                IEnumerable<LLVMValueRef> GetFnArg()
+                {
+                    if (ftype.IsFatFunction)
+                    {
+                        var agg = func;
+                        func = builder.CreateExtractValue(agg, 0, "func");
+                        yield return builder.CreateExtractValue(agg, 1, "data");
+                    }
+                    yield break;
+                }
+
+                var args = GetFnArg().Concat(c.Arguments.Select(a => GenerateExpression(a, true))).ToArray();
+
                 if (ftype.CC == FunctionType.CallingConvention.Stdcall)
                 {
                     func.SetFunctionCallConv((uint)LLVMCallConv.LLVMX86StdcallCallConv);
                 }
+
+                CheckPointerNull(func, c.FunctionExpr, "Attempting to call null function pointer");
+                UpdateStackTracePosition(c);
+                var call = builder.CreateCall(func, args, "");
+                var callConv = LLVM.GetFunctionCallConv(func);
+                LLVM.SetInstructionCallConv(call, callConv);
+                return call;
             }
-
-            // arguments
-            var args = c.Arguments.Select(a => GenerateExpression(a, true)).ToArray();
-
-            UpdateStackTracePosition(c);
-            var call = builder.CreateCall(func, args, "");
-            var callConv = LLVM.GetFunctionCallConv(func);
-            LLVM.SetInstructionCallConv(call, callConv);
-
-            return call;
         }
 
         private LLVMValueRef GenerateIndexExpr(AstArrayAccessExpr expr, bool deref)

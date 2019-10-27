@@ -176,7 +176,7 @@
                 },
                 {
                     "name": "storage.type.cheezlang",
-                    "match": "\\b(fn)\\b"
+                    "match": "\\b(fn|Fn)\\b"
                 },
                 {
                     "name": "keyword.other.cheezlang",

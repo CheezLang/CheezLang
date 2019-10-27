@@ -80,6 +80,7 @@ namespace Cheez.Parsing
         KwReturn,
         KwNew,
         KwRef,
+        Kwfn,
         KwFn,
         KwStruct,
         KwEnum,
@@ -363,7 +364,8 @@ namespace Cheez.Parsing
                 case "return": token.type = TokenType.KwReturn; break;
                 case "new": token.type = TokenType.KwNew; break;
                 case "ref": token.type = TokenType.KwRef; break;
-                case "fn": token.type = TokenType.KwFn; break;
+                case "fn": token.type = TokenType.Kwfn; break;
+                case "Fn": token.type = TokenType.KwFn; break;
                 case "struct": token.type = TokenType.KwStruct; break;
                 case "impl": token.type = TokenType.KwImpl; break;
                 case "let": token.type = TokenType.KwLet; break;

@@ -900,11 +900,12 @@ namespace Cheez.Visitors
 
         public override string VisitFunctionTypeExpr(AstFunctionTypeExpr type, int data = 0)
         {
+            string fn = type.IsFatFunction ? "Fn" : "fn";
             var args = string.Join(", ", type.ParameterTypes.Select(p => p.Accept(this)));
             if (type.ReturnType != null)
-                return $"fn({args}) -> {type.ReturnType.Accept(this)}";
+                return $"{fn}({args}) -> {type.ReturnType.Accept(this)}";
             else
-                return $"fn({args})";
+                return $"{fn}({args})";
         }
 
         public override string VisitArrayTypeExpr(AstArrayTypeExpr type, int data = 0)
