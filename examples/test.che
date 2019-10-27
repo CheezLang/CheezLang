@@ -1,6 +1,6 @@
 // #load("examples/trait_function_call_performance")
 // #load("examples/graphyfier/graphyfier")
-#load("examples/pathtracer2/main")
+// #load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
@@ -10,6 +10,14 @@
 // #load("tests/library/arena_allocator1")
 //#load("tests/other/test1")
 // #load("examples/project_euler/009_special_pythagorean_triplet")
+
+//*
+#load("std:io/io")
+// trait Drop {}
+
+fn Main() {
+}
+// */
 
 /*
 
@@ -54,43 +62,6 @@ fn Main() {
     println("==========")
     // try_catch(test(false), {})
     try_catch(test(false), printfln("test1: err: {}", [err]))
-}
-
-// */
-
-/*
-#load("std:io/io")
-#load("std:os/windows")
-#load("std:thread")
-#load("std:array")
-#load("std:ring_queue")
-
-fn inc(num: &int) {
-    for : 0..50000 {
-        mutex.lock()
-        <<num += 1
-        mutex.release()
-    }
-    // Sleep(100)
-}
-
-let mutex: Mutex = Mutex::create()
-
-fn Main() {
-    let num = 0
-
-    let tp = ThreadPool::create(4)
-    let start = get_time_milliseconds()
-
-    for : 0..10 {
-        tp.enqueue(inc, &num)
-    }
-   
-    tp.terminate(true)
-    let end = get_time_milliseconds()
-    let dur = end - start
-
-    printfln("{} ms, num = {}", [dur, num])
 }
 
 // */
