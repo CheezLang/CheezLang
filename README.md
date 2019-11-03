@@ -100,7 +100,7 @@ impl Vec3 {
 
 impl Printable for Vec3 {
     fn print(ref Self, str: ref String, format: string) {
-        str.appendf("({}, {}, {})", [self.x, self.y, self.z])
+        str.appendf("({}, {}, {})", (self.x, self.y, self.z))
     }
 }
 
