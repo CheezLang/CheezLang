@@ -93,7 +93,7 @@ namespace Cheez.Types.Complex
 
     public class TupleType : CheezType
     {
-        private static List<TupleType> sTypes = new List<TupleType>();
+        public static readonly TupleType UnitLiteral = GetTuple(Array.Empty<(string, CheezType)>());
 
         public (string name, CheezType type)[] Members { get; }
         public override bool IsPolyType => Members.Any(m => m.type.IsPolyType);

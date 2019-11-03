@@ -1488,6 +1488,99 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "is_tuple":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@is_tuple takes 1 argument");
+                            return expr;
+                        }
+
+                        var arg = InferArg(0, CheezType.Type);
+                        expr.Type = CheezType.Bool;
+                        expr.Value = arg.Value is TupleType;
+                        return expr;
+                    }
+
+                case "for_tuple_values":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr.Location, "@for_tuple_values takes 2 arguments");
+                            return expr;
+                        }
+
+                        var tuple = InferArg(0, null);
+                        if (!(tuple.Type is TupleType tupleType))
+                        {
+                            ReportError(tuple, $"First argument must be a tuple, but is {tuple.Type}");
+                            return expr;
+                        }
+
+                        // create temp var if tuple is not a variable
+                        if (!(tuple is AstIdExpr))
+                        {
+                            tuple = new AstTempVarExpr(tuple);
+                        }
+
+                        var lambdaArg = expr.Arguments[1].Expr;
+                        if (!(lambdaArg is AstLambdaExpr lambda))
+                        {
+                            ReportError(lambdaArg, "Second argument must be a lambda");
+                            return expr;
+                        }
+
+                        if (lambda.Parameters.Count == 0)
+                        {
+                            ReportError(lambda, "Lambda must take at least one argument");
+                            return expr;
+                        }
+
+                        if (lambda.Parameters.Count > 2)
+                        {
+                            ReportError(lambda, "Lambda must take at most two arguments");
+                            return expr;
+                        }
+
+                        var param = lambda.Parameters[0];
+                        var indexParam = lambda.Parameters.Count >= 2 ? lambda.Parameters[1] : null;
+
+                        var statements = new List<AstStatement>();
+
+                        int index = 0;
+                        foreach (var member in tupleType.Members)
+                        {
+                            var code = lambda.Body.Clone();
+
+                            var stmts = new List<AstStatement>();
+
+                            if (indexParam != null)
+                            {
+                                var idx = new AstVariableDecl(
+                                    indexParam.Name.Clone(),
+                                    indexParam.TypeExpr?.Clone(),
+                                    new AstNumberExpr(NumberData.FromBigInt(index)),
+                                    true,
+                                    Location: indexParam);
+                                stmts.Add(idx);
+                            }
+                            {
+                                var acc = new AstArrayAccessExpr(tuple.Clone(), new AstNumberExpr(NumberData.FromBigInt(index), Location: param), param);
+                                var init = new AstVariableDecl(param.Name.Clone(), param.TypeExpr?.Clone(), acc, false, Location: param);
+                                stmts.Add(init);
+                            }
+
+                            stmts.Add(new AstExprStmt(code, code));
+                            statements.Add(new AstExprStmt(new AstBlockExpr(stmts, lambda.Body), lambda.Body));
+
+                            index++;
+                        }
+
+                        var block = new AstBlockExpr(statements, expr);
+                        block.Replace(expr);
+                        return InferType(block, expected);
+                    }
+
                 case "is_os":
                     {
                         if (expr.Arguments.Count != 1)
@@ -2652,6 +2745,13 @@ namespace Cheez
                         break;
                     }
 
+                case CheezTypeType _ when !expr.IsDoubleColon && (expr.Left.Value is TupleType t):
+                    {
+                        expr.Type = IntType.LiteralType;
+                        expr.Value = NumberData.FromBigInt(t.Members.Length);
+                        break;
+                    }
+
                 case CheezTypeType _ when !expr.IsDoubleColon && (expr.Left.Value is IntType || expr.Left.Value is FloatType):
                     {
                         expr.Type = expr.Left.Value as CheezType;
@@ -2701,6 +2801,20 @@ namespace Cheez
 
         private AstExpression InferTypeTupleExpr(AstTupleExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            if (expr.Values.Count == 0)
+            {
+                if (expected == CheezType.Type)
+                {
+                    expr.Type = CheezType.Type;
+                    expr.Value = TupleType.UnitLiteral;
+                }
+                else
+                {
+                    expr.Type = TupleType.UnitLiteral;
+                }
+                return expr;
+            }
+
             TupleType tupleType = expected as TupleType;
             if (tupleType?.Members?.Length != expr.Values.Count) tupleType = null;
 

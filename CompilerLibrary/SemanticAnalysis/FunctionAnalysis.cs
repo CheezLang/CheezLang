@@ -179,7 +179,23 @@ namespace Cheez
                     PopErrorHandler();
 
                     if (errs.HasErrors)
-                        errs.ForwardErrors(CurrentErrorHandler);
+                    {
+                        if (func.IsPolyInstance && func.InstantiatedAt != null)
+                        {
+                            ReportError($"Errors in polymorphic function '{func.Name}':");
+                            errs.ForwardErrors(CurrentErrorHandler);
+
+                            ReportError($"Caused from invocations here:");
+                            foreach (var loc in func.InstantiatedAt)
+                            {
+                                ReportError(loc, $"Failed to instantiate function '{func.Name}'");
+                            }
+                        }
+                        else
+                        {
+                            errs.ForwardErrors(CurrentErrorHandler);
+                        }
+                    }
                     else
                         PassVariableLifetimes(func);
 

@@ -830,6 +830,7 @@ namespace Cheez
                     instances.Add(instance);
             }
 
+            instance.AddInstantiatedAt(location);
             return instance;
         }
 

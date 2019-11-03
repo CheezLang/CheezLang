@@ -663,9 +663,9 @@ namespace Cheez.Ast.Expressions
     public class AstTupleExpr : AstExpression
     {
         public override bool IsPolymorphic => false;
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTupleExpr(this, data);
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitTupleExpr(this, data);
 
-        public bool IsTypeExpr = false;
+        public bool IsTypeExpr { get; set; } = false;
         public bool IsFullyNamed => Types.All(t => t.Name != null);
         public List<AstExpression> Values { get; set; }
         public List<AstParameter> Types { get; set; }
@@ -697,7 +697,7 @@ namespace Cheez.Ast.Expressions
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitNumberExpr(this, data);
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitNumberExpr(this, data);
 
         [DebuggerStepThrough]
         public override AstExpression Clone() => CopyValuesTo(new AstNumberExpr(Data, Suffix));

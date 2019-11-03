@@ -1794,9 +1794,7 @@ namespace Cheez.Parsing
 
             if (!isType)
             {
-                if (list.Count == 0)
-                    ReportError(new Location(beg, end), $"Invalid expression");
-                else if (list.Count == 1)
+                if (list.Count == 1)
                 {
                     var expr = list[0].TypeExpr;
                     expr.Location = new Location(beg, end);

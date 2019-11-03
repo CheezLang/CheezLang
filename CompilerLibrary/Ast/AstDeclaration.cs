@@ -102,6 +102,7 @@ namespace Cheez.Ast.Statements
         public bool IsGeneric { get; set; } = false;
         public bool IsConstant => true;
         public bool IsPolyInstance { get; set; } = false;
+        public List<ILocation> InstantiatedAt { get; private set; } = null;
         public AstTraitDeclaration Trait { get; set; } = null;
 
         public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
@@ -148,6 +149,16 @@ namespace Cheez.Ast.Statements
             copy.ConstScope = new Scope($"fn$ {Name.Name}", copy.Scope);
             copy.SubScope = new Scope($"fn {Name.Name}", copy.ConstScope);
             return copy;
+        }
+
+        public void AddInstantiatedAt(ILocation loc)
+        {
+            if (InstantiatedAt == null)
+            {
+                InstantiatedAt = new List<ILocation>();
+            }
+
+            InstantiatedAt.Add(loc);
         }
     }
 
