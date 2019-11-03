@@ -60,8 +60,8 @@ test2 is empty
 
 fn get_and_print(table: ref Table($K, $V), key: K) {
     match table.get(key) {
-        Some($v) -> printf("{} = {}`n", [key, v])
-        None -> printf("{} is empty`n", [key])
+        Some($v) -> printf("{} = {}`n", (key, v))
+        None -> printf("{} is empty`n", key)
     }
 }
 

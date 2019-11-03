@@ -45,7 +45,7 @@ fn dir_change_thread_func(data: &any) {
             game.file_changed()
             FindNextChangeNotification(game.wait_handle)
         } else {
-            // printfln("err: 0x{:x}", [res])
+            // printfln("err: 0x{:x}", res)
         }
     }
 }
@@ -69,7 +69,7 @@ impl Game for MyGame {
         defer free(fullpath)
         wait_handle = FindFirstChangeNotificationA(fullpath, 0, 0x00000008)
         if wait_handle == null {
-            printfln("Failed to create file change watcher for file '{}'", [fullpath])
+            printfln("Failed to create file change watcher for file '{}'", fullpath)
         } else {
             dir_change_thread = Thread::create(dir_change_thread_func, &self)
             dir_change_thread.start()
@@ -120,7 +120,7 @@ impl Game for MyGame {
             }
 
             Err($msg) -> {
-                printfln("Failed to load file: {}", [msg])
+                printfln("Failed to load file: {}", msg)
             }
         }
 
@@ -328,10 +328,10 @@ impl Game for MyGame {
             let mouse_x_world = to_world(pge.get_mouse_pos().x, 0).x
             match evaluate_function(mouse_x_world) {
                 Some($c) -> {
-                    printfln("f({}) = {}", [mouse_x_world, c])
+                    printfln("f({}) = {}", (mouse_x_world, c))
                 }
 
-                None -> printfln("f({}) is undefined", [mouse_x_world])
+                None -> printfln("f({}) is undefined", mouse_x_world)
             }
         }
     }

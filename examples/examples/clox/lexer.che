@@ -184,7 +184,7 @@ impl Lexer {
 
         let c = next_char()
         let n = peek_char()
-        // printfln("checking chars '{}', '{}'", [c, n])
+        // printfln("checking chars '{}', '{}'", (c, n))
 
         return match (c, n) {
             ('!', '=')  -> make_token(TokenKind.BangEqual, 2)

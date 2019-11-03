@@ -111,13 +111,13 @@ impl Camera {
 
 impl Printable for vec3 {
     fn print(ref Self, str: ref String, format: string) {
-        str.appendf("v3({}, {}, {})", [x, y, z])
+        str.appendf("v3({}, {}, {})", (x, y, z))
     }
 }
 
 impl Printable for Ray {
     fn print(ref Self, str: ref String, format: string) {
-        str.appendf("ray({}, {})", [origin, direction])
+        str.appendf("ray({}, {})", (origin, direction))
     }
 }
 

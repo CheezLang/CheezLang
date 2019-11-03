@@ -8,6 +8,7 @@
 // #load("std:iterator")
 // #load("std:random")
 
+//* corotine stuff
 fn foo() -> int #coroutine {
     return 0
     return 1
@@ -25,7 +26,7 @@ fn mul2(a: int) -> Fn(int) -> int {
 }
 
 fn bar(x: int) #fiber {
-    printfln("x = {}", [x])
+    printfln("x = {}", x)
 
     println("bar: a")
     yield
@@ -77,4 +78,29 @@ fn Main() {
     println(triple(2))
     println(triple(3))
 }
+// +/
 
+//* comp time code gen stuff
+struct vec3 {
+    pub x: float
+    pub y: float
+    pub z: float
+}
+
+fn def(T: type) -> T {
+    let result: T = default
+    #code {
+        let type_info = @type_info(T)
+
+        for m : type_info.members {
+            #statement @dot(result, m.name) = default(m.typ)
+        }
+    }
+
+    return result
+}
+
+fn Main() {
+    let v = def(vec3)
+}
+// */

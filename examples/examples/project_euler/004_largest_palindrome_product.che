@@ -29,7 +29,7 @@ fn Main() {
             if product < longest then continue
 
             str.clear()
-            str.appendf("{}", [product])
+            str.appendf("{}", product)
 
             if is_palindrome(str) {
                 longest = product

@@ -28,21 +28,21 @@ enum TokenData {
 impl Printable for TokenLocation {
     fn print(ref Self, str: ref String, format: string) {
         let column = index - line_start
-        str.appendf("{}:{}:{}", [file, line, column])
+        str.appendf("{}:{}:{}", (file, line, column))
     }
 }
 
 impl Printable for Token {
     fn print(ref Self, str: ref String, format: string) {
-        str.appendf("{} ({})", [ttype, location])
+        str.appendf("{} ({})", (ttype, location))
         match data {
-            TokenData.String($s) -> str.appendf(" String({})", [s])
-            TokenData.Integer($s) -> str.appendf(" Int({})", [s])
-            TokenData.Double($s) -> str.appendf(" Double({})", [s])
+            TokenData.String($s) -> str.appendf(" String({})", s)
+            TokenData.Integer($s) -> str.appendf(" Int({})", s)
+            TokenData.Double($s) -> str.appendf(" Double({})", s)
         }
 
         match suffix {
-            Some($s) -> str.appendf(" Suffix(`"{}`")", [s])
+            Some($s) -> str.appendf(" Suffix(`"{}`")", (s))
         }
     }
 }

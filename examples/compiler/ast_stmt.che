@@ -15,7 +15,7 @@ impl Printable for Stmt {
         use StmtType
         match concrete {
             FunctionDecl($func) -> {
-                str.appendf("fn {}() ``{``}", [func.name])
+                str.appendf("fn {}() ``{``}", func.name)
             }
         }
     }

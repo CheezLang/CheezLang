@@ -1,5 +1,5 @@
 #load("std:io/io")
-#load("std:util")
+#load("std:time")
 
 trait TestTrait {
     fn traitFunction(ref Self, n: u64);
@@ -43,7 +43,7 @@ fn Main() {
     let n = 8
 
 
-    printf("iterations: {}, n: {}`n", [iterations, n])
+    printf("iterations: {}, n: {}`n", (iterations, n))
 
     let t: Test = default
     let tt: TestTrait = t
@@ -64,8 +64,8 @@ fn Main() {
             let diff = end - start
             let ms = diff / 1000
 
-            printf("counter: {}`n", [t.counter])
-            printf("[t.normalFunction()] Time elapsed: {} ms ({} iterations)`n", [ms, iterations])
+            printf("counter: {}`n", t.counter)
+            printf("[t.normalFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
         }
     }
 
@@ -85,8 +85,8 @@ fn Main() {
             let diff = end - start
             let ms = diff / 1000
 
-            printf("counter: {}`n", [t.counter])
-            printf("[t.refFunction()] Time elapsed: {} ms ({} iterations)`n", [ms, iterations])
+            printf("counter: {}`n", t.counter)
+            printf("[t.refFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
         }
     }
 
@@ -105,8 +105,8 @@ fn Main() {
             let diff = end - start
             let ms = diff / 1000
 
-            printf("counter: {}`n", [t.counter])
-            printf("[t.traitFunction()] Time elapsed: {} ms ({} iterations)`n", [ms, iterations])
+            printf("counter: {}`n", t.counter)
+            printf("[t.traitFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
         }
     }
 
@@ -127,8 +127,8 @@ fn Main() {
             let diff = end - start
             let ms = diff / 1000
 
-            printf("counter: {}`n", [t.counter])
-            printf("[tt.traitFunction()] Time elapsed: {} ms ({} iterations)`n", [ms, iterations])
+            printf("counter: {}`n", t.counter)
+            printf("[tt.traitFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
         }
     }
 }

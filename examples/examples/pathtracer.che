@@ -32,7 +32,7 @@ impl double {
 
 impl Printable for Vec3 {
     fn print(ref Self, str: ref String, format: string) {
-        str.appendf("{}, {}, {}", [x, y, z])
+        str.appendf("{}, {}, {}", (x, y, z))
     }
 }
 
@@ -274,7 +274,7 @@ fn pathtracer_thread(data: &(index: int, pt: &PathTracer)) -> u32 #stdcall {
         end_y = height - 1
     }
 
-    printfln("{}: {} -> {}", [data.index, start_y, end_y])
+    printfln("{}: {} -> {}", (data.index, start_y, end_y))
     let seed = PseudoRandom::next_int()
     let prng = MTwister::create(cast seed)
 
@@ -330,9 +330,9 @@ impl Game for PathTracer {
         self.cam_up     = self.cam_up.normalized() * up_mag
         self.cam_right  = self.cam_right.normalized() * right_mag
 
-        printfln("  dir: {}", [self.cam_dir])
-        printfln("   up: {}", [self.cam_up])
-        printfln("right: {}", [self.cam_right])
+        printfln("  dir: {}", self.cam_dir)
+        printfln("   up: {}", self.cam_up)
+        printfln("right: {}", self.cam_right)
 
         // create objects
         let m_red   = create(new Material{new{0.9, 0.2, 0.2}, new{}}, allocator)
@@ -415,7 +415,7 @@ impl Game for PathTracer {
             let sps = double(thread_datas[0].samples) / total_t
             let total_seconds = int(total_t + 0.1)
             let s = String::format("Samples: {}, Total: {}s, Samples per second: {}", 
-                [thread_datas[0].samples, total_seconds, sps])
+                (thread_datas[0].samples, total_seconds, sps))
             pge.set_window_title(s)
 
             sample_t -= 1

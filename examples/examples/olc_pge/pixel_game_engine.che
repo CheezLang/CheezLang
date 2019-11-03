@@ -6,7 +6,7 @@
 #load("pge_helper_functions.che")
 
 #load("std:hash_table")
-#load("std:util")
+#load("std:time")
 #load("std:preload")
 #load("opengl:opengl")
 
@@ -265,7 +265,7 @@ impl PixelGameEngine {
 
                     if auto_title {
                         fps_string.resize(0)
-                        fps_string.appendf("OneLoneCoder.com - Pixel Game Engine - FPS: {}", [nFrameCount])
+                        fps_string.appendf("OneLoneCoder.com - Pixel Game Engine - FPS: {}", nFrameCount)
                         fps_string += cast(char) 0
 
                         SetWindowTextA(olc_hWnd, fps_string.get_raw())

@@ -109,7 +109,7 @@ fn infix_to_postfix(str: String, calculate: bool) -> (postfix: String, result: d
     for i : 0..new_order.length {
         let tok = new_order[i]
         let txt = tok.get_text()
-        postfix.appendf("{} ", [txt])
+        postfix.appendf("{} ", txt)
         txt.dispose()
     }
 
@@ -205,9 +205,9 @@ fn Main() {
         if it_index < start_index then continue
         print(infix)
         let (postfix, result) = infix_to_postfix(infix, calculate)
-        printf(" -> {}", [postfix])
+        printf(" -> {}", postfix)
         if calculate {
-            printfln(" = {}", [result])
+            printfln(" = {}", result)
         } else {
             println("")
         }
@@ -215,7 +215,7 @@ fn Main() {
         postfix.dispose()
     }
 
-    // printfln("argc: {:x}, argv: {}", [int(args), count])
+    // printfln("argc: {:x}, argv: {}", (int(args), count))
 
 
     // println(infix_to_postfix("1 + 2 * 3"::to_string()))

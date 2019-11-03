@@ -83,7 +83,7 @@ fn Main() {
                     // random = Random::create(0)
                     random = Random::create(cast c_rand()) // crashes with seed not 0, wtf?
                 }
-                // printfln("thread {}: ({}, {}) -> ({}, {})", [context.id, context.min.x, context.min.y, context.max.x, context.max.y])
+                // printfln("thread {}: ({}, {}) -> ({}, {})", (context.id, context.min.x, context.min.y, context.max.x, context.max.y))
 
                 // if global_random.next_double() < 0.5 {
                     thread_pool.enqueue(render_loop, context)
@@ -99,9 +99,9 @@ fn Main() {
     let end = get_time_milliseconds()
     let dur = double(end - start) / 1000
 
-    printfln("resolution: {}x{}", [width, height])
-    printfln("   samples: {}", [samples])
-    printfln("      time: {}s", [dur])
+    printfln("resolution: {}x{}", (width, height))
+    printfln("   samples: {}", samples)
+    printfln("      time: {}s", dur)
 
     write_bmp(cast width, cast height, image.data, "image.bmp")
 }
@@ -111,7 +111,7 @@ fn render_loop(context: &RenderContext) {
         let h = (height - 1) / grid_size + 1
         let w = (width  - 1) / grid_size + 1
         let count = w * h
-        printfln("block {}/{}: ({}, {}) -> ({}, {})", [context.id, count, context.min.x, context.min.y, context.max.x, context.max.y])
+        printfln("block {}/{}: ({}, {}) -> ({}, {})", (context.id, count, context.min.x, context.min.y, context.max.x, context.max.y))
     }
 
     for : 0..(get_time_microseconds()%100) {
@@ -142,7 +142,7 @@ fn render_loop(context: &RenderContext) {
             context.image[(px + py * width) * 3 + 2] = double(col.z)
         }
     }
-    printfln("block {}: finished", [context.id])
+    printfln("block {}: finished", context.id)
 
     if const report_progress {
         file_write_mutex.lock()

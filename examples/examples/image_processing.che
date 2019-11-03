@@ -104,7 +104,7 @@ impl Game for ImageProcessingGame {
 
         // clear images to black
         for i : 0..num_images_x * num_images_y {
-            printfln("clearing frame {}", [i])
+            printfln("clearing frame {}", i)
             for x : 0..image_width {
                 for y : 0..image_height {
                     frames[i].set(x, y, 0.5)

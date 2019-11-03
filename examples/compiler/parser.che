@@ -26,7 +26,7 @@ impl Parser {
             TokenType.KwFn -> parse_function_decl()
 
             $_ -> {
-                printfln("{}: unexpeted token {}", [token.location, token.ttype])
+                printfln("{}: unexpeted token {}", (token.location, token.ttype))
                 None
             }
         }
@@ -92,7 +92,7 @@ impl Parser {
             }
 
             // TODO: report error
-            printfln("{}: unexpeted token {}", [tok.location, tok.ttype])
+            printfln("{}: unexpeted token {}", (tok.location, tok.ttype))
             lexer.next_token()
             tok = lexer.peek_token()
         }

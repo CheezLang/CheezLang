@@ -44,7 +44,7 @@ fn run_file(file_name: ref String) -> int {
         }
 
         Err($msg) -> {
-            printfln("[RUN FILE] {}", [msg])
+            printfln("[RUN FILE] {}", msg)
             msg.dispose()
 
             60

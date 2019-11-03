@@ -96,7 +96,7 @@ fn compile(expr: string, var_name_allocator: Allocator) -> Option(Array(OpCode))
                 }
 
                 $_ -> {
-                    printfln("[ERROR] {}: Unexpected token '{}'", [tok.location, tok.ttype])
+                    printfln("[ERROR] {}: Unexpected token '{}'", (tok.location, tok.ttype))
                     return None
                 }
             }
@@ -110,7 +110,7 @@ fn compile(expr: string, var_name_allocator: Allocator) -> Option(Array(OpCode))
                             if streq(s, "i") {
                                 false
                             } else {
-                                printfln("[ERROR] {}: Invalid suffix '{}'", [tok.location, s])
+                                printfln("[ERROR] {}: Invalid suffix '{}'", (tok.location, s))
                                 return None
                             }
                         }
@@ -172,7 +172,7 @@ fn compile(expr: string, var_name_allocator: Allocator) -> Option(Array(OpCode))
                 }
 
                 $_ -> {
-                    printfln("[ERROR] {}: Unexpected token '{}'", [tok.location, tok.ttype])
+                    printfln("[ERROR] {}: Unexpected token '{}'", (tok.location, tok.ttype))
                     return None
                 }
             }

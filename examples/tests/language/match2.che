@@ -101,7 +101,7 @@ fn print_enum(e: OptionInt) {
         OptionInt.Some(5) -> println("five")
         OptionInt.Some(10) -> println("ten")
         OptionInt.Some(15) -> println("fifteen")
-        OptionInt.Some($x) -> printf("Some {}`n", [x])
+        OptionInt.Some($x) -> printf("Some {}`n", x)
         OptionInt.None -> println("None")
     }
 }

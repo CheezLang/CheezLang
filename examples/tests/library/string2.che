@@ -8,7 +8,7 @@ fn Main() {
     let s = String::empty()
     let t = true
     let p5 = 0.5
-    s.appendf("uiae {} {}", [t, p5])
+    s.appendf("uiae {} {}", (t, p5))
 
     c_printf("`"%.*s`"`n", s.length, s.get_raw())
 }

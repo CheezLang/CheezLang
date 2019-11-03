@@ -189,7 +189,7 @@ fn olc_window_event(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LR
                 Some($key) -> {
                     pixel_game_engine_ptr.pKeyNewState[cast(int)key] = true
                 }
-                None -> printf("[WNDPROC] failed to get key {} from keymap´`n", [wparam])
+                None -> printf("[WNDPROC] failed to get key {} from keymap´`n", wparam)
             }
         }
         WM_KEYUP        -> {
@@ -197,7 +197,7 @@ fn olc_window_event(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LR
                 Some($key) -> {
                     pixel_game_engine_ptr.pKeyNewState[cast(int)key] = false
                 }
-                None -> printf("[WNDPROC] failed to get key {} from keymap´`n", [wparam])
+                None -> printf("[WNDPROC] failed to get key {} from keymap´`n", wparam)
             }
         }
         

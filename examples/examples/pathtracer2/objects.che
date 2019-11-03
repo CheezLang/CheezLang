@@ -120,7 +120,7 @@ struct BhvNode {
 
 fn test_macro(name: string, arr: []Hittable) {
     let address = int(arr.data)
-    printfln("{}: [{}] {}", [name, address, arr.length])
+    printfln("{}: [{}] {}", (name, address, arr.length))
     for : arr {
         it.bounding_box()
     }

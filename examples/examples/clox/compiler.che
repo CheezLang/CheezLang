@@ -91,7 +91,7 @@ fn compile(source: string) -> &ObjFunction {
     // while true {
     //     let token = lexer.next_token()
 
-    //     printfln("{}> ({}) '{}'", [token.line, token.kind, token.text])
+    //     printfln("{}> ({}) '{}'", (token.line, token.kind, token.text))
 
     //     if int(token.kind) == int(TokenKind.Eof) {
     //         break

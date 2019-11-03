@@ -11,11 +11,20 @@
 //#load("tests/other/test1")
 // #load("examples/project_euler/009_special_pythagorean_triplet")
 
-//*
+/*
+// #load("std:c")
 #load("std:io/io")
 // trait Drop {}
 
+
 fn Main() {
+    // printfln("test1: {}, {}, {}", (123, true, "lol"))
+    // printfln("test2", ())
+    // printfln("test3: {}", "uiaeuiae")
+    // foo(())
+    // foo((1, 2, 3))
+    // foo((true, "lol"))
+    // foo((true, "lol", 2.5, 7, 'a'))
 }
 // */
 
@@ -61,7 +70,7 @@ fn Main() {
     println(foo())
     println("==========")
     // try_catch(test(false), {})
-    try_catch(test(false), printfln("test1: err: {}", [err]))
+    try_catch(test(false), printfln("test1: err: {}", err))
 }
 
 // */

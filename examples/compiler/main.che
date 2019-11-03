@@ -3,7 +3,7 @@
 
 #load("std:preload")
 #load("std:io/io")
-#load("std:util")
+#load("std:time")
 #load("std:mem/arena_allocator")
 
 #load("token")
@@ -35,7 +35,7 @@ fn Main() {
 
             let end = get_time_milliseconds()
             let elapsed = ((cast(double)end) - (cast(double)start)) / 1000.0
-            printfln("elapsed: {}", [elapsed])
+            printfln("elapsed: {}", elapsed)
         }
 
         Err($msg) -> {

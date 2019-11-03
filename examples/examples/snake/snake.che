@@ -57,7 +57,7 @@ fn snake()
     // defer glfwTerminate()
 
     let windowTitle = String::empty()
-    windowTitle.appendf("Snake     {} FPS`0" , [0])
+    windowTitle.appendf("Snake     {} FPS`0" , 0)
 
     let window = glfwCreateWindow(cast width, cast height, windowTitle.get_raw(), null, null)
     if window == null {
@@ -122,10 +122,10 @@ fn snake()
         fpsTimer += deltaTime
         fpsCounter += 1
         if fpsTimer >= 1.0 {
-            printf("FPS: {}`n", [fpsCounter])
+            printf("FPS: {}`n", fpsCounter)
 
             windowTitle.resize(0)
-            windowTitle.appendf("Snake     {} FPS`0" , [fpsCounter])
+            windowTitle.appendf("Snake     {} FPS`0" , fpsCounter)
             glfwSetWindowTitle(window, windowTitle.get_raw())
 
             fpsTimer -= 1.0

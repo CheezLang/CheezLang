@@ -19,7 +19,7 @@ impl Pixel {
 
 impl Printable for Pixel {
     fn print(ref Self, str: ref String, fmt: string) { 
-        str.appendf("({}, {}, {}, {})", [r, g, b, a])
+        str.appendf("({}, {}, {}, {})", (r, g, b, a))
     }
 }
 

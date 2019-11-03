@@ -24,14 +24,14 @@ fn Main() {
     let h = -500
     let i = -123456789
 
-    printf("{} {:s} {:b} {} {:s} {:b}`n", [tru, tru, tru, fals, fals, fals])
-    printf("{0}, {0:b}, {0:x}`n", [a])
-    printf("{0}, {0:b}, {0:x}`n", [b])
-    printf("{0}, {0:b}, {0:x}`n", [c])
-    printf("{0}, {0:b}, {0:x}`n", [d])
-    printf("{0}, {0:b}, {0:x}`n", [e])
-    printf("{0}, {0:b}, {0:x}`n", [f])
-    printf("{0}, {0:b}, {0:x}`n", [g])
-    printf("{0}, {0:b}, {0:x}`n", [h])
-    printf("{0}, {0:b}, {0:x}`n", [i])
+    printf("{} {:s} {:b} {} {:s} {:b}`n", (tru, tru, tru, fals, fals, fals))
+    printf("{0}, {0:b}, {0:x}`n", a)
+    printf("{0}, {0:b}, {0:x}`n", b)
+    printf("{0}, {0:b}, {0:x}`n", c)
+    printf("{0}, {0:b}, {0:x}`n", d)
+    printf("{0}, {0:b}, {0:x}`n", e)
+    printf("{0}, {0:b}, {0:x}`n", f)
+    printf("{0}, {0:b}, {0:x}`n", g)
+    printf("{0}, {0:b}, {0:x}`n", h)
+    printf("{0}, {0:b}, {0:x}`n", i)
 }

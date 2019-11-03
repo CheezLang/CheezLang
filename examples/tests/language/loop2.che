@@ -23,7 +23,7 @@ fn Main() {
 //         sum += it
 //         sum_index += it_index
 //     }
-//     printfln("{}, {}", [sum, sum_index])
+//     printfln("{}, {}", (sum, sum_index))
 // }
 
 // fn test2(n: int) {
@@ -33,7 +33,7 @@ fn Main() {
 //         sum += i
 //         sum_index += k
 //     }
-//     printfln("{}, {}", [sum, sum_index])
+//     printfln("{}, {}", (sum, sum_index))
 // }
 
 // fn test3(n: int) {
