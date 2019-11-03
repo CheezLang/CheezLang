@@ -11,20 +11,23 @@
 //#load("tests/other/test1")
 // #load("examples/project_euler/009_special_pythagorean_triplet")
 
-/*
+//*
 // #load("std:c")
 #load("std:io/io")
 // trait Drop {}
 
+impl Printable for (int, int, int) {
+    fn print(ref Self, str: ref String, format: string) {
+        str.appendf("({}, {}, {})", self)
+    }
+}
 
 fn Main() {
-    // printfln("test1: {}, {}, {}", (123, true, "lol"))
-    // printfln("test2", ())
-    // printfln("test3: {}", "uiaeuiae")
-    // foo(())
-    // foo((1, 2, 3))
-    // foo((true, "lol"))
-    // foo((true, "lol", 2.5, 7, 'a'))
+    let t = (1, 2, 3)
+    println(t)
+    printfln("tuple: {} {} {}", t)
+    printfln("tuple: {}", @tuple(t))
+    printfln("tuple: {} {} {}", @tuple(5, 3, 9))
 }
 // */
 
