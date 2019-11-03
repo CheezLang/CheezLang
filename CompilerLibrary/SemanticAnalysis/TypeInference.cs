@@ -1153,7 +1153,7 @@ namespace Cheez
                     return cast;
                 }
 
-                if (t.Declaration.Implementations.ContainsKey(from))
+                if (t.Declaration.FindMatchingImplementation(from) != null)
                     return cast;
 
                 if (t.Declaration.IsPolyInstance)
@@ -1488,6 +1488,13 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "tuple":
+                    {
+                        var tuple = new AstTupleExpr(expr.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList(), expr.Location);
+                        tuple.Replace(expr);
+                        return InferType(tuple, expected);
+                    }
+
                 case "is_tuple":
                     {
                         if (expr.Arguments.Count != 1)

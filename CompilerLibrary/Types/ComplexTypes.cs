@@ -136,12 +136,7 @@ namespace Cheez.Types.Complex
             return false;
         }
 
-        public override int GetHashCode()
-        {
-            var hashCode = 309225798;
-            hashCode = hashCode * -1521134295 + base.GetHashCode();
-            return hashCode;
-        }
+
 
         public void CalculateSize()
         {
@@ -160,6 +155,18 @@ namespace Cheez.Types.Complex
             }
 
             Size = Utilities.GetNextAligned(Size, Alignment);
+        }
+
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+            //hash.Add(base.GetHashCode());
+            foreach (var m in Members)
+            {
+                hash.Add(m.type.GetHashCode());
+            }
+
+            return hash.ToHashCode();
         }
     }
 
