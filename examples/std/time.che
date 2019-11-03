@@ -1,0 +1,54 @@
+if const @is_os("windows") {
+    #load("std:os/windows")
+}
+if const @is_os("linux") {
+    #load("std:os/linux")
+}
+
+fn get_time_microseconds() -> int {
+    if const @is_os("windows") {
+        let freq: int = 1
+        QueryPerformanceFrequency(&freq)
+
+        let time: int = 0
+        QueryPerformanceCounter(&time)
+
+        time *= 1000000
+        time /= freq
+
+        return time
+    }
+    if const @is_os("linux") {
+        let tv: timeval = default
+        let err = gettimeofday(&tv, null)
+        if err == -1 {
+            return -1
+        }
+        let time_in_micros = 1000000 * int(tv.tv_sec) + int(tv.tv_usec);
+        return time_in_micros
+    }
+}
+
+fn get_time_milliseconds() -> int {
+    if const @is_os("windows") {
+        let freq: int = 1
+        QueryPerformanceFrequency(&freq)
+
+        let time: int = 0
+        QueryPerformanceCounter(&time)
+
+        time *= 1000000
+        time /= freq
+
+        return time / 1000
+    }
+    if const @is_os("linux") {
+        let tv: timeval = default
+        let err = gettimeofday(&tv, null)
+        if err == -1 {
+            return -1
+        }
+        let time_in_micros = 1000000 * int(tv.tv_sec) + int(tv.tv_usec);
+        return time_in_micros / 1000
+    }
+}

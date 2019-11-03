@@ -1,6 +1,6 @@
 #load("std:math")
 #load("std:iterator")
-#load("std:util")
+#load("std:time")
 #load("std:hash_table")
 
 struct LinearCongruentialGenerator {
@@ -226,7 +226,7 @@ fn print_histogram(dist: IDistribution($T), low: double, high: double){
 
     // top line
     let max_str = String::empty()
-    max_str.appendf("{}  ", [max])
+    max_str.appendf("{}  ", max)
     print(max_str)
     while let i = 0, i < width - max_str.length, i += 1 {
         print("-")
@@ -250,11 +250,11 @@ fn print_histogram(dist: IDistribution($T), low: double, high: double){
 
     // bottom line
     let left_str = String::empty()
-    left_str.appendf("{}  ", [low])
+    left_str.appendf("{}  ", low)
     let right_str = String::empty()
-    right_str.appendf("  {}", [high])
+    right_str.appendf("  {}", high)
     let mid_str = String::empty()
-    mid_str.appendf("  {}  ", [0.5 * (low + high)])
+    mid_str.appendf("  {}  ", 0.5 * (low + high))
     let p1 = width / 2
     let p2 = width - p1
 
@@ -305,7 +305,7 @@ fn print_discrete_histogram(dist: IDistribution($T)){
     let max = map.iterator()::map(|t: (int, int)| t[1])::max()
     let scale = if max < width {1.0} else {(cast(double)width)/(cast(double)max)}
     while let i = 0, i < arr.length, i += 1 {
-        printf("{}|", [arr[i][0]])
+        printf("{}|", arr[i][0])
         let count = cast(int) (cast(double) arr[i][1]) * scale
         while let c = 0, c < count, c += 1 {
             print("*")

@@ -12,23 +12,36 @@ fn print_string(s: ref String) {
 
 fn println(v: $T) {
     let s = String::empty()
-    s.appendf("{}`n", [v])
+    s.appendf("{}`n", v)
     print_string(s)
 }
 
 fn print(v: $T) {
     let s = String::empty()
-    s.appendf("{}", [v])
+    s.appendf("{}", v)
     print_string(s)
 }
 
-fn printf(format: string, args: []Printable) {
+// fn printf(format: string, args: []Printable) {
+//     let s = String::empty()
+//     s.appendf(format, args)
+//     print_string(s)
+// }
+
+// fn printfln(format: string, args: []Printable) {
+//     let s = String::empty()
+//     s.appendf(format, args)
+//     s += '`n'
+//     print_string(s)
+// }
+
+fn printf(format: string, args: $T) {
     let s = String::empty()
     s.appendf(format, args)
     print_string(s)
 }
 
-fn printfln(format: string, args: []Printable) {
+fn printfln(format: string, args: $T) {
     let s = String::empty()
     s.appendf(format, args)
     s += '`n'

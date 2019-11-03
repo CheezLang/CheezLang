@@ -168,13 +168,21 @@ impl(CharType: type) StringBase(CharType) {
 }
 
 impl String {
-
     fn append_print(ref Self, pr: Printable) -> ref Self #operator("+=") {
         pr.print(self, "")
         return self
     }
 
-    fn appendf(ref Self, format: string, args: []Printable) {
+    fn appendf(ref Self, format: string, arguments: $T) {
+        if const @is_tuple(T) {
+            let args: [T.length] Printable = default
+            @for_tuple_values(arguments, |v, i| {
+                args[i] = Printable(v)
+            })
+        } else {
+            let args: [1]Printable = [Printable(arguments)]
+        }
+
         let formatSpecifier = {
             let const len = 64
             String::from_raw_ptr(@alloca(char, len), len)
@@ -238,7 +246,7 @@ impl String {
         }
     }
 
-    fn format(format: string, args: []Printable) -> Self {
+    fn format(format: string, args: $T) -> Self {
         let s = Self::empty()
         s.appendf(format, args)
         return s

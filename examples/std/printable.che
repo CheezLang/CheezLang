@@ -116,7 +116,7 @@ fn printf_int_to_string(str: ref String, i: $T, format: string) {
 impl(T: type) Printable for Option(T) if T: Printable {
     fn print(ref Self, str: ref String, format: string) {
         match self {
-            Some($v) -> str.appendf("Some({})", [v])
+            Some($v) -> str.appendf("Some({})", v)
             None -> str.append_string("None")
         }
     }
@@ -125,14 +125,14 @@ impl(T: type) Printable for Option(T) if T: Printable {
 impl(V: type, E: type) Printable for Result(V, E) if V: Printable, E: Printable {
     fn print(ref Self, str: ref String, format: string) {
         match self {
-            Ok($v)  -> str.appendf("Ok({})", [v])
-            Err($v) -> str.appendf("Err({})", [v])
+            Ok($v)  -> str.appendf("Ok({})", v)
+            Err($v) -> str.appendf("Err({})", v)
         }
     }
 }
 
 impl Printable for Complex {
     fn print(ref Self, str: ref String, format: string) {
-        str.appendf("{} + {}i", [r, i])
+        str.appendf("{} + {}i", (r, i))
     }
 }

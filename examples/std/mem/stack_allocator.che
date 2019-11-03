@@ -11,7 +11,7 @@ struct StackAllocation {
 
 impl Printable for StackAllocation {
     fn print(ref Self, str: ref String, format: string) {
-        str.appendf("({}:{})", [offset, size])
+        str.appendf("({}:{})", (offset, size))
     }
 }
 
@@ -38,7 +38,7 @@ impl Printable for StackAllocator {
             if i > 0 {
                 s += ", "
             }
-            s.appendf("{}", [allocations[i]])
+            s.appendf("{}", allocations[i])
         }
         s += "]"
 
@@ -46,7 +46,7 @@ impl Printable for StackAllocator {
         if let lastAllocation = self.getLastAllocation(), lastAllocation != null {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
         }
-        s.appendf(", Free: {} )", [free])
+        s.appendf(", Free: {} )", free)
     }
 }
 
@@ -86,7 +86,7 @@ impl StackAllocator {
             if i > 0 {
                 s += ", "
             }
-            s.appendf("{}", [allocations[i]])
+            s.appendf("{}", allocations[i])
         }
         s += "]"
 
@@ -95,7 +95,7 @@ impl StackAllocator {
         if let lastAllocation = self.getLastAllocation(), lastAllocation != null {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
         }
-        s.appendf(", Free: {} )`n", [free])
+        s.appendf(", Free: {} )`n", free)
         print_string(s)
     }
 

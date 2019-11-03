@@ -1,10 +1,3 @@
-if const @is_os("windows") {
-    #load("std:os/windows")
-}
-if const @is_os("linux") {
-    #load("std:os/linux")
-}
-
 fn next_aligned(_add: &$T, align: u64) -> &T {
     let add = cast(u64) _add
     let mul = add + align - 1
@@ -19,52 +12,4 @@ fn pointer_add_sized(ptr: &$T, amount: int) -> &T {
 
 fn pointer_add(ptr: &$T, amount: int) -> &T {
     return cast(&T)((cast(int) ptr) + amount)
-}
-
-fn get_time_microseconds() -> int {
-    if const @is_os("windows") {
-        let freq: int = 1
-        QueryPerformanceFrequency(&freq)
-
-        let time: int = 0
-        QueryPerformanceCounter(&time)
-
-        time *= 1000000
-        time /= freq
-
-        return time
-    }
-    if const @is_os("linux") {
-        let tv: timeval = default
-        let err = gettimeofday(&tv, null)
-        if err == -1 {
-            return -1
-        }
-        let time_in_micros = 1000000 * int(tv.tv_sec) + int(tv.tv_usec);
-        return time_in_micros
-    }
-}
-
-fn get_time_milliseconds() -> int {
-    if const @is_os("windows") {
-        let freq: int = 1
-        QueryPerformanceFrequency(&freq)
-
-        let time: int = 0
-        QueryPerformanceCounter(&time)
-
-        time *= 1000000
-        time /= freq
-
-        return time / 1000
-    }
-    if const @is_os("linux") {
-        let tv: timeval = default
-        let err = gettimeofday(&tv, null)
-        if err == -1 {
-            return -1
-        }
-        let time_in_micros = 1000000 * int(tv.tv_sec) + int(tv.tv_usec);
-        return time_in_micros / 1000
-    }
 }

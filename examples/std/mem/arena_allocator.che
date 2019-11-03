@@ -65,11 +65,11 @@ impl ArenaAllocator {
     }
 
     fn dump(ref Self, dump_buckets: bool = false) {
-        printfln("ArenaAllocator ({} buckets)", [buckets.length])
+        printfln("ArenaAllocator ({} buckets)", buckets.length)
         while let i = 0, i < buckets.length, i += 1 {
             let bucket: ref Bucket = buckets[i]
 
-            printfln("  Bucket {}: {}/{} bytes", [i, bucket.filled, bucket.memory.length])
+            printfln("  Bucket {}: {}/{} bytes", (i, bucket.filled, bucket.memory.length))
             if dump_buckets {
                 let current: uint = 0
 
@@ -80,7 +80,7 @@ impl ArenaAllocator {
                         continue
                     }
 
-                    printfln("    {}: {} bytes", [current, len])
+                    printfln("    {}: {} bytes", (current, len))
 
                     // find next allocation
                     current += len + 8
