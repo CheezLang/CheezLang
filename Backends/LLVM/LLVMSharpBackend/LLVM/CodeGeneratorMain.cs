@@ -130,6 +130,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             pointerType = LLVM.Int8Type().GetPointerTo();
             var pointerSize = pointerType.SizeOf();
             var size = LLVM.SizeOfTypeInBits(targetData, pointerType);
+
+            //{ // check attributes
+            //    for (int i = 1; i < 100; i++)
+            //    {
+            //        var func = module.AddFunction($"attribute.{i}", LLVM.FunctionType(LLVM.VoidType(), Array.Empty<LLVMTypeRef>(), false));
+            //        func.AddFunctionAttribute(context, (LLVMAttributeKind)i);
+            //        func.Dump();
+            //    }
+            //}
             
             // create dibuilder for debug info
             if (genDebugInfo)

@@ -1320,7 +1320,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         LLVMValueRef result;
                         if (!expr.SubExpression.GetFlag(ExprFlags.IsLValue))
                         {
-                            result = builder.CreateExtractValue(left, (uint)index, "");
+                            if (expr.SubExpression is AstTempVarExpr)
+                            {
+                                result = builder.CreateStructGEP(left, (uint)index, "");
+                                if (deref)
+                                    result = builder.CreateLoad(result, "");
+                            }
+                            else
+                            {
+                                result = builder.CreateExtractValue(left, (uint)index, "");
+                            }
                         }
                         else
                         {
