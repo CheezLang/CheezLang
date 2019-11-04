@@ -21,7 +21,7 @@ impl Sprite {
             data = {
                 let ptr = alloc_raw(Pixel, cast(uint) (w * h))
                 while let i = 0, i < w * h, i += 1 {
-                    ptr[i] = new Pixel{}
+                    ptr[i] = Pixel()
                 }
                 ptr
             }
@@ -46,7 +46,7 @@ impl Sprite {
                 if x >= 0 and x < width and y >= 0 and y < height {
                     data[x + y * width]
                 } else {
-                    new Pixel{0, 0, 0, 0}
+                    Pixel(0, 0, 0, 0)
                 }
             }
             SpriteMode.Periodic -> {

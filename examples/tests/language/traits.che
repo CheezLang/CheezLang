@@ -75,13 +75,13 @@ fn test(t: Test) {
 
 fn Main() {
     {
-        let t = new S{10}
+        let t = S(10)
         t.foo(23)
         c_puts("")
     }
 
     {
-        let tmp = new S{5}
+        let tmp = S(5)
         let t: Test = tmp
         t.foo(7)
         t.print()
@@ -89,7 +89,7 @@ fn Main() {
     }
     
     {
-        let tmp = new S{5}
+        let tmp = S(5)
         let t: Test2 = tmp
         t.bar()
         t.print()
@@ -97,7 +97,7 @@ fn Main() {
     }
     
     {
-        let tmp = new S2{"hello"}
+        let tmp = S2("hello")
         let t: Test = tmp
         t.foo(23)
         t.print()
@@ -106,11 +106,11 @@ fn Main() {
     
     {
         {
-            let tmp = new S{1}
+            let tmp = S(1)
             test(tmp)
         }
         {
-            let tmp = new S2{"zwei"}
+            let tmp = S2("zwei")
             test(tmp)
         }
     }

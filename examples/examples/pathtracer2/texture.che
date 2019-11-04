@@ -12,7 +12,7 @@ struct ConstantTexture {
 
 impl ConstantTexture {
     fn create(color: vec3) -> Texture {
-        return create_object(Texture, new ConstantTexture{color})
+        return create_object(Texture, ConstantTexture(color))
     }
 }
 
@@ -31,7 +31,7 @@ struct CheckerTexture {
 
 impl CheckerTexture {
     fn create(even: Texture, odd: Texture, size: real = 10) -> Texture {
-        return create_object(Texture, new CheckerTexture{even=even, odd=odd, size=size})
+        return create_object(Texture, CheckerTexture(even=even, odd=odd, size=size))
     }
 }
 

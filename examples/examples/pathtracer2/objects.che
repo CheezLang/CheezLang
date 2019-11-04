@@ -37,23 +37,23 @@ impl Hittable for Sphere {
             let temp = -b - sqrt_dis
             if temp < t_max and temp > t_min {
                 let point = r.at(temp)
-                return Some(new HitRecord{
+                return Some(HitRecord(
                     t = temp
                     p = point
                     n = (point - center) / radius
                     m = material
-                })
+                ))
             }
 
             temp = -b + sqrt_dis
             if temp < t_max and temp > t_min {
                 let point = r.at(temp)
-                return Some(new HitRecord{
+                return Some(HitRecord(
                     t = temp
                     p = point
                     n = (point - center) / radius
                     m = material
-                })
+                ))
             }
         }
         return None
@@ -61,8 +61,8 @@ impl Hittable for Sphere {
 
     fn bounding_box(ref Self) -> Option[AABB] {
         return Some(AABB::create(
-            center - new vec3{radius, radius, radius},
-            center + new vec3{radius, radius, radius}
+            center - vec3(radius, radius, radius)
+            center + vec3(radius, radius, radius)
         ))
     }
 }
@@ -93,7 +93,7 @@ impl Hittable for Array[Hittable] {
             Some($aabb) -> aabb
             None -> {
                 return None
-                AABB(default)
+                cast(AABB) default
             }
         }
 
@@ -102,7 +102,7 @@ impl Hittable for Array[Hittable] {
                 Some($aabb) -> AABB::surrounding_box(box, aabb)
                 None -> {
                     return None
-                    AABB(default)
+                    cast(AABB) default
                 }
             }
         }
@@ -200,7 +200,7 @@ impl BhvNode {
             (Some($a), Some($b)) -> AABB::surrounding_box(a, b)
             $_ -> {
                 println("no bounding box in BhvNode constructor")
-                AABB(default)
+                cast(AABB) default
             }
         }
 
@@ -253,18 +253,18 @@ impl Hittable for XYRect {
             return None
         }
 
-        return Some(new HitRecord {
+        return Some(HitRecord(
             t = t
             p = r.at(t)
             m = mat
-            n = new vec3{0, 0, 1}
+            n = vec3(0, 0, 1)
             u = (x - x0) / (x1 - x0)
             v = (y - y0) / (y1 - y0)
-        })
+        ))
     }
 
     fn bounding_box(ref Self) -> Option[AABB] {
-        return Some(AABB::create(new vec3{x0, y0, z - real(0.0001)}, new vec3{x1, y1, z + real(0.0001)}))
+        return Some(AABB::create(vec3(x0, y0, z - real(0.0001)), vec3(x1, y1, z + real(0.0001))))
     }
 }
 
@@ -290,18 +290,18 @@ impl Hittable for YZRect {
             return None
         }
 
-        return Some(new HitRecord {
+        return Some(HitRecord(
             t = t
             p = r.at(t)
             m = mat
-            n = new vec3{1, 0, 0}
+            n = vec3(1, 0, 0)
             u = (y - y0) / (y1 - y0)
             v = (z - z0) / (z1 - z0)
-        })
+        ))
     }
 
     fn bounding_box(ref Self) -> Option[AABB] {
-        return Some(AABB::create(new vec3{x - real(0.0001), y0, z0}, new vec3{x + real(0.0001), y1, z1}))
+        return Some(AABB::create(vec3(x - real(0.0001), y0, z0), vec3(x + real(0.0001), y1, z1)))
     }
 }
 
@@ -327,18 +327,18 @@ impl Hittable for ZXRect {
             return None
         }
 
-        return Some(new HitRecord {
+        return Some(HitRecord(
             t = t
             p = r.at(t)
             m = mat
-            n = new vec3{0, 1, 0}
+            n = vec3(0, 1, 0)
             u = (z - z0) / (z1 - z0)
             v = (x - x0) / (x1 - x0)
-        })
+        ))
     }
 
     fn bounding_box(ref Self) -> Option[AABB] {
-        return Some(AABB::create(new vec3{x0, y - real(0.0001), z0}, new vec3{x1, y + real(0.0001), z1}))
+        return Some(AABB::create(vec3(x0, y - real(0.0001), z0), vec3(x1, y + real(0.0001), z1)))
     }
 }
 
@@ -349,7 +349,7 @@ struct FlipNormals {
 
 impl FlipNormals {
     fn create(h: Hittable) -> Hittable {
-        return create_object(Hittable, new FlipNormals{h})
+        return create_object(Hittable, FlipNormals(h))
     }
 }
 
@@ -381,18 +381,18 @@ impl Box {
     fn create(p0: vec3, p1: vec3, mat: Material) -> Box {
         let arr = Array[Hittable]::create(6)
         create_faces(p0, p1, mat, arr)
-        return new Box{p0, p1, arr}
+        return Box(p0, p1, arr)
     }
 
     fn create_faces(p0: vec3, p1: vec3, mat: Material, arr: ref Array[Hittable]) {
-        arr.add(create_object(Hittable, new XYRect{p0.x, p1.x, p0.y, p1.y, p1.z, mat}))
-        arr.add(FlipNormals::create(create_object(Hittable, new XYRect{p0.x, p1.x, p0.y, p1.y, p0.z, mat})))
+        arr.add(create_object(Hittable, XYRect(p0.x, p1.x, p0.y, p1.y, p1.z, mat)))
+        arr.add(FlipNormals::create(create_object(Hittable, XYRect(p0.x, p1.x, p0.y, p1.y, p0.z, mat))))
 
-        arr.add(create_object(Hittable, new ZXRect{p0.x, p1.x, p0.z, p1.z, p1.y, mat}))
-        arr.add(FlipNormals::create(create_object(Hittable, new ZXRect{p0.x, p1.x, p0.z, p1.z, p0.y, mat})))
+        arr.add(create_object(Hittable, ZXRect(p0.x, p1.x, p0.z, p1.z, p1.y, mat)))
+        arr.add(FlipNormals::create(create_object(Hittable, ZXRect(p0.x, p1.x, p0.z, p1.z, p0.y, mat))))
 
-        arr.add(create_object(Hittable, new YZRect{p0.y, p1.y, p0.z, p1.z, p1.x, mat}))
-        arr.add(FlipNormals::create(create_object(Hittable, new YZRect{p0.y, p1.y, p0.z, p1.z, p0.x, mat})))
+        arr.add(create_object(Hittable, YZRect(p0.y, p1.y, p0.z, p1.z, p1.x, mat)))
+        arr.add(FlipNormals::create(create_object(Hittable, YZRect(p0.y, p1.y, p0.z, p1.z, p0.x, mat))))
     }
 }
 
@@ -415,9 +415,9 @@ struct ConstantMedium {
 
 impl ConstantMedium {
     fn create(boundary: Hittable, density: real, tex: Texture) -> Hittable {
-        return create_object(Hittable, new ConstantMedium{
-            boundary, density, create_object(Material, new Isotropic{tex})
-        })
+        return create_object(Hittable, ConstantMedium(
+            boundary, density, create_object(Material, Isotropic(tex))
+        ))
     }
 }
 
@@ -442,12 +442,12 @@ impl Hittable for ConstantMedium {
                     let hit_distance = -(1.0 / density) * real(log(random.next_double()))
                     if hit_distance < dist_in_boundary {
                         let t = h1.t + hit_distance
-                        let hit = new HitRecord{
+                        let hit = HitRecord(
                             t = t
                             p = r.at(t)
                             n = new{1, 0, 0}
                             m = phase_func
-                        }
+                        )
 
                         return Some(hit)
                     }

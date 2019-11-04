@@ -60,9 +60,9 @@ impl Game for MyGame {
 
         load_function_from_file()
 
-        variables["pi"] = new Complex{3.14159265359}
-        variables["e"]  = new Complex{2.71828182845}
-        variables["t"]  = new Complex{0.0}
+        variables["pi"] = Complex(3.14159265359)
+        variables["e"]  = Complex(2.71828182845)
+        variables["t"]  = Complex(0.0)
 
         // start thread for file changes
         let fullpath = c_fullpath(null, ".", 512)
@@ -157,14 +157,14 @@ impl Game for MyGame {
         draw_grid()
 
         let mouse_pos = pge.get_mouse_pos()
-        variables["mx"] = new Complex{double(mouse_pos.x) / double(width)}
-        variables["my"] = new Complex{1 - double(mouse_pos.y) / double(height)}
+        variables["mx"] = Complex(double(mouse_pos.x) / double(width))
+        variables["my"] = Complex(1 - double(mouse_pos.y) / double(height))
 
         let mouse_pos_w = to_world(mouse_pos.x, mouse_pos.y)
-        variables["mxw"] = new Complex{mouse_pos_w.x}
-        variables["myw"] = new Complex{mouse_pos_w.y}
+        variables["mxw"] = Complex(mouse_pos_w.x)
+        variables["myw"] = Complex(mouse_pos_w.y)
 
-        variables["t"] = <<&variables["t"] + new Complex{dt}
+        variables["t"] = <<&variables["t"] + Complex(dt)
 
         draw_current_function()
 
@@ -173,7 +173,7 @@ impl Game for MyGame {
 
     fn evaluate_function(ref Self, x: double) -> Option[Complex] {
         //return functions[func_index % functions.length](x)
-        variables["x"] = new Complex{x, 0.0}
+        variables["x"] = Complex(x, 0.0)
         return match function {
             Some($f)    -> evaluate(f.slice(), variables)
             None        -> None
@@ -181,7 +181,7 @@ impl Game for MyGame {
     }
 
     fn draw_current_function(ref Self) {
-        let prev = new Complex{}
+        let prev = Complex()
 
         let first = true
         for xp: 0..width {
@@ -342,10 +342,10 @@ fn compare_strings(a: string, b: string) -> bool {
 }
 
 fn Main() {
-    let myGame = new MyGame {
+    let myGame = MyGame(
         var_name_allocator = ArenaAllocator::create(1024)
         variables = Variables::create(compare_strings)
-    }
+    )
     let pge = PixelGameEngine::create(myGame, width, height)
     if pge != null {
         pge.start()

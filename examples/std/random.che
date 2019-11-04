@@ -9,7 +9,7 @@ struct LinearCongruentialGenerator {
 
 impl LinearCongruentialGenerator {
     fn create(seed: u64 = 0) -> Self {
-        return new Self { seed }
+        return Self(seed)
     }
 
     fn next(ref Self) -> u32 {
@@ -127,7 +127,7 @@ struct NormalDistribution {
 
 impl NormalDistribution {
     fn create(mean: double, sigma: double) -> Self {
-        return new{mean, sigma, new StandardContinuousUniform[LinearCongruentialGenerator] {&lcg}}
+        return new{mean, sigma, StandardContinuousUniform[LinearCongruentialGenerator](&lcg)}
     }
 }
 
@@ -189,7 +189,7 @@ impl IDistribution[int] for BernoulliDistribution {
 impl BernoulliDistribution {
     fn create(zero: int, one: int) -> Self {
         @assert(zero >= 0 and one >= 0 and (zero != 0 or one != 0))
-        return new BernoulliDistribution{zero, one}
+        return BernoulliDistribution(zero, one)
     }
 }
 

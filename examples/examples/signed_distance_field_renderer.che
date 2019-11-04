@@ -68,30 +68,30 @@ impl SDF for Cube {
         let d: double = 0
 
         if dx > 0 and dy > 0 and dz > 0 { // corner
-            let r = new Vec3 {
+            let r = Vec3(
                 dx, dy, dz
-            }
+            )
             d = r.mag()
         } else if dx > 0 and dy > 0 {
-            let r = new Vec3 {
+            let r = Vec3(
                 x = dx
                 y = dy
                 z = 0
-            }
+            )
             d = r.mag()
         } else if dx > 0 and dz > 0 {
-            let r = new Vec3 {
+            let r = Vec3(
                 x = dx
                 y = 0
                 z = dz
-            }
+            )
             d = r.mag()
         } else if dy > 0 and dz > 0 {
-            let r = new Vec3 {
+            let r = Vec3(
                 x = 0
                 y = dy
                 z = dz
-            }
+            )
             d = r.mag()
         } else {
             d = fmax(dx, fmax(dy, dz))
@@ -147,7 +147,7 @@ impl SDF for RotatedXSDF {
         let s = sin(rad)
         let y = c * v.y - s * v.z
         let z = s * v.y + c * v.z
-        return sdf.distance(new Vec3{v.x, y, z})
+        return sdf.distance(Vec3(v.x, y, z))
     }
 }
 
@@ -158,7 +158,7 @@ impl SDF for RotatedYSDF {
         let s = sin(rad)
         let x = c * v.x + s * v.z
         let z = -s * v.x + c * v.z
-        return sdf.distance(new Vec3{x, v.y, z})
+        return sdf.distance(Vec3(x, v.y, z))
     }
 }
 
@@ -169,7 +169,7 @@ impl SDF for RotatedZSDF {
         let s = sin(rad)
         let x = c * v.x - s * v.y
         let y = s * v.x + c * v.y
-        return sdf.distance(new Vec3{x, y, v.z})
+        return sdf.distance(Vec3(x, y, v.z))
     }
 }
 
@@ -257,7 +257,7 @@ impl Shader for LambertianShader {
         let c = color * lc
 
         let sdfHit = ray.origin + ld * 0.001
-        let shadowRay = new Ray{sdfHit, ld}
+        let shadowRay = Ray(sdfHit, ld)
         let distance = raymarcher.sdf.distance(shadowRay.origin).distance
 
         while shadowRay.origin.mag() < raymarcher.backgroundDistance and fabs(distance) > 0.00005 {
@@ -305,7 +305,7 @@ impl Background {
     fn project(ref Self, ray: Ray) -> Vec3 {
         let i = ray.direction.y + 0.5
         i *= i
-        return new Vec3 { i, i, i }
+        return Vec3(i, i, i)
     }
 }
 
@@ -333,19 +333,19 @@ impl Raymarcher {
     }
 
     fn sampleLightDirection(ref Self) -> (ld: Vec3, lc: Vec3) {
-        ld = new Vec3 { -1.0, 1.5, 1 }
+        ld = Vec3(-1.0, 1.5, 1)
         ld.normalize()
-        lc = new Vec3 {1, 1, 1}
+        lc = Vec3(1, 1, 1)
     }
 
     fn normal(ref Self, p: Vec3) -> Vec3 {
         let off: double = 0.001
 
-        let n = new Vec3 {
-            x = sdf.distance(new Vec3{p.x + off, p.y, p.z}).distance - sdf.distance(new Vec3{p.x - off, p.y, p.z}).distance
-            y = sdf.distance(new Vec3{p.x, p.y + off, p.z}).distance - sdf.distance(new Vec3{p.x, p.y - off, p.z}).distance
-            z = sdf.distance(new Vec3{p.x, p.y, p.z + off}).distance - sdf.distance(new Vec3{p.x, p.y, p.z - off}).distance
-        }
+        let n = Vec3(
+            x = sdf.distance(Vec3(p.x + off, p.y, p.z)).distance - sdf.distance(Vec3(p.x - off, p.y, p.z)).distance
+            y = sdf.distance(Vec3(p.x, p.y + off, p.z)).distance - sdf.distance(Vec3(p.x, p.y - off, p.z)).distance
+            z = sdf.distance(Vec3(p.x, p.y, p.z + off)).distance - sdf.distance(Vec3(p.x, p.y, p.z - off)).distance
+        )
         return n.normalized()
     }
 }
@@ -362,15 +362,15 @@ struct PerspectiveCamera {
 
 impl PerspectiveCamera {
     fn project(ref Self, x: double, y: double) -> Ray {
-        let dir = new Vec3 {
+        let dir = Vec3(
             x = (x - 0.5) * sensorWidth
             y = -(y - 0.5) * sensorHeight
             z = -focalLength
-        }
-        return new Ray {
-            origin = new Vec3 {0, 0, 0}
+        )
+        return Ray(
+            origin = Vec3(0, 0, 0)
             direction = dir.normalized()
-        }
+        )
     }
 }
 
@@ -396,9 +396,9 @@ impl Film {
         }
         
 
-        let r = new LinearCongruentialGenerator {
+        let r = LinearCongruentialGenerator(
             cast get_time_microseconds()
-        }
+        )
 
         while let y = 0, y < height, y += 1 {
             if antiAliasingSteps >= 0 {
@@ -411,7 +411,7 @@ impl Film {
                 let fx = cast(double) x
                 let fy = cast(double) y
 
-                let color = new Vec3{0, 0, 0}
+                let color = Vec3(0, 0, 0)
 
                 if antiAliasingSteps == 1 {
                     let ray = camera.project((fx + 0.5) * fw, (fy + 0.5) * fh)
@@ -539,36 +539,36 @@ impl SDFAllocator {
 fn renderImage(film: ref Film)
 {
     while let i = 0, i < film.pixels.length, i += 1 {
-        film.pixels[i] = new Vec3 { 0, 0, 0 }
+        film.pixels[i] = Vec3(0, 0, 0)
     }
 
     let as = (cast(double) film.width) / (cast(double) film.height)
-    let camera = new PerspectiveCamera {
+    let camera = PerspectiveCamera(
         focalLength = 50
         sensorWidth = as * 24
         sensorHeight = 24
-    }
+    )
 
-    let bg = new Background{}
+    let bg = Background()
 
     let all = SDFAllocator::create()
 
     //
-    let sChecker1    = new LambertianShader{new Vec3{0.9, 0.8, 0.8}}
-    let sChecker2    = new LambertianShader{new Vec3{0.2, 0.1, 0.1}}
-    let sChecker  = new CheckerBoardShader{1, sChecker1, sChecker2}
+    let sChecker1    = LambertianShader(Vec3(0.9, 0.8, 0.8))
+    let sChecker2    = LambertianShader(Vec3(0.2, 0.1, 0.1))
+    let sChecker  = CheckerBoardShader(1, sChecker1, sChecker2)
 
-    let sWhite    = new LambertianShader{new Vec3{1, 1, 1}}
-    let sBlack    = new LambertianShader{new Vec3{0, 0, 0}}
-    let sRed    = new LambertianShader{new Vec3{1, 0, 0}}
-    let sGreen  = new LambertianShader{new Vec3{1, 1, 0}}
-    let sBlue   = new LambertianShader{new Vec3{0, 0, 1}}
+    let sWhite    = LambertianShader(Vec3(1, 1, 1))
+    let sBlack    = LambertianShader(Vec3(0, 0, 0))
+    let sRed    = LambertianShader(Vec3(1, 0, 0))
+    let sGreen  = LambertianShader(Vec3(1, 1, 0))
+    let sBlue   = LambertianShader(Vec3(0, 0, 1))
 
     //
     let ground = all.planeY(-1.25, sWhite)
-    let s1 = all.sphereT(new Vec3{0, 0.5, 0}, 1, sRed)
-    let s2 = all.sphereT(new Vec3{0, 0, 0}, 0.3, sGreen)
-    let c1 = all.cubeT(new Vec3{0, 0.5, 0}, 0.8, sBlue)
+    let s1 = all.sphereT(Vec3(0, 0.5, 0), 1, sRed)
+    let s2 = all.sphereT(Vec3(0, 0, 0), 0.3, sGreen)
+    let c1 = all.cubeT(Vec3(0, 0.5, 0), 0.8, sBlue)
 
     let sdf = {
         let sdf = {
@@ -593,13 +593,13 @@ fn renderImage(film: ref Film)
         sdf
     }
     
-    let finalSDF = all.translate(sdf, new Vec3{0, 0, -7.5})
+    let finalSDF = all.translate(sdf, Vec3(0, 0, -7.5))
 
-    let raymarcher = new Raymarcher {
+    let raymarcher = Raymarcher(
         sdf = finalSDF
         background = bg
         backgroundDistance = 15
-    }
+    )
 
     film.trigger(camera, raymarcher)
 }
@@ -616,7 +616,7 @@ fn Main()
 
     imageArr.resize(width * height)
 
-    let film = new Film { width, height, imageArr.slice(), antiAliasingSteps }
+    let film = Film(width, height, imageArr.slice(), antiAliasingSteps)
 
     let start = get_time_milliseconds()
     renderImage(film)

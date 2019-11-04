@@ -28,7 +28,7 @@ impl Material for Lambertian {
         let target = hit.p + hit.n + random.random_in_unit_sphere()
         let ray = Ray::from_to(hit.p, target)
         let color = albedo.value(0, 0, hit.p)
-        return Scatter.ColorReflection(new MaterialRecord{color, ray})
+        return Scatter.ColorReflection(MaterialRecord(color, ray))
     }
 }
 
@@ -53,7 +53,7 @@ impl Material for Metal {
     fn scatter(ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
         let reflected = r.direction.reflect(hit.n) + random.random_in_unit_sphere() * roughness
         return if vec3::dot(reflected, hit.n) > 0 then
-            Scatter.ColorReflection(new MaterialRecord{albedo, Ray::from_dir(hit.p, reflected)})
+            Scatter.ColorReflection(MaterialRecord(albedo, Ray::from_dir(hit.p, reflected)))
         else
             Scatter.None
     }
@@ -106,7 +106,7 @@ struct CheckerMaterial {
 
 impl CheckerMaterial {
     fn create(size: real, off: vec3, even: Material, odd: Material) -> Material {
-        return create_object(Material, new CheckerMaterial{size=size, off=off, even=even, odd=odd})
+        return create_object(Material, CheckerMaterial(size=size, off=off, even=even, odd=odd))
     }
 }
 
@@ -124,9 +124,9 @@ struct Isotropic {
 
 impl Material for Isotropic {
     fn scatter(ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
-        return Scatter.ColorReflection(new MaterialRecord{
+        return Scatter.ColorReflection(MaterialRecord(
             att         = albedo.value(hit.u, hit.v, hit.p)
             scattered   = Ray::from_dir(hit.p, random.random_in_unit_sphere())
-        })
+        ))
     }
 }

@@ -45,7 +45,7 @@ fn test1(f: Fn(int) -> int, x: int) {
 
 fn Main() {
     println("")
-    let s = new S{5}
+    let s = S(5)
 
     test(cast s.foo)
     test(cast bar)

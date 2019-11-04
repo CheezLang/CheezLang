@@ -153,12 +153,12 @@ impl Lexer {
         match skip_newlines_and_comments() {
             Some($loc) -> {
                 loc.end = loc.index
-                return new Token {
+                return Token(
                     ttype = TokenType.NewLine
                     location = loc
                     suffix = None
                     data = TokenData.None
-                }
+                )
             }
         }
 
@@ -166,12 +166,12 @@ impl Lexer {
     }
 
     fn read_token(ref Self) -> Token {
-        let token = new Token {
+        let token = Token(
             ttype = TokenType.EOF
             data = TokenData.None
             location = location
             suffix = None
-        }
+        )
         token.location.end = token.location.index
 
         if location.index >= text.length {

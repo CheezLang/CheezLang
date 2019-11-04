@@ -22,7 +22,7 @@ impl Test {
 }
 
 fn Main() {
-    let t = new Test{0}
+    let t = Test(0)
     c_printf("%lld`n", t.x)
     t.foo(3)
     c_printf("%lld`n", t.x)

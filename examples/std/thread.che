@@ -28,10 +28,10 @@ impl Thread {
 
         let handle = CreateThread(null, 0, thread_func, cast td, CREATE_SUSPENDED, null)
         @assert(handle != null)
-        return new Thread {
+        return Thread(
             data = td
             handle = handle
-        }
+        )
     }
 
     fn start(ref Self) -> bool {
@@ -67,7 +67,7 @@ impl Mutex {
             @panic("Failed to create mutex")
         }
 
-        return new Mutex{handle}
+        return Mutex(handle)
     }
 
     fn try_lock(ref Self, timeout: int) -> bool {
@@ -119,13 +119,13 @@ struct ThreadPool {
 impl ThreadPool {
     fn create(num_threads: int) -> Self {
         let data = alloc(ThreadPoolData)
-        <<data = new ThreadPoolData{
+        <<data = ThreadPoolData(
             threads = Array[Thread]::create(num_threads)
             functions = RingQueue[ThreadPoolFunc]::create(10)
             mutex = Mutex::create()
             running = true
             empty_queue  = false
-        }
+        )
 
         for : 0..num_threads {
             let t = Thread::create(worker, data)

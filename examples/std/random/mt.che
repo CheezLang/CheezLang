@@ -24,7 +24,7 @@ impl PseudoRandomGen for MTwister {
 
 impl MTwister {
     fn create(seed: u32) -> Self {
-        let result = new MTwister { index = STATE_VECTOR_LENGTH }
+        let result = MTwister(index = STATE_VECTOR_LENGTH)
         result.mt[0] = seed
         for i : 1..int(STATE_VECTOR_LENGTH) {
             result.mt[i] = 0x6c078965 * @bin_xor(result.mt[i - 1], @bin_lsr(result.mt[i - 1], 30)) + u32(i)

@@ -102,7 +102,7 @@ impl PixelGameEngine {
 
         let pge = alloc(PixelGameEngine)
 
-        <<pge = new PixelGameEngine {
+        <<pge = PixelGameEngine(
             game = game
             screen_width = screen_w
             screen_height = screen_h
@@ -112,7 +112,7 @@ impl PixelGameEngine {
             pixel_y = 2.0f / cast(float) screen_h
             mapKeys = Table[int, Key]::create(compare_ints)
             fps_string = String::empty()
-        }
+        )
 
         pge.default_draw_target = alloc(Sprite)
         <<pge.default_draw_target = Sprite::create(screen_w, screen_h)
@@ -290,12 +290,12 @@ impl PixelGameEngine {
     fn olc_OpenGLCreate(ref Self) -> bool {
         glDeviceContext = GetDC(olc_hWnd)
 
-        let pfd = new PIXELFORMATDESCRIPTOR {
+        let pfd = PIXELFORMATDESCRIPTOR(
             @sizeof(PIXELFORMATDESCRIPTOR), 1,
             @bin_or(PFD_DRAW_TO_WINDOW, PFD_SUPPORT_OPENGL, PFD_DOUBLEBUFFER),
             PFD_TYPE_RGBA, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             PFD_MAIN_PLANE, 0, 0, 0, 0
-        }
+        )
 
         let pf = ChoosePixelFormat(glDeviceContext, &pfd)
         if pf == 0 {

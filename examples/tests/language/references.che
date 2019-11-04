@@ -63,16 +63,16 @@ struct Foo3 {
 fn test3() {
     let c = "uiae"
 
-    let f = new Foo3 {
+    let f = Foo3(
         1i8
         0.0f
         c
-    }
-    let f2 = new Foo3 {
+    )
+    let f2 = Foo3(
         a = 2i8
         b = 1.2
         c = c
-    }
+    )
 }
 
 fn test2() {

@@ -9,11 +9,11 @@ struct Pixel #copy {
 
 impl Pixel {
     fn rgba(r: u8, g: u8, b: u8, a: u8 = 255) -> Self {
-        return new Pixel{r, g, b, a}
+        return Pixel(r, g, b, a)
     }
 
     fn rgbad(r: double, g: double, b: double, a: double = 1) -> Self {
-        return new Pixel{cast(u8) r * 255, cast(u8) g * 255, cast(u8) b * 255, cast(u8) a * 255}
+        return Pixel(cast(u8) r * 255, cast(u8) g * 255, cast(u8) b * 255, cast(u8) a * 255)
     }
 }
 

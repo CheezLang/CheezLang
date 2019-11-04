@@ -50,11 +50,11 @@ impl Drop for ArenaAllocator {
 
 impl ArenaAllocator {
     fn create(size: uint, alloc: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        let a = new ArenaAllocator {
-            parent      = alloc
-            bucket_size = size
+        let a = ArenaAllocator(
+            parent      = alloc,
+            bucket_size = size,
             buckets     = Array[Bucket]::create()
-        }
+        )
         return a
     }
 
@@ -117,10 +117,7 @@ impl Allocator for ArenaAllocator {
 
             let new_mem: []u8 = cast(&u8) parent.allocate(new_bucket_size, @sizeof(u8), alignment)
             new_mem.length = cast new_bucket_size
-            buckets.add(new Bucket {
-                memory = new_mem
-                filled = 0
-            })
+            buckets.add(Bucket(memory = new_mem, filled = 0))
 
             free_bucket = &buckets[buckets.length - 1]
         }

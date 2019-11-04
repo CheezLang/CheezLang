@@ -57,11 +57,11 @@ impl Parser {
         skip_ws()
 
         let func = alloc(Stmt)
-        <<func = new Stmt {
-            concrete = StmtType.FunctionDecl(new FunctionDecl {
+        <<func = Stmt(
+            concrete = StmtType.FunctionDecl(FunctionDecl(
                 name = name_id
-            })
-        }
+            ))
+        )
         return Some(func)
     }
 

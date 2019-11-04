@@ -19,7 +19,7 @@ trait Shape {
 struct BaseShape {
     pub max_nodes   : int
     pub nodes       : Array[Node]
-    pub color       : Pixel = new Pixel{0, 255, 0}
+    pub color       : Pixel = Pixel(0, 255, 0)
 }
 
 impl BaseShape {
@@ -35,7 +35,7 @@ impl BaseShape {
             color = Pixel::rgba(255, 255, 255)
             return null
         }
-        nodes.add(new Node { &self, p })
+        nodes.add(Node(&self, p))
         return &nodes[nodes.get_length() - 1]
     }
 
@@ -250,7 +250,7 @@ impl Game for MyGame {
     fn on_update(ref Self, dt: float) -> bool {
         pge.clear()
 
-        let vMouse = new float2{cast pge.get_mouse_pos().x, cast pge.get_mouse_pos().y}
+        let vMouse = float2(cast pge.get_mouse_pos().x, cast pge.get_mouse_pos().y)
 
         // pan
         if pge.get_mouse(2).pressed {
@@ -336,19 +336,19 @@ impl Game for MyGame {
 
         while let x = vWorldTopLeft.x, x < vWorldBottomRight.x, x += fGrid {
             while let y = vWorldTopLeft.y, y < vWorldBottomRight.y, y += fGrid {
-                let (sx, sy) = world_to_screen(new float2{x, y})
+                let (sx, sy) = world_to_screen(float2(x, y))
                 pge.draw(sx, sy, Pixel::rgba(100, 100, 255))
             }
         }
 
         // draw axis
         {
-            let (sx, sy) = world_to_screen(new float2{0, vWorldTopLeft.y})
-            let (ex, ey) = world_to_screen(new float2{0, vWorldBottomRight.y})
+            let (sx, sy) = world_to_screen(float2(0, vWorldTopLeft.y))
+            let (ex, ey) = world_to_screen(float2(0, vWorldBottomRight.y))
             pge.draw_line(sx, sy, ex, ey, Pixel::rgba(200, 200, 200), 0xF0F0F0F0)
 
-            (sx, sy) = world_to_screen(new float2{vWorldTopLeft.x, 0})
-            (ex, ey) = world_to_screen(new float2{vWorldBottomRight.x, 0})
+            (sx, sy) = world_to_screen(float2(vWorldTopLeft.x, 0))
+            (ex, ey) = world_to_screen(float2(vWorldBottomRight.x, 0))
             pge.draw_line(sx, sy, ex, ey, Pixel::rgba(200, 200, 200), 0xF0F0F0F0)
         }
 
@@ -375,7 +375,7 @@ impl Game for MyGame {
 }
 
 fn Main() {
-    let myGame = new MyGame{}
+    let myGame = MyGame()
     let pge = PixelGameEngine::create(myGame, 1600, 960)
     if pge != null {
         pge.start()

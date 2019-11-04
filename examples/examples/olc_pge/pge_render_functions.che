@@ -2,7 +2,7 @@
 #load("pixel.che")
 
 impl PixelGameEngine {
-    fn clear(ref Self, p: Pixel = new Pixel{}) {
+    fn clear(ref Self, p: Pixel = Pixel()) {
         let count = draw_target.width * draw_target.height
         let pixels = draw_target.get_data()
         while let i = 0, i < count, i += 1 {

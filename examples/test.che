@@ -21,10 +21,22 @@ struct Test(T: type, S: type) {
     pub s: S
 }
 
+typedef TestIS = Test[int, string]
+
 fn Main() {
-    let t = new Test[int, string] {
-        5, "lol"
-    }
+    // let t = new Test[int, string] {
+    //     5, "lol"
+    // }
+
+    let a = TestIS(
+        123
+        "uiae"
+    )
+    let b = TestIS(
+        123,
+        "uiae"
+    )
+    let c = TestIS(123, "uiae")
 }
 // */
 

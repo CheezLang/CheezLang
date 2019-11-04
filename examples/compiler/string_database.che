@@ -32,10 +32,10 @@ impl Hashable for string {
 
 impl StringDatabase {
     fn create() -> Self {
-        let sdb = new Self {
-            pool    = ArenaAllocator::create(1024)
+        let sdb = Self(
+            pool    = ArenaAllocator::create(1024),
             db      = Table[string, string]::create(sdb_compare_strings)
-        }
+        )
 
         return sdb
     }

@@ -103,7 +103,7 @@ impl Object for Sphere {
         let hitPos = ray.pos + ray.dir * t
         let normal = hitPos - pos
         normal.normalize()
-        return Some(new HitInfo{t, hitPos, normal, mat})
+        return Some(HitInfo(t, hitPos, normal, mat))
     }
 }
 
@@ -171,24 +171,24 @@ impl PathTracer {
         return match self.intersect(ray) {
             None -> new{}
             Some($hit) -> {
-                let result = new Vec3{}
+                let result = Vec3()
 
                 // emission
                 result += hit.material.emission
 
                 // diffuse
                 if hit.material.diffuse.max_component() > 0 {
-                    let rand = new StandardContinuousUniform[MTwister] { prng }
+                    let rand = StandardContinuousUniform[MTwister](prng)
                     let r1 = rand.sample() * 2.0 * pi
                     let r2 = rand.sample()
                     let r2s = sqrt(r2)
 
                     let w = hit.normal
-                    let u = if abs(w.x) > abs(w.z) {new Vec3{-w.y, w.x, 0}} else {new Vec3{0, -w.z, w.y}}
+                    let u = if abs(w.x) > abs(w.z) {Vec3(-w.y, w.x, 0)} else {Vec3(0, -w.z, w.y)}
                     u.normalize()
                     let v = u.cross(w)
                     let newDir = u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)
-                    let newRay = new Ray{hit.pos, newDir}
+                    let newRay = Ray(hit.pos, newDir)
 
                     result += hit.material.diffuse * calc_color(newRay, prng, contribution * hit.material.diffuse.max_component(), depth + 1)
                 }
@@ -196,7 +196,7 @@ impl PathTracer {
                 // reflection
                 if hit.material.reflection.max_component() > 0 {
                     let newDir = ray.dir.reflect(hit.normal)
-                    let newRay = new Ray{hit.pos, newDir}
+                    let newRay = Ray(hit.pos, newDir)
                     let nextContribution = contribution * hit.material.reflection.max_component()
                     result += hit.material.reflection * calc_color(newRay, prng, nextContribution, depth + 1)
                 }
@@ -219,19 +219,19 @@ impl PathTracer {
                     }
 
                     let kr = fresnel(I, n, hit.material.ior)
-                    let color_refracted = if kr >= 1 {new Vec3{}} else {
+                    let color_refracted = if kr >= 1 then Vec3() else {
                         let r = n1 / n2
                         let c = -Vec3::dot(n, I)
 
                         let f = r * c - sqrt(1 - r * r * (1 - c * c))
                         let newDir = I * r + n * f
-                        let newRay = new Ray{hit.pos + newDir * 0.01, newDir}
+                        let newRay = Ray(hit.pos + newDir * 0.01, newDir)
                         calc_color(newRay, prng, contribution * refract_max, depth + 1)
                     }
 
                     let color_reflected = {
                         let newDir = I.reflect(n)
-                        let newRay = new Ray{hit.pos + newDir * 0.01, newDir}
+                        let newRay = Ray(hit.pos + newDir * 0.01, newDir)
                         calc_color(newRay, prng, contribution * refract_max, depth + 1)
                     }
 
@@ -320,7 +320,7 @@ impl Game for PathTracer {
         self.cam_dir = new{0, -0.25, 1}
         self.cam_dir.normalize()
 
-        let up = new Vec3{0, 1, 0}
+        let up = Vec3(0, 1, 0)
         self.cam_right = up.cross(self.cam_dir)
         self.cam_up    = self.cam_dir.cross(self.cam_right)
 
@@ -335,33 +335,33 @@ impl Game for PathTracer {
         printfln("right: {}", self.cam_right)
 
         // create objects
-        let m_red   = create(new Material{new{0.9, 0.2, 0.2}, new{}}, allocator)
-        let m_green = create(new Material{new{0.2, 0.9, 0.2}, new{}}, allocator)
-        let m_blue  = create(new Material{new{0.2, 0.2, 0.9}, new{}}, allocator)
-        let m_grey  = create(new Material{new{0.75, 0.75, 0.75}, new{}}, allocator)
+        let m_red   = create(Material(new{0.9, 0.2, 0.2}, new{}), allocator)
+        let m_green = create(Material(new{0.2, 0.9, 0.2}, new{}), allocator)
+        let m_blue  = create(Material(new{0.2, 0.2, 0.9}, new{}), allocator)
+        let m_grey  = create(Material(new{0.75, 0.75, 0.75}, new{}), allocator)
 
         let m_mirror= create(Material::reflective(new{1, 1, 1}), allocator)
         let m_glass = create(Material::refrective(new{1, 1, 1}, 1.95), allocator)
 
-        let m_light = create(new Material{new{}, new{10, 10, 10}}, allocator)
+        let m_light = create(Material(new{}, new{10, 10, 10}), allocator)
 
-        self.add_object(new Sphere{new{-1000.0 - size / 2, 0, 0}, 1000, m_red}) // left
-        self.add_object(new Sphere{new{1000.0 + size / 2, 0, 0}, 1000, m_green}) // right
+        self.add_object(Sphere(new{-1000.0 - size / 2, 0, 0}, 1000, m_red)) // left
+        self.add_object(Sphere(new{1000.0 + size / 2, 0, 0}, 1000, m_green)) // right
 
-        self.add_object(new Sphere{new{0, 0, 1000.0 + size / 2 + 10}, 1000, m_grey}) // back
-        self.add_object(new Sphere{new{0, 0, -1000.0 - size / 2 * 5}, 1000, m_grey}) // front
+        self.add_object(Sphere(new{0, 0, 1000.0 + size / 2 + 10}, 1000, m_grey)) // back
+        self.add_object(Sphere(new{0, 0, -1000.0 - size / 2 * 5}, 1000, m_grey)) // front
 
-        self.add_object(new Sphere{new{0, -1000.0, 0}, 1000, m_grey}) // bot
-        self.add_object(new Sphere{new{0, 1000.0 + size, 0}, 1000, m_grey}) // top
+        self.add_object(Sphere(new{0, -1000.0, 0}, 1000, m_grey)) // bot
+        self.add_object(Sphere(new{0, 1000.0 + size, 0}, 1000, m_grey)) // top
 
         // spheres
-        self.add_object(new Sphere{new{-0.25, 2.25, 8.5}, 1.75, m_glass})
-        self.add_object(new Sphere{new{3, 2, 13}, 2, m_mirror})
-        self.add_object(new Sphere{new{-2.5, 1, 12}, 1, m_green})
-        self.add_object(new Sphere{new{1.75, 1, 10}, 1, m_blue})
+        self.add_object(Sphere(new{-0.25, 2.25, 8.5}, 1.75, m_glass))
+        self.add_object(Sphere(new{3, 2, 13}, 2, m_mirror))
+        self.add_object(Sphere(new{-2.5, 1, 12}, 1, m_green))
+        self.add_object(Sphere(new{1.75, 1, 10}, 1, m_blue))
 
         // light
-        self.add_object(new Sphere{new{0, size + 9.75, 10}, 10, m_light})
+        self.add_object(Sphere(new{0, size + 9.75, 10}, 10, m_light))
 
         // create threads
         for i : 0..thread_count {

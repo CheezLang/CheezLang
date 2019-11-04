@@ -20,8 +20,8 @@ impl Random {
     fn random_in_unit_sphere(ref Self) -> vec3 {
         let p: vec3 = default
         while true {
-            let r = new vec3{self.random_real(), self.random_real(), self.random_real()}
-            p = r * real(2.0) - new vec3{1, 1, 1}
+            let r = vec3(self.random_real(), self.random_real(), self.random_real())
+            p = r * real(2.0) - vec3(1, 1, 1)
             if p.magsq() < 1 {
                 break
             }
@@ -33,8 +33,8 @@ impl Random {
     fn random_in_unit_disk(ref Self) -> vec3 {
         let p: vec3 = default
         while true {
-            let r = new vec3{self.random_real(), self.random_real(), 0.0}
-            p = r * real(2.0) - new vec3{1, 1, 0.0}
+            let r = vec3(self.random_real(), self.random_real(), 0.0)
+            p = r * real(2.0) - vec3(1, 1, 0.0)
             if p.magsq() < 1 {
                 break
             }
@@ -83,7 +83,7 @@ impl Camera {
         let half_height = real(tan(theta / 2.0))
         let half_width = aspect_ratio * half_height
 
-        let up = new vec3{0, 1, 0}
+        let up = vec3(0, 1, 0)
         let w = vec3::normalized(pos - lookat)
         let u = vec3::cross(up, w).normalized()
         let v = vec3::cross(w, u)
@@ -158,16 +158,16 @@ impl AABB {
     }
 
     fn surrounding_box(a: ref AABB, b: ref AABB) -> AABB {
-        let small = new vec3{
+        let small = vec3(
             x = min(a._min.x, b._min.x)
             y = min(a._min.y, b._min.y)
             z = min(a._min.z, b._min.z)
-        }
-        let big = new vec3{
+        )
+        let big = vec3(
             x = max(a._max.x, b._max.x)
             y = max(a._max.y, b._max.y)
             z = max(a._max.z, b._max.z)
-        }
+        )
 
         return AABB::create(small, big)
     }

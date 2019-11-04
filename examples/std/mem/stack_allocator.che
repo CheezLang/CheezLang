@@ -52,12 +52,12 @@ impl Printable for StackAllocator {
 
 impl StackAllocator {
     fn create(size: u64, alloc: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        let a = new StackAllocator {
+        let a = StackAllocator(
             parent = alloc
             memory = null
             capacity = 0
             allocations = Array[StackAllocation]::create()
-        }
+        )
         a.reserve(size)
         return a
     }
@@ -124,10 +124,10 @@ impl Allocator for StackAllocator {
             next_aligned(unaligned, alignment)
         }
 
-        let newAllocation = new StackAllocation {
+        let newAllocation = StackAllocation(
             offset = (cast(u64) nextAddress) - (cast(u64) memory)
             size = count * elementSize
-        }
+        )
 
         let end = newAllocation.offset + newAllocation.size
 
