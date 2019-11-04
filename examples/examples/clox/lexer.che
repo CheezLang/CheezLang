@@ -38,11 +38,11 @@ struct Lexer {
 
 impl Lexer {
     fn create(source: string) -> Lexer {
-        return new {
+        return Lexer(
             source = source
             current = 0
             line = 1
-        }
+        )
     }
 
     fn next_char(ref Self) -> char {
@@ -89,7 +89,7 @@ impl Lexer {
     }
 
     fn make_token(ref Self, kind: TokenKind, length: int = 1) -> Token {
-        return new {kind, source::slice(current - 1, length), line}
+        return Token(kind, source::slice(current - 1, length), line)
     }
 
     fn make_string(ref Self) -> Token {
@@ -103,13 +103,13 @@ impl Lexer {
         }
 
         if is_at_end() {
-            return new {TokenKind.Error, "Unterminated string.", l}
+            return Token(TokenKind.Error, "Unterminated string.", l)
         }
 
         // eat closing ".
         next_char()
 
-        return new {TokenKind.String, source::slice(start, current - start), l}
+        return Token(TokenKind.String, source::slice(start, current - start), l)
     }
 
     fn make_number(ref Self) -> Token {
@@ -128,7 +128,7 @@ impl Lexer {
             }
         }
 
-        return new {TokenKind.Number, source::slice(start, current - start), line}
+        return Token(TokenKind.Number, source::slice(start, current - start), line)
     }
 
     fn make_identifier(ref Self) -> Token {
@@ -137,7 +137,7 @@ impl Lexer {
             next_char()
         }
 
-        return check_keywords(new {TokenKind.Identifier, source::slice(start, current - start), line})
+        return check_keywords(Token(TokenKind.Identifier, source::slice(start, current - start), line))
     }
 
     fn check_keywords(ref Self, token: Token) -> Token {
@@ -179,7 +179,7 @@ impl Lexer {
     fn next_token(ref Self) -> Token {
         skip_whitespace()
         if is_at_end() {
-            return new {TokenKind.Eof, "", line}
+            return Token(TokenKind.Eof, "", line)
         }
 
         let c = next_char()
@@ -213,7 +213,7 @@ impl Lexer {
             ($c, $_) if is_alpha(c) -> make_identifier()
             ($c, $_) if is_digit(c) -> make_number()
 
-            $_ -> new {TokenKind.Error, "Unexpected charactor.", line}
+            $_ -> Token(TokenKind.Error, "Unexpected charactor.", line)
         }
     }
 }

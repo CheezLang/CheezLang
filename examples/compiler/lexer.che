@@ -81,12 +81,12 @@ impl Lexer {
     }
 
     fn from_string(content: String, string_db: ref StringDatabase) -> Lexer {
-        return new {
+        return Lexer(
             text = content
-            location = new {
+            location = TokenLocation(
                 file = "string"
                 line = 1
-            }
+            )
             peek = None
             string_db = string_db
 
@@ -116,7 +116,7 @@ impl Lexer {
             KwContinue  = string_db.intern("continue")
             KwTrait     = string_db.intern("trait")
             KwCast      = string_db.intern("cast")
-        }
+        )
     }
 
     fn from_file(filename: string, string_db: ref StringDatabase) -> Result[Lexer, String] {

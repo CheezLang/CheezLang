@@ -1,5 +1,5 @@
 // #load("examples/trait_function_call_performance")
-#load("examples/graphyfier/graphyfier")
+// #load("examples/graphyfier/graphyfier")
 // #load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")

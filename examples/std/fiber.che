@@ -1,6 +1,6 @@
 #load("std:os/windows")
 
-let thread_fiber: Fiber = new{ConvertThreadToFiber(&thread_fiber), null}
+let thread_fiber: Fiber = Fiber(ConvertThreadToFiber(&thread_fiber), null)
 
 fn fiber_func(param: &any) #stdcall {
     let f = cast(&Fiber)param

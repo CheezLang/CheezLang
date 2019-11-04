@@ -3,7 +3,7 @@ struct Rc(T: type) {
     data    : &T
 }
 
-impl(T: type) Drop for Rc(T) {
+impl(T: type) Drop for Rc[T] {
     fn drop(ref Self) {
         @assert(<<count > 0)
         <<count -= 1
@@ -14,18 +14,18 @@ impl(T: type) Drop for Rc(T) {
     }
 }
 
-impl(T: type) Rc(T) {
-    fn create(value: T) -> Rc(T) {
+impl(T: type) Rc[T] {
+    fn create(value: T) -> Rc[T] {
         let count = alloc(int)
         let data  = alloc(T)
         <<count = 1
         <<data = value
-        return new {count, data}
+        return Rc[T](count, data)
     }
 
-    fn clone(ref Self) -> Rc(T) {
+    fn clone(ref Self) -> Rc[T] {
         <<count += 1
-        return new {count, data}
+        return Rc[T](count, data)
     }
 
     fn get(ref Self) -> ref T {

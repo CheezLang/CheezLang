@@ -75,8 +75,8 @@ fn Main() {
                 let context = alloc(RenderContext)
                 <<context = RenderContext(
                     id = id
-                    min = new {x*size, y*size}
-                    max = new {min((x+1)*size, width), min((y+1)*size, height)}
+                    min = Vector2[int](x*size, y*size)
+                    max = Vector2[int](min((x+1)*size, width), min((y+1)*size, height))
                     image = image
                     world = world
                     cam = cam
@@ -267,8 +267,8 @@ fn random_scene(cam: ref Camera) -> Hittable {
     )))
 
     let box = create_object(Hittable, Box::create(
-        new{-100, 0, -100}, new{100, 1, 100}, null
-        // new{-4, 0, 1}, new{4, 1, 2}, null
+        vec3(-100, 0, -100), vec3(100, 1, 100), null
+        // vec3(-4, 0, 1), vec3(4, 1, 2), null
     ))
 
     let col: real = 1.0
@@ -323,8 +323,8 @@ fn basic_scene(cam: ref Camera) -> Hittable {
     )))
 
     let box = create_object(Hittable, Box::create(
-        new{-100, 0, -100}, new{100, 10, 100}, null
-        // new{-4, 0, 1}, new{4, 1, 2}, null
+        vec3(-100, 0, -100), vec3(100, 10, 100), null
+        // vec3(-4, 0, 1), vec3(4, 1, 2), null
     ))
 
     let col: real = 1.0
@@ -443,8 +443,8 @@ fn big_scene(cam: ref Camera) -> Hittable {
 
     let nb = 20
 
-    let m_white = create_object(Material, Lambertian(ConstantTexture::create(new {0.73, 0.73, 0.73})))
-    let m_ground = create_object(Material, Lambertian(ConstantTexture::create(new {0.48, 0.83, 0.53})))
+    let m_white = create_object(Material, Lambertian(ConstantTexture::create(vec3(0.73, 0.73, 0.73))))
+    let m_ground = create_object(Material, Lambertian(ConstantTexture::create(vec3(0.48, 0.83, 0.53))))
 
     // boxes
     {
@@ -458,62 +458,62 @@ fn big_scene(cam: ref Camera) -> Hittable {
                 let x1 = x0 + w
                 let y1 = 100.0 * (global_random.random_real() + 0.01)
                 let z1 = z0 + w
-                list.add(create_object(Hittable, Box::create(new{x0, y0, z0}, new{x1, y1, z1}, m_ground)))
+                list.add(create_object(Hittable, Box::create(vec3(x0, y0, z0), vec3(x1, y1, z1), m_ground)))
             }
         }
         // list.add(create_object(Hittable, BhvNode::create(boxlist.slice())))
     }
 
     // light
-    let m_light = create_object(Material, Emissive(new{7, 7, 7}))
+    let m_light = create_object(Material, Emissive(vec3(7, 7, 7)))
     list.add(create_object(Hittable, ZXRect(50, 423, 200, 412, 634, m_light)))
 
     // spheres
     // matte
-    list.add(create_object(Hittable, Sphere(new{400, 400, 200}, 50, create_object(Material, Lambertian(ConstantTexture::create(new{0.7, 0.3, 0.1}))))))
+    list.add(create_object(Hittable, Sphere(vec3(400, 400, 200), 50, create_object(Material, Lambertian(ConstantTexture::create(vec3(0.7, 0.3, 0.1)))))))
 
     // glass
-    list.add(create_object(Hittable, Sphere(new{260, 150, 45}, 50, create_object(Material, Dielectric(1.5)))))
+    list.add(create_object(Hittable, Sphere(vec3(260, 150, 45), 50, create_object(Material, Dielectric(1.5)))))
 
     // metal
-    list.add(create_object(Hittable, Sphere(new{0, 150, 145}, 50, create_object(Material, Metal(new{0.8, 0.8, 0.9}, 0.2)))))
+    list.add(create_object(Hittable, Sphere(vec3(0, 150, 145), 50, create_object(Material, Metal(vec3(0.8, 0.8, 0.9), 0.2)))))
 
     // checker sphere
     if true {
         let size = real(80.0)
-        let mat = CheckerMaterial::create(3.1415 / size * 2.0, new{-220, -280, -300},
-            create_object(Material, Lambertian(ConstantTexture::create(new{0.6, 0.2, 0.4}))),
-            create_object(Material, Metal(new{1, 1, 1}, 0)))
+        let mat = CheckerMaterial::create(3.1415 / size * 2.0, vec3(-220, -280, -300),
+            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.6, 0.2, 0.4)))),
+            create_object(Material, Metal(vec3(1, 1, 1), 0)))
 
-        list.add(create_object(Hittable, Sphere(new{220, 280, 300}, size, mat)))
+        list.add(create_object(Hittable, Sphere(vec3(220, 280, 300), size, mat)))
     }
 
     // weird blue sphere
     if true {
-        let boundary = create_object(Hittable, Sphere(new{460, 150, 145}, 70, create_object(Material, Dielectric(1.5))))
+        let boundary = create_object(Hittable, Sphere(vec3(460, 150, 145), 70, create_object(Material, Dielectric(1.5))))
 
         list.add(boundary)
-        list.add(create_object(Hittable, ConstantMedium::create(boundary, 0.2, ConstantTexture::create(new{0.2, 0.4, 0.9}))))
+        list.add(create_object(Hittable, ConstantMedium::create(boundary, 0.2, ConstantTexture::create(vec3(0.2, 0.4, 0.9)))))
     }
 
     // fog
     if true {
-        let boundary = create_object(Hittable, Sphere(new{0, 0, 0}, 5000, create_object(Material, Dielectric(1.5))))
-        list.add(create_object(Hittable, ConstantMedium::create(boundary, 0.0002, ConstantTexture::create(new{1, 1, 1}))))
+        let boundary = create_object(Hittable, Sphere(vec3(0, 0, 0), 5000, create_object(Material, Dielectric(1.5))))
+        list.add(create_object(Hittable, ConstantMedium::create(boundary, 0.0002, ConstantTexture::create(vec3(1, 1, 1)))))
     }
 
     // lots of spheres
     if true {
         let mats = [
-            create_object(Material, Lambertian(ConstantTexture::create(new{0.4, 0.6, 0.8})))
-            create_object(Material, Lambertian(ConstantTexture::create(new{0.4, 0.6, 0.8})))
-            create_object(Material, Lambertian(ConstantTexture::create(new{0.4, 0.8, 0.6})))
-            create_object(Material, Lambertian(ConstantTexture::create(new{0.4, 0.8, 0.6})))
-            create_object(Material, Lambertian(ConstantTexture::create(new{0.8, 0.6, 0.4})))
-            create_object(Material, Lambertian(ConstantTexture::create(new{0.8, 0.6, 0.4})))
-            create_object(Material, Emissive(new{2.0, 2.0, 2.0}))
-            create_object(Material, Metal(new{1, 0.8, 0.8}, 0.0))
-            create_object(Material, Metal(new{1, 0.8, 0.8}, 0.0))
+            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.4, 0.6, 0.8))))
+            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.4, 0.6, 0.8))))
+            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.4, 0.8, 0.6))))
+            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.4, 0.8, 0.6))))
+            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.8, 0.6, 0.4))))
+            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.8, 0.6, 0.4))))
+            create_object(Material, Emissive(vec3(2.0, 2.0, 2.0)))
+            create_object(Material, Metal(vec3(1, 0.8, 0.8), 0.0))
+            create_object(Material, Metal(vec3(1, 0.8, 0.8), 0.0))
             create_object(Material, Dielectric(1.5))
             create_object(Material, Dielectric(1.5))
         ]

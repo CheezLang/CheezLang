@@ -17,13 +17,13 @@ impl(T: type) RingQueue[T] {
         }
 
         let data = alloc_raw(T, cast init_size, allocator)
-        return new{
+        return RingQueue[T](
             data = data
             capacity = init_size
             first = 0
             last = 0
             allocator = allocator
-        }
+        )
     }
 
     fn get_length(ref Self) -> int {

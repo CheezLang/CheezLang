@@ -22,10 +22,10 @@ impl(T: type) Vector[T] {
     }
 
     fn sub(a: Vector[T], b: Vector[T]) -> Vector[T] {
-        return new {
+        return Vector[T](
             a.x - b.x
             a.y - b.y
-        }
+        )
     }
 }
 

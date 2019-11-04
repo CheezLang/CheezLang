@@ -54,13 +54,13 @@ struct Compiler {
 
 impl Compiler {
     fn create(kind: FunctionType) -> Self {
-        // return new {
+        // return Compiler(
         //     enclosing = parent
         //     function = null
         //     kind = kind
         //     local_count = 0
         //     scope_depth = 0
-        // }
+        // )
     }
 }
 

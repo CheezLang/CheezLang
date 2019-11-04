@@ -154,7 +154,7 @@ impl(T: type) Array[T] {
     }
 
     fn iterator(ref Self) -> ArrayIterator[T] {
-        return new { self, 0 }
+        return ArrayIterator[T](self, 0)
     }
 }
 

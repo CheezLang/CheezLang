@@ -24,10 +24,10 @@ struct BaseShape {
 
 impl BaseShape {
     fn create(max_nodes: int) -> BaseShape {
-        return new {
+        return BaseShape(
             max_nodes
             Array[Node]::create(max_nodes)
-        }
+        )
     }
 
     fn next_node(ref Self, p: float2) -> &Node {
@@ -64,7 +64,7 @@ struct LineShape {
 impl LineShape {
     fn create() -> &Self {
         let l = alloc(LineShape)
-        <<l = new { BaseShape::create(2) }
+        <<l = LineShape(BaseShape::create(2))
         return l
     }
 }
@@ -94,7 +94,7 @@ struct BoxShape {
 impl BoxShape {
     fn create() -> &Self {
         let l = alloc(BoxShape)
-        <<l = new { BaseShape::create(2) }
+        <<l = BoxShape(BaseShape::create(2))
         return l
     }
 }
@@ -124,7 +124,7 @@ struct CircleShape {
 impl CircleShape {
     fn create() -> &Self {
         let l = alloc(CircleShape)
-        <<l = new { BaseShape::create(2) }
+        <<l = CircleShape(BaseShape::create(2))
         return l
     }
 }
@@ -165,7 +165,7 @@ struct CurveShape {
 impl CurveShape {
     fn create() -> &Self {
         let l = alloc(CurveShape)
-        <<l = new { BaseShape::create(3) }
+        <<l = CurveShape(BaseShape::create(3))
         return l
     }
 }
@@ -367,10 +367,10 @@ impl Game for MyGame {
     }
 
     fn screen_to_world(ref Self, nScreenX: int, nScreenY: int) -> float2 {
-        return new {
+        return float2(
             (cast(float)nScreenX) / fScale + vOffset.x
             (cast(float)nScreenY) / fScale + vOffset.y
-        }
+        )
     }
 }
 

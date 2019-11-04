@@ -17,14 +17,14 @@ struct Obj {
 }
 
 struct ObjFunction {
-    obj     : Obj   = new {kind = ObjKind.Function}
+    obj     : Obj   = Obj(kind = ObjKind.Function)
     arity   : int
     chunk   : Chunk
     name    : ObjString
 }
 
 struct ObjString {
-    obj     : Obj   = new {kind = ObjKind.String}
+    obj     : Obj   = Obj(kind = ObjKind.String)
     chars   : []char
     hash    : u32
 }

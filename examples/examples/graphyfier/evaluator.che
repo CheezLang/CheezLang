@@ -11,11 +11,11 @@ fn evaluate(code: []OpCode, vars: ref Variables) -> Option[Complex] {
     for op : code {
         match op {
             OpCode.Real($val) -> {
-                stack[sp] = new {val, 0.0}
+                stack[sp] = Complex(val, 0.0)
                 sp += 1
             }
             OpCode.Im($val) -> {
-                stack[sp] = new {0.0, val}
+                stack[sp] = Complex(0.0, val)
                 sp += 1
             }
             OpCode.Var($name) -> {
@@ -78,21 +78,21 @@ fn evaluate(code: []OpCode, vars: ref Variables) -> Option[Complex] {
                 if r == 0 {
                     return None
                 }
-                stack[sp - 1] = new {log(r), p}
+                stack[sp - 1] = Complex(log(r), p)
             }
             OpCode.Sin -> {
                 let u = stack[sp - 1]
-                stack[sp - 1] = new {
+                stack[sp - 1] = Complex(
                     r = sin(u.r) * cosh(u.i)
                     i = cos(u.r) * sinh(u.i)
-                }
+                )
             }
             OpCode.Cos -> {
                 let u = stack[sp - 1]
-                stack[sp - 1] = new {
+                stack[sp - 1] = Complex(
                     r =  cos(u.r) * cosh(u.i)
                     i = -sin(u.r) * sinh(u.i)
-                }
+                )
             }
 
             $_ -> {

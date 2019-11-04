@@ -18,9 +18,9 @@ impl CheezCompiler {
         let ast_a = alloc(StackAllocator)
         <<ast_a = StackAllocator::create(1024 * 100)
         
-        return new {
+        return CheezCompiler(
             string_database     = StringDatabase::create()
             ast_allocator       = ast_a
-        }
+        )
     }
 }

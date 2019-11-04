@@ -97,7 +97,7 @@ fn for_extension_random(dist: IDistribution[$T], code: Code) #for {
 impl(T: type) IDistribution[T] {
     fn samples(ref Self) -> Iterator[T] {
         let it = alloc(DistributionIterator[T])
-        <<it = new {self}
+        <<it = DistributionIterator[T](self)
         return <<it
     }
 }
@@ -114,7 +114,7 @@ impl(T: type) IDistribution[double] for StandardContinuousUniform[T] if T : Pseu
 
 impl(T: type) StandardContinuousUniform[T] if T : PseudoRandomGen {
     fn create(prng: &T) -> Self {
-        return new {prng}
+        return StandardContinuousUniform[T](prng)
     }
 }
 
@@ -127,7 +127,7 @@ struct NormalDistribution {
 
 impl NormalDistribution {
     fn create(mean: double, sigma: double) -> Self {
-        return new{mean, sigma, StandardContinuousUniform[LinearCongruentialGenerator](&lcg)}
+        return NormalDistribution(mean, sigma, StandardContinuousUniform[LinearCongruentialGenerator](&lcg))
     }
 }
 

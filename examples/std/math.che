@@ -118,50 +118,50 @@ impl(T: type) Vector2[T] {
     }
 
     fn neg(Self) -> Self #operator("-") {
-        return new {-x, -y}
+        return Vector2[T](-x, -y)
     }
 
     // static
     fn addvv(a: Self, b: Self) -> Self #operator("+") {
-        return new {
+        return Vector2[T](
             a.x + b.x
             a.y + b.y
-        }
+        )
     }
 
     fn subvv(a: Self, b: Self) -> Self #operator("-") {
-        return new {
+        return Vector2[T](
             a.x - b.x
             a.y - b.y
-        }
+        )
     }
 
     fn mulvv(a: Self, b: Self) -> Self #operator("*") {
-        return new {
+        return Vector2[T](
             a.x * b.x
             a.y * b.y
-        }
+        )
     }
 
     fn mulvs(a: Self, b: T) -> Self #operator("*") {
-        return new {
+        return Vector2[T](
             a.x * b
             a.y * b
-        }
+        )
     }
 
     fn divvv(a: Self, b: Self) -> Self #operator("/") {
-        return new {
+        return Vector2[T](
             a.x / b.x
             a.y / b.y
-        }
+        )
     }
 
     fn divvs(a: Self, b: T) -> Self #operator("/") {
-        return new {
+        return Vector2[T](
             a.x / b
             a.y / b
-        }
+        )
     }
 
     fn dot(a: Self, b : Self) -> T {
@@ -224,13 +224,13 @@ impl(T: type) Vector3[T] {
     fn normalized(Self) -> Self {
         let mag = self.mag()
         if mag != 0 {
-            return new {
+            return Vector3[T](
                 x / mag
                 y / mag
                 z / mag
-            }
+            )
         } else {
-            return new {0, 0, 0}
+            return Vector3[T](0, 0, 0)
         }
     }
 
@@ -243,72 +243,72 @@ impl(T: type) Vector3[T] {
     }
 
     fn neg(Self) -> Self #operator("-") {
-        return new {-x, -y, -z}
+        return Vector3[T](-x, -y, -z)
     }
 
     // static
     fn addvv(a: Self, b: Self) -> Self #operator("+") {
-        return new {
+        return Vector3[T](
             a.x + b.x
             a.y + b.y
             a.z + b.z
-        }
+        )
     }
 
     fn addvs(a: Self, b: T) -> Self #operator("+") {
-        return new {
+        return Vector3[T](
             a.x + b
             a.y + b
             a.z + b
-        }
+        )
     }
 
     fn subvv(a: Self, b: Self) -> Self #operator("-") {
-        return new {
+        return Vector3[T](
             a.x - b.x
             a.y - b.y
             a.z - b.z
-        }
+        )
     }
 
     fn subvs(a: Self, b: T) -> Self #operator("-") {
-        return new {
+        return Vector3[T](
             a.x - b
             a.y - b
             a.z - b
-        }
+        )
     }
 
     fn mulvv(a: Self, b: Self) -> Self #operator("*") {
-        return new {
+        return Vector3[T](
             a.x * b.x
             a.y * b.y
             a.z * b.z
-        }
+        )
     }
 
     fn mulvs(a: Self, b: T) -> Self #operator("*") {
-        return new {
+        return Vector3[T](
             a.x * b
             a.y * b
             a.z * b
-        }
+        )
     }
 
     fn divvv(a: Self, b: Self) -> Self #operator("/") {
-        return new {
+        return Vector3[T](
             a.x / b.x
             a.y / b.y
             a.z / b.z
-        }
+        )
     }
 
     fn divvs(a: Self, b: T) -> Self #operator("/") {
-        return new {
+        return Vector3[T](
             a.x / b
             a.y / b
             a.z / b
-        }
+        )
     }
 
     fn dot(a: Self, b: Self) -> T {
@@ -316,11 +316,11 @@ impl(T: type) Vector3[T] {
     }
 
     fn cross(ref Self, other: Self) -> Self {
-        return new {
+        return Vector3[T](
             y * other.z - z * other.y
             z * other.x - x * other.z
             x * other.y - y * other.x
-        }
+        )
     }
 
     fn reflect(ref Self, normal: Self) -> Self {
@@ -344,15 +344,15 @@ impl(T: type) Vector3[T] {
     }
 
     fn clamped(ref Self, min: T, max: T) -> Self {
-        return new {
+        return Vector3[T](
             clamp(x, min, max)
             clamp(y, min, max)
             clamp(z, min, max)
-        }
+        )
     }
 
     fn change_type(ref Self, $TargetType: type) -> Vector3[TargetType] {
-        return new { TargetType(x), TargetType(y), TargetType(z) }
+        return Vector3[TargetType](TargetType(x), TargetType(y), TargetType(z))
     }
 }
 
@@ -363,86 +363,56 @@ struct Complex #copy {
 
 impl Complex {
     fn real(r: double) -> Self {
-        return new {r, 0}
+        return Complex(r, 0)
     }
 
     fn imaginary(i: double) -> Self {
-        return new {0, i}
+        return Complex(0, i)
     }
 
     fn from_polar(m: double, p: double) -> Self {
-        return new { r = m * cos(p), i = m * sin(p) }
+        return Complex(m * cos(p), m * sin(p))
     }
 
     fn add(a: Complex, b: Complex) -> Self #operator("+") {
-        return new {
-            r = a.r + b.r
-            i = a.i + b.i
-        }
+        return Complex(a.r + b.r, a.i + b.i)
     }
 
     fn add2(a: Complex, b: double) -> Self #operator("+") {
-        return new {
-            r = a.r + b
-            i = a.i
-        }
+        return Complex(a.r + b, a.i)
     }
 
     fn sub(a: Complex, b: Complex) -> Self #operator("-") {
-        return new {
-            r = a.r - b.r
-            i = a.i - b.i
-        }
+        return Complex(a.r - b.r, a.i - b.i)
     }
 
     fn sub2(a: Complex, b: double) -> Self #operator("-") {
-        return new {
-            r = a.r - b
-            i = a.i
-        }
+        return Complex(a.r - b, a.i)
     }
 
     fn neg(a: Complex) -> Self #operator("-") {
-        return new {
-            r = -a.r
-            i = -a.i
-        }
+        return Complex(-a.r, -a.i)
     }
 
     fn conj(a: Complex) -> Self #operator("!") {
-        return new {
-            r = a.r
-            i = -a.i
-        }
+        return Complex(a.r, -a.i)
     }
 
     fn mul(a: Complex, b: Complex) -> Self #operator("*") {
-        return new {
-            r = a.r * b.r - a.i * b.i
-            i = a.r * b.i + a.i * b.r
-        }
+        return Complex(a.r * b.r - a.i * b.i, a.r * b.i + a.i * b.r)
     }
 
     fn mul2(a: Complex, b: double) -> Self #operator("*") {
-        return new {
-            r = a.r * b
-            i = a.i * b
-        }
+        return Complex(a.r * b, a.i * b)
     }
 
     fn div(a: Complex, b: Complex) -> Self #operator("/") {
         let fac = 1 / (b.r * b.r + b.i * b.i)
-        return new {
-            r = fac * (a.r * b.r + a.i * b.i)
-            i = fac * (a.r * b.i - a.i * b.r)
-        }
+        return Complex(fac * (a.r * b.r + a.i * b.i), fac * (a.r * b.i - a.i * b.r))
     }
 
     fn div2(a: Complex, b: double) -> Self #operator("/") {
-        return new {
-            r = a.r / b
-            i = a.i / b
-        }
+        return Complex(a.r / b, a.i / b)
     }
 
     fn poww(a: Complex, e: double) -> Self {
@@ -456,10 +426,7 @@ impl Complex {
         r = pow(r, e)
         p = p * e
 
-        return new {
-            r * cos(p)
-            r * sin(p)
-        }
+        return Complex(r * cos(p), r * sin(p))
     }
 
     fn polar(Self) -> (m: double, p: double) {

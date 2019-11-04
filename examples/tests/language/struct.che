@@ -20,7 +20,7 @@ struct Test #copy {
 
 impl Test {
     fn create(a: int = 2, b: double = 5.5) -> Self {
-        return new { a, b }
+        return Test(a, b)
     }
 
     fn set_val(Self, x: int, y: double) {

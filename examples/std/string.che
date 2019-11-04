@@ -29,13 +29,13 @@ impl(CharType: type) Drop for StringBase[CharType] {
 
 impl(CharType: type) StringBase[CharType] {
     fn empty(allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        return new { null, 0, allocator }
+        return StringBase[CharType](null, 0, allocator)
     }
 
     fn from_raw_ptr(ptr: &CharType, cap: int) -> Self {
         let sl: []CharType = ptr
         sl.length = cap
-        return new { sl, 0, null }
+        return StringBase[CharType](sl, 0, null)
     }
 
     fn from_string(str: string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {

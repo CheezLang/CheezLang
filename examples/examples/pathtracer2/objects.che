@@ -204,7 +204,7 @@ impl BhvNode {
             }
         }
 
-        return new{left, right, aabb}
+        return BhvNode(left, right, aabb)
     }
 }
 
@@ -445,7 +445,7 @@ impl Hittable for ConstantMedium {
                         let hit = HitRecord(
                             t = t
                             p = r.at(t)
-                            n = new{1, 0, 0}
+                            n = vec3(1, 0, 0)
                             m = phase_func
                         )
 

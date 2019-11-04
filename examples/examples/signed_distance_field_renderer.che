@@ -439,9 +439,7 @@ struct SDFAllocator {
 
 impl SDFAllocator {
     fn create() -> Self {
-        return new {
-            StackAllocator::create(1024 * 2)
-        }
+        return SDFAllocator(StackAllocator::create(1024 * 2))
     }
 
     fn allocate(ref Self, $T: type) -> &T {
@@ -510,7 +508,7 @@ impl SDFAllocator {
     fn scale(ref Self, sdf: SDF, x: double = 1, y: double = 1, z: double = 1) -> SDF {
         let t = alloc(ScaledSDF, allocator)
         t.sdf = sdf
-        t.scale = new {x, y, z}
+        t.scale = Vec3(x, y, z)
         return cast(SDF) ref <<t
     }
 

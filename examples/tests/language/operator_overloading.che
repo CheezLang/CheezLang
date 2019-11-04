@@ -28,7 +28,7 @@ struct Num #copy {
 }
 
 fn num_add(a: Num, b: Num) -> Num #operator("+") {
-    return new { a.x + b.x }
+    return Num(a.x + b.x)
 }
 
 fn num_inc(a: &Num, b: Num) #operator("+=") {

@@ -28,13 +28,13 @@ impl(K: type, V: type) Drop for Table[K, V] {
 
 impl(K: type, V: type) Table[K, V] {
     fn create(comp: fn(K, K) -> bool, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        return new {
+        return Table[K, V](
             allocator   = allocator
             comparer    = comp
             max_load    = 0.75
             count       = 0
             entries     = null
-        }
+        )
     }
 
     fn get_entries(ref Self) -> []Entry[K, V] {
@@ -151,7 +151,7 @@ impl(K: type, V: type) Table[K, V] {
     }
 
     fn iterator(ref Self) -> TableIterator[K, V] {
-        return new {self, 0}
+        return TableIterator[K, V](self, 0)
     }
 }
 

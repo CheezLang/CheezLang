@@ -4,18 +4,20 @@ struct Box(T: type) {
     _value: &T
 }
 
-impl Box($T) {
-    fn create(v: T = default) -> Box(T) {
+impl(T: type) Box[T] {
+    fn create(v: T = default) -> Box[T] {
         let p = alloc(T)
         <<p = v
-        return new {p}
+        return Box[T](p)
     }
 
     fn value(ref Self) -> ref T {
         return <<_value
     }
+}
 
-    fn dispose(ref Self) #destructor {
+impl(T: type) Drop for Box[T] {
+    fn drop(ref Self) {
         free(_value)
         _value = null
     }

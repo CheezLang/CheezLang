@@ -51,11 +51,11 @@ impl(It: type, T: type) It if It : Iterator[T] {
     }
 
     fn take(ref Self, count: int) -> TakeIterator[T] {
-        return new {self, count}
+        return TakeIterator[T](self, count)
     }
 
     fn map(ref Self, mapFunc: fn (T) -> $X) -> MapIterator[T, X] {
-        return new {self, mapFunc}
+        return MapIterator[T, X](self, mapFunc)
     }
 
     fn foreach(ref Self, func: fn (T)) {
@@ -131,5 +131,5 @@ impl Iterator[int] for RangeIterator {
 }
 
 fn range(start: int, end: int) -> RangeIterator {
-    return new {start, end}
+    return RangeIterator(start, end)
 }

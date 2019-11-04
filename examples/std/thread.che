@@ -133,7 +133,7 @@ impl ThreadPool {
             data.threads.add(t)
         }
 
-        return new {data}
+        return ThreadPool(data)
     }
 
     fn enqueue(ref Self, function: fn(&$T), data_ptr: &T) {

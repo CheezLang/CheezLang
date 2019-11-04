@@ -8,10 +8,10 @@
 
 typedef Vec3 = Vector3[double]
 
-let const scale             : int = 1
+let const scale             : int = 2
 let const width             : int = 800 / scale
 let const height            : int = 450 / scale
-let const thread_count      : int = 4
+let const thread_count      : int = 2
 
 let const max_depth         : int       = 5
 let const min_contribution  : double    = 0.2
@@ -58,16 +58,11 @@ struct Material {
 
 impl Material {
     fn reflective(color: Vec3) -> Self {
-        return new {
-            reflection = color
-        }
+        return Material(reflection = color)
     }
 
     fn refrective(color: Vec3, ior: double) -> Self {
-        return new {
-            refraction = color
-            ior = ior
-        }
+        return Material(refraction = color, ior = ior)
     }
 }
 
@@ -131,7 +126,7 @@ impl Drop for PathTracer {
 
 impl PathTracer {
     fn create() -> Self {
-        return new {
+        return PathTracer(
             allocator   = ArenaAllocator::create(1024)
             objects     = Array[Object]::create()
             buffer      = {
@@ -139,7 +134,7 @@ impl PathTracer {
                 c_memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
                 b
             }
-        }
+        )
     }
 
     fn add_object(ref Self, obj: $T) {
@@ -165,11 +160,11 @@ impl PathTracer {
 
     fn calc_color(ref Self, ray: Ray, prng: &MTwister, contribution: double, depth: int = 0) -> Vec3 {
         if depth >= max_depth or contribution < min_contribution {
-            return new{}
+            return Vec3()
         }
 
         return match self.intersect(ray) {
-            None -> new{}
+            None -> Vec3()
             Some($hit) -> {
                 let result = Vec3()
 
@@ -295,7 +290,7 @@ fn pathtracer_thread(data: &(index: int, pt: &PathTracer)) -> u32 #stdcall {
                 dir.normalize()
 
                 // shoot ray into scene and calculate color
-                let color = data.pt.calc_color(new{data.pt.cam_pos, dir}, &prng, 1)
+                let color = data.pt.calc_color(Ray(data.pt.cam_pos, dir), &prng, 1)
                 // println(color)
                 data.pt.buffer[index] += color
             }
@@ -316,8 +311,8 @@ impl Game for PathTracer {
         let size = 10.0
 
         // calculate cam rays (forward, right, up)
-        self.cam_pos = new{0, 5, 3}
-        self.cam_dir = new{0, -0.25, 1}
+        self.cam_pos = Vec3(0, 5, 3)
+        self.cam_dir = Vec3(0, -0.25, 1)
         self.cam_dir.normalize()
 
         let up = Vec3(0, 1, 0)
@@ -335,33 +330,33 @@ impl Game for PathTracer {
         printfln("right: {}", self.cam_right)
 
         // create objects
-        let m_red   = create(Material(new{0.9, 0.2, 0.2}, new{}), allocator)
-        let m_green = create(Material(new{0.2, 0.9, 0.2}, new{}), allocator)
-        let m_blue  = create(Material(new{0.2, 0.2, 0.9}, new{}), allocator)
-        let m_grey  = create(Material(new{0.75, 0.75, 0.75}, new{}), allocator)
+        let m_red   = create(Material(Vec3(0.9, 0.2, 0.2)), allocator)
+        let m_green = create(Material(Vec3(0.2, 0.9, 0.2)), allocator)
+        let m_blue  = create(Material(Vec3(0.2, 0.2, 0.9)), allocator)
+        let m_grey  = create(Material(Vec3(0.75, 0.75, 0.75)), allocator)
 
-        let m_mirror= create(Material::reflective(new{1, 1, 1}), allocator)
-        let m_glass = create(Material::refrective(new{1, 1, 1}, 1.95), allocator)
+        let m_mirror= create(Material::reflective(Vec3(1, 1, 1)), allocator)
+        let m_glass = create(Material::refrective(Vec3(1, 1, 1), 1.95), allocator)
 
-        let m_light = create(Material(new{}, new{10, 10, 10}), allocator)
+        let m_light = create(Material(emission = Vec3(10, 10, 10)), allocator)
 
-        self.add_object(Sphere(new{-1000.0 - size / 2, 0, 0}, 1000, m_red)) // left
-        self.add_object(Sphere(new{1000.0 + size / 2, 0, 0}, 1000, m_green)) // right
+        self.add_object(Sphere(Vec3(-1000.0 - size / 2, 0, 0), 1000, m_red)) // left
+        self.add_object(Sphere(Vec3(1000.0 + size / 2, 0, 0), 1000, m_green)) // right
 
-        self.add_object(Sphere(new{0, 0, 1000.0 + size / 2 + 10}, 1000, m_grey)) // back
-        self.add_object(Sphere(new{0, 0, -1000.0 - size / 2 * 5}, 1000, m_grey)) // front
+        self.add_object(Sphere(Vec3(0, 0, 1000.0 + size / 2 + 10), 1000, m_grey)) // back
+        self.add_object(Sphere(Vec3(0, 0, -1000.0 - size / 2 * 5), 1000, m_grey)) // front
 
-        self.add_object(Sphere(new{0, -1000.0, 0}, 1000, m_grey)) // bot
-        self.add_object(Sphere(new{0, 1000.0 + size, 0}, 1000, m_grey)) // top
+        self.add_object(Sphere(Vec3(0, -1000.0, 0), 1000, m_grey)) // bot
+        self.add_object(Sphere(Vec3(0, 1000.0 + size, 0), 1000, m_grey)) // top
 
         // spheres
-        self.add_object(Sphere(new{-0.25, 2.25, 8.5}, 1.75, m_glass))
-        self.add_object(Sphere(new{3, 2, 13}, 2, m_mirror))
-        self.add_object(Sphere(new{-2.5, 1, 12}, 1, m_green))
-        self.add_object(Sphere(new{1.75, 1, 10}, 1, m_blue))
+        self.add_object(Sphere(Vec3(-0.25, 2.25, 8.5), 1.75, m_glass))
+        self.add_object(Sphere(Vec3(3, 2, 13), 2, m_mirror))
+        self.add_object(Sphere(Vec3(-2.5, 1, 12), 1, m_green))
+        self.add_object(Sphere(Vec3(1.75, 1, 10), 1, m_blue))
 
         // light
-        self.add_object(Sphere(new{0, size + 9.75, 10}, 10, m_light))
+        self.add_object(Sphere(Vec3(0, size + 9.75, 10), 10, m_light))
 
         // create threads
         for i : 0..thread_count {

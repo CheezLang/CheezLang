@@ -20,11 +20,11 @@ impl PixelGameEngine {
         // Define window furniture
         let dwExStyle : DWORD = @bin_or(WS_EX_APPWINDOW, WS_EX_WINDOWEDGE)
         let dwStyle   : DWORD = @bin_or(WS_OVERLAPPEDWINDOW, WS_VISIBLE)
-        let rWndRect  : RECT  = new {
+        let rWndRect  : RECT  = RECT(
             0, 0,
             cast screen_width * pixel_width,
             cast screen_height * pixel_height
-        }
+        )
 
         // // Keep client size as requested
         AdjustWindowRectEx(&rWndRect, dwStyle, 0, dwExStyle)

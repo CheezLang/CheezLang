@@ -11,10 +11,10 @@ struct Parser {
 
 impl Parser {
     fn create(c: ref CheezCompiler, l: ref Lexer) -> Self {
-        return new {
+        return Parser(
             compiler = c
             lexer = l
-        }
+        )
     }
 
     fn parse_statement(ref Self) -> Option[&Stmt] {

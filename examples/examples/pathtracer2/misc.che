@@ -52,11 +52,11 @@ struct Ray #copy {
 impl Ray {
     fn from_to(a: vec3, b: vec3) -> Ray {
         let dir = b - a
-        return new{a, dir.normalized()}
+        return Ray(a, dir.normalized())
     }
 
     fn from_dir(a: vec3, dir: vec3) -> Ray {
-        return new{a, dir.normalized()}
+        return Ray(a, dir.normalized())
     }
 
     fn at(ref Self, t: real) -> vec3 {
@@ -92,14 +92,14 @@ impl Camera {
             focus_dist = vec3::mag(pos - lookat)
         }
 
-        return new {
+        return Camera(
             lower_left_corner   = pos - u * half_width * focus_dist - v * half_height * focus_dist - w * focus_dist
             horizontal          = u * real(2.0) * half_width * focus_dist
             vertical            = v * real(2.0) * half_height * focus_dist
             origin              = pos
             u = u, v = v, w = w
             lens_radius = aperture * 0.5
-        }
+        )
     }
 
     fn get_ray(ref Self, s: real, t: real, random: ref Random) -> Ray {
@@ -128,7 +128,7 @@ struct AABB #copy {
 
 impl AABB {
     fn create(min: vec3, max: vec3) -> Self {
-        return new {min, max}
+        return AABB(min, max)
     }
 
     fn help(min_w: real, max_w: real, origin_w: real, dir_w: real, t_min: ref real, t_max: ref real) -> bool {

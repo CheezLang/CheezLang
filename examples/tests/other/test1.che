@@ -80,7 +80,7 @@ let c : [S]DWORD = default
 let d : S2[X1] = test(S)
 
 fn test(a: Z2 = get_val()) -> S2[X1] {
-    return new {}
+    return S2[X1]()
 }
 
 fn get_val() -> Z2 {

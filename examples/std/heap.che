@@ -21,12 +21,12 @@ impl(T: type) Drop for Heap[T] {
 
 impl(T: type) Heap[T] {
     fn create(allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Heap[T] {
-        return new {
+        return Heap[T](
             allocator   = allocator
             data        = alloc_raw(T, 10, allocator)
             capacity    = 10
             length      = 0
-        }
+        )
     }
 
     fn get_length(ref Self) -> int {
