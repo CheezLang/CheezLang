@@ -21,13 +21,13 @@ fn get_precedence(op: OpCode) -> int {
     }
 }
 
-fn compile(expr: string, var_name_allocator: Allocator) -> Option(Array(OpCode)) {
-    let res = Array(OpCode)::create()
+fn compile(expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]] {
+    let res = Array[OpCode]::create()
     
     let string_db = StringDatabase::create()
     let lexer = Lexer::from_raw_string(expr, string_db)
 
-    let op_stack = Array(OpCode)::create()
+    let op_stack = Array[OpCode]::create()
 
     let last_was_expression = false
 

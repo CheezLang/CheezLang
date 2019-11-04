@@ -6,7 +6,7 @@
 struct Table(K: type, V: type) {
     max_load: double
     count: uint
-    entries: []Entry(K, V)
+    entries: []Entry[K, V]
     allocator: Allocator
     comparer: fn (K, K) -> bool
 }
@@ -18,7 +18,7 @@ struct Entry(K: type, V: type) {
     pub is_tombstone: bool
 }
 
-impl(K: type, V: type) Drop for Table(K, V) {
+impl(K: type, V: type) Drop for Table[K, V] {
     fn drop(ref Self) {
         if entries.data != null {
             free_n(entries, allocator)
@@ -26,7 +26,7 @@ impl(K: type, V: type) Drop for Table(K, V) {
     }
 }
 
-impl(K: type, V: type) Table(K, V) {
+impl(K: type, V: type) Table[K, V] {
     fn create(comp: fn(K, K) -> bool, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return new {
             allocator   = allocator
@@ -37,14 +37,14 @@ impl(K: type, V: type) Table(K, V) {
         }
     }
 
-    fn get_entries(ref Self) -> []Entry(K, V) {
+    fn get_entries(ref Self) -> []Entry[K, V] {
         return entries
     }
 
-    fn find_entry(ref Self, the_entries: []Entry(K, V), key: K) -> &Entry(K, V) {
+    fn find_entry(ref Self, the_entries: []Entry[K, V], key: K) -> &Entry[K, V] {
 
         let index = key::hash() % cast(uint) the_entries.length
-        let tombstone: &Entry(K, V) = null
+        let tombstone: &Entry[K, V] = null
 
         while true {
             let entry = &the_entries[index]
@@ -92,7 +92,7 @@ impl(K: type, V: type) Table(K, V) {
         return is_new_key
     }
 
-    fn get(ref Self, key: K) -> Option(ref V) {
+    fn get(ref Self, key: K) -> Option[ref V] {
         if entries.data == null {
             return None
         }
@@ -123,7 +123,7 @@ impl(K: type, V: type) Table(K, V) {
     }
 
     fn adjust_capacity(ref Self, cap: uint) {
-        let entries_new = alloc_n(Entry(K, V), cap, allocator)
+        let entries_new = alloc_n(Entry[K, V], cap, allocator)
 
         while let i = 0, i < entries_new.length, i += 1 {
             entries_new[i].filled = false
@@ -150,19 +150,19 @@ impl(K: type, V: type) Table(K, V) {
         entries = entries_new
     }
 
-    fn iterator(ref Self) -> TableIterator(K, V) {
+    fn iterator(ref Self) -> TableIterator[K, V] {
         return new {self, 0}
     }
 }
 
 // iterator
 struct TableIterator(K: type, V: type) {
-    table: ref Table(K, V)
+    table: ref Table[K, V]
     index: int
 }
 
-impl(K: type, V: type) Iterator((K, V)) for TableIterator(K, V) {
-    fn next(ref Self) -> Option((K, V)) {
+impl(K: type, V: type) Iterator[(K, V)] for TableIterator[K, V] {
+    fn next(ref Self) -> Option[(K, V)] {
         let entries = table.get_entries()
         while index < entries.length {
             let e = ref entries[index]

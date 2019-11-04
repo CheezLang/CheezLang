@@ -5,7 +5,7 @@
 #load("std:random")
 #load("bmp:bmp")
 
-typedef Vec3 = Vector3(double)
+typedef Vec3 = Vector3[double]
 
 ///////////////////////////////////////////////////////////
 fn xor(a: bool, b: bool) -> bool {
@@ -612,7 +612,7 @@ fn Main()
     let height: int = 128 * scale
     let antiAliasingSteps: int = 1
 
-    let imageArr = Array(Vec3)::create()
+    let imageArr = Array[Vec3]::create()
 
     imageArr.resize(width * height)
 

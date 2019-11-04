@@ -10,7 +10,7 @@ impl string {
 
 struct StringDatabase {
     pool    : ArenaAllocator
-    db      : Table(string, string)
+    db      : Table[string, string]
 }
 
 fn sdb_compare_strings(a: string, b: string) -> bool {
@@ -34,7 +34,7 @@ impl StringDatabase {
     fn create() -> Self {
         let sdb = new Self {
             pool    = ArenaAllocator::create(1024)
-            db      = Table(string, string)::create(sdb_compare_strings)
+            db      = Table[string, string]::create(sdb_compare_strings)
         }
 
         return sdb

@@ -14,7 +14,7 @@ struct TokenLocation #copy {
 struct Token #copy {
     pub ttype   : TokenType
     pub location: TokenLocation
-    pub suffix  : Option(string)
+    pub suffix  : Option[string]
     pub data    : TokenData
 }
 

@@ -68,7 +68,7 @@ struct PixelGameEngine {
     fFrameTimer         : float
     nFrameCount         : int
 
-    pub mapKeys         : Table(int, Key)
+    pub mapKeys         : Table[int, Key]
 
     pub active          : bool
 
@@ -110,7 +110,7 @@ impl PixelGameEngine {
             pixel_height = pixel_h
             pixel_x = 2.0f / cast(float) screen_w
             pixel_y = 2.0f / cast(float) screen_h
-            mapKeys = Table(int, Key)::create(compare_ints)
+            mapKeys = Table[int, Key]::create(compare_ints)
             fps_string = String::empty()
         }
 

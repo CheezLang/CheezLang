@@ -73,11 +73,11 @@ trait IDiscreteDistribution(T: type) {
 
 // iterator
 struct DistributionIterator(T: type) {
-    dist: IDistribution(T)
+    dist: IDistribution[T]
 }
 
-impl(T: type) Iterator(T) for DistributionIterator(T) {
-    fn next(ref Self) -> Option(T) {
+impl(T: type) Iterator[T] for DistributionIterator[T] {
+    fn next(ref Self) -> Option[T] {
         return Some(dist.sample())
     }
 
@@ -86,7 +86,7 @@ impl(T: type) Iterator(T) for DistributionIterator(T) {
     }
 }
 
-fn for_extension_random(dist: IDistribution($T), code: Code) #for {
+fn for_extension_random(dist: IDistribution[$T], code: Code) #for {
     while let it_index = 0, true, it_index += 1 {
         let it = dist.sample()
         @insert(code)
@@ -94,9 +94,9 @@ fn for_extension_random(dist: IDistribution($T), code: Code) #for {
 }
 
 // i
-impl(T: type) IDistribution(T) {
-    fn samples(ref Self) -> Iterator(T) {
-        let it = alloc(DistributionIterator(T))
+impl(T: type) IDistribution[T] {
+    fn samples(ref Self) -> Iterator[T] {
+        let it = alloc(DistributionIterator[T])
         <<it = new {self}
         return <<it
     }
@@ -106,13 +106,13 @@ impl(T: type) IDistribution(T) {
 struct StandardContinuousUniform(T: type) {
     prng: &T
 }
-impl(T: type) IDistribution(double) for StandardContinuousUniform(T) if T : PseudoRandomGen {
+impl(T: type) IDistribution[double] for StandardContinuousUniform[T] if T : PseudoRandomGen {
     fn sample(ref Self) -> double {
         return prng.next_double()
     }
 }
 
-impl(T: type) StandardContinuousUniform(T) if T : PseudoRandomGen {
+impl(T: type) StandardContinuousUniform[T] if T : PseudoRandomGen {
     fn create(prng: &T) -> Self {
         return new {prng}
     }
@@ -122,16 +122,16 @@ impl(T: type) StandardContinuousUniform(T) if T : PseudoRandomGen {
 struct NormalDistribution {
     mean    : double
     sigma   : double
-    scu     : StandardContinuousUniform(LinearCongruentialGenerator)
+    scu     : StandardContinuousUniform[LinearCongruentialGenerator]
 }
 
 impl NormalDistribution {
     fn create(mean: double, sigma: double) -> Self {
-        return new{mean, sigma, new StandardContinuousUniform(LinearCongruentialGenerator) {&lcg}}
+        return new{mean, sigma, new StandardContinuousUniform[LinearCongruentialGenerator] {&lcg}}
     }
 }
 
-impl IDistribution(double) for NormalDistribution {
+impl IDistribution[double] for NormalDistribution {
     fn sample(ref Self) -> double {
         let a = scu.sample()
         let b = scu.sample()
@@ -146,12 +146,12 @@ struct StandardDiscreteUniform {
     min: int
     max: int
 }
-impl IDiscreteDistribution(int) for StandardDiscreteUniform {
+impl IDiscreteDistribution[int] for StandardDiscreteUniform {
     fn get_weight(ref Self, i: int) -> int {
         return if i >= min and i <= max {1} else {0}
     }
 }
-impl IDistribution(int) for StandardDiscreteUniform {
+impl IDistribution[int] for StandardDiscreteUniform {
     fn sample(ref Self) -> int {
         let d = PseudoRandom::next_double()
         let mi = cast(double)min
@@ -165,7 +165,7 @@ struct SingletonDistribution(T: type) {
     value: T
 }
 
-impl IDistribution(int) for SingletonDistribution(int) {
+impl IDistribution[int] for SingletonDistribution[int] {
     fn sample(ref Self) -> int {
         return value
     }
@@ -177,7 +177,7 @@ struct BernoulliDistribution {
     one : int
 }
 
-impl IDistribution(int) for BernoulliDistribution {
+impl IDistribution[int] for BernoulliDistribution {
     fn sample(ref Self) -> int {
         let z = cast(double)zero
         let o = cast(double)one
@@ -194,7 +194,7 @@ impl BernoulliDistribution {
 }
 
 // histograms
-fn print_histogram(dist: IDistribution($T), low: double, high: double){
+fn print_histogram(dist: IDistribution[$T], low: double, high: double){
     let const width : int = 160
     let const height: int = 30
     let const samples   : int = 1000000
@@ -277,7 +277,7 @@ fn print_histogram(dist: IDistribution($T), low: double, high: double){
     it.dispose()
 }
 
-fn print_discrete_histogram(dist: IDistribution($T)){
+fn print_discrete_histogram(dist: IDistribution[$T]){
     let const width : int = 40
     let const samples   : int = 100000
     let it = dist::samples()::take(samples)

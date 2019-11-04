@@ -67,7 +67,7 @@ struct Vector4(T: type) #copy {
     pub w: T
 }
 
-impl(T: type) Vector2(T) {
+impl(T: type) Vector2[T] {
     // ref
     fn addv(ref Self, other: Self) -> ref Self #operator("+=") {
         x += other.x
@@ -173,7 +173,7 @@ impl(T: type) Vector2(T) {
     }
 }
 
-impl(T: type) Vector3(T) {
+impl(T: type) Vector3[T] {
     // ref
     fn addv(ref Self, other: Self) -> ref Self #operator("+=") {
         x += other.x
@@ -327,7 +327,7 @@ impl(T: type) Vector3(T) {
         return normal * -Self::dot(self, normal) * T(2) + <<&self
     }
 
-    fn refract(ref Self, normal: Self, ior: T) -> Option(Self) {
+    fn refract(ref Self, normal: Self, ior: T) -> Option[Self] {
         let uv = self
         let dt = Self::dot(uv, normal)
         let discriminant = 1 - ior * ior * (1 - dt * dt)
@@ -351,7 +351,7 @@ impl(T: type) Vector3(T) {
         }
     }
 
-    fn change_type(ref Self, $TargetType: type) -> Vector3(TargetType) {
+    fn change_type(ref Self, $TargetType: type) -> Vector3[TargetType] {
         return new { TargetType(x), TargetType(y), TargetType(z) }
     }
 }

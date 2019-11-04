@@ -24,7 +24,7 @@ a[20] = 8")
 #load("std:array")
 #load("std:string")
 
-fn print_array(a: ref Array(int)) {
+fn print_array(a: ref Array[int]) {
     c_printf("len: %lld`n", a.get_length())
     c_printf("cap: %lld`n", a.get_capacity())
     c_printf("arr: [")
@@ -60,7 +60,7 @@ fn Main() {
     c_printf("%lld`n", x)
     c_printf("`n", x)
 
-    let a = Array(int)::create()
+    let a = Array[int]::create()
 
     print_array(a)
 

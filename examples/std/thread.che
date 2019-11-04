@@ -105,8 +105,8 @@ impl Drop for Mutex {
 typedef ThreadPoolFunc = (function: fn(&any), data: &any)
 
 struct ThreadPoolData {
-    pub threads     : Array(Thread)
-    pub functions   : RingQueue(ThreadPoolFunc)
+    pub threads     : Array[Thread]
+    pub functions   : RingQueue[ThreadPoolFunc]
     pub running     : bool
     pub mutex       : Mutex
     pub empty_queue : bool
@@ -120,8 +120,8 @@ impl ThreadPool {
     fn create(num_threads: int) -> Self {
         let data = alloc(ThreadPoolData)
         <<data = new ThreadPoolData{
-            threads = Array(Thread)::create(num_threads)
-            functions = RingQueue(ThreadPoolFunc)::create(10)
+            threads = Array[Thread]::create(num_threads)
+            functions = RingQueue[ThreadPoolFunc]::create(10)
             mutex = Mutex::create()
             running = true
             empty_queue  = false

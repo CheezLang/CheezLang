@@ -6,7 +6,7 @@
 #load("std:random")
 #load("std:random/mt")
 
-typedef Vec3 = Vector3(double)
+typedef Vec3 = Vector3[double]
 
 let const scale             : int = 1
 let const width             : int = 800 / scale
@@ -72,7 +72,7 @@ impl Material {
 }
 
 trait Object {
-    fn intersect(ref Self, ray: Ray) -> Option(HitInfo);
+    fn intersect(ref Self, ray: Ray) -> Option[HitInfo];
 }
 
 struct Sphere {
@@ -82,7 +82,7 @@ struct Sphere {
 }
 
 impl Object for Sphere {
-    fn intersect(ref Self, ray: Ray) -> Option(HitInfo) {
+    fn intersect(ref Self, ray: Ray) -> Option[HitInfo] {
         let op = pos - ray.pos
         let r2 = rad * rad
         let b = op.dot(ray.dir)
@@ -110,7 +110,7 @@ impl Object for Sphere {
 struct PathTracer {
     pge             : &PixelGameEngine
     allocator       : ArenaAllocator
-    objects         : Array(Object)
+    objects         : Array[Object]
     cam_fov         : double
     pub cam_pos     : Vec3
     pub cam_dir     : Vec3
@@ -133,7 +133,7 @@ impl PathTracer {
     fn create() -> Self {
         return new {
             allocator   = ArenaAllocator::create(1024)
-            objects     = Array(Object)::create()
+            objects     = Array[Object]::create()
             buffer      = {
                 let b = alloc_n(Vec3, u64(width * height))
                 c_memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
@@ -148,8 +148,8 @@ impl PathTracer {
         objects.add(ref <<dyn)
     }
 
-    fn intersect(ref Self, ray: Ray) -> Option(HitInfo) {
-        let nearest: Option(HitInfo) = None
+    fn intersect(ref Self, ray: Ray) -> Option[HitInfo] {
+        let nearest: Option[HitInfo] = None
 
         for n : 0..objects.get_length() {
             let hit = objects[n].intersect(ray)
@@ -178,7 +178,7 @@ impl PathTracer {
 
                 // diffuse
                 if hit.material.diffuse.max_component() > 0 {
-                    let rand = new StandardContinuousUniform(MTwister) { prng }
+                    let rand = new StandardContinuousUniform[MTwister] { prng }
                     let r1 = rand.sample() * 2.0 * pi
                     let r2 = rand.sample()
                     let r2s = sqrt(r2)

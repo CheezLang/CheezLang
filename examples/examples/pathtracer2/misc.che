@@ -6,7 +6,7 @@ fn create_object($T: type, val: $V) -> T {
     return T(<<mem)
 }
 
-typedef vec3 = Vector3(real)
+typedef vec3 = Vector3[real]
 
 let global_random: MTwister = MTwister::create(0)
 

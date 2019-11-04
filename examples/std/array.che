@@ -10,7 +10,7 @@ struct Array(T: type) {
     allocator       : Allocator
 }
 
-impl(T: type) Drop for Array(T) {
+impl(T: type) Drop for Array[T] {
     fn drop(ref Self) {
         // destruct values
         for :length {
@@ -23,9 +23,9 @@ impl(T: type) Drop for Array(T) {
     }
 }
 
-impl(T: type) Array(T) {
+impl(T: type) Array[T] {
     fn create(initial_capacity: int = 10, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        let s = new Array(T) { null, 0, 0, allocator }
+        let s = new Array[T] { null, 0, 0, allocator }
         s.reserve(initial_capacity)
         c_memset(cast s.get_raw(), 0, cast(uint) (s.get_capacity() * @sizeof(T)))
         return s
@@ -96,7 +96,7 @@ impl(T: type) Array(T) {
         return data[length - 1]
     }
 
-    fn get(ref Self, index: int) -> Option(T) {
+    fn get(ref Self, index: int) -> Option[T] {
         if index < 0 or index >= length {
             return None
         } else {
@@ -153,14 +153,14 @@ impl(T: type) Array(T) {
         quick_sort(idx + 1, to, cmp)
     }
 
-    fn iterator(ref Self) -> ArrayIterator(T) {
+    fn iterator(ref Self) -> ArrayIterator[T] {
         return new { self, 0 }
     }
 }
 
 // @todo: only apply this impl if T is default constructable, e.g.:
 // impl(T: type) Array(T) if @is_default_constructable(T) { ...
-impl(T: type) Array(T) if @is_default_constructable(T) {
+impl(T: type) Array[T] if @is_default_constructable(T) {
     fn resize(ref Self, size: int) {
         self.reserve(size)
 
@@ -171,20 +171,20 @@ impl(T: type) Array(T) if @is_default_constructable(T) {
 }
 
 struct ArrayIterator(T: type) {
-    array: ref Array(T)
+    array: ref Array[T]
     index: int
 }
 
-impl(T: type) Iterator(T) for ArrayIterator(T) {
-    fn next(ref Self) -> Option(T) {
+impl(T: type) Iterator[T] for ArrayIterator[T] {
+    fn next(ref Self) -> Option[T] {
         index += 1
         return if index > array.length { None } else { Some(array[index - 1]) }
     }
 }
 
-impl(F: type, T: type) Into(Array(T)) for Array(F) if F : Into(T), #notyet {
-    fn into(ref Self) -> Array(T) {
-        let result = Array(T)::create(self.get_length())
+impl(F: type, T: type) Into[Array[T]] for Array[F] if F : Into[T], #notyet {
+    fn into(ref Self) -> Array[T] {
+        let result = Array[T]::create(self.get_length())
         for :0..self.get_length() {
             result.add(self.access_unchecked(it)::into())
         }
@@ -192,9 +192,9 @@ impl(F: type, T: type) Into(Array(T)) for Array(F) if F : Into(T), #notyet {
     }
 }
 
-impl(F: type, T: type) From(Array(F)) for Array(T) if T : From(F), #notyet {
-    fn from(value: Array(F)) -> Array(T) {
-        let result = Array(T)::create(value.get_length())
+impl(F: type, T: type) From[Array[F]] for Array[T] if T : From[F], #notyet {
+    fn from(value: Array[F]) -> Array[T] {
+        let result = Array[T]::create(value.get_length())
         for :0..value.get_length() {
             result.add(value.access_unchecked(it)::into())
         }
@@ -202,7 +202,7 @@ impl(F: type, T: type) From(Array(F)) for Array(T) if T : From(F), #notyet {
     }
 }
 
-fn for_extension_array_T(arr: ref Array($T), code: Code, reverse: bool = false,
+fn for_extension_array_T(arr: ref Array[$T], code: Code, reverse: bool = false,
                             by_ref: bool = true) #for {
     while let it_index = 0, it_index < arr.get_length(), it_index += 1 {
         if const reverse {

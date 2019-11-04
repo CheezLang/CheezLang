@@ -17,7 +17,7 @@ impl Parser {
         }
     }
 
-    fn parse_statement(ref Self) -> Option(&Stmt) {
+    fn parse_statement(ref Self) -> Option[&Stmt] {
         skip_ws()
         let token = lexer.peek_token()
         return match token.ttype {
@@ -32,7 +32,7 @@ impl Parser {
         }
     }
 
-    fn parse_function_decl(ref Self) -> Option(&Stmt) {
+    fn parse_function_decl(ref Self) -> Option[&Stmt] {
         let _fn = consume(TokenType.KwFn)
         skip_ws()
 

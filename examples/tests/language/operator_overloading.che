@@ -35,7 +35,7 @@ fn num_inc(a: &Num, b: Num) #operator("+=") {
     a.x += b.x
 }
 
-typedef Vec2 = Vector2(double)
+typedef Vec2 = Vector2[double]
 
 fn Main() {
     {

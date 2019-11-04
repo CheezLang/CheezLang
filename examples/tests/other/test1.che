@@ -5,7 +5,7 @@ struct S1 {
 }
 struct S2(T: TYPE) {
     t: T
-    next: &S2(T)
+    next: &S2[T]
 }
 
 enum E1 {
@@ -13,7 +13,7 @@ enum E1 {
 }
 enum E2(T: TYPE) {
     t: T
-    next: &E2(T)
+    next: &E2[T]
 }
 
 trait T1 {
@@ -29,7 +29,7 @@ impl T1 for S1 {
     }
 }
 
-impl T2(string) for S1 {
+impl T2[string] for S1 {
     fn t(ref Self) -> string {
         return ""
     }
@@ -41,7 +41,7 @@ impl T1 for int {
     }
 }
 
-impl T2(string) for int {
+impl T2[string] for int {
     fn t(ref Self) -> string {
         return ""
     }
@@ -58,11 +58,11 @@ typedef TD2 = &S1
 typedef TD3 = []S1
 typedef TD4 = ref S1
 typedef TD5 = fn (S1) -> E1
-typedef TD6 = S2(DWORD)
+typedef TD6 = S2[DWORD]
 typedef TD7 = [10]S1
 typedef TD8 = (S1, E1)
-typedef TD9 = E2(DWORD)
-typedef TD10 = T2(DWORD)
+typedef TD9 = E2[DWORD]
+typedef TD10 = T2[DWORD]
 
 typedef X1 = int
 typedef Y1 = X1
@@ -77,9 +77,9 @@ let const S: Z2 = 10
 let a : [S]DWORD = b
 let b : [S]DWORD = c
 let c : [S]DWORD = default
-let d : S2(X1) = test(S)
+let d : S2[X1] = test(S)
 
-fn test(a: Z2 = get_val()) -> S2(X1) {
+fn test(a: Z2 = get_val()) -> S2[X1] {
     return new {}
 }
 

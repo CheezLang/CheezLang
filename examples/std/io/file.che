@@ -2,14 +2,14 @@
 #load("std:string")
 #load("std:preload")
 
-fn load_file(filename: string) -> Result(String, String) {
+fn load_file(filename: string) -> Result[String, String] {
     let str_c = @alloca(char, filename.length + 1)
     str_c[filename.length] = cast 0
     c_memcpy(cast str_c, cast filename.data, cast filename.length)
     return load_filec(str_c)
 }
 
-fn load_filec(filename: c_string) -> Result(String, String) {
+fn load_filec(filename: c_string) -> Result[String, String] {
     let content = String::empty()
 
     let handle = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null)
@@ -40,7 +40,7 @@ fn load_filec(filename: c_string) -> Result(String, String) {
     return Ok(content)
 }
 
-fn load_filecb(filename: c_string) -> Option([]u8) {
+fn load_filecb(filename: c_string) -> Option[[]u8] {
     let handle = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null)
     if (cast(int)handle) == -1 {
         return None

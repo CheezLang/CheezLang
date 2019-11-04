@@ -3,7 +3,7 @@
 #load("std:array")
 #load("std:alloca")
 
-typedef float2 = Vector2(float)
+typedef float2 = Vector2[float]
 
 struct Node {
     pub parent  : &BaseShape
@@ -18,7 +18,7 @@ trait Shape {
 
 struct BaseShape {
     pub max_nodes   : int
-    pub nodes       : Array(Node)
+    pub nodes       : Array[Node]
     pub color       : Pixel = new Pixel{0, 255, 0}
 }
 
@@ -26,7 +26,7 @@ impl BaseShape {
     fn create(max_nodes: int) -> BaseShape {
         return new {
             max_nodes
-            Array(Node)::create(max_nodes)
+            Array[Node]::create(max_nodes)
         }
     }
 
@@ -228,7 +228,7 @@ struct MyGame {
     fScale  : float = 10
     fGrid   : float = 1
 
-    shapes          : Array(Shape)
+    shapes          : Array[Shape]
     temp_shape      : &Shape    = null
     selectedNode    : &Node     = null
 }
@@ -239,7 +239,7 @@ impl Game for MyGame {
         vOffset.x = -(cast(float)pge.get_width()) * 0.5 / fScale
         vOffset.y = -(cast(float)pge.get_height()) * 0.5 / fScale
 
-        shapes = Array(Shape)::create()
+        shapes = Array[Shape]::create()
         return true
     }
 

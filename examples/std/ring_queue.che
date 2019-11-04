@@ -10,7 +10,7 @@ struct RingQueue(T: type) {
     allocator: Allocator
 }
 
-impl(T: type) RingQueue(T) {
+impl(T: type) RingQueue[T] {
     fn create(init_size: int = 10, allocator: Allocator = null) -> Self {
         if allocator == null {
             allocator = DEFAULT_STD_HEAP_ALLOCATOR
@@ -83,7 +83,7 @@ impl(T: type) RingQueue(T) {
     }
 }
 
-impl(T: type) Drop for RingQueue(T) {
+impl(T: type) Drop for RingQueue[T] {
     fn drop(ref Self) {
         if first <= last {
             for : first..last {

@@ -12,16 +12,16 @@ struct Test(T: type) {
     pub x: T
 }
 
-impl(T: type) Test(T) {
-    fn foo(ref Self, a: int) -> Test(T) {
+impl(T: type) Test[T] {
+    fn foo(ref Self, a: int) -> Test[T] {
         self.x = cast a
-        return new Test(T) { cast a }
+        return new Test[T] { cast a }
     }
 }
 
 fn Main() {
-    let t = new Test(int) {2}
-    let t2 = new Test(double) {3.6}
+    let t = new Test[int] {2}
+    let t2 = new Test[double] {3.6}
 
     c_printf("%lld`n", t.x)
     c_printf("%f`n", t2.x)

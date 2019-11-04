@@ -15,9 +15,9 @@ struct StringBase(CharType: type) {
     allocator: Allocator
 }
 
-typedef String = StringBase(char)
+typedef String = StringBase[char]
 
-impl(CharType: type) Drop for StringBase(CharType) {
+impl(CharType: type) Drop for StringBase[CharType] {
     fn drop(ref Self) {
         if allocator != null {
             free_n(data, allocator)
@@ -27,7 +27,7 @@ impl(CharType: type) Drop for StringBase(CharType) {
     }
 }
 
-impl(CharType: type) StringBase(CharType) {
+impl(CharType: type) StringBase[CharType] {
     fn empty(allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return new { null, 0, allocator }
     }

@@ -13,8 +13,8 @@ struct HitRecord {
 }
 
 trait Hittable {
-    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option(HitRecord);
-    fn bounding_box(ref Self) -> Option(AABB);
+    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord];
+    fn bounding_box(ref Self) -> Option[AABB];
 }
 
 //
@@ -25,7 +25,7 @@ struct Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option(HitRecord) {
+    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
         let oc = r.origin - center
         let b = vec3::dot(oc, r.direction)
         let c = vec3::dot(oc, oc) - radius * radius
@@ -59,7 +59,7 @@ impl Hittable for Sphere {
         return None
     }
 
-    fn bounding_box(ref Self) -> Option(AABB) {
+    fn bounding_box(ref Self) -> Option[AABB] {
         return Some(AABB::create(
             center - new vec3{radius, radius, radius},
             center + new vec3{radius, radius, radius}
@@ -68,9 +68,9 @@ impl Hittable for Sphere {
 }
 
 //
-impl Hittable for Array(Hittable) {
-    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option(HitRecord) {
-        let hit = Option(HitRecord).None
+impl Hittable for Array[Hittable] {
+    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
+        let hit = Option[HitRecord].None
         let closest = t_max
         for : self.slice() {
             match it.hit(r, t_min, closest, random) {
@@ -84,7 +84,7 @@ impl Hittable for Array(Hittable) {
         return hit
     }
 
-    fn bounding_box(ref Self) -> Option(AABB) {
+    fn bounding_box(ref Self) -> Option[AABB] {
         if self.get_length() == 0 {
             return None
         }
@@ -209,7 +209,7 @@ impl BhvNode {
 }
 
 impl Hittable for BhvNode {
-    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option(HitRecord) {
+    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
         if box.hit(r, t_min, t_max) {
             let hit_left = left.hit(r, t_min, t_max, random)
             let hit_right = right.hit(r, t_min, t_max, random)
@@ -225,7 +225,7 @@ impl Hittable for BhvNode {
         return None
     }
 
-    fn bounding_box(ref Self) -> Option(AABB) {
+    fn bounding_box(ref Self) -> Option[AABB] {
         return Some(box)
     }
 }
@@ -241,7 +241,7 @@ struct XYRect {
 }
 
 impl Hittable for XYRect {
-    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option(HitRecord) {
+    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
         let t = (z - r.origin.z) / r.direction.z
         if t < t_min or t > t_max {
             return None
@@ -263,7 +263,7 @@ impl Hittable for XYRect {
         })
     }
 
-    fn bounding_box(ref Self) -> Option(AABB) {
+    fn bounding_box(ref Self) -> Option[AABB] {
         return Some(AABB::create(new vec3{x0, y0, z - real(0.0001)}, new vec3{x1, y1, z + real(0.0001)}))
     }
 }
@@ -278,7 +278,7 @@ struct YZRect {
 }
 
 impl Hittable for YZRect {
-    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option(HitRecord) {
+    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
         let t = (x - r.origin.x) / r.direction.x
         if t < t_min or t > t_max {
             return None
@@ -300,7 +300,7 @@ impl Hittable for YZRect {
         })
     }
 
-    fn bounding_box(ref Self) -> Option(AABB) {
+    fn bounding_box(ref Self) -> Option[AABB] {
         return Some(AABB::create(new vec3{x - real(0.0001), y0, z0}, new vec3{x + real(0.0001), y1, z1}))
     }
 }
@@ -315,7 +315,7 @@ struct ZXRect {
 }
 
 impl Hittable for ZXRect {
-    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option(HitRecord) {
+    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
         let t = (y - r.origin.y) / r.direction.y
         if t < t_min or t > t_max {
             return None
@@ -337,7 +337,7 @@ impl Hittable for ZXRect {
         })
     }
 
-    fn bounding_box(ref Self) -> Option(AABB) {
+    fn bounding_box(ref Self) -> Option[AABB] {
         return Some(AABB::create(new vec3{x0, y - real(0.0001), z0}, new vec3{x1, y + real(0.0001), z1}))
     }
 }
@@ -354,7 +354,7 @@ impl FlipNormals {
 }
 
 impl Hittable for FlipNormals {
-    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option(HitRecord) {
+    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
         return match obj.hit(r, t_min, t_max, random) {
             Some($hit) -> {
                 hit.n *= real(-1.0)
@@ -365,7 +365,7 @@ impl Hittable for FlipNormals {
         }
     }
 
-    fn bounding_box(ref Self) -> Option(AABB) {
+    fn bounding_box(ref Self) -> Option[AABB] {
         return obj.bounding_box()
     }
 }
@@ -374,17 +374,17 @@ impl Hittable for FlipNormals {
 struct Box {
     pmin    : vec3
     pmax    : vec3
-    faces   : Array(Hittable)
+    faces   : Array[Hittable]
 }
 
 impl Box {
     fn create(p0: vec3, p1: vec3, mat: Material) -> Box {
-        let arr = Array(Hittable)::create(6)
+        let arr = Array[Hittable]::create(6)
         create_faces(p0, p1, mat, arr)
         return new Box{p0, p1, arr}
     }
 
-    fn create_faces(p0: vec3, p1: vec3, mat: Material, arr: ref Array(Hittable)) {
+    fn create_faces(p0: vec3, p1: vec3, mat: Material, arr: ref Array[Hittable]) {
         arr.add(create_object(Hittable, new XYRect{p0.x, p1.x, p0.y, p1.y, p1.z, mat}))
         arr.add(FlipNormals::create(create_object(Hittable, new XYRect{p0.x, p1.x, p0.y, p1.y, p0.z, mat})))
 
@@ -397,11 +397,11 @@ impl Box {
 }
 
 impl Hittable for Box {
-    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option(HitRecord) {
+    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
         return faces.hit(r, t_min, t_max, random)
     }
 
-    fn bounding_box(ref Self) -> Option(AABB) {
+    fn bounding_box(ref Self) -> Option[AABB] {
         return Some(AABB::create(pmin, pmax))
     }
 }
@@ -422,7 +422,7 @@ impl ConstantMedium {
 }
 
 impl Hittable for ConstantMedium {
-    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option(HitRecord) {
+    fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
         match boundary.hit(r, -10000.0, 10000.0, random) {
             Some($h1) -> match boundary.hit(r, h1.t + 0.0001, 10000.0, random) {
                 Some($h2) -> {
@@ -458,7 +458,7 @@ impl Hittable for ConstantMedium {
         return None
     }
 
-    fn bounding_box(ref Self) -> Option(AABB) {
+    fn bounding_box(ref Self) -> Option[AABB] {
         return boundary.bounding_box()
     }
 }

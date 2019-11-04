@@ -50,13 +50,13 @@ trait Into(T: type) {
     fn into(ref Self) -> T;
 }
 
-impl(F: type, T: type) From(F) for T if F : Into(T), #notyet {
+impl(F: type, T: type) From[F] for T if F : Into[T], #notyet {
     fn from(value: F) -> T {
         return value::into()
     }
 }
 
-impl(F: type, T: type) Into(T) for F if T : From(F), #notyet {
+impl(F: type, T: type) Into[T] for F if T : From[F], #notyet {
     fn into(ref Self) -> T {
         return T::from(self)
     }

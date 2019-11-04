@@ -1,3 +1,4 @@
+#load("std:preload")
 #load("std:mem/allocator")
 
 struct Heap(T: type) {
@@ -7,7 +8,7 @@ struct Heap(T: type) {
     length  : int
 }
 
-impl(T: type) Drop for Heap(T) {
+impl(T: type) Drop for Heap[T] {
     fn drop(ref Self) {
         for : length {
             Memory::drop(data[it])
@@ -18,8 +19,8 @@ impl(T: type) Drop for Heap(T) {
     }
 }
 
-impl(T: type) Heap(T) {
-    fn create(allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Heap(T) {
+impl(T: type) Heap[T] {
+    fn create(allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Heap[T] {
         return new {
             allocator   = allocator
             data        = alloc_raw(T, 10, allocator)

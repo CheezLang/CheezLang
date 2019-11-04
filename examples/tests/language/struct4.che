@@ -13,15 +13,15 @@ struct Vector(T: type) #copy {
     pub y: T
 }
 
-impl(T: type) Vector(T) {
-    fn add(ref Self, other: Vector(T)) -> ref Vector(T) {
+impl(T: type) Vector[T] {
+    fn add(ref Self, other: Vector[T]) -> ref Vector[T] {
         x += other.x
         y += other.y
 
         return self
     }
 
-    fn sub(a: Vector(T), b: Vector(T)) -> Vector(T) {
+    fn sub(a: Vector[T], b: Vector[T]) -> Vector[T] {
         return new {
             a.x - b.x
             a.y - b.y
@@ -29,9 +29,9 @@ impl(T: type) Vector(T) {
     }
 }
 
-typedef Vec3 = Vector(double)
-typedef Vec3f = Vector(float)
-typedef Vec3i = Vector(int)
+typedef Vec3 = Vector[double]
+typedef Vec3f = Vector[float]
+typedef Vec3i = Vector[int]
 
 fn Main() {
     let a = new Vec3{1, 2}

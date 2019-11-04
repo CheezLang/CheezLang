@@ -21,7 +21,7 @@ struct StackAllocator {
     memory: &any
     capacity: u64
 
-    allocations: Array(StackAllocation)
+    allocations: Array[StackAllocation]
 }
 
 impl Drop for StackAllocator {
@@ -56,7 +56,7 @@ impl StackAllocator {
             parent = alloc
             memory = null
             capacity = 0
-            allocations = Array(StackAllocation)::create()
+            allocations = Array[StackAllocation]::create()
         }
         a.reserve(size)
         return a

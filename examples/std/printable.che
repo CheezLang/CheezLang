@@ -113,7 +113,7 @@ fn printf_int_to_string(str: ref String, i: $T, format: string) {
     format_int(str, i, base)
 }
 
-impl(T: type) Printable for Option(T) if T: Printable {
+impl(T: type) Printable for Option[T] if T: Printable {
     fn print(ref Self, str: ref String, format: string) {
         match self {
             Some($v) -> str.appendf("Some({})", v)
@@ -122,7 +122,7 @@ impl(T: type) Printable for Option(T) if T: Printable {
     }
 }
 
-impl(V: type, E: type) Printable for Result(V, E) if V: Printable, E: Printable {
+impl(V: type, E: type) Printable for Result[V, E] if V: Printable, E: Printable {
     fn print(ref Self, str: ref String, format: string) {
         match self {
             Ok($v)  -> str.appendf("Ok({})", v)

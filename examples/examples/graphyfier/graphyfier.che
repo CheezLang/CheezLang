@@ -6,8 +6,8 @@
 #load("evaluator")
 #load("compiler")
 
-typedef vec2 = Vector2(double)
-typedef vec3 = Vector3(double)
+typedef vec2 = Vector2[double]
+typedef vec3 = Vector3[double]
 
 let width: int = 1600
 let height: int = 960
@@ -24,7 +24,7 @@ struct MyGame {
 
     last_mouse_pos: (x: double, y: double)
 
-    function: Option(Array(OpCode)) = Option(Array(OpCode)).None
+    function: Option[Array[OpCode]] = Option[Array[OpCode]].None
 
     var_name_allocator: ArenaAllocator
 
@@ -171,7 +171,7 @@ impl Game for MyGame {
         return true
     }
 
-    fn evaluate_function(ref Self, x: double) -> Option(Complex) {
+    fn evaluate_function(ref Self, x: double) -> Option[Complex] {
         //return functions[func_index % functions.length](x)
         variables["x"] = new Complex{x, 0.0}
         return match function {

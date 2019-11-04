@@ -8,7 +8,7 @@
 struct Lexer {
     text        : String
     location    : TokenLocation
-    peek        : Option(Token)
+    peek        : Option[Token]
     string_db   : ref StringDatabase
 
     
@@ -119,7 +119,7 @@ impl Lexer {
         }
     }
 
-    fn from_file(filename: string, string_db: ref StringDatabase) -> Result(Lexer, String) {
+    fn from_file(filename: string, string_db: ref StringDatabase) -> Result[Lexer, String] {
         return match load_file(filename) {
             Ok($content) -> {
                 let l = Lexer::from_string(content, string_db)
@@ -478,7 +478,7 @@ impl Lexer {
         token.data = TokenData.String(string_db.intern(str))
     }
 
-    fn skip_newlines_and_comments(ref Self) -> loc: Option(TokenLocation) {
+    fn skip_newlines_and_comments(ref Self) -> loc: Option[TokenLocation] {
         loc = None
 
         while location.index < text.length {

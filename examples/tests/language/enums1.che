@@ -12,7 +12,7 @@ struct PolyStruct(T: type) {
     x: T
 }
 
-fn try_sqrt(f: double) -> Result(double, string) {
+fn try_sqrt(f: double) -> Result[double, string] {
     use Result
     if f < 0 {
         return Err("argument is negative")
@@ -38,7 +38,7 @@ fn Main() {
     test2(try_sqrt(-1.0))
 }
 
-fn test1(x: Option(int)) {
+fn test1(x: Option[int]) {
     use Option
     match x {
         Some($v)    -> c_printf("Some(%lld)`n", cast(int)v)
@@ -46,7 +46,7 @@ fn test1(x: Option(int)) {
     }
 }
 
-fn test2(r: Result(double, string)) {
+fn test2(r: Result[double, string]) {
     use Result
     match r {
         Ok($v)      -> c_printf("Some(%f)`n", v)

@@ -2,9 +2,9 @@
 #load("std:printable")
 #load("std:hash_table")
 
-typedef Variables = Table(string, Complex)
+typedef Variables = Table[string, Complex]
 
-fn evaluate(code: []OpCode, vars: ref Variables) -> Option(Complex) {
+fn evaluate(code: []OpCode, vars: ref Variables) -> Option[Complex] {
     let stack = @alloca(Complex, 128)
     let sp = 0
 
