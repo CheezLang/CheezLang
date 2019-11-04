@@ -3557,7 +3557,7 @@ namespace Cheez
 
         private AstExpression InferTypeStructValueExpr(AstStructValueExpr expr, CheezType expected, TypeInferenceContext context)
         {
-            if (!expr.FromCall && expr.TypeExpr != null)
+            if (!expr.FromCall)
             {
                 ReportError(expr, "Not support anymore. Use call syntax");
             }
