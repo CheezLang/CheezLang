@@ -11,7 +11,7 @@
 //#load("tests/other/test1")
 // #load("examples/project_euler/009_special_pythagorean_triplet")
 
-/*
+//*
 // #load("std:c")
 #load("std:io/io")
 // trait Drop {}
@@ -24,18 +24,6 @@ struct Test(T: type, S: type) {
 typedef TestIS = Test[int, string]
 
 fn Main() {
-    // let t = Test[int, string](
-    //     5, "lol"
-    // )
-
-    let a = TestIS(
-        123
-        "uiae"
-    )
-    let b = TestIS(
-        123,
-        "uiae"
-    )
     let c = TestIS(123, "uiae")
 }
 // */

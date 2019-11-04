@@ -1,6 +1,8 @@
+#load("std:mem/allocator")
 #load("std:os/windows")
 
-let thread_fiber: Fiber = Fiber(ConvertThreadToFiber(&thread_fiber), null)
+// @fixme cyclic dependency, but should work
+// let thread_fiber: Fiber = Fiber(ConvertThreadToFiber(&thread_fiber), null)
 
 fn fiber_func(param: &any) #stdcall {
     let f = cast(&Fiber)param
@@ -47,115 +49,5 @@ impl Fiber {
 
     fn current() -> &Fiber {
         return cast GetFiberData()
-    }
-}
-
-fn generator_func() {
-    let g = Generator(any)::current()
-    g.func(ref <<g)
-}
-
-struct Generator(T: type) {
-    fiber       : &Fiber
-    user_data   : Option(T)
-    pub const func  : fn(ref Generator(T))
-}
-
-impl Generator($T) {
-    fn create(func: fn(ref Generator(T))) -> &Generator(T) {
-        let g = alloc(Generator(T))
-        g.fiber = Fiber::create(generator_func, cast g)
-        g.func = func
-        return g
-    }
-
-    fn resume(ref Self) -> Option(T) {
-        fiber.resume()
-        match user_data {
-            Some($d) -> {
-                user_data = None
-                return Some(d)
-            }
-            None -> {
-                return None
-            }
-        }
-
-        return None
-    }
-
-    fn yield(ref Self, val: T) {
-        user_data = Some(val)
-        Fiber::yield()
-    }
-
-    fn current() -> &Generator(T) {
-        return cast Fiber::current().user_data
-    }
-}
-
-impl Iterator(double) for Generator(double) {
-    fn next(ref Self) -> Option(double) {
-        return self.resume()
-    }
-
-    fn dispose(ref Self) {
-    }
-}
-
-
-// experimental
-fn generator_with_arg_func() {
-    let g = GeneratorWithArg(double, any)::current()
-    g.func(g.arg, ref <<g)
-}
-
-struct GeneratorWithArg(A: type, T: type) {
-    fiber       : &Fiber
-    user_data   : Option(T)
-    pub const arg   : A
-    pub const func  : fn(A, ref GeneratorWithArg(A, T))
-}
-
-impl GeneratorWithArg($A, $T) {
-    fn create(func: fn(A, ref GeneratorWithArg(A, T)), arg: A) -> &GeneratorWithArg(A, T) {
-        let g = alloc(GeneratorWithArg(A, T))
-        g.fiber = Fiber::create(generator_with_arg_func, cast g)
-        g.arg = arg
-        g.func = func
-        return g
-    }
-
-    fn resume(ref Self) -> Option(T) {
-        fiber.resume()
-        match user_data {
-            Some($d) -> {
-                user_data = None
-                return Some(d)
-            }
-            None -> {
-                return None
-            }
-        }
-
-        return None
-    }
-
-    fn yield(ref Self, val: T) {
-        user_data = Some(val)
-        Fiber::yield()
-    }
-
-    fn current() -> &GeneratorWithArg(A, T) {
-        return cast Fiber::current().user_data
-    }
-}
-
-impl Iterator(double) for GeneratorWithArg(double, double) {
-    fn next(ref Self) -> Option(double) {
-        return self.resume()
-    }
-
-    fn dispose(ref Self) {
     }
 }

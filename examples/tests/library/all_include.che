@@ -1,22 +1,47 @@
-// #load("std:mem/")
+// io
 #load("std:io/io")
+#load("std:io/file")
+#load("std:io/stdio")
+
+// mem
 #load("std:mem/allocator")
+#load("std:mem/arena_allocator")
+#load("std:mem/counting_allocator")
 #load("std:mem/memory")
 #load("std:mem/stack_allocator")
 #load("std:mem/std_heap_allocator")
-#load("std:array")
-#load("std:c")
-#load("std:math")
-#load("std:printable")
-#load("std:string")
-#load("std:util")
 
+// os
 if const @is_os("windows") {
     #load("std:os/windows")
 }
 if const @is_os("linux") {
     #load("std:os/linux")
 }
+
+// random
+#load("std:random/mt")
+
+// other
+#load("std:alloca")
+#load("std:array")
+#load("std:box")
+#load("std:c")
+#load("std:fiber")
+#load("std:hash_table")
+#load("std:hash")
+#load("std:heap")
+#load("std:iterator")
+#load("std:math")
+#load("std:printable")
+#load("std:random")
+#load("std:rc")
+#load("std:ring_queue")
+#load("std:stack")
+#load("std:string")
+#load("std:thread")
+#load("std:time")
+#load("std:util")
 
 fn Main() {
 }

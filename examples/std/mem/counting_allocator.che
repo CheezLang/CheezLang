@@ -1,5 +1,8 @@
+#load("std:preload")
+#load("std:mem/memory")
 #load("std:mem/allocator")
 #load("std:mem/std_heap_allocator")
+#load("std:io/io")
 
 struct CountingAllocator {
     parent: Allocator
@@ -8,7 +11,7 @@ struct CountingAllocator {
 }
 
 fn newCountingAllocator() -> CountingAllocator {
-    return CountingAllocator(StdHeapAllocator(), 0, 0)
+    return CountingAllocator(DEFAULT_STD_HEAP_ALLOCATOR, 0, 0)
 }
 
 fn newCountingAllocator2(alloc: Allocator) -> CountingAllocator {
@@ -16,44 +19,44 @@ fn newCountingAllocator2(alloc: Allocator) -> CountingAllocator {
 }
 
 impl CountingAllocator {
-    ref fn printDiagnostics() {
-        printfn("( Allocated: {i32}, Freed: {i32} ) `n", [(any)allocated, freed])
+    fn printDiagnostics(ref Self) {
+        printfln("( Allocated: {}, Freed: {} )", (allocated, freed))
     }
 }
 
 impl Allocator for CountingAllocator {
-    fn allocate(count: u64, elementSize: u64, alignment: u64) -> any& {
+    fn allocate(ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
         let size = count * elementSize
         allocated += size
 
         let mem = parent.allocate(size + @sizeof(u64), 1, alignment)
 
         // store size before allocated memory
-        let sizePtr = (u64&)mem
+        let sizePtr = cast(&u64)mem
         <<sizePtr = size
 
-        return pointerAdd(mem, @sizeof(u64))
+        return pointer_add(mem, @sizeof(u64))
     }
 
-    fn reallocate(mem: any&, count: u64, elementSize: u64, alignment: u64) -> any& {
+    fn reallocate(ref Self, mem: &any, count: u64, elementSize: u64, alignment: u64) -> &any {
         let size = count * elementSize
-        let actualMem = pointerAdd(mem, -@sizeof(u64))
+        let actualMem = pointer_add(mem, -@sizeof(u64))
         
         {
-            let sizePtr = (u64&)actualMem
+            let sizePtr = cast(&u64)actualMem
             allocated += size - <<sizePtr
         }
 
         mem = parent.reallocate(actualMem, size + @sizeof(u64), 1, alignment)
 
-        let sizePtr = (u64&)mem
+        let sizePtr = cast(&u64)mem
         <<sizePtr = size
-        return pointerAdd(mem, @sizeof(u64))
+        return pointer_add(mem, @sizeof(u64))
     }
 
-    fn free(mem: any&) {
-        let actualMem = pointerAdd(mem, -@sizeof(u64))
-        let sizePtr = (u64&)actualMem
+    fn free(ref Self, mem: &any) {
+        let actualMem = pointer_add(mem, -@sizeof(u64))
+        let sizePtr = cast(&u64)actualMem
         freed += <<sizePtr
         parent.free(actualMem)
     }
