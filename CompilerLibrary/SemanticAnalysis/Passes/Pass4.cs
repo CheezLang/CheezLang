@@ -287,6 +287,16 @@ namespace Cheez
                         break;
                     }
 
+                case AstArrayAccessExpr ps:
+                    {
+                        foreach (var m in ps.Arguments)
+                        {
+                            CollectPolyTypeNames(m, result);
+                        }
+
+                        break;
+                    }
+
                 case AstFunctionTypeExpr func:
                     {
                         foreach (var v in func.ParameterTypes)

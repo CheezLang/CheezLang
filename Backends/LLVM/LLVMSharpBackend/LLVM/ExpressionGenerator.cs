@@ -1314,7 +1314,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 case TupleType t:
                     {
-                        var index = ((NumberData)expr.Indexer.Value).ToLong();
+                        var index = ((NumberData)expr.Arguments[0].Value).ToLong();
                         var left = GenerateExpression(expr.SubExpression, false);
 
                         LLVMValueRef result;
@@ -1343,11 +1343,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case SliceType s:
                     {
-                        switch (expr.Indexer.Type)
+                        switch (expr.Arguments[0].Type)
                         {
                             case IntType _:
                                 {
-                                    var index = GenerateExpression(expr.Indexer, true);
+                                    var index = GenerateExpression(expr.Arguments[0], true);
                                     var slice = GenerateExpression(expr.SubExpression, false);
 
                                     var dataPtrPtr = builder.CreateStructGEP(slice, 1, "");
@@ -1363,7 +1363,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                             case RangeType _:
                                 {
-                                    var range = GenerateExpression(expr.Indexer, true);
+                                    var range = GenerateExpression(expr.Arguments[0], true);
                                     var slice = GenerateExpression(expr.SubExpression, false);
 
                                     var range_begin = builder.CreateExtractValue(range, 0, "range_begin");
@@ -1397,7 +1397,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case ArrayType s:
                     {
-                        var index = GenerateExpression(expr.Indexer, true);
+                        var index = GenerateExpression(expr.Arguments[0], true);
                         var arr = GenerateExpression(expr.SubExpression, false);
 
                         var dataPtr = builder.CreatePointerCast(arr, CheezTypeToLLVMType(s.ToPointerType()), "");
@@ -1412,7 +1412,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case PointerType p:
                     {
-                        var index = GenerateExpression(expr.Indexer, true);
+                        var index = GenerateExpression(expr.Arguments[0], true);
                         var pointer = GenerateExpression(expr.SubExpression, true);
 
                         var ptr = builder.CreateInBoundsGEP(pointer, new LLVMValueRef[] { index }, "");

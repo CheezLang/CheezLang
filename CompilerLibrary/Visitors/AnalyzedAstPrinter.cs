@@ -831,7 +831,7 @@ namespace Cheez.Visitors
         public override string VisitArrayAccessExpr(AstArrayAccessExpr arr, int data = 0)
         {
             var sub = arr.SubExpression.Accept(this);
-            var ind = arr.Indexer.Accept(this);
+            var ind = arr.Arguments[0].Accept(this);
             return $"{sub}[{ind}]";
         }
 

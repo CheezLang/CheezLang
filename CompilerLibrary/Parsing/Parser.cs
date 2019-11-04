@@ -1627,7 +1627,6 @@ namespace Cheez.Parsing
                                 }
                             }
                             var end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of function call")).location;
-
                             expr = new AstCallExpr(expr, args, new Location(expr.Beginning, end));
                         }
                         break;
@@ -1637,10 +1636,37 @@ namespace Cheez.Parsing
                             NextToken();
                             SkipNewlines();
 
-                            var index = ParseExpression(errorMessage);
-                            SkipNewlines();
+                            var args = new List<AstExpression>();
+                            while (true)
+                            {
+                                var next = PeekToken();
+                                if (next.type == TokenType.ClosingBracket || next.type == TokenType.EOF)
+                                    break;
+                                args.Add(ParseExpression());
+                                SkipNewlines();
+
+                                next = PeekToken();
+                                if (next.type == TokenType.Comma)
+                                {
+                                    NextToken();
+                                    SkipNewlines();
+                                }
+                                else if (next.type == TokenType.ClosingBracket)
+                                    break;
+                                else
+                                {
+                                    NextToken();
+                                    ReportError(next.location, $"Failed to parse operator [], expected ',' or ']'");
+                                    //RecoverExpression();
+                                }
+                            }
                             var end = Consume(TokenType.ClosingBracket, ErrMsg("]", "at end of [] operator")).location;
-                            expr = new AstArrayAccessExpr(expr, index, new Location(expr.Beginning, end));
+                            if (args.Count == 0)
+                            {
+                                ReportError(end, "At least one argument required");
+                                args.Add(ParseEmptyExpression());
+                            }
+                            expr = new AstArrayAccessExpr(expr, args, new Location(expr.Beginning, end));
                         }
                         break;
 

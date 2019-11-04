@@ -483,10 +483,10 @@ namespace Cheez
             {
                 // before we search for operators, make sure that all impls for both arguments have been matched
                 GetImplsForType(arr.SubExpression.Type);
-                GetImplsForType(arr.Indexer.Type);
+                GetImplsForType(arr.Arguments[0].Type);
                 GetImplsForType(value.Type);
 
-                var ops = ass.Scope.GetNaryOperators("set[]", arr.SubExpression.Type, arr.Indexer.Type, value.Type);
+                var ops = ass.Scope.GetNaryOperators("set[]", arr.SubExpression.Type, arr.Arguments[0].Type, value.Type);
                 if (ops.Count == 0)
                 {
                     if (!pattern.TypeInferred)
@@ -499,7 +499,7 @@ namespace Cheez
                 {
                     var args = new List<AstExpression>
                     {
-                        arr.SubExpression, arr.Indexer, value
+                        arr.SubExpression, arr.Arguments[0], value
                     };
                     var opCall = new AstNaryOpExpr("set[]", args, value.Location);
                     opCall.ActualOperator = ops[0];
@@ -509,7 +509,7 @@ namespace Cheez
                 }
                 else
                 {
-                    ReportError(ass, $"Multiple operators 'set[]' match the types ({arr.SubExpression.Type}, {arr.Indexer.Type}, {value.Type})");
+                    ReportError(ass, $"Multiple operators 'set[]' match the types ({arr.SubExpression.Type}, {arr.Arguments[0].Type}, {value.Type})");
                 }
             }
 

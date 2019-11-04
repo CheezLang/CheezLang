@@ -2383,14 +2383,29 @@ namespace Cheez
             expr.SubExpression.Scope = expr.Scope;
             expr.SubExpression = InferTypeHelper(expr.SubExpression, null, context);
 
-            expr.Indexer.SetFlag(ExprFlags.ValueRequired, true);
-            expr.Indexer.Scope = expr.Scope;
-            expr.Indexer = InferTypeHelper(expr.Indexer, null, context);
+            AstExpression InferSingleIndex(CheezType expected)
+            {
+                if (expr.Arguments.Count > 1)
+                {
+                    ReportError(expr, $"Too many arguments. Only one required.");
+                }
+
+                var index = expr.Arguments[0];
+
+                index.SetFlag(ExprFlags.ValueRequired, true);
+                index.Scope = expr.Scope;
+                index = InferTypeHelper(index, expected, context);
+
+                ConvertLiteralTypeToDefaultType(index, null);
+
+                expr.Arguments[0] = index;
+                return index;
+            }
+
 
             ConvertLiteralTypeToDefaultType(expr.SubExpression, null);
-            ConvertLiteralTypeToDefaultType(expr.Indexer, null);
 
-            if (expr.SubExpression.Type is ErrorType || expr.Indexer.Type is ErrorType)
+            if (expr.SubExpression.Type is ErrorType)
                 return expr;
 
             if (expr.SubExpression.Type is ReferenceType)
@@ -2402,16 +2417,20 @@ namespace Cheez
             {
                 case TupleType tuple:
                     {
-                        if (!(expr.Indexer.Type is IntType) || expr.Indexer.Value == null)
+                        var indexExpr = InferSingleIndex(null);
+                        if (indexExpr.Type.IsErrorType)
+                            return expr;
+
+                        if (!(indexExpr.Type is IntType) || indexExpr.Value == null)
                         {
-                            ReportError(expr.Indexer, $"The index must be a constant int");
+                            ReportError(indexExpr, $"The index must be a constant int");
                             return expr;
                         }
 
-                        var index = ((NumberData)expr.Indexer.Value).ToLong();
+                        var index = ((NumberData)indexExpr.Value).ToLong();
                         if (index < 0 || index >= tuple.Members.Length)
                         {
-                            ReportError(expr.Indexer, $"The index '{index}' is out of range. Index must be between [0, {tuple.Members.Length})");
+                            ReportError(indexExpr, $"The index '{index}' is out of range. Index must be between [0, {tuple.Members.Length})");
                             return expr;
                         }
 
@@ -2421,63 +2440,85 @@ namespace Cheez
 
                 case PointerType ptr:
                     {
-                        expr.Indexer = Deref(expr.Indexer, context);
-                        if (expr.Indexer.Type is IntType)
+                        var indexExpr = InferSingleIndex(null);
+                        if (indexExpr.Type.IsErrorType)
+                            return expr;
+
+                        expr.Arguments[0] = indexExpr = Deref(indexExpr, context);
+                        if (indexExpr.Type is IntType)
                         {
                             expr.SetFlag(ExprFlags.IsLValue, true);
                             expr.Type = ptr.TargetType;
                         }
                         else
                         {
-                            ReportError(expr.Indexer, $"The index into a pointer must be an int but is '{expr.Indexer.Type}'");
+                            ReportError(indexExpr, $"The index into a pointer must be an int but is '{indexExpr.Type}'");
                         }
                         break;
                     }
 
                 case SliceType slice:
                     {
-                        expr.Indexer = Deref(expr.Indexer, context);
-                        if (expr.Indexer.Type is IntType)
+                        var indexExpr = InferSingleIndex(null);
+                        if (indexExpr.Type.IsErrorType)
+                            return expr;
+
+                        expr.Arguments[0] = indexExpr = Deref(indexExpr, context);
+                        if (indexExpr.Type is IntType)
                         {
                             expr.SetFlag(ExprFlags.IsLValue, true);
                             expr.Type = slice.TargetType;
                         }
-                        else if (expr.Indexer.Type is RangeType r && r.TargetType is IntType)
+                        else if (indexExpr.Type is RangeType r && r.TargetType is IntType)
                         {
                             expr.SetFlag(ExprFlags.IsLValue, false);
                             expr.Type = slice;
                         }
                         else
                         {
-                            ReportError(expr.Indexer, $"The index into a slice can't be '{expr.Indexer.Type}'");
+                            ReportError(indexExpr, $"The index into a slice can't be '{indexExpr.Type}'");
                         }
                         break;
                     }
 
                 case ArrayType arr:
                     {
-                        expr.Indexer = Deref(expr.Indexer, context);
-                        if (expr.Indexer.Type is IntType)
+                        var indexExpr = InferSingleIndex(null);
+                        if (indexExpr.Type.IsErrorType)
+                            return expr;
+
+                        expr.Arguments[0] = indexExpr = Deref(indexExpr, context);
+                        if (indexExpr.Type is IntType)
                         {
                             expr.SetFlag(ExprFlags.IsLValue, true);
                             expr.Type = arr.TargetType;
 
-                            if (expr.Indexer.IsCompTimeValue)
+                            if (indexExpr.IsCompTimeValue)
                             {
-                                var val = (NumberData)expr.Indexer.Value;
+                                var val = (NumberData)indexExpr.Value;
                                 if (val < 0 || val >= arr.Length)
-                                    ReportError(expr.Indexer, $"The index is out of range. Must be in [0, {arr.Length-1}]");
+                                    ReportError(indexExpr, $"The index is out of range. Must be in [0, {arr.Length-1}]");
                             }
                         }
                         else
                         {
-                            ReportError(expr.Indexer, $"The index into an array must be an int but is '{expr.Indexer.Type}'", ($"'{expr.SubExpression}' is of type '{arr}'", null));
+                            ReportError(indexExpr, $"The index into an array must be an int but is '{indexExpr.Type}'", ($"'{expr.SubExpression}' is of type '{arr}'", null));
                         }
                         break;
                     }
 
+                case CheezType gen when expr.SubExpression.Value is GenericStructType ||
+                                        expr.SubExpression.Value is GenericTraitType ||
+                                        expr.SubExpression.Value is GenericEnumType:
+                    return InferTypeGenericTypeCallExpr(expr, context);
+
+
                 default:
                     {
+                        var indexExpr = InferSingleIndex(null);
+                        if (indexExpr.Type.IsErrorType)
+                            return expr;
+
                         if (expr.GetFlag(ExprFlags.AssignmentTarget))
                         {
                             expr.TypeInferred = false;
@@ -2486,7 +2527,7 @@ namespace Cheez
                         }
 
                         var left = expr.SubExpression;
-                        var right = expr.Indexer;
+                        var right = indexExpr;
 
                         // resolve impls
                         GetImplsForType(left.Type);
@@ -2734,6 +2775,8 @@ namespace Cheez
                 case CheezTypeType _ when expr.IsDoubleColon:
                     {
                         var t = expr.Left.Value as CheezType;
+                        if (t.IsErrorType)
+                            break;
                         var funcs = GetImplFunctions(t, expr.Right.Name, expected);
 
                         if (funcs.Count == 0)
@@ -2995,12 +3038,13 @@ namespace Cheez
                         return e;
                     }
 
-                case CheezTypeType type when expr.FunctionExpr.Value is GenericStructType ||
-                                        expr.FunctionExpr.Value is GenericTraitType ||
-                                        expr.FunctionExpr.Value is GenericEnumType:
-                    {
-                        return InferTypeGenericTypeCallExpr(expr, context);
-                    }
+
+                //case CheezTypeType type when expr.FunctionExpr.Value is GenericStructType ||
+                //                        expr.FunctionExpr.Value is GenericTraitType ||
+                //                        expr.FunctionExpr.Value is GenericEnumType:
+                //    {
+                //        return InferTypeGenericTypeCallExpr(expr, context);
+                //    }
 
                     // this is a cast
                 case CheezTypeType _:
@@ -3027,18 +3071,16 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression InferTypeGenericTypeCallExpr(AstCallExpr expr, TypeInferenceContext context)
+        private AstExpression InferTypeGenericTypeCallExpr(AstArrayAccessExpr expr, TypeInferenceContext context)
         {
             bool anyArgIsPoly = false;
 
-            foreach (var arg in expr.Arguments)
+            for (int i = 0; i < expr.Arguments.Count; i++)
             {
+                var arg = expr.Arguments[i];
                 arg.AttachTo(expr);
-                arg.Expr.AttachTo(arg);
-                arg.Expr.SetFlag(ExprFlags.ValueRequired, true);
-                arg.Expr = InferTypeHelper(arg.Expr, CheezType.Type, context);
-                arg.Type = arg.Expr.Type;
-                arg.Value = arg.Expr.Value;
+                arg.SetFlag(ExprFlags.ValueRequired, true);
+                expr.Arguments[i] = arg = InferTypeHelper(arg, CheezType.Type, context);
 
                 if (arg.Type == CheezType.Type)
                 {
@@ -3052,7 +3094,7 @@ namespace Cheez
                 }
             }
 
-            if (expr.FunctionExpr.Value is GenericStructType strType)
+            if (expr.SubExpression.Value is GenericStructType strType)
             {
                 if (anyArgIsPoly)
                 {
@@ -3073,7 +3115,7 @@ namespace Cheez
 
                 return expr;
             }
-            else if (expr.FunctionExpr.Value is GenericEnumType @enum)
+            else if (expr.SubExpression.Value is GenericEnumType @enum)
             {
                 if (anyArgIsPoly)
                 {
@@ -3094,7 +3136,7 @@ namespace Cheez
 
                 return expr;
             }
-            else if (expr.FunctionExpr.Value is GenericTraitType trait)
+            else if (expr.SubExpression.Value is GenericTraitType trait)
             {
                 if (anyArgIsPoly)
                 {
@@ -3117,7 +3159,7 @@ namespace Cheez
             }
             else
             {
-                ReportError(expr.FunctionExpr, $"This type must be a polymorphic type but is '{expr.FunctionExpr.Value}'");
+                ReportError(expr.SubExpression, $"This type must be a polymorphic type but is '{expr.SubExpression.Value}'");
                 return expr;
             }
         }

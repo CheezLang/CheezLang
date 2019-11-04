@@ -196,6 +196,8 @@ namespace Cheez
 
         private bool PassVLExpr(AstExpression expr)
         {
+            if (expr.Type.IsErrorType)
+                return false;
             switch (expr)
             {
                 case AstBlockExpr block: return PassVLBlock(block);
@@ -309,8 +311,8 @@ namespace Cheez
 
                 case AstArrayAccessExpr c:
                     if (!PassVLExpr(c.SubExpression)) return false;
-                    if (!PassVLExpr(c.Indexer)) return false;
-                    if (!Move(c.Indexer))
+                    if (!PassVLExpr(c.Arguments[0])) return false;
+                    if (!Move(c.Arguments[0]))
                         return false;
                     return true;
 

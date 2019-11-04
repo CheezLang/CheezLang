@@ -142,10 +142,11 @@ namespace Cheez
                     {
                         // @TODO: provide location
                         ReportError("failed to infer all impl parameters");
+                        return null;
                     }
 
                     return InstantiatePolyImplNew(impl, polies);
-                }).ToList();
+                }).Where(it => it != null).ToList();
                 return (result, false);
             }
             else
@@ -230,24 +231,44 @@ namespace Cheez
             {
                 m_typeImplMap = new Dictionary<CheezType, TypeImplList>();
                 foreach (var td in scope.Typedefs)
+                {
+                    if (td.Type.IsErrorType)
+                        continue;
                     if (!m_typeImplMap.ContainsKey(td.Type))
                         m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
+                }
 
                 foreach (var td in scope.StructDeclarations)
+                {
+                    if (td.Type.IsErrorType)
+                        continue;
                     if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
                         m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
+                }
 
                 foreach (var td in scope.EnumDeclarations)
+                {
+                    if (td.Type.IsErrorType)
+                        continue;
                     if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
                         m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
+                }
 
                 foreach (var td in scope.TraitDeclarations)
+                {
+                    if (td.Type.IsErrorType)
+                        continue;
                     if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
                         m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
+                }
 
                 foreach (var td in scope.Impls)
+                {
+                    if (td.TargetType?.IsErrorType ?? true)
+                        continue;
                     if (!td.IsPolymorphic && td.TargetType != null && !m_typeImplMap.ContainsKey(td.TargetType))
                         m_typeImplMap[td.TargetType] = new TypeImplList(scope.Impls);
+                }
             }
 
             var changes = true;

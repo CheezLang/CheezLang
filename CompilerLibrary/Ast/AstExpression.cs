@@ -622,21 +622,31 @@ namespace Cheez.Ast.Expressions
     public class AstArrayAccessExpr : AstExpression
     {
         public AstExpression SubExpression { get; set; }
-        public AstExpression Indexer { get; set; }
-        public override bool IsPolymorphic => SubExpression.IsPolymorphic || Indexer.IsPolymorphic;
+        public List<AstExpression> Arguments { get; set; }
+        public override bool IsPolymorphic => SubExpression.IsPolymorphic || Arguments.Any(a => a.IsPolymorphic);
 
         [DebuggerStepThrough]
-        public AstArrayAccessExpr(AstExpression sub, AstExpression index, ILocation Location = null) : base(Location)
+        public AstArrayAccessExpr(AstExpression sub, List<AstExpression> args, ILocation Location = null) : base(Location)
         {
             SubExpression = sub;
-            Indexer = index;
+            Arguments = args;
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitArrayAccessExpr(this, data);
+        public AstArrayAccessExpr(AstExpression sub, AstExpression arg, ILocation Location = null) : base(Location)
+        {
+            SubExpression = sub;
+            Arguments = new List<AstExpression> { arg };
+        }
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstArrayAccessExpr(SubExpression.Clone(), Indexer.Clone()));
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitArrayAccessExpr(this, data);
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone() => 
+            CopyValuesTo(new AstArrayAccessExpr(
+                SubExpression.Clone(),
+                Arguments.Select(a => a.Clone()).ToList()));
     }
 
     public class AstNullExpr : AstExpression
