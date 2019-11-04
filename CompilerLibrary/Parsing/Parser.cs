@@ -1563,7 +1563,6 @@ namespace Cheez.Parsing
 
             var e = ParseExpression();
             beg = e.Beginning;
-            SkipNewlines();
 
             // if next token is : then e is the name of the parameter
             if (CheckToken(TokenType.Equal))
@@ -1609,10 +1608,13 @@ namespace Cheez.Parsing
                                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                                     break;
                                 args.Add(ParseArgumentExpression());
-                                SkipNewlines();
 
                                 next = PeekToken();
-                                if (next.type == TokenType.Comma)
+                                if (next.type == TokenType.NewLine)
+                                {
+                                    NextToken();
+                                }
+                                else if (next.type == TokenType.Comma)
                                 {
                                     NextToken();
                                     SkipNewlines();
@@ -1708,10 +1710,13 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                     break;
                 args.Add(ParseArgumentExpression());
-                SkipNewlines();
 
                 next = PeekToken();
-                if (next.type == TokenType.Comma)
+                if (next.type == TokenType.NewLine)
+                {
+                    NextToken();
+                }
+                else if (next.type == TokenType.Comma)
                 {
                     NextToken();
                     SkipNewlines();
@@ -1786,7 +1791,7 @@ namespace Cheez.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct value expression")).location;
 
-            return new AstStructValueExpr(type, members, new Location(beg, end));
+            return new AstStructValueExpr(type, members, false, new Location(beg, end));
         }
 
         private AstIdExpr ParseIdentifierExpr(ErrorMessageResolver customErrorMessage = null, TokenType identType = TokenType.Identifier)

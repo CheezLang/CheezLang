@@ -3046,6 +3046,20 @@ namespace Cheez
                 //        return InferTypeGenericTypeCallExpr(expr, context);
                 //    }
 
+                // "cast" to struct is the new struct instantiation
+                case CheezTypeType _ when expr.FunctionExpr.Value is StructType str:
+                    {
+                        //ReportError(expr, "test");
+                        //return expr;
+                        var inits = expr.Arguments.Select(a =>
+                        {
+                            return new AstStructMemberInitialization(a.Name, a.Expr, a.Location);
+                        }).ToList();
+                        var sve = new AstStructValueExpr(expr.FunctionExpr, inits, true, expr);
+                        sve.Replace(expr);
+                        return InferType(sve, expected);
+                    }
+
                     // this is a cast
                 case CheezTypeType _:
                     {
@@ -3543,6 +3557,11 @@ namespace Cheez
 
         private AstExpression InferTypeStructValueExpr(AstStructValueExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            if (!expr.FromCall && expr.TypeExpr != null)
+            {
+                ReportError(expr, "Not support anymore. Use call syntax");
+            }
+
             if (expr.TypeExpr != null)
             {
                 expr.TypeExpr.AttachTo(expr);

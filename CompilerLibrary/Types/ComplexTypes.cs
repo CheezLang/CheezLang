@@ -46,7 +46,7 @@ namespace Cheez.Types.Complex
             if (Arguments?.Length > 0)
             {
                 var args = string.Join(", ", Arguments.Select(a => a.ToString()));
-                return $"{Declaration.Name.Name}({args})";
+                return $"{Declaration.Name.Name}[{args}]";
             }
             return $"{Declaration.Name.Name}";
         }
@@ -212,7 +212,7 @@ namespace Cheez.Types.Complex
             if (Arguments?.Length > 0)
             {
                 var args = string.Join(", ", Arguments.Select(a => a.ToString()));
-                return $"{Declaration.Name.Name}({args})";
+                return $"{Declaration.Name.Name}[{args}]";
             }
             return $"{Declaration.Name.Name}";
         }
@@ -319,7 +319,7 @@ namespace Cheez.Types.Complex
             if (Arguments?.Length > 0)
             {
                 var args = string.Join(", ", Arguments.Select(a => a.ToString()));
-                return $"{Declaration.Name.Name}({args})";
+                return $"{Declaration.Name.Name}[{args}]";
             }
             return $"{Declaration.Name.Name}";
         }

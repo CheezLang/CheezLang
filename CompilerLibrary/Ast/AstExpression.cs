@@ -770,13 +770,16 @@ namespace Cheez.Ast.Expressions
         public List<AstStructMemberInitialization> MemberInitializers { get; }
         public override bool IsPolymorphic => false;
 
+        public bool FromCall { get; }
+
         public AstIdExpr Name => null;
 
         [DebuggerStepThrough]
-        public AstStructValueExpr(AstExpression type, List<AstStructMemberInitialization> inits, ILocation Location = null) : base(Location)
+        public AstStructValueExpr(AstExpression type, List<AstStructMemberInitialization> inits, bool fromCall = false, ILocation Location = null) : base(Location)
         {
             this.TypeExpr = type;
             this.MemberInitializers = inits;
+            FromCall = fromCall;
         }
 
         [DebuggerStepThrough]
@@ -784,7 +787,7 @@ namespace Cheez.Ast.Expressions
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstStructValueExpr(TypeExpr?.Clone(), MemberInitializers.Select(m => m.Clone()).ToList()));
+            => CopyValuesTo(new AstStructValueExpr(TypeExpr?.Clone(), MemberInitializers.Select(m => m.Clone()).ToList(), FromCall));
     }
 
     public class AstArrayExpr : AstExpression
