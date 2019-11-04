@@ -585,7 +585,7 @@ fn renderImage(film: ref Film)
             // cube
             // {
             //     sdf = s1
-            //     sdf = all.subtract(sdf, all.sphereT(new Vec3{-1, 0, 1}, 1.2, sWhite))
+            //     sdf = all.subtract(sdf, all.sphereT(Vec3(-1, 0, 1), 1.2, sWhite))
             // }
 
             all.add(sdf, ground)

@@ -50,11 +50,11 @@ impl Quad {
     }
 }
 
-let q = new Quad {
-    pos = new Vec2 { -0.5f, -0.5f }
-    size = new Vec2 { 1, 1 }
-    col = new Vec3 { 1, 0, 1 }
-}
+let q = Quad(
+    pos = Vec2(-0.5f, -0.5f)
+    size = Vec2(1, 1)
+    col = Vec3(1, 0, 1)
+)
 
 fn onKeyDown(window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
     if action == GLFW_PRESS {

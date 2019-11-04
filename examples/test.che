@@ -1,5 +1,5 @@
 // #load("examples/trait_function_call_performance")
-// #load("examples/graphyfier/graphyfier")
+#load("examples/graphyfier/graphyfier")
 // #load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
@@ -24,9 +24,9 @@ struct Test(T: type, S: type) {
 typedef TestIS = Test[int, string]
 
 fn Main() {
-    // let t = new Test[int, string] {
+    // let t = Test[int, string](
     //     5, "lol"
-    // }
+    // )
 
     let a = TestIS(
         123

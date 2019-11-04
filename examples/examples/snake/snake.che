@@ -90,18 +90,18 @@ fn snake()
     let startCount = 5
     while let i = 0; i < startCount; i += 1 {
         let intesity = (cast(double)i) / cast(double)(startCount - 1)
-        snake.add(new Quad {
-            new Vec2i{10, 15},
-            new Vec2{gridSize, gridSize},
-            new Vec3{1, intesity, intesity}
-        })
+        snake.add(Quad(
+            Vec2i(10, 15)
+            Vec2(gridSize, gridSize)
+            Vec3(1, intesity, intesity)
+        ))
     }
 
-    let target = new Quad {
-        new Vec2i{rand.next_int(max=xMax), rand.next_int(max=yMax)},
-        new Vec2{gridSize, gridSize},
-        new Vec3{0, 1, 0}
-    }
+    let target = Quad(
+        Vec2i(rand.next_int(max=xMax), rand.next_int(max=yMax))
+        Vec2(gridSize, gridSize)
+        Vec3(0, 1, 0)
+    )
 
     let dir = Direction.Up
 
@@ -148,10 +148,10 @@ fn snake()
             let head: ref Quad = snake[0]
 
             head.pos += match dir {
-                Direction.Up    -> new Vec2i{0, 1}
-                Direction.Right -> new Vec2i{1, 0}
-                Direction.Down  -> new Vec2i{0, -1}
-                Direction.Left  -> new Vec2i{-1, 0}
+                Direction.Up    -> Vec2i(0, 1)
+                Direction.Right -> Vec2i(1, 0)
+                Direction.Down  -> Vec2i(0, -1)
+                Direction.Left  -> Vec2i(-1, 0)
             }
 
             if head.pos.x < 0 { head.pos.x = xMax - 1 }

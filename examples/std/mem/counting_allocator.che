@@ -8,15 +8,11 @@ struct CountingAllocator {
 }
 
 fn newCountingAllocator() -> CountingAllocator {
-    return new CountingAllocator {
-        new StdHeapAllocator {}, 0, 0
-    }
+    return CountingAllocator(StdHeapAllocator(), 0, 0)
 }
 
 fn newCountingAllocator2(alloc: Allocator) -> CountingAllocator {
-    return new CountingAllocator {
-        alloc, 0, 0
-    }
+    return CountingAllocator(alloc, 0, 0)
 }
 
 impl CountingAllocator {
