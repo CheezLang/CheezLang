@@ -32,7 +32,7 @@ ArenaAllocator (8 buckets)
 
 
 fn Main() {
-    let a = ArenaAllocator::create(32)
+    let a = ArenaAllocator.create(32)
 
     a.dump(true)
 

@@ -60,7 +60,7 @@ fn Main() {
     c_printf("%lld`n", x)
     c_printf("`n", x)
 
-    let a = Array[int]::create()
+    let a = Array[int].create()
 
     print_array(a)
 

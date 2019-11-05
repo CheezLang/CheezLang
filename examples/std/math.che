@@ -324,12 +324,12 @@ impl(T: type) Vector3[T] {
     }
 
     fn reflect(ref Self, normal: Self) -> Self {
-        return normal * -Self::dot(self, normal) * T(2) + <<&self
+        return normal * -Self.dot(self, normal) * T(2) + <<&self
     }
 
     fn refract(ref Self, normal: Self, ior: T) -> Option[Self] {
         let uv = self
-        let dt = Self::dot(uv, normal)
+        let dt = Self.dot(uv, normal)
         let discriminant = 1 - ior * ior * (1 - dt * dt)
         if discriminant > 0 {
             let refr = (uv - normal * dt) * ior - normal * T(sqrt(double(discriminant)))

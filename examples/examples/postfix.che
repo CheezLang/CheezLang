@@ -24,39 +24,39 @@ impl Token {
     fn get_text(ref Self) -> String {
         use TokenType
         return match self.ttype {
-            Plus        -> "+"::to_string()
-            Minus       -> "-"::to_string()
-            Asterisk    -> "*"::to_string()
-            ForwardSlash -> "/"::to_string()
+            Plus        -> String.from_string("+")
+            Minus       -> String.from_string("-")
+            Asterisk    -> String.from_string("*")
+            ForwardSlash -> String.from_string("/")
 
             NumberLiteral -> {
                 match data {
-                    TokenData.Integer($val) -> String::format("{}", [val])
-                    TokenData.Double($val) -> String::format("{}", [val])
+                    TokenData.Integer($val) -> String.format("{}", [val])
+                    TokenData.Double($val) -> String.format("{}", [val])
                     $_ -> {
                         @panic("TokenData was neither Integer nor Double")
-                        String::empty()
+                        String.empty()
                     }
                 }
             }
 
-            $_          -> "?"::to_string()
+            $_          -> String.from_string("?")
         }
     }
 }
 
 fn pop_ops_while(new_order: ref Array(Token), stack: ref Stack(Token), precedence: int = -1) {
-    while !stack.empty() and stack.peek().ttype::get_precedence() >= precedence {
+    while !stack.empty() and stack.peek().ttype.get_precedence() >= precedence {
         new_order.add(stack.pop())
     }
 }
 
 fn infix_to_postfix(str: String, calculate: bool) -> (postfix: String, result: double) {
-    let string_db = StringDatabase::create()
-    let lexer = Lexer::from_string(str, string_db)
+    let string_db = StringDatabase.create()
+    let lexer = Lexer.from_string(str, string_db)
 
-    let stack = Stack(Token)::create()
-    let new_order = Array(Token)::create()
+    let stack = Stack[Token].create()
+    let new_order = Array[Token].create()
 
     while true {
         let token = lexer.next_token()
@@ -68,22 +68,22 @@ fn infix_to_postfix(str: String, calculate: bool) -> (postfix: String, result: d
             }
 
             Plus -> {
-                pop_ops_while(new_order, stack, token.ttype::get_precedence())
+                pop_ops_while(new_order, stack, token.ttype.get_precedence())
                 stack.push(token)
             }
 
             Minus -> {
-                pop_ops_while(new_order, stack, token.ttype::get_precedence())
+                pop_ops_while(new_order, stack, token.ttype.get_precedence())
                 stack.push(token)
             }
 
             Asterisk -> {
-                pop_ops_while(new_order, stack, token.ttype::get_precedence())
+                pop_ops_while(new_order, stack, token.ttype.get_precedence())
                 stack.push(token)
             }
 
             ForwardSlash -> {
-                pop_ops_while(new_order, stack, token.ttype::get_precedence())
+                pop_ops_while(new_order, stack, token.ttype.get_precedence())
                 stack.push(token)
             }
 
@@ -105,7 +105,7 @@ fn infix_to_postfix(str: String, calculate: bool) -> (postfix: String, result: d
     }
     pop_ops_while(new_order, stack)
 
-    postfix = String::empty()
+    postfix = String.empty()
     for i : 0..new_order.length {
         let tok = new_order[i]
         let txt = tok.get_text()
@@ -116,7 +116,7 @@ fn infix_to_postfix(str: String, calculate: bool) -> (postfix: String, result: d
     result = 0
 
     if calculate {
-        let numbers = Stack(double)::create()
+        let numbers = Stack[double].create()
         //foreach! t in new_order.iterator() {
         for t : new_order {
             use TokenType
@@ -175,10 +175,10 @@ impl Printable for &u16 {
     }
 }
 
-fn to_ascii_strings(argv: &&u16, argc: int) -> Array(String) {
-    let array = Array(String)::create(argc)
+fn to_ascii_strings(argv: &&u16, argc: int) -> Array[String] {
+    let array = Array[String].create(argc)
     for i : 0..argc {
-        let str = String::empty()
+        let str = String.empty()
         while let k = 0; argv[i][k] != 0; k += 1 {
             str += char(argv[i][k])
         }
@@ -200,7 +200,6 @@ fn Main() {
 
     let (start_index, calculate) = if streq(args[1], "-e") { (2, true) } else { (1, false) }
 
-    //foreach! infix in @cast(Iterator(String), args.iterator())::skip(start_index) {
     for infix : args {
         if it_index < start_index then continue
         print(infix)
@@ -218,8 +217,8 @@ fn Main() {
     // printfln("argc: {:x}, argv: {}", (int(args), count))
 
 
-    // println(infix_to_postfix("1 + 2 * 3"::to_string()))
-    // println(infix_to_postfix("(1 + 2) * 3"::to_string()))
-    // println(infix_to_postfix("1 * (2 + 3)"::to_string()))
-    // println(infix_to_postfix("1 * 2 + 3"::to_string()))
+    // println(infix_to_postfix(String.from_string("1 + 2 * 3"))
+    // println(infix_to_postfix(String.from_string("(1 + 2) * 3"))
+    // println(infix_to_postfix(String.from_string("1 * (2 + 3)"))
+    // println(infix_to_postfix(String.from_string("1 * 2 + 3"))
 }

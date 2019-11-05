@@ -127,8 +127,8 @@ impl Drop for PathTracer {
 impl PathTracer {
     fn create() -> Self {
         return PathTracer(
-            allocator   = ArenaAllocator::create(1024)
-            objects     = Array[Object]::create()
+            allocator   = ArenaAllocator.create(1024)
+            objects     = Array[Object].create()
             buffer      = {
                 let b = alloc_n(Vec3, u64(width * height))
                 c_memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
@@ -206,7 +206,7 @@ impl PathTracer {
                     let n2 = hit.material.ior
 
 
-                    let outside = Vec3::dot(hit.normal, ray.dir) < 0
+                    let outside = Vec3.dot(hit.normal, ray.dir) < 0
                     if !outside {
                         // coming from inside
                         (n1, n2) = (n2, n1)
@@ -216,7 +216,7 @@ impl PathTracer {
                     let kr = fresnel(I, n, hit.material.ior)
                     let color_refracted = if kr >= 1 then Vec3() else {
                         let r = n1 / n2
-                        let c = -Vec3::dot(n, I)
+                        let c = -Vec3.dot(n, I)
 
                         let f = r * c - sqrt(1 - r * r * (1 - c * c))
                         let newDir = I * r + n * f
@@ -240,7 +240,7 @@ impl PathTracer {
     }
 
     fn fresnel(I: Vec3, N: Vec3, ior: double) -> kr: double {
-        let cosi = clamp(Vec3::dot(I, N), -1.0, 1.0, )
+        let cosi = clamp(Vec3.dot(I, N), -1.0, 1.0, )
         let etai = 1.0
         let etat = ior
         if cosi > 0 { (etai, etat) = (etat, etai) }
@@ -270,8 +270,8 @@ fn pathtracer_thread(data: &(index: int, pt: &PathTracer)) -> u32 #stdcall {
     }
 
     printfln("{}: {} -> {}", (data.index, start_y, end_y))
-    let seed = PseudoRandom::next_int()
-    let prng = MTwister::create(cast seed)
+    let seed = PseudoRandom.next_int()
+    let prng = MTwister.create(cast seed)
 
     while true {
         for(inclusive=true) current_y : start_y..end_y {
@@ -305,7 +305,7 @@ impl Game for PathTracer {
     fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
         self.pge = pge
 
-        self.cam_fov = 60.0::to_radians()
+        self.cam_fov = double.to_radians(60.0)
         let aspect_ratio = double(width) / double(height)
 
         let size = 10.0
@@ -335,8 +335,8 @@ impl Game for PathTracer {
         let m_blue  = create(Material(Vec3(0.2, 0.2, 0.9)), allocator)
         let m_grey  = create(Material(Vec3(0.75, 0.75, 0.75)), allocator)
 
-        let m_mirror= create(Material::reflective(Vec3(1, 1, 1)), allocator)
-        let m_glass = create(Material::refrective(Vec3(1, 1, 1), 1.95), allocator)
+        let m_mirror= create(Material.reflective(Vec3(1, 1, 1)), allocator)
+        let m_glass = create(Material.refrective(Vec3(1, 1, 1), 1.95), allocator)
 
         let m_light = create(Material(emission = Vec3(10, 10, 10)), allocator)
 
@@ -396,8 +396,8 @@ impl Game for PathTracer {
                     let bufferColor = buffer[index] / double(sample + 1)
                     // println(bufferColor)
                     bufferColor = bufferColor.clamped(0.0, 1.0) * 255.0
-                    let c = Vec3::change_type(bufferColor, u8)
-                    Pixel::rgba(c.x, c.y, c.z)
+                    let c = Vec3.change_type(bufferColor, u8)
+                    Pixel.rgba(c.x, c.y, c.z)
                 }
                 pge.draw(current_x, current_y, pixel)
             }
@@ -409,7 +409,7 @@ impl Game for PathTracer {
 
             let sps = double(thread_datas[0].samples) / total_t
             let total_seconds = int(total_t + 0.1)
-            let s = String::format("Samples: {}, Total: {}s, Samples per second: {}", 
+            let s = String.format("Samples: {}, Total: {}s, Samples per second: {}", 
                 (thread_datas[0].samples, total_seconds, sps))
             pge.set_window_title(s)
 
@@ -428,8 +428,8 @@ fn test_thread(data: &any) -> u32 #stdcall {
 }
 
 fn Main() {
-    let game = PathTracer::create()
-    let pge = PixelGameEngine::create(game, width, height, 1, 1)
+    let game = PathTracer.create()
+    let pge = PixelGameEngine.create(game, width, height, 1, 1)
     if pge != null {
         pge.start()
     }

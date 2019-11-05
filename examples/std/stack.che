@@ -7,7 +7,7 @@ struct Stack(T: type) {
 impl(T: type) Stack[T] {
     fn create(initial_capacity: int = 10, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return Stack[T](
-            array = Array[T]::create(initial_capacity, allocator)
+            array = Array[T].create(initial_capacity, allocator)
         )
     }
 

@@ -140,7 +140,7 @@ impl Game for ImageProcessingGame {
                 let offset_x = (slot_x + 1) * border_width + slot_x * image_width
                 let offset_y = (slot_y + 1) * border_width + slot_y * image_height
 
-                pge.draw(x + offset_x, y + offset_y, Pixel::rgbad(col.x, col.y, col.z))
+                pge.draw(x + offset_x, y + offset_y, Pixel.rgbad(col.x, col.y, col.z))
             }
         }
     }
@@ -263,7 +263,7 @@ impl Game for ImageProcessingGame {
     }
 
     fn on_update(ref Self, dt: float) -> bool {
-        pge.clear(Pixel::rgba(0, 0, 100))
+        pge.clear(Pixel.rgba(0, 0, 100))
 
         let webcam: ref Frame = frames[0]
         let target1: ref Frame = frames[1]
@@ -295,7 +295,7 @@ impl Game for ImageProcessingGame {
 
 fn Main() {
     let ipg: Game = ref <<alloc(ImageProcessingGame)
-    let engine = PixelGameEngine::create(
+    let engine = PixelGameEngine.create(
         ipg,
         num_images_x * image_width + (num_images_x + 1) * border_width,
         num_images_y * image_height + (num_images_y + 1) * border_width,

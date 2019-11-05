@@ -73,8 +73,8 @@ struct ClassCompiler {
 
 
 fn compile(source: string) -> &ObjFunction {
-    let lexer = Lexer::create(source)
-    let compiler = Compiler::create(FunctionType.Script)
+    let lexer = Lexer.create(source)
+    let compiler = Compiler.create(FunctionType.Script)
 
     let had_error = false
     let panic_mode = false

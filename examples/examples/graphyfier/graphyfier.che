@@ -71,7 +71,7 @@ impl Game for MyGame {
         if wait_handle == null {
             printfln("Failed to create file change watcher for file '{}'", fullpath)
         } else {
-            dir_change_thread = Thread::create(dir_change_thread_func, &self)
+            dir_change_thread = Thread.create(dir_change_thread_func, &self)
             dir_change_thread.start()
         }
         return true
@@ -107,7 +107,7 @@ impl Game for MyGame {
 
         function = match function {
             Some($f)    -> {
-                Memory::drop(f)
+                Memory.drop(f)
                 None
             }
             None -> None
@@ -194,8 +194,8 @@ impl Game for MyGame {
                         first = false
                     }
 
-                    pge.draw_line(xp - 1, cast map(prev.r, yc - yr, yc + yr, double(height), 0), xp, cast map(c.r, yc - yr, yc + yr, double(height), 0), Pixel::rgba(230, 50, 50))
-                    pge.draw_line(xp - 1, cast map(prev.i, yc - yr, yc + yr, double(height), 0), xp, cast map(c.i, yc - yr, yc + yr, double(height), 0), Pixel::rgba(50, 230, 50))
+                    pge.draw_line(xp - 1, cast map(prev.r, yc - yr, yc + yr, double(height), 0), xp, cast map(c.r, yc - yr, yc + yr, double(height), 0), Pixel.rgba(230, 50, 50))
+                    pge.draw_line(xp - 1, cast map(prev.i, yc - yr, yc + yr, double(height), 0), xp, cast map(c.i, yc - yr, yc + yr, double(height), 0), Pixel.rgba(50, 230, 50))
 
                     prev = c
                 }
@@ -213,8 +213,8 @@ impl Game for MyGame {
                 let pcr = to_pixel(0, c.r).y
                 let pci = to_pixel(0, c.i).y
 
-                pge.draw_circle(mouse_x, pcr, 5, Pixel::rgba(255, 0, 0))
-                pge.draw_circle(mouse_x, pci, 5, Pixel::rgba(0, 255, 0))
+                pge.draw_circle(mouse_x, pcr, 5, Pixel.rgba(255, 0, 0))
+                pge.draw_circle(mouse_x, pci, 5, Pixel.rgba(0, 255, 0))
             }
         }
     }
@@ -243,8 +243,8 @@ impl Game for MyGame {
                     else 50
 
                 let x = double(_x) * scale
-                draw_line(x, wmin.y, x, wmax.y, Pixel::rgba(brightness, brightness, brightness))
-                draw_line(x, -lw, x, lw, Pixel::rgba(200, 200, 200))
+                draw_line(x, wmin.y, x, wmax.y, Pixel.rgba(brightness, brightness, brightness))
+                draw_line(x, -lw, x, lw, Pixel.rgba(200, 200, 200))
             }
 
             for _x: int(wmin.x / scale)..0 {
@@ -254,8 +254,8 @@ impl Game for MyGame {
                     else 50
 
                 let x = double(_x) * scale
-                draw_line(x, wmin.y, x, wmax.y, Pixel::rgba(brightness, brightness, brightness))
-                draw_line(x, -lw, x, lw, Pixel::rgba(200, 200, 200))
+                draw_line(x, wmin.y, x, wmax.y, Pixel.rgba(brightness, brightness, brightness))
+                draw_line(x, -lw, x, lw, Pixel.rgba(200, 200, 200))
             }
 
             // horizontal
@@ -266,8 +266,8 @@ impl Game for MyGame {
                     else 50
 
                 let y = double(_y) * scale
-                draw_line(wmin.x, y, wmax.x, y, Pixel::rgba(brightness, brightness, brightness))
-                draw_line(-lw, y, lw, y, Pixel::rgba(200, 200, 200))
+                draw_line(wmin.x, y, wmax.x, y, Pixel.rgba(brightness, brightness, brightness))
+                draw_line(-lw, y, lw, y, Pixel.rgba(200, 200, 200))
             }
 
             for _y: int(wmin.y / scale)..0 {
@@ -277,8 +277,8 @@ impl Game for MyGame {
                     else 50
 
                 let y = double(_y) * scale
-                draw_line(wmin.x, y, wmax.x, y, Pixel::rgba(brightness, brightness, brightness))
-                draw_line(-lw, y, lw, y, Pixel::rgba(200, 200, 200))
+                draw_line(wmin.x, y, wmax.x, y, Pixel.rgba(brightness, brightness, brightness))
+                draw_line(-lw, y, lw, y, Pixel.rgba(200, 200, 200))
             }
         }
     }
@@ -343,10 +343,10 @@ fn compare_strings(a: string, b: string) -> bool {
 
 fn Main() {
     let myGame = MyGame(
-        var_name_allocator = ArenaAllocator::create(1024)
-        variables = Variables::create(compare_strings)
+        var_name_allocator = ArenaAllocator.create(1024)
+        variables = Variables.create(compare_strings)
     )
-    let pge = PixelGameEngine::create(myGame, width, height)
+    let pge = PixelGameEngine.create(myGame, width, height)
     if pge != null {
         pge.start()
     } else {

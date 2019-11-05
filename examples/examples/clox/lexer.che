@@ -89,7 +89,7 @@ impl Lexer {
     }
 
     fn make_token(ref Self, kind: TokenKind, length: int = 1) -> Token {
-        return Token(kind, source::slice(current - 1, length), line)
+        return Token(kind, source.slice(current - 1, length), line)
     }
 
     fn make_string(ref Self) -> Token {
@@ -109,7 +109,7 @@ impl Lexer {
         // eat closing ".
         next_char()
 
-        return Token(TokenKind.String, source::slice(start, current - start), l)
+        return Token(TokenKind.String, source.slice(start, current - start), l)
     }
 
     fn make_number(ref Self) -> Token {
@@ -128,7 +128,7 @@ impl Lexer {
             }
         }
 
-        return Token(TokenKind.Number, source::slice(start, current - start), line)
+        return Token(TokenKind.Number, source.slice(start, current - start), line)
     }
 
     fn make_identifier(ref Self) -> Token {
@@ -137,7 +137,7 @@ impl Lexer {
             next_char()
         }
 
-        return check_keywords(Token(TokenKind.Identifier, source::slice(start, current - start), line))
+        return check_keywords(Token(TokenKind.Identifier, source.slice(start, current - start), line))
     }
 
     fn check_keywords(ref Self, token: Token) -> Token {

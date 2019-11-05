@@ -1,19 +1,19 @@
-#test_expect_output("Test::foo(S{10}, 23)
+#test_expect_output("Test.foo(S{10}, 23)
 
-Test::foo(S{5}, 7)
-Test::print(S{5})
+Test.foo(S{5}, 7)
+Test.print(S{5})
 
-Test2::bar(S{5})
-Test2::print(S{5})
+Test2.bar(S{5})
+Test2.print(S{5})
 
-Test::foo(S2{hello}, 23)
-Test::print(S2{hello})
+Test.foo(S2{hello}, 23)
+Test.print(S2{hello})
 
-Test::foo(S{1}, 123)
-Test::print(S{1})
+Test.foo(S{1}, 123)
+Test.print(S{1})
 
-Test::foo(S2{zwei}, 123)
-Test::print(S2{zwei})
+Test.foo(S2{zwei}, 123)
+Test.print(S2{zwei})
 ")
 
 #load("std:c")
@@ -39,31 +39,31 @@ struct S2 {
 
 impl Test for S {
     fn foo(ref Self, a: int) {
-        c_printf("Test::foo(S{%lld}, %lld)`n", self.a, a)
+        c_printf("Test.foo(S{%lld}, %lld)`n", self.a, a)
     }
 
     fn print(ref Self) {
-        c_printf("Test::print(S{%lld})`n", a)
+        c_printf("Test.print(S{%lld})`n", a)
     }
 }
 
 impl Test2 for S {
     fn bar(ref Self) {
-        c_printf("Test2::bar(S{%lld})`n", a)
+        c_printf("Test2.bar(S{%lld})`n", a)
     }
 
     fn print(ref Self) {
-        c_printf("Test2::print(S{%lld})`n", a)
+        c_printf("Test2.print(S{%lld})`n", a)
     }
 }
 
 impl Test for S2 {
     fn foo(ref Self, a: int) {
-        c_printf("Test::foo(S2{%s}, %lld)`n", x, a)
+        c_printf("Test.foo(S2{%s}, %lld)`n", x, a)
     }
 
     fn print(ref Self) {
-        c_printf("Test::print(S2{%s})`n", x)
+        c_printf("Test.print(S2{%s})`n", x)
     }
 }
 

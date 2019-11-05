@@ -253,7 +253,7 @@ impl Shader for LambertianShader {
         let (ld, lc) = raymarcher.sampleLightDirection()
         let normal = raymarcher.normal(ray.origin)
 
-        let i = Vec3::dot(normal, ld)
+        let i = Vec3.dot(normal, ld)
         let c = color * lc
 
         let sdfHit = ray.origin + ld * 0.001
@@ -439,7 +439,7 @@ struct SDFAllocator {
 
 impl SDFAllocator {
     fn create() -> Self {
-        return SDFAllocator(StackAllocator::create(1024 * 2))
+        return SDFAllocator(StackAllocator.create(1024 * 2))
     }
 
     fn allocate(ref Self, $T: type) -> &T {
@@ -549,7 +549,7 @@ fn renderImage(film: ref Film)
 
     let bg = Background()
 
-    let all = SDFAllocator::create()
+    let all = SDFAllocator.create()
 
     //
     let sChecker1    = LambertianShader(Vec3(0.9, 0.8, 0.8))
@@ -610,7 +610,7 @@ fn Main()
     let height: int = 128 * scale
     let antiAliasingSteps: int = 1
 
-    let imageArr = Array[Vec3]::create()
+    let imageArr = Array[Vec3].create()
 
     imageArr.resize(width * height)
 

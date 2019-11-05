@@ -53,7 +53,7 @@ impl ArenaAllocator {
         let a = ArenaAllocator(
             parent      = alloc,
             bucket_size = size,
-            buckets     = Array[Bucket]::create()
+            buckets     = Array[Bucket].create()
         )
         return a
     }

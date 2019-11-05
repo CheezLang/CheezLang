@@ -27,7 +27,7 @@
 #load("std:io/io")
 
 fn Main() {
-    let sa = StackAllocator::create(1024)
+    let sa = StackAllocator.create(1024)
 
     sa.print_diagnostics()
 

@@ -68,7 +68,7 @@ impl(It: type, T: type) It if It : Iterator[T] {
     }
 
     fn to_array(ref Self) -> Array[T] {
-        let a = Array[T]::create()
+        let a = Array[T].create()
         while match self.next() {
             Some($v) -> {
                 a.add(v)

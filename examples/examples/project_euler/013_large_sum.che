@@ -6,7 +6,7 @@
 #load("std:string")
 
 fn Main() {
-    let res = String::empty()
+    let res = String.empty()
 
     let carry = 0
     for(reverse=true) c : 0..50 {

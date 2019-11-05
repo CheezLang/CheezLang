@@ -26,13 +26,13 @@ impl BaseShape {
     fn create(max_nodes: int) -> BaseShape {
         return BaseShape(
             max_nodes
-            Array[Node]::create(max_nodes)
+            Array[Node].create(max_nodes)
         )
     }
 
     fn next_node(ref Self, p: float2) -> &Node {
         if nodes.get_length() >= max_nodes {
-            color = Pixel::rgba(255, 255, 255)
+            color = Pixel.rgba(255, 255, 255)
             return null
         }
         nodes.add(Node(&self, p))
@@ -42,7 +42,7 @@ impl BaseShape {
     fn draw_nodes(ref Self, g: ref MyGame) {
         while let i = 0, i < nodes.get_length(), i += 1 {
             let (sx, sy) = g.world_to_screen(nodes[i].pos)
-            g.pge.draw_circle(sx, sy, 3, Pixel::rgba(255, 0, 0))
+            g.pge.draw_circle(sx, sy, 3, Pixel.rgba(255, 0, 0))
         }
     }
 
@@ -64,7 +64,7 @@ struct LineShape {
 impl LineShape {
     fn create() -> &Self {
         let l = alloc(LineShape)
-        <<l = LineShape(BaseShape::create(2))
+        <<l = LineShape(BaseShape.create(2))
         return l
     }
 }
@@ -94,7 +94,7 @@ struct BoxShape {
 impl BoxShape {
     fn create() -> &Self {
         let l = alloc(BoxShape)
-        <<l = BoxShape(BaseShape::create(2))
+        <<l = BoxShape(BaseShape.create(2))
         return l
     }
 }
@@ -124,7 +124,7 @@ struct CircleShape {
 impl CircleShape {
     fn create() -> &Self {
         let l = alloc(CircleShape)
-        <<l = CircleShape(BaseShape::create(2))
+        <<l = CircleShape(BaseShape.create(2))
         return l
     }
 }
@@ -165,7 +165,7 @@ struct CurveShape {
 impl CurveShape {
     fn create() -> &Self {
         let l = alloc(CurveShape)
-        <<l = CurveShape(BaseShape::create(3))
+        <<l = CurveShape(BaseShape.create(3))
         return l
     }
 }
@@ -239,7 +239,7 @@ impl Game for MyGame {
         vOffset.x = -(cast(float)pge.get_width()) * 0.5 / fScale
         vOffset.y = -(cast(float)pge.get_height()) * 0.5 / fScale
 
-        shapes = Array[Shape]::create()
+        shapes = Array[Shape].create()
         return true
     }
 
@@ -279,22 +279,22 @@ impl Game for MyGame {
 
         if temp_shape == null {
             if pge.get_key(Key.F1).pressed {
-                shapes.add(ref <<LineShape::create())
+                shapes.add(ref <<LineShape.create())
                 temp_shape   = &shapes[shapes.get_length() - 1]
                 selectedNode = temp_shape.next_node(vCursor)
                 selectedNode = temp_shape.next_node(vCursor)
             } else if pge.get_key(Key.F2).pressed {
-                shapes.add(ref <<BoxShape::create())
+                shapes.add(ref <<BoxShape.create())
                 temp_shape   = &shapes[shapes.get_length() - 1]
                 selectedNode = temp_shape.next_node(vCursor)
                 selectedNode = temp_shape.next_node(vCursor)
             } else if pge.get_key(Key.F3).pressed {
-                shapes.add(ref <<CircleShape::create())
+                shapes.add(ref <<CircleShape.create())
                 temp_shape   = &shapes[shapes.get_length() - 1]
                 selectedNode = temp_shape.next_node(vCursor)
                 selectedNode = temp_shape.next_node(vCursor)
             } else if pge.get_key(Key.F4).pressed {
-                shapes.add(ref <<CurveShape::create())
+                shapes.add(ref <<CurveShape.create())
                 temp_shape   = &shapes[shapes.get_length() - 1]
                 selectedNode = temp_shape.next_node(vCursor)
                 selectedNode = temp_shape.next_node(vCursor)
@@ -337,7 +337,7 @@ impl Game for MyGame {
         while let x = vWorldTopLeft.x, x < vWorldBottomRight.x, x += fGrid {
             while let y = vWorldTopLeft.y, y < vWorldBottomRight.y, y += fGrid {
                 let (sx, sy) = world_to_screen(float2(x, y))
-                pge.draw(sx, sy, Pixel::rgba(100, 100, 255))
+                pge.draw(sx, sy, Pixel.rgba(100, 100, 255))
             }
         }
 
@@ -345,17 +345,17 @@ impl Game for MyGame {
         {
             let (sx, sy) = world_to_screen(float2(0, vWorldTopLeft.y))
             let (ex, ey) = world_to_screen(float2(0, vWorldBottomRight.y))
-            pge.draw_line(sx, sy, ex, ey, Pixel::rgba(200, 200, 200), 0xF0F0F0F0)
+            pge.draw_line(sx, sy, ex, ey, Pixel.rgba(200, 200, 200), 0xF0F0F0F0)
 
             (sx, sy) = world_to_screen(float2(vWorldTopLeft.x, 0))
             (ex, ey) = world_to_screen(float2(vWorldBottomRight.x, 0))
-            pge.draw_line(sx, sy, ex, ey, Pixel::rgba(200, 200, 200), 0xF0F0F0F0)
+            pge.draw_line(sx, sy, ex, ey, Pixel.rgba(200, 200, 200), 0xF0F0F0F0)
         }
 
         // draw cursor
         {
             let (sx, sy) = world_to_screen(vCursor)
-            pge.draw_circle(sx, sy, 3, Pixel::rgba(255, 255, 0))
+            pge.draw_circle(sx, sy, 3, Pixel.rgba(255, 255, 0))
         }
 
         return true
@@ -376,7 +376,7 @@ impl Game for MyGame {
 
 fn Main() {
     let myGame = MyGame()
-    let pge = PixelGameEngine::create(myGame, 1600, 960)
+    let pge = PixelGameEngine.create(myGame, 1600, 960)
     if pge != null {
         pge.start()
     } else {

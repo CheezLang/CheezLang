@@ -13,12 +13,12 @@
 #load("parser")
 
 fn Main() {
-    let string_db = StringDatabase::create()
-    let compiler = CheezCompiler::create()
+    let string_db = StringDatabase.create()
+    let compiler = CheezCompiler.create()
 
-    match Lexer::from_file("test.che", string_db) {
+    match Lexer.from_file("test.che", string_db) {
         Ok($l) -> {
-            let parser = Parser::create(compiler, l)
+            let parser = Parser.create(compiler, l)
             let start = get_time_milliseconds()
             while true {
                 let stmt = parser.parse_statement()

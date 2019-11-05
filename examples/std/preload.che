@@ -52,13 +52,13 @@ trait Into(T: type) {
 
 impl(F: type, T: type) From[F] for T if F : Into[T], #notyet {
     fn from(value: F) -> T {
-        return value::into()
+        return F.into(value)
     }
 }
 
 impl(F: type, T: type) Into[T] for F if T : From[F], #notyet {
     fn into(ref Self) -> T {
-        return T::from(self)
+        return T.from(self)
     }
 }
 

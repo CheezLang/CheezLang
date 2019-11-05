@@ -27,7 +27,7 @@ let max_depth   : int = 15
 let scenes: []fn(ref Camera) -> Hittable = [simple_light, cornell_box, basic_scene, random_scene, big_scene]
 let const scene: int = 4
 
-let file_write_mutex: Mutex = Mutex::create()
+let file_write_mutex: Mutex = Mutex.create()
 
 struct RenderContext {
     pub const id    : int
@@ -48,13 +48,13 @@ fn Main() {
 
     let cam_pos = vec3(20.0, 2.25, 5.0)
     let lookat  = vec3(4.0, 1.0, 1.0)
-    let cam = Camera::create(
+    let cam = Camera.create(
         cam_pos,
         lookat,
         10,
         real(width) / real(height),
         0.0,
-        vec3::mag(cam_pos - lookat))
+        vec3.mag(cam_pos - lookat))
 
     let world = scenes[scene](cam)
 
@@ -64,7 +64,7 @@ fn Main() {
 
     let start = get_time_milliseconds()
     {
-        let thread_pool = ThreadPool::create(num_threads)
+        let thread_pool = ThreadPool.create(num_threads)
 
         let id = 1
         let size = grid_size
@@ -80,8 +80,8 @@ fn Main() {
                     image = image
                     world = world
                     cam = cam
-                    // random = Random::create(0)
-                    random = Random::create(cast c_rand()) // crashes with seed not 0, wtf?
+                    // random = Random.create(0)
+                    random = Random.create(cast c_rand()) // crashes with seed not 0, wtf?
                 )
                 // printfln("thread {}: ({}, {}) -> ({}, {})", (context.id, context.min.x, context.min.y, context.max.x, context.max.y))
 
@@ -175,23 +175,23 @@ fn color(r: Ray, world: Hittable, random: ref Random, depth: int = 0) -> vec3 {
 fn random_scene(cam: ref Camera) -> Hittable {
     let cam_pos = vec3(20.0, 2.25, 5.0)
     let lookat  = vec3(4.0, 1.0, 1.0)
-    cam = Camera::create(
+    cam = Camera.create(
         cam_pos,
         lookat,
         10,
         real(width) / real(height),
         0.1,
-        vec3::mag(cam_pos - lookat))
+        vec3.mag(cam_pos - lookat))
 
     //
-    let list = Array[Hittable]::create()
+    let list = Array[Hittable].create()
     list.add(create_object(Hittable, Sphere(
         center = vec3(0, -1000, 0)
         radius = 1000
         material = create_object(Material, Lambertian(
-            CheckerTexture::create(
-                ConstantTexture::create(vec3(0.1, 0.1, 0.1)),
-                ConstantTexture::create(vec3(0.9, 0.9, 0.9))
+            CheckerTexture.create(
+                ConstantTexture.create(vec3(0.1, 0.1, 0.1)),
+                ConstantTexture.create(vec3(0.9, 0.9, 0.9))
             )
         ))
     )))
@@ -205,12 +205,12 @@ fn random_scene(cam: ref Camera) -> Hittable {
                 z = real(b) + real(0.9) * global_random.random_real()
             )
 
-            if vec3::mag(center - vec3(4, 0.2, 0)) > 0.9 {
+            if vec3.mag(center - vec3(4, 0.2, 0)) > 0.9 {
                 if choose_mat < 0.65 { // diffuse
                     list.add(create_object(Hittable, Sphere(
                         center = center
                         radius = 0.2
-                        material = create_object(Material, Lambertian(ConstantTexture::create(vec3(
+                        material = create_object(Material, Lambertian(ConstantTexture.create(vec3(
                             x = global_random.random_real() * global_random.random_real()
                             y = global_random.random_real() * global_random.random_real()
                             z = global_random.random_real() * global_random.random_real()
@@ -258,7 +258,7 @@ fn random_scene(cam: ref Camera) -> Hittable {
     list.add(create_object(Hittable, Sphere(
         center = vec3(-4, 1, 0)
         radius = 1.0
-        material = create_object(Material, Lambertian(ConstantTexture::create(vec3(0.4, 0.2, 0.1))))
+        material = create_object(Material, Lambertian(ConstantTexture.create(vec3(0.4, 0.2, 0.1))))
     )))
     list.add(create_object(Hittable, Sphere(
         center = vec3(4, 1, 0)
@@ -266,17 +266,17 @@ fn random_scene(cam: ref Camera) -> Hittable {
         material = create_object(Material, Metal(vec3(0.7, 0.6, 0.5), 0.0))
     )))
 
-    let box = create_object(Hittable, Box::create(
+    let box = create_object(Hittable, Box.create(
         vec3(-100, 0, -100), vec3(100, 1, 100), null
         // vec3(-4, 0, 1), vec3(4, 1, 2), null
     ))
 
     let col: real = 1.0
     let den: real = 0.075
-    list.add(ConstantMedium::create(box, den, ConstantTexture::create(vec3(col, col, col))))
+    list.add(ConstantMedium.create(box, den, ConstantTexture.create(vec3(col, col, col))))
 
     if use_bhv {
-        let bhv = BhvNode::create(list.slice())
+        let bhv = BhvNode.create(list.slice())
         return create_object(Hittable, bhv)
     } else {
         return create_object(Hittable, list)
@@ -286,22 +286,22 @@ fn random_scene(cam: ref Camera) -> Hittable {
 fn basic_scene(cam: ref Camera) -> Hittable {
     let cam_pos = vec3(20.0, 2.25, 5.0)
     let lookat  = vec3(4.0, 1.0, 1.0)
-    cam = Camera::create(
+    cam = Camera.create(
         cam_pos,
         lookat,
         10,
         real(width) / real(height),
         0.0,
-        vec3::mag(cam_pos - lookat))
+        vec3.mag(cam_pos - lookat))
 
-    let list = Array[Hittable]::create()
+    let list = Array[Hittable].create()
     list.add(create_object(Hittable, Sphere(
         center = vec3(0, -1000, 0)
         radius = 1000
         material = create_object(Material, Lambertian(
-            CheckerTexture::create(
-                ConstantTexture::create(vec3(0.1, 0.1, 0.1)),
-                ConstantTexture::create(vec3(0.9, 0.9, 0.9))
+            CheckerTexture.create(
+                ConstantTexture.create(vec3(0.1, 0.1, 0.1)),
+                ConstantTexture.create(vec3(0.9, 0.9, 0.9))
             )
         ))
     )))
@@ -314,7 +314,7 @@ fn basic_scene(cam: ref Camera) -> Hittable {
     list.add(create_object(Hittable, Sphere(
         center = vec3(-4, 1, 0)
         radius = 1.0
-        material = create_object(Material, Lambertian(ConstantTexture::create(vec3(0.4, 0.2, 0.1))))
+        material = create_object(Material, Lambertian(ConstantTexture.create(vec3(0.4, 0.2, 0.1))))
     )))
     list.add(create_object(Hittable, Sphere(
         center = vec3(4, 1, 0)
@@ -322,17 +322,17 @@ fn basic_scene(cam: ref Camera) -> Hittable {
         material = create_object(Material, Metal(vec3(0.7, 0.6, 0.5), 0.0))
     )))
 
-    let box = create_object(Hittable, Box::create(
+    let box = create_object(Hittable, Box.create(
         vec3(-100, 0, -100), vec3(100, 10, 100), null
         // vec3(-4, 0, 1), vec3(4, 1, 2), null
     ))
 
     let col: real = 1.0
     let den: real = 0.025
-    list.add(ConstantMedium::create(box, den, ConstantTexture::create(vec3(col, col, col))))
+    list.add(ConstantMedium.create(box, den, ConstantTexture.create(vec3(col, col, col))))
 
     if use_bhv {
-        let bhv = BhvNode::create(list.slice())
+        let bhv = BhvNode.create(list.slice())
         return create_object(Hittable, bhv)
     } else {
         return create_object(Hittable, list)
@@ -340,23 +340,23 @@ fn basic_scene(cam: ref Camera) -> Hittable {
 }
 
 fn simple_light(cam: ref Camera) -> Hittable {
-    cam = Camera::create(
+    cam = Camera.create(
         vec3(20.0, 4.0, 5.0),
         vec3(4.0, 2.5, 1.0),
         20,
         real(width) / real(height)
     )
 
-    let list = Array[Hittable]::create()
+    let list = Array[Hittable].create()
 
     // ground
     list.add(create_object(Hittable, Sphere(
         center = vec3(0, -1000, 0)
         radius = 1000
         material = create_object(Material, Lambertian(
-            CheckerTexture::create(
-                ConstantTexture::create(vec3(0.1, 0.1, 0.1)),
-                ConstantTexture::create(vec3(0.9, 0.9, 0.9))
+            CheckerTexture.create(
+                ConstantTexture.create(vec3(0.1, 0.1, 0.1)),
+                ConstantTexture.create(vec3(0.9, 0.9, 0.9))
             )
         ))
     )))
@@ -364,7 +364,7 @@ fn simple_light(cam: ref Camera) -> Hittable {
     list.add(create_object(Hittable, Sphere(
         center = vec3(0, 2, 0)
         radius = 2
-        material = create_object(Material, Lambertian(ConstantTexture::create(vec3(0.4, 0.7, 0.3))))
+        material = create_object(Material, Lambertian(ConstantTexture.create(vec3(0.4, 0.7, 0.3))))
     )))
 
     list.add(create_object(Hittable, XYRect(
@@ -373,7 +373,7 @@ fn simple_light(cam: ref Camera) -> Hittable {
     )))
 
     if use_bhv {
-        let bhv = BhvNode::create(list.slice())
+        let bhv = BhvNode.create(list.slice())
         return create_object(Hittable, bhv)
     } else {
         return create_object(Hittable, list)
@@ -381,7 +381,7 @@ fn simple_light(cam: ref Camera) -> Hittable {
 }
 
 fn cornell_box(cam: ref Camera) -> Hittable {
-    cam = Camera::create(
+    cam = Camera.create(
         vec3(278, 278, -800),
         vec3(278, 278, 0),
         40,
@@ -391,26 +391,26 @@ fn cornell_box(cam: ref Camera) -> Hittable {
     )
 
     // materials
-    let red = create_object(Material, Lambertian(ConstantTexture::create(vec3(0.65, 0.05, 0.05))))
-    let white = create_object(Material, Lambertian(ConstantTexture::create(vec3(0.73, 0.73, 0.73))))
-    let green = create_object(Material, Lambertian(ConstantTexture::create(vec3(0.12, 0.45, 0.15))))
+    let red = create_object(Material, Lambertian(ConstantTexture.create(vec3(0.65, 0.05, 0.05))))
+    let white = create_object(Material, Lambertian(ConstantTexture.create(vec3(0.73, 0.73, 0.73))))
+    let green = create_object(Material, Lambertian(ConstantTexture.create(vec3(0.12, 0.45, 0.15))))
     let light = create_object(Material, Emissive(vec3(15, 15, 15)))
 
     // room
-    let list = Array[Hittable]::create()
-    list.add(FlipNormals::create(create_object(Hittable, YZRect(  0, 555,   0, 555, 555, green))))  // left
+    let list = Array[Hittable].create()
+    list.add(FlipNormals.create(create_object(Hittable, YZRect(  0, 555,   0, 555, 555, green))))  // left
     list.add(                    create_object(Hittable, YZRect(  0, 555,   0, 555,   0, red)))     // right
     list.add(                    create_object(Hittable, ZXRect(213, 343, 227, 332, 554, light)))   // light
-    // list.add(FlipNormals::create(create_object(Hittable, ZXRect(  0, 555,   0, 555, 555, white))))  // ceiling
+    // list.add(FlipNormals.create(create_object(Hittable, ZXRect(  0, 555,   0, 555, 555, white))))  // ceiling
     list.add(                    create_object(Hittable, ZXRect(  0, 555,   0, 555,   0, white)))   // floor
-    // list.add(FlipNormals::create(create_object(Hittable, XYRect(  0, 555,   0, 555, 555, white))))  // back
+    // list.add(FlipNormals.create(create_object(Hittable, XYRect(  0, 555,   0, 555, 555, white))))  // back
 
     // objects
-    Box::create_faces(vec3(130, 0, 65), vec3(295, 165, 230), white, list)
-    Box::create_faces(vec3(265, 0, 295), vec3(430, 330, 460), white, list)
+    Box.create_faces(vec3(130, 0, 65), vec3(295, 165, 230), white, list)
+    Box.create_faces(vec3(265, 0, 295), vec3(430, 330, 460), white, list)
 
     if use_bhv {
-        let bhv = BhvNode::create(list.slice())
+        let bhv = BhvNode.create(list.slice())
         return create_object(Hittable, bhv)
     } else {
         return create_object(Hittable, list)
@@ -428,9 +428,9 @@ fn big_scene(cam: ref Camera) -> Hittable {
     let look_at = vec3(278, 278, 0)
     let focus_point = vec3(220, 280, 300)
     // vec3(0, 150, 145),
-    let focus_dist = vec3::dot(vec3::normalized(look_at - cam_pos), focus_point - cam_pos) - 80
+    let focus_dist = vec3.dot(vec3.normalized(look_at - cam_pos), focus_point - cam_pos) - 80
 
-    cam = Camera::create(
+    cam = Camera.create(
         cam_pos,
         look_at,
         35,
@@ -439,16 +439,16 @@ fn big_scene(cam: ref Camera) -> Hittable {
         focus_dist
     )
 
-    let list = Array[Hittable]::create()
+    let list = Array[Hittable].create()
 
     let nb = 20
 
-    let m_white = create_object(Material, Lambertian(ConstantTexture::create(vec3(0.73, 0.73, 0.73))))
-    let m_ground = create_object(Material, Lambertian(ConstantTexture::create(vec3(0.48, 0.83, 0.53))))
+    let m_white = create_object(Material, Lambertian(ConstantTexture.create(vec3(0.73, 0.73, 0.73))))
+    let m_ground = create_object(Material, Lambertian(ConstantTexture.create(vec3(0.48, 0.83, 0.53))))
 
     // boxes
     {
-        let boxlist = Array[Hittable]::create()
+        let boxlist = Array[Hittable].create()
         for i: 0..nb {
             for j : 0..nb {
                 let w = real(100.0)
@@ -458,10 +458,10 @@ fn big_scene(cam: ref Camera) -> Hittable {
                 let x1 = x0 + w
                 let y1 = 100.0 * (global_random.random_real() + 0.01)
                 let z1 = z0 + w
-                list.add(create_object(Hittable, Box::create(vec3(x0, y0, z0), vec3(x1, y1, z1), m_ground)))
+                list.add(create_object(Hittable, Box.create(vec3(x0, y0, z0), vec3(x1, y1, z1), m_ground)))
             }
         }
-        // list.add(create_object(Hittable, BhvNode::create(boxlist.slice())))
+        // list.add(create_object(Hittable, BhvNode.create(boxlist.slice())))
     }
 
     // light
@@ -470,7 +470,7 @@ fn big_scene(cam: ref Camera) -> Hittable {
 
     // spheres
     // matte
-    list.add(create_object(Hittable, Sphere(vec3(400, 400, 200), 50, create_object(Material, Lambertian(ConstantTexture::create(vec3(0.7, 0.3, 0.1)))))))
+    list.add(create_object(Hittable, Sphere(vec3(400, 400, 200), 50, create_object(Material, Lambertian(ConstantTexture.create(vec3(0.7, 0.3, 0.1)))))))
 
     // glass
     list.add(create_object(Hittable, Sphere(vec3(260, 150, 45), 50, create_object(Material, Dielectric(1.5)))))
@@ -481,8 +481,8 @@ fn big_scene(cam: ref Camera) -> Hittable {
     // checker sphere
     if true {
         let size = real(80.0)
-        let mat = CheckerMaterial::create(3.1415 / size * 2.0, vec3(-220, -280, -300),
-            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.6, 0.2, 0.4)))),
+        let mat = CheckerMaterial.create(3.1415 / size * 2.0, vec3(-220, -280, -300),
+            create_object(Material, Lambertian(ConstantTexture.create(vec3(0.6, 0.2, 0.4)))),
             create_object(Material, Metal(vec3(1, 1, 1), 0)))
 
         list.add(create_object(Hittable, Sphere(vec3(220, 280, 300), size, mat)))
@@ -493,24 +493,24 @@ fn big_scene(cam: ref Camera) -> Hittable {
         let boundary = create_object(Hittable, Sphere(vec3(460, 150, 145), 70, create_object(Material, Dielectric(1.5))))
 
         list.add(boundary)
-        list.add(create_object(Hittable, ConstantMedium::create(boundary, 0.2, ConstantTexture::create(vec3(0.2, 0.4, 0.9)))))
+        list.add(create_object(Hittable, ConstantMedium.create(boundary, 0.2, ConstantTexture.create(vec3(0.2, 0.4, 0.9)))))
     }
 
     // fog
     if true {
         let boundary = create_object(Hittable, Sphere(vec3(0, 0, 0), 5000, create_object(Material, Dielectric(1.5))))
-        list.add(create_object(Hittable, ConstantMedium::create(boundary, 0.0002, ConstantTexture::create(vec3(1, 1, 1)))))
+        list.add(create_object(Hittable, ConstantMedium.create(boundary, 0.0002, ConstantTexture.create(vec3(1, 1, 1)))))
     }
 
     // lots of spheres
     if true {
         let mats = [
-            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.4, 0.6, 0.8))))
-            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.4, 0.6, 0.8))))
-            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.4, 0.8, 0.6))))
-            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.4, 0.8, 0.6))))
-            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.8, 0.6, 0.4))))
-            create_object(Material, Lambertian(ConstantTexture::create(vec3(0.8, 0.6, 0.4))))
+            create_object(Material, Lambertian(ConstantTexture.create(vec3(0.4, 0.6, 0.8))))
+            create_object(Material, Lambertian(ConstantTexture.create(vec3(0.4, 0.6, 0.8))))
+            create_object(Material, Lambertian(ConstantTexture.create(vec3(0.4, 0.8, 0.6))))
+            create_object(Material, Lambertian(ConstantTexture.create(vec3(0.4, 0.8, 0.6))))
+            create_object(Material, Lambertian(ConstantTexture.create(vec3(0.8, 0.6, 0.4))))
+            create_object(Material, Lambertian(ConstantTexture.create(vec3(0.8, 0.6, 0.4))))
             create_object(Material, Emissive(vec3(2.0, 2.0, 2.0)))
             create_object(Material, Metal(vec3(1, 0.8, 0.8), 0.0))
             create_object(Material, Metal(vec3(1, 0.8, 0.8), 0.0))
@@ -527,11 +527,11 @@ fn big_scene(cam: ref Camera) -> Hittable {
             list.add(create_object(Hittable, Sphere(pos, 10, m)))
         }
 
-        // list.add(create_object(Hittable, BhvNode::create(boxlist.slice())))
+        // list.add(create_object(Hittable, BhvNode.create(boxlist.slice())))
     }
 
     if use_bhv {
-        let bhv = BhvNode::create(list.slice())
+        let bhv = BhvNode.create(list.slice())
         return create_object(Hittable, bhv)
     } else {
         return create_object(Hittable, list)

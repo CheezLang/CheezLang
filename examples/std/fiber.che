@@ -8,7 +8,7 @@ fn fiber_func(param: &any) #stdcall {
     let f = cast(&Fiber)param
     f.func()
     while true {
-        Fiber::yield()
+        Fiber.yield()
     }
 }
 

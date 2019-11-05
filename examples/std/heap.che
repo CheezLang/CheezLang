@@ -11,7 +11,7 @@ struct Heap(T: type) {
 impl(T: type) Drop for Heap[T] {
     fn drop(ref Self) {
         for : length {
-            Memory::drop(data[it])
+            Memory.drop(data[it])
         }
         if allocator != null {
             free(data, allocator)

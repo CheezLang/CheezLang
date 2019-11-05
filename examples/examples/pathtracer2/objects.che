@@ -27,8 +27,8 @@ struct Sphere {
 impl Hittable for Sphere {
     fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
         let oc = r.origin - center
-        let b = vec3::dot(oc, r.direction)
-        let c = vec3::dot(oc, oc) - radius * radius
+        let b = vec3.dot(oc, r.direction)
+        let c = vec3.dot(oc, oc) - radius * radius
         let discriminant = b * b - c
 
         if discriminant > 0 {
@@ -60,7 +60,7 @@ impl Hittable for Sphere {
     }
 
     fn bounding_box(ref Self) -> Option[AABB] {
-        return Some(AABB::create(
+        return Some(AABB.create(
             center - vec3(radius, radius, radius)
             center + vec3(radius, radius, radius)
         ))
@@ -99,7 +99,7 @@ impl Hittable for Array[Hittable] {
 
         for : self.sliceF(1) {
             box = match it.bounding_box() {
-                Some($aabb) -> AABB::surrounding_box(box, aabb)
+                Some($aabb) -> AABB.surrounding_box(box, aabb)
                 None -> {
                     return None
                     cast(AABB) default
@@ -190,14 +190,14 @@ impl BhvNode {
         } else {
             let mid = l.length / 2
             let a = alloc(BhvNode)
-            <<a = BhvNode::create(l[0..mid])
+            <<a = BhvNode.create(l[0..mid])
             let b = alloc(BhvNode)
-            <<b = BhvNode::create(l[mid..l.length])
+            <<b = BhvNode.create(l[mid..l.length])
             (Hittable(<<a), Hittable(<<b))
         }
 
         let aabb = match (left.bounding_box(), right.bounding_box()) {
-            (Some($a), Some($b)) -> AABB::surrounding_box(a, b)
+            (Some($a), Some($b)) -> AABB.surrounding_box(a, b)
             $_ -> {
                 println("no bounding box in BhvNode constructor")
                 cast(AABB) default
@@ -264,7 +264,7 @@ impl Hittable for XYRect {
     }
 
     fn bounding_box(ref Self) -> Option[AABB] {
-        return Some(AABB::create(vec3(x0, y0, z - real(0.0001)), vec3(x1, y1, z + real(0.0001))))
+        return Some(AABB.create(vec3(x0, y0, z - real(0.0001)), vec3(x1, y1, z + real(0.0001))))
     }
 }
 
@@ -301,7 +301,7 @@ impl Hittable for YZRect {
     }
 
     fn bounding_box(ref Self) -> Option[AABB] {
-        return Some(AABB::create(vec3(x - real(0.0001), y0, z0), vec3(x + real(0.0001), y1, z1)))
+        return Some(AABB.create(vec3(x - real(0.0001), y0, z0), vec3(x + real(0.0001), y1, z1)))
     }
 }
 
@@ -338,7 +338,7 @@ impl Hittable for ZXRect {
     }
 
     fn bounding_box(ref Self) -> Option[AABB] {
-        return Some(AABB::create(vec3(x0, y - real(0.0001), z0), vec3(x1, y + real(0.0001), z1)))
+        return Some(AABB.create(vec3(x0, y - real(0.0001), z0), vec3(x1, y + real(0.0001), z1)))
     }
 }
 
@@ -379,20 +379,20 @@ struct Box {
 
 impl Box {
     fn create(p0: vec3, p1: vec3, mat: Material) -> Box {
-        let arr = Array[Hittable]::create(6)
+        let arr = Array[Hittable].create(6)
         create_faces(p0, p1, mat, arr)
         return Box(p0, p1, arr)
     }
 
     fn create_faces(p0: vec3, p1: vec3, mat: Material, arr: ref Array[Hittable]) {
         arr.add(create_object(Hittable, XYRect(p0.x, p1.x, p0.y, p1.y, p1.z, mat)))
-        arr.add(FlipNormals::create(create_object(Hittable, XYRect(p0.x, p1.x, p0.y, p1.y, p0.z, mat))))
+        arr.add(FlipNormals.create(create_object(Hittable, XYRect(p0.x, p1.x, p0.y, p1.y, p0.z, mat))))
 
         arr.add(create_object(Hittable, ZXRect(p0.x, p1.x, p0.z, p1.z, p1.y, mat)))
-        arr.add(FlipNormals::create(create_object(Hittable, ZXRect(p0.x, p1.x, p0.z, p1.z, p0.y, mat))))
+        arr.add(FlipNormals.create(create_object(Hittable, ZXRect(p0.x, p1.x, p0.z, p1.z, p0.y, mat))))
 
         arr.add(create_object(Hittable, YZRect(p0.y, p1.y, p0.z, p1.z, p1.x, mat)))
-        arr.add(FlipNormals::create(create_object(Hittable, YZRect(p0.y, p1.y, p0.z, p1.z, p0.x, mat))))
+        arr.add(FlipNormals.create(create_object(Hittable, YZRect(p0.y, p1.y, p0.z, p1.z, p0.x, mat))))
     }
 }
 
@@ -402,7 +402,7 @@ impl Hittable for Box {
     }
 
     fn bounding_box(ref Self) -> Option[AABB] {
-        return Some(AABB::create(pmin, pmax))
+        return Some(AABB.create(pmin, pmax))
     }
 }
 

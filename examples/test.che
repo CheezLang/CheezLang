@@ -1,17 +1,18 @@
 // #load("examples/trait_function_call_performance")
 // #load("examples/graphyfier/graphyfier")
-// #load("examples/pathtracer2/main")
+#load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
 // #load("examples/pathtracer")
+// #load("examples/snake/snake")
 
 // #load("tests/language/local_variables")
 // #load("tests/library/arena_allocator1")
 //#load("tests/other/test1")
 // #load("examples/project_euler/009_special_pythagorean_triplet")
 
-//*
+/*
 // #load("std:c")
 #load("std:io/io")
 // trait Drop {}
@@ -23,8 +24,20 @@ struct Test(T: type, S: type) {
 
 typedef TestIS = Test[int, string]
 
+fn test() -> [2]int, string {
+    let a = [5, 3], "lol"
+
+    return a
+}
 fn Main() {
     let c = TestIS(123, "uiae")
+
+    let nums, s = test()
+    printfln("nums: {}, {}, s: '{}'", (nums[0], nums[1], s))
+    printfln("nums: {}, {}, s: '{}'", nums[0], nums[1], s)
+
+    // let uiae = test()
+    // printfln("nums: {}, s: '{}'", uiae)
 }
 // */
 

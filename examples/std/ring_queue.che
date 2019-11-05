@@ -87,14 +87,14 @@ impl(T: type) Drop for RingQueue[T] {
     fn drop(ref Self) {
         if first <= last {
             for : first..last {
-                Memory::drop(data[it])
+                Memory.drop(data[it])
             }
         } else {
             for : first..capacity {
-                Memory::drop(data[it])
+                Memory.drop(data[it])
             }
             for : 0..last {
-                Memory::drop(data[it])
+                Memory.drop(data[it])
             }
         }
         if allocator != null {

@@ -8,7 +8,7 @@ impl(T: type) Drop for Rc[T] {
         @assert(<<count > 0)
         <<count -= 1
         if <<count == 0 {
-            Memory::drop(<<data)
+            Memory.drop(<<data)
             free(data)
         }
     }

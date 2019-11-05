@@ -21,11 +21,11 @@ fn Main() {
 }
 
 fn load_graph(str: string) -> Array[Array[int]] {
-    let res = Array[Array[int]]::create()
+    let res = Array[Array[int]].create()
 
     while let i = 0, i < str.length, i += 1 {
         // parse one line
-        let line = Array[int]::create()
+        let line = Array[int].create()
 
         while i < str.length {
             let start = i

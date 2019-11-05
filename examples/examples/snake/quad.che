@@ -1,8 +1,8 @@
 #load("std:math")
 
-typedef Vec2i = Vector2(int)
-typedef Vec2 = Vector2(double)
-typedef Vec3 = Vector3(double)
+typedef Vec2i = Vector2[int]
+typedef Vec2 = Vector2[double]
+typedef Vec3 = Vector3[double]
 
 struct Quad {
     pub pos: Vec2i

@@ -39,13 +39,13 @@ impl(CharType: type) StringBase[CharType] {
     }
 
     fn from_string(str: string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        let s = Self::empty(allocator)
+        let s = Self.empty(allocator)
         s.append_string(str)
         return s
     }
 
     fn from_cstring(str: c_string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        let s = Self::empty(allocator)
+        let s = Self.empty(allocator)
         s.append_cstring(str)
         return s
     }
@@ -88,7 +88,7 @@ impl(CharType: type) StringBase[CharType] {
     }
 
     fn clone(ref Self) -> Self {
-        let other = String::empty()
+        let other = String.empty()
         other.append(self)
         return other
     }
@@ -122,7 +122,7 @@ impl(CharType: type) StringBase[CharType] {
     }
 
     fn append_cstring(ref Self, other: c_string) -> ref Self #operator("+=") {
-        let otherLen = other::get_length()
+        let otherLen = c_strlen(other)
         let newLength = length + otherLen
         self.reserve(newLength)
         c_memcpy(cast &data.data[length], cast other, cast otherLen)
@@ -185,7 +185,7 @@ impl String {
 
         let formatSpecifier = {
             let const len = 64
-            String::from_raw_ptr(@alloca(char, len), len)
+            String.from_raw_ptr(@alloca(char, len), len)
         }
 
         let len = format.length
@@ -247,7 +247,7 @@ impl String {
     }
 
     fn format(format: string, args: $T) -> Self {
-        let s = Self::empty()
+        let s = Self.empty()
         s.appendf(format, args)
         return s
     }
@@ -260,8 +260,8 @@ impl Printable for String {
 }
 
 fn streql(a: $T, b: $T2, len: int) -> bool {
-    let alen = cast a::get_length()
-    let blen = cast b::get_length()
+    let alen = cast T.get_length(a)
+    let blen = cast T2.get_length(b)
     if len > alen {
         len = alen
     }
@@ -270,7 +270,7 @@ fn streql(a: $T, b: $T2, len: int) -> bool {
     }
 
     while let i = 0, i < len, i += 1 {
-        if a::char_at(i) != b::char_at(i) {
+        if T.char_at(a, i) != T2.char_at(b, i) {
             return false
         }
     }
@@ -278,15 +278,15 @@ fn streql(a: $T, b: $T2, len: int) -> bool {
 }
 
 fn streq(a: $T, b: $T2) -> bool {
-    let len = a::get_length()
-    let blen = b::get_length()
+    let len = T.get_length(a)
+    let blen = T2.get_length(b)
 
     if len != blen {
         return false
     }
 
     while let i = 0, i < len, i += 1 {
-        if a::char_at(i) != b::char_at(i) {
+        if T.char_at(a, i) != T2.char_at(b, i) {
             return false
         }
     }
@@ -303,7 +303,7 @@ impl string {
     }
 
     fn to_string(Self) -> String {
-        return String::from_string(self)
+        return String.from_string(self)
     }
 
     fn slice(Self, from: int = 0, length: int = -1) -> string {
@@ -329,6 +329,6 @@ impl c_string {
     }
 
     fn to_string(Self) -> String {
-        return String::from_cstring(self)
+        return String.from_cstring(self)
     }
 }

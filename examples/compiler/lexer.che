@@ -77,7 +77,7 @@ enum LexerNumberState {
 
 impl Lexer {
     fn from_raw_string(content: string, string_db: ref StringDatabase) -> Lexer {
-        return from_string(String::from_string(content), string_db)
+        return from_string(String.from_string(content), string_db)
     }
 
     fn from_string(content: String, string_db: ref StringDatabase) -> Lexer {
@@ -122,7 +122,7 @@ impl Lexer {
     fn from_file(filename: string, string_db: ref StringDatabase) -> Result[Lexer, String] {
         return match load_file(filename) {
             Ok($content) -> {
-                let l = Lexer::from_string(content, string_db)
+                let l = Lexer.from_string(content, string_db)
                 l.location.file = filename
                 Ok(l)
             }
@@ -267,7 +267,7 @@ impl Lexer {
         let str = {
             let const cap = 64
             let raw = @alloca(char, cap)
-            let str = String::from_raw_ptr(raw, cap)
+            let str = String.from_raw_ptr(raw, cap)
             str
         }
 

@@ -56,7 +56,7 @@ impl StackAllocator {
             parent = alloc
             memory = null
             capacity = 0
-            allocations = Array[StackAllocation]::create()
+            allocations = Array[StackAllocation].create()
         )
         a.reserve(size)
         return a
@@ -80,7 +80,7 @@ impl StackAllocator {
     }
 
     fn print_diagnostics(ref Self) {
-        let s = String::empty()
+        let s = String.empty()
         s += "( ["
         while let i = 0, i < allocations.length, i += 1 {
             if i > 0 {

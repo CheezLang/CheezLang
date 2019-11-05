@@ -31,7 +31,7 @@ impl PixelGameEngine {
                 let r = a * (cast(float)p.r) + c * (cast(float)d.r)
                 let g = a * (cast(float)p.g) + c * (cast(float)d.g)
                 let b = a * (cast(float)p.b) + c * (cast(float)d.b)
-                draw_target.set_pixel(x, y, Pixel::rgba(cast r, cast g, cast b))
+                draw_target.set_pixel(x, y, Pixel.rgba(cast r, cast g, cast b))
             }
         }
     }

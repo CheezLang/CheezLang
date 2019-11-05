@@ -10,18 +10,18 @@ fn load_file(filename: string) -> Result[String, String] {
 }
 
 fn load_filec(filename: c_string) -> Result[String, String] {
-    let content = String::empty()
+    let content = String.empty()
 
     let handle = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null)
     if (cast(int)handle) == -1 {
         let lastError = GetLastError();
-        return Err(String::format("failed to open file: 0x{:x}", lastError))
+        return Err(String.format("failed to open file: 0x{:x}", lastError))
     }
 
     let size: int = 0
     if GetFileSizeEx(handle, &size) == 0 {
         let lastError = GetLastError();
-        return Err(String::format("failed to get file size: 0x{:x}", lastError))
+        return Err(String.format("failed to get file size: 0x{:x}", lastError))
     }
 
     content.resize(size)
@@ -29,12 +29,12 @@ fn load_filec(filename: c_string) -> Result[String, String] {
     let bytesRead: u32 = 0
     if ReadFile(handle, content.get_raw(), cast(u32)size, &bytesRead, null) == 0 {
         let lastError = GetLastError();
-        return Err(String::format("failed to read content: 0x{:x}", lastError))
+        return Err(String.format("failed to read content: 0x{:x}", lastError))
     }
 
     if CloseHandle(handle) == 0 {
         let lastError = GetLastError();
-        return Err(String::format("failed to close handle: 0x{:x}", lastError))
+        return Err(String.format("failed to close handle: 0x{:x}", lastError))
     }
 
     return Ok(content)
@@ -119,7 +119,7 @@ fn write_file_string(filename: string, str: string) -> bool {
 // fn get_working_dir() -> wd: String {
 //     let len = cast(int) GetCurrentDirectory(0, null)
 
-//     wd = String::empty()
+//     wd = String.empty()
 //     wd.reserve(len)
 //     wd.resize(len - 1)
 //     GetCurrentDirectory(cast wd.length, wd.get_raw())

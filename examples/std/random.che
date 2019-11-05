@@ -39,7 +39,7 @@ impl PseudoRandomGen for LinearCongruentialGenerator {
 }
 
 let lcg: LinearCongruentialGenerator = {
-    let a = LinearCongruentialGenerator::create(cast get_time_microseconds())
+    let a = LinearCongruentialGenerator.create(cast get_time_microseconds())
     for : 1000 { a.next() }
     a
 }
@@ -153,7 +153,7 @@ impl IDiscreteDistribution[int] for StandardDiscreteUniform {
 }
 impl IDistribution[int] for StandardDiscreteUniform {
     fn sample(ref Self) -> int {
-        let d = PseudoRandom::next_double()
+        let d = PseudoRandom.next_double()
         let mi = cast(double)min
         let ma = cast(double)max
         return cast(int) d * (1.0 + ma - mi) + mi
@@ -181,7 +181,7 @@ impl IDistribution[int] for BernoulliDistribution {
     fn sample(ref Self) -> int {
         let z = cast(double)zero
         let o = cast(double)one
-        let d = PseudoRandom::next_double()
+        let d = PseudoRandom.next_double()
         return if d <= (z / (z + o)) {0} else {1}
     }
 }
@@ -198,7 +198,7 @@ fn print_histogram(dist: IDistribution[$T], low: double, high: double){
     let const width : int = 160
     let const height: int = 30
     let const samples   : int = 1000000
-    let it = dist::samples()::take(samples)
+    let it = dist.samples().take(samples)
 
     let buckets = alloc_n(int, cast width)
     c_memset(buckets.data, 0, cast width * @sizeof(int))
@@ -225,7 +225,7 @@ fn print_histogram(dist: IDistribution[$T], low: double, high: double){
 
 
     // top line
-    let max_str = String::empty()
+    let max_str = String.empty()
     max_str.appendf("{}  ", max)
     print(max_str)
     while let i = 0, i < width - max_str.length, i += 1 {
@@ -249,11 +249,11 @@ fn print_histogram(dist: IDistribution[$T], low: double, high: double){
 
 
     // bottom line
-    let left_str = String::empty()
+    let left_str = String.empty()
     left_str.appendf("{}  ", low)
-    let right_str = String::empty()
+    let right_str = String.empty()
     right_str.appendf("  {}", high)
-    let mid_str = String::empty()
+    let mid_str = String.empty()
     mid_str.appendf("  {}  ", 0.5 * (low + high))
     let p1 = width / 2
     let p2 = width - p1
@@ -280,9 +280,9 @@ fn print_histogram(dist: IDistribution[$T], low: double, high: double){
 fn print_discrete_histogram(dist: IDistribution[$T]){
     let const width : int = 40
     let const samples   : int = 100000
-    let it = dist::samples()::take(samples)
+    let it = dist.samples().take(samples)
 
-    let map = Table(int, int)::create(|a: int, b: int| a == b)
+    let map = Table[int, int].create(|a: int, b: int| a == b)
 
     while match it.next() {
         Some($c) -> {
@@ -300,9 +300,9 @@ fn print_discrete_histogram(dist: IDistribution[$T]){
     } {}
 
     let cmp: fn(ref(int, int), ref(int, int)) -> int = |a, b| b[0] - a[0]
-    let arr = map.iterator()::to_array().sort(cmp)
+    let arr = map.iterator().to_array().sort(cmp)
 
-    let max = map.iterator()::map(|t: (int, int)| t[1])::max()
+    let max = map.iterator().map(|t: (int, int)| t[1]).max()
     let scale = if max < width {1.0} else {(cast(double)width)/(cast(double)max)}
     while let i = 0, i < arr.length, i += 1 {
         printf("{}|", arr[i][0])

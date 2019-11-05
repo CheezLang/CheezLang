@@ -43,7 +43,7 @@ fn number_to_english(n: int) -> String {
     let _10     = n / 10   % 10
     let _1      = n / 1    % 10
 
-    let result = String::empty()
+    let result = String.empty()
     if _1000 != 0 {
         result += number_to_english_1(_1000)
         result += "thousand"

@@ -8,7 +8,7 @@ fn create_object($T: type, val: $V) -> T {
 
 typedef vec3 = Vector3[real]
 
-let global_random: MTwister = MTwister::create(0)
+let global_random: MTwister = MTwister.create(0)
 
 typedef Random = MTwister
 
@@ -84,12 +84,12 @@ impl Camera {
         let half_width = aspect_ratio * half_height
 
         let up = vec3(0, 1, 0)
-        let w = vec3::normalized(pos - lookat)
-        let u = vec3::cross(up, w).normalized()
-        let v = vec3::cross(w, u)
+        let w = vec3.normalized(pos - lookat)
+        let u = vec3.cross(up, w).normalized()
+        let v = vec3.cross(w, u)
 
         if focus_dist < 0.0 {
-            focus_dist = vec3::mag(pos - lookat)
+            focus_dist = vec3.mag(pos - lookat)
         }
 
         return Camera(
@@ -105,7 +105,7 @@ impl Camera {
     fn get_ray(ref Self, s: real, t: real, random: ref Random) -> Ray {
         let rd = random.random_in_unit_disk() * lens_radius
         let offset = u * rd.x + v * rd.y
-        return Ray::from_to(origin + offset, lower_left_corner + horizontal * s + vertical * t)
+        return Ray.from_to(origin + offset, lower_left_corner + horizontal * s + vertical * t)
     }
 }
 
@@ -169,7 +169,7 @@ impl AABB {
             z = max(a._max.z, b._max.z)
         )
 
-        return AABB::create(small, big)
+        return AABB.create(small, big)
     }
 }
 

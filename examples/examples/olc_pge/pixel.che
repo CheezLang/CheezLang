@@ -30,4 +30,4 @@ enum PixelMode {
     Custom
 }
 
-let WHITE: Pixel = Pixel::rgba(255, 255, 255)
+let WHITE: Pixel = Pixel.rgba(255, 255, 255)

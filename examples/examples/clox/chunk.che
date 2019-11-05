@@ -10,9 +10,9 @@ struct Chunk {
 impl Chunk {
     fn create() -> Chunk {
         return Chunk(
-            code        = Array(u8)::create()
-            lines       = Array(int)::create()
-            constants   = Array(Value)::create()
+            code        = Array(u8).create()
+            lines       = Array(int).create()
+            constants   = Array(Value).create()
         )
     }
 

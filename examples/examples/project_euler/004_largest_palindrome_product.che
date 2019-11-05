@@ -17,7 +17,7 @@ fn is_palindrome(str: ref String) -> bool {
 }
 
 fn Main() {
-    let str = String::empty()
+    let str = String.empty()
 
     let longest = 0
 

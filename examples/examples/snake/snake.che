@@ -1,6 +1,7 @@
 #load("std:io/io")
 #load("std:array")
 #load("std:util")
+#load("std:random")
 #load("glfw:glfw3")
 #load("opengl:opengl")
 
@@ -48,21 +49,20 @@ fn action_to_dir(dir: ref Direction, action: Direction) {
     }
 }
 
-fn snake()
+fn Main()
 {
     if !glfwInit() {
         println("Failed to initialize GLFW")
         return
     }
-    // defer glfwTerminate()
+    defer glfwTerminate()
 
-    let windowTitle = String::empty()
+    let windowTitle = String.empty()
     windowTitle.appendf("Snake     {} FPS`0" , 0)
 
     let window = glfwCreateWindow(cast width, cast height, windowTitle.get_raw(), null, null)
     if window == null {
         println("Failed to create window")
-        glfwTerminate()
         return
     }
 
@@ -80,15 +80,15 @@ fn snake()
     glfwSwapInterval(0)
 
     //
-    let rand = LinearCongruentialGenerator::create(cast get_time_milliseconds())
+    let rand = LinearCongruentialGenerator.create(cast get_time_milliseconds())
 
     let xMax = cast(int)(width / gridSize)
     let yMax = cast(int)(height / gridSize)
 
-    let snake = Array(Quad)::create()
+    let snake = Array[Quad].create()
 
     let startCount = 5
-    while let i = 0; i < startCount; i += 1 {
+    while let i = 0, i < startCount, i += 1 {
         let intesity = (cast(double)i) / cast(double)(startCount - 1)
         snake.add(Quad(
             Vec2i(10, 15)
@@ -141,7 +141,7 @@ fn snake()
             action = Direction.None
 
             // move snake
-            while let i = snake.length - 1; i > 0; i -= 1 {
+            while let i = snake.length - 1, i > 0, i -= 1 {
                 snake[i].pos = snake[i - 1].pos
             }
 
@@ -166,7 +166,7 @@ fn snake()
             }
         }
 
-        while let i = 0; i < snake.length; i += 1 {
+        while let i = 0, i < snake.length, i += 1 {
             snake[i].draw()
         }
 
@@ -177,6 +177,4 @@ fn snake()
         //
         glfwPollEvents()
     }
-    
-    glfwTerminate()
 }

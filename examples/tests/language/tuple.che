@@ -33,7 +33,7 @@ fn Main() {
     c_printf("%d, %d`n", c.one, c.two)
 
     let d = get_tuple_value(b, 0)
-    let e = c::get_tuple_value(1)
-    let f = (bool, int)::get_tuple_value(c, 1)
+    let e = @typeof(c).get_tuple_value(c, 1)
+    let f = (bool, int).get_tuple_value(c, 1)
     c_printf("%d, %d`n", d, e)
 }

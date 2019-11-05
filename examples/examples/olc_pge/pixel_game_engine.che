@@ -110,12 +110,12 @@ impl PixelGameEngine {
             pixel_height = pixel_h
             pixel_x = 2.0f / cast(float) screen_w
             pixel_y = 2.0f / cast(float) screen_h
-            mapKeys = Table[int, Key]::create(compare_ints)
-            fps_string = String::empty()
+            mapKeys = Table[int, Key].create(compare_ints)
+            fps_string = String.empty()
         )
 
         pge.default_draw_target = alloc(Sprite)
-        <<pge.default_draw_target = Sprite::create(screen_w, screen_h)
+        <<pge.default_draw_target = Sprite.create(screen_w, screen_h)
 
         pge.set_draw_target(null)
 

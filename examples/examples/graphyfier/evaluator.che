@@ -30,10 +30,10 @@ fn evaluate(code: []OpCode, vars: ref Variables) -> Option[Complex] {
                 }
             }
             OpCode.Neg -> {
-                stack[sp - 1] = Complex::neg(stack[sp - 1])
+                stack[sp - 1] = Complex.neg(stack[sp - 1])
             }
             OpCode.Con -> {
-                stack[sp - 1] = Complex::conj(stack[sp - 1])
+                stack[sp - 1] = Complex.conj(stack[sp - 1])
             }
             OpCode.Add -> {
                 stack[sp - 2] = stack[sp - 2] + stack[sp - 1]
@@ -68,7 +68,7 @@ fn evaluate(code: []OpCode, vars: ref Variables) -> Option[Complex] {
                     let res_r = exp(v.r * ln_r - v.i * p)
                     let res_p = v.i * ln_r + v.r * p
 
-                    stack[sp - 2] = Complex::from_polar(res_r, res_p)
+                    stack[sp - 2] = Complex.from_polar(res_r, res_p)
                 }
 
                 sp -= 1
