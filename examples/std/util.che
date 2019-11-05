@@ -1,6 +1,6 @@
 fn next_aligned(_add: &$T, align: u64) -> &T {
-    let add = cast(u64) _add
-    let mul = add + align - 1
+    add := u64(_add)
+    mul := add + align - 1
     mul -= (mul % align)
     
     return cast mul

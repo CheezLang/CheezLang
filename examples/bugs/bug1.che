@@ -7,7 +7,7 @@
 
 fn Main() {
     {
-        let a = alloc(int)
+        a := alloc(int)
         printf("{}`n", <<a)
         <<a = 5
         printf("{}`n", <<a)
@@ -15,7 +15,7 @@ fn Main() {
     }
 
     {
-        let a = alloc_raw(int, 5)
+        a := alloc_raw(int, 5)
         printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
 
         while let i = 0; i < 5; i += 1 {
@@ -26,7 +26,7 @@ fn Main() {
     }
 
     {
-        let a = alloc_n(int, 5)
+        a := alloc_n(int, 5)
         printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
 
         while let i = 0; i < a.length; i += 1 {
@@ -37,7 +37,7 @@ fn Main() {
     }
 
     {
-        let a = alloc_n(int, 3)
+        a := alloc_n(int, 3)
         while let i = 0; i < a.length; i += 1 {
             a[i] = i + 1
         }

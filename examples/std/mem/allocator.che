@@ -19,7 +19,7 @@ fn realloc_raw(mem: &$T, count: uint, allocator: Allocator = DEFAULT_STD_HEAP_AL
 }
 
 fn alloc_n($T: type, count: uint, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> []T {
-    let mem: []T = cast(&T) allocator.allocate(count, @sizeof(T), @alignof(T))
+    mem : []T = cast(&T) allocator.allocate(count, @sizeof(T), @alignof(T))
     mem.length = cast count
     return mem
 }

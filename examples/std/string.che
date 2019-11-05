@@ -1,5 +1,3 @@
-// #load("std:mem/allocator")
-// #load("std:mem/std_heap_allocator")
 #load("std:mem/memory")
 #load("std:io/io")
 #load("std:printable")
@@ -33,19 +31,19 @@ impl(CharType: type) StringBase[CharType] {
     }
 
     fn from_raw_ptr(ptr: &CharType, cap: int) -> Self {
-        let sl: []CharType = ptr
+        sl : []CharType = ptr
         sl.length = cap
         return StringBase[CharType](sl, 0, null)
     }
 
     fn from_string(str: string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        let s = Self.empty(allocator)
+        s := Self.empty(allocator)
         s.append_string(str)
         return s
     }
 
     fn from_cstring(str: c_string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        let s = Self.empty(allocator)
+        s := Self.empty(allocator)
         s.append_cstring(str)
         return s
     }
@@ -88,7 +86,7 @@ impl(CharType: type) StringBase[CharType] {
     }
 
     fn clone(ref Self) -> Self {
-        let other = String.empty()
+        other := Self.empty()
         other.append(self)
         return other
     }
@@ -106,7 +104,7 @@ impl(CharType: type) StringBase[CharType] {
         if other.data.data == null {
             return self
         }
-        let newLength = length + other.length
+        newLength := length + other.length
         self.reserve(newLength)
         c_memcpy(cast &data.data[length], cast other.data.data, cast(uint) (other.length * @sizeof(CharType)))
         length = newLength
@@ -114,7 +112,7 @@ impl(CharType: type) StringBase[CharType] {
     }
 
     fn append_string(ref Self, other: string) -> ref Self #operator("+=") {
-        let newLength = length + other.length
+        newLength := length + other.length
         self.reserve(newLength)
         c_memcpy(cast &data.data[length], cast other.data, cast other.length)
         length = newLength
@@ -122,8 +120,8 @@ impl(CharType: type) StringBase[CharType] {
     }
 
     fn append_cstring(ref Self, other: c_string) -> ref Self #operator("+=") {
-        let otherLen = c_strlen(other)
-        let newLength = length + otherLen
+        otherLen := c_strlen(other)
+        newLength := length + otherLen
         self.reserve(newLength)
         c_memcpy(cast &data.data[length], cast other, cast otherLen)
         length = newLength
@@ -131,7 +129,7 @@ impl(CharType: type) StringBase[CharType] {
     }
 
     fn append_char(ref Self, ch: CharType) -> ref Self #operator("+=") {
-        let newLength = length + 1
+        newLength := length + 1
         self.reserve(newLength)
         data[length] = ch
         length = newLength
@@ -139,7 +137,7 @@ impl(CharType: type) StringBase[CharType] {
     }
 
     fn sliceFL(ref Self, from: int, len: int) -> []CharType {
-        let slice: []CharType = &data[from]
+        slice : []CharType = &data[from]
         slice.length = len
         return slice
     }
@@ -157,7 +155,7 @@ impl(CharType: type) StringBase[CharType] {
     }
 
     fn index_of(ref Self, ch: CharType) -> int {
-        while let i = 0, i < length, i += 1 {
+        for i : 0..length {
             if data[i] == ch {
                 return i
             }
@@ -175,31 +173,29 @@ impl String {
 
     fn appendf(ref Self, format: string, arguments: $T) {
         if const @is_tuple(T) {
-            let args: [T.length] Printable = default
+            args : [T.length] Printable = default
             @for_tuple_values(arguments, |v, i| {
                 args[i] = Printable(v)
             })
         } else {
-            let args: [1]Printable = [Printable(arguments)]
+            args : [1]Printable = [Printable(arguments)]
         }
 
-        let formatSpecifier = {
-            let const len = 64
+        formatSpecifier := {
+            len :: 64
             String.from_raw_ptr(@alloca(char, len), len)
         }
 
-        let len = format.length
-        let state = 0
-        let argIndex = 0
+        len      := format.length
+        state    := 0
+        argIndex := 0
 
         // state    - desc
         // 0        - normal
         // 1        - in format
         // 2        - escape
 
-        while let i = 0, i < len, i += 1 {
-            let c = format[i]
-
+        for c : format {
             if state == 0 {
                 if c == '``' {
                     state = 2
@@ -215,9 +211,9 @@ impl String {
                 if c == '}' {
                     state = 0
 
-                    let format: string = null
+                    format : string = null
 
-                    let colon = formatSpecifier.index_of(':')
+                    colon := formatSpecifier.index_of(':')
                     if colon >= 1 {
                         // colon -> arg index before colon
                         argIndex = parse_int(formatSpecifier.sliceL(colon))
@@ -231,7 +227,7 @@ impl String {
                     }
 
                     if argIndex >= args.length {
-                        c_printf("[%lld] `"%.*s`": arg index to out of bounds: %lld, args: %lld`n", i, format.length, format.data, argIndex, args.length)
+                        c_printf("[%lld] `"%.*s`": arg index to out of bounds: %lld, args: %lld`n", it_index, format.length, format.data, argIndex, args.length)
                         return
                     }
 
@@ -247,7 +243,7 @@ impl String {
     }
 
     fn format(format: string, args: $T) -> Self {
-        let s = Self.empty()
+        s := Self.empty()
         s.appendf(format, args)
         return s
     }
@@ -260,8 +256,8 @@ impl Printable for String {
 }
 
 fn streql(a: $T, b: $T2, len: int) -> bool {
-    let alen = cast T.get_length(a)
-    let blen = cast T2.get_length(b)
+    alen := T.get_length(a)
+    blen := T2.get_length(b)
     if len > alen {
         len = alen
     }
@@ -269,7 +265,7 @@ fn streql(a: $T, b: $T2, len: int) -> bool {
         len = blen
     }
 
-    while let i = 0, i < len, i += 1 {
+    for i : 0..len {
         if T.char_at(a, i) != T2.char_at(b, i) {
             return false
         }
@@ -278,14 +274,14 @@ fn streql(a: $T, b: $T2, len: int) -> bool {
 }
 
 fn streq(a: $T, b: $T2) -> bool {
-    let len = T.get_length(a)
-    let blen = T2.get_length(b)
+    len  := T.get_length(a)
+    blen := T2.get_length(b)
 
     if len != blen {
         return false
     }
 
-    while let i = 0, i < len, i += 1 {
+    for i : 0..len {
         if T.char_at(a, i) != T2.char_at(b, i) {
             return false
         }
@@ -311,7 +307,7 @@ impl string {
             length = self.length - from
         }
 
-        let result = self
+        result := self
         result.data = pointer_add_sized(result.data, from)
         result.length = length
 

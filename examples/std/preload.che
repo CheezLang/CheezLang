@@ -64,12 +64,12 @@ impl(F: type, T: type) Into[T] for F if T : From[F], #notyet {
 
 // standard for loops
 fn for_extension_range(r: $T..T, code: Code, reverse: bool = false, inclusive: bool = false) #for {
-    let (start, end, inc) = {
-        let end = if const inclusive then r.end else r.end - 1
+    start, end, inc := {
+        end := if const inclusive then r.end else r.end - 1
         if const reverse then (end, r.start, -1) else (r.start, end, 1)
     }
 
-    let const compare = @code(if const reverse then it >= end else it <= end)
+    compare :: @code(if const reverse then it >= end else it <= end)
 
     while let (it, it_index) = (start, 0),
         @insert(compare, link=[it]),
@@ -79,7 +79,7 @@ fn for_extension_range(r: $T..T, code: Code, reverse: bool = false, inclusive: b
 }
 
 fn for_extension_int(num: int, code: Code, inclusive: bool = false, reverse: bool = false) #for {
-    let (start, inc) = if const reverse then (num - 1, -1) else (0, 1)
+    start, inc := if const reverse then (num - 1, -1) else (0, 1)
     while let (it, it_index) = (start, 0),
         if const inclusive then it_index <= num else it_index < num,
         it += inc; it_index += 1 {
@@ -90,11 +90,11 @@ fn for_extension_int(num: int, code: Code, inclusive: bool = false, reverse: boo
 fn for_extension_slice(arr: []$T, code: Code, reverse: bool = false, by_ref: bool = false) #for {
     while let it_index = 0, it_index < arr.length, it_index += 1 {
         if const reverse {
-            let it_index_rev = arr.length - it_index - 1
-            let it = if const by_ref then ref arr[it_index_rev] else arr[it_index_rev]
+            it_index_rev := arr.length - it_index - 1
+            it := if const by_ref then ref arr[it_index_rev] else arr[it_index_rev]
             @insert(code, link=[it_index_rev], _break=break, _continue=continue)
         } else {
-            let it = if const by_ref then ref arr[it_index] else arr[it_index]
+            it := if const by_ref then ref arr[it_index] else arr[it_index]
             @insert(code, _break=break, _continue=continue)
         }
     }

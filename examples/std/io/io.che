@@ -5,44 +5,31 @@
 #load("std:c")
 
 fn print_string(s: ref String) {
-    //let bytesWritten: u32 = 0
+    //bytesWritten := 0u32
     //WriteFile(__std_out_handle, cast s.get_raw(), cast s.length, &bytesWritten, null)
     c_printf("%.*s", cast(i32) s.get_length(), s.get_raw())
 }
 
 fn println(v: $T) {
-    let s = String.empty()
+    s := String.empty()
     s.appendf("{}`n", v)
     print_string(s)
 }
 
 fn print(v: $T) {
-    let s = String.empty()
+    s := String.empty()
     s.appendf("{}", v)
     print_string(s)
 }
 
-// fn printf(format: string, args: []Printable) {
-//     let s = String.empty()
-//     s.appendf(format, args)
-//     print_string(s)
-// }
-
-// fn printfln(format: string, args: []Printable) {
-//     let s = String.empty()
-//     s.appendf(format, args)
-//     s += '`n'
-//     print_string(s)
-// }
-
 fn printf(format: string, args: $T) {
-    let s = String.empty()
+    s := String.empty()
     s.appendf(format, args)
     print_string(s)
 }
 
 fn printfln(format: string, args: $T) {
-    let s = String.empty()
+    s := String.empty()
     s.appendf(format, args)
     s += '`n'
     print_string(s)
@@ -50,26 +37,26 @@ fn printfln(format: string, args: $T) {
 
 // helper functions
 fn parse_int(str: string) -> int {
-    let val = 0
+    val := 0
 
-    while let i = 0, i < str.length, i += 1 {
+    for c : str {
         val *= 10
-        val += cast(int) str[i] - '0'
+        val += int(c - '0')
     }
 
     return val
 }
 
 fn digit_to_char(i: $T) -> char {
-    let c = cast(char) i
-    return if i < 10 { c + '0' } else { (c - cast(char)10) + 'A' }
+    c := char(i)
+    return if i < 10 { c + '0' } else { (c - char(10)) + 'A' }
 }
 
 fn format_int(buffer: ref String, val: $T, _base: int = 10) {
-    let base = cast(T) _base
+    base := T(_base)
 
     // calculate length and sign
-    let (len, sign): (int, T) = if val < 0 then (1, -1)
+    len, sign : int, T = if val < 0 then (1, -1)
     else if val == 0 then (1, 1)
     else (0, 1)
 
@@ -83,9 +70,9 @@ fn format_int(buffer: ref String, val: $T, _base: int = 10) {
     if val == 0 {
         buffer[buffer.length - 1] = '0'
     } else {
-        let i = buffer.length - 1
+        i := buffer.length - 1
         while val != 0, i -= 1 {
-            let lastDigit = (val % base) * sign
+            lastDigit := (val % base) * sign
 
             val = val / base
             buffer[i] = digit_to_char(lastDigit)

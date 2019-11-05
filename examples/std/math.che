@@ -100,7 +100,7 @@ impl(T: type) Vector2[T] {
     }
 
     fn normalize(ref Self) -> ref Self {
-        let mag = self.mag()
+        mag := self.mag()
         if mag != 0 {
             x /= mag
             y /= mag
@@ -211,7 +211,7 @@ impl(T: type) Vector3[T] {
     }
 
     fn normalize(ref Self) -> ref Self {
-        let mag = self.mag()
+        mag := self.mag()
         if mag != 0 {
             x /= mag
             y /= mag
@@ -222,7 +222,7 @@ impl(T: type) Vector3[T] {
     }
 
     fn normalized(Self) -> Self {
-        let mag = self.mag()
+        mag := self.mag()
         if mag != 0 {
             return Vector3[T](
                 x / mag
@@ -328,11 +328,11 @@ impl(T: type) Vector3[T] {
     }
 
     fn refract(ref Self, normal: Self, ior: T) -> Option[Self] {
-        let uv = self
-        let dt = Self.dot(uv, normal)
-        let discriminant = 1 - ior * ior * (1 - dt * dt)
+        uv := self
+        dt := Self.dot(uv, normal)
+        discriminant := 1 - ior * ior * (1 - dt * dt)
         if discriminant > 0 {
-            let refr = (uv - normal * dt) * ior - normal * T(sqrt(double(discriminant)))
+            refr := (uv - normal * dt) * ior - normal * T(sqrt(double(discriminant)))
             return Some(refr)
         } else {
             return None
@@ -407,7 +407,7 @@ impl Complex {
     }
 
     fn div(a: Complex, b: Complex) -> Self #operator("/") {
-        let fac = 1 / (b.r * b.r + b.i * b.i)
+        fac := 1 / (b.r * b.r + b.i * b.i)
         return Complex(fac * (a.r * b.r + a.i * b.i), fac * (a.r * b.i - a.i * b.r))
     }
 
@@ -420,8 +420,8 @@ impl Complex {
             return a
         }
 
-        let r = sqrt(a.r * a.r + a.i * a.i)
-        let p = atan2(a.i, a.r)
+        r := sqrt(a.r * a.r + a.i * a.i)
+        p := atan2(a.i, a.r)
 
         r = pow(r, e)
         p = p * e

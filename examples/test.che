@@ -1,6 +1,6 @@
-// #load("examples/trait_function_call_performance")
+#load("examples/trait_function_call_performance")
 // #load("examples/graphyfier/graphyfier")
-#load("examples/pathtracer2/main")
+// #load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
@@ -17,27 +17,16 @@
 #load("std:io/io")
 // trait Drop {}
 
-struct Test(T: type, S: type) {
-    pub t: T
-    pub s: S
-}
-
-typedef TestIS = Test[int, string]
-
-fn test() -> [2]int, string {
-    let a = [5, 3], "lol"
-
-    return a
-}
 fn Main() {
-    let c = TestIS(123, "uiae")
+    println(395.51)
+    a := 5
+    b : int = 5
+    c : int
+    d :: int
+    e : type : float
 
-    let nums, s = test()
-    printfln("nums: {}, {}, s: '{}'", (nums[0], nums[1], s))
-    printfln("nums: {}, {}, s: '{}'", nums[0], nums[1], s)
-
-    // let uiae = test()
-    // printfln("nums: {}, s: '{}'", uiae)
+    foo : d = 5
+    bar : e = 10
 }
 // */
 

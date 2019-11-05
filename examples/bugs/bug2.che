@@ -6,8 +6,8 @@ enum Foo {
 }
 
 fn Main() {
-    let a = Foo.A
-    let b = ref a
+    a := Foo.A
+    b := ref a
 
     // compiles
     match b {

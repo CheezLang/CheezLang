@@ -39,30 +39,30 @@ impl TestTrait for Test {
 }
 
 fn Main() {
-    let iterations = 100000000
-    let n = 8
+    iterations := 100000000
+    n := 8
 
 
     printf("iterations: {}, n: {}`n", (iterations, n))
 
-    let t: Test = default
-    let tt: TestTrait = t
+    t  : Test = default
+    tt : TestTrait = t
 
     // call normalFunction() on Test
     // t is implicitly passed by value
     {
         t.counter = 0
 
-        let start = get_time_microseconds()
+        start := get_time_microseconds()
 
-        while let i = 0, i < iterations, i += 1 {
+        for : 0..iterations {
             t.normalFunction(cast(u64)n)
         }
 
         {
-            let end = get_time_microseconds()
-            let diff = end - start
-            let ms = diff / 1000
+            end  := get_time_microseconds()
+            diff := end - start
+            ms   := diff / 1000
 
             printf("counter: {}`n", t.counter)
             printf("[t.normalFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
@@ -74,16 +74,16 @@ fn Main() {
     {
         t.counter = 0
 
-        let start = get_time_microseconds()
+        start := get_time_microseconds()
 
-        while let i = 0, i < iterations, i += 1 {
+        for : 0..iterations {
             t.refFunction(cast(u64)n)
         }
 
         {
-            let end = get_time_microseconds()
-            let diff = end - start
-            let ms = diff / 1000
+            end  := get_time_microseconds()
+            diff := end - start
+            ms   := diff / 1000
 
             printf("counter: {}`n", t.counter)
             printf("[t.refFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
@@ -94,16 +94,16 @@ fn Main() {
     {
         t.counter = 0
 
-        let start = get_time_microseconds()
+        start := get_time_microseconds()
 
-        while let i = 0, i < iterations, i += 1 {
+        for : 0..iterations {
             t.traitFunction(cast(u64)n)
         }
 
         {
-            let end = get_time_microseconds()
-            let diff = end - start
-            let ms = diff / 1000
+            end  := get_time_microseconds()
+            diff := end - start
+            ms   := diff / 1000
 
             printf("counter: {}`n", t.counter)
             printf("[t.traitFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
@@ -116,16 +116,16 @@ fn Main() {
     {
         t.counter = 0
 
-        let start = get_time_microseconds()
+        start := get_time_microseconds()
 
-        while let i = 0, i < iterations, i += 1 {
+        for : 0..iterations {
             tt.traitFunction(cast(u64)n)
         }
 
         {
-            let end = get_time_microseconds()
-            let diff = end - start
-            let ms = diff / 1000
+            end  := get_time_microseconds()
+            diff := end - start
+            ms   := diff / 1000
 
             printf("counter: {}`n", t.counter)
             printf("[tt.traitFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))

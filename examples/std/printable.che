@@ -26,21 +26,15 @@ impl Printable for char {
 
 impl Printable for float {
     fn print(ref Self, str: ref String, format: string) {
-        let buff: string = {
-            let buff: [128]char = default
-            buff
-        }
-        buff.length = c_sprintf(buff.data, "%g", cast(double) self)
+        buff : string = @alloca(char, 128)
+        buff.length = c_sprintf(buff.data, "%g", double(self))
         str += buff
     }
 }
 
 impl Printable for double {
     fn print(ref Self, str: ref String, format: string) {
-        let buff: string = {
-            let buff: [128]char = default
-            buff
-        }
+        buff : string = @alloca(char, 128)
         buff.length = c_sprintf(buff.data, "%g", self)
         str += buff
     }
@@ -107,7 +101,7 @@ impl Printable for u64 {
 }
 
 fn printf_int_to_string(str: ref String, i: $T, format: string) {
-    let base = if streq("b", format) then 2
+    base := if streq("b", format) then 2
     else if streq("x", format) then 16
     else 10
     format_int(str, i, base)
