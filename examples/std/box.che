@@ -6,7 +6,7 @@ struct Box(T: type) {
 
 impl(T: type) Box[T] {
     fn create(v: T = default) -> Box[T] {
-        let p = alloc(T)
+        p := alloc(T)
         <<p = v
         return Box[T](p)
     }

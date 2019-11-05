@@ -34,7 +34,7 @@ indexo: -1")
 #load("std:string")
 
 fn Main() {
-    let s = String.from_cstring("lol: "c)
+    s := String.from_cstring("lol: "c)
     
     c_printf("capaci: %lld`n", s.get_capacity())
     c_printf("length: %lld`n", s.length)
@@ -66,7 +66,7 @@ fn Main() {
     c_printf("`n")
 
     {
-        let str = String.from_string(" This is another string =)")
+        str := String.from_string(" This is another string =)")
         s += str
     }
     c_printf("capaci: %lld`n", s.get_capacity())
@@ -74,7 +74,7 @@ fn Main() {
     c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
     c_printf("`n")
 
-    let sub = s.slice()
+    sub := s.slice()
     c_printf(" slice: `"%.*s`"`n", sub.length, sub.data)
     sub = s.sliceF(5)
     c_printf(" slice: `"%.*s`"`n", sub.length, sub.data)

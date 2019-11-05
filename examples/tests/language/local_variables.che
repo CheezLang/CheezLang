@@ -22,10 +22,10 @@
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
 fn Main() {
-    let a = 123
+    a := 123
     let b: bool = true
     let (c, d): (int, bool) = (a, b)
-    let f = (c, d)
+    f := (c, d)
     let (g, h) = f
 
     c_printf("a: %lld`n", a)
@@ -48,7 +48,7 @@ fn Main() {
 
     a += 11
     (a, c) += (3, 3)
-    let x = (9, -5)
+    x := (9, -5)
     (a, c) += x
 
     c_printf("a: %lld`n", a)

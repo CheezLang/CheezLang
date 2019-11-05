@@ -44,7 +44,7 @@ enum Test {
 
 fn Main() {
     {
-        let a = OptionInt.None
+        a := OptionInt.None
         print_enum(a)
         
         a = OptionInt.Some(123)
@@ -107,8 +107,8 @@ fn print_enum(e: OptionInt) {
 }
 
 fn print_value(e: $T, $VT: type) {
-    let ptr_raw = cast(&i8)&e
-    let ptr_val_raw = pointer_add(ptr_raw, 8)
-    let ptr_val = cast(&VT)ptr_val_raw
+    ptr_raw := cast(&i8)&e
+    ptr_val_raw := pointer_add(ptr_raw, 8)
+    ptr_val := cast(&VT)ptr_val_raw
     println(<<ptr_val)
 }

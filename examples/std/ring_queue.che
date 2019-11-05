@@ -16,7 +16,7 @@ impl(T: type) RingQueue[T] {
             allocator = DEFAULT_STD_HEAP_ALLOCATOR
         }
 
-        let data = alloc_raw(T, cast init_size, allocator)
+        data := alloc_raw(T, cast init_size, allocator)
         return RingQueue[T](
             data = data
             capacity = init_size
@@ -42,10 +42,10 @@ impl(T: type) RingQueue[T] {
             last = last - first
             first = 0
         } else {
-            let data_new = alloc_raw(T, cast size, allocator)
+            data_new := alloc_raw(T, cast size, allocator)
 
-            let l1 = capacity - first
-            let l2 = last
+            l1 := capacity - first
+            l2 := last
             // data is split in
             // first half:  first..capacity -> 0..l1
             c_memcpy(cast data_new, cast pointer_add_sized(data, first), u64(l1 * @sizeof(T)))
@@ -76,7 +76,7 @@ impl(T: type) RingQueue[T] {
     fn pop(ref Self) -> T {
         @assert(first != last)
 
-        let val = data[first]
+        val := data[first]
         data[first] = default
         first = (first + 1) % capacity
         return val

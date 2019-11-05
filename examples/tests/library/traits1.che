@@ -34,9 +34,9 @@ fn println(p: Printable) {
 }
 
 fn Main() {
-    let five = 5
-    let hello = "hello"
-    let tru = true
+    five := 5
+    hello := "hello"
+    tru := true
     println(five)
     println(hello)
     println(tru)

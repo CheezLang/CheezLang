@@ -5,8 +5,8 @@
 typedef Variables = Table[string, Complex]
 
 fn evaluate(code: []OpCode, vars: ref Variables) -> Option[Complex] {
-    let stack = @alloca(Complex, 128)
-    let sp = 0
+    stack := @alloca(Complex, 128)
+    sp := 0
 
     for op : code {
         match op {
@@ -48,7 +48,7 @@ fn evaluate(code: []OpCode, vars: ref Variables) -> Option[Complex] {
                 sp -= 1
             }
             OpCode.Div -> {
-                let x = stack[sp - 1]
+                x := stack[sp - 1]
 
                 if (x.r * x.r + x.i * x.i) < 0.0001 {
                     return None
@@ -58,15 +58,15 @@ fn evaluate(code: []OpCode, vars: ref Variables) -> Option[Complex] {
                 sp -= 1
             }
             OpCode.Pow -> {
-                let u = stack[sp - 2]
-                let v = stack[sp - 1]
+                u := stack[sp - 2]
+                v := stack[sp - 1]
 
                 if u.r != 0 or u.i != 0 {
                     let (r, p) = u.polar()
 
-                    let ln_r = log(r)
-                    let res_r = exp(v.r * ln_r - v.i * p)
-                    let res_p = v.i * ln_r + v.r * p
+                    ln_r := log(r)
+                    res_r := exp(v.r * ln_r - v.i * p)
+                    res_p := v.i * ln_r + v.r * p
 
                     stack[sp - 2] = Complex.from_polar(res_r, res_p)
                 }
@@ -81,14 +81,14 @@ fn evaluate(code: []OpCode, vars: ref Variables) -> Option[Complex] {
                 stack[sp - 1] = Complex(log(r), p)
             }
             OpCode.Sin -> {
-                let u = stack[sp - 1]
+                u := stack[sp - 1]
                 stack[sp - 1] = Complex(
                     r = sin(u.r) * cosh(u.i)
                     i = cos(u.r) * sinh(u.i)
                 )
             }
             OpCode.Cos -> {
-                let u = stack[sp - 1]
+                u := stack[sp - 1]
                 stack[sp - 1] = Complex(
                     r =  cos(u.r) * cosh(u.i)
                     i = -sin(u.r) * sinh(u.i)

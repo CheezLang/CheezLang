@@ -5,7 +5,7 @@ impl PixelGameEngine {
     fn clear(ref Self, p: Pixel = Pixel()) {
         let count = draw_target.width * draw_target.height
         let pixels = draw_target.get_data()
-        while let i = 0, i < count, i += 1 {
+        for i : 0..count {
             pixels[i] = p
         }
     }
@@ -96,8 +96,8 @@ impl PixelGameEngine {
         if y2 < 0 { y2 = 0 }
         if y2 >= screen_height { y2 = screen_height }
 
-        while let i = x, i < x2, i += 1 {
-            while let k = y, k < y2, k += 1 {
+        for i : x..x2 {
+            for k : y..y2 {
                 draw(i, k, p)
             }
         }
@@ -126,9 +126,9 @@ impl PixelGameEngine {
             y1 = max(y1, 0)
             y2 = min(y2, screen_height - 1)
 
-            while let y = y1, y <= y2, y += 1 {
+            for(inclusive=true) y : y1..y2 {
                 if rol(pattern) {
-                    draw(x1, y, p)
+                    self.draw(x1, y, p)
                 }
             }
             return
@@ -146,7 +146,7 @@ impl PixelGameEngine {
             x1 = max(x1, 0)
             x2 = min(x2, screen_width - 1)
 
-            while let x = x1, x <= x2, x += 1 {
+            for(inclusive=true) x : x1..x2 {
                 if rol(pattern) {
                     draw(x, y1, p)
                 }

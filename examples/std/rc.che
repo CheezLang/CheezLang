@@ -16,7 +16,7 @@ impl(T: type) Drop for Rc[T] {
 
 impl(T: type) Rc[T] {
     fn create(value: T) -> Rc[T] {
-        let count = alloc(int)
+        count := alloc(int)
         let data  = alloc(T)
         <<count = 1
         <<data = value

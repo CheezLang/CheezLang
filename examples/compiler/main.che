@@ -13,15 +13,15 @@
 #load("parser")
 
 fn Main() {
-    let string_db = StringDatabase.create()
-    let compiler = CheezCompiler.create()
+    string_db := StringDatabase.create()
+    compiler := CheezCompiler.create()
 
     match Lexer.from_file("test.che", string_db) {
         Ok($l) -> {
-            let parser = Parser.create(compiler, l)
-            let start = get_time_milliseconds()
+            parser := Parser.create(compiler, l)
+            start := get_time_milliseconds()
             while true {
-                let stmt = parser.parse_statement()
+                stmt := parser.parse_statement()
                 match stmt {
                     Some($stmt) -> {
                         // println(<<stmt)
@@ -33,8 +33,8 @@ fn Main() {
                 }
             }
 
-            let end = get_time_milliseconds()
-            let elapsed = ((cast(double)end) - (cast(double)start)) / 1000.0
+            end := get_time_milliseconds()
+            elapsed := ((cast(double)end) - (cast(double)start)) / 1000.0
             printfln("elapsed: {}", elapsed)
         }
 

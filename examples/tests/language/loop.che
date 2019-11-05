@@ -19,7 +19,7 @@ fn Main() {
 }
 
 fn fizz_buzz(n: int) {
-    while let a = 1, a < n, a = a + 1 {
+    for a : 1..n {
         if a % 5 == 0 and a % 3 == 0 {
             c_printf("FizzBuzz ")
         } else if a % 5 == 0 {
@@ -48,7 +48,7 @@ fn test5(n: int) {
 }
 
 fn test4(n: int) {
-    while let a = 0, a < n, a = a + 1 {
+    for a : 0..n {
         if a % 2 == 0 {
             continue
         }
@@ -59,7 +59,7 @@ fn test4(n: int) {
 }
 
 fn test3(n: int) {
-    while let a = 0, true, a = a + 1 {
+    while a := 0, true, a = a + 1 {
         if a == n {
             break
         }
@@ -70,14 +70,14 @@ fn test3(n: int) {
 }
 
 fn test2(n: int) {
-    while let a = 0, a < n, a = a + 1 {
+    for a : 0..n {
         c_printf("%lld", a)
     }
     c_printf("`n")
 }
 
 fn test1(n: int) {
-    let a = 0
+    a := 0
     while a < n {
         c_printf("%lld", a)
         a = a + 1

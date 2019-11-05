@@ -20,13 +20,13 @@ impl(T: type) Test[T] {
 }
 
 fn Main() {
-    let t = Test[int](2)
-    let t2 = Test[double](3.6)
+    t := Test[int](2)
+    t2 := Test[double](3.6)
 
     c_printf("%lld`n", t.x)
     c_printf("%f`n", t2.x)
 
-    let uiae = t.foo(5)
+    uiae := t.foo(5)
 
     c_printf("%lld`n", t.x)
     c_printf("%f`n", t2.x)

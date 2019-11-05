@@ -1,571 +1,571 @@
 #load("windows_types")
 
 // new, incomplete
-let const FILE_NOTIFY_CHANGE_LAST_WRITE : DWORD = 0x00000010
-let const FILE_NOTIFY_CHANGE_SIZE       : DWORD = 0x00000008
-let const WT_EXECUTEONLYONCE            : DWORD = 0x00000008
-let const INFINITE                      : DWORD = 0xFFFFFFFF
+FILE_NOTIFY_CHANGE_LAST_WRITE : DWORD : 0x00000010
+FILE_NOTIFY_CHANGE_SIZE       : DWORD : 0x00000008
+WT_EXECUTEONLYONCE            : DWORD : 0x00000008
+INFINITE                      : DWORD : 0xFFFFFFFF
 //
 
-let const CREATE_SUSPENDED                  : DWORD = 0x00000004
-let const STACK_SIZE_PARAM_IS_A_RESERVATION : DWORD = 0x00010000
+CREATE_SUSPENDED                  : DWORD : 0x00000004
+STACK_SIZE_PARAM_IS_A_RESERVATION : DWORD : 0x00010000
 
-let const PFD_MAIN_PLANE            : u8    = 0
-let const PFD_OVERLAY_PLANE         : u8    = 1
-let const PFD_UNDERLAY_PLANE        : u8    = (-1)
+PFD_MAIN_PLANE            : u8    : 0
+PFD_OVERLAY_PLANE         : u8    : 1
+PFD_UNDERLAY_PLANE        : u8    : (-1)
 
-let const PFD_TYPE_RGBA             : u8    = 0
-let const PFD_TYPE_COLORINDEX       : u8    = 1
+PFD_TYPE_RGBA             : u8    : 0
+PFD_TYPE_COLORINDEX       : u8    : 1
 
-let const PFD_DOUBLEBUFFER          : u32   = 0x00000001
-let const PFD_STEREO                : u32   = 0x00000002
-let const PFD_DRAW_TO_WINDOW        : u32   = 0x00000004
-let const PFD_DRAW_TO_BITMAP        : u32   = 0x00000008
-let const PFD_SUPPORT_GDI           : u32   = 0x00000010
-let const PFD_SUPPORT_OPENGL        : u32   = 0x00000020
-let const PFD_GENERIC_FORMAT        : u32   = 0x00000040
-let const PFD_NEED_PALETTE          : u32   = 0x00000080
-let const PFD_NEED_SYSTEM_PALETTE   : u32   = 0x00000100
-let const PFD_SWAP_EXCHANGE         : u32   = 0x00000200
-let const PFD_SWAP_COPY             : u32   = 0x00000400
-let const PFD_SWAP_LAYER_BUFFERS    : u32   = 0x00000800
-let const PFD_GENERIC_ACCELERATED   : u32   = 0x00001000
-let const PFD_SUPPORT_DIRECTDRAW    : u32   = 0x00002000
-let const PFD_DIRECT3D_ACCELERATED  : u32   = 0x00004000
-let const PFD_SUPPORT_COMPOSITION   : u32   = 0x00008000
-let const PFD_DEPTH_DONTCARE        : u32   = 0x20000000
-let const PFD_DOUBLEBUFFER_DONTCARE : u32   = 0x40000000
-let const PFD_STEREO_DONTCARE       : u32   = 0x80000000
+PFD_DOUBLEBUFFER          : u32   : 0x00000001
+PFD_STEREO                : u32   : 0x00000002
+PFD_DRAW_TO_WINDOW        : u32   : 0x00000004
+PFD_DRAW_TO_BITMAP        : u32   : 0x00000008
+PFD_SUPPORT_GDI           : u32   : 0x00000010
+PFD_SUPPORT_OPENGL        : u32   : 0x00000020
+PFD_GENERIC_FORMAT        : u32   : 0x00000040
+PFD_NEED_PALETTE          : u32   : 0x00000080
+PFD_NEED_SYSTEM_PALETTE   : u32   : 0x00000100
+PFD_SWAP_EXCHANGE         : u32   : 0x00000200
+PFD_SWAP_COPY             : u32   : 0x00000400
+PFD_SWAP_LAYER_BUFFERS    : u32   : 0x00000800
+PFD_GENERIC_ACCELERATED   : u32   : 0x00001000
+PFD_SUPPORT_DIRECTDRAW    : u32   : 0x00002000
+PFD_DIRECT3D_ACCELERATED  : u32   : 0x00004000
+PFD_SUPPORT_COMPOSITION   : u32   : 0x00008000
+PFD_DEPTH_DONTCARE        : u32   : 0x20000000
+PFD_DOUBLEBUFFER_DONTCARE : u32   : 0x40000000
+PFD_STEREO_DONTCARE       : u32   : 0x80000000
 
 fn MAKEINTRESOURCE(i: uint) -> &char {
     return cast(&char) cast(u32) cast(u16)i
 }
 
-let const GENERIC_READ                      : DWORD = 0x80000000
-let const GENERIC_WRITE                     : DWORD = 0x40000000
+GENERIC_READ                      : DWORD : 0x80000000
+GENERIC_WRITE                     : DWORD : 0x40000000
 
-let const FILE_SHARE_READ                   : DWORD = 0x00000001
-let const FILE_SHARE_WRITE                  : DWORD = 0x00000002
-let const FILE_SHARE_DELETE                 : DWORD = 0x00000004
+FILE_SHARE_READ                   : DWORD : 0x00000001
+FILE_SHARE_WRITE                  : DWORD : 0x00000002
+FILE_SHARE_DELETE                 : DWORD : 0x00000004
 
-let const CREATE_NEW                        : DWORD = 1
-let const CREATE_ALWAYS                     : DWORD = 2
-let const OPEN_EXISTING                     : DWORD = 3
-let const OPEN_ALWAYS                       : DWORD = 4
-let const TRUNCATE_EXISTING                 : DWORD = 5
+CREATE_NEW                        : DWORD : 1
+CREATE_ALWAYS                     : DWORD : 2
+OPEN_EXISTING                     : DWORD : 3
+OPEN_ALWAYS                       : DWORD : 4
+TRUNCATE_EXISTING                 : DWORD : 5
 
-let const FILE_ATTRIBUTE_NORMAL             : DWORD = 0x80
+FILE_ATTRIBUTE_NORMAL             : DWORD : 0x80
 
-let IDI_APPLICATION                         : c_string  = MAKEINTRESOURCE(32512)
-let IDC_ARROW                               : c_string  = MAKEINTRESOURCE(32512)
+IDI_APPLICATION                         : c_string  = MAKEINTRESOURCE(32512)
+IDC_ARROW                               : c_string  = MAKEINTRESOURCE(32512)
 
-let const CS_VREDRAW                        : UINT  = 0x0001
-let const CS_HREDRAW                        : UINT  = 0x0002
-let const CS_OWNDC                          : UINT  = 0x0020
+CS_VREDRAW                        : UINT  : 0x0001
+CS_HREDRAW                        : UINT  : 0x0002
+CS_OWNDC                          : UINT  : 0x0020
 
-let const WS_EX_DLGMODALFRAME               : DWORD = 0x00000001
-let const WS_EX_NOPARENTNOTIFY              : DWORD = 0x00000004
-let const WS_EX_TOPMOST                     : DWORD = 0x00000008
-let const WS_EX_ACCEPTFILES                 : DWORD = 0x00000010
-let const WS_EX_TRANSPARENT                 : DWORD = 0x00000020
-let const WS_EX_MDICHILD                    : DWORD = 0x00000040
-let const WS_EX_TOOLWINDOW                  : DWORD = 0x00000080
-let const WS_EX_WINDOWEDGE                  : DWORD = 0x00000100
-let const WS_EX_CLIENTEDGE                  : DWORD = 0x00000200
-let const WS_EX_CONTEXTHELP                 : DWORD = 0x00000400
-let const WS_EX_RIGHT                       : DWORD = 0x00001000
-let const WS_EX_LEFT                        : DWORD = 0x00000000
-let const WS_EX_RTLREADING                  : DWORD = 0x00002000
-let const WS_EX_LTRREADING                  : DWORD = 0x00000000
-let const WS_EX_LEFTSCROLLBAR               : DWORD = 0x00004000
-let const WS_EX_RIGHTSCROLLBAR              : DWORD = 0x00000000
-let const WS_EX_CONTROLPARENT               : DWORD = 0x00010000
-let const WS_EX_STATICEDGE                  : DWORD = 0x00020000
-let const WS_EX_APPWINDOW                   : DWORD = 0x00040000
-let const WS_EX_LAYERED                     : DWORD = 0x00080000
-let const WS_EX_NOINHERITLAYOUT             : DWORD = 0x00100000
-let const WS_EX_NOREDIRECTIONBITMAP         : DWORD = 0x00200000
-let const WS_EX_LAYOUTRTL                   : DWORD = 0x00400000
-let const WS_EX_COMPOSITED                  : DWORD = 0x02000000
-let const WS_EX_NOACTIVATE                  : DWORD = 0x08000000
-let const WS_EX_OVERLAPPEDWINDOW            : DWORD = @bin_or(WS_EX_WINDOWEDGE, WS_EX_CLIENTEDGE)
-let const WS_EX_PALETTEWINDOW               : DWORD = @bin_or(WS_EX_WINDOWEDGE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST)
+WS_EX_DLGMODALFRAME               : DWORD : 0x00000001
+WS_EX_NOPARENTNOTIFY              : DWORD : 0x00000004
+WS_EX_TOPMOST                     : DWORD : 0x00000008
+WS_EX_ACCEPTFILES                 : DWORD : 0x00000010
+WS_EX_TRANSPARENT                 : DWORD : 0x00000020
+WS_EX_MDICHILD                    : DWORD : 0x00000040
+WS_EX_TOOLWINDOW                  : DWORD : 0x00000080
+WS_EX_WINDOWEDGE                  : DWORD : 0x00000100
+WS_EX_CLIENTEDGE                  : DWORD : 0x00000200
+WS_EX_CONTEXTHELP                 : DWORD : 0x00000400
+WS_EX_RIGHT                       : DWORD : 0x00001000
+WS_EX_LEFT                        : DWORD : 0x00000000
+WS_EX_RTLREADING                  : DWORD : 0x00002000
+WS_EX_LTRREADING                  : DWORD : 0x00000000
+WS_EX_LEFTSCROLLBAR               : DWORD : 0x00004000
+WS_EX_RIGHTSCROLLBAR              : DWORD : 0x00000000
+WS_EX_CONTROLPARENT               : DWORD : 0x00010000
+WS_EX_STATICEDGE                  : DWORD : 0x00020000
+WS_EX_APPWINDOW                   : DWORD : 0x00040000
+WS_EX_LAYERED                     : DWORD : 0x00080000
+WS_EX_NOINHERITLAYOUT             : DWORD : 0x00100000
+WS_EX_NOREDIRECTIONBITMAP         : DWORD : 0x00200000
+WS_EX_LAYOUTRTL                   : DWORD : 0x00400000
+WS_EX_COMPOSITED                  : DWORD : 0x02000000
+WS_EX_NOACTIVATE                  : DWORD : 0x08000000
+WS_EX_OVERLAPPEDWINDOW            : DWORD : @bin_or(WS_EX_WINDOWEDGE, WS_EX_CLIENTEDGE)
+WS_EX_PALETTEWINDOW               : DWORD : @bin_or(WS_EX_WINDOWEDGE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST)
 
-let const WS_TILED                          : DWORD = 0x00000000
-let const WS_OVERLAPPED                     : DWORD = 0x00000000
-let const WS_TABSTOP                        : DWORD = 0x00010000
-let const WS_MAXIMIZEBOX                    : DWORD = 0x00010000
-let const WS_MINIMIZEBOX                    : DWORD = 0x00020000
-let const WS_GROUP                          : DWORD = 0x00020000
-let const WS_THICKFRAME                     : DWORD = 0x00040000
-let const WS_SIZEBOX                        : DWORD = 0x00040000
-let const WS_SYSMENU                        : DWORD = 0x00080000
-let const WS_HSCROLL                        : DWORD = 0x00100000
-let const WS_VSCROLL                        : DWORD = 0x00200000
-let const WS_DLGFRAME                       : DWORD = 0x00400000
-let const WS_BORDER                         : DWORD = 0x00800000
-let const WS_CAPTION                        : DWORD = 0x00C00000
-let const WS_MAXIMIZE                       : DWORD = 0x01000000
-let const WS_CLIPCHILDREN                   : DWORD = 0x02000000
-let const WS_CLIPSIBLINGS                   : DWORD = 0x04000000
-let const WS_DISABLED                       : DWORD = 0x08000000
-let const WS_VISIBLE                        : DWORD = 0x10000000
-let const WS_MINIMIZE                       : DWORD = 0x20000000
-let const WS_ICONIC                         : DWORD = 0x20000000
-let const WS_CHILD                          : DWORD = 0x40000000
-let const WS_POPUP                          : DWORD = 0x80000000
-let const WS_CHILDWINDOW                    : DWORD = WS_CHILD
-let const WS_OVERLAPPEDWINDOW               : DWORD = @bin_or(WS_OVERLAPPED, WS_CAPTION, WS_SYSMENU, WS_THICKFRAME, WS_MINIMIZEBOX, WS_MAXIMIZEBOX)
-let const WS_POPUPWINDOW                    : DWORD = @bin_or(WS_POPUP, WS_BORDER, WS_SYSMENU)
+WS_TILED                          : DWORD : 0x00000000
+WS_OVERLAPPED                     : DWORD : 0x00000000
+WS_TABSTOP                        : DWORD : 0x00010000
+WS_MAXIMIZEBOX                    : DWORD : 0x00010000
+WS_MINIMIZEBOX                    : DWORD : 0x00020000
+WS_GROUP                          : DWORD : 0x00020000
+WS_THICKFRAME                     : DWORD : 0x00040000
+WS_SIZEBOX                        : DWORD : 0x00040000
+WS_SYSMENU                        : DWORD : 0x00080000
+WS_HSCROLL                        : DWORD : 0x00100000
+WS_VSCROLL                        : DWORD : 0x00200000
+WS_DLGFRAME                       : DWORD : 0x00400000
+WS_BORDER                         : DWORD : 0x00800000
+WS_CAPTION                        : DWORD : 0x00C00000
+WS_MAXIMIZE                       : DWORD : 0x01000000
+WS_CLIPCHILDREN                   : DWORD : 0x02000000
+WS_CLIPSIBLINGS                   : DWORD : 0x04000000
+WS_DISABLED                       : DWORD : 0x08000000
+WS_VISIBLE                        : DWORD : 0x10000000
+WS_MINIMIZE                       : DWORD : 0x20000000
+WS_ICONIC                         : DWORD : 0x20000000
+WS_CHILD                          : DWORD : 0x40000000
+WS_POPUP                          : DWORD : 0x80000000
+WS_CHILDWINDOW                    : DWORD : WS_CHILD
+WS_OVERLAPPEDWINDOW               : DWORD : @bin_or(WS_OVERLAPPED, WS_CAPTION, WS_SYSMENU, WS_THICKFRAME, WS_MINIMIZEBOX, WS_MAXIMIZEBOX)
+WS_POPUPWINDOW                    : DWORD : @bin_or(WS_POPUP, WS_BORDER, WS_SYSMENU)
 
-let const WM_NULL                           : UINT = 0x0000
-let const WM_CREATE                         : UINT = 0x0001
-let const WM_DESTROY                        : UINT = 0x0002
-let const WM_MOVE                           : UINT = 0x0003
-let const WM_SIZE                           : UINT = 0x0005
-let const WM_ACTIVATE                       : UINT = 0x0006
-let const WM_SETFOCUS                       : UINT = 0x0007
-let const WM_KILLFOCUS                      : UINT = 0x0008
-let const WM_ENABLE                         : UINT = 0x000A
-let const WM_SETREDRAW                      : UINT = 0x000B
-let const WM_SETTEXT                        : UINT = 0x000C
-let const WM_GETTEXT                        : UINT = 0x000D
-let const WM_GETTEXTLENGTH                  : UINT = 0x000E
-let const WM_PAINT                          : UINT = 0x000F
-let const WM_CLOSE                          : UINT = 0x0010
-let const WM_QUERYENDSESSION                : UINT = 0x0011
-let const WM_QUERYOPEN                      : UINT = 0x0013
-let const WM_ENDSESSION                     : UINT = 0x0016
-let const WM_QUIT                           : UINT = 0x0012
-let const WM_ERASEBKGND                     : UINT = 0x0014
-let const WM_SYSCOLORCHANGE                 : UINT = 0x0015
-let const WM_SHOWWINDOW                     : UINT = 0x0018
-let const WM_WININICHANGE                   : UINT = 0x001A
-let const WM_DEVMODECHANGE                  : UINT = 0x001B
-let const WM_ACTIVATEAPP                    : UINT = 0x001C
-let const WM_FONTCHANGE                     : UINT = 0x001D
-let const WM_TIMECHANGE                     : UINT = 0x001E
-let const WM_CANCELMODE                     : UINT = 0x001F
-let const WM_SETCURSOR                      : UINT = 0x0020
-let const WM_MOUSEACTIVATE                  : UINT = 0x0021
-let const WM_CHILDACTIVATE                  : UINT = 0x0022
-let const WM_QUEUESYNC                      : UINT = 0x0023
-let const WM_GETMINMAXINFO                  : UINT = 0x0024
-let const WM_PAINTICON                      : UINT = 0x0026
-let const WM_ICONERASEBKGND                 : UINT = 0x0027
-let const WM_NEXTDLGCTL                     : UINT = 0x0028
-let const WM_SPOOLERSTATUS                  : UINT = 0x002A
-let const WM_DRAWITEM                       : UINT = 0x002B
-let const WM_MEASUREITEM                    : UINT = 0x002C
-let const WM_DELETEITEM                     : UINT = 0x002D
-let const WM_VKEYTOITEM                     : UINT = 0x002E
-let const WM_CHARTOITEM                     : UINT = 0x002F
-let const WM_SETFONT                        : UINT = 0x0030
-let const WM_GETFONT                        : UINT = 0x0031
-let const WM_SETHOTKEY                      : UINT = 0x0032
-let const WM_GETHOTKEY                      : UINT = 0x0033
-let const WM_QUERYDRAGICON                  : UINT = 0x0037
-let const WM_COMPAREITEM                    : UINT = 0x0039
-let const WM_GETOBJECT                      : UINT = 0x003D
-let const WM_COMPACTING                     : UINT = 0x0041
-let const WM_COMMNOTIFY                     : UINT = 0x0044  /* no longer suported */
-let const WM_WINDOWPOSCHANGING              : UINT = 0x0046
-let const WM_WINDOWPOSCHANGED               : UINT = 0x0047
-let const WM_POWER                          : UINT = 0x0048
-let const WM_COPYDATA                       : UINT = 0x004A
-let const WM_CANCELJOURNAL                  : UINT = 0x004B
-let const WM_NOTIFY                         : UINT = 0x004E
-let const WM_INPUTLANGCHANGEREQUEST         : UINT = 0x0050
-let const WM_INPUTLANGCHANGE                : UINT = 0x0051
-let const WM_TCARD                          : UINT = 0x0052
-let const WM_HELP                           : UINT = 0x0053
-let const WM_USERCHANGED                    : UINT = 0x0054
-let const WM_NOTIFYFORMAT                   : UINT = 0x0055
-let const WM_CONTEXTMENU                    : UINT = 0x007B
-let const WM_STYLECHANGING                  : UINT = 0x007C
-let const WM_STYLECHANGED                   : UINT = 0x007D
-let const WM_DISPLAYCHANGE                  : UINT = 0x007E
-let const WM_GETICON                        : UINT = 0x007F
-let const WM_SETICON                        : UINT = 0x0080
-let const WM_NCCREATE                       : UINT = 0x0081
-let const WM_NCDESTROY                      : UINT = 0x0082
-let const WM_NCCALCSIZE                     : UINT = 0x0083
-let const WM_NCHITTEST                      : UINT = 0x0084
-let const WM_NCPAINT                        : UINT = 0x0085
-let const WM_NCACTIVATE                     : UINT = 0x0086
-let const WM_GETDLGCODE                     : UINT = 0x0087
-let const WM_SYNCPAINT                      : UINT = 0x0088
-let const WM_NCMOUSEMOVE                    : UINT = 0x00A0
-let const WM_NCLBUTTONDOWN                  : UINT = 0x00A1
-let const WM_NCLBUTTONUP                    : UINT = 0x00A2
-let const WM_NCLBUTTONDBLCLK                : UINT = 0x00A3
-let const WM_NCRBUTTONDOWN                  : UINT = 0x00A4
-let const WM_NCRBUTTONUP                    : UINT = 0x00A5
-let const WM_NCRBUTTONDBLCLK                : UINT = 0x00A6
-let const WM_NCMBUTTONDOWN                  : UINT = 0x00A7
-let const WM_NCMBUTTONUP                    : UINT = 0x00A8
-let const WM_NCMBUTTONDBLCLK                : UINT = 0x00A9
-let const WM_NCXBUTTONDOWN                  : UINT = 0x00AB
-let const WM_NCXBUTTONUP                    : UINT = 0x00AC
-let const WM_NCXBUTTONDBLCLK                : UINT = 0x00AD
-let const WM_INPUT_DEVICE_CHANGE            : UINT = 0x00FE
-let const WM_INPUT                          : UINT = 0x00FF
-let const WM_KEYFIRST                       : UINT = 0x0100
-let const WM_KEYDOWN                        : UINT = 0x0100
-let const WM_KEYUP                          : UINT = 0x0101
-let const WM_CHAR                           : UINT = 0x0102
-let const WM_DEADCHAR                       : UINT = 0x0103
-let const WM_SYSKEYDOWN                     : UINT = 0x0104
-let const WM_SYSKEYUP                       : UINT = 0x0105
-let const WM_SYSCHAR                        : UINT = 0x0106
-let const WM_SYSDEADCHAR                    : UINT = 0x0107
-let const WM_UNICHAR                        : UINT = 0x0109
-let const WM_KEYLAST                        : UINT = 0x0109
-let const WM_IME_STARTCOMPOSITION           : UINT = 0x010D
-let const WM_IME_ENDCOMPOSITION             : UINT = 0x010E
-let const WM_IME_COMPOSITION                : UINT = 0x010F
-let const WM_IME_KEYLAST                    : UINT = 0x010F
-let const WM_INITDIALOG                     : UINT = 0x0110
-let const WM_COMMAND                        : UINT = 0x0111
-let const WM_SYSCOMMAND                     : UINT = 0x0112
-let const WM_TIMER                          : UINT = 0x0113
-let const WM_HSCROLL                        : UINT = 0x0114
-let const WM_VSCROLL                        : UINT = 0x0115
-let const WM_INITMENU                       : UINT = 0x0116
-let const WM_INITMENUPOPUP                  : UINT = 0x0117
-let const WM_GESTURE                        : UINT = 0x0119
-let const WM_GESTURENOTIFY                  : UINT = 0x011A
-let const WM_MENUSELECT                     : UINT = 0x011F
-let const WM_MENUCHAR                       : UINT = 0x0120
-let const WM_ENTERIDLE                      : UINT = 0x0121
-let const WM_MENURBUTTONUP                  : UINT = 0x0122
-let const WM_MENUDRAG                       : UINT = 0x0123
-let const WM_MENUGETOBJECT                  : UINT = 0x0124
-let const WM_UNINITMENUPOPUP                : UINT = 0x0125
-let const WM_MENUCOMMAND                    : UINT = 0x0126
-let const WM_CHANGEUISTATE                  : UINT = 0x0127
-let const WM_UPDATEUISTATE                  : UINT = 0x0128
-let const WM_QUERYUISTATE                   : UINT = 0x0129
-let const WM_CTLCOLORMSGBOX                 : UINT = 0x0132
-let const WM_CTLCOLOREDIT                   : UINT = 0x0133
-let const WM_CTLCOLORLISTBOX                : UINT = 0x0134
-let const WM_CTLCOLORBTN                    : UINT = 0x0135
-let const WM_CTLCOLORDLG                    : UINT = 0x0136
-let const WM_CTLCOLORSCROLLBAR              : UINT = 0x0137
-let const WM_CTLCOLORSTATIC                 : UINT = 0x0138
-let const MN_GETHMENU                       : UINT = 0x01E1
-let const WM_MOUSEFIRST                     : UINT = 0x0200
-let const WM_MOUSEMOVE                      : UINT = 0x0200
-let const WM_LBUTTONDOWN                    : UINT = 0x0201
-let const WM_LBUTTONUP                      : UINT = 0x0202
-let const WM_LBUTTONDBLCLK                  : UINT = 0x0203
-let const WM_RBUTTONDOWN                    : UINT = 0x0204
-let const WM_RBUTTONUP                      : UINT = 0x0205
-let const WM_RBUTTONDBLCLK                  : UINT = 0x0206
-let const WM_MBUTTONDOWN                    : UINT = 0x0207
-let const WM_MBUTTONUP                      : UINT = 0x0208
-let const WM_MBUTTONDBLCLK                  : UINT = 0x0209
-let const WM_MOUSEWHEEL                     : UINT = 0x020A
-let const WM_XBUTTONDOWN                    : UINT = 0x020B
-let const WM_XBUTTONUP                      : UINT = 0x020C
-let const WM_XBUTTONDBLCLK                  : UINT = 0x020D
-let const WM_MOUSEHWHEEL                    : UINT = 0x020E
-let const WM_MOUSELAST                      : UINT = 0x020E
-let const WM_PARENTNOTIFY                   : UINT = 0x0210
-let const WM_ENTERMENULOOP                  : UINT = 0x0211
-let const WM_EXITMENULOOP                   : UINT = 0x0212
-let const WM_NEXTMENU                       : UINT = 0x0213
-let const WM_SIZING                         : UINT = 0x0214
-let const WM_CAPTURECHANGED                 : UINT = 0x0215
-let const WM_MOVING                         : UINT = 0x0216
-let const WM_POWERBROADCAST                 : UINT = 0x0218
-let const WM_DEVICECHANGE                   : UINT = 0x0219
-let const WM_MDICREATE                      : UINT = 0x0220
-let const WM_MDIDESTROY                     : UINT = 0x0221
-let const WM_MDIACTIVATE                    : UINT = 0x0222
-let const WM_MDIRESTORE                     : UINT = 0x0223
-let const WM_MDINEXT                        : UINT = 0x0224
-let const WM_MDIMAXIMIZE                    : UINT = 0x0225
-let const WM_MDITILE                        : UINT = 0x0226
-let const WM_MDICASCADE                     : UINT = 0x0227
-let const WM_MDIICONARRANGE                 : UINT = 0x0228
-let const WM_MDIGETACTIVE                   : UINT = 0x0229
-let const WM_MDISETMENU                     : UINT = 0x0230
-let const WM_ENTERSIZEMOVE                  : UINT = 0x0231
-let const WM_EXITSIZEMOVE                   : UINT = 0x0232
-let const WM_DROPFILES                      : UINT = 0x0233
-let const WM_MDIREFRESHMENU                 : UINT = 0x0234
-let const WM_POINTERDEVICECHANGE            : UINT = 0x238
-let const WM_POINTERDEVICEINRANGE           : UINT = 0x239
-let const WM_POINTERDEVICEOUTOFRANGE        : UINT = 0x23A
-let const WM_TOUCH                          : UINT = 0x0240
-let const WM_NCPOINTERUPDATE                : UINT = 0x0241
-let const WM_NCPOINTERDOWN                  : UINT = 0x0242
-let const WM_NCPOINTERUP                    : UINT = 0x0243
-let const WM_POINTERUPDATE                  : UINT = 0x0245
-let const WM_POINTERDOWN                    : UINT = 0x0246
-let const WM_POINTERUP                      : UINT = 0x0247
-let const WM_POINTERENTER                   : UINT = 0x0249
-let const WM_POINTERLEAVE                   : UINT = 0x024A
-let const WM_POINTERACTIVATE                : UINT = 0x024B
-let const WM_POINTERCAPTURECHANGED          : UINT = 0x024C
-let const WM_TOUCHHITTESTING                : UINT = 0x024D
-let const WM_POINTERWHEEL                   : UINT = 0x024E
-let const WM_POINTERHWHEEL                  : UINT = 0x024F
-let const WM_POINTERROUTEDTO                : UINT = 0x0251
-let const WM_POINTERROUTEDAWAY              : UINT = 0x0252
-let const WM_POINTERROUTEDRELEASED          : UINT = 0x0253
-let const WM_IME_SETCONTEXT                 : UINT = 0x0281
-let const WM_IME_NOTIFY                     : UINT = 0x0282
-let const WM_IME_CONTROL                    : UINT = 0x0283
-let const WM_IME_COMPOSITIONFULL            : UINT = 0x0284
-let const WM_IME_SELECT                     : UINT = 0x0285
-let const WM_IME_CHAR                       : UINT = 0x0286
-let const WM_IME_REQUEST                    : UINT = 0x0288
-let const WM_IME_KEYDOWN                    : UINT = 0x0290
-let const WM_IME_KEYUP                      : UINT = 0x0291
-let const WM_MOUSEHOVER                     : UINT = 0x02A1
-let const WM_MOUSELEAVE                     : UINT = 0x02A3
-let const WM_NCMOUSEHOVER                   : UINT = 0x02A0
-let const WM_NCMOUSELEAVE                   : UINT = 0x02A2
-let const WM_WTSSESSION_CHANGE              : UINT = 0x02B1
-let const WM_TABLET_FIRST                   : UINT = 0x02c0
-let const WM_TABLET_LAST                    : UINT = 0x02df
-let const WM_DPICHANGED                     : UINT = 0x02E0
-let const WM_DPICHANGED_BEFOREPARENT        : UINT = 0x02E2
-let const WM_DPICHANGED_AFTERPARENT         : UINT = 0x02E3
-let const WM_GETDPISCALEDSIZE               : UINT = 0x02E4
-let const WM_CUT                            : UINT = 0x0300
-let const WM_COPY                           : UINT = 0x0301
-let const WM_PASTE                          : UINT = 0x0302
-let const WM_CLEAR                          : UINT = 0x0303
-let const WM_UNDO                           : UINT = 0x0304
-let const WM_RENDERFORMAT                   : UINT = 0x0305
-let const WM_RENDERALLFORMATS               : UINT = 0x0306
-let const WM_DESTROYCLIPBOARD               : UINT = 0x0307
-let const WM_DRAWCLIPBOARD                  : UINT = 0x0308
-let const WM_PAINTCLIPBOARD                 : UINT = 0x0309
-let const WM_VSCROLLCLIPBOARD               : UINT = 0x030A
-let const WM_SIZECLIPBOARD                  : UINT = 0x030B
-let const WM_ASKCBFORMATNAME                : UINT = 0x030C
-let const WM_CHANGECBCHAIN                  : UINT = 0x030D
-let const WM_HSCROLLCLIPBOARD               : UINT = 0x030E
-let const WM_QUERYNEWPALETTE                : UINT = 0x030F
-let const WM_PALETTEISCHANGING              : UINT = 0x0310
-let const WM_PALETTECHANGED                 : UINT = 0x0311
-let const WM_HOTKEY                         : UINT = 0x0312
-let const WM_PRINT                          : UINT = 0x0317
-let const WM_PRINTCLIENT                    : UINT = 0x0318
-let const WM_APPCOMMAND                     : UINT = 0x0319
-let const WM_THEMECHANGED                   : UINT = 0x031A
-let const WM_CLIPBOARDUPDATE                : UINT = 0x031D
-let const WM_DWMCOMPOSITIONCHANGED          : UINT = 0x031E
-let const WM_DWMNCRENDERINGCHANGED          : UINT = 0x031F
-let const WM_DWMCOLORIZATIONCOLORCHANGED    : UINT = 0x0320
-let const WM_DWMWINDOWMAXIMIZEDCHANGE       : UINT = 0x0321
-let const WM_DWMSENDICONICTHUMBNAIL         : UINT = 0x0323
-let const WM_DWMSENDICONICLIVEPREVIEWBITMAP : UINT = 0x0326
-let const WM_GETTITLEBARINFOEX              : UINT = 0x033F
-let const WM_HANDHELDFIRST                  : UINT = 0x0358
-let const WM_HANDHELDLAST                   : UINT = 0x035F
-let const WM_AFXFIRST                       : UINT = 0x0360
-let const WM_AFXLAST                        : UINT = 0x037F
-let const WM_PENWINFIRST                    : UINT = 0x0380
-let const WM_PENWINLAST                     : UINT = 0x038F
-let const WM_APP                            : UINT = 0x8000
-let const WM_USER                           : UINT = 0x0400
+WM_NULL                           : UINT : 0x0000
+WM_CREATE                         : UINT : 0x0001
+WM_DESTROY                        : UINT : 0x0002
+WM_MOVE                           : UINT : 0x0003
+WM_SIZE                           : UINT : 0x0005
+WM_ACTIVATE                       : UINT : 0x0006
+WM_SETFOCUS                       : UINT : 0x0007
+WM_KILLFOCUS                      : UINT : 0x0008
+WM_ENABLE                         : UINT : 0x000A
+WM_SETREDRAW                      : UINT : 0x000B
+WM_SETTEXT                        : UINT : 0x000C
+WM_GETTEXT                        : UINT : 0x000D
+WM_GETTEXTLENGTH                  : UINT : 0x000E
+WM_PAINT                          : UINT : 0x000F
+WM_CLOSE                          : UINT : 0x0010
+WM_QUERYENDSESSION                : UINT : 0x0011
+WM_QUERYOPEN                      : UINT : 0x0013
+WM_ENDSESSION                     : UINT : 0x0016
+WM_QUIT                           : UINT : 0x0012
+WM_ERASEBKGND                     : UINT : 0x0014
+WM_SYSCOLORCHANGE                 : UINT : 0x0015
+WM_SHOWWINDOW                     : UINT : 0x0018
+WM_WININICHANGE                   : UINT : 0x001A
+WM_DEVMODECHANGE                  : UINT : 0x001B
+WM_ACTIVATEAPP                    : UINT : 0x001C
+WM_FONTCHANGE                     : UINT : 0x001D
+WM_TIMECHANGE                     : UINT : 0x001E
+WM_CANCELMODE                     : UINT : 0x001F
+WM_SETCURSOR                      : UINT : 0x0020
+WM_MOUSEACTIVATE                  : UINT : 0x0021
+WM_CHILDACTIVATE                  : UINT : 0x0022
+WM_QUEUESYNC                      : UINT : 0x0023
+WM_GETMINMAXINFO                  : UINT : 0x0024
+WM_PAINTICON                      : UINT : 0x0026
+WM_ICONERASEBKGND                 : UINT : 0x0027
+WM_NEXTDLGCTL                     : UINT : 0x0028
+WM_SPOOLERSTATUS                  : UINT : 0x002A
+WM_DRAWITEM                       : UINT : 0x002B
+WM_MEASUREITEM                    : UINT : 0x002C
+WM_DELETEITEM                     : UINT : 0x002D
+WM_VKEYTOITEM                     : UINT : 0x002E
+WM_CHARTOITEM                     : UINT : 0x002F
+WM_SETFONT                        : UINT : 0x0030
+WM_GETFONT                        : UINT : 0x0031
+WM_SETHOTKEY                      : UINT : 0x0032
+WM_GETHOTKEY                      : UINT : 0x0033
+WM_QUERYDRAGICON                  : UINT : 0x0037
+WM_COMPAREITEM                    : UINT : 0x0039
+WM_GETOBJECT                      : UINT : 0x003D
+WM_COMPACTING                     : UINT : 0x0041
+WM_COMMNOTIFY                     : UINT : 0x0044  /* no longer suported */
+WM_WINDOWPOSCHANGING              : UINT : 0x0046
+WM_WINDOWPOSCHANGED               : UINT : 0x0047
+WM_POWER                          : UINT : 0x0048
+WM_COPYDATA                       : UINT : 0x004A
+WM_CANCELJOURNAL                  : UINT : 0x004B
+WM_NOTIFY                         : UINT : 0x004E
+WM_INPUTLANGCHANGEREQUEST         : UINT : 0x0050
+WM_INPUTLANGCHANGE                : UINT : 0x0051
+WM_TCARD                          : UINT : 0x0052
+WM_HELP                           : UINT : 0x0053
+WM_USERCHANGED                    : UINT : 0x0054
+WM_NOTIFYFORMAT                   : UINT : 0x0055
+WM_CONTEXTMENU                    : UINT : 0x007B
+WM_STYLECHANGING                  : UINT : 0x007C
+WM_STYLECHANGED                   : UINT : 0x007D
+WM_DISPLAYCHANGE                  : UINT : 0x007E
+WM_GETICON                        : UINT : 0x007F
+WM_SETICON                        : UINT : 0x0080
+WM_NCCREATE                       : UINT : 0x0081
+WM_NCDESTROY                      : UINT : 0x0082
+WM_NCCALCSIZE                     : UINT : 0x0083
+WM_NCHITTEST                      : UINT : 0x0084
+WM_NCPAINT                        : UINT : 0x0085
+WM_NCACTIVATE                     : UINT : 0x0086
+WM_GETDLGCODE                     : UINT : 0x0087
+WM_SYNCPAINT                      : UINT : 0x0088
+WM_NCMOUSEMOVE                    : UINT : 0x00A0
+WM_NCLBUTTONDOWN                  : UINT : 0x00A1
+WM_NCLBUTTONUP                    : UINT : 0x00A2
+WM_NCLBUTTONDBLCLK                : UINT : 0x00A3
+WM_NCRBUTTONDOWN                  : UINT : 0x00A4
+WM_NCRBUTTONUP                    : UINT : 0x00A5
+WM_NCRBUTTONDBLCLK                : UINT : 0x00A6
+WM_NCMBUTTONDOWN                  : UINT : 0x00A7
+WM_NCMBUTTONUP                    : UINT : 0x00A8
+WM_NCMBUTTONDBLCLK                : UINT : 0x00A9
+WM_NCXBUTTONDOWN                  : UINT : 0x00AB
+WM_NCXBUTTONUP                    : UINT : 0x00AC
+WM_NCXBUTTONDBLCLK                : UINT : 0x00AD
+WM_INPUT_DEVICE_CHANGE            : UINT : 0x00FE
+WM_INPUT                          : UINT : 0x00FF
+WM_KEYFIRST                       : UINT : 0x0100
+WM_KEYDOWN                        : UINT : 0x0100
+WM_KEYUP                          : UINT : 0x0101
+WM_CHAR                           : UINT : 0x0102
+WM_DEADCHAR                       : UINT : 0x0103
+WM_SYSKEYDOWN                     : UINT : 0x0104
+WM_SYSKEYUP                       : UINT : 0x0105
+WM_SYSCHAR                        : UINT : 0x0106
+WM_SYSDEADCHAR                    : UINT : 0x0107
+WM_UNICHAR                        : UINT : 0x0109
+WM_KEYLAST                        : UINT : 0x0109
+WM_IME_STARTCOMPOSITION           : UINT : 0x010D
+WM_IME_ENDCOMPOSITION             : UINT : 0x010E
+WM_IME_COMPOSITION                : UINT : 0x010F
+WM_IME_KEYLAST                    : UINT : 0x010F
+WM_INITDIALOG                     : UINT : 0x0110
+WM_COMMAND                        : UINT : 0x0111
+WM_SYSCOMMAND                     : UINT : 0x0112
+WM_TIMER                          : UINT : 0x0113
+WM_HSCROLL                        : UINT : 0x0114
+WM_VSCROLL                        : UINT : 0x0115
+WM_INITMENU                       : UINT : 0x0116
+WM_INITMENUPOPUP                  : UINT : 0x0117
+WM_GESTURE                        : UINT : 0x0119
+WM_GESTURENOTIFY                  : UINT : 0x011A
+WM_MENUSELECT                     : UINT : 0x011F
+WM_MENUCHAR                       : UINT : 0x0120
+WM_ENTERIDLE                      : UINT : 0x0121
+WM_MENURBUTTONUP                  : UINT : 0x0122
+WM_MENUDRAG                       : UINT : 0x0123
+WM_MENUGETOBJECT                  : UINT : 0x0124
+WM_UNINITMENUPOPUP                : UINT : 0x0125
+WM_MENUCOMMAND                    : UINT : 0x0126
+WM_CHANGEUISTATE                  : UINT : 0x0127
+WM_UPDATEUISTATE                  : UINT : 0x0128
+WM_QUERYUISTATE                   : UINT : 0x0129
+WM_CTLCOLORMSGBOX                 : UINT : 0x0132
+WM_CTLCOLOREDIT                   : UINT : 0x0133
+WM_CTLCOLORLISTBOX                : UINT : 0x0134
+WM_CTLCOLORBTN                    : UINT : 0x0135
+WM_CTLCOLORDLG                    : UINT : 0x0136
+WM_CTLCOLORSCROLLBAR              : UINT : 0x0137
+WM_CTLCOLORSTATIC                 : UINT : 0x0138
+MN_GETHMENU                       : UINT : 0x01E1
+WM_MOUSEFIRST                     : UINT : 0x0200
+WM_MOUSEMOVE                      : UINT : 0x0200
+WM_LBUTTONDOWN                    : UINT : 0x0201
+WM_LBUTTONUP                      : UINT : 0x0202
+WM_LBUTTONDBLCLK                  : UINT : 0x0203
+WM_RBUTTONDOWN                    : UINT : 0x0204
+WM_RBUTTONUP                      : UINT : 0x0205
+WM_RBUTTONDBLCLK                  : UINT : 0x0206
+WM_MBUTTONDOWN                    : UINT : 0x0207
+WM_MBUTTONUP                      : UINT : 0x0208
+WM_MBUTTONDBLCLK                  : UINT : 0x0209
+WM_MOUSEWHEEL                     : UINT : 0x020A
+WM_XBUTTONDOWN                    : UINT : 0x020B
+WM_XBUTTONUP                      : UINT : 0x020C
+WM_XBUTTONDBLCLK                  : UINT : 0x020D
+WM_MOUSEHWHEEL                    : UINT : 0x020E
+WM_MOUSELAST                      : UINT : 0x020E
+WM_PARENTNOTIFY                   : UINT : 0x0210
+WM_ENTERMENULOOP                  : UINT : 0x0211
+WM_EXITMENULOOP                   : UINT : 0x0212
+WM_NEXTMENU                       : UINT : 0x0213
+WM_SIZING                         : UINT : 0x0214
+WM_CAPTURECHANGED                 : UINT : 0x0215
+WM_MOVING                         : UINT : 0x0216
+WM_POWERBROADCAST                 : UINT : 0x0218
+WM_DEVICECHANGE                   : UINT : 0x0219
+WM_MDICREATE                      : UINT : 0x0220
+WM_MDIDESTROY                     : UINT : 0x0221
+WM_MDIACTIVATE                    : UINT : 0x0222
+WM_MDIRESTORE                     : UINT : 0x0223
+WM_MDINEXT                        : UINT : 0x0224
+WM_MDIMAXIMIZE                    : UINT : 0x0225
+WM_MDITILE                        : UINT : 0x0226
+WM_MDICASCADE                     : UINT : 0x0227
+WM_MDIICONARRANGE                 : UINT : 0x0228
+WM_MDIGETACTIVE                   : UINT : 0x0229
+WM_MDISETMENU                     : UINT : 0x0230
+WM_ENTERSIZEMOVE                  : UINT : 0x0231
+WM_EXITSIZEMOVE                   : UINT : 0x0232
+WM_DROPFILES                      : UINT : 0x0233
+WM_MDIREFRESHMENU                 : UINT : 0x0234
+WM_POINTERDEVICECHANGE            : UINT : 0x238
+WM_POINTERDEVICEINRANGE           : UINT : 0x239
+WM_POINTERDEVICEOUTOFRANGE        : UINT : 0x23A
+WM_TOUCH                          : UINT : 0x0240
+WM_NCPOINTERUPDATE                : UINT : 0x0241
+WM_NCPOINTERDOWN                  : UINT : 0x0242
+WM_NCPOINTERUP                    : UINT : 0x0243
+WM_POINTERUPDATE                  : UINT : 0x0245
+WM_POINTERDOWN                    : UINT : 0x0246
+WM_POINTERUP                      : UINT : 0x0247
+WM_POINTERENTER                   : UINT : 0x0249
+WM_POINTERLEAVE                   : UINT : 0x024A
+WM_POINTERACTIVATE                : UINT : 0x024B
+WM_POINTERCAPTURECHANGED          : UINT : 0x024C
+WM_TOUCHHITTESTING                : UINT : 0x024D
+WM_POINTERWHEEL                   : UINT : 0x024E
+WM_POINTERHWHEEL                  : UINT : 0x024F
+WM_POINTERROUTEDTO                : UINT : 0x0251
+WM_POINTERROUTEDAWAY              : UINT : 0x0252
+WM_POINTERROUTEDRELEASED          : UINT : 0x0253
+WM_IME_SETCONTEXT                 : UINT : 0x0281
+WM_IME_NOTIFY                     : UINT : 0x0282
+WM_IME_CONTROL                    : UINT : 0x0283
+WM_IME_COMPOSITIONFULL            : UINT : 0x0284
+WM_IME_SELECT                     : UINT : 0x0285
+WM_IME_CHAR                       : UINT : 0x0286
+WM_IME_REQUEST                    : UINT : 0x0288
+WM_IME_KEYDOWN                    : UINT : 0x0290
+WM_IME_KEYUP                      : UINT : 0x0291
+WM_MOUSEHOVER                     : UINT : 0x02A1
+WM_MOUSELEAVE                     : UINT : 0x02A3
+WM_NCMOUSEHOVER                   : UINT : 0x02A0
+WM_NCMOUSELEAVE                   : UINT : 0x02A2
+WM_WTSSESSION_CHANGE              : UINT : 0x02B1
+WM_TABLET_FIRST                   : UINT : 0x02c0
+WM_TABLET_LAST                    : UINT : 0x02df
+WM_DPICHANGED                     : UINT : 0x02E0
+WM_DPICHANGED_BEFOREPARENT        : UINT : 0x02E2
+WM_DPICHANGED_AFTERPARENT         : UINT : 0x02E3
+WM_GETDPISCALEDSIZE               : UINT : 0x02E4
+WM_CUT                            : UINT : 0x0300
+WM_COPY                           : UINT : 0x0301
+WM_PASTE                          : UINT : 0x0302
+WM_CLEAR                          : UINT : 0x0303
+WM_UNDO                           : UINT : 0x0304
+WM_RENDERFORMAT                   : UINT : 0x0305
+WM_RENDERALLFORMATS               : UINT : 0x0306
+WM_DESTROYCLIPBOARD               : UINT : 0x0307
+WM_DRAWCLIPBOARD                  : UINT : 0x0308
+WM_PAINTCLIPBOARD                 : UINT : 0x0309
+WM_VSCROLLCLIPBOARD               : UINT : 0x030A
+WM_SIZECLIPBOARD                  : UINT : 0x030B
+WM_ASKCBFORMATNAME                : UINT : 0x030C
+WM_CHANGECBCHAIN                  : UINT : 0x030D
+WM_HSCROLLCLIPBOARD               : UINT : 0x030E
+WM_QUERYNEWPALETTE                : UINT : 0x030F
+WM_PALETTEISCHANGING              : UINT : 0x0310
+WM_PALETTECHANGED                 : UINT : 0x0311
+WM_HOTKEY                         : UINT : 0x0312
+WM_PRINT                          : UINT : 0x0317
+WM_PRINTCLIENT                    : UINT : 0x0318
+WM_APPCOMMAND                     : UINT : 0x0319
+WM_THEMECHANGED                   : UINT : 0x031A
+WM_CLIPBOARDUPDATE                : UINT : 0x031D
+WM_DWMCOMPOSITIONCHANGED          : UINT : 0x031E
+WM_DWMNCRENDERINGCHANGED          : UINT : 0x031F
+WM_DWMCOLORIZATIONCOLORCHANGED    : UINT : 0x0320
+WM_DWMWINDOWMAXIMIZEDCHANGE       : UINT : 0x0321
+WM_DWMSENDICONICTHUMBNAIL         : UINT : 0x0323
+WM_DWMSENDICONICLIVEPREVIEWBITMAP : UINT : 0x0326
+WM_GETTITLEBARINFOEX              : UINT : 0x033F
+WM_HANDHELDFIRST                  : UINT : 0x0358
+WM_HANDHELDLAST                   : UINT : 0x035F
+WM_AFXFIRST                       : UINT : 0x0360
+WM_AFXLAST                        : UINT : 0x037F
+WM_PENWINFIRST                    : UINT : 0x0380
+WM_PENWINLAST                     : UINT : 0x038F
+WM_APP                            : UINT : 0x8000
+WM_USER                           : UINT : 0x0400
 
 
 
-let const VK_LBUTTON                            : int   = 0x01
-let const VK_RBUTTON                            : int   = 0x02
-let const VK_CANCEL                             : int   = 0x03
-let const VK_MBUTTON                            : int   = 0x04    /* NOT contiguous with L & RBUTTON */
-let const VK_XBUTTON1                           : int   = 0x05    /* NOT contiguous with L & RBUTTON */
-let const VK_XBUTTON2                           : int   = 0x06    /* NOT contiguous with L & RBUTTON */
-let const VK_BACK                               : int   = 0x08
-let const VK_TAB                                : int   = 0x09
-let const VK_CLEAR                              : int   = 0x0C
-let const VK_RETURN                             : int   = 0x0D
-let const VK_SHIFT                              : int   = 0x10
-let const VK_CONTROL                            : int   = 0x11
-let const VK_MENU                               : int   = 0x12
-let const VK_PAUSE                              : int   = 0x13
-let const VK_CAPITAL                            : int   = 0x14
-let const VK_KANA                               : int   = 0x15
-let const VK_HANGEUL                            : int   = 0x15  /* old name - should be here for compatibility */
-let const VK_HANGUL                             : int   = 0x15
-let const VK_JUNJA                              : int   = 0x17
-let const VK_FINAL                              : int   = 0x18
-let const VK_HANJA                              : int   = 0x19
-let const VK_KANJI                              : int   = 0x19
-let const VK_ESCAPE                             : int   = 0x1B
-let const VK_CONVERT                            : int   = 0x1C
-let const VK_NONCONVERT                         : int   = 0x1D
-let const VK_ACCEPT                             : int   = 0x1E
-let const VK_MODECHANGE                         : int   = 0x1F
-let const VK_SPACE                              : int   = 0x20
-let const VK_PRIOR                              : int   = 0x21
-let const VK_NEXT                               : int   = 0x22
-let const VK_END                                : int   = 0x23
-let const VK_HOME                               : int   = 0x24
-let const VK_LEFT                               : int   = 0x25
-let const VK_UP                                 : int   = 0x26
-let const VK_RIGHT                              : int   = 0x27
-let const VK_DOWN                               : int   = 0x28
-let const VK_SELECT                             : int   = 0x29
-let const VK_PRINT                              : int   = 0x2A
-let const VK_EXECUTE                            : int   = 0x2B
-let const VK_SNAPSHOT                           : int   = 0x2C
-let const VK_INSERT                             : int   = 0x2D
-let const VK_DELETE                             : int   = 0x2E
-let const VK_HELP                               : int   = 0x2F
-let const VK_LWIN                               : int   = 0x5B
-let const VK_RWIN                               : int   = 0x5C
-let const VK_APPS                               : int   = 0x5D
-let const VK_SLEEP                              : int   = 0x5F
-let const VK_NUMPAD0                            : int   = 0x60
-let const VK_NUMPAD1                            : int   = 0x61
-let const VK_NUMPAD2                            : int   = 0x62
-let const VK_NUMPAD3                            : int   = 0x63
-let const VK_NUMPAD4                            : int   = 0x64
-let const VK_NUMPAD5                            : int   = 0x65
-let const VK_NUMPAD6                            : int   = 0x66
-let const VK_NUMPAD7                            : int   = 0x67
-let const VK_NUMPAD8                            : int   = 0x68
-let const VK_NUMPAD9                            : int   = 0x69
-let const VK_MULTIPLY                           : int   = 0x6A
-let const VK_ADD                                : int   = 0x6B
-let const VK_SEPARATOR                          : int   = 0x6C
-let const VK_SUBTRACT                           : int   = 0x6D
-let const VK_DECIMAL                            : int   = 0x6E
-let const VK_DIVIDE                             : int   = 0x6F
-let const VK_F1                                 : int   = 0x70
-let const VK_F2                                 : int   = 0x71
-let const VK_F3                                 : int   = 0x72
-let const VK_F4                                 : int   = 0x73
-let const VK_F5                                 : int   = 0x74
-let const VK_F6                                 : int   = 0x75
-let const VK_F7                                 : int   = 0x76
-let const VK_F8                                 : int   = 0x77
-let const VK_F9                                 : int   = 0x78
-let const VK_F10                                : int   = 0x79
-let const VK_F11                                : int   = 0x7A
-let const VK_F12                                : int   = 0x7B
-let const VK_F13                                : int   = 0x7C
-let const VK_F14                                : int   = 0x7D
-let const VK_F15                                : int   = 0x7E
-let const VK_F16                                : int   = 0x7F
-let const VK_F17                                : int   = 0x80
-let const VK_F18                                : int   = 0x81
-let const VK_F19                                : int   = 0x82
-let const VK_F20                                : int   = 0x83
-let const VK_F21                                : int   = 0x84
-let const VK_F22                                : int   = 0x85
-let const VK_F23                                : int   = 0x86
-let const VK_F24                                : int   = 0x87
-let const VK_NAVIGATION_VIEW                    : int   = 0x88 // reserved
-let const VK_NAVIGATION_MENU                    : int   = 0x89 // reserved
-let const VK_NAVIGATION_UP                      : int   = 0x8A // reserved
-let const VK_NAVIGATION_DOWN                    : int   = 0x8B // reserved
-let const VK_NAVIGATION_LEFT                    : int   = 0x8C // reserved
-let const VK_NAVIGATION_RIGHT                   : int   = 0x8D // reserved
-let const VK_NAVIGATION_ACCEPT                  : int   = 0x8E // reserved
-let const VK_NAVIGATION_CANCEL                  : int   = 0x8F // reserved
-let const VK_NUMLOCK                            : int   = 0x90
-let const VK_SCROLL                             : int   = 0x91
-let const VK_OEM_NEC_EQUAL                      : int   = 0x92   // '=' key on numpad
-let const VK_OEM_FJ_JISHO                       : int   = 0x92   // 'Dictionary' key
-let const VK_OEM_FJ_MASSHOU                     : int   = 0x93   // 'Unregister word' key
-let const VK_OEM_FJ_TOUROKU                     : int   = 0x94   // 'Register word' key
-let const VK_OEM_FJ_LOYA                        : int   = 0x95   // 'Left OYAYUBI' key
-let const VK_OEM_FJ_ROYA                        : int   = 0x96   // 'Right OYAYUBI' key
-let const VK_LSHIFT                             : int   = 0xA0
-let const VK_RSHIFT                             : int   = 0xA1
-let const VK_LCONTROL                           : int   = 0xA2
-let const VK_RCONTROL                           : int   = 0xA3
-let const VK_LMENU                              : int   = 0xA4
-let const VK_RMENU                              : int   = 0xA5
-let const VK_BROWSER_BACK                       : int   = 0xA6
-let const VK_BROWSER_FORWARD                    : int   = 0xA7
-let const VK_BROWSER_REFRESH                    : int   = 0xA8
-let const VK_BROWSER_STOP                       : int   = 0xA9
-let const VK_BROWSER_SEARCH                     : int   = 0xAA
-let const VK_BROWSER_FAVORITES                  : int   = 0xAB
-let const VK_BROWSER_HOME                       : int   = 0xAC
-let const VK_VOLUME_MUTE                        : int   = 0xAD
-let const VK_VOLUME_DOWN                        : int   = 0xAE
-let const VK_VOLUME_UP                          : int   = 0xAF
-let const VK_MEDIA_NEXT_TRACK                   : int   = 0xB0
-let const VK_MEDIA_PREV_TRACK                   : int   = 0xB1
-let const VK_MEDIA_STOP                         : int   = 0xB2
-let const VK_MEDIA_PLAY_PAUSE                   : int   = 0xB3
-let const VK_LAUNCH_MAIL                        : int   = 0xB4
-let const VK_LAUNCH_MEDIA_SELECT                : int   = 0xB5
-let const VK_LAUNCH_APP1                        : int   = 0xB6
-let const VK_LAUNCH_APP2                        : int   = 0xB7
-let const VK_OEM_1                              : int   = 0xBA   // ';:' for US
-let const VK_OEM_PLUS                           : int   = 0xBB   // '+' any country
-let const VK_OEM_COMMA                          : int   = 0xBC   // ',' any country
-let const VK_OEM_MINUS                          : int   = 0xBD   // '-' any country
-let const VK_OEM_PERIOD                         : int   = 0xBE   // '.' any country
-let const VK_OEM_2                              : int   = 0xBF   // '/?' for US
-let const VK_OEM_3                              : int   = 0xC0   // '`~' for US
-let const VK_GAMEPAD_A                          : int   = 0xC3 // reserved
-let const VK_GAMEPAD_B                          : int   = 0xC4 // reserved
-let const VK_GAMEPAD_X                          : int   = 0xC5 // reserved
-let const VK_GAMEPAD_Y                          : int   = 0xC6 // reserved
-let const VK_GAMEPAD_RIGHT_SHOULDER             : int   = 0xC7 // reserved
-let const VK_GAMEPAD_LEFT_SHOULDER              : int   = 0xC8 // reserved
-let const VK_GAMEPAD_LEFT_TRIGGER               : int   = 0xC9 // reserved
-let const VK_GAMEPAD_RIGHT_TRIGGER              : int   = 0xCA // reserved
-let const VK_GAMEPAD_DPAD_UP                    : int   = 0xCB // reserved
-let const VK_GAMEPAD_DPAD_DOWN                  : int   = 0xCC // reserved
-let const VK_GAMEPAD_DPAD_LEFT                  : int   = 0xCD // reserved
-let const VK_GAMEPAD_DPAD_RIGHT                 : int   = 0xCE // reserved
-let const VK_GAMEPAD_MENU                       : int   = 0xCF // reserved
-let const VK_GAMEPAD_VIEW                       : int   = 0xD0 // reserved
-let const VK_GAMEPAD_LEFT_THUMBSTICK_BUTTON     : int   = 0xD1 // reserved
-let const VK_GAMEPAD_RIGHT_THUMBSTICK_BUTTON    : int   = 0xD2 // reserved
-let const VK_GAMEPAD_LEFT_THUMBSTICK_UP         : int   = 0xD3 // reserved
-let const VK_GAMEPAD_LEFT_THUMBSTICK_DOWN       : int   = 0xD4 // reserved
-let const VK_GAMEPAD_LEFT_THUMBSTICK_RIGHT      : int   = 0xD5 // reserved
-let const VK_GAMEPAD_LEFT_THUMBSTICK_LEFT       : int   = 0xD6 // reserved
-let const VK_GAMEPAD_RIGHT_THUMBSTICK_UP        : int   = 0xD7 // reserved
-let const VK_GAMEPAD_RIGHT_THUMBSTICK_DOWN      : int   = 0xD8 // reserved
-let const VK_GAMEPAD_RIGHT_THUMBSTICK_RIGHT     : int   = 0xD9 // reserved
-let const VK_GAMEPAD_RIGHT_THUMBSTICK_LEFT      : int   = 0xDA // reserved
-let const VK_OEM_4                              : int   = 0xDB  //  '[{' for US
-let const VK_OEM_5                              : int   = 0xDC  //  '\|' for US
-let const VK_OEM_6                              : int   = 0xDD  //  ']}' for US
-let const VK_OEM_7                              : int   = 0xDE  //  ''"' for US
-let const VK_OEM_8                              : int   = 0xDF
-let const VK_OEM_AX                             : int   = 0xE1  //  'AX' key on Japanese AX kbd
-let const VK_OEM_102                            : int   = 0xE2  //  "<>" or "\|" on RT 102-key kbd.
-let const VK_ICO_HELP                           : int   = 0xE3  //  Help key on ICO
-let const VK_ICO_00                             : int   = 0xE4  //  00 key on ICO
-let const VK_PROCESSKEY                         : int   = 0xE5
-let const VK_ICO_CLEAR                          : int   = 0xE6
-let const VK_PACKET                             : int   = 0xE7
-let const VK_OEM_RESET                          : int   = 0xE9
-let const VK_OEM_JUMP                           : int   = 0xEA
-let const VK_OEM_PA1                            : int   = 0xEB
-let const VK_OEM_PA2                            : int   = 0xEC
-let const VK_OEM_PA3                            : int   = 0xED
-let const VK_OEM_WSCTRL                         : int   = 0xEE
-let const VK_OEM_CUSEL                          : int   = 0xEF
-let const VK_OEM_ATTN                           : int   = 0xF0
-let const VK_OEM_FINISH                         : int   = 0xF1
-let const VK_OEM_COPY                           : int   = 0xF2
-let const VK_OEM_AUTO                           : int   = 0xF3
-let const VK_OEM_ENLW                           : int   = 0xF4
-let const VK_OEM_BACKTAB                        : int   = 0xF5
-let const VK_ATTN                               : int   = 0xF6
-let const VK_CRSEL                              : int   = 0xF7
-let const VK_EXSEL                              : int   = 0xF8
-let const VK_EREOF                              : int   = 0xF9
-let const VK_PLAY                               : int   = 0xFA
-let const VK_ZOOM                               : int   = 0xFB
-let const VK_NONAME                             : int   = 0xFC
-let const VK_PA1                                : int   = 0xFD
-let const VK_OEM_CLEAR                          : int   = 0xFE
+VK_LBUTTON                            : int   : 0x01
+VK_RBUTTON                            : int   : 0x02
+VK_CANCEL                             : int   : 0x03
+VK_MBUTTON                            : int   : 0x04    /* NOT contiguous with L & RBUTTON */
+VK_XBUTTON1                           : int   : 0x05    /* NOT contiguous with L & RBUTTON */
+VK_XBUTTON2                           : int   : 0x06    /* NOT contiguous with L & RBUTTON */
+VK_BACK                               : int   : 0x08
+VK_TAB                                : int   : 0x09
+VK_CLEAR                              : int   : 0x0C
+VK_RETURN                             : int   : 0x0D
+VK_SHIFT                              : int   : 0x10
+VK_CONTROL                            : int   : 0x11
+VK_MENU                               : int   : 0x12
+VK_PAUSE                              : int   : 0x13
+VK_CAPITAL                            : int   : 0x14
+VK_KANA                               : int   : 0x15
+VK_HANGEUL                            : int   : 0x15  /* old name - should be here for compatibility */
+VK_HANGUL                             : int   : 0x15
+VK_JUNJA                              : int   : 0x17
+VK_FINAL                              : int   : 0x18
+VK_HANJA                              : int   : 0x19
+VK_KANJI                              : int   : 0x19
+VK_ESCAPE                             : int   : 0x1B
+VK_CONVERT                            : int   : 0x1C
+VK_NONCONVERT                         : int   : 0x1D
+VK_ACCEPT                             : int   : 0x1E
+VK_MODECHANGE                         : int   : 0x1F
+VK_SPACE                              : int   : 0x20
+VK_PRIOR                              : int   : 0x21
+VK_NEXT                               : int   : 0x22
+VK_END                                : int   : 0x23
+VK_HOME                               : int   : 0x24
+VK_LEFT                               : int   : 0x25
+VK_UP                                 : int   : 0x26
+VK_RIGHT                              : int   : 0x27
+VK_DOWN                               : int   : 0x28
+VK_SELECT                             : int   : 0x29
+VK_PRINT                              : int   : 0x2A
+VK_EXECUTE                            : int   : 0x2B
+VK_SNAPSHOT                           : int   : 0x2C
+VK_INSERT                             : int   : 0x2D
+VK_DELETE                             : int   : 0x2E
+VK_HELP                               : int   : 0x2F
+VK_LWIN                               : int   : 0x5B
+VK_RWIN                               : int   : 0x5C
+VK_APPS                               : int   : 0x5D
+VK_SLEEP                              : int   : 0x5F
+VK_NUMPAD0                            : int   : 0x60
+VK_NUMPAD1                            : int   : 0x61
+VK_NUMPAD2                            : int   : 0x62
+VK_NUMPAD3                            : int   : 0x63
+VK_NUMPAD4                            : int   : 0x64
+VK_NUMPAD5                            : int   : 0x65
+VK_NUMPAD6                            : int   : 0x66
+VK_NUMPAD7                            : int   : 0x67
+VK_NUMPAD8                            : int   : 0x68
+VK_NUMPAD9                            : int   : 0x69
+VK_MULTIPLY                           : int   : 0x6A
+VK_ADD                                : int   : 0x6B
+VK_SEPARATOR                          : int   : 0x6C
+VK_SUBTRACT                           : int   : 0x6D
+VK_DECIMAL                            : int   : 0x6E
+VK_DIVIDE                             : int   : 0x6F
+VK_F1                                 : int   : 0x70
+VK_F2                                 : int   : 0x71
+VK_F3                                 : int   : 0x72
+VK_F4                                 : int   : 0x73
+VK_F5                                 : int   : 0x74
+VK_F6                                 : int   : 0x75
+VK_F7                                 : int   : 0x76
+VK_F8                                 : int   : 0x77
+VK_F9                                 : int   : 0x78
+VK_F10                                : int   : 0x79
+VK_F11                                : int   : 0x7A
+VK_F12                                : int   : 0x7B
+VK_F13                                : int   : 0x7C
+VK_F14                                : int   : 0x7D
+VK_F15                                : int   : 0x7E
+VK_F16                                : int   : 0x7F
+VK_F17                                : int   : 0x80
+VK_F18                                : int   : 0x81
+VK_F19                                : int   : 0x82
+VK_F20                                : int   : 0x83
+VK_F21                                : int   : 0x84
+VK_F22                                : int   : 0x85
+VK_F23                                : int   : 0x86
+VK_F24                                : int   : 0x87
+VK_NAVIGATION_VIEW                    : int   : 0x88 // reserved
+VK_NAVIGATION_MENU                    : int   : 0x89 // reserved
+VK_NAVIGATION_UP                      : int   : 0x8A // reserved
+VK_NAVIGATION_DOWN                    : int   : 0x8B // reserved
+VK_NAVIGATION_LEFT                    : int   : 0x8C // reserved
+VK_NAVIGATION_RIGHT                   : int   : 0x8D // reserved
+VK_NAVIGATION_ACCEPT                  : int   : 0x8E // reserved
+VK_NAVIGATION_CANCEL                  : int   : 0x8F // reserved
+VK_NUMLOCK                            : int   : 0x90
+VK_SCROLL                             : int   : 0x91
+VK_OEM_NEC_EQUAL                      : int   : 0x92   // '=' key on numpad
+VK_OEM_FJ_JISHO                       : int   : 0x92   // 'Dictionary' key
+VK_OEM_FJ_MASSHOU                     : int   : 0x93   // 'Unregister word' key
+VK_OEM_FJ_TOUROKU                     : int   : 0x94   // 'Register word' key
+VK_OEM_FJ_LOYA                        : int   : 0x95   // 'Left OYAYUBI' key
+VK_OEM_FJ_ROYA                        : int   : 0x96   // 'Right OYAYUBI' key
+VK_LSHIFT                             : int   : 0xA0
+VK_RSHIFT                             : int   : 0xA1
+VK_LCONTROL                           : int   : 0xA2
+VK_RCONTROL                           : int   : 0xA3
+VK_LMENU                              : int   : 0xA4
+VK_RMENU                              : int   : 0xA5
+VK_BROWSER_BACK                       : int   : 0xA6
+VK_BROWSER_FORWARD                    : int   : 0xA7
+VK_BROWSER_REFRESH                    : int   : 0xA8
+VK_BROWSER_STOP                       : int   : 0xA9
+VK_BROWSER_SEARCH                     : int   : 0xAA
+VK_BROWSER_FAVORITES                  : int   : 0xAB
+VK_BROWSER_HOME                       : int   : 0xAC
+VK_VOLUME_MUTE                        : int   : 0xAD
+VK_VOLUME_DOWN                        : int   : 0xAE
+VK_VOLUME_UP                          : int   : 0xAF
+VK_MEDIA_NEXT_TRACK                   : int   : 0xB0
+VK_MEDIA_PREV_TRACK                   : int   : 0xB1
+VK_MEDIA_STOP                         : int   : 0xB2
+VK_MEDIA_PLAY_PAUSE                   : int   : 0xB3
+VK_LAUNCH_MAIL                        : int   : 0xB4
+VK_LAUNCH_MEDIA_SELECT                : int   : 0xB5
+VK_LAUNCH_APP1                        : int   : 0xB6
+VK_LAUNCH_APP2                        : int   : 0xB7
+VK_OEM_1                              : int   : 0xBA   // ';:' for US
+VK_OEM_PLUS                           : int   : 0xBB   // '+' any country
+VK_OEM_COMMA                          : int   : 0xBC   // ',' any country
+VK_OEM_MINUS                          : int   : 0xBD   // '-' any country
+VK_OEM_PERIOD                         : int   : 0xBE   // '.' any country
+VK_OEM_2                              : int   : 0xBF   // '/?' for US
+VK_OEM_3                              : int   : 0xC0   // '`~' for US
+VK_GAMEPAD_A                          : int   : 0xC3 // reserved
+VK_GAMEPAD_B                          : int   : 0xC4 // reserved
+VK_GAMEPAD_X                          : int   : 0xC5 // reserved
+VK_GAMEPAD_Y                          : int   : 0xC6 // reserved
+VK_GAMEPAD_RIGHT_SHOULDER             : int   : 0xC7 // reserved
+VK_GAMEPAD_LEFT_SHOULDER              : int   : 0xC8 // reserved
+VK_GAMEPAD_LEFT_TRIGGER               : int   : 0xC9 // reserved
+VK_GAMEPAD_RIGHT_TRIGGER              : int   : 0xCA // reserved
+VK_GAMEPAD_DPAD_UP                    : int   : 0xCB // reserved
+VK_GAMEPAD_DPAD_DOWN                  : int   : 0xCC // reserved
+VK_GAMEPAD_DPAD_LEFT                  : int   : 0xCD // reserved
+VK_GAMEPAD_DPAD_RIGHT                 : int   : 0xCE // reserved
+VK_GAMEPAD_MENU                       : int   : 0xCF // reserved
+VK_GAMEPAD_VIEW                       : int   : 0xD0 // reserved
+VK_GAMEPAD_LEFT_THUMBSTICK_BUTTON     : int   : 0xD1 // reserved
+VK_GAMEPAD_RIGHT_THUMBSTICK_BUTTON    : int   : 0xD2 // reserved
+VK_GAMEPAD_LEFT_THUMBSTICK_UP         : int   : 0xD3 // reserved
+VK_GAMEPAD_LEFT_THUMBSTICK_DOWN       : int   : 0xD4 // reserved
+VK_GAMEPAD_LEFT_THUMBSTICK_RIGHT      : int   : 0xD5 // reserved
+VK_GAMEPAD_LEFT_THUMBSTICK_LEFT       : int   : 0xD6 // reserved
+VK_GAMEPAD_RIGHT_THUMBSTICK_UP        : int   : 0xD7 // reserved
+VK_GAMEPAD_RIGHT_THUMBSTICK_DOWN      : int   : 0xD8 // reserved
+VK_GAMEPAD_RIGHT_THUMBSTICK_RIGHT     : int   : 0xD9 // reserved
+VK_GAMEPAD_RIGHT_THUMBSTICK_LEFT      : int   : 0xDA // reserved
+VK_OEM_4                              : int   : 0xDB  //  '[{' for US
+VK_OEM_5                              : int   : 0xDC  //  '\|' for US
+VK_OEM_6                              : int   : 0xDD  //  ']}' for US
+VK_OEM_7                              : int   : 0xDE  //  ''"' for US
+VK_OEM_8                              : int   : 0xDF
+VK_OEM_AX                             : int   : 0xE1  //  'AX' key on Japanese AX kbd
+VK_OEM_102                            : int   : 0xE2  //  "<>" or "\|" on RT 102-key kbd.
+VK_ICO_HELP                           : int   : 0xE3  //  Help key on ICO
+VK_ICO_00                             : int   : 0xE4  //  00 key on ICO
+VK_PROCESSKEY                         : int   : 0xE5
+VK_ICO_CLEAR                          : int   : 0xE6
+VK_PACKET                             : int   : 0xE7
+VK_OEM_RESET                          : int   : 0xE9
+VK_OEM_JUMP                           : int   : 0xEA
+VK_OEM_PA1                            : int   : 0xEB
+VK_OEM_PA2                            : int   : 0xEC
+VK_OEM_PA3                            : int   : 0xED
+VK_OEM_WSCTRL                         : int   : 0xEE
+VK_OEM_CUSEL                          : int   : 0xEF
+VK_OEM_ATTN                           : int   : 0xF0
+VK_OEM_FINISH                         : int   : 0xF1
+VK_OEM_COPY                           : int   : 0xF2
+VK_OEM_AUTO                           : int   : 0xF3
+VK_OEM_ENLW                           : int   : 0xF4
+VK_OEM_BACKTAB                        : int   : 0xF5
+VK_ATTN                               : int   : 0xF6
+VK_CRSEL                              : int   : 0xF7
+VK_EXSEL                              : int   : 0xF8
+VK_EREOF                              : int   : 0xF9
+VK_PLAY                               : int   : 0xFA
+VK_ZOOM                               : int   : 0xFB
+VK_NONAME                             : int   : 0xFC
+VK_PA1                                : int   : 0xFD
+VK_OEM_CLEAR                          : int   : 0xFE

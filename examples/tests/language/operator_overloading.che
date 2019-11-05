@@ -39,9 +39,9 @@ typedef Vec2 = Vector2[double]
 
 fn Main() {
     {
-        let a = Num(1)
-        let b = Num(2)
-        let c = a + b
+        a := Num(1)
+        b := Num(2)
+        c := a + b
 
         c_printf("%lld`n", a.x)
         c_printf("%lld`n", b.x)
@@ -56,11 +56,11 @@ fn Main() {
     }
 
     {
-        let a = Vec2(1, 2)
-        let b = Vec2(3, 4)
-        let c = a + b
+        a := Vec2(1, 2)
+        b := Vec2(3, 4)
+        c := a + b
 
-        let d = Vec2(5, 6)
+        d := Vec2(5, 6)
         d += c
 
         c_printf("%f, %f`n", a.x, a.y)

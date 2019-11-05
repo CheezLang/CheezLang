@@ -8,7 +8,7 @@
 #load("std:heap")
 
 fn Main() {
-    let graph = load_graph(graph_medium)
+    graph := load_graph(graph_medium)
 
     for(reverse=true) r : 0..graph.length-1 {
         for(inclusive=true) c : 0..r {
@@ -16,23 +16,23 @@ fn Main() {
         }
     }
 
-    let max_sum = graph[0][0]
+    max_sum := graph[0][0]
     println(max_sum)
 }
 
 fn load_graph(str: string) -> Array[Array[int]] {
-    let res = Array[Array[int]].create()
+    res := Array[Array[int]].create()
 
-    while let i = 0, i < str.length, i += 1 {
+    while i := 0, i < str.length, i += 1 {
         // parse one line
-        let line = Array[int].create()
+        line := Array[int].create()
 
         while i < str.length {
-            let start = i
+            start := i
             while i < str.length and str[i] >= '0' and str[i] <= '9', i += 1 {}
-            let end = i
-            let num_str = str[start..end]
-            let num = parse_int(num_str)
+            end := i
+            num_str := str[start..end]
+            num := parse_int(num_str)
             line.add(num)
 
             while i < str.length and str[i] == ' ', i += 1 {}

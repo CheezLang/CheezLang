@@ -23,17 +23,17 @@ impl(T: type) T {
 }
 
 fn Main() {
-    let a = (3, 4)
+    a := (3, 4)
     c_printf("%d, %d`n", a[0], a[1])
     
     let b: (first: i32, second: c_string) = (2, "test")
     c_printf("%d, %s`n", b.first, b.second)
     
-    let c = get_tuple()
+    c := get_tuple()
     c_printf("%d, %d`n", c.one, c.two)
 
-    let d = get_tuple_value(b, 0)
-    let e = @typeof(c).get_tuple_value(c, 1)
-    let f = (bool, int).get_tuple_value(c, 1)
+    d := get_tuple_value(b, 0)
+    e := @typeof(c).get_tuple_value(c, 1)
+    f := (bool, int).get_tuple_value(c, 1)
     c_printf("%d, %d`n", d, e)
 }

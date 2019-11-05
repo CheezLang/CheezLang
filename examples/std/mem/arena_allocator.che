@@ -5,7 +5,7 @@
 #load("std:printable")
 
 fn align(add: uint, align: uint) -> uint {
-    let mul = add + align - 1
+    mul := add + align - 1
     mul -= (mul % align)
     
     return mul
@@ -19,15 +19,15 @@ struct Bucket {
 
 impl Bucket {
     fn can_store(ref Self, size: uint, align: uint) -> bool {
-        let next_address = next_aligned(pointer_add(memory.data, cast(int)filled), align)
-        let next_offset = (cast(uint)next_address) - (cast(uint)memory.data)
-        let free = (cast(uint)memory.length) - next_offset
+        next_address := next_aligned(pointer_add(memory.data, cast(int)filled), align)
+        next_offset := (cast(uint)next_address) - (cast(uint)memory.data)
+        free := (cast(uint)memory.length) - next_offset
         return free >= size
     }
 
     fn allocate(ref Self, size: uint, align: uint) -> &u8 {
-        let next_address = next_aligned(pointer_add(memory.data, cast(int)filled), align)
-        let next_offset = (cast(uint)next_address) - (cast(uint)memory.data)
+        next_address := next_aligned(pointer_add(memory.data, cast(int)filled), align)
+        next_offset := (cast(uint)next_address) - (cast(uint)memory.data)
         filled = next_offset + size
         return next_address
     }
@@ -50,7 +50,7 @@ impl Drop for ArenaAllocator {
 
 impl ArenaAllocator {
     fn create(size: uint, alloc: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        let a = ArenaAllocator(
+        a := ArenaAllocator(
             parent      = alloc,
             bucket_size = size,
             buckets     = Array[Bucket].create()
@@ -59,14 +59,14 @@ impl ArenaAllocator {
     }
 
     fn clear(ref Self) {
-        while let i = 0, i < buckets.length, i += 1 {
+        for i : 0..buckets.length {
             buckets[i].filled = 0
         }
     }
 
     fn dump(ref Self, dump_buckets: bool = false) {
         printfln("ArenaAllocator ({} buckets)", buckets.length)
-        while let i = 0, i < buckets.length, i += 1 {
+        for i : 0..buckets.length {
             let bucket: ref Bucket = buckets[i]
 
             printfln("  Bucket {}: {}/{} bytes", (i, bucket.filled, bucket.memory.length))
@@ -74,7 +74,7 @@ impl ArenaAllocator {
                 let current: uint = 0
 
                 while current < bucket.filled {
-                    let len = <<cast(&uint)pointer_add(bucket.memory.data, cast(int)current)
+                    len := <<cast(&uint)pointer_add(bucket.memory.data, cast(int)current)
                     if len == 0 {
                         current += 8
                         continue
@@ -93,14 +93,14 @@ impl ArenaAllocator {
 
 impl Allocator for ArenaAllocator {
     fn allocate(ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
-        let required_size = count * elementSize + 8
+        required_size := count * elementSize + 8
         if alignment < 8 {
             alignment = 8
         }
 
         // find bucket with enough room for required size
         let free_bucket : &Bucket = null
-        while let i = 0, i < buckets.length, i += 1 {
+        for i : 0..buckets.length {
             let bucket: ref Bucket = buckets[i]
             if bucket.can_store(required_size, alignment) {
                 free_bucket = &bucket
@@ -110,7 +110,7 @@ impl Allocator for ArenaAllocator {
 
         // no bucket with enough space
         if free_bucket == null {
-            let new_bucket_size = required_size * 2
+            new_bucket_size := required_size * 2
             if new_bucket_size < bucket_size {
                 new_bucket_size = bucket_size
             }
@@ -122,8 +122,8 @@ impl Allocator for ArenaAllocator {
             free_bucket = &buckets[buckets.length - 1]
         }
 
-        let ptr = free_bucket.allocate(required_size, alignment)
-        let len_ptr = cast(&uint)ptr
+        ptr := free_bucket.allocate(required_size, alignment)
+        len_ptr := cast(&uint)ptr
         <<len_ptr = count * elementSize
         return pointer_add(ptr, 8)
     }
@@ -132,13 +132,13 @@ impl Allocator for ArenaAllocator {
         if mem == null {
             return allocate(count, elementSize, alignment)
         } else {
-            let len = <<cast(&uint)pointer_add(mem, -8)
+            len := <<cast(&uint)pointer_add(mem, -8)
 
             if len >= count * elementSize {
                 return mem
             }
 
-            let new_mem = allocate(count, elementSize, alignment)
+            new_mem := allocate(count, elementSize, alignment)
             c_memcpy(new_mem, mem, len)
             return new_mem
         }

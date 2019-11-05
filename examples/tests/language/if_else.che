@@ -30,13 +30,13 @@ fn Main() {
     test3(true)
     test3(false)
 
-    if let (ok, str) = test4(false), ok {
+    if (ok, str) := test4(false), ok {
         c_printf("%s`n", str)
     } else {
         c_printf("%s`n", "error"c)
     }
 
-    if let res = test4(true), res.ok {
+    if res := test4(true), res.ok {
         c_printf("%s`n", res.value)
     } else {
         c_printf("%s`n", "error"c)
@@ -64,7 +64,7 @@ fn test(b1: bool, b2: bool) {
 }
 
 fn test2(b1: bool, b2: bool) {
-    let num = if b1 {
+    num := if b1 {
         if b2 then 1 else 2
     } else {
         if b2 then

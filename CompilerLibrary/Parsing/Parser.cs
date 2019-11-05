@@ -409,41 +409,7 @@ namespace Cheez.Parsing
                         }
                         if (CheckToken(TokenType.Colon))
                         {
-                            NextToken();
-
-                            AstExpression typeExpr = null;
-
-                            // constant declaration
-                            if (!CheckTokens(TokenType.Colon, TokenType.Equal))
-                            {
-                                typeExpr = ParseExpression(true);
-                            }
-
-                            // constant declaration
-                            if (CheckToken(TokenType.Colon))
-                            {
-                                NextToken();
-                                var init = ParseExpression(true);
-                                return new AstVariableDecl(expr, typeExpr, init, true, isNewSyntax: true, Location: new Location(expr.Beginning, init.End));
-                            }
-
-                            // variable declaration
-                            if (CheckToken(TokenType.Equal))
-                            {
-                                NextToken();
-                                var init = ParseExpression(true);
-                                return new AstVariableDecl(expr, typeExpr, init, false, isNewSyntax: true, Location: new Location(expr.Beginning, init.End));
-                            }
-                            
-                            // variable declaration without initializer
-                            if (CheckToken(TokenType.NewLine))
-                            {
-                                return new AstVariableDecl(expr, typeExpr, null, false, isNewSyntax: true, Location: new Location(expr.Beginning, typeExpr.End));
-                            }
-
-                            //
-                            ReportError(PeekToken().location, $"Unexpected token. Expected ':' or '=' or '\\n'");
-                            return new AstEmptyStatement(expr);
+                            return ParseDeclaration(expr, true);
                         }
                         if (CheckTokens(TokenType.Equal, TokenType.AddEq, TokenType.SubEq, TokenType.MulEq, TokenType.DivEq, TokenType.ModEq))
                         {
@@ -467,6 +433,45 @@ namespace Cheez.Parsing
                         }
                     }
             }
+        }
+
+        private AstVariableDecl ParseDeclaration(AstExpression expr, bool allowCommaTuple)
+        {
+            Consume(TokenType.Colon, ErrMsg(":", "after pattern in declaration"));
+
+            AstExpression typeExpr = null;
+
+            // constant declaration
+            if (!CheckTokens(TokenType.Colon, TokenType.Equal))
+            {
+                typeExpr = ParseExpression(allowCommaTuple);
+            }
+
+            // constant declaration
+            if (CheckToken(TokenType.Colon))
+            {
+                NextToken();
+                var init = ParseExpression(allowCommaTuple);
+                return new AstVariableDecl(expr, typeExpr, init, true, isNewSyntax: true, Location: new Location(expr.Beginning, init.End));
+            }
+
+            // variable declaration
+            if (CheckToken(TokenType.Equal))
+            {
+                NextToken();
+                var init = ParseExpression(allowCommaTuple);
+                return new AstVariableDecl(expr, typeExpr, init, false, isNewSyntax: true, Location: new Location(expr.Beginning, init.End));
+            }
+
+            // variable declaration without initializer
+            if (CheckToken(TokenType.NewLine))
+            {
+                return new AstVariableDecl(expr, typeExpr, null, false, isNewSyntax: true, Location: new Location(expr.Beginning, typeExpr.End));
+            }
+
+            //
+            ReportError(PeekToken().location, $"Unexpected token. Expected ':' or '=' or '\\n'");
+            return new AstVariableDecl(expr, typeExpr, null, false, true, Location: expr);
         }
 
         private AstStatement ParseTraitDeclaration()
@@ -1245,6 +1250,17 @@ namespace Cheez.Parsing
             }
 
             condition = ParseExpression(false, ErrMsg("expression", "after keyword 'while'"));
+
+            // new syntax for variable declaration
+            if (init == null && CheckToken(TokenType.Colon))
+            {
+                init = ParseDeclaration(condition, false);
+                SkipNewlines();
+                Consume(TokenType.Comma, ErrMsg(",", "after variable declaration in while statement"));
+                SkipNewlines();
+                condition = ParseExpression(false, ErrMsg("expression", "after keyword 'while'"));
+            }
+
             SkipNewlines();
 
             if (CheckToken(TokenType.Comma))
@@ -1302,6 +1318,16 @@ namespace Cheez.Parsing
             }
 
             condition = ParseExpression(false, ErrMsg("expression", "after keyword 'if'"));
+
+            // new syntax for variable declaration
+            if (pre == null && CheckToken(TokenType.Colon))
+            {
+                pre = ParseDeclaration(condition, false);
+                SkipNewlines();
+                Consume(TokenType.Comma, ErrMsg(",", "after variable declaration in if expr"));
+                SkipNewlines();
+                condition = ParseExpression(false, ErrMsg("expression", "after keyword 'if'"));
+            }
 
             SkipNewlines();
 

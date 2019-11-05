@@ -50,7 +50,7 @@ impl Quad {
     }
 }
 
-let q = Quad(
+q := Quad(
     pos = Vec2(-0.5f, -0.5f)
     size = Vec2(1, 1)
     col = Vec3(1, 0, 1)
@@ -83,7 +83,7 @@ fn Main()
     }
     // defer glfwTerminate()
 
-    let window = glfwCreateWindow(640, 480, "Hello World", null, null)
+    window := glfwCreateWindow(640, 480, "Hello World", null, null)
     if window == null {
         println("Failed to create window")
         glfwTerminate()

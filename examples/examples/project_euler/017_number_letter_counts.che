@@ -43,7 +43,7 @@ fn number_to_english(n: int) -> String {
     let _10     = n / 10   % 10
     let _1      = n / 1    % 10
 
-    let result = String.empty()
+    result := String.empty()
     if _1000 != 0 {
         result += number_to_english_1(_1000)
         result += "thousand"
@@ -85,9 +85,9 @@ fn number_to_english(n: int) -> String {
 }
 
 fn Main() {
-    let sum = 0
+    sum := 0
     for(inclusive=true) : 1..1000 {
-        let eng = number_to_english(it)
+        eng := number_to_english(it)
         sum += eng.get_length()
     }
     println(sum)

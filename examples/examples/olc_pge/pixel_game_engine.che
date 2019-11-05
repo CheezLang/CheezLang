@@ -100,7 +100,7 @@ impl PixelGameEngine {
             return null
         }
 
-        let pge = alloc(PixelGameEngine)
+        pge := alloc(PixelGameEngine)
 
         <<pge = PixelGameEngine(
             game = game
@@ -123,7 +123,7 @@ impl PixelGameEngine {
     }
 
     fn start(ref Self) {
-        let wnd = self.olc_window_create()
+        wnd := self.olc_window_create()
         if wnd == null {
             return
         }
@@ -154,12 +154,12 @@ impl PixelGameEngine {
             active = false
         }
 
-        let tp1 = get_time_microseconds()
-        let tp2 = get_time_microseconds()
+        tp1 := get_time_microseconds()
+        tp2 := get_time_microseconds()
 
         nMousePosXPrev = nMousePosX
         nMousePosYPrev = nMousePosY
-        let total_frames = 0
+        total_frames := 0
         while active {
             // Run as fast as possible
             while active {
@@ -170,11 +170,11 @@ impl PixelGameEngine {
                 }
                 // Handle Timing
                 tp2 = get_time_microseconds()
-                let fElapsedTime = cast(float) (cast(double) tp2 - tp1) * 0.000001
+                fElapsedTime := cast(float) (cast(double) tp2 - tp1) * 0.000001
                 tp1 = tp2
 
                 // Handle User Input - Keyboard
-                while let i = 0, i < 256, i += 1 {
+                for i : 0..256 {
                     pKeyboardState[i].pressed = false
                     pKeyboardState[i].released = false
 
@@ -192,7 +192,7 @@ impl PixelGameEngine {
                 }
 
                 // Handle User Input - Mouse
-                while let i = 0, i < 5, i += 1 {
+                for i : 0..5 {
                     pMouseState[i].pressed = false
                     pMouseState[i].released = false
 
@@ -290,14 +290,14 @@ impl PixelGameEngine {
     fn olc_OpenGLCreate(ref Self) -> bool {
         glDeviceContext = GetDC(olc_hWnd)
 
-        let pfd = PIXELFORMATDESCRIPTOR(
+        pfd := PIXELFORMATDESCRIPTOR(
             @sizeof(PIXELFORMATDESCRIPTOR), 1,
             @bin_or(PFD_DRAW_TO_WINDOW, PFD_SUPPORT_OPENGL, PFD_DOUBLEBUFFER),
             PFD_TYPE_RGBA, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             PFD_MAIN_PLANE, 0, 0, 0, 0
         )
 
-        let pf = ChoosePixelFormat(glDeviceContext, &pfd)
+        pf := ChoosePixelFormat(glDeviceContext, &pfd)
         if pf == 0 {
             return false
         }
@@ -310,7 +310,7 @@ impl PixelGameEngine {
         wglMakeCurrent(glDeviceContext, glRenderContext)
 
         // Remove Frame cap
-        let wglSwapInterval = cast(fn(i32) #stdcall)wglGetProcAddress("wglSwapIntervalEXT")
+        wglSwapInterval := cast(fn(i32) #stdcall)wglGetProcAddress("wglSwapIntervalEXT")
         if wglSwapInterval {
             wglSwapInterval(0)
         }

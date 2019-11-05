@@ -7,7 +7,7 @@
 #load("std:c")
 
 fn gl_check_error() {
-    let err = glGetError()
+    err := glGetError()
     while err != GL_NO_ERROR {
         match err {
             GL_INVALID_OPERATION -> c_puts("GL_INVALID_OPERATION")

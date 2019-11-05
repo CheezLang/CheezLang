@@ -20,8 +20,8 @@ fn is_prime(i: int) -> bool {
 }
 
 fn Main() {
-    let count = 0
-    while let i = 0, true, i += 1 {
+    count := 0
+    while i := 0, true, i += 1 {
         if is_prime(i) {
             count += 1
         }

@@ -7,8 +7,8 @@
 
 fn is_palindrome(str: ref String) -> bool {
     for : str.get_length()/2 {
-        let i1 = it
-        let i2 = str.get_length() - it - 1
+        i1 := it
+        i2 := str.get_length() - it - 1
         if str[i1] != str[i2] {
             return false
         }
@@ -17,15 +17,15 @@ fn is_palindrome(str: ref String) -> bool {
 }
 
 fn Main() {
-    let str = String.empty()
+    str := String.empty()
 
-    let longest = 0
+    longest := 0
 
     for(reverse=true) a :1000 {
         if a * 999 < longest then break
 
         for(reverse=true) b :1000 {
-            let product = a * b
+            product := a * b
             if product < longest then continue
 
             str.clear()

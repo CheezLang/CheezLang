@@ -90,7 +90,7 @@ struct vec3 {
 fn def(T: type) -> T {
     let result: T = default
     #code {
-        let type_info = @type_info(T)
+        type_info := @type_info(T)
 
         for m : type_info.members {
             #statement @dot(result, m.name) = default(m.typ)
@@ -101,6 +101,6 @@ fn def(T: type) -> T {
 }
 
 fn Main() {
-    let v = def(vec3)
+    v := def(vec3)
 }
 // */

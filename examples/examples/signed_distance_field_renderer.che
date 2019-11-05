@@ -61,33 +61,33 @@ struct Cube {
 
 impl SDF for Cube {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
-        let dx = fabs(v.x) - radius
-        let dy = fabs(v.y) - radius
-        let dz = fabs(v.z) - radius
+        dx := fabs(v.x) - radius
+        dy := fabs(v.y) - radius
+        dz := fabs(v.z) - radius
 
         let d: double = 0
 
         if dx > 0 and dy > 0 and dz > 0 { // corner
-            let r = Vec3(
+            r := Vec3(
                 dx, dy, dz
             )
             d = r.mag()
         } else if dx > 0 and dy > 0 {
-            let r = Vec3(
+            r := Vec3(
                 x = dx
                 y = dy
                 z = 0
             )
             d = r.mag()
         } else if dx > 0 and dz > 0 {
-            let r = Vec3(
+            r := Vec3(
                 x = dx
                 y = 0
                 z = dz
             )
             d = r.mag()
         } else if dy > 0 and dz > 0 {
-            let r = Vec3(
+            r := Vec3(
                 x = 0
                 y = dy
                 z = dz
@@ -142,33 +142,33 @@ struct RotatedZSDF {
 
 impl SDF for RotatedXSDF {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
-        let rad = angle / 360 * 2 * 3.1415
-        let c = cos(rad)
-        let s = sin(rad)
-        let y = c * v.y - s * v.z
-        let z = s * v.y + c * v.z
+        rad := angle / 360 * 2 * 3.1415
+        c := cos(rad)
+        s := sin(rad)
+        y := c * v.y - s * v.z
+        z := s * v.y + c * v.z
         return sdf.distance(Vec3(v.x, y, z))
     }
 }
 
 impl SDF for RotatedYSDF {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
-        let rad = angle / 360 * 2 * 3.1415
-        let c = cos(rad)
-        let s = sin(rad)
-        let x = c * v.x + s * v.z
-        let z = -s * v.x + c * v.z
+        rad := angle / 360 * 2 * 3.1415
+        c := cos(rad)
+        s := sin(rad)
+        x := c * v.x + s * v.z
+        z := -s * v.x + c * v.z
         return sdf.distance(Vec3(x, v.y, z))
     }
 }
 
 impl SDF for RotatedZSDF {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
-        let rad = angle / 360 * 2 * 3.1415
-        let c = cos(rad)
-        let s = sin(rad)
-        let x = c * v.x - s * v.y
-        let y = s * v.x + c * v.y
+        rad := angle / 360 * 2 * 3.1415
+        c := cos(rad)
+        s := sin(rad)
+        x := c * v.x - s * v.y
+        y := s * v.x + c * v.y
         return sdf.distance(Vec3(x, y, v.z))
     }
 }
@@ -181,8 +181,8 @@ struct UnionSDF {
 
 impl SDF for UnionSDF {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
-        let a = sdf1.distance(v)
-        let b = sdf2.distance(v)
+        a := sdf1.distance(v)
+        b := sdf2.distance(v)
         if a.distance < b.distance {
             return a
         } else {
@@ -198,8 +198,8 @@ struct IntersectionSDF {
 
 impl SDF for IntersectionSDF {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
-        let a = sdf1.distance(v)
-        let b = sdf2.distance(v)
+        a := sdf1.distance(v)
+        b := sdf2.distance(v)
         if a.distance > b.distance {
             return a
         } else {
@@ -215,8 +215,8 @@ struct SubtractionSDF {
 
 impl SDF for SubtractionSDF {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
-        let a = sdf1.distance(v)
-        let b = sdf2.distance(v)
+        a := sdf1.distance(v)
+        b := sdf2.distance(v)
 
         b.distance = -b.distance
         if a.distance > b.distance {
@@ -251,14 +251,14 @@ struct LambertianShader {
 impl Shader for LambertianShader {
     fn shade(ref Self, ray: Ray, raymarcher: ref Raymarcher) -> Vec3 {
         let (ld, lc) = raymarcher.sampleLightDirection()
-        let normal = raymarcher.normal(ray.origin)
+        normal := raymarcher.normal(ray.origin)
 
-        let i = Vec3.dot(normal, ld)
-        let c = color * lc
+        i := Vec3.dot(normal, ld)
+        c := color * lc
 
-        let sdfHit = ray.origin + ld * 0.001
-        let shadowRay = Ray(sdfHit, ld)
-        let distance = raymarcher.sdf.distance(shadowRay.origin).distance
+        sdfHit := ray.origin + ld * 0.001
+        shadowRay := Ray(sdfHit, ld)
+        distance := raymarcher.sdf.distance(shadowRay.origin).distance
 
         while shadowRay.origin.mag() < raymarcher.backgroundDistance and fabs(distance) > 0.00005 {
             shadowRay.origin = shadowRay.origin + shadowRay.direction * distance
@@ -284,9 +284,9 @@ struct CheckerBoardShader {
 
 impl Shader for CheckerBoardShader {
     fn shade(ref Self, ray: Ray, raymarcher: ref Raymarcher) -> Vec3 {
-        let x = mod(ray.origin.x, 2 * size)
-        let y = mod(ray.origin.y, 2 * size)
-        let z = mod(ray.origin.z, 2 * size)
+        x := mod(ray.origin.x, 2 * size)
+        y := mod(ray.origin.y, 2 * size)
+        z := mod(ray.origin.z, 2 * size)
 
         if xor(x < size, xor(y < size, z < size)) {
             return shader1.shade(ray, raymarcher)
@@ -303,7 +303,7 @@ struct Background {
 
 impl Background {
     fn project(ref Self, ray: Ray) -> Vec3 {
-        let i = ray.direction.y + 0.5
+        i := ray.direction.y + 0.5
         i *= i
         return Vec3(i, i, i)
     }
@@ -317,7 +317,7 @@ struct Raymarcher {
 
 impl Raymarcher {
     fn project(ref Self, ray: Ray) -> Vec3 {
-        let ds = sdf.distance(ray.origin)
+        ds := sdf.distance(ray.origin)
 
         while fabs(ds.distance) > 0.0000001 {
             ray.origin = ray.origin + ray.direction * ds.distance
@@ -341,7 +341,7 @@ impl Raymarcher {
     fn normal(ref Self, p: Vec3) -> Vec3 {
         let off: double = 0.001
 
-        let n = Vec3(
+        n := Vec3(
             x = sdf.distance(Vec3(p.x + off, p.y, p.z)).distance - sdf.distance(Vec3(p.x - off, p.y, p.z)).distance
             y = sdf.distance(Vec3(p.x, p.y + off, p.z)).distance - sdf.distance(Vec3(p.x, p.y - off, p.z)).distance
             z = sdf.distance(Vec3(p.x, p.y, p.z + off)).distance - sdf.distance(Vec3(p.x, p.y, p.z - off)).distance
@@ -362,7 +362,7 @@ struct PerspectiveCamera {
 
 impl PerspectiveCamera {
     fn project(ref Self, x: double, y: double) -> Ray {
-        let dir = Vec3(
+        dir := Vec3(
             x = (x - 0.5) * sensorWidth
             y = -(y - 0.5) * sensorHeight
             z = -focalLength
@@ -387,8 +387,8 @@ impl Film {
 
         printf("({}, {})`n", (width, height))
 
-        let fw = 1 / cast(double) width
-        let fh = 1 / cast(double) height
+        fw := 1 / cast(double) width
+        fh := 1 / cast(double) height
 
         printf("Rendering image with {} anti-aliasing step(s)`n", antiAliasingSteps)
         if antiAliasingSteps < 1 {
@@ -396,30 +396,29 @@ impl Film {
         }
         
 
-        let r = LinearCongruentialGenerator(
+        r := LinearCongruentialGenerator(
             cast get_time_microseconds()
         )
 
-        while let y = 0, y < height, y += 1 {
+        for y : 0..height {
             if antiAliasingSteps >= 0 {
-                let row = y + 1
+                row := y + 1
                 printf("Rendering row {}/{}`n", (row, height))
             }
 
-            while let x = 0, x < width, x += 1 {
+            for x : 0..width {
+                fx := cast(double) x
+                fy := cast(double) y
 
-                let fx = cast(double) x
-                let fy = cast(double) y
-
-                let color = Vec3(0, 0, 0)
+                color := Vec3(0, 0, 0)
 
                 if antiAliasingSteps == 1 {
-                    let ray = camera.project((fx + 0.5) * fw, (fy + 0.5) * fh)
+                    ray := camera.project((fx + 0.5) * fw, (fy + 0.5) * fh)
                     color= scene.project(ray)
                 } else {
-                    while let i = 0, i < antiAliasingSteps, i += 1 {
-                        let ray = camera.project((fx + r.next_double()) * fw, (fy + r.next_double()) * fh)
-                        let c = scene.project(ray)
+                    for i : 0..antiAliasingSteps {
+                        ray := camera.project((fx + r.next_double()) * fw, (fy + r.next_double()) * fh)
+                        c := scene.project(ray)
                         color += c
                     }
                     color = color * (1 / cast(double) antiAliasingSteps)
@@ -443,13 +442,13 @@ impl SDFAllocator {
     }
 
     fn allocate(ref Self, $T: type) -> &T {
-        let t = cast(&T) allocator.allocate(1, @sizeof(T), @alignof(T))
+        t := cast(&T) allocator.allocate(1, @sizeof(T), @alignof(T))
         // printf("{}`n", (allocator))
         return t
     }
 
     fn sphere(ref Self, radius: double, shader: Shader) -> SDF {
-        let s = alloc(Sphere, allocator)
+        s := alloc(Sphere, allocator)
         s.radius = radius
         s.shader = shader
         return cast(SDF) ref <<s
@@ -460,14 +459,14 @@ impl SDFAllocator {
     }
 
     fn planeY(ref Self, location: double, shader: Shader) -> SDF {
-        let s = alloc(PlaneY, allocator)
+        s := alloc(PlaneY, allocator)
         s.location = location
         s.shader = shader
         return cast(SDF) ref <<s
     }
 
     fn cube(ref Self, radius: double, shader: Shader) -> SDF {
-        let s = alloc(Cube, allocator)
+        s := alloc(Cube, allocator)
         s.radius = radius
         s.shader = shader
         return cast(SDF) ref <<s
@@ -478,56 +477,56 @@ impl SDFAllocator {
     }
 
     fn translate(ref Self, sdf: SDF, translation: Vec3) -> SDF {
-        let t = alloc(TranslatedSDF, allocator)
+        t := alloc(TranslatedSDF, allocator)
         t.sdf = sdf
         t.translation = translation
         return cast(SDF) ref <<t
     }
 
     fn rotateX(ref Self, sdf: SDF, angle: double) -> SDF {
-        let t = alloc(RotatedXSDF, allocator)
+        t := alloc(RotatedXSDF, allocator)
         t.sdf = sdf
         t.angle = angle
         return cast(SDF) ref <<t
     }
 
     fn rotateY(ref Self, sdf: SDF, angle: double) -> SDF {
-        let t = alloc(RotatedYSDF, allocator)
+        t := alloc(RotatedYSDF, allocator)
         t.sdf = sdf
         t.angle = angle
         return cast(SDF) ref <<t
     }
 
     fn rotateZ(ref Self, sdf: SDF, angle: double) -> SDF {
-        let t = alloc(RotatedZSDF, allocator)
+        t := alloc(RotatedZSDF, allocator)
         t.sdf = sdf
         t.angle = angle
         return cast(SDF) ref <<t
     }
 
     fn scale(ref Self, sdf: SDF, x: double = 1, y: double = 1, z: double = 1) -> SDF {
-        let t = alloc(ScaledSDF, allocator)
+        t := alloc(ScaledSDF, allocator)
         t.sdf = sdf
         t.scale = Vec3(x, y, z)
         return cast(SDF) ref <<t
     }
 
     fn add(ref Self, sdf1: SDF, sdf2: SDF) -> SDF {
-        let t = alloc(UnionSDF, allocator)
+        t := alloc(UnionSDF, allocator)
         t.sdf1 = sdf1
         t.sdf2 = sdf2
         return cast(SDF) ref <<t
     }
 
     fn intersect(ref Self, sdf1: SDF, sdf2: SDF) -> SDF {
-        let t = alloc(IntersectionSDF, allocator)
+        t := alloc(IntersectionSDF, allocator)
         t.sdf1 = sdf1
         t.sdf2 = sdf2
         return cast(SDF) ref <<t
     }
 
     fn subtract(ref Self, sdf1: SDF, sdf2: SDF) -> SDF {
-        let t = alloc(SubtractionSDF, allocator)
+        t := alloc(SubtractionSDF, allocator)
         t.sdf1 = sdf1
         t.sdf2 = sdf2
         return cast(SDF) ref <<t
@@ -536,20 +535,20 @@ impl SDFAllocator {
 
 fn renderImage(film: ref Film)
 {
-    while let i = 0, i < film.pixels.length, i += 1 {
+    for i : 0..film.pixels.length {
         film.pixels[i] = Vec3(0, 0, 0)
     }
 
-    let as = (cast(double) film.width) / (cast(double) film.height)
-    let camera = PerspectiveCamera(
+    as := (cast(double) film.width) / (cast(double) film.height)
+    camera := PerspectiveCamera(
         focalLength = 50
         sensorWidth = as * 24
         sensorHeight = 24
     )
 
-    let bg = Background()
+    bg := Background()
 
-    let all = SDFAllocator.create()
+    all := SDFAllocator.create()
 
     //
     let sChecker1    = LambertianShader(Vec3(0.9, 0.8, 0.8))
@@ -563,13 +562,13 @@ fn renderImage(film: ref Film)
     let sBlue   = LambertianShader(Vec3(0, 0, 1))
 
     //
-    let ground = all.planeY(-1.25, sWhite)
-    let s1 = all.sphereT(Vec3(0, 0.5, 0), 1, sRed)
-    let s2 = all.sphereT(Vec3(0, 0, 0), 0.3, sGreen)
-    let c1 = all.cubeT(Vec3(0, 0.5, 0), 0.8, sBlue)
+    ground := all.planeY(-1.25, sWhite)
+    s1 := all.sphereT(Vec3(0, 0.5, 0), 1, sRed)
+    s2 := all.sphereT(Vec3(0, 0, 0), 0.3, sGreen)
+    c1 := all.cubeT(Vec3(0, 0.5, 0), 0.8, sBlue)
 
-    let sdf = {
-        let sdf = {
+    sdf := {
+        sdf := {
             let sdf: SDF
             {
                 sdf = c1
@@ -591,9 +590,9 @@ fn renderImage(film: ref Film)
         sdf
     }
     
-    let finalSDF = all.translate(sdf, Vec3(0, 0, -7.5))
+    finalSDF := all.translate(sdf, Vec3(0, 0, -7.5))
 
-    let raymarcher = Raymarcher(
+    raymarcher := Raymarcher(
         sdf = finalSDF
         background = bg
         backgroundDistance = 15
@@ -610,16 +609,16 @@ fn Main()
     let height: int = 128 * scale
     let antiAliasingSteps: int = 1
 
-    let imageArr = Array[Vec3].create()
+    imageArr := Array[Vec3].create()
 
     imageArr.resize(width * height)
 
-    let film = Film(width, height, imageArr.slice(), antiAliasingSteps)
+    film := Film(width, height, imageArr.slice(), antiAliasingSteps)
 
-    let start = get_time_milliseconds()
+    start := get_time_milliseconds()
     renderImage(film)
-    let end = get_time_milliseconds()
-    let dur = (cast(double) end - start) / 1000.0
+    end := get_time_milliseconds()
+    dur := (cast(double) end - start) / 1000.0
 
     printf("Rendering took {} seconds`n", dur)
 

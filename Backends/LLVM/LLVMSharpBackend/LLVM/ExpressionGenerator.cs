@@ -1079,7 +1079,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.CreateCondBr(cond, bbIf, bbElse);
 
             builder.PositionBuilderAtEnd(bbIf);
-            if (iff.IfCase.Type != CheezType.Void)
+            if (iff.Type != CheezType.Void && iff.IfCase.Type != CheezType.Void)
             {
                 var r = GenerateExpression(iff.IfCase, true);
                 builder.CreateStore(r, result);
@@ -1095,7 +1095,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.PositionBuilderAtEnd(bbElse);
             if (iff.ElseCase != null)
             {
-                if (iff.ElseCase.Type != CheezType.Void)
+                if (iff.Type != CheezType.Void && iff.ElseCase.Type != CheezType.Void)
                 {
                     var r = GenerateExpression(iff.ElseCase, true);
                     builder.CreateStore(r, result);

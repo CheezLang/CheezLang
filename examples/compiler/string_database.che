@@ -21,7 +21,7 @@ impl Hashable for string {
     fn hash(ref Self) -> uint {
         let h: u32 = 2166136261
 
-        while let i = 0, i < self.length, i += 1 {
+        for i : 0..self.length {
             h += cast(u32)self[i]
             h *= 16777619
         }
@@ -32,7 +32,7 @@ impl Hashable for string {
 
 impl StringDatabase {
     fn create() -> Self {
-        let sdb = Self(
+        sdb := Self(
             pool    = ArenaAllocator.create(1024),
             db      = Table[string, string].create(sdb_compare_strings)
         )
@@ -47,7 +47,7 @@ impl StringDatabase {
             }
             None -> {
                 // create string in pool
-                let str_in_pool = alloc_n(char, cast str.length, pool)
+                str_in_pool := alloc_n(char, cast str.length, pool)
                 c_memcpy(str_in_pool.data, str.data, cast str.length)
                 db[str_in_pool] = str_in_pool
                 str_in_pool

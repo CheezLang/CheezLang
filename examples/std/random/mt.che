@@ -16,15 +16,15 @@ impl PseudoRandomGen for MTwister {
     }
 
     fn next_double(ref Self) -> double {
-        let r = double(self.next())
-        let m = double(u32.max)
+        r := double(self.next())
+        m := double(u32.max)
         return r / m
     }
 }
 
 impl MTwister {
     fn create(seed: u32) -> Self {
-        let result = MTwister(index = STATE_VECTOR_LENGTH)
+        result := MTwister(index = STATE_VECTOR_LENGTH)
         result.mt[0] = seed
         for i : 1..int(STATE_VECTOR_LENGTH) {
             result.mt[i] = 0x6c078965 * @bin_xor(result.mt[i - 1], @bin_lsr(result.mt[i - 1], 30)) + u32(i)
@@ -106,16 +106,16 @@ impl MTwister {
     }
 
     fn next_uint(ref Self, min: u64 = 0, max: u64 = cast u64.max) -> u64 {
-        let a = u64(next())
-        let b = u64(next())
-        let rand = @bin_or(@bin_lsl(b, 32), a)
+        a := u64(next())
+        b := u64(next())
+        rand := @bin_or(@bin_lsl(b, 32), a)
         return rand % (max - min) + min
     }
 
     fn next_int(ref Self, min: int = 0, max: int = cast i64.max) -> int {
-        let a = u64(next())
-        let b = u64(next())
-        let rand = @bin_or(@bin_lsl(b, 32), a)
+        a := u64(next())
+        b := u64(next())
+        rand := @bin_or(@bin_lsl(b, 32), a)
         return int(rand) % (max - min) + min
     }
 }

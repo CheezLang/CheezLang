@@ -12,15 +12,15 @@
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
 fn swap(pa: &int, pb: &int) {
-    let a = <<pa
-    let b = <<pb
+    a := <<pa
+    b := <<pb
     (<<pa, <<pb) = (b, a)
 }
 
 fn Main() {
     {
-        let a = 123
-        let pa = &a
+        a := 123
+        pa := &a
 
         c_printf("%d`n", a)
         c_printf("%d`n", <<pa)
@@ -37,8 +37,8 @@ fn Main() {
     }
 
     {
-        let a = 5
-        let b = 9
+        a := 5
+        b := 9
         c_printf("%d, %d`n", a, b)
         swap(&a, &b)
         c_printf("%d, %d`n", a, b)

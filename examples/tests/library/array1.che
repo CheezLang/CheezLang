@@ -29,7 +29,7 @@ fn print_array(a: ref Array[int]) {
     c_printf("cap: %lld`n", a.get_capacity())
     c_printf("arr: [")
 
-    while let i = 0, i < a.get_length(), i += 1 {
+    for i : 0..a.get_length() {
         if i > 0 {
             c_printf(", ")
         }

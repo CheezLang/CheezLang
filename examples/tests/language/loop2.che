@@ -17,8 +17,8 @@ fn Main() {
 }
 
 // fn test1(n: int) {
-//     let sum = 0
-//     let sum_index = 0
+//     sum := 0
+//     sum_index := 0
 //     for : n {
 //         sum += it
 //         sum_index += it_index
@@ -27,8 +27,8 @@ fn Main() {
 // }
 
 // fn test2(n: int) {
-//     let sum = 0
-//     let sum_index = 0
+//     sum := 0
+//     sum_index := 0
 //     for i, k: n {
 //         sum += i
 //         sum_index += k
@@ -37,7 +37,7 @@ fn Main() {
 // }
 
 // fn test3(n: int) {
-//     let sum = 0
+//     sum := 0
 //     for i : n #label a {
 //         for k : n #label b {
 //             if k % 2 == 0 then continue a
@@ -48,7 +48,7 @@ fn Main() {
 // }
 
 // fn test3(n: int) {
-//     while let a = 0, true, a = a + 1 {
+//     while a =: 0, true, a = a + 1 {
 //         if a == n {
 //             break
 //         }
@@ -59,7 +59,7 @@ fn Main() {
 // }
 
 // fn test2(n: int) {
-//     while let a = 0, a < n, a = a + 1 {
+//     while a := 0, a < n, a = a + 1 {
 //         c_printf("%lld", a)
 //     }
 //     c_printf("`n")

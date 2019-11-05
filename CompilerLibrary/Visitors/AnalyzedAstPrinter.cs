@@ -378,7 +378,13 @@ namespace Cheez.Visitors
         public override string VisitIfExpr(AstIfExpr ifs, int indentLevel = 0)
         {
             var sb = new StringBuilder();
-            sb.Append("if ");
+            sb.Append("if:");
+            sb.Append(ifs.Type);
+            sb.Append(":");
+            sb.Append(ifs.IfCase.Type);
+            sb.Append(":");
+            sb.Append(ifs.ElseCase?.Type);
+            sb.Append(": ");
 
             if (ifs.PreAction != null)
                 sb.Append(ifs.PreAction.Accept(this)).Append(", ");

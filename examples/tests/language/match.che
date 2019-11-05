@@ -16,7 +16,7 @@ fn Main() {
 }
 
 fn test2() {
-    let x = 1
+    x := 1
     match x {
         0 -> println("zero")
         1 -> println("one")
@@ -42,17 +42,17 @@ fn test2() {
 }
 
 fn test1() {
-    let str = "hello world, this is a sentence in lower case letters"
+    str := "hello world, this is a sentence in lower case letters"
 
-    let newStr = alloc_n(char, cast str.length)
+    newStr := alloc_n(char, cast str.length)
 
 
     if str[0] >= 'a' and str[0] <= 'z' {
         newStr[0] = str[0] - 'a' + 'A'
     }
 
-    while let i = 1, i < str.length, i += 1 {
-        let c = str[i]
+    for i : 1..str.length {
+        c := str[i]
         c = match (str[i - 1], str[i]) {
             (' ', $x) if x >= 'a' and x <= 'z' -> x - 'a' + 'A'
             $x -> x[1]

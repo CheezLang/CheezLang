@@ -122,7 +122,7 @@ impl Lexer {
     fn from_file(filename: string, string_db: ref StringDatabase) -> Result[Lexer, String] {
         return match load_file(filename) {
             Ok($content) -> {
-                let l = Lexer.from_string(content, string_db)
+                l := Lexer.from_string(content, string_db)
                 l.location.file = filename
                 Ok(l)
             }
@@ -135,7 +135,7 @@ impl Lexer {
             Some($tok) -> tok
 
             None -> {
-                let tok = next_token()
+                tok := next_token()
                 peek = Some(tok)
                 tok
             }
@@ -166,7 +166,7 @@ impl Lexer {
     }
 
     fn read_token(ref Self) -> Token {
-        let token = Token(
+        token := Token(
             ttype = TokenType.EOF
             data = TokenData.None
             location = location
@@ -178,8 +178,8 @@ impl Lexer {
             return token
         }
 
-        let curr = peek_char(0)
-        let next = peek_char(1)
+        curr := peek_char(0)
+        next := peek_char(1)
 
         match curr {
             '=' if next == '=' -> simple_token(token, TokenType.DoubleEqual, 2)
@@ -263,21 +263,21 @@ impl Lexer {
 
     fn parse_number_literal(ref Self, token: ref Token) {
         token.ttype = TokenType.NumberLiteral
-        let base = 10
-        let str = {
+        base := 10
+        str := {
             let const cap = 64
-            let raw = @alloca(char, cap)
-            let str = String.from_raw_ptr(raw, cap)
+            raw := @alloca(char, cap)
+            str := String.from_raw_ptr(raw, cap)
             str
         }
 
-        let isFloat = false
+        isFloat := false
 
         use LexerNumberState
 
-        let state = Init
+        state := Init
         while location.index < text.length {
-            let c = peek_char(0)
+            c := peek_char(0)
             match state {
                 Error -> {break}
                 Done  -> {break}
@@ -406,17 +406,17 @@ impl Lexer {
         str += '`0'
 
         if isFloat {
-            let d = c_strtod(str.get_raw(), null)
+            d := c_strtod(str.get_raw(), null)
             token.data = TokenData.Double(d)
         } else {
-            let i = c_strtol(str.get_raw(), null, cast base)
+            i := c_strtol(str.get_raw(), null, cast base)
             token.data = TokenData.Integer(i)
         }
     }
 
     fn parse_suffix(ref Self, token: ref Token) {
         if is_ident_begin(peek_char(0)) {
-            let start = location.index
+            start := location.index
             while location.index < text.length and is_ident_char(peek_char(0)) {
                 location.index += 1
             }
@@ -432,24 +432,24 @@ impl Lexer {
 
     fn parse_identifier(ref Self, token: ref Token, ttype: TokenType) {
         token.ttype = ttype
-        let start = location.index
+        start := location.index
 
         while location.index < text.length and is_ident_char(peek_char(0)) {
             location.index += 1
         }
 
-        let str = text.sliceFL(start, location.index - start)
+        str := text.sliceFL(start, location.index - start)
         token.data = TokenData.String(string_db.intern(str))
     }
 
     fn parse_string_literal(ref Self, token: ref Token, ttype: TokenType, end: char) {
         token.ttype = ttype
         location.index += 1
-        let start = location.index
+        start := location.index
 
-        let foundEnd = false
+        foundEnd := false
         while location.index < text.length {
-            let c = peek_char(0)
+            c := peek_char(0)
             location.index += 1
 
             if c == end {
@@ -474,7 +474,7 @@ impl Lexer {
             // TODO: report
         }
 
-        let str = text.sliceFL(start, location.index - start - 1)
+        str := text.sliceFL(start, location.index - start - 1)
         token.data = TokenData.String(string_db.intern(str))
     }
 
@@ -482,8 +482,8 @@ impl Lexer {
         loc = None
 
         while location.index < text.length {
-            let c = peek_char(0)
-            let next = peek_char(1)
+            c := peek_char(0)
+            next := peek_char(1)
 
             if c == '/' and next == '*' {
                 parse_multi_line_comment()
@@ -510,7 +510,7 @@ impl Lexer {
     }
 
     fn peek_char(ref Self, offset: int) -> char {
-        let index = location.index + offset
+        index := location.index + offset
         if index >= text.length {
             return '`0'
         }
@@ -519,10 +519,10 @@ impl Lexer {
     }
 
     fn parse_multi_line_comment(ref Self) {
-        let level = 0
+        level := 0
         while location.index < text.length, location.index += 1 {
-            let curr = peek_char(0)
-            let next = peek_char(1)
+            curr := peek_char(0)
+            next := peek_char(1)
 
             if curr == '/' and next == '*' {
                 location.index += 1

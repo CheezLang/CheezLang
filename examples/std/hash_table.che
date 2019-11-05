@@ -43,11 +43,11 @@ impl(K: type, V: type) Table[K, V] {
 
     fn find_entry(ref Self, the_entries: []Entry[K, V], key: K) -> &Entry[K, V] {
 
-        let index = K.hash(key) % cast(uint) the_entries.length
+        index := K.hash(key) % cast(uint) the_entries.length
         let tombstone: &Entry[K, V] = null
 
         while true {
-            let entry = &the_entries[index]
+            entry := &the_entries[index]
 
             if !entry.filled {
                 if !entry.is_tombstone {
@@ -78,8 +78,8 @@ impl(K: type, V: type) Table[K, V] {
             adjust_capacity(cast(uint) entries.length * 2)
         }
 
-        let entry = find_entry(entries, key)
-        let is_new_key = !entry.filled
+        entry := find_entry(entries, key)
+        is_new_key := !entry.filled
         entry.key = key
         entry.value = value
         entry.filled = true
@@ -97,7 +97,7 @@ impl(K: type, V: type) Table[K, V] {
             return None
         }
 
-        let entry = find_entry(entries, key)
+        entry := find_entry(entries, key)
         if !entry.filled {
             return None
         }
@@ -106,14 +106,14 @@ impl(K: type, V: type) Table[K, V] {
     }
 
     fn get_unchecked(ref Self, key: K) -> ref V #operator("[]") {
-        let entry = find_entry(entries, key)
+        entry := find_entry(entries, key)
         return entry.value
     }
 
     fn delete(ref Self, key: K) -> bool {
         if count == 0 or entries.data == null { return false }
 
-        let entry = find_entry(entries, key)
+        entry := find_entry(entries, key)
         if !entry.filled { return false }
 
         entry.filled = false
@@ -123,9 +123,9 @@ impl(K: type, V: type) Table[K, V] {
     }
 
     fn adjust_capacity(ref Self, cap: uint) {
-        let entries_new = alloc_n(Entry[K, V], cap, allocator)
+        entries_new := alloc_n(Entry[K, V], cap, allocator)
 
-        while let i = 0, i < entries_new.length, i += 1 {
+        for i : 0..entries_new.length {
             entries_new[i].filled = false
             entries_new[i].is_tombstone = false
         }
@@ -133,10 +133,10 @@ impl(K: type, V: type) Table[K, V] {
         // copy entries to new array
         if entries.data != null {
             count = 0
-            while let i = 0, i < entries.length, i += 1 {
-                let entry = &entries[i]
+            for i : 0..entries.length {
+                entry := &entries[i]
                 if entry.filled {
-                    let dest = find_entry(entries_new, entry.key)
+                    dest := find_entry(entries_new, entry.key)
                     dest.key = entry.key
                     dest.value = entry.value
                     dest.filled = true
@@ -163,9 +163,9 @@ struct TableIterator(K: type, V: type) {
 
 impl(K: type, V: type) Iterator[(K, V)] for TableIterator[K, V] {
     fn next(ref Self) -> Option[(K, V)] {
-        let entries = table.get_entries()
+        entries := table.get_entries()
         while index < entries.length {
-            let e = ref entries[index]
+            e := ref entries[index]
             index += 1
 
             if e.filled {

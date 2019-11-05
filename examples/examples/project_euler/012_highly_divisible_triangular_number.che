@@ -7,8 +7,8 @@
 #load("std:math")
 
 fn count_divisors(num: int) -> int {
-    let count = 0
-    let max = int(sqrt(double(num)))
+    count := 0
+    max := int(sqrt(double(num)))
 
     for(inclusive=true) : 1..max {
         if num % it == 0 {
@@ -20,10 +20,10 @@ fn count_divisors(num: int) -> int {
 }
 
 fn Main() {
-    let current = 0
-    while let i = 1, true, i += 1 {
+    current := 0
+    while i := 1, true, i += 1 {
         current += i
-        let divisors = count_divisors(current)
+        divisors := count_divisors(current)
         if divisors > 500 then break
     }
 

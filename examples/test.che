@@ -1,24 +1,24 @@
-#load("examples/trait_function_call_performance")
+// #load("examples/trait_function_call_performance")
 // #load("examples/graphyfier/graphyfier")
 // #load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
 // #load("examples/pathtracer")
-// #load("examples/snake/snake")
+#load("examples/snake/snake")
 
 // #load("tests/language/local_variables")
 // #load("tests/library/arena_allocator1")
 //#load("tests/other/test1")
-// #load("examples/project_euler/009_special_pythagorean_triplet")
+// #load("examples/project_euler/005_smallest_multiple")
 
 /*
-// #load("std:c")
-#load("std:io/io")
+#load("std:c")
+// #load("std:io/io")
 // trait Drop {}
 
 fn Main() {
-    println(395.51)
+    // println(395.51)
     a := 5
     b : int = 5
     c : int
@@ -39,7 +39,7 @@ fn try_catch(r: $T, code: Code) #macro {
     match r {
         Ok($v) -> v
         Err($e) -> {
-            let err = e
+            err := e
             @insert(code, link=[err])
         }
     }
@@ -63,7 +63,7 @@ fn test(b: bool) -> Result(int, int) {
 }
 
 fn foo() -> Result(int, int) {
-    let i = try(test(false))
+    i := try(test(false))
     println(i)
     return Ok(0)
 }

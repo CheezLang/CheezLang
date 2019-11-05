@@ -5,15 +5,15 @@
 #load("std:io/io")
 
 fn Main() {
-    let digits = @dup(0, 1000)
+    digits := @dup(0, 1000)
     digits[0] = 1
-    let leftmost_digit = 0
+    leftmost_digit := 0
 
     // calculate 2^1000
     for : 1000 {
-        let carry = 0
+        carry := 0
         for(inclusive=true) i : leftmost_digit {
-            let d = digits[i]
+            d := digits[i]
             d = d * 2 + carry
             digits[i] = d % 10
             carry = d / 10
@@ -25,7 +25,7 @@ fn Main() {
     }
 
     // calculate sum of digits
-    let sum = 0
+    sum := 0
     for(reverse=true) : @cast([]int, digits) {
         sum += it
     }

@@ -27,7 +27,7 @@ enum TokenData {
 
 impl Printable for TokenLocation {
     fn print(ref Self, str: ref String, format: string) {
-        let column = index - line_start
+        column := index - line_start
         str.appendf("{}:{}:{}", (file, line, column))
     }
 }

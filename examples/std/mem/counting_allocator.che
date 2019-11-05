@@ -26,37 +26,37 @@ impl CountingAllocator {
 
 impl Allocator for CountingAllocator {
     fn allocate(ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
-        let size = count * elementSize
+        size := count * elementSize
         allocated += size
 
-        let mem = parent.allocate(size + @sizeof(u64), 1, alignment)
+        mem := parent.allocate(size + @sizeof(u64), 1, alignment)
 
         // store size before allocated memory
-        let sizePtr = cast(&u64)mem
+        sizePtr := cast(&u64)mem
         <<sizePtr = size
 
         return pointer_add(mem, @sizeof(u64))
     }
 
     fn reallocate(ref Self, mem: &any, count: u64, elementSize: u64, alignment: u64) -> &any {
-        let size = count * elementSize
-        let actualMem = pointer_add(mem, -@sizeof(u64))
+        size := count * elementSize
+        actualMem := pointer_add(mem, -@sizeof(u64))
         
         {
-            let sizePtr = cast(&u64)actualMem
+            sizePtr := cast(&u64)actualMem
             allocated += size - <<sizePtr
         }
 
         mem = parent.reallocate(actualMem, size + @sizeof(u64), 1, alignment)
 
-        let sizePtr = cast(&u64)mem
+        sizePtr := cast(&u64)mem
         <<sizePtr = size
         return pointer_add(mem, @sizeof(u64))
     }
 
     fn free(ref Self, mem: &any) {
-        let actualMem = pointer_add(mem, -@sizeof(u64))
-        let sizePtr = cast(&u64)actualMem
+        actualMem := pointer_add(mem, -@sizeof(u64))
+        sizePtr := cast(&u64)actualMem
         freed += <<sizePtr
         parent.free(actualMem)
     }

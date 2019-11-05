@@ -4,7 +4,7 @@
 #load("std:ring_queue")
 
 fn thread_func(data: &any) -> u32 #stdcall {
-    let thread = @cast(&ThreadData, data)
+    thread := @cast(&ThreadData, data)
     thread.func(thread.data)
     return 0
 }
@@ -22,11 +22,11 @@ struct ThreadData {
 
 impl Thread {
     fn create(func: fn(&$T), data: &$T) -> Thread {
-        let td = alloc(ThreadData)
+        td := alloc(ThreadData)
         td.func = @cast(fn(&any), func)
         td.data = @cast(&any, data)
 
-        let handle = CreateThread(null, 0, thread_func, cast td, CREATE_SUSPENDED, null)
+        handle := CreateThread(null, 0, thread_func, cast td, CREATE_SUSPENDED, null)
         @assert(handle != null)
         return Thread(
             data = td
@@ -35,7 +35,7 @@ impl Thread {
     }
 
     fn start(ref Self) -> bool {
-        let res = ResumeThread(handle)
+        res := ResumeThread(handle)
         return res != -1
     }
 
@@ -62,7 +62,7 @@ struct Mutex {
 
 impl Mutex {
     fn create() -> Mutex {
-        let handle = CreateMutexA(null, 0, null)
+        handle := CreateMutexA(null, 0, null)
         if handle == null {
             @panic("Failed to create mutex")
         }
@@ -118,7 +118,7 @@ struct ThreadPool {
 
 impl ThreadPool {
     fn create(num_threads: int) -> Self {
-        let data = alloc(ThreadPoolData)
+        data := alloc(ThreadPoolData)
         <<data = ThreadPoolData(
             threads = Array[Thread].create(num_threads)
             functions = RingQueue[ThreadPoolFunc].create(10)
@@ -128,7 +128,7 @@ impl ThreadPool {
         )
 
         for : 0..num_threads {
-            let t = Thread.create(worker, data)
+            t := Thread.create(worker, data)
             t.start()
             data.threads.add(t)
         }
@@ -154,7 +154,7 @@ impl ThreadPool {
                 break
             }
 
-            let next: ThreadPoolFunc = (@cast(fn(&any), null), null)
+            next : ThreadPoolFunc = (@cast(fn(&any), null), null)
             if tp.functions.get_length() > 0 {
                 next = tp.functions.pop()
             }

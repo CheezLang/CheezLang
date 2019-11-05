@@ -68,7 +68,7 @@ impl(It: type, T: type) It if It : Iterator[T] {
     }
 
     fn to_array(ref Self) -> Array[T] {
-        let a = Array[T].create()
+        a := Array[T].create()
         while match self.next() {
             Some($v) -> {
                 a.add(v)
@@ -124,7 +124,7 @@ impl Iterator[int] for RangeIterator {
             return None
         }
 
-        let n = from
+        n := from
         from += 1
         return Some(n)
     }

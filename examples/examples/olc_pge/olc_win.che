@@ -157,19 +157,19 @@ fn olc_window_event(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LR
         }
 
         WM_MOUSEMOVE -> {
-            let x = cast(i16) @bin_and(lparam, 0xFFFF)
-            let y = cast(i16) @bin_and(@bin_lsr(lparam, 16), 0xFFFF)
+            x := cast(i16) @bin_and(lparam, 0xFFFF)
+            y := cast(i16) @bin_and(@bin_lsr(lparam, 16), 0xFFFF)
             pixel_game_engine_ptr.olc_update_mouse(x, y)
         }
 
         WM_MOUSEWHEEL -> {
-            let delta = cast(i16) @bin_and(@bin_lsr(wparam, 16), 0xFFFF)
+            delta := cast(i16) @bin_and(@bin_lsr(wparam, 16), 0xFFFF)
             pixel_game_engine_ptr.olc_update_mouse_wheel(delta)
         }
 
         WM_SIZE -> {
-            let x = cast(i16) @bin_and(lparam, 0xFFFF)
-            let y = cast(i16) @bin_and(@bin_lsr(lparam, 16), 0xFFFF)
+            x := cast(i16) @bin_and(lparam, 0xFFFF)
+            y := cast(i16) @bin_and(@bin_lsr(lparam, 16), 0xFFFF)
             pixel_game_engine_ptr.olc_update_window_size(x, y)
         }
 

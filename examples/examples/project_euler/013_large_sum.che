@@ -6,16 +6,16 @@
 #load("std:string")
 
 fn Main() {
-    let res = String.empty()
+    res := String.empty()
 
-    let carry = 0
+    carry := 0
     for(reverse=true) c : 0..50 {
         for r : 0..100 {
-            let digit = int(numbers[r][c] - '0')
+            digit := int(numbers[r][c] - '0')
             carry += digit
         }
 
-        let lsd = carry % 10
+        lsd := carry % 10
         carry = carry / 10
         res += char(lsd) + '0'
     }
@@ -25,7 +25,7 @@ fn Main() {
     }
 
     // reverse string
-    let len = res.get_length()
+    len := res.get_length()
     for : len/2 {
         let (a, b) = (res[it], res[len-it-1])
         res[len-it-1] = a

@@ -34,13 +34,13 @@ typedef Vec3f = Vector[float]
 typedef Vec3i = Vector[int]
 
 fn Main() {
-    let a = Vec3(1, 2)
-    let b = Vec3(3, 4)
+    a := Vec3(1, 2)
+    b := Vec3(3, 4)
     
     c_printf("%f, %f`n", a.x, a.y)
     c_printf("%f, %f`n", b.x, b.y)
 
-    let c = Vec3.sub(a, b)
+    c := Vec3.sub(a, b)
     a.add(b).add(Vec3(5, 5))
 
     c_printf("%f, %f`n", a.x, a.y)

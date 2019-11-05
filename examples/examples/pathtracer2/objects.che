@@ -26,17 +26,17 @@ struct Sphere {
 
 impl Hittable for Sphere {
     fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
-        let oc = r.origin - center
-        let b = vec3.dot(oc, r.direction)
-        let c = vec3.dot(oc, oc) - radius * radius
-        let discriminant = b * b - c
+        oc := r.origin - center
+        b := vec3.dot(oc, r.direction)
+        c := vec3.dot(oc, oc) - radius * radius
+        discriminant := b * b - c
 
         if discriminant > 0 {
-            let sqrt_dis = real(sqrt(discriminant))
+            sqrt_dis := real(sqrt(discriminant))
 
-            let temp = -b - sqrt_dis
+            temp := -b - sqrt_dis
             if temp < t_max and temp > t_min {
-                let point = r.at(temp)
+                point := r.at(temp)
                 return Some(HitRecord(
                     t = temp
                     p = point
@@ -47,7 +47,7 @@ impl Hittable for Sphere {
 
             temp = -b + sqrt_dis
             if temp < t_max and temp > t_min {
-                let point = r.at(temp)
+                point := r.at(temp)
                 return Some(HitRecord(
                     t = temp
                     p = point
@@ -70,8 +70,8 @@ impl Hittable for Sphere {
 //
 impl Hittable for Array[Hittable] {
     fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
-        let hit = Option[HitRecord].None
-        let closest = t_max
+        hit := Option[HitRecord].None
+        closest := t_max
         for : self.slice() {
             match it.hit(r, t_min, closest, random) {
                 Some($h) -> {
@@ -89,7 +89,7 @@ impl Hittable for Array[Hittable] {
             return None
         }
 
-        let box = match self[0].bounding_box() {
+        box := match self[0].bounding_box() {
             Some($aabb) -> aabb
             None -> {
                 return None
@@ -119,7 +119,7 @@ struct BhvNode {
 }
 
 fn test_macro(name: string, arr: []Hittable) {
-    let address = int(arr.data)
+    address := int(arr.data)
     printfln("{}: [{}] {}", (name, address, arr.length))
     for : arr {
         it.bounding_box()
@@ -131,9 +131,9 @@ fn quick_sort(arr: []Hittable, cmp: fn (Hittable, Hittable) -> int) {
             return
         }
 
-        let idx = 0
-        let pivot = arr[arr.length - 1]
-        while let i = 0, i < arr.length - 1, i += 1 {
+        idx := 0
+        pivot := arr[arr.length - 1]
+        for i : 0..arr.length-1 {
             if cmp(arr[i], pivot) > 0 {
                 (arr[idx], arr[i]) = (arr[i], arr[idx])
                 idx += 1
@@ -180,7 +180,7 @@ fn box_compare_z(a: Hittable, b: Hittable) -> int {
 
 impl BhvNode {
     fn create(l: []Hittable) -> BhvNode {
-        let compare_funcs = [box_compare_x, box_compare_y, box_compare_z]
+        compare_funcs := [box_compare_x, box_compare_y, box_compare_z]
         quick_sort(l, compare_funcs[int(global_random.random_real() * 3)])
 
         let (left, right) = if l.length == 1 {
@@ -188,15 +188,15 @@ impl BhvNode {
         } else if l.length == 2 {
             (l[0], l[1])
         } else {
-            let mid = l.length / 2
-            let a = alloc(BhvNode)
+            mid := l.length / 2
+            a := alloc(BhvNode)
             <<a = BhvNode.create(l[0..mid])
-            let b = alloc(BhvNode)
+            b := alloc(BhvNode)
             <<b = BhvNode.create(l[mid..l.length])
             (Hittable(<<a), Hittable(<<b))
         }
 
-        let aabb = match (left.bounding_box(), right.bounding_box()) {
+        aabb := match (left.bounding_box(), right.bounding_box()) {
             (Some($a), Some($b)) -> AABB.surrounding_box(a, b)
             $_ -> {
                 println("no bounding box in BhvNode constructor")
@@ -211,8 +211,8 @@ impl BhvNode {
 impl Hittable for BhvNode {
     fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
         if box.hit(r, t_min, t_max) {
-            let hit_left = left.hit(r, t_min, t_max, random)
-            let hit_right = right.hit(r, t_min, t_max, random)
+            hit_left := left.hit(r, t_min, t_max, random)
+            hit_right := right.hit(r, t_min, t_max, random)
 
             return match (hit_left, hit_right) {
                 (None, None)                        -> None
@@ -242,13 +242,13 @@ struct XYRect {
 
 impl Hittable for XYRect {
     fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
-        let t = (z - r.origin.z) / r.direction.z
+        t := (z - r.origin.z) / r.direction.z
         if t < t_min or t > t_max {
             return None
         }
 
-        let x = r.origin.x + t * r.direction.x
-        let y = r.origin.y + t * r.direction.y
+        x := r.origin.x + t * r.direction.x
+        y := r.origin.y + t * r.direction.y
         if x < x0 or x > x1 or y < y0 or y > y1 {
             return None
         }
@@ -279,13 +279,13 @@ struct YZRect {
 
 impl Hittable for YZRect {
     fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
-        let t = (x - r.origin.x) / r.direction.x
+        t := (x - r.origin.x) / r.direction.x
         if t < t_min or t > t_max {
             return None
         }
 
-        let y = r.origin.y + t * r.direction.y
-        let z = r.origin.z + t * r.direction.z
+        y := r.origin.y + t * r.direction.y
+        z := r.origin.z + t * r.direction.z
         if y < y0 or y > y1 or z < z0 or z > z1 {
             return None
         }
@@ -316,13 +316,13 @@ struct ZXRect {
 
 impl Hittable for ZXRect {
     fn hit(ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
-        let t = (y - r.origin.y) / r.direction.y
+        t := (y - r.origin.y) / r.direction.y
         if t < t_min or t > t_max {
             return None
         }
 
-        let z = r.origin.z + t * r.direction.z
-        let x = r.origin.x + t * r.direction.x
+        z := r.origin.z + t * r.direction.z
+        x := r.origin.x + t * r.direction.x
         if z < z0 or z > z1 or x < x0 or x > x1 {
             return None
         }
@@ -379,7 +379,7 @@ struct Box {
 
 impl Box {
     fn create(p0: vec3, p1: vec3, mat: Material) -> Box {
-        let arr = Array[Hittable].create(6)
+        arr := Array[Hittable].create(6)
         create_faces(p0, p1, mat, arr)
         return Box(p0, p1, arr)
     }
@@ -438,11 +438,11 @@ impl Hittable for ConstantMedium {
                         return None
                     }
 
-                    let dist_in_boundary = h2.t - h1.t
-                    let hit_distance = -(1.0 / density) * real(log(random.next_double()))
+                    dist_in_boundary := h2.t - h1.t
+                    hit_distance := -(1.0 / density) * real(log(random.next_double()))
                     if hit_distance < dist_in_boundary {
-                        let t = h1.t + hit_distance
-                        let hit = HitRecord(
+                        t := h1.t + hit_distance
+                        hit := HitRecord(
                             t = t
                             p = r.at(t)
                             n = vec3(1, 0, 0)

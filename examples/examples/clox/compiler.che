@@ -73,23 +73,23 @@ struct ClassCompiler {
 
 
 fn compile(source: string) -> &ObjFunction {
-    let lexer = Lexer.create(source)
-    let compiler = Compiler.create(FunctionType.Script)
+    lexer := Lexer.create(source)
+    compiler := Compiler.create(FunctionType.Script)
 
-    let had_error = false
-    let panic_mode = false
+    had_error := false
+    panic_mode := false
 
     advance()
     while !match_token(TokenKind.Eof) {
         declaration()
     }
 
-    let function = end_compiler()
+    function := end_compiler()
     return if had_error {null} else {function}
 
     // print tokens
     // while true {
-    //     let token = lexer.next_token()
+    //     token := lexer.next_token()
 
     //     printfln("{}> ({}) '{}'", (token.line, token.kind, token.text))
 

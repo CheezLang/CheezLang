@@ -14,7 +14,7 @@ typedef HWButton = (pressed: bool, released: bool, held: bool)
 
 impl Printable for Key {
     fn print(ref Self, str: ref String, fmt: string) {
-        let s = match self {
+        s := match self {
             Key.NONE    -> "NONE"
             Key.A   -> "A"
             Key.B   -> "B"

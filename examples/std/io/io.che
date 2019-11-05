@@ -60,7 +60,7 @@ fn format_int(buffer: ref String, val: $T, _base: int = 10) {
     else if val == 0 then (1, 1)
     else (0, 1)
 
-    while let v = val, v != 0, v /= base {
+    while v := val, v != 0, v /= base {
         len += 1
     }
 

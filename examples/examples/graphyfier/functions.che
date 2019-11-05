@@ -13,14 +13,14 @@ fn f2(x: double) -> Option(Complex) {
         return None
     }
 
-    let result = (Complex.poww(C(-1), x) * 2.0 + 3.0 * x) / x
+    result := (Complex.poww(C(-1), x) * 2.0 + 3.0 * x) / x
     return Some(result)
 }
 
 fn f3(n: double) -> Option(Complex) {
-    let x = 5.0
-    let t = Complex.poww(C(x), n) * n
-    let b = t + 1.0
+    x := 5.0
+    t := Complex.poww(C(x), n) * n
+    b := t + 1.0
 
     if b.r == 0 and b.i == 0 {
         return None

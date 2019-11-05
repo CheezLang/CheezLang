@@ -67,7 +67,7 @@ fn print_a(a: ref Option[int]) {
 }
 
 fn Main() {
-    let a = Some(1)
+    a := Some(1)
 
     inc1(a)
     print_a(a)

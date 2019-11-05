@@ -32,12 +32,12 @@ ArenaAllocator (8 buckets)
 
 
 fn Main() {
-    let a = ArenaAllocator.create(32)
+    a := ArenaAllocator.create(32)
 
     a.dump(true)
 
     alloc(string, a)
-    let x = alloc(i64, a)
+    x := alloc(i64, a)
     alloc(i32, a)
     alloc(i16, a)
     alloc(i8, a)
@@ -45,7 +45,7 @@ fn Main() {
     alloc(i16, a)
     alloc(i32, a)
     alloc(i64, a)
-    let s = alloc(string, a)
+    s := alloc(string, a)
 
     <<s = "lol"
     println(<<s)

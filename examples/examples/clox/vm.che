@@ -12,7 +12,7 @@ fn run() -> InterpretResult {
 }
 
 fn interpret(source: string) -> InterpretResult {
-    let function = compile(source)
+    function := compile(source)
     if function == null {
         return InterpretResult.CompileError
     }

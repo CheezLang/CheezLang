@@ -36,22 +36,22 @@ impl Test {
 
 fn Main() {
     {
-        let t = Test.create()
+        t := Test.create()
         c_printf("%lld, %f`n", t.a, t.b)
     }
 
     {
-        let t = Test.create(6)
+        t := Test.create(6)
         c_printf("%lld, %f`n", t.a, t.b)
     }
 
     {
-        let t = Test.create(b = 1.23456, a = 9)
+        t := Test.create(b = 1.23456, a = 9)
         c_printf("%lld, %f`n", t.a, t.b)
     }
 
     {
-        let t = Test.create(1, 2)
+        t := Test.create(1, 2)
         c_printf("%lld, %f`n", t.a, t.b)
         t.set_val(3, 4.5)
         c_printf("%lld, %f`n", t.a, t.b)

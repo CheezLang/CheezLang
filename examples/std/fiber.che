@@ -5,7 +5,7 @@
 // let thread_fiber: Fiber = Fiber(ConvertThreadToFiber(&thread_fiber), null)
 
 fn fiber_func(param: &any) #stdcall {
-    let f = cast(&Fiber)param
+    f := cast(&Fiber)param
     f.func()
     while true {
         Fiber.yield()
@@ -21,7 +21,7 @@ struct Fiber {
 
 impl Fiber {
     fn create(func: fn(), ud: &any = null) -> &Fiber {
-        let f = alloc(Fiber)
+        f := alloc(Fiber)
         f.ptr = CreateFiber(0, fiber_func, cast f)
         f.func = func
         f.parent = current()
@@ -39,7 +39,7 @@ impl Fiber {
     }
 
     fn yield() {
-        let f = current()
+        f := current()
         if f.parent == null {
             @panic("Can't yield from a fiber without parent")
         } else {

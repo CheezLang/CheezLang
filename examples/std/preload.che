@@ -71,7 +71,7 @@ fn for_extension_range(r: $T..T, code: Code, reverse: bool = false, inclusive: b
 
     compare :: @code(if const reverse then it >= end else it <= end)
 
-    while let (it, it_index) = (start, 0),
+    while (it, it_index) := (start, 0),
         @insert(compare, link=[it]),
         it_index += 1; it += inc {
         @insert(code, _break=break, _continue=continue)
@@ -80,7 +80,7 @@ fn for_extension_range(r: $T..T, code: Code, reverse: bool = false, inclusive: b
 
 fn for_extension_int(num: int, code: Code, inclusive: bool = false, reverse: bool = false) #for {
     start, inc := if const reverse then (num - 1, -1) else (0, 1)
-    while let (it, it_index) = (start, 0),
+    while (it, it_index) := (start, 0),
         if const inclusive then it_index <= num else it_index < num,
         it += inc; it_index += 1 {
         @insert(code, _break=break, _continue=continue)
@@ -88,7 +88,7 @@ fn for_extension_int(num: int, code: Code, inclusive: bool = false, reverse: boo
 }
 
 fn for_extension_slice(arr: []$T, code: Code, reverse: bool = false, by_ref: bool = false) #for {
-    while let it_index = 0, it_index < arr.length, it_index += 1 {
+    while it_index := 0, it_index < arr.length, it_index += 1 {
         if const reverse {
             it_index_rev := arr.length - it_index - 1
             it := if const by_ref then ref arr[it_index_rev] else arr[it_index_rev]
@@ -101,7 +101,7 @@ fn for_extension_slice(arr: []$T, code: Code, reverse: bool = false, by_ref: boo
 }
 
 // fn for_extension_array(arr: [$Size]$T, code: Code, reverse: bool = false, by_ref: bool = false) #for {
-//     while let it_index = 0, it_index < arr.length, it_index += 1 {
+//     while it_index := 0, it_index < arr.length, it_index += 1 {
 //         if const reverse {
 //             let it_index_rev = arr.length - it_index - 1
 //             let it = if const by_ref then ref arr[it_index_rev] else arr[it_index_rev]

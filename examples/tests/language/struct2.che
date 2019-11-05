@@ -22,12 +22,12 @@ impl Test {
 }
 
 fn Main() {
-    let t = Test(0)
+    t := Test(0)
     c_printf("%lld`n", t.x)
     t.foo(3)
     c_printf("%lld`n", t.x)
     t.foo(6)
     c_printf("%lld`n", t.x)
-    let d = t.bar(double)
+    d := t.bar(double)
     c_printf("%f`n", d)
 }

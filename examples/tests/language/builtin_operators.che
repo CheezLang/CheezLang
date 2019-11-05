@@ -91,8 +91,8 @@ fn Main() {
     test_bool(false, false)
 
     // pointer
-    let a = 5
-    let b = 6
+    a := 5
+    b := 6
     test_pointers(null, null)
     test_pointers(&a, &a)
     test_pointers(&a, &b)
@@ -113,15 +113,15 @@ fn foo(b: bool, i: int) -> bool {
 }
 
 fn test_and_or() {
-    let a = foo(true, 0) and foo(true, 1)
-    let b = foo(true, 2) and foo(false, 3)
-    let c = foo(false, 4) and foo(true, 5)
-    let d = foo(false, 6) and foo(false, 7)
+    a := foo(true, 0) and foo(true, 1)
+    b := foo(true, 2) and foo(false, 3)
+    c := foo(false, 4) and foo(true, 5)
+    d := foo(false, 6) and foo(false, 7)
 
-    let e = foo(true, 8) or foo(true, 9)
-    let f = foo(true, 10) or foo(false, 11)
-    let g = foo(false, 12) or foo(true, 13)
-    let h = foo(false, 14) or foo(false, 15)
+    e := foo(true, 8) or foo(true, 9)
+    f := foo(true, 10) or foo(false, 11)
+    g := foo(false, 12) or foo(true, 13)
+    h := foo(false, 14) or foo(false, 15)
 
     c_printf("%hhd %hhd %hhd %hhd %hhd %hhd %hhd %hhd`n", a, b, c, d, e, f, g, h)
 }

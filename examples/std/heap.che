@@ -77,7 +77,7 @@ impl(T: type) Heap[T] {
 
     fn delete_first(ref Self) -> T {
         @assert(length > 0)
-        let val = data[0]
+        val := data[0]
         length -= 1
 
         if length > 0 {
@@ -94,7 +94,7 @@ impl(T: type) Heap[T] {
         }
 
 
-        let pi = get_parent_index(i)
+        pi := get_parent_index(i)
         if data[i] < data[pi] {
             swap(i, pi)
             sift_up(pi)
@@ -102,7 +102,7 @@ impl(T: type) Heap[T] {
     }
 
     fn sift_down(ref Self, i: int) {
-        let ci = get_child_index(i)
+        ci := get_child_index(i)
 
         if ci.left >= length {
             return
@@ -136,8 +136,8 @@ impl(T: type) Heap[T] {
 
     fn validate(ref Self) -> bool {
         for : length {
-            let current = data[it]
-            let ci = get_child_index(it)
+            current := data[it]
+            ci := get_child_index(it)
 
             if ci.left < length {
                 if data[ci.left] < data[it] {

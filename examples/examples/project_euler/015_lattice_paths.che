@@ -18,7 +18,7 @@ fn count_routes(w: int, h: int) -> int {
         return 1
     }
 
-    let count = count_routes(w - 1, h) + count_routes(w, h - 1)
+    count := count_routes(w - 1, h) + count_routes(w, h - 1)
     cache[w-1][h-1] = count
     return count
 }

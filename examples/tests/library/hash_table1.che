@@ -83,8 +83,8 @@ fn test(t1: ref $T1, t2: ref $T2) {
 }
 
 fn Main() {
-    let t1 = Table[int, c_string].create(compare_ints)
-    let t2 = Table[c_string, c_string].create(compare_c_strings)
+    t1 := Table[int, c_string].create(compare_ints)
+    t2 := Table[c_string, c_string].create(compare_c_strings)
 
     t2["first name"c] = "nico"c
     t2["last name"c] = "ot"c

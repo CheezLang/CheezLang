@@ -19,7 +19,7 @@ let const min_contribution  : double    = 0.2
 let const pi: double = 3.14159265359
 
 fn create(val: $T, allocator: Allocator) -> &T {
-    let ptr = alloc(T, allocator)
+    ptr := alloc(T, allocator)
     <<ptr = val
     return ptr
 }
@@ -78,25 +78,25 @@ struct Sphere {
 
 impl Object for Sphere {
     fn intersect(ref Self, ray: Ray) -> Option[HitInfo] {
-        let op = pos - ray.pos
-        let r2 = rad * rad
-        let b = op.dot(ray.dir)
-        let det = b * b - op.magsq() + r2
+        op := pos - ray.pos
+        r2 := rad * rad
+        b := op.dot(ray.dir)
+        det := b * b - op.magsq() + r2
         if det < 0 {
             return None
         }
 
-        let epsilon = 0.0001
+        epsilon := 0.0001
         det = sqrt(det)
-        let minusT = b - det
-        let plusT = b + det
+        minusT := b - det
+        plusT := b + det
         if minusT < epsilon and plusT < epsilon {
             return None
         }
 
-        let t = if minusT > epsilon {minusT} else {plusT}
-        let hitPos = ray.pos + ray.dir * t
-        let normal = hitPos - pos
+        t := if minusT > epsilon {minusT} else {plusT}
+        hitPos := ray.pos + ray.dir * t
+        normal := hitPos - pos
         normal.normalize()
         return Some(HitInfo(t, hitPos, normal, mat))
     }
@@ -130,7 +130,7 @@ impl PathTracer {
             allocator   = ArenaAllocator.create(1024)
             objects     = Array[Object].create()
             buffer      = {
-                let b = alloc_n(Vec3, u64(width * height))
+                b := alloc_n(Vec3, u64(width * height))
                 c_memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
                 b
             }
@@ -138,7 +138,7 @@ impl PathTracer {
     }
 
     fn add_object(ref Self, obj: $T) {
-        let dyn = alloc(T, allocator)
+        dyn := alloc(T, allocator)
         <<dyn = obj
         objects.add(ref <<dyn)
     }
@@ -147,7 +147,7 @@ impl PathTracer {
         let nearest: Option[HitInfo] = None
 
         for n : 0..objects.get_length() {
-            let hit = objects[n].intersect(ray)
+            hit := objects[n].intersect(ray)
             nearest = match (nearest, hit) {
                 (None, Some($hit)) -> Some(hit)
                 (Some($n), Some($hit)) if hit.distance < n.distance -> Some(hit)
@@ -166,71 +166,71 @@ impl PathTracer {
         return match self.intersect(ray) {
             None -> Vec3()
             Some($hit) -> {
-                let result = Vec3()
+                result := Vec3()
 
                 // emission
                 result += hit.material.emission
 
                 // diffuse
                 if hit.material.diffuse.max_component() > 0 {
-                    let rand = StandardContinuousUniform[MTwister](prng)
-                    let r1 = rand.sample() * 2.0 * pi
-                    let r2 = rand.sample()
-                    let r2s = sqrt(r2)
+                    rand := StandardContinuousUniform[MTwister](prng)
+                    r1 := rand.sample() * 2.0 * pi
+                    r2 := rand.sample()
+                    r2s := sqrt(r2)
 
-                    let w = hit.normal
-                    let u = if abs(w.x) > abs(w.z) {Vec3(-w.y, w.x, 0)} else {Vec3(0, -w.z, w.y)}
+                    w := hit.normal
+                    u := if abs(w.x) > abs(w.z) {Vec3(-w.y, w.x, 0)} else {Vec3(0, -w.z, w.y)}
                     u.normalize()
-                    let v = u.cross(w)
-                    let newDir = u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)
-                    let newRay = Ray(hit.pos, newDir)
+                    v := u.cross(w)
+                    newDir := u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)
+                    newRay := Ray(hit.pos, newDir)
 
                     result += hit.material.diffuse * calc_color(newRay, prng, contribution * hit.material.diffuse.max_component(), depth + 1)
                 }
 
                 // reflection
                 if hit.material.reflection.max_component() > 0 {
-                    let newDir = ray.dir.reflect(hit.normal)
-                    let newRay = Ray(hit.pos, newDir)
-                    let nextContribution = contribution * hit.material.reflection.max_component()
+                    newDir := ray.dir.reflect(hit.normal)
+                    newRay := Ray(hit.pos, newDir)
+                    nextContribution := contribution * hit.material.reflection.max_component()
                     result += hit.material.reflection * calc_color(newRay, prng, nextContribution, depth + 1)
                 }
 
                 // refraction
-                let refract_max = hit.material.refraction.max_component()
+                refract_max := hit.material.refraction.max_component()
                 if refract_max > 0 {
-                    let I = ray.dir.normalized()
-                    let n = hit.normal.normalized()
+                    I := ray.dir.normalized()
+                    n := hit.normal.normalized()
 
-                    let n1 = 1.0
-                    let n2 = hit.material.ior
+                    n1 := 1.0
+                    n2 := hit.material.ior
 
 
-                    let outside = Vec3.dot(hit.normal, ray.dir) < 0
+                    outside := Vec3.dot(hit.normal, ray.dir) < 0
                     if !outside {
                         // coming from inside
                         (n1, n2) = (n2, n1)
                         n = -n
                     }
 
-                    let kr = fresnel(I, n, hit.material.ior)
-                    let color_refracted = if kr >= 1 then Vec3() else {
-                        let r = n1 / n2
-                        let c = -Vec3.dot(n, I)
+                    kr := fresnel(I, n, hit.material.ior)
+                    color_refracted := if kr >= 1 then Vec3() else {
+                        r := n1 / n2
+                        c := -Vec3.dot(n, I)
 
-                        let f = r * c - sqrt(1 - r * r * (1 - c * c))
-                        let newDir = I * r + n * f
-                        let newRay = Ray(hit.pos + newDir * 0.01, newDir)
+                        f := r * c - sqrt(1 - r * r * (1 - c * c))
+                        newDir := I * r + n * f
+                        newRay := Ray(hit.pos + newDir * 0.01, newDir)
                         calc_color(newRay, prng, contribution * refract_max, depth + 1)
                     }
 
-                    let color_reflected = {
-                        let newDir = I.reflect(n)
-                        let newRay = Ray(hit.pos + newDir * 0.01, newDir)
+                    color_reflected := {
+                        newDir := I.reflect(n)
+                        newRay := Ray(hit.pos + newDir * 0.01, newDir)
                         calc_color(newRay, prng, contribution * refract_max, depth + 1)
                     }
 
-                    let color = color_reflected * kr + color_refracted * (1 - kr)
+                    color := color_reflected * kr + color_refracted * (1 - kr)
                     result += hit.material.refraction * color
                 }
 
@@ -240,57 +240,57 @@ impl PathTracer {
     }
 
     fn fresnel(I: Vec3, N: Vec3, ior: double) -> kr: double {
-        let cosi = clamp(Vec3.dot(I, N), -1.0, 1.0, )
-        let etai = 1.0
-        let etat = ior
+        cosi := clamp(Vec3.dot(I, N), -1.0, 1.0, )
+        etai := 1.0
+        etat := ior
         if cosi > 0 { (etai, etat) = (etat, etai) }
         // Compute sini using Snell's law
-        let sint = etai / etat * sqrt(fmax(0.0, 1.0 - cosi * cosi))
+        sint := etai / etat * sqrt(fmax(0.0, 1.0 - cosi * cosi))
         // Total internal reflection
         if sint >= 1 {
             kr = 1
         } else {
-            let cost = sqrt(fmax(0.0, 1.0 - sint * sint))
+            cost := sqrt(fmax(0.0, 1.0 - sint * sint))
             cosi = fabs(cosi)
-            let Rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost))
-            let Rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost))
+            Rs := ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost))
+            Rp := ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost))
             kr = (Rs * Rs + Rp * Rp) / 2.0
         }
     }
 }
 
 fn pathtracer_thread(data: &(index: int, pt: &PathTracer)) -> u32 #stdcall {
-    // let data = @cast(&(index: int, pt: &PathTracer), _data)
+    // data := @cast(&(index: int, pt: &PathTracer), _data)
 
-    let y_range = height / thread_count
-    let start_y = data.index * y_range
+    y_range := height / thread_count
+    start_y := data.index * y_range
     let end_y   = (data.index + 1) * y_range - 1
     if height - end_y < y_range {
         end_y = height - 1
     }
 
     printfln("{}: {} -> {}", (data.index, start_y, end_y))
-    let seed = PseudoRandom.next_int()
-    let prng = MTwister.create(cast seed)
+    seed := PseudoRandom.next_int()
+    prng := MTwister.create(cast seed)
 
     while true {
         for(inclusive=true) current_y : start_y..end_y {
             // loop through current line
             for current_x : 0..width {
-                let index = current_x + current_y * width
+                index := current_x + current_y * width
 
                 // x coordinate in range [-1; 1]
                 // y coordinate in range [-1; 1]
                 let blur_radius: double = 1
-                let x = (double(current_x) + prng.next_double() * blur_radius * 2 - blur_radius) / double(width) * 2 - 1
-                let y = (double(height - current_y - 1) + prng.next_double() * blur_radius * 2 - blur_radius) / double(height) * 2 - 1
+                x := (double(current_x) + prng.next_double() * blur_radius * 2 - blur_radius) / double(width) * 2 - 1
+                y := (double(height - current_y - 1) + prng.next_double() * blur_radius * 2 - blur_radius) / double(height) * 2 - 1
 
                 // calculate ray for current pixel
-                let dir = data.pt.cam_dir + data.pt.cam_right * x + data.pt.cam_up * y
+                dir := data.pt.cam_dir + data.pt.cam_right * x + data.pt.cam_up * y
                 dir.normalize()
 
                 // shoot ray into scene and calculate color
-                let color = data.pt.calc_color(Ray(data.pt.cam_pos, dir), &prng, 1)
+                color := data.pt.calc_color(Ray(data.pt.cam_pos, dir), &prng, 1)
                 // println(color)
                 data.pt.buffer[index] += color
             }
@@ -306,21 +306,21 @@ impl Game for PathTracer {
         self.pge = pge
 
         self.cam_fov = double.to_radians(60.0)
-        let aspect_ratio = double(width) / double(height)
+        aspect_ratio := double(width) / double(height)
 
-        let size = 10.0
+        size := 10.0
 
         // calculate cam rays (forward, right, up)
         self.cam_pos = Vec3(0, 5, 3)
         self.cam_dir = Vec3(0, -0.25, 1)
         self.cam_dir.normalize()
 
-        let up = Vec3(0, 1, 0)
+        up := Vec3(0, 1, 0)
         self.cam_right = up.cross(self.cam_dir)
         self.cam_up    = self.cam_dir.cross(self.cam_right)
 
-        let up_mag = tan(self.cam_fov / 2)
-        let right_mag = up_mag * aspect_ratio
+        up_mag := tan(self.cam_fov / 2)
+        right_mag := up_mag * aspect_ratio
 
         self.cam_up     = self.cam_up.normalized() * up_mag
         self.cam_right  = self.cam_right.normalized() * right_mag
@@ -331,14 +331,14 @@ impl Game for PathTracer {
 
         // create objects
         let m_red   = create(Material(Vec3(0.9, 0.2, 0.2)), allocator)
-        let m_green = create(Material(Vec3(0.2, 0.9, 0.2)), allocator)
+        m_green := create(Material(Vec3(0.2, 0.9, 0.2)), allocator)
         let m_blue  = create(Material(Vec3(0.2, 0.2, 0.9)), allocator)
         let m_grey  = create(Material(Vec3(0.75, 0.75, 0.75)), allocator)
 
         let m_mirror= create(Material.reflective(Vec3(1, 1, 1)), allocator)
-        let m_glass = create(Material.refrective(Vec3(1, 1, 1), 1.95), allocator)
+        m_glass := create(Material.refrective(Vec3(1, 1, 1), 1.95), allocator)
 
-        let m_light = create(Material(emission = Vec3(10, 10, 10)), allocator)
+        m_light := create(Material(emission = Vec3(10, 10, 10)), allocator)
 
         self.add_object(Sphere(Vec3(-1000.0 - size / 2, 0, 0), 1000, m_red)) // left
         self.add_object(Sphere(Vec3(1000.0 + size / 2, 0, 0), 1000, m_green)) // right
@@ -382,21 +382,21 @@ impl Game for PathTracer {
         //
         for current_y : 0..height {
             for current_x : 0..width {
-                let index = current_x + current_y * width
-                let thread_id = current_y / (height / thread_count)
+                index := current_x + current_y * width
+                thread_id := current_y / (height / thread_count)
                 if thread_id >= thread_count {
                     thread_id = thread_count - 1
                 }
 
-                let sample = thread_datas[thread_id].samples
+                sample := thread_datas[thread_id].samples
 
                 // calculate color of pixel by taking the average of the color
                 // in the buffer
-                let pixel = {
-                    let bufferColor = buffer[index] / double(sample + 1)
+                pixel := {
+                    bufferColor := buffer[index] / double(sample + 1)
                     // println(bufferColor)
                     bufferColor = bufferColor.clamped(0.0, 1.0) * 255.0
-                    let c = Vec3.change_type(bufferColor, u8)
+                    c := Vec3.change_type(bufferColor, u8)
                     Pixel.rgba(c.x, c.y, c.z)
                 }
                 pge.draw(current_x, current_y, pixel)
@@ -407,9 +407,9 @@ impl Game for PathTracer {
         if sample_t >= 1 {
             total_t += 1
 
-            let sps = double(thread_datas[0].samples) / total_t
-            let total_seconds = int(total_t + 0.1)
-            let s = String.format("Samples: {}, Total: {}s, Samples per second: {}", 
+            sps := double(thread_datas[0].samples) / total_t
+            total_seconds := int(total_t + 0.1)
+            s := String.format("Samples: {}, Total: {}s, Samples per second: {}", 
                 (thread_datas[0].samples, total_seconds, sps))
             pge.set_window_title(s)
 
@@ -421,15 +421,15 @@ impl Game for PathTracer {
 }
 
 fn test_thread(data: &any) -> u32 #stdcall {
-    let index = int(data)
+    index := int(data)
     println(index)
 
     return 0
 }
 
 fn Main() {
-    let game = PathTracer.create()
-    let pge = PixelGameEngine.create(game, width, height, 1, 1)
+    game := PathTracer.create()
+    pge := PixelGameEngine.create(game, width, height, 1, 1)
     if pge != null {
         pge.start()
     }

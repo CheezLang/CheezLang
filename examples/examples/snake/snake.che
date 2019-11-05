@@ -57,10 +57,10 @@ fn Main()
     }
     defer glfwTerminate()
 
-    let windowTitle = String.empty()
+    windowTitle := String.empty()
     windowTitle.appendf("Snake     {} FPS`0" , 0)
 
-    let window = glfwCreateWindow(cast width, cast height, windowTitle.get_raw(), null, null)
+    window := glfwCreateWindow(cast width, cast height, windowTitle.get_raw(), null, null)
     if window == null {
         println("Failed to create window")
         return
@@ -80,16 +80,16 @@ fn Main()
     glfwSwapInterval(0)
 
     //
-    let rand = LinearCongruentialGenerator.create(cast get_time_milliseconds())
+    rand := LinearCongruentialGenerator.create(cast get_time_milliseconds())
 
-    let xMax = cast(int)(width / gridSize)
-    let yMax = cast(int)(height / gridSize)
+    xMax := cast(int)(width / gridSize)
+    yMax := cast(int)(height / gridSize)
 
-    let snake = Array[Quad].create()
+    snake := Array[Quad].create()
 
-    let startCount = 5
-    while let i = 0, i < startCount, i += 1 {
-        let intesity = (cast(double)i) / cast(double)(startCount - 1)
+    startCount := 5
+    for i : 0..startCount {
+        intesity := (cast(double)i) / cast(double)(startCount - 1)
         snake.add(Quad(
             Vec2i(10, 15)
             Vec2(gridSize, gridSize)
@@ -97,25 +97,25 @@ fn Main()
         ))
     }
 
-    let target = Quad(
+    target := Quad(
         Vec2i(rand.next_int(max=xMax), rand.next_int(max=yMax))
         Vec2(gridSize, gridSize)
         Vec3(0, 1, 0)
     )
 
-    let dir = Direction.Up
+    dir := Direction.Up
 
-    let timer = 0.0
-    let fpsTimer = 0.0
-    let fpsCounter = 0
+    timer := 0.0
+    fpsTimer := 0.0
+    fpsCounter := 0
 
-    let lastTime = glfwGetTime()
+    lastTime := glfwGetTime()
     while !glfwWindowShouldClose(window) {
         glClear(GL_COLOR_BUFFER_BIT)
 
         //
-        let now = glfwGetTime()
-        let deltaTime = now - lastTime
+        now := glfwGetTime()
+        deltaTime := now - lastTime
         lastTime = now
 
         //
@@ -141,7 +141,7 @@ fn Main()
             action = Direction.None
 
             // move snake
-            while let i = snake.length - 1, i > 0, i -= 1 {
+            for(reverse=true) i : 1..snake.length {
                 snake[i].pos = snake[i - 1].pos
             }
 
@@ -166,7 +166,7 @@ fn Main()
             }
         }
 
-        while let i = 0, i < snake.length, i += 1 {
+        for i : 0..snake.length {
             snake[i].draw()
         }
 

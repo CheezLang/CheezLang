@@ -64,7 +64,7 @@ impl Lexer {
 
     fn skip_whitespace(ref Self) {
         while true {
-            let c = peek_char()
+            c := peek_char()
             match c {
                 ' '     -> next_char()
                 '`r'    -> next_char()
@@ -93,8 +93,8 @@ impl Lexer {
     }
 
     fn make_string(ref Self) -> Token {
-        let start = current - 1
-        let l = line
+        start := current - 1
+        l := line
         while !is_at_end() and peek_char() != '"' {
             if peek_char() == '`n' {
                 line += 1
@@ -113,7 +113,7 @@ impl Lexer {
     }
 
     fn make_number(ref Self) -> Token {
-        let start = current - 1
+        start := current - 1
 
         while !is_at_end() and is_digit(peek_char()) {
             next_char()
@@ -132,7 +132,7 @@ impl Lexer {
     }
 
     fn make_identifier(ref Self) -> Token {
-        let start = current - 1
+        start := current - 1
         while !is_at_end() and (is_alpha(peek_char()) or is_alpha(peek_char())) {
             next_char()
         }
@@ -182,8 +182,8 @@ impl Lexer {
             return Token(TokenKind.Eof, "", line)
         }
 
-        let c = next_char()
-        let n = peek_char()
+        c := next_char()
+        n := peek_char()
         // printfln("checking chars '{}', '{}'", (c, n))
 
         return match (c, n) {

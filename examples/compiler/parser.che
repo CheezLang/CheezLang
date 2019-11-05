@@ -19,7 +19,7 @@ impl Parser {
 
     fn parse_statement(ref Self) -> Option[&Stmt] {
         skip_ws()
-        let token = lexer.peek_token()
+        token := lexer.peek_token()
         return match token.ttype {
             TokenType.EOF -> None
 
@@ -33,11 +33,11 @@ impl Parser {
     }
 
     fn parse_function_decl(ref Self) -> Option[&Stmt] {
-        let _fn = consume(TokenType.KwFn)
+        _fn := consume(TokenType.KwFn)
         skip_ws()
 
-        let name = consume(TokenType.Identifier)
-        let name_id = match name.data {
+        name := consume(TokenType.Identifier)
+        name_id := match name.data {
             TokenData.String($id)   -> id
             $_                      -> ""
         }
@@ -53,10 +53,10 @@ impl Parser {
         consume(TokenType.OpenBrace)
         skip_ws()
 
-        let end = consume(TokenType.ClosingBrace)
+        end := consume(TokenType.ClosingBrace)
         skip_ws()
 
-        let func = alloc(Stmt)
+        func := alloc(Stmt)
         <<func = Stmt(
             concrete = StmtType.FunctionDecl(FunctionDecl(
                 name = name_id
@@ -68,7 +68,7 @@ impl Parser {
     // helpers
     fn skip_ws(ref Self) {
         while true {
-            let tok = lexer.peek_token()
+            tok := lexer.peek_token()
 
             match tok.ttype {
                 TokenType.NewLine -> {
@@ -83,7 +83,7 @@ impl Parser {
     }
 
     fn consume(ref Self, ttype: TokenType) -> Token {
-        let tok = lexer.peek_token()
+        tok := lexer.peek_token()
         while (cast(int)tok.ttype) != (cast(int)ttype) {
             match tok.ttype {
                 TokenType.EOF -> {

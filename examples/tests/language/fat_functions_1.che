@@ -22,13 +22,13 @@ fn foo(f: Fn()) {
 
 fn baz(f: Fn() -> int) {
     println("baz()")
-    let result = f()
+    result := f()
     printfln("baz(): {}", result)
 }
 
 fn bar(f: Fn(int) -> int, x: int) {
     printfln("bar({})", x)
-    let result = f(x)
+    result := f(x)
     printfln("bar({}): {}", (x, result))
 }
 
@@ -42,7 +42,7 @@ fn test2() -> int {
 }
 
 fn test3(a: int) -> int {
-    let result = a + 5
+    result := a + 5
     printfln("test3({}) -> {}", (a, result))
     return result
 }

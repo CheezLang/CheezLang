@@ -37,7 +37,7 @@ impl CheckerTexture {
 
 impl Texture for CheckerTexture {
     fn value(ref Self, u: real, v: real, p: ref vec3) -> vec3 {
-        let sines = real(sin(size * p.x) * sin(size * p.y) * sin(size * p.z))
+        sines := real(sin(size * p.x) * sin(size * p.y) * sin(size * p.z))
         return if sines >= 0 then even.value(u, v, p) else odd.value(u, v, p)
     }
 }

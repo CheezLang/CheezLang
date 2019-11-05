@@ -8,10 +8,10 @@
 #load("std:io/io")
 
 fn Main() {
-    let sa = StackAllocator.create(1024)
+    sa := StackAllocator.create(1024)
     sa.print_diagnostics()
     
-    let pa = alloc(int, sa)
+    pa := alloc(int, sa)
     sa.print_diagnostics()
 
     <<pa = 5
@@ -19,7 +19,7 @@ fn Main() {
     <<pa = 10
     println(<<pa)
 
-    while let i = 0, i < 100, i += 1 {
+    for i : 0..100 {
         alloc(int, sa)
     }
     sa.print_diagnostics()

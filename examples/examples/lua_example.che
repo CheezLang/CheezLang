@@ -6,7 +6,7 @@
 
 fn check_lua(L: &lua_State, r: i32) -> bool {
     if r != LUA_OK {
-        let errormsg = lua_tostring(L, -1)
+        errormsg := lua_tostring(L, -1)
         printf("[LUA ERROR] {}`n", errormsg)
         return false
     }
@@ -15,16 +15,16 @@ fn check_lua(L: &lua_State, r: i32) -> bool {
 }
 
 fn lua_HostFunction(L: &lua_State) -> i32 {
-    let a = lua_tonumber(L, 1)
-    let b = lua_tonumber(L, 2)
+    a := lua_tonumber(L, 1)
+    b := lua_tonumber(L, 2)
     printf("[CHEEZ] HostFunction({}, {}) has been called`n", (a, b))
-    let c = a * b
+    c := a * b
     lua_pushnumber(L, c)
     return 1
 }
 
 fn Main() {
-    let L = luaL_newstate()
+    L := luaL_newstate()
     luaL_openlibs(L)
 
     lua_register(L, "HostFunction", lua_HostFunction)
@@ -36,7 +36,7 @@ fn Main() {
             lua_pushnumber(L, 6)
 
             if check_lua(L, lua_pcall(L, 2, 1, 0)) {
-                let result = lua_tonumber(L, -1)
+                result := lua_tonumber(L, -1)
                 printf("[CHEEZ] got {}`n", result)
             }
         }

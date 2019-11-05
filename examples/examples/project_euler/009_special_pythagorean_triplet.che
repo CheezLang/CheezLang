@@ -8,8 +8,8 @@
 fn Main() {
     for a : 1..500 #label outer {
         for b : a+1..500 {
-            let c_squared = a * a + b * b
-            let c = int(sqrt(double(c_squared)))
+            c_squared := a * a + b * b
+            c := int(sqrt(double(c_squared)))
 
             if c * c != c_squared then continue
             if a + b + c == 1000 {

@@ -19,8 +19,8 @@ impl Sprite {
             width = w
             height = h
             data = {
-                let ptr = alloc_raw(Pixel, cast(uint) (w * h))
-                while let i = 0, i < w * h, i += 1 {
+                ptr := alloc_raw(Pixel, cast(uint) (w * h))
+                for i : 0..(w * h) {
                     ptr[i] = Pixel()
                 }
                 ptr
@@ -69,8 +69,8 @@ impl Sprite {
     }
 
     fn sample(ref Self, x: float, y: float) -> Pixel {
-        let sx = cast(int) fminf(x * cast(float)width, cast width - 1)
-        let sy = cast(int) fminf(y * cast(float)height, cast height - 1)
+        sx := cast(int) fminf(x * cast(float)width, cast width - 1)
+        sy := cast(int) fminf(y * cast(float)height, cast height - 1)
         return get_pixel(sx, sy)
     }
 

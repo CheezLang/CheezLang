@@ -25,7 +25,7 @@ impl(T: type) Drop for Array[T] {
 
 impl(T: type) Array[T] {
     fn create(initial_capacity: int = 10, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        let s = Array[T](null, 0, 0, allocator)
+        s := Array[T](null, 0, 0, allocator)
         s.reserve(initial_capacity)
         c_memset(cast s.get_raw(), 0, cast(uint) (s.get_capacity() * @sizeof(T)))
         return s
@@ -139,9 +139,10 @@ impl(T: type) Array[T] {
             return
         }
 
-        let idx = from
-        let pivot = data[to]
-        while let i = from, i < to, i += 1 {
+        idx := from
+        pivot := data[to]
+
+        for i : from..to {
             if cmp(data[i], pivot) > 0 {
                 (data[idx], data[i]) = (data[i], data[idx])
                 idx += 1
@@ -184,7 +185,7 @@ impl(T: type) Iterator[T] for ArrayIterator[T] {
 
 impl(F: type, T: type) Into[Array[T]] for Array[F] if F : Into[T], #notyet {
     fn into(ref Self) -> Array[T] {
-        let result = Array[T].create(self.get_length())
+        result := Array[T].create(self.get_length())
         for :0..self.get_length() {
             result.add(F.into(self.access_unchecked(it)))
         }
@@ -194,7 +195,7 @@ impl(F: type, T: type) Into[Array[T]] for Array[F] if F : Into[T], #notyet {
 
 impl(F: type, T: type) From[Array[F]] for Array[T] if T : From[F], #notyet {
     fn from(value: Array[F]) -> Array[T] {
-        let result = Array[T].create(value.get_length())
+        result := Array[T].create(value.get_length())
         for :0..value.get_length() {
             result.add(F.into(value.access_unchecked(it)))
         }
@@ -204,20 +205,20 @@ impl(F: type, T: type) From[Array[F]] for Array[T] if T : From[F], #notyet {
 
 fn for_extension_array_T(arr: ref Array[$T], code: Code, reverse: bool = false,
                             by_ref: bool = true) #for {
-    while let it_index = 0, it_index < arr.get_length(), it_index += 1 {
+    while it_index := 0, it_index < arr.get_length(), it_index += 1 {
         if const reverse {
-            let it_index_rev = arr.length - it_index - 1
+            it_index_rev := arr.length - it_index - 1
             if const by_ref {
-                let it = ref arr[it_index_rev]
+                it := ref arr[it_index_rev]
             } else {
-                let it = arr[it_index_rev]
+                it := arr[it_index_rev]
             }
             @insert(code, link=[it_index_rev])
         } else {
             if const by_ref {
-                let it = ref arr[it_index]
+                it := ref arr[it_index]
             } else {
-                let it = arr[it_index]
+                it := arr[it_index]
             }
             @insert(code)
         }

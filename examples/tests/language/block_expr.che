@@ -4,16 +4,16 @@
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
 fn Main() {
-    let a = { 1 }
-    let b = {
+    a := { 1 }
+    b := {
         2
     }
-    let c = {
-        let x = 3
+    c := {
+        x := 3
         x
     }
-    let d = {
-        let d = 4
+    d := {
+        d := 4
         d
     }
 

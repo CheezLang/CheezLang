@@ -20,7 +20,7 @@ fn is_prime(i: int) -> bool {
 }
 
 fn Main() {
-    let sum = 0
+    sum := 0
     for : 2000000 {
         if is_prime(it) {
             sum += it

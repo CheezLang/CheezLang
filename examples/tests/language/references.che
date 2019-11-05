@@ -26,9 +26,9 @@ fn Main() {
 }
 
 fn test4() {
-    let a = 5
+    a := 5
     let ra: ref int = a
-    let b = ra
+    b := ra
     
     c_printf("%lld`n", a)
     c_printf("%lld`n", ra)
@@ -61,14 +61,14 @@ struct Foo3 {
 }
 
 fn test3() {
-    let c = "uiae"
+    c := "uiae"
 
-    let f = Foo3(
+    f := Foo3(
         1i8
         0.0f
         c
     )
-    let f2 = Foo3(
+    f2 := Foo3(
         a = 2i8
         b = 1.2
         c = c
@@ -76,19 +76,19 @@ fn test3() {
 }
 
 fn test2() {
-    let a = 5
-    let t = (1, 2, a, "lol")
+    a := 5
+    t := (1, 2, a, "lol")
 }
 
 fn help1(a: ref &int) {
-    let b = <<&<<a
+    b := <<&<<a
 }
 
 fn test1() {
-    let a = 5
-    let pa = &a
-    let b = <<pa
-    let c = <<&<<&a
+    a := 5
+    pa := &a
+    b := <<pa
+    c := <<&<<&a
 
     help1(pa)
 }

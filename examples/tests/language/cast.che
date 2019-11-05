@@ -35,13 +35,13 @@ fn Main() {
 
 fn test1(a: i32) { 
     let b: i64 = cast a
-    let c = cast(i8) a
+    c := cast(i8) a
 
     c_printf("%d, %lld, %hhd`n", a, b, c)
 }
 fn test2(a: u32) {
     let b: u64 = cast a
-    let c = cast(u8) a
+    c := cast(u8) a
 
     c_printf("%u, %llu, %hhu`n", a, b, c)
 }
@@ -59,8 +59,8 @@ fn test4(a: &i32) {
 }
 
 fn test5(f: float, d: double) {
-    let a = cast(double) f
-    let b = cast(float) d
+    a := cast(double) f
+    b := cast(float) d
     c_printf("%f, %f`n", a, cast(double) b)
 }
 
