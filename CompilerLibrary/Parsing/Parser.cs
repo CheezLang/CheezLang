@@ -407,6 +407,44 @@ namespace Cheez.Parsing
                             NextToken();
                             return new AstEmptyStatement(expr.Location);
                         }
+                        if (CheckToken(TokenType.Colon))
+                        {
+                            NextToken();
+
+                            AstExpression typeExpr = null;
+
+                            // constant declaration
+                            if (!CheckTokens(TokenType.Colon, TokenType.Equal))
+                            {
+                                typeExpr = ParseExpression(true);
+                            }
+
+                            // constant declaration
+                            if (CheckToken(TokenType.Colon))
+                            {
+                                NextToken();
+                                var init = ParseExpression(true);
+                                return new AstVariableDecl(expr, typeExpr, init, true, isNewSyntax: true, Location: new Location(expr.Beginning, init.End));
+                            }
+
+                            // variable declaration
+                            if (CheckToken(TokenType.Equal))
+                            {
+                                NextToken();
+                                var init = ParseExpression(true);
+                                return new AstVariableDecl(expr, typeExpr, init, false, isNewSyntax: true, Location: new Location(expr.Beginning, init.End));
+                            }
+                            
+                            // variable declaration without initializer
+                            if (CheckToken(TokenType.NewLine))
+                            {
+                                return new AstVariableDecl(expr, typeExpr, null, false, isNewSyntax: true, Location: new Location(expr.Beginning, typeExpr.End));
+                            }
+
+                            //
+                            ReportError(PeekToken().location, $"Unexpected token. Expected ':' or '=' or '\\n'");
+                            return new AstEmptyStatement(expr);
+                        }
                         if (CheckTokens(TokenType.Equal, TokenType.AddEq, TokenType.SubEq, TokenType.MulEq, TokenType.DivEq, TokenType.ModEq))
                         {
                             var x = NextToken().type;
@@ -1120,7 +1158,7 @@ namespace Cheez.Parsing
             //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after variable declaration")))
             //    RecoverStatement();
 
-            return new AstVariableDecl(pattern, type, init, isConst, directives, new Location(beg, end));
+            return new AstVariableDecl(pattern, type, init, isConst, Directives: directives, Location: new Location(beg, end));
         }
 
         private AstForStmt ParseForStatement()

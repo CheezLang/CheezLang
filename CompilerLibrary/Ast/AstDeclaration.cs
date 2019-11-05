@@ -448,19 +448,21 @@ namespace Cheez.Ast.Statements
         public AstExpression TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
 
-        public bool Constant = false;
+        public bool Constant { get; set; } = false;
+        public bool IsNewSyntax { get; set; }
 
         public HashSet<AstSingleVariableDecl> VarDependencies { get; set; }
 
-        public List<AstSingleVariableDecl> SubDeclarations = new List<AstSingleVariableDecl>();
+        public List<AstSingleVariableDecl> SubDeclarations { get; set; } = new List<AstSingleVariableDecl>();
 
-        public AstVariableDecl(AstExpression pattern, AstExpression typeExpr, AstExpression init, bool isConst, List<AstDirective> Directives = null, ILocation Location = null)
+        public AstVariableDecl(AstExpression pattern, AstExpression typeExpr, AstExpression init, bool isConst, bool isNewSyntax = false, List<AstDirective> Directives = null, ILocation Location = null)
             : base(pattern is AstIdExpr ? (pattern as AstIdExpr) : (new AstIdExpr(pattern.ToString(), false, pattern.Location)), Directives, Location)
         {
             this.Pattern = pattern;
             this.TypeExpr = typeExpr;
             this.Initializer = init;
             this.Constant = isConst;
+            this.IsNewSyntax = isNewSyntax;
         }
 
         [DebuggerStepThrough]
@@ -471,7 +473,8 @@ namespace Cheez.Ast.Statements
                 Pattern.Clone(),
                 TypeExpr?.Clone(),
                 Initializer?.Clone(),
-                Constant));
+                Constant,
+                IsNewSyntax));
     }
 
     #endregion
