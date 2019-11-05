@@ -1446,13 +1446,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var type = expr.Left.Type;
             var value = GenerateExpression(expr.Left, false);
 
-            if (!expr.IsDoubleColon)
+            while (type is PointerType p)
             {
-                while (type is PointerType p)
-                {
-                    type = p.TargetType;
-                    value = builder.CreateLoad(value, "");
-                }
+                type = p.TargetType;
+                value = builder.CreateLoad(value, "");
             }
 
             switch (type)

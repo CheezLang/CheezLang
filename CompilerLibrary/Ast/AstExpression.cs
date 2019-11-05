@@ -364,17 +364,15 @@ namespace Cheez.Ast.Expressions
     {
         public AstExpression Left { get; set; }
         public AstIdExpr Right { get; set; }
-        public bool IsDoubleColon { get; set; }
         public override bool IsPolymorphic => Left.IsPolymorphic;
 
         public int DerefCount { get; set; } = 0;
 
         [DebuggerStepThrough]
-        public AstDotExpr(AstExpression left, AstIdExpr right, bool isDC, ILocation Location = null) : base(Location)
+        public AstDotExpr(AstExpression left, AstIdExpr right, ILocation Location = null) : base(Location)
         {
             this.Left = left;
             this.Right = right;
-            IsDoubleColon = isDC;
         }
 
         [DebuggerStepThrough]
@@ -382,7 +380,7 @@ namespace Cheez.Ast.Expressions
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstDotExpr(Left.Clone(), Right.Clone() as AstIdExpr, IsDoubleColon));
+            => CopyValuesTo(new AstDotExpr(Left.Clone(), Right.Clone() as AstIdExpr));
     }
 
     public class AstArgument : AstExpression

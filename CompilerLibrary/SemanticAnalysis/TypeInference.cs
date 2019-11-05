@@ -733,7 +733,7 @@ namespace Cheez
                             if (call.Arguments.Count == 1)
                             { 
                                 e.Argument = call.Arguments[0].Expr;
-                                AstExpression sub = new AstDotExpr(value, new AstIdExpr(e.Member.Name.Name, false, call.Location), false, call.Location);
+                                AstExpression sub = new AstDotExpr(value, new AstIdExpr(e.Member.Name.Name, false, call.Location), call.Location);
                                 sub.AttachTo(value);
                                 sub.SetFlag(ExprFlags.ValueRequired, pattern.GetFlag(ExprFlags.ValueRequired));
                                 sub = InferType(sub, null);
@@ -2572,25 +2572,22 @@ namespace Cheez
             if (expr.Left.Type.IsErrorType)
                 return expr;
 
-            if (!expr.IsDoubleColon)
+            while (expr.Left.Type is PointerType p)
             {
-                while (expr.Left.Type is PointerType p)
-                {
-                    var newLeft = new AstDereferenceExpr(expr.Left, expr.Left.Location);
-                    newLeft.AttachTo(expr.Left);
-                    expr.Left = InferType(newLeft, p.TargetType);
-                }
+                var newLeft = new AstDereferenceExpr(expr.Left, expr.Left.Location);
+                newLeft.AttachTo(expr.Left);
+                expr.Left = InferType(newLeft, p.TargetType);
+            }
 
-                if (expr.Left.Type is ReferenceType r)
-                {
-                    expr.Left = Deref(expr.Left, context);
-                }
+            if (expr.Left.Type is ReferenceType r)
+            {
+                expr.Left = Deref(expr.Left, context);
             }
 
             var sub = expr.Right.Name;
             switch (expr.Left.Type)
             {
-                case RangeType range when !expr.IsDoubleColon:
+                case RangeType range:
                     {
                         var name = expr.Right.Name;
 
@@ -2601,14 +2598,11 @@ namespace Cheez
                             expr.Type = range.TargetType;
                             return expr;
                         }
-                        else
-                        {
-                            ReportError(expr, $"type {range} has no field '{name}'");
-                            return expr;
-                        }
+
+                        return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
                     }
 
-                case EnumType @enum when !expr.IsDoubleColon:
+                case EnumType @enum:
                     {
                         var memName = expr.Right.Name;
                         var mem = @enum.Declaration.Members.FirstOrDefault(m => m.Name.Name == memName);
@@ -2630,7 +2624,7 @@ namespace Cheez
                         break;
                     }
 
-                case TupleType tuple when !expr.IsDoubleColon:
+                case TupleType tuple:
                     {
                         var memName = expr.Right.Name;
                         var memberIndex = tuple.Members.IndexOf(m => m.name == memName);
@@ -2645,46 +2639,41 @@ namespace Cheez
                         break;
                     }
 
-                case SliceType slice when !expr.IsDoubleColon:
+                case SliceType slice:
                     {
                         expr.SetFlag(ExprFlags.IsLValue, true);
                         var name = expr.Right.Name;
                         if (name == "data")
                         {
                             expr.Type = slice.ToPointerType();
+                            return expr;
                         }
-                        else if (name == "length")
+                        if (name == "length")
                         {
                             expr.Type = IntType.GetIntType(8, true);
+                            return expr;
                         }
-                        else
-                        {
-                            // TODO: check for impl functions
-                            ReportError(expr, $"No subscript '{name}' exists for slice type {slice}");
-                        }
-                        break;
+                        return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
                     }
 
-                case ArrayType arr when !expr.IsDoubleColon:
+                case ArrayType arr:
                     {
                         var name = expr.Right.Name;
                         if (name == "data")
                         {
                             expr.Type = arr.ToPointerType();
                             expr.SetFlag(ExprFlags.IsLValue, true);
+                            return expr;
                         }
-                        else if (name == "length")
+                        if (name == "length")
                         {
                             expr.Type = IntType.GetIntType(8, true);
+                            return expr;
                         }
-                        else
-                        {
-                            ReportError(expr, $"No subscript '{name}' exists for array type {arr}");
-                        }
-                        break;
+                        return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
                     }
 
-                case StructType s when !expr.IsDoubleColon:
+                case StructType s:
                     {
                         var name = expr.Right.Name;
                         var index = s.GetIndexOfMember(name);
@@ -2729,7 +2718,7 @@ namespace Cheez
                         break;
                     }
 
-                case TraitType t when !expr.IsDoubleColon:
+                case TraitType t:
                     {
                         var name = expr.Right.Name;
                         var func = t.Declaration.Functions.FirstOrDefault(f => f.Name.Name == name);
@@ -2754,95 +2743,83 @@ namespace Cheez
                         return InferTypeHelper(ufc, null, context);
                     }
 
-                case CheezTypeType _ when !expr.IsDoubleColon && expr.Left.Value is EnumType @enum:
-                    {
-                        if (@enum.Members.TryGetValue(expr.Right.Name, out var m))
-                        {
-                            expr.Type = @enum;
-
-                            var mem = @enum.Declaration.Members.First(x => x.Name.Name == expr.Right.Name);
-                            var eve = new AstEnumValueExpr(@enum.Declaration, mem, loc: expr.Location);
-                            eve.Replace(expr);
-                            return eve;
-                        }
-                        else
-                        {
-                            ReportError(expr, $"Enum {@enum} has no member '{expr.Right}'");
-                        }
-                        break;
-                    }
-
-                case CheezTypeType _ when expr.IsDoubleColon:
-                    {
-                        var t = expr.Left.Value as CheezType;
-                        if (t.IsErrorType)
-                            break;
-                        var funcs = GetImplFunctions(t, expr.Right.Name, expected);
-
-                        if (funcs.Count == 0)
-                        {
-                            ReportError(expr.Right, $"Type '{t}' has no function '{expr.Right.Name}'");
-                            break;
-                        }
-                        else if (funcs.Count > 1)
-                        {
-                            var details = funcs.Select(f => ("Possible candidate:", f.Name.Location));
-                            ReportError(expr.Right, $"Ambigious call to function '{expr.Right.Name}'", details);
-                            break;
-                        }
-
-                        expr.Type = funcs[0].Type;
-                        break;
-                    }
-
-                case CheezTypeType _ when !expr.IsDoubleColon && (expr.Left.Value is TupleType t):
-                    {
-                        expr.Type = IntType.LiteralType;
-                        expr.Value = NumberData.FromBigInt(t.Members.Length);
-                        break;
-                    }
-
-                case CheezTypeType _ when !expr.IsDoubleColon && (expr.Left.Value is IntType || expr.Left.Value is FloatType):
-                    {
-                        expr.Type = expr.Left.Value as CheezType;
-                        switch (expr.Left.Value, expr.Right.Name)
-                        {
-                            case (IntType i, "min"): expr.Value = NumberData.FromBigInt(i.MinValue); break;
-                            case (IntType i, "max"): expr.Value = NumberData.FromBigInt(i.MaxValue); break;
-                            case (IntType i, string att):
-                                ReportError(expr.Right, $"Type {i} has no attribute '{att}'");
-                                expr.Type = CheezType.Error;
-                                break;
-
-                            case (FloatType f, "min"): expr.Value = NumberData.FromDouble(f.MinValue); break;
-                            case (FloatType f, "max"): expr.Value = NumberData.FromDouble(f.MaxValue); break;
-                            case (FloatType f, "nan"): expr.Value = NumberData.FromDouble(f.NaN); break;
-                            case (FloatType f, "pos_inf"): expr.Value = NumberData.FromDouble(f.PosInf); break;
-                            case (FloatType f, "neg_inf"): expr.Value = NumberData.FromDouble(f.NegInf); break;
-                            case (FloatType f, string att):
-                                ReportError(expr.Right, $"Type {f} has no attribute '{att}'");
-                                expr.Type = CheezType.Error;
-                                break;
-
-                            default:
-                                ReportError(expr.Right, $"Type {expr.Left.Value} has no attribute '{expr.Right.Name}'");
-                                expr.Type = CheezType.Error;
-                                break;
-                        }
-                        break;
-                    }
-
                 case CheezTypeType _:
-                    ReportError(expr.Left, $"Invalid value on left side of '.': '{expr.Left.Value}'");
-                    break;
+                    {
+                        var type = expr.Left.Value as CheezType;
+                        if (type.IsErrorType)
+                            break;
+
+                        if (type is EnumType @enum) {
+                            if (@enum.Members.TryGetValue(expr.Right.Name, out var m))
+                            {
+                                expr.Type = @enum;
+
+                                var mem = @enum.Declaration.Members.First(x => x.Name.Name == expr.Right.Name);
+                                var eve = new AstEnumValueExpr(@enum.Declaration, mem, loc: expr.Location);
+                                eve.Replace(expr);
+                                return eve;
+                            }
+                        }
+
+                        if (type is TupleType tuple)
+                        {
+                            if (expr.Right.Name == "length") {
+                                expr.Type = IntType.LiteralType;
+                                expr.Value = NumberData.FromBigInt(tuple.Members.Length);
+                                return expr;
+                            }
+                        }
+
+                        if (type is IntType || type is FloatType)
+                        {
+                            AstExpression setTypeAndValue(object value) {
+                                expr.Type = type;
+                                expr.Value = value;
+                                return expr;
+                            }
+                            switch (type, expr.Right.Name)
+                            {
+                                case (IntType i, "min"): return setTypeAndValue(NumberData.FromBigInt(i.MinValue));
+                                case (IntType i, "max"): return setTypeAndValue(NumberData.FromBigInt(i.MaxValue));
+                                case (FloatType f, "min"): return setTypeAndValue(NumberData.FromDouble(f.MinValue));
+                                case (FloatType f, "max"): return setTypeAndValue(NumberData.FromDouble(f.MaxValue));
+                                case (FloatType f, "nan"): return setTypeAndValue(NumberData.FromDouble(f.NaN));
+                                case (FloatType f, "pos_inf"): return setTypeAndValue(NumberData.FromDouble(f.PosInf));
+                                case (FloatType f, "neg_inf"): return setTypeAndValue(NumberData.FromDouble(f.NegInf));
+                            }
+                        }
+
+                        {
+                            var funcs = GetImplFunctions(type, expr.Right.Name, expected);
+
+                            if (funcs.Count == 0)
+                            {
+                                ReportError(expr.Right, $"Type '{type}' has no member or function '{expr.Right.Name}'");
+                                break;
+                            }
+                            else if (funcs.Count > 1)
+                            {
+                                var details = funcs.Select(f => ("Possible candidate:", f.Name.Location));
+                                ReportError(expr.Right, $"Ambigious call to function '{expr.Right.Name}'", details);
+                                break;
+                            }
+
+                            expr.Type = funcs[0].Type;
+                            break;
+                        }
+                    }
+
+                // case CheezTypeType _:
+                //     ReportError(expr.Left, $"Invalid value on left side of '.': '{expr.Left.Value}'");
+                //     break;
+
+                // case CheezType c when expr.IsDoubleColon:
+                //     {
+                //         var name = expr.Right.Name;
+                //         return GetImplFunctions(expr, c, name, context);
+                //     }
 
                 case ErrorType _: return expr;
-
-                case CheezType c when expr.IsDoubleColon:
-                    {
-                        var name = expr.Right.Name;
-                        return GetImplFunctions(expr, c, name, context);
-                    }
                 default: ReportError(expr, $"Invalid expression on left side of '.'"); break;
             }
 
@@ -3383,7 +3360,7 @@ namespace Cheez
             {
                 if (expr.FunctionExpr is AstDotExpr dot)
                 {
-                    if (dot.IsDoubleColon && dot.Left.Type is CheezType)
+                    if (dot.Left.Type is CheezType)
                     {
                         var type = dot.Left.Value as CheezType;
                         CollectPolyTypes(func.Declaration.ImplBlock.TargetType, type, polyTypes);

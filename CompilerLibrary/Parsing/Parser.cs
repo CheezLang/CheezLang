@@ -14,7 +14,7 @@ namespace Cheez.Parsing
     public class Parser
     {
         public delegate string ErrorMessageResolver(Token t);
-        private delegate AstExpression ExpressionParser(ErrorMessageResolver e);
+        private delegate AstExpression ExpressionParser(bool allowCommaForTuple, ErrorMessageResolver e);
 
         private ILexer mLexer;
         private IErrorHandler mErrorHandler;
@@ -36,7 +36,7 @@ namespace Cheez.Parsing
             var l = Lexer.FromString(v, errorHandler, id);
             var p = new Parser(l, errorHandler);
             p.Replacements = dictionary;
-            return p.ParseExpression();
+            return p.ParseExpression(true);
         }
 
         internal static AstStatement ParseStatement(string v, Dictionary<string, AstExpression> dictionary, IErrorHandler errorHandler, string id)
@@ -378,7 +378,7 @@ namespace Cheez.Parsing
                 case TokenType.Kwfn:
                     return ParseFunctionDeclaration();
                 case TokenType.KwLet:
-                    return ParseVariableDeclaration(TokenType.ClosingBrace);
+                    return ParseVariableDeclaration(true, TokenType.ClosingBrace);
                 case TokenType.KwTypedef:
                     return ParseTypedefDeclaration();
                 case TokenType.KwWhile:
@@ -401,7 +401,7 @@ namespace Cheez.Parsing
 
                 default:
                     {
-                        var expr = ParseExpression();
+                        var expr = ParseExpression(true);
                         if (expr is AstEmptyExpr)
                         {
                             NextToken();
@@ -420,7 +420,7 @@ namespace Cheez.Parsing
                                 case TokenType.ModEq: op = "%"; break;
                             }
                             SkipNewlines();
-                            var val = ParseExpression();
+                            var val = ParseExpression(true);
                             return new AstAssignment(expr, val, op, new Location(expr.Beginning, val.End));
                         }
                         else
@@ -468,7 +468,7 @@ namespace Cheez.Parsing
                     SkipNewlines();
                     Consume(TokenType.Colon, ErrMsg("':'"));
                     SkipNewlines();
-                    var vtype = ParseExpression();
+                    var vtype = ParseExpression(true);
                     variables.Add(new AstStructMember(vname, vtype, null, new Location(vname.Beginning, vtype.End)));
                 }
                 SkipNewlines();
@@ -488,7 +488,7 @@ namespace Cheez.Parsing
             beg = Consume(TokenType.KwMatch, ErrMsg("keyword 'match'", "at beginning of match statement")).location;
             SkipNewlines();
 
-            value = ParseExpression();
+            value = ParseExpression(true);
             SkipNewlines();
 
             Consume(TokenType.OpenBrace, ErrMsg("{", "after value in match statement"));
@@ -501,21 +501,21 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
                     break;
 
-                var v = ParseExpression();
+                var v = ParseExpression(true);
                 SkipNewlines();
 
                 AstExpression cond = null;
                 if (CheckToken(TokenType.KwIf))
                 {
                     NextToken();
-                    cond = ParseExpression();
+                    cond = ParseExpression(true);
                     SkipNewlines();
                 }
 
                 Consume(TokenType.Arrow, ErrMsg("->", "after value in match case"));
 
                 SkipNewlines();
-                var body = ParseExpression();
+                var body = ParseExpression(true);
                 cases.Add(new AstMatchCase(v, cond, body, new Location(v.Beginning, body.End)));
 
                 next = PeekToken();
@@ -581,7 +581,7 @@ namespace Cheez.Parsing
                 {
                     NextToken();
                     SkipNewlines();
-                    associatedType = ParseExpression();
+                    associatedType = ParseExpression(false);
                     e = associatedType.End;
                 }
 
@@ -590,7 +590,7 @@ namespace Cheez.Parsing
                 {
                     NextToken();
                     SkipNewlines();
-                    value = ParseExpression();
+                    value = ParseExpression(false);
                     e = value.End;
                 }
 
@@ -620,7 +620,7 @@ namespace Cheez.Parsing
         {
             var beg = Consume(TokenType.KwUsing, ErrMsg("keyword 'using'", "at beginning of using statement")).location;
             SkipNewlines();
-            var expr = ParseExpression(ErrMsg("expression", "after keyword 'using'"));
+            var expr = ParseExpression(true, ErrMsg("expression", "after keyword 'using'"));
             //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after using statement")))
             //    RecoverStatement();
 
@@ -635,7 +635,7 @@ namespace Cheez.Parsing
             var next = PeekToken();
             if (next.type != TokenType.NewLine && next.type != TokenType.EOF)
             {
-                returnValue = ParseExpression();
+                returnValue = ParseExpression(true);
             }
 
             return new AstReturnStmt(returnValue, new Location(beg));
@@ -679,7 +679,7 @@ namespace Cheez.Parsing
                     if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                         break;
 
-                    var expr = ParseExpression();
+                    var expr = ParseExpression(false);
                     args.Add(expr);
                     SkipNewlines();
 
@@ -701,7 +701,7 @@ namespace Cheez.Parsing
             return new AstDirective(name, args, new Location(name.Beginning, end));
         }
 
-        private AstParameter ParseParameter(bool allowDefaultValue = true)
+        private AstParameter ParseParameter(bool allowCommaForTuple, bool allowDefaultValue = true)
         {
             AstIdExpr pname = null;
             AstExpression ptype = null;
@@ -709,7 +709,7 @@ namespace Cheez.Parsing
 
             TokenLocation beg = null, end = null;
 
-            var e = ParseExpression();
+            var e = ParseExpression(allowCommaForTuple);
             beg = e.Beginning;
             SkipNewlines();
 
@@ -728,7 +728,7 @@ namespace Cheez.Parsing
                 Consume(TokenType.Colon, ErrMsg(":", "after name in parameter"));
                 SkipNewlines();
 
-                ptype = ParseExpression();
+                ptype = ParseExpression(allowCommaForTuple);
             }
             else
             {
@@ -745,7 +745,7 @@ namespace Cheez.Parsing
                 {
                     NextToken();
                     SkipNewlines();
-                    defaultValue = ParseExpression();
+                    defaultValue = ParseExpression(allowCommaForTuple);
                     end = defaultValue.End;
                 }
             }
@@ -766,7 +766,7 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                     break;
 
-                var a = ParseParameter(allowDefaultValue);
+                var a = ParseParameter(false, allowDefaultValue);
                 parameters.Add(a);
 
                 SkipNewlines();
@@ -852,14 +852,14 @@ namespace Cheez.Parsing
                 Consume(TokenType.Colon, ErrMsg(":", "after struct member name"));
                 SkipNewlines();
 
-                var mType = ParseExpression();
+                var mType = ParseExpression(true);
                 AstExpression init = null;
 
                 next = PeekToken();
                 if (next.type == TokenType.Equal)
                 {
                     NextToken();
-                    init = ParseExpression();
+                    init = ParseExpression(true);
                     next = PeekToken();
                 }
 
@@ -912,7 +912,7 @@ namespace Cheez.Parsing
                 SkipNewlines();
             }
 
-            target = ParseExpression();
+            target = ParseExpression(true);
             SkipNewlines();
 
             if (CheckToken(TokenType.KwFor))
@@ -920,7 +920,7 @@ namespace Cheez.Parsing
                 NextToken();
                 SkipNewlines();
                 trait = target;
-                target = ParseExpression();
+                target = ParseExpression(true);
                 SkipNewlines();
             }
 
@@ -943,16 +943,16 @@ namespace Cheez.Parsing
                         }
                         else if (next.type == TokenType.AtSignIdentifier)
                         {
-                            var expr = ParseExpression();
+                            var expr = ParseExpression(false);
                             conditions.Add(new ImplConditionAny(expr, new Location(next.location)));
                         }
                         else
                         {
-                            var typ = ParseExpression();
+                            var typ = ParseExpression(false);
                             SkipNewlines();
                             ConsumeUntil(TokenType.Colon, ErrMsg("':'", "after type in impl condition"));
                             SkipNewlines();
-                            var trt = ParseExpression();
+                            var trt = ParseExpression(false);
                             SkipNewlines();
 
                             conditions.Add(new ImplConditionImplTrait(typ, trt, new Location(typ.Beginning, trt.End)));
@@ -1048,7 +1048,7 @@ namespace Cheez.Parsing
 
         private AstExprStmt ParseExpressionStatement()
         {
-            var expr = ParseExpression();
+            var expr = ParseExpression(true);
             return new AstExprStmt(expr, new Location(expr.Beginning, expr.End));
         }
 
@@ -1067,13 +1067,13 @@ namespace Cheez.Parsing
             Consume(TokenType.Equal, ErrMsg("type expression", "after '=' in type alias declaration"));
             SkipNewlines();
 
-            value = ParseExpression();
+            value = ParseExpression(true);
             end = value.End;
 
             return new AstTypeAliasDecl(name, value, Location: new Location(beg, end));
         }
 
-        private AstVariableDecl ParseVariableDeclaration(params TokenType[] delimiters)
+        private AstVariableDecl ParseVariableDeclaration(bool allowCommaForTuple, params TokenType[] delimiters)
         {
             TokenLocation beg = null, end = null;
             var directives = new List<AstDirective>();
@@ -1098,14 +1098,14 @@ namespace Cheez.Parsing
                 SkipNewlines();
             }
 
-            pattern = ParseExpression();
+            pattern = ParseExpression(true);
             end = pattern.End;
 
             if (CheckToken(TokenType.Colon))
             {
                 NextToken();
                 SkipNewlines();
-                type = ParseExpression();
+                type = ParseExpression(allowCommaForTuple);
                 end = type.End;
             }
 
@@ -1113,7 +1113,7 @@ namespace Cheez.Parsing
             {
                 NextToken();
                 SkipNewlines();
-                init = ParseExpression(ErrMsg("expression", "after '=' in variable declaration"));
+                init = ParseExpression(allowCommaForTuple, ErrMsg("expression", "after '=' in variable declaration"));
                 end = init.End;
             }
 
@@ -1163,7 +1163,7 @@ namespace Cheez.Parsing
             SkipNewlines();
 
             // collection
-            collection = ParseExpression();
+            collection = ParseExpression(true);
             SkipNewlines();
 
             if (CheckToken(TokenType.HashIdentifier))
@@ -1181,7 +1181,7 @@ namespace Cheez.Parsing
                 }
             }
 
-            body = ParseExpression();
+            body = ParseExpression(true);
 
             return new AstForStmt(varName, indexName, collection, body, args, label, new Location(beg.location, collection.End));
         }
@@ -1200,13 +1200,13 @@ namespace Cheez.Parsing
 
             if (CheckToken(TokenType.KwLet))
             {
-                init = ParseVariableDeclaration(TokenType.Comma);
+                init = ParseVariableDeclaration(false, TokenType.Comma);
                 SkipNewlines();
                 Consume(TokenType.Comma, ErrMsg(",", "after variable declaration in while statement"));
                 SkipNewlines();
             }
 
-            condition = ParseExpression(ErrMsg("expression", "after keyword 'while'"));
+            condition = ParseExpression(false, ErrMsg("expression", "after keyword 'while'"));
             SkipNewlines();
 
             if (CheckToken(TokenType.Comma))
@@ -1237,7 +1237,7 @@ namespace Cheez.Parsing
             return new AstWhileStmt(condition, body, init, post, label, new Location(beg, body.End));
         }
 
-        private AstIfExpr ParseIfExpr()
+        private AstIfExpr ParseIfExpr(bool allowCommaForTuple)
         {
             TokenLocation beg = null, end = null;
             AstExpression condition = null;
@@ -1257,24 +1257,24 @@ namespace Cheez.Parsing
 
             if (CheckToken(TokenType.KwLet))
             {
-                pre = ParseVariableDeclaration(TokenType.Comma);
+                pre = ParseVariableDeclaration(false, TokenType.Comma);
                 SkipNewlines();
                 Consume(TokenType.Comma, ErrMsg(",", "after variable declaration in if statement"));
                 SkipNewlines();
             }
 
-            condition = ParseExpression(ErrMsg("expression", "after keyword 'if'"));
+            condition = ParseExpression(false, ErrMsg("expression", "after keyword 'if'"));
 
             SkipNewlines();
 
             bool allowNewline = false;
             if (CheckToken(TokenType.OpenBrace))
-                ifCase = ParseExpression();
+                ifCase = ParseExpression(allowCommaForTuple);
             else
             {
                 Consume(TokenType.KwThen, ErrMsg("keyword 'then'", "after condition in if expression"));
                 SkipNewlines();
-                ifCase = ParseExpression();
+                ifCase = ParseExpression(allowCommaForTuple);
                 allowNewline = true;
             }
             end = ifCase.End;
@@ -1285,7 +1285,7 @@ namespace Cheez.Parsing
             {
                 NextToken();
                 SkipNewlines();
-                elseCase = ParseExpression();
+                elseCase = ParseExpression(allowCommaForTuple);
                 end = elseCase.End;
             }
 
@@ -1321,7 +1321,7 @@ namespace Cheez.Parsing
             {
                 NextToken();
                 SkipNewlines();
-                returnValue = ParseParameter();
+                returnValue = ParseParameter(true);
                 SkipNewlines();
             }
 
@@ -1344,7 +1344,7 @@ namespace Cheez.Parsing
 
         #region Expression Parsing
 
-        private AstExpression ParseFunctionTypeExpr()
+        private AstExpression ParseFunctionTypeExpr(bool allowCommaForTuple)
         {
             var args = new List<AstExpression>();
             AstExpression returnType = null;
@@ -1377,7 +1377,7 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
                     break;
 
-                args.Add(ParseExpression());
+                args.Add(ParseExpression(false));
                 SkipNewlines();
 
                 next = PeekToken();
@@ -1397,7 +1397,7 @@ namespace Cheez.Parsing
             if (CheckToken(TokenType.Arrow))
             {
                 NextToken();
-                returnType = ParseExpression();
+                returnType = ParseExpression(allowCommaForTuple);
                 end = returnType.End;
             }
 
@@ -1406,33 +1406,54 @@ namespace Cheez.Parsing
             return new AstFunctionTypeExpr(args, returnType, isFatFunction, dirs, new Location(beginning, end));
         }
 
-        public AstExpression ParseExpression(ErrorMessageResolver errorMessage = null)
+        public AstExpression ParseExpression(bool allowCommaForTuple, ErrorMessageResolver errorMessage = null)
         {
             errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
 
-            var expr = ParseOrExpression(errorMessage);
+            var expr = ParseOrExpression(false, errorMessage);
+
+            if (allowCommaForTuple)
+            {
+                List<AstParameter> list = null;
+                while (CheckToken(TokenType.Comma))
+                {
+                    if (list == null)
+                    {
+                        list = new List<AstParameter>();
+                        list.Add(new AstParameter(null, expr, null, expr));
+                    }
+
+                    NextToken();
+
+                    expr = ParseOrExpression(false, errorMessage);
+                    list.Add(new AstParameter(null, expr, null, expr));
+                }
+
+                if (list != null)
+                    expr = new AstTupleExpr(list, new Location(list.First().Beginning, list.Last().End));
+            }
 
             return expr;
         }
 
         [DebuggerStepThrough]
-        private AstExpression ParseOrExpression(ErrorMessageResolver e)
+        private AstExpression ParseOrExpression(bool allowCommaForTuple, ErrorMessageResolver e)
         {
-            return ParseBinaryLeftAssociativeExpression(ParseAndExpression, e,
+            return ParseBinaryLeftAssociativeExpression(ParseAndExpression, allowCommaForTuple, e,
                 (TokenType.KwOr, "or"));
         }
 
         [DebuggerStepThrough]
-        private AstExpression ParseAndExpression(ErrorMessageResolver e)
+        private AstExpression ParseAndExpression(bool allowCommaForTuple, ErrorMessageResolver e)
         {
-            return ParseBinaryLeftAssociativeExpression(ParseComparisonExpression, e,
+            return ParseBinaryLeftAssociativeExpression(ParseComparisonExpression, allowCommaForTuple, e,
                 (TokenType.KwAnd, "and"));
         }
 
         [DebuggerStepThrough]
-        private AstExpression ParseComparisonExpression(ErrorMessageResolver e)
+        private AstExpression ParseComparisonExpression(bool allowCommaForTuple, ErrorMessageResolver e)
         {
-            return ParseBinaryLeftAssociativeExpression(ParseRangeExpression, e,
+            return ParseBinaryLeftAssociativeExpression(ParseRangeExpression, allowCommaForTuple, e,
                 (TokenType.Less, "<"),
                 (TokenType.LessEqual, "<="),
                 (TokenType.Greater, ">"),
@@ -1442,15 +1463,15 @@ namespace Cheez.Parsing
         }
 
         //[DebuggerStepThrough]
-        private AstExpression ParseRangeExpression(ErrorMessageResolver e)
+        private AstExpression ParseRangeExpression(bool allowCommaForTuple, ErrorMessageResolver e)
         {
-            var lhs = ParseAddSubExpression(e);
+            var lhs = ParseAddSubExpression(allowCommaForTuple, e);
 
             if (CheckToken(TokenType.PeriodPeriod))
             {
                 NextToken();
                 SkipNewlines();
-                var rhs = ParseAddSubExpression(e);
+                var rhs = ParseAddSubExpression(allowCommaForTuple, e);
                 return new AstRangeExpr(lhs, rhs, new Location(lhs.Beginning, rhs.End));
             }
 
@@ -1458,26 +1479,26 @@ namespace Cheez.Parsing
         }
 
         [DebuggerStepThrough]
-        private AstExpression ParseAddSubExpression(ErrorMessageResolver e)
+        private AstExpression ParseAddSubExpression(bool allowCommaForTuple, ErrorMessageResolver e)
         {
-            return ParseBinaryLeftAssociativeExpression(ParseMulDivExpression, e,
+            return ParseBinaryLeftAssociativeExpression(ParseMulDivExpression, allowCommaForTuple, e,
                 (TokenType.Plus, "+"),
                 (TokenType.Minus, "-"));
         }
 
         [DebuggerStepThrough]
-        private AstExpression ParseMulDivExpression(ErrorMessageResolver e)
+        private AstExpression ParseMulDivExpression(bool allowCommaForTuple, ErrorMessageResolver e)
         {
-            return ParseBinaryLeftAssociativeExpression(ParseUnaryExpression, e,
+            return ParseBinaryLeftAssociativeExpression(ParseUnaryExpression, allowCommaForTuple, e,
                 (TokenType.Asterisk, "*"),
                 (TokenType.ForwardSlash, "/"),
                 (TokenType.Percent, "%"));
         }
 
         [DebuggerStepThrough]
-        private AstExpression ParseBinaryLeftAssociativeExpression(ExpressionParser sub, ErrorMessageResolver errorMessage, params (TokenType, string)[] types)
+        private AstExpression ParseBinaryLeftAssociativeExpression(ExpressionParser sub, bool allowCommaForTuple, ErrorMessageResolver errorMessage, params (TokenType, string)[] types)
         {
-            return ParseLeftAssociativeExpression(sub, errorMessage, type =>
+            return ParseLeftAssociativeExpression(sub, allowCommaForTuple, errorMessage, type =>
             {
                 foreach (var (t, o) in types)
                 {
@@ -1491,10 +1512,11 @@ namespace Cheez.Parsing
 
         private AstExpression ParseLeftAssociativeExpression(
             ExpressionParser sub,
+            bool allowCommaForTuple,
             ErrorMessageResolver errorMessage,
             Func<TokenType, string> tokenMapping)
         {
-            var lhs = sub(errorMessage);
+            var lhs = sub(allowCommaForTuple, errorMessage);
             AstExpression rhs = null;
 
             while (true)
@@ -1509,33 +1531,33 @@ namespace Cheez.Parsing
 
                 NextToken();
                 SkipNewlines();
-                rhs = sub(errorMessage);
+                rhs = sub(allowCommaForTuple, errorMessage);
                 lhs = new AstBinaryExpr(op, lhs, rhs, new Location(lhs.Beginning, rhs.End));
             }
         }
 
-        private AstExpression ParseUnaryExpression(ErrorMessageResolver errorMessage = null)
+        private AstExpression ParseUnaryExpression(bool allowCommaForTuple, ErrorMessageResolver errorMessage = null)
         {
             var next = PeekToken();
             if (next.type == TokenType.Ampersand)
             {
                 NextToken();
                 SkipNewlines();
-                var sub = ParseUnaryExpression(errorMessage);
+                var sub = ParseUnaryExpression(allowCommaForTuple, errorMessage);
                 return new AstAddressOfExpr(sub, new Location(next.location, sub.End));
             }
             else if (next.type == TokenType.LessLess)
             {
                 NextToken();
                 SkipNewlines();
-                var sub = ParseUnaryExpression(errorMessage);
+                var sub = ParseUnaryExpression(allowCommaForTuple, errorMessage);
                 return new AstDereferenceExpr(sub, new Location(next.location, sub.End));
             }
             else if (next.type == TokenType.Minus || next.type == TokenType.Plus)
             {
                 NextToken();
                 SkipNewlines();
-                var sub = ParseUnaryExpression(errorMessage);
+                var sub = ParseUnaryExpression(allowCommaForTuple, errorMessage);
                 string op = "";
                 switch (next.type)
                 {
@@ -1548,11 +1570,11 @@ namespace Cheez.Parsing
             {
                 NextToken();
                 SkipNewlines();
-                var sub = ParseUnaryExpression(errorMessage);
+                var sub = ParseUnaryExpression(allowCommaForTuple, errorMessage);
                 return new AstUnaryExpr("!", sub, new Location(next.location, sub.End));
             }
 
-            return ParsePostUnaryExpression(errorMessage);
+            return ParsePostUnaryExpression(allowCommaForTuple, errorMessage);
         }
 
         private AstArgument ParseArgumentExpression()
@@ -1561,7 +1583,7 @@ namespace Cheez.Parsing
             AstExpression expr;
             AstIdExpr name = null;
 
-            var e = ParseExpression();
+            var e = ParseExpression(false);
             beg = e.Beginning;
 
             // if next token is : then e is the name of the parameter
@@ -1579,7 +1601,7 @@ namespace Cheez.Parsing
                 Consume(TokenType.Equal, ErrMsg("=", "after name in argument"));
                 SkipNewlines();
 
-                expr = ParseExpression();
+                expr = ParseExpression(false);
             }
             else
             {
@@ -1589,9 +1611,9 @@ namespace Cheez.Parsing
             return new AstArgument(expr, name, new Location(beg, expr.End));
         }
 
-        private AstExpression ParsePostUnaryExpression(ErrorMessageResolver errorMessage)
+        private AstExpression ParsePostUnaryExpression(bool allowCommaForTuple, ErrorMessageResolver errorMessage)
         {
-            var expr = ParseAtomicExpression(errorMessage);
+            var expr = ParseAtomicExpression(allowCommaForTuple, errorMessage);
 
             while (true)
             {
@@ -1644,7 +1666,7 @@ namespace Cheez.Parsing
                                 var next = PeekToken();
                                 if (next.type == TokenType.ClosingBracket || next.type == TokenType.EOF)
                                     break;
-                                args.Add(ParseExpression());
+                                args.Add(ParseExpression(false));
                                 SkipNewlines();
 
                                 next = PeekToken();
@@ -1678,17 +1700,7 @@ namespace Cheez.Parsing
                             SkipNewlines();
                             var right = ParseIdentifierExpr(ErrMsg("identifier", "after ."));
 
-                            expr = new AstDotExpr(expr, right, false, new Location(expr.Beginning, right.End));
-                            break;
-                        }
-
-                    case TokenType.DoubleColon:
-                        {
-                            NextToken();
-                            SkipNewlines();
-                            var right = ParseIdentifierExpr(ErrMsg("identifier", "after ."));
-
-                            expr = new AstDotExpr(expr, right, true, new Location(expr.Beginning, right.End));
+                            expr = new AstDotExpr(expr, right, new Location(expr.Beginning, right.End));
                             break;
                         }
 
@@ -1746,7 +1758,7 @@ namespace Cheez.Parsing
             var maybeOpenBrace = PeekToken();
             if (maybeOpenBrace.type != TokenType.OpenBrace)
             {
-                type = ParseExpression();
+                type = ParseExpression(true);
                 SkipNewlines();
             }
 
@@ -1760,14 +1772,14 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
                     break;
 
-                var value = ParseExpression();
+                var value = ParseExpression(false);
                 AstIdExpr memberName = null;
                 if (value is AstIdExpr n && CheckToken(TokenType.Equal))
                 {
                     memberName = n;
                     NextToken();
                     SkipNewlines();
-                    value = ParseExpression();
+                    value = ParseExpression(false);
                 }
 
                 members.Add(new AstStructMemberInitialization(memberName, value, new Location(memberName?.Beginning ?? value.Beginning, value.End)));
@@ -1849,7 +1861,7 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingBracket || next.type == TokenType.EOF)
                     break;
 
-                values.Add(ParseExpression());
+                values.Add(ParseExpression(false));
 
                 next = PeekToken();
 
@@ -1871,7 +1883,7 @@ namespace Cheez.Parsing
 
             if (IsTypeExprToken())
             {
-                var target = ParseExpression();
+                var target = ParseExpression(false);
                 if (values.Count == 0)
                     return new AstSliceTypeExpr(target, new Location(token.location, target.End));
                 else
@@ -1885,7 +1897,7 @@ namespace Cheez.Parsing
             return new AstArrayExpr(values, new Location(token.location, end));
         }
 
-        private AstExpression ParseLambdaExpr()
+        private AstExpression ParseLambdaExpr(bool allowCommaForTuple)
         {
             var beg = ConsumeUntil(TokenType.Pipe, ErrMsg("|", "at beginning of lambda")).location;
             var parameters = new List<AstParameter>();
@@ -1908,7 +1920,7 @@ namespace Cheez.Parsing
                     {
                         NextToken();
                         SkipNewlines();
-                        type = ParseExpression();
+                        type = ParseExpression(false);
                         end = type.End;
                         SkipNewlines();
                     }
@@ -1939,10 +1951,10 @@ namespace Cheez.Parsing
             {
                 NextToken();
                 SkipNewlines();
-                retType = ParseExpression();
+                retType = ParseExpression(false);
             }
 
-            var body = ParseExpression();
+            var body = ParseExpression(allowCommaForTuple);
 
             return new AstLambdaExpr(parameters, body, retType, new Location(beg, body.End));
         }
@@ -1965,7 +1977,7 @@ namespace Cheez.Parsing
             return new AstBreakExpr(name, new Location(token.location, name?.Location?.End ?? token.location));
         }
 
-        private AstExpression ParseAtomicExpression(ErrorMessageResolver errorMessage)
+        private AstExpression ParseAtomicExpression(bool allowCommaForTuple, ErrorMessageResolver errorMessage)
         {
             var token = PeekToken();
             switch (token.type)
@@ -1980,7 +1992,7 @@ namespace Cheez.Parsing
                     return new AstDefaultExpr(new Location(token.location));
 
                 case TokenType.Pipe:
-                    return ParseLambdaExpr();
+                    return ParseLambdaExpr(allowCommaForTuple);
 
                 case TokenType.KwNew:
                     return ParseStructValue();
@@ -2049,23 +2061,38 @@ namespace Cheez.Parsing
                     return ParseBlockExpr();
 
                 case TokenType.KwIf:
-                    return ParseIfExpr();
+                    return ParseIfExpr(allowCommaForTuple);
 
                 case TokenType.KwMatch:
                     return ParseMatchExpr();
 
                 case TokenType.OpenParen:
                     return ParseTupleExpression();
+                    // {
+                    //     var start = NextToken().location;
+                    //     SkipNewlines();
+                    //     if (CheckToken(TokenType.ClosingParen))
+                    //     {
+                    //         var end = NextToken().location;
+                    //         return new AstTupleExpr(new List<AstParameter>(), new Location(start, end));
+                    //     }
+                    //     else
+                    //     {
+                    //         var expr = ParseExpression(true);
+                    //         var end = ConsumeUntil(TokenType.ClosingParen, ErrMsg(")", "at end of tuple")).location;
+                    //         return expr;
+                    //     }
+                    // }
 
                 case TokenType.KwRef:
                     NextToken();
                     SkipNewlines();
-                    var target = ParseExpression();
+                    var target = ParseExpression(allowCommaForTuple);
                     return new AstReferenceTypeExpr(target, new Location(token.location, target.End));
 
                 case TokenType.Kwfn:
                 case TokenType.KwFn:
-                    return ParseFunctionTypeExpr();
+                    return ParseFunctionTypeExpr(allowCommaForTuple);
 
 
                 case TokenType.KwCast:
@@ -2081,13 +2108,13 @@ namespace Cheez.Parsing
                         {
                             NextToken();
                             SkipNewlines();
-                            type = ParseExpression();
+                            type = ParseExpression(true);
                             SkipNewlines();
                             Consume(TokenType.ClosingParen, ErrMsg("')'", "after type in cast expression"));
                             SkipNewlines();
                         }
 
-                        var sub = ParseExpression();
+                        var sub = ParseExpression(allowCommaForTuple);
                         return new AstCastExpr(type, sub, new Location(beg, sub.End));
                     }
 

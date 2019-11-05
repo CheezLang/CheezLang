@@ -63,7 +63,7 @@ namespace Cheez
                     {
                         foreach (var m in @struct.Declaration.Members)
                         {
-                            AstExpression expr = new AstDotExpr(new AstSymbolExpr(p), new AstIdExpr(m.Name.Name, false), false);
+                            AstExpression expr = new AstDotExpr(new AstSymbolExpr(p), new AstIdExpr(m.Name.Name, false));
                             expr.AttachTo(func, func.SubScope);
                             expr = InferType(expr, m.Type);
 
@@ -370,7 +370,7 @@ namespace Cheez
                         }
                         foreach (var mem in str.Declaration.Members)
                         {
-                            AstExpression expr = new AstDotExpr(tempVar, new AstIdExpr(mem.Name.Name, false, use.Location), false, use.Location);
+                            AstExpression expr = new AstDotExpr(tempVar, new AstIdExpr(mem.Name.Name, false, use.Location), use.Location);
                             //expr = InferType(expr, null);
                             use.Scope.DefineUse(mem.Name.Name, expr, true, out var u);
                         }

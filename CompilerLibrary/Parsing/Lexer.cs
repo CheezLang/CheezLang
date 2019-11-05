@@ -34,7 +34,6 @@ namespace Cheez.Parsing
         ReplaceIdentifier,
 
         Semicolon,
-        DoubleColon,
         Colon,
         Comma,
         Period,
@@ -220,7 +219,6 @@ namespace Cheez.Parsing
                 case '<' when Next == '=': SimpleToken(ref token, TokenType.LessEqual, 2); break;
                 case '<' when Next == '<': SimpleToken(ref token, TokenType.LessLess, 2); break;
                 case '>' when Next == '=': SimpleToken(ref token, TokenType.GreaterEqual, 2); break;
-                case ':' when Next == ':': SimpleToken(ref token, TokenType.DoubleColon, 2); break;
                 case '-' when Next == '>': SimpleToken(ref token, TokenType.Arrow, 2); break;
                 case '+' when Next == '=': SimpleToken(ref token, TokenType.AddEq, 2); break;
                 case '-' when Next == '=': SimpleToken(ref token, TokenType.SubEq, 2); break;
