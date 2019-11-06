@@ -9,7 +9,7 @@
 #load("material")
 #load("texture")
 
-let const report_progress: bool = false
+report_progress: bool : false
 typedef real = float
 
 let use_bhv     : bool = true
@@ -25,7 +25,7 @@ let samples     : int = 50
 let max_depth   : int = 15
 
 let scenes: []fn(ref Camera) -> Hittable = [simple_light, cornell_box, basic_scene, random_scene, big_scene]
-let const scene: int = 4
+scene: int : 4
 
 let file_write_mutex: Mutex = Mutex.create()
 

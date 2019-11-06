@@ -195,9 +195,9 @@ impl BernoulliDistribution {
 
 // histograms
 fn print_histogram(dist: IDistribution[$T], low: double, high: double){
-    let const width : int = 160
-    let const height: int = 30
-    let const samples   : int = 1000000
+    width : int : 160
+    height: int : 30
+    samples   : int : 1000000
     it := dist.samples().take(samples)
 
     buckets := alloc_n(int, cast width)
@@ -277,8 +277,8 @@ fn print_histogram(dist: IDistribution[$T], low: double, high: double){
 }
 
 fn print_discrete_histogram(dist: IDistribution[$T]){
-    let const width : int = 40
-    let const samples   : int = 100000
+    width : int : 40
+    samples   : int : 100000
     it := dist.samples().take(samples)
 
     map := Table[int, int].create(|a: int, b: int| a == b)

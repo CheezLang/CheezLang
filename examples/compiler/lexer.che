@@ -265,7 +265,7 @@ impl Lexer {
         token.ttype = TokenType.NumberLiteral
         base := 10
         str := {
-            let const cap = 64
+            cap :: 64
             raw := @alloca(char, cap)
             str := String.from_raw_ptr(raw, cap)
             str

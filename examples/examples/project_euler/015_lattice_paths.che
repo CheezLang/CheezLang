@@ -4,8 +4,8 @@
 
 #load("std:io/io")
 
-let const width: int = 20
-let const height: int = 20
+width: int : 20
+height: int : 20
 
 let cache: [width][height]int = @dup(@dup(0))
 

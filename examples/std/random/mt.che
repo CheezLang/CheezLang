@@ -1,8 +1,8 @@
 #load("std:random")
 
-let const STATE_VECTOR_LENGTH   : u32 = 624
-let const STATE_VECTOR_M        : u32 = 397
-let const STATE_VECTOR_DIFF     : u32 = STATE_VECTOR_LENGTH - STATE_VECTOR_M
+STATE_VECTOR_LENGTH   : u32 : 624
+STATE_VECTOR_M        : u32 : 397
+STATE_VECTOR_DIFF     : u32 : STATE_VECTOR_LENGTH - STATE_VECTOR_M
 
 struct MTwister {
     mt      : [STATE_VECTOR_LENGTH]u32

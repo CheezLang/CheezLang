@@ -8,15 +8,15 @@
 
 typedef Vec3 = Vector3[double]
 
-let const scale             : int = 2
-let const width             : int = 800 / scale
-let const height            : int = 450 / scale
-let const thread_count      : int = 2
+scale             : int : 2
+width             : int : 800 / scale
+height            : int : 450 / scale
+thread_count      : int : 2
 
-let const max_depth         : int       = 5
-let const min_contribution  : double    = 0.2
+max_depth         : int       : 5
+min_contribution  : double    : 0.2
 
-let const pi: double = 3.14159265359
+pi: double : 3.14159265359
 
 fn create(val: $T, allocator: Allocator) -> &T {
     ptr := alloc(T, allocator)

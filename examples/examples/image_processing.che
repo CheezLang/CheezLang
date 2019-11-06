@@ -5,11 +5,11 @@
 // #load("../libraries/escapi/escapi")
 #load("../libraries/opencv/opencv")
 
-let const image_width   : int = 320
-let const image_height  : int = 240
-let const num_images_x  : int = 3
-let const num_images_y  : int = 1
-let const border_width  : int = 10
+image_width   : int : 320
+image_height  : int : 240
+num_images_x  : int : 3
+num_images_y  : int : 1
+border_width  : int : 10
 
 typedef Color = (x: double, y: double, z: double)
 

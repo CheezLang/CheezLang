@@ -47,8 +47,8 @@ impl T2[string] for int {
     }
 }
 
-let const (A, B): TUPLE = default
-let const (C, D): (TD1, DWORD) = default
+A, B : TUPLE : default
+C, D : TD1, DWORD : default
 
 typedef TYPE = type
 typedef TUPLE = (int, string)
@@ -72,7 +72,7 @@ typedef Z2 = Y2
 typedef Y2 = X2
 typedef X2 = int
 
-let const S: Z2 = 10
+S : Z2 : 10
 
 let a : [S]DWORD = b
 let b : [S]DWORD = c
@@ -89,7 +89,7 @@ fn get_val() -> Z2 {
 
 let uiae : int = xvlc()
 let nrtd : int = uiae
-let const hgfq : int = 1
+hgfq : int : 1
 fn xvlc(x: int = hgfq) -> int {
     return x
 }

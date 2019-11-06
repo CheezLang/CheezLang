@@ -15,28 +15,28 @@ typedef lua_Reader      = fn(&lua_State, &any, int) -> c_string {}
 typedef lua_Writer      = fn(&lua_State, &any, int, &any) -> i32 {}
 
 
-let const LUA_MULTRET   : i32   = -1
-let const LUA_OK        : i32   = 0
-let const LUA_YIELD     : i32   = 1
-let const LUA_ERRRUN    : i32   = 2
-let const LUA_ERRSYNTAX : i32   = 3
-let const LUA_ERRMEM    : i32   = 4
-let const LUA_ERRGCMM   : i32   = 5
-let const LUA_ERRERR    : i32   = 6
+LUA_MULTRET   : i32   : -1
+LUA_OK        : i32   : 0
+LUA_YIELD     : i32   : 1
+LUA_ERRRUN    : i32   : 2
+LUA_ERRSYNTAX : i32   : 3
+LUA_ERRMEM    : i32   : 4
+LUA_ERRGCMM   : i32   : 5
+LUA_ERRERR    : i32   : 6
 
 /*
 ** basic types
 */
-let const LUA_TNONE             : i32   = (-1)
-let const LUA_TNIL              : i32   = 0
-let const LUA_TBOOLEAN          : i32   = 1
-let const LUA_TLIGHTUSERDATA    : i32   = 2
-let const LUA_TNUMBER           : i32   = 3
-let const LUA_TSTRING           : i32   = 4
-let const LUA_TTABLE            : i32   = 5
-let const LUA_TFUNCTION         : i32   = 6
-let const LUA_TUSERDATA         : i32   = 7
-let const LUA_TTHREAD           : i32   = 8
+LUA_TNONE             : i32   : (-1)
+LUA_TNIL              : i32   : 0
+LUA_TBOOLEAN          : i32   : 1
+LUA_TLIGHTUSERDATA    : i32   : 2
+LUA_TNUMBER           : i32   : 3
+LUA_TSTRING           : i32   : 4
+LUA_TTABLE            : i32   : 5
+LUA_TFUNCTION         : i32   : 6
+LUA_TUSERDATA         : i32   : 7
+LUA_TTHREAD           : i32   : 8
 
 // #defines
 fn lua_tostring(L: &lua_State, idx: i32) -> c_string {
