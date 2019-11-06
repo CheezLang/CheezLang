@@ -207,7 +207,7 @@ namespace Cheez.Visitors
                 var head = $"struct ";
 
                 var sb = new StringBuilder();
-                sb.Append($"{head} {{ // size: {str.StructType?.Size}, alignment: {str.StructType?.Alignment}\n{body.Indent(4)}\n}}");
+                sb.Append($"{head} {{ // size: {str.StructType?.GetSize()}, alignment: {str.StructType?.GetAlignment()}\n{body.Indent(4)}\n}}");
 
                 return sb.ToString();
             }
@@ -248,7 +248,7 @@ namespace Cheez.Visitors
                 var head = $"struct {str.Name.Accept(this)}";
 
                 var sb = new StringBuilder();
-                sb.Append($"{head} {{ // size: {str.Type?.Size}, alignment: {str.Type?.Alignment}\n{body.Indent(4)}\n}}");
+                sb.Append($"{head} {{ // size: {str.Type?.GetSize()}, alignment: {str.Type?.GetAlignment()}\n{body.Indent(4)}\n}}");
 
                 return sb.ToString();
             }
@@ -627,7 +627,7 @@ namespace Cheez.Visitors
             {
                 var body = string.Join("\n", en.Members.Select(m => VisitEnumMember(m)));
                 var head = $"enum {en.Name.Accept(this)}";
-                return $"{head} {{ // size: {en.Type?.Size}, alignment: {en.Type?.Alignment}\n{body.Indent(4)}\n}}";
+                return $"{head} {{ // size: {en.Type?.GetSize()}, alignment: {en.Type?.GetAlignment()}\n{body.Indent(4)}\n}}";
             }
         }
 

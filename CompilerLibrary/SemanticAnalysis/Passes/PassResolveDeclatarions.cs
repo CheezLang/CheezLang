@@ -77,8 +77,32 @@ namespace Cheez
             ResolveFunctionBodies(scope);
 
             // compute struct members of remaining structs
-            foreach (var s in allStructTypes)
-                ComputeStructMembers(s);
+
+            while (true)
+            {
+                var allTypes = CheezType.AllTypes;
+                if (allTypes.Count() == 0)
+                    break;
+
+                //Console.WriteLine($"Calculating properties of {allTypes.Count()} types...");
+
+                CheezType.ClearAllTypes();
+                foreach (var type in allTypes)
+                {
+                    //try
+                    {
+                        if (type is AbstractType || type.IsErrorType || type.IsPolyType)
+                            continue; 
+
+                        // force computation of all types sizes
+                        GetSizeOfType(type);
+                        IsTypeDefaultConstructable(type);
+                    }
+                    //catch (Exception e)
+                    //{
+                    //}
+                }
+            }
         }
         private class TypeImplList
         {

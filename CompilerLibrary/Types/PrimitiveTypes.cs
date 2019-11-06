@@ -11,38 +11,44 @@ namespace Cheez.Types.Primitive
         public override string ToString() => "void";
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
-        public override bool IsDefaultConstructable => true;
+
+        private VoidType() : base(0, 1, true) { }
     }
 
     public class AnyType : CheezType
     {
-        public static AnyType Intance { get; } = new AnyType { Size = 8, Alignment = 8 };
+        public static AnyType Intance { get; } = new AnyType();
+
+        private AnyType() : base(8, 8, false) { }
+
         public override string ToString() => "any";
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
-        public override bool IsDefaultConstructable => false;
     }
 
     public class BoolType : CheezType
     {
-        public static BoolType Instance = new BoolType { Size = 1, Alignment = 1 };
-        private BoolType() { }
+        public static BoolType Instance = new BoolType();
         public override string ToString() => "bool";
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
-        public override bool IsDefaultConstructable => true;
+        private BoolType() : base(1, 1, true) { }
     }
 
     public class IntType : CheezType
     {
         private static Dictionary<(int, bool), IntType> sTypes = new Dictionary<(int, bool), IntType>();
-        public static IntType LiteralType = new IntType { Signed = false, Size = 0 };
+        public static IntType LiteralType = new IntType(0, false);
         public static IntType DefaultType => GetIntType(8, true);
+
+        private IntType(int size, bool sign) : base(size, size, true)
+        {
+            Signed = sign;
+        }
 
         public bool Signed { get; private set; }
         public override bool IsErrorType => false;
         public override bool IsPolyType => false;
-        public override bool IsDefaultConstructable => true;
 
         public static IntType GetIntType(int sizeInBytes, bool signed)
         {
@@ -53,12 +59,7 @@ namespace Cheez.Types.Primitive
                 return sTypes[key];
             }
 
-            var type = new IntType
-            {
-                Size = sizeInBytes,
-                Alignment = sizeInBytes,
-                Signed = signed
-            };
+            var type = new IntType(sizeInBytes, signed);
 
             sTypes[key] = type;
             return type;
@@ -66,7 +67,7 @@ namespace Cheez.Types.Primitive
 
         public override string ToString()
         {
-            return (Signed ? "i" : "u") + (Size * 8);
+            return (Signed ? "i" : "u") + (GetSize() * 8);
         }
 
         public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
@@ -79,16 +80,16 @@ namespace Cheez.Types.Primitive
                 if (t.Signed != this.Signed)
                     return -1;
 
-                if (concrete.Size > this.Size)
+                if (concrete.GetSize() > this.GetSize())
                     return -1;
-                if (concrete.Size < this.Size)
+                if (concrete.GetSize() < this.GetSize())
                     return 1;
                 return 0;
             }
             return -1;
         }
 
-        public BigInteger MinValue => (Signed, Size) switch
+        public BigInteger MinValue => (Signed, GetSize()) switch
         {
             (true, 1) => sbyte.MinValue,
             (true, 2) => short.MinValue,
@@ -101,7 +102,7 @@ namespace Cheez.Types.Primitive
             _ => throw new NotImplementedException()
         };
 
-        public BigInteger MaxValue => (Signed, Size) switch
+        public BigInteger MaxValue => (Signed, GetSize()) switch
         {
             (true, 1) => sbyte.MaxValue,
             (true, 2) => short.MaxValue,
@@ -118,11 +119,12 @@ namespace Cheez.Types.Primitive
     public class FloatType : CheezType
     {
         private static Dictionary<int, FloatType> sTypes = new Dictionary<int, FloatType>();
-        public static FloatType LiteralType = new FloatType { Size = 0 };
+        public static FloatType LiteralType = new FloatType(0);
         public static FloatType DefaultType => GetFloatType(8);
         public override bool IsErrorType => false;
         public override bool IsPolyType => false;
-        public override bool IsDefaultConstructable => true;
+
+        private FloatType(int size) : base(size, size, true) { }
 
         public static FloatType GetFloatType(int bytes)
         {
@@ -131,11 +133,7 @@ namespace Cheez.Types.Primitive
                 return sTypes[bytes];
             }
 
-            var type = new FloatType
-            {
-                Size = bytes,
-                Alignment = bytes
-            };
+            var type = new FloatType(bytes);
 
             sTypes[bytes] = type;
             return type;
@@ -143,7 +141,7 @@ namespace Cheez.Types.Primitive
 
         public override string ToString()
         {
-            return "f" + (Size * 8);
+            return "f" + (GetSize() * 8);
         }
 
         public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
@@ -153,43 +151,43 @@ namespace Cheez.Types.Primitive
 
             if (concrete is FloatType t)
             {
-                if (concrete.Size > this.Size)
+                if (concrete.GetSize() > this.GetSize())
                     return -1;
-                if (concrete.Size < this.Size)
+                if (concrete.GetSize() < this.GetSize())
                     return 1;
                 return 0;
             }
             return -1;
         }
 
-        public double MinValue => Size switch
+        public double MinValue => GetSize() switch
         {
             4 => float.MinValue,
             8 => double.MinValue,
             _ => throw new NotImplementedException()
         };
 
-        public double MaxValue => Size switch
+        public double MaxValue => GetSize() switch
         {
             4 => float.MaxValue,
             8 => double.MaxValue,
             _ => throw new NotImplementedException()
         };
-        public double NaN => Size switch
+        public double NaN => GetSize() switch
         {
             4 => float.NaN,
             8 => double.NaN,
             _ => throw new NotImplementedException()
         };
         
-        public double PosInf => Size switch
+        public double PosInf => GetSize() switch
         {
             4 => float.PositiveInfinity,
             8 => double.PositiveInfinity,
             _ => throw new NotImplementedException()
         };
         
-        public double NegInf => Size switch
+        public double NegInf => GetSize() switch
         {
             4 => float.NegativeInfinity,
             8 => double.NegativeInfinity,
@@ -203,17 +201,16 @@ namespace Cheez.Types.Primitive
         public static int PointerAlignment = 8;
 
         private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
-        public static PointerType NullLiteralType = new PointerType
+        public static PointerType NullLiteralType = new PointerType(null);
+
+        private PointerType(CheezType target) : base(PointerSize, PointerAlignment, true)
         {
-            TargetType = null,
-            Size = PointerSize,
-            Alignment = PointerAlignment
-        };
+            TargetType = target;
+        }
 
         public CheezType TargetType { get; set; }
         public override bool IsErrorType => TargetType?.IsErrorType ?? false;
         public override bool IsPolyType => TargetType?.IsPolyType ?? false;
-        public override bool IsDefaultConstructable => true;
 
         public static PointerType GetPointerType(CheezType targetType)
         {
@@ -225,12 +222,7 @@ namespace Cheez.Types.Primitive
                 return sTypes[targetType];
             }
 
-            var type = new PointerType
-            {
-                TargetType = targetType,
-                Size = PointerSize,
-                Alignment = PointerAlignment
-            };
+            var type = new PointerType(targetType);
 
             sTypes[targetType] = type;
             return type;
@@ -274,7 +266,11 @@ namespace Cheez.Types.Primitive
         public CheezType TargetType { get; set; }
         public override bool IsErrorType => TargetType.IsErrorType;
         public override bool IsPolyType => TargetType.IsPolyType;
-        public override bool IsDefaultConstructable => false;
+
+        private ReferenceType(CheezType target) : base(PointerType.PointerSize, PointerType.PointerAlignment, false)
+        {
+            TargetType = target;
+        }
 
         public static ReferenceType GetRefType(CheezType targetType)
         {
@@ -289,12 +285,7 @@ namespace Cheez.Types.Primitive
                 return sTypes[targetType];
             }
 
-            var type = new ReferenceType
-            {
-                TargetType = targetType,
-                Size = PointerType.PointerSize,
-                Alignment = PointerType.PointerAlignment
-            };
+            var type = new ReferenceType(targetType);
 
             sTypes[targetType] = type;
             return type;
@@ -339,9 +330,11 @@ namespace Cheez.Types.Primitive
         public override bool IsErrorType => TargetType.IsErrorType;
         public override bool IsPolyType => TargetType.IsPolyType;
 
-        public override int Size => Length * TargetType.Size;
-        public override int Alignment => TargetType.Alignment;
-        public override bool IsDefaultConstructable => false;
+        private ArrayType(CheezType target, int length) : base()
+        {
+            TargetType = target;
+            Length = length;
+        }
 
         public static ArrayType GetArrayType(CheezType targetType, int length)
         {
@@ -352,13 +345,7 @@ namespace Cheez.Types.Primitive
             if (existing != null)
                 return existing;
 
-            var type = new ArrayType
-            {
-                TargetType = targetType,
-                Size = length * targetType.Size,
-                Alignment = targetType.Alignment,
-                Length = length
-            };
+            var type = new ArrayType(targetType, length);
 
             sTypes[targetType] = type;
             return type;
@@ -407,7 +394,11 @@ namespace Cheez.Types.Primitive
         public CheezType TargetType { get; set; }
         public override bool IsErrorType => TargetType.IsErrorType;
         public override bool IsPolyType => TargetType.IsPolyType;
-        public override bool IsDefaultConstructable => true;
+
+        private SliceType(CheezType target) : base(PointerType.PointerSize * 2, PointerType.PointerAlignment, true)
+        {
+            TargetType = target;
+        }
 
         public static SliceType GetSliceType(CheezType targetType)
         {
@@ -417,12 +408,7 @@ namespace Cheez.Types.Primitive
             if (sTypes.ContainsKey(targetType))
                 return sTypes[targetType];
 
-            var type = new SliceType
-            {
-                TargetType = targetType,
-                Size = PointerType.PointerSize * 2,
-                Alignment = PointerType.PointerAlignment
-            };
+            var type = new SliceType(targetType);
 
             sTypes[targetType] = type;
             return type;
@@ -473,7 +459,6 @@ namespace Cheez.Types.Primitive
         public CheezType TargetType { get; set; }
         public override bool IsErrorType => TargetType.IsErrorType;
         public override bool IsPolyType => TargetType.IsPolyType;
-        public override bool IsDefaultConstructable => false;
 
         public static RangeType GetRangeType(CheezType targetType)
         {
@@ -485,9 +470,7 @@ namespace Cheez.Types.Primitive
 
             var type = new RangeType
             {
-                TargetType = targetType,
-                Size = targetType.Size * 2,
-                Alignment = targetType.Alignment
+                TargetType = targetType
             };
 
             sTypes[targetType] = type;
@@ -532,15 +515,18 @@ namespace Cheez.Types.Primitive
         public override bool IsPolyType => false;
         public override string ToString() => "string_literal";
         public override bool IsErrorType => false;
-        public override bool IsDefaultConstructable => throw new NotImplementedException();
+
+        private StringLiteralType() : base(0, 1, false) { }
     }
 
     public class CharType : CheezType
     {
-        public static CharType Instance = new CharType { Size = 1, Alignment = 1 };
+        public static CharType Instance = new CharType();
+
         public override bool IsPolyType => false;
         public override string ToString() => "char";
         public override bool IsErrorType => false;
-        public override bool IsDefaultConstructable => true;
+
+        private CharType() : base(1, 1, true) { }
     }
 }

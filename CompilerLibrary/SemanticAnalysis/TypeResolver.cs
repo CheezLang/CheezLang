@@ -258,8 +258,6 @@ namespace Cheez
                 ReportError($"Detected a potential infinite loop in polymorphic declarations after {MaxPolyStructResolveStepCount} steps", details);
             }
 
-            CalculateEnumAndStructSizes(done);
-
             foreach (var d in done)
             {
                 if (d is AstStructDecl s)

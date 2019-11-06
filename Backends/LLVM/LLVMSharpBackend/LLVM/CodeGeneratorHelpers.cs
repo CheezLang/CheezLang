@@ -326,12 +326,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     return LLVM.Int1Type();
 
                 case IntType i:
-                    return LLVM.IntType((uint)i.Size * 8);
+                    return LLVM.IntType((uint)i.GetSize() * 8);
 
                 case FloatType f:
-                    if (f.Size == 4)
+                    if (f.GetSize() == 4)
                         return LLVMTypeRef.FloatType();
-                    else if (f.Size == 8)
+                    else if (f.GetSize() == 8)
                         return LLVMTypeRef.DoubleType();
                     else throw new NotImplementedException();
 
@@ -391,7 +391,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                         if (e.Declaration.HasAssociatedTypes)
                         {
-                            var restSize = e.Size - e.TagType.Size;
+                            var restSize = e.GetSize() - e.TagType.GetSize();
                             llvmType.StructSetBody(new LLVMTypeRef[]
                             {
                                 CheezTypeToLLVMType(e.TagType),

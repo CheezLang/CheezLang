@@ -919,8 +919,7 @@ namespace Cheez
             if (expected is StructType s)
             {
                 //if (s.Declaration.GetFlag(StmtFlags.NoDefaultInitializer))
-                ComputeStructMembers(s.Declaration);
-                if (!s.IsDefaultConstructable)
+                if (!IsTypeDefaultConstructable(s))
                 {
                     ReportError(expr, $"Can't default initialize struct {s}");
                     return expr;
@@ -1794,7 +1793,7 @@ namespace Cheez
                         {
                             var type = arg.Value as CheezType;
                             expr.Type = CheezType.Bool;
-                            expr.Value = type.IsDefaultConstructable;
+                            expr.Value = IsTypeDefaultConstructable(type);
                             return expr;
                         }
                         else
@@ -2127,7 +2126,7 @@ namespace Cheez
                             ComputeStructMembers(s.Declaration);
                         }
 
-                        var num = new AstNumberExpr(type.Size, Location: expr.Location);
+                        var num = new AstNumberExpr(GetSizeOfType(type), Location: expr.Location);
                         num.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                         return InferTypeHelper(num, null, context);
                     }
@@ -2152,7 +2151,7 @@ namespace Cheez
 
                         var type = (CheezType)arg.Value;
 
-                        var num = new AstNumberExpr(type.Alignment, Location: expr.Location);
+                        var num = new AstNumberExpr(GetAlignOfType(type), Location: expr.Location);
                         num.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                         return InferTypeHelper(num, null, context);
                     }
@@ -2862,7 +2861,8 @@ namespace Cheez
                             break;
 
                         if (type is EnumType @enum) {
-                            if (@enum.Members.TryGetValue(expr.Right.Name, out var m))
+                            var m = @enum.Declaration.Members.Find(m => m.Name.Name == expr.Right.Name);
+                            if (m != null)
                             {
                                 expr.Type = @enum;
 
@@ -4179,10 +4179,10 @@ namespace Cheez
             if (to is PointerType p2 && p2.TargetType == CheezType.Any && from is PointerType)
                 return InferType(cast, to);
 
-            if (to is IntType i1 && from is IntType i2 && i1.Signed == i2.Signed && i1.Size >= i2.Size)
+            if (to is IntType i1 && from is IntType i2 && i1.Signed == i2.Signed && GetSizeOfType(i1) >= GetSizeOfType(i2))
                 return InferType(cast, to);
 
-            if (to is FloatType f1 && from is FloatType f2 && f1.Size >= f2.Size)
+            if (to is FloatType f1 && from is FloatType f2 && GetSizeOfType(f1) >= GetSizeOfType(f2))
                 return InferType(cast, to);
 
             if (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType)
@@ -4291,7 +4291,7 @@ namespace Cheez
         {
             switch (type)
             {
-                case IntType i when i.Size != 0:
+                case IntType i when GetSizeOfType(i) != 0:
                     {
                         var val = ((NumberData)value).IntValue;
                         if (val > i.MaxValue || val < i.MinValue)

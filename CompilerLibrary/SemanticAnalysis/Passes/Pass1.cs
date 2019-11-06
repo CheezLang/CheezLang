@@ -41,23 +41,23 @@ namespace Cheez
                 CollectPolyTypeNames(func.ReturnTypeExpr.TypeExpr, polyNames);
             }
 
-            if (polyNames.Count > 0)
-            {
-                func.Type = new GenericFunctionType(func);
-            }
-            else
-            {
-                func.Type = new FunctionType(func);
+            //if (polyNames.Count > 0)
+            //{
+            //    func.Type = new GenericFunctionType(func);
+            //}
+            //else
+            //{
+            //    func.Type = new FunctionType(func);
 
-                if (func.TryGetDirective("varargs", out var varargs))
-                {
-                    if (varargs.Arguments.Count != 0)
-                    {
-                        ReportError(varargs, $"#varargs takes no arguments!");
-                    }
-                    func.FunctionType.VarArgs = true;
-                }
-            }
+            //    if (func.TryGetDirective("varargs", out var varargs))
+            //    {
+            //        if (varargs.Arguments.Count != 0)
+            //        {
+            //            ReportError(varargs, $"#varargs takes no arguments!");
+            //        }
+            //        func.FunctionType.VarArgs = true;
+            //    }
+            //}
 
             var res = func.Scope.DefineDeclaration(func);
             if (!res.ok)

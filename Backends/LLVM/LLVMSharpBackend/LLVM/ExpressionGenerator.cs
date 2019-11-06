@@ -559,21 +559,21 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
             else if (to.Signed) // s <- u
             {
-                if (to.Size > from.Size)
+                if (to.GetSize() > from.GetSize())
                     return builder.CreateZExtOrBitCast(value, toLLVM, "");
                 else
                     return builder.CreateTruncOrBitCast(value, toLLVM, "");
             }
             else if (from.Signed) // u <- s
             {
-                if (to.Size > from.Size)
+                if (to.GetSize() > from.GetSize())
                     return builder.CreateZExtOrBitCast(value, toLLVM, "");
                 else
                     return builder.CreateTruncOrBitCast(value, toLLVM, "");
             }
             else // u <- u
             {
-                if (to.Size > from.Size)
+                if (to.GetSize() > from.GetSize())
                     return builder.CreateZExtOrBitCast(value, toLLVM, "");
                 else
                     return builder.CreateTruncOrBitCast(value, toLLVM, "");
@@ -1378,7 +1378,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                                     var length_ptr = builder.CreateStructGEP(slice, 0, "slice_length_ptr");
                                     length_ptr = builder.CreateLoad(length_ptr, "slice_length");
 
-                                    var dataOffset = builder.CreateMul(range_begin, LLVM.ConstInt(LLVM.Int64Type(), (ulong)s.TargetType.Size, false), "");
+                                    var dataOffset = builder.CreateMul(range_begin, LLVM.ConstInt(LLVM.Int64Type(), (ulong)s.TargetType.GetSize(), false), "");
                                     dataPtr = builder.CreatePtrToInt(dataPtr, LLVM.Int64Type(), "");
                                     dataPtr = builder.CreateAdd(dataPtr, dataOffset, "data_new");
                                     dataPtr = builder.CreateIntToPtr(dataPtr, CheezTypeToLLVMType(s.TargetType).GetPointerTo(), "data_new_ptr");

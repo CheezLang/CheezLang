@@ -2,6 +2,7 @@
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using Cheez.Util;
+using System;
 using System.Collections.Generic;
 
 namespace Cheez.Types
@@ -20,14 +21,61 @@ namespace Cheez.Types
         public static CheezType Any => AnyType.Intance;
 
         public abstract bool IsPolyType { get; }
-        public abstract bool IsDefaultConstructable { get; }
-        public virtual int Size { get; set; } = 0;
-        public virtual int Alignment { get; set; } = 8;
 
         public abstract bool IsErrorType { get; }
 
         public virtual bool IsCopy { get; } = true;
         public virtual bool IsComptimeOnly { get; } = false;
+
+        private int Size = -1;
+        private int Alignment = 0;
+        private bool? IsDefaultConstructable;
+
+        private static List<CheezType> allTypes = new List<CheezType>();
+        public static IEnumerable<CheezType> AllTypes => allTypes;
+
+        protected CheezType(int size, int align, bool hasDefault)
+        {
+            Size = size;
+            Alignment = align;
+            IsDefaultConstructable = hasDefault;
+            allTypes.Add(this);
+        }
+
+        protected CheezType(int size, int align)
+        {
+            Size = size;
+            Alignment = align;
+            allTypes.Add(this);
+        }
+
+        protected CheezType(bool hasDefault)
+        {
+            IsDefaultConstructable = hasDefault;
+            allTypes.Add(this);
+        }
+
+        protected CheezType()
+        {
+            allTypes.Add(this);
+        }
+
+        public int GetSize() => Size;
+        public int GetAlignment() => Alignment;
+
+        public void SetSizeAndAlignment(int size, int align)
+        {
+            Size = size;
+            Alignment = align;
+        }
+
+        internal bool IsDefaultConstructableComputed() => IsDefaultConstructable != null;
+        internal bool GetIsDefaultConstructable() => IsDefaultConstructable.Value;
+
+        internal void SetIsDefaultConstructable(bool isDefaultConstructable)
+        {
+            IsDefaultConstructable = isDefaultConstructable;
+        }
 
         public static bool operator ==(CheezType a, CheezType b)
         {
@@ -39,6 +87,11 @@ namespace Cheez.Types
         public static bool operator !=(CheezType a, CheezType b)
         {
             return !(a == b);
+        }
+
+        internal static void ClearAllTypes()
+        {
+            allTypes = new List<CheezType>();
         }
 
         //public override bool Equals(object obj)
@@ -130,12 +183,10 @@ namespace Cheez.Types
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
         public override bool IsComptimeOnly => true;
-        public override bool IsDefaultConstructable => false;
 
         public override string ToString() => "type";
 
-        private CheezTypeType()
-        { }
+        private CheezTypeType() : base(0, 1, false) { }
     }
 
     public class CodeType : CheezType
@@ -144,11 +195,9 @@ namespace Cheez.Types
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
         public override bool IsComptimeOnly => true;
-        public override bool IsDefaultConstructable => false;
 
         public override string ToString() => "Code";
 
-        private CodeType()
-        {}
+        private CodeType() : base(0, 1, false) { }
     }
 }

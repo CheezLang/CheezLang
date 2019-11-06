@@ -11,13 +11,14 @@ namespace Cheez.Types.Abstract
     public abstract class AbstractType : CheezType {
         public override bool IsErrorType => true;
         public override bool IsComptimeOnly => true;
+
+        protected AbstractType() : base(0, 1, false) { }
     }
 
     public class SelfType : AbstractType
     {
         public override bool IsPolyType => false;
         public CheezType traitType { get; }
-        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public SelfType(CheezType traitType)
         {
@@ -34,7 +35,6 @@ namespace Cheez.Types.Abstract
     {
         public override bool IsPolyType => false;
         public AstSingleVariableDecl Declaration { get; }
-        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public VarDeclType(AstSingleVariableDecl decl)
         {
@@ -48,7 +48,6 @@ namespace Cheez.Types.Abstract
     {
         public override bool IsPolyType => false;
         public List<AbstractType> SubTypes { get; }
-        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public CombiType(List<AbstractType> decls)
         {
@@ -62,7 +61,6 @@ namespace Cheez.Types.Abstract
     {
         public override bool IsPolyType => false;
         public AstTypeAliasDecl Declaration { get; }
-        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public AliasType(AstTypeAliasDecl decl)
         {
@@ -77,9 +75,9 @@ namespace Cheez.Types.Abstract
         public AstFunctionDecl Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
-        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public GenericFunctionType(AstFunctionDecl decl)
+            : base(0, 1, false)
         {
             Declaration = decl;
         }
@@ -96,12 +94,12 @@ namespace Cheez.Types.Abstract
         public AstStructTypeExpr Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
-        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public bool IsCopy { get; }
         public string Name { get; }
 
         public GenericStructType(AstStructTypeExpr decl, bool copy, string name)
+            : base(0, 1, false)
         {
             Declaration = decl;
             IsCopy = copy;
@@ -114,9 +112,9 @@ namespace Cheez.Types.Abstract
         public AstEnumDecl Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
-        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public GenericEnumType(AstEnumDecl decl)
+            : base(0, 1, false)
         {
             Declaration = decl;
         }
@@ -127,9 +125,9 @@ namespace Cheez.Types.Abstract
         public AstTraitDeclaration Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
-        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public GenericTraitType(AstTraitDeclaration decl)
+            : base(0, 1, false)
         {
             Declaration = decl;
         }
@@ -137,11 +135,12 @@ namespace Cheez.Types.Abstract
 
     public class ErrorType : CheezType
     {
-        public static ErrorType Instance { get; } = new ErrorType { Size = 0 };
+        public static ErrorType Instance { get; } = new ErrorType();
         public override bool IsPolyType => false;
         public override string ToString() => "<Error Type>";
         public override bool IsErrorType => true;
-        public override bool IsDefaultConstructable => false;
+
+        private ErrorType() : base(0, 1, false) { }
     }
 
     public class PolyType : CheezType
@@ -149,11 +148,11 @@ namespace Cheez.Types.Abstract
         public string Name { get; }
         public override bool IsPolyType => true;
         public override bool IsErrorType => false;
-        public override bool IsDefaultConstructable => throw new NotImplementedException();
 
         public bool IsDeclaring = false;
 
         public PolyType(string name, bool declaring = false)
+            : base(0, 1, false)
         {
             this.Name = name;
             this.IsDeclaring = declaring;

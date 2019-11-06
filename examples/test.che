@@ -1,5 +1,5 @@
 // #load("examples/trait_function_call_performance")
-// #load("examples/graphyfier/graphyfier")
+#load("examples/graphyfier/graphyfaier")
 // #load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
@@ -11,6 +11,14 @@
 // #load("tests/library/all_include")
 // #load("tests/other/test1")
 // #load("examples/project_euler/005_smallest_multiple")
+
+/*
+#load("std:io/io")
+fn Main() {
+
+}
+
+// */
 
 /*
 #load("std:c")

@@ -29,14 +29,12 @@ namespace Cheez.Types.Complex
 
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
         public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
-        public override bool IsDefaultConstructable => true;
 
         public CheezType[] Arguments { get; }
 
         public TraitType(AstTraitDeclaration decl, CheezType[] args = null)
+            : base(2 * PointerType.PointerSize, PointerType.PointerAlignment, true)
         {
-            Size = 2 * PointerType.PointerSize;
-            Alignment = PointerType.PointerAlignment;
             Declaration = decl;
             Arguments = args ?? decl.Parameters.Select(p => p.Value as CheezType).ToArray();
         }
@@ -99,12 +97,10 @@ namespace Cheez.Types.Complex
         public override bool IsPolyType => Members.Any(m => m.type.IsPolyType);
         public override bool IsErrorType => Members.Any(m => m.type.IsErrorType);
         public override bool IsCopy => Members.All(m => m.type.IsCopy);
-        public override bool IsDefaultConstructable => Members.All(m => m.type.IsDefaultConstructable);
 
         private TupleType((string name, CheezType type)[] members)
         {
             Members = members;
-            CalculateSize();
         }
 
         public static TupleType GetTuple((string name, CheezType type)[] members)
@@ -135,28 +131,7 @@ namespace Cheez.Types.Complex
 
             return false;
         }
-
-
-
-        public void CalculateSize()
-        {
-            Alignment = 1;
-            Size = 0;
-            for (int i = 0; i < Members.Length; i++)
-            {
-                var m = Members[i];
-
-                var ms = m.type.Size;
-                var ma = m.type.Alignment;
-
-                Alignment = Math.Max(Alignment, ma);
-                Size += ms;
-                Size = Utilities.GetNextAligned(Size, ma);
-            }
-
-            Size = Utilities.GetNextAligned(Size, Alignment);
-        }
-
+        
         public override int GetHashCode()
         {
             var hash = new HashCode();
@@ -179,56 +154,15 @@ namespace Cheez.Types.Complex
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
         public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
         public override bool IsCopy { get; }
-        //public override bool IsDefaultConstructable => Declaration.Members.All(m => m.IsPublic && (m.Type.IsDefaultConstructable || m.Initializer != null));
-        public override bool IsDefaultConstructable => Declaration.Members.All(m => m.Decl.Initializer != null);
-
-        //public AstStructDecl DeclarationTemplate => Declaration.Template ?? Declaration;
         public AstStructTypeExpr DeclarationTemplate => Declaration.Template ?? Declaration;
 
-        private int _size = -1;
-        public override int Size
-        {
-            get
-            {
-                if (_size == -1)
-                    CalculateSize();
-                return _size;
-            }
-        }
-
-        //public StructType(AstStructDecl decl, CheezType[] args = null)
-        //{
-        //    Size = -1;
-        //    Declaration = decl;
-        //    Arguments = args ?? decl.Parameters.Select(p => p.Value as CheezType).ToArray();
-        //}
 
         public StructType(AstStructTypeExpr decl, bool isCopy, string name, CheezType[] args = null)
         {
-            Size = -1;
             Declaration = decl;
             IsCopy = isCopy;
             Name = name;
             Arguments = args ?? decl.Parameters.Select(p => p.Value as CheezType).ToArray();
-        }
-
-        public void CalculateSize()
-        {
-            Alignment = 1;
-            _size = 0;
-            for (int i = 0; i < Declaration.Members.Count; i++)
-            {
-                var m = Declaration.Members[i];
-
-                var ms = m.Type.Size;
-                var ma = m.Type.Alignment;
-
-                Alignment = Math.Max(Alignment, ma);
-                _size += ms;
-                _size = Utilities.GetNextAligned(_size, ma);
-            }
-
-            _size = Utilities.GetNextAligned(_size, Alignment);
         }
 
         public override string ToString()
@@ -302,40 +236,18 @@ namespace Cheez.Types.Complex
     {
         public AstEnumDecl Declaration { get; set; }
 
-        public Dictionary<string, long> Members { get; private set; }
+        //public Dictionary<string, long> Members { get; private set; }
         public CheezType[] Arguments { get; }
         public IntType TagType { get; set; }
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
         public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
-        public override bool IsDefaultConstructable => false;
 
         public AstEnumDecl DeclarationTemplate => Declaration.Template ?? Declaration;
 
-        public EnumType(AstEnumDecl en, CheezType[] args = null)
+        public EnumType(AstEnumDecl en, CheezType[] args = null) : base(false)
         {
-            Size = -1;
             Declaration = en;
             Arguments = args ?? en.Parameters.Select(p => p.Value as CheezType).ToArray();
-        }
-
-        public void CalculateSize()
-        {
-            Alignment = Declaration.TagType.Alignment;
-
-            TagType = Declaration.TagType;
-            Members = new Dictionary<string, long>();
-
-            var maxMemberSize = 0;
-
-            foreach (var m in Declaration.Members)
-            {
-                Members.Add(m.Name.Name, ((NumberData)m.Value.Value).ToLong());
-                if (m.AssociatedTypeExpr != null)
-                    maxMemberSize = Math.Max(maxMemberSize, ((CheezType)m.AssociatedTypeExpr.Value).Size);
-            }
-
-            Size = TagType.Size + maxMemberSize;
-            Size = Utilities.GetNextAligned(Size, Alignment);
         }
 
         public override string ToString()
@@ -388,11 +300,11 @@ namespace Cheez.Types.Complex
 
         public AstFunctionDecl Declaration { get; set; } = null;
         public override bool IsErrorType => ReturnType.IsErrorType || Parameters.Any(p => p.type.IsErrorType);
-        public override bool IsDefaultConstructable => true;
 
         public CallingConvention CC = CallingConvention.Default;
 
         public FunctionType((string name, CheezType type, AstExpression defaultValue)[] parameterTypes, CheezType returnType, bool isFatFunc, CallingConvention cc)
+            : base(PointerType.PointerSize, PointerType.PointerAlignment, true)
         {
             if (parameterTypes.Any(p => p.type == null))
             {
@@ -403,12 +315,10 @@ namespace Cheez.Types.Complex
             this.ReturnType = returnType;
             this.IsFatFunction = isFatFunc;
             this.CC = cc;
-
-            Size = PointerType.PointerSize;
-            Alignment = PointerType.PointerAlignment;
         }
 
         public FunctionType(AstFunctionDecl func)
+            : base(PointerType.PointerSize, PointerType.PointerAlignment, true)
         {
             this.Declaration = func;
             this.ReturnType = func.ReturnTypeExpr?.Type ?? CheezType.Void;
@@ -417,9 +327,6 @@ namespace Cheez.Types.Complex
 
             if (func.TryGetDirective("stdcall", out var dir))
                 this.CC = CallingConvention.Stdcall;
-
-            Size = PointerType.PointerSize;
-            Alignment = PointerType.PointerAlignment;
         }
 
         public override string ToString()
