@@ -48,7 +48,6 @@ namespace Cheez.Ast.Statements
 
         public object Value { get; set; }
 
-        public bool IsConstant => true;
         public bool IsReturnParam { get; set; } = false;
 
         public AstParameter(AstIdExpr name, AstExpression typeExpr, AstExpression defaultValue, ILocation Location = null)
@@ -65,7 +64,7 @@ namespace Cheez.Ast.Statements
         }
 
         [DebuggerStepThrough]
-        public T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitParameter(this, data);
+        public TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitParameter(this, data);
 
         public override string ToString()
         {
@@ -100,7 +99,6 @@ namespace Cheez.Ast.Statements
 
         public SelfParamType SelfType { get; set; } = SelfParamType.None;
         public bool IsGeneric { get; set; } = false;
-        public bool IsConstant => true;
         public bool IsPolyInstance { get; set; } = false;
         public List<ILocation> InstantiatedAt { get; private set; } = null;
         public AstTraitDeclaration Trait { get; set; } = null;
@@ -121,7 +119,6 @@ namespace Cheez.Ast.Statements
         public ILocation ParameterLocation { get; internal set; }
 
         public AstFunctionDecl(AstIdExpr name,
-            List<AstIdExpr> generics,
             List<AstParameter> parameters,
             AstParameter returns,
             AstBlockExpr body = null,
@@ -137,15 +134,16 @@ namespace Cheez.Ast.Statements
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default(D)) => visitor.VisitFunctionDecl(this, data);
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitFunctionDecl(this, data);
 
         public override AstStatement Clone()
         {
-            var copy = CopyValuesTo(new AstFunctionDecl(Name.Clone() as AstIdExpr,
-                null,
+            var copy = CopyValuesTo(new AstFunctionDecl(
+                Name.Clone() as AstIdExpr,
                 Parameters.Select(p => p.Clone()).ToList(),
                 ReturnTypeExpr?.Clone(),
-                Body?.Clone() as AstBlockExpr, ParameterLocation: ParameterLocation));
+                Body?.Clone() as AstBlockExpr, 
+                ParameterLocation: ParameterLocation));
             copy.ConstScope = new Scope($"fn$ {Name.Name}", copy.Scope);
             copy.SubScope = new Scope($"fn {Name.Name}", copy.ConstScope);
             return copy;
@@ -216,8 +214,6 @@ namespace Cheez.Ast.Statements
         public bool IsPolymorphic { get; set; }
         public bool IsPolyInstance { get; set; }
 
-        public bool IsConstant => true;
-
         public List<AstStructDecl> PolymorphicInstances { get; } = new List<AstStructDecl>();
 
         //public List<AstImplBlock> Implementations { get; } = new List<AstImplBlock>();
@@ -231,7 +227,7 @@ namespace Cheez.Ast.Statements
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitStructDecl(this, data);
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitStructDecl(this, data);
 
         public override AstStatement Clone() => CopyValuesTo(new AstStructDecl(Name.Clone() as AstIdExpr, Parameters?.Select(p => p.Clone()).ToList(), Members.Select(m => m.Clone()).ToList()));
     }
@@ -248,8 +244,6 @@ namespace Cheez.Ast.Statements
         public List<AstStructMember> Variables { get; }
 
         public Dictionary<CheezType, AstImplBlock> Implementations { get; } = new Dictionary<CheezType, AstImplBlock>();
-
-        public bool IsConstant => true;
 
         public bool IsPolymorphic { get; set; }
         public bool IsPolyInstance { get; set; }
@@ -272,7 +266,7 @@ namespace Cheez.Ast.Statements
             this.Variables = variables;
         }
 
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTraitDecl(this, data);
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitTraitDecl(this, data);
 
         public override AstStatement Clone() => CopyValuesTo(
             new AstTraitDeclaration(
@@ -299,7 +293,7 @@ namespace Cheez.Ast.Statements
 
     public abstract class ImplCondition
     {
-        public ILocation Location;
+        public ILocation Location { get; set; }
 
         public abstract ImplCondition Clone();
 
@@ -369,8 +363,8 @@ namespace Cheez.Ast.Statements
 
         public AstImplBlock Template { get; set; } = null;
         public List<AstImplBlock> PolyInstances { get; set; } = new List<AstImplBlock>();
-        public bool IsPolyInstance = false;
-        public bool IsPolymorphic = false;
+        public bool IsPolyInstance { get; set; } = false;
+        public bool IsPolymorphic { get; set; } = false;
 
         public AstImplBlock(
             List<AstParameter> parameters,
@@ -387,7 +381,7 @@ namespace Cheez.Ast.Statements
             this.Functions = functions;
         }
 
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitImplDecl(this, data);
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitImplDecl(this, data);
 
         public override AstStatement Clone()
             => CopyValuesTo(new AstImplBlock(
@@ -417,7 +411,7 @@ namespace Cheez.Ast.Statements
 
         public object Value { get; set; } = null;
 
-        public bool Constant = false;
+        public bool Constant { get; set; }
 
         public AstSingleVariableDecl(AstIdExpr name, AstExpression typeExpr, AstVariableDecl parent, bool isConst, ILocation Location) : base(name, Location: Location)
         {

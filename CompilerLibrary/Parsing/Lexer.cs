@@ -84,7 +84,6 @@ namespace Cheez.Parsing
         KwStruct,
         KwEnum,
         KwImpl,
-        KwLet,
         KwTypedef,
         KwIf,
         KwElse,
@@ -111,11 +110,11 @@ namespace Cheez.Parsing
 
     public class Token
     {
-        public TokenType type;
-        public TokenLocation location;
-        public object data;
+        public TokenType type { get; set; }
+        public TokenLocation location { get; set; }
+        public object data { get; set; }
 
-        public string suffix;
+        public string suffix { get; set; }
 
         public override string ToString()
         {
@@ -147,7 +146,7 @@ namespace Cheez.Parsing
             return new Lexer
             {
                 mErrorHandler = errorHandler,
-                mText = File.ReadAllText(fileName, Encoding.UTF8).Replace("\r\n", "\n"),
+                mText = File.ReadAllText(fileName, Encoding.UTF8).Replace("\r\n", "\n", StringComparison.InvariantCulture),
                 mLocation = new TokenLocation
                 {
                     file = fileName,
@@ -163,7 +162,7 @@ namespace Cheez.Parsing
             return new Lexer
             {
                 mErrorHandler = errorHandler,
-                mText = str.Replace("\r\n", "\n"),
+                mText = str.Replace("\r\n", "\n", StringComparison.InvariantCulture),
                 mLocation = new TokenLocation
                 {
                     file = fileName,
@@ -356,7 +355,7 @@ namespace Cheez.Parsing
             mLocation.index += len;
         }
 
-        private void CheckKeywords(ref Token token)
+        private static void CheckKeywords(ref Token token)
         {
             switch (token.data as string)
             {
@@ -367,7 +366,6 @@ namespace Cheez.Parsing
                 case "Fn": token.type = TokenType.KwFn; break;
                 case "struct": token.type = TokenType.KwStruct; break;
                 case "impl": token.type = TokenType.KwImpl; break;
-                case "let": token.type = TokenType.KwLet; break;
                 case "typedef": token.type = TokenType.KwTypedef; break;
                 case "if": token.type = TokenType.KwIf; break;
                 case "else": token.type = TokenType.KwElse; break;
@@ -626,32 +624,27 @@ namespace Cheez.Parsing
             token.data = new NumberData(dataType, dataStringValue, dataIntBase);
         }
 
-        private bool IsBinaryDigit(char c)
+        private static bool IsBinaryDigit(char c)
         {
             return c == '0' || c == '1';
         }
 
-        private bool IsHexDigit(char c)
+        private static bool IsHexDigit(char c)
         {
             return IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
         }
 
-        private bool IsDigit(char c)
+        private static bool IsDigit(char c)
         {
             return c >= '0' && c <= '9';
         }
 
-        private bool IsIdentBegin(char c)
+        private static bool IsIdentBegin(char c)
         {
             return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
         }
 
-        private bool IsAlpha(char c)
-        {
-            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-        }
-
-        private bool IsIdent(char c)
+        private static bool IsIdent(char c)
         {
             return IsIdentBegin(c) || (c >= '0' && c <= '9');
         }

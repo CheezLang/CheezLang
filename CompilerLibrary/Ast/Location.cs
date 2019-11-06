@@ -5,11 +5,11 @@ namespace Cheez.Ast
 {
     public class TokenLocation : ILocation
     {
-        public string file;
-        public int line;
-        public int index;
-        public int end;
-        public int lineStartIndex;
+        public string file { get; set; }
+        public int line { get; set; }
+        public int index { get; set; }
+        public int end { get; set; }
+        public int lineStartIndex { get; set; }
 
         public TokenLocation Beginning => this;
         public TokenLocation End => this;

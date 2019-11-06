@@ -751,7 +751,7 @@ namespace Cheez
                 Pass1Impl(v);
         }
 
-        public void InsertDeclarationsIntoScope(Scope scope, List<AstStatement> statements)
+        private static void InsertDeclarationsIntoScope(Scope scope, List<AstStatement> statements)
         {
             foreach (var decl in statements)
             {

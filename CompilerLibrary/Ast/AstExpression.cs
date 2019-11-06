@@ -31,7 +31,7 @@ namespace Cheez.Ast.Expressions
 
     public abstract class AstExpression : IVisitorAcceptor, ILocation, IAstNode
     {
-        protected int mFlags = 0;
+        protected int mFlags { get; set; } = 0;
 
         public ILocation Location { get; set; }
         public TokenLocation Beginning => Location?.Beginning;
@@ -81,7 +81,7 @@ namespace Cheez.Ast.Expressions
         public bool GetFlag(ExprFlags f) => (mFlags & (1 << (int)f)) != 0;
 
         [DebuggerStepThrough]
-        public abstract T Accept<T, D>(IVisitor<T, D> visitor, D data = default);
+        public abstract TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default);
 
         [DebuggerStepThrough]
         public abstract AstExpression Clone();
@@ -388,10 +388,10 @@ namespace Cheez.Ast.Expressions
         public override bool IsPolymorphic => Expr.IsPolymorphic;
         public AstExpression Expr { get; set; }
         public AstIdExpr Name { get; set; }
-        public int Index = -1;
+        public int Index { get; set; } = -1;
 
-        public bool IsDefaultArg = false;
-        public bool IsConstArg = false;
+        public bool IsDefaultArg { get; set; } = false;
+        public bool IsConstArg { get; set; } = false;
 
         public AstArgument(AstExpression expr, AstIdExpr name = null, ILocation Location = null)
             : base(Location)
@@ -413,7 +413,7 @@ namespace Cheez.Ast.Expressions
         public override bool IsPolymorphic => FunctionExpr.IsPolymorphic || Arguments.Any(a => a.IsPolymorphic);
 
         public AstFunctionDecl Declaration { get; internal set; }
-        public FunctionType FunctionType = null;
+        public FunctionType FunctionType { get; set; } = null;
 
         public bool UnifiedFunctionCall { get; set; }
 
@@ -551,7 +551,7 @@ namespace Cheez.Ast.Expressions
     {
         public AstExpression SubExpression { get; set; }
         public override bool IsPolymorphic => SubExpression.IsPolymorphic;
-        public bool Reference = false;
+        public bool Reference { get; set; } = false;
 
         [DebuggerStepThrough]
         public AstAddressOfExpr(AstExpression sub, ILocation Location = null) : base(Location)
@@ -599,8 +599,6 @@ namespace Cheez.Ast.Expressions
         public AstExpression SubExpression { get; set; }
         public AstExpression TypeExpr { get; set; }
         public override bool IsPolymorphic => SubExpression.IsPolymorphic || Type.IsPolyType;
-
-        public AstIdExpr Name => null;
 
         [DebuggerStepThrough]
         public AstCastExpr(AstExpression typeExpr, AstExpression sub, ILocation Location = null) : base(Location)
@@ -770,8 +768,6 @@ namespace Cheez.Ast.Expressions
 
         public bool FromCall { get; }
 
-        public AstIdExpr Name => null;
-
         [DebuggerStepThrough]
         public AstStructValueExpr(AstExpression type, List<AstStructMemberInitialization> inits, bool fromCall = false, ILocation Location = null) : base(Location)
         {
@@ -793,8 +789,6 @@ namespace Cheez.Ast.Expressions
         public override bool IsPolymorphic => false;
 
         public List<AstExpression> Values { get; set; }
-
-        public AstIdExpr Name => null;
 
         public AstArrayExpr(List<AstExpression> values, ILocation Location = null) : base(Location)
         {
@@ -845,7 +839,7 @@ namespace Cheez.Ast.Expressions
 
         public AstIdExpr Label { get; set; }
 
-        public override bool IsPolymorphic => throw new System.NotImplementedException();
+        public override bool IsPolymorphic => false;
 
         public AstContinueExpr(AstIdExpr label = null, ILocation Location = null) : base(Location: Location)
         {

@@ -117,7 +117,7 @@ namespace Cheez.Parsing
         }
 
         [DebuggerStepThrough]
-        public ErrorMessageResolver ErrMsgUnexpected(string expect, string where = null)
+        private static ErrorMessageResolver ErrMsgUnexpected(string expect, string where = null)
         {
             return t => $"Unexpected token {t} at {where}. Expected {expect}";
         }
@@ -377,8 +377,6 @@ namespace Cheez.Parsing
                     return ParseReturnStatement();
                 case TokenType.Kwfn:
                     return ParseFunctionDeclaration();
-                case TokenType.KwLet:
-                    return ParseVariableDeclaration(true, TokenType.ClosingBrace);
                 case TokenType.KwTypedef:
                     return ParseTypedefDeclaration();
                 case TokenType.KwWhile:
@@ -1116,56 +1114,6 @@ namespace Cheez.Parsing
             return new AstTypeAliasDecl(name, value, Location: new Location(beg, end));
         }
 
-        private AstVariableDecl ParseVariableDeclaration(bool allowCommaForTuple, params TokenType[] delimiters)
-        {
-            TokenLocation beg = null, end = null;
-            var directives = new List<AstDirective>();
-            AstExpression pattern = null;
-            AstExpression type = null;
-            AstExpression init = null;
-            bool isConst = false;
-
-            beg = Consume(TokenType.KwLet, ErrMsg("keyword 'let'", "at beginning of variable declaration")).location;
-
-            SkipNewlines();
-            while (CheckToken(TokenType.HashIdentifier))
-            {
-                directives.Add(ParseDirective());
-                SkipNewlines();
-            }
-
-            if (CheckToken(TokenType.KwConst))
-            {
-                isConst = true;
-                NextToken();
-                SkipNewlines();
-            }
-
-            pattern = ParseExpression(true);
-            end = pattern.End;
-
-            if (CheckToken(TokenType.Colon))
-            {
-                NextToken();
-                SkipNewlines();
-                type = ParseExpression(allowCommaForTuple);
-                end = type.End;
-            }
-
-            if (CheckToken(TokenType.Equal))
-            {
-                NextToken();
-                SkipNewlines();
-                init = ParseExpression(allowCommaForTuple, ErrMsg("expression", "after '=' in variable declaration"));
-                end = init.End;
-            }
-
-            //if (!Expect(TokenType.NewLine, ErrMsg("\\n", "after variable declaration")))
-            //    RecoverStatement();
-
-            return new AstVariableDecl(pattern, type, init, isConst, Directives: directives, Location: new Location(beg, end));
-        }
-
         private AstForStmt ParseForStatement()
         {
             AstIdExpr varName = null;
@@ -1241,18 +1189,10 @@ namespace Cheez.Parsing
             beg = Consume(TokenType.KwWhile, ErrMsg("keyword 'while'", "at beginning of while statement")).location;
             SkipNewlines();
 
-            if (CheckToken(TokenType.KwLet))
-            {
-                init = ParseVariableDeclaration(false, TokenType.Comma);
-                SkipNewlines();
-                Consume(TokenType.Comma, ErrMsg(",", "after variable declaration in while statement"));
-                SkipNewlines();
-            }
-
             condition = ParseExpression(false, ErrMsg("expression", "after keyword 'while'"));
 
             // new syntax for variable declaration
-            if (init == null && CheckToken(TokenType.Colon))
+            if (CheckToken(TokenType.Colon))
             {
                 init = ParseDeclaration(condition, false);
                 SkipNewlines();
@@ -1309,18 +1249,10 @@ namespace Cheez.Parsing
                 isConstIf = true;
             }
 
-            if (CheckToken(TokenType.KwLet))
-            {
-                pre = ParseVariableDeclaration(false, TokenType.Comma);
-                SkipNewlines();
-                Consume(TokenType.Comma, ErrMsg(",", "after variable declaration in if statement"));
-                SkipNewlines();
-            }
-
             condition = ParseExpression(false, ErrMsg("expression", "after keyword 'if'"));
 
             // new syntax for variable declaration
-            if (pre == null && CheckToken(TokenType.Colon))
+            if (CheckToken(TokenType.Colon))
             {
                 pre = ParseDeclaration(condition, false);
                 SkipNewlines();
@@ -1366,7 +1298,6 @@ namespace Cheez.Parsing
             var parameters = new List<AstParameter>();
             AstParameter returnValue = null;
             var directives = new List<AstDirective>();
-            var generics = new List<AstIdExpr>();
 
             beginning = ConsumeUntil(TokenType.Kwfn, ErrMsgUnexpected("keyword 'fn'", "beginning of function declaration")).location;
             SkipNewlines();
@@ -1403,7 +1334,7 @@ namespace Cheez.Parsing
                 end = body.End;
             }
 
-            return new AstFunctionDecl(name, generics, parameters, returnValue, body, directives, Location: new Location(beginning, end), ParameterLocation: new Location(pbeg, pend));
+            return new AstFunctionDecl(name, parameters, returnValue, body, directives, Location: new Location(beginning, end), ParameterLocation: new Location(pbeg, pend));
         }
 
         #region Expression Parsing
@@ -2041,6 +1972,95 @@ namespace Cheez.Parsing
             return new AstBreakExpr(name, new Location(token.location, name?.Location?.End ?? token.location));
         }
 
+        private AstExpression ParseStructTypeExpression()
+        {
+            TokenLocation beg = null, end = null;
+            var members = new List<AstStructMember>();
+            var directives = new List<AstDirective>();
+            List<AstParameter> parameters = null;
+
+            beg = Consume(TokenType.KwStruct, ErrMsg("keyword 'struct'", "at beginning of struct type")).location;
+
+            if (CheckToken(TokenType.OpenParen))
+                parameters = ParseParameterList(out var _, out var _);
+
+            while (CheckToken(TokenType.HashIdentifier))
+            {
+                var dir = ParseDirective();
+                if (dir != null)
+                    directives.Add(dir);
+            }
+
+            ConsumeUntil(TokenType.OpenBrace, ErrMsg("{", "at beginning of struct body"));
+
+            SkipNewlines();
+            while (true)
+            {
+                var next = PeekToken();
+                if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
+                    break;
+
+                TokenLocation memberBeg = null;
+
+                bool pub = false;
+                bool get = false;
+                if (next.type == TokenType.KwPub)
+                {
+                    memberBeg = next.location;
+                    NextToken();
+                    pub = true;
+                    if (CheckToken(TokenType.KwConst))
+                    {
+                        get = true;
+                        NextToken();
+                    }
+                }
+
+                var mName = ParseIdentifierExpr(ErrMsg("identifier", "in struct member"));
+                if (memberBeg == null)
+                    memberBeg = mName.Location.Beginning;
+
+                SkipNewlines();
+                Consume(TokenType.Colon, ErrMsg(":", "after struct member name"));
+                SkipNewlines();
+
+                var mType = ParseExpression(true);
+                AstExpression init = null;
+
+                next = PeekToken();
+                if (next.type == TokenType.Equal)
+                {
+                    NextToken();
+                    init = ParseExpression(true);
+                    next = PeekToken();
+                }
+
+                var memberEnd = init?.End ?? mType.End;
+                var mem = new AstStructMember(mName, mType, init, new Location(memberBeg, memberEnd));
+                mem.IsPublic = pub;
+                mem.IsReadOnly = get;
+                members.Add(mem);
+
+                if (next.type == TokenType.NewLine)
+                {
+                    SkipNewlines();
+                }
+                else if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
+                {
+                    break;
+                }
+                else
+                {
+                    NextToken();
+                    ReportError(next.location, $"Unexpected token {next} at end of struct member");
+                }
+            }
+
+            end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct declaration")).location;
+
+            return new AstEmptyExpr(new Location(beg, end));
+        }
+
         private AstExpression ParseAtomicExpression(bool allowCommaForTuple, ErrorMessageResolver errorMessage)
         {
             var token = PeekToken();
@@ -2180,6 +2200,11 @@ namespace Cheez.Parsing
 
                         var sub = ParseExpression(allowCommaForTuple);
                         return new AstCastExpr(type, sub, new Location(beg, sub.End));
+                    }
+
+                case TokenType.KwStruct:
+                    {
+                        return ParseStructTypeExpression();
                     }
 
                 default:
