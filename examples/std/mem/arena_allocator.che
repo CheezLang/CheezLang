@@ -67,11 +67,11 @@ impl ArenaAllocator {
     fn dump(ref Self, dump_buckets: bool = false) {
         printfln("ArenaAllocator ({} buckets)", buckets.length)
         for i : 0..buckets.length {
-            let bucket: ref Bucket = buckets[i]
+            bucket : ref Bucket = buckets[i]
 
             printfln("  Bucket {}: {}/{} bytes", (i, bucket.filled, bucket.memory.length))
             if dump_buckets {
-                let current: uint = 0
+                current : uint = 0
 
                 while current < bucket.filled {
                     len := <<cast(&uint)pointer_add(bucket.memory.data, cast(int)current)
@@ -99,9 +99,9 @@ impl Allocator for ArenaAllocator {
         }
 
         // find bucket with enough room for required size
-        let free_bucket : &Bucket = null
+        free_bucket : &Bucket = null
         for i : 0..buckets.length {
-            let bucket: ref Bucket = buckets[i]
+            bucket : ref Bucket = buckets[i]
             if bucket.can_store(required_size, alignment) {
                 free_bucket = &bucket
                 break
@@ -115,7 +115,7 @@ impl Allocator for ArenaAllocator {
                 new_bucket_size = bucket_size
             }
 
-            let new_mem: []u8 = cast(&u8) parent.allocate(new_bucket_size, @sizeof(u8), alignment)
+            new_mem : []u8 = cast(&u8) parent.allocate(new_bucket_size, @sizeof(u8), alignment)
             new_mem.length = cast new_bucket_size
             buckets.add(Bucket(memory = new_mem, filled = 0))
 

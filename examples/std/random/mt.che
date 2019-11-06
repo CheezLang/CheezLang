@@ -51,8 +51,8 @@ impl MTwister {
     }
 
     fn generate_numbers(ref Self) {
-        let i: u64 = 0
-        let y: u32 = 0
+        i : u64 = 0
+        y : u32 = 0
 
         while i < STATE_VECTOR_DIFF {
             unroll(y, i, i + STATE_VECTOR_M)

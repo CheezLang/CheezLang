@@ -82,7 +82,7 @@ fn Main() {
 
     {
         tmp := S(5)
-        let t: Test = tmp
+        t : Test = tmp
         t.foo(7)
         t.print()
         c_puts("")
@@ -90,7 +90,7 @@ fn Main() {
     
     {
         tmp := S(5)
-        let t: Test2 = tmp
+        t : Test2 = tmp
         t.bar()
         t.print()
         c_puts("")
@@ -98,7 +98,7 @@ fn Main() {
     
     {
         tmp := S2("hello")
-        let t: Test = tmp
+        t : Test = tmp
         t.foo(23)
         t.print()
         c_puts("")

@@ -5,16 +5,16 @@
 
 fn glewInit() -> GLenum #stdcall;
 
-let GLEW_OK                         : u32 = 0
-let GLEW_NO_ERROR                   : u32 = 0
-let GLEW_ERROR_NO_GL_VERSION        : u32 = 1  /* missing GL version */
-let GLEW_ERROR_GL_VERSION_10_ONLY   : u32 = 2  /* Need at least OpenGL 1.1 */
-let GLEW_ERROR_GLX_VERSION_11_ONLY  : u32 = 3  /* Need at least GLX 1.2 */
-let GLEW_ERROR_NO_GLX_DISPLAY       : u32 = 4  /* Need GLX display for GLX support */
+GLEW_OK : u32 = 0
+GLEW_NO_ERROR : u32 = 0
+GLEW_ERROR_NO_GL_VERSION : u32 = 1  /* missing GL version */
+GLEW_ERROR_GL_VERSION_10_ONLY : u32 = 2  /* Need at least OpenGL 1.1 */
+GLEW_ERROR_GLX_VERSION_11_ONLY : u32 = 3  /* Need at least GLX 1.2 */
+GLEW_ERROR_NO_GLX_DISPLAY : u32 = 4  /* Need GLX display for GLX support */
 
-let GLEW_VERSION        : u32 =  1
-let GLEW_VERSION_MAJOR  : u32 =  2
-let GLEW_VERSION_MINOR  : u32 =  3
-let GLEW_VERSION_MICRO  : u32 =  4
+GLEW_VERSION : u32 =  1
+GLEW_VERSION_MAJOR : u32 =  2
+GLEW_VERSION_MINOR : u32 =  3
+GLEW_VERSION_MICRO : u32 =  4
 
 fn glewGetString(name: GLenum) -> c_string #stdcall;

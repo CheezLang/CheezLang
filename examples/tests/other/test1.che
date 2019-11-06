@@ -74,10 +74,10 @@ typedef X2 = int
 
 S : Z2 : 10
 
-let a : [S]DWORD = b
-let b : [S]DWORD = c
-let c : [S]DWORD = default
-let d : S2[X1] = test(S)
+a : [S]DWORD = b
+b : [S]DWORD = c
+c : [S]DWORD = default
+d : S2[X1] = test(S)
 
 fn test(a: Z2 = get_val()) -> S2[X1] {
     return S2[X1]()
@@ -87,8 +87,8 @@ fn get_val() -> Z2 {
     return 0
 }
 
-let uiae : int = xvlc()
-let nrtd : int = uiae
+uiae : int = xvlc()
+nrtd : int = uiae
 hgfq : int : 1
 fn xvlc(x: int = hgfq) -> int {
     return x

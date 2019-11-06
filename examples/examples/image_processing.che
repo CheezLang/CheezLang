@@ -57,7 +57,7 @@ impl Frame {
             return 0
         }
 
-        let p = pixels[x + y * image_width]
+        p := pixels[x + y * image_width]
         return (p.x + p.y + p.z) * 0.3333333333
     }
 
@@ -135,10 +135,10 @@ impl Game for ImageProcessingGame {
     fn draw_frame(ref Self, slot_x: int, slot_y: int, frame: ref Frame) {
         for x : 0..image_width {
             for y : 0..image_height {
-                let col = frame.get_rgb(x, y)
+                col := frame.get_rgb(x, y)
 
-                let offset_x = (slot_x + 1) * border_width + slot_x * image_width
-                let offset_y = (slot_y + 1) * border_width + slot_y * image_height
+                offset_x := (slot_x + 1) * border_width + slot_x * image_width
+                offset_y := (slot_y + 1) * border_width + slot_y * image_height
 
                 pge.draw(x + offset_x, y + offset_y, Pixel.rgbad(col.x, col.y, col.z))
             }
@@ -146,16 +146,16 @@ impl Game for ImageProcessingGame {
     }
 
     fn capture_webcam(ref Self, targetFrame: ref Frame) {
-        let res = cvQueryFrame(capture)
+        res := cvQueryFrame(capture)
         if res != null {
-            let xScale = (cast(double)image_width) / (cast(double)res.width)
-            let yScale = (cast(double)image_height) / (cast(double)res.height)
+            xScale := (cast(double)image_width) / (cast(double)res.width)
+            yScale := (cast(double)image_height) / (cast(double)res.height)
             for x : 0..res.width {
                 for y : 0..res.height {
-                    let index = (x + y * res.width) * 3
-                    let col = (cast(double) res.imageData[index + 2], cast(double) res.imageData[index + 1], cast(double) res.imageData[index + 0]) / 255.0
-                    let targetX = cast(int) (cast(double)x) * xScale
-                    let targetY = cast(int) (cast(double)y) * yScale
+                    index := (x + y * res.width) * 3
+                    col := (cast(double) res.imageData[index + 2], cast(double) res.imageData[index + 1], cast(double) res.imageData[index + 0]) / 255.0
+                    targetX := cast(int) (cast(double)x) * xScale
+                    targetY := cast(int) (cast(double)y) * yScale
                     targetFrame.set_rgb(targetX, targetY, col)
                 }
             }
@@ -165,16 +165,16 @@ impl Game for ImageProcessingGame {
     fn move_detection(ref Self, source_frame: ref Frame, last_frame: ref Frame, target_frame: ref Frame) {
         for x : 0..image_width {
             for y : 0..image_height {
-                let last = last_frame.get(x, y)
-                let now = source_frame.get(x, y)
-                let diff = last - now
+                last := last_frame.get(x, y)
+                now := source_frame.get(x, y)
+                diff := last - now
 
-                let r = if diff > 0 then  diff else 0.0
-                let g = if diff < 0 then -diff else 0.0
-                let b = abs(diff)
+                r := if diff > 0 then  diff else 0.0
+                g := if diff < 0 then -diff else 0.0
+                b := abs(diff)
 
-                // let r = if diff > 0 {diff} else {0.0}
-                // let g = if diff < 0 {-diff} else {0.0}
+                // r := if diff > 0 {diff} else {0.0}
+                // g := if diff < 0 {-diff} else {0.0}
 
                 target_frame.set_rgb(x, y, (r, g, b))
             }
@@ -184,7 +184,7 @@ impl Game for ImageProcessingGame {
     fn temporal_low_pass_filter(ref Self, source_frame: ref Frame, target_frame: ref Frame, activity_frame: ref Frame) {
         for x : 0..image_width {
             for y : 0..image_height {
-                let dl = source_frame.get_rgb(x, y) - activity_frame.get_rgb(x, y)
+                dl := source_frame.get_rgb(x, y) - activity_frame.get_rgb(x, y)
                 dl *= 0.2
                 activity_frame.set_rgb(x, y, dl + activity_frame.get_rgb(x, y))
                 target_frame.set_rgb(x, y, absolute(source_frame.get_rgb(x, y) - activity_frame.get_rgb(x, y)))
@@ -193,12 +193,12 @@ impl Game for ImageProcessingGame {
     }
 
     fn dilation_erosion(ref Self, input: ref Frame, last: ref Frame, activity: ref Frame, output: ref Frame) {
-        let steps = 5.0
+        steps := 5.0
         // activity
         for x : 0..image_width {
             for y : 0..image_height {
-                let i = input.get(x, y)
-                let k = (cast(float) (cast(int)i * steps)) / steps
+                i := input.get(x, y)
+                k := (cast(float) (cast(int)i * steps)) / steps
                 activity.set(x, y, k)
             }
         }
@@ -226,7 +226,7 @@ impl Game for ImageProcessingGame {
             for x : 0..image_width {
                 for y : 0..image_height {
 
-                    let sum =   activity.get(x - 1, y) +
+                    sum :=   activity.get(x - 1, y) +
                                 activity.get(x + 1, y) +
                                 activity.get(x, y + 1) +
                                 activity.get(x, y - 1)
@@ -246,11 +246,11 @@ impl Game for ImageProcessingGame {
     }
 
     fn adaptive_threshold(input: ref Frame, output: ref Frame) {
-        let adaptive_bias = 1.0
+        adaptive_bias := 1.0
 
         for x : 0..image_width {
             for y : 0..image_height {
-                let region_sum = 0.0
+                region_sum := 0.0
                 for(inclusive=true) xx : (x - 2)..(x + 2) {
                     for(inclusive=true) yy : (y - 2)..(y + 2) {
                         region_sum += input.get(xx, yy)
@@ -265,9 +265,9 @@ impl Game for ImageProcessingGame {
     fn on_update(ref Self, dt: float) -> bool {
         pge.clear(Pixel.rgba(0, 0, 100))
 
-        let webcam: ref Frame = frames[0]
-        let target1: ref Frame = frames[1]
-        let target2: ref Frame = frames[2]
+        webcam : ref Frame = frames[0]
+        target1 : ref Frame = frames[1]
+        target2 : ref Frame = frames[2]
 
         capture_webcam(webcam)
 
@@ -294,8 +294,8 @@ impl Game for ImageProcessingGame {
 }
 
 fn Main() {
-    let ipg: Game = ref <<alloc(ImageProcessingGame)
-    let engine = PixelGameEngine.create(
+    ipg : Game = ref <<alloc(ImageProcessingGame)
+    engine := PixelGameEngine.create(
         ipg,
         num_images_x * image_width + (num_images_x + 1) * border_width,
         num_images_y * image_height + (num_images_y + 1) * border_width,

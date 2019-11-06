@@ -42,7 +42,7 @@ impl Printable for StackAllocator {
         }
         s += "]"
 
-        let free: u64 = capacity
+        free : u64 = capacity
         if lastAllocation := self.getLastAllocation(), lastAllocation != null {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
         }
@@ -52,7 +52,7 @@ impl Printable for StackAllocator {
 
 impl StackAllocator {
     fn create(size: u64, alloc: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        let a = StackAllocator(
+        a := StackAllocator(
             parent = alloc
             memory = null
             capacity = 0
@@ -80,7 +80,7 @@ impl StackAllocator {
     }
 
     fn print_diagnostics(ref Self) {
-        let s = String.empty()
+        s := String.empty()
         s += "( ["
         for i : 0..allocations.length {
             if i > 0 {
@@ -90,7 +90,7 @@ impl StackAllocator {
         }
         s += "]"
 
-        let free: u64 = capacity
+        free : u64 = capacity
 
         if lastAllocation := self.getLastAllocation(), lastAllocation != null {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
@@ -119,17 +119,17 @@ impl StackAllocator {
 impl Allocator for StackAllocator {
     fn allocate(ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
 
-        let nextAddress = {
-            let unaligned = pointer_add(memory, cast(i64) self.getNextAllocationOffset())
+        nextAddress := {
+            unaligned := pointer_add(memory, cast(i64) self.getNextAllocationOffset())
             next_aligned(unaligned, alignment)
         }
 
-        let newAllocation = StackAllocation(
+        newAllocation := StackAllocation(
             offset = (cast(u64) nextAddress) - (cast(u64) memory)
             size = count * elementSize
         )
 
-        let end = newAllocation.offset + newAllocation.size
+        end := newAllocation.offset + newAllocation.size
 
         if end > capacity {
             self.reserve(2 * end)
@@ -141,16 +141,16 @@ impl Allocator for StackAllocator {
     }
 
     fn reallocate(ref Self, mem: &any, count: u64, elementSize: u64, alignment: u64) -> &any {
-        let size = count * elementSize
+        size := count * elementSize
 
-        let lastAllocation = self.getLastAllocation()
+        lastAllocation := self.getLastAllocation()
         if lastAllocation == null {
             return null
         }
 
-        let lastAllocationAddress = pointer_add(memory, cast(i64) lastAllocation.offset)
+        lastAllocationAddress := pointer_add(memory, cast(i64) lastAllocation.offset)
         if mem == lastAllocationAddress {
-            let newEnd = lastAllocation.offset + size
+            newEnd := lastAllocation.offset + size
             if newEnd > capacity {
                 self.reserve(2 * newEnd)
             }
@@ -158,14 +158,14 @@ impl Allocator for StackAllocator {
             lastAllocation.size = size
             return mem
         } else {
-            let newMem = self.allocate(count, elementSize, 8)
+            newMem := self.allocate(count, elementSize, 8)
             c_memcpy(newMem, mem, cast(uint) size)
             return newMem
         }
     }
 
     fn free(ref Self, mem: &any) {
-        let lastAllocation = self.getLastAllocation()
+        lastAllocation := self.getLastAllocation()
         if lastAllocation == null {
             return
         }

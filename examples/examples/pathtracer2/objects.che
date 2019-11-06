@@ -183,7 +183,7 @@ impl BhvNode {
         compare_funcs := [box_compare_x, box_compare_y, box_compare_z]
         quick_sort(l, compare_funcs[int(global_random.random_real() * 3)])
 
-        let (left, right) = if l.length == 1 {
+        (left, right) := if l.length == 1 {
             (l[0], l[0])
         } else if l.length == 2 {
             (l[0], l[1])

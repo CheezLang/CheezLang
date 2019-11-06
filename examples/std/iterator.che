@@ -7,7 +7,7 @@ trait Iterator(T: type) {
 
 // impl(It: type, T: type) It if It : Iterator(T) {
 //     fn max(ref Self) -> T {
-//         let max: T
+//         max: T
 
 //         while true {
 //             match self.next() {
@@ -23,7 +23,7 @@ trait Iterator(T: type) {
 //     }
 
 //     fn sum(ref Self) -> T {
-//         let sum: T
+//         sum: T
 
 //         while true {
 //             match self.next() {

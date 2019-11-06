@@ -19,7 +19,7 @@ fn sdb_compare_strings(a: string, b: string) -> bool {
 
 impl Hashable for string {
     fn hash(ref Self) -> uint {
-        let h: u32 = 2166136261
+        h: u32 = 2166136261
 
         for i : 0..self.length {
             h += cast(u32)self[i]

@@ -44,7 +44,7 @@ impl(K: type, V: type) Table[K, V] {
     fn find_entry(ref Self, the_entries: []Entry[K, V], key: K) -> &Entry[K, V] {
 
         index := K.hash(key) % cast(uint) the_entries.length
-        let tombstone: &Entry[K, V] = null
+        tombstone : &Entry[K, V] = null
 
         while true {
             entry := &the_entries[index]

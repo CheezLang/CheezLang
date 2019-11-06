@@ -6,7 +6,7 @@ enum Platform {
     OSX
 }
 
-let __platform__: Platform = if const @is_os("Windows") {
+__platform__ : Platform = if const @is_os("Windows") {
     Platform.Windows
 } else if const @is_os("Linux") {
     Platform.Linux
@@ -103,11 +103,11 @@ fn for_extension_slice(arr: []$T, code: Code, reverse: bool = false, by_ref: boo
 // fn for_extension_array(arr: [$Size]$T, code: Code, reverse: bool = false, by_ref: bool = false) #for {
 //     while it_index := 0, it_index < arr.length, it_index += 1 {
 //         if const reverse {
-//             let it_index_rev = arr.length - it_index - 1
-//             let it = if const by_ref then ref arr[it_index_rev] else arr[it_index_rev]
+//             it_index_rev := arr.length - it_index - 1
+//             it := if const by_ref then ref arr[it_index_rev] else arr[it_index_rev]
 //             @insert(code, link=[it_index_rev], _break=break, _continue=continue)
 //         } else {
-//             let it = if const by_ref then ref arr[it_index] else arr[it_index]
+//             it := if const by_ref then ref arr[it_index] else arr[it_index]
 //             @insert(code, _break=break, _continue=continue)
 //         }
 //     }

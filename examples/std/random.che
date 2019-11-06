@@ -13,9 +13,9 @@ impl LinearCongruentialGenerator {
     }
 
     fn next(ref Self) -> u32 {
-        let M: u64 = cast(u64) u32.max
-        let A: u64 = 1664525
-        let B: u64 = 1013904223
+        M : u64 = cast(u64) u32.max
+        A : u64 = 1664525
+        B : u64 = 1013904223
         seed = (A * seed + B) % M
 
         return cast(u32) seed
@@ -38,7 +38,7 @@ impl PseudoRandomGen for LinearCongruentialGenerator {
     }
 }
 
-let lcg: LinearCongruentialGenerator = {
+lcg : LinearCongruentialGenerator = {
     a := LinearCongruentialGenerator.create(cast get_time_microseconds())
     for : 1000 { a.next() }
     a
@@ -298,7 +298,7 @@ fn print_discrete_histogram(dist: IDistribution[$T]){
         $_ -> false
     } {}
 
-    let cmp: fn(ref(int, int), ref(int, int)) -> int = |a, b| b[0] - a[0]
+    cmp : fn(ref(int, int), ref(int, int)) -> int = |a, b| b[0] - a[0]
     arr := map.iterator().to_array().sort(cmp)
 
     max := map.iterator().map(|t: (int, int)| t[1]).max()

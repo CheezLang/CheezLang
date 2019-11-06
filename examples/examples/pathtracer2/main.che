@@ -12,22 +12,22 @@
 report_progress: bool : false
 typedef real = float
 
-let use_bhv     : bool = true
-let num_threads : int = 10
-let grid_size   : int = 15
+use_bhv : bool = true
+num_threads : int = 10
+grid_size : int = 15
 
-let scale       : int = 1
-let width       : int = 192 * scale
-let height      : int = 108 * scale
-// let width       : int = 108 * scale
-// let height      : int = 108 * scale
-let samples     : int = 50
-let max_depth   : int = 15
+scale : int = 1
+width : int = 192 * scale
+height : int = 108 * scale
+// width : int = 108 * scale
+// height : int = 108 * scale
+samples : int = 50
+max_depth : int = 15
 
-let scenes: []fn(ref Camera) -> Hittable = [simple_light, cornell_box, basic_scene, random_scene, big_scene]
+scenes : []fn(ref Camera) -> Hittable = [simple_light, cornell_box, basic_scene, random_scene, big_scene]
 scene: int : 4
 
-let file_write_mutex: Mutex = Mutex.create()
+file_write_mutex : Mutex = Mutex.create()
 
 struct RenderContext {
     pub const id    : int
@@ -47,7 +47,7 @@ fn Main() {
     image := alloc_n(double, cast width * height * 3)
 
     cam_pos := vec3(20.0, 2.25, 5.0)
-    let lookat  = vec3(4.0, 1.0, 1.0)
+    lookat  := vec3(4.0, 1.0, 1.0)
     cam := Camera.create(
         cam_pos,
         lookat,
@@ -164,7 +164,7 @@ fn color(r: Ray, world: Hittable, random: ref Random, depth: int = 0) -> vec3 {
         }
 
         None -> {
-            // let t: real = 0.5 * (r.direction.y + 1)
+            // t : real = 0.5 * (r.direction.y + 1)
             // vec3(1, 1, 1) * (1 - t) + vec3(0.5, 0.7, 1.0) * t
             vec3(0.0, 0.0, 0.0)
             // vec3(1, 1, 1)
@@ -174,7 +174,7 @@ fn color(r: Ray, world: Hittable, random: ref Random, depth: int = 0) -> vec3 {
 
 fn random_scene(cam: ref Camera) -> Hittable {
     cam_pos := vec3(20.0, 2.25, 5.0)
-    let lookat  = vec3(4.0, 1.0, 1.0)
+    lookat  := vec3(4.0, 1.0, 1.0)
     cam = Camera.create(
         cam_pos,
         lookat,
@@ -271,8 +271,8 @@ fn random_scene(cam: ref Camera) -> Hittable {
         // vec3(-4, 0, 1), vec3(4, 1, 2), null
     ))
 
-    let col: real = 1.0
-    let den: real = 0.075
+    col : real = 1.0
+    den : real = 0.075
     list.add(ConstantMedium.create(box, den, ConstantTexture.create(vec3(col, col, col))))
 
     if use_bhv {
@@ -285,7 +285,7 @@ fn random_scene(cam: ref Camera) -> Hittable {
 
 fn basic_scene(cam: ref Camera) -> Hittable {
     cam_pos := vec3(20.0, 2.25, 5.0)
-    let lookat  = vec3(4.0, 1.0, 1.0)
+    lookat  := vec3(4.0, 1.0, 1.0)
     cam = Camera.create(
         cam_pos,
         lookat,
@@ -327,8 +327,8 @@ fn basic_scene(cam: ref Camera) -> Hittable {
         // vec3(-4, 0, 1), vec3(4, 1, 2), null
     ))
 
-    let col: real = 1.0
-    let den: real = 0.025
+    col : real = 1.0
+    den : real = 0.025
     list.add(ConstantMedium.create(box, den, ConstantTexture.create(vec3(col, col, col))))
 
     if use_bhv {

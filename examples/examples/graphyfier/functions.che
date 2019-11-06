@@ -1,4 +1,4 @@
-let functions: []fn(double) -> Option(Complex) = [ f1, f2, f3, f4, f5, f6, f7, f8 ]
+functions : []fn(double) -> Option(Complex) = [ f1, f2, f3, f4, f5, f6, f7, f8 ]
 
 fn C(r: double, i: double = 0.0) -> Complex {
     return Complex(r, i)

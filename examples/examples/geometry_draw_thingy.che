@@ -41,7 +41,7 @@ impl BaseShape {
 
     fn draw_nodes(ref Self, g: ref MyGame) {
         for i : 0..nodes.get_length() {
-            let (sx, sy) = g.world_to_screen(nodes[i].pos)
+            (sx, sy) := g.world_to_screen(nodes[i].pos)
             g.pge.draw_circle(sx, sy, 3, Pixel.rgba(255, 0, 0))
         }
     }
@@ -71,8 +71,8 @@ impl LineShape {
 
 impl Shape for LineShape {
     fn draw(ref Self, g: ref MyGame) {
-        let (sx, sy) = g.world_to_screen(base.nodes[0].pos)
-        let (ex, ey) = g.world_to_screen(base.nodes[1].pos)
+        (sx, sy) := g.world_to_screen(base.nodes[0].pos)
+        (ex, ey) := g.world_to_screen(base.nodes[1].pos)
         g.pge.draw_line(sx, sy, ex, ey, base.color)
 
         base.draw_nodes(g)
@@ -101,8 +101,8 @@ impl BoxShape {
 
 impl Shape for BoxShape {
     fn draw(ref Self, g: ref MyGame) {
-        let (sx, sy) = g.world_to_screen(base.nodes[0].pos)
-        let (ex, ey) = g.world_to_screen(base.nodes[1].pos)
+        (sx, sy) := g.world_to_screen(base.nodes[0].pos)
+        (ex, ey) := g.world_to_screen(base.nodes[1].pos)
         g.pge.draw_rect(sx, sy, ex - sx, ey - sy, base.color)
 
         base.draw_nodes(g)
@@ -131,8 +131,8 @@ impl CircleShape {
 
 impl Shape for CircleShape {
     fn draw(ref Self, g: ref MyGame) {
-        let (sx, sy) = g.world_to_screen(base.nodes[0].pos)
-        let (ex, ey) = g.world_to_screen(base.nodes[1].pos)
+        (sx, sy) := g.world_to_screen(base.nodes[0].pos)
+        (ex, ey) := g.world_to_screen(base.nodes[1].pos)
 
         dx := cast(float) ex - sx
         dy := cast(float) ey - sy
@@ -175,16 +175,16 @@ impl Shape for CurveShape {
         ac := base.color
         ac.a = 75
 
-        let (sx, sy) = g.world_to_screen(base.nodes[0].pos)
-        let (ex, ey) = g.world_to_screen(base.nodes[1].pos)
+        (sx, sy) := g.world_to_screen(base.nodes[0].pos)
+        (ex, ey) := g.world_to_screen(base.nodes[1].pos)
         g.pge.set_pixel_mode(PixelMode.Alpha)
         g.pge.draw_line(sx, sy, ex, ey, ac, 0xFF00FF00)
         g.pge.set_pixel_mode(PixelMode.Normal)
         
 
         if base.nodes.get_length() == 3 {
-            let (sx, sy) = g.world_to_screen(base.nodes[1].pos)
-            let (ex, ey) = g.world_to_screen(base.nodes[2].pos)
+            (sx, sy) := g.world_to_screen(base.nodes[1].pos)
+            (ex, ey) := g.world_to_screen(base.nodes[2].pos)
             g.pge.set_pixel_mode(PixelMode.Alpha)
             g.pge.draw_line(sx, sy, ex, ey, ac, 0xFF00FF00)
             g.pge.set_pixel_mode(PixelMode.Normal)
@@ -197,8 +197,8 @@ impl Shape for CurveShape {
                 np =    base.nodes[0].pos * (1 - t) * (1 - t) +
                         base.nodes[1].pos * 2.0f * (1 - t) * t +
                         base.nodes[2].pos * t * t
-                let (sx, sy) = g.world_to_screen(op)
-                let (ex, ey) = g.world_to_screen(np)
+                (sx, sy) := g.world_to_screen(op)
+                (ex, ey) := g.world_to_screen(np)
                 g.pge.draw_line(sx, sy, ex, ey, base.color)
                 op = np
             }
@@ -263,7 +263,7 @@ impl Game for MyGame {
         }
 
         // zoom
-        let vMouseBeforeZoom    : float2 = screen_to_world(cast vMouse.x, cast vMouse.y)
+        vMouseBeforeZoom : float2 = screen_to_world(cast vMouse.x, cast vMouse.y)
         if pge.get_mouse_wheel() > 0 {
             fScale *= 1.1f
         }
@@ -327,8 +327,8 @@ impl Game for MyGame {
         }
 
         // draw grid
-        let vWorldTopLeft       : float2 = screen_to_world(0, 0)
-        let vWorldBottomRight   : float2 = screen_to_world(pge.get_width(), pge.get_height())
+        vWorldTopLeft : float2 = screen_to_world(0, 0)
+        vWorldBottomRight : float2 = screen_to_world(pge.get_width(), pge.get_height())
 
         vWorldTopLeft.x = floorf(vWorldTopLeft.x)
         vWorldTopLeft.y = floorf(vWorldTopLeft.y)
@@ -337,15 +337,15 @@ impl Game for MyGame {
 
         while x := vWorldTopLeft.x, x < vWorldBottomRight.x, x += fGrid {
             while y := vWorldTopLeft.y, y < vWorldBottomRight.y, y += fGrid {
-                let (sx, sy) = world_to_screen(float2(x, y))
+                (sx, sy) := world_to_screen(float2(x, y))
                 pge.draw(sx, sy, Pixel.rgba(100, 100, 255))
             }
         }
 
         // draw axis
         {
-            let (sx, sy) = world_to_screen(float2(0, vWorldTopLeft.y))
-            let (ex, ey) = world_to_screen(float2(0, vWorldBottomRight.y))
+            (sx, sy) := world_to_screen(float2(0, vWorldTopLeft.y))
+            (ex, ey) := world_to_screen(float2(0, vWorldBottomRight.y))
             pge.draw_line(sx, sy, ex, ey, Pixel.rgba(200, 200, 200), 0xF0F0F0F0)
 
             (sx, sy) = world_to_screen(float2(vWorldTopLeft.x, 0))
@@ -355,7 +355,7 @@ impl Game for MyGame {
 
         // draw cursor
         {
-            let (sx, sy) = world_to_screen(vCursor)
+            (sx, sy) := world_to_screen(vCursor)
             pge.draw_circle(sx, sy, 3, Pixel.rgba(255, 255, 0))
         }
 

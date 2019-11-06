@@ -76,7 +76,7 @@ impl Material for Dielectric {
 
     fn scatter(ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
         dir_dot_n := vec3.dot(r.direction, hit.n)
-        let (outward_normal, ni_over_nt, cosine) = if dir_dot_n > 0 then
+        (outward_normal, ni_over_nt, cosine) := if dir_dot_n > 0 then
             (-hit.n, self.ior, self.ior * dir_dot_n)
         else
             (hit.n, 1.0 / self.ior, -dir_dot_n)

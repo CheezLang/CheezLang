@@ -163,7 +163,7 @@ impl PixelGameEngine {
         while active {
             // Run as fast as possible
             while active {
-                let msg: MSG = default
+                msg : MSG = default
                 while PeekMessageA(&msg, null, 0, 0, 0x0001) > 0 {
                     TranslateMessage(&msg)
                     DispatchMessageA(&msg)

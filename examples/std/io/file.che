@@ -18,7 +18,7 @@ fn load_filec(filename: c_string) -> Result[String, String] {
         return Err(String.format("failed to open file: 0x{:x}", lastError))
     }
 
-    let size: int = 0
+    size : int = 0
     if GetFileSizeEx(handle, &size) == 0 {
         lastError := GetLastError();
         return Err(String.format("failed to get file size: 0x{:x}", lastError))
@@ -26,7 +26,7 @@ fn load_filec(filename: c_string) -> Result[String, String] {
 
     content.resize(size)
     
-    let bytesRead: u32 = 0
+    bytesRead : u32 = 0
     if ReadFile(handle, content.get_raw(), cast(u32)size, &bytesRead, null) == 0 {
         lastError := GetLastError();
         return Err(String.format("failed to read content: 0x{:x}", lastError))
@@ -46,14 +46,14 @@ fn load_filecb(filename: c_string) -> Option[[]u8] {
         return None
     }
 
-    let size: int = 0
+    size : int = 0
     if GetFileSizeEx(handle, &size) == 0 {
         return None
     }
 
     content := alloc_n(u8, cast size)
     
-    let bytesRead: u32 = 0
+    bytesRead : u32 = 0
     if ReadFile(handle, cast content.data, cast(u32)size, &bytesRead, null) == 0 {
         free_n(content)
         return None
@@ -74,7 +74,7 @@ fn write_filecb(filename: c_string, data: []u8) -> bool {
         return false
     }
 
-    let bytesRead: u32 = 0
+    bytesRead : u32 = 0
     if WriteFile(handle, cast data.data, cast(u32)data.length, &bytesRead, null) == 0 {
         println("failed to write data")
         return false
@@ -102,7 +102,7 @@ fn write_file_string(filename: string, str: string) -> bool {
         return false
     }
 
-    let bytesRead: u32 = 0
+    bytesRead : u32 = 0
     if WriteFile(handle, cast str.data, cast(u32)str.length, &bytesRead, null) == 0 {
         println("failed to write data")
         return false

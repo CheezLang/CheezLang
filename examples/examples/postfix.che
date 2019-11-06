@@ -198,12 +198,12 @@ fn get_cmd_args() -> Array(String) {
 fn Main() {
     args := get_cmd_args()
 
-    let (start_index, calculate) = if streq(args[1], "-e") { (2, true) } else { (1, false) }
+    (start_index, calculate) := if streq(args[1], "-e") { (2, true) } else { (1, false) }
 
     for infix : args {
         if it_index < start_index then continue
         print(infix)
-        let (postfix, result) = infix_to_postfix(infix, calculate)
+        (postfix, result) := infix_to_postfix(infix, calculate)
         printf(" -> {}", postfix)
         if calculate {
             printfln(" = {}", result)

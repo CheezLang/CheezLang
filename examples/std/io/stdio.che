@@ -4,9 +4,9 @@ struct FILE {
 
 fn __acrt_iob_func(_: u32) -> &FILE;
 
-let stdin   : &FILE = __acrt_iob_func(1)
-let stdout  : &FILE = __acrt_iob_func(1)
-let stderr  : &FILE = __acrt_iob_func(1)
+stdin : &FILE = __acrt_iob_func(1)
+stdout : &FILE = __acrt_iob_func(1)
+stderr : &FILE = __acrt_iob_func(1)
 
 fn fflush(file: &FILE);
 

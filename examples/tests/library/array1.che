@@ -54,13 +54,13 @@ fn test(a: ref int) {
 }
 
 fn Main() {
-    let x = 1
+    x := 1
     c_printf("%lld`n", x)
     test(x)
     c_printf("%lld`n", x)
     c_printf("`n", x)
 
-    let a = Array[int].create()
+    a := Array[int].create()
 
     print_array(a)
 

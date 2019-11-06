@@ -65,7 +65,7 @@ impl SDF for Cube {
         dy := fabs(v.y) - radius
         dz := fabs(v.z) - radius
 
-        let d: double = 0
+        d : double = 0
 
         if dx > 0 and dy > 0 and dz > 0 { // corner
             r := Vec3(
@@ -250,7 +250,7 @@ struct LambertianShader {
 
 impl Shader for LambertianShader {
     fn shade(ref Self, ray: Ray, raymarcher: ref Raymarcher) -> Vec3 {
-        let (ld, lc) = raymarcher.sampleLightDirection()
+        (ld, lc) := raymarcher.sampleLightDirection()
         normal := raymarcher.normal(ray.origin)
 
         i := Vec3.dot(normal, ld)
@@ -265,7 +265,7 @@ impl Shader for LambertianShader {
             distance = raymarcher.sdf.distance(shadowRay.origin).distance
         }
 
-        let shadow: double = 1.0
+        shadow : double = 1.0
         if shadowRay.origin.mag() < raymarcher.backgroundDistance {
             shadow = 0.3
         }
@@ -339,7 +339,7 @@ impl Raymarcher {
     }
 
     fn normal(ref Self, p: Vec3) -> Vec3 {
-        let off: double = 0.001
+        off : double = 0.001
 
         n := Vec3(
             x = sdf.distance(Vec3(p.x + off, p.y, p.z)).distance - sdf.distance(Vec3(p.x - off, p.y, p.z)).distance
@@ -551,15 +551,15 @@ fn renderImage(film: ref Film)
     all := SDFAllocator.create()
 
     //
-    let sChecker1    = LambertianShader(Vec3(0.9, 0.8, 0.8))
-    let sChecker2    = LambertianShader(Vec3(0.2, 0.1, 0.1))
-    let sChecker  = CheckerBoardShader(1, sChecker1, sChecker2)
+    sChecker1    := LambertianShader(Vec3(0.9, 0.8, 0.8))
+    sChecker2    := LambertianShader(Vec3(0.2, 0.1, 0.1))
+    sChecker  := CheckerBoardShader(1, sChecker1, sChecker2)
 
-    let sWhite    = LambertianShader(Vec3(1, 1, 1))
-    let sBlack    = LambertianShader(Vec3(0, 0, 0))
-    let sRed    = LambertianShader(Vec3(1, 0, 0))
-    let sGreen  = LambertianShader(Vec3(1, 1, 0))
-    let sBlue   = LambertianShader(Vec3(0, 0, 1))
+    sWhite    := LambertianShader(Vec3(1, 1, 1))
+    sBlack    := LambertianShader(Vec3(0, 0, 0))
+    sRed    := LambertianShader(Vec3(1, 0, 0))
+    sGreen  := LambertianShader(Vec3(1, 1, 0))
+    sBlue   := LambertianShader(Vec3(0, 0, 1))
 
     //
     ground := all.planeY(-1.25, sWhite)
@@ -569,7 +569,7 @@ fn renderImage(film: ref Film)
 
     sdf := {
         sdf := {
-            let sdf: SDF
+            sdf: SDF
             {
                 sdf = c1
                 sdf = all.subtract(sdf, s1)
@@ -604,10 +604,10 @@ fn renderImage(film: ref Film)
 fn Main()
 {
     //
-    let scale: int = 2
-    let width: int = 192 * scale
-    let height: int = 128 * scale
-    let antiAliasingSteps: int = 1
+    scale : int = 2
+    width : int = 192 * scale
+    height : int = 128 * scale
+    antiAliasingSteps : int = 1
 
     imageArr := Array[Vec3].create()
 

@@ -38,10 +38,10 @@ fn number_to_english_10(n: int) -> string {
 fn number_to_english(n: int) -> String {
     if n >= 10000 then @panic("Can't convert numbers larger than 10'000")
 
-    let _1000   = n / 1000 % 10
-    let _100    = n / 100  % 10
-    let _10     = n / 10   % 10
-    let _1      = n / 1    % 10
+    _1000   := n / 1000 % 10
+    _100    := n / 100  % 10
+    _10     := n / 10   % 10
+    _1      := n / 1    % 10
 
     result := String.empty()
     if _1000 != 0 {

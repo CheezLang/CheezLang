@@ -129,7 +129,7 @@ impl(T: type) Heap[T] {
     }
 
     fn slice(ref Self) -> []T {
-        let slc: []T = data
+        slc : []T = data
         slc.length = length
         return slc
     }

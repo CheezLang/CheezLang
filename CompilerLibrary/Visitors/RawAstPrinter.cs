@@ -176,14 +176,23 @@ namespace Cheez.Visitors
         public override string VisitVariableDecl(AstVariableDecl variable, int indentLevel = 0)
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("let ");
-            if (variable.Constant)
-                sb.Append("const ");
             sb.Append(variable.Pattern.Accept(this));
+
             if (variable.TypeExpr != null)
-                sb.Append($": {variable.TypeExpr.Accept(this)}");
-            if (variable.Initializer != null)
-                sb.Append($" = {variable.Initializer.Accept(this)}");
+                sb.Append($" : {variable.TypeExpr.Accept(this)} ");
+            else
+                sb.Append(" :");
+
+            if (variable.Constant)
+            {
+                sb.Append(": ");
+                sb.Append(variable.Initializer.Accept(this));
+            }
+            else if (variable.Initializer != null)
+            {
+                sb.Append("= ");
+                sb.Append(variable.Initializer.Accept(this));
+            }
             return sb.ToString();
         }
 

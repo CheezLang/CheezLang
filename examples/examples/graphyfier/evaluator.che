@@ -62,7 +62,7 @@ fn evaluate(code: []OpCode, vars: ref Variables) -> Option[Complex] {
                 v := stack[sp - 1]
 
                 if u.r != 0 or u.i != 0 {
-                    let (r, p) = u.polar()
+                    (r, p) := u.polar()
 
                     ln_r := log(r)
                     res_r := exp(v.r * ln_r - v.i * p)
@@ -74,7 +74,7 @@ fn evaluate(code: []OpCode, vars: ref Variables) -> Option[Complex] {
                 sp -= 1
             }
             OpCode.Log -> {
-                let (r, p) = stack[sp - 1].polar()
+                (r, p) := stack[sp - 1].polar()
                 if r == 0 {
                     return None
                 }

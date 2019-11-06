@@ -19,7 +19,7 @@ fn Main() {
     println(max_line + 1)
 }
 
-let numbers: [](base: int, exp: int) = [
+numbers : [](base: int, exp: int) = [
     (519432, 525806)
     (632382, 518061)
     (78864, 613712)

@@ -2,7 +2,7 @@
 
 impl PixelGameEngine {
     fn olc_window_create(ref Self) -> HWND {
-        let wc: WNDCLASS = WNDCLASS()
+        wc : WNDCLASS = WNDCLASS()
         wc.hIcon = LoadIconA(null, IDI_APPLICATION)
         wc.hCursor = LoadCursorA(null, IDC_ARROW)
         wc.style = @bin_or(CS_HREDRAW, CS_VREDRAW, CS_OWNDC)
@@ -18,9 +18,9 @@ impl PixelGameEngine {
 
 
         // Define window furniture
-        let dwExStyle : DWORD = @bin_or(WS_EX_APPWINDOW, WS_EX_WINDOWEDGE)
-        let dwStyle   : DWORD = @bin_or(WS_OVERLAPPEDWINDOW, WS_VISIBLE)
-        let rWndRect  : RECT  = RECT(
+        dwExStyle : DWORD = @bin_or(WS_EX_APPWINDOW, WS_EX_WINDOWEDGE)
+        dwStyle : DWORD = @bin_or(WS_OVERLAPPEDWINDOW, WS_VISIBLE)
+        rWndRect : RECT = RECT(
             0, 0,
             cast screen_width * pixel_width,
             cast screen_height * pixel_height
@@ -29,8 +29,8 @@ impl PixelGameEngine {
         // // Keep client size as requested
         AdjustWindowRectEx(&rWndRect, dwStyle, 0, dwExStyle)
 
-        let width  : i32 = rWndRect.right - rWndRect.left
-        let height : i32 = rWndRect.bottom - rWndRect.top
+        width : i32 = rWndRect.right - rWndRect.left
+        height : i32 = rWndRect.bottom - rWndRect.top
 
         olc_hWnd = CreateWindowExA(dwExStyle, "OLC_PIXEL_GAME_ENGINE", "Window Title", dwStyle, 30, 30, width, height, null, null, GetModuleHandleA(null), cast &self)
 
@@ -146,7 +146,7 @@ impl PixelGameEngine {
     }
 }
 
-let pixel_game_engine_ptr: &PixelGameEngine = null
+pixel_game_engine_ptr : &PixelGameEngine = null
 fn olc_window_event(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT #stdcall {
     match msg {
         WM_DESTROY -> PostQuitMessage(0)

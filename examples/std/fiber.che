@@ -2,7 +2,7 @@
 #load("std:os/windows")
 
 // @fixme cyclic dependency, but should work
-// let thread_fiber: Fiber = Fiber(ConvertThreadToFiber(&thread_fiber), null)
+// thread_fiber : Fiber = Fiber(ConvertThreadToFiber(&thread_fiber), null)
 
 fn fiber_func(param: &any) #stdcall {
     f := cast(&Fiber)param

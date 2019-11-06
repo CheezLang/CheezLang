@@ -27,12 +27,12 @@
 #load("std:io/io")
 
 fn Main() {
-    let sa = StackAllocator.create(1024)
+    sa := StackAllocator.create(1024)
 
     sa.print_diagnostics()
 
     {
-        let a = alloc(int, sa)
+        a := alloc(int, sa)
         <<a = 0
         printf("{}`n", <<a)
         <<a = 5
@@ -42,7 +42,7 @@ fn Main() {
     println("")
 
     {
-        let a = alloc_raw(int, 5, sa)
+        a := alloc_raw(int, 5, sa)
         for i : 0..5 { a[i] = 0 }
         printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
 
@@ -53,7 +53,7 @@ fn Main() {
     println("")
 
     {
-        let a = alloc_n(int, 5, sa)
+        a := alloc_n(int, 5, sa)
         for i : 0..a.length { a[i] = 0 }
         printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
 
@@ -64,7 +64,7 @@ fn Main() {
     println("")
 
     {
-        let a = alloc_n(int, 3, sa)
+        a := alloc_n(int, 3, sa)
         for i : 0..a.length { a[i] = i + 1 }
         printfln("{}, {}, {}", (a[0], a[1], a[2]))
         sa.print_diagnostics()
@@ -77,7 +77,7 @@ fn Main() {
     println("")
 
     {
-        let a = alloc_raw(int, 3, sa)
+        a := alloc_raw(int, 3, sa)
         for i : 0..3 { a[i] = i + 1 }
         printfln("{}, {}, {}", (a[0], a[1], a[2]))
         sa.print_diagnostics()

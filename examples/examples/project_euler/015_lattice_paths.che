@@ -7,7 +7,7 @@
 width: int : 20
 height: int : 20
 
-let cache: [width][height]int = @dup(@dup(0))
+cache : [width][height]int = @dup(@dup(0))
 
 fn count_routes(w: int, h: int) -> int {
     if w > 0 and h > 0 and w <= width and h <= height and cache[w-1][h-1] > 0 {

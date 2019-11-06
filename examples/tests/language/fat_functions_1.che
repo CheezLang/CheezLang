@@ -51,19 +51,19 @@ fn Main() {
     println("")
 
     {
-        let f: Fn() = cast test1
+        f : Fn() = cast test1
         foo(f)
         println("")
     }
 
     {
-        let f: Fn() -> int = cast test2
+        f : Fn() -> int = cast test2
         baz(f)
         println("")
     }
 
     {
-        let f: Fn(int) -> int = cast test3
+        f : Fn(int) -> int = cast test3
         bar(f, 9)
         println("")
     }

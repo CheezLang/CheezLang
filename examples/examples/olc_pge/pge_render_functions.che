@@ -3,8 +3,8 @@
 
 impl PixelGameEngine {
     fn clear(ref Self, p: Pixel = Pixel()) {
-        let count = draw_target.width * draw_target.height
-        let pixels = draw_target.get_data()
+        count := draw_target.width * draw_target.height
+        pixels := draw_target.get_data()
         for i : 0..count {
             pixels[i] = p
         }
@@ -25,12 +25,12 @@ impl PixelGameEngine {
             PixelMode.Mask if p.a == 255 -> draw_target.set_pixel(x, y, p)
 
             PixelMode.Alpha -> {
-                let d = draw_target.get_pixel(x, y)
-                let a = (cast(float)p.a) / 255.0f * fBlendFactor
-                let c = 1.0f - a
-                let r = a * (cast(float)p.r) + c * (cast(float)d.r)
-                let g = a * (cast(float)p.g) + c * (cast(float)d.g)
-                let b = a * (cast(float)p.b) + c * (cast(float)d.b)
+                d := draw_target.get_pixel(x, y)
+                a := (cast(float)p.a) / 255.0f * fBlendFactor
+                c := 1.0f - a
+                r := a * (cast(float)p.r) + c * (cast(float)d.r)
+                g := a * (cast(float)p.g) + c * (cast(float)d.g)
+                b := a * (cast(float)p.b) + c * (cast(float)d.b)
                 draw_target.set_pixel(x, y, Pixel.rgba(cast r, cast g, cast b))
             }
         }
@@ -41,9 +41,9 @@ impl PixelGameEngine {
             return
         }
 
-        let x0 = 0
-        let y0 = r
-        let d = 3 - 2 * r
+        x0 := 0
+        y0 := r
+        d := 3 - 2 * r
         while y0 >= x0 {
             if @bin_and(mask, 0x01u32) != 0 { draw(x + x0, y - y0, p) }
             if @bin_and(mask, 0x02u32) != 0 { draw(x + y0, y - x0, p) }
@@ -82,8 +82,8 @@ impl PixelGameEngine {
             h *= -1
         }
 
-        let x2 = x + w
-        let y2 = y + h
+        x2 := x + w
+        y2 := y + h
 
         if x < 0 { x = 0 }
         if x >= screen_width { x = screen_width }
@@ -104,15 +104,15 @@ impl PixelGameEngine {
     }
 
     fn rol(pattern: ref u32) -> bool {
-        let p = pattern
+        p := pattern
         pattern = @bin_or(@bin_lsl(p, 1u32), @bin_lsr(p, 31u32))
         p = pattern
         return @bin_and(p, 1u32) != 0
     }
 
     fn draw_line(ref Self, x1: int, y1: int, x2: int, y2: int, p: Pixel, pattern: u32 = 0xFFFFFFFF) {
-        let dx = x2 - x1
-        let dy = y2 - y1
+        dx := x2 - x1
+        dy := y2 - y1
 
         // vertical line
         if dx == 0 {
@@ -163,12 +163,12 @@ impl PixelGameEngine {
             return
         }
         if x1 < 0 {
-            let slope = double(dy) / double(dx)
+            slope := double(dy) / double(dx)
             y1 += int(double(-x1) * slope)
             x1 = 0
         }
         if x2 > screen_width - 1 {
-            let slope = double(dy) / double(dx)
+            slope := double(dy) / double(dx)
             y2 += int(double(screen_width - 1 - x2) * slope)
             x2 = screen_width - 1
         }
@@ -182,12 +182,12 @@ impl PixelGameEngine {
             return
         }
         if y1 < 0 {
-            let slope = double(dx) / double(dy)
+            slope := double(dx) / double(dy)
             x1 += int(double(-y1) * slope)
             y1 = 0
         }
         if y2 > screen_height - 1 {
-            let slope = double(dx) / double(dy)
+            slope := double(dx) / double(dy)
             x2 += int(double(screen_height - 1 - y2) * slope)
             y2 = screen_height - 1
         }
@@ -197,12 +197,12 @@ impl PixelGameEngine {
         dx = x2 - x1
         dy = y2 - y1
 
-        let dx1 = abs(dx)
-        let dy1 = abs(dy)
-        let px = 2 * dy1 - dx1
-        let py = 2 * dx1 - dy1
+        dx1 := abs(dx)
+        dy1 := abs(dy)
+        px := 2 * dy1 - dx1
+        py := 2 * dx1 - dy1
         if dy1 <= dx1 {
-            let (x, y, xe) = if dx >= 0 {
+            (x, y, xe) := if dx >= 0 {
                 (x1, y1, x2)
             } else {
                 (x2, y2, x1)
@@ -229,7 +229,7 @@ impl PixelGameEngine {
                 }
             }
         } else {
-            let (x, y, ye) = if dy >= 0 {
+            (x, y, ye) := if dy >= 0 {
                 (x1, y1, y2)
             } else {
                 (x2, y2, y1)

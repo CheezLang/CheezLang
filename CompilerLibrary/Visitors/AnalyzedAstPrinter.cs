@@ -340,39 +340,23 @@ namespace Cheez.Visitors
 
         public override string VisitVariableDecl(AstVariableDecl variable, int indentLevel = 0)
         {
-            if (variable.IsNewSyntax)
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.Append(variable.Pattern.Accept(this));
-                sb.Append($" : {variable.Type}");
+            StringBuilder sb = new StringBuilder();
+            sb.Append(variable.Pattern.Accept(this));
+            sb.Append($" : {variable.Type}");
 
-                if (variable.Constant)
-                {
-                    sb.Append(" : ");
-                    sb.Append(variable.Initializer.Accept(this));
-                    sb.Append(" = ");
-                    sb.Append(variable.Initializer.Value);
-                }
-                else if (variable.Initializer != null)
-                {
-                    sb.Append(" = ");
-                    sb.Append(variable.Initializer.Accept(this));
-                }
-                return sb.ToString();
-            }
-            else
+            if (variable.Constant)
             {
-                StringBuilder sb = new StringBuilder();
-                sb.Append("let ");
-                if (variable.Constant)
-                    sb.Append("const ");
-                sb.Append(variable.Pattern.Accept(this));
-                sb.Append($": {variable.Type}");
-                if (variable.Initializer != null)
-                    sb.Append($" = {variable.Initializer.Accept(this)}");
-
-                return sb.ToString();
+                sb.Append(" : ");
+                sb.Append(variable.Initializer.Accept(this));
+                sb.Append(" = ");
+                sb.Append(variable.Initializer.Value);
             }
+            else if (variable.Initializer != null)
+            {
+                sb.Append(" = ");
+                sb.Append(variable.Initializer.Accept(this));
+            }
+            return sb.ToString();
         }
 
         public override string VisitIfExpr(AstIfExpr ifs, int indentLevel = 0)

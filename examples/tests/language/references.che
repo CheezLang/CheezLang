@@ -27,7 +27,7 @@ fn Main() {
 
 fn test4() {
     a := 5
-    let ra: ref int = a
+    ra : ref int = a
     b := ra
     
     c_printf("%lld`n", a)

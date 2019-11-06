@@ -15,7 +15,7 @@ enum Direction {
     Left
 }
 
-let action  : Direction = Direction.None
+action : Direction = Direction.None
 
 fn onKeyDown(window: &GLFWwindow, key: i32, scancode: i32, a: i32, mods: i32) {
     if a == GLFW_PRESS {
@@ -32,11 +32,11 @@ fn onResize(window: &GLFWwindow, w: i32, h: i32) {
     glViewport(0, 0, w, h)
 }
 
-let timePerStep : double = 0.05
-let gridSize    : double = 10.0
+timePerStep : double = 0.05
+gridSize : double = 10.0
 
-let width       : double = 640.0
-let height      : double = 480.0
+width : double = 640.0
+height : double = 480.0
 
 fn action_to_dir(dir: ref Direction, action: Direction) {
     dir = match (<<&dir, action) {
@@ -145,7 +145,7 @@ fn Main()
                 snake[i].pos = snake[i - 1].pos
             }
 
-            let head: ref Quad = snake[0]
+            head : ref Quad = snake[0]
 
             head.pos += match dir {
                 Direction.Up    -> Vec2i(0, 1)

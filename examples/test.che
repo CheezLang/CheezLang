@@ -1,11 +1,11 @@
 // #load("examples/trait_function_call_performance")
 // #load("examples/graphyfier/graphyfier")
 // #load("examples/pathtracer2/main")
-// #load("examples/geometry_draw_thingy")
+#load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
 // #load("examples/pathtracer")
-#load("examples/snake/snake")
+// #load("examples/snake/snake")
 
 // #load("tests/language/local_variables")
 // #load("tests/library/arena_allocator1")
