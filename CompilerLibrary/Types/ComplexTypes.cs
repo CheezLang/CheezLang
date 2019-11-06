@@ -183,7 +183,7 @@ namespace Cheez.Types.Complex
         public override bool IsDefaultConstructable => Declaration.Members.All(m => m.Decl.Initializer != null);
 
         //public AstStructDecl DeclarationTemplate => Declaration.Template ?? Declaration;
-        public AstStructTypeExpr DeclarationTemplate => Declaration.Template;
+        public AstStructTypeExpr DeclarationTemplate => Declaration.Template ?? Declaration;
 
         private int _size = -1;
         public override int Size

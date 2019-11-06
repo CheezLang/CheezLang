@@ -7,14 +7,14 @@
 // #load("examples/pathtracer")
 // #load("examples/snake/snake")
 
-// #load("tests/language/local_variables")
-// #load("tests/library/arena_allocator1")
+// #load("tests/language/allocator2")
+// #load("tests/library/all_include")
 // #load("tests/other/test1")
 // #load("examples/project_euler/005_smallest_multiple")
 
-//*
+/*
 #load("std:c")
-// #load("std:io/io")
+#load("std:io/io")
 
 Real2 :: Real1
 Real3 :: float
@@ -36,13 +36,15 @@ GVec :: struct (T: type) {
 
 impl Vec {
     fn print(ref Self) {
-        c_printf("Vec(%f, %f, %f, %f)`n", double(x), double(y), double(z), double(w))
+        printfln("Vec({}, {}, {}, {})", (double(x), double(y), double(z), double(w)))
+        // c_printf("Vec(%f, %f, %f, %f)`n", double(x), double(y), double(z), double(w))
     }
 }
 
 impl(T: type) GVec[T] {
     fn print(ref Self) {
-        c_printf("GVec(%f, %f)`n", double(x), double(y))
+        printfln("GVec({}, {})", (double(x), double(y)))
+        // c_printf("GVec(%f, %f)`n", double(x), double(y))
     }
 }
 

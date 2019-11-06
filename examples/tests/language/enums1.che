@@ -8,7 +8,7 @@ Err(`"argument is negative`")")
 #load("std:c")
 #load("std:math")
 
-struct PolyStruct(T: type) {
+PolyStruct :: struct(T: type) {
     x: T
 }
 

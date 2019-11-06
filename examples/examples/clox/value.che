@@ -5,6 +5,6 @@ enum Value {
     Obj     : &Object
 }
 
-struct Object {
+Object :: struct {
 
 }

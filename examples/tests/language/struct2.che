@@ -7,8 +7,8 @@
 
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
-struct Test {
-    pub x: int
+Test :: struct {
+    x: int
 }
 
 impl Test {

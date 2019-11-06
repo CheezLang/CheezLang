@@ -2,7 +2,7 @@
 
 #load("ast_stmt")
 
-struct Expr {
+Expr :: struct {
     location    : Location
     concrete    : ExprType
 }
@@ -12,10 +12,10 @@ enum ExprType {
     Number  : NumberExpr
 }
 
-struct NumberExpr {
+NumberExpr :: struct {
 
 }
 
-struct IdExpr {
+IdExpr :: struct {
 
 }

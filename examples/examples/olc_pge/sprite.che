@@ -1,11 +1,11 @@
 #load("std:mem/allocator")
 #load("std:math")
 
-struct Sprite {
-    pub const width: int
-    pub const height: int
-    pub const mode : SpriteMode = SpriteMode.Normal
-    pub const data: &Pixel = null
+Sprite :: struct {
+    width: int
+    height: int
+    mode : SpriteMode = SpriteMode.Normal
+    data: &Pixel = null
 }
 
 enum SpriteMode {

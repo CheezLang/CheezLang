@@ -16,7 +16,7 @@ trait Game {
     fn on_update(ref Self, dt: float) -> bool;
 }
 
-struct PixelGameEngine {
+PixelGameEngine :: struct {
     game                : Game
 
 
@@ -27,24 +27,24 @@ struct PixelGameEngine {
     olc_hWnd            : HWND      = null
 
     // other stuff
-    nMousePosX          : int
-    nMousePosY          : int
-    nMousePosXcache     : int
-    nMousePosYcache     : int
-    nMousePosXPrev      : int
-    nMousePosYPrev      : int
-    nMouseDeltaX        : int
-    nMouseDeltaY        : int
+    nMousePosX          : int       = 0
+    nMousePosY          : int       = 0
+    nMousePosXcache     : int       = 0
+    nMousePosYcache     : int       = 0
+    nMousePosXPrev      : int       = 0
+    nMousePosYPrev      : int       = 0
+    nMouseDeltaX        : int       = 0
+    nMouseDeltaY        : int       = 0
 
-    nMouseWheelDelta    : int
-    nMouseWheelDeltaCache : int
+    nMouseWheelDelta    : int       = 0
+    nMouseWheelDeltaCache : int     = 0
 
     window_width        : int       = -1
     window_height       : int       = -1
-    screen_width        : int
-    screen_height       : int
-    pixel_width         : int
-    pixel_height        : int
+    screen_width        : int       = 0
+    screen_height       : int       = 0
+    pixel_width         : int       = 0
+    pixel_height        : int       = 0
 
     pixel_x             : float     = 1.0f
     pixel_y             : float     = 1.0f
@@ -54,31 +54,31 @@ struct PixelGameEngine {
     nPixelMode          : PixelMode = PixelMode.Normal
     fBlendFactor        : float     = 1.0f
 
-    pub bHasMouseFocus  : bool      = false
-    pub bHasInputFocus  : bool      = false
+    bHasMouseFocus      : bool      = false
+    bHasInputFocus      : bool      = false
 
-    pub pKeyNewState    : [256]bool
-    pKeyOldState        : [256]bool
-    pKeyboardState      : [256]HWButton
+    pKeyNewState        : [256]bool = default
+    pKeyOldState        : [256]bool = default
+    pKeyboardState      : [256]HWButton = default
 
-    pub pMouseState     : [5]HWButton
-    pub pMouseOldState  : [5]bool
-    pub pMouseNewState  : [5]bool
+    pMouseState         : [5]HWButton = default
+    pMouseOldState      : [5]bool   = default
+    pMouseNewState      : [5]bool   = default
 
-    fFrameTimer         : float
-    nFrameCount         : int
+    fFrameTimer         : float     = 0
+    nFrameCount         : int       = 0
 
-    pub mapKeys         : Table[int, Key]
+    mapKeys             : Table[int, Key]
 
-    pub active          : bool
+    active              : bool      = false
 
     // gl stuff
-    glBuffer            : GLuint
-    glDeviceContext     : HDC   = null
-    glRenderContext     : HGLRC = null
+    glBuffer            : GLuint    = 0
+    glDeviceContext     : HDC       = null
+    glRenderContext     : HGLRC     = null
 
     // other
-    auto_title          : bool = true
+    auto_title          : bool      = true
     fps_string          : String
 }
 

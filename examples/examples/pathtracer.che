@@ -6,7 +6,7 @@
 #load("std:random")
 #load("std:random/mt")
 
-typedef Vec3 = Vector3[double]
+Vec3 :: Vector3[double]
 
 scale             : int : 2
 width             : int : 800 / scale
@@ -36,24 +36,24 @@ impl Printable for Vec3 {
     }
 }
 
-struct Ray {
-    pub pos: Vec3
-    pub dir: Vec3
+Ray :: struct {
+    pos: Vec3
+    dir: Vec3
 }
 
-struct HitInfo {
-    pub distance: double
-    pub pos     : Vec3
-    pub normal  : Vec3
-    pub material: &Material
+HitInfo :: struct {
+    distance: double
+    pos     : Vec3
+    normal  : Vec3
+    material: &Material
 }
 
-struct Material {
-    pub diffuse     : Vec3
-    pub emission    : Vec3
-    pub reflection  : Vec3
-    pub refraction  : Vec3
-    pub ior         : double
+Material :: struct {
+    diffuse     : Vec3      = default
+    emission    : Vec3      = default
+    reflection  : Vec3      = default
+    refraction  : Vec3      = default
+    ior         : double    = 1.0
 }
 
 impl Material {
@@ -70,7 +70,7 @@ trait Object {
     fn intersect(ref Self, ray: Ray) -> Option[HitInfo];
 }
 
-struct Sphere {
+Sphere :: struct {
     pos: Vec3
     rad: double
     mat: &Material
@@ -102,20 +102,20 @@ impl Object for Sphere {
     }
 }
 
-struct PathTracer {
-    pge             : &PixelGameEngine
+PathTracer :: struct {
+    pge             : &PixelGameEngine      = null
     allocator       : ArenaAllocator
     objects         : Array[Object]
-    cam_fov         : double
-    pub cam_pos     : Vec3
-    pub cam_dir     : Vec3
-    pub cam_right   : Vec3
-    pub cam_up      : Vec3
-    sample_t        : double
-    total_t         : double
-    pub buffer      : []Vec3
-    threads         : [thread_count]HANDLE
-    pub thread_datas: [thread_count](id: int, pt: &PathTracer, samples: int)
+    cam_fov         : double                = 0
+    cam_pos         : Vec3                  = default
+    cam_dir         : Vec3                  = default
+    cam_right       : Vec3                  = default
+    cam_up          : Vec3                  = default
+    sample_t        : double                = 0
+    total_t         : double                = 0
+    buffer          : []Vec3                = default
+    threads         : [thread_count]HANDLE  = default
+    thread_datas    : [thread_count](id: int, pt: &PathTracer, samples: int) = default
 }
 
 impl Drop for PathTracer {

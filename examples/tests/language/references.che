@@ -54,7 +54,7 @@ fn test4() {
     c_printf("`n")
 }
 
-struct Foo3 {
+Foo3 :: struct {
     a: int
     b: double
     c: string

@@ -21,8 +21,7 @@ WPARAM               :: UINT_PTR
 LPARAM               :: LONG_PTR
 LRESULT              :: LONG_PTR
 ATOM                 :: u16
-// WNDCLASS             :: WNDCLASSA
-typedef WNDCLASS     =  WNDCLASSA
+WNDCLASS             :: WNDCLASSA
 UCHAR                :: u8
 BYTE                 :: u8
 WORD                 :: u16
@@ -30,124 +29,124 @@ SIZE_T               :: u64
 THREAD_START_ROUTINE :: fn(&any) -> DWORD #stdcall
 WAITORTIMERCALLBACK  :: fn(&any, bool) #stdcall
 
-struct POINT {
-    pub x: i32
-    pub y: i32
+POINT :: struct {
+    x   : i32   = 0
+    y   : i32   = 0
 }
 
-struct MSG {
-    pub hwnd        : HWND
-    pub message     : UINT
-    pub wParam      : WPARAM
-    pub lParam      : LPARAM
-    pub time        : DWORD
-    pub pt          : POINT
-    pub lPrivate    : DWORD
+MSG :: struct {
+    hwnd        : HWND      = default
+    message     : UINT      = default
+    wParam      : WPARAM    = default
+    lParam      : LPARAM    = default
+    time        : DWORD     = default
+    pt          : POINT     = default
+    lPrivate    : DWORD     = default
 }
 
-struct RECT {
-    pub left    : i32
-    pub top     : i32
-    pub right   : i32
-    pub bottom  : i32
+RECT :: struct {
+    left    : i32
+    top     : i32
+    right   : i32
+    bottom  : i32
 }
 
-struct WNDCLASSA {
-    pub style           : UINT
-    pub lpfnWndProc     : fn(HWND, UINT, WPARAM, LPARAM) -> LRESULT
-    pub cbClsExtra      : i32
-    pub cbWndExtra      : i32
-    pub hInstance       : HINSTANCE
-    pub hIcon           : HICON
-    pub hCursor         : HCURSOR
-    pub hbrBackground   : HBRUSH
-    pub lpszMenuName    : c_string
-    pub lpszClassName   : c_string
+WNDCLASSA :: struct {
+    style           : UINT      = default
+    lpfnWndProc     : fn(HWND, UINT, WPARAM, LPARAM) -> LRESULT = default
+    cbClsExtra      : i32       = default
+    cbWndExtra      : i32       = default
+    hInstance       : HINSTANCE = default
+    hIcon           : HICON     = default
+    hCursor         : HCURSOR   = default
+    hbrBackground   : HBRUSH    = default
+    lpszMenuName    : c_string  = default
+    lpszClassName   : c_string  = default
 }
 
 
-struct MINMAXINFO {
-    pub ptReserved      : POINT
-    pub ptMaxSize       : POINT
-    pub ptMaxPosition   : POINT
-    pub ptMinTrackSize  : POINT
-    pub ptMaxTrackSize  : POINT
+MINMAXINFO :: struct {
+    ptReserved      : POINT
+    ptMaxSize       : POINT
+    ptMaxPosition   : POINT
+    ptMinTrackSize  : POINT
+    ptMaxTrackSize  : POINT
 }
 
-// struct COPYDATASTRUCT {
+// COPYDATASTRUCT :: struct {
 //     ULONG_PTR dwData;
 //     DWORD cbData;
 //     _Field_size_bytes_(cbData) PVOID lpData;
 // } 
 
-struct MDINEXTMENU {
-    pub hmenuIn     : HMENU
-    pub hmenuNext   : HMENU
-    pub hwndNext    : HWND
+MDINEXTMENU :: struct {
+    hmenuIn     : HMENU
+    hmenuNext   : HMENU
+    hwndNext    : HWND
 }
 
-struct GUID {
-    pub Data1   : DWORD
-    pub Data2   : WORD
-    pub Data3   : WORD
-    pub Data4   : [8]BYTE
+GUID :: struct {
+    Data1   : DWORD
+    Data2   : WORD
+    Data3   : WORD
+    Data4   : [8]BYTE
 }
 
 
-struct POWERBROADCAST_SETTING {
-    pub PowerSetting    : GUID
-    pub DataLength      : DWORD
-    pub Data            : [1]UCHAR
+POWERBROADCAST_SETTING :: struct {
+    PowerSetting    : GUID
+    DataLength      : DWORD
+    Data            : [1]UCHAR
 }
 
-struct CREATESTRUCTA {
-    pub lpCreateParams  : &any
-    pub hInstance       : HINSTANCE
-    pub hMenu           : HMENU
-    pub hwndParent      : HWND
-    pub cy              : i32
-    pub cx              : i32
-    pub y               : i32
-    pub x               : i32
-    pub style           : LONG
-    pub lpszName        : c_string
-    pub lpszClass       : c_string
-    pub dwExStyle       : DWORD
+CREATESTRUCTA :: struct {
+    lpCreateParams  : &any
+    hInstance       : HINSTANCE
+    hMenu           : HMENU
+    hwndParent      : HWND
+    cy              : i32
+    cx              : i32
+    y               : i32
+    x               : i32
+    style           : LONG
+    lpszName        : c_string
+    lpszClass       : c_string
+    dwExStyle       : DWORD
 }
 
-struct PIXELFORMATDESCRIPTOR {
-    pub nSize           : WORD
-    pub nVersion        : WORD
-    pub dwFlags         : DWORD
-    pub iPixelType      : BYTE
-    pub cColorBits      : BYTE
-    pub cRedBits        : BYTE
-    pub cRedShift       : BYTE
-    pub cGreenBits      : BYTE
-    pub cGreenShift     : BYTE
-    pub cBlueBits       : BYTE
-    pub cBlueShift      : BYTE
-    pub cAlphaBits      : BYTE
-    pub cAlphaShift     : BYTE
-    pub cAccumBits      : BYTE
-    pub cAccumRedBits   : BYTE
-    pub cAccumGreenBits : BYTE
-    pub cAccumBlueBits  : BYTE
-    pub cAccumAlphaBits : BYTE
-    pub cDepthBits      : BYTE
-    pub cStencilBits    : BYTE
-    pub cAuxBuffers     : BYTE
-    pub iLayerType      : BYTE
-    pub bReserved       : BYTE
-    pub dwLayerMask     : DWORD
-    pub dwVisibleMask   : DWORD
-    pub dwDamageMask    : DWORD
+PIXELFORMATDESCRIPTOR :: struct {
+    nSize           : WORD
+    nVersion        : WORD
+    dwFlags         : DWORD
+    iPixelType      : BYTE
+    cColorBits      : BYTE
+    cRedBits        : BYTE
+    cRedShift       : BYTE
+    cGreenBits      : BYTE
+    cGreenShift     : BYTE
+    cBlueBits       : BYTE
+    cBlueShift      : BYTE
+    cAlphaBits      : BYTE
+    cAlphaShift     : BYTE
+    cAccumBits      : BYTE
+    cAccumRedBits   : BYTE
+    cAccumGreenBits : BYTE
+    cAccumBlueBits  : BYTE
+    cAccumAlphaBits : BYTE
+    cDepthBits      : BYTE
+    cStencilBits    : BYTE
+    cAuxBuffers     : BYTE
+    iLayerType      : BYTE
+    bReserved       : BYTE
+    dwLayerMask     : DWORD
+    dwVisibleMask   : DWORD
+    dwDamageMask    : DWORD
 }
 
-struct SECURITY_ATTRIBUTES {
-  pub nLength               : DWORD
-  pub lpSecurityDescriptor  : &any
-  pub bInheritHandle        : BOOL
+SECURITY_ATTRIBUTES :: struct {
+  nLength               : DWORD
+  lpSecurityDescriptor  : &any
+  bInheritHandle        : BOOL
 }
 
 

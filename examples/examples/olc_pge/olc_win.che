@@ -2,7 +2,7 @@
 
 impl PixelGameEngine {
     fn olc_window_create(ref Self) -> HWND {
-        wc : WNDCLASS = WNDCLASS()
+        wc : WNDCLASS = default
         wc.hIcon = LoadIconA(null, IDI_APPLICATION)
         wc.hCursor = LoadCursorA(null, IDC_ARROW)
         wc.style = @bin_or(CS_HREDRAW, CS_VREDRAW, CS_OWNDC)

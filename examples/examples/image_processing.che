@@ -11,7 +11,7 @@ num_images_x  : int : 3
 num_images_y  : int : 1
 border_width  : int : 10
 
-typedef Color = (x: double, y: double, z: double)
+Color :: (x: double, y: double, z: double)
 
 impl Color {
     fn add(a: ref Color, b: ref Color) -> Color #operator("+") {
@@ -47,7 +47,7 @@ fn absolute(self: ref Color) -> Color {
     return (abs(self.x), abs(self.y), abs(self.z))
 }
 
-struct Frame {
+Frame :: struct {
     pixels: [image_width * image_height]Color
 }
 
@@ -90,7 +90,7 @@ impl Frame {
     }
 }
 
-struct ImageProcessingGame {
+ImageProcessingGame :: struct {
     pge     : &PixelGameEngine
     frames  : [num_images_x * num_images_y]Frame
     last_frame : Frame

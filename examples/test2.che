@@ -81,10 +81,10 @@ fn Main() {
 // +/
 
 //* comp time code gen stuff
-struct vec3 {
-    pub x: float
-    pub y: float
-    pub z: float
+vec3 :: struct {
+    x: float
+    y: float
+    z: float
 }
 
 fn def(T: type) -> T {

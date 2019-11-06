@@ -10,7 +10,7 @@ bar1(3) -> 3
 
 #load("std:io/io")
 
-struct S {
+S :: struct {
     a: int
 }
 

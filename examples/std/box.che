@@ -1,6 +1,6 @@
 #load("std:mem/allocator")
 
-struct Box(T: type) {
+Box :: struct(T: type) {
     _value: &T
 }
 

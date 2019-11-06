@@ -1,7 +1,7 @@
 #load("std:mem/allocator")
 #load("std:mem/memory")
 
-struct StdHeapAllocator {
+StdHeapAllocator :: struct {
     _unused: i32 = 0
 }
 

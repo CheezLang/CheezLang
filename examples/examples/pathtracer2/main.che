@@ -10,7 +10,7 @@
 #load("texture")
 
 report_progress: bool : false
-typedef real = float
+real :: float
 
 use_bhv : bool = true
 num_threads : int = 10
@@ -29,14 +29,14 @@ scene: int : 4
 
 file_write_mutex : Mutex = Mutex.create()
 
-struct RenderContext {
-    pub const id    : int
-    pub const min   : Vector2[int]
-    pub const max   : Vector2[int]
-    pub image       : []double
-    pub const world : Hittable
-    pub const cam   : ref Camera
-    pub const random: Random
+RenderContext :: struct {
+    id    : int
+    min   : Vector2[int]
+    max   : Vector2[int]
+    image       : []double
+    world : Hittable
+    cam   : ref Camera
+    random: Random
 }
 
 fn Main() {

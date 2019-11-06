@@ -8,8 +8,8 @@
 
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
-struct Test(T: type) {
-    pub x: T
+Test :: struct(T: type) {
+    x: T
 }
 
 impl(T: type) Test[T] {

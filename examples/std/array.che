@@ -3,10 +3,10 @@
 #load("std:mem/std_heap_allocator")
 #load("std:iterator")
 
-struct Array(T: type) {
+Array :: struct(T: type) {
     data            : &T
     capacity        : int
-    pub const length: int
+    length          : int
     allocator       : Allocator
 }
 
@@ -171,7 +171,7 @@ impl(T: type) Array[T] if @is_default_constructable(T) {
     }
 }
 
-struct ArrayIterator(T: type) {
+ArrayIterator :: struct(T: type) {
     array: ref Array[T]
     index: int
 }

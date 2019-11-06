@@ -12,9 +12,9 @@ fn align(add: uint, align: uint) -> uint {
 }
 
 
-struct Bucket {
-    pub memory  : []u8
-    pub filled  : uint
+Bucket :: struct {
+    memory  : []u8
+    filled  : uint
 }
 
 impl Bucket {
@@ -33,7 +33,7 @@ impl Bucket {
     }
 }
 
-struct ArenaAllocator {
+ArenaAllocator :: struct {
     parent      : Allocator
 
     bucket_size : uint

@@ -1,6 +1,6 @@
 #lib("./lib/opencv_highgui2413.lib")
 
-struct CvCapture {}
+CvCapture :: struct {}
 
 fn cvCreateCameraCapture(index: i32) -> &CvCapture;
 fn cvReleaseCapture(capture: &&CvCapture);
@@ -9,37 +9,37 @@ fn cvQueryFrame(capture: &CvCapture) -> &IplImage;
 fn cvSetCaptureProperty(capture: &CvCapture, property_id: i32, value: double) -> i32;
 fn cvGetCaptureProperty(capture: &CvCapture, property_id: i32) -> double;
 
-struct IplTileInfo {}
+IplTileInfo :: struct {}
 
-struct IplROI {
-    pub coi     : i32 /**< 0 - no COI (all channels are selected), 1 - 0th channel is selected ...*/
-    pub xOffset : i32
-    pub yOffset : i32
-    pub width   : i32
-    pub height  : i32
+IplROI :: struct {
+    coi     : i32 /**< 0 - no COI (all channels are selected), 1 - 0th channel is selected ...*/
+    xOffset : i32
+    yOffset : i32
+    width   : i32
+    height  : i32
 }
 
-struct IplImage {
-    pub nSize               : i32
-    pub ID                  : i32
-    pub nChannels           : i32
-    pub alphaChannel        : i32
-    pub depth               : i32
-    pub colorModel          : [4]char
-    pub channelSeq          : [4]char
-    pub dataOrder           : i32
-    pub origin              : i32
-    pub align               : i32
-    pub width               : i32
-    pub height              : i32
-    pub roi                 : &IplROI
-    pub maskROI             : &IplImage
-    pub imageId             : &any
-    pub tileInfo            : &IplTileInfo
-    pub imageSize           : i32
-    pub imageData           : &u8
-    pub widthStep           : i32
-    pub BorderMode          : [4]i32
-    pub BorderConst         : [4]i32
-    pub imageDataOrigin     : &char
+IplImage :: struct {
+    nSize               : i32
+    ID                  : i32
+    nChannels           : i32
+    alphaChannel        : i32
+    depth               : i32
+    colorModel          : [4]char
+    channelSeq          : [4]char
+    dataOrder           : i32
+    origin              : i32
+    align               : i32
+    width               : i32
+    height              : i32
+    roi                 : &IplROI
+    maskROI             : &IplImage
+    imageId             : &any
+    tileInfo            : &IplTileInfo
+    imageSize           : i32
+    imageData           : &u8
+    widthStep           : i32
+    BorderMode          : [4]i32
+    BorderConst         : [4]i32
+    imageDataOrigin     : &char
 }

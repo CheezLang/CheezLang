@@ -49,22 +49,22 @@ fn clamp(value: $T, min: T, max: T) -> T {
     return value
 }
 
-struct Vector2(T: type) #copy {
-    pub x: T
-    pub y: T
+Vector2 :: struct(T: type) #copy {
+    x : T = default
+    y : T = default
 }
 
-struct Vector3(T: type) #copy {
-    pub x: T
-    pub y: T
-    pub z: T
+Vector3 :: struct(T: type) #copy {
+    x : T = default
+    y : T = default
+    z : T = default
 }
 
-struct Vector4(T: type) #copy {
-    pub x: T
-    pub y: T
-    pub z: T
-    pub w: T
+Vector4 :: struct(T: type) #copy {
+    x : T = default
+    y : T = default
+    z : T = default
+    w : T = default
 }
 
 impl(T: type) Vector2[T] {
@@ -356,9 +356,9 @@ impl(T: type) Vector3[T] {
     }
 }
 
-struct Complex #copy {
-    pub r: double
-    pub i: double
+Complex :: struct #copy {
+    r : double = 0.0
+    i : double = 0.0
 }
 
 impl Complex {

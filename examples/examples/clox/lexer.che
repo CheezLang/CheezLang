@@ -24,13 +24,13 @@ enum TokenKind {
     Eof
 }
 
-struct Token {
-    pub kind    : TokenKind
-    pub text    : string
-    pub line    : int
+Token :: struct {
+    kind    : TokenKind
+    text    : string
+    line    : int
 }
 
-struct Lexer {
+Lexer :: struct {
     source  : string
     current : int
     line    : int

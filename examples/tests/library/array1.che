@@ -39,7 +39,7 @@ fn print_array(a: ref Array[int]) {
     c_printf("]`n`n")
 }
 
-struct Foo {
+Foo :: struct {
     x: int
 }
 

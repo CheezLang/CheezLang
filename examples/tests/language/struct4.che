@@ -8,9 +8,9 @@
 
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
-struct Vector(T: type) #copy {
-    pub x: T
-    pub y: T
+Vector :: struct(T: type) #copy {
+    x: T
+    y: T
 }
 
 impl(T: type) Vector[T] {
@@ -29,9 +29,9 @@ impl(T: type) Vector[T] {
     }
 }
 
-typedef Vec3 = Vector[double]
-typedef Vec3f = Vector[float]
-typedef Vec3i = Vector[int]
+Vec3  :: Vector[double]
+Vec3f :: Vector[float]
+Vec3i :: Vector[int]
 
 fn Main() {
     a := Vec3(1, 2)

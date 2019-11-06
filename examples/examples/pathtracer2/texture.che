@@ -6,8 +6,8 @@ trait Texture {
 }
 
 //
-struct ConstantTexture {
-    pub const color: vec3
+ConstantTexture :: struct {
+    color: vec3
 }
 
 impl ConstantTexture {
@@ -23,7 +23,7 @@ impl Texture for ConstantTexture {
 }
 
 //
-struct CheckerTexture {
+CheckerTexture :: struct {
     even: Texture
     odd : Texture
     size: real

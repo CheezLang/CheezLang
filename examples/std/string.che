@@ -7,13 +7,13 @@
 #load("std:alloca")
 #load("std:util")
 
-struct StringBase(CharType: type) {
+StringBase :: struct(CharType: type) {
     data: []CharType
-    pub const length: int
+    length: int
     allocator: Allocator
 }
 
-typedef String = StringBase[char]
+String :: StringBase[char]
 
 impl(CharType: type) Drop for StringBase[CharType] {
     fn drop(ref Self) {

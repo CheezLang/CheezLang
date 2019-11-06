@@ -3,7 +3,7 @@
 #load("std:hash")
 #load("std:iterator")
 
-struct Table(K: type, V: type) {
+Table :: struct(K: type, V: type) {
     max_load: double
     count: uint
     entries: []Entry[K, V]
@@ -11,11 +11,11 @@ struct Table(K: type, V: type) {
     comparer: fn (K, K) -> bool
 }
 
-struct Entry(K: type, V: type) {
-    pub key: K
-    pub value: V
-    pub filled: bool
-    pub is_tombstone: bool
+Entry :: struct(K: type, V: type) {
+    key: K
+    value: V
+    filled: bool
+    is_tombstone: bool
 }
 
 impl(K: type, V: type) Drop for Table[K, V] {
@@ -156,7 +156,7 @@ impl(K: type, V: type) Table[K, V] {
 }
 
 // iterator
-struct TableIterator(K: type, V: type) {
+TableIterator :: struct(K: type, V: type) {
     table: ref Table[K, V]
     index: int
 }

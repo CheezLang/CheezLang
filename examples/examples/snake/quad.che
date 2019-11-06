@@ -1,13 +1,13 @@
 #load("std:math")
 
-typedef Vec2i = Vector2[int]
-typedef Vec2 = Vector2[double]
-typedef Vec3 = Vector3[double]
+Vec2i :: Vector2[int]
+Vec2 :: Vector2[double]
+Vec3 :: Vector3[double]
 
-struct Quad {
-    pub pos: Vec2i
-    pub size: Vec2
-    pub col: Vec3
+Quad :: struct {
+    pos: Vec2i
+    size: Vec2
+    col: Vec3
 }
 
 impl Quad {

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Cheez.Ast.Expressions;
 
 namespace Cheez.Ast
@@ -18,6 +19,11 @@ namespace Cheez.Ast
             this.Location = Location;
             this.Name = name;
             this.Arguments = args;
+        }
+
+        public AstDirective Clone()
+        {
+            return new AstDirective(Name.Clone() as AstIdExpr, Arguments.Select(a => a.Clone()).ToList(), Location);
         }
     }
 }

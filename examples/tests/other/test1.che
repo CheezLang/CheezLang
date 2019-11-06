@@ -1,9 +1,9 @@
 #load("std:preload")
 
-struct S1 {
+S1 :: struct {
     t: DWORD
 }
-struct S2(T: TYPE) {
+S2 :: struct(T: TYPE) {
     t: T
     next: &S2[T]
 }
@@ -50,27 +50,27 @@ impl T2[string] for int {
 A, B : TUPLE : default
 C, D : TD1, DWORD : default
 
-typedef TYPE = type
-typedef TUPLE = (int, string)
-typedef DWORD = int
-typedef TD1 = S1
-typedef TD2 = &S1
-typedef TD3 = []S1
-typedef TD4 = ref S1
-typedef TD5 = fn (S1) -> E1
-typedef TD6 = S2[DWORD]
-typedef TD7 = [10]S1
-typedef TD8 = (S1, E1)
-typedef TD9 = E2[DWORD]
-typedef TD10 = T2[DWORD]
+TYPE :: type
+TUPLE :: (int, string)
+DWORD :: int
+TD1 :: S1
+TD2 :: &S1
+TD3 :: []S1
+TD4 :: ref S1
+TD5 :: fn (S1) -> E1
+TD6 :: S2[DWORD]
+TD7 :: [10]S1
+TD8 :: (S1, E1)
+TD9 :: E2[DWORD]
+TD10 :: T2[DWORD]
 
-typedef X1 = int
-typedef Y1 = X1
-typedef Z1 = Y1
+X1 :: int
+Y1 :: X1
+Z1 :: Y1
 
-typedef Z2 = Y2
-typedef Y2 = X2
-typedef X2 = int
+Z2 :: Y2
+Y2 :: X2
+X2 :: int
 
 S : Z2 : 10
 

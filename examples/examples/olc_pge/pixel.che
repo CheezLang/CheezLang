@@ -1,10 +1,10 @@
 #load("std:printable")
 
-struct Pixel #copy {
-    pub r: u8
-    pub g: u8
-    pub b: u8
-    pub a: u8 = 255
+Pixel :: struct #copy {
+    r: u8 = 0
+    g: u8 = 0
+    b: u8 = 0
+    a: u8 = 255
 }
 
 impl Pixel {

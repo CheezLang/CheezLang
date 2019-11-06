@@ -13,9 +13,9 @@
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
 
-struct Test #copy {
-    pub a: int
-    pub b: double
+Test :: struct #copy {
+    a: int
+    b: double
 }
 
 impl Test {

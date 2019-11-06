@@ -5,7 +5,7 @@
 #load("std:random")
 #load("bmp:bmp")
 
-typedef Vec3 = Vector3[double]
+Vec3 :: Vector3[double]
 
 ///////////////////////////////////////////////////////////
 fn xor(a: bool, b: bool) -> bool {
@@ -18,12 +18,12 @@ fn mod(a: $T, b: T) -> T {
 
 ///////////////////////////////////////////////////////////
 
-struct Ray {
-    pub origin: Vec3
-    pub direction: Vec3
+Ray :: struct {
+    origin: Vec3
+    direction: Vec3
 }
 
-typedef DistanceShaderPair = (distance: double, shader: Shader)
+DistanceShaderPair :: (distance: double, shader: Shader)
 
 ////////////////////////////////// SDF //////////////////////////////////////////////
 
@@ -32,9 +32,9 @@ trait SDF {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair;
 }
 
-struct Sphere {
-    pub radius: double
-    pub shader: Shader
+Sphere :: struct {
+    radius: double
+    shader: Shader
 }
 
 impl SDF for Sphere {
@@ -43,9 +43,9 @@ impl SDF for Sphere {
     }
 }
 
-struct PlaneY {
-    pub location: double
-    pub shader: Shader
+PlaneY :: struct {
+    location: double
+    shader: Shader
 }
 
 impl SDF for PlaneY {
@@ -54,9 +54,9 @@ impl SDF for PlaneY {
     }
 }
 
-struct Cube {
-    pub radius: double
-    pub shader: Shader
+Cube :: struct {
+    radius: double
+    shader: Shader
 }
 
 impl SDF for Cube {
@@ -103,9 +103,9 @@ impl SDF for Cube {
 
 ///////////////////// transformations //////////////////////////
 
-struct TranslatedSDF {
-    pub sdf: SDF
-    pub translation: Vec3
+TranslatedSDF :: struct {
+    sdf: SDF
+    translation: Vec3
 }
 
 impl SDF for TranslatedSDF {
@@ -114,9 +114,9 @@ impl SDF for TranslatedSDF {
     }
 }
 
-struct ScaledSDF {
-    pub sdf: SDF
-    pub scale: Vec3
+ScaledSDF :: struct {
+    sdf: SDF
+    scale: Vec3
 }
 
 impl SDF for ScaledSDF {
@@ -125,19 +125,19 @@ impl SDF for ScaledSDF {
     }
 }
 
-struct RotatedXSDF {
-    pub sdf: SDF
-    pub angle: double
+RotatedXSDF :: struct {
+    sdf: SDF
+    angle: double
 }
 
-struct RotatedYSDF {
-    pub sdf: SDF
-    pub angle: double
+RotatedYSDF :: struct {
+    sdf: SDF
+    angle: double
 }
 
-struct RotatedZSDF {
-    pub sdf: SDF
-    pub angle: double
+RotatedZSDF :: struct {
+    sdf: SDF
+    angle: double
 }
 
 impl SDF for RotatedXSDF {
@@ -174,9 +174,9 @@ impl SDF for RotatedZSDF {
 }
 
 ////////////////////// combinations ///////////////////////
-struct UnionSDF {
-    pub sdf1: SDF
-    pub sdf2: SDF
+UnionSDF :: struct {
+    sdf1: SDF
+    sdf2: SDF
 }
 
 impl SDF for UnionSDF {
@@ -191,9 +191,9 @@ impl SDF for UnionSDF {
     }
 }
 
-struct IntersectionSDF {
-    pub sdf1: SDF
-    pub sdf2: SDF
+IntersectionSDF :: struct {
+    sdf1: SDF
+    sdf2: SDF
 }
 
 impl SDF for IntersectionSDF {
@@ -208,9 +208,9 @@ impl SDF for IntersectionSDF {
     }
 }
 
-struct SubtractionSDF {
-    pub sdf1: SDF
-    pub sdf2: SDF
+SubtractionSDF :: struct {
+    sdf1: SDF
+    sdf2: SDF
 }
 
 impl SDF for SubtractionSDF {
@@ -233,7 +233,7 @@ trait Shader {
     fn shade(ref Self, ray: Ray, raymarcher: ref Raymarcher) -> Vec3;
 }
 
-struct ConstantColorShader {
+ConstantColorShader :: struct {
     color: Vec3
 }
 
@@ -244,7 +244,7 @@ impl Shader for ConstantColorShader {
 }
 
 //////
-struct LambertianShader {
+LambertianShader :: struct {
     color: Vec3
 }
 
@@ -275,7 +275,7 @@ impl Shader for LambertianShader {
     }
 }
 
-struct CheckerBoardShader {
+CheckerBoardShader :: struct {
     size: double
     shader1: Shader
     shader2: Shader
@@ -297,7 +297,7 @@ impl Shader for CheckerBoardShader {
 }
 
 ///////////////////////////// scene //////////////////////////////
-struct Background {
+Background :: struct {
 
 }
 
@@ -309,10 +309,10 @@ impl Background {
     }
 }
 
-struct Raymarcher {
-    pub sdf: SDF
-    pub background: Background
-    pub backgroundDistance: double = 1000
+Raymarcher :: struct {
+    sdf: SDF
+    background: Background
+    backgroundDistance: double = 1000
 }
 
 impl Raymarcher {
@@ -354,7 +354,7 @@ impl Raymarcher {
 /////////////////////////////////////////////////
 
 
-struct PerspectiveCamera {
+PerspectiveCamera :: struct {
     focalLength: double
     sensorWidth: double
     sensorHeight: double
@@ -374,12 +374,12 @@ impl PerspectiveCamera {
     }
 }
 
-struct Film {
-    pub width: int
-    pub height: int
-    pub pixels: []Vec3
+Film :: struct {
+    width: int
+    height: int
+    pixels: []Vec3
 
-    pub antiAliasingSteps: int
+    antiAliasingSteps: int
 }
 
 impl Film {
@@ -432,7 +432,7 @@ impl Film {
 
 ///////////////////////////////////////////////////////////////////////////
 
-struct SDFAllocator {
+SDFAllocator :: struct {
     allocator: StackAllocator
 }
 

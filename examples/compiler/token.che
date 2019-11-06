@@ -1,21 +1,21 @@
 #load("std:io/io")
 #load("std:preload")
 
-typedef Location = (beg: TokenLocation, end: TokenLocation)
+Location :: (beg: TokenLocation, end: TokenLocation)
 
-struct TokenLocation #copy {
-    pub file            : string
-    pub line            : int
-    pub index           : int
-    pub end             : int
-    pub line_start      : int
+TokenLocation :: struct #copy {
+    file            : string
+    line            : int
+    index           : int
+    end             : int
+    line_start      : int
 }
 
-struct Token #copy {
-    pub ttype   : TokenType
-    pub location: TokenLocation
-    pub suffix  : Option[string]
-    pub data    : TokenData
+Token :: struct #copy {
+    ttype   : TokenType
+    location: TokenLocation
+    suffix  : Option[string]
+    data    : TokenData
 }
 
 enum TokenData {

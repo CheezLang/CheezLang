@@ -16,7 +16,7 @@ fn Main() {
     string_db := StringDatabase.create()
     compiler := CheezCompiler.create()
 
-    match Lexer.from_file("test.che", string_db) {
+    match Lexer.from_file("../examples/test.che", string_db) {
         Ok($l) -> {
             parser := Parser.create(compiler, l)
             start := get_time_milliseconds()

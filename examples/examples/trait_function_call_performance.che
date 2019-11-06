@@ -5,8 +5,8 @@ trait TestTrait {
     fn traitFunction(ref Self, n: u64);
 }
 
-struct Test #copy {
-    pub counter: u64
+Test :: struct #copy {
+    counter: u64 = default
 
     // not used, just so that passing by value will be slow
     // comment out to see performance of pass by value with small structs

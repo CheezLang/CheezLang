@@ -300,13 +300,15 @@ namespace Cheez.Ast.Statements
         public List<AstStructTypeExpr> PolymorphicInstances { get; } = new List<AstStructTypeExpr>();
 
         public List<TraitType> Traits { get; } = new List<TraitType>();
+        public List<AstDirective> Directives { get; protected set; }
 
         public AstStructTypeExpr(List<AstParameter> param, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
             : base(Location)
         {
             this.Parameters = param ?? new List<AstParameter>();
             this.Declarations = declarations;
-            _isPolymorphic = Parameters.Count > 0;
+            this._isPolymorphic = Parameters.Count > 0;
+            this.Directives = Directives;
         }
 
         [DebuggerStepThrough]
@@ -315,7 +317,21 @@ namespace Cheez.Ast.Statements
         public override AstExpression Clone() => CopyValuesTo(
             new AstStructTypeExpr(
                 Parameters.Select(p => p.Clone()).ToList(),
-                Declarations.Select(m => m.Clone() as AstDecl).ToList()));
+                Declarations.Select(m => m.Clone() as AstDecl).ToList(),
+                Directives.Select(d => d.Clone()).ToList()));
+
+        public bool HasDirective(string name) => Directives?.Find(d => d.Name.Name == name) != null;
+
+        public AstDirective GetDirective(string name)
+        {
+            return Directives?.FirstOrDefault(d => d.Name.Name == name);
+        }
+
+        public bool TryGetDirective(string name, out AstDirective dir)
+        {
+            dir = Directives?.FirstOrDefault(d => d.Name.Name == name);
+            return dir != null;
+        }
     }
 
     #endregion

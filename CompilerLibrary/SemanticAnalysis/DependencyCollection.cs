@@ -81,6 +81,15 @@ namespace Cheez
                     foreach (var p in expr.Arguments)
                         CollectTypeDependencies(decl, p.Expr, type);
                     break;
+
+                case AstArrayAccessExpr expr:
+                    {
+                        CollectTypeDependencies(decl, expr.SubExpression, type);
+
+                        foreach (var p in expr.Arguments)
+                            CollectTypeDependencies(decl, p, type);
+                        break;
+                    }
             }
         }
     }

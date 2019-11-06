@@ -1,6 +1,6 @@
 #load("std:array")
 
-struct Stack(T: type) {
+Stack :: struct(T: type) {
     array: Array[T]
 }
 

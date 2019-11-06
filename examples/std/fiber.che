@@ -12,11 +12,11 @@ fn fiber_func(param: &any) #stdcall {
     }
 }
 
-struct Fiber {
+Fiber :: struct {
     ptr             : &any
     parent          : &Fiber = null
-    pub const func  : fn()
-    pub const user_data : &any
+    func  : fn()
+    user_data : &any
 }
 
 impl Fiber {

@@ -3,13 +3,13 @@
 #load("misc")
 #load("material")
 
-struct HitRecord {
-    pub t: real
-    pub p: vec3
-    pub n: vec3
-    pub m: Material
-    pub u: real
-    pub v: real
+HitRecord :: struct {
+    t: real
+    p: vec3
+    n: vec3
+    m: Material
+    u: real = 0
+    v: real = 0
 }
 
 trait Hittable {
@@ -18,10 +18,10 @@ trait Hittable {
 }
 
 //
-struct Sphere {
-    pub const center: vec3
-    pub const radius: real
-    pub const material: Material
+Sphere :: struct {
+    center: vec3
+    radius: real
+    material: Material
 }
 
 impl Hittable for Sphere {
@@ -93,7 +93,7 @@ impl Hittable for Array[Hittable] {
             Some($aabb) -> aabb
             None -> {
                 return None
-                cast(AABB) default
+                AABB(default, default)
             }
         }
 
@@ -102,7 +102,7 @@ impl Hittable for Array[Hittable] {
                 Some($aabb) -> AABB.surrounding_box(box, aabb)
                 None -> {
                     return None
-                    cast(AABB) default
+                    AABB(default, default)
                 }
             }
         }
@@ -112,7 +112,7 @@ impl Hittable for Array[Hittable] {
 }
 
 //
-struct BhvNode {
+BhvNode :: struct {
     left    : Hittable
     right   : Hittable
     box     : AABB
@@ -200,7 +200,7 @@ impl BhvNode {
             (Some($a), Some($b)) -> AABB.surrounding_box(a, b)
             $_ -> {
                 println("no bounding box in BhvNode constructor")
-                cast(AABB) default
+                AABB(default, default)
             }
         }
 
@@ -231,7 +231,7 @@ impl Hittable for BhvNode {
 }
 
 //
-struct XYRect {
+XYRect :: struct {
     x0  : real
     x1  : real
     y0  : real
@@ -268,7 +268,7 @@ impl Hittable for XYRect {
     }
 }
 
-struct YZRect {
+YZRect :: struct {
     y0  : real
     y1  : real
     z0  : real
@@ -305,7 +305,7 @@ impl Hittable for YZRect {
     }
 }
 
-struct ZXRect {
+ZXRect :: struct {
     x0  : real
     x1  : real
     z0  : real
@@ -343,7 +343,7 @@ impl Hittable for ZXRect {
 }
 
 //
-struct FlipNormals {
+FlipNormals :: struct {
     obj: Hittable
 }
 
@@ -371,7 +371,7 @@ impl Hittable for FlipNormals {
 }
 
 //
-struct Box {
+Box :: struct {
     pmin    : vec3
     pmax    : vec3
     faces   : Array[Hittable]
@@ -407,7 +407,7 @@ impl Hittable for Box {
 }
 
 // volumes
-struct ConstantMedium {
+ConstantMedium :: struct {
     boundary    : Hittable
     density     : real
     phase_func  : Material

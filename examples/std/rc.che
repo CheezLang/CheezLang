@@ -1,4 +1,4 @@
-struct Rc(T: type) {
+Rc :: struct(T: type) {
     count   : &int
     data    : &T
 }

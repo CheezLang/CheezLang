@@ -1,7 +1,7 @@
 #lib("./x64/glfw3dll.lib")
 #lib("OpenGL32.Lib")
 
-struct GLFWvidmode {
+GLFWvidmode :: struct {
     /*! The width, in screen coordinates, of the video mode.
      */
     width: i32
@@ -22,7 +22,7 @@ struct GLFWvidmode {
     refreshRate: i32
 }
 
-struct GLFWgammaramp {
+GLFWgammaramp :: struct {
     /*! An array of value describing the response of the red channel.
      */
     red: &u16
@@ -37,7 +37,7 @@ struct GLFWgammaramp {
     size: u32
 }
 
-struct GLFWimage {
+GLFWimage :: struct {
     /*! The width, in pixels, of this image.
      */
     width: i32
@@ -49,9 +49,9 @@ struct GLFWimage {
     pixels: &u8
 }
 
-struct GLFWwindow {}
-struct GLFWmonitor {}
-struct GLFWcursor {}
+GLFWwindow :: struct {}
+GLFWmonitor :: struct {}
+GLFWcursor :: struct {}
 
 fn glfwInit() -> bool;
 fn glfwTerminate();

@@ -2,9 +2,9 @@
 #load("std:mem/allocator")
 #load("std:mem/stack_allocator")
 
-struct CheezCompiler {
-    pub const string_database : StringDatabase
-    pub const ast_allocator   : &StackAllocator
+CheezCompiler :: struct {
+    string_database : StringDatabase
+    ast_allocator   : &StackAllocator
 }
 
 impl Drop for CheezCompiler {

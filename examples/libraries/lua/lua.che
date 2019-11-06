@@ -1,18 +1,18 @@
 #lib("./lua53.lib")
 
-struct lua_State { }
+lua_State :: struct { }
 
 
-typedef lua_KContext    = i64
-typedef lua_Integer     = i64
-typedef lua_Unsigned    = u64
-typedef lua_Number      = double
+lua_KContext    :: i64
+lua_Integer     :: i64
+lua_Unsigned    :: u64
+lua_Number      :: double
 
-typedef lua_KFunction   = fn(&lua_State, i32, lua_KContext) -> i32 {}
-typedef lua_CFunction   = fn(&lua_State) -> i32 {}
-typedef lua_Alloc       = fn(&any, &any, int, int) -> &any {}
-typedef lua_Reader      = fn(&lua_State, &any, int) -> c_string {}
-typedef lua_Writer      = fn(&lua_State, &any, int, &any) -> i32 {}
+lua_KFunction   :: fn(&lua_State, i32, lua_KContext) -> i32 {}
+lua_CFunction   :: fn(&lua_State) -> i32 {}
+lua_Alloc       :: fn(&any, &any, int, int) -> &any {}
+lua_Reader      :: fn(&lua_State, &any, int) -> c_string {}
+lua_Writer      :: fn(&lua_State, &any, int, &any) -> i32 {}
 
 
 LUA_MULTRET   : i32   : -1

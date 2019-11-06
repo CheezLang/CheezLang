@@ -1,15 +1,15 @@
-typedef GLenum     = u32
-typedef GLboolean  = bool
-typedef GLbitfield = u32
-typedef GLbyte     = i8
-typedef GLshort    = i16
-typedef GLint      = i32
-typedef GLsizei    = i32
-typedef GLubyte    = u8
-typedef GLushort   = u16
-typedef GLuint     = u32
-typedef GLfloat    = float
-typedef GLclampf   = float
-typedef GLdouble   = double
-typedef GLclampd   = double
-typedef GLvoid     = void
+GLenum     :: u32
+GLboolean  :: bool
+GLbitfield :: u32
+GLbyte     :: i8
+GLshort    :: i16
+GLint      :: i32
+GLsizei    :: i32
+GLubyte    :: u8
+GLushort   :: u16
+GLuint     :: u32
+GLfloat    :: float
+GLclampf   :: float
+GLdouble   :: double
+GLclampd   :: double
+GLvoid     :: void

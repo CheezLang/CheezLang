@@ -6,14 +6,14 @@
 #load("evaluator")
 #load("compiler")
 
-typedef vec2 = Vector2[double]
-typedef vec3 = Vector3[double]
+vec2 :: Vector2[double]
+vec3 :: Vector3[double]
 
 width  : int = 1600
 height : int = 960
 
-struct MyGame {
-    pge: &PixelGameEngine
+MyGame :: struct {
+    pge: &PixelGameEngine = null
 
     xc : double = 0.0
     yc : double = 3.0
@@ -22,17 +22,17 @@ struct MyGame {
 
     func_index: int = 0
 
-    last_mouse_pos: (x: double, y: double)
+    last_mouse_pos: (x: double, y: double) = (0.0, 0.0)
 
     function: Option[Array[OpCode]] = Option[Array[OpCode]].None
 
     var_name_allocator: ArenaAllocator
 
-    variables : Variables
-    dir_change_thread: Thread
-    pub wait_handle: HANDLE
+    variables           : Variables
+    dir_change_thread   : &Thread = null
+    wait_handle         : HANDLE = null
 
-    last_file_change: double = -1
+    last_file_change    : double = -1
 }
 
 fn dir_change_thread_func(data: &any) {
@@ -68,7 +68,8 @@ impl Game for MyGame {
         if wait_handle == null {
             printfln("Failed to create file change watcher for file '{}'", fullpath)
         } else {
-            dir_change_thread = Thread.create(dir_change_thread_func, &self)
+            dir_change_thread = alloc(Thread)
+            <<dir_change_thread = Thread.create(dir_change_thread_func, &self)
             dir_change_thread.start()
         }
         return true

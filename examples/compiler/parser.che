@@ -4,7 +4,7 @@
 #load("cheez_compiler")
 #load("lexer")
 
-struct Parser {
+Parser :: struct {
     compiler    : ref CheezCompiler
     lexer       : ref Lexer
 }

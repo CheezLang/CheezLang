@@ -2,7 +2,7 @@
 #load("std:mem/allocator")
 #load("std:util")
 
-struct RingQueue(T: type) {
+RingQueue :: struct(T: type) {
     data    : &T
     capacity: int
     first   : int

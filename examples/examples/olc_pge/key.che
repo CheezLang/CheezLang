@@ -10,7 +10,7 @@ enum Key {
     NpMul, NpDiv, NpAdd, NpSub, NpDecimal,
 }
 
-typedef HWButton = (pressed: bool, released: bool, held: bool)
+HWButton :: (pressed: bool, released: bool, held: bool)
 
 impl Printable for Key {
     fn print(ref Self, str: ref String, fmt: string) {

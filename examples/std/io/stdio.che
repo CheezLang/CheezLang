@@ -1,4 +1,4 @@
-struct FILE {
+FILE :: struct {
     _Placeholder: &any
 }
 
@@ -12,8 +12,8 @@ fn fflush(file: &FILE);
 
 ///
 
-typedef errno_t = i32
-typedef size_t = i64
+errno_t :: i32
+size_t :: i64
 
 fn clearerr_s(_Stream: &FILE) -> errno_t;
 fn fopen_s(_Stream: &&FILE, _FileName: c_string, _Mode: c_string) -> errno_t;

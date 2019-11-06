@@ -1,7 +1,7 @@
 #load("std:preload")
 #load("std:mem/allocator")
 
-struct Heap(T: type) {
+Heap :: struct(T: type) {
     allocator: Allocator
     data    : &T
     capacity: int

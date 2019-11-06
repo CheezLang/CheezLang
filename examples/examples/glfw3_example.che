@@ -5,10 +5,10 @@
 #load("std:math")
 #load("opengl:opengl")
 
-typedef Vec2 = Vector2(float)
-typedef Vec3 = Vector3(float)
+Vec2 :: Vector2(float)
+Vec3 :: Vector3(float)
 
-struct Quad {
+Quad :: struct {
     pos: Vec2
     size: Vec2
     col: Vec3

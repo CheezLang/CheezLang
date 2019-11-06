@@ -10,14 +10,14 @@ fn thread_func(data: &any) -> u32 #stdcall {
 }
 
 // thread
-struct Thread {
+Thread :: struct {
     data: &ThreadData
     handle: HANDLE
 }
 
-struct ThreadData {
-    pub data: &any
-    pub func: fn(&any)
+ThreadData :: struct {
+    data: &any
+    func: fn(&any)
 }
 
 impl Thread {
@@ -56,7 +56,7 @@ impl Drop for Thread {
 }
 
 // mutex
-struct Mutex {
+Mutex :: struct {
     handle: HANDLE
 }
 
@@ -102,17 +102,17 @@ impl Drop for Mutex {
 }
 
 // thread pool
-typedef ThreadPoolFunc = (function: fn(&any), data: &any)
+ThreadPoolFunc :: (function: fn(&any), data: &any)
 
-struct ThreadPoolData {
-    pub threads     : Array[Thread]
-    pub functions   : RingQueue[ThreadPoolFunc]
-    pub running     : bool
-    pub mutex       : Mutex
-    pub empty_queue : bool
+ThreadPoolData :: struct {
+    threads     : Array[Thread]
+    functions   : RingQueue[ThreadPoolFunc]
+    running     : bool
+    mutex       : Mutex
+    empty_queue : bool
 }
 
-struct ThreadPool {
+ThreadPool :: struct {
     data: &ThreadPoolData
 }
 

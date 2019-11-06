@@ -29,11 +29,11 @@ trait Test2 {
     fn print(ref Self);
 }
 
-struct S {
+S :: struct {
     a: int
 }
 
-struct S2 {
+S2 :: struct {
     x: c_string
 }
 

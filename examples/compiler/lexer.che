@@ -5,7 +5,7 @@
 #load("string_database")
 
 
-struct Lexer {
+Lexer :: struct {
     text        : String
     location    : TokenLocation
     peek        : Option[Token]
@@ -86,6 +86,9 @@ impl Lexer {
             location = TokenLocation(
                 file = "string"
                 line = 1
+                index = 0
+                end = 0
+                line_start = 0
             )
             peek = None
             string_db = string_db

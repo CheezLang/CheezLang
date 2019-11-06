@@ -4,7 +4,7 @@
 #load("std:mem/std_heap_allocator")
 #load("std:io/io")
 
-struct CountingAllocator {
+CountingAllocator :: struct {
     parent: Allocator
     allocated: u64
     freed: u64

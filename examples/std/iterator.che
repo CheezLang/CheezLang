@@ -81,7 +81,7 @@ impl(It: type, T: type) It if It : Iterator[T] {
 }
 
 // take
-struct TakeIterator(T: type) {
+TakeIterator :: struct(T: type) {
     it      : Iterator[T]
     count   : int
 }
@@ -98,7 +98,7 @@ impl(T: type) Iterator[T] for TakeIterator[T] {
 }
 
 // map
-struct MapIterator(T: type, X: type) {
+MapIterator :: struct(T: type, X: type) {
     it      : Iterator[T]
     mapFunc : fn(T) -> X
 }
@@ -113,7 +113,7 @@ impl(T: type, X: type) Iterator[X] for MapIterator[T, X] {
 }
 
 // range
-struct RangeIterator {
+RangeIterator :: struct {
     from    : int
     to      : int
 }

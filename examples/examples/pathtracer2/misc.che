@@ -6,11 +6,11 @@ fn create_object($T: type, val: $V) -> T {
     return T(<<mem)
 }
 
-typedef vec3 = Vector3[real]
+vec3 :: Vector3[real]
 
 global_random : MTwister = MTwister.create(0)
 
-typedef Random = MTwister
+Random :: MTwister
 
 impl Random {
     fn random_real(ref Self) -> real {
@@ -44,9 +44,9 @@ impl Random {
     }
 }
 
-struct Ray #copy {
-    pub const origin    : vec3
-    pub const direction : vec3
+Ray :: struct #copy {
+    origin    : vec3
+    direction : vec3
 }
 
 impl Ray {
@@ -64,7 +64,7 @@ impl Ray {
     }
 }
 
-struct Camera {
+Camera :: struct {
     origin              : vec3
     lower_left_corner   : vec3
     horizontal          : vec3
@@ -121,9 +121,9 @@ impl Printable for Ray {
     }
 }
 
-struct AABB #copy {
-    pub const _min: vec3
-    pub const _max: vec3
+AABB :: struct #copy {
+    _min: vec3
+    _max: vec3
 }
 
 impl AABB {

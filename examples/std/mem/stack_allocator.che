@@ -4,9 +4,9 @@
 #load("std:util")
 #load("std:printable")
 
-struct StackAllocation {
-    pub offset: u64
-    pub size: u64
+StackAllocation :: struct {
+    offset  : u64 = 0
+    size    : u64 = 0
 }
 
 impl Printable for StackAllocation {
@@ -15,7 +15,7 @@ impl Printable for StackAllocation {
     }
 }
 
-struct StackAllocator {
+StackAllocator :: struct {
     parent: Allocator
 
     memory: &any

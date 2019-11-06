@@ -1,8 +1,8 @@
 if const @static_assert(@is_os("linux"), "linux.che can only be loaded on linux") {}
 
-struct timeval {
-    pub tv_sec  : int // seconds
-    pub tv_usec : int // and microseconds
+timeval :: struct {
+    tv_sec  : int // seconds
+    tv_usec : int // and microseconds
 }
 
 fn gettimeofday(tv: &timeval, tz: &any) -> i32;

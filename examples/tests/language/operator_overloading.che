@@ -23,8 +23,8 @@
 
 fn c_printf(format: c_string) #varargs #linkname("printf");
 
-struct Num #copy {
-    pub x: int
+Num :: struct #copy {
+    x: int
 }
 
 fn num_add(a: Num, b: Num) -> Num #operator("+") {
@@ -35,7 +35,7 @@ fn num_inc(a: &Num, b: Num) #operator("+=") {
     a.x += b.x
 }
 
-typedef Vec2 = Vector2[double]
+Vec2 :: Vector2[double]
 
 fn Main() {
     {
@@ -68,7 +68,6 @@ fn Main() {
         c_printf("%f, %f`n", c.x, c.y)
         c_printf("%f, %f`n", d.x, d.y)
 
-        
         c_printf("`n")
 
         a -= Vec2(0.5, 1)

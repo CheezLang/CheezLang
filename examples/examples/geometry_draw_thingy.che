@@ -3,11 +3,11 @@
 #load("std:array")
 #load("std:alloca")
 
-typedef float2 = Vector2[float]
+float2 :: Vector2[float]
 
-struct Node {
-    pub parent  : &BaseShape
-    pub pos     : float2
+Node :: struct {
+    parent  : &BaseShape
+    pos     : float2
 }
 
 trait Shape {
@@ -16,10 +16,10 @@ trait Shape {
     fn hit_node(ref Self, p: float2) -> &Node;
 }
 
-struct BaseShape {
-    pub max_nodes   : int
-    pub nodes       : Array[Node]
-    pub color       : Pixel = Pixel(0, 255, 0)
+BaseShape :: struct {
+    max_nodes   : int
+    nodes       : Array[Node]
+    color       : Pixel = Pixel(0, 255, 0)
 }
 
 impl BaseShape {
@@ -57,7 +57,7 @@ impl BaseShape {
     }
 }
 
-struct LineShape {
+LineShape :: struct {
     base    : BaseShape
 }
 
@@ -87,7 +87,7 @@ impl Shape for LineShape {
     }
 }
 
-struct BoxShape {
+BoxShape :: struct {
     base    : BaseShape
 }
 
@@ -117,7 +117,7 @@ impl Shape for BoxShape {
     }
 }
 
-struct CircleShape {
+CircleShape :: struct {
     base    : BaseShape
 }
 
@@ -158,7 +158,7 @@ impl Shape for CircleShape {
     }
 }
 
-struct CurveShape {
+CurveShape :: struct {
     base    : BaseShape
 }
 
@@ -216,17 +216,17 @@ impl Shape for CurveShape {
     }
 }
 
-struct MyGame {
-    pub pge: &PixelGameEngine
+MyGame :: struct {
+    pge: &PixelGameEngine = null
 
     // panning and zooming
-    vOffset : float2
-    vStart  : float2
-    vStartPan : float2
-    vCursor : float2
+    vOffset     : float2 = default
+    vStart      : float2 = default
+    vStartPan   : float2 = default
+    vCursor     : float2 = default
 
-    fScale  : float = 10
-    fGrid   : float = 1
+    fScale      : float = 10
+    fGrid       : float = 1
 
     shapes          : Array[Shape]
     temp_shape      : &Shape    = null
@@ -238,8 +238,6 @@ impl Game for MyGame {
         self.pge = pge
         vOffset.x = -(cast(float)pge.get_width()) * 0.5 / fScale
         vOffset.y = -(cast(float)pge.get_height()) * 0.5 / fScale
-
-        shapes = Array[Shape].create()
         return true
     }
 
@@ -376,7 +374,7 @@ impl Game for MyGame {
 }
 
 fn Main() {
-    myGame := MyGame()
+    myGame := MyGame(shapes = Array[Shape].create())
     pge := PixelGameEngine.create(myGame, 1600, 960)
     if pge != null {
         pge.start()

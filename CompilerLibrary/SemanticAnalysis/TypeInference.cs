@@ -309,8 +309,15 @@ namespace Cheez
                             mem.Initializer = CheckType(mem.Initializer, mem.Type);
                     }
 
+                    if (expr.StructType.IsCopy && !mem.Type.IsCopy)
+                    {
+                        ReportError(mem, "Member is not copyable");
+                    }
 
                     expr.Members.Add(new AstStructMemberNew(mem, true, false, expr.Members.Count));
+
+                    if (mem.Type is StructType s)
+                        ComputeStructMembers(s.Declaration);
                 }
             }
         }
@@ -329,7 +336,7 @@ namespace Cheez
                     expr.Name = c.Name.Name;
             }
 
-            bool isCopy = false;
+            bool isCopy = expr.HasDirective("copy");
 
             if (expr.IsPolymorphic)
             {
@@ -912,6 +919,7 @@ namespace Cheez
             if (expected is StructType s)
             {
                 //if (s.Declaration.GetFlag(StmtFlags.NoDefaultInitializer))
+                ComputeStructMembers(s.Declaration);
                 if (!s.IsDefaultConstructable)
                 {
                     ReportError(expr, $"Can't default initialize struct {s}");
@@ -2114,6 +2122,11 @@ namespace Cheez
 
                         var type = (CheezType)arg.Value;
 
+                        if (type is StructType s)
+                        {
+                            ComputeStructMembers(s.Declaration);
+                        }
+
                         var num = new AstNumberExpr(type.Size, Location: expr.Location);
                         num.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                         return InferTypeHelper(num, null, context);
@@ -2969,6 +2982,10 @@ namespace Cheez
 
             if (typeMembers == expr.Values.Count)
             {
+                foreach (var m in members)
+                    if (m.type is StructType s)
+                        ComputeStructMembers(s.Declaration);
+
                 expr.Type = CheezType.Type;
                 expr.Value = TupleType.GetTuple(members);
             }
@@ -3771,7 +3788,7 @@ namespace Cheez
         {
             expr.SubExpr.SetFlag(ExprFlags.ValueRequired, true);
             expr.SubExpr.Scope = expr.Scope;
-            expr.SubExpr = InferTypeHelper(expr.SubExpr, null, context);
+            expr.SubExpr = InferTypeHelper(expr.SubExpr, expected, context);
 
             if (expr.SubExpr.Type.IsErrorType)
                 return expr;
