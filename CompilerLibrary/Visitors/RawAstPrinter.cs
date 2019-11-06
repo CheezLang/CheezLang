@@ -173,6 +173,21 @@ namespace Cheez.Visitors
             return $"{header} {{\n{body.Indent(4)}\n}}";
         }
 
+        public override string VisitConstantDeclaration(AstConstantDeclaration decl, int data = 0)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(decl.Pattern.Accept(this));
+
+            if (decl.TypeExpr != null)
+                sb.Append($" : {decl.TypeExpr.Accept(this)} ");
+            else
+                sb.Append(" :");
+
+            sb.Append(": ");
+            sb.Append(decl.Initializer.Accept(this));
+            return sb.ToString();
+        }
+
         public override string VisitVariableDecl(AstVariableDecl variable, int indentLevel = 0)
         {
             StringBuilder sb = new StringBuilder();

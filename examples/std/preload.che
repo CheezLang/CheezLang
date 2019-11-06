@@ -22,8 +22,7 @@ trait Drop {
 }
 
 // drops a values
-struct Memory {
-}
+Memory :: struct{}
 impl Memory {
     fn drop(_: $T) {}
 }
@@ -50,17 +49,17 @@ trait Into(T: type) {
     fn into(ref Self) -> T;
 }
 
-impl(F: type, T: type) From[F] for T if F : Into[T], #notyet {
-    fn from(value: F) -> T {
-        return F.into(value)
-    }
-}
+// impl(F: type, T: type) From[F] for T if F : Into[T], #notyet {
+//     fn from(value: F) -> T {
+//         return F.into(value)
+//     }
+// }
 
-impl(F: type, T: type) Into[T] for F if T : From[F], #notyet {
-    fn into(ref Self) -> T {
-        return T.from(self)
-    }
-}
+// impl(F: type, T: type) Into[T] for F if T : From[F], #notyet {
+//     fn into(ref Self) -> T {
+//         return T.from(self)
+//     }
+// }
 
 // standard for loops
 fn for_extension_range(r: $T..T, code: Code, reverse: bool = false, inclusive: bool = false) #for {

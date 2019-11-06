@@ -26,6 +26,7 @@ namespace Cheez
                     return true;
 
                 case StructType str:
+                    ComputeStructMembers(str.Declaration);
                     return str.Declaration.Members.Any(m => SizeOfTypeDependsOnSelfType(m.Type));
 
                 case TupleType t:
@@ -259,7 +260,8 @@ namespace Cheez
 
                 foreach (var v in impl.Trait.Declaration.Variables)
                 {
-                    var member = strDecl.Members.FirstOrDefault(m => m.Name.Name == v.Name.Name);
+                    ComputeStructMembers(strDecl);
+                    var member = strDecl.Members.FirstOrDefault(m => m.Name == v.Name.Name);
                     if (member == null)
                     {
                         ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because it misses member '{v.Name.Name}: {v.Type}'",
@@ -268,14 +270,14 @@ namespace Cheez
                     }
                     if (!member.IsPublic || member.IsReadOnly)
                     {
-                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because member '{member.Name.Name}: {member.Type}' is not public",
+                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because member '{member.Name}: {member.Type}' is not public",
                             ("Struct member defined here:", member.Location));
                         continue;
                     }
                     if (member.Type != v.Type)
                     {
-                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because '{member.Name.Name}' has a different type than the trait member",
-                            ("Struct member defined here:", member.TypeExpr.Location),
+                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because '{member.Name}' has a different type than the trait member",
+                            ("Struct member defined here:", member.Decl.TypeExpr.Location),
                             ("Trait member defined here:", v.TypeExpr.Location));
                         continue;
                     }

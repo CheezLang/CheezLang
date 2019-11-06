@@ -137,6 +137,11 @@ namespace Cheez
 
                 if (decl.Type == CheezType.Void)
                     ReportError(decl.Name, $"A variable can't have type void");
+
+                if (decl.Value != null)
+                {
+                    CheckValueRangeForType(decl.Type, decl.Value, initializer);
+                }
             }
             else if (pattern is AstTupleExpr tuple)
             {

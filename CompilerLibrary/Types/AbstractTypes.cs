@@ -92,14 +92,20 @@ namespace Cheez.Types.Abstract
 
     public class GenericStructType : CheezType
     {
-        public AstStructDecl Declaration { get; }
+        //public AstStructDecl Declaration { get; }
+        public AstStructTypeExpr Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
         public override bool IsDefaultConstructable => throw new NotImplementedException();
 
-        public GenericStructType(AstStructDecl decl)
+        public bool IsCopy { get; }
+        public string Name { get; }
+
+        public GenericStructType(AstStructTypeExpr decl, bool copy, string name)
         {
             Declaration = decl;
+            IsCopy = copy;
+            Name = name;
         }
     }
 

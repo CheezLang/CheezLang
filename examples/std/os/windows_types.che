@@ -1,33 +1,34 @@
-typedef DWORD           = u32
-typedef HANDLE          = &any
-typedef HWND            = HANDLE
-typedef HINSTANCE       = HANDLE
-typedef HMODULE         = HANDLE
-typedef HICON           = HANDLE
-typedef HMENU           = HANDLE
-typedef HDC             = HANDLE
-typedef HGLRC           = HANDLE
-typedef HCURSOR         = HICON
-typedef HBRUSH          = HANDLE
-typedef HFILE           = i32
-typedef BOOL            = i32
-typedef UINT            = u32
-typedef LONG            = i32
-typedef LONGLONG        = i64
-typedef LARGE_INTEGER   = LONGLONG
-typedef UINT_PTR        = u64
-typedef LONG_PTR        = i64
-typedef WPARAM          = UINT_PTR
-typedef LPARAM          = LONG_PTR
-typedef LRESULT         = LONG_PTR
-typedef ATOM            = u16
-typedef WNDCLASS        = WNDCLASSA
-typedef UCHAR           = u8
-typedef BYTE            = u8
-typedef WORD            = u16
-typedef SIZE_T          = u64
-typedef THREAD_START_ROUTINE = fn(&any) -> DWORD #stdcall
-typedef WAITORTIMERCALLBACK = fn(&any, bool) #stdcall
+DWORD                :: u32
+HANDLE               :: &any
+HWND                 :: HANDLE
+HINSTANCE            :: HANDLE
+HMODULE              :: HANDLE
+HICON                :: HANDLE
+HMENU                :: HANDLE
+HDC                  :: HANDLE
+HGLRC                :: HANDLE
+HCURSOR              :: HICON
+HBRUSH               :: HANDLE
+HFILE                :: i32
+BOOL                 :: i32
+UINT                 :: u32
+LONG                 :: i32
+LONGLONG             :: i64
+LARGE_INTEGER        :: LONGLONG
+UINT_PTR             :: u64
+LONG_PTR             :: i64
+WPARAM               :: UINT_PTR
+LPARAM               :: LONG_PTR
+LRESULT              :: LONG_PTR
+ATOM                 :: u16
+// WNDCLASS             :: WNDCLASSA
+typedef WNDCLASS     =  WNDCLASSA
+UCHAR                :: u8
+BYTE                 :: u8
+WORD                 :: u16
+SIZE_T               :: u64
+THREAD_START_ROUTINE :: fn(&any) -> DWORD #stdcall
+WAITORTIMERCALLBACK  :: fn(&any, bool) #stdcall
 
 struct POINT {
     pub x: i32

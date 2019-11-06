@@ -65,10 +65,9 @@ namespace Cheez
         public AstIdExpr Name => throw new NotImplementedException();
 
         public AstExpression Expr { get; }
-        public bool IsConstant => true;
 
         public ILocation Location { get; set; }
-        public bool Replace = false;
+        public bool Replace { get; set; } = false;
 
 
         [DebuggerStepThrough]
@@ -97,10 +96,10 @@ namespace Cheez
             moved
         }
 
-        public readonly int order;
-        public ISymbol symbol;
-        public Kind kind;
-        public ILocation location;
+        public readonly int order { get; }
+        public ISymbol symbol { get; set; }
+        public Kind kind { get; set; }
+        public ILocation location { get; set; }
 
         public SymbolStatus(int order, ISymbol symbol, Kind kind, ILocation location)
         {
@@ -144,17 +143,18 @@ namespace Cheez
                                 .OrderByDescending(s => s.order);
 
         //
-        public List<AstStructDecl> StructDeclarations = new List<AstStructDecl>();
-        public List<AstTraitDeclaration> TraitDeclarations = new List<AstTraitDeclaration>();
-        public List<AstEnumDecl> EnumDeclarations = new List<AstEnumDecl>();
-        public List<AstTypeAliasDecl> Typedefs = new List<AstTypeAliasDecl>();
-        public List<AstUsingStmt> Uses = new List<AstUsingStmt>();
+        public List<AstConstantDeclaration> ConstantDeclarations { get; } = new List<AstConstantDeclaration>();
+        public List<AstStructDecl> StructDeclarations { get; } = new List<AstStructDecl>();
+        public List<AstTraitDeclaration> TraitDeclarations { get; } = new List<AstTraitDeclaration>();
+        public List<AstEnumDecl> EnumDeclarations { get; } = new List<AstEnumDecl>();
+        public List<AstTypeAliasDecl> Typedefs { get; } = new List<AstTypeAliasDecl>();
+        public List<AstUsingStmt> Uses { get; } = new List<AstUsingStmt>();
 
-        public List<AstVariableDecl> Variables = new List<AstVariableDecl>();
-        public List<AstFunctionDecl> Functions = new List<AstFunctionDecl>();
-        public List<AstImplBlock> Impls = new List<AstImplBlock>();
+        public List<AstVariableDecl> Variables { get; } = new List<AstVariableDecl>();
+        public List<AstFunctionDecl> Functions { get; } = new List<AstFunctionDecl>();
+        public List<AstImplBlock> Impls { get; } = new List<AstImplBlock>();
 
-        public Queue<AstImplBlock> unresolvedImpls = new Queue<AstImplBlock>();
+        public Queue<AstImplBlock> unresolvedImpls { get; } = new Queue<AstImplBlock>();
         //
 
         public IEnumerable<KeyValuePair<string, ISymbol>> Symbols => mSymbolTable.AsEnumerable();

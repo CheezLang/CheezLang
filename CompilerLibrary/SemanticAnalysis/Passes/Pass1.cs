@@ -216,6 +216,9 @@ namespace Cheez
 
         private void Pass1StructDeclaration(AstStructDecl @struct)
         {
+            ReportError(@struct, $"Not supported anymore, please use new syntax");
+            return;
+
             if (@struct.HasDirective("copy"))
             {
                 @struct.SetFlag(StmtFlags.IsCopy);
@@ -224,7 +227,7 @@ namespace Cheez
             if (@struct.Parameters.Count > 0)
             {
                 @struct.IsPolymorphic = true;
-                @struct.Type = new GenericStructType(@struct);
+                //@struct.Type = new GenericStructType(@struct);
 
                 foreach (var p in @struct.Parameters)
                 {
@@ -234,7 +237,7 @@ namespace Cheez
             }
             else
             {
-                @struct.Type = new StructType(@struct);
+                //@struct.Type = new StructType(@struct);
             }
             @struct.SubScope = new Scope($"struct {@struct.Name.Name}", @struct.Scope);
 

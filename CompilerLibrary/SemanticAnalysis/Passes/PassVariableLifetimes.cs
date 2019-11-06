@@ -71,6 +71,7 @@ namespace Cheez
             if (type is StructType @struct)
             {
                 // check if any member needs desctructor
+                ComputeStructMembers(@struct.Declaration);
                 foreach (var mem in @struct.Declaration.Members)
                 {
                     if (TypeHasDestructor(mem.Type))

@@ -1,6 +1,8 @@
-﻿using Cheez.Ast.Expressions;
+﻿using Cheez.Ast;
+using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Extras;
+using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
@@ -15,14 +17,14 @@ namespace Cheez
     /// </summary>
     public partial class Workspace
     {
-        private void CalculateSizeOfDecl(AstDecl decl, HashSet<AstDecl> done, HashSet<AstDecl> path)
+        private void CalculateSizeOfDecl(CheezType decl, ILocation location, HashSet<CheezType> done, HashSet<CheezType> path)
         {
             if (done.Contains(decl))
                 return;
 
             if (path.Contains(decl))
             {
-                ReportError(decl.Name, $"Failed to calculate the size of {decl.Name}");
+                ReportError(location, $"Failed to calculate the size of {decl}");
                 path.Remove(decl);
                 done.Add(decl);
                 return;
@@ -30,34 +32,27 @@ namespace Cheez
 
             path.Add(decl);
 
-            if (decl is AstEnumDecl @enum)
+            if (decl is StructType @struct)
             {
-                foreach (var em in @enum.Members)
+                ComputeStructMembers(@struct.Declaration);
+                foreach (var em in @struct.Declaration.Members)
+                {
+                    CalculateSizeOfDecl(em.Type, em.Location, done, path);
+                }
+
+                @struct.CalculateSize();
+            }
+            else if (decl is EnumType @enum)
+            {
+                foreach (var em in @enum.Declaration.Members)
                 {
                     if (em.AssociatedTypeExpr != null)
                     {
-                        if (em.AssociatedTypeExpr.Value is StructType s)
-                            CalculateSizeOfDecl(s.Declaration, done, path);
-                        else if (em.AssociatedTypeExpr.Value is EnumType e)
-                            CalculateSizeOfDecl(e.Declaration, done, path);
+                        CalculateSizeOfDecl(em.AssociatedType, location, done, path);
                     }
                 }
 
-                if (@enum.Type is EnumType str)
-                    str.CalculateSize();
-            }
-            else if (decl is AstStructDecl @struct)
-            {
-                foreach (var em in @struct.Members)
-                {
-                    if (em.Type is StructType s)
-                        CalculateSizeOfDecl(s.Declaration, done, path);
-                    else if (em.Type is EnumType e)
-                        CalculateSizeOfDecl(e.Declaration, done, path);
-                }
-
-                if (@struct.Type is StructType str)
-                    str.CalculateSize();
+                @enum.CalculateSize();
             }
 
             path.Remove(decl);
@@ -66,10 +61,10 @@ namespace Cheez
 
         private void CalculateEnumAndStructSizes(List<AstDecl> declarations)
         {
-            var done = new HashSet<AstDecl>();
+            var done = new HashSet<CheezType>();
             foreach (var decl in declarations)
             {
-                CalculateSizeOfDecl(decl, done, new HashSet<AstDecl>());
+                CalculateSizeOfDecl(decl.Type, decl, done, new HashSet<CheezType>());
             }
         }
     }

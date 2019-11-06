@@ -10,6 +10,33 @@ namespace Cheez
         {
             switch (typeExpr)
             {
+                case AstStructTypeExpr str:
+                    {
+                        foreach (var p in str.Parameters)
+                            CollectTypeDependencies(decl, p.TypeExpr, DependencyKind.Type); // or type?
+
+                        foreach (var m in str.Declarations)
+                        {
+                            switch (m)
+                            {
+                                //case AstVariableDecl v:
+                                //    if (v.TypeExpr != null)
+                                //        CollectTypeDependencies(decl, v.TypeExpr, DependencyKind.Value); // or type?
+                                //    if (v.Initializer != null)
+                                //        CollectTypeDependencies(decl, v.Initializer, DependencyKind.Type); // or type?
+                                //    break;
+
+                                case AstConstantDeclaration v:
+                                    if (v.TypeExpr != null)
+                                        CollectTypeDependencies(decl, v.TypeExpr, DependencyKind.Value); // or type?
+                                    CollectTypeDependencies(decl, v.Initializer, DependencyKind.Type); // or type?
+                                    break;
+                            }
+                        }
+
+                        break;
+                    }
+
                 case AstIdExpr id:
                     var sym = decl.Scope.GetSymbol(id.Name);
                     if (sym is AstDecl d)

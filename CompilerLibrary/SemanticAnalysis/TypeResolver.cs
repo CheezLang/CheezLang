@@ -536,7 +536,7 @@ namespace Cheez
         }
 
         // struct
-        private AstStructDecl InstantiatePolyStruct(AstStructDecl decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
+        private AstStructTypeExpr InstantiatePolyStruct(AstStructTypeExpr decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
         {
             if (args.Count != decl.Parameters.Count)
             {
@@ -547,7 +547,7 @@ namespace Cheez
                 return null;
             }
 
-            AstStructDecl instance = null;
+            AstStructTypeExpr instance = null;
 
             // check if instance already exists
             foreach (var pi in decl.PolymorphicInstances)
@@ -576,12 +576,15 @@ namespace Cheez
             // instatiate type
             if (instance == null)
             {
-                instance = decl.Clone() as AstStructDecl;
-                instance.SubScope = new Scope($"struct {decl.Name.Name}<poly>", instance.Scope);
+                instance = decl.Clone() as AstStructTypeExpr;
+                instance.SubScope = new Scope($"struct.poly", instance.Scope);
                 instance.IsPolyInstance = true;
-                instance.IsPolymorphic = false;
+                instance._isPolymorphic = false;
                 instance.Template = decl;
-                instance.SetFlag(StmtFlags.IsCopy, decl.GetFlag(StmtFlags.IsCopy));
+                instance.Name = decl.Name;
+
+                // @todo
+                //instance.SetFlag(StmtFlags.IsCopy, decl.GetFlag(StmtFlags.IsCopy));
                 decl.PolymorphicInstances.Add(instance);
 
                 Debug.Assert(instance.Parameters.Count == args.Count);
@@ -597,14 +600,16 @@ namespace Cheez
                     instance.SubScope.DefineTypeSymbol(param.Name.Name, param.Value as CheezType);
                 }
 
-                instance.Type = new StructType(instance);
+                instance = InferType(instance, null) as AstStructTypeExpr;
 
-                if (instances != null)
-                    instances.Add(instance);
-                else
-                {
-                    ResolveTypeDeclaration(instance);
-                }
+                //instance.Type = new StructType(instance);
+
+                //if (instances != null)
+                //    instances.Add(instance);
+                //else
+                //{
+                //    ResolveTypeDeclaration(instance);
+                //}
             }
 
             return instance;

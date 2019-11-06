@@ -1,7 +1,7 @@
 // #load("examples/trait_function_call_performance")
 // #load("examples/graphyfier/graphyfier")
 // #load("examples/pathtracer2/main")
-#load("examples/geometry_draw_thingy")
+// #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
 // #load("examples/pathtracer")
@@ -9,24 +9,63 @@
 
 // #load("tests/language/local_variables")
 // #load("tests/library/arena_allocator1")
-//#load("tests/other/test1")
+// #load("tests/other/test1")
 // #load("examples/project_euler/005_smallest_multiple")
 
-/*
+//*
 #load("std:c")
 // #load("std:io/io")
-// trait Drop {}
+
+Real2 :: Real1
+Real3 :: float
+Vec :: struct {
+    dim :: 3
+    x : Real1
+    y : Real2
+    z : Real3
+    w : Real4
+}
+
+Real1 :: int
+Real4 :: Real3
+
+GVec :: struct (T: type) {
+    x : T
+    y : T
+}
+
+impl Vec {
+    fn print(ref Self) {
+        c_printf("Vec(%f, %f, %f, %f)`n", double(x), double(y), double(z), double(w))
+    }
+}
+
+impl(T: type) GVec[T] {
+    fn print(ref Self) {
+        c_printf("GVec(%f, %f)`n", double(x), double(y))
+    }
+}
+
+Foo :: struct {
+    bar : &Bar
+}
+
+Bar :: struct {
+    foo : &Foo
+}
+
+
 
 fn Main() {
-    // println(395.51)
-    a := 5
-    b : int = 5
-    c : int
-    d :: int
-    e : type : float
+    v := Vec(1, 2, 3, 4)
+    v.print()
+    
+    v2 := GVec[int](10, 20)
+    v2.print()
 
-    foo : d = 5
-    bar : e = 10
+    f := Foo(null)
+    b := Bar(&f)
+    f.bar = &b
 }
 // */
 

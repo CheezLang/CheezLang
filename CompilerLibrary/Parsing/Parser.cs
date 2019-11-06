@@ -433,8 +433,11 @@ namespace Cheez.Parsing
             }
         }
 
-        private AstVariableDecl ParseDeclaration(AstExpression expr, bool allowCommaTuple)
+        private AstDecl ParseDeclaration(AstExpression expr, bool allowCommaTuple)
         {
+            if (expr == null)
+                expr = ParseExpression(allowCommaTuple);
+
             Consume(TokenType.Colon, ErrMsg(":", "after pattern in declaration"));
 
             AstExpression typeExpr = null;
@@ -450,7 +453,7 @@ namespace Cheez.Parsing
             {
                 NextToken();
                 var init = ParseExpression(allowCommaTuple);
-                return new AstVariableDecl(expr, typeExpr, init, true, isNewSyntax: true, Location: new Location(expr.Beginning, init.End));
+                return new AstConstantDeclaration(expr, typeExpr, init, Location: new Location(expr.Beginning, init.End));
             }
 
             // variable declaration
@@ -470,6 +473,24 @@ namespace Cheez.Parsing
             //
             ReportError(PeekToken().location, $"Unexpected token. Expected ':' or '=' or '\\n'");
             return new AstVariableDecl(expr, typeExpr, null, false, true, Location: expr);
+        }
+
+        private AstVariableDecl ParseVariableDeclaration(AstExpression expr)
+        {
+            Consume(TokenType.Colon, ErrMsg(":", "after pattern in declaration"));
+
+            AstExpression typeExpr = null;
+
+            // constant declaration
+            if (!CheckTokens(TokenType.Equal))
+            {
+                typeExpr = ParseExpression(false);
+            }
+
+            // variable declaration
+            ConsumeUntil(TokenType.Equal, ErrMsg("=", "in variable declaration"));
+            var init = ParseExpression(false);
+            return new AstVariableDecl(expr, typeExpr, init, false, isNewSyntax: true, Location: new Location(expr.Beginning, init.End));
         }
 
         private AstStatement ParseTraitDeclaration()
@@ -1194,7 +1215,7 @@ namespace Cheez.Parsing
             // new syntax for variable declaration
             if (CheckToken(TokenType.Colon))
             {
-                init = ParseDeclaration(condition, false);
+                init = ParseVariableDeclaration(condition);
                 SkipNewlines();
                 Consume(TokenType.Comma, ErrMsg(",", "after variable declaration in while statement"));
                 SkipNewlines();
@@ -1254,7 +1275,7 @@ namespace Cheez.Parsing
             // new syntax for variable declaration
             if (CheckToken(TokenType.Colon))
             {
-                pre = ParseDeclaration(condition, false);
+                pre = ParseVariableDeclaration(condition);
                 SkipNewlines();
                 Consume(TokenType.Comma, ErrMsg(",", "after variable declaration in if expr"));
                 SkipNewlines();
@@ -1975,7 +1996,7 @@ namespace Cheez.Parsing
         private AstExpression ParseStructTypeExpression()
         {
             TokenLocation beg = null, end = null;
-            var members = new List<AstStructMember>();
+            var declarations = new List<AstDecl>();
             var directives = new List<AstDirective>();
             List<AstParameter> parameters = null;
 
@@ -2000,47 +2021,9 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
                     break;
 
-                TokenLocation memberBeg = null;
-
-                bool pub = false;
-                bool get = false;
-                if (next.type == TokenType.KwPub)
-                {
-                    memberBeg = next.location;
-                    NextToken();
-                    pub = true;
-                    if (CheckToken(TokenType.KwConst))
-                    {
-                        get = true;
-                        NextToken();
-                    }
-                }
-
-                var mName = ParseIdentifierExpr(ErrMsg("identifier", "in struct member"));
-                if (memberBeg == null)
-                    memberBeg = mName.Location.Beginning;
-
-                SkipNewlines();
-                Consume(TokenType.Colon, ErrMsg(":", "after struct member name"));
-                SkipNewlines();
-
-                var mType = ParseExpression(true);
-                AstExpression init = null;
+                declarations.Add(ParseDeclaration(null, true));
 
                 next = PeekToken();
-                if (next.type == TokenType.Equal)
-                {
-                    NextToken();
-                    init = ParseExpression(true);
-                    next = PeekToken();
-                }
-
-                var memberEnd = init?.End ?? mType.End;
-                var mem = new AstStructMember(mName, mType, init, new Location(memberBeg, memberEnd));
-                mem.IsPublic = pub;
-                mem.IsReadOnly = get;
-                members.Add(mem);
-
                 if (next.type == TokenType.NewLine)
                 {
                     SkipNewlines();
@@ -2058,7 +2041,7 @@ namespace Cheez.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct declaration")).location;
 
-            return new AstEmptyExpr(new Location(beg, end));
+            return new AstStructTypeExpr(parameters, declarations, directives, new Location(beg, end));
         }
 
         private AstExpression ParseAtomicExpression(bool allowCommaForTuple, ErrorMessageResolver errorMessage)

@@ -144,6 +144,9 @@ namespace Cheez
 
             switch (expr)
             {
+                case AstStructTypeExpr s:
+                    return InferTypeStructTypeExpr(s, expected);
+
                 case AstNullExpr n:
                     return InferTypesNullExpr(n, expected);
 
@@ -267,6 +270,99 @@ namespace Cheez
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private void ComputeStructMembers(AstStructTypeExpr expr)
+        {
+            if (expr.Members != null)
+                return;
+
+
+            expr.Members = new List<AstStructMemberNew>();
+            foreach (var decl in expr.Declarations)
+            {
+                if (decl is AstVariableDecl mem)
+                {
+                    if (!(mem.Pattern is AstIdExpr memName))
+                    {
+                        ReportError(mem.Pattern, $"Only single names allowed");
+                        continue;
+                    }
+
+                    if (mem.TypeExpr != null)
+                    {
+                        mem.TypeExpr.AttachTo(mem);
+                        mem.TypeExpr = ResolveTypeNow(mem.TypeExpr, out var t);
+                        mem.Type = t;
+
+                        // @todo: check if type is valid as struct member, eg no void
+                    }
+
+                    if (mem.Initializer != null)
+                    {
+                        mem.Initializer.AttachTo(mem);
+                        mem.Initializer = InferType(mem.Initializer, mem.Type);
+
+                        if (mem.Type == null)
+                            mem.Type = mem.Initializer.Type;
+                        else
+                            mem.Initializer = CheckType(mem.Initializer, mem.Type);
+                    }
+
+
+                    expr.Members.Add(new AstStructMemberNew(mem, true, false, expr.Members.Count));
+                }
+            }
+        }
+
+        private List<AstStructTypeExpr> allStructTypes = new List<AstStructTypeExpr>();
+        private AstExpression InferTypeStructTypeExpr(AstStructTypeExpr expr, CheezType expected)
+        {
+            if (expr.IsPolyInstance)
+            {
+                
+            }
+            else
+            {
+                expr.SubScope = new Scope("struct", expr.Scope);
+                if (expr.Parent is AstConstantDeclaration c)
+                    expr.Name = c.Name.Name;
+            }
+
+            bool isCopy = false;
+
+            if (expr.IsPolymorphic)
+            {
+                // @todo
+                foreach (var p in expr.Parameters)
+                {
+                    p.Scope = expr.Scope;
+                    p.TypeExpr.Scope = expr.Scope;
+                    p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
+                    p.Type = t;
+
+                    ValidatePolymorphicParameterType(p, p.Type);
+                }
+
+                expr.Type = CheezType.Type;
+                expr.Value = new GenericStructType(expr, isCopy, expr.Name);
+                return expr;
+            }
+
+            allStructTypes.Add(expr);
+            foreach (var decl in expr.Declarations)
+            {
+                decl.Scope = expr.SubScope;
+
+                if (decl is AstConstantDeclaration con)
+                {
+                    AnalyseConstantDeclaration(con);
+                }
+            }
+
+            expr.Type = CheezType.Type;
+            expr.Value = new StructType(expr, isCopy, expr.Name);
+            return expr;
         }
 
         private AstExpression InferTypeRangeExpr(AstRangeExpr r, CheezType expected, TypeInferenceContext context)
@@ -815,7 +911,8 @@ namespace Cheez
 
             if (expected is StructType s)
             {
-                if (s.Declaration.GetFlag(StmtFlags.NoDefaultInitializer))
+                //if (s.Declaration.GetFlag(StmtFlags.NoDefaultInitializer))
+                if (!s.IsDefaultConstructable)
                 {
                     ReportError(expr, $"Can't default initialize struct {s}");
                     return expr;
@@ -2675,6 +2772,7 @@ namespace Cheez
 
                 case StructType s:
                     {
+                        ComputeStructMembers(s.Declaration);
                         var name = expr.Right.Name;
                         var index = s.GetIndexOfMember(name);
                         if (index == -1)
@@ -2682,6 +2780,7 @@ namespace Cheez
                             return GetImplFunctions(expr, s, name, context);
                         }
 
+                        ComputeStructMembers(s.Declaration);
                         var member = s.Declaration.Members[index];
 
                         // check wether we have private access to this struct
@@ -3090,7 +3189,8 @@ namespace Cheez
                 if (anyArgIsPoly)
                 {
                     expr.Type = CheezType.Type;
-                    expr.Value = new StructType(strType.Declaration, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
+                    // @todo: fix this
+                    expr.Value = new StructType(strType.Declaration, strType.IsCopy, strType.Name, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
                     return expr;
                 }
 
@@ -3098,7 +3198,7 @@ namespace Cheez
                 var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
                 var instance = InstantiatePolyStruct(strType.Declaration, args, context.newPolyDeclarations, expr);
                 expr.Type = CheezType.Type;
-                expr.Value = instance?.Type ?? CheezType.Error;
+                expr.Value = instance.StructType ?? CheezType.Error;
 
                 // this causes impls to be calculated for this type if not done yet
                 //if (instance.Type != null)
@@ -3569,13 +3669,13 @@ namespace Cheez
                 return expr;
             }
 
-            if (type.Size == -1)
-            {
-                ReportError(expr, 
-                    $"Can't create an instance of this struct because the member types have not yet been computed. This may be a bug in the compiler. This error can happen if you use a struct literal in a constant context which is not allowed.");
-                expr.Type = CheezType.Error;
-                return expr;
-            }
+            //if (type.Size == -1)
+            //{
+            //    ReportError(expr, 
+            //        $"Can't create an instance of this struct because the member types have not yet been computed. This may be a bug in the compiler. This error can happen if you use a struct literal in a constant context which is not allowed.");
+            //    expr.Type = CheezType.Error;
+            //    return expr;
+            //}
 
             // 
             int namesProvided = 0;
@@ -3583,9 +3683,10 @@ namespace Cheez
             {
                 if (m.Name != null)
                 {
-                    if (!type.Declaration.Members.Any(m2 => m2.Name.Name == m.Name.Name))
+                    ComputeStructMembers(type.Declaration);
+                    if (!type.Declaration.Members.Any(m2 => m2.Name == m.Name.Name))
                     {
-                        ReportError(m.Name, $"'{m.Name}' is not a member of struct {type.Declaration.Name}");
+                        ReportError(m.Name, $"'{m.Name}' is not a member of struct {type.Name}");
                     }
                     namesProvided++;
                 }
@@ -3594,17 +3695,18 @@ namespace Cheez
             var inits = new HashSet<string>();
             if (namesProvided == 0)
             {
+                ComputeStructMembers(type.Declaration);
                 for (int i = 0; i < expr.MemberInitializers.Count && i < type.Declaration.Members.Count; i++)
                 {
                     var mi = expr.MemberInitializers[i];
                     var mem = type.Declaration.Members[i];
-                    inits.Add(mem.Name.Name);
+                    inits.Add(mem.Name);
 
                     mi.Value.AttachTo(expr);
                     mi.Value = InferTypeHelper(mi.Value, mem.Type, context);
                     ConvertLiteralTypeToDefaultType(mi.Value, mem.Type);
 
-                    mi.Name = new AstIdExpr(mem.Name.Name, false, mi.Value);
+                    mi.Name = new AstIdExpr(mem.Name, false, mi.Value);
                     mi.Index = i;
 
                     if (mi.Value.Type.IsErrorType) continue;
@@ -3614,10 +3716,11 @@ namespace Cheez
             }
             else if (namesProvided == expr.MemberInitializers.Count)
             {
+                ComputeStructMembers(type.Declaration);
                 for (int i = 0; i < expr.MemberInitializers.Count && i < type.Declaration.Members.Count; i++)
                 {
                     var mi = expr.MemberInitializers[i];
-                    var memIndex = type.Declaration.Members.FindIndex(m => m.Name.Name == mi.Name.Name);
+                    var memIndex = type.Declaration.Members.FindIndex(m => m.Name == mi.Name.Name);
                     if (memIndex < 0 || memIndex >= type.Declaration.Members.Count)
                     {
                         mi.Value.Type = CheezType.Error;
@@ -3626,7 +3729,7 @@ namespace Cheez
 
 
                     var mem = type.Declaration.Members[memIndex];
-                    inits.Add(mem.Name.Name);
+                    inits.Add(mem.Name);
 
                     mi.Index = memIndex;
 
@@ -3647,15 +3750,15 @@ namespace Cheez
             // create missing values
             foreach (var mem in type.Declaration.Members)
             {
-                if (!inits.Contains(mem.Name.Name))
+                if (!inits.Contains(mem.Name))
                 {
-                    if (mem.Initializer == null)
+                    if (mem.Decl.Initializer == null)
                     {
-                        ReportError(expr, $"You must provide an initial value for member '{mem.Name.Name}' because it can't be default initialized");
+                        ReportError(expr, $"You must provide an initial value for member '{mem.Name}' because it can't be default initialized");
                         continue;
                     }
 
-                    var mi = new AstStructMemberInitialization(new AstIdExpr(mem.Name.Name, false, expr.Location), mem.Initializer, expr.Location);
+                    var mi = new AstStructMemberInitialization(new AstIdExpr(mem.Name, false, expr.Location), mem.Decl.Initializer, expr.Location);
                     mi.Index = mem.Index;
                     expr.MemberInitializers.Add(mi);
                 }
@@ -3838,7 +3941,11 @@ namespace Cheez
                 context.dependencies.Add(decl);
             }
 
-            if (sym is AstSingleVariableDecl var)
+            if (sym is AstConstantDeclaration con) {
+                expr.Type = con.Type;
+                expr.Value = con.Value;
+            }
+            else if (sym is AstSingleVariableDecl var)
             {
                 expr.Type = var.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
@@ -4161,6 +4268,20 @@ namespace Cheez
             if (resultTrait.Count > 0)
                 return resultTrait;
             return resultTrait2;
+        }
+
+        private void CheckValueRangeForType(CheezType type, object value, ILocation location)
+        {
+            switch (type)
+            {
+                case IntType i when i.Size != 0:
+                    {
+                        var val = ((NumberData)value).IntValue;
+                        if (val > i.MaxValue || val < i.MinValue)
+                            ReportError(location, $"Value is outside of the range of type {type}. Value is {val}, range is [{i.MinValue},{i.MaxValue}]");
+                        break;
+                    }
+            }
         }
     }
 }

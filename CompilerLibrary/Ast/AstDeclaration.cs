@@ -72,6 +72,32 @@ namespace Cheez.Ast.Statements
         }
     }
 
+    public class AstConstantDeclaration : AstDecl
+    {
+        public AstExpression Pattern { get; set; }
+        public AstExpression TypeExpr { get; set; }
+        public AstExpression Initializer { get; set; }
+
+        public object Value { get; set; }
+
+        public AstConstantDeclaration(AstExpression pattern, AstExpression typeExpr, AstExpression init, ILocation Location = null)
+            : base(pattern is AstIdExpr ? (pattern as AstIdExpr) : (new AstIdExpr(pattern.ToString(), false, pattern.Location)), null, Location)
+        {
+            this.Pattern = pattern;
+            this.TypeExpr = typeExpr;
+            this.Initializer = init;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitConstantDeclaration(this, data);
+
+        public override AstStatement Clone()
+            => CopyValuesTo(new AstConstantDeclaration(
+                Pattern.Clone(),
+                TypeExpr?.Clone(),
+                Initializer.Clone()));
+    }
+
     #region Function Declaration
 
     public enum SelfParamType
@@ -230,6 +256,66 @@ namespace Cheez.Ast.Statements
         public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitStructDecl(this, data);
 
         public override AstStatement Clone() => CopyValuesTo(new AstStructDecl(Name.Clone() as AstIdExpr, Parameters?.Select(p => p.Clone()).ToList(), Members.Select(m => m.Clone()).ToList()));
+    }
+
+    public class AstStructMemberNew
+    {
+
+        public bool IsPublic { get; }
+        public bool IsReadOnly { get; }
+        public AstVariableDecl Decl { get; }
+        public string Name => Decl.Name.Name;
+        public CheezType Type => Decl.Type;
+        public ILocation Location => Decl.Location;
+        public int Index { get; }
+
+
+        public AstStructMemberNew(AstVariableDecl decl, bool pub, bool readOnly, int index)
+        {
+            Decl = decl;
+            IsPublic = pub;
+            IsReadOnly = readOnly;
+            Index = index;
+        }
+    }
+
+    public class AstStructTypeExpr : AstExpression
+    {
+        public string Name { get; set; } = "#anonymous";
+        public List<AstParameter> Parameters { get; set; }
+        public List<AstDecl> Declarations { get; }
+        public List<AstStructMemberNew> Members { get; set; }
+
+        public StructType StructType => Value as StructType;
+
+        public AstStructTypeExpr Template { get; set; } = null;
+
+        public Scope SubScope { get; set; }
+
+        public bool _isPolymorphic { get; set; }
+        public override bool IsPolymorphic => _isPolymorphic;
+
+        public bool IsPolyInstance { get; set; }
+
+        public List<AstStructTypeExpr> PolymorphicInstances { get; } = new List<AstStructTypeExpr>();
+
+        public List<TraitType> Traits { get; } = new List<TraitType>();
+
+        public AstStructTypeExpr(List<AstParameter> param, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
+            : base(Location)
+        {
+            this.Parameters = param ?? new List<AstParameter>();
+            this.Declarations = declarations;
+            _isPolymorphic = Parameters.Count > 0;
+        }
+
+        [DebuggerStepThrough]
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitStructTypeExpr(this, data);
+
+        public override AstExpression Clone() => CopyValuesTo(
+            new AstStructTypeExpr(
+                Parameters.Select(p => p.Clone()).ToList(),
+                Declarations.Select(m => m.Clone() as AstDecl).ToList()));
     }
 
     #endregion
@@ -536,8 +622,6 @@ namespace Cheez.Ast.Statements
     public class AstTypeAliasDecl : AstDecl, ITypedSymbol
     {
         public AstExpression TypeExpr { get; set; }
-
-        public bool IsConstant => false;
 
         public AstTypeAliasDecl(AstIdExpr name, AstExpression typeExpr, List<AstDirective> Directives = null, ILocation Location = null)
             : base(name, Directives, Location)

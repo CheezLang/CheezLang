@@ -79,7 +79,7 @@ namespace Cheez.Types
             }
             else if (a is StructType sa && b is StructType sb)
             {
-                if (sa.Declaration.Name.Name != sb.Declaration.Name.Name)
+                if (sa.Name != sb.Name)
                     return false;
                 if (sa.Arguments.Length != sb.Arguments.Length)
                     return false;

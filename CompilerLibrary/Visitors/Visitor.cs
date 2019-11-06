@@ -24,6 +24,7 @@ namespace Cheez.Visitors
         ReturnType VisitEmptyStmt(AstEmptyStatement stmt, DataType data = default);
 
         // declarations
+        ReturnType VisitConstantDeclaration(AstConstantDeclaration decl, DataType data = default);
         ReturnType VisitFunctionDecl(AstFunctionDecl decl, DataType data = default);
         ReturnType VisitVariableDecl(AstVariableDecl decl, DataType data = default);
         ReturnType VisitStructDecl(AstStructDecl decl, DataType data = default);
@@ -70,6 +71,7 @@ namespace Cheez.Visitors
         ReturnType VisitSliceTypeExpr(AstSliceTypeExpr type, DataType data = default);
         ReturnType VisitArrayTypeExpr(AstArrayTypeExpr type, DataType data = default);
         ReturnType VisitFunctionTypeExpr(AstFunctionTypeExpr type, DataType data = default);
+        ReturnType VisitStructTypeExpr(AstStructTypeExpr expr, DataType data = default);
 
         // special expressions
         ReturnType VisitVariableRef(AstVariableRef expr, DataType data = default);
@@ -100,6 +102,7 @@ namespace Cheez.Visitors
         public virtual ReturnType VisitEmptyStmt(AstEmptyStatement stmt, DataType data = default) => default;
 
         // declarations
+        public virtual ReturnType VisitConstantDeclaration(AstConstantDeclaration decl, DataType data = default) => default;
         public virtual ReturnType VisitTypeAliasDecl(AstTypeAliasDecl decl, DataType data = default) => default;
         public virtual ReturnType VisitEnumDecl(AstEnumDecl decl, DataType data = default) => default;
         public virtual ReturnType VisitTraitDecl(AstTraitDeclaration decl, DataType data = default) => default;
@@ -145,6 +148,7 @@ namespace Cheez.Visitors
         public virtual ReturnType VisitSliceTypeExpr(AstSliceTypeExpr type, DataType data = default) => default;
         public virtual ReturnType VisitArrayTypeExpr(AstArrayTypeExpr type, DataType data = default) => default;
         public virtual ReturnType VisitFunctionTypeExpr(AstFunctionTypeExpr type, DataType data = default) => default;
+        public virtual ReturnType VisitStructTypeExpr(AstStructTypeExpr expr, DataType data = default) => default;
 
         // special
         public virtual ReturnType VisitArgumentExpr(AstArgument expr, DataType data = default) => default;

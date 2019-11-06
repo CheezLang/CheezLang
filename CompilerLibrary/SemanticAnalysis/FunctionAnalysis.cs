@@ -61,20 +61,21 @@ namespace Cheez
 
                     if (func.ImplBlock.TargetType is StructType @struct)
                     {
+                        ComputeStructMembers(@struct.Declaration);
                         foreach (var m in @struct.Declaration.Members)
                         {
-                            AstExpression expr = new AstDotExpr(new AstSymbolExpr(p), new AstIdExpr(m.Name.Name, false));
+                            AstExpression expr = new AstDotExpr(new AstSymbolExpr(p), new AstIdExpr(m.Name, false));
                             expr.AttachTo(func, func.SubScope);
                             expr = InferType(expr, m.Type);
 
                             // define use if no parameter has the same name
-                            if (!func.Parameters.Any(pa => pa.Name?.Name == m.Name.Name))
+                            if (!func.Parameters.Any(pa => pa.Name?.Name == m.Name))
                             {
-                                var (ok, other) = func.SubScope.DefineUse(m.Name.Name, expr, false, out var use);
+                                var (ok, other) = func.SubScope.DefineUse(m.Name, expr, false, out var use);
 
                                 if (!ok)
                                 {
-                                    ReportError(p, $"A symbol with name '{m.Name.Name}' already exists", ("Other here:", other));
+                                    ReportError(p, $"A symbol with name '{m.Name}' already exists", ("Other here:", other));
                                 }
                             }
                         }
@@ -213,6 +214,7 @@ namespace Cheez
         {
             switch (stmt)
             {
+                case AstConstantDeclaration con: return AnalyseConstantDeclaration(con);
                 case AstVariableDecl vardecl: return AnalyseVariableDecl(vardecl);
                 case AstReturnStmt ret: return AnalyseReturnStatement(ret);
                 case AstExprStmt expr: return AnalyseExprStatement(expr);
@@ -227,6 +229,37 @@ namespace Cheez
             }
 
             return stmt;
+        }
+
+        private AstStatement AnalyseConstantDeclaration(AstConstantDeclaration c)
+        {
+            if (c.TypeExpr != null)
+            {
+                c.TypeExpr.AttachTo(c);
+                c.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
+                c.TypeExpr = ResolveTypeNow(c.TypeExpr, out var t);
+                c.Type = t;
+            }
+
+            c.Initializer.AttachTo(c);
+            c.Initializer = InferType(c.Initializer, c.Type);
+
+            if (c.Type == null)
+                c.Type = c.Initializer.Type;
+            else
+                c.Initializer = CheckType(c.Initializer, c.Type);
+
+            if (!c.Initializer.IsCompTimeValue)
+            {
+                ReportError(c.Initializer, $"Value of constant declaration must be constant");
+                return c;
+            }
+            c.Value = c.Initializer.Value;
+
+            CheckValueRangeForType(c.Type, c.Value, c.Initializer);
+
+            c.Scope.DefineSymbol(c);
+            return c;
         }
 
         private AstStatement AnalyseDeferStatement(AstDeferStmt def)
@@ -368,11 +401,12 @@ namespace Cheez
                             tempVar = InferType(tempVar, use.Value.Type);
                             use.Value = tempVar;
                         }
+                        ComputeStructMembers(str.Declaration);
                         foreach (var mem in str.Declaration.Members)
                         {
-                            AstExpression expr = new AstDotExpr(tempVar, new AstIdExpr(mem.Name.Name, false, use.Location), use.Location);
+                            AstExpression expr = new AstDotExpr(tempVar, new AstIdExpr(mem.Name, false, use.Location), use.Location);
                             //expr = InferType(expr, null);
-                            use.Scope.DefineUse(mem.Name.Name, expr, true, out var u);
+                            use.Scope.DefineUse(mem.Name, expr, true, out var u);
                         }
                     }
                     break;

@@ -172,26 +172,50 @@ namespace Cheez.Types.Complex
 
     public class StructType : CheezType
     {
-        public AstStructDecl Declaration { get; }
+        //public AstStructDecl Declaration { get; }
+        public string Name { get; }
+        public AstStructTypeExpr Declaration { get; }
         public CheezType[] Arguments { get; }
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
         public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
-        public override bool IsCopy => Declaration.GetFlag(StmtFlags.IsCopy);
-        public override bool IsDefaultConstructable => Declaration.Members.All(m => m.IsPublic && (m.Type.IsDefaultConstructable || m.Initializer != null));
+        public override bool IsCopy { get; }
+        //public override bool IsDefaultConstructable => Declaration.Members.All(m => m.IsPublic && (m.Type.IsDefaultConstructable || m.Initializer != null));
+        public override bool IsDefaultConstructable => Declaration.Members.All(m => m.Decl.Initializer != null);
 
-        public AstStructDecl DeclarationTemplate => Declaration.Template ?? Declaration;
+        //public AstStructDecl DeclarationTemplate => Declaration.Template ?? Declaration;
+        public AstStructTypeExpr DeclarationTemplate => Declaration.Template;
 
-        public StructType(AstStructDecl decl, CheezType[] args = null)
+        private int _size = -1;
+        public override int Size
+        {
+            get
+            {
+                if (_size == -1)
+                    CalculateSize();
+                return _size;
+            }
+        }
+
+        //public StructType(AstStructDecl decl, CheezType[] args = null)
+        //{
+        //    Size = -1;
+        //    Declaration = decl;
+        //    Arguments = args ?? decl.Parameters.Select(p => p.Value as CheezType).ToArray();
+        //}
+
+        public StructType(AstStructTypeExpr decl, bool isCopy, string name, CheezType[] args = null)
         {
             Size = -1;
             Declaration = decl;
+            IsCopy = isCopy;
+            Name = name;
             Arguments = args ?? decl.Parameters.Select(p => p.Value as CheezType).ToArray();
         }
 
         public void CalculateSize()
         {
             Alignment = 1;
-            Size = 0;
+            _size = 0;
             for (int i = 0; i < Declaration.Members.Count; i++)
             {
                 var m = Declaration.Members[i];
@@ -200,11 +224,11 @@ namespace Cheez.Types.Complex
                 var ma = m.Type.Alignment;
 
                 Alignment = Math.Max(Alignment, ma);
-                Size += ms;
-                Size = Utilities.GetNextAligned(Size, ma);
+                _size += ms;
+                _size = Utilities.GetNextAligned(_size, ma);
             }
 
-            Size = Utilities.GetNextAligned(Size, Alignment);
+            _size = Utilities.GetNextAligned(_size, Alignment);
         }
 
         public override string ToString()
@@ -212,14 +236,14 @@ namespace Cheez.Types.Complex
             if (Arguments?.Length > 0)
             {
                 var args = string.Join(", ", Arguments.Select(a => a.ToString()));
-                return $"{Declaration.Name.Name}[{args}]";
+                return $"{Name}[{args}]";
             }
-            return $"{Declaration.Name.Name}";
+            return Name;
         }
 
         public int GetIndexOfMember(string right)
         {
-            return Declaration.Members.FindIndex(m => m.Name.Name == right);
+            return Declaration.Members.FindIndex(m => m.Name == right);
         }
 
         public override bool Equals(object obj)

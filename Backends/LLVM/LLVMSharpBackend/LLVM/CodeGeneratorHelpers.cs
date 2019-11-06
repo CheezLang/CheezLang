@@ -414,7 +414,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         //var memTypes2 = s.Declaration.Members.Select(m => CheezTypeToLLVMType(m.Type)).ToArray();
                         //return LLVM.StructType(memTypes2, false);
 
-                        var name = $"struct.{s.Declaration.Name.Name}";
+                        var name = $"struct.{s.Name}";
 
                         if (s.Declaration.IsPolyInstance)
                         {
@@ -510,7 +510,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             StructType p => p.Declaration.Members.Aggregate(
                 LLVM.GetUndef(CheezTypeToLLVMType(p)),
-                (str, m) => builder.CreateInsertValue(str, GenerateExpression(m.Initializer, true), (uint)m.Index, "")),
+                (str, m) => builder.CreateInsertValue(str, GenerateExpression(m.Decl.Initializer, true), (uint)m.Index, "")),
 
             TraitType t => LLVM.ConstNamedStruct(CheezTypeToLLVMType(t), new LLVMValueRef[] {
                         LLVM.ConstPointerNull(LLVM.Int8Type().GetPointerTo()),
@@ -607,7 +607,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         var strType = CheezTypeToLLVMType(str);
                         foreach (var v in impl.Trait.Declaration.Variables)
                         {
-                            var mem = str.Declaration.Members.First(m => m.Name.Name == v.Name.Name);
+                            var mem = str.Declaration.Members.First(m => m.Name == v.Name.Name);
                             var offset = LLVM.OffsetOfElement(targetData, strType, (uint)mem.Index);
                             var index = vtableIndices[v];
                             functions[index] = LLVM.ConstInt(LLVM.Int64Type(), offset, false);

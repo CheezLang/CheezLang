@@ -12,7 +12,7 @@ STACK_SIZE_PARAM_IS_A_RESERVATION : DWORD : 0x00010000
 
 PFD_MAIN_PLANE            : u8    : 0
 PFD_OVERLAY_PLANE         : u8    : 1
-PFD_UNDERLAY_PLANE        : u8    : (-1)
+PFD_UNDERLAY_PLANE        : u8    : u8.max
 
 PFD_TYPE_RGBA             : u8    : 0
 PFD_TYPE_COLORINDEX       : u8    : 1

@@ -296,6 +296,7 @@ namespace Cheez
                     s is AstVariableDecl ||
                     s is AstTypeAliasDecl ||
                     s is AstTraitDeclaration ||
+                    s is AstConstantDeclaration ||
                     s is AstUsingStmt)
                 {
                     s.SourceFile = file;

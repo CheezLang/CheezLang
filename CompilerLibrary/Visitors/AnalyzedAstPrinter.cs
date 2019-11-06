@@ -172,6 +172,47 @@ namespace Cheez.Visitors
             return v;
         }
 
+        public override string VisitStructTypeExpr(AstStructTypeExpr str, int data = 0)
+        {
+            if (str.IsPolymorphic)
+            {
+                var body = string.Join("\n", str.Declarations.Select(m => m.Accept(this)));
+                var head = $"struct ";
+
+                head += "(";
+                head += string.Join(", ", str.Parameters.Select(p => $"{p.Name.Accept(this)}: {p.Type}"));
+                head += ")";
+
+                var sb = new StringBuilder();
+                sb.Append($"{head} {{\n{body.Indent(4)}\n}}");
+
+                // polies
+                if (str.PolymorphicInstances?.Count > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"// Polymorphic instances for {head}");
+                    foreach (var pi in str.PolymorphicInstances)
+                    {
+                        var args = string.Join(", ", pi.Parameters.Select(p => $"{p.Name.Accept(this)} = {p.Value}"));
+                        sb.AppendLine($"// {args}".Indent(4));
+                        sb.AppendLine(pi.Accept(this).Indent(4));
+                    }
+                }
+
+                return sb.ToString();
+            }
+            else
+            {
+                var body = string.Join("\n", str.Declarations.Select(m => m.Accept(this)));
+                var head = $"struct ";
+
+                var sb = new StringBuilder();
+                sb.Append($"{head} {{ // size: {str.StructType?.Size}, alignment: {str.StructType?.Alignment}\n{body.Indent(4)}\n}}");
+
+                return sb.ToString();
+            }
+        }
+
         public override string VisitStructDecl(AstStructDecl str, int data = 0)
         {
             if (str.IsPolymorphic)
@@ -336,6 +377,19 @@ namespace Cheez.Visitors
 
                 return $"{header} {{\n{body.Indent(4)}\n}}";
             }
+        }
+
+        public override string VisitConstantDeclaration(AstConstantDeclaration decl, int data = 0)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(decl.Pattern.Accept(this));
+            sb.Append($" : {decl.Type}");
+
+            sb.Append(" : ");
+            sb.Append(decl.Initializer.Accept(this));
+            sb.Append(" = ");
+            sb.Append(decl.Initializer.Value);
+            return sb.ToString();
         }
 
         public override string VisitVariableDecl(AstVariableDecl variable, int indentLevel = 0)

@@ -2,6 +2,7 @@
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
+using Cheez.Extras;
 using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
@@ -14,6 +15,71 @@ namespace Cheez
 {
     public partial class Workspace
     {
+        private void ResolveDeclarations(Scope scope, List<AstStatement> statements)
+        {
+            // handle constant declarations
+            {
+                var constants = statements.Where(c => c is AstConstantDeclaration).Select(c => c as AstConstantDeclaration).ToList();
+                foreach (var con in constants)
+                {
+                    con.Scope = scope;
+                    scope.DefineSymbol(con);
+                }
+                foreach (var con in constants)
+                {
+                    if (con.TypeExpr != null)
+                        CollectTypeDependencies(con, con.TypeExpr, DependencyKind.Type);
+                    CollectTypeDependencies(con, con.Initializer, DependencyKind.Value);
+                }
+
+                ResolveMissingTypesOfConstantDeclarations(scope, constants);
+            }
+
+            // sort all declarations into different lists
+            InsertDeclarationsIntoScope(scope, statements);
+
+            // go through all type declarations (structs, traits, enums, typedefs) and define them in the scope
+            // go through all constant declarations and define them in the scope
+            DefineTypeDeclarations(scope);
+
+            // go through all type declarations again and build the dependencies
+            BuildDependencies(scope);
+
+            // check for cyclic dependencies and resolve types of typedefs and constant variables
+            ResolveMissingTypesOfDeclarations(scope);
+
+            // compute types of struct members, enum members, trait members
+            ComputeTypeMembers(scope);
+
+            // resolve impls (check if is polymorphic, setup scopes, check for self params in functions, etc.)
+            foreach (var impl in scope.Impls)
+            {
+                if (impl.TraitExpr == null)
+                    Pass3Impl(impl);
+                else
+                    Pass3TraitImpl(impl);
+            }
+
+            // go through all type declarations and connect impls to types
+            UpdateTypeImplMap(GlobalScope);
+
+
+            // handle uses
+            foreach (var use in scope.Uses)
+            {
+                AnalyseUseStatement(use);
+            }
+
+            // check initializers of non-constant variables declarations
+            CheckInitializersOfNonConstantVars(scope);
+
+            // resolve function bodies
+            ResolveFunctionBodies(scope);
+
+            // compute struct members of remaining structs
+            foreach (var s in allStructTypes)
+                ComputeStructMembers(s);
+        }
         private class TypeImplList
         {
             public HashSet<AstImplBlock> impls;
@@ -309,49 +375,7 @@ namespace Cheez
             }
         }
 
-        private void ResolveDeclarations(Scope scope, List<AstStatement> statements)
-        {
-            // sort all declarations into different lists
-            InsertDeclarationsIntoScope(scope, statements);
-
-            // go through all type declarations (structs, traits, enums, typedefs) and define them in the scope
-            // go through all constant declarations and define them in the scope
-            DefineTypeDeclarations(scope);
-
-            // go through all type declarations again and build the dependencies
-            BuildDependencies(scope);
-
-            // check for cyclic dependencies and resolve types of typedefs and constant variables
-            ResolveMissingTypesOfDeclarations(scope);
-
-            // compute types of struct members, enum members, trait members
-            ComputeTypeMembers(scope);
-
-            // resolve impls (check if is polymorphic, setup scopes, check for self params in functions, etc.)
-            foreach (var impl in scope.Impls)
-            {
-                if (impl.TraitExpr == null)
-                    Pass3Impl(impl);
-                else
-                    Pass3TraitImpl(impl);
-            }
-
-            // go through all type declarations and connect impls to types
-            UpdateTypeImplMap(GlobalScope);
-
-
-            // handle uses
-            foreach (var use in scope.Uses)
-            {
-                AnalyseUseStatement(use);
-            }
-
-            // check initializers of non-constant variables declarations
-            CheckInitializersOfNonConstantVars(scope);
-
-            // resolve function bodies
-            ResolveFunctionBodies(scope);
-        }
+        
 
         private void ResolveFunctionBodies(Scope scope)
         {
@@ -506,6 +530,35 @@ namespace Cheez
 
             switch (decl)
             {
+                case AstConstantDeclaration c:
+                    {
+                        if (c.TypeExpr != null)
+                        {
+                            c.TypeExpr.AttachTo(c);
+                            c.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
+                            c.TypeExpr = ResolveType(c.TypeExpr, newPolyDecls, out var t);
+                            c.Type = t;
+                        }
+
+                        c.Initializer.AttachTo(c);
+                        c.Initializer = InferType(c.Initializer, c.Type);
+
+                        if (c.Type == null)
+                            c.Type = c.Initializer.Type;
+                        else
+                            c.Initializer = CheckType(c.Initializer, c.Type);
+
+                        if (!c.Initializer.IsCompTimeValue)
+                        {
+                            ReportError(c.Initializer, $"Value of constant declaration must be constant");
+                            break;
+                        }
+                        c.Value = c.Initializer.Value;
+
+                        CheckValueRangeForType(c.Type, c.Value, c.Initializer);
+                        break;
+                    }
+
                 case AstVariableDecl v:
                     {
                         CheezType type = null;
@@ -652,6 +705,21 @@ namespace Cheez
             greySet.Remove(decl);
         }
 
+        private void ResolveMissingTypesOfConstantDeclarations(Scope scope, List<AstConstantDeclaration> decls)
+        {
+            var whiteSet = new HashSet<AstDecl>();
+            var greySet = new HashSet<AstDecl>();
+            var chain = new Dictionary<AstDecl, AstDecl>();
+
+            whiteSet.UnionWith(decls);
+
+            while (whiteSet.Count > 0)
+            {
+                var x = whiteSet.First();
+                ResolveMissingTypesOfDeclarationsHelper(scope, x, whiteSet, greySet, chain);
+            }
+        }
+
         private void ResolveMissingTypesOfDeclarations(Scope scope)
         {
             var whiteSet = new HashSet<AstDecl>();
@@ -760,6 +828,12 @@ namespace Cheez
 
                 switch (decl)
                 {
+                    case AstConstantDeclaration d:
+                        {
+
+                            break;
+                        }
+
                     case AstUsingStmt use:
                         {
                             scope.Uses.Add(use);

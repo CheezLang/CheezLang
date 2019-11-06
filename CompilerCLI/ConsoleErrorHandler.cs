@@ -1,4 +1,4 @@
-﻿//#define PRINT_SRC_LOCATION
+﻿#define PRINT_SRC_LOCATION
 
 using System;
 using System.Collections.Generic;
@@ -94,7 +94,9 @@ namespace CheezCLI
                         var detailText = TextProvider.GetText(d.location);
 
                         Log($"{d.location.Beginning}: ", ConsoleColor.White);
-                        PrintLocation(detailText, d.location, linesBefore: 0, highlightColor: ConsoleColor.Green);
+
+                        if (DoPrintLocation)
+                            PrintLocation(detailText, d.location, linesBefore: 0, highlightColor: ConsoleColor.Green);
                     }
                 }
             }
