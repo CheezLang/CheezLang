@@ -1,10 +1,11 @@
-﻿using System;
+﻿//#define PRINT_SRC_LOCATION
+
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Cheez;
 using Cheez.Ast;
-using Cheez.Parsing;
 
 namespace CheezCLI
 {
@@ -16,6 +17,14 @@ namespace CheezCLI
 
         public int LinesBeforeError { get; set; } = 1;
         public int LinesAfterError { get; set; } = 1;
+        public bool DoPrintLocation { get; set; } = true;
+
+        public ConsoleErrorHandler(int linesBeforeError, int linesAfterError, bool printLocation)
+        {
+            this.LinesBeforeError = linesBeforeError;
+            this.LinesAfterError = linesAfterError;
+            this.DoPrintLocation = printLocation;
+        }
 
         public void ReportError(string text, ILocation location, string message, List<Error> subErrors, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
@@ -33,7 +42,7 @@ namespace CheezCLI
         public void ReportError(string message, [CallerFilePath] string callingFunctionFile = "", [CallerMemberName] string callingFunctionName = "", [CallerLineNumber] int callLineNumber = 0)
         {
             HasErrors = true;
-#if DEBUG
+#if DEBUG && PRINT_SRC_LOCATION
             Log($"{callingFunctionFile}:{callLineNumber} - {callingFunctionName}()", ConsoleColor.DarkYellow);
 #endif
 
@@ -44,7 +53,7 @@ namespace CheezCLI
         {
             HasErrors = true;
 
-#if DEBUG
+#if DEBUG && PRINT_SRC_LOCATION
             Log($"{error.File}:{error.LineNumber} - {error.Function}()", ConsoleColor.DarkYellow);
 #endif
 
@@ -59,7 +68,8 @@ namespace CheezCLI
                 LogInline($"{beginning}: ", ConsoleColor.White);
                 Log(error.Message, ConsoleColor.Red);
 
-                PrintLocation(text, error.Location, linesBefore: LinesBeforeError, linesAfter: LinesAfterError);
+                if (DoPrintLocation)
+                    PrintLocation(text, error.Location, linesBefore: LinesBeforeError, linesAfter: LinesAfterError);
             }
             else
             {
@@ -88,8 +98,6 @@ namespace CheezCLI
                     }
                 }
             }
-
-            Console.Error.WriteLine();
 
             if (error.SubErrors?.Count > 0)
             {

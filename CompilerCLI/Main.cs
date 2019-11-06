@@ -79,6 +79,9 @@ namespace CheezCLI
 
         [Option("trace-stack", Default = false, HelpText = "Enable stacktrace (potentially big impact on performance): --trace-stack")]
         public bool EnableStackTrace { get; set; }
+
+        [Option("error-source", Default = false, HelpText = "When reporting an error, print the the line which contains the error")]
+        public bool PrintSourceInErrorMessage { get; set; }
     }
 
     class Prog
@@ -162,7 +165,7 @@ namespace CheezCLI
 
             Console.WriteLine(Parser.Default.FormatCommandLine(options));
 
-            IErrorHandler errorHandler = new ConsoleErrorHandler();
+            IErrorHandler errorHandler = new ConsoleErrorHandler(0, 0, options.PrintSourceInErrorMessage);
             if (options.NoErrors)
             {
                 errorHandler = new SilentErrorHandler();
