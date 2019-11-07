@@ -33,6 +33,7 @@ namespace Cheez
                     return t.Members.Any(m => SizeOfTypeDependsOnSelfType(m.type));
 
                 case EnumType en:
+                    ComputeEnumMembers(en.Declaration);
                     return en.Declaration.Members.Any(m => m.AssociatedType != null ? SizeOfTypeDependsOnSelfType(m.AssociatedType) : false);
 
                 case ArrayType t:

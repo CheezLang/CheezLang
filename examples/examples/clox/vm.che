@@ -1,7 +1,7 @@
 #load("object")
 #load("compiler")
 
-enum InterpretResult {
+InterpretResult :: enum {
     Ok
     CompileError
     RuntimeError

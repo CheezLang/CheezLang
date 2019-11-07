@@ -163,7 +163,7 @@ namespace Cheez.Types
             }
             else if (a is EnumType ea && b is EnumType eb)
             {
-                if (ea.Declaration.Name.Name != eb.Declaration.Name.Name)
+                if (ea.Declaration.Name != eb.Declaration.Name)
                     return false;
                 if (ea.Arguments.Length != eb.Arguments.Length)
                     return false;

@@ -74,6 +74,7 @@ namespace Cheez
 
                     case EnumType e:
                         {
+                            ComputeEnumMembers(e.Declaration);
                             // @todo: force compute member types
                             var (tagSize, tagAlign) = ComputeSizeAndAlignmentOfType(e.Declaration.TagType, path);
 
@@ -83,7 +84,7 @@ namespace Cheez
 
                             foreach (var m in e.Declaration.Members)
                             {
-                                if (m.AssociatedTypeExpr != null)
+                                if (m.AssociatedType != null)
                                 {
                                     var (memberSize, _) = ComputeSizeAndAlignmentOfType(m.AssociatedType, path);
                                     maxMemberSize = Math.Max(maxMemberSize, memberSize);

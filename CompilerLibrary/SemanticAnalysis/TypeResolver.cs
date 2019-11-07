@@ -401,7 +401,7 @@ namespace Cheez
 
         // enum
 
-        private AstEnumDecl InstantiatePolyEnum(AstEnumDecl decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
+        private AstEnumTypeExpr InstantiatePolyEnum(AstEnumTypeExpr decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
         {
             if (args.Count != decl.Parameters.Count)
             {
@@ -412,7 +412,7 @@ namespace Cheez
                 return null;
             }
 
-            AstEnumDecl instance = null;
+            AstEnumTypeExpr instance = null;
 
             // check if instance already exists
             foreach (var pi in decl.PolymorphicInstances)
@@ -441,12 +441,13 @@ namespace Cheez
             // instatiate type
             if (instance == null)
             {
-                instance = decl.Clone() as AstEnumDecl;
-                instance.SubScope = new Scope($"enum {decl.Name.Name}<poly>", instance.Scope);
+                instance = decl.Clone() as AstEnumTypeExpr;
+                instance.SubScope = new Scope($"enum {decl.Name}<poly>", instance.Scope);
                 instance.IsPolyInstance = true;
-                instance.IsPolymorphic = false;
+                instance._isPolymorphic = false;
                 instance.Template = decl;
                 decl.PolymorphicInstances.Add(instance);
+                instance.Name = decl.Name;
 
                 Debug.Assert(instance.Parameters.Count == args.Count);
 
@@ -461,14 +462,16 @@ namespace Cheez
                     instance.SubScope.DefineTypeSymbol(param.Name.Name, param.Value as CheezType);
                 }
 
-                instance.Type = new EnumType(instance);
+                instance = InferType(instance, null) as AstEnumTypeExpr;
 
-                if (instances != null)
-                    instances.Add(instance);
-                else
-                {
-                    ResolveTypeDeclaration(instance);
-                }
+                //instance.Type = new EnumType(instance);
+
+                //if (instances != null)
+                //    instances.Add(instance);
+                //else
+                //{
+                //    ResolveTypeDeclaration(instance);
+                //}
             }
 
             return instance;
@@ -484,7 +487,7 @@ namespace Cheez
             if (@enum.EnumType != null)
             {
                 // regular enum (not poly)
-                @enum.EnumType.TagType = @enum.TagType;
+                //@enum.TagType = @enum.TagType;
             }
 
             foreach (var p in @enum.Parameters)

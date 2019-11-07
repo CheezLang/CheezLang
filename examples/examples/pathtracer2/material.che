@@ -7,7 +7,7 @@ MaterialRecord :: struct {
     scattered : Ray
 }
 
-enum Scatter {
+Scatter :: enum {
     ColorReflection: MaterialRecord
     Reflection: Ray
     Color: vec3

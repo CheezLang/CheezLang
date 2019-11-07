@@ -61,7 +61,7 @@ fn is_binary_digit(c: char) -> bool {
     return c >= '0' and c <= '1'
 }
 
-enum LexerNumberState {
+LexerNumberState :: enum {
     Error
     Init
     Z

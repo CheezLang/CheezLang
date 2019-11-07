@@ -292,7 +292,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             if (decl.Dependencies != null)
             {
-                foreach (var (kind, dep) in decl.Dependencies)
+                foreach (var dep in decl.Dependencies)
                 {
                     if (dep is AstVariableDecl v)
                         InitGlobalVariable(v, visited);

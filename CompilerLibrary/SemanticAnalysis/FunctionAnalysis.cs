@@ -426,10 +426,11 @@ namespace Cheez
                 case EnumType e:
                     {
                         var decl = e.Declaration;
+                        ComputeEnumMembers(decl);
                         foreach (var m in decl.Members)
                         {
                             var eve = new AstEnumValueExpr(e.Declaration, m);
-                            use.Scope.DefineUse(m.Name.Name, eve, true, out var u);
+                            use.Scope.DefineUse(m.Name, eve, true, out var u);
                         }
                         break;
                     }
@@ -437,10 +438,11 @@ namespace Cheez
                 case GenericEnumType e:
                     {
                         var decl = e.Declaration;
+                        ComputeEnumMembers(decl);
                         foreach (var m in decl.Members)
                         {
                             var eve = new AstEnumValueExpr(decl, m);
-                            use.Scope.DefineUse(m.Name.Name, eve, true, out var u);
+                            use.Scope.DefineUse(m.Name, eve, true, out var u);
                         }
                         break;
                     }

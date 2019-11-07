@@ -1,5 +1,5 @@
 // OS
-enum Platform {
+Platform :: enum {
     Unknown
     Windows
     Linux
@@ -28,12 +28,12 @@ impl Memory {
 }
 
 // option and result
-enum Option(T: type) {
+Option :: enum(T: type) #copy(T) {
     Some : T
     None
 }
 
-enum Result(V: type, E: type) {
+Result :: enum(V: type, E: type) #copy(V, E) {
     Ok  : V
     Err : E
 }

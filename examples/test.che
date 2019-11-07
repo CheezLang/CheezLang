@@ -1,13 +1,13 @@
 // #load("examples/trait_function_call_performance")
-#load("examples/graphyfier/graphyfier")
+// #load("examples/graphyfier/graphyfier")
 // #load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
-// #load("examples/pathtracer")
+// #load("examples/pathtracer") // buggy
 // #load("examples/snake/snake")
 
-// #load("tests/language/allocator2")
+// #load("tests/language/match3")
 // #load("tests/library/all_include")
 // #load("tests/other/test1")
 // #load("examples/project_euler/005_smallest_multiple")
@@ -22,7 +22,7 @@ Foo :: struct {
 BYTE :: u8
 
 Bar :: enum #base_type(BYTE) {
-    SIZE :: 5
+    SIZE :: 123
     A
     B
     C : int

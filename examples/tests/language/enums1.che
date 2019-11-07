@@ -21,7 +21,7 @@ fn try_sqrt(f: double) -> Result[double, string] {
     }
 }
 
-enum Test {
+Test :: enum {
     A
     B
     C

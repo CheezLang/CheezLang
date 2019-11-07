@@ -234,19 +234,22 @@ namespace Cheez.Types.Complex
 
     public class EnumType : CheezType
     {
-        public AstEnumDecl Declaration { get; set; }
+        public AstEnumTypeExpr Declaration { get; set; }
+        //public AstEnumDecl Declaration { get; set; }
 
         //public Dictionary<string, long> Members { get; private set; }
         public CheezType[] Arguments { get; }
-        public IntType TagType { get; set; }
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
         public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
 
-        public AstEnumDecl DeclarationTemplate => Declaration.Template ?? Declaration;
+        public AstEnumTypeExpr DeclarationTemplate => Declaration.Template ?? Declaration;
 
-        public EnumType(AstEnumDecl en, CheezType[] args = null) : base(false)
+        public override bool IsCopy { get; }
+
+        public EnumType(AstEnumTypeExpr en, bool isCopy, CheezType[] args = null) : base(false)
         {
             Declaration = en;
+            IsCopy = isCopy;
             Arguments = args ?? en.Parameters.Select(p => p.Value as CheezType).ToArray();
         }
 
@@ -255,9 +258,9 @@ namespace Cheez.Types.Complex
             if (Arguments?.Length > 0)
             {
                 var args = string.Join(", ", Arguments.Select(a => a.ToString()));
-                return $"{Declaration.Name.Name}[{args}]";
+                return $"{Declaration.Name}[{args}]";
             }
-            return $"{Declaration.Name.Name}";
+            return $"{Declaration.Name}";
         }
 
         public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)

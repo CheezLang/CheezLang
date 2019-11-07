@@ -28,8 +28,8 @@ namespace Cheez
                 foreach (var con in constants)
                 {
                     if (con.TypeExpr != null)
-                        CollectTypeDependencies(con, con.TypeExpr, DependencyKind.Type);
-                    CollectTypeDependencies(con, con.Initializer, DependencyKind.Value);
+                        CollectTypeDependencies(con, con.TypeExpr);
+                    CollectTypeDependencies(con, con.Initializer);
                 }
 
                 ResolveMissingTypesOfConstantDeclarations(scope, constants);
@@ -515,7 +515,7 @@ namespace Cheez
             whiteSet.Remove(decl);
             greySet.Add(decl);
 
-            foreach (var (kind, dep) in decl.Dependencies)
+            foreach (var dep in decl.Dependencies)
             {
                 if (greySet.Contains(dep))
                 {
@@ -756,7 +756,7 @@ namespace Cheez
             {
                 foreach (var param in @struct.Parameters)
                 {
-                    CollectTypeDependencies(@struct, param.TypeExpr, DependencyKind.Type);
+                    CollectTypeDependencies(@struct, param.TypeExpr);
                 }
             }
 
@@ -764,7 +764,7 @@ namespace Cheez
             {
                 foreach (var param in @enum.Parameters)
                 {
-                    CollectTypeDependencies(@enum, param.TypeExpr, DependencyKind.Type);
+                    CollectTypeDependencies(@enum, param.TypeExpr);
                 }
             }
 
@@ -772,31 +772,31 @@ namespace Cheez
             {
                 foreach (var param in @trait.Parameters)
                 {
-                    CollectTypeDependencies(@trait, param.TypeExpr, DependencyKind.Type);
+                    CollectTypeDependencies(@trait, param.TypeExpr);
                 }
             }
 
             foreach (var typedef in scope.Typedefs)
             {
-                CollectTypeDependencies(typedef, typedef.TypeExpr, DependencyKind.Type);
+                CollectTypeDependencies(typedef, typedef.TypeExpr);
             }
 
             foreach (var @var in scope.Variables)
             {
-                CollectTypeDependencies(@var, @var.TypeExpr, DependencyKind.Type);
-                CollectTypeDependencies(@var, @var.Initializer, DependencyKind.Value);
+                CollectTypeDependencies(@var, @var.TypeExpr);
+                CollectTypeDependencies(@var, @var.Initializer);
                 //PrintDependencies(@var);
             }
 
             foreach (var func in scope.Functions)
             {
                 if (func.ReturnTypeExpr != null)
-                    CollectTypeDependencies(func, func.ReturnTypeExpr.TypeExpr, DependencyKind.Type);
+                    CollectTypeDependencies(func, func.ReturnTypeExpr.TypeExpr);
                 foreach (var p in func.Parameters)
                 {
-                    CollectTypeDependencies(func, p.TypeExpr, DependencyKind.Type);
+                    CollectTypeDependencies(func, p.TypeExpr);
                     if (p.DefaultValue != null)
-                        CollectTypeDependencies(func, p.DefaultValue, DependencyKind.Value);
+                        CollectTypeDependencies(func, p.DefaultValue);
                 }
                 //PrintDependencies(func);
             }
@@ -807,16 +807,12 @@ namespace Cheez
             Console.WriteLine($"Dependencies of {decl.Name.Name}");
             foreach (var d in decl.Dependencies)
             {
-                Console.WriteLine($"    {d.kind}: {d.decl.Name.Name}");
+                Console.WriteLine($"    {d.Name.Name}");
             }
         }
 
         private void DefineTypeDeclarations(Scope scope)
         {
-            foreach (var @struct in scope.StructDeclarations)
-                Pass1StructDeclaration(@struct);
-            foreach (var @enum in scope.EnumDeclarations)
-                Pass1EnumDeclaration(@enum);
             foreach (var @trait in scope.TraitDeclarations)
                 Pass1TraitDeclaration(@trait);
             foreach (var @typedef in scope.Typedefs)

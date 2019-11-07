@@ -6,7 +6,7 @@ Stmt :: struct {
     concrete    : StmtType
 }
 
-enum StmtType {
+StmtType :: enum {
     FunctionDecl    : FunctionDecl
 }
 

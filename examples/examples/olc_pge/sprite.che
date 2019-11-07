@@ -8,7 +8,7 @@ Sprite :: struct {
     data: &Pixel = null
 }
 
-enum SpriteMode {
+SpriteMode :: enum {
     Normal,
     Periodic
 }

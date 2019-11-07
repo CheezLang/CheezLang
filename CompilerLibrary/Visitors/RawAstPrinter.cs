@@ -360,8 +360,8 @@ namespace Cheez.Visitors
         public override string VisitEnumValueExpr(AstEnumValueExpr expr, int data = 0)
         {
             if (expr.Argument != null)
-                return $"{expr.Type}.{expr.Member.Name.Name}({expr.Argument.Accept(this)})";
-            return $"{expr.Type}.{expr.Member.Name.Name}";
+                return $"{expr.Type}.{expr.Member.Name}({expr.Argument.Accept(this)})";
+            return $"{expr.Type}.{expr.Member.Name}";
         }
 
         public string VisitMatchCase(AstMatchCase c)

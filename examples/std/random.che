@@ -38,11 +38,7 @@ impl PseudoRandomGen for LinearCongruentialGenerator {
     }
 }
 
-lcg : LinearCongruentialGenerator = {
-    a := LinearCongruentialGenerator.create(cast get_time_microseconds())
-    for : 1000 { a.next() }
-    a
-}
+lcg : &LinearCongruentialGenerator = null
 
 trait PseudoRandomGen {
     fn next_u32(ref Self) -> u32;
@@ -52,6 +48,12 @@ trait PseudoRandomGen {
 PseudoRandom :: struct {}
 
 impl PseudoRandom {
+    fn init() {
+        lcg = alloc(LinearCongruentialGenerator)
+        <<lcg = LinearCongruentialGenerator.create(cast get_time_microseconds())
+        for : 0..1000 { lcg.next() }
+    }
+
     fn next_int() -> i32 {
         return cast lcg.next()
     }
@@ -127,7 +129,7 @@ NormalDistribution :: struct {
 
 impl NormalDistribution {
     fn create(mean: double, sigma: double) -> Self {
-        return NormalDistribution(mean, sigma, StandardContinuousUniform[LinearCongruentialGenerator](&lcg))
+        return NormalDistribution(mean, sigma, StandardContinuousUniform[LinearCongruentialGenerator](lcg))
     }
 }
 

@@ -1,4 +1,4 @@
-enum TokenKind {
+TokenKind :: enum {
     // Single-character tokens.
     LeftParen, RightParen,
     LeftBrace, RightBrace,

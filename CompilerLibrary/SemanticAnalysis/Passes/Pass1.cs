@@ -174,34 +174,34 @@ namespace Cheez
             }
         }
 
-        private void Pass1EnumDeclaration(AstEnumDecl @enum)
-        {
-            if (@enum.Parameters?.Count > 0)
-            {
-                @enum.IsPolymorphic = true;
-                @enum.Type = new GenericEnumType(@enum, @enum.Name.Name);
+        //private void Pass1EnumDeclaration(AstEnumDecl @enum)
+        //{
+        //    if (@enum.Parameters?.Count > 0)
+        //    {
+        //        @enum.IsPolymorphic = true;
+        //        @enum.Type = new GenericEnumType(@enum, @enum.Name.Name);
 
-                foreach (var p in @enum.Parameters)
-                {
-                    p.Scope = @enum.Scope;
-                    p.TypeExpr.Scope = @enum.Scope;
-                }
-            }
-            else
-            {
-                @enum.Type = new EnumType(@enum);
-            }
-            @enum.SubScope = new Scope($"enum {@enum.Name.Name}", @enum.Scope);
+        //        foreach (var p in @enum.Parameters)
+        //        {
+        //            p.Scope = @enum.Scope;
+        //            p.TypeExpr.Scope = @enum.Scope;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        @enum.Type = new EnumType(@enum);
+        //    }
+        //    @enum.SubScope = new Scope($"enum {@enum.Name.Name}", @enum.Scope);
 
 
-            var res = @enum.Scope.DefineDeclaration(@enum);
-            if (!res.ok)
-            {
-                (string, ILocation)? detail = null;
-                if (res.other != null) detail = ("Other declaration here:", res.other);
-                ReportError(@enum.Name, $"A symbol with name '{@enum.Name.Name}' already exists in current scope", detail);
-            }
-        }
+        //    var res = @enum.Scope.DefineDeclaration(@enum);
+        //    if (!res.ok)
+        //    {
+        //        (string, ILocation)? detail = null;
+        //        if (res.other != null) detail = ("Other declaration here:", res.other);
+        //        ReportError(@enum.Name, $"A symbol with name '{@enum.Name.Name}' already exists in current scope", detail);
+        //    }
+        //}
 
         private void Pass1Impl(AstImplBlock impl)
         {
@@ -214,41 +214,41 @@ namespace Cheez
             }
         }
 
-        private void Pass1StructDeclaration(AstStructDecl @struct)
-        {
-            ReportError(@struct, $"Not supported anymore, please use new syntax");
-            return;
+        //private void Pass1StructDeclaration(AstStructDecl @struct)
+        //{
+        //    ReportError(@struct, $"Not supported anymore, please use new syntax");
+        //    return;
 
-            if (@struct.HasDirective("copy"))
-            {
-                @struct.SetFlag(StmtFlags.IsCopy);
-            }
+        //    if (@struct.HasDirective("copy"))
+        //    {
+        //        @struct.SetFlag(StmtFlags.IsCopy);
+        //    }
 
-            if (@struct.Parameters.Count > 0)
-            {
-                @struct.IsPolymorphic = true;
-                //@struct.Type = new GenericStructType(@struct);
+        //    if (@struct.Parameters.Count > 0)
+        //    {
+        //        @struct.IsPolymorphic = true;
+        //        //@struct.Type = new GenericStructType(@struct);
 
-                foreach (var p in @struct.Parameters)
-                {
-                    p.Scope = @struct.Scope;
-                    p.TypeExpr.Scope = @struct.Scope;
-                }
-            }
-            else
-            {
-                //@struct.Type = new StructType(@struct);
-            }
-            @struct.SubScope = new Scope($"struct {@struct.Name.Name}", @struct.Scope);
+        //        foreach (var p in @struct.Parameters)
+        //        {
+        //            p.Scope = @struct.Scope;
+        //            p.TypeExpr.Scope = @struct.Scope;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        //@struct.Type = new StructType(@struct);
+        //    }
+        //    @struct.SubScope = new Scope($"struct {@struct.Name.Name}", @struct.Scope);
 
-            var res = @struct.Scope.DefineDeclaration(@struct);
-            if (!res.ok)
-            {
-                (string, ILocation)? detail = null;
-                if (res.other != null) detail = ("Other declaration here:", res.other);
-                ReportError(@struct.Name, $"A symbol with name '{@struct.Name.Name}' already exists in current scope", detail);
-            }
-        }
+        //    var res = @struct.Scope.DefineDeclaration(@struct);
+        //    if (!res.ok)
+        //    {
+        //        (string, ILocation)? detail = null;
+        //        if (res.other != null) detail = ("Other declaration here:", res.other);
+        //        ReportError(@struct.Name, $"A symbol with name '{@struct.Name.Name}' already exists in current scope", detail);
+        //    }
+        //}
 
         private void Pass1Typedef(AstTypeAliasDecl alias)
         {

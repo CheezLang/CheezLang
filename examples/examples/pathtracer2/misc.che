@@ -8,7 +8,7 @@ fn create_object($T: type, val: $V) -> T {
 
 vec3 :: Vector3[real]
 
-global_random : MTwister = MTwister.create(0)
+global_random : &MTwister = null
 
 Random :: MTwister
 

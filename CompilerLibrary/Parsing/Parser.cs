@@ -2096,6 +2096,11 @@ namespace Cheez.Parsing
                 {
                     SkipNewlines();
                 }
+                else if (next.type == TokenType.Comma)
+                {
+                    NextToken();
+                    SkipNewlines();
+                }
                 else if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
                 {
                     break;

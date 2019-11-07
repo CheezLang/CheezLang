@@ -92,6 +92,7 @@ namespace Cheez
             if (type is EnumType @enum)
             {
                 // check if any member needs desctructor
+                ComputeEnumMembers(@enum.Declaration);
                 foreach (var mem in @enum.Declaration.Members)
                 {
                     if (mem.AssociatedType != null && TypeHasDestructor(mem.AssociatedType))

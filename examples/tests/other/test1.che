@@ -8,10 +8,10 @@ S2 :: struct(T: TYPE) {
     next: &S2[T]
 }
 
-enum E1 {
+E1 :: enum {
     t
 }
-enum E2(T: TYPE) {
+E2 :: enum(T: TYPE) {
     t: T
     next: &E2[T]
 }

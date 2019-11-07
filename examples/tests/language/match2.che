@@ -20,23 +20,23 @@ Test.C
 Test.D
 Test.E
 Test.F
-Test.D
+Test.G
 Test.H")
 
 #load("std:io/io")
 #load("std:util")
 
-enum OptionInt {
+OptionInt :: enum #copy {
     Some : i64
     None
 }
 
-enum Test {
-    A = 10
+Test :: enum {
+    A = 11
     B
     C = 3
-    D = 7
-    E = 5
+    D = 5
+    E = 7
     F
     G
     H

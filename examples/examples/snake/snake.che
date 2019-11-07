@@ -7,7 +7,7 @@
 
 #load("quad")
 
-enum Direction {
+Direction :: enum {
     None
     Up
     Right

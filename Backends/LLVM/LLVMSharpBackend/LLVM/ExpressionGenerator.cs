@@ -291,7 +291,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var v = CreateLocalVariable(eve.Type);
 
             var ptr = builder.CreateStructGEP(v, 0, "");
-            var val = GenerateExpression(eve.Member.Value, true);
+            var val = LLVM.ConstInt(CheezTypeToLLVMType(eve.EnumDecl.TagType), eve.Member.Value.ToUlong(), false);
             builder.CreateStore(val, ptr);
 
             if (eve.Argument != null)
@@ -441,7 +441,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case AstEnumValueExpr e:
                     {
-                        var tag = LLVM.ConstInt(LLVM.Int64Type(), ((NumberData)e.Member.Value.Value).ToUlong(), true);
+                        var tag = LLVM.ConstInt(LLVM.Int64Type(), e.Member.Value.ToUlong(), true);
 
                         var valueTagPtr = builder.CreateStructGEP(value, 0, "");
                         var valueTag = builder.CreateLoad(valueTagPtr, "");
@@ -636,7 +636,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 var v = GenerateExpression(cast.SubExpression, true);
                 var tag = builder.CreateExtractValue(v, 0, "");
-                return CreateIntCast(i3, e.TagType, tag);
+                return CreateIntCast(i3, e.Declaration.TagType, tag);
             }
 
             if (to is BoolType && from is FunctionType)
@@ -1483,7 +1483,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case EnumType @enum:
                     {
                         var memName = expr.Right.Name;
-                        var mem = @enum.Declaration.Members.FirstOrDefault(m => m.Name.Name == memName);
+                        var mem = @enum.Declaration.Members.FirstOrDefault(m => m.Name == memName);
 
                         var assType = CheezTypeToLLVMType(mem.AssociatedTypeExpr.Value as CheezType);
 

@@ -1,5 +1,6 @@
 ﻿using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
+using Cheez.Extras;
 using Cheez.Types;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
@@ -9,21 +10,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 
 namespace Cheez.Ast.Statements
 {
-    public enum DependencyKind
-    {
-        Type,
-        Value
-    }
-
     public abstract class AstDecl : AstStatement, ISymbol
     {
         public AstIdExpr Name { get; set; }
         public CheezType Type { get; set; }
 
-        public HashSet<(DependencyKind kind, AstDecl decl)> Dependencies { get; set; } = new HashSet<(DependencyKind, AstDecl)>();
+        public HashSet<AstDecl> Dependencies { get; set; } = new HashSet<AstDecl>();
 
         public AstDecl(AstIdExpr name, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
         {
@@ -340,17 +336,17 @@ namespace Cheez.Ast.Statements
 
         public AstVariableDecl Decl { get; }
         public string Name => Decl.Name.Name;
-        public CheezType Type => Decl.Type;
+        public CheezType AssociatedType => Decl.Type;
+        public AstExpression AssociatedTypeExpr => Decl.TypeExpr;
         public ILocation Location => Decl.Location;
         public int Index { get; }
-        public object Value { get; }
+        public NumberData Value { get; set; }
 
 
-        public AstEnumMemberNew(AstVariableDecl decl, int index, object value)
+        public AstEnumMemberNew(AstVariableDecl decl, int index)
         {
             this.Decl = decl;
             this.Index = index;
-            this.Value = value;
         }
     }
 
@@ -362,6 +358,7 @@ namespace Cheez.Ast.Statements
         public List<AstEnumMemberNew> Members { get; set; }
 
         public EnumType EnumType => Value as EnumType;
+        public IntType TagType { get; set; }
 
         public AstEnumTypeExpr Template { get; set; } = null;
 
@@ -376,6 +373,8 @@ namespace Cheez.Ast.Statements
 
         public List<TraitType> Traits { get; } = new List<TraitType>();
         public List<AstDirective> Directives { get; protected set; }
+
+        public bool MembersComputed { get; set; } = false;
 
         public AstEnumTypeExpr(List<AstParameter> param, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
             : base(Location)

@@ -23,7 +23,10 @@ Ray :: struct {
     direction: Vec3
 }
 
-DistanceShaderPair :: (distance: double, shader: Shader)
+DistanceShaderPair :: struct {
+    distance : double
+    shader   : Shader
+}
 
 ////////////////////////////////// SDF //////////////////////////////////////////////
 
@@ -39,7 +42,7 @@ Sphere :: struct {
 
 impl SDF for Sphere {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
-        return (v.mag() - radius, shader)
+        return DistanceShaderPair(v.mag() - radius, shader)
     }
 }
 
@@ -50,7 +53,7 @@ PlaneY :: struct {
 
 impl SDF for PlaneY {
     fn distance(ref Self, v: Vec3) -> DistanceShaderPair {
-        return (v.y - location, shader)
+        return DistanceShaderPair(v.y - location, shader)
     }
 }
 
@@ -97,7 +100,7 @@ impl SDF for Cube {
             d = fmax(dx, fmax(dy, dz))
         }
 
-        return (d, shader)
+        return DistanceShaderPair(d, shader)
     }
 }
 

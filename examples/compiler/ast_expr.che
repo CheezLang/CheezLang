@@ -7,7 +7,7 @@ Expr :: struct {
     concrete    : ExprType
 }
 
-enum ExprType {
+ExprType :: enum {
     Id      : IdExpr
     Number  : NumberExpr
 }

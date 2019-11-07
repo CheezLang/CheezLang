@@ -94,8 +94,7 @@ namespace Cheez.Types.Abstract
         public AstStructTypeExpr Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
-
-        public bool IsCopy { get; }
+        public override bool IsCopy { get; }
         public string Name { get; }
 
         public GenericStructType(AstStructTypeExpr decl, bool copy, string name)
@@ -109,12 +108,12 @@ namespace Cheez.Types.Abstract
 
     public class GenericEnumType : CheezType
     {
-        public AstEnumDecl Declaration { get; }
+        public AstEnumTypeExpr Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
         public string Name { get; }
 
-        public GenericEnumType(AstEnumDecl decl, string name)
+        public GenericEnumType(AstEnumTypeExpr decl, string name)
             : base(0, 1, false)
         {
             Declaration = decl;

@@ -2,7 +2,7 @@
 #load("lexer")
 
 
-enum Precedence {
+Precedence :: enum {
     None
     Assignment
     Or
@@ -35,7 +35,7 @@ Upvalue :: struct {
     is_local: bool
 }
 
-enum FunctionType {
+FunctionType :: enum {
     Function
     Initializer
     Method

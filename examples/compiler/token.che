@@ -18,7 +18,7 @@ Token :: struct #copy {
     data    : TokenData
 }
 
-enum TokenData {
+TokenData :: enum #copy {
     None
     String  : string
     Integer : int
@@ -125,7 +125,7 @@ impl Printable for TokenType {
     }
 }
 
-enum TokenType {
+TokenType :: enum #copy {
     Unknown
 
     NewLine

@@ -1,6 +1,6 @@
 // cant use reference in match when matching in a tuple
 
-enum Foo {
+Foo :: enum {
     A
     B
 }

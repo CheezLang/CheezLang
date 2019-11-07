@@ -15,15 +15,15 @@ namespace Cheez.Ast.Expressions
 
         public bool IsComplete => !(Member.AssociatedTypeExpr != null && Argument == null);
         
-        public AstEnumDecl EnumDecl { get; set; }
-        public AstEnumMember Member { get; set; }
+        public AstEnumTypeExpr EnumDecl { get; set; }
+        public AstEnumMemberNew Member { get; set; }
         public AstExpression Argument { get; set; }
 
-        public AstEnumValueExpr(AstEnumDecl ed, AstEnumMember member, AstExpression arg = null, ILocation loc = null)
+        public AstEnumValueExpr(AstEnumTypeExpr ed, AstEnumMemberNew member, AstExpression arg = null, ILocation loc = null)
             : base(loc)
         {
             Member = member;
-            Type = ed.Type;
+            Type = ed.EnumType;
             Argument = arg;
             EnumDecl = ed;
         }

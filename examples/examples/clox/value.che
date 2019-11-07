@@ -1,4 +1,4 @@
-enum Value {
+Value :: enum {
     Nil
     Bool    : bool
     Num     : double

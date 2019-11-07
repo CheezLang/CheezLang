@@ -23,11 +23,9 @@ impl Printable for Pixel {
     }
 }
 
-enum PixelMode {
+PixelMode :: enum #copy {
     Normal
     Mask
     Alpha
     Custom
 }
-
-WHITE : Pixel = Pixel.rgba(255, 255, 255)

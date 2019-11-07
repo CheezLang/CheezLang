@@ -27,19 +27,25 @@ max_depth : int = 15
 scenes : []fn(ref Camera) -> Hittable = [simple_light, cornell_box, basic_scene, random_scene, big_scene]
 scene: int : 4
 
-file_write_mutex : Mutex = Mutex.create()
+file_write_mutex : &Mutex = null
 
 RenderContext :: struct {
     id    : int
     min   : Vector2[int]
     max   : Vector2[int]
-    image       : []double
+    image : []double
     world : Hittable
     cam   : ref Camera
     random: Random
 }
 
 fn Main() {
+    file_write_mutex = alloc(Mutex)
+    <<file_write_mutex = Mutex.create()
+
+    global_random = alloc(MTwister)
+    <<global_random = MTwister.create(0)
+
     c_srand(c_time(null))
 
     println(if use_bhv then "bhv enabled" else "bhv disabled")

@@ -389,22 +389,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         var llvmType = LLVM.StructCreateNamed(context, $"enum.{e}");
 
-                        if (e.Declaration.HasAssociatedTypes)
-                        {
-                            var restSize = e.GetSize() - e.TagType.GetSize();
+                        //if (e.Declaration.HasAssociatedTypes)
+                        //{
+                            var restSize = e.GetSize() - e.Declaration.TagType.GetSize();
                             llvmType.StructSetBody(new LLVMTypeRef[]
                             {
-                                CheezTypeToLLVMType(e.TagType),
+                                CheezTypeToLLVMType(e.Declaration.TagType),
                                 LLVM.ArrayType(LLVM.Int8Type(), (uint)restSize)
                             }, false);
-                        }
-                        else
-                        {
-                            llvmType.StructSetBody(new LLVMTypeRef[]
-                            {
-                                CheezTypeToLLVMType(e.TagType)
-                            }, false);
-                        }
+                        //}
+                        //else
+                        //{
+                        //    llvmType.StructSetBody(new LLVMTypeRef[]
+                        //    {
+                        //        CheezTypeToLLVMType(e.TagType)
+                        //    }, false);
+                        //}
 
                         return llvmType;
                     }

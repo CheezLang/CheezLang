@@ -275,54 +275,83 @@ namespace Cheez
             }
         }
 
-        //private void ComputeEnumMembers(AstEnumTypeExpr expr)
-        //{
-        //    if (expr.Members != null)
-        //        return;
+        private void ComputeTypeMembers(CheezType type)
+        {
+            switch (type)
+            {
+                case StructType s:
+                    ComputeStructMembers(s.Declaration);
+                    break;
+                case EnumType e:
+                    ComputeEnumMembers(e.Declaration);
+                    break;
+            }
+        }
 
-        //    expr.Members = new List<AstEnumMemberNew>();
-        //    foreach (var decl in expr.Declarations)
-        //    {
-        //        if (decl is AstVariableDecl mem)
-        //        {
-        //            if (!(mem.Pattern is AstIdExpr memName))
-        //            {
-        //                ReportError(mem.Pattern, $"Only single names allowed");
-        //                continue;
-        //            }
+        private void ComputeEnumMembers(AstEnumTypeExpr expr)
+        {
+            if (expr.MembersComputed)
+                return;
+            expr.MembersComputed = true;
 
-        //            if (mem.TypeExpr != null)
-        //            {
-        //                mem.TypeExpr.AttachTo(mem);
-        //                mem.TypeExpr = ResolveTypeNow(mem.TypeExpr, out var t);
-        //                mem.Type = t;
+            BigInteger value = 0;
+            var usedValues = new HashSet<BigInteger>();
 
-        //                // @todo: check if type is valid as enum member, eg no void
-        //            }
+            foreach (var mem in expr.Members)
+            {
+                var memDecl = mem.Decl;
 
-        //            if (mem.Initializer != null)
-        //            {
-        //                mem.Initializer.AttachTo(mem);
-        //                mem.Initializer = InferType(mem.Initializer, mem.Type);
+                if (!(memDecl.Pattern is AstIdExpr memName))
+                {
+                    ReportError(memDecl.Pattern, $"Only single names allowed");
+                    continue;
+                }
 
-        //                if (mem.Type == null)
-        //                    mem.Type = mem.Initializer.Type;
-        //                else
-        //                    mem.Initializer = CheckType(mem.Initializer, mem.Type);
-        //            }
+                if (memDecl.TypeExpr != null)
+                {
+                    memDecl.TypeExpr.AttachTo(memDecl);
+                    memDecl.TypeExpr = ResolveTypeNow(memDecl.TypeExpr, out var t);
+                    memDecl.Type = t;
 
-        //            if (expr.StructType.IsCopy && !mem.Type.IsCopy)
-        //            {
-        //                ReportError(mem, "Member is not copyable");
-        //            }
+                    // @todo: check if type is valid as enum member, eg no void
+                }
 
-        //            expr.Members.Add(new AstStructMemberNew(mem, true, false, expr.Members.Count));
+                if (memDecl.Initializer != null)
+                {
+                    memDecl.Initializer.AttachTo(memDecl);
+                    memDecl.Initializer = InferType(memDecl.Initializer, expr.TagType);
+                    memDecl.Initializer = CheckType(memDecl.Initializer, expr.TagType);
 
-        //            if (mem.Type is StructType s)
-        //                ComputeStructMembers(s.Declaration);
-        //        }
-        //    }
-        //}
+                    if (memDecl.Initializer.Type is IntType i)
+                    {
+                        if (memDecl.Initializer.IsCompTimeValue)
+                        {
+                            value = ((NumberData)memDecl.Initializer.Value).IntValue;
+                            CheckValueRangeForType(i, memDecl.Initializer.Value, memDecl.Initializer);
+                        }
+                        else
+                        {
+                            ReportError(memDecl.Initializer, $"Value of enum member has to be an constant integer");
+                        }
+                    }
+                }
+
+                if (!expr.IsPolymorphic && expr.EnumType.IsCopy && (!memDecl.Type?.IsCopy ?? false))
+                {
+                    ReportError(memDecl, "Member is not copyable");
+                }
+
+                if (usedValues.Contains(value))
+                    ReportError(memDecl, $"Member has value {value} which is already being used by another member");
+                usedValues.Add(value);
+
+                if (memDecl.Type != null)
+                    ComputeTypeMembers(memDecl.Type);
+                mem.Value = NumberData.FromBigInt(value);
+
+                value += 1;
+            }
+        }
 
         private AstExpression InferTypeEnumTypeExpr(AstEnumTypeExpr expr)
         {
@@ -337,13 +366,24 @@ namespace Cheez
                     expr.Name = c.Name.Name;
             }
 
-            bool isCopy = expr.HasDirective("copy");
+            bool isCopy = false;
+            if (!expr.IsPolymorphic && expr.TryGetDirective("copy", out var d))
+            {
+                isCopy = true;
+                foreach (var arg in d.Arguments)
+                {
+                    arg.AttachTo(expr, expr.SubScope);
+                    ResolveTypeNow(arg, out var t);
+                    isCopy &= t.IsCopy;
+                }
+            }
 
-            if (expr.TryGetDirective("base_type", out var bt))
+            expr.TagType = IntType.GetIntType(8, false);
+            if (expr.TryGetDirective("tag_type", out var bt))
             {
                 if (bt.Arguments.Count != 1)
                 {
-                    ReportError(bt, $"#base_type requires one argument");
+                    ReportError(bt, $"#tag_type requires one argument");
                 }
                 else
                 {
@@ -359,7 +399,7 @@ namespace Cheez
                         }
                         else if (arg.Value is IntType i)
                         {
-                            Console.WriteLine($"Enum {expr.Name} has #base_type {i}");
+                            expr.TagType = i;
                         }
                         else
                         {
@@ -367,6 +407,22 @@ namespace Cheez
                         }
                     }
 
+                }
+            }
+
+            // setup scopes and separate members
+            expr.Members = new List<AstEnumMemberNew>();
+            foreach (var decl in expr.Declarations)
+            {
+                decl.Scope = expr.SubScope;
+
+                switch (decl)
+                {
+                    case AstConstantDeclaration con:
+                        break;
+                    case AstVariableDecl mem:
+                        expr.Members.Add(new AstEnumMemberNew(mem, expr.Members.Count));
+                        break;
                 }
             }
 
@@ -381,18 +437,17 @@ namespace Cheez
                     p.Type = t;
 
                     ValidatePolymorphicParameterType(p, p.Type);
+
+                    expr.SubScope.DefineTypeSymbol(p.Name.Name, new PolyType(p.Name.Name, true));
                 }
 
                 expr.Type = CheezType.Type;
-                expr.Value = CheezType.Void;
-                //expr.Value = new GenericEnumType(expr);
+                expr.Value = new GenericEnumType(expr, expr.Name);
                 return expr;
             }
 
             foreach (var decl in expr.Declarations)
             {
-                decl.Scope = expr.SubScope;
-
                 if (decl is AstConstantDeclaration con)
                 {
                     AnalyseConstantDeclaration(con);
@@ -400,8 +455,7 @@ namespace Cheez
             }
 
             expr.Type = CheezType.Type;
-            expr.Value = CheezType.Void;
-            //expr.Value = new EnumType(expr, isCopy, expr.Name);
+            expr.Value = new EnumType(expr, isCopy);
             return expr;
         }
 
@@ -449,8 +503,7 @@ namespace Cheez
 
                     expr.Members.Add(new AstStructMemberNew(mem, true, false, expr.Members.Count));
 
-                    if (mem.Type is StructType s)
-                        ComputeStructMembers(s.Declaration);
+                    ComputeTypeMembers(mem.Type);
                 }
             }
         }
@@ -481,6 +534,8 @@ namespace Cheez
                     p.Type = t;
 
                     ValidatePolymorphicParameterType(p, p.Type);
+
+                    expr.SubScope.DefineTypeSymbol(p.Name.Name, new PolyType(p.Name.Name, true));
                 }
 
                 expr.Type = CheezType.Type;
@@ -669,12 +724,13 @@ namespace Cheez
                 expr.Argument = InferType(expr.Argument, at);
                 ConvertLiteralTypeToDefaultType(expr.Argument, at);
 
-                if (expr.EnumDecl.Type is GenericEnumType g)
+                if (expr.EnumDecl.Value is GenericEnumType g)
                 {
                     if (expected is EnumType enumType && enumType.DeclarationTemplate == g.Declaration)
                     {
+                        ComputeEnumMembers(enumType.Declaration);
                         expr.EnumDecl = enumType.Declaration;
-                        expr.Member = enumType.Declaration.Members.First(m => m.Name.Name == expr.Member.Name.Name);
+                        expr.Member = enumType.Declaration.Members.First(m => m.Name == expr.Member.Name);
                         at = expr.Member.AssociatedTypeExpr.Value as CheezType;
                     }
                     else
@@ -699,8 +755,9 @@ namespace Cheez
                             var instance = InstantiatePolyEnum(g.Declaration, args, context.newPolyDeclarations, expr.Location);
                             if (instance != null)
                             {
+                                ComputeEnumMembers(instance);
                                 expr.EnumDecl = instance;
-                                expr.Member = instance.Members.First(m => m.Name.Name == expr.Member.Name.Name);
+                                expr.Member = instance.Members.First(m => m.Name == expr.Member.Name);
                                 at = expr.Member.AssociatedTypeExpr.Value as CheezType;
                             }
                         }
@@ -726,12 +783,13 @@ namespace Cheez
                     return expr;
                 }
 
-                if (expr.EnumDecl.Type is GenericEnumType g)
+                if (expr.EnumDecl.Value is GenericEnumType g)
                 {
                     if (expected is EnumType enumType && enumType.DeclarationTemplate == g.Declaration)
                     {
+                        ComputeEnumMembers(enumType.Declaration);
                         expr.EnumDecl = enumType.Declaration;
-                        expr.Member = enumType.Declaration.Members.First(m => m.Name.Name == expr.Member.Name.Name);
+                        expr.Member = enumType.Declaration.Members.First(m => m.Name == expr.Member.Name);
                     }
                     else if (expr.IsComplete)
                     {
@@ -741,7 +799,7 @@ namespace Cheez
                 }
             }
 
-            expr.Type = expr.EnumDecl.Type;
+            expr.Type = expr.EnumDecl.Value as CheezType;
 
             return expr;
         }
@@ -967,7 +1025,7 @@ namespace Cheez
                             if (call.Arguments.Count == 1)
                             { 
                                 e.Argument = call.Arguments[0].Expr;
-                                AstExpression sub = new AstDotExpr(value, new AstIdExpr(e.Member.Name.Name, false, call.Location), call.Location);
+                                AstExpression sub = new AstDotExpr(value, new AstIdExpr(e.Member.Name, false, call.Location), call.Location);
                                 sub.AttachTo(value);
                                 sub.SetFlag(ExprFlags.ValueRequired, pattern.GetFlag(ExprFlags.ValueRequired));
                                 sub = InferType(sub, null);
@@ -2251,11 +2309,6 @@ namespace Cheez
 
                         var type = (CheezType)arg.Value;
 
-                        if (type is StructType s)
-                        {
-                            ComputeStructMembers(s.Declaration);
-                        }
-
                         var num = new AstNumberExpr(GetSizeOfType(type), Location: expr.Location);
                         num.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                         return InferTypeHelper(num, null, context);
@@ -2843,8 +2896,9 @@ namespace Cheez
 
                 case EnumType @enum:
                     {
+                        ComputeEnumMembers(@enum.Declaration);
                         var memName = expr.Right.Name;
-                        var mem = @enum.Declaration.Members.FirstOrDefault(m => m.Name.Name == memName);
+                        var mem = @enum.Declaration.Members.FirstOrDefault(m => m.Name == memName);
 
                         if (mem == null)
                         {
@@ -2922,7 +2976,6 @@ namespace Cheez
                             return GetImplFunctions(expr, s, name, context);
                         }
 
-                        ComputeStructMembers(s.Declaration);
                         var member = s.Declaration.Members[index];
 
                         // check wether we have private access to this struct
@@ -2991,12 +3044,13 @@ namespace Cheez
                             break;
 
                         if (type is EnumType @enum) {
-                            var m = @enum.Declaration.Members.Find(m => m.Name.Name == expr.Right.Name);
+                            ComputeEnumMembers(@enum.Declaration);
+                            var m = @enum.Declaration.Members.Find(m => m.Name == expr.Right.Name);
                             if (m != null)
                             {
                                 expr.Type = @enum;
 
-                                var mem = @enum.Declaration.Members.First(x => x.Name.Name == expr.Right.Name);
+                                var mem = @enum.Declaration.Members.First(x => x.Name == expr.Right.Name);
                                 var eve = new AstEnumValueExpr(@enum.Declaration, mem, loc: expr.Location);
                                 eve.Replace(expr);
                                 return eve;
@@ -3113,8 +3167,7 @@ namespace Cheez
             if (typeMembers == expr.Values.Count)
             {
                 foreach (var m in members)
-                    if (m.type is StructType s)
-                        ComputeStructMembers(s.Declaration);
+                    ComputeTypeMembers(m.type);
 
                 expr.Type = CheezType.Type;
                 expr.Value = TupleType.GetTuple(members);
@@ -3363,7 +3416,7 @@ namespace Cheez
                 if (anyArgIsPoly)
                 {
                     expr.Type = CheezType.Type;
-                    expr.Value = new EnumType(@enum.Declaration, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
+                    expr.Value = new EnumType(@enum.Declaration, true, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
                     return expr;
                 }
 
@@ -3371,7 +3424,7 @@ namespace Cheez
                 var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
                 var instance = InstantiatePolyEnum(@enum.Declaration, args, context.newPolyDeclarations, expr);
                 expr.Type = CheezType.Type;
-                expr.Value = instance?.Type ?? CheezType.Error;
+                expr.Value = instance.EnumType ?? CheezType.Error;
 
                 // this causes impls to be calculated for this type if not done yet
                 //if (instance.Type != null)

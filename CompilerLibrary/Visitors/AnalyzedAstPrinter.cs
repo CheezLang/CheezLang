@@ -567,13 +567,13 @@ namespace Cheez.Visitors
             return sb.ToString();
         }
 
-        public string VisitEnumMember(AstEnumMember m)
+        public string VisitEnumMember(AstEnumMemberNew m)
         {
-            var str = m.Name.Accept(this);
+            var str = m.Name;
             if (m.AssociatedTypeExpr != null)
                 str += " : " + m.AssociatedTypeExpr.Value;
             if (m.Value != null)
-                str += " = " + m.Value.Accept(this);
+                str += " = " + m.Value;
             return str;
         }
 
@@ -587,49 +587,13 @@ namespace Cheez.Visitors
             return str;
         }
 
-        public override string VisitEnumDecl(AstEnumDecl en, int data = 0)
-        {
-            if (en.IsPolymorphic)
-            {
-                var body = string.Join("\n", en.Members.Select(m => VisitEnumMember(m)));
-                var head = $"enum {en.Name.Accept(this)}";
-
-                head += "(";
-                head += string.Join(", ", en.Parameters.Select(p => p.Accept(this)));
-                head += ")";
-
-                var sb = new StringBuilder();
-                sb.Append($"{head} {{\n{body.Indent(4)}\n}}");
-
-                // polies
-                if (en.PolymorphicInstances?.Count > 0)
-                {
-                    sb.AppendLine();
-                    sb.AppendLine($"// Polymorphic instances for {head}");
-                    foreach (var pi in en.PolymorphicInstances)
-                    {
-                        var args = string.Join(", ", pi.Parameters.Select(p => $"{p.Name.Accept(this)} = {p.Value}"));
-                        sb.AppendLine($"// {args}".Indent(4));
-                        sb.AppendLine(pi.Accept(this).Indent(4));
-                    }
-                }
-
-                return sb.ToString();
-            }
-            else
-            {
-                var body = string.Join("\n", en.Members.Select(m => VisitEnumMember(m)));
-                var head = $"enum {en.Name.Accept(this)}";
-                return $"{head} {{ // size: {en.Type?.GetSize()}, alignment: {en.Type?.GetAlignment()}\n{body.Indent(4)}\n}}";
-            }
-        }
-
         public override string VisitEnumTypeExpr(AstEnumTypeExpr en, int data = 0)
         {
             if (en.IsPolymorphic)
             {
-                var body = string.Join("\n", en.Declarations.Select(m => m.Accept(this)));
-                var head = $"enum";
+                var bodyStrings = en.Declarations.Where(d => d is AstConstantDeclaration).Select(m => m.Accept(this)).Concat(en.Members.Select(m => VisitEnumMember(m)));
+                var body = string.Join("\n", bodyStrings);
+                var head = $"enum<{en.TagType}>";
 
                 head += "(";
                 head += string.Join(", ", en.Parameters.Select(p => p.Accept(this)));
@@ -655,8 +619,9 @@ namespace Cheez.Visitors
             }
             else
             {
-                var body = string.Join("\n", en.Declarations.Select(m => m.Accept(this)));
-                var head = $"enum";
+                var bodyStrings = en.Declarations.Where(d => d is AstConstantDeclaration).Select(m => m.Accept(this)).Concat(en.Members.Select(m => VisitEnumMember(m)));
+                var body = string.Join("\n", bodyStrings);
+                var head = $"enum<{en.TagType}>";
                 return $"{head} {{ // size: {en.Type?.GetSize()}, alignment: {en.Type?.GetAlignment()}\n{body.Indent(4)}\n}}";
             }
         }
@@ -747,8 +712,8 @@ namespace Cheez.Visitors
         public override string VisitEnumValueExpr(AstEnumValueExpr expr, int data = 0)
         {
             if (expr.Argument != null)
-                return $"{expr.Type}.{expr.Member.Name.Name}({expr.Argument.Accept(this)})";
-            return $"{expr.Type}.{expr.Member.Name.Name}";
+                return $"{expr.Type}.{expr.Member.Name}({expr.Argument.Accept(this)})";
+            return $"{expr.Type}.{expr.Member.Name}";
         }
 
         private string VisitMatchCase(AstMatchCase c)
