@@ -461,18 +461,18 @@ namespace Cheez.Parsing
             {
                 NextToken();
                 var init = ParseExpression(allowCommaTuple);
-                return new AstVariableDecl(expr, typeExpr, init, false, isNewSyntax: true, Location: new Location(expr.Beginning, init.End));
+                return new AstVariableDecl(expr, typeExpr, init, Location: new Location(expr.Beginning, init.End));
             }
 
             // variable declaration without initializer
             if (CheckToken(TokenType.NewLine))
             {
-                return new AstVariableDecl(expr, typeExpr, null, false, isNewSyntax: true, Location: new Location(expr.Beginning, typeExpr.End));
+                return new AstVariableDecl(expr, typeExpr, null, Location: new Location(expr.Beginning, typeExpr.End));
             }
 
             //
             ReportError(PeekToken().location, $"Unexpected token. Expected ':' or '=' or '\\n'");
-            return new AstVariableDecl(expr, typeExpr, null, false, true, Location: expr);
+            return new AstVariableDecl(expr, typeExpr, null, Location: expr);
         }
 
         private AstVariableDecl ParseVariableDeclaration(AstExpression expr)
@@ -490,7 +490,7 @@ namespace Cheez.Parsing
             // variable declaration
             ConsumeUntil(TokenType.Equal, ErrMsg("=", "in variable declaration"));
             var init = ParseExpression(false);
-            return new AstVariableDecl(expr, typeExpr, init, false, isNewSyntax: true, Location: new Location(expr.Beginning, init.End));
+            return new AstVariableDecl(expr, typeExpr, init, Location: new Location(expr.Beginning, init.End));
         }
 
         private AstStatement ParseTraitDeclaration()
@@ -2044,6 +2044,74 @@ namespace Cheez.Parsing
             return new AstStructTypeExpr(parameters, declarations, directives, new Location(beg, end));
         }
 
+        private AstExpression ParseEnumTypeExpression()
+        {
+            TokenLocation beg = null, end = null;
+            var declarations = new List<AstDecl>();
+            var directives = new List<AstDirective>();
+            List<AstParameter> parameters = null;
+
+            beg = Consume(TokenType.KwEnum, ErrMsg("keyword 'enum'", "at beginning of enum type")).location;
+
+            if (CheckToken(TokenType.OpenParen))
+                parameters = ParseParameterList(out var _, out var _);
+
+            while (CheckToken(TokenType.HashIdentifier))
+            {
+                var dir = ParseDirective();
+                if (dir != null)
+                    directives.Add(dir);
+            }
+
+            ConsumeUntil(TokenType.OpenBrace, ErrMsg("{", "at beginning of enum body"));
+
+            SkipNewlines();
+            while (true)
+            {
+                var next = PeekToken();
+                if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
+                    break;
+
+                var name = ParseIdentifierExpr();
+                AstDecl declaration = null;
+                if (CheckToken(TokenType.Colon))
+                {
+                    declaration = ParseDeclaration(name, true);
+                }
+                else if (CheckToken(TokenType.Equal))
+                {
+                    NextToken();
+                    var value = ParseExpression(false);
+                    declaration = new AstVariableDecl(name, null, value, Location: new Location(name.Beginning, value.End));
+                }
+                else
+                {
+                    declaration = new AstVariableDecl(name, null, null, Location: name.Location);
+                }
+
+                declarations.Add(declaration);
+
+                next = PeekToken();
+                if (next.type == TokenType.NewLine)
+                {
+                    SkipNewlines();
+                }
+                else if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
+                {
+                    break;
+                }
+                else
+                {
+                    NextToken();
+                    ReportError(next.location, $"Unexpected token {next} after enum member");
+                }
+            }
+
+            end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of enum declaration")).location;
+
+            return new AstEnumTypeExpr(parameters, declarations, directives, new Location(beg, end));
+        }
+
         private AstExpression ParseAtomicExpression(bool allowCommaForTuple, ErrorMessageResolver errorMessage)
         {
             var token = PeekToken();
@@ -2186,9 +2254,10 @@ namespace Cheez.Parsing
                     }
 
                 case TokenType.KwStruct:
-                    {
-                        return ParseStructTypeExpression();
-                    }
+                    return ParseStructTypeExpression();
+
+                case TokenType.KwEnum:
+                    return ParseEnumTypeExpression();
 
                 default:
                     //NextToken();

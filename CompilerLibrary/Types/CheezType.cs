@@ -28,36 +28,39 @@ namespace Cheez.Types
         public virtual bool IsComptimeOnly { get; } = false;
 
         private int Size = -1;
-        private int Alignment = 0;
+        private int Alignment = -1;
         private bool? IsDefaultConstructable;
 
-        private static List<CheezType> allTypes = new List<CheezType>();
-        public static IEnumerable<CheezType> AllTypes => allTypes;
+        private static List<CheezType> typesWithMissingProperties = new List<CheezType>();
+        public static IEnumerable<CheezType> TypesWithMissingProperties => typesWithMissingProperties;
 
         protected CheezType(int size, int align, bool hasDefault)
         {
+            if (size < 0 || align < 0)
+                throw new ArgumentOutOfRangeException();
             Size = size;
             Alignment = align;
             IsDefaultConstructable = hasDefault;
-            allTypes.Add(this);
         }
 
         protected CheezType(int size, int align)
         {
+            if (size < 0 || align < 0)
+                throw new ArgumentOutOfRangeException();
             Size = size;
             Alignment = align;
-            allTypes.Add(this);
+            typesWithMissingProperties.Add(this);
         }
 
         protected CheezType(bool hasDefault)
         {
             IsDefaultConstructable = hasDefault;
-            allTypes.Add(this);
+            typesWithMissingProperties.Add(this);
         }
 
         protected CheezType()
         {
-            allTypes.Add(this);
+            typesWithMissingProperties.Add(this);
         }
 
         public int GetSize() => Size;
@@ -91,7 +94,7 @@ namespace Cheez.Types
 
         internal static void ClearAllTypes()
         {
-            allTypes = new List<CheezType>();
+            typesWithMissingProperties = new List<CheezType>();
         }
 
         //public override bool Equals(object obj)

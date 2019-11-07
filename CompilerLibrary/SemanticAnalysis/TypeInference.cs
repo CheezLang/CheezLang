@@ -144,6 +144,9 @@ namespace Cheez
 
             switch (expr)
             {
+                case AstEnumTypeExpr e:
+                    return InferTypeEnumTypeExpr(e);
+
                 case AstStructTypeExpr s:
                     return InferTypeStructTypeExpr(s, expected);
 
@@ -272,6 +275,136 @@ namespace Cheez
             }
         }
 
+        //private void ComputeEnumMembers(AstEnumTypeExpr expr)
+        //{
+        //    if (expr.Members != null)
+        //        return;
+
+        //    expr.Members = new List<AstEnumMemberNew>();
+        //    foreach (var decl in expr.Declarations)
+        //    {
+        //        if (decl is AstVariableDecl mem)
+        //        {
+        //            if (!(mem.Pattern is AstIdExpr memName))
+        //            {
+        //                ReportError(mem.Pattern, $"Only single names allowed");
+        //                continue;
+        //            }
+
+        //            if (mem.TypeExpr != null)
+        //            {
+        //                mem.TypeExpr.AttachTo(mem);
+        //                mem.TypeExpr = ResolveTypeNow(mem.TypeExpr, out var t);
+        //                mem.Type = t;
+
+        //                // @todo: check if type is valid as enum member, eg no void
+        //            }
+
+        //            if (mem.Initializer != null)
+        //            {
+        //                mem.Initializer.AttachTo(mem);
+        //                mem.Initializer = InferType(mem.Initializer, mem.Type);
+
+        //                if (mem.Type == null)
+        //                    mem.Type = mem.Initializer.Type;
+        //                else
+        //                    mem.Initializer = CheckType(mem.Initializer, mem.Type);
+        //            }
+
+        //            if (expr.StructType.IsCopy && !mem.Type.IsCopy)
+        //            {
+        //                ReportError(mem, "Member is not copyable");
+        //            }
+
+        //            expr.Members.Add(new AstStructMemberNew(mem, true, false, expr.Members.Count));
+
+        //            if (mem.Type is StructType s)
+        //                ComputeStructMembers(s.Declaration);
+        //        }
+        //    }
+        //}
+
+        private AstExpression InferTypeEnumTypeExpr(AstEnumTypeExpr expr)
+        {
+            if (expr.IsPolyInstance)
+            {
+
+            }
+            else
+            {
+                expr.SubScope = new Scope("enum", expr.Scope);
+                if (expr.Parent is AstConstantDeclaration c)
+                    expr.Name = c.Name.Name;
+            }
+
+            bool isCopy = expr.HasDirective("copy");
+
+            if (expr.TryGetDirective("base_type", out var bt))
+            {
+                if (bt.Arguments.Count != 1)
+                {
+                    ReportError(bt, $"#base_type requires one argument");
+                }
+                else
+                {
+                    var arg = bt.Arguments[0];
+                    arg.AttachTo(expr);
+                    arg = InferType(arg, CheezType.Type);
+
+                    if (!arg.Type.IsErrorType)
+                    {
+                        if (arg.Type != CheezType.Type)
+                        {
+                            ReportError(arg, $"Argument must be an int type");
+                        }
+                        else if (arg.Value is IntType i)
+                        {
+                            Console.WriteLine($"Enum {expr.Name} has #base_type {i}");
+                        }
+                        else
+                        {
+                            ReportError(arg, $"Argument must be an int type");
+                        }
+                    }
+
+                }
+            }
+
+            if (expr.IsPolymorphic)
+            {
+                // @todo
+                foreach (var p in expr.Parameters)
+                {
+                    p.Scope = expr.Scope;
+                    p.TypeExpr.Scope = expr.Scope;
+                    p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
+                    p.Type = t;
+
+                    ValidatePolymorphicParameterType(p, p.Type);
+                }
+
+                expr.Type = CheezType.Type;
+                expr.Value = CheezType.Void;
+                //expr.Value = new GenericEnumType(expr);
+                return expr;
+            }
+
+            foreach (var decl in expr.Declarations)
+            {
+                decl.Scope = expr.SubScope;
+
+                if (decl is AstConstantDeclaration con)
+                {
+                    AnalyseConstantDeclaration(con);
+                }
+            }
+
+            expr.Type = CheezType.Type;
+            expr.Value = CheezType.Void;
+            //expr.Value = new EnumType(expr, isCopy, expr.Name);
+            return expr;
+        }
+
         private void ComputeStructMembers(AstStructTypeExpr expr)
         {
             if (expr.Members != null)
@@ -322,7 +455,6 @@ namespace Cheez
             }
         }
 
-        private List<AstStructTypeExpr> allStructTypes = new List<AstStructTypeExpr>();
         private AstExpression InferTypeStructTypeExpr(AstStructTypeExpr expr, CheezType expected)
         {
             if (expr.IsPolyInstance)
@@ -356,7 +488,6 @@ namespace Cheez
                 return expr;
             }
 
-            allStructTypes.Add(expr);
             foreach (var decl in expr.Declarations)
             {
                 decl.Scope = expr.SubScope;
@@ -1667,17 +1798,16 @@ namespace Cheez
 
                             if (indexParam != null)
                             {
-                                var idx = new AstVariableDecl(
+                                var idx = new AstConstantDeclaration(
                                     indexParam.Name.Clone(),
                                     indexParam.TypeExpr?.Clone(),
                                     new AstNumberExpr(NumberData.FromBigInt(index)),
-                                    true,
                                     Location: indexParam);
                                 stmts.Add(idx);
                             }
                             {
                                 var acc = new AstArrayAccessExpr(tuple.Clone(), new AstNumberExpr(NumberData.FromBigInt(index), Location: param), param);
-                                var init = new AstVariableDecl(param.Name.Clone(), param.TypeExpr?.Clone(), acc, false, Location: param);
+                                var init = new AstVariableDecl(param.Name.Clone(), param.TypeExpr?.Clone(), acc, Location: param);
                                 stmts.Add(init);
                             }
 
@@ -3018,7 +3148,12 @@ namespace Cheez
                     new AstIdExpr("link", false, arg.Location),
                     new List<AstArgument> { arg }, arg.Location);
                 bool isConst = arg.Type.IsComptimeOnly || arg.Expr.Value != null;
-                var varDecl = new AstVariableDecl(param.Name, null, link, isConst, Location: arg.Location);
+
+                AstDecl varDecl = null;
+                if (isConst)
+                    varDecl = new AstConstantDeclaration(param.Name, null, link, Location: arg.Location);
+                else
+                    varDecl = new AstVariableDecl(param.Name, null, link, Location: arg.Location);
                 return varDecl;
             });
             code.Statements.InsertRange(0, links);
@@ -3970,12 +4105,6 @@ namespace Cheez
                 if (var.Type is VarDeclType && !context.is_global)
                 {
                     ReportError(expr, $"Can't use variable '{var.Name}' before it is declared");
-                }
-
-                if (var.Constant)
-                {
-                    expr.IsCompTimeValue = true;
-                    expr.Value = var.Value;
                 }
             }
             else if (sym is AstParameter p)

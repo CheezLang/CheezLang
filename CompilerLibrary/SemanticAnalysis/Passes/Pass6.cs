@@ -109,16 +109,11 @@ namespace Cheez
                     }
                 }
 
-                if (v.Constant && !v.Initializer.IsCompTimeValue)
-                {
-                    ReportError(v.Initializer, $"Initializer must be a constant");
-                }
-
                 if (v.TypeExpr == null)
                     v.Type = v.Initializer.Type;
             }
 
-            if (v.Type.IsComptimeOnly && !v.Constant)
+            if (v.Type.IsComptimeOnly)
                 ReportError(v, $"Variable declaration must be constant because type '{v.Type}' is only available at compile time");
 
             AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);

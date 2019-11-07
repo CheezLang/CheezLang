@@ -111,7 +111,7 @@ namespace Cheez
             if (pattern is AstIdExpr id)
             {
 
-                var decl = new AstSingleVariableDecl(id, type, parent, parent.Constant, pattern);
+                var decl = new AstSingleVariableDecl(id, type, parent, pattern);
                 decl.Scope = parent.Scope;
                 decl.Type = new VarDeclType(decl);
                 decl.SetFlag(StmtFlags.GlobalScope, parent.GetFlag(StmtFlags.GlobalScope));
@@ -179,7 +179,7 @@ namespace Cheez
             if (@enum.Parameters?.Count > 0)
             {
                 @enum.IsPolymorphic = true;
-                @enum.Type = new GenericEnumType(@enum);
+                @enum.Type = new GenericEnumType(@enum, @enum.Name.Name);
 
                 foreach (var p in @enum.Parameters)
                 {

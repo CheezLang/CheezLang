@@ -198,12 +198,7 @@ namespace Cheez.Visitors
             else
                 sb.Append(" :");
 
-            if (variable.Constant)
-            {
-                sb.Append(": ");
-                sb.Append(variable.Initializer.Accept(this));
-            }
-            else if (variable.Initializer != null)
+            if (variable.Initializer != null)
             {
                 sb.Append("= ");
                 sb.Append(variable.Initializer.Accept(this));
@@ -316,6 +311,17 @@ namespace Cheez.Visitors
         {
             var body = string.Join("\n", en.Members.Select(m => VisitEnumMember(m)));
             var head = $"enum {en.Name.Accept(this)}";
+            if (en.Parameters != null)
+            {
+                head += $"({string.Join(", ", en.Parameters.Select(p => p.Accept(this)))})";
+            }
+            return $"{head} {{\n{body.Indent(4)}\n}}";
+        }
+
+        public override string VisitEnumTypeExpr(AstEnumTypeExpr en, int data = 0)
+        {
+            var body = string.Join("\n", en.Declarations.Select(m => m.Accept(this)));
+            var head = $"enum";
             if (en.Parameters != null)
             {
                 head += $"({string.Join(", ", en.Parameters.Select(p => p.Accept(this)))})";

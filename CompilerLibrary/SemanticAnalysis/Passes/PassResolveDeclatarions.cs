@@ -80,11 +80,11 @@ namespace Cheez
 
             while (true)
             {
-                var allTypes = CheezType.AllTypes;
+                var allTypes = CheezType.TypesWithMissingProperties;
                 if (allTypes.Count() == 0)
                     break;
 
-                //Console.WriteLine($"Calculating properties of {allTypes.Count()} types...");
+                Console.WriteLine($"Calculating properties of {allTypes.Count()} types...");
 
                 CheezType.ClearAllTypes();
                 foreach (var type in allTypes)
@@ -436,7 +436,7 @@ namespace Cheez
 
         private void CheckInitializersOfNonConstantVars(Scope scope)
         {
-            foreach (var v in scope.Variables.Where(x => !x.Constant && !x.Type.IsErrorType))
+            foreach (var v in scope.Variables.Where(x => !x.Type.IsErrorType))
             {
                 var type = v.Type;
                 v.Initializer = InferType(v.Initializer, type);
@@ -444,8 +444,6 @@ namespace Cheez
 
                 if (v.Initializer.Type.IsErrorType)
                 {
-                    if (v.Constant && !v.Initializer.IsCompTimeValue)
-                        ReportError(v.Initializer, $"Initializer must be a constant");
                     break;
                 }
 
@@ -458,12 +456,6 @@ namespace Cheez
                 {
                     if (v.Initializer.Type is ReferenceType)
                         v.Initializer = Deref(v.Initializer, null);
-                }
-
-                if (v.Constant && !v.Initializer.IsCompTimeValue)
-                {
-                    ReportError(v.Initializer, $"Initializer must be a constant");
-                    break;
                 }
 
                 AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
@@ -598,11 +590,13 @@ namespace Cheez
 
                         // this must happen later after we computed the types of struct/enum/trait members
                         // except for const variables, compute them now
-                        if (!v.Constant)
-                        {
-                            AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
-                            break;
-                        }
+
+                        // @todo: im confused. i think this shouldn't be here.
+                        //if (!v.Constant)
+                        //{
+                        //    AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
+                        //    break;
+                        //}
 
                         v.Initializer.SetFlag(ExprFlags.ValueRequired, true);
                         v.Initializer = InferType(v.Initializer, type);
@@ -611,8 +605,6 @@ namespace Cheez
                         if (v.Initializer.Type.IsErrorType)
                         {
                             Console.WriteLine(v.Pattern);
-                            if (v.Constant && !v.Initializer.IsCompTimeValue)
-                                ReportError(v.Initializer, $"Initializer must be a constant");
                             break;
                         }
 
@@ -625,12 +617,6 @@ namespace Cheez
                         {
                             if (v.Initializer.Type is ReferenceType)
                                 v.Initializer = Deref(v.Initializer, null);
-                        }
-
-                        if (v.Constant && !v.Initializer.IsCompTimeValue)
-                        {
-                            ReportError(v.Initializer, $"Initializer must be a constant");
-                            break;
                         }
 
                         AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);

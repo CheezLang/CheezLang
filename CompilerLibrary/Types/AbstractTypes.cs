@@ -112,11 +112,13 @@ namespace Cheez.Types.Abstract
         public AstEnumDecl Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
+        public string Name { get; }
 
-        public GenericEnumType(AstEnumDecl decl)
+        public GenericEnumType(AstEnumDecl decl, string name)
             : base(0, 1, false)
         {
             Declaration = decl;
+            Name = name;
         }
     }
 

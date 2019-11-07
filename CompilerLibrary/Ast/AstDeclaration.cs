@@ -334,6 +334,81 @@ namespace Cheez.Ast.Statements
         }
     }
 
+
+    public class AstEnumMemberNew
+    {
+
+        public AstVariableDecl Decl { get; }
+        public string Name => Decl.Name.Name;
+        public CheezType Type => Decl.Type;
+        public ILocation Location => Decl.Location;
+        public int Index { get; }
+        public object Value { get; }
+
+
+        public AstEnumMemberNew(AstVariableDecl decl, int index, object value)
+        {
+            this.Decl = decl;
+            this.Index = index;
+            this.Value = value;
+        }
+    }
+
+    public class AstEnumTypeExpr : AstExpression
+    {
+        public string Name { get; set; } = "#anonymous";
+        public List<AstParameter> Parameters { get; set; }
+        public List<AstDecl> Declarations { get; }
+        public List<AstEnumMemberNew> Members { get; set; }
+
+        public EnumType EnumType => Value as EnumType;
+
+        public AstEnumTypeExpr Template { get; set; } = null;
+
+        public Scope SubScope { get; set; }
+
+        public bool _isPolymorphic { get; set; }
+        public override bool IsPolymorphic => _isPolymorphic;
+
+        public bool IsPolyInstance { get; set; }
+
+        public List<AstEnumTypeExpr> PolymorphicInstances { get; } = new List<AstEnumTypeExpr>();
+
+        public List<TraitType> Traits { get; } = new List<TraitType>();
+        public List<AstDirective> Directives { get; protected set; }
+
+        public AstEnumTypeExpr(List<AstParameter> param, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
+            : base(Location)
+        {
+            this.Parameters = param ?? new List<AstParameter>();
+            this.Declarations = declarations;
+            this._isPolymorphic = Parameters.Count > 0;
+            this.Directives = Directives;
+        }
+
+        [DebuggerStepThrough]
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitEnumTypeExpr(this, data);
+
+        public override AstExpression Clone() => CopyValuesTo(
+            new AstEnumTypeExpr(
+                Parameters.Select(p => p.Clone()).ToList(),
+                Declarations.Select(m => m.Clone() as AstDecl).ToList(),
+                Directives.Select(d => d.Clone()).ToList()));
+
+        public bool HasDirective(string name) => Directives?.Find(d => d.Name.Name == name) != null;
+
+        public AstDirective GetDirective(string name)
+        {
+            return Directives?.FirstOrDefault(d => d.Name.Name == name);
+        }
+
+        public bool TryGetDirective(string name, out AstDirective dir)
+        {
+            dir = Directives?.FirstOrDefault(d => d.Name.Name == name);
+            return dir != null;
+        }
+    }
+
     #endregion
 
     #region Trait
@@ -513,13 +588,10 @@ namespace Cheez.Ast.Statements
 
         public object Value { get; set; } = null;
 
-        public bool Constant { get; set; }
-
-        public AstSingleVariableDecl(AstIdExpr name, AstExpression typeExpr, AstVariableDecl parent, bool isConst, ILocation Location) : base(name, Location: Location)
+        public AstSingleVariableDecl(AstIdExpr name, AstExpression typeExpr, AstVariableDecl parent, ILocation Location) : base(name, Location: Location)
         {
             TypeExpr = typeExpr;
             VarDeclaration = parent;
-            this.Constant = isConst;
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
@@ -544,21 +616,16 @@ namespace Cheez.Ast.Statements
         public AstExpression TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
 
-        public bool Constant { get; set; } = false;
-        public bool IsNewSyntax { get; set; }
-
         public HashSet<AstSingleVariableDecl> VarDependencies { get; set; }
 
         public List<AstSingleVariableDecl> SubDeclarations { get; set; } = new List<AstSingleVariableDecl>();
 
-        public AstVariableDecl(AstExpression pattern, AstExpression typeExpr, AstExpression init, bool isConst, bool isNewSyntax = false, List<AstDirective> Directives = null, ILocation Location = null)
+        public AstVariableDecl(AstExpression pattern, AstExpression typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null)
             : base(pattern is AstIdExpr ? (pattern as AstIdExpr) : (new AstIdExpr(pattern.ToString(), false, pattern.Location)), Directives, Location)
         {
             this.Pattern = pattern;
             this.TypeExpr = typeExpr;
             this.Initializer = init;
-            this.Constant = isConst;
-            this.IsNewSyntax = isNewSyntax;
         }
 
         [DebuggerStepThrough]
@@ -568,9 +635,7 @@ namespace Cheez.Ast.Statements
             => CopyValuesTo(new AstVariableDecl(
                 Pattern.Clone(),
                 TypeExpr?.Clone(),
-                Initializer?.Clone(),
-                Constant,
-                IsNewSyntax));
+                Initializer?.Clone()));
     }
 
     #endregion

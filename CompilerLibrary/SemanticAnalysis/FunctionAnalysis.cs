@@ -332,7 +332,7 @@ namespace Cheez
                         { "it", name }
                     });
 
-                    var varDecl = new AstVariableDecl(name, type, link, false, Location: location);
+                    var varDecl = new AstVariableDecl(name, type, link, Location: location);
                     return varDecl;
                 }
 
