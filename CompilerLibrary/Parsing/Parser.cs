@@ -383,10 +383,6 @@ namespace Cheez.Parsing
                     return ParseWhileStatement();
                 case TokenType.KwFor:
                     return ParseForStatement();
-                case TokenType.KwEnum:
-                    return ParseEnumDeclaration();
-                case TokenType.KwStruct:
-                    return ParseStructDeclaration();
                 case TokenType.KwImpl:
                     return ParseImplBlock();
                 case TokenType.KwTrait:
@@ -498,7 +494,7 @@ namespace Cheez.Parsing
             TokenLocation beg = null, end = null;
             AstIdExpr name = null;
             var functions = new List<AstFunctionDecl>();
-            var variables = new List<AstStructMember>();
+            var variables = new List<AstVariableDecl>();
             var parameters = new List<AstParameter>();
 
             beg = Consume(TokenType.KwTrait, ErrMsg("keyword 'trait'", "at beginning of trait declaration")).location;
@@ -527,11 +523,8 @@ namespace Cheez.Parsing
                 else if (next.type == TokenType.Identifier)
                 {
                     var vname = ParseIdentifierExpr(ErrMsg("identifier"));
-                    SkipNewlines();
-                    Consume(TokenType.Colon, ErrMsg("':'"));
-                    SkipNewlines();
-                    var vtype = ParseExpression(true);
-                    variables.Add(new AstStructMember(vname, vtype, null, new Location(vname.Beginning, vtype.End)));
+                    var v = ParseVariableDeclaration(vname);
+                    variables.Add(v);
                 }
                 SkipNewlines();
             }
@@ -598,84 +591,6 @@ namespace Cheez.Parsing
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of match statement")).location;
 
             return new AstMatchExpr(value, cases, Location: new Location(beg, end));
-        }
-
-        private AstStatement ParseEnumDeclaration()
-        {
-            TokenLocation beginning = null, end = null;
-            AstIdExpr name;
-            var members = new List<AstEnumMember>();
-            List<AstParameter> parameters = null;
-
-            beginning = NextToken().location;
-            SkipNewlines();
-            name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'enum'"));
-
-
-
-            SkipNewlines();
-            if (CheckToken(TokenType.OpenParen))
-            {
-                parameters = ParseParameterList(out var _, out var _);
-                SkipNewlines();
-            }
-
-            Consume(TokenType.OpenBrace, ErrMsg("{", "after name in enum declaration"));
-
-            while (true)
-            {
-                SkipNewlines();
-
-                var next = PeekToken();
-
-                if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
-                    break;
-
-                var memberName = ParseIdentifierExpr(ErrMsg("identifier", "at enum member"));
-                next = PeekToken();
-
-                AstExpression associatedType = null;
-                AstExpression value = null;
-                TokenLocation e = memberName.End;
-
-                next = PeekToken();
-                if (next.type == TokenType.Colon)
-                {
-                    NextToken();
-                    SkipNewlines();
-                    associatedType = ParseExpression(false);
-                    e = associatedType.End;
-                }
-
-                next = PeekToken();
-                if (next.type == TokenType.Equal)
-                {
-                    NextToken();
-                    SkipNewlines();
-                    value = ParseExpression(false);
-                    e = value.End;
-                }
-
-                members.Add(new AstEnumMember(memberName, associatedType, value, new Location(memberName.Location.Beginning, e)));
-
-                next = PeekToken();
-                if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
-                {
-                    NextToken();
-                }
-                else if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
-                {
-                    break;
-                }
-                else
-                {
-                    NextToken();
-                    ReportError(next.location, $"Expected either ',' or '\n' or '}}' after enum member");
-                }
-            }
-
-            end = Consume(TokenType.ClosingBrace, ErrMsg("}")).location;
-            return new AstEnumDecl(name, members, parameters, Location: new Location(beginning, end));
         }
 
         private AstStatement ParseUsingStatement()
@@ -851,104 +766,6 @@ namespace Cheez.Parsing
             end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of parameter list")).location;
 
             return parameters;
-        }
-
-        private AstStructDecl ParseStructDeclaration()
-        {
-            TokenLocation beg = null, end = null;
-            var members = new List<AstStructMember>();
-            var directives = new List<AstDirective>();
-            AstIdExpr name = null;
-            List<AstParameter> parameters = null;
-
-            beg = Consume(TokenType.KwStruct, ErrMsg("keyword 'struct'", "at beginning of struct declaration")).location;
-            SkipNewlines();
-            name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'struct'"));
-            SkipNewlines();
-
-            if (CheckToken(TokenType.OpenParen))
-            {
-                parameters = ParseParameterList(out var _, out var _);
-                SkipNewlines();
-            }
-
-
-            while (CheckToken(TokenType.HashIdentifier))
-            {
-                var dir = ParseDirective();
-                if (dir != null)
-                    directives.Add(dir);
-                SkipNewlines();
-            }
-
-            Consume(TokenType.OpenBrace, ErrMsg("{", "at beginning of struct body"));
-
-            SkipNewlines();
-            while (true)
-            {
-                var next = PeekToken();
-                if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
-                    break;
-
-                TokenLocation memberBeg = null;
-
-                bool pub = false;
-                bool get = false;
-                if (next.type == TokenType.KwPub)
-                {
-                    memberBeg = next.location;
-                    NextToken();
-                    pub = true;
-                    if (CheckToken(TokenType.KwConst))
-                    {
-                        get = true;
-                        NextToken();
-                    }
-                }
-
-                var mName = ParseIdentifierExpr(ErrMsg("identifier", "in struct member"));
-                if (memberBeg == null)
-                    memberBeg = mName.Location.Beginning;
-
-                SkipNewlines();
-                Consume(TokenType.Colon, ErrMsg(":", "after struct member name"));
-                SkipNewlines();
-
-                var mType = ParseExpression(true);
-                AstExpression init = null;
-
-                next = PeekToken();
-                if (next.type == TokenType.Equal)
-                {
-                    NextToken();
-                    init = ParseExpression(true);
-                    next = PeekToken();
-                }
-
-                var memberEnd = init?.End ?? mType.End;
-                var mem = new AstStructMember(mName, mType, init, new Location(memberBeg, memberEnd));
-                mem.IsPublic = pub;
-                mem.IsReadOnly = get;
-                members.Add(mem);
-
-                if (next.type == TokenType.NewLine)
-                {
-                    SkipNewlines();
-                }
-                else if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
-                {
-                    break;
-                }
-                else
-                {
-                    NextToken();
-                    ReportError(next.location, $"Unexpected token {next} at end of struct member");
-                }
-            }
-
-            end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct declaration")).location;
-
-            return new AstStructDecl(name, parameters, members, directives, new Location(beg, end));
         }
 
         private AstImplBlock ParseImplBlock()

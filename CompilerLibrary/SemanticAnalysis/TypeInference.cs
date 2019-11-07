@@ -4170,16 +4170,6 @@ namespace Cheez
                 expr.Type = CheezType.Type;
                 expr.Value = ct.Type;
             }
-            else if (sym is AstStructDecl str)
-            {
-                expr.Type = CheezType.Type;
-                expr.Value = str.Type;
-            }
-            else if (sym is AstEnumDecl @enum)
-            {
-                expr.Type = CheezType.Type;
-                expr.Value = @enum.Type;
-            }
             else if (sym is AstTraitDeclaration trait)
             {
                 expr.Type = CheezType.Type;

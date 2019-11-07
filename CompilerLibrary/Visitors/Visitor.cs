@@ -27,8 +27,6 @@ namespace Cheez.Visitors
         ReturnType VisitConstantDeclaration(AstConstantDeclaration decl, DataType data = default);
         ReturnType VisitFunctionDecl(AstFunctionDecl decl, DataType data = default);
         ReturnType VisitVariableDecl(AstVariableDecl decl, DataType data = default);
-        ReturnType VisitStructDecl(AstStructDecl decl, DataType data = default);
-        ReturnType VisitEnumDecl(AstEnumDecl decl, DataType data = default);
         ReturnType VisitImplDecl(AstImplBlock decl, DataType data = default);
         ReturnType VisitTypeAliasDecl(AstTypeAliasDecl decl, DataType data = default);
         ReturnType VisitTraitDecl(AstTraitDeclaration decl, DataType data = default);
@@ -105,10 +103,8 @@ namespace Cheez.Visitors
         // declarations
         public virtual ReturnType VisitConstantDeclaration(AstConstantDeclaration decl, DataType data = default) => default;
         public virtual ReturnType VisitTypeAliasDecl(AstTypeAliasDecl decl, DataType data = default) => default;
-        public virtual ReturnType VisitEnumDecl(AstEnumDecl decl, DataType data = default) => default;
         public virtual ReturnType VisitTraitDecl(AstTraitDeclaration decl, DataType data = default) => default;
         public virtual ReturnType VisitFunctionDecl(AstFunctionDecl decl, DataType data = default) => default;
-        public virtual ReturnType VisitStructDecl(AstStructDecl decl, DataType data = default) => default;
         public virtual ReturnType VisitVariableDecl(AstVariableDecl decl, DataType data = default) => default;
         public virtual ReturnType VisitImplDecl(AstImplBlock decl, DataType data = default) => default;
 

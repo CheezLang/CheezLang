@@ -4,8 +4,8 @@
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
+#load("examples/snake/snake")
 // #load("examples/pathtracer") // buggy
-// #load("examples/snake/snake")
 
 // #load("tests/language/match3")
 // #load("tests/library/all_include")

@@ -186,74 +186,6 @@ namespace Cheez.Ast.Statements
 
     #region Struct Declaration
 
-    public class AstStructMember : ISymbol
-    {
-        internal bool IsPublic;
-        internal bool IsReadOnly;
-
-        public ILocation Location { get; private set; }
-        public TokenLocation Beginning => Location?.Beginning;
-        public TokenLocation End => Location?.End;
-
-        public AstIdExpr Name { get; }
-        public AstExpression Initializer { get; set; }
-        public AstExpression TypeExpr { get; set; }
-        public CheezType Type { get; set; }
-
-        public int Index { get; set; }
-
-        public AstStructMember(AstIdExpr name, AstExpression typeExpr, AstExpression init, ILocation Location = null)
-        {
-            this.Location = Location;
-            this.Name = name;
-            this.TypeExpr = typeExpr;
-            this.Initializer = init;
-        }
-
-        public AstStructMember Clone()
-            => new AstStructMember(Name.Clone() as AstIdExpr, TypeExpr.Clone(), Initializer?.Clone())
-            {
-                IsPublic = IsPublic,
-                IsReadOnly = IsReadOnly,
-                Location = Location
-            };
-
-        public override string ToString()
-        {
-            return new RawAstPrinter(null).VisitStructMember(this);
-        }
-    }
-
-    public class AstStructDecl : AstDecl, ITypedSymbol
-    {
-        public List<AstStructMember> Members { get; }
-        public List<AstParameter> Parameters { get; set; }
-
-        public AstStructDecl Template { get; set; } = null;
-
-        public Scope SubScope { get; set; }
-
-        public bool IsPolymorphic { get; set; }
-        public bool IsPolyInstance { get; set; }
-
-        public List<AstStructDecl> PolymorphicInstances { get; } = new List<AstStructDecl>();
-
-        //public List<AstImplBlock> Implementations { get; } = new List<AstImplBlock>();
-        public List<TraitType> Traits { get; } = new List<TraitType>();
-
-        public AstStructDecl(AstIdExpr name, List<AstParameter> param, List<AstStructMember> members, List<AstDirective> Directives = null, ILocation Location = null)
-            : base(name, Directives, Location)
-        {
-            this.Parameters = param ?? new List<AstParameter>();
-            this.Members = members;
-        }
-
-        [DebuggerStepThrough]
-        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitStructDecl(this, data);
-
-        public override AstStatement Clone() => CopyValuesTo(new AstStructDecl(Name.Clone() as AstIdExpr, Parameters?.Select(p => p.Clone()).ToList(), Members.Select(m => m.Clone()).ToList()));
-    }
-
     public class AstStructMemberNew
     {
 
@@ -350,63 +282,7 @@ namespace Cheez.Ast.Statements
         }
     }
 
-    public class AstEnumTypeExpr : AstExpression
-    {
-        public string Name { get; set; } = "#anonymous";
-        public List<AstParameter> Parameters { get; set; }
-        public List<AstDecl> Declarations { get; }
-        public List<AstEnumMemberNew> Members { get; set; }
-
-        public EnumType EnumType => Value as EnumType;
-        public IntType TagType { get; set; }
-
-        public AstEnumTypeExpr Template { get; set; } = null;
-
-        public Scope SubScope { get; set; }
-
-        public bool _isPolymorphic { get; set; }
-        public override bool IsPolymorphic => _isPolymorphic;
-
-        public bool IsPolyInstance { get; set; }
-
-        public List<AstEnumTypeExpr> PolymorphicInstances { get; } = new List<AstEnumTypeExpr>();
-
-        public List<TraitType> Traits { get; } = new List<TraitType>();
-        public List<AstDirective> Directives { get; protected set; }
-
-        public bool MembersComputed { get; set; } = false;
-
-        public AstEnumTypeExpr(List<AstParameter> param, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
-            : base(Location)
-        {
-            this.Parameters = param ?? new List<AstParameter>();
-            this.Declarations = declarations;
-            this._isPolymorphic = Parameters.Count > 0;
-            this.Directives = Directives;
-        }
-
-        [DebuggerStepThrough]
-        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitEnumTypeExpr(this, data);
-
-        public override AstExpression Clone() => CopyValuesTo(
-            new AstEnumTypeExpr(
-                Parameters.Select(p => p.Clone()).ToList(),
-                Declarations.Select(m => m.Clone() as AstDecl).ToList(),
-                Directives.Select(d => d.Clone()).ToList()));
-
-        public bool HasDirective(string name) => Directives?.Find(d => d.Name.Name == name) != null;
-
-        public AstDirective GetDirective(string name)
-        {
-            return Directives?.FirstOrDefault(d => d.Name.Name == name);
-        }
-
-        public bool TryGetDirective(string name, out AstDirective dir)
-        {
-            dir = Directives?.FirstOrDefault(d => d.Name.Name == name);
-            return dir != null;
-        }
-    }
+    
 
     #endregion
 
@@ -417,7 +293,7 @@ namespace Cheez.Ast.Statements
         public List<AstParameter> Parameters { get; set; }
 
         public List<AstFunctionDecl> Functions { get; }
-        public List<AstStructMember> Variables { get; }
+        public List<AstVariableDecl> Variables { get; }
 
         public Dictionary<CheezType, AstImplBlock> Implementations { get; } = new Dictionary<CheezType, AstImplBlock>();
 
@@ -433,7 +309,7 @@ namespace Cheez.Ast.Statements
             AstIdExpr name,
             List<AstParameter> parameters,
             List<AstFunctionDecl> functions,
-            List<AstStructMember> variables,
+            List<AstVariableDecl> variables,
             ILocation Location = null)
             : base(name, Location: Location)
         {
@@ -449,7 +325,7 @@ namespace Cheez.Ast.Statements
                 Name.Clone() as AstIdExpr,
                 Parameters.Select(p => p.Clone()).ToList(),
                 Functions.Select(f => f.Clone() as AstFunctionDecl).ToList(),
-                Variables.Select(v => v.Clone()).ToList()));
+                Variables.Select(v => v.Clone() as AstVariableDecl).ToList()));
 
         public AstImplBlock FindMatchingImplementation(CheezType from)
         {
@@ -641,58 +517,62 @@ namespace Cheez.Ast.Statements
 
     #region Enum
 
-    public class AstEnumMember : ILocation
+    public class AstEnumTypeExpr : AstExpression
     {
-        public ILocation Location { get; private set; }
-        public TokenLocation Beginning => Location?.Beginning;
-        public TokenLocation End => Location?.End;
-
-        public AstIdExpr Name { get; }
-        public AstExpression Value { get; set; }
-        public AstExpression AssociatedTypeExpr { get; set; }
-        public CheezType AssociatedType => AssociatedTypeExpr?.Value as CheezType;
-
-        public AstEnumMember(AstIdExpr name, AstExpression assType, AstExpression value, ILocation Location = null)
-        {
-            this.Location = Location;
-            this.Name = name;
-            this.Value = value;
-            this.AssociatedTypeExpr = assType;
-        }
-
-        public AstEnumMember Clone() => new AstEnumMember(Name.Clone() as AstIdExpr, AssociatedTypeExpr?.Clone(), Value?.Clone());
-    }
-
-    public class AstEnumDecl : AstDecl
-    {
-        public Scope SubScope { get; set; }
-        public List<AstEnumMember> Members { get; }
+        public string Name { get; set; } = "#anonymous";
         public List<AstParameter> Parameters { get; set; }
+        public List<AstDecl> Declarations { get; }
+        public List<AstEnumMemberNew> Members { get; set; }
 
-        public EnumType EnumType => Type as EnumType;
+        public EnumType EnumType => Value as EnumType;
         public IntType TagType { get; set; }
-        public bool HasAssociatedTypes { get; set; } = false;
-        public bool IsPolymorphic { get; internal set; }
+
+        public AstEnumTypeExpr Template { get; set; } = null;
+
+        public Scope SubScope { get; set; }
+
+        public bool _isPolymorphic { get; set; }
+        public override bool IsPolymorphic => _isPolymorphic;
+
         public bool IsPolyInstance { get; set; }
 
-        public List<AstEnumDecl> PolymorphicInstances { get; } = new List<AstEnumDecl>();
-        public AstEnumDecl Template { get; set; } = null;
+        public List<AstEnumTypeExpr> PolymorphicInstances { get; } = new List<AstEnumTypeExpr>();
 
-        public AstEnumDecl(AstIdExpr name, List<AstEnumMember> members, List<AstParameter> parameters, List<AstDirective> Directive = null, ILocation Location = null)
-            : base(name, Directive, Location)
+        public List<TraitType> Traits { get; } = new List<TraitType>();
+        public List<AstDirective> Directives { get; protected set; }
+
+        public bool MembersComputed { get; set; } = false;
+
+        public AstEnumTypeExpr(List<AstParameter> param, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
+            : base(Location)
         {
-            this.Members = members;
-            this.Parameters = parameters ?? new List<AstParameter>();
+            this.Parameters = param ?? new List<AstParameter>();
+            this.Declarations = declarations;
+            this._isPolymorphic = Parameters.Count > 0;
+            this.Directives = Directives;
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitEnumDecl(this, data);
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitEnumTypeExpr(this, data);
 
-        public override AstStatement Clone()
-            => CopyValuesTo(new AstEnumDecl(
-                Name.Clone() as AstIdExpr, 
-                Members.Select(m => m.Clone()).ToList(),
-                Parameters?.Select(p => p.Clone())?.ToList()));
+        public override AstExpression Clone() => CopyValuesTo(
+            new AstEnumTypeExpr(
+                Parameters.Select(p => p.Clone()).ToList(),
+                Declarations.Select(m => m.Clone() as AstDecl).ToList(),
+                Directives.Select(d => d.Clone()).ToList()));
+
+        public bool HasDirective(string name) => Directives?.Find(d => d.Name.Name == name) != null;
+
+        public AstDirective GetDirective(string name)
+        {
+            return Directives?.FirstOrDefault(d => d.Name.Name == name);
+        }
+
+        public bool TryGetDirective(string name, out AstDirective dir)
+        {
+            dir = Directives?.FirstOrDefault(d => d.Name.Name == name);
+            return dir != null;
+        }
     }
 
     #endregion

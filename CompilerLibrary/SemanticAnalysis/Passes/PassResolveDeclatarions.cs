@@ -84,7 +84,7 @@ namespace Cheez
                 if (allTypes.Count() == 0)
                     break;
 
-                Console.WriteLine($"Calculating properties of {allTypes.Count()} types...");
+                //Console.WriteLine($"Calculating properties of {allTypes.Count()} types...");
 
                 CheezType.ClearAllTypes();
                 foreach (var type in allTypes)
@@ -328,21 +328,21 @@ namespace Cheez
                         m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
                 }
 
-                foreach (var td in scope.StructDeclarations)
-                {
-                    if (td.Type.IsErrorType)
-                        continue;
-                    if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
-                        m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
-                }
+                //foreach (var td in scope.StructDeclarations)
+                //{
+                //    if (td.Type.IsErrorType)
+                //        continue;
+                //    if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
+                //        m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
+                //}
 
-                foreach (var td in scope.EnumDeclarations)
-                {
-                    if (td.Type.IsErrorType)
-                        continue;
-                    if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
-                        m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
-                }
+                //foreach (var td in scope.EnumDeclarations)
+                //{
+                //    if (td.Type.IsErrorType)
+                //        continue;
+                //    if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
+                //        m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
+                //}
 
                 foreach (var td in scope.TraitDeclarations)
                 {
@@ -468,20 +468,6 @@ namespace Cheez
         private void ComputeTypeMembers(Scope scope)
         {
             var declarations = new List<AstDecl>();
-
-            foreach (var @struct in scope.StructDeclarations)
-            {
-                if (@struct.IsPolymorphic)
-                    declarations.AddRange(@struct.PolymorphicInstances);
-                declarations.Add(@struct);
-            }
-
-            foreach (var @enum in scope.EnumDeclarations)
-            {
-                if (@enum.IsPolymorphic)
-                    declarations.AddRange(@enum.PolymorphicInstances);
-                declarations.Add(@enum);
-            }
 
             foreach (var trait in scope.TraitDeclarations)
             {
@@ -642,52 +628,6 @@ namespace Cheez
                         break;
                     }
 
-                case AstStructDecl @struct when @struct.IsPolymorphic:
-                    {
-                        foreach (var p in @struct.Parameters)
-                        {
-                            p.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
-                            p.TypeExpr = ResolveType(p.TypeExpr, newPolyDecls, out var type);
-                            p.Type = type;
-                            if (!ValidatePolymorphicParameterType(p.TypeExpr, p.Type))
-                                continue;
-
-                            switch (p.Type)
-                            {
-                                case CheezTypeType _:
-                                    p.Value = new PolyType(p.Name.Name, true);
-                                    break;
-
-                                default:
-                                    throw new NotImplementedException();
-                            }
-                        }
-                        break;
-                    }
-
-                case AstEnumDecl @enum when @enum.IsPolymorphic:
-                    {
-                        foreach (var p in @enum.Parameters)
-                        {
-                            p.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
-                            p.TypeExpr = ResolveType(p.TypeExpr, newPolyDecls, out var type);
-                            p.Type = type;
-                            if (!ValidatePolymorphicParameterType(p.TypeExpr, p.Type))
-                                continue;
-
-                            switch (p.Type)
-                            {
-                                case CheezTypeType _:
-                                    p.Value = new PolyType(p.Name.Name, true);
-                                    break;
-
-                                default:
-                                    throw new NotImplementedException();
-                            }
-                        }
-                        break;
-                    }
-
                 case AstTraitDeclaration trait when trait.IsPolymorphic:
                     {
                         foreach (var p in trait.Parameters)
@@ -736,8 +676,6 @@ namespace Cheez
             var greySet = new HashSet<AstDecl>();
             var chain = new Dictionary<AstDecl, AstDecl>();
 
-            whiteSet.UnionWith(scope.StructDeclarations);
-            whiteSet.UnionWith(scope.EnumDeclarations);
             whiteSet.UnionWith(scope.TraitDeclarations);
             whiteSet.UnionWith(scope.Typedefs);
             whiteSet.UnionWith(scope.Variables);
@@ -752,22 +690,6 @@ namespace Cheez
 
         private void BuildDependencies(Scope scope)
         {
-            foreach (var @struct in scope.StructDeclarations)
-            {
-                foreach (var param in @struct.Parameters)
-                {
-                    CollectTypeDependencies(@struct, param.TypeExpr);
-                }
-            }
-
-            foreach (var @enum in scope.EnumDeclarations)
-            {
-                foreach (var param in @enum.Parameters)
-                {
-                    CollectTypeDependencies(@enum, param.TypeExpr);
-                }
-            }
-
             foreach (var @trait in scope.TraitDeclarations)
             {
                 foreach (var param in @trait.Parameters)
@@ -846,21 +768,9 @@ namespace Cheez
                             break;
                         }
 
-                    case AstStructDecl @struct:
-                        {
-                            scope.StructDeclarations.Add(@struct);
-                            break;
-                        }
-
                     case AstTraitDeclaration @trait:
                         {
                             scope.TraitDeclarations.Add(@trait);
-                            break;
-                        }
-
-                    case AstEnumDecl @enum:
-                        {
-                            scope.EnumDeclarations.Add(@enum);
                             break;
                         }
 

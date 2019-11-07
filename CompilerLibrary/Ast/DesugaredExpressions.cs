@@ -109,13 +109,13 @@ namespace Cheez.Ast.Expressions
 
     public class AstStructRef : AstExpression
     {
-        public AstStructDecl Declaration { get; }
+        public AstStructTypeExpr Declaration { get; }
 
         public AstExpression Original { get; set; }
 
         public override bool IsPolymorphic => false;
 
-        public AstStructRef(AstStructDecl @struct, AstExpression original, ILocation Location = null)
+        public AstStructRef(AstStructTypeExpr @struct, AstExpression original, ILocation Location = null)
             : base(Location)
         {
             Declaration = @struct;

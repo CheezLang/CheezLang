@@ -49,28 +49,6 @@ namespace Cheez.Visitors
             return head;
         }
 
-        public override string VisitStructDecl(AstStructDecl str, int data = 0)
-        {
-            var head = $"struct {str.Name.Name}";
-
-            if (str.Parameters?.Count > 0)
-            {
-                head += "(";
-                head += string.Join(", ", str.Parameters.Select(p => $"{p.Name.Name}: {p.TypeExpr.Accept(rawPrinter)}"));
-                head += ")";
-            }
-
-            if (str.Directives != null)
-            {
-                head += string.Join(", ", str.Directives.Select(d => {
-                    var args = string.Join(", ", d.Arguments.Select(a => a.Accept(rawPrinter)));
-                    return $"#{d.Name}({args})";
-                }));
-            }
-
-            return head;
-        }
-
         public override string VisitTraitDecl(AstTraitDeclaration trait, int data = 0)
         {
             var head = $"trait {trait.Name.Name}";
@@ -110,24 +88,6 @@ namespace Cheez.Visitors
                 }));
 
             return header;
-        }
-        
-        public override string VisitEnumDecl(AstEnumDecl en, int data = 0)
-        {
-            var head = $"enum {en.Name.Accept(rawPrinter)}";
-            if (en.Parameters != null)
-            {
-                head += $"({string.Join(", ", en.Parameters.Select(p => p.Accept(rawPrinter)))})";
-            }
-
-            if (en.Directives != null)
-            {
-                head += string.Join(", ", en.Directives.Select(d => {
-                    var args = string.Join(", ", d.Arguments.Select(a => a.Accept(rawPrinter)));
-                    return $"#{d.Name}({args})";
-                }));
-            }
-            return head;
         }
 
         private string TypeToString(AstExpression typeExpr)

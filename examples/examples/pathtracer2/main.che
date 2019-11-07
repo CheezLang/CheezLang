@@ -25,7 +25,7 @@ samples : int = 50
 max_depth : int = 15
 
 scenes : []fn(ref Camera) -> Hittable = [simple_light, cornell_box, basic_scene, random_scene, big_scene]
-scene: int : 4
+scene: int : 0
 
 file_write_mutex : &Mutex = null
 

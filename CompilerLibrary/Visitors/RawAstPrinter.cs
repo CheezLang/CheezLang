@@ -94,39 +94,13 @@ namespace Cheez.Visitors
             return $"use {use.Value.Accept(this)}";
         }
 
-        public string VisitStructMember(AstStructMember m)
-        {
-            var v = $"{m.Name.Accept(this)}: {m.TypeExpr.Accept(this)}";
-            if (m.Initializer != null)
-                v += $" = {m.Initializer.Accept(this)}";
-            return v;
-        }
-
-        public override string VisitStructDecl(AstStructDecl str, int data = 0)
-        {
-            var body = string.Join("\n", str.Members.Select(m => VisitStructMember(m)));
-            var head = $"struct {str.Name.Accept(this)}";
-
-            if (str.Parameters?.Count > 0)
-            {
-                head += "(";
-                head += string.Join(", ", str.Parameters.Select(p => $"{p.Name.Accept(this)}: {p.TypeExpr.Accept(this)}"));
-                head += ")";
-            }
-
-            var sb = new StringBuilder();
-            sb.Append($"{head} {{\n{body.Indent(4)}\n}}");
-
-            return sb.ToString();
-        }
-
         public override string VisitTraitDecl(AstTraitDeclaration trait, int data = 0)
         {
             var sb = new StringBuilder();
             sb.AppendLine($"trait {trait.Name.Accept(this)} {{");
 
             foreach (var f in trait.Variables)
-                sb.AppendLine(VisitStructMember(f).Indent(4));
+                sb.AppendLine(f.Accept(this).Indent(4));
 
             foreach (var f in trait.Functions)
                 sb.AppendLine(f.Accept(this).Indent(4));
@@ -295,27 +269,6 @@ namespace Cheez.Visitors
         public override string VisitExpressionStmt(AstExprStmt stmt, int indentLevel = 0)
         {
             return stmt.Expr.Accept(this);
-        }
-
-        public string VisitEnumMember(AstEnumMember m)
-        {
-            var str = m.Name.Accept(this);
-            if (m.AssociatedTypeExpr != null)
-                str += " : " + m.AssociatedTypeExpr.Accept(this);
-            if (m.Value != null)
-                str += " = " + m.Value.Accept(this);
-            return str;
-        }
-
-        public override string VisitEnumDecl(AstEnumDecl en, int data = 0)
-        {
-            var body = string.Join("\n", en.Members.Select(m => VisitEnumMember(m)));
-            var head = $"enum {en.Name.Accept(this)}";
-            if (en.Parameters != null)
-            {
-                head += $"({string.Join(", ", en.Parameters.Select(p => p.Accept(this)))})";
-            }
-            return $"{head} {{\n{body.Indent(4)}\n}}";
         }
 
         public override string VisitEnumTypeExpr(AstEnumTypeExpr en, int data = 0)

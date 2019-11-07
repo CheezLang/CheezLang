@@ -290,9 +290,7 @@ namespace Cheez
             void HandleStatement(AstStatement s)
             {
                 if (s is AstFunctionDecl ||
-                    s is AstStructDecl ||
                     s is AstImplBlock ||
-                    s is AstEnumDecl ||
                     s is AstVariableDecl ||
                     s is AstTypeAliasDecl ||
                     s is AstTraitDeclaration ||

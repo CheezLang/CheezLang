@@ -144,9 +144,7 @@ namespace Cheez
 
         //
         public List<AstConstantDeclaration> ConstantDeclarations { get; } = new List<AstConstantDeclaration>();
-        public List<AstStructDecl> StructDeclarations { get; } = new List<AstStructDecl>();
         public List<AstTraitDeclaration> TraitDeclarations { get; } = new List<AstTraitDeclaration>();
-        public List<AstEnumDecl> EnumDeclarations { get; } = new List<AstEnumDecl>();
         public List<AstTypeAliasDecl> Typedefs { get; } = new List<AstTypeAliasDecl>();
         public List<AstUsingStmt> Uses { get; } = new List<AstUsingStmt>();
 

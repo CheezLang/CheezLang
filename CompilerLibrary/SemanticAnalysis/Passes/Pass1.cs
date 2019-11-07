@@ -13,9 +13,7 @@ namespace Cheez
     public partial class Workspace
     {
         // for semantic analysis
-        private List<AstStructDecl> mStructs = new List<AstStructDecl>();
         private List<AstTraitDeclaration> mTraits = new List<AstTraitDeclaration>();
-        private List<AstEnumDecl> mEnums = new List<AstEnumDecl>();
         public List<AstVariableDecl> mVariables = new List<AstVariableDecl>();
         private List<AstTypeAliasDecl> mTypeDefs = new List<AstTypeAliasDecl>();
         public List<AstImplBlock> mImpls = new List<AstImplBlock>();

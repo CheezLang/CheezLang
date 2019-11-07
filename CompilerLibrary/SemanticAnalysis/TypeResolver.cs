@@ -223,18 +223,6 @@ namespace Cheez
                 {
                     switch (instance)
                     {
-                        case AstEnumDecl e:
-                            if (!e.IsPolymorphic)
-                                mEnums.Add(e);
-                            ResolveEnum(e, nextInstances);
-                            break;
-
-                        case AstStructDecl s:
-                            if (!s.IsPolymorphic)
-                                mStructs.Add(s);
-                            ResolveStruct(s, nextInstances);
-                            break;
-
                         case AstTraitDeclaration trait:
                             if (!trait.IsPolymorphic)
                                 mTraits.Add(trait);
@@ -256,12 +244,6 @@ namespace Cheez
             {
                 var details = declarations.Select(str => ("Here:", str.Location)).ToList();
                 ReportError($"Detected a potential infinite loop in polymorphic declarations after {MaxPolyStructResolveStepCount} steps", details);
-            }
-
-            foreach (var d in done)
-            {
-                if (d is AstStructDecl s)
-                    ResolveStructMemberInitializers(s);
             }
         }
 
@@ -477,65 +459,6 @@ namespace Cheez
             return instance;
         }
 
-        private void ResolveEnum(AstEnumDecl @enum, List<AstDecl> instances = null)
-        {
-            //
-            var names = new HashSet<string>();
-
-            @enum.TagType = IntType.DefaultType;
-
-            if (@enum.EnumType != null)
-            {
-                // regular enum (not poly)
-                //@enum.TagType = @enum.TagType;
-            }
-
-            foreach (var p in @enum.Parameters)
-            {
-                @enum.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
-            }
-
-            int value = 0;
-            foreach (var mem in @enum.Members)
-            {
-                if (names.Contains(mem.Name.Name))
-                    ReportError(mem.Name, $"Duplicate enum member '{mem.Name}'");
-
-                if (mem.AssociatedTypeExpr != null)
-                {
-                    @enum.HasAssociatedTypes = true;
-                    mem.AssociatedTypeExpr.Scope = @enum.SubScope;
-                    mem.AssociatedTypeExpr.SetFlag(ExprFlags.ValueRequired, true);
-                    mem.AssociatedTypeExpr = ResolveType(mem.AssociatedTypeExpr, instances, out var t);
-                }
-
-                if (mem.Value == null)
-                {
-                    mem.Value = new AstNumberExpr(value, Location: mem.Name);
-                }
-
-                mem.Value.Scope = @enum.SubScope;
-                mem.Value = InferType(mem.Value, @enum.TagType);
-                ConvertLiteralTypeToDefaultType(mem.Value, @enum.TagType);
-                if (!mem.Value.IsCompTimeValue || !(mem.Value.Type is IntType))
-                {
-                    ReportError(mem.Value, $"The value of an enum member must be a compile time integer");
-                }
-                else
-                {
-                    value = (int)((NumberData)mem.Value.Value).IntValue + 1;
-                }
-            }
-
-            if (@enum.HasAssociatedTypes)
-            {
-                // TODO: check if all values are unique
-            }
-
-            //@enum.Scope.DefineBinaryOperator("==", );
-            //@enum.Scope.DefineBinaryOperator("!=", );
-        }
-
         // struct
         private AstStructTypeExpr InstantiatePolyStruct(AstStructTypeExpr decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
         {
@@ -614,56 +537,6 @@ namespace Cheez
             }
 
             return instance;
-        }
-        
-
-        private void ResolveStruct(AstStructDecl @struct, List<AstDecl> instances = null)
-        {
-            foreach (var p in @struct.Parameters)
-            {
-                @struct.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
-            }
-
-            // resolve member types
-            int index = 0;
-            foreach (var member in @struct.Members)
-            {
-                member.Index = index++;
-                member.TypeExpr.Scope = @struct.SubScope;
-                member.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
-                member.TypeExpr = ResolveType(member.TypeExpr, instances, out var t);
-                member.Type = t;
-            }
-        }
-
-        private void ResolveStructMemberInitializers(AstStructDecl @struct)
-        {
-            foreach (var member in @struct.Members)
-            {
-                if (member.Initializer == null)
-                {
-                    switch (member.Type)
-                    {
-                        case EnumType _:
-                        case ReferenceType _:
-                            @struct.SetFlag(StmtFlags.NoDefaultInitializer);
-                            break;
-
-                        default:
-                            member.Initializer = new AstDefaultExpr(member.Name.Location);
-                            break;
-                    }
-                }
-
-                if (member.Initializer != null)
-                {
-                    member.Initializer.Scope = @struct.SubScope;
-                    member.Initializer.SetFlag(ExprFlags.ValueRequired, true);
-                    member.Initializer = InferType(member.Initializer, member.Type);
-                    ConvertLiteralTypeToDefaultType(member.Initializer, member.Type);
-                    member.Initializer = CheckType(member.Initializer, member.Type);
-                }
-            }
         }
 
         private AstFunctionDecl InstantiatePolyImplFunction(

@@ -83,13 +83,11 @@ namespace Cheez
             }
             trait.SubScope.DefineTypeSymbol("Self", new SelfType(trait.Type));
 
-            int index = 0;
             foreach (var v in trait.Variables)
             {
                 v.TypeExpr.Scope = trait.SubScope;
                 v.TypeExpr = ResolveTypeNow(v.TypeExpr, out var type);
                 v.Type = type;
-                v.Index = index++;
 
                 var res = trait.SubScope.DefineSymbol(v);
                 if (!res.ok)
