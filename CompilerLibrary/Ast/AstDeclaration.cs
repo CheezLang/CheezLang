@@ -107,85 +107,6 @@ namespace Cheez.Ast.Statements
         Reference
     }
 
-    public class AstFunctionDecl : AstDecl, ITypedSymbol
-    {
-        public Scope ConstScope { get; set; }
-        public Scope SubScope { get; set; }
-
-        public List<AstParameter> Parameters { get; set; }
-        public AstParameter ReturnTypeExpr { get; }
-
-        public FunctionType FunctionType => Type as FunctionType;
-        public CheezType ReturnType => ReturnTypeExpr?.Type ?? CheezType.Void;
-
-        public AstBlockExpr Body { get; private set; }
-
-        public List<AstFunctionDecl> PolymorphicInstances { get; } = new List<AstFunctionDecl>();
-        public AstFunctionDecl Template { get; set; } = null;
-
-        public SelfParamType SelfType { get; set; } = SelfParamType.None;
-        public bool IsGeneric { get; set; } = false;
-        public bool IsPolyInstance { get; set; } = false;
-        public List<ILocation> InstantiatedAt { get; private set; } = null;
-        public AstTraitDeclaration Trait { get; set; } = null;
-
-        public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
-        public Dictionary<string, (CheezType type, object value)> ConstParameters { get; internal set; }
-
-        private AstImplBlock _ImplBlock;
-        public AstImplBlock ImplBlock
-        {
-            get => _ImplBlock;
-            set
-            {
-                _ImplBlock = value;
-            }
-        }
-        public AstFunctionDecl TraitFunction { get; internal set; }
-        public ILocation ParameterLocation { get; internal set; }
-
-        public AstFunctionDecl(AstIdExpr name,
-            List<AstParameter> parameters,
-            AstParameter returns,
-            AstBlockExpr body = null,
-            List<AstDirective> Directives = null,
-            ILocation Location = null,
-            ILocation ParameterLocation = null)
-            : base(name, Directives, Location)
-        {
-            this.Parameters = parameters;
-            this.ReturnTypeExpr = returns;
-            this.Body = body;
-            this.ParameterLocation = ParameterLocation;
-        }
-
-        [DebuggerStepThrough]
-        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitFunctionDecl(this, data);
-
-        public override AstStatement Clone()
-        {
-            var copy = CopyValuesTo(new AstFunctionDecl(
-                Name.Clone() as AstIdExpr,
-                Parameters.Select(p => p.Clone()).ToList(),
-                ReturnTypeExpr?.Clone(),
-                Body?.Clone() as AstBlockExpr, 
-                ParameterLocation: ParameterLocation));
-            copy.ConstScope = new Scope($"fn$ {Name.Name}", copy.Scope);
-            copy.SubScope = new Scope($"fn {Name.Name}", copy.ConstScope);
-            return copy;
-        }
-
-        public void AddInstantiatedAt(ILocation loc)
-        {
-            if (InstantiatedAt == null)
-            {
-                InstantiatedAt = new List<ILocation>();
-            }
-
-            InstantiatedAt.Add(loc);
-        }
-    }
-
     public class AstFuncExpr : AstExpression, ITypedSymbol
     {
         public Scope ConstScope { get; set; }
@@ -682,26 +603,6 @@ namespace Cheez.Ast.Statements
             dir = Directives?.FirstOrDefault(d => d.Name.Name == name);
             return dir != null;
         }
-    }
-
-    #endregion
-
-    #region Type Alias
-
-    public class AstTypeAliasDecl : AstDecl, ITypedSymbol
-    {
-        public AstExpression TypeExpr { get; set; }
-
-        public AstTypeAliasDecl(AstIdExpr name, AstExpression typeExpr, List<AstDirective> Directives = null, ILocation Location = null)
-            : base(name, Directives, Location)
-        {
-            this.TypeExpr = typeExpr;
-        }
-
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitTypeAliasDecl(this, data);
-
-        public override AstStatement Clone()
-            => CopyValuesTo(new AstTypeAliasDecl(Name.Clone() as AstIdExpr, TypeExpr.Clone()));
     }
 
     #endregion

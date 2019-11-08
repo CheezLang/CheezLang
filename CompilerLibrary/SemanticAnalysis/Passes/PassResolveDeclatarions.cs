@@ -323,29 +323,6 @@ namespace Cheez
             if (m_typeImplMap == null)
             {
                 m_typeImplMap = new Dictionary<CheezType, TypeImplList>();
-                foreach (var td in scope.Typedefs)
-                {
-                    if (td.Type.IsErrorType)
-                        continue;
-                    if (!m_typeImplMap.ContainsKey(td.Type))
-                        m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
-                }
-
-                //foreach (var td in scope.StructDeclarations)
-                //{
-                //    if (td.Type.IsErrorType)
-                //        continue;
-                //    if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
-                //        m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
-                //}
-
-                //foreach (var td in scope.EnumDeclarations)
-                //{
-                //    if (td.Type.IsErrorType)
-                //        continue;
-                //    if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
-                //        m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
-                //}
 
                 foreach (var td in scope.TraitDeclarations)
                 {
@@ -625,22 +602,6 @@ namespace Cheez
                         break;
                     }
 
-                case AstFunctionDecl func:
-                    {
-                        func.ConstScope = new Scope($"fn$ {func.Name.Name}", func.Scope);
-                        func.SubScope = new Scope($"fn {func.Name.Name}", func.ConstScope);
-                        ResolveFunctionSignature(func, newPolyDecls);
-                        break;
-                    }
-
-                case AstTypeAliasDecl typedef:
-                    {
-                        typedef.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
-                        typedef.TypeExpr = ResolveType(typedef.TypeExpr, newPolyDecls, out var type);
-                        typedef.Type = type;
-                        break;
-                    }
-
                 case AstTraitDeclaration trait when trait.IsPolymorphic:
                     {
                         foreach (var p in trait.Parameters)
@@ -690,7 +651,6 @@ namespace Cheez
             var chain = new Dictionary<AstDecl, AstDecl>();
 
             whiteSet.UnionWith(scope.TraitDeclarations);
-            whiteSet.UnionWith(scope.Typedefs);
             whiteSet.UnionWith(scope.Variables);
 
             while (whiteSet.Count > 0)
@@ -710,32 +670,15 @@ namespace Cheez
                 }
             }
 
-            foreach (var typedef in scope.Typedefs)
-            {
-                CollectTypeDependencies(typedef, typedef.TypeExpr);
-            }
-
             foreach (var @var in scope.Variables)
             {
                 CollectTypeDependencies(@var, @var.TypeExpr);
                 CollectTypeDependencies(@var, @var.Initializer);
-                //PrintDependencies(@var);
-            }
-        }
-
-        private void PrintDependencies(AstDecl decl)
-        {
-            Console.WriteLine($"Dependencies of {decl.Name.Name}");
-            foreach (var d in decl.Dependencies)
-            {
-                Console.WriteLine($"    {d.Name.Name}");
             }
         }
 
         private void DefineTypeDeclarations(Scope scope)
         {
-            foreach (var @typedef in scope.Typedefs)
-                Pass1Typedef(@typedef);
             foreach (var v in scope.Variables)
                 Pass1VariableDeclaration(v);
             foreach (var v in scope.Impls)
@@ -779,12 +722,6 @@ namespace Cheez
                         {
                             impl.SubScope = new Scope($"impl", impl.Scope);
                             scope.Impls.Add(impl);
-                            break;
-                        }
-
-                    case AstTypeAliasDecl type:
-                        {
-                            scope.Typedefs.Add(type);
                             break;
                         }
                 }

@@ -126,7 +126,7 @@ try :: (r: $T) #macro {
     }
 }
 
-test :: (b: bool) -> Result(int, int) {
+test :: (b: bool) -> Result[int, int] {
     if b {
         return Ok(5)
     } else {
@@ -134,7 +134,7 @@ test :: (b: bool) -> Result(int, int) {
     }
 }
 
-foo :: () -> Result(int, int) {
+foo :: () -> Result[int, int] {
     i := try(test(false))
     println(i)
     return Ok(0)

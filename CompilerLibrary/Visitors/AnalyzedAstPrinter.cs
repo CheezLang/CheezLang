@@ -51,68 +51,6 @@ namespace Cheez.Visitors
         }
 
 
-        public override string VisitFunctionDecl(AstFunctionDecl function, int indentLevel = 0)
-        {
-            if (function.IsGeneric)
-            {
-                var sb = new StringBuilder();
-
-                var body = function.Body?.Accept(this) ?? ";";
-
-                var pars = string.Join(", ", function.Parameters.Select(p => p.Name != null ? $"{p.Name.Accept(this)}: {p.TypeExpr}" : p.Type.ToString()));
-                var head = $"fn {function.Name.Accept(this)}";
-
-                head += $"({pars})";
-
-                if (function.ReturnTypeExpr != null)
-                    head += $" -> {function.ReturnTypeExpr.TypeExpr.Accept(this)}";
-
-                sb.Append($"{head} {body}".Indent(indentLevel));
-
-                // polies
-                if (function.PolymorphicInstances?.Count > 0)
-                {
-                    sb.AppendLine($"\n// Polymorphic instances for {head}");
-                    foreach (var pi in function.PolymorphicInstances)
-                    {
-                        if (pi.PolymorphicTypes != null)
-                        {
-                            var args = string.Join(", ", pi.PolymorphicTypes.Select(kv => $"{kv.Key} = {kv.Value}"));
-                            sb.AppendLine($"/* {args} */".Indent(4));
-                        }
-                        if (pi.ConstParameters != null)
-                        {
-                            var args = string.Join(", ", pi.ConstParameters.Select(kv => $"{kv.Key} = {kv.Value.value}"));
-                            sb.AppendLine($"/* {args} */".Indent(4));
-                        }
-                        sb.AppendLine(pi.Accept(this).Indent(4));
-                    }
-                }
-
-                return sb.ToString();
-            }
-            else
-            {
-                var sb = new StringBuilder();
-
-                var body = function.Body?.Accept(this) ?? ";";
-
-                var pars = string.Join(", ", function.Parameters.Select(p => p.Accept(this)));
-                var head = $"fn {function.Name.Accept(this)}";
-
-                head += $"({pars})";
-
-                if (function.ReturnTypeExpr != null)
-                    head += $" -> {function.ReturnTypeExpr.Accept(this)}";
-
-                if (function.Directives.Count > 0)
-                    head += " " + string.Join(" ", function.Directives.Select(d => VisitDirective(d)));
-
-                sb.Append($"{head} {body}".Indent(indentLevel));
-                return sb.ToString();
-            }
-        }
-
         public override string VisitReturnStmt(AstReturnStmt ret, int data = 0)
         {
             var sb = new StringBuilder();
@@ -141,11 +79,6 @@ namespace Cheez.Visitors
             if (ret.ReturnValue != null)
                 sb.Append(" ").Append(ret.ReturnValue.Accept(this));
             return sb.ToString();
-        }
-
-        public override string VisitTypeAliasDecl(AstTypeAliasDecl al, int data = 0)
-        {
-            return $"typedef {al.Name.Accept(this)} = {al.Type}";
         }
 
         public override string VisitUsingStmt(AstUsingStmt use, int data = 0)

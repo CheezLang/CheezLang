@@ -215,7 +215,6 @@ namespace Cheez.Parsing
                 return false;
             switch (next.type)
             {
-                case TokenType.KwNew:
                 case TokenType.Plus:
                 case TokenType.Minus:
                 case TokenType.LessLess:
@@ -375,10 +374,6 @@ namespace Cheez.Parsing
 
                 case TokenType.KwReturn:
                     return ParseReturnStatement();
-                case TokenType.Kwfn:
-                    return ParseFunctionDeclaration();
-                case TokenType.KwTypedef:
-                    return ParseTypedefDeclaration();
                 case TokenType.KwWhile:
                     return ParseWhileStatement();
                 case TokenType.KwFor:
@@ -949,27 +944,6 @@ namespace Cheez.Parsing
             return new AstExprStmt(expr, new Location(expr.Beginning, expr.End));
         }
 
-        private AstTypeAliasDecl ParseTypedefDeclaration()
-        {
-            TokenLocation beg = null, end = null;
-            AstIdExpr name = null;
-            AstExpression value = null;
-
-            beg = Consume(TokenType.KwTypedef, ErrMsg("keyword 'typedef'", "at beginning of type alias declaration")).location;
-            SkipNewlines();
-
-            name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'typedef'"));
-            SkipNewlines();
-
-            Consume(TokenType.Equal, ErrMsg("type expression", "after '=' in type alias declaration"));
-            SkipNewlines();
-
-            value = ParseExpression(true);
-            end = value.End;
-
-            return new AstTypeAliasDecl(name, value, Location: new Location(beg, end));
-        }
-
         private AstForStmt ParseForStatement()
         {
             AstIdExpr varName = null;
@@ -1142,55 +1116,6 @@ namespace Cheez.Parsing
             }
 
             return new AstIfExpr(condition, ifCase, elseCase, pre, isConstIf, new Location(beg, end));
-        }
-
-        private AstFunctionDecl ParseFunctionDeclaration()
-        {
-            TokenLocation beginning = null,
-                end = null,
-                pbeg = null,
-                pend = null;
-            AstBlockExpr body = null;
-            var parameters = new List<AstParameter>();
-            AstParameter returnValue = null;
-            var directives = new List<AstDirective>();
-
-            beginning = ConsumeUntil(TokenType.Kwfn, ErrMsgUnexpected("keyword 'fn'", "beginning of function declaration")).location;
-            SkipNewlines();
-
-            var name = ParseIdentifierExpr(ErrMsg("identifier", "after keyword 'fn' in function declaration"));
-            SkipNewlines();
-
-            // parameters
-            SkipNewlines();
-            parameters = ParseParameterList(out pbeg, out pend);
-
-            SkipNewlines();
-
-            // return type
-            if (CheckToken(TokenType.Arrow))
-            {
-                NextToken();
-                SkipNewlines();
-                returnValue = ParseParameter(true);
-                SkipNewlines();
-            }
-
-            while (CheckToken(TokenType.HashIdentifier))
-            {
-                directives.Add(ParseDirective());
-                SkipNewlines();
-            }
-
-            if (CheckToken(TokenType.Semicolon))
-                end = NextToken().location;
-            else
-            {
-                body = ParseBlockExpr();
-                end = body.End;
-            }
-
-            return new AstFunctionDecl(name, parameters, returnValue, body, directives, Location: new Location(beginning, end), ParameterLocation: new Location(pbeg, pend));
         }
 
         #region Expression Parsing
@@ -1598,66 +1523,6 @@ namespace Cheez.Parsing
             return args;
         }
 
-        private AstExpression ParseStructValue()
-        {
-            TokenLocation beg = null, end = null;
-            List<AstStructMemberInitialization> members = new List<AstStructMemberInitialization>();
-            AstExpression type = null;
-
-            beg = Consume(TokenType.KwNew, ErrMsg("keyword 'new'", "at beginning of struct value expression")).location;
-
-            SkipNewlines();
-            var maybeOpenBrace = PeekToken();
-            if (maybeOpenBrace.type != TokenType.OpenBrace)
-            {
-                type = ParseExpression(true);
-                SkipNewlines();
-            }
-
-            Consume(TokenType.OpenBrace, ErrMsg("{", "after name in struct value"));
-
-            SkipNewlines();
-            while (true)
-            {
-                var next = PeekToken();
-
-                if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
-                    break;
-
-                var value = ParseExpression(false);
-                AstIdExpr memberName = null;
-                if (value is AstIdExpr n && CheckToken(TokenType.Equal))
-                {
-                    memberName = n;
-                    NextToken();
-                    SkipNewlines();
-                    value = ParseExpression(false);
-                }
-
-                members.Add(new AstStructMemberInitialization(memberName, value, new Location(memberName?.Beginning ?? value.Beginning, value.End)));
-
-                next = PeekToken();
-                if (next.type == TokenType.NewLine || next.type == TokenType.Comma)
-                {
-                    NextToken();
-                    SkipNewlines();
-                }
-                else if (next.type == TokenType.ClosingBrace)
-                {
-                    break;
-                }
-                else
-                {
-                    NextToken();
-                    ReportError(next.location, $"Expected ',' or '\\n' or '}}'");
-                }
-            }
-
-            end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct value expression")).location;
-
-            return new AstStructValueExpr(type, members, false, new Location(beg, end));
-        }
-
         private AstIdExpr ParseIdentifierExpr(ErrorMessageResolver customErrorMessage = null, TokenType identType = TokenType.Identifier)
         {
             var next = PeekToken();
@@ -2003,9 +1868,6 @@ namespace Cheez.Parsing
 
                 case TokenType.Pipe:
                     return ParseLambdaExpr(allowCommaForTuple);
-
-                case TokenType.KwNew:
-                    return ParseStructValue();
 
                 case TokenType.KwNull:
                     NextToken();

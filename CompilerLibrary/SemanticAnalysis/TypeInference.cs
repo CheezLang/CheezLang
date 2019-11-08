@@ -118,15 +118,6 @@ namespace Cheez
         {
             if (expected != null)
                 expr.SetFlag(ExprFlags.ValueRequired, true);
-            // @todo: remove, just for testing
-            if (!expr.GetFlag(ExprFlags.ValueRequired)
-                && !(expr.Parent is AstFunctionDecl)
-                && !(expr.Parent is AstExprStmt)
-                && !(expr.Parent is AstWhileStmt))
-            {
-                //expr.Type = CheezType.Void;
-                //return expr;
-            }
 
             if (!(context?.forceInfer ?? false) && expr.TypeInferred)
                 return expr;
@@ -3692,8 +3683,8 @@ namespace Cheez
                 if (expr.FunctionExpr is AstIdExpr id)
                 {
                     ILocation loc = id.Symbol.Location;
-                    if (id.Symbol is AstFunctionDecl fd)
-                        loc = new Location(fd.Name.Beginning, fd.ParameterLocation.End);
+                    if (id.Symbol is AstFuncExpr fd)
+                        loc = fd.ParameterLocation;
                     detail = ("Function defined here:", loc);
                 }
                 ReportError(expr, $"Too many arguments. Expected {parameters.Length}, got {expr.Arguments.Count}", detail);
@@ -4314,11 +4305,6 @@ namespace Cheez
             {
                 expr.Type = CheezType.Type;
                 expr.Value = trait.Type;
-            }
-            else if (sym is AstTypeAliasDecl typedef)
-            {
-                expr.Type = CheezType.Type;
-                expr.Value = typedef.Type;
             }
             else if (sym is AstFuncExpr func)
             {

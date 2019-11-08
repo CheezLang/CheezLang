@@ -685,7 +685,7 @@ namespace Cheez
                         newScope = null;
                         break;
                     }
-                    if (currentNode == null || currentNode is AstFunctionDecl)
+                    if (currentNode == null || currentNode is AstFuncExpr)
                     {
                         WellThatsNotSupposedToHappen();
                         newScope = null;
@@ -740,7 +740,7 @@ namespace Cheez
                         newScope = null;
                         break;
                     }
-                    if (currentNode == null || currentNode is AstFunctionDecl)
+                    if (currentNode == null || currentNode is AstFuncExpr)
                     {
                         WellThatsNotSupposedToHappen();
                         newScope = null;

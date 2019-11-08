@@ -1679,7 +1679,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         public LLVMValueRef GenerateIdExpr(AstIdExpr expr, bool deref)
         {
             LLVMValueRef v;
-            if (expr.Symbol is AstFunctionDecl func)
+            if (expr.Symbol is AstFuncExpr func)
             {
                 //v =
                 v = valueMap[func];

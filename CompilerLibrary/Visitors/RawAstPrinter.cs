@@ -74,11 +74,6 @@ namespace Cheez.Visitors
             return sb.ToString();
         }
 
-        public override string VisitTypeAliasDecl(AstTypeAliasDecl al, int data = 0)
-        {
-            return $"typedef {al.Name.Accept(this)} = {al.TypeExpr.Accept(this)}";
-        }
-
         public override string VisitUsingStmt(AstUsingStmt use, int data = 0)
         {
             return $"use {use.Value.Accept(this)}";

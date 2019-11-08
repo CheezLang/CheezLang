@@ -77,14 +77,12 @@ namespace Cheez.Parsing
         Pipe,
 
         KwReturn,
-        KwNew,
         KwRef,
         Kwfn,
         KwFn,
         KwStruct,
         KwEnum,
         KwImpl,
-        KwTypedef,
         KwIf,
         KwElse,
         KwFor,
@@ -360,13 +358,11 @@ namespace Cheez.Parsing
             switch (token.data as string)
             {
                 case "return": token.type = TokenType.KwReturn; break;
-                case "new": token.type = TokenType.KwNew; break;
                 case "ref": token.type = TokenType.KwRef; break;
                 case "fn": token.type = TokenType.Kwfn; break;
                 case "Fn": token.type = TokenType.KwFn; break;
                 case "struct": token.type = TokenType.KwStruct; break;
                 case "impl": token.type = TokenType.KwImpl; break;
-                case "typedef": token.type = TokenType.KwTypedef; break;
                 case "if": token.type = TokenType.KwIf; break;
                 case "else": token.type = TokenType.KwElse; break;
                 case "for": token.type = TokenType.KwFor; break;

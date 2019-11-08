@@ -15,7 +15,6 @@ namespace Cheez
         // for semantic analysis
         private List<AstTraitDeclaration> mTraits = new List<AstTraitDeclaration>();
         public List<AstVariableDecl> mVariables = new List<AstVariableDecl>();
-        private List<AstTypeAliasDecl> mTypeDefs = new List<AstTypeAliasDecl>();
         public List<AstImplBlock> mImpls = new List<AstImplBlock>();
 
         public List<AstFuncExpr> mFunctions = new List<AstFuncExpr>();
@@ -23,48 +22,6 @@ namespace Cheez
 
         public IEnumerable<AstTraitDeclaration> Traits => mTraits;
         //
-
-        private void Pass1FunctionDeclaration(AstFunctionDecl func)
-        {
-            var polyNames = new List<string>();
-            foreach (var p in func.Parameters)
-            {
-                CollectPolyTypeNames(p.TypeExpr, polyNames);
-                if (p.Name != null)
-                    CollectPolyTypeNames(p.Name, polyNames);
-            }
-
-            if (func.ReturnTypeExpr != null)
-            {
-                CollectPolyTypeNames(func.ReturnTypeExpr.TypeExpr, polyNames);
-            }
-
-            //if (polyNames.Count > 0)
-            //{
-            //    func.Type = new GenericFunctionType(func);
-            //}
-            //else
-            //{
-            //    func.Type = new FunctionType(func);
-
-            //    if (func.TryGetDirective("varargs", out var varargs))
-            //    {
-            //        if (varargs.Arguments.Count != 0)
-            //        {
-            //            ReportError(varargs, $"#varargs takes no arguments!");
-            //        }
-            //        func.FunctionType.VarArgs = true;
-            //    }
-            //}
-
-            var res = func.Scope.DefineDeclaration(func);
-            if (!res.ok)
-            {
-                (string, ILocation)? detail = null;
-                if (res.other != null) detail = ("Other declaration here:", res.other);
-                ReportError(func.Name, $"A symbol with name '{func.Name.Name}' already exists in current scope", detail);
-            }
-        }
 
         private void Pass1VariableDeclaration(AstVariableDecl var)
         {
@@ -172,35 +129,6 @@ namespace Cheez
             }
         }
 
-        //private void Pass1EnumDeclaration(AstEnumDecl @enum)
-        //{
-        //    if (@enum.Parameters?.Count > 0)
-        //    {
-        //        @enum.IsPolymorphic = true;
-        //        @enum.Type = new GenericEnumType(@enum, @enum.Name.Name);
-
-        //        foreach (var p in @enum.Parameters)
-        //        {
-        //            p.Scope = @enum.Scope;
-        //            p.TypeExpr.Scope = @enum.Scope;
-        //        }
-        //    }
-        //    else
-        //    {
-        //        @enum.Type = new EnumType(@enum);
-        //    }
-        //    @enum.SubScope = new Scope($"enum {@enum.Name.Name}", @enum.Scope);
-
-
-        //    var res = @enum.Scope.DefineDeclaration(@enum);
-        //    if (!res.ok)
-        //    {
-        //        (string, ILocation)? detail = null;
-        //        if (res.other != null) detail = ("Other declaration here:", res.other);
-        //        ReportError(@enum.Name, $"A symbol with name '{@enum.Name.Name}' already exists in current scope", detail);
-        //    }
-        //}
-
         private void Pass1Impl(AstImplBlock impl)
         {
             impl.TargetTypeExpr.Scope = impl.SubScope;
@@ -209,56 +137,6 @@ namespace Cheez
             if (impl.Parameters != null)
             {
                 impl.IsPolymorphic = true;
-            }
-        }
-
-        //private void Pass1StructDeclaration(AstStructDecl @struct)
-        //{
-        //    ReportError(@struct, $"Not supported anymore, please use new syntax");
-        //    return;
-
-        //    if (@struct.HasDirective("copy"))
-        //    {
-        //        @struct.SetFlag(StmtFlags.IsCopy);
-        //    }
-
-        //    if (@struct.Parameters.Count > 0)
-        //    {
-        //        @struct.IsPolymorphic = true;
-        //        //@struct.Type = new GenericStructType(@struct);
-
-        //        foreach (var p in @struct.Parameters)
-        //        {
-        //            p.Scope = @struct.Scope;
-        //            p.TypeExpr.Scope = @struct.Scope;
-        //        }
-        //    }
-        //    else
-        //    {
-        //        //@struct.Type = new StructType(@struct);
-        //    }
-        //    @struct.SubScope = new Scope($"struct {@struct.Name.Name}", @struct.Scope);
-
-        //    var res = @struct.Scope.DefineDeclaration(@struct);
-        //    if (!res.ok)
-        //    {
-        //        (string, ILocation)? detail = null;
-        //        if (res.other != null) detail = ("Other declaration here:", res.other);
-        //        ReportError(@struct.Name, $"A symbol with name '{@struct.Name.Name}' already exists in current scope", detail);
-        //    }
-        //}
-
-        private void Pass1Typedef(AstTypeAliasDecl alias)
-        {
-            alias.TypeExpr.Scope = alias.Scope;
-            alias.Type = new AliasType(alias);
-
-            var res = alias.Scope.DefineDeclaration(alias);
-            if (!res.ok)
-            {
-                (string, ILocation)? detail = null;
-                if (res.other != null) detail = ("Other declaration here:", res.other);
-                ReportError(alias.Name, $"A symbol with name '{alias.Name.Name}' already exists in current scope", detail);
             }
         }
     }

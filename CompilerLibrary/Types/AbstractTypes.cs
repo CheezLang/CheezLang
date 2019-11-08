@@ -57,19 +57,6 @@ namespace Cheez.Types.Abstract
         public override string ToString() => $"<decls> ({string.Join(", ", SubTypes)})";
     }
 
-    public class AliasType : AbstractType
-    {
-        public override bool IsPolyType => false;
-        public AstTypeAliasDecl Declaration { get; }
-
-        public AliasType(AstTypeAliasDecl decl)
-        {
-            Declaration = decl;
-        }
-
-        public override string ToString() => $"<type alias> {Declaration.Name.Name}";
-    }
-
     public class GenericFunctionType : CheezType
     {
         public AstFuncExpr Declaration { get; }

@@ -20,35 +20,6 @@ namespace Cheez.Visitors
             else
                 rawPrinter = new AnalysedAstPrinter();
         }
-        
-        public override string VisitFunctionDecl(AstFunctionDecl function, int indentLevel = 0)
-        {
-            var head = $"fn ";
-
-            if (function.ImplBlock != null)
-            {
-                head += function.ImplBlock.TargetTypeExpr.Accept(rawPrinter) + "::";
-            }
-
-            head += function.Name.Accept(rawPrinter);
-
-            var pars = string.Join(", ", function.Parameters.Select(p => p.Accept(rawPrinter)));
-            head += $"({pars})";
-
-            if (function.ReturnTypeExpr != null)
-                head += $" -> {function.ReturnTypeExpr.Accept(rawPrinter)}";
-
-            if (function.Directives != null)
-            {
-                head += string.Join(", ", function.Directives.Select(d => {
-                    var args = string.Join(", ", d.Arguments.Select(a => a.Accept(rawPrinter)));
-                    return $"#{d.Name}({args})";
-                }));
-            }
-
-            return head;
-        }
-
         public override string VisitTraitDecl(AstTraitDeclaration trait, int data = 0)
         {
             var head = $"trait {trait.Name.Name}";

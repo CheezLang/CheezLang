@@ -108,54 +108,10 @@ namespace Cheez
             // new
             ResolveDeclarations(GlobalScope, Statements);
 
-            // print debug info
-            if (false)
-            {
-                // print type to impl map
-                foreach (var kv in m_typeImplMap)
-                {
-                    System.Console.WriteLine($"{kv.Key}:");
-                    System.Console.WriteLine("    impls");
-                    foreach (var impl in kv.Value.impls)
-                        System.Console.WriteLine($"      {impl.Accept(new SignatureAstPrinter())}");
-                    System.Console.WriteLine("    potential impls");
-                    foreach (var impl in kv.Value.potentialImpls)
-                        System.Console.WriteLine($"      {impl.Accept(new SignatureAstPrinter())}");
-                }
-            }
-
             if (mCompiler.ErrorHandler.HasErrors)
                 return;
 
             mVariables.AddRange(GlobalScope.Variables);
-            mTypeDefs.AddRange(GlobalScope.Typedefs);
-
-            // print stuff
-            {
-                //System.Console.WriteLine("Traits: ");
-                //foreach (var t in Traits)
-                //    System.Console.WriteLine($"  {t.Type}");
-
-                //System.Console.WriteLine("Enums: ");
-                //foreach (var t in mEnums)
-                //    System.Console.WriteLine($"  {t.Type}");
-
-                //System.Console.WriteLine("Structs: ");
-                //foreach (var t in mStructs)
-                //    System.Console.WriteLine($"  {t.Type}");
-
-                //System.Console.WriteLine("Functions: ");
-                //foreach (var t in mFunctions)
-                //    System.Console.WriteLine($"  {t.Name}: {t.Type}");
-
-                //System.Console.WriteLine("Variables: ");
-                //foreach (var t in mVariables)
-                //    System.Console.WriteLine($"  {t.Pattern}: {t.Type}");
-
-                //System.Console.WriteLine("Typedefs: ");
-                //foreach (var t in mTypeDefs)
-                //    System.Console.WriteLine($"  {t.Name} = {t.Type}");
-            }
 
             var mains = GlobalScope.GetFunctionsWithDirective("main");
             if (mains.Count() > 1)

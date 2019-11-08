@@ -221,9 +221,6 @@ namespace Cheez
                 case AstUsingStmt use: return AnalyseUseStatement(use);
                 case AstForStmt fo: return AnalyseForStatement(fo);
                 case AstDeferStmt def: return AnalyseDeferStatement(def);
-
-                case AstFunctionDecl func: ReportError(func, $"Local functions not supported yet."); break;
-                //default: throw new NotImplementedException();
             }
 
             return stmt;
