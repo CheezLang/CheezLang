@@ -62,7 +62,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private int pointerSize = 4;
 
         // context
-        private AstFunctionDecl currentFunction;
+        private AstFuncExpr currentFunction;
         private LLVMValueRef currentLLVMFunction;
         private IRBuilder builder;
         private LLVMBuilderRef rawBuilder;
@@ -184,8 +184,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 // create implementations
                 foreach (var function in workspace.mFunctions)
+                {
+
                     if (!function.IsGeneric)
                         GenerateFunctionImplementation(function);
+                }
 
                 // generate destructors
                 GenerateDestructors();

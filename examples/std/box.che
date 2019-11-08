@@ -5,19 +5,19 @@ Box :: struct(T: type) {
 }
 
 impl(T: type) Box[T] {
-    fn create(v: T = default) -> Box[T] {
+    create :: (v: T = default) -> Box[T] {
         p := alloc(T)
         <<p = v
         return Box[T](p)
     }
 
-    fn value(ref Self) -> ref T {
+    value :: (ref Self) -> ref T {
         return <<_value
     }
 }
 
 impl(T: type) Drop for Box[T] {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         free(_value)
         _value = null
     }

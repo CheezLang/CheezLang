@@ -14,9 +14,9 @@
 #load("std:preload")
 
 // required for printing
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
-fn Main() {
+Main :: () {
     test(true, true)
     test(false, true)
     test(true, false)
@@ -43,11 +43,11 @@ fn Main() {
     }
 }
 
-fn bool_to_string(b: bool) -> c_string {
+bool_to_string :: (b: bool) -> c_string {
     return if b {"true"} else {"false"}
 }
 
-fn test(b1: bool, b2: bool) {
+test :: (b1: bool, b2: bool) {
     if b1 {
         if b2 {
             c_printf("true, true`n")
@@ -63,7 +63,7 @@ fn test(b1: bool, b2: bool) {
     }
 }
 
-fn test2(b1: bool, b2: bool) {
+test2 :: (b1: bool, b2: bool) {
     num := if b1 {
         if b2 then 1 else 2
     } else {
@@ -76,7 +76,7 @@ fn test2(b1: bool, b2: bool) {
     c_printf("%d`n", num)
 }
 
-fn test3(b: bool) {
+test3 :: (b: bool) {
     if b {
         c_printf("true`n")
         return
@@ -85,7 +85,7 @@ fn test3(b: bool) {
     c_printf("false`n")
 }
 
-fn test4(b: bool) -> (ok: bool, value: c_string) {
+test4 :: (b: bool) -> (ok: bool, value: c_string) {
     ok = b
     value = if ok {"yey"} else {null}
 }

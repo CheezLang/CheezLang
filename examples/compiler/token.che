@@ -26,14 +26,14 @@ TokenData :: enum #copy {
 }
 
 impl Printable for TokenLocation {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         column := index - line_start
         str.appendf("{}:{}:{}", (file, line, column))
     }
 }
 
 impl Printable for Token {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         str.appendf("{} ({})", (ttype, location))
         match data {
             TokenData.String($s) -> str.appendf(" String({})", s)
@@ -48,7 +48,7 @@ impl Printable for Token {
 }
 
 impl Printable for TokenType {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         use TokenType
 
         str += cast(string)match self {

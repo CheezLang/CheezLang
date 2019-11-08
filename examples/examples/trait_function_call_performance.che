@@ -2,7 +2,7 @@
 #load("std:time")
 
 trait TestTrait {
-    fn traitFunction(ref Self, n: u64);
+    traitFunction :: (ref Self, n: u64);
 }
 
 Test :: struct #copy {
@@ -23,22 +23,22 @@ Test :: struct #copy {
 }
 
 impl Test {
-    fn normalFunction(Self, n: u64) {
+    normalFunction :: (Self, n: u64) {
         counter += n
     }
 
-    fn refFunction(ref Self, n: u64) {
+    refFunction :: (ref Self, n: u64) {
         counter += n
     }
 }
 
 impl TestTrait for Test {
-    fn traitFunction(ref Self, n: u64) {
+    traitFunction :: (ref Self, n: u64) {
         counter += n
     }
 }
 
-fn Main() {
+Main :: () {
     iterations := 100000000
     n := 8
 

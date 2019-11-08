@@ -3,7 +3,7 @@
 #load("std:stack")
 
 impl TokenType {
-    fn get_precedence(Self) -> int {
+    get_precedence :: (Self) -> int {
         use TokenType
         return match self {
             Plus        -> 5
@@ -21,7 +21,7 @@ impl TokenType {
 }
 
 impl Token {
-    fn get_text(ref Self) -> String {
+    get_text :: (ref Self) -> String {
         use TokenType
         return match self.ttype {
             Plus        -> String.from_string("+")
@@ -45,13 +45,13 @@ impl Token {
     }
 }
 
-fn pop_ops_while(new_order: ref Array(Token), stack: ref Stack(Token), precedence: int = -1) {
+pop_ops_while :: (new_order: ref Array(Token), stack: ref Stack(Token), precedence: int = -1) {
     while !stack.empty() and stack.peek().ttype.get_precedence() >= precedence {
         new_order.add(stack.pop())
     }
 }
 
-fn infix_to_postfix(str: String, calculate: bool) -> (postfix: String, result: double) {
+infix_to_postfix :: (str: String, calculate: bool) -> (postfix: String, result: double) {
     string_db := StringDatabase.create()
     lexer := Lexer.from_string(str, string_db)
 
@@ -168,14 +168,14 @@ fn infix_to_postfix(str: String, calculate: bool) -> (postfix: String, result: d
 }
 
 impl Printable for &u16 {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         while i := 0; self[i] != 0; i += 1 {
             str += char(self[i])
         }
     }
 }
 
-fn to_ascii_strings(argv: &&u16, argc: int) -> Array[String] {
+to_ascii_strings :: (argv: &&u16, argc: int) -> Array[String] {
     array := Array[String].create(argc)
     for i : 0..argc {
         str := String.empty()
@@ -188,14 +188,14 @@ fn to_ascii_strings(argv: &&u16, argc: int) -> Array[String] {
     return array
 }
 
-fn get_cmd_args() -> Array(String) {
+get_cmd_args :: () -> Array(String) {
     cmdLineArgs := GetCommandLineW()
     count := 0i32
     args := CommandLineToArgvW(cmdLineArgs, &count)
     return to_ascii_strings(args, int(count))
 }
 
-fn Main() {
+Main :: () {
     args := get_cmd_args()
 
     (start_index, calculate) := if streq(args[1], "-e") { (2, true) } else { (1, false) }

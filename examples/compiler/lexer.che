@@ -41,23 +41,23 @@ Lexer :: struct {
     KwCast      : string
 }
 
-fn is_ident_begin(c: char) -> bool {
+is_ident_begin :: (c: char) -> bool {
     return (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z') or (c == '_')
 }
 
-fn is_ident_char(c: char) -> bool {
+is_ident_char :: (c: char) -> bool {
     return is_ident_begin(c) or (c >= '0' and c <= '9')
 }
 
-fn is_digit(c: char) -> bool {
+is_digit :: (c: char) -> bool {
     return c >= '0' and c <= '9'
 }
 
-fn is_hex_digit(c: char) -> bool {
+is_hex_digit :: (c: char) -> bool {
     return (c >= '0' and c <= '9') or (c >= 'a' and c <= 'f') or (c >= 'A' and c <= 'F')
 }
 
-fn is_binary_digit(c: char) -> bool {
+is_binary_digit :: (c: char) -> bool {
     return c >= '0' and c <= '1'
 }
 
@@ -76,11 +76,11 @@ LexerNumberState :: enum {
 }
 
 impl Lexer {
-    fn from_raw_string(content: string, string_db: ref StringDatabase) -> Lexer {
+    from_raw_string :: (content: string, string_db: ref StringDatabase) -> Lexer {
         return from_string(String.from_string(content), string_db)
     }
 
-    fn from_string(content: String, string_db: ref StringDatabase) -> Lexer {
+    from_string :: (content: String, string_db: ref StringDatabase) -> Lexer {
         return Lexer(
             text = content
             location = TokenLocation(
@@ -122,7 +122,7 @@ impl Lexer {
         )
     }
 
-    fn from_file(filename: string, string_db: ref StringDatabase) -> Result[Lexer, String] {
+    from_file :: (filename: string, string_db: ref StringDatabase) -> Result[Lexer, String] {
         return match load_file(filename) {
             Ok($content) -> {
                 l := Lexer.from_string(content, string_db)
@@ -133,7 +133,7 @@ impl Lexer {
         }
     }
 
-    fn peek_token(ref Self) -> Token {
+    peek_token :: (ref Self) -> Token {
         return match peek {
             Some($tok) -> tok
 
@@ -145,7 +145,7 @@ impl Lexer {
         }
     }
 
-    fn next_token(ref Self) -> Token {
+    next_token :: (ref Self) -> Token {
         match peek {
             Some($t) -> {
                 peek = None
@@ -168,7 +168,7 @@ impl Lexer {
         return read_token()
     }
 
-    fn read_token(ref Self) -> Token {
+    read_token :: (ref Self) -> Token {
         token := Token(
             ttype = TokenType.EOF
             data = TokenData.None
@@ -264,7 +264,7 @@ impl Lexer {
         return token
     }
 
-    fn parse_number_literal(ref Self, token: ref Token) {
+    parse_number_literal :: (ref Self, token: ref Token) {
         token.ttype = TokenType.NumberLiteral
         base := 10
         str := {
@@ -417,7 +417,7 @@ impl Lexer {
         }
     }
 
-    fn parse_suffix(ref Self, token: ref Token) {
+    parse_suffix :: (ref Self, token: ref Token) {
         if is_ident_begin(peek_char(0)) {
             start := location.index
             while location.index < text.length and is_ident_char(peek_char(0)) {
@@ -428,12 +428,12 @@ impl Lexer {
         }
     }
 
-    fn simple_token(ref Self, token: ref Token, ttype: TokenType, len: int = 1) {
+    simple_token :: (ref Self, token: ref Token, ttype: TokenType, len: int = 1) {
         token.ttype = ttype
         location.index += len
     }
 
-    fn parse_identifier(ref Self, token: ref Token, ttype: TokenType) {
+    parse_identifier :: (ref Self, token: ref Token, ttype: TokenType) {
         token.ttype = ttype
         start := location.index
 
@@ -445,7 +445,7 @@ impl Lexer {
         token.data = TokenData.String(string_db.intern(str))
     }
 
-    fn parse_string_literal(ref Self, token: ref Token, ttype: TokenType, end: char) {
+    parse_string_literal :: (ref Self, token: ref Token, ttype: TokenType, end: char) {
         token.ttype = ttype
         location.index += 1
         start := location.index
@@ -481,7 +481,7 @@ impl Lexer {
         token.data = TokenData.String(string_db.intern(str))
     }
 
-    fn skip_newlines_and_comments(ref Self) -> loc: Option[TokenLocation] {
+    skip_newlines_and_comments :: (ref Self) -> loc: Option[TokenLocation] {
         loc = None
 
         while location.index < text.length {
@@ -512,7 +512,7 @@ impl Lexer {
         }
     }
 
-    fn peek_char(ref Self, offset: int) -> char {
+    peek_char :: (ref Self, offset: int) -> char {
         index := location.index + offset
         if index >= text.length {
             return '`0'
@@ -521,7 +521,7 @@ impl Lexer {
         return text[index]
     }
 
-    fn parse_multi_line_comment(ref Self) {
+    parse_multi_line_comment :: (ref Self) {
         level := 0
         while location.index < text.length, location.index += 1 {
             curr := peek_char(0)
@@ -544,7 +544,7 @@ impl Lexer {
         }
     }
 
-    fn parse_single_line_comment(ref Self) {
+    parse_single_line_comment :: (ref Self) {
         while location.index < text.length {
             if peek_char(0) == '`n' {
                 break
@@ -554,7 +554,7 @@ impl Lexer {
         }
     }
 
-    fn check_keywords(ref Self, token: ref Token) {
+    check_keywords :: (ref Self, token: ref Token) {
         match token.data {
             TokenData.String($str) -> {
                 token.ttype =

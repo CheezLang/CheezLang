@@ -4,7 +4,7 @@
 #load("std:c")
 #load("std:io/io")
 
-fn Main() {
+Main :: () {
     s := String.empty()
     t := true
     p5 := 0.5

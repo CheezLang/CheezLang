@@ -4,7 +4,7 @@
 
 Variables :: Table[string, Complex]
 
-fn evaluate(code: []OpCode, vars: ref Variables) -> Option[Complex] {
+evaluate :: (code: []OpCode, vars: ref Variables) -> Option[Complex] {
     stack := @alloca(Complex, 128)
     sp := 0
 
@@ -124,7 +124,7 @@ OpCode :: enum {
 }
 
 impl Printable for OpCode {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         use OpCode
         match self {
             Real($v)    -> str.appendf("Real({})", v)

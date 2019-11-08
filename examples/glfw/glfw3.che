@@ -53,22 +53,22 @@ GLFWwindow :: struct {}
 GLFWmonitor :: struct {}
 GLFWcursor :: struct {}
 
-fn glfwInit() -> bool;
-fn glfwTerminate();
+glfwInit :: () -> bool;
+glfwTerminate :: ();
 
-fn glfwCreateWindow(widht: i32, height: i32, title: c_string, monitor: &GLFWmonitor, share: &GLFWwindow) -> &GLFWwindow;
-fn glfwWindowShouldClose(window: &GLFWwindow) -> bool;
-fn glfwPollEvents();
-fn glfwSwapBuffers(window: &GLFWwindow);
-fn glfwSwapInterval(interval: i32);
+glfwCreateWindow :: (widht: i32, height: i32, title: c_string, monitor: &GLFWmonitor, share: &GLFWwindow) -> &GLFWwindow;
+glfwWindowShouldClose :: (window: &GLFWwindow) -> bool;
+glfwPollEvents :: ();
+glfwSwapBuffers :: (window: &GLFWwindow);
+glfwSwapInterval :: (interval: i32);
 
-fn glfwSetWindowTitle(window: &GLFWwindow, title: c_string);
-fn glfwMakeContextCurrent(window: &GLFWwindow);
-fn glfwSetKeyCallback(window: &GLFWwindow, callback: fn (&GLFWwindow, i32, i32, i32, i32));
-fn glfwSetWindowSizeCallback(window: &GLFWwindow, callback: fn (&GLFWwindow, i32, i32));
-fn glfwWindowHint(hint: i32, value: i32);
+glfwSetWindowTitle :: (window: &GLFWwindow, title: c_string);
+glfwMakeContextCurrent :: (window: &GLFWwindow);
+glfwSetKeyCallback :: (window: &GLFWwindow, callback: fn (&GLFWwindow, i32, i32, i32, i32));
+glfwSetWindowSizeCallback :: (window: &GLFWwindow, callback: fn (&GLFWwindow, i32, i32));
+glfwWindowHint :: (hint: i32, value: i32);
 
-fn glfwGetTime() -> double;
+glfwGetTime :: () -> double;
 
 GLFW_RELEASE : i32 = 0
 GLFW_PRESS : i32 = 1

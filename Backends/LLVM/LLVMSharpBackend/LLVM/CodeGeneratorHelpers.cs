@@ -33,7 +33,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             stackTraceTop.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
         }
 
-        private void PushStackTrace(AstFunctionDecl function)
+        private void PushStackTrace(AstFuncExpr function)
         {
             if (!keepTrackOfStackTrace)
                 return;
@@ -49,7 +49,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var previous = builder.CreateLoad(stackTraceTop, "stack_trace.top");
             builder.CreateStore(previous, previousPointer);
 
-            builder.CreateStore(builder.CreateGlobalStringPtr(function.Name.Name, ""), functionNamePointer);
+            builder.CreateStore(builder.CreateGlobalStringPtr(function.Name, ""), functionNamePointer);
             builder.CreateStore(builder.CreateGlobalStringPtr(function.Beginning.file, ""), locationPointer);
             builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)function.Beginning.line, true), linePointer);
             builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)(function.Beginning.index - function.Beginning.lineStartIndex + 1), true), columnPointer);
@@ -474,6 +474,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case ArrayType arr when arr.TargetType == CheezType.Char && v is string s:
                     return LLVM.ConstArray(CheezTypeToLLVMType(CheezType.Char), s.ToCharArray().Select(c => CheezValueToLLVMValue(CheezType.Char, c)).ToArray());
 
+                case FunctionType f when f.Declaration != null:
+                    return valueMap[f.Declaration];
+
                 default:
                     if (type == CheezType.String)
                     {
@@ -488,6 +491,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         var s = v as string;
                         return builder.CreateGlobalStringPtr(s, "");
                     }
+
                     throw new NotImplementedException();
             }
 
@@ -542,7 +546,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 }
                 foreach (var func in trait.Functions)
                 {
-                    if (func.GetFlag(StmtFlags.ExcludeFromVtable))
+                    if (func.ExcludeFromVTable)
                         continue;
 
                     if (func.IsGeneric)
@@ -619,7 +623,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         var traitFunc = func.TraitFunction;
                         if (traitFunc == null || func.SelfType != SelfParamType.Reference)
                             continue;
-                        if (traitFunc.GetFlag(StmtFlags.ExcludeFromVtable))
+                        if (traitFunc.ExcludeFromVTable)
                             continue;
 
                         var index = vtableIndices[traitFunc];

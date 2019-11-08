@@ -15,35 +15,35 @@ S :: struct {
 }
 
 impl S {
-    fn foo(ref Self) {
+    foo :: (ref Self) {
         printfln("foo(self): {}", a)
     }
 
-    fn foo1(ref Self, x: int) -> int {
+    foo1 :: (ref Self, x: int) -> int {
         result := a * x
         printfln("foo1(self, {}): {}", (x, result))
         return result
     }
 }
 
-fn bar() {
+bar :: () {
     println("bar()")
 }
 
-fn bar1(x: int) -> int {
+bar1 :: (x: int) -> int {
     printfln("bar1({}) -> {}", (x, x))
     return x
 }
 
-fn test(f: Fn()) {
+test :: (f: Fn()) {
     f()
 }
 
-fn test1(f: Fn(int) -> int, x: int) {
+test1 :: (f: Fn(int) -> int, x: int) {
     println(f(x))
 }
 
-fn Main() {
+Main :: () {
     println("")
     s := S(5)
 

@@ -16,7 +16,7 @@ StringBase :: struct(CharType: type) {
 String :: StringBase[char]
 
 impl(CharType: type) Drop for StringBase[CharType] {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         if allocator != null {
             free_n(data, allocator)
         }
@@ -26,49 +26,49 @@ impl(CharType: type) Drop for StringBase[CharType] {
 }
 
 impl(CharType: type) StringBase[CharType] {
-    fn empty(allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    empty :: (allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return StringBase[CharType](null, 0, allocator)
     }
 
-    fn from_raw_ptr(ptr: &CharType, cap: int) -> Self {
+    from_raw_ptr :: (ptr: &CharType, cap: int) -> Self {
         sl : []CharType = ptr
         sl.length = cap
         return StringBase[CharType](sl, 0, null)
     }
 
-    fn from_string(str: string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    from_string :: (str: string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         s := Self.empty(allocator)
         s.append_string(str)
         return s
     }
 
-    fn from_cstring(str: c_string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    from_cstring :: (str: c_string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         s := Self.empty(allocator)
         s.append_cstring(str)
         return s
     }
 
-    fn get_capacity(ref Self) -> int {
+    get_capacity :: (ref Self) -> int {
         return data.length
     }
 
-    fn get_length(ref Self) -> int {
+    get_length :: (ref Self) -> int {
         return length
     }
 
-    fn get_raw(ref Self) -> &CharType {
+    get_raw :: (ref Self) -> &CharType {
         return data.data
     }
 
-    fn char_at(ref Self, i: int) -> CharType #operator("[]") {
+    char_at :: (ref Self, i: int) -> CharType #operator("[]") {
         return data[i]
     }
 
-    fn set_char_at(ref Self, i: int, c: CharType) #operator("set[]") {
+    set_char_at :: (ref Self, i: int, c: CharType) #operator("set[]") {
         data[i] = c
     }
 
-    fn reserve(ref Self, size: int) {
+    reserve :: (ref Self, size: int) {
         if data.length > size {
             return
         }
@@ -85,22 +85,22 @@ impl(CharType: type) StringBase[CharType] {
         }
     }
 
-    fn clone(ref Self) -> Self {
+    clone :: (ref Self) -> Self {
         other := Self.empty()
         other.append(self)
         return other
     }
 
-    fn clear(ref Self) {
+    clear :: (ref Self) {
         length = 0
     }
 
-    fn resize(ref Self, size: int) {
+    resize :: (ref Self, size: int) {
         self.reserve(size)
         length = size
     }
 
-    fn append(ref Self, other: ref Self) -> ref Self #operator("+=") {
+    append :: (ref Self, other: ref Self) -> ref Self #operator("+=") {
         if other.data.data == null {
             return self
         }
@@ -111,7 +111,7 @@ impl(CharType: type) StringBase[CharType] {
         return self
     }
 
-    fn append_string(ref Self, other: string) -> ref Self #operator("+=") {
+    append_string :: (ref Self, other: string) -> ref Self #operator("+=") {
         newLength := length + other.length
         self.reserve(newLength)
         c_memcpy(cast &data.data[length], cast other.data, cast other.length)
@@ -119,7 +119,7 @@ impl(CharType: type) StringBase[CharType] {
         return self
     }
 
-    fn append_cstring(ref Self, other: c_string) -> ref Self #operator("+=") {
+    append_cstring :: (ref Self, other: c_string) -> ref Self #operator("+=") {
         otherLen := c_strlen(other)
         newLength := length + otherLen
         self.reserve(newLength)
@@ -128,7 +128,7 @@ impl(CharType: type) StringBase[CharType] {
         return self
     }
 
-    fn append_char(ref Self, ch: CharType) -> ref Self #operator("+=") {
+    append_char :: (ref Self, ch: CharType) -> ref Self #operator("+=") {
         newLength := length + 1
         self.reserve(newLength)
         data[length] = ch
@@ -136,25 +136,25 @@ impl(CharType: type) StringBase[CharType] {
         return self
     }
 
-    fn sliceFL(ref Self, from: int, len: int) -> []CharType {
+    sliceFL :: (ref Self, from: int, len: int) -> []CharType {
         slice : []CharType = &data[from]
         slice.length = len
         return slice
     }
 
-    fn slice(ref Self) -> []CharType {
+    slice :: (ref Self) -> []CharType {
         return self.sliceFL(0, length)
     }
 
-    fn sliceF(ref Self, from: int) -> []CharType {
+    sliceF :: (ref Self, from: int) -> []CharType {
         return self.sliceFL(from, length - from)
     }
     
-    fn sliceL(ref Self, len: int) -> []CharType {
+    sliceL :: (ref Self, len: int) -> []CharType {
         return self.sliceFL(0, len)
     }
 
-    fn index_of(ref Self, ch: CharType) -> int {
+    index_of :: (ref Self, ch: CharType) -> int {
         for i : 0..length {
             if data[i] == ch {
                 return i
@@ -166,12 +166,12 @@ impl(CharType: type) StringBase[CharType] {
 }
 
 impl String {
-    fn append_print(ref Self, pr: Printable) -> ref Self #operator("+=") {
+    append_print :: (ref Self, pr: Printable) -> ref Self #operator("+=") {
         pr.print(self, "")
         return self
     }
 
-    fn appendf(ref Self, format: string, arguments: $T) {
+    appendf :: (ref Self, format: string, arguments: $T) {
         if const @is_tuple(T) {
             args : [T.length] Printable = default
             @for_tuple_values(arguments, |v, i| {
@@ -242,7 +242,7 @@ impl String {
         }
     }
 
-    fn format(format: string, args: $T) -> Self {
+    format :: (format: string, args: $T) -> Self {
         s := Self.empty()
         s.appendf(format, args)
         return s
@@ -250,12 +250,12 @@ impl String {
 }
 
 impl Printable for String {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         str += self
     }
 }
 
-fn streql(a: $T, b: $T2, len: int) -> bool {
+streql :: (a: $T, b: $T2, len: int) -> bool {
     alen := T.get_length(a)
     blen := T2.get_length(b)
     if len > alen {
@@ -273,7 +273,7 @@ fn streql(a: $T, b: $T2, len: int) -> bool {
     return true
 }
 
-fn streq(a: $T, b: $T2) -> bool {
+streq :: (a: $T, b: $T2) -> bool {
     len  := T.get_length(a)
     blen := T2.get_length(b)
 
@@ -290,19 +290,19 @@ fn streq(a: $T, b: $T2) -> bool {
 }
 
 impl string {
-    fn get_length(Self) -> int {
+    get_length :: (Self) -> int {
         return self.length
     }
     
-    fn char_at(Self, i: int) -> char {
+    char_at :: (Self, i: int) -> char {
         return self[i]
     }
 
-    fn to_string(Self) -> String {
+    to_string :: (Self) -> String {
         return String.from_string(self)
     }
 
-    fn slice(Self, from: int = 0, length: int = -1) -> string {
+    slice :: (Self, from: int = 0, length: int = -1) -> string {
         if length < 0 {
             length = self.length - from
         }
@@ -316,15 +316,15 @@ impl string {
 }
 
 impl c_string {
-    fn get_length(Self) -> int {
+    get_length :: (Self) -> int {
         return cast c_strlen(self)
     }
     
-    fn char_at(Self, i: int) -> char {
+    char_at :: (Self, i: int) -> char {
         return self[i]
     }
 
-    fn to_string(Self) -> String {
+    to_string :: (Self) -> String {
         return String.from_cstring(self)
     }
 }

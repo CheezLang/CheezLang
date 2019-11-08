@@ -16,7 +16,7 @@ namespace Cheez
 {
     public interface ISymbol
     {
-        AstIdExpr Name { get; }
+        string Name { get; }
         //CheezType Type { get; }
         ILocation Location { get; }
     }
@@ -31,7 +31,7 @@ namespace Cheez
         private static int _id_counter = 0;
 
         public ILocation Location => null;
-        public AstIdExpr Name { get; private set; }
+        public string Name { get; private set; }
 
         public CheezType Type { get; private set; }
         public object Value { get; private set; }
@@ -39,7 +39,7 @@ namespace Cheez
 
         public ConstSymbol(string name, CheezType type, object value)
         {
-            this.Name = new AstIdExpr(name, false);
+            this.Name = name;
             this.Type = type;
             this.Value = value;
         }
@@ -48,13 +48,13 @@ namespace Cheez
     public class TypeSymbol : ITypedSymbol
     {
         public ILocation Location => null;
-        public AstIdExpr Name { get; private set; }
+        public string Name { get; private set; }
 
         public CheezType Type { get; private set; }
 
         public TypeSymbol(string name, CheezType type)
         {
-            this.Name = new AstIdExpr(name, false);
+            this.Name = name;
             this.Type = type;
         }
     }
@@ -62,7 +62,7 @@ namespace Cheez
     public class Using : ITypedSymbol
     {
         public CheezType Type => Expr.Type;
-        public AstIdExpr Name => throw new NotImplementedException();
+        public string Name => throw new NotImplementedException();
 
         public AstExpression Expr { get; }
 
@@ -130,9 +130,9 @@ namespace Cheez
         private Dictionary<string, List<INaryOperator>> mNaryOperatorTable = new Dictionary<string, List<INaryOperator>>();
         private Dictionary<string, List<IBinaryOperator>> mBinaryOperatorTable = new Dictionary<string, List<IBinaryOperator>>();
         private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
-        private Dictionary<AstImplBlock, List<AstFunctionDecl>> mImplTable = new Dictionary<AstImplBlock, List<AstFunctionDecl>>();
+        private Dictionary<AstImplBlock, List<AstFuncExpr>> mImplTable = new Dictionary<AstImplBlock, List<AstFuncExpr>>();
         private Dictionary<ISymbol, SymbolStatus> mSymbolStatus;
-        private List<AstFunctionDecl> mForExtensions = null;
+        private List<AstFuncExpr> mForExtensions = null;
         private (string label, object loopOrAction)? mBreak = null;
         private (string label, object loopOrAction)? mContinue = null;
 
@@ -149,7 +149,7 @@ namespace Cheez
         public List<AstUsingStmt> Uses { get; } = new List<AstUsingStmt>();
 
         public List<AstVariableDecl> Variables { get; } = new List<AstVariableDecl>();
-        public List<AstFunctionDecl> Functions { get; } = new List<AstFunctionDecl>();
+        public List<AstFuncExpr> Functions { get; } = new List<AstFuncExpr>();
         public List<AstImplBlock> Impls { get; } = new List<AstImplBlock>();
 
         public Queue<AstImplBlock> unresolvedImpls { get; } = new Queue<AstImplBlock>();
@@ -243,14 +243,14 @@ namespace Cheez
             }
         }
 
-        public void AddForExtension(AstFunctionDecl func)
+        public void AddForExtension(AstFuncExpr func)
         {
             if (mForExtensions == null)
-                mForExtensions = new List<AstFunctionDecl>();
+                mForExtensions = new List<AstFuncExpr>();
             mForExtensions.Add(func);
         }
 
-        public List<AstFunctionDecl> GetForExtensions(CheezType type)
+        public List<AstFuncExpr> GetForExtensions(CheezType type)
         {
             return mForExtensions?.Where(func =>
             {
@@ -260,7 +260,7 @@ namespace Cheez
                 if (CheezType.TypesMatch(paramType, type))
                     return true;
                 return false;
-            })?.ToList() ?? Parent?.GetForExtensions(type) ?? new List<AstFunctionDecl>();
+            })?.ToList() ?? Parent?.GetForExtensions(type) ?? new List<AstFuncExpr>();
         }
 
         public List<INaryOperator> GetNaryOperators(string name, params CheezType[] types)
@@ -380,17 +380,17 @@ namespace Cheez
             Parent?.GetOperator(name, sub, result, ref level);
         }
 
-        public void DefineUnaryOperator(string op, AstFunctionDecl func)
+        public void DefineUnaryOperator(string op, AstFuncExpr func)
         {
             DefineUnaryOperator(new UserDefinedUnaryOperator(op, func));
         }
 
-        public void DefineBinaryOperator(string op, AstFunctionDecl func)
+        public void DefineBinaryOperator(string op, AstFuncExpr func)
         {
             DefineBinaryOperator(new UserDefinedBinaryOperator(op, func));
         }
 
-        public void DefineOperator(string op, AstFunctionDecl func)
+        public void DefineOperator(string op, AstFuncExpr func)
         {
             DefineOperator(new UserDefinedNaryOperator(op, func));
         }
@@ -728,7 +728,7 @@ namespace Cheez
 
         public (bool ok, ILocation other) DefineSymbol(ISymbol symbol, string name = null)
         {
-            name = name ?? symbol.Name.Name;
+            name = name ?? symbol.Name;
             if (mSymbolTable.TryGetValue(name, out var other))
                 return (false, other.Location);
 
@@ -797,7 +797,7 @@ namespace Cheez
             return Parent?.GetSymbol(name);
         }
 
-        public IEnumerable<AstFunctionDecl> GetFunctionsWithDirective(string directive)
+        public IEnumerable<AstFuncExpr> GetFunctionsWithDirective(string directive)
         {
             foreach (var f in Functions)
                 if (f.HasDirective(directive))
@@ -808,11 +808,11 @@ namespace Cheez
                     yield return f;
         }
 
-        public bool DefineImplFunction(AstFunctionDecl f)
+        public bool DefineImplFunction(AstFuncExpr f)
         {
             if (!mImplTable.TryGetValue(f.ImplBlock, out var list))
             {
-                list = new List<AstFunctionDecl>();
+                list = new List<AstFuncExpr>();
                 mImplTable[f.ImplBlock] = list;
             }
 
@@ -824,7 +824,7 @@ namespace Cheez
             return true;
         }
 
-        public List<AstFunctionDecl> GetImplFunction(CheezType targetType, string name)
+        public List<AstFuncExpr> GetImplFunction(CheezType targetType, string name)
         {
             var impls = mImplTable.Where(kv =>
             {
@@ -834,13 +834,13 @@ namespace Cheez
                 return false;
             });
 
-            var candidates = new List<AstFunctionDecl>();
+            var candidates = new List<AstFuncExpr>();
 
             foreach (var impl in impls)
             {
                 var list = impl.Value;
                 
-                var c = list?.FirstOrDefault(f => f.Name.Name == name);
+                var c = list?.FirstOrDefault(f => f.Name == name);
                 if (c != null)
                     candidates.Add(c);
 
@@ -856,7 +856,7 @@ namespace Cheez
             return candidates;
         }
 
-        public AstFunctionDecl GetImplFunctionWithDirective(CheezType targetType, string attribute)
+        public AstFuncExpr GetImplFunctionWithDirective(CheezType targetType, string attribute)
         {
             var impls = mImplTable.Where(kv =>
             {
@@ -866,7 +866,7 @@ namespace Cheez
                 return false;
             });
 
-            var candidates = new List<AstFunctionDecl>();
+            var candidates = new List<AstFuncExpr>();
 
             foreach (var impl in impls)
             {

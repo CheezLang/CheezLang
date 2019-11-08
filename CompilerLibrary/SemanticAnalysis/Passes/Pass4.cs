@@ -15,18 +15,7 @@ namespace Cheez
     /// </summary>
     public partial class Workspace
     {
-        /// <summary>
-        /// pass 4: resolve function signatures
-        /// </summary>
-        private void Pass4()
-        {
-            foreach (var f in mFunctions)
-            {
-                Pass4ResolveFunctionSignature(f);
-            }
-        }
-
-        private void CheckForSelfParam(AstFunctionDecl func)
+        private void CheckForSelfParam(AstFuncExpr func)
         {
             if (func.Parameters.Count > 0)
             {
@@ -57,126 +46,127 @@ namespace Cheez
 
         private void ResolveFunctionSignature(AstFunctionDecl func, List<AstDecl> newPolyDecls)
         {
-            if (func.HasDirective("macro"))
-                func.SetFlag(StmtFlags.IsMacroFunction);
-            if (func.HasDirective("for"))
-            {
-                func.SetFlag(StmtFlags.IsMacroFunction);
-                func.SetFlag(StmtFlags.IsForExtension);
+            throw new NotImplementedException();
+            //if (func.HasDirective("macro"))
+            //    func.SetFlag(StmtFlags.IsMacroFunction);
+            //if (func.HasDirective("for"))
+            //{
+            //    func.SetFlag(StmtFlags.IsMacroFunction);
+            //    func.SetFlag(StmtFlags.IsForExtension);
 
-                if (!func.IsPolyInstance)
-                    func.Scope.AddForExtension(func);
-            }
+            //    if (!func.IsPolyInstance)
+            //        func.Scope.AddForExtension(func);
+            //}
 
-            if (func.ReturnTypeExpr?.TypeExpr?.IsPolymorphic ?? false)
-            {
-                ReportError(func.ReturnTypeExpr, "The return type of a function can't be polymorphic");
-            }
+            //if (func.ReturnTypeExpr?.TypeExpr?.IsPolymorphic ?? false)
+            //{
+            //    ReportError(func.ReturnTypeExpr, "The return type of a function can't be polymorphic");
+            //}
 
-            if (!func.IsPolyInstance)
-            {
-                var polyNames = new List<string>();
-                foreach (var p in func.Parameters)
-                {
-                    CollectPolyTypeNames(p.TypeExpr, polyNames);
-                    if (p.Name?.IsPolymorphic ?? false)
-                        polyNames.Add(p.Name.Name);
-                }
+            //if (!func.IsPolyInstance)
+            //{
+            //    var polyNames = new List<string>();
+            //    foreach (var p in func.Parameters)
+            //    {
+            //        CollectPolyTypeNames(p.TypeExpr, polyNames);
+            //        if (p.Name?.IsPolymorphic ?? false)
+            //            polyNames.Add(p.Name.Name);
+            //    }
 
-                foreach (var pn in polyNames)
-                {
-                    func.ConstScope.DefineTypeSymbol(pn, new PolyType(pn));
-                }
-            }
+            //    foreach (var pn in polyNames)
+            //    {
+            //        func.ConstScope.DefineTypeSymbol(pn, new PolyType(pn));
+            //    }
+            //}
 
-            // return types
-            if (func.ReturnTypeExpr != null)
-            {
-                func.ReturnTypeExpr.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
-                func.ReturnTypeExpr.Scope = func.SubScope;
-                func.ReturnTypeExpr.TypeExpr.Scope = func.SubScope;
-                func.ReturnTypeExpr.TypeExpr = ResolveType(func.ReturnTypeExpr.TypeExpr, newPolyDecls, out var t);
-                //func.ReturnTypeExpr.TypeExpr = ResolveTypeNow(func.ReturnTypeExpr.TypeExpr, out var t);
-                func.ReturnTypeExpr.Type = t;
+            //// return types
+            //if (func.ReturnTypeExpr != null)
+            //{
+            //    func.ReturnTypeExpr.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
+            //    func.ReturnTypeExpr.Scope = func.SubScope;
+            //    func.ReturnTypeExpr.TypeExpr.Scope = func.SubScope;
+            //    func.ReturnTypeExpr.TypeExpr = ResolveType(func.ReturnTypeExpr.TypeExpr, newPolyDecls, out var t);
+            //    //func.ReturnTypeExpr.TypeExpr = ResolveTypeNow(func.ReturnTypeExpr.TypeExpr, out var t);
+            //    func.ReturnTypeExpr.Type = t;
 
-                if (func.ReturnTypeExpr.Type.IsPolyType)
-                    func.IsGeneric = true;
-            }
+            //    if (func.ReturnTypeExpr.Type.IsPolyType)
+            //        func.IsGeneric = true;
+            //}
 
-            // parameter types
-            foreach (var p in func.Parameters)
-            {
-                p.TypeExpr.Scope = func.SubScope;
-                p.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
-                p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
-                p.Type = t;
+            //// parameter types
+            //foreach (var p in func.Parameters)
+            //{
+            //    p.TypeExpr.Scope = func.SubScope;
+            //    p.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
+            //    p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
+            //    p.Type = t;
 
-                if (p.Type.IsPolyType || (p.Name?.IsPolymorphic ?? false))
-                    func.IsGeneric = true;
+            //    if (p.Type.IsPolyType || (p.Name?.IsPolymorphic ?? false))
+            //        func.IsGeneric = true;
 
-                if (!func.GetFlag(StmtFlags.IsMacroFunction))
-                {
-                    if (p.Type.IsComptimeOnly && !(p.Name?.IsPolymorphic ?? false))
-                    {
-                        ReportError(p, $"Parameter '{p}' must be constant because the type '{p.Type}' is only available at compiletime");
-                    }
-                }
-            }
+            //    if (!func.GetFlag(StmtFlags.IsMacroFunction))
+            //    {
+            //        if (p.Type.IsComptimeOnly && !(p.Name?.IsPolymorphic ?? false))
+            //        {
+            //            ReportError(p, $"Parameter '{p}' must be constant because the type '{p.Type}' is only available at compiletime");
+            //        }
+            //    }
+            //}
 
-            if (func.IsGeneric)
-            {
-                func.Type = new GenericFunctionType(func);
-            }
-            else
-            {
-                func.Type = new FunctionType(func);
+            //if (func.IsGeneric)
+            //{
+            //    func.Type = new GenericFunctionType(func);
+            //}
+            //else
+            //{
+            //    func.Type = new FunctionType(func);
 
-                if (func.TryGetDirective("varargs", out var varargs))
-                {
-                    if (varargs.Arguments.Count != 0)
-                    {
-                        ReportError(varargs, $"#varargs takes no arguments!");
-                    }
-                    func.FunctionType.VarArgs = true;
-                }
-            }
+            //    if (func.TryGetDirective("varargs", out var varargs))
+            //    {
+            //        if (varargs.Arguments.Count != 0)
+            //        {
+            //            ReportError(varargs, $"#varargs takes no arguments!");
+            //        }
+            //        func.FunctionType.VarArgs = true;
+            //    }
+            //}
 
-            if (func.TryGetDirective("operator", out var op))
-            {
-                if (op.Arguments.Count != 1)
-                {
-                    ReportError(op, $"#operator requires exactly one argument!");
-                }
-                else
-                {
-                    var arg = op.Arguments[0];
-                    arg.SetFlag(ExprFlags.ValueRequired, true);
-                    arg = op.Arguments[0] = InferType(arg, null);
-                    if (arg.Value is string v)
-                    {
-                        var targetScope = func.Scope;
-                        if (func.ImplBlock != null) targetScope = func.ImplBlock.Scope;
+            //if (func.TryGetDirective("operator", out var op))
+            //{
+            //    if (op.Arguments.Count != 1)
+            //    {
+            //        ReportError(op, $"#operator requires exactly one argument!");
+            //    }
+            //    else
+            //    {
+            //        var arg = op.Arguments[0];
+            //        arg.SetFlag(ExprFlags.ValueRequired, true);
+            //        arg = op.Arguments[0] = InferType(arg, null);
+            //        if (arg.Value is string v)
+            //        {
+            //            var targetScope = func.Scope;
+            //            if (func.ImplBlock != null) targetScope = func.ImplBlock.Scope;
 
-                        CheckForValidOperator(v, func, op, targetScope);
-                    }
-                    else
-                    {
-                        ReportError(arg, $"Argument to #op must be a constant string!");
-                    }
-                }
-            }
+            //            CheckForValidOperator(v, func, op, targetScope);
+            //        }
+            //        else
+            //        {
+            //            ReportError(arg, $"Argument to #op must be a constant string!");
+            //        }
+            //    }
+            //}
         }
 
-        private void CheckForValidOperator(string op, AstFunctionDecl func, AstDirective directive, Scope targetScope)
+        private void CheckForValidOperator(string op, AstFuncExpr func, AstDirective directive, Scope targetScope)
         {
             switch (op)
             {
                 case "!":
                 case "-" when func.Parameters.Count == 1:
                     if (func.ReturnType == CheezType.Void)
-                        ReportError(func.Name, $"This function must return a value in order to use it as operator '{op}'");
+                        ReportError(func.ParameterLocation, $"This function must return a value in order to use it as operator '{op}'");
                     else if (func.Parameters.Count != 1)
-                        ReportError(func.Name, $"This function must take one parameter in order to use it as operator '{op}'");
+                        ReportError(func.ParameterLocation, $"This function must take one parameter in order to use it as operator '{op}'");
                     else
                         targetScope.DefineUnaryOperator(op, func);
                     break;
@@ -195,9 +185,9 @@ namespace Cheez
                 case "and":
                 case "or":
                     if (func.ReturnType == CheezType.Void)
-                        ReportError(func.Name, $"This function must return a value in order to use it as operator '{op}'");
+                        ReportError(func.ParameterLocation, $"This function must return a value in order to use it as operator '{op}'");
                     else if (func.Parameters.Count != 2)
-                        ReportError(func.Name, $"This function must take two parameters in order to use it as operator '{op}'");
+                        ReportError(func.ParameterLocation, $"This function must take two parameters in order to use it as operator '{op}'");
                     else
                         targetScope.DefineBinaryOperator(op, func);
                     break;
@@ -209,7 +199,7 @@ namespace Cheez
                 case "%=":
                     if (func.Parameters.Count != 2)
                     {
-                        ReportError(func.Name, $"This function must take two parameters in order to use it as operator '{op}'");
+                        ReportError(func.ParameterLocation, $"This function must take two parameters in order to use it as operator '{op}'");
                     }
                     else
                     {
@@ -219,9 +209,9 @@ namespace Cheez
 
                 case "[]":
                     if (func.ReturnType == CheezType.Void)
-                        ReportError(func.Name, $"This function must return a value in order to use it as operator '{op}'");
+                        ReportError(func.ParameterLocation, $"This function must return a value in order to use it as operator '{op}'");
                     else if (func.Parameters.Count != 2)
-                        ReportError(func.Name, $"This function must take two parameters in order to use it as operator '{op}'");
+                        ReportError(func.ParameterLocation, $"This function must take two parameters in order to use it as operator '{op}'");
                     else
                         targetScope.DefineBinaryOperator(op, func);
                     break;
@@ -229,7 +219,7 @@ namespace Cheez
 
                 case "set[]":
                     if (func.Parameters.Count != 3)
-                        ReportError(func.Name, $"This function must take three parameters in order to use it as operator '{op}'");
+                        ReportError(func.ParameterLocation, $"This function must take three parameters in order to use it as operator '{op}'");
                     else
                         targetScope.DefineOperator(op, func);
                     break;
@@ -319,6 +309,11 @@ namespace Cheez
                 case AstRangeExpr r:
                     CollectPolyTypeNames(r.From, result);
                     CollectPolyTypeNames(r.To, result);
+                    break;
+
+                case AstNumberExpr _:
+                case AstStringLiteral _:
+                case AstBoolExpr _:
                     break;
 
                 default: throw new NotImplementedException($"Type {typeExpr}");

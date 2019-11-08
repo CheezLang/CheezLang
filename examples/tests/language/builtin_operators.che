@@ -65,9 +65,9 @@
 
 #load("std:preload")
 
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
-fn Main() {
+Main :: () {
     // signed ints
     test_numbers(i8,  9i8,  5i8,  3i8, arith_string = "%hhd, %hhd, %hhd, %hhd, %hhd`n"c)
     test_numbers(i16, 9i16, 5i16, 3i16, arith_string = "%hd, %hd, %hd, %hd, %hd`n"c)
@@ -103,16 +103,16 @@ fn Main() {
     test_unary(false, -3, -7.3)
 }
 
-fn test_unary(a: bool, b: int, c: double) {
+test_unary :: (a: bool, b: int, c: double) {
     c_printf("%lld, %lld, %f`n", cast(int) !a, -b, -c)
 }
 
-fn foo(b: bool, i: int) -> bool {
+foo :: (b: bool, i: int) -> bool {
     c_printf("%lld`n", i)
     return b
 }
 
-fn test_and_or() {
+test_and_or :: () {
     a := foo(true, 0) and foo(true, 1)
     b := foo(true, 2) and foo(false, 3)
     c := foo(false, 4) and foo(true, 5)
@@ -126,7 +126,7 @@ fn test_and_or() {
     c_printf("%hhd %hhd %hhd %hhd %hhd %hhd %hhd %hhd`n", a, b, c, d, e, f, g, h)
 }
 
-fn test_numbers($T: type, a: T, b: T, c: T, $test_arith: bool = true, $arith_string: c_string = "%d, %d, %d, %d, %d`n"c) {
+test_numbers :: ($T: type, a: T, b: T, c: T, $test_arith: bool = true, $arith_string: c_string = "%d, %d, %d, %d, %d`n"c) {
     if test_arith {
         c_printf(arith_string, (a + b), (a - b), (a * b), (a / b), (a % b))
     }
@@ -136,10 +136,10 @@ fn test_numbers($T: type, a: T, b: T, c: T, $test_arith: bool = true, $arith_str
     c_printf("%hhd, %hhd, %hhd, %hhd, %hhd, %hhd`n", (a == b), (a != b), (a > b), (a >= b), (a < b), (a <= b))
 }
 
-fn test_bool(a: bool, b: bool) {
+test_bool :: (a: bool, b: bool) {
     c_printf("%lld, %lld`n", cast(int) (a == b), cast(int) (a != b))
 }
 
-fn test_pointers(a: &int, b: &int) {
+test_pointers :: (a: &int, b: &int) {
     c_printf("%lld, %lld`n", cast(int) (a == b), cast(int) (a != b))
 }

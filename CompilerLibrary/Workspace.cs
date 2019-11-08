@@ -29,14 +29,14 @@ namespace Cheez
         public Scope GlobalScope { get; private set; }
         public List<Scope> AllScopes { get; private set; }
 
-        public AstFunctionDecl MainFunction { get; set; }
+        public AstFuncExpr MainFunction { get; set; }
 
         public Dictionary<CheezType, List<AstImplBlock>> TypeTraitMap = new Dictionary<CheezType, List<AstImplBlock>>();
 
         public int MaxPolyStructResolveStepCount { get; set; } = 10;
         public int MaxPolyFuncResolveStepCount { get; set; } = 10;
 
-        private AstFunctionDecl currentFunction = null;
+        private AstFuncExpr currentFunction = null;
 
         public TargetArchitecture TargetArch = TargetArchitecture.X64;
 
@@ -161,11 +161,12 @@ namespace Cheez
             if (mains.Count() > 1)
             {
                 ReportError("Only one main function is allowed",
-                    mains.Select(f => ("Main function defined here:", f.Name.Location)).ToList());
+                    mains.Select(f => ("Main function defined here:", f.ParameterLocation)).ToList());
             }
             else if (mains.Count() == 0)
             {
-                MainFunction = GlobalScope.GetSymbol("Main") as AstFunctionDecl;
+                var mainDecl = GlobalScope.GetSymbol("Main") as AstConstantDeclaration;
+                MainFunction = mainDecl?.Initializer as AstFuncExpr;
 
                 if (MainFunction == null)
                 {

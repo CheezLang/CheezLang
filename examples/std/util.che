@@ -1,4 +1,4 @@
-fn next_aligned(_add: &$T, align: u64) -> &T {
+next_aligned :: (_add: &$T, align: u64) -> &T {
     add := u64(_add)
     mul := add + align - 1
     mul -= (mul % align)
@@ -6,10 +6,10 @@ fn next_aligned(_add: &$T, align: u64) -> &T {
     return cast mul
 }
 
-fn pointer_add_sized(ptr: &$T, amount: int) -> &T {
+pointer_add_sized :: (ptr: &$T, amount: int) -> &T {
     return cast(&T)((cast(int) ptr) + amount * @sizeof(T))
 }
 
-fn pointer_add(ptr: &$T, amount: int) -> &T {
+pointer_add :: (ptr: &$T, amount: int) -> &T {
     return cast(&T)((cast(int) ptr) + amount)
 }

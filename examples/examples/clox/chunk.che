@@ -8,7 +8,7 @@ Chunk :: struct {
 }
 
 impl Chunk {
-    fn create() -> Chunk {
+    create :: () -> Chunk {
         return Chunk(
             code        = Array(u8).create()
             lines       = Array(int).create()
@@ -16,18 +16,18 @@ impl Chunk {
         )
     }
 
-    fn dispose(ref Self) {
+    dispose :: (ref Self) {
         code.dispose()
         lines.dispose()
         constants.dispose()
     }
 
-    fn write(ref Self, byte: u8, line: int) {
+    write :: (ref Self, byte: u8, line: int) {
         code.add(byte)
         lines.add(line)
     }
 
-    fn add_constant(ref Self, value: Value) {
+    add_constant :: (ref Self, value: Value) {
         // gc
         // push(value)
         constants.add(value)

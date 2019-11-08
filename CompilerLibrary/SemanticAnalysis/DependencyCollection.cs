@@ -10,6 +10,15 @@ namespace Cheez
         {
             switch (typeExpr)
             {
+                case AstFuncExpr fun:
+                    {
+                        foreach (var p in fun.Parameters)
+                            CollectTypeDependencies(decl, p.TypeExpr);
+                        if (fun.ReturnTypeExpr != null)
+                            CollectTypeDependencies(decl, fun.ReturnTypeExpr.TypeExpr);
+                        break;
+                    }
+
                 case AstStructTypeExpr str:
                     {
                         foreach (var p in str.Parameters)

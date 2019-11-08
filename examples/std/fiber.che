@@ -4,7 +4,7 @@
 // @fixme cyclic dependency, but should work
 // thread_fiber : Fiber = Fiber(ConvertThreadToFiber(&thread_fiber), null)
 
-fn fiber_func(param: &any) #stdcall {
+fiber_func :: (param: &any) #stdcall {
     f := cast(&Fiber)param
     f.func()
     while true {
@@ -20,7 +20,7 @@ Fiber :: struct {
 }
 
 impl Fiber {
-    fn create(func: fn(), ud: &any = null) -> &Fiber {
+    create :: (func: fn(), ud: &any = null) -> &Fiber {
         f := alloc(Fiber)
         f.ptr = CreateFiber(0, fiber_func, cast f)
         f.func = func
@@ -29,16 +29,16 @@ impl Fiber {
         return f
     }
 
-    fn dispose(ref Self) {
+    dispose :: (ref Self) {
         free(&self)
     }
 
-    fn resume(ref Self) {
+    resume :: (ref Self) {
         parent = current()
         SwitchToFiber(ptr)
     }
 
-    fn yield() {
+    yield :: () {
         f := current()
         if f.parent == null {
             @panic("Can't yield from a fiber without parent")
@@ -47,7 +47,7 @@ impl Fiber {
         }
     }
 
-    fn current() -> &Fiber {
+    current :: () -> &Fiber {
         return cast GetFiberData()
     }
 }

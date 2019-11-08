@@ -10,22 +10,22 @@ CountingAllocator :: struct {
     freed: u64
 }
 
-fn newCountingAllocator() -> CountingAllocator {
+newCountingAllocator :: () -> CountingAllocator {
     return CountingAllocator(DEFAULT_STD_HEAP_ALLOCATOR, 0, 0)
 }
 
-fn newCountingAllocator2(alloc: Allocator) -> CountingAllocator {
+newCountingAllocator2 :: (alloc: Allocator) -> CountingAllocator {
     return CountingAllocator(alloc, 0, 0)
 }
 
 impl CountingAllocator {
-    fn printDiagnostics(ref Self) {
+    printDiagnostics :: (ref Self) {
         printfln("( Allocated: {}, Freed: {} )", (allocated, freed))
     }
 }
 
 impl Allocator for CountingAllocator {
-    fn allocate(ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
+    allocate :: (ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
         size := count * elementSize
         allocated += size
 
@@ -38,7 +38,7 @@ impl Allocator for CountingAllocator {
         return pointer_add(mem, @sizeof(u64))
     }
 
-    fn reallocate(ref Self, mem: &any, count: u64, elementSize: u64, alignment: u64) -> &any {
+    reallocate :: (ref Self, mem: &any, count: u64, elementSize: u64, alignment: u64) -> &any {
         size := count * elementSize
         actualMem := pointer_add(mem, -@sizeof(u64))
         
@@ -54,7 +54,7 @@ impl Allocator for CountingAllocator {
         return pointer_add(mem, @sizeof(u64))
     }
 
-    fn free(ref Self, mem: &any) {
+    free :: (ref Self, mem: &any) {
         actualMem := pointer_add(mem, -@sizeof(u64))
         sizePtr := cast(&u64)actualMem
         freed += <<sizePtr

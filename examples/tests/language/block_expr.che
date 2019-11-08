@@ -1,9 +1,9 @@
 #test_expect_output("1, 2, 3, 4")
 #load("std:preload")
 
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
-fn Main() {
+Main :: () {
     a := { 1 }
     b := {
         2

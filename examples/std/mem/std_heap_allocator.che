@@ -6,15 +6,15 @@ StdHeapAllocator :: struct {
 }
 
 impl Allocator for StdHeapAllocator {
-    fn allocate(ref Self, count: uint, elementSize: uint, alignment: uint) -> &any {
+    allocate   :: (ref Self, count: uint, elementSize: uint, alignment: uint) -> &any {
         return c_malloc(cast(uint) (count * elementSize))
     }
 
-    fn reallocate(ref Self, mem: &any, count: uint, elementSize: uint, alignment: uint) -> &any {
+    reallocate :: (ref Self, mem: &any, count: uint, elementSize: uint, alignment: uint) -> &any {
         return c_realloc(mem, cast(uint) (count * elementSize))
     }
 
-    fn free(ref Self, mem: &any) {
+    free       :: (ref Self, mem: &any) {
         c_free(mem)
     }
 }

@@ -5,7 +5,7 @@
 #load("std:io/io")
 #load("std:math")
 
-fn Main() {
+Main :: () {
     max_digits := 0.0
     max_line := -1
     for : numbers {

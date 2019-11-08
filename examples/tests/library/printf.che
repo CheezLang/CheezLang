@@ -11,7 +11,7 @@
 
 #load("std:io/io")
 
-fn Main() {
+Main :: () {
     tru := true
     fals := false
     a := 123456789

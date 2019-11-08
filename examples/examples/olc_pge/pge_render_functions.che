@@ -2,7 +2,7 @@
 #load("pixel.che")
 
 impl PixelGameEngine {
-    fn clear(ref Self, p: Pixel = Pixel()) {
+    clear :: (ref Self, p: Pixel = Pixel()) {
         count := draw_target.width * draw_target.height
         pixels := draw_target.get_data()
         for i : 0..count {
@@ -10,11 +10,11 @@ impl PixelGameEngine {
         }
     }
 
-    fn get_pixel(ref Self, x: int, y: int) -> Pixel {
+    get_pixel :: (ref Self, x: int, y: int) -> Pixel {
         return draw_target.get_pixel(x, y)
     }
 
-    fn draw(ref Self, x: int, y: int, p: Pixel) -> bool {
+    draw :: (ref Self, x: int, y: int, p: Pixel) -> bool {
         if draw_target == null {
             return false
         }
@@ -36,7 +36,7 @@ impl PixelGameEngine {
         }
     }
 
-    fn draw_circle(ref Self, x: int, y: int, r: int, p: Pixel, mask: u32 = 0xFFFFFFFF) {
+    draw_circle :: (ref Self, x: int, y: int, r: int, p: Pixel, mask: u32 = 0xFFFFFFFF) {
         if r == 0 {
             return
         }
@@ -65,14 +65,14 @@ impl PixelGameEngine {
         }
     }
 
-    fn draw_rect(ref Self, x: int, y: int, w: int, h: int, p: Pixel) {
+    draw_rect :: (ref Self, x: int, y: int, w: int, h: int, p: Pixel) {
         draw_line(x, y, x+w, y, p)
         draw_line(x+w, y, x+w, y+h, p)
         draw_line(x+w, y+h, x, y+h, p)
         draw_line(x, y+h, x, y, p)
     }
 
-    fn fill_rect(ref Self, x: int, y: int, w: int, h: int, p: Pixel) {
+    fill_rect :: (ref Self, x: int, y: int, w: int, h: int, p: Pixel) {
         if w < 0 {
             x += w
             w *= -1
@@ -103,14 +103,14 @@ impl PixelGameEngine {
         }
     }
 
-    fn rol(pattern: ref u32) -> bool {
+    rol :: (pattern: ref u32) -> bool {
         p := pattern
         pattern = @bin_or(@bin_lsl(p, 1u32), @bin_lsr(p, 31u32))
         p = pattern
         return @bin_and(p, 1u32) != 0
     }
 
-    fn draw_line(ref Self, x1: int, y1: int, x2: int, y2: int, p: Pixel, pattern: u32 = 0xFFFFFFFF) {
+    draw_line :: (ref Self, x1: int, y1: int, x2: int, y2: int, p: Pixel, pattern: u32 = 0xFFFFFFFF) {
         dx := x2 - x1
         dy := y2 - y1
 

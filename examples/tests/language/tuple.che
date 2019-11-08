@@ -5,24 +5,24 @@
 
 #load("std:preload")
 
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
-fn get_tuple() -> (one: bool, two: int) {
+get_tuple :: () -> (one: bool, two: int) {
     one = true
     two = 6
 }
 
-fn get_tuple_value(tuple: $T, $Index: int) -> @tuple_type_member(T, Index) {
+get_tuple_value :: (tuple: $T, $Index: int) -> @tuple_type_member(T, Index) {
     return tuple[Index]
 }
 
 impl(T: type) T {
-    fn get_tuple_value(ref Self, $Index: int) -> @tuple_type_member(Self, Index) {
+    get_tuple_value :: (ref Self, $Index: int) -> @tuple_type_member(Self, Index) {
         return self[Index]
     }
 }
 
-fn Main() {
+Main :: () {
     a := (3, 4)
     c_printf("%d, %d`n", a[0], a[1])
     

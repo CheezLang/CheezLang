@@ -17,7 +17,7 @@ Direction :: enum {
 
 action : Direction = Direction.None
 
-fn onKeyDown(window: &GLFWwindow, key: i32, scancode: i32, a: i32, mods: i32) {
+onKeyDown :: (window: &GLFWwindow, key: i32, scancode: i32, a: i32, mods: i32) {
     if a == GLFW_PRESS {
         action = match key {
             265 -> Direction.Up
@@ -28,7 +28,7 @@ fn onKeyDown(window: &GLFWwindow, key: i32, scancode: i32, a: i32, mods: i32) {
     }
 }
 
-fn onResize(window: &GLFWwindow, w: i32, h: i32) {
+onResize :: (window: &GLFWwindow, w: i32, h: i32) {
     glViewport(0, 0, w, h)
 }
 
@@ -38,7 +38,7 @@ gridSize : double = 10.0
 width : double = 640.0
 height : double = 480.0
 
-fn action_to_dir(dir: ref Direction, action: Direction) {
+action_to_dir :: (dir: ref Direction, action: Direction) {
     dir = match (<<&dir, action) {
         (Direction.Up,      Direction.Down) -> dir
         (Direction.Right,   Direction.Left) -> dir
@@ -49,8 +49,7 @@ fn action_to_dir(dir: ref Direction, action: Direction) {
     }
 }
 
-fn Main()
-{
+Main :: () {
     if !glfwInit() {
         println("Failed to initialize GLFW")
         return

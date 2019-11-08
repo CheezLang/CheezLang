@@ -16,13 +16,13 @@ namespace Cheez
             new Dictionary<AstWhileStmt, HashSet<(Scope scope, ILocation location)>>();
         private HashSet<AstTempVarExpr> mMovedTempVars = new HashSet<AstTempVarExpr>();
 
-        private Dictionary<CheezType, AstFunctionDecl> mTypeDropFuncMap = new Dictionary<CheezType, AstFunctionDecl>();
+        private Dictionary<CheezType, AstFuncExpr> mTypeDropFuncMap = new Dictionary<CheezType, AstFuncExpr>();
         private AstTraitDeclaration mTraitDrop;
         private HashSet<CheezType> mTypesWithDestructor = new HashSet<CheezType>();
         
         public IEnumerable<CheezType> TypesWithDestructor => mTypesWithDestructor;
 
-        public AstFunctionDecl GetDropFuncForType(CheezType type)
+        public AstFuncExpr GetDropFuncForType(CheezType type)
         {
             if (mTypeDropFuncMap.TryGetValue(type, out var f))
                 return f;
@@ -156,7 +156,7 @@ namespace Cheez
             return null;
         }
 
-        private void PassVariableLifetimes(AstFunctionDecl func)
+        private void PassVariableLifetimes(AstFuncExpr func)
         {
             mWhileExits.Clear();
             mMovedTempVars.Clear();

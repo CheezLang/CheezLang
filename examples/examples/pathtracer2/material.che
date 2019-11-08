@@ -15,7 +15,7 @@ Scatter :: enum {
 }
 
 trait Material {
-    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter;
+    scatter :: (ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter;
 }
 
 //
@@ -24,7 +24,7 @@ Lambertian :: struct {
 }
 
 impl Material for Lambertian {
-    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
+    scatter :: (ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
         target := hit.p + hit.n + random.random_in_unit_sphere()
         ray := Ray.from_to(hit.p, target)
         color := albedo.value(0, 0, hit.p)
@@ -38,7 +38,7 @@ Emissive :: struct {
 }
 
 impl Material for Emissive {
-    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
+    scatter :: (ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
         return Scatter.Color(color)
     }
 }
@@ -50,7 +50,7 @@ Metal :: struct {
 }
 
 impl Material for Metal {
-    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
+    scatter :: (ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
         reflected := r.direction.reflect(hit.n) + random.random_in_unit_sphere() * roughness
         return if vec3.dot(reflected, hit.n) > 0 then
             Scatter.ColorReflection(MaterialRecord(albedo, Ray.from_dir(hit.p, reflected)))
@@ -65,7 +65,7 @@ Dielectric :: struct {
 }
 
 impl Material for Dielectric {
-    fn schlick(cosine: real, ior: real) -> real {
+    schlick :: (cosine: real, ior: real) -> real {
         r0 := {
             r := (1.0 - ior) / (1.0 + ior)
             r * r
@@ -74,7 +74,7 @@ impl Material for Dielectric {
         return r0 + (1.0 - r0) * real(pow(1.0 - cosine, 5))
     }
 
-    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
+    scatter :: (ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
         dir_dot_n := vec3.dot(r.direction, hit.n)
         (outward_normal, ni_over_nt, cosine) := if dir_dot_n > 0 then
             (-hit.n, self.ior, self.ior * dir_dot_n)
@@ -105,13 +105,13 @@ CheckerMaterial :: struct {
 }
 
 impl CheckerMaterial {
-    fn create(size: real, off: vec3, even: Material, odd: Material) -> Material {
+    create :: (size: real, off: vec3, even: Material, odd: Material) -> Material {
         return create_object(Material, CheckerMaterial(size=size, off=off, even=even, odd=odd))
     }
 }
 
 impl Material for CheckerMaterial {
-    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
+    scatter :: (ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
         sines := real(sin(size * (hit.p.x + off.x)) * sin(size * (hit.p.y + off.y)) * sin(size * (hit.p.z + off.z)))
         return if sines >= 0 then even.scatter(r, hit, random) else odd.scatter(r, hit, random)
     }
@@ -123,7 +123,7 @@ Isotropic :: struct {
 }
 
 impl Material for Isotropic {
-    fn scatter(ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
+    scatter :: (ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter {
         return Scatter.ColorReflection(MaterialRecord(
             att         = albedo.value(hit.u, hit.v, hit.p)
             scattered   = Ray.from_dir(hit.p, random.random_in_unit_sphere())

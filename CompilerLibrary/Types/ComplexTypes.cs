@@ -301,7 +301,7 @@ namespace Cheez.Types.Complex
         public (string name, CheezType type, AstExpression defaultValue)[] Parameters { get; private set; }
         public CheezType ReturnType { get; private set; }
 
-        public AstFunctionDecl Declaration { get; set; } = null;
+        public AstFuncExpr Declaration { get; set; } = null;
         public override bool IsErrorType => ReturnType.IsErrorType || Parameters.Any(p => p.type.IsErrorType);
 
         public CallingConvention CC = CallingConvention.Default;
@@ -320,7 +320,7 @@ namespace Cheez.Types.Complex
             this.CC = cc;
         }
 
-        public FunctionType(AstFunctionDecl func)
+        public FunctionType(AstFuncExpr func)
             : base(PointerType.PointerSize, PointerType.PointerAlignment, true)
         {
             this.Declaration = func;

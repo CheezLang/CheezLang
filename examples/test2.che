@@ -9,23 +9,23 @@
 // #load("std:random")
 
 //* corotine stuff
-fn foo() -> int #coroutine {
+foo :: () -> int #coroutine {
     return 0
     return 1
     return 2
 }
 
-fn mul(a: int) -> int #coroutine(b: int) {
+mul :: (a: int) -> int #coroutine(b: int) {
     while true {
         return a * b
     }
 }
 
-fn mul2(a: int) -> Fn(int) -> int {
+mul2 :: (a: int) -> Fn(int) -> int {
     return |b| a * b
 }
 
-fn bar(x: int) #fiber {
+bar :: (x: int) #fiber {
     printfln("x = {}", x)
 
     println("bar: a")
@@ -39,7 +39,7 @@ fn bar(x: int) #fiber {
     println("bar: d")
 }
 
-fn baz() {
+baz :: () {
     println("   baz: a")
     yield
     println("   baz: b")
@@ -49,7 +49,7 @@ fn baz() {
     println("   baz: d")
 }
 
-fn Main() {
+Main :: () {
     b : Fiber = bar()
     b() // bar: a
     b() // bar: b
@@ -87,7 +87,7 @@ vec3 :: struct {
     z: float
 }
 
-fn def(T: type) -> T {
+def :: (T: type) -> T {
     result : T = default
     #code {
         type_info := @type_info(T)
@@ -100,7 +100,7 @@ fn def(T: type) -> T {
     return result
 }
 
-fn Main() {
+Main :: () {
     v := def(vec3)
 }
 // */

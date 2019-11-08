@@ -9,17 +9,17 @@
 #load("std:preload")
 
 // required for printing
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
-fn foo(a: i32, b: i32) {
+foo :: (a: i32, b: i32) {
     c_printf("%d, %d`n", a, b)
 }
 
-fn bar(a: i32 = 123, b: i32 = 456) {
+bar :: (a: i32 = 123, b: i32 = 456) {
     c_printf("%d, %d`n", a, b)
 }
 
-fn Main() {
+Main :: () {
     foo(1, 2)
     foo(b = 4, a = 3)
 

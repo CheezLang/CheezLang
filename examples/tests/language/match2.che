@@ -42,7 +42,7 @@ Test :: enum {
     H
 }
 
-fn Main() {
+Main :: () {
     {
         a := OptionInt.None
         print_enum(a)
@@ -83,7 +83,7 @@ fn Main() {
     }
 }
 
-fn print_enum2(e: Test) {
+print_enum2 :: (e: Test) {
     match e {
         Test.A -> println("Test.A")
         Test.B -> println("Test.B")
@@ -96,7 +96,7 @@ fn print_enum2(e: Test) {
     }
 }
 
-fn print_enum(e: OptionInt) {
+print_enum :: (e: OptionInt) {
     match e {
         OptionInt.Some(5) -> println("five")
         OptionInt.Some(10) -> println("ten")
@@ -106,7 +106,7 @@ fn print_enum(e: OptionInt) {
     }
 }
 
-fn print_value(e: $T, $VT: type) {
+print_value :: (e: $T, $VT: type) {
     ptr_raw := cast(&i8)&e
     ptr_val_raw := pointer_add(ptr_raw, 8)
     ptr_val := cast(&VT)ptr_val_raw

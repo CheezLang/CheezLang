@@ -6,7 +6,7 @@
 
 #load("std:preload")
 
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
 Vector :: struct(T: type) #copy {
     x: T
@@ -14,14 +14,14 @@ Vector :: struct(T: type) #copy {
 }
 
 impl(T: type) Vector[T] {
-    fn add(ref Self, other: Vector[T]) -> ref Vector[T] {
+    add :: (ref Self, other: Vector[T]) -> ref Vector[T] {
         x += other.x
         y += other.y
 
         return self
     }
 
-    fn sub(a: Vector[T], b: Vector[T]) -> Vector[T] {
+    sub :: (a: Vector[T], b: Vector[T]) -> Vector[T] {
         return Vector[T](
             a.x - b.x
             a.y - b.y
@@ -33,7 +33,7 @@ Vec3  :: Vector[double]
 Vec3f :: Vector[float]
 Vec3i :: Vector[int]
 
-fn Main() {
+Main :: () {
     a := Vec3(1, 2)
     b := Vec3(3, 4)
     

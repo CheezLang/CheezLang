@@ -2,12 +2,12 @@
 
 CvCapture :: struct {}
 
-fn cvCreateCameraCapture(index: i32) -> &CvCapture;
-fn cvReleaseCapture(capture: &&CvCapture);
-fn cvGrabFrame(capture: &CvCapture) -> i32;
-fn cvQueryFrame(capture: &CvCapture) -> &IplImage;
-fn cvSetCaptureProperty(capture: &CvCapture, property_id: i32, value: double) -> i32;
-fn cvGetCaptureProperty(capture: &CvCapture, property_id: i32) -> double;
+cvCreateCameraCapture :: (index: i32) -> &CvCapture;
+cvReleaseCapture :: (capture: &&CvCapture);
+cvGrabFrame :: (capture: &CvCapture) -> i32;
+cvQueryFrame :: (capture: &CvCapture) -> &IplImage;
+cvSetCaptureProperty :: (capture: &CvCapture, property_id: i32, value: double) -> i32;
+cvGetCaptureProperty :: (capture: &CvCapture, property_id: i32) -> double;
 
 IplTileInfo :: struct {}
 

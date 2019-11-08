@@ -10,7 +10,7 @@ StackAllocation :: struct {
 }
 
 impl Printable for StackAllocation {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         str.appendf("({}:{})", (offset, size))
     }
 }
@@ -25,14 +25,14 @@ StackAllocator :: struct {
 }
 
 impl Drop for StackAllocator {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         self.clear()
         parent.free(memory)
     }
 }
 
 impl Printable for StackAllocator {
-    fn print(ref Self, s: ref String, format: string) {
+    print :: (ref Self, s: ref String, format: string) {
         s += "( ["
         for i : 0..allocations.length {
             if i > 0 {
@@ -51,7 +51,7 @@ impl Printable for StackAllocator {
 }
 
 impl StackAllocator {
-    fn create(size: u64, alloc: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    create :: (size: u64, alloc: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         a := StackAllocator(
             parent = alloc
             memory = null
@@ -62,7 +62,7 @@ impl StackAllocator {
         return a
     }
 
-    fn reserve(ref Self, s: u64) {
+    reserve :: (ref Self, s: u64) {
         if s <= capacity {
             return
         }
@@ -75,11 +75,11 @@ impl StackAllocator {
         }
     }
 
-    fn clear(ref Self) {
+    clear :: (ref Self) {
         allocations.resize(0)
     }
 
-    fn print_diagnostics(ref Self) {
+    print_diagnostics :: (ref Self) {
         s := String.empty()
         s += "( ["
         for i : 0..allocations.length {
@@ -99,7 +99,7 @@ impl StackAllocator {
         print_string(s)
     }
 
-    fn getLastAllocation(ref Self) -> &StackAllocation {
+    getLastAllocation :: (ref Self) -> &StackAllocation {
         if allocations.length == 0 {
             return null
         } else {
@@ -107,7 +107,7 @@ impl StackAllocator {
         }
     }
 
-    fn getNextAllocationOffset(ref Self) -> u64 {
+    getNextAllocationOffset :: (ref Self) -> u64 {
         if last := self.getLastAllocation(), last == null {
             return 0
         } else {
@@ -117,7 +117,7 @@ impl StackAllocator {
 }
 
 impl Allocator for StackAllocator {
-    fn allocate(ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
+    allocate :: (ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
 
         nextAddress := {
             unaligned := pointer_add(memory, cast(i64) self.getNextAllocationOffset())
@@ -140,7 +140,7 @@ impl Allocator for StackAllocator {
         return nextAddress
     }
 
-    fn reallocate(ref Self, mem: &any, count: u64, elementSize: u64, alignment: u64) -> &any {
+    reallocate :: (ref Self, mem: &any, count: u64, elementSize: u64, alignment: u64) -> &any {
         size := count * elementSize
 
         lastAllocation := self.getLastAllocation()
@@ -164,7 +164,7 @@ impl Allocator for StackAllocator {
         }
     }
 
-    fn free(ref Self, mem: &any) {
+    free :: (ref Self, mem: &any) {
         lastAllocation := self.getLastAllocation()
         if lastAllocation == null {
             return

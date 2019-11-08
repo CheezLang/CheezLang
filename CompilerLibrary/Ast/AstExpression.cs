@@ -412,7 +412,7 @@ namespace Cheez.Ast.Expressions
         public List<AstArgument> Arguments { get; set; }
         public override bool IsPolymorphic => FunctionExpr.IsPolymorphic || Arguments.Any(a => a.IsPolymorphic);
 
-        public AstFunctionDecl Declaration { get; internal set; }
+        public AstFuncExpr Declaration { get; internal set; }
         public FunctionType FunctionType { get; set; } = null;
 
         public bool UnifiedFunctionCall { get; set; }

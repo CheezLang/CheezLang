@@ -2,24 +2,24 @@
 
 #load("std:preload")
 
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
-fn Main() {
+Main :: () {
     c_printf("%lld, %lld, %lld, %lld", foo(int), bar(1), baz(int, 2), uiae(3, int))
 }
 
-fn foo($T: type) -> T {
+foo :: ($T: type) -> T {
     return 0
 }
 
-fn bar(x: $T) -> T {
+bar :: (x: $T) -> T {
     return x
 }
 
-fn baz($T: type, x: $T2) -> T {
+baz :: ($T: type, x: $T2) -> T {
     return x
 }
 
-fn uiae($X: int, $T: type) -> T {
+uiae :: ($X: int, $T: type) -> T {
     return X
 }

@@ -9,52 +9,52 @@
 #load("material")
 #load("texture")
 
-report_progress: bool : false
+report_progress : bool : false
 real :: float
 
-use_bhv : bool = true
-num_threads : int = 10
-grid_size : int = 15
+use_bhv     : bool = true
+num_threads : int  = 10
+grid_size   : int  = 15
 
-scale : int = 1
-width : int = 192 * scale
+scale  : int = 1
+width  : int = 192 * scale
 height : int = 108 * scale
 // width : int = 108 * scale
 // height : int = 108 * scale
-samples : int = 50
+samples   : int = 50
 max_depth : int = 15
 
 scenes : []fn(ref Camera) -> Hittable = [simple_light, cornell_box, basic_scene, random_scene, big_scene]
-scene: int : 0
+scene  : int : 0
 
 file_write_mutex : &Mutex = null
 
 RenderContext :: struct {
-    id    : int
-    min   : Vector2[int]
-    max   : Vector2[int]
-    image : []double
-    world : Hittable
-    cam   : ref Camera
-    random: Random
+    id      : int
+    min     : Vector2[int]
+    max     : Vector2[int]
+    image   : []double
+    world   : Hittable
+    cam     : ref Camera
+    random  : Random
 }
 
-fn Main() {
-    file_write_mutex = alloc(Mutex)
-    <<file_write_mutex = Mutex.create()
+Main :: () {
+    file_write_mutex    = alloc(Mutex)
+    <<file_write_mutex  = Mutex.create()
 
-    global_random = alloc(MTwister)
-    <<global_random = MTwister.create(0)
+    global_random       = alloc(MTwister)
+    <<global_random     = MTwister.create(0)
 
     c_srand(c_time(null))
 
     println(if use_bhv then "bhv enabled" else "bhv disabled")
 
-    image := alloc_n(double, cast width * height * 3)
+    image   := alloc_n(double, cast width * height * 3)
 
     cam_pos := vec3(20.0, 2.25, 5.0)
     lookat  := vec3(4.0, 1.0, 1.0)
-    cam := Camera.create(
+    cam     := Camera.create(
         cam_pos,
         lookat,
         10,
@@ -72,20 +72,20 @@ fn Main() {
     {
         thread_pool := ThreadPool.create(num_threads)
 
-        id := 1
+        id   := 1
         size := grid_size
-        h := (height-1)/size+1
-        w := (width-1)/size+1
+        h    := (height-1)/size+1
+        w    := (width-1)/size+1
         for y: 0..h {
             for x: 0..w {
                 context := alloc(RenderContext)
                 <<context = RenderContext(
-                    id = id
-                    min = Vector2[int](x*size, y*size)
-                    max = Vector2[int](min((x+1)*size, width), min((y+1)*size, height))
+                    id    = id
+                    min   = Vector2[int](x*size, y*size)
+                    max   = Vector2[int](min((x+1)*size, width), min((y+1)*size, height))
                     image = image
                     world = world
-                    cam = cam
+                    cam   = cam
                     // random = Random.create(0)
                     random = Random.create(cast c_rand()) // crashes with seed not 0, wtf?
                 )
@@ -112,7 +112,7 @@ fn Main() {
     write_bmp(cast width, cast height, image.data, "image.bmp")
 }
 
-fn render_loop(context: &RenderContext) {
+render_loop :: (context: &RenderContext) {
     {
         h := (height - 1) / grid_size + 1
         w := (width  - 1) / grid_size + 1
@@ -157,7 +157,7 @@ fn render_loop(context: &RenderContext) {
     }
 }
 
-fn color(r: Ray, world: Hittable, random: ref Random, depth: int = 0) -> vec3 {
+color :: (r: Ray, world: Hittable, random: ref Random, depth: int = 0) -> vec3 {
     return match world.hit(r, 0.001, 1000000.0, random) {
         Some($hit) -> {
             match hit.m.scatter(r, hit, random) {
@@ -178,7 +178,7 @@ fn color(r: Ray, world: Hittable, random: ref Random, depth: int = 0) -> vec3 {
     }
 }
 
-fn random_scene(cam: ref Camera) -> Hittable {
+random_scene :: (cam: ref Camera) -> Hittable {
     cam_pos := vec3(20.0, 2.25, 5.0)
     lookat  := vec3(4.0, 1.0, 1.0)
     cam = Camera.create(
@@ -289,7 +289,7 @@ fn random_scene(cam: ref Camera) -> Hittable {
     }
 }
 
-fn basic_scene(cam: ref Camera) -> Hittable {
+basic_scene :: (cam: ref Camera) -> Hittable {
     cam_pos := vec3(20.0, 2.25, 5.0)
     lookat  := vec3(4.0, 1.0, 1.0)
     cam = Camera.create(
@@ -345,7 +345,7 @@ fn basic_scene(cam: ref Camera) -> Hittable {
     }
 }
 
-fn simple_light(cam: ref Camera) -> Hittable {
+simple_light :: (cam: ref Camera) -> Hittable {
     cam = Camera.create(
         vec3(20.0, 4.0, 5.0),
         vec3(4.0, 2.5, 1.0),
@@ -386,7 +386,7 @@ fn simple_light(cam: ref Camera) -> Hittable {
     }
 }
 
-fn cornell_box(cam: ref Camera) -> Hittable {
+cornell_box :: (cam: ref Camera) -> Hittable {
     cam = Camera.create(
         vec3(278, 278, -800),
         vec3(278, 278, 0),
@@ -423,7 +423,7 @@ fn cornell_box(cam: ref Camera) -> Hittable {
     }
 }
 
-fn big_scene(cam: ref Camera) -> Hittable {
+big_scene :: (cam: ref Camera) -> Hittable {
     // change random number gen for better level gen
     {
         global_random.next_double()

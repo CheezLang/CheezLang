@@ -14,40 +14,40 @@ bar(9): 14
 
 #load("std:io/io")
 
-fn foo(f: Fn()) {
+foo :: (f: Fn()) {
     println("foo()")
     f()
     println("foo(): ...")
 }
 
-fn baz(f: Fn() -> int) {
+baz :: (f: Fn() -> int) {
     println("baz()")
     result := f()
     printfln("baz(): {}", result)
 }
 
-fn bar(f: Fn(int) -> int, x: int) {
+bar :: (f: Fn(int) -> int, x: int) {
     printfln("bar({})", x)
     result := f(x)
     printfln("bar({}): {}", (x, result))
 }
 
-fn test1() {
+test1 :: () {
     println("test1()")
 }
 
-fn test2() -> int {
+test2 :: () -> int {
     println("test2() -> 3")
     return 3
 }
 
-fn test3(a: int) -> int {
+test3 :: (a: int) -> int {
     result := a + 5
     printfln("test3({}) -> {}", (a, result))
     return result
 }
 
-fn Main() {
+Main :: () {
     println("")
 
     {

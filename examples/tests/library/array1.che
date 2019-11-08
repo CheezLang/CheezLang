@@ -24,7 +24,7 @@ a[20] = 8")
 #load("std:array")
 #load("std:string")
 
-fn print_array(a: ref Array[int]) {
+print_array :: (a: ref Array[int]) {
     c_printf("len: %lld`n", a.get_length())
     c_printf("cap: %lld`n", a.get_capacity())
     c_printf("arr: [")
@@ -44,16 +44,16 @@ Foo :: struct {
 }
 
 impl Foo {
-    fn bar(ref Self) {
+    bar :: (ref Self) {
         self.x += 10
     }
 }
 
-fn test(a: ref int) {
+test :: (a: ref int) {
     a = 5
 }
 
-fn Main() {
+Main :: () {
     x := 1
     c_printf("%lld`n", x)
     test(x)

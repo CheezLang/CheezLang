@@ -10,7 +10,7 @@
 
 #load("std:preload")
 
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
 
 Test :: struct #copy {
@@ -19,22 +19,22 @@ Test :: struct #copy {
 }
 
 impl Test {
-    fn create(a: int = 2, b: double = 5.5) -> Self {
+    create :: (a: int = 2, b: double = 5.5) -> Self {
         return Test(a, b)
     }
 
-    fn set_val(Self, x: int, y: double) {
+    set_val :: (Self, x: int, y: double) {
         a = x
         b = y
     }
 
-    fn set_ref(ref Self, x: int, y: double) {
+    set_ref :: (ref Self, x: int, y: double) {
         a = x
         b = y
     }
 }
 
-fn Main() {
+Main :: () {
     {
         t := Test.create()
         c_printf("%lld, %f`n", t.a, t.b)

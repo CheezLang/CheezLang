@@ -72,11 +72,11 @@ namespace Cheez.Types.Abstract
 
     public class GenericFunctionType : CheezType
     {
-        public AstFunctionDecl Declaration { get; }
+        public AstFuncExpr Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
 
-        public GenericFunctionType(AstFunctionDecl decl)
+        public GenericFunctionType(AstFuncExpr decl)
             : base(0, 1, false)
         {
             Declaration = decl;

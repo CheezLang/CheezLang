@@ -38,9 +38,9 @@ namespace Cheez.Ast.Expressions
         public override bool IsPolymorphic => false;
 
         public AstExpression SelfArg { get; }
-        public AstFunctionDecl FunctionDecl { get; }
+        public AstFuncExpr FunctionDecl { get; }
 
-        public AstUfcFuncExpr(AstExpression self, AstFunctionDecl func) : base(null)
+        public AstUfcFuncExpr(AstExpression self, AstFuncExpr func) : base(null)
         {
             this.SelfArg = self;
             this.FunctionDecl = func;
@@ -155,13 +155,13 @@ namespace Cheez.Ast.Expressions
 
     public class AstFunctionRef : AstExpression
     {
-        public AstFunctionDecl Declaration { get; }
+        public AstFuncExpr Declaration { get; }
 
         public AstExpression Original { get; set; }
 
         public override bool IsPolymorphic => false;
 
-        public AstFunctionRef(AstFunctionDecl func, AstExpression original, ILocation Location = null) : base(Location)
+        public AstFunctionRef(AstFuncExpr func, AstExpression original, ILocation Location = null) : base(Location)
         {
             Declaration = func;
             Type = func.Type;

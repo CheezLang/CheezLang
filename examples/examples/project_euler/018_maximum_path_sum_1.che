@@ -7,7 +7,7 @@
 #load("std:mem/arena_allocator")
 #load("std:heap")
 
-fn Main() {
+Main :: () {
     graph := load_graph(graph_medium)
 
     for(reverse=true) r : 0..graph.length-1 {
@@ -20,7 +20,7 @@ fn Main() {
     println(max_sum)
 }
 
-fn load_graph(str: string) -> Array[Array[int]] {
+load_graph :: (str: string) -> Array[Array[int]] {
     res := Array[Array[int]].create()
 
     while i := 0, i < str.length, i += 1 {

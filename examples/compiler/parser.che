@@ -10,14 +10,14 @@ Parser :: struct {
 }
 
 impl Parser {
-    fn create(c: ref CheezCompiler, l: ref Lexer) -> Self {
+    create :: (c: ref CheezCompiler, l: ref Lexer) -> Self {
         return Parser(
             compiler = c
             lexer = l
         )
     }
 
-    fn parse_statement(ref Self) -> Option[&Stmt] {
+    parse_statement :: (ref Self) -> Option[&Stmt] {
         skip_ws()
         token := lexer.peek_token()
         return match token.ttype {
@@ -32,7 +32,7 @@ impl Parser {
         }
     }
 
-    fn parse_function_decl(ref Self) -> Option[&Stmt] {
+    parse_function_decl :: (ref Self) -> Option[&Stmt] {
         _fn := consume(TokenType.KwFn)
         skip_ws()
 
@@ -66,7 +66,7 @@ impl Parser {
     }
 
     // helpers
-    fn skip_ws(ref Self) {
+    skip_ws :: (ref Self) {
         while true {
             tok := lexer.peek_token()
 
@@ -82,7 +82,7 @@ impl Parser {
         }
     }
 
-    fn consume(ref Self, ttype: TokenType) -> Token {
+    consume :: (ref Self, ttype: TokenType) -> Token {
         tok := lexer.peek_token()
         while (cast(int)tok.ttype) != (cast(int)ttype) {
             match tok.ttype {

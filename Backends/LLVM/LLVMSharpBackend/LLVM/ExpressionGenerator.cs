@@ -1267,7 +1267,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 func = valueMap[c.Declaration];
 
                 // arguments
-                var args = c.Arguments.Select(a => GenerateExpression(a, true)).ToArray();
+                var args = c.Arguments.Select(a => {
+                    return GenerateExpression(a, true);
+                }).ToArray();
 
                 UpdateStackTracePosition(c);
                 var call = builder.CreateCall(func, args, "");

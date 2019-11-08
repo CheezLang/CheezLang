@@ -33,7 +33,7 @@ indexo: -1")
 
 #load("std:string")
 
-fn Main() {
+Main :: () {
     s := String.from_cstring("lol: "c)
     
     c_printf("capaci: %lld`n", s.get_capacity())

@@ -6,7 +6,7 @@
 
 #load("std:c")
 
-fn gl_check_error() {
+gl_check_error :: () {
     err := glGetError()
     while err != GL_NO_ERROR {
         match err {

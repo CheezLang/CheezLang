@@ -11,7 +11,7 @@ StmtType :: enum {
 }
 
 impl Printable for Stmt {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         use StmtType
         match concrete {
             FunctionDecl($func) -> {

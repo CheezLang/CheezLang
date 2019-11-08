@@ -11,9 +11,9 @@ Node :: struct {
 }
 
 trait Shape {
-    fn draw(ref Self, pge: ref MyGame);
-    fn next_node(ref Self, p: float2) -> &Node;
-    fn hit_node(ref Self, p: float2) -> &Node;
+    draw :: (ref Self, pge: ref MyGame);
+    next_node :: (ref Self, p: float2) -> &Node;
+    hit_node :: (ref Self, p: float2) -> &Node;
 }
 
 BaseShape :: struct {
@@ -23,14 +23,14 @@ BaseShape :: struct {
 }
 
 impl BaseShape {
-    fn create(max_nodes: int) -> BaseShape {
+    create :: (max_nodes: int) -> BaseShape {
         return BaseShape(
             max_nodes
             Array[Node].create(max_nodes)
         )
     }
 
-    fn next_node(ref Self, p: float2) -> &Node {
+    next_node :: (ref Self, p: float2) -> &Node {
         if nodes.get_length() >= max_nodes {
             color = Pixel.rgba(255, 255, 255)
             return null
@@ -39,14 +39,14 @@ impl BaseShape {
         return &nodes[nodes.get_length() - 1]
     }
 
-    fn draw_nodes(ref Self, g: ref MyGame) {
+    draw_nodes :: (ref Self, g: ref MyGame) {
         for i : 0..nodes.get_length() {
             (sx, sy) := g.world_to_screen(nodes[i].pos)
             g.pge.draw_circle(sx, sy, 3, Pixel.rgba(255, 0, 0))
         }
     }
 
-    fn hit_node(ref Self, p: float2) -> &Node {
+    hit_node :: (ref Self, p: float2) -> &Node {
         for i : 0..nodes.get_length() {
             if (p - nodes[i].pos).magsq() < 0.01f {
                 return &nodes[i]
@@ -62,7 +62,7 @@ LineShape :: struct {
 }
 
 impl LineShape {
-    fn create() -> &Self {
+    create :: () -> &Self {
         l := alloc(LineShape)
         <<l = LineShape(BaseShape.create(2))
         return l
@@ -70,7 +70,7 @@ impl LineShape {
 }
 
 impl Shape for LineShape {
-    fn draw(ref Self, g: ref MyGame) {
+    draw :: (ref Self, g: ref MyGame) {
         (sx, sy) := g.world_to_screen(base.nodes[0].pos)
         (ex, ey) := g.world_to_screen(base.nodes[1].pos)
         g.pge.draw_line(sx, sy, ex, ey, base.color)
@@ -78,11 +78,11 @@ impl Shape for LineShape {
         base.draw_nodes(g)
     }
 
-    fn next_node(ref Self, p: float2) -> &Node {
+    next_node :: (ref Self, p: float2) -> &Node {
         return base.next_node(p)
     }
 
-    fn hit_node(ref Self, p: float2) -> &Node {
+    hit_node :: (ref Self, p: float2) -> &Node {
         return base.hit_node(p)
     }
 }
@@ -92,7 +92,7 @@ BoxShape :: struct {
 }
 
 impl BoxShape {
-    fn create() -> &Self {
+    create :: () -> &Self {
         l := alloc(BoxShape)
         <<l = BoxShape(BaseShape.create(2))
         return l
@@ -100,7 +100,7 @@ impl BoxShape {
 }
 
 impl Shape for BoxShape {
-    fn draw(ref Self, g: ref MyGame) {
+    draw :: (ref Self, g: ref MyGame) {
         (sx, sy) := g.world_to_screen(base.nodes[0].pos)
         (ex, ey) := g.world_to_screen(base.nodes[1].pos)
         g.pge.draw_rect(sx, sy, ex - sx, ey - sy, base.color)
@@ -108,11 +108,11 @@ impl Shape for BoxShape {
         base.draw_nodes(g)
     }
 
-    fn next_node(ref Self, p: float2) -> &Node {
+    next_node :: (ref Self, p: float2) -> &Node {
         return base.next_node(p)
     }
 
-    fn hit_node(ref Self, p: float2) -> &Node {
+    hit_node :: (ref Self, p: float2) -> &Node {
         return base.hit_node(p)
     }
 }
@@ -122,7 +122,7 @@ CircleShape :: struct {
 }
 
 impl CircleShape {
-    fn create() -> &Self {
+    create :: () -> &Self {
         l := alloc(CircleShape)
         <<l = CircleShape(BaseShape.create(2))
         return l
@@ -130,7 +130,7 @@ impl CircleShape {
 }
 
 impl Shape for CircleShape {
-    fn draw(ref Self, g: ref MyGame) {
+    draw :: (ref Self, g: ref MyGame) {
         (sx, sy) := g.world_to_screen(base.nodes[0].pos)
         (ex, ey) := g.world_to_screen(base.nodes[1].pos)
 
@@ -149,11 +149,11 @@ impl Shape for CircleShape {
         base.draw_nodes(g)
     }
 
-    fn next_node(ref Self, p: float2) -> &Node {
+    next_node :: (ref Self, p: float2) -> &Node {
         return base.next_node(p)
     }
 
-    fn hit_node(ref Self, p: float2) -> &Node {
+    hit_node :: (ref Self, p: float2) -> &Node {
         return base.hit_node(p)
     }
 }
@@ -163,7 +163,7 @@ CurveShape :: struct {
 }
 
 impl CurveShape {
-    fn create() -> &Self {
+    create :: () -> &Self {
         l := alloc(CurveShape)
         <<l = CurveShape(BaseShape.create(3))
         return l
@@ -171,7 +171,7 @@ impl CurveShape {
 }
 
 impl Shape for CurveShape {
-    fn draw(ref Self, g: ref MyGame) {
+    draw :: (ref Self, g: ref MyGame) {
         ac := base.color
         ac.a = 75
 
@@ -207,11 +207,11 @@ impl Shape for CurveShape {
         base.draw_nodes(g)
     }
 
-    fn next_node(ref Self, p: float2) -> &Node {
+    next_node :: (ref Self, p: float2) -> &Node {
         return base.next_node(p)
     }
 
-    fn hit_node(ref Self, p: float2) -> &Node {
+    hit_node :: (ref Self, p: float2) -> &Node {
         return base.hit_node(p)
     }
 }
@@ -234,18 +234,18 @@ MyGame :: struct {
 }
 
 impl Game for MyGame {
-    fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
+    on_create :: (ref Self, pge: &PixelGameEngine) -> bool {
         self.pge = pge
         vOffset.x = -(cast(float)pge.get_width()) * 0.5 / fScale
         vOffset.y = -(cast(float)pge.get_height()) * 0.5 / fScale
         return true
     }
 
-    fn on_destroy(ref Self) -> bool {
+    on_destroy :: (ref Self) -> bool {
         return true
     }
 
-    fn on_update(ref Self, dt: float) -> bool {
+    on_update :: (ref Self, dt: float) -> bool {
         pge.clear()
 
         vMouse := float2(cast pge.get_mouse_pos().x, cast pge.get_mouse_pos().y)
@@ -360,12 +360,12 @@ impl Game for MyGame {
         return true
     }
 
-    fn world_to_screen(ref Self, v: float2) -> (x: int, y: int) {
+    world_to_screen :: (ref Self, v: float2) -> (x: int, y: int) {
         x = cast(int) (v.x - vOffset.x) * fScale
         y = cast(int) (v.y - vOffset.y) * fScale
     }
 
-    fn screen_to_world(ref Self, nScreenX: int, nScreenY: int) -> float2 {
+    screen_to_world :: (ref Self, nScreenX: int, nScreenY: int) -> float2 {
         return float2(
             (cast(float)nScreenX) / fScale + vOffset.x
             (cast(float)nScreenY) / fScale + vOffset.y
@@ -373,7 +373,7 @@ impl Game for MyGame {
     }
 }
 
-fn Main() {
+Main :: () {
     myGame := MyGame(shapes = Array[Shape].create())
     pge := PixelGameEngine.create(myGame, 1600, 960)
     if pge != null {

@@ -18,7 +18,7 @@ namespace Cheez
         private List<AstTypeAliasDecl> mTypeDefs = new List<AstTypeAliasDecl>();
         public List<AstImplBlock> mImpls = new List<AstImplBlock>();
 
-        public List<AstFunctionDecl> mFunctions = new List<AstFunctionDecl>();
+        public List<AstFuncExpr> mFunctions = new List<AstFuncExpr>();
         private List<AstUsingStmt> mGlobalUses = new List<AstUsingStmt>();
 
         public IEnumerable<AstTraitDeclaration> Traits => mTraits;

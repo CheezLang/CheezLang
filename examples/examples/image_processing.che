@@ -14,36 +14,36 @@ border_width  : int : 10
 Color :: (x: double, y: double, z: double)
 
 impl Color {
-    fn add(a: ref Color, b: ref Color) -> Color #operator("+") {
+    add :: (a: ref Color, b: ref Color) -> Color #operator("+") {
         return (a.x + b.x, a.y + b.y, a.z + b.z)
     }
 
-    fn sub(a: ref Color, b: ref Color) -> Color #operator("-") {
+    sub :: (a: ref Color, b: ref Color) -> Color #operator("-") {
         return (a.x - b.x, a.y - b.y, a.z - b.z)
     }
 
-    fn mul(a: ref Color, b: ref Color) -> Color #operator("*") {
+    mul :: (a: ref Color, b: ref Color) -> Color #operator("*") {
         return (a.x * b.x, a.y * b.y, a.z * b.z)
     }
     
-    fn mul_s(a: ref Color, b: double) -> Color #operator("*") {
+    mul_s :: (a: ref Color, b: double) -> Color #operator("*") {
         return (a.x * b, a.y * b, a.z * b)
     }
     
-    fn div(a: ref Color, b: ref Color) -> Color #operator("/") {
+    div :: (a: ref Color, b: ref Color) -> Color #operator("/") {
         return (a.x / b.x, a.y / b.y, a.z / b.z)
     }
     
-    fn div_s(a: ref Color, b: double) -> Color #operator("/") {
+    div_s :: (a: ref Color, b: double) -> Color #operator("/") {
         return (a.x / b, a.y / b, a.z / b)
     }
     
-    fn neg(a: ref Color) -> Color #operator("-") {
+    neg :: (a: ref Color) -> Color #operator("-") {
         return (-a.x, -a.y, -a.z)
     }
 }
 
-fn absolute(self: ref Color) -> Color {
+absolute :: (self: ref Color) -> Color {
     return (abs(self.x), abs(self.y), abs(self.z))
 }
 
@@ -52,7 +52,7 @@ Frame :: struct {
 }
 
 impl Frame {
-    fn get(ref Self, x: int, y: int) -> double {
+    get :: (ref Self, x: int, y: int) -> double {
         if x < 0 or y < 0 or x >= image_width or y >= image_height {
             return 0
         }
@@ -61,7 +61,7 @@ impl Frame {
         return (p.x + p.y + p.z) * 0.3333333333
     }
 
-    fn get_rgb(ref Self, x: int, y: int) -> Color {
+    get_rgb :: (ref Self, x: int, y: int) -> Color {
         if x < 0 or y < 0 or x >= image_width or y >= image_height {
             return (0, 0, 0)
         }
@@ -69,7 +69,7 @@ impl Frame {
         return pixels[x + y * image_width]
     }
 
-    fn set(ref Self, x: int, y: int, value: double) {
+    set :: (ref Self, x: int, y: int, value: double) {
         if x < 0 or y < 0 or x >= image_width or y >= image_height {
             return
         }
@@ -77,7 +77,7 @@ impl Frame {
         pixels[x + y * image_width] = (value, value, value)
     }
 
-    fn set_rgb(ref Self, x: int, y: int, value: Color) {
+    set_rgb :: (ref Self, x: int, y: int, value: Color) {
         if x < 0 or y < 0 or x >= image_width or y >= image_height {
             return
         }
@@ -85,7 +85,7 @@ impl Frame {
         pixels[x + y * image_width] = value
     }
 
-    fn copy_to(ref Self, target: ref Frame) {
+    copy_to :: (ref Self, target: ref Frame) {
         c_memcpy(cast &target.pixels, cast &pixels, cast @sizeof(@typeof(pixels)))
     }
 }
@@ -99,7 +99,7 @@ ImageProcessingGame :: struct {
 }
 
 impl Game for ImageProcessingGame {
-    fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
+    on_create :: (ref Self, pge: &PixelGameEngine) -> bool {
         self.pge = pge
 
         // clear images to black
@@ -127,12 +127,12 @@ impl Game for ImageProcessingGame {
         return true
     }
 
-    fn on_destroy(ref Self) -> bool {
+    on_destroy :: (ref Self) -> bool {
         cvReleaseCapture(&capture)
         return true
     }
 
-    fn draw_frame(ref Self, slot_x: int, slot_y: int, frame: ref Frame) {
+    draw_frame :: (ref Self, slot_x: int, slot_y: int, frame: ref Frame) {
         for x : 0..image_width {
             for y : 0..image_height {
                 col := frame.get_rgb(x, y)
@@ -145,7 +145,7 @@ impl Game for ImageProcessingGame {
         }
     }
 
-    fn capture_webcam(ref Self, targetFrame: ref Frame) {
+    capture_webcam :: (ref Self, targetFrame: ref Frame) {
         res := cvQueryFrame(capture)
         if res != null {
             xScale := (cast(double)image_width) / (cast(double)res.width)
@@ -162,7 +162,7 @@ impl Game for ImageProcessingGame {
         }
     }
 
-    fn move_detection(ref Self, source_frame: ref Frame, last_frame: ref Frame, target_frame: ref Frame) {
+    move_detection :: (ref Self, source_frame: ref Frame, last_frame: ref Frame, target_frame: ref Frame) {
         for x : 0..image_width {
             for y : 0..image_height {
                 last := last_frame.get(x, y)
@@ -181,7 +181,7 @@ impl Game for ImageProcessingGame {
         }
     }
 
-    fn temporal_low_pass_filter(ref Self, source_frame: ref Frame, target_frame: ref Frame, activity_frame: ref Frame) {
+    temporal_low_pass_filter :: (ref Self, source_frame: ref Frame, target_frame: ref Frame, activity_frame: ref Frame) {
         for x : 0..image_width {
             for y : 0..image_height {
                 dl := source_frame.get_rgb(x, y) - activity_frame.get_rgb(x, y)
@@ -192,7 +192,7 @@ impl Game for ImageProcessingGame {
         }
     }
 
-    fn dilation_erosion(ref Self, input: ref Frame, last: ref Frame, activity: ref Frame, output: ref Frame) {
+    dilation_erosion :: (ref Self, input: ref Frame, last: ref Frame, activity: ref Frame, output: ref Frame) {
         steps := 5.0
         // activity
         for x : 0..image_width {
@@ -245,7 +245,7 @@ impl Game for ImageProcessingGame {
         }
     }
 
-    fn adaptive_threshold(input: ref Frame, output: ref Frame) {
+    adaptive_threshold :: (input: ref Frame, output: ref Frame) {
         adaptive_bias := 1.0
 
         for x : 0..image_width {
@@ -262,7 +262,7 @@ impl Game for ImageProcessingGame {
         }
     }
 
-    fn on_update(ref Self, dt: float) -> bool {
+    on_update :: (ref Self, dt: float) -> bool {
         pge.clear(Pixel.rgba(0, 0, 100))
 
         webcam : ref Frame = frames[0]
@@ -293,7 +293,7 @@ impl Game for ImageProcessingGame {
     }
 }
 
-fn Main() {
+Main :: () {
     ipg : Game = ref <<alloc(ImageProcessingGame)
     engine := PixelGameEngine.create(
         ipg,

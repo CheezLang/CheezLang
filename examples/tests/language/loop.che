@@ -7,9 +7,9 @@
 
 #load("std:preload")
 
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
-fn Main() {
+Main :: () {
     test1(5)
     test2(6)
     test3(4)
@@ -18,7 +18,7 @@ fn Main() {
     fizz_buzz(20)
 }
 
-fn fizz_buzz(n: int) {
+fizz_buzz :: (n: int) {
     for a : 1..n {
         if a % 5 == 0 and a % 3 == 0 {
             c_printf("FizzBuzz ")
@@ -32,7 +32,7 @@ fn fizz_buzz(n: int) {
     }
 }
 
-fn test5(n: int) {
+test5 :: (n: int) {
     while true, n = n - 1 {
         if n == 0 {
             break
@@ -47,7 +47,7 @@ fn test5(n: int) {
     c_printf("`n")
 }
 
-fn test4(n: int) {
+test4 :: (n: int) {
     for a : 0..n {
         if a % 2 == 0 {
             continue
@@ -58,7 +58,7 @@ fn test4(n: int) {
     c_printf("`n")
 }
 
-fn test3(n: int) {
+test3 :: (n: int) {
     while a := 0, true, a = a + 1 {
         if a == n {
             break
@@ -69,14 +69,14 @@ fn test3(n: int) {
     c_printf("`n")
 }
 
-fn test2(n: int) {
+test2 :: (n: int) {
     for a : 0..n {
         c_printf("%lld", a)
     }
     c_printf("`n")
 }
 
-fn test1(n: int) {
+test1 :: (n: int) {
     a := 0
     while a < n {
         c_printf("%lld", a)

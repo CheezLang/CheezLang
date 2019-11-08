@@ -6,7 +6,7 @@
 #load("std:io/io")
 #load("std:math")
 
-fn count_divisors(num: int) -> int {
+count_divisors :: (num: int) -> int {
     count := 0
     max := int(sqrt(double(num)))
 
@@ -19,7 +19,7 @@ fn count_divisors(num: int) -> int {
     return count
 }
 
-fn Main() {
+Main :: () {
     current := 0
     while i := 1, true, i += 1 {
         current += i

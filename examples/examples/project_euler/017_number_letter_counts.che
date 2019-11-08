@@ -5,7 +5,7 @@
 #load("std:io/io")
 #load("std:string")
 
-fn number_to_english_1(n: int) -> string {
+number_to_english_1 :: (n: int) -> string {
     return match n % 10 {
         0 -> "zero"
         1 -> "one"
@@ -20,7 +20,7 @@ fn number_to_english_1(n: int) -> string {
     }
 }
 
-fn number_to_english_10(n: int) -> string {
+number_to_english_10 :: (n: int) -> string {
     return match n % 10 {
         0 -> ""
         1 -> "ten"
@@ -35,7 +35,7 @@ fn number_to_english_10(n: int) -> string {
     }
 }
 
-fn number_to_english(n: int) -> String {
+number_to_english :: (n: int) -> String {
     if n >= 10000 then @panic("Can't convert numbers larger than 10'000")
 
     _1000   := n / 1000 % 10
@@ -84,7 +84,7 @@ fn number_to_english(n: int) -> String {
     return result
 }
 
-fn Main() {
+Main :: () {
     sum := 0
     for(inclusive=true) : 1..1000 {
         eng := number_to_english(it)

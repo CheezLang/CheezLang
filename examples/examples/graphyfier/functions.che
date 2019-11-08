@@ -1,14 +1,14 @@
 functions : []fn(double) -> Option(Complex) = [ f1, f2, f3, f4, f5, f6, f7, f8 ]
 
-fn C(r: double, i: double = 0.0) -> Complex {
+C :: (r: double, i: double = 0.0) -> Complex {
     return Complex(r, i)
 }
 
-fn f1(x: double) -> Option(Complex) {
+f1 :: (x: double) -> Option(Complex) {
     return Some(C(x, -x))
 }
 
-fn f2(x: double) -> Option(Complex) {
+f2 :: (x: double) -> Option(Complex) {
     if abs(x) < 0.001 {
         return None
     }
@@ -17,7 +17,7 @@ fn f2(x: double) -> Option(Complex) {
     return Some(result)
 }
 
-fn f3(n: double) -> Option(Complex) {
+f3 :: (n: double) -> Option(Complex) {
     x := 5.0
     t := Complex.poww(C(x), n) * n
     b := t + 1.0
@@ -28,7 +28,7 @@ fn f3(n: double) -> Option(Complex) {
     return Some(t / b)
 }
 
-fn f4(x: double) -> Option(Complex) {
+f4 :: (x: double) -> Option(Complex) {
     if x == 0 {
         return None
     }
@@ -36,18 +36,18 @@ fn f4(x: double) -> Option(Complex) {
     return Some(C(1/x))
 }
 
-fn f5(x: double) -> Option(Complex) {
+f5 :: (x: double) -> Option(Complex) {
     return Some(C(sin(x), cos(x)))
 }
 
-fn f6(x: double) -> Option(Complex) {
+f6 :: (x: double) -> Option(Complex) {
     return Some(Complex.poww(C(-1), x))
 }
 
-fn f7(x: double) -> Option(Complex) {
+f7 :: (x: double) -> Option(Complex) {
     return Some(C(x*x))
 }
 
-fn f8(x: double) -> Option(Complex) {
+f8 :: (x: double) -> Option(Complex) {
     return Some(Complex.poww(C(2.7), x))
 }

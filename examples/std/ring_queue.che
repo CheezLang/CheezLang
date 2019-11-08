@@ -11,7 +11,7 @@ RingQueue :: struct(T: type) {
 }
 
 impl(T: type) RingQueue[T] {
-    fn create(init_size: int = 10, allocator: Allocator = null) -> Self {
+    create :: (init_size: int = 10, allocator: Allocator = null) -> Self {
         if allocator == null {
             allocator = DEFAULT_STD_HEAP_ALLOCATOR
         }
@@ -26,12 +26,12 @@ impl(T: type) RingQueue[T] {
         )
     }
 
-    fn get_length(ref Self) -> int {
+    get_length :: (ref Self) -> int {
         // return if (last >= first) then (last - first) else (last - first + capacity)
         return (last - first + capacity) % capacity
     }
 
-    fn reserve(ref Self, size: int) {
+    reserve :: (ref Self, size: int) {
         if capacity > size {
             return
         }
@@ -64,7 +64,7 @@ impl(T: type) RingQueue[T] {
         }
     }
 
-    fn push(ref Self, val: T) {
+    push :: (ref Self, val: T) {
         if get_length() == capacity - 1 {
             reserve(capacity * 2)
         }
@@ -73,7 +73,7 @@ impl(T: type) RingQueue[T] {
         last = (last + 1) % capacity
     }
 
-    fn pop(ref Self) -> T {
+    pop :: (ref Self) -> T {
         @assert(first != last)
 
         val := data[first]
@@ -84,7 +84,7 @@ impl(T: type) RingQueue[T] {
 }
 
 impl(T: type) Drop for RingQueue[T] {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         if first <= last {
             for : first..last {
                 Memory.drop(data[it])

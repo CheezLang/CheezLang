@@ -13,9 +13,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 {
     public partial class LLVMCodeGenerator
     {
-        private void GenerateFunctionHeader(AstFunctionDecl function)
+        private void GenerateFunctionHeader(AstFuncExpr function)
         {
-            if (function.GetFlag(StmtFlags.IsMacroFunction))
+            if (function.IsMacroFunction)
                 return;
 
             var name = "";
@@ -27,7 +27,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     name += function.ImplBlock.Trait + ".";
             }
 
-            name += function.Name.Name;
+            name += function.Name;
 
             if (function.PolymorphicTypes != null && function.PolymorphicTypes.Count > 0)
                 name += "." + string.Join(".", function.PolymorphicTypes.Select(p => $"{p.Key}.{p.Value}"));
@@ -72,9 +72,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             valueMap[function] = lfunc;
         }
 
-        private void GenerateFunctionImplementation(AstFunctionDecl function)
+        private void GenerateFunctionImplementation(AstFuncExpr function)
         {
-            if (function.Body == null || function.GetFlag(StmtFlags.IsMacroFunction))
+            if (function.Body == null || function.IsMacroFunction)
                 return;
 
             currentFunction = function;

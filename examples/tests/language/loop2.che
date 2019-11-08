@@ -7,7 +7,7 @@
 
 // #load("std:io/io")
 
-fn Main() {
+Main :: () {
 //     test1(5)
 //     test2(6)
 //     test3(4)
@@ -16,7 +16,7 @@ fn Main() {
 //     fizz_buzz(20)
 }
 
-// fn test1(n: int) {
+// test1 :: (n: int) {
 //     sum := 0
 //     sum_index := 0
 //     for : n {
@@ -26,7 +26,7 @@ fn Main() {
 //     printfln("{}, {}", (sum, sum_index))
 // }
 
-// fn test2(n: int) {
+// test2 :: (n: int) {
 //     sum := 0
 //     sum_index := 0
 //     for i, k: n {
@@ -36,7 +36,7 @@ fn Main() {
 //     printfln("{}, {}", (sum, sum_index))
 // }
 
-// fn test3(n: int) {
+// test3 :: (n: int) {
 //     sum := 0
 //     for i : n #label a {
 //         for k : n #label b {
@@ -47,7 +47,7 @@ fn Main() {
 //     println(sum)
 // }
 
-// fn test3(n: int) {
+// test3 :: (n: int) {
 //     while a =: 0, true, a = a + 1 {
 //         if a == n {
 //             break
@@ -58,7 +58,7 @@ fn Main() {
 //     c_printf("`n")
 // }
 
-// fn test2(n: int) {
+// test2 :: (n: int) {
 //     while a := 0, a < n, a = a + 1 {
 //         c_printf("%lld", a)
 //     }

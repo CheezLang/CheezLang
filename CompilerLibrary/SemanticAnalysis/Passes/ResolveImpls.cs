@@ -102,29 +102,29 @@ namespace Cheez
             {
                 f.Trait = trait;
                 f.Scope = trait.SubScope;
-                f.ConstScope = new Scope($"fn$ {f.Name.Name}", f.Scope);
-                f.SubScope = new Scope($"fn {f.Name.Name}", f.ConstScope);
+                f.ConstScope = new Scope($"fn$ {f.Name}", f.Scope);
+                f.SubScope = new Scope($"fn {f.Name}", f.ConstScope);
 
-                Pass4ResolveFunctionSignature(f);
+                InferTypeFuncExpr(f);
                 CheckForSelfParam(f);
 
                 foreach (var p in f.Parameters)
                 {
                     if (SizeOfTypeDependsOnSelfType(p.Type))
                     {
-                        f.SetFlag(StmtFlags.ExcludeFromVtable);
+                        f.ExcludeFromVTable = true;
                     }
                 }
 
                 if (SizeOfTypeDependsOnSelfType(f.ReturnType))
                 {
-                    f.SetFlag(StmtFlags.ExcludeFromVtable);
+                    f.ExcludeFromVTable = true;
                 }
 
                 // TODO: for now don't allow default implemenation
                 if (f.Body != null)
                 {
-                    ReportError(f.Name, $"Trait functions can't have an implementation");
+                    ReportError(f.ParameterLocation, $"Trait functions can't have an implementation");
                 }
             }
 
@@ -229,17 +229,18 @@ namespace Cheez
             foreach (var f in impl.Functions)
             {
                 f.Scope = impl.SubScope;
-                f.ConstScope = new Scope($"fn$ {f.Name.Name}", f.Scope);
-                f.SubScope = new Scope($"fn {f.Name.Name}", f.ConstScope);
+                f.ConstScope = new Scope($"fn$ {f.Name}", f.Scope);
+                f.SubScope = new Scope($"fn {f.Name}", f.ConstScope);
                 f.ImplBlock = impl;
 
-                Pass4ResolveFunctionSignature(f);
+                InferTypeFuncExpr(f);
                 CheckForSelfParam(f);
                 impl.Scope.DefineImplFunction(f);
+                impl.SubScope.DefineSymbol(f);
 
                 if (f.Body == null)
                 {
-                    ReportError(f.Name, $"Function must have an implementation");
+                    ReportError(f.ParameterLocation, $"Function must have an implementation");
                 }
             }
 
@@ -290,7 +291,7 @@ namespace Cheez
                 bool found = false;
                 foreach (var func in impl.Functions)
                 {
-                    if (func.Name.Name != traitFunc.Name.Name)
+                    if (func.Name != traitFunc.Name)
                         continue;
 
                     func.TraitFunction = traitFunc;
@@ -298,9 +299,9 @@ namespace Cheez
 
                     if (func.SelfType != traitFunc.SelfType)
                     {
-                        ReportError(func.Name, 
+                        ReportError(func.ParameterLocation, 
                             $"The self parameter of this function doesn't match the trait functions self parameter",
-                            ("Trait function defined here:", traitFunc.Name.Location));
+                            ("Trait function defined here:", traitFunc.ParameterLocation));
                         continue;
                     }
 
@@ -323,11 +324,17 @@ namespace Cheez
                         if (tp.Type is SelfType)
                         {
                             if (fp.Type != impl.TargetType)
-                                ReportError(fp.TypeExpr, $"Type of parameter '{fp.Type}' must be the implemented type '{impl.TargetType}'", ("Trait function parameter type defined here:", tp.TypeExpr));
+                                ReportError(
+                                    fp.TypeExpr,
+                                    $"Type of parameter '{fp.Type}' must be the implemented type '{impl.TargetType}'",
+                                    ("Trait function parameter type defined here:", tp.TypeExpr));
                         }
                         else if (!CheezType.TypesMatch(fp.Type, tp.Type))
                         {
-                            ReportError(fp.TypeExpr, $"Type of parameter '{fp.Type}' must match the type of the trait functions parameter '{tp.Type}'", ("Trait function parameter type defined here:", tp.TypeExpr));
+                            ReportError(
+                                fp.TypeExpr,
+                                $"Type of parameter '{fp.Type}' must match the type of the trait functions parameter '{tp.Type}'",
+                                ("Trait function parameter type defined here:", tp.TypeExpr));
                         }
                     }
 
@@ -335,16 +342,25 @@ namespace Cheez
                     if (traitFunc.ReturnType is SelfType)
                     {
                         if (func.ReturnType != impl.TargetType)
-                            ReportError(func.ReturnTypeExpr?.Location ?? func.Name.Location, $"Return type '{func.ReturnType}' must be the implemented type '{impl.TargetType}'", ("Trait function parameter type defined here:", traitFunc.ReturnTypeExpr?.Location ?? traitFunc.Name.Location));
+                            ReportError(
+                                func.ReturnTypeExpr?.Location ?? func.ParameterLocation,
+                                $"Return type '{func.ReturnType}' must be the implemented type '{impl.TargetType}'",
+                                ("Trait function parameter type defined here:", traitFunc.ReturnTypeExpr?.Location ?? traitFunc.ParameterLocation));
                     } else if (!CheezType.TypesMatch(func.ReturnType, traitFunc.ReturnType))
                     {
-                        ReportError(func.ReturnTypeExpr?.Location ?? func.Name.Location, $"Return type must match the trait functions return type", ("Trait function parameter type defined here:", traitFunc.ReturnTypeExpr?.Location ?? traitFunc.Name.Location));
+                        ReportError(
+                            func.ReturnTypeExpr?.Location ?? func.ParameterLocation,
+                            $"Return type must match the trait functions return type",
+                            ("Trait function parameter type defined here:", traitFunc.ReturnTypeExpr?.Location ?? traitFunc.ParameterLocation));
                     }
                 }
 
                 if (!found)
                 {
-                    ReportError(impl.TargetTypeExpr, $"Missing implementation for trait function '{traitFunc.Name.Name}'", ("Trait function defined here:", traitFunc));
+                    ReportError(
+                        impl.TargetTypeExpr,
+                        $"Missing implementation for trait function '{traitFunc.Name}'",
+                        ("Trait function defined here:", traitFunc));
                 }
             }
         }
@@ -433,13 +449,14 @@ namespace Cheez
                 foreach (var f in impl.Functions)
                 {
                     f.Scope = impl.SubScope;
-                    f.ConstScope = new Scope($"fn$ {f.Name.Name}", f.Scope);
-                    f.SubScope = new Scope($"fn {f.Name.Name}", f.ConstScope);
+                    f.ConstScope = new Scope($"fn$ {f.Name}", f.Scope);
+                    f.SubScope = new Scope($"fn {f.Name}", f.ConstScope);
                     f.ImplBlock = impl;
 
-                    Pass4ResolveFunctionSignature(f);
+                    InferTypeFuncExpr(f);
                     CheckForSelfParam(f);
                     impl.Scope.DefineImplFunction(f);
+                    impl.SubScope.DefineSymbol(f);
                 }
             }
             finally

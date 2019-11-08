@@ -31,7 +31,7 @@ ArenaAllocator (8 buckets)
 #load("std:mem/arena_allocator")
 
 
-fn Main() {
+Main :: () {
     a := ArenaAllocator.create(32)
 
     a.dump(true)

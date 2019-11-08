@@ -36,7 +36,7 @@ MyGame :: struct {
     last_file_change    : double = -1
 }
 
-fn dir_change_thread_func(game: &MyGame) {
+dir_change_thread_func :: (game: &MyGame) {
     while true {
         res := WaitForSingleObject(game.wait_handle, 1000)
         if res == 0 {
@@ -46,12 +46,12 @@ fn dir_change_thread_func(game: &MyGame) {
     }
 }
 
-fn map(x: double, a: double, b: double, c: double, d: double) -> double {
+map :: (x: double, a: double, b: double, c: double, d: double) -> double {
     return (x - a) / (b - a) * (d - c) + c
 }
 
 impl Game for MyGame {
-    fn on_create(ref Self, pge: &PixelGameEngine) -> bool {
+    on_create :: (ref Self, pge: &PixelGameEngine) -> bool {
         self.pge = pge
 
         load_function_from_file()
@@ -74,7 +74,7 @@ impl Game for MyGame {
         return true
     }
 
-    fn on_destroy(ref Self) -> bool {
+    on_destroy :: (ref Self) -> bool {
         if dir_change_thread != null {
             dir_change_thread.terminate()
             FindCloseChangeNotification(wait_handle)
@@ -82,26 +82,26 @@ impl Game for MyGame {
         return true
     }
 
-    fn file_changed(ref Self) {
+    file_changed :: (ref Self) {
         last_file_change = 0.1
     }
 
-    fn to_pixel(ref Self, wx: double, wy: double) -> (x: int, y: int) {
+    to_pixel :: (ref Self, wx: double, wy: double) -> (x: int, y: int) {
         return (cast map(wx, xc - xr, xc + xr, 0, double(width)), cast map(wy, yc - yr, yc + yr, double(height), 0))
     }
 
-    fn to_world(ref Self, wx: int, wy: int) -> (x: double, y: double) {
+    to_world :: (ref Self, wx: int, wy: int) -> (x: double, y: double) {
         return (map(double(wx), 0, double(width), xc - xr, xc + xr), map(double(wy), double(height), 0, yc - yr, yc + yr))
     }
 
-    fn draw_line(ref Self, x1: double, y1: double, x2: double, y2: double, col: Pixel) {
+    draw_line :: (ref Self, x1: double, y1: double, x2: double, y2: double, col: Pixel) {
         px1, py1 := to_pixel(x1, y1)
         px2, py2 := to_pixel(x2, y2)
 
         pge.draw_line(px1, py1, px2, py2, col)
     }
 
-    fn load_function_from_file(ref Self) {
+    load_function_from_file :: (ref Self) {
         println("reloading...")
 
         function = match function {
@@ -134,7 +134,7 @@ impl Game for MyGame {
         }
     }
 
-    fn on_update(ref Self, dt: float) -> bool {
+    on_update :: (ref Self, dt: float) -> bool {
         pge.clear()
 
         // 
@@ -170,7 +170,7 @@ impl Game for MyGame {
         return true
     }
 
-    fn evaluate_function(ref Self, x: double) -> Option[Complex] {
+    evaluate_function :: (ref Self, x: double) -> Option[Complex] {
         //return functions[func_index % functions.length](x)
         variables["x"] = Complex(x, 0.0)
         return match function {
@@ -179,7 +179,7 @@ impl Game for MyGame {
         }
     }
 
-    fn draw_current_function(ref Self) {
+    draw_current_function :: (ref Self) {
         prev := Complex()
 
         first := true
@@ -218,7 +218,7 @@ impl Game for MyGame {
         }
     }
 
-    fn draw_grid(ref Self) {
+    draw_grid :: (ref Self) {
         // grid
         {
             lw   := 0.15
@@ -282,7 +282,7 @@ impl Game for MyGame {
         }
     }
 
-    fn handle_input(ref Self, dt: double) {
+    handle_input :: (ref Self, dt: double) {
         scroll_speed := 0.001
 
         // move
@@ -336,11 +336,11 @@ impl Game for MyGame {
     }
 }
 
-fn compare_strings(a: string, b: string) -> bool {
+compare_strings :: (a: string, b: string) -> bool {
     return streq(a, b)
 }
 
-fn Main() {
+Main :: () {
     myGame := MyGame(
         var_name_allocator = ArenaAllocator.create(1024)
         variables = Variables.create(compare_strings)

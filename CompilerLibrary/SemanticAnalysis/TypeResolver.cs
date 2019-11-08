@@ -539,26 +539,26 @@ namespace Cheez
             return instance;
         }
 
-        private AstFunctionDecl InstantiatePolyImplFunction(
+        private AstFuncExpr InstantiatePolyImplFunction(
             GenericFunctionType func,
             Dictionary<string, CheezType> polyTypes,
             Dictionary<string, (CheezType type, object value)> constArgs,
-            List<AstFunctionDecl> instances = null,
+            List<AstFuncExpr> instances = null,
             ILocation location = null)
         {
             var impl = func.Declaration.ImplBlock;
             var implInstance = InstantiatePolyImplNew(impl, polyTypes, location);
-            return implInstance.Functions.FirstOrDefault(f => f.Name.Name == func.Declaration.Name.Name);
+            return implInstance.Functions.FirstOrDefault(f => f.Name == func.Declaration.Name);
         }
 
-        private AstFunctionDecl InstantiatePolyFunction(
+        private AstFuncExpr InstantiatePolyFunction(
             GenericFunctionType func,
             Dictionary<string, CheezType> polyTypes,
             Dictionary<string, (CheezType type, object value)> constArgs,
-            List<AstFunctionDecl> instances = null,
+            List<AstFuncExpr> instances = null,
             ILocation location = null)
         {
-            AstFunctionDecl instance = null;
+            AstFuncExpr instance = null;
 
             if (func.Declaration.ImplBlock != null && func.Declaration.ImplBlock.Trait != null)
             {
@@ -621,7 +621,7 @@ namespace Cheez
             // instatiate type
             if (instance == null)
             {
-                instance = func.Declaration.Clone() as AstFunctionDecl;
+                instance = func.Declaration.Clone() as AstFuncExpr;
                 instance.Template = func.Declaration;
                 instance.IsPolyInstance = true;
                 instance.IsGeneric = false;
@@ -700,10 +700,7 @@ namespace Cheez
 
                 //remove constant params
                 instance.Parameters = instance.Parameters.Where(p => !(p.Name?.IsPolymorphic ?? false)).ToList();
-                ResolveFunctionSignature(instance, null);
-
-                //instance.Type = new FunctionType(instance);
-
+                instance = InferTypeFuncExpr(instance) as AstFuncExpr;
 
                 if (instances != null)
                     instances.Add(instance);

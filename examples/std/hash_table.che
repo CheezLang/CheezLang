@@ -19,7 +19,7 @@ Entry :: struct(K: type, V: type) {
 }
 
 impl(K: type, V: type) Drop for Table[K, V] {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         if entries.data != null {
             free_n(entries, allocator)
         }
@@ -27,7 +27,7 @@ impl(K: type, V: type) Drop for Table[K, V] {
 }
 
 impl(K: type, V: type) Table[K, V] {
-    fn create(comp: fn(K, K) -> bool, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    create :: (comp: fn(K, K) -> bool, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return Table[K, V](
             allocator   = allocator
             comparer    = comp
@@ -37,11 +37,11 @@ impl(K: type, V: type) Table[K, V] {
         )
     }
 
-    fn get_entries(ref Self) -> []Entry[K, V] {
+    get_entries :: (ref Self) -> []Entry[K, V] {
         return entries
     }
 
-    fn find_entry(ref Self, the_entries: []Entry[K, V], key: K) -> &Entry[K, V] {
+    find_entry :: (ref Self, the_entries: []Entry[K, V], key: K) -> &Entry[K, V] {
 
         index := K.hash(key) % cast(uint) the_entries.length
         tombstone : &Entry[K, V] = null
@@ -70,7 +70,7 @@ impl(K: type, V: type) Table[K, V] {
         return null
     }
 
-    fn set(ref Self, key: K, value: V) -> bool #operator("set[]") {
+    set :: (ref Self, key: K, value: V) -> bool #operator("set[]") {
         if entries.data == null {
             adjust_capacity(13)
         }
@@ -92,7 +92,7 @@ impl(K: type, V: type) Table[K, V] {
         return is_new_key
     }
 
-    fn get(ref Self, key: K) -> Option[ref V] {
+    get :: (ref Self, key: K) -> Option[ref V] {
         if entries.data == null {
             return None
         }
@@ -105,12 +105,12 @@ impl(K: type, V: type) Table[K, V] {
         return Some(entry.value)
     }
 
-    fn get_unchecked(ref Self, key: K) -> ref V #operator("[]") {
+    get_unchecked :: (ref Self, key: K) -> ref V #operator("[]") {
         entry := find_entry(entries, key)
         return entry.value
     }
 
-    fn delete(ref Self, key: K) -> bool {
+    delete :: (ref Self, key: K) -> bool {
         if count == 0 or entries.data == null { return false }
 
         entry := find_entry(entries, key)
@@ -122,7 +122,7 @@ impl(K: type, V: type) Table[K, V] {
         return true
     }
 
-    fn adjust_capacity(ref Self, cap: uint) {
+    adjust_capacity :: (ref Self, cap: uint) {
         entries_new := alloc_n(Entry[K, V], cap, allocator)
 
         for i : 0..entries_new.length {
@@ -150,7 +150,7 @@ impl(K: type, V: type) Table[K, V] {
         entries = entries_new
     }
 
-    fn iterator(ref Self) -> TableIterator[K, V] {
+    iterator :: (ref Self) -> TableIterator[K, V] {
         return TableIterator[K, V](self, 0)
     }
 }
@@ -162,7 +162,7 @@ TableIterator :: struct(K: type, V: type) {
 }
 
 impl(K: type, V: type) Iterator[(K, V)] for TableIterator[K, V] {
-    fn next(ref Self) -> Option[(K, V)] {
+    next :: (ref Self) -> Option[(K, V)] {
         entries := table.get_entries()
         while index < entries.length {
             e := ref entries[index]
@@ -176,7 +176,7 @@ impl(K: type, V: type) Iterator[(K, V)] for TableIterator[K, V] {
         return None
     }
 
-    fn dispose(ref Self) {
+    dispose :: (ref Self) {
         free(&self)
     }
 }

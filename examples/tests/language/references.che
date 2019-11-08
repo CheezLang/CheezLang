@@ -18,14 +18,14 @@
 #load("std:c")
 #load("std:string")
 
-fn Main() {
+Main :: () {
     test1()
     test2()
     test3()
     test4()
 }
 
-fn test4() {
+test4 :: () {
     a := 5
     ra : ref int = a
     b := ra
@@ -60,7 +60,7 @@ Foo3 :: struct {
     c: string
 }
 
-fn test3() {
+test3 :: () {
     c := "uiae"
 
     f := Foo3(
@@ -75,16 +75,16 @@ fn test3() {
     )
 }
 
-fn test2() {
+test2 :: () {
     a := 5
     t := (1, 2, a, "lol")
 }
 
-fn help1(a: ref &int) {
+help1 :: (a: ref &int) {
     b := <<&<<a
 }
 
-fn test1() {
+test1 :: () {
     a := 5
     pa := &a
     b := <<pa

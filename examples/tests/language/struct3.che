@@ -6,20 +6,20 @@
 
 #load("std:preload")
 
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
 Test :: struct(T: type) {
     x: T
 }
 
 impl(T: type) Test[T] {
-    fn foo(ref Self, a: int) -> Test[T] {
+    foo :: (ref Self, a: int) -> Test[T] {
         self.x = cast a
         return Test[T](cast a)
     }
 }
 
-fn Main() {
+Main :: () {
     t := Test[int](2)
     t2 := Test[double](3.6)
 

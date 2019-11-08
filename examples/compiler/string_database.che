@@ -3,7 +3,7 @@
 #load("std:mem/arena_allocator")
 
 impl string {
-    fn equal(a: Self, b: Self) -> bool #operator("==") {
+    equal :: (a: Self, b: Self) -> bool #operator("==") {
         return a.length == b.length and a.data == b.data
     }
 }
@@ -13,12 +13,12 @@ StringDatabase :: struct {
     db      : Table[string, string]
 }
 
-fn sdb_compare_strings(a: string, b: string) -> bool {
+sdb_compare_strings :: (a: string, b: string) -> bool {
     return streq(a, b)
 }
 
 impl Hashable for string {
-    fn hash(ref Self) -> uint {
+    hash :: (ref Self) -> uint {
         h: u32 = 2166136261
 
         for i : 0..self.length {
@@ -31,7 +31,7 @@ impl Hashable for string {
 }
 
 impl StringDatabase {
-    fn create() -> Self {
+    create :: () -> Self {
         sdb := Self(
             pool    = ArenaAllocator.create(1024),
             db      = Table[string, string].create(sdb_compare_strings)
@@ -40,7 +40,7 @@ impl StringDatabase {
         return sdb
     }
 
-    fn intern(ref Self, str: string) -> string {
+    intern :: (ref Self, str: string) -> string {
         return match db.get(str) {
             Some($s) -> {
                 s

@@ -5,7 +5,7 @@ if const @is_os("linux") {
     #load("std:os/linux")
 }
 
-fn get_time_microseconds() -> int {
+get_time_microseconds :: () -> int {
     if const @is_os("windows") {
         freq := 1
         QueryPerformanceFrequency(&freq)
@@ -29,7 +29,7 @@ fn get_time_microseconds() -> int {
     }
 }
 
-fn get_time_milliseconds() -> int {
+get_time_milliseconds :: () -> int {
     if const @is_os("windows") {
         freq := 1
         QueryPerformanceFrequency(&freq)

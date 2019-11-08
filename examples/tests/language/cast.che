@@ -8,9 +8,9 @@
 
 #load("std:preload")
 
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
-fn Main() {
+Main :: () {
     // int <- int
     test1(-65)
 
@@ -33,42 +33,42 @@ fn Main() {
     test7(7)
 }
 
-fn test1(a: i32) { 
+test1 :: (a: i32) { 
     b : i64 = cast a
     c := cast(i8) a
 
     c_printf("%d, %lld, %hhd`n", a, b, c)
 }
-fn test2(a: u32) {
+test2 :: (a: u32) {
     b : u64 = cast a
     c := cast(u8) a
 
     c_printf("%u, %llu, %hhu`n", a, b, c)
 }
 
-fn test3(a: u64) {
+test3 :: (a: u64) {
     b : &any = cast a
 
     c_printf("%llu, %u`n", a, b)
 }
 
-fn test4(a: &i32) {
+test4 :: (a: &i32) {
     b : u64 = cast a
 
     c_printf("%u, %u`n", a, b)
 }
 
-fn test5(f: float, d: double) {
+test5 :: (f: float, d: double) {
     a := cast(double) f
     b := cast(float) d
     c_printf("%f, %f`n", a, cast(double) b)
 }
 
-fn test6(d: double) {
+test6 :: (d: double) {
     c_printf("%f, %d`n", d, cast(i32) d)
 }
 
-fn test7(i: i32) {
+test7 :: (i: i32) {
     c_printf("%d, %f`n", i, cast(double) i)
 }
 

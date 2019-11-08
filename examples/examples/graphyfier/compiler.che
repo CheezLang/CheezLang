@@ -2,7 +2,7 @@
 #load("evaluator")
 #load("../../compiler/lexer")
 
-fn get_precedence(op: OpCode) -> int {
+get_precedence :: (op: OpCode) -> int {
     return match op {
         OpCode.Grp -> 0
         OpCode.Neg -> 1
@@ -21,7 +21,7 @@ fn get_precedence(op: OpCode) -> int {
     }
 }
 
-fn compile(expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]] {
+compile :: (expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]] {
     res := Array[OpCode].create()
     
     string_db := StringDatabase.create()

@@ -4,7 +4,7 @@
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
-#load("examples/snake/snake")
+// #load("examples/snake/snake")
 // #load("examples/pathtracer") // buggy
 
 // #load("tests/language/match3")
@@ -15,23 +15,30 @@
 /*
 #load("std:io/io")
 
-Foo :: struct {
+add :: (a: int, b: int) -> int {
+    sum := a + b
+    return sum
+}
+
+trait Foo {
+    foo :: (ref Self);
+}
+
+Bar :: struct {
     a : int
 }
 
-BYTE :: u8
-
-Bar :: enum #base_type(BYTE) {
-    SIZE :: 123
-    A
-    B
-    C : int
-    D = 5
-    E : float, int = 6
+impl Foo for Bar {
+    foo :: (ref Self) {
+        println(a)
+    }
 }
 
-fn Main() {
+Main :: () {
+    x := add(5, 7)
 
+    b := Bar(5)
+    b.foo()
 }
 
 // */
@@ -59,14 +66,14 @@ GVec :: struct (T: type) {
 }
 
 impl Vec {
-    fn print(ref Self) {
+    print :: (ref Self) {
         printfln("Vec({}, {}, {}, {})", (double(x), double(y), double(z), double(w)))
         // c_printf("Vec(%f, %f, %f, %f)`n", double(x), double(y), double(z), double(w))
     }
 }
 
 impl(T: type) GVec[T] {
-    fn print(ref Self) {
+    print :: (ref Self) {
         printfln("GVec({}, {})", (double(x), double(y)))
         // c_printf("GVec(%f, %f)`n", double(x), double(y))
     }
@@ -82,7 +89,7 @@ Bar :: struct {
 
 
 
-fn Main() {
+Main :: () {
     v := Vec(1, 2, 3, 4)
     v.print()
     
@@ -100,7 +107,7 @@ fn Main() {
 #load("std:preload")
 #load("std:io/io")
 
-fn try_catch(r: $T, code: Code) #macro {
+try_catch :: (r: $T, code: Code) #macro {
     match r {
         Ok($v) -> v
         Err($e) -> {
@@ -110,7 +117,7 @@ fn try_catch(r: $T, code: Code) #macro {
     }
 }
 
-fn try(r: $T) #macro {
+try :: (r: $T) #macro {
     match r {
         Ok($v) -> v
         Err($e) -> {
@@ -119,7 +126,7 @@ fn try(r: $T) #macro {
     }
 }
 
-fn test(b: bool) -> Result(int, int) {
+test :: (b: bool) -> Result(int, int) {
     if b {
         return Ok(5)
     } else {
@@ -127,13 +134,13 @@ fn test(b: bool) -> Result(int, int) {
     }
 }
 
-fn foo() -> Result(int, int) {
+foo :: () -> Result(int, int) {
     i := try(test(false))
     println(i)
     return Ok(0)
 }
 
-fn Main() {
+Main :: () {
     println(foo())
     println("==========")
     // try_catch(test(false), {})

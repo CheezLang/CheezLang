@@ -8,13 +8,13 @@ CheezCompiler :: struct {
 }
 
 impl Drop for CheezCompiler {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         free(ast_allocator)
     }
 }
 
 impl CheezCompiler {
-    fn create() -> CheezCompiler {
+    create :: () -> CheezCompiler {
         ast_a := alloc(StackAllocator)
         <<ast_a = StackAllocator.create(1024 * 100)
         

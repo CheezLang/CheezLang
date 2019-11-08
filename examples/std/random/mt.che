@@ -11,11 +11,11 @@ MTwister :: struct {
 }
 
 impl PseudoRandomGen for MTwister {
-    fn next_u32(ref Self) -> u32 {
+    next_u32 :: (ref Self) -> u32 {
         return self.next()
     }
 
-    fn next_double(ref Self) -> double {
+    next_double :: (ref Self) -> double {
         r := double(self.next())
         m := double(u32.max)
         return r / m
@@ -23,7 +23,7 @@ impl PseudoRandomGen for MTwister {
 }
 
 impl MTwister {
-    fn create(seed: u32) -> Self {
+    create :: (seed: u32) -> Self {
         result := MTwister(index = STATE_VECTOR_LENGTH)
         result.mt[0] = seed
         for i : 1..int(STATE_VECTOR_LENGTH) {
@@ -32,15 +32,15 @@ impl MTwister {
         return result
     }
 
-    fn m32(x: u32) -> u32 {
+    m32 :: (x: u32) -> u32 {
         return @bin_and(x, 0x80000000)
     }
 
-    fn l31(x: u32) -> u32 {
+    l31 :: (x: u32) -> u32 {
         return @bin_and(x, 0x7FFFFFFF)
     }
 
-    fn unroll(ref Self, y: ref u32, i: ref u64, expr: u64) {
+    unroll :: (ref Self, y: ref u32, i: ref u64, expr: u64) {
         y = @bin_or(m32(mt[i]), l31(mt[i + 1]))
         mt[i] = @bin_xor(
             mt[expr],
@@ -50,7 +50,7 @@ impl MTwister {
         i += 1
     }
 
-    fn generate_numbers(ref Self) {
+    generate_numbers :: (ref Self) {
         i : u64 = 0
         y : u32 = 0
 
@@ -95,7 +95,7 @@ impl MTwister {
         index = 0
     }
 
-    fn next(ref Self) -> u32 {
+    next :: (ref Self) -> u32 {
         if index >= STATE_VECTOR_LENGTH {
             generate_numbers()
             index = 0
@@ -105,14 +105,14 @@ impl MTwister {
         return mt_temp[index - 1]
     }
 
-    fn next_uint(ref Self, min: u64 = 0, max: u64 = cast u64.max) -> u64 {
+    next_uint :: (ref Self, min: u64 = 0, max: u64 = cast u64.max) -> u64 {
         a := u64(next())
         b := u64(next())
         rand := @bin_or(@bin_lsl(b, 32), a)
         return rand % (max - min) + min
     }
 
-    fn next_int(ref Self, min: int = 0, max: int = cast i64.max) -> int {
+    next_int :: (ref Self, min: int = 0, max: int = cast i64.max) -> int {
         a := u64(next())
         b := u64(next())
         rand := @bin_or(@bin_lsl(b, 32), a)

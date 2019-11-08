@@ -3,7 +3,7 @@
 #load("std:array")
 #load("std:ring_queue")
 
-fn thread_func(data: &any) -> u32 #stdcall {
+thread_func :: (data: &any) -> u32 #stdcall {
     thread := @cast(&ThreadData, data)
     thread.func(thread.data)
     return 0
@@ -21,7 +21,7 @@ ThreadData :: struct {
 }
 
 impl Thread {
-    fn create(func: fn(&$T), data: &$T) -> Thread {
+    create :: (func: fn(&$T), data: &$T) -> Thread {
         td := alloc(ThreadData)
         td.func = @cast(fn(&any), func)
         td.data = @cast(&any, data)
@@ -34,23 +34,23 @@ impl Thread {
         )
     }
 
-    fn start(ref Self) -> bool {
+    start :: (ref Self) -> bool {
         res := ResumeThread(handle)
         return res != -1
     }
 
-    fn join(ref Self) {
+    join :: (ref Self) {
         // use INFINITE instead of this
         WaitForSingleObject(handle, 100000000)
     }
 
-    fn terminate(ref Self) {
+    terminate :: (ref Self) {
         TerminateThread(handle, -1)
     }
 }
 
 impl Drop for Thread {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         self.join()
     }
 }
@@ -61,7 +61,7 @@ Mutex :: struct {
 }
 
 impl Mutex {
-    fn create() -> Mutex {
+    create :: () -> Mutex {
         handle := CreateMutexA(null, 0, null)
         if handle == null {
             @panic("Failed to create mutex")
@@ -70,7 +70,7 @@ impl Mutex {
         return Mutex(handle)
     }
 
-    fn try_lock(ref Self, timeout: int) -> bool {
+    try_lock :: (ref Self, timeout: int) -> bool {
         return match WaitForSingleObject(handle, cast timeout) {
             0x00000000 -> true
             0x00000080 -> true
@@ -80,7 +80,7 @@ impl Mutex {
         }
     }
 
-    fn lock(ref Self) {
+    lock :: (ref Self) {
         match WaitForSingleObject(handle, INFINITE) {
             0x00000000 -> {}
             0x00000080 -> {}
@@ -90,13 +90,13 @@ impl Mutex {
         }
     }
 
-    fn release(ref Self) {
+    release :: (ref Self) {
         ReleaseMutex(handle)
     }
 }
 
 impl Drop for Mutex {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         CloseHandle(handle)
     }
 }
@@ -117,7 +117,7 @@ ThreadPool :: struct {
 }
 
 impl ThreadPool {
-    fn create(num_threads: int) -> Self {
+    create :: (num_threads: int) -> Self {
         data := alloc(ThreadPoolData)
         <<data = ThreadPoolData(
             threads = Array[Thread].create(num_threads)
@@ -136,18 +136,18 @@ impl ThreadPool {
         return ThreadPool(data)
     }
 
-    fn enqueue(ref Self, function: fn(&$T), data_ptr: &T) {
+    enqueue :: (ref Self, function: fn(&$T), data_ptr: &T) {
         data.mutex.lock()
         data.functions.push((@cast(fn(&any), function), @cast(&any, data_ptr)))
         data.mutex.release()
     }
 
-    fn terminate(Self, empty_queue: bool) {
+    terminate :: (Self, empty_queue: bool) {
         data.empty_queue = empty_queue
         data.running = false
     }
 
-    fn worker(tp: &ThreadPoolData) {
+    worker :: (tp: &ThreadPoolData) {
         while true {
             tp.mutex.lock()
             if !(tp.running or (tp.empty_queue and tp.functions.get_length() > 0)) {
@@ -170,7 +170,7 @@ impl ThreadPool {
 }
 
 impl Drop for ThreadPool {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         data.running = false
         for : data.threads {
             it.join()

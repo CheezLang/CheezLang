@@ -15,7 +15,7 @@ Quad :: struct {
 }
 
 impl Quad {
-    fn draw(ref Self) {
+    draw :: (ref Self) {
         glBegin(GL_TRIANGLES)
 
         {
@@ -56,7 +56,7 @@ q := Quad(
     col = Vec3(1, 0, 1)
 )
 
-fn onKeyDown(window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
+onKeyDown :: (window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
     if action == GLFW_PRESS {
         if key == 86 { q.pos.y += 0.1 }
         if key == 73 { q.pos.y -= 0.1 }
@@ -71,11 +71,11 @@ fn onKeyDown(window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i3
     }
 }
 
-fn onResize(window: &GLFWwindow, w: i32, h: i32) {
+onResize :: (window: &GLFWwindow, w: i32, h: i32) {
     glViewport(0, 0, w, h)
 }
 
-fn Main()
+Main :: ()
 {
     if !glfwInit() {
         println("Failed to initialize GLFW")

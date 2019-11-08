@@ -21,6 +21,8 @@ namespace Cheez.Ast.Statements
 
         public HashSet<AstDecl> Dependencies { get; set; } = new HashSet<AstDecl>();
 
+        string ISymbol.Name => Name.Name;
+
         public AstDecl(AstIdExpr name, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
         {
             this.Name = name;
@@ -34,6 +36,8 @@ namespace Cheez.Ast.Statements
         public TokenLocation End => Location?.End;
 
         public AstIdExpr Name { get; set; }
+
+        string ISymbol.Name => Name.Name;
         public CheezType Type { get; set; }
         public AstExpression TypeExpr { get; set; }
         public AstExpression DefaultValue { get; set; }
@@ -182,6 +186,111 @@ namespace Cheez.Ast.Statements
         }
     }
 
+    public class AstFuncExpr : AstExpression, ITypedSymbol
+    {
+        public Scope ConstScope { get; set; }
+        public Scope SubScope { get; set; }
+
+        public string Name { get; set; }
+
+        public List<AstParameter> Parameters { get; set; }
+        public AstParameter ReturnTypeExpr { get; }
+
+        public FunctionType FunctionType => Type as FunctionType;
+        public CheezType ReturnType => ReturnTypeExpr?.Type ?? CheezType.Void;
+
+        public AstBlockExpr Body { get; private set; }
+
+        public List<AstFuncExpr> PolymorphicInstances { get; } = new List<AstFuncExpr>();
+        public AstFuncExpr Template { get; set; } = null;
+
+        public SelfParamType SelfType { get; set; } = SelfParamType.None;
+        public bool IsPolyInstance { get; set; } = false;
+        public List<ILocation> InstantiatedAt { get; private set; } = null;
+        public AstTraitDeclaration Trait { get; set; } = null;
+
+        private AstImplBlock _ImplBlock;
+        public AstImplBlock ImplBlock
+        {
+            get => _ImplBlock;
+            set
+            {
+                _ImplBlock = value;
+            }
+        }
+        public AstFuncExpr TraitFunction { get; internal set; }
+        public ILocation ParameterLocation { get; internal set; }
+
+        public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
+        public Dictionary<string, (CheezType type, object value)> ConstParameters { get; internal set; }
+
+        public bool IsGeneric = false; // @todo: remove or rename this?
+        public override bool IsPolymorphic => IsGeneric;
+        public List<AstDirective> Directives { get; protected set; }
+
+        // flags
+        public bool ExcludeFromVTable { get; set; }
+        public bool IsMacroFunction { get; set; }
+        public bool IsForExtension { get; set; }
+        public bool IsAnalysed { get; set; }
+
+        public AstFuncExpr(List<AstParameter> parameters,
+            AstParameter returns,
+            AstBlockExpr body = null,
+            List<AstDirective> Directives = null,
+            ILocation Location = null,
+            ILocation ParameterLocation = null)
+            : base(Location)
+        {
+            this.Parameters = parameters;
+            this.ReturnTypeExpr = returns;
+            this.Body = body;
+            this.ParameterLocation = ParameterLocation;
+            this.Directives = Directives;
+        }
+
+        [DebuggerStepThrough]
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default)
+            => visitor.VisitFuncExpr(this, data);
+
+        public override AstExpression Clone()
+        {
+            var copy = CopyValuesTo(new AstFuncExpr(
+                Parameters.Select(p => p.Clone()).ToList(),
+                ReturnTypeExpr?.Clone(),
+                Body?.Clone() as AstBlockExpr,
+                Directives?.Select(d => d.Clone())?.ToList(),
+                ParameterLocation: ParameterLocation));
+            copy.ConstScope = new Scope($"fn$", copy.Scope);
+            copy.SubScope = new Scope($"fn", copy.ConstScope);
+            copy.Name = Name;
+            return copy;
+        }
+
+        public void AddInstantiatedAt(ILocation loc)
+        {
+            if (InstantiatedAt == null)
+            {
+                InstantiatedAt = new List<ILocation>();
+            }
+
+            InstantiatedAt.Add(loc);
+        }
+
+        public bool HasDirective(string name) => Directives.Find(d => d.Name.Name == name) != null;
+
+        public AstDirective GetDirective(string name)
+        {
+            return Directives.FirstOrDefault(d => d.Name.Name == name);
+        }
+
+        public bool TryGetDirective(string name, out AstDirective dir)
+        {
+            dir = Directives.FirstOrDefault(d => d.Name.Name == name);
+            return dir != null;
+        }
+    }
+
     #endregion
 
     #region Struct Declaration
@@ -292,7 +401,7 @@ namespace Cheez.Ast.Statements
     {
         public List<AstParameter> Parameters { get; set; }
 
-        public List<AstFunctionDecl> Functions { get; }
+        public List<AstFuncExpr> Functions { get; }
         public List<AstVariableDecl> Variables { get; }
 
         public Dictionary<CheezType, AstImplBlock> Implementations { get; } = new Dictionary<CheezType, AstImplBlock>();
@@ -308,7 +417,7 @@ namespace Cheez.Ast.Statements
         public AstTraitDeclaration(
             AstIdExpr name,
             List<AstParameter> parameters,
-            List<AstFunctionDecl> functions,
+            List<AstFuncExpr> functions,
             List<AstVariableDecl> variables,
             ILocation Location = null)
             : base(name, Location: Location)
@@ -324,7 +433,7 @@ namespace Cheez.Ast.Statements
             new AstTraitDeclaration(
                 Name.Clone() as AstIdExpr,
                 Parameters.Select(p => p.Clone()).ToList(),
-                Functions.Select(f => f.Clone() as AstFunctionDecl).ToList(),
+                Functions.Select(f => f.Clone() as AstFuncExpr).ToList(),
                 Variables.Select(v => v.Clone() as AstVariableDecl).ToList()));
 
         public AstImplBlock FindMatchingImplementation(CheezType from)
@@ -409,7 +518,7 @@ namespace Cheez.Ast.Statements
 
         public List<ImplCondition> Conditions { get; set; }
 
-        public List<AstFunctionDecl> Functions { get; }
+        public List<AstFuncExpr> Functions { get; }
 
         public Scope SubScope { get; set; }
 
@@ -423,7 +532,7 @@ namespace Cheez.Ast.Statements
             AstExpression targetTypeExpr,
             AstExpression traitExpr,
             List<ImplCondition> conditions,
-            List<AstFunctionDecl> functions,
+            List<AstFuncExpr> functions,
             ILocation Location = null) : base(Location: Location)
         {
             this.Parameters = parameters;
@@ -441,7 +550,7 @@ namespace Cheez.Ast.Statements
                 TargetTypeExpr.Clone(),
                 TraitExpr?.Clone(),
                 Conditions?.Select(c => c.Clone()).ToList(),
-                Functions.Select(f => f.Clone() as AstFunctionDecl).ToList()
+                Functions.Select(f => f.Clone() as AstFuncExpr).ToList()
                 ));
 
         public override string ToString()

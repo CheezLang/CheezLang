@@ -19,9 +19,9 @@
 #load("std:preload")
 
 // required for printing
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
-fn Main() {
+Main :: () {
     a := 123
     b : bool = true
     (c, d) : (int, bool) = (a, b)

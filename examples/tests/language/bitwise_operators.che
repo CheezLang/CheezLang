@@ -3,7 +3,7 @@
 #load("std:io/io")
 #load("std:string")
 
-fn Main() {
+Main :: () {
     println("")
     @static_assert(@bin_or(0b0001, 0b0010) == 0b0011, "binary or")
     @static_assert(@bin_or(0b0101, 0b1010) == 0b1111, "binary or")

@@ -9,7 +9,7 @@ Heap :: struct(T: type) {
 }
 
 impl(T: type) Drop for Heap[T] {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         for : length {
             Memory.drop(data[it])
         }
@@ -20,7 +20,7 @@ impl(T: type) Drop for Heap[T] {
 }
 
 impl(T: type) Heap[T] {
-    fn create(allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Heap[T] {
+    create :: (allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Heap[T] {
         return Heap[T](
             allocator   = allocator
             data        = alloc_raw(T, 10, allocator)
@@ -29,11 +29,11 @@ impl(T: type) Heap[T] {
         )
     }
 
-    fn get_length(ref Self) -> int {
+    get_length :: (ref Self) -> int {
         return length
     }
 
-    fn reserve(ref Self, size: int) {
+    reserve :: (ref Self, size: int) {
         if capacity > size {
             return
         }
@@ -50,16 +50,16 @@ impl(T: type) Heap[T] {
         }
     }
 
-    fn get_child_index(i: int) -> (left: int, right: int) {
+    get_child_index :: (i: int) -> (left: int, right: int) {
         left = 2 * i + 1
         right = 2 * i + 2
     }
 
-    fn get_parent_index(i: int) -> int {
+    get_parent_index :: (i: int) -> int {
         return (i - 1) / 2
     }
 
-    fn insert(ref Self, val: T) {
+    insert :: (ref Self, val: T) {
         if capacity <= length {
             reserve(length * 2)
         }
@@ -70,12 +70,12 @@ impl(T: type) Heap[T] {
         sift_up(length - 1)
     }
 
-    fn peek(ref Self) -> ref T {
+    peek :: (ref Self) -> ref T {
         @assert(length > 0)
         return data[0]
     }
 
-    fn delete_first(ref Self) -> T {
+    delete_first :: (ref Self) -> T {
         @assert(length > 0)
         val := data[0]
         length -= 1
@@ -88,7 +88,7 @@ impl(T: type) Heap[T] {
         return val
     }
 
-    fn sift_up(ref Self, i: int) {
+    sift_up :: (ref Self, i: int) {
         if i == 0 {
             return
         }
@@ -101,7 +101,7 @@ impl(T: type) Heap[T] {
         }
     }
 
-    fn sift_down(ref Self, i: int) {
+    sift_down :: (ref Self, i: int) {
         ci := get_child_index(i)
 
         if ci.left >= length {
@@ -124,17 +124,17 @@ impl(T: type) Heap[T] {
         }
     }
 
-    fn swap(ref Self, a: int, b: int) {
+    swap :: (ref Self, a: int, b: int) {
         (data[a], data[b]) = (data[b], data[a])
     }
 
-    fn slice(ref Self) -> []T {
+    slice :: (ref Self) -> []T {
         slc : []T = data
         slc.length = length
         return slc
     }
 
-    fn validate(ref Self) -> bool {
+    validate :: (ref Self) -> bool {
         for : length {
             current := data[it]
             ci := get_child_index(it)

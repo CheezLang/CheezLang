@@ -1,7 +1,7 @@
 #load("std:os/windows")
 
 impl PixelGameEngine {
-    fn olc_window_create(ref Self) -> HWND {
+    olc_window_create :: (ref Self) -> HWND {
         wc : WNDCLASS = default
         wc.hIcon = LoadIconA(null, IDI_APPLICATION)
         wc.hCursor = LoadCursorA(null, IDC_ARROW)
@@ -147,7 +147,7 @@ impl PixelGameEngine {
 }
 
 pixel_game_engine_ptr : &PixelGameEngine = null
-fn olc_window_event(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT #stdcall {
+olc_window_event :: (hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT #stdcall {
     match msg {
         WM_DESTROY -> PostQuitMessage(0)
         WM_CLOSE   -> { pixel_game_engine_ptr.active = false }

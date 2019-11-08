@@ -1,0 +1,83 @@
+Positiv :: property {}
+
+Sorted  :: property {}
+SortedA :: property {Sorted}
+SortedD :: property {Sorted}
+
+// impl(T: type) Sorted for T if T : SortedA {}
+// impl(T: type) Sorted for T if T : SortedB {}
+
+// usigned numbers are always positive
+impl(T: type) Positiv for T if @is_unsigned_int(T) {}
+
+// alternative
+impl Positiv for u8 {}
+impl Positiv for u16 {}
+impl Positiv for u32 {}
+impl Positiv for u64 {}
+
+// remaining numbers
+impl(T: type) Positiv for T if is_number(T), #not_yet {
+    assert :: (val: T) -> bool {
+        return val >= 0
+    }
+}
+
+impl(T: type) Positiv for []T if T : Positiv {
+    assert :: (arr: []T) -> bool {
+        for arr {
+            if !Positiv(it) {
+                return false
+            }
+        }
+
+        return true
+    }
+}
+
+impl(T: type) Sorted for []T {
+    assert :: (arr: []T) -> bool {
+        for 1..arr.length {
+            if arr[i] < arr[i - 1] {
+                return false
+            }
+        }
+
+        return true
+    }
+}
+
+sort :: (arr: []int) asserts Sorted(arr) {
+    // ...
+}
+
+foo :: (arr: []int) requires Sorted(arr) {
+    for arr {
+        println(it)
+    }
+}
+
+abs :: (val: $T) asserts Positiv(val) {
+    return if val >= 0 then val else -val
+}
+
+print_int :: (val: int) requires Positiv(val) {
+    //...
+}
+
+read_number_from_user :: () -> int {
+    return 32
+}
+
+Main :: () {
+    arr := [5, 3, 4, 1, 2]
+    foo(arr) // error: arr is not Sorted(arr)
+
+    sort(arr) // now arr has Sorted(arr)
+    foo(arr) // ok: arr has Sorted(arr)
+
+    v : int = read_number_from_user()
+    print_int(v) // error
+    @assert(Positiv(v))
+    print_int(v) // ok
+}

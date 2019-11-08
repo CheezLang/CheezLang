@@ -37,7 +37,7 @@ Lexer :: struct {
 }
 
 impl Lexer {
-    fn create(source: string) -> Lexer {
+    create :: (source: string) -> Lexer {
         return Lexer(
             source = source
             current = 0
@@ -45,24 +45,24 @@ impl Lexer {
         )
     }
 
-    fn next_char(ref Self) -> char {
+    next_char :: (ref Self) -> char {
         current += 1
         return source[current - 1]
     }
 
-    fn peek_char(ref Self) -> char {
+    peek_char :: (ref Self) -> char {
         return if is_at_end() { char(0) } else { source[current] }
     }
 
-    fn peek_next_char(ref Self) -> char {
+    peek_next_char :: (ref Self) -> char {
         return if current >= source.length - 1 { char(0) } else { source[current + 1] }
     }
 
-    fn is_at_end(ref Self) -> bool {
+    is_at_end :: (ref Self) -> bool {
         return current >= source.length
     }
 
-    fn skip_whitespace(ref Self) {
+    skip_whitespace :: (ref Self) {
         while true {
             c := peek_char()
             match c {
@@ -88,11 +88,11 @@ impl Lexer {
         }
     }
 
-    fn make_token(ref Self, kind: TokenKind, length: int = 1) -> Token {
+    make_token :: (ref Self, kind: TokenKind, length: int = 1) -> Token {
         return Token(kind, source.slice(current - 1, length), line)
     }
 
-    fn make_string(ref Self) -> Token {
+    make_string :: (ref Self) -> Token {
         start := current - 1
         l := line
         while !is_at_end() and peek_char() != '"' {
@@ -112,7 +112,7 @@ impl Lexer {
         return Token(TokenKind.String, source.slice(start, current - start), l)
     }
 
-    fn make_number(ref Self) -> Token {
+    make_number :: (ref Self) -> Token {
         start := current - 1
 
         while !is_at_end() and is_digit(peek_char()) {
@@ -131,7 +131,7 @@ impl Lexer {
         return Token(TokenKind.Number, source.slice(start, current - start), line)
     }
 
-    fn make_identifier(ref Self) -> Token {
+    make_identifier :: (ref Self) -> Token {
         start := current - 1
         while !is_at_end() and (is_alpha(peek_char()) or is_alpha(peek_char())) {
             next_char()
@@ -140,7 +140,7 @@ impl Lexer {
         return check_keywords(Token(TokenKind.Identifier, source.slice(start, current - start), line))
     }
 
-    fn check_keywords(ref Self, token: Token) -> Token {
+    check_keywords :: (ref Self, token: Token) -> Token {
         token.kind = match token.text {
             $txt if streq(txt, "and")       -> TokenKind.And
             $txt if streq(txt, "var")       -> TokenKind.Var
@@ -166,17 +166,17 @@ impl Lexer {
         return token
     }
 
-    fn is_digit(c: char) -> bool {
+    is_digit :: (c: char) -> bool {
         return c >= '0' and c <= '9'
     }
 
-    fn is_alpha(c: char) -> bool {
+    is_alpha :: (c: char) -> bool {
         return  (c >= 'a' and c <= 'z') or
                 (c >= 'A' and c <= 'Z') or
                 (c == '_')
     }
 
-    fn next_token(ref Self) -> Token {
+    next_token :: (ref Self) -> Token {
         skip_whitespace()
         if is_at_end() {
             return Token(TokenKind.Eof, "", line)
@@ -219,7 +219,7 @@ impl Lexer {
 }
 
 impl Printable for TokenKind {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         str.append_string(match self {
             TokenKind.LeftParen -> "LeftParen"
             TokenKind.RightParen -> "RightParen"
@@ -264,45 +264,3 @@ impl Printable for TokenKind {
         })
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

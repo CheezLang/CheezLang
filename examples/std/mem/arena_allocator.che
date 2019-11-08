@@ -4,7 +4,7 @@
 #load("std:util")
 #load("std:printable")
 
-fn align(add: uint, align: uint) -> uint {
+align :: (add: uint, align: uint) -> uint {
     mul := add + align - 1
     mul -= (mul % align)
     
@@ -18,14 +18,14 @@ Bucket :: struct {
 }
 
 impl Bucket {
-    fn can_store(ref Self, size: uint, align: uint) -> bool {
+    can_store :: (ref Self, size: uint, align: uint) -> bool {
         next_address := next_aligned(pointer_add(memory.data, cast(int)filled), align)
         next_offset := (cast(uint)next_address) - (cast(uint)memory.data)
         free := (cast(uint)memory.length) - next_offset
         return free >= size
     }
 
-    fn allocate(ref Self, size: uint, align: uint) -> &u8 {
+    allocate :: (ref Self, size: uint, align: uint) -> &u8 {
         next_address := next_aligned(pointer_add(memory.data, cast(int)filled), align)
         next_offset := (cast(uint)next_address) - (cast(uint)memory.data)
         filled = next_offset + size
@@ -41,7 +41,7 @@ ArenaAllocator :: struct {
 }
 
 impl Drop for ArenaAllocator {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         for :buckets {
             parent.free(it.memory.data)
         }
@@ -49,7 +49,7 @@ impl Drop for ArenaAllocator {
 }
 
 impl ArenaAllocator {
-    fn create(size: uint, alloc: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    create :: (size: uint, alloc: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         a := ArenaAllocator(
             parent      = alloc,
             bucket_size = size,
@@ -58,13 +58,13 @@ impl ArenaAllocator {
         return a
     }
 
-    fn clear(ref Self) {
+    clear :: (ref Self) {
         for i : 0..buckets.length {
             buckets[i].filled = 0
         }
     }
 
-    fn dump(ref Self, dump_buckets: bool = false) {
+    dump :: (ref Self, dump_buckets: bool = false) {
         printfln("ArenaAllocator ({} buckets)", buckets.length)
         for i : 0..buckets.length {
             bucket : ref Bucket = buckets[i]
@@ -92,7 +92,7 @@ impl ArenaAllocator {
 }
 
 impl Allocator for ArenaAllocator {
-    fn allocate(ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
+    allocate :: (ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
         required_size := count * elementSize + 8
         if alignment < 8 {
             alignment = 8
@@ -128,7 +128,7 @@ impl Allocator for ArenaAllocator {
         return pointer_add(ptr, 8)
     }
 
-    fn reallocate(ref Self, mem: &any, count: u64, elementSize: u64, alignment: u64) -> &any {
+    reallocate :: (ref Self, mem: &any, count: u64, elementSize: u64, alignment: u64) -> &any {
         if mem == null {
             return allocate(count, elementSize, alignment)
         } else {
@@ -144,7 +144,7 @@ impl Allocator for ArenaAllocator {
         }
     }
 
-    fn free(ref Self, mem: &any) {
+    free :: (ref Self, mem: &any) {
         // do nothing
     }
 }

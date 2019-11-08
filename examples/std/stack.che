@@ -5,30 +5,30 @@ Stack :: struct(T: type) {
 }
 
 impl(T: type) Stack[T] {
-    fn create(initial_capacity: int = 10, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    create :: (initial_capacity: int = 10, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return Stack[T](
             array = Array[T].create(initial_capacity, allocator)
         )
     }
 
-    fn reserve(ref Self, size: int) {
+    reserve :: (ref Self, size: int) {
         array.reserve(size)
     }
 
-    fn push(ref Self, item: T) {
+    push :: (ref Self, item: T) {
         array.add(item)
     }
 
-    fn pop(ref Self) -> T {
+    pop :: (ref Self) -> T {
         return array.remove_last()
     }
 
-    fn peek(ref Self) -> ref T {
+    peek :: (ref Self) -> ref T {
         @assert(array.length > 0)
         return array[array.length - 1]
     }
 
-    fn empty(ref Self) -> bool {
+    empty :: (ref Self) -> bool {
         return array.length == 0
     }
 }

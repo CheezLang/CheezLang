@@ -8,17 +8,17 @@ Pixel :: struct #copy {
 }
 
 impl Pixel {
-    fn rgba(r: u8, g: u8, b: u8, a: u8 = 255) -> Self {
+    rgba :: (r: u8, g: u8, b: u8, a: u8 = 255) -> Self {
         return Pixel(r, g, b, a)
     }
 
-    fn rgbad(r: double, g: double, b: double, a: double = 1) -> Self {
+    rgbad :: (r: double, g: double, b: double, a: double = 1) -> Self {
         return Pixel(cast(u8) r * 255, cast(u8) g * 255, cast(u8) b * 255, cast(u8) a * 255)
     }
 }
 
 impl Printable for Pixel {
-    fn print(ref Self, str: ref String, fmt: string) { 
+    print :: (ref Self, str: ref String, fmt: string) { 
         str.appendf("({}, {}, {}, {})", (r, g, b, a))
     }
 }

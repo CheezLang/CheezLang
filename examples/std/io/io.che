@@ -4,31 +4,31 @@
 //#load("std:os/windows")
 #load("std:c")
 
-fn print_string(s: ref String) {
+print_string :: (s: ref String) {
     //bytesWritten := 0u32
     //WriteFile(__std_out_handle, cast s.get_raw(), cast s.length, &bytesWritten, null)
     c_printf("%.*s", cast(i32) s.get_length(), s.get_raw())
 }
 
-fn println(v: $T) {
+println :: (v: $T) {
     s := String.empty()
     s.appendf("{}`n", v)
     print_string(s)
 }
 
-fn print(v: $T) {
+print :: (v: $T) {
     s := String.empty()
     s.appendf("{}", v)
     print_string(s)
 }
 
-fn printf(format: string, args: $T) {
+printf :: (format: string, args: $T) {
     s := String.empty()
     s.appendf(format, args)
     print_string(s)
 }
 
-fn printfln(format: string, args: $T) {
+printfln :: (format: string, args: $T) {
     s := String.empty()
     s.appendf(format, args)
     s += '`n'
@@ -36,7 +36,7 @@ fn printfln(format: string, args: $T) {
 }
 
 // helper functions
-fn parse_int(str: string) -> int {
+parse_int :: (str: string) -> int {
     val := 0
 
     for c : str {
@@ -47,12 +47,12 @@ fn parse_int(str: string) -> int {
     return val
 }
 
-fn digit_to_char(i: $T) -> char {
+digit_to_char :: (i: $T) -> char {
     c := char(i)
     return if i < 10 { c + '0' } else { (c - char(10)) + 'A' }
 }
 
-fn format_int(buffer: ref String, val: $T, _base: int = 10) {
+format_int :: (buffer: ref String, val: $T, _base: int = 10) {
     base := T(_base)
 
     // calculate length and sign

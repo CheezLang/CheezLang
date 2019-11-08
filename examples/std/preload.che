@@ -18,13 +18,13 @@ __platform__ : Platform = if const @is_os("Windows") {
 
 // drop
 trait Drop {
-    fn drop(ref Self);
+    drop :: (ref Self);
 }
 
 // drops a values
 Memory :: struct{}
 impl Memory {
-    fn drop(_: $T) {}
+    drop :: (_: $T) {}
 }
 
 // option and result
@@ -42,27 +42,27 @@ use Option
 use Result
 
 trait From(T: type) {
-    fn from(value: T) -> Self;
+    from :: (value: T) -> Self;
 }
 
 trait Into(T: type) {
-    fn into(ref Self) -> T;
+    into :: (ref Self) -> T;
 }
 
 // impl(F: type, T: type) From[F] for T if F : Into[T], #notyet {
-//     fn from(value: F) -> T {
+//     from :: (value: F) -> T {
 //         return F.into(value)
 //     }
 // }
 
 // impl(F: type, T: type) Into[T] for F if T : From[F], #notyet {
-//     fn into(ref Self) -> T {
+//     into :: (ref Self) -> T {
 //         return T.from(self)
 //     }
 // }
 
 // standard for loops
-fn for_extension_range(r: $T..T, code: Code, reverse: bool = false, inclusive: bool = false) #for {
+for_extension_range :: (r: $T..T, code: Code, reverse: bool = false, inclusive: bool = false) #for {
     start, end, inc := {
         end := if const inclusive then r.end else r.end - 1
         if const reverse then (end, r.start, -1) else (r.start, end, 1)
@@ -77,7 +77,7 @@ fn for_extension_range(r: $T..T, code: Code, reverse: bool = false, inclusive: b
     }
 }
 
-fn for_extension_int(num: int, code: Code, inclusive: bool = false, reverse: bool = false) #for {
+for_extension_int :: (num: int, code: Code, inclusive: bool = false, reverse: bool = false) #for {
     start, inc := if const reverse then (num - 1, -1) else (0, 1)
     while (it, it_index) := (start, 0),
         if const inclusive then it_index <= num else it_index < num,
@@ -86,7 +86,7 @@ fn for_extension_int(num: int, code: Code, inclusive: bool = false, reverse: boo
     }
 }
 
-fn for_extension_slice(arr: []$T, code: Code, reverse: bool = false, by_ref: bool = false) #for {
+for_extension_slice :: (arr: []$T, code: Code, reverse: bool = false, by_ref: bool = false) #for {
     while it_index := 0, it_index < arr.length, it_index += 1 {
         if const reverse {
             it_index_rev := arr.length - it_index - 1
@@ -99,7 +99,7 @@ fn for_extension_slice(arr: []$T, code: Code, reverse: bool = false, by_ref: boo
     }
 }
 
-// fn for_extension_array(arr: [$Size]$T, code: Code, reverse: bool = false, by_ref: bool = false) #for {
+// for_extension_array :: (arr: [$Size]$T, code: Code, reverse: bool = false, by_ref: bool = false) #for {
 //     while it_index := 0, it_index < arr.length, it_index += 1 {
 //         if const reverse {
 //             it_index_rev := arr.length - it_index - 1

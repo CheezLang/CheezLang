@@ -15,22 +15,16 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        private void AnalyseFunctions(List<AstFunctionDecl> newInstances)
+        private void AnalyseFunctions(List<AstFuncExpr> newInstances)
         {
-            var nextInstances = new List<AstFunctionDecl>();
-
             int i = 0;
             while (i < MaxPolyFuncResolveStepCount && newInstances.Count != 0)
             {
                 foreach (var instance in newInstances)
                 {
-                    AnalyseFunction(instance, nextInstances);
+                    AnalyseFunction(instance);
                 }
                 newInstances.Clear();
-
-                var t = newInstances;
-                newInstances = nextInstances;
-                nextInstances = t;
 
                 i++;
             }
@@ -42,8 +36,12 @@ namespace Cheez
             }
         }
 
-        private void AnalyseFunction(AstFunctionDecl func, List<AstFunctionDecl> instances = null)
+        private void AnalyseFunction(AstFuncExpr func)
         {
+            if (func.IsAnalysed)
+                return;
+            func.IsAnalysed = true;
+
             Log($"Analysing function {func.Name}", $"impl = {func.ImplBlock?.Accept(new SignatureAstPrinter())}", $"poly = {func.IsGeneric}");
             PushLogScope();
 
@@ -162,7 +160,7 @@ namespace Cheez
                 if (func.FunctionType.IsErrorType || func.FunctionType.IsPolyType)
                     return;
 
-                if (func.Body != null && !func.GetFlag(StmtFlags.IsMacroFunction))
+                if (func.Body != null && !func.IsMacroFunction)
                 {
                     var errs = PushSilentErrorHandler();
                     func.Body.AttachTo(func, func.SubScope);
@@ -206,7 +204,7 @@ namespace Cheez
             {
                 currentFunction = prevCurrentFunction;
                 PopLogScope();
-                Log($"Finished function {func.Name.Name}");
+                Log($"Finished function {func.Name}");
             }
         }
 
@@ -308,13 +306,13 @@ namespace Cheez
 
             if (matches.Count == 0)
             {
-                var candidates = fors.Select(f => ("Tried this candidate:", f.Name.Location));
+                var candidates = fors.Select(f => ("Tried this candidate:", f.ParameterLocation));
                 ReportError(fo, $"No for extension matches this for loop", candidates);
                 return fo;
             }
             else if (matches.Count > 1)
             {
-                var candidates = matches.Select(f => ("This matches:", f.func.Name.Location));
+                var candidates = matches.Select(f => ("This matches:", f.func.ParameterLocation));
                 ReportError(fo, $"Multible for extensions match this for loop", candidates);
                 return fo;
             }

@@ -3,7 +3,7 @@
 
 #load("opengl.che")
 
-fn glewInit() -> GLenum #stdcall;
+glewInit :: () -> GLenum #stdcall;
 
 GLEW_OK : u32 = 0
 GLEW_NO_ERROR : u32 = 0
@@ -17,4 +17,4 @@ GLEW_VERSION_MAJOR : u32 =  2
 GLEW_VERSION_MINOR : u32 =  3
 GLEW_VERSION_MICRO : u32 =  4
 
-fn glewGetString(name: GLenum) -> c_string #stdcall;
+glewGetString :: (name: GLenum) -> c_string #stdcall;

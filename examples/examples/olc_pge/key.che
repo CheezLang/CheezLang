@@ -13,7 +13,7 @@ Key :: enum #copy {
 HWButton :: (pressed: bool, released: bool, held: bool)
 
 impl Printable for Key {
-    fn print(ref Self, str: ref String, fmt: string) {
+    print :: (ref Self, str: ref String, fmt: string) {
         s := match self {
             Key.NONE    -> "NONE"
             Key.A   -> "A"

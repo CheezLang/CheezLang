@@ -12,7 +12,7 @@
 #load("cheez_compiler")
 #load("parser")
 
-fn Main() {
+Main :: () {
     string_db := StringDatabase.create()
     compiler := CheezCompiler.create()
 

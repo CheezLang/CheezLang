@@ -208,9 +208,9 @@ namespace Cheez
         public CheezType ResultType { get; set; }
         public string Name { get; set; }
 
-        public AstFunctionDecl Declaration { get; set; }
+        public AstFuncExpr Declaration { get; set; }
 
-        public UserDefinedUnaryOperator(string name, AstFunctionDecl func)
+        public UserDefinedUnaryOperator(string name, AstFuncExpr func)
         {
             this.Name = name;
             this.SubExprType = func.Parameters[0].Type;
@@ -245,9 +245,9 @@ namespace Cheez
         public CheezType RhsType { get; set; }
         public CheezType ResultType { get; set; }
         public string Name { get; set; }
-        public AstFunctionDecl Declaration { get; set; }
+        public AstFuncExpr Declaration { get; set; }
 
-        public UserDefinedBinaryOperator(string name, AstFunctionDecl func)
+        public UserDefinedBinaryOperator(string name, AstFuncExpr func)
         {
             this.Name = name;
             this.LhsType = func.Parameters[0].Type;
@@ -286,10 +286,10 @@ namespace Cheez
         public CheezType[] ArgTypes { get; }
         public CheezType ResultType { get; }
         public string Name { get; set; }
-        public AstFunctionDecl Declaration { get; set; }
+        public AstFuncExpr Declaration { get; set; }
 
 
-        public UserDefinedNaryOperator(string name, AstFunctionDecl func)
+        public UserDefinedNaryOperator(string name, AstFuncExpr func)
         {
             this.Name = name;
             this.ArgTypes = func.Parameters.Select(p => p.Type).ToArray();

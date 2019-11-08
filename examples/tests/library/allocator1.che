@@ -18,7 +18,7 @@
 #load("std:io/io")
 
 
-fn Main() {
+Main :: () {
     {
         a := alloc(int)
         <<a = 0

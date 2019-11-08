@@ -5,7 +5,7 @@
 #load("std:io/io")
 #load("std:math")
 
-fn is_prime(i: int) -> bool {
+is_prime :: (i: int) -> bool {
     if i < 2 {
         return false
     }
@@ -19,7 +19,7 @@ fn is_prime(i: int) -> bool {
     return true
 }
 
-fn Main() {
+Main :: () {
     count := 0
     while i := 0, true, i += 1 {
         if is_prime(i) {

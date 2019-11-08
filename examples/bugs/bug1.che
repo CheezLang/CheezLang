@@ -5,7 +5,7 @@
 #load("std:io/io")
 
 
-fn Main() {
+Main :: () {
     {
         a := alloc(int)
         printf("{}`n", <<a)

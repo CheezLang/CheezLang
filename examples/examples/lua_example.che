@@ -4,7 +4,7 @@
 #load("../libraries/lua/lauxlib.che")
 #load("../libraries/lua/lualib.che")
 
-fn check_lua(L: &lua_State, r: i32) -> bool {
+check_lua :: (L: &lua_State, r: i32) -> bool {
     if r != LUA_OK {
         errormsg := lua_tostring(L, -1)
         printf("[LUA ERROR] {}`n", errormsg)
@@ -14,7 +14,7 @@ fn check_lua(L: &lua_State, r: i32) -> bool {
     return true
 }
 
-fn lua_HostFunction(L: &lua_State) -> i32 {
+lua_HostFunction :: (L: &lua_State) -> i32 {
     a := lua_tonumber(L, 1)
     b := lua_tonumber(L, 2)
     printf("[CHEEZ] HostFunction({}, {}) has been called`n", (a, b))
@@ -23,7 +23,7 @@ fn lua_HostFunction(L: &lua_State) -> i32 {
     return 1
 }
 
-fn Main() {
+Main :: () {
     L := luaL_newstate()
     luaL_openlibs(L)
 

@@ -4,7 +4,7 @@ Rc :: struct(T: type) {
 }
 
 impl(T: type) Drop for Rc[T] {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         @assert(<<count > 0)
         <<count -= 1
         if <<count == 0 {
@@ -15,7 +15,7 @@ impl(T: type) Drop for Rc[T] {
 }
 
 impl(T: type) Rc[T] {
-    fn create(value: T) -> Rc[T] {
+    create :: (value: T) -> Rc[T] {
         count := alloc(int)
         data  := alloc(T)
         <<count = 1
@@ -23,12 +23,12 @@ impl(T: type) Rc[T] {
         return Rc[T](count, data)
     }
 
-    fn clone(ref Self) -> Rc[T] {
+    clone :: (ref Self) -> Rc[T] {
         <<count += 1
         return Rc[T](count, data)
     }
 
-    fn get(ref Self) -> ref T {
+    get :: (ref Self) -> ref T {
         return <<data
     }
 }

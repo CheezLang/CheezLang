@@ -8,11 +8,11 @@ LinearCongruentialGenerator :: struct {
 }
 
 impl LinearCongruentialGenerator {
-    fn create(seed: u64 = 0) -> Self {
+    create :: (seed: u64 = 0) -> Self {
         return Self(seed)
     }
 
-    fn next(ref Self) -> u32 {
+    next :: (ref Self) -> u32 {
         M : u64 = cast(u64) u32.max
         A : u64 = 1664525
         B : u64 = 1013904223
@@ -21,17 +21,17 @@ impl LinearCongruentialGenerator {
         return cast(u32) seed
     }
 
-    fn next_int(ref Self, min: int = 0, max: int = cast u32.max) -> int {
+    next_int :: (ref Self, min: int = 0, max: int = cast u32.max) -> int {
         return (cast(int)next()) % (max - min) + min
     }
 }
 
 impl PseudoRandomGen for LinearCongruentialGenerator {
-    fn next_u32(ref Self) -> u32 {
+    next_u32 :: (ref Self) -> u32 {
         return self.next()
     }
 
-    fn next_double(ref Self) -> double {
+    next_double :: (ref Self) -> double {
         r := double(self.next())
         m := double(u32.max)
         return r / m
@@ -41,36 +41,36 @@ impl PseudoRandomGen for LinearCongruentialGenerator {
 lcg : &LinearCongruentialGenerator = null
 
 trait PseudoRandomGen {
-    fn next_u32(ref Self) -> u32;
-    fn next_double(ref Self) -> double;
+    next_u32 :: (ref Self) -> u32;
+    next_double :: (ref Self) -> double;
 }
 
 PseudoRandom :: struct {}
 
 impl PseudoRandom {
-    fn init() {
+    init :: () {
         lcg = alloc(LinearCongruentialGenerator)
         <<lcg = LinearCongruentialGenerator.create(cast get_time_microseconds())
         for : 0..1000 { lcg.next() }
     }
 
-    fn next_int() -> i32 {
+    next_int :: () -> i32 {
         return cast lcg.next()
     }
 
-    fn next_double() -> double {
+    next_double :: () -> double {
         return lcg.next_double()
     }
 }
 
 // distributions
 trait IDistribution(T: type) {
-    fn sample(ref Self) -> T;
+    sample :: (ref Self) -> T;
 }
 
 trait IDiscreteDistribution(T: type) {
-    fn get_weight(ref Self, t: T) -> int;
-    // fn support(ref Self) -> T;
+    get_weight :: (ref Self, t: T) -> int;
+    // support :: (ref Self) -> T;
 }
 
 // iterator
@@ -79,16 +79,16 @@ DistributionIterator :: struct(T: type) {
 }
 
 impl(T: type) Iterator[T] for DistributionIterator[T] {
-    fn next(ref Self) -> Option[T] {
+    next :: (ref Self) -> Option[T] {
         return Some(dist.sample())
     }
 
-    fn dispose(ref Self) {
+    dispose :: (ref Self) {
         free(&self)
     }
 }
 
-fn for_extension_random(dist: IDistribution[$T], code: Code) #for {
+for_extension_random :: (dist: IDistribution[$T], code: Code) #for {
     while it_index := 0, true, it_index += 1 {
         it := dist.sample()
         @insert(code)
@@ -97,7 +97,7 @@ fn for_extension_random(dist: IDistribution[$T], code: Code) #for {
 
 // i
 impl(T: type) IDistribution[T] {
-    fn samples(ref Self) -> Iterator[T] {
+    samples :: (ref Self) -> Iterator[T] {
         it := alloc(DistributionIterator[T])
         <<it = DistributionIterator[T](self)
         return <<it
@@ -109,13 +109,13 @@ StandardContinuousUniform :: struct(T: type) {
     prng: &T
 }
 impl(T: type) IDistribution[double] for StandardContinuousUniform[T] if T : PseudoRandomGen {
-    fn sample(ref Self) -> double {
+    sample :: (ref Self) -> double {
         return prng.next_double()
     }
 }
 
 impl(T: type) StandardContinuousUniform[T] if T : PseudoRandomGen {
-    fn create(prng: &T) -> Self {
+    create :: (prng: &T) -> Self {
         return StandardContinuousUniform[T](prng)
     }
 }
@@ -128,13 +128,13 @@ NormalDistribution :: struct {
 }
 
 impl NormalDistribution {
-    fn create(mean: double, sigma: double) -> Self {
+    create :: (mean: double, sigma: double) -> Self {
         return NormalDistribution(mean, sigma, StandardContinuousUniform[LinearCongruentialGenerator](lcg))
     }
 }
 
 impl IDistribution[double] for NormalDistribution {
-    fn sample(ref Self) -> double {
+    sample :: (ref Self) -> double {
         a := scu.sample()
         b := scu.sample()
         return mean + sigma * (
@@ -149,12 +149,12 @@ StandardDiscreteUniform :: struct {
     max: int
 }
 impl IDiscreteDistribution[int] for StandardDiscreteUniform {
-    fn get_weight(ref Self, i: int) -> int {
+    get_weight :: (ref Self, i: int) -> int {
         return if i >= min and i <= max {1} else {0}
     }
 }
 impl IDistribution[int] for StandardDiscreteUniform {
-    fn sample(ref Self) -> int {
+    sample :: (ref Self) -> int {
         d := PseudoRandom.next_double()
         mi := cast(double)min
         ma := cast(double)max
@@ -168,7 +168,7 @@ SingletonDistribution :: struct(T: type) {
 }
 
 impl IDistribution[int] for SingletonDistribution[int] {
-    fn sample(ref Self) -> int {
+    sample :: (ref Self) -> int {
         return value
     }
 }
@@ -180,7 +180,7 @@ BernoulliDistribution :: struct {
 }
 
 impl IDistribution[int] for BernoulliDistribution {
-    fn sample(ref Self) -> int {
+    sample :: (ref Self) -> int {
         z := cast(double)zero
         o := cast(double)one
         d := PseudoRandom.next_double()
@@ -189,14 +189,14 @@ impl IDistribution[int] for BernoulliDistribution {
 }
 
 impl BernoulliDistribution {
-    fn create(zero: int, one: int) -> Self {
+    create :: (zero: int, one: int) -> Self {
         @assert(zero >= 0 and one >= 0 and (zero != 0 or one != 0))
         return BernoulliDistribution(zero, one)
     }
 }
 
 // histograms
-fn print_histogram(dist: IDistribution[$T], low: double, high: double){
+print_histogram :: (dist: IDistribution[$T], low: double, high: double){
     width : int : 160
     height: int : 30
     samples   : int : 1000000
@@ -278,7 +278,7 @@ fn print_histogram(dist: IDistribution[$T], low: double, high: double){
     it.dispose()
 }
 
-fn print_discrete_histogram(dist: IDistribution[$T]){
+print_discrete_histogram :: (dist: IDistribution[$T]){
     width : int : 40
     samples   : int : 100000
     it := dist.samples().take(samples)

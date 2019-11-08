@@ -3,29 +3,29 @@
 #load("std:math")
 
 trait Printable {
-    fn print(ref Self, str: ref String, format: string);
+    print :: (ref Self, str: ref String, format: string);
 }
 
 impl Printable for c_string {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         str += self
     }
 }
 
 impl Printable for string {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         str += self
     }
 }
 
 impl Printable for char {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         str += self
     }
 }
 
 impl Printable for float {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         buff : string = @alloca(char, 128)
         buff.length = c_sprintf(buff.data, "%g", double(self))
         str += buff
@@ -33,7 +33,7 @@ impl Printable for float {
 }
 
 impl Printable for double {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         buff : string = @alloca(char, 128)
         buff.length = c_sprintf(buff.data, "%g", self)
         str += buff
@@ -41,7 +41,7 @@ impl Printable for double {
 }
 
 impl Printable for bool {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         str += if streq(format, "b") {
             if self {"1"} else {"0"}
         } else if streq(format, "s") {
@@ -53,54 +53,54 @@ impl Printable for bool {
 }
 
 impl Printable for i8 {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for i16 {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for i32 {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for i64 {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for u8 {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for u16 {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for u32 {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for u64 {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
-fn printf_int_to_string(str: ref String, i: $T, format: string) {
+printf_int_to_string :: (str: ref String, i: $T, format: string) {
     base := if streq("b", format) then 2
     else if streq("x", format) then 16
     else 10
@@ -108,7 +108,7 @@ fn printf_int_to_string(str: ref String, i: $T, format: string) {
 }
 
 impl(T: type) Printable for Option[T] if T: Printable {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         match self {
             Some($v) -> str.appendf("Some({})", v)
             None -> str.append_string("None")
@@ -117,7 +117,7 @@ impl(T: type) Printable for Option[T] if T: Printable {
 }
 
 impl(V: type, E: type) Printable for Result[V, E] if V: Printable, E: Printable {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         match self {
             Ok($v)  -> str.appendf("Ok({})", v)
             Err($v) -> str.appendf("Err({})", v)
@@ -126,7 +126,7 @@ impl(V: type, E: type) Printable for Result[V, E] if V: Printable, E: Printable 
 }
 
 impl Printable for Complex {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         str.appendf("{} + {}i", (r, i))
     }
 }

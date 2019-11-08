@@ -2,11 +2,11 @@
 #load("std:array")
 
 trait Iterator(T: type) {
-    fn next(ref Self) -> Option[T];
+    next :: (ref Self) -> Option[T];
 }
 
 // impl(It: type, T: type) It if It : Iterator(T) {
-//     fn max(ref Self) -> T {
+//     max :: (ref Self) -> T {
 //         max: T
 
 //         while true {
@@ -22,7 +22,7 @@ trait Iterator(T: type) {
 //         return max
 //     }
 
-//     fn sum(ref Self) -> T {
+//     sum :: (ref Self) -> T {
 //         sum: T
 
 //         while true {
@@ -42,7 +42,7 @@ trait Iterator(T: type) {
 // }
 
 impl(It: type, T: type) It if It : Iterator[T] {
-    fn skip(ref Self, count: int) -> Self {
+    skip :: (ref Self, count: int) -> Self {
         for :count {
             self.next()
         }
@@ -50,15 +50,15 @@ impl(It: type, T: type) It if It : Iterator[T] {
         return self
     }
 
-    fn take(ref Self, count: int) -> TakeIterator[T] {
+    take :: (ref Self, count: int) -> TakeIterator[T] {
         return TakeIterator[T](self, count)
     }
 
-    fn map(ref Self, mapFunc: fn (T) -> $X) -> MapIterator[T, X] {
+    map :: (ref Self, mapFunc: fn (T) -> $X) -> MapIterator[T, X] {
         return MapIterator[T, X](self, mapFunc)
     }
 
-    fn foreach(ref Self, func: fn (T)) {
+    foreach :: (ref Self, func: fn (T)) {
         while true {
             match self.next() {
                 Some($v) -> func(v)
@@ -67,7 +67,7 @@ impl(It: type, T: type) It if It : Iterator[T] {
         }
     }
 
-    fn to_array(ref Self) -> Array[T] {
+    to_array :: (ref Self) -> Array[T] {
         a := Array[T].create()
         while match self.next() {
             Some($v) -> {
@@ -87,7 +87,7 @@ TakeIterator :: struct(T: type) {
 }
 
 impl(T: type) Iterator[T] for TakeIterator[T] {
-    fn next(ref Self) -> Option[T] {
+    next :: (ref Self) -> Option[T] {
         if count > 0 {
             count -= 1
             return it.next()
@@ -104,7 +104,7 @@ MapIterator :: struct(T: type, X: type) {
 }
 
 impl(T: type, X: type) Iterator[X] for MapIterator[T, X] {
-    fn next(ref Self) -> Option[X] {
+    next :: (ref Self) -> Option[X] {
         return match it.next() {
             Some($v) -> Some(mapFunc(v))
             None -> None
@@ -119,7 +119,7 @@ RangeIterator :: struct {
 }
 
 impl Iterator[int] for RangeIterator {
-    fn next(ref Self) -> Option[int] {
+    next :: (ref Self) -> Option[int] {
         if from > to {
             return None
         }
@@ -130,6 +130,6 @@ impl Iterator[int] for RangeIterator {
     }
 }
 
-fn range(start: int, end: int) -> RangeIterator {
+range :: (start: int, end: int) -> RangeIterator {
     return RangeIterator(start, end)
 }

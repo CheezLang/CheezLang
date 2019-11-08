@@ -2,26 +2,26 @@ FILE :: struct {
     _Placeholder: &any
 }
 
-fn __acrt_iob_func(_: u32) -> &FILE;
+__acrt_iob_func :: (_: u32) -> &FILE;
 
 stdin : &FILE = __acrt_iob_func(1)
 stdout : &FILE = __acrt_iob_func(1)
 stderr : &FILE = __acrt_iob_func(1)
 
-fn fflush(file: &FILE);
+fflush :: (file: &FILE);
 
 ///
 
 errno_t :: i32
 size_t :: i64
 
-fn clearerr_s(_Stream: &FILE) -> errno_t;
-fn fopen_s(_Stream: &&FILE, _FileName: c_string, _Mode: c_string) -> errno_t;
-fn fopen(_Stream: &&FILE, _FileName: c_string, _Mode: c_string) -> errno_t;
-fn fread_s(_Buffer: &any, _BufferSize: size_t, _ElementSize: size_t, _ElementCount: size_t, _Stream: &FILE) -> size_t;
-fn fseek(_Stream: &FILE, _Offset: i64, _Rel: i32);
-fn ftell(_Stream: &FILE) -> i64;
-fn fclose(_Stream: &FILE) -> i32;
+clearerr_s :: (_Stream: &FILE) -> errno_t;
+fopen_s :: (_Stream: &&FILE, _FileName: c_string, _Mode: c_string) -> errno_t;
+fopen :: (_Stream: &&FILE, _FileName: c_string, _Mode: c_string) -> errno_t;
+fread_s :: (_Buffer: &any, _BufferSize: size_t, _ElementSize: size_t, _ElementCount: size_t, _Stream: &FILE) -> size_t;
+fseek :: (_Stream: &FILE, _Offset: i64, _Rel: i32);
+ftell :: (_Stream: &FILE) -> i64;
+fclose :: (_Stream: &FILE) -> i32;
 
 
 /*

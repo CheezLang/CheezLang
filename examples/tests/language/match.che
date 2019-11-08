@@ -8,14 +8,14 @@ even 2
 #load("std:io/io")
 #load("std:mem/allocator")
 
-fn Main() {
+Main :: () {
     test1()
 
     println("")
     test2()
 }
 
-fn test2() {
+test2 :: () {
     x := 1
     match x {
         0 -> println("zero")
@@ -41,7 +41,7 @@ fn test2() {
     }
 }
 
-fn test1() {
+test1 :: () {
     str := "hello world, this is a sentence in lower case letters"
 
     newStr := alloc_n(char, cast str.length)

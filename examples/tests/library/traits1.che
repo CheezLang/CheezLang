@@ -7,33 +7,33 @@ true")
 // #load("std:string")
 
 trait Printable {
-    fn print(ref Self);
+    print :: (ref Self);
 }
 
 impl Printable for int {
-    fn print(ref Self) {
+    print :: (ref Self) {
         c_printf("%lld", self)
     }
 }
 
 impl Printable for bool {
-    fn print(ref Self) {
+    print :: (ref Self) {
         c_printf("%s", if self {"true"c} else {"false"c})
     }
 }
 
 impl Printable for string {
-    fn print(ref Self) {
+    print :: (ref Self) {
         c_printf("%.*s", self.length, self.data)
     }
 }
 
-fn println(p: Printable) {
+println :: (p: Printable) {
     p.print()
     c_puts("")
 }
 
-fn Main() {
+Main :: () {
     five := 5
     hello := "hello"
     tru := true

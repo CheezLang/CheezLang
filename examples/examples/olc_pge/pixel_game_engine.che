@@ -11,9 +11,9 @@
 #load("opengl:opengl")
 
 trait Game {
-    fn on_create(ref Self, pge: &PixelGameEngine) -> bool;
-    fn on_destroy(ref Self) -> bool;
-    fn on_update(ref Self, dt: float) -> bool;
+    on_create :: (ref Self, pge: &PixelGameEngine) -> bool;
+    on_destroy :: (ref Self) -> bool;
+    on_update :: (ref Self, dt: float) -> bool;
 }
 
 PixelGameEngine :: struct {
@@ -82,12 +82,12 @@ PixelGameEngine :: struct {
     fps_string          : String
 }
 
-fn compare_ints(a: int, b: int) -> bool {
+compare_ints :: (a: int, b: int) -> bool {
     return b == a
 }
 
 impl Drop for PixelGameEngine {
-    fn drop(ref Self) {
+    drop :: (ref Self) {
         default_draw_target.dispose()
         free(default_draw_target)
         default_draw_target = null
@@ -95,7 +95,7 @@ impl Drop for PixelGameEngine {
 }
 
 impl PixelGameEngine {
-    fn create(game: Game, screen_w: int, screen_h: int, pixel_w: int = 1, pixel_h: int = 1) -> &PixelGameEngine {
+    create :: (game: Game, screen_w: int, screen_h: int, pixel_w: int = 1, pixel_h: int = 1) -> &PixelGameEngine {
         if screen_w <= 0 or screen_h <= 0 or pixel_w <= 0 or pixel_h <= 0 {
             return null
         }
@@ -122,7 +122,7 @@ impl PixelGameEngine {
         return pge
     }
 
-    fn start(ref Self) {
+    start :: (ref Self) {
         wnd := self.olc_window_create()
         if wnd == null {
             return
@@ -132,7 +132,7 @@ impl PixelGameEngine {
         engine_thread()
     }
 
-    fn engine_thread(ref Self) {
+    engine_thread :: (ref Self) {
         // Start OpenGL, the context is owned by the game thread
         olc_OpenGLCreate()
 
@@ -287,7 +287,7 @@ impl PixelGameEngine {
         PostMessageA(olc_hWnd, WM_DESTROY, 0, 0)
     }
 
-    fn olc_OpenGLCreate(ref Self) -> bool {
+    olc_OpenGLCreate :: (ref Self) -> bool {
         glDeviceContext = GetDC(olc_hWnd)
 
         pfd := PIXELFORMATDESCRIPTOR(

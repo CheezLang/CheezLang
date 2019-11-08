@@ -5,7 +5,7 @@
 #load("std:io/io")
 #load("std:string")
 
-fn Main() {
+Main :: () {
     res := String.empty()
 
     carry := 0

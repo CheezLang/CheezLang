@@ -7,11 +7,11 @@ InterpretResult :: enum {
     RuntimeError
 }
 
-fn run() -> InterpretResult {
+run :: () -> InterpretResult {
     return InterpretResult.RuntimeError
 }
 
-fn interpret(source: string) -> InterpretResult {
+interpret :: (source: string) -> InterpretResult {
     function := compile(source)
     if function == null {
         return InterpretResult.CompileError

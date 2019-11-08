@@ -50,6 +50,7 @@ namespace Cheez.Visitors
             return result.ToString();
         }
 
+
         public override string VisitFunctionDecl(AstFunctionDecl function, int indentLevel = 0)
         {
             if (function.IsGeneric)
@@ -618,6 +619,65 @@ namespace Cheez.Visitors
 
         #region Expressions
 
+        public override string VisitFuncExpr(AstFuncExpr function, int indentLevel = 0)
+        {
+            if (function.IsPolymorphic)
+            {
+                var sb = new StringBuilder();
+
+                var body = function.Body?.Accept(this) ?? ";";
+
+                var pars = string.Join(", ", function.Parameters.Select(p => p.Name != null ? $"{p.Name.Accept(this)}: {p.TypeExpr}" : p.Type.ToString()));
+                var head = $"{function.Name}({pars})";
+
+                if (function.ReturnTypeExpr != null)
+                    head += $" -> {function.ReturnTypeExpr.TypeExpr.Accept(this)}";
+
+                sb.Append($"{head} {body}".Indent(indentLevel));
+
+                // polies
+                if (function.PolymorphicInstances?.Count > 0)
+                {
+                    sb.AppendLine($"\n// Polymorphic instances for {head}");
+                    foreach (var pi in function.PolymorphicInstances)
+                    {
+                        if (pi.PolymorphicTypes != null)
+                        {
+                            var args = string.Join(", ", pi.PolymorphicTypes.Select(kv => $"{kv.Key} = {kv.Value}"));
+                            sb.AppendLine($"/* {args} */".Indent(4));
+                        }
+                        if (pi.ConstParameters != null)
+                        {
+                            var args = string.Join(", ", pi.ConstParameters.Select(kv => $"{kv.Key} = {kv.Value.value}"));
+                            sb.AppendLine($"/* {args} */".Indent(4));
+                        }
+                        sb.AppendLine(pi.Accept(this).Indent(4));
+                    }
+                }
+
+                return sb.ToString();
+            }
+            else
+            {
+                var sb = new StringBuilder();
+
+                var body = function.Body?.Accept(this) ?? "";
+
+                var pars = string.Join(", ", function.Parameters.Select(p => p.Accept(this)));
+                var head = $"{function.Name}({pars})";
+
+                if (function.ReturnTypeExpr != null)
+                    head += $" -> {function.ReturnTypeExpr.Accept(this)}";
+
+                // @todo
+                if (function.Directives.Count > 0)
+                    head += " " + string.Join(" ", function.Directives.Select(d => VisitDirective(d)));
+
+                sb.Append($"{head} {body}".Indent(indentLevel));
+                return sb.ToString();
+            }
+        }
+
         public override string VisitRangeExpr(AstRangeExpr expr, int data = 0)
         {
             return $"{expr.From.Accept(this)}..{expr.To.Accept(this)}";
@@ -681,7 +741,7 @@ namespace Cheez.Visitors
 
         public override string VisitUfcFuncExpr(AstUfcFuncExpr expr, int data = 0)
         {
-            return $"{expr.SelfArg.Type}::{expr.FunctionDecl.Name.Accept(this)}";
+            return $"{expr.SelfArg.Type}::{expr.FunctionDecl.Name}";
         }
 
         public override string VisitTempVarExpr(AstTempVarExpr te, int data = 0)
@@ -748,7 +808,7 @@ namespace Cheez.Visitors
 
         public override string VisitSymbolExpr(AstSymbolExpr te, int data = 0)
         {
-            return te.Symbol.Name?.Accept(this) ?? te.Symbol.ToString();
+            return te.Symbol.Name ?? te.Symbol.ToString();
         }
 
         public override string VisitIdExpr(AstIdExpr ident, int indentLevel = 0)

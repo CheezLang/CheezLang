@@ -124,7 +124,7 @@ namespace Cheez.Ast.Statements
     {
         public AstStatement Deferred { get; set; }
 
-        public AstIdExpr Name => throw new System.NotImplementedException();
+        public string Name => throw new System.NotImplementedException();
 
         public AstDeferStmt(AstStatement deferred, List<AstDirective> Directives = null, ILocation Location = null)
             : base(Directives, Location)
@@ -150,7 +150,7 @@ namespace Cheez.Ast.Statements
 
         public AstIdExpr Label { get; set; }
 
-        public AstIdExpr Name => Label;
+        public string Name => Label.Name;
 
         public AstWhileStmt(AstExpression cond, AstBlockExpr body, AstVariableDecl pre, AstStatement post, AstIdExpr label, ILocation Location = null)
             : base(Location: Location)

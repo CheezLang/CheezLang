@@ -22,7 +22,7 @@ namespace Cheez
     {
         public class TypeInferenceContext
         {
-            public List<AstFunctionDecl> newPolyFunctions;
+            public List<AstFuncExpr> newPolyFunctions;
             public List<AstDecl> newPolyDeclarations;
             public HashSet<AstDecl> dependencies;
             public bool resolve_poly_expr_to_concrete_type;
@@ -95,7 +95,7 @@ namespace Cheez
         {
             var context = new TypeInferenceContext
             {
-                newPolyFunctions = new List<AstFunctionDecl>(),
+                newPolyFunctions = new List<AstFuncExpr>(),
                 //newPolyDeclarations = new List<AstDecl>(),
                 resolve_poly_expr_to_concrete_type = resolve_poly_expr_to_concrete_type,
                 dependencies = dependencies,
@@ -108,8 +108,8 @@ namespace Cheez
                 ResolveTypeDeclarations(context.newPolyDeclarations);
             }
 
-            if (context.newPolyFunctions.Count > 0)
-                AnalyseFunctions(context.newPolyFunctions);
+            //if (context.newPolyFunctions.Count > 0)
+            //    AnalyseFunctions(context.newPolyFunctions);
 
             return newExpr;
         }
@@ -144,6 +144,9 @@ namespace Cheez
 
             switch (expr)
             {
+                case AstFuncExpr f:
+                    return InferTypeFuncExpr(f);
+
                 case AstEnumTypeExpr e:
                     return InferTypeEnumTypeExpr(e);
 
@@ -273,6 +276,143 @@ namespace Cheez
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private AstExpression InferTypeFuncExpr(AstFuncExpr func)
+        {
+            if (func.IsPolyInstance)
+            {
+                // do nothing
+            }
+            else
+            {
+                // get name if available
+                if (func.Parent is AstConstantDeclaration c)
+                    func.Name = c.Name.Name;
+
+                // setup scopes
+                func.ConstScope = new Scope("fn const", func.Scope);
+                func.SubScope = new Scope("fn", func.ConstScope);
+            }
+
+            // check for macro stuff
+            if (func.HasDirective("macro"))
+            {
+                func.IsMacroFunction = true;
+            }
+            if (func.HasDirective("for"))
+            {
+                func.IsMacroFunction = true;
+                func.IsForExtension = true;
+
+                if (!func.IsPolyInstance)
+                    func.Scope.AddForExtension(func);
+            }
+
+            // handle poly stuff
+            if (func.ReturnTypeExpr?.TypeExpr?.IsPolymorphic ?? false)
+            {
+                ReportError(func.ReturnTypeExpr, "The return type of a function can't be polymorphic");
+            }
+
+            if (!func.IsPolyInstance)
+            {
+                var polyNames = new List<string>();
+                foreach (var p in func.Parameters)
+                {
+                    CollectPolyTypeNames(p.TypeExpr, polyNames);
+                    if (p.Name?.IsPolymorphic ?? false)
+                        polyNames.Add(p.Name.Name);
+                }
+
+                foreach (var pn in polyNames)
+                {
+                    func.ConstScope.DefineTypeSymbol(pn, new PolyType(pn));
+                }
+            }
+
+            // return types
+            if (func.ReturnTypeExpr != null)
+            {
+                func.ReturnTypeExpr.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
+                func.ReturnTypeExpr.Scope = func.SubScope;
+                func.ReturnTypeExpr.TypeExpr.Scope = func.SubScope;
+                func.ReturnTypeExpr.TypeExpr = ResolveTypeNow(func.ReturnTypeExpr.TypeExpr, out var t);
+                func.ReturnTypeExpr.Type = t;
+
+                if (func.ReturnTypeExpr.Type.IsPolyType)
+                    func.IsGeneric = true;
+            }
+
+            // parameter types
+            foreach (var p in func.Parameters)
+            {
+                p.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
+                p.TypeExpr.Scope = func.SubScope;
+                p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
+                p.Type = t;
+
+                if (p.Type.IsPolyType || (p.Name?.IsPolymorphic ?? false))
+                    func.IsGeneric = true;
+
+                if (!func.IsMacroFunction)
+                {
+                    if (p.Type.IsComptimeOnly && !(p.Name?.IsPolymorphic ?? false))
+                    {
+                        ReportError(p, $"Parameter '{p}' must be constant because the type '{p.Type}' is only available at compiletime");
+                    }
+                }
+            }
+
+            if (func.IsGeneric)
+            {
+                func.Type = new GenericFunctionType(func);
+            }
+            else
+            {
+                func.Type = new FunctionType(func);
+
+                if (func.TryGetDirective("varargs", out var varargs))
+                {
+                    if (varargs.Arguments.Count != 0)
+                    {
+                        ReportError(varargs, $"#varargs takes no arguments!");
+                    }
+                    func.FunctionType.VarArgs = true;
+                }
+
+                // @todo: is this the right place to do this?
+                if (func.Trait == null)
+                    GlobalScope.Functions.Add(func);
+            }
+
+            if (func.TryGetDirective("operator", out var op))
+            {
+                if (op.Arguments.Count != 1)
+                {
+                    ReportError(op, $"#operator requires exactly one argument!");
+                }
+                else
+                {
+                    var arg = op.Arguments[0];
+                    arg.SetFlag(ExprFlags.ValueRequired, true);
+                    arg = op.Arguments[0] = InferType(arg, null);
+                    if (arg.Value is string v)
+                    {
+                        var targetScope = func.Scope;
+                        if (func.ImplBlock != null) targetScope = func.ImplBlock.Scope;
+
+                        CheckForValidOperator(v, func, op, targetScope);
+                    }
+                    else
+                    {
+                        ReportError(arg, $"Argument to #op must be a constant string!");
+                    }
+                }
+            }
+
+            func.Value = func;
+            return func;
         }
 
         private void ComputeTypeMembers(CheezType type)
@@ -3015,7 +3155,7 @@ namespace Cheez
                 case TraitType t:
                     {
                         var name = expr.Right.Name;
-                        var func = t.Declaration.Functions.FirstOrDefault(f => f.Name.Name == name);
+                        var func = t.Declaration.Functions.FirstOrDefault(f => f.Name == name);
 
                         if (func == null)
                         {
@@ -3095,7 +3235,7 @@ namespace Cheez
                             }
                             else if (funcs.Count > 1)
                             {
-                                var details = funcs.Select(f => ("Possible candidate:", f.Name.Location));
+                                var details = funcs.Select(f => ("Possible candidate:", f.ParameterLocation));
                                 ReportError(expr.Right, $"Ambigious call to function '{expr.Right.Name}'", details);
                                 break;
                             }
@@ -3219,7 +3359,7 @@ namespace Cheez
 
             if (errHandler.HasErrors)
             {
-                ReportError(call.Location, "Failed to expand macro", errHandler.Errors, ("Macro defined here:", macro.Name.Location));
+                ReportError(call.Location, "Failed to expand macro", errHandler.Errors, ("Macro defined here:", macro.ParameterLocation));
             }
 
             return newExpr;
@@ -3244,7 +3384,7 @@ namespace Cheez
                         var newExpr = InferRegularFunctionCall(f, expr, expected, context);
 
                         // check if it is a macro call
-                        if (!newExpr.Type.IsErrorType && newExpr is AstCallExpr call && call.Declaration != null && call.Declaration.GetFlag(StmtFlags.IsMacroFunction))
+                        if (!newExpr.Type.IsErrorType && newExpr is AstCallExpr call && call.Declaration != null && call.Declaration.IsMacroFunction)
                         {
                             return ExpandMacro(call, context);
                         }
@@ -3258,7 +3398,7 @@ namespace Cheez
 
                         // check if it is a macro call
                         if (!newExpr.Type.IsErrorType && newExpr is AstCallExpr call
-                            && call.Declaration.Template.GetFlag(StmtFlags.IsMacroFunction))
+                            && call.Declaration.Template.IsMacroFunction)
                         {
                             return ExpandMacro(call, context);
                         }
@@ -3788,7 +3928,7 @@ namespace Cheez
                 if (func.Declaration.SelfType == SelfParamType.None)
                     ReportError(expr, $"Can't call trait function with non ref Self param");
 
-                if (func.Declaration.GetFlag(StmtFlags.ExcludeFromVtable))
+                if (func.Declaration.ExcludeFromVTable)
                     ReportError(expr, $"Can't call trait function because it is excluded from the vtable");
             }
 
@@ -4180,9 +4320,10 @@ namespace Cheez
                 expr.Type = CheezType.Type;
                 expr.Value = typedef.Type;
             }
-            else if (sym is AstFunctionDecl func)
+            else if (sym is AstFuncExpr func)
             {
                 expr.Type = func.Type;
+                expr.Value = func;
                 if (func.SelfType != SelfParamType.None)
                 {
                     var ufc = new AstUfcFuncExpr(new AstIdExpr("self", false, expr), func);
@@ -4406,7 +4547,7 @@ namespace Cheez
             }
             else if (result.Count > 1)
             {
-                var details = result.Select(f => ("Possible candidate:", f.Name.Location));
+                var details = result.Select(f => ("Possible candidate:", f.ParameterLocation));
                 ReportError(expr.Right, $"Ambigious call to impl function '{functionName}'", details);
                 return expr;
             }
@@ -4417,12 +4558,12 @@ namespace Cheez
             return InferTypeHelper(ufc, null, context);
         }
 
-        private List<AstFunctionDecl> GetImplFunctions(CheezType type, string functionName, CheezType expected)
+        private List<AstFuncExpr> GetImplFunctions(CheezType type, string functionName, CheezType expected)
         {
-            var resultNormal = new List<AstFunctionDecl>();
-            var resultNormal2 = new List<AstFunctionDecl>();
-            var resultTrait = new List<AstFunctionDecl>();
-            var resultTrait2 = new List<AstFunctionDecl>();
+            var resultNormal = new List<AstFuncExpr>();
+            var resultNormal2 = new List<AstFuncExpr>();
+            var resultTrait = new List<AstFuncExpr>();
+            var resultTrait2 = new List<AstFuncExpr>();
 
             // only search for non reference types
             if (type is ReferenceType r)
@@ -4432,7 +4573,7 @@ namespace Cheez
             {
                 if (impl.Trait == null)
                 {
-                    var func = impl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
+                    var func = impl.Functions.FirstOrDefault(f => f.Name == functionName);
                     if (func != null)
                         if (Utilities.Implies(expected != null, func.ReturnType == expected))
                             resultNormal.Add(func);
@@ -4441,7 +4582,7 @@ namespace Cheez
                 }
                 else
                 {
-                    var func = impl.Functions.FirstOrDefault(f => f.Name.Name == functionName);
+                    var func = impl.Functions.FirstOrDefault(f => f.Name == functionName);
                     if (func != null)
                         if (Utilities.Implies(expected != null, func.ReturnType == expected))
                             resultTrait.Add(func);

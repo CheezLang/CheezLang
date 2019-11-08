@@ -4,9 +4,9 @@
 #test_expect_output("Test printf 4")
 
 #load("std:preload")
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
-fn Main() {
+Main :: () {
     c_printf("Test printf 1`nTest printf 2`n")
     c_printf("Test printf 3`n")
     c_printf("Test printf 4")

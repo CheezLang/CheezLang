@@ -9,15 +9,15 @@
 
 #load("std:preload")
 
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
-fn swap(pa: &int, pb: &int) {
+swap :: (pa: &int, pb: &int) {
     a := <<pa
     b := <<pb
     (<<pa, <<pb) = (b, a)
 }
 
-fn Main() {
+Main :: () {
     {
         a := 123
         pa := &a

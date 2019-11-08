@@ -4,7 +4,7 @@
 
 #load("std:io/io")
 
-fn count_steps(n: int) -> int {
+count_steps :: (n: int) -> int {
     count := 1
     while n != 1, count += 1 {
         if n % 2 == 0 {
@@ -17,7 +17,7 @@ fn count_steps(n: int) -> int {
     return count
 }
 
-fn Main() {
+Main :: () {
     max_steps := 0
     max_n := 0
     for n : 1..1000000 {

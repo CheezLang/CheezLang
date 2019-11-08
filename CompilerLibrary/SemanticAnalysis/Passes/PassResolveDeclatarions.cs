@@ -17,6 +17,12 @@ namespace Cheez
     {
         private void ResolveDeclarations(Scope scope, List<AstStatement> statements)
         {
+            // hack
+            // sort all declarations into different lists
+            InsertDeclarationsIntoScope(scope, statements);
+            foreach (var @trait in scope.TraitDeclarations)
+                Pass1TraitDeclaration(@trait);
+
             // handle constant declarations
             {
                 var constants = statements.Where(c => c is AstConstantDeclaration).Select(c => c as AstConstantDeclaration).ToList();
@@ -34,9 +40,6 @@ namespace Cheez
 
                 ResolveMissingTypesOfConstantDeclarations(scope, constants);
             }
-
-            // sort all declarations into different lists
-            InsertDeclarationsIntoScope(scope, statements);
 
             // go through all type declarations (structs, traits, enums, typedefs) and define them in the scope
             // go through all constant declarations and define them in the scope
@@ -401,15 +404,22 @@ namespace Cheez
 
         
 
-        private void ResolveFunctionBodies(Scope scope)
+        private void ResolveFunctionBodies(Scope scope, int fo = 0)
         {
-            foreach (var func in scope.Functions)
+            // this is a regular for loop because AnalyseFunction might create new functions
+            // by instantiating a polymorphic function, which then in turn adds itsef to scope.Functions.
+            // That shouldn't be a problem though since these functions get added at the end of the array,
+            // so we should hit all functions exactly once.
+            for (int i = fo; i < scope.Functions.Count; i++)
             {
+                var func = scope.Functions[i];
                 AnalyseFunction(func);
             }
 
-            foreach (var impl in scope.Impls)
-                scope.unresolvedImpls.Enqueue(impl);
+            int functionCount = scope.Functions.Count;
+
+            for (int i = 0; i < scope.Impls.Count; i++)
+                scope.unresolvedImpls.Enqueue(scope.Impls[i]);
 
             while (scope.unresolvedImpls.Count > 0)
             {
@@ -432,6 +442,9 @@ namespace Cheez
                     AnalyseFunction(f);
                 }
             }
+
+            if (scope.Functions.Count > functionCount)
+                ResolveFunctionBodies(scope, functionCount);
         }
 
         private void CheckInitializersOfNonConstantVars(Scope scope)
@@ -679,7 +692,6 @@ namespace Cheez
             whiteSet.UnionWith(scope.TraitDeclarations);
             whiteSet.UnionWith(scope.Typedefs);
             whiteSet.UnionWith(scope.Variables);
-            whiteSet.UnionWith(scope.Functions);
 
             while (whiteSet.Count > 0)
             {
@@ -709,19 +721,6 @@ namespace Cheez
                 CollectTypeDependencies(@var, @var.Initializer);
                 //PrintDependencies(@var);
             }
-
-            foreach (var func in scope.Functions)
-            {
-                if (func.ReturnTypeExpr != null)
-                    CollectTypeDependencies(func, func.ReturnTypeExpr.TypeExpr);
-                foreach (var p in func.Parameters)
-                {
-                    CollectTypeDependencies(func, p.TypeExpr);
-                    if (p.DefaultValue != null)
-                        CollectTypeDependencies(func, p.DefaultValue);
-                }
-                //PrintDependencies(func);
-            }
         }
 
         private void PrintDependencies(AstDecl decl)
@@ -735,12 +734,8 @@ namespace Cheez
 
         private void DefineTypeDeclarations(Scope scope)
         {
-            foreach (var @trait in scope.TraitDeclarations)
-                Pass1TraitDeclaration(@trait);
             foreach (var @typedef in scope.Typedefs)
                 Pass1Typedef(@typedef);
-            foreach (var v in scope.Functions)
-                Pass1FunctionDeclaration(v);
             foreach (var v in scope.Variables)
                 Pass1VariableDeclaration(v);
             foreach (var v in scope.Impls)
@@ -777,12 +772,6 @@ namespace Cheez
                     case AstVariableDecl @var:
                         {
                             scope.Variables.Add(@var);
-                            break;
-                        }
-
-                    case AstFunctionDecl func:
-                        {
-                            scope.Functions.Add(func);
                             break;
                         }
 

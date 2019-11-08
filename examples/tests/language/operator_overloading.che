@@ -21,23 +21,23 @@
 #load("std:preload")
 #load("std:math")
 
-fn c_printf(format: c_string) #varargs #linkname("printf");
+c_printf :: (format: c_string) #varargs #linkname("printf");
 
 Num :: struct #copy {
     x: int
 }
 
-fn num_add(a: Num, b: Num) -> Num #operator("+") {
+num_add :: (a: Num, b: Num) -> Num #operator("+") {
     return Num(a.x + b.x)
 }
 
-fn num_inc(a: &Num, b: Num) #operator("+=") {
+num_inc :: (a: &Num, b: Num) #operator("+=") {
     a.x += b.x
 }
 
 Vec2 :: Vector2[double]
 
-fn Main() {
+Main :: () {
     {
         a := Num(1)
         b := Num(2)

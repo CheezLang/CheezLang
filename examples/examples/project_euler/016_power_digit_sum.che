@@ -4,7 +4,7 @@
 
 #load("std:io/io")
 
-fn Main() {
+Main :: () {
     digits := @dup(0, 1000)
     digits[0] = 1
     leftmost_digit := 0

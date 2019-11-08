@@ -43,5 +43,5 @@ if const @is_os("linux") {
 #load("std:time")
 #load("std:util")
 
-fn Main() {
+Main :: () {
 }

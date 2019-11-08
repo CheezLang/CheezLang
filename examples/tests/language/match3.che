@@ -9,12 +9,12 @@ get_ref
 
 #load("std:preload")
 
-fn get_ref(a: ref Option[int]) -> ref Option[int] {
+get_ref :: (a: ref Option[int]) -> ref Option[int] {
     c_puts("get_ref")
     return a
 }
 
-fn inc1(a: ref Option[int]) {
+inc1 :: (a: ref Option[int]) {
     match get_ref(a) {
         Some(ref $v) -> {
             v += 1
@@ -23,7 +23,7 @@ fn inc1(a: ref Option[int]) {
 
 }
 
-fn inc2(a: ref Option[int]) {
+inc2 :: (a: ref Option[int]) {
     match get_ref(a) {
         Some($v) -> {
             v += 2
@@ -31,7 +31,7 @@ fn inc2(a: ref Option[int]) {
     }
 }
 
-fn inc3(a: Option[int]) {
+inc3 :: (a: Option[int]) {
     match a {
         Some(ref $v) -> {
             v += 4
@@ -39,7 +39,7 @@ fn inc3(a: Option[int]) {
     }
 }
 
-fn inc4(a: Option[int]) {
+inc4 :: (a: Option[int]) {
     match Option[int].Some(1) {
         Some(ref $v) -> {
             v += 8
@@ -47,7 +47,7 @@ fn inc4(a: Option[int]) {
     }
 }
 
-fn inc5(a: Option[int]) {
+inc5 :: (a: Option[int]) {
     match Option[int].Some(1) {
         Some($v) -> {
             v += 16
@@ -55,7 +55,7 @@ fn inc5(a: Option[int]) {
     }
 }
 
-fn print_a(a: ref Option[int]) {
+print_a :: (a: ref Option[int]) {
     match a {
         Some($a) -> {
             c_printf("%lld`n", a)
@@ -66,7 +66,7 @@ fn print_a(a: ref Option[int]) {
     }
 }
 
-fn Main() {
+Main :: () {
     a := Some(1)
 
     inc1(a)
