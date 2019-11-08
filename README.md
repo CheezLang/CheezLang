@@ -130,7 +130,7 @@ Main :: () {
     ints.add(2)
     ints.add(1)
 
-    while i := 0u64, i < ints.length, i += 1 {
+    for i : 0..ints.length {
         v := ints[i]
         printfln("ints[{}] = {}", (i, v))
     }
@@ -140,8 +140,8 @@ Main :: () {
 
 IntArray :: struct {
     data    : &int
-    length  : uint
-    capacity: uint
+    length  : int
+    capacity: int
 }
 
 impl IntArray {
@@ -160,14 +160,14 @@ impl IntArray {
     add :: (ref Self, val: int) {
         if capacity <= length {
             capacity = capacity * 2
-            data = realloc_raw(data, capacity)
+            data = realloc_raw(data, u64(capacity))
         }
 
         data[length] = val
         length += 1
     }
 
-    get :: (ref Self, index: uint) -> int #operator("[]") {
+    get :: (ref Self, index: int) -> int #operator("[]") {
         return data[index]
     }
 }
