@@ -20,7 +20,7 @@ Here's what a Hello World program looks like:
 ```rust
 #load("std:io/io")
 
-fn Main() {
+Main :: () {
     println("Hello World.")
 }
 ```
@@ -29,16 +29,16 @@ A fibonacci calculator, starting at index 0:
 ```rust
 #load("std:io/io")
 
-fn fib(x: int) -> int {
+fib :: (x: int) -> int {
     if x <= 1 {
         return 1
     }
     return fib(x - 1) + fib(x - 2)
 }
 
-fn Main() {
-    let x = fib(5)
-    printfln("fib(5) = {}", [x])
+Main :: () {
+    x := fib(5)
+    printfln("fib(5) = {}", x)
 }
 ```
 
@@ -47,7 +47,7 @@ Greatest common divisor:
 #load("std:io/io")
 
 // iterative implementation
-fn gcd_it(a: int, b: int) -> int {
+gcd_it :: (a: int, b: int) -> int {
     if a == 0 {
         return b
     }
@@ -64,7 +64,7 @@ fn gcd_it(a: int, b: int) -> int {
 }
 
 // recursive implementation
-fn gcd_rec(a: int, b: int) -> int {
+gcd_rec :: (a: int, b: int) -> int {
     if b == 0 {
         return a
     }
@@ -72,9 +72,9 @@ fn gcd_rec(a: int, b: int) -> int {
     return gcd_rec(b, a % b)
 }
 
-fn Main() {
-    printfln("gcd_it(9, 6) = {}", [gcd_it(9, 6)])
-    printfln("gcd_rec(9, 6) = {}", [gcd_rec(9, 6)])
+Main :: () {
+    printfln("gcd_it(9, 6) = {}", gcd_it(9, 6))
+    printfln("gcd_rec(9, 6) = {}", gcd_rec(9, 6))
 }
 ```
 
@@ -82,39 +82,39 @@ Vectors and trait implementation:
 ```rust
 #load("std:io/io")
 
-struct Vec3 {
-    pub x: double
-    pub y: double
-    pub z: double
+Vec3 :: struct #copy {
+    x : double
+    y : double
+    z : double
 }
 
 impl Vec3 {
-    fn add(Self, other: Vec3) -> Vec3 #operator("+") {
-        return new Vec3 {
+    add :: (Self, other: Vec3) -> Vec3 #operator("+") {
+        return Vec3(
             x = self.x + other.x
             y = self.y + other.y
             z = self.z + other.z
-        }
+        )
     }
 }
 
 impl Printable for Vec3 {
-    fn print(ref Self, str: ref String, format: string) {
+    print :: (ref Self, str: ref String, format: string) {
         str.appendf("({}, {}, {})", (self.x, self.y, self.z))
     }
 }
 
-fn Main() {
-    let a = new Vec3 { 1, 2, 3 }
-    let b = new Vec3 { x = 4, y = 5, z = 6 }
+Main :: () {
+    a := Vec3(1, 2, 3)
+    b := Vec3(x = 4, y = 5, z = 6)
 
-    let c = a + b
+    c := a + b
 
     printfln("
   {}
 + {}
   ------------------------------
-= {}", [a, b, c])
+= {}", (a, b, c))
 }
 ```
 
@@ -123,41 +123,41 @@ Generic dynamic array:
 #load("std:mem/std_heap_allocator")
 #load("std:io/io")
 
-fn Main() {
-    let ints = IntArray::create()
+Main :: () {
+    ints := IntArray.create()
 
     ints.add(3)
     ints.add(2)
     ints.add(1)
 
-    while let i = 0u64, i < ints.length, i += 1 {
-        let v = ints[i]
-        printfln("ints[{}] = {}", [i, v])
+    while i := 0u64, i < ints.length, i += 1 {
+        v := ints[i]
+        printfln("ints[{}] = {}", (i, v))
     }
 
     ints.dispose()
 }
 
-struct IntArray {
-    data: &int
-    pub const length: uint
+IntArray :: struct {
+    data    : &int
+    length  : uint
     capacity: uint
 }
 
 impl IntArray {
-    fn create() -> Self {
-        return new {
-            length = 0
+    create :: () -> Self {
+        return IntArray(
+            length   = 0
             capacity = 10
-            data = alloc_raw(int, 10)
-        }
+            data     = alloc_raw(int, 10)
+        )
     }
 
-    fn dispose(ref Self) {
+    dispose :: (ref Self) {
         free(data)
     }
 
-    fn add(ref Self, val: int) {
+    add :: (ref Self, val: int) {
         if capacity <= length {
             capacity = capacity * 2
             data = realloc_raw(data, capacity)
@@ -167,7 +167,7 @@ impl IntArray {
         length += 1
     }
 
-    fn get(ref Self, index: uint) -> int #operator("[]") {
+    get :: (ref Self, index: uint) -> int #operator("[]") {
         return data[index]
     }
 }
