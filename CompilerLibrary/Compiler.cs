@@ -291,7 +291,6 @@ namespace Cheez
             {
                 if (s is AstImplBlock ||
                     s is AstVariableDecl ||
-                    s is AstTraitDeclaration ||
                     s is AstConstantDeclaration ||
                     s is AstUsingStmt)
                 {

@@ -395,61 +395,6 @@ namespace Cheez.Ast.Statements
         }
     }
 
-    public class AstTraitDeclaration : AstDecl, ITypedSymbol
-    {
-        public List<AstParameter> Parameters { get; set; }
-
-        public List<AstFuncExpr> Functions { get; }
-        public List<AstVariableDecl> Variables { get; }
-
-        public Dictionary<CheezType, AstImplBlock> Implementations { get; } = new Dictionary<CheezType, AstImplBlock>();
-
-        public bool IsPolymorphic { get; set; }
-        public bool IsPolyInstance { get; set; }
-
-        public List<AstTraitDeclaration> PolymorphicInstances { get; } = new List<AstTraitDeclaration>();
-        public AstTraitDeclaration Template { get; set; } = null;
-
-        public Scope SubScope { get; set; }
-
-        public AstTraitDeclaration(
-            AstIdExpr name,
-            List<AstParameter> parameters,
-            List<AstFuncExpr> functions,
-            List<AstVariableDecl> variables,
-            ILocation Location = null)
-            : base(name, Location: Location)
-        {
-            this.Parameters = parameters;
-            this.Functions = functions;
-            this.Variables = variables;
-        }
-
-        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitTraitDecl(this, data);
-
-        public override AstStatement Clone() => CopyValuesTo(
-            new AstTraitDeclaration(
-                Name.Clone() as AstIdExpr,
-                Parameters.Select(p => p.Clone()).ToList(),
-                Functions.Select(f => f.Clone() as AstFuncExpr).ToList(),
-                Variables.Select(v => v.Clone() as AstVariableDecl).ToList()));
-
-        public AstImplBlock FindMatchingImplementation(CheezType from)
-        {
-            foreach (var kv in Implementations)
-            {
-                var type = kv.Key;
-                var impl = kv.Value;
-                if (CheezType.TypesMatch(type, from))
-                {
-                    return impl;
-                }
-            }
-
-            return null;
-        }
-    }
-
     public abstract class ImplCondition
     {
         public ILocation Location { get; set; }

@@ -323,14 +323,6 @@ namespace Cheez
             {
                 m_typeImplMap = new Dictionary<CheezType, TypeImplList>();
 
-                foreach (var td in scope.TraitDeclarations)
-                {
-                    if (td.Type.IsErrorType)
-                        continue;
-                    if (!td.IsPolymorphic && !m_typeImplMap.ContainsKey(td.Type))
-                        m_typeImplMap[td.Type] = new TypeImplList(scope.Impls);
-                }
-
                 foreach (var td in scope.Impls)
                 {
                     if (td.TargetType?.IsErrorType ?? true)
@@ -586,29 +578,6 @@ namespace Cheez
                             v.Type = v.Initializer.Type;
                         break;
                     }
-
-                case AstTraitDeclaration trait when trait.IsPolymorphic:
-                    {
-                        foreach (var p in trait.Parameters)
-                        {
-                            p.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
-                            p.TypeExpr = ResolveType(p.TypeExpr, newPolyDecls, out var type);
-                            p.Type = type;
-                            if (!ValidatePolymorphicParameterType(p.TypeExpr, p.Type))
-                                continue;
-
-                            switch (p.Type)
-                            {
-                                case CheezTypeType _:
-                                    p.Value = new PolyType(p.Name.Name, true);
-                                    break;
-
-                                default:
-                                    throw new NotImplementedException();
-                            }
-                        }
-                        break;
-                    }
             }
 
             greySet.Remove(decl);
@@ -635,7 +604,6 @@ namespace Cheez
             var greySet = new HashSet<AstDecl>();
             var chain = new Dictionary<AstDecl, AstDecl>();
 
-            whiteSet.UnionWith(scope.TraitDeclarations);
             whiteSet.UnionWith(scope.Variables);
 
             while (whiteSet.Count > 0)
@@ -647,14 +615,6 @@ namespace Cheez
 
         private void BuildDependencies(Scope scope)
         {
-            foreach (var @trait in scope.TraitDeclarations)
-            {
-                foreach (var param in @trait.Parameters)
-                {
-                    CollectTypeDependencies(@trait, param.TypeExpr);
-                }
-            }
-
             foreach (var @var in scope.Variables)
             {
                 CollectTypeDependencies(@var, @var.TypeExpr);
@@ -688,12 +648,6 @@ namespace Cheez
                     case AstUsingStmt use:
                         {
                             scope.Uses.Add(use);
-                            break;
-                        }
-
-                    case AstTraitDeclaration @trait:
-                        {
-                            scope.TraitDeclarations.Add(@trait);
                             break;
                         }
 

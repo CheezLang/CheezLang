@@ -20,15 +20,6 @@ namespace Cheez.Visitors
             else
                 rawPrinter = new AnalysedAstPrinter();
         }
-        public override string VisitTraitDecl(AstTraitDeclaration trait, int data = 0)
-        {
-            var head = $"trait {trait.Name.Name}";
-            if (trait.Parameters?.Count > 0)
-            {
-                head += "(" + string.Join(", ", trait.Parameters.Select(p => $"{p.Name.Name}: {p.TypeExpr.Accept(rawPrinter)}")) + ")";
-            }
-            return head;
-        }
 
         public override string VisitImplDecl(AstImplBlock impl, int data = 0)
         {

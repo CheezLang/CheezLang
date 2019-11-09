@@ -4412,11 +4412,6 @@ namespace Cheez
                 expr.Type = CheezType.Type;
                 expr.Value = ct.Type;
             }
-            else if (sym is AstTraitDeclaration trait)
-            {
-                expr.Type = CheezType.Type;
-                expr.Value = trait.Type;
-            }
             else if (sym is AstFuncExpr func)
             {
                 expr.Type = func.Type;

@@ -380,8 +380,6 @@ namespace Cheez.Parsing
                     return ParseForStatement();
                 case TokenType.KwImpl:
                     return ParseImplBlock();
-                case TokenType.KwTrait:
-                    return ParseTraitDeclaration();
                 case TokenType.OpenBrace:
                     return ParseBlockStatement();
 
@@ -482,65 +480,6 @@ namespace Cheez.Parsing
             ConsumeUntil(TokenType.Equal, ErrMsg("=", "in variable declaration"));
             var init = ParseExpression(false);
             return new AstVariableDecl(expr, typeExpr, init, Location: new Location(expr.Beginning, init.End));
-        }
-
-        private AstStatement ParseTraitDeclaration()
-        {
-            TokenLocation beg = null, end = null;
-            AstIdExpr name = null;
-            var functions = new List<AstFuncExpr>();
-            var variables = new List<AstVariableDecl>();
-            var parameters = new List<AstParameter>();
-
-            beg = Consume(TokenType.KwTrait, ErrMsg("keyword 'trait'", "at beginning of trait declaration")).location;
-            SkipNewlines();
-
-            name = ParseIdentifierExpr(ErrMsg("name", "after keyword 'trait'"));
-            SkipNewlines();
-
-            if (CheckToken(TokenType.OpenParen))
-            {
-                parameters = ParseParameterList(out var _, out var _);
-                SkipNewlines();
-            }
-
-            Consume(TokenType.OpenBrace, ErrMsg("{", "after name of trait"));
-            SkipNewlines();
-
-            while (true)
-            {
-                var next = PeekToken();
-                if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
-                    break;
-
-                var vname = ParseIdentifierExpr(ErrMsg("identifier"));
-                var decl = ParseDeclaration(vname, false);
-
-                if (decl is AstVariableDecl v)
-                    variables.Add(v);
-                else if (decl is AstConstantDeclaration con)
-                {
-                    if (con.Initializer is AstFuncExpr func)
-                    {
-                        func.Name = vname.Name;
-                        functions.Add(func);
-                    }
-                    else
-                    {
-                        ReportError(con.Initializer, "Expected constant function expression");
-                    }
-                }
-                else
-                {
-                    ReportError(decl, "Expected constant function expression");
-                }
-
-                SkipNewlines();
-            }
-
-            end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of trait")).location;
-
-            return new AstTraitDeclaration(name, parameters, functions, variables, new Location(beg, end));
         }
 
         private AstExpression ParseMatchExpr()
