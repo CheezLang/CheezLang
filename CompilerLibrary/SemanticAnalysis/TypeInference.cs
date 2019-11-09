@@ -154,7 +154,7 @@ namespace Cheez
                     return InferTypesCharLiteral(ch);
 
                 case AstIdExpr i:
-                    return InferTypesIdExpr(i, expected, context);
+                    return InferTypeIdExpr(i, expected, context);
 
                 case AstAddressOfExpr ao:
                     return InferTypeAddressOf(ao, expected, context);
@@ -365,7 +365,7 @@ namespace Cheez
 
                 // @todo: is this the right place to do this?
                 if (func.Trait == null)
-                    GlobalScope.Functions.Add(func);
+                    AddFunction(func);
             }
 
             if (func.TryGetDirective("operator", out var op))
@@ -397,414 +397,7 @@ namespace Cheez
             return func;
         }
 
-        private void ComputeTypeMembers(CheezType type)
-        {
-            switch (type)
-            {
-                case StructType s:
-                    ComputeStructMembers(s.Declaration);
-                    break;
-                case EnumType e:
-                    ComputeEnumMembers(e.Declaration);
-                    break;
-
-                case TraitType t:
-                    ComputeTraitMembers(t.Declaration);
-                    break;
-            }
-        }
-
-        private void ComputeTraitMembers(AstTraitTypeExpr trait)
-        {
-            if (trait.IsPolymorphic)
-                return;
-            if (trait.MembersComputed)
-                return;
-            trait.MembersComputed = true;
-
-            if (trait.Parameters != null)
-                foreach (var p in trait.Parameters)
-                    trait.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
-            trait.SubScope.DefineTypeSymbol("Self", new SelfType(trait.Value as CheezType));
-
-            foreach (var v in trait.Variables)
-            {
-                v.TypeExpr.Scope = trait.SubScope;
-                v.TypeExpr = ResolveTypeNow(v.TypeExpr, out var type);
-                v.Type = type;
-
-                var res = trait.SubScope.DefineSymbol(v);
-                if (!res.ok)
-                {
-                    (string, ILocation)? detail = null;
-                    if (res.other != null) detail = ("Other declaration here:", res.other);
-                    ReportError(v.Name, $"A symbol with name '{v.Name.Name}' already exists in current scope", detail);
-                }
-            }
-
-            foreach (var f in trait.Functions)
-            {
-                f.Trait = trait;
-                f.Scope = trait.SubScope;
-                f.ConstScope = new Scope($"fn$ {f.Name}", f.Scope);
-                f.SubScope = new Scope($"fn {f.Name}", f.ConstScope);
-
-                InferTypeFuncExpr(f);
-                CheckForSelfParam(f);
-
-                foreach (var p in f.Parameters)
-                {
-                    if (SizeOfTypeDependsOnSelfType(p.Type))
-                    {
-                        f.ExcludeFromVTable = true;
-                    }
-                }
-
-                if (SizeOfTypeDependsOnSelfType(f.ReturnType))
-                {
-                    f.ExcludeFromVTable = true;
-                }
-
-                // TODO: for now don't allow default implemenation
-                if (f.Body != null)
-                {
-                    ReportError(f.ParameterLocation, $"Trait functions can't have an implementation");
-                }
-            }
-        }
-
-        private AstExpression InferTypeTraitTypeExpr(AstTraitTypeExpr expr)
-        {
-            if (expr.IsPolyInstance)
-            {
-
-            }
-            else
-            {
-                expr.SubScope = new Scope("trait", expr.Scope);
-                if (expr.Parent is AstConstantDeclaration c)
-                    expr.Name = c.Name.Name;
-            }
-
-            // setup scopes and separate members
-            foreach (var decl in expr.Declarations)
-            {
-                decl.Scope = expr.SubScope;
-
-                switch (decl)
-                {
-                    case AstConstantDeclaration con when con.Initializer is AstFuncExpr func:
-                        func.Name = con.Name.Name;
-                        expr.Functions.Add(func);
-                        break;
-
-                    case AstConstantDeclaration con:
-                        ReportError(con, $"Not supported yet");
-                        break;
-
-                    case AstVariableDecl mem:
-                        expr.Variables.Add(mem);
-                        break;
-                }
-            }
-
-            if (expr.IsPolymorphic)
-            {
-                // @todo
-                foreach (var p in expr.Parameters)
-                {
-                    p.Scope = expr.Scope;
-                    p.TypeExpr.Scope = expr.Scope;
-                    p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
-                    p.Type = t;
-
-                    ValidatePolymorphicParameterType(p, p.Type);
-
-                    expr.SubScope.DefineTypeSymbol(p.Name.Name, new PolyType(p.Name.Name, true));
-                }
-
-                expr.Type = CheezType.Type;
-                expr.Value = new GenericTraitType(expr);
-                return expr;
-            }
-
-            expr.Type = CheezType.Type;
-            expr.Value = new TraitType(expr);
-
-            mTraits.Add(expr);
-            return expr;
-        }
-
-        private void ComputeEnumMembers(AstEnumTypeExpr expr)
-        {
-            if (expr.MembersComputed)
-                return;
-            expr.MembersComputed = true;
-
-            BigInteger value = 0;
-            var usedValues = new HashSet<BigInteger>();
-
-            foreach (var mem in expr.Members)
-            {
-                var memDecl = mem.Decl;
-
-                if (!(memDecl.Pattern is AstIdExpr memName))
-                {
-                    ReportError(memDecl.Pattern, $"Only single names allowed");
-                    continue;
-                }
-
-                if (memDecl.TypeExpr != null)
-                {
-                    memDecl.TypeExpr.AttachTo(memDecl);
-                    memDecl.TypeExpr = ResolveTypeNow(memDecl.TypeExpr, out var t);
-                    memDecl.Type = t;
-
-                    // @todo: check if type is valid as enum member, eg no void
-                }
-
-                if (memDecl.Initializer != null)
-                {
-                    memDecl.Initializer.AttachTo(memDecl);
-                    memDecl.Initializer = InferType(memDecl.Initializer, expr.TagType);
-                    memDecl.Initializer = CheckType(memDecl.Initializer, expr.TagType);
-
-                    if (memDecl.Initializer.Type is IntType i)
-                    {
-                        if (memDecl.Initializer.IsCompTimeValue)
-                        {
-                            value = ((NumberData)memDecl.Initializer.Value).IntValue;
-                            CheckValueRangeForType(i, memDecl.Initializer.Value, memDecl.Initializer);
-                        }
-                        else
-                        {
-                            ReportError(memDecl.Initializer, $"Value of enum member has to be an constant integer");
-                        }
-                    }
-                }
-
-                if (!expr.IsPolymorphic && expr.EnumType.IsCopy && (!memDecl.Type?.IsCopy ?? false))
-                {
-                    ReportError(memDecl, "Member is not copyable");
-                }
-
-                if (usedValues.Contains(value))
-                    ReportError(memDecl, $"Member has value {value} which is already being used by another member");
-                usedValues.Add(value);
-
-                if (memDecl.Type != null)
-                    ComputeTypeMembers(memDecl.Type);
-                mem.Value = NumberData.FromBigInt(value);
-
-                value += 1;
-            }
-        }
-
-        private AstExpression InferTypeEnumTypeExpr(AstEnumTypeExpr expr)
-        {
-            if (expr.IsPolyInstance)
-            {
-
-            }
-            else
-            {
-                expr.SubScope = new Scope("enum", expr.Scope);
-                if (expr.Parent is AstConstantDeclaration c)
-                    expr.Name = c.Name.Name;
-            }
-
-            bool isCopy = false;
-            if (!expr.IsPolymorphic && expr.TryGetDirective("copy", out var d))
-            {
-                isCopy = true;
-                foreach (var arg in d.Arguments)
-                {
-                    arg.AttachTo(expr, expr.SubScope);
-                    ResolveTypeNow(arg, out var t);
-                    isCopy &= t.IsCopy;
-                }
-            }
-
-            expr.TagType = IntType.GetIntType(8, false);
-            if (expr.TryGetDirective("tag_type", out var bt))
-            {
-                if (bt.Arguments.Count != 1)
-                {
-                    ReportError(bt, $"#tag_type requires one argument");
-                }
-                else
-                {
-                    var arg = bt.Arguments[0];
-                    arg.AttachTo(expr);
-                    arg = InferType(arg, CheezType.Type);
-
-                    if (!arg.Type.IsErrorType)
-                    {
-                        if (arg.Type != CheezType.Type)
-                        {
-                            ReportError(arg, $"Argument must be an int type");
-                        }
-                        else if (arg.Value is IntType i)
-                        {
-                            expr.TagType = i;
-                        }
-                        else
-                        {
-                            ReportError(arg, $"Argument must be an int type");
-                        }
-                    }
-
-                }
-            }
-
-            // setup scopes and separate members
-            expr.Members = new List<AstEnumMemberNew>();
-            foreach (var decl in expr.Declarations)
-            {
-                decl.Scope = expr.SubScope;
-
-                switch (decl)
-                {
-                    case AstConstantDeclaration con:
-                        break;
-                    case AstVariableDecl mem:
-                        expr.Members.Add(new AstEnumMemberNew(mem, expr.Members.Count));
-                        break;
-                }
-            }
-
-            if (expr.IsPolymorphic)
-            {
-                // @todo
-                foreach (var p in expr.Parameters)
-                {
-                    p.Scope = expr.Scope;
-                    p.TypeExpr.Scope = expr.Scope;
-                    p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
-                    p.Type = t;
-
-                    ValidatePolymorphicParameterType(p, p.Type);
-
-                    expr.SubScope.DefineTypeSymbol(p.Name.Name, new PolyType(p.Name.Name, true));
-                }
-
-                expr.Type = CheezType.Type;
-                expr.Value = new GenericEnumType(expr, expr.Name);
-                return expr;
-            }
-
-            foreach (var decl in expr.Declarations)
-            {
-                if (decl is AstConstantDeclaration con)
-                {
-                    AnalyseConstantDeclaration(con);
-                }
-            }
-
-            expr.Type = CheezType.Type;
-            expr.Value = new EnumType(expr, isCopy);
-            return expr;
-        }
-
-        private void ComputeStructMembers(AstStructTypeExpr expr)
-        {
-            if (expr.Members != null)
-                return;
-
-
-            expr.Members = new List<AstStructMemberNew>();
-            foreach (var decl in expr.Declarations)
-            {
-                if (decl is AstVariableDecl mem)
-                {
-                    if (!(mem.Pattern is AstIdExpr memName))
-                    {
-                        ReportError(mem.Pattern, $"Only single names allowed");
-                        continue;
-                    }
-
-                    if (mem.TypeExpr != null)
-                    {
-                        mem.TypeExpr.AttachTo(mem);
-                        mem.TypeExpr = ResolveTypeNow(mem.TypeExpr, out var t);
-                        mem.Type = t;
-
-                        // @todo: check if type is valid as struct member, eg no void
-                    }
-
-                    if (mem.Initializer != null)
-                    {
-                        mem.Initializer.AttachTo(mem);
-                        mem.Initializer = InferType(mem.Initializer, mem.Type);
-
-                        if (mem.Type == null)
-                            mem.Type = mem.Initializer.Type;
-                        else
-                            mem.Initializer = CheckType(mem.Initializer, mem.Type);
-                    }
-
-                    if (expr.StructType.IsCopy && !mem.Type.IsCopy)
-                    {
-                        ReportError(mem, "Member is not copyable");
-                    }
-
-                    expr.Members.Add(new AstStructMemberNew(mem, true, false, expr.Members.Count));
-
-                    ComputeTypeMembers(mem.Type);
-                }
-            }
-        }
-
-        private AstExpression InferTypeStructTypeExpr(AstStructTypeExpr expr)
-        {
-            if (expr.IsPolyInstance)
-            {
-                
-            }
-            else
-            {
-                expr.SubScope = new Scope("struct", expr.Scope);
-                if (expr.Parent is AstConstantDeclaration c)
-                    expr.Name = c.Name.Name;
-            }
-
-            bool isCopy = expr.HasDirective("copy");
-
-            if (expr.IsPolymorphic)
-            {
-                // @todo
-                foreach (var p in expr.Parameters)
-                {
-                    p.Scope = expr.Scope;
-                    p.TypeExpr.Scope = expr.Scope;
-                    p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
-                    p.Type = t;
-
-                    ValidatePolymorphicParameterType(p, p.Type);
-
-                    expr.SubScope.DefineTypeSymbol(p.Name.Name, new PolyType(p.Name.Name, true));
-                }
-
-                expr.Type = CheezType.Type;
-                expr.Value = new GenericStructType(expr, isCopy, expr.Name);
-                return expr;
-            }
-
-            foreach (var decl in expr.Declarations)
-            {
-                decl.Scope = expr.SubScope;
-
-                if (decl is AstConstantDeclaration con)
-                {
-                    AnalyseConstantDeclaration(con);
-                }
-            }
-
-            expr.Type = CheezType.Type;
-            expr.Value = new StructType(expr, isCopy, expr.Name);
-            return expr;
-        }
-
+        
         private AstExpression InferTypeRangeExpr(AstRangeExpr r, TypeInferenceContext context)
         {
             r.From.AttachTo(r);
@@ -3144,7 +2737,7 @@ namespace Cheez
 
                         if (mem == null)
                         {
-                            ReportError(expr, $"Type '{@enum}' has no member '{memName}'", ("Maybe use :: instead of . if you want to call a function", null));
+                            ReportError(expr, $"Type '{@enum}' has no member '{memName}'");
                             return expr;
                         }
 
@@ -3685,7 +3278,7 @@ namespace Cheez
 
                 // instantiate trait
                 var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
-                var instance = InstantiatePolyTrait(trait.Declaration, args, context.newPolyDeclarations, expr);
+                var instance = InstantiatePolyTrait(trait.Declaration, args, expr);
                 expr.Type = CheezType.Type;
                 expr.Value = instance.TraitType ?? CheezType.Error;
 
@@ -4365,7 +3958,7 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression InferTypesIdExpr(AstIdExpr expr, CheezType expected, TypeInferenceContext context)
+        private AstExpression InferTypeIdExpr(AstIdExpr expr, CheezType expected, TypeInferenceContext context)
         {
             if (expr.IsPolymorphic && !context.resolve_poly_expr_to_concrete_type)
             {
@@ -4397,7 +3990,7 @@ namespace Cheez
                 expr.Type = var.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
 
-                if (var.Type is VarDeclType && !context.is_global)
+                if (var.Type is VarDeclType && var.Scope != GlobalScope)
                 {
                     ReportError(expr, $"Can't use variable '{var.Name}' before it is declared");
                 }
@@ -4608,26 +4201,6 @@ namespace Cheez
             return expr;
         }
 
-        private AstImplBlock GetTraitImpl(Scope scope, CheezType trait)
-        {
-            while (scope != null)
-            {
-                foreach (var impl in scope.Impls)
-                {
-                    if (impl.Trait == null &&
-                        CheezType.TypesMatch(impl.TargetType, trait))
-                    {
-
-                        return impl;
-                    }
-                }
-
-                scope = scope.Parent;
-            }
-
-            return null;
-        }
-
         private AstExpression GetImplFunctions(AstDotExpr expr, CheezType type, string functionName, TypeInferenceContext context)
         {
             var result = GetImplFunctions(type, functionName, context.functionExpectedReturnType);
@@ -4703,6 +4276,18 @@ namespace Cheez
                             ReportError(location, $"Value is outside of the range of type {type}. Value is {val}, range is [{i.MinValue},{i.MaxValue}]");
                         break;
                     }
+            }
+        }
+
+        private bool ValidatePolymorphicParameterType(ILocation location, CheezType type)
+        {
+            switch (type)
+            {
+                case CheezTypeType _: return true;
+
+                default:
+                    ReportError(location, $"The type {type} is not allowed here");
+                    return false;
             }
         }
     }

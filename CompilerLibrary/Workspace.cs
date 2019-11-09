@@ -106,14 +106,12 @@ namespace Cheez
             GlobalScope.IsOrdered = false;
 
             // new
-            ResolveDeclarations(GlobalScope, Statements);
+            ResolveDeclarations(Statements);
 
             if (mCompiler.ErrorHandler.HasErrors)
                 return;
 
-            mVariables.AddRange(GlobalScope.Variables);
-
-            var mains = GlobalScope.GetFunctionsWithDirective("main");
+            var mains = mAllFunctions.Where(f => f.HasDirective("main"));
             if (mains.Count() > 1)
             {
                 ReportError("Only one main function is allowed",
@@ -152,20 +150,6 @@ namespace Cheez
 
         [SkipInStackFrameAttribute]
         public void ReportError(string errorMessage, List<(string, ILocation)> details)
-        {
-            var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
-            CurrentErrorHandler.ReportError(new Error
-            {
-                Message = errorMessage,
-                Details = details,
-                File = callingFunctionFile,
-                Function = callingFunctionName,
-                LineNumber = callLineNumber,
-            });
-        }
-
-        [SkipInStackFrameAttribute]
-        public void ReportError(string errorMessage, params (string, ILocation)[] details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
             CurrentErrorHandler.ReportError(new Error

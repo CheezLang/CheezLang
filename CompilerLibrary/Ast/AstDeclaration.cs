@@ -210,6 +210,11 @@ namespace Cheez.Ast.Statements
             dir = Directives.FirstOrDefault(d => d.Name.Name == name);
             return dir != null;
         }
+
+        public override string ToString()
+        {
+            return Accept(new AnalysedAstPrinter());
+        }
     }
 
     #endregion

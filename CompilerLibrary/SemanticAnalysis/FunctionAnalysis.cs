@@ -83,8 +83,6 @@ namespace Cheez
                 if (func.IsGeneric)
                     return;
 
-                mFunctions.Add(func);
-
                 if (func.TryGetDirective("linkname", out var ln))
                 {
                     if (ln.Arguments.Count != 1)

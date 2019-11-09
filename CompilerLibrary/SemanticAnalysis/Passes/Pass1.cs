@@ -13,17 +13,50 @@ namespace Cheez
     public partial class Workspace
     {
         // for semantic analysis
-        private List<AstTraitTypeExpr> mTraits = new List<AstTraitTypeExpr>();
-        private List<AstVariableDecl> mVariables = new List<AstVariableDecl>();
+        private List<AstConstantDeclaration> mAllGlobalConstants = new List<AstConstantDeclaration>();
+        private List<AstTraitTypeExpr> mAllTraits = new List<AstTraitTypeExpr>();
+        private List<AstStructTypeExpr> mAllStructs = new List<AstStructTypeExpr>();
+        private List<AstEnumTypeExpr> mAllEnums = new List<AstEnumTypeExpr>();
+        private List<AstFuncExpr> mAllFunctions = new List<AstFuncExpr>();
+        private List<AstVariableDecl> mAllGlobalVariables = new List<AstVariableDecl>();
+        private List<AstUsingStmt> mAllGlobalUses = new List<AstUsingStmt>();
+        private List<AstImplBlock> mAllImpls = new List<AstImplBlock>();
 
-        private List<AstFuncExpr> mFunctions = new List<AstFuncExpr>();
-        private List<AstUsingStmt> mGlobalUses = new List<AstUsingStmt>();
+        private Queue<AstImplBlock> mUnresolvedImpls = new Queue<AstImplBlock>();
+        private Queue<AstStructTypeExpr> mUnresolvedStructs = new Queue<AstStructTypeExpr>();
+        private Queue<AstEnumTypeExpr> mUnresolvedEnums = new Queue<AstEnumTypeExpr>();
+        private Queue<AstTraitTypeExpr> mUnresolvedTraits = new Queue<AstTraitTypeExpr>();
+        private Queue<AstFuncExpr> mUnresolvedFunctions = new Queue<AstFuncExpr>();
 
-        public IEnumerable<AstFuncExpr> Functions => mFunctions;
-        public IEnumerable<AstVariableDecl> Variables => mVariables;
 
-        public IEnumerable<AstTraitTypeExpr> Traits => mTraits;
+        public IEnumerable<AstFuncExpr> Functions => mAllFunctions;
+        public IEnumerable<AstVariableDecl> Variables => mAllGlobalVariables;
+        public IEnumerable<AstTraitTypeExpr> Traits => mAllTraits;
         //
+
+        private void AddTrait(AstTraitTypeExpr trait)
+        {
+            mAllTraits.Add(trait);
+            mUnresolvedTraits.Enqueue(trait);
+        }
+
+        private void AddEnum(AstEnumTypeExpr en)
+        {
+            mAllEnums.Add(en);
+            mUnresolvedEnums.Enqueue(en);
+        }
+
+        private void AddStruct(AstStructTypeExpr str)
+        {
+            mAllStructs.Add(str);
+            mUnresolvedStructs.Enqueue(str);
+        }
+
+        private void AddFunction(AstFuncExpr func)
+        {
+            mAllFunctions.Add(func);
+            mUnresolvedFunctions.Enqueue(func);
+        }
 
         private void Pass1VariableDeclaration(AstVariableDecl var)
         {
@@ -41,13 +74,7 @@ namespace Cheez
             }
 
             if (var.TypeExpr != null)
-            {
                 var.TypeExpr.AttachTo(var);
-            }
-            else if (var.GetFlag(StmtFlags.GlobalScope))
-            {
-                ReportError(var, $"Global variables must have a type annotation");
-            }
             MatchPatternWithTypeExpr(var, var.Pattern, var.TypeExpr);
 
             foreach (var decl in var.SubDeclarations)
@@ -100,17 +127,6 @@ namespace Cheez
             else
             {
                 ReportError(pattern, $"This pattern is not valid here");
-            }
-        }
-
-        private static void Pass1Impl(AstImplBlock impl)
-        {
-            impl.TargetTypeExpr.Scope = impl.SubScope;
-
-            // check if there are parameters
-            if (impl.Parameters != null)
-            {
-                impl.IsPolymorphic = true;
             }
         }
     }

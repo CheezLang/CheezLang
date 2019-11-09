@@ -22,7 +22,7 @@ namespace Cheez
         private void Pass6()
         {
             var done = new HashSet<AstVariableDecl>();
-            foreach (var v in mVariables)
+            foreach (var v in mAllGlobalVariables)
             {
                 var path = new List<AstVariableDecl>();
                 Pass6VariableDeclaration(v, done, path);
@@ -113,7 +113,7 @@ namespace Cheez
                     v.Type = v.Initializer.Type;
             }
 
-            if (v.Type.IsComptimeOnly)
+            if (!v.Type.IsErrorType && v.Type.IsComptimeOnly)
                 ReportError(v, $"Variable declaration must be constant because type '{v.Type}' is only available at compile time");
 
             AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);

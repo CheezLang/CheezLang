@@ -74,6 +74,12 @@ namespace Cheez
 
         private void Pass3TraitImpl(AstImplBlock impl)
         {
+            if (!impl.IsPolyInstance)
+            {
+                impl.SubScope = new Scope($"impl {impl.TraitExpr} for {impl.TargetTypeExpr}", impl.Scope);
+                if (impl.Parameters?.Count > 0)
+                    impl.IsPolymorphic = true;
+            }
             impl.TraitExpr.Scope = impl.SubScope;
 
             if (impl.IsPolymorphic)
@@ -314,6 +320,12 @@ namespace Cheez
 
             try
             {
+                if (!impl.IsPolyInstance)
+                {
+                    impl.SubScope = new Scope($"impl {impl.TraitExpr} for {impl.TargetTypeExpr}", impl.Scope);
+                    if (impl.Parameters?.Count > 0)
+                        impl.IsPolymorphic = true;
+                }
 
                 // check if there are parameters
                 if (impl.IsPolymorphic)

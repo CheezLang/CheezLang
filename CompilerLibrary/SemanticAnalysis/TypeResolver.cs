@@ -252,250 +252,14 @@ namespace Cheez
                     Pass3Impl(instance);
 
                 // @TODO: does this work?
-                GlobalScope.unresolvedImpls.Enqueue(instance);
+                mUnresolvedImpls.Enqueue(instance);
             }
 
             return instance;
         }
 
-        // trait
-        private AstTraitTypeExpr InstantiatePolyTrait(AstTraitTypeExpr decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
-        {
-
-            if (args.Any(a => a.type == CheezType.Type && (a.value as CheezType).IsErrorType))
-                WellThatsNotSupposedToHappen();
-
-            if (args.Count != decl.Parameters.Count)
-            {
-                if (location != null)
-                    ReportError(location, "Polymorphic instantiation has wrong number of arguments.", ("Declaration here:", decl));
-                else
-                    ReportError("Polymorphic instantiation has wrong number of arguments.", ("Declaration here:", decl));
-                return null;
-            }
-
-            AstTraitTypeExpr instance = null;
-
-            // check if instance already exists
-            foreach (var pi in decl.PolymorphicInstances)
-            {
-                Debug.Assert(pi.Parameters.Count == args.Count);
-
-                bool eq = true;
-                for (int i = 0; i < pi.Parameters.Count; i++)
-                {
-                    var param = pi.Parameters[i];
-                    var arg = args[i];
-                    if (!param.Value.Equals(arg.value))
-                    {
-                        eq = false;
-                        break;
-                    }
-                }
-
-                if (eq)
-                {
-                    instance = pi;
-                    break;
-                }
-            }
-
-            // instatiate type
-            if (instance == null)
-            {
-                instance = decl.Clone() as AstTraitTypeExpr;
-                instance.SubScope = new Scope($"trait <poly>", instance.Scope);
-                instance.IsPolyInstance = true;
-                instance.IsGeneric = false;
-                instance.Template = decl;
-                instance.Name = decl.Name;
-                decl.PolymorphicInstances.Add(instance);
-
-                Debug.Assert(instance.Parameters.Count == args.Count);
-
-                for (int i = 0; i < instance.Parameters.Count; i++)
-                {
-                    var param = instance.Parameters[i];
-                    var arg = args[i];
-                    param.Type = arg.type;
-                    param.Value = arg.value;
-
-                    // TODO: non type parameters
-                    instance.SubScope.DefineTypeSymbol(param.Name.Name, param.Value as CheezType);
-                }
-
-                instance = InferType(instance, null) as AstTraitTypeExpr;
-                ComputeTraitMembers(instance);
-
-                //if (instances != null)
-                //    instances.Add(instance);
-                //else
-                //{
-                //    ResolveTypeDeclaration(instance);
-                //}
-            }
-
-            return instance;
-        }
-
-        // enum
-
-        private AstEnumTypeExpr InstantiatePolyEnum(AstEnumTypeExpr decl, List<(CheezType type, object value)> args, ILocation location = null)
-        {
-            if (args.Count != decl.Parameters.Count)
-            {
-                if (location != null)
-                    ReportError(location, "Polymorphic instantiation has wrong number of arguments.", ("Declaration here:", decl));
-                else
-                    ReportError("Polymorphic instantiation has wrong number of arguments.", ("Declaration here:", decl));
-                return null;
-            }
-
-            AstEnumTypeExpr instance = null;
-
-            // check if instance already exists
-            foreach (var pi in decl.PolymorphicInstances)
-            {
-                Debug.Assert(pi.Parameters.Count == args.Count);
-
-                bool eq = true;
-                for (int i = 0; i < pi.Parameters.Count; i++)
-                {
-                    var param = pi.Parameters[i];
-                    var arg = args[i];
-                    if (param.Value != arg.value)
-                    {
-                        eq = false;
-                        break;
-                    }
-                }
-
-                if (eq)
-                {
-                    instance = pi;
-                    break;
-                }
-            }
-
-            // instatiate type
-            if (instance == null)
-            {
-                instance = decl.Clone() as AstEnumTypeExpr;
-                instance.SubScope = new Scope($"enum {decl.Name}<poly>", instance.Scope);
-                instance.IsPolyInstance = true;
-                instance.IsGeneric = false;
-                instance.Template = decl;
-                decl.PolymorphicInstances.Add(instance);
-                instance.Name = decl.Name;
-
-                Debug.Assert(instance.Parameters.Count == args.Count);
-
-                for (int i = 0; i < instance.Parameters.Count; i++)
-                {
-                    var param = instance.Parameters[i];
-                    var arg = args[i];
-                    param.Type = arg.type;
-                    param.Value = arg.value;
-
-                    // TODO: non type parameters
-                    instance.SubScope.DefineTypeSymbol(param.Name.Name, param.Value as CheezType);
-                }
-
-                instance = InferType(instance, null) as AstEnumTypeExpr;
-
-                //instance.Type = new EnumType(instance);
-
-                //if (instances != null)
-                //    instances.Add(instance);
-                //else
-                //{
-                //    ResolveTypeDeclaration(instance);
-                //}
-            }
-
-            return instance;
-        }
 
         // struct
-        private AstStructTypeExpr InstantiatePolyStruct(AstStructTypeExpr decl, List<(CheezType type, object value)> args, ILocation location = null)
-        {
-            if (args.Count != decl.Parameters.Count)
-            {
-                if (location != null)
-                    ReportError(location, "Polymorphic struct instantiation has wrong number of arguments.", ("Declaration here:", decl));
-                else
-                    ReportError("Polymorphic struct instantiation has wrong number of arguments.", ("Declaration here:", decl));
-                return null;
-            }
-
-            AstStructTypeExpr instance = null;
-
-            // check if instance already exists
-            foreach (var pi in decl.PolymorphicInstances)
-            {
-                Debug.Assert(pi.Parameters.Count == args.Count);
-
-                bool eq = true;
-                for (int i = 0; i < pi.Parameters.Count; i++)
-                {
-                    var param = pi.Parameters[i];
-                    var arg = args[i];
-                    if (param.Value != arg.value)
-                    {
-                        eq = false;
-                        break;
-                    }
-                }
-
-                if (eq)
-                {
-                    instance = pi;
-                    break;
-                }
-            }
-
-            // instatiate type
-            if (instance == null)
-            {
-                instance = decl.Clone() as AstStructTypeExpr;
-                instance.SubScope = new Scope($"struct.poly", instance.Scope);
-                instance.IsPolyInstance = true;
-                instance.IsGeneric = false;
-                instance.Template = decl;
-                instance.Name = decl.Name;
-
-                // @todo
-                //instance.SetFlag(StmtFlags.IsCopy, decl.GetFlag(StmtFlags.IsCopy));
-                decl.PolymorphicInstances.Add(instance);
-
-                Debug.Assert(instance.Parameters.Count == args.Count);
-
-                for (int i = 0; i < instance.Parameters.Count; i++)
-                {
-                    var param = instance.Parameters[i];
-                    var arg = args[i];
-                    param.Type = arg.type;
-                    param.Value = arg.value;
-
-                    // TODO: what if arg.value is not a type?
-                    instance.SubScope.DefineTypeSymbol(param.Name.Name, param.Value as CheezType);
-                }
-
-                instance = InferType(instance, null) as AstStructTypeExpr;
-
-                //instance.Type = new StructType(instance);
-
-                //if (instances != null)
-                //    instances.Add(instance);
-                //else
-                //{
-                //    ResolveTypeDeclaration(instance);
-                //}
-            }
-
-            return instance;
-        }
-
         private AstFuncExpr InstantiatePolyImplFunction(
             GenericFunctionType func,
             Dictionary<string, CheezType> polyTypes,
@@ -722,5 +486,25 @@ namespace Cheez
                 default: throw new NotImplementedException();
             }
         }
+
+
+        // type expressions
+        private void ComputeTypeMembers(CheezType type)
+        {
+            switch (type)
+            {
+                case StructType s:
+                    ComputeStructMembers(s.Declaration);
+                    break;
+                case EnumType e:
+                    ComputeEnumMembers(e.Declaration);
+                    break;
+
+                case TraitType t:
+                    ComputeTraitMembers(t.Declaration);
+                    break;
+            }
+        }
+
     }
 }

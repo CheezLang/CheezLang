@@ -15,42 +15,36 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        private void ResolveDeclarations(Scope scope, List<AstStatement> statements)
+        private void ResolveDeclarations(List<AstStatement> statements)
         {
-            // hack
             // sort all declarations into different lists
-            InsertDeclarationsIntoScope(scope, statements);
+            InsertDeclarationsIntoLists(statements);
 
             // handle constant declarations
-            {
-                var constants = statements.Where(c => c is AstConstantDeclaration).Select(c => c as AstConstantDeclaration).ToList();
-                foreach (var con in constants)
-                {
-                    con.Scope = scope;
-                    scope.DefineSymbol(con);
-                }
-                foreach (var con in constants)
-                {
-                    if (con.TypeExpr != null)
-                        CollectTypeDependencies(con, con.TypeExpr);
-                    CollectTypeDependencies(con, con.Initializer);
-                }
+            ResolveConstantDeclarations();
 
-                ResolveMissingTypesOfConstantDeclarations(scope, constants);
-            }
+            // handle uses
+            foreach (var use in mAllGlobalUses)
+                AnalyseUseStatement(use);
 
             // go through all type declarations (structs, traits, enums, typedefs) and define them in the scope
             // go through all constant declarations and define them in the scope
-            DefineTypeDeclarations(scope);
+            foreach (var v in mAllGlobalVariables)
+                Pass1VariableDeclaration(v);
 
-            // go through all type declarations again and build the dependencies
-            BuildDependencies(scope);
-
+            // global variables
+            foreach (var @var in mAllGlobalVariables)
+            {
+                if (@var.TypeExpr != null)
+                    CollectTypeDependencies(@var, @var.TypeExpr);
+                if (@var.Initializer != null)
+                    CollectTypeDependencies(@var, @var.Initializer);
+            }
             // check for cyclic dependencies and resolve types of typedefs and constant variables
-            ResolveMissingTypesOfDeclarations(scope);
+            ResolveMissingTypesOfDeclarations(mAllGlobalVariables);
 
             // resolve impls (check if is polymorphic, setup scopes, check for self params in functions, etc.)
-            foreach (var impl in scope.Impls)
+            foreach (var impl in mAllImpls)
             {
                 if (impl.TraitExpr == null)
                     Pass3Impl(impl);
@@ -59,24 +53,10 @@ namespace Cheez
             }
 
             // go through all type declarations and connect impls to types
-            UpdateTypeImplMap(GlobalScope);
+            // @todo: don't think this is necessary here
+            // UpdateTypeImplMap(GlobalScope);
 
-
-            // handle uses
-            foreach (var use in scope.Uses)
-            {
-                AnalyseUseStatement(use);
-            }
-
-            // check initializers of non-constant variables declarations
-            CheckInitializersOfNonConstantVars(scope);
-
-            // compute trait members
-            foreach (var t in Traits)
-                ComputeTraitMembers(t);
-
-            // resolve function bodies
-            ResolveFunctionBodies(scope);
+            ResolveGlobalDeclarationBodies();
 
             // compute struct members of remaining structs
 
@@ -106,360 +86,121 @@ namespace Cheez
                 }
             }
         }
-        private class TypeImplList
-        {
-            public HashSet<AstImplBlock> impls;
-            public List<AstImplBlock> potentialImpls;
-            public List<AstImplBlock> temp;
 
-            public TypeImplList(List<AstImplBlock> potentials)
+        private void InsertDeclarationsIntoLists(List<AstStatement> statements)
+        {
+            foreach (var decl in statements)
             {
-                impls = new HashSet<AstImplBlock>();
-                potentialImpls = new List<AstImplBlock>(potentials);
-                temp = new List<AstImplBlock>();
+                decl.Scope = GlobalScope;
+                switch (decl)
+                {
+                    case AstConstantDeclaration con:
+                        mAllGlobalConstants.Add(con);
+                        break;
+
+                    case AstUsingStmt use:
+                        mAllGlobalUses.Add(use);
+                        break;
+
+                    case AstVariableDecl @var:
+                        mAllGlobalVariables.Add(@var);
+                        break;
+
+                    case AstImplBlock impl:
+                        mAllImpls.Add(impl);
+                        break;
+                }
             }
         }
 
-        private Dictionary<CheezType, TypeImplList> m_typeImplMap;
-
-        private IEnumerable<Dictionary<string, CheezType>> CheckIfConditionApplies(ImplConditionImplTrait cond, Dictionary<string, CheezType> polies)
+        private void ResolveConstantDeclarations()
         {
-            cond.type.Scope = cond.Scope;
-            cond.trait.Scope = cond.Scope;
-
-            var ty_expr = cond.type.Clone();
-            var tr_expr = cond.trait.Clone();
-
-            ty_expr.Scope = new Scope("temp", ty_expr.Scope);
-            tr_expr.Scope = new Scope("temp", tr_expr.Scope);
-
-            foreach (var p in polies)
+            foreach (var con in mAllGlobalConstants)
+                GlobalScope.DefineSymbol(con);
+            foreach (var con in mAllGlobalConstants)
             {
-                ty_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
-                tr_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
+                if (con.TypeExpr != null)
+                    CollectTypeDependencies(con, con.TypeExpr);
+                CollectTypeDependencies(con, con.Initializer);
             }
 
-            ty_expr.SetFlag(ExprFlags.ValueRequired, true);
-            var ty = InferType(ty_expr, null, forceInfer: true).Value as CheezType;
-            tr_expr.SetFlag(ExprFlags.ValueRequired, true);
-            var tr = InferType(tr_expr, null, forceInfer: true).Value as CheezType;
-
-            var matches = GetTraitImplForType(ty, tr, polies);
-            return matches;
+            ResolveMissingTypesOfDeclarations(mAllGlobalConstants);
         }
 
-        private (List<AstImplBlock> impls, bool maybeApplies) ImplAppliesToType(AstImplBlock impl, CheezType type)
+        private void ResolveGlobalDeclarationBodies()
         {
-            if (type.IsErrorType)
-                WellThatsNotSupposedToHappen();
-
-            // can't impl for type 'type', so always return false
-            if (type == CheezType.Type)
-                return (null, false);
-
-            if (impl.IsPolymorphic)
+            while (true)
             {
-                if (!CheezType.TypesMatch(impl.TargetType, type))
-                    return (null, false);
+                bool unresolvedStuff = false;
 
-                var poliesList = new List<Dictionary<string, CheezType>>();
+                while (mUnresolvedTraits.Count > 0)
                 {
-                    var polies = new Dictionary<string, CheezType>();
-                    CollectPolyTypes(impl.TargetType, type, polies);
-                    poliesList.Add(polies);
+                    unresolvedStuff = true;
+                    var t = mUnresolvedTraits.Dequeue();
+                    ComputeTraitMembers(t);
                 }
-
-                // @TODO: check conditions
-                if (impl.Conditions != null)
+                while (mUnresolvedStructs.Count > 0)
                 {
-                    foreach (var cond in impl.Conditions)
-                    {
-                        var newPoliesList = new List<Dictionary<string, CheezType>>();
-                        foreach (var polies in poliesList)
-                        {
-                            switch (cond)
-                            {
-                                case ImplConditionImplTrait c:
-                                    //foreach (var match in CheckIfConditionApplies(c, polies))
-                                    //    newPoliesList.Add(match);
-                                    newPoliesList.AddRange(CheckIfConditionApplies(c, polies));
-                                    break;
-
-                                case ImplConditionNotYet c:
-                                    {
-                                        var targetType = InstantiatePolyType(impl.TargetType, polies, c.Location);
-                                        var traitType = InstantiatePolyType(impl.Trait, polies, c.Location);
-                                        var impls = GetImplsForType(targetType, traitType);
-                                        if (impls.Count == 0)
-                                            newPoliesList.Add(polies);
-                                        break;
-                                    }
-
-                                case ImplConditionAny a:
-                                    {
-                                        var expr = a.Expr.Clone();
-                                        expr.AttachTo(impl, new Scope("temp", impl.Scope));
-
-                                        foreach (var p in polies)
-                                            expr.Scope.DefineTypeSymbol(p.Key, p.Value);
-
-                                        expr = InferType(expr, CheezType.Bool);
-
-                                        if (!expr.IsCompTimeValue)
-                                        {
-                                            ReportError(a.Location, $"Expression must be a compile time constant of type bool");
-                                        }
-                                        else
-                                        {
-                                            bool val = (bool)expr.Value;
-                                            if (val)
-                                                newPoliesList.Add(polies);
-                                        }
-
-                                        break;
-                                    }
-                                default: throw new NotImplementedException();
-                            }
-                        }
-                        poliesList = newPoliesList;
-                    }
+                    unresolvedStuff = true;
+                    var t = mUnresolvedStructs.Dequeue();
+                    ComputeStructMembers(t);
                 }
-
-                if (poliesList.Count == 0)
-                    return (null, true);
-
-                var result = poliesList.Select(polies =>
+                while (mUnresolvedEnums.Count > 0)
                 {
-                    if (impl.Parameters.Count != polies.Count)
-                    {
-                        // @TODO: provide location
-                        ReportError("failed to infer all impl parameters");
-                        return null;
-                    }
-
-                    return InstantiatePolyImplNew(impl, polies);
-                }).Where(it => it != null).ToList();
-                return (result, false);
-            }
-            else
-            {
-                return CheezType.TypesMatch(impl.TargetType, type) ? (new List<AstImplBlock> { impl }, false) : (null, false);
-            }
-        }
-
-        private List<Dictionary<string, CheezType>> GetTraitImplForType(CheezType type, CheezType trait, Dictionary<string, CheezType> polies)
-        {
-            if (m_typeImplMap.TryGetValue(type, out var _list))
-            {
-                var result = new List<Dictionary<string, CheezType>>();
-
-                foreach (var impl in _list.impls)
-                {
-                    if (CheezType.TypesMatch(impl.Trait, trait))
-                    {
-                        var p = new Dictionary<string, CheezType>(polies);
-                        CollectPolyTypes(trait, impl.Trait, p);
-                        result.Add(p);
-                    }
+                    unresolvedStuff = true;
+                    var t = mUnresolvedEnums.Dequeue();
+                    ComputeEnumMembers(t);
                 }
-
-                return result;
-            }
-            else if (type.IsPolyType)
-            {
-                var result = new List<Dictionary<string, CheezType>>();
-
-                foreach (var kv in m_typeImplMap)
+                while (mUnresolvedFunctions.Count > 0)
                 {
-                    if (!CheezType.TypesMatch(type, kv.Key))
+                    unresolvedStuff = true;
+                    var t = mUnresolvedFunctions.Dequeue();
+                    AnalyseFunction(t);
+                }
+                while (mUnresolvedImpls.Count > 0)
+                {
+                    unresolvedStuff = true;
+                    var i = mUnresolvedImpls.Dequeue();
+
+                    //if (i.TraitExpr != null && i.Trait == null)
+                    if (i.Trait?.IsErrorType ?? false)
+                    {
+                        // an error has been reported elsewhere, we don't need to analyse the functions
                         continue;
-
-                    foreach (var impl in kv.Value.impls)
-                    {
-                        if (impl.Trait == trait)
-                        {
-                            var p = new Dictionary<string, CheezType>(polies);
-                            CollectPolyTypes(type, kv.Key, p);
-                            result.Add(p);
-                        }
                     }
-                }
 
-                return result;
-            }
-
-            return new List<Dictionary<string, CheezType>>();
-        }
-
-        private List<AstImplBlock> GetImplsForType(CheezType type, CheezType trait = null)
-        {
-            var impls = GetImplsForTypeHelper(type);
-            if (trait != null)
-                return impls.Where(i => i.Trait == trait).ToList();
-            return impls.ToList();
-        }
-
-        private HashSet<AstImplBlock> GetImplsForTypeHelper(CheezType type)
-        {
-            if (type.IsErrorType)
-                WellThatsNotSupposedToHappen();
-
-            if (m_typeImplMap == null)
-                UpdateTypeImplMap(GlobalScope);
-
-            if (m_typeImplMap.TryGetValue(type, out var _list))
-                return _list.impls;
-
-            m_typeImplMap[type] = new TypeImplList(GlobalScope.Impls);
-
-            UpdateTypeImplMap(GlobalScope);
-
-            return m_typeImplMap[type].impls;
-        }
-
-        private void UpdateTypeImplMap(Scope scope)
-        {
-            if (m_typeImplMap == null)
-            {
-                m_typeImplMap = new Dictionary<CheezType, TypeImplList>();
-
-                foreach (var td in scope.Impls)
-                {
-                    if (td.TargetType?.IsErrorType ?? true)
+                    if (i.IsPolymorphic)
+                    {
                         continue;
-                    if (!td.IsPolymorphic && td.TargetType != null && !m_typeImplMap.ContainsKey(td.TargetType))
-                        m_typeImplMap[td.TargetType] = new TypeImplList(scope.Impls);
-                }
-            }
-
-            var changes = true;
-            while (changes)
-            {
-                changes = false;
-
-                var mapCopy = new Dictionary<CheezType, TypeImplList>(m_typeImplMap);
-
-                foreach (var kv in mapCopy)
-                {
-                    var type = kv.Key;
-                    var lists = kv.Value;
-
-                    foreach (var impl in lists.potentialImpls)
-                    {
-                        var (concreteImpls, maybeApplies) = ImplAppliesToType(impl, type);
-                        if (concreteImpls != null)
-                        {
-                            foreach (var concreteImpl in concreteImpls)
-                                lists.impls.Add(concreteImpl);
-                            changes = true;
-                        }
-                        else if (maybeApplies)
-                        {
-                            lists.temp.Add(impl);
-                        }
                     }
 
-
-                    lists.potentialImpls.Clear();
-
-                    // swap lists
-                    var tmpList = lists.temp;
-                    lists.temp = lists.potentialImpls;
-                    lists.potentialImpls = tmpList;
-                }
-            }
-        }
-
-        
-
-        private void ResolveFunctionBodies(Scope scope, int fo = 0)
-        {
-            // this is a regular for loop because AnalyseFunction might create new functions
-            // by instantiating a polymorphic function, which then in turn adds itsef to scope.Functions.
-            // That shouldn't be a problem though since these functions get added at the end of the array,
-            // so we should hit all functions exactly once.
-            for (int i = fo; i < scope.Functions.Count; i++)
-            {
-                var func = scope.Functions[i];
-                AnalyseFunction(func);
-            }
-
-            int functionCount = scope.Functions.Count;
-
-            for (int i = 0; i < scope.Impls.Count; i++)
-                scope.unresolvedImpls.Enqueue(scope.Impls[i]);
-
-            while (scope.unresolvedImpls.Count > 0)
-            {
-                var i = scope.unresolvedImpls.Dequeue();
-
-                //if (i.TraitExpr != null && i.Trait == null)
-                if (i.Trait?.IsErrorType ?? false)
-                {
-                    // an error has been reported elsewhere, we don't need to analyse the functions
-                    continue;
+                    foreach (var f in i.Functions)
+                    {
+                        AnalyseFunction(f);
+                    }
                 }
 
-                if (i.IsPolymorphic)
-                {
-                    continue;
-                }
-
-                foreach (var f in i.Functions)
-                {
-                    AnalyseFunction(f);
-                }
-            }
-
-            if (scope.Functions.Count > functionCount)
-                ResolveFunctionBodies(scope, functionCount);
-        }
-
-        private void CheckInitializersOfNonConstantVars(Scope scope)
-        {
-            foreach (var v in scope.Variables.Where(x => !x.Type.IsErrorType))
-            {
-                var type = v.Type;
-                v.Initializer = InferType(v.Initializer, type);
-                ConvertLiteralTypeToDefaultType(v.Initializer, type);
-
-                if (v.Initializer.Type.IsErrorType)
-                {
+                if (!unresolvedStuff)
                     break;
-                }
-
-                if (v.TypeExpr != null)
-                {
-                    v.Initializer = HandleReference(v.Initializer, type, null);
-                    v.Initializer = CheckType(v.Initializer, type);
-                }
-                else
-                {
-                    if (v.Initializer.Type is ReferenceType)
-                        v.Initializer = Deref(v.Initializer, null);
-                }
-
-                AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
-
-                if (v.TypeExpr == null)
-                    v.Type = v.Initializer.Type;
             }
         }
 
-        private bool ValidatePolymorphicParameterType(ILocation location, CheezType type)
+        private void ResolveMissingTypesOfDeclarations(IEnumerable<AstDecl> declarations)
         {
-            switch (type)
-            {
-                case CheezTypeType _: return true;
+            var whiteSet = new HashSet<AstDecl>();
+            var greySet = new HashSet<AstDecl>();
+            var chain = new Dictionary<AstDecl, AstDecl>();
 
-                default:
-                    ReportError(location, $"The type {type} is not allowed here");
-                    return false;
+            whiteSet.UnionWith(declarations);
+
+            while (whiteSet.Count > 0)
+            {
+                var x = whiteSet.First();
+                ResolveMissingTypesOfDeclarationsHelper(x, whiteSet, greySet, chain);
             }
         }
 
         private void ResolveMissingTypesOfDeclarationsHelper(
-            Scope scope,
             AstDecl decl,
             HashSet<AstDecl> whiteSet,
             HashSet<AstDecl> greySet,
@@ -491,7 +232,7 @@ namespace Cheez
                 else if (whiteSet.Contains(dep))
                 {
                     chain[decl] = dep;
-                    ResolveMissingTypesOfDeclarationsHelper(scope, dep, whiteSet, greySet, chain);
+                    ResolveMissingTypesOfDeclarationsHelper(dep, whiteSet, greySet, chain);
                 }
             }
 
@@ -541,16 +282,6 @@ namespace Cheez
                             type = v.Type = t;
                         }
 
-                        // this must happen later after we computed the types of struct/enum/trait members
-                        // except for const variables, compute them now
-
-                        // @todo: im confused. i think this shouldn't be here.
-                        //if (!v.Constant)
-                        //{
-                        //    AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
-                        //    break;
-                        //}
-
                         v.Initializer.SetFlag(ExprFlags.ValueRequired, true);
                         v.Initializer = InferType(v.Initializer, type);
                         ConvertLiteralTypeToDefaultType(v.Initializer, type);
@@ -572,99 +303,16 @@ namespace Cheez
                                 v.Initializer = Deref(v.Initializer, null);
                         }
 
-                        AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
-
                         if (v.TypeExpr == null)
                             v.Type = v.Initializer.Type;
+
+                        AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
+
                         break;
                     }
             }
 
             greySet.Remove(decl);
-        }
-
-        private void ResolveMissingTypesOfConstantDeclarations(Scope scope, List<AstConstantDeclaration> decls)
-        {
-            var whiteSet = new HashSet<AstDecl>();
-            var greySet = new HashSet<AstDecl>();
-            var chain = new Dictionary<AstDecl, AstDecl>();
-
-            whiteSet.UnionWith(decls);
-
-            while (whiteSet.Count > 0)
-            {
-                var x = whiteSet.First();
-                ResolveMissingTypesOfDeclarationsHelper(scope, x, whiteSet, greySet, chain);
-            }
-        }
-
-        private void ResolveMissingTypesOfDeclarations(Scope scope)
-        {
-            var whiteSet = new HashSet<AstDecl>();
-            var greySet = new HashSet<AstDecl>();
-            var chain = new Dictionary<AstDecl, AstDecl>();
-
-            whiteSet.UnionWith(scope.Variables);
-
-            while (whiteSet.Count > 0)
-            {
-                var x = whiteSet.First();
-                ResolveMissingTypesOfDeclarationsHelper(scope, x, whiteSet, greySet, chain);
-            }
-        }
-
-        private void BuildDependencies(Scope scope)
-        {
-            foreach (var @var in scope.Variables)
-            {
-                CollectTypeDependencies(@var, @var.TypeExpr);
-                CollectTypeDependencies(@var, @var.Initializer);
-            }
-        }
-
-        private void DefineTypeDeclarations(Scope scope)
-        {
-            foreach (var v in scope.Variables)
-                Pass1VariableDeclaration(v);
-            foreach (var v in scope.Impls)
-                Pass1Impl(v);
-        }
-
-        private static void InsertDeclarationsIntoScope(Scope scope, List<AstStatement> statements)
-        {
-            foreach (var decl in statements)
-            {
-                decl.Scope = scope;
-                decl.Position = scope.NextPosition();
-
-                switch (decl)
-                {
-                    case AstConstantDeclaration d:
-                        {
-
-                            break;
-                        }
-
-                    case AstUsingStmt use:
-                        {
-                            scope.Uses.Add(use);
-                            break;
-                        }
-
-                    case AstVariableDecl @var:
-                        {
-                            scope.Variables.Add(@var);
-                            break;
-                        }
-
-                    case AstImplBlock impl:
-                        {
-                            impl.SubScope = new Scope($"impl", impl.Scope);
-                            scope.Impls.Add(impl);
-                            break;
-                        }
-                }
-            }
         }
     }
 }

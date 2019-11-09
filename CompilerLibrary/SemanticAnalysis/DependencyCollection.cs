@@ -113,6 +113,15 @@ namespace Cheez
                             CollectTypeDependencies(decl, val);
                         break;
                     }
+
+                case AstBinaryExpr b:
+                    CollectTypeDependencies(decl, b.Left);
+                    CollectTypeDependencies(decl, b.Right);
+                    break;
+
+                case AstUnaryExpr u:
+                    CollectTypeDependencies(decl, u.SubExpr);
+                    break;
             }
         }
     }

@@ -140,14 +140,6 @@ namespace Cheez
                                 .OrderByDescending(s => s.order);
 
         //
-        public List<AstConstantDeclaration> ConstantDeclarations { get; } = new List<AstConstantDeclaration>();
-        public List<AstUsingStmt> Uses { get; } = new List<AstUsingStmt>();
-
-        public List<AstVariableDecl> Variables { get; } = new List<AstVariableDecl>();
-        public List<AstFuncExpr> Functions { get; } = new List<AstFuncExpr>();
-        public List<AstImplBlock> Impls { get; } = new List<AstImplBlock>();
-
-        public Queue<AstImplBlock> unresolvedImpls { get; } = new Queue<AstImplBlock>();
         //
 
         public IEnumerable<KeyValuePair<string, ISymbol>> Symbols => mSymbolTable.AsEnumerable();
@@ -790,17 +782,6 @@ namespace Cheez
                 return v;
             }
             return Parent?.GetSymbol(name);
-        }
-
-        public IEnumerable<AstFuncExpr> GetFunctionsWithDirective(string directive)
-        {
-            foreach (var f in Functions)
-                if (f.HasDirective(directive))
-                    yield return f;
-
-            if (Parent != null)
-                foreach (var f in Parent.GetFunctionsWithDirective(directive))
-                    yield return f;
         }
 
         public bool DefineImplFunction(AstFuncExpr f)

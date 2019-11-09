@@ -261,8 +261,20 @@ namespace Cheez.Visitors
 
             sb.Append(" : ");
             sb.Append(decl.Initializer.Accept(this));
-            sb.Append(" = ");
-            sb.Append(decl.Initializer.Value);
+
+            switch (decl.Initializer)
+            {
+                case AstStructTypeExpr _:
+                case AstEnumTypeExpr _:
+                case AstTraitTypeExpr _:
+                case AstFuncExpr _:
+                    break;
+
+                default:
+                    sb.Append(" = ");
+                    sb.Append(decl.Initializer.Value);
+                    break;
+            }
             return sb.ToString();
         }
 
@@ -675,7 +687,7 @@ namespace Cheez.Visitors
 
         public override string VisitUfcFuncExpr(AstUfcFuncExpr expr, int data = 0)
         {
-            return $"{expr.SelfArg.Type}::{expr.FunctionDecl.Name}";
+            return $"{expr.SelfArg}.{expr.FunctionDecl.Name}";
         }
 
         public override string VisitTempVarExpr(AstTempVarExpr te, int data = 0)
