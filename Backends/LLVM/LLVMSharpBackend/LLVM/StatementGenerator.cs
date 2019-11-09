@@ -344,14 +344,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             visited.Add(decl);
         }
 
-        public void GenerateVariableDecl(AstVariableDecl decl)
+        private void GenerateVariableDecl(AstVariableDecl decl)
         {
             if (decl.Type.IsComptimeOnly)
                 return;
 
             foreach (var v in decl.SubDeclarations)
             {
-                var varPtr = CreateLocalVariable(v.Type, v.Name.Name);
+                var varPtr = CreateLocalVariable(v.Type);
                 valueMap[v] = varPtr;
 
                 if (v.Initializer != null)
@@ -362,7 +362,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
-        public void GenerateReturnStatement(AstReturnStmt ret)
+        private void GenerateReturnStatement(AstReturnStmt ret)
         {
             if (ret.ReturnValue != null)
             {

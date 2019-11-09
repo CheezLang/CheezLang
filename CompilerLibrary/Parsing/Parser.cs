@@ -63,7 +63,7 @@ namespace Cheez.Parsing
             }, end);
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         [DebuggerStepThrough]
         public void SkipNewlines()
         {
@@ -84,7 +84,7 @@ namespace Cheez.Parsing
             }
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         [DebuggerStepThrough]
         public Token NextToken()
         {
@@ -94,7 +94,7 @@ namespace Cheez.Parsing
             return mCurrentToken;
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         [DebuggerStepThrough]
         public void ReportError(TokenLocation location, string message)
         {
@@ -102,7 +102,7 @@ namespace Cheez.Parsing
             mErrorHandler.ReportError(mLexer.Text, new Location(location), message, null, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         [DebuggerStepThrough]
         public void ReportError(ILocation location, string message)
         {
@@ -140,7 +140,7 @@ namespace Cheez.Parsing
             return true;
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         [DebuggerStepThrough]
         public Token Consume(TokenType type, ErrorMessageResolver customErrorMessage)
         {
@@ -149,7 +149,7 @@ namespace Cheez.Parsing
             return CurrentToken;
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         [DebuggerStepThrough]
         public Token ConsumeUntil(TokenType type, ErrorMessageResolver customErrorMessage)
         {
@@ -244,7 +244,7 @@ namespace Cheez.Parsing
             return mLexer.PeekToken();
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         public Token ReadToken(bool SkipNewLines = false)
         {
             while (true)

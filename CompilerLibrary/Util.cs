@@ -7,7 +7,8 @@ using System.Text.RegularExpressions;
 
 namespace Cheez.Util
 {
-    public class SkipInStackFrame : Attribute
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    public class SkipInStackFrameAttribute : Attribute
     { }
 
     public class Reference<T>
@@ -67,7 +68,7 @@ namespace Cheez.Util
         {
             foreach (var (f, t) in reps)
             {
-                str = str.Replace(f, t);
+                str = str.Replace(f, t, StringComparison.InvariantCulture);
             }
             return str;
         }
@@ -135,7 +136,7 @@ namespace Cheez.Util
             argList = argList ?? new List<string>();
             var args = string.Join(" ", argList.Select(a =>
             {
-                if (a.Contains(" "))
+                if (a.Contains(" ", StringComparison.InvariantCulture))
                     return $"\"{a}\"";
                 return a;
             }));
@@ -178,8 +179,9 @@ namespace Cheez.Util
             return process;
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         [DebuggerStepThrough]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Exception not required. This is for error reporting only.")]
         public static (string function, string file, int line)? GetCallingFunction()
         {
             try
@@ -190,7 +192,7 @@ namespace Cheez.Util
                 foreach (var frame in frames)
                 {
                     var method = frame.GetMethod();
-                    var attribute = method.GetCustomAttributesData().FirstOrDefault(d => d.AttributeType == typeof(SkipInStackFrame));
+                    var attribute = method.GetCustomAttributesData().FirstOrDefault(d => d.AttributeType == typeof(SkipInStackFrameAttribute));
                     if (attribute != null)
                         continue;
 

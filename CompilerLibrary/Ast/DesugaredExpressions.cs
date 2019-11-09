@@ -75,7 +75,8 @@ namespace Cheez.Ast.Expressions
         public override bool IsPolymorphic => false;
 
         public AstExpression Expr { get; set; }
-        public readonly int Id = ++_id_gen;
+        private readonly int _id = ++_id_gen;
+        public int Id => _id;
 
         public bool StorePointer { get; set; } = false;
 

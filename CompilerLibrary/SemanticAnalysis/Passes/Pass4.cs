@@ -15,7 +15,7 @@ namespace Cheez
     /// </summary>
     public partial class Workspace
     {
-        private void CheckForSelfParam(AstFuncExpr func)
+        private static void CheckForSelfParam(AstFuncExpr func)
         {
             if (func.Parameters.Count > 0)
             {

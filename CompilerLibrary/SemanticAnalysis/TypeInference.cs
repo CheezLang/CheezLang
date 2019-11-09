@@ -20,23 +20,23 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        public class TypeInferenceContext
+        private class TypeInferenceContext
         {
-            public List<AstFuncExpr> newPolyFunctions;
-            public List<AstDecl> newPolyDeclarations;
-            public HashSet<AstDecl> dependencies;
-            public bool resolve_poly_expr_to_concrete_type;
-            public bool forceInfer = false;
-            public CheezType functionExpectedReturnType = null;
-            public bool is_global = false;
+            internal List<AstFuncExpr> newPolyFunctions;
+            internal List<AstDecl> newPolyDeclarations;
+            internal HashSet<AstDecl> dependencies;
+            internal bool resolve_poly_expr_to_concrete_type;
+            internal bool forceInfer = false;
+            internal CheezType functionExpectedReturnType = null;
+            internal bool is_global = false;
         }
 
-        private bool IsLiteralType(CheezType t)
+        private static bool IsLiteralType(CheezType t)
         {
             return t == IntType.LiteralType || t == FloatType.LiteralType || t == CheezType.StringLiteral || t == PointerType.NullLiteralType;
         }
 
-        private CheezType UnifyTypes(CheezType concrete, CheezType literal)
+        private static CheezType UnifyTypes(CheezType concrete, CheezType literal)
         {
             if (concrete is ReferenceType r)
                 concrete = r.TargetType;
@@ -50,7 +50,7 @@ namespace Cheez
             return LiteralTypeToDefaultType(literal);
         }
 
-        private CheezType LiteralTypeToDefaultType(CheezType literalType, CheezType expected = null)
+        private static CheezType LiteralTypeToDefaultType(CheezType literalType, CheezType expected = null)
         {
             // :hack
             if (expected == CheezType.Void) expected = null;
@@ -77,7 +77,7 @@ namespace Cheez
             return literalType;
         }
 
-        private void ConvertLiteralTypeToDefaultType(AstExpression expr, CheezType expected)
+        private static void ConvertLiteralTypeToDefaultType(AstExpression expr, CheezType expected)
         {
             expr.Type = LiteralTypeToDefaultType(expr.Type, expected);
         }
@@ -91,13 +91,13 @@ namespace Cheez
             return expr;
         }
 
-        public AstExpression InferType(AstExpression expr, CheezType expected, bool resolve_poly_expr_to_concrete_type = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
+        public AstExpression InferType(AstExpression expr, CheezType expected, bool resolvePolyExprToConcreteType = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
         {
             var context = new TypeInferenceContext
             {
                 newPolyFunctions = new List<AstFuncExpr>(),
                 //newPolyDeclarations = new List<AstDecl>(),
-                resolve_poly_expr_to_concrete_type = resolve_poly_expr_to_concrete_type,
+                resolve_poly_expr_to_concrete_type = resolvePolyExprToConcreteType,
                 dependencies = dependencies,
                 forceInfer = forceInfer
             };
@@ -142,7 +142,7 @@ namespace Cheez
                     return InferTypeEnumTypeExpr(e);
 
                 case AstStructTypeExpr s:
-                    return InferTypeStructTypeExpr(s, expected);
+                    return InferTypeStructTypeExpr(s);
 
                 case AstNullExpr n:
                     return InferTypesNullExpr(n, expected);
@@ -157,7 +157,7 @@ namespace Cheez
                     return InferTypesStringLiteral(s, expected);
 
                 case AstCharLiteral ch:
-                    return InferTypesCharLiteral(ch, expected);
+                    return InferTypesCharLiteral(ch);
 
                 case AstIdExpr i:
                     return InferTypesIdExpr(i, expected, context);
@@ -234,14 +234,11 @@ namespace Cheez
                 case AstFunctionTypeExpr func:
                     return InferTypeFunctionTypeExpr(func, context);
 
-                case AstImplTraitTypeExpr implTrait:
-                    return InferTypeImplTraitTypeExpr(implTrait, context);
-
                 case AstTypeRef typeRef:
                     return InferTypeTypeRefExpr(typeRef);
 
                 case AstDefaultExpr def:
-                    return InferTypeDefaultExpr(def, expected, context);
+                    return InferTypeDefaultExpr(def, expected);
 
                 case AstMatchExpr m:
                     return InferTypeMatchExpr(m, expected, context);
@@ -253,7 +250,7 @@ namespace Cheez
                     return InferTypeLambdaExpr(l, expected, context);
 
                 case AstFunctionRef f:
-                    return InferTypeFunctionRef(f, expected, context);
+                    return InferTypeFunctionRef(f);
 
                 case AstBreakExpr b:
                     return InferTypeBreak(b);
@@ -262,7 +259,7 @@ namespace Cheez
                     return InferTypeContinue(b);
 
                 case AstRangeExpr r:
-                    return InferTypeRangeExpr(r, expected, context);
+                    return InferTypeRangeExpr(r, context);
 
                 default:
                     throw new NotImplementedException();
@@ -639,7 +636,7 @@ namespace Cheez
             }
         }
 
-        private AstExpression InferTypeStructTypeExpr(AstStructTypeExpr expr, CheezType expected)
+        private AstExpression InferTypeStructTypeExpr(AstStructTypeExpr expr)
         {
             if (expr.IsPolyInstance)
             {
@@ -689,7 +686,7 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression InferTypeRangeExpr(AstRangeExpr r, CheezType expected, TypeInferenceContext context)
+        private AstExpression InferTypeRangeExpr(AstRangeExpr r, TypeInferenceContext context)
         {
             r.From.AttachTo(r);
             r.To.AttachTo(r);
@@ -774,15 +771,10 @@ namespace Cheez
             return br;
         }
 
-        private AstExpression InferTypeFunctionRef(AstFunctionRef f, CheezType expected, TypeInferenceContext context)
+        private static AstExpression InferTypeFunctionRef(AstFunctionRef f)
         {
             f.Type = f.Declaration.Type;
             return f;
-        }
-
-        private AstExpression InferTypeImplTraitTypeExpr(AstImplTraitTypeExpr implTrait, TypeInferenceContext context)
-        {
-            throw new NotImplementedException();
         }
 
         private AstExpression InferTypeLambdaExpr(AstLambdaExpr expr, CheezType expected, TypeInferenceContext context)
@@ -883,7 +875,7 @@ namespace Cheez
 
                         if (args.Count == g.Declaration.Parameters.Count)
                         {
-                            var instance = InstantiatePolyEnum(g.Declaration, args, context.newPolyDeclarations, expr.Location);
+                            var instance = InstantiatePolyEnum(g.Declaration, args, expr.Location);
                             if (instance != null)
                             {
                                 ComputeEnumMembers(instance);
@@ -1215,7 +1207,7 @@ namespace Cheez
             return pattern;
         }
 
-        private AstExpression InferTypeDefaultExpr(AstDefaultExpr expr, CheezType expected, TypeInferenceContext context)
+        private AstExpression InferTypeDefaultExpr(AstDefaultExpr expr, CheezType expected)
         {
             expr.IsCompTimeValue = true;
             if (expected == null)
@@ -1321,13 +1313,13 @@ namespace Cheez
             }
         }
 
-        private AstExpression InferTypeTypeRefExpr(AstTypeRef expr)
+        private static AstExpression InferTypeTypeRefExpr(AstTypeRef expr)
         {
             expr.Type = CheezType.Type;
             return expr;
         }
 
-        private AstExpression InferTypeSymbolExpr(AstSymbolExpr s)
+        private static AstExpression InferTypeSymbolExpr(AstSymbolExpr s)
         {
             s.Type = s.Symbol.Type;
             s.SetFlag(ExprFlags.IsLValue, true);
@@ -1342,7 +1334,7 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression InferTypeBoolExpr(AstBoolExpr expr)
+        private static AstExpression InferTypeBoolExpr(AstBoolExpr expr)
         {
             expr.Type = CheezType.Bool;
             expr.Value = expr.BoolValue;
@@ -1510,13 +1502,13 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression InferTypeUfcFuncExpr(AstUfcFuncExpr expr)
+        private static AstExpression InferTypeUfcFuncExpr(AstUfcFuncExpr expr)
         {
             expr.Type = expr.FunctionDecl.Type;
             return expr;
         }
 
-        private AstExpression InferTypesNullExpr(AstNullExpr expr, CheezType expected)
+        private static AstExpression InferTypesNullExpr(AstNullExpr expr, CheezType expected)
         {
             expr.IsCompTimeValue = true;
             if (expected is PointerType)
@@ -2034,11 +2026,11 @@ namespace Cheez
                             return false;
                         }
 
-                        bool is_os = val?.ToLowerInvariant() switch
+                        bool is_os = val?.ToUpperInvariant() switch
                         {
-                            "windows" => RuntimeInformation.IsOSPlatform(OSPlatform.Windows),
-                            "linux" => RuntimeInformation.IsOSPlatform(OSPlatform.Linux),
-                            "osx" => RuntimeInformation.IsOSPlatform(OSPlatform.OSX),
+                            "WINDOWS" => RuntimeInformation.IsOSPlatform(OSPlatform.Windows),
+                            "LINUX" => RuntimeInformation.IsOSPlatform(OSPlatform.Linux),
+                            "OSX" => RuntimeInformation.IsOSPlatform(OSPlatform.OSX),
                             _ => unknownPlatform(val)
                         };
 
@@ -3372,7 +3364,7 @@ namespace Cheez
             {
                 case FunctionType f:
                     {
-                        var newExpr = InferRegularFunctionCall(f, expr, expected, context);
+                        var newExpr = InferRegularFunctionCall(f, expr, context);
 
                         // check if it is a macro call
                         if (!newExpr.Type.IsErrorType && newExpr is AstCallExpr call && call.Declaration != null && call.Declaration.IsMacroFunction)
@@ -3385,7 +3377,7 @@ namespace Cheez
 
                 case GenericFunctionType g:
                     {
-                        var newExpr = InferGenericFunctionCall(g, expr, expected, context);
+                        var newExpr = InferGenericFunctionCall(g, expr, context);
 
                         // check if it is a macro call
                         if (!newExpr.Type.IsErrorType && newExpr is AstCallExpr call
@@ -3532,7 +3524,7 @@ namespace Cheez
 
                 // instantiate struct
                 var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
-                var instance = InstantiatePolyStruct(strType.Declaration, args, context.newPolyDeclarations, expr);
+                var instance = InstantiatePolyStruct(strType.Declaration, args, expr);
                 expr.Type = CheezType.Type;
                 expr.Value = instance.StructType ?? CheezType.Error;
 
@@ -3553,7 +3545,7 @@ namespace Cheez
 
                 // instantiate enum
                 var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
-                var instance = InstantiatePolyEnum(@enum.Declaration, args, context.newPolyDeclarations, expr);
+                var instance = InstantiatePolyEnum(@enum.Declaration, args, expr);
                 expr.Type = CheezType.Type;
                 expr.Value = instance.EnumType ?? CheezType.Error;
 
@@ -3756,7 +3748,7 @@ namespace Cheez
             return true;
         }
 
-        private AstExpression InferGenericFunctionCall(GenericFunctionType func, AstCallExpr expr, CheezType expected, TypeInferenceContext context)
+        private AstExpression InferGenericFunctionCall(GenericFunctionType func, AstCallExpr expr, TypeInferenceContext context)
         {
             var decl = func.Declaration;
 
@@ -3909,7 +3901,7 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression InferRegularFunctionCall(FunctionType func, AstCallExpr expr, CheezType expected, TypeInferenceContext context)
+        private AstExpression InferRegularFunctionCall(FunctionType func, AstCallExpr expr, TypeInferenceContext context)
         {
             // check if call is from trait to non ref self param function
             if (func.Declaration?.Trait != null)
@@ -4345,7 +4337,7 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression InferTypesCharLiteral(AstCharLiteral expr, CheezType expected)
+        private static AstExpression InferTypesCharLiteral(AstCharLiteral expr)
         {
             expr.Type = CheezType.Char;
             expr.CharValue = expr.RawValue[0];

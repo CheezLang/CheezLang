@@ -66,8 +66,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef currentLLVMFunction;
         private IRBuilder builder;
         private LLVMBuilderRef rawBuilder;
-        private Dictionary<object, LLVMValueRef> returnValuePointer = new Dictionary<object, LLVMValueRef>();
-        private LLVMBasicBlockRef currentTempBasicBlock;
 
         public LLVMCodeGenerator(bool enableStackTrace)
         {
@@ -108,7 +106,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         public bool GenerateCode(Workspace workspace, string intDir, string outDir, string targetFile, bool optimize, bool outputIntermediateFile)
         {
-            this.workspace = workspace;
+            this.workspace = workspace ?? throw new ArgumentNullException(nameof(workspace));
             this.intDir = Path.GetFullPath(intDir ?? "");
             this.outDir = Path.GetFullPath(outDir ?? "");
             this.targetFile = targetFile;
@@ -161,7 +159,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 GenerateVTables();
 
                 // create declarations
-                foreach (var function in workspace.mFunctions)
+                foreach (var function in workspace.Functions)
                     if (!function.IsGeneric)
                         GenerateFunctionHeader(function);
 
@@ -183,7 +181,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 GenerateMainFunction();
 
                 // create implementations
-                foreach (var function in workspace.mFunctions)
+                foreach (var function in workspace.Functions)
                 {
 
                     if (!function.IsGeneric)
@@ -252,7 +250,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return LLVMLinker.Link(workspace, exeFile, objFile, libraryIncludeDirectories, libraries, subsystem, errorHandler);
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                return ClangLinker.Link(workspace, exeFile, objFile, libraryIncludeDirectories, libraries, subsystem, errorHandler);
+                return ClangLinker.Link(workspace, exeFile, objFile, libraries);
             else
                 throw new NotImplementedException();
         }
@@ -351,7 +349,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         break;
                 }
 
-            var ltype = LLVM.FunctionType(returnType, new LLVMTypeRef[0], false);
+            var ltype = LLVM.FunctionType(returnType, Array.Empty<LLVMTypeRef>(), false);
             var lfunc = module.AddFunction(mainFuncName, ltype);
             var entry = lfunc.AppendBasicBlock("entry");
             var main = lfunc.AppendBasicBlock("main");
@@ -365,7 +363,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var visited = new HashSet<AstVariableDecl>();
 
                 // init global variables
-                foreach (var gv in workspace.mVariables)
+                foreach (var gv in workspace.Variables)
                 {
                     InitGlobalVariable(gv, visited);
                 }
@@ -378,12 +376,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var cheezMain = valueMap[workspace.MainFunction];
                 if (workspace.MainFunction.ReturnTypeExpr == null)
                 {
-                    builder.CreateCall(cheezMain, new LLVMValueRef[0], "");
+                    builder.CreateCall(cheezMain, Array.Empty<LLVMValueRef>(), "");
                     builder.CreateRet(LLVM.ConstInt(returnType, 0, false));
                 }
                 else
                 {
-                    var exitCode = builder.CreateCall(cheezMain, new LLVMValueRef[0], "exitCode");
+                    var exitCode = builder.CreateCall(cheezMain, Array.Empty<LLVMValueRef>(), "exitCode");
                     builder.CreateRet(exitCode);
                 }
             }

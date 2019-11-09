@@ -28,14 +28,11 @@ namespace Cheez
 
     public class ConstSymbol : ITypedSymbol
     {
-        private static int _id_counter = 0;
-
         public ILocation Location => null;
         public string Name { get; private set; }
 
         public CheezType Type { get; private set; }
         public object Value { get; private set; }
-        public readonly int Id = _id_counter++;
 
         public ConstSymbol(string name, CheezType type, object value)
         {
@@ -62,7 +59,7 @@ namespace Cheez
     public class Using : ITypedSymbol
     {
         public CheezType Type => Expr.Type;
-        public string Name => throw new NotImplementedException();
+        public string Name => null;
 
         public AstExpression Expr { get; }
 
@@ -87,7 +84,7 @@ namespace Cheez
 
 
 
-    public struct SymbolStatus
+    public class SymbolStatus
     {
         public enum Kind
         {
@@ -96,7 +93,7 @@ namespace Cheez
             moved
         }
 
-        public readonly int order { get; }
+        public int order { get; }
         public ISymbol symbol { get; set; }
         public Kind kind { get; set; }
         public ILocation location { get; set; }

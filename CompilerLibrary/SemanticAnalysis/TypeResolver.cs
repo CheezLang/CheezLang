@@ -16,13 +16,13 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        public AstExpression ResolveType(AstExpression expr, TypeInferenceContext context, out CheezType type)
+        private AstExpression ResolveType(AstExpression expr, TypeInferenceContext context, out CheezType type)
         {
             expr = InferTypeHelper(expr, CheezType.Type, context);
             return ResolveTypeHelper(expr, out type);
         }
 
-        public AstExpression ResolveType(AstExpression expr, List<AstDecl> newPolyDecls, out CheezType type)
+        private AstExpression ResolveType(AstExpression expr, List<AstDecl> newPolyDecls, out CheezType type)
         {
             expr = InferTypeHelper(expr, CheezType.Type, new TypeInferenceContext
             {
@@ -31,13 +31,13 @@ namespace Cheez
             return ResolveTypeHelper(expr, out type);
         }
 
-        public AstExpression ResolveTypeNow(AstExpression expr, out CheezType type, bool resolve_poly_expr_to_concrete_type = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
+        private AstExpression ResolveTypeNow(AstExpression expr, out CheezType type, bool resolvePolyExprToConcreteType = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
         {
-            expr = InferType(expr, CheezType.Type, resolve_poly_expr_to_concrete_type, dependencies, forceInfer);
+            expr = InferType(expr, CheezType.Type, resolvePolyExprToConcreteType, dependencies, forceInfer);
             return ResolveTypeHelper(expr, out type);
         }
 
-        public AstExpression ResolveTypeHelper(AstExpression expr, out CheezType type)
+        private AstExpression ResolveTypeHelper(AstExpression expr, out CheezType type)
         {
             expr = InferType(expr, CheezType.Type);
             if (expr.Type.IsErrorType)
@@ -383,7 +383,7 @@ namespace Cheez
 
         // enum
 
-        private AstEnumTypeExpr InstantiatePolyEnum(AstEnumTypeExpr decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
+        private AstEnumTypeExpr InstantiatePolyEnum(AstEnumTypeExpr decl, List<(CheezType type, object value)> args, ILocation location = null)
         {
             if (args.Count != decl.Parameters.Count)
             {
@@ -426,7 +426,7 @@ namespace Cheez
                 instance = decl.Clone() as AstEnumTypeExpr;
                 instance.SubScope = new Scope($"enum {decl.Name}<poly>", instance.Scope);
                 instance.IsPolyInstance = true;
-                instance._isPolymorphic = false;
+                instance.IsGeneric = false;
                 instance.Template = decl;
                 decl.PolymorphicInstances.Add(instance);
                 instance.Name = decl.Name;
@@ -460,7 +460,7 @@ namespace Cheez
         }
 
         // struct
-        private AstStructTypeExpr InstantiatePolyStruct(AstStructTypeExpr decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
+        private AstStructTypeExpr InstantiatePolyStruct(AstStructTypeExpr decl, List<(CheezType type, object value)> args, ILocation location = null)
         {
             if (args.Count != decl.Parameters.Count)
             {
@@ -503,7 +503,7 @@ namespace Cheez
                 instance = decl.Clone() as AstStructTypeExpr;
                 instance.SubScope = new Scope($"struct.poly", instance.Scope);
                 instance.IsPolyInstance = true;
-                instance._isPolymorphic = false;
+                instance.IsGeneric = false;
                 instance.Template = decl;
                 instance.Name = decl.Name;
 
@@ -542,8 +542,6 @@ namespace Cheez
         private AstFuncExpr InstantiatePolyImplFunction(
             GenericFunctionType func,
             Dictionary<string, CheezType> polyTypes,
-            Dictionary<string, (CheezType type, object value)> constArgs,
-            List<AstFuncExpr> instances = null,
             ILocation location = null)
         {
             var impl = func.Declaration.ImplBlock;
@@ -562,7 +560,7 @@ namespace Cheez
 
             if (func.Declaration.ImplBlock != null && func.Declaration.ImplBlock.Trait != null)
             {
-                return InstantiatePolyImplFunction(func, polyTypes, constArgs, instances, location);
+                return InstantiatePolyImplFunction(func, polyTypes, location);
             }
 
             // check if instance already exists

@@ -14,11 +14,13 @@ namespace Cheez
     {
         // for semantic analysis
         private List<AstTraitDeclaration> mTraits = new List<AstTraitDeclaration>();
-        public List<AstVariableDecl> mVariables = new List<AstVariableDecl>();
-        public List<AstImplBlock> mImpls = new List<AstImplBlock>();
+        private List<AstVariableDecl> mVariables = new List<AstVariableDecl>();
 
-        public List<AstFuncExpr> mFunctions = new List<AstFuncExpr>();
+        private List<AstFuncExpr> mFunctions = new List<AstFuncExpr>();
         private List<AstUsingStmt> mGlobalUses = new List<AstUsingStmt>();
+
+        public IEnumerable<AstFuncExpr> Functions => mFunctions;
+        public IEnumerable<AstVariableDecl> Variables => mVariables;
 
         public IEnumerable<AstTraitDeclaration> Traits => mTraits;
         //
@@ -129,7 +131,7 @@ namespace Cheez
             }
         }
 
-        private void Pass1Impl(AstImplBlock impl)
+        private static void Pass1Impl(AstImplBlock impl)
         {
             impl.TargetTypeExpr.Scope = impl.SubScope;
 

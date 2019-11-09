@@ -26,13 +26,13 @@ namespace Cheez.CodeGeneration
 
     public static class OS
     {
-        private static IOS _os;
+        private static IOS _os = GetOS();
 
-        static OS() {
+        private static IOS GetOS() {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                _os = new OSWindows();
+                return new OSWindows();
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                _os = new OSLinux();
+                return new OSLinux();
             else
                 throw new NotImplementedException();
         }
@@ -40,12 +40,12 @@ namespace Cheez.CodeGeneration
         public static string ObjectFileExtension => _os.ObjectFileExtension;
         public static string ExecutableFileExtension => _os.ExecutableFileExtension;
 
-        public class CheezWindowsSdk
+        internal class CheezWindowsSdk
         {
-            public string Version;
-            public string Path;
-            public string UcrtPath;
-            public string UmPath;
+            public string Version { get; set; }
+            public string Path { get; set; }
+            public string UcrtPath { get; set; }
+            public string UmPath { get; set; }
         }
 
         public static string GetLatestSdkVersion(string sdkPath)
@@ -79,7 +79,7 @@ namespace Cheez.CodeGeneration
             return version;
         }
 
-        public static CheezWindowsSdk FindWindowsSdk()
+        internal static CheezWindowsSdk FindWindowsSdk()
         {
             using (var localMachine = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Default))
             using (var roots = localMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows Kits\Installed Roots", RegistryRights.ReadKey))

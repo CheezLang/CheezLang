@@ -28,7 +28,7 @@ namespace Cheez.Types.Primitive
 
     public class BoolType : CheezType
     {
-        public static BoolType Instance = new BoolType();
+        public static BoolType Instance { get; } = new BoolType();
         public override string ToString() => "bool";
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
@@ -38,7 +38,7 @@ namespace Cheez.Types.Primitive
     public class IntType : CheezType
     {
         private static Dictionary<(int, bool), IntType> sTypes = new Dictionary<(int, bool), IntType>();
-        public static IntType LiteralType = new IntType(0, false);
+        public static IntType LiteralType { get; } = new IntType(0, false);
         public static IntType DefaultType => GetIntType(8, true);
 
         private IntType(int size, bool sign) : base(size, size, true)
@@ -119,7 +119,7 @@ namespace Cheez.Types.Primitive
     public class FloatType : CheezType
     {
         private static Dictionary<int, FloatType> sTypes = new Dictionary<int, FloatType>();
-        public static FloatType LiteralType = new FloatType(0);
+        public static FloatType LiteralType { get; } = new FloatType(0);
         public static FloatType DefaultType => GetFloatType(8);
         public override bool IsErrorType => false;
         public override bool IsPolyType => false;
@@ -184,24 +184,24 @@ namespace Cheez.Types.Primitive
         {
             4 => float.PositiveInfinity,
             8 => double.PositiveInfinity,
-            _ => throw new NotImplementedException()
+            _ => throw new InvalidOperationException()
         };
         
         public double NegInf => GetSize() switch
         {
             4 => float.NegativeInfinity,
             8 => double.NegativeInfinity,
-            _ => throw new NotImplementedException()
+            _ => throw new InvalidOperationException()
         };
     }
 
     public class PointerType : CheezType
     {
-        public static int PointerSize = 8;
-        public static int PointerAlignment = 8;
+        public const int PointerSize = 8;
+        public const int PointerAlignment = 8;
 
         private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
-        public static PointerType NullLiteralType = new PointerType(null);
+        public static PointerType NullLiteralType { get; } = new PointerType(null);
 
         private PointerType(CheezType target) : base(PointerSize, PointerAlignment, true)
         {
@@ -511,7 +511,7 @@ namespace Cheez.Types.Primitive
 
     public class StringLiteralType : CheezType
     {
-        public static StringLiteralType Instance = new StringLiteralType();
+        public static StringLiteralType Instance { get; } = new StringLiteralType();
         public override bool IsPolyType => false;
         public override string ToString() => "string_literal";
         public override bool IsErrorType => false;
@@ -521,7 +521,7 @@ namespace Cheez.Types.Primitive
 
     public class CharType : CheezType
     {
-        public static CharType Instance = new CharType();
+        public static CharType Instance { get; } = new CharType();
 
         public override bool IsPolyType => false;
         public override string ToString() => "char";

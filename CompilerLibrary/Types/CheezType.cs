@@ -36,8 +36,10 @@ namespace Cheez.Types
 
         protected CheezType(int size, int align, bool hasDefault)
         {
-            if (size < 0 || align < 0)
-                throw new ArgumentOutOfRangeException();
+            if (size < 0)
+                throw new ArgumentOutOfRangeException(nameof(size));
+            if (align < 0)
+                throw new ArgumentOutOfRangeException(nameof(align));
             Size = size;
             Alignment = align;
             IsDefaultConstructable = hasDefault;
@@ -45,8 +47,10 @@ namespace Cheez.Types
 
         protected CheezType(int size, int align)
         {
-            if (size < 0 || align < 0)
-                throw new ArgumentOutOfRangeException();
+            if (size < 0)
+                throw new ArgumentOutOfRangeException(nameof(size));
+            if (align < 0)
+                throw new ArgumentOutOfRangeException(nameof(align));
             Size = size;
             Alignment = align;
             typesWithMissingProperties.Add(this);
@@ -106,6 +110,16 @@ namespace Cheez.Types
         //{
         //    return base.GetHashCode();
         //}
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
 
         public virtual int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
         {

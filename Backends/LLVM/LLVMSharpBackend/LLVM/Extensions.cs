@@ -8,6 +8,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
     {
         public static LLVMValueRef CallIntrinsic(this IRBuilder self, LLVMValueRef intr, params LLVMValueRef[] args)
         {
+            if (self is null)
+                throw new ArgumentNullException(nameof(self));
+
             return self.CreateCall(intr, args, "");
         }
     }
@@ -154,6 +157,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         public static void EmitToFile(this LLVMTargetMachineRef self, Module module, string filename)
         {
+            if (module is null)
+                throw new ArgumentNullException(nameof(module));
+
             try
             {
                 var filenameMarshaled = Marshal.StringToCoTaskMemAnsi(filename);

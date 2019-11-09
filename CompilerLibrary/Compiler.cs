@@ -44,7 +44,7 @@ namespace Cheez
         private Dictionary<string, Lexer> mLoadingFiles = new Dictionary<string, Lexer>();
         private Dictionary<string, Workspace> mWorkspaces = new Dictionary<string, Workspace>();
         public IErrorHandler ErrorHandler { get; }
-        public Dictionary<string, string> ModulePaths = new Dictionary<string, string>();
+        public Dictionary<string, string> ModulePaths { get; } = new Dictionary<string, string>();
 
         private Workspace mMainWorkspace;
         public Workspace DefaultWorkspace => mMainWorkspace;
@@ -116,12 +116,12 @@ namespace Cheez
             return file;
         }
 
-        private bool ValidateFilePath(string dir, string filePath, bool isRel, IErrorHandler eh, (string file, ILocation loc)? from, out string path)
+        private static bool ValidateFilePath(string dir, string filePath, bool isRel, IErrorHandler eh, (string file, ILocation loc)? from, out string path)
         {
             path = filePath;
 
             var extension = Path.GetExtension(path);
-            if (extension == "")
+            if (string.IsNullOrEmpty(extension))
             {
                 path += ".che";
             }
@@ -156,7 +156,7 @@ namespace Cheez
             return true;
         }
 
-        private bool RequireDirectiveArguments(List<AstExpression> args, params Type[] types)
+        private static bool RequireDirectiveArguments(List<AstExpression> args, params Type[] types)
         {
             if (args.Count != types.Length)
             {
@@ -186,7 +186,7 @@ namespace Cheez
                 string moduleName = (d.Arguments[0] as AstStringLiteral).StringValue;
                 string modulePath = (d.Arguments[1] as AstStringLiteral).StringValue;
 
-                if (modulePath.StartsWith("./"))
+                if (modulePath.StartsWith("./", StringComparison.InvariantCulture))
                 {
                     string sourceFileDir = Path.GetDirectoryName(directive.Beginning.file);
                     modulePath = Path.Combine(sourceFileDir, modulePath);
@@ -204,7 +204,7 @@ namespace Cheez
                 }
 
                 string path = f.StringValue;
-                int colon = path.IndexOf(':');
+                int colon = path.IndexOf(':', StringComparison.InvariantCulture);
                 if (colon >= path.Length - 1)
                 {
                     eh.ReportError(lexer.Text, d, "Invalid load: path can not be empty");
@@ -246,7 +246,7 @@ namespace Cheez
                 }
 
                 string libFile = f.StringValue;
-                if (libFile.StartsWith("./"))
+                if (libFile.StartsWith("./", StringComparison.InvariantCulture))
                 {
                     string sourceFileDir = Path.GetDirectoryName(directive.Beginning.file);
                     libFile = Path.Combine(sourceFileDir, f.StringValue);
@@ -366,6 +366,9 @@ namespace Cheez
 
         public string GetText(ILocation location)
         {
+            if (location is null)
+                throw new ArgumentNullException(nameof(location));
+
             var normalizedPath = Path.GetFullPath(location.Beginning.file).PathNormalize();
 
             // files

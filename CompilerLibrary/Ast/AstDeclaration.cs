@@ -145,7 +145,7 @@ namespace Cheez.Ast.Statements
         public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
         public Dictionary<string, (CheezType type, object value)> ConstParameters { get; internal set; }
 
-        public bool IsGeneric = false; // @todo: remove or rename this?
+        public bool IsGeneric { get; set; } = false; // @todo: remove or rename this?
         public override bool IsPolymorphic => IsGeneric;
         public List<AstDirective> Directives { get; protected set; }
 
@@ -250,8 +250,8 @@ namespace Cheez.Ast.Statements
 
         public Scope SubScope { get; set; }
 
-        public bool _isPolymorphic { get; set; }
-        public override bool IsPolymorphic => _isPolymorphic;
+        public bool IsGeneric { get; set; }
+        public override bool IsPolymorphic => IsGeneric;
 
         public bool IsPolyInstance { get; set; }
 
@@ -265,7 +265,7 @@ namespace Cheez.Ast.Statements
         {
             this.Parameters = param ?? new List<AstParameter>();
             this.Declarations = declarations;
-            this._isPolymorphic = Parameters.Count > 0;
+            this.IsGeneric = Parameters.Count > 0;
             this.Directives = Directives;
         }
 
@@ -561,8 +561,8 @@ namespace Cheez.Ast.Statements
 
         public Scope SubScope { get; set; }
 
-        public bool _isPolymorphic { get; set; }
-        public override bool IsPolymorphic => _isPolymorphic;
+        public bool IsGeneric { get; set; }
+        public override bool IsPolymorphic => IsGeneric;
 
         public bool IsPolyInstance { get; set; }
 
@@ -578,7 +578,7 @@ namespace Cheez.Ast.Statements
         {
             this.Parameters = param ?? new List<AstParameter>();
             this.Declarations = declarations;
-            this._isPolymorphic = Parameters.Count > 0;
+            this.IsGeneric = Parameters.Count > 0;
             this.Directives = Directives;
         }
 

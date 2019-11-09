@@ -27,10 +27,7 @@ namespace Cheez.Ast.Statements
 
     public abstract class AstStatement : IVisitorAcceptor, ILocation, IAstNode
     {
-        private static int _id_gen = 0;
-        public readonly int Id = ++_id_gen;
-
-        protected int mFlags = 0;
+        protected int mFlags { get; private set; } = 0;
 
         public ILocation Location { get; private set; }
         public TokenLocation Beginning => Location?.Beginning;
@@ -101,7 +98,7 @@ namespace Cheez.Ast.Statements
 
     public class AstDirectiveStatement : AstStatement
     {
-        public AstDirective Directive;
+        public AstDirective Directive { get; }
 
         public AstDirectiveStatement(AstDirective Directive, ILocation Location = null) : base(Location: Location)
         {
@@ -124,7 +121,7 @@ namespace Cheez.Ast.Statements
     {
         public AstStatement Deferred { get; set; }
 
-        public string Name => throw new System.NotImplementedException();
+        public string Name => null;
 
         public AstDeferStmt(AstStatement deferred, List<AstDirective> Directives = null, ILocation Location = null)
             : base(Directives, Location)

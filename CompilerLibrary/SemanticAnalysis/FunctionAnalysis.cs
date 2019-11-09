@@ -382,7 +382,7 @@ namespace Cheez
             switch (use.Value.Type)
             {
                 case CheezTypeType type:
-                    HandleUseType(use, type);
+                    HandleUseType(use);
                     break;
 
                 case StructType str:
@@ -414,7 +414,7 @@ namespace Cheez
             return use;
         }
 
-        private void HandleUseType(AstUsingStmt use, CheezTypeType type)
+        private void HandleUseType(AstUsingStmt use)
         {
             switch (use.Value.Value as CheezType)
             {

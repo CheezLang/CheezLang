@@ -13,7 +13,7 @@ namespace Cheez.Types.Complex
     public class TraitErrorType : TraitType
     {
         public override bool IsErrorType => true;
-        public TraitErrorType() : base(null, new CheezType[0])
+        public TraitErrorType() : base(null, Array.Empty<CheezType>())
         {
         }
 
@@ -304,14 +304,14 @@ namespace Cheez.Types.Complex
         public AstFuncExpr Declaration { get; set; } = null;
         public override bool IsErrorType => ReturnType.IsErrorType || Parameters.Any(p => p.type.IsErrorType);
 
-        public CallingConvention CC = CallingConvention.Default;
+        public CallingConvention CC { get; } = CallingConvention.Default;
 
         public FunctionType((string name, CheezType type, AstExpression defaultValue)[] parameterTypes, CheezType returnType, bool isFatFunc, CallingConvention cc)
             : base(PointerType.PointerSize, PointerType.PointerAlignment, true)
         {
             if (parameterTypes.Any(p => p.type == null))
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(parameterTypes));
             }
 
             this.Parameters = parameterTypes;

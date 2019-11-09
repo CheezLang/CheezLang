@@ -9,27 +9,27 @@ using System.Text;
 
 namespace Cheez.CodeGeneration.LLVMCodeGen
 {
-    class VsWhere
+    public class VsWhere
     {
-#pragma warning disable 0649 // #warning directive
-        public string instanceId;
-        public string installDate;
-        public string installationName;
-        public string installationPath;
-        public string installationVersion;
-        public string isPrerelease;
-        public string displayName;
-        public string description;
-        public string enginePath;
-        public string channelId;
-        public string channelPath;
-        public string channelUri;
-        public string releaseNotes;
-        public string thirdPartyNotices;
-#pragma warning restore CS0649 // #warning directive
+        public string instanceId { get; set; }
+        public string installDate { get; set; }
+        public string installationName { get; set; }
+        public string installationPath { get; set; }
+        public string installationVersion { get; set; }
+        public string isPrerelease { get; set; }
+        public string displayName { get; set; }
+        public string description { get; set; }
+        public string enginePath { get; set; }
+        public string channelId { get; set; }
+        public string channelPath { get; set; }
+        public string channelUri { get; set; }
+        public string releaseNotes { get; set; }
+        public string thirdPartyNotices { get; set; }
     }
 
-    public class LLVMLinker
+#pragma warning disable CA1060 // Move pinvokes to native methods class
+    public static class LLVMLinker
+#pragma warning restore CA1060 // Move pinvokes to native methods class
     {
         [DllImport(@"D:\Programming\CheezLang\LLVMLinker.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private extern static bool llvm_link_coff(string[] argv, int argc);
@@ -39,6 +39,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         public static bool Link(Workspace workspace, string targetFile, string objFile, IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
         {
+            if (workspace is null)
+                throw new ArgumentNullException(nameof(workspace));
+            if (libraryIncludeDirectories is null)
+                throw new ArgumentNullException(nameof(libraryIncludeDirectories));
+            if (errorHandler is null)
+                throw new ArgumentNullException(nameof(errorHandler));
+
             string target = null;
             switch (workspace.TargetArch)
             {
@@ -191,7 +198,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 return (v, dir);
             }
+#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception)
+#pragma warning restore CA1031 // Do not catch general exception types
             {
                 return (-1, null);
             }

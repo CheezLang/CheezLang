@@ -137,7 +137,7 @@ namespace Cheez.Types.Abstract
         public override bool IsPolyType => true;
         public override bool IsErrorType => false;
 
-        public bool IsDeclaring = false;
+        public bool IsDeclaring { get; } = false;
 
         public PolyType(string name, bool declaring = false)
             : base(0, 1, false)

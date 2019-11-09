@@ -31,14 +31,14 @@ namespace Cheez
 
         public AstFuncExpr MainFunction { get; set; }
 
-        public Dictionary<CheezType, List<AstImplBlock>> TypeTraitMap = new Dictionary<CheezType, List<AstImplBlock>>();
+        public Dictionary<CheezType, List<AstImplBlock>> TypeTraitMap { get; } = new Dictionary<CheezType, List<AstImplBlock>>();
 
         public int MaxPolyStructResolveStepCount { get; set; } = 10;
         public int MaxPolyFuncResolveStepCount { get; set; } = 10;
 
         private AstFuncExpr currentFunction = null;
 
-        public TargetArchitecture TargetArch = TargetArchitecture.X64;
+        public TargetArchitecture TargetArch { get; } = TargetArchitecture.X64;
 
         private Stack<IErrorHandler> m_errorHandlerReplacements = new Stack<IErrorHandler>();
         public IErrorHandler CurrentErrorHandler => m_errorHandlerReplacements.Count > 0 ? m_errorHandlerReplacements.Peek() : mCompiler.ErrorHandler;
@@ -137,20 +137,20 @@ namespace Cheez
             //ReportError("error");
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         public void ReportError(Error error)
         {
             CurrentErrorHandler.ReportError(error);
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         public void ReportError(string errorMessage)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
             CurrentErrorHandler.ReportError(errorMessage, callingFunctionFile, callingFunctionName, callLineNumber);
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         public void ReportError(string errorMessage, List<(string, ILocation)> details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
@@ -164,7 +164,7 @@ namespace Cheez
             });
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         public void ReportError(string errorMessage, params (string, ILocation)[] details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
@@ -178,7 +178,7 @@ namespace Cheez
             });
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         public void ReportError(string errorMessage, (string, ILocation) details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
@@ -192,7 +192,7 @@ namespace Cheez
             });
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         public void ReportError(ILocation lc, string message, (string, ILocation)? detail = null)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
@@ -208,7 +208,7 @@ namespace Cheez
             });
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         public void ReportError(ILocation lc, string message, List<Error> subErrors, params (string, ILocation)[] details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
@@ -224,7 +224,7 @@ namespace Cheez
             });
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         public void ReportError(ILocation lc, string message, params (string, ILocation)[] details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
@@ -239,7 +239,7 @@ namespace Cheez
             });
         }
 
-        [SkipInStackFrame]
+        [SkipInStackFrameAttribute]
         public void ReportError(ILocation lc, string message, IEnumerable<(string, ILocation)> details)
         {
             var (callingFunctionName, callingFunctionFile, callLineNumber) = Utilities.GetCallingFunction().GetValueOrDefault(("", "", -1));
@@ -267,9 +267,13 @@ namespace Cheez
         }
 
         private int logScope = 0;
-        private void Log(string message, params string[] comments)
+        private static void Log(string message, params string[] comments)
         {
-            return;
+            if (message is null)
+                throw new ArgumentNullException(nameof(message));
+            if (comments is null)
+                throw new ArgumentNullException(nameof(comments));
+#if false
             var indent = new string(' ', logScope * 4);
 
             var cc = System.Console.ForegroundColor;
@@ -284,6 +288,7 @@ namespace Cheez
                 System.Console.WriteLine($"      {indent}{comment}");
             }
             System.Console.ForegroundColor = cc;
+#endif
         }
 
         private void PushLogScope()
@@ -296,7 +301,7 @@ namespace Cheez
             logScope--;
         }
 
-        private void WellThatsNotSupposedToHappen(string message = null)
+        private static void WellThatsNotSupposedToHappen(string message = null)
         {
             throw new Exception($"[{message}] Well that's not supposed to happen...");
         }

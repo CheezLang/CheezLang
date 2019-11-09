@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Cheez;
@@ -85,7 +86,7 @@ namespace CheezCLI
 
                     foreach (var line in d.message.Split('\n'))
                     {
-                        if (line != "") 
+                        if (!string.IsNullOrEmpty(line)) 
                             Log("| " + line, ConsoleColor.White);
                     }
 
@@ -124,7 +125,7 @@ namespace CheezCLI
             int linesSpread = CountLines(text, index, end.end);
 
             var errorLineBackgroundColor = ConsoleColor.Black;
-            int lineNumberWidth = (end.line + linesAfter).ToString().Length;
+            int lineNumberWidth = (end.line + linesAfter).ToString(CultureInfo.InvariantCulture).Length;
 
             // lines before current line
             {
@@ -142,7 +143,7 @@ namespace CheezCLI
                 for (int i = previousLines.Count - 1; i >= 0; i--)
                 {
                     int line = lineNumber - 1 - i;
-                    LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", line), ConsoleColor.White);
+                    LogInline(string.Format(CultureInfo.InvariantCulture, $"{{0,{lineNumberWidth}}}> ", line), ConsoleColor.White);
                     Log(previousLines[i], textColor);
                 }
             }
@@ -161,7 +162,7 @@ namespace CheezCLI
                     var part2 = text.Substring(i, ei - i);
                     var part3 = text.Substring(ei, le - ei);
 
-                    LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", line + firstLine), ConsoleColor.White);
+                    LogInline(string.Format(CultureInfo.InvariantCulture, $"{{0,{lineNumberWidth}}}> ", line + firstLine), ConsoleColor.White);
 
                     LogInline(part1, textColor, errorLineBackgroundColor);
                     LogInline(part2, highlightColor, errorLineBackgroundColor);
@@ -196,14 +197,14 @@ namespace CheezCLI
                     if (lineEnd >= text.Length)
                         break;
                     var str = text.Substring(lineBegin, lineEnd - lineBegin);
-                    LogInline(string.Format($"{{0,{lineNumberWidth}}}> ", line), ConsoleColor.White);
+                    LogInline(string.Format(CultureInfo.InvariantCulture, $"{{0,{lineNumberWidth}}}> ", line), ConsoleColor.White);
                     Log(str, textColor);
                     lineBegin = lineEnd + 1;
                 }
             }
         }
 
-        private ConsoleColor GetDarkColor(ConsoleColor color)
+        private static ConsoleColor GetDarkColor(ConsoleColor color)
         {
             switch (color)
             {
@@ -218,7 +219,7 @@ namespace CheezCLI
             }
         }
 
-        private int CountLines(string text, int start, int end)
+        private static int CountLines(string text, int start, int end)
         {
             int lines = 1;
             for (; start < end && start < text.Length; start++)
@@ -230,7 +231,7 @@ namespace CheezCLI
             return lines;
         }
 
-        private int GetLineEndIndex(string text, int currentIndex)
+        private static int GetLineEndIndex(string text, int currentIndex)
         {
             for (; currentIndex < text.Length; currentIndex++)
             {
@@ -241,7 +242,7 @@ namespace CheezCLI
             return currentIndex;
         }
 
-        private int GetLineStartIndex(string text, int currentIndex)
+        private static int GetLineStartIndex(string text, int currentIndex)
         {
             if (currentIndex >= text.Length)
                 currentIndex = text.Length - 1;
@@ -258,7 +259,7 @@ namespace CheezCLI
             return 0;
         }
 
-        private void Log(string message, ConsoleColor foreground, ConsoleColor background = ConsoleColor.Black)
+        private static void Log(string message, ConsoleColor foreground, ConsoleColor background = ConsoleColor.Black)
         {
             var colf = Console.ForegroundColor;
             var colb = Console.BackgroundColor;
@@ -269,7 +270,7 @@ namespace CheezCLI
             Console.BackgroundColor = colb;
         }
 
-        private void LogInline(string message, ConsoleColor foreground, ConsoleColor background = ConsoleColor.Black)
+        private static void LogInline(string message, ConsoleColor foreground, ConsoleColor background = ConsoleColor.Black)
         {
             var colf = Console.ForegroundColor;
             var colb = Console.BackgroundColor;

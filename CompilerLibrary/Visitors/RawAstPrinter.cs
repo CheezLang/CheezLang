@@ -393,15 +393,21 @@ namespace Cheez.Visitors
         public override string VisitCharLiteralExpr(AstCharLiteral expr, int data = 0)
         {
             string v = expr.RawValue;
-            v = v.Replace("`", "``").Replace("\r", "`r").Replace("\n", "`n").Replace("\0", "`0");
+            v = v.Replace("`", "``", StringComparison.InvariantCulture)
+                .Replace("\r", "`r", StringComparison.InvariantCulture)
+                .Replace("\n", "`n", StringComparison.InvariantCulture)
+                .Replace("\0", "`0", StringComparison.InvariantCulture);
             return $"'{v}'";
         }
 
         public override string VisitStringLiteralExpr(AstStringLiteral str, int data = 0)
         {
             string v = str.StringValue;
-            v = v.Replace("`", "``").Replace("\r", "`r").Replace("\n", "`n").Replace("\0", "`0");
-            v = $"\"{v.Replace("\"", "`\"")}\"";
+            v = v.Replace("`", "``", StringComparison.InvariantCulture)
+                .Replace("\r", "`r", StringComparison.InvariantCulture)
+                .Replace("\n", "`n", StringComparison.InvariantCulture)
+                .Replace("\0", "`0", StringComparison.InvariantCulture);
+            v = $"\"{v.Replace("\"", "`\"", StringComparison.InvariantCulture)}\"";
             if (str.Suffix != null) v += str.Suffix;
             return v;
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -440,7 +441,7 @@ namespace Cheez.Visitors
             return sb.ToString();
         }
 
-        public string VisitEnumMember(AstEnumMemberNew m)
+        public static string VisitEnumMember(AstEnumMemberNew m)
         {
             var str = m.Name;
             if (m.AssociatedTypeExpr != null)
@@ -726,15 +727,18 @@ namespace Cheez.Visitors
                 case '\t': return "'`t'";
                 case '\'': return "'`''";
                 case '`': return "'``'";
-                default: return $"'{expr.CharValue.ToString()}'";
+                default: return $"'{expr.CharValue.ToString(CultureInfo.InvariantCulture)}'";
             }
         }
 
         public override string VisitStringLiteralExpr(AstStringLiteral str, int data = 0)
         {
             string v = str.StringValue;
-            v = v.Replace("`", "``").Replace("\r", "`r").Replace("\n", "`n").Replace("\0", "`0");
-            v = $"\"{v.Replace("\"", "`\"")}\"";
+            v = v.Replace("`", "``", StringComparison.InvariantCulture)
+                .Replace("\r", "`r", StringComparison.InvariantCulture)
+                .Replace("\n", "`n", StringComparison.InvariantCulture)
+                .Replace("\0", "`0", StringComparison.InvariantCulture);
+            v = $"\"{v.Replace("\"", "`\"", StringComparison.InvariantCulture)}\"";
             if (str.Suffix != null) v += str.Suffix;
             return v;
         }
@@ -750,8 +754,11 @@ namespace Cheez.Visitors
             {
                 if (c.Value is string v)
                 {
-                    v = v.Replace("`", "``").Replace("\r", "`r").Replace("\n", "`n").Replace("\0", "`0");
-                    return $"\"{v.Replace("\"", "`\"")}\"";
+                    v = v.Replace("`", "``", StringComparison.InvariantCulture)
+                        .Replace("\r", "`r", StringComparison.InvariantCulture)
+                        .Replace("\n", "`n", StringComparison.InvariantCulture)
+                        .Replace("\0", "`0", StringComparison.InvariantCulture);
+                    return $"\"{v.Replace("\"", "`\"", StringComparison.InvariantCulture)}\"";
                 }
                 else if (c.Value is NumberData nd)
                 {

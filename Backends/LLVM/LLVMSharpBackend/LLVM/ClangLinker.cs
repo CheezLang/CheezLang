@@ -9,16 +9,12 @@ using System.Text;
 
 namespace Cheez.CodeGeneration.LLVMCodeGen
 {
-    public class ClangLinker
+    public static class ClangLinker
     {
-        public static bool Link(Workspace workspace, string targetFile, string objFile, IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
+        public static bool Link(Workspace workspace, string targetFile, string objFile, IEnumerable<string> libraries)
         {
-            string target = null;
-            switch (workspace.TargetArch)
-            {
-                case TargetArchitecture.X86: target = "x86"; break;
-                case TargetArchitecture.X64: target = "x64"; break;
-            }
+            if (workspace == null)
+                throw new ArgumentNullException(nameof(workspace));
 
             foreach (var f in workspace.Files)
             {

@@ -213,7 +213,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return lfunc;
         }
 
-        private bool CanPassByValue(CheezType ct)
+        private static bool CanPassByValue(CheezType ct)
         {
             switch (ct)
             {
@@ -250,7 +250,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return t;
         }
 
-        private LLVMValueRef CreateLocalVariable(CheezType exprType, string name = "")
+        private LLVMValueRef CreateLocalVariable(CheezType exprType)
         {
             return CreateLocalVariable(CheezTypeToLLVMType(exprType));
         }

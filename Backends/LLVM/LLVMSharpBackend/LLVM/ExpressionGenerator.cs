@@ -14,7 +14,7 @@ using System.Linq;
 
 namespace Cheez.CodeGeneration.LLVMCodeGen
 {
-    public partial class LLVMCodeGenerator
+    public partial class LLVMCodeGenerator : IDisposable
     {
         //[DebuggerStepThrough()]
         private LLVMValueRef GenerateExpression(AstExpression expr, bool deref)
@@ -46,8 +46,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstBlockExpr block: return GenerateBlock(block, deref);
                 case AstIfExpr iff: return GenerateIfExpr(iff);
                 case AstBinaryExpr bin: return GenerateBinaryExpr(bin);
-                case AstCastExpr cast: return GenerateCastExpr(cast, deref);
-                case AstUfcFuncExpr ufc: return GenerateUfcFuncExpr(ufc, deref);
+                case AstCastExpr cast: return GenerateCastExpr(cast);
+                case AstUfcFuncExpr ufc: return GenerateUfcFuncExpr(ufc);
                 case AstArrayExpr arr: return GenerateArrayExpr(arr, deref);
                 case AstDefaultExpr def: return GenerateDefaultExpr(def);
                 case AstMatchExpr m: return GenerateMatchExpr(m);
@@ -501,7 +501,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return ptr;
         }
 
-        private LLVMValueRef GenerateUfcFuncExpr(AstUfcFuncExpr ufc, bool deref)
+        private LLVMValueRef GenerateUfcFuncExpr(AstUfcFuncExpr ufc)
         {
             if (ufc.FunctionDecl.TraitFunction != null)
             {
@@ -580,7 +580,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
-        private LLVMValueRef GenerateCastExpr(AstCastExpr cast, bool deref)
+        private LLVMValueRef GenerateCastExpr(AstCastExpr cast)
         {
             var to = cast.Type;
             var from = cast.SubExpression.Type;
@@ -1195,7 +1195,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var type = t.Type;
                 if (t.StorePointer) type = PointerType.GetPointerType(type);
 
-                var x = CreateLocalVariable(type, $"tempvar_{t.Id}");
+                var x = CreateLocalVariable(type);
                 valueMap[t] = x;
                 var v = GenerateExpression(t.Expr, !t.StorePointer);
                 builder.CreateStore(v, x);
@@ -1430,7 +1430,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
-        public LLVMValueRef GenerateStructValueExpr(AstStructValueExpr expr)
+        private LLVMValueRef GenerateStructValueExpr(AstStructValueExpr expr)
         {
             var str = LLVM.GetUndef(CheezTypeToLLVMType(expr.Type));
 
@@ -1443,7 +1443,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return str;
         }
 
-        public LLVMValueRef GenerateDotExpr(AstDotExpr expr, bool deref)
+        private LLVMValueRef GenerateDotExpr(AstDotExpr expr, bool deref)
         {
             var type = expr.Left.Type;
             var value = GenerateExpression(expr.Left, false);
@@ -1606,7 +1606,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             throw new NotImplementedException();
         }
 
-        public LLVMValueRef GenerateTupleExpr(AstTupleExpr expr)
+        private LLVMValueRef GenerateTupleExpr(AstTupleExpr expr)
         {
             var tuple = LLVM.GetUndef(CheezTypeToLLVMType(expr.Type));
 
@@ -1619,14 +1619,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return tuple;
         }
 
-        public LLVMValueRef GenerateCharLiteralExpr(AstCharLiteral expr)
+        private LLVMValueRef GenerateCharLiteralExpr(AstCharLiteral expr)
         {
             var ch = expr.CharValue;
             var val = LLVM.ConstInt(CheezTypeToLLVMType(expr.Type), ch, true);
             return val;
         }
 
-        public LLVMValueRef GenerateStringLiteralExpr(AstStringLiteral expr)
+        private LLVMValueRef GenerateStringLiteralExpr(AstStringLiteral expr)
         {
             var ch = expr.StringValue;
 
@@ -1649,18 +1649,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
-        public LLVMValueRef VisitStringLiteralExpr(AstStringLiteral expr)
-        {
-            throw new NotImplementedException();
-        }
-
-        public LLVMValueRef GenerateBoolExpr(AstBoolExpr expr)
+        private LLVMValueRef GenerateBoolExpr(AstBoolExpr expr)
         {
             var llvmType = CheezTypeToLLVMType(expr.Type);
             return LLVM.ConstInt(llvmType, expr.BoolValue ? 1u : 0u, false);
         }
 
-        public LLVMValueRef GenerateNumberExpr(AstNumberExpr expr)
+        private LLVMValueRef GenerateNumberExpr(AstNumberExpr expr)
         {
             var llvmType = CheezTypeToLLVMType(expr.Type);
             if (expr.Type is IntType i)
@@ -1676,7 +1671,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
-        public LLVMValueRef GenerateIdExpr(AstIdExpr expr, bool deref)
+        private LLVMValueRef GenerateIdExpr(AstIdExpr expr, bool deref)
         {
             LLVMValueRef v;
             if (expr.Symbol is AstFuncExpr func)
@@ -1702,6 +1697,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 v = builder.CreateLoad(v, "");
 
             return v;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                builder.Dispose();
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

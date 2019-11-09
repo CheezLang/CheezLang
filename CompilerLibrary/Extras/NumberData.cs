@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
 
 namespace Cheez.Extras
 {
-    public struct NumberData
+    public struct NumberData : IEquatable<NumberData>
     {
         public enum NumberType
         {
@@ -13,12 +14,12 @@ namespace Cheez.Extras
             Int
         }
 
-        public int IntBase;
-        public string StringValue;
-        public NumberType Type;
-        public BigInteger IntValue;
-        public double DoubleValue;
-        public string Error;
+        public int IntBase { get; private set; }
+        public string StringValue { get; private set; }
+        public NumberType Type { get; private set; }
+        public BigInteger IntValue { get; private set; }
+        public double DoubleValue { get; private set; }
+        public string Error { get; private set; }
 
         public NumberData(NumberType type, string val, int b)
         {
@@ -32,9 +33,9 @@ namespace Cheez.Extras
             if (type == NumberType.Int)
             {
                 if (b == 10)
-                    IntValue = BigInteger.Parse("0" + val);
+                    IntValue = BigInteger.Parse("0" + val, CultureInfo.InvariantCulture);
                 else if (b == 16)
-                    IntValue = BigInteger.Parse("0" + val, NumberStyles.HexNumber);
+                    IntValue = BigInteger.Parse("0" + val, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
                 else if (b == 2)
                 {
                     BigInteger currentDigit = 1;
@@ -128,20 +129,13 @@ namespace Cheez.Extras
             return false;
         }
 
-        public static bool operator ==(NumberData a, NumberData b)
-        {
-            if (a.Type != b.Type) return false;
-            if (a.Type == NumberType.Int) return a.IntValue == b.IntValue;
-            return a.DoubleValue == b.DoubleValue;
-        }
-
 
 
         public static NumberData FromBigInt(BigInteger num)
         {
             return new NumberData {
                 IntBase = 10,
-                StringValue = num.ToString(),
+                StringValue = num.ToString(CultureInfo.InvariantCulture),
                 Type = NumberType.Int,
                 IntValue = num,
                 DoubleValue = default,
@@ -153,7 +147,7 @@ namespace Cheez.Extras
         {
             return new NumberData {
                 IntBase = 10,
-                StringValue = num.ToString(),
+                StringValue = num.ToString(CultureInfo.InvariantCulture),
                 Type = NumberType.Float,
                 IntValue = default,
                 DoubleValue = num,
@@ -170,21 +164,33 @@ namespace Cheez.Extras
             return hashCode;
         }
 
+        public bool Equals([AllowNull] NumberData other)
+        {
+            return this == other;
+        }
+
         public static implicit operator NumberData(BigInteger bi) => FromBigInt(bi);
         public static implicit operator NumberData(int i) => FromBigInt(new BigInteger(i));
         public static implicit operator NumberData(long l) => FromBigInt(new BigInteger(l));
         public static implicit operator NumberData(double d) => FromDouble(d);
 
+
+        public static bool operator ==(NumberData a, NumberData b)
+        {
+            if (a.Type != b.Type) return false;
+            if (a.Type == NumberType.Int) return a.IntValue == b.IntValue;
+            return a.DoubleValue == b.DoubleValue;
+        }
         public static bool operator !=(NumberData a, NumberData b) => !(a == b);
+        public static bool operator >(NumberData a, NumberData b) => a.Type == b.Type && (a.Type == NumberType.Int ? a.IntValue > b.IntValue : a.DoubleValue > b.DoubleValue);
+        public static bool operator >=(NumberData a, NumberData b) => a.Type == b.Type && (a.Type == NumberType.Int ? a.IntValue >= b.IntValue : a.DoubleValue >= b.DoubleValue);
+        public static bool operator <(NumberData a, NumberData b) => a.Type == b.Type && (a.Type == NumberType.Int ? a.IntValue < b.IntValue : a.DoubleValue < b.DoubleValue);
+        public static bool operator <=(NumberData a, NumberData b) => a.Type == b.Type && (a.Type == NumberType.Int ? a.IntValue <= b.IntValue : a.DoubleValue <= b.DoubleValue);
 
         public static NumberData operator +(NumberData a, NumberData b) => a.Type == NumberType.Int ? FromBigInt(a.IntValue + b.IntValue) : FromDouble(a.DoubleValue + b.DoubleValue);
         public static NumberData operator -(NumberData a, NumberData b) => a.Type == NumberType.Int ? FromBigInt(a.IntValue - b.IntValue) : FromDouble(a.DoubleValue - b.DoubleValue);
         public static NumberData operator *(NumberData a, NumberData b) => a.Type == NumberType.Int ? FromBigInt(a.IntValue * b.IntValue) : FromDouble(a.DoubleValue * b.DoubleValue);
         public static NumberData operator /(NumberData a, NumberData b) => a.Type == NumberType.Int ? FromBigInt(a.IntValue / b.IntValue) : FromDouble(a.DoubleValue / b.DoubleValue);
         public static NumberData operator %(NumberData a, NumberData b) => a.Type == NumberType.Int ? FromBigInt(a.IntValue % b.IntValue) : FromDouble(a.DoubleValue % b.DoubleValue);
-        public static bool operator >(NumberData a, NumberData b) => a.Type == b.Type && (a.Type == NumberType.Int ? a.IntValue > b.IntValue : a.DoubleValue > b.DoubleValue);
-        public static bool operator >=(NumberData a, NumberData b) => a.Type == b.Type && (a.Type == NumberType.Int ? a.IntValue >= b.IntValue : a.DoubleValue >= b.DoubleValue);
-        public static bool operator <(NumberData a, NumberData b) => a.Type == b.Type && (a.Type == NumberType.Int ? a.IntValue < b.IntValue : a.DoubleValue < b.DoubleValue);
-        public static bool operator <=(NumberData a, NumberData b) => a.Type == b.Type && (a.Type == NumberType.Int ? a.IntValue <= b.IntValue : a.DoubleValue <= b.DoubleValue);
     }
 }

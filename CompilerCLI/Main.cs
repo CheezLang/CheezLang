@@ -321,8 +321,7 @@ namespace CheezCLI
 
         private static bool GenerateAndCompileCode(CompilerOptions options, Workspace workspace, IErrorHandler errorHandler)
         {
-
-            ICodeGenerator generator = new LLVMCodeGenerator(options.EnableStackTrace);
+            using var generator = new LLVMCodeGenerator(options.EnableStackTrace);
             bool success = generator.GenerateCode(workspace, options.IntDir, options.OutDir, options.OutName, options.Optimize, options.EmitLLVMIR);
             if (!success)
                 return false;

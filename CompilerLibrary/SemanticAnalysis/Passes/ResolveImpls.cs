@@ -178,7 +178,7 @@ namespace Cheez
             }
 
             impl.TraitExpr.SetFlag(ExprFlags.ValueRequired, true);
-            impl.TraitExpr = ResolveTypeNow(impl.TraitExpr, out var type, resolve_poly_expr_to_concrete_type: true);
+            impl.TraitExpr = ResolveTypeNow(impl.TraitExpr, out var type, resolvePolyExprToConcreteType: true);
 
 
             if (type is TraitType tt)
@@ -195,7 +195,7 @@ namespace Cheez
 
             impl.TargetTypeExpr.SetFlag(ExprFlags.ValueRequired, true);
             impl.TargetTypeExpr.Scope = impl.SubScope;
-            impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t, resolve_poly_expr_to_concrete_type: !impl.IsPolymorphic);
+            impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t, resolvePolyExprToConcreteType: !impl.IsPolymorphic);
             impl.TargetType = t;
 
             if (impl.Conditions != null)
@@ -418,14 +418,8 @@ namespace Cheez
 
                 impl.TargetTypeExpr.SetFlag(ExprFlags.ValueRequired, true);
                 impl.TargetTypeExpr.Scope = impl.SubScope;
-                impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t, resolve_poly_expr_to_concrete_type: !impl.IsPolymorphic);
+                impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t, resolvePolyExprToConcreteType: !impl.IsPolymorphic);
                 impl.TargetType = t;
-
-                // @TODO: check if target type expr contains poly names such as '$T', these are not allowed
-                if (false)
-                {
-                    ReportError(impl.TargetTypeExpr, $"Target type of impl can't be polymorphic");
-                }
 
                 // @TODO: does it make sense to allow conditions on impl blocks without parameters?
                 // for now don't allow these
