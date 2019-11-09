@@ -562,9 +562,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     }
                 }
 
-                var vtableType = LLVM.StructCreateNamed(context, $"__vtable_type_{trait.Type}");
+                var vtableType = LLVM.StructCreateNamed(context, $"__vtable_type_{trait.TraitType}");
                 LLVM.StructSetBody(vtableType, funcTypes.ToArray(), false);
-                vtableTypes[trait.Type] = vtableType;
+                vtableTypes[trait.TraitType] = vtableType;
             }
 
 

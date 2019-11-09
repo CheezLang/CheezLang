@@ -13,7 +13,7 @@ namespace Cheez
     public partial class Workspace
     {
         // for semantic analysis
-        private List<AstTraitDeclaration> mTraits = new List<AstTraitDeclaration>();
+        private List<AstTraitTypeExpr> mTraits = new List<AstTraitTypeExpr>();
         private List<AstVariableDecl> mVariables = new List<AstVariableDecl>();
 
         private List<AstFuncExpr> mFunctions = new List<AstFuncExpr>();
@@ -22,7 +22,7 @@ namespace Cheez
         public IEnumerable<AstFuncExpr> Functions => mFunctions;
         public IEnumerable<AstVariableDecl> Variables => mVariables;
 
-        public IEnumerable<AstTraitDeclaration> Traits => mTraits;
+        public IEnumerable<AstTraitTypeExpr> Traits => mTraits;
         //
 
         private void Pass1VariableDeclaration(AstVariableDecl var)
@@ -100,34 +100,6 @@ namespace Cheez
             else
             {
                 ReportError(pattern, $"This pattern is not valid here");
-            }
-        }
-
-        private void Pass1TraitDeclaration(AstTraitDeclaration trait)
-        {
-            if (trait.Parameters.Count > 0)
-            {
-                trait.IsPolymorphic = true;
-                trait.Type = new GenericTraitType(trait);
-
-                foreach (var p in trait.Parameters)
-                {
-                    p.Scope = trait.Scope;
-                    p.TypeExpr.Scope = trait.Scope;
-                }
-            }
-            else
-            {
-                trait.Type = new TraitType(trait);
-            }
-            trait.SubScope = new Scope($"trait {trait.Name.Name}", trait.Scope);
-
-            var res = trait.Scope.DefineDeclaration(trait);
-            if (!res.ok)
-            {
-                (string, ILocation)? detail = null;
-                if (res.other != null) detail = ("Other declaration here:", res.other);
-                ReportError(trait.Name, $"A symbol with name '{trait.Name.Name}' already exists in current scope", detail);
             }
         }
 

@@ -6,7 +6,7 @@ true")
 #load("std:c")
 // #load("std:string")
 
-trait Printable {
+Printable :: trait {
     print :: (ref Self);
 }
 

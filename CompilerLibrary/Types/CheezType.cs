@@ -163,7 +163,7 @@ namespace Cheez.Types
             }
             else if (a is TraitType ta && b is TraitType tb)
             {
-                if (ta.Declaration.Name.Name != tb.Declaration.Name.Name)
+                if (ta.Declaration.Name != tb.Declaration.Name)
                     return false;
                 if (ta.Arguments.Length != tb.Arguments.Length)
                     return false;

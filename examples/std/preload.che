@@ -17,7 +17,7 @@ __platform__ : Platform = if const @is_os("Windows") {
 }
 
 // drop
-trait Drop {
+Drop :: trait {
     drop :: (ref Self);
 }
 
@@ -41,11 +41,11 @@ Result :: enum(V: type, E: type) #copy(V, E) {
 use Option
 use Result
 
-trait From(T: type) {
+From :: trait(T: type) {
     from :: (value: T) -> Self;
 }
 
-trait Into(T: type) {
+Into :: trait(T: type) {
     into :: (ref Self) -> T;
 }
 

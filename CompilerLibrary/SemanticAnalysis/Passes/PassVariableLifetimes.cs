@@ -17,7 +17,7 @@ namespace Cheez
         private HashSet<AstTempVarExpr> mMovedTempVars = new HashSet<AstTempVarExpr>();
 
         private Dictionary<CheezType, AstFuncExpr> mTypeDropFuncMap = new Dictionary<CheezType, AstFuncExpr>();
-        private AstTraitDeclaration mTraitDrop;
+        private AstTraitTypeExpr mTraitDrop;
         private HashSet<CheezType> mTypesWithDestructor = new HashSet<CheezType>();
         
         public IEnumerable<CheezType> TypesWithDestructor => mTypesWithDestructor;
@@ -58,7 +58,7 @@ namespace Cheez
             if (mTraitDrop == null)
             {
                 var sym = GlobalScope.GetSymbol("Drop");
-                if (sym is AstTraitDeclaration t)
+                if (sym is AstConstantDeclaration c && c.Initializer is AstTraitTypeExpr t)
                     mTraitDrop = t;
                 else
                     ReportError("There should be a global trait called Drop");
@@ -101,7 +101,7 @@ namespace Cheez
             }
 
             // do this last because we want to visit all members
-            var impls = GetImplsForType(type, mTraitDrop.Type);
+            var impls = GetImplsForType(type, mTraitDrop.TraitType);
             if (impls.Count > 0)
             {
                 if (impls.Count != 1)

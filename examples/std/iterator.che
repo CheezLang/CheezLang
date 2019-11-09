@@ -1,7 +1,7 @@
 #load("std:preload")
 #load("std:array")
 
-trait Iterator(T: type) {
+Iterator :: trait(T: type) {
     next :: (ref Self) -> Option[T];
 }
 

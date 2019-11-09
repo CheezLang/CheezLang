@@ -79,6 +79,23 @@ namespace Cheez.Visitors
             return $"use {use.Value.Accept(this)}";
         }
 
+        public override string VisitTraitTypeExpr(AstTraitTypeExpr trait, int data = 0)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("trait {");
+
+            foreach (var f in trait.Variables)
+                sb.AppendLine(f.Accept(this).Indent(4));
+
+            foreach (var f in trait.Functions)
+                sb.AppendLine(f.Accept(this).Indent(4));
+
+            sb.Append("}");
+
+            return sb.ToString().Indent(data);
+        }
+
+
         public override string VisitTraitDecl(AstTraitDeclaration trait, int data = 0)
         {
             var sb = new StringBuilder();

@@ -202,51 +202,6 @@ namespace Cheez
             }
         }
 
-        private void ResolveTypeDeclaration(AstDecl decl)
-        {
-            ResolveTypeDeclarations(new List<AstDecl> { decl });
-        }
-
-        private void ResolveTypeDeclarations(List<AstDecl> declarations)
-        {
-            var done = new List<AstDecl>();
-
-            // make a copy of declarations
-            declarations = new List<AstDecl>(declarations);
-
-            var nextInstances = new List<AstDecl>();
-
-            int i = 0;
-            while (i < MaxPolyStructResolveStepCount && declarations.Count != 0)
-            {
-                foreach (var instance in declarations)
-                {
-                    switch (instance)
-                    {
-                        case AstTraitDeclaration trait:
-                            if (!trait.IsPolymorphic)
-                                mTraits.Add(trait);
-                            Pass3Trait(trait);
-                            break;
-                    }
-                }
-                done.AddRange(declarations);
-                declarations.Clear();
-
-                var t = declarations;
-                declarations = nextInstances;
-                nextInstances = t;
-
-                i++;
-            }
-
-            if (i == MaxPolyStructResolveStepCount)
-            {
-                var details = declarations.Select(str => ("Here:", str.Location)).ToList();
-                ReportError($"Detected a potential infinite loop in polymorphic declarations after {MaxPolyStructResolveStepCount} steps", details);
-            }
-        }
-
         // impl
         private AstImplBlock InstantiatePolyImplNew(AstImplBlock decl, Dictionary<string, CheezType> args, ILocation location = null)
         {
@@ -304,7 +259,7 @@ namespace Cheez
         }
 
         // trait
-        private AstTraitDeclaration InstantiatePolyTrait(AstTraitDeclaration decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
+        private AstTraitTypeExpr InstantiatePolyTrait(AstTraitTypeExpr decl, List<(CheezType type, object value)> args, List<AstDecl> instances = null, ILocation location = null)
         {
 
             if (args.Any(a => a.type == CheezType.Type && (a.value as CheezType).IsErrorType))
@@ -319,7 +274,7 @@ namespace Cheez
                 return null;
             }
 
-            AstTraitDeclaration instance = null;
+            AstTraitTypeExpr instance = null;
 
             // check if instance already exists
             foreach (var pi in decl.PolymorphicInstances)
@@ -348,11 +303,12 @@ namespace Cheez
             // instatiate type
             if (instance == null)
             {
-                instance = decl.Clone() as AstTraitDeclaration;
-                instance.SubScope = new Scope($"trait {decl.Name.Name}<poly>", instance.Scope);
+                instance = decl.Clone() as AstTraitTypeExpr;
+                instance.SubScope = new Scope($"trait <poly>", instance.Scope);
                 instance.IsPolyInstance = true;
-                instance.IsPolymorphic = false;
+                instance.IsGeneric = false;
                 instance.Template = decl;
+                instance.Name = decl.Name;
                 decl.PolymorphicInstances.Add(instance);
 
                 Debug.Assert(instance.Parameters.Count == args.Count);
@@ -368,14 +324,15 @@ namespace Cheez
                     instance.SubScope.DefineTypeSymbol(param.Name.Name, param.Value as CheezType);
                 }
 
-                instance.Type = new TraitType(instance);
+                instance = InferType(instance, null) as AstTraitTypeExpr;
+                ComputeTraitMembers(instance);
 
-                if (instances != null)
-                    instances.Add(instance);
-                else
-                {
-                    ResolveTypeDeclaration(instance);
-                }
+                //if (instances != null)
+                //    instances.Add(instance);
+                //else
+                //{
+                //    ResolveTypeDeclaration(instance);
+                //}
             }
 
             return instance;
@@ -732,7 +689,7 @@ namespace Cheez
                         var args = s.Arguments.Select(a => (CheezType.Type, (object)InstantiatePolyType(a, concreteTypes, location))).ToList();
                         //var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
                         var instance = InstantiatePolyStruct(s.Declaration, args, location: location);
-                        return instance.Type;
+                        return instance.StructType;
                     }
 
                 case TraitType s:
@@ -747,7 +704,7 @@ namespace Cheez
                         var zipped = args.Zip(s.Declaration.Parameters, (type, param) => (param.Type, (object)type)).ToList();
 
                         var instance = InstantiatePolyTrait(s.Declaration, zipped, location: location);
-                        return instance.Type;
+                        return instance.TraitType;
                     }
 
                 case EnumType s:
@@ -756,7 +713,7 @@ namespace Cheez
                             throw new Exception("must be null");
                         var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
                         var instance = InstantiatePolyEnum(s.Declaration, args, location: location);
-                        return instance.Type;
+                        return instance.EnumType;
                     }
 
                 case PointerType p:

@@ -110,11 +110,11 @@ namespace Cheez.Types.Abstract
 
     public class GenericTraitType : CheezType
     {
-        public AstTraitDeclaration Declaration { get; }
+        public AstTraitTypeExpr Declaration { get; }
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
 
-        public GenericTraitType(AstTraitDeclaration decl)
+        public GenericTraitType(AstTraitTypeExpr decl)
             : base(0, 1, false)
         {
             Declaration = decl;

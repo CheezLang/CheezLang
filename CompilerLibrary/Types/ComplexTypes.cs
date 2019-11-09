@@ -24,19 +24,19 @@ namespace Cheez.Types.Complex
 
     public class TraitType : CheezType
     {
-        public AstTraitDeclaration Declaration { get; }
-        public AstTraitDeclaration DeclarationTemplate => Declaration.Template ?? Declaration;
+        public AstTraitTypeExpr Declaration { get; }
+        public AstTraitTypeExpr DeclarationTemplate => Declaration.Template ?? Declaration;
 
         public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
         public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
 
         public CheezType[] Arguments { get; }
 
-        public TraitType(AstTraitDeclaration decl, CheezType[] args = null)
+        public TraitType(AstTraitTypeExpr decl, CheezType[] args = null)
             : base(2 * PointerType.PointerSize, PointerType.PointerAlignment, true)
         {
             Declaration = decl;
-            Arguments = args ?? decl.Parameters.Select(p => p.Value as CheezType).ToArray();
+            Arguments = args ?? decl.Parameters?.Select(p => p.Value as CheezType)?.ToArray() ?? Array.Empty<CheezType>();
         }
         
         public override string ToString()
@@ -44,9 +44,9 @@ namespace Cheez.Types.Complex
             if (Arguments?.Length > 0)
             {
                 var args = string.Join(", ", Arguments.Select(a => a.ToString()));
-                return $"{Declaration.Name.Name}[{args}]";
+                return $"{Declaration.Name}[{args}]";
             }
-            return $"{Declaration.Name.Name}";
+            return $"{Declaration.Name}";
         }
 
         public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)

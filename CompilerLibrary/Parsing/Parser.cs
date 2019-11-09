@@ -1852,6 +1852,57 @@ namespace Cheez.Parsing
             return new AstEnumTypeExpr(parameters, declarations, directives, new Location(beg, end));
         }
 
+        private AstExpression ParseTraitTypeExpression()
+        {
+            TokenLocation beg = null, end = null;
+            var declarations = new List<AstDecl>();
+            var directives = new List<AstDirective>();
+            List<AstParameter> parameters = null;
+
+            beg = Consume(TokenType.KwTrait, ErrMsg("keyword 'trait'", "at beginning of trait type")).location;
+
+            if (CheckToken(TokenType.OpenParen))
+                parameters = ParseParameterList(out var _, out var _);
+
+            while (CheckToken(TokenType.HashIdentifier))
+            {
+                var dir = ParseDirective();
+                if (dir != null)
+                    directives.Add(dir);
+            }
+
+            ConsumeUntil(TokenType.OpenBrace, ErrMsg("{", "at beginning of trait body"));
+
+            SkipNewlines();
+            while (true)
+            {
+                var next = PeekToken();
+                if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
+                    break;
+
+                declarations.Add(ParseDeclaration(null, true));
+
+                next = PeekToken();
+                if (next.type == TokenType.NewLine)
+                {
+                    SkipNewlines();
+                }
+                else if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
+                {
+                    break;
+                }
+                else
+                {
+                    NextToken();
+                    ReportError(next.location, $"Unexpected token {next} at end of trait member");
+                }
+            }
+
+            end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of trait declaration")).location;
+
+            return new AstTraitTypeExpr(parameters, declarations, directives, new Location(beg, end));
+        }
+
         private AstExpression ParseAtomicExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver errorMessage)
         {
             var token = PeekToken();
@@ -1995,6 +2046,9 @@ namespace Cheez.Parsing
 
                 case TokenType.KwEnum:
                     return ParseEnumTypeExpression();
+
+                case TokenType.KwTrait:
+                    return ParseTraitTypeExpression();
 
                 default:
                     //NextToken();

@@ -1,7 +1,7 @@
 #load("std:io/io")
 #load("std:time")
 
-trait TestTrait {
+TestTrait :: trait {
     traitFunction :: (ref Self, n: u64);
 }
 

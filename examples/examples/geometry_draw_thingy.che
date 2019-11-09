@@ -10,7 +10,7 @@ Node :: struct {
     pos     : float2
 }
 
-trait Shape {
+Shape :: trait {
     draw :: (ref Self, pge: ref MyGame);
     next_node :: (ref Self, p: float2) -> &Node;
     hit_node :: (ref Self, p: float2) -> &Node;

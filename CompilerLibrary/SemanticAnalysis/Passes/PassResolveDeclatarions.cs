@@ -20,8 +20,6 @@ namespace Cheez
             // hack
             // sort all declarations into different lists
             InsertDeclarationsIntoScope(scope, statements);
-            foreach (var @trait in scope.TraitDeclarations)
-                Pass1TraitDeclaration(@trait);
 
             // handle constant declarations
             {
@@ -51,9 +49,6 @@ namespace Cheez
             // check for cyclic dependencies and resolve types of typedefs and constant variables
             ResolveMissingTypesOfDeclarations(scope);
 
-            // compute types of struct members, enum members, trait members
-            ComputeTypeMembers(scope);
-
             // resolve impls (check if is polymorphic, setup scopes, check for self params in functions, etc.)
             foreach (var impl in scope.Impls)
             {
@@ -75,6 +70,10 @@ namespace Cheez
 
             // check initializers of non-constant variables declarations
             CheckInitializersOfNonConstantVars(scope);
+
+            // compute trait members
+            foreach (var t in Traits)
+                ComputeTraitMembers(t);
 
             // resolve function bodies
             ResolveFunctionBodies(scope);
@@ -453,20 +452,6 @@ namespace Cheez
                 if (v.TypeExpr == null)
                     v.Type = v.Initializer.Type;
             }
-        }
-
-        private void ComputeTypeMembers(Scope scope)
-        {
-            var declarations = new List<AstDecl>();
-
-            foreach (var trait in scope.TraitDeclarations)
-            {
-                if (trait.IsPolymorphic)
-                    declarations.AddRange(trait.PolymorphicInstances);
-                declarations.Add(trait);
-            }
-
-            ResolveTypeDeclarations(declarations);
         }
 
         private bool ValidatePolymorphicParameterType(ILocation location, CheezType type)

@@ -72,65 +72,6 @@ namespace Cheez
             }
         }
 
-        private void Pass3Trait(AstTraitDeclaration trait)
-        {
-            if (trait.GetFlag(StmtFlags.MembersComputed))
-                return;
-
-            foreach (var p in trait.Parameters)
-            {
-                trait.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
-            }
-            trait.SubScope.DefineTypeSymbol("Self", new SelfType(trait.Type));
-
-            foreach (var v in trait.Variables)
-            {
-                v.TypeExpr.Scope = trait.SubScope;
-                v.TypeExpr = ResolveTypeNow(v.TypeExpr, out var type);
-                v.Type = type;
-
-                var res = trait.SubScope.DefineSymbol(v);
-                if (!res.ok)
-                {
-                    (string, ILocation)? detail = null;
-                    if (res.other != null) detail = ("Other declaration here:", res.other);
-                    ReportError(v.Name, $"A symbol with name '{v.Name.Name}' already exists in current scope", detail);
-                }
-            }
-
-            foreach (var f in trait.Functions)
-            {
-                f.Trait = trait;
-                f.Scope = trait.SubScope;
-                f.ConstScope = new Scope($"fn$ {f.Name}", f.Scope);
-                f.SubScope = new Scope($"fn {f.Name}", f.ConstScope);
-
-                InferTypeFuncExpr(f);
-                CheckForSelfParam(f);
-
-                foreach (var p in f.Parameters)
-                {
-                    if (SizeOfTypeDependsOnSelfType(p.Type))
-                    {
-                        f.ExcludeFromVTable = true;
-                    }
-                }
-
-                if (SizeOfTypeDependsOnSelfType(f.ReturnType))
-                {
-                    f.ExcludeFromVTable = true;
-                }
-
-                // TODO: for now don't allow default implemenation
-                if (f.Body != null)
-                {
-                    ReportError(f.ParameterLocation, $"Trait functions can't have an implementation");
-                }
-            }
-
-            trait.SetFlag(StmtFlags.MembersComputed);
-        }
-
         private void Pass3TraitImpl(AstImplBlock impl)
         {
             impl.TraitExpr.Scope = impl.SubScope;
@@ -252,7 +193,7 @@ namespace Cheez
                 if (!(impl.TargetType is StructType str))
                 {
                     ReportError(impl.TargetTypeExpr, $"Can't implement trait '{impl.Trait}' for non struct type '{impl.TargetType}' because the trait requires members",
-                        ("Trait defined here:", impl.Trait.Declaration.Name.Location));
+                        ("Trait defined here:", impl.Trait.Declaration.Location));
                     break;
                 }
 
@@ -285,6 +226,7 @@ namespace Cheez
             } while (false);
 
             // match functions against trait functions
+            ComputeTraitMembers(impl.Trait.Declaration);
             foreach (var traitFunc in impl.Trait.Declaration.Functions)
             {
                 // find matching function

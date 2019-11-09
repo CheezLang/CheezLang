@@ -2,7 +2,7 @@
 #load("std:string")
 #load("std:math")
 
-trait Printable {
+Printable :: trait {
     print :: (ref Self, str: ref String, format: string);
 }
 

@@ -10,7 +10,7 @@
 #load("std:preload")
 #load("opengl:opengl")
 
-trait Game {
+Game :: trait {
     on_create :: (ref Self, pge: &PixelGameEngine) -> bool;
     on_destroy :: (ref Self) -> bool;
     on_update :: (ref Self, dt: float) -> bool;

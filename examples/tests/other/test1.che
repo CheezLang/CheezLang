@@ -16,10 +16,10 @@ E2 :: enum(T: TYPE) {
     next: &E2[T]
 }
 
-trait T1 {
+T1 :: trait {
     t :: (ref Self) -> int;
 }
-trait T2(T: TYPE) {
+T2 :: trait(T: TYPE) {
     t :: (ref Self) -> T;
 }
 

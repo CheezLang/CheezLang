@@ -1,4 +1,4 @@
-trait Hashable {
+Hashable :: trait {
     hash :: (ref Self) -> uint;
 }
 

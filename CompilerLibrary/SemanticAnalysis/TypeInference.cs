@@ -96,20 +96,11 @@ namespace Cheez
             var context = new TypeInferenceContext
             {
                 newPolyFunctions = new List<AstFuncExpr>(),
-                //newPolyDeclarations = new List<AstDecl>(),
                 resolve_poly_expr_to_concrete_type = resolvePolyExprToConcreteType,
                 dependencies = dependencies,
                 forceInfer = forceInfer
             };
             var newExpr = InferTypeHelper(expr, expected, context);
-
-            if (context.newPolyDeclarations?.Count > 0)
-            {
-                ResolveTypeDeclarations(context.newPolyDeclarations);
-            }
-
-            //if (context.newPolyFunctions.Count > 0)
-            //    AnalyseFunctions(context.newPolyFunctions);
 
             return newExpr;
         }
@@ -137,6 +128,9 @@ namespace Cheez
             {
                 case AstFuncExpr f:
                     return InferTypeFuncExpr(f);
+
+                case AstTraitTypeExpr t:
+                    return InferTypeTraitTypeExpr(t);
 
                 case AstEnumTypeExpr e:
                     return InferTypeEnumTypeExpr(e);
@@ -413,7 +407,132 @@ namespace Cheez
                 case EnumType e:
                     ComputeEnumMembers(e.Declaration);
                     break;
+
+                case TraitType t:
+                    ComputeTraitMembers(t.Declaration);
+                    break;
             }
+        }
+
+        private void ComputeTraitMembers(AstTraitTypeExpr trait)
+        {
+            if (trait.IsPolymorphic)
+                return;
+            if (trait.MembersComputed)
+                return;
+            trait.MembersComputed = true;
+
+            if (trait.Parameters != null)
+                foreach (var p in trait.Parameters)
+                    trait.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
+            trait.SubScope.DefineTypeSymbol("Self", new SelfType(trait.Value as CheezType));
+
+            foreach (var v in trait.Variables)
+            {
+                v.TypeExpr.Scope = trait.SubScope;
+                v.TypeExpr = ResolveTypeNow(v.TypeExpr, out var type);
+                v.Type = type;
+
+                var res = trait.SubScope.DefineSymbol(v);
+                if (!res.ok)
+                {
+                    (string, ILocation)? detail = null;
+                    if (res.other != null) detail = ("Other declaration here:", res.other);
+                    ReportError(v.Name, $"A symbol with name '{v.Name.Name}' already exists in current scope", detail);
+                }
+            }
+
+            foreach (var f in trait.Functions)
+            {
+                f.Trait = trait;
+                f.Scope = trait.SubScope;
+                f.ConstScope = new Scope($"fn$ {f.Name}", f.Scope);
+                f.SubScope = new Scope($"fn {f.Name}", f.ConstScope);
+
+                InferTypeFuncExpr(f);
+                CheckForSelfParam(f);
+
+                foreach (var p in f.Parameters)
+                {
+                    if (SizeOfTypeDependsOnSelfType(p.Type))
+                    {
+                        f.ExcludeFromVTable = true;
+                    }
+                }
+
+                if (SizeOfTypeDependsOnSelfType(f.ReturnType))
+                {
+                    f.ExcludeFromVTable = true;
+                }
+
+                // TODO: for now don't allow default implemenation
+                if (f.Body != null)
+                {
+                    ReportError(f.ParameterLocation, $"Trait functions can't have an implementation");
+                }
+            }
+        }
+
+        private AstExpression InferTypeTraitTypeExpr(AstTraitTypeExpr expr)
+        {
+            if (expr.IsPolyInstance)
+            {
+
+            }
+            else
+            {
+                expr.SubScope = new Scope("trait", expr.Scope);
+                if (expr.Parent is AstConstantDeclaration c)
+                    expr.Name = c.Name.Name;
+            }
+
+            // setup scopes and separate members
+            foreach (var decl in expr.Declarations)
+            {
+                decl.Scope = expr.SubScope;
+
+                switch (decl)
+                {
+                    case AstConstantDeclaration con when con.Initializer is AstFuncExpr func:
+                        func.Name = con.Name.Name;
+                        expr.Functions.Add(func);
+                        break;
+
+                    case AstConstantDeclaration con:
+                        ReportError(con, $"Not supported yet");
+                        break;
+
+                    case AstVariableDecl mem:
+                        expr.Variables.Add(mem);
+                        break;
+                }
+            }
+
+            if (expr.IsPolymorphic)
+            {
+                // @todo
+                foreach (var p in expr.Parameters)
+                {
+                    p.Scope = expr.Scope;
+                    p.TypeExpr.Scope = expr.Scope;
+                    p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
+                    p.Type = t;
+
+                    ValidatePolymorphicParameterType(p, p.Type);
+
+                    expr.SubScope.DefineTypeSymbol(p.Name.Name, new PolyType(p.Name.Name, true));
+                }
+
+                expr.Type = CheezType.Type;
+                expr.Value = new GenericTraitType(expr);
+                return expr;
+            }
+
+            expr.Type = CheezType.Type;
+            expr.Value = new TraitType(expr);
+
+            mTraits.Add(expr);
+            return expr;
         }
 
         private void ComputeEnumMembers(AstEnumTypeExpr expr)
@@ -3568,7 +3687,7 @@ namespace Cheez
                 var args = expr.Arguments.Select(a => (a.Type, a.Value)).ToList();
                 var instance = InstantiatePolyTrait(trait.Declaration, args, context.newPolyDeclarations, expr);
                 expr.Type = CheezType.Type;
-                expr.Value = instance?.Type ?? CheezType.Error;
+                expr.Value = instance.TraitType ?? CheezType.Error;
 
                 // this causes impls to be calculated for this type if not done yet
                 //if (instance.Type != null)

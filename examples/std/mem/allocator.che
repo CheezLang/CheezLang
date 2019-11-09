@@ -1,6 +1,6 @@
 #load("std:mem/std_heap_allocator")
 
-trait Allocator {
+Allocator :: trait {
     allocate :: (ref Self, count: uint, elementSize: uint, alignment: uint) -> &any;
     reallocate :: (ref Self, mem: &any, count: uint, elementSize: uint, alignment: uint) -> &any;
     free :: (ref Self, mem: &any);

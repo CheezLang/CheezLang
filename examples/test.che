@@ -1,4 +1,4 @@
-#load("examples/trait_function_call_performance")
+// #load("examples/trait_function_call_performance")
 // #load("examples/graphyfier/graphyfier")
 // #load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
@@ -20,7 +20,7 @@ add :: (a: int, b: int) -> int {
     return sum
 }
 
-trait Foo {
+Foo :: trait {
     foo :: (ref Self);
 }
 

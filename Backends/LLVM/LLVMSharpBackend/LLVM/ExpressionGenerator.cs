@@ -1240,7 +1240,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 }
 
                 // load function pointer
-                var vtableType = vtableTypes[c.Declaration.Trait.Type];
+                var vtableType = vtableTypes[c.Declaration.Trait.TraitType];
                 vtablePtr = builder.CreatePointerCast(vtablePtr, vtableType.GetPointerTo(), "");
 
                 var funcPointer = builder.CreateStructGEP(vtablePtr, (uint)functionIndex, "");

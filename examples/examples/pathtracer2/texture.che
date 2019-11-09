@@ -1,7 +1,7 @@
 #load("std:math")
 #load("misc")
 
-trait Texture {
+Texture :: trait {
     value :: (ref Self, u: real, v: real, p: ref vec3) -> vec3;
 }
 

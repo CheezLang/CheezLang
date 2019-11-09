@@ -31,7 +31,7 @@ DistanceShaderPair :: struct {
 ////////////////////////////////// SDF //////////////////////////////////////////////
 
 ///////////////////// basic ///////////////////
-trait SDF {
+SDF :: trait {
     distance :: (ref Self, v: Vec3) -> DistanceShaderPair;
 }
 
@@ -232,7 +232,7 @@ impl SDF for SubtractionSDF {
 
 ////////////////////////////// shaders //////////////////////////////////
 
-trait Shader {
+Shader :: trait {
     shade :: (ref Self, ray: Ray, raymarcher: ref Raymarcher) -> Vec3;
 }
 

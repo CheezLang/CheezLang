@@ -12,7 +12,7 @@ HitRecord :: struct {
     v: real = 0
 }
 
-trait Hittable {
+Hittable :: trait {
     hit :: (ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord];
     bounding_box :: (ref Self) -> Option[AABB];
 }

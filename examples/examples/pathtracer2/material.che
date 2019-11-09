@@ -14,7 +14,7 @@ Scatter :: enum {
     None
 }
 
-trait Material {
+Material :: trait {
     scatter :: (ref Self, r: ref Ray, hit: ref HitRecord, random: ref Random) -> Scatter;
 }
 

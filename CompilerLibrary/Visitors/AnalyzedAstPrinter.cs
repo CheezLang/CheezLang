@@ -128,6 +128,55 @@ namespace Cheez.Visitors
             }
         }
 
+        public override string VisitTraitTypeExpr(AstTraitTypeExpr trait, int data = 0)
+        {
+            if (trait.IsPolymorphic)
+            {
+                var sb = new StringBuilder();
+                sb.Append($"trait(");
+                sb.Append(string.Join(", ", trait.Parameters.Select(p => p.Accept(this))));
+                sb.AppendLine(") {");
+
+                foreach (var f in trait.Variables)
+                    sb.AppendLine(f.Accept(this).Indent(4));
+
+                foreach (var f in trait.Functions)
+                    sb.AppendLine(f.Accept(this).Indent(4));
+
+                sb.Append("}");
+
+                // polies
+                if (trait.PolymorphicInstances?.Count > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"// Polymorphic instances for {trait.Name}");
+                    foreach (var pi in trait.PolymorphicInstances)
+                    {
+                        var args = string.Join(", ", pi.Parameters.Select(p => $"{p.Name.Accept(this)} = {p.Value}"));
+                        sb.AppendLine($"// {args}".Indent(4));
+                        sb.AppendLine(pi.Accept(this).Indent(4));
+                    }
+                }
+
+                return sb.ToString().Indent(data);
+            }
+            else
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine("trait {");
+
+                foreach (var f in trait.Variables)
+                    sb.AppendLine(f.Accept(this).Indent(4));
+
+                foreach (var f in trait.Functions)
+                    sb.AppendLine(f.Accept(this).Indent(4));
+
+                sb.Append("}");
+
+                return sb.ToString().Indent(data);
+            }
+        }
+
         public override string VisitTraitDecl(AstTraitDeclaration trait, int data = 0)
         {
             if (trait.IsPolymorphic)

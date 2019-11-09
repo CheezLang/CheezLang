@@ -40,7 +40,7 @@ impl PseudoRandomGen for LinearCongruentialGenerator {
 
 lcg : &LinearCongruentialGenerator = null
 
-trait PseudoRandomGen {
+PseudoRandomGen :: trait {
     next_u32 :: (ref Self) -> u32;
     next_double :: (ref Self) -> double;
 }
@@ -64,11 +64,11 @@ impl PseudoRandom {
 }
 
 // distributions
-trait IDistribution(T: type) {
+IDistribution :: trait(T: type) {
     sample :: (ref Self) -> T;
 }
 
-trait IDiscreteDistribution(T: type) {
+IDiscreteDistribution :: trait(T: type) {
     get_weight :: (ref Self, t: T) -> int;
     // support :: (ref Self) -> T;
 }
