@@ -158,6 +158,10 @@ impl ThreadPool {
         return ThreadPool(data)
     }
 
+    count :: (ref Self) -> int {
+        return data.functions.get_length()
+    }
+
     enqueue :: (ref Self, function: fn(&$T), data_ptr: &T) {
         data.mutex.lock()
         data.functions.push((@cast(fn(&any), function), @cast(&any, data_ptr)))

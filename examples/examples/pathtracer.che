@@ -5,16 +5,23 @@
 #load("std:math")
 #load("std:random")
 #load("std:random/mt")
+#load("std:thread")
 
 Vec3 :: Vector3[double]
 
-scale             : int : 2
-width             : int : 800 / scale
-height            : int : 450 / scale
-thread_count      : int : 2
+block_size          :: 32
+block_count_x       :: (width  - 1) / block_size + 1
+block_count_y       :: (height - 1) / block_size + 1
+block_count         :: block_count_x * block_count_y
+samples_per_block   :: 5
+thread_count        :: 4
 
-max_depth         : int       : 5
-min_contribution  : double    : 0.2
+scale               :: 2
+width               :: 800 / scale
+height              :: 450 / scale
+                    
+max_depth           :: 5
+min_contribution    :: 0.2
 
 pi: double : 3.14159265359
 
@@ -114,8 +121,9 @@ PathTracer :: struct {
     sample_t        : double                = 0
     total_t         : double                = 0
     buffer          : []Vec3                = default
-    threads         : [thread_count]HANDLE  = default
-    thread_datas    : [thread_count](id: int, pt: &PathTracer, samples: int) = default
+    thread_datas    : [block_count]&RenderContext = default
+
+    running         : bool = true
 }
 
 impl Drop for PathTracer {
@@ -259,46 +267,46 @@ impl PathTracer {
     }
 }
 
-pathtracer_thread :: (data: &(index: int, pt: &PathTracer)) -> u32 #stdcall {
-    // data := @cast(&(index: int, pt: &PathTracer), _data)
+RenderContext :: struct {
+    pt      : &PathTracer   = null
+    min     : Vector2[int]  = default
+    max     : Vector2[int]  = default
+    samples : int           = 0
+    random  : MTwister
+}
 
-    y_range := height / thread_count
-    start_y := data.index * y_range
-    end_y   := (data.index + 1) * y_range - 1
-    if height - end_y < y_range {
-        end_y = height - 1
-    }
-
-    printfln("{}: {} -> {}", (data.index, start_y, end_y))
-    seed := PseudoRandom.next_int()
-    prng := MTwister.create(cast seed)
-
-    while true {
-        for(inclusive=true) current_y : start_y..end_y {
+pathtracer_thread :: (data: &RenderContext) {
+    for 0..samples_per_block {
+        for current_y : data.min.y..data.max.y {
             // loop through current line
-            for current_x : 0..width {
+            for current_x : data.min.x..data.max.x {
                 index := current_x + current_y * width
 
                 // x coordinate in range [-1; 1]
                 // y coordinate in range [-1; 1]
                 blur_radius : double = 1
-                x := (double(current_x) + prng.next_double() * blur_radius * 2 - blur_radius) / double(width) * 2 - 1
-                y := (double(height - current_y - 1) + prng.next_double() * blur_radius * 2 - blur_radius) / double(height) * 2 - 1
+                x := (double(current_x) + data.random.next_double()) / double(width) * 2 - 1
+                y := (double(height - current_y - 1) + data.random.next_double()) / double(height) * 2 - 1
 
                 // calculate ray for current pixel
                 dir := data.pt.cam_dir + data.pt.cam_right * x + data.pt.cam_up * y
                 dir.normalize()
 
                 // shoot ray into scene and calculate color
-                color := data.pt.calc_color(Ray(data.pt.cam_pos, dir), &prng, 1)
+                color := data.pt.calc_color(Ray(data.pt.cam_pos, dir), &data.random, 1)
                 // println(color)
                 data.pt.buffer[index] += color
             }
         }
 
-        data.pt.thread_datas[data.index].samples += 1
+        data.samples += 1
     }
-    return 0
+
+    thread_pool_mut.lock()
+    if data.pt.running and thread_pool.count() == 0 {
+        data.pt.enqueue_threads()
+    }
+    thread_pool_mut.release()
 }
 
 impl Game for PathTracer {
@@ -358,19 +366,37 @@ impl Game for PathTracer {
         // light
         self.add_object(Sphere(Vec3(0, size + 9.75, 10), 10, m_light))
 
-        // create threads
-        for i : 0..thread_count {
-            thread_datas[i] = (i, &self, 0)
-            threads[i] = CreateThread(null, 0, cast pathtracer_thread, &thread_datas[i], 0, null)
+        // setup render contexts
+        println(block_count_x)
+        println(block_count_y)
+        for y: 0..block_count_y {
+            for x: 0..block_count_x {
+                context := alloc(RenderContext)
+                <<context = RenderContext(
+                    pt      = &self
+                    min     = Vector2[int](x * block_size, y * block_size)
+                    max     = Vector2[int](min((x + 1) * block_size, width), min((y + 1) * block_size, height))
+                    random  = MTwister.create(cast c_rand()) // crashes with seed not 0, wtf?
+                )
+
+                thread_datas[x + y * block_count_x] = context
+            }
         }
+
+        // create threads
+        enqueue_threads()
         return true
     }
 
-    on_destroy :: (ref Self) -> bool {
-        for i : 0..thread_count {
-            TerminateThread(threads[i], 0)
-            CloseHandle(threads[i])
+    enqueue_threads :: (ref Self) {
+        tds : []&RenderContext = thread_datas
+        for context : tds {
+            thread_pool.enqueue(pathtracer_thread, context)
         }
+    }
+
+    on_destroy :: (ref Self) -> bool {
+        running = false
         return true
     }
 
@@ -383,23 +409,29 @@ impl Game for PathTracer {
         for current_y : 0..height {
             for current_x : 0..width {
                 index := current_x + current_y * width
-                thread_id := current_y / (height / thread_count)
-                if thread_id >= thread_count {
-                    thread_id = thread_count - 1
+                thread_id_x := current_x / block_size
+                thread_id_y := current_y / block_size
+                thread_id   := thread_id_x + thread_id_y * block_count_x
+
+                if !(thread_id >= 0 and thread_id < thread_datas.length) {
+                    printfln("{},{} -> {},{} -> {}/{}", (current_x, current_y, thread_id_x, thread_id_y, thread_id, thread_datas.length))
+                    continue
                 }
 
                 sample := thread_datas[thread_id].samples
 
-                // calculate color of pixel by taking the average of the color
-                // in the buffer
-                pixel := {
-                    bufferColor := buffer[index] / double(sample + 1)
-                    // println(bufferColor)
-                    bufferColor = bufferColor.clamped(0.0, 1.0) * 255.0
-                    c := Vec3.change_type(bufferColor, u8)
-                    Pixel.rgba(c.x, c.y, c.z)
+                if sample > 0 {
+                    // calculate color of pixel by taking the average of the color
+                    // in the buffer
+                    pixel := {
+                        bufferColor := buffer[index] / double(sample)
+                        // println(bufferColor)
+                        bufferColor = bufferColor.clamped(0.0, 1.0) * 255.0
+                        c := Vec3.change_type(bufferColor, u8)
+                        Pixel.rgba(c.x, c.y, c.z)
+                    }
+                    pge.draw(current_x, current_y, pixel)
                 }
-                pge.draw(current_x, current_y, pixel)
             }
         }
 
@@ -420,17 +452,20 @@ impl Game for PathTracer {
     }
 }
 
-test_thread :: (data: &any) -> u32 #stdcall {
-    index := int(data)
-    println(index)
-
-    return 0
-}
+thread_pool_mut : &Mutex      = null
+thread_pool     : &ThreadPool = null
 
 Main :: () {
+    tp := ThreadPool.create(thread_count)
+    m  := Mutex.create()
+    thread_pool     = &tp
+    thread_pool_mut = &m
+
     game := PathTracer.create()
     pge := PixelGameEngine.create(game, width, height, 1, 1)
     if pge != null {
         pge.start()
     }
+
+    tp.terminate(false)
 }
