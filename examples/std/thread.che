@@ -3,12 +3,6 @@
 #load("std:array")
 #load("std:ring_queue")
 
-thread_func :: (data: &any) -> u32 #stdcall {
-    thread := @cast(&ThreadData, data)
-    thread.func(thread.data)
-    return 0
-}
-
 // thread
 Thread :: struct {
     data: &ThreadData
@@ -25,6 +19,12 @@ impl Thread {
         td := alloc(ThreadData)
         td.func = @cast(fn(&any), func)
         td.data = @cast(&any, data)
+
+        thread_func :: (data: &any) -> u32 #stdcall {
+            thread := @cast(&ThreadData, data)
+            thread.func(thread.data)
+            return 0
+        }
 
         handle := CreateThread(null, 0, thread_func, cast td, CREATE_SUSPENDED, null)
         @assert(handle != null)
@@ -127,7 +127,29 @@ impl ThreadPool {
             empty_queue  = false
         )
 
-        for : 0..num_threads {
+        // defined right here so it's not accessible outside
+        worker :: (tp: &ThreadPoolData) {
+            while true {
+                tp.mutex.lock()
+                if !(tp.running or (tp.empty_queue and tp.functions.get_length() > 0)) {
+                    break
+                }
+
+                next : ThreadPoolFunc = (@cast(fn(&any), null), null)
+                if tp.functions.get_length() > 0 {
+                    next = tp.functions.pop()
+                }
+                tp.mutex.release()
+
+                if next.function != null {
+                    next.function(next.data)
+                } else {
+                    Sleep(1)
+                }
+            }
+        }
+
+        for 0..num_threads {
             t := Thread.create(worker, data)
             t.start()
             data.threads.add(t)
@@ -146,33 +168,12 @@ impl ThreadPool {
         data.empty_queue = empty_queue
         data.running = false
     }
-
-    worker :: (tp: &ThreadPoolData) {
-        while true {
-            tp.mutex.lock()
-            if !(tp.running or (tp.empty_queue and tp.functions.get_length() > 0)) {
-                break
-            }
-
-            next : ThreadPoolFunc = (@cast(fn(&any), null), null)
-            if tp.functions.get_length() > 0 {
-                next = tp.functions.pop()
-            }
-            tp.mutex.release()
-
-            if next.function != null {
-                next.function(next.data)
-            } else {
-                Sleep(1)
-            }
-        }
-    }
 }
 
 impl Drop for ThreadPool {
     drop :: (ref Self) {
         data.running = false
-        for : data.threads {
+        for data.threads {
             it.join()
         }
     }

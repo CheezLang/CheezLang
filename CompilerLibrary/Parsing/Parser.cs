@@ -904,26 +904,35 @@ namespace Cheez.Parsing
                 SkipNewlines();
             }
 
-            // names
-            if (CheckToken(TokenType.Identifier))
+            var expr = ParseExpression(false);
+
+            if (expr is AstIdExpr vn)
             {
-                varName = ParseIdentifierExpr(ErrMsg("identifier"));
-                SkipNewlines();
                 if (CheckToken(TokenType.Comma))
                 {
+                    varName = vn;
                     NextToken();
-                    SkipNewlines();
-                    indexName = ParseIdentifierExpr(ErrMsg("identifier"));
-                    SkipNewlines();
+                    indexName = ParseIdentifierExpr();
+
+                    ConsumeUntil(TokenType.Colon, null);
+                    collection = ParseExpression(false);
+                }
+                else if (CheckToken(TokenType.Colon))
+                {
+                    varName = vn;
+                    NextToken();
+                    collection = ParseExpression(false);
+                }
+                else
+                {
+                    collection = expr;
                 }
             }
+            else
+            {
+                collection = expr;
+            }
 
-            // :
-            Consume(TokenType.Colon, ErrMsg("':'"));
-            SkipNewlines();
-
-            // collection
-            collection = ParseExpression(true);
             SkipNewlines();
 
             if (CheckToken(TokenType.HashIdentifier))
@@ -941,7 +950,15 @@ namespace Cheez.Parsing
                 }
             }
 
-            body = ParseExpression(true);
+            if (CheckToken(TokenType.KwDo))
+            {
+                NextToken();
+                body = ParseExpression(true);
+            }
+            else
+            {
+                body = ParseBlockExpr();
+            }
 
             return new AstForStmt(varName, indexName, collection, body, args, label, new Location(beg.location, collection.End));
         }

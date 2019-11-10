@@ -64,7 +64,7 @@ Main :: () {
 
     world := scenes[scene](cam)
 
-    for : 0..(get_time_milliseconds()%100) {
+    for 0..(get_time_milliseconds()%100) {
         global_random.next_double()
     }
 
@@ -120,7 +120,7 @@ render_loop :: (context: &RenderContext) {
         printfln("block {}/{}: ({}, {}) -> ({}, {})", (context.id, count, context.min.x, context.min.y, context.max.x, context.max.y))
     }
 
-    for : 0..(get_time_microseconds()%100) {
+    for 0..(get_time_microseconds()%100) {
         context.random.next_double()
     }
 

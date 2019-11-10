@@ -8,7 +8,7 @@
 Main :: () {
     max_digits := 0.0
     max_line := -1
-    for : numbers {
+    for numbers {
         digits := double(it.exp) * log(double(it.base))
         if digits > max_digits {
             max_digits = digits

@@ -105,6 +105,7 @@ namespace Cheez
                 // define parameters
                 foreach (var p in func.Parameters)
                 {
+                    p.ContainingFunction = func;
                     if (p.Name != null)
                     {
                         var (ok, other) = func.SubScope.DefineSymbol(p);
@@ -131,6 +132,7 @@ namespace Cheez
 
                 if (func.ReturnTypeExpr?.Name != null)
                 {
+                    func.ReturnTypeExpr.ContainingFunction = func;
                     func.ReturnTypeExpr.IsReturnParam = true;
                     var (ok, other) = func.SubScope.DefineSymbol(func.ReturnTypeExpr);
                     if (!ok)
@@ -760,6 +762,8 @@ namespace Cheez
         {
             foreach (var sub in SplitVariableDeclaration(decl))
                 yield return sub;
+
+            decl.ContainingFunction = currentFunction;
             ResolveVariableDecl(decl);
 
             var (ok, other) = decl.Scope.DefineSymbol(decl);

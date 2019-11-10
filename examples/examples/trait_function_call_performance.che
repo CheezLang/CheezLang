@@ -55,7 +55,7 @@ Main :: () {
 
         start := get_time_microseconds()
 
-        for : 0..iterations {
+        for 0..iterations {
             t.normalFunction(cast(u64)n)
         }
 
@@ -76,7 +76,7 @@ Main :: () {
 
         start := get_time_microseconds()
 
-        for : 0..iterations {
+        for 0..iterations {
             t.refFunction(cast(u64)n)
         }
 
@@ -96,7 +96,7 @@ Main :: () {
 
         start := get_time_microseconds()
 
-        for : 0..iterations {
+        for 0..iterations {
             t.traitFunction(cast(u64)n)
         }
 
@@ -118,7 +118,7 @@ Main :: () {
 
         start := get_time_microseconds()
 
-        for : 0..iterations {
+        for 0..iterations {
             tt.traitFunction(cast(u64)n)
         }
 

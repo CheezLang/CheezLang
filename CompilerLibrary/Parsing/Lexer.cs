@@ -103,6 +103,7 @@ namespace Cheez.Parsing
         KwDefault,
         KwPub,
         KwThen,
+        KwDo,
         KwMut
     }
 
@@ -384,6 +385,7 @@ namespace Cheez.Parsing
                 case "default": token.type = TokenType.KwDefault; break;
                 case "pub": token.type = TokenType.KwPub; break;
                 case "then": token.type = TokenType.KwThen; break;
+                case "do": token.type = TokenType.KwDo; break;
                 case "mut": token.type = TokenType.KwMut; break;
             }
         }

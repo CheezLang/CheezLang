@@ -5,40 +5,37 @@
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
 // #load("examples/snake/snake")
-// #load("examples/pathtracer") // buggy
+#load("examples/pathtracer")
 
 // #load("tests/language/match3")
-// #load("tests/library/all_include")
+// #load("tests/library/arena_allocator1")
 // #load("tests/other/test1")
 // #load("examples/project_euler/005_smallest_multiple")
 
 /*
 #load("std:io/io")
+#load("std:thread")
 
-add :: (a: int, b: int) -> int {
-    sum := a + b
-    return sum
-}
+mutex : &Mutex = null
 
-Foo :: trait {
-    foo :: (ref Self);
-}
-
-Bar :: struct {
-    a : int
-}
-
-impl Foo for Bar {
-    foo :: (ref Self) {
-        println(a)
+foo :: (i: &int) {
+    mutex.lock()
+    for 0..1000000 {
+        <<i += 1
     }
+    mutex.release()
 }
 
 Main :: () {
-    x := add(5, 7)
+    mutex = alloc(Mutex)
+    <<mutex = Mutex.create()
+    n := 0
 
-    b := Bar(5)
-    b.foo()
+    tp := ThreadPool.create(10)
+    for 0..10 do tp.enqueue(foo, &n)
+    tp.terminate(true)
+
+    println(n)
 }
 
 // */

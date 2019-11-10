@@ -6,7 +6,7 @@
 
 Main :: () {
     sum := 0
-    for :1000 {
+    for 0..1000 {
         if it % 3 == 0 or it % 5 == 0 {
             sum += it
         }

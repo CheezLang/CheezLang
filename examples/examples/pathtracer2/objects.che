@@ -72,7 +72,7 @@ impl Hittable for Array[Hittable] {
     hit :: (ref Self, r: ref Ray, t_min: real, t_max: real, random: ref Random) -> Option[HitRecord] {
         hit := Option[HitRecord].None
         closest := t_max
-        for : self.slice() {
+        for self.slice() {
             match it.hit(r, t_min, closest, random) {
                 Some($h) -> {
                     hit = Some(h)
@@ -97,7 +97,7 @@ impl Hittable for Array[Hittable] {
             }
         }
 
-        for : self.sliceF(1) {
+        for self.sliceF(1) {
             box = match it.bounding_box() {
                 Some($aabb) -> AABB.surrounding_box(box, aabb)
                 None -> {
@@ -121,7 +121,7 @@ BhvNode :: struct {
 test_macro :: (name: string, arr: []Hittable) {
     address := int(arr.data)
     printfln("{}: [{}] {}", (name, address, arr.length))
-    for : arr {
+    for arr {
         it.bounding_box()
     }
 }

@@ -10,9 +10,9 @@ Main :: () {
     leftmost_digit := 0
 
     // calculate 2^1000
-    for : 1000 {
+    for 0..1000 {
         carry := 0
-        for(inclusive=true) i : leftmost_digit {
+        for(inclusive=true) i : 0..leftmost_digit {
             d := digits[i]
             d = d * 2 + carry
             digits[i] = d % 10
@@ -26,7 +26,7 @@ Main :: () {
 
     // calculate sum of digits
     sum := 0
-    for(reverse=true) : @cast([]int, digits) {
+    for(reverse=true) @cast([]int, digits) {
         sum += it
     }
     

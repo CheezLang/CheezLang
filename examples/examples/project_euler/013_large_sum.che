@@ -26,7 +26,7 @@ Main :: () {
 
     // reverse string
     len := res.get_length()
-    for : len/2 {
+    for 0..len/2 {
         (a, b) := (res[it], res[len-it-1])
         res[len-it-1] = a
         res[it] = b

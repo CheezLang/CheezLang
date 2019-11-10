@@ -86,14 +86,14 @@ impl(T: type) RingQueue[T] {
 impl(T: type) Drop for RingQueue[T] {
     drop :: (ref Self) {
         if first <= last {
-            for : first..last {
+            for first..last {
                 Memory.drop(data[it])
             }
         } else {
-            for : first..capacity {
+            for first..capacity {
                 Memory.drop(data[it])
             }
-            for : 0..last {
+            for 0..last {
                 Memory.drop(data[it])
             }
         }

@@ -126,7 +126,7 @@ impl Game for MyGame {
         match function {
             Some($f)    -> {
                 println("===================")
-                for : f {
+                for f {
                     println(it)
                 }
                 println("===================")

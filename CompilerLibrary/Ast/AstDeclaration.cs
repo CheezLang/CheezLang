@@ -50,6 +50,8 @@ namespace Cheez.Ast.Statements
 
         public bool IsReturnParam { get; set; } = false;
 
+        public AstFuncExpr ContainingFunction { get; set; }
+
         public AstParameter(AstIdExpr name, AstExpression typeExpr, AstExpression defaultValue, ILocation Location = null)
         {
             this.Location = Location;
@@ -516,6 +518,8 @@ namespace Cheez.Ast.Statements
         public AstExpression Pattern { get; set; }
         public AstExpression TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
+
+        public AstFuncExpr ContainingFunction { get; set; }
 
         public AstVariableDecl(AstExpression pattern, AstExpression typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null)
             : base(pattern is AstIdExpr ? (pattern as AstIdExpr) : (new AstIdExpr(pattern.ToString(), false, pattern.Location)), Directives, Location)

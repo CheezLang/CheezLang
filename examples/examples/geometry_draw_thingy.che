@@ -320,7 +320,7 @@ impl Game for MyGame {
             }
         }
 
-        for : shapes {
+        for shapes {
             it.draw(self)
         }
 

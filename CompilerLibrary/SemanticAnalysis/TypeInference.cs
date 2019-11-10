@@ -2907,7 +2907,7 @@ namespace Cheez
                 case CheezTypeType _:
                     {
                         var type = expr.Left.Value as CheezType;
-                        if (type.IsErrorType)
+                        if (type?.IsErrorType ?? true)
                             break;
 
                         if (type is EnumType @enum) {
@@ -4024,6 +4024,14 @@ namespace Cheez
                 expr.Type = var.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
 
+                if (!var.GetFlag(StmtFlags.GlobalScope))
+                {
+                    if (var.ContainingFunction == null)
+                        throw new NotImplementedException();
+                    if (var.ContainingFunction != currentFunction)
+                        ReportError(expr, $"Can't access variable '{expr.Name}' defined in outer function '{var.ContainingFunction.Name}'", ("Variable defined here:", var.Location));
+                }
+
                 if (var.Type is VarDeclType && var.Scope != GlobalScope)
                 {
                     ReportError(expr, $"Can't use variable '{var.Name}' before it is declared");
@@ -4033,6 +4041,11 @@ namespace Cheez
             {
                 expr.Type = p.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
+
+                if (p.ContainingFunction == null)
+                    throw new NotImplementedException();
+                if (p.ContainingFunction != currentFunction)
+                    ReportError(expr, $"Can't access parameter '{expr.Name}' defined in outer function '{p.ContainingFunction.Name}'");
             }
             else if (sym is TypeSymbol ct)
             {

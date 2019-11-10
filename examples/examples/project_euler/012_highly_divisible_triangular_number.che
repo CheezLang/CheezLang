@@ -10,7 +10,7 @@ count_divisors :: (num: int) -> int {
     count := 0
     max := int(sqrt(double(num)))
 
-    for(inclusive=true) : 1..max {
+    for(inclusive=true) 1..max {
         if num % it == 0 {
             count += 2
         }

@@ -86,7 +86,7 @@ number_to_english :: (n: int) -> String {
 
 Main :: () {
     sum := 0
-    for(inclusive=true) : 1..1000 {
+    for(inclusive=true) 1..1000 {
         eng := number_to_english(it)
         sum += eng.get_length()
     }

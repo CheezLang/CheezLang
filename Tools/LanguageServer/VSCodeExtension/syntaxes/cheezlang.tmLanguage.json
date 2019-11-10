@@ -109,7 +109,7 @@
         },
         "type_keywords": {
             "name": "storage.type.cheezlang",
-            "match": "\\b(use|enum|struct|trait|impl|for|pub)\\b"
+            "match": "\\b(use|enum|struct|trait|impl|for|pub|do)\\b"
         },
         "escaped_character": {
             "name": "constant.character.escape.cheezlang",

@@ -7,7 +7,7 @@
 Main :: () {
     n := 600851475143
 
-    for(inclusive=true) :2..n/2 {
+    for(inclusive=true) 2..n/2 {
         while n % it == 0 {
             n /= it
         }

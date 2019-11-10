@@ -42,7 +42,7 @@ ArenaAllocator :: struct {
 
 impl Drop for ArenaAllocator {
     drop :: (ref Self) {
-        for :buckets {
+        for buckets {
             parent.free(it.memory.data)
         }
     }

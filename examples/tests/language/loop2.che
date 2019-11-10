@@ -19,7 +19,7 @@ Main :: () {
 // test1 :: (n: int) {
 //     sum := 0
 //     sum_index := 0
-//     for : n {
+//     for 0..n {
 //         sum += it
 //         sum_index += it_index
 //     }

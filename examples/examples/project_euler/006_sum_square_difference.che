@@ -10,7 +10,7 @@ Main :: () {
     sum_squared := sum * sum
 
     squared_sum := 0
-    for : n+1 {
+    for 0..n+1 {
         squared_sum += it * it
     }
 

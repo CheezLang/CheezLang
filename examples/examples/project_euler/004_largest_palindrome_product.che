@@ -6,7 +6,7 @@
 #load("std:string")
 
 is_palindrome :: (str: ref String) -> bool {
-    for : str.get_length()/2 {
+    for 0..str.get_length()/2 {
         i1 := it
         i2 := str.get_length() - it - 1
         if str[i1] != str[i2] {
@@ -21,10 +21,10 @@ Main :: () {
 
     longest := 0
 
-    for(reverse=true) a :1000 {
+    for(reverse=true) a : 0..1000 {
         if a * 999 < longest then break
 
-        for(reverse=true) b :1000 {
+        for(reverse=true) b : 0..1000 {
             product := a * b
             if product < longest then continue
 
