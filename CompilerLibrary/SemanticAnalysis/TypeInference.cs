@@ -255,9 +255,29 @@ namespace Cheez
                 case AstRangeExpr r:
                     return InferTypeRangeExpr(r, context);
 
+                case AstVariableRef r:
+                    return InferTypeVariableRef(r);
+
+                case AstConstantRef c:
+                    return InferTypeConstantRef(c);
+
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private static AstExpression InferTypeVariableRef(AstVariableRef r)
+        {
+            r.SetFlag(ExprFlags.IsLValue, true);
+            r.Type = r.Declaration.Type;
+            return r;
+        }
+
+        private static AstExpression InferTypeConstantRef(AstConstantRef r)
+        {
+            r.Type = r.Declaration.Type;
+            r.Value = r.Declaration.Value;
+            return r;
         }
 
         private AstExpression InferTypeFuncExpr(AstFuncExpr func)
@@ -1439,11 +1459,17 @@ namespace Cheez
                 expr.SubScope = new Scope("if", expr.Scope);
             }
 
-            if (expr.PreAction != null)
+            if (expr.PreActions != null)
             {
-                expr.PreAction.Scope = expr.SubScope;
-                expr.PreAction.Parent = expr;
-                AnalyseVariableDecl(expr.PreAction);
+                for (int i = 0; i < expr.PreActions.Count; i++)
+                {
+                    var pre = expr.PreActions[i];
+                    pre.Scope = expr.SubScope;
+                    pre.Parent = expr;
+                    var subs = AnalyseVariableDecl(pre).ToList();
+                    foreach (var sub in subs)
+                        expr.PreActions.Add(sub);
+                }
             }
 
             expr.Condition.SetFlag(ExprFlags.ValueRequired, true);
@@ -2452,7 +2478,13 @@ namespace Cheez
                 var stmt = expr.Statements[i];
                 stmt.Scope = expr.SubScope;
                 stmt.Parent = expr;
-                expr.Statements[i] = stmt = AnalyseStatement(stmt);
+                expr.Statements[i] = stmt = AnalyseStatement(stmt, out var newStatements);
+
+                if (newStatements != null)
+                {
+                    expr.Statements.InsertRange(i + 1, newStatements);
+                    end += newStatements.Count();
+                }
 
                 if (stmt.GetFlag(StmtFlags.Returns))
                     expr.SetFlag(ExprFlags.Returns, true);
@@ -3039,9 +3071,11 @@ namespace Cheez
 
                 AstDecl varDecl = null;
                 if (isConst)
+                    // for some strange reason we cant pass a typeref as type expr for this constant declaration
+                    // because this messes something up... idk :/
                     varDecl = new AstConstantDeclaration(param.Name, null, link, Location: arg.Location);
                 else
-                    varDecl = new AstVariableDecl(param.Name, null, link, Location: arg.Location);
+                    varDecl = new AstVariableDecl(param.Name, new AstTypeRef(param.Type, param), link, Location: arg.Location);
                 return varDecl;
             });
             code.Statements.InsertRange(0, links);
@@ -3985,7 +4019,7 @@ namespace Cheez
                 expr.Type = con.Type;
                 expr.Value = con.Value;
             }
-            else if (sym is AstSingleVariableDecl var)
+            else if (sym is AstVariableDecl var)
             {
                 expr.Type = var.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);

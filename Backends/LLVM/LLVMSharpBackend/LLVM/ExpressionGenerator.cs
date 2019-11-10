@@ -57,8 +57,24 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstBreakExpr b: return GenerateBreak(b);
                 case AstContinueExpr c: return GenerateContinue(c);
                 case AstRangeExpr r: return GenerateRangeExpr(r);
+                case AstVariableRef v: return GenerateVariableRefExpr(v, deref);
+                case AstConstantRef v: return GenerateConstantRefExpr(v);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GenerateVariableRefExpr(AstVariableRef v, bool deref)
+        {
+            var val = valueMap[v.Declaration];
+
+            if (deref)
+                val = builder.CreateLoad(val, "");
+            return val;
+        }
+
+        private LLVMValueRef GenerateConstantRefExpr(AstConstantRef v)
+        {
+            return CheezValueToLLVMValue(v.Declaration.Type, v.Declaration.Value);
         }
 
         private LLVMValueRef GenerateRangeExpr(AstRangeExpr r)
@@ -1062,9 +1078,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateIfExpr(AstIfExpr iff)
         {
-            if (iff.PreAction != null)
+            if (iff.PreActions != null)
             {
-                GenerateVariableDecl(iff.PreAction);
+                foreach (var pre in iff.PreActions)
+                    GenerateVariableDecl(pre);
             }
 
             LLVMValueRef result = default;

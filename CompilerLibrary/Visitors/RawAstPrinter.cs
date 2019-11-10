@@ -170,8 +170,9 @@ namespace Cheez.Visitors
             var sb = new StringBuilder();
             sb.Append("if ");
 
-            if (ifs.PreAction != null)
-                sb.Append(ifs.PreAction.Accept(this)).Append(", ");
+            if (ifs.PreActions != null)
+                foreach (var pre in ifs.PreActions)
+                    sb.Append(pre.Accept(this)).Append(", ");
 
             sb.Append(ifs.Condition.Accept(this));
             sb.Append(" ");
@@ -218,7 +219,9 @@ namespace Cheez.Visitors
         {
             var sb = new StringBuilder();
             sb.Append("while ");
-            if (wh.PreAction != null) sb.Append(wh.PreAction.Accept(this) + ", ");
+            if (wh.PreActions != null)
+                foreach (var pre in wh.PreActions)
+                    sb.Append(pre.Accept(this)).Append(", ");
             sb.Append(wh.Condition.Accept(this));
             if (wh.PostAction != null) sb.Append(", " + wh.PostAction.Accept(this));
             sb.Append(" " + wh.Body.Accept(this));

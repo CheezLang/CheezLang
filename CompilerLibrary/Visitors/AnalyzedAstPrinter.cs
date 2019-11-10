@@ -303,8 +303,9 @@ namespace Cheez.Visitors
             sb.Append(ifs.ElseCase?.Type);
             sb.Append(": ");
 
-            if (ifs.PreAction != null)
-                sb.Append(ifs.PreAction.Accept(this)).Append(", ");
+            if (ifs.PreActions != null)
+                foreach (var pre in ifs.PreActions)
+                    sb.Append(pre.Accept(this)).Append(", ");
 
             sb.Append(ifs.Condition.Accept(this));
             sb.Append(" ");
@@ -351,7 +352,9 @@ namespace Cheez.Visitors
         {
             var sb = new StringBuilder();
             sb.Append("while ");
-            if (wh.PreAction != null) sb.Append(wh.PreAction.Accept(this) + ", ");
+            if (wh.PreActions != null)
+                foreach (var pre in wh.PreActions)
+                    sb.Append(pre.Accept(this)).Append(", ");
             sb.Append(wh.Condition.Accept(this));
             if (wh.PostAction != null) sb.Append(", " + wh.PostAction.Accept(this));
             sb.Append(" " + wh.Body.Accept(this));
@@ -564,6 +567,16 @@ namespace Cheez.Visitors
 
 
         #region Expressions
+
+        public override string VisitVariableRef(AstVariableRef expr, int data = 0)
+        {
+            return $"@var({expr.Declaration.Name})";
+        }
+
+        public override string VisitConstantRef(AstConstantRef expr, int data = 0)
+        {
+            return $"@const({expr.Declaration.Name})";
+        }
 
         public override string VisitFuncExpr(AstFuncExpr function, int indentLevel = 0)
         {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Cheez.Ast;
 using Cheez.Ast.Expressions;
@@ -206,12 +207,13 @@ namespace Cheez
             }
         }
 
-        private AstStatement AnalyseStatement(AstStatement stmt)
+        private AstStatement AnalyseStatement(AstStatement stmt, out List<AstStatement> newStatements)
         {
+            newStatements = null;
             switch (stmt)
             {
                 case AstConstantDeclaration con: return AnalyseConstantDeclaration(con);
-                case AstVariableDecl vardecl: return AnalyseVariableDecl(vardecl);
+                case AstVariableDecl vardecl: newStatements = AnalyseVariableDecl(vardecl).Select(v => v as AstStatement).ToList(); break;
                 case AstReturnStmt ret: return AnalyseReturnStatement(ret);
                 case AstExprStmt expr: return AnalyseExprStatement(expr);
                 case AstAssignment ass: return AnalyseAssignStatement(ass);
@@ -260,7 +262,9 @@ namespace Cheez
             def.Deferred.Scope = def.Scope;
             def.Deferred.Parent = def;
 
-            AnalyseStatement(def.Deferred);
+            AnalyseStatement(def.Deferred, out var v);
+            if (v?.Count() > 0)
+                ReportError(def, $"New statements not allowed");
 
             def.Scope.DefineSymbol(def, GetUniqueName("defer"));
 
@@ -364,7 +368,9 @@ namespace Cheez
                 var exprStmt = new AstExprStmt(call, fo.Body.Location);
                 exprStmt.Parent = fo.Parent;
                 exprStmt.Scope = fo.SubScope;
-                return AnalyseStatement(exprStmt);
+                var result = AnalyseStatement(exprStmt, out var ns);
+                Debug.Assert(ns == null);
+                return result;
             }
         }
 
@@ -449,12 +455,20 @@ namespace Cheez
         private AstWhileStmt AnalyseWhileStatement(AstWhileStmt whl)
         {
             whl.PreScope = whl.Scope;
-            if (whl.PreAction != null)
+            if (whl.PreActions != null)
             {
                 whl.PreScope = new Scope("while-pre", whl.Scope);
-                whl.PreAction.Scope = whl.PreScope;
-                whl.PreAction.Parent = whl;
-                whl.PreAction = AnalyseVariableDecl(whl.PreAction);
+
+                for (int i = 0; i < whl.PreActions.Count; i++)
+                {
+                    var pre = whl.PreActions[i];
+                    pre.Scope = whl.PreScope;
+                    pre.Parent = whl;
+
+                    var subs = AnalyseVariableDecl(pre).ToList();
+                    foreach (var sub in subs)
+                        whl.PreActions.Add(sub);
+                }
             }
             whl.SubScope = new Scope("while", whl.PreScope);
 
@@ -468,7 +482,10 @@ namespace Cheez
             {
                 whl.PostAction.Scope = whl.SubScope;
                 whl.PostAction.Parent = whl;
-                whl.PostAction = AnalyseStatement(whl.PostAction);
+                whl.PostAction = AnalyseStatement(whl.PostAction, out var newStatements);
+
+                if (newStatements?.Count() > 0)
+                    ReportError(whl.PostAction, $"New statements not allowed");
             }
 
             whl.SubScope.DefineLoop(whl);
@@ -739,17 +756,15 @@ namespace Cheez
             return value;
         }
 
-        private AstVariableDecl AnalyseVariableDecl(AstVariableDecl vardecl)
+        private IEnumerable<AstVariableDecl> AnalyseVariableDecl(AstVariableDecl decl)
         {
-            Pass1VariableDeclaration(vardecl);
-            Pass6VariableDeclaration(vardecl);
+            foreach (var sub in SplitVariableDeclaration(decl))
+                yield return sub;
+            ResolveVariableDecl(decl);
 
-            if (vardecl.Type is SumType)
-            {
-                ReportError(vardecl.Pattern, $"Invalid type for variable declaration: {vardecl.Type}");
-            }
-
-            return vardecl;
+            var (ok, other) = decl.Scope.DefineSymbol(decl);
+            if (!ok)
+                ReportError(decl, $"A symbol with name '{decl.Name.Name}' already exists in this scope", ("Other declaration here:", other));
         }
 
         private AstExprStmt AnalyseExprStatement(AstExprStmt expr, bool allow_any_expr = false, bool infer_types = true)

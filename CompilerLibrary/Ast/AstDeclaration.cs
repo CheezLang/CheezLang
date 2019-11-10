@@ -14,7 +14,7 @@ using System.Numerics;
 
 namespace Cheez.Ast.Statements
 {
-    public abstract class AstDecl : AstStatement, ISymbol
+    public abstract class AstDecl : AstStatement, ITypedSymbol
     {
         public AstIdExpr Name { get; set; }
         public CheezType Type { get; set; }
@@ -511,46 +511,11 @@ namespace Cheez.Ast.Statements
 
     #region Variable Declarion
 
-    public class AstSingleVariableDecl : AstDecl, ITypedSymbol
-    {
-        public AstExpression TypeExpr { get; set; }
-        public AstExpression Initializer { get; set; }
-
-        public AstVariableDecl VarDeclaration { get; set; }
-
-        public object Value { get; set; } = null;
-
-        public AstSingleVariableDecl(AstIdExpr name, AstExpression typeExpr, AstVariableDecl parent, ILocation Location) : base(name, Location: Location)
-        {
-            TypeExpr = typeExpr;
-            VarDeclaration = parent;
-        }
-
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override AstStatement Clone()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override string ToString()
-        {
-            return $"@singlevar({Name.Name}, {VarDeclaration})";
-        }
-    }
-
     public class AstVariableDecl : AstDecl
     {
         public AstExpression Pattern { get; set; }
         public AstExpression TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
-
-        public HashSet<AstSingleVariableDecl> VarDependencies { get; set; }
-
-        public List<AstSingleVariableDecl> SubDeclarations { get; set; } = new List<AstSingleVariableDecl>();
 
         public AstVariableDecl(AstExpression pattern, AstExpression typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null)
             : base(pattern is AstIdExpr ? (pattern as AstIdExpr) : (new AstIdExpr(pattern.ToString(), false, pattern.Location)), Directives, Location)

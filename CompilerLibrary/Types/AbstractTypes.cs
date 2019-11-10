@@ -34,9 +34,9 @@ namespace Cheez.Types.Abstract
     public class VarDeclType : AbstractType
     {
         public override bool IsPolyType => false;
-        public AstSingleVariableDecl Declaration { get; }
+        public AstVariableDecl Declaration { get; }
 
-        public VarDeclType(AstSingleVariableDecl decl)
+        public VarDeclType(AstVariableDecl decl)
         {
             Declaration = decl;
         }

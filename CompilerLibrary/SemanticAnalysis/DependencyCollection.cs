@@ -50,10 +50,18 @@ namespace Cheez
                     var sym = decl.Scope.GetSymbol(id.Name);
                     if (sym is AstDecl d)
                     {
-                        if (d is AstSingleVariableDecl sv)
-                            d = sv.VarDeclaration;
+                        if (d is AstVariableDecl sv)
+                            d = sv;
                         decl.Dependencies.Add(d);
                     }
+                    break;
+
+                case AstVariableRef vr:
+                    decl.Dependencies.Add(vr.Declaration);
+                    break;
+
+                case AstConstantRef vr:
+                    decl.Dependencies.Add(vr.Declaration);
                     break;
 
                 case AstAddressOfExpr add:

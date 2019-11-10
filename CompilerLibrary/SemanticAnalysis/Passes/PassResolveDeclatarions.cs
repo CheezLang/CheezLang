@@ -5,10 +5,10 @@ using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types;
 using Cheez.Types.Abstract;
-using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Cheez
@@ -27,21 +27,9 @@ namespace Cheez
             foreach (var use in mAllGlobalUses)
                 AnalyseUseStatement(use);
 
-            // go through all type declarations (structs, traits, enums, typedefs) and define them in the scope
-            // go through all constant declarations and define them in the scope
-            foreach (var v in mAllGlobalVariables)
-                Pass1VariableDeclaration(v);
 
             // global variables
-            foreach (var @var in mAllGlobalVariables)
-            {
-                if (@var.TypeExpr != null)
-                    CollectTypeDependencies(@var, @var.TypeExpr);
-                if (@var.Initializer != null)
-                    CollectTypeDependencies(@var, @var.Initializer);
-            }
-            // check for cyclic dependencies and resolve types of typedefs and constant variables
-            ResolveMissingTypesOfDeclarations(mAllGlobalVariables);
+            ResolveGlobalVariables();
 
             // resolve impls (check if is polymorphic, setup scopes, check for self params in functions, etc.)
             foreach (var impl in mAllImpls)
@@ -51,10 +39,6 @@ namespace Cheez
                 else
                     Pass3TraitImpl(impl);
             }
-
-            // go through all type declarations and connect impls to types
-            // @todo: don't think this is necessary here
-            // UpdateTypeImplMap(GlobalScope);
 
             ResolveGlobalDeclarationBodies();
 
@@ -115,8 +99,21 @@ namespace Cheez
 
         private void ResolveConstantDeclarations()
         {
+            for (int i = 0; i < mAllGlobalConstants.Count; i++)
+            {
+                foreach (var sub in SplitConstantDeclaration(mAllGlobalConstants[i]))
+                {
+                    mAllGlobalConstants.Add(sub);
+                    mStatements.Add(sub);
+                }
+            }
+
             foreach (var con in mAllGlobalConstants)
-                GlobalScope.DefineSymbol(con);
+            {
+                var (ok, other) = GlobalScope.DefineSymbol(con);
+                if (!ok)
+                    ReportError(con, $"A symbol with name '{con.Name.Name}' already exists in this scope", ("Other declaration here:", other));
+            }
             foreach (var con in mAllGlobalConstants)
             {
                 if (con.TypeExpr != null)
@@ -125,6 +122,33 @@ namespace Cheez
             }
 
             ResolveMissingTypesOfDeclarations(mAllGlobalConstants);
+        }
+
+        private void ResolveGlobalVariables()
+        {
+            for (int i = 0; i < mAllGlobalVariables.Count; i++)
+            {
+                foreach (var sub in SplitVariableDeclaration(mAllGlobalVariables[i]))
+                {
+                    mAllGlobalVariables.Add(sub);
+                    mStatements.Add(sub);
+                }
+            }
+
+            foreach (var con in mAllGlobalVariables)
+            {
+                var (ok, other) = GlobalScope.DefineSymbol(con);
+                if (!ok)
+                    ReportError(con, $"A symbol with name '{con.Name.Name}' already exists in this scope", ("Other declaration here:", other));
+            }
+            foreach (var @var in mAllGlobalVariables)
+            {
+                if (@var.TypeExpr != null)
+                    CollectTypeDependencies(@var, @var.TypeExpr);
+                if (@var.Initializer != null)
+                    CollectTypeDependencies(@var, @var.Initializer);
+            }
+            ResolveMissingTypesOfDeclarations(mAllGlobalVariables);
         }
 
         private void ResolveGlobalDeclarationBodies()
@@ -242,6 +266,9 @@ namespace Cheez
             {
                 case AstConstantDeclaration c:
                     {
+                        if (!(c.Pattern is AstIdExpr))
+                            ReportError(c.Pattern, $"Only identifier pattern allowed here");
+
                         if (c.TypeExpr != null)
                         {
                             c.TypeExpr.AttachTo(c);
@@ -251,6 +278,7 @@ namespace Cheez
                         }
 
                         c.Initializer.AttachTo(c);
+                        c.Initializer.SetFlag(ExprFlags.ValueRequired, true);
                         c.Initializer = InferType(c.Initializer, c.Type);
 
                         if (c.Type == null)
@@ -271,43 +299,8 @@ namespace Cheez
 
                 case AstVariableDecl v:
                     {
-                        CheezType type = null;
-                        v.Type = CheezType.Error;
-
-                        // type ex
-                        if (v.TypeExpr != null)
-                        {
-                            v.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
-                            v.TypeExpr = ResolveType(v.TypeExpr, newPolyDecls, out var t);
-                            type = v.Type = t;
-                        }
-
-                        v.Initializer.SetFlag(ExprFlags.ValueRequired, true);
-                        v.Initializer = InferType(v.Initializer, type);
-                        ConvertLiteralTypeToDefaultType(v.Initializer, type);
-
-                        if (v.Initializer.Type.IsErrorType)
-                        {
-                            Console.WriteLine(v.Pattern);
-                            break;
-                        }
-
-                        if (v.TypeExpr != null)
-                        {
-                            v.Initializer = HandleReference(v.Initializer, type, null);
-                            v.Initializer = CheckType(v.Initializer, type);
-                        }
-                        else
-                        {
-                            if (v.Initializer.Type is ReferenceType)
-                                v.Initializer = Deref(v.Initializer, null);
-                        }
-
-                        if (v.TypeExpr == null)
-                            v.Type = v.Initializer.Type;
-
-                        AssignTypesAndValuesToSubdecls(v.Pattern, v.Type, v.Initializer);
-
+                        v.SetFlag(StmtFlags.GlobalScope, true);
+                        ResolveVariableDecl(v);
                         break;
                     }
             }

@@ -134,24 +134,39 @@ namespace Cheez.Ast.Expressions
     public class AstVariableRef : AstExpression
     {
         public AstVariableDecl Declaration { get; }
-        public AstExpression Original { get; set; }
         public override bool IsPolymorphic => false;
 
-        public AstVariableRef(AstVariableDecl let, AstExpression original, ILocation Location = null)
+        public AstVariableRef(AstVariableDecl let, ILocation Location = null)
             : base(Location)
         {
             Declaration = let;
             Type = let.Type;
-            this.Original = original;
-            Value = let;
         }
 
         [DebuggerStepThrough]
-        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default)
-            => Original != null ? Original.Accept(visitor, data) : visitor.VisitVariableRef(this, data);
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitVariableRef(this, data);
 
         public override AstExpression Clone()
-            => CopyValuesTo(new AstVariableRef(Declaration, Original));
+            => CopyValuesTo(new AstVariableRef(Declaration));
+    }
+
+    public class AstConstantRef : AstExpression
+    {
+        public AstConstantDeclaration Declaration { get; }
+        public override bool IsPolymorphic => false;
+
+        public AstConstantRef(AstConstantDeclaration let, ILocation Location = null)
+            : base(Location)
+        {
+            Declaration = let;
+            Type = let.Type;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitConstantRef(this, data);
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstConstantRef(Declaration));
     }
 
     public class AstFunctionRef : AstExpression

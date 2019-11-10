@@ -384,6 +384,10 @@ namespace Cheez
                         return true;
                     }
 
+                case AstVariableRef _:
+                case AstConstantRef _:
+                        return true;
+
                 case AstDefaultExpr _:
                 case AstNumberExpr _:
                 case AstBoolExpr _:
@@ -413,18 +417,17 @@ namespace Cheez
                     if (var.Type.IsComptimeOnly)
                         return true;
 
-                    foreach (var sv in var.SubDeclarations)
+                    if (var.Initializer != null)
                     {
-                        if (sv.Initializer != null)
-                        {
-                            scope.SetSymbolStatus(sv, SymbolStatus.Kind.initialized, sv);
-                            if (!PassVLExpr(sv.Initializer))
-                                return false;
-                            if (!Move(sv.Initializer))
-                                return false;
-                        }
-                        else
-                            scope.SetSymbolStatus(sv, SymbolStatus.Kind.uninitialized, sv.Name);
+                        scope.SetSymbolStatus(var, SymbolStatus.Kind.initialized, var);
+                        if (!PassVLExpr(var.Initializer))
+                            return false;
+                        if (!Move(var.Initializer))
+                            return false;
+                    }
+                    else
+                    {
+                        scope.SetSymbolStatus(var, SymbolStatus.Kind.uninitialized, var.Name);
                     }
                     return true;
 

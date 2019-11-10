@@ -139,7 +139,7 @@ namespace Cheez.Ast.Statements
         public AstExpression Condition { get; set; }
         public AstBlockExpr Body { get; set; }
 
-        public AstVariableDecl PreAction { get; set; }
+        public List<AstVariableDecl> PreActions { get; set; }
         public AstStatement PostAction { get; set; }
 
         public Scope PreScope { get; set; }
@@ -154,7 +154,17 @@ namespace Cheez.Ast.Statements
         {
             this.Condition = cond;
             this.Body = body;
-            this.PreAction = pre;
+            this.PreActions = pre != null ? new List<AstVariableDecl> { pre } : null;
+            this.PostAction = post;
+            this.Label = label;
+        }
+
+        public AstWhileStmt(AstExpression cond, AstBlockExpr body, List<AstVariableDecl> pre, AstStatement post, AstIdExpr label, ILocation Location = null)
+            : base(Location: Location)
+        {
+            this.Condition = cond;
+            this.Body = body;
+            this.PreActions = pre;
             this.PostAction = post;
             this.Label = label;
         }
@@ -165,7 +175,7 @@ namespace Cheez.Ast.Statements
             => CopyValuesTo(new AstWhileStmt(
                 Condition.Clone(),
                 Body.Clone() as AstBlockExpr,
-                PreAction?.Clone() as AstVariableDecl,
+                PreActions?.Select(v => v.Clone() as AstVariableDecl)?.ToList(),
                 PostAction?.Clone(),
                 Label?.Clone() as AstIdExpr
                 ));
