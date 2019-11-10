@@ -49,16 +49,20 @@ PseudoRandom :: struct {}
 
 impl PseudoRandom {
     init :: () {
-        lcg = alloc(LinearCongruentialGenerator)
-        <<lcg = LinearCongruentialGenerator.create(cast get_time_microseconds())
-        for : 0..1000 { lcg.next() }
+        if lcg == null {
+            lcg = alloc(LinearCongruentialGenerator)
+            <<lcg = LinearCongruentialGenerator.create(cast get_time_microseconds())
+            for : 0..1000 { lcg.next() }
+        }
     }
 
     next_int :: () -> i32 {
+        init()
         return cast lcg.next()
     }
 
     next_double :: () -> double {
+        init()
         return lcg.next_double()
     }
 }

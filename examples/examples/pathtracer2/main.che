@@ -9,23 +9,23 @@
 #load("material")
 #load("texture")
 
-report_progress : bool : false
-real :: float
+report_progress :: false
+real            :: float
 
-use_bhv     : bool = true
-num_threads : int  = 10
-grid_size   : int  = 15
+use_bhv     := true
+num_threads := 10
+grid_size   := 15
 
-scale  : int = 1
-width  : int = 192 * scale
-height : int = 108 * scale
+scale  := 1
+width  := 192 * scale
+height := 108 * scale
 // width : int = 108 * scale
 // height : int = 108 * scale
-samples   : int = 50
-max_depth : int = 15
+samples   := 50
+max_depth := 15
 
-scenes : []fn(ref Camera) -> Hittable = [simple_light, cornell_box, basic_scene, random_scene, big_scene]
-scene  : int : 0
+scenes := [simple_light, cornell_box, basic_scene, random_scene, big_scene]
+scene  :: 0
 
 file_write_mutex : &Mutex = null
 

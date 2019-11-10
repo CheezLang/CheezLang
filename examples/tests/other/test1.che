@@ -47,8 +47,8 @@ impl T2[string] for int {
     }
 }
 
-A, B  : TUPLE      : default
-C, D  : TD1, DWORD : default
+A, B  : TUPLE      = default
+C, D  : TD1, DWORD = default
 
 TYPE  :: type
 TUPLE :: (int, string)
