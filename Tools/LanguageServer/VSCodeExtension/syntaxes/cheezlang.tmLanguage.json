@@ -109,7 +109,7 @@
         },
         "type_keywords": {
             "name": "storage.type.cheezlang",
-            "match": "\\b(use|enum|struct|trait|impl|for|typedef|let|pub)\\b"
+            "match": "\\b(use|enum|struct|trait|impl|for|pub)\\b"
         },
         "escaped_character": {
             "name": "constant.character.escape.cheezlang",
@@ -164,23 +164,12 @@
                 { "include": "#block_comment" },
                 { "include": "#line_comment" },
                 {
-                    "match": "\\b(new)\\s+([_a-zA-Z][_a-zA-Z0-9]*)\\b",
-                    "captures": {
-                        "1": {
-                            "name": "keyword.other.cheezlang"
-                        },
-                        "2": {
-                            "name": "entity.name.type.cheezlang"
-                        }
-                    }
-                },
-                {
                     "name": "storage.type.cheezlang",
                     "match": "\\b(fn|Fn)\\b"
                 },
                 {
                     "name": "keyword.other.cheezlang",
-                    "match": "\\b(new|cast)\\b"
+                    "match": "\\b(cast)\\b"
                 },
                 { "include": "#core_types" },
                 { "include": "#control_keywords" },
@@ -193,39 +182,6 @@
                 { "include": "#delimiters" },
                 { "include": "#identifier" }
             ]
-        },
-        "type_decl": {
-            "match": "\\b(enum|struct|trait|typedef)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
-            "captures": {
-                "1": {
-                    "name": "storage.type.cheezlang"
-                },
-                "2": {
-                    "name": "entity.name.type.cheezlang"
-                }
-            }
-        },
-        "fn_decl": {
-            "match": "\\b(fn)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
-            "captures": {
-                "1": {
-                    "name": "storage.type.cheezlang"
-                },
-                "2": {
-                    "name": "entity.name.function.cheezlang"
-                }
-            }
-        },
-        "var_decl": {
-            "match": "\\b(let)\\s+((const)\\s+)?",
-            "captures": {
-                "1": {
-                    "name": "storage.type.cheezlang"
-                },
-                "2": {
-                    "name": "storage.type.cheezlang"
-                }
-            }
         }
     }
 }
