@@ -94,12 +94,28 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.PositionBuilderAtEnd(bbEnd);
         }
 
-        private void PrintStackTrace()
+        void Sprintf(LLVMValueRef buffer, params LLVMValueRef[] args)
+        {
+            var b = builder.CreateLoad(buffer, "");
+
+            args = args.Prepend(b).ToArray();
+
+            var count = builder.CreateCall(sprintf, args, "");
+            count = builder.CreateIntCast(count, LLVM.Int64Type(), "");
+            b = builder.CreatePtrToInt(b, LLVM.Int64Type(), "");
+            b = builder.CreateAdd(b, count, "");
+            b = builder.CreateIntToPtr(b, LLVM.Int8Type().GetPointerTo(), "");
+
+            builder.CreateStore(b, buffer);
+        }
+
+        private void PrintStackTrace(LLVMValueRef buffer)
         {
             if (!keepTrackOfStackTrace)
                 return;
 
-            builder.CreateCall(printf, new LLVMValueRef[] { builder.CreateGlobalStringPtr("at\n", "") }, "");
+
+            Sprintf(buffer, builder.CreateGlobalStringPtr("at\n", ""));
 
             var bbCond = currentLLVMFunction.AppendBasicBlock("stack_trace.print.cond");
             var bbBody = currentLLVMFunction.AppendBasicBlock("stack_trace.print.body");
@@ -128,8 +144,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var location = builder.CreateLoad(locationPtr, "");
                 var line = builder.CreateLoad(builder.CreateStructGEP(current, 3, ""), "");
                 var col = builder.CreateLoad(builder.CreateStructGEP(current, 4, ""), "");
-                LLVMValueRef[] args = { builder.CreateGlobalStringPtr("  %s (%s:%lld:%lld)\n", ""), name, location, line, col };
-                builder.CreateCall(printf, args, "");
+                Sprintf(buffer, builder.CreateGlobalStringPtr("  %s (%s:%lld:%lld)\n", ""), name, location, line, col);
             }
             // load previous entry
             {
@@ -161,9 +176,21 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void CreateCLibFunctions()
         {
+            void CreateFunc(ref LLVMValueRef func, string name, LLVMTypeRef returnType, bool isVarargs, params LLVMTypeRef[] argTypes)
+            {
+                func = module.GetNamedFunction(name);
+                if (func.Pointer.ToInt64() == 0)
+                {
+                    var ltype = LLVM.FunctionType(returnType, argTypes, isVarargs);
+                    func = module.AddFunction(name, ltype);
+                }
+            }
+
             exit = module.GetNamedFunction("exit");
             if (exit.Pointer.ToInt64() == 0)
                 exit = GenerateIntrinsicDeclaration("exit", LLVM.VoidType(), LLVM.Int32Type());
+
+            CreateFunc(ref puts, "puts", LLVM.VoidType(), false, LLVM.Int8Type().GetPointerTo());
 
             printf = module.GetNamedFunction("printf");
             if (printf.Pointer.ToInt64() == 0)
@@ -172,6 +199,27 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     LLVM.PointerType(LLVM.Int8Type(), 0)
                 }, true);
                 printf = module.AddFunction("printf", ltype);
+            }
+
+            sprintf = module.GetNamedFunction("sprintf");
+            if (sprintf.Pointer.ToInt64() == 0)
+            {
+                var ltype = LLVM.FunctionType(LLVM.Int32Type(), new LLVMTypeRef[] {
+                    LLVM.PointerType(LLVM.Int8Type(), 0),
+                    LLVM.PointerType(LLVM.Int8Type(), 0)
+                }, true);
+                sprintf = module.AddFunction("sprintf", ltype);
+            }
+
+            exitThread = module.GetNamedFunction("ExitThread");
+            if (exitThread.Pointer.ToInt64() == 0)
+            {
+                var ltype = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[]
+                {
+                    LLVM.Int32Type()
+                }, false);
+                exitThread = module.AddFunction("ExitThread", ltype);
+                exitThread.SetFunctionCallConv((uint)LLVMCallConv.LLVMX86StdcallCallConv);
             }
         }
 
@@ -197,11 +245,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 builder.CreateGlobalStringPtr(msg + "\n", "")
             };
             args.AddRange(p);
-            var pf = builder.CreateCall(printf, args.ToArray(), "");
 
-            PrintStackTrace();
+            // create temporary buffer for message and stack trace
+            var buffer = builder.CreateAlloca(LLVM.Int8Type().GetPointerTo(), "stack_trace.print.buffer");
+            builder.CreateStore(builder.CreateArrayMalloc(LLVM.Int8Type(), LLVM.ConstInt(LLVM.Int32Type(), 1024 * 4, false), ""), buffer);
+            var originalBuffer = builder.CreateLoad(buffer, "");
 
-            builder.CreateCall(exit, new LLVMValueRef[] {
+            // print message and stack trace to temporary buffer
+            Sprintf(buffer, args.ToArray());
+            PrintStackTrace(buffer);
+
+            // print
+            builder.CreateCall(puts, new LLVMValueRef[] { originalBuffer }, "");
+            builder.CreateFree(originalBuffer);
+
+            // exit thread
+            builder.CreateCall(exitThread, new LLVMValueRef[] {
                 LLVM.ConstInt(LLVM.Int32Type(), (uint)exitCode, true)
             }, "");
         }

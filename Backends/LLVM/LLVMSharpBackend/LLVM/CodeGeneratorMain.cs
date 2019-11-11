@@ -56,6 +56,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         // c lib
         private LLVMValueRef exit;
         private LLVMValueRef printf;
+        private LLVMValueRef sprintf;
+        private LLVMValueRef puts;
+        private LLVMValueRef exitThread;
 
         //
         private LLVMTypeRef pointerType;
