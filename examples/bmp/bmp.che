@@ -1,3 +1,5 @@
 #lib("./bmp64.lib")
 
+
+// data: array of pixels, each with r, g, b
 write_bmp :: (w: i32, h: i32, data: &double, filename: c_string);

@@ -11,9 +11,9 @@
 #load("opengl:opengl")
 
 Game :: trait {
-    on_create :: (ref Self, pge: &PixelGameEngine) -> bool;
+    on_create  :: (ref Self, pge: &PixelGameEngine) -> bool;
     on_destroy :: (ref Self) -> bool;
-    on_update :: (ref Self, dt: float) -> bool;
+    on_update  :: (ref Self, dt: float) -> bool;
 }
 
 PixelGameEngine :: struct {
@@ -80,6 +80,7 @@ PixelGameEngine :: struct {
     // other
     auto_title          : bool      = true
     fps_string          : String
+    current_fps         : int       = 0
 }
 
 compare_ints :: (a: int, b: int) -> bool {
@@ -262,6 +263,7 @@ impl PixelGameEngine {
                 nFrameCount += 1
                 if fFrameTimer >= 1.0f {
                     fFrameTimer -= 1.0f
+                    current_fps = nFrameCount
 
                     if auto_title {
                         fps_string.resize(0)

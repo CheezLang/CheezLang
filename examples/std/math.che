@@ -1,43 +1,43 @@
 #load("std:preload")
 
 sqrtf :: (f: float) -> float;
-sqrt :: (f: double) -> double;
+sqrt  :: (f: double) -> double;
 
-abs :: (i: $T) -> T { return if i < 0 {-i} else {i} }
+abs   :: (i: $T) -> T { return if i < 0 {-i} else {i} }
 fabsf :: (f: float) -> float;
-fabs :: (f: double) -> double;
+fabs  :: (f: double) -> double;
 
-max :: (a: $T, b: T) -> T { return if a >= b then a else b }
+max   :: (a: $T, b: T) -> T { return if a >= b then a else b }
 fmaxf :: (f1: float, f2: float) -> float;
-fmax :: (f1: double, f2: double) -> double;
+fmax  :: (f1: double, f2: double) -> double;
 
-min :: (a: $T, b: T) -> T { return if a <= b then a else b }
+min   :: (a: $T, b: T) -> T { return if a <= b then a else b }
 fminf :: (f1: float, f2: float) -> float;
-fmin :: (f1: double, f2: double) -> double;
+fmin  :: (f1: double, f2: double) -> double;
 
-sinf :: (f: float) -> float;
-sin :: (f: double) -> double;
-sinh :: (f: double) -> double;
+sinf  :: (f: float) -> float;
+sin   :: (f: double) -> double;
+sinh  :: (f: double) -> double;
 
-cosf :: (f: float) -> float;
-cos :: (f: double) -> double;
-cosh :: (f: double) -> double;
+cosf  :: (f: float) -> float;
+cos   :: (f: double) -> double;
+cosh  :: (f: double) -> double;
 
-tanf :: (f: float) -> float;
-tan :: (f: double) -> double;
+tanf  :: (f: float) -> float;
+tan   :: (f: double) -> double;
 
 atan2 :: (a: double, b: double) -> double;
-pow :: (a: double, b: double) -> double;
-exp :: (a: double) -> double;
+pow   :: (a: double, b: double) -> double;
+exp   :: (a: double) -> double;
 
-logf :: (f: float) -> float;
-log :: (f: double) -> double;
+logf  :: (f: float) -> float;
+log   :: (f: double) -> double;
 
-floorf :: (float) -> float;
+floorf:: (float) -> float;
 floor :: (double) -> double;
 
 ceilf :: (float) -> float;
-ceil :: (double) -> double;
+ceil  :: (double) -> double;
 
 mod_pos :: (a: $T, b: T) -> T {
     return ((a % b) + b) % b

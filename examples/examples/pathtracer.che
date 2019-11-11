@@ -1,4 +1,5 @@
 #load("olc_pge/pixel_game_engine")
+#load("../bmp/bmp")
 #load("std:io/io")
 #load("std:mem/arena_allocator")
 #load("std:array")
@@ -9,14 +10,16 @@
 
 Vec3 :: Vector3[float]
 
+save_file_name      :: "pt_image.bmp"c
+
 block_size          :: 64
 block_count_x       :: (width  - 1) / block_size + 1
 block_count_y       :: (height - 1) / block_size + 1
 block_count         :: block_count_x * block_count_y
 samples_per_block   :: 5
-thread_count        :: 2
+thread_count        :: 4
 
-scale               :: 2
+scale               :: 5
 width               :: 192 * scale
 height              :: 108 * scale
                     
@@ -113,17 +116,18 @@ PathTracer :: struct {
     pge             : &PixelGameEngine      = null
     allocator       : ArenaAllocator
     objects         : Array[Object]
-    cam_fov         : float                = 0
+    cam_fov         : float                 = 0
     cam_pos         : Vec3                  = default
     cam_dir         : Vec3                  = default
     cam_right       : Vec3                  = default
     cam_up          : Vec3                  = default
-    sample_t        : float                = 0
-    total_t         : float                = 0
+    sample_t        : float                 = 0
+    total_t         : float                 = 0
     buffer          : []Vec3                = default
     thread_datas    : [block_count]&RenderContext = default
 
     running         : bool = true
+    paused          : bool = false
 }
 
 impl Drop for PathTracer {
@@ -388,6 +392,9 @@ impl Game for PathTracer {
     }
 
     enqueue_threads :: (ref Self) {
+        if paused {
+            return
+        }
         tds : []&RenderContext = thread_datas
         for context : tds {
             thread_pool.enqueue(pathtracer_thread, context)
@@ -404,7 +411,89 @@ impl Game for PathTracer {
             return false
         }
 
+        if pge.get_key(Key.Space).pressed {
+            paused = !paused
+            if !paused {
+                thread_pool_mut.lock()
+                if running and thread_pool.count() == 0 {
+                    enqueue_threads()
+                }
+                thread_pool_mut.release()
+            }
+        }
+
+        if paused and pge.get_key(Key.F1).pressed {
+            save_image()
+        }
+
         //
+        if !paused or thread_pool.count() > 0 {
+            for current_y : 0..height {
+                for current_x : 0..width {
+                    index := current_x + current_y * width
+                    thread_id_x := current_x / block_size
+                    thread_id_y := current_y / block_size
+                    thread_id   := thread_id_x + thread_id_y * block_count_x
+
+                    if !(thread_id >= 0 and thread_id < thread_datas.length) {
+                        printfln("{},{} -> {},{} -> {}/{}", (current_x, current_y, thread_id_x, thread_id_y, thread_id, thread_datas.length))
+                        continue
+                    }
+
+                    sample := thread_datas[thread_id].samples
+
+                    if sample > 0 {
+                        // calculate color of pixel by taking the average of the color
+                        // in the buffer
+                        pixel := {
+                            bufferColor := buffer[index] / float(sample)
+                            // println(bufferColor)
+                            bufferColor = bufferColor.clamped(0.0, 1.0) * 255.0f
+                            c := Vec3.change_type(bufferColor, u8)
+                            Pixel.rgba(c.x, c.y, c.z)
+                        }
+                        pge.draw(current_x, current_y, pixel)
+                    }
+                }
+            }
+
+            tds : []&RenderContext = thread_datas
+            for tds {
+                if it.active {
+                    size := it.max - it.min
+                    col  := Pixel(255, 255, 255)
+
+                    for offset : 0..3 {
+                        pge.draw_rect(it.min.x + offset, it.min.y + offset, size.x - 2*offset - 1, size.y - 2*offset - 1, col)
+                    }
+                }
+            }
+        }
+
+        sample_t += float(dt)
+        if sample_t >= 1 {
+            total_t += 1
+
+            fps := pge.current_fps
+
+            sps := float(thread_datas[0].samples) / total_t
+            total_seconds := int(total_t + 0.1)
+            s := String.format("{}, FPS: {}, Samples: {}, Total: {}s, Samples per second: {}", 
+                (if paused then "paused" else "running", fps, thread_datas[0].samples, total_seconds, sps))
+            pge.set_window_title(s)
+
+            sample_t -= 1
+        }
+
+        Sleep(5)
+
+        return true
+    }
+
+    save_image :: (ref Self) {
+        data := alloc_raw(double, width * height * 3)
+        defer free(data)
+
         for current_y : 0..height {
             for current_x : 0..width {
                 index := current_x + current_y * width
@@ -422,44 +511,16 @@ impl Game for PathTracer {
                 if sample > 0 {
                     // calculate color of pixel by taking the average of the color
                     // in the buffer
-                    pixel := {
-                        bufferColor := buffer[index] / float(sample)
-                        // println(bufferColor)
-                        bufferColor = bufferColor.clamped(0.0, 1.0) * 255.0f
-                        c := Vec3.change_type(bufferColor, u8)
-                        Pixel.rgba(c.x, c.y, c.z)
-                    }
-                    pge.draw(current_x, current_y, pixel)
+                    bufferColor := buffer[index] / float(sample)
+                    bufferColor = bufferColor.clamped(0.0, 1.0)
+                    data[index * 3 + 0] = bufferColor.x
+                    data[index * 3 + 1] = bufferColor.y
+                    data[index * 3 + 2] = bufferColor.z
                 }
             }
         }
 
-        tds : []&RenderContext = thread_datas
-        for tds {
-            if it.active {
-                size := it.max - it.min
-                col  := Pixel(255, 255, 255)
-
-                for offset : 0..3 {
-                    pge.draw_rect(it.min.x + offset, it.min.y + offset, size.x - 2*offset - 1, size.y - 2*offset - 1, col)
-                }
-            }
-        }
-
-        sample_t += float(dt)
-        if sample_t >= 1 {
-            total_t += 1
-
-            sps := float(thread_datas[0].samples) / total_t
-            total_seconds := int(total_t + 0.1)
-            s := String.format("Samples: {}, Total: {}s, Samples per second: {}", 
-                (thread_datas[0].samples, total_seconds, sps))
-            pge.set_window_title(s)
-
-            sample_t -= 1
-        }
-
-        return true
+        write_bmp(width, height, data, save_file_name)
     }
 }
 

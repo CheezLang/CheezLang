@@ -1,147 +1,45 @@
-// #load("examples/trait_function_call_performance")
+#load("examples/trait_function_call_performance")
 // #load("examples/graphyfier/graphyfier")
 // #load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
 // #load("examples/snake/snake")
-#load("examples/pathtracer")
+// #load("examples/pathtracer")
 
 // #load("tests/language/match3")
 // #load("tests/library/arena_allocator1")
 // #load("tests/other/test1")
 // #load("examples/project_euler/005_smallest_multiple")
 
+
 /*
 #load("std:io/io")
+#load("std:fiber")
 #load("std:thread")
-
-mutex : &Mutex = null
-
-foo :: (i: &int) {
-    mutex.lock()
-    for 0..1000000 {
-        <<i += 1
-    }
-    mutex.release()
-}
-
-Main :: () {
-    mutex = alloc(Mutex)
-    <<mutex = Mutex.create()
-    n := 0
-
-    tp := ThreadPool.create(10)
-    for 0..10 do tp.enqueue(foo, &n)
-    tp.terminate(true)
-
-    println(n)
-}
-
-// */
-
-/*
 #load("std:c")
-#load("std:io/io")
 
-Real2 :: Real1
-Real3 :: float
-Vec :: struct {
-    dim :: 3
-    x : Real1
-    y : Real2
-    z : Real3
-    w : Real4
-}
-
-Real1 :: int
-Real4 :: Real3
-
-GVec :: struct (T: type) {
-    x : T
-    y : T
-}
-
-impl Vec {
-    print :: (ref Self) {
-        printfln("Vec({}, {}, {}, {})", (double(x), double(y), double(z), double(w)))
-        // c_printf("Vec(%f, %f, %f, %f)`n", double(x), double(y), double(z), double(w))
+foo :: () {
+    if c_rand() % 10 == 0 {
+        @panic("uiae")
     }
+    foo()
 }
 
-impl(T: type) GVec[T] {
-    print :: (ref Self) {
-        printfln("GVec({}, {})", (double(x), double(y)))
-        // c_printf("GVec(%f, %f)`n", double(x), double(y))
-    }
-}
-
-Foo :: struct {
-    bar : &Bar
-}
-
-Bar :: struct {
-    foo : &Foo
-}
-
-
-
-Main :: () {
-    v := Vec(1, 2, 3, 4)
-    v.print()
-    
-    v2 := GVec[int](10, 20)
-    v2.print()
-
-    f := Foo(null)
-    b := Bar(&f)
-    f.bar = &b
-}
-// */
-
-/*
-
-#load("std:preload")
-#load("std:io/io")
-
-try_catch :: (r: $T, code: Code) #macro {
-    match r {
-        Ok($v) -> v
-        Err($e) -> {
-            err := e
-            @insert(code, link=[err])
-        }
-    }
-}
-
-try :: (r: $T) #macro {
-    match r {
-        Ok($v) -> v
-        Err($e) -> {
-            return Err(e)
-        }
-    }
-}
-
-test :: (b: bool) -> Result[int, int] {
-    if b {
-        return Ok(5)
-    } else {
-        return Err(-1)
-    }
-}
-
-foo :: () -> Result[int, int] {
-    i := try(test(false))
-    println(i)
-    return Ok(0)
+thread_func :: (_: &any) {
+    c_srand(c_time(null) % 10)
+    foo()
 }
 
 Main :: () {
-    println(foo())
-    println("==========")
-    // try_catch(test(false), {})
-    try_catch(test(false), printfln("test1: err: {}", err))
+    tp := ThreadPool.create(10)
+    for 0..2 {
+        tp.enqueue(thread_func, null)
+        Sleep(1)
+    }
+    println("waiting")
+    tp.terminate(true)
+    println("done")
 }
 
 // */

@@ -4,13 +4,6 @@
 // @fixme cyclic dependency, but should work
 // thread_fiber : Fiber = Fiber(ConvertThreadToFiber(&thread_fiber), null)
 
-fiber_func :: (param: &any) #stdcall {
-    f := cast(&Fiber)param
-    f.func()
-    while true {
-        Fiber.yield()
-    }
-}
 
 Fiber :: struct {
     ptr             : &any
@@ -21,6 +14,14 @@ Fiber :: struct {
 
 impl Fiber {
     create :: (func: fn(), ud: &any = null) -> &Fiber {
+        fiber_func :: (param: &any) #stdcall {
+            f := cast(&Fiber)param
+            f.func()
+            while true {
+                Fiber.yield()
+            }
+        }
+
         f := alloc(Fiber)
         f.ptr = CreateFiber(0, fiber_func, cast f)
         f.func = func
