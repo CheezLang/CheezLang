@@ -527,17 +527,17 @@ namespace Cheez
             // basic types
 
             foreach (var type in new CheezType[]
-            {
-                IntType.GetIntType(1, true),
-                IntType.GetIntType(2, true),
-                IntType.GetIntType(4, true),
-                IntType.GetIntType(8, true),
-                IntType.GetIntType(1, false),
-                IntType.GetIntType(2, false),
-                IntType.GetIntType(4, false),
-                IntType.GetIntType(8, false),
-                CheezType.Char
-            })
+                {
+                    IntType.GetIntType(1, true),
+                    IntType.GetIntType(2, true),
+                    IntType.GetIntType(4, true),
+                    IntType.GetIntType(8, true),
+                    IntType.GetIntType(1, false),
+                    IntType.GetIntType(2, false),
+                    IntType.GetIntType(4, false),
+                    IntType.GetIntType(8, false),
+                    CheezType.Char
+                })
             {
                 DefineUnaryOperator("-", type, a => ((NumberData)a).Negate());
 
@@ -559,18 +559,18 @@ namespace Cheez
             {
                 DefineUnaryOperator("-", type, a => ((NumberData)a).Negate());
 
-                DefineBinaryOperator(new BuiltInBinaryOperator("+", type, type, type, (a, b) => (NumberData)a + (NumberData)b));
-                DefineBinaryOperator(new BuiltInBinaryOperator("-", type, type, type, (a, b) => (NumberData)a - (NumberData)b));
-                DefineBinaryOperator(new BuiltInBinaryOperator("*", type, type, type, (a, b) => (NumberData)a * (NumberData)b));
-                DefineBinaryOperator(new BuiltInBinaryOperator("/", type, type, type, (a, b) => (NumberData)a / (NumberData)b));
-                DefineBinaryOperator(new BuiltInBinaryOperator("%", type, type, type, (a, b) => (NumberData)a % (NumberData)b));
+                DefineBinaryOperator(new BuiltInBinaryOperator("+", type, type, type, (a, b) => ((NumberData)a).AsDouble() + ((NumberData)b).AsDouble()));
+                DefineBinaryOperator(new BuiltInBinaryOperator("-", type, type, type, (a, b) => ((NumberData)a).AsDouble() - ((NumberData)b).AsDouble()));
+                DefineBinaryOperator(new BuiltInBinaryOperator("*", type, type, type, (a, b) => ((NumberData)a).AsDouble() * ((NumberData)b).AsDouble()));
+                DefineBinaryOperator(new BuiltInBinaryOperator("/", type, type, type, (a, b) => ((NumberData)a).AsDouble() / ((NumberData)b).AsDouble()));
+                DefineBinaryOperator(new BuiltInBinaryOperator("%", type, type, type, (a, b) => ((NumberData)a).AsDouble() % ((NumberData)b).AsDouble()));
 
-                DefineBinaryOperator(new BuiltInBinaryOperator("==", CheezType.Bool, type, type, (a, b) => (NumberData)a == (NumberData)b));
-                DefineBinaryOperator(new BuiltInBinaryOperator("!=", CheezType.Bool, type, type, (a, b) => (NumberData)a != (NumberData)b));
-                DefineBinaryOperator(new BuiltInBinaryOperator("<", CheezType.Bool, type, type, (a, b) => (NumberData)a < (NumberData)b));
-                DefineBinaryOperator(new BuiltInBinaryOperator("<=", CheezType.Bool, type, type, (a, b) => (NumberData)a <= (NumberData)b));
-                DefineBinaryOperator(new BuiltInBinaryOperator(">", CheezType.Bool, type, type, (a, b) => (NumberData)a > (NumberData)b));
-                DefineBinaryOperator(new BuiltInBinaryOperator(">=", CheezType.Bool, type, type, (a, b) => (NumberData)a >= (NumberData)b));
+                DefineBinaryOperator(new BuiltInBinaryOperator("==", CheezType.Bool, type, type, (a, b) => ((NumberData)a).AsDouble() == ((NumberData)b).AsDouble()));
+                DefineBinaryOperator(new BuiltInBinaryOperator("!=", CheezType.Bool, type, type, (a, b) => ((NumberData)a).AsDouble() != ((NumberData)b).AsDouble()));
+                DefineBinaryOperator(new BuiltInBinaryOperator("<", CheezType.Bool, type, type, (a, b) => ((NumberData)a).AsDouble() < ((NumberData)b).AsDouble()));
+                DefineBinaryOperator(new BuiltInBinaryOperator("<=", CheezType.Bool, type, type, (a, b) => ((NumberData)a).AsDouble() <= ((NumberData)b).AsDouble()));
+                DefineBinaryOperator(new BuiltInBinaryOperator(">", CheezType.Bool, type, type, (a, b) => ((NumberData)a).AsDouble() > ((NumberData)b).AsDouble()));
+                DefineBinaryOperator(new BuiltInBinaryOperator(">=", CheezType.Bool, type, type, (a, b) => ((NumberData)a).AsDouble() >= ((NumberData)b).AsDouble()));
             }
         }
 

@@ -192,5 +192,12 @@ namespace Cheez.Extras
         public static NumberData operator *(NumberData a, NumberData b) => a.Type == NumberType.Int ? FromBigInt(a.IntValue * b.IntValue) : FromDouble(a.DoubleValue * b.DoubleValue);
         public static NumberData operator /(NumberData a, NumberData b) => a.Type == NumberType.Int ? FromBigInt(a.IntValue / b.IntValue) : FromDouble(a.DoubleValue / b.DoubleValue);
         public static NumberData operator %(NumberData a, NumberData b) => a.Type == NumberType.Int ? FromBigInt(a.IntValue % b.IntValue) : FromDouble(a.DoubleValue % b.DoubleValue);
+
+        internal NumberData AsDouble()
+        {
+            if (Type == NumberType.Float)
+                return this;
+            return FromDouble(ToDouble());
+        }
     }
 }
