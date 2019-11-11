@@ -4,19 +4,28 @@
 // @fixme cyclic dependency, but should work
 // thread_fiber : Fiber = Fiber(ConvertThreadToFiber(&thread_fiber), null)
 
-
 Fiber :: struct {
     ptr             : &any
     parent          : &Fiber = null
-    func  : fn()
-    user_data : &any
+    func            : fn(&any)
+    user_data       : &any
 }
 
 impl Fiber {
-    create :: (func: fn(), ud: &any = null) -> &Fiber {
+    init :: () {
+        f := alloc(Fiber)
+        <<f = Fiber(
+            ptr     = ConvertThreadToFiber(f)
+            parent  = null
+            func    = null
+            user_data = null
+        )
+    }
+
+    new :: (func: fn(&$T), ud: &T = null) -> &Fiber {
         fiber_func :: (param: &any) #stdcall {
             f := cast(&Fiber)param
-            f.func()
+            f.func(f.user_data)
             while true {
                 Fiber.yield()
             }
@@ -24,7 +33,7 @@ impl Fiber {
 
         f := alloc(Fiber)
         f.ptr = CreateFiber(0, fiber_func, cast f)
-        f.func = func
+        f.func = cast func
         f.parent = current()
         f.user_data = ud
         return f

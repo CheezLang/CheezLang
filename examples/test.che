@@ -1,4 +1,4 @@
-#load("examples/trait_function_call_performance")
+// #load("examples/trait_function_call_performance")
 // #load("examples/graphyfier/graphyfier")
 // #load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
@@ -13,33 +13,33 @@
 // #load("examples/project_euler/005_smallest_multiple")
 
 
-/*
+//*
 #load("std:io/io")
 #load("std:fiber")
 #load("std:thread")
 #load("std:c")
 
-foo :: () {
-    if c_rand() % 10 == 0 {
-        @panic("uiae")
-    }
-    foo()
-}
+foo :: (n: &int) {
+    while (true) {
+        thread := GetCurrentThread()
 
-thread_func :: (_: &any) {
-    c_srand(c_time(null) % 10)
-    foo()
+    }
 }
 
 Main :: () {
-    tp := ThreadPool.create(10)
-    for 0..2 {
-        tp.enqueue(thread_func, null)
-        Sleep(1)
-    }
-    println("waiting")
-    tp.terminate(true)
-    println("done")
+
+    println(GetCurrentThreadId())
+    // Fiber.init()
+
+    // f1 := Fiber.new(foo, cast(&int) 1)
+    // f2 := Fiber.new(foo, cast(&int) 2)
+
+    // println("main 1")
+    // f1.resume()
+    // f2.resume()
+    // f1.resume()
+    // f2.resume()
+    // println("main 2")
 }
 
 // */

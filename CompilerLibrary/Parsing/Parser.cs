@@ -450,7 +450,8 @@ namespace Cheez.Parsing
             {
                 NextToken();
                 var init = ParseExpression(allowCommaTuple);
-                return new AstVariableDecl(expr, typeExpr, init, Location: new Location(expr.Beginning, init.End));
+                var directives = ParseDirectives();
+                return new AstVariableDecl(expr, typeExpr, init, directives, Location: new Location(expr.Beginning, init.End));
             }
 
             // variable declaration without initializer
@@ -479,7 +480,9 @@ namespace Cheez.Parsing
             // variable declaration
             ConsumeUntil(TokenType.Equal, ErrMsg("=", "in variable declaration"));
             var init = ParseExpression(false);
-            return new AstVariableDecl(expr, typeExpr, init, Location: new Location(expr.Beginning, init.End));
+
+            var directives = ParseDirectives();
+            return new AstVariableDecl(expr, typeExpr, init, directives, Location: new Location(expr.Beginning, init.End));
         }
 
         private AstExpression ParseMatchExpr()

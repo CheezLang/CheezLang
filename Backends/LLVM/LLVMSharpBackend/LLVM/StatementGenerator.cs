@@ -305,6 +305,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             var varPtr = module.AddGlobal(type, decl.Name.Name);
             varPtr.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
+            if (decl.HasDirective("thread_local"))
+                varPtr.SetThreadLocal(true);
             //varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);// TODO?
 
             var dExtern = decl.GetDirective("extern");

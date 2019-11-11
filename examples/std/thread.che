@@ -3,49 +3,68 @@
 #load("std:array")
 #load("std:ring_queue")
 
+current_thread_data : &ThreadData = null #thread_local
+
 // thread
 Thread :: struct {
     data: &ThreadData
-    handle: HANDLE
 }
 
 ThreadData :: struct {
-    data: &any
-    func: fn(&any)
+    handle  : HANDLE
+    user    : &any
+    func    : fn(&any)
+    id      : int
 }
 
 impl Thread {
-    create :: (func: fn(&$T), data: &$T) -> Thread {
-        td := alloc(ThreadData)
-        td.func = @cast(fn(&any), func)
-        td.data = @cast(&any, data)
+    current :: () -> &ThreadData {
+        if current_thread_data == null {
+            current_thread_data = alloc(ThreadData)
+            <<current_thread_data = ThreadData(
+                handle  = GetCurrentThread()
+                user    = null
+                func    = null
+                id      = cast GetCurrentThreadId()
+            )
+        }
+        return current_thread_data
+    }
 
+    create :: (func: fn(&$T), user_data: &$T) -> Thread {
         thread_func :: (data: &any) -> u32 #stdcall {
-            thread := @cast(&ThreadData, data)
-            thread.func(thread.data)
+            thread_data := @cast(&ThreadData, data)
+            current_thread_data = thread_data
+            thread_data.func(thread_data.user)
             return 0
         }
 
+        td := alloc(ThreadData)
         handle := CreateThread(null, 0, thread_func, cast td, CREATE_SUSPENDED, null)
         @assert(handle != null)
+
+        td.handle   = handle
+        td.id       = cast GetThreadId(handle)
+        td.func     = @cast(fn(&any), func)
+        td.user     = @cast(&any, user_data)
+
         return Thread(
             data = td
-            handle = handle
         )
     }
 
     start :: (ref Self) -> bool {
-        res := ResumeThread(handle)
+        res := ResumeThread(data.handle)
         return res != -1
     }
 
     join :: (ref Self) {
         // use INFINITE instead of this
-        WaitForSingleObject(handle, 100000000)
+        WaitForSingleObject(data.handle, 100000000)
     }
 
     terminate :: (ref Self) {
-        TerminateThread(handle, -1)
+        TerminateThread(data.handle, -1)
     }
 }
 

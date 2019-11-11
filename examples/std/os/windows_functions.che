@@ -88,6 +88,9 @@ SwitchToFiber :: (fiber: &any) #stdcall;
 CreateFiber :: (dwStackSize: int, lpStartAddress: fn(&any) #stdcall, lpParameter: &any) -> &any #stdcall;
 
 // threads
+GetCurrentThread :: () -> HANDLE #stdcall;
+GetCurrentThreadId :: () -> DWORD #stdcall;
+GetThreadId  :: (handle: HANDLE) -> DWORD #stdcall;
 CreateThread :: (lpThreadAttributes: &SECURITY_ATTRIBUTES, dwStackSize: SIZE_T, lpStartAddress: THREAD_START_ROUTINE, lpParameter: &any, dwCreationFlags: DWORD, lpThreadId: &DWORD) -> HANDLE #stdcall;
 ResumeThread :: (hThread: HANDLE) -> DWORD #stdcall;
 // ExitThread :: (hThread: HANDLE) -> DWORD #stdcall;
