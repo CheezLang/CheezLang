@@ -7,23 +7,23 @@
 #load("std:random/mt")
 #load("std:thread")
 
-Vec3 :: Vector3[double]
+Vec3 :: Vector3[float]
 
-block_size          :: 32
+block_size          :: 64
 block_count_x       :: (width  - 1) / block_size + 1
 block_count_y       :: (height - 1) / block_size + 1
 block_count         :: block_count_x * block_count_y
 samples_per_block   :: 5
-thread_count        :: 4
+thread_count        :: 2
 
 scale               :: 2
-width               :: 800 / scale
-height              :: 450 / scale
+width               :: 192 * scale
+height              :: 108 * scale
                     
 max_depth           :: 5
 min_contribution    :: 0.2
 
-pi: double : 3.14159265359
+pi                  :: 3.14159265359
 
 create :: (val: $T, allocator: Allocator) -> &T {
     ptr := alloc(T, allocator)
@@ -31,7 +31,7 @@ create :: (val: $T, allocator: Allocator) -> &T {
     return ptr
 }
 
-impl double {
+impl float {
     to_radians :: (Self) -> Self {
         return self / 180.0 * pi
     }
@@ -49,7 +49,7 @@ Ray :: struct {
 }
 
 HitInfo :: struct {
-    distance: double
+    distance: float
     pos     : Vec3
     normal  : Vec3
     material: &Material
@@ -60,7 +60,7 @@ Material :: struct {
     emission    : Vec3      = default
     reflection  : Vec3      = default
     refraction  : Vec3      = default
-    ior         : double    = 1.0
+    ior         : float    = 1.0
 }
 
 impl Material {
@@ -68,7 +68,7 @@ impl Material {
         return Material(reflection = color)
     }
 
-    refrective :: (color: Vec3, ior: double) -> Self {
+    refrective :: (color: Vec3, ior: float) -> Self {
         return Material(refraction = color, ior = ior)
     }
 }
@@ -79,7 +79,7 @@ Object :: trait {
 
 Sphere :: struct {
     pos: Vec3
-    rad: double
+    rad: float
     mat: &Material
 }
 
@@ -94,7 +94,7 @@ impl Object for Sphere {
         }
 
         epsilon := 0.0001
-        det = sqrt(det)
+        det = sqrtf(det)
         minusT := b - det
         plusT := b + det
         if minusT < epsilon and plusT < epsilon {
@@ -113,13 +113,13 @@ PathTracer :: struct {
     pge             : &PixelGameEngine      = null
     allocator       : ArenaAllocator
     objects         : Array[Object]
-    cam_fov         : double                = 0
+    cam_fov         : float                = 0
     cam_pos         : Vec3                  = default
     cam_dir         : Vec3                  = default
     cam_right       : Vec3                  = default
     cam_up          : Vec3                  = default
-    sample_t        : double                = 0
-    total_t         : double                = 0
+    sample_t        : float                = 0
+    total_t         : float                = 0
     buffer          : []Vec3                = default
     thread_datas    : [block_count]&RenderContext = default
 
@@ -166,7 +166,7 @@ impl PathTracer {
         return nearest
     }
 
-    calc_color :: (ref Self, ray: Ray, prng: &MTwister, contribution: double, depth: int = 0) -> Vec3 {
+    calc_color :: (ref Self, ray: Ray, prng: &MTwister, contribution: float, depth: int = 0) -> Vec3 {
         if depth >= max_depth or contribution < min_contribution {
             return Vec3()
         }
@@ -182,15 +182,15 @@ impl PathTracer {
                 // diffuse
                 if hit.material.diffuse.max_component() > 0 {
                     rand := StandardContinuousUniform[MTwister](prng)
-                    r1 := rand.sample() * 2.0 * pi
-                    r2 := rand.sample()
-                    r2s := sqrt(r2)
+                    r1 := float(rand.sample()) * 2.0f * pi
+                    r2 := float(rand.sample())
+                    r2s := sqrtf(r2)
 
                     w := hit.normal
                     u := if abs(w.x) > abs(w.z) {Vec3(-w.y, w.x, 0)} else {Vec3(0, -w.z, w.y)}
                     u.normalize()
                     v := u.cross(w)
-                    newDir := u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)
+                    newDir := u * float(cos(r1)) * r2s + v * float(sin(r1)) * r2s + w * sqrtf(1 - r2)
                     newRay := Ray(hit.pos, newDir)
 
                     result += hit.material.diffuse * calc_color(newRay, prng, contribution * hit.material.diffuse.max_component(), depth + 1)
@@ -210,7 +210,7 @@ impl PathTracer {
                     I := ray.dir.normalized()
                     n := hit.normal.normalized()
 
-                    n1 := 1.0
+                    n1 := 1.0f
                     n2 := hit.material.ior
 
 
@@ -226,15 +226,15 @@ impl PathTracer {
                         r := n1 / n2
                         c := -Vec3.dot(n, I)
 
-                        f := r * c - sqrt(1 - r * r * (1 - c * c))
+                        f := r * c - sqrtf(1 - r * r * (1 - c * c))
                         newDir := I * r + n * f
-                        newRay := Ray(hit.pos + newDir * 0.01, newDir)
+                        newRay := Ray(hit.pos + newDir * 0.01f, newDir)
                         calc_color(newRay, prng, contribution * refract_max, depth + 1)
                     }
 
                     color_reflected := {
                         newDir := I.reflect(n)
-                        newRay := Ray(hit.pos + newDir * 0.01, newDir)
+                        newRay := Ray(hit.pos + newDir * 0.01f, newDir)
                         calc_color(newRay, prng, contribution * refract_max, depth + 1)
                     }
 
@@ -247,22 +247,22 @@ impl PathTracer {
         }
     }
 
-    fresnel :: (I: Vec3, N: Vec3, ior: double) -> kr: double {
-        cosi := clamp(Vec3.dot(I, N), -1.0, 1.0, )
-        etai := 1.0
+    fresnel :: (I: Vec3, N: Vec3, ior: float) -> kr: float {
+        cosi := clamp(Vec3.dot(I, N), -1.0f, 1.0f)
+        etai := 1.0f
         etat := ior
         if cosi > 0 { (etai, etat) = (etat, etai) }
         // Compute sini using Snell's law
-        sint := etai / etat * sqrt(fmax(0.0, 1.0 - cosi * cosi))
+        sint := etai / etat * sqrtf(fmaxf(0.0f, 1.0f - cosi * cosi))
         // Total internal reflection
         if sint >= 1 {
             kr = 1
         } else {
-            cost := sqrt(fmax(0.0, 1.0 - sint * sint))
-            cosi = fabs(cosi)
+            cost := sqrtf(fmaxf(0.0, 1.0f - sint * sint))
+            cosi = float(fabs(cosi))
             Rs := ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost))
             Rp := ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost))
-            kr = (Rs * Rs + Rp * Rp) / 2.0
+            kr = (Rs * Rs + Rp * Rp) / 2.0f
         }
     }
 }
@@ -273,9 +273,11 @@ RenderContext :: struct {
     max     : Vector2[int]  = default
     samples : int           = 0
     random  : MTwister
+    active  : bool
 }
 
 pathtracer_thread :: (data: &RenderContext) {
+    data.active = true
     for 0..samples_per_block {
         for current_y : data.min.y..data.max.y {
             // loop through current line
@@ -284,9 +286,9 @@ pathtracer_thread :: (data: &RenderContext) {
 
                 // x coordinate in range [-1; 1]
                 // y coordinate in range [-1; 1]
-                blur_radius : double = 1
-                x := (double(current_x) + data.random.next_double()) / double(width) * 2 - 1
-                y := (double(height - current_y - 1) + data.random.next_double()) / double(height) * 2 - 1
+                blur_radius : float = 1
+                x := (float(current_x) + float(data.random.next_double())) / float(width) * 2 - 1
+                y := (float(height - current_y - 1) + float(data.random.next_double())) / float(height) * 2 - 1
 
                 // calculate ray for current pixel
                 dir := data.pt.cam_dir + data.pt.cam_right * x + data.pt.cam_up * y
@@ -307,16 +309,18 @@ pathtracer_thread :: (data: &RenderContext) {
         data.pt.enqueue_threads()
     }
     thread_pool_mut.release()
+
+    data.active = false
 }
 
 impl Game for PathTracer {
     on_create :: (ref Self, pge: &PixelGameEngine) -> bool {
         self.pge = pge
 
-        self.cam_fov = double.to_radians(60.0)
-        aspect_ratio := double(width) / double(height)
+        self.cam_fov = float.to_radians(60.0)
+        aspect_ratio := float(width) / float(height)
 
-        size := 10.0
+        size := 10.0f
 
         // calculate cam rays (forward, right, up)
         self.cam_pos = Vec3(0, 5, 3)
@@ -327,15 +331,11 @@ impl Game for PathTracer {
         self.cam_right = up.cross(self.cam_dir)
         self.cam_up    = self.cam_dir.cross(self.cam_right)
 
-        up_mag := tan(self.cam_fov / 2)
+        up_mag    := float(tan(self.cam_fov / 2))
         right_mag := up_mag * aspect_ratio
 
         self.cam_up     = self.cam_up.normalized() * up_mag
         self.cam_right  = self.cam_right.normalized() * right_mag
-
-        printfln("  dir: {}", self.cam_dir)
-        printfln("   up: {}", self.cam_up)
-        printfln("right: {}", self.cam_right)
 
         // create objects
         m_red   := create(Material(Vec3(0.9, 0.2, 0.2)), allocator)
@@ -367,8 +367,6 @@ impl Game for PathTracer {
         self.add_object(Sphere(Vec3(0, size + 9.75, 10), 10, m_light))
 
         // setup render contexts
-        println(block_count_x)
-        println(block_count_y)
         for y: 0..block_count_y {
             for x: 0..block_count_x {
                 context := alloc(RenderContext)
@@ -377,6 +375,7 @@ impl Game for PathTracer {
                     min     = Vector2[int](x * block_size, y * block_size)
                     max     = Vector2[int](min((x + 1) * block_size, width), min((y + 1) * block_size, height))
                     random  = MTwister.create(cast c_rand()) // crashes with seed not 0, wtf?
+                    active  = false
                 )
 
                 thread_datas[x + y * block_count_x] = context
@@ -424,9 +423,9 @@ impl Game for PathTracer {
                     // calculate color of pixel by taking the average of the color
                     // in the buffer
                     pixel := {
-                        bufferColor := buffer[index] / double(sample)
+                        bufferColor := buffer[index] / float(sample)
                         // println(bufferColor)
-                        bufferColor = bufferColor.clamped(0.0, 1.0) * 255.0
+                        bufferColor = bufferColor.clamped(0.0, 1.0) * 255.0f
                         c := Vec3.change_type(bufferColor, u8)
                         Pixel.rgba(c.x, c.y, c.z)
                     }
@@ -435,11 +434,23 @@ impl Game for PathTracer {
             }
         }
 
-        sample_t += double(dt)
+        tds : []&RenderContext = thread_datas
+        for tds {
+            if it.active {
+                size := it.max - it.min
+                col  := Pixel(255, 255, 255)
+
+                for offset : 0..3 {
+                    pge.draw_rect(it.min.x + offset, it.min.y + offset, size.x - 2*offset - 1, size.y - 2*offset - 1, col)
+                }
+            }
+        }
+
+        sample_t += float(dt)
         if sample_t >= 1 {
             total_t += 1
 
-            sps := double(thread_datas[0].samples) / total_t
+            sps := float(thread_datas[0].samples) / total_t
             total_seconds := int(total_t + 0.1)
             s := String.format("Samples: {}, Total: {}s, Samples per second: {}", 
                 (thread_datas[0].samples, total_seconds, sps))
