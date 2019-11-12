@@ -11,6 +11,12 @@ Fiber :: struct {
     user_data       : &any
 }
 
+impl Drop for Fiber {
+    drop :: (ref Self) {
+        DeleteFiber(ptr)
+    }
+}
+
 impl Fiber {
     init :: () {
         f := alloc(Fiber)
@@ -23,7 +29,7 @@ impl Fiber {
     }
 
     new :: (func: fn(&$T), ud: &T = null) -> &Fiber {
-        fiber_func :: (param: &any) #stdcall {
+        fiber_func :: (param: &any) #stdcall #nostacktrace {
             f := cast(&Fiber)param
             f.func(f.user_data)
             while true {
@@ -39,16 +45,16 @@ impl Fiber {
         return f
     }
 
-    dispose :: (ref Self) {
-        free(&self)
+    to_func :: (ref Self) -> Fn() {
+        return cast self.resume
     }
 
-    resume :: (ref Self) {
+    resume :: (ref Self) #nostacktrace {
         parent = current()
         SwitchToFiber(ptr)
     }
 
-    yield :: () {
+    yield :: () #nostacktrace {
         f := current()
         if f.parent == null {
             @panic("Can't yield from a fiber without parent")

@@ -211,14 +211,14 @@ for_extension_array_T :: (arr: ref Array[$T], code: Code, reverse: bool = false,
             } else {
                 it := arr[it_index_rev]
             }
-            @insert(code, link=[it_index_rev])
+            @insert(code, link=[it_index_rev], _break=break, _continue=continue)
         } else {
             if const by_ref {
                 it := ref arr[it_index]
             } else {
                 it := arr[it_index]
             }
-            @insert(code)
+            @insert(code, _break=break, _continue=continue)
         }
     }
 }

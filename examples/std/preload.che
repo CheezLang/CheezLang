@@ -71,7 +71,7 @@ for_extension_range :: (r: $T..T, code: Code, reverse: bool = false, inclusive: 
     compare :: @code(if const reverse then it >= end else it <= end)
 
     while (it, it_index) := (start, 0),
-        @insert(compare, link=[it]),
+        @insert(compare, link=[it], _break={}, _continue={}),
         it_index += 1; it += inc {
         @insert(code, _break=break, _continue=continue)
     }
