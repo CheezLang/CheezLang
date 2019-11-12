@@ -779,14 +779,23 @@ namespace Cheez
                         else
                         {
                             var newPattern = InferType(id, value.Type);
+                            ConvertLiteralTypeToDefaultType(newPattern, value.Type);
                             if (newPattern != pattern)
                                 return MatchPatternWithType(cas, newPattern, value);
 
                             if (pattern.Type.IsErrorType)
                                 return id;
 
-                            if (id.Type != value.Type)
-                                break;
+                            if (newPattern.Type != value.Type)
+                            {
+                                if (value.Type is IntType && newPattern.Type == IntType.LiteralType)
+                                    ; // do nothing
+                                else if (value.Type is FloatType && newPattern.Type == FloatType.LiteralType)
+                                    ; // do nothing
+                                else
+                                    break;
+                            }
+
                             if (!id.IsCompTimeValue)
                             {
                                 ReportError(id, $"Must be constant");
@@ -815,7 +824,14 @@ namespace Cheez
                             return pattern;
 
                         if (n.Type != value.Type)
-                            break;
+                        {
+                            if (value.Type is IntType && n.Type == IntType.LiteralType)
+                                ; // do nothing
+                            else if (value.Type is FloatType && n.Type == FloatType.LiteralType)
+                                ; // do nothing
+                            else
+                                break;
+                        }
                         return n;
                     }
 
@@ -1381,9 +1397,17 @@ namespace Cheez
                 return cast;
             }
 
+            else if (to is PointerType && from is IntType)
+            {
+                if (cast.SubExpression.IsCompTimeValue)
+                {
+                    cast.Value = cast.SubExpression.Value;
+                }
+                return cast;
+            }
+
             else if ((to is PointerType && from is PointerType) ||
                 (to is IntType && from is PointerType) ||
-                (to is PointerType && from is IntType) ||
                 (to is PointerType p1 && from is ArrayType a1 && p1.TargetType == a1.TargetType) ||
                 (to is IntType && from is IntType) ||
                 (to is FloatType && from is FloatType) ||
@@ -1962,11 +1986,11 @@ namespace Cheez
                         }
 
                         var _breaks = expr.Arguments.Where(a => a.Name?.Name == "_break").ToArray();
-                        if (_breaks.Length > 1)
+                        if (_breaks.Length != 1)
                         {
-                            ReportError(expr, $"Only one argument can be named '_break'");
+                            ReportError(expr, $"Exactly one argument must be named '_break'");
                         }
-                        else if (_breaks.Length == 1)
+                        if (_breaks.Length == 1)
                         {
                             var _break = _breaks[0];
                             var action = _break.Expr;
@@ -1976,11 +2000,11 @@ namespace Cheez
 
                         // continue
                         var _continues = expr.Arguments.Where(a => a.Name?.Name == "_continue").ToArray();
-                        if (_continues.Length > 1)
+                        if (_continues.Length != 1)
                         {
-                            ReportError(expr, $"Only one argument can be named '_continue'");
+                            ReportError(expr, $"Exactly one argument must be named '_continue'");
                         }
-                        else if (_continues.Length == 1)
+                        if (_continues.Length == 1)
                         {
                             var _continue = _continues[0];
                             var action = _continue.Expr;
@@ -2419,7 +2443,8 @@ namespace Cheez
             for (int i = 0; i < expr.Arguments.Count; i++)
             {
                 var arg = expr.Arguments[i];
-                ConvertLiteralTypeToDefaultType(arg.Expr, expectedArgType);
+                if (expectedArgType != null)
+                    ConvertLiteralTypeToDefaultType(arg.Expr, expectedArgType);
                 arg.Expr = Deref(arg.Expr, context);
                 if (arg.Expr.Type.IsErrorType)
                 {
@@ -2731,16 +2756,16 @@ namespace Cheez
             if (expr.Left.Type.IsErrorType)
                 return expr;
 
+            if (expr.Left.Type is ReferenceType r)
+            {
+                expr.Left = Deref(expr.Left, context);
+            }
+
             while (expr.Left.Type is PointerType p)
             {
                 var newLeft = new AstDereferenceExpr(expr.Left, expr.Left.Location);
                 newLeft.AttachTo(expr.Left);
                 expr.Left = InferType(newLeft, p.TargetType);
-            }
-
-            if (expr.Left.Type is ReferenceType r)
-            {
-                expr.Left = Deref(expr.Left, context);
             }
 
             var sub = expr.Right.Name;
@@ -2898,7 +2923,7 @@ namespace Cheez
                             return expr;
                         }
 
-                        var ufc = new AstUfcFuncExpr(expr.Left, func);
+                        var ufc = new AstUfcFuncExpr(expr.Left, func, expr);
                         ufc.Replace(expr);
                         ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                         return InferTypeHelper(ufc, null, context);
@@ -2983,7 +3008,7 @@ namespace Cheez
                 //     }
 
                 case ErrorType _: return expr;
-                default: ReportError(expr, $"Invalid expression on left side of '.'"); break;
+                default: ReportError(expr, $"Invalid expression on left side of '.' (type is {expr.Type})"); break;
             }
 
             return expr;
@@ -4058,7 +4083,7 @@ namespace Cheez
                 expr.Value = func;
                 if (func.SelfType != SelfParamType.None)
                 {
-                    var ufc = new AstUfcFuncExpr(new AstIdExpr("self", false, expr), func);
+                    var ufc = new AstUfcFuncExpr(new AstIdExpr("self", false, expr), func, expr);
                     ufc.Replace(expr);
                     ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                     return InferTypeHelper(ufc, null, default);
@@ -4264,7 +4289,7 @@ namespace Cheez
                 return expr;
             }
 
-            var ufc = new AstUfcFuncExpr(expr.Left, result[0]);
+            var ufc = new AstUfcFuncExpr(expr.Left, result[0], expr);
             ufc.Replace(expr);
             ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
             return InferTypeHelper(ufc, null, context);

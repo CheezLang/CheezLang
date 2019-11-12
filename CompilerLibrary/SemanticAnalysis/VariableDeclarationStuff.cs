@@ -40,6 +40,10 @@ namespace Cheez
                     v.Initializer = HandleReference(v.Initializer, v.Type, null);
                     v.Initializer = CheckType(v.Initializer, v.Type);
                 }
+                else if (v.Initializer is AstAddressOfExpr add && add.Reference)
+                {
+                    // do nothing
+                }
                 else if (v.Initializer.Type is ReferenceType)
                 {
                     v.Initializer = Deref(v.Initializer, null);

@@ -92,6 +92,7 @@ namespace Cheez
                     {
                         mem.Initializer.AttachTo(mem);
                         mem.Initializer = InferType(mem.Initializer, mem.Type);
+                        ConvertLiteralTypeToDefaultType(mem.Initializer, mem.Type);
 
                         if (mem.Type == null)
                             mem.Type = mem.Initializer.Type;

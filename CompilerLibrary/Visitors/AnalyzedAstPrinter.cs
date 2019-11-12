@@ -262,19 +262,19 @@ namespace Cheez.Visitors
             sb.Append(" : ");
             sb.Append(decl.Initializer.Accept(this));
 
-            switch (decl.Initializer)
-            {
-                case AstStructTypeExpr _:
-                case AstEnumTypeExpr _:
-                case AstTraitTypeExpr _:
-                case AstFuncExpr _:
-                    break;
+            //switch (decl.Initializer)
+            //{
+            //    case AstStructTypeExpr _:
+            //    case AstEnumTypeExpr _:
+            //    case AstTraitTypeExpr _:
+            //    case AstFuncExpr _:
+            //        break;
 
-                default:
-                    sb.Append(" = ");
-                    sb.Append(decl.Initializer.Value);
-                    break;
-            }
+            //    default:
+            //        sb.Append(" = ");
+            //        sb.Append(decl.Initializer.Value);
+            //        break;
+            //}
             return sb.ToString();
         }
 
@@ -357,6 +357,9 @@ namespace Cheez.Visitors
                     sb.Append(pre.Accept(this)).Append(", ");
             sb.Append(wh.Condition.Accept(this));
             if (wh.PostAction != null) sb.Append(", " + wh.PostAction.Accept(this));
+
+            if (wh.Label != null)
+                sb.Append(" #label " + wh.Label.Name);
             sb.Append(" " + wh.Body.Accept(this));
             return sb.ToString().Indent(indentLevel);
         }

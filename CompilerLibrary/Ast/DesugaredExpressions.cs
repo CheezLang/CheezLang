@@ -40,7 +40,7 @@ namespace Cheez.Ast.Expressions
         public AstExpression SelfArg { get; }
         public AstFuncExpr FunctionDecl { get; }
 
-        public AstUfcFuncExpr(AstExpression self, AstFuncExpr func) : base(null)
+        public AstUfcFuncExpr(AstExpression self, AstFuncExpr func, ILocation Location) : base(Location)
         {
             this.SelfArg = self;
             this.FunctionDecl = func;
@@ -48,7 +48,7 @@ namespace Cheez.Ast.Expressions
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitUfcFuncExpr(this, data);
 
-        public override AstExpression Clone() => CopyValuesTo(new AstUfcFuncExpr(SelfArg, FunctionDecl));
+        public override AstExpression Clone() => CopyValuesTo(new AstUfcFuncExpr(SelfArg, FunctionDecl, Location));
     }
 
     public class AstSymbolExpr : AstExpression

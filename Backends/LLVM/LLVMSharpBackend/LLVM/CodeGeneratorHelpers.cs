@@ -537,7 +537,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     return valueMap[f.Declaration];
 
                 default:
-                    if (type == CheezType.String)
+                    if (type == CheezType.String && v is string)
                     {
                         var s = v as string;
                         return LLVM.ConstNamedStruct(CheezTypeToLLVMType(type), new LLVMValueRef[] {
@@ -545,10 +545,17 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             LLVM.ConstPointerCast(builder.CreateGlobalStringPtr(s, ""), LLVM.PointerType(LLVM.Int8Type(), 0))
                         });
                     }
-                    if (type == CheezType.CString)
+                    if (type == CheezType.CString && v is string)
                     {
                         var s = v as string;
                         return builder.CreateGlobalStringPtr(s, "");
+                    }
+
+                    if (type is PointerType p)
+                    {
+                        var val = LLVM.ConstInt(LLVM.Int64Type(), ((NumberData)v).ToUlong(), false);
+                        var t = CheezTypeToLLVMType(p);
+                        return LLVM.ConstIntToPtr(val, t);
                     }
 
                     throw new NotImplementedException();

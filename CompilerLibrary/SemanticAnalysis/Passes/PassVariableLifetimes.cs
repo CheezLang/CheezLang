@@ -238,7 +238,11 @@ namespace Cheez
 
                         var sym = id.Symbol;
 
-                        if (id.Scope.TryGetSymbolStatus(sym, out var status))
+                        if (sym is AstVariableDecl var && var.GetFlag(StmtFlags.GlobalScope))
+                        {
+                            // do nothing
+                        }
+                        else if (id.Scope.TryGetSymbolStatus(sym, out var status))
                         {
                             switch (status.kind)
                             {

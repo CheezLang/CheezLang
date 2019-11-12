@@ -666,7 +666,13 @@ namespace Cheez
         public void OverrideBreakName(string label)
         {
             if (mBreak == null)
-                throw new Exception("Well that's not supposed to happen...");
+            {
+                if (Parent != null)
+                    Parent.OverrideBreakName(label);
+                else
+                    throw new Exception("Well that's not supposed to happen...");
+            }
+
 
             if (mBreak != null)
                 mBreak = (label, mBreak.Value.loopOrAction);
@@ -675,7 +681,12 @@ namespace Cheez
         public void OverrideContinueName(string label)
         {
             if (mContinue == null)
-                throw new Exception("Well that's not supposed to happen...");
+            {
+                if (Parent != null)
+                    Parent.OverrideContinueName(label);
+                else
+                    throw new Exception("Well that's not supposed to happen...");
+            }
 
             if (mContinue != null)
                 mContinue = (label, mContinue.Value.loopOrAction);
