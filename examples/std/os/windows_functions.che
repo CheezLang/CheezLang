@@ -31,6 +31,12 @@ ReadDirectoryChangesW :: (
 ) -> BOOL #stdcall;
 
 WaitForSingleObject :: (handle: &any, millis: DWORD) -> DWORD #stdcall;
+WaitForMultipleObjects :: (
+  nCount         : DWORD,
+  lpHandles      : &HANDLE,
+  bWaitAll       : BOOL,
+  dwMilliseconds : DWORD
+) -> DWORD #stdcall;
 
 UnregisterWait :: (handle: HANDLE) #stdcall;
 

@@ -1,4 +1,4 @@
-#load("std:preload")
+
 #load("std:mem/allocator")
 #load("std:util")
 
@@ -27,6 +27,11 @@ impl(T: type) RingQueue[T] {
     }
 
     get_length :: (ref Self) -> int {
+        // return if (last >= first) then (last - first) else (last - first + capacity)
+        return (last - first + capacity) % capacity
+    }
+
+    count :: (ref Self) -> int {
         // return if (last >= first) then (last - first) else (last - first + capacity)
         return (last - first + capacity) % capacity
     }

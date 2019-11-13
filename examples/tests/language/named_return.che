@@ -2,7 +2,7 @@
 #test_expect_output("0, 1, 7, 8, 9, 1, 2, 8, 9, 10")
 #test_expect_output("1, 3, 12, 13, 14, 2, 4, 13, 14, 15")
 
-#load("std:preload")
+
 
 // required for printing
 c_printf :: (format: c_string) #varargs #linkname("printf");

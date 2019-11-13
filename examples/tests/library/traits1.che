@@ -2,7 +2,7 @@
 hello
 true")
 
-#load("std:preload")
+
 #load("std:c")
 // #load("std:string")
 

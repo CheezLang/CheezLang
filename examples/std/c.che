@@ -1,4 +1,4 @@
-#load("std:preload")
+
 
 c_strlen :: (str: c_string) -> i32 #linkname("strlen");
 c_printf :: (format: c_string) #varargs #linkname("printf");

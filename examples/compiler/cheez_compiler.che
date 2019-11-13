@@ -1,4 +1,4 @@
-#load("std:preload")
+
 #load("std:mem/allocator")
 #load("std:mem/stack_allocator")
 

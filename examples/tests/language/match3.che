@@ -7,7 +7,7 @@ get_ref
 
 #load("std:c")
 
-#load("std:preload")
+
 
 get_ref :: (a: ref Option[int]) -> ref Option[int] {
     c_puts("get_ref")

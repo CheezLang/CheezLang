@@ -82,6 +82,9 @@ namespace CheezCLI
 
         [Option("error-source", Default = false, HelpText = "When reporting an error, print the the line which contains the error")]
         public bool PrintSourceInErrorMessage { get; set; }
+
+        [Option("preload", Default = null, HelpText = "Path to a .che file used to import by default")]
+        public string Preload { get; set; }
     }
 
     class Prog
@@ -151,7 +154,6 @@ namespace CheezCLI
             if (options.PrintAnalysedAst != null) options.PrintAnalysedAst = Path.GetFullPath(options.PrintAnalysedAst);
 
             if (options.Stdlib != null) options.Stdlib = Path.GetFullPath(options.Stdlib);
-
             return options;
         }
 
@@ -173,7 +175,7 @@ namespace CheezCLI
 
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var compiler = new CheezCompiler(errorHandler, options.Stdlib);
+            var compiler = new CheezCompiler(errorHandler, options.Stdlib, options.Preload);
             foreach (string mod in options.Modules)
             {
                 var parts = mod.Split(':');

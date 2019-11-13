@@ -1,5 +1,3 @@
-#load("std:preload")
-
 #load("ast_stmt")
 
 Expr :: struct {

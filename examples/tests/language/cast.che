@@ -6,7 +6,7 @@
 #test_expect_output("3.700000, 3")
 #test_expect_output("7, 7.000000")
 
-#load("std:preload")
+
 
 c_printf :: (format: c_string) #varargs #linkname("printf");
 

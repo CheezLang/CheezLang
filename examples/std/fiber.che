@@ -26,6 +26,7 @@ impl Fiber {
             func    = null
             user_data = null
         )
+        // printfln("[{}] Fiber.init: ({:x}:{:x})", (Thread.current().id, int(f), int(f.ptr)))
     }
 
     new :: (func: fn(&$T), ud: &T = null) -> &Fiber {
@@ -42,6 +43,7 @@ impl Fiber {
         f.func = cast func
         f.parent = current()
         f.user_data = ud
+        // printfln("[{}] Fiber.new: ({:x}:{:x})", (Thread.current().id, int(f), int(f.ptr)))
         return f
     }
 
@@ -59,6 +61,7 @@ impl Fiber {
         if f.parent == null {
             @panic("Can't yield from a fiber without parent")
         } else {
+            // printfln("[{}] Fiber.yield: ({:x}:{:x}) parent: ({:x}:{:x})", (Thread.current().id, int(f), int(f.ptr), int(f.parent), int(f.parent.ptr)))
             SwitchToFiber(f.parent.ptr)
         }
     }

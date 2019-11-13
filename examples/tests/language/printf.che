@@ -3,7 +3,7 @@
 #test_expect_output("Test printf 3")
 #test_expect_output("Test printf 4")
 
-#load("std:preload")
+
 c_printf :: (format: c_string) #varargs #linkname("printf");
 
 Main :: () {

@@ -1,4 +1,4 @@
-#load("std:preload")
+
 #load("std:mem/allocator")
 
 Heap :: struct(T: type) {

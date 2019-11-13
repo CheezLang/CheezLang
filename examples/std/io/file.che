@@ -1,6 +1,6 @@
 #load("std:os/windows")
 #load("std:string")
-#load("std:preload")
+
 
 load_file :: (filename: string) -> Result[String, String] {
     str_c := @alloca(char, filename.length + 1)

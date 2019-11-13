@@ -25,7 +25,7 @@ ArenaAllocator (8 buckets)
   Bucket 7: 48/96 bytes
     0: 40 bytes")
     
-#load("std:preload")
+
 #load("std:io/io")
 #load("std:util")
 #load("std:mem/arena_allocator")

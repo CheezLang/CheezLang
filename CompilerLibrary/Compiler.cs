@@ -57,7 +57,7 @@ namespace Cheez
 
         private Scope mGlobalConstIfScope = null;
 
-        public CheezCompiler(IErrorHandler errorHandler, string stdlib)
+        public CheezCompiler(IErrorHandler errorHandler, string stdlib, string preload)
         {
             ErrorHandler = errorHandler;
             mMainWorkspace = new Workspace(this);
@@ -76,6 +76,9 @@ namespace Cheez
             mGlobalConstIfScope = new Scope("global_const_if");
             mGlobalConstIfScope.DefineBuiltInTypes();
             mGlobalConstIfScope.DefineBuiltInOperators();
+
+            // add preload file
+            AddFile(Path.Combine(exePath, preload ?? "std/preload.che"));
         }
 
         public PTFile AddFile(string fileNameT, string body = null, Workspace workspace = null, bool reparse = false)

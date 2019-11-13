@@ -102,3 +102,36 @@ for_extension_slice :: (arr: []$T, code: Code, reverse: bool = false, by_ref: bo
 //         }
 //     }
 // }
+
+// type info stuff
+TypeInfo :: struct {
+    size        : int
+    alignment   : int
+    kind        : enum {
+        Int         : TypeInfoInt
+        Float
+        Bool
+        Char
+        Struct      : TypeInfoStruct
+        Pointer     : &TypeInfo
+        Reference   : &TypeInfo
+        Slice       : &TypeInfo
+    }
+}
+
+TypeInfoInt :: struct {
+    signed : bool
+}
+
+TypeInfoStruct :: struct {
+    name          : Option[string]
+    parameters    : []any
+    members       : []TypeInfoStructMember
+    const_members : []TypeInfoStructMember
+}
+
+TypeInfoStructMember :: struct {
+    name : string
+    typ  : &TypeInfo
+    value: any
+}

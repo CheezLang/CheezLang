@@ -1,4 +1,4 @@
-#load("std:preload")
+
 
 #load("ast")
 #load("cheez_compiler")

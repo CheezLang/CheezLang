@@ -7,7 +7,7 @@
 
 #load("std:hash_table")
 #load("std:time")
-#load("std:preload")
+
 #load("opengl:opengl")
 
 Game :: trait {

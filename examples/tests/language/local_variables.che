@@ -16,7 +16,7 @@
 #test_expect_output("f[0]: 456, f[1]: 0")
 #test_expect_output("g: 456, h: 0")
 
-#load("std:preload")
+
 
 // required for printing
 c_printf :: (format: c_string) #varargs #linkname("printf");

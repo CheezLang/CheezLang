@@ -1,7 +1,7 @@
 // #load("tests/library/hash_table1")
 // #load("examples/lua_example.che")
 
-#load("std:preload")
+
 #load("std:io/io")
 #load("std:time")
 #load("std:mem/arena_allocator")
