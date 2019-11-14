@@ -329,7 +329,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (decl.Type.IsComptimeOnly)
                 return;
 
-            var varPtr = CreateLocalVariable(decl.Type);
+            var varPtr = CreateLocalVariable(decl.Type, decl.Name.Name);
             valueMap[decl] = varPtr;
 
             if (decl.Initializer != null)

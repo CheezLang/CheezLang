@@ -18,7 +18,7 @@ impl Printable for StackAllocation {
 StackAllocator :: struct {
     parent: Allocator
 
-    memory: &any
+    memory: &void
     capacity: u64
 
     allocations: Array[StackAllocation]
@@ -117,7 +117,7 @@ impl StackAllocator {
 }
 
 impl Allocator for StackAllocator {
-    allocate :: (ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
+    allocate :: (ref Self, count: u64, elementSize: u64, alignment: u64) -> &void {
 
         nextAddress := {
             unaligned := pointer_add(memory, cast(i64) self.getNextAllocationOffset())
@@ -140,7 +140,7 @@ impl Allocator for StackAllocator {
         return nextAddress
     }
 
-    reallocate :: (ref Self, mem: &any, count: u64, elementSize: u64, alignment: u64) -> &any {
+    reallocate :: (ref Self, mem: &void, count: u64, elementSize: u64, alignment: u64) -> &void {
         size := count * elementSize
 
         lastAllocation := self.getLastAllocation()
@@ -164,7 +164,7 @@ impl Allocator for StackAllocator {
         }
     }
 
-    free :: (ref Self, mem: &any) {
+    free :: (ref Self, mem: &void) {
         lastAllocation := self.getLastAllocation()
         if lastAllocation == null {
             return

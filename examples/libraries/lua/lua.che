@@ -10,9 +10,9 @@ lua_Number      :: double
 
 lua_KFunction   :: fn(&lua_State, i32, lua_KContext) -> i32 {}
 lua_CFunction   :: fn(&lua_State) -> i32 {}
-lua_Alloc       :: fn(&any, &any, int, int) -> &any {}
-lua_Reader      :: fn(&lua_State, &any, int) -> c_string {}
-lua_Writer      :: fn(&lua_State, &any, int, &any) -> i32 {}
+lua_Alloc       :: fn(&void, &void, int, int) -> &void {}
+lua_Reader      :: fn(&lua_State, &void, int) -> c_string {}
+lua_Writer      :: fn(&lua_State, &void, int, &void) -> i32 {}
 
 
 LUA_MULTRET   : i32   : -1
@@ -72,7 +72,7 @@ lua_isnoneornil :: (L: &lua_State, n: i32) -> bool { return lua_type(L, n) <= 0 
 /*
 ** state manipulation
 */
-lua_newstate :: (f: lua_Alloc, ud: &any) -> &lua_State;
+lua_newstate :: (f: lua_Alloc, ud: &void) -> &lua_State;
 lua_close :: (L: &lua_State);
 lua_newthread :: (L: &lua_State) -> &lua_State;
 lua_atpanic :: (L: &lua_State, panicf: lua_CFunction) -> lua_CFunction;
@@ -90,7 +90,7 @@ lua_pushvfstring :: (L: &lua_State, fmt: c_string) -> c_string;
 lua_pushfstring :: (L: &lua_State, fmt: c_string) -> c_string #varargs;
 lua_pushcclosure :: (L: &lua_State, f: lua_CFunction, n: i32);
 lua_pushboolean :: (L: &lua_State, b: i32);
-lua_pushlightuserdata :: (L: &lua_State, p: &any);
+lua_pushlightuserdata :: (L: &lua_State, p: &void);
 lua_pushthread :: (L: &lua_State) -> i32;
 
 
@@ -103,9 +103,9 @@ lua_getfield ::      (L: &lua_State, idx: i32, k: c_string) -> i32;
 lua_geti ::          (L: &lua_State, idx: i32, n: lua_Integer) -> i32;
 lua_rawget ::        (L: &lua_State, idx: i32) -> i32;
 lua_rawgeti ::       (L: &lua_State, idx: i32, n: lua_Integer) -> i32;
-lua_rawgetp ::       (L: &lua_State, idx: i32, p: &any) -> i32;
+lua_rawgetp ::       (L: &lua_State, idx: i32, p: &void) -> i32;
 lua_createtable ::   (L: &lua_State, narr: i32, nrec: i32) ;
-lua_newuserdata ::   (L: &lua_State, sz: int) -> &any;
+lua_newuserdata ::   (L: &lua_State, sz: int) -> &void;
 lua_getmetatable ::  (L: &lua_State, objindex: i32) -> i32;
 lua_getuservalue ::  (L: &lua_State, idx: i32) -> i32;
 
@@ -118,7 +118,7 @@ lua_setfield :: (L: &lua_State, idx: i32, k: c_string);
 lua_seti :: (L: &lua_State, idx: i32, n: lua_Integer);
 lua_rawset :: (L: &lua_State, idx: i32);
 lua_rawseti :: (L: &lua_State, idx: i32, n: lua_Integer);
-lua_rawsetp :: (L: &lua_State, idx: i32, p: &any);
+lua_rawsetp :: (L: &lua_State, idx: i32, p: &void);
 lua_setmetatable :: (L: &lua_State, objindex: i32) -> int;
 lua_setuservalue :: (L: &lua_State, idx: i32);
 
@@ -138,17 +138,17 @@ lua_toboolean :: (L: &lua_State, idx: i32) -> i32;
 lua_tolstring :: (L: &lua_State, idx: i32, len: &int) -> c_string;
 lua_rawlen :: (L: &lua_State, idx: i32) -> i32;
 lua_tocfunction :: (L: &lua_State, idx: i32) -> lua_CFunction;
-lua_touserdata :: (L: &lua_State, idx: i32) -> &any;
+lua_touserdata :: (L: &lua_State, idx: i32) -> &void;
 lua_tothread :: (L: &lua_State, idx: i32) -> &lua_State;
-lua_topointer :: (L: &lua_State, idx: i32) -> &any;
+lua_topointer :: (L: &lua_State, idx: i32) -> &void;
 
 /*
 ** 'load' and 'call' functions (load and run Lua code)
 */
 lua_callk :: (L: &lua_State, nargs: i32, nresults: i32, ctx: lua_KContext, k: lua_KFunction);
 lua_pcallk :: (L: &lua_State, nargs: i32, nresults: i32, errfunc: i32, ctx: lua_KContext, k: lua_KFunction) -> i32;
-lua_load :: (L: &lua_State, reader: lua_Reader, dt: &any, chunkname: c_string, mode: c_string) -> i32;
-lua_dump :: (L: &lua_State, writer: lua_Writer, data: &any, strip: int) -> i32;
+lua_load :: (L: &lua_State, reader: lua_Reader, dt: &void, chunkname: c_string, mode: c_string) -> i32;
+lua_dump :: (L: &lua_State, writer: lua_Writer, data: &void, strip: int) -> i32;
 
 /*
 ** basic stack manipulation

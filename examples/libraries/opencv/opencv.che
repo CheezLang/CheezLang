@@ -34,7 +34,7 @@ IplImage :: struct {
     height              : i32
     roi                 : &IplROI
     maskROI             : &IplImage
-    imageId             : &any
+    imageId             : &void
     tileInfo            : &IplTileInfo
     imageSize           : i32
     imageData           : &u8

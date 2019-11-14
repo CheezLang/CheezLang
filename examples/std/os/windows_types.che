@@ -1,5 +1,5 @@
 DWORD                :: u32
-HANDLE               :: &any
+HANDLE               :: &void
 HWND                 :: HANDLE
 HINSTANCE            :: HANDLE
 HMODULE              :: HANDLE
@@ -26,8 +26,8 @@ UCHAR                :: u8
 BYTE                 :: u8
 WORD                 :: u16
 SIZE_T               :: u64
-THREAD_START_ROUTINE :: fn(&any) -> DWORD #stdcall
-WAITORTIMERCALLBACK  :: fn(&any, bool) #stdcall
+THREAD_START_ROUTINE :: fn(&void) -> DWORD #stdcall
+WAITORTIMERCALLBACK  :: fn(&void, bool) #stdcall
 
 POINT :: struct {
     x   : i32   = 0
@@ -100,7 +100,7 @@ POWERBROADCAST_SETTING :: struct {
 }
 
 CREATESTRUCTA :: struct {
-    lpCreateParams  : &any
+    lpCreateParams  : &void
     hInstance       : HINSTANCE
     hMenu           : HMENU
     hwndParent      : HWND
@@ -145,7 +145,7 @@ PIXELFORMATDESCRIPTOR :: struct {
 
 SECURITY_ATTRIBUTES :: struct {
   nLength               : DWORD
-  lpSecurityDescriptor  : &any
+  lpSecurityDescriptor  : &void
   bInheritHandle        : BOOL
 }
 

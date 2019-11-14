@@ -92,7 +92,7 @@ impl ArenaAllocator {
 }
 
 impl Allocator for ArenaAllocator {
-    allocate :: (ref Self, count: u64, elementSize: u64, alignment: u64) -> &any {
+    allocate :: (ref Self, count: u64, elementSize: u64, alignment: u64) -> &void {
         required_size := count * elementSize + 8
         if alignment < 8 {
             alignment = 8
@@ -128,7 +128,7 @@ impl Allocator for ArenaAllocator {
         return pointer_add(ptr, 8)
     }
 
-    reallocate :: (ref Self, mem: &any, count: u64, elementSize: u64, alignment: u64) -> &any {
+    reallocate :: (ref Self, mem: &void, count: u64, elementSize: u64, alignment: u64) -> &void {
         if mem == null {
             return allocate(count, elementSize, alignment)
         } else {
@@ -144,7 +144,7 @@ impl Allocator for ArenaAllocator {
         }
     }
 
-    free :: (ref Self, mem: &any) {
+    free :: (ref Self, mem: &void) {
         // do nothing
     }
 }

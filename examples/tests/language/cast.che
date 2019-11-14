@@ -47,7 +47,7 @@ test2 :: (a: u32) {
 }
 
 test3 :: (a: u64) {
-    b : &any = cast a
+    b : &void = cast a
 
     c_printf("%llu, %u`n", a, b)
 }

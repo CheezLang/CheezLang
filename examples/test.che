@@ -13,6 +13,7 @@
 // #load("tests/other/test1")
 // #load("examples/project_euler/005_smallest_multiple")
 
+
 //*
 
 #load("std:c")
@@ -36,18 +37,7 @@ Baz :: enum #copy {
     C : &int    = 96
 }
 
-print :: (data: $T) {
-    typ := @type_info(T)
-    print_any(&data, typ)
-}
-
-println :: (data: $T) {
-    typ := @type_info(T)
-    print_any(&data, typ)
-    c_puts("")
-}
-
-print_any :: (data: &any, typ: &TypeInfo) {
+print_any :: (data: &void, typ: &TypeInfo) {
     match typ.kind {
         TypeInfoKind.Int($tint) -> {
             if tint.signed {
@@ -82,7 +72,7 @@ print_any :: (data: &any, typ: &TypeInfo) {
         }
 
         TypeInfoKind.Pointer($target) -> {
-            ptr := cast(&&any) data
+            ptr := cast(&&void) data
             c_printf("0x%llX", <<ptr)
         }
 
@@ -95,7 +85,7 @@ print_any :: (data: &any, typ: &TypeInfo) {
                     c_printf("`"%.*s`"", ptr.length, ptr.data)
                 }
             } else {
-                ptr := <<cast(&[]any) data
+                ptr := <<cast(&[]void) data
                 c_printf("[")
                 for i : 0..ptr.length {
                     if i > 0 then c_printf(", ")
@@ -108,7 +98,7 @@ print_any :: (data: &any, typ: &TypeInfo) {
         }
 
         TypeInfoKind.Struct($tstruct) -> {
-            ptr := cast(&any) data
+            ptr := cast(&void) data
             c_printf("%.*s", i32(tstruct.name.length), tstruct.name.data)
 
             c_printf("(")
@@ -126,7 +116,7 @@ print_any :: (data: &any, typ: &TypeInfo) {
         }
 
         TypeInfoKind.Enum($tenum) -> {
-            ptr := cast(&any) data
+            ptr := cast(&void) data
             c_printf("%.*s.", i32(tenum.name.length), tenum.name.data)
 
             tag := match tenum.tag_type.size {
@@ -139,8 +129,6 @@ print_any :: (data: &any, typ: &TypeInfo) {
                     0
                 }
             }
-
-            // c_printf(".%lld", tag)
 
             for(by_ref=true) mem : tenum.members {
                 if mem.tag == tag {
@@ -155,23 +143,21 @@ print_any :: (data: &any, typ: &TypeInfo) {
                     }
                 }
             }
-
-            // if tstruct.members.data != null {
-            //     for i : 0..tstruct.members.length {
-            //         if i > 0 then c_printf(", ")
-            //         member_info := &tstruct.members[i]
-            //         member_ptr  := pointer_add(ptr, member_info.offset)
-            //         member_type := member_info.typ
-            //         c_printf("%.*s = ", i32(member_info.name.length), member_info.name.data)
-            //         print_any(member_ptr, member_type)
-            //     }
-            // }
         }
 
         $_ -> {
             c_printf("<unknown>")
         }
     }
+}
+
+print :: (data: any) {
+    print_any(data.val, data.typ)
+}
+
+println :: (data: any) {
+    print_any(data.val, data.typ)
+    c_puts("")
 }
 
 Main :: () {

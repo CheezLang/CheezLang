@@ -12,8 +12,8 @@ Thread :: struct {
 
 ThreadData :: struct {
     handle  : HANDLE
-    user    : &any
-    func    : fn(&any)
+    user    : &void
+    func    : fn(&void)
     id      : int
 }
 
@@ -32,7 +32,7 @@ impl Thread {
     }
 
     create :: (func: fn(&$T), user_data: &$T) -> Thread {
-        thread_func :: (data: &any) -> u32 #stdcall {
+        thread_func :: (data: &void) -> u32 #stdcall {
             thread_data := @cast(&ThreadData, data)
             current_thread_data = thread_data
             thread_data.func(thread_data.user)
@@ -45,8 +45,8 @@ impl Thread {
 
         td.handle   = handle
         td.id       = cast GetThreadId(handle)
-        td.func     = @cast(fn(&any), func)
-        td.user     = @cast(&any, user_data)
+        td.func     = @cast(fn(&void), func)
+        td.user     = @cast(&void, user_data)
 
         return Thread(td)
     }
@@ -118,7 +118,7 @@ impl Drop for Mutex {
 }
 
 // thread pool
-ThreadPoolFunc :: (function: fn(&any), data: &any)
+ThreadPoolFunc :: (function: fn(&void), data: &void)
 
 ThreadPoolData :: struct {
     threads     : Array[Thread]
@@ -151,7 +151,7 @@ impl ThreadPool {
                     break
                 }
 
-                next : ThreadPoolFunc = (@cast(fn(&any), null), null)
+                next : ThreadPoolFunc = (@cast(fn(&void), null), null)
                 if tp.functions.get_length() > 0 {
                     next = tp.functions.pop()
                 }
@@ -180,7 +180,7 @@ impl ThreadPool {
 
     enqueue :: (ref Self, function: fn(&$T), data_ptr: &T) {
         data.mutex.lock()
-        data.functions.push((@cast(fn(&any), function), @cast(&any, data_ptr)))
+        data.functions.push((@cast(fn(&void), function), @cast(&void, data_ptr)))
         data.mutex.release()
     }
 

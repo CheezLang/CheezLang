@@ -5,6 +5,6 @@ timeval :: struct {
     tv_usec : int // and microseconds
 }
 
-gettimeofday :: (tv: &timeval, tz: &any) -> i32;
+gettimeofday :: (tv: &timeval, tz: &void) -> i32;
 
 sleep :: (seconds: u32) -> u32;

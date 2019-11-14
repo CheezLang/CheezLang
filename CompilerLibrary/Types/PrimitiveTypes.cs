@@ -19,7 +19,7 @@ namespace Cheez.Types.Primitive
     {
         public static AnyType Intance { get; } = new AnyType();
 
-        private AnyType() : base(8, 8, false) { }
+        private AnyType() : base(16, 8, false) { }
 
         public override string ToString() => "any";
         public override bool IsPolyType => false;

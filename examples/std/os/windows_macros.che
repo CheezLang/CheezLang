@@ -1,4 +1,4 @@
 #lib("./windows_macros/windows_macros64.lib")
 
-GetFiberData :: () -> &any #linkname("winmacro_GetFiberData");
-GetCurrentFiber :: () -> &any #linkname("winmacro_GetCurrentFiber");
+GetFiberData :: () -> &void #linkname("winmacro_GetFiberData");
+GetCurrentFiber :: () -> &void #linkname("winmacro_GetCurrentFiber");

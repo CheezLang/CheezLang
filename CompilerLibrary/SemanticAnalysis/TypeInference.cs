@@ -71,7 +71,7 @@ namespace Cheez
                 if (expected is TraitType)
                     return expected;
 
-                return PointerType.GetPointerType(CheezType.Any);
+                return PointerType.GetPointerType(CheezType.Void);
             }
 
             return literalType;
@@ -1406,6 +1406,12 @@ namespace Cheez
                 return cast;
             }
 
+            else if (to == CheezType.Any)
+            {
+                MarkTypeAsRequiredAtRuntime(from);
+                return cast;
+            }
+
             else if ((to is PointerType && from is PointerType) ||
                 (to is IntType && from is PointerType) ||
                 (to is PointerType p1 && from is ArrayType a1 && p1.TargetType == a1.TargetType) ||
@@ -1420,7 +1426,7 @@ namespace Cheez
                 (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType) ||
                 (to is IntType && from is EnumType) ||
                 (to is BoolType && from is FunctionType) ||
-                (to is FunctionType && from is PointerType p2 && p2.TargetType == CheezType.Any))
+                (to is FunctionType && from is PointerType p2 && p2.TargetType == CheezType.Void))
             {
                 return cast;
             }
@@ -2861,6 +2867,25 @@ namespace Cheez
             var sub = expr.Right.Name;
             switch (expr.Left.Type)
             {
+                case AnyType _:
+                    {
+                        var name = expr.Right.Name;
+                        switch (name)
+                        {
+                            case "typ":
+                                expr.Type = PointerType.GetPointerType(GlobalScope.GetStruct("TypeInfo").StructType);
+                                break;
+                            case "val":
+                                expr.Type = PointerType.GetPointerType(CheezType.Void);
+                                break;
+
+                            default:
+                                return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
+                        }
+
+                        return expr;
+                    }
+
                 case RangeType range:
                     {
                         var name = expr.Right.Name;
@@ -4333,10 +4358,13 @@ namespace Cheez
             cast.Scope = expr.Scope;
 
             // TODO: only do this for implicit casts
+            if (to == CheezType.Any)
+                return InferType(cast, to);
+
             if (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType)
                 return InferType(cast, to);
 
-            if (to is PointerType p2 && p2.TargetType == CheezType.Any && from is PointerType)
+            if (to is PointerType p2 && p2.TargetType == CheezType.Void && from is PointerType)
                 return InferType(cast, to);
 
             if (to is IntType i1 && from is IntType i2 && i1.Signed == i2.Signed && GetSizeOfType(i1) >= GetSizeOfType(i2))
@@ -4351,7 +4379,7 @@ namespace Cheez
             if (to is BoolType && from is FunctionType)
                 return InferType(cast, to);
 
-            if (to is FunctionType && from is PointerType p3 && p3.TargetType == CheezType.Any)
+            if (to is FunctionType && from is PointerType p3 && p3.TargetType == CheezType.Void)
                 return InferType(cast, to);
 
             if (to is TraitType trait)

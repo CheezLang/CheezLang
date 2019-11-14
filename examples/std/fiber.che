@@ -5,10 +5,10 @@
 // thread_fiber : Fiber = Fiber(ConvertThreadToFiber(&thread_fiber), null)
 
 Fiber :: struct {
-    ptr             : &any
+    ptr             : &void
     parent          : &Fiber = null
-    func            : fn(&any)
-    user_data       : &any
+    func            : fn(&void)
+    user_data       : &void
 }
 
 impl Drop for Fiber {
@@ -30,7 +30,7 @@ impl Fiber {
     }
 
     new :: (func: fn(&$T), ud: &T = null) -> &Fiber {
-        fiber_func :: (param: &any) #stdcall #nostacktrace {
+        fiber_func :: (param: &void) #stdcall #nostacktrace {
             f := cast(&Fiber)param
             f.func(f.user_data)
             while true {

@@ -14,23 +14,23 @@ RegisterWaitForSingleObject :: (
   phNewWaitObject   : &HANDLE,
   hObject           : HANDLE,
   callback          : WAITORTIMERCALLBACK,
-  context           : &any,
+  context           : &void,
   dwMilliseconds    : u32,
   dwFlags           : u32
 ) -> BOOL #stdcall;
 
 ReadDirectoryChangesW :: (
     hDirectory          : HANDLE,
-    lpBuffer            : &any,
+    lpBuffer            : &void,
     nBufferLength       : DWORD,
     bWatchSubtree       : BOOL,
     dwNotifyFilter      : DWORD,
     lpBytesReturned     : &DWORD,
-    lpOverlapped        : &any,
-    lpCompletionRoutine : &any
+    lpOverlapped        : &void,
+    lpCompletionRoutine : &void
 ) -> BOOL #stdcall;
 
-WaitForSingleObject :: (handle: &any, millis: DWORD) -> DWORD #stdcall;
+WaitForSingleObject :: (handle: &void, millis: DWORD) -> DWORD #stdcall;
 WaitForMultipleObjects :: (
   nCount         : DWORD,
   lpHandles      : &HANDLE,
@@ -56,9 +56,9 @@ Sleep                     :: (millis: DWORD) #stdcall;
 
 // file stuff
 GetStdHandle  :: (nStdHandle: DWORD) -> HANDLE #stdcall;
-WriteFile     :: (hFile: HANDLE, lpBuffer: &any, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: &DWORD, lpOverlapped: &any) -> BOOL #stdcall;
-ReadFile      :: (hFile: HANDLE, lpBuffer: &any, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: &DWORD, lpOverlapped: &any) -> BOOL #stdcall;
-CreateFileA   :: (lpFileName: c_string, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &any, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
+WriteFile     :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
+ReadFile      :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
+CreateFileA   :: (lpFileName: c_string, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &void, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
 GetFileSize   :: (hFile: HANDLE, lpFileSizeHigh: &DWORD) -> DWORD #stdcall;
 GetFileSizeEx :: (hFile: HANDLE, lpFileSize: &LARGE_INTEGER) -> BOOL #stdcall;
 
@@ -68,7 +68,7 @@ SetWindowTextA     :: (hWnd: HWND, lpString: c_string) -> BOOL #stdcall;
 DefWindowProcA     :: (hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT #stdcall;
 RegisterClassA     :: (wndClass: &WNDCLASSA) -> ATOM #stdcall;
 AdjustWindowRectEx :: (lpRect: &RECT, dwStyle: DWORD, bMenu: BOOL, dwExStyle: DWORD) -> BOOL #stdcall;
-CreateWindowExA    :: (dwExStyle: DWORD, lpClassNa: c_string, lpWindowName : c_string, dwSty: DWORD, X: i32, Y: i32, nWidt: i32, nHeig: i32, hWndParen: HWND, hMenu: HMENU, hInstance: HINSTANCE, lpPar: &any) -> HWND #stdcall;
+CreateWindowExA    :: (dwExStyle: DWORD, lpClassNa: c_string, lpWindowName : c_string, dwSty: DWORD, X: i32, Y: i32, nWidt: i32, nHeig: i32, hWndParen: HWND, hMenu: HMENU, hInstance: HINSTANCE, lpPar: &void) -> HWND #stdcall;
 PostMessageA       :: (hWnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> BOOL #stdcall;
 PeekMessageA       :: (lpMsg: &MSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT, wRemoveMsg: UINT) -> BOOL #stdcall;
 GetMessageA        :: (lpMsg: &MSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT) -> BOOL #stdcall;
@@ -89,21 +89,21 @@ wglMakeCurrent     :: (HDC, HGLRC) -> BOOL #stdcall;
 wglGetProcAddress  :: (c_string) -> (fn() #stdcall) #stdcall;
 
 // fiber
-ConvertThreadToFiber :: (lpParameter: &any) -> &any #stdcall;
-SwitchToFiber        :: (fiber: &any) #stdcall;
-CreateFiber          :: (dwStackSize: int, lpStartAddress: fn(&any) #stdcall, lpParameter: &any) -> &any #stdcall;
-DeleteFiber          :: (fiber: &any) #stdcall;
+ConvertThreadToFiber :: (lpParameter: &void) -> &void #stdcall;
+SwitchToFiber        :: (fiber: &void) #stdcall;
+CreateFiber          :: (dwStackSize: int, lpStartAddress: fn(&void) #stdcall, lpParameter: &void) -> &void #stdcall;
+DeleteFiber          :: (fiber: &void) #stdcall;
 
 // threads
 GetCurrentThread   :: () -> HANDLE #stdcall;
 GetCurrentThreadId :: () -> DWORD #stdcall;
 GetThreadId        :: (handle: HANDLE) -> DWORD #stdcall;
-CreateThread       :: (lpThreadAttributes: &SECURITY_ATTRIBUTES, dwStackSize: SIZE_T, lpStartAddress: THREAD_START_ROUTINE, lpParameter: &any, dwCreationFlags: DWORD, lpThreadId: &DWORD) -> HANDLE #stdcall;
+CreateThread       :: (lpThreadAttributes: &SECURITY_ATTRIBUTES, dwStackSize: SIZE_T, lpStartAddress: THREAD_START_ROUTINE, lpParameter: &void, dwCreationFlags: DWORD, lpThreadId: &DWORD) -> HANDLE #stdcall;
 ResumeThread       :: (hThread: HANDLE) -> DWORD #stdcall;
 ExitThread         :: (exitCode: DWORD) -> DWORD #stdcall;
 TerminateThread    :: (hThread: HANDLE, dwExitCode: DWORD) -> BOOL #stdcall;
 ReleaseMutex       :: (handle: HANDLE) -> BOOL #stdcall;
-CreateMutexA       :: (lpMutexAttributes: &any, bInitialOwner: BOOL, lpName: &char) -> HANDLE #stdcall;
+CreateMutexA       :: (lpMutexAttributes: &void, bInitialOwner: BOOL, lpName: &char) -> HANDLE #stdcall;
 
 // somehow not linking
 // GetCurrentDirectory :: (nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;
