@@ -789,9 +789,9 @@ namespace Cheez
                             if (newPattern.Type != value.Type)
                             {
                                 if (value.Type is IntType && newPattern.Type == IntType.LiteralType)
-                                    ; // do nothing
+                                { } // do nothing
                                 else if (value.Type is FloatType && newPattern.Type == FloatType.LiteralType)
-                                    ; // do nothing
+                                { } // do nothing
                                 else
                                     break;
                             }
@@ -826,9 +826,9 @@ namespace Cheez
                         if (n.Type != value.Type)
                         {
                             if (value.Type is IntType && n.Type == IntType.LiteralType)
-                                ; // do nothing
+                            { } // do nothing
                             else if (value.Type is FloatType && n.Type == FloatType.LiteralType)
-                                ; // do nothing
+                            { } // do nothing
                             else
                                 break;
                         }
@@ -1412,6 +1412,14 @@ namespace Cheez
                 return cast;
             }
 
+            else if (to is IntType && from is EnumType e1)
+            {
+                var mem = cast.SubExpression as AstEnumValueExpr;
+                if (mem != null)
+                    cast.Value = mem.Member.Value;
+                return cast;
+            }
+
             else if ((to is PointerType && from is PointerType) ||
                 (to is IntType && from is PointerType) ||
                 (to is PointerType p1 && from is ArrayType a1 && p1.TargetType == a1.TargetType) ||
@@ -1424,7 +1432,6 @@ namespace Cheez
                 (to is CharType && from is IntType) ||
                 (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
                 (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType) ||
-                (to is IntType && from is EnumType) ||
                 (to is BoolType && from is FunctionType) ||
                 (to is FunctionType && from is PointerType p2 && p2.TargetType == CheezType.Void))
             {
@@ -4222,6 +4229,11 @@ namespace Cheez
 
                 expr.Type = u.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
+            }
+            else if (sym is AstEnumMemberNew em)
+            {
+                expr.Type = em.EnumDeclaration.TagType;
+                expr.Value = em.Value;
             }
             else
             {

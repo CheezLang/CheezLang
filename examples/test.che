@@ -1,3 +1,4 @@
+#load("examples/glfw3_example")
 // #load("examples/trait_function_call_performance")
 // #load("examples/graphyfier/graphyfier")
 // #load("examples/pathtracer2/main")
@@ -13,8 +14,7 @@
 // #load("tests/other/test1")
 // #load("examples/project_euler/005_smallest_multiple")
 
-
-//*
+/*
 
 #load("std:c")
 #load("std:util")

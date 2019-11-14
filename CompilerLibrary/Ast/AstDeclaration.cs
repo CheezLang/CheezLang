@@ -300,9 +300,9 @@ namespace Cheez.Ast.Statements
     }
 
 
-    public class AstEnumMemberNew
+    public class AstEnumMemberNew : ISymbol
     {
-
+        public AstEnumTypeExpr EnumDeclaration { get; set; }
         public AstVariableDecl Decl { get; }
         public string Name => Decl.Name.Name;
         public CheezType AssociatedType => Decl.Type;
@@ -312,8 +312,9 @@ namespace Cheez.Ast.Statements
         public NumberData Value { get; set; }
 
 
-        public AstEnumMemberNew(AstVariableDecl decl, int index)
+        public AstEnumMemberNew(AstEnumTypeExpr enumDeclaration, AstVariableDecl decl, int index)
         {
+            this.EnumDeclaration = enumDeclaration;
             this.Decl = decl;
             this.Index = index;
         }
@@ -568,6 +569,8 @@ namespace Cheez.Ast.Statements
         public List<AstDirective> Directives { get; protected set; }
 
         public bool MembersComputed { get; set; } = false;
+
+        public bool IsReprC { get; set; }
 
         public AstEnumTypeExpr(List<AstParameter> param, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
             : base(Location)

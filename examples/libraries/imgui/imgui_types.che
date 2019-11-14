@@ -1,0 +1,919 @@
+ImDrawListSharedData       :: struct {}
+ImGuiContext               :: struct {}
+
+ImTextureID             :: &void
+ImGuiID                 :: u32
+ImWchar                 :: u16
+ImGuiCol                :: i32
+ImGuiCond               :: i32
+ImGuiDataType           :: i32
+ImGuiDir                :: i32
+ImGuiKey                :: i32
+ImGuiNavInput           :: i32
+ImGuiMouseCursor        :: i32
+ImGuiStyleVar           :: i32
+ImDrawCornerFlags       :: i32
+ImDrawListFlags         :: i32
+ImFontAtlasFlags        :: i32
+ImGuiBackendFlags       :: i32
+ImGuiColorEditFlags     :: i32
+ImGuiConfigFlags        :: i32
+ImGuiComboFlags         :: i32
+ImGuiDragDropFlags      :: i32
+ImGuiFocusedFlags       :: i32
+ImGuiHoveredFlags       :: i32
+ImGuiInputTextFlags     :: i32
+ImGuiSelectableFlags    :: i32
+ImGuiTabBarFlags        :: i32
+ImGuiTabItemFlags       :: i32
+ImGuiTreeNodeFlags      :: i32
+ImGuiWindowFlags        :: i32
+ImGuiInputTextCallback  :: fn(&ImGuiInputTextCallbackData) -> i32
+ImGuiSizeCallback       :: fn(&ImGuiSizeCallbackData)
+ImS8                    :: i8
+ImU8                    :: u8
+ImS16                   :: i16
+ImU16                   :: u16
+ImS32                   :: i32
+ImU32                   :: u32
+ImS64                   :: i64
+ImU64                   :: u64
+ImDrawCallback          :: fn(&ImDrawList, &ImDrawCmd)
+ImDrawIdx               :: u16
+
+ImVector :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &void
+}
+
+ImVector_float :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &f32
+}
+
+ImVector_ImWchar :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImWchar
+}
+
+ImVector_ImDrawVert :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImDrawVert
+}
+
+ImVector_ImFontGlyph :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImFontGlyph
+}
+
+ImVector_ImGuiTextRange :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImGuiTextRange
+}
+
+ImVector_ImGuiStoragePair :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImGuiStoragePair
+}
+
+ImVector_ImDrawChannel :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImDrawChannel
+}
+
+ImVector_char :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &i8
+}
+
+ImVector_ImU32 :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImU32
+}
+
+ImVector_ImFontAtlasCustomRect :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImFontAtlasCustomRect
+}
+
+ImVector_ImTextureID :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImTextureID
+}
+
+ImVector_ImFontConfig :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImFontConfig
+}
+
+ImVector_ImFontPtr :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &&ImFont
+}
+
+ImVector_ImDrawCmd :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImDrawCmd
+}
+
+ImVector_ImVec4 :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImVec4
+}
+
+ImVector_ImDrawIdx :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImDrawIdx
+}
+
+ImVector_ImVec2 :: struct {
+    Size     : i32
+    Capacity : i32
+    Data     : &ImVec2
+}
+
+ImVec2 :: struct {
+    x : f32
+    y : f32
+}
+
+ImVec4 :: struct {
+    x : f32
+    y : f32
+    z : f32
+    w : f32
+}
+
+ImGuiWindowFlags_ :: enum #repr("C") {
+    ImGuiWindowFlags_None                      = 0
+    ImGuiWindowFlags_NoTitleBar                = @bin_lsl(1, 0)
+    ImGuiWindowFlags_NoResize                  = @bin_lsl(1, 1)
+    ImGuiWindowFlags_NoMove                    = @bin_lsl(1, 2)
+    ImGuiWindowFlags_NoScrollbar               = @bin_lsl(1, 3)
+    ImGuiWindowFlags_NoScrollWithMouse         = @bin_lsl(1, 4)
+    ImGuiWindowFlags_NoCollapse                = @bin_lsl(1, 5)
+    ImGuiWindowFlags_AlwaysAutoResize          = @bin_lsl(1, 6)
+    ImGuiWindowFlags_NoBackground              = @bin_lsl(1, 7)
+    ImGuiWindowFlags_NoSavedSettings           = @bin_lsl(1, 8)
+    ImGuiWindowFlags_NoMouseInputs             = @bin_lsl(1, 9)
+    ImGuiWindowFlags_MenuBar                   = @bin_lsl(1, 10)
+    ImGuiWindowFlags_HorizontalScrollbar       = @bin_lsl(1, 11)
+    ImGuiWindowFlags_NoFocusOnAppearing        = @bin_lsl(1, 12)
+    ImGuiWindowFlags_NoBringToFrontOnFocus     = @bin_lsl(1, 13)
+    ImGuiWindowFlags_AlwaysVerticalScrollbar   = @bin_lsl(1, 14)
+    ImGuiWindowFlags_AlwaysHorizontalScrollbar = @bin_lsl(1, 15)
+    ImGuiWindowFlags_AlwaysUseWindowPadding    = @bin_lsl(1, 16)
+    ImGuiWindowFlags_NoNavInputs               = @bin_lsl(1, 18)
+    ImGuiWindowFlags_NoNavFocus                = @bin_lsl(1, 19)
+    ImGuiWindowFlags_UnsavedDocument           = @bin_lsl(1, 20)
+    ImGuiWindowFlags_NoNav                     = @bin_or(ImGuiWindowFlags_NoNavInputs, ImGuiWindowFlags_NoNavFocus)
+    ImGuiWindowFlags_NoDecoration              = @bin_or(ImGuiWindowFlags_NoTitleBar, ImGuiWindowFlags_NoResize, ImGuiWindowFlags_NoScrollbar, ImGuiWindowFlags_NoCollapse)
+    ImGuiWindowFlags_NoInputs                  = @bin_or(ImGuiWindowFlags_NoMouseInputs, ImGuiWindowFlags_NoNavInputs, ImGuiWindowFlags_NoNavFocus)
+    ImGuiWindowFlags_NavFlattened              = @bin_lsl(1, 23)
+    ImGuiWindowFlags_ChildWindow               = @bin_lsl(1, 24)
+    ImGuiWindowFlags_Tooltip                   = @bin_lsl(1, 25)
+    ImGuiWindowFlags_Popup                     = @bin_lsl(1, 26)
+    ImGuiWindowFlags_Modal                     = @bin_lsl(1, 27)
+    ImGuiWindowFlags_ChildMenu                 = @bin_lsl(1, 28)
+}
+
+ImGuiInputTextFlags_ :: enum #repr("C") {
+    ImGuiInputTextFlags_None                = 0
+    ImGuiInputTextFlags_CharsDecimal        = @bin_lsl(1, 0)
+    ImGuiInputTextFlags_CharsHexadecimal    = @bin_lsl(1, 1)
+    ImGuiInputTextFlags_CharsUppercase      = @bin_lsl(1, 2)
+    ImGuiInputTextFlags_CharsNoBlank        = @bin_lsl(1, 3)
+    ImGuiInputTextFlags_AutoSelectAll       = @bin_lsl(1, 4)
+    ImGuiInputTextFlags_EnterReturnsTrue    = @bin_lsl(1, 5)
+    ImGuiInputTextFlags_CallbackCompletion  = @bin_lsl(1, 6)
+    ImGuiInputTextFlags_CallbackHistory     = @bin_lsl(1, 7)
+    ImGuiInputTextFlags_CallbackAlways      = @bin_lsl(1, 8)
+    ImGuiInputTextFlags_CallbackCharFilter  = @bin_lsl(1, 9)
+    ImGuiInputTextFlags_AllowTabInput       = @bin_lsl(1, 10)
+    ImGuiInputTextFlags_CtrlEnterForNewLine = @bin_lsl(1, 11)
+    ImGuiInputTextFlags_NoHorizontalScroll  = @bin_lsl(1, 12)
+    ImGuiInputTextFlags_AlwaysInsertMode    = @bin_lsl(1, 13)
+    ImGuiInputTextFlags_ReadOnly            = @bin_lsl(1, 14)
+    ImGuiInputTextFlags_Password            = @bin_lsl(1, 15)
+    ImGuiInputTextFlags_NoUndoRedo          = @bin_lsl(1, 16)
+    ImGuiInputTextFlags_CharsScientific     = @bin_lsl(1, 17)
+    ImGuiInputTextFlags_CallbackResize      = @bin_lsl(1, 18)
+    ImGuiInputTextFlags_Multiline           = @bin_lsl(1, 20)
+    ImGuiInputTextFlags_NoMarkEdited        = @bin_lsl(1, 21)
+}
+
+ImGuiTreeNodeFlags_ :: enum #repr("C") {
+    ImGuiTreeNodeFlags_None                 = 0
+    ImGuiTreeNodeFlags_Selected             = @bin_lsl(1, 0)
+    ImGuiTreeNodeFlags_Framed               = @bin_lsl(1, 1)
+    ImGuiTreeNodeFlags_AllowItemOverlap     = @bin_lsl(1, 2)
+    ImGuiTreeNodeFlags_NoTreePushOnOpen     = @bin_lsl(1, 3)
+    ImGuiTreeNodeFlags_NoAutoOpenOnLog      = @bin_lsl(1, 4)
+    ImGuiTreeNodeFlags_DefaultOpen          = @bin_lsl(1, 5)
+    ImGuiTreeNodeFlags_OpenOnDoubleClick    = @bin_lsl(1, 6)
+    ImGuiTreeNodeFlags_OpenOnArrow          = @bin_lsl(1, 7)
+    ImGuiTreeNodeFlags_Leaf                 = @bin_lsl(1, 8)
+    ImGuiTreeNodeFlags_Bullet               = @bin_lsl(1, 9)
+    ImGuiTreeNodeFlags_FramePadding         = @bin_lsl(1, 10)
+    ImGuiTreeNodeFlags_SpanAvailWidth       = @bin_lsl(1, 11)
+    ImGuiTreeNodeFlags_SpanFullWidth        = @bin_lsl(1, 12)
+    ImGuiTreeNodeFlags_NavLeftJumpsBackHere = @bin_lsl(1, 13)
+    ImGuiTreeNodeFlags_CollapsingHeader     = @bin_or(ImGuiTreeNodeFlags_Framed, ImGuiTreeNodeFlags_NoTreePushOnOpen, ImGuiTreeNodeFlags_NoAutoOpenOnLog)
+}
+
+ImGuiSelectableFlags_ :: enum #repr("C") {
+    ImGuiSelectableFlags_None             = 0,
+    ImGuiSelectableFlags_DontClosePopups  = @bin_lsl(1, 0)
+    ImGuiSelectableFlags_SpanAllColumns   = @bin_lsl(1, 1)
+    ImGuiSelectableFlags_AllowDoubleClick = @bin_lsl(1, 2)
+    ImGuiSelectableFlags_Disabled         = @bin_lsl(1, 3)
+    ImGuiSelectableFlags_AllowItemOverlap = @bin_lsl(1, 4)
+}
+
+ImGuiComboFlags_ :: enum #repr("C") {
+    ImGuiComboFlags_None           = 0
+    ImGuiComboFlags_PopupAlignLeft = @bin_lsl(1, 0)
+    ImGuiComboFlags_HeightSmall    = @bin_lsl(1, 1)
+    ImGuiComboFlags_HeightRegular  = @bin_lsl(1, 2)
+    ImGuiComboFlags_HeightLarge    = @bin_lsl(1, 3)
+    ImGuiComboFlags_HeightLargest  = @bin_lsl(1, 4)
+    ImGuiComboFlags_NoArrowButton  = @bin_lsl(1, 5)
+    ImGuiComboFlags_NoPreview      = @bin_lsl(1, 6)
+    ImGuiComboFlags_HeightMask_    = @bin_or(ImGuiComboFlags_HeightSmall, ImGuiComboFlags_HeightRegular, ImGuiComboFlags_HeightLarge, ImGuiComboFlags_HeightLargest)
+}
+
+ImGuiTabBarFlags_ :: enum #repr("C") {
+    ImGuiTabBarFlags_None                         = 0
+    ImGuiTabBarFlags_Reorderable                  = @bin_lsl(1, 0)
+    ImGuiTabBarFlags_AutoSelectNewTabs            = @bin_lsl(1, 1)
+    ImGuiTabBarFlags_TabListPopupButton           = @bin_lsl(1, 2)
+    ImGuiTabBarFlags_NoCloseWithMiddleMouseButton = @bin_lsl(1, 3)
+    ImGuiTabBarFlags_NoTabListScrollingButtons    = @bin_lsl(1, 4)
+    ImGuiTabBarFlags_NoTooltip                    = @bin_lsl(1, 5)
+    ImGuiTabBarFlags_FittingPolicyResizeDown      = @bin_lsl(1, 6)
+    ImGuiTabBarFlags_FittingPolicyScroll          = @bin_lsl(1, 7)
+    ImGuiTabBarFlags_FittingPolicyMask_           = @bin_or(ImGuiTabBarFlags_FittingPolicyResizeDown, ImGuiTabBarFlags_FittingPolicyScroll)
+    ImGuiTabBarFlags_FittingPolicyDefault_        = ImGuiTabBarFlags_FittingPolicyResizeDown
+}
+
+ImGuiTabItemFlags_ :: enum #repr("C") {
+    ImGuiTabItemFlags_None                         = 0
+    ImGuiTabItemFlags_UnsavedDocument              = @bin_lsl(1, 0)
+    ImGuiTabItemFlags_SetSelected                  = @bin_lsl(1, 1)
+    ImGuiTabItemFlags_NoCloseWithMiddleMouseButton = @bin_lsl(1, 2)
+    ImGuiTabItemFlags_NoPushId                     = @bin_lsl(1, 3)
+}
+
+ImGuiFocusedFlags_ :: enum #repr("C") {
+    ImGuiFocusedFlags_None                = 0
+    ImGuiFocusedFlags_ChildWindows        = @bin_lsl(1, 0)
+    ImGuiFocusedFlags_RootWindow          = @bin_lsl(1, 1)
+    ImGuiFocusedFlags_AnyWindow           = @bin_lsl(1, 2)
+    ImGuiFocusedFlags_RootAndChildWindows = @bin_or(ImGuiFocusedFlags_RootWindow, ImGuiFocusedFlags_ChildWindows)
+}
+
+ImGuiHoveredFlags_ :: enum #repr("C") {
+    ImGuiHoveredFlags_None                         = 0
+    ImGuiHoveredFlags_ChildWindows                 = @bin_lsl(1, 0)
+    ImGuiHoveredFlags_RootWindow                   = @bin_lsl(1, 1)
+    ImGuiHoveredFlags_AnyWindow                    = @bin_lsl(1, 2)
+    ImGuiHoveredFlags_AllowWhenBlockedByPopup      = @bin_lsl(1, 3)
+    ImGuiHoveredFlags_AllowWhenBlockedByActiveItem = @bin_lsl(1, 5)
+    ImGuiHoveredFlags_AllowWhenOverlapped          = @bin_lsl(1, 6)
+    ImGuiHoveredFlags_AllowWhenDisabled            = @bin_lsl(1, 7)
+    ImGuiHoveredFlags_RectOnly                     = @bin_or(ImGuiHoveredFlags_AllowWhenBlockedByPopup, ImGuiHoveredFlags_AllowWhenBlockedByActiveItem, ImGuiHoveredFlags_AllowWhenOverlapped)
+    ImGuiHoveredFlags_RootAndChildWindows          = @bin_or(ImGuiHoveredFlags_RootWindow, ImGuiHoveredFlags_ChildWindows)
+}
+
+ImGuiDragDropFlags_ :: enum #repr("C") {
+    ImGuiDragDropFlags_None                     = 0
+    ImGuiDragDropFlags_SourceNoPreviewTooltip   = @bin_lsl(1, 0)
+    ImGuiDragDropFlags_SourceNoDisableHover     = @bin_lsl(1, 1)
+    ImGuiDragDropFlags_SourceNoHoldToOpenOthers = @bin_lsl(1, 2)
+    ImGuiDragDropFlags_SourceAllowNullID        = @bin_lsl(1, 3)
+    ImGuiDragDropFlags_SourceExtern             = @bin_lsl(1, 4)
+    ImGuiDragDropFlags_SourceAutoExpirePayload  = @bin_lsl(1, 5)
+    ImGuiDragDropFlags_AcceptBeforeDelivery     = @bin_lsl(1, 10)
+    ImGuiDragDropFlags_AcceptNoDrawDefaultRect  = @bin_lsl(1, 11)
+    ImGuiDragDropFlags_AcceptNoPreviewTooltip   = @bin_lsl(1, 12)
+    ImGuiDragDropFlags_AcceptPeekOnly           = @bin_or(ImGuiDragDropFlags_AcceptBeforeDelivery, ImGuiDragDropFlags_AcceptNoDrawDefaultRect)
+}
+
+ImGuiDataType_ :: enum #repr("C") {
+    ImGuiDataType_S8
+    ImGuiDataType_U8
+    ImGuiDataType_S16
+    ImGuiDataType_U16
+    ImGuiDataType_S32
+    ImGuiDataType_U32
+    ImGuiDataType_S64
+    ImGuiDataType_U64
+    ImGuiDataType_Float
+    ImGuiDataType_Double
+    ImGuiDataType_COUNT
+}
+
+ImGuiDir_ :: enum #repr("C") {
+    ImGuiDir_None  = -1
+    ImGuiDir_Left  = 0
+    ImGuiDir_Right = 1
+    ImGuiDir_Up    = 2
+    ImGuiDir_Down  = 3
+    ImGuiDir_COUNT
+}
+
+ImGuiKey_ :: enum #repr("C") {
+    ImGuiKey_Tab
+    ImGuiKey_LeftArrow
+    ImGuiKey_RightArrow
+    ImGuiKey_UpArrow
+    ImGuiKey_DownArrow
+    ImGuiKey_PageUp
+    ImGuiKey_PageDown
+    ImGuiKey_Home
+    ImGuiKey_End
+    ImGuiKey_Insert
+    ImGuiKey_Delete
+    ImGuiKey_Backspace
+    ImGuiKey_Space
+    ImGuiKey_Enter
+    ImGuiKey_Escape
+    ImGuiKey_KeyPadEnter
+    ImGuiKey_A
+    ImGuiKey_C
+    ImGuiKey_V
+    ImGuiKey_X
+    ImGuiKey_Y
+    ImGuiKey_Z
+    ImGuiKey_COUNT
+}
+
+ImGuiNavInput_ :: enum #repr("C") {
+    ImGuiNavInput_Activate
+    ImGuiNavInput_Cancel
+    ImGuiNavInput_Input
+    ImGuiNavInput_Menu
+    ImGuiNavInput_DpadLeft
+    ImGuiNavInput_DpadRight
+    ImGuiNavInput_DpadUp
+    ImGuiNavInput_DpadDown
+    ImGuiNavInput_LStickLeft
+    ImGuiNavInput_LStickRight
+    ImGuiNavInput_LStickUp
+    ImGuiNavInput_LStickDown
+    ImGuiNavInput_FocusPrev
+    ImGuiNavInput_FocusNext
+    ImGuiNavInput_TweakSlow
+    ImGuiNavInput_TweakFast
+    ImGuiNavInput_KeyMenu_
+    ImGuiNavInput_KeyTab_
+    ImGuiNavInput_KeyLeft_
+    ImGuiNavInput_KeyRight_
+    ImGuiNavInput_KeyUp_
+    ImGuiNavInput_KeyDown_
+    ImGuiNavInput_COUNT
+    ImGuiNavInput_InternalStart_ = ImGuiNavInput_KeyMenu_
+}
+
+ImGuiConfigFlags_ :: enum #repr("C") {
+    ImGuiConfigFlags_None                 = 0
+    ImGuiConfigFlags_NavEnableKeyboard    = @bin_lsl(1, 0)
+    ImGuiConfigFlags_NavEnableGamepad     = @bin_lsl(1, 1)
+    ImGuiConfigFlags_NavEnableSetMousePos = @bin_lsl(1, 2)
+    ImGuiConfigFlags_NavNoCaptureKeyboard = @bin_lsl(1, 3)
+    ImGuiConfigFlags_NoMouse              = @bin_lsl(1, 4)
+    ImGuiConfigFlags_NoMouseCursorChange  = @bin_lsl(1, 5)
+    ImGuiConfigFlags_IsSRGB               = @bin_lsl(1, 20)
+    ImGuiConfigFlags_IsTouchScreen        = @bin_lsl(1, 21)
+}
+
+ImGuiBackendFlags_ :: enum #repr("C") {
+    ImGuiBackendFlags_None                 = 0
+    ImGuiBackendFlags_HasGamepad           = @bin_lsl(1, 0)
+    ImGuiBackendFlags_HasMouseCursors      = @bin_lsl(1, 1)
+    ImGuiBackendFlags_HasSetMousePos       = @bin_lsl(1, 2)
+    ImGuiBackendFlags_RendererHasVtxOffset = @bin_lsl(1, 3)
+}
+
+ImGuiCol_ :: enum #repr("C") {
+    ImGuiCol_Text
+    ImGuiCol_TextDisabled
+    ImGuiCol_WindowBg
+    ImGuiCol_ChildBg
+    ImGuiCol_PopupBg
+    ImGuiCol_Border
+    ImGuiCol_BorderShadow
+    ImGuiCol_FrameBg
+    ImGuiCol_FrameBgHovered
+    ImGuiCol_FrameBgActive
+    ImGuiCol_TitleBg
+    ImGuiCol_TitleBgActive
+    ImGuiCol_TitleBgCollapsed
+    ImGuiCol_MenuBarBg
+    ImGuiCol_ScrollbarBg
+    ImGuiCol_ScrollbarGrab
+    ImGuiCol_ScrollbarGrabHovered
+    ImGuiCol_ScrollbarGrabActive
+    ImGuiCol_CheckMark
+    ImGuiCol_SliderGrab
+    ImGuiCol_SliderGrabActive
+    ImGuiCol_Button
+    ImGuiCol_ButtonHovered
+    ImGuiCol_ButtonActive
+    ImGuiCol_Header
+    ImGuiCol_HeaderHovered
+    ImGuiCol_HeaderActive
+    ImGuiCol_Separator
+    ImGuiCol_SeparatorHovered
+    ImGuiCol_SeparatorActive
+    ImGuiCol_ResizeGrip
+    ImGuiCol_ResizeGripHovered
+    ImGuiCol_ResizeGripActive
+    ImGuiCol_Tab
+    ImGuiCol_TabHovered
+    ImGuiCol_TabActive
+    ImGuiCol_TabUnfocused
+    ImGuiCol_TabUnfocusedActive
+    ImGuiCol_PlotLines
+    ImGuiCol_PlotLinesHovered
+    ImGuiCol_PlotHistogram
+    ImGuiCol_PlotHistogramHovered
+    ImGuiCol_TextSelectedBg
+    ImGuiCol_DragDropTarget
+    ImGuiCol_NavHighlight
+    ImGuiCol_NavWindowingHighlight
+    ImGuiCol_NavWindowingDimBg
+    ImGuiCol_ModalWindowDimBg
+    ImGuiCol_COUNT
+}
+
+ImGuiStyleVar_ :: enum #repr("C") {
+    ImGuiStyleVar_Alpha
+    ImGuiStyleVar_WindowPadding
+    ImGuiStyleVar_WindowRounding
+    ImGuiStyleVar_WindowBorderSize
+    ImGuiStyleVar_WindowMinSize
+    ImGuiStyleVar_WindowTitleAlign
+    ImGuiStyleVar_ChildRounding
+    ImGuiStyleVar_ChildBorderSize
+    ImGuiStyleVar_PopupRounding
+    ImGuiStyleVar_PopupBorderSize
+    ImGuiStyleVar_FramePadding
+    ImGuiStyleVar_FrameRounding
+    ImGuiStyleVar_FrameBorderSize
+    ImGuiStyleVar_ItemSpacing
+    ImGuiStyleVar_ItemInnerSpacing
+    ImGuiStyleVar_IndentSpacing
+    ImGuiStyleVar_ScrollbarSize
+    ImGuiStyleVar_ScrollbarRounding
+    ImGuiStyleVar_GrabMinSize
+    ImGuiStyleVar_GrabRounding
+    ImGuiStyleVar_TabRounding
+    ImGuiStyleVar_ButtonTextAlign
+    ImGuiStyleVar_SelectableTextAlign
+    ImGuiStyleVar_COUNT
+}
+
+ImGuiColorEditFlags_ :: enum #repr("C") {
+    ImGuiColorEditFlags_None             = 0
+    ImGuiColorEditFlags_NoAlpha          = @bin_lsl(1, 1)
+    ImGuiColorEditFlags_NoPicker         = @bin_lsl(1, 2)
+    ImGuiColorEditFlags_NoOptions        = @bin_lsl(1, 3)
+    ImGuiColorEditFlags_NoSmallPreview   = @bin_lsl(1, 4)
+    ImGuiColorEditFlags_NoInputs         = @bin_lsl(1, 5)
+    ImGuiColorEditFlags_NoTooltip        = @bin_lsl(1, 6)
+    ImGuiColorEditFlags_NoLabel          = @bin_lsl(1, 7)
+    ImGuiColorEditFlags_NoSidePreview    = @bin_lsl(1, 8)
+    ImGuiColorEditFlags_NoDragDrop       = @bin_lsl(1, 9)
+    ImGuiColorEditFlags_AlphaBar         = @bin_lsl(1, 16)
+    ImGuiColorEditFlags_AlphaPreview     = @bin_lsl(1, 17)
+    ImGuiColorEditFlags_AlphaPreviewHalf = @bin_lsl(1, 18)
+    ImGuiColorEditFlags_HDR              = @bin_lsl(1, 19)
+    ImGuiColorEditFlags_DisplayRGB       = @bin_lsl(1, 20)
+    ImGuiColorEditFlags_DisplayHSV       = @bin_lsl(1, 21)
+    ImGuiColorEditFlags_DisplayHex       = @bin_lsl(1, 22)
+    ImGuiColorEditFlags_Uint8            = @bin_lsl(1, 23)
+    ImGuiColorEditFlags_Float            = @bin_lsl(1, 24)
+    ImGuiColorEditFlags_PickerHueBar     = @bin_lsl(1, 25)
+    ImGuiColorEditFlags_PickerHueWheel   = @bin_lsl(1, 26)
+    ImGuiColorEditFlags_InputRGB         = @bin_lsl(1, 27)
+    ImGuiColorEditFlags_InputHSV         = @bin_lsl(1, 28)
+    ImGuiColorEditFlags__OptionsDefault  = @bin_or(ImGuiColorEditFlags_Uint8, ImGuiColorEditFlags_DisplayRGB, ImGuiColorEditFlags_InputRGB, ImGuiColorEditFlags_PickerHueBar)
+    ImGuiColorEditFlags__DisplayMask     = @bin_or(ImGuiColorEditFlags_DisplayRGB, ImGuiColorEditFlags_DisplayHSV, ImGuiColorEditFlags_DisplayHex)
+    ImGuiColorEditFlags__DataTypeMask    = @bin_or(ImGuiColorEditFlags_Uint8, ImGuiColorEditFlags_Float)
+    ImGuiColorEditFlags__PickerMask      = @bin_or(ImGuiColorEditFlags_PickerHueWheel, ImGuiColorEditFlags_PickerHueBar)
+    ImGuiColorEditFlags__InputMask       = @bin_or(ImGuiColorEditFlags_InputRGB, ImGuiColorEditFlags_InputHSV)
+}
+
+ImGuiMouseCursor_ :: enum #repr("C") {
+    ImGuiMouseCursor_None       = -1
+    ImGuiMouseCursor_Arrow      = 0
+    ImGuiMouseCursor_TextInput
+    ImGuiMouseCursor_ResizeAll
+    ImGuiMouseCursor_ResizeNS
+    ImGuiMouseCursor_ResizeEW
+    ImGuiMouseCursor_ResizeNESW
+    ImGuiMouseCursor_ResizeNWSE
+    ImGuiMouseCursor_Hand
+    ImGuiMouseCursor_COUNT
+}
+
+ImGuiCond_ :: enum #repr("C") {
+    ImGuiCond_Always       = @bin_lsl(1, 0)
+    ImGuiCond_Once         = @bin_lsl(1, 1)
+    ImGuiCond_FirstUseEver = @bin_lsl(1, 2)
+    ImGuiCond_Appearing    = @bin_lsl(1, 3)
+}
+
+ImGuiStyle :: struct {
+    Alpha                    : f32
+    WindowPadding            : ImVec2
+    WindowRounding           : f32
+    WindowBorderSize         : f32
+    WindowMinSize            : ImVec2
+    WindowTitleAlign         : ImVec2
+    WindowMenuButtonPosition : ImGuiDir
+    ChildRounding            : f32
+    ChildBorderSize          : f32
+    PopupRounding            : f32
+    PopupBorderSize          : f32
+    FramePadding             : ImVec2
+    FrameRounding            : f32
+    FrameBorderSize          : f32
+    ItemSpacing              : ImVec2
+    ItemInnerSpacing         : ImVec2
+    TouchExtraPadding        : ImVec2
+    IndentSpacing            : f32
+    ColumnsMinSpacing        : f32
+    ScrollbarSize            : f32
+    ScrollbarRounding        : f32
+    GrabMinSize              : f32
+    GrabRounding             : f32
+    TabRounding              : f32
+    TabBorderSize            : f32
+    ColorButtonPosition      : ImGuiDir
+    ButtonTextAlign          : ImVec2
+    SelectableTextAlign      : ImVec2
+    DisplayWindowPadding     : ImVec2
+    DisplaySafeAreaPadding   : ImVec2
+    MouseCursorScale         : f32
+    AntiAliasedLines         : bool
+    AntiAliasedFill          : bool
+    CurveTessellationTol     : f32
+    Colors                   : [int(ImGuiCol_.ImGuiCol_COUNT)]ImVec4
+}
+
+ImGuiIO :: struct {
+    ConfigFlags                       : ImGuiConfigFlags
+    BackendFlags                      : ImGuiBackendFlags
+    DisplaySize                       : ImVec2
+    DeltaTime                         : f32
+    IniSavingRate                     : f32
+    IniFilename                       : &i8
+    LogFilename                       : &i8
+    MouseDoubleClickTime              : f32
+    MouseDoubleClickMaxDist           : f32
+    MouseDragThreshold                : f32
+    KeyMap                            : [int(ImGuiKey_.ImGuiKey_COUNT)]i32
+    KeyRepeatDelay                    : f32
+    KeyRepeatRate                     : f32
+    UserData                          : &void
+    Fonts                             : &ImFontAtlas
+    FontGlobalScale                   : f32
+    FontAllowUserScaling              : bool
+    FontDefault                       : &ImFont
+    DisplayFramebufferScale           : ImVec2
+    MouseDrawCursor                   : bool
+    ConfigMacOSXBehaviors             : bool
+    ConfigInputTextCursorBlink        : bool
+    ConfigWindowsResizeFromEdges      : bool
+    ConfigWindowsMoveFromTitleBarOnly : bool
+    ConfigWindowsMemoryCompactTimer   : f32
+    BackendPlatformName               : &i8
+    BackendRendererName               : &i8
+    BackendPlatformUserData           : &void
+    BackendRendererUserData           : &void
+    BackendLanguageUserData           : &void
+    GetClipboardTextFn                : fn(&void) -> &i8
+    SetClipboardTextFn                : fn(&void, &i8) -> void
+    ClipboardUserData                 : &void
+    ImeSetInputScreenPosFn            : fn(i32, i32) -> void
+    ImeWindowHandle                   : &void
+    RenderDrawListsFnUnused           : &void
+    MousePos                          : ImVec2
+    MouseDown                         : [5]bool
+    MouseWheel                        : f32
+    MouseWheelH                       : f32
+    KeyCtrl                           : bool
+    KeyShift                          : bool
+    KeyAlt                            : bool
+    KeySuper                          : bool
+    KeysDown                          : [512]bool
+    NavInputs                         : [int(ImGuiNavInput_.ImGuiNavInput_COUNT)]f32
+    WantCaptureMouse                  : bool
+    WantCaptureKeyboard               : bool
+    WantTextInput                     : bool
+    WantSetMousePos                   : bool
+    WantSaveIniSettings               : bool
+    NavActive                         : bool
+    NavVisible                        : bool
+    Framerate                         : f32
+    MetricsRenderVertices             : i32
+    MetricsRenderIndices              : i32
+    MetricsRenderWindows              : i32
+    MetricsActiveWindows              : i32
+    MetricsActiveAllocations          : i32
+    MouseDelta                        : ImVec2
+    MousePosPrev                      : ImVec2
+    MouseClickedPos                   : [5]ImVec2
+    MouseClickedTime                  : [5]f64
+    MouseClicked                      : [5]bool
+    MouseDoubleClicked                : [5]bool
+    MouseReleased                     : [5]bool
+    MouseDownOwned                    : [5]bool
+    MouseDownWasDoubleClick           : [5]bool
+    MouseDownDuration                 : [5]f32
+    MouseDownDurationPrev             : [5]f32
+    MouseDragMaxDistanceAbs           : [5]ImVec2
+    MouseDragMaxDistanceSqr           : [5]f32
+    KeysDownDuration                  : [512]f32
+    KeysDownDurationPrev              : [512]f32
+    NavInputsDownDuration             : [int(ImGuiNavInput_.ImGuiNavInput_COUNT)]f32
+    NavInputsDownDurationPrev         : [int(ImGuiNavInput_.ImGuiNavInput_COUNT)]f32
+    InputQueueCharacters              : ImVector_ImWchar
+}
+
+ImGuiInputTextCallbackData :: struct {
+    EventFlag      : ImGuiInputTextFlags
+    Flags          : ImGuiInputTextFlags
+    UserData       : &void
+    EventChar      : ImWchar
+    EventKey       : ImGuiKey
+    Buf            : &i8
+    BufTextLen     : i32
+    BufSize        : i32
+    BufDirty       : bool
+    CursorPos      : i32
+    SelectionStart : i32
+    SelectionEnd   : i32
+}
+
+ImGuiSizeCallbackData :: struct {
+    UserData    : &void
+    Pos         : ImVec2
+    CurrentSize : ImVec2
+    DesiredSize : ImVec2
+}
+
+ImGuiPayload :: struct {
+    Data           : &void
+    DataSize       : i32
+    SourceId       : ImGuiID
+    SourceParentId : ImGuiID
+    DataFrameCount : i32
+    DataType       : [32+1]i8
+    Preview        : bool
+    Delivery       : bool
+}
+
+ImGuiOnceUponAFrame :: struct {
+    RefFrame : i32
+}
+
+ImGuiTextFilter :: struct {
+    InputBuf  : [256]i8
+    Filters   : ImVector_ImGuiTextRange
+    CountGrep : i32
+}
+
+ImGuiTextBuffer :: struct {
+    Buf : ImVector_char
+}
+
+ImGuiStorage :: struct {
+    Data : ImVector_ImGuiStoragePair
+}
+
+ImGuiListClipper :: struct {
+    StartPosY    : f32
+    ItemsHeight  : f32
+    ItemsCount   : i32
+    StepNo       : i32
+    DisplayStart : i32
+    DisplayEnd   : i32
+}
+
+ImColor :: struct {
+    Value : ImVec4
+}
+
+ImDrawCmd :: struct {
+    ElemCount        : u32
+    ClipRect         : ImVec4
+    TextureId        : ImTextureID
+    VtxOffset        : u32
+    IdxOffset        : u32
+    UserCallback     : ImDrawCallback
+    UserCallbackData : &void
+}
+
+ImDrawVert :: struct {
+    pos : ImVec2
+    uv  : ImVec2
+    col : ImU32
+}
+
+ImDrawChannel :: struct {
+    _CmdBuffer : ImVector_ImDrawCmd
+    _IdxBuffer : ImVector_ImDrawIdx
+}
+
+ImDrawListSplitter :: struct {
+    _Current  : i32
+    _Count    : i32
+    _Channels : ImVector_ImDrawChannel
+}
+
+ImDrawCornerFlags_ :: enum #repr("C") {
+    ImDrawCornerFlags_None     = 0
+    ImDrawCornerFlags_TopLeft  = @bin_lsl(1, 0)
+    ImDrawCornerFlags_TopRight = @bin_lsl(1, 1)
+    ImDrawCornerFlags_BotLeft  = @bin_lsl(1, 2)
+    ImDrawCornerFlags_BotRight = @bin_lsl(1, 3)
+    ImDrawCornerFlags_Top      = @bin_or(ImDrawCornerFlags_TopLeft, ImDrawCornerFlags_TopRight)
+    ImDrawCornerFlags_Bot      = @bin_or(ImDrawCornerFlags_BotLeft, ImDrawCornerFlags_BotRight)
+    ImDrawCornerFlags_Left     = @bin_or(ImDrawCornerFlags_TopLeft, ImDrawCornerFlags_BotLeft)
+    ImDrawCornerFlags_Right    = @bin_or(ImDrawCornerFlags_TopRight, ImDrawCornerFlags_BotRight)
+    ImDrawCornerFlags_All      = 0xF
+}
+
+ImDrawListFlags_ :: enum #repr("C") {
+    ImDrawListFlags_None             = 0,
+    ImDrawListFlags_AntiAliasedLines = @bin_lsl(1, 0),
+    ImDrawListFlags_AntiAliasedFill  = @bin_lsl(1, 1),
+    ImDrawListFlags_AllowVtxOffset   = @bin_lsl(1, 2)
+}
+
+ImDrawList :: struct {
+    CmdBuffer         : ImVector_ImDrawCmd
+    IdxBuffer         : ImVector_ImDrawIdx
+    VtxBuffer         : ImVector_ImDrawVert
+    Flags             : ImDrawListFlags
+    _Data             : &ImDrawListSharedData
+    _OwnerName        : &i8
+    _VtxCurrentOffset : u32
+    _VtxCurrentIdx    : u32
+    _VtxWritePtr      : &ImDrawVert
+    _IdxWritePtr      : &ImDrawIdx
+    _ClipRectStack    : ImVector_ImVec4
+    _TextureIdStack   : ImVector_ImTextureID
+    _Path             : ImVector_ImVec2
+    _Splitter         : ImDrawListSplitter
+}
+
+ImDrawData :: struct {
+    Valid            : bool
+    CmdLists         : &&ImDrawList
+    CmdListsCount    : i32
+    TotalIdxCount    : i32
+    TotalVtxCount    : i32
+    DisplayPos       : ImVec2
+    DisplaySize      : ImVec2
+    FramebufferScale : ImVec2
+}
+
+ImFontConfig :: struct {
+    FontData             : &void
+    FontDataSize         : i32
+    FontDataOwnedByAtlas : bool
+    FontNo               : i32
+    SizePixels           : f32
+    OversampleH          : i32
+    OversampleV          : i32
+    PixelSnapH           : bool
+    GlyphExtraSpacing    : ImVec2
+    GlyphOffset          : ImVec2
+    GlyphRanges          : &ImWchar
+    GlyphMinAdvanceX     : f32
+    GlyphMaxAdvanceX     : f32
+    MergeMode            : bool
+    RasterizerFlags      : u32
+    RasterizerMultiply   : f32
+    EllipsisChar         : ImWchar
+    Name                 : [40]i8
+    DstFont              : &ImFont
+}
+
+ImFontGlyph :: struct {
+    Codepoint : ImWchar
+    AdvanceX  : f32
+    X0        : f32
+    Y0        : f32
+    X1        : f32
+    Y1        : f32
+    U0        : f32
+    V0        : f32
+    U1        : f32
+    V1        : f32
+}
+
+ImFontGlyphRangesBuilder :: struct {
+    UsedChars : ImVector_ImU32
+}
+
+ImFontAtlasCustomRect :: struct {
+    ID            : u32
+    Width         : u16
+    Height        : u16
+    X             : u16
+    Y             : u16
+    GlyphAdvanceX : f32
+    GlyphOffset   : ImVec2
+    Font          : &ImFont
+}
+
+ImFontAtlasFlags_ :: enum #repr("C") {
+    ImFontAtlasFlags_None               = 0,
+    ImFontAtlasFlags_NoPowerOfTwoHeight = @bin_lsl(1, 0),
+    ImFontAtlasFlags_NoMouseCursors     = @bin_lsl(1, 1)
+}
+
+ImFontAtlas :: struct {
+    Locked          : bool
+    Flags           : ImFontAtlasFlags
+    TexID           : ImTextureID
+    TexDesiredWidth : i32
+    TexGlyphPadding : i32
+    TexPixelsAlpha8 : &u8
+    TexPixelsRGBA32 : &u32
+    TexWidth        : i32
+    TexHeight       : i32
+    TexUvScale      : ImVec2
+    TexUvWhitePixel : ImVec2
+    Fonts           : ImVector_ImFontPtr
+    CustomRects     : ImVector_ImFontAtlasCustomRect
+    ConfigData      : ImVector_ImFontConfig
+    CustomRectIds   : [1]i32
+}
+
+ImFont :: struct {
+    IndexAdvanceX       : ImVector_float
+    FallbackAdvanceX    : f32
+    FontSize            : f32
+    IndexLookup         : ImVector_ImWchar
+    Glyphs              : ImVector_ImFontGlyph
+    FallbackGlyph       : &ImFontGlyph
+    DisplayOffset       : ImVec2
+    ContainerAtlas      : &ImFontAtlas
+    ConfigData          : &ImFontConfig
+    ConfigDataCount     : i16
+    FallbackChar        : ImWchar
+    EllipsisChar        : ImWchar
+    Scale               : f32
+    Ascent              : f32
+    Descent             : f32
+    MetricsTotalSurface : i32
+    DirtyLookupTables   : bool
+}
+
+ImGuiTextRange :: struct {
+    b : &i8
+    e : &i8
+}
+
+ImGuiStoragePair :: struct {
+    key : ImGuiID
+    val : u64
+    // union { i32 val_i f32 val_f &void val_p }
+}
+
+ImVec2_Simple  :: struct {
+    x : f32
+    y : f32
+}
+ImVec4_Simple  :: struct {
+    x : f32
+    y : f32
+    z : f32
+    w : f32
+}
+ImColor_Simple :: struct {
+    Value : ImVec4_Simple
+}

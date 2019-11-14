@@ -439,6 +439,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case EnumType e:
                     {
+                        if (e.Declaration.IsReprC)
+                            return CheezTypeToLLVMType(e.Declaration.TagType);
+
                         var llvmType = LLVM.StructCreateNamed(context, $"enum.{e}");
 
                         //if (e.Declaration.HasAssociatedTypes)

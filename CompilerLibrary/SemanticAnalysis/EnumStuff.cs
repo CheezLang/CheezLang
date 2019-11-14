@@ -39,7 +39,7 @@ namespace Cheez
                 }
             }
 
-            expr.TagType = IntType.GetIntType(8, false);
+            expr.TagType = IntType.GetIntType(8, true);
             if (expr.TryGetDirective("tag_type", out var bt))
             {
                 if (bt.Arguments.Count != 1)
@@ -70,6 +70,27 @@ namespace Cheez
 
                 }
             }
+            else if (expr.TryGetDirective("repr", out var repr))
+            {
+                if (repr.Arguments.Count != 1 || !(repr.Arguments[0] is AstStringLiteral str))
+                {
+                    ReportError(bt, $"#repr requires one string argument");
+                }
+                else
+                {
+                    var val = str.StringValue;
+                    if (val == "C")
+                    {
+                        expr.IsReprC = true;
+                        // TODO: check platform
+                        expr.TagType = IntType.GetIntType(4, true);
+                    }
+                    else
+                    {
+                        ReportError(repr, $"unknown repr");
+                    }
+                }
+            }
 
             // setup scopes and separate members
             expr.Members = new List<AstEnumMemberNew>();
@@ -80,9 +101,15 @@ namespace Cheez
                 switch (decl)
                 {
                     case AstConstantDeclaration con:
-                        break;
+                        throw new System.Exception();
                     case AstVariableDecl mem:
-                        expr.Members.Add(new AstEnumMemberNew(mem, expr.Members.Count));
+                        var m = new AstEnumMemberNew(expr, mem, expr.Members.Count);
+                        expr.Members.Add(m);
+                        var (ok, other) = expr.SubScope.DefineSymbol(m);
+                        if (!ok)
+                        {
+                            ReportError(mem.Name, $"A member with this name already exists", ("Other member here: ", other));
+                        }
                         break;
                 }
             }
@@ -127,7 +154,7 @@ namespace Cheez
             expr.MembersComputed = true;
 
             BigInteger value = 0;
-            var usedValues = new HashSet<BigInteger>();
+            var usedValues = new Dictionary<BigInteger, AstEnumMemberNew>();
 
             foreach (var mem in expr.Members)
             {
@@ -152,6 +179,7 @@ namespace Cheez
                 {
                     memDecl.Initializer.AttachTo(memDecl);
                     memDecl.Initializer = InferType(memDecl.Initializer, expr.TagType);
+                    ConvertLiteralTypeToDefaultType(memDecl.Initializer, expr.TagType);
                     memDecl.Initializer = CheckType(memDecl.Initializer, expr.TagType);
 
                     if (memDecl.Initializer.Type is IntType i)
@@ -173,15 +201,34 @@ namespace Cheez
                     ReportError(memDecl, "Member is not copyable");
                 }
 
-                if (usedValues.Contains(value))
-                    ReportError(memDecl, $"Member has value {value} which is already being used by another member");
-                usedValues.Add(value);
+                if (usedValues.TryGetValue(value, out var other))
+                {
+                    if (other.AssociatedType != mem.AssociatedType)
+                        ReportError(memDecl,
+                            $"Member has value {value} which is already being used by another member with different type",
+                            ("Other member here:", other.Location));
+                }
+                else
+                {
+                    usedValues.Add(value, mem);
+                }
 
                 if (memDecl.Type != null)
                     ComputeTypeMembers(memDecl.Type);
                 mem.Value = NumberData.FromBigInt(value);
 
                 value += 1;
+            }
+
+            if (expr.IsReprC)
+            {
+                foreach (var mem in expr.Members)
+                {
+                    if (mem.AssociatedType != null)
+                    {
+                        ReportError(mem.Location, $"Member can't have an associated value in repr c enum");
+                    }
+                }
             }
         }
 

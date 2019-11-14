@@ -148,7 +148,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // generated object files
             lldArgs.Add(objFile);
 
-            //Console.WriteLine("[LINKER] " + string.Join(" ", lldArgs));
+            Console.WriteLine("[LINKER] " + string.Join(" ", lldArgs));
 
             var process = Utilities.StartProcess("lld-link", lldArgs,
                             stdout: (s, e) => { if (e.Data != null) Console.WriteLine(e.Data); },
