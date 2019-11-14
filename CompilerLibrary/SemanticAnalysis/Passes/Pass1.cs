@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cheez.Ast.Statements;
+using Cheez.Types;
 
 namespace Cheez
 {
@@ -22,10 +23,12 @@ namespace Cheez
         private Queue<AstTraitTypeExpr> mUnresolvedTraits = new Queue<AstTraitTypeExpr>();
         private Queue<AstFuncExpr> mUnresolvedFunctions = new Queue<AstFuncExpr>();
 
+        private HashSet<CheezType> mTypesRequiredAtRuntime = new HashSet<CheezType>();
 
         public IEnumerable<AstFuncExpr> Functions => mAllFunctions;
         public IEnumerable<AstVariableDecl> Variables => mAllGlobalVariables;
         public IEnumerable<AstTraitTypeExpr> Traits => mAllTraits;
+        public IEnumerable<CheezType> TypesRequiredAtRuntime => mTypesRequiredAtRuntime;
         //
 
         private void AddTrait(AstTraitTypeExpr trait)

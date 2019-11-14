@@ -1644,6 +1644,65 @@ namespace Cheez
             return expr;
         }
 
+        private void MarkTypeAsRequiredAtRuntime(CheezType type)
+        {
+            if (mTypesRequiredAtRuntime.Contains(type))
+                return;
+            mTypesRequiredAtRuntime.Add(type);
+
+            switch (type)
+            {
+                case PointerType p:
+                    MarkTypeAsRequiredAtRuntime(p.TargetType);
+                    break;
+                case SliceType p:
+                    MarkTypeAsRequiredAtRuntime(p.TargetType);
+                    break;
+                case ArrayType p:
+                    MarkTypeAsRequiredAtRuntime(p.TargetType);
+                    break;
+
+                case TupleType t:
+                    {
+                        foreach (var m in t.Members)
+                        {
+                            MarkTypeAsRequiredAtRuntime(m.type);
+                        }
+                        break;
+                    }
+
+                case StructType s:
+                    {
+                        ComputeStructMembers(s.Declaration);
+                        foreach (var m in s.Declaration.Members)
+                            MarkTypeAsRequiredAtRuntime(m.Type);
+                        break;
+                    }
+
+                case EnumType e:
+                    {
+                        ComputeEnumMembers(e.Declaration);
+                        foreach (var m in e.Declaration.Members)
+                            if (m.AssociatedType != null)
+                                MarkTypeAsRequiredAtRuntime(m.AssociatedType);
+                        break;
+                    }
+
+                case CharType _:
+                case IntType _:
+                case BoolType _:
+                case FloatType _:
+                case AnyType _:
+                case VoidType _:
+                    break;
+
+                case ErrorType _:
+                    break;
+
+                default: WellThatsNotSupposedToHappen(); break;
+            }
+        }
+        
         private AstExpression InferTypeCompCall(AstCompCallExpr expr, CheezType expected, TypeInferenceContext context)
         {
             AstExpression InferArg(int index, CheezType e)
@@ -1666,6 +1725,36 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "type_info":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@type_info takes 1 argument");
+                            return expr;
+                        }
+
+                        var arg = InferArg(0, CheezType.Type);
+                        if (arg.Value is CheezType t)
+                        {
+                            MarkTypeAsRequiredAtRuntime(t);
+                            var sym = GlobalScope.GetSymbol("TypeInfo");
+                            if (sym is AstConstantDeclaration c && c.Initializer is AstStructTypeExpr s)
+                            {
+                                expr.Type = PointerType.GetPointerType(s.StructType);
+                            }
+                            else
+                            {
+                                ReportError("There should be a global trait called Drop");
+                            }
+                        }
+                        else
+                        {
+                            ReportError(arg, "Must be a type");
+                        }
+
+                        return expr;
+                    }
+
                 case "tuple":
                     {
                         var tuple = new AstTupleExpr(expr.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList(), expr.Location);

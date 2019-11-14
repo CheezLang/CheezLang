@@ -1,0 +1,271 @@
+#load("std:array")
+#load("std:ring_queue")
+#load("std:io/io")
+#load("std:fiber")
+#load("std:thread")
+#load("std:c")
+#load("std:time")
+
+Logger :: struct {}
+
+impl Logger {
+    debug_log :: (format: string, args: $T) {
+        // str := String.empty()
+        // str.appendf("[{}] ", Thread.current().id)
+        // str.appendf(format, args)
+        // println(str)
+    }
+
+    log :: (format: string, args: $T) {
+        str := String.empty()
+        str.appendf("[{}] ", Thread.current().id)
+        str.appendf(format, args)
+        println(str)
+    }
+}
+
+Expr :: struct {
+    id      : int
+    depend  : [2]&Expr = [null, null]
+    done    := false
+    progressed := false
+}
+
+CompileFiber :: struct {
+    compiler: &Compiler
+    fiber   : &Fiber
+    expr    : &Expr = null
+    thread  := -1
+}
+
+Compiler :: struct {
+    exprs   := Array[Expr].create()
+    expr_q  := RingQueue[&Expr].create()
+
+    fibers  := Array[&CompileFiber].create(1024)
+    fiber_q := RingQueue[&CompileFiber].create()
+    fiber_q2:= RingQueue[&CompileFiber].create()
+
+    mutex   : Mutex
+    threads : Array[Thread]
+}
+
+impl Drop for Compiler {
+    drop :: (ref Self) {
+        for f : fibers {
+            Memory.drop(f.fiber)
+        }
+    }
+}
+
+wait_for_expr :: (expr: &Expr, wait_for: &Expr) {
+    current_fiber := Fiber.current()
+    compiler_fiber := cast(&CompileFiber) current_fiber.user_data
+    expr.progressed = true
+
+    while yield_count := 0, true, yield_count += 1 {
+        if wait_for != null and !wait_for.done {
+            Logger.debug_log("   {} waiting for {}", (int(expr.id), wait_for.id))
+            defer Logger.debug_log("   {} resuming", int(expr.id))
+
+            if yield_count > 0 {
+                expr.progressed = false
+            }
+            Fiber.yield()
+        } else {
+            break
+        }
+    }
+    expr.progressed = true
+}
+
+compile_expr :: (expr: &Expr) {
+    Logger.debug_log("   {} starting", (int(expr.id)))
+
+    // Logger.log("{}: a", expr.id)
+    Sleep(5)
+    // Logger.log("{}: b", expr.id)
+    wait_for_expr(expr, expr.depend[0])
+    wait_for_expr(expr, expr.depend[1])
+    // Logger.log("{}: c", expr.id)
+    Sleep(5)
+    // Logger.log("{}: d", expr.id)
+
+    expr.done = true
+    Logger.debug_log("   {} done", (int(expr.id)))
+}
+
+compiler_fiber :: (fiber : &CompileFiber) {
+    while true {
+        while fiber.expr == null {
+            Fiber.yield()
+        }
+        fiber.expr.progressed = false
+        compile_expr(fiber.expr)
+        fiber.expr = null
+    }
+}
+
+impl Compiler {
+    new :: (thread_count: int) -> &Compiler {
+        comp := alloc(Compiler)
+
+        threads := Array[Thread].create()
+        for 0..thread_count {
+            threads.add(Thread.create(thread_func, comp))
+        }
+
+        <<comp = Compiler(
+            mutex = Mutex.create()
+            threads = threads
+        )
+
+        return comp
+    }
+
+    thread_func :: (self: &Compiler) {
+        Fiber.init()
+        thread_id := Thread.current().id
+
+        Logger.log("starting compilation", ())
+
+        current_fiber : &CompileFiber = null
+        while true #label main_loop {
+            {
+                Logger.debug_log("  getting lock 1", ())
+                self.mutex.lock()
+                Logger.debug_log("- got lock 2", ())
+                defer {
+                    Logger.debug_log("- releasing lock 1", ())
+                    self.mutex.release()
+                    Logger.debug_log("  released lock 2", ())
+                }
+
+                // if fiber made progress or finished, move all stuff from q2 to q
+                if current_fiber != null {
+                    current_fiber.thread = -1
+                    Logger.debug_log("- current_fiber != null", ())
+                    if current_fiber.expr == null or current_fiber.expr.progressed {
+                        Logger.debug_log("- q2 -> q: {} -> {}", (self.fiber_q2.count(), self.fiber_q.count()))
+                        while self.fiber_q2.count() > 0 {
+                            self.fiber_q.push(self.fiber_q2.pop())
+                        }
+                    }
+
+                    // if still not done, push in q2
+                    if current_fiber.expr != null {
+                        Logger.debug_log("- current_fiber -> q2", ())
+                        self.fiber_q2.push(current_fiber)
+                    }
+
+                    current_fiber = null
+                }
+
+                if self.fiber_q.count() == 0 {
+                    Logger.debug_log("- no fibers queued", ())
+                    if self.expr_q.count() > 0 {
+                        Logger.debug_log("- queueing next expression", ())
+                        expr  := self.expr_q.pop()
+                        fiber := self.find_free_fiber()
+                        fiber.expr = expr
+                        self.fiber_q.push(fiber)
+                    // } else if self.fiber_q2.count() > 0 {
+                    //     self.fiber_q.push(self.fiber_q2.pop())
+                    } else {
+                        Logger.log("- no exprs queued, breaking", ())
+                        break main_loop
+                    }
+                }
+
+                current_fiber = self.fiber_q.pop()
+                current_fiber.thread = thread_id
+            }
+
+            Logger.debug_log("resuming expr {}", (current_fiber.expr.id))
+            expr_id := current_fiber.expr.id
+            current_fiber.fiber.resume()
+            Logger.debug_log("returned expr {}", (expr_id))
+        }
+
+        Logger.log("finished compilation", ())
+    }
+}
+
+impl Compiler {
+    compile_all :: (ref Self) {
+        for exprs {
+            expr_q.push(&it)
+        }
+
+        println("---------------------------------------------------")
+        for threads {
+            it.start()
+        }
+
+        handles := alloc_raw(HANDLE, cast threads.get_length())
+
+        for threads {
+            handles[it_index] = it.data.handle
+        }
+        WaitForMultipleObjects(cast threads.get_length(), handles, 1, INFINITE)
+        println("---------------------------------------------------")
+        for expr : exprs {
+            if !expr.done {
+                printfln("err: expr [{}] is not done", expr.id)
+            }
+        }
+
+        printfln("[compiler] finished compilation with {} fibers", fibers.get_length())
+    }
+
+    find_free_fiber :: (ref Self) -> &CompileFiber {
+        for f : fibers {
+            if f.expr == null and f.thread == -1 {
+                return f
+            }
+        }
+        Logger.log("new fiber", ())
+        new_fiber   := alloc(CompileFiber)
+        <<new_fiber = CompileFiber(&self, Fiber.new(compiler_fiber, new_fiber))
+        fibers.add(new_fiber)
+        return new_fiber
+    }
+}
+
+Main :: () {
+    Fiber.init()
+
+    compiler := Compiler.new(10)
+    defer {
+        Memory.drop(compiler)
+        free(compiler)
+    }
+
+    for(inclusive=true) id : 1..10 {
+        compiler.exprs.add(Expr(id))
+    }
+
+    // no dependencies
+    //
+
+    // 5:4, 4:3, 3:2, 2:1
+    // for i : 0..compiler.exprs.get_length()/2 {
+    //     left  := i * 2 + 1
+    //     right := i * 2 + 2
+    //     if left >= compiler.exprs.get_length() then break
+    //     compiler.exprs[i].depend[0] = &compiler.exprs[left]
+    //     if right >= compiler.exprs.get_length() then break
+    //     compiler.exprs[i].depend[1] = &compiler.exprs[right]
+    // }
+
+    // 1:2, 2:3, 3:4, 4:5
+    // for i : 0..compiler.exprs.get_length()-1 {
+    //     compiler.exprs[i].depend = &compiler.exprs[i+1]
+    // }
+
+    start := get_time_milliseconds()
+    compiler.compile_all()
+    end := get_time_milliseconds()
+    dur := end - start
+    printfln("Compilation took {} ms", dur)
+}

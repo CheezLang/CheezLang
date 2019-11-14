@@ -46,6 +46,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         // vtable stuff
         private bool checkForNullTraitObjects = true;
         private Dictionary<CheezType, LLVMTypeRef> vtableTypes = new Dictionary<CheezType, LLVMTypeRef>();
+        private Dictionary<CheezType, LLVMValueRef> typeInfoTable = new Dictionary<CheezType, LLVMValueRef>();
         private Dictionary<object, int> vtableIndices = new Dictionary<object, int>();
         private Dictionary<(CheezType, CheezType), LLVMValueRef> vtableMap = new Dictionary<(CheezType, CheezType), LLVMValueRef>();
 
@@ -157,6 +158,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             // generate code
             {
+                GenerateTypeInfos();
+
                 GenerateIntrinsicDeclarations();
 
                 GenerateVTables();
@@ -361,6 +364,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             builder = new IRBuilder();
             builder.PositionBuilderAtEnd(entry);
+
+            SetTypeInfos();
 
             {
                 var visited = new HashSet<AstVariableDecl>();

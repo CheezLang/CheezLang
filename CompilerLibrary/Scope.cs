@@ -795,6 +795,22 @@ namespace Cheez
             return Parent?.GetSymbol(name);
         }
 
+        public AstStructTypeExpr GetStruct(string name)
+        {
+            var sym = GetSymbol(name);
+            if (sym is AstConstantDeclaration c && c.Initializer is AstStructTypeExpr s)
+                return s;
+            return null;
+        }
+        
+        public AstEnumTypeExpr GetEnum(string name)
+        {
+            var sym = GetSymbol(name);
+            if (sym is AstConstantDeclaration c && c.Initializer is AstEnumTypeExpr s)
+                return s;
+            return null;
+        }
+
         public bool DefineImplFunction(AstFuncExpr f)
         {
             if (!mImplTable.TryGetValue(f.ImplBlock, out var list))

@@ -104,34 +104,47 @@ for_extension_slice :: (arr: []$T, code: Code, reverse: bool = false, by_ref: bo
 // }
 
 // type info stuff
-TypeInfo :: struct {
+TypeInfo :: struct #copy {
     size        : int
     alignment   : int
-    kind        : enum {
-        Int         : TypeInfoInt
-        Float
-        Bool
-        Char
-        Struct      : TypeInfoStruct
-        Pointer     : &TypeInfo
-        Reference   : &TypeInfo
-        Slice       : &TypeInfo
-    }
+    kind        : TypeInfoKind
 }
 
-TypeInfoInt :: struct {
+TypeInfoKind :: enum #copy {
+    Int         : TypeInfoInt    = 0
+    Float                        = 1
+    Bool                         = 2
+    Char                         = 3
+    Struct      : TypeInfoStruct = 4
+    Pointer     : &TypeInfo      = 5
+    Reference   : &TypeInfo      = 6
+    Slice       : &TypeInfo      = 7
+    Enum        : TypeInfoEnum   = 8
+}
+
+TypeInfoInt :: struct #copy {
     signed : bool
 }
 
-TypeInfoStruct :: struct {
-    name          : Option[string]
-    parameters    : []any
+TypeInfoStruct :: struct #copy {
+    name          : string
     members       : []TypeInfoStructMember
-    const_members : []TypeInfoStructMember
+    // parameters    : []any
+    // const_members : []TypeInfoStructMember
 }
 
-TypeInfoStructMember :: struct {
+TypeInfoStructMember :: struct #copy {
+    offset : int
+    name   : string
+    typ    : &TypeInfo
+}
+
+TypeInfoEnum :: struct #copy {
+    name    : string
+    members : []TypeInfoEnumMember
+}
+
+TypeInfoEnumMember :: struct #copy {
     name : string
     typ  : &TypeInfo
-    value: any
 }

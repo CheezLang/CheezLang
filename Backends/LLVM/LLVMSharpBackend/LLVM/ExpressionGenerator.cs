@@ -175,6 +175,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (cc.GetFlag(ExprFlags.IgnoreInCodeGen))
                 return LLVM.GetUndef(CheezTypeToLLVMType(cc.Type));
 
+            if (cc.Name.Name == "type_info")
+            {
+                return typeInfoTable[cc.Arguments[0].Expr.Value as CheezType];
+            }
+
             if (cc.Name.Name == "alloca")
             {
                 var size = GenerateExpression(cc.Arguments[1], true);

@@ -6,6 +6,7 @@
 // #load("compiler/main")
 // #load("examples/snake/snake")
 // #load("examples/pathtracer")
+// #load("compiler/compiler_test")
 
 // #load("tests/language/match3")
 // #load("tests/library/arena_allocator1")
@@ -13,270 +14,152 @@
 // #load("examples/project_euler/005_smallest_multiple")
 
 //*
-#load("std:array")
-#load("std:ring_queue")
-#load("std:io/io")
-#load("std:fiber")
-#load("std:thread")
+
 #load("std:c")
-#load("std:time")
+#load("std:util")
 
-Logger :: struct {}
-
-impl Logger {
-    debug_log :: (format: string, args: $T) {
-        // str := String.empty()
-        // str.appendf("[{}] ", Thread.current().id)
-        // str.appendf(format, args)
-        // println(str)
-    }
-
-    log :: (format: string, args: $T) {
-        str := String.empty()
-        str.appendf("[{}] ", Thread.current().id)
-        str.appendf(format, args)
-        println(str)
-    }
+Foo :: struct #copy {
+    num : int
+    bar : Bar
+    // baz : Baz
 }
 
-Expr :: struct {
-    id      : int
-    depend  : &Expr = null
-    done    := false
-    progressed := false
+Bar :: struct #copy {
+    str : string
+    boo : bool
 }
 
-CompileFiber :: struct {
-    compiler: &Compiler
-    fiber   : &Fiber
-    expr    : &Expr = null
-    thread  := -1
+Baz :: enum #copy {
+    A
+    B : int
+    C : &int
 }
 
-Compiler :: struct {
-    exprs   := Array[Expr].create()
-    expr_q  := RingQueue[&Expr].create()
-
-    fibers  := Array[&CompileFiber].create(1024)
-    fiber_q := RingQueue[&CompileFiber].create()
-    fiber_q2:= RingQueue[&CompileFiber].create()
-
-    mutex   : Mutex
-    threads : Array[Thread]
+print :: (data: $T) {
+    typ := @type_info(T)
+    print_any(&data, typ)
 }
 
-impl Drop for Compiler {
-    drop :: (ref Self) {
-        for f : fibers {
-            Memory.drop(f.fiber)
-        }
-    }
+println :: (data: $T) {
+    typ := @type_info(T)
+    print_any(&data, typ)
+    c_puts("")
 }
 
-wait_for_expr :: (expr: &Expr, wait_for: &Expr) {
-    current_fiber := Fiber.current()
-    compiler_fiber := cast(&CompileFiber) current_fiber.user_data
-    expr.progressed = true
-
-    while yield_count := 0, true, yield_count += 1 {
-        if wait_for != null and !wait_for.done {
-            Logger.debug_log("   {} waiting for {}", (int(expr.id), wait_for.id))
-            defer Logger.debug_log("   {} resuming", int(expr.id))
-
-            if yield_count > 0 {
-                expr.progressed = false
+print_any :: (data: &any, typ: &TypeInfo) {
+    match typ.kind {
+        TypeInfoKind.Int($tint) -> {
+            if tint.signed {
+                ptr := cast(&int) data
+                c_printf("%lld", <<ptr)
+            } else {
+                ptr := cast(&uint) data
+                c_printf("%llu", <<ptr)
             }
-            Fiber.yield()
-        } else {
-            break
-        }
-    }
-    expr.progressed = true
-}
-
-compile_expr :: (expr: &Expr) {
-    Logger.debug_log("   {} starting", (int(expr.id)))
-
-    // Logger.log("{}: a", expr.id)
-    Sleep(5)
-    // Logger.log("{}: b", expr.id)
-    wait_for_expr(expr, expr.depend)
-    // Logger.log("{}: c", expr.id)
-    Sleep(5)
-    // Logger.log("{}: d", expr.id)
-
-    expr.done = true
-    Logger.debug_log("   {} done", (int(expr.id)))
-}
-
-compiler_fiber :: (fiber : &CompileFiber) {
-    while true {
-        while fiber.expr == null {
-            Fiber.yield()
-        }
-        fiber.expr.progressed = false
-        compile_expr(fiber.expr)
-        fiber.expr = null
-    }
-}
-
-impl Compiler {
-    new :: (thread_count: int) -> &Compiler {
-        comp := alloc(Compiler)
-
-        threads := Array[Thread].create()
-        for 0..thread_count {
-            threads.add(Thread.create(thread_func, comp))
         }
 
-        <<comp = Compiler(
-            mutex = Mutex.create()
-            threads = threads
-        )
+        TypeInfoKind.Float -> {
+            if typ.size == 4 {
+                ptr := cast(&float) data
+                c_printf("%f", double(<<ptr))
+            } else if typ.size == 8 {
+                ptr := cast(&double) data
+                c_printf("%f", <<ptr)
+            } else {
+                c_printf("<float: invalid size %lld>", typ.size)
+            }
+        }
 
-        return comp
-    }
+        TypeInfoKind.Bool -> {
+            ptr := cast(&bool) data
+            if <<ptr then c_printf("true") else c_printf("false")
+        }
 
-    thread_func :: (self: &Compiler) {
-        Fiber.init()
-        thread_id := Thread.current().id
+        TypeInfoKind.Char -> {
+            ptr := cast(&char) data
+            ch  := <<ptr
+            c_printf("'%c'", <<ptr)
+        }
 
-        Logger.log("starting compilation", ())
-
-        current_fiber : &CompileFiber = null
-        while true #label main_loop {
-            {
-                Logger.debug_log("  getting lock 1", ())
-                self.mutex.lock()
-                Logger.debug_log("- got lock 2", ())
-                defer {
-                    Logger.debug_log("- releasing lock 1", ())
-                    self.mutex.release()
-                    Logger.debug_log("  released lock 2", ())
+        TypeInfoKind.Slice($target) -> {
+            if int(target.kind) == int(TypeInfoKind.Char) {
+                if data == null {
+                    c_printf("null")
+                } else {
+                    ptr := <<cast(&[]char) data
+                    c_printf("`"%.*s`"", ptr.length, ptr.data)
                 }
+            } else {
+                ptr := <<cast(&[]any) data
+                c_printf("[")
+                for i : 0..ptr.length {
+                    if i > 0 then c_printf(", ")
 
-                // if fiber made progress or finished, move all stuff from q2 to q
-                if current_fiber != null {
-                    current_fiber.thread = -1
-                    Logger.debug_log("- current_fiber != null", ())
-                    if current_fiber.expr == null or current_fiber.expr.progressed {
-                        Logger.debug_log("- q2 -> q: {} -> {}", (self.fiber_q2.count(), self.fiber_q.count()))
-                        while self.fiber_q2.count() > 0 {
-                            self.fiber_q.push(self.fiber_q2.pop())
-                        }
-                    }
-
-                    // if still not done, push in q2
-                    if current_fiber.expr != null {
-                        Logger.debug_log("- current_fiber -> q2", ())
-                        self.fiber_q2.push(current_fiber)
-                    }
-
-                    current_fiber = null
+                    elem := pointer_add(ptr.data, i * target.size)
+                    print_any(elem, target)
                 }
+                c_printf("]")
+            }
+        }
 
-                if self.fiber_q.count() == 0 {
-                    Logger.debug_log("- no fibers queued", ())
-                    if self.expr_q.count() > 0 {
-                        Logger.debug_log("- queueing next expression", ())
-                        expr  := self.expr_q.pop()
-                        fiber := self.find_free_fiber()
-                        fiber.expr = expr
-                        self.fiber_q.push(fiber)
-                    // } else if self.fiber_q2.count() > 0 {
-                    //     self.fiber_q.push(self.fiber_q2.pop())
-                    } else {
-                        Logger.log("- no exprs queued, breaking", ())
-                        break main_loop
-                    }
+        TypeInfoKind.Struct($tstruct) -> {
+            ptr := cast(&any) data
+            c_printf("%.*s", i32(tstruct.name.length), tstruct.name.data)
+
+            c_printf("(")
+            if tstruct.members.data != null {
+                for i : 0..tstruct.members.length {
+                    if i > 0 then c_printf(", ")
+                    member_info := &tstruct.members[i]
+                    member_ptr  := pointer_add(ptr, member_info.offset)
+                    member_type := member_info.typ
+                    print_any(member_ptr, member_type)
                 }
-
-                current_fiber = self.fiber_q.pop()
-                current_fiber.thread = thread_id
             }
-
-            Logger.debug_log("resuming expr {}", (current_fiber.expr.id))
-            expr_id := current_fiber.expr.id
-            current_fiber.fiber.resume()
-            Logger.debug_log("returned expr {}", (expr_id))
+            c_printf(")")
         }
 
-        Logger.log("finished compilation", ())
-    }
-}
-
-impl Compiler {
-    compile_all :: (ref Self) {
-        for exprs {
-            expr_q.push(&it)
+        $_ -> {
+            c_printf("<unknown>")
         }
-
-        println("---------------------------------------------------")
-        for threads {
-            it.start()
-        }
-
-        handles := alloc_raw(HANDLE, cast threads.get_length())
-
-        for threads {
-            handles[it_index] = it.data.handle
-        }
-        WaitForMultipleObjects(cast threads.get_length(), handles, 1, INFINITE)
-        println("---------------------------------------------------")
-        for expr : exprs {
-            if !expr.done {
-                printfln("err: expr [{}] is not done", expr.id)
-            }
-        }
-
-        printfln("[compiler] finished compilation with {} fibers", fibers.get_length())
-    }
-
-    find_free_fiber :: (ref Self) -> &CompileFiber {
-        for f : fibers {
-            if f.expr == null and f.thread == -1 {
-                return f
-            }
-        }
-        Logger.log("new fiber", ())
-        new_fiber   := alloc(CompileFiber)
-        <<new_fiber = CompileFiber(&self, Fiber.new(compiler_fiber, new_fiber))
-        fibers.add(new_fiber)
-        return new_fiber
     }
 }
 
 Main :: () {
-    Fiber.init()
+    bar := Bar("lol", true)
+    foo := Foo(12345, bar)
 
-    compiler := Compiler.new(10)
-    defer {
-        Memory.drop(compiler)
-        free(compiler)
-    }
+    tchar      := @type_info(char)
+    tint       := @type_info(int)
+    tbool      := @type_info(bool)
 
-    for(inclusive=true) id : 1..100 {
-        compiler.exprs.add(Expr(id))
-    }
+    tstring    := @type_info(string)
+    tint_slice := @type_info([]int)
 
-    // no dependencies
-    //
+    tBar       := @type_info(Bar)
+    tFoo       := @type_info(Foo)
 
-    // 5:4, 4:3, 3:2, 2:1
-    for i : 1..compiler.exprs.get_length() {
-        compiler.exprs[i].depend = &compiler.exprs[i-1]
-    }
+    a := 123
+    b := true
+    s : []int = [a, 353, 987]
+    w := "lol"
 
-    // 1:2, 2:3, 3:4, 4:5
-    // for i : 0..compiler.exprs.get_length()-1 {
-    //     compiler.exprs[i].depend = &compiler.exprs[i+1]
-    // }
+    println(a)
+    println(b)
+    println(s)
+    println(w)
 
-    start := get_time_milliseconds()
-    compiler.compile_all()
-    end := get_time_milliseconds()
-    dur := end - start
-    printfln("Compilation took {} ms", dur)
+    println(bar)
+    println(foo)
+
+    println((struct{
+        num : int
+        word : string
+        boolean : bool
+        floater : double
+        character : char
+    })(1, "hi", false, 5.3, 'x'))
+
+    // println(<<tBar)
 }
-
 // */
