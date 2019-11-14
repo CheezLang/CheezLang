@@ -185,6 +185,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     func = module.AddFunction(name, ltype);
                 }
             }
+            //LLVMValueRef ___chkstk_ms = default;
+            //CreateFunc(ref ___chkstk_ms, "___chkstk_ms", LLVM.VoidType(), false);
 
             exit = module.GetNamedFunction("exit");
             if (exit.Pointer.ToInt64() == 0)
@@ -961,15 +963,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             var memberArray = module.AddGlobal(memberArrayType, $"ti.{s.Declaration.Name}.members");
                             var memberSliceType = CheezTypeToLLVMType(SliceType.GetSliceType(sTypeInfoEnumMember.StructType));
 
-                            var members = s.Declaration.Members.Select(m =>
+                            memberArray.SetInitializer(LLVM.ConstArray(tTypeInfoEnumMember, s.Declaration.Members.Select(_ => LLVM.GetUndef(tTypeInfoEnumMember)).ToArray()));
+                            foreach (var m in s.Declaration.Members)
                             {
-                                return LLVM.ConstNamedStruct(tTypeInfoStructMember, new LLVMValueRef[]
+                                var memberInfoPtr = builder.CreateInBoundsGEP(memberArray, new LLVMValueRef[]
+                                {
+                                    LLVM.ConstInt(LLVM.Int64Type(), 0, false),
+                                    LLVM.ConstInt(LLVM.Int64Type(), (ulong)m.Index, false),
+                                }, "");
+                                var memberInfo = LLVM.ConstNamedStruct(tTypeInfoEnumMember, new LLVMValueRef[]
                                 {
                                     CheezValueToLLVMValue(CheezType.String, m.Name),
-                                    m.AssociatedType != null ? typeInfoTable[m.AssociatedType] : LLVM.ConstPointerNull(tTypeInfo.GetPointerTo())
+                                    m.AssociatedType != null ? typeInfoTable[m.AssociatedType] : LLVM.ConstPointerNull(tTypeInfo.GetPointerTo()),
+                                    LLVM.ConstInt(LLVM.Int64Type(), m.Value.ToUlong(), false)
                                 });
-                            }).ToArray();
-                            memberArray.SetInitializer(LLVM.ConstArray(tTypeInfoEnumMember, members));
+                                builder.CreateStore(memberInfo, memberInfoPtr);
+                            }
 
                             var val = LLVM.ConstNamedStruct(tTypeInfoEnum, new LLVMValueRef[]
                             {
@@ -977,7 +986,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                                 LLVM.ConstNamedStruct(memberSliceType, new LLVMValueRef[]
                                 {
                                     LLVM.ConstInt(LLVM.Int64Type(), (ulong)s.Declaration.Members.Count, true),
-                                    memberArray
+                                    memberArray,
+                                    typeInfoTable[s.Declaration.TagType]
                                 })
                             });
                             builder.CreateStore(val, ptr);

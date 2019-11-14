@@ -142,9 +142,11 @@ TypeInfoStructMember :: struct #copy {
 TypeInfoEnum :: struct #copy {
     name    : string
     members : []TypeInfoEnumMember
+    tag_type: &TypeInfo
 }
 
 TypeInfoEnumMember :: struct #copy {
     name : string
     typ  : &TypeInfo
+    tag  : int
 }

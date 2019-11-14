@@ -2,6 +2,7 @@
 using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types;
+using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -52,6 +53,14 @@ namespace Cheez
 
             if (v.TypeExpr == null)
                 v.Type = v.Initializer.Type;
+
+            switch (v.Type)
+            {
+                case VoidType _:
+                case SumType _:
+                    ReportError(v, $"Variable can't have type {v.Type}");
+                    break;
+            }
 
             //if (vardecl.Type is SumType)
             //{

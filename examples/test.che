@@ -17,11 +17,12 @@
 
 #load("std:c")
 #load("std:util")
+#load("std:alloca")
 
 Foo :: struct #copy {
     num : int
     bar : Bar
-    // baz : Baz
+    baz : Baz
 }
 
 Bar :: struct #copy {
@@ -30,9 +31,9 @@ Bar :: struct #copy {
 }
 
 Baz :: enum #copy {
-    A
-    B : int
-    C : &int
+    A           = 353
+    B : int     = 46
+    C : &int    = 96
 }
 
 print :: (data: $T) {
@@ -61,10 +62,10 @@ print_any :: (data: &any, typ: &TypeInfo) {
         TypeInfoKind.Float -> {
             if typ.size == 4 {
                 ptr := cast(&float) data
-                c_printf("%f", double(<<ptr))
+                c_printf("%g", double(<<ptr))
             } else if typ.size == 8 {
                 ptr := cast(&double) data
-                c_printf("%f", <<ptr)
+                c_printf("%g", <<ptr)
             } else {
                 c_printf("<float: invalid size %lld>", typ.size)
             }
@@ -77,8 +78,12 @@ print_any :: (data: &any, typ: &TypeInfo) {
 
         TypeInfoKind.Char -> {
             ptr := cast(&char) data
-            ch  := <<ptr
             c_printf("'%c'", <<ptr)
+        }
+
+        TypeInfoKind.Pointer($target) -> {
+            ptr := cast(&&any) data
+            c_printf("0x%llX", <<ptr)
         }
 
         TypeInfoKind.Slice($target) -> {
@@ -113,10 +118,54 @@ print_any :: (data: &any, typ: &TypeInfo) {
                     member_info := &tstruct.members[i]
                     member_ptr  := pointer_add(ptr, member_info.offset)
                     member_type := member_info.typ
+                    c_printf("%.*s = ", i32(member_info.name.length), member_info.name.data)
                     print_any(member_ptr, member_type)
                 }
             }
             c_printf(")")
+        }
+
+        TypeInfoKind.Enum($tenum) -> {
+            ptr := cast(&any) data
+            c_printf("%.*s.", i32(tenum.name.length), tenum.name.data)
+
+            tag := match tenum.tag_type.size {
+                1  -> int(<<cast(&u8) ptr)
+                2  -> int(<<cast(&u16) ptr)
+                4  -> int(<<cast(&u32) ptr)
+                8  -> int(<<cast(&u64) ptr)
+                $_ -> {
+                    @panic("Unsupported tag size")
+                    0
+                }
+            }
+
+            // c_printf(".%lld", tag)
+
+            for(by_ref=true) mem : tenum.members {
+                if mem.tag == tag {
+                    c_printf("%.*s", i32(mem.name.length), mem.name.data)
+
+                    if mem.typ != null {
+                        mem_val_ptr := pointer_add(ptr, tenum.tag_type.size)
+
+                        c_printf("(")
+                        print_any(mem_val_ptr, mem.typ)
+                        c_printf(")")
+                    }
+                }
+            }
+
+            // if tstruct.members.data != null {
+            //     for i : 0..tstruct.members.length {
+            //         if i > 0 then c_printf(", ")
+            //         member_info := &tstruct.members[i]
+            //         member_ptr  := pointer_add(ptr, member_info.offset)
+            //         member_type := member_info.typ
+            //         c_printf("%.*s = ", i32(member_info.name.length), member_info.name.data)
+            //         print_any(member_ptr, member_type)
+            //     }
+            // }
         }
 
         $_ -> {
@@ -127,7 +176,7 @@ print_any :: (data: &any, typ: &TypeInfo) {
 
 Main :: () {
     bar := Bar("lol", true)
-    foo := Foo(12345, bar)
+    foo := Foo(12345, bar, Baz.A)
 
     tchar      := @type_info(char)
     tint       := @type_info(int)
@@ -151,12 +200,14 @@ Main :: () {
 
     println(bar)
     println(foo)
+    println(Foo(654, bar, Baz.B(420)))
+    println(Foo(741, bar, Baz.C(&a)))
 
     println((struct{
-        num : int
-        word : string
-        boolean : bool
-        floater : double
+        num       : int
+        word      : string
+        boolean   : bool
+        floater   : double
         character : char
     })(1, "hi", false, 5.3, 'x'))
 

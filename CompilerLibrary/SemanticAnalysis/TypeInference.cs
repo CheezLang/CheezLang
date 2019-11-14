@@ -1682,6 +1682,7 @@ namespace Cheez
                 case EnumType e:
                     {
                         ComputeEnumMembers(e.Declaration);
+                        MarkTypeAsRequiredAtRuntime(e.Declaration.TagType);
                         foreach (var m in e.Declaration.Members)
                             if (m.AssociatedType != null)
                                 MarkTypeAsRequiredAtRuntime(m.AssociatedType);
