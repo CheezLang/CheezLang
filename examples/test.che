@@ -164,16 +164,6 @@ Main :: () {
     bar := Bar("lol", true)
     foo := Foo(12345, bar, Baz.A)
 
-    tchar      := @type_info(char)
-    tint       := @type_info(int)
-    tbool      := @type_info(bool)
-
-    tstring    := @type_info(string)
-    tint_slice := @type_info([]int)
-
-    tBar       := @type_info(Bar)
-    tFoo       := @type_info(Foo)
-
     a := 123
     b := true
     s : []int = [a, 353, 987]
@@ -196,7 +186,5 @@ Main :: () {
         floater   : double
         character : char
     })(1, "hi", false, 5.3, 'x'))
-
-    // println(<<tBar)
 }
 // */
