@@ -15,7 +15,7 @@
 // #load("examples/project_euler/005_smallest_multiple")
 
 /*
-
+// #define IMGUI_IMPL_OPENGL_LOADER_GLAD
 #load("std:c")
 #load("std:util")
 #load("std:alloca")

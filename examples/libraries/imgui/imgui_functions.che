@@ -13,6 +13,8 @@ igGetIO                                               :: () -> &ImGuiIO;
 igGetStyle                                            :: () -> &ImGuiStyle;
 igNewFrame                                            :: () -> void;
 igEndFrame                                            :: () -> void;
+igUpdatePlatformWindows                               :: () -> void;
+igRenderPlatformWindowsDefault                        :: () -> void;
 igRender                                              :: () -> void;
 igGetDrawData                                         :: () -> &ImDrawData;
 igShowDemoWindow                                      :: (p_open : &bool) -> void;

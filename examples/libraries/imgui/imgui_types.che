@@ -392,16 +392,39 @@ ImGuiNavInput_ :: enum #repr("C") {
     ImGuiNavInput_InternalStart_ = ImGuiNavInput_KeyMenu_
 }
 
+// ImGuiConfigFlags_ :: enum #repr("C") {
+//     ImGuiConfigFlags_None                 = 0
+//     ImGuiConfigFlags_NavEnableKeyboard    = @bin_lsl(1, 0)
+//     ImGuiConfigFlags_NavEnableGamepad     = @bin_lsl(1, 1)
+//     ImGuiConfigFlags_NavEnableSetMousePos = @bin_lsl(1, 2)
+//     ImGuiConfigFlags_NavNoCaptureKeyboard = @bin_lsl(1, 3)
+//     ImGuiConfigFlags_NoMouse              = @bin_lsl(1, 4)
+//     ImGuiConfigFlags_NoMouseCursorChange  = @bin_lsl(1, 5)
+//     ImGuiConfigFlags_IsSRGB               = @bin_lsl(1, 20)
+//     ImGuiConfigFlags_IsTouchScreen        = @bin_lsl(1, 21)
+// }
+
 ImGuiConfigFlags_ :: enum #repr("C") {
-    ImGuiConfigFlags_None                 = 0
-    ImGuiConfigFlags_NavEnableKeyboard    = @bin_lsl(1, 0)
-    ImGuiConfigFlags_NavEnableGamepad     = @bin_lsl(1, 1)
-    ImGuiConfigFlags_NavEnableSetMousePos = @bin_lsl(1, 2)
-    ImGuiConfigFlags_NavNoCaptureKeyboard = @bin_lsl(1, 3)
-    ImGuiConfigFlags_NoMouse              = @bin_lsl(1, 4)
-    ImGuiConfigFlags_NoMouseCursorChange  = @bin_lsl(1, 5)
-    ImGuiConfigFlags_IsSRGB               = @bin_lsl(1, 20)
-    ImGuiConfigFlags_IsTouchScreen        = @bin_lsl(1, 21)
+    ImGuiConfigFlags_None                   = 0
+    ImGuiConfigFlags_NavEnableKeyboard      = @bin_lsl(1, 0)   // Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeysDown[].
+    ImGuiConfigFlags_NavEnableGamepad       = @bin_lsl(1, 1)   // Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.NavInputs[]. Back-end also needs to set ImGuiBackendFlags_HasGamepad.
+    ImGuiConfigFlags_NavEnableSetMousePos   = @bin_lsl(1, 2)   // Instruct navigation to move the mouse cursor. May be useful on TV/console systems where moving a virtual mouse is awkward. Will update io.MousePos and set io.WantSetMousePos=true. If enabled you MUST honor io.WantSetMousePos requests in your binding, otherwise ImGui will react as if the mouse is jumping around back and forth.
+    ImGuiConfigFlags_NavNoCaptureKeyboard   = @bin_lsl(1, 3)   // Instruct navigation to not set the io.WantCaptureKeyboard flag when io.NavActive is set.
+    ImGuiConfigFlags_NoMouse                = @bin_lsl(1, 4)   // Instruct imgui to clear mouse position/buttons in NewFrame(). This allows ignoring the mouse information set by the back-end.
+    ImGuiConfigFlags_NoMouseCursorChange    = @bin_lsl(1, 5)   // Instruct back-end to not alter mouse cursor shape and visibility. Use if the back-end cursor changes are interfering with yours and you don't want to use SetMouseCursor() to change mouse cursor. You may want to honor requests from imgui by reading GetMouseCursor() yourself instead.
+
+    // [BETA] Docking
+    ImGuiConfigFlags_DockingEnable          = @bin_lsl(1, 6)   // Docking enable flags.
+
+    // [BETA] Viewports
+    // When using viewports it is recommended that your default value for ImGuiCol_WindowBg is opaque (Alpha=1.0) so transition to a viewport won't be noticeable.
+    ImGuiConfigFlags_ViewportsEnable        = @bin_lsl(1, 10)  // Viewport enable flags (require both ImGuiConfigFlags_PlatformHasViewports + ImGuiConfigFlags_RendererHasViewports set by the respective back-ends)
+    ImGuiConfigFlags_DpiEnableScaleViewports= @bin_lsl(1, 14)  // [BETA: Don't use] FIXME-DPI: Reposition and resize imgui windows when the DpiScale of a viewport changed (mostly useful for the main viewport hosting other window). Note that resizing the main window itself is up to your application.
+    ImGuiConfigFlags_DpiEnableScaleFonts    = @bin_lsl(1, 15)  // [BETA: Don't use] FIXME-DPI: Request bitmap-scaled fonts to match DpiScale. This is a very low-quality workaround. The correct way to handle DPI is _currently_ to replace the atlas and/or fonts in the Platform_OnChangedViewport callback, but this is all early work in progress.
+
+    // User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects. Those flags are not used by core Dear ImGui)
+    ImGuiConfigFlags_IsSRGB                 = @bin_lsl(1, 20)  // Application is SRGB-aware.
+    ImGuiConfigFlags_IsTouchScreen          = @bin_lsl(1, 21)   // Application is using a touch screen instead of a mouse.
 }
 
 ImGuiBackendFlags_ :: enum #repr("C") {
@@ -586,8 +609,8 @@ ImGuiIO :: struct {
     DisplaySize                       : ImVec2
     DeltaTime                         : f32
     IniSavingRate                     : f32
-    IniFilename                       : &i8
-    LogFilename                       : &i8
+    IniFilename                       : c_string
+    LogFilename                       : c_string
     MouseDoubleClickTime              : f32
     MouseDoubleClickMaxDist           : f32
     MouseDragThreshold                : f32
@@ -600,27 +623,34 @@ ImGuiIO :: struct {
     FontAllowUserScaling              : bool
     FontDefault                       : &ImFont
     DisplayFramebufferScale           : ImVec2
+    ConfigDockingNoSplit              : bool
+    ConfigDockingWithShift            : bool
+    ConfigDockingAlwaysTabBar         : bool
+    ConfigDockingTransparentPayload   : bool
+    ConfigViewportsNoAutoMerge        : bool
+    ConfigViewportsNoTaskBarIcon      : bool
+    ConfigViewportsNoDecoration       : bool
+    ConfigViewportsNoDefaultParent    : bool
     MouseDrawCursor                   : bool
     ConfigMacOSXBehaviors             : bool
     ConfigInputTextCursorBlink        : bool
     ConfigWindowsResizeFromEdges      : bool
     ConfigWindowsMoveFromTitleBarOnly : bool
     ConfigWindowsMemoryCompactTimer   : f32
-    BackendPlatformName               : &i8
-    BackendRendererName               : &i8
+    BackendPlatformName               : c_string
+    BackendRendererName               : c_string
     BackendPlatformUserData           : &void
     BackendRendererUserData           : &void
     BackendLanguageUserData           : &void
-    GetClipboardTextFn                : fn(&void) -> &i8
-    SetClipboardTextFn                : fn(&void, &i8) -> void
+    GetClipboardTextFn                : fn(&void) -> c_string
+    SetClipboardTextFn                : fn(&void, c_string) -> void
     ClipboardUserData                 : &void
-    ImeSetInputScreenPosFn            : fn(i32, i32) -> void
-    ImeWindowHandle                   : &void
     RenderDrawListsFnUnused           : &void
     MousePos                          : ImVec2
     MouseDown                         : [5]bool
     MouseWheel                        : f32
     MouseWheelH                       : f32
+    MouseHoveredViewport              : ImGuiID
     KeyCtrl                           : bool
     KeyShift                          : bool
     KeyAlt                            : bool
@@ -766,8 +796,8 @@ ImDrawCornerFlags_ :: enum #repr("C") {
 
 ImDrawListFlags_ :: enum #repr("C") {
     ImDrawListFlags_None             = 0,
-    ImDrawListFlags_AntiAliasedLines = @bin_lsl(1, 0),
-    ImDrawListFlags_AntiAliasedFill  = @bin_lsl(1, 1),
+    ImDrawListFlags_AntiAliasedLines = @bin_lsl(1, 0)
+    ImDrawListFlags_AntiAliasedFill  = @bin_lsl(1, 1)
     ImDrawListFlags_AllowVtxOffset   = @bin_lsl(1, 2)
 }
 
@@ -851,7 +881,7 @@ ImFontAtlasCustomRect :: struct {
 
 ImFontAtlasFlags_ :: enum #repr("C") {
     ImFontAtlasFlags_None               = 0,
-    ImFontAtlasFlags_NoPowerOfTwoHeight = @bin_lsl(1, 0),
+    ImFontAtlasFlags_NoPowerOfTwoHeight = @bin_lsl(1, 0)
     ImFontAtlasFlags_NoMouseCursors     = @bin_lsl(1, 1)
 }
 

@@ -52,16 +52,10 @@ Main :: () {
     glfwSetWindowSizeCallback(window, onResize)
 
     // imgui setup
-    context := igCreateContext(null)
-    igStyleColorsDark(null)
-    if !ImGui_ImplGlfw_InitForOpenGL(window, true) {
-        println("[ERROR] ImGui_ImplGlfw_InitForOpenGL failed")
+    if !init_imgui(window) {
         return
     }
-    if !ImGui_ImplOpenGL3_Init("#version 130") {
-        println("[ERROR] ImGui_ImplOpenGL3_Init failed")
-        return
-    }
+    defer shutdown_imgui()
 
     // opengl
     glViewport(0, 0, 1080, 720)
@@ -71,19 +65,75 @@ Main :: () {
 
     while !glfwWindowShouldClose(window) {
         glfwPollEvents()
+        glClear(GL_COLOR_BUFFER_BIT)
 
         //
-        ImGui_ImplOpenGL3_NewFrame()
-        ImGui_ImplGlfw_NewFrame()
-        igNewFrame()
+        begin_frame()
 
         if show_demo_window then
             igShowDemoWindow(&show_demo_window)
-        igRender()
+
+        end_frame()
 
         // present image
-        glClear(GL_COLOR_BUFFER_BIT)
-        ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData())
         glfwSwapBuffers(window)
     }
+}
+
+begin_frame :: () {
+    ImGui_ImplOpenGL3_NewFrame()
+    ImGui_ImplGlfw_NewFrame()
+    igNewFrame()
+}
+
+end_frame :: () {
+    io := igGetIO()
+
+    // rendering
+    igEndFrame()
+    igRender()
+    ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData())
+
+    if @bin_and(io.ConfigFlags, i32(ImGuiConfigFlags_.ImGuiConfigFlags_ViewportsEnable)) != 0 {
+        backup_current_context := glfwGetCurrentContext()
+        igUpdatePlatformWindows()
+        igRenderPlatformWindowsDefault()
+        glfwMakeContextCurrent(backup_current_context)
+    }
+}
+
+init_imgui :: (window: &GLFWwindow) -> bool {
+    context := igCreateContext(null)
+
+    use ImGuiConfigFlags_
+    io := igGetIO()
+    io.ConfigFlags = @bin_or(io.ConfigFlags,
+        i32(ImGuiConfigFlags_DockingEnable),
+        i32(ImGuiConfigFlags_ViewportsEnable))
+
+    igStyleColorsDark(null)
+
+    if @bin_and(io.ConfigFlags, i32(ImGuiConfigFlags_ViewportsEnable)) != 0 {
+        style := igGetStyle()
+        style.WindowRounding = 0.0
+        style.Colors[int(ImGuiCol_.ImGuiCol_WindowBg)].w = 1.0
+    }
+
+    //
+    if !ImGui_ImplGlfw_InitForOpenGL(window, true) {
+        println("[ERROR] ImGui_ImplGlfw_InitForOpenGL failed")
+        return false
+    }
+    if !ImGui_ImplOpenGL3_Init("#version 130") {
+        println("[ERROR] ImGui_ImplOpenGL3_Init failed")
+        return false
+    }
+
+    return true
+}
+
+shutdown_imgui :: () {
+    ImGui_ImplOpenGL3_Shutdown()
+    ImGui_ImplGlfw_Shutdown()
+    igDestroyContext(null)
 }

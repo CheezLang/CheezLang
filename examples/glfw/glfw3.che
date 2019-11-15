@@ -65,6 +65,7 @@ glfwSwapInterval :: (interval: i32);
 
 glfwSetWindowTitle :: (window: &GLFWwindow, title: c_string);
 glfwMakeContextCurrent :: (window: &GLFWwindow);
+glfwGetCurrentContext :: () -> &GLFWwindow;
 glfwSetKeyCallback :: (window: &GLFWwindow, callback: fn (&GLFWwindow, i32, i32, i32, i32));
 glfwSetWindowSizeCallback :: (window: &GLFWwindow, callback: fn (&GLFWwindow, i32, i32));
 glfwWindowHint :: (hint: i32, value: i32);
