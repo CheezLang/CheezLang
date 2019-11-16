@@ -200,6 +200,10 @@ namespace Cheez
         {
             if (expr.Type.IsErrorType)
                 return false;
+
+            if (expr.Scope.SymbolStatuses == null)
+                expr.Scope.InitSymbolStats();
+
             switch (expr)
             {
                 case AstBlockExpr block: return PassVLBlock(block);
@@ -512,6 +516,15 @@ namespace Cheez
             if (expr.SubScope != expr.Scope && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
                 expr.SubScope.ApplyInitializedSymbolsToParent();
 
+            if (expr.Scope.ExportedSymbols != null)
+            {
+                foreach (var export in expr.Scope.ExportedSymbols)
+                {
+                    var stat = expr.Scope.GetSymbolStatus(export);
+                    expr.Scope.LinkedScope.SetSymbolStatus(export, stat.kind, stat.location);
+                }
+            }
+
             // call constructors
             if (!expr.GetFlag(ExprFlags.Anonymous)
                 && !expr.GetFlag(ExprFlags.Breaks) && !expr.GetFlag(ExprFlags.Returns))
@@ -524,6 +537,15 @@ namespace Cheez
                     }
                 }
             }
+
+            // add destructors
+            //foreach (var stat in expr.Scope.AllSymbolStatusesReverseOrdered)
+            //{
+            //    if (stat.kind == SymbolStatus.Kind.initialized)
+            //    {
+            //        expr.AddDestruction(Destruct(stat.symbol, expr));
+            //    }
+            //}
 
             return true;
         }

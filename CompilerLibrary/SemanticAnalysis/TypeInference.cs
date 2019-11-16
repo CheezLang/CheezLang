@@ -293,8 +293,8 @@ namespace Cheez
                     func.Name = c.Name.Name;
 
                 // setup scopes
-                func.ConstScope = new Scope("fn const", func.Scope);
-                func.SubScope = new Scope("fn", func.ConstScope);
+                func.ConstScope = new Scope($"fn$ {func.Name}", func.Scope);
+                func.SubScope = new Scope($"fn {func.Name}", func.ConstScope);
             }
 
             // check for macro stuff
@@ -2125,9 +2125,9 @@ namespace Cheez
 
                 case "link":
                     {
-                        if (expr.Arguments.Count != 1)
+                        if (expr.Arguments.Count < 1)
                         {
-                            ReportError(expr.Location, "@link takes exacty one argument");
+                            ReportError(expr.Location, "@link takes at least one argument");
                             return expr;
                         }
 
@@ -2296,10 +2296,9 @@ namespace Cheez
                         }
 
                         var type = (CheezType)arg.Value;
-
-                        var num = new AstNumberExpr(GetSizeOfType(type), Location: expr.Location);
-                        num.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
-                        return InferTypeHelper(num, null, context);
+                        expr.Type = IntType.LiteralType;
+                        expr.Value = NumberData.FromBigInt(GetSizeOfType(type));
+                        return expr;
                     }
 
                 case "alignof":
@@ -2321,10 +2320,9 @@ namespace Cheez
                         }
 
                         var type = (CheezType)arg.Value;
-
-                        var num = new AstNumberExpr(GetAlignOfType(type), Location: expr.Location);
-                        num.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
-                        return InferTypeHelper(num, null, context);
+                        expr.Type = IntType.LiteralType;
+                        expr.Value = NumberData.FromBigInt(GetAlignOfType(type));
+                        return expr;
                     }
 
                 case "tuple_type_member":
@@ -2581,7 +2579,9 @@ namespace Cheez
             {
                 var values = from arg in expr.Arguments select (NumberData)arg.Expr.Value;
                 var result = compute(values);
-                return InferTypeHelper(new AstNumberExpr(result, Location: expr.Location), expectedArgType, context);
+                expr.Type = expectedArgType;
+                expr.Value = result;
+                return expr;
             }
 
             expr.Type = expr.Arguments[0].Expr.Type;
@@ -3201,11 +3201,16 @@ namespace Cheez
         private AstExpression ExpandMacro(AstCallExpr call, TypeInferenceContext context)
         {
             var macro = call.Declaration;
+
+            bool export_symbols = call.Declaration.HasDirective("export_symbols");
+
             var code = macro.Body.Clone() as AstBlockExpr;
             code.Parent = call.Parent;
             code.Scope = new Scope("macro {}", macro.ConstScope);
             code.Scope.LinkedScope = call.Scope;
             code.SetFlag(ExprFlags.FromMacroExpansion, true);
+            if (export_symbols)
+                code.SetFlag(ExprFlags.Anonymous, true);
 
             // define arguments
             var links = call.Arguments.Select((arg, index) =>
@@ -3236,6 +3241,28 @@ namespace Cheez
             if (errHandler.HasErrors)
             {
                 ReportError(call.Location, "Failed to expand macro", errHandler.Errors, ("Macro defined here:", macro.ParameterLocation));
+            }
+
+            if (export_symbols)
+            {
+                var dir = call.Declaration.GetDirective("export_symbols");
+
+                foreach (var arg in dir.Arguments)
+                {
+                    if (arg is AstIdExpr id)
+                    {
+                        if (!newExpr.Scope.Export(id.Name))
+                        {
+                            ReportError(arg, $"No symbol with name '{id.Name}' exists in this macro");
+                            continue;
+                        }
+                        call.Scope.Import(newExpr.Scope.GetSymbol(id.Name));
+                    }
+                    else
+                    {
+                        ReportError(arg, $"Must be an identifier");
+                    }
+                }
             }
 
             return newExpr;

@@ -313,6 +313,13 @@ impl string {
 
         return result
     }
+
+    to_cstring :: (Self) -> c_string {
+        str_c := alloc_raw(char, cast self.length + 1)
+        str_c[self.length] = cast 0
+        c_memcpy(cast str_c, cast self.data, cast self.length)
+        return str_c
+    }
 }
 
 impl c_string {

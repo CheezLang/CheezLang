@@ -244,7 +244,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return true;
         }
 
-        public bool CompileCode(IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
+        public bool CompileCode(IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler, bool printLikerArgs)
         {
             if (!string.IsNullOrWhiteSpace(outDir) && !Directory.Exists(outDir))
                 Directory.CreateDirectory(outDir);
@@ -254,7 +254,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return LLVMLinker.Link(workspace, exeFile, objFile, libraryIncludeDirectories, libraries, subsystem, errorHandler);
+                return LLVMLinker.Link(workspace, exeFile, objFile, libraryIncludeDirectories, libraries, subsystem, errorHandler, printLikerArgs);
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 return ClangLinker.Link(workspace, exeFile, objFile, libraries);
             else

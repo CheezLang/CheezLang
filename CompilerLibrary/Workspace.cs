@@ -52,7 +52,7 @@ namespace Cheez
 
         private string GetUniqueName(string str = "")
         {
-            return $"~{str}~{mNameGen++}";
+            return $"\"{str}-{mNameGen++}\"";
         }
 
         public void PushErrorHandler(IErrorHandler handler)

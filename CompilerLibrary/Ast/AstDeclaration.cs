@@ -185,7 +185,7 @@ namespace Cheez.Ast.Statements
                 Directives?.Select(d => d.Clone())?.ToList(),
                 ParameterLocation: ParameterLocation));
             copy.ConstScope = new Scope($"fn$", copy.Scope);
-            copy.SubScope = new Scope($"fn", copy.ConstScope);
+            copy.SubScope = new Scope($"fn {Name}", copy.ConstScope);
             copy.Name = Name;
             return copy;
         }

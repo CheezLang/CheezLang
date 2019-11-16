@@ -37,7 +37,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         [DllImport("LLVMLinker", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private extern static bool llvm_link_elf(string[] argv, int argc);
 
-        public static bool Link(Workspace workspace, string targetFile, string objFile, IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler)
+        public static bool Link(Workspace workspace, string targetFile, string objFile, IEnumerable<string> libraryIncludeDirectories, IEnumerable<string> libraries, string subsystem, IErrorHandler errorHandler, bool printLinkerArgs)
         {
             if (workspace is null)
                 throw new ArgumentNullException(nameof(workspace));
@@ -148,7 +148,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // generated object files
             lldArgs.Add(objFile);
 
-            Console.WriteLine("[LINKER] " + string.Join(" ", lldArgs));
+            if (printLinkerArgs)
+                Console.WriteLine("[LINKER] " + string.Join(" ", lldArgs));
 
             var process = Utilities.StartProcess("lld-link", lldArgs,
                             stdout: (s, e) => { if (e.Data != null) Console.WriteLine(e.Data); },

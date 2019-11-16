@@ -1,4 +1,4 @@
-#load("examples/glfw3_example")
+// #load("examples/glfw3_example")
 // #load("examples/trait_function_call_performance")
 // #load("examples/graphyfier/graphyfier")
 // #load("examples/pathtracer2/main")
@@ -13,6 +13,165 @@
 // #load("tests/library/arena_allocator1")
 // #load("tests/other/test1")
 // #load("examples/project_euler/005_smallest_multiple")
+
+//*
+
+#load("std:io/io")
+#load("std:io/stdio")
+#load("std:math")
+#load("std:time")
+#load("std:thread")
+
+Function1 :: () {
+    profile_scope("Function1")
+    for 0..1000 {
+        printfln("Hello World #{}", it)
+    }
+}
+
+Function2 :: () {
+    profile_scope("Function2")
+    for 0..1000 {
+        printfln("Hello World #{}", sqrt(double(it)))
+    }
+}
+
+run_benchmarks :: () {
+    profile_scope("run_benchmarks")
+    Sleep(10)
+    Function1()
+    Sleep(10)
+    Function2()
+    Sleep(10)
+}
+
+Main :: () {
+    Instrumentor.get().begin_session("test_session", "test_session.json")
+    run_benchmarks()
+    Instrumentor.get().end_session()
+}
+
+// instrumentor
+profile_scope :: (name: string) #macro #export_symbols(_) {
+    _ := Timer.start(name)
+}
+
+// profile_function :: () #macro {
+//     profile_scope(@function_name())
+// }
+
+ProfileResult :: struct {
+    name      : string
+    start     : int
+    end       : int
+    thread_id : int
+}
+
+Instrumentor :: struct {
+    current_session : string
+    output_file     : &FILE
+    profile_count   : int
+}
+
+global_instrumantor : &Instrumentor = null
+
+impl Instrumentor {
+    new :: () -> Instrumentor {
+        return Instrumentor(null, null, 0)
+    }
+
+    get :: () -> &Instrumentor {
+        if global_instrumantor == null {
+            global_instrumantor = alloc(Instrumentor)
+            <<global_instrumantor = new()
+        }
+
+        return global_instrumantor
+    }
+
+    begin_session :: (ref Self, name: string, filepath: string = "results.json") {
+        current_session = name
+        filepath_c := filepath.to_cstring()
+        defer free(filepath_c)
+        err := fopen_s(&output_file, filepath_c, "w")
+        if err != 0 {
+            println("failed to open file")
+            output_file = null
+            return
+        }
+
+        write_header()
+    }
+
+    end_session :: (ref Self) {
+        write_footer()
+        fclose(output_file)
+
+        current_session = null
+        output_file     = null
+        profile_count   = 0
+    }
+
+    write_header :: (ref Self) {
+        fprintf(output_file, "{`n    `"otherData`": {},`n    `"traceEvents`": [")
+        fflush(output_file)
+    }
+
+    write_footer :: (ref Self) {
+        fprintf(output_file, "`n    ]`n}")
+        fflush(output_file)
+    }
+
+    write_profile :: (ref Self, result: ProfileResult) {
+        profile_count += 1
+        if profile_count > 1 then fprintf(output_file, ",")
+
+        fprintf(output_file, "`n")
+        fprintf(output_file, "        {`n")
+        fprintf(output_file, "            `"cast`": `"function`",`n")
+        fprintf(output_file, "            `"dur`" : %lld,`n", result.end - result.start)
+        fprintf(output_file, "            `"name`": `"%.*s`",`n", result.name)
+        fprintf(output_file, "            `"ph`"  : `"X`",`n")
+        fprintf(output_file, "            `"pid`" : 0,`n")
+        fprintf(output_file, "            `"tid`" : %lld,`n", result.thread_id)
+        fprintf(output_file, "            `"ts`"  : %lld`n", result.start)
+        fprintf(output_file, "        }")
+
+        fflush(output_file)
+    }
+}
+
+// timer
+Timer :: struct {
+    name    : string
+    start   : int
+    stopped := false
+}
+
+impl Timer {
+    start :: (name: string) -> Timer {
+        return Timer(name, get_time_microseconds())
+    }
+
+    stop :: (ref Self) {
+        end := get_time_microseconds()
+        dur := end - start
+
+        // printfln("{}: {}ms", (name, double(dur) * 0.001))
+        thread_id := Thread.current().id
+        Instrumentor.get().write_profile(ProfileResult(name, start, end, thread_id))
+
+        stopped = true
+    }
+}
+
+impl Drop for Timer {
+    drop :: (ref Self) {
+        if !stopped then self.stop()
+    }
+}
+
+// */
 
 /*
 // #define IMGUI_IMPL_OPENGL_LOADER_GLAD

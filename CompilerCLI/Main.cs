@@ -85,6 +85,9 @@ namespace CheezCLI
 
         [Option("preload", Default = null, HelpText = "Path to a .che file used to import by default")]
         public string Preload { get; set; }
+
+        [Option("print-linker-args", Default = false, HelpText = "Print arguments passed to linker")]
+        public bool PrintLinkerArguments { get; set; }
     }
 
     class Prog
@@ -328,7 +331,7 @@ namespace CheezCLI
             if (!success)
                 return false;
 
-            return generator.CompileCode(options.LibraryIncludeDirectories, options.Libraries, options.SubSystem.ToString(), errorHandler);
+            return generator.CompileCode(options.LibraryIncludeDirectories, options.Libraries, options.SubSystem.ToString(), errorHandler, options.PrintLinkerArguments);
         }
     }
 }

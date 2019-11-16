@@ -136,8 +136,14 @@ namespace Cheez
         public ISymbol[] SymbolStatuses => mSymbolStatus?.Keys?.ToArray();
         public IEnumerable<SymbolStatus> AllSymbolStatusesReverseOrdered => mSymbolStatus?.Values?.OrderByDescending(s => s.order);
         public IEnumerable<SymbolStatus> SymbolStatusesReverseOrdered => mSymbolStatus?.Values?
-                                .Where(v => mSymbolTable.ContainsValue(v.symbol))?
+                                .Where(v => mSymbolTable.ContainsValue(v.symbol) || (mImportedSymbols?.Contains(v.symbol) ?? false))?
                                 .OrderByDescending(s => s.order);
+
+        public List<ISymbol> mExportedSymbols;
+        public IEnumerable<ISymbol> ExportedSymbols => mExportedSymbols;
+
+        public List<ISymbol> mImportedSymbols;
+        public IEnumerable<ISymbol> ImportedSymbols => mImportedSymbols;
 
         //
         //
@@ -166,6 +172,12 @@ namespace Cheez
             //if (mSymbolStatus != null)
             //    return;
             mSymbolStatus ??= new Dictionary<ISymbol, SymbolStatus>();
+
+            //foreach (var s in Symbols)
+            //{
+            //    mSymbolStatus[s.Value] = new SymbolStatus(mSymbolStatus.Count, s.Value, SymbolStatus.Kind.uninitialized, s.Value.Location);
+            //}
+
             if (Parent?.mSymbolStatus != null)
             {
                 foreach (var symbol in Parent.mSymbolStatus)
@@ -228,6 +240,26 @@ namespace Cheez
                 if (mSymbolStatus.TryGetValue(s, out var stat))
                     scope.mSymbolStatus[s] = stat;
             }
+        }
+
+        internal bool Export(string name)
+        {
+            if (mExportedSymbols == null)
+                mExportedSymbols = new List<ISymbol>();
+
+            var sym = GetSymbol(name);
+            if (sym == null)
+                return false;
+            mExportedSymbols.Add(sym);
+            return true;
+        }
+
+        internal void Import(ISymbol sym)
+        {
+            if (mImportedSymbols == null)
+                mImportedSymbols = new List<ISymbol>();
+
+            mImportedSymbols.Add(sym);
         }
 
         public void AddForExtension(AstFuncExpr func)

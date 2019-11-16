@@ -7,14 +7,14 @@ Stmt :: struct {
 }
 
 StmtType :: enum {
-    FunctionDecl    : FunctionDecl
+    Func    : FunctionDecl
 }
 
 impl Printable for Stmt {
     print :: (ref Self, str: ref String, format: string) {
         use StmtType
         match concrete {
-            FunctionDecl($func) -> {
+            Func($func) -> {
                 str.appendf("fn {}() ``{``}", func.name)
             }
         }

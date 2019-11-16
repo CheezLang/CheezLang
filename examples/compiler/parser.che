@@ -58,7 +58,7 @@ impl Parser {
 
         func := alloc(Stmt)
         <<func = Stmt(
-            concrete = StmtType.FunctionDecl(FunctionDecl(
+            concrete = StmtType.Func(FunctionDecl(
                 name = name_id
             ))
         )
