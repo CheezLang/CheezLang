@@ -1,0 +1,174 @@
+#load("std:io/stdio")
+#load("std:time")
+#load("std:thread")
+
+profile_scope :: (name: string) #macro #export_symbols(_) {
+    if const enable_profiler {
+        _ := Timer.start(name)
+    } else {
+        _ := 0
+    }
+}
+
+profile_function :: () #macro #export_symbols(_) {
+    if const enable_profiler {
+        _ := Timer.start(@function_signature())
+    } else {
+        _ := 0
+    }
+}
+
+profile_async :: (name: string, id: int, ph: string) #macro {
+    if const enable_profiler {
+        Instrumentor.get().
+            write_profile_async(name, id, get_time_microseconds(), ph, Thread.current().id)
+    }
+}
+
+// instrumentor
+ProfileResult :: struct {
+    name      : string
+    start     : int
+    end       : int
+    thread_id : int
+}
+
+Instrumentor :: struct {
+    current_session : string
+    output_file     : &FILE
+    profile_count   : int
+    mutex           : &Mutex
+}
+
+global_instrumantor : &Instrumentor = null
+
+impl Instrumentor {
+    init :: (thread_safe: bool) {
+        @assert(global_instrumantor == null)
+
+
+        m : &Mutex = if thread_safe {
+            m := alloc(Mutex)
+            <<m = Mutex.create()
+            m
+        } else {
+            null
+        }
+        global_instrumantor = alloc(Instrumentor)
+        <<global_instrumantor = Instrumentor(null, null, 0, m)
+    }
+
+    get :: () -> &Instrumentor {
+        @assert(global_instrumantor != null)
+        return global_instrumantor
+    }
+
+    begin_session :: (ref Self, name: string, filepath: string = "results.json") {
+        current_session = name
+        filepath_c := filepath.to_cstring()
+        defer free(filepath_c)
+        err := fopen_s(&output_file, filepath_c, "w")
+        if err != 0 {
+            println("failed to open file")
+            output_file = null
+            return
+        }
+
+        write_header()
+    }
+
+    end_session :: (ref Self) {
+        write_footer()
+        fclose(output_file)
+
+        current_session = null
+        output_file     = null
+        profile_count   = 0
+    }
+
+    write_header :: (ref Self) {
+        fprintf(output_file, "{`"otherData`":{},`"traceEvents`":[")
+        fflush(output_file)
+    }
+
+    write_footer :: (ref Self) {
+        fprintf(output_file, "]}")
+        fflush(output_file)
+    }
+
+    write_profile :: (ref Self, result: ProfileResult) {
+        if mutex != null then mutex.lock()
+        defer if mutex != null then mutex.release() else {}
+        profile_count += 1
+        if profile_count > 1 then fprintf(output_file, ",")
+
+        fprintf(output_file, "")
+        fprintf(output_file, "{")
+        fprintf(output_file, "`"cat`":`"function`",")
+        fprintf(output_file, "`"dur`":%lld,", result.end - result.start)
+        fprintf(output_file, "`"name`":`"%.*s`",", result.name)
+        fprintf(output_file, "`"ph`":`"X`",")
+        fprintf(output_file, "`"pid`":0,")
+        fprintf(output_file, "`"tid`":%lld,", result.thread_id)
+        fprintf(output_file, "`"ts`":%lld", result.start)
+        fprintf(output_file, "}")
+
+        fflush(output_file)
+    }
+
+    write_profile_async :: (ref Self, name: string, id: int, time: int, ph: string, thread_id: int) {
+        if mutex != null then mutex.lock()
+        defer if mutex != null then mutex.release() else {}
+        profile_count += 1
+        if profile_count > 1 then fprintf(output_file, ",")
+
+        fprintf(output_file, "")
+        fprintf(output_file, "{")
+        fprintf(output_file, "`"cat`":`"function`",")
+        fprintf(output_file, "`"name`":`"%.*s`",", name.length, name.data)
+        fprintf(output_file, "`"ph`":`"%.*s`",", ph.length, ph.data)
+        fprintf(output_file, "`"pid`":0,")
+        fprintf(output_file, "`"tid`":%lld,", thread_id)
+        fprintf(output_file, "`"id`":%lld,", id)
+        fprintf(output_file, "`"ts`":%lld,", time)
+        fprintf(output_file, "`"args`":{`"id`":%lld}", id)
+        fprintf(output_file, "}")
+
+        fflush(output_file)
+    }
+}
+
+// timer
+Timer :: struct {
+    name    : string
+    start   : int
+    stopped := false
+}
+
+impl Timer {
+    start :: (name: string) -> Timer {
+        return Timer(name, get_time_microseconds())
+    }
+
+    restart :: (ref Self) {
+        start = get_time_microseconds()
+        stopped = false
+    }
+
+    stop :: (ref Self) {
+        end := get_time_microseconds()
+        dur := end - start
+
+        // printfln("{}: {}ms", (name, double(dur) * 0.001))
+        thread_id := Thread.current().id
+        Instrumentor.get().write_profile(ProfileResult(name, start, end, thread_id))
+
+        stopped = true
+    }
+}
+
+impl Drop for Timer {
+    drop :: (ref Self) {
+        if !stopped then self.stop()
+    }
+}

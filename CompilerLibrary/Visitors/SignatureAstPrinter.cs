@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
@@ -19,6 +20,16 @@ namespace Cheez.Visitors
                 rawPrinter = new RawAstPrinter(new StringWriter());
             else
                 rawPrinter = new AnalysedAstPrinter();
+        }
+
+        public string VisitDirective(AstDirective dir)
+        {
+            var name = "#" + dir.Name.Accept(rawPrinter);
+            if (dir.Arguments.Count > 0)
+            {
+                name += $"({string.Join(", ", dir.Arguments.Select(a => a.Accept(rawPrinter)))})";
+            }
+            return name;
         }
 
         public override string VisitImplDecl(AstImplBlock impl, int data = 0)
@@ -50,6 +61,21 @@ namespace Cheez.Visitors
                 }));
 
             return header;
+        }
+
+        public override string VisitFuncExpr(AstFuncExpr function, int data = 0)
+        {
+            var pars = string.Join(", ", function.Parameters.Select(p => p.Accept(this)));
+            var head = $"{function.Name}({pars})";
+
+            if (function.ReturnTypeExpr != null)
+                head += $" -> {function.ReturnTypeExpr.Accept(this)}";
+
+            // @todo
+            if (function.Directives.Count > 0)
+                head += " " + string.Join(" ", function.Directives.Select(d => VisitDirective(d)));
+
+            return head;
         }
 
         private string TypeToString(AstExpression typeExpr)

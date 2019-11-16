@@ -2,9 +2,12 @@
 #load("std:io/io")
 #load("std:math")
 #load("std:thread")
+#load("std:profiling")
 #load("../olc_pge/pixel_game_engine")
 #load("evaluator")
 #load("compiler")
+
+enable_profiler :: true
 
 vec2 :: Vector2[double]
 vec3 :: Vector3[double]
@@ -52,6 +55,7 @@ map :: (x: double, a: double, b: double, c: double, d: double) -> double {
 
 impl Game for MyGame {
     on_create :: (ref Self, pge: &PixelGameEngine) -> bool {
+        profile_function()
         self.pge = pge
 
         load_function_from_file()
@@ -75,6 +79,7 @@ impl Game for MyGame {
     }
 
     on_destroy :: (ref Self) -> bool {
+        profile_function()
         if dir_change_thread != null {
             dir_change_thread.terminate()
             FindCloseChangeNotification(wait_handle)
@@ -102,6 +107,7 @@ impl Game for MyGame {
     }
 
     load_function_from_file :: (ref Self) {
+        profile_function()
         println("reloading...")
 
         function = match function {
@@ -135,6 +141,8 @@ impl Game for MyGame {
     }
 
     on_update :: (ref Self, dt: float) -> bool {
+        profile_function()
+
         pge.clear()
 
         // 
@@ -180,6 +188,7 @@ impl Game for MyGame {
     }
 
     draw_current_function :: (ref Self) {
+        profile_function()
         prev := Complex()
 
         first := true
@@ -219,6 +228,7 @@ impl Game for MyGame {
     }
 
     draw_grid :: (ref Self) {
+        profile_function()
         // grid
         {
             lw   := 0.15
@@ -283,6 +293,7 @@ impl Game for MyGame {
     }
 
     handle_input :: (ref Self, dt: double) {
+        profile_function()
         scroll_speed := 0.001
 
         // move
@@ -341,6 +352,8 @@ compare_strings :: (a: string, b: string) -> bool {
 }
 
 Main :: () {
+    Instrumentor.init(false)
+    Instrumentor.get().begin_session("graphyfier", "graphyfier_profile.json")
     myGame := MyGame(
         var_name_allocator = ArenaAllocator.create(1024)
         variables = Variables.create(compare_strings)
@@ -351,6 +364,7 @@ Main :: () {
     } else {
         println("failed to create pixel game engine")
     }
+    Instrumentor.get().end_session()
 }
 
 // */

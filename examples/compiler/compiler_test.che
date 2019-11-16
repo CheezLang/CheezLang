@@ -5,6 +5,9 @@
 #load("std:thread")
 #load("std:c")
 #load("std:time")
+#load("std:profiling")
+
+enable_profiler :: true
 
 Logger :: struct {}
 
@@ -59,6 +62,9 @@ impl Drop for Compiler {
 }
 
 wait_for_expr :: (expr: &Expr, wait_for: &Expr) {
+    id := expr.id
+    // profile_async("wait_for_expr", id, "b")
+
     current_fiber := Fiber.current()
     compiler_fiber := cast(&CompileFiber) current_fiber.user_data
     expr.progressed = true
@@ -71,35 +77,65 @@ wait_for_expr :: (expr: &Expr, wait_for: &Expr) {
             if yield_count > 0 {
                 expr.progressed = false
             }
+
             Fiber.yield()
         } else {
             break
         }
     }
     expr.progressed = true
+
+    // profile_async("wait_for_expr", id, "e")
 }
 
 compile_expr :: (expr: &Expr) {
+    id := expr.id
+
+    if const enable_profiler {
+        str := String.empty()
+        str.appendf("compile_expr({})", expr.id)
+        profile_async("compile_expr", id, "b")
+        defer profile_async("compile_expr", id, "e")
+    }
+
     Logger.debug_log("   {} starting", (int(expr.id)))
 
-    // Logger.log("{}: a", expr.id)
-    Sleep(5)
-    // Logger.log("{}: b", expr.id)
+    {
+        Logger.log("{}: a", expr.id)
+        Sleep(5)
+        Logger.log("{}: b", expr.id)
+
+    }
+
+    profile_async("compile_expr", id, "e")
     wait_for_expr(expr, expr.depend[0])
+    profile_async("compile_expr", id, "b")
+
+    {
+        Sleep(5)
+    }
+
+
+    profile_async("compile_expr", id, "e")
     wait_for_expr(expr, expr.depend[1])
-    // Logger.log("{}: c", expr.id)
-    Sleep(5)
-    // Logger.log("{}: d", expr.id)
+    profile_async("compile_expr", id, "b")
+    {
+        Logger.log("{}: c", expr.id)
+        Sleep(5)
+        Logger.log("{}: d", expr.id)
+    }
 
     expr.done = true
     Logger.debug_log("   {} done", (int(expr.id)))
 }
 
 compiler_fiber :: (fiber : &CompileFiber) {
+    profile_function()
     while true {
         while fiber.expr == null {
             Fiber.yield()
         }
+
         fiber.expr.progressed = false
         compile_expr(fiber.expr)
         fiber.expr = null
@@ -108,6 +144,7 @@ compiler_fiber :: (fiber : &CompileFiber) {
 
 impl Compiler {
     new :: (thread_count: int) -> &Compiler {
+        profile_function()
         comp := alloc(Compiler)
 
         threads := Array[Thread].create()
@@ -124,6 +161,7 @@ impl Compiler {
     }
 
     thread_func :: (self: &Compiler) {
+        profile_function()
         Fiber.init()
         thread_id := Thread.current().id
 
@@ -193,6 +231,7 @@ impl Compiler {
 
 impl Compiler {
     compile_all :: (ref Self) {
+        profile_function()
         for exprs {
             expr_q.push(&it)
         }
@@ -219,6 +258,7 @@ impl Compiler {
     }
 
     find_free_fiber :: (ref Self) -> &CompileFiber {
+        profile_function()
         for f : fibers {
             if f.expr == null and f.thread == -1 {
                 return f
@@ -232,10 +272,11 @@ impl Compiler {
     }
 }
 
-Main :: () {
+compiler_test :: () {
+    profile_function()
     Fiber.init()
 
-    compiler := Compiler.new(10)
+    compiler := Compiler.new(1)
     defer {
         Memory.drop(compiler)
         free(compiler)
@@ -259,13 +300,21 @@ Main :: () {
     // }
 
     // 1:2, 2:3, 3:4, 4:5
-    // for i : 0..compiler.exprs.get_length()-1 {
-    //     compiler.exprs[i].depend = &compiler.exprs[i+1]
-    // }
+    for i : 0..compiler.exprs.get_length()-1 {
+        compiler.exprs[i].depend[0] = &compiler.exprs[i+1]
+        compiler.exprs[i].depend[1] = null
+    }
 
     start := get_time_milliseconds()
     compiler.compile_all()
     end := get_time_milliseconds()
     dur := end - start
     printfln("Compilation took {} ms", dur)
+}
+
+Main :: () {
+    Instrumentor.init(true)
+    Instrumentor.get().begin_session("compiler_test", "compiler_test_profile.json")
+    compiler_test()
+    Instrumentor.get().end_session()
 }

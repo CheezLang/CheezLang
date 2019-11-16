@@ -51,6 +51,28 @@ impl Thread {
         return Thread(td)
     }
 
+    create_without_data :: (func: fn()) -> Thread {
+        thread_func :: (data: &void) -> u32 #stdcall {
+            thread_data := @cast(&ThreadData, data)
+            current_thread_data = thread_data
+
+            func := @cast(fn(), thread_data.func)
+            func()
+            return 0
+        }
+
+        td := alloc(ThreadData)
+        handle := CreateThread(null, 0, thread_func, cast td, CREATE_SUSPENDED, null)
+        @assert(handle != null)
+
+        td.handle   = handle
+        td.id       = cast GetThreadId(handle)
+        td.func     = @cast(fn(&void), func)
+        td.user     = null
+
+        return Thread(td)
+    }
+
     start :: (ref Self) -> bool {
         res := ResumeThread(data.handle)
         return res != -1

@@ -15,6 +15,7 @@ using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using Cheez.Util;
+using Cheez.Visitors;
 
 namespace Cheez
 {
@@ -1739,6 +1740,32 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "function_name":
+                    {
+                        if (expr.Arguments.Count != 0)
+                        {
+                            ReportError(expr.Location, "@function_name takes 0 arguments");
+                            return expr;
+                        }
+
+                        expr.Type = CheezType.StringLiteral;
+                        expr.Value = currentFunction.Name;
+                        return expr;
+                    }
+
+                case "function_signature":
+                    {
+                        if (expr.Arguments.Count != 0)
+                        {
+                            ReportError(expr.Location, "@function_signature takes 0 arguments");
+                            return expr;
+                        }
+
+                        expr.Type = CheezType.StringLiteral;
+                        expr.Value = currentFunction.Accept(new SignatureAstPrinter(false));
+                        return expr;
+                    }
+
                 case "type_info":
                     {
                         if (expr.Arguments.Count != 1)
