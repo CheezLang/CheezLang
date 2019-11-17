@@ -4,6 +4,7 @@ true")
 
 
 #load("std:c")
+#load("std:alloca")
 // #load("std:string")
 
 Printable :: trait {

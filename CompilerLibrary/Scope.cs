@@ -84,31 +84,6 @@ namespace Cheez
 
 
 
-    public class SymbolStatus
-    {
-        public enum Kind
-        {
-            initialized,
-            uninitialized,
-            moved
-        }
-
-        public int order { get; }
-        public ISymbol symbol { get; set; }
-        public Kind kind { get; set; }
-        public ILocation location { get; set; }
-
-        public SymbolStatus(int order, ISymbol symbol, Kind kind, ILocation location)
-        {
-            this.order = order;
-            this.symbol = symbol;
-            this.kind = kind;
-            this.location = location;
-        }
-
-        public override string ToString() => $"{symbol.Name}: {kind} @ {location} [{location.Beginning}]";
-    }
-
     public class Scope
     {
         public string Name { get; set; }
@@ -130,19 +105,10 @@ namespace Cheez
         private Dictionary<string, List<IBinaryOperator>> mBinaryOperatorTable = new Dictionary<string, List<IBinaryOperator>>();
         private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
         private Dictionary<AstImplBlock, List<AstFuncExpr>> mImplTable = new Dictionary<AstImplBlock, List<AstFuncExpr>>();
-        private Dictionary<ISymbol, SymbolStatus> mSymbolStatus;
+
         private List<AstFuncExpr> mForExtensions = null;
         private (string label, object loopOrAction)? mBreak = null;
         private (string label, object loopOrAction)? mContinue = null;
-
-        public ISymbol[] SymbolStatuses => mSymbolStatus?.Keys?.ToArray();
-        public IEnumerable<SymbolStatus> AllSymbolStatusesReverseOrdered => mSymbolStatus?.Values?.OrderByDescending(s => s.order);
-        public IEnumerable<SymbolStatus> SymbolStatusesReverseOrdered => mSymbolStatus?.Values?
-                                .Where(v => mSymbolTable.ContainsValue(v.symbol))?
-                                .OrderByDescending(s => s.order);
-
-        //
-        //
 
         public IEnumerable<KeyValuePair<string, ISymbol>> Symbols => mSymbolTable.AsEnumerable();
 
@@ -162,81 +128,6 @@ namespace Cheez
                 mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>(mUnaryOperatorTable)
                 // TODO: mImplTable?, rest?
             };
-        }
-
-        public void InitSymbolStats(Scope add = null)
-        {
-            //if (mSymbolStatus != null)
-            //    return;
-            mSymbolStatus ??= new Dictionary<ISymbol, SymbolStatus>();
-
-            //foreach (var s in Symbols)
-            //{
-            //    mSymbolStatus[s.Value] = new SymbolStatus(mSymbolStatus.Count, s.Value, SymbolStatus.Kind.uninitialized, s.Value.Location);
-            //}
-
-            if (Parent?.mSymbolStatus != null)
-            {
-                foreach (var symbol in Parent.mSymbolStatus)
-                    mSymbolStatus[symbol.Key] = symbol.Value;
-            }
-            if (LinkedScope?.mSymbolStatus != null)
-            {
-                foreach (var symbol in LinkedScope.mSymbolStatus)
-                    mSymbolStatus[symbol.Key] = symbol.Value;
-            }
-
-            if (add?.mSymbolStatus != null)
-            {
-                foreach (var symbol in add.mSymbolStatus)
-                    mSymbolStatus[symbol.Key] = symbol.Value;
-            }
-        }
-
-        public void SetSymbolStatus(ISymbol symbol, SymbolStatus.Kind holdsValue, ILocation location)
-        {
-            var order = mSymbolStatus.Count;
-            if (mSymbolStatus.TryGetValue(symbol, out var stat))
-                order = stat.order;
-
-            mSymbolStatus[symbol] = new SymbolStatus(order, symbol, holdsValue, location);
-        }
-
-        public SymbolStatus GetSymbolStatus(ISymbol symbol) => mSymbolStatus[symbol];
-
-        public bool TryGetSymbolStatus(ISymbol symbol, out SymbolStatus status)
-        {
-            if (mSymbolStatus.TryGetValue(symbol, out var s))
-            {
-                status = s;
-                return true;
-            }
-
-            status = default;
-            return false;
-        }
-
-        public void ApplyInitializedSymbolsToParent()
-        {
-            if (Parent == null)
-                return;
-
-            if (Parent.mSymbolStatus == null)
-                Parent.InitSymbolStats();
-
-            foreach (var s in Parent.mSymbolStatus.Keys.ToArray())
-            {
-                Parent.mSymbolStatus[s] = mSymbolStatus[s];
-            }
-        }
-
-        public void ApplyInitializedSymbolsTo(Scope scope)
-        {
-            foreach (var s in scope.mSymbolStatus.Keys.ToArray())
-            {
-                if (mSymbolStatus.TryGetValue(s, out var stat))
-                    scope.mSymbolStatus[s] = stat;
-            }
         }
 
         public void AddForExtension(AstFuncExpr func)

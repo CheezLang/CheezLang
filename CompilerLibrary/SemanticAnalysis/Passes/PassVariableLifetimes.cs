@@ -1,5 +1,8 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Cheez.Ast;
 using Cheez.Ast.Expressions;
@@ -10,6 +13,105 @@ using Cheez.Types.Primitive;
 
 namespace Cheez
 {
+    internal class SymbolStatus
+    {
+        public enum Kind
+        {
+            initialized,
+            uninitialized,
+            moved
+        }
+
+        public int order { get; }
+        public ISymbol symbol { get; set; }
+        public Kind kind { get; set; }
+        public ILocation location { get; set; }
+        public bool Owned { get; set; }
+
+        public SymbolStatus(int order, ISymbol symbol, Kind kind, ILocation location, bool owned)
+        {
+            this.order = order;
+            this.symbol = symbol;
+            this.kind = kind;
+            this.location = location;
+            this.Owned = owned;
+        }
+
+        public override string ToString() => $"{symbol.Name}: {kind} @ {location} [{location.Beginning}]";
+    }
+    internal class SymbolStatusTable
+    {
+        public SymbolStatusTable Parent { get; }
+        private Dictionary<ISymbol, SymbolStatus> mSymbolStatus;
+        public ISymbol[] SymbolStatuses => mSymbolStatus.Keys.ToArray();
+        public IEnumerable<SymbolStatus> AllSymbolStatusesReverseOrdered => Parent != null ?
+            mSymbolStatus.Values.Where(v => v.Owned).Concat(Parent.AllSymbolStatusesReverseOrdered) :
+            mSymbolStatus.Values.Where(v => v.Owned);
+        public IEnumerable<SymbolStatus> UnownedSymbolStatuses => mSymbolStatus.Values
+                                .Where(v => !v.Owned);
+        public IEnumerable<SymbolStatus> OwnedSymbolStatusesReverseOrdered => mSymbolStatus.Values
+                                .Where(v => v.Owned)
+                                .OrderByDescending(s => s.order);
+
+        public SymbolStatusTable(SymbolStatusTable parent)
+        {
+            this.Parent = parent;
+            this.mSymbolStatus = new Dictionary<ISymbol, SymbolStatus>();
+        }
+
+        public void InitSymbolStatus(ISymbol symbol, SymbolStatus.Kind holdsValue, ILocation location)
+        {
+            if (mSymbolStatus.ContainsKey(symbol))
+                throw new Exception();
+
+            var order = mSymbolStatus.Count;
+            if (mSymbolStatus.TryGetValue(symbol, out var stat))
+                order = stat.order;
+
+            mSymbolStatus[symbol] = new SymbolStatus(order, symbol, holdsValue, location, true);
+        }
+
+        public void UpdateSymbolStatus(ISymbol symbol, SymbolStatus.Kind holdsValue, ILocation location)
+        {
+            if (mSymbolStatus.TryGetValue(symbol, out var status))
+            {
+                status.kind = holdsValue;
+                status.location = location;
+            }
+            else
+            {
+                mSymbolStatus[symbol] = new SymbolStatus(mSymbolStatus.Count, symbol, holdsValue, location, false);
+            }
+        }
+
+        public SymbolStatus GetSymbolStatus(ISymbol symbol) =>
+            mSymbolStatus.TryGetValue(symbol, out var stat) ? stat : Parent?.GetSymbolStatus(symbol)!;
+
+        public SymbolStatus? GetLocalSymbolStatus(ISymbol symbol) =>
+            mSymbolStatus.TryGetValue(symbol, out var stat) ? stat : null;
+
+        public bool TryGetSymbolStatus(ISymbol symbol, [NotNullWhen(true)] out SymbolStatus? status)
+        {
+            if (mSymbolStatus.TryGetValue(symbol, out var s))
+            {
+                status = s;
+                return true;
+            }
+            if (Parent != null)
+                return Parent.TryGetSymbolStatus(symbol, out status);
+            status = null;
+            return false;
+        }
+
+        public void ApplyInitializedSymbolsToParent()
+        {
+            foreach (var stat in UnownedSymbolStatuses)
+            {
+                Parent.UpdateSymbolStatus(stat.symbol, stat.kind, stat.location);
+            }
+        }
+    }
+
     public partial class Workspace
     {
         private Dictionary<AstWhileStmt, HashSet<(Scope scope, ILocation location)>> mWhileExits =
@@ -161,26 +263,26 @@ namespace Cheez
             mWhileExits.Clear();
             mMovedTempVars.Clear();
 
-            func.SubScope.InitSymbolStats();
+            var symStatTable = new SymbolStatusTable(null);
 
             foreach (var p in func.Parameters)
             {
-                func.SubScope.SetSymbolStatus(p, SymbolStatus.Kind.initialized, p);
+                symStatTable.InitSymbolStatus(p, SymbolStatus.Kind.initialized, p);
             }
 
             if (func.ReturnTypeExpr?.Name != null)
             {
-                func.SubScope.SetSymbolStatus(func.ReturnTypeExpr, SymbolStatus.Kind.uninitialized, func.ReturnTypeExpr.Name);
+                symStatTable.InitSymbolStatus(func.ReturnTypeExpr, SymbolStatus.Kind.uninitialized, func.ReturnTypeExpr.Name);
             }
             if (func.ReturnTypeExpr?.TypeExpr is AstTupleExpr t && t.IsFullyNamed)
             {
                 foreach (var m in t.Types)
                 {
-                    func.SubScope.SetSymbolStatus(m.Symbol, SymbolStatus.Kind.uninitialized, m.Name);
+                    symStatTable.InitSymbolStatus(m.Symbol, SymbolStatus.Kind.uninitialized, m.Name);
                 }
             }
 
-            PassVLExpr(func.Body);
+            PassVLExpr(func.Body, symStatTable);
 
             // destruct params
             if (!func.Body.GetFlag(ExprFlags.Returns))
@@ -188,7 +290,8 @@ namespace Cheez
                 for (int i = func.Parameters.Count - 1; i >= 0; i--)
                 {
                     var p = func.Parameters[i];
-                    if (func.SubScope.TryGetSymbolStatus(p, out var stat) && stat.kind == SymbolStatus.Kind.initialized)
+                    var stat = symStatTable.GetSymbolStatus(p);
+                    if (stat.kind == SymbolStatus.Kind.initialized)
                     {
                         func.Body.AddDestruction(Destruct(p, func.Body.End));
                     }
@@ -196,35 +299,32 @@ namespace Cheez
             }
         }
 
-        private bool PassVLExpr(AstExpression expr)
+        private bool PassVLExpr(AstExpression expr, SymbolStatusTable symStatTable)
         {
             if (expr.Type.IsErrorType)
                 return false;
 
-            if (expr.Scope.SymbolStatuses == null)
-                expr.Scope.InitSymbolStats();
-
             switch (expr)
             {
-                case AstBlockExpr block: return PassVLBlock(block);
-                case AstIfExpr e: return PassVLIf(e);
-                case AstMatchExpr m: return PassVLMatch(m); 
+                case AstBlockExpr block: return PassVLBlock(block, symStatTable);
+                case AstIfExpr e: return PassVLIf(e, symStatTable);
+                case AstMatchExpr m: return PassVLMatch(m, symStatTable);
 
                 case AstCallExpr c:
                     {
                         bool b = true;
                         foreach (var arg in c.Arguments)
                         {
-                            if (PassVLExpr(arg.Expr))
+                            if (PassVLExpr(arg.Expr, symStatTable))
                             {
                                 if (arg.Index >= c.FunctionType.Parameters.Length)
                                 {
-                                    b &= Move(arg.Expr);
+                                    b &= Move(arg.Expr, symStatTable);
                                 }
                                 else if (arg.Index < c.FunctionType.Parameters.Length
                                     && !c.FunctionType.Parameters[arg.Index].type.IsCopy)
                                 {
-                                    b &= Move(arg.Expr);
+                                    b &= Move(arg.Expr, symStatTable);
                                 }
                             }
                             else
@@ -246,7 +346,7 @@ namespace Cheez
                         {
                             // do nothing
                         }
-                        else if (id.Scope.TryGetSymbolStatus(sym, out var status))
+                        else if (symStatTable.TryGetSymbolStatus(sym, out var status))
                         {
                             switch (status.kind)
                             {
@@ -269,7 +369,7 @@ namespace Cheez
                         var id = cc.Arguments[0].Expr as AstIdExpr;
                         var symbol = cc.Scope.GetSymbol(id.Name);
 
-                        if (cc.Scope.TryGetSymbolStatus(symbol, out var status))
+                        if (symStatTable.TryGetSymbolStatus(symbol, out var status))
                             Console.WriteLine($"[symbol stat] ({id.Location.Beginning}) {status}");
                         else
                             Console.WriteLine($"[symbol stat] ({id.Location.Beginning}) undefined");
@@ -283,8 +383,8 @@ namespace Cheez
 
                 case AstBinaryExpr b:
                     {
-                        var l = PassVLExpr(b.Left);
-                        var r = PassVLExpr(b.Right);
+                        var l = PassVLExpr(b.Left, symStatTable);
+                        var r = PassVLExpr(b.Right, symStatTable);
 
                         // no need to move here because the types should be primitive
                         // Move(b.Left);
@@ -293,36 +393,36 @@ namespace Cheez
                     }
 
                 case AstUnaryExpr u:
-                    return PassVLExpr(u.SubExpr);
+                    return PassVLExpr(u.SubExpr, symStatTable);
                     // no need to move here because the types should be primitive
                     // Move(u.SubExpr);
 
 
-                case AstAddressOfExpr a: return PassVLExpr(a.SubExpression);
-                case AstDereferenceExpr d: return PassVLExpr(d.SubExpression);
+                case AstAddressOfExpr a: return PassVLExpr(a.SubExpression, symStatTable);
+                case AstDereferenceExpr d: return PassVLExpr(d.SubExpression, symStatTable);
                 case AstArrayExpr a:
                     foreach (var sub in a.Values)
                     {
-                        if (!PassVLExpr(sub))
+                        if (!PassVLExpr(sub, symStatTable))
                             return false;
-                        if (!Move(sub))
+                        if (!Move(sub, symStatTable))
                             return false;
                     }
                     return true;
 
                 case AstCastExpr c:
-                    if (!PassVLExpr(c.SubExpression)) return false;
+                    if (!PassVLExpr(c.SubExpression, symStatTable)) return false;
 
                     // traits only borrow, so we dont move
                     if (c.Type is TraitType)
                         return true;
 
-                    return Move(c.SubExpression);
+                    return Move(c.SubExpression, symStatTable);
 
                 case AstArrayAccessExpr c:
-                    if (!PassVLExpr(c.SubExpression)) return false;
-                    if (!PassVLExpr(c.Arguments[0])) return false;
-                    if (!Move(c.Arguments[0]))
+                    if (!PassVLExpr(c.SubExpression, symStatTable)) return false;
+                    if (!PassVLExpr(c.Arguments[0], symStatTable)) return false;
+                    if (!Move(c.Arguments[0], symStatTable))
                         return false;
                     return true;
 
@@ -331,8 +431,8 @@ namespace Cheez
                         bool b = true;
                         foreach (var arg in sv.MemberInitializers)
                         {
-                            if (PassVLExpr(arg.Value))
-                                b &= Move(arg.Value);
+                            if (PassVLExpr(arg.Value, symStatTable))
+                                b &= Move(arg.Value, symStatTable);
                             else
                                 b = false;
                         }
@@ -341,39 +441,39 @@ namespace Cheez
                     }
 
                 case AstDotExpr dot:
-                    if (!PassVLExpr(dot.Left))
+                    if (!PassVLExpr(dot.Left, symStatTable))
                         return false;
                     return true;
 
                 case AstRangeExpr r:
                     {
-                        if (!PassVLExpr(r.From))
+                        if (!PassVLExpr(r.From, symStatTable))
                             return false;
-                        if (!Move(r.From))
+                        if (!Move(r.From, symStatTable))
                             return false;
-                        if (!PassVLExpr(r.To))
+                        if (!PassVLExpr(r.To, symStatTable))
                             return false;
-                        if (!Move(r.To))
+                        if (!Move(r.To, symStatTable))
                             return false;
                         return true;
                     }
 
                 case AstBreakExpr br:
-                    return PassVLBreak(br);
+                    return PassVLBreak(br, symStatTable);
 
                 case AstContinueExpr cont:
-                    return PassVLContinue(cont);
+                    return PassVLContinue(cont, symStatTable);
 
                 case AstEnumValueExpr e:
-                    return PassVLEnumValueExpr(e);
+                    return PassVLEnumValueExpr(e, symStatTable);
 
                 case AstTupleExpr t:
                     {
                         foreach (var v in t.Values)
                         {
-                            if (!PassVLExpr(v))
+                            if (!PassVLExpr(v, symStatTable))
                                 return false;
-                            if (!Move(v))
+                            if (!Move(v, symStatTable))
                                 return false;
                         }
 
@@ -385,9 +485,9 @@ namespace Cheez
                         if (mMovedTempVars.Contains(t))
                             return true;
                         mMovedTempVars.Add(t);
-                        if (!PassVLExpr(t.Expr))
+                        if (!PassVLExpr(t.Expr, symStatTable))
                             return false;
-                        if (!Move(t.Expr))
+                        if (!Move(t.Expr, symStatTable))
                             return false;
                         return true;
                     }
@@ -416,46 +516,39 @@ namespace Cheez
                 }
         }
 
-        private bool PassVLStatement(AstStatement stmt, Scope scope)
+        private bool PassVLStatement(AstStatement stmt, SymbolStatusTable symStatTable)
         {
             switch (stmt)
             {
                 case AstVariableDecl var:
-                    // dont handle comptime only variables
-                    if (var.Type.IsComptimeOnly)
-                        return true;
-
                     if (var.Initializer != null)
                     {
-                        scope.SetSymbolStatus(var, SymbolStatus.Kind.initialized, var);
-                        if (!PassVLExpr(var.Initializer))
+                        symStatTable.InitSymbolStatus(var, SymbolStatus.Kind.uninitialized, var);
+                        if (!PassVLExpr(var.Initializer, symStatTable))
                             return false;
-                        if (!Move(var.Initializer))
+                        symStatTable.UpdateSymbolStatus(var, SymbolStatus.Kind.initialized, var);
+                        if (!Move(var.Initializer, symStatTable))
                             return false;
                     }
                     else
                     {
-                        scope.SetSymbolStatus(var, SymbolStatus.Kind.uninitialized, var.Name);
+                        symStatTable.InitSymbolStatus(var, SymbolStatus.Kind.uninitialized, var);
                     }
                     return true;
 
                 case AstWhileStmt whl:
-                    if (!PassVLWhile(whl))
+                    if (!PassVLWhile(whl, symStatTable))
                         return false;
                     return true;
 
                 case AstAssignment ass:
-                    if (!PassVLAssignment(ass))
+                    if (!PassVLAssignment(ass, symStatTable))
                         return false;
                     return true;
 
                 case AstExprStmt es:
                     {
-                        if (es.Scope != scope)
-                            es.Scope.InitSymbolStats();
-                        if (es.Expr.Scope != es.Scope)
-                            es.Expr.Scope.InitSymbolStats(es.Scope);
-                        if (!PassVLExpr(es.Expr))
+                        if (!PassVLExpr(es.Expr, symStatTable))
                             return false;
 
                         if (TypeHasDestructor(es.Expr.Type))
@@ -465,23 +558,18 @@ namespace Cheez
                             es.Expr = tempVar;
                             es.AddDestruction(Destruct(tempVar));
                         }
-
-                        if (es.Expr.Scope != es.Scope)
-                            es.Expr.Scope.ApplyInitializedSymbolsTo(es.Scope);
-                        if (es.Scope != scope)
-                            es.Scope.ApplyInitializedSymbolsToParent();
                         return true;
                     }
 
                 case AstReturnStmt ret:
-                    return PassVLReturn(ret);
+                    return PassVLReturn(ret, symStatTable);
 
                 case AstDeferStmt def:
                     {
-                        if (!PassVLStatement(def.Deferred, def.Scope))
+                        if (!PassVLStatement(def.Deferred, symStatTable))
                             return false;
 
-                        scope.SetSymbolStatus(def, SymbolStatus.Kind.initialized, def);
+                        symStatTable.InitSymbolStatus(def, SymbolStatus.Kind.initialized, def);
                         return true;
                     }
             }
@@ -489,14 +577,12 @@ namespace Cheez
             return true;
         }
 
-        private bool PassVLBlock(AstBlockExpr expr)
+        private bool PassVLBlock(AstBlockExpr expr, SymbolStatusTable parent)
         {
-            var scope = expr.SubScope;
-            scope.InitSymbolStats();
-
+            var symStatTable = new SymbolStatusTable(parent);
             foreach (var stmt in expr.Statements)
             {
-                if (!PassVLStatement(stmt, scope))
+                if (!PassVLStatement(stmt, symStatTable))
                     return false;
 
                 // @todo: should we report errors for code after a break or return?
@@ -513,14 +599,12 @@ namespace Cheez
             //}
 
             //if (!expr.GetFlag(ExprFlags.Anonymous) && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
-            if (expr.SubScope != expr.Scope && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
-                expr.SubScope.ApplyInitializedSymbolsToParent();
 
             // call constructors
             if (!expr.GetFlag(ExprFlags.Anonymous)
                 && !expr.GetFlag(ExprFlags.Breaks) && !expr.GetFlag(ExprFlags.Returns))
             {
-                foreach (var stat in expr.SubScope.SymbolStatusesReverseOrdered)
+                foreach (var stat in symStatTable.OwnedSymbolStatusesReverseOrdered)
                 {
                     if (stat.kind == SymbolStatus.Kind.initialized)
                     {
@@ -529,48 +613,43 @@ namespace Cheez
                 }
             }
 
-            // add destructors
-            //foreach (var stat in expr.Scope.AllSymbolStatusesReverseOrdered)
-            //{
-            //    if (stat.kind == SymbolStatus.Kind.initialized)
-            //    {
-            //        expr.AddDestruction(Destruct(stat.symbol, expr));
-            //    }
-            //}
+            // apply to parent
+            foreach (var stat in symStatTable.UnownedSymbolStatuses)
+            {
+                parent.UpdateSymbolStatus(stat.symbol, stat.kind, stat.location);
+            }
 
             return true;
         }
 
-        private bool PassVLIf(AstIfExpr expr)
+        private bool PassVLIf(AstIfExpr expr, SymbolStatusTable parent)
         {
-            expr.SubScope.InitSymbolStats();
+            var symStatTableIf = new SymbolStatusTable(parent);
+            var symStatTableElse = new SymbolStatusTable(parent);
+
             expr.IfCase.SetFlag(ExprFlags.DontApplySymbolStatuses, true);
             expr.ElseCase.SetFlag(ExprFlags.DontApplySymbolStatuses, true);
-            var result = PassVLExpr(expr.IfCase);
-            result &= PassVLExpr(expr.ElseCase);
+            var result = PassVLExpr(expr.IfCase, symStatTableIf);
+            result &= PassVLExpr(expr.ElseCase, symStatTableElse);
 
             bool ifReturns = expr.IfCase.GetFlag(ExprFlags.Returns) || expr.IfCase.GetFlag(ExprFlags.Breaks);
             bool elseReturns = expr.ElseCase.GetFlag(ExprFlags.Returns) || expr.ElseCase.GetFlag(ExprFlags.Breaks);
             if (ifReturns && !elseReturns)
             {
                 if (expr.ElseCase is AstNestedExpression elseCase)
-                    elseCase.SubScope.ApplyInitializedSymbolsToParent();
+                    symStatTableElse.ApplyInitializedSymbolsToParent();
             }
             else if (elseReturns && !ifReturns)
             {
                 if (expr.IfCase is AstNestedExpression ifCase)
-                    ifCase.SubScope.ApplyInitializedSymbolsToParent();
+                    symStatTableIf.ApplyInitializedSymbolsToParent();
             }
             else if (!ifReturns && !elseReturns)
             {
-                var ifBlock = expr.IfCase as AstNestedExpression;
-                var elseBlock = expr.ElseCase as AstNestedExpression;
-                foreach (var sym in expr.Scope.SymbolStatuses)
+                foreach (var sym in parent.SymbolStatuses)
                 {
-                    if (!(expr.Scope.TryGetSymbolStatus(sym, out var oldStat)))
-                        continue;
-                    var ifStat = ifBlock?.SubScope?.GetSymbolStatus(sym) ?? oldStat;
-                    var elseStat = elseBlock?.SubScope?.GetSymbolStatus(sym) ?? oldStat;
+                    var ifStat = symStatTableIf.GetSymbolStatus(sym);
+                    var elseStat = symStatTableElse.GetSymbolStatus(sym);
 
                     if ((ifStat.kind == SymbolStatus.Kind.initialized) ^ (elseStat.kind == SymbolStatus.Kind.initialized))
                     {
@@ -581,84 +660,62 @@ namespace Cheez
                     }
                     else
                     {
-                        expr.SubScope.SetSymbolStatus(sym, ifStat.kind, ifStat.location);
+                        parent.UpdateSymbolStatus(sym, ifStat.kind, ifStat.location);
                     }
                 }
             }
-            expr.SubScope.ApplyInitializedSymbolsToParent();
 
             return result;
         }
 
-        private bool PassVLMatch(AstMatchExpr expr)
+        private bool PassVLMatch(AstMatchExpr expr, SymbolStatusTable parent)
         {
-            foreach (var cas in expr.Cases)
+            var subStats = new SymbolStatusTable[expr.Cases.Count];
+            for (int i = 0; i < expr.Cases.Count; i++)
             {
-                cas.SubScope.InitSymbolStats();
-                if (!PassVLExpr(cas.Body))
+                subStats[i] = new SymbolStatusTable(parent);
+                if (!PassVLExpr(expr.Cases[i].Body, subStats[i]))
                     return false;
             }
 
             bool result = true;
             // handle initialized symbols
-            foreach (var sym in expr.Scope.SymbolStatuses)
+            foreach (var sym in parent.SymbolStatuses)
             {
-                if (!(expr.Scope.TryGetSymbolStatus(sym, out var oldStat)))
-                    continue;
-
                 var moves = new List<(SymbolStatus.Kind kind, ILocation location)>();
                 var inits = new List<ILocation>();
 
-                foreach (var cas in expr.Cases)
+                for (int i = 0; i < expr.Cases.Count; i++)
                 {
-                    var caseStat = cas.SubScope.GetSymbolStatus(sym);
+                    var caseStat = subStats[i].GetSymbolStatus(sym);
 
                     switch (caseStat.kind)
                     {
                         case SymbolStatus.Kind.initialized:
-                            if (caseStat.location == oldStat.location)
-                                inits.Add(cas.Body.End);
-                            else
-                                inits.Add(caseStat.location);
+                            inits.Add(caseStat.location);
                             break;
 
                         case SymbolStatus.Kind.moved:
-                            if (caseStat.location == oldStat.location)
-                                moves.Add((caseStat.kind, cas.Body.End));
-                            else
-                                moves.Add((caseStat.kind, caseStat.location));
+                            moves.Add((caseStat.kind, caseStat.location));
                             break;
 
                         case SymbolStatus.Kind.uninitialized:
-                            if (caseStat.location == oldStat.location)
-                                moves.Add((caseStat.kind, cas.Body.End));
-                            else
-                                moves.Add((caseStat.kind, caseStat.location));
+                            moves.Add((caseStat.kind, caseStat.location));
                             break;
                     }
-
-                    //allInit &= caseStat.kind == SymbolStatus.Kind.initialized;
-                    //allDeinit &= caseStat.kind != SymbolStatus.Kind.initialized;
-
-                    //if (caseStat.kind == SymbolStatus.Kind.initialized && firstInit == null)
-                    //    firstInit = caseStat;
-                    //else if (caseStat.kind != SymbolStatus.Kind.initialized && firstDeinit == null)
-                    //    firstDeinit = caseStat;
                 }
 
                 if (inits.Count > 0 && moves.Count == 0)
                 {
                     if (inits.Count != expr.Cases.Count)
                         WellThatsNotSupposedToHappen();
-                    if (oldStat.kind != SymbolStatus.Kind.initialized)
-                        expr.Scope.SetSymbolStatus(sym, SymbolStatus.Kind.initialized, inits[0]);
+                    parent.UpdateSymbolStatus(sym, SymbolStatus.Kind.initialized, inits[0]);
                 }
                 else if (moves.Count > 0 && inits.Count == 0)
                 {
                     if (moves.Count != expr.Cases.Count)
                         WellThatsNotSupposedToHappen();
-                    if (oldStat.kind == SymbolStatus.Kind.initialized)
-                        expr.Scope.SetSymbolStatus(sym, moves[0].kind, moves[0].location);
+                    parent.UpdateSymbolStatus(sym, moves[0].kind, moves[0].location);
                 }
                 else
                 {
@@ -673,121 +730,41 @@ namespace Cheez
             return result;
         }
 
-        private bool PassVLBreak(AstBreakExpr br)
+        private bool PassVLBreak(AstBreakExpr br, SymbolStatusTable symStatTable)
         {
             var whl = br.Loop;
             AddLoopExit(whl, br.Scope, br);
 
-            // @todo: add destructors and deferred expressions
-            var currentScope = br.Scope;
-            IAstNode currentNode = br;
-
-            while (currentScope != null)
+            foreach (var stat in symStatTable.OwnedSymbolStatusesReverseOrdered)
             {
-                var stats = currentScope.SymbolStatusesReverseOrdered;
-                if (stats != null)
+                if (stat.kind == SymbolStatus.Kind.initialized)
                 {
-                    foreach (var stat in stats)
-                    {
-                        if (stat.kind == SymbolStatus.Kind.initialized)
-                        {
-                            br.AddDestruction(Destruct(stat.symbol, br));
-                        }
-                    }
+                    br.AddDestruction(Destruct(stat.symbol, br));
                 }
-
-                var newScope = currentScope;
-                while (newScope == currentScope)
-                {
-                    currentNode = currentNode.Parent;
-                    if (currentNode == br.Loop)
-                    {
-                        newScope = null;
-                        break;
-                    }
-                    if (currentNode == null || currentNode is AstFuncExpr)
-                    {
-                        WellThatsNotSupposedToHappen();
-                        newScope = null;
-                        break;
-                    }
-                    if (currentNode is AstExpression expr)
-                    {
-                        newScope = expr.Scope;
-                    }
-                    else if (currentNode is AstStatement stmt)
-                    {
-                        newScope = stmt.Scope;
-                    }
-                }
-
-                currentScope = newScope;
             }
-
             return true;
         }
 
-        private bool PassVLContinue(AstContinueExpr cont)
+        private bool PassVLContinue(AstContinueExpr cont, SymbolStatusTable symStatTable)
         {
             var whl = cont.Loop;
             AddLoopExit(whl, cont.Scope, cont);
 
-            // @todo: add destructors and deferred expressions
-            var currentScope = cont.Scope;
-            IAstNode currentNode = cont;
-
-            while (currentScope != null)
+            foreach (var stat in symStatTable.OwnedSymbolStatusesReverseOrdered)
             {
-                var stats = currentScope.SymbolStatusesReverseOrdered;
-                if (stats != null)
+                if (stat.kind == SymbolStatus.Kind.initialized)
                 {
-                    foreach (var stat in stats)
-                    {
-                        if (stat.kind == SymbolStatus.Kind.initialized)
-                        {
-                            cont.AddDestruction(Destruct(stat.symbol, cont));
-                        }
-                    }
+                    cont.AddDestruction(Destruct(stat.symbol, cont));
                 }
-
-                var newScope = currentScope;
-                while (newScope == currentScope)
-                {
-                    var oldCurrent = currentNode;
-                    currentNode = currentNode.Parent;
-                    if (currentNode == cont.Loop)
-                    {
-                        newScope = null;
-                        break;
-                    }
-                    if (currentNode == null || currentNode is AstFuncExpr)
-                    {
-                        WellThatsNotSupposedToHappen();
-                        newScope = null;
-                        break;
-                    }
-                    if (currentNode is AstExpression expr)
-                    {
-                        newScope = expr.Scope;
-                    }
-                    else if (currentNode is AstStatement stmt)
-                    {
-                        newScope = stmt.Scope;
-                    }
-                }
-
-                currentScope = newScope;
             }
 
             return true;
         }
 
-        private bool PassVLWhile(AstWhileStmt whl)
+        private bool PassVLWhile(AstWhileStmt whl, SymbolStatusTable parent)
         {
-            if (whl.PreScope != whl.Scope)
-                whl.PreScope.InitSymbolStats();
-            whl.SubScope.InitSymbolStats();
-            if (!PassVLExpr(whl.Body))
+            var symStatTable = new SymbolStatusTable(parent);
+            if (!PassVLExpr(whl.Body, symStatTable))
                 return false;
 
             if (!whl.Body.GetFlag(ExprFlags.Breaks) && !whl.Body.GetFlag(ExprFlags.Returns))
@@ -795,13 +772,12 @@ namespace Cheez
 
             if (mWhileExits.TryGetValue(whl, out var exits))
             {
-                foreach (var sym in whl.Scope.SymbolStatuses)
+                foreach (var sym in parent.SymbolStatuses)
                 {
-                    if (!(whl.Scope.TryGetSymbolStatus(sym, out var oldStat)))
-                        continue;
+                    var oldStat = parent.GetSymbolStatus(sym);
                     foreach (var exit in exits)
                     {
-                        var newStat = exit.scope.GetSymbolStatus(sym);
+                        var newStat = symStatTable.GetSymbolStatus(sym);
 
                         if ((oldStat.kind == SymbolStatus.Kind.initialized) ^ (newStat.kind == SymbolStatus.Kind.initialized))
                         {
@@ -817,17 +793,17 @@ namespace Cheez
             return true;
         }
 
-        private bool PassVLAssignment(AstAssignment ass)
+        private bool PassVLAssignment(AstAssignment ass, SymbolStatusTable symStatTable)
         {
             var result = true;
             if (ass.SubAssignments?.Count > 0)
             {
                 foreach (var sub in ass.SubAssignments)
-                    result &= PassVLAssignment(sub);
+                    result &= PassVLAssignment(sub, symStatTable);
                 return result;
             }
 
-            if (!PassVLExpr(ass.Pattern))
+            if (!PassVLExpr(ass.Pattern, symStatTable))
                 return false;
 
             // destruct pattern if already initialized
@@ -835,7 +811,7 @@ namespace Cheez
                 if (ass.Pattern is AstIdExpr id)
                 {
                     // if it is an id pattern it may not be initialized
-                    if (ass.Scope.TryGetSymbolStatus(id.Symbol, out var stat)
+                    if (symStatTable.TryGetSymbolStatus(id.Symbol, out var stat)
                         && stat.kind == SymbolStatus.Kind.initialized)
                         ass.AddDestruction(Destruct(id.Symbol, ass.Pattern));
                 }
@@ -859,47 +835,47 @@ namespace Cheez
             }
 
             // value
-            result &= PassVLExpr(ass.Value);
+            result &= PassVLExpr(ass.Value, symStatTable);
 
             // if pattern is an id, update status
             // otherwise it must already be initialized
             {
-                if (ass.Pattern is AstIdExpr id && ass.Scope.TryGetSymbolStatus(id.Symbol, out var status))
+                if (ass.Pattern is AstIdExpr id && symStatTable.TryGetSymbolStatus(id.Symbol, out var status))
                 {
-                    ass.Scope.SetSymbolStatus(id.Symbol, SymbolStatus.Kind.initialized, ass);
+                    symStatTable.UpdateSymbolStatus(id.Symbol, SymbolStatus.Kind.initialized, ass);
                 }
             }
 
             // move value if no operator assignment (otherwise the operator call handles this)=
             if (ass.Operator == null)
-                result &= Move(ass.Value);
+                result &= Move(ass.Value, symStatTable);
             return result;
         }
 
-        private bool PassVLEnumValueExpr(AstEnumValueExpr e)
+        private bool PassVLEnumValueExpr(AstEnumValueExpr e, SymbolStatusTable symStatTable)
         {
             if (e.Argument != null)
             {
-                if (!PassVLExpr(e.Argument))
+                if (!PassVLExpr(e.Argument, symStatTable))
                     return false;
-                return Move(e.Argument);
+                return Move(e.Argument, symStatTable);
             }
             return true;
         }
 
-        private bool PassVLReturn(AstReturnStmt ret)
+        private bool PassVLReturn(AstReturnStmt ret, SymbolStatusTable symStatTable)
         {
             // move value
             if (ret.ReturnValue != null)
             {
-                if (!PassVLExpr(ret.ReturnValue))
+                if (!PassVLExpr(ret.ReturnValue, symStatTable))
                     return false;
-                if (!Move(ret.ReturnValue))
+                if (!Move(ret.ReturnValue, symStatTable))
                     return false;
             }
 
             // add destructors
-            foreach (var stat in ret.Scope.AllSymbolStatusesReverseOrdered)
+            foreach (var stat in symStatTable.OwnedSymbolStatusesReverseOrdered)
             {
                 if (stat.kind == SymbolStatus.Kind.initialized)
                 {
@@ -918,7 +894,7 @@ namespace Cheez
                         foreach (var m in t.Types)
                         {
                             if (m.Symbol != null
-                                && ret.Scope.TryGetSymbolStatus(m.Symbol, out var stat)
+                                && symStatTable.TryGetSymbolStatus(m.Symbol, out var stat)
                                 && stat.kind == SymbolStatus.Kind.initialized)
                             {
                                 // ok
@@ -940,7 +916,7 @@ namespace Cheez
                 }
                 else
                 {
-                    if (ret.Scope.GetSymbolStatus(currentFunction.ReturnTypeExpr).kind != SymbolStatus.Kind.initialized)
+                    if (symStatTable.GetSymbolStatus(currentFunction.ReturnTypeExpr).kind != SymbolStatus.Kind.initialized)
                     {
                         // check if maybe is tuple and all tuples have been initialized
                         if (currentFunction.ReturnTypeExpr.TypeExpr is AstTupleExpr t && t.IsFullyNamed)
@@ -948,7 +924,7 @@ namespace Cheez
                             foreach (var m in t.Types)
                             {
                                 if (m.Symbol != null
-                                    && ret.Scope.TryGetSymbolStatus(m.Symbol, out var stat)
+                                    && symStatTable.TryGetSymbolStatus(m.Symbol, out var stat)
                                     && stat.kind == SymbolStatus.Kind.initialized)
                                 {
                                     // ok

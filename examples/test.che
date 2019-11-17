@@ -7,33 +7,51 @@
 // #load("compiler/main")
 // #load("examples/snake/snake")
 // #load("examples/pathtracer")
-// #load("compiler/compiler_test")
+#load("compiler/compiler_test")
 
 // #load("tests/language/match3")
 // #load("tests/library/arena_allocator1")
 // #load("tests/other/test1")
-// #load("examples/project_euler/005_smallest_multiple")
+// #load("examples/project_euler/018_maximum_path_sum_1")
 
-//*
-// #load("std:io/io")
+/*
+#load("std:io/io")
 
-// Bar :: struct {
-//     num : int
-// }
+Bar :: struct {
+    num : int
+}
 
-// impl Drop for Bar {
-//     drop :: (ref Self) {
-//         println(num)
-//     }
-// }
+impl Drop for Bar {
+    drop :: (ref Self) {
+        println(num)
+    }
+}
 
 // foo :: (num: int) #macro #transparent {
 //     x := Bar(num)
 // }
 
-// Main :: () {
-//     foo(3)
-// }
+baz :: (b: Bar) {
+
+}
+
+Main :: () {
+    n : Bar
+
+    @log_symbol_status(n)
+    while false {
+        @log_symbol_status(n)
+    }
+    @log_symbol_status(n)
+
+    if false {
+        n = Bar(5)
+        baz(n)
+    } else {
+        n = Bar(7)
+        baz(n)
+    }
+}
 
 // */
 

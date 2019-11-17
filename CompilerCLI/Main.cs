@@ -246,6 +246,12 @@ namespace CheezCLI
                 bool codeGenOk = GenerateAndCompileCode(options, compiler.DefaultWorkspace, errorHandler);
                 result.BackEnd = stopwatch.Elapsed;
 
+                if (!codeGenOk)
+                {
+                    result.ExitCode = 4;
+                    return result;
+                }
+
                 if (options.RunCode && codeGenOk)
                 {
                     if (options.RunAsTest)

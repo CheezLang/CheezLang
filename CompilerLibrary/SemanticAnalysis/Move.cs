@@ -7,7 +7,7 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        private bool Move(AstExpression expr, ILocation location = null)
+        private bool Move(AstExpression expr, SymbolStatusTable symStatTable, ILocation location = null)
         {
             switch (expr)
             {
@@ -23,7 +23,7 @@ namespace Cheez
 
                 case AstIdExpr id:
                     {
-                        if (expr.Scope.TryGetSymbolStatus(id.Symbol, out var status))
+                        if (symStatTable.TryGetSymbolStatus(id.Symbol, out var status))
                         {
                             if (status.kind != SymbolStatus.Kind.initialized)
                             {
@@ -37,13 +37,13 @@ namespace Cheez
                                 var type = (id.Symbol as ITypedSymbol).Type;
                                 if (!type.IsCopy)
                                 {
-                                    expr.Scope.SetSymbolStatus(id.Symbol, SymbolStatus.Kind.moved, expr);
+                                    symStatTable.UpdateSymbolStatus(id.Symbol, SymbolStatus.Kind.moved, expr);
                                 }
                             }
                         }
                         else if (id.Symbol is Using use)
                         {
-                            return Move(use.Expr, id.Location);
+                            return Move(use.Expr, symStatTable, id.Location);
                         }
                         return true;
                     }
