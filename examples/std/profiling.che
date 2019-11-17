@@ -2,20 +2,20 @@
 #load("std:time")
 #load("std:thread")
 
-profile_scope :: (name: string) #macro #export_symbols(_) {
-    if const enable_profiler {
+profile_scope :: (name: string) #macro #transparent {
+    // if const enable_profiler {
         _ := Timer.start(name)
-    } else {
-        _ := 0
-    }
+    // } else {
+    //     _ := 0
+    // }
 }
 
-profile_function :: () #macro #export_symbols(_) {
-    if const enable_profiler {
+profile_function :: () #macro #transparent {
+    // if const enable_profiler {
         _ := Timer.start(@function_signature())
-    } else {
-        _ := 0
-    }
+    // } else {
+    //     _ := 0
+    // }
 }
 
 profile_async :: (name: string, id: int, ph: string) #macro {

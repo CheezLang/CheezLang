@@ -143,22 +143,30 @@ impl Game for MyGame {
     on_update :: (ref Self, dt: float) -> bool {
         profile_function()
 
-        pge.clear()
+        {
+            // for 0..100000 {}
+            profile_scope("clear")
+            pge.clear()
+        }
 
         // 
-        last_file_change -= dt
-        if last_file_change <= 0 and last_file_change > -1 {
-            load_function_from_file()
-            last_file_change = -2
+        {
+            profile_scope("other stuff")
+
+            last_file_change -= dt
+            if last_file_change <= 0 and last_file_change > -1 {
+                load_function_from_file()
+                last_file_change = -2
+            }
+            last_file_change = max(last_file_change, -2.0)
+
+            // update dimensions
+            width = pge.get_width()
+            height = pge.get_height()
+
+            // aspect ratio
+            xr = yr * double(width) / double(height)
         }
-        last_file_change = max(last_file_change, -2.0)
-
-        // update dimensions
-        width = pge.get_width()
-        height = pge.get_height()
-
-        // aspect ratio
-        xr = yr * double(width) / double(height)
 
         handle_input(dt)
         draw_grid()

@@ -101,9 +101,9 @@ compile_expr :: (expr: &Expr) {
     Logger.debug_log("   {} starting", (int(expr.id)))
 
     {
-        Logger.log("{}: a", expr.id)
+        // Logger.log("{}: a", expr.id)
         Sleep(5)
-        Logger.log("{}: b", expr.id)
+        // Logger.log("{}: b", expr.id)
 
     }
 
@@ -120,9 +120,9 @@ compile_expr :: (expr: &Expr) {
     wait_for_expr(expr, expr.depend[1])
     profile_async("compile_expr", id, "b")
     {
-        Logger.log("{}: c", expr.id)
+        // Logger.log("{}: c", expr.id)
         Sleep(5)
-        Logger.log("{}: d", expr.id)
+        // Logger.log("{}: d", expr.id)
     }
 
     expr.done = true
@@ -207,8 +207,12 @@ impl Compiler {
                         fiber := self.find_free_fiber()
                         fiber.expr = expr
                         self.fiber_q.push(fiber)
+
+                    //*
                     // } else if self.fiber_q2.count() > 0 {
                     //     self.fiber_q.push(self.fiber_q2.pop())
+                    // */
+
                     } else {
                         Logger.log("- no exprs queued, breaking", ())
                         break main_loop
@@ -276,13 +280,13 @@ compiler_test :: () {
     profile_function()
     Fiber.init()
 
-    compiler := Compiler.new(1)
+    compiler := Compiler.new(10)
     defer {
         Memory.drop(compiler)
         free(compiler)
     }
 
-    for(inclusive=true) id : 1..10 {
+    for(inclusive=true) id : 1..100 {
         compiler.exprs.add(Expr(id))
     }
 
