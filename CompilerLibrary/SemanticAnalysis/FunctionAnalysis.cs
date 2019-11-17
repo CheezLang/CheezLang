@@ -255,7 +255,11 @@ namespace Cheez
 
             CheckValueRangeForType(c.Type, c.Value, c.Initializer);
 
-            c.Scope.DefineSymbol(c);
+            var (ok, other) = c.GetFlag(StmtFlags.IsLocal) ?
+                c.Scope.DefineLocalSymbol(c) :
+                c.Scope.DefineSymbol(c);
+            if (!ok)
+                ReportError(c, $"A symbol with name '{c.Name.Name}' already exists in this scope", ("Other declaration here:", other));
             return c;
         }
 
@@ -766,7 +770,9 @@ namespace Cheez
             decl.ContainingFunction = currentFunction;
             ResolveVariableDecl(decl);
 
-            var (ok, other) = decl.Scope.DefineSymbol(decl);
+            var (ok, other) = decl.GetFlag(StmtFlags.IsLocal) ?
+                decl.Scope.DefineLocalSymbol(decl) :
+                decl.Scope.DefineSymbol(decl);
             if (!ok)
                 ReportError(decl, $"A symbol with name '{decl.Name.Name}' already exists in this scope", ("Other declaration here:", other));
         }

@@ -123,6 +123,8 @@ namespace Cheez
             get => mLinkedScope ?? Parent?.LinkedScope;
         }
 
+        public Scope TransparentParent { get; }
+
         private Dictionary<string, ISymbol> mSymbolTable = new Dictionary<string, ISymbol>();
         private Dictionary<string, List<INaryOperator>> mNaryOperatorTable = new Dictionary<string, List<INaryOperator>>();
         private Dictionary<string, List<IBinaryOperator>> mBinaryOperatorTable = new Dictionary<string, List<IBinaryOperator>>();
@@ -136,24 +138,19 @@ namespace Cheez
         public ISymbol[] SymbolStatuses => mSymbolStatus?.Keys?.ToArray();
         public IEnumerable<SymbolStatus> AllSymbolStatusesReverseOrdered => mSymbolStatus?.Values?.OrderByDescending(s => s.order);
         public IEnumerable<SymbolStatus> SymbolStatusesReverseOrdered => mSymbolStatus?.Values?
-                                .Where(v => mSymbolTable.ContainsValue(v.symbol) || (mImportedSymbols?.Contains(v.symbol) ?? false))?
+                                .Where(v => mSymbolTable.ContainsValue(v.symbol))?
                                 .OrderByDescending(s => s.order);
-
-        public List<ISymbol> mExportedSymbols;
-        public IEnumerable<ISymbol> ExportedSymbols => mExportedSymbols;
-
-        public List<ISymbol> mImportedSymbols;
-        public IEnumerable<ISymbol> ImportedSymbols => mImportedSymbols;
 
         //
         //
 
         public IEnumerable<KeyValuePair<string, ISymbol>> Symbols => mSymbolTable.AsEnumerable();
 
-        public Scope(string name, Scope parent = null)
+        public Scope(string name, Scope parent = null, Scope transparentParent = null)
         {
             this.Name = name;
             this.Parent = parent;
+            this.TransparentParent = transparentParent;
         }
 
         public Scope Clone()
@@ -240,26 +237,6 @@ namespace Cheez
                 if (mSymbolStatus.TryGetValue(s, out var stat))
                     scope.mSymbolStatus[s] = stat;
             }
-        }
-
-        internal bool Export(string name)
-        {
-            if (mExportedSymbols == null)
-                mExportedSymbols = new List<ISymbol>();
-
-            var sym = GetSymbol(name);
-            if (sym == null)
-                return false;
-            mExportedSymbols.Add(sym);
-            return true;
-        }
-
-        internal void Import(ISymbol sym)
-        {
-            if (mImportedSymbols == null)
-                mImportedSymbols = new List<ISymbol>();
-
-            mImportedSymbols.Add(sym);
         }
 
         public void AddForExtension(AstFuncExpr func)
@@ -606,17 +583,6 @@ namespace Cheez
             }
         }
 
-        internal int NextPosition()
-        {
-            if (IsOrdered)
-            {
-                if (Parent != null && Parent.nextPosition > nextPosition)
-                    nextPosition = Parent.nextPosition;
-                return nextPosition++;
-            }
-            return 0;
-        }
-
         private void DefineArithmeticOperators(CheezType[] types, params string[] ops)
         {
             foreach (var name in ops)
@@ -756,65 +722,43 @@ namespace Cheez
             return Parent?.GetContinue(label);
         }
 
-        public (bool ok, ILocation other) DefineSymbol(ISymbol symbol, string name = null)
+        public (bool ok, ILocation other) DefineLocalSymbol(ISymbol symbol, string name = null)
         {
             name = name ?? symbol.Name;
             if (mSymbolTable.TryGetValue(name, out var other))
                 return (false, other.Location);
 
             mSymbolTable[name] = symbol;
-
-            //switch (symbol)
-            //{
-            //    case AstSingleVariableDecl v when !v.GetFlag(StmtFlags.GlobalScope):
-            //    case AstParameter p when p.IsReturnParam:
-            //        SetSymbolStatus(symbol, SymbolStatus.Kind.uninitialized, symbol.Location);
-            //        break;
-            //}
-
             return (true, null);
+        }
+
+        public (bool ok, ILocation other) DefineSymbol(ISymbol symbol, string name = null)
+        {
+            if (TransparentParent != null)
+                return TransparentParent.DefineSymbol(symbol, name);
+
+            return DefineLocalSymbol(symbol, name);
         }
 
         public (bool ok, ILocation other) DefineUse(string name, AstExpression expr, bool replace, out Using use)
         {
-            use = null;
-            if (mSymbolTable.TryGetValue(name, out var other))
-                return (false, other.Location);
-
             use = new Using(expr, replace);
-            mSymbolTable[name] = use;
-            return (true, null);
+            return DefineSymbol(use, name);
         }
 
         public (bool ok, ILocation other) DefineConstant(string name, CheezType type, object value)
         {
-            if (mSymbolTable.TryGetValue(name, out var other))
-                return (false, other.Location);
-
-            mSymbolTable[name] = new ConstSymbol(name, type, value);
-            return (true, null);
+            return DefineSymbol(new ConstSymbol(name, type, value));
         }
 
         public bool DefineTypeSymbol(string name, CheezType symbol)
         {
-            if (symbol is null)
-                throw new ArgumentNullException(nameof(symbol));
-
-            if (mSymbolTable.ContainsKey(name))
-                return false;
-
-            mSymbolTable[name] = new TypeSymbol(name, symbol);
-            return true;
+            return DefineSymbol(new TypeSymbol(name, symbol)).ok;
         }
 
         public (bool ok, ILocation other) DefineDeclaration(AstDecl decl)
         {
-            string name = decl.Name.Name;
-            if (mSymbolTable.TryGetValue(name, out var other))
-                return (false, other.Location);
-
-            mSymbolTable[name] = decl;
-            return (true, null);
+            return DefineSymbol(decl, decl.Name.Name);
         }
 
         public ISymbol GetSymbol(string name)

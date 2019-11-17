@@ -7,52 +7,33 @@
 // #load("compiler/main")
 // #load("examples/snake/snake")
 // #load("examples/pathtracer")
-#load("compiler/compiler_test")
+// #load("compiler/compiler_test")
 
 // #load("tests/language/match3")
 // #load("tests/library/arena_allocator1")
 // #load("tests/other/test1")
 // #load("examples/project_euler/005_smallest_multiple")
 
-/*
-#load("std:io/io")
-#load("std:io/stdio")
-#load("std:math")
-#load("std:time")
-#load("std:thread")
-#load("std:profiling")
+//*
+// #load("std:io/io")
 
-enable_profiler :: true
+// Bar :: struct {
+//     num : int
+// }
 
-func_threaded :: () {
-    profile_function()
-    for 0..1000 {
-        printfln("Hello World #{}", it)
-    }
-}
+// impl Drop for Bar {
+//     drop :: (ref Self) {
+//         println(num)
+//     }
+// }
 
-func_2 :: () {
-    profile_function()
-    for 0..1000 {
-        printfln("Hello World #{}", sqrt(double(it)))
-    }
-}
+// foo :: (num: int) #macro #transparent {
+//     x := Bar(num)
+// }
 
-run_all_benchmarks :: () {
-    profile_function()
-    t1 := Thread.create_without_data(func_threaded)
-    t1.start()
-    func_2()
-    t1.join()
-}
-
-Main :: () {
-    println("start")
-    Instrumentor.get().begin_session("test_session", "test_session.json")
-    run_all_benchmarks()
-    Instrumentor.get().end_session()
-    println("end")
-}
+// Main :: () {
+//     foo(3)
+// }
 
 // */
 

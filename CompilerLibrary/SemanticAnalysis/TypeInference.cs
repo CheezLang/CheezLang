@@ -2621,7 +2621,8 @@ namespace Cheez
                 expr.SubScope = expr.Scope;
             else
             {
-                expr.SubScope = new Scope("{}", expr.Scope);
+                var transparentParent = expr.Transparent ? expr.Scope : null;
+                expr.SubScope = new Scope("{}", expr.Scope, transparentParent);
             }
 
             int end = expr.Statements.Count;
@@ -3229,23 +3230,34 @@ namespace Cheez
         {
             var macro = call.Declaration;
 
-            bool export_symbols = call.Declaration.HasDirective("export_symbols");
+            bool isTransparent = call.Declaration.HasDirective("transparent");
 
             var code = macro.Body.Clone() as AstBlockExpr;
             code.Parent = call.Parent;
-            code.Scope = new Scope("macro {}", macro.ConstScope);
-            code.Scope.LinkedScope = call.Scope;
             code.SetFlag(ExprFlags.FromMacroExpansion, true);
-            if (export_symbols)
-                code.SetFlag(ExprFlags.Anonymous, true);
+
+            if (isTransparent)
+            {
+                code.Scope = call.Scope;
+                code.Transparent = true;
+            }
+            else
+            {
+                code.Scope = new Scope("macro {}", macro.ConstScope);
+                code.Scope.LinkedScope = call.Scope;
+            }
 
             // define arguments
             var links = call.Arguments.Select((arg, index) =>
             {
                 var param = macro.Parameters[index];
-                var link = new AstCompCallExpr(
-                    new AstIdExpr("link", false, arg.Location),
-                    new List<AstArgument> { arg }, arg.Location);
+                AstExpression link = null;
+                if (isTransparent)
+                    link = arg.Expr;
+                else
+                    link = new AstCompCallExpr(
+                        new AstIdExpr("link", false, arg.Location),
+                        new List<AstArgument> { arg }, arg.Location);
                 bool isConst = arg.Type.IsComptimeOnly || arg.Expr.Value != null;
 
                 AstDecl varDecl = null;
@@ -3255,6 +3267,7 @@ namespace Cheez
                     varDecl = new AstConstantDeclaration(param.Name, null, link, Location: arg.Location);
                 else
                     varDecl = new AstVariableDecl(param.Name, new AstTypeRef(param.Type, param), link, Location: arg.Location);
+                varDecl.SetFlag(StmtFlags.IsLocal, true);
                 return varDecl;
             });
             code.Statements.InsertRange(0, links);
@@ -3268,28 +3281,6 @@ namespace Cheez
             if (errHandler.HasErrors)
             {
                 ReportError(call.Location, "Failed to expand macro", errHandler.Errors, ("Macro defined here:", macro.ParameterLocation));
-            }
-
-            if (export_symbols)
-            {
-                var dir = call.Declaration.GetDirective("export_symbols");
-
-                foreach (var arg in dir.Arguments)
-                {
-                    if (arg is AstIdExpr id)
-                    {
-                        if (!newExpr.Scope.Export(id.Name))
-                        {
-                            ReportError(arg, $"No symbol with name '{id.Name}' exists in this macro");
-                            continue;
-                        }
-                        call.Scope.Import(newExpr.Scope.GetSymbol(id.Name));
-                    }
-                    else
-                    {
-                        ReportError(arg, $"Must be an identifier");
-                    }
-                }
             }
 
             return newExpr;

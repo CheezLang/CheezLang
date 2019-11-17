@@ -256,31 +256,21 @@ namespace Cheez.Visitors
         public override string VisitConstantDeclaration(AstConstantDeclaration decl, int data = 0)
         {
             StringBuilder sb = new StringBuilder();
+            if (decl.GetFlag(StmtFlags.IsLocal))
+                sb.Append("local ");
             sb.Append(decl.Pattern.Accept(this));
             sb.Append($" : {decl.Type}");
 
             sb.Append(" : ");
             sb.Append(decl.Initializer.Accept(this));
-
-            //switch (decl.Initializer)
-            //{
-            //    case AstStructTypeExpr _:
-            //    case AstEnumTypeExpr _:
-            //    case AstTraitTypeExpr _:
-            //    case AstFuncExpr _:
-            //        break;
-
-            //    default:
-            //        sb.Append(" = ");
-            //        sb.Append(decl.Initializer.Value);
-            //        break;
-            //}
             return sb.ToString();
         }
 
         public override string VisitVariableDecl(AstVariableDecl variable, int indentLevel = 0)
         {
             StringBuilder sb = new StringBuilder();
+            if (variable.GetFlag(StmtFlags.IsLocal))
+                sb.Append("local ");
             sb.Append(variable.Pattern.Accept(this));
             sb.Append($" : {variable.Type}");
 

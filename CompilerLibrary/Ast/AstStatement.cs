@@ -18,7 +18,8 @@ namespace Cheez.Ast.Statements
         IsMacroFunction,
         IsForExtension,
         IsCopy,
-        Breaks
+        Breaks,
+        IsLocal
     }
 
     public interface IAstNode {

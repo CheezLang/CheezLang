@@ -516,15 +516,6 @@ namespace Cheez
             if (expr.SubScope != expr.Scope && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
                 expr.SubScope.ApplyInitializedSymbolsToParent();
 
-            if (expr.Scope.ExportedSymbols != null)
-            {
-                foreach (var export in expr.Scope.ExportedSymbols)
-                {
-                    var stat = expr.Scope.GetSymbolStatus(export);
-                    expr.Scope.LinkedScope.SetSymbolStatus(export, stat.kind, stat.location);
-                }
-            }
-
             // call constructors
             if (!expr.GetFlag(ExprFlags.Anonymous)
                 && !expr.GetFlag(ExprFlags.Breaks) && !expr.GetFlag(ExprFlags.Returns))

@@ -270,6 +270,9 @@ namespace Cheez.Ast.Expressions
 
         public override bool IsPolymorphic => false;
 
+        // flags
+        public bool Transparent { get; set; }
+
         public AstBlockExpr(List<AstStatement> statements, ILocation Location = null) : base(Location: Location)
         {
             this.Statements = statements;
