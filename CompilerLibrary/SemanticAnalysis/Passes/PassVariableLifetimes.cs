@@ -579,7 +579,12 @@ namespace Cheez
 
         private bool PassVLBlock(AstBlockExpr expr, SymbolStatusTable parent)
         {
-            var symStatTable = new SymbolStatusTable(parent);
+            SymbolStatusTable? symStatTable = null;
+            if (expr.Transparent)
+                symStatTable = parent;
+            else
+                symStatTable = new SymbolStatusTable(parent);
+
             foreach (var stmt in expr.Statements)
             {
                 if (!PassVLStatement(stmt, symStatTable))
@@ -600,23 +605,26 @@ namespace Cheez
 
             //if (!expr.GetFlag(ExprFlags.Anonymous) && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
 
-            // call constructors
-            if (!expr.GetFlag(ExprFlags.Anonymous)
-                && !expr.GetFlag(ExprFlags.Breaks) && !expr.GetFlag(ExprFlags.Returns))
+            if (!expr.Transparent)
             {
-                foreach (var stat in symStatTable.OwnedSymbolStatusesReverseOrdered)
+                // call constructors
+                if (!expr.GetFlag(ExprFlags.Anonymous)
+                    && !expr.GetFlag(ExprFlags.Breaks) && !expr.GetFlag(ExprFlags.Returns))
                 {
-                    if (stat.kind == SymbolStatus.Kind.initialized)
+                    foreach (var stat in symStatTable.OwnedSymbolStatusesReverseOrdered)
                     {
-                        expr.AddDestruction(Destruct(stat.symbol, expr.End));
+                        if (stat.kind == SymbolStatus.Kind.initialized)
+                        {
+                            expr.AddDestruction(Destruct(stat.symbol, expr.End));
+                        }
                     }
                 }
-            }
 
-            // apply to parent
-            foreach (var stat in symStatTable.UnownedSymbolStatuses)
-            {
-                parent.UpdateSymbolStatus(stat.symbol, stat.kind, stat.location);
+                // apply to parent
+                foreach (var stat in symStatTable.UnownedSymbolStatuses)
+                {
+                    parent.UpdateSymbolStatus(stat.symbol, stat.kind, stat.location);
+                }
             }
 
             return true;
