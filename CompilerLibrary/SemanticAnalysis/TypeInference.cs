@@ -1497,19 +1497,6 @@ namespace Cheez
                 expr.SubScope = new Scope("if", expr.Scope);
             }
 
-            if (expr.PreActions != null)
-            {
-                for (int i = 0; i < expr.PreActions.Count; i++)
-                {
-                    var pre = expr.PreActions[i];
-                    pre.Scope = expr.SubScope;
-                    pre.Parent = expr;
-                    var subs = AnalyseVariableDecl(pre).ToList();
-                    foreach (var sub in subs)
-                        expr.PreActions.Add(sub);
-                }
-            }
-
             expr.Condition.SetFlag(ExprFlags.ValueRequired, true);
             expr.Condition.AttachTo(expr, expr.SubScope);
             expr.Condition = InferTypeHelper(expr.Condition, CheezType.Bool, context);

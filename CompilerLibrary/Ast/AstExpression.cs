@@ -224,18 +224,16 @@ namespace Cheez.Ast.Expressions
         public AstExpression Condition { get; set; }
         public AstExpression IfCase { get; set; }
         public AstExpression ElseCase { get; set; }
-        public List<AstVariableDecl> PreActions { get; set; }
         public bool IsConstIf { get; set; }
 
         public override bool IsPolymorphic => false;
 
-        public AstIfExpr(AstExpression cond, AstExpression ifCase, AstExpression elseCase = null, List<AstVariableDecl> pre = null, bool isConstIf = false, ILocation Location = null)
+        public AstIfExpr(AstExpression cond, AstExpression ifCase, AstExpression elseCase = null, bool isConstIf = false, ILocation Location = null)
             : base(Location: Location)
         {
             this.Condition = cond;
             this.IfCase = ifCase;
             this.ElseCase = elseCase;
-            this.PreActions = pre;
             this.IsConstIf = isConstIf;
         }
 
@@ -247,7 +245,6 @@ namespace Cheez.Ast.Expressions
                 Condition.Clone(),
                 IfCase.Clone(),
                 ElseCase?.Clone(),
-                PreActions?.Select(v => v.Clone() as AstVariableDecl).ToList(),
                 IsConstIf));
     }
 

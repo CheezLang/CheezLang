@@ -285,20 +285,12 @@ namespace Cheez.Visitors
         public override string VisitIfExpr(AstIfExpr ifs, int indentLevel = 0)
         {
             var sb = new StringBuilder();
-            sb.Append("if:");
-            sb.Append(ifs.Type);
-            sb.Append(":");
-            sb.Append(ifs.IfCase.Type);
-            sb.Append(":");
-            sb.Append(ifs.ElseCase?.Type);
-            sb.Append(": ");
-
-            if (ifs.PreActions != null)
-                foreach (var pre in ifs.PreActions)
-                    sb.Append(pre.Accept(this)).Append(", ");
+            sb.Append("if ");
 
             sb.Append(ifs.Condition.Accept(this));
             sb.Append(" ");
+            if (!(ifs.IfCase is AstBlockExpr))
+                sb.Append("then ");
             sb.Append(ifs.IfCase.Accept(this));
             if (ifs.ElseCase != null)
             {
@@ -387,7 +379,9 @@ namespace Cheez.Visitors
                 }
             }
 
-            var result = $"{{\n{sb.ToString().Indent(4)}\n}}".Indent(indentLevel);
+            var result = string.IsNullOrWhiteSpace(sb.ToString()) ?
+                "{}" :
+                 $"{{\n{sb.ToString().Indent(4)}\n}}";
 
             if (block.GetFlag(ExprFlags.Anonymous))
                 result = "#anonymous " + result;

@@ -1075,7 +1075,7 @@ namespace Cheez.Parsing
             return new AstWhileStmt(body, label, new Location(beg, body.End));
         }
 
-        private AstIfExpr ParseIfExpr(bool allowCommaForTuple)
+        private AstExpression ParseIfExpr(bool allowCommaForTuple)
         {
             TokenLocation beg = null, end = null;
             AstExpression condition = null;
@@ -1129,8 +1129,17 @@ namespace Cheez.Parsing
                 end = elseCase.End;
             }
 
-            var init = pre != null ? new List<AstVariableDecl> { pre } : null;
-            return new AstIfExpr(condition, ifCase, elseCase, init, isConstIf, new Location(beg, end));
+            var iff = new AstIfExpr(condition, ifCase, elseCase, isConstIf, new Location(beg, end));
+
+            if (pre != null)
+            {
+                var block = new AstBlockExpr(new List<AstStatement>{
+                    pre,
+                    new AstExprStmt(iff, iff.Location)
+                }, iff.Location);
+                return block;
+            }
+            return iff;
         }
 
         #region Expression Parsing

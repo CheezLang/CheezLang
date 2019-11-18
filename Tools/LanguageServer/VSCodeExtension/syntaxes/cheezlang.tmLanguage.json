@@ -105,7 +105,7 @@
         },
         "control_keywords": {
             "name": "keyword.control.cheezlang",
-            "match": "\\b(if|then|match|while|return|continue|break|defer|else)\\b"
+            "match": "\\b(if|then|match|while|loop|return|continue|break|defer|else)\\b"
         },
         "type_keywords": {
             "name": "storage.type.cheezlang",

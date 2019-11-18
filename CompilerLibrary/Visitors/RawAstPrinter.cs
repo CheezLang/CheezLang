@@ -170,10 +170,6 @@ namespace Cheez.Visitors
             var sb = new StringBuilder();
             sb.Append("if ");
 
-            if (ifs.PreActions != null)
-                foreach (var pre in ifs.PreActions)
-                    sb.Append(pre.Accept(this)).Append(", ");
-
             sb.Append(ifs.Condition.Accept(this));
             sb.Append(" ");
             sb.Append(ifs.IfCase.Accept(this));
