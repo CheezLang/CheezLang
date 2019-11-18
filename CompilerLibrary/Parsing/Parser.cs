@@ -1028,7 +1028,7 @@ namespace Cheez.Parsing
                     condition.Location));
             if (post != null)
                 body.Statements.Insert(1, new AstDeferStmt(post, null, post.Location));
-            var whl = new AstWhileStmt(new AstBoolExpr(true, new Location(beg)), body, null, null, label, new Location(beg, body.End));
+            var whl = new AstWhileStmt(body, label, new Location(beg, body.End));
 
             if (init != null)
             {
@@ -1072,8 +1072,7 @@ namespace Cheez.Parsing
             else
                 body = new AstBlockExpr(new List<AstStatement>{new AstExprStmt(b, b.Location)}, b.Location);
 
-            var cond = new AstBoolExpr(true, new Location(beg));
-            return new AstWhileStmt(cond, body, null, null, label, new Location(beg, body.End));
+            return new AstWhileStmt(body, label, new Location(beg, body.End));
         }
 
         private AstIfExpr ParseIfExpr(bool allowCommaForTuple)

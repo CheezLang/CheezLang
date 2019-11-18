@@ -460,40 +460,7 @@ namespace Cheez
 
         private AstWhileStmt AnalyseWhileStatement(AstWhileStmt whl)
         {
-            whl.PreScope = whl.Scope;
-            if (whl.PreActions != null)
-            {
-                whl.PreScope = new Scope("while-pre", whl.Scope);
-
-                for (int i = 0; i < whl.PreActions.Count; i++)
-                {
-                    var pre = whl.PreActions[i];
-                    pre.Scope = whl.PreScope;
-                    pre.Parent = whl;
-
-                    var subs = AnalyseVariableDecl(pre).ToList();
-                    foreach (var sub in subs)
-                        whl.PreActions.Add(sub);
-                }
-            }
-            whl.SubScope = new Scope("while", whl.PreScope);
-
-            whl.Condition.AttachTo(whl, whl.SubScope);
-            whl.Condition = InferType(whl.Condition, CheezType.Bool);
-            ConvertLiteralTypeToDefaultType(whl.Condition, CheezType.Bool);
-            if (whl.Condition.Type != CheezType.Bool && !whl.Condition.Type.IsErrorType)
-                ReportError(whl.Condition, $"The condition of a while statement must be a bool but is a {whl.Condition.Type}");
-
-            if (whl.PostAction != null)
-            {
-                whl.PostAction.Scope = whl.SubScope;
-                whl.PostAction.Parent = whl;
-                whl.PostAction = AnalyseStatement(whl.PostAction, out var newStatements);
-
-                if (newStatements?.Count() > 0)
-                    ReportError(whl.PostAction, $"New statements not allowed");
-            }
-
+            whl.SubScope = new Scope("loop", whl.Scope);
             whl.SubScope.DefineLoop(whl);
             whl.Body.AttachTo(whl, whl.SubScope);
             InferType(whl.Body, null);

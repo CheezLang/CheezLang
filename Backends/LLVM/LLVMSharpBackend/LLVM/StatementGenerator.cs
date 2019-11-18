@@ -196,35 +196,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void GenerateWhile(AstWhileStmt whl)
         {
-            if (whl.PreActions != null)
-                foreach (var pre in whl.PreActions)
-                    GenerateStatement(pre);
-
-            var bbCond = LLVM.AppendBasicBlock(currentLLVMFunction, "_loop_cond");
             var bbBody = LLVM.AppendBasicBlock(currentLLVMFunction, "_loop_body");
-            var bbPost = LLVM.AppendBasicBlock(currentLLVMFunction, "_loop_post");
             var bbEnd = LLVM.AppendBasicBlock(currentLLVMFunction, "_loop_end");
 
+            loopBodyMap[whl] = bbBody;
             loopEndMap[whl] = bbEnd;
-            loopPostActionMap[whl] = bbPost;
 
-            builder.CreateBr(bbCond);
-
-            builder.PositionBuilderAtEnd(bbCond);
-            var cond = GenerateExpression(whl.Condition, true);
-            builder.CreateCondBr(cond, bbBody, bbEnd);
-
+            builder.CreateBr(bbBody);
             builder.PositionBuilderAtEnd(bbBody);
             GenerateExpression(whl.Body, false);
-
-            builder.CreateBr(bbPost);
-            builder.PositionBuilderAtEnd(bbPost);
-
-            if (whl.PostAction != null)
-                GenerateStatement(whl.PostAction);
-
-            builder.CreateBr(bbCond);
-
+            builder.CreateBr(bbBody);
             builder.PositionBuilderAtEnd(bbEnd);
         }
 

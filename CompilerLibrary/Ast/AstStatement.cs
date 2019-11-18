@@ -137,26 +137,17 @@ namespace Cheez.Ast.Statements
 
     public class AstWhileStmt : AstStatement, ISymbol
     {
-        public AstExpression Condition { get; set; }
-        public AstBlockExpr Body { get; set; }
-
-        public List<AstVariableDecl> PreActions { get; set; }
-        public AstStatement PostAction { get; set; }
-
-        public Scope PreScope { get; set; }
         public Scope SubScope { get; set; }
+        public AstBlockExpr Body { get; set; }
 
         public AstIdExpr Label { get; set; }
 
         public string Name => Label.Name;
 
-        public AstWhileStmt(AstExpression cond, AstBlockExpr body, List<AstVariableDecl> pre, AstStatement post, AstIdExpr label, ILocation Location = null)
+        public AstWhileStmt(AstBlockExpr body, AstIdExpr label, ILocation Location = null)
             : base(Location: Location)
         {
-            this.Condition = cond;
             this.Body = body;
-            this.PreActions = pre;
-            this.PostAction = post;
             this.Label = label;
         }
 
@@ -164,10 +155,7 @@ namespace Cheez.Ast.Statements
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitWhileStmt(this, data);
         public override AstStatement Clone() 
             => CopyValuesTo(new AstWhileStmt(
-                Condition.Clone(),
                 Body.Clone() as AstBlockExpr,
-                PreActions?.Select(v => v.Clone() as AstVariableDecl)?.ToList(),
-                PostAction?.Clone(),
                 Label?.Clone() as AstIdExpr
                 ));
     }

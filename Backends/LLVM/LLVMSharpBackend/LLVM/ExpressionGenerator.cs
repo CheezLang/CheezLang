@@ -90,16 +90,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateContinue(AstContinueExpr cont)
         {
-            // TODO: deferred statements
+            // generate destructor calls and deferred statements
             if (cont.Destructions != null)
-            {
                 foreach (var dest in cont.Destructions)
-                {
                     GenerateExpression(dest, false);
-                }
-            }
 
-            var postAction = loopPostActionMap[cont.Loop];
+            var postAction = loopBodyMap[cont.Loop];
             builder.CreateBr(postAction);
 
             var bbNext = LLVM.AppendBasicBlock(currentLLVMFunction, "_cont_next");
@@ -110,14 +106,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateBreak(AstBreakExpr br)
         {
-            // TODO: deferred statements
+            // generate destructor calls and deferred statements
             if (br.Destructions != null)
-            {
                 foreach (var dest in br.Destructions)
-                {
                     GenerateExpression(dest, false);
-                }
-            }
 
             var end = loopEndMap[br.Loop];
             builder.CreateBr(end);

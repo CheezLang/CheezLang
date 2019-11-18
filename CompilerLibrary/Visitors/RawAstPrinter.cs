@@ -217,15 +217,11 @@ namespace Cheez.Visitors
 
         public override string VisitWhileStmt(AstWhileStmt wh, int indentLevel = 0)
         {
-            var sb = new StringBuilder();
-            sb.Append("while ");
-            if (wh.PreActions != null)
-                foreach (var pre in wh.PreActions)
-                    sb.Append(pre.Accept(this)).Append(", ");
-            sb.Append(wh.Condition.Accept(this));
-            if (wh.PostAction != null) sb.Append(", " + wh.PostAction.Accept(this));
-            sb.Append(" " + wh.Body.Accept(this));
-            return sb.ToString().Indent(indentLevel);
+            var str = "loop ";
+            if (wh.Label != null)
+                str += " #label " + wh.Label.Name;
+            str += wh.Body.Accept(this);
+            return str;
         }
 
         public override string VisitDeferStmt(AstDeferStmt def, int data = 0)
