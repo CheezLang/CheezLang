@@ -105,6 +105,11 @@ end_frame :: () {
 init_imgui :: (window: &GLFWwindow) -> bool {
     context := igCreateContext(null)
 
+    if context == null {
+        println("[ERROR] igCreateContext failed")
+        return false
+    }
+
     use ImGuiConfigFlags_
     io := igGetIO()
     io.ConfigFlags = @bin_or(io.ConfigFlags,

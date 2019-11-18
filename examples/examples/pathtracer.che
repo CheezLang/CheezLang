@@ -46,7 +46,7 @@ impl Printable for Vec3 {
     }
 }
 
-Ray :: struct {
+Ray :: struct #copy {
     pos: Vec3
     dir: Vec3
 }

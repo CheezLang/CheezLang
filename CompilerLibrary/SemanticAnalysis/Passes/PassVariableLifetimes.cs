@@ -44,9 +44,8 @@ namespace Cheez
         public SymbolStatusTable Parent { get; }
         public AstWhileStmt? Loop { get; set; }
         private Dictionary<ISymbol, SymbolStatus> mSymbolStatus;
-        public ISymbol[] SymbolStatuses => mSymbolStatus.Keys.ToArray();
-        public IEnumerable<SymbolStatus> AllSymbolStatusesReverseOrdered => Parent != null ?
-            mSymbolStatus.Values.Where(v => v.Owned).Concat(Parent.AllSymbolStatusesReverseOrdered) :
+        public IEnumerable<SymbolStatus> AllSymbolStatuses => Parent != null ?
+            mSymbolStatus.Values.Where(v => v.Owned).Concat(Parent.AllSymbolStatuses) :
             mSymbolStatus.Values.Where(v => v.Owned);
         
         public IEnumerable<SymbolStatus> UnownedSymbolStatuses => mSymbolStatus.Values
@@ -133,8 +132,10 @@ namespace Cheez
 
     public partial class Workspace
     {
-        private Dictionary<AstWhileStmt, HashSet<(Scope scope, ILocation location)>> mWhileExits =
-            new Dictionary<AstWhileStmt, HashSet<(Scope scope, ILocation location)>>();
+        private Dictionary<AstWhileStmt, HashSet<(SymbolStatusTable scope, ILocation location)>> mWhileBreaks =
+            new Dictionary<AstWhileStmt, HashSet<(SymbolStatusTable scope, ILocation location)>>();
+        private Dictionary<AstWhileStmt, HashSet<(SymbolStatusTable scope, ILocation location)>> mWhileContinues =
+            new Dictionary<AstWhileStmt, HashSet<(SymbolStatusTable scope, ILocation location)>>();
         private HashSet<AstTempVarExpr> mMovedTempVars = new HashSet<AstTempVarExpr>();
 
         private Dictionary<CheezType, AstFuncExpr> mTypeDropFuncMap = new Dictionary<CheezType, AstFuncExpr>();
@@ -150,14 +151,24 @@ namespace Cheez
             return null;
         }
 
-        private void AddLoopExit(AstWhileStmt whl, Scope s, ILocation location)
+        private void AddLoopExit(AstWhileStmt whl, SymbolStatusTable s, ILocation location)
         {
-            if (!mWhileExits.ContainsKey(whl))
+            if (!mWhileBreaks.ContainsKey(whl))
             {
-                mWhileExits.Add(whl, new HashSet<(Scope scope, ILocation location)>());
+                mWhileBreaks.Add(whl, new HashSet<(SymbolStatusTable scope, ILocation location)>());
             }
 
-            mWhileExits[whl].Add((s, location));
+            mWhileBreaks[whl].Add((s, location));
+        }
+
+        private void AddLoopContinue(AstWhileStmt whl, SymbolStatusTable s, ILocation location)
+        {
+            if (!mWhileContinues.ContainsKey(whl))
+            {
+                mWhileContinues.Add(whl, new HashSet<(SymbolStatusTable scope, ILocation location)>());
+            }
+
+            mWhileContinues[whl].Add((s, location));
         }
 
         public bool TypeHasDestructor(CheezType type)
@@ -277,7 +288,7 @@ namespace Cheez
 
         private void PassVariableLifetimes(AstFuncExpr func)
         {
-            mWhileExits.Clear();
+            mWhileBreaks.Clear();
             mMovedTempVars.Clear();
 
             var symStatTable = new SymbolStatusTable(null);
@@ -671,21 +682,21 @@ namespace Cheez
             }
             else if (!ifReturns && !elseReturns)
             {
-                foreach (var sym in parent.SymbolStatuses)
+                foreach (var stat in parent.AllSymbolStatuses)
                 {
-                    var ifStat = symStatTableIf.GetSymbolStatus(sym);
-                    var elseStat = symStatTableElse.GetSymbolStatus(sym);
+                    var ifStat = symStatTableIf.GetSymbolStatus(stat.symbol);
+                    var elseStat = symStatTableElse.GetSymbolStatus(stat.symbol);
 
                     if ((ifStat.kind == SymbolStatus.Kind.initialized) ^ (elseStat.kind == SymbolStatus.Kind.initialized))
                     {
-                        ReportError(expr.Beginning, $"Symbol '{sym.Name}' is initialized in one case but not the other",
+                        ReportError(expr.Beginning, $"Symbol '{stat.symbol.Name}' is initialized in one case but not the other",
                             ("if-case: " + ifStat.kind, ifStat.location),
                             ("else-case: " + elseStat.kind, elseStat.location));
                         result = false;
                     }
                     else
                     {
-                        parent.UpdateSymbolStatus(sym, ifStat.kind, ifStat.location);
+                        parent.UpdateSymbolStatus(stat.symbol, ifStat.kind, ifStat.location);
                     }
                 }
             }
@@ -705,14 +716,14 @@ namespace Cheez
 
             bool result = true;
             // handle initialized symbols
-            foreach (var sym in parent.SymbolStatuses)
+            foreach (var stat in parent.AllSymbolStatuses)
             {
                 var moves = new List<(SymbolStatus.Kind kind, ILocation location)>();
                 var inits = new List<ILocation>();
 
                 for (int i = 0; i < expr.Cases.Count; i++)
                 {
-                    var caseStat = subStats[i].GetSymbolStatus(sym);
+                    var caseStat = subStats[i].GetSymbolStatus(stat.symbol);
 
                     switch (caseStat.kind)
                     {
@@ -734,20 +745,20 @@ namespace Cheez
                 {
                     if (inits.Count != expr.Cases.Count)
                         WellThatsNotSupposedToHappen();
-                    parent.UpdateSymbolStatus(sym, SymbolStatus.Kind.initialized, inits[0]);
+                    parent.UpdateSymbolStatus(stat.symbol, SymbolStatus.Kind.initialized, inits[0]);
                 }
                 else if (moves.Count > 0 && inits.Count == 0)
                 {
                     if (moves.Count != expr.Cases.Count)
                         WellThatsNotSupposedToHappen();
-                    parent.UpdateSymbolStatus(sym, moves[0].kind, moves[0].location);
+                    parent.UpdateSymbolStatus(stat.symbol, moves[0].kind, moves[0].location);
                 }
                 else
                 {
                     var details = moves.Select(m => (m.kind.ToString() + " here:", m.location)).Concat(
                         inits.Select(i => ("initialized here:", i))
                         );
-                    ReportError(expr.Beginning, $"Symbol '{sym.Name}' is initialized in some but not all cases", details);
+                    ReportError(expr.Beginning, $"Symbol '{stat.symbol.Name}' is initialized in some but not all cases", details);
                     result = false;
                 }
             }
@@ -758,7 +769,7 @@ namespace Cheez
         private bool PassVLBreak(AstBreakExpr br, SymbolStatusTable symStatTable)
         {
             var whl = br.Loop;
-            AddLoopExit(whl, br.Scope, br);
+            AddLoopExit(whl, symStatTable, br);
 
             foreach (var stat in symStatTable.SymbolStatusesLoopReverseOrdered(whl))
             {
@@ -773,7 +784,7 @@ namespace Cheez
         private bool PassVLContinue(AstContinueExpr cont, SymbolStatusTable symStatTable)
         {
             var whl = cont.Loop;
-            AddLoopExit(whl, cont.Scope, cont);
+            AddLoopContinue(whl, symStatTable, cont);
 
             foreach (var stat in symStatTable.SymbolStatusesLoopReverseOrdered(whl))
             {
@@ -793,24 +804,53 @@ namespace Cheez
                 return false;
 
             if (!whl.Body.GetFlag(ExprFlags.Breaks) && !whl.Body.GetFlag(ExprFlags.Returns))
-                AddLoopExit(whl, whl.Body.SubScope, whl.Body.Location.End);
+                AddLoopContinue(whl, symStatTable, whl.Body.Location.End);
 
-            if (mWhileExits.TryGetValue(whl, out var exits))
+            if (mWhileContinues.TryGetValue(whl, out var conts))
             {
-                foreach (var sym in parent.SymbolStatuses)
+                foreach (var stat in parent.AllSymbolStatuses)
                 {
-                    var oldStat = parent.GetSymbolStatus(sym);
-                    foreach (var exit in exits)
+                    var oldStat = parent.GetSymbolStatus(stat.symbol);
+                    foreach (var exit in conts)
                     {
-                        var newStat = symStatTable.GetSymbolStatus(sym);
+                        var newStat = symStatTable.GetSymbolStatus(stat.symbol);
 
                         if ((oldStat.kind == SymbolStatus.Kind.initialized) ^ (newStat.kind == SymbolStatus.Kind.initialized))
                         {
                             ReportError(exit.location,
-                                $"Symbol '{sym.Name}' is {oldStat.kind} before the loop but {newStat.kind} at this exit point of the loop",
+                                $"Symbol '{stat.symbol.Name}' is {oldStat.kind} before the loop but {newStat.kind} at this exit point of the loop",
                                 ("before loop: " + oldStat.kind, oldStat.location),
                                 ("exit point: " + newStat.kind, newStat.location));
                         }
+                    }
+                }
+            }
+
+            if (mWhileBreaks.TryGetValue(whl, out var breaks))
+            {
+                foreach (var stat in parent.AllSymbolStatuses)
+                {
+                    int inits = 0;
+                    int moves = 0;
+                    var newStat = stat;
+                    foreach (var exit in breaks)
+                    {
+                        newStat = exit.scope.GetSymbolStatus(stat.symbol);
+
+                        if (newStat.kind == SymbolStatus.Kind.initialized)
+                            inits++;
+                        else
+                            moves++;
+                    }
+
+                    if (inits > 0 && moves > 0)
+                    {
+                        ReportError(stat.location,
+                            $"Symbol '{stat.symbol.Name}' is initialized in some cases but moved/uninitialized in other cases");
+                    }
+                    else
+                    {
+                        parent.UpdateSymbolStatus(stat.symbol, newStat.kind, newStat.location);
                     }
                 }
             }
