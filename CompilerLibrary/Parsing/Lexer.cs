@@ -87,6 +87,7 @@ namespace Cheez.Parsing
         KwElse,
         KwFor,
         KwWhile,
+        KwLoop,
         KwAnd,
         KwOr,
         KwTrue,
@@ -368,6 +369,7 @@ namespace Cheez.Parsing
                 case "else": token.type = TokenType.KwElse; break;
                 case "for": token.type = TokenType.KwFor; break;
                 case "while": token.type = TokenType.KwWhile; break;
+                case "loop": token.type = TokenType.KwLoop; break;
                 case "and": token.type = TokenType.KwAnd; break;
                 case "or": token.type = TokenType.KwOr; break;
                 case "true": token.type = TokenType.KwTrue; break;

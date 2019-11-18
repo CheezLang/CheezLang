@@ -376,6 +376,8 @@ namespace Cheez.Parsing
                     return ParseReturnStatement();
                 case TokenType.KwWhile:
                     return ParseWhileStatement();
+                case TokenType.KwLoop:
+                    return ParseLoopStatement();
                 case TokenType.KwFor:
                     return ParseForStatement();
                 case TokenType.KwImpl:
@@ -966,7 +968,7 @@ namespace Cheez.Parsing
             return new AstForStmt(varName, indexName, collection, body, args, label, new Location(beg.location, collection.End));
         }
 
-        private AstWhileStmt ParseWhileStatement()
+        private AstStatement ParseWhileStatement()
         {
             TokenLocation beg = null;
             AstExpression condition = null;
@@ -1017,7 +1019,61 @@ namespace Cheez.Parsing
 
             body = ParseBlockExpr();
 
-            return new AstWhileStmt(condition, body, init, post, label, new Location(beg, body.End));
+            body.Statements.Insert(0,
+                new AstExprStmt(
+                    new AstIfExpr(
+                        new AstUnaryExpr("!", condition, condition.Location),
+                        new AstBreakExpr(null, condition.Location),
+                        Location: condition.Location),
+                    condition.Location));
+            if (post != null)
+                body.Statements.Insert(1, new AstDeferStmt(post, null, post.Location));
+            var whl = new AstWhileStmt(new AstBoolExpr(true, new Location(beg)), body, null, null, label, new Location(beg, body.End));
+
+            if (init != null)
+            {
+                var block = new AstBlockExpr(new List<AstStatement>{
+                    init,
+                    whl
+                }, whl.Location);
+                return new AstExprStmt(block, block.Location);
+            }
+
+            return whl;
+        }
+
+        private AstWhileStmt ParseLoopStatement()
+        {
+            TokenLocation beg = null;
+            AstBlockExpr body = null;
+            AstIdExpr label = null;
+
+            beg = Consume(TokenType.KwLoop, ErrMsg("keyword 'loop'", "at beginning of loop statement")).location;
+            SkipNewlines();
+
+            if (CheckToken(TokenType.HashIdentifier))
+            {
+                var dir = ParseIdentifierExpr(identType: TokenType.HashIdentifier);
+                if (dir.Name == "label")
+                {
+                    label = ParseIdentifierExpr();
+                    SkipNewlines();
+                }
+                else
+                {
+                    ReportError(dir.Location, $"Unknown directive '{dir.Name}'");
+                    RecoverUntil(TokenType.OpenBrace);
+                }
+            }
+
+            var b = ParseExpression(false);
+            if (b is AstBlockExpr block)
+                body = block;
+            else
+                body = new AstBlockExpr(new List<AstStatement>{new AstExprStmt(b, b.Location)}, b.Location);
+
+            var cond = new AstBoolExpr(true, new Location(beg));
+            return new AstWhileStmt(cond, body, null, null, label, new Location(beg, body.End));
         }
 
         private AstIfExpr ParseIfExpr(bool allowCommaForTuple)
@@ -1074,7 +1130,8 @@ namespace Cheez.Parsing
                 end = elseCase.End;
             }
 
-            return new AstIfExpr(condition, ifCase, elseCase, pre, isConstIf, new Location(beg, end));
+            var init = pre != null ? new List<AstVariableDecl> { pre } : null;
+            return new AstIfExpr(condition, ifCase, elseCase, init, isConstIf, new Location(beg, end));
         }
 
         #region Expression Parsing

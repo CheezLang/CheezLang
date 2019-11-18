@@ -150,16 +150,6 @@ namespace Cheez.Ast.Statements
 
         public string Name => Label.Name;
 
-        public AstWhileStmt(AstExpression cond, AstBlockExpr body, AstVariableDecl pre, AstStatement post, AstIdExpr label, ILocation Location = null)
-            : base(Location: Location)
-        {
-            this.Condition = cond;
-            this.Body = body;
-            this.PreActions = pre != null ? new List<AstVariableDecl> { pre } : null;
-            this.PostAction = post;
-            this.Label = label;
-        }
-
         public AstWhileStmt(AstExpression cond, AstBlockExpr body, List<AstVariableDecl> pre, AstStatement post, AstIdExpr label, ILocation Location = null)
             : base(Location: Location)
         {

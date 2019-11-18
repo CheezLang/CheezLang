@@ -229,16 +229,6 @@ namespace Cheez.Ast.Expressions
 
         public override bool IsPolymorphic => false;
 
-        public AstIfExpr(AstExpression cond, AstExpression ifCase, AstExpression elseCase = null, AstVariableDecl pre = null, bool isConstIf = false, ILocation Location = null)
-            : base(Location: Location)
-        {
-            this.Condition = cond;
-            this.IfCase = ifCase;
-            this.ElseCase = elseCase;
-            this.PreActions = pre != null ? new List<AstVariableDecl> { pre } : null;
-            this.IsConstIf = isConstIf;
-        }
-
         public AstIfExpr(AstExpression cond, AstExpression ifCase, AstExpression elseCase = null, List<AstVariableDecl> pre = null, bool isConstIf = false, ILocation Location = null)
             : base(Location: Location)
         {

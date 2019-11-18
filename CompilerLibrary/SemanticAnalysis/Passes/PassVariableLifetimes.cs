@@ -42,21 +42,40 @@ namespace Cheez
     internal class SymbolStatusTable
     {
         public SymbolStatusTable Parent { get; }
+        public AstWhileStmt? Loop { get; set; }
         private Dictionary<ISymbol, SymbolStatus> mSymbolStatus;
         public ISymbol[] SymbolStatuses => mSymbolStatus.Keys.ToArray();
         public IEnumerable<SymbolStatus> AllSymbolStatusesReverseOrdered => Parent != null ?
             mSymbolStatus.Values.Where(v => v.Owned).Concat(Parent.AllSymbolStatusesReverseOrdered) :
             mSymbolStatus.Values.Where(v => v.Owned);
+        
         public IEnumerable<SymbolStatus> UnownedSymbolStatuses => mSymbolStatus.Values
                                 .Where(v => !v.Owned);
         public IEnumerable<SymbolStatus> OwnedSymbolStatusesReverseOrdered => mSymbolStatus.Values
                                 .Where(v => v.Owned)
                                 .OrderByDescending(s => s.order);
 
-        public SymbolStatusTable(SymbolStatusTable parent)
+        public SymbolStatusTable(SymbolStatusTable parent, AstWhileStmt? loop = null)
         {
             this.Parent = parent;
             this.mSymbolStatus = new Dictionary<ISymbol, SymbolStatus>();
+            this.Loop = loop;
+        }
+
+        public IEnumerable<SymbolStatus> SymbolStatusesLoopReverseOrdered(AstWhileStmt loop)
+        {
+
+            foreach (var stat in mSymbolStatus.Values.Where(v => v.Owned))
+            {
+                yield return stat;
+            }
+
+            if (Loop == loop)
+                yield break;
+
+            if (Parent != null)
+                foreach (var stat in Parent.SymbolStatusesLoopReverseOrdered(loop))
+                    yield return stat;
         }
 
         public void InitSymbolStatus(ISymbol symbol, SymbolStatus.Kind holdsValue, ILocation location)
@@ -743,7 +762,7 @@ namespace Cheez
             var whl = br.Loop;
             AddLoopExit(whl, br.Scope, br);
 
-            foreach (var stat in symStatTable.OwnedSymbolStatusesReverseOrdered)
+            foreach (var stat in symStatTable.SymbolStatusesLoopReverseOrdered(whl))
             {
                 if (stat.kind == SymbolStatus.Kind.initialized)
                 {
@@ -758,7 +777,7 @@ namespace Cheez
             var whl = cont.Loop;
             AddLoopExit(whl, cont.Scope, cont);
 
-            foreach (var stat in symStatTable.OwnedSymbolStatusesReverseOrdered)
+            foreach (var stat in symStatTable.SymbolStatusesLoopReverseOrdered(whl))
             {
                 if (stat.kind == SymbolStatus.Kind.initialized)
                 {
@@ -771,7 +790,7 @@ namespace Cheez
 
         private bool PassVLWhile(AstWhileStmt whl, SymbolStatusTable parent)
         {
-            var symStatTable = new SymbolStatusTable(parent);
+            var symStatTable = new SymbolStatusTable(parent, whl);
             if (!PassVLExpr(whl.Body, symStatTable))
                 return false;
 
