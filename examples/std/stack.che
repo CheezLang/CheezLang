@@ -20,7 +20,7 @@ impl(T: type) Stack[T] {
     }
 
     pop :: (ref Self) -> T {
-        return array.remove_last()
+        return array.pop()
     }
 
     peek :: (ref Self) -> ref T {

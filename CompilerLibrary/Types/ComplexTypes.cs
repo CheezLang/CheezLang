@@ -98,7 +98,7 @@ namespace Cheez.Types.Complex
         public override bool IsErrorType => Members.Any(m => m.type.IsErrorType);
         public override bool IsCopy => Members.All(m => m.type.IsCopy);
 
-        private TupleType((string name, CheezType type)[] members)
+        private TupleType((string name, CheezType type)[] members) : base()
         {
             Members = members;
         }

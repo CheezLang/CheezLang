@@ -148,7 +148,7 @@ namespace Cheez
                     foreach (var m in t.Types)
                     {
                         if (m.Name == null) continue;
-                        AstExpression access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnTypeExpr), new AstNumberExpr(index));
+                        AstExpression access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnTypeExpr), new AstNumberExpr(index, Location: func.ReturnTypeExpr.Location), func.ReturnTypeExpr.Location);
                         access = InferType(access, null);
                         var (ok, other) = func.SubScope.DefineUse(m.Name.Name, access, false, out var use);
                         if (!ok)
@@ -174,6 +174,7 @@ namespace Cheez
                         ret.Scope = func.Body.SubScope;
                         ret = AnalyseReturnStatement(ret);
                         func.Body.Statements.Add(ret);
+                        func.Body.SetFlag(ExprFlags.Returns, true);
                     }
 
                     PopErrorHandler();

@@ -22,15 +22,17 @@ namespace Cheez
             moved
         }
 
+        private static int _order = 0;
+
         public int order { get; }
         public ISymbol symbol { get; set; }
         public Kind kind { get; set; }
         public ILocation location { get; set; }
         public bool Owned { get; set; }
 
-        public SymbolStatus(int order, ISymbol symbol, Kind kind, ILocation location, bool owned)
+        public SymbolStatus(ISymbol symbol, Kind kind, ILocation location, bool owned)
         {
-            this.order = order;
+            this.order = _order++;
             this.symbol = symbol;
             this.kind = kind;
             this.location = location;
@@ -45,6 +47,9 @@ namespace Cheez
         public AstWhileStmt? Loop { get; set; }
         private Dictionary<ISymbol, SymbolStatus> mSymbolStatus;
         public IEnumerable<SymbolStatus> AllSymbolStatuses => Parent != null ?
+            mSymbolStatus.Values.Where(v => v.Owned).Concat(Parent.AllSymbolStatuses).OrderByDescending(s => s.order) :
+            mSymbolStatus.Values.Where(v => v.Owned).OrderByDescending(s => s.order);
+        public IEnumerable<SymbolStatus> AllSymbolStatusesReverseOrdered => Parent != null ?
             mSymbolStatus.Values.Where(v => v.Owned).Concat(Parent.AllSymbolStatuses) :
             mSymbolStatus.Values.Where(v => v.Owned);
         
@@ -82,11 +87,7 @@ namespace Cheez
             if (mSymbolStatus.ContainsKey(symbol))
                 throw new Exception();
 
-            var order = mSymbolStatus.Count;
-            if (mSymbolStatus.TryGetValue(symbol, out var stat))
-                order = stat.order;
-
-            mSymbolStatus[symbol] = new SymbolStatus(order, symbol, holdsValue, location, true);
+            mSymbolStatus[symbol] = new SymbolStatus(symbol, holdsValue, location, true);
         }
 
         public void UpdateSymbolStatus(ISymbol symbol, SymbolStatus.Kind holdsValue, ILocation location)
@@ -98,7 +99,7 @@ namespace Cheez
             }
             else
             {
-                mSymbolStatus[symbol] = new SymbolStatus(mSymbolStatus.Count, symbol, holdsValue, location, false);
+                mSymbolStatus[symbol] = new SymbolStatus(symbol, holdsValue, location, false);
             }
         }
 
@@ -845,7 +846,7 @@ namespace Cheez
 
                     if (inits > 0 && moves > 0)
                     {
-                        ReportError(stat.location,
+                        ReportError(whl,
                             $"Symbol '{stat.symbol.Name}' is initialized in some cases but moved/uninitialized in other cases");
                     }
                     else
@@ -940,9 +941,15 @@ namespace Cheez
             }
 
             // add destructors
-            foreach (var stat in symStatTable.OwnedSymbolStatusesReverseOrdered)
+            foreach (var stat in symStatTable.AllSymbolStatuses)
             {
-                if (stat.kind == SymbolStatus.Kind.initialized)
+                if (stat.symbol is AstParameter p && p.IsReturnParam)
+                    continue;
+                if (stat.symbol is Using)
+                    continue;
+
+                var kind = symStatTable.GetSymbolStatus(stat.symbol).kind;
+                if (kind == SymbolStatus.Kind.initialized)
                 {
                     ret.AddDestruction(Destruct(stat.symbol, ret));
                 }
@@ -1001,6 +1008,10 @@ namespace Cheez
                                     return false;
                                 }
                             }
+                        }
+                        else
+                        {
+                            ReportError(ret, $"Return value has not been initialized");
                         }
                     }
                 }

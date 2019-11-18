@@ -37,7 +37,7 @@ namespace Cheez.Ast.Statements
 
         public AstIdExpr Name { get; set; }
 
-        string ISymbol.Name => Name.Name;
+        string ISymbol.Name => Name?.Name;
         public CheezType Type { get; set; }
         public AstExpression TypeExpr { get; set; }
         public AstExpression DefaultValue { get; set; }

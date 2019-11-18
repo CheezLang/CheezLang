@@ -57,7 +57,7 @@ namespace Cheez.Ast.Expressions
 
         public ITypedSymbol Symbol { get; set; }
 
-        public AstSymbolExpr(ITypedSymbol sym) : base(null)
+        public AstSymbolExpr(ITypedSymbol sym) : base(sym.Location)
         {
             this.Symbol = sym;
             this.Type = sym.Type;

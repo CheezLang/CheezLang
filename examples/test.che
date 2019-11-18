@@ -7,6 +7,7 @@
 // #load("compiler/main")
 // #load("examples/snake/snake")
 // #load("examples/pathtracer")
+#load("examples/postfix")
 // #load("compiler/compiler_test")
 
 // #load("tests/language/match3")
@@ -14,29 +15,21 @@
 // #load("tests/other/test1")
 // #load("examples/project_euler/004_largest_palindrome_product")
 
-//*
+/*
 #load("std:io/io")
 
 Foo :: struct {}
 
-bar :: (f: Foo) {
+bar :: (f: Foo) -> ret: Foo {
+    a := Foo()
+    ret = Foo()
+}
 
+impl Drop for Foo {
+    drop :: (ref Self) {}
 }
 
 Main :: () {
-    a : Foo
-
-    counter := 0
-
-    loop {
-        if counter == 10 {
-            a = Foo()
-            break
-        }
-        counter += 1
-    }
-
-    bar(a)
 }
 
 // */

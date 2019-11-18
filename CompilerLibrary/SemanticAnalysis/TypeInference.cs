@@ -3195,9 +3195,6 @@ namespace Cheez
 
             if (typeMembers == expr.Values.Count)
             {
-                foreach (var m in members)
-                    ComputeTypeMembers(m.type);
-
                 expr.Type = CheezType.Type;
                 expr.Value = TupleType.GetTuple(members);
             }
