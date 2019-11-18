@@ -93,7 +93,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // generate destructor calls and deferred statements
             if (cont.Destructions != null)
                 foreach (var dest in cont.Destructions)
-                    GenerateExpression(dest, false);
+                    GenerateStatement(dest);
 
             var postAction = loopBodyMap[cont.Loop];
             builder.CreateBr(postAction);
@@ -109,7 +109,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // generate destructor calls and deferred statements
             if (br.Destructions != null)
                 foreach (var dest in br.Destructions)
-                    GenerateExpression(dest, false);
+                    GenerateStatement(dest);
 
             var end = loopEndMap[br.Loop];
             builder.CreateBr(end);
@@ -1188,7 +1188,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 {
                     foreach (var dest in expr.Destructions)
                     {
-                        GenerateExpression(dest, false);
+                        GenerateStatement(dest);
                     }
                 }
             }
@@ -1197,7 +1197,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 foreach (var dest in block.Destructions)
                 {
-                    GenerateExpression(dest, false);
+                    GenerateStatement(dest);
                 }
             }
 

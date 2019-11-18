@@ -205,7 +205,7 @@ namespace Cheez.Ast.Statements
     {
         public AstExpression ReturnValue { get; set; }
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
-        public List<AstExpression> Destructions { get; private set; } = null;
+        public List<AstStatement> Destructions { get; private set; } = null;
 
         public AstReturnStmt(AstExpression values, ILocation Location = null)
             : base(Location: Location)
@@ -217,12 +217,12 @@ namespace Cheez.Ast.Statements
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitReturnStmt(this, data);
         public override AstStatement Clone() => CopyValuesTo(new AstReturnStmt(ReturnValue?.Clone()));
 
-        public void AddDestruction(AstExpression dest)
+        public void AddDestruction(AstStatement dest)
         {
             if (dest == null)
                 return;
             if (Destructions == null)
-                Destructions = new List<AstExpression>();
+                Destructions = new List<AstStatement>();
             Destructions.Add(dest);
         }
     }
@@ -236,7 +236,7 @@ namespace Cheez.Ast.Statements
         public List<AstAssignment> SubAssignments { get; set; }
         public bool OnlyGenerateValue { get; internal set; } = false;
 
-        public List<AstExpression> Destructions { get; private set; } = null;
+        public List<AstStatement> Destructions { get; private set; } = null;
 
         public AstAssignment(AstExpression target, AstExpression value, string op = null, ILocation Location = null)
             : base(Location: Location)
@@ -252,12 +252,12 @@ namespace Cheez.Ast.Statements
             SubAssignments.Add(ass);
         }
 
-        public void AddDestruction(AstExpression dest)
+        public void AddDestruction(AstStatement dest)
         {
             if (dest == null)
                 return;
             if (Destructions == null)
-                Destructions = new List<AstExpression>();
+                Destructions = new List<AstStatement>();
             Destructions.Add(dest);
         }
 
@@ -271,7 +271,7 @@ namespace Cheez.Ast.Statements
     public class AstExprStmt : AstStatement
     {
         public AstExpression Expr { get; set; }
-        public List<AstExpression> Destructions { get; private set; } = null;
+        public List<AstStatement> Destructions { get; private set; } = null;
 
         [DebuggerStepThrough]
         public AstExprStmt(AstExpression expr, ILocation Location = null) : base(Location: Location)
@@ -287,12 +287,12 @@ namespace Cheez.Ast.Statements
 
         public override string ToString() => $"#expr {base.ToString()}";
 
-        public void AddDestruction(AstExpression dest)
+        public void AddDestruction(AstStatement dest)
         {
             if (dest == null)
                 return;
             if (Destructions == null)
-                Destructions = new List<AstExpression>();
+                Destructions = new List<AstStatement>();
             Destructions.Add(dest);
         }
     }

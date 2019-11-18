@@ -253,7 +253,7 @@ namespace Cheez.Ast.Expressions
         public List<AstStatement> Statements { get; set; }
 
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
-        public List<AstExpression> Destructions { get; private set; } = null;
+        public List<AstStatement> Destructions { get; private set; } = null;
 
         public override bool IsPolymorphic => false;
 
@@ -271,12 +271,12 @@ namespace Cheez.Ast.Expressions
         public override AstExpression Clone()
          => CopyValuesTo(new AstBlockExpr(Statements.Select(s => s.Clone()).ToList()));
 
-        public void AddDestruction(AstExpression dest)
+        public void AddDestruction(AstStatement dest)
         {
             if (dest == null)
                 return;
             if (Destructions == null)
-                Destructions = new List<AstExpression>();
+                Destructions = new List<AstStatement>();
             Destructions.Add(dest);
         }
     }
@@ -804,7 +804,7 @@ namespace Cheez.Ast.Expressions
     public class AstBreakExpr : AstExpression
     {
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
-        public List<AstExpression> Destructions { get; private set; } = null;
+        public List<AstStatement> Destructions { get; private set; } = null;
         public AstWhileStmt Loop { get; set; }
 
         public AstIdExpr Label { get; set; }
@@ -821,12 +821,12 @@ namespace Cheez.Ast.Expressions
         public override AstExpression Clone()
             => CopyValuesTo(new AstBreakExpr(Label?.Clone() as AstIdExpr));
 
-        public void AddDestruction(AstExpression dest)
+        public void AddDestruction(AstStatement dest)
         {
             if (dest == null)
                 return;
             if (Destructions == null)
-                Destructions = new List<AstExpression>();
+                Destructions = new List<AstStatement>();
             Destructions.Add(dest);
         }
     }
@@ -834,7 +834,7 @@ namespace Cheez.Ast.Expressions
     public class AstContinueExpr : AstExpression
     {
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
-        public List<AstExpression> Destructions { get; private set; } = null;
+        public List<AstStatement> Destructions { get; private set; } = null;
         public AstWhileStmt Loop { get; set; }
 
         public AstIdExpr Label { get; set; }
@@ -851,12 +851,12 @@ namespace Cheez.Ast.Expressions
         public override AstExpression Clone()
             => CopyValuesTo(new AstContinueExpr(Label?.Clone() as AstIdExpr));
 
-        public void AddDestruction(AstExpression dest)
+        public void AddDestruction(AstStatement dest)
         {
             if (dest == null)
                 return;
             if (Destructions == null)
-                Destructions = new List<AstExpression>();
+                Destructions = new List<AstStatement>();
             Destructions.Add(dest);
         }
     }

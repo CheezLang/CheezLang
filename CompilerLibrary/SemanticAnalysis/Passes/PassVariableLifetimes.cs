@@ -238,7 +238,7 @@ namespace Cheez
             return memberNeedsDtor;
         }
 
-        private AstExpression Destruct(AstExpression expr)
+        private AstStatement? Destruct(AstExpression expr)
         {
             if (!TypeHasDestructor(expr.Type))
                 return null;
@@ -249,16 +249,14 @@ namespace Cheez
             }, expr.Location);
             cc.Type = CheezType.Void;
             //cc.SetFlag(ExprFlags.IgnoreInCodeGen, true);
-            return cc;
+            return new AstExprStmt(cc, cc.Location);
         }
 
-        private AstExpression Destruct(ISymbol symbol, ILocation location)
+        private AstStatement? Destruct(ISymbol symbol, ILocation location)
         {
             if (symbol is AstDeferStmt def)
             {
-                var block = new AstBlockExpr(new List<AstStatement> { def.Deferred }, location);
-                block.Type = CheezType.Void;
-                return block;
+                return def.Deferred;
             }
             else if (symbol is ITypedSymbol tsymbol)
             {
@@ -270,7 +268,7 @@ namespace Cheez
                     new AstArgument(new AstSymbolExpr(tsymbol), Location: location)
                 }, location);
                 cc.Type = CheezType.Void;
-                return cc;
+                return new AstExprStmt(cc, cc.Location);
             }
 
             WellThatsNotSupposedToHappen();

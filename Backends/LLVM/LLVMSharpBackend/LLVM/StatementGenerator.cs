@@ -247,7 +247,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 foreach (var dest in ass.Destructions)
                 {
-                    GenerateExpression(dest, false);
+                    GenerateStatement(dest);
                 }
             }
 
@@ -262,7 +262,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 foreach (var dest in expr.Destructions)
                 {
-                    GenerateExpression(dest, false);
+                    GenerateStatement(dest);
                 }
             }
         }
@@ -332,7 +332,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 {
                     foreach (var dest in ret.Destructions)
                     {
-                        GenerateExpression(dest, false);
+                        GenerateStatement(dest);
                     }
                 }
 
@@ -349,7 +349,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 {
                     foreach (var dest in ret.Destructions)
                     {
-                        GenerateExpression(dest, false);
+                        GenerateStatement(dest);
                     }
                 }
 
@@ -363,7 +363,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 {
                     foreach (var dest in ret.Destructions)
                     {
-                        GenerateExpression(dest, false);
+                        GenerateStatement(dest);
                     }
                 }
 
