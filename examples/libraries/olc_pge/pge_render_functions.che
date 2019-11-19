@@ -1,5 +1,6 @@
-#load("pixel_game_engine.che")
-#load("pixel.che")
+use import pixel_game_engine
+use import pixel
+use import std.math
 
 impl PixelGameEngine {
     clear :: (ref Self, p: Pixel = Pixel()) {

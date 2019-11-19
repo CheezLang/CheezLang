@@ -1,5 +1,6 @@
-#load("std:mem/allocator")
-#load("std:math")
+use import std.mem.allocator
+use import std.math
+use import pixel
 
 Sprite :: struct {
     width: int

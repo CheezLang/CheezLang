@@ -1,6 +1,13 @@
-#load("std:array")
-#load("evaluator")
-#load("../../compiler/lexer")
+use import std.mem.allocator
+use import std.array
+use import std.string
+use import std.compiler.string_database
+use import std.profiling
+use import std.compiler.lexer
+use import std.compiler.token
+use import evaluator
+io :: import std.io
+C :: import std.c
 
 get_precedence :: (op: OpCode) -> int {
     return match op {
@@ -89,7 +96,7 @@ compile :: (expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]
                         res.add(op_stack.pop())
                     }
                     if op_stack.get_length() == 0 {
-                        println("[ERROR] Mismatched parenthesis")
+                        io.println("[ERROR] Mismatched parenthesis")
                         return None
                     }
                     op_stack.pop()
@@ -97,7 +104,7 @@ compile :: (expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]
                 }
 
                 $_ -> {
-                    printfln("[ERROR] {}: Unexpected token '{}'", (tok.location, tok.ttype))
+                    io.printfln("[ERROR] {}: Unexpected token '{}'", (tok.location, tok.ttype))
                     return None
                 }
             }
@@ -111,7 +118,7 @@ compile :: (expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]
                             if streq(s, "i") {
                                 false
                             } else {
-                                printfln("[ERROR] {}: Invalid suffix '{}'", (tok.location, s))
+                                io.printfln("[ERROR] {}: Invalid suffix '{}'", (tok.location, s))
                                 return None
                             }
                         }
@@ -153,7 +160,7 @@ compile :: (expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]
                                 last_was_expression = false
                             } else {
                                 name_copy := alloc_n(char, cast v.length, var_name_allocator)
-                                c_memcpy(name_copy.data, v.data, cast @sizeof(char) * v.length)
+                                C.memcpy(name_copy.data, v.data, cast @sizeof(char) * v.length)
                                 res.add(OpCode.Var(name_copy))
                             }
                         }
@@ -173,7 +180,7 @@ compile :: (expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]
                 }
 
                 $_ -> {
-                    printfln("[ERROR] {}: Unexpected token '{}'", (tok.location, tok.ttype))
+                    io.printfln("[ERROR] {}: Unexpected token '{}'", (tok.location, tok.ttype))
                     return None
                 }
             }
@@ -182,19 +189,19 @@ compile :: (expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]
 
     while op_stack.get_length() > 0 {
         if int(op_stack.peek_last()) == int(OpCode.Grp) {
-            println("[ERROR] Mismatched parenthesis")
+            io.println("[ERROR] Mismatched parenthesis")
             return None
         }
         res.add(op_stack.pop())
     }
 
     if res.get_length() == 0 {
-        println("[ERROR] Empty input")
+        io.println("[ERROR] Empty input")
         return None
     }
 
     if !last_was_expression {
-        println("[ERROR] Invalid expression")
+        io.println("[ERROR] Invalid expression")
         return None
     }
 

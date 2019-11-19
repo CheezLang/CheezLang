@@ -1,9 +1,8 @@
-
-#load("std:io/file")
-
-#load("token")
-#load("string_database")
-
+use import std.io.file
+use import token
+use import std.string
+use import string_database
+C :: import std.c
 
 Lexer :: struct {
     text        : String
@@ -409,10 +408,10 @@ impl Lexer {
         str += '`0'
 
         if isFloat {
-            d := c_strtod(str.get_raw(), null)
+            d := C.strtod(str.get_raw(), null)
             token.data = TokenData.Double(d)
         } else {
-            i := c_strtol(str.get_raw(), null, cast base)
+            i := C.strtol(str.get_raw(), null, cast base)
             token.data = TokenData.Integer(i)
         }
     }

@@ -1,4 +1,11 @@
-#load("pixel_game_engine.che")
+use import pixel_game_engine
+use import key
+use import pixel
+use import sprite
+use import opengl.functions
+use import opengl.constants
+use import std.string
+use import std.os.windows_functions
 
 impl PixelGameEngine {
     

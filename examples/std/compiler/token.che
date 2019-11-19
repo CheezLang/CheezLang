@@ -1,5 +1,6 @@
-#load("std:io/io")
-
+io :: import std.io
+use import std.printable
+use import std.string
 
 Location :: (beg: TokenLocation, end: TokenLocation)
 

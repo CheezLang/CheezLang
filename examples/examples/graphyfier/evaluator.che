@@ -1,6 +1,8 @@
-#load("std:math")
-#load("std:printable")
-#load("std:hash_table")
+use import std.math
+use import std.printable
+use import std.string
+use import std.hash_table
+use import std.hash
 
 Variables :: Table[string, Complex]
 

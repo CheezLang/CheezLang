@@ -16,6 +16,19 @@ impl Hashable for c_string {
     }
 }
 
+impl Hashable for string {
+    hash :: (ref Self) -> uint {
+        h: u32 = 2166136261
+
+        for i : 0..self.length {
+            h += cast(u32)self[i]
+            h *= 16777619
+        }
+
+        return h
+    }
+}
+
 impl Hashable for int {
     hash :: (ref Self) -> uint {
         return cast(uint) (self * 123)

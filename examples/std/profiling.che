@@ -1,6 +1,9 @@
-#load("std:io/stdio")
-#load("std:time")
-#load("std:thread")
+use import std.io.stdio
+use import std.time
+use import std.thread
+use import std.mem.allocator
+use import std.string
+io :: import std.io
 
 profile_scope :: (name: string) #macro #transparent {
     // if const enable_profiler {
@@ -69,7 +72,7 @@ impl Instrumentor {
         defer free(filepath_c)
         err := fopen_s(&output_file, filepath_c, "w")
         if err != 0 {
-            println("failed to open file")
+            io.println("failed to open file")
             output_file = null
             return
         }
