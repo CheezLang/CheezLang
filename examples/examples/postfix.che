@@ -1,6 +1,14 @@
-#load("../compiler/lexer")
-
-#load("std:stack")
+use import std.compiler.lexer
+use import std.compiler.token
+use import std.compiler.string_database
+use import std.stack
+use import std.array
+use import std.string
+use import std.printable
+use import std.mem.std_heap_allocator
+use import std.mem.allocator
+use import std.os.windows_functions
+io :: import std.io
 
 impl TokenType {
     get_precedence :: (Self) -> int {
@@ -198,21 +206,21 @@ Main :: () {
 
     for infix : args {
         if it_index < start_index then continue
-        print(infix)
+        io.print(infix)
         (postfix, result) := infix_to_postfix(infix, calculate)
-        printf(" -> {}", postfix)
+        io.printf(" -> {}", postfix)
         if calculate {
-            printfln(" = {}", result)
+            io.printfln(" = {}", result)
         } else {
-            println("")
+            io.println("")
         }
     }
 
-    // printfln("argc: {:x}, argv: {}", (int(args), count))
+    // io.printfln("argc: {:x}, argv: {}", (int(args), count))
 
 
-    // println(infix_to_postfix(String.from_string("1 + 2 * 3"))
-    // println(infix_to_postfix(String.from_string("(1 + 2) * 3"))
-    // println(infix_to_postfix(String.from_string("1 * (2 + 3)"))
-    // println(infix_to_postfix(String.from_string("1 * 2 + 3"))
+    // io.println(infix_to_postfix(String.from_string("1 + 2 * 3"))
+    // io.println(infix_to_postfix(String.from_string("(1 + 2) * 3"))
+    // io.println(infix_to_postfix(String.from_string("1 * (2 + 3)"))
+    // io.println(infix_to_postfix(String.from_string("1 * 2 + 3"))
 }
