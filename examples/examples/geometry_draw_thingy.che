@@ -1,7 +1,12 @@
-#load("olc_pge/pixel_game_engine")
-#load("std:io/io")
-#load("std:array")
-#load("std:alloca")
+use import olc_pge.pixel_game_engine
+use import olc_pge.pixel
+use import olc_pge.key
+
+use import std.array
+use import std.alloca
+use import std.math
+use import std.mem.allocator
+io :: import std.io
 
 float2 :: Vector2[float]
 
@@ -379,6 +384,6 @@ Main :: () {
     if pge != null {
         pge.start()
     } else {
-        println("failed to create pixel game engine")
+        io.println("failed to create pixel game engine")
     }
 }
