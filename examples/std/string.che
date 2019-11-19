@@ -5,7 +5,7 @@ C    :: import std.c
 use import std.printable
 use import std.mem.allocator
 use import std.mem.std_heap_allocator
-#load("std:std/alloca")
+import std.alloca
 
 StringBase :: struct(CharType: type) {
     data: []CharType

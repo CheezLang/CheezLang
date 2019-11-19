@@ -1,6 +1,8 @@
-#load("object")
-#load("lexer")
+use import std.array
+use import std.string
+use import std.printable
 
+io :: import std.io
 
 Precedence :: enum {
     None
@@ -54,13 +56,15 @@ Compiler :: struct {
 
 impl Compiler {
     create :: (kind: FunctionType) -> Self {
-        // return Compiler(
-        //     enclosing = parent
-        //     function = null
-        //     kind = kind
-        //     local_count = 0
-        //     scope_depth = 0
-        // )
+        return Compiler(
+            enclosing   = null // @todo: parent
+            function    = null
+            kind        = kind
+            locals      = default
+            local_count = 0
+            upvalues    = default
+            scope_depth = 0
+        )
     }
 }
 
@@ -79,13 +83,13 @@ compile :: (source: string) -> &ObjFunction {
     had_error := false
     panic_mode := false
 
-    advance()
-    while !match_token(TokenKind.Eof) {
-        declaration()
-    }
+    // advance()
+    // while !match_token(TokenKind.Eof) {
+    //     declaration()
+    // }
 
-    function := end_compiler()
-    return if had_error {null} else {function}
+    // function := end_compiler()
+    // return if had_error {null} else {function}
 
     // print tokens
     // while true {
@@ -98,4 +102,406 @@ compile :: (source: string) -> &ObjFunction {
     //     }
     // }
     return null
+}
+
+// :object
+ObjKind :: enum {
+    BoundMethod
+    Class
+    Closure
+    Function
+    Instance
+    Native
+    String
+    UpValue
+}
+
+Obj :: struct {
+    kind    : ObjKind
+    is_dark : bool = false
+    next    : &Obj = null
+}
+
+ObjFunction :: struct {
+    obj     : Obj   = Obj(kind = ObjKind.Function)
+    arity   : int
+    chunk   : Chunk
+    name    : ObjString
+}
+
+ObjString :: struct {
+    obj     : Obj   = Obj(kind = ObjKind.String)
+    chars   : []char
+    hash    : u32
+}
+
+// :value
+Value :: enum {
+    Nil
+    Bool    : bool
+    Num     : double
+    Obj     : &Object
+}
+
+Object :: struct {
+
+}
+
+// :lexer
+TokenKind :: enum {
+    // Single-character tokens.
+    LeftParen, RightParen,
+    LeftBrace, RightBrace,
+    Comma, Dot, Minus, Plus,
+    Semicolon, Slash, Star,
+
+    // One or two character tokens.
+    Bang, BangEqual,
+    Equal, EqualEqual,
+    Greater, GreaterEqual,
+    Less, LessEqual,
+
+    // Literals.
+    Identifier, String, Number,
+
+    // Keywords.
+    And, Class, Else, False,
+    For, Fun, If, Nil, Or,
+    Print, Return, Super, This,
+    True, Var, While,
+
+    Error,
+    Eof
+}
+
+Token :: struct {
+    kind    : TokenKind
+    text    : string
+    line    : int
+}
+
+Lexer :: struct {
+    source  : string
+    current : int
+    line    : int
+}
+
+impl Lexer {
+    create :: (source: string) -> Lexer {
+        return Lexer(
+            source = source
+            current = 0
+            line = 1
+        )
+    }
+
+    next_char :: (ref Self) -> char {
+        current += 1
+        return source[current - 1]
+    }
+
+    peek_char :: (ref Self) -> char {
+        return if is_at_end() { char(0) } else { source[current] }
+    }
+
+    peek_next_char :: (ref Self) -> char {
+        return if current >= source.length - 1 { char(0) } else { source[current + 1] }
+    }
+
+    is_at_end :: (ref Self) -> bool {
+        return current >= source.length
+    }
+
+    skip_whitespace :: (ref Self) {
+        while true {
+            c := peek_char()
+            match c {
+                ' '     -> next_char()
+                '`r'    -> next_char()
+                '`t'    -> next_char()
+
+                '`n'    -> {
+                    line += 1
+                    next_char()
+                }
+
+                '/' if peek_next_char() == '/' -> {
+                    while !is_at_end() and peek_char() != '`n' {
+                        next_char()
+                    }
+                }
+
+                $_ -> {
+                    break
+                }
+            }
+        }
+    }
+
+    make_token :: (ref Self, kind: TokenKind, length: int = 1) -> Token {
+        return Token(kind, source.slice(current - 1, length), line)
+    }
+
+    make_string :: (ref Self) -> Token {
+        start := current - 1
+        l := line
+        while !is_at_end() and peek_char() != '"' {
+            if peek_char() == '`n' {
+                line += 1
+            }
+            next_char()
+        }
+
+        if is_at_end() {
+            return Token(TokenKind.Error, "Unterminated string.", l)
+        }
+
+        // eat closing ".
+        next_char()
+
+        return Token(TokenKind.String, source.slice(start, current - start), l)
+    }
+
+    make_number :: (ref Self) -> Token {
+        start := current - 1
+
+        while !is_at_end() and is_digit(peek_char()) {
+            next_char()
+        }
+
+        // look for a fractional part
+        if peek_char() == '.' and is_digit(peek_next_char()) {
+            next_char()
+
+            while !is_at_end() and is_digit(peek_char()) {
+                next_char()
+            }
+        }
+
+        return Token(TokenKind.Number, source.slice(start, current - start), line)
+    }
+
+    make_identifier :: (ref Self) -> Token {
+        start := current - 1
+        while !is_at_end() and (is_alpha(peek_char()) or is_alpha(peek_char())) {
+            next_char()
+        }
+
+        return check_keywords(Token(TokenKind.Identifier, source.slice(start, current - start), line))
+    }
+
+    check_keywords :: (ref Self, token: Token) -> Token {
+        token.kind = match token.text {
+            $txt if streq(txt, "and")       -> TokenKind.And
+            $txt if streq(txt, "var")       -> TokenKind.Var
+            $txt if streq(txt, "And")       -> TokenKind.And
+            $txt if streq(txt, "Class")     -> TokenKind.Class
+            $txt if streq(txt, "Else")      -> TokenKind.Else
+            $txt if streq(txt, "False")     -> TokenKind.False
+            $txt if streq(txt, "For")       -> TokenKind.For
+            $txt if streq(txt, "Fun")       -> TokenKind.Fun
+            $txt if streq(txt, "If")        -> TokenKind.If
+            $txt if streq(txt, "Nil")       -> TokenKind.Nil
+            $txt if streq(txt, "Or")        -> TokenKind.Or
+            $txt if streq(txt, "Print")     -> TokenKind.Print
+            $txt if streq(txt, "Return")    -> TokenKind.Return
+            $txt if streq(txt, "Super")     -> TokenKind.Super
+            $txt if streq(txt, "This")      -> TokenKind.This
+            $txt if streq(txt, "True")      -> TokenKind.True
+            $txt if streq(txt, "Var")       -> TokenKind.Var
+            $txt if streq(txt, "While")     -> TokenKind.While
+
+            $_ -> token.kind
+        }
+        return token
+    }
+
+    is_digit :: (c: char) -> bool {
+        return c >= '0' and c <= '9'
+    }
+
+    is_alpha :: (c: char) -> bool {
+        return  (c >= 'a' and c <= 'z') or
+                (c >= 'A' and c <= 'Z') or
+                (c == '_')
+    }
+
+    next_token :: (ref Self) -> Token {
+        skip_whitespace()
+        if is_at_end() {
+            return Token(TokenKind.Eof, "", line)
+        }
+
+        c := next_char()
+        n := peek_char()
+        // printfln("checking chars '{}', '{}'", (c, n))
+
+        return match (c, n) {
+            ('!', '=')  -> make_token(TokenKind.BangEqual, 2)
+            ('=', '=')  -> make_token(TokenKind.EqualEqual, 2)
+            ('<', '=')  -> make_token(TokenKind.LessEqual, 2)
+            ('>', '=')  -> make_token(TokenKind.GreaterEqual, 2)
+
+            ('!', $_)   -> make_token(TokenKind.Bang)
+            ('=', $_)   -> make_token(TokenKind.Equal)
+            ('<', $_)   -> make_token(TokenKind.Less)
+            ('>', $_)   -> make_token(TokenKind.Greater)
+
+            ('(', $_)   -> make_token(TokenKind.LeftParen)
+            (')', $_)   -> make_token(TokenKind.RightParen)
+            ('{', $_)   -> make_token(TokenKind.LeftBrace)
+            ('}', $_)   -> make_token(TokenKind.RightBrace)
+            (';', $_)   -> make_token(TokenKind.Semicolon)
+            (',', $_)   -> make_token(TokenKind.Comma)
+            ('.', $_)   -> make_token(TokenKind.Dot)
+            ('-', $_)   -> make_token(TokenKind.Minus)
+            ('+', $_)   -> make_token(TokenKind.Plus)
+            ('/', $_)   -> make_token(TokenKind.Slash)
+            ('*', $_)   -> make_token(TokenKind.Star)
+
+            ('"', $_)   -> make_string()
+            ($c, $_) if is_alpha(c) -> make_identifier()
+            ($c, $_) if is_digit(c) -> make_number()
+
+            $_ -> Token(TokenKind.Error, "Unexpected charactor.", line)
+        }
+    }
+}
+
+impl Printable for TokenKind {
+    print :: (ref Self, str: ref String, format: string) {
+        str.append_string(match self {
+            TokenKind.LeftParen -> "LeftParen"
+            TokenKind.RightParen -> "RightParen"
+            TokenKind.LeftBrace -> "LeftBrace"
+            TokenKind.RightBrace -> "RightBrace"
+            TokenKind.Comma -> "Comma"
+            TokenKind.Dot -> "Dot"
+            TokenKind.Minus -> "Minus"
+            TokenKind.Plus -> "Plus"
+            TokenKind.Semicolon -> "Semicolon"
+            TokenKind.Slash -> "Slash"
+            TokenKind.Star -> "Star"
+            TokenKind.Bang -> "Bang"
+            TokenKind.BangEqual -> "BangEqual"
+            TokenKind.Equal -> "Equal"
+            TokenKind.EqualEqual -> "EqualEqual"
+            TokenKind.Greater -> "Greater"
+            TokenKind.GreaterEqual -> "GreaterEqual"
+            TokenKind.Less -> "Less"
+            TokenKind.LessEqual -> "LessEqual"
+            TokenKind.Identifier -> "Identifier"
+            TokenKind.String -> "String"
+            TokenKind.Number -> "Number"
+            TokenKind.And -> "And"
+            TokenKind.Class -> "Class"
+            TokenKind.Else -> "Else"
+            TokenKind.False -> "False"
+            TokenKind.For -> "For"
+            TokenKind.Fun -> "Fun"
+            TokenKind.If -> "If"
+            TokenKind.Nil -> "Nil"
+            TokenKind.Or -> "Or"
+            TokenKind.Print -> "Print"
+            TokenKind.Return -> "Return"
+            TokenKind.Super -> "Super"
+            TokenKind.This -> "This"
+            TokenKind.True -> "True"
+            TokenKind.Var -> "Var"
+            TokenKind.While -> "While"
+            TokenKind.Error -> "Error"
+            TokenKind.Eof -> "Eof"
+        })
+    }
+}
+
+// :vm
+InterpretResult :: enum {
+    Ok
+    CompileError
+    RuntimeError
+}
+
+run :: () -> InterpretResult {
+    return InterpretResult.RuntimeError
+}
+
+interpret :: (source: string) -> InterpretResult {
+    function := compile(source)
+    if function == null {
+        return InterpretResult.CompileError
+    }
+
+    io.println("ok")
+    return run()
+}
+
+// :chuck
+Chunk :: struct {
+    code: Array[u8]
+    lines: Array[int]
+    constants: Array[Value]
+}
+
+impl Chunk {
+    create :: () -> Chunk {
+        return Chunk(
+            code        = Array[u8].create()
+            lines       = Array[int].create()
+            constants   = Array[Value].create()
+        )
+    }
+
+    write :: (ref Self, byte: u8, line: int) {
+        code.add(byte)
+        lines.add(line)
+    }
+
+    add_constant :: (ref Self, value: Value) {
+        // gc
+        // push(value)
+        constants.add(value)
+        // gc
+        // pop()
+    }
+}
+
+OpCode :: enum {
+    Constant
+    Nil
+    True
+    False
+    Pop
+    GetLocal
+    SetLocal
+    GetGlobal
+    DefineGlobal
+    SetGlobal
+    GetUpvalue
+    SetUpvalue
+    GetProperty
+    SetProperty
+    GetSuper
+    Equal
+    Greater
+    Less
+    Add
+    Subtract
+    Multiply
+    Divide
+    Not
+    Negate
+    Print
+    Jump
+    JumpIfFalse
+    Loop
+    Call
+    Invoke
+    Super
+    Closure
+    CloseUpvalue
+    Return
+    Class
+    Inherit
+    Method
 }

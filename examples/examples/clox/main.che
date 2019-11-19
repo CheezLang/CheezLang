@@ -1,14 +1,15 @@
-#load("std:io/io")
-#load("std:io/file")
-#load("std:array")
-#load("chunk")
-#load("vm")
+use import compiler
+use import std.array
+use import std.string
+use import std.io.file
+use import std.os.windows_functions
+io :: import std.io
 
-to_ascii_strings :: (argv: &&u16, argc: int) -> Array(String) {
-    array := Array(String).create(argc)
+to_ascii_strings :: (argv: &&u16, argc: int) -> Array[String] {
+    array := Array[String].create(argc)
     for i :0..argc {
         str := String.empty()
-        while k := 0; argv[i][k] != 0; k += 1 {
+        while k := 0, argv[i][k] != 0, k += 1 {
             str += char(argv[i][k])
         }
 
@@ -17,7 +18,7 @@ to_ascii_strings :: (argv: &&u16, argc: int) -> Array(String) {
     return array
 }
 
-get_cmd_args :: () -> Array(String) {
+get_cmd_args :: () -> Array[String] {
     cmdLineArgs := GetCommandLineW()
     count := 0i32
     args := CommandLineToArgvW(cmdLineArgs, &count)
@@ -25,7 +26,7 @@ get_cmd_args :: () -> Array(String) {
 }
 
 repl :: () -> int {
-    println("Repl not implemented yet.")
+    io.println("Repl not implemented yet.")
     return -1
 }
 
@@ -38,15 +39,12 @@ run_file :: (file_name: ref String) -> int {
                 CompileError -> 65
                 RuntimeError -> 70
             }
-            text.dispose()
 
             result
         }
 
         Err($msg) -> {
-            printfln("[RUN FILE] {}", msg)
-            msg.dispose()
-
+            io.printfln("[RUN FILE] {}", msg)
             60
         }
     }
@@ -59,7 +57,7 @@ Main :: () -> int {
         1 -> repl()
         2 -> run_file(args[1])
         $_-> {
-            println("Usage: clox [path]")
+            io.println("Usage: clox [path]")
             0
         }
     }
