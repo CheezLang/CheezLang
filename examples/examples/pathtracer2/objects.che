@@ -1,7 +1,12 @@
-#load("std:array")
-#load("std:math")
-#load("misc")
-#load("material")
+use import main
+use import misc
+use import material
+use import texture
+
+use import std.array
+use import std.math
+use import std.mem.allocator
+io :: import std.io
 
 HitRecord :: struct {
     t: real
@@ -120,7 +125,7 @@ BhvNode :: struct {
 
 test_macro :: (name: string, arr: []Hittable) {
     address := int(arr.data)
-    printfln("{}: [{}] {}", (name, address, arr.length))
+    io.printfln("{}: [{}] {}", (name, address, arr.length))
     for arr {
         it.bounding_box()
     }
@@ -150,7 +155,7 @@ box_compare_x :: (a: Hittable, b: Hittable) -> int {
         (Some($a), Some($b)) -> if a._min.x - b._min.x < 0 then -1 else 1
 
         $_ -> {
-            println("no bounding box in BhvNode constructor")
+            io.println("no bounding box in BhvNode constructor")
             0
         }
     }
@@ -161,7 +166,7 @@ box_compare_y :: (a: Hittable, b: Hittable) -> int {
         (Some($a), Some($b)) -> if a._min.y - b._min.y < 0 then -1 else 1
 
         $_ -> {
-            println("no bounding box in BhvNode constructor")
+            io.println("no bounding box in BhvNode constructor")
             0
         }
     }
@@ -172,7 +177,7 @@ box_compare_z :: (a: Hittable, b: Hittable) -> int {
         (Some($a), Some($b)) -> if a._min.z - b._min.z < 0 then -1 else 1
 
         $_ -> {
-            println("no bounding box in BhvNode constructor")
+            io.println("no bounding box in BhvNode constructor")
             0
         }
     }
@@ -199,7 +204,7 @@ impl BhvNode {
         aabb := match (left.bounding_box(), right.bounding_box()) {
             (Some($a), Some($b)) -> AABB.surrounding_box(a, b)
             $_ -> {
-                println("no bounding box in BhvNode constructor")
+                io.println("no bounding box in BhvNode constructor")
                 AABB(default, default)
             }
         }

@@ -1,5 +1,6 @@
-#load("std:math")
-#load("misc")
+use import main
+use import misc
+use import std.math
 
 Texture :: trait {
     value :: (ref Self, u: real, v: real, p: ref vec3) -> vec3;

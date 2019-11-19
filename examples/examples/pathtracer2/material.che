@@ -1,6 +1,9 @@
-#load("misc")
-#load("texture")
+use import main
+use import misc
+use import texture
+use import objects
 
+use import std.math
 
 MaterialRecord :: struct {
     att       : vec3

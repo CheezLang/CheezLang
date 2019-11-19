@@ -1,14 +1,21 @@
-#load("std:io/io")
-#load("std:math")
-#load("std:random/mt")
-#load("std:util")
-#load("std:thread")
-#load("std:profiling")
-#load("../../bmp/bmp")
-#load("misc")
-#load("objects")
-#load("material")
-#load("texture")
+use import misc
+use import objects
+use import material
+use import texture
+
+use import std.math
+use import std.random.mt
+use import std.util
+use import std.string
+use import std.time
+use import std.thread
+use import std.array
+use import std.profiling
+use import std.mem.allocator
+io :: import std.io
+C :: import std.c
+
+use import bmp.bmp
 
 enable_profiler :: false
 report_progress :: false
@@ -56,9 +63,9 @@ pathtracer2 :: () {
     global_random       = alloc(MTwister)
     <<global_random     = MTwister.create(0)
 
-    c_srand(c_time(null))
+    C.srand(C.time(null))
 
-    println(if use_bhv then "bhv enabled" else "bhv disabled")
+    io.println(if use_bhv then "bhv enabled" else "bhv disabled")
 
     image   := alloc_n(double, cast width * height * 3)
 
@@ -97,9 +104,9 @@ pathtracer2 :: () {
                     world = world
                     cam   = cam
                     // random = Random.create(0)
-                    random = Random.create(cast c_rand()) // crashes with seed not 0, wtf?
+                    random = Random.create(cast C.rand()) // crashes with seed not 0, wtf?
                 )
-                // printfln("thread {}: ({}, {}) -> ({}, {})", (context.id, context.min.x, context.min.y, context.max.x, context.max.y))
+                // io.printfln("thread {}: ({}, {}) -> ({}, {})", (context.id, context.min.x, context.min.y, context.max.x, context.max.y))
 
                 // if global_random.next_double() < 0.5 {
                     thread_pool.enqueue(render_loop, context)
@@ -115,9 +122,9 @@ pathtracer2 :: () {
     end := get_time_milliseconds()
     dur := double(end - start) / 1000
 
-    printfln("resolution: {}x{}", (width, height))
-    printfln("   samples: {}", samples)
-    printfln("      time: {}s", dur)
+    io.printfln("resolution: {}x{}", (width, height))
+    io.printfln("   samples: {}", samples)
+    io.printfln("      time: {}s", dur)
 
     {
         profile_scope("write_bmp")
@@ -131,7 +138,7 @@ render_loop :: (context: &RenderContext) {
         h := (height - 1) / grid_size + 1
         w := (width  - 1) / grid_size + 1
         count := w * h
-        printfln("block {}/{}: ({}, {}) -> ({}, {})", (context.id, count, context.min.x, context.min.y, context.max.x, context.max.y))
+        io.printfln("block {}/{}: ({}, {}) -> ({}, {})", (context.id, count, context.min.x, context.min.y, context.max.x, context.max.y))
     }
 
     for 0..(get_time_microseconds()%100) {
@@ -167,7 +174,7 @@ render_loop :: (context: &RenderContext) {
             context.image[(px + py * width) * 3 + 2] = double(col.z)
         }
     }
-    printfln("block {}: finished", context.id)
+    io.printfln("block {}: finished", context.id)
 
     if const report_progress {
         file_write_mutex.lock()

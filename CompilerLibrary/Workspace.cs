@@ -102,7 +102,7 @@ namespace Cheez
             }
             else if (mains.Count() == 0)
             {
-                var scopesWithMain = Files.Where(f => f.FileScope.GetSymbol("Main") is AstConstantDeclaration c && c.Initializer is AstFuncExpr);
+                var scopesWithMain = Files.Where(f => f.FileScope.GetSymbol("Main", false) is AstConstantDeclaration c && c.Initializer is AstFuncExpr);
 
                 if (scopesWithMain.Count() == 0)
                     mCompiler.ErrorHandler.ReportError("No main function was specified");

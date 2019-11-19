@@ -70,6 +70,7 @@ namespace Cheez
             ModulePaths["imgui"]  = exePath + "/libraries";
             ModulePaths["opengl"] = exePath + "/libraries";
             ModulePaths["olc_pge"]= exePath + "/libraries";
+            ModulePaths["bmp"]= exePath + "/libraries";
 
             mGlobalConstIfScope = new Scope("global_const_if");
             mGlobalConstIfScope.DefineBuiltInTypes();

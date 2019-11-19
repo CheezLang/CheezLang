@@ -1,4 +1,11 @@
-#load("std:math")
+use import main
+
+use import std.math
+use import std.random
+use import std.printable
+use import std.string
+use import std.mem.allocator
+use import std.random.mt
 
 create_object :: ($T: type, val: $V) -> T {
     mem := alloc(V)
