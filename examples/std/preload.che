@@ -120,6 +120,11 @@ TypeInfoKind :: enum #copy {
     Reference   : &TypeInfo      = 6
     Slice       : &TypeInfo      = 7
     Enum        : TypeInfoEnum   = 8
+    Trait       : TypeInfoTrait  = 9
+}
+
+TypeInfoTrait :: struct #copy {
+    name : string
 }
 
 TypeInfoInt :: struct #copy {
@@ -149,4 +154,29 @@ TypeInfoEnumMember :: struct #copy {
     name : string
     typ  : &TypeInfo
     tag  : int
+}
+
+impl TypeInfoStruct {
+    get_member :: (ref Self, name: string) -> &TypeInfoStructMember {
+        for(by_ref=true) members {
+            if strings_equal(name, it.name) {
+                return &it
+            }
+        }
+        return null
+    }
+}
+
+strings_equal :: (a: string, b: string) -> bool {
+    if a.length != b.length {
+        return false
+    }
+
+    for 0..a.length {
+        if a[it] != b[it] {
+            return false
+        }
+    }
+
+    return true
 }

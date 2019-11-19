@@ -19,7 +19,7 @@ Baz :: enum #copy {
     C : &int    = 96
 }
 
-print_any :: (data: &void, typ: &TypeInfo) {
+do_print_any :: (data: &void, typ: &TypeInfo) {
     match typ.kind {
         TypeInfoKind.Int($tint) -> {
             if tint.signed {
@@ -73,7 +73,7 @@ print_any :: (data: &void, typ: &TypeInfo) {
                     if i > 0 then C.printf(", ")
 
                     elem := pointer_add(ptr.data, i * target.size)
-                    print_any(elem, target)
+                    do_print_any(elem, target)
                 }
                 C.printf("]")
             }
@@ -91,7 +91,7 @@ print_any :: (data: &void, typ: &TypeInfo) {
                     member_ptr  := pointer_add(ptr, member_info.offset)
                     member_type := member_info.typ
                     C.printf("%.*s = ", i32(member_info.name.length), member_info.name.data)
-                    print_any(member_ptr, member_type)
+                    do_print_any(member_ptr, member_type)
                 }
             }
             C.printf(")")
@@ -120,7 +120,7 @@ print_any :: (data: &void, typ: &TypeInfo) {
                         mem_val_ptr := pointer_add(ptr, tenum.tag_type.size)
 
                         C.printf("(")
-                        print_any(mem_val_ptr, mem.typ)
+                        do_print_any(mem_val_ptr, mem.typ)
                         C.printf(")")
                     }
                 }
@@ -133,16 +133,16 @@ print_any :: (data: &void, typ: &TypeInfo) {
     }
 }
 
-print :: (data: any) {
-    print_any(data.val, data.typ)
+print_any :: (data: any) {
+    do_print_any(data.val, data.typ)
 }
 
-println :: (data: any) {
-    print_any(data.val, data.typ)
+println_any :: (data: any) {
+    do_print_any(data.val, data.typ)
     C.puts("")
 }
 
-Main :: () {
+Main2 :: () {
     bar := Bar("lol", true)
     foo := Foo(12345, bar, Baz.A)
 
@@ -151,17 +151,17 @@ Main :: () {
     s : []int = [a, 353, 987]
     w := "lol"
 
-    println(a)
-    println(b)
-    println(s)
-    println(w)
+    println_any(a)
+    println_any(b)
+    println_any(s)
+    println_any(w)
 
-    println(bar)
-    println(foo)
-    println(Foo(654, bar, Baz.B(420)))
-    println(Foo(741, bar, Baz.C(&a)))
+    println_any(bar)
+    println_any(foo)
+    println_any(Foo(654, bar, Baz.B(420)))
+    println_any(Foo(741, bar, Baz.C(&a)))
 
-    println((struct{
+    println_any((struct{
         num       : int
         word      : string
         boolean   : bool

@@ -1,13 +1,15 @@
 ﻿using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
+using Cheez.Types;
+using Cheez.Types.Primitive;
 using System;
 
 namespace Cheez
 {
     public partial class Workspace
     {
-        private bool Move(AstExpression expr, SymbolStatusTable symStatTable, ILocation location = null)
+        private bool Move(CheezType targetType, AstExpression expr, SymbolStatusTable symStatTable, ILocation location = null)
         {
             switch (expr)
             {
@@ -23,6 +25,12 @@ namespace Cheez
 
                 case AstIdExpr id:
                     {
+                        if (id.Type is ReferenceType && !(targetType is ReferenceType))
+                        {
+                            ReportError(id, $"Can't move out of reference");
+                            return false;
+                        }
+
                         if (symStatTable.TryGetSymbolStatus(id.Symbol, out var status))
                         {
                             if (status.kind != SymbolStatus.Kind.initialized)
@@ -43,7 +51,7 @@ namespace Cheez
                         }
                         else if (id.Symbol is Using use)
                         {
-                            return Move(use.Expr, symStatTable, id.Location);
+                            return Move(targetType, use.Expr, symStatTable, id.Location);
                         }
                         return true;
                     }

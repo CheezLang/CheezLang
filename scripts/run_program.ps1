@@ -6,7 +6,7 @@ param (
 )
 
 Push-Location gen
-&"./$file$executable_file_extension" "-e" "1+2*3"
+&"./$file$executable_file_extension" -name Nico -age 23
 Pop-Location
 
 Write-Host "Program exited with code $LASTEXITCODE"

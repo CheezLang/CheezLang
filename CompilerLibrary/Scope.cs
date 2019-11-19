@@ -735,6 +735,14 @@ namespace Cheez
             return null;
         }
 
+        public AstTraitTypeExpr? GetTrait(string name)
+        {
+            var sym = GetSymbol(name);
+            if (sym is AstConstantDeclaration c && c.Initializer is AstTraitTypeExpr s)
+                return s;
+            return null;
+        }
+
         public AstStructTypeExpr? GetStruct(string name)
         {
             var sym = GetSymbol(name);

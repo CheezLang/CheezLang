@@ -838,6 +838,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var sTypeInfoStructMember = workspace.GlobalScope.GetStruct("TypeInfoStructMember");
             var sTypeInfoEnum = workspace.GlobalScope.GetStruct("TypeInfoEnum");
             var sTypeInfoEnumMember = workspace.GlobalScope.GetStruct("TypeInfoEnumMember");
+            var sTypeInfoTrait = workspace.GlobalScope.GetStruct("TypeInfoTrait");
             var sTypeInfoKind = workspace.GlobalScope.GetEnum("TypeInfoKind");
 
             var tTypeInfo = CheezTypeToLLVMType(sTypeInfo.StructType);
@@ -846,6 +847,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var tTypeInfoStructMember = CheezTypeToLLVMType(sTypeInfoStructMember.StructType);
             var tTypeInfoEnum = CheezTypeToLLVMType(sTypeInfoEnum.StructType);
             var tTypeInfoEnumMember = CheezTypeToLLVMType(sTypeInfoEnumMember.StructType);
+            var tTypeInfoTrait = CheezTypeToLLVMType(sTypeInfoTrait.StructType);
             var tTypeInfoKind = CheezTypeToLLVMType(sTypeInfoKind.EnumType);
 
             // set values
@@ -870,6 +872,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     ReferenceType _ => 6,
                     SliceType _ => 7,
                     EnumType _ => 8,
+                    TraitType _ => 9,
                     _ => throw new NotImplementedException()
                 };
                 var kindPtr = builder.CreateStructGEP(global, 2, "ti.kind.ptr");
@@ -983,6 +986,19 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                                     memberArray,
                                     typeInfoTable[s.Declaration.TagType]
                                 })
+                            });
+                            builder.CreateStore(val, ptr);
+                            break;
+                        }
+
+                    case TraitType t:
+                        {
+                            var traitType = CheezTypeToLLVMType(t);
+                            var ptr = builder.CreatePointerCast(assPtr, tTypeInfoTrait.GetPointerTo(), "ti.kind.type_info_trait.ptr");
+
+                            var val = LLVM.ConstNamedStruct(tTypeInfoTrait, new LLVMValueRef[]
+                            {
+                                CheezValueToLLVMValue(CheezType.String, t.Declaration.Name),
                             });
                             builder.CreateStore(val, ptr);
                             break;

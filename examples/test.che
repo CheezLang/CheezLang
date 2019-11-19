@@ -8,7 +8,7 @@
 // use import examples.pathtracer
 // use import examples.postfix
 // use import examples.print_any
-// use import examples.command_line_parser
+use import examples.command_line_parser
 // use import std.compiler.main
 // use import std.compiler.compiler_test
 

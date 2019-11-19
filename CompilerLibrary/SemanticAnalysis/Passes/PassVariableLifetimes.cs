@@ -344,16 +344,20 @@ namespace Cheez
                         bool b = true;
                         foreach (var arg in c.Arguments)
                         {
+                            var paramType = arg.Index < c.FunctionType.Parameters.Length ?
+                                c.FunctionType.Parameters[arg.Index].type :
+                                arg.Type;
+
                             if (PassVLExpr(arg.Expr, symStatTable))
                             {
                                 if (arg.Index >= c.FunctionType.Parameters.Length)
                                 {
-                                    b &= Move(arg.Expr, symStatTable);
+                                    b &= Move(paramType, arg.Expr, symStatTable);
                                 }
                                 else if (arg.Index < c.FunctionType.Parameters.Length
-                                    && !c.FunctionType.Parameters[arg.Index].type.IsCopy)
+                                    && !paramType.IsCopy)
                                 {
-                                    b &= Move(arg.Expr, symStatTable);
+                                    b &= Move(paramType, arg.Expr, symStatTable);
                                 }
                             }
                             else
@@ -432,9 +436,10 @@ namespace Cheez
                 case AstArrayExpr a:
                     foreach (var sub in a.Values)
                     {
+                        var arrType = (a.Type as ArrayType)!;
                         if (!PassVLExpr(sub, symStatTable))
                             return false;
-                        if (!Move(sub, symStatTable))
+                        if (!Move(arrType.TargetType, sub, symStatTable))
                             return false;
                     }
                     return true;
@@ -446,12 +451,12 @@ namespace Cheez
                     if (c.Type is TraitType)
                         return true;
 
-                    return Move(c.SubExpression, symStatTable);
+                    return Move(c.Type, c.SubExpression, symStatTable);
 
                 case AstArrayAccessExpr c:
                     if (!PassVLExpr(c.SubExpression, symStatTable)) return false;
                     if (!PassVLExpr(c.Arguments[0], symStatTable)) return false;
-                    if (!Move(c.Arguments[0], symStatTable))
+                    if (!Move(c.Arguments[0].Type, c.Arguments[0], symStatTable))
                         return false;
                     return true;
 
@@ -460,8 +465,10 @@ namespace Cheez
                         bool b = true;
                         foreach (var arg in sv.MemberInitializers)
                         {
+                            var structType = (sv.Type as StructType)!;
+                            var mem = structType.Declaration.Members.First(m => m.Index == arg.Index);
                             if (PassVLExpr(arg.Value, symStatTable))
-                                b &= Move(arg.Value, symStatTable);
+                                b &= Move(mem.Type, arg.Value, symStatTable);
                             else
                                 b = false;
                         }
@@ -476,13 +483,14 @@ namespace Cheez
 
                 case AstRangeExpr r:
                     {
+                        var rangeType = (r.Type as RangeType)!;
                         if (!PassVLExpr(r.From, symStatTable))
                             return false;
-                        if (!Move(r.From, symStatTable))
+                        if (!Move(rangeType.TargetType, r.From, symStatTable))
                             return false;
                         if (!PassVLExpr(r.To, symStatTable))
                             return false;
-                        if (!Move(r.To, symStatTable))
+                        if (!Move(rangeType.TargetType, r.To, symStatTable))
                             return false;
                         return true;
                     }
@@ -502,7 +510,7 @@ namespace Cheez
                         {
                             if (!PassVLExpr(v, symStatTable))
                                 return false;
-                            if (!Move(v, symStatTable))
+                            if (!Move(v.Type, v, symStatTable))
                                 return false;
                         }
 
@@ -516,7 +524,7 @@ namespace Cheez
                         mMovedTempVars.Add(t);
                         if (!PassVLExpr(t.Expr, symStatTable))
                             return false;
-                        if (!Move(t.Expr, symStatTable))
+                        if (!Move(t.Type, t.Expr, symStatTable))
                             return false;
                         return true;
                     }
@@ -556,7 +564,7 @@ namespace Cheez
                         if (!PassVLExpr(var.Initializer, symStatTable))
                             return false;
                         symStatTable.UpdateSymbolStatus(var, SymbolStatus.Kind.initialized, var);
-                        if (!Move(var.Initializer, symStatTable))
+                        if (!Move(var.Type, var.Initializer, symStatTable))
                             return false;
                     }
                     else
@@ -914,7 +922,7 @@ namespace Cheez
 
             // move value if no operator assignment (otherwise the operator call handles this)=
             if (ass.Operator == null)
-                result &= Move(ass.Value, symStatTable);
+                result &= Move(ass.Pattern.Type, ass.Value, symStatTable);
             return result;
         }
 
@@ -924,7 +932,7 @@ namespace Cheez
             {
                 if (!PassVLExpr(e.Argument, symStatTable))
                     return false;
-                return Move(e.Argument, symStatTable);
+                return Move(e.Member.AssociatedType, e.Argument, symStatTable);
             }
             return true;
         }
@@ -936,7 +944,7 @@ namespace Cheez
             {
                 if (!PassVLExpr(ret.ReturnValue, symStatTable))
                     return false;
-                if (!Move(ret.ReturnValue, symStatTable))
+                if (!Move(currentFunction.ReturnType, ret.ReturnValue, symStatTable))
                     return false;
             }
 

@@ -1765,6 +1765,11 @@ namespace Cheez
                         break;
                     }
 
+                case TraitType t:
+                    {
+                        break;
+                    }
+
                 case CharType _:
                 case IntType _:
                 case BoolType _:
@@ -1772,6 +1777,7 @@ namespace Cheez
                 case AnyType _:
                 case VoidType _:
                     break;
+
 
                 case ErrorType _:
                     break;

@@ -22,7 +22,7 @@ namespace Cheez.Visitors
         {
             foreach (var file in workspace.Files)
             {
-                _writer.WriteLine($"#file {file.Name}");
+                _writer.WriteLine($"#file {Path.GetFileName(file.Name)}");
                 foreach (var s in file.Statements)
                 {
                     _writer.WriteLine(s.Accept(this));
