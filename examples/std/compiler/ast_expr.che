@@ -1,4 +1,5 @@
-#load("ast_stmt")
+use import ast_stmt
+use import token
 
 Expr :: struct {
     location    : Location

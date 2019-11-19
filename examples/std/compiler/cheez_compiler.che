@@ -1,6 +1,6 @@
-
-#load("std:mem/allocator")
-#load("std:mem/stack_allocator")
+use import std.mem.allocator
+use import std.mem.stack_allocator
+use import std.compiler.string_database
 
 CheezCompiler :: struct {
     string_database : StringDatabase

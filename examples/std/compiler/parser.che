@@ -1,8 +1,10 @@
+use import ast
+use import ast_stmt
+use import lexer
+use import token
+use import cheez_compiler
 
-
-#load("ast")
-#load("cheez_compiler")
-#load("lexer")
+use import std.mem.allocator
 
 Parser :: struct {
     compiler    : ref CheezCompiler
@@ -26,7 +28,7 @@ impl Parser {
             TokenType.KwFn -> parse_function_decl()
 
             $_ -> {
-                printfln("{}: unexpeted token {}", (token.location, token.ttype))
+                io.printfln("{}: unexpeted token {}", (token.location, token.ttype))
                 None
             }
         }
@@ -92,7 +94,7 @@ impl Parser {
             }
 
             // TODO: report error
-            printfln("{}: unexpeted token {}", (tok.location, tok.ttype))
+            io.printfln("{}: unexpeted token {}", (tok.location, tok.ttype))
             lexer.next_token()
             tok = lexer.peek_token()
         }

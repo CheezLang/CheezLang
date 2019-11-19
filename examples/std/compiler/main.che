@@ -1,16 +1,14 @@
-// #load("tests/library/hash_table1")
-// #load("examples/lua_example.che")
+use import token
+use import lexer
+use import string_database
+use import cheez_compiler
+use import parser
 
+use import std.time
+use import std.mem.arena_allocator
+use import std.mem.allocator
+io :: import std.io
 
-#load("std:io/io")
-#load("std:time")
-#load("std:mem/arena_allocator")
-
-#load("token")
-#load("lexer")
-#load("string_database")
-#load("cheez_compiler")
-#load("parser")
 
 Main :: () {
     string_db := StringDatabase.create()
@@ -24,7 +22,7 @@ Main :: () {
                 stmt := parser.parse_statement()
                 match stmt {
                     Some($stmt) -> {
-                        // println(<<stmt)
+                        io.println(<<stmt)
                     }
 
                     None -> {
@@ -35,11 +33,11 @@ Main :: () {
 
             end := get_time_milliseconds()
             elapsed := ((cast(double)end) - (cast(double)start)) / 1000.0
-            printfln("elapsed: {}", elapsed)
+            io.printfln("elapsed: {}", elapsed)
         }
 
         Err($msg) -> {
-            println(msg)
+            io.println(msg)
         }
     }
 }
