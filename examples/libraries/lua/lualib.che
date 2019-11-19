@@ -1,3 +1,0 @@
-#load("lua.che")
-
-luaL_openlibs :: (L: &lua_State);

@@ -1,13 +1,11 @@
-// #load("tests/language/match")
-#load("std:io/io")
-#load("../libraries/lua/lua.che")
-#load("../libraries/lua/lauxlib.che")
-#load("../libraries/lua/lualib.che")
+io :: import std.io
+
+use import lua.lua
 
 check_lua :: (L: &lua_State, r: i32) -> bool {
     if r != LUA_OK {
         errormsg := lua_tostring(L, -1)
-        printf("[LUA ERROR] {}`n", errormsg)
+        io.printf("[LUA ERROR] {}`n", errormsg)
         return false
     }
 
@@ -17,7 +15,7 @@ check_lua :: (L: &lua_State, r: i32) -> bool {
 lua_HostFunction :: (L: &lua_State) -> i32 {
     a := lua_tonumber(L, 1)
     b := lua_tonumber(L, 2)
-    printf("[CHEEZ] HostFunction({}, {}) has been called`n", (a, b))
+    io.printf("[CHEEZ] HostFunction({}, {}) has been called`n", (a, b))
     c := a * b
     lua_pushnumber(L, c)
     return 1
@@ -37,7 +35,7 @@ Main :: () {
 
             if check_lua(L, lua_pcall(L, 2, 1, 0)) {
                 result := lua_tonumber(L, -1)
-                printf("[CHEEZ] got {}`n", result)
+                io.printf("[CHEEZ] got {}`n", result)
             }
         }
     }

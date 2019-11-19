@@ -14,11 +14,13 @@
 
 // use import examples.image_processing
 // use import examples.clox.main
+// use import examples.lua_example
 
 // use import tests.language.global_variables
 // use import tests.library.all_include
 // use import tests.other.test1
 // use import "examples/project_euler/018_maximum_path_sum_1"
+// use import bugs.bug1
 
 /*
 io :: import std.io

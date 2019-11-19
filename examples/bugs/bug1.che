@@ -1,38 +1,37 @@
 // parser is in infinite loop
 // in line 44
 
-#load("std:mem/allocator")
-#load("std:io/io")
-
+use import std.mem.allocator
+io :: import std.io
 
 Main :: () {
     {
         a := alloc(int)
-        printf("{}`n", <<a)
+        io.printf("{}`n", <<a)
         <<a = 5
-        printf("{}`n", <<a)
+        io.printf("{}`n", <<a)
         free(a)
     }
 
     {
         a := alloc_raw(int, 5)
-        printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
+        io.printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
 
         for i : 0..5 {
             a[i] = i * 2
         }
-        printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
+        io.printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
         free(a)
     }
 
     {
         a := alloc_n(int, 5)
-        printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
+        io.printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
 
         for i : 0..a.length {
             a[i] = i + 1
         }
-        printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
+        io.printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
         free_n(a)
     }
 
@@ -41,10 +40,10 @@ Main :: () {
         for i : 0..a.length {
             a[i] = i + 1
         }
-        printf("{}, {}, {}`n", (a[0], a[1], a[2]))
+        io.printf("{}, {}, {}`n", (a[0], a[1], a[2]))
 
         a = realloc_n(a, 5)
-        printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
+        io.printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
         free_n(a)
     }
 }

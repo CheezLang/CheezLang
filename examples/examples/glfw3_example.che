@@ -1,5 +1,3 @@
-// #load("compiler/main.che")
-
 io :: import std.io
 use import std.math
 use import glfw.glfw3
