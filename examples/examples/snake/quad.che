@@ -1,4 +1,6 @@
-#load("std:math")
+use import std.math
+use import opengl.functions
+use import opengl.constants
 
 Vec2i :: Vector2[int]
 Vec2 :: Vector2[double]

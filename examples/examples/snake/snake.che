@@ -1,11 +1,17 @@
-#load("std:io/io")
-#load("std:array")
-#load("std:util")
-#load("std:random")
-#load("glfw:glfw3")
-#load("opengl:opengl")
+use import quad
 
-#load("quad")
+use import std.array
+use import std.util
+use import std.math
+use import std.random
+use import std.string
+use import std.time
+io :: import std.io
+
+use import glfw.glfw3
+use import opengl.opengl
+use import opengl.functions
+use import opengl.constants
 
 Direction :: enum {
     None
@@ -51,7 +57,7 @@ action_to_dir :: (dir: ref Direction, action: Direction) {
 
 Main :: () {
     if !glfwInit() {
-        println("Failed to initialize GLFW")
+        io.println("Failed to initialize GLFW")
         return
     }
     defer glfwTerminate()
@@ -61,7 +67,7 @@ Main :: () {
 
     window := glfwCreateWindow(cast width, cast height, windowTitle.get_raw(), null, null)
     if window == null {
-        println("Failed to create window")
+        io.println("Failed to create window")
         return
     }
 
@@ -121,7 +127,7 @@ Main :: () {
         fpsTimer += deltaTime
         fpsCounter += 1
         if fpsTimer >= 1.0 {
-            printf("FPS: {}`n", fpsCounter)
+            io.printf("FPS: {}`n", fpsCounter)
 
             windowTitle.resize(0)
             windowTitle.appendf("Snake     {} FPS`0" , fpsCounter)
