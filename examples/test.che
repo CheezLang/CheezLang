@@ -1,35 +1,25 @@
-// #load("examples/glfw3_example")
 // #load("examples/trait_function_call_performance")
-// #load("examples/graphyfier/graphyfier")
+// #load("examples/glfw3_example")
+#load("examples/graphyfier/graphyfier")
 // #load("examples/pathtracer2/main")
 // #load("examples/geometry_draw_thingy")
 // #load("examples/signed_distance_field_renderer")
 // #load("compiler/main")
 // #load("examples/snake/snake")
 // #load("examples/pathtracer")
-#load("examples/postfix")
+// #load("examples/postfix")
 // #load("compiler/compiler_test")
 
-// #load("tests/language/match3")
-// #load("tests/library/arena_allocator1")
+// #load("tests/language/global_variables")
+// #load("tests/library/all_include")
 // #load("tests/other/test1")
-// #load("examples/project_euler/004_largest_palindrome_product")
+// #load("examples/project_euler/018_maximum_path_sum_1")
 
 /*
-#load("std:io/io")
-
-Foo :: struct {}
-
-bar :: (f: Foo) -> ret: Foo {
-    a := Foo()
-    ret = Foo()
-}
-
-impl Drop for Foo {
-    drop :: (ref Self) {}
-}
+io :: import std.io
 
 Main :: () {
+
 }
 
 // */

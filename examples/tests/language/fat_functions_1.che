@@ -12,59 +12,59 @@ test3(9) -> 14
 bar(9): 14
 ")
 
-#load("std:io/io")
+io :: import std.io
 
 foo :: (f: Fn()) {
-    println("foo()")
+    io.println("foo()")
     f()
-    println("foo(): ...")
+    io.println("foo(): ...")
 }
 
 baz :: (f: Fn() -> int) {
-    println("baz()")
+    io.println("baz()")
     result := f()
-    printfln("baz(): {}", result)
+    io.printfln("baz(): {}", result)
 }
 
 bar :: (f: Fn(int) -> int, x: int) {
-    printfln("bar({})", x)
+    io.printfln("bar({})", x)
     result := f(x)
-    printfln("bar({}): {}", (x, result))
+    io.printfln("bar({}): {}", (x, result))
 }
 
 test1 :: () {
-    println("test1()")
+    io.println("test1()")
 }
 
 test2 :: () -> int {
-    println("test2() -> 3")
+    io.println("test2() -> 3")
     return 3
 }
 
 test3 :: (a: int) -> int {
     result := a + 5
-    printfln("test3({}) -> {}", (a, result))
+    io.printfln("test3({}) -> {}", (a, result))
     return result
 }
 
 Main :: () {
-    println("")
+    io.println("")
 
     {
         f : Fn() = cast test1
         foo(f)
-        println("")
+        io.println("")
     }
 
     {
         f : Fn() -> int = cast test2
         baz(f)
-        println("")
+        io.println("")
     }
 
     {
         f : Fn(int) -> int = cast test3
         bar(f, 9)
-        println("")
+        io.println("")
     }
 }

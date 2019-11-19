@@ -3,8 +3,8 @@
 
 #test_expect_output("76576500")
 
-#load("std:io/io")
-#load("std:math")
+io :: import std.io
+use import std.math
 
 count_divisors :: (num: int) -> int {
     count := 0
@@ -27,5 +27,5 @@ Main :: () {
         if divisors > 500 then break
     }
 
-    println(current)
+    io.println(current)
 }

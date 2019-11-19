@@ -2,7 +2,7 @@
 
 #test_expect_output("4613732")
 
-#load("std:io/io")
+io :: import std.io
 
 Main :: () {
     a := 0
@@ -21,5 +21,5 @@ Main :: () {
         }
     }
 
-    println(sum)
+    io.println(sum)
 }

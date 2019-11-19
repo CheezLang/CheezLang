@@ -20,23 +20,23 @@ arr: [5, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 6, 7, 8]
 a[5] = 3
 a[20] = 8")
 
-#load("std:c")
-#load("std:array")
-#load("std:string")
+use import std.array
+use import std.string
+C :: import std.c
 
 print_array :: (a: ref Array[int]) {
-    c_printf("len: %lld`n", a.get_length())
-    c_printf("cap: %lld`n", a.get_capacity())
-    c_printf("arr: [")
+    C.printf("len: %lld`n", a.get_length())
+    C.printf("cap: %lld`n", a.get_capacity())
+    C.printf("arr: [")
 
     for i : 0..a.get_length() {
         if i > 0 {
-            c_printf(", ")
+            C.printf(", ")
         }
-        c_printf("%lld", a[i])
+        C.printf("%lld", a[i])
     }
 
-    c_printf("]`n`n")
+    C.printf("]`n`n")
 }
 
 Foo :: struct {
@@ -55,10 +55,10 @@ test :: (a: ref int) {
 
 Main :: () {
     x := 1
-    c_printf("%lld`n", x)
+    C.printf("%lld`n", x)
     test(x)
-    c_printf("%lld`n", x)
-    c_printf("`n", x)
+    C.printf("%lld`n", x)
+    C.printf("`n", x)
 
     a := Array[int].create()
 
@@ -80,7 +80,7 @@ Main :: () {
     a += 3 + 5
     print_array(a)
 
-    match a.get(-1) { Some($value)  -> c_printf("a[%lld] = %lld`n", -1, value) }
-    match a.get(5)  { Some($value)  -> c_printf("a[%lld] = %lld`n", 5, value) }
-    match a.get(20) { Some($value)  -> c_printf("a[%lld] = %lld`n", 20, value) }
+    match a.get(-1) { Some($value)  -> C.printf("a[%lld] = %lld`n", -1, value) }
+    match a.get(5)  { Some($value)  -> C.printf("a[%lld] = %lld`n", 5, value) }
+    match a.get(20) { Some($value)  -> C.printf("a[%lld] = %lld`n", 20, value) }
 }

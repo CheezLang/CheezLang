@@ -2,7 +2,7 @@
 
 #test_expect_output("25164150")
 
-#load("std:io/io")
+io :: import std.io
 
 Main :: () {
     n := 100
@@ -14,5 +14,5 @@ Main :: () {
         squared_sum += it * it
     }
 
-    println(sum_squared - squared_sum)
+    io.println(sum_squared - squared_sum)
 }

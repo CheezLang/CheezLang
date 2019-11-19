@@ -2,8 +2,8 @@
 
 #test_expect_output("709")
 
-#load("std:io/io")
-#load("std:math")
+io :: import std.io
+use import std.math
 
 Main :: () {
     max_digits := 0.0
@@ -16,7 +16,7 @@ Main :: () {
         }
     }
 
-    println(max_line + 1)
+    io.println(max_line + 1)
 }
 
 numbers : [](base: int, exp: int) = [

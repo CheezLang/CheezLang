@@ -1,7 +1,7 @@
-#load("std:mem/memory")
-#load("std:mem/allocator")
-#load("std:mem/std_heap_allocator")
-#load("std:iterator")
+use import std.mem.allocator
+use import std.mem.std_heap_allocator
+use import std.iterator
+C :: import std.c
 
 Array :: struct(T: type) {
     data            : &T
@@ -27,7 +27,7 @@ impl(T: type) Array[T] {
     create :: (initial_capacity: int = 10, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         s := Array[T](null, 0, 0, allocator)
         s.reserve(initial_capacity)
-        c_memset(cast s.get_raw(), 0, cast(uint) (s.get_capacity() * @sizeof(T)))
+        C.memset(cast s.get_raw(), 0, cast(uint) (s.get_capacity() * @sizeof(T)))
         return s
     }
 
@@ -40,7 +40,7 @@ impl(T: type) Array[T] {
         data = realloc_raw(data, cast size, allocator)
 
         if size > length {
-            c_memset(cast &data[length], 0, cast(uint) ((size - length) * @sizeof(T)))
+            C.memset(cast &data[length], 0, cast(uint) ((size - length) * @sizeof(T)))
         }
 
         if length > capacity {

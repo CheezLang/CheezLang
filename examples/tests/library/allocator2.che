@@ -22,9 +22,9 @@
 ( [(0:8), (8:40), (48:40), (88:40), (128:40)], Free: 856 )
 ")
 
-#load("std:mem/allocator")
-#load("std:mem/stack_allocator")
-#load("std:io/io")
+use import std.mem.allocator
+use import std.mem.stack_allocator
+io :: import std.io
 
 Main :: () {
     sa := StackAllocator.create(1024)
@@ -34,58 +34,58 @@ Main :: () {
     {
         a := alloc(int, sa)
         <<a = 0
-        printf("{}`n", <<a)
+        io.printfln("{}", <<a)
         <<a = 5
-        printf("{}`n", <<a)
+        io.printfln("{}", <<a)
     }
     sa.print_diagnostics()
-    println("")
+    io.println("")
 
     {
         a := alloc_raw(int, 5, sa)
         for i : 0..5 { a[i] = 0 }
-        printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
+        io.printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
 
         for i : 0..5 { a[i] = i * 2 }
-        printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
+        io.printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
     }
     sa.print_diagnostics()
-    println("")
+    io.println("")
 
     {
         a := alloc_n(int, 5, sa)
         for i : 0..a.length { a[i] = 0 }
-        printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
+        io.printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
 
         for i : 0..a.length { a[i] = i + 1 }
-        printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
+        io.printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
     }
     sa.print_diagnostics()
-    println("")
+    io.println("")
 
     {
         a := alloc_n(int, 3, sa)
         for i : 0..a.length { a[i] = i + 1 }
-        printfln("{}, {}, {}", (a[0], a[1], a[2]))
+        io.printfln("{}, {}, {}", (a[0], a[1], a[2]))
         sa.print_diagnostics()
 
         a = realloc_n(a, 5, sa)
         for i : 3..a.length { a[i] = 0 }
-        printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
+        io.printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
     }
     sa.print_diagnostics()
-    println("")
+    io.println("")
 
     {
         a := alloc_raw(int, 3, sa)
         for i : 0..3 { a[i] = i + 1 }
-        printfln("{}, {}, {}", (a[0], a[1], a[2]))
+        io.printfln("{}, {}, {}", (a[0], a[1], a[2]))
         sa.print_diagnostics()
 
         a = realloc_raw(a, 5, sa)
         for i : 3..5 { a[i] = 0 }
-        printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
+        io.printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
     }
     sa.print_diagnostics()
-    println("")
+    io.println("")
 }

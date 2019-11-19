@@ -1,0 +1,5 @@
+c :: import std.c
+
+bazzz :: () {
+    c.puts(@function_name())
+}

@@ -1,10 +1,15 @@
 // #load("compiler/main.che")
 
-#load("std:io/io")
-#load("glfw:glfw3")
-#load("std:math")
-#load("opengl:opengl")
-#load("../libraries/imgui/imgui")
+io :: import std.io
+use import std.math
+use import glfw.glfw3
+use import opengl.opengl
+use import opengl.constants
+use import opengl.types
+use import opengl.functions
+use import imgui.imgui
+use import imgui.types
+use import imgui.functions
 
 vec2 :: Vector2[float]
 vec3 :: Vector3[float]
@@ -20,14 +25,14 @@ onResize :: (window: &GLFWwindow, w: i32, h: i32) {
 }
 
 glfw_error_callback :: (error: i32, description: c_string) {
-    c_printf("Glfw Error %d: %s\n", error, description)
+    C.printf("Glfw Error %d: %s\n", error, description)
 }
 
 Main :: () {
     glfwSetErrorCallback(glfw_error_callback)
 
     if !glfwInit() {
-        println("Failed to initialize GLFW")
+        io.println("Failed to initialize GLFW")
         return
     }
     defer glfwTerminate()
@@ -37,7 +42,7 @@ Main :: () {
 
     window := glfwCreateWindow(1280, 720, "Hello World", null, null)
     if window == null {
-        println("Failed to create window")
+        io.println("Failed to create window")
         return
     }
     defer glfwDestroyWindow(window)
@@ -106,19 +111,19 @@ init_imgui :: (window: &GLFWwindow) -> bool {
     context := igCreateContext(null)
 
     if context == null {
-        println("[ERROR] igCreateContext failed")
+        io.println("[ERROR] igCreateContext failed")
         return false
     }
 
     use ImGuiConfigFlags_
-    io := igGetIO()
-    io.ConfigFlags = @bin_or(io.ConfigFlags,
+    imgui_io := igGetIO()
+    imgui_io.ConfigFlags = @bin_or(imgui_io.ConfigFlags,
         i32(ImGuiConfigFlags_DockingEnable),
         i32(ImGuiConfigFlags_ViewportsEnable))
 
     igStyleColorsDark(null)
 
-    if @bin_and(io.ConfigFlags, i32(ImGuiConfigFlags_ViewportsEnable)) != 0 {
+    if @bin_and(imgui_io.ConfigFlags, i32(ImGuiConfigFlags_ViewportsEnable)) != 0 {
         style := igGetStyle()
         style.WindowRounding = 0.0
         style.Colors[int(ImGuiCol_.ImGuiCol_WindowBg)].w = 1.0
@@ -126,11 +131,11 @@ init_imgui :: (window: &GLFWwindow) -> bool {
 
     //
     if !ImGui_ImplGlfw_InitForOpenGL(window, true) {
-        println("[ERROR] ImGui_ImplGlfw_InitForOpenGL failed")
+        io.println("[ERROR] ImGui_ImplGlfw_InitForOpenGL failed")
         return false
     }
     if !ImGui_ImplOpenGL3_Init("#version 130") {
-        println("[ERROR] ImGui_ImplOpenGL3_Init failed")
+        io.println("[ERROR] ImGui_ImplOpenGL3_Init failed")
         return false
     }
 

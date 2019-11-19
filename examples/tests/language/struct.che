@@ -8,10 +8,7 @@
 #test_expect_output("1, 2.000000")
 #test_expect_output("3, 4.500000")
 
-
-
-c_printf :: (format: c_string) #varargs #linkname("printf");
-
+C :: import std.c
 
 Test :: struct #copy {
     a: int
@@ -37,25 +34,25 @@ impl Test {
 Main :: () {
     {
         t := Test.create()
-        c_printf("%lld, %f`n", t.a, t.b)
+        C.printf("%lld, %f`n", t.a, t.b)
     }
 
     {
         t := Test.create(6)
-        c_printf("%lld, %f`n", t.a, t.b)
+        C.printf("%lld, %f`n", t.a, t.b)
     }
 
     {
         t := Test.create(b = 1.23456, a = 9)
-        c_printf("%lld, %f`n", t.a, t.b)
+        C.printf("%lld, %f`n", t.a, t.b)
     }
 
     {
         t := Test.create(1, 2)
-        c_printf("%lld, %f`n", t.a, t.b)
+        C.printf("%lld, %f`n", t.a, t.b)
         t.set_val(3, 4.5)
-        c_printf("%lld, %f`n", t.a, t.b)
+        C.printf("%lld, %f`n", t.a, t.b)
         t.set_ref(3, 4.5)
-        c_printf("%lld, %f`n", t.a, t.b)
+        C.printf("%lld, %f`n", t.a, t.b)
     }
 }

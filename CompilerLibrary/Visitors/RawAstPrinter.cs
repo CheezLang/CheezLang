@@ -20,10 +20,14 @@ namespace Cheez.Visitors
 
         public void PrintWorkspace(Workspace workspace)
         {
-            foreach (var s in workspace.Statements)
+            foreach (var file in workspace.Files)
             {
-                _writer.WriteLine(s.Accept(this));
-                _writer.WriteLine();
+                _writer.WriteLine($"#file {file.Name}");
+                foreach (var s in file.Statements)
+                {
+                    _writer.WriteLine(s.Accept(this));
+                    _writer.WriteLine();
+                }
             }
         }
 
@@ -284,6 +288,13 @@ namespace Cheez.Visitors
 
 
         #region Expression
+        public override string VisitImportExpr(AstImportExpr expr, int data = 0)
+        {
+            var result = "import ";
+            result += string.Join(".", expr.Path.Select(p => p.Accept(this)));
+
+            return result;
+        }
 
         public override string VisitRangeExpr(AstRangeExpr expr, int data = 0)
         {

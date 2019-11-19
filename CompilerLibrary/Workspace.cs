@@ -23,11 +23,9 @@ namespace Cheez
 
         public IEnumerable<PTFile> Files => mFiles.Select(kv => kv.Value);
 
-        private List<AstStatement> mStatements = new List<AstStatement>();
-        public List<AstStatement> Statements => mStatements;
+        private Queue<PTFile> mUnresolvedFiles = new Queue<PTFile>();
 
-        public Scope GlobalScope { get; private set; }
-        public List<Scope> AllScopes { get; private set; }
+        public Scope GlobalScope { get; }
 
         public AstFuncExpr MainFunction { get; set; }
 
@@ -48,6 +46,10 @@ namespace Cheez
         public Workspace(CheezCompiler comp)
         {
             mCompiler = comp;
+
+            GlobalScope = new Scope("global");
+            GlobalScope.DefineBuiltInTypes();
+            GlobalScope.DefineBuiltInOperators();
         }
 
         private string GetUniqueName(string str = "")
@@ -74,8 +76,8 @@ namespace Cheez
 
         public void AddFile(PTFile file)
         {
+            mUnresolvedFiles.Enqueue(file);
             mFiles[file.Name] = file;
-            mStatements.AddRange(file.Statements);
         }
 
         public PTFile GetFile(string file)
@@ -83,30 +85,11 @@ namespace Cheez
             return mFiles[file];
         }
 
-        public void RemoveFile(PTFile file)
-        {
-            mFiles.Remove(file.Name);
-
-            mStatements.RemoveAll(s => s.SourceFile == file);
-            //GlobalScope.FunctionDeclarations.RemoveAll(fd => fd.GenericParseTreeNode.SourceFile == file);
-            //GlobalScope.TypeDeclarations.RemoveAll(fd => fd.GenericParseTreeNode.SourceFile == file);
-            //GlobalScope.VariableDeclarations.RemoveAll(fd => fd.GenericParseTreeNode.SourceFile == file);
-
-            // @Todo: make that better, somewhere else
-            //GlobalScope = new Scope("Global");
-        }
-
         public void CompileAll()
         {
-            var preludeScope = new Scope("prelude");
-            preludeScope.DefineBuiltInTypes();
-            preludeScope.DefineBuiltInOperators();
-
-            GlobalScope = new Scope("Global", preludeScope);
-            GlobalScope.IsOrdered = false;
-
             // new
-            ResolveDeclarations(Statements);
+            ResolveImports();
+            ResolveDeclarations();
 
             if (mCompiler.ErrorHandler.HasErrors)
                 return;
@@ -119,8 +102,17 @@ namespace Cheez
             }
             else if (mains.Count() == 0)
             {
-                var mainDecl = GlobalScope.GetSymbol("Main") as AstConstantDeclaration;
-                MainFunction = mainDecl?.Initializer as AstFuncExpr;
+                var scopesWithMain = Files.Where(f => f.FileScope.GetSymbol("Main") is AstConstantDeclaration c && c.Initializer is AstFuncExpr);
+
+                if (scopesWithMain.Count() == 0)
+                    mCompiler.ErrorHandler.ReportError("No main function was specified");
+                else if (scopesWithMain.Count() > 1)
+                    mCompiler.ErrorHandler.ReportError("No main function was specified");
+                else
+                {
+                    var mainDecl = scopesWithMain.First().FileScope.GetSymbol("Main") as AstConstantDeclaration;
+                    MainFunction = mainDecl?.Initializer as AstFuncExpr;
+                }
 
                 if (MainFunction == null)
                 {

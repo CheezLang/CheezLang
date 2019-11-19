@@ -1,6 +1,7 @@
-
-#load("std:mem/allocator")
-#load("std:util")
+use import std.mem.allocator
+use import std.mem.std_heap_allocator
+use import std.util
+C :: import std.c
 
 RingQueue :: struct(T: type) {
     data    : &T
@@ -53,9 +54,9 @@ impl(T: type) RingQueue[T] {
             l2 := last
             // data is split in
             // first half:  first..capacity -> 0..l1
-            c_memcpy(cast data_new, cast pointer_add_sized(data, first), u64(l1 * @sizeof(T)))
+            C.memcpy(cast data_new, cast pointer_add_sized(data, first), u64(l1 * @sizeof(T)))
             // second half: 0..last         -> l1..l1+l2
-            c_memcpy(cast pointer_add_sized(data_new, l1), cast data, u64(l2 * @sizeof(T)))
+            C.memcpy(cast pointer_add_sized(data_new, l1), cast data, u64(l2 * @sizeof(T)))
             free(data, allocator)
             data = data_new
             last = l1 + l2
@@ -65,7 +66,7 @@ impl(T: type) RingQueue[T] {
         capacity = size
 
         if size > get_length() {
-            c_memset(cast &data[get_length()], 0, u64((size - get_length()) * @sizeof(T)))
+            C.memset(cast &data[get_length()], 0, u64((size - get_length()) * @sizeof(T)))
         }
     }
 

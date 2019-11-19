@@ -14,62 +14,61 @@
 1, 2, 3, 0, 0
 ")
 
-#load("std:mem/allocator")
-#load("std:io/io")
-
+use import std.mem.allocator
+io :: import std.io
 
 Main :: () {
     {
         a := alloc(int)
         <<a = 0
-        printf("{}`n", <<a)
+        io.printf("{}`n", <<a)
         <<a = 5
-        printf("{}`n`n", <<a)
+        io.printf("{}`n`n", <<a)
         free(a)
     }
 
     {
         a := alloc_raw(int, 5)
         for i : 0..5 { a[i] = 0 }
-        printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
+        io.printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
 
         
         for i : 0..5 { a[i] = i * 2 }
-        printf("{}, {}, {}, {}, {}`n`n", (a[0], a[1], a[2], a[3], a[4]))
+        io.printf("{}, {}, {}, {}, {}`n`n", (a[0], a[1], a[2], a[3], a[4]))
         free(a)
     }
 
     {
         a := alloc_n(int, 5)
         for i : 0..a.length { a[i] = 0 }
-        printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
+        io.printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
 
         for i : 0..a.length {
             a[i] = i + 1
         }
-        printf("{}, {}, {}, {}, {}`n`n", (a[0], a[1], a[2], a[3], a[4]))
+        io.printf("{}, {}, {}, {}, {}`n`n", (a[0], a[1], a[2], a[3], a[4]))
         free_n(a)
     }
 
     {
         a := alloc_n(int, 3)
         for i : 0..a.length { a[i] = i + 1 }
-        printf("{}, {}, {}`n", (a[0], a[1], a[2]))
+        io.printf("{}, {}, {}`n", (a[0], a[1], a[2]))
 
         a = realloc_n(a, 5)
         for i : 3..a.length { a[i] = 0 }
-        printf("{}, {}, {}, {}, {}`n`n", (a[0], a[1], a[2], a[3], a[4]))
+        io.printf("{}, {}, {}, {}, {}`n`n", (a[0], a[1], a[2], a[3], a[4]))
         free_n(a)
     }
 
     {
         a := alloc_raw(int, 3)
         for i : 0..3 { a[i] = i + 1 }
-        printf("{}, {}, {}`n", (a[0], a[1], a[2]))
+        io.printf("{}, {}, {}`n", (a[0], a[1], a[2]))
 
         a = realloc_raw(a, 5)
         for i : 3..5 { a[i] = 0 }
-        printf("{}, {}, {}, {}, {}`n`n", (a[0], a[1], a[2], a[3], a[4]))
+        io.printf("{}, {}, {}, {}, {}`n`n", (a[0], a[1], a[2], a[3], a[4]))
         free(a)
     }
 }

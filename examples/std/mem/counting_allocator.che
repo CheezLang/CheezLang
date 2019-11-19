@@ -1,8 +1,8 @@
-
-#load("std:mem/memory")
-#load("std:mem/allocator")
-#load("std:mem/std_heap_allocator")
-#load("std:io/io")
+use import std.mem.allocator
+use import std.mem.std_heap_allocator
+C :: import std.c
+io :: import std.io
+util :: import std.util
 
 CountingAllocator :: struct {
     parent: Allocator
@@ -20,7 +20,7 @@ newCountingAllocator2 :: (alloc: Allocator) -> CountingAllocator {
 
 impl CountingAllocator {
     printDiagnostics :: (ref Self) {
-        printfln("( Allocated: {}, Freed: {} )", (allocated, freed))
+        io.printfln("( Allocated: {}, Freed: {} )", (allocated, freed))
     }
 }
 
@@ -35,12 +35,12 @@ impl Allocator for CountingAllocator {
         sizePtr := cast(&u64)mem
         <<sizePtr = size
 
-        return pointer_add(mem, @sizeof(u64))
+        return util.pointer_add(mem, @sizeof(u64))
     }
 
     reallocate :: (ref Self, mem: &void, count: u64, elementSize: u64, alignment: u64) -> &void {
         size := count * elementSize
-        actualMem := pointer_add(mem, -@sizeof(u64))
+        actualMem := util.pointer_add(mem, -@sizeof(u64))
         
         {
             sizePtr := cast(&u64)actualMem
@@ -51,11 +51,11 @@ impl Allocator for CountingAllocator {
 
         sizePtr := cast(&u64)mem
         <<sizePtr = size
-        return pointer_add(mem, @sizeof(u64))
+        return util.pointer_add(mem, @sizeof(u64))
     }
 
     free :: (ref Self, mem: &void) {
-        actualMem := pointer_add(mem, -@sizeof(u64))
+        actualMem := util.pointer_add(mem, -@sizeof(u64))
         sizePtr := cast(&u64)actualMem
         freed += <<sizePtr
         parent.free(actualMem)

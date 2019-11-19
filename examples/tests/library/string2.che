@@ -1,8 +1,7 @@
 #test_expect_output("`"uiae true 0.5`"")
 
-#load("std:string")
-#load("std:c")
-#load("std:io/io")
+use import std.string
+C :: import std.c
 
 Main :: () {
     s := String.empty()
@@ -10,5 +9,5 @@ Main :: () {
     p5 := 0.5
     s.appendf("uiae {} {}", (t, p5))
 
-    c_printf("`"%.*s`"`n", s.length, s.get_raw())
+    C.printf("`"%.*s`"`n", s.length, s.get_raw())
 }

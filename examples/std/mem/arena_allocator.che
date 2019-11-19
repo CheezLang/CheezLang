@@ -1,8 +1,10 @@
-#load("std:mem/allocator")
-#load("std:mem/std_heap_allocator")
-#load("std:array")
-#load("std:util")
-#load("std:printable")
+use import std.mem.allocator
+use import std.mem.std_heap_allocator
+use import std.array
+use import std.printable
+util :: import std.util
+io :: import std.io
+C :: import std.c
 
 align :: (add: uint, align: uint) -> uint {
     mul := add + align - 1
@@ -19,14 +21,14 @@ Bucket :: struct {
 
 impl Bucket {
     can_store :: (ref Self, size: uint, align: uint) -> bool {
-        next_address := next_aligned(pointer_add(memory.data, cast(int)filled), align)
+        next_address := util.next_aligned(util.pointer_add(memory.data, cast(int)filled), align)
         next_offset := (cast(uint)next_address) - (cast(uint)memory.data)
         free := (cast(uint)memory.length) - next_offset
         return free >= size
     }
 
     allocate :: (ref Self, size: uint, align: uint) -> &u8 {
-        next_address := next_aligned(pointer_add(memory.data, cast(int)filled), align)
+        next_address := util.next_aligned(util.pointer_add(memory.data, cast(int)filled), align)
         next_offset := (cast(uint)next_address) - (cast(uint)memory.data)
         filled = next_offset + size
         return next_address
@@ -65,22 +67,22 @@ impl ArenaAllocator {
     }
 
     dump :: (ref Self, dump_buckets: bool = false) {
-        printfln("ArenaAllocator ({} buckets)", buckets.length)
+        io.printfln("ArenaAllocator ({} buckets)", buckets.length)
         for i : 0..buckets.length {
             bucket : ref Bucket = buckets[i]
 
-            printfln("  Bucket {}: {}/{} bytes", (i, bucket.filled, bucket.memory.length))
+            io.printfln("  Bucket {}: {}/{} bytes", (i, bucket.filled, bucket.memory.length))
             if dump_buckets {
                 current : uint = 0
 
                 while current < bucket.filled {
-                    len := <<cast(&uint)pointer_add(bucket.memory.data, cast(int)current)
+                    len := <<cast(&uint)util.pointer_add(bucket.memory.data, cast(int)current)
                     if len == 0 {
                         current += 8
                         continue
                     }
 
-                    printfln("    {}: {} bytes", (current, len))
+                    io.printfln("    {}: {} bytes", (current, len))
 
                     // find next allocation
                     current += len + 8
@@ -125,21 +127,21 @@ impl Allocator for ArenaAllocator {
         ptr := free_bucket.allocate(required_size, alignment)
         len_ptr := cast(&uint)ptr
         <<len_ptr = count * elementSize
-        return pointer_add(ptr, 8)
+        return util.pointer_add(ptr, 8)
     }
 
     reallocate :: (ref Self, mem: &void, count: u64, elementSize: u64, alignment: u64) -> &void {
         if mem == null {
             return allocate(count, elementSize, alignment)
         } else {
-            len := <<cast(&uint)pointer_add(mem, -8)
+            len := <<cast(&uint)util.pointer_add(mem, -8)
 
             if len >= count * elementSize {
                 return mem
             }
 
             new_mem := allocate(count, elementSize, alignment)
-            c_memcpy(new_mem, mem, len)
+            C.memcpy(new_mem, mem, len)
             return new_mem
         }
     }

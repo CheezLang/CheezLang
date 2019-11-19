@@ -1,5 +1,5 @@
-#load("std:io/io")
-#load("std:time")
+io   :: import std.io
+time :: import std.time
 
 TestTrait :: trait {
     traitFunction :: (ref Self, n: u64);
@@ -43,7 +43,7 @@ Main :: () {
     n := 8
 
 
-    printf("iterations: {}, n: {}`n", (iterations, n))
+    io.printf("iterations: {}, n: {}`n", (iterations, n))
 
     t  : Test = default
     tt : TestTrait = t
@@ -53,19 +53,19 @@ Main :: () {
     {
         t.counter = 0
 
-        start := get_time_microseconds()
+        start := time.get_time_microseconds()
 
         for 0..iterations {
             t.normalFunction(cast(u64)n)
         }
 
         {
-            end  := get_time_microseconds()
+            end  := time.get_time_microseconds()
             diff := end - start
             ms   := diff / 1000
 
-            printf("counter: {}`n", t.counter)
-            printf("[t.normalFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
+            io.printf("counter: {}`n", t.counter)
+            io.printf("[t.normalFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
         }
     }
 
@@ -74,19 +74,19 @@ Main :: () {
     {
         t.counter = 0
 
-        start := get_time_microseconds()
+        start := time.get_time_microseconds()
 
         for 0..iterations {
             t.refFunction(cast(u64)n)
         }
 
         {
-            end  := get_time_microseconds()
+            end  := time.get_time_microseconds()
             diff := end - start
             ms   := diff / 1000
 
-            printf("counter: {}`n", t.counter)
-            printf("[t.refFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
+            io.printf("counter: {}`n", t.counter)
+            io.printf("[t.refFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
         }
     }
 
@@ -94,19 +94,19 @@ Main :: () {
     {
         t.counter = 0
 
-        start := get_time_microseconds()
+        start := time.get_time_microseconds()
 
         for 0..iterations {
             t.traitFunction(cast(u64)n)
         }
 
         {
-            end  := get_time_microseconds()
+            end  := time.get_time_microseconds()
             diff := end - start
             ms   := diff / 1000
 
-            printf("counter: {}`n", t.counter)
-            printf("[t.traitFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
+            io.printf("counter: {}`n", t.counter)
+            io.printf("[t.traitFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
         }
     }
 
@@ -116,19 +116,19 @@ Main :: () {
     {
         t.counter = 0
 
-        start := get_time_microseconds()
+        start := time.get_time_microseconds()
 
         for 0..iterations {
             tt.traitFunction(cast(u64)n)
         }
 
         {
-            end  := get_time_microseconds()
+            end  := time.get_time_microseconds()
             diff := end - start
             ms   := diff / 1000
 
-            printf("counter: {}`n", t.counter)
-            printf("[tt.traitFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
+            io.printf("counter: {}`n", t.counter)
+            io.printf("[tt.traitFunction()] Time elapsed: {} ms ({} iterations)`n", (ms, iterations))
         }
     }
 }

@@ -2,19 +2,16 @@
 #test_expect_output("0, 1, 7, 8, 9, 1, 2, 8, 9, 10")
 #test_expect_output("1, 3, 12, 13, 14, 2, 4, 13, 14, 15")
 
-
-
-// required for printing
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 Main :: () {
-    c_printf("%d, %d, %d, %d, %d`n",
+    C.printf("%d, %d, %d, %d, %d`n",
         test0(), test1(), test2(), test3(), test4())
 
-    c_printf("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d`n",
+    C.printf("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d`n",
         test5()[0], test6()[0], test7()[0], test8()[0], test9()[0], test5()[1], test6()[1], test7()[1], test8()[1], test9()[1])
 
-    c_printf("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d`n", 
+    C.printf("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d`n", 
         test10()[0], test11()[0], test12()[0], test13()[0], test14()[0], test10()[1], test11()[1], test12()[1], test13()[1], test14()[1])
 }
 

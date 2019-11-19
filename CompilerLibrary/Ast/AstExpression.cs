@@ -134,6 +134,24 @@ namespace Cheez.Ast.Expressions
         }
     }
 
+    public class AstImportExpr : AstExpression
+    {
+        public override bool IsPolymorphic => false;
+
+        public AstIdExpr[] Path { get; }
+
+        public AstImportExpr(AstIdExpr[] path, ILocation Location = null) : base(Location)
+        {
+            this.Path = path;
+        }
+
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default)
+            => visitor.VisitImportExpr(this, data);
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstImportExpr(Path.Select(p => p.Clone() as AstIdExpr).ToArray()));
+    }
+
     public abstract class AstNestedExpression : AstExpression
     {
         public Scope SubScope { get; set; }

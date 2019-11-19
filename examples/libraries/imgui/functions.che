@@ -1,3 +1,6 @@
+use import types
+use import glfw.glfw3
+
 ImVec2_ImVec2                                         :: () -> &ImVec2;
 ImVec2_destroy                                        :: (self : &ImVec2) -> void;
 ImVec2_ImVec2Float                                    :: (_x : f32, _y : f32) -> &ImVec2;

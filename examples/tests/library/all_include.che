@@ -1,47 +1,46 @@
 // io
-#load("std:io/io")
-#load("std:io/file")
-#load("std:io/stdio")
+import std.io
+import std.io.file
+import std.io.stdio
 
 // mem
-#load("std:mem/allocator")
-#load("std:mem/arena_allocator")
-#load("std:mem/counting_allocator")
-#load("std:mem/memory")
-#load("std:mem/stack_allocator")
-#load("std:mem/std_heap_allocator")
+import std.mem.allocator
+import std.mem.arena_allocator
+import std.mem.counting_allocator
+import std.mem.stack_allocator
+import std.mem.std_heap_allocator
 
 // os
 if const @is_os("windows") {
-    #load("std:os/windows")
+    import std.os.windows
 }
 if const @is_os("linux") {
-    #load("std:os/linux")
+    import std.os.linux
 }
 
-// random
-#load("std:random/mt")
-
 // other
-#load("std:alloca")
-#load("std:array")
-#load("std:box")
-#load("std:c")
-#load("std:fiber")
-#load("std:hash_table")
-#load("std:hash")
-#load("std:heap")
-#load("std:iterator")
-#load("std:math")
-#load("std:printable")
-#load("std:random")
-#load("std:rc")
-#load("std:ring_queue")
-#load("std:stack")
-#load("std:string")
-#load("std:thread")
-#load("std:time")
-#load("std:util")
+import std.alloca
+import std.array
+import std.box
+import std.c
+import std.fiber
+import std.hash_table
+import std.hash
+import std.heap
+import std.iterator
+import std.math
+import std.printable
+import std.random
+import std.rc
+import std.ring_queue
+import std.stack
+import std.string
+import std.thread
+import std.time
+import std.util
+
+// random
+import std.random.mt
 
 Main :: () {
 }

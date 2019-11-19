@@ -1,7 +1,6 @@
 #test_expect_output("1, 2, 3, 4")
 
-
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 Main :: () {
     a := { 1 }
@@ -17,5 +16,5 @@ Main :: () {
         d
     }
 
-    c_printf("%d, %d, %d, %d", a, b, c, d)
+    C.printf("%d, %d, %d, %d", a, b, c, d)
 }

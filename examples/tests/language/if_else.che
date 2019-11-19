@@ -11,10 +11,7 @@
 #test_expect_output("error")
 #test_expect_output("yey")
 
-
-
-// required for printing
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 Main :: () {
     test(true, true)
@@ -31,15 +28,15 @@ Main :: () {
     test3(false)
 
     if (ok, str) := test4(false), ok {
-        c_printf("%s`n", str)
+        C.printf("%s`n", str)
     } else {
-        c_printf("%s`n", "error"c)
+        C.printf("%s`n", "error"c)
     }
 
     if res := test4(true), res.ok {
-        c_printf("%s`n", res.value)
+        C.printf("%s`n", res.value)
     } else {
-        c_printf("%s`n", "error"c)
+        C.printf("%s`n", "error"c)
     }
 }
 
@@ -50,15 +47,15 @@ bool_to_string :: (b: bool) -> c_string {
 test :: (b1: bool, b2: bool) {
     if b1 {
         if b2 {
-            c_printf("true, true`n")
+            C.printf("true, true`n")
         } else {
-            c_printf("true, false`n")
+            C.printf("true, false`n")
         }
     } else {
         if b2 {
-            c_printf("false, true`n")
+            C.printf("false, true`n")
         } else {
-            c_printf("false, false`n")
+            C.printf("false, false`n")
         }
     }
 }
@@ -73,16 +70,16 @@ test2 :: (b1: bool, b2: bool) {
             4
     }
 
-    c_printf("%d`n", num)
+    C.printf("%d`n", num)
 }
 
 test3 :: (b: bool) {
     if b {
-        c_printf("true`n")
+        C.printf("true`n")
         return
     }
 
-    c_printf("false`n")
+    C.printf("false`n")
 }
 
 test4 :: (b: bool) -> (ok: bool, value: c_string) {

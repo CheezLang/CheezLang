@@ -1,5 +1,4 @@
-
-#load("std:array")
+use import std.array
 
 Iterator :: trait(T: type) {
     next :: (ref Self) -> Option[T];

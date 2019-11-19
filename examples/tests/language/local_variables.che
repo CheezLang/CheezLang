@@ -16,10 +16,7 @@
 #test_expect_output("f[0]: 456, f[1]: 0")
 #test_expect_output("g: 456, h: 0")
 
-
-
-// required for printing
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 Main :: () {
     a := 123
@@ -28,11 +25,11 @@ Main :: () {
     f := (c, d)
     (g, h) := f
 
-    c_printf("a: %lld`n", a)
-    c_printf("b: %lld`n", cast(int)b)
-    c_printf("c: %lld, d: %lld`n", c, cast(int)d)
-    c_printf("f[0]: %lld, f[1]: %lld`n", f[0], cast(int)f[1])
-    c_printf("g: %lld, h: %lld`n", g, cast(int)h)
+    C.printf("a: %lld`n", a)
+    C.printf("b: %lld`n", cast(int)b)
+    C.printf("c: %lld, d: %lld`n", c, cast(int)d)
+    C.printf("f[0]: %lld, f[1]: %lld`n", f[0], cast(int)f[1])
+    C.printf("g: %lld, h: %lld`n", g, cast(int)h)
     
     a = 456
     b = false
@@ -40,20 +37,20 @@ Main :: () {
     f = (c, d)
     (g, h) = f
     
-    c_printf("a: %lld`n", a)
-    c_printf("b: %lld`n", cast(int)b)
-    c_printf("c: %lld, d: %lld`n", c, cast(int)d)
-    c_printf("f[0]: %lld, f[1]: %lld`n", f[0], cast(int)f[1])
-    c_printf("g: %lld, h: %lld`n", g, cast(int)h)
+    C.printf("a: %lld`n", a)
+    C.printf("b: %lld`n", cast(int)b)
+    C.printf("c: %lld, d: %lld`n", c, cast(int)d)
+    C.printf("f[0]: %lld, f[1]: %lld`n", f[0], cast(int)f[1])
+    C.printf("g: %lld, h: %lld`n", g, cast(int)h)
 
     a += 11
     (a, c) += (3, 3)
     x := (9, -5)
     (a, c) += x
 
-    c_printf("a: %lld`n", a)
-    c_printf("b: %lld`n", cast(int)b)
-    c_printf("c: %lld, d: %lld`n", c, cast(int)d)
-    c_printf("f[0]: %lld, f[1]: %lld`n", f[0], cast(int)f[1])
-    c_printf("g: %lld, h: %lld`n", g, cast(int)h)
+    C.printf("a: %lld`n", a)
+    C.printf("b: %lld`n", cast(int)b)
+    C.printf("c: %lld, d: %lld`n", c, cast(int)d)
+    C.printf("f[0]: %lld, f[1]: %lld`n", f[0], cast(int)f[1])
+    C.printf("g: %lld, h: %lld`n", g, cast(int)h)
 }

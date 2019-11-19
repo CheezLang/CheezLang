@@ -6,17 +6,14 @@
 #test_expect_output("7, 8")
 #test_expect_output("9, 10")
 
-
-
-// required for printing
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 foo :: (a: i32, b: i32) {
-    c_printf("%d, %d`n", a, b)
+    C.printf("%d, %d`n", a, b)
 }
 
 bar :: (a: i32 = 123, b: i32 = 456) {
-    c_printf("%d, %d`n", a, b)
+    C.printf("%d, %d`n", a, b)
 }
 
 Main :: () {

@@ -1,5 +1,5 @@
-#load("std:mem/allocator")
-#load("std:mem/memory")
+use import std.mem.allocator
+c :: import std.c
 
 StdHeapAllocator :: struct {
     _unused: i32 = 0
@@ -7,15 +7,15 @@ StdHeapAllocator :: struct {
 
 impl Allocator for StdHeapAllocator {
     allocate   :: (ref Self, count: uint, elementSize: uint, alignment: uint) -> &void {
-        return c_malloc(cast(uint) (count * elementSize))
+        return c.malloc(cast(uint) (count * elementSize))
     }
 
     reallocate :: (ref Self, mem: &void, count: uint, elementSize: uint, alignment: uint) -> &void {
-        return c_realloc(mem, cast(uint) (count * elementSize))
+        return c.realloc(mem, cast(uint) (count * elementSize))
     }
 
     free       :: (ref Self, mem: &void) {
-        c_free(mem)
+        c.free(mem)
     }
 }
 

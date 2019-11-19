@@ -1,8 +1,9 @@
 if const @is_os("windows") {
-    #load("std:os/windows")
+    import std.os.windows
+    use import std.os.windows_functions
 }
 if const @is_os("linux") {
-    #load("std:os/linux")
+    linux :: import std.os.linux
 }
 
 get_time_microseconds :: () -> int {

@@ -1,4 +1,5 @@
-#load("std:mem/allocator")
+use import std.mem.allocator
+
 
 Box :: struct(T: type) {
     _value: &T

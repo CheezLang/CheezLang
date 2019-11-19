@@ -8,7 +8,8 @@ using System.Linq;
 
 namespace Cheez.Types.Abstract
 {
-    public abstract class AbstractType : CheezType {
+    public abstract class AbstractType : CheezType
+    {
         public override bool IsErrorType => true;
         public override bool IsComptimeOnly => true;
 

@@ -1,11 +1,9 @@
 #test_expect_output("0, 1, 2, 3")
 
-
-
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 Main :: () {
-    c_printf("%lld, %lld, %lld, %lld", foo(int), bar(1), baz(int, 2), uiae(3, int))
+    C.printf("%lld, %lld, %lld, %lld", foo(int), bar(1), baz(int, 2), uiae(3, int))
 }
 
 foo :: ($T: type) -> T {

@@ -4,9 +4,8 @@ None
 Some(1.414214)
 Err(`"argument is negative`")")
 
-
-#load("std:c")
-#load("std:math")
+C :: import std.c
+use import std.math
 
 PolyStruct :: struct(T: type) {
     x: T
@@ -41,15 +40,15 @@ Main :: () {
 test1 :: (x: Option[int]) {
     use Option
     match x {
-        Some($v)    -> c_printf("Some(%lld)`n", cast(int)v)
-        None        -> c_puts("None")
+        Some($v)    -> C.printf("Some(%lld)`n", cast(int)v)
+        None        -> C.puts("None")
     }
 }
 
 test2 :: (r: Result[double, string]) {
     use Result
     match r {
-        Ok($v)      -> c_printf("Some(%f)`n", v)
-        Err($msg)   -> c_printf("Err(`"%.*s`")`n", msg.length, msg.data)
+        Ok($v)      -> C.printf("Some(%f)`n", v)
+        Err($msg)   -> C.printf("Err(`"%.*s`")`n", msg.length, msg.data)
     }
 }

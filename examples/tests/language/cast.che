@@ -6,9 +6,7 @@
 #test_expect_output("3.700000, 3")
 #test_expect_output("7, 7.000000")
 
-
-
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 Main :: () {
     // int <- int
@@ -37,38 +35,38 @@ test1 :: (a: i32) {
     b : i64 = cast a
     c := cast(i8) a
 
-    c_printf("%d, %lld, %hhd`n", a, b, c)
+    C.printf("%d, %lld, %hhd`n", a, b, c)
 }
 test2 :: (a: u32) {
     b : u64 = cast a
     c := cast(u8) a
 
-    c_printf("%u, %llu, %hhu`n", a, b, c)
+    C.printf("%u, %llu, %hhu`n", a, b, c)
 }
 
 test3 :: (a: u64) {
     b : &void = cast a
 
-    c_printf("%llu, %u`n", a, b)
+    C.printf("%llu, %u`n", a, b)
 }
 
 test4 :: (a: &i32) {
     b : u64 = cast a
 
-    c_printf("%u, %u`n", a, b)
+    C.printf("%u, %u`n", a, b)
 }
 
 test5 :: (f: float, d: double) {
     a := cast(double) f
     b := cast(float) d
-    c_printf("%f, %f`n", a, cast(double) b)
+    C.printf("%f, %f`n", a, cast(double) b)
 }
 
 test6 :: (d: double) {
-    c_printf("%f, %d`n", d, cast(i32) d)
+    C.printf("%f, %d`n", d, cast(i32) d)
 }
 
 test7 :: (i: i32) {
-    c_printf("%d, %f`n", i, cast(double) i)
+    C.printf("%d, %f`n", i, cast(double) i)
 }
 

@@ -9,7 +9,7 @@
 -500, -111110100, -1F4
 -123456789, -111010110111100110100010101, -75BCD15")
 
-#load("std:io/io")
+io :: import std.io
 
 Main :: () {
     tru := true
@@ -24,14 +24,14 @@ Main :: () {
     h := -500
     i := -123456789
 
-    printf("{} {:s} {:b} {} {:s} {:b}`n", (tru, tru, tru, fals, fals, fals))
-    printf("{0}, {0:b}, {0:x}`n", a)
-    printf("{0}, {0:b}, {0:x}`n", b)
-    printf("{0}, {0:b}, {0:x}`n", c)
-    printf("{0}, {0:b}, {0:x}`n", d)
-    printf("{0}, {0:b}, {0:x}`n", e)
-    printf("{0}, {0:b}, {0:x}`n", f)
-    printf("{0}, {0:b}, {0:x}`n", g)
-    printf("{0}, {0:b}, {0:x}`n", h)
-    printf("{0}, {0:b}, {0:x}`n", i)
+    io.printf("{} {:s} {:b} {} {:s} {:b}`n", (tru, tru, tru, fals, fals, fals))
+    io.printf("{0}, {0:b}, {0:x}`n", a)
+    io.printf("{0}, {0:b}, {0:x}`n", b)
+    io.printf("{0}, {0:b}, {0:x}`n", c)
+    io.printf("{0}, {0:b}, {0:x}`n", d)
+    io.printf("{0}, {0:b}, {0:x}`n", e)
+    io.printf("{0}, {0:b}, {0:x}`n", f)
+    io.printf("{0}, {0:b}, {0:x}`n", g)
+    io.printf("{0}, {0:b}, {0:x}`n", h)
+    io.printf("{0}, {0:b}, {0:x}`n", i)
 }

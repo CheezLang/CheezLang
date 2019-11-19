@@ -2,10 +2,8 @@
 hello
 true")
 
-
-#load("std:c")
-#load("std:alloca")
-// #load("std:string")
+C :: import std.c
+import std.alloca
 
 Printable :: trait {
     print :: (ref Self);
@@ -13,25 +11,25 @@ Printable :: trait {
 
 impl Printable for int {
     print :: (ref Self) {
-        c_printf("%lld", self)
+        C.printf("%lld", self)
     }
 }
 
 impl Printable for bool {
     print :: (ref Self) {
-        c_printf("%s", if self {"true"c} else {"false"c})
+        C.printf("%s", if self {"true"c} else {"false"c})
     }
 }
 
 impl Printable for string {
     print :: (ref Self) {
-        c_printf("%.*s", self.length, self.data)
+        C.printf("%.*s", self.length, self.data)
     }
 }
 
 println :: (p: Printable) {
     p.print()
-    c_puts("")
+    C.puts("")
 }
 
 Main :: () {

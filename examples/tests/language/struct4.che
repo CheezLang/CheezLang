@@ -6,7 +6,7 @@
 
 
 
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 Vector :: struct(T: type) #copy {
     x: T
@@ -37,13 +37,13 @@ Main :: () {
     a := Vec3(1, 2)
     b := Vec3(3, 4)
     
-    c_printf("%f, %f`n", a.x, a.y)
-    c_printf("%f, %f`n", b.x, b.y)
+    C.printf("%f, %f`n", a.x, a.y)
+    C.printf("%f, %f`n", b.x, b.y)
 
     c := Vec3.sub(a, b)
     a.add(b).add(Vec3(5, 5))
 
-    c_printf("%f, %f`n", a.x, a.y)
-    c_printf("%f, %f`n", b.x, b.y)
-    c_printf("%f, %f`n", c.x, c.y)
+    C.printf("%f, %f`n", a.x, a.y)
+    C.printf("%f, %f`n", b.x, b.y)
+    C.printf("%f, %f`n", c.x, c.y)
 }

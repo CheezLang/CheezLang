@@ -105,7 +105,8 @@ namespace Cheez.Parsing
         KwPub,
         KwThen,
         KwDo,
-        KwMut
+        KwMut,
+        KwImport
     }
 
     public class Token
@@ -389,6 +390,7 @@ namespace Cheez.Parsing
                 case "then": token.type = TokenType.KwThen; break;
                 case "do": token.type = TokenType.KwDo; break;
                 case "mut": token.type = TokenType.KwMut; break;
+                case "import": token.type = TokenType.KwImport; break;
             }
         }
 

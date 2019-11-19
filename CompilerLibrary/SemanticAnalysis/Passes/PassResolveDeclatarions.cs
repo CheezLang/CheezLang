@@ -1,25 +1,102 @@
-﻿using Cheez.Ast;
+﻿#nullable enable
+
+using Cheez.Ast;
 using Cheez.Ast.Expressions;
-using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
-using Cheez.Extras;
 using Cheez.Types;
 using Cheez.Types.Abstract;
-using Cheez.Types.Primitive;
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace Cheez
 {
     public partial class Workspace
     {
-        private void ResolveDeclarations(List<AstStatement> statements)
+        private void ResolveImports()
         {
-            // sort all declarations into different lists
-            InsertDeclarationsIntoLists(statements);
+            ModuleSymbol? GetModule(Scope scope, string name)
+            {
+                var sym = scope.GetSymbol(name);
+                return sym as ModuleSymbol;
+            }
 
+            while (mUnresolvedFiles.Count > 0)
+            {
+                var file = mUnresolvedFiles.Dequeue();
+
+                // sort all declarations into different lists
+                InsertDeclarationsIntoLists(file.Statements);
+
+                // find all imports and resolve them first
+                while (mUnresolvedGlobalImportUses.Count > 0)
+                {
+                    var use = mUnresolvedGlobalImportUses.Dequeue();
+                    var import = use.Value as AstImportExpr ?? throw new System.Exception();
+                    InferTypeImportExpr(import, file);
+                    if (!(import.Value is PTFile importedFile))
+                        continue;
+
+                    file.FileScope.AddUsedScope(importedFile.FileScope);
+                }
+
+                while (mUnresolvedGlobalImportConstants.Count > 0)
+                {
+                    var importC = mUnresolvedGlobalImportConstants.Dequeue();
+                    if (!(importC.Pattern is AstIdExpr importAs))
+                    {
+                        ReportError(importC.Pattern, $"Only identifier allowed here.");
+                        continue;
+                    }
+                    var import = importC.Initializer as AstImportExpr ?? throw new System.Exception();
+                    InferTypeImportExpr(import, file);
+
+                    if (!(import.Value is PTFile importedFile))
+                        continue;
+
+                    var lastName = importAs;
+                    var (ok, other) = file.FileScope.DefineSymbol(new ModuleSymbol(importedFile.FileScope, lastName.Name, lastName.Location));
+                    if (!ok)
+                        ReportError(import, $"Module {lastName} is already imported", ("Other import here:", other));
+                }
+
+                while (mUnresolvedGlobalImports.Count > 0)
+                {
+                    var import = mUnresolvedGlobalImports.Dequeue();
+                    InferTypeImportExpr(import, file);
+
+                    if (!(import.Value is PTFile importedFile))
+                        continue;
+
+                    var targetScope = file.FileScope;
+
+                    for (int i = 0; i < import.Path.Length - 1; i++)
+                    {
+                        var name = import.Path[i];
+
+                        var subMod = GetModule(targetScope, name.Name);
+
+                        if (subMod == null)
+                        {
+                            var subScope = new Scope(name.Name);
+                            targetScope.DefineSymbol(new ModuleSymbol(subScope, name.Name, name.Location));
+                            targetScope = subScope;
+                        }
+                        else
+                        {
+                            targetScope = subMod.Scope;
+                        }
+                    }
+
+                    var lastName = import.Path.Last();
+                    var (ok, other) = targetScope.DefineSymbol(new ModuleSymbol(importedFile.FileScope, lastName.Name, lastName.Location));
+                    if (!ok)
+                        ReportError(import, $"Module {lastName} is already imported", ("Other import here:", other));
+                }
+            }
+        }
+
+        private void ResolveDeclarations()
+        {
             // handle constant declarations
             ResolveConstantDeclarations();
 
@@ -75,9 +152,22 @@ namespace Cheez
         {
             foreach (var decl in statements)
             {
-                decl.Scope = GlobalScope;
+                decl.SetFlag(StmtFlags.GlobalScope, true);
                 switch (decl)
                 {
+                    case AstConstantDeclaration con when con.Initializer is AstImportExpr:
+                        mUnresolvedGlobalImportConstants.Enqueue(con);
+                        break;
+
+                    case AstUsingStmt use when use.Value is AstImportExpr:
+                        mUnresolvedGlobalImportUses.Enqueue(use);
+                        break;
+
+                    case AstExprStmt stmt when stmt.Expr is AstImportExpr import:
+                        import.Scope = stmt.Scope;
+                        mUnresolvedGlobalImports.Enqueue(import);
+                        break;
+
                     case AstConstantDeclaration con:
                         mAllGlobalConstants.Add(con);
                         break;
@@ -104,13 +194,12 @@ namespace Cheez
                 foreach (var sub in SplitConstantDeclaration(mAllGlobalConstants[i]))
                 {
                     mAllGlobalConstants.Add(sub);
-                    mStatements.Add(sub);
                 }
             }
 
             foreach (var con in mAllGlobalConstants)
             {
-                var (ok, other) = GlobalScope.DefineSymbol(con);
+                var (ok, other) = con.Scope.DefineSymbol(con);
                 if (!ok)
                     ReportError(con, $"A symbol with name '{con.Name.Name}' already exists in this scope", ("Other declaration here:", other));
             }
@@ -131,13 +220,12 @@ namespace Cheez
                 foreach (var sub in SplitVariableDeclaration(mAllGlobalVariables[i]))
                 {
                     mAllGlobalVariables.Add(sub);
-                    mStatements.Add(sub);
                 }
             }
 
             foreach (var con in mAllGlobalVariables)
             {
-                var (ok, other) = GlobalScope.DefineSymbol(con);
+                var (ok, other) = con.Scope.DefineSymbol(con);
                 if (!ok)
                     ReportError(con, $"A symbol with name '{con.Name.Name}' already exists in this scope", ("Other declaration here:", other));
             }
@@ -248,8 +336,8 @@ namespace Cheez
 
                     var detail1 = string.Join(" -> ", c.Select(x => x.Name.Name));
 
-                    var details = new List<(string, ILocation)> { (detail1, null) };
-                    details.AddRange(c.Skip(1).Take(c.Count - 2).Select(x => ("Here is the next declaration in the cycle", x.Name.Location)));
+                    var details = new List<(string, ILocation?)> { (detail1, null) };
+                    details.AddRange(c.Skip(1).Take(c.Count - 2).Select(x => ("Here is the next declaration in the cycle", x.Name.Location))!);
                     ReportError(decl.Name, $"Cyclic dependency not allowed", details);
                     return;
                 }

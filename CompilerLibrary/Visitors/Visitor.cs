@@ -79,6 +79,7 @@ namespace Cheez.Visitors
         ReturnType VisitSymbolExpr(AstSymbolExpr expr, DataType data = default);
         ReturnType VisitUfcFuncExpr(AstUfcFuncExpr expr, DataType data = default);
         ReturnType VisitEnumValueExpr(AstEnumValueExpr expr, DataType data = default);
+        ReturnType VisitImportExpr(AstImportExpr expr, DataType data = default);
 
 
         // other
@@ -156,6 +157,7 @@ namespace Cheez.Visitors
         public virtual ReturnType VisitSymbolExpr(AstSymbolExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitUfcFuncExpr(AstUfcFuncExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitEnumValueExpr(AstEnumValueExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitImportExpr(AstImportExpr expr, DataType data = default) => default;
 
         // other
         public virtual ReturnType VisitParameter(AstParameter param, DataType data = default) => default;

@@ -1,4 +1,4 @@
-#load("std:array")
+use import std.array
 
 Stack :: struct(T: type) {
     array: Array[T]

@@ -1,8 +1,10 @@
-#load("std:mem/allocator")
-#load("std:mem/std_heap_allocator")
-#load("std:array")
-#load("std:util")
-#load("std:printable")
+use import std.mem.allocator
+use import std.mem.std_heap_allocator
+use import std.array
+use import std.printable
+use import std.string
+util :: import std.util
+C :: import std.c
 
 StackAllocation :: struct {
     offset  : u64 = 0
@@ -96,7 +98,7 @@ impl StackAllocator {
             free = capacity - (lastAllocation.offset + lastAllocation.size)
         }
         s.appendf(", Free: {} )`n", free)
-        print_string(s)
+        io.print(s)
     }
 
     getLastAllocation :: (ref Self) -> &StackAllocation {
@@ -120,8 +122,8 @@ impl Allocator for StackAllocator {
     allocate :: (ref Self, count: u64, elementSize: u64, alignment: u64) -> &void {
 
         nextAddress := {
-            unaligned := pointer_add(memory, cast(i64) self.getNextAllocationOffset())
-            next_aligned(unaligned, alignment)
+            unaligned := util.pointer_add(memory, cast(i64) self.getNextAllocationOffset())
+            util.next_aligned(unaligned, alignment)
         }
 
         newAllocation := StackAllocation(
@@ -148,7 +150,7 @@ impl Allocator for StackAllocator {
             return null
         }
 
-        lastAllocationAddress := pointer_add(memory, cast(i64) lastAllocation.offset)
+        lastAllocationAddress := util.pointer_add(memory, cast(i64) lastAllocation.offset)
         if mem == lastAllocationAddress {
             newEnd := lastAllocation.offset + size
             if newEnd > capacity {
@@ -159,7 +161,7 @@ impl Allocator for StackAllocator {
             return mem
         } else {
             newMem := self.allocate(count, elementSize, 8)
-            c_memcpy(newMem, mem, cast(uint) size)
+            C.memcpy(newMem, mem, cast(uint) size)
             return newMem
         }
     }
@@ -169,7 +171,7 @@ impl Allocator for StackAllocator {
         if lastAllocation == null {
             return
         }
-        if mem == pointer_add(memory, cast(i64) lastAllocation.offset) {
+        if mem == util.pointer_add(memory, cast(i64) lastAllocation.offset) {
             allocations.resize(allocations.length - 1)
         }
     }

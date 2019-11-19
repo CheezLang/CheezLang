@@ -2,7 +2,7 @@
 
 #test_expect_output("1366")
 
-#load("std:io/io")
+io :: import std.io
 
 Main :: () {
     digits := @dup(0, 1000)
@@ -29,6 +29,6 @@ Main :: () {
     for(reverse=true) @cast([]int, digits) {
         sum += it
     }
-    
-    println(sum)
+
+    io.println(sum)
 }

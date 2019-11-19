@@ -192,9 +192,6 @@ namespace Cheez
                     var arg = args[i];
                     param.Type = arg.type;
                     param.Value = arg.value;
-
-                    // TODO: non type parameters
-                    instance.SubScope.DefineTypeSymbol(param.Name.Name, param.Value as CheezType);
                 }
 
                 instance = InferType(instance, null) as AstTraitTypeExpr;

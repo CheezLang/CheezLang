@@ -1,5 +1,6 @@
-#load("windows_types")
 #load("windows_macros")
+
+use import windows_types
 
 // new, incomplete
 FindFirstChangeNotificationA :: (

@@ -1,4 +1,4 @@
-#load("windows_types")
+use import windows_types
 
 // new, incomplete
 FILE_NOTIFY_CHANGE_LAST_WRITE      :: 0x00000010

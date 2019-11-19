@@ -5,12 +5,10 @@ get_ref
 2
 2")
 
-#load("std:c")
-
-
+C :: import std.c
 
 get_ref :: (a: ref Option[int]) -> ref Option[int] {
-    c_puts("get_ref")
+    C.puts("get_ref")
     return a
 }
 
@@ -58,10 +56,10 @@ inc5 :: (a: Option[int]) {
 print_a :: (a: ref Option[int]) {
     match a {
         Some($a) -> {
-            c_printf("%lld`n", a)
+            C.printf("%lld`n", a)
         }
         None -> {
-            c_puts("None")
+            C.puts("None")
         }
     }
 }

@@ -1927,11 +1927,31 @@ namespace Cheez.Parsing
             return new AstTraitTypeExpr(parameters, declarations, directives, new Location(beg, end));
         }
 
+        private AstImportExpr ParseImportExpr()
+        {
+            var beg = Consume(TokenType.KwImport, null).location;
+
+            var path = new List<AstIdExpr>();
+
+            path.Add(ParseIdentifierExpr());
+
+            while (CheckToken(TokenType.Period))
+            {
+                NextToken();
+                path.Add(ParseIdentifierExpr());
+            }
+
+            return new AstImportExpr(path.ToArray(), new Location(beg, path.Last().End));
+        }
+
         private AstExpression ParseAtomicExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver errorMessage)
         {
             var token = PeekToken();
             switch (token.type)
             {
+                case TokenType.KwImport:
+                    return ParseImportExpr();
+
                 case TokenType.KwBreak:
                     return ParseBreakExpr();
                 case TokenType.KwContinue:

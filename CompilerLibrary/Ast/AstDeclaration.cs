@@ -156,6 +156,8 @@ namespace Cheez.Ast.Statements
         public bool IsMacroFunction { get; set; }
         public bool IsForExtension { get; set; }
         public bool IsAnalysed { get; set; }
+        public bool SignatureAnalysed { get; set; }
+
 
         public AstFuncExpr(List<AstParameter> parameters,
             AstParameter returns,

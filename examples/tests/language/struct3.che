@@ -4,9 +4,7 @@
 #test_expect_output("3.600000")
 #test_expect_output("5")
 
-
-
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 Test :: struct(T: type) {
     x: T
@@ -23,12 +21,12 @@ Main :: () {
     t := Test[int](2)
     t2 := Test[double](3.6)
 
-    c_printf("%lld`n", t.x)
-    c_printf("%f`n", t2.x)
+    C.printf("%lld`n", t.x)
+    C.printf("%f`n", t2.x)
 
     uiae := t.foo(5)
 
-    c_printf("%lld`n", t.x)
-    c_printf("%f`n", t2.x)
-    c_printf("%lld`n", uiae.x)
+    C.printf("%lld`n", t.x)
+    C.printf("%f`n", t2.x)
+    C.printf("%lld`n", uiae.x)
 }

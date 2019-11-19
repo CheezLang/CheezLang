@@ -1,7 +1,7 @@
-
-#load("std:mem/std_heap_allocator")
-#load("std:hash")
-#load("std:iterator")
+use import std.mem.allocator
+use import std.mem.std_heap_allocator
+use import std.hash
+use import std.iterator
 
 Table :: struct(K: type, V: type) {
     max_load: double

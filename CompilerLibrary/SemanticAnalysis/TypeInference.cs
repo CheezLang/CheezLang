@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -66,7 +67,12 @@ namespace Cheez
                 if (expected != null && !(expected is FloatType)) return FloatType.DefaultType;
                 return expected ?? FloatType.DefaultType;
             }
-            else if (literalType == CheezType.StringLiteral) return CheezType.String;
+            else if (literalType == CheezType.StringLiteral)
+            {
+                if (expected != null && (expected == CheezType.String || expected == CheezType.CString))
+                    return expected;
+                return CheezType.String;
+            }
             else if (literalType == PointerType.NullLiteralType)
             {
                 if (expected is TraitType)
@@ -127,6 +133,10 @@ namespace Cheez
 
             switch (expr)
             {
+                case AstImportExpr i:
+                    ReportError(i, $"Import expression not allowed here.");
+                    return expr;
+
                 case AstFuncExpr f:
                     return InferTypeFuncExpr(f);
 
@@ -267,6 +277,64 @@ namespace Cheez
             }
         }
 
+        private AstExpression InferTypeImportExpr(AstImportExpr i, PTFile file)
+        {
+            string SearchForModuleInPath(string basePath, AstIdExpr[] module)
+            {
+                var path = basePath;
+
+                for (int i = 0; i < module.Length - 1; i++)
+                {
+                    var combined = Path.Combine(path, module[i].Name);
+                    if (Directory.Exists(combined))
+                        path = combined;
+                    else
+                        return null;
+                }
+
+                path = Path.Combine(path, module.Last().Name);
+                path += ".che";
+
+                if (File.Exists(path))
+                    return path;
+                return null;
+            }
+
+            IEnumerable<string> ModulePaths(PTFile file, AstIdExpr[] path)
+            {
+                yield return Path.GetDirectoryName(file.Name);
+                if (path.Length > 1)
+                {
+                    var start = path[0].Name;
+                    if (mCompiler.ModulePaths.TryGetValue(start, out var p))
+                        yield return p;
+                }
+            }
+
+            string FindModule()
+            {
+                foreach (var modPath in ModulePaths(file, i.Path))
+                {
+                    var p = SearchForModuleInPath(modPath, i.Path);
+                    if (p != null)
+                        return p;
+                }
+                return null;
+            }
+
+            string path = FindModule();
+            if (path == null)
+            {
+                ReportError(i, $"Can't find module {string.Join(".", i.Path.Select(i => i.Name))}");
+                i.Type = CheezType.Error;
+                return i;
+            }
+
+            i.Type = CheezType.Module;
+            i.Value = mCompiler.AddFile(path, workspace: this);
+            return i;
+        }
+
         private static AstExpression InferTypeVariableRef(AstVariableRef r)
         {
             r.SetFlag(ExprFlags.IsLValue, true);
@@ -283,6 +351,10 @@ namespace Cheez
 
         private AstExpression InferTypeFuncExpr(AstFuncExpr func)
         {
+            if (func.SignatureAnalysed)
+                return func;
+            func.SignatureAnalysed = true;
+
             if (func.IsPolyInstance)
             {
                 // do nothing
@@ -328,7 +400,7 @@ namespace Cheez
                         polyNames.Add(p.Name.Name);
                 }
 
-                foreach (var pn in polyNames)
+                foreach (var pn in new HashSet<string>(polyNames))
                 {
                     func.ConstScope.DefineTypeSymbol(pn, new PolyType(pn));
                 }
@@ -354,6 +426,9 @@ namespace Cheez
                 p.TypeExpr.Scope = func.SubScope;
                 p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
                 p.Type = t;
+
+                if (p.DefaultValue != null)
+                    p.DefaultValue.Scope = func.Scope;
 
                 if (p.Type.IsPolyType || (p.Name?.IsPolymorphic ?? false))
                     func.IsGeneric = true;
@@ -3134,6 +3209,17 @@ namespace Cheez
                         }
                     }
 
+                case ModuleType m:
+                    {
+                        var mod = expr.Left.Value as ModuleSymbol;
+                        expr.Right.Scope = mod.Scope;
+                        var id = InferType(expr.Right, expected);
+
+                        expr.Type = id.Type;
+                        expr.Value = id.Value;
+                        return expr;
+                    }
+
                 // case CheezTypeType _:
                 //     ReportError(expr.Left, $"Invalid value on left side of '.': '{expr.Left.Value}'");
                 //     break;
@@ -3659,6 +3745,7 @@ namespace Cheez
                 var arg = new AstArgument(p.DefaultValue.Clone(), Location: p.DefaultValue.Location);
                 arg.IsDefaultArg = true;
                 arg.Index = i;
+                arg.Expr.Scope = p.DefaultValue.Scope;
                 expr.Arguments.Add(arg);
             }
 
@@ -3687,7 +3774,13 @@ namespace Cheez
             {
                 arg.Expr.SetFlag(ExprFlags.ValueRequired, true);
                 arg.AttachTo(expr);
-                arg.Expr.AttachTo(arg, expr.Scope);
+                arg.Expr.Parent = arg;
+
+                // if the expression already has a scope it is because it is a default value
+                if (arg.IsDefaultArg)
+                { } // do nothing
+                else
+                    arg.Expr.Scope = expr.Scope;
 
                 var ex = param.Type;
                 if (ex.IsPolyType)
@@ -3849,7 +3942,15 @@ namespace Cheez
             {
                 arg.Expr.SetFlag(ExprFlags.ValueRequired, true);
                 arg.AttachTo(expr);
-                arg.Expr.AttachTo(arg, expr.Scope);
+
+                arg.Expr.Parent = arg;
+
+                // if the expression already has a scope it is because it is a default value
+                if (arg.IsDefaultArg)
+                { } // do nothing
+                else
+                    arg.Expr.Scope = expr.Scope;
+                
                 arg.Expr = InferTypeHelper(arg.Expr, type, context);
                 ConvertLiteralTypeToDefaultType(arg.Expr, type);
                 arg.Type = arg.Expr.Type;
@@ -4208,7 +4309,7 @@ namespace Cheez
                         ReportError(expr, $"Can't access variable '{expr.Name}' defined in outer function '{var.ContainingFunction.Name}'", ("Variable defined here:", var.Location));
                 }
 
-                if (var.Type is VarDeclType && var.Scope != GlobalScope)
+                if (var.Type is VarDeclType && !var.GetFlag(StmtFlags.GlobalScope))
                 {
                     ReportError(expr, $"Can't use variable '{var.Name}' before it is declared");
                 }
@@ -4263,6 +4364,16 @@ namespace Cheez
             {
                 expr.Type = em.EnumDeclaration.TagType;
                 expr.Value = em.Value;
+            }
+            else if (sym is ModuleSymbol mod)
+            {
+                expr.Type = CheezType.Module;
+                expr.Value = mod;
+            }
+            else if (sym is AmbiguousSymol amb)
+            {
+                var details = amb.Symbols.Select(s => ("Symbol defined here:", s.Location));
+                ReportError(expr, $"Ambiguous symbol '{expr.Name}'", details);
             }
             else
             {

@@ -8,7 +8,7 @@ bar1(3) -> 3
 3
 ")
 
-#load("std:io/io")
+io :: import std.io
 
 S :: struct {
     a: int
@@ -16,22 +16,22 @@ S :: struct {
 
 impl S {
     foo :: (ref Self) {
-        printfln("foo(self): {}", a)
+        io.printfln("foo(self): {}", a)
     }
 
     foo1 :: (ref Self, x: int) -> int {
         result := a * x
-        printfln("foo1(self, {}): {}", (x, result))
+        io.printfln("foo1(self, {}): {}", (x, result))
         return result
     }
 }
 
 bar :: () {
-    println("bar()")
+    io.println("bar()")
 }
 
 bar1 :: (x: int) -> int {
-    printfln("bar1({}) -> {}", (x, x))
+    io.printfln("bar1({}) -> {}", (x, x))
     return x
 }
 
@@ -40,20 +40,20 @@ test :: (f: Fn()) {
 }
 
 test1 :: (f: Fn(int) -> int, x: int) {
-    println(f(x))
+    io.println(f(x))
 }
 
 Main :: () {
-    println("")
+    io.println("")
     s := S(5)
 
     test(cast s.foo)
     test(cast bar)
 
-    println("")
+    io.println("")
 
     test1(cast s.foo1, 3)
     test1(cast bar1, 3)
 
-    println("")
+    io.println("")
 }

@@ -88,6 +88,7 @@ namespace Cheez
                             new AstVariableRef(v, v.Initializer),
                             new AstNumberExpr(NumberData.FromBigInt(index), Location: v.Initializer));
                         var sub = new AstVariableDecl(subPattern, null, init, Location: v);
+                        sub.Scope = v.Scope;
 
                         yield return sub;
                         index += 1;
@@ -122,6 +123,7 @@ namespace Cheez
                             new AstConstantRef(v, v.Initializer),
                             new AstNumberExpr(NumberData.FromBigInt(index), Location: v.Initializer));
                         var sub = new AstConstantDeclaration(subPattern, null, init, Location: v);
+                        sub.Scope = v.Scope;
 
                         yield return sub;
                         index += 1;

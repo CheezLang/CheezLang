@@ -1,5 +1,5 @@
 
-#load("std:mem/allocator")
+use import std.mem.allocator
 
 Heap :: struct(T: type) {
     allocator: Allocator

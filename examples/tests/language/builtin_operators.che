@@ -63,9 +63,7 @@
 #test_expect_output("0, -1, -2.500000")
 #test_expect_output("1, 3, 7.300000")
 
-
-
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 Main :: () {
     // signed ints
@@ -104,11 +102,11 @@ Main :: () {
 }
 
 test_unary :: (a: bool, b: int, c: double) {
-    c_printf("%lld, %lld, %f`n", cast(int) !a, -b, -c)
+    C.printf("%lld, %lld, %f`n", cast(int) !a, -b, -c)
 }
 
 foo :: (b: bool, i: int) -> bool {
-    c_printf("%lld`n", i)
+    C.printf("%lld`n", i)
     return b
 }
 
@@ -123,23 +121,23 @@ test_and_or :: () {
     g := foo(false, 12) or foo(true, 13)
     h := foo(false, 14) or foo(false, 15)
 
-    c_printf("%hhd %hhd %hhd %hhd %hhd %hhd %hhd %hhd`n", a, b, c, d, e, f, g, h)
+    C.printf("%hhd %hhd %hhd %hhd %hhd %hhd %hhd %hhd`n", a, b, c, d, e, f, g, h)
 }
 
 test_numbers :: ($T: type, a: T, b: T, c: T, $test_arith: bool = true, $arith_string: c_string = "%d, %d, %d, %d, %d`n"c) {
     if test_arith {
-        c_printf(arith_string, (a + b), (a - b), (a * b), (a / b), (a % b))
+        C.printf(arith_string, (a + b), (a - b), (a * b), (a / b), (a % b))
     }
-    c_printf("%hhd, %hhd, %hhd, %hhd, %hhd, %hhd`n", (a == b), (a != b), (a > b), (a >= b), (a < b), (a <= b))
+    C.printf("%hhd, %hhd, %hhd, %hhd, %hhd, %hhd`n", (a == b), (a != b), (a > b), (a >= b), (a < b), (a <= b))
     a = c
     b = c
-    c_printf("%hhd, %hhd, %hhd, %hhd, %hhd, %hhd`n", (a == b), (a != b), (a > b), (a >= b), (a < b), (a <= b))
+    C.printf("%hhd, %hhd, %hhd, %hhd, %hhd, %hhd`n", (a == b), (a != b), (a > b), (a >= b), (a < b), (a <= b))
 }
 
 test_bool :: (a: bool, b: bool) {
-    c_printf("%lld, %lld`n", cast(int) (a == b), cast(int) (a != b))
+    C.printf("%lld, %lld`n", cast(int) (a == b), cast(int) (a != b))
 }
 
 test_pointers :: (a: &int, b: &int) {
-    c_printf("%lld, %lld`n", cast(int) (a == b), cast(int) (a != b))
+    C.printf("%lld, %lld`n", cast(int) (a == b), cast(int) (a != b))
 }

@@ -1,7 +1,0 @@
-c_alloca  :: (size: uint) -> &void #linkname("alloca");
-c_malloc  :: (size: uint) -> &void #linkname("malloc");
-c_realloc :: (mem: &void, size: uint) -> &void #linkname("realloc");
-c_free    :: (mem: &void) #linkname("free");
-
-c_memcpy  :: (dest: &void, src: &void, size: uint) #linkname("memcpy");
-c_memset  :: (mem: &void, value: i32, num: uint) -> &void #linkname("memset");

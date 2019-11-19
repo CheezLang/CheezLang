@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Types;
 
@@ -8,6 +9,10 @@ namespace Cheez
     public partial class Workspace
     {
         // for semantic analysis
+        private Queue<AstConstantDeclaration> mUnresolvedGlobalImportConstants = new Queue<AstConstantDeclaration>();
+        private Queue<AstUsingStmt> mUnresolvedGlobalImportUses = new Queue<AstUsingStmt>();
+        private Queue<AstImportExpr> mUnresolvedGlobalImports = new Queue<AstImportExpr>();
+
         private List<AstConstantDeclaration> mAllGlobalConstants = new List<AstConstantDeclaration>();
         private List<AstTraitTypeExpr> mAllTraits = new List<AstTraitTypeExpr>();
         private List<AstStructTypeExpr> mAllStructs = new List<AstStructTypeExpr>();

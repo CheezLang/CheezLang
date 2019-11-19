@@ -1,4 +1,4 @@
-#load("opengl_types")
+use import types
 
 /* AccumOp */
 GL_ACCUM                : GLenum : 0x0100

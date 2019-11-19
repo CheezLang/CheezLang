@@ -2,7 +2,7 @@
 
 #test_expect_output("137846528820")
 
-#load("std:io/io")
+io :: import std.io
 
 width: int : 20
 height: int : 20
@@ -24,5 +24,5 @@ count_routes :: (w: int, h: int) -> int {
 }
 
 Main :: () {
-    println(count_routes(width, width))
+    io.println(count_routes(width, width))
 }

@@ -19,9 +19,8 @@
 #test_expect_output("-1.500000, -4.000000")
 
 
-#load("std:math")
-
-c_printf :: (format: c_string) #varargs #linkname("printf");
+use import std.math
+C :: import std.c
 
 Num :: struct #copy {
     x: int
@@ -43,16 +42,16 @@ Main :: () {
         b := Num(2)
         c := a + b
 
-        c_printf("%lld`n", a.x)
-        c_printf("%lld`n", b.x)
-        c_printf("%lld`n", c.x)
+        C.printf("%lld`n", a.x)
+        C.printf("%lld`n", b.x)
+        C.printf("%lld`n", c.x)
 
         (a, c) += (b, Num(5))
         
-        c_printf("%lld`n", a.x)
-        c_printf("%lld`n", b.x)
-        c_printf("%lld`n", c.x)
-        c_printf("`n")
+        C.printf("%lld`n", a.x)
+        C.printf("%lld`n", b.x)
+        C.printf("%lld`n", c.x)
+        C.printf("`n")
     }
 
     {
@@ -63,26 +62,26 @@ Main :: () {
         d := Vec2(5, 6)
         d += c
 
-        c_printf("%f, %f`n", a.x, a.y)
-        c_printf("%f, %f`n", b.x, b.y)
-        c_printf("%f, %f`n", c.x, c.y)
-        c_printf("%f, %f`n", d.x, d.y)
+        C.printf("%f, %f`n", a.x, a.y)
+        C.printf("%f, %f`n", b.x, b.y)
+        C.printf("%f, %f`n", c.x, c.y)
+        C.printf("%f, %f`n", d.x, d.y)
 
-        c_printf("`n")
+        C.printf("`n")
 
         a -= Vec2(0.5, 1)
-        c_printf("%f, %f`n", a.x, a.y)
+        C.printf("%f, %f`n", a.x, a.y)
 
         a *= 4.0
-        c_printf("%f, %f`n", a.x, a.y)
+        C.printf("%f, %f`n", a.x, a.y)
 
         a /= Vec2(4, 2)
-        c_printf("%f, %f`n", a.x, a.y)
+        C.printf("%f, %f`n", a.x, a.y)
 
         a *= Vec2(3, 2)
-        c_printf("%f, %f`n", a.x, a.y)
+        C.printf("%f, %f`n", a.x, a.y)
 
         a = -a
-        c_printf("%f, %f`n", a.x, a.y)
+        C.printf("%f, %f`n", a.x, a.y)
     }
 }

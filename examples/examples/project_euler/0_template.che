@@ -2,8 +2,8 @@
 
 #test_expect_output("")
 
-#load("std:io/io")
+io :: import std.io
 
 Main :: () {
-    println("")
+    io.println("")
 }

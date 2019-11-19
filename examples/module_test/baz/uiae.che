@@ -1,0 +1,5 @@
+c :: import std.c
+
+uiaeuiae :: () {
+    c.puts(@function_name())
+}

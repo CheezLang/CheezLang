@@ -2,8 +2,8 @@
 
 #test_expect_output("21124")
 
-#load("std:io/io")
-#load("std:string")
+io :: import std.io
+use import std.string
 
 number_to_english_1 :: (n: int) -> string {
     return match n % 10 {
@@ -90,5 +90,5 @@ Main :: () {
         eng := number_to_english(it)
         sum += eng.get_length()
     }
-    println(sum)
+    io.println(sum)
 }

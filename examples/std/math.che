@@ -1,5 +1,3 @@
-
-
 sqrtf :: (f: float) -> float;
 sqrt  :: (f: double) -> double;
 

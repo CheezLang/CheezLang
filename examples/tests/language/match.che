@@ -5,39 +5,39 @@ one
 even 2
 3")
 
-#load("std:io/io")
-#load("std:mem/allocator")
+io :: import std.io
+use import std.mem.allocator
 
 Main :: () {
     test1()
 
-    println("")
+    io.println("")
     test2()
 }
 
 test2 :: () {
     x := 1
     match x {
-        0 -> println("zero")
-        1 -> println("one")
-        $x if x % 2 == 0 -> printf("even {}`n", x)
-        $z -> println(z)
+        0 -> io.println("zero")
+        1 -> io.println("one")
+        $x if x % 2 == 0 -> io.printf("even {}`n", x)
+        $z -> io.println(z)
     }
     
     x = 2
     match x {
-        0 -> println("zero")
-        1 -> println("one")
-        $x if x % 2 == 0 -> printf("even {}`n", x)
-        $z -> println(z)
+        0 -> io.println("zero")
+        1 -> io.println("one")
+        $x if x % 2 == 0 -> io.printf("even {}`n", x)
+        $z -> io.println(z)
     }
     
     x = 3
     match x {
-        0 -> println("zero")
-        1 -> println("one")
-        $x if x % 2 == 0 -> printf("even {}`n", x)
-        $z -> println(z)
+        0 -> io.println("zero")
+        1 -> io.println("one")
+        $x if x % 2 == 0 -> io.printf("even {}`n", x)
+        $z -> io.println(z)
     }
 }
 
@@ -61,6 +61,6 @@ test1 :: () {
         newStr[i] = c
     }
 
-    println(str)
-    println(newStr)
+    io.println(str)
+    io.println(newStr)
 }

@@ -31,60 +31,61 @@ indexo: 3
 indexo: 11
 indexo: -1")
 
-#load("std:string")
+use import std.string
+C :: import std.c
 
 Main :: () {
     s := String.from_cstring("lol: "c)
-    
-    c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.length)
-    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
-    c_printf("`n")
+
+    C.printf("capaci: %lld`n", s.get_capacity())
+    C.printf("length: %lld`n", s.length)
+    C.printf("string: `"%.*s`"`n", s.length, s.get_raw())
+    C.printf("`n")
 
     s.reserve(10)
-    c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.length)
-    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
-    c_printf("`n")
-    
+    C.printf("capaci: %lld`n", s.get_capacity())
+    C.printf("length: %lld`n", s.length)
+    C.printf("string: `"%.*s`"`n", s.length, s.get_raw())
+    C.printf("`n")
+
     s += "Hello "
-    c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.length)
-    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
-    c_printf("`n")
+    C.printf("capaci: %lld`n", s.get_capacity())
+    C.printf("length: %lld`n", s.length)
+    C.printf("string: `"%.*s`"`n", s.length, s.get_raw())
+    C.printf("`n")
 
     s += "World"c
-    c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.length)
-    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
-    c_printf("`n")
+    C.printf("capaci: %lld`n", s.get_capacity())
+    C.printf("length: %lld`n", s.length)
+    C.printf("string: `"%.*s`"`n", s.length, s.get_raw())
+    C.printf("`n")
 
     s += '!'
-    c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.length)
-    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
-    c_printf("`n")
+    C.printf("capaci: %lld`n", s.get_capacity())
+    C.printf("length: %lld`n", s.length)
+    C.printf("string: `"%.*s`"`n", s.length, s.get_raw())
+    C.printf("`n")
 
     {
         str := String.from_string(" This is another string =)")
         s += str
     }
-    c_printf("capaci: %lld`n", s.get_capacity())
-    c_printf("length: %lld`n", s.length)
-    c_printf("string: `"%.*s`"`n", s.length, s.get_raw())
-    c_printf("`n")
+    C.printf("capaci: %lld`n", s.get_capacity())
+    C.printf("length: %lld`n", s.length)
+    C.printf("string: `"%.*s`"`n", s.length, s.get_raw())
+    C.printf("`n")
 
     sub := s.slice()
-    c_printf(" slice: `"%.*s`"`n", sub.length, sub.data)
+    C.printf(" slice: `"%.*s`"`n", sub.length, sub.data)
     sub = s.sliceF(5)
-    c_printf(" slice: `"%.*s`"`n", sub.length, sub.data)
+    C.printf(" slice: `"%.*s`"`n", sub.length, sub.data)
     sub = s.sliceL(3)
-    c_printf(" slice: `"%.*s`"`n", sub.length, sub.data)
+    C.printf(" slice: `"%.*s`"`n", sub.length, sub.data)
     sub = s.sliceFL(5, 5)
-    c_printf(" slice: `"%.*s`"`n", sub.length, sub.data)
-    c_printf("`n")
+    C.printf(" slice: `"%.*s`"`n", sub.length, sub.data)
+    C.printf("`n")
 
-    c_printf("indexo: %lld`n", s.index_of(':'))
-    c_printf("indexo: %lld`n", s.index_of('W'))
-    c_printf("indexo: %lld`n", s.index_of('z'))
+    C.printf("indexo: %lld`n", s.index_of(':'))
+    C.printf("indexo: %lld`n", s.index_of('W'))
+    C.printf("indexo: %lld`n", s.index_of('z'))
 }

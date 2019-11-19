@@ -3,9 +3,7 @@
 #test_expect_output("6")
 #test_expect_output("6.000000")
 
-
-
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 Test :: struct {
     x: int
@@ -23,11 +21,11 @@ impl Test {
 
 Main :: () {
     t := Test(0)
-    c_printf("%lld`n", t.x)
+    C.printf("%lld`n", t.x)
     t.foo(3)
-    c_printf("%lld`n", t.x)
+    C.printf("%lld`n", t.x)
     t.foo(6)
-    c_printf("%lld`n", t.x)
+    C.printf("%lld`n", t.x)
     d := t.bar(double)
-    c_printf("%f`n", d)
+    C.printf("%f`n", d)
 }

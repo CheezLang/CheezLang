@@ -16,20 +16,17 @@ namespace Cheez
         public string Name { get; }
         public string Text { get; }
 
-        public Scope ExportScope { get; }
-        public Scope PrivateScope { get; }
+        public Scope FileScope { get; }
 
         public List<AstStatement> Statements { get; } = new List<AstStatement>();
 
         public List<string> Libraries { get; set; } = new List<string>();
-        public List<string> LibrariyIncludeDirectories { get; set; } = new List<string>();
 
-        public PTFile(string name, string raw)
+        public PTFile(string name, string raw, Scope scope)
         {
             this.Name = name;
             this.Text = raw;
-            ExportScope = new Scope("Export");
-            PrivateScope = new Scope("Private", ExportScope);
+            FileScope = scope;
         }
 
         public override string ToString()
@@ -67,21 +64,21 @@ namespace Cheez
 
             string exePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "libraries");
             if (stdlib != null) exePath = stdlib;
-            ModulePaths["std"] = Path.Combine(exePath, "std");
-            ModulePaths["opengl"] = Path.Combine(exePath, "opengl");
-            ModulePaths["glfw"] = Path.Combine(exePath, "glfw");
-            ModulePaths["bmp"] = Path.Combine(exePath, "bmp");
-
+            ModulePaths["std"]    = exePath;
+            ModulePaths["opengl"] = exePath;
+            ModulePaths["glfw"]   = exePath;
+            ModulePaths["bmp"]    = exePath;
+            ModulePaths["imgui"]  = exePath + "/libraries";
 
             mGlobalConstIfScope = new Scope("global_const_if");
             mGlobalConstIfScope.DefineBuiltInTypes();
             mGlobalConstIfScope.DefineBuiltInOperators();
 
             // add preload file
-            AddFile(Path.Combine(exePath, preload ?? "std/preload.che"));
+            AddFile(Path.Combine(exePath, preload ?? "std/preload.che"), globalScope: true);
         }
 
-        public PTFile AddFile(string fileNameT, string body = null, Workspace workspace = null, bool reparse = false)
+        public PTFile AddFile(string fileNameT, string body = null, Workspace workspace = null, bool globalScope = false)
         {
             if (!ValidateFilePath("", fileNameT, false, ErrorHandler, null, out string filePath))
             {
@@ -93,14 +90,10 @@ namespace Cheez
 
             if (mFiles.ContainsKey(filePath))
             {
-                if (!reparse)
-                    return mFiles[filePath];
-
-                // remove all contributions of old file
-                workspace.RemoveFile(mFiles[filePath]);
+                return mFiles[filePath];
             }
 
-            var (file, loadedFiles) = ParseFile(filePath, body, ErrorHandler);
+            var (file, loadedFiles) = ParseFile(filePath, body, ErrorHandler, globalScope);
             if (file == null)
                 return null;
 
@@ -276,7 +269,7 @@ namespace Cheez
             }
         }
 
-        private (PTFile, List<string>) ParseFile(string fileName, string body, IErrorHandler eh)
+        private (PTFile, List<string>) ParseFile(string fileName, string body, IErrorHandler eh, bool globalScope = false)
         {
             var lexer = body != null ? Lexer.FromString(body, eh, fileName) : Lexer.FromFile(fileName, eh);
             
@@ -286,15 +279,21 @@ namespace Cheez
                 return (null, null);
 
             var parser = new Parser(lexer, eh);
-            var file = new PTFile(fileName, lexer.Text);
+
+            var fileScope = globalScope ?
+                mMainWorkspace.GlobalScope :
+                new Scope($"{Path.GetFileNameWithoutExtension(fileName)}.che", mMainWorkspace.GlobalScope);
+            var file = new PTFile(fileName, lexer.Text, fileScope);
 
             List<string> loadedFiles = new List<string>();
 
             void HandleStatement(AstStatement s)
             {
+                s.Scope = file.FileScope;
                 if (s is AstImplBlock ||
                     s is AstVariableDecl ||
                     s is AstConstantDeclaration ||
+                    (s is AstExprStmt es && es.Expr is AstImportExpr) ||
                     s is AstUsingStmt)
                 {
                     s.SourceFile = file;

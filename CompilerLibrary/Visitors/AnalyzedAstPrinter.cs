@@ -17,10 +17,14 @@ namespace Cheez.Visitors
     {
         public void PrintWorkspace(Workspace workspace, TextWriter writer)
         {
-            foreach (var s in workspace.Statements)
+            foreach (var file in workspace.Files)
             {
-                writer.WriteLine(s.Accept(this, 0));
-                writer.WriteLine();
+                writer.WriteLine($"#file {file.Name}");
+                foreach (var s in file.Statements)
+                {
+                    writer.WriteLine(s.Accept(this));
+                    writer.WriteLine();
+                }
             }
         }
 
@@ -547,6 +551,14 @@ namespace Cheez.Visitors
 
 
         #region Expressions
+
+        public override string VisitImportExpr(AstImportExpr expr, int data = 0)
+        {
+            var result = "import ";
+            result += string.Join(".", expr.Path.Select(p => p.Accept(this)));
+
+            return result;
+        }
 
         public override string VisitVariableRef(AstVariableRef expr, int data = 0)
         {

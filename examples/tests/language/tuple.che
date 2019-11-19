@@ -3,9 +3,7 @@
 #test_expect_output("1, 6")
 #test_expect_output("2, 6")
 
-
-
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 get_tuple :: () -> (one: bool, two: int) {
     one = true
@@ -24,16 +22,16 @@ impl(T: type) T {
 
 Main :: () {
     a := (3, 4)
-    c_printf("%d, %d`n", a[0], a[1])
+    C.printf("%d, %d`n", a[0], a[1])
     
     b : (first: i32, second: c_string) = (2, "test")
-    c_printf("%d, %s`n", b.first, b.second)
+    C.printf("%d, %s`n", b.first, b.second)
     
     c := get_tuple()
-    c_printf("%d, %d`n", c.one, c.two)
+    C.printf("%d, %d`n", c.one, c.two)
 
     d := get_tuple_value(b, 0)
     e := @typeof(c).get_tuple_value(c, 1)
     f := (bool, int).get_tuple_value(c, 1)
-    c_printf("%d, %d`n", d, e)
+    C.printf("%d, %d`n", d, e)
 }

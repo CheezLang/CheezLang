@@ -3,11 +3,10 @@
 #test_expect_output("Test printf 3")
 #test_expect_output("Test printf 4")
 
-
-c_printf :: (format: c_string) #varargs #linkname("printf");
+C :: import std.c
 
 Main :: () {
-    c_printf("Test printf 1`nTest printf 2`n")
-    c_printf("Test printf 3`n")
-    c_printf("Test printf 4")
+    C.printf("Test printf 1`nTest printf 2`n")
+    C.printf("Test printf 3`n")
+    C.printf("Test printf 4")
 }

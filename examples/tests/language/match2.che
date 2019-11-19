@@ -23,8 +23,8 @@ Test.F
 Test.G
 Test.H")
 
-#load("std:io/io")
-#load("std:util")
+io   :: import std.io
+util :: import std.util
 
 OptionInt :: enum #copy {
     Some : i64
@@ -57,7 +57,7 @@ Main :: () {
         a.Some = 3
         print_enum(a)
 
-        println("")
+        io.println("")
 
         print_enum(OptionInt.None)
         print_enum(OptionInt.Some(1))
@@ -68,7 +68,7 @@ Main :: () {
         print_enum(OptionInt.Some(14))
         print_enum(OptionInt.Some(15))
         print_enum(OptionInt.Some(16))
-        println("")
+        io.println("")
     }
 
     {
@@ -85,30 +85,30 @@ Main :: () {
 
 print_enum2 :: (e: Test) {
     match e {
-        Test.A -> println("Test.A")
-        Test.B -> println("Test.B")
-        Test.C -> println("Test.C")
-        Test.D -> println("Test.D")
-        Test.E -> println("Test.E")
-        Test.F -> println("Test.F")
-        Test.G -> println("Test.G")
-        Test.H -> println("Test.H")
+        Test.A -> io.println("Test.A")
+        Test.B -> io.println("Test.B")
+        Test.C -> io.println("Test.C")
+        Test.D -> io.println("Test.D")
+        Test.E -> io.println("Test.E")
+        Test.F -> io.println("Test.F")
+        Test.G -> io.println("Test.G")
+        Test.H -> io.println("Test.H")
     }
 }
 
 print_enum :: (e: OptionInt) {
     match e {
-        OptionInt.Some(5) -> println("five")
-        OptionInt.Some(10) -> println("ten")
-        OptionInt.Some(15) -> println("fifteen")
-        OptionInt.Some($x) -> printf("Some {}`n", x)
-        OptionInt.None -> println("None")
+        OptionInt.Some(5) -> io.println("five")
+        OptionInt.Some(10) -> io.println("ten")
+        OptionInt.Some(15) -> io.println("fifteen")
+        OptionInt.Some($x) -> io.printf("Some {}`n", x)
+        OptionInt.None -> io.println("None")
     }
 }
 
 print_value :: (e: $T, $VT: type) {
     ptr_raw := cast(&i8)&e
-    ptr_val_raw := pointer_add(ptr_raw, 8)
+    ptr_val_raw := util.pointer_add(ptr_raw, 8)
     ptr_val := cast(&VT)ptr_val_raw
-    println(<<ptr_val)
+    io.println(<<ptr_val)
 }

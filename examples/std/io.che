@@ -1,13 +1,11 @@
-#load("std:string")
-#load("std:printable")
-#load("std:mem/memory")
-//#load("std:os/windows")
-#load("std:c")
+use import std.string
+use import std.printable
+c :: import std.c
 
 print_string :: (s: ref String) {
     //bytesWritten := 0u32
     //WriteFile(__std_out_handle, cast s.get_raw(), cast s.length, &bytesWritten, null)
-    c_printf("%.*s", cast(i32) s.get_length(), s.get_raw())
+    c.printf("%.*s", cast(i32) s.get_length(), s.get_raw())
 }
 
 println :: (v: $T) {

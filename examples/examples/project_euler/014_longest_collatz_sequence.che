@@ -2,7 +2,7 @@
 
 #test_expect_output("837799")
 
-#load("std:io/io")
+io :: import std.io
 
 count_steps :: (n: int) -> int {
     count := 1
@@ -28,5 +28,5 @@ Main :: () {
         }
     }
 
-    println(max_n)
+    io.println(max_n)
 }

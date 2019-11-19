@@ -1,7 +1,8 @@
-#load("std:math")
-#load("std:iterator")
-#load("std:time")
-#load("std:hash_table")
+use import std.math
+use import std.iterator
+use import std.time
+use import std.hash_table
+use import std.mem.allocator
 
 LinearCongruentialGenerator :: struct {
     seed: u64

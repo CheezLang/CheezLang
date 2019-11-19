@@ -24,12 +24,11 @@ ArenaAllocator (8 buckets)
     0: 32 bytes
   Bucket 7: 48/96 bytes
     0: 40 bytes")
-    
 
-#load("std:io/io")
-#load("std:util")
-#load("std:mem/arena_allocator")
-
+use import std.mem.allocator
+use import std.mem.arena_allocator
+io :: import std.io
+util :: import std.util
 
 Main :: () {
     a := ArenaAllocator.create(32)
@@ -48,14 +47,14 @@ Main :: () {
     s := alloc(string, a)
 
     <<s = "lol"
-    println(<<s)
+    io.println(<<s)
     s = realloc_raw(s, 2, a)
-    println(<<s)
+    io.println(<<s)
     
     <<x = 5
-    println(<<x)
+    io.println(<<x)
     x = realloc_raw(x, 5, a)
-    println(<<x)
+    io.println(<<x)
 
     a.dump(true)
 }

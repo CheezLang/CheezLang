@@ -2,8 +2,8 @@
 
 #test_expect_output("142913828922")
 
-#load("std:io/io")
-#load("std:math")
+io :: import std.io
+use import std.math
 
 is_prime :: (i: int) -> bool {
     if i < 2 {
@@ -26,5 +26,5 @@ Main :: () {
             sum += it
         }
     }
-    println(sum)
+    io.println(sum)
 }

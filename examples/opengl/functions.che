@@ -1,4 +1,4 @@
-#load("opengl_types")
+use import types
 
 //
 glAccum :: (op: GLenum, value: GLfloat) -> void #stdcall;

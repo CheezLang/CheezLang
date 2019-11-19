@@ -1,67 +1,65 @@
-// #test_expect_output("01234")
-// #test_expect_output("012345")
-// #test_expect_output("0123")
-// #test_expect_output("13579")
-// #test_expect_output("14,13,11,10,8,7,5,4,2,1,")
-// #test_expect_output("1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz 16 17 Fizz 19 ")
+#test_expect_output("10, 10")
+#test_expect_output("15, 15")
+#test_expect_output("4")
+#test_expect_output("0123456789")
+#test_expect_output("01234567891011121314")
 
-// #load("std:io/io")
+io :: import std.io
 
 Main :: () {
-//     test1(5)
-//     test2(6)
-//     test3(4)
-//     test4(10)
-//     test5(15)
-//     fizz_buzz(20)
+    test1(5)
+    test2(6)
+    test3(4)
+    test4(10)
+    test5(15)
 }
 
-// test1 :: (n: int) {
-//     sum := 0
-//     sum_index := 0
-//     for 0..n {
-//         sum += it
-//         sum_index += it_index
-//     }
-//     printfln("{}, {}", (sum, sum_index))
-// }
+test1 :: (n: int) {
+    sum := 0
+    sum_index := 0
+    for 0..n {
+        sum += it
+        sum_index += it_index
+    }
+    io.printfln("{}, {}", (sum, sum_index))
+}
 
-// test2 :: (n: int) {
-//     sum := 0
-//     sum_index := 0
-//     for i, k: n {
-//         sum += i
-//         sum_index += k
-//     }
-//     printfln("{}, {}", (sum, sum_index))
-// }
+test2 :: (n: int) {
+    sum := 0
+    sum_index := 0
+    for i, k: 0..n {
+        sum += i
+        sum_index += k
+    }
+    io.printfln("{}, {}", (sum, sum_index))
+}
 
-// test3 :: (n: int) {
-//     sum := 0
-//     for i : n #label a {
-//         for k : n #label b {
-//             if k % 2 == 0 then continue a
-//             sum += k
-//         }
-//     }
-//     println(sum)
-// }
+test3 :: (n: int) {
+    sum := 0
+    for i : 0..n #label a {
+        for k : i..n #label b {
+            if k % 2 == 0 then continue a
+            sum += k
+        }
+    }
+    io.println(sum)
+}
 
-// test3 :: (n: int) {
-//     while a =: 0, true, a = a + 1 {
-//         if a == n {
-//             break
-//         }
+test4 :: (n: int) {
+    while a := 0, true, a = a + 1 {
+        if a == n {
+            break
+        }
 
-//         c_printf("%lld", a)
-//     }
-//     c_printf("`n")
-// }
+        io.print(a)
+    }
+    io.println("")
+}
 
-// test2 :: (n: int) {
-//     while a := 0, a < n, a = a + 1 {
-//         c_printf("%lld", a)
-//     }
-//     c_printf("`n")
-// }
+test5 :: (n: int) {
+    while a := 0, a < n, a = a + 1 {
+        io.print(a)
+    }
+    io.println("")
+}
 

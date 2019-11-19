@@ -1,12 +1,11 @@
-﻿using Cheez.Ast;
+﻿#nullable enable
+
+using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types;
-using Cheez.Types.Abstract;
-using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
-using Cheez.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,9 +25,38 @@ namespace Cheez
         CheezType Type { get; }
     }
 
+    public class AmbiguousSymol : ISymbol
+    {
+        public string Name => throw new NotImplementedException();
+        public ILocation Location => throw new NotImplementedException();
+
+        public List<ISymbol> Symbols { get; }
+
+        public AmbiguousSymol(List<ISymbol> syms)
+        {
+            Symbols = syms;
+        }
+    }
+
+    public class ModuleSymbol : ISymbol
+    {
+        public string Name { get; }
+
+        public ILocation Location { get; }
+
+        public Scope Scope { get; }
+
+        public ModuleSymbol(Scope scope, string name, ILocation importLocation)
+        {
+            Scope = scope;
+            Name = name;
+            Location = importLocation;
+        }
+    }
+
     public class ConstSymbol : ITypedSymbol
     {
-        public ILocation Location => null;
+        public ILocation Location => throw new NotImplementedException();
         public string Name { get; private set; }
 
         public CheezType Type { get; private set; }
@@ -44,7 +72,7 @@ namespace Cheez
 
     public class TypeSymbol : ITypedSymbol
     {
-        public ILocation Location => null;
+        public ILocation Location => throw new NotImplementedException();
         public string Name { get; private set; }
 
         public CheezType Type { get; private set; }
@@ -59,7 +87,7 @@ namespace Cheez
     public class Using : ITypedSymbol
     {
         public CheezType Type => Expr.Type;
-        public string Name => null;
+        public string Name => throw new NotImplementedException();
 
         public AstExpression Expr { get; }
 
@@ -87,18 +115,18 @@ namespace Cheez
     public class Scope
     {
         public string Name { get; set; }
-        public Scope Parent { get; }
-        public bool IsOrdered { get; set; } = true;
-        private int nextPosition = 1;
+        public Scope? Parent { get; }
 
-        private Scope mLinkedScope;
-        public Scope LinkedScope
+        private Scope? mLinkedScope;
+        public Scope? LinkedScope
         {
             set { mLinkedScope = value; }
             get => mLinkedScope ?? Parent?.LinkedScope;
         }
 
-        public Scope TransparentParent { get; }
+        public Scope? TransparentParent { get; }
+
+        private List<Scope>? mUsedScopes = null;
 
         private Dictionary<string, ISymbol> mSymbolTable = new Dictionary<string, ISymbol>();
         private Dictionary<string, List<INaryOperator>> mNaryOperatorTable = new Dictionary<string, List<INaryOperator>>();
@@ -106,13 +134,13 @@ namespace Cheez
         private Dictionary<string, List<IUnaryOperator>> mUnaryOperatorTable = new Dictionary<string, List<IUnaryOperator>>();
         private Dictionary<AstImplBlock, List<AstFuncExpr>> mImplTable = new Dictionary<AstImplBlock, List<AstFuncExpr>>();
 
-        private List<AstFuncExpr> mForExtensions = null;
-        private (string label, object loopOrAction)? mBreak = null;
-        private (string label, object loopOrAction)? mContinue = null;
+        private List<AstFuncExpr>? mForExtensions = null;
+        private (string? label, object loopOrAction)? mBreak = null;
+        private (string? label, object loopOrAction)? mContinue = null;
 
         public IEnumerable<KeyValuePair<string, ISymbol>> Symbols => mSymbolTable.AsEnumerable();
 
-        public Scope(string name, Scope parent = null, Scope transparentParent = null)
+        public Scope(string name, Scope? parent = null, Scope? transparentParent = null)
         {
             this.Name = name;
             this.Parent = parent;
@@ -130,6 +158,13 @@ namespace Cheez
             };
         }
 
+        public void AddUsedScope(Scope scope)
+        {
+            if (mUsedScopes == null)
+                mUsedScopes = new List<Scope>();
+            mUsedScopes.Add(scope);
+        }
+
         public void AddForExtension(AstFuncExpr func)
         {
             if (mForExtensions == null)
@@ -139,54 +174,80 @@ namespace Cheez
 
         public List<AstFuncExpr> GetForExtensions(CheezType type)
         {
-            return mForExtensions?.Where(func =>
+            var result = new List<AstFuncExpr>();
+            GetForExtensions(type, result);
+            return result;
+        }
+
+        public void GetForExtensions(CheezType type, List<AstFuncExpr> result, bool localOnly = false)
+        {
+            if (mForExtensions != null)
             {
-                var paramType = func.Parameters[0].Type;
-                if (paramType is ReferenceType r)
-                    paramType = r.TargetType;
-                if (CheezType.TypesMatch(paramType, type))
-                    return true;
-                return false;
-            })?.ToList() ?? Parent?.GetForExtensions(type) ?? new List<AstFuncExpr>();
+                foreach (var func in mForExtensions)
+                {
+                    var paramType = func.Parameters[0].Type;
+                    if (paramType is ReferenceType r)
+                        paramType = r.TargetType;
+                    if (CheezType.TypesMatch(paramType, type))
+                        result.Add(func);
+                }
+            }
+
+            if (localOnly)
+                return;
+
+            if (mUsedScopes != null)
+            {
+                foreach (var scope in mUsedScopes)
+                    scope.GetForExtensions(type, result, true);
+            }
+
+            Parent?.GetForExtensions(type, result);
         }
 
         public List<INaryOperator> GetNaryOperators(string name, params CheezType[] types)
         {
             var result = new List<INaryOperator>();
             int level = int.MaxValue;
-            GetOperator(name, result, ref level, types);
+            GetOperator(name, result, ref level, false, types);
             return result;
         }
 
-        private void GetOperator(string name, List<INaryOperator> result, ref int level, params CheezType[] types)
+        private void GetOperator(string name, List<INaryOperator> result, ref int level, bool localOnly, params CheezType[] types)
         {
-            if (!mNaryOperatorTable.ContainsKey(name))
+            if (mNaryOperatorTable.TryGetValue(name, out var ops))
             {
-                Parent?.GetOperator(name, result, ref level, types);
+                foreach (var op in ops)
+                {
+                    var l = op.Accepts(types);
+                    if (l == -1)
+                        continue;
+
+                    if (l < level)
+                    {
+                        level = l;
+                        result.Clear();
+                        result.Add(op);
+                    }
+                    else if (l == level)
+                    {
+                        result.Add(op);
+                    }
+                }
+            }
+
+            if (localOnly)
                 return;
-            }
 
-            var ops = mNaryOperatorTable[name];
-
-            foreach (var op in ops)
+            if (mUsedScopes != null)
             {
-                var l = op.Accepts(types);
-                if (l == -1)
-                    continue;
-
-                if (l < level)
+                foreach (var scope in mUsedScopes)
                 {
-                    level = l;
-                    result.Clear();
-                    result.Add(op);
-                }
-                else if (l == level)
-                {
-                    result.Add(op);
+                    scope.GetOperator(name, result, ref level, true, types);
                 }
             }
 
-            Parent?.GetOperator(name, result, ref level, types);
+            Parent?.GetOperator(name, result, ref level, false, types);
         }
 
         public List<IBinaryOperator> GetBinaryOperators(string name, CheezType lhs, CheezType rhs)
@@ -197,31 +258,37 @@ namespace Cheez
             return result;
         }
 
-        private void GetOperator(string name, CheezType lhs, CheezType rhs, List<IBinaryOperator> result, ref int level)
+        private void GetOperator(string name, CheezType lhs, CheezType rhs, List<IBinaryOperator> result, ref int level, bool localOnly = false)
         {
-            if (!mBinaryOperatorTable.ContainsKey(name))
+            if (mBinaryOperatorTable.TryGetValue(name, out var ops))
             {
-                Parent?.GetOperator(name, lhs, rhs, result, ref level);
-                return;
+                foreach (var op in ops)
+                {
+                    var l = op.Accepts(lhs, rhs);
+                    if (l == -1)
+                        continue;
+
+                    if (l < level)
+                    {
+                        level = l;
+                        result.Clear();
+                        result.Add(op);
+                    }
+                    else if (l == level)
+                    {
+                        result.Add(op);
+                    }
+                }
             }
 
-            var ops = mBinaryOperatorTable[name];
+            if (localOnly)
+                return;
 
-            foreach (var op in ops)
+            if (mUsedScopes != null && !localOnly)
             {
-                var l = op.Accepts(lhs, rhs);
-                if (l == -1)
-                    continue;
-
-                if (l < level)
+                foreach (var scope in mUsedScopes)
                 {
-                    level = l;
-                    result.Clear();
-                    result.Add(op);
-                }
-                else if (l == level)
-                {
-                    result.Add(op);
+                    scope.GetOperator(name, lhs, rhs, result, ref level, true);
                 }
             }
 
@@ -236,31 +303,37 @@ namespace Cheez
             return result;
         }
 
-        private void GetOperator(string name, CheezType sub, List<IUnaryOperator> result, ref int level)
+        private void GetOperator(string name, CheezType sub, List<IUnaryOperator> result, ref int level, bool localOnly = false)
         {
-            if (!mUnaryOperatorTable.ContainsKey(name))
+            if (mUnaryOperatorTable.TryGetValue(name, out var ops))
             {
-                Parent?.GetOperator(name, sub, result, ref level);
-                return;
+                foreach (var op in ops)
+                {
+                    var l = op.Accepts(sub);
+                    if (l == -1)
+                        continue;
+
+                    if (l < level)
+                    {
+                        level = l;
+                        result.Clear();
+                        result.Add(op);
+                    }
+                    else if (l == level)
+                    {
+                        result.Add(op);
+                    }
+                }
             }
 
-            var ops = mUnaryOperatorTable[name];
+            if (localOnly)
+                return;
 
-            foreach (var op in ops)
+            if (mUsedScopes != null && !localOnly)
             {
-                var l = op.Accepts(sub);
-                if (l == -1)
-                    continue;
-
-                if (l < level)
+                foreach (var scope in mUsedScopes)
                 {
-                    level = l;
-                    result.Clear();
-                    result.Add(op);
-                }
-                else if (l == level)
-                {
-                    result.Add(op);
+                    scope.GetOperator(name, sub, result, ref level, true);
                 }
             }
 
@@ -340,7 +413,7 @@ namespace Cheez
 
         private void DefineUnaryOperator(IUnaryOperator op)
         {
-            List<IUnaryOperator> list = null;
+            List<IUnaryOperator>? list = null;
             if (mUnaryOperatorTable.ContainsKey(op.Name))
                 list = mUnaryOperatorTable[op.Name];
             else
@@ -356,7 +429,7 @@ namespace Cheez
         {
             foreach (var op in ops)
             {
-                List<IBinaryOperator> list = null;
+                List<IBinaryOperator>? list = null;
                 if (mBinaryOperatorTable.ContainsKey(op.name))
                     list = mBinaryOperatorTable[op.name];
                 else
@@ -376,7 +449,7 @@ namespace Cheez
         {
             foreach (var op in new string[] { "==", "!=" })
             {
-                List<IBinaryOperator> list = null;
+                List<IBinaryOperator> list;
                 if (mBinaryOperatorTable.ContainsKey(op))
                     list = mBinaryOperatorTable[op];
                 else
@@ -478,7 +551,7 @@ namespace Cheez
         {
             foreach (var name in ops)
             {
-                List<IBinaryOperator> list = null;
+                List<IBinaryOperator> list;
                 if (mBinaryOperatorTable.ContainsKey(name))
                     list = mBinaryOperatorTable[name];
                 else
@@ -494,29 +567,9 @@ namespace Cheez
             }
         }
 
-        private void DefineArithmeticUnaryOperators(CheezType[] types, params string[] ops)
-        {
-            foreach (var name in ops)
-            {
-                List<IUnaryOperator> list = null;
-                if (mUnaryOperatorTable.ContainsKey(name))
-                    list = mUnaryOperatorTable[name];
-                else
-                {
-                    list = new List<IUnaryOperator>();
-                    mUnaryOperatorTable[name] = list;
-                }
-
-                foreach (var t in types)
-                {
-                    list.Add(new BuiltInUnaryOperator(name, t, t));
-                }
-            }
-        }
-
         private void DefineBinaryOperator(IBinaryOperator op)
         {
-            List<IBinaryOperator> list = null;
+            List<IBinaryOperator> list;
             if (mBinaryOperatorTable.ContainsKey(op.Name))
                 list = mBinaryOperatorTable[op.Name];
             else
@@ -530,7 +583,7 @@ namespace Cheez
 
         private void DefineOperator(INaryOperator op)
         {
-            List<INaryOperator> list = null;
+            List<INaryOperator> list;
             if (mNaryOperatorTable.ContainsKey(op.Name))
                 list = mNaryOperatorTable[op.Name];
             else
@@ -597,7 +650,7 @@ namespace Cheez
             mContinue = (name, action);
         }
 
-        public object GetBreak(string label = null)
+        public object? GetBreak(string? label = null)
         {
             if (mBreak != null && (label == null || mBreak.Value.label == label))
                 return mBreak.Value.loopOrAction;
@@ -605,7 +658,7 @@ namespace Cheez
             return Parent?.GetBreak(label);
         }
 
-        public object GetContinue(string label = null)
+        public object? GetContinue(string? label = null)
         {
             if (mContinue != null && (label == null || mContinue.Value.label == label))
                 return mContinue.Value.loopOrAction;
@@ -613,7 +666,7 @@ namespace Cheez
             return Parent?.GetContinue(label);
         }
 
-        public (bool ok, ILocation other) DefineLocalSymbol(ISymbol symbol, string name = null)
+        public (bool ok, ILocation? other) DefineLocalSymbol(ISymbol symbol, string? name = null)
         {
             name = name ?? symbol.Name;
             if (mSymbolTable.TryGetValue(name, out var other))
@@ -623,7 +676,7 @@ namespace Cheez
             return (true, null);
         }
 
-        public (bool ok, ILocation other) DefineSymbol(ISymbol symbol, string name = null)
+        public (bool ok, ILocation? other) DefineSymbol(ISymbol symbol, string? name = null)
         {
             if (TransparentParent != null)
                 return TransparentParent.DefineSymbol(symbol, name);
@@ -631,13 +684,13 @@ namespace Cheez
             return DefineLocalSymbol(symbol, name);
         }
 
-        public (bool ok, ILocation other) DefineUse(string name, AstExpression expr, bool replace, out Using use)
+        public (bool ok, ILocation? other) DefineUse(string name, AstExpression expr, bool replace, out Using use)
         {
             use = new Using(expr, replace);
             return DefineSymbol(use, name);
         }
 
-        public (bool ok, ILocation other) DefineConstant(string name, CheezType type, object value)
+        public (bool ok, ILocation? other) DefineConstant(string name, CheezType type, object value)
         {
             return DefineSymbol(new ConstSymbol(name, type, value));
         }
@@ -647,22 +700,42 @@ namespace Cheez
             return DefineSymbol(new TypeSymbol(name, symbol)).ok;
         }
 
-        public (bool ok, ILocation other) DefineDeclaration(AstDecl decl)
+        public (bool ok, ILocation? other) DefineDeclaration(AstDecl decl)
         {
             return DefineSymbol(decl, decl.Name.Name);
         }
 
-        public ISymbol GetSymbol(string name)
+        public ISymbol? GetSymbol(string name, bool searchUsedScopes = true, bool searchParentScope = true)
         {
             if (mSymbolTable.ContainsKey(name))
             {
                 var v = mSymbolTable[name];
                 return v;
             }
-            return Parent?.GetSymbol(name);
+
+            if (mUsedScopes != null && searchUsedScopes)
+            {
+                List<ISymbol> found = new List<ISymbol>();
+                foreach (var scope in mUsedScopes)
+                {
+                    var sym = scope.GetSymbol(name, false, false);
+                    if (sym == null)
+                        continue;
+                    found.Add(sym);
+                }
+
+                if (found.Count == 1)
+                    return found[0];
+                if (found.Count > 1)
+                    return new AmbiguousSymol(found);
+            }
+
+            if (searchParentScope)
+                return Parent?.GetSymbol(name);
+            return null;
         }
 
-        public AstStructTypeExpr GetStruct(string name)
+        public AstStructTypeExpr? GetStruct(string name)
         {
             var sym = GetSymbol(name);
             if (sym is AstConstantDeclaration c && c.Initializer is AstStructTypeExpr s)
@@ -670,7 +743,7 @@ namespace Cheez
             return null;
         }
         
-        public AstEnumTypeExpr GetEnum(string name)
+        public AstEnumTypeExpr? GetEnum(string name)
         {
             var sym = GetSymbol(name);
             if (sym is AstConstantDeclaration c && c.Initializer is AstEnumTypeExpr s)
@@ -726,7 +799,7 @@ namespace Cheez
             return candidates;
         }
 
-        public AstFuncExpr GetImplFunctionWithDirective(CheezType targetType, string attribute)
+        public AstFuncExpr? GetImplFunctionWithDirective(CheezType targetType, string attribute)
         {
             var impls = mImplTable.Where(kv =>
             {

@@ -1,6 +1,7 @@
+use import std.string
+use import std.math
 
-#load("std:string")
-#load("std:math")
+C :: import std.c
 
 Printable :: trait {
     print :: (ref Self, str: ref String, format: string);
@@ -8,47 +9,47 @@ Printable :: trait {
 
 impl Printable for c_string {
     print :: (ref Self, str: ref String, format: string) {
-        str += self
+        str.append_cstring(self)
     }
 }
 
 impl Printable for string {
     print :: (ref Self, str: ref String, format: string) {
-        str += self
+        str.append_string(self)
     }
 }
 
 impl Printable for char {
     print :: (ref Self, str: ref String, format: string) {
-        str += self
+        str.append_char(self)
     }
 }
 
 impl Printable for float {
     print :: (ref Self, str: ref String, format: string) {
         buff : string = @alloca(char, 128)
-        buff.length = c_sprintf(buff.data, "%g", double(self))
-        str += buff
+        buff.length = C.sprintf(buff.data, "%g", double(self))
+        str.append_string(buff)
     }
 }
 
 impl Printable for double {
     print :: (ref Self, str: ref String, format: string) {
         buff : string = @alloca(char, 128)
-        buff.length = c_sprintf(buff.data, "%g", self)
-        str += buff
+        buff.length = C.sprintf(buff.data, "%g", self)
+        str.append_string(buff)
     }
 }
 
 impl Printable for bool {
     print :: (ref Self, str: ref String, format: string) {
-        str += if streq(format, "b") {
+        str.append_string(if streq(format, "b") {
             if self {"1"} else {"0"}
         } else if streq(format, "s") {
             if self {"t"} else {"f"}
         } else {
             if self {"true"} else {"false"}
-        }
+        })
     }
 }
 
@@ -104,7 +105,7 @@ printf_int_to_string :: (str: ref String, i: $T, format: string) {
     base := if streq("b", format) then 2
     else if streq("x", format) then 16
     else 10
-    format_int(str, i, base)
+    io.format_int(str, i, base)
 }
 
 impl(T: type) Printable for Option[T] if T: Printable {

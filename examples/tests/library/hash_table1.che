@@ -44,10 +44,10 @@ test2 is empty
 6 is empty
 7 is empty")
 
-#load("std:hash_table")
-#load("std:hash")
-#load("std:string")
-#load("std:io/io")
+use import std.hash_table
+use import std.hash
+use import std.string
+io :: import std.io
 
 // won't be necessary as soon as we have polymorphic traits
     compare_ints :: (a: int, b: int) -> bool {
@@ -60,8 +60,8 @@ test2 is empty
 
 get_and_print :: (table: ref Table[$K, $V], key: K) {
     match table.get(key) {
-        Some($v) -> printf("{} = {}`n", (key, v))
-        None -> printf("{} is empty`n", key)
+        Some($v) -> io.printf("{} = {}`n", (key, v))
+        None -> io.printf("{} is empty`n", key)
     }
 }
 
@@ -99,14 +99,14 @@ Main :: () {
 
     test(t1, t2)
 
-    println("`n--------------------------`n")
+    io.println("`n--------------------------`n")
 
     t2.delete("last name"c)
     t1.delete(3)
     t1.delete(5)
 
     test(t1, t2)
-    println("`n--------------------------`n")
+    io.println("`n--------------------------`n")
 
     t2["first name"c] = "Markenikon"c
     t2["last name"c] = "The One"c

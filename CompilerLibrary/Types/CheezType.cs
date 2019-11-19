@@ -19,6 +19,7 @@ namespace Cheez.Types
         public static CheezType Type => CheezTypeType.Instance;
         public static CheezType Code => CodeType.Instance;
         public static CheezType Any => AnyType.Intance;
+        public static CheezType Module => ModuleType.Instance;
 
         public abstract bool IsPolyType { get; }
 
@@ -192,6 +193,18 @@ namespace Cheez.Types
 
             return false;
         }
+    }
+
+    public class ModuleType : CheezType
+    {
+        public static readonly ModuleType Instance = new ModuleType();
+
+        public override bool IsPolyType => false;
+
+        public override bool IsErrorType => false;
+
+        public ModuleType() : base(0, 1, false)
+        { }
     }
 
     public class CheezTypeType : CheezType

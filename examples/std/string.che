@@ -1,11 +1,11 @@
-#load("std:mem/memory")
-#load("std:io/io")
-#load("std:printable")
-#load("std:c")
-#load("std:mem/allocator")
-#load("std:mem/std_heap_allocator")
-#load("std:alloca")
-#load("std:util")
+io   :: import std.io
+util :: import std.util
+C    :: import std.c
+
+use import std.printable
+use import std.mem.allocator
+use import std.mem.std_heap_allocator
+#load("std:std/alloca")
 
 StringBase :: struct(CharType: type) {
     data: []CharType
@@ -106,7 +106,7 @@ impl(CharType: type) StringBase[CharType] {
         }
         newLength := length + other.length
         self.reserve(newLength)
-        c_memcpy(cast &data.data[length], cast other.data.data, cast(uint) (other.length * @sizeof(CharType)))
+        C.memcpy(cast &data.data[length], cast other.data.data, cast(uint) (other.length * @sizeof(CharType)))
         length = newLength
         return self
     }
@@ -114,16 +114,16 @@ impl(CharType: type) StringBase[CharType] {
     append_string :: (ref Self, other: string) -> ref Self #operator("+=") {
         newLength := length + other.length
         self.reserve(newLength)
-        c_memcpy(cast &data.data[length], cast other.data, cast other.length)
+        C.memcpy(cast &data.data[length], cast other.data, cast other.length)
         length = newLength
         return self
     }
 
     append_cstring :: (ref Self, other: c_string) -> ref Self #operator("+=") {
-        otherLen := c_strlen(other)
+        otherLen := C.strlen(other)
         newLength := length + otherLen
         self.reserve(newLength)
-        c_memcpy(cast &data.data[length], cast other, cast otherLen)
+        C.memcpy(cast &data.data[length], cast other, cast otherLen)
         length = newLength
         return self
     }
@@ -165,12 +165,12 @@ impl(CharType: type) StringBase[CharType] {
     }
 }
 
+
 impl String {
     append_print :: (ref Self, pr: Printable) -> ref Self #operator("+=") {
         pr.print(self, "")
         return self
     }
-
     appendf :: (ref Self, format: string, arguments: $T) {
         if const @is_tuple(T) {
             args : [T.length] Printable = default
@@ -216,10 +216,10 @@ impl String {
                     colon := formatSpecifier.index_of(':')
                     if colon >= 1 {
                         // colon -> arg index before colon
-                        argIndex = parse_int(formatSpecifier.sliceL(colon))
+                        argIndex = io.parse_int(formatSpecifier.sliceL(colon))
                     } else if colon == -1 and formatSpecifier.length > 0 {
                         // no colon but non empty -> arg index
-                        argIndex = parse_int(formatSpecifier.slice())
+                        argIndex = io.parse_int(formatSpecifier.slice())
                     }
                     if colon != -1 {
                         // colon -> format after colon
@@ -227,7 +227,7 @@ impl String {
                     }
 
                     if argIndex >= args.length {
-                        c_printf("[%lld] `"%.*s`": arg index to out of bounds: %lld, args: %lld`n", it_index, format.length, format.data, argIndex, args.length)
+                        C.printf("[%lld] `"%.*s`": arg index to out of bounds: %lld, args: %lld`n", it_index, format.length, format.data, argIndex, args.length)
                         return
                     }
 
@@ -308,7 +308,7 @@ impl string {
         }
 
         result := self
-        result.data = pointer_add_sized(result.data, from)
+        result.data = util.pointer_add_sized(result.data, from)
         result.length = length
 
         return result
@@ -317,14 +317,14 @@ impl string {
     to_cstring :: (Self) -> c_string {
         str_c := alloc_raw(char, cast self.length + 1)
         str_c[self.length] = cast 0
-        c_memcpy(cast str_c, cast self.data, cast self.length)
+        C.memcpy(cast str_c, cast self.data, cast self.length)
         return str_c
     }
 }
 
 impl c_string {
     get_length :: (Self) -> int {
-        return cast c_strlen(self)
+        return cast C.strlen(self)
     }
     
     char_at :: (Self, i: int) -> char {
