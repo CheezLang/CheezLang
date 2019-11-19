@@ -1933,12 +1933,22 @@ namespace Cheez.Parsing
 
             var path = new List<AstIdExpr>();
 
-            path.Add(ParseIdentifierExpr());
 
-            while (CheckToken(TokenType.Period))
+            if (CheckToken(TokenType.StringLiteral))
             {
-                NextToken();
+                var str = NextToken();
+                var pathStr = str.data as string;
+                path.AddRange(pathStr.Split("/").Select(p => new AstIdExpr(p, false, new Location(str.location))));
+            }
+            else
+            {
                 path.Add(ParseIdentifierExpr());
+
+                while (CheckToken(TokenType.Period))
+                {
+                    NextToken();
+                    path.Add(ParseIdentifierExpr());
+                }
             }
 
             return new AstImportExpr(path.ToArray(), new Location(beg, path.Last().End));
