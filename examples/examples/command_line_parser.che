@@ -1,0 +1,5 @@
+io :: import std.io
+
+Main :: () {
+    io.println("welcome to my awesome new command line argument parser")
+}

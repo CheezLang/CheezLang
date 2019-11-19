@@ -392,3 +392,26 @@ Main :: () {
 }
 
 // */
+
+profile_scope :: (name: string) #macro #transparent {
+    if const enable_profiler {
+        _ := Timer.start(name)
+    } else {
+        _ := 0
+    }
+}
+
+profile_function :: () #macro #transparent {
+    if const enable_profiler {
+        _ := Timer.start(@function_signature())
+    } else {
+        _ := 0
+    }
+}
+
+profile_async :: (name: string, id: int, ph: string) #macro {
+    if const enable_profiler {
+        Instrumentor.get().
+            write_profile_async(name, id, get_time_microseconds(), ph, Thread.current().id)
+    }
+}

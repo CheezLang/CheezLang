@@ -1,0 +1,171 @@
+C :: import std.c
+use import std.util
+use import std.alloca
+
+Foo :: struct #copy {
+    num : int
+    bar : Bar
+    baz : Baz
+}
+
+Bar :: struct #copy {
+    str : string
+    boo : bool
+}
+
+Baz :: enum #copy {
+    A           = 353
+    B : int     = 46
+    C : &int    = 96
+}
+
+print_any :: (data: &void, typ: &TypeInfo) {
+    match typ.kind {
+        TypeInfoKind.Int($tint) -> {
+            if tint.signed {
+                ptr := cast(&int) data
+                C.printf("%lld", <<ptr)
+            } else {
+                ptr := cast(&uint) data
+                C.printf("%llu", <<ptr)
+            }
+        }
+
+        TypeInfoKind.Float -> {
+            if typ.size == 4 {
+                ptr := cast(&float) data
+                C.printf("%g", double(<<ptr))
+            } else if typ.size == 8 {
+                ptr := cast(&double) data
+                C.printf("%g", <<ptr)
+            } else {
+                C.printf("<float: invalid size %lld>", typ.size)
+            }
+        }
+
+        TypeInfoKind.Bool -> {
+            ptr := cast(&bool) data
+            if <<ptr then C.printf("true") else C.printf("false")
+        }
+
+        TypeInfoKind.Char -> {
+            ptr := cast(&char) data
+            C.printf("'%c'", <<ptr)
+        }
+
+        TypeInfoKind.Pointer($target) -> {
+            ptr := cast(&&void) data
+            C.printf("0x%llX", <<ptr)
+        }
+
+        TypeInfoKind.Slice($target) -> {
+            if int(target.kind) == int(TypeInfoKind.Char) {
+                if data == null {
+                    C.printf("null")
+                } else {
+                    ptr := <<cast(&[]char) data
+                    C.printf("`"%.*s`"", ptr.length, ptr.data)
+                }
+            } else {
+                ptr := <<cast(&[]void) data
+                C.printf("[")
+                for i : 0..ptr.length {
+                    if i > 0 then C.printf(", ")
+
+                    elem := pointer_add(ptr.data, i * target.size)
+                    print_any(elem, target)
+                }
+                C.printf("]")
+            }
+        }
+
+        TypeInfoKind.Struct($tstruct) -> {
+            ptr := cast(&void) data
+            C.printf("%.*s", i32(tstruct.name.length), tstruct.name.data)
+
+            C.printf("(")
+            if tstruct.members.data != null {
+                for i : 0..tstruct.members.length {
+                    if i > 0 then C.printf(", ")
+                    member_info := &tstruct.members[i]
+                    member_ptr  := pointer_add(ptr, member_info.offset)
+                    member_type := member_info.typ
+                    C.printf("%.*s = ", i32(member_info.name.length), member_info.name.data)
+                    print_any(member_ptr, member_type)
+                }
+            }
+            C.printf(")")
+        }
+
+        TypeInfoKind.Enum($tenum) -> {
+            ptr := cast(&void) data
+            C.printf("%.*s.", i32(tenum.name.length), tenum.name.data)
+
+            tag := match tenum.tag_type.size {
+                1  -> int(<<cast(&u8) ptr)
+                2  -> int(<<cast(&u16) ptr)
+                4  -> int(<<cast(&u32) ptr)
+                8  -> int(<<cast(&u64) ptr)
+                $_ -> {
+                    @panic("Unsupported tag size")
+                    0
+                }
+            }
+
+            for(by_ref=true) mem : tenum.members {
+                if mem.tag == tag {
+                    C.printf("%.*s", i32(mem.name.length), mem.name.data)
+
+                    if mem.typ != null {
+                        mem_val_ptr := pointer_add(ptr, tenum.tag_type.size)
+
+                        C.printf("(")
+                        print_any(mem_val_ptr, mem.typ)
+                        C.printf(")")
+                    }
+                }
+            }
+        }
+
+        $_ -> {
+            C.printf("<unknown>")
+        }
+    }
+}
+
+print :: (data: any) {
+    print_any(data.val, data.typ)
+}
+
+println :: (data: any) {
+    print_any(data.val, data.typ)
+    C.puts("")
+}
+
+Main :: () {
+    bar := Bar("lol", true)
+    foo := Foo(12345, bar, Baz.A)
+
+    a := 123
+    b := true
+    s : []int = [a, 353, 987]
+    w := "lol"
+
+    println(a)
+    println(b)
+    println(s)
+    println(w)
+
+    println(bar)
+    println(foo)
+    println(Foo(654, bar, Baz.B(420)))
+    println(Foo(741, bar, Baz.C(&a)))
+
+    println((struct{
+        num       : int
+        word      : string
+        boolean   : bool
+        floater   : double
+        character : char
+    })(1, "hi", false, 5.3, 'x'))
+}
