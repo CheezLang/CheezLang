@@ -1,12 +1,20 @@
-#load("olc_pge/pixel_game_engine")
-#load("../bmp/bmp")
-#load("std:io/io")
-#load("std:mem/arena_allocator")
-#load("std:array")
-#load("std:math")
-#load("std:random")
-#load("std:random/mt")
-#load("std:thread")
+use import std.string
+use import std.printable
+use import std.array
+use import std.math
+use import std.thread
+use import std.random
+use import std.random.mt
+use import std.mem.allocator
+use import std.mem.arena_allocator
+use import std.os.windows_functions
+io :: import std.io
+C :: import std.c
+
+use import olc_pge.pixel_game_engine
+use import olc_pge.pixel
+use import olc_pge.key
+use import bmp.bmp
 
 Vec3 :: Vector3[float]
 
@@ -143,7 +151,7 @@ impl PathTracer {
             objects     = Array[Object].create()
             buffer      = {
                 b := alloc_n(Vec3, u64(width * height))
-                c_memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
+                C.memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
                 b
             }
         )
@@ -378,7 +386,7 @@ impl Game for PathTracer {
                     pt      = &self
                     min     = Vector2[int](x * block_size, y * block_size)
                     max     = Vector2[int](min((x + 1) * block_size, width), min((y + 1) * block_size, height))
-                    random  = MTwister.create(cast c_rand()) // crashes with seed not 0, wtf?
+                    random  = MTwister.create(cast C.rand()) // crashes with seed not 0, wtf?
                     active  = false
                 )
 
@@ -436,7 +444,7 @@ impl Game for PathTracer {
                     thread_id   := thread_id_x + thread_id_y * block_count_x
 
                     if !(thread_id >= 0 and thread_id < thread_datas.length) {
-                        printfln("{},{} -> {},{} -> {}/{}", (current_x, current_y, thread_id_x, thread_id_y, thread_id, thread_datas.length))
+                        io.printfln("{},{} -> {},{} -> {}/{}", (current_x, current_y, thread_id_x, thread_id_y, thread_id, thread_datas.length))
                         continue
                     }
 
@@ -502,7 +510,7 @@ impl Game for PathTracer {
                 thread_id   := thread_id_x + thread_id_y * block_count_x
 
                 if !(thread_id >= 0 and thread_id < thread_datas.length) {
-                    printfln("{},{} -> {},{} -> {}/{}", (current_x, current_y, thread_id_x, thread_id_y, thread_id, thread_datas.length))
+                    io.printfln("{},{} -> {},{} -> {}/{}", (current_x, current_y, thread_id_x, thread_id_y, thread_id, thread_datas.length))
                     continue
                 }
 
