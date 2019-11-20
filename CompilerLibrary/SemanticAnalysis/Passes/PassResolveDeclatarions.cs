@@ -104,10 +104,6 @@ namespace Cheez
             foreach (var use in mAllGlobalUses)
                 AnalyseUseStatement(use);
 
-
-            // global variables
-            ResolveGlobalVariables();
-
             // resolve impls (check if is polymorphic, setup scopes, check for self params in functions, etc.)
             foreach (var impl in mAllImpls)
             {
@@ -116,6 +112,9 @@ namespace Cheez
                 else
                     Pass3TraitImpl(impl);
             }
+
+            // global variables
+            ResolveGlobalVariables();
 
             ResolveGlobalDeclarationBodies();
 

@@ -1755,6 +1755,11 @@ namespace Cheez
                         break;
                     }
 
+                case TraitType t:
+                    {
+                        break;
+                    }
+
                 case StructType s:
                     {
                         ComputeStructMembers(s.Declaration);
@@ -1770,11 +1775,6 @@ namespace Cheez
                         foreach (var m in e.Declaration.Members)
                             if (m.AssociatedType != null)
                                 MarkTypeAsRequiredAtRuntime(m.AssociatedType);
-                        break;
-                    }
-
-                case TraitType t:
-                    {
                         break;
                     }
 
@@ -3157,6 +3157,24 @@ namespace Cheez
 
                 case CheezTypeType _:
                     {
+                        {
+                            var funcs = GetImplFunctions(CheezType.Type, expr.Right.Name, expected);
+
+                            if (funcs.Count > 1)
+                            {
+                                var details = funcs.Select(f => ("Possible candidate:", f.ParameterLocation));
+                                ReportError(expr.Right, $"Ambigious call to function '{expr.Right.Name}'", details);
+                                break;
+                            }
+                            else if (funcs.Count == 1)
+                            {
+                                var ufc = new AstUfcFuncExpr(expr.Left, funcs[0], expr);
+                                ufc.Replace(expr);
+                                ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
+                                return InferTypeHelper(ufc, null, context);
+                            }
+                        }
+
                         var type = expr.Left.Value as CheezType;
                         if (type?.IsErrorType ?? true)
                             break;
@@ -3839,6 +3857,10 @@ namespace Cheez
                                 break;
 
                             case SelfParamType.Value:
+                                CollectPolyTypes(func.Declaration.ImplBlock.TargetType, selfType, polyTypes);
+                                break;
+
+                            case SelfParamType.None:
                                 CollectPolyTypes(func.Declaration.ImplBlock.TargetType, selfType, polyTypes);
                                 break;
 

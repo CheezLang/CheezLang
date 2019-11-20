@@ -6,12 +6,12 @@
 // use import examples.signed_distance_field_renderer
 // use import examples.snake.snake
 // use import examples.pathtracer
-// use import examples.postfix
 // use import examples.print_any
-// use import examples.command_line_parser
+use import examples.command_line_parser
 // use import std.compiler.main
 // use import std.compiler.compiler_test
 
+// use import examples.postfix
 // use import examples.image_processing
 // use import examples.clox.main
 // use import examples.lua_example
@@ -23,10 +23,72 @@
 // use import bugs.bug1
 
 /*
-io :: import std.io
+use import std.string
+use import std.printable
+io  :: import std.io
+fmt :: import std.fmt
+
+Foo :: struct #copy {
+    num : int
+    bar : Bar
+    baz : Baz
+}
+
+Bar :: struct #copy {
+    str : string
+    boo : bool
+}
+
+Baz :: enum #copy {
+    A           = 353
+    B : int     = 46
+    C : &int    = 96
+}
+
+// impl Printable for Foo {
+//     print :: (ref Self, str: ref String, format: string) {
+//         str.appendf("{}:", num)
+
+//         s := fmt.format("{}:", [bar])
+//         str += s
+//         s = fmt.format_any(baz)
+//         str += s
+//     }
+// }
+
+// impl Printable for Bar {
+//     print :: (ref Self, str: ref String, format: string) {
+//         str.append_string(self.str)
+//         if boo then str.append_string("boo")
+//     }
+// }
 
 Main :: () {
+    // @type_info(Printable)
+    // @type_info(Drop)
 
+    // value := String.from_string("jo wassup")
+    // print := @type_info(String).get_trait_function(Printable, "print", fn(ref String, ref String, string))
+    // buff := String.empty()
+    // print(value, buff, "")
+    // io.println(buff)
+
+    bar := Bar("lol", true)
+    foo := Foo(12345, bar, Baz.A)
+
+    a := 123
+    b := true
+    s : []int = [a, 353, 987]
+    w := "lol"
+
+    io.println(fmt.format("foo: {:?}", [foo]))
+    io.println(fmt.format("foo: {}", [foo]))
+    io.println(fmt.format("bar: {:?}", [bar]))
+    io.println(fmt.format("bar: {}", [bar]))
+    io.println(fmt.format("  a: {}", [a]))
+    io.println(fmt.format("  b: {}", [b]))
+    io.println(fmt.format("  s: {}", [s]))
+    io.println(fmt.format("  w: {}", [w]))
 }
 
 // */

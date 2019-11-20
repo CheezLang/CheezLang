@@ -48,11 +48,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private Dictionary<CheezType, LLVMTypeRef> vtableTypes = new Dictionary<CheezType, LLVMTypeRef>();
         private Dictionary<CheezType, LLVMValueRef> typeInfoTable = new Dictionary<CheezType, LLVMValueRef>();
         private Dictionary<object, int> vtableIndices = new Dictionary<object, int>();
-        private Dictionary<(CheezType, CheezType), LLVMValueRef> vtableMap = new Dictionary<(CheezType, CheezType), LLVMValueRef>();
-
-        // intrinsics
-        private LLVMValueRef memcpy32;
-        private LLVMValueRef memcpy64;
+        private Dictionary<AstImplBlock, LLVMValueRef> vtableMap = new Dictionary<AstImplBlock, LLVMValueRef>();
 
         // c lib
         private LLVMValueRef exit;
@@ -158,11 +154,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             // generate code
             {
-                GenerateTypeInfos();
-
-                GenerateIntrinsicDeclarations();
-
                 GenerateVTables();
+                GenerateTypeInfos();
 
                 // create declarations
                 foreach (var function in workspace.Functions)

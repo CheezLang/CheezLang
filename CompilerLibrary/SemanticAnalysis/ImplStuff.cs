@@ -145,8 +145,8 @@ namespace Cheez
                 WellThatsNotSupposedToHappen();
 
             // can't impl for type 'type', so always return false
-            if (type == CheezType.Type)
-                return (null, false);
+            //if (type == CheezType.Type)
+            //    return (null, false);
 
             if (impl.IsPolymorphic)
             {

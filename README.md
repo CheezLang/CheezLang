@@ -18,16 +18,16 @@ Here are some simple examples, more advanced examples can be found [here](https:
 
 Here's what a Hello World program looks like:
 ```rust
-#load("std:io/io")
+io :: import std.io
 
 Main :: () {
-    println("Hello World.")
+    io.println("Hello World.")
 }
 ```
 
 A fibonacci calculator, starting at index 0:
 ```rust
-#load("std:io/io")
+io :: import std.io
 
 fib :: (x: int) -> int {
     if x <= 1 {
@@ -38,13 +38,13 @@ fib :: (x: int) -> int {
 
 Main :: () {
     x := fib(5)
-    printfln("fib(5) = {}", x)
+    io.printfln("fib(5) = {}", x)
 }
 ```
 
 Greatest common divisor:
 ```rust
-#load("std:io/io")
+io :: import std.io
 
 // iterative implementation
 gcd_it :: (a: int, b: int) -> int {
@@ -73,14 +73,16 @@ gcd_rec :: (a: int, b: int) -> int {
 }
 
 Main :: () {
-    printfln("gcd_it(9, 6) = {}", gcd_it(9, 6))
-    printfln("gcd_rec(9, 6) = {}", gcd_rec(9, 6))
+    io.printfln("gcd_it(9, 6) = {}", gcd_it(9, 6))
+    io.printfln("gcd_rec(9, 6) = {}", gcd_rec(9, 6))
 }
 ```
 
 Vectors and trait implementation:
 ```rust
-#load("std:io/io")
+use import std.string
+use import std.printable
+io :: import std.io
 
 Vec3 :: struct #copy {
     x : double
@@ -110,7 +112,7 @@ Main :: () {
 
     c := a + b
 
-    printfln("
+    io.printfln("
   {}
 + {}
   ------------------------------
@@ -120,8 +122,8 @@ Main :: () {
 
 Generic dynamic array:
 ```rust
-#load("std:mem/std_heap_allocator")
-#load("std:io/io")
+use import std.mem.allocator
+io :: import std.io
 
 Main :: () {
     ints := IntArray.create()
@@ -132,7 +134,7 @@ Main :: () {
 
     for i : 0..ints.length {
         v := ints[i]
-        printfln("ints[{}] = {}", (i, v))
+        io.printfln("ints[{}] = {}", (i, v))
     }
 
     ints.dispose()

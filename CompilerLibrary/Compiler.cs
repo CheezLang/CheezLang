@@ -98,21 +98,12 @@ namespace Cheez
                 return mFiles[filePath];
             }
 
-            var (file, loadedFiles) = ParseFile(filePath, body, ErrorHandler, globalScope);
+            var file = ParseFile(filePath, body, ErrorHandler, globalScope);
             if (file == null)
                 return null;
 
             mFiles[filePath] = file;
             workspace.AddFile(file);
-
-            foreach (var fname in loadedFiles)
-            {
-                if (mFiles.ContainsKey(fname))
-                    continue;
-                var f = AddFile(fname, null, workspace);
-                if (f == null)
-                    return null;
-            }
 
             return file;
         }
@@ -173,71 +164,9 @@ namespace Cheez
             return true;
         }
 
-        private void HandleDirective(AstDirectiveStatement directive, IErrorHandler eh, Lexer lexer, List<string> loadedFiles, PTFile file)
+        private void HandleDirective(AstDirectiveStatement directive, IErrorHandler eh, Lexer lexer, PTFile file)
         {
-            if (directive.Directive.Name.Name == "with_module")
-            {
-                var d = directive.Directive;
-                if (!RequireDirectiveArguments(d.Arguments, typeof(AstStringLiteral), typeof(AstStringLiteral)))
-                {
-                    eh.ReportError(lexer.Text, d, $"Invalid arguments for with_module directive");
-                    return;
-                }
-
-                string moduleName = (d.Arguments[0] as AstStringLiteral).StringValue;
-                string modulePath = (d.Arguments[1] as AstStringLiteral).StringValue;
-
-                if (modulePath.StartsWith("./", StringComparison.InvariantCulture))
-                {
-                    string sourceFileDir = Path.GetDirectoryName(directive.Beginning.file);
-                    modulePath = Path.Combine(sourceFileDir, modulePath);
-                }
-
-                ModulePaths[moduleName] = modulePath;
-            }
-            else if (directive.Directive.Name.Name == "load")
-            {
-                var d = directive.Directive;
-                if (d.Arguments.Count != 1 || !(d.Arguments[0] is AstStringLiteral f))
-                {
-                    eh.ReportError(lexer.Text, d, "#load takes one string as argument");
-                    return;
-                }
-
-                string path = f.StringValue;
-                int colon = path.IndexOf(':', StringComparison.InvariantCulture);
-                if (colon >= path.Length - 1)
-                {
-                    eh.ReportError(lexer.Text, d, "Invalid load: path can not be empty");
-                    return;
-                }
-
-                if (colon >= 0)
-                {
-                    string module = path.Substring(0, colon);
-
-                    if (module.Length == 0)
-                    {
-                        eh.ReportError(lexer.Text, d, "empty module name is not allowed");
-                        return;
-                    }
-
-                    if (!ModulePaths.TryGetValue(module, out string modulePath))
-                    {
-                        eh.ReportError(lexer.Text, d, $"The module '{module}' is not defined.");
-                        return;
-                    }
-
-                    string libPath = path.Substring(colon + 1);
-                    if (ValidateFilePath(modulePath, libPath, true, eh, (lexer.Text, d), out string pp))
-                        loadedFiles.Add(pp);
-                }
-                else if (ValidateFilePath(Path.GetDirectoryName(file.Name), f.StringValue, true, eh, (lexer.Text, d), out string pp))
-                {
-                    loadedFiles.Add(pp);
-                }
-            }
-            else if (directive.Directive.Name.Name == "lib")
+            if (directive.Directive.Name.Name == "lib")
             {
                 var d = directive.Directive;
                 if (d.Arguments.Count != 1 || !(d.Arguments[0] is AstStringLiteral f))
@@ -274,14 +203,14 @@ namespace Cheez
             }
         }
 
-        private (PTFile, List<string>) ParseFile(string fileName, string body, IErrorHandler eh, bool globalScope = false)
+        private PTFile ParseFile(string fileName, string body, IErrorHandler eh, bool globalScope = false)
         {
             var lexer = body != null ? Lexer.FromString(body, eh, fileName) : Lexer.FromFile(fileName, eh);
             
             mLoadingFiles.Add(fileName, lexer);
 
             if (lexer == null)
-                return (null, null);
+                return null;
 
             var parser = new Parser(lexer, eh);
 
@@ -289,8 +218,6 @@ namespace Cheez
                 mMainWorkspace.GlobalScope :
                 new Scope($"{Path.GetFileNameWithoutExtension(fileName)}.che", mMainWorkspace.GlobalScope);
             var file = new PTFile(fileName, lexer.Text, fileScope);
-
-            List<string> loadedFiles = new List<string>();
 
             bool isPublic = false;
 
@@ -318,7 +245,7 @@ namespace Cheez
                 }
                 else if (s is AstDirectiveStatement directive)
                 {
-                    HandleDirective(directive, eh, lexer, loadedFiles, file);
+                    HandleDirective(directive, eh, lexer, file);
                 }
                 else if (s is AstExprStmt exprStmt && exprStmt.Expr is AstIfExpr @if && @if.IsConstIf)
                 {
@@ -370,7 +297,7 @@ namespace Cheez
             }
 
             mLoadingFiles.Remove(fileName);
-            return (file, loadedFiles);
+            return file;
         }
 
         public PTFile GetFile(string v)

@@ -144,6 +144,11 @@ namespace Cheez
             impl.TargetTypeExpr = ResolveTypeNow(impl.TargetTypeExpr, out var t, resolvePolyExprToConcreteType: !impl.IsPolymorphic);
             impl.TargetType = t;
 
+            if (impl.TargetType is StructType @struct)
+            {
+                @struct.Declaration.Traits.Add(impl.Trait);
+            }
+
             if (impl.Conditions != null)
             {
                 if (impl.Parameters == null)

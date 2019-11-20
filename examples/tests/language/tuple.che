@@ -14,12 +14,6 @@ get_tuple_value :: (tuple: $T, $Index: int) -> @tuple_type_member(T, Index) {
     return tuple[Index]
 }
 
-impl(T: type) T {
-    get_tuple_value :: (ref Self, $Index: int) -> @tuple_type_member(Self, Index) {
-        return self[Index]
-    }
-}
-
 Main :: () {
     a := (3, 4)
     C.printf("%d, %d`n", a[0], a[1])
@@ -31,7 +25,7 @@ Main :: () {
     C.printf("%d, %d`n", c.one, c.two)
 
     d := get_tuple_value(b, 0)
-    e := @typeof(c).get_tuple_value(c, 1)
-    f := (bool, int).get_tuple_value(c, 1)
+    e := get_tuple_value(c, 1)
+    f := get_tuple_value(c, 1)
     C.printf("%d, %d`n", d, e)
 }

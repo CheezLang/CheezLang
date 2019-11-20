@@ -604,7 +604,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var ptr = GenerateExpression(cast.SubExpression, false);
                 ptr = builder.CreatePointerCast(ptr, pointerType, "");
 
-                var vtablePtr = vtableMap[(from, trait)];
+                var impl = trait.Declaration.Implementations[from];
+                var vtablePtr = vtableMap[impl];
 
                 var traitObject = LLVM.GetUndef(toLLVM);
                 traitObject = builder.CreateInsertValue(traitObject, vtablePtr, 0, "");

@@ -1,4 +1,7 @@
 use import std.string
+use import std.printable
+use import std.util
+C :: import std.c
 
 #export_scope
 
@@ -47,6 +50,219 @@ format_int :: (buffer: ref String, val: $T, _base: int = 10) {
         if sign < 0 {
             buffer[i] = '-'
             i -= 1
+        }
+    }
+}
+
+format_any :: (arg: any) -> String {
+    result := String.empty()
+    format_any_into_string(result, arg.val, arg.typ, "", true)
+    return result
+}
+
+format :: (text: string, args: []any) -> String {
+    State :: enum { Text, Format, Escape }
+    use State
+
+    formatSpecifier := {
+        len :: 64
+        String.from_raw_ptr(@alloca(char, len), len)
+    }
+
+    len      := text.length
+    argIndex := 0
+    state    := Text
+
+    result   := String.empty()
+
+
+    for c : text {
+        match state {
+            Text -> {
+                if c == '``' {
+                    state = Escape
+                } else if c == '{' {
+                    state = Format
+                } else {
+                    result += c
+                }
+            }
+
+            Escape -> {
+                result += c
+                state = Text
+            }
+
+            Format -> {
+                if c == '}' {
+                    state = Text
+                    value_to_print := args[argIndex]
+                    formatArg : string = ""
+
+                    colon := formatSpecifier.index_of(':')
+                    if colon >= 1 {
+                        // colon -> arg index before colon
+                        argIndex = parse_int(formatSpecifier.sliceL(colon))
+                    } else if colon == -1 and formatSpecifier.length > 0 {
+                        // no colon but non empty -> arg index
+                        argIndex = parse_int(formatSpecifier.slice())
+                    }
+                    if colon != -1 {
+                        // colon -> formatArg after colon
+                        formatArg = formatSpecifier.sliceF(colon + 1)
+                    }
+
+                    if argIndex >= args.length {
+                        C.puts("error")
+                    }
+                    @assert(argIndex >= 0 and argIndex < args.length)
+
+                    if streq(formatArg, "?") {
+                        format_any_into_string(result, value_to_print.val, value_to_print.typ, "", true)
+                    } else {
+                        format_any_into_string(result, value_to_print.val, value_to_print.typ, formatArg, false)
+                    }
+
+                    argIndex += 1
+                    formatSpecifier.length = 0
+
+                } else {
+                    formatSpecifier += c
+                }
+            }
+        }
+    }
+
+    return result
+}
+
+#file_scope
+
+format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, format: string, recursive: bool) {
+    if !recursive {
+        trait_func := typ.get_trait_function(Printable, "print", fn(ref Printable, ref String, string))
+        if trait_func != null {
+            trait_func(<<cast(&Printable) data, result, "")
+            return
+        }
+    }
+
+    match typ.kind {
+        TypeInfoKind.Int($tint) -> {
+            if tint.signed {
+                ptr := cast(&int) data
+                format_int(result, <<ptr)
+            } else {
+                ptr := cast(&uint) data
+                format_int(result, <<ptr)
+            }
+        }
+
+        TypeInfoKind.Float -> {
+            if typ.size == 4 {
+                ptr := cast(&float) data
+                result.appendf("{}", <<ptr)
+            } else if typ.size == 8 {
+                ptr := cast(&double) data
+                result.appendf("{}", <<ptr)
+            } else {
+                result.appendf("<float: invalid size {}>", typ.size)
+                @assert(false)
+            }
+        }
+
+        TypeInfoKind.Bool -> {
+            ptr := cast(&bool) data
+            if <<ptr then result.append_string("true") else result.append_string("false")
+        }
+
+        TypeInfoKind.Char -> {
+            ptr := cast(&char) data
+            result.appendf("'{}'", <<ptr)
+        }
+
+        TypeInfoKind.Pointer($target) -> {
+            ptr := cast(&&void) data
+            result.appendf("0x{:x}", int(<<ptr))
+        }
+
+        TypeInfoKind.Slice($target) -> {
+            if int(target.kind) == int(TypeInfoKind.Char) {
+                if data == null {
+                    result.append_string("null")
+                } else {
+                    ptr := <<cast(&[]char) data
+                    result.append_string(ptr)
+                }
+            } else {
+                ptr := <<cast(&[]void) data
+                result += "["
+                for i : 0..ptr.length {
+                    if i > 0 {
+                        result += ", "
+                    }
+
+                    elem := pointer_add(ptr.data, i * target.size)
+                    format_any_into_string(result, elem, target, format, recursive)
+                }
+                result += "]"
+            }
+        }
+
+        TypeInfoKind.Struct($tstruct) -> {
+            ptr := cast(&void) data
+            result += tstruct.name
+
+            result += "("
+            if tstruct.members.data != null {
+                for i : 0..tstruct.members.length {
+                    if i > 0 {
+                        result += ", "
+                    }
+                    member_info := &tstruct.members[i]
+                    member_ptr  := pointer_add(ptr, member_info.offset)
+                    member_type := member_info.typ
+                    result += member_info.name
+                    result += " = "
+                    format_any_into_string(result, member_ptr, member_type, format, recursive)
+                }
+            }
+            result += ")"
+        }
+
+        TypeInfoKind.Enum($tenum) -> {
+            ptr := cast(&void) data
+            result += tenum.name
+            result += "."
+
+            tag := match tenum.tag_type.size {
+                1  -> int(<<cast(&u8) ptr)
+                2  -> int(<<cast(&u16) ptr)
+                4  -> int(<<cast(&u32) ptr)
+                8  -> int(<<cast(&u64) ptr)
+                $_ -> {
+                    @panic("Unsupported tag size")
+                    0
+                }
+            }
+
+            for(by_ref=true) mem : tenum.members {
+                if mem.tag == tag {
+                    result += mem.name
+
+                    if mem.typ != null {
+                        mem_val_ptr := pointer_add(ptr, tenum.tag_type.size)
+
+                        result += "("
+                        format_any_into_string(result, mem_val_ptr, mem.typ, format, recursive)
+                        result += ")"
+                    }
+                }
+            }
+        }
+
+        $_ -> {
+            result += "<unknown>"
         }
     }
 }

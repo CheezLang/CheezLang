@@ -1,3 +1,5 @@
+_C :: import std.c
+
 // OS
 Platform :: enum {
     Unknown
@@ -110,6 +112,19 @@ TypeInfo :: struct #copy {
     kind        : TypeInfoKind
 }
 
+impl TypeInfo {
+    get_trait_function :: (ref Self, $Trait: type, name: string, $F: type) -> F {
+        return match kind {
+            TypeInfoKind.Struct($s) ->  s.get_trait_function(Trait, name, F)
+
+            $_ -> {
+                // @panic("Not implemented!")
+                null
+            }
+        }
+    }
+}
+
 TypeInfoKind :: enum #copy {
     Int         : TypeInfoInt    = 0
     Float                        = 1
@@ -121,10 +136,17 @@ TypeInfoKind :: enum #copy {
     Slice       : &TypeInfo      = 7
     Enum        : TypeInfoEnum   = 8
     Trait       : TypeInfoTrait  = 9
+    Void                         = 10
 }
 
 TypeInfoTrait :: struct #copy {
-    name : string
+    name      : string
+    functions : []TypeInfoTraitFunction
+}
+
+TypeInfoTraitFunction :: struct #copy {
+    name  : string
+    index : int
 }
 
 TypeInfoInt :: struct #copy {
@@ -132,10 +154,16 @@ TypeInfoInt :: struct #copy {
 }
 
 TypeInfoStruct :: struct #copy {
-    name          : string
-    members       : []TypeInfoStructMember
+    name    : string
+    members : []TypeInfoStructMember
+    traits  : []TypeInfoTraitImpl
     // parameters    : []any
     // const_members : []TypeInfoStructMember
+}
+
+TypeInfoTraitImpl :: struct #copy {
+    trait_type : &TypeInfo
+    vtable     : &void
 }
 
 TypeInfoStructMember :: struct #copy {
@@ -165,7 +193,45 @@ impl TypeInfoStruct {
         }
         return null
     }
+
+    get_trait_impl :: (ref Self, $T: type) -> &TypeInfoTraitImpl {
+        ti := @type_info(T)
+        match ti.kind {
+            TypeInfoKind.Trait -> {
+                for(by_ref=true) traits {
+                    if it.trait_type == ti {
+                        return &it
+                    }
+                }
+            }
+        }
+        return null
+    }
+
+    get_trait_function :: (ref Self, $Trait : type, func_name: string, $F: type) -> F {
+        ti_impl := self.get_trait_impl(Trait)
+        if ti_impl == null {
+            return null
+        }
+        ti_trait := ti_impl.trait_type
+        vtable := ti_impl.vtable
+        func_info := ti_trait.kind.Trait.get_function(func_name)
+        function := cast(F) @cast(&fn(), vtable)[func_info.index]
+        return function
+    }
 }
+
+impl TypeInfoTrait {
+    get_function :: (ref Self, name: string) -> &TypeInfoTraitFunction {
+        for(by_ref=true) functions {
+            if strings_equal(name, it.name) {
+                return &it
+            }
+        }
+        return null
+    }
+}
+
 
 strings_equal :: (a: string, b: string) -> bool {
     if a.length != b.length {
