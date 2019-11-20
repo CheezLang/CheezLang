@@ -22,8 +22,6 @@
 // use import "examples/project_euler/018_maximum_path_sum_1"
 // use import bugs.bug1
 
-// #load("module_test/main")
-
 /*
 io :: import std.io
 

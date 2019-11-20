@@ -1,5 +1,7 @@
 #lib("./lib/opencv_highgui2413.lib")
 
+#export_scope
+
 CvCapture :: struct {}
 
 cvCreateCameraCapture :: (index: i32) -> &CvCapture;

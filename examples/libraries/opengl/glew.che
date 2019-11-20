@@ -1,7 +1,7 @@
 #lib("./glew32s.lib")
 #lib("OpenGL32.Lib")
 
-#load("opengl.che")
+use import opengl.types
 
 glewInit :: () -> GLenum #stdcall;
 

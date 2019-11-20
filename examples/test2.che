@@ -1,13 +1,3 @@
-// #load("examples/geometry_draw_thingy")
-// #load("examples/trait_function_call_performance")
-// #load("examples/signed_distance_field_renderer")
-// #load("compiler/main")
-
-// #load("test2")
-// #load("std:io/io")
-// #load("std:iterator")
-// #load("std:random")
-
 //* corotine stuff
 foo :: () -> int #coroutine {
     return 0

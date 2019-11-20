@@ -65,7 +65,7 @@ Into :: trait(T: type) {
 for_extension_range :: (r: $T..T, code: Code, reverse: bool = false, inclusive: bool = false) #for {
     start, end, inc := {
         end := if const inclusive then r.end else r.end - 1
-        if const reverse then (end, r.start, -1) else (r.start, end, 1)
+        if const reverse then (end, r.start, T(-1)) else (r.start, end, T(1))
     }
 
     compare :: @code(if const reverse then it >= end else it <= end)

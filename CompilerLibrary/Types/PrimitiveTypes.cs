@@ -80,10 +80,8 @@ namespace Cheez.Types.Primitive
                 if (t.Signed != this.Signed)
                     return -1;
 
-                if (concrete.GetSize() > this.GetSize())
+                if (concrete.GetSize() != this.GetSize())
                     return -1;
-                if (concrete.GetSize() < this.GetSize())
-                    return 1;
                 return 0;
             }
             return -1;

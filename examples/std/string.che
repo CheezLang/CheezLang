@@ -124,7 +124,7 @@ impl(CharType: type) StringBase[CharType] {
 
     append_cstring :: (ref Self, other: c_string) -> ref Self #operator("+=") {
         otherLen := C.strlen(other)
-        newLength := length + otherLen
+        newLength := length + int(otherLen)
         self.reserve(newLength)
         C.memcpy(cast &data.data[length], cast other, cast otherLen)
         length = newLength

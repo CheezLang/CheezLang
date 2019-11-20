@@ -1,9 +1,12 @@
-#load("std:io/io")
-#load("std:iterator")
+use import std.math
+use import std.mem.allocator
+use import std.iterator
+io :: import std.io
+C  :: import std.c
 
-#load("olc_pge/pixel_game_engine.che")
-// #load("../libraries/escapi/escapi")
-#load("../libraries/opencv/opencv")
+use import olc_pge.pixel_game_engine
+use import olc_pge.pixel
+use import opencv.opencv
 
 image_width   : int : 320
 image_height  : int : 240
@@ -14,36 +17,36 @@ border_width  : int : 10
 Color :: (x: double, y: double, z: double)
 
 impl Color {
-    add :: (a: ref Color, b: ref Color) -> Color #operator("+") {
+    add :: (a: Color, b: Color) -> Color #operator("+") {
         return (a.x + b.x, a.y + b.y, a.z + b.z)
     }
 
-    sub :: (a: ref Color, b: ref Color) -> Color #operator("-") {
+    sub :: (a: Color, b: Color) -> Color #operator("-") {
         return (a.x - b.x, a.y - b.y, a.z - b.z)
     }
 
-    mul :: (a: ref Color, b: ref Color) -> Color #operator("*") {
+    mul :: (a: Color, b: Color) -> Color #operator("*") {
         return (a.x * b.x, a.y * b.y, a.z * b.z)
     }
     
-    mul_s :: (a: ref Color, b: double) -> Color #operator("*") {
+    mul_s :: (a: Color, b: double) -> Color #operator("*") {
         return (a.x * b, a.y * b, a.z * b)
     }
     
-    div :: (a: ref Color, b: ref Color) -> Color #operator("/") {
+    div :: (a: Color, b: Color) -> Color #operator("/") {
         return (a.x / b.x, a.y / b.y, a.z / b.z)
     }
     
-    div_s :: (a: ref Color, b: double) -> Color #operator("/") {
+    div_s :: (a: Color, b: double) -> Color #operator("/") {
         return (a.x / b, a.y / b, a.z / b)
     }
     
-    neg :: (a: ref Color) -> Color #operator("-") {
+    neg :: (a: Color) -> Color #operator("-") {
         return (-a.x, -a.y, -a.z)
     }
 }
 
-absolute :: (self: ref Color) -> Color {
+absolute :: (self: Color) -> Color {
     return (abs(self.x), abs(self.y), abs(self.z))
 }
 
@@ -86,7 +89,7 @@ impl Frame {
     }
 
     copy_to :: (ref Self, target: ref Frame) {
-        c_memcpy(cast &target.pixels, cast &pixels, cast @sizeof(@typeof(pixels)))
+        C.memcpy(cast &target.pixels, cast &pixels, cast @sizeof(@typeof(pixels)))
     }
 }
 
@@ -104,7 +107,7 @@ impl Game for ImageProcessingGame {
 
         // clear images to black
         for i : 0..num_images_x * num_images_y {
-            printfln("clearing frame {}", i)
+            io.printfln("clearing frame {}", i)
             for x : 0..image_width {
                 for y : 0..image_height {
                     frames[i].set(x, y, 0.5)
@@ -121,6 +124,7 @@ impl Game for ImageProcessingGame {
         capture = cvCreateCameraCapture(0)
 
         if capture == null {
+            io.println("Failed to create webcam capture")
             return false
         }
 
@@ -150,8 +154,8 @@ impl Game for ImageProcessingGame {
         if res != null {
             xScale := (cast(double)image_width) / (cast(double)res.width)
             yScale := (cast(double)image_height) / (cast(double)res.height)
-            for x : 0..res.width {
-                for y : 0..res.height {
+            for x : 0i32..res.width {
+                for y : 0i32..res.height {
                     index := (x + y * res.width) * 3
                     col := (cast(double) res.imageData[index + 2], cast(double) res.imageData[index + 1], cast(double) res.imageData[index + 0]) / 255.0
                     targetX := cast(int) (cast(double)x) * xScale
