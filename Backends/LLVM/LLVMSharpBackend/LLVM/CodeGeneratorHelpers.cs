@@ -1051,3 +1051,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             break;
                         }
 
+
+                    default: throw new NotImplementedException();
+                }
+            }
+        }
+    }
+}

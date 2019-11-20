@@ -1734,6 +1734,14 @@ namespace Cheez
                 return;
             mTypesRequiredAtRuntime.Add(type);
 
+            var impls = GetImplsForType(type);
+            foreach (var impl in impls)
+            {
+                MarkTypeAsRequiredAtRuntime(impl.TargetType);
+                if (impl.Trait != null)
+                    MarkTypeAsRequiredAtRuntime(impl.Trait);
+            }
+
             switch (type)
             {
                 case PointerType p:
