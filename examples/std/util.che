@@ -1,3 +1,5 @@
+#export_scope
+
 next_aligned :: (_add: &$T, align: u64) -> &T {
     add := u64(_add)
     mul := add + align - 1

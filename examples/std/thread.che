@@ -9,6 +9,8 @@ use import std.ring_queue
 
 C :: import std.c
 
+#export_scope
+
 current_thread_data : &ThreadData = null #thread_local
 
 // thread

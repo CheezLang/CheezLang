@@ -1,5 +1,4 @@
 use import std.compiler.lexer
-use import std.compiler.token
 use import std.compiler.string_database
 use import std.stack
 use import std.array

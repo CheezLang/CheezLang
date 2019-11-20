@@ -3,6 +3,8 @@ use import std.mem.std_heap_allocator
 use import std.hash
 use import std.iterator
 
+#export_scope
+
 Table :: struct(K: type, V: type) {
     max_load: double
     count: uint

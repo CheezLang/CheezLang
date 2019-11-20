@@ -1,3 +1,5 @@
+#export_scope
+
 GLenum     :: u32
 GLboolean  :: bool
 GLbitfield :: u32

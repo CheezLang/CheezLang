@@ -1,10 +1,11 @@
 use import ast
-use import ast_stmt
 use import lexer
-use import token
 use import cheez_compiler
 
 use import std.mem.allocator
+io :: import std.io
+
+#export_scope
 
 Parser :: struct {
     compiler    : ref CheezCompiler

@@ -17,6 +17,7 @@ namespace Cheez
         public string Text { get; }
 
         public Scope FileScope { get; }
+        public Scope ExportScope { get; }
 
         public List<AstStatement> Statements { get; } = new List<AstStatement>();
 
@@ -27,6 +28,7 @@ namespace Cheez
             this.Name = name;
             this.Text = raw;
             FileScope = scope;
+            ExportScope = new Scope("export");
         }
 
         public override string ToString()
@@ -289,6 +291,8 @@ namespace Cheez
 
             List<string> loadedFiles = new List<string>();
 
+            bool isPublic = false;
+
             void HandleStatement(AstStatement s)
             {
                 s.Scope = file.FileScope;
@@ -300,7 +304,16 @@ namespace Cheez
                 {
                     s.SourceFile = file;
                     s.SetFlag(StmtFlags.GlobalScope);
+                    s.SetFlag(StmtFlags.ExportScope, isPublic);
                     file.Statements.Add(s);
+                }
+                else if (s is AstDirectiveStatement dir && dir.Directive.Name.Name == "file_scope")
+                {
+                    isPublic = false;
+                }
+                else if (s is AstDirectiveStatement dir2 && dir2.Directive.Name.Name == "export_scope")
+                {
+                    isPublic = true;
                 }
                 else if (s is AstDirectiveStatement directive)
                 {

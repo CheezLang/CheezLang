@@ -2,6 +2,8 @@ use import main
 use import misc
 use import std.math
 
+#export_scope
+
 Texture :: trait {
     value :: (ref Self, u: real, v: real, p: ref vec3) -> vec3;
 }

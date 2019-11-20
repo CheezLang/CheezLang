@@ -547,26 +547,6 @@ namespace Cheez
             }
         }
 
-        private void DefineArithmeticOperators(CheezType[] types, params string[] ops)
-        {
-            foreach (var name in ops)
-            {
-                List<IBinaryOperator> list;
-                if (mBinaryOperatorTable.ContainsKey(name))
-                    list = mBinaryOperatorTable[name];
-                else
-                {
-                    list = new List<IBinaryOperator>();
-                    mBinaryOperatorTable[name] = list;
-                }
-
-                foreach (var t in types)
-                {
-                    list.Add(new BuiltInBinaryOperator(name, t, t, t));
-                }
-            }
-        }
-
         private void DefineBinaryOperator(IBinaryOperator op)
         {
             List<IBinaryOperator> list;

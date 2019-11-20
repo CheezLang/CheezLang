@@ -1,5 +1,7 @@
-io :: import std.io
 use import std.math
+io :: import std.io
+C :: import std.c
+
 use import glfw.glfw3
 use import opengl.opengl
 use import opengl.constants
@@ -8,6 +10,8 @@ use import opengl.functions
 use import imgui.imgui
 use import imgui.types
 use import imgui.functions
+
+#export_scope
 
 vec2 :: Vector2[float]
 vec3 :: Vector3[float]

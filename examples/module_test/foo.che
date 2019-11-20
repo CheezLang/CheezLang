@@ -1,7 +1,12 @@
-c :: import std.c
+// c :: import std.c
 
+#file_scope
+
+#export_scope
 fo :: () {
-    c.puts(@function_name())
+    // c.puts(@function_name())
 }
 
+
+#export_scope
 test :: () {}

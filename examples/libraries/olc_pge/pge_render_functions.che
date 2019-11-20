@@ -2,6 +2,8 @@ use import pixel_game_engine
 use import pixel
 use import std.math
 
+#export_scope
+
 impl PixelGameEngine {
     clear :: (ref Self, p: Pixel = Pixel()) {
         count := draw_target.width * draw_target.height

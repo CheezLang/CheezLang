@@ -1,5 +1,7 @@
 use import types
 
+#export_scope
+
 /* AccumOp */
 GL_ACCUM                : GLenum : 0x0100
 GL_LOAD                 : GLenum : 0x0101

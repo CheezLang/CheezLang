@@ -1,0 +1,52 @@
+use import std.string
+
+#export_scope
+
+parse_int :: (str: string) -> int {
+    val := 0
+
+    for c : str {
+        val *= 10
+        val += int(c - '0')
+    }
+
+    return val
+}
+
+format_int :: (buffer: ref String, val: $T, _base: int = 10) {
+    digit_to_char :: (i: $T) -> char {
+        c := char(i)
+        return if i < 10 { c + '0' } else { (c - char(10)) + 'A' }
+    }
+
+    base := T(_base)
+
+    // calculate length and sign
+    len, sign : int, T = if val < 0 then (1, -1)
+    else if val == 0 then (1, 1)
+    else (0, 1)
+
+    while v := val, v != 0, v /= base {
+        len += 1
+    }
+
+    // reserve memory
+    buffer.resize(buffer.length + len)
+    
+    if val == 0 {
+        buffer[buffer.length - 1] = '0'
+    } else {
+        i := buffer.length - 1
+        while val != 0, i -= 1 {
+            lastDigit := (val % base) * sign
+
+            val = val / base
+            buffer[i] = digit_to_char(lastDigit)
+        }
+
+        if sign < 0 {
+            buffer[i] = '-'
+            i -= 1
+        }
+    }
+}

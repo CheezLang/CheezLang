@@ -381,7 +381,15 @@ namespace Cheez
                 func.IsForExtension = true;
 
                 if (!func.IsPolyInstance)
+                {
                     func.Scope.AddForExtension(func);
+
+
+                    if (func.Parent is AstConstantDeclaration con && con.GetFlag(StmtFlags.ExportScope))
+                    {
+                        con.SourceFile.ExportScope.AddForExtension(func);
+                    }
+                }
             }
 
             // handle poly stuff

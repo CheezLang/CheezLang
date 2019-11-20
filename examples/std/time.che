@@ -6,6 +6,8 @@ if const @is_os("linux") {
     linux :: import std.os.linux
 }
 
+#export_scope
+
 get_time_microseconds :: () -> int {
     if const @is_os("windows") {
         freq := 1

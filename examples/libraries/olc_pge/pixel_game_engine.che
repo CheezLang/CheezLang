@@ -19,6 +19,8 @@ use import opengl.functions
 use import opengl.types
 use import opengl.constants
 
+#export_scope
+
 Game :: trait {
     on_create  :: (ref Self, pge: &PixelGameEngine) -> bool;
     on_destroy :: (ref Self) -> bool;

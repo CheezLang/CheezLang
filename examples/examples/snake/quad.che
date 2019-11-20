@@ -2,6 +2,8 @@ use import std.math
 use import opengl.functions
 use import opengl.constants
 
+#export_scope
+
 Vec2i :: Vector2[int]
 Vec2 :: Vector2[double]
 Vec3 :: Vector3[double]

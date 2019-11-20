@@ -5,6 +5,8 @@ use import std.mem.allocator
 use import std.string
 io :: import std.io
 
+#export_scope
+
 /*
 profile_scope :: (name: string) #macro #transparent {
     if const enable_profiler {

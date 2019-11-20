@@ -1,3 +1,4 @@
+#export_scope
 strlen :: (str: c_string) -> i32;
 printf :: (format: c_string) #varargs;
 sprintf :: (buff: c_string, f: c_string) -> i32 #varargs;

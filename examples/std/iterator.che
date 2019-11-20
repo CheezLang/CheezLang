@@ -1,5 +1,7 @@
 use import std.array
 
+#export_scope
+
 Iterator :: trait(T: type) {
     next :: (ref Self) -> Option[T];
 }

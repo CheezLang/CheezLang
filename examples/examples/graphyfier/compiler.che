@@ -4,10 +4,11 @@ use import std.string
 use import std.compiler.string_database
 use import std.profiling
 use import std.compiler.lexer
-use import std.compiler.token
 use import evaluator
 io :: import std.io
 C :: import std.c
+
+#export_scope
 
 get_precedence :: (op: OpCode) -> int {
     return match op {

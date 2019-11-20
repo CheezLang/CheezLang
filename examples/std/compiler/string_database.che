@@ -5,6 +5,8 @@ use import std.mem.allocator
 use import std.mem.arena_allocator
 C :: import std.c
 
+#export_scope
+
 impl string {
     equal :: (a: Self, b: Self) -> bool #operator("==") {
         return a.length == b.length and a.data == b.data

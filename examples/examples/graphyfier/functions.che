@@ -1,3 +1,5 @@
+#export_scope
+
 functions : []fn(double) -> Option(Complex) = [ f1, f2, f3, f4, f5, f6, f7, f8 ]
 
 C :: (r: double, i: double = 0.0) -> Complex {

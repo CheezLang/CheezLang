@@ -42,7 +42,14 @@ namespace Cheez
                     else if (func.Parameters.Count != 1)
                         ReportError(func.ParameterLocation, $"This function must take one parameter in order to use it as operator '{op}'");
                     else
+                    {
                         targetScope.DefineUnaryOperator(op, func);
+
+                        if (func.Parent is AstConstantDeclaration con && con.GetFlag(StmtFlags.ExportScope))
+                        {
+                            con.SourceFile.ExportScope.DefineUnaryOperator(op, func);
+                        }
+                    }
                     break;
 
                 case "+":
@@ -63,7 +70,14 @@ namespace Cheez
                     else if (func.Parameters.Count != 2)
                         ReportError(func.ParameterLocation, $"This function must take two parameters in order to use it as operator '{op}'");
                     else
+                    {
                         targetScope.DefineBinaryOperator(op, func);
+
+                        if (func.Parent is AstConstantDeclaration con && con.GetFlag(StmtFlags.ExportScope))
+                        {
+                            con.SourceFile.ExportScope.DefineBinaryOperator(op, func);
+                        }
+                    }
                     break;
 
                 case "+=":
@@ -78,6 +92,11 @@ namespace Cheez
                     else
                     {
                         targetScope.DefineBinaryOperator(op, func);
+
+                        if (func.Parent is AstConstantDeclaration con && con.GetFlag(StmtFlags.ExportScope))
+                        {
+                            con.SourceFile.ExportScope.DefineBinaryOperator(op, func);
+                        }
                     }
                     break;
 
@@ -87,7 +106,14 @@ namespace Cheez
                     else if (func.Parameters.Count != 2)
                         ReportError(func.ParameterLocation, $"This function must take two parameters in order to use it as operator '{op}'");
                     else
+                    {
                         targetScope.DefineBinaryOperator(op, func);
+
+                        if (func.Parent is AstConstantDeclaration con && con.GetFlag(StmtFlags.ExportScope))
+                        {
+                            con.SourceFile.ExportScope.DefineBinaryOperator(op, func);
+                        }
+                    }
                     break;
 
 
@@ -95,7 +121,14 @@ namespace Cheez
                     if (func.Parameters.Count != 3)
                         ReportError(func.ParameterLocation, $"This function must take three parameters in order to use it as operator '{op}'");
                     else
+                    {
                         targetScope.DefineOperator(op, func);
+
+                        if (func.Parent is AstConstantDeclaration con && con.GetFlag(StmtFlags.ExportScope))
+                        {
+                            con.SourceFile.ExportScope.DefineOperator(op, func);
+                        }
+                    }
                     break;
 
                 default:

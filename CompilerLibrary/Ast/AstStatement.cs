@@ -19,7 +19,8 @@ namespace Cheez.Ast.Statements
         IsForExtension,
         IsCopy,
         Breaks,
-        IsLocal
+        IsLocal,
+        ExportScope
     }
 
     public interface IAstNode {
@@ -58,6 +59,12 @@ namespace Cheez.Ast.Statements
         }
         
         public bool GetFlag(StmtFlags f) => (mFlags & (1 << (int)f)) != 0;
+
+        public int GetFlags() => mFlags;
+        public void SetFlags(int flags)
+        {
+            mFlags = flags;
+        }
         public bool HasDirective(string name) => Directives.Find(d => d.Name.Name == name) != null;
 
         public AstDirective GetDirective(string name)
@@ -83,7 +90,12 @@ namespace Cheez.Ast.Statements
             to.Parent = this.Parent;
             to.Scope = this.Scope;
             to.Directives = this.Directives;
-            
+            to.SourceFile = this.SourceFile;
+
+            // copy some flags
+            to.SetFlag(StmtFlags.ExportScope, this.GetFlag(StmtFlags.ExportScope));
+            to.SetFlag(StmtFlags.GlobalScope, this.GetFlag(StmtFlags.GlobalScope));
+
             // @TODO: i feel like flags should not be copieds
             //to.mFlags = this.mFlags;
             return to;

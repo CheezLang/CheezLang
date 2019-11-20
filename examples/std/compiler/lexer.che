@@ -1,8 +1,12 @@
-use import std.io.file
-use import token
-use import std.string
 use import string_database
+
+use import std.string
+use import std.printable
+use import std.io.file
 C :: import std.c
+io :: import std.io
+
+#export_scope
 
 Lexer :: struct {
     text        : String
@@ -587,4 +591,214 @@ impl Lexer {
             }
         }
     }
+}
+
+// token
+Location :: (beg: TokenLocation, end: TokenLocation)
+
+TokenLocation :: struct #copy {
+    file            : string
+    line            : int
+    index           : int
+    end             : int
+    line_start      : int
+}
+
+Token :: struct #copy {
+    ttype   : TokenType
+    location: TokenLocation
+    suffix  : Option[string]
+    data    : TokenData
+}
+
+TokenData :: enum #copy {
+    None
+    String  : string
+    Integer : int
+    Double  : double
+}
+
+impl Printable for TokenLocation {
+    print :: (ref Self, str: ref String, format: string) {
+        column := index - line_start
+        str.appendf("{}:{}:{}", (file, line, column))
+    }
+}
+
+impl Printable for Token {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("{} ({})", (ttype, location))
+        match data {
+            TokenData.String($s) -> str.appendf(" String({})", s)
+            TokenData.Integer($s) -> str.appendf(" Int({})", s)
+            TokenData.Double($s) -> str.appendf(" Double({})", s)
+        }
+
+        match suffix {
+            Some($s) -> str.appendf(" Suffix(`"{}`")", (s))
+        }
+    }
+}
+
+impl Printable for TokenType {
+    print :: (ref Self, str: ref String, format: string) {
+        use TokenType
+
+        str += cast(string)match self {
+            Unknown         -> "Unknown"
+            NewLine         -> "NewLine"
+            EOF             -> "EOF"
+            StringLiteral   -> "StringLiteral"
+            CharLiteral     -> "CharLiteral"
+            NumberLiteral   -> "NumberLiteral"
+            Identifier      -> "Identifier"
+            DollarIdentifier-> "DollarIdentifier"
+            HashIdentifier  -> "HashIdentifier"
+            AtSignIdentifier-> "AtSignIdentifier"
+            Semicolon       -> "Semicolon"
+            DoubleColon     -> "DoubleColon"
+            Colon           -> "Colon"
+            Comma           -> "Comma"
+            Period          -> "Period"
+            Equal           -> "Equal"
+            Ampersand       -> "Ampersand"
+            Bang            -> "Bang"
+            Plus            -> "Plus"
+            Minus           -> "Minus"
+            Asterisk        -> "Asterisk"
+            ForwardSlash    -> "ForwardSlash"
+            Percent         -> "Percent"
+            AddEq           -> "AddEq"
+            SubEq           -> "SubEq"
+            MulEq           -> "MulEq"
+            DivEq           -> "DivEq"
+            ModEq           -> "ModEq"
+            Less            -> "Less"
+            LessEqual       -> "LessEqual"
+            Greater         -> "Greater"
+            Greater         -> "GreaterEqual"
+            DoubleEqual     -> "DoubleEqual"
+            NotEqual        -> "NotEqual"
+            Arrow           -> "Arrow"
+            LessLess        -> "LessLess"
+            Caret           -> "Caret"
+            OpenParen       -> "OpenParen"
+            ClosingParen    -> "ClosingParen"
+            OpenBrace       -> "OpenBrace"
+            ClosingBrace    -> "ClosingBrace"
+            OpenBracket     -> "OpenBracket"
+            ClosingBracket  -> "ClosingBracket"
+            KwReturn        -> "KwReturn"
+            KwNew           -> "KwNew"
+            KwRef           -> "KwRef"
+            KwFn            -> "KwFn"
+            KwStruct        -> "KwStruct"
+            KwEnum          -> "KwEnum"
+            KwImpl          -> "KwImpl"
+            KwConst         -> "const"
+            KwLet           -> "KwLet"
+            KwTypedef       -> "KwTypedef"
+            KwIf            -> "KwIf"
+            KwElse          -> "KwElse"
+            KwFor           -> "KwFor"
+            KwWhile         -> "KwWhile"
+            KwAnd           -> "KwAnd"
+            KwOr            -> "KwOr"
+            KwTrue          -> "KwTrue"
+            KwFalse         -> "KwFalse"
+            KwNull          -> "KwNull"
+            KwUsing         -> "KwUsing"
+            KwDefer         -> "KwDefer"
+            KwMatch         -> "KwMatch"
+            KwBreak         -> "KwBreak"
+            KwContinue      -> "KwContinue"
+            KwTrait         -> "KwTrait"
+            KwCast          -> "KwCast"
+        }
+    }
+}
+
+TokenType :: enum #copy {
+    Unknown
+
+    NewLine
+    EOF
+
+    StringLiteral
+    CharLiteral
+    NumberLiteral
+
+    Identifier
+    DollarIdentifier
+    HashIdentifier
+    AtSignIdentifier
+
+    Semicolon
+    DoubleColon
+    Colon
+    Comma
+    Period
+    Equal
+    Ampersand
+
+    Bang
+
+    Plus
+    Minus
+    Asterisk
+    ForwardSlash
+    Percent
+
+    AddEq
+    SubEq
+    MulEq
+    DivEq
+    ModEq
+
+    Less
+    LessEqual
+    Greater
+    GreaterEqual
+    DoubleEqual
+    NotEqual
+
+    Arrow
+    LessLess
+    Caret
+
+    OpenParen
+    ClosingParen
+
+    OpenBrace
+    ClosingBrace
+
+    OpenBracket
+    ClosingBracket
+
+    KwReturn
+    KwNew
+    KwRef
+    KwFn
+    KwStruct
+    KwEnum
+    KwImpl
+    KwConst
+    KwLet
+    KwTypedef
+    KwIf
+    KwElse
+    KwFor
+    KwWhile
+    KwAnd
+    KwOr
+    KwTrue
+    KwFalse
+    KwNull
+    KwUsing
+    KwDefer
+    KwMatch
+    KwBreak
+    KwContinue
+    KwTrait
+    KwCast
 }

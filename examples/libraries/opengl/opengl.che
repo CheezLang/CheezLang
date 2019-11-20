@@ -5,6 +5,8 @@ use import constants
 use import functions
 C :: import std.c
 
+#export_scope
+
 gl_check_error :: () {
     err := glGetError()
     while err != GL_NO_ERROR {

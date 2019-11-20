@@ -5,6 +5,8 @@ use import objects
 
 use import std.math
 
+#export_scope
+
 MaterialRecord :: struct {
     att       : vec3
     scattered : Ray

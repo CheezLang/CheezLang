@@ -1,6 +1,8 @@
 #lib("./x64/glfw3dll.lib")
 #lib("OpenGL32.Lib")
 
+#export_scope
+
 GLFWvidmode :: struct {
     /*! The width, in screen coordinates, of the video mode.
      */

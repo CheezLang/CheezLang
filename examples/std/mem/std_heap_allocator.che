@@ -1,6 +1,8 @@
 use import std.mem.allocator
 c :: import std.c
 
+#export_scope
+
 StdHeapAllocator :: struct {
     _unused: i32 = 0
 }

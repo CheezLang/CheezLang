@@ -4,6 +4,8 @@ use import std.string
 use import std.hash_table
 use import std.hash
 
+#export_scope
+
 Variables :: Table[string, Complex]
 
 evaluate :: (code: []OpCode, vars: ref Variables) -> Option[Complex] {

@@ -3,6 +3,8 @@ use import std.mem.std_heap_allocator
 use import std.iterator
 C :: import std.c
 
+#export_scope
+
 Array :: struct(T: type) {
     data            : &T
     capacity        : int

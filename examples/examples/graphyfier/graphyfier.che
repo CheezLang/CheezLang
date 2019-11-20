@@ -23,6 +23,8 @@ use import olc_pge.pge_render_functions
 use import olc_pge.pixel
 use import olc_pge.key
 
+#export_scope
+
 enable_profiler :: true
 
 vec2 :: Vector2[double]

@@ -1,5 +1,7 @@
 use import std.random
 
+#export_scope
+
 STATE_VECTOR_LENGTH   : u32 : 624
 STATE_VECTOR_M        : u32 : 397
 STATE_VECTOR_DIFF     : u32 : STATE_VECTOR_LENGTH - STATE_VECTOR_M

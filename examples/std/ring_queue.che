@@ -3,6 +3,8 @@ use import std.mem.std_heap_allocator
 use import std.util
 C :: import std.c
 
+#export_scope
+
 RingQueue :: struct(T: type) {
     data    : &T
     capacity: int

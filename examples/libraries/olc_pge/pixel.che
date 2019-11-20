@@ -1,6 +1,8 @@
 use import std.printable
 use import std.string
 
+#export_scope
+
 Pixel :: struct #copy {
     r: u8 = 0
     g: u8 = 0

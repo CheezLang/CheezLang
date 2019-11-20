@@ -2,7 +2,8 @@
 
 #test_expect_output("1074")
 
-io :: import std.io
+io  :: import std.io
+fmt :: import std.fmt
 use import std.math
 use import std.string
 use import std.array
@@ -32,7 +33,7 @@ load_graph :: (str: string) -> Array[Array[int]] {
             while i < str.length and str[i] >= '0' and str[i] <= '9', i += 1 {}
             end := i
             num_str := str[start..end]
-            num := io.parse_int(num_str)
+            num := fmt.parse_int(num_str)
             line.add(num)
 
             while i < str.length and str[i] == ' ', i += 1 {}

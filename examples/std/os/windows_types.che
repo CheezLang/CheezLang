@@ -1,3 +1,5 @@
+#export_scope
+
 DWORD                :: u32
 HANDLE               :: &void
 HWND                 :: HANDLE

@@ -16,8 +16,7 @@ namespace Cheez
     /// This pass resolves the types of struct members
     /// </summary>
     public partial class Workspace
-    {        
-
+    {
         private bool SizeOfTypeDependsOnSelfType(CheezType type)
         {
             switch (type)
@@ -171,6 +170,8 @@ namespace Cheez
 
             // @TODO: should not be necessary
             AddTraitForType(impl.TargetType, impl);
+
+            SortDeclarationsIntoImplBlock(impl);
 
             // handle functions
             foreach (var f in impl.Functions)
@@ -394,12 +395,15 @@ namespace Cheez
 
                 impl.SubScope.DefineTypeSymbol("Self", impl.TargetType);
 
+                SortDeclarationsIntoImplBlock(impl);
+
                 foreach (var f in impl.Functions)
                 {
                     f.Scope = impl.SubScope;
                     f.ConstScope = new Scope($"fn$ {f.Name}", f.Scope);
                     f.SubScope = new Scope($"fn {f.Name}", f.ConstScope);
                     f.ImplBlock = impl;
+                    f.SetFlag(ExprFlags.ExportScope, impl.GetFlag(StmtFlags.ExportScope));
 
                     InferTypeFuncExpr(f);
                     CheckForSelfParam(f);
@@ -411,6 +415,44 @@ namespace Cheez
             {
                 PopLogScope();
                 Log($"Finished Pass3Impl {impl.Accept(new SignatureAstPrinter())}", $"poly = {impl.IsPolymorphic}");
+            }
+        }
+
+        // helper functions
+        internal void SortDeclarationsIntoImplBlock(AstImplBlock impl)
+        {
+            foreach (var decl in impl.Declarations)
+            {
+                decl.Parent = impl;
+                decl.Scope = impl.SubScope;
+                decl.SetFlag(StmtFlags.ExportScope, impl.GetFlag(StmtFlags.ExportScope));
+                decl.SourceFile = impl.SourceFile;
+
+                switch (decl)
+                {
+                    case AstConstantDeclaration con:
+                        {
+                            con.Initializer.AttachTo(con);
+
+                            switch (con.Initializer)
+                            {
+                                case AstFuncExpr func:
+                                    impl.Functions.Add(func);
+                                    break;
+
+                                default:
+                                    ReportError(con.Initializer, $"This type is not allowed here.");
+                                    break;
+                            }
+
+                            break;
+                        }
+
+
+                    default:
+                        ReportError(decl, $"This type of declaration is not allowed here.");
+                        break;
+                }
             }
         }
     }

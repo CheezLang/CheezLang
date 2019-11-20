@@ -4,6 +4,8 @@ use import std.time
 use import std.hash_table
 use import std.mem.allocator
 
+#export_scope
+
 LinearCongruentialGenerator :: struct {
     seed: u64
 }

@@ -1,17 +1,18 @@
-use import foo
-use import bar
+import foo
+// use import bar
 // use import baz
 // import baz.lol
 // import baz.uiae
 // b :: import bar
 
-use import std.c
+// use import std.c
 
 Main :: () {
-    test()
-    // foo.fo()
+    // test()
+    foo.fo()
+    foo.test()
     // baz.bazzz()
     // baz.lol.lololol()
     // b.barrr()
-    puts("Hello World!")
+    // puts("Hello World!")
 }

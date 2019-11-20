@@ -7,6 +7,8 @@ use import std.string
 use import std.mem.allocator
 use import std.random.mt
 
+#export_scope
+
 create_object :: ($T: type, val: $V) -> T {
     mem := alloc(V)
     <<mem = val

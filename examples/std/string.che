@@ -1,11 +1,14 @@
 io   :: import std.io
 util :: import std.util
 C    :: import std.c
+fmt  :: import std.fmt
 
 use import std.printable
 use import std.mem.allocator
 use import std.mem.std_heap_allocator
 import std.alloca
+
+#export_scope
 
 StringBase :: struct(CharType: type) {
     data: []CharType
@@ -216,10 +219,10 @@ impl String {
                     colon := formatSpecifier.index_of(':')
                     if colon >= 1 {
                         // colon -> arg index before colon
-                        argIndex = io.parse_int(formatSpecifier.sliceL(colon))
+                        argIndex = fmt.parse_int(formatSpecifier.sliceL(colon))
                     } else if colon == -1 and formatSpecifier.length > 0 {
                         // no colon but non empty -> arg index
-                        argIndex = io.parse_int(formatSpecifier.slice())
+                        argIndex = fmt.parse_int(formatSpecifier.slice())
                     }
                     if colon != -1 {
                         // colon -> format after colon

@@ -8,6 +8,8 @@ use import std.math
 use import std.mem.allocator
 io :: import std.io
 
+#export_scope
+
 HitRecord :: struct {
     t: real
     p: vec3

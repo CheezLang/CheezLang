@@ -1,3 +1,5 @@
+#export_scope
+
 FILE :: struct {
     _Placeholder: &void
 }

@@ -7,6 +7,8 @@ use import opengl.constants
 use import std.string
 use import std.os.windows_functions
 
+#export_scope
+
 impl PixelGameEngine {
     
 

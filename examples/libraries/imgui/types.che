@@ -1,5 +1,7 @@
-ImDrawListSharedData       :: struct {}
-ImGuiContext               :: struct {}
+#export_scope
+
+ImDrawListSharedData    :: struct {}
+ImGuiContext            :: struct {}
 
 ImTextureID             :: &void
 ImGuiID                 :: u32

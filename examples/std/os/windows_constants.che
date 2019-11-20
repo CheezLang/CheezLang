@@ -1,5 +1,6 @@
 use import windows_types
 
+#export_scope
 // new, incomplete
 FILE_NOTIFY_CHANGE_LAST_WRITE      :: 0x00000010
 FILE_NOTIFY_CHANGE_SIZE            :: 0x00000008

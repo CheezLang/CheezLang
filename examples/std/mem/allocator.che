@@ -1,5 +1,7 @@
 use import std.mem.std_heap_allocator
 
+#export_scope
+
 Allocator :: trait {
     allocate :: (ref Self, count: uint, elementSize: uint, alignment: uint) -> &void;
     reallocate :: (ref Self, mem: &void, count: uint, elementSize: uint, alignment: uint) -> &void;

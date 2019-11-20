@@ -3,8 +3,10 @@ use import std.mem.std_heap_allocator
 use import std.array
 use import std.printable
 util :: import std.util
-io :: import std.io
-C :: import std.c
+io   :: import std.io
+C    :: import std.c
+
+#export_scope
 
 align :: (add: uint, align: uint) -> uint {
     mul := add + align - 1

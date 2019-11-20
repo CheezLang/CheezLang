@@ -1,4 +1,49 @@
+use import lexer
+
+use import std.printable
+use import std.string
+
+#export_scope
+
+Stmt :: struct {
+    concrete    : StmtType
+}
+
+StmtType :: enum {
+    Func    : FunctionDecl
+}
+
+impl Printable for Stmt {
+    print :: (ref Self, str: ref String, format: string) {
+        use StmtType
+        match concrete {
+            Func($func) -> {
+                str.appendf("fn {}() ``{``}", func.name)
+            }
+        }
+    }
+}
+
+FunctionDecl :: struct {
+    name    : string
+}
 
 
-#load("ast_stmt")
-#load("ast_expr")
+// expressions
+Expr :: struct {
+    location    : Location
+    concrete    : ExprType
+}
+
+ExprType :: enum {
+    Id      : IdExpr
+    Number  : NumberExpr
+}
+
+NumberExpr :: struct {
+
+}
+
+IdExpr :: struct {
+
+}

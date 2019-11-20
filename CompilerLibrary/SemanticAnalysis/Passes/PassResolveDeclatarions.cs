@@ -36,7 +36,7 @@ namespace Cheez
                     if (!(import.Value is PTFile importedFile))
                         continue;
 
-                    file.FileScope.AddUsedScope(importedFile.FileScope);
+                    file.FileScope.AddUsedScope(importedFile.ExportScope);
                 }
 
                 while (mUnresolvedGlobalImportConstants.Count > 0)
@@ -54,7 +54,7 @@ namespace Cheez
                         continue;
 
                     var lastName = importAs;
-                    var (ok, other) = file.FileScope.DefineSymbol(new ModuleSymbol(importedFile.FileScope, lastName.Name, lastName.Location));
+                    var (ok, other) = file.FileScope.DefineSymbol(new ModuleSymbol(importedFile.ExportScope, lastName.Name, lastName.Location));
                     if (!ok)
                         ReportError(import, $"Module {lastName} is already imported", ("Other import here:", other));
                 }
@@ -88,7 +88,7 @@ namespace Cheez
                     }
 
                     var lastName = import.Path.Last();
-                    var (ok, other) = targetScope.DefineSymbol(new ModuleSymbol(importedFile.FileScope, lastName.Name, lastName.Location));
+                    var (ok, other) = targetScope.DefineSymbol(new ModuleSymbol(importedFile.ExportScope, lastName.Name, lastName.Location));
                     if (!ok)
                         ReportError(import, $"Module {lastName} is already imported", ("Other import here:", other));
                 }
@@ -202,6 +202,13 @@ namespace Cheez
                 var (ok, other) = con.Scope.DefineSymbol(con);
                 if (!ok)
                     ReportError(con, $"A symbol with name '{con.Name.Name}' already exists in this scope", ("Other declaration here:", other));
+
+                if (con.GetFlag(StmtFlags.ExportScope))
+                {
+                    (ok, other) = con.SourceFile.ExportScope.DefineSymbol(con);
+                    if (!ok)
+                        ReportError(con, $"A symbol with name '{con.Name.Name}' is already exported from this file", ("Other export here:", other));
+                }
             }
             foreach (var con in mAllGlobalConstants)
             {
@@ -228,6 +235,13 @@ namespace Cheez
                 var (ok, other) = con.Scope.DefineSymbol(con);
                 if (!ok)
                     ReportError(con, $"A symbol with name '{con.Name.Name}' already exists in this scope", ("Other declaration here:", other));
+
+                if (con.GetFlag(StmtFlags.ExportScope))
+                {
+                    (ok, other) = con.SourceFile.ExportScope.DefineSymbol(con);
+                    if (!ok)
+                        ReportError(con, $"A symbol with name '{con.Name.Name}' is already exported from this file", ("Other export here:", other));
+                }
             }
             foreach (var @var in mAllGlobalVariables)
             {

@@ -2,6 +2,8 @@ use import std.mem.allocator
 use import std.math
 use import pixel
 
+#export_scope
+
 Sprite :: struct {
     width: int
     height: int

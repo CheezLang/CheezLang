@@ -471,7 +471,8 @@ namespace Cheez.Ast.Statements
 
         public List<ImplCondition> Conditions { get; set; }
 
-        public List<AstFuncExpr> Functions { get; }
+        public List<AstFuncExpr> Functions { get; } = new List<AstFuncExpr>();
+        public List<AstDecl> Declarations { get; }
 
         public Scope SubScope { get; set; }
 
@@ -485,14 +486,14 @@ namespace Cheez.Ast.Statements
             AstExpression targetTypeExpr,
             AstExpression traitExpr,
             List<ImplCondition> conditions,
-            List<AstFuncExpr> functions,
+            List<AstDecl> declarations,
             ILocation Location = null) : base(Location: Location)
         {
             this.Parameters = parameters;
             this.TargetTypeExpr = targetTypeExpr;
             this.TraitExpr = traitExpr;
             this.Conditions = conditions;
-            this.Functions = functions;
+            this.Declarations = declarations;
         }
 
         public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default) => visitor.VisitImplDecl(this, data);
@@ -503,7 +504,7 @@ namespace Cheez.Ast.Statements
                 TargetTypeExpr.Clone(),
                 TraitExpr?.Clone(),
                 Conditions?.Select(c => c.Clone()).ToList(),
-                Functions.Select(f => f.Clone() as AstFuncExpr).ToList()
+                Declarations.Select(f => f.Clone() as AstDecl).ToList()
                 ));
 
         public override string ToString()

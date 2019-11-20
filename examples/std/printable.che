@@ -1,7 +1,11 @@
 use import std.string
 use import std.math
 
-C :: import std.c
+C   :: import std.c
+io  :: import std.io
+fmt :: import std.fmt
+
+#export_scope
 
 Printable :: trait {
     print :: (ref Self, str: ref String, format: string);
@@ -101,13 +105,6 @@ impl Printable for u64 {
     }
 }
 
-printf_int_to_string :: (str: ref String, i: $T, format: string) {
-    base := if streq("b", format) then 2
-    else if streq("x", format) then 16
-    else 10
-    io.format_int(str, i, base)
-}
-
 impl(T: type) Printable for Option[T] if T: Printable {
     print :: (ref Self, str: ref String, format: string) {
         match self {
@@ -130,4 +127,12 @@ impl Printable for Complex {
     print :: (ref Self, str: ref String, format: string) {
         str.appendf("{} + {}i", (r, i))
     }
+}
+
+#file_scope
+printf_int_to_string :: (str: ref String, i: $T, format: string) {
+    base := if streq("b", format) then 2
+    else if streq("x", format) then 16
+    else 10
+    fmt.format_int(str, i, base)
 }

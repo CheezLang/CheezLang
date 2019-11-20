@@ -7,6 +7,9 @@ use import std.os.windows
 use import std.os.windows_functions
 use import std.os.windows_types
 use import std.os.windows_constants
+io :: import std.io
+
+#export_scope
 
 impl PixelGameEngine {
     olc_window_create :: (ref Self) -> HWND {

@@ -1,5 +1,7 @@
 use import types
 
+#export_scope
+
 //
 glAccum :: (op: GLenum, value: GLfloat) -> void #stdcall;
 glAlphaFunc :: (func: GLenum, reff: GLclampf) -> void #stdcall;

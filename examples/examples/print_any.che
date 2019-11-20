@@ -142,7 +142,7 @@ println_any :: (data: any) {
     C.puts("")
 }
 
-Main2 :: () {
+Main :: () {
     bar := Bar("lol", true)
     foo := Foo(12345, bar, Baz.A)
 

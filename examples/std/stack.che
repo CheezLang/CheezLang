@@ -2,6 +2,8 @@ use import std.array
 use import std.mem.allocator
 use import std.mem.std_heap_allocator
 
+#export_scope
+
 Stack :: struct(T: type) {
     array: Array[T]
 }

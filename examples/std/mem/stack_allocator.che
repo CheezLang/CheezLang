@@ -4,7 +4,10 @@ use import std.array
 use import std.printable
 use import std.string
 util :: import std.util
-C :: import std.c
+C    :: import std.c
+io   :: import std.io
+
+#export_scope
 
 StackAllocation :: struct {
     offset  : u64 = 0

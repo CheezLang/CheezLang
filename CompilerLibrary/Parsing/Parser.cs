@@ -724,7 +724,7 @@ namespace Cheez.Parsing
         private AstImplBlock ParseImplBlock()
         {
             TokenLocation beg = null, end = null;
-            var functions = new List<AstFuncExpr>();
+            var declarations = new List<AstDecl>();
             AstExpression target = null;
             AstExpression trait = null;
             List<AstParameter> parameters = null;
@@ -819,19 +819,14 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
                     break;
 
-                var name = ParseIdentifierExpr();
-                Consume(TokenType.Colon, null);
-                Consume(TokenType.Colon, null);
-                var f = ParseFuncExpr(null, null);
-                f.Name = name.Name;
-                functions.Add(f);
+                declarations.Add(ParseDeclaration(null, true));
 
                 SkipNewlines();
             }
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of impl statement")).location;
 
-            return new AstImplBlock(parameters, target, trait, conditions, functions, new Location(beg, end));
+            return new AstImplBlock(parameters, target, trait, conditions, declarations, new Location(beg, end));
         }
 
         public AstExprStmt ParseBlockStatement()
