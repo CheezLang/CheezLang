@@ -55,9 +55,7 @@ format_int :: (buffer: ref String, val: $T, _base: int = 10) {
 }
 
 format_any :: (arg: any) -> String {
-    result := String.empty()
-    format_any_into_string(result, arg.val, arg.typ, "", true)
-    return result
+    return format("{}", [arg])
 }
 
 format :: (text: string, args: []any) -> String {
