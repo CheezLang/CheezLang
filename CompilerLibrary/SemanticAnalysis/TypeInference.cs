@@ -549,9 +549,9 @@ namespace Cheez
                 ReportError(cont, $"Did not find a loop matching this continue");
             else if (sym is AstWhileStmt loop)
                 cont.Loop = loop;
-            else if (sym is AstExpression action)
+            else if (sym is BCAction a)
             {
-                action = action.Clone();
+                var action = a.Action.Clone();
                 action.Parent = cont.Parent;
                 action = InferTypeSilent(action, null, out var errs);
                 if (errs.HasErrors)
@@ -571,15 +571,19 @@ namespace Cheez
             if (sym == null)
                 ReportError(br, $"Did not find a loop matching this break");
             else if (sym is AstWhileStmt loop)
-                br.Loop = loop;
-            else if (sym is AstExpression action)
+                br.Breakable = loop;
+            else if (sym is BCAction a)
             {
-                action = action.Clone();
+                var action = a.Action.Clone();
                 action.Parent = br.Parent;
                 action = InferTypeSilent(action, null, out var errs);
                 if (errs.HasErrors)
                     ReportError(br.Location, "Failed to break", errs.Errors, ("break action defined here:", action.Location));
                 return action;
+            }
+            else if (sym is AstBlockExpr b)
+            {
+                br.Breakable = b;
             }
             else WellThatsNotSupposedToHappen();
 
@@ -1571,7 +1575,7 @@ namespace Cheez
         private AstExpression InferTypeIfExpr(AstIfExpr expr, CheezType expected, TypeInferenceContext context)
         {
             if (expr.ElseCase == null)
-                expr.ElseCase = new AstBlockExpr(new List<AstStatement>(), new Location(expr.IfCase.End));
+                expr.ElseCase = new AstBlockExpr(new List<AstStatement>(), Location: new Location(expr.IfCase.End));
 
             if (expr.IsConstIf)
                 expr.SubScope = expr.Scope;
@@ -1616,7 +1620,7 @@ namespace Cheez
                 else
                 {
                     var emptyBlock = new AstBlockExpr(
-                            new List<AstStatement>(), expr.Condition.Location);
+                            new List<AstStatement>(), Location: expr.Condition.Location);
                     emptyBlock.Replace(expr);
                     return InferTypeHelper(emptyBlock, expected, context);
                 }
@@ -1969,12 +1973,12 @@ namespace Cheez
                             }
 
                             stmts.Add(new AstExprStmt(code, code));
-                            statements.Add(new AstExprStmt(new AstBlockExpr(stmts, lambda.Body), lambda.Body));
+                            statements.Add(new AstExprStmt(new AstBlockExpr(stmts, Location: lambda.Body), lambda.Body));
 
                             index++;
                         }
 
-                        var block = new AstBlockExpr(statements, expr);
+                        var block = new AstBlockExpr(statements, Location: expr);
                         block.Replace(expr);
                         return InferType(block, expected);
                     }
@@ -2707,6 +2711,8 @@ namespace Cheez
             {
                 var transparentParent = expr.Transparent ? expr.Scope : null;
                 expr.SubScope = new Scope("{}", expr.Scope, transparentParent);
+                if (expr.Label != null)
+                    expr.SubScope.DefineBreakable(expr);
             }
 
             int end = expr.Statements.Count;

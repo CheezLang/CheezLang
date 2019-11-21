@@ -147,7 +147,7 @@ namespace Cheez.Ast.Statements
         public override AstStatement Clone() => CopyValuesTo(new AstDeferStmt(Deferred.Clone()));
     }
 
-    public class AstWhileStmt : AstStatement, ISymbol
+    public class AstWhileStmt : AstStatement, ISymbol, IBreakable, IContinuable
     {
         public Scope SubScope { get; set; }
         public AstBlockExpr Body { get; set; }

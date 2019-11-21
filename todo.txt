@@ -1,5 +1,16 @@
-- kill test program:
-    taskkill /IM "test.exe" /F
+- labeled block + break from block
+    + add label to block
+    + break from block
+    + defer working
+    - test drop
+    - test nesting in blocks and loops
+    - test variable lifetimes
+- immutable/mutable variables
+- public/private struct members
+- number constants as polymorphic parameters
+- loop as expression with value (provided by break)
+- polymorphic constraints (e.g. $T/Printable)
+- properly implement lambdas
 
 - improve error messages when type of const argument doesn't match type of const parameter (location shown is from param)
 - return in match as expression

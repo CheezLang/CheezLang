@@ -111,7 +111,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 foreach (var dest in br.Destructions)
                     GenerateStatement(dest);
 
-            var end = loopEndMap[br.Loop];
+            var end = breakTargetMap[br.Breakable];
             builder.CreateBr(end);
 
             var bbNext = LLVM.AppendBasicBlock(currentLLVMFunction, "_br_next");
@@ -1164,6 +1164,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateBlock(AstBlockExpr block, bool deref)
         {
+            LLVMBasicBlockRef? bbBody = null;
+            LLVMBasicBlockRef? bbEnd = null;
+            if (block.Label != null)
+            {
+                bbBody = LLVM.AppendBasicBlock(currentLLVMFunction, "_block_body");
+                bbEnd  = LLVM.AppendBasicBlock(currentLLVMFunction, "_block_end");
+
+                if (block.Label != null)
+                    breakTargetMap[block] = bbEnd.Value;
+
+                builder.CreateBr(bbBody.Value);
+                builder.PositionBuilderAtEnd(bbBody.Value);
+            }
+
             LLVMValueRef result = default;
 
             int end = block.Statements.Count;
@@ -1205,6 +1219,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             for (int i = block.DeferredStatements.Count - 1; i >= 0; i--)
             {
                 GenerateStatement(block.DeferredStatements[i]);
+            }
+
+            if (block.Label != null && !block.GetFlag(ExprFlags.Breaks) && !block.GetFlag(ExprFlags.Returns))
+            {
+                builder.CreateBr(bbEnd.Value);
+                builder.PositionBuilderAtEnd(bbEnd.Value);
             }
 
             return result;

@@ -13,6 +13,27 @@ using System.Linq;
 
 namespace Cheez
 {
+    public interface IBreakable
+    {
+        AstIdExpr Label { get; }
+    }
+
+    public interface IContinuable
+    {
+        AstIdExpr Label { get; }
+    }
+
+    internal class BCAction : IBreakable, IContinuable
+    {
+        public AstIdExpr Label => throw new NotImplementedException();
+        public AstExpression Action { get; set; }
+
+        public BCAction(AstExpression action)
+        {
+            this.Action = action;
+        }
+    }
+
     public interface ISymbol
     {
         string Name { get; }
@@ -135,8 +156,8 @@ namespace Cheez
         private Dictionary<AstImplBlock, List<AstFuncExpr>> mImplTable = new Dictionary<AstImplBlock, List<AstFuncExpr>>();
 
         private List<AstFuncExpr>? mForExtensions = null;
-        private (string? label, object loopOrAction)? mBreak = null;
-        private (string? label, object loopOrAction)? mContinue = null;
+        private (string? label, IBreakable loopOrAction)? mBreak = null;
+        private (string? label, IContinuable loopOrAction)? mContinue = null;
 
         public IEnumerable<KeyValuePair<string, ISymbol>> Symbols => mSymbolTable.AsEnumerable();
 
@@ -585,6 +606,15 @@ namespace Cheez
             mContinue = (name, loop);
         }
 
+        public void DefineBreakable(IBreakable breakable)
+        {
+            if (mBreak != null)
+                throw new Exception("Well that's not supposed to happen...");
+
+            var name = breakable.Label?.Name;
+            mBreak = (name, breakable);
+        }
+
         public void OverrideBreakName(string label)
         {
             if (mBreak == null)
@@ -619,7 +649,7 @@ namespace Cheez
             if (mBreak != null)
                 throw new Exception("Well that's not supposed to happen...");
 
-            mBreak = (name, action);
+            mBreak = (name, new BCAction(action));
         }
 
         public void DefineContinue(string name, AstExpression action)
@@ -627,10 +657,10 @@ namespace Cheez
             if (mContinue != null)
                 throw new Exception("Well that's not supposed to happen...");
 
-            mContinue = (name, action);
+            mContinue = (name, new BCAction(action));
         }
 
-        public object? GetBreak(string? label = null)
+        public IBreakable? GetBreak(string? label = null)
         {
             if (mBreak != null && (label == null || mBreak.Value.label == label))
                 return mBreak.Value.loopOrAction;
@@ -638,7 +668,7 @@ namespace Cheez
             return Parent?.GetBreak(label);
         }
 
-        public object? GetContinue(string? label = null)
+        public IContinuable? GetContinue(string? label = null)
         {
             if (mContinue != null && (label == null || mContinue.Value.label == label))
                 return mContinue.Value.loopOrAction;

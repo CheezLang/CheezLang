@@ -267,9 +267,10 @@ namespace Cheez.Ast.Expressions
                 IsConstIf));
     }
 
-    public class AstBlockExpr : AstNestedExpression
+    public class AstBlockExpr : AstNestedExpression, IBreakable
     {
         public List<AstStatement> Statements { get; set; }
+        public AstIdExpr Label { get; set; }
 
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
         public List<AstStatement> Destructions { get; private set; } = null;
@@ -279,16 +280,20 @@ namespace Cheez.Ast.Expressions
         // flags
         public bool Transparent { get; set; }
 
-        public AstBlockExpr(List<AstStatement> statements, ILocation Location = null) : base(Location: Location)
+        public AstBlockExpr(List<AstStatement> statements, AstIdExpr label = null, ILocation Location = null) : base(Location: Location)
         {
             this.Statements = statements;
+            this.Label = label;
         }
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitBlockExpr(this, data);
 
         public override AstExpression Clone()
-         => CopyValuesTo(new AstBlockExpr(Statements.Select(s => s.Clone()).ToList()));
+            => CopyValuesTo(new AstBlockExpr(
+                    Statements.Select(s => s.Clone()).ToList(),
+                    Label?.Clone() as AstIdExpr
+                ));
 
         public void AddDestruction(AstStatement dest)
         {
@@ -824,7 +829,7 @@ namespace Cheez.Ast.Expressions
     {
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
         public List<AstStatement> Destructions { get; private set; } = null;
-        public AstWhileStmt Loop { get; set; }
+        public IBreakable Breakable { get; set; }
 
         public AstIdExpr Label { get; set; }
 

@@ -369,7 +369,7 @@ namespace Cheez
                 code.TypeInferred = false;
                 code.Value = null;
                 links.Add(new AstExprStmt(code, code.Location));
-                args[1].Expr = new AstBlockExpr(links, fo.Body.Location);
+                args[1].Expr = new AstBlockExpr(links, Location: fo.Body.Location);
 
                 var call = new AstCallExpr(new AstFunctionRef(func, null, fo.Location), args, fo.Location);
                 var exprStmt = new AstExprStmt(call, fo.Body.Location);

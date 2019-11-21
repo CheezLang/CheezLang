@@ -1,0 +1,79 @@
+#test_expect_output("
+3
+<5
+a
+===================
+7
+<5
+<10
+b
+a
+===================
+14
+<5
+<10
+<15
+c
+b
+a
+===================
+15
+<5
+<10
+<15
+<20
+d
+c
+b
+a
+===================
+21
+<5
+<10
+<15
+<20
+>=20
+e
+d
+c
+b
+a")
+
+io  :: import std.io
+
+foo :: (a: int) {
+    io.println(a)
+    { #label test_block
+        defer io.println("a")
+        io.println("<5")
+        if a < 5 then break
+
+        defer io.println("b")
+        io.println("<10")
+        if a < 10 then break
+        
+        defer io.println("c")
+        io.println("<15")
+        if a < 15 then break
+        
+        defer io.println("d")
+        io.println("<20")
+        if a < 20 then break
+        
+        defer io.println("e")
+        io.println(">=20")
+    }
+}
+
+Main :: () {
+    io.println("")
+    foo(3)
+    io.println("===================")
+    foo(7)
+    io.println("===================")
+    foo(14)
+    io.println("===================")
+    foo(15)
+    io.println("===================")
+    foo(21)
+}

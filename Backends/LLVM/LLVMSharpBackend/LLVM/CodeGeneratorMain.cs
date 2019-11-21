@@ -32,7 +32,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private Dictionary<CheezType, LLVMTypeRef> typeMap = new Dictionary<CheezType, LLVMTypeRef>();
         private Dictionary<object, LLVMValueRef> valueMap = new Dictionary<object, LLVMValueRef>();
         private Dictionary<AstWhileStmt, LLVMBasicBlockRef> loopBodyMap = new Dictionary<AstWhileStmt, LLVMBasicBlockRef>();
-        private Dictionary<AstWhileStmt, LLVMBasicBlockRef> loopEndMap = new Dictionary<AstWhileStmt, LLVMBasicBlockRef>();
+        private Dictionary<IBreakable, LLVMBasicBlockRef> breakTargetMap = new Dictionary<IBreakable, LLVMBasicBlockRef>();
 
         // destructors
         private Dictionary<CheezType, LLVMValueRef> mDestructorMap = new Dictionary<CheezType, LLVMValueRef>();

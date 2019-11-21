@@ -43,15 +43,16 @@ namespace Cheez
     }
     internal class SymbolStatusTable
     {
-        public SymbolStatusTable Parent { get; }
-        public AstWhileStmt? Loop { get; set; }
+        public SymbolStatusTable? Parent { get; }
+        public IBreakable? Breakable { get; set; }
+        public IContinuable? Continuable { get; set; }
         private Dictionary<ISymbol, SymbolStatus> mSymbolStatus;
         public IEnumerable<SymbolStatus> AllSymbolStatuses => Parent != null ?
             mSymbolStatus.Values.Where(v => v.Owned).Concat(Parent.AllSymbolStatuses).OrderByDescending(s => s.order) :
             mSymbolStatus.Values.Where(v => v.Owned).OrderByDescending(s => s.order);
         public IEnumerable<SymbolStatus> AllSymbolStatusesReverseOrdered => Parent != null ?
-            mSymbolStatus.Values.Where(v => v.Owned).Concat(Parent.AllSymbolStatuses) :
-            mSymbolStatus.Values.Where(v => v.Owned);
+            mSymbolStatus.Values.Where(v => v.Owned).Concat(Parent.AllSymbolStatuses).OrderByDescending(s => s.order) :
+            mSymbolStatus.Values.Where(v => v.Owned).OrderByDescending(s => s.order);
         
         public IEnumerable<SymbolStatus> UnownedSymbolStatuses => mSymbolStatus.Values
                                 .Where(v => !v.Owned);
@@ -59,27 +60,57 @@ namespace Cheez
                                 .Where(v => v.Owned)
                                 .OrderByDescending(s => s.order);
 
-        public SymbolStatusTable(SymbolStatusTable parent, AstWhileStmt? loop = null)
+        public SymbolStatusTable(SymbolStatusTable? parent, IBreakable? breakable = null)
         {
             this.Parent = parent;
             this.mSymbolStatus = new Dictionary<ISymbol, SymbolStatus>();
-            this.Loop = loop;
+            this.Breakable = breakable;
         }
 
-        public IEnumerable<SymbolStatus> SymbolStatusesLoopReverseOrdered(AstWhileStmt loop)
+        public SymbolStatusTable(SymbolStatusTable? parent, AstWhileStmt loop)
         {
+            this.Parent = parent;
+            this.mSymbolStatus = new Dictionary<ISymbol, SymbolStatus>();
+            this.Breakable = loop;
+            this.Continuable = loop;
+        }
 
-            foreach (var stat in mSymbolStatus.Values.Where(v => v.Owned))
-            {
-                yield return stat;
+        public IEnumerable<SymbolStatus> SymbolStatusesBreakableReverseOrdered(IBreakable breakable)
+        {
+            IEnumerable<SymbolStatus> SymbolStatusesBreakable(IBreakable breakable) {
+                foreach (var stat in mSymbolStatus.Values.Where(v => v.Owned))
+                {
+                    yield return stat;
+                }
+
+                if (Breakable == breakable)
+                    yield break;
+
+                if (Parent != null)
+                    foreach (var stat in Parent.SymbolStatusesBreakableReverseOrdered(breakable))
+                        yield return stat;
             }
 
-            if (Loop == loop)
-                yield break;
+            return SymbolStatusesBreakable(breakable).OrderByDescending(s => s.order);
+        }
 
-            if (Parent != null)
-                foreach (var stat in Parent.SymbolStatusesLoopReverseOrdered(loop))
+        public IEnumerable<SymbolStatus> SymbolStatusesContinuableReverseOrdered(IContinuable continuable)
+        {
+            IEnumerable<SymbolStatus> SymbolStatusesContinuable(IContinuable continuable) {
+                foreach (var stat in mSymbolStatus.Values.Where(v => v.Owned))
+                {
                     yield return stat;
+                }
+
+                if (Continuable == continuable)
+                    yield break;
+
+                if (Parent != null)
+                    foreach (var stat in Parent.SymbolStatusesContinuableReverseOrdered(continuable))
+                        yield return stat;
+            }
+
+            return SymbolStatusesContinuable(continuable).OrderByDescending(s => s.order);
         }
 
         public void InitSymbolStatus(ISymbol symbol, SymbolStatus.Kind holdsValue, ILocation location)
@@ -124,6 +155,8 @@ namespace Cheez
 
         public void ApplyInitializedSymbolsToParent()
         {
+            if (Parent == null)
+                throw new Exception();
             foreach (var stat in UnownedSymbolStatuses)
             {
                 Parent.UpdateSymbolStatus(stat.symbol, stat.kind, stat.location);
@@ -133,8 +166,8 @@ namespace Cheez
 
     public partial class Workspace
     {
-        private Dictionary<AstWhileStmt, HashSet<(SymbolStatusTable scope, ILocation location)>> mWhileBreaks =
-            new Dictionary<AstWhileStmt, HashSet<(SymbolStatusTable scope, ILocation location)>>();
+        private Dictionary<IBreakable, HashSet<(SymbolStatusTable scope, ILocation location)>> mBreaks =
+            new Dictionary<IBreakable, HashSet<(SymbolStatusTable scope, ILocation location)>>();
         private Dictionary<AstWhileStmt, HashSet<(SymbolStatusTable scope, ILocation location)>> mWhileContinues =
             new Dictionary<AstWhileStmt, HashSet<(SymbolStatusTable scope, ILocation location)>>();
         private HashSet<AstTempVarExpr> mMovedTempVars = new HashSet<AstTempVarExpr>();
@@ -145,21 +178,21 @@ namespace Cheez
         
         public IEnumerable<CheezType> TypesWithDestructor => mTypesWithDestructor;
 
-        public AstFuncExpr GetDropFuncForType(CheezType type)
+        public AstFuncExpr? GetDropFuncForType(CheezType type)
         {
             if (mTypeDropFuncMap.TryGetValue(type, out var f))
                 return f;
             return null;
         }
 
-        private void AddLoopExit(AstWhileStmt whl, SymbolStatusTable s, ILocation location)
+        private void AddBreak(IBreakable whl, SymbolStatusTable s, ILocation location)
         {
-            if (!mWhileBreaks.ContainsKey(whl))
+            if (!mBreaks.ContainsKey(whl))
             {
-                mWhileBreaks.Add(whl, new HashSet<(SymbolStatusTable scope, ILocation location)>());
+                mBreaks.Add(whl, new HashSet<(SymbolStatusTable scope, ILocation location)>());
             }
 
-            mWhileBreaks[whl].Add((s, location));
+            mBreaks[whl].Add((s, location));
         }
 
         private void AddLoopContinue(AstWhileStmt whl, SymbolStatusTable s, ILocation location)
@@ -194,7 +227,10 @@ namespace Cheez
                 if (sym is AstConstantDeclaration c && c.Initializer is AstTraitTypeExpr t)
                     mTraitDrop = t;
                 else
+                {
                     ReportError("There should be a global trait called Drop");
+                    return false;
+                }
             }
 
             if (mTypeDropFuncMap.ContainsKey(type))
@@ -289,7 +325,7 @@ namespace Cheez
 
         private void PassVariableLifetimes(AstFuncExpr func)
         {
-            mWhileBreaks.Clear();
+            mBreaks.Clear();
             mMovedTempVars.Clear();
 
             var symStatTable = new SymbolStatusTable(null);
@@ -399,8 +435,8 @@ namespace Cheez
 
                 case AstCompCallExpr cc when cc.Name.Name == "log_symbol_status":
                     {
-                        var id = cc.Arguments[0].Expr as AstIdExpr;
-                        var symbol = cc.Scope.GetSymbol(id.Name);
+                        var id = (cc.Arguments[0].Expr as AstIdExpr)!;
+                        var symbol = cc.Scope.GetSymbol(id.Name)!;
 
                         if (symStatTable.TryGetSymbolStatus(symbol, out var status))
                             Console.WriteLine($"[symbol stat] ({id.Location.Beginning}) {status}");
@@ -620,7 +656,7 @@ namespace Cheez
             if (expr.Transparent)
                 symStatTable = parent;
             else
-                symStatTable = new SymbolStatusTable(parent);
+                symStatTable = new SymbolStatusTable(parent, expr.Label != null ? expr : null);
 
             foreach (var stmt in expr.Statements)
             {
@@ -777,10 +813,10 @@ namespace Cheez
 
         private bool PassVLBreak(AstBreakExpr br, SymbolStatusTable symStatTable)
         {
-            var whl = br.Loop;
-            AddLoopExit(whl, symStatTable, br);
+            var whl = br.Breakable;
+            AddBreak(whl, symStatTable, br);
 
-            foreach (var stat in symStatTable.SymbolStatusesLoopReverseOrdered(whl))
+            foreach (var stat in symStatTable.SymbolStatusesBreakableReverseOrdered(whl))
             {
                 if (stat.kind == SymbolStatus.Kind.initialized)
                 {
@@ -795,7 +831,7 @@ namespace Cheez
             var whl = cont.Loop;
             AddLoopContinue(whl, symStatTable, cont);
 
-            foreach (var stat in symStatTable.SymbolStatusesLoopReverseOrdered(whl))
+            foreach (var stat in symStatTable.SymbolStatusesContinuableReverseOrdered(whl))
             {
                 if (stat.kind == SymbolStatus.Kind.initialized)
                 {
@@ -835,7 +871,7 @@ namespace Cheez
                 }
             }
 
-            if (mWhileBreaks.TryGetValue(whl, out var breaks))
+            if (mBreaks.TryGetValue(whl, out var breaks))
             {
                 foreach (var stat in parent.AllSymbolStatuses)
                 {

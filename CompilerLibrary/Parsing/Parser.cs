@@ -324,7 +324,7 @@ namespace Cheez.Parsing
                 var location = new Location(stmts.First().Beginning, stmts.Last().End);
 
                 // @temporary, these statements should not create a new scope
-                var block = new AstBlockExpr(stmts, location);
+                var block = new AstBlockExpr(stmts, Location: location);
                 block.SetFlag(ExprFlags.Anonymous, true);
                 stmt = new AstExprStmt(block, location);
             }
@@ -840,6 +840,21 @@ namespace Cheez.Parsing
             var statements = new List<AstStatement>();
             var beg = Consume(TokenType.OpenBrace, ErrMsg("{", "at beginning of block statement")).location;
 
+            AstIdExpr label = null;
+
+            if (CheckToken(TokenType.HashIdentifier))
+            {
+                var id = NextToken();
+                if (id.data as string == "label")
+                {
+                    label = ParseIdentifierExpr();
+                }
+                else
+                {
+                    ReportError(id.location, $"Unexpected token");
+                }
+            }
+
             SkipNewlines();
             while (true)
             {
@@ -874,7 +889,7 @@ namespace Cheez.Parsing
 
             var end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of block statement")).location;
 
-            return new AstBlockExpr(statements, new Location(beg, end));
+            return new AstBlockExpr(statements, label, new Location(beg, end));
         }
 
         private AstExprStmt ParseExpressionStatement()
@@ -1030,7 +1045,7 @@ namespace Cheez.Parsing
                 var block = new AstBlockExpr(new List<AstStatement>{
                     init,
                     whl
-                }, whl.Location);
+                }, Location: whl.Location);
                 return new AstExprStmt(block, block.Location);
             }
 
@@ -1065,7 +1080,7 @@ namespace Cheez.Parsing
             if (b is AstBlockExpr block)
                 body = block;
             else
-                body = new AstBlockExpr(new List<AstStatement>{new AstExprStmt(b, b.Location)}, b.Location);
+                body = new AstBlockExpr(new List<AstStatement>{new AstExprStmt(b, b.Location)}, Location: b.Location);
 
             return new AstWhileStmt(body, label, new Location(beg, body.End));
         }
@@ -1131,7 +1146,7 @@ namespace Cheez.Parsing
                 var block = new AstBlockExpr(new List<AstStatement>{
                     pre,
                     new AstExprStmt(iff, iff.Location)
-                }, iff.Location);
+                }, Location: iff.Location);
                 return block;
             }
             return iff;

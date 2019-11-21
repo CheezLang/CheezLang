@@ -200,7 +200,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var bbEnd = LLVM.AppendBasicBlock(currentLLVMFunction, "_loop_end");
 
             loopBodyMap[whl] = bbBody;
-            loopEndMap[whl] = bbEnd;
+            breakTargetMap[whl] = bbEnd;
 
             builder.CreateBr(bbBody);
             builder.PositionBuilderAtEnd(bbBody);
