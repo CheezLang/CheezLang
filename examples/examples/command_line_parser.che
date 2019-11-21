@@ -17,12 +17,46 @@ Main :: () {
         io.printfln("[{}] '{}'", (it_index, arg.slice()))
     }
     io.println("==============")
-    my_args := parse_arguments(MyArguments, args)
-    io.println("==============")
-    io.println(my_args.name.slice())
-    io.println(my_args.age)
+    my_args := parse_arguments(MyArgsEnum, args.sliceF(1))
 
-    io.println(fmt.format_any(<<my_args))
+    if my_args != null {
+        io.println("==============")
+        io.println(fmt.format_any(<<my_args))
+    }
+}
+
+log_args :: (args: []String) {
+    io.println("=== args ===")
+    for arg : args {
+        io.printfln("[{}] '{}'", (it_index, arg.slice()))
+    }
+    io.println("============")
+}
+
+MyArgsEnum :: enum {
+    help
+    build
+    project : Project
+}
+
+Project :: enum {
+    new : ProjectNew
+}
+
+ProjectNew :: struct {
+    name : String
+    typ  : ProjectType
+}
+
+ProjectType :: enum {
+    Program
+    DynamicLibrary
+    StaticLibrary
+}
+
+LibraryType :: enum {
+    Dynamic
+    Static
 }
 
 MyArguments :: struct {
@@ -30,65 +64,100 @@ MyArguments :: struct {
     age  : int
 }
 
-parse_arguments :: ($T: type, args: Array[String]) -> &T {
+parse_arguments :: ($T: type, args: []String) -> &T {
     result := alloc(T)
+    ok := parse_arguments_help(@type_info(T), args, result, args)
 
-    use TypeInfoKind
+    if !ok {
+        free(result)
+        return null
+    }
+    return result
+}
 
-    typ_base := @type_info(T)
-    typ := match typ_base.kind {
-        Struct($info) -> info
+parse_arguments_help :: (type_info: &TypeInfo, args: []String, result: &$T, args_out: ref []String) -> bool {
+    args_out = args
+    return match type_info.kind {
+        TypeInfoKind.Struct($info) if streq(info.name, "StringBase") -> {
+            <<cast(&String) result = args[0].clone()
+            true
+        }
+
+        TypeInfoKind.Enum($info)   -> parse_arguments_enum(&info, args, result, args)
+        TypeInfoKind.Struct($info) -> parse_arguments_struct(&info, args, result, args)
+        TypeInfoKind.Int($into)    -> {
+            <<cast(&int) result = fmt.parse_int(args[0].slice())
+            true
+        }
         $_ -> {
-            io.printfln("Can't use non-struct type {}", @typename(T))
-            return null
+            io.printfln("Can't parse into type {}", @typename(T))
+            false
+        }
+    }
+}
+
+parse_arguments_enum :: (type_info: &TypeInfoEnum, args: []String, result: &void, args_out: ref []String) -> bool {
+    args_out = args
+    io.printfln("parsing into enum {}", type_info.name)
+    log_args(args)
+
+    if args.length == 0 {
+        io.println("Missing command. Possible commands:")
+        for(by_ref=true) type_info.members {
+            io.printfln("  {}", it.name)
+        }
+        return false
+    }
+
+    command := ref args[0]
+    for(by_ref=true) type_info.members {
+        if streq(command.slice(), it.name) {
+            // first store the tag
+            tag_ptr := cast(&int) result
+            <<tag_ptr = it.tag
+
+            if it.typ != null {
+                // parse remaining arguments into associated value
+                tag_size := type_info.tag_type.size
+                value_ptr := pointer_add(result, tag_size)
+                parse_arguments_help(it.typ, args[1..args.length], value_ptr, args_out)
+            }
+            return true
         }
     }
 
-    while i := 0, i < args.get_length(), i += 1 {
-        if i == 0 then continue
+    io.printfln("Unknown command: {}", command.slice())
+    return false
+}
+
+parse_arguments_struct :: (type_info: &TypeInfoStruct, args: []String, result: &void, args_out: ref []String) -> bool {
+    args_out = args
+    io.printfln("parsing into struct {}", type_info.name)
+    log_args(args)
+    while i := 0, i < args.length, i += 1 {
         arg := ref args[i]
-        @assert(arg.get_length() > 0)
+        @assert(arg.length > 0)
 
         if arg[0] == '-' {
             name := arg.sliceF(1)
-            mem := typ.get_member(name)
+            mem := type_info.get_member(name)
 
             if mem == null {
                 io.printfln("[CLP] Error: unknown argument '{}'", name)
-                continue
+                return false
             }
 
-            match mem.typ.kind {
-                Struct($tstr) if streq(tstr.name, "StringBase") -> {
-                    @assert(i < args.get_length() - 1)
-                    value := args[i + 1].clone()
-                    ptr := cast(&String) pointer_add(result, mem.offset)
-                    <<ptr = value
-                    i += 1
-                }
-
-                Int($tint) -> {
-                    value := fmt.parse_int(args[i + 1].slice())
-                    <<cast(&int) pointer_add(result, mem.offset) = value
-                    i += 1
-                }
-
-                $_ -> {
-                    @assert(false, "Not implemented")
-                }
-            }
+            parse_arguments_help(mem.typ, args[(i + 1)..args.length], pointer_add(result, mem.offset), ref args)
         } else {
             @assert(false, "Not implemented")
-            io.println("[CLP] Error: not implemented")
+            io.printfln("[CLP] Error: not implemented", ())
+            return false
         }
 
         io.printfln("parsing '{}'", arg.slice())
     }
 
-    // <<result = T(String.from_string("lol"))
-    // <<&result.name = String.from_string("wassup")
-    // result.name = 456
-    return result
+    return true
 }
 
 // helper functions

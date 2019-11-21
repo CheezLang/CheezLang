@@ -7,7 +7,7 @@
 // import examples.snake.snake
 // import examples.pathtracer
 // import examples.print_any
-// import examples.command_line_parser
+import examples.command_line_parser
 // import std.compiler.main
 // import std.compiler.compiler_test
 
@@ -22,7 +22,7 @@
 // import "examples/project_euler/018_maximum_path_sum_1"
 // import bugs.bug1
 
-//*
+/*
 #test_expect_output("")
 
 io  :: import std.io
