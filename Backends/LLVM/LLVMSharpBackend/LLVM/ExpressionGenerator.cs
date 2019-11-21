@@ -1221,9 +1221,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 GenerateStatement(block.DeferredStatements[i]);
             }
 
-            if (block.Label != null && !block.GetFlag(ExprFlags.Breaks) && !block.GetFlag(ExprFlags.Returns))
+            if (block.Label != null)
             {
-                builder.CreateBr(bbEnd.Value);
+                if (builder.GetInsertBlock().GetBasicBlockTerminator().Pointer.ToInt64() == 0)
+                    builder.CreateBr(bbEnd.Value);
                 builder.PositionBuilderAtEnd(bbEnd.Value);
             }
 

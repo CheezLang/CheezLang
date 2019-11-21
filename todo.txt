@@ -2,9 +2,7 @@
     + add label to block
     + break from block
     + defer working
-    - test drop
     - test nesting in blocks and loops
-    - test variable lifetimes
 - immutable/mutable variables
 - public/private struct members
 - number constants as polymorphic parameters

@@ -75,6 +75,28 @@ namespace Cheez
             this.Continuable = loop;
         }
 
+        public SymbolStatusTable Clone()
+        {
+            var result = new SymbolStatusTable(Parent)
+            {
+                Breakable = this.Breakable,
+                Continuable = this.Continuable,
+            };
+
+            SymbolStatusTable? p = this;
+            while (p != null)
+            {
+                foreach (var kv in p.mSymbolStatus)
+                {
+                    if (!result.mSymbolStatus.ContainsKey(kv.Key))
+                        result.UpdateSymbolStatus(kv.Key, kv.Value.kind, kv.Value.location);
+                }
+                p = p.Parent;
+            }
+
+            return result;
+        }
+
         public IEnumerable<SymbolStatus> SymbolStatusesBreakableReverseOrdered(IBreakable breakable)
         {
             IEnumerable<SymbolStatus> SymbolStatusesBreakable(IBreakable breakable) {
@@ -192,7 +214,7 @@ namespace Cheez
                 mBreaks.Add(whl, new HashSet<(SymbolStatusTable scope, ILocation location)>());
             }
 
-            mBreaks[whl].Add((s, location));
+            mBreaks[whl].Add((s.Clone(), location));
         }
 
         private void AddLoopContinue(AstWhileStmt whl, SymbolStatusTable s, ILocation location)
@@ -202,7 +224,7 @@ namespace Cheez
                 mWhileContinues.Add(whl, new HashSet<(SymbolStatusTable scope, ILocation location)>());
             }
 
-            mWhileContinues[whl].Add((s, location));
+            mWhileContinues[whl].Add((s.Clone(), location));
         }
 
         public bool TypeHasDestructor(CheezType type)
@@ -670,14 +692,6 @@ namespace Cheez
                 //    break;
             }
 
-            //if (expr.Statements.LastOrDefault() is AstExprStmt es && expr.Type != CheezType.Void)
-            //{
-            //    if (!Move(es.Expr))
-            //        return false;
-            //}
-
-            //if (!expr.GetFlag(ExprFlags.Anonymous) && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
-
             if (!expr.Transparent)
             {
                 // call constructors
@@ -694,9 +708,36 @@ namespace Cheez
                 }
 
                 // apply to parent
-                foreach (var stat in symStatTable.UnownedSymbolStatuses)
+                if (!expr.GetFlag(ExprFlags.Breaks) && !expr.GetFlag(ExprFlags.Returns))
+                    AddBreak(expr, symStatTable, expr.Location.End);
+
+                if (mBreaks.TryGetValue(expr, out var breaks))
                 {
-                    parent.UpdateSymbolStatus(stat.symbol, stat.kind, stat.location);
+                    foreach (var stat in parent.AllSymbolStatuses)
+                    {
+                        int inits = 0;
+                        int moves = 0;
+                        var newStat = stat;
+                        foreach (var exit in breaks)
+                        {
+                            newStat = exit.scope.GetSymbolStatus(stat.symbol);
+
+                            if (newStat.kind == SymbolStatus.Kind.initialized)
+                                inits++;
+                            else
+                                moves++;
+                        }
+
+                        if (inits > 0 && moves > 0)
+                        {
+                            ReportError(expr,
+                                $"Symbol '{stat.symbol.Name}' is initialized in some cases but moved/uninitialized in other cases");
+                        }
+                        else
+                        {
+                            parent.UpdateSymbolStatus(stat.symbol, newStat.kind, newStat.location);
+                        }
+                    }
                 }
             }
 

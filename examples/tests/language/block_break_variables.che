@@ -1,0 +1,52 @@
+#test_expect_output("
+a
+1
+b
+!c
+=============
+a
+1
+b
+b'
+!c
+2
+3")
+
+io  :: import std.io
+
+Foo :: struct {
+    id: int
+}
+
+impl Drop for Foo {
+    drop :: (ref Self) {
+        io.println(id)
+    }
+}
+
+foo :: ($b: bool) {
+    f  := Foo(1)
+    f2 := Foo(2)
+
+    io.println("a")
+    { #label test
+        defer io.print("!")
+        Memory.drop(f)
+        io.println("b")
+
+        if const b {
+            if true then break else break
+        }
+
+        f = Foo(3)
+        io.println("b'")
+    }
+    io.println("c")
+}
+
+Main :: () {
+    io.println("")
+    foo(true)
+    io.println("=============")
+    foo(false)
+}
