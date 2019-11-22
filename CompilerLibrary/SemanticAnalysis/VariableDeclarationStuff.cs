@@ -15,6 +15,18 @@ namespace Cheez
         {
             Debug.Assert(v.Name != null);
 
+            if (v.Directives != null)
+            {
+                foreach (var d in v.Directives)
+                {
+                    foreach (var arg in d.Arguments)
+                    {
+                        arg.Scope = v.Scope;
+                        InferType(arg, null);
+                    }
+                }
+            }
+
             if (v.TypeExpr != null)
             {
                 v.TypeExpr.AttachTo(v);
@@ -123,7 +135,7 @@ namespace Cheez
                         var init = new AstArrayAccessExpr(
                             new AstConstantRef(v, v.Initializer),
                             new AstNumberExpr(NumberData.FromBigInt(index), Location: v.Initializer));
-                        var sub = new AstConstantDeclaration(subPattern, null, init, Location: v);
+                        var sub = new AstConstantDeclaration(subPattern, null, init, null, Location: v);
                         sub.Scope = v.Scope;
                         sub.SetFlags(v.GetFlags());
 

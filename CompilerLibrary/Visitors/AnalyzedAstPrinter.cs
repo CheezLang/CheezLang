@@ -273,6 +273,22 @@ namespace Cheez.Visitors
         public override string VisitVariableDecl(AstVariableDecl variable, int indentLevel = 0)
         {
             StringBuilder sb = new StringBuilder();
+
+            if (variable.Directives != null)
+            {
+                var dirs = "";
+                foreach (var d in variable.Directives)
+                {
+                    dirs += "#" + d.Name.Name;
+                    foreach (var arg in d.Arguments)
+                    {
+                        dirs += " " + arg.Accept(this);
+                    }
+                    dirs += "\n";
+                }
+                sb.Append(dirs);
+            }
+
             if (variable.GetFlag(StmtFlags.IsLocal))
                 sb.Append("local ");
             sb.Append(variable.Pattern.Accept(this));
@@ -440,9 +456,25 @@ namespace Cheez.Visitors
             return sb.ToString();
         }
 
-        public static string VisitEnumMember(AstEnumMemberNew m)
+        public string VisitEnumMember(AstEnumMemberNew m)
         {
             var str = m.Name;
+
+            if (m.Decl.Directives != null)
+            {
+                var dirs = "";
+                foreach (var d in m.Decl.Directives)
+                {
+                    dirs += "#" + d.Name.Name;
+                    foreach (var arg in d.Arguments)
+                    {
+                        dirs += " " + arg.Accept(this);
+                    }
+                    dirs += "\n";
+                }
+                str = dirs + str;
+            }
+
             if (m.AssociatedTypeExpr != null)
                 str += " : " + m.AssociatedTypeExpr.Value;
             if (m.Value != null)
@@ -482,7 +514,10 @@ namespace Cheez.Visitors
             }
             else
             {
-                var bodyStrings = en.Declarations.Where(d => d is AstConstantDeclaration).Select(m => m.Accept(this)).Concat(en.Members.Select(m => VisitEnumMember(m)));
+                var bodyStrings = en.Declarations
+                    .Where(d => d is AstConstantDeclaration)
+                    .Select(m => m.Accept(this))
+                    .Concat(en.Members.Select(m => VisitEnumMember(m)));
                 var body = string.Join("\n", bodyStrings);
                 var head = $"enum<{en.TagType}>";
                 return $"{head} {{ // size: {en.Type?.GetSize()}, alignment: {en.Type?.GetAlignment()}\n{body.Indent(4)}\n}}";

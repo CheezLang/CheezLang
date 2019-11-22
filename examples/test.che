@@ -7,7 +7,7 @@
 // import examples.snake.snake
 // import examples.pathtracer
 // import examples.print_any
-import examples.command_line_parser
+// import examples.command_line_parser
 // import std.compiler.main
 // import std.compiler.compiler_test
 
@@ -26,7 +26,39 @@ import examples.command_line_parser
 #test_expect_output("")
 
 io  :: import std.io
+fmt :: import std.fmt
+
+// Foo :: struct {
+//     #help #test1
+//     num: int
+
+//     lol: string
+
+//     #help2("lol")
+//     #help3
+//     flt: float
+
+//     bar: bool
+
+// }
+
+Bar :: struct {
+    #test("lol")
+    num : int
+}
 
 Main :: () {
+    ti := &@type_info(Bar).kind.Struct
+    for mem: ti.members {
+        for att : mem.attributes {
+            io.printf("#{}(", att.name)
+            for arg : att.args {
+                io.print(fmt.format_any(arg))
+            }
+            io.print(") ")
+        }
+        io.printfln("`n{}`n", mem.name)
+
+    }
 }
 // */

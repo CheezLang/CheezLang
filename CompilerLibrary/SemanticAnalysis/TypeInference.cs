@@ -1776,7 +1776,15 @@ namespace Cheez
                     {
                         ComputeStructMembers(s.Declaration);
                         foreach (var m in s.Declaration.Members)
+                        {
                             MarkTypeAsRequiredAtRuntime(m.Type);
+                            if (m.Decl.Directives != null)
+                            {
+                                foreach (var dir in m.Decl.Directives)
+                                    foreach (var arg in dir.Arguments)
+                                        MarkTypeAsRequiredAtRuntime(arg.Type);
+                            }
+                        }
                         break;
                     }
 
@@ -1963,6 +1971,7 @@ namespace Cheez
                                     indexParam.Name.Clone(),
                                     indexParam.TypeExpr?.Clone(),
                                     new AstNumberExpr(NumberData.FromBigInt(index)),
+                                    null,
                                     Location: indexParam);
                                 stmts.Add(idx);
                             }
@@ -3380,7 +3389,7 @@ namespace Cheez
                 if (isConst)
                     // for some strange reason we cant pass a typeref as type expr for this constant declaration
                     // because this messes something up... idk :/
-                    varDecl = new AstConstantDeclaration(param.Name, null, link, Location: arg.Location);
+                    varDecl = new AstConstantDeclaration(param.Name, null, link, null, Location: arg.Location);
                 else
                     varDecl = new AstVariableDecl(param.Name, new AstTypeRef(param.Type, param), link, Location: arg.Location);
                 varDecl.SetFlag(StmtFlags.IsLocal, true);

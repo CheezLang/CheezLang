@@ -61,6 +61,31 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMTypeRef pointerType;
         private int pointerSize = 4;
 
+        // rtti stuff
+        private CheezType sTypeInfo;
+        private CheezType sTypeInfoKind;
+        private CheezType sTypeInfoInt;
+        private CheezType sTypeInfoStruct;
+        private CheezType sTypeInfoStructMember;
+        private CheezType sTypeInfoEnum;
+        private CheezType sTypeInfoEnumMember;
+        private CheezType sTypeInfoTrait;
+        private CheezType sTypeInfoTraitFunction;
+        private CheezType sTypeInfoTraitImpl;
+        private CheezType sTypeInfoAttribute;
+
+        private LLVMTypeRef rttiTypeInfo;
+        private LLVMTypeRef rttiTypeInfoKind;
+        private LLVMTypeRef rttiTypeInfoInt;
+        private LLVMTypeRef rttiTypeInfoStruct;
+        private LLVMTypeRef rttiTypeInfoStructMember;
+        private LLVMTypeRef rttiTypeInfoEnum;
+        private LLVMTypeRef rttiTypeInfoEnumMember;
+        private LLVMTypeRef rttiTypeInfoTrait;
+        private LLVMTypeRef rttiTypeInfoTraitFunction;
+        private LLVMTypeRef rttiTypeInfoTraitImpl;
+        private LLVMTypeRef rttiTypeInfoAttribute;
+
         // context
         private AstFuncExpr currentFunction;
         private LLVMValueRef currentLLVMFunction;

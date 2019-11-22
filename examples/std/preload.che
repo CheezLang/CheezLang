@@ -167,15 +167,21 @@ TypeInfoTraitImpl :: struct #copy {
 }
 
 TypeInfoStructMember :: struct #copy {
-    offset : int
-    name   : string
-    typ    : &TypeInfo
+    offset     : int
+    name       : string
+    typ        : &TypeInfo
+    attributes : []TypeInfoAttribute
+}
+
+TypeInfoAttribute :: struct {
+    name : string
+    args : []any
 }
 
 TypeInfoEnum :: struct #copy {
-    name    : string
-    members : []TypeInfoEnumMember
-    tag_type: &TypeInfo
+    name     : string
+    members  : []TypeInfoEnumMember
+    tag_type : &TypeInfo
 }
 
 TypeInfoEnumMember :: struct #copy {
@@ -218,6 +224,28 @@ impl TypeInfoStruct {
         func_info := ti_trait.kind.Trait.get_function(func_name)
         function := cast(F) @cast(&fn(), vtable)[func_info.index]
         return function
+    }
+}
+
+impl TypeInfoStructMember {
+    get_attribute :: (ref Self, name: string) -> &TypeInfoAttribute {
+        for(by_ref=true) att : attributes {
+            if strings_equal(att.name, name) {
+                return &att
+            }
+        }
+
+        return null
+    }
+
+    has_attribute :: (ref Self, name: string) -> bool {
+        for(by_ref=true) att : attributes {
+            if strings_equal(att.name, name) {
+                return true
+            }
+        }
+
+        return false
     }
 }
 

@@ -38,7 +38,7 @@ namespace Cheez.Ast.Statements
         public PTFile SourceFile { get; set; }
 
         public Scope Scope { get; set; }
-        public List<AstDirective> Directives { get; protected set; }
+        public List<AstDirective> Directives { get; set; }
 
         public IAstNode Parent { get; set; }
 

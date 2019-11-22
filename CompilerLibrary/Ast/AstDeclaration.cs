@@ -82,8 +82,16 @@ namespace Cheez.Ast.Statements
 
         public object Value { get; set; }
 
-        public AstConstantDeclaration(AstExpression pattern, AstExpression typeExpr, AstExpression init, ILocation Location = null)
-            : base(pattern is AstIdExpr ? (pattern as AstIdExpr) : (new AstIdExpr(pattern.ToString(), false, pattern.Location)), null, Location)
+        public AstConstantDeclaration(
+            AstExpression pattern,
+            AstExpression typeExpr,
+            AstExpression init,
+            List<AstDirective> directives,
+            ILocation Location = null)
+            : base(
+                pattern is AstIdExpr ? (pattern as AstIdExpr) : (new AstIdExpr(pattern.ToString(), false, pattern.Location)),
+                directives,
+                Location)
         {
             this.Pattern = pattern;
             this.TypeExpr = typeExpr;
@@ -97,7 +105,8 @@ namespace Cheez.Ast.Statements
             => CopyValuesTo(new AstConstantDeclaration(
                 Pattern.Clone(),
                 TypeExpr?.Clone(),
-                Initializer.Clone()));
+                Initializer.Clone(),
+                Directives?.Select(d => d.Clone()).ToList()));
     }
 
     #region Function Declaration
