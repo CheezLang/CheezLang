@@ -57,8 +57,8 @@ TRUNCATE_EXISTING                  :: 5
 
 FILE_ATTRIBUTE_NORMAL              :: 0x80
 
-IDI_APPLICATION                    :: cast(&char) WORD(32512)
-IDC_ARROW                          :: cast(&char) WORD(32512)
+IDI_APPLICATION                    :: cast(&char) 32512
+IDC_ARROW                          :: cast(&char) 32512
 
 CS_VREDRAW                         :: 0x0001
 CS_HREDRAW                         :: 0x0002
@@ -570,3 +570,12 @@ VK_ZOOM                            :: 0xFB
 VK_NONAME                          :: 0xFC
 VK_PA1                             :: 0xFD
 VK_OEM_CLEAR                       :: 0xFE
+
+// GetLastError() codes
+WindowsErrorCode :: enum #tag_type(u32) {
+    ERROR_SUCCESS          = 0x00
+    ERROR_INVALID_FUNCTION = 0x1
+    ERROR_FILE_NOT_FOUND   = 0x2
+    ERROR_PATH_NOT_FOUND   = 0x03
+    ERROR_ALREADY_EXISTS   = 0xB7
+}

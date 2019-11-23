@@ -67,6 +67,7 @@ namespace Cheez
             string exePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "libraries");
             if (stdlib != null) exePath = stdlib;
             ModulePaths["std"]    = exePath;
+            ModulePaths["libs"]   = exePath;
             ModulePaths["opencv"] = exePath + "/libraries";
             ModulePaths["glfw"]   = exePath + "/libraries";
             ModulePaths["imgui"]  = exePath + "/libraries";

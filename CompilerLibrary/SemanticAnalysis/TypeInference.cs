@@ -308,6 +308,9 @@ namespace Cheez
                     var start = path[0].Name;
                     if (mCompiler.ModulePaths.TryGetValue(start, out var p))
                         yield return p;
+
+                    if (mCompiler.ModulePaths.TryGetValue("libs", out var p2))
+                        yield return p2;
                 }
             }
 

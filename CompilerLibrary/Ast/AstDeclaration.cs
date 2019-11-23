@@ -139,6 +139,7 @@ namespace Cheez.Ast.Statements
         public SelfParamType SelfType { get; set; } = SelfParamType.None;
         public bool IsPolyInstance { get; set; } = false;
         public List<ILocation> InstantiatedAt { get; private set; } = null;
+        public HashSet<AstFuncExpr> InstantiatedBy { get; private set; } = null;
         public AstTraitTypeExpr Trait { get; set; } = null;
 
         private AstImplBlock _ImplBlock;
@@ -201,14 +202,18 @@ namespace Cheez.Ast.Statements
             return copy;
         }
 
-        public void AddInstantiatedAt(ILocation loc)
+        public void AddInstantiatedAt(ILocation loc, AstFuncExpr func)
         {
             if (InstantiatedAt == null)
             {
                 InstantiatedAt = new List<ILocation>();
+                InstantiatedBy = new HashSet<AstFuncExpr>();
             }
 
             InstantiatedAt.Add(loc);
+
+            if (func != null)
+                InstantiatedBy.Add(func);
         }
 
         public bool HasDirective(string name) => Directives.Find(d => d.Name.Name == name) != null;

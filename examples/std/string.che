@@ -33,6 +33,12 @@ impl(CharType: type) StringBase[CharType] {
         return StringBase[CharType](null, 0, allocator)
     }
 
+    with_capacity :: (cap: int, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+        result := StringBase[CharType](null, 0, allocator)
+        result.reserve(cap)
+        return result
+    }
+
     from_raw_ptr :: (ptr: &CharType, cap: int) -> Self {
         sl : []CharType = ptr
         sl.length = cap
@@ -323,6 +329,13 @@ impl string {
         C.memcpy(cast str_c, cast self.data, cast self.length)
         return str_c
     }
+}
+
+string_to_cstring_stack :: (str: string) #macro {
+    result := @alloca(char, str.length + 1)
+    C.memcpy(result, str.data, cast str.length)
+    result[str.length] = char(0)
+    result
 }
 
 impl c_string {

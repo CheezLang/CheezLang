@@ -1,4 +1,5 @@
 use import windows_types
+use import windows_constants
 
 #export_scope
 
@@ -49,19 +50,21 @@ GetCommandLineW    :: () -> &u16 #stdcall;
 CommandLineToArgvW :: (lpCmdLine: &u16, pNumArgs: &i32) -> &&u16 #stdcall;
 
 // general stuff
-GetLastError              :: () -> DWORD #stdcall;
+GetLastError              :: () -> WindowsErrorCode #stdcall;
 CloseHandle               :: (hObject: HANDLE) -> BOOL #stdcall;
 QueryPerformanceCounter   :: (lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
 QueryPerformanceFrequency :: (lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
 Sleep                     :: (millis: DWORD) #stdcall;
 
 // file stuff
-GetStdHandle  :: (nStdHandle: DWORD) -> HANDLE #stdcall;
-WriteFile     :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
-ReadFile      :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
-CreateFileA   :: (lpFileName: c_string, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &void, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
-GetFileSize   :: (hFile: HANDLE, lpFileSizeHigh: &DWORD) -> DWORD #stdcall;
-GetFileSizeEx :: (hFile: HANDLE, lpFileSize: &LARGE_INTEGER) -> BOOL #stdcall;
+GetStdHandle     :: (nStdHandle: DWORD) -> HANDLE #stdcall;
+WriteFile        :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
+ReadFile         :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
+CreateFileA      :: (lpFileName: c_string, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &void, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
+CreateDirectoryA :: (lpPathName: c_string, lpSecurityAttributes: &SECURITY_ATTRIBUTES) -> BOOL #stdcall;
+GetFileSize      :: (hFile: HANDLE, lpFileSizeHigh: &DWORD) -> DWORD #stdcall;
+GetFileSizeEx    :: (hFile: HANDLE, lpFileSize: &LARGE_INTEGER) -> BOOL #stdcall;
+GetFullPathNameA :: (lpFileName: c_string, nBufferLength: DWORD, lpBuffer: c_string, lpFilePart: &c_string) -> DWORD #stdcall;
 
 // window stuff
 GetModuleHandleA   :: (lpModuleName: c_string) -> HMODULE #stdcall;

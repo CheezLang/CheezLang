@@ -186,11 +186,19 @@ namespace Cheez
                             ReportError($"Errors in polymorphic function '{func.Name}':");
                             errs.ForwardErrors(CurrentErrorHandler);
 
-                            ReportError($"Caused from invocations here:");
-                            foreach (var loc in func.InstantiatedAt)
+                            void ReportSources(AstFuncExpr func, string indent = "")
                             {
-                                ReportError(loc, $"Failed to instantiate function '{func.Name}'");
+                                foreach (var loc in func.InstantiatedAt)
+                                    ReportError(loc, indent + $"Failed to instantiate function '{func.Name}'");
+                                foreach (var loc in func.InstantiatedBy)
+                                {
+                                    ReportError(loc, indent + $"Failed to instantiate function '{func.Name}'");
+                                    ReportSources(loc, indent + "  ");
+                                }
                             }
+
+                            ReportError($"Caused from invocations here:");
+                            ReportSources(func);
                         }
                         else
                         {

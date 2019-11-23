@@ -9,6 +9,7 @@ use import std.array
 use import std.mem.arena_allocator
 use import std.mem.allocator
 io  :: import std.io
+fs  :: import std.io.fs
 fmt :: import std.fmt
 
 use import clap.clap
@@ -73,7 +74,39 @@ command_project_new :: (options: &CommandProjectNew) {
 }
 
 command_project_new_program :: (options: &CommandProjectNew) {
+    create_dir :: (dir_format: string, dir_args: []any) #macro {
+        dir := fmt.format(dir_format, dir_args)
+        io.printfln("Creating directory '{}'", dir.slice())
+        fs.create_directory(dir.slice())
+    }
 
+    create_file :: (path_format: string, path_args: []any, content_format: string, content_args: []any) {
+        path    := fmt.format(path_format, path_args)
+        content := fmt.format(content_format, content_args)
+        io.printfln("Creating file '{}'", path.slice())
+        fs.create_file(path.slice(), content.slice())
+    }
+
+    create_dir("{}", [options.name.slice()])
+    create_dir("{}/src", [options.name.slice()])
+    create_dir("{}/bin", [options.name.slice()])
+    create_dir("{}/modules", [options.name.slice()])
+
+    create_file("{}/src/{}",
+                [options.name.slice(), "main.che"],
+                "io :: import std.io
+
+Main :: () ``{
+    io.println(`"Hello, {}!`")
+}",
+                [options.name.slice()])
+
+    create_file("{}/build.ps1",
+                [options.name.slice()],
+                "[CmdletBinding()]
+param ([Parameter(ValueFromRemainingArguments)] [string[]] $Passthrough)
+&cheezc ./src/main.che --out ./bin --name {} --time @Passthrough",
+                [options.name.slice()])
 }
 
 command_compile :: (options: &CommandCompile) {

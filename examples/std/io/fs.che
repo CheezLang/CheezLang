@@ -1,0 +1,48 @@
+if const @is_os("windows") {
+    import std.os.windows
+    use import std.os.windows_functions
+    use import std.os.windows_constants
+}
+if const @is_os("linux") {
+    linux :: import std.os.linux
+}
+
+use import std.io.file
+use import std.string
+io :: import std.io
+C  :: import std.c
+
+#export_scope
+FsError :: enum {
+    Unknown
+    AlreadyExists
+    PathNotFound
+}
+
+create_directory :: (path: string) -> Result[(), FsError] {
+    full_path := get_full_path(path)
+    full_path += char(0)
+    c_path := full_path.get_raw()
+    use WindowsErrorCode
+    return if CreateDirectoryA(c_path, null) != 0 then Ok(()) else match GetLastError() {
+        ERROR_ALREADY_EXISTS -> Err(FsError.AlreadyExists)
+        ERROR_PATH_NOT_FOUND -> Err(FsError.PathNotFound)
+        $_                   -> Err(FsError.Unknown)
+    }
+}
+
+create_file :: (path: string, content: string) -> Result[(), FsError] {
+    return if write_file_string(path, content) then Ok(()) else Err(FsError.Unknown)
+}
+
+get_full_path :: (path: string) -> String {
+    c_path := string_to_cstring_stack(path)
+    required_length := GetFullPathNameA(c_path, 0, null, null)
+    result := String.empty()
+    result.reserve(cast required_length)
+    result.resize(cast required_length - 1)
+    GetFullPathNameA(c_path, required_length, result.get_raw(), null)
+    return result
+}
+
+#file_scope

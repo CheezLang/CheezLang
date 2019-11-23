@@ -425,7 +425,7 @@ namespace Cheez
                     instances.Add(instance);
             }
 
-            instance.AddInstantiatedAt(location);
+            instance.AddInstantiatedAt(location, currentFunction);
             return instance;
         }
 

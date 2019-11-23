@@ -31,7 +31,7 @@ get_precedence :: (op: OpCode) -> int {
 
 compile :: (expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]] {
     res := Array[OpCode].create()
-    
+
     string_db := StringDatabase.create()
     lexer := Lexer.from_raw_string(expr, string_db)
 
