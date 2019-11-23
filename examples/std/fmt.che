@@ -213,11 +213,16 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
 
             result += "("
             if tstruct.members.data != null {
+                comma := false
                 for i : 0..tstruct.members.length {
-                    if i > 0 {
+                    member_info := &tstruct.members[i]
+                    if member_info.has_attribute("fmt_ignore") then continue
+
+                    if comma {
                         result += ", "
                     }
-                    member_info := &tstruct.members[i]
+                    comma = true
+
                     member_ptr  := pointer_add(ptr, member_info.offset)
                     member_type := member_info.typ
                     result += member_info.name

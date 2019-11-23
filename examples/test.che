@@ -8,8 +8,8 @@
 // import examples.pathtracer
 // import examples.print_any
 // import examples.command_line_parser
-// import std.compiler.main
-// import std.compiler.compiler_test
+// import compiler.cli
+// import compiler.compiler_test
 
 // import examples.postfix
 // import examples.image_processing

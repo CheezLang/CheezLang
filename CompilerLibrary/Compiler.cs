@@ -74,6 +74,8 @@ namespace Cheez
             ModulePaths["olc_pge"]= exePath + "/libraries";
             ModulePaths["bmp"]    = exePath + "/libraries";
             ModulePaths["lua"]    = exePath + "/libraries";
+            ModulePaths["clap"]   = exePath + "/libraries";
+            ModulePaths["compiler"] = exePath + "/libraries";
 
             mGlobalConstIfScope = new Scope("global_const_if");
             mGlobalConstIfScope.DefineBuiltInTypes();

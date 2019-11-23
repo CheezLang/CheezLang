@@ -241,7 +241,7 @@ namespace Cheez
         private bool TypeHasDestructorHelper(CheezType type)
         {
             if (type.IsErrorType)
-                WellThatsNotSupposedToHappen();
+                return false;
 
             if (mTraitDrop == null)
             {
@@ -507,6 +507,9 @@ namespace Cheez
 
                     // traits only borrow, so we dont move
                     if (c.Type is TraitType)
+                        return true;
+                    // any only borrow, so we dont move
+                    if (c.Type == CheezType.Any)
                         return true;
 
                     return Move(c.Type, c.SubExpression, symStatTable);

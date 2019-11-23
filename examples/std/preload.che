@@ -170,6 +170,7 @@ TypeInfoStructMember :: struct #copy {
     offset     : int
     name       : string
     typ        : &TypeInfo
+    value      : any
     attributes : []TypeInfoAttribute
 }
 
@@ -191,6 +192,15 @@ TypeInfoEnumMember :: struct #copy {
 }
 
 impl TypeInfoStruct {
+    has_member :: (ref Self, name: string) -> bool {
+        for(by_ref=true) members {
+            if strings_equal(name, it.name) {
+                return true
+            }
+        }
+        return false
+    }
+
     get_member :: (ref Self, name: string) -> &TypeInfoStructMember {
         for(by_ref=true) members {
             if strings_equal(name, it.name) {

@@ -1,0 +1,265 @@
+use import std.array
+use import std.string
+use import std.os.windows_functions
+use import std.mem.allocator
+use import std.util
+io  :: import std.io
+fmt :: import std.fmt
+C   :: import std.c
+
+console_debug_print :: false
+
+#export_scope
+
+parse_arguments :: ($T: type, args: []String) -> &T {
+    result := alloc(T)
+    ok := parse_arguments_help(@type_info(T), args, result)
+
+    if !ok {
+        Memory.drop(<<result)
+        free(result)
+        return null
+    }
+    return result
+}
+
+get_cmd_args :: () -> Array[String] {
+    cmdLineArgs := GetCommandLineW()
+    count := 0i32
+    args := CommandLineToArgvW(cmdLineArgs, &count)
+    return to_ascii_strings(args, int(count))
+}
+
+#file_scope
+
+parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) -> bool {
+    if const console_debug_print {
+        io.println("parsing help")
+        log_args(args)
+    }
+
+    require_arg :: (args: []String) -> bool {
+        if args.length < 1 {
+            io.println("[ERROR] missing required argument for option")
+            return false
+        }
+
+        return true
+    }
+
+    return match type_info.kind {
+        TypeInfoKind.Struct($info) if streq(info.name, "StringBase") -> {
+            if !require_arg(args) { return false }
+            <<cast(&String) result = args[0].clone()
+            args = args[1..args.length]
+            true
+        }
+
+        $_ if type_info == @type_info(Array[String]) -> parse_arguments_string_array(args, result)
+
+        TypeInfoKind.Enum($info)   -> parse_arguments_enum(&info, args, result)
+        TypeInfoKind.Struct($info) -> parse_arguments_struct(&info, args, result)
+        TypeInfoKind.Int($into)    -> {
+            if !require_arg(args) { return false }
+            <<cast(&int) result = fmt.parse_int(args[0].slice())
+            args = args[1..args.length]
+            true
+        }
+
+        TypeInfoKind.Bool -> {
+            <<cast(&bool) result = true
+            true
+        }
+        $_ -> {
+            io.printfln("[ERROR] Can't parse into type {}", @typename(T))
+            false
+        }
+    }
+}
+
+parse_arguments_string_array :: (args: ref []String, result: &void) -> bool {
+    if const console_debug_print {
+        io.println("parse_arguments_string_array")
+        log_args(args)
+    }
+
+    array := cast(&Array[String]) result
+    <<array = Array[String].create()
+
+    while args.length > 0 {
+        arg := ref args[0]
+        @assert(arg.length > 0)
+
+        if arg[0] == '-' {
+            return true
+        }
+
+        array.add(arg.clone())
+        args = args[1..args.length]
+    }
+
+    return true
+}
+
+parse_arguments_enum :: (type_info: &TypeInfoEnum, args: ref []String, result: &void) -> bool {
+    if const console_debug_print {
+        io.printfln("parsing into enum {}", type_info.name)
+        log_args(args)
+    }
+
+    if args.length == 0 {
+        io.println("[ERROR] Missing command. Possible commands:")
+        for(by_ref=true) type_info.members {
+            io.printfln("  {}", it.name)
+        }
+        return false
+    }
+
+    command := ref args[0]
+    args = args[1..args.length]
+    for(by_ref=true) type_info.members {
+        if streq(command.slice(), it.name) {
+            // first store the tag
+            tag_ptr := cast(&int) result
+            <<tag_ptr = it.tag
+
+            if it.typ != null {
+                // parse remaining arguments into associated value
+                tag_size := type_info.tag_type.size
+                value_ptr := pointer_add(result, tag_size)
+                if !parse_arguments_help(it.typ, args, value_ptr) {
+                    return false
+                }
+            }
+            return true
+        }
+    }
+
+    io.printfln("[ERROR] Unknown command: {}", command.slice())
+    return false
+}
+
+parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, result: &void) -> bool {
+    if const console_debug_print {
+        io.printfln("parsing into struct {}", type_info.name)
+        log_args(args)
+    }
+
+    // filter members of struct + handle #name and #ignore
+    MemberInfo :: (name: string, mem: &TypeInfoStructMember, set: bool)
+    members := Array[MemberInfo].create()
+    for(by_ref=true) m : type_info.members {
+        mem_name := m.name
+
+        if m.has_attribute("ignore") {
+            // io.printfln("ignoring '{}'", m.name)
+            continue
+        }
+
+        name_att := m.get_attribute("name")
+        if name_att != null {
+            if name_att.args.length != 1 {
+                io.printfln("[ERROR] #name on member {}.{} must have one argument", (type_info.name, m.name))
+                return false
+            }
+            name_arg := name_att.args[0]
+
+            if name_arg.typ != @type_info(string) {
+                io.printfln("[ERROR] type of argument of #name on member {}.{} must be string", (type_info.name, m.name))
+                return false
+            }
+
+            mem_name = <<cast(&string)name_arg.val
+        }
+
+        members.add((mem_name, &m, false))
+    }
+
+    get_member :: (arr: ref @typeof(members), name: string) -> &MemberInfo {
+        for(by_ref=true) arr.slice() {
+            if streq(it.name, name) {
+                return &it
+            }
+        }
+        return null
+    }
+
+    // io.println("==")
+    // for members {
+    //     io.printfln("     {} -> {}", (it.mem.name, it.name))
+    // }
+    // io.println("==")
+
+    while args.length > 0 {
+        arg := ref args[0]
+        @assert(arg.length > 0)
+
+        args = args[1..args.length]
+
+        if arg[0] == '-' {
+            name := arg.sliceF(1)
+            mem_info := get_member(members, name)
+
+            if mem_info == null {
+                io.printfln("[ERROR] unknown argument '{}'", name)
+                return false
+            }
+
+            if mem_info.set {
+                io.printfln("[ERROR] member '{}' was already specified", mem_info.name)
+            }
+
+            if !parse_arguments_help(mem_info.mem.typ, args, pointer_add(result, mem_info.mem.offset)) {
+                return false
+            }
+
+            mem_info.set = true
+        } else {
+            io.printfln("[CLP] Error: not implemented, arg: {}", arg)
+            @assert(false, "Not implemented")
+            return false
+        }
+    }
+
+    // check if all members were set or have a default value
+    for(by_ref=true) mem_info : members {
+        if mem_info.set then continue
+
+        default_value := mem_info.mem.value
+        if default_value.typ == null {
+            io.printfln("[ERROR] please provide a value for option '{}'", mem_info.mem.name)
+            return false
+        }
+
+        if !assign_value_to_member(mem_info.mem, pointer_add(result, mem_info.mem.offset), default_value) {
+            return false
+        }
+    }
+
+    return true
+}
+
+assign_value_to_member :: (member: &TypeInfoStructMember, result: &void, value: any) -> bool {
+    if member.typ == value.typ {
+        C.memcpy(result, value.val, cast member.typ.size)
+        return true
+    }
+
+    io.printfln("[ERROR] can't assign a value of type ... to ...", ())
+    return false
+}
+
+// helper functions
+
+to_ascii_strings :: (argv: &&u16, argc: int) -> Array[String] {
+    array := Array[String].create(argc)
+    for i : 0..argc {
+        str := String.empty()
+        while k := 0, argv[i][k] != 0, k += 1 {
+            str += char(argv[i][k])
+        }
+
+        array.add(str)
+    }
+    return array
+}

@@ -1006,12 +1006,18 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             );
 
             //
+            var default_value = m.Decl.Initializer != null ?
+                GenerateRTTIForAny(m.Decl.Initializer) :
+                GenerateRTTIForNullAny();
+
+            //
             var off = LLVM.OffsetOfElement(targetData, CheezTypeToLLVMType(s), (uint)m.Index);
             return LLVM.ConstNamedStruct(rttiTypeInfoStructMember, new LLVMValueRef[]
             {
                 LLVM.ConstInt(LLVM.Int64Type(), off, true),
                 CheezValueToLLVMValue(CheezType.String, m.Name),
                 typeInfoTable[m.Type],
+                default_value,
                 directives
             });
         }
@@ -1038,6 +1044,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 CheezValueToLLVMValue(CheezType.String, dir.Name.Name),
                 arguments
+            });
+        }
+
+        private LLVMValueRef GenerateRTTIForNullAny()
+        {
+            return LLVM.ConstNamedStruct(CheezTypeToLLVMType(CheezType.Any), new LLVMValueRef[]
+            {
+                LLVM.ConstPointerNull(rttiTypeInfo.GetPointerTo()),
+                LLVM.ConstPointerNull(LLVM.Int8Type().GetPointerTo())
             });
         }
 

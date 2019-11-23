@@ -1,0 +1,112 @@
+use import lexer
+use import string_database
+use import cheez_compiler
+use import parser
+
+use import std.time
+use import std.string
+use import std.array
+use import std.mem.arena_allocator
+use import std.mem.allocator
+io  :: import std.io
+fmt :: import std.fmt
+
+use import clap.clap
+
+Main :: () {
+    args_array := get_cmd_args()
+    compiler_args := parse_arguments(MainCommand, args_array.sliceF(1))
+
+    if compiler_args == null {
+        // print_help_message(MainCommand)
+        return
+    }
+
+    io.println(fmt.format_any(<<compiler_args))
+
+    match <<compiler_args {
+        MainCommand.compile($options) -> command_compile(&options)
+        MainCommand.project($poptions) -> match poptions {
+            CommandProject.new($options) -> command_project_new(&options)
+        }
+    }
+}
+
+#file_scope
+
+MainCommand :: enum {
+    compile : CommandCompile
+    build   : CommandBuild
+    project : CommandProject
+}
+
+CommandCompile :: struct {
+    files : Array[String]
+}
+
+CommandBuild :: struct {
+    
+}
+
+CommandProject :: enum {
+    new : CommandProjectNew
+}
+
+CommandProjectNew :: struct {
+    name : String
+
+    #name("type")
+    typ  : ProjectType
+}
+
+ProjectType :: enum {
+    Program
+    DynamicLibrary
+    StaticLibrary
+}
+
+command_project_new :: (options: &CommandProjectNew) {
+    io.println(fmt.format("creating new project named '{}' of type {}", [options.name.slice(), options.typ]))
+    match options.typ {
+        ProjectType.Program -> command_project_new_program(options)
+    }
+}
+
+command_project_new_program :: (options: &CommandProjectNew) {
+
+}
+
+command_compile :: (options: &CommandCompile) {
+    string_db := StringDatabase.create()
+    compiler := CheezCompiler.create()
+    io.println("compiling...")
+    for file : options.files {
+        io.printfln("parsing {}...", file.slice())
+        match Lexer.from_file("../examples/test.che", string_db) {
+            Ok($l) -> {
+                parser := Parser.create(compiler, l)
+                start := get_time_milliseconds()
+                while true {
+                    stmt := parser.parse_statement()
+                    match stmt {
+                        Some($stmt) -> {
+                            io.println(<<stmt)
+                        }
+
+                        None -> {
+                            break
+                        }
+                    }
+                }
+
+                end := get_time_milliseconds()
+                elapsed := ((cast(double)end) - (cast(double)start)) / 1000.0
+                io.printfln("elapsed: {}", elapsed)
+            }
+
+            Err($msg) -> {
+                io.println(msg)
+            }
+        }
+    }
+}

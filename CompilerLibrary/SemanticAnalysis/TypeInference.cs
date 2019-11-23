@@ -1734,6 +1734,8 @@ namespace Cheez
 
         private void MarkTypeAsRequiredAtRuntime(CheezType type)
         {
+            if (type.IsErrorType)
+                return;
             if (mTypesRequiredAtRuntime.Contains(type))
                 return;
             mTypesRequiredAtRuntime.Add(type);
