@@ -98,6 +98,23 @@ SwitchToFiber        :: (fiber: &void) #stdcall;
 CreateFiber          :: (dwStackSize: int, lpStartAddress: fn(&void) #stdcall, lpParameter: &void) -> &void #stdcall;
 DeleteFiber          :: (fiber: &void) #stdcall;
 
+// process
+CreateProcessA :: (
+    lpApplicationName: c_string,
+    lpCommandLine: c_string,
+    lpProcessAttributes: &SECURITY_ATTRIBUTES,
+    lpThreadAttributes: &SECURITY_ATTRIBUTES,
+    bInheritHandles: BOOL,
+    dwCreationFlags: DWORD,
+    lpEnvironment: &void,
+    lpCurrentDirectory: c_string,
+    lpStartupInfo: &STARTUPINFOA,
+    lpProcessInformation: &PROCESS_INFORMATION
+) -> BOOL #stdcall;
+
+// requires shlwapi.lib
+PathFindOnPathA :: (pszPath: c_string, ppszOtherDirs: &c_string) -> BOOL #stdcall;
+
 // threads
 GetCurrentThread   :: () -> HANDLE #stdcall;
 GetCurrentThreadId :: () -> DWORD #stdcall;

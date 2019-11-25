@@ -151,6 +151,33 @@ SECURITY_ATTRIBUTES :: struct {
   bInheritHandle        : BOOL
 }
 
+STARTUPINFOA :: struct {
+  cb              : DWORD     = @sizeof(STARTUPINFOA)
+  lpReserved      : c_string  = default
+  lpDesktop       : c_string  = default
+  lpTitle         : c_string  = default
+  dwX             : DWORD     = default
+  dwY             : DWORD     = default
+  dwXSize         : DWORD     = default
+  dwYSize         : DWORD     = default
+  dwXCountChars   : DWORD     = default
+  dwYCountChars   : DWORD     = default
+  dwFillAttribute : DWORD     = default
+  dwFlags         : DWORD     = default
+  wShowWindow     : WORD      = default
+  cbReserved2     : WORD      = default
+  lpReserved2     : &BYTE     = default
+  hStdInput       : HANDLE    = default
+  hStdOutput      : HANDLE    = default
+  hStdError       : HANDLE    = default
+}
+
+PROCESS_INFORMATION :: struct {
+  hProcess    : HANDLE = default
+  hThread     : HANDLE = default
+  dwProcessId : DWORD  = default
+  dwThreadId  : DWORD  = default
+}
 
 // #define UNICODE_NOCHAR                  0xFFFF
 
