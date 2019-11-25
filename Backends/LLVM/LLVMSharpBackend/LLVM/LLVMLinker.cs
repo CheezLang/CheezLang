@@ -139,6 +139,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             lldArgs.Add("libclang.lib");
             lldArgs.Add("libvcruntimed.lib");
             lldArgs.Add("msvcrtd.lib");
+            lldArgs.Add("shlwapi.lib");
 
             foreach (var linc in libraries)
             {
