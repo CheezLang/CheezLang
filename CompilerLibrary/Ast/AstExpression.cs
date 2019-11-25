@@ -128,13 +128,13 @@ namespace Cheez.Ast.Expressions
             this.Parent = parent;
         }
 
-        public void AttachTo(AstExpression expr, Scope? scope = null)
+        public void AttachTo(AstExpression expr, Scope scope = null)
         {
             this.Scope = scope ?? expr.Scope;
             this.Parent = expr;
         }
 
-        public void AttachTo(AstStatement stmt, Scope? scope = null)
+        public void AttachTo(AstStatement stmt, Scope scope = null)
         {
             this.Scope = scope ?? stmt.Scope;
             this.Parent = stmt;
