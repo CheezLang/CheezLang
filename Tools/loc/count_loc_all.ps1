@@ -6,6 +6,9 @@
 .\count_loc.ps1 ..\..\Backends\LLVM\LLVMWrapper\src .\Backends_LLVM_LLVMWrapper.csv  -exclude TemporaryGeneratedFile*
 .\count_loc.ps1 ..\..\Backends\LLVM\TestNet .\Backends_LLVM_TestNet.csv *.cs -exclude TemporaryGeneratedFile*
 .\count_loc.ps1 ..\..\CompilerCLI .\CompilerCLI.csv *.cs -exclude TemporaryGeneratedFile*
-.\count_loc.ps1 ..\..\examples .\examples.csv *.che
+.\count_loc.ps1 ..\..\examples .\che_all.csv *.che
+.\count_loc.ps1 ..\..\examples\examples .\examples.csv *.che
+.\count_loc.ps1 ..\..\examples\libraries .\libraries.csv *.che
+.\count_loc.ps1 ..\..\examples\std .\std.csv *.che
 .\count_loc.ps1 ..\LanguageServer\VSCodeExtension\src .\Tools_LanguageServer_VSCodeExtension.csv *.ts
 .\count_loc.ps1 ..\LanguageServer\Server .\Tools_LanguageServer_Server.csv *.cs -exclude TemporaryGeneratedFile*
