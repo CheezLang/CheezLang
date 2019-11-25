@@ -1,0 +1,9 @@
+File Name,Lines
+lexer.che,710
+compiler_test.che,253
+cli.che,160
+parser.che,85
+string_database.che,42
+ast.che,36
+cheez_compiler.che,24
+Total,1310
