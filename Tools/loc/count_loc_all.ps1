@@ -1,3 +1,4 @@
+.\count_loc.ps1 ..\..\ .\Compiler_all.csv *.cs -exclude TemporaryGeneratedFile*
 .\count_loc.ps1 ..\..\CompilerLibrary .\CompilerLibrary.csv *.cs -exclude TemporaryGeneratedFile*
 .\count_loc.ps1 ..\..\Backends\DummyBackend .\Backends_DummyBackend.csv *.cs -exclude TemporaryGeneratedFile*
 .\count_loc.ps1 ..\..\Backends\LLVM\Linker .\Backends_LLVM_Linker.csv *.cs -exclude TemporaryGeneratedFile*
