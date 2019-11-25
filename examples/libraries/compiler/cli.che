@@ -8,6 +8,7 @@ use import std.string
 use import std.array
 use import std.mem.arena_allocator
 use import std.mem.allocator
+use import std.process
 io  :: import std.io
 fs  :: import std.io.fs
 fmt :: import std.fmt
@@ -90,8 +91,12 @@ CommandProjectNew :: struct {
     name : String
 
     #name("type")
-    #help("The type of project you want to create.")
+    #help("The type of project you want to create")
     typ  : ProjectType
+
+    #name("no-git")
+    #help("Don't create a git repository")
+    no_git: bool = false
 }
 
 CommandProjectChangeType :: struct {
@@ -99,7 +104,7 @@ CommandProjectChangeType :: struct {
     name : String
 
     #name("type")
-    #help("The type of project you want to create.")
+    #help("The type of project you want to create")
     typ  : ProjectType
 }
 
@@ -116,7 +121,7 @@ ProjectType :: enum {
 }
 
 command_project_new :: (options: &CommandProjectNew) {
-    io.println(fmt.format("creating new project named '{}' of type {}", [options.name.slice(), options.typ]))
+    // io.println(fmt.format("creating new project named '{}' of type {}", [options.name.slice(), options.typ]))
     match options.typ {
         ProjectType.Program -> command_project_new_program(options)
     }
@@ -125,17 +130,18 @@ command_project_new :: (options: &CommandProjectNew) {
 command_project_new_program :: (options: &CommandProjectNew) {
     create_dir :: (dir_format: string, dir_args: []any) #macro {
         dir := fmt.format(dir_format, dir_args)
-        io.printfln("Creating directory '{}'", dir.slice())
+        // io.printfln("Creating directory '{}'", dir.slice())
         fs.create_directory(dir.slice())
     }
 
     create_file :: (path_format: string, path_args: []any, content_format: string, content_args: []any) {
         path    := fmt.format(path_format, path_args)
         content := fmt.format(content_format, content_args)
-        io.printfln("Creating file '{}'", path.slice())
+        // io.printfln("Creating file '{}'", path.slice())
         fs.create_file(path.slice(), content.slice())
     }
 
+    io.printfln("Creating project files for new project '{}'", options.name.slice())
     create_dir("{}", [options.name.slice()])
     create_dir("{}/src", [options.name.slice()])
     create_dir("{}/bin", [options.name.slice()])
@@ -143,7 +149,7 @@ command_project_new_program :: (options: &CommandProjectNew) {
 
     create_file("{}/src/{}",
                 [options.name.slice(), "main.che"],
-                "io :: import std.io
+"io :: import std.io
 
 Main :: () ``{
     io.println(`"Hello, {}!`")
@@ -152,10 +158,29 @@ Main :: () ``{
 
     create_file("{}/build.ps1",
                 [options.name.slice()],
-                "[CmdletBinding()]
+"[CmdletBinding()]
 param ([Parameter(ValueFromRemainingArguments)] [string[]] $Passthrough)
 &cheezc ./src/main.che --out ./bin --name {} --time @Passthrough",
                 [options.name.slice()])
+
+    if !options.no_git {
+        create_file("{}/.gitignore", [options.name.slice()],
+"# Build results
+bin/", [])
+
+        // find git.exe
+        io.println("Initializing git repository...")
+        match find_on_path("git.exe") {
+            None -> {
+                io.println("[ERROR] No git installation found.")
+            }
+
+            Some($path) -> {
+                // init git repo
+                run_process(path.slice(), ["init"], options.name.slice())
+            }
+        }
+    }
 }
 
 command_compile :: (options: &CommandCompile) {
