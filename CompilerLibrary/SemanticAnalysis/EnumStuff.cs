@@ -70,7 +70,7 @@ namespace Cheez
 
                 }
             }
-            else if (expr.TryGetDirective("repr", out var repr))
+            if (expr.TryGetDirective("repr", out var repr))
             {
                 if (repr.Arguments.Count != 1 || !(repr.Arguments[0] is AstStringLiteral str))
                 {
@@ -82,8 +82,6 @@ namespace Cheez
                     if (val == "C")
                     {
                         expr.IsReprC = true;
-                        // TODO: check platform
-                        expr.TagType = IntType.GetIntType(4, true);
                     }
                     else
                     {
@@ -165,6 +163,10 @@ namespace Cheez
                     ReportError(memDecl.Pattern, $"Only single names allowed");
                     continue;
                 }
+
+                if (memDecl.Directives != null)
+                    foreach (var dir in memDecl.Directives)
+                        InferTypeAttributeDirective(dir, memDecl, memDecl.Scope);
 
                 if (memDecl.TypeExpr != null)
                 {

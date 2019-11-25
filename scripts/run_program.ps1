@@ -7,7 +7,9 @@ param (
 
 Push-Location gen
 # &"./$file$executable_file_extension" compile -files test.che
-&"./$file$executable_file_extension" project new -name hello_world -type Program
+# &"./$file$executable_file_extension" project new -name hello_world -type Program
+&"./$file$executable_file_extension" help
+# &"./$file$executable_file_extension" run -file main.che
 # &"./$file$executable_file_extension"
 Pop-Location
 

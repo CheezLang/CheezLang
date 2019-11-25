@@ -19,29 +19,50 @@ Main :: () {
     compiler_args := parse_arguments(MainCommand, args_array.sliceF(1))
 
     if compiler_args == null {
-        // print_help_message(MainCommand)
+        // io.println(get_help_message(MainCommand))
         return
     }
 
     io.println(fmt.format_any(<<compiler_args))
 
     match <<compiler_args {
-        MainCommand.compile($options) -> command_compile(&options)
-        MainCommand.project($poptions) -> match poptions {
-            CommandProject.new($options) -> command_project_new(&options)
+        MainCommand.Compile($options) -> command_compile(&options)
+        MainCommand.Project($poptions) -> match poptions {
+            CommandProject.New($options) -> command_project_new(&options)
         }
+
+        MainCommand.Help -> io.println(get_help_message(@type_info(MainCommand)))
     }
 }
 
 #file_scope
 
 MainCommand :: enum {
-    compile : CommandCompile
-    build   : CommandBuild
-    project : CommandProject
+    #name("help")
+    #help("Displays this help info")
+    Help
+
+    #name("compile")
+    #help("Compile files")
+    Compile : CommandCompile
+
+    #name("build")
+    #help("Build a project using a build script (default: build.che)")
+    Build   : CommandBuild
+
+    #name("project")
+    #help("Manage projects")
+    Project : CommandProject
+
+    #name("run")
+    #help("Run a bytecode or source file")
+    Run     : CommandRun
 }
 
 CommandCompile :: struct {
+    #help("List of files to compile (.che extension optional)
+e.g. ... compile foo.che bar.che
+e.g. ... compile foo bar")
     files : Array[String]
 }
 
@@ -50,19 +71,47 @@ CommandBuild :: struct {
 }
 
 CommandProject :: enum {
-    new : CommandProjectNew
+    #name("new")
+    #help("Create a new project")
+    New : CommandProjectNew
+
+    #help("Change the type of a project")
+    #name("change-type")
+    ChangeType : ProjectType
+}
+
+CommandRun :: struct {
+    #help("File to run. Can be a source file (.che) or bytecode file (.cheb)")
+    file : String
 }
 
 CommandProjectNew :: struct {
+    #help("The name of the project to be created")
     name : String
 
     #name("type")
+    #help("The type of project you want to create.")
+    typ  : ProjectType
+}
+
+CommandProjectChangeType :: struct {
+    #help("The name of the project to be created")
+    name : String
+
+    #name("type")
+    #help("The type of project you want to create.")
     typ  : ProjectType
 }
 
 ProjectType :: enum {
+    #name("program")
+    #help("Executable program")
     Program
+    #name("dynamic-lib")
+    #help("Dynamic library")
     DynamicLibrary
+    #name("static-lib")
+    #help("Static library")
     StaticLibrary
 }
 

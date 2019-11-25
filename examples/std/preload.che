@@ -186,9 +186,10 @@ TypeInfoEnum :: struct #copy {
 }
 
 TypeInfoEnumMember :: struct #copy {
-    name : string
-    typ  : &TypeInfo
-    tag  : int
+    name       : string
+    typ        : &TypeInfo
+    tag        : int
+    attributes : []TypeInfoAttribute
 }
 
 impl TypeInfoStruct {
@@ -238,6 +239,28 @@ impl TypeInfoStruct {
 }
 
 impl TypeInfoStructMember {
+    get_attribute :: (ref Self, name: string) -> &TypeInfoAttribute {
+        for(by_ref=true) att : attributes {
+            if strings_equal(att.name, name) {
+                return &att
+            }
+        }
+
+        return null
+    }
+
+    has_attribute :: (ref Self, name: string) -> bool {
+        for(by_ref=true) att : attributes {
+            if strings_equal(att.name, name) {
+                return true
+            }
+        }
+
+        return false
+    }
+}
+
+impl TypeInfoEnumMember {
     get_attribute :: (ref Self, name: string) -> &TypeInfoAttribute {
         for(by_ref=true) att : attributes {
             if strings_equal(att.name, name) {

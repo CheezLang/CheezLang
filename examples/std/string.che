@@ -3,6 +3,7 @@ util :: import std.util
 C    :: import std.c
 fmt  :: import std.fmt
 
+use import std.array
 use import std.printable
 use import std.mem.allocator
 use import std.mem.std_heap_allocator
@@ -77,6 +78,10 @@ impl(CharType: type) StringBase[CharType] {
         data[i] = c
     }
 
+    reserve_more :: (ref Self, amount: int) {
+        reserve(length + amount)
+    }
+
     reserve :: (ref Self, size: int) {
         if data.length > size {
             return
@@ -145,6 +150,12 @@ impl(CharType: type) StringBase[CharType] {
         return self
     }
 
+    sliceFT :: (ref Self, from: int, to: int) -> []CharType {
+        slice : []CharType = &data[from]
+        slice.length = to - from
+        return slice
+    }
+
     sliceFL :: (ref Self, from: int, len: int) -> []CharType {
         slice : []CharType = &data[from]
         slice.length = len
@@ -180,6 +191,7 @@ impl String {
         pr.print(self, "")
         return self
     }
+
     appendf :: (ref Self, format: string, arguments: $T) {
         if const @is_tuple(T) {
             args : [T.length] Printable = default
@@ -255,6 +267,31 @@ impl String {
         s := Self.empty()
         s.appendf(format, args)
         return s
+    }
+
+    split_at_char :: (ref Self, c: char, remove_empty: bool = false) -> Array[string] {
+        result := Array[string].create()
+
+        start := 0
+        for i : 0..length {
+            if data[i] == c {
+                sub := self.sliceFT(start, i)
+                if sub.length > 0 or !remove_empty {
+                    result.add(sub)
+                }
+
+                start = i + 1
+            }
+        }
+
+        if start < length {
+            sub := self.sliceF(start)
+            if sub.length > 0 or !remove_empty {
+                result.add(sub)
+            }
+        }
+
+        return result
     }
 }
 

@@ -81,39 +81,8 @@ namespace Cheez
                     }
 
                     if (mem.Directives != null)
-                    {
                         foreach (var dir in mem.Directives)
-                        {
-                            for (int i = 0; i < dir.Arguments.Count; i++)
-                            {
-                                dir.Arguments[i].AttachTo(mem);
-                                dir.Arguments[i] = InferType(dir.Arguments[i], null);
-                                ConvertLiteralTypeToDefaultType(dir.Arguments[i], null);
-
-                                if (!dir.Arguments[i].IsCompTimeValue)
-                                {
-                                    ReportError(dir.Arguments[i], $"Argument must be a constant.");
-                                    break;
-                                }
-
-                                // check type
-                                var type = dir.Arguments[i].Type;
-                                switch (type)
-                                {
-                                    case IntType _:
-                                    case BoolType _:
-                                    case FloatType _:
-                                        break;
-
-                                    default:
-                                        if (type == CheezType.String)
-                                            break;
-                                        ReportError(dir.Arguments[i], $"Type {type} is not allowed here.");
-                                        break;
-                                }
-                            }
-                        }
-                    }
+                            InferTypeAttributeDirective(dir, mem, mem.Scope);
 
                     if (mem.TypeExpr != null)
                     {

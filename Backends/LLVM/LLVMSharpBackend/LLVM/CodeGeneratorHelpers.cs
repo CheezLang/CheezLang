@@ -928,12 +928,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var memberSlice = CreateSlice(
                 sTypeInfoEnumMember,
                 $"ti.{enumType.Declaration.Name}.members",
-                enumType.Declaration.Members.Select(m => LLVM.ConstNamedStruct(rttiTypeInfoEnumMember, new LLVMValueRef[]
-                {
-                    CheezValueToLLVMValue(CheezType.String, m.Name),
-                    m.AssociatedType != null ? typeInfoTable[m.AssociatedType] : LLVM.ConstPointerNull(rttiTypeInfo.GetPointerTo()),
-                    LLVM.ConstInt(LLVM.Int64Type(), m.Value.ToUlong(), false)
-                }))
+                enumType.Declaration.Members.Select(m => GenerateRTTIForEnumMember(enumType, m))
             );
 
             // create type info
@@ -944,6 +939,23 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 typeInfoTable[enumType.Declaration.TagType]
             });
             builder.CreateStore(val, ptr);
+        }
+
+        private LLVMValueRef GenerateRTTIForEnumMember(EnumType enumType, AstEnumMemberNew mem)
+        {
+            // create directives
+            var attributes = CreateSlice(
+                sTypeInfoAttribute,
+                $"ti.{enumType.Declaration.Name}.member.{mem.Name}.attributes",
+                mem.Decl.Directives.Select(dir => GenerateRTTIForAttribute(dir))
+            );
+            return LLVM.ConstNamedStruct(rttiTypeInfoEnumMember, new LLVMValueRef[]
+            {
+                CheezValueToLLVMValue(CheezType.String, mem.Name),
+                mem.AssociatedType != null ? typeInfoTable[mem.AssociatedType] : LLVM.ConstPointerNull(rttiTypeInfo.GetPointerTo()),
+                LLVM.ConstInt(LLVM.Int64Type(), mem.Value.ToUlong(), false),
+                attributes
+            });
         }
 
         private void GenerateRTTIForTrait(TraitType traitType, LLVMValueRef assPtr)
@@ -999,7 +1011,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef GenerateRTTIForStructMember(StructType s, AstStructMemberNew m)
         {
             // create directives
-            var directives = CreateSlice(
+            var attributes = CreateSlice(
                 sTypeInfoAttribute,
                 $"ti.{s.Name}.member.{m.Name}.attributes",
                 m.Decl.Directives.Select(dir => GenerateRTTIForAttribute(dir))
@@ -1018,7 +1030,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 CheezValueToLLVMValue(CheezType.String, m.Name),
                 typeInfoTable[m.Type],
                 default_value,
-                directives
+                attributes
             });
         }
 

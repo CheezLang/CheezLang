@@ -8,6 +8,7 @@ fmt :: import std.fmt
 C   :: import std.c
 
 console_debug_print :: false
+indent_size         :: 2
 
 #export_scope
 
@@ -28,6 +29,15 @@ get_cmd_args :: () -> Array[String] {
     count := 0i32
     args := CommandLineToArgvW(cmdLineArgs, &count)
     return to_ascii_strings(args, int(count))
+}
+
+get_help_message :: (type_info: &TypeInfo) -> String {
+    result := String.empty()
+    result += "Usage:`n"
+
+    get_help_message_helper(type_info, result, indent_size)
+
+    return result
 }
 
 #file_scope
@@ -110,24 +120,26 @@ parse_arguments_enum :: (type_info: &TypeInfoEnum, args: ref []String, result: &
     if args.length == 0 {
         io.println("[ERROR] Missing command. Possible commands:")
         for(by_ref=true) type_info.members {
-            io.printfln("  {}", it.name)
+            io.printfln("  {}", get_display_name_for_member(it))
         }
         return false
     }
 
     command := ref args[0]
     args = args[1..args.length]
-    for(by_ref=true) type_info.members {
-        if streq(command.slice(), it.name) {
+
+    for(by_ref=true) mem : type_info.members {
+        mem_name := get_display_name_for_member(mem)
+        if streq(command.slice(), mem_name) {
             // first store the tag
             tag_ptr := cast(&int) result
-            <<tag_ptr = it.tag
+            <<tag_ptr = mem.tag
 
-            if it.typ != null {
+            if mem.typ != null {
                 // parse remaining arguments into associated value
                 tag_size := type_info.tag_type.size
                 value_ptr := pointer_add(result, tag_size)
-                if !parse_arguments_help(it.typ, args, value_ptr) {
+                if !parse_arguments_help(mem.typ, args, value_ptr) {
                     return false
                 }
             }
@@ -149,27 +161,11 @@ parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, resul
     MemberInfo :: (name: string, mem: &TypeInfoStructMember, set: bool)
     members := Array[MemberInfo].create()
     for(by_ref=true) m : type_info.members {
-        mem_name := m.name
+        mem_name := get_display_name_for_member(m)
 
         if m.has_attribute("ignore") {
             // io.printfln("ignoring '{}'", m.name)
             continue
-        }
-
-        name_att := m.get_attribute("name")
-        if name_att != null {
-            if name_att.args.length != 1 {
-                io.printfln("[ERROR] #name on member {}.{} must have one argument", (type_info.name, m.name))
-                return false
-            }
-            name_arg := name_att.args[0]
-
-            if name_arg.typ != @type_info(string) {
-                io.printfln("[ERROR] type of argument of #name on member {}.{} must be string", (type_info.name, m.name))
-                return false
-            }
-
-            mem_name = <<cast(&string)name_arg.val
         }
 
         members.add((mem_name, &m, false))
@@ -184,12 +180,7 @@ parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, resul
         return null
     }
 
-    // io.println("==")
-    // for members {
-    //     io.printfln("     {} -> {}", (it.mem.name, it.name))
-    // }
-    // io.println("==")
-
+    // parse arguments
     while args.length > 0 {
         arg := ref args[0]
         @assert(arg.length > 0)
@@ -206,7 +197,7 @@ parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, resul
             }
 
             if mem_info.set {
-                io.printfln("[ERROR] member '{}' was already specified", mem_info.name)
+                io.printfln("[ERROR] option '{}' was already specified", mem_info.name)
             }
 
             if !parse_arguments_help(mem_info.mem.typ, args, pointer_add(result, mem_info.mem.offset)) {
@@ -239,6 +230,178 @@ parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, resul
     return true
 }
 
+get_help_message_helper :: (type_info: &TypeInfo, result: ref String, indent: int) {
+    use TypeInfoKind
+    match type_info.kind {
+        $_ if type_info == @type_info(String) -> {
+            indent_string(result, indent)
+            result += "String"
+        }
+        $_ if type_info == @type_info(Array[String]) -> {
+            result += "Array[String]"
+        }
+
+        Struct($ti) -> get_help_message_struct(&ti, result, indent)
+        Enum($ti) -> get_help_message_enum(&ti, result, indent)
+    }
+}
+
+get_help_message_struct :: (type_info: &TypeInfoStruct, result: ref String, indent: int) {
+    old_indent := indent
+    indent += indent_size
+
+    description_indent := {
+        m := 0
+        for(by_ref=true) mem : type_info.members {
+            if mem.name.length > m {
+                m = mem.name.length
+            }
+        }
+        next_aligned_num(m + 1 + 8, indent_size)
+    }
+
+    // print descriptions
+    for(by_ref=true) mem : type_info.members {
+        indent_string(result, indent)
+        
+
+        mem_name := get_display_name_for_member(mem)
+        result.appendf("-{}", mem_name)
+
+        help_text_att := mem.get_attribute("help")
+        if help_text_att != null {
+            @assert(help_text_att.args.length == 1)
+            @assert(help_text_att.args[0].typ == @type_info(string))
+            text := String.from_string(<<cast(&string) help_text_att.args[0].val)
+
+            lines := text.split_at_char('`n', true)
+
+            for line : lines {
+                if it_index == 0 {
+                    indent_string(result, description_indent - mem_name.length - 1)
+                } else {
+                    result += "`n"
+                    indent_string(result, description_indent + indent)
+                }
+                result += line
+            }
+        }
+
+        result += "`n"
+    }
+
+    // print detailed info (args)
+
+    if type_info.members.length > 0 {
+        result += "`n"
+        for(by_ref=true) mem : type_info.members {
+            mem_name := get_display_name_for_member(mem)
+            get_help_message_member(result, mem.typ, mem_name, "-{}: ", indent, description_indent - mem_name.length - 3)
+            result += "`n"
+        }
+    }
+}
+
+get_help_message_enum :: (type_info: &TypeInfoEnum, result: ref String, indent: int) {
+    old_indent := indent
+    indent += indent_size
+
+    description_indent := {
+        m := 0
+        for(by_ref=true) mem : type_info.members {
+            if mem.name.length > m {
+                m = mem.name.length
+            }
+        }
+        next_aligned_num(m + 8, indent_size)
+    }
+
+    // print descriptions
+    for(by_ref=true) mem : type_info.members {
+        indent_string(result, indent)
+
+        mem_name := get_display_name_for_member(mem)
+        result += mem_name
+
+        help_text_att := mem.get_attribute("help")
+        if help_text_att != null {
+            @assert(help_text_att.args.length == 1)
+            @assert(help_text_att.args[0].typ == @type_info(string))
+            text := String.from_string(<<cast(&string) help_text_att.args[0].val)
+
+            lines := text.split_at_char('`n', true)
+
+            for line : lines {
+                if it_index == 0 {
+                    indent_string(result, description_indent - mem_name.length)
+                } else {
+                    result += "`n"
+                    indent_string(result, description_indent + indent)
+                }
+                result += line
+            }
+        }
+
+        result += "`n"
+    }
+
+    // print detailed info (args)
+    printed_details_string := false
+    for(by_ref=true) mem : type_info.members {
+        if mem.typ == null then continue
+
+        if !printed_details_string {
+            result += "`n"
+            printed_details_string = true
+        }
+
+        mem_name := get_display_name_for_member(mem)
+
+        get_help_message_member(result, mem.typ, mem_name, "{}: ", indent, description_indent - mem.name.length - 2)
+        result += "`n"
+    }
+}
+
+get_help_message_member :: (result: ref String, type_info: &TypeInfo, name: string, format: string, indent: int, indent2: int) {
+    use TypeInfoKind
+    match type_info.kind {
+        $_ if type_info == @type_info(String) -> {
+            indent_string(result, indent)
+            result.appendf(format, name)
+            indent_string(result, indent2)
+            result += "String"
+        }
+        $_ if type_info == @type_info(Array[String]) -> {
+            indent_string(result, indent)
+            result.appendf(format, name)
+            indent_string(result, indent2)
+            result += "Array[String]"
+        }
+        Struct($ti) -> {
+            if ti.members.length > 0 {
+                indent_string(result, indent)
+                result.appendf(format, name)
+                result += "`n"
+                get_help_message_helper(type_info, result, indent + indent_size)
+            }
+        }
+        Enum($ti) -> {
+            if ti.members.length > 0 {
+                indent_string(result, indent)
+                result.appendf(format, name)
+                result += "`n"
+                get_help_message_helper(type_info, result, indent + indent_size)
+            }
+        }
+        $_ -> {
+            indent_string(result, indent)
+            result.appendf(format, name)
+            indent_string(result, indent2)
+            type_info.print(result, "")
+        }
+    }
+}
+
 assign_value_to_member :: (member: &TypeInfoStructMember, result: &void, value: any) -> bool {
     if member.typ == value.typ {
         C.memcpy(result, value.val, cast member.typ.size)
@@ -262,4 +425,23 @@ to_ascii_strings :: (argv: &&u16, argc: int) -> Array[String] {
         array.add(str)
     }
     return array
+}
+
+indent_string :: (str: ref String, amount: int) {
+    str.reserve_more(amount)
+    for 0..amount {
+        str += " "
+    }
+}
+
+get_display_name_for_member :: (mem: ref $T) -> string {
+    name_att := mem.get_attribute("name")
+    if name_att == null {
+        return mem.name
+    }
+
+    @assert(name_att.args.length == 1)
+    @assert(name_att.args[0].typ == @type_info(string))
+    name := <<cast(&string)name_att.args[0].val
+    return name
 }

@@ -301,23 +301,32 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateEnumValueExpr(AstEnumValueExpr eve)
         {
+            var enumType = eve.Type as EnumType;
+
             var v = CreateLocalVariable(eve.Type);
 
-            var ptr = builder.CreateStructGEP(v, 0, "");
-            var val = LLVM.ConstInt(CheezTypeToLLVMType(eve.EnumDecl.TagType), eve.Member.Value.ToUlong(), false);
-            builder.CreateStore(val, ptr);
-
-            if (eve.Argument != null)
+            if (enumType.Declaration.IsReprC)
             {
-                ptr = builder.CreateStructGEP(v, 1, "");
-                ptr = builder.CreatePointerCast(ptr, CheezTypeToLLVMType(PointerType.GetPointerType(eve.Argument.Type)), "");
-
-                val = GenerateExpression(eve.Argument, true);
-                builder.CreateStore(val, ptr);
+                return CheezValueToLLVMValue(enumType.Declaration.TagType, eve.Member.Value);
             }
+            else
+            {
+                var ptr = builder.CreateStructGEP(v, 0, "");
+                var val = LLVM.ConstInt(CheezTypeToLLVMType(eve.EnumDecl.TagType), eve.Member.Value.ToUlong(), false);
+                builder.CreateStore(val, ptr);
 
-            v = builder.CreateLoad(v, "");
-            return v;
+                if (eve.Argument != null)
+                {
+                    ptr = builder.CreateStructGEP(v, 1, "");
+                    ptr = builder.CreatePointerCast(ptr, CheezTypeToLLVMType(PointerType.GetPointerType(eve.Argument.Type)), "");
+
+                    val = GenerateExpression(eve.Argument, true);
+                    builder.CreateStore(val, ptr);
+                }
+
+                v = builder.CreateLoad(v, "");
+                return v;
+            }
         }
 
         private LLVMValueRef GenerateMatchExpr(AstMatchExpr m)
@@ -454,22 +463,34 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case AstEnumValueExpr e:
                     {
-                        var tag = LLVM.ConstInt(LLVM.Int64Type(), e.Member.Value.ToUlong(), true);
+                        var enumType = e.Member.EnumDeclaration.EnumType;
+                        if (enumType.Declaration.IsReprC)
+                        {
+                            var tag = CheezValueToLLVMValue(enumType.Declaration.TagType, e.Member.Value);
+                            var val = builder.CreateLoad(value, "");
 
-                        var valueTagPtr = builder.CreateStructGEP(value, 0, "");
-                        var valueTag = builder.CreateLoad(valueTagPtr, "");
+                            var cmp = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, tag, val, "");
+                            return cmp;
+                        }
+                        else
+                        {
+                            var tag = LLVM.ConstInt(LLVM.Int64Type(), e.Member.Value.ToUlong(), true);
 
-                        var comp1 = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, valueTag, tag, "");
+                            var valueTagPtr = builder.CreateStructGEP(value, 0, "");
+                            var valueTag = builder.CreateLoad(valueTagPtr, "");
 
-                        if (e.Argument == null)
-                            return comp1;
+                            var comp1 = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, valueTag, tag, "");
 
-                        var valPtr = builder.CreateStructGEP(value, 1, "");
-                        
-                        valPtr = builder.CreatePointerCast(valPtr, CheezTypeToLLVMType(PointerType.GetPointerType(e.Argument.Type)), "");
-                        var comp2 = GeneratePatternCondition(e.Argument, valPtr);
+                            if (e.Argument == null)
+                                return comp1;
 
-                        return builder.CreateAnd(comp1, comp2, "");
+                            var valPtr = builder.CreateStructGEP(value, 1, "");
+                            
+                            valPtr = builder.CreatePointerCast(valPtr, CheezTypeToLLVMType(PointerType.GetPointerType(e.Argument.Type)), "");
+                            var comp2 = GeneratePatternCondition(e.Argument, valPtr);
+
+                            return builder.CreateAnd(comp1, comp2, "");
+                        }
                     }
 
                 case AstReferenceTypeExpr r:

@@ -572,8 +572,8 @@ VK_PA1                             :: 0xFD
 VK_OEM_CLEAR                       :: 0xFE
 
 // GetLastError() codes
-WindowsErrorCode :: enum #tag_type(u32) {
-    ERROR_SUCCESS          = 0x00
+WindowsErrorCode :: enum #repr("C") #tag_type(i32) {
+    ERROR_SUCCESS          = 0x0
     ERROR_INVALID_FUNCTION = 0x1
     ERROR_FILE_NOT_FOUND   = 0x2
     ERROR_PATH_NOT_FOUND   = 0x03

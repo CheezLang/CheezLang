@@ -1,0 +1,29 @@
+Usage: MainCommand <args>
+
+MainCommand:
+    help            Displays this help info
+    compile         compile a file
+    build           build a project using build.che
+    project         manage projects
+    run             run a bytecode or source file
+
+    help arguments: none
+    
+    compile arguments:
+        -files      List of files to compile (file extension optional)
+                    e.g. -files main.che foo.che bar.che
+                    e.g. -files main foo bar
+    
+    project arguments:
+        new         create a new project
+
+        new:
+            -name       name of the project
+            -type       what kind of project
+
+            -type:
+                Program
+                DynamicLibrary
+                StaticLibrary
+        
+    run arguments: none
