@@ -507,24 +507,89 @@ namespace Cheez.Types.Primitive
         }
     }
 
+    public class CharType : CheezType
+    {
+        private static Dictionary<int, CharType> sTypes = new Dictionary<int, CharType>();
+        public static CharType LiteralType { get; } = new CharType(0);
+        public static CharType DefaultType => GetCharType(4);
+
+        private CharType(int size) : base(size, size, true)
+        {
+        }
+
+        public bool Signed { get; private set; }
+        public override bool IsErrorType => false;
+        public override bool IsPolyType => false;
+
+        public static CharType GetCharType(int sizeInBytes)
+        {
+            var key = sizeInBytes;
+
+            if (sTypes.ContainsKey(key))
+            {
+                return sTypes[key];
+            }
+
+            var type = new CharType(sizeInBytes);
+
+            sTypes[key] = type;
+            return type;
+        }
+
+        public override string ToString()
+        {
+            return "char" + (GetSize() * 8);
+        }
+
+        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        {
+            if (concrete is ReferenceType r)
+                concrete = r.TargetType;
+
+            if (concrete is CharType t)
+            {
+                if (concrete.GetSize() != this.GetSize())
+                    return -1;
+                return 0;
+            }
+            return -1;
+        }
+
+        public BigInteger MinValue => GetSize() switch
+        {
+            1 => byte.MinValue,
+            2 => ushort.MinValue,
+            4 => uint.MinValue,
+            _ => throw new NotImplementedException()
+        };
+
+        public BigInteger MaxValue => GetSize() switch
+        {
+            1 => byte.MaxValue,
+            2 => ushort.MaxValue,
+            4 => uint.MaxValue,
+            _ => throw new NotImplementedException()
+        };
+    }
+
+    public class StringType : CheezType
+    {
+        public static StringType Instance { get; } = new StringType();
+
+        public override bool IsPolyType => false;
+        public override bool IsErrorType => false;
+
+        private StringType() : base(16, 8, true) { }
+        public override string ToString() => "string";
+    }
+
     public class StringLiteralType : CheezType
     {
         public static StringLiteralType Instance { get; } = new StringLiteralType();
         public override bool IsPolyType => false;
-        public override string ToString() => "string_literal";
         public override bool IsErrorType => false;
 
         private StringLiteralType() : base(0, 1, false) { }
-    }
-
-    public class CharType : CheezType
-    {
-        public static CharType Instance { get; } = new CharType();
-
-        public override bool IsPolyType => false;
-        public override string ToString() => "char";
-        public override bool IsErrorType => false;
-
-        private CharType() : base(1, 1, true) { }
+        public override string ToString() => "string_literal";
     }
 }

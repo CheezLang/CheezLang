@@ -2,4 +2,6 @@
 #include <Shlwapi.h>
 
 int main() {
+    //_In_NLS_string_(cbMultiByte)LPCCH lpMultiByteStr
+    MultiByteToWideChar()
 }

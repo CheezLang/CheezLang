@@ -167,6 +167,17 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (cc.GetFlag(ExprFlags.IgnoreInCodeGen))
                 return LLVM.GetUndef(CheezTypeToLLVMType(cc.Type));
 
+            if (cc.Name.Name == "string_from_ptr_and_length")
+            {
+                var ptr = GenerateExpression(cc.Arguments[0], true);
+                var len = GenerateExpression(cc.Arguments[1], true);
+                var withLen = builder.CreateInsertValue(
+                    LLVM.GetUndef(CheezTypeToLLVMType(CheezType.String)), len, 0, "");
+                var result = builder.CreateInsertValue(withLen, ptr, 1, "");
+
+                return result;
+            }
+
             if (cc.Name.Name == "type_info")
             {
                 return typeInfoTable[cc.Arguments[0].Expr.Value as CheezType];
@@ -583,22 +594,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             else throw new NotImplementedException();
         }
 
-        private LLVMValueRef CreateIntCast(IntType from, IntType to, LLVMValueRef value)
+        private LLVMValueRef CreateIntCast(CheezType from, bool fromSigned, CheezType to, bool toSigned, LLVMValueRef value)
         {
             var toLLVM = CheezTypeToLLVMType(to);
 
-            if (to.Signed && from.Signed)
+            if (toSigned && fromSigned)
             {
                 return builder.CreateIntCast(value, toLLVM, "");
             }
-            else if (to.Signed) // s <- u
+            else if (toSigned) // s <- u
             {
                 if (to.GetSize() > from.GetSize())
                     return builder.CreateZExtOrBitCast(value, toLLVM, "");
                 else
                     return builder.CreateTruncOrBitCast(value, toLLVM, "");
             }
-            else if (from.Signed) // u <- s
+            else if (fromSigned) // u <- s
             {
                 if (to.GetSize() > from.GetSize())
                     return builder.CreateZExtOrBitCast(value, toLLVM, "");
@@ -639,7 +650,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (to is IntType t1 && from is IntType f1) // int <- int
             {
                 var v = GenerateExpression(cast.SubExpression, true);
-                return CreateIntCast(f1, t1, v);
+                return CreateIntCast(f1, f1.Signed, t1, t1.Signed, v);
+            }
+            if (to is CharType c1 && from is CharType c2) // char <- char
+            {
+                var v = GenerateExpression(cast.SubExpression, true);
+                return CreateIntCast(c2, false, c1, false, v);
+            }
+            if (to is CharType c3 && from is IntType i3) // char <- int
+            {
+                var v = GenerateExpression(cast.SubExpression, true);
+                return CreateIntCast(i3, i3.Signed, c3, false, v);
+            }
+            if (to is IntType i4 && from is CharType c4) // int <- char
+            {
+                var v = GenerateExpression(cast.SubExpression, true);
+                return CreateIntCast(c4, false, i4, i4.Signed, v);
             }
             if (to is PointerType && from is IntType) // * <- int
                 return builder.CreateCast(LLVMOpcode.LLVMIntToPtr, GenerateExpression(cast.SubExpression, true), toLLVM, "");
@@ -655,10 +681,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return builder.CreateCast(i2.Signed ? LLVMOpcode.LLVMSIToFP : LLVMOpcode.LLVMUIToFP, GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is IntType && from is BoolType) // int <- bool
                 return builder.CreateZExt(GenerateExpression(cast.SubExpression, true), toLLVM, "");
-            if (to is IntType && from is CharType) // int <- char
-                return builder.CreateSExt(GenerateExpression(cast.SubExpression, true), toLLVM, "");
-            if (to is CharType && from is IntType) // char <- int
-                return builder.CreateTrunc(GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is SliceType s && from is PointerType p) // [] <- *
             {
                 var withLen = builder.CreateInsertValue(LLVM.GetUndef(CheezTypeToLLVMType(s)), LLVM.ConstInt(LLVM.Int64Type(), 0, false), 0, "");
@@ -667,11 +689,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return result;
             }
 
-            if (to is IntType i3 && from is EnumType e)
+            if (to is IntType i5 && from is EnumType e)
             {
                 var v = GenerateExpression(cast.SubExpression, true);
                 var tag = builder.CreateExtractValue(v, 0, "");
-                return CreateIntCast(i3, e.Declaration.TagType, tag);
+                return CreateIntCast(i5, i5.Signed, e.Declaration.TagType, e.Declaration.TagType.Signed, tag);
             }
 
             if (to is BoolType && from is FunctionType)
@@ -952,14 +974,32 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 { ("!=", CheezType.Bool), GetICompare(LLVMIntPredicate.LLVMIntNE) },
 
                 //
-                { ("+", CheezType.Char), LLVM.BuildAdd },
-                { ("-", CheezType.Char), LLVM.BuildSub },
-                { ("==", CheezType.Char), GetICompare(LLVMIntPredicate.LLVMIntEQ) },
-                { ("!=", CheezType.Char), GetICompare(LLVMIntPredicate.LLVMIntNE) },
-                { (">", CheezType.Char), GetICompare(LLVMIntPredicate.LLVMIntSGT) },
-                { (">=", CheezType.Char), GetICompare(LLVMIntPredicate.LLVMIntSGE) },
-                { ("<", CheezType.Char), GetICompare(LLVMIntPredicate.LLVMIntSLT) },
-                { ("<=", CheezType.Char), GetICompare(LLVMIntPredicate.LLVMIntSLE) },
+                { ("+", CharType.GetCharType(1)), LLVM.BuildAdd },
+                { ("-", CharType.GetCharType(1)), LLVM.BuildSub },
+                { ("==", CharType.GetCharType(1)), GetICompare(LLVMIntPredicate.LLVMIntEQ) },
+                { ("!=", CharType.GetCharType(1)), GetICompare(LLVMIntPredicate.LLVMIntNE) },
+                { (">", CharType.GetCharType(1)), GetICompare(LLVMIntPredicate.LLVMIntSGT) },
+                { (">=", CharType.GetCharType(1)), GetICompare(LLVMIntPredicate.LLVMIntSGE) },
+                { ("<", CharType.GetCharType(1)), GetICompare(LLVMIntPredicate.LLVMIntSLT) },
+                { ("<=", CharType.GetCharType(1)), GetICompare(LLVMIntPredicate.LLVMIntSLE) },
+
+                { ("+", CharType.GetCharType(2)), LLVM.BuildAdd },
+                { ("-", CharType.GetCharType(2)), LLVM.BuildSub },
+                { ("==", CharType.GetCharType(2)), GetICompare(LLVMIntPredicate.LLVMIntEQ) },
+                { ("!=", CharType.GetCharType(2)), GetICompare(LLVMIntPredicate.LLVMIntNE) },
+                { (">", CharType.GetCharType(2)), GetICompare(LLVMIntPredicate.LLVMIntSGT) },
+                { (">=", CharType.GetCharType(2)), GetICompare(LLVMIntPredicate.LLVMIntSGE) },
+                { ("<", CharType.GetCharType(2)), GetICompare(LLVMIntPredicate.LLVMIntSLT) },
+                { ("<=", CharType.GetCharType(2)), GetICompare(LLVMIntPredicate.LLVMIntSLE) },
+
+                { ("+", CharType.GetCharType(4)), LLVM.BuildAdd },
+                { ("-", CharType.GetCharType(4)), LLVM.BuildSub },
+                { ("==", CharType.GetCharType(4)), GetICompare(LLVMIntPredicate.LLVMIntEQ) },
+                { ("!=", CharType.GetCharType(4)), GetICompare(LLVMIntPredicate.LLVMIntNE) },
+                { (">", CharType.GetCharType(4)), GetICompare(LLVMIntPredicate.LLVMIntSGT) },
+                { (">=", CharType.GetCharType(4)), GetICompare(LLVMIntPredicate.LLVMIntSGE) },
+                { ("<", CharType.GetCharType(4)), GetICompare(LLVMIntPredicate.LLVMIntSLT) },
+                { ("<=", CharType.GetCharType(4)), GetICompare(LLVMIntPredicate.LLVMIntSLE) },
             };
 
         private Dictionary<string, Func<LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string, LLVMValueRef>> builtInPointerOperators
@@ -1419,6 +1459,59 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         return result;
                     }
 
+                case StringType s:
+                    {
+                        switch (expr.Arguments[0].Type)
+                        {
+                            case IntType _:
+                                {
+                                    var index = GenerateExpression(expr.Arguments[0], true);
+                                    var slice = GenerateExpression(expr.SubExpression, false);
+
+                                    var dataPtrPtr = builder.CreateStructGEP(slice, 1, "");
+                                    var dataPtr = builder.CreateLoad(dataPtrPtr, "");
+
+                                    var ptr = builder.CreateInBoundsGEP(dataPtr, new LLVMValueRef[] { index }, "");
+
+                                    var val = ptr;
+                                    if (deref)
+                                        val = builder.CreateLoad(ptr, "");
+                                    return val;
+                                }
+
+                            case RangeType _:
+                                {
+                                    var range = GenerateExpression(expr.Arguments[0], true);
+                                    var slice = GenerateExpression(expr.SubExpression, false);
+
+                                    var range_begin = builder.CreateExtractValue(range, 0, "range_begin");
+                                    range_begin = builder.CreateIntCast(range_begin, LLVM.Int64Type(), "range_begin_int");
+
+                                    var range_end = builder.CreateExtractValue(range, 1, "range_end");
+                                    range_end = builder.CreateIntCast(range_end, LLVM.Int64Type(), "range_end_int");
+
+                                    var dataPtrPtr = builder.CreateStructGEP(slice, 1, "slice_data_ptr");
+                                    var dataPtr = builder.CreateLoad(dataPtrPtr, "slice_data");
+
+                                    var length_ptr = builder.CreateStructGEP(slice, 0, "slice_length_ptr");
+                                    length_ptr = builder.CreateLoad(length_ptr, "slice_length");
+
+                                    dataPtr = builder.CreatePtrToInt(dataPtr, LLVM.Int64Type(), "");
+                                    dataPtr = builder.CreateAdd(dataPtr, range_begin, "data_new");
+                                    dataPtr = builder.CreateIntToPtr(dataPtr, LLVM.Int8Type().GetPointerTo(), "data_new_ptr");
+                                    length_ptr = builder.CreateSub(range_end, range_begin, "length_new");
+
+                                    var result = builder.CreateInsertValue(LLVM.GetUndef(CheezTypeToLLVMType(s)), length_ptr, 0, "result");
+                                    result = builder.CreateInsertValue(result, dataPtr, 1, "result");
+
+                                    return result;
+                                }
+
+                            default:
+                                throw new NotImplementedException();
+                        }
+                    }
+
                 case SliceType s:
                     {
                         switch (expr.Arguments[0].Type)
@@ -1622,7 +1715,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         return result;
                     }
 
-                case SliceType slice:
+                case StringType str:
                     {
                         if (expr.Right.Name == "data")
                         {
@@ -1631,12 +1724,84 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             var dataPtr = builder.CreateLoad(dataPtrPtr, "");
                             return dataPtr;
                         }
-                        else if (expr.Right.Name == "length")
+                        if (expr.Right.Name == "length")
                         {
                             var lengthPtr = builder.CreateStructGEP(value, 0, "");
                             if (!deref) return lengthPtr;
                             var length = builder.CreateLoad(lengthPtr, "");
                             return length;
+                        }
+                        switch (expr.Right.Name)
+                        {
+                            case "bytes":
+                                {
+                                    var len = builder.CreateStructGEP(value, 0, "");
+                                    len = builder.CreateLoad(len, "");
+                                    var ptr = builder.CreateStructGEP(value, 1, "");
+                                    ptr = builder.CreateLoad(ptr, "");
+                                    ptr = builder.CreatePointerCast(ptr, LLVM.Int8Type().GetPointerTo(), "");
+
+                                    var result = LLVM.GetUndef(CheezTypeToLLVMType(expr.Type));
+                                    result = builder.CreateInsertValue(result, len, 0, "");
+                                    result = builder.CreateInsertValue(result, ptr, 1, "");
+                                    return result;
+                                }
+                            case "ascii":
+                                {
+                                    var len = builder.CreateStructGEP(value, 0, "");
+                                    len = builder.CreateLoad(len, "");
+                                    var ptr = builder.CreateStructGEP(value, 1, "");
+                                    ptr = builder.CreateLoad(ptr, "");
+                                    ptr = builder.CreatePointerCast(ptr, LLVM.Int8Type().GetPointerTo(), "");
+
+                                    var result = LLVM.GetUndef(CheezTypeToLLVMType(expr.Type));
+                                    result = builder.CreateInsertValue(result, len, 0, "");
+                                    result = builder.CreateInsertValue(result, ptr, 1, "");
+                                    return result;
+                                }
+                        }
+                        break;
+                    }
+
+                case SliceType slice:
+                    {
+                        if (expr.Left.GetFlag(ExprFlags.IsLValue))
+                        {
+                            switch (expr.Right.Name)
+                            {
+                                case "data":
+                                    {
+                                        var dataPtrPtr = builder.CreateStructGEP(value, 1, "");
+                                        if (!deref) return dataPtrPtr;
+                                        var dataPtr = builder.CreateLoad(dataPtrPtr, "");
+                                        return dataPtr;
+                                    }
+
+                                case "length":
+                                    {
+                                        var lengthPtr = builder.CreateStructGEP(value, 0, "");
+                                        if (!deref) return lengthPtr;
+                                        var length = builder.CreateLoad(lengthPtr, "");
+                                        return length;
+                                    }
+                            }
+                        }
+                        else
+                        {
+                            switch (expr.Right.Name)
+                            {
+                                case "data":
+                                    {
+                                        var dataPtr = builder.CreateExtractValue(value, 1, "");
+                                        return dataPtr;
+                                    }
+
+                                case "length":
+                                    {
+                                        var length = builder.CreateExtractValue(value, 0, "");
+                                        return length;
+                                    }
+                            }
                         }
                         break;
                     }
@@ -1730,25 +1895,25 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateStringLiteralExpr(AstStringLiteral expr)
         {
-            var ch = expr.StringValue;
+            //var ch = expr.StringValue;
 
-            if (expr.Type == CheezType.CString)
-            {
-                return builder.CreateGlobalStringPtr(ch, "");
-            }
-            else if (expr.Type == CheezType.String)
-            {
-                var str = builder.CreateGlobalString(ch, "");
-                return LLVM.ConstNamedStruct(CheezTypeToLLVMType(expr.Type), new LLVMValueRef[]
-                {
-                    LLVM.ConstInt(LLVM.Int64Type(), (ulong)ch.Length, true),
-                    LLVM.ConstPointerCast(str, LLVM.PointerType(LLVM.Int8Type(), 0))
-                });
-            }
-            else
-            {
+            //if (expr.Type == CheezType.CString)
+            //{
+            //    return builder.CreateGlobalStringPtr(ch, "");
+            //}
+            //else if (expr.Type == CheezType.String)
+            //{
+            //    var str = builder.CreateGlobalString(ch, "");
+            //    return LLVM.ConstNamedStruct(CheezTypeToLLVMType(expr.Type), new LLVMValueRef[]
+            //    {
+            //        LLVM.ConstInt(LLVM.Int64Type(), (ulong)ch.Length, true),
+            //        LLVM.ConstPointerCast(str, LLVM.PointerType(LLVM.Int8Type(), 0))
+            //    });
+            //}
+            //else
+            //{
                 throw new NotImplementedException();
-            }
+            //}
         }
 
         private LLVMValueRef GenerateBoolExpr(AstBoolExpr expr)

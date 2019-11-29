@@ -31,17 +31,17 @@ impl Printable for char {
 
 impl Printable for float {
     print :: (ref Self, str: ref String, format: string) {
-        buff : string = @alloca(char, 128)
+        buff : []char8 = @alloca(char8, 128)
         buff.length = C.sprintf(buff.data, "%g", double(self))
-        str.append_string(buff)
+        str.append_cstring(buff.data)
     }
 }
 
 impl Printable for double {
     print :: (ref Self, str: ref String, format: string) {
-        buff : string = @alloca(char, 128)
+        buff : []char8 = @alloca(char8, 128)
         buff.length = C.sprintf(buff.data, "%g", self)
-        str.append_string(buff)
+        str.append_cstring(buff.data)
     }
 }
 

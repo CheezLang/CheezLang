@@ -8,7 +8,7 @@
 // import examples.pathtracer
 // import examples.print_any
 // import examples.command_line_parser
-import compiler.cli
+// import compiler.cli
 // import compiler.compiler_test
 
 // import examples.postfix
@@ -22,43 +22,132 @@ import compiler.cli
 // import "examples/project_euler/018_maximum_path_sum_1"
 // import bugs.bug1
 
-/*
+//*
 #test_expect_output("")
 
+use import std.os.windows_functions
+use import std.os.windows_types
+use import std.os.windows_constants
+use import std.io.file
+use import std.string
+use import std.mem.allocator
 io  :: import std.io
 fmt :: import std.fmt
+C   :: import std.c
 
-// Foo :: struct {
-//     #help #test1
-//     num: int
 
-//     lol: string
 
-//     #help2("lol")
-//     #help3
-//     flt: float
+Uft8 :: struct{}
 
-//     bar: bool
+impl Uft8 {
+    decode :: (bytes: []u8) -> char, i32 {
+        b0 : u32 = cast bytes[0]
 
-// }
+        byte_count : i32 = 0
+        code_point : u32 = 0
+        if @bin_lsr(b0, 7) == 0 {
+            code_point = cast b0
+            byte_count = 1
+        } else if @bin_lsr(b0, 5) == 0b110 {
+            b1 : u32 = cast bytes[1]
 
-Bar :: struct {
-    #test("lol")
-    num : int
+            b0_masked := @bin_and(b0, 0b00011111)
+            b1_masked := @bin_and(b1, 0b00111111)
+
+            code_point = @bin_or(@bin_lsl(b0_masked, 6), b1_masked)
+            byte_count = 2
+        } else if @bin_lsr(b0, 4) == 0b1110 {
+            b1 : u32 = cast bytes[1]
+            b2 : u32 = cast bytes[2]
+
+            b0_masked := @bin_and(b0, 0b00001111)
+            b1_masked := @bin_and(b1, 0b00111111)
+            b2_masked := @bin_and(b2, 0b00111111)
+
+            code_point = @bin_or(@bin_lsl(b0_masked, 6), b1_masked)
+            code_point = @bin_or(@bin_lsl(code_point, 6), b2_masked)
+            byte_count = 3
+        } else if @bin_lsr(b0, 3) == 0b11110 {
+            b1 : u32 = cast bytes[1]
+            b2 : u32 = cast bytes[2]
+            b3 : u32 = cast bytes[3]
+
+            b0_masked := @bin_and(b0, 0b00000111)
+            b1_masked := @bin_and(b1, 0b00111111)
+            b2_masked := @bin_and(b2, 0b00111111)
+            b3_masked := @bin_and(b3, 0b00111111)
+
+            code_point = @bin_or(@bin_lsl(b0_masked, 6), b1_masked)
+            code_point = @bin_or(@bin_lsl(code_point, 6), b2_masked)
+            code_point = @bin_or(@bin_lsl(code_point, 6), b3_masked)
+            byte_count = 4
+        }
+
+        return char(code_point), byte_count
+    }
+}
+
+impl string {
+    index_of :: (ref Self, ch: char) -> Option[int] {
+        return None
+    }
 }
 
 Main :: () {
-    ti := &@type_info(Bar).kind.Struct
-    for mem: ti.members {
-        for att : mem.attributes {
-            io.printf("#{}(", att.name)
-            for arg : att.args {
-                io.print(fmt.format_any(arg))
-            }
-            io.print(") ")
-        }
-        io.printfln("`n{}`n", mem.name)
+    a := "(╯°□°）╯︵ ┻━┻ 😂😂😂😂.txt"
 
+    str := String.from_string(a)
+    str += char(0)
+
+    { #label b
+        required_size := MultiByteToWideChar(CP_UTF8, 0, str.get_raw(), cast str.get_length(), null, 0)
+        io.printfln("required_size: {}", required_size)
+        wide_char_str := alloc_raw(u16, cast required_size)
+        bytes_written := MultiByteToWideChar(CP_UTF8, 0, str.get_raw(), cast str.get_length(), wide_char_str, required_size)
+        io.printfln("bytes_written: {}", bytes_written)
+        handle := CreateFileW(wide_char_str, GENERIC_WRITE, FILE_SHARE_WRITE, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null)
+        if (cast(int)handle) == -1 {
+            io.println("failed to create file")
+            break b
+        }
+
+        bytesRead : u32 = 0
+        if WriteFile(handle, cast str.get_raw(), cast(u32)str.get_length() - 1, &bytesRead, null) == 0 {
+            io.println("failed to write data")
+            break b
+        }
+
+        if CloseHandle(handle) == 0 {
+            io.println("failed to close handle")
+            break b
+        }
     }
+
+
+    // bytes := a.bytes
+    // ascii := a.ascii
+
+    // io.println(a.bytes.length)
+    // io.println(a.ascii.length)
+
+    // io.println(a.bytes.length)
+    // io.println(a)
+
+    // for i : 0..a.bytes.length {
+    //     io.printf("{:b} ", u32(a[i]))
+    // }
+    // io.println("")
+    // io.println("")
+    // io.println("")
+    // io.println("")
+
+    // for c : a {
+    //     io.printf("{:b} ", u32(c))
+    // }
+    // io.println("")
+
+    // if !write_file_string("test.out", a) {
+    //     io.println("Failed to write to file")
+    // }
 }
 // */

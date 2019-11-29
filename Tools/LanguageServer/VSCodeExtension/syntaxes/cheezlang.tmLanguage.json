@@ -29,7 +29,7 @@
         },
         "core_types": {
             "name": "storage.type.cheezlang",
-            "match": "\\b(bool|char|u8|u16|u32|u64|i8|i16|i32|i64|f32|f64|string|c_string|int|uint|float|double|void|Self|any|type)\\b"
+            "match": "\\b(bool|char|char8|char16|char32|u8|u16|u32|u64|i8|i16|i32|i64|f32|f64|string|c_string|int|uint|float|double|void|Self|any|type)\\b"
         },
         "type_modifiers": {
             "name": "storage.type.cheezlang",

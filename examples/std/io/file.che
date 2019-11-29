@@ -11,16 +11,16 @@ mem :: import std.mem.allocator
 #export_scope
 
 load_file :: (filename: string) -> Result[String, String] {
-    str_c := @alloca(char, filename.length + 1)
-    str_c[filename.length] = cast 0
-    C.memcpy(cast str_c, cast filename.data, cast filename.length)
+    str_c := @alloca(char8, filename.bytes.length + 1)
+    str_c[filename.bytes.length] = cast 0
+    C.memcpy(cast str_c, cast filename.bytes.data, cast filename.bytes.length)
     return load_filec(str_c)
 }
 
 load_filec :: (filename: c_string) -> Result[String, String] {
     content := String.empty()
 
-    handle := CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null)
+    handle := CreateFileA(cast filename, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null)
     if (cast(int)handle) == -1 {
         lastError := GetLastError();
         return Err(fmt.format("failed to open file: 0x{:x}", [lastError]))
@@ -49,7 +49,7 @@ load_filec :: (filename: c_string) -> Result[String, String] {
 }
 
 load_filecb :: (filename: c_string) -> Option[[]u8] {
-    handle := CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null)
+    handle := CreateFileA(cast filename, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null)
     if (cast(int)handle) == -1 {
         return None
     }
@@ -76,7 +76,7 @@ load_filecb :: (filename: c_string) -> Option[[]u8] {
 }
 
 write_filecb :: (filename: c_string, data: []u8) -> bool {
-    handle := CreateFileA(filename, GENERIC_WRITE, FILE_SHARE_WRITE, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null)
+    handle := CreateFileA(cast filename, GENERIC_WRITE, FILE_SHARE_WRITE, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null)
     if (cast(int)handle) == -1 {
         io.println("failed to create file")
         return false
@@ -98,20 +98,20 @@ write_filecb :: (filename: c_string, data: []u8) -> bool {
 
 write_file_string :: (filename: string, str: string) -> bool {
     filename_c := {
-        str_c := @alloca(char, filename.length + 1)
-        str_c[filename.length] = cast 0
-        C.memcpy(cast str_c, cast filename.data, cast filename.length)
+        str_c := @alloca(char8, filename.bytes.length + 1)
+        str_c[filename.bytes.length] = cast 0
+        C.memcpy(cast str_c, cast filename.bytes.data, cast filename.bytes.length)
         str_c
     }
 
-    handle := CreateFileA(filename_c, GENERIC_WRITE, FILE_SHARE_WRITE, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null)
+    handle := CreateFileA(cast filename_c, GENERIC_WRITE, FILE_SHARE_WRITE, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null)
     if (cast(int)handle) == -1 {
         io.println("failed to create file")
         return false
     }
 
     bytesRead : u32 = 0
-    if WriteFile(handle, cast str.data, cast(u32)str.length, &bytesRead, null) == 0 {
+    if WriteFile(handle, cast str.bytes.data, cast(u32)str.bytes.length, &bytesRead, null) == 0 {
         io.println("failed to write data")
         return false
     }

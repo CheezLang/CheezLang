@@ -712,6 +712,12 @@ namespace Cheez.Ast.Expressions
             this.Types = values;
             this.Values = Types.Select(t => t.TypeExpr).ToList();
         }
+        public AstTupleExpr(List<AstExpression> values, ILocation Location)
+            : base(Location)
+        {
+            this.Types = values.Select(v => new AstParameter(null, v, null, v.Location)).ToList();
+            this.Values = Types.Select(t => t.TypeExpr).ToList();
+        }
 
         public override AstExpression Clone()
             => CopyValuesTo(new AstTupleExpr(Types.Select(v => v.Clone()).ToList(), Location));

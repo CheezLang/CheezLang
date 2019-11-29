@@ -37,18 +37,18 @@ format_int :: (buffer: ref String, val: $T, _base: int = 10) {
     buffer.resize(buffer.length + len)
     
     if val == 0 {
-        buffer[buffer.length - 1] = '0'
+        buffer[buffer.length - 1] = u8(0)
     } else {
         i := buffer.length - 1
         while val != 0, i -= 1 {
             lastDigit := (val % base) * sign
 
             val = val / base
-            buffer[i] = digit_to_char(lastDigit)
+            buffer[i] = u8(digit_to_char(lastDigit))
         }
 
         if sign < 0 {
-            buffer[i] = '-'
+            buffer[i] = u8('-')
             i -= 1
         }
     }
@@ -64,10 +64,10 @@ format :: (text: string, args: []any) -> String {
 
     formatSpecifier := {
         len :: 64
-        String.from_raw_ptr(@alloca(char, len), len)
+        String.from_raw_ptr(@alloca(u8, len), len)
     }
 
-    len      := text.length
+    len      := text.bytes.length
     argIndex := 0
     state    := Text
 
@@ -185,26 +185,17 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
         }
 
         TypeInfoKind.Slice($target) -> {
-            if int(target.kind) == int(TypeInfoKind.Char) {
-                if data == null {
-                    result.append_string("null")
-                } else {
-                    ptr := <<cast(&[]char) data
-                    result.append_string(ptr)
+            ptr := <<cast(&[]void) data
+            result += "["
+            for i : 0..ptr.length {
+                if i > 0 {
+                    result += ", "
                 }
-            } else {
-                ptr := <<cast(&[]void) data
-                result += "["
-                for i : 0..ptr.length {
-                    if i > 0 {
-                        result += ", "
-                    }
 
-                    elem := pointer_add(ptr.data, i * target.size)
-                    format_any_into_string(result, elem, target, format, recursive)
-                }
-                result += "]"
+                elem := pointer_add(ptr.data, i * target.size)
+                format_any_into_string(result, elem, target, format, recursive)
             }
+            result += "]"
         }
 
         TypeInfoKind.Struct($tstruct) -> {

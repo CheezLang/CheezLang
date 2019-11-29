@@ -52,6 +52,7 @@ namespace Cheez
                 case FloatType _:
                 case BoolType _:
                 case CharType _:
+                case StringType _:
                     return false;
 
                 case CheezTypeType _:

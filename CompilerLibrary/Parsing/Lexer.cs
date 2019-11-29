@@ -360,37 +360,37 @@ namespace Cheez.Parsing
         {
             switch (token.data as string)
             {
-                case "return": token.type = TokenType.KwReturn; break;
-                case "ref": token.type = TokenType.KwRef; break;
-                case "fn": token.type = TokenType.Kwfn; break;
-                case "Fn": token.type = TokenType.KwFn; break;
-                case "struct": token.type = TokenType.KwStruct; break;
-                case "impl": token.type = TokenType.KwImpl; break;
-                case "if": token.type = TokenType.KwIf; break;
-                case "else": token.type = TokenType.KwElse; break;
-                case "for": token.type = TokenType.KwFor; break;
-                case "while": token.type = TokenType.KwWhile; break;
-                case "loop": token.type = TokenType.KwLoop; break;
-                case "and": token.type = TokenType.KwAnd; break;
-                case "or": token.type = TokenType.KwOr; break;
-                case "true": token.type = TokenType.KwTrue; break;
-                case "false": token.type = TokenType.KwFalse; break;
-                case "null": token.type = TokenType.KwNull; break;
-                case "use": token.type = TokenType.KwUsing; break;
-                case "defer": token.type = TokenType.KwDefer; break;
-                case "enum": token.type = TokenType.KwEnum; break;
-                case "match": token.type = TokenType.KwMatch; break;
-                case "break": token.type = TokenType.KwBreak; break;
+                case "return":   token.type = TokenType.KwReturn; break;
+                case "ref":      token.type = TokenType.KwRef; break;
+                case "fn":       token.type = TokenType.Kwfn; break;
+                case "Fn":       token.type = TokenType.KwFn; break;
+                case "struct":   token.type = TokenType.KwStruct; break;
+                case "impl":     token.type = TokenType.KwImpl; break;
+                case "if":       token.type = TokenType.KwIf; break;
+                case "else":     token.type = TokenType.KwElse; break;
+                case "for":      token.type = TokenType.KwFor; break;
+                case "while":    token.type = TokenType.KwWhile; break;
+                case "loop":     token.type = TokenType.KwLoop; break;
+                case "and":      token.type = TokenType.KwAnd; break;
+                case "or":       token.type = TokenType.KwOr; break;
+                case "true":     token.type = TokenType.KwTrue; break;
+                case "false":    token.type = TokenType.KwFalse; break;
+                case "null":     token.type = TokenType.KwNull; break;
+                case "use":      token.type = TokenType.KwUsing; break;
+                case "defer":    token.type = TokenType.KwDefer; break;
+                case "enum":     token.type = TokenType.KwEnum; break;
+                case "match":    token.type = TokenType.KwMatch; break;
+                case "break":    token.type = TokenType.KwBreak; break;
                 case "continue": token.type = TokenType.KwContinue; break;
-                case "trait": token.type = TokenType.KwTrait; break;
-                case "cast": token.type = TokenType.KwCast; break;
-                case "const": token.type = TokenType.KwConst; break;
-                case "default": token.type = TokenType.KwDefault; break;
-                case "pub": token.type = TokenType.KwPub; break;
-                case "then": token.type = TokenType.KwThen; break;
-                case "do": token.type = TokenType.KwDo; break;
-                case "mut": token.type = TokenType.KwMut; break;
-                case "import": token.type = TokenType.KwImport; break;
+                case "trait":    token.type = TokenType.KwTrait; break;
+                case "cast":     token.type = TokenType.KwCast; break;
+                case "const":    token.type = TokenType.KwConst; break;
+                case "default":  token.type = TokenType.KwDefault; break;
+                case "pub":      token.type = TokenType.KwPub; break;
+                case "then":     token.type = TokenType.KwThen; break;
+                case "do":       token.type = TokenType.KwDo; break;
+                case "mut":      token.type = TokenType.KwMut; break;
+                case "import":   token.type = TokenType.KwImport; break;
             }
         }
 

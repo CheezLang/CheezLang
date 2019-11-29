@@ -4,6 +4,26 @@ use import windows_constants
 #export_scope
 
 // new, incomplete
+MultiByteToWideChar :: (
+  CodePage       : u32,
+  dwFlags        : DWORD,
+  lpMultiByteStr : &u8,
+  cbMultiByte    : i32,
+  lpWideCharStr  : &u16,
+  cchWideChar    : i32
+) -> i32 #stdcall;
+
+WideCharToMultiByte :: (
+  CodePage          : u32,
+  dwFlags           : DWORD,
+  lpWideCharStr     : &u16,
+  cchWideChar       : i32,
+  lpMultiByteStr    : &u8,
+  cbMultiByte       : i32,
+  lpDefaultChar     : &u8,
+  lpUsedDefaultChar : &BOOL
+) -> i32 #stdcall;
+
 FindFirstChangeNotificationA :: (
     lpPathName: c_string,
     bWatchSubtree: BOOL,
@@ -60,7 +80,8 @@ Sleep                     :: (millis: DWORD) #stdcall;
 GetStdHandle     :: (nStdHandle: DWORD) -> HANDLE #stdcall;
 WriteFile        :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
 ReadFile         :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
-CreateFileA      :: (lpFileName: c_string, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &void, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
+CreateFileA      :: (lpFileName: &u8,  dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &SECURITY_ATTRIBUTES, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
+CreateFileW      :: (lpFileName: &u16, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &SECURITY_ATTRIBUTES, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
 CreateDirectoryA :: (lpPathName: c_string, lpSecurityAttributes: &SECURITY_ATTRIBUTES) -> BOOL #stdcall;
 GetFileSize      :: (hFile: HANDLE, lpFileSizeHigh: &DWORD) -> DWORD #stdcall;
 GetFileSizeEx    :: (hFile: HANDLE, lpFileSize: &LARGE_INTEGER) -> BOOL #stdcall;

@@ -10,10 +10,9 @@ namespace Cheez.Types
     public abstract class CheezType
     {
         public static CheezType Void => VoidType.Intance;
-        public static CheezType CString => PointerType.GetPointerType(CheezType.Char);
-        public static CheezType String => SliceType.GetSliceType(CheezType.Char);
+        public static CheezType CString => PointerType.GetPointerType(CharType.GetCharType(1));
+        public static CheezType String => StringType.Instance;
         public static CheezType StringLiteral => StringLiteralType.Instance;
-        public static CheezType Char => CharType.Instance;
         public static CheezType Bool => BoolType.Instance;
         public static CheezType Error => ErrorType.Instance;
         public static CheezType Type => CheezTypeType.Instance;

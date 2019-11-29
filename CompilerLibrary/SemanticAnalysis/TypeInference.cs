@@ -10,7 +10,6 @@ using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Extras;
-using Cheez.Parsing;
 using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
@@ -35,7 +34,7 @@ namespace Cheez
 
         private static bool IsLiteralType(CheezType t)
         {
-            return t == IntType.LiteralType || t == FloatType.LiteralType || t == CheezType.StringLiteral || t == PointerType.NullLiteralType;
+            return t == IntType.LiteralType || t == FloatType.LiteralType || t == CheezType.StringLiteral || t == PointerType.NullLiteralType || t == CharType.LiteralType;
         }
 
         private static CheezType UnifyTypes(CheezType concrete, CheezType literal)
@@ -43,6 +42,7 @@ namespace Cheez
             if (concrete is ReferenceType r)
                 concrete = r.TargetType;
                 
+            if (concrete is CharType && literal is CharType) return concrete;
             if (concrete is IntType && literal is IntType) return concrete;
             if (concrete is FloatType && literal is IntType) return concrete;
             if (concrete is FloatType && literal is FloatType) return concrete;
@@ -61,6 +61,11 @@ namespace Cheez
             {
                 if (expected != null && !(expected is IntType || expected is FloatType)) return IntType.DefaultType;
                 return expected ?? IntType.DefaultType;
+            }
+            else if (literalType == CharType.LiteralType)
+            {
+                if (expected != null && !(expected is CharType)) return CharType.DefaultType;
+                return expected ?? CharType.DefaultType;
             }
             else if (literalType == FloatType.LiteralType)
             {
@@ -1521,6 +1526,7 @@ namespace Cheez
                 (to is IntType && from is BoolType) ||
                 (to is IntType && from is CharType) ||
                 (to is CharType && from is IntType) ||
+                (to is CharType && from is CharType) ||
                 (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType) ||
                 (to is SliceType s2 && from is ArrayType a && a.TargetType == s2.TargetType) ||
                 (to is BoolType && from is FunctionType) ||
@@ -1841,6 +1847,21 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "string_from_ptr_and_length":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr.Location, "@string_from_ptr_and_length takes 2 arguments");
+                            return expr;
+                        }
+
+                        var ptr = InferArg(0, PointerType.GetPointerType(IntType.GetIntType(1, false)));
+                        var len = InferArg(1, IntType.GetIntType(8, true));
+
+                        expr.Type = CheezType.String;
+                        return expr;
+                    }
+
                 case "function_name":
                     {
                         if (expr.Arguments.Count != 0)
@@ -2876,6 +2897,30 @@ namespace Cheez
                         break;
                     }
 
+                case StringType _:
+                    {
+                        var indexExpr = InferSingleIndex(null);
+                        if (indexExpr.Type.IsErrorType)
+                            return expr;
+
+                        expr.Arguments[0] = indexExpr = Deref(indexExpr, context);
+                        if (indexExpr.Type is IntType)
+                        {
+                            expr.SetFlag(ExprFlags.IsLValue, true);
+                            expr.Type = IntType.GetIntType(1, false);
+                        }
+                        else if (indexExpr.Type is RangeType r && r.TargetType is IntType)
+                        {
+                            expr.SetFlag(ExprFlags.IsLValue, false);
+                            expr.Type = CheezType.String;
+                        }
+                        else
+                        {
+                            ReportError(indexExpr, $"The index into a slice can't be '{indexExpr.Type}'");
+                        }
+                        break;
+                    }
+
                 case SliceType slice:
                     {
                         var indexExpr = InferSingleIndex(null);
@@ -3006,6 +3051,34 @@ namespace Cheez
             var sub = expr.Right.Name;
             switch (expr.Left.Type)
             {
+                case StringType str:
+                    {
+                        expr.SetFlag(ExprFlags.IsLValue, false);
+                        var name = expr.Right.Name;
+                        //if (name == "data")
+                        //{
+                        //    expr.Type = PointerType.GetPointerType(IntType.GetIntType(1, false));
+                        //    return expr;
+                        //}
+                        //if (name == "length")
+                        //{
+                        //    expr.Type = IntType.GetIntType(8, true);
+                        //    return expr;
+                        //}
+                        if (name == "bytes")
+                        {
+                            expr.Type = SliceType.GetSliceType(IntType.GetIntType(1, false));
+                            return expr;
+                        }
+                        if (name == "ascii")
+                        {
+                            expr.Type = SliceType.GetSliceType(CharType.GetCharType(1));
+                            //expr.Type = CheezType.Void;
+                            return expr;
+                        }
+                        return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
+                    }
+
                 case AnyType _:
                     {
                         var name = expr.Right.Name;
@@ -3080,7 +3153,7 @@ namespace Cheez
 
                 case SliceType slice:
                     {
-                        expr.SetFlag(ExprFlags.IsLValue, true);
+                        expr.SetFlag(ExprFlags.IsLValue, expr.Left.GetFlag(ExprFlags.IsLValue));
                         var name = expr.Right.Name;
                         if (name == "data")
                         {
@@ -3535,15 +3608,39 @@ namespace Cheez
                     // this is a cast
                 case CheezTypeType _:
                     {
-                        if (expr.Arguments.Count != 1)
+                        var targetType = (CheezType)expr.FunctionExpr.Value;
+                        var arg = expr.Arguments[0].Expr;
+
+                        if (targetType == CheezType.String)
+                        {
+                            if (expr.Arguments.Count != 2)
+                            {
+                                ReportError(expr.Location, "Cast requires exactly two arguments!");
+                                return expr;
+                            }
+
+                            var ptr = expr.Arguments[0].Expr;
+                            var len = expr.Arguments[1].Expr;
+
+                            var @string = new AstCompCallExpr(
+                                new AstIdExpr("string_from_ptr_and_length", false, expr.FunctionExpr.Location),
+                                new List<AstArgument> {
+                                    new AstArgument(ptr, Location: ptr.Location),
+                                    new AstArgument(len, Location: len.Location),
+                                },
+                                expr.Location);
+
+                            @string.Replace(expr);
+                            return InferTypeHelper(@string, expected, context);
+                        }
+                        else if (expr.Arguments.Count != 1)
                         {
                             ReportError(expr.Location, "Cast requires exactly one argument!");
                             return expr;
                         }
 
-                        var targetType = (CheezType)expr.FunctionExpr.Value;
                         var cast = new AstCastExpr(new AstTypeRef(targetType, expr.FunctionExpr.Location),
-                            expr.Arguments[0].Expr,
+                            arg,
                             expr.Location);
                         cast.Replace(expr);
                         return InferTypeHelper(cast, expected, context);
@@ -4449,7 +4546,7 @@ namespace Cheez
 
         private static AstExpression InferTypesCharLiteral(AstCharLiteral expr)
         {
-            expr.Type = CheezType.Char;
+            expr.Type = CharType.LiteralType;
             expr.CharValue = expr.RawValue[0];
             expr.Value = expr.CharValue;
 
@@ -4468,9 +4565,9 @@ namespace Cheez
                 }
             }
             else if (expected == CheezType.String || expected == CheezType.CString) expr.Type = expected;
-            else if (expected is ArrayType arr && arr.TargetType == CheezType.Char)
+            else if (expected is ArrayType arr && arr.TargetType is CharType ct)
             {
-                expr.Type = ArrayType.GetArrayType(CheezType.Char, expr.StringValue.Length);
+                expr.Type = ArrayType.GetArrayType(ct, expr.StringValue.Length);
             }
             else expr.Type = CheezType.StringLiteral;
 

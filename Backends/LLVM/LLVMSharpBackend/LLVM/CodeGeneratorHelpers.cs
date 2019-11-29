@@ -11,6 +11,7 @@ using LLVMSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Cheez.CodeGeneration.LLVMCodeGen
 {
@@ -340,6 +341,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             switch (ct)
             {
+                case StringType s:
+                    {
+                        var str = context.StructCreateNamed("string");
+                        LLVM.StructSetBody(str, new LLVMTypeRef[] {
+                            LLVM.Int64Type(),
+                            LLVM.Int8Type().GetPointerTo()
+                        }, false);
+                        return str;
+                    }
+
                 case TraitType t:
                     {
                         var str = LLVM.StructCreateNamed(context, t.ToString());
@@ -374,7 +385,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     else throw new NotImplementedException();
 
                 case CharType c:
-                    return LLVM.Int8Type();
+                    return LLVM.IntType((uint)c.GetSize() * 8);
 
                 case PointerType p:
                     if (p.TargetType == VoidType.Intance)
@@ -512,8 +523,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case CharType _: return LLVM.ConstInt(CheezTypeToLLVMType(type), (char)v, false);
                 case IntType i: return LLVM.ConstInt(CheezTypeToLLVMType(type), ((NumberData)v).ToUlong(), i.Signed);
                 case FloatType f: return LLVM.ConstReal(CheezTypeToLLVMType(type), ((NumberData)v).ToDouble());
-                case ArrayType arr when arr.TargetType == CheezType.Char && v is string s:
-                    return LLVM.ConstArray(CheezTypeToLLVMType(CheezType.Char), s.ToCharArray().Select(c => CheezValueToLLVMValue(CheezType.Char, c)).ToArray());
+                case ArrayType arr when arr.TargetType is CharType ct && v is string s:
+                    return LLVM.ConstArray(CheezTypeToLLVMType(ct), s.ToCharArray().Select(c => CheezValueToLLVMValue(ct, c)).ToArray());
 
                 case FunctionType f when f.Declaration != null:
                     return valueMap[f.Declaration];
@@ -522,9 +533,17 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     if (type == CheezType.String && v is string)
                     {
                         var s = v as string;
+                        var bytes = Encoding.UTF8.GetBytes(s);
+                        var byteValues = new LLVMValueRef[bytes.Length];
+                        for (int i = 0; i < bytes.Length; i++)
+                            byteValues[i] = LLVM.ConstInt(LLVM.Int8Type(), (ulong)bytes[i], false);
+
+                        var glob = module.AddGlobal(LLVM.ArrayType(LLVM.Int8Type(), (uint)bytes.Length), "string");
+                        glob.SetInitializer(LLVM.ConstArray(LLVM.Int8Type(), byteValues));
+
                         return LLVM.ConstNamedStruct(CheezTypeToLLVMType(type), new LLVMValueRef[] {
-                            LLVM.ConstInt(LLVM.Int64Type(), (ulong)s.Length, true),
-                            LLVM.ConstPointerCast(builder.CreateGlobalStringPtr(s, ""), LLVM.PointerType(LLVM.Int8Type(), 0))
+                            LLVM.ConstInt(LLVM.Int64Type(), (ulong)byteValues.Length, true),
+                            glob
                         });
                     }
                     if (type == CheezType.CString && v is string)
