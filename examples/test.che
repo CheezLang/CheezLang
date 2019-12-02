@@ -113,8 +113,8 @@ Main :: () {
 }
 
 test :: () -> Result[(), int] {
-    dir := "👀👀👀"
-
+    dir := "iauiaeuiae"
+    io.println(dir.bytes.length)
     try_with(create_directory(dir), io.println("failed to create directory"))
 
     a := "(╯°□°）╯︵ ┻━┻ 😂😂😂😂.txt"
