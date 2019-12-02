@@ -275,6 +275,7 @@ namespace Cheez.Ast.Expressions
 
     public class AstBlockExpr : AstNestedExpression, IBreakable
     {
+        public AstExprStmt LastExpr { get; set; }
         public List<AstStatement> Statements { get; set; }
         public AstIdExpr Label { get; set; }
 

@@ -49,6 +49,6 @@ test2 :: (r: Result[double, string]) {
     use Result
     match r {
         Ok($v)      -> C.printf("Some(%f)`n", v)
-        Err($msg)   -> C.printf("Err(`"%.*s`")`n", msg.length, msg.data)
+        Err($msg)   -> C.printf("Err(`"%.*s`")`n", msg.bytes.length, msg.bytes.data)
     }
 }

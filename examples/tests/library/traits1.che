@@ -23,7 +23,7 @@ impl Printable for bool {
 
 impl Printable for string {
     print :: (ref Self) {
-        C.printf("%.*s", self.length, self.data)
+        C.printf("%.*s", self.bytes.length, self.bytes.data)
     }
 }
 

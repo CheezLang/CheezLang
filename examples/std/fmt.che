@@ -37,7 +37,7 @@ format_int :: (buffer: ref String, val: $T, _base: int = 10) {
     buffer.resize(buffer.length + len)
     
     if val == 0 {
-        buffer[buffer.length - 1] = u8(0)
+        buffer[buffer.length - 1] = u8('0')
     } else {
         i := buffer.length - 1
         while val != 0, i -= 1 {

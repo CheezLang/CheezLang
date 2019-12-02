@@ -695,9 +695,14 @@ namespace Cheez
                 //    break;
             }
 
+            if (expr.LastExpr != null) {
+                expr.LastExpr.RemoveDestructions();
+                Move(expr.Type, expr.LastExpr.Expr, symStatTable, expr.LastExpr);
+            }
+
             if (!expr.Transparent)
             {
-                // call constructors
+                // call destructors
                 if (!expr.GetFlag(ExprFlags.Anonymous)
                     && !expr.GetFlag(ExprFlags.Breaks) && !expr.GetFlag(ExprFlags.Returns))
                 {

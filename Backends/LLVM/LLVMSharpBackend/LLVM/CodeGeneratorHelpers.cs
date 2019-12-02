@@ -588,6 +588,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         LLVM.ConstPointerNull(LLVM.Int8Type().GetPointerTo())
                     }),
 
+            StringType _ => LLVM.ConstNamedStruct(CheezTypeToLLVMType(type), new LLVMValueRef[] {
+                        LLVM.ConstInt(LLVM.Int64Type(), 0, true),
+                        LLVM.ConstPointerNull(LLVM.Int8Type().GetPointerTo())
+                    }),
+
             SliceType s => LLVM.ConstNamedStruct(CheezTypeToLLVMType(s), new LLVMValueRef[] {
                         LLVM.ConstInt(LLVM.Int64Type(), 0, true),
                         GetDefaultLLVMValue(s.ToPointerType())

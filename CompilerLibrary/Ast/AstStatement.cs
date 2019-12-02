@@ -299,6 +299,10 @@ namespace Cheez.Ast.Statements
 
         public override string ToString() => $"#expr {base.ToString()}";
 
+        public void RemoveDestructions() {
+            Destructions = null;
+        }
+
         public void AddDestruction(AstStatement dest)
         {
             if (dest == null)

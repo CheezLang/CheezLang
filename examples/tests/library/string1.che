@@ -76,13 +76,13 @@ Main :: () {
     C.printf("`n")
 
     sub := s.slice()
-    C.printf(" slice: `"%.*s`"`n", sub.length, sub.data)
+    C.printf(" slice: `"%.*s`"`n", sub.bytes.length, sub.bytes.data)
     sub = s.sliceF(5)
-    C.printf(" slice: `"%.*s`"`n", sub.length, sub.data)
+    C.printf(" slice: `"%.*s`"`n", sub.bytes.length, sub.bytes.data)
     sub = s.sliceL(3)
-    C.printf(" slice: `"%.*s`"`n", sub.length, sub.data)
+    C.printf(" slice: `"%.*s`"`n", sub.bytes.length, sub.bytes.data)
     sub = s.sliceFL(5, 5)
-    C.printf(" slice: `"%.*s`"`n", sub.length, sub.data)
+    C.printf(" slice: `"%.*s`"`n", sub.bytes.length, sub.bytes.data)
     C.printf("`n")
 
     C.printf("indexo: %lld`n", s.index_of(':'))

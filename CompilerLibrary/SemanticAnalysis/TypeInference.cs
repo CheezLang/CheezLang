@@ -2800,6 +2800,7 @@ namespace Cheez
                 if (exprStmt.GetFlag(StmtFlags.Breaks))
                     expr.SetFlag(ExprFlags.Breaks, true);
 
+                expr.LastExpr = exprStmt;
             }
             else
             {

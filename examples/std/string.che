@@ -9,6 +9,11 @@ use import std.mem.allocator
 use import std.mem.std_heap_allocator
 import std.alloca
 
+if const @is_os("windows") {
+    use import std.os.windows_functions
+    use import std.os.windows_constants
+}
+
 #export_scope
 
 // StringBase :: struct(CharType: type) {
@@ -364,6 +369,19 @@ impl string {
         str_c[self.bytes.length] = cast 0
         C.memcpy(cast str_c, cast self.bytes.data, cast self.bytes.length)
         return str_c
+    }
+
+    to_utf16 :: (Self, null_terminate: bool = false) -> Result[Array[u16], ()] {
+        required_size := MultiByteToWideChar(CP_UTF8, 0, self.bytes.data, cast self.bytes.length, null, 0)
+        if null_terminate { required_size += 1 }
+        wide_char_str := Array[u16].create(cast required_size)
+        wide_char_str.resize(required_size)
+        if null_terminate { wide_char_str.access_unchecked(required_size - 1) = 0 }
+        bytes_written := MultiByteToWideChar(CP_UTF8, 0, self.bytes.data, cast self.bytes.length, wide_char_str.get_raw(), required_size)
+        if bytes_written == 0 {
+            return Err(())
+        }
+        return Ok(wide_char_str)
     }
 }
 

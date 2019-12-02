@@ -44,21 +44,21 @@ test2 :: () {
 test1 :: () {
     str := "hello world, this is a sentence in lower case letters"
 
-    newStr := alloc_n(char, cast str.length)
+    newStr := string(alloc_raw(u8, cast str.bytes.length), str.bytes.length)
 
 
-    if str[0] >= 'a' and str[0] <= 'z' {
-        newStr[0] = str[0] - 'a' + 'A'
+    if str[0] >= u8('a') and str[0] <= u8('z') {
+        newStr[0] = str[0] - u8('a') + u8('A')
     }
 
-    for i : 1..str.length {
-        c := str[i]
-        c = match (str[i - 1], str[i]) {
+    for i : 1..str.bytes.length {
+        c := char(str[i])
+        c = match (char(str[i - 1]), char(str[i])) {
             (' ', $x) if x >= 'a' and x <= 'z' -> x - 'a' + 'A'
             $x -> x[1]
         }
 
-        newStr[i] = c
+        newStr[i] = u8(c)
     }
 
     io.println(str)
