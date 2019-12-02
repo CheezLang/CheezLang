@@ -66,6 +66,17 @@ impl String {
         return s
     }
 
+    from_utf16 :: (str: []u16) -> Result[String, ()] {
+        required_size := WideCharToMultiByte(CP_UTF8, 0, str.data, cast str.length, null, 0, null, null)
+        result := String.empty()
+        result.resize(required_size)
+        bytes_written := WideCharToMultiByte(CP_UTF8, 0, str.data, cast str.length, result.get_raw(), required_size, null, null)
+        if bytes_written == 0 {
+            return Err(())
+        }
+        return Ok(result)
+    }
+
     get_capacity :: (ref Self) -> int {
         return data.length
     }
@@ -386,13 +397,6 @@ impl string {
         }
         return Ok(wide_char_str)
     }
-}
-
-string_to_cstring_stack :: (str: string) #macro {
-    result := @alloca(char8, str.bytes.length + 1)
-    C.memcpy(result, str.bytes.data, cast str.bytes.length)
-    result[str.bytes.length] = char8(0)
-    result
 }
 
 impl c_string {

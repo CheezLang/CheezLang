@@ -8,6 +8,7 @@ if const @is_os("linux") {
     linux :: import std.os.linux
 }
 
+use import std.mem.allocator
 use import std.io.file
 use import std.string
 io :: import std.io
@@ -21,15 +22,21 @@ FsError :: enum {
     InvalidUtf8
 }
 
+// @todo: prepend \? to remove path limit
+// @see https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createdirectoryw
 create_directory :: (path: string) -> Result[(), FsError] {
-    full_path := get_full_path(path)
-    full_path += char(0)
-    c_path := full_path.get_raw()
-    use WindowsErrorCode
-    return if CreateDirectoryA(c_path, null) != 0 then Ok(()) else match GetLastError() {
-        ERROR_ALREADY_EXISTS -> Err(FsError.AlreadyExists)
-        ERROR_PATH_NOT_FOUND -> Err(FsError.PathNotFound)
-        $_                   -> Err(FsError.Unknown)
+    path_utf16 := try_with(path.to_utf16(), {return Err(FsError.Unknown)})
+
+    required_length := GetFullPathNameW(path_utf16.get_raw(), 0, null, null)
+    full_path_utf16 := alloc_n(u16, required_length)
+    defer free_n(full_path_utf16)
+    if GetFullPathNameW(path_utf16.get_raw(), required_length, cast full_path_utf16.data, null) == 0 {
+        return Err(FsError.Unknown)
+    }
+    return if CreateDirectoryW(full_path_utf16.data, null) != 0 then Ok(()) else match GetLastError() {
+        WindowsErrorCode.ERROR_ALREADY_EXISTS -> Err(FsError.AlreadyExists)
+        WindowsErrorCode.ERROR_PATH_NOT_FOUND -> Err(FsError.PathNotFound)
+        $_ -> Err(FsError.Unknown)
     }
 }
 
@@ -81,14 +88,17 @@ read_file :: (path: string) -> Result[String, FsError] {
     return Ok(result)
 }
 
-get_full_path :: (path: string) -> String {
-    c_path := string_to_cstring_stack(path)
-    required_length := GetFullPathNameA(c_path, 0, null, null)
-    result := String.empty()
-    result.reserve(cast required_length)
-    result.resize(cast required_length - 1)
-    GetFullPathNameA(c_path, required_length, cast result.get_raw(), null)
-    return result
+get_full_path :: (path: string) -> Result[String, ()] {
+    path_utf16 := try(path.to_utf16())
+
+    required_length := GetFullPathNameW(path_utf16.get_raw(), 0, null, null)
+    buffer := alloc_n(u16, required_length)
+    defer free_n(buffer)
+    if GetFullPathNameW(path_utf16.get_raw(), required_length, cast buffer.data, null) == 0 {
+        return Err(())
+    }
+
+    return String.from_utf16(buffer)
 }
 
 #file_scope
