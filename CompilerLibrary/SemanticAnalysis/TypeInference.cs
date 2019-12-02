@@ -1862,6 +1862,19 @@ namespace Cheez
                         return expr;
                     }
 
+                case "function_type":
+                    {
+                        if (expr.Arguments.Count != 0)
+                        {
+                            ReportError(expr.Location, "@function_type takes 0 arguments");
+                            return expr;
+                        }
+
+                        expr.Type = CheezType.Type;
+                        expr.Value = currentFunction.FunctionType;
+                        return expr;
+                    }
+
                 case "function_name":
                     {
                         if (expr.Arguments.Count != 0)
@@ -1923,6 +1936,13 @@ namespace Cheez
                         var tuple = new AstTupleExpr(expr.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList(), expr.Location);
                         tuple.Replace(expr);
                         return InferType(tuple, expected);
+                    }
+
+                case "unit_type":
+                    {
+                        expr.Type = CheezType.Type;
+                        expr.Value = TupleType.GetTuple(Array.Empty<(string, CheezType)>());
+                        return expr;
                     }
 
                 case "is_tuple":
@@ -3141,15 +3161,14 @@ namespace Cheez
                     {
                         var memName = expr.Right.Name;
                         var memberIndex = tuple.Members.IndexOf(m => m.name == memName);
-                        if (memberIndex == -1)
+                        if (memberIndex >= 0)
                         {
-                            ReportError(expr, $"The tuple '{tuple}' has no member '{memName}'");
+                            expr.Type = tuple.Members[memberIndex].type;
+                            expr.SetFlag(ExprFlags.IsLValue, expr.Left.GetFlag(ExprFlags.IsLValue));
                             return expr;
                         }
 
-                        expr.Type = tuple.Members[memberIndex].type;
-                        expr.SetFlag(ExprFlags.IsLValue, expr.Left.GetFlag(ExprFlags.IsLValue));
-                        break;
+                        return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
                     }
 
                 case SliceType slice:
@@ -3259,24 +3278,6 @@ namespace Cheez
 
                 case CheezTypeType _:
                     {
-                        {
-                            var funcs = GetImplFunctions(CheezType.Type, expr.Right.Name, expected);
-
-                            if (funcs.Count > 1)
-                            {
-                                var details = funcs.Select(f => ("Possible candidate:", f.ParameterLocation));
-                                ReportError(expr.Right, $"Ambigious call to function '{expr.Right.Name}'", details);
-                                break;
-                            }
-                            else if (funcs.Count == 1)
-                            {
-                                var ufc = new AstUfcFuncExpr(expr.Left, funcs[0], expr);
-                                ufc.Replace(expr);
-                                ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
-                                return InferTypeHelper(ufc, null, context);
-                            }
-                        }
-
                         var type = expr.Left.Value as CheezType;
                         if (type?.IsErrorType ?? true)
                             break;
@@ -3323,24 +3324,34 @@ namespace Cheez
                             }
                         }
 
+                        if (type is FunctionType funcType)
                         {
-                            var funcs = GetImplFunctions(type, expr.Right.Name, expected);
-
-                            if (funcs.Count == 0)
+                            switch (expr.Right.Name)
                             {
-                                ReportError(expr.Right, $"Type '{type}' has no member or function '{expr.Right.Name}'");
-                                break;
+                                case "return_type": {
+                                    expr.Type = CheezType.Type;
+                                    expr.Value = funcType.ReturnType;
+                                    return expr;
+                                }
                             }
-                            else if (funcs.Count > 1)
-                            {
-                                var details = funcs.Select(f => ("Possible candidate:", f.ParameterLocation));
-                                ReportError(expr.Right, $"Ambigious call to function '{expr.Right.Name}'", details);
-                                break;
-                            }
-
-                            expr.Type = funcs[0].Type;
-                            break;
                         }
+
+                        switch (type)
+                        {
+                            case EnumType e when e.Declaration.IsPolyInstance:
+                                {
+                                    var constParam = e.Declaration.Parameters.FirstOrDefault(p => p.Name.Name == expr.Right.Name);
+                                    if (constParam != null)
+                                    {
+                                        expr.Type = constParam.Type;
+                                        expr.Value = constParam.Value;
+                                        return expr;
+                                    }
+                                    break;
+                                }
+                        }
+
+                        return GetImplFunctions(expr, type, expr.Right.Name, context);
                     }
 
                 case ModuleType m:
@@ -3574,11 +3585,11 @@ namespace Cheez
                         if (e.Argument != null)
                         {
                             e.Argument.AttachTo(e);
-                            e.Argument = InferTypeHelper(e.Argument, assType, context);
-                            ConvertLiteralTypeToDefaultType(e.Argument, assType);
-                            e.Argument = HandleReference(e.Argument, assType, context);
-                            e.Argument = CheckType(e.Argument, assType);
-                            
+                            var earg = InferTypeHelper(e.Argument, assType, context);
+                            ConvertLiteralTypeToDefaultType(earg, assType);
+                            earg = HandleReference(earg, assType, context);
+                            earg = CheckType(earg, assType);
+                            e.Argument = earg;
                         }
 
                         return e;
@@ -4707,7 +4718,7 @@ namespace Cheez
 
         private AstExpression GetImplFunctions(AstDotExpr expr, CheezType type, string functionName, TypeInferenceContext context)
         {
-            var result = GetImplFunctions(type, functionName, context.functionExpectedReturnType);
+            var result = GetImplFunctionsHelper(type, functionName, context.functionExpectedReturnType);
             
             if (result.Count == 0)
             {
@@ -4721,13 +4732,21 @@ namespace Cheez
                 return expr;
             }
 
-            var ufc = new AstUfcFuncExpr(expr.Left, result[0], expr);
-            ufc.Replace(expr);
-            ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
-            return InferTypeHelper(ufc, null, context);
+            if (expr.Left.Type == CheezType.Type)
+            {
+                expr.Type = result[0].Type;
+                return expr;
+            }
+            else
+            {
+                var ufc = new AstUfcFuncExpr(expr.Left, result[0], expr);
+                ufc.Replace(expr);
+                ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
+                return InferTypeHelper(ufc, null, context);
+            }
         }
 
-        private List<AstFuncExpr> GetImplFunctions(CheezType type, string functionName, CheezType expected)
+        private List<AstFuncExpr> GetImplFunctionsHelper(CheezType type, string functionName, CheezType expected)
         {
             var resultNormal = new List<AstFuncExpr>();
             var resultNormal2 = new List<AstFuncExpr>();

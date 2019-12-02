@@ -200,10 +200,14 @@ impl String {
 
     appendf :: (ref Self, format: string, arguments: $T) {
         if const @is_tuple(T) {
-            args : [T.length] Printable = default
-            @for_tuple_values(arguments, |v, i| {
-                args[i] = Printable(v)
-            })
+            if const T.length == 0 {
+                args : [1]Printable = [arguments]
+            } else {
+                args : [T.length] Printable = default
+                @for_tuple_values(arguments, |v, i| {
+                    args[i] = Printable(v)
+                })
+            }
         } else {
             args : [1]Printable = [Printable(arguments)]
         }

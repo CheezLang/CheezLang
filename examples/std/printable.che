@@ -11,9 +11,9 @@ Printable :: trait {
     print :: (ref Self, str: ref String, format: string);
 }
 
-impl Printable for c_string {
+impl Printable for () {
     print :: (ref Self, str: ref String, format: string) {
-        str.append_cstring(self)
+        str += "()"
     }
 }
 

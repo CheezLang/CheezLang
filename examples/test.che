@@ -94,78 +94,48 @@ C   :: import std.c
 //     }
 // }
 
-try :: (code: Code) #macro {
-    match @insert(code, _break=break, _continue=continue) {
-        Ok($val) -> val
-        Err($err) -> {
-            return Err(err)
-        }
-    }
-}
-
-try_with :: (code: Code, with: Code) #macro {
-    match @insert(code, _break=break, _continue=continue) {
-        Ok($val) -> val
-        Err($err) -> @insert(with, _break=break, _continue=continue)
+impl Into[int] for () {
+    into :: (ref Self) -> int {
+        return 123
     }
 }
 
 Main :: () {
     match test() {
-        Ok($succ) -> {}
-        Ok($err) -> {}
+        Ok($succ) -> {
+            io.printfln("Ok({})", succ)
+        }
+        Err($err) -> {
+            io.printfln("Err({})", err)
+        }
     }
 }
 
-Foo :: struct {
-    i: int
-}
+test :: () -> Result[(), int] {
+    a := "(╯°□°）╯︵ ┻━┻ 😂😂😂😂.txt"
 
-impl Drop for Foo {
-    drop :: (ref Self) {
-        io.printfln("~Foo({})", i)
+    str := String.from_string(a)
+    str += char(0)
+
+    { #label b
+        utf16 := try(str.slice().to_utf16(true))
+        handle := CreateFileW(utf16.get_raw(), GENERIC_WRITE, FILE_SHARE_WRITE, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null)
+        if (cast(int)handle) == -1 {
+            io.println("failed to create file")
+            break b
+        }
+
+        bytesRead : u32 = 0
+        if WriteFile(handle, cast str.get_raw(), cast(u32)str.get_length() - 1, &bytesRead, null) == 0 {
+            io.println("failed to write data")
+            break b
+        }
+
+        if CloseHandle(handle) == 0 {
+            io.println("failed to close handle")
+            break b
+        }
     }
-}
-
-bar :: (b: bool) -> Result[Foo, ()] {
-    return if b then Ok(Foo(0)) else Err(())
-}
-
-baz :: (i: int) -> Foo {
-    return Foo(i)
-}
-
-test :: () -> Result[(), ()] {
-    // a := "(╯°□°）╯︵ ┻━┻ 😂😂😂😂.txt"
-
-    // str := String.from_string(a)
-    // str += char(0)
-
-    // { #label b
-    //     utf16 := try(str.slice().to_utf16(true))
-    //     wide_char_str := utf16.get_raw()
-    //     // required_size := MultiByteToWideChar(CP_UTF8, 0, str.get_raw(), cast str.get_length(), null, 0)
-    //     // io.printfln("required_size: {}", required_size)
-    //     // wide_char_str := alloc_raw(u16, cast required_size)
-    //     // bytes_written := MultiByteToWideChar(CP_UTF8, 0, str.get_raw(), cast str.get_length(), wide_char_str, required_size)
-    //     // io.printfln("bytes_written: {}", bytes_written)
-    //     handle := CreateFileW(wide_char_str, GENERIC_WRITE, FILE_SHARE_WRITE, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null)
-    //     if (cast(int)handle) == -1 {
-    //         io.println("failed to create file")
-    //         break b
-    //     }
-
-    //     bytesRead : u32 = 0
-    //     if WriteFile(handle, cast str.get_raw(), cast(u32)str.get_length() - 1, &bytesRead, null) == 0 {
-    //         io.println("failed to write data")
-    //         break b
-    //     }
-
-    //     if CloseHandle(handle) == 0 {
-    //         io.println("failed to close handle")
-    //         break b
-    //     }
-    // }
 
 
     // bytes := a.bytes

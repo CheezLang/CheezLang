@@ -727,9 +727,13 @@ VK_OEM_CLEAR                       :: 0xFE
 
 // GetLastError() codes
 WindowsErrorCode :: enum #repr("C") #tag_type(i32) {
-    ERROR_SUCCESS          = 0x0
-    ERROR_INVALID_FUNCTION = 0x1
-    ERROR_FILE_NOT_FOUND   = 0x2
-    ERROR_PATH_NOT_FOUND   = 0x03
-    ERROR_ALREADY_EXISTS   = 0xB7
+    ERROR_SUCCESS                = 0x0
+    ERROR_INVALID_FUNCTION       = 0x1
+    ERROR_FILE_NOT_FOUND         = 0x2
+    ERROR_PATH_NOT_FOUND         = 0x3
+    ERROR_INVALID_PARAMETER      = 0x57
+    ERROR_INSUFFICIENT_BUFFER    = 0x7A
+    ERROR_ALREADY_EXISTS         = 0xB7
+    ERROR_INVALID_FLAGS          = 0x3EC
+    ERROR_NO_UNICODE_TRANSLATION = 0x459
 }

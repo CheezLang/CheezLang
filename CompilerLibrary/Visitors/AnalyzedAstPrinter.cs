@@ -267,6 +267,12 @@ namespace Cheez.Visitors
 
             sb.Append(" : ");
             sb.Append(decl.Initializer.Accept(this));
+
+            if (decl.Type == CheezType.Type &&
+                !(decl.Initializer is AstStructTypeExpr || decl.Initializer is AstEnumTypeExpr || decl.Initializer is AstTraitTypeExpr)) {
+                sb.Append(" = ");
+                sb.Append(decl.Initializer.Value);
+            }
             return sb.ToString();
         }
 

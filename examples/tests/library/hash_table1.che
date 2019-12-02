@@ -54,7 +54,7 @@ io :: import std.io
         return a == b
     }
 
-    compare_c_strings :: (a: c_string, b: c_string) -> bool {
+    compare_c_strings :: (a: string, b: string) -> bool {
         return streq(a, b)
     }
 
@@ -66,11 +66,11 @@ get_and_print :: (table: ref Table[$K, $V], key: K) {
 }
 
 test :: (t1: ref $T1, t2: ref $T2) {
-    get_and_print(t2, "first name"c)
-    get_and_print(t2, "last name"c)
-    get_and_print(t2, "gender"c)
-    get_and_print(t2, "test1"c)
-    get_and_print(t2, "test2"c)
+    get_and_print(t2, "first name")
+    get_and_print(t2, "last name")
+    get_and_print(t2, "gender")
+    get_and_print(t2, "test1")
+    get_and_print(t2, "test2")
 
     get_and_print(t1, 0)
     get_and_print(t1, 1)
@@ -83,41 +83,41 @@ test :: (t1: ref $T1, t2: ref $T2) {
 }
 
 Main :: () {
-    t1 := Table[int, c_string].create(compare_ints)
-    t2 := Table[c_string, c_string].create(compare_c_strings)
+    t1 := Table[int, string].create(compare_ints)
+    t2 := Table[string, string].create(compare_c_strings)
 
-    t2["first name"c] = "nico"c
-    t2["last name"c] = "ot"c
-    t2["gender"c] = "m"c
+    t2["first name"] = "nico"
+    t2["last name"] = "ot"
+    t2["gender"] = "m"
 
-    t1[0] = "zero"c
-    t1[1] = "one"c
-    t1[2] = "two"c
-    t1[3] = "three"c
-    t1[4] = "four"c
-    t1[5] = "five"c
+    t1[0] = "zero"
+    t1[1] = "one"
+    t1[2] = "two"
+    t1[3] = "three"
+    t1[4] = "four"
+    t1[5] = "five"
 
     test(t1, t2)
 
     io.println("`n--------------------------`n")
 
-    t2.delete("last name"c)
+    t2.delete("last name")
     t1.delete(3)
     t1.delete(5)
 
     test(t1, t2)
     io.println("`n--------------------------`n")
 
-    t2["first name"c] = "Markenikon"c
-    t2["last name"c] = "The One"c
-    t2["gender"c] = "M"c
+    t2["first name"] = "Markenikon"
+    t2["last name"] = "The One"
+    t2["gender"] = "M"
 
-    t1[0] = "zerrrro"c
-    t1[1] = "unos"c
-    t1[2] = "dos"c
-    t1[3] = "traes?"c
-    t1[4] = "quat..."c
-    t1[5] = "fuennef"c
+    t1[0] = "zerrrro"
+    t1[1] = "unos"
+    t1[2] = "dos"
+    t1[3] = "traes?"
+    t1[4] = "quat..."
+    t1[5] = "fuennef"
 
     test(t1, t2)
 }
