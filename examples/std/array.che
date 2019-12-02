@@ -105,7 +105,11 @@ impl(T: type) Array[T] {
         }
     }
 
-    access_unchecked :: (ref Self, index: int) -> ref T #operator("[]") {
+    access_unchecked :: (ref Self, index: int) -> ref T {
+        return data[index]
+    }
+
+    access :: (ref Self, index: int) -> ref T #operator("[]") {
         @assert(index >= 0 and index < length, "Index was out of range")
         return data[index]
     }

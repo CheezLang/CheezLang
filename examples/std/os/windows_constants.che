@@ -725,6 +725,8 @@ VK_NONAME                          :: 0xFC
 VK_PA1                             :: 0xFD
 VK_OEM_CLEAR                       :: 0xFE
 
+INVALID_HANDLE_VALUE               :: 0xFFFFFFFFFFFFFFFF
+
 // GetLastError() codes
 WindowsErrorCode :: enum #repr("C") #tag_type(i32) {
     ERROR_SUCCESS                = 0x0

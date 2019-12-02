@@ -138,7 +138,7 @@ command_project_new_program :: (options: &CommandProjectNew) {
         path    := fmt.format(path_format, path_args)
         content := fmt.format(content_format, content_args)
         // io.printfln("Creating file '{}'", path.slice())
-        fs.create_file(path.slice(), content.slice())
+        fs.write_file(path.slice(), content.slice())
     }
 
     io.printfln("Creating project files for new project '{}'", options.name.slice())

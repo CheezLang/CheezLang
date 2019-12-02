@@ -3,6 +3,7 @@ if const @static_assert(@is_os("windows"), "windows.che can only be loaded on wi
 use import std.os.windows_functions
 use import std.os.windows_types
 
+#export_scope
 __std_in_handle  : HANDLE = GetStdHandle(-10)
 __std_out_handle : HANDLE = GetStdHandle(-11)
 __std_err_handle : HANDLE = GetStdHandle(-12)

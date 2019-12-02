@@ -82,10 +82,14 @@ WriteFile        :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToWrite: DWOR
 ReadFile         :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
 CreateFileA      :: (lpFileName: &u8,  dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &SECURITY_ATTRIBUTES, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
 CreateFileW      :: (lpFileName: &u16, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &SECURITY_ATTRIBUTES, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
-CreateDirectoryA :: (lpPathName: c_string, lpSecurityAttributes: &SECURITY_ATTRIBUTES) -> BOOL #stdcall;
+CreateDirectoryA :: (lpPathName: &u8,  lpSecurityAttributes: &SECURITY_ATTRIBUTES) -> BOOL #stdcall;
+CreateDirectoryW :: (lpPathName: &u16, lpSecurityAttributes: &SECURITY_ATTRIBUTES) -> BOOL #stdcall;
 GetFileSize      :: (hFile: HANDLE, lpFileSizeHigh: &DWORD) -> DWORD #stdcall;
 GetFileSizeEx    :: (hFile: HANDLE, lpFileSize: &LARGE_INTEGER) -> BOOL #stdcall;
 GetFullPathNameA :: (lpFileName: c_string, nBufferLength: DWORD, lpBuffer: c_string, lpFilePart: &c_string) -> DWORD #stdcall;
+
+WriteConsoleW    :: (hConsoleOutput: HANDLE, lpBuffer: &void, nNumberOfBytesToWrite: DWORD, lpNumberOfCharsWritten: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
+GetConsoleMode   :: (hConsoleHandle: HANDLE, lpMode: &DWORD) -> BOOL #stdcall;
 
 // window stuff
 GetModuleHandleA   :: (lpModuleName: c_string) -> HMODULE #stdcall;
