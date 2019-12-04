@@ -869,18 +869,19 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 var tag = type switch
                 {
-                    IntType _ => 0,
-                    FloatType _ => 1,
-                    BoolType _ => 2,
-                    CharType _ => 3,
-                    StructType _ => 4,
-                    PointerType _ => 5,
+                    IntType _       => 0,
+                    FloatType _     => 1,
+                    BoolType _      => 2,
+                    CharType _      => 3,
+                    StructType _    => 4,
+                    PointerType _   => 5,
                     ReferenceType _ => 6,
-                    SliceType _ => 7,
-                    EnumType _ => 8,
-                    TraitType _ => 9,
-                    VoidType _ => 10,
-                    _ => throw new NotImplementedException()
+                    SliceType _     => 7,
+                    EnumType _      => 8,
+                    TraitType _     => 9,
+                    VoidType _      => 10,
+                    StringType _    => 11,
+                    _               => throw new NotImplementedException()
                 };
                 var kindPtr = builder.CreateStructGEP(global, 2, "ti.kind.ptr");
                 var tagPtr = builder.CreateStructGEP(kindPtr, 0, "ti.kind.tag.ptr");
@@ -892,6 +893,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     case VoidType _:
                     case FloatType _:
                     case BoolType _:
+                    case StringType _:
                     case CharType _:
                         break;
 

@@ -64,6 +64,7 @@ namespace Cheez.Parsing
         NotEqual,
 
         Arrow,
+        DoubleArrow,
         LessLess,
 
         OpenParen,
@@ -77,6 +78,7 @@ namespace Cheez.Parsing
 
         Pipe,
 
+        KwLambda,
         KwReturn,
         KwRef,
         Kwfn,
@@ -216,6 +218,7 @@ namespace Cheez.Parsing
 
             switch (Current)
             {
+                case '=' when Next == '>': SimpleToken(ref token, TokenType.DoubleArrow, 2); break;
                 case '=' when Next == '=': SimpleToken(ref token, TokenType.DoubleEqual, 2); break;
                 case '!' when Next == '=': SimpleToken(ref token, TokenType.NotEqual, 2); break;
                 case '<' when Next == '=': SimpleToken(ref token, TokenType.LessEqual, 2); break;
@@ -361,6 +364,7 @@ namespace Cheez.Parsing
         {
             switch (token.data as string)
             {
+                case "lambda":   token.type = TokenType.KwLambda; break;
                 case "return":   token.type = TokenType.KwReturn; break;
                 case "ref":      token.type = TokenType.KwRef; break;
                 case "fn":       token.type = TokenType.Kwfn; break;

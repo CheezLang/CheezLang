@@ -1861,6 +1861,7 @@ namespace Cheez
                         break;
                     }
 
+                case StringType _:
                 case CharType _:
                 case IntType _:
                 case BoolType _:

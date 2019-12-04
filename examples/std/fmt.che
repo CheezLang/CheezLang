@@ -146,6 +146,11 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
     }
 
     match typ.kind {
+        TypeInfoKind.String -> {
+            ptr := cast(&string) data
+            result.append_string(<<ptr)
+        }
+
         TypeInfoKind.Int($tint) -> {
             if tint.signed {
                 ptr := cast(&int) data

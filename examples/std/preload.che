@@ -168,6 +168,7 @@ TypeInfoKind :: enum #copy {
     Enum        : TypeInfoEnum   = 8
     Trait       : TypeInfoTrait  = 9
     Void                         = 10
+    String                       = 11
 }
 
 TypeInfoTrait :: struct #copy {

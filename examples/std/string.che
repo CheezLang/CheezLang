@@ -90,8 +90,9 @@ impl String {
         return data.data
     }
 
-    char_at :: (ref Self, i: int) -> ref u8 #operator("[]") {
-        return data[i]
+    char_at :: (ref Self, i: int) -> ref char #operator("[]") {
+        code_point, len := Utf8.decode(data[i..data.length])
+        return code_point
     }
 
     set_char_at :: (ref Self, i: int, c: u8) #operator("set[]") {
@@ -217,7 +218,7 @@ impl String {
                 args : [1]Printable = [arguments]
             } else {
                 args : [T.length] Printable = default
-                @for_tuple_values(arguments, |v, i| {
+                @for_tuple_values(arguments, lambda v, i => {
                     args[i] = Printable(v)
                 })
             }
