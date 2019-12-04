@@ -6,12 +6,12 @@ puts :: (str: c_string);
 scanf :: (format: c_string) -> i32 #varargs;
 gets :: (string: c_string) -> c_string;
 getchar :: () -> i32;
-strtol :: (str: c_string, endptr: &&char, base: i32) -> int;
-strtod :: (str: c_string, endptr: &&char) -> double;
+strtol :: (str: c_string, endptr: &&char8, base: i32) -> int;
+strtod :: (str: c_string, endptr: &&char8) -> double;
 rand :: () -> i32;
 srand :: (seed: u32);
 time :: (timer: &void) -> u32;
-_fullpath :: (absPath: &char, relPath: &char, maxLength: int) -> &char;
+_fullpath :: (absPath: &char8, relPath: &char8, maxLength: int) -> &char8;
 
 // memory
 alloca  :: (size: uint) -> &void;

@@ -9,7 +9,7 @@ C :: import std.c
 
 impl string {
     equal :: (a: Self, b: Self) -> bool #operator("==") {
-        return a.length == b.length and a.data == b.data
+        return a.bytes.length == b.bytes.length and a.bytes.data == b.bytes.data
     }
 }
 
@@ -39,9 +39,12 @@ impl StringDatabase {
             }
             None -> {
                 // create string in pool
-                str_in_pool := alloc_n(char, cast str.length, pool)
-                C.memcpy(str_in_pool.data, str.data, cast str.length)
-                db[str_in_pool] = str_in_pool
+                str_in_pool := {
+                    mem := alloc_n(u8, cast str.bytes.length, pool)
+                    string(mem.data, mem.length)
+                }
+                C.memcpy(str_in_pool.bytes.data, str.bytes.data, cast str.bytes.length)
+                db.set(str_in_pool, str_in_pool)
                 str_in_pool
             }
         }

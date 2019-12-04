@@ -94,6 +94,7 @@ GetConsoleMode   :: (hConsoleHandle: HANDLE, lpMode: &DWORD) -> BOOL #stdcall;
 // window stuff
 GetModuleHandleA   :: (lpModuleName: c_string) -> HMODULE #stdcall;
 SetWindowTextA     :: (hWnd: HWND, lpString: c_string) -> BOOL #stdcall;
+SetWindowTextW     :: (hWnd: HWND, lpString: &u16) -> BOOL #stdcall;
 DefWindowProcA     :: (hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT #stdcall;
 RegisterClassA     :: (wndClass: &WNDCLASSA) -> ATOM #stdcall;
 AdjustWindowRectEx :: (lpRect: &RECT, dwStyle: DWORD, bMenu: BOOL, dwExStyle: DWORD) -> BOOL #stdcall;

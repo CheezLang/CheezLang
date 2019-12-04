@@ -1,6 +1,7 @@
 use import string_database
 
 use import std.string
+use import std.unicode
 use import std.printable
 use import std.io.file
 C :: import std.c
@@ -272,7 +273,7 @@ impl Lexer {
         base := 10
         str := {
             cap :: 64
-            raw := @alloca(char, cap)
+            raw := @alloca(u8, cap)
             str := String.from_raw_ptr(raw, cap)
             str
         }
@@ -412,10 +413,10 @@ impl Lexer {
         str += '`0'
 
         if isFloat {
-            d := C.strtod(str.get_raw(), null)
+            d := C.strtod(cast str.get_raw(), null)
             token.data = TokenData.Double(d)
         } else {
-            i := C.strtol(str.get_raw(), null, cast base)
+            i := C.strtol(cast str.get_raw(), null, cast base)
             token.data = TokenData.Integer(i)
         }
     }
@@ -521,7 +522,8 @@ impl Lexer {
             return '`0'
         }
 
-        return text[index]
+        code_point, _ := Utf8.decode(text.slice().bytes[index..text.length])
+        return code_point
     }
 
     parse_multi_line_comment :: (ref Self) {

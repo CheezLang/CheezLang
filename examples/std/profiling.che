@@ -62,7 +62,7 @@ impl Instrumentor {
             null
         }
         global_instrumantor = alloc(Instrumentor)
-        <<global_instrumantor = Instrumentor(null, null, 0, m)
+        <<global_instrumantor = Instrumentor("null", null, 0, m)
     }
 
     get :: () -> &Instrumentor {
@@ -88,7 +88,7 @@ impl Instrumentor {
         write_footer()
         fclose(output_file)
 
-        current_session = null
+        current_session = ""
         output_file     = null
         profile_count   = 0
     }
@@ -132,8 +132,8 @@ impl Instrumentor {
         fprintf(output_file, "")
         fprintf(output_file, "{")
         fprintf(output_file, "`"cat`":`"function`",")
-        fprintf(output_file, "`"name`":`"%.*s`",", name.length, name.data)
-        fprintf(output_file, "`"ph`":`"%.*s`",", ph.length, ph.data)
+        fprintf(output_file, "`"name`":`"%.*s`",", name.bytes.length, name.bytes.data)
+        fprintf(output_file, "`"ph`":`"%.*s`",", ph.bytes.length, ph.bytes.data)
         fprintf(output_file, "`"pid`":0,")
         fprintf(output_file, "`"tid`":%lld,", thread_id)
         fprintf(output_file, "`"id`":%lld,", id)

@@ -1,7 +1,7 @@
 // import examples.trait_function_call_performance
 // import examples.glfw3_example
 // import examples.graphyfier.graphyfier
-// import examples.pathtracer2.main
+import examples.pathtracer2.maain
 // import examples.geometry_draw_thingy
 // import examples.signed_distance_field_renderer
 // import examples.snake.snake
@@ -22,7 +22,7 @@
 // import "examples/project_euler/018_maximum_path_sum_1"
 // import bugs.bug1
 
-//*
+/*
 #test_expect_output("")
 
 use import std.os.windows_functions
