@@ -830,6 +830,13 @@ namespace Cheez.Visitors
             return ident.Name;
         }
 
+        public override string VisitPipeExpr(AstPipeExpr expr, int data = 0)
+        {
+            var left = expr.Left.Accept(this, 0);
+            var right = expr.Right.Accept(this, 0);
+            return $"({left} | {right})";
+        }
+
         public override string VisitBinaryExpr(AstBinaryExpr bin, int data = 0)
         {
             var left = bin.Left.Accept(this, 0);

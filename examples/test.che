@@ -113,7 +113,24 @@ Main :: () {
 }
 
 test :: () -> Result[(), int] {
-    dir := "iauiaeuiae"
+    // str := "AöЖ€𝄞(╯°□°）╯︵ ┻━┻ 😂.txt"
+
+    // io.println("")
+    // io.println("")
+
+    // test := String.empty()
+    // for c : str {
+    //     test += c
+    //     io.print(c)
+    // }
+    // io.println("")
+    // slc := test.slice()
+    // for b : slc.bytes do io.printf("{:x} ", b)
+    // io.println("")
+    // for b : str.bytes do io.printf("{:x} ", b)
+    // io.println("")
+
+    dir := "(╯°□°）╯︵ ┻━┻ 😂😂😂😂"
     io.println(dir.bytes.length)
     try_with(create_directory(dir), io.println("failed to create directory"))
 

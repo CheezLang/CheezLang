@@ -1226,7 +1226,7 @@ namespace Cheez.Parsing
         {
             errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
 
-            var expr = ParseOrExpression(false, allowFunctionExpression, errorMessage);
+            var expr = ParsePipeExpression(false, allowFunctionExpression, errorMessage);
 
             if (allowCommaForTuple)
             {
@@ -1241,7 +1241,7 @@ namespace Cheez.Parsing
 
                     NextToken();
 
-                    expr = ParseOrExpression(false, allowFunctionExpression, errorMessage);
+                    expr = ParsePipeExpression(false, allowFunctionExpression, errorMessage);
                     list.Add(new AstParameter(null, expr, null, expr));
                 }
 
@@ -1250,6 +1250,23 @@ namespace Cheez.Parsing
             }
 
             return expr;
+        }
+
+        [DebuggerStepThrough]
+        private AstExpression ParsePipeExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver errorMessage)
+        {
+            var lhs = ParseOrExpression(allowCommaForTuple, allowFunctionExpression, errorMessage);
+            AstExpression rhs = null;
+
+            while (CheckToken(TokenType.Pipe))
+            {
+                NextToken();
+                SkipNewlines();
+                rhs = ParseOrExpression(allowCommaForTuple, allowFunctionExpression, errorMessage);
+                lhs = new AstPipeExpr(lhs, rhs, new Location(lhs.Beginning, rhs.End));
+            }
+
+            return lhs;
         }
 
         [DebuggerStepThrough]
@@ -1304,6 +1321,15 @@ namespace Cheez.Parsing
 
         [DebuggerStepThrough]
         private AstExpression ParseMulDivExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver e)
+        {
+            return ParseBinaryLeftAssociativeExpression(ParseUnaryExpression, allowCommaForTuple, allowFunctionExpression, e,
+                (TokenType.Asterisk, "*"),
+                (TokenType.ForwardSlash, "/"),
+                (TokenType.Percent, "%"));
+        }
+
+        [DebuggerStepThrough]
+        private AstExpression ParseBinaryExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver e)
         {
             return ParseBinaryLeftAssociativeExpression(ParseUnaryExpression, allowCommaForTuple, allowFunctionExpression, e,
                 (TokenType.Asterisk, "*"),

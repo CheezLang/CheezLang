@@ -138,6 +138,9 @@ namespace Cheez
 
             switch (expr)
             {
+                case AstPipeExpr p:
+                    return InferTypePipeExpr(p, expected, context);
+
                 case AstImportExpr i:
                     ReportError(i, $"Import expression not allowed here.");
                     return expr;
@@ -279,6 +282,55 @@ namespace Cheez
 
                 default:
                     throw new NotImplementedException();
+            }
+        }
+
+        private AstExpression InferTypePipeExpr(AstPipeExpr p, CheezType expected, TypeInferenceContext context)
+        {
+            p.Left.Scope = p.Scope;
+            p.Left = InferTypeHelper(p.Left, null, context);
+            p.Right.Scope = p.Scope;
+            switch (p.Right)
+            {
+                case AstCompCallExpr cc:
+                    {
+                        // check if there is an arg named _
+                        foreach (var arg in cc.Arguments)
+                        {
+                            if (arg.Expr is AstIdExpr id && id.Name == "_")
+                            {
+                                arg.Expr = p.Left;
+                                return InferTypeHelper(cc, expected, context);
+                            }
+                        }
+
+                        // no arg named _, so add lhs as last arg
+                        cc.Arguments.Add(new AstArgument(p.Left, null, p.Left.Location));
+                        return InferTypeHelper(cc, expected, context);
+                    }
+
+                case AstCallExpr cc:
+                    {
+                        // check if there is an arg named _
+                        foreach (var arg in cc.Arguments)
+                        {
+                            if (arg.Expr is AstIdExpr id && id.Name == "_")
+                            {
+                                arg.Expr = p.Left;
+                                return InferTypeHelper(cc, expected, context);
+                            }
+                        }
+
+                        // no arg named _, so add lhs as last arg
+                        cc.Arguments.Add(new AstArgument(p.Left, null, p.Left.Location));
+                        return InferTypeHelper(cc, expected, context);
+                    }
+
+
+
+                default:
+                    ReportError(p, $"This kind of expression is not allowed here");
+                    return p;
             }
         }
 

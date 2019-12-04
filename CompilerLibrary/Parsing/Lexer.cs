@@ -43,6 +43,7 @@ namespace Cheez.Parsing
 
         Bang,
 
+        // arithmetic
         Plus,
         Minus,
         Asterisk,
