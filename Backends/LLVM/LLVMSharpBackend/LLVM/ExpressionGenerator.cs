@@ -693,7 +693,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 var v = GenerateExpression(cast.SubExpression, true);
                 var tag = builder.CreateExtractValue(v, 0, "");
-                return CreateIntCast(i5, i5.Signed, e.Declaration.TagType, e.Declaration.TagType.Signed, tag);
+                return CreateIntCast(e.Declaration.TagType, e.Declaration.TagType.Signed, i5, i5.Signed, tag);
             }
 
             if (to is BoolType && from is FunctionType)

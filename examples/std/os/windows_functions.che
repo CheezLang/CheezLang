@@ -88,8 +88,10 @@ GetFileSize      :: (hFile: HANDLE, lpFileSizeHigh: &DWORD) -> DWORD #stdcall;
 GetFileSizeEx    :: (hFile: HANDLE, lpFileSize: &LARGE_INTEGER) -> BOOL #stdcall;
 GetFullPathNameW :: (lpFileName: &u16, nBufferLength: DWORD, lpBuffer: c_string, lpFilePart: &c_string) -> DWORD #stdcall;
 
+// console stuff
 WriteConsoleW    :: (hConsoleOutput: HANDLE, lpBuffer: &void, nNumberOfBytesToWrite: DWORD, lpNumberOfCharsWritten: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
 GetConsoleMode   :: (hConsoleHandle: HANDLE, lpMode: &DWORD) -> BOOL #stdcall;
+SetConsoleTextAttribute :: (hConsoleOutput: HANDLE, wAttributes: WORD) -> BOOL #stdcall;
 
 // window stuff
 GetModuleHandleA   :: (lpModuleName: c_string) -> HMODULE #stdcall;

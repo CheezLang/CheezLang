@@ -1,0 +1,86 @@
+use import lexer
+
+io :: import std.io
+
+#export_scope
+
+ErrorHandler :: trait {
+    has_errors :: (ref Self) -> bool;
+    report_error :: (ref Self, location: ref Location, message: string);
+}
+
+TextProvider :: trait {
+    get_text :: (ref Self, filename: string) -> string;
+}
+
+ConsoleErrorHandler :: struct {
+    text_provider     : TextProvider
+    error_count       := 0
+    do_print_location := true
+}
+
+impl ConsoleErrorHandler {
+    new :: (text_provider: TextProvider) -> ConsoleErrorHandler {
+        return ConsoleErrorHandler(text_provider)
+    }
+}
+
+impl ErrorHandler for ConsoleErrorHandler {
+    has_errors :: (ref Self) -> bool {
+        return error_count > 0
+    }
+
+    report_error :: (ref Self, location: ref Location, message: string) {
+        error_count += 1
+
+        io.printf("{}:{}:{}:", (location.file, location.line, location.column))
+        io.set_console_color(io.ConsoleColor.Red, io.ConsoleColor.Black)
+        io.printfln(" {}", message)
+        io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
+
+        if do_print_location then print_location(location)
+    }
+
+    print_location :: (ref Self, location: ref Location) {
+        text := text_provider.get_text(location.file)
+
+        // returns index of first character in the same line
+        find_start_of_line :: (text: string, byte_index: int) -> int {
+            bytes := text.bytes
+            start := byte_index
+            byte_index -= 1
+            while byte_index >= 0 and bytes[byte_index] != u8('`n') {
+                start = byte_index
+                byte_index -= 1
+            }
+            return start
+        }
+
+        // returns index of \n at the end of the same line
+        find_end_of_line :: (text: string, byte_index: int) -> int {
+            bytes := text.bytes
+            while byte_index >= 0 and bytes[byte_index] != u8('`n') {
+                byte_index += 1
+            }
+            return byte_index
+        }
+
+        // print line containing error
+        {
+            line := location.line
+            line_start := find_start_of_line(text, location.byte_index)
+            line_end   := find_end_of_line(text, location.byte_index)
+
+            io.println(line_start)
+            io.println(location.byte_index)
+            io.println(line_end)
+
+            @assert(line_start <= location.byte_index)
+            @assert(location.byte_index <= line_end)
+
+            sub1 := text[line_start..location.byte_index]
+            sub2 := text[line_start..location.byte_index]
+            sub3 := text[location.byte_index..line_end]
+        }
+    }
+}

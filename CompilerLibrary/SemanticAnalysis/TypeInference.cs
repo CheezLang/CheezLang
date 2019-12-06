@@ -914,7 +914,7 @@ namespace Cheez
             {
                 case AstIdExpr id:
                     {
-                        if (id.IsPolymorphic)
+                        if (id.IsPolymorphic || id.Name == "_")
                         {
                             AstExpression tmpVar = new AstTempVarExpr(value, false);
                             tmpVar.Replace(value);

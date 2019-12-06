@@ -228,6 +228,8 @@ namespace Cheez.Parsing
                 case TokenType.KwTrue:
                 case TokenType.KwFalse:
                 case TokenType.KwCast:
+                case TokenType.KwMatch:
+                case TokenType.KwIf:
                 case TokenType.Ampersand:
                 case TokenType.Asterisk:
                 case TokenType.Identifier:
@@ -566,7 +568,8 @@ namespace Cheez.Parsing
             AstExpression returnValue = null;
 
             var next = PeekToken();
-            if (next.type != TokenType.NewLine && next.type != TokenType.EOF)
+            if (IsExprToken())
+            //if (next.type != TokenType.NewLine && next.type != TokenType.EOF)
             {
                 returnValue = ParseExpression(true);
             }

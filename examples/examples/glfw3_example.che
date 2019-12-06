@@ -15,6 +15,7 @@ use import imgui.functions
 
 vec2 :: Vector2[float]
 vec3 :: Vector3[float]
+vec4 :: Vector4[float]
 
 gladLoadGL :: () -> i32;
 
@@ -66,16 +67,27 @@ Main :: () {
 
     // opengl
     glViewport(0, 0, 1080, 720)
-    glClearColor(0, 0, 0, 1)
 
-    show_demo_window := true
+    clear_color := vec4(1, 0, 1, 1)
+
+    show_demo_window := false
 
     while !glfwWindowShouldClose(window) {
         glfwPollEvents()
+        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
         glClear(GL_COLOR_BUFFER_BIT)
 
         //
         begin_frame()
+
+        {
+            open := true
+            igBegin("Settings", &open, cast ImGuiWindowFlags_.None)
+
+            igColorPicker3("clear color", cast(&float)&clear_color, 0)
+
+            igEnd()
+        }
 
         if show_demo_window then
             igShowDemoWindow(&show_demo_window)
