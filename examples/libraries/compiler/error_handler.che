@@ -65,22 +65,71 @@ impl ErrorHandler for ConsoleErrorHandler {
             return byte_index
         }
 
+        // 
+        get_line_range :: (text: string, start_line: int, byte_index: int, byte_length: int) -> int..int {
+            bytes := text.bytes
+            end_line   := start_line
+            end := byte_index + byte_length
+
+            while byte_index < end, byte_index += 1 {
+                if bytes[byte_index] == u8('`n') {
+                    end_line += 1
+                }
+            }
+
+            return start_line..end_line
+        }
+
         // print line containing error
         {
+            index  := location.byte_index
+            length := location.byte_length
             line := location.line
-            line_start := find_start_of_line(text, location.byte_index)
-            line_end   := find_end_of_line(text, location.byte_index)
 
-            io.println(line_start)
-            io.println(location.byte_index)
-            io.println(line_end)
+            range_lines := get_line_range(text, location.line, index, length)
 
-            @assert(line_start <= location.byte_index)
-            @assert(location.byte_index <= line_end)
+            while true, line += 1 {
+                line_start := find_start_of_line(text, index)
+                line_end   := find_end_of_line(text, index)
+                range_start := index
+                range_end   := index + length
 
-            sub1 := text[line_start..location.byte_index]
-            sub2 := text[line_start..location.byte_index]
-            sub3 := text[location.byte_index..line_end]
+                // io.println(range_lines.start)
+                // io.println(range_lines.end)
+                // io.println(line_start)
+                // io.println(range_start)
+                // io.println(range_end)
+                // io.println(line_end)
+
+                @assert(line_start <= index)
+
+                if range_end > line_end {
+                    // goes to next line
+                    sub1 := text[line_start..index]
+                    sub2 := text[range_start..line_end]
+
+                    io.set_console_color(io.ConsoleColor.Green, io.ConsoleColor.Black)
+                    io.print(sub1)
+                    io.set_console_color(io.ConsoleColor.Red, io.ConsoleColor.Black)
+                    io.print(sub2)
+                    io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
+                    io.println("")
+                } else {
+
+                    sub1 := text[line_start..index]
+                    sub2 := text[range_start..range_end]
+                    sub3 := text[range_end..line_end]
+
+                    io.set_console_color(io.ConsoleColor.Green, io.ConsoleColor.Black)
+                    io.print(sub1)
+                    io.set_console_color(io.ConsoleColor.Red, io.ConsoleColor.Black)
+                    io.print(sub2)
+                    io.set_console_color(io.ConsoleColor.Green, io.ConsoleColor.Black)
+                    io.print(sub3)
+                    io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
+                    io.println("")
+                }
+            }
         }
     }
 }

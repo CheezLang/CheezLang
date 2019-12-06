@@ -253,6 +253,10 @@ impl Lexer {
 
         token.location.byte_length = location.byte_index - token.location.byte_index
 
+        if int(token.ttype) == int(TokenType.StringLiteral) {
+            error_handler.report_error(token.location, "Invalid string literal")
+        }
+
         return token
     }
 
