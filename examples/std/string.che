@@ -4,6 +4,7 @@ C    :: import std.c
 fmt  :: import std.fmt
 
 use import std.array
+use import std.unicode
 use import std.printable
 use import std.mem.allocator
 use import std.mem.std_heap_allocator
@@ -89,8 +90,9 @@ impl String {
         return data.data
     }
 
-    char_at :: (ref Self, i: int) -> ref u8 #operator("[]") {
-        return data[i]
+    char_at :: (ref Self, i: int) -> ref char #operator("[]") {
+        code_point, len := Utf8.decode(data[i..data.length])
+        return code_point
     }
 
     set_char_at :: (ref Self, i: int, c: u8) #operator("set[]") {
@@ -162,9 +164,10 @@ impl String {
     }
 
     append_char :: (ref Self, ch: char) -> ref Self #operator("+=") {
-        newLength := length + 1
+        bytes, count := Utf8.encode(ch)
+        newLength := length + int(count)
         self.reserve(newLength)
-        data[length] = u8(ch)
+        C.memcpy(&data[length], &bytes[0], cast count)
         length = newLength
         return self
     }
@@ -215,7 +218,7 @@ impl String {
                 args : [1]Printable = [arguments]
             } else {
                 args : [T.length] Printable = default
-                @for_tuple_values(arguments, |v, i| {
+                @for_tuple_values(arguments, lambda v, i => {
                     args[i] = Printable(v)
                 })
             }
@@ -410,5 +413,15 @@ impl c_string {
 
     to_string :: (Self) -> String {
         return String.from_cstring(self)
+    }
+}
+
+for_extension_string_builtin :: (arr: string, code: Code) #for {
+    bytes := arr.bytes
+
+    while it_index := 0, it_index < bytes.length {
+        it, len := Utf8.decode(bytes[it_index..bytes.length])
+        @insert(code, _break=break, _continue=continue)
+        it_index += int(len)
     }
 }

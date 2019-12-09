@@ -13,6 +13,7 @@ use import std.os.windows
 use import std.os.windows_functions
 use import std.os.windows_types
 use import std.os.windows_constants
+io :: import std.io
 
 use import opengl.opengl
 use import opengl.functions
@@ -281,7 +282,14 @@ impl PixelGameEngine {
                         fps_string.appendf("OneLoneCoder.com - Pixel Game Engine - FPS: {}", nFrameCount)
                         fps_string += cast(char) 0
 
-                        SetWindowTextA(olc_hWnd, fps_string.get_raw())
+                        match fps_string.slice().to_utf16() {
+                            Ok($title) -> {
+                                SetWindowTextW(olc_hWnd, title.get_raw())
+                                io.println(fps_string.clone())
+                            }
+                            Err($title) -> SetWindowTextA(olc_hWnd, "ERROR in to_utf16()"c)
+                        }
+
                     }
                     nFrameCount = 0
                 }

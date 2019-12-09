@@ -228,6 +228,8 @@ namespace Cheez.Parsing
                 case TokenType.KwTrue:
                 case TokenType.KwFalse:
                 case TokenType.KwCast:
+                case TokenType.KwMatch:
+                case TokenType.KwIf:
                 case TokenType.Ampersand:
                 case TokenType.Asterisk:
                 case TokenType.Identifier:
@@ -566,7 +568,8 @@ namespace Cheez.Parsing
             AstExpression returnValue = null;
 
             var next = PeekToken();
-            if (next.type != TokenType.NewLine && next.type != TokenType.EOF)
+            if (IsExprToken())
+            //if (next.type != TokenType.NewLine && next.type != TokenType.EOF)
             {
                 returnValue = ParseExpression(true);
             }
@@ -1226,7 +1229,7 @@ namespace Cheez.Parsing
         {
             errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
 
-            var expr = ParseOrExpression(false, allowFunctionExpression, errorMessage);
+            var expr = ParsePipeExpression(false, allowFunctionExpression, errorMessage);
 
             if (allowCommaForTuple)
             {
@@ -1241,7 +1244,7 @@ namespace Cheez.Parsing
 
                     NextToken();
 
-                    expr = ParseOrExpression(false, allowFunctionExpression, errorMessage);
+                    expr = ParsePipeExpression(false, allowFunctionExpression, errorMessage);
                     list.Add(new AstParameter(null, expr, null, expr));
                 }
 
@@ -1250,6 +1253,23 @@ namespace Cheez.Parsing
             }
 
             return expr;
+        }
+
+        [DebuggerStepThrough]
+        private AstExpression ParsePipeExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver errorMessage)
+        {
+            var lhs = ParseOrExpression(allowCommaForTuple, allowFunctionExpression, errorMessage);
+            AstExpression rhs = null;
+
+            while (CheckToken(TokenType.Pipe))
+            {
+                NextToken();
+                SkipNewlines();
+                rhs = ParseOrExpression(allowCommaForTuple, allowFunctionExpression, errorMessage);
+                lhs = new AstPipeExpr(lhs, rhs, new Location(lhs.Beginning, rhs.End));
+            }
+
+            return lhs;
         }
 
         [DebuggerStepThrough]
@@ -1304,6 +1324,15 @@ namespace Cheez.Parsing
 
         [DebuggerStepThrough]
         private AstExpression ParseMulDivExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver e)
+        {
+            return ParseBinaryLeftAssociativeExpression(ParseUnaryExpression, allowCommaForTuple, allowFunctionExpression, e,
+                (TokenType.Asterisk, "*"),
+                (TokenType.ForwardSlash, "/"),
+                (TokenType.Percent, "%"));
+        }
+
+        [DebuggerStepThrough]
+        private AstExpression ParseBinaryExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver e)
         {
             return ParseBinaryLeftAssociativeExpression(ParseUnaryExpression, allowCommaForTuple, allowFunctionExpression, e,
                 (TokenType.Asterisk, "*"),
@@ -1690,7 +1719,7 @@ namespace Cheez.Parsing
 
         private AstExpression ParseLambdaExpr(bool allowCommaForTuple)
         {
-            var beg = ConsumeUntil(TokenType.Pipe, ErrMsg("|", "at beginning of lambda")).location;
+            var beg = ConsumeUntil(TokenType.KwLambda, ErrMsg("'lambda'", "at beginning of lambda")).location;
             var parameters = new List<AstParameter>();
             AstExpression retType = null;
 
@@ -1725,7 +1754,14 @@ namespace Cheez.Parsing
                         SkipNewlines();
                     }
                 }
-                else if (next.type == TokenType.Pipe || next.type == TokenType.EOF)
+                else if (CheckToken(TokenType.Arrow))
+                {
+                    NextToken();
+                    SkipNewlines();
+                    retType = ParseExpression(false);
+                    break;
+                }
+                else if (next.type == TokenType.DoubleArrow || next.type == TokenType.EOF)
                 {
                     break;
                 }
@@ -1736,14 +1772,7 @@ namespace Cheez.Parsing
                 }
             }
 
-            ConsumeUntil(TokenType.Pipe, ErrMsg("|", "in lambda"));
-
-            if (CheckToken(TokenType.Arrow))
-            {
-                NextToken();
-                SkipNewlines();
-                retType = ParseExpression(false);
-            }
+            ConsumeUntil(TokenType.DoubleArrow, ErrMsg("=>", "in lambda"));
 
             var body = ParseExpression(allowCommaForTuple);
 
@@ -1991,7 +2020,7 @@ namespace Cheez.Parsing
                     NextToken();
                     return new AstDefaultExpr(new Location(token.location));
 
-                case TokenType.Pipe:
+                case TokenType.KwLambda:
                     return ParseLambdaExpr(allowCommaForTuple);
 
                 case TokenType.KwNull:

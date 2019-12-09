@@ -162,6 +162,25 @@ WT_EXECUTEONLYONCE                 :: 0x00000008
 INFINITE                           :: 0xFFFFFFFF
 //
 
+// Console Attributes
+FOREGROUND_BLUE            :: 0x0001 // text color contains blue.
+FOREGROUND_GREEN           :: 0x0002 // text color contains green.
+FOREGROUND_RED             :: 0x0004 // text color contains red.
+FOREGROUND_INTENSITY       :: 0x0008 // text color is intensified.
+BACKGROUND_BLUE            :: 0x0010 // background color contains blue.
+BACKGROUND_GREEN           :: 0x0020 // background color contains green.
+BACKGROUND_RED             :: 0x0040 // background color contains red.
+BACKGROUND_INTENSITY       :: 0x0080 // background color is intensified.
+COMMON_LVB_LEADING_BYTE    :: 0x0100 // Leading Byte of DBCS
+COMMON_LVB_TRAILING_BYTE   :: 0x0200 // Trailing Byte of DBCS
+COMMON_LVB_GRID_HORIZONTAL :: 0x0400 // DBCS: Grid attribute: top horizontal.
+COMMON_LVB_GRID_LVERTICAL  :: 0x0800 // DBCS: Grid attribute: left vertical.
+COMMON_LVB_GRID_RVERTICAL  :: 0x1000 // DBCS: Grid attribute: right vertical.
+COMMON_LVB_REVERSE_VIDEO   :: 0x4000 // DBCS: Reverse fore/back ground attribute.
+COMMON_LVB_UNDERSCORE      :: 0x8000 // DBCS: Underscore.
+COMMON_LVB_SBCSDBCS        :: 0x0300 // SBCS or DBCS flag.
+
+//
 CREATE_SUSPENDED                   :: 0x00000004
 STACK_SIZE_PARAM_IS_A_RESERVATION  :: 0x00010000
 
@@ -211,8 +230,8 @@ TRUNCATE_EXISTING                  :: 5
 
 FILE_ATTRIBUTE_NORMAL              :: 0x80
 
-IDI_APPLICATION                    :: cast(&char) 32512
-IDC_ARROW                          :: cast(&char) 32512
+IDI_APPLICATION                    :: cast(&char8) 32512
+IDC_ARROW                          :: cast(&char8) 32512
 
 CS_VREDRAW                         :: 0x0001
 CS_HREDRAW                         :: 0x0002

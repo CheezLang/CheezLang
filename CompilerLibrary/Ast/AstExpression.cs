@@ -509,6 +509,30 @@ namespace Cheez.Ast.Expressions
             => CopyValuesTo(new AstNaryOpExpr(Operator, Arguments.Select(a => a.Clone()).ToList()));
     }
 
+    public class AstPipeExpr : AstExpression
+    {
+        public AstExpression Left { get; set; }
+        public AstExpression Right { get; set; }
+
+        public override bool IsPolymorphic => Left.IsPolymorphic || Right.IsPolymorphic;
+
+        public IBinaryOperator ActualOperator { get; set; }
+
+        [DebuggerStepThrough]
+        public AstPipeExpr(AstExpression lhs, AstExpression rhs, ILocation Location = null) : base(Location)
+        {
+            Left = lhs;
+            Right = rhs;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitPipeExpr(this, data);
+
+        [DebuggerStepThrough]
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstPipeExpr(Left.Clone(), Right.Clone()));
+    }
+
     public class AstBinaryExpr : AstExpression
     {
         public string Operator { get; set; }

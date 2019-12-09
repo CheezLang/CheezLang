@@ -65,7 +65,7 @@ Main :: () {
     windowTitle := String.empty()
     windowTitle.appendf("Snake     {} FPS`0" , 0)
 
-    window := glfwCreateWindow(cast width, cast height, windowTitle.get_raw(), null, null)
+    window := glfwCreateWindow(cast width, cast height, cast windowTitle.get_raw(), null, null)
     if window == null {
         io.println("Failed to create window")
         return
@@ -131,7 +131,7 @@ Main :: () {
 
             windowTitle.resize(0)
             windowTitle.appendf("Snake     {} FPS`0" , fpsCounter)
-            glfwSetWindowTitle(window, windowTitle.get_raw())
+            glfwSetWindowTitle(window, cast windowTitle.get_raw())
 
             fpsTimer -= 1.0
             fpsCounter = 0

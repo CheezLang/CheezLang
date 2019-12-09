@@ -690,6 +690,10 @@ namespace Cheez
         public (bool ok, ILocation? other) DefineLocalSymbol(ISymbol symbol, string? name = null)
         {
             name = name ?? symbol.Name;
+
+            if (name == "_")
+                return (true, null);
+
             if (mSymbolTable.TryGetValue(name, out var other))
                 return (false, other.Location);
 

@@ -159,9 +159,9 @@ compile :: (expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]
                                 op_stack.push(OpCode.Log)
                                 last_was_expression = false
                             } else {
-                                name_copy := alloc_n(char, cast v.length, var_name_allocator)
-                                C.memcpy(name_copy.data, v.data, cast @sizeof(char) * v.length)
-                                res.add(OpCode.Var(name_copy))
+                                name_copy := alloc_n(u8, cast v.bytes.length, var_name_allocator)
+                                C.memcpy(name_copy.data, v.bytes.data, cast v.bytes.length)
+                                res.add(OpCode.Var(string(name_copy.data, name_copy.length)))
                             }
                         }
 

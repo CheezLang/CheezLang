@@ -59,29 +59,25 @@ do_print_any :: (data: &void, typ: &TypeInfo) {
         }
 
         TypeInfoKind.Slice($target) -> {
-            if int(target.kind) == int(TypeInfoKind.Char) {
-                if data == null {
-                    C.printf("null")
-                } else {
-                    ptr := <<cast(&[]char) data
-                    C.printf("`"%.*s`"", ptr.length, ptr.data)
-                }
-            } else {
-                ptr := <<cast(&[]void) data
-                C.printf("[")
-                for i : 0..ptr.length {
-                    if i > 0 then C.printf(", ")
+            ptr := <<cast(&[]void) data
+            C.printf("[")
+            for i : 0..ptr.length {
+                if i > 0 then C.printf(", ")
 
-                    elem := pointer_add(ptr.data, i * target.size)
-                    do_print_any(elem, target)
-                }
-                C.printf("]")
+                elem := pointer_add(ptr.data, i * target.size)
+                do_print_any(elem, target)
             }
+            C.printf("]")
+        }
+
+        TypeInfoKind.String -> {
+            str := <<cast(&string) data
+            C.printf("%.*s", i32(str.bytes.length), str.bytes.data)
         }
 
         TypeInfoKind.Struct($tstruct) -> {
             ptr := cast(&void) data
-            C.printf("%.*s", i32(tstruct.name.length), tstruct.name.data)
+            C.printf("%.*s", i32(tstruct.name.bytes.length), tstruct.name.bytes.data)
 
             C.printf("(")
             if tstruct.members.data != null {
@@ -90,7 +86,7 @@ do_print_any :: (data: &void, typ: &TypeInfo) {
                     member_info := &tstruct.members[i]
                     member_ptr  := pointer_add(ptr, member_info.offset)
                     member_type := member_info.typ
-                    C.printf("%.*s = ", i32(member_info.name.length), member_info.name.data)
+                    C.printf("%.*s = ", i32(member_info.name.bytes.length), member_info.name.bytes.data)
                     do_print_any(member_ptr, member_type)
                 }
             }
@@ -99,7 +95,7 @@ do_print_any :: (data: &void, typ: &TypeInfo) {
 
         TypeInfoKind.Enum($tenum) -> {
             ptr := cast(&void) data
-            C.printf("%.*s.", i32(tenum.name.length), tenum.name.data)
+            C.printf("%.*s.", i32(tenum.name.bytes.length), tenum.name.bytes.data)
 
             tag := match tenum.tag_type.size {
                 1  -> int(<<cast(&u8) ptr)
@@ -114,7 +110,7 @@ do_print_any :: (data: &void, typ: &TypeInfo) {
 
             for(by_ref=true) mem : tenum.members {
                 if mem.tag == tag {
-                    C.printf("%.*s", i32(mem.name.length), mem.name.data)
+                    C.printf("%.*s", i32(mem.name.bytes.length), mem.name.bytes.data)
 
                     if mem.typ != null {
                         mem_val_ptr := pointer_add(ptr, tenum.tag_type.size)

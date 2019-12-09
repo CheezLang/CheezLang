@@ -37,57 +37,9 @@ io  :: import std.io
 fmt :: import std.fmt
 C   :: import std.c
 
-
-
-// Uft8 :: struct{}
-
-// impl Uft8 {
-//     decode :: (bytes: []u8) -> char, i32 {
-//         b0 : u32 = cast bytes[0]
-
-//         byte_count : i32 = 0
-//         code_point : u32 = 0
-//         if @bin_lsr(b0, 7) == 0 {
-//             code_point = cast b0
-//             byte_count = 1
-//         } else if @bin_lsr(b0, 5) == 0b110 {
-//             b1 : u32 = cast bytes[1]
-
-//             b0_masked := @bin_and(b0, 0b00011111)
-//             b1_masked := @bin_and(b1, 0b00111111)
-
-//             code_point = @bin_or(@bin_lsl(b0_masked, 6), b1_masked)
-//             byte_count = 2
-//         } else if @bin_lsr(b0, 4) == 0b1110 {
-//             b1 : u32 = cast bytes[1]
-//             b2 : u32 = cast bytes[2]
-
-//             b0_masked := @bin_and(b0, 0b00001111)
-//             b1_masked := @bin_and(b1, 0b00111111)
-//             b2_masked := @bin_and(b2, 0b00111111)
-
-//             code_point = @bin_or(@bin_lsl(b0_masked, 6), b1_masked)
-//             code_point = @bin_or(@bin_lsl(code_point, 6), b2_masked)
-//             byte_count = 3
-//         } else if @bin_lsr(b0, 3) == 0b11110 {
-//             b1 : u32 = cast bytes[1]
-//             b2 : u32 = cast bytes[2]
-//             b3 : u32 = cast bytes[3]
-
-//             b0_masked := @bin_and(b0, 0b00000111)
-//             b1_masked := @bin_and(b1, 0b00111111)
-//             b2_masked := @bin_and(b2, 0b00111111)
-//             b3_masked := @bin_and(b3, 0b00111111)
-
-//             code_point = @bin_or(@bin_lsl(b0_masked, 6), b1_masked)
-//             code_point = @bin_or(@bin_lsl(code_point, 6), b2_masked)
-//             code_point = @bin_or(@bin_lsl(code_point, 6), b3_masked)
-//             byte_count = 4
-//         }
-
-//         return char(code_point), byte_count
-//     }
-// }
+use import compiler.lexer
+use import compiler.error_handler
+use import compiler.string_database
 
 // impl string {
 //     index_of :: (ref Self, ch: char) -> Option[int] {
@@ -95,78 +47,28 @@ C   :: import std.c
 //     }
 // }
 
-impl Into[int] for () {
-    into :: (ref Self) -> int {
-        return 123
-    }
-}
+
 
 Main :: () {
-    match test() {
-        Ok($succ) -> {
-            io.printfln("Ok({})", succ)
-        }
-        Err($err) -> {
-            io.printfln("Err({})", err)
-        }
-    }
-}
+    a0 := 123_456
+    a1 := 0b1101_1110
+    a2 := 0xABC_789
 
-test :: () -> Result[(), int] {
-    dir := "iauiaeuiae"
-    io.println(dir.bytes.length)
-    try_with(create_directory(dir), io.println("failed to create directory"))
+    console_error_handler := ConsoleErrorHandler.new(null)
+    string_db := StringDatabase.new()
+    lexer := try_with(Lexer.from_file("D:\Programming\CheezLang\gen\uiae.che", string_db, console_error_handler), {return})
+    console_error_handler.text_provider = lexer
 
-    a := "(╯°□°）╯︵ ┻━┻ 😂😂😂😂.txt"
+    str := String.empty()
 
-    str := String.from_string(a)
-    str += char(0)
+    loop {
+        token := lexer.next_token()
 
-    match write_file(a, "(╯°□°）╯︵ ┻━┻ 😂😂😂😂.txt
-🤣«»©®℗™⁝⁀⁐⁁&
-(╯°□°）╯︵ ┻━┻ 😂😂😂😂.txt
-(╯°□°）╯︵ ┻━┻ 😂😂😂😂.txt
-🤣«»©®℗™⁝⁀⁐⁁&
-(╯°□°）╯︵ ┻━┻ 😂😂😂😂.txt
-🤣«»©®℗™⁝⁀⁐⁁&
-🤣«»©®℗™⁝⁀⁐⁁&") {
-        Err($err) -> io.println(fmt.format_any(err))
+        str.appendf("{}`n", token)
+
+        if int(token.ttype) == int(TokenType.EOF) then break
     }
 
-    io.println("==============================")
-    match read_file(a) {
-        Ok($str) -> io.println(str)
-        Err($err) -> io.println(fmt.format_any(err))
-    }
-    io.println("==============================")
-
-
-    // bytes := a.bytes
-    // ascii := a.ascii
-
-    // io.println(a.bytes.length)
-    // io.println(a.ascii.length)
-
-    // io.println(a.bytes.length)
-    // io.println(a)
-
-    // for i : 0..a.bytes.length {
-    //     io.printf("{:b} ", u32(a[i]))
-    // }
-    // io.println("")
-    // io.println("")
-    // io.println("")
-    // io.println("")
-
-    // for c : a {
-    //     io.printf("{:b} ", u32(c))
-    // }
-    // io.println("")
-
-    // if !write_file_string("test.out", a) {
-    //     io.println("Failed to write to file")
-    // }
-
-    return Ok(())
+    write_file("out.txt", str.slice())
 }
 // */

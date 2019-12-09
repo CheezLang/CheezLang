@@ -4,6 +4,7 @@ c :: import std.c
 
 use import std.os.windows
 use import std.os.windows_functions
+use import std.os.windows_constants
 
 #export_scope
 println :: (v: $T) {
@@ -31,6 +32,32 @@ printfln :: (format: string, args: $T) {
     print_string(s)
 }
 
+ConsoleColor :: enum {
+    Black  = 0
+    Red    = 0x1
+    Green  = 0x2
+    Blue   = 0x4
+    Bright = 0x8
+    White  = @bin_or(Red, Green, Blue)
+}
+
+set_console_color :: (foreground: ConsoleColor, background: ConsoleColor) {
+    fg := u16(foreground)
+    bg := u16(background)
+    attributes := 0u16
+
+    if @bin_and(fg, u16(ConsoleColor.Red))    != 0 { attributes = @bin_or(attributes, FOREGROUND_RED) }
+    if @bin_and(fg, u16(ConsoleColor.Green))  != 0 { attributes = @bin_or(attributes, FOREGROUND_GREEN) }
+    if @bin_and(fg, u16(ConsoleColor.Blue))   != 0 { attributes = @bin_or(attributes, FOREGROUND_BLUE) }
+    if @bin_and(fg, u16(ConsoleColor.Bright)) != 0 { attributes = @bin_or(attributes, FOREGROUND_INTENSITY) }
+
+    if @bin_and(bg, u16(ConsoleColor.Red))    != 0 { attributes = @bin_or(attributes, BACKGROUND_RED) }
+    if @bin_and(bg, u16(ConsoleColor.Green))  != 0 { attributes = @bin_or(attributes, BACKGROUND_GREEN) }
+    if @bin_and(bg, u16(ConsoleColor.Blue))   != 0 { attributes = @bin_or(attributes, BACKGROUND_BLUE) }
+    if @bin_and(bg, u16(ConsoleColor.Bright)) != 0 { attributes = @bin_or(attributes, BACKGROUND_INTENSITY) }
+
+    SetConsoleTextAttribute(__std_out_handle, attributes)
+}
 
 #file_scope
 

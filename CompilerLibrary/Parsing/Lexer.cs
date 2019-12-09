@@ -43,6 +43,7 @@ namespace Cheez.Parsing
 
         Bang,
 
+        // arithmetic
         Plus,
         Minus,
         Asterisk,
@@ -63,6 +64,7 @@ namespace Cheez.Parsing
         NotEqual,
 
         Arrow,
+        DoubleArrow,
         LessLess,
 
         OpenParen,
@@ -76,6 +78,7 @@ namespace Cheez.Parsing
 
         Pipe,
 
+        KwLambda,
         KwReturn,
         KwRef,
         Kwfn,
@@ -215,12 +218,13 @@ namespace Cheez.Parsing
 
             switch (Current)
             {
+                case '-' when Next == '>': SimpleToken(ref token, TokenType.Arrow, 2); break;
+                case '=' when Next == '>': SimpleToken(ref token, TokenType.DoubleArrow, 2); break;
                 case '=' when Next == '=': SimpleToken(ref token, TokenType.DoubleEqual, 2); break;
                 case '!' when Next == '=': SimpleToken(ref token, TokenType.NotEqual, 2); break;
                 case '<' when Next == '=': SimpleToken(ref token, TokenType.LessEqual, 2); break;
                 case '<' when Next == '<': SimpleToken(ref token, TokenType.LessLess, 2); break;
                 case '>' when Next == '=': SimpleToken(ref token, TokenType.GreaterEqual, 2); break;
-                case '-' when Next == '>': SimpleToken(ref token, TokenType.Arrow, 2); break;
                 case '+' when Next == '=': SimpleToken(ref token, TokenType.AddEq, 2); break;
                 case '-' when Next == '=': SimpleToken(ref token, TokenType.SubEq, 2); break;
                 case '*' when Next == '=': SimpleToken(ref token, TokenType.MulEq, 2); break;
@@ -360,6 +364,7 @@ namespace Cheez.Parsing
         {
             switch (token.data as string)
             {
+                case "lambda":   token.type = TokenType.KwLambda; break;
                 case "return":   token.type = TokenType.KwReturn; break;
                 case "ref":      token.type = TokenType.KwRef; break;
                 case "fn":       token.type = TokenType.Kwfn; break;
@@ -426,6 +431,7 @@ namespace Cheez.Parsing
             var dataStringValue = "";
             var dataType = NumberData.NumberType.Int;
 
+            const int StateError = -1;
             const int StateInit = 0;
             const int State0 = 1;
             const int StateX = 2;
@@ -436,6 +442,10 @@ namespace Cheez.Parsing
             const int StateDone = 9;
             const int StateFloatPoint = 10;
             const int StateFloatDigit = 11;
+            const int StateDecimal_ = 12;
+            const int StateHex_ = 13;
+            const int StateBinary_ = 14;
+            const int StateFloat_ = 15;
             int state = StateInit;
             string error = null;
 
@@ -460,7 +470,7 @@ namespace Cheez.Parsing
                             }
                             else
                             {
-                                state = -1;
+                                state = StateError;
                                 error = "THIS SHOULD NOT HAPPEN!";
                             }
                             break;
@@ -511,6 +521,10 @@ namespace Cheez.Parsing
                                 dataType = NumberData.NumberType.Float;
 
                             }
+                            else if (c == '_')
+                            {
+                                state = StateDecimal_;
+                            }
                             else
                             {
                                 state = StateDone;
@@ -539,6 +553,10 @@ namespace Cheez.Parsing
                             {
                                 dataStringValue += c;
                             }
+                            else if (c == '_')
+                            {
+                                state = StateFloat_;
+                            }
                             else
                             {
                                 state = StateDone;
@@ -565,6 +583,10 @@ namespace Cheez.Parsing
                         {
                             if (IsHexDigit(c))
                                 dataStringValue += c;
+                            else if (c == '_')
+                            {
+                                state = StateHex_;
+                            }
                             else
                             {
                                 state = StateDone;
@@ -595,6 +617,10 @@ namespace Cheez.Parsing
                         {
                             if (IsBinaryDigit(c))
                                 dataStringValue += c;
+                            else if (c == '_')
+                            {
+                                state = StateBinary_;
+                            }
                             else if (IsDigit(c))
                             {
                                 error = "Invalid character, expected binary digit";
@@ -606,6 +632,58 @@ namespace Cheez.Parsing
                             }
                             break;
                         }
+
+                    case StateDecimal_:
+                        if (IsDigit(c))
+                        {
+                            dataStringValue += c;
+                            state = StateDecimalDigit;
+                        }
+                        else
+                        {
+                            error = $"Unexpected character '{c}'. Expected digit";
+                            state = StateError;
+                        }
+                        break;
+
+                    case StateHex_:
+                        if (IsHexDigit(c))
+                        {
+                            dataStringValue += c;
+                            state = StateHexDigit;
+                        }
+                        else
+                        {
+                            error = $"Unexpected character '{c}'. Expected hex digit";
+                            state = StateError;
+                        }
+                        break;
+
+                    case StateBinary_:
+                        if (IsDigit(c))
+                        {
+                            dataStringValue += c;
+                            state = StateBinaryDigit;
+                        }
+                        else
+                        {
+                            error = $"Unexpected character '{c}'. Expected binary digit";
+                            state = StateError;
+                        }
+                        break;
+
+                    case StateFloat_:
+                        if (IsDigit(c))
+                        {
+                            dataStringValue += c;
+                            state = StateFloatDigit;
+                        }
+                        else
+                        {
+                            error = $"Unexpected character '{c}'. Expected digit";
+                            state = StateError;
+                        }
+                        break;
                 }
 
                 if (state != StateDone)

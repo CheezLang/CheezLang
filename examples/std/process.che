@@ -17,13 +17,13 @@ fmt :: import std.fmt
 
 find_on_path :: (program: string) -> Option[String] {
     buffer: [MAX_PATH]char = default
-    C.memcpy(buffer.data, program.data, cast program.length)
-    ok := 0 != PathFindOnPathA(buffer.data, null)
+    C.memcpy(buffer.data, program.bytes.data, cast program.bytes.length)
+    ok := 0 != PathFindOnPathA(cast buffer.data, null)
     if !ok {
         return None
     }
 
-    result := String.from_cstring(buffer.data)
+    result := String.from_cstring(cast buffer.data)
     return Some(result)
 }
 
@@ -40,7 +40,7 @@ run_process :: (program: string, args: []string, working_dir: string) -> bool {
 
     current_directory := String.from_string(working_dir)
     current_directory.append_char(char(0))
-    ok := 0 != CreateProcessA(null, command_line.get_raw(), null, null, 0, 0, null, current_directory.get_raw(), &si, &pi)
+    ok := 0 != CreateProcessA(null, cast command_line.get_raw(), null, null, 0, 0, null, cast current_directory.get_raw(), &si, &pi)
 
     if !ok {
         lastError := GetLastError();

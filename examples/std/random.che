@@ -290,7 +290,7 @@ print_discrete_histogram :: (dist: IDistribution[$T]){
     samples   : int : 100000
     it := dist.samples().take(samples)
 
-    map := Table[int, int].create(|a: int, b: int| a == b)
+    map := Table[int, int].create(lambda a: int, b: int => a == b)
 
     while match it.next() {
         Some($c) -> {
@@ -307,10 +307,10 @@ print_discrete_histogram :: (dist: IDistribution[$T]){
         $_ -> false
     } {}
 
-    cmp : fn(ref(int, int), ref(int, int)) -> int = |a, b| b[0] - a[0]
+    cmp : fn(ref(int, int), ref(int, int)) -> int = lambda a, b => b[0] - a[0]
     arr := map.iterator().to_array().sort(cmp)
 
-    max := map.iterator().map(|t: (int, int)| t[1]).max()
+    max := map.iterator().map(lambda t: (int, int) => t[1]).max()
     scale := if max < width {1.0} else {(cast(double)width)/(cast(double)max)}
 
     for i : 0..arr.length {

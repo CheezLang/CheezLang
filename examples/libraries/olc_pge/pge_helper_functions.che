@@ -100,7 +100,7 @@ impl PixelGameEngine {
         fps_string.append(title)
         fps_string += char(0)
 
-        SetWindowTextA(olc_hWnd, fps_string.get_raw())
+        SetWindowTextA(olc_hWnd, cast fps_string.get_raw())
     }
 }
 

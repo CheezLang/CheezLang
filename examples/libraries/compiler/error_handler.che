@@ -1,0 +1,135 @@
+use import lexer
+
+io :: import std.io
+
+#export_scope
+
+ErrorHandler :: trait {
+    has_errors :: (ref Self) -> bool;
+    report_error :: (ref Self, location: ref Location, message: string);
+}
+
+TextProvider :: trait {
+    get_text :: (ref Self, filename: string) -> string;
+}
+
+ConsoleErrorHandler :: struct {
+    text_provider     : TextProvider
+    error_count       := 0
+    do_print_location := true
+}
+
+impl ConsoleErrorHandler {
+    new :: (text_provider: TextProvider) -> ConsoleErrorHandler {
+        return ConsoleErrorHandler(text_provider)
+    }
+}
+
+impl ErrorHandler for ConsoleErrorHandler {
+    has_errors :: (ref Self) -> bool {
+        return error_count > 0
+    }
+
+    report_error :: (ref Self, location: ref Location, message: string) {
+        error_count += 1
+
+        io.printf("{}:{}:{}:", (location.file, location.line, location.column))
+        io.set_console_color(io.ConsoleColor.Red, io.ConsoleColor.Black)
+        io.printfln(" {}", message)
+        io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
+
+        if do_print_location then print_location(location)
+    }
+
+    print_location :: (ref Self, location: ref Location) {
+        text := text_provider.get_text(location.file)
+
+        // returns index of first character in the same line
+        find_start_of_line :: (text: string, byte_index: int) -> int {
+            bytes := text.bytes
+            start := byte_index
+            byte_index -= 1
+            while byte_index >= 0 and bytes[byte_index] != u8('`n') {
+                start = byte_index
+                byte_index -= 1
+            }
+            return start
+        }
+
+        // returns index of \n at the end of the same line
+        find_end_of_line :: (text: string, byte_index: int) -> int {
+            bytes := text.bytes
+            while byte_index >= 0 and bytes[byte_index] != u8('`n') {
+                byte_index += 1
+            }
+            return byte_index
+        }
+
+        // 
+        get_line_range :: (text: string, start_line: int, byte_index: int, byte_length: int) -> int..int {
+            bytes := text.bytes
+            end_line   := start_line
+            end := byte_index + byte_length
+
+            while byte_index < end, byte_index += 1 {
+                if bytes[byte_index] == u8('`n') {
+                    end_line += 1
+                }
+            }
+
+            return start_line..end_line
+        }
+
+        // print line containing error
+        {
+            index  := location.byte_index
+            length := location.byte_length
+            line := location.line
+
+            range_lines := get_line_range(text, location.line, index, length)
+
+            while true, line += 1 {
+                line_start := find_start_of_line(text, index)
+                line_end   := find_end_of_line(text, index)
+                range_start := index
+                range_end   := index + length
+
+                // io.println(range_lines.start)
+                // io.println(range_lines.end)
+                // io.println(line_start)
+                // io.println(range_start)
+                // io.println(range_end)
+                // io.println(line_end)
+
+                @assert(line_start <= index)
+
+                if range_end > line_end {
+                    // goes to next line
+                    sub1 := text[line_start..index]
+                    sub2 := text[range_start..line_end]
+
+                    io.set_console_color(io.ConsoleColor.Green, io.ConsoleColor.Black)
+                    io.print(sub1)
+                    io.set_console_color(io.ConsoleColor.Red, io.ConsoleColor.Black)
+                    io.print(sub2)
+                    io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
+                    io.println("")
+                } else {
+
+                    sub1 := text[line_start..index]
+                    sub2 := text[range_start..range_end]
+                    sub3 := text[range_end..line_end]
+
+                    io.set_console_color(io.ConsoleColor.Green, io.ConsoleColor.Black)
+                    io.print(sub1)
+                    io.set_console_color(io.ConsoleColor.Red, io.ConsoleColor.Black)
+                    io.print(sub2)
+                    io.set_console_color(io.ConsoleColor.Green, io.ConsoleColor.Black)
+                    io.print(sub3)
+                    io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
+                    io.println("")
+                }
+            }
+        }
+    }
+}
