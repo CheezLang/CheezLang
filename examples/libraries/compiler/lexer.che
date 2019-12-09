@@ -65,7 +65,10 @@ impl Lexer {
         return from_string(String.from_string(content), string_db, error_handler)
     }
 
-    from_string :: (content: String, string_db: ref StringDatabase, error_handler: ErrorHandler) -> Lexer {
+    // i dont know why, but for some reason when I enable trace-stack this function crashes
+    // but with #nostacktrace it works...
+    // - NO, 09.12.19
+    from_string :: (content: String, string_db: ref StringDatabase, error_handler: ErrorHandler) -> Lexer #nostacktrace {
         txt := content.slice()
         return Lexer(
             text_string = content
@@ -201,6 +204,7 @@ impl Lexer {
             '&', _   -> simple_token(token, TokenType.Ampersand,      curr_len, 1)
             '*', _   -> simple_token(token, TokenType.Asterisk,       curr_len, 1)
             '/', _   -> simple_token(token, TokenType.ForwardSlash,   curr_len, 1)
+            '^', _   -> simple_token(token, TokenType.Caret,           curr_len, 1)
             '+', _   -> simple_token(token, TokenType.Plus,           curr_len, 1)
             '%', _   -> simple_token(token, TokenType.Percent,        curr_len, 1)
             '-', _   -> simple_token(token, TokenType.Minus,          curr_len, 1)
@@ -252,10 +256,6 @@ impl Lexer {
         }
 
         token.location.byte_length = location.byte_index - token.location.byte_index
-
-        if int(token.ttype) == int(TokenType.StringLiteral) {
-            error_handler.report_error(token.location, "Invalid string literal")
-        }
 
         return token
     }
@@ -654,17 +654,19 @@ impl Lexer {
         match token.data {
             TokenData.String($str) -> {
                 token.ttype =
-                    if      str == KwReturn     then TokenType.KwReturn
+                    if str == KwLambda          then TokenType.KwLambda
+                    else if str == KwReturn     then TokenType.KwReturn
                     else if str == KwRef        then TokenType.KwRef
+                    else if str == Kwfn         then TokenType.Kwfn
                     else if str == KwFn         then TokenType.KwFn
                     else if str == KwStruct     then TokenType.KwStruct
                     else if str == KwEnum       then TokenType.KwEnum
                     else if str == KwImpl       then TokenType.KwImpl
-                    else if str == KwConst      then TokenType.KwConst
                     else if str == KwIf         then TokenType.KwIf
                     else if str == KwElse       then TokenType.KwElse
                     else if str == KwFor        then TokenType.KwFor
                     else if str == KwWhile      then TokenType.KwWhile
+                    else if str == KwLoop       then TokenType.KwLoop
                     else if str == KwAnd        then TokenType.KwAnd
                     else if str == KwOr         then TokenType.KwOr
                     else if str == KwTrue       then TokenType.KwTrue
@@ -677,7 +679,14 @@ impl Lexer {
                     else if str == KwContinue   then TokenType.KwContinue
                     else if str == KwTrait      then TokenType.KwTrait
                     else if str == KwCast       then TokenType.KwCast
-                    else                             token.ttype
+                    else if str == KwConst      then TokenType.KwConst
+                    else if str == KwDefault    then TokenType.KwDefault
+                    else if str == KwPub        then TokenType.KwPub
+                    else if str == KwThen       then TokenType.KwThen
+                    else if str == KwDo         then TokenType.KwDo
+                    else if str == KwMut        then TokenType.KwMut
+                    else if str == KwImport     then TokenType.KwImport
+                    else token.ttype
             }
         }
     }
@@ -751,6 +760,7 @@ impl Printable for TokenType {
             Equal             -> "Equal"
             Ampersand         -> "Ampersand"
             Bang              -> "Bang"
+            Caret             -> "Caret"
             Plus              -> "Plus"
             Minus             -> "Minus"
             Asterisk          -> "Asterisk"
@@ -833,6 +843,7 @@ TokenType :: enum #copy {
     Equal
     Ampersand
     Bang
+    Caret
     Plus
     Minus
     Asterisk

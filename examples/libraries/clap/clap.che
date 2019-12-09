@@ -58,18 +58,28 @@ parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) 
     }
 
     return match type_info.kind {
-        $_ if type_info == @type_info(String) -> {
+        // String
+        _ if type_info == @type_info(String) -> {
             if !require_arg(args) { return false }
             <<cast(&String) result = args[0].clone()
             args = args[1..args.length]
             true
         }
 
-        $_ if type_info == @type_info(Array[String]) -> parse_arguments_string_array(args, result)
+        // Array[String]
+        _ if type_info == @type_info(Array[String]) -> parse_arguments_string_array(args, result)
+
+        // Option[String]
+        _ if type_info == @type_info(Option[String]) -> {
+            temp := @alloca(String, 1)
+            parse_arguments_help(@type_info(String), args, temp)
+            <<cast(&Option[String]) result = Some(<<temp)
+            true
+        }
 
         TypeInfoKind.Enum($info)   -> parse_arguments_enum(&info, args, result)
         TypeInfoKind.Struct($info) -> parse_arguments_struct(&info, args, result)
-        TypeInfoKind.Int($into)    -> {
+        TypeInfoKind.Int($_)    -> {
             if !require_arg(args) { return false }
             <<cast(&int) result = fmt.parse_int(args[0].slice())
             args = args[1..args.length]
@@ -80,7 +90,7 @@ parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) 
             <<cast(&bool) result = true
             true
         }
-        $_ -> {
+        _ -> {
             io.printfln("[ERROR] Can't parse into type {}", @typename(T))
             false
         }

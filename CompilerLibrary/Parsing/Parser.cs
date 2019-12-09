@@ -233,6 +233,8 @@ namespace Cheez.Parsing
                 case TokenType.Ampersand:
                 case TokenType.Asterisk:
                 case TokenType.Identifier:
+                case TokenType.AtSignIdentifier:
+                case TokenType.DollarIdentifier:
                     return true;
 
                 default:

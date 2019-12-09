@@ -1,7 +1,8 @@
 use import lexer
 
 use import std.math
-io :: import std.io
+io  :: import std.io
+fmt :: import std.fmt
 
 #export_scope
 
@@ -18,6 +19,8 @@ ConsoleErrorHandler :: struct {
     text_provider     : TextProvider
     error_count       := 0
     do_print_location := true
+    code_color_error  := io.ConsoleColor.Red
+    code_color_normal := io.ConsoleColor.Green
 }
 
 impl ConsoleErrorHandler {
@@ -110,12 +113,20 @@ impl ErrorHandler for ConsoleErrorHandler {
                 sub2 := text[error_range.start .. error_range.end]
                 sub3 := text[error_range.end   .. line_range.end]
 
+                sub1_bytes := sub1.bytes
+                sub2_bytes := sub2.bytes
+                sub3_bytes := sub3.bytes
+
+                print_stuff :: (bytes: []u8) #macro {
+                    for b : bytes do io.printf("{:x} ", b)
+                }
+
                 print_line_number(line, max_line_digits)
-                io.set_console_color(io.ConsoleColor.Green, io.ConsoleColor.Black)
+                io.set_console_color(code_color_normal, io.ConsoleColor.Black)
                 io.print(sub1)
-                io.set_console_color(io.ConsoleColor.Red, io.ConsoleColor.Black)
+                io.set_console_color(code_color_error, io.ConsoleColor.Black)
                 io.print(sub2)
-                io.set_console_color(io.ConsoleColor.Green, io.ConsoleColor.Black)
+                io.set_console_color(code_color_normal, io.ConsoleColor.Black)
                 io.print(sub3)
                 io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
                 io.println("")

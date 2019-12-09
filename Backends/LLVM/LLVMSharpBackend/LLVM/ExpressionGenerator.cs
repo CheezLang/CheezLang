@@ -459,7 +459,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 case AstIdExpr n:
                     {
-                        if (n.IsPolymorphic)
+                        if (n.IsPolymorphic || n.Name == "_")
                         {
                             GenerateExpression(n, false);
                             return LLVM.ConstInt(LLVM.Int1Type(), 1, false);

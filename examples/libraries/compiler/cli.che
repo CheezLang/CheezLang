@@ -2,6 +2,7 @@ use import lexer
 use import string_database
 use import cheez_compiler
 use import parser
+use import error_handler
 
 use import std.time
 use import std.string
@@ -33,6 +34,8 @@ Main :: () {
         }
 
         MainCommand.Help -> io.println(get_help_message(@type_info(MainCommand)))
+
+        MainCommand.FindToken($options) -> find_tokens_of_type(&options)
     }
 }
 
@@ -49,7 +52,7 @@ MainCommand :: enum {
 
     #name("build")
     #help("Build a project using a build script (default: build.che)")
-    Build   : CommandBuild
+    Build : CommandBuild
 
     #name("project")
     #help("Manage projects")
@@ -57,7 +60,11 @@ MainCommand :: enum {
 
     #name("run")
     #help("Run a bytecode or source file")
-    Run     : CommandRun
+    Run : CommandRun
+
+    #name("find-tokens")
+    #help("Find all occurences of a specific token type in a file")
+    FindToken : CommandFindToken
 }
 
 CommandCompile :: struct {
@@ -118,6 +125,55 @@ ProjectType :: enum {
     #name("static-lib")
     #help("Static library")
     StaticLibrary
+}
+
+CommandFindToken :: struct {
+    #name("file")
+    #help("The file to search tokens in")
+    file : String
+
+    #name("type")
+    #help("The type of token to search for")
+    typ : TokenType
+
+    #name("suffix")
+    #help("If searching for a literal, only include those with the specified suffix")
+    suffix : Option[String] = None
+}
+
+find_tokens_of_type :: (options: &CommandFindToken) {
+    console_error_handler := ConsoleErrorHandler.new(null)
+    console_error_handler.code_color_error  = io.ConsoleColor.Green
+    console_error_handler.code_color_normal = io.ConsoleColor.White
+    string_db := StringDatabase.new()
+    lexer := try_with(
+        Lexer.from_file(
+            options.file.slice(), string_db, console_error_handler), {
+                io.printfln("Failed to open file '{}'", options.file.slice())
+                return
+            })
+    console_error_handler.text_provider = lexer
+
+    suffix, filter_suffix := match options.suffix {
+        Some($str) -> str.slice(), true
+        None -> "", false
+    }
+
+    loop {
+        token := lexer.next_token()
+
+        if int(token.ttype) == int(TokenType.EOF) then break
+        if int(token.ttype) != int(options.typ) then continue
+
+        if filter_suffix {
+            match token.suffix {
+                Some($s) if streq(suffix, s)  -> console_error_handler.report_error(token.location, "")
+                None     if streq(suffix, "") -> console_error_handler.report_error(token.location, "")
+            }
+        } else {
+            console_error_handler.report_error(token.location, "")
+        }
+    }
 }
 
 command_project_new :: (options: &CommandProjectNew) {
@@ -184,13 +240,15 @@ bin/", [])
 }
 
 command_compile :: (options: &CommandCompile) {
-    string_db := StringDatabase.create()
+    console_error_handler := ConsoleErrorHandler.new(null)
+    string_db := StringDatabase.new()
     compiler := CheezCompiler.create()
     io.println("compiling...")
     for file : options.files {
         io.printfln("parsing {}...", file.slice())
-        match Lexer.from_file("../examples/test.che", string_db) {
+        match Lexer.from_file("../examples/test.che", string_db, console_error_handler) {
             Ok($l) -> {
+                console_error_handler.text_provider = l
                 parser := Parser.create(compiler, l)
                 start := get_time_milliseconds()
                 while true {

@@ -50,8 +50,8 @@ impl Memory {
 
 // option and result
 Option :: enum(T: type) #copy(T) {
-    Some : T
     None
+    Some : T
 }
 
 Result :: enum(V: type, E: type) #copy(V, E) {

@@ -21,7 +21,7 @@ impl CheezCompiler {
         <<ast_a = StackAllocator.create(1024 * 100)
         
         return CheezCompiler(
-            string_database     = StringDatabase.create()
+            string_database     = StringDatabase.new()
             ast_allocator       = ast_a
         )
     }

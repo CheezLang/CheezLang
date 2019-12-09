@@ -3536,6 +3536,7 @@ namespace Cheez
                 else
                     varDecl = new AstVariableDecl(param.Name, new AstTypeRef(param.Type, param), link, Location: arg.Location);
                 varDecl.SetFlag(StmtFlags.IsLocal, true);
+                varDecl.SetFlag(StmtFlags.IsMacroFunction, true);
                 return varDecl;
             });
             code.Statements.InsertRange(0, links);

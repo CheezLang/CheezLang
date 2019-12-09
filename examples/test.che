@@ -9,7 +9,7 @@
 // import examples.print_any
 // import examples.command_line_parser
 // import compiler.cli
-// import compiler.compiler_test
+import compiler.compiler_test
 
 // import examples.postfix
 // import examples.image_processing
@@ -22,7 +22,7 @@
 // import "examples/project_euler/018_maximum_path_sum_1"
 // import bugs.bug1
 
-//*
+/*
 #test_expect_output("")
 
 use import std.os.windows_functions
@@ -41,14 +41,6 @@ use import compiler.lexer
 use import compiler.error_handler
 use import compiler.string_database
 
-// impl string {
-//     index_of :: (ref Self, ch: char) -> Option[int] {
-//         return None
-//     }
-// }
-
-
-
 Main :: () {
     source_file := "D:\Programming\CheezLang\gen\uiae.che"
     console_error_handler := ConsoleErrorHandler.new(null)
@@ -59,6 +51,7 @@ Main :: () {
                 io.printfln("Failed to open file '{}'", source_file)
                 return
             })
+    // lexer := Lexer.from_raw_string("`"ёжь ́«»щюэяшертыуиоkпkаkсkд`"", string_db, console_error_handler)
     console_error_handler.text_provider = lexer
 
     str := String.empty()

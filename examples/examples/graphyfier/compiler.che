@@ -1,12 +1,15 @@
+use import evaluator
+
 use import std.mem.allocator
 use import std.array
 use import std.string
-use import compiler.string_database
 use import std.profiling
-use import compiler.lexer
-use import evaluator
 io :: import std.io
 C :: import std.c
+
+use import compiler.string_database
+use import compiler.lexer
+use import compiler.error_handler
 
 #export_scope
 
@@ -32,8 +35,10 @@ get_precedence :: (op: OpCode) -> int {
 compile :: (expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]] {
     res := Array[OpCode].create()
 
-    string_db := StringDatabase.create()
-    lexer := Lexer.from_raw_string(expr, string_db)
+    error_handler := ConsoleErrorHandler.new(null)
+    string_db := StringDatabase.new()
+    lexer := Lexer.from_raw_string(expr, string_db, error_handler)
+    error_handler.text_provider = lexer
 
     op_stack := Array[OpCode].create()
 

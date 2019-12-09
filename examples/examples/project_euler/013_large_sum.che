@@ -16,7 +16,7 @@ Main :: () {
         }
 
         lsd := carry % 10
-        carry = carry / 10
+        carry /= 10
         res += char(lsd) + '0'
     }
 

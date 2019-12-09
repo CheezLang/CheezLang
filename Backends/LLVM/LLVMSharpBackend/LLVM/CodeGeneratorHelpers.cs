@@ -116,7 +116,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (!keepTrackOfStackTrace)
                 return;
 
-
             Sprintf(buffer, builder.CreateGlobalStringPtr("at\n", ""));
 
             var bbCond = currentLLVMFunction.AppendBasicBlock("stack_trace.print.cond");
@@ -446,8 +445,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         var restSize = e.GetSize() - e.Declaration.TagType.GetSize();
                         llvmType.StructSetBody(new LLVMTypeRef[]
                         {
-                                CheezTypeToLLVMType(e.Declaration.TagType),
-                                LLVM.ArrayType(LLVM.Int8Type(), (uint)restSize)
+                            CheezTypeToLLVMType(e.Declaration.TagType),
+                            LLVM.ArrayType(LLVM.Int8Type(), (uint)restSize)
                         }, false);
                         //}
                         //else
@@ -1097,7 +1096,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef GenerateRTTIForAny(AstExpression expr)
         {
             var valueGlobal = module.AddGlobal(CheezTypeToLLVMType(expr.Type), "any");
-            var init = CheezValueToLLVMValue(expr.Type, expr.Value);
+
+            LLVMValueRef init = default;
+            if (expr is AstEnumValueExpr ev)
+            {
+                if (ev.Member.AssociatedTypeExpr != null)
+                    throw new Exception("ev.Member.AssociatedTypeExpr != null");
+                init = LLVM.ConstNamedStruct(CheezTypeToLLVMType(expr.Type), new LLVMValueRef[]
+                {
+                    CheezValueToLLVMValue(ev.EnumDecl.TagType, ev.Member.Value),
+                    LLVM.GetUndef(LLVM.ArrayType(LLVM.Int8Type(), (uint)(ev.EnumDecl.EnumType.GetSize() - ev.EnumDecl.TagType.GetSize())))
+                });
+            }
+            else
+            {
+                init = CheezValueToLLVMValue(expr.Type, expr.Value);
+            }
             valueGlobal.SetInitializer(init);
             return LLVM.ConstNamedStruct(CheezTypeToLLVMType(CheezType.Any), new LLVMValueRef[]
             {

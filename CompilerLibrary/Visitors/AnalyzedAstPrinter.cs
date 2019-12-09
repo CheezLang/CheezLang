@@ -378,7 +378,10 @@ namespace Cheez.Visitors
                 foreach (var s in block.Statements)
                 {
                     if (i > 0) sb.AppendLine();
-                    sb.Append(s.Accept(this));
+                    if (s is AstConstantDeclaration c && c.Type == CheezType.Code)
+                        ; // local const code in macro, dont print
+                    else
+                        sb.Append(s.Accept(this));
                     ++i;
                 }
             }

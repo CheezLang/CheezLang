@@ -33,7 +33,7 @@ printfln :: (format: string, args: $T) {
     print_string(s)
 }
 
-ConsoleColor :: enum {
+ConsoleColor :: enum #copy {
     Black  = 0
     Red    = 0x1
     Green  = 0x2
@@ -67,6 +67,7 @@ print_string :: (s: ref String) {
     if GetConsoleMode(__std_out_handle, &mode) == 0 {
         // no console handle, use WriteFileW
         bytesWritten := 0u32
+
         WriteFile(__std_out_handle, cast s.get_raw(), cast s.get_length(), &bytesWritten, null)
     } else {
         match s.slice().to_utf16() {
