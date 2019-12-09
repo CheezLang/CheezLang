@@ -50,13 +50,15 @@ use import compiler.string_database
 
 
 Main :: () {
-    a0 := 123_456
-    a1 := 0b1101_1110
-    a2 := 0xABC_789
-
+    source_file := "D:\Programming\CheezLang\gen\uiae.che"
     console_error_handler := ConsoleErrorHandler.new(null)
     string_db := StringDatabase.new()
-    lexer := try_with(Lexer.from_file("D:\Programming\CheezLang\gen\uiae.che", string_db, console_error_handler), {return})
+    lexer := try_with(
+        Lexer.from_file(
+            source_file, string_db, console_error_handler), {
+                io.printfln("Failed to open file '{}'", source_file)
+                return
+            })
     console_error_handler.text_provider = lexer
 
     str := String.empty()

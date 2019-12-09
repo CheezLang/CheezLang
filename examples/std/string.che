@@ -395,7 +395,8 @@ impl string {
         wide_char_str.resize(required_size)
         wide_char_str.access_unchecked(required_size) = 0
         bytes_written := MultiByteToWideChar(CP_UTF8, 0, self.bytes.data, cast self.bytes.length, wide_char_str.get_raw(), required_size)
-        if bytes_written == 0 {
+        if bytes_written < required_size {
+            @assert(false)
             return Err(())
         }
         return Ok(wide_char_str)

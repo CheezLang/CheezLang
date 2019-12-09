@@ -49,6 +49,17 @@ clamp :: (value: $T, min: T, max: T) -> T {
     return value
 }
 
+count_digits :: (value: $T, base : int = 10) -> int {
+    return if value == 0 then 1 else {
+        digits := 0
+        while value > 0 {
+            value /= T(base)
+            digits += 1
+        }
+        digits
+    }
+}
+
 Vector2 :: struct(T: type) #copy {
     x : T = default
     y : T = default

@@ -1,6 +1,7 @@
 use import std.string
 use import std.printable
-c :: import std.c
+c   :: import std.c
+fmt :: import std.fmt
 
 use import std.os.windows
 use import std.os.windows_functions
@@ -74,8 +75,7 @@ print_string :: (s: ref String) {
                 WriteConsoleW(__std_out_handle, cast str.get_raw(), cast str.get_length(), &bytesWritten, null)
             }
             Err -> {
-                c.puts("print_string failed")
-                c.printf("%.*s", cast(i32) s.get_length(), s.get_raw())
+                @assert(false, "print_string failed")
             }
         }
     }
