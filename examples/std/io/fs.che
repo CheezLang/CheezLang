@@ -11,6 +11,7 @@ if const @is_os("linux") {
 use import std.mem.allocator
 use import std.io.file
 use import std.string
+use import std.util
 io :: import std.io
 C  :: import std.c
 
@@ -22,17 +23,17 @@ FsError :: enum {
     InvalidUtf8
 }
 
-// @todo: prepend \? to remove path limit
-// @see https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createdirectoryw
 create_directory :: (path: string) -> Result[(), FsError] {
-    path_utf16 := try_with(path.to_utf16(), {return Err(FsError.Unknown)})
+    // get full path
+    full_path := try_with(get_full_path(path), {return Err(FsError.Unknown)})
 
-    required_length := GetFullPathNameW(path_utf16.get_raw(), 0, null, null)
-    full_path_utf16 := alloc_n(u16, required_length)
-    defer free_n(full_path_utf16)
-    if GetFullPathNameW(path_utf16.get_raw(), required_length, cast full_path_utf16.data, null) == 0 {
-        return Err(FsError.Unknown)
-    }
+    // prepend \\?\ to path to remove path length limit
+    path_long := String.empty()
+    path_long += "\\?\"
+    path_long += full_path
+
+    // convert to utf16
+    full_path_utf16 := try_with(path_long.slice().to_utf16(), {return Err(FsError.Unknown)})
     return if CreateDirectoryW(full_path_utf16.data, null) != 0 then Ok(()) else match GetLastError() {
         WindowsErrorCode.ERROR_ALREADY_EXISTS -> Err(FsError.AlreadyExists)
         WindowsErrorCode.ERROR_PATH_NOT_FOUND -> Err(FsError.PathNotFound)
