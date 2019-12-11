@@ -137,6 +137,7 @@ for_extension_slice :: (arr: []$T, code: Code, reverse: bool = false, by_ref: bo
 // }
 
 // type info stuff
+__ti_type_info := @type_info(TypeInfo)
 TypeInfo :: struct #copy {
     size        : int
     alignment   : int
@@ -169,6 +170,7 @@ TypeInfoKind :: enum #copy {
     Trait       : TypeInfoTrait  = 9
     Void                         = 10
     String                       = 11
+    Any                          = 12
 }
 
 TypeInfoTrait :: struct #copy {

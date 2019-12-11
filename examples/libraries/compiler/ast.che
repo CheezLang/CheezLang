@@ -30,20 +30,26 @@ FunctionDecl :: struct {
 
 
 // expressions
-Expr :: struct {
+Expr :: struct #extendable {
+    id  : int
     location    : Location
-    concrete    : ExprType
-}
-
-ExprType :: enum {
-    Id      : IdExpr
-    Number  : NumberExpr
-}
-
-NumberExpr :: struct {
 
 }
 
-IdExpr :: struct {
+IdExpr :: struct #extend(Expr) {
+    name : string
+}
 
+NumberExpr :: struct #extend(Expr) {
+    value : int
+}
+
+Operator :: enum {
+    Add, Sub, Mul, Div
+}
+
+BinaryExpr :: struct #extend(Expr) {
+    op    : Operator
+    left  : ref Expr
+    right : ref Expr
 }

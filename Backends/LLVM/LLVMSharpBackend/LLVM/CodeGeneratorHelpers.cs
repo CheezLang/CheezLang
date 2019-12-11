@@ -10,6 +10,7 @@ using Cheez.Util;
 using LLVMSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -260,6 +261,18 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return lfunc;
         }
 
+        private AstImplBlock GetTraitImpl(TraitType trait, CheezType type)
+        {
+            if (trait.Declaration.Implementations.TryGetValue(type, out var impl))
+                return impl;
+
+            if (type is StructType str && str.Declaration.Extends != null)
+                return GetTraitImpl(trait, str.Declaration.Extends);
+
+            Debug.Assert(false);
+            return null;
+        }
+
         private static bool CanPassByValue(CheezType ct)
         {
             switch (ct)
@@ -476,8 +489,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         var llvmType = LLVM.StructCreateNamed(context, name);
                         typeMap[s] = llvmType;
 
-                        var memTypes = s.Declaration.Members.Select(m => CheezTypeToLLVMType(m.Type)).ToArray();
-                        LLVM.StructSetBody(llvmType, memTypes, false);
+                        var memTypes = s.Declaration.Members.Select(m => CheezTypeToLLVMType(m.Type));
+
+                        LLVM.StructSetBody(llvmType, memTypes.ToArray(), false);
                         return llvmType;
                     }
 
@@ -880,6 +894,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     TraitType _     => 9,
                     VoidType _      => 10,
                     StringType _    => 11,
+                    AnyType _       => 12,
                     _               => throw new NotImplementedException()
                 };
                 var kindPtr = builder.CreateStructGEP(global, 2, "ti.kind.ptr");
@@ -894,6 +909,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     case BoolType _:
                     case StringType _:
                     case CharType _:
+                    case AnyType _:
                         break;
 
                     case IntType i:
@@ -1043,7 +1059,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             );
 
             //
-            var default_value = m.Decl.Initializer != null ?
+            var default_value = m.Decl.Initializer != null && m.Decl.Initializer.IsCompTimeValue ?
                 GenerateRTTIForAny(m.Decl.Initializer) :
                 GenerateRTTIForNullAny();
 

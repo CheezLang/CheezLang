@@ -122,7 +122,7 @@ namespace Cheez.Visitors
             }
             else
             {
-                var body = string.Join("\n", str.Declarations.Select(m => m.Accept(this)));
+                var body = string.Join("\n", str.Members.Select(m => m.Decl.Accept(this)));
                 var head = $"struct ";
 
                 var sb = new StringBuilder();
@@ -947,9 +947,9 @@ namespace Cheez.Visitors
 
         #region Type expressions
 
-        public override string VisitTypeExpr(AstTypeRef astArrayTypeExpr, int data = 0)
+        public override string VisitTypeExpr(AstTypeRef expr, int data = 0)
         {
-            return astArrayTypeExpr.Type?.ToString();
+            return expr.Value.ToString();
         }
 
         public override string VisitSliceTypeExpr(AstSliceTypeExpr type, int data = 0)

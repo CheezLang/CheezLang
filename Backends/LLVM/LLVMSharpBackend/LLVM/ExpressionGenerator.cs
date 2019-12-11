@@ -46,7 +46,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstBlockExpr block: return GenerateBlock(block, deref);
                 case AstIfExpr iff: return GenerateIfExpr(iff);
                 case AstBinaryExpr bin: return GenerateBinaryExpr(bin);
-                case AstCastExpr cast: return GenerateCastExpr(cast);
+                case AstCastExpr cast: return GenerateCastExpr(cast, deref);
                 case AstUfcFuncExpr ufc: return GenerateUfcFuncExpr(ufc);
                 case AstArrayExpr arr: return GenerateArrayExpr(arr, deref);
                 case AstDefaultExpr def: return GenerateDefaultExpr(def);
@@ -378,7 +378,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 if (m.Type != CheezType.Void) result = CreateLocalVariable(m.Type);
                 LLVMBasicBlockRef bbElse = currentLLVMFunction.AppendBasicBlock($"_switch_else");
                 LLVMBasicBlockRef bbNext = default;
+
+                if (m.SubExpression is AstTempVarExpr tmp && tmp.Id == 56)
+                {
+
+                }
                 var cond = GenerateExpression(m.SubExpression, false);
+
+                if (m.SubExpression.Type is ReferenceType)
+                    cond = builder.CreateLoad(cond, "cond");
 
                 foreach (var c in m.Cases)
                 {
@@ -395,6 +403,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                     builder.CreateCondBr(patt, bb, bbNext);
 
+                    if (m.SubExpression.Type is ReferenceType)
+                    {
+
+                    }
 
                     builder.PositionBuilderAtEnd(bb);
                     var b = GenerateExpression(c.Body, true);
@@ -496,7 +508,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                                 return comp1;
 
                             var valPtr = builder.CreateStructGEP(value, 1, "");
-                            
+
                             valPtr = builder.CreatePointerCast(valPtr, CheezTypeToLLVMType(PointerType.GetPointerType(e.Argument.Type)), "");
                             var comp2 = GeneratePatternCondition(e.Argument, valPtr);
 
@@ -513,8 +525,29 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         }
                         break;
                     }
+                case AstCallExpr call:
+                    {
+                        if (call.FunctionExpr.Type == CheezType.Type)
+                        {
+                            var type = call.FunctionExpr.Value as CheezType;
+                            switch (type)
+                            {
+                                case StructType str:
+                                    {
+                                        var type_info_case = typeInfoTable[str];
 
+                                        var type_ptr_ptr = builder.CreateStructGEP(value, 0, "type_info_ptr_ptr");
+                                        var type_info_value = builder.CreateLoad(type_ptr_ptr, "type_info_ptr");
+
+                                        var match = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, type_info_value, type_info_case, "types_match");
+                                        return match;
+                                    }
+                            }
+                        }
+                        break;
+                    }
             }
+
             throw new NotImplementedException();
         }
 
@@ -625,18 +658,24 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
-        private LLVMValueRef GenerateCastExpr(AstCastExpr cast)
+        private LLVMValueRef GenerateCastExpr(AstCastExpr cast, bool deref)
         {
             var to = cast.Type;
             var from = cast.SubExpression.Type;
             var toLLVM = CheezTypeToLLVMType(to);
+            var toLLVMPtr = toLLVM.GetPointerTo();
+
+            if (!deref)
+            {
+                toLLVM = toLLVMPtr;
+            }
 
             if (to is TraitType trait)
             {
                 var ptr = GenerateExpression(cast.SubExpression, false);
                 ptr = builder.CreatePointerCast(ptr, pointerType, "");
 
-                var impl = trait.Declaration.Implementations[from];
+                var impl = GetTraitImpl(trait, from);
                 var vtablePtr = vtableMap[impl];
 
                 var traitObject = LLVM.GetUndef(toLLVM);
@@ -673,6 +712,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return builder.CreateCast(LLVMOpcode.LLVMPtrToInt, GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is PointerType && from is PointerType) // * <- *
                 return builder.CreatePointerCast(GenerateExpression(cast.SubExpression, true), toLLVM, "");
+            if (to is ReferenceType && from is ReferenceType) // * <- *
+                return builder.CreatePointerCast(GenerateExpression(cast.SubExpression, deref), toLLVM, "");
             if (to is FloatType && from is FloatType) // float <- float
             return builder.CreateFPCast(GenerateExpression(cast.SubExpression, true), toLLVM, "");
             if (to is IntType i && from is FloatType) // int <- float

@@ -9,7 +9,7 @@
 // import examples.print_any
 // import examples.command_line_parser
 // import compiler.cli
-import compiler.compiler_test
+// import compiler.compiler_test
 
 // import examples.postfix
 // import examples.image_processing
@@ -22,7 +22,7 @@ import compiler.compiler_test
 // import "examples/project_euler/018_maximum_path_sum_1"
 // import bugs.bug1
 
-/*
+//*
 #test_expect_output("")
 
 use import std.os.windows_functions
@@ -37,33 +37,122 @@ io  :: import std.io
 fmt :: import std.fmt
 C   :: import std.c
 
-use import compiler.lexer
-use import compiler.error_handler
-use import compiler.string_database
+use import compiler.type
+
+
+Expr :: struct #extendable {
+    id  : int
+}
+
+NumberExpr :: struct #extend(Expr) {
+    value : int
+}
+
+Operator :: enum {
+    Add, Sub, Mul, Div
+}
+
+BinaryExpr :: struct #extend(Expr) {
+    op    : Operator
+    left  : ref Expr
+    right : ref Expr
+}
+
+impl Expr {
+    evaluate :: (ref Self) -> int {
+        return match self {
+            NumberExpr($expr) -> expr.value
+            BinaryExpr($expr) -> match expr.op {
+                Operator.Add -> expr.left.evaluate() + expr.right.evaluate()
+                Operator.Sub -> expr.left.evaluate() - expr.right.evaluate()
+                Operator.Mul -> expr.left.evaluate() * expr.right.evaluate()
+                Operator.Div -> expr.left.evaluate() / expr.right.evaluate()
+            }
+
+            _ -> {@assert(false); 0}
+        }
+    }
+}
+
+pretty_print :: (expr: ref Expr) {
+    help :: (expr: ref Expr) {
+        match expr {
+            NumberExpr($n) -> io.print(n.value)
+            BinaryExpr($b) -> {
+                io.print("(")
+                help(b.left)
+                match b.op {
+                    Operator.Add -> io.print(" + ")
+                    Operator.Sub -> io.print(" - ")
+                    Operator.Mul -> io.print(" * ")
+                    Operator.Div -> io.print(" / ")
+                }
+                help(b.right)
+                io.print(")")
+            }
+        }
+    }
+    help(expr)
+    io.println("")
+}
 
 Main :: () {
-    source_file := "D:\Programming\CheezLang\gen\uiae.che"
-    console_error_handler := ConsoleErrorHandler.new(null)
-    string_db := StringDatabase.new()
-    lexer := try_with(
-        Lexer.from_file(
-            source_file, string_db, console_error_handler), {
-                io.printfln("Failed to open file '{}'", source_file)
-                return
-            })
-    // lexer := Lexer.from_raw_string("`"ёжь ́«»щюэяшертыуиоkпkаkсkд`"", string_db, console_error_handler)
-    console_error_handler.text_provider = lexer
+    t_i8  := IntType(1, 1, 1, true)
+    t_i16 := IntType(1, 2, 2, true)
+    t_i32 := IntType(1, 4, 4, true)
+    t_i64 := IntType(1, 8, 8, true)
+    t_u8  := IntType(1, 1, 1, false)
+    t_u16 := IntType(1, 2, 2, false)
+    t_u32 := IntType(1, 4, 4, false)
+    t_u64 := IntType(1, 8, 8, false)
 
-    str := String.empty()
+    t_f32 := FloatType(1, 4, 4)
+    t_f64 := FloatType(1, 8, 8)
+    
+    t_char8  := CharType(1, 1, 1)
+    t_char16 := CharType(1, 2, 2)
+    t_char32 := CharType(1, 4, 4)
 
-    loop {
-        token := lexer.next_token()
+    t_void   := VoidType(1, 0, 0)
+    t_string := StringType(1, 16, 8)
+    t_type   := TypeType(1, 0, 0)
+    t_bool   := BoolType(1, 1, 1)
 
-        str.appendf("{}`n", token)
+    io.println(t_i8)
+    io.println(t_i16)
+    io.println(t_i32)
+    io.println(t_i64)
+    io.println(t_u8)
+    io.println(t_u16)
+    io.println(t_u32)
+    io.println(t_u64)
+    io.println(t_f32)
+    io.println(t_f64)
+    io.println(t_char8)
+    io.println(t_char16)
+    io.println(t_char32)
+    io.println(t_void)
+    io.println(t_string)
+    io.println(t_type)
+    io.println(t_bool)
 
-        if int(token.ttype) == int(TokenType.EOF) then break
-    }
 
-    write_file("out.txt", str.slice())
+    io.printfln("Expr({:x})", int(@type_info(Expr)))
+    io.printfln("NumberExpr({:x})", int(@type_info(NumberExpr)))
+    io.printfln("BinaryExpr({:x})", int(@type_info(BinaryExpr)))
+    io.println("")
+
+    num1  := NumberExpr(id = 1, value = 1)
+    num2  := NumberExpr(id = 2, value = 2)
+    num3  := NumberExpr(id = 3, value = 3)
+    six   := BinaryExpr(id = 6, op = Operator.Mul, left = <<cast(&Expr) &num2, right = <<cast(&Expr) &num3)
+    seven := BinaryExpr(id = 7, op = Operator.Add, left = <<cast(&Expr) &num1, right = <<cast(&Expr) &six)
+
+    pretty_print(seven)
+    io.println(seven.evaluate())
+
+    // match e {
+    //     IdExpr($id) -> 
+    // }
 }
 // */

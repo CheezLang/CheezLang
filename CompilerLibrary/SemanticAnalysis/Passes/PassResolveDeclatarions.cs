@@ -145,6 +145,8 @@ namespace Cheez
                     //}
                 }
             }
+
+            MarkTypeAsRequiredAtRuntimeFinish();
         }
 
         private void InsertDeclarationsIntoLists(List<AstStatement> statements)

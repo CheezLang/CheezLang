@@ -28,6 +28,7 @@ namespace Cheez
         private Queue<AstTraitTypeExpr> mUnresolvedTraits = new Queue<AstTraitTypeExpr>();
         private Queue<AstFuncExpr> mUnresolvedFunctions = new Queue<AstFuncExpr>();
 
+        private Queue<CheezType> mTypesRequiredAtRuntimeQueue = new Queue<CheezType>();
         private HashSet<CheezType> mTypesRequiredAtRuntime = new HashSet<CheezType>();
 
         public IEnumerable<AstFuncExpr> Functions => mAllFunctions;

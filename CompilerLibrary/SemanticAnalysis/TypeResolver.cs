@@ -231,7 +231,11 @@ namespace Cheez
                 instance.Template = decl;
                 decl.PolyInstances.Add(instance);
 
-                Debug.Assert(instance.Parameters.Count == args.Count);
+                if (instance.Parameters == null)
+                {
+
+                }
+                Debug.Assert((instance.Parameters?.Count ?? 0) == args.Count);
 
                 for (int i = 0; i < instance.Parameters.Count; i++)
                 {

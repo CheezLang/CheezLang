@@ -21,6 +21,10 @@ namespace Cheez
 
                 case AstStructTypeExpr str:
                     {
+                        if (str.TryGetDirective("extend", out var dir))
+                            foreach (var arg in dir.Arguments)
+                                CollectTypeDependencies(decl, arg);
+
                         foreach (var p in str.Parameters)
                             CollectTypeDependencies(decl, p.TypeExpr);
 

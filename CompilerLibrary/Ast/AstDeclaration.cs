@@ -266,6 +266,7 @@ namespace Cheez.Ast.Statements
         public List<AstParameter> Parameters { get; set; }
         public List<AstDecl> Declarations { get; }
         public List<AstStructMemberNew> Members { get; set; }
+        public IReadOnlyList<AstStructMemberNew> PublicMembers => Members.Where(m => m.IsPublic).ToList();
 
         public StructType StructType => Value as StructType;
 
@@ -282,6 +283,9 @@ namespace Cheez.Ast.Statements
 
         public List<TraitType> Traits { get; } = new List<TraitType>();
         public List<AstDirective> Directives { get; protected set; }
+
+        public bool Extendable { get; set; }
+        public StructType Extends { get; set; }
 
         public AstStructTypeExpr(List<AstParameter> param, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
             : base(Location)

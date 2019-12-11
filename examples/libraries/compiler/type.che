@@ -1,0 +1,58 @@
+use import std.printable
+use import std.string
+
+#export_scope
+
+Type :: struct #extendable {
+    id    : int
+    size  : int
+    align : int
+}
+
+VoidType :: struct #extend(Type) {}
+TypeType :: struct #extend(Type) {}
+
+IntType :: struct #extend(Type) {
+    sign : bool
+}
+
+CharType  :: struct #extend(Type) {}
+FloatType :: struct #extend(Type) {}
+BoolType  :: struct #extend(Type) {}
+
+StringType :: struct #extend(Type) {}
+
+PointerType :: struct #extend(Type) {
+    target : ref Type
+}
+
+ReferenceType :: struct #extend(Type) {
+    target : ref Type
+}
+
+SliceType :: struct #extend(Type) {
+    target : ref Type
+}
+
+ArrayType :: struct #extend(Type) {
+    target : ref Type
+    length : int
+}
+
+impl Printable for Type {
+    print :: (ref Self, str: ref String, format: string) {
+        match self {
+            VoidType($t)      -> str.appendf("void", ())
+            TypeType($t)      -> str.appendf("type", ())
+            IntType($t)       -> str.appendf("{}{}", (if t.sign then "i" else "u", t.size * 8))
+            CharType($t)      -> str.appendf("char{}", t.size * 8)
+            FloatType($t)     -> str.appendf("f{}", t.size * 8)
+            BoolType($t)      -> str.appendf("bool", ())
+            StringType($t)    -> str.appendf("string", ())
+            PointerType($t)   -> str.appendf("&{}", t.target)
+            ReferenceType($t) -> str.appendf("ref {}", t.target)
+            SliceType($t)     -> str.appendf("[]{}", t.target)
+            ArrayType($t)     -> str.appendf("[{}]{}", (t.length, t.target))
+        }
+    }
+}

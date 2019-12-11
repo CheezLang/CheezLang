@@ -817,12 +817,13 @@ namespace Cheez
                 return expr;
 
             ConvertLiteralTypeToDefaultType(expr.SubExpression, null);
-            if (expr.SubExpression.Type is ReferenceType)
-                expr.SubExpression = Deref(expr.SubExpression, context);
+            //if (expr.SubExpression.Type is ReferenceType)
+            //    expr.SubExpression = Deref(expr.SubExpression, context);
 
             if (expr.SubExpression.GetFlag(ExprFlags.IsLValue))
             {
-                var tmp = new AstTempVarExpr(expr.SubExpression, true);
+                bool isRef = expr.SubExpression.Type is ReferenceType;
+                var tmp = new AstTempVarExpr(expr.SubExpression, !isRef);
                 tmp.AttachTo(expr);
                 tmp.SetFlag(ExprFlags.IsLValue, true);
                 expr.SubExpression = InferTypeHelper(tmp, null, context);
@@ -905,8 +906,10 @@ namespace Cheez
             AstExpression pattern,
             AstExpression value)
         {
-            if (value.Type is ReferenceType)
+            var expected = value.Type;
+            if (value.Type is ReferenceType re)
             {
+                expected = re.TargetType;
                 //pattern.SetFlag(ExprFlags.PatternRefersToReference, true);
             }
 
@@ -926,8 +929,8 @@ namespace Cheez
                         }
                         else
                         {
-                            var newPattern = InferType(id, value.Type);
-                            ConvertLiteralTypeToDefaultType(newPattern, value.Type);
+                            var newPattern = InferType(id, expected);
+                            ConvertLiteralTypeToDefaultType(newPattern, expected);
                             if (newPattern != pattern)
                                 return MatchPatternWithType(cas, newPattern, value);
 
@@ -1014,7 +1017,7 @@ namespace Cheez
                         {
                             if (pattern.Type.IsErrorType)
                                 return pattern;
-                            if (e.Type != value.Type)
+                            if (e.Type != expected)
                                 break;
                             return d;
                         }
@@ -1026,7 +1029,7 @@ namespace Cheez
                     {
                         if (pattern.Type.IsErrorType)
                             return pattern;
-                        if (ev.Type != value.Type)
+                        if (ev.Type != expected)
                             break;
                         return ev;
                     }
@@ -1034,11 +1037,11 @@ namespace Cheez
                 case AstCallExpr call:
                     {
                         call.FunctionExpr.AttachTo(call);
-                        var d = InferType(call.FunctionExpr, value.Type);
-                        if (d is AstEnumValueExpr e)
+                        call.FunctionExpr = InferType(call.FunctionExpr, expected);
+                        if (call.FunctionExpr is AstEnumValueExpr e)
                         {
                             call.Type = e.Type;
-                            if (e.Type != value.Type)
+                            if (e.Type != expected)
                                 break;
 
                             if (call.Arguments.Count == 1)
@@ -1060,7 +1063,32 @@ namespace Cheez
                                 //e.Argument = MatchPatternWithType(cas, e.Argument, ...);
                             }
 
-                            return d;
+                            return call.FunctionExpr;
+                        }
+                        else if (call.FunctionExpr.Type == CheezType.Type)
+                        {
+                            var type = call.FunctionExpr.Value as CheezType;
+                            switch (type)
+                            {
+                                case StructType str when value.Type is ReferenceType r && r.TargetType == str.Declaration.Extends:
+                                    {
+                                        if (call.Arguments.Count == 1 && call.Arguments[0].Expr is AstIdExpr id && (id.IsPolymorphic || id.Name == "_"))
+                                        {
+                                            AstExpression cast = new AstCastExpr(new AstTypeRef(ReferenceType.GetRefType(str)), value);
+                                            cast.Replace(value);
+                                            cast = InferType(cast, null);
+
+                                            //id.Type = value.Type;
+                                            cas.SubScope.DefineUse(id.Name, cast, false, out var use);
+                                            //id.Symbol = use;
+                                            // do nothing.
+                                        }
+                                        else
+                                            ReportError(call, $"This pattern requires one polymorphic argument or _");
+                                        return call;
+                                    }
+                            }
+                            break;
                         }
                         else
                         {
@@ -1489,14 +1517,22 @@ namespace Cheez
                     var template = t.Declaration.FindMatchingImplementation(from);
                     if (template == null)
                     {
-                        ReportError(cast, $"Can't cast {from} to {to} because it doesn't implement the trait");
-                        return cast;
+                        if (from is StructType str && str.Declaration.Extends != null)
+                        {
+                            template = t.Declaration.FindMatchingImplementation(str.Declaration.Extends);
+                        }
+
+                        if (template == null)
+                        {
+                            ReportError(cast, $"Can't cast {from} to {to} because it doesn't implement the trait");
+                            return cast;
+                        }
                     }
 
                     var polyTypes = new Dictionary<string, CheezType>();
                     CollectPolyTypes(template.TargetType, from, polyTypes);
-
-                    var impl = InstantiatePolyImplNew(template, polyTypes);
+                    if (polyTypes.Count > 0)
+                        InstantiatePolyImplNew(template, polyTypes);
                     return cast;
                 }
             }
@@ -1569,6 +1605,7 @@ namespace Cheez
             }
 
             else if ((to is PointerType && from is PointerType) ||
+                (to is ReferenceType && from is ReferenceType) ||
                 (to is IntType && from is PointerType) ||
                 (to is PointerType p1 && from is ArrayType a1 && p1.TargetType == a1.TargetType) ||
                 (to is IntType && from is IntType) ||
@@ -1795,89 +1832,102 @@ namespace Cheez
 
         private void MarkTypeAsRequiredAtRuntime(CheezType type)
         {
-            if (type.IsErrorType)
-                return;
-            if (mTypesRequiredAtRuntime.Contains(type))
-                return;
-            mTypesRequiredAtRuntime.Add(type);
+            if (!mTypesRequiredAtRuntime.Contains(type))
+                mTypesRequiredAtRuntimeQueue.Enqueue(type);
+        }
 
-            var impls = GetImplsForType(type);
-            foreach (var impl in impls)
+        private void MarkTypeAsRequiredAtRuntimeFinish()
+        {
+            while (mTypesRequiredAtRuntimeQueue.Count > 0)
             {
-                MarkTypeAsRequiredAtRuntime(impl.TargetType);
-                if (impl.Trait != null)
-                    MarkTypeAsRequiredAtRuntime(impl.Trait);
-            }
+                var type = mTypesRequiredAtRuntimeQueue.Dequeue();
 
-            switch (type)
-            {
-                case PointerType p:
-                    MarkTypeAsRequiredAtRuntime(p.TargetType);
-                    break;
-                case SliceType p:
-                    MarkTypeAsRequiredAtRuntime(p.TargetType);
-                    break;
-                case ArrayType p:
-                    MarkTypeAsRequiredAtRuntime(p.TargetType);
-                    break;
+                if (mTypesRequiredAtRuntime.Contains(type) || type.IsErrorType)
+                    continue;
 
-                case TupleType t:
-                    {
-                        foreach (var m in t.Members)
-                        {
-                            MarkTypeAsRequiredAtRuntime(m.type);
-                        }
+                mTypesRequiredAtRuntime.Add(type);
+
+                var impls = GetImplsForType(type);
+                foreach (var impl in impls)
+                {
+                    MarkTypeAsRequiredAtRuntime(impl.TargetType);
+                    if (impl.Trait != null)
+                        MarkTypeAsRequiredAtRuntime(impl.Trait);
+                }
+
+                switch (type)
+                {
+                    case PointerType p:
+                        MarkTypeAsRequiredAtRuntime(p.TargetType);
                         break;
-                    }
-
-                case TraitType t:
-                    {
+                    case ReferenceType p:
+                        MarkTypeAsRequiredAtRuntime(p.TargetType);
                         break;
-                    }
+                    case SliceType p:
+                        MarkTypeAsRequiredAtRuntime(p.TargetType);
+                        break;
+                    case ArrayType p:
+                        MarkTypeAsRequiredAtRuntime(p.TargetType);
+                        break;
 
-                case StructType s:
-                    {
-                        ComputeStructMembers(s.Declaration);
-                        foreach (var m in s.Declaration.Members)
+                    case TupleType t:
                         {
-                            MarkTypeAsRequiredAtRuntime(m.Type);
-                            if (m.Decl.Directives != null)
+                            foreach (var m in t.Members)
                             {
-                                foreach (var dir in m.Decl.Directives)
-                                    foreach (var arg in dir.Arguments)
-                                        MarkTypeAsRequiredAtRuntime(arg.Type);
+                                MarkTypeAsRequiredAtRuntime(m.type);
                             }
+                            break;
                         }
+
+                    case TraitType t:
+                        {
+                            break;
+                        }
+
+                    case StructType s:
+                        {
+                            ComputeStructMembers(s.Declaration);
+                            foreach (var m in s.Declaration.Members)
+                            {
+                                MarkTypeAsRequiredAtRuntime(m.Type);
+                                if (m.Decl.Directives != null)
+                                {
+                                    foreach (var dir in m.Decl.Directives)
+                                        foreach (var arg in dir.Arguments)
+                                            MarkTypeAsRequiredAtRuntime(arg.Type);
+                                }
+                            }
+                            break;
+                        }
+
+                    case EnumType e:
+                        {
+                            ComputeEnumMembers(e.Declaration);
+                            MarkTypeAsRequiredAtRuntime(e.Declaration.TagType);
+                            foreach (var m in e.Declaration.Members)
+                                if (m.AssociatedType != null)
+                                    MarkTypeAsRequiredAtRuntime(m.AssociatedType);
+                            break;
+                        }
+
+                    case StringType _:
+                    case CharType _:
+                    case IntType _:
+                    case BoolType _:
+                    case FloatType _:
+                    case AnyType _:
+                    case VoidType _:
                         break;
-                    }
 
-                case EnumType e:
-                    {
-                        ComputeEnumMembers(e.Declaration);
-                        MarkTypeAsRequiredAtRuntime(e.Declaration.TagType);
-                        foreach (var m in e.Declaration.Members)
-                            if (m.AssociatedType != null)
-                                MarkTypeAsRequiredAtRuntime(m.AssociatedType);
+
+                    case ErrorType _:
                         break;
-                    }
 
-                case StringType _:
-                case CharType _:
-                case IntType _:
-                case BoolType _:
-                case FloatType _:
-                case AnyType _:
-                case VoidType _:
-                    break;
-
-
-                case ErrorType _:
-                    break;
-
-                default: WellThatsNotSupposedToHappen(); break;
+                    default: WellThatsNotSupposedToHappen(); break;
+                }
             }
         }
-        
+
         private AstExpression InferTypeCompCall(AstCompCallExpr expr, CheezType expected, TypeInferenceContext context)
         {
             AstExpression InferArg(int index, CheezType e)
@@ -4274,10 +4324,11 @@ namespace Cheez
             if (namesProvided == 0)
             {
                 ComputeStructMembers(type.Declaration);
-                for (int i = 0; i < expr.MemberInitializers.Count && i < type.Declaration.Members.Count; i++)
+                var publicMembers = type.Declaration.PublicMembers;
+                for (int i = 0; i < expr.MemberInitializers.Count && i < publicMembers.Count; i++)
                 {
                     var mi = expr.MemberInitializers[i];
-                    var mem = type.Declaration.Members[i];
+                    var mem = publicMembers[i];
                     inits.Add(mem.Name);
 
                     mi.Value.AttachTo(expr);
@@ -4285,7 +4336,7 @@ namespace Cheez
                     ConvertLiteralTypeToDefaultType(mi.Value, mem.Type);
 
                     mi.Name = new AstIdExpr(mem.Name, false, mi.Value);
-                    mi.Index = i;
+                    mi.Index = mem.Index;
 
                     if (mi.Value.Type.IsErrorType) continue;
                     mi.Value = HandleReference(mi.Value, mem.Type, context);
@@ -4746,6 +4797,9 @@ namespace Cheez
             if (to is PointerType p2 && p2.TargetType == CheezType.Void && from is PointerType)
                 return InferType(cast, to);
 
+            if (to is ReferenceType r1 && from is ReferenceType r2 && r2.TargetType is StructType r2s && r2s.Declaration.Extends == r1.TargetType)
+                return InferType(cast, to);
+
             if (to is IntType i1 && from is IntType i2 && i1.Signed == i2.Signed && GetSizeOfType(i1) >= GetSizeOfType(i2))
                 return InferType(cast, to);
 
@@ -4776,8 +4830,15 @@ namespace Cheez
             
             if (result.Count == 0)
             {
-                ReportError(expr.Right, $"Type '{type}' has no impl function '{functionName}'");
-                return expr;
+                if (type is StructType str && str.Declaration.Extends != null)
+                {
+                    return GetImplFunctions(expr, str.Declaration.Extends, functionName, context);
+                }
+                else
+                {
+                    ReportError(expr.Right, $"Type '{type}' has no impl function '{functionName}'");
+                    return expr;
+                }
             }
             else if (result.Count > 1)
             {
