@@ -9,6 +9,8 @@ Type :: struct #extendable {
     align : int
 }
 
+ErrorType :: struct #extend(Type) {}
+
 VoidType :: struct #extend(Type) {}
 TypeType :: struct #extend(Type) {}
 

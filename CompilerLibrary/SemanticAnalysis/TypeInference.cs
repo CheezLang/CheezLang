@@ -3452,6 +3452,18 @@ namespace Cheez
                                     }
                                     break;
                                 }
+
+                            case StructType s:
+                                {
+                                    var decl = s.Declaration.Declarations.FirstOrDefault(d => d.Name.Name == expr.Right.Name);
+                                    if (decl is AstConstantDeclaration con)
+                                    {
+                                        expr.Type = con.Type;
+                                        expr.Value = con.Value;
+                                        return expr;
+                                    }
+                                    break;
+                                }
                         }
 
                         return GetImplFunctions(expr, type, expr.Right.Name, context);

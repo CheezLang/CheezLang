@@ -118,6 +118,11 @@ Main :: () {
     t_type   := TypeType(1, 0, 0)
     t_bool   := BoolType(1, 1, 1)
 
+    t_a := PointerType(1, 8, 8, t_u8)
+    t_b := ReferenceType(1, 8, 8, t_string)
+    t_c := SliceType(1, 8, 8, t_f32)
+    t_d := ArrayType(1, 8, 8, t_string, 69)
+
     io.println(t_i8)
     io.println(t_i16)
     io.println(t_i32)
@@ -135,6 +140,11 @@ Main :: () {
     io.println(t_string)
     io.println(t_type)
     io.println(t_bool)
+
+    io.println(t_a)
+    io.println(t_b)
+    io.println(t_c)
+    io.println(t_d)
 
 
     io.printfln("Expr({:x})", int(@type_info(Expr)))

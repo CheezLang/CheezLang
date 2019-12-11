@@ -44,12 +44,25 @@ NumberExpr :: struct #extend(Expr) {
     value : int
 }
 
-Operator :: enum {
-    Add, Sub, Mul, Div
-}
-
 BinaryExpr :: struct #extend(Expr) {
     op    : Operator
     left  : ref Expr
     right : ref Expr
+
+    Operator :: enum { Add, Sub, Mul, Div }
+}
+
+UnaryExpr :: struct #extend(Expr) {
+    op  : Operator
+    sub : ref Expr
+
+    Operator :: enum { Neg, Not }
+}
+
+impl Printable for Expr {
+    print :: (ref Self, str: ref String, format: string) {
+        match self {
+            IdExpr($expr) -> str.appendf("Id({})", expr.name)
+        }
+    }
 }
