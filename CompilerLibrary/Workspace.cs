@@ -1,4 +1,5 @@
 ﻿using Cheez.Ast;
+using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Complex;
@@ -35,6 +36,7 @@ namespace Cheez
         public int MaxPolyFuncResolveStepCount { get; set; } = 10;
 
         private AstFuncExpr currentFunction = null;
+        private AstLambdaExpr currentLambda = null;
 
         public TargetArchitecture TargetArch { get; } = TargetArchitecture.X64;
 
@@ -54,7 +56,7 @@ namespace Cheez
 
         private string GetUniqueName(string str = "")
         {
-            return $"\"{str}-{mNameGen++}\"";
+            return $"@id({str}_{mNameGen++})";
         }
 
         public void PushErrorHandler(IErrorHandler handler)

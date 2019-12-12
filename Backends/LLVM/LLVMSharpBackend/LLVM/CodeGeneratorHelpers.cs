@@ -567,9 +567,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                     if (type is PointerType p)
                     {
-                        var val = LLVM.ConstInt(LLVM.Int64Type(), ((NumberData)v).ToUlong(), false);
                         var t = CheezTypeToLLVMType(p);
-                        return LLVM.ConstIntToPtr(val, t);
+                        if (v == null)
+                        {
+                            return LLVM.ConstPointerNull(t);
+                        }
+                        else
+                        {
+                            var val = LLVM.ConstInt(LLVM.Int64Type(), ((NumberData)v).ToUlong(), false);
+                            return LLVM.ConstIntToPtr(val, t);
+                        }
                     }
 
                     throw new NotImplementedException();

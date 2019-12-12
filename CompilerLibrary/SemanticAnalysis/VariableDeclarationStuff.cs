@@ -27,6 +27,9 @@ namespace Cheez
                 }
             }
 
+            if (v.HasDirective("local"))
+                v.SetFlag(StmtFlags.IsLocal, true);
+
             if (v.TypeExpr != null)
             {
                 v.TypeExpr.AttachTo(v);
@@ -82,8 +85,14 @@ namespace Cheez
 
         private IEnumerable<AstVariableDecl> SplitVariableDeclaration(AstVariableDecl v)
         {
+            v.Pattern.SetFlag(ExprFlags.IsDeclarationPattern, true);
             switch (v.Pattern)
             {
+                case AstCompCallExpr cc when cc.Name.Name == "id":
+                    cc.AttachTo(v);
+                    v.Name = InferType(cc, null) as AstIdExpr;
+                    break;
+
                 case AstIdExpr name:
                     // ok, do nothing
                     v.Name = name;
@@ -118,8 +127,14 @@ namespace Cheez
 
         private IEnumerable<AstConstantDeclaration> SplitConstantDeclaration(AstConstantDeclaration v)
         {
+            v.Pattern.SetFlag(ExprFlags.IsDeclarationPattern, true);
             switch (v.Pattern)
             {
+                case AstCompCallExpr cc when cc.Name.Name == "id":
+                    cc.AttachTo(v);
+                    v.Name = InferType(cc, null) as AstIdExpr;
+                    break;
+
                 case AstIdExpr name:
                     // ok, do nothing
                     v.Name = name;

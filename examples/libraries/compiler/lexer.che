@@ -694,11 +694,11 @@ impl Lexer {
 
 // token
 Location :: struct #copy {
-    file        : string
-    byte_index  : int
-    byte_length : int
-    line        : int
-    column      : int
+    file        : string = default
+    byte_index  : int    = default
+    byte_length : int    = default
+    line        : int    = default
+    column      : int    = default
 }
 
 Token :: struct #copy {

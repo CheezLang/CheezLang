@@ -659,6 +659,8 @@ namespace Cheez
 
         private AstExpression InferTypeLambdaExpr(AstLambdaExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            var prevCurrentLambda = currentLambda;
+            currentLambda = expr;
             var paramScope = new Scope("||", expr.Scope);
             var subScope = new Scope("lambda", paramScope);
 
@@ -670,6 +672,7 @@ namespace Cheez
                 CheezType ex = (funcType != null && i < funcType.Parameters.Length) ? funcType.Parameters[i].type : null;
 
                 param.Scope = paramScope;
+                param.ContainingFunction = expr;
                 if (param.TypeExpr != null)
                 {
                     param.TypeExpr.Scope = paramScope;
@@ -705,9 +708,10 @@ namespace Cheez
             expr.Type = new FunctionType(
                 expr.Parameters.Select(p => (p.Name.Name, p.Type, (AstExpression)null)).ToArray(),
                 retType,
-                true,
+                false,
                 FunctionType.CallingConvention.Default);
 
+            currentLambda = prevCurrentLambda;
             return expr;
         }
 
@@ -1133,7 +1137,6 @@ namespace Cheez
 
         private AstExpression InferTypeDefaultExpr(AstDefaultExpr expr, CheezType expected)
         {
-            expr.IsCompTimeValue = true;
             if (expected == null)
             {
                 ReportError(expr, $"Can't infer type of default expression");
@@ -1271,7 +1274,6 @@ namespace Cheez
             arg.Expr = InferTypeHelper(arg, expected, context);
             arg.Type = arg.Expr.Type;
             arg.Value = arg.Expr.Value;
-            arg.IsCompTimeValue = arg.Expr.IsCompTimeValue;
             return arg;
         }
 
@@ -1434,7 +1436,6 @@ namespace Cheez
 
         private static AstExpression InferTypesNullExpr(AstNullExpr expr, CheezType expected)
         {
-            expr.IsCompTimeValue = true;
             if (expected is PointerType)
                 expr.Type = expected;
             else if (expected is SliceType)
@@ -1950,6 +1951,51 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                case "unique_id":
+                    {
+                        if (expr.Arguments.Count != 0)
+                        {
+                            ReportError(expr.Location, "@unique_id takes 0 arguments");
+                            return expr;
+                        }
+
+                        expr.Type = CheezType.String;
+                        expr.Value = GetUniqueName();
+                        return expr;
+                    }
+
+                case "id":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@id takes 1 argument");
+                            return expr;
+                        }
+
+                        var len = InferArg(0, CheezType.String);
+                        if (!len.IsCompTimeValue)
+                        {
+                            ReportError(expr, $"Argument must be const");
+                            return expr;
+                        }
+
+                        if (len.Type != CheezType.String)
+                        {
+
+                            ReportError(expr, $"Argument must be a string");
+                            return expr;
+                        }
+
+                        AstExpression id = new AstIdExpr(len.Value as string, false, expr.Location);
+
+                        if (!expr.GetFlag(ExprFlags.IsDeclarationPattern))
+                        {
+                            id.Replace(expr);
+                            id = InferTypeHelper(id, expected, context);
+                        }
+                        return id;
+                    }
+
                 case "string_from_ptr_and_length":
                     {
                         if (expr.Arguments.Count != 2)
@@ -2362,30 +2408,42 @@ namespace Cheez
                         }
 
                         var _breaks = expr.Arguments.Where(a => a.Name?.Name == "_break").ToArray();
-                        if (_breaks.Length != 1)
+                        if (_breaks.Count() == 0)
                         {
-                            ReportError(expr, $"Exactly one argument must be named '_break'");
+                            var action = new AstBreakExpr(Location: expr);
+                            action.AttachTo(expr);
+                            code.Scope.DefineBreak(null, action);
                         }
-                        if (_breaks.Length == 1)
+                        else if (_breaks.Length == 1)
                         {
                             var _break = _breaks[0];
                             var action = _break.Expr;
                             action.AttachTo(expr);
                             code.Scope.DefineBreak(null, action);
                         }
+                        else
+                        {
+                            ReportError(expr, $"Exactly one argument must be named '_break'");
+                        }
 
                         // continue
                         var _continues = expr.Arguments.Where(a => a.Name?.Name == "_continue").ToArray();
-                        if (_continues.Length != 1)
+                        if (_continues.Count() == 0)
                         {
-                            ReportError(expr, $"Exactly one argument must be named '_continue'");
+                            var action = new AstContinueExpr(Location: expr);
+                            action.AttachTo(expr);
+                            code.Scope.DefineContinue(null, action);
                         }
-                        if (_continues.Length == 1)
+                        else if (_continues.Length == 1)
                         {
                             var _continue = _continues[0];
                             var action = _continue.Expr;
                             action.AttachTo(expr);
                             code.Scope.DefineContinue(null, action);
+                        }
+                        else
+                        {
+                            ReportError(expr, $"Exactly one argument must be named '_continue'");
                         }
 
                         code.Parent = expr;
@@ -3560,7 +3618,7 @@ namespace Cheez
         {
             var macro = call.Declaration;
 
-            bool isTransparent = call.Declaration.HasDirective("transparent");
+            bool isTransparent = macro.HasDirective("transparent");
 
             var code = macro.Body.Clone() as AstBlockExpr;
             code.Parent = call.Parent;
@@ -3598,7 +3656,7 @@ namespace Cheez
                 else
                     varDecl = new AstVariableDecl(param.Name, new AstTypeRef(param.Type, param), link, Location: arg.Location);
                 varDecl.SetFlag(StmtFlags.IsLocal, true);
-                varDecl.SetFlag(StmtFlags.IsMacroFunction, true);
+                //varDecl.SetFlag(StmtFlags.IsMacroFunction, true);
                 return varDecl;
             });
             code.Statements.InsertRange(0, links);
@@ -4609,10 +4667,12 @@ namespace Cheez
                 expr.Type = p.Type;
                 expr.SetFlag(ExprFlags.IsLValue, true);
 
-                if (p.ContainingFunction == null)
+                if (currentLambda != null && p.ContainingFunction == currentLambda)
+                    ; // ok, do nthing
+                else if (p.ContainingFunction == null)
                     throw new NotImplementedException();
-                if (p.ContainingFunction != currentFunction)
-                    ReportError(expr, $"Can't access parameter '{expr.Name}' defined in outer function '{p.ContainingFunction.Name}'");
+                else if (p.ContainingFunction != currentFunction)
+                    ReportError(expr, $"Can't access parameter '{expr.Name}' defined in outer function");
             }
             else if (sym is TypeSymbol ct)
             {

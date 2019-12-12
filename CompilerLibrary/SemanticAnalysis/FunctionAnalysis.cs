@@ -239,6 +239,9 @@ namespace Cheez
 
         private AstStatement AnalyseConstantDeclaration(AstConstantDeclaration c)
         {
+            if (c.HasDirective("local"))
+                c.SetFlag(StmtFlags.IsLocal, true);
+
             if (c.TypeExpr != null)
             {
                 c.TypeExpr.AttachTo(c);

@@ -218,7 +218,7 @@ impl String {
                 args : [1]Printable = [arguments]
             } else {
                 args : [T.length] Printable = default
-                @for_tuple_values(arguments, lambda v, i => {
+                @for_tuple_values(arguments, (v, i) => {
                     args[i] = Printable(v)
                 })
             }

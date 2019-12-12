@@ -1639,7 +1639,7 @@ namespace Cheez.Parsing
             return new AstFuncExpr(parameters, returnType, body, directives, Location: new Location(paramsLocation.Beginning, body?.End ?? paramsLocation.End), ParameterLocation: paramsLocation);
         }
 
-        private AstExpression ParseTupleExpression(bool allowFunctionExpression)
+        private AstExpression ParseTupleExpression(bool allowFunctionExpression, bool allowCommaForTuple)
         {
             var list = ParseParameterList(out var beg, out var end, allowDefaultValue: true);
 
@@ -1648,6 +1648,22 @@ namespace Cheez.Parsing
             if (allowFunctionExpression && CheckTokens(TokenType.Arrow, TokenType.OpenBrace, TokenType.HashIdentifier, TokenType.Semicolon))
             {
                 return ParseFuncExpr(list, new Location(beg, end));
+            }
+
+            if (CheckToken(TokenType.DoubleArrow))
+            {
+                // if only one id is given for a parameter, then this should be used as name, not type
+                foreach (var p in list)
+                {
+                    if (p.Name == null && p.TypeExpr != null)
+                    {
+                        p.Name = p.TypeExpr as AstIdExpr;
+                        if (p.Name == null)
+                            ReportError(p.TypeExpr.Location, $"Lambda argument name must be an identifier");
+                        p.TypeExpr = null;
+                    }
+                }
+                return ParseLambdaExpr(list, beg, allowCommaForTuple);
             }
 
             bool isType = false;
@@ -1719,59 +1735,14 @@ namespace Cheez.Parsing
             return new AstArrayExpr(values, new Location(token.location, end));
         }
 
-        private AstExpression ParseLambdaExpr(bool allowCommaForTuple)
+        private AstExpression ParseLambdaExpr(List<AstParameter> parameters, TokenLocation beg, bool allowCommaForTuple)
         {
-            var beg = ConsumeUntil(TokenType.KwLambda, ErrMsg("'lambda'", "at beginning of lambda")).location;
-            var parameters = new List<AstParameter>();
             AstExpression retType = null;
-
-            SkipNewlines();
-            while (true)
+            if (CheckToken(TokenType.Arrow))
             {
-                var next = PeekToken();
-
-                if (next.type == TokenType.Identifier)
-                {
-                    NextToken();
-                    var name = new AstIdExpr(next.data as string, false, new Location(next.location));
-                    AstExpression type = null;
-                    var end = name.End;
-
-                    SkipNewlines();
-                    if (CheckToken(TokenType.Colon))
-                    {
-                        NextToken();
-                        SkipNewlines();
-                        type = ParseExpression(false);
-                        end = type.End;
-                        SkipNewlines();
-                    }
-
-                    parameters.Add(new AstParameter(name, type, null, new Location(name.Beginning, end)));
-
-                    next = PeekToken();
-                    if (next.type == TokenType.Comma)
-                    {
-                        NextToken();
-                        SkipNewlines();
-                    }
-                }
-                else if (CheckToken(TokenType.Arrow))
-                {
-                    NextToken();
-                    SkipNewlines();
-                    retType = ParseExpression(false);
-                    break;
-                }
-                else if (next.type == TokenType.DoubleArrow || next.type == TokenType.EOF)
-                {
-                    break;
-                }
-                else
-                {
-                    NextToken();
-                    ReportError(next.location, $"Unexpected token {next.type} in parameter list of lamda");
-                }
+                NextToken();
+                SkipNewlines();
+                retType = ParseExpression(true);
             }
 
             ConsumeUntil(TokenType.DoubleArrow, ErrMsg("=>", "in lambda"));
@@ -2022,9 +1993,6 @@ namespace Cheez.Parsing
                     NextToken();
                     return new AstDefaultExpr(new Location(token.location));
 
-                case TokenType.KwLambda:
-                    return ParseLambdaExpr(allowCommaForTuple);
-
                 case TokenType.KwNull:
                     NextToken();
                     return new AstNullExpr(new Location(token.location));
@@ -2062,8 +2030,16 @@ namespace Cheez.Parsing
                     return new AstIdExpr((string)token.data, true, new Location(token.location));
 
                 case TokenType.Identifier:
-                    NextToken();
-                    return new AstIdExpr((string)token.data, false, new Location(token.location));
+                    {
+                        NextToken();
+                        var id = new AstIdExpr((string)token.data, false, new Location(token.location));
+                        if (CheckToken(TokenType.DoubleArrow))
+                            return ParseLambdaExpr(
+                                new List<AstParameter> { new AstParameter(id, null, null, id.Location) },
+                                id.Beginning, allowCommaForTuple);
+                        else
+                            return id;
+                    }
 
                 case TokenType.StringLiteral:
                     NextToken();
@@ -2095,7 +2071,7 @@ namespace Cheez.Parsing
                     return ParseMatchExpr();
 
                 case TokenType.OpenParen:
-                    return ParseTupleExpression(allowFunctionExpression);
+                    return ParseTupleExpression(allowFunctionExpression, allowCommaForTuple);
                     // {
                     //     var start = NextToken().location;
                     //     SkipNewlines();

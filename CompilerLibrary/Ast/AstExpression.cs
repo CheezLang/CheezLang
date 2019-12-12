@@ -27,7 +27,8 @@ namespace Cheez.Ast.Expressions
         RequireInitializedSymbol = 9,
         Breaks = 10,
         ValueRequired = 11,
-        ExportScope = 12
+        ExportScope = 12,
+        IsDeclarationPattern = 13
     }
 
     public abstract class AstExpression : IVisitorAcceptor, ILocation, IAstNode
@@ -53,7 +54,7 @@ namespace Cheez.Ast.Expressions
         // TODO: still necessary?
         public abstract bool IsPolymorphic { get; }
 
-        public bool IsCompTimeValue { get; set; } = false;
+        public bool IsCompTimeValue { get; protected set; } = false;
 
         public IAstNode Parent { get; set; }
         //public IAstNode LinkParent { get; set; }
@@ -707,6 +708,7 @@ namespace Cheez.Ast.Expressions
         [DebuggerStepThrough]
         public AstNullExpr(ILocation Location = null) : base(Location)
         {
+            IsCompTimeValue = true;
         }
 
         [DebuggerStepThrough]

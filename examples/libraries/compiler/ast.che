@@ -1,4 +1,5 @@
 use import lexer
+use import type
 
 use import std.printable
 use import std.string
@@ -31,9 +32,9 @@ FunctionDecl :: struct {
 
 // expressions
 Expr :: struct #extendable {
-    id  : int
-    location    : Location
-
+    id       : int
+    location : Location = default
+    typ      : &Type    = null
 }
 
 IdExpr :: struct #extend(Expr) {
@@ -49,20 +50,42 @@ BinaryExpr :: struct #extend(Expr) {
     left  : ref Expr
     right : ref Expr
 
-    Operator :: enum { Add, Sub, Mul, Div }
+    Operator :: enum #copy { Add, Sub, Mul, Div }
 }
 
 UnaryExpr :: struct #extend(Expr) {
     op  : Operator
     sub : ref Expr
 
-    Operator :: enum { Neg, Not }
+    Operator :: enum #copy { Neg, Not }
+}
+
+impl Printable for BinaryExpr.Operator {
+    print :: (ref Self, str: ref String, format: string) {
+        match self {
+            BinaryExpr.Operator.Add -> str.append_char('+')
+            BinaryExpr.Operator.Sub -> str.append_char('-')
+            BinaryExpr.Operator.Mul -> str.append_char('*')
+            BinaryExpr.Operator.Div -> str.append_char('/')
+        }
+    }
+}
+impl Printable for UnaryExpr.Operator {
+    print :: (ref Self, str: ref String, format: string) {
+        match self {
+            UnaryExpr.Operator.Neg -> str.append_char('-')
+            UnaryExpr.Operator.Not -> str.append_char('!')
+        }
+    }
 }
 
 impl Printable for Expr {
     print :: (ref Self, str: ref String, format: string) {
         match self {
-            IdExpr($expr) -> str.appendf("Id({})", expr.name)
+            IdExpr($expr) -> str.appendf("{}", expr.name)
+            NumberExpr($expr) -> str.appendf("{}", expr.value)
+            BinaryExpr($expr) -> str.appendf("({} {} {})", (Printable(expr.left), expr.op, Printable(expr.right)))
+            UnaryExpr($expr) -> str.appendf("{}{}", (expr.op, Printable(expr.sub)))
         }
     }
 }

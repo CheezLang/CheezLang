@@ -50,7 +50,7 @@ namespace Cheez.Ast.Statements
 
         public bool IsReturnParam { get; set; } = false;
 
-        public AstFuncExpr ContainingFunction { get; set; }
+        public AstExpression ContainingFunction { get; set; }
 
         public AstParameter(AstIdExpr name, AstExpression typeExpr, AstExpression defaultValue, ILocation Location = null)
         {

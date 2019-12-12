@@ -369,7 +369,7 @@ namespace Cheez
                 }
             }
 
-            PassVLExpr(func.Body, symStatTable);
+           PassVLExpr(func.Body, symStatTable);
 
             // destruct params
             if (!func.Body.GetFlag(ExprFlags.Returns))
@@ -590,6 +590,12 @@ namespace Cheez
                         return true;
                     }
 
+                case AstLambdaExpr lambda:
+                    {
+                        var table = new SymbolStatusTable(null);
+                        return PassVLExpr(lambda.Body, table);
+                    }
+
                 case AstVariableRef _:
                 case AstConstantRef _:
                         return true;
@@ -607,6 +613,7 @@ namespace Cheez
 
                 case AstEmptyExpr _:
                     return true;
+
 
                 default:
                     WellThatsNotSupposedToHappen(expr.GetType().ToString());

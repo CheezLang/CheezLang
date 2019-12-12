@@ -32,137 +32,68 @@ use import std.io.file
 use import std.io.fs
 use import std.string
 use import std.array
+use import std.hash_table
 use import std.mem.allocator
 io  :: import std.io
 fmt :: import std.fmt
 C   :: import std.c
 
 use import compiler.type
+use import compiler.ast
 
-
-Expr :: struct #extendable {
-    id  : int
-}
-
-NumberExpr :: struct #extend(Expr) {
-    value : int
-}
-
-Operator :: enum {
-    Add, Sub, Mul, Div
-}
-
-BinaryExpr :: struct #extend(Expr) {
-    op    : Operator
-    left  : ref Expr
-    right : ref Expr
+EvalContext :: struct {
+    variables : Table[string, int]
 }
 
 impl Expr {
-    evaluate :: (ref Self) -> int {
+    evaluate :: (ref Self, ctx: ref EvalContext) -> int {
         return match self {
+            IdExpr($expr) -> match ctx.variables.get(expr.name) {
+                Some($val) -> val
+                None -> {@assert(false, "Unknown variable"); 0}
+            }
             NumberExpr($expr) -> expr.value
             BinaryExpr($expr) -> match expr.op {
-                Operator.Add -> expr.left.evaluate() + expr.right.evaluate()
-                Operator.Sub -> expr.left.evaluate() - expr.right.evaluate()
-                Operator.Mul -> expr.left.evaluate() * expr.right.evaluate()
-                Operator.Div -> expr.left.evaluate() / expr.right.evaluate()
+                BinaryExpr.Operator.Add -> expr.left.evaluate(ctx) + expr.right.evaluate(ctx)
+                BinaryExpr.Operator.Sub -> expr.left.evaluate(ctx) - expr.right.evaluate(ctx)
+                BinaryExpr.Operator.Mul -> expr.left.evaluate(ctx) * expr.right.evaluate(ctx)
+                BinaryExpr.Operator.Div -> expr.left.evaluate(ctx) / expr.right.evaluate(ctx)
+            }
+            UnaryExpr($expr) -> match expr.op {
+                UnaryExpr.Operator.Neg -> -expr.sub.evaluate(ctx)
+                _ -> {@assert(false, "Unary operator not implemented"); 0}
             }
 
-            _ -> {@assert(false); 0}
+            _ -> {@assert(false, "Expression not implemented"); 0}
         }
     }
 }
 
-pretty_print :: (expr: ref Expr) {
-    help :: (expr: ref Expr) {
-        match expr {
-            NumberExpr($n) -> io.print(n.value)
-            BinaryExpr($b) -> {
-                io.print("(")
-                help(b.left)
-                match b.op {
-                    Operator.Add -> io.print(" + ")
-                    Operator.Sub -> io.print(" - ")
-                    Operator.Mul -> io.print(" * ")
-                    Operator.Div -> io.print(" / ")
-                }
-                help(b.right)
-                io.print(")")
-            }
-        }
-    }
-    help(expr)
-    io.println("")
+push_var :: (var: Code, x: Code) #macro #transparent {
+    prev :: @unique_id() #local
+    @id(prev) := @insert(var)
+    defer {@insert(var) = @id(prev)}
+    @insert(var) = @insert(x)
 }
 
 Main :: () {
-    t_i8  := IntType(1, 1, 1, true)
-    t_i16 := IntType(1, 2, 2, true)
-    t_i32 := IntType(1, 4, 4, true)
-    t_i64 := IntType(1, 8, 8, true)
-    t_u8  := IntType(1, 1, 1, false)
-    t_u16 := IntType(1, 2, 2, false)
-    t_u32 := IntType(1, 4, 4, false)
-    t_u64 := IntType(1, 8, 8, false)
-
-    t_f32 := FloatType(1, 4, 4)
-    t_f64 := FloatType(1, 8, 8)
+    num1   := IdExpr(id = 1, name = "foo")
+    num2   := NumberExpr(id = 2, value = 2)
+    num3   := NumberExpr(id = 3, value = 3)
+    six    := BinaryExpr(id = 6, op = BinaryExpr.Operator.Mul, left = num2, right = num3)
+    seven  := BinaryExpr(id = 7, op = BinaryExpr.Operator.Add, left = num1, right = six)
+    result := UnaryExpr(id = 8, op = UnaryExpr.Operator.Neg, sub = seven)
     
-    t_char8  := CharType(1, 1, 1)
-    t_char16 := CharType(1, 2, 2)
-    t_char32 := CharType(1, 4, 4)
 
-    t_void   := VoidType(1, 0, 0)
-    t_string := StringType(1, 16, 8)
-    t_type   := TypeType(1, 0, 0)
-    t_bool   := BoolType(1, 1, 1)
+    io.println(ref num1)
+    io.println(ref num2)
+    io.println(ref num3)
+    io.println(ref six)
+    io.println(ref seven)
+    io.println(ref result)
 
-    t_a := PointerType(1, 8, 8, t_u8)
-    t_b := ReferenceType(1, 8, 8, t_string)
-    t_c := SliceType(1, 8, 8, t_f32)
-    t_d := ArrayType(1, 8, 8, t_string, 69)
-
-    io.println(t_i8)
-    io.println(t_i16)
-    io.println(t_i32)
-    io.println(t_i64)
-    io.println(t_u8)
-    io.println(t_u16)
-    io.println(t_u32)
-    io.println(t_u64)
-    io.println(t_f32)
-    io.println(t_f64)
-    io.println(t_char8)
-    io.println(t_char16)
-    io.println(t_char32)
-    io.println(t_void)
-    io.println(t_string)
-    io.println(t_type)
-    io.println(t_bool)
-
-    io.println(t_a)
-    io.println(t_b)
-    io.println(t_c)
-    io.println(t_d)
-
-
-    io.printfln("Expr({:x})", int(@type_info(Expr)))
-    io.printfln("NumberExpr({:x})", int(@type_info(NumberExpr)))
-    io.printfln("BinaryExpr({:x})", int(@type_info(BinaryExpr)))
-    io.println("")
-
-    num1  := NumberExpr(id = 1, value = 1)
-    num2  := NumberExpr(id = 2, value = 2)
-    num3  := NumberExpr(id = 3, value = 3)
-    six   := BinaryExpr(id = 6, op = Operator.Mul, left = <<cast(&Expr) &num2, right = <<cast(&Expr) &num3)
-    seven := BinaryExpr(id = 7, op = Operator.Add, left = <<cast(&Expr) &num1, right = <<cast(&Expr) &six)
-
-    pretty_print(seven)
-    io.println(seven.evaluate())
-
-    // match e {
-    //     IdExpr($id) -> 
-    // }
+    ctx := EvalContext(Table[string, int].create((a, b) => streq(a, b)))
+    ctx.variables["foo"] = 69
+    io.println(result.evaluate(ctx))
 }
 // */

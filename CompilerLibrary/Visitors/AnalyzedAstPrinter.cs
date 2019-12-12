@@ -297,7 +297,7 @@ namespace Cheez.Visitors
 
             if (variable.GetFlag(StmtFlags.IsLocal))
                 sb.Append("local ");
-            sb.Append(variable.Pattern.Accept(this));
+            sb.Append(variable.Name.Accept(this));
             sb.Append($" : {variable.Type}");
 
             if (variable.Initializer != null)
@@ -681,13 +681,14 @@ namespace Cheez.Visitors
         public override string VisitLambdaExpr(AstLambdaExpr expr, int data = 0)
         {
             var sb = new StringBuilder();
-            sb.Append("|");
+            sb.Append("(");
             sb.Append(string.Join(", ", expr.Parameters.Select(p => p.Accept(this))));
-            sb.Append("| ");
+            sb.Append(") ");
 
             if (expr.FunctionType?.ReturnType != null && expr.FunctionType.ReturnType != CheezType.Void)
-                sb.Append($"-> {expr.FunctionType.ReturnType} ");
+                sb.Append($" -> {expr.FunctionType.ReturnType} ");
 
+            sb.Append("=> ");
             sb.Append(expr.Body);
 
             return sb.ToString();

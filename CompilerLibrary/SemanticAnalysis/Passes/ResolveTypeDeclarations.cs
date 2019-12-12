@@ -181,7 +181,8 @@ namespace Cheez
                             bool isDefaultConstructable = true;
                             foreach (var m in s.Declaration.Members)
                             {
-                                isDefaultConstructable &= ComputeIsDefaultConstructableOfType(m.Type, path);
+                                isDefaultConstructable &= m.Decl.Initializer != null;
+                                //isDefaultConstructable &= ComputeIsDefaultConstructableOfType(m.Type, path);
                             }
 
                             s.SetIsDefaultConstructable(isDefaultConstructable);
