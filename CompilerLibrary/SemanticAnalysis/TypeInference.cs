@@ -304,11 +304,12 @@ namespace Cheez
                 expr.IsReferenceReassignment = true;
                 expr.Source.AttachTo(expr);
                 expr.Source = InferTypeHelper(expr.Source, r.TargetType, context);
-                expr.Source = CheckType(expr.Source, r.TargetType);
+                expr.Source = HandleReference(expr.Source, expr.Target.Type, context);
+                expr.Source = CheckType(expr.Source, expr.Target.Type);
 
-                if (!expr.Source.GetFlag(ExprFlags.IsLValue))
+                if (!expr.Source.Type.IsErrorType && !expr.Source.GetFlag(ExprFlags.IsLValue))
                 {
-                    ReportError(expr.Target, $"Soucre reference reassignment must be an lvalue");
+                    ReportError(expr.Source, $"Source reference reassignment must be an lvalue");
                     return expr;
                 }
 
@@ -1647,8 +1648,15 @@ namespace Cheez
                 return cast;
             }
 
+            else if (to is ReferenceType && from is ReferenceType)
+            {
+                bool fromIsLValue = cast.SubExpression.GetFlag(ExprFlags.IsLValue);
+                Debug.Assert(fromIsLValue);
+                cast.SetFlag(ExprFlags.IsLValue, true);
+                return cast;
+            }
+
             else if ((to is PointerType && from is PointerType) ||
-                (to is ReferenceType && from is ReferenceType) ||
                 (to is IntType && from is PointerType) ||
                 (to is PointerType p1 && from is ArrayType a1 && p1.TargetType == a1.TargetType) ||
                 (to is IntType && from is IntType) ||

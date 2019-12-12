@@ -69,8 +69,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (expr.IsReferenceReassignment)
             {
                 var target = GenerateExpression(expr.Target, false);
-                var source = GenerateExpression(expr.Source, false);
-                builder.CreateStore(source, target);
+                var source = GenerateExpression(expr.Source, true);
+                var store = builder.CreateStore(source, target);
                 return default;
             }
             else

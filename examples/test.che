@@ -76,7 +76,6 @@ Main :: () {
     six    := BinaryExpr(id = 6, op = BinaryExpr.Operator.Mul, left = num2, right = num3)
     seven  := BinaryExpr(id = 7, op = BinaryExpr.Operator.Add, left = num1, right = six)
     result := UnaryExpr(id = 8, op = UnaryExpr.Operator.Neg, sub = seven)
-    
 
     io.println(ref num1)
     io.println(ref num2)
