@@ -38,54 +38,39 @@ io  :: import std.io
 fmt :: import std.fmt
 C   :: import std.c
 
-use import compiler.type
-use import compiler.ast
-
-EvalContext :: struct {
-    variables : Table[string, int]
+Foo :: struct {
+    a : int
 }
 
-impl Expr {
-    evaluate :: (ref Self, ctx: ref EvalContext) -> int {
-        return match self {
-            IdExpr($expr) -> match ctx.variables.get(expr.name) {
-                Some($val) -> val
-                None -> {@assert(false, "Unknown variable"); 0}
-            }
-            NumberExpr($expr) -> expr.value
-            BinaryExpr($expr) -> match expr.op {
-                BinaryExpr.Operator.Add -> expr.left.evaluate(ctx) + expr.right.evaluate(ctx)
-                BinaryExpr.Operator.Sub -> expr.left.evaluate(ctx) - expr.right.evaluate(ctx)
-                BinaryExpr.Operator.Mul -> expr.left.evaluate(ctx) * expr.right.evaluate(ctx)
-                BinaryExpr.Operator.Div -> expr.left.evaluate(ctx) / expr.right.evaluate(ctx)
-            }
-            UnaryExpr($expr) -> match expr.op {
-                UnaryExpr.Operator.Neg -> -expr.sub.evaluate(ctx)
-                _ -> {@assert(false, "Unary operator not implemented"); 0}
-            }
-
-            _ -> {@assert(false, "Expression not implemented"); 0}
-        }
+impl Drop for Foo {
+    drop :: (ref Self) {
+        io.printfln("~Foo({})", a)
     }
 }
 
+Bar :: struct {
+    foo : Option[Foo]
+}
+
+// test :: (foo: Option[Foo]) {
+//     io.println("test()")
+//     match foo {
+//         Some($foo) -> {
+//             io.printfln("Some(Foo({}))", foo.a)
+//         }
+//         None -> io.println("None")
+//     }
+// }
+
 Main :: () {
-    num1   := IdExpr(id = 1, name = "foo")
-    num2   := NumberExpr(id = 2, value = 2)
-    num3   := NumberExpr(id = 3, value = 3)
-    six    := BinaryExpr(id = 6, op = BinaryExpr.Operator.Mul, left = num2, right = num3)
-    seven  := BinaryExpr(id = 7, op = BinaryExpr.Operator.Add, left = num1, right = six)
-    result := UnaryExpr(id = 8, op = UnaryExpr.Operator.Neg, sub = seven)
-
-    io.println(ref num1)
-    io.println(ref num2)
-    io.println(ref num3)
-    io.println(ref six)
-    io.println(ref seven)
-    io.println(ref result)
-
-    ctx := EvalContext(Table[string, int].create((a, b) => streq(a, b)))
-    ctx.variables["foo"] = 69
-    io.println(result.evaluate(ctx))
+    io.println("main()")
+    bar := Bar(Some(Foo(123)))
+    test(bar.foo <- Some(Foo(456)))
+    io.println("... main()")
+    // test(bar.foo <- None)
+    // match bar.foo {
+    //     Some($foo) -> io.printfln("Some(Foo({}))", foo.a)
+    //     None -> io.println("None")
+    // }
 }
 // */

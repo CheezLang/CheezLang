@@ -232,7 +232,7 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
         TypeInfoKind.Enum($tenum) -> {
             ptr := cast(&void) data
             result += tenum.name
-            result += "."
+            result += '.'
 
             tag := match tenum.tag_type.size {
                 1  -> int(<<cast(&u8) ptr)

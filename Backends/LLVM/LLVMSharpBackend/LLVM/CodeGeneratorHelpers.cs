@@ -764,6 +764,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void GenerateDestructors(CheezType type, LLVMValueRef func)
         {
+            currentLLVMFunction = func;
+
             var self = func.GetParam(0);
             var builder = new IRBuilder();
             var entry = func.AppendBasicBlock("entry");
@@ -785,10 +787,50 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case StructType @struct:
                     GenerateDestructorStruct(@struct, builder, self);
                     break;
+
+                case EnumType @enum:
+                    GenerateDestructorEnum(@enum, builder, self);
+                    break;
             }
 
             builder.CreateRetVoid();
             builder.Dispose();
+        }
+
+        private void GenerateDestructorEnum(EnumType @enum, IRBuilder builder, LLVMValueRef self)
+        {
+            var bbEnd = currentLLVMFunction.AppendBasicBlock("end");
+            var bbElse = currentLLVMFunction.AppendBasicBlock("else");
+
+            var tag = builder.CreateStructGEP(self, 0, "tag.ptr");
+            tag = builder.CreateLoad(tag, "tag");
+            var match = builder.CreateSwitch(tag, bbElse, (uint)@enum.Declaration.Members.Count);
+            
+            foreach (var m in @enum.Declaration.Members)
+            {
+                var memberTag = CheezValueToLLVMValue(@enum.Declaration.TagType, m.Value);
+                var bbCase = currentLLVMFunction.AppendBasicBlock($"case {m.Name}");
+                match.AddCase(memberTag, bbCase);
+
+                builder.PositionBuilderAtEnd(bbCase);
+
+                if (m.AssociatedType != null && workspace.TypeHasDestructor(m.AssociatedType))
+                {
+                    var memDtor = GetDestructor(m.AssociatedType);
+                    var memPtr = builder.CreateStructGEP(self, 1, "");
+                    memPtr = builder.CreatePointerCast(memPtr, CheezTypeToLLVMType(m.AssociatedType).GetPointerTo(), "");
+                    UpdateStackTracePosition(m.Location);
+                    builder.CreateCall(memDtor, new LLVMValueRef[] { memPtr }, "");
+                }
+
+                builder.CreateBr(bbEnd);
+            }
+
+            builder.PositionBuilderAtEnd(bbElse);
+            CreateExit($"[{@enum.Declaration.Location.Beginning}] Enum tag invalid", 69);
+            builder.CreateBr(bbEnd);
+
+            builder.PositionBuilderAtEnd(bbEnd);
         }
 
         private void GenerateDestructorStruct(StructType type, IRBuilder builder, LLVMValueRef self)
@@ -801,6 +843,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 {
                     var memDtor = GetDestructor(memType);
                     var memPtr = builder.CreateStructGEP(self, (uint)mem.Index, "");
+                    UpdateStackTracePosition(mem.Location);
                     builder.CreateCall(memDtor, new LLVMValueRef[] { memPtr }, "");
                 }
             }
