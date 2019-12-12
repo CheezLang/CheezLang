@@ -397,6 +397,8 @@ namespace Cheez
                 case AstIfExpr e: return PassVLIf(e, symStatTable);
                 case AstMatchExpr m: return PassVLMatch(m, symStatTable);
 
+                case AstMoveAssignExpr m: return PassVLMoveAssign(m, symStatTable);
+
                 case AstCallExpr c:
                     {
                         bool b = true;
@@ -619,6 +621,21 @@ namespace Cheez
                     WellThatsNotSupposedToHappen(expr.GetType().ToString());
                     return false;
                 }
+        }
+
+        private bool PassVLMoveAssign(AstMoveAssignExpr m, SymbolStatusTable symStatTable)
+        {
+            if (!PassVLExpr(m.Target, symStatTable))
+                return false;
+            if (!PassVLExpr(m.Source, symStatTable))
+                return false;
+
+            if (!m.IsReferenceReassignment)
+            {
+                if (!Move(m.Target.Type, m.Source, symStatTable, m.Source))
+                    return false;
+            }
+            return true;
         }
 
         private bool PassVLStatement(AstStatement stmt, SymbolStatusTable symStatTable)

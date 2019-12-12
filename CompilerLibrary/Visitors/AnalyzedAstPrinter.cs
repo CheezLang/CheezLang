@@ -596,6 +596,11 @@ namespace Cheez.Visitors
 
         #region Expressions
 
+        public override string VisitMoveAssignExpr(AstMoveAssignExpr expr, int data = 0)
+        {
+            return $"{expr.Target.Accept(this)} <- {expr.Source.Accept(this)}";
+        }
+
         public override string VisitImportExpr(AstImportExpr expr, int data = 0)
         {
             var result = "import ";

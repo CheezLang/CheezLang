@@ -63,6 +63,7 @@ namespace Cheez.Parsing
         DoubleEqual,
         NotEqual,
 
+        ReverseArrow,
         Arrow,
         DoubleArrow,
         LessLess,
@@ -218,6 +219,7 @@ namespace Cheez.Parsing
 
             switch (Current)
             {
+                case '<' when Next == '-': SimpleToken(ref token, TokenType.ReverseArrow, 2); break;
                 case '-' when Next == '>': SimpleToken(ref token, TokenType.Arrow, 2); break;
                 case '=' when Next == '>': SimpleToken(ref token, TokenType.DoubleArrow, 2); break;
                 case '=' when Next == '=': SimpleToken(ref token, TokenType.DoubleEqual, 2); break;

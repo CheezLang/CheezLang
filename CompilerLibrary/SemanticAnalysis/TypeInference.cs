@@ -138,6 +138,9 @@ namespace Cheez
 
             switch (expr)
             {
+                case AstMoveAssignExpr m:
+                    return InferTypeMoveAssignExpr(m, expected, context);
+
                 case AstPipeExpr p:
                     return InferTypePipeExpr(p, expected, context);
 
@@ -283,6 +286,45 @@ namespace Cheez
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private AstExpression InferTypeMoveAssignExpr(AstMoveAssignExpr expr, CheezType expected, TypeInferenceContext context)
+        {
+            expr.Target.AttachTo(expr);
+            expr.Target = InferTypeHelper(expr.Target, expected, context);
+
+            if (!expr.Target.GetFlag(ExprFlags.IsLValue))
+            {
+                ReportError(expr.Target, $"Target of move assign must be an lvalue");
+                return expr;
+            }
+
+            if (expr.Target.Type is ReferenceType r)
+            {
+                expr.IsReferenceReassignment = true;
+                expr.Source.AttachTo(expr);
+                expr.Source = InferTypeHelper(expr.Source, r.TargetType, context);
+                expr.Source = CheckType(expr.Source, r.TargetType);
+
+                if (!expr.Source.GetFlag(ExprFlags.IsLValue))
+                {
+                    ReportError(expr.Target, $"Soucre reference reassignment must be an lvalue");
+                    return expr;
+                }
+
+                expr.Type = CheezType.Void;
+                return expr;
+            }
+            else
+            {
+                expr.Source.AttachTo(expr);
+                expr.Source = InferTypeHelper(expr.Source, expr.Target.Type, context);
+                expr.Source = CheckType(expr.Source, expr.Target.Type);
+
+                expr.Type = expr.Target.Type;
+                return expr;
+            }
+
         }
 
         private AstExpression InferTypePipeExpr(AstPipeExpr p, CheezType expected, TypeInferenceContext context)

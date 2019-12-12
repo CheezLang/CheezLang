@@ -142,6 +142,28 @@ namespace Cheez.Ast.Expressions
         }
     }
 
+    public class AstMoveAssignExpr : AstExpression
+    {
+        public AstExpression Target { get; set; }
+        public AstExpression Source { get; set; }
+
+        public bool IsReferenceReassignment { get; set; }
+
+        public override bool IsPolymorphic => false;
+
+        public AstMoveAssignExpr(AstExpression target, AstExpression source, ILocation Location = null)
+            : base(Location: Location)
+        {
+            this.Target = target;
+            this.Source = source;
+        }
+
+        [DebuggerStepThrough]
+        public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitMoveAssignExpr(this, data);
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstMoveAssignExpr(Target.Clone(), Source.Clone()));
+    }
     public class AstImportExpr : AstExpression
     {
         public override bool IsPolymorphic => false;

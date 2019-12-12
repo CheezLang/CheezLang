@@ -69,13 +69,6 @@ impl Expr {
     }
 }
 
-push_var :: (var: Code, x: Code) #macro #transparent {
-    prev :: @unique_id() #local
-    @id(prev) := @insert(var)
-    defer {@insert(var) = @id(prev)}
-    @insert(var) = @insert(x)
-}
-
 Main :: () {
     num1   := IdExpr(id = 1, name = "foo")
     num2   := NumberExpr(id = 2, value = 2)

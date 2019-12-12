@@ -1231,7 +1231,7 @@ namespace Cheez.Parsing
         {
             errorMessage = errorMessage ?? (t => $"Unexpected token '{t}' in expression");
 
-            var expr = ParsePipeExpression(false, allowFunctionExpression, errorMessage);
+            var expr = ParseMoveExpression(false, allowFunctionExpression, errorMessage);
 
             if (allowCommaForTuple)
             {
@@ -1246,7 +1246,7 @@ namespace Cheez.Parsing
 
                     NextToken();
 
-                    expr = ParsePipeExpression(false, allowFunctionExpression, errorMessage);
+                    expr = ParseMoveExpression(false, allowFunctionExpression, errorMessage);
                     list.Add(new AstParameter(null, expr, null, expr));
                 }
 
@@ -1255,6 +1255,21 @@ namespace Cheez.Parsing
             }
 
             return expr;
+        }
+
+        private AstExpression ParseMoveExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver err)
+        {
+            var sub = ParsePipeExpression(allowCommaForTuple, allowFunctionExpression, err);
+
+            if (CheckToken(TokenType.ReverseArrow))
+            {
+                NextToken();
+                SkipNewlines();
+                var right = ParseMoveExpression(allowCommaForTuple, allowFunctionExpression, err);
+                sub = new AstMoveAssignExpr(sub, right, new Location(sub.Beginning, right.End));
+            }
+
+            return sub;
         }
 
         [DebuggerStepThrough]

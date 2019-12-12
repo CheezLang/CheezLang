@@ -18,6 +18,13 @@ __platform__ : Platform = if const @is_os("Windows") {
     Platform.Unknown
 }
 
+// 
+push_var :: (var: Code, x: Code) #macro #transparent {
+    prev := @insert(var) #local
+    defer {@insert(var) = prev}
+    @insert(var) = @insert(x)
+}
+
 // try
 try :: (code: Code) #macro {
     match @insert(code, _break=break, _continue=continue) {

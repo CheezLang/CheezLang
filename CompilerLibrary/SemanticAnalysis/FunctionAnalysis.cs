@@ -777,6 +777,7 @@ namespace Cheez
                     case AstEmptyExpr _:
                     case AstBreakExpr _:
                     case AstContinueExpr _:
+                    case AstMoveAssignExpr _:
                         break;
 
                     default:

@@ -26,6 +26,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             switch (expr)
             {
+                case AstMoveAssignExpr ma: return GenerateMoveAssignExpr(ma);
                 case AstNullExpr nll: return GenerateNullExpr(nll);
                 case AstBoolExpr n: return GenerateBoolExpr(n);
                 case AstNumberExpr n: return GenerateNumberExpr(n);
@@ -61,6 +62,27 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstConstantRef v: return GenerateConstantRefExpr(v);
             }
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GenerateMoveAssignExpr(AstMoveAssignExpr expr)
+        {
+            if (expr.IsReferenceReassignment)
+            {
+                var target = GenerateExpression(expr.Target, false);
+                var source = GenerateExpression(expr.Source, false);
+                builder.CreateStore(source, target);
+                return default;
+            }
+            else
+            {
+                var target = GenerateExpression(expr.Target, false);
+                var value = builder.CreateLoad(target, "value");
+
+                var source = GenerateExpression(expr.Source, true);
+                builder.CreateStore(source, target);
+
+                return value;
+            }
         }
 
         private LLVMValueRef GenerateVariableRefExpr(AstVariableRef v, bool deref)

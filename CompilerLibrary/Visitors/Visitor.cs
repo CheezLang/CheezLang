@@ -58,6 +58,7 @@ namespace Cheez.Visitors
         ReturnType VisitDefaultExpr(AstDefaultExpr expr, DataType data = default);
         ReturnType VisitMatchExpr(AstMatchExpr expr, DataType data = default);
         ReturnType VisitPipeExpr(AstPipeExpr expr, DataType data = default);
+        ReturnType VisitMoveAssignExpr(AstMoveAssignExpr expr, DataType data = default);
 
         ReturnType VisitEmptyExpression(AstEmptyExpr expr, DataType data = default);
 
@@ -136,6 +137,7 @@ namespace Cheez.Visitors
         public virtual ReturnType VisitDefaultExpr(AstDefaultExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitMatchExpr(AstMatchExpr expr, DataType data = default) => default;
         public virtual ReturnType VisitPipeExpr(AstPipeExpr expr, DataType data = default) => default;
+        public virtual ReturnType VisitMoveAssignExpr(AstMoveAssignExpr expr, DataType data = default) => default;
 
         public virtual ReturnType VisitEmptyExpression(AstEmptyExpr expr, DataType data = default) => default;
 
