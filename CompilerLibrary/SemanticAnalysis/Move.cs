@@ -2,6 +2,7 @@
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Types;
+using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using System;
 
@@ -13,9 +14,19 @@ namespace Cheez
         {
             switch (expr)
             {
+                //case AstTempVarExpr tmp:
+                //    {
+                //        return Move(targetType, tmp.Expr, symStatTable, location);
+                //    }
+
                 case AstDotExpr dot:
                     {
-                        if (!dot.Type.IsCopy)
+                        if (dot.Left.Type is EnumType)
+                        {
+                            Move(targetType, dot.Left, symStatTable, location);
+                            return true;
+                        }
+                        else if (!dot.Type.IsCopy)
                         {
                             ReportError(location ?? expr, $"Can't move out of '{dot}' because type {dot.Type} is not copy");
                             return false;

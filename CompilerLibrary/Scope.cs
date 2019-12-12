@@ -108,7 +108,7 @@ namespace Cheez
     public class Using : ITypedSymbol
     {
         public CheezType Type => Expr.Type;
-        public string Name => throw new NotImplementedException();
+        public string Name => null;
 
         public AstExpression Expr { get; }
 

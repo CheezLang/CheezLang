@@ -379,9 +379,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     var bb = currentLLVMFunction.AppendBasicBlock($"_switch_case_{c.Pattern}");
 
                     builder.PositionBuilderAtEnd(bb);
+
                     var b = GenerateExpression(c.Body, true);
                     if (m.Type != CheezType.Void)
                         builder.CreateStore(b, result);
+
+                    if (c.Destructions != null)
+                    {
+                        foreach (var dest in c.Destructions)
+                            GenerateStatement(dest);
+                    }
 
                     builder.CreateBr(bbElse);
 
@@ -409,21 +416,35 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 {
                     var patt = GeneratePatternCondition(c.Pattern, cond, m.SubExpression.Type);
 
+                    var bbCondition = currentLLVMFunction.AppendBasicBlock($"_switch_case_{c.Pattern}_condition");
+                    var bbCase = currentLLVMFunction.AppendBasicBlock($"_switch_case_{c.Pattern}");
+                    bbNext = currentLLVMFunction.AppendBasicBlock($"_switch_next");
+                    builder.CreateCondBr(patt, bbCondition, bbNext);
+                    builder.PositionBuilderAtEnd(bbCondition);
+
+                    if (c.Bindings != null)
+                    {
+                        foreach (var binding in c.Bindings)
+                            GenerateVariableDecl(binding);
+                    }
+
                     if (c.Condition != null)
                     {
                         var v = GenerateExpression(c.Condition, true);
                         patt = builder.CreateAnd(patt, v, "");
                     }
+                    builder.CreateCondBr(patt, bbCase, bbNext);
 
-                    var bb = currentLLVMFunction.AppendBasicBlock($"_switch_case_{c.Pattern}");
-                    bbNext = currentLLVMFunction.AppendBasicBlock($"_switch_next");
-
-                    builder.CreateCondBr(patt, bb, bbNext);
-
-                    builder.PositionBuilderAtEnd(bb);
+                    builder.PositionBuilderAtEnd(bbCase);
                     var b = GenerateExpression(c.Body, true);
                     if (m.Type != CheezType.Void && c.Body.Type != CheezType.Void)
                         builder.CreateStore(b, result);
+
+                    if (c.Destructions != null)
+                    {
+                        foreach (var dest in c.Destructions)
+                            GenerateStatement(dest);
+                    }
 
                     if (!c.Body.GetFlag(ExprFlags.Returns))
                         builder.CreateBr(bbElse);
@@ -738,6 +759,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 var impl = GetTraitImpl(trait, from);
                 var vtablePtr = vtableMap[impl];
+                vtablePtr = builder.CreatePointerCast(vtablePtr, pointerType, "");
 
                 var traitObject = LLVM.GetUndef(toLLVM);
                 traitObject = builder.CreateInsertValue(traitObject, vtablePtr, 0, "");

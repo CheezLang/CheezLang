@@ -227,6 +227,9 @@ namespace Cheez.Ast.Expressions
         public AstExpression Condition { get; set; }
         public AstExpression Body { get; set; }
 
+        public List<AstVariableDecl> Bindings { get; private set; } = null;
+        public List<AstStatement> Destructions { get; private set; } = null;
+
         public Scope SubScope { get; set; }
 
         public AstMatchCase(AstExpression pattern, AstExpression condition, AstExpression body, ILocation Location = null)
@@ -242,6 +245,22 @@ namespace Cheez.Ast.Expressions
         public override string ToString()
         {
             return new RawAstPrinter(null).VisitMatchCase(this);
+        }
+
+        public void AddBinding(AstVariableDecl decl)
+        {
+            if (Bindings == null)
+                Bindings = new List<AstVariableDecl>();
+            Bindings.Add(decl);
+        }
+
+        public void AddDestruction(AstStatement dest)
+        {
+            if (dest == null)
+                return;
+            if (Destructions == null)
+                Destructions = new List<AstStatement>();
+            Destructions.Add(dest);
         }
     }
 

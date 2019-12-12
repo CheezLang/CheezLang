@@ -123,7 +123,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var bbBody = currentLLVMFunction.AppendBasicBlock("stack_trace.print.body");
             var bbEnd = currentLLVMFunction.AppendBasicBlock("stack_trace.print.end");
 
-            var currentTop = CreateLocalVariable(LLVM.PointerType(stackTraceType, 0), "stack_trace.print.current");
+            var currentTop = CreateLocalVariable(LLVM.PointerType(stackTraceType, 0), 8, "stack_trace.print.current");
             {
                 var v = builder.CreateLoad(stackTraceTop, "");
                 builder.CreateStore(v, currentTop);
@@ -312,10 +312,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef CreateLocalVariable(CheezType exprType, string name = "temp")
         {
-            return CreateLocalVariable(CheezTypeToLLVMType(exprType), name);
+            return CreateLocalVariable(CheezTypeToLLVMType(exprType), exprType.GetAlignment(), name);
         }
 
-        private LLVMValueRef CreateLocalVariable(LLVMTypeRef type, string name = "temp")
+        private LLVMValueRef CreateLocalVariable(LLVMTypeRef type, int alignment, string name = "temp")
         {
             var builder = new IRBuilder();
 
@@ -327,8 +327,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 builder.PositionBuilderBefore(brInst);
 
             var result = builder.CreateAlloca(type, name);
-            var alignment = targetData.AlignmentOfType(type);
-            result.SetAlignment(alignment);
+            var llvmAlignment = targetData.AlignmentOfType(type);
+            Debug.Assert(alignment >= llvmAlignment && alignment % llvmAlignment == 0);
+            result.SetAlignment((uint)alignment);
 
             builder.Dispose();
             return result;
@@ -556,7 +557,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                         return LLVM.ConstNamedStruct(CheezTypeToLLVMType(type), new LLVMValueRef[] {
                             LLVM.ConstInt(LLVM.Int64Type(), (ulong)byteValues.Length, true),
-                            glob
+                            LLVM.ConstPointerCast(glob, LLVM.Int8Type().GetPointerTo())
                         });
                     }
                     if (type == CheezType.CString && v is string)
@@ -719,7 +720,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             continue;
 
                         var index = vtableIndices[traitFunc];
-                        functions[index] = valueMap[func];
+                        functions[index] = LLVM.ConstPointerCast(valueMap[func], vfuncTypes[index]);
                     }
 
                     var defValue = LLVM.ConstNamedStruct(vtableType, functions);
@@ -1055,7 +1056,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             // create trait function array
             var memberSlice = CreateSlice(
-                sTypeInfoStructMember,
+                sTypeInfoTraitFunction,
                 $"ti.{traitType.Declaration.Name}.functions",
                 traitType.Declaration.Functions.Select(m => LLVM.ConstNamedStruct(rttiTypeInfoTraitFunction, new LLVMValueRef[]
                 {
@@ -1133,7 +1134,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return LLVM.ConstNamedStruct(rttiTypeInfoTraitImpl, new LLVMValueRef[]
             {
                 typeInfoTable[t],
-                vtablePtr
+                LLVM.ConstPointerCast(vtablePtr, LLVM.Int8Type().GetPointerTo()),
             });
         }
 
@@ -1202,10 +1203,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef CreateSliceHelper(CheezType targetType, int length, LLVMValueRef data)
         {
             var targetTypeLLVM = CheezTypeToLLVMType(SliceType.GetSliceType(targetType));
+            var elemTypes = targetTypeLLVM.GetStructElementTypes();
             return LLVM.ConstNamedStruct(targetTypeLLVM, new LLVMValueRef[]
             {
                 LLVM.ConstInt(LLVM.Int64Type(), (ulong)length, true),
-                data
+                LLVM.ConstPointerCast(data, elemTypes[1]),
             });
         }
     }

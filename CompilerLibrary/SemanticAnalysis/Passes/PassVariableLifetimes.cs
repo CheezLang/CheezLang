@@ -832,9 +832,28 @@ namespace Cheez
             var subStats = new SymbolStatusTable[expr.Cases.Count];
             for (int i = 0; i < expr.Cases.Count; i++)
             {
-                subStats[i] = new SymbolStatusTable(parent);
-                if (!PassVLExpr(expr.Cases[i].Body, subStats[i]))
+                var stats = subStats[i] = new SymbolStatusTable(parent);
+                var cas = expr.Cases[i];
+
+                if (cas.Bindings != null)
+                {
+                    foreach (var sym in cas.Bindings)
+                    {
+                        PassVLStatement(sym, stats);
+                    }
+                }
+
+                if (!PassVLExpr(cas.Body, stats))
                     return false;
+
+                // call destructors for bindings
+                foreach (var stat in stats.OwnedSymbolStatusesReverseOrdered)
+                {
+                    if (stat.kind == SymbolStatus.Kind.initialized)
+                    {
+                        cas.AddDestruction(Destruct(stat.symbol, expr.End));
+                    }
+                }
             }
 
             bool result = true;

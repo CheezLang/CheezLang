@@ -18,7 +18,7 @@
 
 // import "tests/language/match"
 // import tests.language.match3
-// import tests.library.all_include
+// import tests.library.hash_table1
 // import tests.other.test1
 // import "examples/project_euler/018_maximum_path_sum_1"
 // import bugs.bug1
@@ -35,17 +35,13 @@
 // use import std.array
 // use import std.hash_table
 // use import std.mem.allocator
-// io  :: import std.io
+io  :: import std.io
 // fmt :: import std.fmt
 C   :: import std.c
 
-Foo :: struct #copy {
-    x : int
-}
-
 impl Drop for Foo {
     drop :: (ref Self) {
-        // io.printfln("~Foo({})", a)
+        io.printfln("~Foo({})", x)
     }
 }
 
@@ -63,45 +59,43 @@ Bar :: struct {
 //     }
 // }
 
+Foo :: struct {
+    x : int
+}
+
 Main :: () {
     foo := Some(Foo(123))
 
-    C.puts("--- match ---")
+    io.println("    match")
     match ref foo {
         Some($f) -> {
-            C.printf("Some(Foo(%lld))`n", f.x)
-            f.x = 987
-            f = Foo(-1)
+            io.println("        case beg")
+            f = Foo(1)
+            f = Foo(4)
+            io.println("        case end")
         }
-        None -> C.puts("None")
     }
 
-    C.puts("--- match ---")
+    io.println("    match")
     match foo {
         Some($f) -> {
-            C.printf("Some(Foo(%lld))`n", f.x)
-            f.x = 123
-            f = Foo(645)
+            io.println("        case beg")
+            f = Foo(2)
+            f = Foo(5)
+            io.println("        case end")
         }
-        None -> C.puts("None")
     }
     
-    C.puts("--- match ---")
-    match foo {
-        Some($f) -> {
-            C.printf("Some(Foo(%lld))`n", f.x)
-        }
-        None -> C.puts("None")
-    }
-    
-    C.puts("--- match ---")
+    io.println("    match")
     match Some(Foo(9)) {
         Some($f) -> {
-            C.printf("Some(Foo(%lld))`n", f.x)
+            io.println("        case beg")
+            f = Foo(3)
+            f = Foo(6)
+            io.println("        case end")
         }
-        None -> C.puts("None")
     }
-    C.puts("--- end ---")
 
+    io.println("    ende")
 }
 // */

@@ -906,6 +906,16 @@ namespace Cheez
                     continue;
                 }
 
+                if (c.Bindings != null)
+                {
+                    foreach (var binding in c.Bindings)
+                    {
+                        binding.Scope = c.SubScope;
+                        AnalyseStatement(binding, out var ns);
+                        Debug.Assert(ns.Count == 0);
+                    }
+                }
+
                 // condition
                 if (c.Condition != null)
                 {
@@ -1151,13 +1161,9 @@ namespace Cheez
             {
                 case CheezType _ when (pattern is AstIdExpr id && (id.Name == "_" || id.IsPolymorphic)):
                     {
-                        AstExpression tmpVar = new AstTempVarExpr(value, false);
-                        tmpVar.Replace(value);
-                        tmpVar = InferType(tmpVar, null);
-
-                        id.Type = value.Type;
-                        id.Scope.DefineUse(id.Name, tmpVar, false, out var use);
-                        id.Symbol = use;
+                        var binding = new AstVariableDecl(pattern.Clone(), null, value.Clone(), Location: pattern.Location);
+                        cas.AddBinding(binding);
+                        pattern.Type = value.Type;
                         return id;
                     }
 

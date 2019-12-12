@@ -718,6 +718,15 @@ namespace Cheez.Visitors
 
             result += " -> " + c.Body.Accept(this);
 
+            if (c.Destructions != null)
+            {
+                result += ";\n";
+                foreach (var dest in c.Destructions)
+                {
+                    result += $"{dest.Accept(this)};";
+                }
+            }
+
             return result;
         }
 
