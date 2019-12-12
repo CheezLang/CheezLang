@@ -864,13 +864,11 @@ namespace Cheez
                 return expr;
 
             ConvertLiteralTypeToDefaultType(expr.SubExpression, null);
-            //if (expr.SubExpression.Type is ReferenceType)
-            //    expr.SubExpression = Deref(expr.SubExpression, context);
 
             if (expr.SubExpression.GetFlag(ExprFlags.IsLValue))
             {
                 bool isRef = expr.SubExpression.Type is ReferenceType;
-                var tmp = new AstTempVarExpr(expr.SubExpression, !isRef);
+                var tmp = new AstTempVarExpr(expr.SubExpression, false);
                 tmp.AttachTo(expr);
                 tmp.SetFlag(ExprFlags.IsLValue, true);
                 expr.SubExpression = InferTypeHelper(tmp, null, context);
@@ -879,11 +877,12 @@ namespace Cheez
             {
                 var tmp = new AstTempVarExpr(expr.SubExpression);
                 tmp.AttachTo(expr);
-                tmp.SetFlag(ExprFlags.IsLValue, true);
+                tmp.SetFlag(ExprFlags.IsLValue, false);
                 expr.SubExpression = InferTypeHelper(tmp, null, context);
             }
-            
+
             expr.IsSimpleIntMatch = true;
+            bool matchingReference = expr.SubExpression.Type is ReferenceType;
 
             if (expr.Cases.Count == 0)
             {
@@ -899,7 +898,7 @@ namespace Cheez
                 c.Pattern.AttachTo(expr);
                 c.Pattern.Scope = c.SubScope;
                 c.Pattern.SetFlag(ExprFlags.ValueRequired, true);
-                c.Pattern = MatchPatternWithType(c, c.Pattern, expr.SubExpression);
+                c.Pattern = MatchPatternWithType(c, c.Pattern, expr.SubExpression, matchingReference);
 
                 if (c.Pattern.Type?.IsErrorType ?? false)
                 {
@@ -948,128 +947,56 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression MatchPatternWithType(
+        private AstExpression MatchPatternWithPrimitive(
             AstMatchCase cas,
             AstExpression pattern,
-            AstExpression value)
+            AstExpression value,
+            bool matchingReference)
         {
             var expected = value.Type;
             if (value.Type is ReferenceType re)
-            {
                 expected = re.TargetType;
-                //pattern.SetFlag(ExprFlags.PatternRefersToReference, true);
-            }
 
             switch (pattern)
             {
-                case AstIdExpr id:
+                default:
                     {
-                        if (id.IsPolymorphic || id.Name == "_")
-                        {
-                            AstExpression tmpVar = new AstTempVarExpr(value, false);
-                            tmpVar.Replace(value);
-                            tmpVar = InferType(tmpVar, null);
-
-                            id.Type = value.Type;
-                            id.Scope.DefineUse(id.Name, tmpVar, false, out var use);
-                            id.Symbol = use;
-                        }
-                        else
-                        {
-                            var newPattern = InferType(id, expected);
-                            ConvertLiteralTypeToDefaultType(newPattern, expected);
-                            if (newPattern != pattern)
-                                return MatchPatternWithType(cas, newPattern, value);
-
-                            if (pattern.Type.IsErrorType)
-                                return id;
-
-                            if (newPattern.Type != value.Type)
-                            {
-                                if (value.Type is IntType && newPattern.Type == IntType.LiteralType)
-                                { } // do nothing
-                                else if (value.Type is FloatType && newPattern.Type == FloatType.LiteralType)
-                                { } // do nothing
-                                else
-                                    break;
-                            }
-
-                            if (!id.IsCompTimeValue)
-                            {
-                                ReportError(id, $"Must be constant");
-                            }
-                        }
-                        return id;
-                    }
-
-                case AstCharLiteral n:
-                    {
-                        InferType(n, value.Type);
-                        ConvertLiteralTypeToDefaultType(n, value.Type);
+                        InferType(pattern, expected);
+                        ConvertLiteralTypeToDefaultType(pattern, expected);
                         if (pattern.Type.IsErrorType)
                             return pattern;
 
-                        if (n.Type != value.Type)
-                            break;
-                        return n;
+                        if (pattern.Type != expected)
+                            ReportError(pattern, $"Can't match type {value.Type} with pattern {pattern}");
+                        if (!pattern.IsCompTimeValue)
+                            ReportError(pattern, $"Pattern must be constant");
+                        return pattern;
                     }
+            }
+        }
 
-                case AstNumberExpr n:
+        private AstExpression MatchPatternWithEnum(
+            AstMatchCase cas,
+            AstExpression pattern,
+            AstExpression value,
+            bool matchingReference)
+        {
+            var expected = value.Type;
+            if (value.Type is ReferenceType re)
+                expected = re.TargetType;
+
+            switch (pattern)
+            {
+                case AstIdExpr _:
+                case AstDotExpr _:
                     {
-                        InferType(n, value.Type);
-                        ConvertLiteralTypeToDefaultType(n, value.Type);
-                        if (pattern.Type.IsErrorType)
+                        if (!(InferType(pattern, expected) is AstEnumValueExpr ev))
+                            break;
+                        if (ev.Type.IsErrorType)
                             return pattern;
-
-                        if (n.Type != value.Type)
-                        {
-                            if (value.Type is IntType && n.Type == IntType.LiteralType)
-                            { } // do nothing
-                            else if (value.Type is FloatType && n.Type == FloatType.LiteralType)
-                            { } // do nothing
-                            else
-                                break;
-                        }
-                        return n;
-                    }
-
-                case AstTupleExpr te:
-                    {
-                        if (value.Type is TupleType tt)
-                        {
-                            if (te.Values.Count != tt.Members.Length)
-                                break;
-                            for (int i = 0; i < tt.Members.Length; i++)
-                            {
-                                var p = te.Values[i];
-                                p.AttachTo(te);
-                                AstExpression v = new AstArrayAccessExpr(value, new AstNumberExpr(i, Location: value.Location), value.Location);
-                                v.AttachTo(value);
-                                v = InferType(v, tt.Members[i].type);
-                                te.Values[i] = MatchPatternWithType(cas, p, v);
-                            }
-
-                            te.Type = tt;
-
-                            return te;
-                        }
-                        pattern.Type = CheezType.Error;
-                        break;
-                    }
-
-                case AstDotExpr dot:
-                    {
-                        var d = InferType(dot, null);
-                        if (d is AstEnumValueExpr e)
-                        {
-                            if (pattern.Type.IsErrorType)
-                                return pattern;
-                            if (e.Type != expected)
-                                break;
-                            return d;
-                        }
-                        else
+                        if (ev.Type != expected)
                             break;
+                        return ev;
                     }
 
                 case AstEnumValueExpr ev:
@@ -1085,97 +1012,173 @@ namespace Cheez
                     {
                         call.FunctionExpr.AttachTo(call);
                         call.FunctionExpr = InferType(call.FunctionExpr, expected);
-                        if (call.FunctionExpr is AstEnumValueExpr e)
-                        {
-                            call.Type = e.Type;
-                            if (e.Type != expected)
-                                break;
-
-                            if (call.Arguments.Count == 1)
-                            { 
-                                e.Argument = call.Arguments[0].Expr;
-                                AstExpression sub = new AstDotExpr(value, new AstIdExpr(e.Member.Name, false, call.Location), call.Location);
-                                sub.AttachTo(value);
-                                sub.SetFlag(ExprFlags.ValueRequired, pattern.GetFlag(ExprFlags.ValueRequired));
-                                sub = InferType(sub, null);
-                                e.Argument.AttachTo(e);
-                                e.Argument = MatchPatternWithType(cas, e.Argument, sub);
-                            }
-                            else if (call.Arguments.Count > 1)
-                            {
-                                e.Argument = new AstTupleExpr(
-                                    call.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList(),
-                                    call.Location);
-
-                                //e.Argument = MatchPatternWithType(cas, e.Argument, ...);
-                            }
-
-                            return call.FunctionExpr;
-                        }
-                        else if (call.FunctionExpr.Type == CheezType.Type)
-                        {
-                            var type = call.FunctionExpr.Value as CheezType;
-                            switch (type)
-                            {
-                                case StructType str when value.Type is ReferenceType r && r.TargetType == str.Declaration.Extends:
-                                    {
-                                        if (call.Arguments.Count == 1 && call.Arguments[0].Expr is AstIdExpr id && (id.IsPolymorphic || id.Name == "_"))
-                                        {
-                                            AstExpression cast = new AstCastExpr(new AstTypeRef(ReferenceType.GetRefType(str)), value);
-                                            cast.Replace(value);
-                                            cast = InferType(cast, null);
-
-                                            //id.Type = value.Type;
-                                            cas.SubScope.DefineUse(id.Name, cast, false, out var use);
-                                            //id.Symbol = use;
-                                            // do nothing.
-                                        }
-                                        else
-                                            ReportError(call, $"This pattern requires one polymorphic argument or _");
-                                        return call;
-                                    }
-                            }
+                        if (!(call.FunctionExpr is AstEnumValueExpr e))
                             break;
-                        }
-                        else
-                        {
+                        call.Type = e.Type;
+                        if (e.Type != expected)
                             break;
-                        }
-                    }
 
-                    case AstReferenceTypeExpr r:
-                    {
-                        r.Target.AttachTo(r);
-
-                        if (r.Target is AstIdExpr id && id.IsPolymorphic)
+                        if (call.Arguments.Count == 1)
                         {
-                            var val = new AstAddressOfExpr(value, value.Location);
-                            val.Reference = true;
+                            e.Argument = call.Arguments[0].Expr;
+                            AstExpression sub = new AstDotExpr(value, new AstIdExpr(e.Member.Name, false, call.Location), call.Location);
+                            sub.AttachTo(value);
+                            sub.SetFlag(ExprFlags.ValueRequired, pattern.GetFlag(ExprFlags.ValueRequired));
+                            sub = InferType(sub, null);
 
-                            AstExpression tmpVar = new AstTempVarExpr(val, false);
-                            tmpVar.Replace(r);
-                            tmpVar = InferType(tmpVar, null);
+                            if (matchingReference)
+                                sub = HandleReference(sub, ReferenceType.GetRefType(e.Member.AssociatedType), null);
 
-                            id.Type = tmpVar.Type;
-                            id.Scope.DefineUse(id.Name, tmpVar, false, out var use);
-                            id.Symbol = use;
-
-                            r.Type = id.Type;
-                            return r;
+                            e.Argument.AttachTo(e);
+                            e.Argument = MatchPatternWithType(cas, e.Argument, sub, matchingReference);
                         }
-                        else
+                        else if (call.Arguments.Count > 1)
                         {
-                            ReportError(r, $"invalid pattern");
-                        }
-                        return r;
-                    }
+                            e.Argument = new AstTupleExpr(
+                                call.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList(),
+                                call.Location);
 
+                            //e.Argument = MatchPatternWithType(cas, e.Argument, ...);
+                        }
+
+                        return call.FunctionExpr;
+                    }
             }
 
-            //if (pattern.Type?.IsErrorType ?? false)
-                ReportError(pattern, $"Can't match type {value.Type} to pattern {pattern}");
-            pattern.Type = CheezType.Error;
+            ReportError(pattern, $"Can't match type {value.Type} with pattern {pattern}");
             return pattern;
+        }
+
+        private AstExpression MatchPatternWithTuple(
+            AstMatchCase cas,
+            AstExpression pattern,
+            AstExpression value,
+            bool matchingReference)
+        {
+            var expected = value.Type;
+            if (value.Type is ReferenceType re)
+                expected = re.TargetType;
+
+            switch (pattern)
+            {
+                case AstTupleExpr te:
+                    {
+                        if (value.Type is TupleType tt)
+                        {
+                            if (te.Values.Count != tt.Members.Length)
+                                break;
+                            for (int i = 0; i < tt.Members.Length; i++)
+                            {
+                                var p = te.Values[i];
+                                p.AttachTo(te);
+                                AstExpression v = new AstArrayAccessExpr(value, new AstNumberExpr(i, Location: value.Location), value.Location);
+                                v.AttachTo(value);
+                                v = InferType(v, tt.Members[i].type);
+                                te.Values[i] = MatchPatternWithType(cas, p, v, matchingReference);
+                            }
+
+                            te.Type = tt;
+
+                            return te;
+                        }
+                        pattern.Type = CheezType.Error;
+                        break;
+                    }
+            }
+
+            ReportError(pattern, $"Can't match type {value.Type} with pattern {pattern}");
+            return pattern;
+        }
+
+        private AstExpression MatchPatternWithStruct(
+            AstMatchCase cas,
+            AstExpression pattern,
+            AstExpression value,
+            bool matchingReference)
+        {
+            var expected = value.Type;
+            if (value.Type is ReferenceType re)
+                expected = re.TargetType;
+
+            switch (pattern)
+            {
+                case AstCallExpr call:
+                    {
+                        call.FunctionExpr.AttachTo(call);
+                        call.FunctionExpr = InferType(call.FunctionExpr, expected);
+                        if (call.FunctionExpr.Type != CheezType.Type)
+                            break;
+                        var type = call.FunctionExpr.Value as CheezType;
+                        switch (type)
+                        {
+                            case StructType str when value.Type is ReferenceType r && r.TargetType == str.Declaration.Extends:
+                                {
+                                    if (call.Arguments.Count == 1 && call.Arguments[0].Expr is AstIdExpr id && (id.IsPolymorphic || id.Name == "_"))
+                                    {
+                                        AstExpression cast = new AstCastExpr(new AstTypeRef(ReferenceType.GetRefType(str)), value);
+                                        cast.Replace(value);
+                                        cast = InferType(cast, null);
+
+                                        //id.Type = value.Type;
+                                        cas.SubScope.DefineUse(id.Name, cast, false, out var use);
+                                        //id.Symbol = use;
+                                        // do nothing.
+                                    }
+                                    else
+                                        ReportError(call, $"This pattern requires one polymorphic argument or _");
+                                    return call;
+                                }
+                        }
+                        break;
+                    }
+            }
+
+            ReportError(pattern, $"Can't match type {value.Type} with pattern {pattern}");
+            return pattern;
+        }
+
+        private AstExpression MatchPatternWithType(
+            AstMatchCase cas,
+            AstExpression pattern,
+            AstExpression value,
+            bool matchingReference)
+        {
+            var expected = value.Type;
+            if (value.Type is ReferenceType re)
+                expected = re.TargetType;
+
+            switch (expected)
+            {
+                case CheezType _ when (pattern is AstIdExpr id && (id.Name == "_" || id.IsPolymorphic)):
+                    {
+                        AstExpression tmpVar = new AstTempVarExpr(value, false);
+                        tmpVar.Replace(value);
+                        tmpVar = InferType(tmpVar, null);
+
+                        id.Type = value.Type;
+                        id.Scope.DefineUse(id.Name, tmpVar, false, out var use);
+                        id.Symbol = use;
+                        return id;
+                    }
+
+                case IntType _:
+                case CharType _:
+                case BoolType _:
+                    return MatchPatternWithPrimitive(cas, pattern, value, matchingReference);
+
+                case EnumType _:
+                    return MatchPatternWithEnum(cas, pattern, value, matchingReference);
+
+                case TupleType _ when !matchingReference:
+                    return MatchPatternWithTuple(cas, pattern, value, matchingReference);
+
+                case StructType _ when matchingReference:
+                    return MatchPatternWithStruct(cas, pattern, value, matchingReference);
+
+                default:
+                    ReportError(pattern, $"Can't pattern match on type {expected}");
+                    return pattern;
+            }
         }
 
         private AstExpression InferTypeDefaultExpr(AstDefaultExpr expr, CheezType expected)

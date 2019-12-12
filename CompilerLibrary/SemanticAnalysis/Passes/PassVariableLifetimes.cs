@@ -824,6 +824,11 @@ namespace Cheez
 
         private bool PassVLMatch(AstMatchExpr expr, SymbolStatusTable parent)
         {
+            if (!PassVLExpr(expr.SubExpression, parent))
+                return false;
+            if (!Move(expr.SubExpression.Type, expr.SubExpression, parent, expr.SubExpression))
+                return false;
+
             var subStats = new SymbolStatusTable[expr.Cases.Count];
             for (int i = 0; i < expr.Cases.Count; i++)
             {

@@ -401,18 +401,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 LLVMBasicBlockRef bbElse = currentLLVMFunction.AppendBasicBlock($"_switch_else");
                 LLVMBasicBlockRef bbNext = default;
 
-                if (m.SubExpression is AstTempVarExpr tmp && tmp.Id == 56)
-                {
-
-                }
                 var cond = GenerateExpression(m.SubExpression, false);
-
                 if (m.SubExpression.Type is ReferenceType)
-                    cond = builder.CreateLoad(cond, "cond");
+                    cond = builder.CreateLoad(cond, "");
 
                 foreach (var c in m.Cases)
                 {
-                    var patt = GeneratePatternCondition(c.Pattern, cond);
+                    var patt = GeneratePatternCondition(c.Pattern, cond, m.SubExpression.Type);
 
                     if (c.Condition != null)
                     {
@@ -424,11 +419,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     bbNext = currentLLVMFunction.AppendBasicBlock($"_switch_next");
 
                     builder.CreateCondBr(patt, bb, bbNext);
-
-                    if (m.SubExpression.Type is ReferenceType)
-                    {
-
-                    }
 
                     builder.PositionBuilderAtEnd(bb);
                     var b = GenerateExpression(c.Body, true);
@@ -450,29 +440,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
-        private LLVMValueRef GeneratePatternCondition(AstExpression pattern, LLVMValueRef value)
+        private LLVMValueRef GeneratePatternConditionInt(AstExpression pattern, LLVMValueRef value, CheezType valueType)
         {
-            //if (pattern.GetFlag(ExprFlags.PatternRefersToReference))
-            //{
-            //    value = builder.CreateLoad(value, "");
-            //}
-
+            var matchingReference = valueType is ReferenceType;
             switch (pattern)
             {
-                case AstTupleExpr t:
-                    {
-                        var result = LLVM.ConstInt(LLVM.Int1Type(), 1, false);
-
-                        for (int i = 0; i < t.Values.Count; i++)
-                        {
-                            var c = builder.CreateStructGEP(value, (uint)i, "");
-                            var v = GeneratePatternCondition(t.Values[i], c);
-                            result = builder.CreateAnd(result, v, "");
-                        }
-
-                        return result;
-                    }
-
                 case AstNumberExpr _:
                     {
                         value = builder.CreateLoad(value, "");
@@ -483,29 +455,95 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             return builder.CreateFCmp(LLVMRealPredicate.LLVMRealOEQ, value, v, "");
                         break;
                     }
+            }
 
+            throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GeneratePatternConditionChar(AstExpression pattern, LLVMValueRef value, CheezType valueType)
+        {
+            var matchingReference = valueType is ReferenceType;
+            switch (pattern)
+            {
                 case AstCharLiteral _:
                     {
                         value = builder.CreateLoad(value, "");
                         var v = GenerateExpression(pattern, true);
                         return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, value, v, "");
                     }
+            }
 
-                case AstIdExpr n:
+            throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GeneratePatternConditionBool(AstExpression pattern, LLVMValueRef value, CheezType valueType)
+        {
+            var matchingReference = valueType is ReferenceType;
+            switch (pattern)
+            {
+            }
+
+            throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GeneratePatternConditionTuple(AstExpression pattern, LLVMValueRef value, CheezType valueType)
+        {
+            var matchingReference = valueType is ReferenceType;
+            switch (pattern)
+            {
+                case AstTupleExpr t:
                     {
-                        if (n.IsPolymorphic || n.Name == "_")
-                        {
-                            GenerateExpression(n, false);
-                            return LLVM.ConstInt(LLVM.Int1Type(), 1, false);
-                        }
-                        else
-                        {
-                            value = builder.CreateLoad(value, "");
-                            var v = GenerateExpression(pattern, true);
-                            return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, value, v, "");
-                        }
-                    }
+                        var tupleType = t.Type as TupleType;
 
+                        var result = LLVM.ConstInt(LLVM.Int1Type(), 1, false);
+
+                        for (int i = 0; i < t.Values.Count; i++)
+                        {
+                            var c = builder.CreateStructGEP(value, (uint)i, "");
+                            var v = GeneratePatternCondition(t.Values[i], c, tupleType.Members[i].type);
+                            result = builder.CreateAnd(result, v, "");
+                        }
+
+                        return result;
+                    }
+            }
+
+            throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GeneratePatternConditionStruct(AstExpression pattern, LLVMValueRef value, CheezType valueType)
+        {
+            var matchingReference = valueType is ReferenceType;
+            switch (pattern)
+            {
+                case AstCallExpr call:
+                    {
+                        var type = call.FunctionExpr.Value as CheezType;
+                        switch (type)
+                        {
+                            case StructType str:
+                                {
+                                    var type_info_case = typeInfoTable[str];
+
+                                    var type_ptr_ptr = builder.CreateStructGEP(value, 0, "type_info_ptr_ptr");
+                                    var type_info_value = builder.CreateLoad(type_ptr_ptr, "type_info_ptr");
+
+                                    var match = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, type_info_value, type_info_case, "types_match");
+                                    return match;
+                                }
+                        }
+                        break;
+                    }
+            }
+
+            throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GeneratePatternConditionEnum(AstExpression pattern, LLVMValueRef value, CheezType valueType)
+        {
+            var matchingReference = valueType is ReferenceType;
+            switch (pattern)
+            {
                 case AstEnumValueExpr e:
                     {
                         var enumType = e.Member.EnumDeclaration.EnumType;
@@ -531,46 +569,47 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                             var valPtr = builder.CreateStructGEP(value, 1, "");
 
-                            valPtr = builder.CreatePointerCast(valPtr, CheezTypeToLLVMType(PointerType.GetPointerType(e.Argument.Type)), "");
-                            var comp2 = GeneratePatternCondition(e.Argument, valPtr);
+                            var argType = CheezTypeToLLVMType(e.Argument.Type);
+                            if (!matchingReference)
+                                argType = argType.GetPointerTo();
+                            valPtr = builder.CreatePointerCast(valPtr, argType, "");
+                            var comp2 = GeneratePatternCondition(e.Argument, valPtr, e.Argument.Type);
 
                             return builder.CreateAnd(comp1, comp2, "");
                         }
                     }
-
-                case AstReferenceTypeExpr r:
-                    {
-                        if (r.Target is AstIdExpr id && id.IsPolymorphic)
-                        {
-                            GenerateExpression(id, false);
-                            return LLVM.ConstInt(LLVM.Int1Type(), 1, false);
-                        }
-                        break;
-                    }
-                case AstCallExpr call:
-                    {
-                        if (call.FunctionExpr.Type == CheezType.Type)
-                        {
-                            var type = call.FunctionExpr.Value as CheezType;
-                            switch (type)
-                            {
-                                case StructType str:
-                                    {
-                                        var type_info_case = typeInfoTable[str];
-
-                                        var type_ptr_ptr = builder.CreateStructGEP(value, 0, "type_info_ptr_ptr");
-                                        var type_info_value = builder.CreateLoad(type_ptr_ptr, "type_info_ptr");
-
-                                        var match = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, type_info_value, type_info_case, "types_match");
-                                        return match;
-                                    }
-                            }
-                        }
-                        break;
-                    }
             }
 
             throw new NotImplementedException();
+        }
+
+        private LLVMValueRef GeneratePatternCondition(AstExpression pattern, LLVMValueRef value, CheezType valueType)
+        {
+            var concrete = valueType;
+            if (valueType is ReferenceType ruiae)
+                concrete = ruiae.TargetType;
+
+            switch (concrete)
+            {
+                case CheezType _ when (pattern is AstIdExpr id && (id.Name == "_" || id.IsPolymorphic)):
+                    return LLVM.ConstInt(LLVM.Int1Type(), 1, false);
+
+                case IntType _:
+                    return GeneratePatternConditionInt(pattern, value, valueType);
+                case CharType _:
+                    return GeneratePatternConditionChar(pattern, value, valueType);
+                case BoolType _:
+                    return GeneratePatternConditionBool(pattern, value, valueType);
+                case TupleType _:
+                    return GeneratePatternConditionTuple(pattern, value, valueType);
+                case StructType _:
+                    return GeneratePatternConditionStruct(pattern, value, valueType);
+                case EnumType _:
+                    return GeneratePatternConditionEnum(pattern, value, valueType);
+
+                default:
+                    throw new NotImplementedException();
+            }
         }
 
         private LLVMValueRef GenerateDefaultExpr(AstDefaultExpr def)

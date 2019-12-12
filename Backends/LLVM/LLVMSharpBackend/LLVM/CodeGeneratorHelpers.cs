@@ -827,7 +827,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
 
             builder.PositionBuilderAtEnd(bbElse);
-            CreateExit($"[{@enum.Declaration.Location.Beginning}] Enum tag invalid", 69);
+            //CreateExit($"[{@enum.Declaration.Location.Beginning}] Enum tag invalid", 69);
             builder.CreateBr(bbEnd);
 
             builder.PositionBuilderAtEnd(bbEnd);

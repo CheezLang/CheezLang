@@ -59,7 +59,7 @@ format_any :: (arg: any) -> String {
 }
 
 format :: (text: string, args: []any) -> String {
-    State :: enum { Text, Format, Escape }
+    State :: enum #copy { Text, Format, Escape }
     use State
 
     formatSpecifier := {

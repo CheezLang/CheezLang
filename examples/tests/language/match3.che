@@ -7,50 +7,17 @@ get_ref
 
 C :: import std.c
 
-get_ref :: (a: ref Option[int]) -> ref Option[int] {
-    C.puts("get_ref")
-    return a
-}
+Main :: () {
+    a := Some(1)
 
-inc1 :: (a: ref Option[int]) {
-    match get_ref(a) {
-        Some(ref $v) -> {
-            v += 1
-        }
-    }
-
-}
-
-inc2 :: (a: ref Option[int]) {
-    match get_ref(a) {
-        Some($v) -> {
-            v += 2
-        }
-    }
-}
-
-inc3 :: (a: Option[int]) {
-    match a {
-        Some(ref $v) -> {
-            v += 4
-        }
-    }
-}
-
-inc4 :: (a: Option[int]) {
-    match Option[int].Some(1) {
-        Some(ref $v) -> {
-            v += 8
-        }
-    }
-}
-
-inc5 :: (a: Option[int]) {
-    match Option[int].Some(1) {
-        Some($v) -> {
-            v += 16
-        }
-    }
+    inc1(a)
+    print_a(a)
+    inc2(a)
+    print_a(a)
+    inc3(a)
+    print_a(a)
+    inc4(a)
+    print_a(a)
 }
 
 print_a :: (a: ref Option[int]) {
@@ -64,15 +31,49 @@ print_a :: (a: ref Option[int]) {
     }
 }
 
-Main :: () {
-    a := Some(1)
+get_ref :: (a: ref Option[int]) -> ref Option[int] {
+    C.puts("get_ref")
+    return a
+}
 
-    inc1(a)
-    print_a(a)
-    inc2(a)
-    print_a(a)
-    inc3(a)
-    print_a(a)
-    inc4(a)
-    print_a(a)
+inc1 :: (a: ref Option[int]) {
+    match get_ref(a) {
+        Some($v) -> {
+            v += 1
+        }
+    }
+
+}
+
+inc2 :: (a: ref Option[int]) {
+    a_ref := get_ref(a)
+    match <<&a_ref {
+        Some($v) -> {
+            v += 2
+        }
+    }
+}
+
+inc3 :: (a: Option[int]) {
+    match ref a {
+        Some($v) -> {
+            v += 4
+        }
+    }
+}
+
+inc4 :: (a: Option[int]) {
+    match Option[int].Some(1) {
+        Some($v) -> {
+            v += 8
+        }
+    }
+}
+
+inc5 :: (a: Option[int]) {
+    match Option[int].Some(1) {
+        Some($v) -> {
+            v += 16
+        }
+    }
 }
