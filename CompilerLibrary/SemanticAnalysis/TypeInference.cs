@@ -1165,7 +1165,7 @@ namespace Cheez
             {
                 case CheezType _ when (pattern is AstIdExpr id && (id.Name == "_" || id.IsPolymorphic)):
                     {
-                        var binding = new AstVariableDecl(pattern.Clone(), null, value.Clone(), Location: pattern.Location);
+                        var binding = new AstVariableDecl(pattern.Clone(), new AstTypeRef(value.Type, pattern.Location), value.Clone(), Location: pattern.Location);
                         cas.AddBinding(binding);
                         pattern.Type = value.Type;
                         return id;

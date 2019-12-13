@@ -1,5 +1,5 @@
 // import examples.trait_function_call_performance
-import examples.glfw3_example
+// import examples.glfw3_example
 // import examples.graphyfier.graphyfier
 // import examples.pathtracer2.main
 // import examples.geometry_draw_thingy
@@ -9,7 +9,7 @@ import examples.glfw3_example
 // import examples.print_any
 // import examples.command_line_parser
 // import compiler.cli
-// import compiler.compiler_test
+import compiler.compiler_test
 
 // import examples.postfix
 // import examples.image_processing
@@ -45,56 +45,27 @@ impl Drop for Foo {
     }
 }
 
-Bar :: struct {
-    foo : Option[Foo]
-}
-
-// test :: (foo: Option[Foo]) {
-//     io.println("test()")
-//     match foo {
-//         Some($foo) -> {
-//             io.printfln("Some(Foo({}))", foo.a)
-//         }
-//         None -> io.println("None")
-//     }
-// }
-
 Foo :: struct {
     x : int
 }
 
 Main :: () {
-    foo := Some(Foo(123))
+    foo := Foo(123)
 
     io.println("    match")
-    match ref foo {
-        Some($f) -> {
-            io.println("        case beg")
-            f = Foo(1)
-            f = Foo(4)
-            io.println("        case end")
+    match (ref foo, 2) {
+        ($f, 3) -> {
+            T :: @typeof(f)
+            io.println("1")
+        }
+
+        ($f, _) -> {
+            T :: @typeof(f)
+            io.println("2")
         }
     }
 
-    io.println("    match")
-    match foo {
-        Some($f) -> {
-            io.println("        case beg")
-            f = Foo(2)
-            f = Foo(5)
-            io.println("        case end")
-        }
-    }
-    
-    io.println("    match")
-    match Some(Foo(9)) {
-        Some($f) -> {
-            io.println("        case beg")
-            f = Foo(3)
-            f = Foo(6)
-            io.println("        case end")
-        }
-    }
+    io.println(foo.x)
 
     io.println("    ende")
 }
