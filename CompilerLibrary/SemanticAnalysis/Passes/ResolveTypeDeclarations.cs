@@ -35,6 +35,8 @@ namespace Cheez
 
         private (int size, int alignment) ComputeSizeAndAlignmentOfType(CheezType type, List<CheezType> path)
         {
+            if (type is StructType suiae && suiae.Declaration.Name == "STARTUPINFOA")
+            {}
             if (type.GetSize() >= 0)
                 return (type.GetSize(), type.GetAlignment());
 
@@ -52,7 +54,7 @@ namespace Cheez
                 {
                     case StructType s:
                         {
-                            ComputeStructMembers(s.Declaration);
+                            ComputeStructMemberSizes(s.Declaration);
                             var alignment = 1;
                             var size = 0;
                             for (int i = 0; i < s.Declaration.Members.Count; i++)

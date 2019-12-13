@@ -287,6 +287,9 @@ namespace Cheez.Ast.Statements
         public bool Extendable { get; set; }
         public StructType Extends { get; set; }
 
+        public bool TypesComputed { get; set; }
+        public bool InitializersComputed { get; set; }
+
         public AstStructTypeExpr(List<AstParameter> param, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
             : base(Location)
         {

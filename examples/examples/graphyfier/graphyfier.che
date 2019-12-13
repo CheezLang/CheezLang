@@ -128,7 +128,7 @@ impl Game for MyGame {
         profile_function()
         io.println("reloading...")
 
-        function = match function {
+        function = match ref function {
             Some($f) -> {
                 Memory.drop(f)
                 None
@@ -147,10 +147,10 @@ impl Game for MyGame {
             }
         }
 
-        match function {
+        match ref function {
             Some($f)    -> {
                 io.println("===================")
-                for f {
+                for f.slice() {
                     io.println(it)
                 }
                 io.println("===================")
@@ -207,7 +207,7 @@ impl Game for MyGame {
     evaluate_function :: (ref Self, x: double) -> Option[Complex] {
         //return functions[func_index % functions.length](x)
         variables["x"] = Complex(x, 0.0)
-        return match function {
+        return match ref function {
             Some($f)    -> evaluate(f.slice(), variables)
             None        -> None
         }

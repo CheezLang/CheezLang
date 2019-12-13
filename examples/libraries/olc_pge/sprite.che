@@ -11,7 +11,7 @@ Sprite :: struct {
     data: &Pixel = null
 }
 
-SpriteMode :: enum {
+SpriteMode :: enum #copy {
     Normal,
     Periodic
 }

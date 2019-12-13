@@ -11,11 +11,11 @@ Printable :: trait {
     print :: (ref Self, str: ref String, format: string);
 }
 
-// impl Printable for () {
-//     print :: (ref Self, str: ref String, format: string) {
-//         str += "()"
-//     }
-// }
+impl Printable for () {
+    print :: (ref Self, str: ref String, format: string) {
+        str += "()"
+    }
+}
 
 impl Printable for string {
     print :: (ref Self, str: ref String, format: string) {

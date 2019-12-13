@@ -77,11 +77,11 @@ Into :: trait(T: type) {
     into :: (ref Self) -> T;
 }
 
-// impl Into[()] for () {
-//     into :: (ref Self) -> () {
-//         return ()
-//     }
-// }
+impl Into[()] for () {
+    into :: (ref Self) -> () {
+        return ()
+    }
+}
 
 impl From[()] for () {
     from :: (value: ()) -> () {

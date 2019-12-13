@@ -13,7 +13,7 @@ use import opengl.opengl
 use import opengl.functions
 use import opengl.constants
 
-Direction :: enum {
+Direction :: enum #copy {
     None
     Up
     Right
@@ -51,7 +51,7 @@ action_to_dir :: (dir: ref Direction, action: Direction) {
         (Direction.Down,    Direction.Up)   -> dir
         (Direction.Left,    Direction.Right)-> dir
         ($x, Direction.None)                -> dir
-        $x -> action
+        (_, $a) -> a
     }
 }
 

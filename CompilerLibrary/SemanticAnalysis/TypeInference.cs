@@ -954,6 +954,10 @@ namespace Cheez
             if (!(expr.Type is IntType || expr.Type is CharType))
                 expr.IsSimpleIntMatch = false;
 
+            if (expr.Type == null)
+            {
+
+            }
             return expr;
         }
 
@@ -1892,6 +1896,12 @@ namespace Cheez
 
         private void MarkTypeAsRequiredAtRuntime(CheezType type)
         {
+            // we call this now so if there are poly impls which need to be
+            // instantiated they get instantiated now, so the functions and stuff
+            // in there gets properly analysed
+            GetImplsForType(type);
+
+            // queue this type if not yet marked
             if (!mTypesRequiredAtRuntime.Contains(type))
                 mTypesRequiredAtRuntimeQueue.Enqueue(type);
         }

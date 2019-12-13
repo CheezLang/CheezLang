@@ -82,8 +82,8 @@ impl Hittable for Array[Hittable] {
         for self.slice() {
             match it.hit(r, t_min, closest, random) {
                 Some($h) -> {
-                    hit = Some(h)
                     closest = h.t
+                    hit = Some(h)
                 }
             }
         }

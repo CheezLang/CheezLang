@@ -88,11 +88,10 @@ namespace Cheez
             return expr;
         }
 
-        private void ComputeStructMembers(AstStructTypeExpr expr)
+        private void SetupStructMembers(AstStructTypeExpr expr)
         {
             if (expr.Members != null)
                 return;
-
             expr.Members = new List<AstStructMemberNew>();
 
             if (expr.Extendable || expr.Extends != null)
@@ -101,21 +100,10 @@ namespace Cheez
                     $"__type_ptr__ : &TypeInfo = @type_info(§self)",
                     new Dictionary<string, AstExpression>
                     {
-                        { "self", new AstTypeRef(expr.StructType, expr) }
+                            { "self", new AstTypeRef(expr.StructType, expr) }
                     }) as AstVariableDecl;
                 mem.Parent = expr;
                 mem.Scope = expr.SubScope;
-
-                mem.TypeExpr.AttachTo(mem);
-                mem.TypeExpr = ResolveTypeNow(mem.TypeExpr, out var t);
-                mem.Type = t;
-
-                mem.Initializer.AttachTo(mem);
-                mem.Initializer = InferType(mem.Initializer, mem.Type);
-                ConvertLiteralTypeToDefaultType(mem.Initializer, mem.Type);
-
-                mem.Initializer = CheckType(mem.Initializer, mem.Type);
-
                 expr.Members.Add(new AstStructMemberNew(mem, false, true, expr.Members.Count));
             }
 
@@ -126,7 +114,7 @@ namespace Cheez
                 foreach (var m in expr.Extends.Declaration.Members.Skip(1))
                 {
                     var clone = m.Decl.Clone() as AstVariableDecl;
-                    ComputeMember(clone);
+                    expr.Members.Add(new AstStructMemberNew(clone, true, false, expr.Members.Count));
                 }
             }
 
@@ -134,52 +122,82 @@ namespace Cheez
             {
                 if (decl is AstVariableDecl mem)
                 {
-                    ComputeMember(mem);
+                    expr.Members.Add(new AstStructMemberNew(mem, true, false, expr.Members.Count));
                 }
             }
+        }
 
-            void ComputeMember(AstVariableDecl mem)
+        private void ComputeStructMemberSizes(AstStructTypeExpr expr)
+        {
+            if (expr.TypesComputed)
+                return;
+            SetupStructMembers(expr);
+
+            foreach (var m in expr.Members)
             {
-                if (!(mem.Pattern is AstIdExpr memName))
-                {
-                    ReportError(mem.Pattern, $"Only single names allowed");
-                    return;
-                }
-
-                if (mem.Directives != null)
-                    foreach (var dir in mem.Directives)
-                        InferTypeAttributeDirective(dir, mem, mem.Scope);
-
-                if (mem.TypeExpr != null)
-                {
-                    mem.TypeExpr.AttachTo(mem);
-                    mem.TypeExpr = ResolveTypeNow(mem.TypeExpr, out var t);
-                    mem.Type = t;
-
-                    // @todo: check if type is valid as struct member, eg no void
-                }
-
-                if (mem.Initializer != null)
-                {
-                    mem.Initializer.AttachTo(mem);
-                    mem.Initializer = InferType(mem.Initializer, mem.Type);
-                    ConvertLiteralTypeToDefaultType(mem.Initializer, mem.Type);
-
-                    if (mem.Type == null)
-                        mem.Type = mem.Initializer.Type;
-                    else
-                        mem.Initializer = CheckType(mem.Initializer, mem.Type);
-                }
-
-                if (expr.StructType.IsCopy && !mem.Type.IsCopy)
-                {
-                    ReportError(mem, "Member is not copyable");
-                }
-
-                expr.Members.Add(new AstStructMemberNew(mem, true, false, expr.Members.Count));
-
-                ComputeTypeMembers(mem.Type);
+                ComputeStructMember(m, false);
+                if (expr.StructType.IsCopy && !m.Decl.Type.IsCopy)
+                    ReportError(m.Decl, "Member is not copyable");
             }
+
+            expr.TypesComputed = true;
+        }
+
+        private void ComputeStructMembers(AstStructTypeExpr expr)
+        {
+            if (expr.Name == "STARTUPINFOA")
+            { }
+            if (expr.TypesComputed && expr.InitializersComputed)
+                return;
+            SetupStructMembers(expr);
+
+            foreach (var m in expr.Members)
+            {
+                ComputeStructMember(m, true);
+                if (expr.StructType.IsCopy && !m.Decl.Type.IsCopy)
+                    ReportError(m.Decl, "Member is not copyable");
+            }
+
+            expr.TypesComputed = true;
+            expr.InitializersComputed = true;
+        }
+
+        void ComputeStructMember(AstStructMemberNew mem, bool computeInitializer)
+        {
+            var decl = mem.Decl;
+
+            if (!(decl.Pattern is AstIdExpr memName))
+            {
+                ReportError(decl.Pattern, $"Only single names allowed");
+                return;
+            }
+
+            if (decl.Directives != null)
+                foreach (var dir in decl.Directives)
+                    InferTypeAttributeDirective(dir, decl, decl.Scope);
+
+            if (decl.TypeExpr != null && decl.Type == null)
+            {
+                decl.TypeExpr.AttachTo(decl);
+                decl.TypeExpr = ResolveTypeNow(decl.TypeExpr, out var t);
+                decl.Type = t;
+
+                // @todo: check if type is valid as struct member, eg no void
+            }
+
+            if (decl.Initializer != null && decl.Initializer.Type == null && (computeInitializer || decl.TypeExpr == null))
+            {
+                decl.Initializer.AttachTo(decl);
+                decl.Initializer = InferType(decl.Initializer, decl.Type);
+                ConvertLiteralTypeToDefaultType(decl.Initializer, decl.Type);
+
+                if (decl.Type == null)
+                    decl.Type = decl.Initializer.Type;
+                else
+                    decl.Initializer = CheckType(decl.Initializer, decl.Type);
+            }
+
+            ComputeTypeMembers(decl.Type);
         }
 
         private AstStructTypeExpr InstantiatePolyStruct(AstStructTypeExpr decl, List<(CheezType type, object value)> args, ILocation location = null)

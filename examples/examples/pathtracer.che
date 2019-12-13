@@ -171,7 +171,7 @@ impl PathTracer {
             nearest = match (nearest, hit) {
                 (None, Some($hit)) -> Some(hit)
                 (Some($n), Some($hit)) if hit.distance < n.distance -> Some(hit)
-                $_ -> nearest
+                ($n, _) -> n
             }
         }
 

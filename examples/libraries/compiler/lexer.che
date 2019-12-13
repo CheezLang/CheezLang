@@ -272,7 +272,7 @@ impl Lexer {
 
         is_float := false
 
-        LexerNumberState :: enum {
+        LexerNumberState :: enum #copy {
             Error
             Init
             Done

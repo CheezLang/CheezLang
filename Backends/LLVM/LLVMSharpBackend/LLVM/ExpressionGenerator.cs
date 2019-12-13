@@ -466,6 +466,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var matchingReference = valueType is ReferenceType;
             switch (pattern)
             {
+                case AstIdExpr _:
+                    {
+                        value = builder.CreateLoad(value, "");
+                        var v = GenerateExpression(pattern, true);
+                        return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, value, v, "");
+                    }
+
                 case AstNumberExpr _:
                     {
                         value = builder.CreateLoad(value, "");

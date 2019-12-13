@@ -13,6 +13,7 @@ use import std.process
 io  :: import std.io
 fs  :: import std.io.fs
 fmt :: import std.fmt
+C   :: import std.c
 
 use import clap.clap
 
@@ -154,7 +155,7 @@ find_tokens_of_type :: (options: &CommandFindToken) {
             })
     console_error_handler.text_provider = lexer
 
-    suffix, filter_suffix := match options.suffix {
+    suffix, filter_suffix := match ref options.suffix {
         Some($str) -> str.slice(), true
         None -> "", false
     }
@@ -178,7 +179,7 @@ find_tokens_of_type :: (options: &CommandFindToken) {
 
 command_project_new :: (options: &CommandProjectNew) {
     // io.println(fmt.format("creating new project named '{}' of type {}", [options.name.slice(), options.typ]))
-    match options.typ {
+    match ref options.typ {
         ProjectType.Program -> command_project_new_program(options)
     }
 }

@@ -17,7 +17,7 @@ StmtType :: enum {
 impl Printable for Stmt {
     print :: (ref Self, str: ref String, format: string) {
         use StmtType
-        match concrete {
+        match ref concrete {
             Func($func) -> {
                 str.appendf("fn {}() ``{``}", func.name)
             }
