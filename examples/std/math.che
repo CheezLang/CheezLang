@@ -28,6 +28,7 @@ tan   :: (f: double) -> double;
 
 atan2 :: (a: double, b: double) -> double;
 pow   :: (a: double, b: double) -> double;
+powf  :: (a: float, b: float) -> float;
 exp   :: (a: double) -> double;
 
 logf  :: (f: float) -> float;

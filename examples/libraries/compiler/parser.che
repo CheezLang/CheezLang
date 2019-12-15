@@ -26,46 +26,11 @@ impl Parser {
         return match token.ttype {
             TokenType.EOF -> None
 
-            TokenType.KwFn -> parse_function_decl()
-
             $_ -> {
                 io.printfln("{}: unexpeted token {}", (token.location, token.ttype))
                 None
             }
         }
-    }
-
-    parse_function_decl :: (ref Self) -> Option[&Stmt] {
-        _fn := consume(TokenType.KwFn)
-        skip_ws()
-
-        name := consume(TokenType.Identifier)
-        name_id := match name.data {
-            TokenData.String($id)   -> id
-            $_                      -> ""
-        }
-        skip_ws()
-
-        // TODO: param list
-        consume(TokenType.OpenParen)
-        skip_ws()
-
-        consume(TokenType.ClosingParen)
-        skip_ws()
-
-        consume(TokenType.OpenBrace)
-        skip_ws()
-
-        end := consume(TokenType.ClosingBrace)
-        skip_ws()
-
-        func := alloc(Stmt)
-        <<func = Stmt(
-            concrete = StmtType.Func(FunctionDecl(
-                name = name_id
-            ))
-        )
-        return Some(func)
     }
 
     // helpers

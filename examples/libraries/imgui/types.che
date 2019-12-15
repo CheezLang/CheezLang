@@ -1,7 +1,63 @@
 #export_scope
+// beta stuff
+ImGuiWindowClass :: struct #copy {
+    ClassId                    : ImGuiID            = 0     // User data. 0 = Default class (unclassed)
+    ParentViewportId           : ImGuiID            = 0     // Hint for the platform back-end. If non-zero, the platform back-end can create a parent<>child relationship between the platform windows. Not conforming back-ends are free to e.g. parent every viewport to the main viewport or not.
+    ViewportFlagsOverrideSet   := ImGuiViewportFlags.None   // Viewport flags to set when a window of this class owns a viewport. This allows you to enforce OS decoration or task bar icon, override the defaults on a per-window basis.
+    ViewportFlagsOverrideClear := ImGuiViewportFlags.None   // Viewport flags to clear when a window of this class owns a viewport. This allows you to enforce OS decoration or task bar icon, override the defaults on a per-window basis.
+    DockingAlwaysTabBar        : bool               = false // Set to true to enforce windows of this class always having their own tab (equivalent of setting the global io.ConfigDockingAlwaysTabBar)
+    DockingAllowUnclassed      : bool               = false // Set to true to allow windows of this class to be docked/merged with an unclassed window.
 
-ImDrawListSharedData    :: struct {}
-ImGuiContext            :: struct {}
+    // ImGuiWindowClass() { ClassId = 0; ParentViewportId = 0; ViewportFlagsOverrideSet = ViewportFlagsOverrideClear = 0x00; DockingAlwaysTabBar = false; DockingAllowUnclassed = true; }
+}
+
+ImGuiViewportFlags :: enum #copy #repr("C") #tag_type(i32) {
+    None                     = @bin_lsl(0, 0)
+    NoDecoration             = @bin_lsl(1, 0) // Platform Window: Disable platform decorations: title bar, borders, etc. (generally set all windows, but if ImGuiConfigFlags_ViewportsDecoration is set we only set this on popups/tooltips)
+    NoTaskBarIcon            = @bin_lsl(1, 1) // Platform Window: Disable platform task bar icon (generally set on popups/tooltips, or all windows if ImGuiConfigFlags_ViewportsNoTaskBarIcon is set)
+    NoFocusOnAppearing       = @bin_lsl(1, 2) // Platform Window: Don't take focus when created.
+    NoFocusOnClick           = @bin_lsl(1, 3) // Platform Window: Don't take focus when clicked on.
+    NoInputs                 = @bin_lsl(1, 4) // Platform Window: Make mouse pass through so we can drag this window while peaking behind it.
+    NoRendererClear          = @bin_lsl(1, 5) // Platform Window: Renderer doesn't need to clear the framebuffer ahead (because we will fill it entirely).
+    TopMost                  = @bin_lsl(1, 6) // Platform Window: Display on top (for tooltips only).
+    Minimized                = @bin_lsl(1, 7) // Platform Window: Window is minimized, can skip render. When minimized we tend to avoid using the viewport pos/size for clipping window or testing if they are contained in the viewport.
+    NoAutoMerge              = @bin_lsl(1, 8) // Platform Window: Avoid merging this widow into another host window. This can only be set via ImGuiWindowClass viewport flags override (because we need to now ahead if we are going to create a viewport in the first place!).
+    CanHostOtherWindows      = @bin_lsl(1, 9) // Main viewport: can host multiple imgui windows (secondary viewports are associated to a single window).
+}
+
+ImGuiDockNodeFlags :: i32
+ImGuiDockNodeFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                         = 0
+    KeepAliveOnly                = @bin_lsl(1, 0) // Shared       // Don't display the dockspace node but keep it alive. Windows docked into this dockspace node won't be undocked.
+    NoCentralNode                = @bin_lsl(1, 1) // Shared       // Disable Central Node (the node which can stay empty)
+    NoDockingInCentralNode       = @bin_lsl(1, 2) // Shared       // Disable docking inside the Central Node, which will be always kept empty.
+    PassthruCentralNode          = @bin_lsl(1, 3) // Shared       // Enable passthru dockspace: 1) DockSpace() will render a ImGuiCol_WindowBg background covering everything excepted the Central Node when empty. Meaning the host window should probably use SetNextWindowBgAlpha(0.0f) prior to Begin() when using this. 2) When Central Node is empty: let inputs pass-through + won't display a DockingEmptyBg background. See demo for details.
+    NoSplit                      = @bin_lsl(1, 4) // Shared/Local // Disable splitting the node into smaller nodes. Useful e.g. when embedding dockspaces into a main root one (the root one may have splitting disabled to reduce confusion). Note: when turned off, existing splits will be preserved.
+    NoResize                     = @bin_lsl(1, 5) // Shared/Local // Disable resizing node using the splitter/separators. Useful with programatically setup dockspaces.
+    AutoHideTabBar               = @bin_lsl(1, 6) // Shared/Local // Tab bar will automatically hide when there is a single window in the dock node.
+}
+
+ImGuiViewport :: struct #copy {
+    ID                    : ImGuiID            // Unique identifier for the viewport
+    Flags                 : ImGuiViewportFlags // See ImGuiViewportFlags_
+    Pos                   : ImVec2             // Position of viewport both in imgui space and in OS desktop/native space
+    Size                  : ImVec2             // Size of viewport in pixel
+    DpiScale              : float              // 1.0f = 96 DPI = No extra scale
+    DrawData              : &ImDrawData        // The ImDrawData corresponding to this viewport. Valid after Render() and until the next call to NewFrame().
+    ParentViewportId      : ImGuiID            // (Advanced) 0: no parent. Instruct the platform back-end to setup a parent/child relationship between platform windows.
+    RendererUserData      : &void              // void* to hold custom data structure for the renderer (e.g. swap chain, frame-buffers etc.)
+    PlatformUserData      : &void              // void* to hold custom data structure for the OS / platform (e.g. windowing info, render context)
+    PlatformHandle        : &void              // void* for FindViewportByPlatformHandle(). (e.g. suggested to use natural platform handle such as HWND, GLFWWindow*, SDL_Window*)
+    PlatformHandleRaw     : &void              // void* to hold low-level, platform-native window handle (e.g. the HWND) when using an abstraction layer like GLFW or SDL (where PlatformHandle would be a SDL_Window*)
+    PlatformRequestClose  : bool               // Platform window requested closure (e.g. window was moved by the OS / host window manager, e.g. pressing ALT-F4)
+    PlatformRequestMove   : bool               // Platform window requested move (e.g. window was moved by the OS / host window manager, authoritative position will be OS window position)
+    PlatformRequestResize : bool               // Platform window requested resize (e.g. window was resized by the OS / host window manager, authoritative size will be OS window size)
+}
+
+//
+
+ImDrawListSharedData    :: struct #copy {}
+ImGuiContext            :: struct #copy {}
 
 ImTextureID             :: &void
 ImGuiID                 :: u32
@@ -43,127 +99,127 @@ ImU64                   :: u64
 ImDrawCallback          :: fn(&ImDrawList, &ImDrawCmd)
 ImDrawIdx               :: u16
 
-ImVector :: struct {
+ImVector :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &void
 }
 
-ImVector_float :: struct {
+ImVector_float :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &f32
 }
 
-ImVector_ImWchar :: struct {
+ImVector_ImWchar :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImWchar
 }
 
-ImVector_ImDrawVert :: struct {
+ImVector_ImDrawVert :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImDrawVert
 }
 
-ImVector_ImFontGlyph :: struct {
+ImVector_ImFontGlyph :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImFontGlyph
 }
 
-ImVector_ImGuiTextRange :: struct {
+ImVector_ImGuiTextRange :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImGuiTextRange
 }
 
-ImVector_ImGuiStoragePair :: struct {
+ImVector_ImGuiStoragePair :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImGuiStoragePair
 }
 
-ImVector_ImDrawChannel :: struct {
+ImVector_ImDrawChannel :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImDrawChannel
 }
 
-ImVector_char :: struct {
+ImVector_char :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &i8
 }
 
-ImVector_ImU32 :: struct {
+ImVector_ImU32 :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImU32
 }
 
-ImVector_ImFontAtlasCustomRect :: struct {
+ImVector_ImFontAtlasCustomRect :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImFontAtlasCustomRect
 }
 
-ImVector_ImTextureID :: struct {
+ImVector_ImTextureID :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImTextureID
 }
 
-ImVector_ImFontConfig :: struct {
+ImVector_ImFontConfig :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImFontConfig
 }
 
-ImVector_ImFontPtr :: struct {
+ImVector_ImFontPtr :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &&ImFont
 }
 
-ImVector_ImDrawCmd :: struct {
+ImVector_ImDrawCmd :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImDrawCmd
 }
 
-ImVector_ImVec4 :: struct {
+ImVector_ImVec4 :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImVec4
 }
 
-ImVector_ImDrawIdx :: struct {
+ImVector_ImDrawIdx :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImDrawIdx
 }
 
-ImVector_ImVec2 :: struct {
+ImVector_ImVec2 :: struct #copy {
     Size     : i32
     Capacity : i32
     Data     : &ImVec2
 }
 
-ImVec2 :: struct {
+ImVec2 :: struct #copy {
     x : f32
     y : f32
 }
 
-ImVec4 :: struct {
+ImVec4 :: struct #copy {
     x : f32
     y : f32
     z : f32
     w : f32
 }
 
-ImGuiWindowFlags_ :: enum #repr("C") {
+ImGuiWindowFlags_ :: enum #copy #repr("C") {
     None                      = 0
     NoTitleBar                = @bin_lsl(1, 0)
     NoResize                  = @bin_lsl(1, 1)
@@ -185,6 +241,7 @@ ImGuiWindowFlags_ :: enum #repr("C") {
     NoNavInputs               = @bin_lsl(1, 18)
     NoNavFocus                = @bin_lsl(1, 19)
     UnsavedDocument           = @bin_lsl(1, 20)
+    NoDocking                 = @bin_lsl(1, 21)
     NoNav                     = @bin_or(NoNavInputs, NoNavFocus)
     NoDecoration              = @bin_or(NoTitleBar, NoResize, NoScrollbar, NoCollapse)
     NoInputs                  = @bin_or(NoMouseInputs, NoNavInputs, NoNavFocus)
@@ -196,7 +253,7 @@ ImGuiWindowFlags_ :: enum #repr("C") {
     ChildMenu                 = @bin_lsl(1, 28)
 }
 
-ImGuiInputTextFlags_ :: enum #repr("C") {
+ImGuiInputTextFlags_ :: enum #copy #repr("C") {
     ImGuiInputTextFlags_None                = 0
     ImGuiInputTextFlags_CharsDecimal        = @bin_lsl(1, 0)
     ImGuiInputTextFlags_CharsHexadecimal    = @bin_lsl(1, 1)
@@ -221,7 +278,7 @@ ImGuiInputTextFlags_ :: enum #repr("C") {
     ImGuiInputTextFlags_NoMarkEdited        = @bin_lsl(1, 21)
 }
 
-ImGuiTreeNodeFlags_ :: enum #repr("C") {
+ImGuiTreeNodeFlags_ :: enum #copy #repr("C") {
     ImGuiTreeNodeFlags_None                 = 0
     ImGuiTreeNodeFlags_Selected             = @bin_lsl(1, 0)
     ImGuiTreeNodeFlags_Framed               = @bin_lsl(1, 1)
@@ -240,7 +297,7 @@ ImGuiTreeNodeFlags_ :: enum #repr("C") {
     ImGuiTreeNodeFlags_CollapsingHeader     = @bin_or(ImGuiTreeNodeFlags_Framed, ImGuiTreeNodeFlags_NoTreePushOnOpen, ImGuiTreeNodeFlags_NoAutoOpenOnLog)
 }
 
-ImGuiSelectableFlags_ :: enum #repr("C") {
+ImGuiSelectableFlags_ :: enum #copy #repr("C") {
     ImGuiSelectableFlags_None             = 0,
     ImGuiSelectableFlags_DontClosePopups  = @bin_lsl(1, 0)
     ImGuiSelectableFlags_SpanAllColumns   = @bin_lsl(1, 1)
@@ -249,7 +306,7 @@ ImGuiSelectableFlags_ :: enum #repr("C") {
     ImGuiSelectableFlags_AllowItemOverlap = @bin_lsl(1, 4)
 }
 
-ImGuiComboFlags_ :: enum #repr("C") {
+ImGuiComboFlags_ :: enum #copy #repr("C") {
     ImGuiComboFlags_None           = 0
     ImGuiComboFlags_PopupAlignLeft = @bin_lsl(1, 0)
     ImGuiComboFlags_HeightSmall    = @bin_lsl(1, 1)
@@ -261,7 +318,7 @@ ImGuiComboFlags_ :: enum #repr("C") {
     ImGuiComboFlags_HeightMask_    = @bin_or(ImGuiComboFlags_HeightSmall, ImGuiComboFlags_HeightRegular, ImGuiComboFlags_HeightLarge, ImGuiComboFlags_HeightLargest)
 }
 
-ImGuiTabBarFlags_ :: enum #repr("C") {
+ImGuiTabBarFlags_ :: enum #copy #repr("C") {
     ImGuiTabBarFlags_None                         = 0
     ImGuiTabBarFlags_Reorderable                  = @bin_lsl(1, 0)
     ImGuiTabBarFlags_AutoSelectNewTabs            = @bin_lsl(1, 1)
@@ -275,7 +332,7 @@ ImGuiTabBarFlags_ :: enum #repr("C") {
     ImGuiTabBarFlags_FittingPolicyDefault_        = ImGuiTabBarFlags_FittingPolicyResizeDown
 }
 
-ImGuiTabItemFlags_ :: enum #repr("C") {
+ImGuiTabItemFlags_ :: enum #copy #repr("C") {
     ImGuiTabItemFlags_None                         = 0
     ImGuiTabItemFlags_UnsavedDocument              = @bin_lsl(1, 0)
     ImGuiTabItemFlags_SetSelected                  = @bin_lsl(1, 1)
@@ -283,7 +340,7 @@ ImGuiTabItemFlags_ :: enum #repr("C") {
     ImGuiTabItemFlags_NoPushId                     = @bin_lsl(1, 3)
 }
 
-ImGuiFocusedFlags_ :: enum #repr("C") {
+ImGuiFocusedFlags_ :: enum #copy #repr("C") {
     ImGuiFocusedFlags_None                = 0
     ImGuiFocusedFlags_ChildWindows        = @bin_lsl(1, 0)
     ImGuiFocusedFlags_RootWindow          = @bin_lsl(1, 1)
@@ -291,7 +348,7 @@ ImGuiFocusedFlags_ :: enum #repr("C") {
     ImGuiFocusedFlags_RootAndChildWindows = @bin_or(ImGuiFocusedFlags_RootWindow, ImGuiFocusedFlags_ChildWindows)
 }
 
-ImGuiHoveredFlags_ :: enum #repr("C") {
+ImGuiHoveredFlags_ :: enum #copy #repr("C") {
     ImGuiHoveredFlags_None                         = 0
     ImGuiHoveredFlags_ChildWindows                 = @bin_lsl(1, 0)
     ImGuiHoveredFlags_RootWindow                   = @bin_lsl(1, 1)
@@ -304,7 +361,7 @@ ImGuiHoveredFlags_ :: enum #repr("C") {
     ImGuiHoveredFlags_RootAndChildWindows          = @bin_or(ImGuiHoveredFlags_RootWindow, ImGuiHoveredFlags_ChildWindows)
 }
 
-ImGuiDragDropFlags_ :: enum #repr("C") {
+ImGuiDragDropFlags_ :: enum #copy #repr("C") {
     ImGuiDragDropFlags_None                     = 0
     ImGuiDragDropFlags_SourceNoPreviewTooltip   = @bin_lsl(1, 0)
     ImGuiDragDropFlags_SourceNoDisableHover     = @bin_lsl(1, 1)
@@ -318,7 +375,7 @@ ImGuiDragDropFlags_ :: enum #repr("C") {
     ImGuiDragDropFlags_AcceptPeekOnly           = @bin_or(ImGuiDragDropFlags_AcceptBeforeDelivery, ImGuiDragDropFlags_AcceptNoDrawDefaultRect)
 }
 
-ImGuiDataType_ :: enum #repr("C") {
+ImGuiDataType_ :: enum #copy #repr("C") {
     ImGuiDataType_S8
     ImGuiDataType_U8
     ImGuiDataType_S16
@@ -332,7 +389,7 @@ ImGuiDataType_ :: enum #repr("C") {
     ImGuiDataType_COUNT
 }
 
-ImGuiDir_ :: enum #repr("C") {
+ImGuiDir_ :: enum #copy #repr("C") {
     ImGuiDir_None  = -1
     ImGuiDir_Left  = 0
     ImGuiDir_Right = 1
@@ -341,7 +398,7 @@ ImGuiDir_ :: enum #repr("C") {
     ImGuiDir_COUNT
 }
 
-ImGuiKey_ :: enum #repr("C") {
+ImGuiKey_ :: enum #copy #repr("C") {
     ImGuiKey_Tab
     ImGuiKey_LeftArrow
     ImGuiKey_RightArrow
@@ -367,7 +424,7 @@ ImGuiKey_ :: enum #repr("C") {
     ImGuiKey_COUNT
 }
 
-ImGuiNavInput_ :: enum #repr("C") {
+ImGuiNavInput_ :: enum #copy #repr("C") {
     ImGuiNavInput_Activate
     ImGuiNavInput_Cancel
     ImGuiNavInput_Input
@@ -394,7 +451,7 @@ ImGuiNavInput_ :: enum #repr("C") {
     ImGuiNavInput_InternalStart_ = ImGuiNavInput_KeyMenu_
 }
 
-// ImGuiConfigFlags_ :: enum #repr("C") {
+// ImGuiConfigFlags_ :: enum #copy #repr("C") {
 //     ImGuiConfigFlags_None                 = 0
 //     ImGuiConfigFlags_NavEnableKeyboard    = @bin_lsl(1, 0)
 //     ImGuiConfigFlags_NavEnableGamepad     = @bin_lsl(1, 1)
@@ -406,30 +463,30 @@ ImGuiNavInput_ :: enum #repr("C") {
 //     ImGuiConfigFlags_IsTouchScreen        = @bin_lsl(1, 21)
 // }
 
-ImGuiConfigFlags_ :: enum #repr("C") {
-    ImGuiConfigFlags_None                   = 0
-    ImGuiConfigFlags_NavEnableKeyboard      = @bin_lsl(1, 0)   // Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeysDown[].
-    ImGuiConfigFlags_NavEnableGamepad       = @bin_lsl(1, 1)   // Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.NavInputs[]. Back-end also needs to set ImGuiBackendFlags_HasGamepad.
-    ImGuiConfigFlags_NavEnableSetMousePos   = @bin_lsl(1, 2)   // Instruct navigation to move the mouse cursor. May be useful on TV/console systems where moving a virtual mouse is awkward. Will update io.MousePos and set io.WantSetMousePos=true. If enabled you MUST honor io.WantSetMousePos requests in your binding, otherwise ImGui will react as if the mouse is jumping around back and forth.
-    ImGuiConfigFlags_NavNoCaptureKeyboard   = @bin_lsl(1, 3)   // Instruct navigation to not set the io.WantCaptureKeyboard flag when io.NavActive is set.
-    ImGuiConfigFlags_NoMouse                = @bin_lsl(1, 4)   // Instruct imgui to clear mouse position/buttons in NewFrame(). This allows ignoring the mouse information set by the back-end.
-    ImGuiConfigFlags_NoMouseCursorChange    = @bin_lsl(1, 5)   // Instruct back-end to not alter mouse cursor shape and visibility. Use if the back-end cursor changes are interfering with yours and you don't want to use SetMouseCursor() to change mouse cursor. You may want to honor requests from imgui by reading GetMouseCursor() yourself instead.
+ImGuiConfigFlags_ :: enum #copy #repr("C") {
+    None                   = 0
+    NavEnableKeyboard      = @bin_lsl(1, 0)   // Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeysDown[].
+    NavEnableGamepad       = @bin_lsl(1, 1)   // Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.NavInputs[]. Back-end also needs to set ImGuiBackendFlags_HasGamepad.
+    NavEnableSetMousePos   = @bin_lsl(1, 2)   // Instruct navigation to move the mouse cursor. May be useful on TV/console systems where moving a virtual mouse is awkward. Will update io.MousePos and set io.WantSetMousePos=true. If enabled you MUST honor io.WantSetMousePos requests in your binding, otherwise ImGui will react as if the mouse is jumping around back and forth.
+    NavNoCaptureKeyboard   = @bin_lsl(1, 3)   // Instruct navigation to not set the io.WantCaptureKeyboard flag when io.NavActive is set.
+    NoMouse                = @bin_lsl(1, 4)   // Instruct imgui to clear mouse position/buttons in NewFrame(). This allows ignoring the mouse information set by the back-end.
+    NoMouseCursorChange    = @bin_lsl(1, 5)   // Instruct back-end to not alter mouse cursor shape and visibility. Use if the back-end cursor changes are interfering with yours and you don't want to use SetMouseCursor() to change mouse cursor. You may want to honor requests from imgui by reading GetMouseCursor() yourself instead.
 
     // [BETA] Docking
-    ImGuiConfigFlags_DockingEnable          = @bin_lsl(1, 6)   // Docking enable flags.
+    DockingEnable          = @bin_lsl(1, 6)   // Docking enable flags.
 
     // [BETA] Viewports
     // When using viewports it is recommended that your default value for ImGuiCol_WindowBg is opaque (Alpha=1.0) so transition to a viewport won't be noticeable.
-    ImGuiConfigFlags_ViewportsEnable        = @bin_lsl(1, 10)  // Viewport enable flags (require both ImGuiConfigFlags_PlatformHasViewports + ImGuiConfigFlags_RendererHasViewports set by the respective back-ends)
-    ImGuiConfigFlags_DpiEnableScaleViewports= @bin_lsl(1, 14)  // [BETA: Don't use] FIXME-DPI: Reposition and resize imgui windows when the DpiScale of a viewport changed (mostly useful for the main viewport hosting other window). Note that resizing the main window itself is up to your application.
-    ImGuiConfigFlags_DpiEnableScaleFonts    = @bin_lsl(1, 15)  // [BETA: Don't use] FIXME-DPI: Request bitmap-scaled fonts to match DpiScale. This is a very low-quality workaround. The correct way to handle DPI is _currently_ to replace the atlas and/or fonts in the Platform_OnChangedViewport callback, but this is all early work in progress.
+    ViewportsEnable        = @bin_lsl(1, 10)  // Viewport enable flags (require both PlatformHasViewports + RendererHasViewports set by the respective back-ends)
+    DpiEnableScaleViewports= @bin_lsl(1, 14)  // [BETA: Don't use] FIXME-DPI: Reposition and resize imgui windows when the DpiScale of a viewport changed (mostly useful for the main viewport hosting other window). Note that resizing the main window itself is up to your application.
+    DpiEnableScaleFonts    = @bin_lsl(1, 15)  // [BETA: Don't use] FIXME-DPI: Request bitmap-scaled fonts to match DpiScale. This is a very low-quality workaround. The correct way to handle DPI is _currently_ to replace the atlas and/or fonts in the Platform_OnChangedViewport callback, but this is all early work in progress.
 
     // User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects. Those flags are not used by core Dear ImGui)
-    ImGuiConfigFlags_IsSRGB                 = @bin_lsl(1, 20)  // Application is SRGB-aware.
-    ImGuiConfigFlags_IsTouchScreen          = @bin_lsl(1, 21)   // Application is using a touch screen instead of a mouse.
+    IsSRGB                 = @bin_lsl(1, 20)  // Application is SRGB-aware.
+    IsTouchScreen          = @bin_lsl(1, 21)   // Application is using a touch screen instead of a mouse.
 }
 
-ImGuiBackendFlags_ :: enum #repr("C") {
+ImGuiBackendFlags_ :: enum #copy #repr("C") {
     ImGuiBackendFlags_None                 = 0
     ImGuiBackendFlags_HasGamepad           = @bin_lsl(1, 0)
     ImGuiBackendFlags_HasMouseCursors      = @bin_lsl(1, 1)
@@ -437,7 +494,7 @@ ImGuiBackendFlags_ :: enum #repr("C") {
     ImGuiBackendFlags_RendererHasVtxOffset = @bin_lsl(1, 3)
 }
 
-ImGuiCol_ :: enum #repr("C") {
+ImGuiCol_ :: enum #copy #repr("C") {
     ImGuiCol_Text
     ImGuiCol_TextDisabled
     ImGuiCol_WindowBg
@@ -489,34 +546,34 @@ ImGuiCol_ :: enum #repr("C") {
     ImGuiCol_COUNT
 }
 
-ImGuiStyleVar_ :: enum #repr("C") {
-    ImGuiStyleVar_Alpha
-    ImGuiStyleVar_WindowPadding
-    ImGuiStyleVar_WindowRounding
-    ImGuiStyleVar_WindowBorderSize
-    ImGuiStyleVar_WindowMinSize
-    ImGuiStyleVar_WindowTitleAlign
-    ImGuiStyleVar_ChildRounding
-    ImGuiStyleVar_ChildBorderSize
-    ImGuiStyleVar_PopupRounding
-    ImGuiStyleVar_PopupBorderSize
-    ImGuiStyleVar_FramePadding
-    ImGuiStyleVar_FrameRounding
-    ImGuiStyleVar_FrameBorderSize
-    ImGuiStyleVar_ItemSpacing
-    ImGuiStyleVar_ItemInnerSpacing
-    ImGuiStyleVar_IndentSpacing
-    ImGuiStyleVar_ScrollbarSize
-    ImGuiStyleVar_ScrollbarRounding
-    ImGuiStyleVar_GrabMinSize
-    ImGuiStyleVar_GrabRounding
-    ImGuiStyleVar_TabRounding
-    ImGuiStyleVar_ButtonTextAlign
-    ImGuiStyleVar_SelectableTextAlign
-    ImGuiStyleVar_COUNT
+ImGuiStyleVar_ :: enum #copy #repr("C") {
+    Alpha
+    WindowPadding
+    WindowRounding
+    WindowBorderSize
+    WindowMinSize
+    WindowTitleAlign
+    ChildRounding
+    ChildBorderSize
+    PopupRounding
+    PopupBorderSize
+    FramePadding
+    FrameRounding
+    FrameBorderSize
+    ItemSpacing
+    ItemInnerSpacing
+    IndentSpacing
+    ScrollbarSize
+    ScrollbarRounding
+    GrabMinSize
+    GrabRounding
+    TabRounding
+    ButtonTextAlign
+    SelectableTextAlign
+    COUNT
 }
 
-ImGuiColorEditFlags_ :: enum #repr("C") {
+ImGuiColorEditFlags_ :: enum #copy #repr("C") {
     ImGuiColorEditFlags_None             = 0
     ImGuiColorEditFlags_NoAlpha          = @bin_lsl(1, 1)
     ImGuiColorEditFlags_NoPicker         = @bin_lsl(1, 2)
@@ -547,7 +604,7 @@ ImGuiColorEditFlags_ :: enum #repr("C") {
     ImGuiColorEditFlags__InputMask       = @bin_or(ImGuiColorEditFlags_InputRGB, ImGuiColorEditFlags_InputHSV)
 }
 
-ImGuiMouseCursor_ :: enum #repr("C") {
+ImGuiMouseCursor_ :: enum #copy #repr("C") {
     ImGuiMouseCursor_None       = -1
     ImGuiMouseCursor_Arrow      = 0
     ImGuiMouseCursor_TextInput
@@ -560,14 +617,14 @@ ImGuiMouseCursor_ :: enum #repr("C") {
     ImGuiMouseCursor_COUNT
 }
 
-ImGuiCond_ :: enum #repr("C") {
+ImGuiCond_ :: enum #copy #repr("C") {
     ImGuiCond_Always       = @bin_lsl(1, 0)
     ImGuiCond_Once         = @bin_lsl(1, 1)
     ImGuiCond_FirstUseEver = @bin_lsl(1, 2)
     ImGuiCond_Appearing    = @bin_lsl(1, 3)
 }
 
-ImGuiStyle :: struct {
+ImGuiStyle :: struct #copy {
     Alpha                    : f32
     WindowPadding            : ImVec2
     WindowRounding           : f32
@@ -605,7 +662,7 @@ ImGuiStyle :: struct {
     Colors                   : [int(ImGuiCol_.ImGuiCol_COUNT)]ImVec4
 }
 
-ImGuiIO :: struct {
+ImGuiIO :: struct #copy {
     ConfigFlags                       : ImGuiConfigFlags
     BackendFlags                      : ImGuiBackendFlags
     DisplaySize                       : ImVec2
@@ -692,7 +749,7 @@ ImGuiIO :: struct {
     InputQueueCharacters              : ImVector_ImWchar
 }
 
-ImGuiInputTextCallbackData :: struct {
+ImGuiInputTextCallbackData :: struct #copy {
     EventFlag      : ImGuiInputTextFlags
     Flags          : ImGuiInputTextFlags
     UserData       : &void
@@ -707,14 +764,14 @@ ImGuiInputTextCallbackData :: struct {
     SelectionEnd   : i32
 }
 
-ImGuiSizeCallbackData :: struct {
+ImGuiSizeCallbackData :: struct #copy {
     UserData    : &void
     Pos         : ImVec2
     CurrentSize : ImVec2
     DesiredSize : ImVec2
 }
 
-ImGuiPayload :: struct {
+ImGuiPayload :: struct #copy {
     Data           : &void
     DataSize       : i32
     SourceId       : ImGuiID
@@ -725,25 +782,25 @@ ImGuiPayload :: struct {
     Delivery       : bool
 }
 
-ImGuiOnceUponAFrame :: struct {
+ImGuiOnceUponAFrame :: struct #copy {
     RefFrame : i32
 }
 
-ImGuiTextFilter :: struct {
+ImGuiTextFilter :: struct #copy {
     InputBuf  : [256]i8
     Filters   : ImVector_ImGuiTextRange
     CountGrep : i32
 }
 
-ImGuiTextBuffer :: struct {
+ImGuiTextBuffer :: struct #copy {
     Buf : ImVector_char
 }
 
-ImGuiStorage :: struct {
+ImGuiStorage :: struct #copy {
     Data : ImVector_ImGuiStoragePair
 }
 
-ImGuiListClipper :: struct {
+ImGuiListClipper :: struct #copy {
     StartPosY    : f32
     ItemsHeight  : f32
     ItemsCount   : i32
@@ -752,11 +809,11 @@ ImGuiListClipper :: struct {
     DisplayEnd   : i32
 }
 
-ImColor :: struct {
+ImColor :: struct #copy {
     Value : ImVec4
 }
 
-ImDrawCmd :: struct {
+ImDrawCmd :: struct #copy {
     ElemCount        : u32
     ClipRect         : ImVec4
     TextureId        : ImTextureID
@@ -766,24 +823,24 @@ ImDrawCmd :: struct {
     UserCallbackData : &void
 }
 
-ImDrawVert :: struct {
+ImDrawVert :: struct #copy {
     pos : ImVec2
     uv  : ImVec2
     col : ImU32
 }
 
-ImDrawChannel :: struct {
+ImDrawChannel :: struct #copy {
     _CmdBuffer : ImVector_ImDrawCmd
     _IdxBuffer : ImVector_ImDrawIdx
 }
 
-ImDrawListSplitter :: struct {
+ImDrawListSplitter :: struct #copy {
     _Current  : i32
     _Count    : i32
     _Channels : ImVector_ImDrawChannel
 }
 
-ImDrawCornerFlags_ :: enum #repr("C") {
+ImDrawCornerFlags_ :: enum #copy #repr("C") {
     ImDrawCornerFlags_None     = 0
     ImDrawCornerFlags_TopLeft  = @bin_lsl(1, 0)
     ImDrawCornerFlags_TopRight = @bin_lsl(1, 1)
@@ -796,14 +853,14 @@ ImDrawCornerFlags_ :: enum #repr("C") {
     ImDrawCornerFlags_All      = 0xF
 }
 
-ImDrawListFlags_ :: enum #repr("C") {
+ImDrawListFlags_ :: enum #copy #repr("C") {
     ImDrawListFlags_None             = 0,
     ImDrawListFlags_AntiAliasedLines = @bin_lsl(1, 0)
     ImDrawListFlags_AntiAliasedFill  = @bin_lsl(1, 1)
     ImDrawListFlags_AllowVtxOffset   = @bin_lsl(1, 2)
 }
 
-ImDrawList :: struct {
+ImDrawList :: struct #copy {
     CmdBuffer         : ImVector_ImDrawCmd
     IdxBuffer         : ImVector_ImDrawIdx
     VtxBuffer         : ImVector_ImDrawVert
@@ -820,7 +877,7 @@ ImDrawList :: struct {
     _Splitter         : ImDrawListSplitter
 }
 
-ImDrawData :: struct {
+ImDrawData :: struct #copy {
     Valid            : bool
     CmdLists         : &&ImDrawList
     CmdListsCount    : i32
@@ -831,7 +888,7 @@ ImDrawData :: struct {
     FramebufferScale : ImVec2
 }
 
-ImFontConfig :: struct {
+ImFontConfig :: struct #copy {
     FontData             : &void
     FontDataSize         : i32
     FontDataOwnedByAtlas : bool
@@ -853,7 +910,7 @@ ImFontConfig :: struct {
     DstFont              : &ImFont
 }
 
-ImFontGlyph :: struct {
+ImFontGlyph :: struct #copy {
     Codepoint : ImWchar
     AdvanceX  : f32
     X0        : f32
@@ -866,11 +923,11 @@ ImFontGlyph :: struct {
     V1        : f32
 }
 
-ImFontGlyphRangesBuilder :: struct {
+ImFontGlyphRangesBuilder :: struct #copy {
     UsedChars : ImVector_ImU32
 }
 
-ImFontAtlasCustomRect :: struct {
+ImFontAtlasCustomRect :: struct #copy {
     ID            : u32
     Width         : u16
     Height        : u16
@@ -881,13 +938,13 @@ ImFontAtlasCustomRect :: struct {
     Font          : &ImFont
 }
 
-ImFontAtlasFlags_ :: enum #repr("C") {
+ImFontAtlasFlags_ :: enum #copy #repr("C") {
     ImFontAtlasFlags_None               = 0,
     ImFontAtlasFlags_NoPowerOfTwoHeight = @bin_lsl(1, 0)
     ImFontAtlasFlags_NoMouseCursors     = @bin_lsl(1, 1)
 }
 
-ImFontAtlas :: struct {
+ImFontAtlas :: struct #copy {
     Locked          : bool
     Flags           : ImFontAtlasFlags
     TexID           : ImTextureID
@@ -905,7 +962,7 @@ ImFontAtlas :: struct {
     CustomRectIds   : [1]i32
 }
 
-ImFont :: struct {
+ImFont :: struct #copy {
     IndexAdvanceX       : ImVector_float
     FallbackAdvanceX    : f32
     FontSize            : f32
@@ -925,27 +982,27 @@ ImFont :: struct {
     DirtyLookupTables   : bool
 }
 
-ImGuiTextRange :: struct {
+ImGuiTextRange :: struct #copy {
     b : &i8
     e : &i8
 }
 
-ImGuiStoragePair :: struct {
+ImGuiStoragePair :: struct #copy {
     key : ImGuiID
     val : u64
     // union { i32 val_i f32 val_f &void val_p }
 }
 
-ImVec2_Simple  :: struct {
+ImVec2_Simple  :: struct #copy {
     x : f32
     y : f32
 }
-ImVec4_Simple  :: struct {
+ImVec4_Simple  :: struct #copy {
     x : f32
     y : f32
     z : f32
     w : f32
 }
-ImColor_Simple :: struct {
+ImColor_Simple :: struct #copy {
     Value : ImVec4_Simple
 }

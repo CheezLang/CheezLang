@@ -116,37 +116,46 @@ namespace Cheez
             // global variables
             ResolveGlobalVariables();
 
-            ResolveGlobalDeclarationBodies();
+            while (true)
+            {
+                bool changes = false;
 
-            // compute struct members of remaining structs
+                changes |= ResolveGlobalDeclarationBodies();
+                changes |= ComputeSizeAndAlignmentOfRemainingTypes();
+                changes |= MarkTypeAsRequiredAtRuntimeFinish();
+
+                if (!changes)
+                    break;
+            }
+        }
+
+        private bool ComputeSizeAndAlignmentOfRemainingTypes()
+        {
+            bool changes = false;
 
             while (true)
             {
-                var allTypes = CheezType.TypesWithMissingProperties;
-                if (allTypes.Count() == 0)
+                var typesWithMissingProperties = CheezType.TypesWithMissingProperties;
+                if (typesWithMissingProperties.Count() == 0)
                     break;
 
-                //Console.WriteLine($"Calculating properties of {allTypes.Count()} types...");
+                changes = true;
 
                 CheezType.ClearAllTypes();
-                foreach (var type in allTypes)
+                foreach (var type in typesWithMissingProperties)
                 {
-                    //try
                     {
                         if (type is AbstractType || type.IsErrorType || type.IsPolyType)
-                            continue; 
+                            continue;
 
                         // force computation of all types sizes
                         GetSizeOfType(type);
                         IsTypeDefaultConstructable(type);
                     }
-                    //catch (Exception e)
-                    //{
-                    //}
                 }
             }
 
-            MarkTypeAsRequiredAtRuntimeFinish();
+            return changes;
         }
 
         private void InsertDeclarationsIntoLists(List<AstStatement> statements)
@@ -254,8 +263,9 @@ namespace Cheez
             ResolveMissingTypesOfDeclarations(mAllGlobalVariables);
         }
 
-        private void ResolveGlobalDeclarationBodies()
+        private bool ResolveGlobalDeclarationBodies()
         {
+            bool changes = false;
             while (true)
             {
                 bool unresolvedStuff = false;
@@ -307,9 +317,13 @@ namespace Cheez
                     }
                 }
 
+                changes |= unresolvedStuff;
+
                 if (!unresolvedStuff)
                     break;
             }
+
+            return changes;
         }
 
         private void ResolveMissingTypesOfDeclarations(IEnumerable<AstDecl> declarations)

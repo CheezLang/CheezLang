@@ -8,8 +8,9 @@
 // import examples.pathtracer
 // import examples.print_any
 // import examples.command_line_parser
-// import compiler.cli
-import compiler.compiler_test
+import examples.ShmupEngine.src.main
+//import compiler.cli
+// import compiler.compiler_test
 
 // import examples.postfix
 // import examples.image_processing
@@ -39,34 +40,47 @@ io  :: import std.io
 // fmt :: import std.fmt
 C   :: import std.c
 
-impl Drop for Foo {
-    drop :: (ref Self) {
-        io.printfln("~Foo({})", x)
-    }
-}
-
-Foo :: struct {
-    x : int
-}
+use import compiler.ast
+use import compiler.lexer
+use import compiler.parser
+use import compiler.error_handler
+use import compiler.string_database
 
 Main :: () {
-    foo := Foo(123)
+    file :: "uiae.che"
 
-    io.println("    match")
-    match (ref foo, 2) {
-        ($f, 3) -> {
-            T :: @typeof(f)
-            io.println("1")
-        }
+    console_error_handler := ConsoleErrorHandler.new(null)
+    console_error_handler.code_color_error  = io.ConsoleColor.Green
+    console_error_handler.code_color_normal = io.ConsoleColor.White
+    string_db := StringDatabase.new()
+    lexer := try_with(
+        Lexer.from_file(file, string_db),
+        {
+            io.printfln("Failed to open file '{}'", file)
+            return
+        })
 
-        ($f, _) -> {
-            T :: @typeof(f)
-            io.println("2")
-        }
+    pattern := IdExpr(id = 1, name = "foo")
+    init    := IdExpr(id = 2, name = "bar")
+
+    move := MoveExpr(id = 1, target = pattern, source = init)
+    pipe := PipeExpr(id = 1, left = move, right = pattern)
+
+    decl := DeclStmt(
+        id       = 3
+        is_const = true
+        pattern  = pattern
+        typ      = Some(init)
+        init     = Some(pipe))
+    io.println(pattern)
+    io.println(init)
+    io.println(decl)
+
+    loop {
+        token := lexer.next_token()
+        if int(token.ttype) == int(TokenType.EOF) then break
+
+        
     }
-
-    io.println(foo.x)
-
-    io.println("    ende")
 }
 // */

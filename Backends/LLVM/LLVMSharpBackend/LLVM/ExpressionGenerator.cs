@@ -823,7 +823,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (to is IntType i5 && from is EnumType e)
             {
                 var v = GenerateExpression(cast.SubExpression, true);
-                var tag = builder.CreateExtractValue(v, 0, "");
+                var tag = v;
+                if (!e.Declaration.IsReprC)
+                    tag = builder.CreateExtractValue(v, 0, "");
                 return CreateIntCast(e.Declaration.TagType, e.Declaration.TagType.Signed, i5, i5.Signed, tag);
             }
 

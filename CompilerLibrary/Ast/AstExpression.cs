@@ -558,8 +558,6 @@ namespace Cheez.Ast.Expressions
 
         public override bool IsPolymorphic => Left.IsPolymorphic || Right.IsPolymorphic;
 
-        public IBinaryOperator ActualOperator { get; set; }
-
         [DebuggerStepThrough]
         public AstPipeExpr(AstExpression lhs, AstExpression rhs, ILocation Location = null) : base(Location)
         {

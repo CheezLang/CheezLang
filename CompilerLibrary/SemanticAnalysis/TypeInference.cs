@@ -333,43 +333,40 @@ namespace Cheez
             p.Left.Scope = p.Scope;
             p.Left = InferTypeHelper(p.Left, null, context);
             p.Right.Scope = p.Scope;
+
+
+            void InsertIntoArgs(List<AstArgument> arguments) {
+                bool hasUnderscores = false;
+                foreach (var arg in arguments)
+                    if (arg.Expr is AstIdExpr id && id.Name == "_")
+                        hasUnderscores = true;
+
+                if (hasUnderscores)
+                {
+                    var left = new AstTempVarExpr(p.Left);
+                    foreach (var arg in arguments)
+                        if (arg.Expr is AstIdExpr id && id.Name == "_")
+                            arg.Expr = left;
+                }
+                else
+                {
+                    arguments.Add(new AstArgument(p.Left, null, p.Left.Location));
+                }
+            }
+
             switch (p.Right)
             {
                 case AstCompCallExpr cc:
                     {
-                        // check if there is an arg named _
-                        foreach (var arg in cc.Arguments)
-                        {
-                            if (arg.Expr is AstIdExpr id && id.Name == "_")
-                            {
-                                arg.Expr = p.Left;
-                                return InferTypeHelper(cc, expected, context);
-                            }
-                        }
-
-                        // no arg named _, so add lhs as last arg
-                        cc.Arguments.Add(new AstArgument(p.Left, null, p.Left.Location));
+                        InsertIntoArgs(cc.Arguments);
                         return InferTypeHelper(cc, expected, context);
                     }
 
                 case AstCallExpr cc:
                     {
-                        // check if there is an arg named _
-                        foreach (var arg in cc.Arguments)
-                        {
-                            if (arg.Expr is AstIdExpr id && id.Name == "_")
-                            {
-                                arg.Expr = p.Left;
-                                return InferTypeHelper(cc, expected, context);
-                            }
-                        }
-
-                        // no arg named _, so add lhs as last arg
-                        cc.Arguments.Add(new AstArgument(p.Left, null, p.Left.Location));
+                        InsertIntoArgs(cc.Arguments);
                         return InferTypeHelper(cc, expected, context);
                     }
-
-
 
                 default:
                     ReportError(p, $"This kind of expression is not allowed here");
@@ -1906,14 +1903,18 @@ namespace Cheez
                 mTypesRequiredAtRuntimeQueue.Enqueue(type);
         }
 
-        private void MarkTypeAsRequiredAtRuntimeFinish()
+        private bool MarkTypeAsRequiredAtRuntimeFinish()
         {
+            bool changes = false;
+
             while (mTypesRequiredAtRuntimeQueue.Count > 0)
             {
                 var type = mTypesRequiredAtRuntimeQueue.Dequeue();
 
                 if (mTypesRequiredAtRuntime.Contains(type) || type.IsErrorType)
                     continue;
+
+                changes = true;
 
                 mTypesRequiredAtRuntime.Add(type);
 
@@ -1996,6 +1997,8 @@ namespace Cheez
                     default: WellThatsNotSupposedToHappen(); break;
                 }
             }
+
+            return changes;
         }
 
         private AstExpression InferTypeCompCall(AstCompCallExpr expr, CheezType expected, TypeInferenceContext context)

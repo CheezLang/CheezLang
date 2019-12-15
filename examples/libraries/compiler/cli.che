@@ -142,14 +142,22 @@ CommandFindToken :: struct {
     suffix : Option[String] = None
 }
 
+impl TextProvider for Lexer {
+    get_text :: (ref Self, filename: string) -> string {
+        return text
+    }
+}
+
 find_tokens_of_type :: (options: &CommandFindToken) {
     console_error_handler := ConsoleErrorHandler.new(null)
     console_error_handler.code_color_error  = io.ConsoleColor.Green
     console_error_handler.code_color_normal = io.ConsoleColor.White
+
     string_db := StringDatabase.new()
     lexer := try_with(
         Lexer.from_file(
-            options.file.slice(), string_db, console_error_handler), {
+            options.file.slice(), string_db),
+            {
                 io.printfln("Failed to open file '{}'", options.file.slice())
                 return
             })
@@ -247,7 +255,7 @@ command_compile :: (options: &CommandCompile) {
     io.println("compiling...")
     for file : options.files {
         io.printfln("parsing {}...", file.slice())
-        match Lexer.from_file("../examples/test.che", string_db, console_error_handler) {
+        match Lexer.from_file("../examples/test.che", string_db) {
             Ok($l) -> {
                 console_error_handler.text_provider = l
                 parser := Parser.create(compiler, l)

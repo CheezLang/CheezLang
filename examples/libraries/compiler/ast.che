@@ -6,29 +6,21 @@ use import std.string
 
 #export_scope
 
-Stmt :: struct {
-    concrete    : StmtType
+Stmt :: struct #extendable {
+    id       : int
+    location : Location = default
 }
 
-StmtType :: enum {
-    Func    : FunctionDecl
+DeclStmt :: struct #extend(Stmt) {
+    is_const : bool
+    pattern  : ref Expr
+    typ      : Option[ref Expr]
+    init     : Option[ref Expr]
 }
 
-impl Printable for Stmt {
-    print :: (ref Self, str: ref String, format: string) {
-        use StmtType
-        match ref concrete {
-            Func($func) -> {
-                str.appendf("fn {}() ``{``}", func.name)
-            }
-        }
-    }
+UseStmt :: struct #extend(Stmt) {
+    expr : ref Expr
 }
-
-FunctionDecl :: struct {
-    name    : string
-}
-
 
 // expressions
 Expr :: struct #extendable {
@@ -50,7 +42,7 @@ BinaryExpr :: struct #extend(Expr) {
     left  : ref Expr
     right : ref Expr
 
-    Operator :: enum #copy { Add, Sub, Mul, Div }
+    Operator :: enum #copy { Add, Sub, Mul, Div, Mod, And, Or, Less, LessEq, Greater, GreaterEq, Equal, NotEqual }
 }
 
 UnaryExpr :: struct #extend(Expr) {
@@ -60,16 +52,36 @@ UnaryExpr :: struct #extend(Expr) {
     Operator :: enum #copy { Neg, Not }
 }
 
+MoveExpr :: struct #extend(Expr) {
+    target : ref Expr
+    source : ref Expr
+}
+
+PipeExpr :: struct #extend(Expr) {
+    left  : ref Expr
+    right : ref Expr
+}
+
 impl Printable for BinaryExpr.Operator {
     print :: (ref Self, str: ref String, format: string) {
         match self {
-            BinaryExpr.Operator.Add -> str.append_char('+')
-            BinaryExpr.Operator.Sub -> str.append_char('-')
-            BinaryExpr.Operator.Mul -> str.append_char('*')
-            BinaryExpr.Operator.Div -> str.append_char('/')
+            BinaryExpr.Operator.Add       -> str.append_string("+")
+            BinaryExpr.Operator.Sub       -> str.append_string("-")
+            BinaryExpr.Operator.Mul       -> str.append_string("*")
+            BinaryExpr.Operator.Div       -> str.append_string("/")
+            BinaryExpr.Operator.Mod       -> str.append_string("%")
+            BinaryExpr.Operator.And       -> str.append_string("and")
+            BinaryExpr.Operator.Or        -> str.append_string("or")
+            BinaryExpr.Operator.Less      -> str.append_string("<")
+            BinaryExpr.Operator.LessEq    -> str.append_string("<=")
+            BinaryExpr.Operator.Greater   -> str.append_string(">")
+            BinaryExpr.Operator.GreaterEq -> str.append_string(">=")
+            BinaryExpr.Operator.Equal     -> str.append_string("==")
+            BinaryExpr.Operator.NotEqual  -> str.append_string("!=")
         }
     }
 }
+
 impl Printable for UnaryExpr.Operator {
     print :: (ref Self, str: ref String, format: string) {
         match self {
@@ -82,10 +94,40 @@ impl Printable for UnaryExpr.Operator {
 impl Printable for Expr {
     print :: (ref Self, str: ref String, format: string) {
         match self {
-            IdExpr($expr) -> str.appendf("{}", expr.name)
+            IdExpr($expr)     -> str.appendf("{}", expr.name)
             NumberExpr($expr) -> str.appendf("{}", expr.value)
             BinaryExpr($expr) -> str.appendf("({} {} {})", (Printable(expr.left), expr.op, Printable(expr.right)))
-            UnaryExpr($expr) -> str.appendf("{}{}", (expr.op, Printable(expr.sub)))
+            UnaryExpr($expr)  -> str.appendf("{}{}", (expr.op, Printable(expr.sub)))
+            MoveExpr($expr)   -> str.appendf("({} <- {})", (Printable(expr.target), Printable(expr.source)))
+            PipeExpr($expr)   -> str.appendf("{} | {}", (Printable(expr.left), Printable(expr.right)))
+        }
+    }
+}
+
+impl Printable for Stmt {
+    print :: (ref Self, str: ref String, format: string) {
+        match self {
+            DeclStmt($stmt) -> {
+                str.appendf("{} :", Printable(stmt.pattern))
+
+                match ref stmt.typ {
+                    Some($expr) -> {
+                        str.appendf(" {} ", Printable(expr))
+                    }
+                }
+
+                str.append_char(if stmt.is_const then ':' else '=')
+
+                match ref stmt.init {
+                    Some($expr) -> {
+                        str.appendf(" {}", Printable(expr))
+                    }
+                }
+            }
+
+            UseStmt($stmt) -> {
+                str.appendf("use {}", Printable(stmt.expr))
+            }
         }
     }
 }

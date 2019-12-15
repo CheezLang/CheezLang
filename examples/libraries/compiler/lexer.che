@@ -1,11 +1,10 @@
 use import string_database
-use import error_handler
 
 use import std.string
 use import std.unicode
 use import std.printable
 use import std.io.fs
-C :: import std.c
+C  :: import std.c
 io :: import std.io
 
 #export_scope
@@ -16,9 +15,7 @@ Lexer :: struct {
     location    : Location
     peek        : Option[Token]
     string_db   : ref StringDatabase
-    error_handler : ErrorHandler
 
-    
     // interned keywords
     KwLambda   : string
     KwReturn   : string
@@ -54,21 +51,15 @@ Lexer :: struct {
     KwImport   : string
 }
 
-impl TextProvider for Lexer {
-    get_text :: (ref Self, filename: string) -> string {
-        return text
-    }
-}
-
 impl Lexer {
-    from_raw_string :: (content: string, string_db: ref StringDatabase, error_handler: ErrorHandler) -> Lexer {
-        return from_string(String.from_string(content), string_db, error_handler)
+    from_raw_string :: (content: string, string_db: ref StringDatabase) -> Lexer {
+        return from_string(String.from_string(content), string_db)
     }
 
     // i dont know why, but for some reason when I enable trace-stack this function crashes
     // but with #nostacktrace it works...
     // - NO, 09.12.19
-    from_string :: (content: String, string_db: ref StringDatabase, error_handler: ErrorHandler) -> Lexer #nostacktrace {
+    from_string :: (content: String, string_db: ref StringDatabase) -> Lexer #nostacktrace {
         txt := content.slice()
         return Lexer(
             text_string = content
@@ -82,7 +73,6 @@ impl Lexer {
             )
             peek          = None
             string_db     = string_db
-            error_handler = error_handler
 
             KwLambda   = string_db.intern("lambda")
             KwReturn   = string_db.intern("return")
@@ -119,9 +109,9 @@ impl Lexer {
         )
     }
 
-    from_file :: (filename: string, string_db: ref StringDatabase, error_handler: ErrorHandler) -> Result[Lexer, ()] {
+    from_file :: (filename: string, string_db: ref StringDatabase) -> Result[Lexer, ()] {
         content := try_with(read_file(filename), {return Err(())})
-        l := Lexer.from_string(content, string_db, error_handler)
+        l := Lexer.from_string(content, string_db)
         l.location.file = filename
         return Ok(l)
     }
@@ -177,6 +167,7 @@ impl Lexer {
         next, next_len := { x := peek_char(1); x[0], int(x[1]) }
 
         match curr, next {
+            '<', '-' -> simple_token(token, TokenType.ReverseArrow,   curr_len + next_len, 2)
             '-', '>' -> simple_token(token, TokenType.Arrow,          curr_len + next_len, 2)
             '=', '>' -> simple_token(token, TokenType.DoubleArrow,    curr_len + next_len, 2)
             '=', '=' -> simple_token(token, TokenType.DoubleEqual,    curr_len + next_len, 2)
@@ -473,8 +464,8 @@ impl Lexer {
 
         match state {
             Error -> {
-                error_handler.report_error(location, "Invalid number literal")
-                token.ttype = TokenType.Unknown
+                token.ttype = TokenType.Error
+                token.data = TokenData.String("Invalid number literal")
                 return
             }
         }
@@ -741,6 +732,7 @@ impl Printable for TokenType {
         use TokenType
 
         str += cast(string)match self {
+            Error             -> "Error"
             Unknown           -> "Unknown"
             NewLine           -> "NewLine"
             EOF               -> "EOF"
@@ -777,6 +769,7 @@ impl Printable for TokenType {
             GreaterEqual      -> "GreaterEqual"
             DoubleEqual       -> "DoubleEqual"
             NotEqual          -> "NotEqual"
+            ReverseArrow      -> "ReverseArrow"
             Arrow             -> "Arrow"
             DoubleArrow       -> "DoubleArrow"
             LessLess          -> "LessLess"
@@ -824,6 +817,7 @@ impl Printable for TokenType {
 }
 
 TokenType :: enum #copy {
+    Error
     Unknown
     NewLine
     EOF
@@ -860,6 +854,7 @@ TokenType :: enum #copy {
     GreaterEqual
     DoubleEqual
     NotEqual
+    ReverseArrow
     Arrow
     DoubleArrow
     LessLess

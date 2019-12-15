@@ -1,0 +1,224 @@
+use import std.math
+io :: import std.io
+C :: import std.c
+
+use import glfw.glfw3
+use import opengl.opengl
+use import opengl.constants
+use import opengl.types
+use import opengl.functions
+use import imgui.imgui
+use import imgui.types
+use import imgui.functions
+
+#export_scope
+
+vec2 :: Vector2[float]
+vec3 :: Vector3[float]
+vec4 :: Vector4[float]
+
+gladLoadGL :: () -> i32;
+
+onKeyDown :: (window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
+
+}
+
+onResize :: (window: &GLFWwindow, w: i32, h: i32) {
+    glViewport(0, 0, w, h)
+}
+
+glfw_error_callback :: (error: i32, description: c_string) {
+    C.printf("Glfw Error %d: %s\n", error, description)
+}
+
+opt_fullscreen_persistant := false
+
+Main :: () {
+    glfwSetErrorCallback(glfw_error_callback)
+
+    if !glfwInit() {
+        io.println("Failed to initialize GLFW")
+        return
+    }
+    defer glfwTerminate()
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0)
+
+    window := glfwCreateWindow(1280, 720, "Hello World", null, null)
+    if window == null {
+        io.println("Failed to create window")
+        return
+    }
+    defer glfwDestroyWindow(window)
+
+    glfwMakeContextCurrent(window)
+    glfwSwapInterval(1)
+    if gladLoadGL() != 1 {
+        return
+    }
+
+    glfwSetKeyCallback(window, onKeyDown)
+    glfwSetWindowSizeCallback(window, onResize)
+
+    // imgui setup
+    if !init_imgui(window) {
+        return
+    }
+    defer shutdown_imgui()
+
+    // opengl
+    glViewport(0, 0, 1080, 720)
+
+    clear_color := vec4(1, 0, 1, 1)
+
+    show_demo_window := true
+    open := true
+    dockspace_flags := @bin_or(
+        i32(ImGuiDockNodeFlags_.None)
+        i32(ImGuiDockNodeFlags_.PassthruCentralNode))
+
+        
+
+    while !glfwWindowShouldClose(window) {
+        glfwPollEvents()
+        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
+        glClear(GL_COLOR_BUFFER_BIT)
+
+        //
+        begin_frame()
+
+        if open {
+            imvec2_zero := ImVec2_ImVec2()
+            size := ImVec2_ImVec2()
+            opt_fullscreen := opt_fullscreen_persistant
+
+            // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+            // because it would be confusing to have two docking targets within each others.
+            window_flags := @bin_or(
+                i32(ImGuiWindowFlags_.MenuBar),
+                i32(ImGuiWindowFlags_.None))
+
+            if opt_fullscreen {
+                viewport := igGetMainViewport()
+                igSetNextWindowPos(&viewport.Pos, 0, imvec2_zero)
+                igSetNextWindowSize(&viewport.Size, 0)
+                igSetNextWindowViewport(viewport.ID)
+                igPushStyleVarFloat(cast ImGuiStyleVar_.WindowRounding, 0)
+                igPushStyleVarFloat(cast ImGuiStyleVar_.WindowBorderSize, 0)
+                window_flags = window_flags | @bin_or(
+                    i32(ImGuiWindowFlags_.NoBackground),
+                    i32(ImGuiWindowFlags_.NoTitleBar),
+                    i32(ImGuiWindowFlags_.NoCollapse),
+                    i32(ImGuiWindowFlags_.NoResize),
+                    i32(ImGuiWindowFlags_.NoMove),
+                    i32(ImGuiWindowFlags_.NoBringToFrontOnFocus),
+                    i32(ImGuiWindowFlags_.NoNavFocus))
+            }
+
+            igPushStyleVarVec2(cast ImGuiStyleVar_.WindowPadding, imvec2_zero)
+            igBegin("DockSpace Demo", &open, cast window_flags)
+            // igBegin("DockSpace Demo", &open, cast ImGuiWindowFlags_.None)
+            igPopStyleVar(1)
+
+            if opt_fullscreen then igPopStyleVar(2)
+
+            // DockSpace
+            imgui_io := igGetIO()
+            if @bin_and(imgui_io.ConfigFlags, i32(ImGuiConfigFlags_.DockingEnable)) != 0 {
+                dockspace_id := igGetIDStr("MyDockSpace"c)
+                igDockSpace(0, size, dockspace_flags, null)
+            }
+
+            igEnd()
+        }
+
+        // if show_demo_window then
+        //     igShowDemoWindow(&show_demo_window)
+
+
+        {
+            open := true
+            igBegin("Settings", &open, cast ImGuiWindowFlags_.None)
+
+            igColorPicker3("clear color", cast(&float)&clear_color, 0)
+
+            igEnd()
+        }
+        {
+            open := true
+            igBegin("Settings2", &open, cast ImGuiWindowFlags_.None)
+
+            igColorPicker3("clear color", cast(&float)&clear_color, 0)
+
+            igEnd()
+        }
+        end_frame()
+
+        // present image
+        glfwSwapBuffers(window)
+    }
+}
+
+begin_frame :: () {
+    ImGui_ImplOpenGL3_NewFrame()
+    ImGui_ImplGlfw_NewFrame()
+    igNewFrame()
+}
+
+end_frame :: () {
+    io := igGetIO()
+
+    // rendering
+    igEndFrame()
+    igRender()
+    ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData())
+
+    if @bin_and(io.ConfigFlags, i32(ImGuiConfigFlags_.ViewportsEnable)) != 0 {
+        backup_current_context := glfwGetCurrentContext()
+        igUpdatePlatformWindows()
+        igRenderPlatformWindowsDefault()
+        glfwMakeContextCurrent(backup_current_context)
+    }
+}
+
+init_imgui :: (window: &GLFWwindow) -> bool {
+    context := igCreateContext(null)
+
+    if context == null {
+        io.println("[ERROR] igCreateContext failed")
+        return false
+    }
+
+    imgui_io := igGetIO()
+    imgui_io.ConfigFlags = @bin_or(imgui_io.ConfigFlags,
+        i32(ImGuiConfigFlags_.DockingEnable),
+        i32(ImGuiConfigFlags_.ViewportsEnable))
+    imgui_io.ConfigDockingWithShift = true
+
+    igStyleColorsDark(null)
+
+    if @bin_and(imgui_io.ConfigFlags, i32(ImGuiConfigFlags_.ViewportsEnable)) != 0 {
+        style := igGetStyle()
+        style.WindowRounding = 0.0
+        style.Colors[int(ImGuiCol_.ImGuiCol_WindowBg)].w = 1.0
+    }
+
+    //
+    if !ImGui_ImplGlfw_InitForOpenGL(window, true) {
+        io.println("[ERROR] ImGui_ImplGlfw_InitForOpenGL failed")
+        return false
+    }
+    if !ImGui_ImplOpenGL3_Init("#version 130") {
+        io.println("[ERROR] ImGui_ImplOpenGL3_Init failed")
+        return false
+    }
+
+    return true
+}
+
+shutdown_imgui :: () {
+    ImGui_ImplOpenGL3_Shutdown()
+    ImGui_ImplGlfw_Shutdown()
+    igDestroyContext(null)
+}
