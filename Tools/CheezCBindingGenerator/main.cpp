@@ -32,6 +32,9 @@ struct Context {
 };
 
 void emit_function_decl(Context& ctx, CXCursor cursor);
+void emit_struct_decl(Context& ctx, CXCursor cursor);
+void emit_typedef_decl(Context& ctx, CXCursor cursor);
+void emit_enum_decl(Context& ctx, CXCursor cursor);
 
 int main(int argc, char** argv)
 {
@@ -96,6 +99,18 @@ int main(int argc, char** argv)
             emit_function_decl(ctx, c);
             break;
 
+        case CXCursor_StructDecl:
+            emit_struct_decl(ctx, c);
+            break;
+
+        case CXCursor_TypedefDecl:
+            emit_typedef_decl(ctx, c);
+            break;
+
+        case CXCursor_EnumDecl:
+            emit_enum_decl(ctx, c);
+            break;
+
         default: {
             std::cout << "[ERROR] TODO: " << "Cursor '" << clang_getCursorSpelling(c) << "' of kind '" << clang_getCursorKindSpelling(clang_getCursorKind(c)) << "'\n";
             break;
@@ -108,6 +123,30 @@ int main(int argc, char** argv)
 
     clang_disposeTranslationUnit(unit);
     clang_disposeIndex(index);
+}
+
+void emit_struct_decl(Context& ctx, CXCursor cursor) {
+    auto name = clang_getCString(clang_getCursorSpelling(cursor));
+    if (name == nullptr)
+        return;
+
+    ctx.cheez_file << name << " :: struct {}\n";
+}
+
+void emit_typedef_decl(Context& ctx, CXCursor cursor) {
+    auto name = clang_getCString(clang_getCursorSpelling(cursor));
+    if (name == nullptr)
+        return;
+
+    //ctx.cheez_file << name << " :: struct {}\n";
+}
+
+void emit_enum_decl(Context& ctx, CXCursor cursor) {
+    auto name = clang_getCString(clang_getCursorSpelling(cursor));
+    if (name == nullptr)
+        return;
+
+    ctx.cheez_file << name << " :: enum {}\n";
 }
 
 std::string get_anonymous_param_name(int index) {
