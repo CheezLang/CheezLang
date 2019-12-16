@@ -86,74 +86,74 @@ Main :: () {
         glClear(GL_COLOR_BUFFER_BIT)
 
         //
-        begin_frame()
+        // begin_frame()
 
-        if open {
-            imvec2_zero := ImVec2_ImVec2()
-            size := ImVec2_ImVec2()
-            opt_fullscreen := opt_fullscreen_persistant
+        // if open {
+        //     imvec2_zero := ImVec2_ImVec2()
+        //     size := ImVec2_ImVec2()
+        //     opt_fullscreen := opt_fullscreen_persistant
 
-            // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-            // because it would be confusing to have two docking targets within each others.
-            window_flags := @bin_or(
-                i32(ImGuiWindowFlags_.MenuBar),
-                i32(ImGuiWindowFlags_.None))
+        //     // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+        //     // because it would be confusing to have two docking targets within each others.
+        //     window_flags := @bin_or(
+        //         i32(ImGuiWindowFlags_.MenuBar),
+        //         i32(ImGuiWindowFlags_.None))
 
-            if opt_fullscreen {
-                viewport := igGetMainViewport()
-                igSetNextWindowPos(&viewport.Pos, 0, imvec2_zero)
-                igSetNextWindowSize(&viewport.Size, 0)
-                igSetNextWindowViewport(viewport.ID)
-                igPushStyleVarFloat(cast ImGuiStyleVar_.WindowRounding, 0)
-                igPushStyleVarFloat(cast ImGuiStyleVar_.WindowBorderSize, 0)
-                window_flags = window_flags | @bin_or(
-                    i32(ImGuiWindowFlags_.NoBackground),
-                    i32(ImGuiWindowFlags_.NoTitleBar),
-                    i32(ImGuiWindowFlags_.NoCollapse),
-                    i32(ImGuiWindowFlags_.NoResize),
-                    i32(ImGuiWindowFlags_.NoMove),
-                    i32(ImGuiWindowFlags_.NoBringToFrontOnFocus),
-                    i32(ImGuiWindowFlags_.NoNavFocus))
-            }
+        //     if opt_fullscreen {
+        //         viewport := igGetMainViewport()
+        //         igSetNextWindowPos(&viewport.Pos, 0, imvec2_zero)
+        //         igSetNextWindowSize(&viewport.Size, 0)
+        //         igSetNextWindowViewport(viewport.ID)
+        //         igPushStyleVarFloat(cast ImGuiStyleVar_.WindowRounding, 0)
+        //         igPushStyleVarFloat(cast ImGuiStyleVar_.WindowBorderSize, 0)
+        //         window_flags = window_flags | @bin_or(
+        //             i32(ImGuiWindowFlags_.NoBackground),
+        //             i32(ImGuiWindowFlags_.NoTitleBar),
+        //             i32(ImGuiWindowFlags_.NoCollapse),
+        //             i32(ImGuiWindowFlags_.NoResize),
+        //             i32(ImGuiWindowFlags_.NoMove),
+        //             i32(ImGuiWindowFlags_.NoBringToFrontOnFocus),
+        //             i32(ImGuiWindowFlags_.NoNavFocus))
+        //     }
 
-            igPushStyleVarVec2(cast ImGuiStyleVar_.WindowPadding, imvec2_zero)
-            igBegin("DockSpace Demo", &open, cast window_flags)
-            // igBegin("DockSpace Demo", &open, cast ImGuiWindowFlags_.None)
-            igPopStyleVar(1)
+        //     igPushStyleVarVec2(cast ImGuiStyleVar_.WindowPadding, imvec2_zero)
+        //     igBegin("DockSpace Demo", &open, cast window_flags)
+        //     // igBegin("DockSpace Demo", &open, cast ImGuiWindowFlags_.None)
+        //     igPopStyleVar(1)
 
-            if opt_fullscreen then igPopStyleVar(2)
+        //     if opt_fullscreen then igPopStyleVar(2)
 
-            // DockSpace
-            imgui_io := igGetIO()
-            if @bin_and(imgui_io.ConfigFlags, i32(ImGuiConfigFlags_.DockingEnable)) != 0 {
-                dockspace_id := igGetIDStr("MyDockSpace"c)
-                igDockSpace(0, size, dockspace_flags, null)
-            }
+        //     // DockSpace
+        //     imgui_io := igGetIO()
+        //     if @bin_and(imgui_io.ConfigFlags, i32(ImGuiConfigFlags_.DockingEnable)) != 0 {
+        //         dockspace_id := igGetIDStr("MyDockSpace"c)
+        //         igDockSpace(0, size, dockspace_flags, null)
+        //     }
 
-            igEnd()
-        }
+        //     igEnd()
+        // }
 
-        // if show_demo_window then
-        //     igShowDemoWindow(&show_demo_window)
+        // // if show_demo_window then
+        // //     igShowDemoWindow(&show_demo_window)
 
 
-        {
-            open := true
-            igBegin("Settings", &open, cast ImGuiWindowFlags_.None)
+        // {
+        //     open := true
+        //     igBegin("Settings", &open, cast ImGuiWindowFlags_.None)
 
-            igColorPicker3("clear color", cast(&float)&clear_color, 0)
+        //     igColorPicker3("clear color", cast(&float)&clear_color, 0)
 
-            igEnd()
-        }
-        {
-            open := true
-            igBegin("Settings2", &open, cast ImGuiWindowFlags_.None)
+        //     igEnd()
+        // }
+        // {
+        //     open := true
+        //     igBegin("Settings2", &open, cast ImGuiWindowFlags_.None)
 
-            igColorPicker3("clear color", cast(&float)&clear_color, 0)
+        //     igColorPicker3("clear color", cast(&float)&clear_color, 0)
 
-            igEnd()
-        }
-        end_frame()
+        //     igEnd()
+        // }
+        // end_frame()
 
         // present image
         glfwSwapBuffers(window)

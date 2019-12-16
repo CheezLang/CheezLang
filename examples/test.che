@@ -8,7 +8,7 @@
 // import examples.pathtracer
 // import examples.print_any
 // import examples.command_line_parser
-import examples.ShmupEngine.src.main
+// import examples.ShmupEngine.src.main
 //import compiler.cli
 // import compiler.compiler_test
 
@@ -23,6 +23,26 @@ import examples.ShmupEngine.src.main
 // import tests.other.test1
 // import "examples/project_euler/018_maximum_path_sum_1"
 // import bugs.bug1
+
+#lib("D:\Programming\CheezLang\gen\Test\x64\Debug\Test.lib")
+io  :: import std.io
+
+Foo :: struct #copy {
+    x: i32
+    y: i32
+    z: i32
+}
+
+foo :: (a: i64, b: i64, c: i64) -> i32;
+foo_che :: (f: Foo) -> i32 {
+    i := int(f.y) | @bin_lsl(_, 32) | @bin_or(int(f.x))
+    return foo(i, cast f.z, 0)
+}
+
+Main :: () {
+    f := Foo(2, 3, 4)
+    io.println(foo_che(f))
+}
 
 /*
 #test_expect_output("")

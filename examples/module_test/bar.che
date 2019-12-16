@@ -1,7 +1,0 @@
-c :: import std.c
-
-barrr ::  () {
-    c.puts(@function_name())
-}
-
-test :: () {}

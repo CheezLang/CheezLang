@@ -11,7 +11,8 @@
         "*.che": "cheezlang",
         "xstring": "cpp",
         "cstdio": "cpp",
-        "shlwapi.h": "c"
+        "shlwapi.h": "c",
+        "test.h": "c"
     },
     "editor.wordBasedSuggestions": true
 }
