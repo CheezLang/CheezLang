@@ -15,6 +15,12 @@ impl Printable for CXString {
     }
 }
 
+impl CXString {
+    get_length :: (ref Self) -> int {
+        return C.strlen(clang_getCStringHelper(&self))
+    }
+}
+
 impl Drop for CXString {
     drop :: (ref Self) {
         clang_disposeStringHelper(&self)
@@ -32,7 +38,6 @@ GenContext :: struct {
     c_file            : String
     buffer            : String
     requires_wrapper  : bool   = false
-    args_with_wrapper : int    = 0
     param_index       : int    = 0
     return_type_is_struct := false
 }
@@ -65,6 +70,26 @@ Main :: () {
     cursor : CXCursor = default
     clang_getTranslationUnitCursor(&cursor, cx_translation_unit)
 
+    ctx := GenContext(
+        cheez_file = String.empty()
+        c_file     = String.empty()
+        buffer     = String.empty()
+    )
+
+    {
+        // std::string header(header_file_path);
+        // size_t last_slash = header.find_last_of('/');
+        // size_t last_backslash = header.find_last_of('\\');
+        // size_t last = -1;
+        // if (last_slash == std::string::npos) last = last_backslash;
+        // if (last_backslash == std::string::npos) last = last_slash;
+        // if (last == std::string::npos) last = 0;
+        // else last += 1;
+        // std::string header_name = header.substr(last);
+        // c_file << "#include \"" << header_name << "\"\n\n";
+        ctx.c_file.appendf("#include `"{}`"`n", options.input.sliceL(options.input.get_length() - 1))
+    }
+
     visitor :: (c: &CXCursor, parent: &CXCursor, client_data: CXClientData) -> CXChildVisitResult {
         ctx := cast(&GenContext) client_data
 
@@ -72,7 +97,12 @@ Main :: () {
         
         match c_kind {
             CXCursorKind.FunctionDecl -> emit_function_decl(<<ctx, c)
-            CXCursorKind.StructDecl   -> emit_struct_decl(<<ctx, c)
+            CXCursorKind.StructDecl   -> {
+                name := clang_getCursorSpelling(c)
+                if name.get_length() != 0 {
+                    emit_struct_decl(<<ctx, c, clang_getCursorSpelling(c))
+                }
+            }
             CXCursorKind.TypedefDecl  -> emit_typedef_decl(<<ctx, c)
             CXCursorKind.EnumDecl     -> emit_enum_decl(<<ctx, c)
 
@@ -85,12 +115,6 @@ Main :: () {
 
         return CXChildVisitResult.Continue
     }
-
-    ctx := GenContext(
-        cheez_file = String.empty()
-        c_file     = String.empty()
-        buffer     = String.empty()
-    )
     clang_visitChildrenHelper(&cursor, visitor, &ctx)
 
     {
@@ -104,7 +128,7 @@ Main :: () {
         })
 
         // c file
-        c_file_name := fmt.format("{}/{}.c", [options.out_path.slice(), options.name.slice()]);
+        c_file_name := fmt.format("{}/{}.cpp", [options.out_path.slice(), options.name.slice()]);
         io.printfln("writing file {} ...", c_file_name.slice())
         try_with(fs.write_file(c_file_name.slice(), ctx.c_file.slice()), {
             io.printfln("writing file {} failed", cheez_file_name.slice())
@@ -112,63 +136,225 @@ Main :: () {
     }
 }
 
-emit_function_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
-    ctx.requires_wrapper = false
-    ctx.args_with_wrapper = 0
+emit_struct_decl :: (ctx: ref GenContext, cursor: &CXCursor, name: CXString) {
+    // io.printfln("[ERROR] Unhandled cursor '{}' of kind '{}'", (name, clang_getCursorKindSpelling(cursor.kind)))
 
-    function_type := clang_getCursorType(cursor)
-    return_type   := clang_getResultType(function_type)
+    ctx.cheez_file.appendf("{} :: struct ``{`n", name)
 
-    // check if return type is struct
-    ctx.return_type_is_struct = check_type_struct(ctx, return_type)
+    visit_struct_members(cursor, ctx, {
+        member_name := clang_getCursorSpelling(c)
+        member_type := clang_getCursorType(c)
 
-    ctx.cheez_file.appendf("{} :: (", clang_getCursorSpelling(cursor))
-    if ctx.return_type_is_struct {
-        ctx.cheez_file.append_string("ret: &")
-        emit_c_type(ctx, return_type, true, true)
-    }
+        ctx.cheez_file.appendf("    {} : ", member_name)
+        emit_c_type(ctx, member_type, false, false)
+        ctx.cheez_file.append_string("`n")
+    })
 
-    visitor :: (c: &CXCursor, parent: &CXCursor, client_data: CXClientData) -> CXChildVisitResult {
-        if int(c.kind) != int(CXCursorKind.ParmDecl) {
-            return CXChildVisitResult.Continue
-        }
-
-        ctx := ref <<cast(&GenContext) client_data
-        defer { ctx.param_index += 1 }
-
-        if ctx.param_index > 1 or ctx.return_type_is_struct {
-            ctx.cheez_file.append_string(", ")
-        }
-
-        ctx.cheez_file.appendf("p{}: ", ctx.param_index - 1)
-        emit_c_type(ctx, clang_getCursorType(c), true)
-
-        return CXChildVisitResult.Continue
-    }
-
-    ctx.param_index = 1
-    clang_visitChildrenHelper(cursor, visitor, &ctx)
-
-    ctx.cheez_file.append_string(")")
-
-    if !ctx.return_type_is_struct {
-        ctx.cheez_file.appendf(" -> ", ())
-        emit_c_type(ctx, return_type, true)
-    }
-
-    ctx.cheez_file.append_string(";`n")
-}
-
-emit_struct_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
-
+    ctx.cheez_file.appendf("}`n", ())
 }
 
 emit_typedef_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+    elo          := clang_getTypedefDeclUnderlyingType(<<cursor)
+    actual_type  := clang_Type_getNamedType(elo)
+    type_decl    := clang_getTypeDeclaration(actual_type)
 
+    match type_decl.kind {
+        CXCursorKind.StructDecl -> {
+            struct_name := clang_getCursorSpelling(&type_decl)
+
+            if struct_name.get_length() == 0{
+                emit_struct_decl(ctx, &type_decl, clang_getCursorSpelling(cursor))
+            }
+        }
+    }
 }
 
 emit_enum_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
 
+}
+
+emit_function_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+    ctx.requires_wrapper = false
+
+    function_type := clang_getCursorType(cursor)
+    return_type   := clang_getResultType(function_type)
+
+    // check if return type or any param is struct
+    ctx.return_type_is_struct = check_type_struct(ctx, return_type)
+    if ctx.return_type_is_struct {
+        ctx.requires_wrapper = true
+    }
+    visit_parameters(cursor, ctx, {
+        if check_type_struct(ctx, clang_getCursorType(c)) {
+            ctx.requires_wrapper = true
+        }
+    })
+
+    // bind func
+    {
+        if ctx.requires_wrapper {
+            ctx.cheez_file.append_string("__bind__")
+        }
+        ctx.cheez_file.appendf("{} :: (", clang_getCursorSpelling(cursor))
+        if ctx.return_type_is_struct {
+            ctx.cheez_file.append_string("ret: &")
+            emit_c_type(ctx, return_type, true, true)
+        }
+
+        visit_parameters(cursor, ctx, {
+            if ctx.param_index > 0 or ctx.return_type_is_struct {
+                ctx.cheez_file.append_string(", ")
+            }
+
+            ctx.cheez_file.appendf("p{}: ", ctx.param_index)
+            emit_c_type(ctx, clang_getCursorType(c), true)
+        })
+
+        ctx.cheez_file.append_string(")")
+
+        if !ctx.return_type_is_struct {
+            ctx.cheez_file.appendf(" -> ", ())
+            emit_c_type(ctx, return_type, true)
+        }
+
+        ctx.cheez_file.append_string(";`n")
+    }
+    
+    // wrapper
+    if ctx.requires_wrapper {
+        ctx.cheez_file.appendf("{} :: (", clang_getCursorSpelling(cursor))
+
+        // generate param list
+        visit_parameters(cursor, ctx, {
+            if ctx.param_index > 0 {
+                ctx.cheez_file.append_string(", ")
+            }
+
+            ctx.cheez_file.appendf("p{}: ", ctx.param_index)
+            emit_c_type(ctx, clang_getCursorType(c), true, true)
+        })
+
+        ctx.cheez_file.append_string(") -> ")
+        emit_c_type(ctx, return_type, true, true)
+        ctx.cheez_file.append_string(" {`n")
+
+        // generate body
+        if ctx.return_type_is_struct {
+            ctx.cheez_file.append_string("    ret: ")
+            emit_c_type(ctx, return_type, true, true)
+            ctx.cheez_file.append_string("`n    ")
+        } else if int(return_type.kind) != int(CXTypeKind.Void) {
+            ctx.cheez_file.append_string("    return ")
+        } else {
+            ctx.cheez_file.append_string("    ")
+        }
+
+        // call bind func
+        ctx.cheez_file.appendf("__bind__{}(", clang_getCursorSpelling(cursor))
+
+        if ctx.return_type_is_struct {
+            ctx.cheez_file.append_string("&ret")
+        }
+
+        visit_parameters(cursor, ctx, {
+            if ctx.param_index > 0 or ctx.return_type_is_struct {
+                ctx.cheez_file.append_string(", ")
+            }
+
+            if check_type_struct(ctx, clang_getCursorType(c)) {
+                ctx.cheez_file.append_string("&")
+            }
+
+            ctx.cheez_file.appendf("p{}", ctx.param_index)
+        })
+
+        // return result
+        if ctx.return_type_is_struct {
+            ctx.cheez_file.append_string(")`n    return ret")
+        } else {
+            ctx.cheez_file.append_string(")")
+        }
+
+        ctx.cheez_file.append_string("`n}`n")
+    }
+
+    if ctx.requires_wrapper {
+        emit_function_c_decl(ctx, cursor)
+    }
+}
+
+emit_function_c_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+    function_type := clang_getCursorType(cursor)
+    return_type   := clang_getResultType(function_type)
+
+    visit_parameters(cursor, ctx, {
+        ctx.c_file.appendf("using {}_p{}_t = {};`n", (
+            clang_getCursorSpelling(parent),
+            ctx.param_index,
+            clang_getTypeSpelling(clang_getCursorType(c))))
+    })
+
+    ctx.c_file.append_string("extern `"C`" ");
+
+    // return type
+    if ctx.return_type_is_struct {
+        ctx.c_file.append_string("void")
+    } else {
+        ctx.c_file.appendf("{}", clang_getTypeSpelling(return_type))
+    }
+
+    // function name
+    ctx.c_file.appendf(" __bind__{}(", clang_getCursorSpelling(cursor))
+
+    // return param
+    if ctx.return_type_is_struct {
+        ctx.c_file.appendf("{}* ret", clang_getTypeSpelling(return_type))
+    }
+
+    visit_parameters(cursor, ctx, {
+        if ctx.param_index > 0 or ctx.return_type_is_struct {
+            ctx.c_file.append_string(", ")
+        }
+
+        // param type
+        ctx.c_file.appendf("{}_p{}_t", (
+            clang_getCursorSpelling(parent),
+            ctx.param_index))
+
+        if check_type_struct(ctx, clang_getCursorType(c)) {
+            ctx.c_file.append_string("*")
+        }
+
+        ctx.c_file.appendf(" p{}", ctx.param_index)
+    })
+
+    ctx.c_file.append_string(") {`n")
+
+    // call original function
+    if ctx.return_type_is_struct {
+        ctx.c_file.append_string("    *ret = ")
+    } else if int(return_type.kind) != int(CXTypeKind.Void) {
+        ctx.c_file.append_string("    return ")
+    } else {
+        ctx.c_file.append_string("    ")
+    }
+
+    ctx.c_file.appendf("{}(", clang_getCursorSpelling(cursor))
+
+    // args
+    visit_parameters(cursor, ctx, {
+        if ctx.param_index > 0 {
+            ctx.c_file.append_string(", ")
+        }
+
+        if check_type_struct(ctx, clang_getCursorType(c)) {
+            ctx.c_file.append_string("*")
+        }
+
+        ctx.c_file.appendf("p{}", ctx.param_index)
+    })
+
+    ctx.c_file.append_string(");`n}`n")
 }
 
 check_type_struct :: (ctx: ref GenContext, typ: CXType) -> bool {
@@ -243,6 +429,12 @@ emit_c_type :: (ctx: ref GenContext, typ: CXType, is_func_param: bool, behind_po
             emit_c_type(ctx, target_type, is_func_param, true)
         }
 
+        Elaborated -> {
+            actual_type := clang_Type_getNamedType(typ)
+            type_decl   := clang_getTypeDeclaration(actual_type)
+            ctx.cheez_file.appendf("{}", clang_getCursorSpelling(&type_decl))
+        }
+
         Typedef -> {
             typedef_decl := clang_getTypeDeclaration(typ)
             elo          := clang_getTypedefDeclUnderlyingType(typedef_decl)
@@ -264,4 +456,32 @@ emit_c_type :: (ctx: ref GenContext, typ: CXType, is_func_param: bool, behind_po
             io.printfln("[ERROR] Failed to translate type '{}' ({})", (clang_getTypeSpelling(typ), clang_getTypeKindSpelling(typ.kind)))
         }
     }
+}
+
+visit_parameters :: (cursor: Code, ctx: Code, code: Code) #macro {
+    @insert(ctx).param_index = 0
+    clang_visitChildrenHelper(@insert(cursor),
+        (c, parent, client_data) => {
+            if int(c.kind) == int(CXCursorKind.ParmDecl) {
+                ctx := ref <<cast(&GenContext) client_data
+                @insert(code, link=[c, parent, ctx])
+                ctx.param_index += 1
+            }
+            CXChildVisitResult.Continue
+        },
+        &@insert(ctx))
+}
+
+visit_struct_members :: (cursor: Code, ctx: Code, code: Code) #macro {
+    @insert(ctx).param_index = 0
+    clang_visitChildrenHelper(@insert(cursor),
+        (c, parent, client_data) => {
+            if int(c.kind) == int(CXCursorKind.FieldDecl) {
+                ctx := ref <<cast(&GenContext) client_data
+                @insert(code, link=[c, parent, ctx])
+                ctx.param_index += 1
+            }
+            CXChildVisitResult.Continue
+        },
+        &@insert(ctx))
 }

@@ -156,6 +156,10 @@ std::string get_anonymous_param_name(int index) {
     return ss.str();
 }
 
+using uiae = int;
+
+void test(uiae);
+
 void emit_type(Context& ctx, const CXType& type, bool behind_pointer = false) {
     long long size = clang_Type_getSizeOf(type);
 
@@ -199,6 +203,10 @@ void emit_type(Context& ctx, const CXType& type, bool behind_pointer = false) {
         (*ctx.buffer) << "&";
         emit_type(ctx, target_type, true);
         break;
+    }
+
+    case CXTypeKind::CXType_Elaborated: {
+
     }
 
     case CXTypeKind::CXType_Typedef: {
