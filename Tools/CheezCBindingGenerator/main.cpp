@@ -188,6 +188,8 @@ void emit_type(Context& ctx, const CXType& type, bool behind_pointer = false) {
         auto array_size = clang_getArraySize(type);
         (*ctx.buffer) << "&";
         emit_type(ctx, target_type);
+
+        clang_getEnumConstantDeclValue
         break;
     }
 

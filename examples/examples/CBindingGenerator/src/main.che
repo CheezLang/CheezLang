@@ -28,9 +28,12 @@ impl Drop for CXString {
 }
 
 GenOptions :: struct {
-    input    : String
-    out_path : String
-    name     : String
+    input        : String
+    out_path     : String
+    name         : String
+    no_structs   := false
+    no_enums     := false
+    no_functions := false
 }
 
 GenContext :: struct {
@@ -40,6 +43,7 @@ GenContext :: struct {
     requires_wrapper  : bool   = false
     param_index       : int    = 0
     return_type_is_struct := false
+    options           : ref GenOptions
 }
 
 Main :: () {
@@ -74,6 +78,7 @@ Main :: () {
         cheez_file = String.empty()
         c_file     = String.empty()
         buffer     = String.empty()
+        options    = <<options
     )
 
     {
@@ -97,14 +102,23 @@ Main :: () {
         
         match c_kind {
             CXCursorKind.FunctionDecl -> emit_function_decl(<<ctx, c)
+            CXCursorKind.TypedefDecl  -> emit_typedef_decl(<<ctx, c)
             CXCursorKind.StructDecl   -> {
                 name := clang_getCursorSpelling(c)
                 if name.get_length() != 0 {
                     emit_struct_decl(<<ctx, c, clang_getCursorSpelling(c))
                 }
             }
-            CXCursorKind.TypedefDecl  -> emit_typedef_decl(<<ctx, c)
-            CXCursorKind.EnumDecl     -> emit_enum_decl(<<ctx, c)
+            CXCursorKind.EnumDecl     -> {
+                name := clang_getCursorSpelling(c)
+                if name.get_length() != 0 {
+                    emit_enum_decl(<<ctx, c, clang_getCursorSpelling(c))
+                }
+            }
+
+            CXCursorKind.VarDecl -> {
+                // ignore
+            }
 
             _ -> {
                 c_spelling := clang_getCursorSpelling(c)
@@ -136,10 +150,35 @@ Main :: () {
     }
 }
 
+emit_typedef_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+    elo          := clang_getTypedefDeclUnderlyingType(<<cursor)
+    actual_type  := clang_Type_getNamedType(elo)
+    type_decl    := clang_getTypeDeclaration(actual_type)
+
+    match type_decl.kind {
+        CXCursorKind.StructDecl -> {
+            struct_name := clang_getCursorSpelling(&type_decl)
+            if struct_name.get_length() == 0{
+                emit_struct_decl(ctx, &type_decl, clang_getCursorSpelling(cursor))
+            }
+        }
+
+        CXCursorKind.EnumDecl -> {
+            struct_name := clang_getCursorSpelling(&type_decl)
+            if struct_name.get_length() == 0{
+                emit_enum_decl(ctx, &type_decl, clang_getCursorSpelling(cursor))
+            }
+        }
+    }
+}
+
 emit_struct_decl :: (ctx: ref GenContext, cursor: &CXCursor, name: CXString) {
+    if ctx.options.no_structs {
+        return
+    }
     // io.printfln("[ERROR] Unhandled cursor '{}' of kind '{}'", (name, clang_getCursorKindSpelling(cursor.kind)))
 
-    ctx.cheez_file.appendf("{} :: struct ``{`n", name)
+    ctx.cheez_file.appendf("{} :: struct #copy ``{`n", name)
 
     visit_struct_members(cursor, ctx, {
         member_name := clang_getCursorSpelling(c)
@@ -153,31 +192,39 @@ emit_struct_decl :: (ctx: ref GenContext, cursor: &CXCursor, name: CXString) {
     ctx.cheez_file.appendf("}`n", ())
 }
 
-emit_typedef_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
-    elo          := clang_getTypedefDeclUnderlyingType(<<cursor)
-    actual_type  := clang_Type_getNamedType(elo)
-    type_decl    := clang_getTypeDeclaration(actual_type)
-
-    match type_decl.kind {
-        CXCursorKind.StructDecl -> {
-            struct_name := clang_getCursorSpelling(&type_decl)
-
-            if struct_name.get_length() == 0{
-                emit_struct_decl(ctx, &type_decl, clang_getCursorSpelling(cursor))
-            }
-        }
+emit_enum_decl :: (ctx: ref GenContext, cursor: &CXCursor, name: CXString) {
+    if ctx.options.no_enums {
+        return
     }
-}
+    // io.printfln("[ERROR] Unhandled cursor '{}' of kind '{}'", (name, clang_getCursorKindSpelling(cursor.kind)))
 
-emit_enum_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+    ctx.cheez_file.appendf("{} :: enum #copy #repr(`"C`") #tag_type(", name)
+    emit_c_type(ctx, clang_getEnumDeclIntegerType(<<cursor), false)
+    ctx.cheez_file.append_string(") {`n")
 
+    visit_enum_members(cursor, ctx, {
+        member_name := clang_getCursorSpelling(c)
+        member_type := clang_getCursorType(c)
+        member_vaule := clang_getEnumConstantDeclValue(<<c)
+
+        ctx.cheez_file.appendf("    {} = {}`n", (member_name, member_vaule))
+        // ctx.cheez_file.appendf("`n", ())
+    })
+
+    ctx.cheez_file.appendf("}`n", ())
 }
 
 emit_function_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+    if ctx.options.no_functions {
+        return
+    }
+
     ctx.requires_wrapper = false
 
     function_type := clang_getCursorType(cursor)
     return_type   := clang_getResultType(function_type)
+
+    io.printfln("[] {}: {}", (clang_getCursorSpelling(cursor), clang_getTypeSpelling(function_type)))
 
     // check if return type or any param is struct
     ctx.return_type_is_struct = check_type_struct(ctx, return_type)
@@ -463,9 +510,14 @@ visit_parameters :: (cursor: Code, ctx: Code, code: Code) #macro {
     clang_visitChildrenHelper(@insert(cursor),
         (c, parent, client_data) => {
             if int(c.kind) == int(CXCursorKind.ParmDecl) {
+                typ := clang_getCursorType(c)
+                io.printfln("+ {}: {}", (clang_getCursorSpelling(c), clang_getTypeSpelling(typ)))
                 ctx := ref <<cast(&GenContext) client_data
                 @insert(code, link=[c, parent, ctx])
                 ctx.param_index += 1
+            } else {
+                typ := clang_getCursorType(c)
+                io.printfln("- {}: {}   ({})", (clang_getCursorSpelling(c), clang_getTypeSpelling(typ), clang_getCursorKindSpelling(c.kind)))
             }
             CXChildVisitResult.Continue
         },
@@ -477,6 +529,20 @@ visit_struct_members :: (cursor: Code, ctx: Code, code: Code) #macro {
     clang_visitChildrenHelper(@insert(cursor),
         (c, parent, client_data) => {
             if int(c.kind) == int(CXCursorKind.FieldDecl) {
+                ctx := ref <<cast(&GenContext) client_data
+                @insert(code, link=[c, parent, ctx])
+                ctx.param_index += 1
+            }
+            CXChildVisitResult.Continue
+        },
+        &@insert(ctx))
+}
+
+visit_enum_members :: (cursor: Code, ctx: Code, code: Code) #macro {
+    @insert(ctx).param_index = 0
+    clang_visitChildrenHelper(@insert(cursor),
+        (c, parent, client_data) => {
+            if int(c.kind) == int(CXCursorKind.EnumConstantDecl) {
                 ctx := ref <<cast(&GenContext) client_data
                 @insert(code, link=[c, parent, ctx])
                 ctx.param_index += 1

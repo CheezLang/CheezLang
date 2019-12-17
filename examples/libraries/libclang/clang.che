@@ -63,6 +63,13 @@ clang_getTypeDeclarationHelper      :: (ret: &CXCursor, typ: &CXType);
 clang_getTypeDeclaration            :: (typ: CXType) -> CXCursor { gen_binding(&typ) }
 clang_getTypedefDeclUnderlyingTypeHelper :: (ret: &CXType, cursor: &CXCursor);
 clang_getTypedefDeclUnderlyingType       :: (cursor: CXCursor) -> CXType { gen_binding(&cursor) }
+clang_getEnumDeclIntegerTypeHelper  :: (ret: &CXType, cursor: &CXCursor);
+clang_getEnumDeclIntegerType        :: (cursor: CXCursor) -> CXType { gen_binding(&cursor) }
+
+clang_getEnumConstantDeclValueHelper         :: (T: &CXCursor) -> i64;
+clang_getEnumConstantDeclValue               :: (T: CXCursor) -> i64 { gen_binding2(&T) }
+clang_getEnumConstantDeclUnsignedValueHelper :: (T: &CXCursor) -> u64;
+clang_getEnumConstantDeclUnsignedValue       :: (T: CXCursor) -> u64 { gen_binding2(&T) }
 
 gen_binding :: (param: Code) #macro {
     res : @function_type().return_type = default

@@ -35,9 +35,12 @@ C_API void clang_disposeStringHelper(CXString* string) { clang_disposeString(*st
 
 C_API long long clang_Type_getSizeOfHelper(CXType* T) { return clang_Type_getSizeOf(*T); }
 C_API long long clang_getArraySizeHelper(CXType* T) { return clang_getArraySize(*T); }
+C_API long long clang_getEnumConstantDeclValueHelper(CXCursor* T) { return clang_getEnumConstantDeclValue(*T); }
+C_API unsigned long long clang_getEnumConstantDeclUnsignedValueHelper(CXCursor* T) { return clang_getEnumConstantDeclUnsignedValue(*T); }
 C_API void clang_getResultTypeHelper(CXType* ret, CXType* T) { *ret = clang_getResultType(*T); }
 C_API void clang_getArrayElementTypeHelper(CXType* ret, CXType* T) { *ret = clang_getArrayElementType(*T); }
 C_API void clang_getPointeeTypeHelper(CXType* ret, CXType* T) { *ret = clang_getPointeeType(*T); }
 C_API void clang_getTypeDeclarationHelper(CXCursor* ret, CXType* T) { *ret = clang_getTypeDeclaration(*T); }
 C_API void clang_getTypedefDeclUnderlyingTypeHelper(CXType* ret, CXCursor* C) { *ret = clang_getTypedefDeclUnderlyingType(*C); }
 C_API void clang_Type_getNamedTypeHelper(CXType* ret, CXType* T) { *ret = clang_Type_getNamedType(*T); }
+C_API void clang_getEnumDeclIntegerTypeHelper(CXType* ret, CXCursor* C) { *ret = clang_getEnumDeclIntegerType(*C); }
