@@ -38,6 +38,7 @@ void emit_enum_decl(Context& ctx, CXCursor cursor);
 
 int main(int argc, char** argv)
 {
+    std::cout << "ok\n";
     if (argc != (int) ArgumentIndices::COUNT) {
         std::cerr << "Wrong number of arguments\n";
         return 1;

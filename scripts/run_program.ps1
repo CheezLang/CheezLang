@@ -6,7 +6,8 @@ param (
 )
 
 Push-Location gen
-&"./$file$executable_file_extension" find-tokens -file D:\Programming\CheezLang\gen\uiae.che -type StringLiteral -suffix "c"
+&"./$file$executable_file_extension" -input "c_test.h" -out_path . -name c_binding
+# &"./$file$executable_file_extension" find-tokens -file D:\Programming\CheezLang\gen\uiae.che -type StringLiteral -suffix "c"
 # &"./$file$executable_file_extension" compile -files test.che
 # &"./$file$executable_file_extension" project new -name hello_world3 -type program
 # &"./$file$executable_file_extension" help

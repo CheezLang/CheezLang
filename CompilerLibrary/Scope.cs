@@ -493,6 +493,8 @@ namespace Cheez
             DefineUnaryOperator("-", IntType.LiteralType, a => ((NumberData)a).Negate());
             DefineUnaryOperator("-", FloatType.LiteralType, a => ((NumberData)a).Negate());
 
+            DefineBinaryOperator(new BuiltInBinaryOperator("+", CheezType.StringLiteral, CheezType.StringLiteral, CheezType.StringLiteral, (a, b) => $"{a}{b}"));
+
             DefineBinaryOperator(new BuiltInBinaryOperator("+", IntType.LiteralType, IntType.LiteralType, IntType.LiteralType, (a, b) => (NumberData)a + (NumberData)b));
             DefineBinaryOperator(new BuiltInBinaryOperator("-", IntType.LiteralType, IntType.LiteralType, IntType.LiteralType, (a, b) => (NumberData)a - (NumberData)b));
             DefineBinaryOperator(new BuiltInBinaryOperator("*", IntType.LiteralType, IntType.LiteralType, IntType.LiteralType, (a, b) => (NumberData)a * (NumberData)b));

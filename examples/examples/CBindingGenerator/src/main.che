@@ -1,0 +1,267 @@
+use import std.printable
+use import std.string
+io  :: import std.io
+C   :: import std.c
+fs  :: import std.io.fs
+fmt :: import std.fmt
+
+use import clap.clap
+use import libclang.clang
+
+impl Printable for CXString {
+    print :: (ref Self, str: ref String, format: string) {
+        c_str := clang_getCStringHelper(&self)
+        str.appendf("{}", string(cast c_str, C.strlen(c_str)))
+    }
+}
+
+impl Drop for CXString {
+    drop :: (ref Self) {
+        clang_disposeStringHelper(&self)
+    }
+}
+
+GenOptions :: struct {
+    input    : String
+    out_path : String
+    name     : String
+}
+
+GenContext :: struct {
+    cheez_file        : String
+    c_file            : String
+    buffer            : String
+    requires_wrapper  : bool   = false
+    args_with_wrapper : int    = 0
+    param_index       : int    = 0
+    return_type_is_struct := false
+}
+
+Main :: () {
+    args := get_cmd_args()
+    options := parse_arguments(GenOptions, args.sliceF(1))
+
+    if options == null {
+        io.println(get_help_message(@type_info(GenOptions)))
+        return
+    }
+    options.input.append_char(char(0))
+
+    cx_index := clang_createIndex(0, 0)
+    if cx_index == null {
+        io.println("[ERROR] Failed to clang index")
+        return
+    }
+    defer clang_disposeIndex(cx_index)
+
+    io.printfln("reading file {} ...", options.input.slice())
+    cx_translation_unit := clang_parseTranslationUnit(cx_index, cast options.input.get_raw(), null, 0, null, 0, CXTranslationUnit_Flags.None)
+    if cx_translation_unit == null {
+        io.println("[ERROR] Failed to parse header file")
+        return
+    }
+    defer clang_disposeTranslationUnit(cx_translation_unit)
+
+    cursor : CXCursor = default
+    clang_getTranslationUnitCursor(&cursor, cx_translation_unit)
+
+    visitor :: (c: &CXCursor, parent: &CXCursor, client_data: CXClientData) -> CXChildVisitResult {
+        ctx := cast(&GenContext) client_data
+
+        c_kind := clang_getCursorKindHelper(c)
+        
+        match c_kind {
+            CXCursorKind.FunctionDecl -> emit_function_decl(<<ctx, c)
+            CXCursorKind.StructDecl   -> emit_struct_decl(<<ctx, c)
+            CXCursorKind.TypedefDecl  -> emit_typedef_decl(<<ctx, c)
+            CXCursorKind.EnumDecl     -> emit_enum_decl(<<ctx, c)
+
+            _ -> {
+                c_spelling := clang_getCursorSpelling(c)
+                c_kind_spelling := clang_getCursorKindSpelling(c_kind)
+                io.printfln("[ERROR] Unhandled cursor '{}' of kind '{}'", (c_spelling, c_kind_spelling))
+            }
+        }
+
+        return CXChildVisitResult.Continue
+    }
+
+    ctx := GenContext(
+        cheez_file = String.empty()
+        c_file     = String.empty()
+        buffer     = String.empty()
+    )
+    clang_visitChildrenHelper(&cursor, visitor, &ctx)
+
+    {
+        fs.create_directory(options.out_path.slice())
+
+        // cheez file
+        cheez_file_name := fmt.format("{}/{}.che", [options.out_path.slice(), options.name.slice()]);
+        io.printfln("writing file {} ...", cheez_file_name.slice())
+        try_with(fs.write_file(cheez_file_name.slice(), ctx.cheez_file.slice()), {
+            io.printfln("writing file {} failed", cheez_file_name.slice())
+        })
+
+        // c file
+        c_file_name := fmt.format("{}/{}.c", [options.out_path.slice(), options.name.slice()]);
+        io.printfln("writing file {} ...", c_file_name.slice())
+        try_with(fs.write_file(c_file_name.slice(), ctx.c_file.slice()), {
+            io.printfln("writing file {} failed", cheez_file_name.slice())
+        })
+    }
+}
+
+emit_function_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+    ctx.requires_wrapper = false
+    ctx.args_with_wrapper = 0
+
+    function_type := clang_getCursorType(cursor)
+    return_type   := clang_getResultType(function_type)
+
+    // check if return type is struct
+    ctx.return_type_is_struct = check_type_struct(ctx, return_type)
+
+    ctx.cheez_file.appendf("{} :: (", clang_getCursorSpelling(cursor))
+    if ctx.return_type_is_struct {
+        ctx.cheez_file.append_string("ret: &")
+        emit_c_type(ctx, return_type, true, true)
+    }
+
+    visitor :: (c: &CXCursor, parent: &CXCursor, client_data: CXClientData) -> CXChildVisitResult {
+        if int(c.kind) != int(CXCursorKind.ParmDecl) {
+            return CXChildVisitResult.Continue
+        }
+
+        ctx := ref <<cast(&GenContext) client_data
+        defer { ctx.param_index += 1 }
+
+        if ctx.param_index > 1 or ctx.return_type_is_struct {
+            ctx.cheez_file.append_string(", ")
+        }
+
+        ctx.cheez_file.appendf("p{}: ", ctx.param_index - 1)
+        emit_c_type(ctx, clang_getCursorType(c), true)
+
+        return CXChildVisitResult.Continue
+    }
+
+    ctx.param_index = 1
+    clang_visitChildrenHelper(cursor, visitor, &ctx)
+
+    ctx.cheez_file.append_string(")")
+
+    if !ctx.return_type_is_struct {
+        ctx.cheez_file.appendf(" -> ", ())
+        emit_c_type(ctx, return_type, true)
+    }
+
+    ctx.cheez_file.append_string(";`n")
+}
+
+emit_struct_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+
+}
+
+emit_typedef_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+
+}
+
+emit_enum_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+
+}
+
+check_type_struct :: (ctx: ref GenContext, typ: CXType) -> bool {
+    return match typ.kind {
+        CXTypeKind.Typedef -> {
+            typedef_decl := clang_getTypeDeclaration(typ)
+            elo          := clang_getTypedefDeclUnderlyingType(typedef_decl)
+            actual_type  := clang_Type_getNamedType(elo)
+            type_decl    := clang_getTypeDeclaration(actual_type)
+
+            match type_decl.kind {
+                CXCursorKind.StructDecl -> true
+                _ -> false
+            }
+        }
+
+        _ -> false
+    }
+}
+
+emit_c_type :: (ctx: ref GenContext, typ: CXType, is_func_param: bool, behind_pointer: bool = false) {
+    size := clang_Type_getSizeOf(typ)
+    // io.printfln("emit_c_type({}, {})", (clang_getTypeSpelling(typ), clang_getTypeKindSpelling(typ.kind)))
+
+    use CXTypeKind
+    match typ.kind {
+        Void      -> ctx.cheez_file.appendf("void", ())
+
+        UChar     -> ctx.cheez_file.appendf("u{}", size * 8)
+        UShort    -> ctx.cheez_file.appendf("u{}", size * 8)
+        UInt      -> ctx.cheez_file.appendf("u{}", size * 8)
+        ULong     -> ctx.cheez_file.appendf("u{}", size * 8)
+        ULongLong -> ctx.cheez_file.appendf("u{}", size * 8)
+        Char_S    -> ctx.cheez_file.appendf("i{}", size * 8)
+        Short     -> ctx.cheez_file.appendf("i{}", size * 8)
+        Int       -> ctx.cheez_file.appendf("i{}", size * 8)
+        Long      -> ctx.cheez_file.appendf("i{}", size * 8)
+        LongLong  -> ctx.cheez_file.appendf("i{}", size * 8)
+
+        Float     -> ctx.cheez_file.appendf("f{}", size * 8)
+        Double    -> ctx.cheez_file.appendf("f{}", size * 8)
+
+        // TODO: not working?
+        Bool      -> ctx.cheez_file.appendf("bool", ())
+
+        ConstantArray -> {
+            target_type := clang_getArrayElementType(typ)
+
+            if is_func_param {
+                ctx.cheez_file.append_string("&")
+            } else {
+                target_type_size := clang_getArraySize(typ)
+                ctx.cheez_file.appendf("[{}]", target_type_size)
+            }
+            emit_c_type(ctx, target_type, is_func_param, true)
+        }
+
+        IncompleteArray -> {
+            target_type := clang_getArrayElementType(typ)
+
+            if is_func_param {
+                ctx.cheez_file.append_string("&")
+            } else {
+                ctx.cheez_file.append_string("[0]")
+            }
+            emit_c_type(ctx, target_type, is_func_param, true)
+        }
+
+        Pointer -> {
+            target_type := clang_getPointeeType(typ)
+            ctx.cheez_file.append_string("&")
+            emit_c_type(ctx, target_type, is_func_param, true)
+        }
+
+        Typedef -> {
+            typedef_decl := clang_getTypeDeclaration(typ)
+            elo          := clang_getTypedefDeclUnderlyingType(typedef_decl)
+            actual_type  := clang_Type_getNamedType(elo)
+            type_decl    := clang_getTypeDeclaration(actual_type)
+
+            match type_decl.kind {
+                CXCursorKind.StructDecl if is_func_param and !behind_pointer -> {
+                    ctx.cheez_file.appendf("&{}", clang_getTypeSpelling(typ))
+                }
+
+                _ -> {
+                    ctx.cheez_file.appendf("{}", clang_getTypeSpelling(typ))
+                }
+            }
+        }
+
+        _ -> {
+            io.printfln("[ERROR] Failed to translate type '{}' ({})", (clang_getTypeSpelling(typ), clang_getTypeKindSpelling(typ.kind)))
+        }
+    }
+}
