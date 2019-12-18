@@ -12,6 +12,7 @@
 CXIndex             :: &void
 CXTranslationUnit   :: &void
 CXClientData        :: &void
+CXFile              :: &void
 CXCursorVisitor     :: fn(&CXCursor, &CXCursor, CXClientData) -> CXChildVisitResult
 
 // functions
@@ -25,7 +26,7 @@ clang_parseTranslationUnit          :: (
     num_command_line_args : i32,
     unsaved_files         : &CXUnsavedFile,
     num_unsaved_files     : u32,
-    options               : CXTranslationUnit_Flags) -> CXTranslationUnit;
+    options               : u32) -> CXTranslationUnit;
 clang_disposeTranslationUnit        :: (unit: CXTranslationUnit);
 clang_visitChildrenHelper           :: (cursor: &CXCursor, visitor: CXCursorVisitor, client_data: CXClientData) -> u32;
 
@@ -65,12 +66,52 @@ clang_getTypedefDeclUnderlyingTypeHelper :: (ret: &CXType, cursor: &CXCursor);
 clang_getTypedefDeclUnderlyingType       :: (cursor: CXCursor) -> CXType { gen_binding(&cursor) }
 clang_getEnumDeclIntegerTypeHelper  :: (ret: &CXType, cursor: &CXCursor);
 clang_getEnumDeclIntegerType        :: (cursor: CXCursor) -> CXType { gen_binding(&cursor) }
+clang_getArgTypeHelper              :: (ret: &CXType, T: &CXType, index: u32);
+clang_getArgType                    :: (T: CXType, index: u32) -> CXType {
+    res : CXType = default
+    clang_getArgTypeHelper(&res, &T, index)
+    return res
+}
 
 clang_getEnumConstantDeclValueHelper         :: (T: &CXCursor) -> i64;
 clang_getEnumConstantDeclValue               :: (T: CXCursor) -> i64 { gen_binding2(&T) }
 clang_getEnumConstantDeclUnsignedValueHelper :: (T: &CXCursor) -> u64;
 clang_getEnumConstantDeclUnsignedValue       :: (T: CXCursor) -> u64 { gen_binding2(&T) }
 
+clang_getCursorLocationHelper       :: (ret: &CXSourceLocation, cursor: &CXCursor);
+clang_getCursorLocation             :: (cursor: CXCursor) -> CXSourceLocation { gen_binding(&cursor) }
+clang_Location_isFromMainFileHelper :: (T: &CXSourceLocation) -> i32;
+clang_Location_isFromMainFile       :: (T: CXSourceLocation) -> i32 { gen_binding2(&T) }
+clang_getFileLocationHelper         :: (location: &CXSourceLocation, file: &CXFile, line: &u32, column: &u32, offset: &u32);
+clang_getFileLocation               :: (location: CXSourceLocation) -> (file: CXFile, line: int, column: int, offset: int) {
+    file   : CXFile = default
+    line   : u32    = default
+    column : u32    = default
+    offset : u32    = default
+    clang_getFileLocationHelper(&location, &file, &line, &column, &offset)
+    return file, int(line), int(column), int(offset)
+}
+
+
+clang_Cursor_isExternalSymbol_result :: struct {
+    language     : CXString = default
+    defined_in   : CXString = default
+    is_generated : u32      = default
+}
+clang_Cursor_isExternalSymbolHelper :: (C: &CXCursor, language: &CXString, defined_in: &CXString, is_generated: &u32) -> u32;
+clang_Cursor_isExternalSymbol       :: (C: CXCursor) -> Option[clang_Cursor_isExternalSymbol_result] {
+    result : clang_Cursor_isExternalSymbol_result = default
+    if clang_Cursor_isExternalSymbolHelper(&C, &result.language, &result.defined_in, &result.is_generated) != 0 {
+        return Some(result)
+    } else {
+        return None
+    }
+}
+
+clang_getFileNameHelper             :: (ret: &CXString, cursor: CXFile);
+clang_getFileName                   :: (cursor: CXFile) -> CXString { gen_binding(cursor) }
+
+// binding helpers
 gen_binding :: (param: Code) #macro {
     res : @function_type().return_type = default
     @id(@function_name() + "Helper")(&res, @insert(param))
@@ -102,6 +143,11 @@ CXCursor :: struct #copy {
 CXType :: struct #copy {
     kind : CXTypeKind = CXTypeKind.Invalid
     data : [2]&void   = default
+}
+
+CXSourceLocation :: struct #copy {
+  ptr_data : [2]&void = default
+  int_data : u32      = default
 }
 
 // enums

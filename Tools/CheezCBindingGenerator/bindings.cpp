@@ -44,3 +44,17 @@ C_API void clang_getTypeDeclarationHelper(CXCursor* ret, CXType* T) { *ret = cla
 C_API void clang_getTypedefDeclUnderlyingTypeHelper(CXType* ret, CXCursor* C) { *ret = clang_getTypedefDeclUnderlyingType(*C); }
 C_API void clang_Type_getNamedTypeHelper(CXType* ret, CXType* T) { *ret = clang_Type_getNamedType(*T); }
 C_API void clang_getEnumDeclIntegerTypeHelper(CXType* ret, CXCursor* C) { *ret = clang_getEnumDeclIntegerType(*C); }
+C_API void clang_getArgTypeHelper(CXType* ret, CXType* T, unsigned i) { *ret = clang_getArgType(*T, i); }
+
+C_API void clang_getCursorLocationHelper(CXSourceLocation* ret, CXCursor* C) { *ret = clang_getCursorLocation(*C); }
+C_API int clang_Location_isFromMainFileHelper(CXSourceLocation* location) { return clang_Location_isFromMainFile(*location); }
+C_API void clang_getFileLocationHelper(CXSourceLocation* location, CXFile* file, unsigned* line, unsigned* column, unsigned* offset)
+    { clang_getFileLocation(*location, file, line, column, offset); }
+C_API void clang_getFileNameHelper(CXString* ret, CXFile C) { *ret = clang_getFileName(C); }
+
+C_API unsigned clang_Cursor_isExternalSymbolHelper(CXCursor* C, CXString* language, CXString* definedIn, unsigned* isGenerated)
+    { return clang_Cursor_isExternalSymbol(*C, language, definedIn, isGenerated); }
+
+void test() {
+    
+}

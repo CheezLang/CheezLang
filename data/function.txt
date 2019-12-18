@@ -1,0 +1,10 @@
+i^x
+x * sin x + i * x * cos x
+x^x
+(x * (mx * 10 - 5)^x) / (x * (mx * 10 - 5)^x + 1)
+mx*(1 - x^2)^0.5 + (1-mx)*(1 + x^2)^0.5
+(1 - (x-mxw)^2)^0.5 + myw
+e^(i * pi * 2 * t * 0.5)
+
+i^x
+sin x * sin t
