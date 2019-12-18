@@ -1,5 +1,5 @@
 // import examples.trait_function_call_performance
-// import examples.glfw3_example
+import examples.glfw3_example
 // import examples.graphyfier.graphyfier
 // import examples.pathtracer2.main
 // import examples.geometry_draw_thingy
@@ -10,7 +10,7 @@
 // import examples.command_line_parser
 // import examples.ShmupEngine.src.main
 // import examples.CBindingGenerator.src.main
-//import compiler.cli
+// import compiler.cli
 // import compiler.compiler_test
 
 // import examples.postfix
@@ -24,14 +24,6 @@
 // import tests.other.test1
 // import "examples/project_euler/018_maximum_path_sum_1"
 // import bugs.bug1
-
-#lib("D:\Programming\C++ Projects\imgui\imgui-vs\x64\Release\cimgui.lib")
-
-use import imgui.cimgui_binding
-
-Main :: () {
-
-}
 
 /*
 #test_expect_output("")

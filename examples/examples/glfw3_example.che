@@ -7,9 +7,12 @@ use import opengl.opengl
 use import opengl.constants
 use import opengl.types
 use import opengl.functions
-use import imgui.imgui
-use import imgui.types
-use import imgui.functions
+
+
+use import imgui.imgui_binding
+use import imgui.cimgui_binding
+use import imgui.cimgui_glfw_binding
+use import imgui.cimgui_opengl3_binding
 
 #export_scope
 
@@ -112,13 +115,6 @@ end_frame :: () {
     igEndFrame()
     igRender()
     ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData())
-
-    if @bin_and(io.ConfigFlags, i32(ImGuiConfigFlags_.ImGuiConfigFlags_ViewportsEnable)) != 0 {
-        backup_current_context := glfwGetCurrentContext()
-        igUpdatePlatformWindows()
-        igRenderPlatformWindowsDefault()
-        glfwMakeContextCurrent(backup_current_context)
-    }
 }
 
 init_imgui :: (window: &GLFWwindow) -> bool {
@@ -129,19 +125,7 @@ init_imgui :: (window: &GLFWwindow) -> bool {
         return false
     }
 
-    use ImGuiConfigFlags_
-    imgui_io := igGetIO()
-    imgui_io.ConfigFlags = @bin_or(imgui_io.ConfigFlags,
-        i32(ImGuiConfigFlags_DockingEnable),
-        i32(ImGuiConfigFlags_ViewportsEnable))
-
     igStyleColorsDark(null)
-
-    if @bin_and(imgui_io.ConfigFlags, i32(ImGuiConfigFlags_ViewportsEnable)) != 0 {
-        style := igGetStyle()
-        style.WindowRounding = 0.0
-        style.Colors[int(ImGuiCol_.ImGuiCol_WindowBg)].w = 1.0
-    }
 
     //
     if !ImGui_ImplGlfw_InitForOpenGL(window, true) {

@@ -1,16 +1,18 @@
 #export_scope
-strlen :: (str: c_string) -> i32;
-printf :: (format: c_string) #varargs;
-sprintf :: (buff: c_string, f: c_string) -> i32 #varargs;
-puts :: (str: c_string);
-scanf :: (format: c_string) -> i32 #varargs;
-gets :: (string: c_string) -> c_string;
-getchar :: () -> i32;
-strtol :: (str: c_string, endptr: &&char8, base: i32) -> int;
-strtod :: (str: c_string, endptr: &&char8) -> double;
-rand :: () -> i32;
-srand :: (seed: u32);
-time :: (timer: &void) -> u32;
+strlen    :: (str: c_string) -> u64;
+strcmp    :: (a: c_string, b: c_string) -> i32;
+strncmp   :: (a: c_string, b: c_string, count: u64) -> i32;
+printf    :: (format: c_string) #varargs;
+sprintf   :: (buff: c_string, f: c_string) -> i32 #varargs;
+puts      :: (str: c_string);
+scanf     :: (format: c_string) -> i32 #varargs;
+gets      :: (string: c_string) -> c_string;
+getchar   :: () -> i32;
+strtol    :: (str: c_string, endptr: &&char8, base: i32) -> int;
+strtod    :: (str: c_string, endptr: &&char8) -> double;
+rand      :: () -> i32;
+srand     :: (seed: u32);
+time      :: (timer: &void) -> u32;
 _fullpath :: (absPath: &char8, relPath: &char8, maxLength: int) -> &char8;
 
 // memory

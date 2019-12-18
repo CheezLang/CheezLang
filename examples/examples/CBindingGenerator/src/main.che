@@ -1,5 +1,6 @@
 use import std.printable
 use import std.string
+use import std.util
 io  :: import std.io
 C   :: import std.c
 fs  :: import std.io.fs
@@ -13,13 +14,13 @@ debug_print_all :: false
 impl Printable for CXString {
     print :: (ref Self, str: ref String, format: string) {
         c_str := clang_getCStringHelper(&self)
-        str.appendf("{}", string(cast c_str, C.strlen(c_str)))
+        str.appendf("{}", string(cast c_str, cast C.strlen(c_str)))
     }
 }
 
 impl CXString {
     get_length :: (ref Self) -> int {
-        return C.strlen(clang_getCStringHelper(&self))
+        return cast C.strlen(clang_getCStringHelper(&self))
     }
 }
 
@@ -40,13 +41,16 @@ GenOptions :: struct {
 }
 
 GenContext :: struct {
-    cheez_file        : String
-    c_file            : String
-    buffer            : String
-    requires_wrapper  : bool   = false
-    param_index       : int    = 0
-    return_type_is_struct := false
-    options           : ref GenOptions
+    cheez_file              : String
+    c_file                  : String
+    buffer                  : String
+    requires_wrapper        : bool   = false
+    param_index             : int    = 0
+    return_type_is_struct   := false
+    options                 : ref GenOptions
+    is_cpp_struct           := false
+    has_members             := false
+    longest_member_name     := 0
 }
 
 Main :: () {
@@ -69,7 +73,7 @@ Main :: () {
     // cmd_line_args_for_clang := []
 
     clang_parseTranslationUnit_options := @bin_or(
-        int(CXTranslationUnit_Flags.Incomplete),
+        //int(CXTranslationUnit_Flags.Incomplete),
         // int(CXTranslationUnit_Flags.SkipFunctionBodies),
         // int(CXTranslationUnit_Flags.KeepGoing),
         // int(CXTranslationUnit_Flags.SingleFileParse),
@@ -116,6 +120,10 @@ Main :: () {
         ctx.c_file.appendf("#include `"{}`"`n", options.input.sliceL(options.input.get_length() - 1))
     }
 
+    {
+        ctx.cheez_file.append_string("#export_scope`n`n")
+    }
+
     visitor :: (c: &CXCursor, parent: &CXCursor, client_data: CXClientData) -> CXChildVisitResult {
         ctx := cast(&GenContext) client_data
 
@@ -123,16 +131,23 @@ Main :: () {
             // skip functions from other files
             source_location := clang_getCursorLocation(<<c)
             if clang_Location_isFromMainFile(source_location) == 0 {
-                file, _, _, _ := clang_getFileLocation(source_location)
-                // io.printfln("Skipping ({}) {} from '{}'",
-                //     (clang_getCursorKindSpelling(c.kind), clang_getCursorSpelling(c), clang_getFileName(file)))
+                file, line, column, _ := clang_getFileLocation(source_location)
+                io.printfln("Skipping ({})`t`t{}`t`tfrom {}:{}:{}",
+                    (clang_getCursorKindSpelling(c.kind), clang_getCursorSpelling(c), clang_getFileName(file), line, column))
                 return CXChildVisitResult.Continue
             }
         }
 
         match c.kind {
             _ if debug_print_all -> {
-                io.printfln("[ERROR] Unhandled cursor '{}' of kind '{}'", (clang_getCursorSpelling(c), clang_getCursorKindSpelling(c.kind)))
+                source_location := clang_getCursorLocation(<<c)
+                file, line, column, _ := clang_getFileLocation(source_location)
+                io.printfln("[ERROR] Unhandled cursor ({})`t`t'{}'`t`tat {}:{}:{}", (
+                        clang_getCursorKindSpelling(c.kind),
+                        clang_getCursorSpelling(c),
+                        clang_getFileName(file),
+                        line, column
+                    ))
             }
 
             CXCursorKind.FunctionDecl -> emit_function_decl(<<ctx, c)
@@ -168,9 +183,14 @@ Main :: () {
             CXCursorKind.Namespace -> {}
 
             _ -> {
-                c_spelling := clang_getCursorSpelling(c)
-                c_kind_spelling := clang_getCursorKindSpelling(c.kind)
-                io.printfln("[ERROR] Unhandled cursor '{}' of kind '{}'", (c_spelling, c_kind_spelling))
+                source_location := clang_getCursorLocation(<<c)
+                file, line, column, _ := clang_getFileLocation(source_location)
+                io.printfln("[ERROR] Unhandled cursor ({})`t`t'{}'`t`tat {}:{}:{}", (
+                        clang_getCursorKindSpelling(c.kind),
+                        clang_getCursorSpelling(c),
+                        clang_getFileName(file),
+                        line, column
+                    ))
             }
         }
 
@@ -216,6 +236,12 @@ emit_typedef_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
                 emit_enum_decl(ctx, &type_decl, clang_getCursorSpelling(cursor))
             }
         }
+
+        _ -> {
+            ctx.cheez_file.appendf("{} :: ", clang_getCursorSpelling(cursor))
+            emit_c_type(ctx, elo, false)
+            ctx.cheez_file.append_string("`n")
+        }
     }
 }
 
@@ -223,38 +249,138 @@ emit_struct_decl :: (ctx: ref GenContext, cursor: &CXCursor, name: CXString) {
     if ctx.options.no_structs {
         return
     }
-    // io.printfln("[ERROR] Unhandled cursor '{}' of kind '{}'", (name, clang_getCursorKindSpelling(cursor.kind)))
 
-    ctx.cheez_file.appendf("{} :: struct #copy ``{`n", name)
+    name_c := clang_getCStringHelper(&name)
+    name_str := string(cast name_c, cast C.strlen(name_c))
 
+    // if this struct contains any constructors or field with a function type
+    // then we assume it is a c++ struct
+    // and we will emit an empty struct, but tell the user
+    ctx.is_cpp_struct = false
+    ctx.longest_member_name = 0
     visit_struct_members(cursor, ctx, {
         member_name := clang_getCursorSpelling(c)
         member_type := clang_getCursorType(c)
 
-        ctx.cheez_file.appendf("    {} : ", member_name)
-        emit_c_type(ctx, member_type, false, false)
-        ctx.cheez_file.append_string(" = default`n")
+        // if name is same as struct name then its a constructor, so skip it
+        struct_name := clang_getCursorSpelling(parent)
+        struct_name_c := clang_getCStringHelper(&struct_name)
+        member_name_c := clang_getCStringHelper(&member_name)
+        if C.strcmp(struct_name_c, member_name_c) == 0 or
+            int(member_type.kind) == int(CXTypeKind.FunctionProto) or
+            int(member_type.kind) == int(CXTypeKind.FunctionNoProto) or
+            member_name.get_length() == 0 {
+            ctx.is_cpp_struct = true
+        } else {
+            member_name_len := member_name.get_length()
+            if member_name_len > ctx.longest_member_name {
+                ctx.longest_member_name = member_name_len
+            }
+        }
     })
 
-    ctx.cheez_file.appendf("}`n", ())
+    if ctx.is_cpp_struct {
+        source_location := clang_getCursorLocation(<<cursor)
+        file, line, column, _ := clang_getFileLocation(source_location)
+        io.printfln("Generating temporary struct for '{}' because it is probably a c++ type`t`t`t({}:{}:{}:)", (
+            name_str, clang_getFileName(file), line, column
+        ))
+
+        ctx.cheez_file.appendf("/*`n{} :: struct #copy ``{`n    // TODO: {}:{}", (name_str, clang_getFileName(file), line))
+
+        ctx.has_members = true
+        visit_struct_members(cursor, ctx, {
+            member_name := clang_getCursorSpelling(c)
+            member_type := clang_getCursorType(c)
+            member_name_len := member_name.get_length()
+
+            ctx.cheez_file.appendf("`n    {}", member_name)
+            indent(ctx.cheez_file, ctx.longest_member_name - member_name_len)
+            ctx.cheez_file.append_string(" : ")
+            emit_c_type(ctx, member_type, false, false)
+            ctx.cheez_file.append_string(" = default")
+        })
+
+        if ctx.has_members then ctx.cheez_file.append_string("`n")
+        ctx.cheez_file.appendf("}`n*/`n", ())
+    } else {
+        ctx.cheez_file.appendf("{} :: struct #copy ``{", name_str)
+        
+        ctx.has_members = false
+        visit_struct_members(cursor, ctx, {
+            member_name := clang_getCursorSpelling(c)
+            member_type := clang_getCursorType(c)
+            member_name_len := member_name.get_length()
+
+            ctx.cheez_file.appendf("`n    {}", member_name)
+            indent(ctx.cheez_file, ctx.longest_member_name - member_name_len)
+            ctx.cheez_file.append_string(" : ")
+            emit_c_type(ctx, member_type, false, false)
+            ctx.cheez_file.append_string(" = default")
+
+            ctx.has_members = true
+        })
+
+        if ctx.has_members then ctx.cheez_file.append_string("`n")
+        ctx.cheez_file.appendf("}`n", ())
+    }
+
+
 }
 
 emit_enum_decl :: (ctx: ref GenContext, cursor: &CXCursor, name: CXString) {
     if ctx.options.no_enums {
         return
     }
-    // io.printfln("[ERROR] Unhandled cursor '{}' of kind '{}'", (name, clang_getCursorKindSpelling(cursor.kind)))
+
+    {
+        ctx.longest_member_name = 0
+        visit_enum_members(cursor, ctx, {
+            member_name := clang_getCursorSpelling(c)
+            member_type := clang_getCursorType(c)
+
+            struct_name := clang_getCursorSpelling(parent)
+            struct_name_c := clang_getCStringHelper(&struct_name)
+            member_name_c := clang_getCStringHelper(&member_name)
+
+            member_name_len := member_name.get_length()
+
+            if c_string_starts_with(member_name_c, struct_name_c) {
+                member_name_len -= struct_name.get_length()
+            }
+
+            if member_name_len > ctx.longest_member_name {
+                ctx.longest_member_name = member_name_len
+            }
+        })
+    }
 
     ctx.cheez_file.appendf("{} :: enum #copy #repr(`"C`") #tag_type(", name)
     emit_c_type(ctx, clang_getEnumDeclIntegerType(<<cursor), false)
     ctx.cheez_file.append_string(") {`n")
 
     visit_enum_members(cursor, ctx, {
-        member_name := clang_getCursorSpelling(c)
-        member_type := clang_getCursorType(c)
-        member_vaule := clang_getEnumConstantDeclValue(<<c)
+        member_name   := clang_getCursorSpelling(c)
+        member_name_c := clang_getCStringHelper(&member_name)
+        member_type   := clang_getCursorType(c)
+        member_value  := clang_getEnumConstantDeclValue(<<c)
 
-        ctx.cheez_file.appendf("    {} = {}`n", (member_name, member_vaule))
+        struct_name := clang_getCursorSpelling(parent)
+        struct_name_c := clang_getCStringHelper(&struct_name)
+
+        if c_string_starts_with(member_name_c, struct_name_c) {
+            member_name_c = pointer_add(member_name_c, struct_name.get_length())
+        }
+        
+        ctx.cheez_file.append_string("    ")
+        ctx.cheez_file.append_cstring(member_name_c)
+        indent(ctx.cheez_file, ctx.longest_member_name - int(C.strlen(member_name_c)))
+
+        if member_value >= 0 {
+            ctx.cheez_file.appendf(" = 0x{:x}`n", (member_value))
+        } else {
+            ctx.cheez_file.appendf(" = {}`n", (member_value))
+        }
         // ctx.cheez_file.appendf("`n", ())
     })
 
@@ -587,6 +713,26 @@ emit_c_type :: (ctx: ref GenContext, typ: CXType, is_func_param: bool, behind_po
             emit_c_type(ctx, return_type, false)
         }
 
+        FunctionNoProto -> {
+            ctx.cheez_file.append_string("fn(")
+
+            arg_index := 0u32
+            loop {
+                arg_type := clang_getArgType(typ, arg_index)
+                if int(arg_type.kind) == int(Invalid) then break
+
+                if arg_index > 0 {
+                    ctx.cheez_file.append_string(", ")
+                }
+                emit_c_type(ctx, arg_type, false)
+                arg_index += 1
+            }
+
+            ctx.cheez_file.append_string(") -> ")
+            return_type := clang_getResultType(typ)
+            emit_c_type(ctx, return_type, false)
+        }
+
         Elaborated -> {
             actual_type := clang_Type_getNamedType(typ)
             type_decl   := clang_getTypeDeclaration(actual_type)
@@ -614,18 +760,30 @@ emit_c_type :: (ctx: ref GenContext, typ: CXType, is_func_param: bool, behind_po
             type_decl    := clang_getTypeDeclaration(actual_type)
 
             match type_decl.kind {
-                CXCursorKind.StructDecl if is_func_param and !behind_pointer -> {
-                    ctx.cheez_file.appendf("&{}", clang_getTypeSpelling(typ))
+                CXCursorKind.StructDecl -> {
+                    if is_func_param and !behind_pointer {
+                        ctx.cheez_file.appendf("&{}", clang_getTypeSpelling(typ))
+                    } else {
+                        ctx.cheez_file.appendf("{}", clang_getTypeSpelling(typ))
+                    }
                 }
 
                 _ -> {
-                    ctx.cheez_file.appendf("{}", clang_getTypeSpelling(typ))
+                    emit_c_type(ctx, elo, is_func_param, behind_pointer)
                 }
             }
         }
 
         _ -> {
-            io.printfln("[ERROR] Failed to translate type '{}' ({})", (clang_getTypeSpelling(typ), clang_getTypeKindSpelling(typ.kind)))
+            // source_location := clang_getCursorLocation(<<c)
+            // file, line, column, _ := clang_getFileLocation(source_location)
+            // io.printfln("[ERROR] Unhandled type ({}) '{}' at {}:{}:{}", (
+            //         clang_getTypeKindSpelling(typ.kind),
+            //         clang_getTypeSpelling(typ),
+            //         clang_getFileName(file),
+            //         line, column
+            //     ))
+            io.printfln("[ERROR] Unhandled type ({})`t`t'{}'", (clang_getTypeKindSpelling(typ.kind), clang_getTypeSpelling(typ)))
         }
     }
 }
@@ -663,12 +821,13 @@ visit_struct_members :: (cursor: Code, ctx: Code, code: Code) #macro {
     @insert(ctx).param_index = 0
     clang_visitChildrenHelper(@insert(cursor),
         (c, parent, client_data) => {
+            action := CXChildVisitResult.Continue
             if int(c.kind) == int(CXCursorKind.FieldDecl) {
                 ctx := ref <<cast(&GenContext) client_data
                 @insert(code, link=[c, parent, ctx])
                 ctx.param_index += 1
             }
-            CXChildVisitResult.Continue
+            action
         },
         &@insert(ctx))
 }
@@ -685,4 +844,15 @@ visit_enum_members :: (cursor: Code, ctx: Code, code: Code) #macro {
             CXChildVisitResult.Continue
         },
         &@insert(ctx))
+}
+
+indent :: (str: ref String, amount: int) {
+    str.reserve(str.get_length() + amount)
+    for 0..amount {
+        str += " "
+    }
+}
+
+c_string_starts_with :: (str: &char8, pre: &char8) -> bool {
+    return C.strncmp(pre, str, C.strlen(pre)) == 0
 }

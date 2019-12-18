@@ -1,7 +1,13 @@
+#lib("./lib/cimgui.lib")
+
+#export_scope
+
 size_t          :: u64
 ImGuiStorage    :: void
 ImGuiTextFilter :: void
 ImGuiTextBuffer :: void
+ImDrawData      :: void
+ImFontAtlas     :: void
 
 ImVec2_Simple :: struct #copy {
     x : f32 = default
@@ -16,17 +22,13 @@ ImVec4_Simple :: struct #copy {
 ImColor_Simple :: struct #copy {
     Value : ImVec4_Simple = default
 }
-GLFWwindow :: struct #copy {
-}
-SDL_Window :: struct #copy {
-}
 ImVec2_ImVec2 :: () -> &i32;
 ImVec2_destroy :: (_self: &i32) -> void;
 ImVec2_ImVec2Float :: () -> &i32;
 ImVec4_ImVec4 :: () -> &i32;
 ImVec4_destroy :: (_self: &i32) -> void;
 ImVec4_ImVec4Float :: () -> &i32;
-igCreateContext :: () -> &i32;
+igCreateContext :: (shared_font_atlas: &ImFontAtlas) -> &i32;
 igDestroyContext :: (_ctx: &i32) -> void;
 igGetCurrentContext :: () -> &i32;
 igSetCurrentContext :: (_ctx: &i32) -> void;

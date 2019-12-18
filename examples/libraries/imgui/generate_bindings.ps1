@@ -1,0 +1,4 @@
+# &cheez_bindgen.exe -no_includes -name cimgui_opengl3_binding -input "D:\Programming\C++ Projects\imgui\imgui\examples\imgui_impl_opengl3.h" -out_path "D:\Programming\CheezLang\examples\libraries\imgui"
+# &cheez_bindgen.exe -no_includes -name cimgui_glfw_binding -input "D:\Programming\C++ Projects\imgui\imgui\examples\imgui_impl_glfw.h" -out_path "D:\Programming\CheezLang\examples\libraries\imgui"
+&cheez_bindgen.exe -no_includes -name imgui_binding -input "D:\Programming\C++ Projects\imgui\imgui\imgui.h" -out_path "D:\Programming\CheezLang\examples\libraries\imgui"
+# &cheez_bindgen.exe -no_includes -name cimgui_binding -input "D:\Programming\C++ Projects\imgui\cimgui\cimgui.h" -out_path "D:\Programming\CheezLang\examples\libraries\imgui"

@@ -1,5 +1,0 @@
-// #lib("D:/Programming/C++ Projects/imgui-1.73/imgui-vs/x64/Release/cimgui.lib")
-#lib("./cimgui.lib")
-
-use import types
-use import functions

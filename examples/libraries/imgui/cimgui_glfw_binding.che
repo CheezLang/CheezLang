@@ -1,0 +1,15 @@
+use import glfw.glfw3
+
+#export_scope
+
+ImGui_ImplGlfw_InitForOpenGL       :: (window: &GLFWwindow, install_callbacks: bool) -> bool;
+ImGui_ImplGlfw_InitForVulkan       :: (window: &GLFWwindow, install_callbacks: bool) -> bool;
+ImGui_ImplGlfw_Shutdown            :: () -> void;
+ImGui_ImplGlfw_NewFrame            :: () -> void;
+
+// InitXXX function with 'install_callbacks=true': install GLFW callbacks. They will call user's previously installed callbacks, if any.
+// InitXXX function with 'install_callbacks=false': do not install GLFW callbacks. You will need to call them yourself from your own GLFW callbacks.
+ImGui_ImplGlfw_MouseButtonCallback :: (window: &GLFWwindow, button: i32, action: i32, mods: i32) -> void;
+ImGui_ImplGlfw_ScrollCallback      :: (window: &GLFWwindow, xoffset: double, yoffset: double) -> void;
+ImGui_ImplGlfw_KeyCallback         :: (window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) -> void;
+ImGui_ImplGlfw_CharCallback        :: (window: &GLFWwindow, c: u32) -> void;
