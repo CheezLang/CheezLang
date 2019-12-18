@@ -1,0 +1,1 @@
+&cheez_bindgen.exe -no_includes -name glfw_binding -input "./glfw3.h" -out_path .
