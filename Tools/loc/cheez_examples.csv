@@ -1,5 +1,6 @@
 File Name,Lines
 099_largest_exponential.che,1018
+main.che,716
 signed_distance_field_renderer.che,515
 main.che,511
 pathtracer.che,454
@@ -9,15 +10,16 @@ graphyfier.che,339
 geometry_draw_thingy.che,321
 image_processing.che,256
 postfix.che,189
-compiler.che,186
+compiler.che,189
+main.che,175
 018_maximum_path_sum_1.che,155
 misc.che,151
 snake.che,146
-print_any.che,146
+print_any.che,141
 evaluator.che,135
 013_large_sum.che,131
-glfw3_example.che,117
 material.che,113
+glfw3_example.che,110
 trait_function_call_performance.che,104
 command_line_parser.che,103
 017_number_letter_counts.che,82
@@ -33,7 +35,7 @@ lua_example.che,35
 014_longest_collatz_sequence.che,26
 010_summation_of_primes.che,25
 012_highly_divisible_triangular_number.che,24
-008_largest_product_in_a_series.che,20
+008_largest_product_in_a_series.che,21
 015_lattice_paths.che,20
 002_even_fibonacci_numbers.che,18
 009_special_pythagorean_triplet.che,17
@@ -42,4 +44,4 @@ lua_example.che,35
 006_sum_square_difference.che,13
 001_multiples_of_3_and_5.che,12
 0_template.che,6
-Total,6565
+Total,7448

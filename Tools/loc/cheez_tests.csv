@@ -1,6 +1,6 @@
 File Name,Lines
 builtin_operators.che,114
-hash_table1.che,103
+hash_table1.che,108
 match2.che,102
 traits.che,98
 test1.che,79
@@ -11,7 +11,7 @@ allocator2.che,75
 string1.che,74
 named_return.che,73
 loop.che,72
-match3.che,67
+match3.che,68
 operator_overloading.che,67
 array1.che,66
 allocator1.che,60
@@ -41,4 +41,4 @@ global_variables.che,14
 printf.che,10
 string2.che,10
 bitwise_operators.che,9
-Total,2163
+Total,2169
