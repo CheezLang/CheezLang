@@ -1,6 +1,9 @@
+use import std.mem.allocator
+use import std.string
+use import std.array
 use import std.math
 io :: import std.io
-C :: import std.c
+C  :: import std.c
 
 use import glfw.glfw3
 use import opengl.opengl
@@ -19,6 +22,31 @@ use import imgui.cimgui_opengl3_binding
 vec2 :: Vector2[float]
 vec3 :: Vector3[float]
 vec4 :: Vector4[float]
+
+for_extension_vec4 :: (vec: ref vec4, code: Code) #for {
+    { #label _block_all
+        { #label _block_x
+            it_index := 0
+            it := ref vec.x
+            @insert(code, _continue={break _block_x}, _break={break _block_all})
+        }
+        { #label _block_y
+            it_index := 1
+            it := ref vec.y
+            @insert(code, _continue={break _block_y}, _break={break _block_all})
+        }
+        { #label _block_z
+            it_index := 2
+            it := ref vec.z
+            @insert(code, _continue={break _block_z}, _break={break _block_all})
+        }
+        { #label _block_w
+            it_index := 3
+            it := ref vec.w
+            @insert(code, _continue={break _block_w}, _break={break _block_all})
+        }
+    }
+}
 
 gladLoadGL :: () -> i32;
 
@@ -40,6 +68,25 @@ gl_check_errors :: () {
         if int(err) == int(GL_NO_ERROR) then break
         io.printfln("[OpenGL] Error: {}", err)
     }
+}
+
+igListBoxStringArray :: (label: c_string, current_index: &i32, arr: ref Array[String]) -> bool {
+    array_string_getter :: (data: &void, idx: i32, out_text: &c_string) -> bool {
+        arr := ref <<cast(&Array[String]) data
+        if idx < 0 or int(idx) >= arr.get_length() {
+            return false
+        }
+
+        <<out_text = arr.access(idx).as_cstring()
+
+        return true
+    }
+
+    if arr.get_length() == 0 {
+        return false
+    }
+
+    return igListBoxFnPtr(label, current_index, array_string_getter, cast &arr, cast arr.get_length())
 }
 
 Main :: () {
@@ -81,7 +128,16 @@ Main :: () {
 
     clear_color := vec4(1, 0, 1, 1)
 
+    strings := Array[String].create()
+    strings.add(String.from_string("Hello"))
+    strings.add(String.from_string("World"))
+    strings_selected := 0i32
+
     show_demo_window := false
+
+    buff := alloc_n(char8, 256)
+    C.memset(buff.data, 0, cast buff.length)
+    defer free_n(buff)
 
     while !glfwWindowShouldClose(window) {
         glfwPollEvents()
@@ -96,7 +152,23 @@ Main :: () {
             igBegin("Settings", &open, cast ImGuiWindowFlags_.None)
 
             igColorPicker3("clear color", cast(&float)&clear_color, 0)
+            igSeparator()
+            
+            for component : clear_color {
+                igPushIDInt(i32(it_index))
+                igInputFloat("##", &component)
+                igPopID()
+            }
 
+            igSeparator()
+            igInputText("String to add", buff.data, cast buff.length)
+            if igSmallButton("Add String") {
+                strings.add(String.from_cstring(buff.data))
+                buff[0] = cast 0
+            }
+            igSeparator()
+
+            igListBoxStringArray("strings", &strings_selected, strings)
             igEnd()
         }
 

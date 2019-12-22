@@ -8,6 +8,8 @@ ImGuiTextFilter :: void
 ImGuiTextBuffer :: void
 ImDrawData      :: void
 ImFontAtlas     :: void
+ImGuiInputTextCallbackData :: void
+ImGuiInputTextCallback :: fn(&void) -> int
 
 ImVec2_Simple :: struct #copy {
     x : f32 = default
@@ -201,10 +203,10 @@ igSliderScalarN :: (_label: &char8, _data_type: i32, _p_data: &void, _components
 igVSliderFloat :: (_label: &char8, _size: i32, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32) -> bool;
 igVSliderInt :: (_label: &char8, _size: i32, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8) -> bool;
 igVSliderScalar :: (_label: &char8, _size: i32, _data_type: i32, _p_data: &void, _p_min: &void, _p_max: &void, _format: &char8, _power: f32) -> bool;
-igInputText :: (_label: &char8, _buf: &char8, _buf_size: size_t, _flags: i32, _callback: i32, _user_data: &void) -> bool;
+igInputText :: (_label: &char8, _buf: &char8, _buf_size: size_t, _flags: i32 = 0, _callback: ImGuiInputTextCallback = null, _user_data: &void = null) -> bool;
 igInputTextMultiline :: (_label: &char8, _buf: &char8, _buf_size: size_t, _size: i32, _flags: i32, _callback: i32, _user_data: &void) -> bool;
 igInputTextWithHint :: (_label: &char8, _hint: &char8, _buf: &char8, _buf_size: size_t, _flags: i32, _callback: i32, _user_data: &void) -> bool;
-igInputFloat :: (_label: &char8, _v: &f32, _step: f32, _step_fast: f32, _format: &char8, _flags: i32) -> bool;
+igInputFloat :: (_label: &char8, _v: &f32, _step: f32 = 0, _step_fast: f32 = 0, _format: &char8 = "%.3f", _flags: i32 = 0) -> bool;
 igInputFloat2 :: (_label: &char8, _v: &f32, _format: &char8, _flags: i32) -> bool;
 igInputFloat3 :: (_label: &char8, _v: &f32, _format: &char8, _flags: i32) -> bool;
 igInputFloat4 :: (_label: &char8, _v: &f32, _format: &char8, _flags: i32) -> bool;
@@ -212,7 +214,7 @@ igInputInt :: (_label: &char8, _v: &i32, _step: i32, _step_fast: i32, _flags: i3
 igInputInt2 :: (_label: &char8, _v: &i32, _flags: i32) -> bool;
 igInputInt3 :: (_label: &char8, _v: &i32, _flags: i32) -> bool;
 igInputInt4 :: (_label: &char8, _v: &i32, _flags: i32) -> bool;
-igInputDouble :: (_label: &char8, _v: &f64, _step: f64, _step_fast: f64, _format: &char8, _flags: i32) -> bool;
+igInputDouble :: (_label: &char8, _v: &f64, _step: f64 = 0, _step_fast: f64 = 0, _format: &char8 = "%.6f", _flags: i32 = 0) -> bool;
 igInputScalar :: (_label: &char8, _data_type: i32, _p_data: &void, _p_step: &void, _p_step_fast: &void, _format: &char8, _flags: i32) -> bool;
 igInputScalarN :: (_label: &char8, _data_type: i32, _p_data: &void, _components: i32, _p_step: &void, _p_step_fast: &void, _format: &char8, _flags: i32) -> bool;
 igColorEdit3 :: (_label: &char8, _col: &f32, _flags: i32) -> bool;
@@ -237,7 +239,7 @@ igSetNextItemOpen :: (_is_open: bool, _cond: i32) -> void;
 igSelectable :: (_label: &char8, _selected: bool, _flags: i32, _size: i32) -> bool;
 igSelectableBoolPtr :: (_label: &char8, _p_selected: &bool, _flags: i32, _size: i32) -> bool;
 igListBoxStr_arr :: (_label: &char8, _current_item: &i32, _items: &&char8, _items_count: i32, _height_in_items: i32) -> bool;
-igListBoxFnPtr :: (_label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32) -> bool;
+igListBoxFnPtr :: (_label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32 = -1) -> bool;
 igListBoxHeaderVec2 :: (_label: &char8, _size: i32) -> bool;
 igListBoxHeaderInt :: (_label: &char8, _items_count: i32, _height_in_items: i32) -> bool;
 igListBoxFooter :: () -> void;
