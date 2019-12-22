@@ -6,7 +6,6 @@ import examples.glfw3_example
 // import examples.signed_distance_field_renderer
 // import examples.snake.snake
 // import examples.pathtracer
-// import examples.print_any
 // import examples.command_line_parser
 // import examples.ShmupEngine.src.main
 // import examples.CBindingGenerator.src.main

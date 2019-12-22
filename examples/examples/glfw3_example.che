@@ -34,6 +34,14 @@ glfw_error_callback :: (error: i32, description: c_string) {
     C.printf("Glfw Error %d: %s\n", error, description)
 }
 
+gl_check_errors :: () {
+    loop {
+        err := glGetError()
+        if int(err) == int(GL_NO_ERROR) then break
+        io.printfln("[OpenGL] Error: {}", err)
+    }
+}
+
 Main :: () {
     glfwSetErrorCallback(glfw_error_callback)
 
