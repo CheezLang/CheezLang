@@ -52,7 +52,7 @@ Main :: () {
     defer glfwTerminate()
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0)
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
 
     window := glfwCreateWindow(1280, 720, "Hello World", null, null)
     if window == null {
