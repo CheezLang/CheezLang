@@ -1,5 +1,5 @@
 #include <memory>
-#include "D:/Programming/CppLibs/imgui/imgui/imgui.cpp"
+#include "imgui_binding_all.cpp"
 
 extern "C" void __c__ImVec2_new_2(ImVec2* self) {
     new (self) ImVec2();
@@ -2631,4 +2631,52 @@ extern "C" void __c__RenderWindowDecorations(ImGuiWindow * _window, ImRect * _ti
 }
 extern "C" void __c__RenderWindowTitleBarContents(ImGuiWindow * _window, ImRect * _title_bar_rect, char * _name, bool * _p_open) {
     ImGui::RenderWindowTitleBarContents(_window, *_title_bar_rect, _name, _p_open);
+}
+extern "C" void __c__ImGui_ImplOpenGL3_Init(bool *ret, char * _glsl_version) {
+    *ret = (bool )ImGui_ImplOpenGL3_Init(_glsl_version);
+}
+extern "C" void __c__ImGui_ImplOpenGL3_Shutdown() {
+    ImGui_ImplOpenGL3_Shutdown();
+}
+extern "C" void __c__ImGui_ImplOpenGL3_NewFrame() {
+    ImGui_ImplOpenGL3_NewFrame();
+}
+extern "C" void __c__ImGui_ImplOpenGL3_RenderDrawData(ImDrawData * _draw_data) {
+    ImGui_ImplOpenGL3_RenderDrawData(_draw_data);
+}
+extern "C" void __c__ImGui_ImplOpenGL3_CreateFontsTexture(bool *ret) {
+    *ret = (bool )ImGui_ImplOpenGL3_CreateFontsTexture();
+}
+extern "C" void __c__ImGui_ImplOpenGL3_DestroyFontsTexture() {
+    ImGui_ImplOpenGL3_DestroyFontsTexture();
+}
+extern "C" void __c__ImGui_ImplOpenGL3_CreateDeviceObjects(bool *ret) {
+    *ret = (bool )ImGui_ImplOpenGL3_CreateDeviceObjects();
+}
+extern "C" void __c__ImGui_ImplOpenGL3_DestroyDeviceObjects() {
+    ImGui_ImplOpenGL3_DestroyDeviceObjects();
+}
+extern "C" void __c__ImGui_ImplGlfw_InitForOpenGL(bool *ret, GLFWwindow * _window, bool _install_callbacks) {
+    *ret = (bool )ImGui_ImplGlfw_InitForOpenGL(_window, _install_callbacks);
+}
+extern "C" void __c__ImGui_ImplGlfw_InitForVulkan(bool *ret, GLFWwindow * _window, bool _install_callbacks) {
+    *ret = (bool )ImGui_ImplGlfw_InitForVulkan(_window, _install_callbacks);
+}
+extern "C" void __c__ImGui_ImplGlfw_Shutdown() {
+    ImGui_ImplGlfw_Shutdown();
+}
+extern "C" void __c__ImGui_ImplGlfw_NewFrame() {
+    ImGui_ImplGlfw_NewFrame();
+}
+extern "C" void __c__ImGui_ImplGlfw_MouseButtonCallback(GLFWwindow * _window, int32_t _button, int32_t _action, int32_t _mods) {
+    ImGui_ImplGlfw_MouseButtonCallback(_window, _button, _action, _mods);
+}
+extern "C" void __c__ImGui_ImplGlfw_ScrollCallback(GLFWwindow * _window, double _xoffset, double _yoffset) {
+    ImGui_ImplGlfw_ScrollCallback(_window, _xoffset, _yoffset);
+}
+extern "C" void __c__ImGui_ImplGlfw_KeyCallback(GLFWwindow * _window, int32_t _key, int32_t _scancode, int32_t _action, int32_t _mods) {
+    ImGui_ImplGlfw_KeyCallback(_window, _key, _scancode, _action, _mods);
+}
+extern "C" void __c__ImGui_ImplGlfw_CharCallback(GLFWwindow * _window, uint32_t _c) {
+    ImGui_ImplGlfw_CharCallback(_window, _c);
 }

@@ -5213,6 +5213,64 @@ RenderWindowDecorations :: (_window: &ImGuiWindow, _title_bar_rect: ref ImRect, 
 RenderWindowTitleBarContents :: (_window: &ImGuiWindow, _title_bar_rect: ref ImRect, _name: &char8, _p_open: &bool) {
     __c__RenderWindowTitleBarContents(_window, &_title_bar_rect, _name, _p_open)
 }
+ImGui_ImplOpenGL3_Init :: (_glsl_version: &char8) -> bool {
+    result : bool = default
+    __c__ImGui_ImplOpenGL3_Init(&result, _glsl_version)
+    return result
+}
+ImGui_ImplOpenGL3_Shutdown :: () {
+    __c__ImGui_ImplOpenGL3_Shutdown()
+}
+ImGui_ImplOpenGL3_NewFrame :: () {
+    __c__ImGui_ImplOpenGL3_NewFrame()
+}
+ImGui_ImplOpenGL3_RenderDrawData :: (_draw_data: &ImDrawData) {
+    __c__ImGui_ImplOpenGL3_RenderDrawData(_draw_data)
+}
+ImGui_ImplOpenGL3_CreateFontsTexture :: () -> bool {
+    result : bool = default
+    __c__ImGui_ImplOpenGL3_CreateFontsTexture(&result)
+    return result
+}
+ImGui_ImplOpenGL3_DestroyFontsTexture :: () {
+    __c__ImGui_ImplOpenGL3_DestroyFontsTexture()
+}
+ImGui_ImplOpenGL3_CreateDeviceObjects :: () -> bool {
+    result : bool = default
+    __c__ImGui_ImplOpenGL3_CreateDeviceObjects(&result)
+    return result
+}
+ImGui_ImplOpenGL3_DestroyDeviceObjects :: () {
+    __c__ImGui_ImplOpenGL3_DestroyDeviceObjects()
+}
+ImGui_ImplGlfw_InitForOpenGL :: (_window: &GLFWwindow, _install_callbacks: bool) -> bool {
+    result : bool = default
+    __c__ImGui_ImplGlfw_InitForOpenGL(&result, _window, _install_callbacks)
+    return result
+}
+ImGui_ImplGlfw_InitForVulkan :: (_window: &GLFWwindow, _install_callbacks: bool) -> bool {
+    result : bool = default
+    __c__ImGui_ImplGlfw_InitForVulkan(&result, _window, _install_callbacks)
+    return result
+}
+ImGui_ImplGlfw_Shutdown :: () {
+    __c__ImGui_ImplGlfw_Shutdown()
+}
+ImGui_ImplGlfw_NewFrame :: () {
+    __c__ImGui_ImplGlfw_NewFrame()
+}
+ImGui_ImplGlfw_MouseButtonCallback :: (_window: &GLFWwindow, _button: i32, _action: i32, _mods: i32) {
+    __c__ImGui_ImplGlfw_MouseButtonCallback(_window, _button, _action, _mods)
+}
+ImGui_ImplGlfw_ScrollCallback :: (_window: &GLFWwindow, _xoffset: f64, _yoffset: f64) {
+    __c__ImGui_ImplGlfw_ScrollCallback(_window, _xoffset, _yoffset)
+}
+ImGui_ImplGlfw_KeyCallback :: (_window: &GLFWwindow, _key: i32, _scancode: i32, _action: i32, _mods: i32) {
+    __c__ImGui_ImplGlfw_KeyCallback(_window, _key, _scancode, _action, _mods)
+}
+ImGui_ImplGlfw_CharCallback :: (_window: &GLFWwindow, _c: u32) {
+    __c__ImGui_ImplGlfw_CharCallback(_window, _c)
+}
 
 // ==========================================================
 // ==========================================================
@@ -6097,3 +6155,19 @@ __c__UpdateDebugToolItemPicker :: ();
 __c__RenderWindowOuterBorders :: (_window: &ImGuiWindow);
 __c__RenderWindowDecorations :: (_window: &ImGuiWindow, _title_bar_rect: &ImRect, _title_bar_is_highlight: bool, _resize_grip_count: i32, _resize_grip_col: &ImU32, _resize_grip_draw_size: f32);
 __c__RenderWindowTitleBarContents :: (_window: &ImGuiWindow, _title_bar_rect: &ImRect, _name: &char8, _p_open: &bool);
+__c__ImGui_ImplOpenGL3_Init :: (ret: &bool, _glsl_version: &char8);
+__c__ImGui_ImplOpenGL3_Shutdown :: ();
+__c__ImGui_ImplOpenGL3_NewFrame :: ();
+__c__ImGui_ImplOpenGL3_RenderDrawData :: (_draw_data: &ImDrawData);
+__c__ImGui_ImplOpenGL3_CreateFontsTexture :: (ret: &bool);
+__c__ImGui_ImplOpenGL3_DestroyFontsTexture :: ();
+__c__ImGui_ImplOpenGL3_CreateDeviceObjects :: (ret: &bool);
+__c__ImGui_ImplOpenGL3_DestroyDeviceObjects :: ();
+__c__ImGui_ImplGlfw_InitForOpenGL :: (ret: &bool, _window: &GLFWwindow, _install_callbacks: bool);
+__c__ImGui_ImplGlfw_InitForVulkan :: (ret: &bool, _window: &GLFWwindow, _install_callbacks: bool);
+__c__ImGui_ImplGlfw_Shutdown :: ();
+__c__ImGui_ImplGlfw_NewFrame :: ();
+__c__ImGui_ImplGlfw_MouseButtonCallback :: (_window: &GLFWwindow, _button: i32, _action: i32, _mods: i32);
+__c__ImGui_ImplGlfw_ScrollCallback :: (_window: &GLFWwindow, _xoffset: f64, _yoffset: f64);
+__c__ImGui_ImplGlfw_KeyCallback :: (_window: &GLFWwindow, _key: i32, _scancode: i32, _action: i32, _mods: i32);
+__c__ImGui_ImplGlfw_CharCallback :: (_window: &GLFWwindow, _c: u32);
