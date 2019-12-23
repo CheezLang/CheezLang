@@ -104,6 +104,12 @@ struct Context {
             return ss.str();
         }
     }
+
+    void indent(std::ostream& stream, int amount) {
+        for (int i = 0; i < amount; i++) {
+            stream << " ";
+        }
+    }
 };
 
 template <typename F>
@@ -298,7 +304,7 @@ void Context::emit_typedef_decl(CXCursor cursor) {
         //if (strlen(clang_getCString(struct_name)) == 0) {
         //    emit_enum_decl(type_decl, clang_getCursorSpelling(cursor));
         //}
-        cheez_file << clang_getCursorSpelling(cursor) << " :: enum #copy {}\n";
+        // cheez_file << clang_getCursorSpelling(cursor) << " :: enum #copy {}\n";
         break;
     }
 
@@ -541,7 +547,70 @@ void Context::emit_enum_decl(CXCursor cursor) {
     if (!clang_isCursorDefinition(cursor))
         return;
 
-    cheez_file << name << " :: enum #copy {}\n";
+    int longest_member_name = 0;
+    {
+        auto calcMaxMemberLength = [this, &longest_member_name](CXCursor c, CXCursor parent, CXClientData client_data) {
+            auto member_name = clang_getCursorSpelling(c);
+            auto member_name_c = clang_getCString(member_name);
+
+            auto struct_name = clang_getCursorSpelling(parent);
+            auto struct_name_c = clang_getCString(struct_name);
+
+            int member_name_len = strlen(member_name_c);
+
+            if (c_string_starts_with(member_name_c, struct_name_c)) {
+                member_name_len -= strlen(struct_name_c);
+            }
+
+            if (member_name_len > longest_member_name) {
+                longest_member_name = member_name_len;
+            }
+
+            member_index += 1;
+            return CXChildVisit_Continue;
+        };
+
+        auto data = getFreeCallbackData(&calcMaxMemberLength, nullptr);
+        clang_visitChildren(cursor, getFreeCallback(&calcMaxMemberLength), &data);
+    }
+
+    {
+        auto visitAllChildren = [this, longest_member_name](CXCursor c, CXCursor parent, CXClientData client_data) {
+            auto member_name = clang_getCursorSpelling(c);
+            auto member_name_c = clang_getCString(member_name);
+            auto member_type = clang_getCursorType(c);
+            auto member_value = clang_getEnumConstantDeclValue(c);
+
+            auto struct_name = clang_getCursorSpelling(parent);
+            auto struct_name_c = clang_getCString(struct_name);
+
+            if (c_string_starts_with(member_name_c, struct_name_c)) {
+                member_name_c += strlen(struct_name_c);
+            }
+
+            cheez_type_decl << "    " << member_name_c;
+
+            indent(cheez_type_decl, longest_member_name - strlen(member_name_c));
+
+            if (member_value >= 0) {
+                cheez_type_decl << " = 0x" << std::hex << member_value << std::dec << "\n";
+                //cheez_type_decl << " = " << member_value << "\n";
+            } else {
+                cheez_type_decl << " = " << member_value << "\n";
+            }
+
+            member_index += 1;
+            return CXChildVisit_Continue;
+        };
+        auto data = getFreeCallbackData(&visitAllChildren, nullptr);
+        clang_visitChildren(cursor, getFreeCallback(&visitAllChildren), &data);
+    }
+
+    auto tag_type = clang_getEnumDeclIntegerType(cursor);
+
+    cheez_file << name << " :: enum #copy #repr(\"C\") #tag_type(";
+    emit_cheez_type(cheez_file, tag_type, false);
+    cheez_file << ") {\n" << cheez_type_decl.str() << "}\n";
 }
 
 void Context::emit_function_decl(const Declaration& decl) {

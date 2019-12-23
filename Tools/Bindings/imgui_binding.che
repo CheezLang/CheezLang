@@ -95,67 +95,590 @@ uint_fast64_t :: u64
 intmax_t :: i64
 uintmax_t :: u64
 DPI_AWARENESS_CONTEXT :: &DPI_AWARENESS_CONTEXT__
-DPI_AWARENESS :: enum #copy {}
-DPI_HOSTING_BEHAVIOR :: enum #copy {}
 MODEMDEVCAPS :: struct #copy {}
 PMODEMDEVCAPS :: &_MODEMDEVCAPS
 LPMODEMDEVCAPS :: &_MODEMDEVCAPS
 MODEMSETTINGS :: struct #copy {}
 PMODEMSETTINGS :: &_MODEMSETTINGS
 LPMODEMSETTINGS :: &_MODEMSETTINGS
-ImGuiWindowFlags_ :: enum #copy {}
-ImGuiInputTextFlags_ :: enum #copy {}
-ImGuiTreeNodeFlags_ :: enum #copy {}
-ImGuiSelectableFlags_ :: enum #copy {}
-ImGuiComboFlags_ :: enum #copy {}
-ImGuiTabBarFlags_ :: enum #copy {}
-ImGuiTabItemFlags_ :: enum #copy {}
-ImGuiFocusedFlags_ :: enum #copy {}
-ImGuiHoveredFlags_ :: enum #copy {}
-ImGuiDragDropFlags_ :: enum #copy {}
-ImGuiDataType_ :: enum #copy {}
-ImGuiDir_ :: enum #copy {}
-ImGuiKey_ :: enum #copy {}
-ImGuiNavInput_ :: enum #copy {}
-ImGuiConfigFlags_ :: enum #copy {}
-ImGuiBackendFlags_ :: enum #copy {}
-ImGuiCol_ :: enum #copy {}
-ImGuiStyleVar_ :: enum #copy {}
-ImGuiColorEditFlags_ :: enum #copy {}
-ImGuiMouseButton_ :: enum #copy {}
-ImGuiMouseCursor_ :: enum #copy {}
-ImGuiCond_ :: enum #copy {}
-ImDrawCornerFlags_ :: enum #copy {}
-ImDrawListFlags_ :: enum #copy {}
-ImFontAtlasFlags_ :: enum #copy {}
-ImGuiButtonFlags_ :: enum #copy {}
-ImGuiSliderFlags_ :: enum #copy {}
-ImGuiDragFlags_ :: enum #copy {}
-ImGuiColumnsFlags_ :: enum #copy {}
-ImGuiSelectableFlagsPrivate_ :: enum #copy {}
-ImGuiTreeNodeFlagsPrivate_ :: enum #copy {}
-ImGuiSeparatorFlags_ :: enum #copy {}
-ImGuiItemFlags_ :: enum #copy {}
-ImGuiItemStatusFlags_ :: enum #copy {}
-ImGuiTextFlags_ :: enum #copy {}
-ImGuiLayoutType_ :: enum #copy {}
-ImGuiLogType :: enum #copy {}
-ImGuiAxis :: enum #copy {}
-ImGuiPlotType :: enum #copy {}
-ImGuiInputSource :: enum #copy {}
-ImGuiInputReadMode :: enum #copy {}
-ImGuiNavHighlightFlags_ :: enum #copy {}
-ImGuiNavDirSourceFlags_ :: enum #copy {}
-ImGuiNavMoveFlags_ :: enum #copy {}
-ImGuiNavForward :: enum #copy {}
-ImGuiNavLayer :: enum #copy {}
-ImGuiPopupPositionPolicy :: enum #copy {}
-ImGuiNextWindowDataFlags_ :: enum #copy {}
-ImGuiNextItemDataFlags_ :: enum #copy {}
-ImGuiTabBarFlagsPrivate_ :: enum #copy {}
-ImGuiTabItemFlagsPrivate_ :: enum #copy {}
-DPI_AWARENESS :: enum #copy {}
-DPI_HOSTING_BEHAVIOR :: enum #copy {}
+ImGuiWindowFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                      = 0x0
+    NoTitleBar                = 0x1
+    NoResize                  = 0x2
+    NoMove                    = 0x4
+    NoScrollbar               = 0x8
+    NoScrollWithMouse         = 0x10
+    NoCollapse                = 0x20
+    AlwaysAutoResize          = 0x40
+    NoBackground              = 0x80
+    NoSavedSettings           = 0x100
+    NoMouseInputs             = 0x200
+    MenuBar                   = 0x400
+    HorizontalScrollbar       = 0x800
+    NoFocusOnAppearing        = 0x1000
+    NoBringToFrontOnFocus     = 0x2000
+    AlwaysVerticalScrollbar   = 0x4000
+    AlwaysHorizontalScrollbar = 0x8000
+    AlwaysUseWindowPadding    = 0x10000
+    NoNavInputs               = 0x40000
+    NoNavFocus                = 0x80000
+    UnsavedDocument           = 0x100000
+    NoNav                     = 0xc0000
+    NoDecoration              = 0x2b
+    NoInputs                  = 0xc0200
+    NavFlattened              = 0x800000
+    ChildWindow               = 0x1000000
+    Tooltip                   = 0x2000000
+    Popup                     = 0x4000000
+    Modal                     = 0x8000000
+    ChildMenu                 = 0x10000000
+}
+ImGuiInputTextFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                = 0x0
+    CharsDecimal        = 0x1
+    CharsHexadecimal    = 0x2
+    CharsUppercase      = 0x4
+    CharsNoBlank        = 0x8
+    AutoSelectAll       = 0x10
+    EnterReturnsTrue    = 0x20
+    CallbackCompletion  = 0x40
+    CallbackHistory     = 0x80
+    CallbackAlways      = 0x100
+    CallbackCharFilter  = 0x200
+    AllowTabInput       = 0x400
+    CtrlEnterForNewLine = 0x800
+    NoHorizontalScroll  = 0x1000
+    AlwaysInsertMode    = 0x2000
+    ReadOnly            = 0x4000
+    Password            = 0x8000
+    NoUndoRedo          = 0x10000
+    CharsScientific     = 0x20000
+    CallbackResize      = 0x40000
+    Multiline           = 0x100000
+    NoMarkEdited        = 0x200000
+}
+ImGuiTreeNodeFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                 = 0x0
+    Selected             = 0x1
+    Framed               = 0x2
+    AllowItemOverlap     = 0x4
+    NoTreePushOnOpen     = 0x8
+    NoAutoOpenOnLog      = 0x10
+    DefaultOpen          = 0x20
+    OpenOnDoubleClick    = 0x40
+    OpenOnArrow          = 0x80
+    Leaf                 = 0x100
+    Bullet               = 0x200
+    FramePadding         = 0x400
+    SpanAvailWidth       = 0x800
+    SpanFullWidth        = 0x1000
+    NavLeftJumpsBackHere = 0x2000
+    CollapsingHeader     = 0x1a
+}
+ImGuiSelectableFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None             = 0x0
+    DontClosePopups  = 0x1
+    SpanAllColumns   = 0x2
+    AllowDoubleClick = 0x4
+    Disabled         = 0x8
+    AllowItemOverlap = 0x10
+}
+ImGuiComboFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None           = 0x0
+    PopupAlignLeft = 0x1
+    HeightSmall    = 0x2
+    HeightRegular  = 0x4
+    HeightLarge    = 0x8
+    HeightLargest  = 0x10
+    NoArrowButton  = 0x20
+    NoPreview      = 0x40
+    HeightMask_    = 0x1e
+}
+ImGuiTabBarFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                         = 0x0
+    Reorderable                  = 0x1
+    AutoSelectNewTabs            = 0x2
+    TabListPopupButton           = 0x4
+    NoCloseWithMiddleMouseButton = 0x8
+    NoTabListScrollingButtons    = 0x10
+    NoTooltip                    = 0x20
+    FittingPolicyResizeDown      = 0x40
+    FittingPolicyScroll          = 0x80
+    FittingPolicyMask_           = 0xc0
+    FittingPolicyDefault_        = 0x40
+}
+ImGuiTabItemFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                         = 0x0
+    UnsavedDocument              = 0x1
+    SetSelected                  = 0x2
+    NoCloseWithMiddleMouseButton = 0x4
+    NoPushId                     = 0x8
+}
+ImGuiFocusedFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                = 0x0
+    ChildWindows        = 0x1
+    RootWindow          = 0x2
+    AnyWindow           = 0x4
+    RootAndChildWindows = 0x3
+}
+ImGuiHoveredFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                         = 0x0
+    ChildWindows                 = 0x1
+    RootWindow                   = 0x2
+    AnyWindow                    = 0x4
+    AllowWhenBlockedByPopup      = 0x8
+    AllowWhenBlockedByActiveItem = 0x20
+    AllowWhenOverlapped          = 0x40
+    AllowWhenDisabled            = 0x80
+    RectOnly                     = 0x68
+    RootAndChildWindows          = 0x3
+}
+ImGuiDragDropFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                     = 0x0
+    SourceNoPreviewTooltip   = 0x1
+    SourceNoDisableHover     = 0x2
+    SourceNoHoldToOpenOthers = 0x4
+    SourceAllowNullID        = 0x8
+    SourceExtern             = 0x10
+    SourceAutoExpirePayload  = 0x20
+    AcceptBeforeDelivery     = 0x400
+    AcceptNoDrawDefaultRect  = 0x800
+    AcceptNoPreviewTooltip   = 0x1000
+    AcceptPeekOnly           = 0xc00
+}
+ImGuiDataType_ :: enum #copy #repr("C") #tag_type(i32) {
+    S8     = 0x0
+    U8     = 0x1
+    S16    = 0x2
+    U16    = 0x3
+    S32    = 0x4
+    U32    = 0x5
+    S64    = 0x6
+    U64    = 0x7
+    Float  = 0x8
+    Double = 0x9
+    COUNT  = 0xa
+}
+ImGuiDir_ :: enum #copy #repr("C") #tag_type(i32) {
+    None  = -1
+    Left  = 0x0
+    Right = 0x1
+    Up    = 0x2
+    Down  = 0x3
+    COUNT = 0x4
+}
+ImGuiKey_ :: enum #copy #repr("C") #tag_type(i32) {
+    Tab         = 0x0
+    LeftArrow   = 0x1
+    RightArrow  = 0x2
+    UpArrow     = 0x3
+    DownArrow   = 0x4
+    PageUp      = 0x5
+    PageDown    = 0x6
+    Home        = 0x7
+    End         = 0x8
+    Insert      = 0x9
+    Delete      = 0xa
+    Backspace   = 0xb
+    Space       = 0xc
+    Enter       = 0xd
+    Escape      = 0xe
+    KeyPadEnter = 0xf
+    A           = 0x10
+    C           = 0x11
+    V           = 0x12
+    X           = 0x13
+    Y           = 0x14
+    Z           = 0x15
+    COUNT       = 0x16
+}
+ImGuiNavInput_ :: enum #copy #repr("C") #tag_type(i32) {
+    Activate       = 0x0
+    Cancel         = 0x1
+    Input          = 0x2
+    Menu           = 0x3
+    DpadLeft       = 0x4
+    DpadRight      = 0x5
+    DpadUp         = 0x6
+    DpadDown       = 0x7
+    LStickLeft     = 0x8
+    LStickRight    = 0x9
+    LStickUp       = 0xa
+    LStickDown     = 0xb
+    FocusPrev      = 0xc
+    FocusNext      = 0xd
+    TweakSlow      = 0xe
+    TweakFast      = 0xf
+    KeyMenu_       = 0x10
+    KeyLeft_       = 0x11
+    KeyRight_      = 0x12
+    KeyUp_         = 0x13
+    KeyDown_       = 0x14
+    COUNT          = 0x15
+    InternalStart_ = 0x10
+}
+ImGuiConfigFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                 = 0x0
+    NavEnableKeyboard    = 0x1
+    NavEnableGamepad     = 0x2
+    NavEnableSetMousePos = 0x4
+    NavNoCaptureKeyboard = 0x8
+    NoMouse              = 0x10
+    NoMouseCursorChange  = 0x20
+    IsSRGB               = 0x100000
+    IsTouchScreen        = 0x200000
+}
+ImGuiBackendFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                 = 0x0
+    HasGamepad           = 0x1
+    HasMouseCursors      = 0x2
+    HasSetMousePos       = 0x4
+    RendererHasVtxOffset = 0x8
+}
+ImGuiCol_ :: enum #copy #repr("C") #tag_type(i32) {
+    Text                  = 0x0
+    TextDisabled          = 0x1
+    WindowBg              = 0x2
+    ChildBg               = 0x3
+    PopupBg               = 0x4
+    Border                = 0x5
+    BorderShadow          = 0x6
+    FrameBg               = 0x7
+    FrameBgHovered        = 0x8
+    FrameBgActive         = 0x9
+    TitleBg               = 0xa
+    TitleBgActive         = 0xb
+    TitleBgCollapsed      = 0xc
+    MenuBarBg             = 0xd
+    ScrollbarBg           = 0xe
+    ScrollbarGrab         = 0xf
+    ScrollbarGrabHovered  = 0x10
+    ScrollbarGrabActive   = 0x11
+    CheckMark             = 0x12
+    SliderGrab            = 0x13
+    SliderGrabActive      = 0x14
+    Button                = 0x15
+    ButtonHovered         = 0x16
+    ButtonActive          = 0x17
+    Header                = 0x18
+    HeaderHovered         = 0x19
+    HeaderActive          = 0x1a
+    Separator             = 0x1b
+    SeparatorHovered      = 0x1c
+    SeparatorActive       = 0x1d
+    ResizeGrip            = 0x1e
+    ResizeGripHovered     = 0x1f
+    ResizeGripActive      = 0x20
+    Tab                   = 0x21
+    TabHovered            = 0x22
+    TabActive             = 0x23
+    TabUnfocused          = 0x24
+    TabUnfocusedActive    = 0x25
+    PlotLines             = 0x26
+    PlotLinesHovered      = 0x27
+    PlotHistogram         = 0x28
+    PlotHistogramHovered  = 0x29
+    TextSelectedBg        = 0x2a
+    DragDropTarget        = 0x2b
+    NavHighlight          = 0x2c
+    NavWindowingHighlight = 0x2d
+    NavWindowingDimBg     = 0x2e
+    ModalWindowDimBg      = 0x2f
+    COUNT                 = 0x30
+    ModalWindowDarkening  = 0x2f
+}
+ImGuiStyleVar_ :: enum #copy #repr("C") #tag_type(i32) {
+    Alpha               = 0x0
+    WindowPadding       = 0x1
+    WindowRounding      = 0x2
+    WindowBorderSize    = 0x3
+    WindowMinSize       = 0x4
+    WindowTitleAlign    = 0x5
+    ChildRounding       = 0x6
+    ChildBorderSize     = 0x7
+    PopupRounding       = 0x8
+    PopupBorderSize     = 0x9
+    FramePadding        = 0xa
+    FrameRounding       = 0xb
+    FrameBorderSize     = 0xc
+    ItemSpacing         = 0xd
+    ItemInnerSpacing    = 0xe
+    IndentSpacing       = 0xf
+    ScrollbarSize       = 0x10
+    ScrollbarRounding   = 0x11
+    GrabMinSize         = 0x12
+    GrabRounding        = 0x13
+    TabRounding         = 0x14
+    ButtonTextAlign     = 0x15
+    SelectableTextAlign = 0x16
+    COUNT               = 0x17
+    Count_              = 0x17
+}
+ImGuiColorEditFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None             = 0x0
+    NoAlpha          = 0x2
+    NoPicker         = 0x4
+    NoOptions        = 0x8
+    NoSmallPreview   = 0x10
+    NoInputs         = 0x20
+    NoTooltip        = 0x40
+    NoLabel          = 0x80
+    NoSidePreview    = 0x100
+    NoDragDrop       = 0x200
+    AlphaBar         = 0x10000
+    AlphaPreview     = 0x20000
+    AlphaPreviewHalf = 0x40000
+    HDR              = 0x80000
+    DisplayRGB       = 0x100000
+    DisplayHSV       = 0x200000
+    DisplayHex       = 0x400000
+    Uint8            = 0x800000
+    Float            = 0x1000000
+    PickerHueBar     = 0x2000000
+    PickerHueWheel   = 0x4000000
+    InputRGB         = 0x8000000
+    InputHSV         = 0x10000000
+    _OptionsDefault  = 0xa900000
+    _DisplayMask     = 0x700000
+    _DataTypeMask    = 0x1800000
+    _PickerMask      = 0x6000000
+    _InputMask       = 0x18000000
+    RGB              = 0x100000
+    HSV              = 0x200000
+    HEX              = 0x400000
+}
+ImGuiMouseButton_ :: enum #copy #repr("C") #tag_type(i32) {
+    Left   = 0x0
+    Right  = 0x1
+    Middle = 0x2
+    COUNT  = 0x5
+}
+ImGuiMouseCursor_ :: enum #copy #repr("C") #tag_type(i32) {
+    None       = -1
+    Arrow      = 0x0
+    TextInput  = 0x1
+    ResizeAll  = 0x2
+    ResizeNS   = 0x3
+    ResizeEW   = 0x4
+    ResizeNESW = 0x5
+    ResizeNWSE = 0x6
+    Hand       = 0x7
+    NotAllowed = 0x8
+    COUNT      = 0x9
+    Count_     = 0x9
+}
+ImGuiCond_ :: enum #copy #repr("C") #tag_type(i32) {
+    Always       = 0x1
+    Once         = 0x2
+    FirstUseEver = 0x4
+    Appearing    = 0x8
+}
+ImDrawCornerFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None     = 0x0
+    TopLeft  = 0x1
+    TopRight = 0x2
+    BotLeft  = 0x4
+    BotRight = 0x8
+    Top      = 0x3
+    Bot      = 0xc
+    Left     = 0x5
+    Right    = 0xa
+    All      = 0xf
+}
+ImDrawListFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None             = 0x0
+    AntiAliasedLines = 0x1
+    AntiAliasedFill  = 0x2
+    AllowVtxOffset   = 0x4
+}
+ImFontAtlasFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None               = 0x0
+    NoPowerOfTwoHeight = 0x1
+    NoMouseCursors     = 0x2
+}
+ImGuiButtonFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                  = 0x0
+    Repeat                = 0x1
+    PressedOnClickRelease = 0x2
+    PressedOnClick        = 0x4
+    PressedOnRelease      = 0x8
+    PressedOnDoubleClick  = 0x10
+    FlattenChildren       = 0x20
+    AllowItemOverlap      = 0x40
+    DontClosePopups       = 0x80
+    Disabled              = 0x100
+    AlignTextBaseLine     = 0x200
+    NoKeyModifiers        = 0x400
+    NoHoldingActiveID     = 0x800
+    PressedOnDragDropHold = 0x1000
+    NoNavFocus            = 0x2000
+    NoHoveredOnNav        = 0x4000
+}
+ImGuiSliderFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None     = 0x0
+    Vertical = 0x1
+}
+ImGuiDragFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None     = 0x0
+    Vertical = 0x1
+}
+ImGuiColumnsFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                   = 0x0
+    NoBorder               = 0x1
+    NoResize               = 0x2
+    NoPreserveWidths       = 0x4
+    NoForceWithinWindow    = 0x8
+    GrowParentContentsSize = 0x10
+}
+ImGuiSelectableFlagsPrivate_ :: enum #copy #repr("C") #tag_type(i32) {
+    ImGuiSelectableFlags_NoHoldingActiveID   = 0x100000
+    ImGuiSelectableFlags_PressedOnClick      = 0x200000
+    ImGuiSelectableFlags_PressedOnRelease    = 0x400000
+    ImGuiSelectableFlags_DrawFillAvailWidth  = 0x800000
+    ImGuiSelectableFlags_DrawHoveredWhenHeld = 0x1000000
+    ImGuiSelectableFlags_SetNavIdOnHover     = 0x2000000
+}
+ImGuiTreeNodeFlagsPrivate_ :: enum #copy #repr("C") #tag_type(i32) {
+    ImGuiTreeNodeFlags_ClipLabelForTrailingButton = 0x100000
+}
+ImGuiSeparatorFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None           = 0x0
+    Horizontal     = 0x1
+    Vertical       = 0x2
+    SpanAllColumns = 0x4
+}
+ImGuiItemFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                     = 0x0
+    NoTabStop                = 0x1
+    ButtonRepeat             = 0x2
+    Disabled                 = 0x4
+    NoNav                    = 0x8
+    NoNavDefaultFocus        = 0x10
+    SelectableDontClosePopup = 0x20
+    MixedValue               = 0x40
+    Default_                 = 0x0
+}
+ImGuiItemStatusFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None             = 0x0
+    HoveredRect      = 0x1
+    HasDisplayRect   = 0x2
+    Edited           = 0x4
+    ToggledSelection = 0x8
+    ToggledOpen      = 0x10
+    HasDeactivated   = 0x20
+    Deactivated      = 0x40
+}
+ImGuiTextFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                       = 0x0
+    NoWidthForLargeClippedText = 0x1
+}
+ImGuiLayoutType_ :: enum #copy #repr("C") #tag_type(i32) {
+    Horizontal = 0x0
+    Vertical   = 0x1
+}
+ImGuiLogType :: enum #copy #repr("C") #tag_type(i32) {
+    _None      = 0x0
+    _TTY       = 0x1
+    _File      = 0x2
+    _Buffer    = 0x3
+    _Clipboard = 0x4
+}
+ImGuiAxis :: enum #copy #repr("C") #tag_type(i32) {
+    _None = -1
+    _X    = 0x0
+    _Y    = 0x1
+}
+ImGuiPlotType :: enum #copy #repr("C") #tag_type(i32) {
+    _Lines     = 0x0
+    _Histogram = 0x1
+}
+ImGuiInputSource :: enum #copy #repr("C") #tag_type(i32) {
+    _None        = 0x0
+    _Mouse       = 0x1
+    _Nav         = 0x2
+    _NavKeyboard = 0x3
+    _NavGamepad  = 0x4
+    _COUNT       = 0x5
+}
+ImGuiInputReadMode :: enum #copy #repr("C") #tag_type(i32) {
+    _Down       = 0x0
+    _Pressed    = 0x1
+    _Released   = 0x2
+    _Repeat     = 0x3
+    _RepeatSlow = 0x4
+    _RepeatFast = 0x5
+}
+ImGuiNavHighlightFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None        = 0x0
+    TypeDefault = 0x1
+    TypeThin    = 0x2
+    AlwaysDraw  = 0x4
+    NoRounding  = 0x8
+}
+ImGuiNavDirSourceFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None      = 0x0
+    Keyboard  = 0x1
+    PadDPad   = 0x2
+    PadLStick = 0x4
+}
+ImGuiNavMoveFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None                = 0x0
+    LoopX               = 0x1
+    LoopY               = 0x2
+    WrapX               = 0x4
+    WrapY               = 0x8
+    AllowCurrentNavId   = 0x10
+    AlsoScoreVisibleSet = 0x20
+    ScrollToEdge        = 0x40
+}
+ImGuiNavForward :: enum #copy #repr("C") #tag_type(i32) {
+    _None          = 0x0
+    _ForwardQueued = 0x1
+    _ForwardActive = 0x2
+}
+ImGuiNavLayer :: enum #copy #repr("C") #tag_type(i32) {
+    _Main  = 0x0
+    _Menu  = 0x1
+    _COUNT = 0x2
+}
+ImGuiPopupPositionPolicy :: enum #copy #repr("C") #tag_type(i32) {
+    _Default  = 0x0
+    _ComboBox = 0x1
+}
+ImGuiNextWindowDataFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None              = 0x0
+    HasPos            = 0x1
+    HasSize           = 0x2
+    HasContentSize    = 0x4
+    HasCollapsed      = 0x8
+    HasSizeConstraint = 0x10
+    HasFocus          = 0x20
+    HasBgAlpha        = 0x40
+}
+ImGuiNextItemDataFlags_ :: enum #copy #repr("C") #tag_type(i32) {
+    None     = 0x0
+    HasWidth = 0x1
+    HasOpen  = 0x2
+}
+ImGuiTabBarFlagsPrivate_ :: enum #copy #repr("C") #tag_type(i32) {
+    ImGuiTabBarFlags_DockNode     = 0x100000
+    ImGuiTabBarFlags_IsFocused    = 0x200000
+    ImGuiTabBarFlags_SaveSettings = 0x400000
+}
+ImGuiTabItemFlagsPrivate_ :: enum #copy #repr("C") #tag_type(i32) {
+    ImGuiTabItemFlags_NoCloseButton = 0x100000
+}
+DPI_AWARENESS :: enum #copy #repr("C") #tag_type(i32) {
+    _INVALID           = -1
+    _UNAWARE           = 0x0
+    _SYSTEM_AWARE      = 0x1
+    _PER_MONITOR_AWARE = 0x2
+}
+DPI_HOSTING_BEHAVIOR :: enum #copy #repr("C") #tag_type(i32) {
+    _INVALID = -1
+    _DEFAULT = 0x0
+    _MIXED   = 0x1
+}
 ImVec2 :: struct #copy {
     x : f32 = default
     y : f32 = default
