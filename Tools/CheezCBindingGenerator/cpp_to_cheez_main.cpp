@@ -10,6 +10,10 @@
 #define LOG_CURSOR(c)
 #endif
 
+bool c_string_starts_with(const char* str, const char* pre) {
+    return strncmp(pre, str, strlen(pre)) == 0;
+}
+
 std::ostream& operator<<(std::ostream& stream, const CXString& str)
 {
     stream << clang_getCString(str);
@@ -27,12 +31,14 @@ struct Context {
     std::stringstream cheez_type_decl;
     std::stringstream cheez_drop_impl;
     std::stringstream cheez_impl;
+    std::stringstream cheez_c_bindings;
     std::ostream* buffer = nullptr;
     bool requires_c_wrapper = false;
     uint64_t args_which_need_wrapping = 0;
     uint64_t param_index = 0;
     uint64_t member_index = 0;
     bool start_with_comma = false;
+    bool prefer_pointers = false;
     bool no_includes = true;
 
     void reset() {
@@ -47,12 +53,12 @@ struct Context {
     void emit_enum_decl(CXCursor cursor);
     void emit_function_decl_c_wrapper(CXCursor cursor);
     void emit_c_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma = false);
-    void emit_cheez_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma = false);
     void emit_c_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma = false);
+    void emit_cheez_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma = false, bool prefer_pointers = false);
     void emit_cheez_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma = false);
     void emit_param_name(std::ostream& stream, CXCursor cursor, int index);
     std::string get_param_name(CXCursor cursor, int index);
-    void emit_cheez_type(std::ostream& stream, const CXType& type, bool is_func_param, bool behind_pointer = false);
+    void emit_cheez_type(std::ostream& stream, const CXType& type, bool is_func_param, bool behind_pointer = false, bool prefer_pointers = false);
     void emit_c_type(std::ostream& stream, const CXType& type, const char* name, bool is_func_param, bool behind_pointer = false);
     bool pass_type_by_pointer(const CXType& type);
 };
@@ -92,6 +98,7 @@ int main(int argc, char** argv)
         if (last == std::string::npos) last = 0;
         else last += 1;
         std::string header_name = header.substr(last);
+        c_file << "#include <memory>\n";
         c_file << "#include \"" << header_name << "\"\n\n";
     }
 
@@ -116,19 +123,22 @@ int main(int argc, char** argv)
         Context& ctx = *(Context*)client_data;
         ctx.reset();
 
-        if (ctx.no_includes && c.kind != CXCursorKind::CXCursor_UnexposedDecl) {
-            // skip functions from other files
-            auto source_location = clang_getCursorLocation(c);
-            if (clang_Location_isFromMainFile(source_location) == 0) {
-                CXFile file;
-                uint32_t line, column;
-                clang_getFileLocation(source_location, &file, &line, &column, nullptr);
-                std::cout << "Skipping (" << clang_getCursorKindSpelling(c.kind) << ")\t\t" << clang_getCursorSpelling(c) << "\t\tfrom " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
-                return CXChildVisitResult::CXChildVisit_Continue;
-            }
-        }
+        //if (ctx.no_includes && c.kind != CXCursorKind::CXCursor_UnexposedDecl) {
+        //    // skip functions from other files
+        //    auto source_location = clang_getCursorLocation(c);
+        //    if (clang_Location_isFromMainFile(source_location) == 0) {
+        //        CXFile file;
+        //        uint32_t line, column;
+        //        clang_getFileLocation(source_location, &file, &line, &column, nullptr);
+        //        std::cout << "Skipping (" << clang_getCursorKindSpelling(c.kind) << ")\t\t" << clang_getCursorSpelling(c) << "\t\tfrom " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+        //        return CXChildVisitResult::CXChildVisit_Continue;
+        //    }
+        //}
 
         switch (c.kind) {
+        case CXCursor_Namespace:
+            return CXChildVisit_Recurse;
+
         case CXCursor_FunctionDecl:
             ctx.emit_function_decl(c);
             break;
@@ -166,7 +176,15 @@ int main(int argc, char** argv)
     clang_disposeTranslationUnit(unit);
     clang_disposeIndex(index);
 
-    cheez_file << ctx.cheez_file.str();
+    cheez_file << "#lib(\"./__TODO__.lib\")\n\n";
+    cheez_file << "#export_scope\n\n";
+    cheez_file << "__UNKNOWN__ :: struct{}\n\n";
+    cheez_file << ctx.cheez_file.str() << "\n";
+    cheez_file << "// ==========================================================\n";
+    cheez_file << "// ==========================================================\n";
+    cheez_file << "// ==========================================================\n\n";
+    cheez_file << "#file_scope\n\n";
+    cheez_file << ctx.cheez_c_bindings.str();
     c_file << ctx.c_file.str();
 }
 
@@ -187,29 +205,80 @@ void Context::emit_struct_decl(CXCursor cursor) {
         case CXCursorKind::CXCursor_FieldDecl: {
             ctx.cheez_type_decl << "    " << name << " : ";
             ctx.emit_cheez_type(ctx.cheez_type_decl, type, false);
+            ctx.cheez_type_decl << " = default";
             ctx.cheez_type_decl << "\n";
             break;
         }
 
         case CXCursorKind::CXCursor_CXXMethod: {
+            if (c_string_starts_with(clang_getCString(name), "operator"))
+                break;
+
+            CXType return_type = clang_getResultType(type);
+
             // cheez
             {
                 ctx.cheez_impl << "    " << name << " :: (ref Self";
                 ctx.emit_cheez_function_parameter_list(ctx.cheez_impl, c, true);
                 ctx.cheez_impl << ") ";
-                // return type
+                if (return_type.kind != CXTypeKind::CXType_Void) {
+                    ctx.cheez_impl << "-> ";
+                    ctx.emit_cheez_type(ctx.cheez_impl, return_type, true);
+                    ctx.cheez_impl << " ";
+                }
                 ctx.cheez_impl << "{\n";
-                ctx.cheez_impl << "        __c__" << struct_name << "_" << name << "_" << ctx.member_index << "(";
+
+                if (return_type.kind != CXTypeKind::CXType_Void) {
+                    ctx.cheez_impl << "        result : ";
+                    ctx.emit_cheez_type(ctx.cheez_impl, return_type, false, true, true);
+                    ctx.cheez_impl << " = default\n";
+                }
+                ctx.cheez_impl << "        __c__" << struct_name << "_" << name << "_" << ctx.member_index << "(&self";
+                if (return_type.kind != CXTypeKind::CXType_Void) {
+                    ctx.cheez_impl << ", &result";
+                }
+                ctx.emit_cheez_function_argument_list(ctx.cheez_impl, c, true);
                 ctx.cheez_impl << ")\n";
+                if (return_type.kind != CXTypeKind::CXType_Void) {
+                    ctx.cheez_impl << "        return ";
+                    if (return_type.kind == CXTypeKind::CXType_LValueReference)
+                        ctx.cheez_impl << "<<";
+                    ctx.cheez_impl << "result\n";
+                }
                 ctx.cheez_impl << "    }\n";
+            }
+
+            // cheez binding
+            {
+                ctx.cheez_c_bindings << "__c__" << struct_name << "_" << name << "_" << ctx.member_index << " :: (self: &" << struct_name;
+
+                if (return_type.kind != CXTypeKind::CXType_Void) {
+                    ctx.cheez_c_bindings << ", ret: &";
+                    ctx.emit_cheez_type(ctx.cheez_c_bindings, return_type, false, true, true);
+                }
+
+                ctx.emit_cheez_function_parameter_list(ctx.cheez_c_bindings, c, true, true);
+                ctx.cheez_c_bindings << ");\n";
             }
 
             // c
             {
                 ctx.c_file << "extern \"C\" void __c__" << struct_name << "_" << name << "_" << ctx.member_index << "(" << struct_name << "* self";
+                if (return_type.kind != CXTypeKind::CXType_Void) {
+                    ctx.c_file << ", ";
+                    ctx.emit_c_type(ctx.c_file, return_type, "*ret", true, true);
+                }
                 ctx.emit_c_function_parameter_list(ctx.c_file, c, true);
                 ctx.c_file << ") {\n";
-                ctx.c_file << "    self->" << name << "(";
+                ctx.c_file << "    ";
+                if (return_type.kind != CXTypeKind::CXType_Void) {
+                    ctx.c_file << "*ret = (";
+                    ctx.emit_c_type(ctx.c_file, return_type, "", false, false);
+                    ctx.c_file << ")";
+                    if (return_type.kind == CXTypeKind::CXType_LValueReference)
+                        ctx.c_file << "&";
+                }
+                ctx.c_file << "self->" << name << "(";
                 ctx.emit_c_function_argument_list(ctx.c_file, c, false);
                 ctx.c_file << ");\n";
                 ctx.c_file << "}\n";
@@ -218,13 +287,26 @@ void Context::emit_struct_decl(CXCursor cursor) {
         }
         
         case CXCursorKind::CXCursor_Constructor: {
+            CXType return_type = clang_getResultType(type);
+
             // cheez
             {
-                ctx.cheez_impl << "    new_" << struct_name << " :: (self: &Self";
-                ctx.emit_cheez_function_parameter_list(ctx.cheez_impl, c, true);
-                ctx.cheez_impl << ") {\n";
-                // call binding
+                ctx.cheez_impl << "    new :: (";
+                ctx.emit_cheez_function_parameter_list(ctx.cheez_impl, c, false);
+                ctx.cheez_impl << ") -> " << struct_name     << " {\n";
+                ctx.cheez_impl << "        result : " << struct_name << " = default\n";
+                ctx.cheez_impl << "        __c__" << struct_name << "_new_" << ctx.member_index << "(&result";
+                ctx.emit_cheez_function_argument_list(ctx.cheez_impl, c, true);
+                ctx.cheez_impl << ")\n";
+                ctx.cheez_impl << "        return result\n";
                 ctx.cheez_impl << "    }\n";
+            }
+
+            // cheez binding
+            {
+                ctx.cheez_c_bindings << "__c__" << struct_name << "_new_" << ctx.member_index << " :: (self: &" << struct_name;
+                ctx.emit_cheez_function_parameter_list(ctx.cheez_c_bindings, c, true, true);
+                ctx.cheez_c_bindings << ");\n";
             }
 
             // c
@@ -241,9 +323,24 @@ void Context::emit_struct_decl(CXCursor cursor) {
         }
         
         case CXCursorKind::CXCursor_Destructor: {
-            ctx.cheez_drop_impl << "    drop :: (ref Self) {\n";
-            // call binding
-            ctx.cheez_drop_impl << "    }\n";
+            // cheez
+            {
+                ctx.cheez_drop_impl << "    drop :: (ref Self) {\n";
+                ctx.cheez_drop_impl << "        __c__" << struct_name << "_dtor(&self)\n";
+                ctx.cheez_drop_impl << "    }\n";
+            }
+
+            // cheez binding
+            {
+                ctx.cheez_c_bindings << "__c__" << struct_name << "_dtor :: (self: &" << struct_name << ");\n";
+            }
+
+            // c
+            {
+                ctx.c_file << "extern \"C\" void __c__" << struct_name << "_dtor(" << struct_name << "* self) {\n";
+                ctx.c_file << "    self->~" << struct_name << "();\n";
+                ctx.c_file << "}\n";
+            }
             break;
         }
 
@@ -448,10 +545,11 @@ void Context::emit_function_decl(CXCursor cursor) {
     //}
 }
 
-void Context::emit_cheez_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
+void Context::emit_cheez_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma, bool prefer_pointers) {
     buffer = &stream;
     param_index = 0;
     this->start_with_comma = start_with_comma;
+    this->prefer_pointers = prefer_pointers;
 
     clang_visitChildren(func, [](CXCursor c, CXCursor parent, CXClientData client_data) {
         Context& ctx = *(Context*)client_data;
@@ -463,25 +561,44 @@ void Context::emit_cheez_function_parameter_list(std::ostream& stream, CXCursor 
 
             if (ctx.param_index > 0 || ctx.start_with_comma)
                 *ctx.buffer << ", ";
-            *ctx.buffer << name << ": ";
-            ctx.emit_cheez_type(*ctx.buffer, type, true);
+            ctx.emit_param_name(*ctx.buffer, c, ctx.param_index);
+            *ctx.buffer << ": ";
+            ctx.emit_cheez_type(*ctx.buffer, type, true, false, ctx.prefer_pointers);
 
             clang_disposeString(name);
-            break;
-        }
-
-        default: {
-            std::cout << "[ERROR] parameter: " << "Cursor '" << clang_getCursorSpelling(c) << "' of kind '" << clang_getCursorKindSpelling(clang_getCursorKind(c)) << "'\n";
+            ctx.param_index += 1;
             break;
         }
         }
 
-        ctx.param_index += 1;
         return CXChildVisit_Continue;
     }, this);
 }
 
 void Context::emit_cheez_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
+    buffer = &stream;
+    param_index = 0;
+    this->start_with_comma = start_with_comma;
+
+    clang_visitChildren(func, [](CXCursor c, CXCursor parent, CXClientData client_data) {
+        Context& ctx = *(Context*)client_data;
+
+        switch (c.kind) {
+        case CXCursorKind::CXCursor_ParmDecl: {
+            if (ctx.param_index > 0 || ctx.start_with_comma)
+                *ctx.buffer << ", ";
+
+            CXType type = clang_getCursorType(c);
+            if (ctx.pass_type_by_pointer(type) || type.kind == CXType_LValueReference)
+                *ctx.buffer << "&";
+            ctx.emit_param_name(*ctx.buffer, c, ctx.param_index);
+            ctx.param_index += 1;
+            break;
+        }
+        }
+
+        return CXChildVisit_Continue;
+    }, this);
 }
 
 void Context::emit_c_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
@@ -494,14 +611,10 @@ void Context::emit_c_function_parameter_list(std::ostream& stream, CXCursor func
 
         switch (c.kind) {
         case CXCursorKind::CXCursor_ParmDecl: {
-            CXString name = clang_getCursorSpelling(c);
-            CXType type = clang_getCursorType(c);
-
             if (ctx.param_index > 0 || ctx.start_with_comma)
                 *ctx.buffer << ", ";
-            ctx.emit_c_type(*ctx.buffer, type, ctx.get_param_name(c, ctx.param_index).c_str(), true);
-
-            clang_disposeString(name);
+            ctx.emit_c_type(*ctx.buffer, clang_getCursorType(c), ctx.get_param_name(c, ctx.param_index).c_str(), true);
+            ctx.param_index += 1;
             break;
         }
 
@@ -511,7 +624,6 @@ void Context::emit_c_function_parameter_list(std::ostream& stream, CXCursor func
         }
         }
 
-        ctx.param_index += 1;
         return CXChildVisit_Continue;
     }, this);
 }
@@ -537,16 +649,16 @@ void Context::emit_c_function_argument_list(std::ostream& stream, CXCursor func,
             ctx.emit_param_name(*ctx.buffer, c, ctx.param_index);
 
             clang_disposeString(name);
+            ctx.param_index += 1;
             break;
         }
         }
 
-        ctx.param_index += 1;
         return CXChildVisit_Continue;
     }, this);
 }
 
-void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_func_param, bool behind_pointer) {
+void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_func_param, bool behind_pointer, bool prefer_pointers) {
     long long size = clang_Type_getSizeOf(type);
 
     switch (type.kind) {
@@ -582,7 +694,7 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
         else {
             stream << "[" << array_size << "]";
         }
-        emit_cheez_type(stream, target_type, is_func_param);
+        emit_cheez_type(stream, target_type, is_func_param, false, prefer_pointers);
         break;
     }
 
@@ -595,25 +707,28 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
         else {
             stream << "[]";
         }
-        emit_cheez_type(stream, target_type, is_func_param);
+        emit_cheez_type(stream, target_type, is_func_param, false, prefer_pointers);
         break;
     }
 
     case CXTypeKind::CXType_Pointer: {
         auto target_type = clang_getPointeeType(type);
         stream << "&";
-        emit_cheez_type(stream, target_type, is_func_param, true);
+        emit_cheez_type(stream, target_type, is_func_param, true, false);
         break;
     }
 
     case CXTypeKind::CXType_LValueReference: {
         auto target_type = clang_getPointeeType(type);
-        stream << "&";
-        emit_cheez_type(stream, target_type, is_func_param, true);
+        if (prefer_pointers)
+            stream << "&";
+        else
+            stream << "ref ";
+        emit_cheez_type(stream, target_type, is_func_param, true, false);
         break;
     }
 
-                                           // function type
+    // function type
     case CXTypeKind::CXType_FunctionProto: {
         stream << "fn(";
 
@@ -625,12 +740,12 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
             if (arg_index > 0) {
                 stream << ", ";
             }
-            emit_cheez_type(stream, arg_type, true, false);
+            emit_cheez_type(stream, arg_type, true, false, prefer_pointers);
         }
 
         stream << ") -> ";
         CXType return_type = clang_getResultType(type);
-        emit_cheez_type(stream, return_type, false, false);
+        emit_cheez_type(stream, return_type, false, false, prefer_pointers);
         break;
     }
 
@@ -641,10 +756,10 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
         break;
     }
 
-                                      // struct
+    // struct
     case CXTypeKind::CXType_Record: {
         CXCursor type_decl = clang_getTypeDeclaration(type);
-        if (is_func_param && !behind_pointer) {
+        if (prefer_pointers && !behind_pointer) {
             stream << "&" << clang_getCursorSpelling(type_decl);
         }
         else {
@@ -653,7 +768,7 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
         break;
     }
 
-                                  // enum
+    // enum
     case CXTypeKind::CXType_Enum: {
         stream << clang_getTypeSpelling(type);
         break;
@@ -674,7 +789,7 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
             case CXCursorKind::CXCursor_StructDecl:
             case CXCursorKind::CXCursor_UnionDecl:
             case CXCursorKind::CXCursor_ClassDecl:
-                if (is_func_param && !behind_pointer) {
+                if (prefer_pointers && !behind_pointer) {
                     stream << "&" << clang_getTypeSpelling(type);
                 }
                 else {
@@ -683,7 +798,7 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
                 break;
 
             default:
-                emit_cheez_type(stream, elo, is_func_param, behind_pointer);
+                emit_cheez_type(stream, elo, is_func_param, behind_pointer, prefer_pointers);
                 break;
             }
         }
@@ -692,6 +807,8 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
 
     default: {
         auto spelling = clang_getTypeSpelling(type);
+        if (prefer_pointers && !behind_pointer)
+            stream << "&";
         stream << "__UNKNOWN__";
         std::cout << "[ERROR] Failed to translate type '" << spelling << "' (" << clang_getTypeKindSpelling(type.kind) << ")\n";
         break;
@@ -701,6 +818,10 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
 
 void Context::emit_c_type(std::ostream& stream, const CXType& type, const char* name, bool is_func_param, bool behind_pointer) {
     long long size = clang_Type_getSizeOf(type);
+
+    if (strcmp(name, "_callback") == 0) {
+        int i = 0;
+    }
 
     switch (type.kind) {
     case CXTypeKind::CXType_Void:       stream << "void " << name; break;
@@ -717,24 +838,26 @@ void Context::emit_c_type(std::ostream& stream, const CXType& type, const char* 
     case CXTypeKind::CXType_Long:       stream << "int" << (size * 8) << "_t " << name; break;
     case CXTypeKind::CXType_LongLong:   stream << "int" << (size * 8) << "_t " << name; break;
 
-    case CXTypeKind::CXType_Char_S:     stream << "char" << (size * 8) << "_t " << name; break;
-    case CXTypeKind::CXType_WChar:      stream << "char" << (size * 8) << "_t " << name; break;
+    //case CXTypeKind::CXType_Char_S:     stream << "char" << (size * 8) << "_t " << name; break;
+    //case CXTypeKind::CXType_WChar:      stream << "char" << (size * 8) << "_t " << name; break;
+    case CXTypeKind::CXType_Char_S:     stream << "char " << name; break;
+    case CXTypeKind::CXType_WChar:      stream << "wchar_t " << name; break;
 
     case CXTypeKind::CXType_Float:      stream << "float " << name; break;
-    case CXTypeKind::CXType_Double:     stream << "double" << name; break;
+    case CXTypeKind::CXType_Double:     stream << "double " << name; break;
 
-    case CXTypeKind::CXType_Bool:       stream << "bool" << name; break;
+    case CXTypeKind::CXType_Bool:       stream << "bool " << name; break;
 
     case CXTypeKind::CXType_ConstantArray: {
         auto target_type = clang_getArrayElementType(type);
         auto array_size = clang_getArraySize(type);
 
-        emit_c_type(stream, target_type, "", is_func_param);
+        emit_c_type(stream, target_type, "", is_func_param, true);
         if (is_func_param) {
-            stream << " (*" << name << ")";
+            stream << "* " << name;
         }
         else {
-            stream << "(" << name << "[" << array_size << "])";
+            stream << name << "[" << array_size << "]";
         }
         break;
     }
@@ -742,12 +865,12 @@ void Context::emit_c_type(std::ostream& stream, const CXType& type, const char* 
     case CXTypeKind::CXType_IncompleteArray: {
         auto target_type = clang_getArrayElementType(type);
 
-        emit_c_type(stream, target_type, "", is_func_param);
+        emit_c_type(stream, target_type, "", is_func_param, true);
         if (is_func_param) {
-            stream << " (*" << name << ")";
+            stream << "* " << name;
         }
         else {
-            stream << "(" << name << "[])";
+            stream << "" << name << "[]";
         }
         break;
     }
@@ -755,18 +878,18 @@ void Context::emit_c_type(std::ostream& stream, const CXType& type, const char* 
     case CXTypeKind::CXType_Pointer: {
         auto target_type = clang_getPointeeType(type);
         emit_c_type(stream, target_type, "", is_func_param, true);
-        stream << " (*" << name << ")";
+        stream << "* " << name;
         break;
     }
 
     case CXTypeKind::CXType_LValueReference: {
         auto target_type = clang_getPointeeType(type);
         emit_c_type(stream, target_type, "", is_func_param, true);
-        stream << " (*" << name << ")";
+        stream << "* " << name;
         break;
     }
 
-                                           // function type
+    // function type
     case CXTypeKind::CXType_FunctionProto: {
         CXType return_type = clang_getResultType(type);
         emit_c_type(stream, return_type, "", false);
@@ -794,18 +917,18 @@ void Context::emit_c_type(std::ostream& stream, const CXType& type, const char* 
         break;
     }
 
-                                      // struct
+    // struct
     case CXTypeKind::CXType_Record: {
         CXCursor type_decl = clang_getTypeDeclaration(type);
         if (is_func_param && !behind_pointer) {
-            stream << clang_getCursorSpelling(type_decl) << " (*" << name << ")";
+            stream << clang_getCursorSpelling(type_decl) << "* " << name;
         } else {
-            stream << clang_getCursorSpelling(type_decl) << name;
+            stream << clang_getCursorSpelling(type_decl) << " " << name;
         }
         break;
     }
 
-                                  // enum
+    // enum
     case CXTypeKind::CXType_Enum: {
         stream << clang_getTypeSpelling(type) << " " << name;
         break;
@@ -827,7 +950,7 @@ void Context::emit_c_type(std::ostream& stream, const CXType& type, const char* 
             case CXCursorKind::CXCursor_UnionDecl:
             case CXCursorKind::CXCursor_ClassDecl:
                 if (is_func_param && !behind_pointer) {
-                    stream << clang_getTypeSpelling(type) << " (*" << name << ")";
+                    stream << clang_getTypeSpelling(type) << "* " << name;
                 }
                 else {
                     stream << clang_getTypeSpelling(type) << " " << name;
@@ -835,7 +958,11 @@ void Context::emit_c_type(std::ostream& stream, const CXType& type, const char* 
                 break;
 
             default:
-                emit_c_type(stream, elo, "", is_func_param, behind_pointer);
+                if (elo.kind == CXTypeKind::CXType_Pointer && clang_getPointeeType(elo).kind == CXTypeKind::CXType_FunctionProto) {
+                    stream << clang_getTypeSpelling(type) << " " << name;
+                } else {
+                    emit_c_type(stream, elo, name, is_func_param, behind_pointer);
+                }
                 break;
             }
         }
@@ -845,6 +972,9 @@ void Context::emit_c_type(std::ostream& stream, const CXType& type, const char* 
     default: {
         auto spelling = clang_getTypeSpelling(type);
         stream << "__UNKNOWN__";
+        if (!behind_pointer)
+            stream << "*";
+        stream << " " << name;
         std::cout << "[ERROR] Failed to translate type '" << spelling << "' (" << clang_getTypeKindSpelling(type.kind) << ")\n";
         break;
     }
@@ -909,7 +1039,7 @@ bool Context::pass_type_by_pointer(const CXType& type) {
         auto spelling = clang_getTypeSpelling(type);
         std::cout << "[ERROR] unhandled pass_type_by_pointer '" << spelling << "' (" << clang_getTypeKindSpelling(type.kind) << ")\n";
         clang_disposeString(spelling);
-        return false;
+        return true;
     }
     }
 }
@@ -917,7 +1047,7 @@ bool Context::pass_type_by_pointer(const CXType& type) {
 void Context::emit_param_name(std::ostream& stream, CXCursor cursor, int index) {
     CXString name = clang_getCursorSpelling(cursor);
     if (strlen(clang_getCString(name)) == 0) {
-        stream << "p" << index;
+        stream << "_" << index;
     } else {
         stream << "_" << name;
     }
