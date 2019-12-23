@@ -12,10 +12,10 @@ use import opengl.types
 use import opengl.functions
 
 
-use import imgui.imgui_binding
-use import imgui.cimgui_binding
-use import imgui.cimgui_glfw_binding
-use import imgui.cimgui_opengl3_binding
+imgui :: import imgui.imgui_binding
+// use import imgui.cimgui_binding
+// use import imgui.cimgui_glfw_binding
+// use import imgui.cimgui_opengl3_binding
 
 #export_scope
 
@@ -86,7 +86,7 @@ igListBoxStringArray :: (label: c_string, current_index: &i32, arr: ref Array[St
         return false
     }
 
-    return igListBoxFnPtr(label, current_index, array_string_getter, cast &arr, cast arr.get_length())
+    return imgui.ListBoxFnPtr(label, current_index, array_string_getter, cast &arr, cast arr.get_length())
 }
 
 Main :: () {
@@ -149,31 +149,31 @@ Main :: () {
 
         {
             open := true
-            igBegin("Settings", &open, cast ImGuiWindowFlags_.None)
+            imgui.Begin("Settings", &open, cast imgui.ImGuiWindowFlags_.None)
 
-            igColorPicker3("clear color", cast(&float)&clear_color, 0)
-            igSeparator()
+            imgui.ColorPicker3("clear color", cast(&float)&clear_color, 0)
+            imgui.Separator()
             
             for component : clear_color {
-                igPushIDInt(i32(it_index))
-                igInputFloat("##", &component)
-                igPopID()
+                imgui.PushIDInt(i32(it_index))
+                imgui.InputFloat("##", &component)
+                imgui.PopID()
             }
 
-            igSeparator()
-            igInputText("String to add", buff.data, cast buff.length)
-            if igSmallButton("Add String") {
+            imgui.Separator()
+            imgui.InputText("String to add", buff.data, cast buff.length)
+            if imgui.SmallButton("Add String") {
                 strings.add(String.from_cstring(buff.data))
                 buff[0] = cast 0
             }
-            igSeparator()
+            imgui.Separator()
 
             igListBoxStringArray("strings", &strings_selected, strings)
-            igEnd()
+            imgui.End()
         }
 
         if show_demo_window then
-            igShowDemoWindow(&show_demo_window)
+            imgui.ShowDemoWindow(&show_demo_window)
 
         end_frame()
 
@@ -183,37 +183,37 @@ Main :: () {
 }
 
 begin_frame :: () {
-    ImGui_ImplOpenGL3_NewFrame()
-    ImGui_ImplGlfw_NewFrame()
-    igNewFrame()
+    imgui.ImGui_ImplOpenGL3_NewFrame()
+    imgui.ImGui_ImplGlfw_NewFrame()
+    imgui.NewFrame()
 }
 
 end_frame :: () {
-    io := igGetIO()
+    io := imgui.GetIO()
 
     // rendering
-    igEndFrame()
-    igRender()
-    ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData())
+    imgui.EndFrame()
+    imgui.Render()
+    imgui.ImGui_ImplOpenGL3_RenderDrawData(imgui.GetDrawData())
 }
 
 init_imgui :: (window: &GLFWwindow) -> bool {
-    context := igCreateContext(null)
+    context := imgui.CreateContext(null)
 
     if context == null {
-        io.println("[ERROR] igCreateContext failed")
+        io.println("[ERROR] imgui.CreateContext failed")
         return false
     }
 
-    igStyleColorsDark(null)
+    imgui.StyleColorsDark(null)
 
     //
-    if !ImGui_ImplGlfw_InitForOpenGL(window, true) {
-        io.println("[ERROR] ImGui_ImplGlfw_InitForOpenGL failed")
+    if !imgui.ImGui_ImplGlfw_InitForOpenGL(window, true) {
+        io.println("[ERROR] imgui.ImGui_ImplGlfw_InitForOpenGL failed")
         return false
     }
-    if !ImGui_ImplOpenGL3_Init("#version 130") {
-        io.println("[ERROR] ImGui_ImplOpenGL3_Init failed")
+    if !imgui.ImGui_ImplOpenGL3_Init("#version 130") {
+        io.println("[ERROR] imgui.ImGui_ImplOpenGL3_Init failed")
         return false
     }
 
@@ -221,7 +221,7 @@ init_imgui :: (window: &GLFWwindow) -> bool {
 }
 
 shutdown_imgui :: () {
-    ImGui_ImplOpenGL3_Shutdown()
-    ImGui_ImplGlfw_Shutdown()
-    igDestroyContext(null)
+    imgui.ImGui_ImplOpenGL3_Shutdown()
+    imgui.ImGui_ImplGlfw_Shutdown()
+    imgui.DestroyContext(null)
 }

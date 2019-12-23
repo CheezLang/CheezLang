@@ -1,5 +1,5 @@
 // import examples.trait_function_call_performance
-// import examples.glfw3_example
+import examples.glfw3_example
 // import examples.graphyfier.graphyfier
 // import examples.pathtracer2.main
 // import examples.geometry_draw_thingy
@@ -25,11 +25,6 @@
 // import bugs.bug1
 
 // import "../Tools/Bindings/imgui_binding"
-import "imgui/imgui_binding"
-
-Main :: () {
-
-}
 
 /*
 #test_expect_output("")

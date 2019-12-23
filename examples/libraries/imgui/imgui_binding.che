@@ -1,6 +1,10 @@
-#lib("./__TODO__.lib")
+#lib("./lib/Bindings.lib")
+#lib("./lib/cimgui.lib")
 
+import std.alloca
 use import std.io.stdio
+
+use import glfw.glfw3
 
 #export_scope
 
@@ -98,13 +102,6 @@ uint_fast32_t :: u32
 uint_fast64_t :: u64
 intmax_t :: i64
 uintmax_t :: u64
-DPI_AWARENESS_CONTEXT :: &DPI_AWARENESS_CONTEXT__
-MODEMDEVCAPS :: struct #copy {}
-PMODEMDEVCAPS :: &_MODEMDEVCAPS
-LPMODEMDEVCAPS :: &_MODEMDEVCAPS
-MODEMSETTINGS :: struct #copy {}
-PMODEMSETTINGS :: &_MODEMSETTINGS
-LPMODEMSETTINGS :: &_MODEMSETTINGS
 ImGuiWindowFlags_ :: enum #copy #repr("C") #tag_type(i32) {
     None                      = 0x0
     NoTitleBar                = 0x1
@@ -581,36 +578,36 @@ ImGuiLayoutType_ :: enum #copy #repr("C") #tag_type(i32) {
     Vertical   = 0x1
 }
 ImGuiLogType :: enum #copy #repr("C") #tag_type(i32) {
-    _None      = 0x0
-    _TTY       = 0x1
-    _File      = 0x2
-    _Buffer    = 0x3
-    _Clipboard = 0x4
+    None      = 0x0
+    TTY       = 0x1
+    File      = 0x2
+    Buffer    = 0x3
+    Clipboard = 0x4
 }
 ImGuiAxis :: enum #copy #repr("C") #tag_type(i32) {
-    _None = -1
-    _X    = 0x0
-    _Y    = 0x1
+    None = -1
+    X    = 0x0
+    Y    = 0x1
 }
 ImGuiPlotType :: enum #copy #repr("C") #tag_type(i32) {
-    _Lines     = 0x0
-    _Histogram = 0x1
+    Lines     = 0x0
+    Histogram = 0x1
 }
 ImGuiInputSource :: enum #copy #repr("C") #tag_type(i32) {
-    _None        = 0x0
-    _Mouse       = 0x1
-    _Nav         = 0x2
-    _NavKeyboard = 0x3
-    _NavGamepad  = 0x4
-    _COUNT       = 0x5
+    None        = 0x0
+    Mouse       = 0x1
+    Nav         = 0x2
+    NavKeyboard = 0x3
+    NavGamepad  = 0x4
+    COUNT       = 0x5
 }
 ImGuiInputReadMode :: enum #copy #repr("C") #tag_type(i32) {
-    _Down       = 0x0
-    _Pressed    = 0x1
-    _Released   = 0x2
-    _Repeat     = 0x3
-    _RepeatSlow = 0x4
-    _RepeatFast = 0x5
+    Down       = 0x0
+    Pressed    = 0x1
+    Released   = 0x2
+    Repeat     = 0x3
+    RepeatSlow = 0x4
+    RepeatFast = 0x5
 }
 ImGuiNavHighlightFlags_ :: enum #copy #repr("C") #tag_type(i32) {
     None        = 0x0
@@ -636,18 +633,18 @@ ImGuiNavMoveFlags_ :: enum #copy #repr("C") #tag_type(i32) {
     ScrollToEdge        = 0x40
 }
 ImGuiNavForward :: enum #copy #repr("C") #tag_type(i32) {
-    _None          = 0x0
-    _ForwardQueued = 0x1
-    _ForwardActive = 0x2
+    None          = 0x0
+    ForwardQueued = 0x1
+    ForwardActive = 0x2
 }
 ImGuiNavLayer :: enum #copy #repr("C") #tag_type(i32) {
-    _Main  = 0x0
-    _Menu  = 0x1
-    _COUNT = 0x2
+    Main  = 0x0
+    Menu  = 0x1
+    COUNT = 0x2
 }
 ImGuiPopupPositionPolicy :: enum #copy #repr("C") #tag_type(i32) {
-    _Default  = 0x0
-    _ComboBox = 0x1
+    Default  = 0x0
+    ComboBox = 0x1
 }
 ImGuiNextWindowDataFlags_ :: enum #copy #repr("C") #tag_type(i32) {
     None              = 0x0
@@ -671,17 +668,6 @@ ImGuiTabBarFlagsPrivate_ :: enum #copy #repr("C") #tag_type(i32) {
 }
 ImGuiTabItemFlagsPrivate_ :: enum #copy #repr("C") #tag_type(i32) {
     ImGuiTabItemFlags_NoCloseButton = 0x100000
-}
-DPI_AWARENESS :: enum #copy #repr("C") #tag_type(i32) {
-    _INVALID           = -1
-    _UNAWARE           = 0x0
-    _SYSTEM_AWARE      = 0x1
-    _PER_MONITOR_AWARE = 0x2
-}
-DPI_HOSTING_BEHAVIOR :: enum #copy #repr("C") #tag_type(i32) {
-    _INVALID = -1
-    _DEFAULT = 0x0
-    _MIXED   = 0x1
 }
 ImVec2 :: struct #copy {
     x : f32 = default
@@ -2374,7 +2360,7 @@ ImGuiContext :: struct #copy {
     ActiveIdUsingKeyInputMask : ImU64 = default
     ActiveIdClickOffset : ImVec2 = default
     ActiveIdWindow : &ImGuiWindow = default
-    ActiveIdSource : ImGuiInputSource = default
+    ActiveIdSource : ImGuiInputSource = ImGuiInputSource.None
     ActiveIdPreviousFrame : ImGuiID = default
     ActiveIdPreviousFrameIsAlive : bool = default
     ActiveIdPreviousFrameHasBeenEditedBefore : bool = default
@@ -2398,7 +2384,7 @@ ImGuiContext :: struct #copy {
     NavJustMovedToId : ImGuiID = default
     NavJustMovedToMultiSelectScopeId : ImGuiID = default
     NavNextActivateId : ImGuiID = default
-    NavInputSource : ImGuiInputSource = default
+    NavInputSource : ImGuiInputSource = ImGuiInputSource.None
     NavScoringRectScreen : ImRect = default
     NavScoringCount : i32 = default
     NavWindowingTarget : &ImGuiWindow = default
@@ -2407,7 +2393,7 @@ ImGuiContext :: struct #copy {
     NavWindowingTimer : f32 = default
     NavWindowingHighlightAlpha : f32 = default
     NavWindowingToggleLayer : bool = default
-    NavLayer : ImGuiNavLayer = default
+    NavLayer : ImGuiNavLayer = ImGuiNavLayer.Main
     NavIdTabCounter : i32 = default
     NavIdIsAlive : bool = default
     NavMousePosDirty : bool = default
@@ -2421,7 +2407,7 @@ ImGuiContext :: struct #copy {
     NavMoveFromClampedRefRect : bool = default
     NavMoveRequest : bool = default
     NavMoveRequestFlags : ImGuiNavMoveFlags = default
-    NavMoveRequestForward : ImGuiNavForward = default
+    NavMoveRequestForward : ImGuiNavForward = ImGuiNavForward.None
     NavMoveDir : ImGuiDir = default
     NavMoveDirLast : ImGuiDir = default
     NavMoveClipDir : ImGuiDir = default
@@ -2483,7 +2469,7 @@ ImGuiContext :: struct #copy {
     SettingsHandlers : __UNKNOWN__ = default
     SettingsWindows : __UNKNOWN__ = default
     LogEnabled : bool = default
-    LogType : ImGuiLogType = default
+    LogType : ImGuiLogType = ImGuiLogType.None
     LogFile : ImFileHandle = default
     LogBuffer : ImGuiTextBuffer = default
     LogLinePosY : f32 = default
@@ -2523,7 +2509,7 @@ ImGuiWindowTempData :: struct #copy {
     LastItemStatusFlags : ImGuiItemStatusFlags = default
     LastItemRect : ImRect = default
     LastItemDisplayRect : ImRect = default
-    NavLayerCurrent : ImGuiNavLayer = default
+    NavLayerCurrent : ImGuiNavLayer = ImGuiNavLayer.Main
     NavLayerCurrentMask : i32 = default
     NavLayerActiveMask : i32 = default
     NavLayerActiveMaskNext : i32 = default
@@ -3254,7 +3240,7 @@ PushID_2 :: (_str_id_begin: &char8, _str_id_end: &char8) {
 PushID_3 :: (_ptr_id: &void) {
     __c__PushID_3(_ptr_id)
 }
-PushID_4 :: (_int_id: i32) {
+PushIDInt :: (_int_id: i32) {
     __c__PushID_4(_int_id)
 }
 PopID :: () {
@@ -3521,7 +3507,7 @@ VSliderScalar :: (_label: &char8, _size: ref ImVec2, _data_type: ImGuiDataType, 
     __c__VSliderScalar(&result, _label, &_size, _data_type, _p_data, _p_min, _p_max, _format, _power)
     return result
 }
-InputText :: (_label: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback, _user_data: &void) -> bool {
+InputText :: (_label: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags = 0, _callback: ImGuiInputTextCallback = null, _user_data: &void = null) -> bool {
     result : bool = default
     __c__InputText(&result, _label, _buf, _buf_size, _flags, _callback, _user_data)
     return result
@@ -3536,7 +3522,7 @@ InputTextWithHint :: (_label: &char8, _hint: &char8, _buf: &char8, _buf_size: si
     __c__InputTextWithHint(&result, _label, _hint, _buf, _buf_size, _flags, _callback, _user_data)
     return result
 }
-InputFloat :: (_label: &char8, _v: &f32, _step: f32, _step_fast: f32, _format: &char8, _flags: ImGuiInputTextFlags) -> bool {
+InputFloat :: (_label: &char8, _v: &f32, _step: f32 = 0, _step_fast: f32 = 0, _format: &char8 = "%.3f", _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputFloat(&result, _label, _v, _step, _step_fast, _format, _flags)
     return result
@@ -3711,7 +3697,7 @@ ListBox :: (_label: &char8, _current_item: &i32, _items: &&char8, _items_count: 
     __c__ListBox(&result, _label, _current_item, _items, _items_count, _height_in_items)
     return result
 }
-ListBox_2 :: (_label: &char8, _current_item: &i32, _items_getter: &fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32) -> bool {
+ListBoxFnPtr :: (_label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32 = -1) -> bool {
     result : bool = default
     __c__ListBox_2(&result, _label, _current_item, _items_getter, _data, _items_count, _height_in_items)
     return result
@@ -5717,10 +5703,10 @@ __c__SliderScalarN :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p
 __c__VSliderFloat :: (ret: &bool, _label: &char8, _size: &ImVec2, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
 __c__VSliderInt :: (ret: &bool, _label: &char8, _size: &ImVec2, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8);
 __c__VSliderScalar :: (ret: &bool, _label: &char8, _size: &ImVec2, _data_type: ImGuiDataType, _p_data: &void, _p_min: &void, _p_max: &void, _format: &char8, _power: f32);
-__c__InputText :: (ret: &bool, _label: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback, _user_data: &void);
+__c__InputText :: (ret: &bool, _label: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags = 0, _callback: ImGuiInputTextCallback = null, _user_data: &void = null);
 __c__InputTextMultiline :: (ret: &bool, _label: &char8, _buf: &char8, _buf_size: size_t, _size: &ImVec2, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback, _user_data: &void);
 __c__InputTextWithHint :: (ret: &bool, _label: &char8, _hint: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback, _user_data: &void);
-__c__InputFloat :: (ret: &bool, _label: &char8, _v: &f32, _step: f32, _step_fast: f32, _format: &char8, _flags: ImGuiInputTextFlags);
+__c__InputFloat :: (ret: &bool, _label: &char8, _v: &f32, _step: f32 = 0, _step_fast: f32 = 0, _format: &char8 = "%.3f", _flags: ImGuiInputTextFlags = 0);
 __c__InputFloat2 :: (ret: &bool, _label: &char8, _v: &f32, _format: &char8, _flags: ImGuiInputTextFlags);
 __c__InputFloat3 :: (ret: &bool, _label: &char8, _v: &f32, _format: &char8, _flags: ImGuiInputTextFlags);
 __c__InputFloat4 :: (ret: &bool, _label: &char8, _v: &f32, _format: &char8, _flags: ImGuiInputTextFlags);
@@ -5757,7 +5743,7 @@ __c__SetNextItemOpen :: (_is_open: bool, _cond: ImGuiCond);
 __c__Selectable :: (ret: &bool, _label: &char8, _selected: bool, _flags: ImGuiSelectableFlags, _size: &ImVec2);
 __c__Selectable_2 :: (ret: &bool, _label: &char8, _p_selected: &bool, _flags: ImGuiSelectableFlags, _size: &ImVec2);
 __c__ListBox :: (ret: &bool, _label: &char8, _current_item: &i32, _items: &&char8, _items_count: i32, _height_in_items: i32);
-__c__ListBox_2 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_getter: &fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32);
+__c__ListBox_2 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32);
 __c__ListBoxHeader :: (ret: &bool, _label: &char8, _size: &ImVec2);
 __c__ListBoxHeader_2 :: (ret: &bool, _label: &char8, _items_count: i32, _height_in_items: i32);
 __c__ListBoxFooter :: ();
