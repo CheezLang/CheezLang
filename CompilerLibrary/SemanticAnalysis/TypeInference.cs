@@ -2865,6 +2865,50 @@ namespace Cheez
                         return expr;
                     }
 
+                case "bin_not":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr, $"@bin_not requires one argument");
+                            return expr;
+                        }
+
+                        var arg = InferArg(0, expected);
+                        if (arg.Type is IntType i)
+                        {
+                            if (arg.IsCompTimeValue)
+                            {
+                                var value = ((NumberData)arg.Value);
+
+                                var arr = new byte[i.GetSize()];
+                                if (!value.IntValue.TryWriteBytes(arr, out var bytes, true))
+                                {
+                                    ReportError(arg, $"Value does not fit (too large or too small for type {arg.Type})");
+                                }
+
+                                expr.Value = (i.GetSize(), i.Signed) switch
+                                {
+                                    (1, false) => NumberData.FromBigInt(~arr[0]),
+                                    (2, false) => NumberData.FromBigInt(~BitConverter.ToUInt16(arr, 0)),
+                                    (4, false) => NumberData.FromBigInt(~BitConverter.ToUInt32(arr, 0)),
+                                    (8, false) => NumberData.FromBigInt(~BitConverter.ToUInt64(arr, 0)),
+                                    (1, true)  => NumberData.FromBigInt(~(sbyte)arr[0]),
+                                    (2, true)  => NumberData.FromBigInt(~BitConverter.ToInt16(arr, 0)),
+                                    (4, true)  => NumberData.FromBigInt(~BitConverter.ToInt32(arr, 0)),
+                                    (8, true)  => NumberData.FromBigInt(~BitConverter.ToInt64(arr, 0)),
+                                    _ => throw new Exception()
+                                };
+                            }
+                        }
+                        else
+                        {
+                            ReportError(arg, $"Argument must be an int but is {arg.Type}");
+                        }
+
+                        expr.Type = arg.Type;
+                        return expr;
+                    }
+
                 case "bin_or":
                     return HandleComptimeBitwiseOperator(expr.Name.Name, expr, context, -1, values =>
                     {

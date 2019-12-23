@@ -188,6 +188,8 @@ namespace Cheez
 
                             void ReportSources(AstFuncExpr func, string indent = "")
                             {
+                                if (func.InstantiatedAt == null)
+                                    return;
                                 foreach (var loc in func.InstantiatedAt)
                                     ReportError(loc, indent + $"Failed to instantiate function '{func.Name}'");
                                 foreach (var loc in func.InstantiatedBy)
