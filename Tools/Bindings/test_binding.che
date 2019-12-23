@@ -1,0 +1,94 @@
+#lib("D:\Programming\CheezLang\Tools\Bindings\bin\x64\Bindings.lib")
+
+#export_scope
+
+__UNKNOWN__ :: struct{}
+
+Vector :: struct #copy {
+    x : f32 = default
+    y : f32 = default
+    z : f32 = default
+}
+impl Vector {
+    new :: () -> Vector {
+        result : Vector = default
+        __c__Vector_new_3(&result)
+        return result
+    }
+    new :: (_other: ref Vector) -> Vector {
+        result : Vector = default
+        __c__Vector_new_4(&result, &_other)
+        return result
+    }
+    new :: (_other: &Vector) -> Vector {
+        result : Vector = default
+        __c__Vector_new_5(&result, _other)
+        return result
+    }
+    new :: (_x: f32, _y: f32, _z: f32) -> Vector {
+        result : Vector = default
+        __c__Vector_new_6(&result, _x, _y, _z)
+        return result
+    }
+    getX :: (ref Self) -> f32 {
+        result : f32 = default
+        __c__Vector_getX_8(&self, &result)
+        return result
+    }
+    getY :: (ref Self) -> f32 {
+        result : f32 = default
+        __c__Vector_getY_9(&self, &result)
+        return result
+    }
+    foo :: (ref Self, _uiae: Vector, _s: f32) -> f32 {
+        result : f32 = default
+        __c__Vector_foo_10(&self, &result, &_uiae, _s)
+        return result
+    }
+    bar :: (ref Self, _uiae: Vector, _s: f32) -> Vector {
+        result : Vector = default
+        __c__Vector_bar_11(&self, &result, &_uiae, _s)
+        return result
+    }
+    mul :: (ref Self, _other: Vector) {
+        __c__Vector_mul_12(&self, &_other)
+    }
+    div :: (ref Self, _other: Vector) {
+        __c__Vector_div_13(&self, &_other)
+    }
+    add :: (ref Self, _other: ref Vector) {
+        __c__Vector_add_14(&self, &_other)
+    }
+    sub :: (ref Self, _other: ref Vector) {
+        __c__Vector_sub_15(&self, &_other)
+    }
+    mod :: (ref Self, _other: &Vector) {
+        __c__Vector_mod_16(&self, _other)
+    }
+}
+impl Drop for Vector {
+    drop :: (ref Self) {
+        __c__Vector_dtor(&self)
+    }
+}
+
+// ==========================================================
+// ==========================================================
+// ==========================================================
+
+#file_scope
+
+__c__Vector_new_3 :: (self: &Vector);
+__c__Vector_new_4 :: (self: &Vector, _other: &Vector);
+__c__Vector_new_5 :: (self: &Vector, _other: &Vector);
+__c__Vector_new_6 :: (self: &Vector, _x: f32, _y: f32, _z: f32);
+__c__Vector_dtor :: (self: &Vector);
+__c__Vector_getX_8 :: (self: &Vector, ret: &f32);
+__c__Vector_getY_9 :: (self: &Vector, ret: &f32);
+__c__Vector_foo_10 :: (self: &Vector, ret: &f32, _uiae: &Vector, _s: f32);
+__c__Vector_bar_11 :: (self: &Vector, ret: &Vector, _uiae: &Vector, _s: f32);
+__c__Vector_mul_12 :: (self: &Vector, _other: &Vector);
+__c__Vector_div_13 :: (self: &Vector, _other: &Vector);
+__c__Vector_add_14 :: (self: &Vector, _other: &Vector);
+__c__Vector_sub_15 :: (self: &Vector, _other: &Vector);
+__c__Vector_mod_16 :: (self: &Vector, _other: &Vector);

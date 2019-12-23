@@ -1,0 +1,2569 @@
+#lib("./__TODO__.lib")
+
+#export_scope
+
+__UNKNOWN__ :: struct #copy {}
+
+ImTextureID :: &void
+ImGuiID :: u32
+ImWchar :: u16
+ImGuiCol :: i32
+ImGuiCond :: i32
+ImGuiDataType :: i32
+ImGuiDir :: i32
+ImGuiKey :: i32
+ImGuiNavInput :: i32
+ImGuiMouseButton :: i32
+ImGuiMouseCursor :: i32
+ImGuiStyleVar :: i32
+ImDrawCornerFlags :: i32
+ImDrawListFlags :: i32
+ImFontAtlasFlags :: i32
+ImGuiBackendFlags :: i32
+ImGuiColorEditFlags :: i32
+ImGuiConfigFlags :: i32
+ImGuiComboFlags :: i32
+ImGuiDragDropFlags :: i32
+ImGuiFocusedFlags :: i32
+ImGuiHoveredFlags :: i32
+ImGuiInputTextFlags :: i32
+ImGuiSelectableFlags :: i32
+ImGuiTabBarFlags :: i32
+ImGuiTabItemFlags :: i32
+ImGuiTreeNodeFlags :: i32
+ImGuiWindowFlags :: i32
+ImGuiInputTextCallback :: &fn(&ImGuiInputTextCallbackData) -> i32
+ImGuiSizeCallback :: &fn(&ImGuiSizeCallbackData) -> void
+ImS8 :: i8
+ImU8 :: u8
+ImS16 :: i16
+ImU16 :: u16
+ImS32 :: i32
+ImU32 :: u32
+ImS64 :: i64
+ImU64 :: u64
+ImVec2 :: struct #copy {
+    x : f32 = default
+    y : f32 = default
+}
+impl ImVec2 {
+    new :: () -> ImVec2 {
+        result : ImVec2 = default
+        __c__ImVec2_new_2(&result)
+        return result
+    }
+    new :: (__x: f32, __y: f32) -> ImVec2 {
+        result : ImVec2 = default
+        __c__ImVec2_new_3(&result, __x, __y)
+        return result
+    }
+}
+ImVec4 :: struct #copy {
+    x : f32 = default
+    y : f32 = default
+    z : f32 = default
+    w : f32 = default
+}
+impl ImVec4 {
+    new :: () -> ImVec4 {
+        result : ImVec4 = default
+        __c__ImVec4_new_4(&result)
+        return result
+    }
+    new :: (__x: f32, __y: f32, __z: f32, __w: f32) -> ImVec4 {
+        result : ImVec4 = default
+        __c__ImVec4_new_5(&result, __x, __y, __z, __w)
+        return result
+    }
+}
+ImGuiWindowFlags_ :: enum #copy {}
+ImGuiInputTextFlags_ :: enum #copy {}
+ImGuiTreeNodeFlags_ :: enum #copy {}
+ImGuiSelectableFlags_ :: enum #copy {}
+ImGuiComboFlags_ :: enum #copy {}
+ImGuiTabBarFlags_ :: enum #copy {}
+ImGuiTabItemFlags_ :: enum #copy {}
+ImGuiFocusedFlags_ :: enum #copy {}
+ImGuiHoveredFlags_ :: enum #copy {}
+ImGuiDragDropFlags_ :: enum #copy {}
+ImGuiDataType_ :: enum #copy {}
+ImGuiDir_ :: enum #copy {}
+ImGuiKey_ :: enum #copy {}
+ImGuiNavInput_ :: enum #copy {}
+ImGuiConfigFlags_ :: enum #copy {}
+ImGuiBackendFlags_ :: enum #copy {}
+ImGuiCol_ :: enum #copy {}
+ImGuiStyleVar_ :: enum #copy {}
+ImGuiColorEditFlags_ :: enum #copy {}
+ImGuiMouseButton_ :: enum #copy {}
+ImGuiMouseCursor_ :: enum #copy {}
+ImGuiCond_ :: enum #copy {}
+ImGuiStyle :: struct #copy {
+    Alpha : f32 = default
+    WindowPadding : ImVec2 = default
+    WindowRounding : f32 = default
+    WindowBorderSize : f32 = default
+    WindowMinSize : ImVec2 = default
+    WindowTitleAlign : ImVec2 = default
+    WindowMenuButtonPosition : ImGuiDir = default
+    ChildRounding : f32 = default
+    ChildBorderSize : f32 = default
+    PopupRounding : f32 = default
+    PopupBorderSize : f32 = default
+    FramePadding : ImVec2 = default
+    FrameRounding : f32 = default
+    FrameBorderSize : f32 = default
+    ItemSpacing : ImVec2 = default
+    ItemInnerSpacing : ImVec2 = default
+    TouchExtraPadding : ImVec2 = default
+    IndentSpacing : f32 = default
+    ColumnsMinSpacing : f32 = default
+    ScrollbarSize : f32 = default
+    ScrollbarRounding : f32 = default
+    GrabMinSize : f32 = default
+    GrabRounding : f32 = default
+    TabRounding : f32 = default
+    TabBorderSize : f32 = default
+    ColorButtonPosition : ImGuiDir = default
+    ButtonTextAlign : ImVec2 = default
+    SelectableTextAlign : ImVec2 = default
+    DisplayWindowPadding : ImVec2 = default
+    DisplaySafeAreaPadding : ImVec2 = default
+    MouseCursorScale : f32 = default
+    AntiAliasedLines : bool = default
+    AntiAliasedFill : bool = default
+    CurveTessellationTol : f32 = default
+    Colors : [48]ImVec4 = default
+}
+impl ImGuiStyle {
+    new :: () -> ImGuiStyle {
+        result : ImGuiStyle = default
+        __c__ImGuiStyle_new_35(&result)
+        return result
+    }
+    ScaleAllSizes :: (ref Self, _scale_factor: f32) {
+        __c__ImGuiStyle_ScaleAllSizes_36(&self, _scale_factor)
+    }
+}
+ImGuiIO :: struct #copy {
+    ConfigFlags : ImGuiConfigFlags = default
+    BackendFlags : ImGuiBackendFlags = default
+    DisplaySize : ImVec2 = default
+    DeltaTime : f32 = default
+    IniSavingRate : f32 = default
+    IniFilename : &char8 = default
+    LogFilename : &char8 = default
+    MouseDoubleClickTime : f32 = default
+    MouseDoubleClickMaxDist : f32 = default
+    MouseDragThreshold : f32 = default
+    KeyMap : [22]i32 = default
+    KeyRepeatDelay : f32 = default
+    KeyRepeatRate : f32 = default
+    UserData : &void = default
+    Fonts : &ImFontAtlas = default
+    FontGlobalScale : f32 = default
+    FontAllowUserScaling : bool = default
+    FontDefault : &ImFont = default
+    DisplayFramebufferScale : ImVec2 = default
+    MouseDrawCursor : bool = default
+    ConfigMacOSXBehaviors : bool = default
+    ConfigInputTextCursorBlink : bool = default
+    ConfigWindowsResizeFromEdges : bool = default
+    ConfigWindowsMoveFromTitleBarOnly : bool = default
+    ConfigWindowsMemoryCompactTimer : f32 = default
+    BackendPlatformName : &char8 = default
+    BackendRendererName : &char8 = default
+    BackendPlatformUserData : &void = default
+    BackendRendererUserData : &void = default
+    BackendLanguageUserData : &void = default
+    GetClipboardTextFn : &fn(&void) -> &char8 = default
+    SetClipboardTextFn : &fn(&void, &char8) -> void = default
+    ClipboardUserData : &void = default
+    ImeSetInputScreenPosFn : &fn(i32, i32) -> void = default
+    ImeWindowHandle : &void = default
+    RenderDrawListsFn : &fn(&ImDrawData) -> void = default
+    MousePos : ImVec2 = default
+    MouseDown : [5]bool = default
+    MouseWheel : f32 = default
+    MouseWheelH : f32 = default
+    KeyCtrl : bool = default
+    KeyShift : bool = default
+    KeyAlt : bool = default
+    KeySuper : bool = default
+    KeysDown : [512]bool = default
+    NavInputs : [21]f32 = default
+    WantCaptureMouse : bool = default
+    WantCaptureKeyboard : bool = default
+    WantTextInput : bool = default
+    WantSetMousePos : bool = default
+    WantSaveIniSettings : bool = default
+    NavActive : bool = default
+    NavVisible : bool = default
+    Framerate : f32 = default
+    MetricsRenderVertices : i32 = default
+    MetricsRenderIndices : i32 = default
+    MetricsRenderWindows : i32 = default
+    MetricsActiveWindows : i32 = default
+    MetricsActiveAllocations : i32 = default
+    MouseDelta : ImVec2 = default
+    MousePosPrev : ImVec2 = default
+    MouseClickedPos : [5]ImVec2 = default
+    MouseClickedTime : [5]f64 = default
+    MouseClicked : [5]bool = default
+    MouseDoubleClicked : [5]bool = default
+    MouseReleased : [5]bool = default
+    MouseDownOwned : [5]bool = default
+    MouseDownWasDoubleClick : [5]bool = default
+    MouseDownDuration : [5]f32 = default
+    MouseDownDurationPrev : [5]f32 = default
+    MouseDragMaxDistanceAbs : [5]ImVec2 = default
+    MouseDragMaxDistanceSqr : [5]f32 = default
+    KeysDownDuration : [512]f32 = default
+    KeysDownDurationPrev : [512]f32 = default
+    NavInputsDownDuration : [21]f32 = default
+    NavInputsDownDurationPrev : [21]f32 = default
+    InputQueueCharacters : __UNKNOWN__ = default
+}
+impl ImGuiIO {
+    AddInputCharacter :: (ref Self, _c: u32) {
+        __c__ImGuiIO_AddInputCharacter_46(&self, _c)
+    }
+    AddInputCharactersUTF8 :: (ref Self, _str: &char8) {
+        __c__ImGuiIO_AddInputCharactersUTF8_47(&self, _str)
+    }
+    ClearInputCharacters :: (ref Self) {
+        __c__ImGuiIO_ClearInputCharacters_48(&self)
+    }
+    new :: () -> ImGuiIO {
+        result : ImGuiIO = default
+        __c__ImGuiIO_new_80(&result)
+        return result
+    }
+}
+ImGuiInputTextCallbackData :: struct #copy {
+    EventFlag : ImGuiInputTextFlags = default
+    Flags : ImGuiInputTextFlags = default
+    UserData : &void = default
+    EventChar : ImWchar = default
+    EventKey : ImGuiKey = default
+    Buf : &char8 = default
+    BufTextLen : i32 = default
+    BufSize : i32 = default
+    BufDirty : bool = default
+    CursorPos : i32 = default
+    SelectionStart : i32 = default
+    SelectionEnd : i32 = default
+}
+impl ImGuiInputTextCallbackData {
+    new :: () -> ImGuiInputTextCallbackData {
+        result : ImGuiInputTextCallbackData = default
+        __c__ImGuiInputTextCallbackData_new_12(&result)
+        return result
+    }
+    DeleteChars :: (ref Self, _pos: i32, _bytes_count: i32) {
+        __c__ImGuiInputTextCallbackData_DeleteChars_13(&self, _pos, _bytes_count)
+    }
+    InsertChars :: (ref Self, _pos: i32, _text: &char8, _text_end: &char8) {
+        __c__ImGuiInputTextCallbackData_InsertChars_14(&self, _pos, _text, _text_end)
+    }
+    HasSelection :: (ref Self) -> bool {
+        result : bool = default
+        __c__ImGuiInputTextCallbackData_HasSelection_15(&self, &result)
+        return result
+    }
+}
+ImGuiSizeCallbackData :: struct #copy {
+    UserData : &void = default
+    Pos : ImVec2 = default
+    CurrentSize : ImVec2 = default
+    DesiredSize : ImVec2 = default
+}
+ImGuiPayload :: struct #copy {
+    Data : &void = default
+    DataSize : i32 = default
+    SourceId : ImGuiID = default
+    SourceParentId : ImGuiID = default
+    DataFrameCount : i32 = default
+    DataType : [33]char8 = default
+    Preview : bool = default
+    Delivery : bool = default
+}
+impl ImGuiPayload {
+    new :: () -> ImGuiPayload {
+        result : ImGuiPayload = default
+        __c__ImGuiPayload_new_8(&result)
+        return result
+    }
+    Clear :: (ref Self) {
+        __c__ImGuiPayload_Clear_9(&self)
+    }
+    IsDataType :: (ref Self, _type: &char8) -> bool {
+        result : bool = default
+        __c__ImGuiPayload_IsDataType_10(&self, &result, _type)
+        return result
+    }
+    IsPreview :: (ref Self) -> bool {
+        result : bool = default
+        __c__ImGuiPayload_IsPreview_11(&self, &result)
+        return result
+    }
+    IsDelivery :: (ref Self) -> bool {
+        result : bool = default
+        __c__ImGuiPayload_IsDelivery_12(&self, &result)
+        return result
+    }
+}
+ImGuiTextEditCallback :: ImGuiInputTextCallback
+ImGuiTextEditCallbackData :: ImGuiInputTextCallbackData
+ImGuiOnceUponAFrame :: struct #copy {
+    RefFrame : i32 = default
+}
+impl ImGuiOnceUponAFrame {
+    new :: () -> ImGuiOnceUponAFrame {
+        result : ImGuiOnceUponAFrame = default
+        __c__ImGuiOnceUponAFrame_new_0(&result)
+        return result
+    }
+}
+ImGuiTextFilter :: struct #copy {
+    InputBuf : [256]char8 = default
+    Filters : __UNKNOWN__ = default
+    CountGrep : i32 = default
+}
+impl ImGuiTextFilter {
+    new :: (_default_filter: &char8) -> ImGuiTextFilter {
+        result : ImGuiTextFilter = default
+        __c__ImGuiTextFilter_new_0(&result, _default_filter)
+        return result
+    }
+    Draw :: (ref Self, _label: &char8, _width: f32) -> bool {
+        result : bool = default
+        __c__ImGuiTextFilter_Draw_1(&self, &result, _label, _width)
+        return result
+    }
+    PassFilter :: (ref Self, _text: &char8, _text_end: &char8) -> bool {
+        result : bool = default
+        __c__ImGuiTextFilter_PassFilter_2(&self, &result, _text, _text_end)
+        return result
+    }
+    Build :: (ref Self) {
+        __c__ImGuiTextFilter_Build_3(&self)
+    }
+    Clear :: (ref Self) {
+        __c__ImGuiTextFilter_Clear_4(&self)
+    }
+    IsActive :: (ref Self) -> bool {
+        result : bool = default
+        __c__ImGuiTextFilter_IsActive_5(&self, &result)
+        return result
+    }
+}
+ImGuiTextBuffer :: struct #copy {
+    Buf : __UNKNOWN__ = default
+}
+impl ImGuiTextBuffer {
+    new :: () -> ImGuiTextBuffer {
+        result : ImGuiTextBuffer = default
+        __c__ImGuiTextBuffer_new_2(&result)
+        return result
+    }
+    begin :: (ref Self) -> &char8 {
+        result : &char8 = default
+        __c__ImGuiTextBuffer_begin_4(&self, &result)
+        return result
+    }
+    end :: (ref Self) -> &char8 {
+        result : &char8 = default
+        __c__ImGuiTextBuffer_end_5(&self, &result)
+        return result
+    }
+    size :: (ref Self) -> i32 {
+        result : i32 = default
+        __c__ImGuiTextBuffer_size_6(&self, &result)
+        return result
+    }
+    empty :: (ref Self) -> bool {
+        result : bool = default
+        __c__ImGuiTextBuffer_empty_7(&self, &result)
+        return result
+    }
+    clear :: (ref Self) {
+        __c__ImGuiTextBuffer_clear_8(&self)
+    }
+    reserve :: (ref Self, _capacity: i32) {
+        __c__ImGuiTextBuffer_reserve_9(&self, _capacity)
+    }
+    c_str :: (ref Self) -> &char8 {
+        result : &char8 = default
+        __c__ImGuiTextBuffer_c_str_10(&self, &result)
+        return result
+    }
+    append :: (ref Self, _str: &char8, _str_end: &char8) {
+        __c__ImGuiTextBuffer_append_11(&self, _str, _str_end)
+    }
+    appendf :: (ref Self, _fmt: &char8) {
+        __c__ImGuiTextBuffer_appendf_12(&self, _fmt)
+    }
+    appendfv :: (ref Self, _fmt: &char8, _args: va_list) {
+        __c__ImGuiTextBuffer_appendfv_13(&self, _fmt, _args)
+    }
+}
+ImGuiStorage :: struct #copy {
+    Data : __UNKNOWN__ = default
+}
+impl ImGuiStorage {
+    Clear :: (ref Self) {
+        __c__ImGuiStorage_Clear_2(&self)
+    }
+    GetInt :: (ref Self, _key: ImGuiID, _default_val: i32) -> i32 {
+        result : i32 = default
+        __c__ImGuiStorage_GetInt_3(&self, &result, _key, _default_val)
+        return result
+    }
+    SetInt :: (ref Self, _key: ImGuiID, _val: i32) {
+        __c__ImGuiStorage_SetInt_4(&self, _key, _val)
+    }
+    GetBool :: (ref Self, _key: ImGuiID, _default_val: bool) -> bool {
+        result : bool = default
+        __c__ImGuiStorage_GetBool_5(&self, &result, _key, _default_val)
+        return result
+    }
+    SetBool :: (ref Self, _key: ImGuiID, _val: bool) {
+        __c__ImGuiStorage_SetBool_6(&self, _key, _val)
+    }
+    GetFloat :: (ref Self, _key: ImGuiID, _default_val: f32) -> f32 {
+        result : f32 = default
+        __c__ImGuiStorage_GetFloat_7(&self, &result, _key, _default_val)
+        return result
+    }
+    SetFloat :: (ref Self, _key: ImGuiID, _val: f32) {
+        __c__ImGuiStorage_SetFloat_8(&self, _key, _val)
+    }
+    GetVoidPtr :: (ref Self, _key: ImGuiID) -> &void {
+        result : &void = default
+        __c__ImGuiStorage_GetVoidPtr_9(&self, &result, _key)
+        return result
+    }
+    SetVoidPtr :: (ref Self, _key: ImGuiID, _val: &void) {
+        __c__ImGuiStorage_SetVoidPtr_10(&self, _key, _val)
+    }
+    GetIntRef :: (ref Self, _key: ImGuiID, _default_val: i32) -> &i32 {
+        result : &i32 = default
+        __c__ImGuiStorage_GetIntRef_11(&self, &result, _key, _default_val)
+        return result
+    }
+    GetBoolRef :: (ref Self, _key: ImGuiID, _default_val: bool) -> &bool {
+        result : &bool = default
+        __c__ImGuiStorage_GetBoolRef_12(&self, &result, _key, _default_val)
+        return result
+    }
+    GetFloatRef :: (ref Self, _key: ImGuiID, _default_val: f32) -> &f32 {
+        result : &f32 = default
+        __c__ImGuiStorage_GetFloatRef_13(&self, &result, _key, _default_val)
+        return result
+    }
+    GetVoidPtrRef :: (ref Self, _key: ImGuiID, _default_val: &void) -> &&void {
+        result : &&void = default
+        __c__ImGuiStorage_GetVoidPtrRef_14(&self, &result, _key, _default_val)
+        return result
+    }
+    SetAllInt :: (ref Self, _val: i32) {
+        __c__ImGuiStorage_SetAllInt_15(&self, _val)
+    }
+    BuildSortByKey :: (ref Self) {
+        __c__ImGuiStorage_BuildSortByKey_16(&self)
+    }
+}
+ImGuiListClipper :: struct #copy {
+    StartPosY : f32 = default
+    ItemsHeight : f32 = default
+    ItemsCount : i32 = default
+    StepNo : i32 = default
+    DisplayStart : i32 = default
+    DisplayEnd : i32 = default
+}
+impl ImGuiListClipper {
+    new :: (_items_count: i32, _items_height: f32) -> ImGuiListClipper {
+        result : ImGuiListClipper = default
+        __c__ImGuiListClipper_new_6(&result, _items_count, _items_height)
+        return result
+    }
+    Step :: (ref Self) -> bool {
+        result : bool = default
+        __c__ImGuiListClipper_Step_8(&self, &result)
+        return result
+    }
+    Begin :: (ref Self, _items_count: i32, _items_height: f32) {
+        __c__ImGuiListClipper_Begin_9(&self, _items_count, _items_height)
+    }
+    End :: (ref Self) {
+        __c__ImGuiListClipper_End_10(&self)
+    }
+}
+impl Drop for ImGuiListClipper {
+    drop :: (ref Self) {
+        __c__ImGuiListClipper_dtor(&self)
+    }
+}
+ImColor :: struct #copy {
+    Value : ImVec4 = default
+}
+impl ImColor {
+    new :: () -> ImColor {
+        result : ImColor = default
+        __c__ImColor_new_1(&result)
+        return result
+    }
+    new :: (_r: i32, _g: i32, _b: i32, _a: i32) -> ImColor {
+        result : ImColor = default
+        __c__ImColor_new_2(&result, _r, _g, _b, _a)
+        return result
+    }
+    new :: (_rgba: ImU32) -> ImColor {
+        result : ImColor = default
+        __c__ImColor_new_3(&result, _rgba)
+        return result
+    }
+    new :: (_r: f32, _g: f32, _b: f32, _a: f32) -> ImColor {
+        result : ImColor = default
+        __c__ImColor_new_4(&result, _r, _g, _b, _a)
+        return result
+    }
+    new :: (_col: ref ImVec4) -> ImColor {
+        result : ImColor = default
+        __c__ImColor_new_5(&result, &_col)
+        return result
+    }
+    SetHSV :: (ref Self, _h: f32, _s: f32, _v: f32, _a: f32) {
+        __c__ImColor_SetHSV_8(&self, _h, _s, _v, _a)
+    }
+    HSV :: (ref Self, _h: f32, _s: f32, _v: f32, _a: f32) -> ImColor {
+        result : ImColor = default
+        __c__ImColor_HSV_9(&self, &result, _h, _s, _v, _a)
+        return result
+    }
+}
+ImDrawCallback :: &fn(&ImDrawList, &ImDrawCmd) -> void
+ImDrawCmd :: struct #copy {
+    ElemCount : u32 = default
+    ClipRect : ImVec4 = default
+    TextureId : ImTextureID = default
+    VtxOffset : u32 = default
+    IdxOffset : u32 = default
+    UserCallback : ImDrawCallback = default
+    UserCallbackData : &void = default
+}
+impl ImDrawCmd {
+    new :: () -> ImDrawCmd {
+        result : ImDrawCmd = default
+        __c__ImDrawCmd_new_7(&result)
+        return result
+    }
+}
+ImDrawIdx :: u16
+ImDrawVert :: struct #copy {
+    pos : ImVec2 = default
+    uv : ImVec2 = default
+    col : ImU32 = default
+}
+ImDrawChannel :: struct #copy {
+    _CmdBuffer : __UNKNOWN__ = default
+    _IdxBuffer : __UNKNOWN__ = default
+}
+ImDrawListSplitter :: struct #copy {
+    _Current : i32 = default
+    _Count : i32 = default
+    _Channels : __UNKNOWN__ = default
+}
+impl ImDrawListSplitter {
+    new :: () -> ImDrawListSplitter {
+        result : ImDrawListSplitter = default
+        __c__ImDrawListSplitter_new_3(&result)
+        return result
+    }
+    Clear :: (ref Self) {
+        __c__ImDrawListSplitter_Clear_5(&self)
+    }
+    ClearFreeMemory :: (ref Self) {
+        __c__ImDrawListSplitter_ClearFreeMemory_6(&self)
+    }
+    Split :: (ref Self, _draw_list: &ImDrawList, _count: i32) {
+        __c__ImDrawListSplitter_Split_7(&self, _draw_list, _count)
+    }
+    Merge :: (ref Self, _draw_list: &ImDrawList) {
+        __c__ImDrawListSplitter_Merge_8(&self, _draw_list)
+    }
+    SetCurrentChannel :: (ref Self, _draw_list: &ImDrawList, _channel_idx: i32) {
+        __c__ImDrawListSplitter_SetCurrentChannel_9(&self, _draw_list, _channel_idx)
+    }
+}
+impl Drop for ImDrawListSplitter {
+    drop :: (ref Self) {
+        __c__ImDrawListSplitter_dtor(&self)
+    }
+}
+ImDrawCornerFlags_ :: enum #copy {}
+ImDrawListFlags_ :: enum #copy {}
+ImDrawList :: struct #copy {
+    CmdBuffer : __UNKNOWN__ = default
+    IdxBuffer : __UNKNOWN__ = default
+    VtxBuffer : __UNKNOWN__ = default
+    Flags : ImDrawListFlags = default
+    _Data : &ImDrawListSharedData = default
+    _OwnerName : &char8 = default
+    _VtxCurrentOffset : u32 = default
+    _VtxCurrentIdx : u32 = default
+    _VtxWritePtr : &ImDrawVert = default
+    _IdxWritePtr : &ImDrawIdx = default
+    _ClipRectStack : __UNKNOWN__ = default
+    _TextureIdStack : __UNKNOWN__ = default
+    _Path : __UNKNOWN__ = default
+    _Splitter : ImDrawListSplitter = default
+}
+impl ImDrawList {
+    new :: (_shared_data: &ImDrawListSharedData) -> ImDrawList {
+        result : ImDrawList = default
+        __c__ImDrawList_new_14(&result, _shared_data)
+        return result
+    }
+    PushClipRect :: (ref Self, _clip_rect_min: ImVec2, _clip_rect_max: ImVec2, _intersect_with_current_clip_rect: bool) {
+        __c__ImDrawList_PushClipRect_16(&self, &_clip_rect_min, &_clip_rect_max, _intersect_with_current_clip_rect)
+    }
+    PushClipRectFullScreen :: (ref Self) {
+        __c__ImDrawList_PushClipRectFullScreen_17(&self)
+    }
+    PopClipRect :: (ref Self) {
+        __c__ImDrawList_PopClipRect_18(&self)
+    }
+    PushTextureID :: (ref Self, _texture_id: ImTextureID) {
+        __c__ImDrawList_PushTextureID_19(&self, _texture_id)
+    }
+    PopTextureID :: (ref Self) {
+        __c__ImDrawList_PopTextureID_20(&self)
+    }
+    GetClipRectMin :: (ref Self) -> ImVec2 {
+        result : ImVec2 = default
+        __c__ImDrawList_GetClipRectMin_21(&self, &result)
+        return result
+    }
+    GetClipRectMax :: (ref Self) -> ImVec2 {
+        result : ImVec2 = default
+        __c__ImDrawList_GetClipRectMax_22(&self, &result)
+        return result
+    }
+    AddLine :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _col: ImU32, _thickness: f32) {
+        __c__ImDrawList_AddLine_23(&self, &_p1, &_p2, _col, _thickness)
+    }
+    AddRect :: (ref Self, _p_min: ref ImVec2, _p_max: ref ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags, _thickness: f32) {
+        __c__ImDrawList_AddRect_24(&self, &_p_min, &_p_max, _col, _rounding, _rounding_corners, _thickness)
+    }
+    AddRectFilled :: (ref Self, _p_min: ref ImVec2, _p_max: ref ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags) {
+        __c__ImDrawList_AddRectFilled_25(&self, &_p_min, &_p_max, _col, _rounding, _rounding_corners)
+    }
+    AddRectFilledMultiColor :: (ref Self, _p_min: ref ImVec2, _p_max: ref ImVec2, _col_upr_left: ImU32, _col_upr_right: ImU32, _col_bot_right: ImU32, _col_bot_left: ImU32) {
+        __c__ImDrawList_AddRectFilledMultiColor_26(&self, &_p_min, &_p_max, _col_upr_left, _col_upr_right, _col_bot_right, _col_bot_left)
+    }
+    AddQuad :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _col: ImU32, _thickness: f32) {
+        __c__ImDrawList_AddQuad_27(&self, &_p1, &_p2, &_p3, &_p4, _col, _thickness)
+    }
+    AddQuadFilled :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _col: ImU32) {
+        __c__ImDrawList_AddQuadFilled_28(&self, &_p1, &_p2, &_p3, &_p4, _col)
+    }
+    AddTriangle :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _col: ImU32, _thickness: f32) {
+        __c__ImDrawList_AddTriangle_29(&self, &_p1, &_p2, &_p3, _col, _thickness)
+    }
+    AddTriangleFilled :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _col: ImU32) {
+        __c__ImDrawList_AddTriangleFilled_30(&self, &_p1, &_p2, &_p3, _col)
+    }
+    AddCircle :: (ref Self, _center: ref ImVec2, _radius: f32, _col: ImU32, _num_segments: i32, _thickness: f32) {
+        __c__ImDrawList_AddCircle_31(&self, &_center, _radius, _col, _num_segments, _thickness)
+    }
+    AddCircleFilled :: (ref Self, _center: ref ImVec2, _radius: f32, _col: ImU32, _num_segments: i32) {
+        __c__ImDrawList_AddCircleFilled_32(&self, &_center, _radius, _col, _num_segments)
+    }
+    AddNgon :: (ref Self, _center: ref ImVec2, _radius: f32, _col: ImU32, _num_segments: i32, _thickness: f32) {
+        __c__ImDrawList_AddNgon_33(&self, &_center, _radius, _col, _num_segments, _thickness)
+    }
+    AddNgonFilled :: (ref Self, _center: ref ImVec2, _radius: f32, _col: ImU32, _num_segments: i32) {
+        __c__ImDrawList_AddNgonFilled_34(&self, &_center, _radius, _col, _num_segments)
+    }
+    AddText :: (ref Self, _pos: ref ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8) {
+        __c__ImDrawList_AddText_35(&self, &_pos, _col, _text_begin, _text_end)
+    }
+    AddText :: (ref Self, _font: &ImFont, _font_size: f32, _pos: ref ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8, _wrap_width: f32, _cpu_fine_clip_rect: &ImVec4) {
+        __c__ImDrawList_AddText_36(&self, _font, _font_size, &_pos, _col, _text_begin, _text_end, _wrap_width, _cpu_fine_clip_rect)
+    }
+    AddPolyline :: (ref Self, _points: &ImVec2, _num_points: i32, _col: ImU32, _closed: bool, _thickness: f32) {
+        __c__ImDrawList_AddPolyline_37(&self, _points, _num_points, _col, _closed, _thickness)
+    }
+    AddConvexPolyFilled :: (ref Self, _points: &ImVec2, _num_points: i32, _col: ImU32) {
+        __c__ImDrawList_AddConvexPolyFilled_38(&self, _points, _num_points, _col)
+    }
+    AddBezierCurve :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _col: ImU32, _thickness: f32, _num_segments: i32) {
+        __c__ImDrawList_AddBezierCurve_39(&self, &_p1, &_p2, &_p3, &_p4, _col, _thickness, _num_segments)
+    }
+    AddImage :: (ref Self, _user_texture_id: ImTextureID, _p_min: ref ImVec2, _p_max: ref ImVec2, _uv_min: ref ImVec2, _uv_max: ref ImVec2, _col: ImU32) {
+        __c__ImDrawList_AddImage_40(&self, _user_texture_id, &_p_min, &_p_max, &_uv_min, &_uv_max, _col)
+    }
+    AddImageQuad :: (ref Self, _user_texture_id: ImTextureID, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _uv1: ref ImVec2, _uv2: ref ImVec2, _uv3: ref ImVec2, _uv4: ref ImVec2, _col: ImU32) {
+        __c__ImDrawList_AddImageQuad_41(&self, _user_texture_id, &_p1, &_p2, &_p3, &_p4, &_uv1, &_uv2, &_uv3, &_uv4, _col)
+    }
+    AddImageRounded :: (ref Self, _user_texture_id: ImTextureID, _p_min: ref ImVec2, _p_max: ref ImVec2, _uv_min: ref ImVec2, _uv_max: ref ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags) {
+        __c__ImDrawList_AddImageRounded_42(&self, _user_texture_id, &_p_min, &_p_max, &_uv_min, &_uv_max, _col, _rounding, _rounding_corners)
+    }
+    PathClear :: (ref Self) {
+        __c__ImDrawList_PathClear_43(&self)
+    }
+    PathLineTo :: (ref Self, _pos: ref ImVec2) {
+        __c__ImDrawList_PathLineTo_44(&self, &_pos)
+    }
+    PathLineToMergeDuplicate :: (ref Self, _pos: ref ImVec2) {
+        __c__ImDrawList_PathLineToMergeDuplicate_45(&self, &_pos)
+    }
+    PathFillConvex :: (ref Self, _col: ImU32) {
+        __c__ImDrawList_PathFillConvex_46(&self, _col)
+    }
+    PathStroke :: (ref Self, _col: ImU32, _closed: bool, _thickness: f32) {
+        __c__ImDrawList_PathStroke_47(&self, _col, _closed, _thickness)
+    }
+    PathArcTo :: (ref Self, _center: ref ImVec2, _radius: f32, _a_min: f32, _a_max: f32, _num_segments: i32) {
+        __c__ImDrawList_PathArcTo_48(&self, &_center, _radius, _a_min, _a_max, _num_segments)
+    }
+    PathArcToFast :: (ref Self, _center: ref ImVec2, _radius: f32, _a_min_of_12: i32, _a_max_of_12: i32) {
+        __c__ImDrawList_PathArcToFast_49(&self, &_center, _radius, _a_min_of_12, _a_max_of_12)
+    }
+    PathBezierCurveTo :: (ref Self, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _num_segments: i32) {
+        __c__ImDrawList_PathBezierCurveTo_50(&self, &_p2, &_p3, &_p4, _num_segments)
+    }
+    PathRect :: (ref Self, _rect_min: ref ImVec2, _rect_max: ref ImVec2, _rounding: f32, _rounding_corners: ImDrawCornerFlags) {
+        __c__ImDrawList_PathRect_51(&self, &_rect_min, &_rect_max, _rounding, _rounding_corners)
+    }
+    AddCallback :: (ref Self, _callback: ImDrawCallback, _callback_data: &void) {
+        __c__ImDrawList_AddCallback_52(&self, _callback, _callback_data)
+    }
+    AddDrawCmd :: (ref Self) {
+        __c__ImDrawList_AddDrawCmd_53(&self)
+    }
+    CloneOutput :: (ref Self) -> &ImDrawList {
+        result : &ImDrawList = default
+        __c__ImDrawList_CloneOutput_54(&self, &result)
+        return result
+    }
+    ChannelsSplit :: (ref Self, _count: i32) {
+        __c__ImDrawList_ChannelsSplit_55(&self, _count)
+    }
+    ChannelsMerge :: (ref Self) {
+        __c__ImDrawList_ChannelsMerge_56(&self)
+    }
+    ChannelsSetCurrent :: (ref Self, _n: i32) {
+        __c__ImDrawList_ChannelsSetCurrent_57(&self, _n)
+    }
+    Clear :: (ref Self) {
+        __c__ImDrawList_Clear_58(&self)
+    }
+    ClearFreeMemory :: (ref Self) {
+        __c__ImDrawList_ClearFreeMemory_59(&self)
+    }
+    PrimReserve :: (ref Self, _idx_count: i32, _vtx_count: i32) {
+        __c__ImDrawList_PrimReserve_60(&self, _idx_count, _vtx_count)
+    }
+    PrimUnreserve :: (ref Self, _idx_count: i32, _vtx_count: i32) {
+        __c__ImDrawList_PrimUnreserve_61(&self, _idx_count, _vtx_count)
+    }
+    PrimRect :: (ref Self, _a: ref ImVec2, _b: ref ImVec2, _col: ImU32) {
+        __c__ImDrawList_PrimRect_62(&self, &_a, &_b, _col)
+    }
+    PrimRectUV :: (ref Self, _a: ref ImVec2, _b: ref ImVec2, _uv_a: ref ImVec2, _uv_b: ref ImVec2, _col: ImU32) {
+        __c__ImDrawList_PrimRectUV_63(&self, &_a, &_b, &_uv_a, &_uv_b, _col)
+    }
+    PrimQuadUV :: (ref Self, _a: ref ImVec2, _b: ref ImVec2, _c: ref ImVec2, _d: ref ImVec2, _uv_a: ref ImVec2, _uv_b: ref ImVec2, _uv_c: ref ImVec2, _uv_d: ref ImVec2, _col: ImU32) {
+        __c__ImDrawList_PrimQuadUV_64(&self, &_a, &_b, &_c, &_d, &_uv_a, &_uv_b, &_uv_c, &_uv_d, _col)
+    }
+    PrimWriteVtx :: (ref Self, _pos: ref ImVec2, _uv: ref ImVec2, _col: ImU32) {
+        __c__ImDrawList_PrimWriteVtx_65(&self, &_pos, &_uv, _col)
+    }
+    PrimWriteIdx :: (ref Self, _idx: ImDrawIdx) {
+        __c__ImDrawList_PrimWriteIdx_66(&self, _idx)
+    }
+    PrimVtx :: (ref Self, _pos: ref ImVec2, _uv: ref ImVec2, _col: ImU32) {
+        __c__ImDrawList_PrimVtx_67(&self, &_pos, &_uv, _col)
+    }
+    UpdateClipRect :: (ref Self) {
+        __c__ImDrawList_UpdateClipRect_68(&self)
+    }
+    UpdateTextureID :: (ref Self) {
+        __c__ImDrawList_UpdateTextureID_69(&self)
+    }
+}
+impl Drop for ImDrawList {
+    drop :: (ref Self) {
+        __c__ImDrawList_dtor(&self)
+    }
+}
+ImDrawData :: struct #copy {
+    Valid : bool = default
+    CmdLists : &&ImDrawList = default
+    CmdListsCount : i32 = default
+    TotalIdxCount : i32 = default
+    TotalVtxCount : i32 = default
+    DisplayPos : ImVec2 = default
+    DisplaySize : ImVec2 = default
+    FramebufferScale : ImVec2 = default
+}
+impl ImDrawData {
+    new :: () -> ImDrawData {
+        result : ImDrawData = default
+        __c__ImDrawData_new_8(&result)
+        return result
+    }
+    Clear :: (ref Self) {
+        __c__ImDrawData_Clear_10(&self)
+    }
+    DeIndexAllBuffers :: (ref Self) {
+        __c__ImDrawData_DeIndexAllBuffers_11(&self)
+    }
+    ScaleClipRects :: (ref Self, _fb_scale: ref ImVec2) {
+        __c__ImDrawData_ScaleClipRects_12(&self, &_fb_scale)
+    }
+}
+impl Drop for ImDrawData {
+    drop :: (ref Self) {
+        __c__ImDrawData_dtor(&self)
+    }
+}
+ImFontConfig :: struct #copy {
+    FontData : &void = default
+    FontDataSize : i32 = default
+    FontDataOwnedByAtlas : bool = default
+    FontNo : i32 = default
+    SizePixels : f32 = default
+    OversampleH : i32 = default
+    OversampleV : i32 = default
+    PixelSnapH : bool = default
+    GlyphExtraSpacing : ImVec2 = default
+    GlyphOffset : ImVec2 = default
+    GlyphRanges : &ImWchar = default
+    GlyphMinAdvanceX : f32 = default
+    GlyphMaxAdvanceX : f32 = default
+    MergeMode : bool = default
+    RasterizerFlags : u32 = default
+    RasterizerMultiply : f32 = default
+    EllipsisChar : ImWchar = default
+    Name : [40]char8 = default
+    DstFont : &ImFont = default
+}
+impl ImFontConfig {
+    new :: () -> ImFontConfig {
+        result : ImFontConfig = default
+        __c__ImFontConfig_new_19(&result)
+        return result
+    }
+}
+ImFontGlyph :: struct #copy {
+    Codepoint : ImWchar = default
+    AdvanceX : f32 = default
+    X0 : f32 = default
+    Y0 : f32 = default
+    X1 : f32 = default
+    Y1 : f32 = default
+    U0 : f32 = default
+    V0 : f32 = default
+    U1 : f32 = default
+    V1 : f32 = default
+}
+ImFontGlyphRangesBuilder :: struct #copy {
+    UsedChars : __UNKNOWN__ = default
+}
+impl ImFontGlyphRangesBuilder {
+    new :: () -> ImFontGlyphRangesBuilder {
+        result : ImFontGlyphRangesBuilder = default
+        __c__ImFontGlyphRangesBuilder_new_1(&result)
+        return result
+    }
+    Clear :: (ref Self) {
+        __c__ImFontGlyphRangesBuilder_Clear_2(&self)
+    }
+    GetBit :: (ref Self, _n: i32) -> bool {
+        result : bool = default
+        __c__ImFontGlyphRangesBuilder_GetBit_3(&self, &result, _n)
+        return result
+    }
+    SetBit :: (ref Self, _n: i32) {
+        __c__ImFontGlyphRangesBuilder_SetBit_4(&self, _n)
+    }
+    AddChar :: (ref Self, _c: ImWchar) {
+        __c__ImFontGlyphRangesBuilder_AddChar_5(&self, _c)
+    }
+    AddText :: (ref Self, _text: &char8, _text_end: &char8) {
+        __c__ImFontGlyphRangesBuilder_AddText_6(&self, _text, _text_end)
+    }
+    AddRanges :: (ref Self, _ranges: &ImWchar) {
+        __c__ImFontGlyphRangesBuilder_AddRanges_7(&self, _ranges)
+    }
+    BuildRanges :: (ref Self, _out_ranges: &__UNKNOWN__) {
+        __c__ImFontGlyphRangesBuilder_BuildRanges_8(&self, _out_ranges)
+    }
+}
+ImFontAtlasCustomRect :: struct #copy {
+    ID : u32 = default
+    Width : u16 = default
+    Height : u16 = default
+    X : u16 = default
+    Y : u16 = default
+    GlyphAdvanceX : f32 = default
+    GlyphOffset : ImVec2 = default
+    Font : &ImFont = default
+}
+impl ImFontAtlasCustomRect {
+    new :: () -> ImFontAtlasCustomRect {
+        result : ImFontAtlasCustomRect = default
+        __c__ImFontAtlasCustomRect_new_8(&result)
+        return result
+    }
+    IsPacked :: (ref Self) -> bool {
+        result : bool = default
+        __c__ImFontAtlasCustomRect_IsPacked_9(&self, &result)
+        return result
+    }
+}
+ImFontAtlasFlags_ :: enum #copy {}
+ImFontAtlas :: struct #copy {
+    Locked : bool = default
+    Flags : ImFontAtlasFlags = default
+    TexID : ImTextureID = default
+    TexDesiredWidth : i32 = default
+    TexGlyphPadding : i32 = default
+    TexPixelsAlpha8 : &u8 = default
+    TexPixelsRGBA32 : &u32 = default
+    TexWidth : i32 = default
+    TexHeight : i32 = default
+    TexUvScale : ImVec2 = default
+    TexUvWhitePixel : ImVec2 = default
+    Fonts : __UNKNOWN__ = default
+    CustomRects : __UNKNOWN__ = default
+    ConfigData : __UNKNOWN__ = default
+    CustomRectIds : [1]i32 = default
+}
+impl ImFontAtlas {
+    new :: () -> ImFontAtlas {
+        result : ImFontAtlas = default
+        __c__ImFontAtlas_new_0(&result)
+        return result
+    }
+    AddFont :: (ref Self, _font_cfg: &ImFontConfig) -> &ImFont {
+        result : &ImFont = default
+        __c__ImFontAtlas_AddFont_2(&self, &result, _font_cfg)
+        return result
+    }
+    AddFontDefault :: (ref Self, _font_cfg: &ImFontConfig) -> &ImFont {
+        result : &ImFont = default
+        __c__ImFontAtlas_AddFontDefault_3(&self, &result, _font_cfg)
+        return result
+    }
+    AddFontFromFileTTF :: (ref Self, _filename: &char8, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar) -> &ImFont {
+        result : &ImFont = default
+        __c__ImFontAtlas_AddFontFromFileTTF_4(&self, &result, _filename, _size_pixels, _font_cfg, _glyph_ranges)
+        return result
+    }
+    AddFontFromMemoryTTF :: (ref Self, _font_data: &void, _font_size: i32, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar) -> &ImFont {
+        result : &ImFont = default
+        __c__ImFontAtlas_AddFontFromMemoryTTF_5(&self, &result, _font_data, _font_size, _size_pixels, _font_cfg, _glyph_ranges)
+        return result
+    }
+    AddFontFromMemoryCompressedTTF :: (ref Self, _compressed_font_data: &void, _compressed_font_size: i32, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar) -> &ImFont {
+        result : &ImFont = default
+        __c__ImFontAtlas_AddFontFromMemoryCompressedTTF_6(&self, &result, _compressed_font_data, _compressed_font_size, _size_pixels, _font_cfg, _glyph_ranges)
+        return result
+    }
+    AddFontFromMemoryCompressedBase85TTF :: (ref Self, _compressed_font_data_base85: &char8, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar) -> &ImFont {
+        result : &ImFont = default
+        __c__ImFontAtlas_AddFontFromMemoryCompressedBase85TTF_7(&self, &result, _compressed_font_data_base85, _size_pixels, _font_cfg, _glyph_ranges)
+        return result
+    }
+    ClearInputData :: (ref Self) {
+        __c__ImFontAtlas_ClearInputData_8(&self)
+    }
+    ClearTexData :: (ref Self) {
+        __c__ImFontAtlas_ClearTexData_9(&self)
+    }
+    ClearFonts :: (ref Self) {
+        __c__ImFontAtlas_ClearFonts_10(&self)
+    }
+    Clear :: (ref Self) {
+        __c__ImFontAtlas_Clear_11(&self)
+    }
+    Build :: (ref Self) -> bool {
+        result : bool = default
+        __c__ImFontAtlas_Build_12(&self, &result)
+        return result
+    }
+    GetTexDataAsAlpha8 :: (ref Self, _out_pixels: &&u8, _out_width: &i32, _out_height: &i32, _out_bytes_per_pixel: &i32) {
+        __c__ImFontAtlas_GetTexDataAsAlpha8_13(&self, _out_pixels, _out_width, _out_height, _out_bytes_per_pixel)
+    }
+    GetTexDataAsRGBA32 :: (ref Self, _out_pixels: &&u8, _out_width: &i32, _out_height: &i32, _out_bytes_per_pixel: &i32) {
+        __c__ImFontAtlas_GetTexDataAsRGBA32_14(&self, _out_pixels, _out_width, _out_height, _out_bytes_per_pixel)
+    }
+    IsBuilt :: (ref Self) -> bool {
+        result : bool = default
+        __c__ImFontAtlas_IsBuilt_15(&self, &result)
+        return result
+    }
+    SetTexID :: (ref Self, _id: ImTextureID) {
+        __c__ImFontAtlas_SetTexID_16(&self, _id)
+    }
+    GetGlyphRangesDefault :: (ref Self) -> &ImWchar {
+        result : &ImWchar = default
+        __c__ImFontAtlas_GetGlyphRangesDefault_17(&self, &result)
+        return result
+    }
+    GetGlyphRangesKorean :: (ref Self) -> &ImWchar {
+        result : &ImWchar = default
+        __c__ImFontAtlas_GetGlyphRangesKorean_18(&self, &result)
+        return result
+    }
+    GetGlyphRangesJapanese :: (ref Self) -> &ImWchar {
+        result : &ImWchar = default
+        __c__ImFontAtlas_GetGlyphRangesJapanese_19(&self, &result)
+        return result
+    }
+    GetGlyphRangesChineseFull :: (ref Self) -> &ImWchar {
+        result : &ImWchar = default
+        __c__ImFontAtlas_GetGlyphRangesChineseFull_20(&self, &result)
+        return result
+    }
+    GetGlyphRangesChineseSimplifiedCommon :: (ref Self) -> &ImWchar {
+        result : &ImWchar = default
+        __c__ImFontAtlas_GetGlyphRangesChineseSimplifiedCommon_21(&self, &result)
+        return result
+    }
+    GetGlyphRangesCyrillic :: (ref Self) -> &ImWchar {
+        result : &ImWchar = default
+        __c__ImFontAtlas_GetGlyphRangesCyrillic_22(&self, &result)
+        return result
+    }
+    GetGlyphRangesThai :: (ref Self) -> &ImWchar {
+        result : &ImWchar = default
+        __c__ImFontAtlas_GetGlyphRangesThai_23(&self, &result)
+        return result
+    }
+    GetGlyphRangesVietnamese :: (ref Self) -> &ImWchar {
+        result : &ImWchar = default
+        __c__ImFontAtlas_GetGlyphRangesVietnamese_24(&self, &result)
+        return result
+    }
+    AddCustomRectRegular :: (ref Self, _id: u32, _width: i32, _height: i32) -> i32 {
+        result : i32 = default
+        __c__ImFontAtlas_AddCustomRectRegular_25(&self, &result, _id, _width, _height)
+        return result
+    }
+    AddCustomRectFontGlyph :: (ref Self, _font: &ImFont, _id: ImWchar, _width: i32, _height: i32, _advance_x: f32, _offset: ref ImVec2) -> i32 {
+        result : i32 = default
+        __c__ImFontAtlas_AddCustomRectFontGlyph_26(&self, &result, _font, _id, _width, _height, _advance_x, &_offset)
+        return result
+    }
+    GetCustomRectByIndex :: (ref Self, _index: i32) -> &ImFontAtlasCustomRect {
+        result : &ImFontAtlasCustomRect = default
+        __c__ImFontAtlas_GetCustomRectByIndex_27(&self, &result, _index)
+        return result
+    }
+    CalcCustomRectUV :: (ref Self, _rect: &ImFontAtlasCustomRect, _out_uv_min: &ImVec2, _out_uv_max: &ImVec2) {
+        __c__ImFontAtlas_CalcCustomRectUV_28(&self, _rect, _out_uv_min, _out_uv_max)
+    }
+    GetMouseCursorTexData :: (ref Self, _cursor: ImGuiMouseCursor, _out_offset: &ImVec2, _out_size: &ImVec2, _out_uv_border: &ImVec2, _out_uv_fill: &ImVec2) -> bool {
+        result : bool = default
+        __c__ImFontAtlas_GetMouseCursorTexData_29(&self, &result, _cursor, _out_offset, _out_size, _out_uv_border, _out_uv_fill)
+        return result
+    }
+}
+impl Drop for ImFontAtlas {
+    drop :: (ref Self) {
+        __c__ImFontAtlas_dtor(&self)
+    }
+}
+ImFont :: struct #copy {
+    IndexAdvanceX : __UNKNOWN__ = default
+    FallbackAdvanceX : f32 = default
+    FontSize : f32 = default
+    IndexLookup : __UNKNOWN__ = default
+    Glyphs : __UNKNOWN__ = default
+    FallbackGlyph : &ImFontGlyph = default
+    DisplayOffset : ImVec2 = default
+    ContainerAtlas : &ImFontAtlas = default
+    ConfigData : &ImFontConfig = default
+    ConfigDataCount : i16 = default
+    FallbackChar : ImWchar = default
+    EllipsisChar : ImWchar = default
+    Scale : f32 = default
+    Ascent : f32 = default
+    Descent : f32 = default
+    MetricsTotalSurface : i32 = default
+    DirtyLookupTables : bool = default
+}
+impl ImFont {
+    new :: () -> ImFont {
+        result : ImFont = default
+        __c__ImFont_new_17(&result)
+        return result
+    }
+    FindGlyph :: (ref Self, _c: ImWchar) -> &ImFontGlyph {
+        result : &ImFontGlyph = default
+        __c__ImFont_FindGlyph_19(&self, &result, _c)
+        return result
+    }
+    FindGlyphNoFallback :: (ref Self, _c: ImWchar) -> &ImFontGlyph {
+        result : &ImFontGlyph = default
+        __c__ImFont_FindGlyphNoFallback_20(&self, &result, _c)
+        return result
+    }
+    GetCharAdvance :: (ref Self, _c: ImWchar) -> f32 {
+        result : f32 = default
+        __c__ImFont_GetCharAdvance_21(&self, &result, _c)
+        return result
+    }
+    IsLoaded :: (ref Self) -> bool {
+        result : bool = default
+        __c__ImFont_IsLoaded_22(&self, &result)
+        return result
+    }
+    GetDebugName :: (ref Self) -> &char8 {
+        result : &char8 = default
+        __c__ImFont_GetDebugName_23(&self, &result)
+        return result
+    }
+    CalcTextSizeA :: (ref Self, _size: f32, _max_width: f32, _wrap_width: f32, _text_begin: &char8, _text_end: &char8, _remaining: &&char8) -> ImVec2 {
+        result : ImVec2 = default
+        __c__ImFont_CalcTextSizeA_24(&self, &result, _size, _max_width, _wrap_width, _text_begin, _text_end, _remaining)
+        return result
+    }
+    CalcWordWrapPositionA :: (ref Self, _scale: f32, _text: &char8, _text_end: &char8, _wrap_width: f32) -> &char8 {
+        result : &char8 = default
+        __c__ImFont_CalcWordWrapPositionA_25(&self, &result, _scale, _text, _text_end, _wrap_width)
+        return result
+    }
+    RenderChar :: (ref Self, _draw_list: &ImDrawList, _size: f32, _pos: ImVec2, _col: ImU32, _c: ImWchar) {
+        __c__ImFont_RenderChar_26(&self, _draw_list, _size, &_pos, _col, _c)
+    }
+    RenderText :: (ref Self, _draw_list: &ImDrawList, _size: f32, _pos: ImVec2, _col: ImU32, _clip_rect: ref ImVec4, _text_begin: &char8, _text_end: &char8, _wrap_width: f32, _cpu_fine_clip: bool) {
+        __c__ImFont_RenderText_27(&self, _draw_list, _size, &_pos, _col, &_clip_rect, _text_begin, _text_end, _wrap_width, _cpu_fine_clip)
+    }
+    BuildLookupTable :: (ref Self) {
+        __c__ImFont_BuildLookupTable_28(&self)
+    }
+    ClearOutputData :: (ref Self) {
+        __c__ImFont_ClearOutputData_29(&self)
+    }
+    GrowIndex :: (ref Self, _new_size: i32) {
+        __c__ImFont_GrowIndex_30(&self, _new_size)
+    }
+    AddGlyph :: (ref Self, _c: ImWchar, _x0: f32, _y0: f32, _x1: f32, _y1: f32, _u0: f32, _v0: f32, _u1: f32, _v1: f32, _advance_x: f32) {
+        __c__ImFont_AddGlyph_31(&self, _c, _x0, _y0, _x1, _y1, _u0, _v0, _u1, _v1, _advance_x)
+    }
+    AddRemapChar :: (ref Self, _dst: ImWchar, _src: ImWchar, _overwrite_dst: bool) {
+        __c__ImFont_AddRemapChar_32(&self, _dst, _src, _overwrite_dst)
+    }
+    SetFallbackChar :: (ref Self, _c: ImWchar) {
+        __c__ImFont_SetFallbackChar_33(&self, _c)
+    }
+}
+impl Drop for ImFont {
+    drop :: (ref Self) {
+        __c__ImFont_dtor(&self)
+    }
+}
+ImGuiLayoutType :: i32
+ImGuiButtonFlags :: i32
+ImGuiColumnsFlags :: i32
+ImGuiDragFlags :: i32
+ImGuiItemFlags :: i32
+ImGuiItemStatusFlags :: i32
+ImGuiNavHighlightFlags :: i32
+ImGuiNavDirSourceFlags :: i32
+ImGuiNavMoveFlags :: i32
+ImGuiNextItemDataFlags :: i32
+ImGuiNextWindowDataFlags :: i32
+ImGuiSeparatorFlags :: i32
+ImGuiSliderFlags :: i32
+ImGuiTextFlags :: i32
+StbUndoRecord :: struct #copy {}
+StbUndoState :: struct #copy {}
+STB_TexteditState :: struct #copy {}
+StbTexteditRow :: struct #copy {}
+ImFileHandle :: &FILE
+ImBoolVector :: struct #copy {
+    Storage : __UNKNOWN__ = default
+}
+impl ImBoolVector {
+    new :: () -> ImBoolVector {
+        result : ImBoolVector = default
+        __c__ImBoolVector_new_1(&result)
+        return result
+    }
+    Resize :: (ref Self, _sz: i32) {
+        __c__ImBoolVector_Resize_2(&self, _sz)
+    }
+    Clear :: (ref Self) {
+        __c__ImBoolVector_Clear_3(&self)
+    }
+    GetBit :: (ref Self, _n: i32) -> bool {
+        result : bool = default
+        __c__ImBoolVector_GetBit_4(&self, &result, _n)
+        return result
+    }
+    SetBit :: (ref Self, _n: i32, _v: bool) {
+        __c__ImBoolVector_SetBit_5(&self, _n, _v)
+    }
+}
+ImPoolIdx :: i32
+ImGuiButtonFlags_ :: enum #copy {}
+ImGuiSliderFlags_ :: enum #copy {}
+ImGuiDragFlags_ :: enum #copy {}
+ImGuiColumnsFlags_ :: enum #copy {}
+ImGuiSelectableFlagsPrivate_ :: enum #copy {}
+ImGuiTreeNodeFlagsPrivate_ :: enum #copy {}
+ImGuiSeparatorFlags_ :: enum #copy {}
+ImGuiItemFlags_ :: enum #copy {}
+ImGuiItemStatusFlags_ :: enum #copy {}
+ImGuiTextFlags_ :: enum #copy {}
+ImGuiLayoutType_ :: enum #copy {}
+ImGuiLogType :: enum #copy {}
+ImGuiAxis :: enum #copy {}
+ImGuiPlotType :: enum #copy {}
+ImGuiInputSource :: enum #copy {}
+ImGuiInputReadMode :: enum #copy {}
+ImGuiNavHighlightFlags_ :: enum #copy {}
+ImGuiNavDirSourceFlags_ :: enum #copy {}
+ImGuiNavMoveFlags_ :: enum #copy {}
+ImGuiNavForward :: enum #copy {}
+ImGuiNavLayer :: enum #copy {}
+ImGuiPopupPositionPolicy :: enum #copy {}
+ImVec1 :: struct #copy {
+    x : f32 = default
+}
+impl ImVec1 {
+    new :: () -> ImVec1 {
+        result : ImVec1 = default
+        __c__ImVec1_new_1(&result)
+        return result
+    }
+    new :: (__x: f32) -> ImVec1 {
+        result : ImVec1 = default
+        __c__ImVec1_new_2(&result, __x)
+        return result
+    }
+}
+ImVec2ih :: struct #copy {
+    x : i16 = default
+    y : i16 = default
+}
+impl ImVec2ih {
+    new :: () -> ImVec2ih {
+        result : ImVec2ih = default
+        __c__ImVec2ih_new_2(&result)
+        return result
+    }
+    new :: (__x: i16, __y: i16) -> ImVec2ih {
+        result : ImVec2ih = default
+        __c__ImVec2ih_new_3(&result, __x, __y)
+        return result
+    }
+}
+ImRect :: struct #copy {
+    Min : ImVec2 = default
+    Max : ImVec2 = default
+}
+impl ImRect {
+    new :: () -> ImRect {
+        result : ImRect = default
+        __c__ImRect_new_2(&result)
+        return result
+    }
+    new :: (_min: ref ImVec2, _max: ref ImVec2) -> ImRect {
+        result : ImRect = default
+        __c__ImRect_new_3(&result, &_min, &_max)
+        return result
+    }
+    new :: (_v: ref ImVec4) -> ImRect {
+        result : ImRect = default
+        __c__ImRect_new_4(&result, &_v)
+        return result
+    }
+    new :: (_x1: f32, _y1: f32, _x2: f32, _y2: f32) -> ImRect {
+        result : ImRect = default
+        __c__ImRect_new_5(&result, _x1, _y1, _x2, _y2)
+        return result
+    }
+    GetCenter :: (ref Self) -> ImVec2 {
+        result : ImVec2 = default
+        __c__ImRect_GetCenter_6(&self, &result)
+        return result
+    }
+    GetSize :: (ref Self) -> ImVec2 {
+        result : ImVec2 = default
+        __c__ImRect_GetSize_7(&self, &result)
+        return result
+    }
+    GetWidth :: (ref Self) -> f32 {
+        result : f32 = default
+        __c__ImRect_GetWidth_8(&self, &result)
+        return result
+    }
+    GetHeight :: (ref Self) -> f32 {
+        result : f32 = default
+        __c__ImRect_GetHeight_9(&self, &result)
+        return result
+    }
+    GetTL :: (ref Self) -> ImVec2 {
+        result : ImVec2 = default
+        __c__ImRect_GetTL_10(&self, &result)
+        return result
+    }
+    GetTR :: (ref Self) -> ImVec2 {
+        result : ImVec2 = default
+        __c__ImRect_GetTR_11(&self, &result)
+        return result
+    }
+    GetBL :: (ref Self) -> ImVec2 {
+        result : ImVec2 = default
+        __c__ImRect_GetBL_12(&self, &result)
+        return result
+    }
+    GetBR :: (ref Self) -> ImVec2 {
+        result : ImVec2 = default
+        __c__ImRect_GetBR_13(&self, &result)
+        return result
+    }
+    Contains :: (ref Self, _p: ref ImVec2) -> bool {
+        result : bool = default
+        __c__ImRect_Contains_14(&self, &result, &_p)
+        return result
+    }
+    Contains :: (ref Self, _r: ref ImRect) -> bool {
+        result : bool = default
+        __c__ImRect_Contains_15(&self, &result, &_r)
+        return result
+    }
+    Overlaps :: (ref Self, _r: ref ImRect) -> bool {
+        result : bool = default
+        __c__ImRect_Overlaps_16(&self, &result, &_r)
+        return result
+    }
+    Add :: (ref Self, _p: ref ImVec2) {
+        __c__ImRect_Add_17(&self, &_p)
+    }
+    Add :: (ref Self, _r: ref ImRect) {
+        __c__ImRect_Add_18(&self, &_r)
+    }
+    Expand :: (ref Self, _amount: f32) {
+        __c__ImRect_Expand_19(&self, _amount)
+    }
+    Expand :: (ref Self, _amount: ref ImVec2) {
+        __c__ImRect_Expand_20(&self, &_amount)
+    }
+    Translate :: (ref Self, _d: ref ImVec2) {
+        __c__ImRect_Translate_21(&self, &_d)
+    }
+    TranslateX :: (ref Self, _dx: f32) {
+        __c__ImRect_TranslateX_22(&self, _dx)
+    }
+    TranslateY :: (ref Self, _dy: f32) {
+        __c__ImRect_TranslateY_23(&self, _dy)
+    }
+    ClipWith :: (ref Self, _r: ref ImRect) {
+        __c__ImRect_ClipWith_24(&self, &_r)
+    }
+    ClipWithFull :: (ref Self, _r: ref ImRect) {
+        __c__ImRect_ClipWithFull_25(&self, &_r)
+    }
+    Floor :: (ref Self) {
+        __c__ImRect_Floor_26(&self)
+    }
+    IsInverted :: (ref Self) -> bool {
+        result : bool = default
+        __c__ImRect_IsInverted_27(&self, &result)
+        return result
+    }
+}
+ImGuiDataTypeInfo :: struct #copy {
+    Size : size_t = default
+    PrintFmt : &char8 = default
+    ScanFmt : &char8 = default
+}
+ImGuiColorMod :: struct #copy {
+    Col : ImGuiCol = default
+    BackupValue : ImVec4 = default
+}
+ImGuiStyleMod :: struct #copy {
+    VarIdx : ImGuiStyleVar = default
+}
+impl ImGuiStyleMod {
+    new :: (_idx: ImGuiStyleVar, _v: i32) -> ImGuiStyleMod {
+        result : ImGuiStyleMod = default
+        __c__ImGuiStyleMod_new_2(&result, _idx, _v)
+        return result
+    }
+    new :: (_idx: ImGuiStyleVar, _v: f32) -> ImGuiStyleMod {
+        result : ImGuiStyleMod = default
+        __c__ImGuiStyleMod_new_3(&result, _idx, _v)
+        return result
+    }
+    new :: (_idx: ImGuiStyleVar, _v: ImVec2) -> ImGuiStyleMod {
+        result : ImGuiStyleMod = default
+        __c__ImGuiStyleMod_new_4(&result, _idx, &_v)
+        return result
+    }
+}
+ImGuiGroupData :: struct #copy {
+    BackupCursorPos : ImVec2 = default
+    BackupCursorMaxPos : ImVec2 = default
+    BackupIndent : ImVec1 = default
+    BackupGroupOffset : ImVec1 = default
+    BackupCurrLineSize : ImVec2 = default
+    BackupCurrLineTextBaseOffset : f32 = default
+    BackupActiveIdIsAlive : ImGuiID = default
+    BackupActiveIdPreviousFrameIsAlive : bool = default
+    EmitItem : bool = default
+}
+ImGuiMenuColumns :: struct #copy {
+    Spacing : f32 = default
+    Width : f32 = default
+    NextWidth : f32 = default
+    Pos : [3]f32 = default
+    NextWidths : [3]f32 = default
+}
+impl ImGuiMenuColumns {
+    new :: () -> ImGuiMenuColumns {
+        result : ImGuiMenuColumns = default
+        __c__ImGuiMenuColumns_new_5(&result)
+        return result
+    }
+    Update :: (ref Self, _count: i32, _spacing: f32, _clear: bool) {
+        __c__ImGuiMenuColumns_Update_6(&self, _count, _spacing, _clear)
+    }
+    DeclColumns :: (ref Self, _w0: f32, _w1: f32, _w2: f32) -> f32 {
+        result : f32 = default
+        __c__ImGuiMenuColumns_DeclColumns_7(&self, &result, _w0, _w1, _w2)
+        return result
+    }
+    CalcExtraSpace :: (ref Self, _avail_w: f32) -> f32 {
+        result : f32 = default
+        __c__ImGuiMenuColumns_CalcExtraSpace_8(&self, &result, _avail_w)
+        return result
+    }
+}
+ImGuiInputTextState :: struct #copy {
+    ID : ImGuiID = default
+    CurLenW : i32 = default
+    CurLenA : i32 = default
+    TextW : __UNKNOWN__ = default
+    TextA : __UNKNOWN__ = default
+    InitialTextA : __UNKNOWN__ = default
+    TextAIsValid : bool = default
+    BufCapacityA : i32 = default
+    ScrollX : f32 = default
+    Stb : STB_TexteditState = default
+    CursorAnim : f32 = default
+    CursorFollow : bool = default
+    SelectedAllMouseLock : bool = default
+    UserFlags : ImGuiInputTextFlags = default
+    UserCallback : ImGuiInputTextCallback = default
+    UserCallbackData : &void = default
+}
+impl ImGuiInputTextState {
+    new :: () -> ImGuiInputTextState {
+        result : ImGuiInputTextState = default
+        __c__ImGuiInputTextState_new_16(&result)
+        return result
+    }
+    ClearText :: (ref Self) {
+        __c__ImGuiInputTextState_ClearText_17(&self)
+    }
+    ClearFreeMemory :: (ref Self) {
+        __c__ImGuiInputTextState_ClearFreeMemory_18(&self)
+    }
+    GetUndoAvailCount :: (ref Self) -> i32 {
+        result : i32 = default
+        __c__ImGuiInputTextState_GetUndoAvailCount_19(&self, &result)
+        return result
+    }
+    GetRedoAvailCount :: (ref Self) -> i32 {
+        result : i32 = default
+        __c__ImGuiInputTextState_GetRedoAvailCount_20(&self, &result)
+        return result
+    }
+    OnKeyPressed :: (ref Self, _key: i32) {
+        __c__ImGuiInputTextState_OnKeyPressed_21(&self, _key)
+    }
+    CursorAnimReset :: (ref Self) {
+        __c__ImGuiInputTextState_CursorAnimReset_22(&self)
+    }
+    CursorClamp :: (ref Self) {
+        __c__ImGuiInputTextState_CursorClamp_23(&self)
+    }
+    HasSelection :: (ref Self) -> bool {
+        result : bool = default
+        __c__ImGuiInputTextState_HasSelection_24(&self, &result)
+        return result
+    }
+    ClearSelection :: (ref Self) {
+        __c__ImGuiInputTextState_ClearSelection_25(&self)
+    }
+    SelectAll :: (ref Self) {
+        __c__ImGuiInputTextState_SelectAll_26(&self)
+    }
+}
+ImGuiWindowSettings :: struct #copy {
+    ID : ImGuiID = default
+    Pos : ImVec2ih = default
+    Size : ImVec2ih = default
+    Collapsed : bool = default
+}
+impl ImGuiWindowSettings {
+    new :: () -> ImGuiWindowSettings {
+        result : ImGuiWindowSettings = default
+        __c__ImGuiWindowSettings_new_4(&result)
+        return result
+    }
+    GetName :: (ref Self) -> &char8 {
+        result : &char8 = default
+        __c__ImGuiWindowSettings_GetName_5(&self, &result)
+        return result
+    }
+}
+ImGuiSettingsHandler :: struct #copy {
+    TypeName : &char8 = default
+    TypeHash : ImGuiID = default
+    ReadOpenFn : &fn(&ImGuiContext, &ImGuiSettingsHandler, &char8) -> &void = default
+    ReadLineFn : &fn(&ImGuiContext, &ImGuiSettingsHandler, &void, &char8) -> void = default
+    WriteAllFn : &fn(&ImGuiContext, &ImGuiSettingsHandler, &ImGuiTextBuffer) -> void = default
+    UserData : &void = default
+}
+impl ImGuiSettingsHandler {
+    new :: () -> ImGuiSettingsHandler {
+        result : ImGuiSettingsHandler = default
+        __c__ImGuiSettingsHandler_new_6(&result)
+        return result
+    }
+}
+ImGuiPopupData :: struct #copy {
+    PopupId : ImGuiID = default
+    Window : &ImGuiWindow = default
+    SourceWindow : &ImGuiWindow = default
+    OpenFrameCount : i32 = default
+    OpenParentId : ImGuiID = default
+    OpenPopupPos : ImVec2 = default
+    OpenMousePos : ImVec2 = default
+}
+impl ImGuiPopupData {
+    new :: () -> ImGuiPopupData {
+        result : ImGuiPopupData = default
+        __c__ImGuiPopupData_new_7(&result)
+        return result
+    }
+}
+ImGuiColumnData :: struct #copy {
+    OffsetNorm : f32 = default
+    OffsetNormBeforeResize : f32 = default
+    Flags : ImGuiColumnsFlags = default
+    ClipRect : ImRect = default
+}
+impl ImGuiColumnData {
+    new :: () -> ImGuiColumnData {
+        result : ImGuiColumnData = default
+        __c__ImGuiColumnData_new_4(&result)
+        return result
+    }
+}
+ImGuiColumns :: struct #copy {
+    ID : ImGuiID = default
+    Flags : ImGuiColumnsFlags = default
+    IsFirstFrame : bool = default
+    IsBeingResized : bool = default
+    Current : i32 = default
+    Count : i32 = default
+    OffMinX : f32 = default
+    OffMaxX : f32 = default
+    LineMinY : f32 = default
+    LineMaxY : f32 = default
+    HostCursorPosY : f32 = default
+    HostCursorMaxPosX : f32 = default
+    HostClipRect : ImRect = default
+    HostWorkRect : ImRect = default
+    Columns : __UNKNOWN__ = default
+}
+impl ImGuiColumns {
+    new :: () -> ImGuiColumns {
+        result : ImGuiColumns = default
+        __c__ImGuiColumns_new_15(&result)
+        return result
+    }
+    Clear :: (ref Self) {
+        __c__ImGuiColumns_Clear_16(&self)
+    }
+}
+ImDrawListSharedData :: struct #copy {
+    TexUvWhitePixel : ImVec2 = default
+    Font : &ImFont = default
+    FontSize : f32 = default
+    CurveTessellationTol : f32 = default
+    ClipRectFullscreen : ImVec4 = default
+    InitialFlags : ImDrawListFlags = default
+    CircleVtx12 : [12]ImVec2 = default
+}
+impl ImDrawListSharedData {
+    new :: () -> ImDrawListSharedData {
+        result : ImDrawListSharedData = default
+        __c__ImDrawListSharedData_new_7(&result)
+        return result
+    }
+}
+ImDrawDataBuilder :: struct #copy {
+    Layers : [2]__UNKNOWN__ = default
+}
+impl ImDrawDataBuilder {
+    Clear :: (ref Self) {
+        __c__ImDrawDataBuilder_Clear_1(&self)
+    }
+    ClearFreeMemory :: (ref Self) {
+        __c__ImDrawDataBuilder_ClearFreeMemory_2(&self)
+    }
+    FlattenIntoSingleLayer :: (ref Self) {
+        __c__ImDrawDataBuilder_FlattenIntoSingleLayer_3(&self)
+    }
+}
+ImGuiNavMoveResult :: struct #copy {
+    ID : ImGuiID = default
+    SelectScopeId : ImGuiID = default
+    Window : &ImGuiWindow = default
+    DistBox : f32 = default
+    DistCenter : f32 = default
+    DistAxial : f32 = default
+    RectRel : ImRect = default
+}
+impl ImGuiNavMoveResult {
+    new :: () -> ImGuiNavMoveResult {
+        result : ImGuiNavMoveResult = default
+        __c__ImGuiNavMoveResult_new_7(&result)
+        return result
+    }
+    Clear :: (ref Self) {
+        __c__ImGuiNavMoveResult_Clear_8(&self)
+    }
+}
+ImGuiNextWindowDataFlags_ :: enum #copy {}
+ImGuiNextWindowData :: struct #copy {
+    Flags : ImGuiNextWindowDataFlags = default
+    PosCond : ImGuiCond = default
+    SizeCond : ImGuiCond = default
+    CollapsedCond : ImGuiCond = default
+    PosVal : ImVec2 = default
+    PosPivotVal : ImVec2 = default
+    SizeVal : ImVec2 = default
+    ContentSizeVal : ImVec2 = default
+    CollapsedVal : bool = default
+    SizeConstraintRect : ImRect = default
+    SizeCallback : ImGuiSizeCallback = default
+    SizeCallbackUserData : &void = default
+    BgAlphaVal : f32 = default
+    MenuBarOffsetMinVal : ImVec2 = default
+}
+impl ImGuiNextWindowData {
+    new :: () -> ImGuiNextWindowData {
+        result : ImGuiNextWindowData = default
+        __c__ImGuiNextWindowData_new_14(&result)
+        return result
+    }
+    ClearFlags :: (ref Self) {
+        __c__ImGuiNextWindowData_ClearFlags_15(&self)
+    }
+}
+ImGuiNextItemDataFlags_ :: enum #copy {}
+ImGuiNextItemData :: struct #copy {
+    Flags : ImGuiNextItemDataFlags = default
+    Width : f32 = default
+    OpenVal : bool = default
+    OpenCond : ImGuiCond = default
+}
+impl ImGuiNextItemData {
+    new :: () -> ImGuiNextItemData {
+        result : ImGuiNextItemData = default
+        __c__ImGuiNextItemData_new_4(&result)
+        return result
+    }
+    ClearFlags :: (ref Self) {
+        __c__ImGuiNextItemData_ClearFlags_5(&self)
+    }
+}
+ImGuiShrinkWidthItem :: struct #copy {
+    Index : i32 = default
+    Width : f32 = default
+}
+ImGuiPtrOrIndex :: struct #copy {
+    Ptr : &void = default
+    Index : i32 = default
+}
+impl ImGuiPtrOrIndex {
+    new :: (_ptr: &void) -> ImGuiPtrOrIndex {
+        result : ImGuiPtrOrIndex = default
+        __c__ImGuiPtrOrIndex_new_2(&result, _ptr)
+        return result
+    }
+    new :: (_index: i32) -> ImGuiPtrOrIndex {
+        result : ImGuiPtrOrIndex = default
+        __c__ImGuiPtrOrIndex_new_3(&result, _index)
+        return result
+    }
+}
+ImGuiContext :: struct #copy {
+    Initialized : bool = default
+    FontAtlasOwnedByContext : bool = default
+    IO : ImGuiIO = default
+    Style : ImGuiStyle = default
+    Font : &ImFont = default
+    FontSize : f32 = default
+    FontBaseSize : f32 = default
+    DrawListSharedData : ImDrawListSharedData = default
+    Time : f64 = default
+    FrameCount : i32 = default
+    FrameCountEnded : i32 = default
+    FrameCountRendered : i32 = default
+    WithinFrameScope : bool = default
+    WithinFrameScopeWithImplicitWindow : bool = default
+    WithinEndChild : bool = default
+    Windows : __UNKNOWN__ = default
+    WindowsFocusOrder : __UNKNOWN__ = default
+    WindowsSortBuffer : __UNKNOWN__ = default
+    CurrentWindowStack : __UNKNOWN__ = default
+    WindowsById : ImGuiStorage = default
+    WindowsActiveCount : i32 = default
+    CurrentWindow : &ImGuiWindow = default
+    HoveredWindow : &ImGuiWindow = default
+    HoveredRootWindow : &ImGuiWindow = default
+    MovingWindow : &ImGuiWindow = default
+    WheelingWindow : &ImGuiWindow = default
+    WheelingWindowRefMousePos : ImVec2 = default
+    WheelingWindowTimer : f32 = default
+    HoveredId : ImGuiID = default
+    HoveredIdAllowOverlap : bool = default
+    HoveredIdPreviousFrame : ImGuiID = default
+    HoveredIdTimer : f32 = default
+    HoveredIdNotActiveTimer : f32 = default
+    ActiveId : ImGuiID = default
+    ActiveIdIsAlive : ImGuiID = default
+    ActiveIdTimer : f32 = default
+    ActiveIdIsJustActivated : bool = default
+    ActiveIdAllowOverlap : bool = default
+    ActiveIdHasBeenPressedBefore : bool = default
+    ActiveIdHasBeenEditedBefore : bool = default
+    ActiveIdHasBeenEditedThisFrame : bool = default
+    ActiveIdUsingNavDirMask : ImU32 = default
+    ActiveIdUsingNavInputMask : ImU32 = default
+    ActiveIdUsingKeyInputMask : ImU64 = default
+    ActiveIdClickOffset : ImVec2 = default
+    ActiveIdWindow : &ImGuiWindow = default
+    ActiveIdSource : ImGuiInputSource = default
+    ActiveIdPreviousFrame : ImGuiID = default
+    ActiveIdPreviousFrameIsAlive : bool = default
+    ActiveIdPreviousFrameHasBeenEditedBefore : bool = default
+    ActiveIdPreviousFrameWindow : &ImGuiWindow = default
+    LastActiveId : ImGuiID = default
+    LastActiveIdTimer : f32 = default
+    NextWindowData : ImGuiNextWindowData = default
+    NextItemData : ImGuiNextItemData = default
+    ColorModifiers : __UNKNOWN__ = default
+    StyleModifiers : __UNKNOWN__ = default
+    FontStack : __UNKNOWN__ = default
+    OpenPopupStack : __UNKNOWN__ = default
+    BeginPopupStack : __UNKNOWN__ = default
+    NavWindow : &ImGuiWindow = default
+    NavId : ImGuiID = default
+    NavActivateId : ImGuiID = default
+    NavActivateDownId : ImGuiID = default
+    NavActivatePressedId : ImGuiID = default
+    NavInputId : ImGuiID = default
+    NavJustTabbedId : ImGuiID = default
+    NavJustMovedToId : ImGuiID = default
+    NavJustMovedToMultiSelectScopeId : ImGuiID = default
+    NavNextActivateId : ImGuiID = default
+    NavInputSource : ImGuiInputSource = default
+    NavScoringRectScreen : ImRect = default
+    NavScoringCount : i32 = default
+    NavWindowingTarget : &ImGuiWindow = default
+    NavWindowingTargetAnim : &ImGuiWindow = default
+    NavWindowingList : &ImGuiWindow = default
+    NavWindowingTimer : f32 = default
+    NavWindowingHighlightAlpha : f32 = default
+    NavWindowingToggleLayer : bool = default
+    NavLayer : ImGuiNavLayer = default
+    NavIdTabCounter : i32 = default
+    NavIdIsAlive : bool = default
+    NavMousePosDirty : bool = default
+    NavDisableHighlight : bool = default
+    NavDisableMouseHover : bool = default
+    NavAnyRequest : bool = default
+    NavInitRequest : bool = default
+    NavInitRequestFromMove : bool = default
+    NavInitResultId : ImGuiID = default
+    NavInitResultRectRel : ImRect = default
+    NavMoveFromClampedRefRect : bool = default
+    NavMoveRequest : bool = default
+    NavMoveRequestFlags : ImGuiNavMoveFlags = default
+    NavMoveRequestForward : ImGuiNavForward = default
+    NavMoveDir : ImGuiDir = default
+    NavMoveDirLast : ImGuiDir = default
+    NavMoveClipDir : ImGuiDir = default
+    NavMoveResultLocal : ImGuiNavMoveResult = default
+    NavMoveResultLocalVisibleSet : ImGuiNavMoveResult = default
+    NavMoveResultOther : ImGuiNavMoveResult = default
+    FocusRequestCurrWindow : &ImGuiWindow = default
+    FocusRequestNextWindow : &ImGuiWindow = default
+    FocusRequestCurrCounterAll : i32 = default
+    FocusRequestCurrCounterTab : i32 = default
+    FocusRequestNextCounterAll : i32 = default
+    FocusRequestNextCounterTab : i32 = default
+    FocusTabPressed : bool = default
+    DrawData : ImDrawData = default
+    DrawDataBuilder : ImDrawDataBuilder = default
+    DimBgRatio : f32 = default
+    BackgroundDrawList : ImDrawList = default
+    ForegroundDrawList : ImDrawList = default
+    MouseCursor : ImGuiMouseCursor = default
+    DragDropActive : bool = default
+    DragDropWithinSourceOrTarget : bool = default
+    DragDropSourceFlags : ImGuiDragDropFlags = default
+    DragDropSourceFrameCount : i32 = default
+    DragDropMouseButton : i32 = default
+    DragDropPayload : ImGuiPayload = default
+    DragDropTargetRect : ImRect = default
+    DragDropTargetId : ImGuiID = default
+    DragDropAcceptFlags : ImGuiDragDropFlags = default
+    DragDropAcceptIdCurrRectSurface : f32 = default
+    DragDropAcceptIdCurr : ImGuiID = default
+    DragDropAcceptIdPrev : ImGuiID = default
+    DragDropAcceptFrameCount : i32 = default
+    DragDropPayloadBufHeap : __UNKNOWN__ = default
+    DragDropPayloadBufLocal : [16]u8 = default
+    CurrentTabBar : &ImGuiTabBar = default
+    TabBars : __UNKNOWN__ = default
+    CurrentTabBarStack : __UNKNOWN__ = default
+    ShrinkWidthBuffer : __UNKNOWN__ = default
+    LastValidMousePos : ImVec2 = default
+    InputTextState : ImGuiInputTextState = default
+    InputTextPasswordFont : ImFont = default
+    TempInputTextId : ImGuiID = default
+    ColorEditOptions : ImGuiColorEditFlags = default
+    ColorEditLastHue : f32 = default
+    ColorEditLastColor : [3]f32 = default
+    ColorPickerRef : ImVec4 = default
+    DragCurrentAccumDirty : bool = default
+    DragCurrentAccum : f32 = default
+    DragSpeedDefaultRatio : f32 = default
+    ScrollbarClickDeltaToGrabCenter : f32 = default
+    TooltipOverrideCount : i32 = default
+    PrivateClipboard : __UNKNOWN__ = default
+    MultiSelectScopeId : ImGuiID = default
+    PlatformImePos : ImVec2 = default
+    PlatformImeLastPos : ImVec2 = default
+    SettingsLoaded : bool = default
+    SettingsDirtyTimer : f32 = default
+    SettingsIniData : ImGuiTextBuffer = default
+    SettingsHandlers : __UNKNOWN__ = default
+    SettingsWindows : __UNKNOWN__ = default
+    LogEnabled : bool = default
+    LogType : ImGuiLogType = default
+    LogFile : ImFileHandle = default
+    LogBuffer : ImGuiTextBuffer = default
+    LogLinePosY : f32 = default
+    LogLineFirstItem : bool = default
+    LogDepthRef : i32 = default
+    LogDepthToExpand : i32 = default
+    LogDepthToExpandDefault : i32 = default
+    DebugItemPickerActive : bool = default
+    DebugItemPickerBreakID : ImGuiID = default
+    FramerateSecPerFrame : [120]f32 = default
+    FramerateSecPerFrameIdx : i32 = default
+    FramerateSecPerFrameAccum : f32 = default
+    WantCaptureMouseNextFrame : i32 = default
+    WantCaptureKeyboardNextFrame : i32 = default
+    WantTextInputNextFrame : i32 = default
+    TempBuffer : [3073]char8 = default
+}
+impl ImGuiContext {
+    new :: (_shared_font_atlas: &ImFontAtlas) -> ImGuiContext {
+        result : ImGuiContext = default
+        __c__ImGuiContext_new_172(&result, _shared_font_atlas)
+        return result
+    }
+}
+ImGuiWindowTempData :: struct #copy {
+    CursorPos : ImVec2 = default
+    CursorPosPrevLine : ImVec2 = default
+    CursorStartPos : ImVec2 = default
+    CursorMaxPos : ImVec2 = default
+    CurrLineSize : ImVec2 = default
+    PrevLineSize : ImVec2 = default
+    CurrLineTextBaseOffset : f32 = default
+    PrevLineTextBaseOffset : f32 = default
+    TreeDepth : i32 = default
+    TreeMayJumpToParentOnPopMask : ImU32 = default
+    LastItemId : ImGuiID = default
+    LastItemStatusFlags : ImGuiItemStatusFlags = default
+    LastItemRect : ImRect = default
+    LastItemDisplayRect : ImRect = default
+    NavLayerCurrent : ImGuiNavLayer = default
+    NavLayerCurrentMask : i32 = default
+    NavLayerActiveMask : i32 = default
+    NavLayerActiveMaskNext : i32 = default
+    NavHideHighlightOneFrame : bool = default
+    NavHasScroll : bool = default
+    MenuBarAppending : bool = default
+    MenuBarOffset : ImVec2 = default
+    ChildWindows : __UNKNOWN__ = default
+    StateStorage : &ImGuiStorage = default
+    LayoutType : ImGuiLayoutType = default
+    ParentLayoutType : ImGuiLayoutType = default
+    FocusCounterAll : i32 = default
+    FocusCounterTab : i32 = default
+    ItemFlags : ImGuiItemFlags = default
+    ItemWidth : f32 = default
+    TextWrapPos : f32 = default
+    ItemFlagsStack : __UNKNOWN__ = default
+    ItemWidthStack : __UNKNOWN__ = default
+    TextWrapPosStack : __UNKNOWN__ = default
+    GroupStack : __UNKNOWN__ = default
+    StackSizesBackup : [6]i16 = default
+    Indent : ImVec1 = default
+    GroupOffset : ImVec1 = default
+    ColumnsOffset : ImVec1 = default
+    CurrentColumns : &ImGuiColumns = default
+}
+impl ImGuiWindowTempData {
+    new :: () -> ImGuiWindowTempData {
+        result : ImGuiWindowTempData = default
+        __c__ImGuiWindowTempData_new_40(&result)
+        return result
+    }
+}
+ImGuiWindow :: struct #copy {
+    Name : &char8 = default
+    ID : ImGuiID = default
+    Flags : ImGuiWindowFlags = default
+    Pos : ImVec2 = default
+    Size : ImVec2 = default
+    SizeFull : ImVec2 = default
+    ContentSize : ImVec2 = default
+    ContentSizeExplicit : ImVec2 = default
+    WindowPadding : ImVec2 = default
+    WindowRounding : f32 = default
+    WindowBorderSize : f32 = default
+    NameBufLen : i32 = default
+    MoveId : ImGuiID = default
+    ChildId : ImGuiID = default
+    Scroll : ImVec2 = default
+    ScrollMax : ImVec2 = default
+    ScrollTarget : ImVec2 = default
+    ScrollTargetCenterRatio : ImVec2 = default
+    ScrollbarSizes : ImVec2 = default
+    ScrollbarX : bool = default
+    ScrollbarY : bool = default
+    Active : bool = default
+    WasActive : bool = default
+    WriteAccessed : bool = default
+    Collapsed : bool = default
+    WantCollapseToggle : bool = default
+    SkipItems : bool = default
+    Appearing : bool = default
+    Hidden : bool = default
+    HasCloseButton : bool = default
+    ResizeBorderHeld : i8 = default
+    BeginCount : i16 = default
+    BeginOrderWithinParent : i16 = default
+    BeginOrderWithinContext : i16 = default
+    PopupId : ImGuiID = default
+    AutoFitFramesX : ImS8 = default
+    AutoFitFramesY : ImS8 = default
+    AutoFitChildAxises : ImS8 = default
+    AutoFitOnlyGrows : bool = default
+    AutoPosLastDirection : ImGuiDir = default
+    HiddenFramesCanSkipItems : i32 = default
+    HiddenFramesCannotSkipItems : i32 = default
+    SetWindowPosAllowFlags : ImGuiCond = default
+    SetWindowSizeAllowFlags : ImGuiCond = default
+    SetWindowCollapsedAllowFlags : ImGuiCond = default
+    SetWindowPosVal : ImVec2 = default
+    SetWindowPosPivot : ImVec2 = default
+    IDStack : __UNKNOWN__ = default
+    DC : ImGuiWindowTempData = default
+    OuterRectClipped : ImRect = default
+    InnerRect : ImRect = default
+    InnerClipRect : ImRect = default
+    WorkRect : ImRect = default
+    ClipRect : ImRect = default
+    ContentRegionRect : ImRect = default
+    LastFrameActive : i32 = default
+    LastTimeActive : f32 = default
+    ItemWidthDefault : f32 = default
+    MenuColumns : ImGuiMenuColumns = default
+    StateStorage : ImGuiStorage = default
+    ColumnsStorage : __UNKNOWN__ = default
+    FontWindowScale : f32 = default
+    SettingsOffset : i32 = default
+    DrawList : &ImDrawList = default
+    DrawListInst : ImDrawList = default
+    ParentWindow : &ImGuiWindow = default
+    RootWindow : &ImGuiWindow = default
+    RootWindowForTitleBarHighlight : &ImGuiWindow = default
+    RootWindowForNav : &ImGuiWindow = default
+    NavLastChildNavWindow : &ImGuiWindow = default
+    NavLastIds : [2]ImGuiID = default
+    NavRectRel : [2]ImRect = default
+    MemoryCompacted : bool = default
+    MemoryDrawListIdxCapacity : i32 = default
+    MemoryDrawListVtxCapacity : i32 = default
+}
+impl ImGuiWindow {
+    new :: (_context: &ImGuiContext, _name: &char8) -> ImGuiWindow {
+        result : ImGuiWindow = default
+        __c__ImGuiWindow_new_76(&result, _context, _name)
+        return result
+    }
+    GetID :: (ref Self, _str: &char8, _str_end: &char8) -> ImGuiID {
+        result : ImGuiID = default
+        __c__ImGuiWindow_GetID_78(&self, &result, _str, _str_end)
+        return result
+    }
+    GetID :: (ref Self, _ptr: &void) -> ImGuiID {
+        result : ImGuiID = default
+        __c__ImGuiWindow_GetID_79(&self, &result, _ptr)
+        return result
+    }
+    GetID :: (ref Self, _n: i32) -> ImGuiID {
+        result : ImGuiID = default
+        __c__ImGuiWindow_GetID_80(&self, &result, _n)
+        return result
+    }
+    GetIDNoKeepAlive :: (ref Self, _str: &char8, _str_end: &char8) -> ImGuiID {
+        result : ImGuiID = default
+        __c__ImGuiWindow_GetIDNoKeepAlive_81(&self, &result, _str, _str_end)
+        return result
+    }
+    GetIDNoKeepAlive :: (ref Self, _ptr: &void) -> ImGuiID {
+        result : ImGuiID = default
+        __c__ImGuiWindow_GetIDNoKeepAlive_82(&self, &result, _ptr)
+        return result
+    }
+    GetIDNoKeepAlive :: (ref Self, _n: i32) -> ImGuiID {
+        result : ImGuiID = default
+        __c__ImGuiWindow_GetIDNoKeepAlive_83(&self, &result, _n)
+        return result
+    }
+    GetIDFromRectangle :: (ref Self, _r_abs: ref ImRect) -> ImGuiID {
+        result : ImGuiID = default
+        __c__ImGuiWindow_GetIDFromRectangle_84(&self, &result, &_r_abs)
+        return result
+    }
+    Rect :: (ref Self) -> ImRect {
+        result : ImRect = default
+        __c__ImGuiWindow_Rect_85(&self, &result)
+        return result
+    }
+    CalcFontSize :: (ref Self) -> f32 {
+        result : f32 = default
+        __c__ImGuiWindow_CalcFontSize_86(&self, &result)
+        return result
+    }
+    TitleBarHeight :: (ref Self) -> f32 {
+        result : f32 = default
+        __c__ImGuiWindow_TitleBarHeight_87(&self, &result)
+        return result
+    }
+    TitleBarRect :: (ref Self) -> ImRect {
+        result : ImRect = default
+        __c__ImGuiWindow_TitleBarRect_88(&self, &result)
+        return result
+    }
+    MenuBarHeight :: (ref Self) -> f32 {
+        result : f32 = default
+        __c__ImGuiWindow_MenuBarHeight_89(&self, &result)
+        return result
+    }
+    MenuBarRect :: (ref Self) -> ImRect {
+        result : ImRect = default
+        __c__ImGuiWindow_MenuBarRect_90(&self, &result)
+        return result
+    }
+}
+impl Drop for ImGuiWindow {
+    drop :: (ref Self) {
+        __c__ImGuiWindow_dtor(&self)
+    }
+}
+ImGuiItemHoveredDataBackup :: struct #copy {
+    LastItemId : ImGuiID = default
+    LastItemStatusFlags : ImGuiItemStatusFlags = default
+    LastItemRect : ImRect = default
+    LastItemDisplayRect : ImRect = default
+}
+impl ImGuiItemHoveredDataBackup {
+    new :: () -> ImGuiItemHoveredDataBackup {
+        result : ImGuiItemHoveredDataBackup = default
+        __c__ImGuiItemHoveredDataBackup_new_4(&result)
+        return result
+    }
+    Backup :: (ref Self) {
+        __c__ImGuiItemHoveredDataBackup_Backup_5(&self)
+    }
+    Restore :: (ref Self) {
+        __c__ImGuiItemHoveredDataBackup_Restore_6(&self)
+    }
+}
+ImGuiTabBarFlagsPrivate_ :: enum #copy {}
+ImGuiTabItemFlagsPrivate_ :: enum #copy {}
+ImGuiTabItem :: struct #copy {
+    ID : ImGuiID = default
+    Flags : ImGuiTabItemFlags = default
+    LastFrameVisible : i32 = default
+    LastFrameSelected : i32 = default
+    NameOffset : i32 = default
+    Offset : f32 = default
+    Width : f32 = default
+    ContentWidth : f32 = default
+}
+impl ImGuiTabItem {
+    new :: () -> ImGuiTabItem {
+        result : ImGuiTabItem = default
+        __c__ImGuiTabItem_new_8(&result)
+        return result
+    }
+}
+ImGuiTabBar :: struct #copy {
+    Tabs : __UNKNOWN__ = default
+    ID : ImGuiID = default
+    SelectedTabId : ImGuiID = default
+    NextSelectedTabId : ImGuiID = default
+    VisibleTabId : ImGuiID = default
+    CurrFrameVisible : i32 = default
+    PrevFrameVisible : i32 = default
+    BarRect : ImRect = default
+    LastTabContentHeight : f32 = default
+    OffsetMax : f32 = default
+    OffsetMaxIdeal : f32 = default
+    OffsetNextTab : f32 = default
+    ScrollingAnim : f32 = default
+    ScrollingTarget : f32 = default
+    ScrollingTargetDistToVisibility : f32 = default
+    ScrollingSpeed : f32 = default
+    Flags : ImGuiTabBarFlags = default
+    ReorderRequestTabId : ImGuiID = default
+    ReorderRequestDir : ImS8 = default
+    WantLayout : bool = default
+    VisibleTabWasSubmitted : bool = default
+    LastTabItemIdx : i16 = default
+    FramePadding : ImVec2 = default
+    TabsNames : ImGuiTextBuffer = default
+}
+impl ImGuiTabBar {
+    new :: () -> ImGuiTabBar {
+        result : ImGuiTabBar = default
+        __c__ImGuiTabBar_new_24(&result)
+        return result
+    }
+    GetTabOrder :: (ref Self, _tab: &ImGuiTabItem) -> i32 {
+        result : i32 = default
+        __c__ImGuiTabBar_GetTabOrder_25(&self, &result, _tab)
+        return result
+    }
+    GetTabName :: (ref Self, _tab: &ImGuiTabItem) -> &char8 {
+        result : &char8 = default
+        __c__ImGuiTabBar_GetTabName_26(&self, &result, _tab)
+        return result
+    }
+}
+int8_t :: i8
+int16_t :: i16
+int32_t :: i32
+int64_t :: i64
+uint8_t :: u8
+uint16_t :: u16
+uint32_t :: u32
+uint64_t :: u64
+int_least8_t :: i8
+int_least16_t :: i16
+int_least32_t :: i32
+int_least64_t :: i64
+uint_least8_t :: u8
+uint_least16_t :: u16
+uint_least32_t :: u32
+uint_least64_t :: u64
+int_fast8_t :: i8
+int_fast16_t :: i32
+int_fast32_t :: i32
+int_fast64_t :: i64
+uint_fast8_t :: u8
+uint_fast16_t :: u32
+uint_fast32_t :: u32
+uint_fast64_t :: u64
+intmax_t :: i64
+uintmax_t :: u64
+ImGuiResizeGripDef :: struct #copy {
+    CornerPosN : ImVec2 = default
+    InnerDir : ImVec2 = default
+    AngleMin12 : i32 = default
+    AngleMax12 : i32 = default
+}
+ImGuiStyleVarInfo :: struct #copy {
+    Type : ImGuiDataType = default
+    Count : ImU32 = default
+    Offset : ImU32 = default
+}
+impl ImGuiStyleVarInfo {
+    GetVarPtr :: (ref Self, _style: &ImGuiStyle) -> &void {
+        result : &void = default
+        __c__ImGuiStyleVarInfo_GetVarPtr_3(&self, &result, _style)
+        return result
+    }
+}
+DPI_AWARENESS_CONTEXT__ :: struct #copy {
+    unused : i32 = default
+}
+DPI_AWARENESS_CONTEXT :: &DPI_AWARENESS_CONTEXT__
+DPI_AWARENESS :: enum #copy {}
+DPI_AWARENESS :: enum #copy {}
+DPI_HOSTING_BEHAVIOR :: enum #copy {}
+DPI_HOSTING_BEHAVIOR :: enum #copy {}
+_MODEMDEVCAPS :: struct #copy {
+    dwActualSize : DWORD = default
+    dwRequiredSize : DWORD = default
+    dwDevSpecificOffset : DWORD = default
+    dwDevSpecificSize : DWORD = default
+    dwModemProviderVersion : DWORD = default
+    dwModemManufacturerOffset : DWORD = default
+    dwModemManufacturerSize : DWORD = default
+    dwModemModelOffset : DWORD = default
+    dwModemModelSize : DWORD = default
+    dwModemVersionOffset : DWORD = default
+    dwModemVersionSize : DWORD = default
+    dwDialOptions : DWORD = default
+    dwCallSetupFailTimer : DWORD = default
+    dwInactivityTimeout : DWORD = default
+    dwSpeakerVolume : DWORD = default
+    dwSpeakerMode : DWORD = default
+    dwModemOptions : DWORD = default
+    dwMaxDTERate : DWORD = default
+    dwMaxDCERate : DWORD = default
+    abVariablePortion : [1]BYTE = default
+}
+MODEMDEVCAPS :: struct #copy {}
+PMODEMDEVCAPS :: &_MODEMDEVCAPS
+LPMODEMDEVCAPS :: &_MODEMDEVCAPS
+_MODEMSETTINGS :: struct #copy {
+    dwActualSize : DWORD = default
+    dwRequiredSize : DWORD = default
+    dwDevSpecificOffset : DWORD = default
+    dwDevSpecificSize : DWORD = default
+    dwCallSetupFailTimer : DWORD = default
+    dwInactivityTimeout : DWORD = default
+    dwSpeakerVolume : DWORD = default
+    dwSpeakerMode : DWORD = default
+    dwPreferredModemOptions : DWORD = default
+    dwNegotiatedModemOptions : DWORD = default
+    dwNegotiatedDCERate : DWORD = default
+    abVariablePortion : [1]BYTE = default
+}
+MODEMSETTINGS :: struct #copy {}
+PMODEMSETTINGS :: &_MODEMSETTINGS
+LPMODEMSETTINGS :: &_MODEMSETTINGS
+
+// ==========================================================
+// ==========================================================
+// ==========================================================
+
+#file_scope
+
+__c__ImVec2_new_2 :: (self: &ImVec2);
+__c__ImVec2_new_3 :: (self: &ImVec2, __x: f32, __y: f32);
+__c__ImVec4_new_4 :: (self: &ImVec4);
+__c__ImVec4_new_5 :: (self: &ImVec4, __x: f32, __y: f32, __z: f32, __w: f32);
+__c__ImGuiStyle_new_35 :: (self: &ImGuiStyle);
+__c__ImGuiStyle_ScaleAllSizes_36 :: (self: &ImGuiStyle, _scale_factor: f32);
+__c__ImGuiIO_AddInputCharacter_46 :: (self: &ImGuiIO, _c: u32);
+__c__ImGuiIO_AddInputCharactersUTF8_47 :: (self: &ImGuiIO, _str: &char8);
+__c__ImGuiIO_ClearInputCharacters_48 :: (self: &ImGuiIO);
+__c__ImGuiIO_new_80 :: (self: &ImGuiIO);
+__c__ImGuiInputTextCallbackData_new_12 :: (self: &ImGuiInputTextCallbackData);
+__c__ImGuiInputTextCallbackData_DeleteChars_13 :: (self: &ImGuiInputTextCallbackData, _pos: i32, _bytes_count: i32);
+__c__ImGuiInputTextCallbackData_InsertChars_14 :: (self: &ImGuiInputTextCallbackData, _pos: i32, _text: &char8, _text_end: &char8);
+__c__ImGuiInputTextCallbackData_HasSelection_15 :: (self: &ImGuiInputTextCallbackData, ret: &bool);
+__c__ImGuiPayload_new_8 :: (self: &ImGuiPayload);
+__c__ImGuiPayload_Clear_9 :: (self: &ImGuiPayload);
+__c__ImGuiPayload_IsDataType_10 :: (self: &ImGuiPayload, ret: &bool, _type: &char8);
+__c__ImGuiPayload_IsPreview_11 :: (self: &ImGuiPayload, ret: &bool);
+__c__ImGuiPayload_IsDelivery_12 :: (self: &ImGuiPayload, ret: &bool);
+__c__ImGuiOnceUponAFrame_new_0 :: (self: &ImGuiOnceUponAFrame);
+__c__ImGuiTextFilter_new_0 :: (self: &ImGuiTextFilter, _default_filter: &char8);
+__c__ImGuiTextFilter_Draw_1 :: (self: &ImGuiTextFilter, ret: &bool, _label: &char8, _width: f32);
+__c__ImGuiTextFilter_PassFilter_2 :: (self: &ImGuiTextFilter, ret: &bool, _text: &char8, _text_end: &char8);
+__c__ImGuiTextFilter_Build_3 :: (self: &ImGuiTextFilter);
+__c__ImGuiTextFilter_Clear_4 :: (self: &ImGuiTextFilter);
+__c__ImGuiTextFilter_IsActive_5 :: (self: &ImGuiTextFilter, ret: &bool);
+__c__ImGuiTextBuffer_new_2 :: (self: &ImGuiTextBuffer);
+__c__ImGuiTextBuffer_begin_4 :: (self: &ImGuiTextBuffer, ret: &&char8);
+__c__ImGuiTextBuffer_end_5 :: (self: &ImGuiTextBuffer, ret: &&char8);
+__c__ImGuiTextBuffer_size_6 :: (self: &ImGuiTextBuffer, ret: &i32);
+__c__ImGuiTextBuffer_empty_7 :: (self: &ImGuiTextBuffer, ret: &bool);
+__c__ImGuiTextBuffer_clear_8 :: (self: &ImGuiTextBuffer);
+__c__ImGuiTextBuffer_reserve_9 :: (self: &ImGuiTextBuffer, _capacity: i32);
+__c__ImGuiTextBuffer_c_str_10 :: (self: &ImGuiTextBuffer, ret: &&char8);
+__c__ImGuiTextBuffer_append_11 :: (self: &ImGuiTextBuffer, _str: &char8, _str_end: &char8);
+__c__ImGuiTextBuffer_appendf_12 :: (self: &ImGuiTextBuffer, _fmt: &char8);
+__c__ImGuiTextBuffer_appendfv_13 :: (self: &ImGuiTextBuffer, _fmt: &char8, _args: va_list);
+__c__ImGuiStorage_Clear_2 :: (self: &ImGuiStorage);
+__c__ImGuiStorage_GetInt_3 :: (self: &ImGuiStorage, ret: &i32, _key: ImGuiID, _default_val: i32);
+__c__ImGuiStorage_SetInt_4 :: (self: &ImGuiStorage, _key: ImGuiID, _val: i32);
+__c__ImGuiStorage_GetBool_5 :: (self: &ImGuiStorage, ret: &bool, _key: ImGuiID, _default_val: bool);
+__c__ImGuiStorage_SetBool_6 :: (self: &ImGuiStorage, _key: ImGuiID, _val: bool);
+__c__ImGuiStorage_GetFloat_7 :: (self: &ImGuiStorage, ret: &f32, _key: ImGuiID, _default_val: f32);
+__c__ImGuiStorage_SetFloat_8 :: (self: &ImGuiStorage, _key: ImGuiID, _val: f32);
+__c__ImGuiStorage_GetVoidPtr_9 :: (self: &ImGuiStorage, ret: &&void, _key: ImGuiID);
+__c__ImGuiStorage_SetVoidPtr_10 :: (self: &ImGuiStorage, _key: ImGuiID, _val: &void);
+__c__ImGuiStorage_GetIntRef_11 :: (self: &ImGuiStorage, ret: &&i32, _key: ImGuiID, _default_val: i32);
+__c__ImGuiStorage_GetBoolRef_12 :: (self: &ImGuiStorage, ret: &&bool, _key: ImGuiID, _default_val: bool);
+__c__ImGuiStorage_GetFloatRef_13 :: (self: &ImGuiStorage, ret: &&f32, _key: ImGuiID, _default_val: f32);
+__c__ImGuiStorage_GetVoidPtrRef_14 :: (self: &ImGuiStorage, ret: &&&void, _key: ImGuiID, _default_val: &void);
+__c__ImGuiStorage_SetAllInt_15 :: (self: &ImGuiStorage, _val: i32);
+__c__ImGuiStorage_BuildSortByKey_16 :: (self: &ImGuiStorage);
+__c__ImGuiListClipper_new_6 :: (self: &ImGuiListClipper, _items_count: i32, _items_height: f32);
+__c__ImGuiListClipper_dtor :: (self: &ImGuiListClipper);
+__c__ImGuiListClipper_Step_8 :: (self: &ImGuiListClipper, ret: &bool);
+__c__ImGuiListClipper_Begin_9 :: (self: &ImGuiListClipper, _items_count: i32, _items_height: f32);
+__c__ImGuiListClipper_End_10 :: (self: &ImGuiListClipper);
+__c__ImColor_new_1 :: (self: &ImColor);
+__c__ImColor_new_2 :: (self: &ImColor, _r: i32, _g: i32, _b: i32, _a: i32);
+__c__ImColor_new_3 :: (self: &ImColor, _rgba: ImU32);
+__c__ImColor_new_4 :: (self: &ImColor, _r: f32, _g: f32, _b: f32, _a: f32);
+__c__ImColor_new_5 :: (self: &ImColor, _col: &ImVec4);
+__c__ImColor_SetHSV_8 :: (self: &ImColor, _h: f32, _s: f32, _v: f32, _a: f32);
+__c__ImColor_HSV_9 :: (self: &ImColor, ret: &ImColor, _h: f32, _s: f32, _v: f32, _a: f32);
+__c__ImDrawCmd_new_7 :: (self: &ImDrawCmd);
+__c__ImDrawListSplitter_new_3 :: (self: &ImDrawListSplitter);
+__c__ImDrawListSplitter_dtor :: (self: &ImDrawListSplitter);
+__c__ImDrawListSplitter_Clear_5 :: (self: &ImDrawListSplitter);
+__c__ImDrawListSplitter_ClearFreeMemory_6 :: (self: &ImDrawListSplitter);
+__c__ImDrawListSplitter_Split_7 :: (self: &ImDrawListSplitter, _draw_list: &ImDrawList, _count: i32);
+__c__ImDrawListSplitter_Merge_8 :: (self: &ImDrawListSplitter, _draw_list: &ImDrawList);
+__c__ImDrawListSplitter_SetCurrentChannel_9 :: (self: &ImDrawListSplitter, _draw_list: &ImDrawList, _channel_idx: i32);
+__c__ImDrawList_new_14 :: (self: &ImDrawList, _shared_data: &ImDrawListSharedData);
+__c__ImDrawList_dtor :: (self: &ImDrawList);
+__c__ImDrawList_PushClipRect_16 :: (self: &ImDrawList, _clip_rect_min: &ImVec2, _clip_rect_max: &ImVec2, _intersect_with_current_clip_rect: bool);
+__c__ImDrawList_PushClipRectFullScreen_17 :: (self: &ImDrawList);
+__c__ImDrawList_PopClipRect_18 :: (self: &ImDrawList);
+__c__ImDrawList_PushTextureID_19 :: (self: &ImDrawList, _texture_id: ImTextureID);
+__c__ImDrawList_PopTextureID_20 :: (self: &ImDrawList);
+__c__ImDrawList_GetClipRectMin_21 :: (self: &ImDrawList, ret: &ImVec2);
+__c__ImDrawList_GetClipRectMax_22 :: (self: &ImDrawList, ret: &ImVec2);
+__c__ImDrawList_AddLine_23 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _col: ImU32, _thickness: f32);
+__c__ImDrawList_AddRect_24 :: (self: &ImDrawList, _p_min: &ImVec2, _p_max: &ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags, _thickness: f32);
+__c__ImDrawList_AddRectFilled_25 :: (self: &ImDrawList, _p_min: &ImVec2, _p_max: &ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags);
+__c__ImDrawList_AddRectFilledMultiColor_26 :: (self: &ImDrawList, _p_min: &ImVec2, _p_max: &ImVec2, _col_upr_left: ImU32, _col_upr_right: ImU32, _col_bot_right: ImU32, _col_bot_left: ImU32);
+__c__ImDrawList_AddQuad_27 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _col: ImU32, _thickness: f32);
+__c__ImDrawList_AddQuadFilled_28 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _col: ImU32);
+__c__ImDrawList_AddTriangle_29 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _col: ImU32, _thickness: f32);
+__c__ImDrawList_AddTriangleFilled_30 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _col: ImU32);
+__c__ImDrawList_AddCircle_31 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32, _thickness: f32);
+__c__ImDrawList_AddCircleFilled_32 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32);
+__c__ImDrawList_AddNgon_33 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32, _thickness: f32);
+__c__ImDrawList_AddNgonFilled_34 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32);
+__c__ImDrawList_AddText_35 :: (self: &ImDrawList, _pos: &ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8);
+__c__ImDrawList_AddText_36 :: (self: &ImDrawList, _font: &ImFont, _font_size: f32, _pos: &ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8, _wrap_width: f32, _cpu_fine_clip_rect: &ImVec4);
+__c__ImDrawList_AddPolyline_37 :: (self: &ImDrawList, _points: &ImVec2, _num_points: i32, _col: ImU32, _closed: bool, _thickness: f32);
+__c__ImDrawList_AddConvexPolyFilled_38 :: (self: &ImDrawList, _points: &ImVec2, _num_points: i32, _col: ImU32);
+__c__ImDrawList_AddBezierCurve_39 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _col: ImU32, _thickness: f32, _num_segments: i32);
+__c__ImDrawList_AddImage_40 :: (self: &ImDrawList, _user_texture_id: ImTextureID, _p_min: &ImVec2, _p_max: &ImVec2, _uv_min: &ImVec2, _uv_max: &ImVec2, _col: ImU32);
+__c__ImDrawList_AddImageQuad_41 :: (self: &ImDrawList, _user_texture_id: ImTextureID, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _uv1: &ImVec2, _uv2: &ImVec2, _uv3: &ImVec2, _uv4: &ImVec2, _col: ImU32);
+__c__ImDrawList_AddImageRounded_42 :: (self: &ImDrawList, _user_texture_id: ImTextureID, _p_min: &ImVec2, _p_max: &ImVec2, _uv_min: &ImVec2, _uv_max: &ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags);
+__c__ImDrawList_PathClear_43 :: (self: &ImDrawList);
+__c__ImDrawList_PathLineTo_44 :: (self: &ImDrawList, _pos: &ImVec2);
+__c__ImDrawList_PathLineToMergeDuplicate_45 :: (self: &ImDrawList, _pos: &ImVec2);
+__c__ImDrawList_PathFillConvex_46 :: (self: &ImDrawList, _col: ImU32);
+__c__ImDrawList_PathStroke_47 :: (self: &ImDrawList, _col: ImU32, _closed: bool, _thickness: f32);
+__c__ImDrawList_PathArcTo_48 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _a_min: f32, _a_max: f32, _num_segments: i32);
+__c__ImDrawList_PathArcToFast_49 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _a_min_of_12: i32, _a_max_of_12: i32);
+__c__ImDrawList_PathBezierCurveTo_50 :: (self: &ImDrawList, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _num_segments: i32);
+__c__ImDrawList_PathRect_51 :: (self: &ImDrawList, _rect_min: &ImVec2, _rect_max: &ImVec2, _rounding: f32, _rounding_corners: ImDrawCornerFlags);
+__c__ImDrawList_AddCallback_52 :: (self: &ImDrawList, _callback: ImDrawCallback, _callback_data: &void);
+__c__ImDrawList_AddDrawCmd_53 :: (self: &ImDrawList);
+__c__ImDrawList_CloneOutput_54 :: (self: &ImDrawList, ret: &&ImDrawList);
+__c__ImDrawList_ChannelsSplit_55 :: (self: &ImDrawList, _count: i32);
+__c__ImDrawList_ChannelsMerge_56 :: (self: &ImDrawList);
+__c__ImDrawList_ChannelsSetCurrent_57 :: (self: &ImDrawList, _n: i32);
+__c__ImDrawList_Clear_58 :: (self: &ImDrawList);
+__c__ImDrawList_ClearFreeMemory_59 :: (self: &ImDrawList);
+__c__ImDrawList_PrimReserve_60 :: (self: &ImDrawList, _idx_count: i32, _vtx_count: i32);
+__c__ImDrawList_PrimUnreserve_61 :: (self: &ImDrawList, _idx_count: i32, _vtx_count: i32);
+__c__ImDrawList_PrimRect_62 :: (self: &ImDrawList, _a: &ImVec2, _b: &ImVec2, _col: ImU32);
+__c__ImDrawList_PrimRectUV_63 :: (self: &ImDrawList, _a: &ImVec2, _b: &ImVec2, _uv_a: &ImVec2, _uv_b: &ImVec2, _col: ImU32);
+__c__ImDrawList_PrimQuadUV_64 :: (self: &ImDrawList, _a: &ImVec2, _b: &ImVec2, _c: &ImVec2, _d: &ImVec2, _uv_a: &ImVec2, _uv_b: &ImVec2, _uv_c: &ImVec2, _uv_d: &ImVec2, _col: ImU32);
+__c__ImDrawList_PrimWriteVtx_65 :: (self: &ImDrawList, _pos: &ImVec2, _uv: &ImVec2, _col: ImU32);
+__c__ImDrawList_PrimWriteIdx_66 :: (self: &ImDrawList, _idx: ImDrawIdx);
+__c__ImDrawList_PrimVtx_67 :: (self: &ImDrawList, _pos: &ImVec2, _uv: &ImVec2, _col: ImU32);
+__c__ImDrawList_UpdateClipRect_68 :: (self: &ImDrawList);
+__c__ImDrawList_UpdateTextureID_69 :: (self: &ImDrawList);
+__c__ImDrawData_new_8 :: (self: &ImDrawData);
+__c__ImDrawData_dtor :: (self: &ImDrawData);
+__c__ImDrawData_Clear_10 :: (self: &ImDrawData);
+__c__ImDrawData_DeIndexAllBuffers_11 :: (self: &ImDrawData);
+__c__ImDrawData_ScaleClipRects_12 :: (self: &ImDrawData, _fb_scale: &ImVec2);
+__c__ImFontConfig_new_19 :: (self: &ImFontConfig);
+__c__ImFontGlyphRangesBuilder_new_1 :: (self: &ImFontGlyphRangesBuilder);
+__c__ImFontGlyphRangesBuilder_Clear_2 :: (self: &ImFontGlyphRangesBuilder);
+__c__ImFontGlyphRangesBuilder_GetBit_3 :: (self: &ImFontGlyphRangesBuilder, ret: &bool, _n: i32);
+__c__ImFontGlyphRangesBuilder_SetBit_4 :: (self: &ImFontGlyphRangesBuilder, _n: i32);
+__c__ImFontGlyphRangesBuilder_AddChar_5 :: (self: &ImFontGlyphRangesBuilder, _c: ImWchar);
+__c__ImFontGlyphRangesBuilder_AddText_6 :: (self: &ImFontGlyphRangesBuilder, _text: &char8, _text_end: &char8);
+__c__ImFontGlyphRangesBuilder_AddRanges_7 :: (self: &ImFontGlyphRangesBuilder, _ranges: &ImWchar);
+__c__ImFontGlyphRangesBuilder_BuildRanges_8 :: (self: &ImFontGlyphRangesBuilder, _out_ranges: &__UNKNOWN__);
+__c__ImFontAtlasCustomRect_new_8 :: (self: &ImFontAtlasCustomRect);
+__c__ImFontAtlasCustomRect_IsPacked_9 :: (self: &ImFontAtlasCustomRect, ret: &bool);
+__c__ImFontAtlas_new_0 :: (self: &ImFontAtlas);
+__c__ImFontAtlas_dtor :: (self: &ImFontAtlas);
+__c__ImFontAtlas_AddFont_2 :: (self: &ImFontAtlas, ret: &&ImFont, _font_cfg: &ImFontConfig);
+__c__ImFontAtlas_AddFontDefault_3 :: (self: &ImFontAtlas, ret: &&ImFont, _font_cfg: &ImFontConfig);
+__c__ImFontAtlas_AddFontFromFileTTF_4 :: (self: &ImFontAtlas, ret: &&ImFont, _filename: &char8, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar);
+__c__ImFontAtlas_AddFontFromMemoryTTF_5 :: (self: &ImFontAtlas, ret: &&ImFont, _font_data: &void, _font_size: i32, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar);
+__c__ImFontAtlas_AddFontFromMemoryCompressedTTF_6 :: (self: &ImFontAtlas, ret: &&ImFont, _compressed_font_data: &void, _compressed_font_size: i32, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar);
+__c__ImFontAtlas_AddFontFromMemoryCompressedBase85TTF_7 :: (self: &ImFontAtlas, ret: &&ImFont, _compressed_font_data_base85: &char8, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar);
+__c__ImFontAtlas_ClearInputData_8 :: (self: &ImFontAtlas);
+__c__ImFontAtlas_ClearTexData_9 :: (self: &ImFontAtlas);
+__c__ImFontAtlas_ClearFonts_10 :: (self: &ImFontAtlas);
+__c__ImFontAtlas_Clear_11 :: (self: &ImFontAtlas);
+__c__ImFontAtlas_Build_12 :: (self: &ImFontAtlas, ret: &bool);
+__c__ImFontAtlas_GetTexDataAsAlpha8_13 :: (self: &ImFontAtlas, _out_pixels: &&u8, _out_width: &i32, _out_height: &i32, _out_bytes_per_pixel: &i32);
+__c__ImFontAtlas_GetTexDataAsRGBA32_14 :: (self: &ImFontAtlas, _out_pixels: &&u8, _out_width: &i32, _out_height: &i32, _out_bytes_per_pixel: &i32);
+__c__ImFontAtlas_IsBuilt_15 :: (self: &ImFontAtlas, ret: &bool);
+__c__ImFontAtlas_SetTexID_16 :: (self: &ImFontAtlas, _id: ImTextureID);
+__c__ImFontAtlas_GetGlyphRangesDefault_17 :: (self: &ImFontAtlas, ret: &&ImWchar);
+__c__ImFontAtlas_GetGlyphRangesKorean_18 :: (self: &ImFontAtlas, ret: &&ImWchar);
+__c__ImFontAtlas_GetGlyphRangesJapanese_19 :: (self: &ImFontAtlas, ret: &&ImWchar);
+__c__ImFontAtlas_GetGlyphRangesChineseFull_20 :: (self: &ImFontAtlas, ret: &&ImWchar);
+__c__ImFontAtlas_GetGlyphRangesChineseSimplifiedCommon_21 :: (self: &ImFontAtlas, ret: &&ImWchar);
+__c__ImFontAtlas_GetGlyphRangesCyrillic_22 :: (self: &ImFontAtlas, ret: &&ImWchar);
+__c__ImFontAtlas_GetGlyphRangesThai_23 :: (self: &ImFontAtlas, ret: &&ImWchar);
+__c__ImFontAtlas_GetGlyphRangesVietnamese_24 :: (self: &ImFontAtlas, ret: &&ImWchar);
+__c__ImFontAtlas_AddCustomRectRegular_25 :: (self: &ImFontAtlas, ret: &i32, _id: u32, _width: i32, _height: i32);
+__c__ImFontAtlas_AddCustomRectFontGlyph_26 :: (self: &ImFontAtlas, ret: &i32, _font: &ImFont, _id: ImWchar, _width: i32, _height: i32, _advance_x: f32, _offset: &ImVec2);
+__c__ImFontAtlas_GetCustomRectByIndex_27 :: (self: &ImFontAtlas, ret: &&ImFontAtlasCustomRect, _index: i32);
+__c__ImFontAtlas_CalcCustomRectUV_28 :: (self: &ImFontAtlas, _rect: &ImFontAtlasCustomRect, _out_uv_min: &ImVec2, _out_uv_max: &ImVec2);
+__c__ImFontAtlas_GetMouseCursorTexData_29 :: (self: &ImFontAtlas, ret: &bool, _cursor: ImGuiMouseCursor, _out_offset: &ImVec2, _out_size: &ImVec2, _out_uv_border: &ImVec2, _out_uv_fill: &ImVec2);
+__c__ImFont_new_17 :: (self: &ImFont);
+__c__ImFont_dtor :: (self: &ImFont);
+__c__ImFont_FindGlyph_19 :: (self: &ImFont, ret: &&ImFontGlyph, _c: ImWchar);
+__c__ImFont_FindGlyphNoFallback_20 :: (self: &ImFont, ret: &&ImFontGlyph, _c: ImWchar);
+__c__ImFont_GetCharAdvance_21 :: (self: &ImFont, ret: &f32, _c: ImWchar);
+__c__ImFont_IsLoaded_22 :: (self: &ImFont, ret: &bool);
+__c__ImFont_GetDebugName_23 :: (self: &ImFont, ret: &&char8);
+__c__ImFont_CalcTextSizeA_24 :: (self: &ImFont, ret: &ImVec2, _size: f32, _max_width: f32, _wrap_width: f32, _text_begin: &char8, _text_end: &char8, _remaining: &&char8);
+__c__ImFont_CalcWordWrapPositionA_25 :: (self: &ImFont, ret: &&char8, _scale: f32, _text: &char8, _text_end: &char8, _wrap_width: f32);
+__c__ImFont_RenderChar_26 :: (self: &ImFont, _draw_list: &ImDrawList, _size: f32, _pos: &ImVec2, _col: ImU32, _c: ImWchar);
+__c__ImFont_RenderText_27 :: (self: &ImFont, _draw_list: &ImDrawList, _size: f32, _pos: &ImVec2, _col: ImU32, _clip_rect: &ImVec4, _text_begin: &char8, _text_end: &char8, _wrap_width: f32, _cpu_fine_clip: bool);
+__c__ImFont_BuildLookupTable_28 :: (self: &ImFont);
+__c__ImFont_ClearOutputData_29 :: (self: &ImFont);
+__c__ImFont_GrowIndex_30 :: (self: &ImFont, _new_size: i32);
+__c__ImFont_AddGlyph_31 :: (self: &ImFont, _c: ImWchar, _x0: f32, _y0: f32, _x1: f32, _y1: f32, _u0: f32, _v0: f32, _u1: f32, _v1: f32, _advance_x: f32);
+__c__ImFont_AddRemapChar_32 :: (self: &ImFont, _dst: ImWchar, _src: ImWchar, _overwrite_dst: bool);
+__c__ImFont_SetFallbackChar_33 :: (self: &ImFont, _c: ImWchar);
+__c__ImBoolVector_new_1 :: (self: &ImBoolVector);
+__c__ImBoolVector_Resize_2 :: (self: &ImBoolVector, _sz: i32);
+__c__ImBoolVector_Clear_3 :: (self: &ImBoolVector);
+__c__ImBoolVector_GetBit_4 :: (self: &ImBoolVector, ret: &bool, _n: i32);
+__c__ImBoolVector_SetBit_5 :: (self: &ImBoolVector, _n: i32, _v: bool);
+__c__ImVec1_new_1 :: (self: &ImVec1);
+__c__ImVec1_new_2 :: (self: &ImVec1, __x: f32);
+__c__ImVec2ih_new_2 :: (self: &ImVec2ih);
+__c__ImVec2ih_new_3 :: (self: &ImVec2ih, __x: i16, __y: i16);
+__c__ImRect_new_2 :: (self: &ImRect);
+__c__ImRect_new_3 :: (self: &ImRect, _min: &ImVec2, _max: &ImVec2);
+__c__ImRect_new_4 :: (self: &ImRect, _v: &ImVec4);
+__c__ImRect_new_5 :: (self: &ImRect, _x1: f32, _y1: f32, _x2: f32, _y2: f32);
+__c__ImRect_GetCenter_6 :: (self: &ImRect, ret: &ImVec2);
+__c__ImRect_GetSize_7 :: (self: &ImRect, ret: &ImVec2);
+__c__ImRect_GetWidth_8 :: (self: &ImRect, ret: &f32);
+__c__ImRect_GetHeight_9 :: (self: &ImRect, ret: &f32);
+__c__ImRect_GetTL_10 :: (self: &ImRect, ret: &ImVec2);
+__c__ImRect_GetTR_11 :: (self: &ImRect, ret: &ImVec2);
+__c__ImRect_GetBL_12 :: (self: &ImRect, ret: &ImVec2);
+__c__ImRect_GetBR_13 :: (self: &ImRect, ret: &ImVec2);
+__c__ImRect_Contains_14 :: (self: &ImRect, ret: &bool, _p: &ImVec2);
+__c__ImRect_Contains_15 :: (self: &ImRect, ret: &bool, _r: &ImRect);
+__c__ImRect_Overlaps_16 :: (self: &ImRect, ret: &bool, _r: &ImRect);
+__c__ImRect_Add_17 :: (self: &ImRect, _p: &ImVec2);
+__c__ImRect_Add_18 :: (self: &ImRect, _r: &ImRect);
+__c__ImRect_Expand_19 :: (self: &ImRect, _amount: f32);
+__c__ImRect_Expand_20 :: (self: &ImRect, _amount: &ImVec2);
+__c__ImRect_Translate_21 :: (self: &ImRect, _d: &ImVec2);
+__c__ImRect_TranslateX_22 :: (self: &ImRect, _dx: f32);
+__c__ImRect_TranslateY_23 :: (self: &ImRect, _dy: f32);
+__c__ImRect_ClipWith_24 :: (self: &ImRect, _r: &ImRect);
+__c__ImRect_ClipWithFull_25 :: (self: &ImRect, _r: &ImRect);
+__c__ImRect_Floor_26 :: (self: &ImRect);
+__c__ImRect_IsInverted_27 :: (self: &ImRect, ret: &bool);
+__c__ImGuiStyleMod_new_2 :: (self: &ImGuiStyleMod, _idx: ImGuiStyleVar, _v: i32);
+__c__ImGuiStyleMod_new_3 :: (self: &ImGuiStyleMod, _idx: ImGuiStyleVar, _v: f32);
+__c__ImGuiStyleMod_new_4 :: (self: &ImGuiStyleMod, _idx: ImGuiStyleVar, _v: &ImVec2);
+__c__ImGuiMenuColumns_new_5 :: (self: &ImGuiMenuColumns);
+__c__ImGuiMenuColumns_Update_6 :: (self: &ImGuiMenuColumns, _count: i32, _spacing: f32, _clear: bool);
+__c__ImGuiMenuColumns_DeclColumns_7 :: (self: &ImGuiMenuColumns, ret: &f32, _w0: f32, _w1: f32, _w2: f32);
+__c__ImGuiMenuColumns_CalcExtraSpace_8 :: (self: &ImGuiMenuColumns, ret: &f32, _avail_w: f32);
+__c__ImGuiInputTextState_new_16 :: (self: &ImGuiInputTextState);
+__c__ImGuiInputTextState_ClearText_17 :: (self: &ImGuiInputTextState);
+__c__ImGuiInputTextState_ClearFreeMemory_18 :: (self: &ImGuiInputTextState);
+__c__ImGuiInputTextState_GetUndoAvailCount_19 :: (self: &ImGuiInputTextState, ret: &i32);
+__c__ImGuiInputTextState_GetRedoAvailCount_20 :: (self: &ImGuiInputTextState, ret: &i32);
+__c__ImGuiInputTextState_OnKeyPressed_21 :: (self: &ImGuiInputTextState, _key: i32);
+__c__ImGuiInputTextState_CursorAnimReset_22 :: (self: &ImGuiInputTextState);
+__c__ImGuiInputTextState_CursorClamp_23 :: (self: &ImGuiInputTextState);
+__c__ImGuiInputTextState_HasSelection_24 :: (self: &ImGuiInputTextState, ret: &bool);
+__c__ImGuiInputTextState_ClearSelection_25 :: (self: &ImGuiInputTextState);
+__c__ImGuiInputTextState_SelectAll_26 :: (self: &ImGuiInputTextState);
+__c__ImGuiWindowSettings_new_4 :: (self: &ImGuiWindowSettings);
+__c__ImGuiWindowSettings_GetName_5 :: (self: &ImGuiWindowSettings, ret: &&char8);
+__c__ImGuiSettingsHandler_new_6 :: (self: &ImGuiSettingsHandler);
+__c__ImGuiPopupData_new_7 :: (self: &ImGuiPopupData);
+__c__ImGuiColumnData_new_4 :: (self: &ImGuiColumnData);
+__c__ImGuiColumns_new_15 :: (self: &ImGuiColumns);
+__c__ImGuiColumns_Clear_16 :: (self: &ImGuiColumns);
+__c__ImDrawListSharedData_new_7 :: (self: &ImDrawListSharedData);
+__c__ImDrawDataBuilder_Clear_1 :: (self: &ImDrawDataBuilder);
+__c__ImDrawDataBuilder_ClearFreeMemory_2 :: (self: &ImDrawDataBuilder);
+__c__ImDrawDataBuilder_FlattenIntoSingleLayer_3 :: (self: &ImDrawDataBuilder);
+__c__ImGuiNavMoveResult_new_7 :: (self: &ImGuiNavMoveResult);
+__c__ImGuiNavMoveResult_Clear_8 :: (self: &ImGuiNavMoveResult);
+__c__ImGuiNextWindowData_new_14 :: (self: &ImGuiNextWindowData);
+__c__ImGuiNextWindowData_ClearFlags_15 :: (self: &ImGuiNextWindowData);
+__c__ImGuiNextItemData_new_4 :: (self: &ImGuiNextItemData);
+__c__ImGuiNextItemData_ClearFlags_5 :: (self: &ImGuiNextItemData);
+__c__ImGuiPtrOrIndex_new_2 :: (self: &ImGuiPtrOrIndex, _ptr: &void);
+__c__ImGuiPtrOrIndex_new_3 :: (self: &ImGuiPtrOrIndex, _index: i32);
+__c__ImGuiContext_new_172 :: (self: &ImGuiContext, _shared_font_atlas: &ImFontAtlas);
+__c__ImGuiWindowTempData_new_40 :: (self: &ImGuiWindowTempData);
+__c__ImGuiWindow_new_76 :: (self: &ImGuiWindow, _context: &ImGuiContext, _name: &char8);
+__c__ImGuiWindow_dtor :: (self: &ImGuiWindow);
+__c__ImGuiWindow_GetID_78 :: (self: &ImGuiWindow, ret: &ImGuiID, _str: &char8, _str_end: &char8);
+__c__ImGuiWindow_GetID_79 :: (self: &ImGuiWindow, ret: &ImGuiID, _ptr: &void);
+__c__ImGuiWindow_GetID_80 :: (self: &ImGuiWindow, ret: &ImGuiID, _n: i32);
+__c__ImGuiWindow_GetIDNoKeepAlive_81 :: (self: &ImGuiWindow, ret: &ImGuiID, _str: &char8, _str_end: &char8);
+__c__ImGuiWindow_GetIDNoKeepAlive_82 :: (self: &ImGuiWindow, ret: &ImGuiID, _ptr: &void);
+__c__ImGuiWindow_GetIDNoKeepAlive_83 :: (self: &ImGuiWindow, ret: &ImGuiID, _n: i32);
+__c__ImGuiWindow_GetIDFromRectangle_84 :: (self: &ImGuiWindow, ret: &ImGuiID, _r_abs: &ImRect);
+__c__ImGuiWindow_Rect_85 :: (self: &ImGuiWindow, ret: &ImRect);
+__c__ImGuiWindow_CalcFontSize_86 :: (self: &ImGuiWindow, ret: &f32);
+__c__ImGuiWindow_TitleBarHeight_87 :: (self: &ImGuiWindow, ret: &f32);
+__c__ImGuiWindow_TitleBarRect_88 :: (self: &ImGuiWindow, ret: &ImRect);
+__c__ImGuiWindow_MenuBarHeight_89 :: (self: &ImGuiWindow, ret: &f32);
+__c__ImGuiWindow_MenuBarRect_90 :: (self: &ImGuiWindow, ret: &ImRect);
+__c__ImGuiItemHoveredDataBackup_new_4 :: (self: &ImGuiItemHoveredDataBackup);
+__c__ImGuiItemHoveredDataBackup_Backup_5 :: (self: &ImGuiItemHoveredDataBackup);
+__c__ImGuiItemHoveredDataBackup_Restore_6 :: (self: &ImGuiItemHoveredDataBackup);
+__c__ImGuiTabItem_new_8 :: (self: &ImGuiTabItem);
+__c__ImGuiTabBar_new_24 :: (self: &ImGuiTabBar);
+__c__ImGuiTabBar_GetTabOrder_25 :: (self: &ImGuiTabBar, ret: &i32, _tab: &ImGuiTabItem);
+__c__ImGuiTabBar_GetTabName_26 :: (self: &ImGuiTabBar, ret: &&char8, _tab: &ImGuiTabItem);
+__c__ImGuiStyleVarInfo_GetVarPtr_3 :: (self: &ImGuiStyleVarInfo, ret: &&void, _style: &ImGuiStyle);

@@ -1,18 +1,33 @@
+//template <typename T>
+//struct List {
+//    T data;
+//    List<T>* next;
+//};
+
 struct Vector {
-    // float x, y, z;
+     float x, y, z;
 
     Vector() {}
-    Vector(Vector other) {}
+    Vector(const Vector& other) {}
+    Vector(Vector* other) {}
     Vector(float x, float y, float z) {}
     ~Vector() {};
 
-    float getX();
+    //List<Vector>* add_to_list(List<Vector>* list);
+    //List<Vector>& add_to_list(List<Vector>& list);
+    //List<Vector>  add_to_list(List<Vector>  list);
+
+    float getX() { return x; }
     float getY() { return y; }
 
-    void add(const Vector& other);
-    void sub(Vector& other);
-    void mul(Vector other);
-    void div(const Vector other);
+    float foo(Vector uiae, float s) { return s; }
+    Vector bar(Vector uiae, float s) { return uiae; }
+
+    void mul(Vector other) {}
+    void div(const Vector other) {}
+    void add(const Vector& other) {}
+    void sub(Vector& other) {}
+    void mod(Vector* other) {}
 
     // static void uiae(Vector a, Vector b);
     // void xvlc(Vector a, Vector b);
