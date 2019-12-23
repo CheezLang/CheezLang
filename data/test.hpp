@@ -1,9 +1,21 @@
 struct Vector {
-    float x, y, z;
+    // float x, y, z;
+
+    Vector() {}
+    Vector(Vector other) {}
+    Vector(float x, float y, float z) {}
+    ~Vector() {};
 
     float getX();
-
     float getY() { return y; }
+
+    void add(const Vector& other);
+    void sub(Vector& other);
+    void mul(Vector other);
+    void div(const Vector other);
+
+    // static void uiae(Vector a, Vector b);
+    // void xvlc(Vector a, Vector b);
 };
 
 // using T1 = char;

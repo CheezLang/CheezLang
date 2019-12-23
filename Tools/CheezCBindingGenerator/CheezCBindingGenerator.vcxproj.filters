@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bindings.cpp">
+    <ClCompile Include="cpp_to_cheez_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,5 +1,5 @@
 // import examples.trait_function_call_performance
-import examples.glfw3_example
+// import examples.glfw3_example
 // import examples.graphyfier.graphyfier
 // import examples.pathtracer2.main
 // import examples.geometry_draw_thingy
@@ -8,7 +8,7 @@ import examples.glfw3_example
 // import examples.pathtracer
 // import examples.command_line_parser
 // import examples.ShmupEngine.src.main
-// import examples.CBindingGenerator.src.main
+import examples.CBindingGenerator.src.main
 // import compiler.cli
 // import compiler.compiler_test
 
