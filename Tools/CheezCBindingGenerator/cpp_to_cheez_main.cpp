@@ -562,6 +562,10 @@ void Context::emit_enum_decl(CXCursor cursor) {
                 member_name_len -= strlen(struct_name_c);
             }
 
+            if (c_string_starts_with(member_name_c, "_")) {
+                member_name_len -= 1;
+            }
+
             if (member_name_len > longest_member_name) {
                 longest_member_name = member_name_len;
             }
@@ -586,6 +590,10 @@ void Context::emit_enum_decl(CXCursor cursor) {
 
             if (c_string_starts_with(member_name_c, struct_name_c)) {
                 member_name_c += strlen(struct_name_c);
+            }
+
+            if (c_string_starts_with(member_name_c, "_")) {
+                member_name_c += 1;
             }
 
             cheez_type_decl << "    " << member_name_c;
@@ -874,8 +882,12 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
 
     case CXTypeKind::CXType_Pointer: {
         auto target_type = clang_getPointeeType(type);
-        stream << "&";
-        emit_cheez_type(stream, target_type, is_func_param, true, false);
+        if (target_type.kind == CXTypeKind::CXType_FunctionProto) {
+            emit_cheez_type(stream, target_type, is_func_param, behind_pointer, prefer_pointers);
+        } else {
+            stream << "&";
+            emit_cheez_type(stream, target_type, is_func_param, true, false);
+        }
         break;
     }
 

@@ -32,8 +32,8 @@ ImGuiTabBarFlags :: i32
 ImGuiTabItemFlags :: i32
 ImGuiTreeNodeFlags :: i32
 ImGuiWindowFlags :: i32
-ImGuiInputTextCallback :: &fn(&ImGuiInputTextCallbackData) -> i32
-ImGuiSizeCallback :: &fn(&ImGuiSizeCallbackData) -> void
+ImGuiInputTextCallback :: fn(&ImGuiInputTextCallbackData) -> i32
+ImGuiSizeCallback :: fn(&ImGuiSizeCallbackData) -> void
 ImS8 :: i8
 ImU8 :: u8
 ImS16 :: i16
@@ -44,7 +44,7 @@ ImS64 :: i64
 ImU64 :: u64
 ImGuiTextEditCallback :: ImGuiInputTextCallback
 ImGuiTextEditCallbackData :: ImGuiInputTextCallbackData
-ImDrawCallback :: &fn(&ImDrawList, &ImDrawCmd) -> void
+ImDrawCallback :: fn(&ImDrawList, &ImDrawCmd) -> void
 ImDrawIdx :: u16
 CustomRect :: ImFontAtlasCustomRect
 GlyphRangesBuilder :: ImFontGlyphRangesBuilder
@@ -438,11 +438,11 @@ ImGuiColorEditFlags_ :: enum #copy #repr("C") #tag_type(i32) {
     PickerHueWheel   = 0x4000000
     InputRGB         = 0x8000000
     InputHSV         = 0x10000000
-    _OptionsDefault  = 0xa900000
-    _DisplayMask     = 0x700000
-    _DataTypeMask    = 0x1800000
-    _PickerMask      = 0x6000000
-    _InputMask       = 0x18000000
+    OptionsDefault   = 0xa900000
+    DisplayMask      = 0x700000
+    DataTypeMask     = 0x1800000
+    PickerMask       = 0x6000000
+    InputMask        = 0x18000000
     RGB              = 0x100000
     HSV              = 0x200000
     HEX              = 0x400000
@@ -577,36 +577,36 @@ ImGuiLayoutType_ :: enum #copy #repr("C") #tag_type(i32) {
     Vertical   = 0x1
 }
 ImGuiLogType :: enum #copy #repr("C") #tag_type(i32) {
-    _None      = 0x0
-    _TTY       = 0x1
-    _File      = 0x2
-    _Buffer    = 0x3
-    _Clipboard = 0x4
+    None       = 0x0
+    TTY        = 0x1
+    File       = 0x2
+    Buffer     = 0x3
+    Clipboard  = 0x4
 }
 ImGuiAxis :: enum #copy #repr("C") #tag_type(i32) {
-    _None = -1
-    _X    = 0x0
-    _Y    = 0x1
+    None  = -1
+    X     = 0x0
+    Y     = 0x1
 }
 ImGuiPlotType :: enum #copy #repr("C") #tag_type(i32) {
-    _Lines     = 0x0
-    _Histogram = 0x1
+    Lines      = 0x0
+    Histogram  = 0x1
 }
 ImGuiInputSource :: enum #copy #repr("C") #tag_type(i32) {
-    _None        = 0x0
-    _Mouse       = 0x1
-    _Nav         = 0x2
-    _NavKeyboard = 0x3
-    _NavGamepad  = 0x4
-    _COUNT       = 0x5
+    None         = 0x0
+    Mouse        = 0x1
+    Nav          = 0x2
+    NavKeyboard  = 0x3
+    NavGamepad   = 0x4
+    COUNT        = 0x5
 }
 ImGuiInputReadMode :: enum #copy #repr("C") #tag_type(i32) {
-    _Down       = 0x0
-    _Pressed    = 0x1
-    _Released   = 0x2
-    _Repeat     = 0x3
-    _RepeatSlow = 0x4
-    _RepeatFast = 0x5
+    Down        = 0x0
+    Pressed     = 0x1
+    Released    = 0x2
+    Repeat      = 0x3
+    RepeatSlow  = 0x4
+    RepeatFast  = 0x5
 }
 ImGuiNavHighlightFlags_ :: enum #copy #repr("C") #tag_type(i32) {
     None        = 0x0
@@ -632,18 +632,18 @@ ImGuiNavMoveFlags_ :: enum #copy #repr("C") #tag_type(i32) {
     ScrollToEdge        = 0x40
 }
 ImGuiNavForward :: enum #copy #repr("C") #tag_type(i32) {
-    _None          = 0x0
-    _ForwardQueued = 0x1
-    _ForwardActive = 0x2
+    None           = 0x0
+    ForwardQueued  = 0x1
+    ForwardActive  = 0x2
 }
 ImGuiNavLayer :: enum #copy #repr("C") #tag_type(i32) {
-    _Main  = 0x0
-    _Menu  = 0x1
-    _COUNT = 0x2
+    Main   = 0x0
+    Menu   = 0x1
+    COUNT  = 0x2
 }
 ImGuiPopupPositionPolicy :: enum #copy #repr("C") #tag_type(i32) {
-    _Default  = 0x0
-    _ComboBox = 0x1
+    Default   = 0x0
+    ComboBox  = 0x1
 }
 ImGuiNextWindowDataFlags_ :: enum #copy #repr("C") #tag_type(i32) {
     None              = 0x0
@@ -669,15 +669,15 @@ ImGuiTabItemFlagsPrivate_ :: enum #copy #repr("C") #tag_type(i32) {
     ImGuiTabItemFlags_NoCloseButton = 0x100000
 }
 DPI_AWARENESS :: enum #copy #repr("C") #tag_type(i32) {
-    _INVALID           = -1
-    _UNAWARE           = 0x0
-    _SYSTEM_AWARE      = 0x1
-    _PER_MONITOR_AWARE = 0x2
+    INVALID            = -1
+    UNAWARE            = 0x0
+    SYSTEM_AWARE       = 0x1
+    PER_MONITOR_AWARE  = 0x2
 }
 DPI_HOSTING_BEHAVIOR :: enum #copy #repr("C") #tag_type(i32) {
-    _INVALID = -1
-    _DEFAULT = 0x0
-    _MIXED   = 0x1
+    INVALID  = -1
+    DEFAULT  = 0x0
+    MIXED    = 0x1
 }
 ImVec2 :: struct #copy {
     x : f32 = default
@@ -793,12 +793,12 @@ ImGuiIO :: struct #copy {
     BackendPlatformUserData : &void = default
     BackendRendererUserData : &void = default
     BackendLanguageUserData : &void = default
-    GetClipboardTextFn : &fn(&void) -> &char8 = default
-    SetClipboardTextFn : &fn(&void, &char8) -> void = default
+    GetClipboardTextFn : fn(&void) -> &char8 = default
+    SetClipboardTextFn : fn(&void, &char8) -> void = default
     ClipboardUserData : &void = default
-    ImeSetInputScreenPosFn : &fn(i32, i32) -> void = default
+    ImeSetInputScreenPosFn : fn(i32, i32) -> void = default
     ImeWindowHandle : &void = default
-    RenderDrawListsFn : &fn(&ImDrawData) -> void = default
+    RenderDrawListsFn : fn(&ImDrawData) -> void = default
     MousePos : ImVec2 = default
     MouseDown : [5]bool = default
     MouseWheel : f32 = default
@@ -2144,9 +2144,9 @@ impl ImGuiWindowSettings {
 ImGuiSettingsHandler :: struct #copy {
     TypeName : &char8 = default
     TypeHash : ImGuiID = default
-    ReadOpenFn : &fn(&ImGuiContext, &ImGuiSettingsHandler, &char8) -> &void = default
-    ReadLineFn : &fn(&ImGuiContext, &ImGuiSettingsHandler, &void, &char8) -> void = default
-    WriteAllFn : &fn(&ImGuiContext, &ImGuiSettingsHandler, &ImGuiTextBuffer) -> void = default
+    ReadOpenFn : fn(&ImGuiContext, &ImGuiSettingsHandler, &char8) -> &void = default
+    ReadLineFn : fn(&ImGuiContext, &ImGuiSettingsHandler, &void, &char8) -> void = default
+    WriteAllFn : fn(&ImGuiContext, &ImGuiSettingsHandler, &ImGuiTextBuffer) -> void = default
     UserData : &void = default
 }
 impl ImGuiSettingsHandler {
@@ -3421,7 +3421,7 @@ Combo_2 :: (_label: &char8, _current_item: &i32, _items_separated_by_zeros: &cha
     __c__Combo_2(&result, _label, _current_item, _items_separated_by_zeros, _popup_max_height_in_items)
     return result
 }
-Combo_3 :: (_label: &char8, _current_item: &i32, _items_getter: &fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _popup_max_height_in_items: i32) -> bool {
+Combo_3 :: (_label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _popup_max_height_in_items: i32) -> bool {
     result : bool = default
     __c__Combo_3(&result, _label, _current_item, _items_getter, _data, _items_count, _popup_max_height_in_items)
     return result
@@ -3746,7 +3746,7 @@ ListBox :: (_label: &char8, _current_item: &i32, _items: &&char8, _items_count: 
     __c__ListBox(&result, _label, _current_item, _items, _items_count, _height_in_items)
     return result
 }
-ListBox_2 :: (_label: &char8, _current_item: &i32, _items_getter: &fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32) -> bool {
+ListBox_2 :: (_label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32) -> bool {
     result : bool = default
     __c__ListBox_2(&result, _label, _current_item, _items_getter, _data, _items_count, _height_in_items)
     return result
@@ -3767,13 +3767,13 @@ ListBoxFooter :: () {
 PlotLines :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: ImVec2, _stride: i32) {
     __c__PlotLines(_label, _values, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_graph_size, _stride)
 }
-PlotLines_2 :: (_label: &char8, _values_getter: &fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: ImVec2) {
+PlotLines_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: ImVec2) {
     __c__PlotLines_2(_label, _values_getter, _data, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_graph_size)
 }
 PlotHistogram :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: ImVec2, _stride: i32) {
     __c__PlotHistogram(_label, _values, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_graph_size, _stride)
 }
-PlotHistogram_2 :: (_label: &char8, _values_getter: &fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: ImVec2) {
+PlotHistogram_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: ImVec2) {
     __c__PlotHistogram_2(_label, _values_getter, _data, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_graph_size)
 }
 Value :: (_prefix: &char8, _b: bool) {
@@ -4272,7 +4272,7 @@ SaveIniSettingsToMemory :: (_out_ini_size: &size_t) -> &char8 {
     __c__SaveIniSettingsToMemory(&result, _out_ini_size)
     return result
 }
-SetAllocatorFunctions :: (_alloc_func: &fn(size_t, &void) -> &void, _free_func: &fn(&void, &void) -> void, _user_data: &void) {
+SetAllocatorFunctions :: (_alloc_func: fn(size_t, &void) -> &void, _free_func: fn(&void, &void) -> void, _user_data: &void) {
     __c__SetAllocatorFunctions(_alloc_func, _free_func, _user_data)
 }
 MemAlloc :: (_size: size_t) -> &void {
@@ -5052,7 +5052,7 @@ ColorEditOptionsPopup :: (_col: &f32, _flags: ImGuiColorEditFlags) {
 ColorPickerOptionsPopup :: (_ref_col: &f32, _flags: ImGuiColorEditFlags) {
     __c__ColorPickerOptionsPopup(_ref_col, _flags)
 }
-PlotEx :: (_plot_type: ImGuiPlotType, _label: &char8, _values_getter: &fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _frame_size: ImVec2) {
+PlotEx :: (_plot_type: ImGuiPlotType, _label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _frame_size: ImVec2) {
     __c__PlotEx(_plot_type, _label, _values_getter, _data, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_frame_size)
 }
 ShadeVertsLinearColorGradientKeepAlpha :: (_draw_list: &ImDrawList, _vert_start_idx: i32, _vert_end_idx: i32, _gradient_p0: ImVec2, _gradient_p1: ImVec2, _col0: ImU32, _col1: ImU32) {
@@ -5725,7 +5725,7 @@ __c__BeginCombo :: (ret: &bool, _label: &char8, _preview_value: &char8, _flags: 
 __c__EndCombo :: ();
 __c__Combo :: (ret: &bool, _label: &char8, _current_item: &i32, _items: &&char8, _items_count: i32, _popup_max_height_in_items: i32);
 __c__Combo_2 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_separated_by_zeros: &char8, _popup_max_height_in_items: i32);
-__c__Combo_3 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_getter: &fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _popup_max_height_in_items: i32);
+__c__Combo_3 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _popup_max_height_in_items: i32);
 __c__DragFloat :: (ret: &bool, _label: &char8, _v: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
 __c__DragFloat2 :: (ret: &bool, _label: &char8, _v: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
 __c__DragFloat3 :: (ret: &bool, _label: &char8, _v: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
@@ -5792,14 +5792,14 @@ __c__SetNextItemOpen :: (_is_open: bool, _cond: ImGuiCond);
 __c__Selectable :: (ret: &bool, _label: &char8, _selected: bool, _flags: ImGuiSelectableFlags, _size: &ImVec2);
 __c__Selectable_2 :: (ret: &bool, _label: &char8, _p_selected: &bool, _flags: ImGuiSelectableFlags, _size: &ImVec2);
 __c__ListBox :: (ret: &bool, _label: &char8, _current_item: &i32, _items: &&char8, _items_count: i32, _height_in_items: i32);
-__c__ListBox_2 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_getter: &fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32);
+__c__ListBox_2 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32);
 __c__ListBoxHeader :: (ret: &bool, _label: &char8, _size: &ImVec2);
 __c__ListBoxHeader_2 :: (ret: &bool, _label: &char8, _items_count: i32, _height_in_items: i32);
 __c__ListBoxFooter :: ();
 __c__PlotLines :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: &ImVec2, _stride: i32);
-__c__PlotLines_2 :: (_label: &char8, _values_getter: &fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: &ImVec2);
+__c__PlotLines_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: &ImVec2);
 __c__PlotHistogram :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: &ImVec2, _stride: i32);
-__c__PlotHistogram_2 :: (_label: &char8, _values_getter: &fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: &ImVec2);
+__c__PlotHistogram_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: &ImVec2);
 __c__Value :: (_prefix: &char8, _b: bool);
 __c__Value_2 :: (_prefix: &char8, _v: i32);
 __c__Value_3 :: (_prefix: &char8, _v: u32);
@@ -5918,7 +5918,7 @@ __c__LoadIniSettingsFromDisk :: (_ini_filename: &char8);
 __c__LoadIniSettingsFromMemory :: (_ini_data: &char8, _ini_size: size_t);
 __c__SaveIniSettingsToDisk :: (_ini_filename: &char8);
 __c__SaveIniSettingsToMemory :: (ret: &&char8, _out_ini_size: &size_t);
-__c__SetAllocatorFunctions :: (_alloc_func: &fn(size_t, &void) -> &void, _free_func: &fn(&void, &void) -> void, _user_data: &void);
+__c__SetAllocatorFunctions :: (_alloc_func: fn(size_t, &void) -> &void, _free_func: fn(&void, &void) -> void, _user_data: &void);
 __c__MemAlloc :: (ret: &&void, _size: size_t);
 __c__MemFree :: (_ptr: &void);
 __c__InputFloat_2 :: (ret: &bool, _label: &char8, _v: &f32, _step: f32, _step_fast: f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags);
@@ -6110,7 +6110,7 @@ __c__TempInputTextScalar :: (ret: &bool, _bb: &ImRect, _id: ImGuiID, _label: &ch
 __c__ColorTooltip :: (_text: &char8, _col: &f32, _flags: ImGuiColorEditFlags);
 __c__ColorEditOptionsPopup :: (_col: &f32, _flags: ImGuiColorEditFlags);
 __c__ColorPickerOptionsPopup :: (_ref_col: &f32, _flags: ImGuiColorEditFlags);
-__c__PlotEx :: (_plot_type: ImGuiPlotType, _label: &char8, _values_getter: &fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _frame_size: &ImVec2);
+__c__PlotEx :: (_plot_type: ImGuiPlotType, _label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _frame_size: &ImVec2);
 __c__ShadeVertsLinearColorGradientKeepAlpha :: (_draw_list: &ImDrawList, _vert_start_idx: i32, _vert_end_idx: i32, _gradient_p0: &ImVec2, _gradient_p1: &ImVec2, _col0: ImU32, _col1: ImU32);
 __c__ShadeVertsLinearUV :: (_draw_list: &ImDrawList, _vert_start_idx: i32, _vert_end_idx: i32, _a: &ImVec2, _b: &ImVec2, _uv_a: &ImVec2, _uv_b: &ImVec2, _clamp: bool);
 __c__ImFontAtlasBuildWithStbTruetype :: (ret: &bool, _atlas: &ImFontAtlas);
