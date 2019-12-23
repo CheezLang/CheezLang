@@ -880,7 +880,7 @@ impl ImGuiInputTextCallbackData {
     DeleteChars :: (ref Self, _pos: i32, _bytes_count: i32) {
         __c__ImGuiInputTextCallbackData_DeleteChars_13(&self, _pos, _bytes_count)
     }
-    InsertChars :: (ref Self, _pos: i32, _text: &char8, _text_end: &char8) {
+    InsertChars :: (ref Self, _pos: i32, _text: &char8, _text_end: &char8 = null) {
         __c__ImGuiInputTextCallbackData_InsertChars_14(&self, _pos, _text, _text_end)
     }
     HasSelection :: (ref Self) -> bool {
@@ -946,17 +946,17 @@ ImGuiTextFilter :: struct #copy {
     CountGrep : i32 = default
 }
 impl ImGuiTextFilter {
-    new :: (_default_filter: &char8) -> ImGuiTextFilter {
+    new :: (_default_filter: &char8 = "") -> ImGuiTextFilter {
         result : ImGuiTextFilter = default
         __c__ImGuiTextFilter_new_0(&result, _default_filter)
         return result
     }
-    Draw :: (ref Self, _label: &char8, _width: f32) -> bool {
+    Draw :: (ref Self, _label: &char8 = "Filter (inc,-exc)", _width: f32 = 0.0f) -> bool {
         result : bool = default
         __c__ImGuiTextFilter_Draw_1(&self, &result, _label, _width)
         return result
     }
-    PassFilter :: (ref Self, _text: &char8, _text_end: &char8) -> bool {
+    PassFilter :: (ref Self, _text: &char8, _text_end: &char8 = null) -> bool {
         result : bool = default
         __c__ImGuiTextFilter_PassFilter_2(&self, &result, _text, _text_end)
         return result
@@ -1037,7 +1037,7 @@ impl ImGuiTextBuffer {
         __c__ImGuiTextBuffer_c_str_10(&self, &result)
         return result
     }
-    append :: (ref Self, _str: &char8, _str_end: &char8) {
+    append :: (ref Self, _str: &char8, _str_end: &char8 = null) {
         __c__ImGuiTextBuffer_append_11(&self, _str, _str_end)
     }
     appendf :: (ref Self, _fmt: &char8) {
@@ -1054,7 +1054,7 @@ impl ImGuiStorage {
     Clear :: (ref Self) {
         __c__ImGuiStorage_Clear_2(&self)
     }
-    GetInt :: (ref Self, _key: ImGuiID, _default_val: i32) -> i32 {
+    GetInt :: (ref Self, _key: ImGuiID, _default_val: i32 = 0) -> i32 {
         result : i32 = default
         __c__ImGuiStorage_GetInt_3(&self, &result, _key, _default_val)
         return result
@@ -1062,7 +1062,7 @@ impl ImGuiStorage {
     SetInt :: (ref Self, _key: ImGuiID, _val: i32) {
         __c__ImGuiStorage_SetInt_4(&self, _key, _val)
     }
-    GetBool :: (ref Self, _key: ImGuiID, _default_val: bool) -> bool {
+    GetBool :: (ref Self, _key: ImGuiID, _default_val: bool = false) -> bool {
         result : bool = default
         __c__ImGuiStorage_GetBool_5(&self, &result, _key, _default_val)
         return result
@@ -1070,7 +1070,7 @@ impl ImGuiStorage {
     SetBool :: (ref Self, _key: ImGuiID, _val: bool) {
         __c__ImGuiStorage_SetBool_6(&self, _key, _val)
     }
-    GetFloat :: (ref Self, _key: ImGuiID, _default_val: f32) -> f32 {
+    GetFloat :: (ref Self, _key: ImGuiID, _default_val: f32 = 0.0f) -> f32 {
         result : f32 = default
         __c__ImGuiStorage_GetFloat_7(&self, &result, _key, _default_val)
         return result
@@ -1086,22 +1086,22 @@ impl ImGuiStorage {
     SetVoidPtr :: (ref Self, _key: ImGuiID, _val: &void) {
         __c__ImGuiStorage_SetVoidPtr_10(&self, _key, _val)
     }
-    GetIntRef :: (ref Self, _key: ImGuiID, _default_val: i32) -> &i32 {
+    GetIntRef :: (ref Self, _key: ImGuiID, _default_val: i32 = 0) -> &i32 {
         result : &i32 = default
         __c__ImGuiStorage_GetIntRef_11(&self, &result, _key, _default_val)
         return result
     }
-    GetBoolRef :: (ref Self, _key: ImGuiID, _default_val: bool) -> &bool {
+    GetBoolRef :: (ref Self, _key: ImGuiID, _default_val: bool = false) -> &bool {
         result : &bool = default
         __c__ImGuiStorage_GetBoolRef_12(&self, &result, _key, _default_val)
         return result
     }
-    GetFloatRef :: (ref Self, _key: ImGuiID, _default_val: f32) -> &f32 {
+    GetFloatRef :: (ref Self, _key: ImGuiID, _default_val: f32 = 0.0f) -> &f32 {
         result : &f32 = default
         __c__ImGuiStorage_GetFloatRef_13(&self, &result, _key, _default_val)
         return result
     }
-    GetVoidPtrRef :: (ref Self, _key: ImGuiID, _default_val: &void) -> &&void {
+    GetVoidPtrRef :: (ref Self, _key: ImGuiID, _default_val: &void = null) -> &&void {
         result : &&void = default
         __c__ImGuiStorage_GetVoidPtrRef_14(&self, &result, _key, _default_val)
         return result
@@ -1142,7 +1142,7 @@ ImGuiListClipper :: struct #copy {
     DisplayEnd : i32 = default
 }
 impl ImGuiListClipper {
-    new :: (_items_count: i32, _items_height: f32) -> ImGuiListClipper {
+    new :: (_items_count: i32 = -1, _items_height: f32 = -1.0f) -> ImGuiListClipper {
         result : ImGuiListClipper = default
         __c__ImGuiListClipper_new_6(&result, _items_count, _items_height)
         return result
@@ -1152,7 +1152,7 @@ impl ImGuiListClipper {
         __c__ImGuiListClipper_Step_8(&self, &result)
         return result
     }
-    Begin :: (ref Self, _items_count: i32, _items_height: f32) {
+    Begin :: (ref Self, _items_count: i32, _items_height: f32 = -1.0f) {
         __c__ImGuiListClipper_Begin_9(&self, _items_count, _items_height)
     }
     End :: (ref Self) {
@@ -1173,7 +1173,7 @@ impl ImColor {
         __c__ImColor_new_1(&result)
         return result
     }
-    new :: (_r: i32, _g: i32, _b: i32, _a: i32) -> ImColor {
+    new :: (_r: i32, _g: i32, _b: i32, _a: i32 = 255) -> ImColor {
         result : ImColor = default
         __c__ImColor_new_2(&result, _r, _g, _b, _a)
         return result
@@ -1183,7 +1183,7 @@ impl ImColor {
         __c__ImColor_new_3(&result, _rgba)
         return result
     }
-    new :: (_r: f32, _g: f32, _b: f32, _a: f32) -> ImColor {
+    new :: (_r: f32, _g: f32, _b: f32, _a: f32 = 1.0f) -> ImColor {
         result : ImColor = default
         __c__ImColor_new_4(&result, _r, _g, _b, _a)
         return result
@@ -1193,10 +1193,10 @@ impl ImColor {
         __c__ImColor_new_5(&result, &_col)
         return result
     }
-    SetHSV :: (ref Self, _h: f32, _s: f32, _v: f32, _a: f32) {
+    SetHSV :: (ref Self, _h: f32, _s: f32, _v: f32, _a: f32 = 1.0f) {
         __c__ImColor_SetHSV_8(&self, _h, _s, _v, _a)
     }
-    HSV :: (ref Self, _h: f32, _s: f32, _v: f32, _a: f32) -> ImColor {
+    HSV :: (ref Self, _h: f32, _s: f32, _v: f32, _a: f32 = 1.0f) -> ImColor {
         result : ImColor = default
         __c__ImColor_HSV_9(&self, &result, _h, _s, _v, _a)
         return result
@@ -1281,7 +1281,7 @@ impl ImDrawList {
         __c__ImDrawList_new_14(&result, _shared_data)
         return result
     }
-    PushClipRect :: (ref Self, _clip_rect_min: ImVec2, _clip_rect_max: ImVec2, _intersect_with_current_clip_rect: bool) {
+    PushClipRect :: (ref Self, _clip_rect_min: ImVec2, _clip_rect_max: ImVec2, _intersect_with_current_clip_rect: bool = false) {
         __c__ImDrawList_PushClipRect_16(&self, &_clip_rect_min, &_clip_rect_max, _intersect_with_current_clip_rect)
     }
     PushClipRectFullScreen :: (ref Self) {
@@ -1306,46 +1306,46 @@ impl ImDrawList {
         __c__ImDrawList_GetClipRectMax_22(&self, &result)
         return result
     }
-    AddLine :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _col: ImU32, _thickness: f32) {
+    AddLine :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _col: ImU32, _thickness: f32 = 1.0f) {
         __c__ImDrawList_AddLine_23(&self, &_p1, &_p2, _col, _thickness)
     }
-    AddRect :: (ref Self, _p_min: ref ImVec2, _p_max: ref ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags, _thickness: f32) {
+    AddRect :: (ref Self, _p_min: ref ImVec2, _p_max: ref ImVec2, _col: ImU32, _rounding: f32 = 0.0f, _rounding_corners: ImDrawCornerFlags = ImDrawCornerFlags_All, _thickness: f32 = 1.0f) {
         __c__ImDrawList_AddRect_24(&self, &_p_min, &_p_max, _col, _rounding, _rounding_corners, _thickness)
     }
-    AddRectFilled :: (ref Self, _p_min: ref ImVec2, _p_max: ref ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags) {
+    AddRectFilled :: (ref Self, _p_min: ref ImVec2, _p_max: ref ImVec2, _col: ImU32, _rounding: f32 = 0.0f, _rounding_corners: ImDrawCornerFlags = ImDrawCornerFlags_All) {
         __c__ImDrawList_AddRectFilled_25(&self, &_p_min, &_p_max, _col, _rounding, _rounding_corners)
     }
     AddRectFilledMultiColor :: (ref Self, _p_min: ref ImVec2, _p_max: ref ImVec2, _col_upr_left: ImU32, _col_upr_right: ImU32, _col_bot_right: ImU32, _col_bot_left: ImU32) {
         __c__ImDrawList_AddRectFilledMultiColor_26(&self, &_p_min, &_p_max, _col_upr_left, _col_upr_right, _col_bot_right, _col_bot_left)
     }
-    AddQuad :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _col: ImU32, _thickness: f32) {
+    AddQuad :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _col: ImU32, _thickness: f32 = 1.0f) {
         __c__ImDrawList_AddQuad_27(&self, &_p1, &_p2, &_p3, &_p4, _col, _thickness)
     }
     AddQuadFilled :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _col: ImU32) {
         __c__ImDrawList_AddQuadFilled_28(&self, &_p1, &_p2, &_p3, &_p4, _col)
     }
-    AddTriangle :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _col: ImU32, _thickness: f32) {
+    AddTriangle :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _col: ImU32, _thickness: f32 = 1.0f) {
         __c__ImDrawList_AddTriangle_29(&self, &_p1, &_p2, &_p3, _col, _thickness)
     }
     AddTriangleFilled :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _col: ImU32) {
         __c__ImDrawList_AddTriangleFilled_30(&self, &_p1, &_p2, &_p3, _col)
     }
-    AddCircle :: (ref Self, _center: ref ImVec2, _radius: f32, _col: ImU32, _num_segments: i32, _thickness: f32) {
+    AddCircle :: (ref Self, _center: ref ImVec2, _radius: f32, _col: ImU32, _num_segments: i32 = 12, _thickness: f32 = 1.0f) {
         __c__ImDrawList_AddCircle_31(&self, &_center, _radius, _col, _num_segments, _thickness)
     }
-    AddCircleFilled :: (ref Self, _center: ref ImVec2, _radius: f32, _col: ImU32, _num_segments: i32) {
+    AddCircleFilled :: (ref Self, _center: ref ImVec2, _radius: f32, _col: ImU32, _num_segments: i32 = 12) {
         __c__ImDrawList_AddCircleFilled_32(&self, &_center, _radius, _col, _num_segments)
     }
-    AddNgon :: (ref Self, _center: ref ImVec2, _radius: f32, _col: ImU32, _num_segments: i32, _thickness: f32) {
+    AddNgon :: (ref Self, _center: ref ImVec2, _radius: f32, _col: ImU32, _num_segments: i32, _thickness: f32 = 1.0f) {
         __c__ImDrawList_AddNgon_33(&self, &_center, _radius, _col, _num_segments, _thickness)
     }
     AddNgonFilled :: (ref Self, _center: ref ImVec2, _radius: f32, _col: ImU32, _num_segments: i32) {
         __c__ImDrawList_AddNgonFilled_34(&self, &_center, _radius, _col, _num_segments)
     }
-    AddText :: (ref Self, _pos: ref ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8) {
+    AddText :: (ref Self, _pos: ref ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8 = null) {
         __c__ImDrawList_AddText_35(&self, &_pos, _col, _text_begin, _text_end)
     }
-    AddText :: (ref Self, _font: &ImFont, _font_size: f32, _pos: ref ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8, _wrap_width: f32, _cpu_fine_clip_rect: &ImVec4) {
+    AddText :: (ref Self, _font: &ImFont, _font_size: f32, _pos: ref ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8 = null, _wrap_width: f32 = 0.0f, _cpu_fine_clip_rect: &ImVec4 = null) {
         __c__ImDrawList_AddText_36(&self, _font, _font_size, &_pos, _col, _text_begin, _text_end, _wrap_width, _cpu_fine_clip_rect)
     }
     AddPolyline :: (ref Self, _points: &ImVec2, _num_points: i32, _col: ImU32, _closed: bool, _thickness: f32) {
@@ -1354,16 +1354,16 @@ impl ImDrawList {
     AddConvexPolyFilled :: (ref Self, _points: &ImVec2, _num_points: i32, _col: ImU32) {
         __c__ImDrawList_AddConvexPolyFilled_38(&self, _points, _num_points, _col)
     }
-    AddBezierCurve :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _col: ImU32, _thickness: f32, _num_segments: i32) {
+    AddBezierCurve :: (ref Self, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _col: ImU32, _thickness: f32, _num_segments: i32 = 0) {
         __c__ImDrawList_AddBezierCurve_39(&self, &_p1, &_p2, &_p3, &_p4, _col, _thickness, _num_segments)
     }
-    AddImage :: (ref Self, _user_texture_id: ImTextureID, _p_min: ref ImVec2, _p_max: ref ImVec2, _uv_min: ref ImVec2, _uv_max: ref ImVec2, _col: ImU32) {
+    AddImage :: (ref Self, _user_texture_id: ImTextureID, _p_min: ref ImVec2, _p_max: ref ImVec2, _uv_min: ref ImVec2, _uv_max: ref ImVec2, _col: ImU32 = IM_COL32_WHITE) {
         __c__ImDrawList_AddImage_40(&self, _user_texture_id, &_p_min, &_p_max, &_uv_min, &_uv_max, _col)
     }
-    AddImageQuad :: (ref Self, _user_texture_id: ImTextureID, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _uv1: ref ImVec2, _uv2: ref ImVec2, _uv3: ref ImVec2, _uv4: ref ImVec2, _col: ImU32) {
+    AddImageQuad :: (ref Self, _user_texture_id: ImTextureID, _p1: ref ImVec2, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _uv1: ref ImVec2, _uv2: ref ImVec2, _uv3: ref ImVec2, _uv4: ref ImVec2, _col: ImU32 = IM_COL32_WHITE) {
         __c__ImDrawList_AddImageQuad_41(&self, _user_texture_id, &_p1, &_p2, &_p3, &_p4, &_uv1, &_uv2, &_uv3, &_uv4, _col)
     }
-    AddImageRounded :: (ref Self, _user_texture_id: ImTextureID, _p_min: ref ImVec2, _p_max: ref ImVec2, _uv_min: ref ImVec2, _uv_max: ref ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags) {
+    AddImageRounded :: (ref Self, _user_texture_id: ImTextureID, _p_min: ref ImVec2, _p_max: ref ImVec2, _uv_min: ref ImVec2, _uv_max: ref ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags = ImDrawCornerFlags_All) {
         __c__ImDrawList_AddImageRounded_42(&self, _user_texture_id, &_p_min, &_p_max, &_uv_min, &_uv_max, _col, _rounding, _rounding_corners)
     }
     PathClear :: (ref Self) {
@@ -1378,19 +1378,19 @@ impl ImDrawList {
     PathFillConvex :: (ref Self, _col: ImU32) {
         __c__ImDrawList_PathFillConvex_46(&self, _col)
     }
-    PathStroke :: (ref Self, _col: ImU32, _closed: bool, _thickness: f32) {
+    PathStroke :: (ref Self, _col: ImU32, _closed: bool, _thickness: f32 = 1.0f) {
         __c__ImDrawList_PathStroke_47(&self, _col, _closed, _thickness)
     }
-    PathArcTo :: (ref Self, _center: ref ImVec2, _radius: f32, _a_min: f32, _a_max: f32, _num_segments: i32) {
+    PathArcTo :: (ref Self, _center: ref ImVec2, _radius: f32, _a_min: f32, _a_max: f32, _num_segments: i32 = 10) {
         __c__ImDrawList_PathArcTo_48(&self, &_center, _radius, _a_min, _a_max, _num_segments)
     }
     PathArcToFast :: (ref Self, _center: ref ImVec2, _radius: f32, _a_min_of_12: i32, _a_max_of_12: i32) {
         __c__ImDrawList_PathArcToFast_49(&self, &_center, _radius, _a_min_of_12, _a_max_of_12)
     }
-    PathBezierCurveTo :: (ref Self, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _num_segments: i32) {
+    PathBezierCurveTo :: (ref Self, _p2: ref ImVec2, _p3: ref ImVec2, _p4: ref ImVec2, _num_segments: i32 = 0) {
         __c__ImDrawList_PathBezierCurveTo_50(&self, &_p2, &_p3, &_p4, _num_segments)
     }
-    PathRect :: (ref Self, _rect_min: ref ImVec2, _rect_max: ref ImVec2, _rounding: f32, _rounding_corners: ImDrawCornerFlags) {
+    PathRect :: (ref Self, _rect_min: ref ImVec2, _rect_max: ref ImVec2, _rounding: f32 = 0.0f, _rounding_corners: ImDrawCornerFlags = ImDrawCornerFlags_All) {
         __c__ImDrawList_PathRect_51(&self, &_rect_min, &_rect_max, _rounding, _rounding_corners)
     }
     AddCallback :: (ref Self, _callback: ImDrawCallback, _callback_data: &void) {
@@ -1549,7 +1549,7 @@ impl ImFontGlyphRangesBuilder {
     AddChar :: (ref Self, _c: ImWchar) {
         __c__ImFontGlyphRangesBuilder_AddChar_5(&self, _c)
     }
-    AddText :: (ref Self, _text: &char8, _text_end: &char8) {
+    AddText :: (ref Self, _text: &char8, _text_end: &char8 = null) {
         __c__ImFontGlyphRangesBuilder_AddText_6(&self, _text, _text_end)
     }
     AddRanges :: (ref Self, _ranges: &ImWchar) {
@@ -1609,27 +1609,27 @@ impl ImFontAtlas {
         __c__ImFontAtlas_AddFont_2(&self, &result, _font_cfg)
         return result
     }
-    AddFontDefault :: (ref Self, _font_cfg: &ImFontConfig) -> &ImFont {
+    AddFontDefault :: (ref Self, _font_cfg: &ImFontConfig = null) -> &ImFont {
         result : &ImFont = default
         __c__ImFontAtlas_AddFontDefault_3(&self, &result, _font_cfg)
         return result
     }
-    AddFontFromFileTTF :: (ref Self, _filename: &char8, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar) -> &ImFont {
+    AddFontFromFileTTF :: (ref Self, _filename: &char8, _size_pixels: f32, _font_cfg: &ImFontConfig = null, _glyph_ranges: &ImWchar = null) -> &ImFont {
         result : &ImFont = default
         __c__ImFontAtlas_AddFontFromFileTTF_4(&self, &result, _filename, _size_pixels, _font_cfg, _glyph_ranges)
         return result
     }
-    AddFontFromMemoryTTF :: (ref Self, _font_data: &void, _font_size: i32, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar) -> &ImFont {
+    AddFontFromMemoryTTF :: (ref Self, _font_data: &void, _font_size: i32, _size_pixels: f32, _font_cfg: &ImFontConfig = null, _glyph_ranges: &ImWchar = null) -> &ImFont {
         result : &ImFont = default
         __c__ImFontAtlas_AddFontFromMemoryTTF_5(&self, &result, _font_data, _font_size, _size_pixels, _font_cfg, _glyph_ranges)
         return result
     }
-    AddFontFromMemoryCompressedTTF :: (ref Self, _compressed_font_data: &void, _compressed_font_size: i32, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar) -> &ImFont {
+    AddFontFromMemoryCompressedTTF :: (ref Self, _compressed_font_data: &void, _compressed_font_size: i32, _size_pixels: f32, _font_cfg: &ImFontConfig = null, _glyph_ranges: &ImWchar = null) -> &ImFont {
         result : &ImFont = default
         __c__ImFontAtlas_AddFontFromMemoryCompressedTTF_6(&self, &result, _compressed_font_data, _compressed_font_size, _size_pixels, _font_cfg, _glyph_ranges)
         return result
     }
-    AddFontFromMemoryCompressedBase85TTF :: (ref Self, _compressed_font_data_base85: &char8, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar) -> &ImFont {
+    AddFontFromMemoryCompressedBase85TTF :: (ref Self, _compressed_font_data_base85: &char8, _size_pixels: f32, _font_cfg: &ImFontConfig = null, _glyph_ranges: &ImWchar = null) -> &ImFont {
         result : &ImFont = default
         __c__ImFontAtlas_AddFontFromMemoryCompressedBase85TTF_7(&self, &result, _compressed_font_data_base85, _size_pixels, _font_cfg, _glyph_ranges)
         return result
@@ -1651,10 +1651,10 @@ impl ImFontAtlas {
         __c__ImFontAtlas_Build_12(&self, &result)
         return result
     }
-    GetTexDataAsAlpha8 :: (ref Self, _out_pixels: &&u8, _out_width: &i32, _out_height: &i32, _out_bytes_per_pixel: &i32) {
+    GetTexDataAsAlpha8 :: (ref Self, _out_pixels: &&u8, _out_width: &i32, _out_height: &i32, _out_bytes_per_pixel: &i32 = null) {
         __c__ImFontAtlas_GetTexDataAsAlpha8_13(&self, _out_pixels, _out_width, _out_height, _out_bytes_per_pixel)
     }
-    GetTexDataAsRGBA32 :: (ref Self, _out_pixels: &&u8, _out_width: &i32, _out_height: &i32, _out_bytes_per_pixel: &i32) {
+    GetTexDataAsRGBA32 :: (ref Self, _out_pixels: &&u8, _out_width: &i32, _out_height: &i32, _out_bytes_per_pixel: &i32 = null) {
         __c__ImFontAtlas_GetTexDataAsRGBA32_14(&self, _out_pixels, _out_width, _out_height, _out_bytes_per_pixel)
     }
     IsBuilt :: (ref Self) -> bool {
@@ -1784,7 +1784,7 @@ impl ImFont {
         __c__ImFont_GetDebugName_23(&self, &result)
         return result
     }
-    CalcTextSizeA :: (ref Self, _size: f32, _max_width: f32, _wrap_width: f32, _text_begin: &char8, _text_end: &char8, _remaining: &&char8) -> ImVec2 {
+    CalcTextSizeA :: (ref Self, _size: f32, _max_width: f32, _wrap_width: f32, _text_begin: &char8, _text_end: &char8 = null, _remaining: &&char8 = null) -> ImVec2 {
         result : ImVec2 = default
         __c__ImFont_CalcTextSizeA_24(&self, &result, _size, _max_width, _wrap_width, _text_begin, _text_end, _remaining)
         return result
@@ -1797,7 +1797,7 @@ impl ImFont {
     RenderChar :: (ref Self, _draw_list: &ImDrawList, _size: f32, _pos: ImVec2, _col: ImU32, _c: ImWchar) {
         __c__ImFont_RenderChar_26(&self, _draw_list, _size, &_pos, _col, _c)
     }
-    RenderText :: (ref Self, _draw_list: &ImDrawList, _size: f32, _pos: ImVec2, _col: ImU32, _clip_rect: ref ImVec4, _text_begin: &char8, _text_end: &char8, _wrap_width: f32, _cpu_fine_clip: bool) {
+    RenderText :: (ref Self, _draw_list: &ImDrawList, _size: f32, _pos: ImVec2, _col: ImU32, _clip_rect: ref ImVec4, _text_begin: &char8, _text_end: &char8, _wrap_width: f32 = 0.0f, _cpu_fine_clip: bool = false) {
         __c__ImFont_RenderText_27(&self, _draw_list, _size, &_pos, _col, &_clip_rect, _text_begin, _text_end, _wrap_width, _cpu_fine_clip)
     }
     BuildLookupTable :: (ref Self) {
@@ -1812,7 +1812,7 @@ impl ImFont {
     AddGlyph :: (ref Self, _c: ImWchar, _x0: f32, _y0: f32, _x1: f32, _y1: f32, _u0: f32, _v0: f32, _u1: f32, _v1: f32, _advance_x: f32) {
         __c__ImFont_AddGlyph_31(&self, _c, _x0, _y0, _x1, _y1, _u0, _v0, _u1, _v1, _advance_x)
     }
-    AddRemapChar :: (ref Self, _dst: ImWchar, _src: ImWchar, _overwrite_dst: bool) {
+    AddRemapChar :: (ref Self, _dst: ImWchar, _src: ImWchar, _overwrite_dst: bool = true) {
         __c__ImFont_AddRemapChar_32(&self, _dst, _src, _overwrite_dst)
     }
     SetFallbackChar :: (ref Self, _c: ImWchar) {
@@ -2636,7 +2636,7 @@ impl ImGuiWindow {
         __c__ImGuiWindow_new_76(&result, _context, _name)
         return result
     }
-    GetID :: (ref Self, _str: &char8, _str_end: &char8) -> ImGuiID {
+    GetID :: (ref Self, _str: &char8, _str_end: &char8 = null) -> ImGuiID {
         result : ImGuiID = default
         __c__ImGuiWindow_GetID_78(&self, &result, _str, _str_end)
         return result
@@ -2651,7 +2651,7 @@ impl ImGuiWindow {
         __c__ImGuiWindow_GetID_80(&self, &result, _n)
         return result
     }
-    GetIDNoKeepAlive :: (ref Self, _str: &char8, _str_end: &char8) -> ImGuiID {
+    GetIDNoKeepAlive :: (ref Self, _str: &char8, _str_end: &char8 = null) -> ImGuiID {
         result : ImGuiID = default
         __c__ImGuiWindow_GetIDNoKeepAlive_81(&self, &result, _str, _str_end)
         return result
@@ -2843,12 +2843,12 @@ _MODEMSETTINGS :: struct #copy {
     dwNegotiatedDCERate : DWORD = default
     abVariablePortion : [1]BYTE = default
 }
-CreateContext :: (_shared_font_atlas: &ImFontAtlas) -> &ImGuiContext {
+CreateContext :: (_shared_font_atlas: &ImFontAtlas = null) -> &ImGuiContext {
     result : &ImGuiContext = default
     __c__CreateContext(&result, _shared_font_atlas)
     return result
 }
-DestroyContext :: (_ctx: &ImGuiContext) {
+DestroyContext :: (_ctx: &ImGuiContext = null) {
     __c__DestroyContext(_ctx)
 }
 GetCurrentContext :: () -> &ImGuiContext {
@@ -2888,16 +2888,16 @@ GetDrawData :: () -> &ImDrawData {
     __c__GetDrawData(&result)
     return result
 }
-ShowDemoWindow :: (_p_open: &bool) {
+ShowDemoWindow :: (_p_open: &bool = null) {
     __c__ShowDemoWindow(_p_open)
 }
-ShowAboutWindow :: (_p_open: &bool) {
+ShowAboutWindow :: (_p_open: &bool = null) {
     __c__ShowAboutWindow(_p_open)
 }
-ShowMetricsWindow :: (_p_open: &bool) {
+ShowMetricsWindow :: (_p_open: &bool = null) {
     __c__ShowMetricsWindow(_p_open)
 }
-ShowStyleEditor :: (_ref: &ImGuiStyle) {
+ShowStyleEditor :: (_ref: &ImGuiStyle = null) {
     __c__ShowStyleEditor(_ref)
 }
 ShowStyleSelector :: (_label: &char8) -> bool {
@@ -2916,16 +2916,16 @@ GetVersion :: () -> &char8 {
     __c__GetVersion(&result)
     return result
 }
-StyleColorsDark :: (_dst: &ImGuiStyle) {
+StyleColorsDark :: (_dst: &ImGuiStyle = null) {
     __c__StyleColorsDark(_dst)
 }
-StyleColorsClassic :: (_dst: &ImGuiStyle) {
+StyleColorsClassic :: (_dst: &ImGuiStyle = null) {
     __c__StyleColorsClassic(_dst)
 }
-StyleColorsLight :: (_dst: &ImGuiStyle) {
+StyleColorsLight :: (_dst: &ImGuiStyle = null) {
     __c__StyleColorsLight(_dst)
 }
-Begin :: (_name: &char8, _p_open: &bool, _flags: ImGuiWindowFlags) -> bool {
+Begin :: (_name: &char8, _p_open: &bool = null, _flags: ImGuiWindowFlags = 0) -> bool {
     result : bool = default
     __c__Begin(&result, _name, _p_open, _flags)
     return result
@@ -2933,12 +2933,12 @@ Begin :: (_name: &char8, _p_open: &bool, _flags: ImGuiWindowFlags) -> bool {
 End :: () {
     __c__End()
 }
-BeginChild :: (_str_id: &char8, _size: ref ImVec2, _border: bool, _flags: ImGuiWindowFlags) -> bool {
+BeginChild :: (_str_id: &char8, _size: ref ImVec2, _border: bool = false, _flags: ImGuiWindowFlags = 0) -> bool {
     result : bool = default
     __c__BeginChild(&result, _str_id, &_size, _border, _flags)
     return result
 }
-BeginChild_2 :: (_id: ImGuiID, _size: ref ImVec2, _border: bool, _flags: ImGuiWindowFlags) -> bool {
+BeginChild_2 :: (_id: ImGuiID, _size: ref ImVec2, _border: bool = false, _flags: ImGuiWindowFlags = 0) -> bool {
     result : bool = default
     __c__BeginChild_2(&result, _id, &_size, _border, _flags)
     return result
@@ -2956,12 +2956,12 @@ IsWindowCollapsed :: () -> bool {
     __c__IsWindowCollapsed(&result)
     return result
 }
-IsWindowFocused :: (_flags: ImGuiFocusedFlags) -> bool {
+IsWindowFocused :: (_flags: ImGuiFocusedFlags = 0) -> bool {
     result : bool = default
     __c__IsWindowFocused(&result, _flags)
     return result
 }
-IsWindowHovered :: (_flags: ImGuiHoveredFlags) -> bool {
+IsWindowHovered :: (_flags: ImGuiHoveredFlags = 0) -> bool {
     result : bool = default
     __c__IsWindowHovered(&result, _flags)
     return result
@@ -2991,19 +2991,19 @@ GetWindowHeight :: () -> f32 {
     __c__GetWindowHeight(&result)
     return result
 }
-SetNextWindowPos :: (_pos: ref ImVec2, _cond: ImGuiCond, _pivot: ref ImVec2) {
+SetNextWindowPos :: (_pos: ref ImVec2, _cond: ImGuiCond = 0, _pivot: ref ImVec2) {
     __c__SetNextWindowPos(&_pos, _cond, &_pivot)
 }
-SetNextWindowSize :: (_size: ref ImVec2, _cond: ImGuiCond) {
+SetNextWindowSize :: (_size: ref ImVec2, _cond: ImGuiCond = 0) {
     __c__SetNextWindowSize(&_size, _cond)
 }
-SetNextWindowSizeConstraints :: (_size_min: ref ImVec2, _size_max: ref ImVec2, _custom_callback: ImGuiSizeCallback, _custom_callback_data: &void) {
+SetNextWindowSizeConstraints :: (_size_min: ref ImVec2, _size_max: ref ImVec2, _custom_callback: ImGuiSizeCallback = null, _custom_callback_data: &void = null) {
     __c__SetNextWindowSizeConstraints(&_size_min, &_size_max, _custom_callback, _custom_callback_data)
 }
 SetNextWindowContentSize :: (_size: ref ImVec2) {
     __c__SetNextWindowContentSize(&_size)
 }
-SetNextWindowCollapsed :: (_collapsed: bool, _cond: ImGuiCond) {
+SetNextWindowCollapsed :: (_collapsed: bool, _cond: ImGuiCond = 0) {
     __c__SetNextWindowCollapsed(_collapsed, _cond)
 }
 SetNextWindowFocus :: () {
@@ -3012,13 +3012,13 @@ SetNextWindowFocus :: () {
 SetNextWindowBgAlpha :: (_alpha: f32) {
     __c__SetNextWindowBgAlpha(_alpha)
 }
-SetWindowPos :: (_pos: ref ImVec2, _cond: ImGuiCond) {
+SetWindowPos :: (_pos: ref ImVec2, _cond: ImGuiCond = 0) {
     __c__SetWindowPos(&_pos, _cond)
 }
-SetWindowSize :: (_size: ref ImVec2, _cond: ImGuiCond) {
+SetWindowSize :: (_size: ref ImVec2, _cond: ImGuiCond = 0) {
     __c__SetWindowSize(&_size, _cond)
 }
-SetWindowCollapsed :: (_collapsed: bool, _cond: ImGuiCond) {
+SetWindowCollapsed :: (_collapsed: bool, _cond: ImGuiCond = 0) {
     __c__SetWindowCollapsed(_collapsed, _cond)
 }
 SetWindowFocus :: () {
@@ -3027,13 +3027,13 @@ SetWindowFocus :: () {
 SetWindowFontScale :: (_scale: f32) {
     __c__SetWindowFontScale(_scale)
 }
-SetWindowPos_2 :: (_name: &char8, _pos: ref ImVec2, _cond: ImGuiCond) {
+SetWindowPos_2 :: (_name: &char8, _pos: ref ImVec2, _cond: ImGuiCond = 0) {
     __c__SetWindowPos_2(_name, &_pos, _cond)
 }
-SetWindowSize_2 :: (_name: &char8, _size: ref ImVec2, _cond: ImGuiCond) {
+SetWindowSize_2 :: (_name: &char8, _size: ref ImVec2, _cond: ImGuiCond = 0) {
     __c__SetWindowSize_2(_name, &_size, _cond)
 }
-SetWindowCollapsed_2 :: (_name: &char8, _collapsed: bool, _cond: ImGuiCond) {
+SetWindowCollapsed_2 :: (_name: &char8, _collapsed: bool, _cond: ImGuiCond = 0) {
     __c__SetWindowCollapsed_2(_name, _collapsed, _cond)
 }
 SetWindowFocus_2 :: (_name: &char8) {
@@ -3090,16 +3090,16 @@ SetScrollX :: (_scroll_x: f32) {
 SetScrollY :: (_scroll_y: f32) {
     __c__SetScrollY(_scroll_y)
 }
-SetScrollHereX :: (_center_x_ratio: f32) {
+SetScrollHereX :: (_center_x_ratio: f32 = 0.5f) {
     __c__SetScrollHereX(_center_x_ratio)
 }
-SetScrollHereY :: (_center_y_ratio: f32) {
+SetScrollHereY :: (_center_y_ratio: f32 = 0.5f) {
     __c__SetScrollHereY(_center_y_ratio)
 }
-SetScrollFromPosX :: (_local_x: f32, _center_x_ratio: f32) {
+SetScrollFromPosX :: (_local_x: f32, _center_x_ratio: f32 = 0.5f) {
     __c__SetScrollFromPosX(_local_x, _center_x_ratio)
 }
-SetScrollFromPosY :: (_local_y: f32, _center_y_ratio: f32) {
+SetScrollFromPosY :: (_local_y: f32, _center_y_ratio: f32 = 0.5f) {
     __c__SetScrollFromPosY(_local_y, _center_y_ratio)
 }
 PushFont :: (_font: &ImFont) {
@@ -3114,7 +3114,7 @@ PushStyleColor :: (_idx: ImGuiCol, _col: ImU32) {
 PushStyleColor_2 :: (_idx: ImGuiCol, _col: ref ImVec4) {
     __c__PushStyleColor_2(_idx, &_col)
 }
-PopStyleColor :: (_count: i32) {
+PopStyleColor :: (_count: i32 = 1) {
     __c__PopStyleColor(_count)
 }
 PushStyleVar :: (_idx: ImGuiStyleVar, _val: f32) {
@@ -3123,7 +3123,7 @@ PushStyleVar :: (_idx: ImGuiStyleVar, _val: f32) {
 PushStyleVar_2 :: (_idx: ImGuiStyleVar, _val: ref ImVec2) {
     __c__PushStyleVar_2(_idx, &_val)
 }
-PopStyleVar :: (_count: i32) {
+PopStyleVar :: (_count: i32 = 1) {
     __c__PopStyleVar(_count)
 }
 GetStyleColorVec4 :: (_idx: ImGuiCol) -> ref ImVec4 {
@@ -3146,7 +3146,7 @@ GetFontTexUvWhitePixel :: () -> ImVec2 {
     __c__GetFontTexUvWhitePixel(&result)
     return result
 }
-GetColorU32 :: (_idx: ImGuiCol, _alpha_mul: f32) -> ImU32 {
+GetColorU32 :: (_idx: ImGuiCol, _alpha_mul: f32 = 1.0f) -> ImU32 {
     result : ImU32 = default
     __c__GetColorU32(&result, _idx, _alpha_mul)
     return result
@@ -3175,7 +3175,7 @@ CalcItemWidth :: () -> f32 {
     __c__CalcItemWidth(&result)
     return result
 }
-PushTextWrapPos :: (_wrap_local_pos_x: f32) {
+PushTextWrapPos :: (_wrap_local_pos_x: f32 = 0.0f) {
     __c__PushTextWrapPos(_wrap_local_pos_x)
 }
 PopTextWrapPos :: () {
@@ -3196,7 +3196,7 @@ PopButtonRepeat :: () {
 Separator :: () {
     __c__Separator()
 }
-SameLine :: (_offset_from_start_x: f32, _spacing: f32) {
+SameLine :: (_offset_from_start_x: f32 = 0.0f, _spacing: f32 = -1.0f) {
     __c__SameLine(_offset_from_start_x, _spacing)
 }
 NewLine :: () {
@@ -3208,10 +3208,10 @@ Spacing :: () {
 Dummy :: (_size: ref ImVec2) {
     __c__Dummy(&_size)
 }
-Indent :: (_indent_w: f32) {
+Indent :: (_indent_w: f32 = 0.0f) {
     __c__Indent(_indent_w)
 }
-Unindent :: (_indent_w: f32) {
+Unindent :: (_indent_w: f32 = 0.0f) {
     __c__Unindent(_indent_w)
 }
 BeginGroup :: () {
@@ -3310,7 +3310,7 @@ GetID_3 :: (_ptr_id: &void) -> ImGuiID {
     __c__GetID_3(&result, _ptr_id)
     return result
 }
-TextUnformatted :: (_text: &char8, _text_end: &char8) {
+TextUnformatted :: (_text: &char8, _text_end: &char8 = null) {
     __c__TextUnformatted(_text, _text_end)
 }
 Text :: (_fmt: &char8) {
@@ -3372,7 +3372,7 @@ ArrowButton :: (_str_id: &char8, _dir: ImGuiDir) -> bool {
 Image :: (_user_texture_id: ImTextureID, _size: ref ImVec2, _uv0: ref ImVec2, _uv1: ref ImVec2, _tint_col: ref ImVec4, _border_col: ref ImVec4) {
     __c__Image(_user_texture_id, &_size, &_uv0, &_uv1, &_tint_col, &_border_col)
 }
-ImageButton :: (_user_texture_id: ImTextureID, _size: ref ImVec2, _uv0: ref ImVec2, _uv1: ref ImVec2, _frame_padding: i32, _bg_col: ref ImVec4, _tint_col: ref ImVec4) -> bool {
+ImageButton :: (_user_texture_id: ImTextureID, _size: ref ImVec2, _uv0: ref ImVec2, _uv1: ref ImVec2, _frame_padding: i32 = -1, _bg_col: ref ImVec4, _tint_col: ref ImVec4) -> bool {
     result : bool = default
     __c__ImageButton(&result, _user_texture_id, &_size, &_uv0, &_uv1, _frame_padding, &_bg_col, &_tint_col)
     return result
@@ -3397,13 +3397,13 @@ RadioButton_2 :: (_label: &char8, _v: &i32, _v_button: i32) -> bool {
     __c__RadioButton_2(&result, _label, _v, _v_button)
     return result
 }
-ProgressBar :: (_fraction: f32, _size_arg: ref ImVec2, _overlay: &char8) {
+ProgressBar :: (_fraction: f32, _size_arg: ref ImVec2, _overlay: &char8 = null) {
     __c__ProgressBar(_fraction, &_size_arg, _overlay)
 }
 Bullet :: () {
     __c__Bullet()
 }
-BeginCombo :: (_label: &char8, _preview_value: &char8, _flags: ImGuiComboFlags) -> bool {
+BeginCombo :: (_label: &char8, _preview_value: &char8, _flags: ImGuiComboFlags = 0) -> bool {
     result : bool = default
     __c__BeginCombo(&result, _label, _preview_value, _flags)
     return result
@@ -3411,242 +3411,242 @@ BeginCombo :: (_label: &char8, _preview_value: &char8, _flags: ImGuiComboFlags) 
 EndCombo :: () {
     __c__EndCombo()
 }
-Combo :: (_label: &char8, _current_item: &i32, _items: &&char8, _items_count: i32, _popup_max_height_in_items: i32) -> bool {
+Combo :: (_label: &char8, _current_item: &i32, _items: &&char8, _items_count: i32, _popup_max_height_in_items: i32 = -1) -> bool {
     result : bool = default
     __c__Combo(&result, _label, _current_item, _items, _items_count, _popup_max_height_in_items)
     return result
 }
-Combo_2 :: (_label: &char8, _current_item: &i32, _items_separated_by_zeros: &char8, _popup_max_height_in_items: i32) -> bool {
+Combo_2 :: (_label: &char8, _current_item: &i32, _items_separated_by_zeros: &char8, _popup_max_height_in_items: i32 = -1) -> bool {
     result : bool = default
     __c__Combo_2(&result, _label, _current_item, _items_separated_by_zeros, _popup_max_height_in_items)
     return result
 }
-Combo_3 :: (_label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _popup_max_height_in_items: i32) -> bool {
+Combo_3 :: (_label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _popup_max_height_in_items: i32 = -1) -> bool {
     result : bool = default
     __c__Combo_3(&result, _label, _current_item, _items_getter, _data, _items_count, _popup_max_height_in_items)
     return result
 }
-DragFloat :: (_label: &char8, _v: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32) -> bool {
+DragFloat :: (_label: &char8, _v: &f32, _v_speed: f32 = 1.0f, _v_min: f32 = 0.0f, _v_max: f32 = 0.0f, _format: &char8 = "%.3f", _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__DragFloat(&result, _label, _v, _v_speed, _v_min, _v_max, _format, _power)
     return result
 }
-DragFloat2 :: (_label: &char8, _v: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32) -> bool {
+DragFloat2 :: (_label: &char8, _v: &f32, _v_speed: f32 = 1.0f, _v_min: f32 = 0.0f, _v_max: f32 = 0.0f, _format: &char8 = "%.3f", _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__DragFloat2(&result, _label, _v, _v_speed, _v_min, _v_max, _format, _power)
     return result
 }
-DragFloat3 :: (_label: &char8, _v: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32) -> bool {
+DragFloat3 :: (_label: &char8, _v: &f32, _v_speed: f32 = 1.0f, _v_min: f32 = 0.0f, _v_max: f32 = 0.0f, _format: &char8 = "%.3f", _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__DragFloat3(&result, _label, _v, _v_speed, _v_min, _v_max, _format, _power)
     return result
 }
-DragFloat4 :: (_label: &char8, _v: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32) -> bool {
+DragFloat4 :: (_label: &char8, _v: &f32, _v_speed: f32 = 1.0f, _v_min: f32 = 0.0f, _v_max: f32 = 0.0f, _format: &char8 = "%.3f", _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__DragFloat4(&result, _label, _v, _v_speed, _v_min, _v_max, _format, _power)
     return result
 }
-DragFloatRange2 :: (_label: &char8, _v_current_min: &f32, _v_current_max: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _format_max: &char8, _power: f32) -> bool {
+DragFloatRange2 :: (_label: &char8, _v_current_min: &f32, _v_current_max: &f32, _v_speed: f32 = 1.0f, _v_min: f32 = 0.0f, _v_max: f32 = 0.0f, _format: &char8 = "%.3f", _format_max: &char8 = null, _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__DragFloatRange2(&result, _label, _v_current_min, _v_current_max, _v_speed, _v_min, _v_max, _format, _format_max, _power)
     return result
 }
-DragInt :: (_label: &char8, _v: &i32, _v_speed: f32, _v_min: i32, _v_max: i32, _format: &char8) -> bool {
+DragInt :: (_label: &char8, _v: &i32, _v_speed: f32 = 1.0f, _v_min: i32 = 0, _v_max: i32 = 0, _format: &char8 = "%d") -> bool {
     result : bool = default
     __c__DragInt(&result, _label, _v, _v_speed, _v_min, _v_max, _format)
     return result
 }
-DragInt2 :: (_label: &char8, _v: &i32, _v_speed: f32, _v_min: i32, _v_max: i32, _format: &char8) -> bool {
+DragInt2 :: (_label: &char8, _v: &i32, _v_speed: f32 = 1.0f, _v_min: i32 = 0, _v_max: i32 = 0, _format: &char8 = "%d") -> bool {
     result : bool = default
     __c__DragInt2(&result, _label, _v, _v_speed, _v_min, _v_max, _format)
     return result
 }
-DragInt3 :: (_label: &char8, _v: &i32, _v_speed: f32, _v_min: i32, _v_max: i32, _format: &char8) -> bool {
+DragInt3 :: (_label: &char8, _v: &i32, _v_speed: f32 = 1.0f, _v_min: i32 = 0, _v_max: i32 = 0, _format: &char8 = "%d") -> bool {
     result : bool = default
     __c__DragInt3(&result, _label, _v, _v_speed, _v_min, _v_max, _format)
     return result
 }
-DragInt4 :: (_label: &char8, _v: &i32, _v_speed: f32, _v_min: i32, _v_max: i32, _format: &char8) -> bool {
+DragInt4 :: (_label: &char8, _v: &i32, _v_speed: f32 = 1.0f, _v_min: i32 = 0, _v_max: i32 = 0, _format: &char8 = "%d") -> bool {
     result : bool = default
     __c__DragInt4(&result, _label, _v, _v_speed, _v_min, _v_max, _format)
     return result
 }
-DragIntRange2 :: (_label: &char8, _v_current_min: &i32, _v_current_max: &i32, _v_speed: f32, _v_min: i32, _v_max: i32, _format: &char8, _format_max: &char8) -> bool {
+DragIntRange2 :: (_label: &char8, _v_current_min: &i32, _v_current_max: &i32, _v_speed: f32 = 1.0f, _v_min: i32 = 0, _v_max: i32 = 0, _format: &char8 = "%d", _format_max: &char8 = null) -> bool {
     result : bool = default
     __c__DragIntRange2(&result, _label, _v_current_min, _v_current_max, _v_speed, _v_min, _v_max, _format, _format_max)
     return result
 }
-DragScalar :: (_label: &char8, _data_type: ImGuiDataType, _p_data: &void, _v_speed: f32, _p_min: &void, _p_max: &void, _format: &char8, _power: f32) -> bool {
+DragScalar :: (_label: &char8, _data_type: ImGuiDataType, _p_data: &void, _v_speed: f32, _p_min: &void = null, _p_max: &void = null, _format: &char8 = null, _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__DragScalar(&result, _label, _data_type, _p_data, _v_speed, _p_min, _p_max, _format, _power)
     return result
 }
-DragScalarN :: (_label: &char8, _data_type: ImGuiDataType, _p_data: &void, _components: i32, _v_speed: f32, _p_min: &void, _p_max: &void, _format: &char8, _power: f32) -> bool {
+DragScalarN :: (_label: &char8, _data_type: ImGuiDataType, _p_data: &void, _components: i32, _v_speed: f32, _p_min: &void = null, _p_max: &void = null, _format: &char8 = null, _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__DragScalarN(&result, _label, _data_type, _p_data, _components, _v_speed, _p_min, _p_max, _format, _power)
     return result
 }
-SliderFloat :: (_label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32) -> bool {
+SliderFloat :: (_label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8 = "%.3f", _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__SliderFloat(&result, _label, _v, _v_min, _v_max, _format, _power)
     return result
 }
-SliderFloat2 :: (_label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32) -> bool {
+SliderFloat2 :: (_label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8 = "%.3f", _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__SliderFloat2(&result, _label, _v, _v_min, _v_max, _format, _power)
     return result
 }
-SliderFloat3 :: (_label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32) -> bool {
+SliderFloat3 :: (_label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8 = "%.3f", _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__SliderFloat3(&result, _label, _v, _v_min, _v_max, _format, _power)
     return result
 }
-SliderFloat4 :: (_label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32) -> bool {
+SliderFloat4 :: (_label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8 = "%.3f", _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__SliderFloat4(&result, _label, _v, _v_min, _v_max, _format, _power)
     return result
 }
-SliderAngle :: (_label: &char8, _v_rad: &f32, _v_degrees_min: f32, _v_degrees_max: f32, _format: &char8) -> bool {
+SliderAngle :: (_label: &char8, _v_rad: &f32, _v_degrees_min: f32 = -360.0f, _v_degrees_max: f32 = +360.0f, _format: &char8 = "%.0f deg") -> bool {
     result : bool = default
     __c__SliderAngle(&result, _label, _v_rad, _v_degrees_min, _v_degrees_max, _format)
     return result
 }
-SliderInt :: (_label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8) -> bool {
+SliderInt :: (_label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8 = "%d") -> bool {
     result : bool = default
     __c__SliderInt(&result, _label, _v, _v_min, _v_max, _format)
     return result
 }
-SliderInt2 :: (_label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8) -> bool {
+SliderInt2 :: (_label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8 = "%d") -> bool {
     result : bool = default
     __c__SliderInt2(&result, _label, _v, _v_min, _v_max, _format)
     return result
 }
-SliderInt3 :: (_label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8) -> bool {
+SliderInt3 :: (_label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8 = "%d") -> bool {
     result : bool = default
     __c__SliderInt3(&result, _label, _v, _v_min, _v_max, _format)
     return result
 }
-SliderInt4 :: (_label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8) -> bool {
+SliderInt4 :: (_label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8 = "%d") -> bool {
     result : bool = default
     __c__SliderInt4(&result, _label, _v, _v_min, _v_max, _format)
     return result
 }
-SliderScalar :: (_label: &char8, _data_type: ImGuiDataType, _p_data: &void, _p_min: &void, _p_max: &void, _format: &char8, _power: f32) -> bool {
+SliderScalar :: (_label: &char8, _data_type: ImGuiDataType, _p_data: &void, _p_min: &void, _p_max: &void, _format: &char8 = null, _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__SliderScalar(&result, _label, _data_type, _p_data, _p_min, _p_max, _format, _power)
     return result
 }
-SliderScalarN :: (_label: &char8, _data_type: ImGuiDataType, _p_data: &void, _components: i32, _p_min: &void, _p_max: &void, _format: &char8, _power: f32) -> bool {
+SliderScalarN :: (_label: &char8, _data_type: ImGuiDataType, _p_data: &void, _components: i32, _p_min: &void, _p_max: &void, _format: &char8 = null, _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__SliderScalarN(&result, _label, _data_type, _p_data, _components, _p_min, _p_max, _format, _power)
     return result
 }
-VSliderFloat :: (_label: &char8, _size: ref ImVec2, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32) -> bool {
+VSliderFloat :: (_label: &char8, _size: ref ImVec2, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8 = "%.3f", _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__VSliderFloat(&result, _label, &_size, _v, _v_min, _v_max, _format, _power)
     return result
 }
-VSliderInt :: (_label: &char8, _size: ref ImVec2, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8) -> bool {
+VSliderInt :: (_label: &char8, _size: ref ImVec2, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8 = "%d") -> bool {
     result : bool = default
     __c__VSliderInt(&result, _label, &_size, _v, _v_min, _v_max, _format)
     return result
 }
-VSliderScalar :: (_label: &char8, _size: ref ImVec2, _data_type: ImGuiDataType, _p_data: &void, _p_min: &void, _p_max: &void, _format: &char8, _power: f32) -> bool {
+VSliderScalar :: (_label: &char8, _size: ref ImVec2, _data_type: ImGuiDataType, _p_data: &void, _p_min: &void, _p_max: &void, _format: &char8 = null, _power: f32 = 1.0f) -> bool {
     result : bool = default
     __c__VSliderScalar(&result, _label, &_size, _data_type, _p_data, _p_min, _p_max, _format, _power)
     return result
 }
-InputText :: (_label: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback, _user_data: &void) -> bool {
+InputText :: (_label: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags = 0, _callback: ImGuiInputTextCallback = null, _user_data: &void = null) -> bool {
     result : bool = default
     __c__InputText(&result, _label, _buf, _buf_size, _flags, _callback, _user_data)
     return result
 }
-InputTextMultiline :: (_label: &char8, _buf: &char8, _buf_size: size_t, _size: ref ImVec2, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback, _user_data: &void) -> bool {
+InputTextMultiline :: (_label: &char8, _buf: &char8, _buf_size: size_t, _size: ref ImVec2, _flags: ImGuiInputTextFlags = 0, _callback: ImGuiInputTextCallback = null, _user_data: &void = null) -> bool {
     result : bool = default
     __c__InputTextMultiline(&result, _label, _buf, _buf_size, &_size, _flags, _callback, _user_data)
     return result
 }
-InputTextWithHint :: (_label: &char8, _hint: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback, _user_data: &void) -> bool {
+InputTextWithHint :: (_label: &char8, _hint: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags = 0, _callback: ImGuiInputTextCallback = null, _user_data: &void = null) -> bool {
     result : bool = default
     __c__InputTextWithHint(&result, _label, _hint, _buf, _buf_size, _flags, _callback, _user_data)
     return result
 }
-InputFloat :: (_label: &char8, _v: &f32, _step: f32, _step_fast: f32, _format: &char8, _flags: ImGuiInputTextFlags) -> bool {
+InputFloat :: (_label: &char8, _v: &f32, _step: f32 = 0.0f, _step_fast: f32 = 0.0f, _format: &char8 = "%.3f", _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputFloat(&result, _label, _v, _step, _step_fast, _format, _flags)
     return result
 }
-InputFloat2 :: (_label: &char8, _v: &f32, _format: &char8, _flags: ImGuiInputTextFlags) -> bool {
+InputFloat2 :: (_label: &char8, _v: &f32, _format: &char8 = "%.3f", _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputFloat2(&result, _label, _v, _format, _flags)
     return result
 }
-InputFloat3 :: (_label: &char8, _v: &f32, _format: &char8, _flags: ImGuiInputTextFlags) -> bool {
+InputFloat3 :: (_label: &char8, _v: &f32, _format: &char8 = "%.3f", _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputFloat3(&result, _label, _v, _format, _flags)
     return result
 }
-InputFloat4 :: (_label: &char8, _v: &f32, _format: &char8, _flags: ImGuiInputTextFlags) -> bool {
+InputFloat4 :: (_label: &char8, _v: &f32, _format: &char8 = "%.3f", _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputFloat4(&result, _label, _v, _format, _flags)
     return result
 }
-InputInt :: (_label: &char8, _v: &i32, _step: i32, _step_fast: i32, _flags: ImGuiInputTextFlags) -> bool {
+InputInt :: (_label: &char8, _v: &i32, _step: i32 = 1, _step_fast: i32 = 100, _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputInt(&result, _label, _v, _step, _step_fast, _flags)
     return result
 }
-InputInt2 :: (_label: &char8, _v: &i32, _flags: ImGuiInputTextFlags) -> bool {
+InputInt2 :: (_label: &char8, _v: &i32, _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputInt2(&result, _label, _v, _flags)
     return result
 }
-InputInt3 :: (_label: &char8, _v: &i32, _flags: ImGuiInputTextFlags) -> bool {
+InputInt3 :: (_label: &char8, _v: &i32, _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputInt3(&result, _label, _v, _flags)
     return result
 }
-InputInt4 :: (_label: &char8, _v: &i32, _flags: ImGuiInputTextFlags) -> bool {
+InputInt4 :: (_label: &char8, _v: &i32, _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputInt4(&result, _label, _v, _flags)
     return result
 }
-InputDouble :: (_label: &char8, _v: &f64, _step: f64, _step_fast: f64, _format: &char8, _flags: ImGuiInputTextFlags) -> bool {
+InputDouble :: (_label: &char8, _v: &f64, _step: f64 = 0.0, _step_fast: f64 = 0.0, _format: &char8 = "%.6f", _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputDouble(&result, _label, _v, _step, _step_fast, _format, _flags)
     return result
 }
-InputScalar :: (_label: &char8, _data_type: ImGuiDataType, _p_data: &void, _p_step: &void, _p_step_fast: &void, _format: &char8, _flags: ImGuiInputTextFlags) -> bool {
+InputScalar :: (_label: &char8, _data_type: ImGuiDataType, _p_data: &void, _p_step: &void = null, _p_step_fast: &void = null, _format: &char8 = null, _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputScalar(&result, _label, _data_type, _p_data, _p_step, _p_step_fast, _format, _flags)
     return result
 }
-InputScalarN :: (_label: &char8, _data_type: ImGuiDataType, _p_data: &void, _components: i32, _p_step: &void, _p_step_fast: &void, _format: &char8, _flags: ImGuiInputTextFlags) -> bool {
+InputScalarN :: (_label: &char8, _data_type: ImGuiDataType, _p_data: &void, _components: i32, _p_step: &void = null, _p_step_fast: &void = null, _format: &char8 = null, _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputScalarN(&result, _label, _data_type, _p_data, _components, _p_step, _p_step_fast, _format, _flags)
     return result
 }
-ColorEdit3 :: (_label: &char8, _col: &f32, _flags: ImGuiColorEditFlags) -> bool {
+ColorEdit3 :: (_label: &char8, _col: &f32, _flags: ImGuiColorEditFlags = 0) -> bool {
     result : bool = default
     __c__ColorEdit3(&result, _label, _col, _flags)
     return result
 }
-ColorEdit4 :: (_label: &char8, _col: &f32, _flags: ImGuiColorEditFlags) -> bool {
+ColorEdit4 :: (_label: &char8, _col: &f32, _flags: ImGuiColorEditFlags = 0) -> bool {
     result : bool = default
     __c__ColorEdit4(&result, _label, _col, _flags)
     return result
 }
-ColorPicker3 :: (_label: &char8, _col: &f32, _flags: ImGuiColorEditFlags) -> bool {
+ColorPicker3 :: (_label: &char8, _col: &f32, _flags: ImGuiColorEditFlags = 0) -> bool {
     result : bool = default
     __c__ColorPicker3(&result, _label, _col, _flags)
     return result
 }
-ColorPicker4 :: (_label: &char8, _col: &f32, _flags: ImGuiColorEditFlags, _ref_col: &f32) -> bool {
+ColorPicker4 :: (_label: &char8, _col: &f32, _flags: ImGuiColorEditFlags = 0, _ref_col: &f32 = null) -> bool {
     result : bool = default
     __c__ColorPicker4(&result, _label, _col, _flags, _ref_col)
     return result
 }
-ColorButton :: (_desc_id: &char8, _col: ref ImVec4, _flags: ImGuiColorEditFlags, _size: ImVec2) -> bool {
+ColorButton :: (_desc_id: &char8, _col: ref ImVec4, _flags: ImGuiColorEditFlags = 0, _size: ImVec2) -> bool {
     result : bool = default
     __c__ColorButton(&result, _desc_id, &_col, _flags, &_size)
     return result
@@ -3679,7 +3679,7 @@ TreeNodeV_2 :: (_ptr_id: &void, _fmt: &char8, _args: va_list) -> bool {
     __c__TreeNodeV_2(&result, _ptr_id, _fmt, _args)
     return result
 }
-TreeNodeEx :: (_label: &char8, _flags: ImGuiTreeNodeFlags) -> bool {
+TreeNodeEx :: (_label: &char8, _flags: ImGuiTreeNodeFlags = 0) -> bool {
     result : bool = default
     __c__TreeNodeEx(&result, _label, _flags)
     return result
@@ -3707,7 +3707,7 @@ TreeNodeExV_2 :: (_ptr_id: &void, _flags: ImGuiTreeNodeFlags, _fmt: &char8, _arg
 TreePush :: (_str_id: &char8) {
     __c__TreePush(_str_id)
 }
-TreePush_2 :: (_ptr_id: &void) {
+TreePush_2 :: (_ptr_id: &void = null) {
     __c__TreePush_2(_ptr_id)
 }
 TreePop :: () {
@@ -3718,35 +3718,35 @@ GetTreeNodeToLabelSpacing :: () -> f32 {
     __c__GetTreeNodeToLabelSpacing(&result)
     return result
 }
-CollapsingHeader :: (_label: &char8, _flags: ImGuiTreeNodeFlags) -> bool {
+CollapsingHeader :: (_label: &char8, _flags: ImGuiTreeNodeFlags = 0) -> bool {
     result : bool = default
     __c__CollapsingHeader(&result, _label, _flags)
     return result
 }
-CollapsingHeader_2 :: (_label: &char8, _p_open: &bool, _flags: ImGuiTreeNodeFlags) -> bool {
+CollapsingHeader_2 :: (_label: &char8, _p_open: &bool, _flags: ImGuiTreeNodeFlags = 0) -> bool {
     result : bool = default
     __c__CollapsingHeader_2(&result, _label, _p_open, _flags)
     return result
 }
-SetNextItemOpen :: (_is_open: bool, _cond: ImGuiCond) {
+SetNextItemOpen :: (_is_open: bool, _cond: ImGuiCond = 0) {
     __c__SetNextItemOpen(_is_open, _cond)
 }
-Selectable :: (_label: &char8, _selected: bool, _flags: ImGuiSelectableFlags, _size: ref ImVec2) -> bool {
+Selectable :: (_label: &char8, _selected: bool = false, _flags: ImGuiSelectableFlags = 0, _size: ref ImVec2) -> bool {
     result : bool = default
     __c__Selectable(&result, _label, _selected, _flags, &_size)
     return result
 }
-Selectable_2 :: (_label: &char8, _p_selected: &bool, _flags: ImGuiSelectableFlags, _size: ref ImVec2) -> bool {
+Selectable_2 :: (_label: &char8, _p_selected: &bool, _flags: ImGuiSelectableFlags = 0, _size: ref ImVec2) -> bool {
     result : bool = default
     __c__Selectable_2(&result, _label, _p_selected, _flags, &_size)
     return result
 }
-ListBox :: (_label: &char8, _current_item: &i32, _items: &&char8, _items_count: i32, _height_in_items: i32) -> bool {
+ListBox :: (_label: &char8, _current_item: &i32, _items: &&char8, _items_count: i32, _height_in_items: i32 = -1) -> bool {
     result : bool = default
     __c__ListBox(&result, _label, _current_item, _items, _items_count, _height_in_items)
     return result
 }
-ListBox_2 :: (_label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32) -> bool {
+ListBox_2 :: (_label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32 = -1) -> bool {
     result : bool = default
     __c__ListBox_2(&result, _label, _current_item, _items_getter, _data, _items_count, _height_in_items)
     return result
@@ -3756,7 +3756,7 @@ ListBoxHeader :: (_label: &char8, _size: ref ImVec2) -> bool {
     __c__ListBoxHeader(&result, _label, &_size)
     return result
 }
-ListBoxHeader_2 :: (_label: &char8, _items_count: i32, _height_in_items: i32) -> bool {
+ListBoxHeader_2 :: (_label: &char8, _items_count: i32, _height_in_items: i32 = -1) -> bool {
     result : bool = default
     __c__ListBoxHeader_2(&result, _label, _items_count, _height_in_items)
     return result
@@ -3764,16 +3764,16 @@ ListBoxHeader_2 :: (_label: &char8, _items_count: i32, _height_in_items: i32) ->
 ListBoxFooter :: () {
     __c__ListBoxFooter()
 }
-PlotLines :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: ImVec2, _stride: i32) {
+PlotLines :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = FLT_MAX, _scale_max: f32 = FLT_MAX, _graph_size: ImVec2, _stride: i32) {
     __c__PlotLines(_label, _values, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_graph_size, _stride)
 }
-PlotLines_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: ImVec2) {
+PlotLines_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = FLT_MAX, _scale_max: f32 = FLT_MAX, _graph_size: ImVec2) {
     __c__PlotLines_2(_label, _values_getter, _data, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_graph_size)
 }
-PlotHistogram :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: ImVec2, _stride: i32) {
+PlotHistogram :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = FLT_MAX, _scale_max: f32 = FLT_MAX, _graph_size: ImVec2, _stride: i32) {
     __c__PlotHistogram(_label, _values, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_graph_size, _stride)
 }
-PlotHistogram_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: ImVec2) {
+PlotHistogram_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = FLT_MAX, _scale_max: f32 = FLT_MAX, _graph_size: ImVec2) {
     __c__PlotHistogram_2(_label, _values_getter, _data, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_graph_size)
 }
 Value :: (_prefix: &char8, _b: bool) {
@@ -3785,7 +3785,7 @@ Value_2 :: (_prefix: &char8, _v: i32) {
 Value_3 :: (_prefix: &char8, _v: u32) {
     __c__Value_3(_prefix, _v)
 }
-Value_4 :: (_prefix: &char8, _v: f32, _float_format: &char8) {
+Value_4 :: (_prefix: &char8, _v: f32, _float_format: &char8 = null) {
     __c__Value_4(_prefix, _v, _float_format)
 }
 BeginMenuBar :: () -> bool {
@@ -3804,7 +3804,7 @@ BeginMainMenuBar :: () -> bool {
 EndMainMenuBar :: () {
     __c__EndMainMenuBar()
 }
-BeginMenu :: (_label: &char8, _enabled: bool) -> bool {
+BeginMenu :: (_label: &char8, _enabled: bool = true) -> bool {
     result : bool = default
     __c__BeginMenu(&result, _label, _enabled)
     return result
@@ -3812,12 +3812,12 @@ BeginMenu :: (_label: &char8, _enabled: bool) -> bool {
 EndMenu :: () {
     __c__EndMenu()
 }
-MenuItem :: (_label: &char8, _shortcut: &char8, _selected: bool, _enabled: bool) -> bool {
+MenuItem :: (_label: &char8, _shortcut: &char8 = null, _selected: bool = false, _enabled: bool = true) -> bool {
     result : bool = default
     __c__MenuItem(&result, _label, _shortcut, _selected, _enabled)
     return result
 }
-MenuItem_2 :: (_label: &char8, _shortcut: &char8, _p_selected: &bool, _enabled: bool) -> bool {
+MenuItem_2 :: (_label: &char8, _shortcut: &char8, _p_selected: &bool, _enabled: bool = true) -> bool {
     result : bool = default
     __c__MenuItem_2(&result, _label, _shortcut, _p_selected, _enabled)
     return result
@@ -3837,27 +3837,27 @@ SetTooltipV :: (_fmt: &char8, _args: va_list) {
 OpenPopup :: (_str_id: &char8) {
     __c__OpenPopup(_str_id)
 }
-BeginPopup :: (_str_id: &char8, _flags: ImGuiWindowFlags) -> bool {
+BeginPopup :: (_str_id: &char8, _flags: ImGuiWindowFlags = 0) -> bool {
     result : bool = default
     __c__BeginPopup(&result, _str_id, _flags)
     return result
 }
-BeginPopupContextItem :: (_str_id: &char8, _mouse_button: ImGuiMouseButton) -> bool {
+BeginPopupContextItem :: (_str_id: &char8 = null, _mouse_button: ImGuiMouseButton = 1) -> bool {
     result : bool = default
     __c__BeginPopupContextItem(&result, _str_id, _mouse_button)
     return result
 }
-BeginPopupContextWindow :: (_str_id: &char8, _mouse_button: ImGuiMouseButton, _also_over_items: bool) -> bool {
+BeginPopupContextWindow :: (_str_id: &char8 = null, _mouse_button: ImGuiMouseButton = 1, _also_over_items: bool = true) -> bool {
     result : bool = default
     __c__BeginPopupContextWindow(&result, _str_id, _mouse_button, _also_over_items)
     return result
 }
-BeginPopupContextVoid :: (_str_id: &char8, _mouse_button: ImGuiMouseButton) -> bool {
+BeginPopupContextVoid :: (_str_id: &char8 = null, _mouse_button: ImGuiMouseButton = 1) -> bool {
     result : bool = default
     __c__BeginPopupContextVoid(&result, _str_id, _mouse_button)
     return result
 }
-BeginPopupModal :: (_name: &char8, _p_open: &bool, _flags: ImGuiWindowFlags) -> bool {
+BeginPopupModal :: (_name: &char8, _p_open: &bool = null, _flags: ImGuiWindowFlags = 0) -> bool {
     result : bool = default
     __c__BeginPopupModal(&result, _name, _p_open, _flags)
     return result
@@ -3865,7 +3865,7 @@ BeginPopupModal :: (_name: &char8, _p_open: &bool, _flags: ImGuiWindowFlags) -> 
 EndPopup :: () {
     __c__EndPopup()
 }
-OpenPopupOnItemClick :: (_str_id: &char8, _mouse_button: ImGuiMouseButton) -> bool {
+OpenPopupOnItemClick :: (_str_id: &char8 = null, _mouse_button: ImGuiMouseButton = 1) -> bool {
     result : bool = default
     __c__OpenPopupOnItemClick(&result, _str_id, _mouse_button)
     return result
@@ -3878,7 +3878,7 @@ IsPopupOpen :: (_str_id: &char8) -> bool {
 CloseCurrentPopup :: () {
     __c__CloseCurrentPopup()
 }
-Columns :: (_count: i32, _id: &char8, _border: bool) {
+Columns :: (_count: i32 = 1, _id: &char8 = null, _border: bool = true) {
     __c__Columns(_count, _id, _border)
 }
 NextColumn :: () {
@@ -3889,7 +3889,7 @@ GetColumnIndex :: () -> i32 {
     __c__GetColumnIndex(&result)
     return result
 }
-GetColumnWidth :: (_column_index: i32) -> f32 {
+GetColumnWidth :: (_column_index: i32 = -1) -> f32 {
     result : f32 = default
     __c__GetColumnWidth(&result, _column_index)
     return result
@@ -3897,7 +3897,7 @@ GetColumnWidth :: (_column_index: i32) -> f32 {
 SetColumnWidth :: (_column_index: i32, _width: f32) {
     __c__SetColumnWidth(_column_index, _width)
 }
-GetColumnOffset :: (_column_index: i32) -> f32 {
+GetColumnOffset :: (_column_index: i32 = -1) -> f32 {
     result : f32 = default
     __c__GetColumnOffset(&result, _column_index)
     return result
@@ -3910,7 +3910,7 @@ GetColumnsCount :: () -> i32 {
     __c__GetColumnsCount(&result)
     return result
 }
-BeginTabBar :: (_str_id: &char8, _flags: ImGuiTabBarFlags) -> bool {
+BeginTabBar :: (_str_id: &char8, _flags: ImGuiTabBarFlags = 0) -> bool {
     result : bool = default
     __c__BeginTabBar(&result, _str_id, _flags)
     return result
@@ -3918,7 +3918,7 @@ BeginTabBar :: (_str_id: &char8, _flags: ImGuiTabBarFlags) -> bool {
 EndTabBar :: () {
     __c__EndTabBar()
 }
-BeginTabItem :: (_label: &char8, _p_open: &bool, _flags: ImGuiTabItemFlags) -> bool {
+BeginTabItem :: (_label: &char8, _p_open: &bool = null, _flags: ImGuiTabItemFlags = 0) -> bool {
     result : bool = default
     __c__BeginTabItem(&result, _label, _p_open, _flags)
     return result
@@ -3929,13 +3929,13 @@ EndTabItem :: () {
 SetTabItemClosed :: (_tab_or_docked_window_label: &char8) {
     __c__SetTabItemClosed(_tab_or_docked_window_label)
 }
-LogToTTY :: (_auto_open_depth: i32) {
+LogToTTY :: (_auto_open_depth: i32 = -1) {
     __c__LogToTTY(_auto_open_depth)
 }
-LogToFile :: (_auto_open_depth: i32, _filename: &char8) {
+LogToFile :: (_auto_open_depth: i32 = -1, _filename: &char8 = null) {
     __c__LogToFile(_auto_open_depth, _filename)
 }
-LogToClipboard :: (_auto_open_depth: i32) {
+LogToClipboard :: (_auto_open_depth: i32 = -1) {
     __c__LogToClipboard(_auto_open_depth)
 }
 LogFinish :: () {
@@ -3947,12 +3947,12 @@ LogButtons :: () {
 LogText :: (_fmt: &char8) {
     __c__LogText(_fmt)
 }
-BeginDragDropSource :: (_flags: ImGuiDragDropFlags) -> bool {
+BeginDragDropSource :: (_flags: ImGuiDragDropFlags = 0) -> bool {
     result : bool = default
     __c__BeginDragDropSource(&result, _flags)
     return result
 }
-SetDragDropPayload :: (_type: &char8, _data: &void, _sz: size_t, _cond: ImGuiCond) -> bool {
+SetDragDropPayload :: (_type: &char8, _data: &void, _sz: size_t, _cond: ImGuiCond = 0) -> bool {
     result : bool = default
     __c__SetDragDropPayload(&result, _type, _data, _sz, _cond)
     return result
@@ -3965,7 +3965,7 @@ BeginDragDropTarget :: () -> bool {
     __c__BeginDragDropTarget(&result)
     return result
 }
-AcceptDragDropPayload :: (_type: &char8, _flags: ImGuiDragDropFlags) -> &ImGuiPayload {
+AcceptDragDropPayload :: (_type: &char8, _flags: ImGuiDragDropFlags = 0) -> &ImGuiPayload {
     result : &ImGuiPayload = default
     __c__AcceptDragDropPayload(&result, _type, _flags)
     return result
@@ -3987,10 +3987,10 @@ PopClipRect :: () {
 SetItemDefaultFocus :: () {
     __c__SetItemDefaultFocus()
 }
-SetKeyboardFocusHere :: (_offset: i32) {
+SetKeyboardFocusHere :: (_offset: i32 = 0) {
     __c__SetKeyboardFocusHere(_offset)
 }
-IsItemHovered :: (_flags: ImGuiHoveredFlags) -> bool {
+IsItemHovered :: (_flags: ImGuiHoveredFlags = 0) -> bool {
     result : bool = default
     __c__IsItemHovered(&result, _flags)
     return result
@@ -4005,7 +4005,7 @@ IsItemFocused :: () -> bool {
     __c__IsItemFocused(&result)
     return result
 }
-IsItemClicked :: (_mouse_button: ImGuiMouseButton) -> bool {
+IsItemClicked :: (_mouse_button: ImGuiMouseButton = 0) -> bool {
     result : bool = default
     __c__IsItemClicked(&result, _mouse_button)
     return result
@@ -4121,7 +4121,7 @@ GetStateStorage :: () -> &ImGuiStorage {
     __c__GetStateStorage(&result)
     return result
 }
-CalcTextSize :: (_text: &char8, _text_end: &char8, _hide_text_after_double_hash: bool, _wrap_width: f32) -> ImVec2 {
+CalcTextSize :: (_text: &char8, _text_end: &char8 = null, _hide_text_after_double_hash: bool = false, _wrap_width: f32 = -1.0f) -> ImVec2 {
     result : ImVec2 = default
     __c__CalcTextSize(&result, _text, _text_end, _hide_text_after_double_hash, _wrap_width)
     return result
@@ -4129,7 +4129,7 @@ CalcTextSize :: (_text: &char8, _text_end: &char8, _hide_text_after_double_hash:
 CalcListClipping :: (_items_count: i32, _items_height: f32, _out_items_display_start: &i32, _out_items_display_end: &i32) {
     __c__CalcListClipping(_items_count, _items_height, _out_items_display_start, _out_items_display_end)
 }
-BeginChildFrame :: (_id: ImGuiID, _size: ref ImVec2, _flags: ImGuiWindowFlags) -> bool {
+BeginChildFrame :: (_id: ImGuiID, _size: ref ImVec2, _flags: ImGuiWindowFlags = 0) -> bool {
     result : bool = default
     __c__BeginChildFrame(&result, _id, &_size, _flags)
     return result
@@ -4163,7 +4163,7 @@ IsKeyDown :: (_user_key_index: i32) -> bool {
     __c__IsKeyDown(&result, _user_key_index)
     return result
 }
-IsKeyPressed :: (_user_key_index: i32, _repeat: bool) -> bool {
+IsKeyPressed :: (_user_key_index: i32, _repeat: bool = true) -> bool {
     result : bool = default
     __c__IsKeyPressed(&result, _user_key_index, _repeat)
     return result
@@ -4178,7 +4178,7 @@ GetKeyPressedAmount :: (_key_index: i32, _repeat_delay: f32, _rate: f32) -> i32 
     __c__GetKeyPressedAmount(&result, _key_index, _repeat_delay, _rate)
     return result
 }
-CaptureKeyboardFromApp :: (_want_capture_keyboard_value: bool) {
+CaptureKeyboardFromApp :: (_want_capture_keyboard_value: bool = true) {
     __c__CaptureKeyboardFromApp(_want_capture_keyboard_value)
 }
 IsMouseDown :: (_button: ImGuiMouseButton) -> bool {
@@ -4186,7 +4186,7 @@ IsMouseDown :: (_button: ImGuiMouseButton) -> bool {
     __c__IsMouseDown(&result, _button)
     return result
 }
-IsMouseClicked :: (_button: ImGuiMouseButton, _repeat: bool) -> bool {
+IsMouseClicked :: (_button: ImGuiMouseButton, _repeat: bool = false) -> bool {
     result : bool = default
     __c__IsMouseClicked(&result, _button, _repeat)
     return result
@@ -4201,12 +4201,12 @@ IsMouseDoubleClicked :: (_button: ImGuiMouseButton) -> bool {
     __c__IsMouseDoubleClicked(&result, _button)
     return result
 }
-IsMouseHoveringRect :: (_r_min: ref ImVec2, _r_max: ref ImVec2, _clip: bool) -> bool {
+IsMouseHoveringRect :: (_r_min: ref ImVec2, _r_max: ref ImVec2, _clip: bool = true) -> bool {
     result : bool = default
     __c__IsMouseHoveringRect(&result, &_r_min, &_r_max, _clip)
     return result
 }
-IsMousePosValid :: (_mouse_pos: &ImVec2) -> bool {
+IsMousePosValid :: (_mouse_pos: &ImVec2 = null) -> bool {
     result : bool = default
     __c__IsMousePosValid(&result, _mouse_pos)
     return result
@@ -4226,17 +4226,17 @@ GetMousePosOnOpeningCurrentPopup :: () -> ImVec2 {
     __c__GetMousePosOnOpeningCurrentPopup(&result)
     return result
 }
-IsMouseDragging :: (_button: ImGuiMouseButton, _lock_threshold: f32) -> bool {
+IsMouseDragging :: (_button: ImGuiMouseButton, _lock_threshold: f32 = -1.0f) -> bool {
     result : bool = default
     __c__IsMouseDragging(&result, _button, _lock_threshold)
     return result
 }
-GetMouseDragDelta :: (_button: ImGuiMouseButton, _lock_threshold: f32) -> ImVec2 {
+GetMouseDragDelta :: (_button: ImGuiMouseButton = 0, _lock_threshold: f32 = -1.0f) -> ImVec2 {
     result : ImVec2 = default
     __c__GetMouseDragDelta(&result, _button, _lock_threshold)
     return result
 }
-ResetMouseDragDelta :: (_button: ImGuiMouseButton) {
+ResetMouseDragDelta :: (_button: ImGuiMouseButton = 0) {
     __c__ResetMouseDragDelta(_button)
 }
 GetMouseCursor :: () -> ImGuiMouseCursor {
@@ -4247,7 +4247,7 @@ GetMouseCursor :: () -> ImGuiMouseCursor {
 SetMouseCursor :: (_cursor_type: ImGuiMouseCursor) {
     __c__SetMouseCursor(_cursor_type)
 }
-CaptureMouseFromApp :: (_want_capture_mouse_value: bool) {
+CaptureMouseFromApp :: (_want_capture_mouse_value: bool = true) {
     __c__CaptureMouseFromApp(_want_capture_mouse_value)
 }
 GetClipboardText :: () -> &char8 {
@@ -4261,18 +4261,18 @@ SetClipboardText :: (_text: &char8) {
 LoadIniSettingsFromDisk :: (_ini_filename: &char8) {
     __c__LoadIniSettingsFromDisk(_ini_filename)
 }
-LoadIniSettingsFromMemory :: (_ini_data: &char8, _ini_size: size_t) {
+LoadIniSettingsFromMemory :: (_ini_data: &char8, _ini_size: size_t = 0) {
     __c__LoadIniSettingsFromMemory(_ini_data, _ini_size)
 }
 SaveIniSettingsToDisk :: (_ini_filename: &char8) {
     __c__SaveIniSettingsToDisk(_ini_filename)
 }
-SaveIniSettingsToMemory :: (_out_ini_size: &size_t) -> &char8 {
+SaveIniSettingsToMemory :: (_out_ini_size: &size_t = null) -> &char8 {
     result : &char8 = default
     __c__SaveIniSettingsToMemory(&result, _out_ini_size)
     return result
 }
-SetAllocatorFunctions :: (_alloc_func: fn(size_t, &void) -> &void, _free_func: fn(&void, &void) -> void, _user_data: &void) {
+SetAllocatorFunctions :: (_alloc_func: fn(size_t, &void) -> &void, _free_func: fn(&void, &void) -> void, _user_data: &void = null) {
     __c__SetAllocatorFunctions(_alloc_func, _free_func, _user_data)
 }
 MemAlloc :: (_size: size_t) -> &void {
@@ -4283,32 +4283,32 @@ MemAlloc :: (_size: size_t) -> &void {
 MemFree :: (_ptr: &void) {
     __c__MemFree(_ptr)
 }
-InputFloat_2 :: (_label: &char8, _v: &f32, _step: f32, _step_fast: f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags) -> bool {
+InputFloat_2 :: (_label: &char8, _v: &f32, _step: f32, _step_fast: f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputFloat_2(&result, _label, _v, _step, _step_fast, _decimal_precision, _flags)
     return result
 }
-InputFloat2_2 :: (_label: &char8, _v: &f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags) -> bool {
+InputFloat2_2 :: (_label: &char8, _v: &f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputFloat2_2(&result, _label, _v, _decimal_precision, _flags)
     return result
 }
-InputFloat3_2 :: (_label: &char8, _v: &f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags) -> bool {
+InputFloat3_2 :: (_label: &char8, _v: &f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputFloat3_2(&result, _label, _v, _decimal_precision, _flags)
     return result
 }
-InputFloat4_2 :: (_label: &char8, _v: &f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags) -> bool {
+InputFloat4_2 :: (_label: &char8, _v: &f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags = 0) -> bool {
     result : bool = default
     __c__InputFloat4_2(&result, _label, _v, _decimal_precision, _flags)
     return result
 }
-ImHashData :: (_data: &void, _data_size: size_t, _seed: ImU32) -> ImU32 {
+ImHashData :: (_data: &void, _data_size: size_t, _seed: ImU32 = 0) -> ImU32 {
     result : ImU32 = default
     __c__ImHashData(&result, _data, _data_size, _seed)
     return result
 }
-ImHashStr :: (_data: &char8, _data_size: size_t, _seed: ImU32) -> ImU32 {
+ImHashStr :: (_data: &char8, _data_size: size_t = 0, _seed: ImU32 = 0) -> ImU32 {
     result : ImU32 = default
     __c__ImHashStr(&result, _data, _data_size, _seed)
     return result
@@ -4409,7 +4409,7 @@ ImTextCharFromUtf8 :: (_out_char: &u32, _in_text: &char8, _in_text_end: &char8) 
     __c__ImTextCharFromUtf8(&result, _out_char, _in_text, _in_text_end)
     return result
 }
-ImTextStrFromUtf8 :: (_buf: &ImWchar, _buf_size: i32, _in_text: &char8, _in_text_end: &char8, _in_remaining: &&char8) -> i32 {
+ImTextStrFromUtf8 :: (_buf: &ImWchar, _buf_size: i32, _in_text: &char8, _in_text_end: &char8, _in_remaining: &&char8 = null) -> i32 {
     result : i32 = default
     __c__ImTextStrFromUtf8(&result, _buf, _buf_size, _in_text, _in_text_end, _in_remaining)
     return result
@@ -4454,7 +4454,7 @@ ImFileWrite :: (_data: &void, _size: ImU64, _count: ImU64, _file: ImFileHandle) 
     __c__ImFileWrite(&result, _data, _size, _count, _file)
     return result
 }
-ImFileLoadToMemory :: (_filename: &char8, _mode: &char8, _out_file_size: &size_t, _padding_bytes: i32) -> &void {
+ImFileLoadToMemory :: (_filename: &char8, _mode: &char8, _out_file_size: &size_t = null, _padding_bytes: i32 = 0) -> &void {
     result : &void = default
     __c__ImFileLoadToMemory(&result, _filename, _mode, _out_file_size, _padding_bytes)
     return result
@@ -4545,13 +4545,13 @@ GetWindowAllowedExtentRect :: (_window: &ImGuiWindow) -> ImRect {
     __c__GetWindowAllowedExtentRect(&result, _window)
     return result
 }
-SetWindowPos_3 :: (_window: &ImGuiWindow, _pos: ref ImVec2, _cond: ImGuiCond) {
+SetWindowPos_3 :: (_window: &ImGuiWindow, _pos: ref ImVec2, _cond: ImGuiCond = 0) {
     __c__SetWindowPos_3(_window, &_pos, _cond)
 }
-SetWindowSize_3 :: (_window: &ImGuiWindow, _size: ref ImVec2, _cond: ImGuiCond) {
+SetWindowSize_3 :: (_window: &ImGuiWindow, _size: ref ImVec2, _cond: ImGuiCond = 0) {
     __c__SetWindowSize_3(_window, &_size, _cond)
 }
-SetWindowCollapsed_3 :: (_window: &ImGuiWindow, _collapsed: bool, _cond: ImGuiCond) {
+SetWindowCollapsed_3 :: (_window: &ImGuiWindow, _collapsed: bool, _cond: ImGuiCond = 0) {
     __c__SetWindowCollapsed_3(_window, _collapsed, _cond)
 }
 GcCompactTransientWindowBuffers :: (_window: &ImGuiWindow) {
@@ -4613,10 +4613,10 @@ SetScrollX_2 :: (_window: &ImGuiWindow, _new_scroll_x: f32) {
 SetScrollY_2 :: (_window: &ImGuiWindow, _new_scroll_y: f32) {
     __c__SetScrollY_2(_window, _new_scroll_y)
 }
-SetScrollFromPosX_2 :: (_window: &ImGuiWindow, _local_x: f32, _center_x_ratio: f32) {
+SetScrollFromPosX_2 :: (_window: &ImGuiWindow, _local_x: f32, _center_x_ratio: f32 = 0.5f) {
     __c__SetScrollFromPosX_2(_window, _local_x, _center_x_ratio)
 }
-SetScrollFromPosY_2 :: (_window: &ImGuiWindow, _local_y: f32, _center_y_ratio: f32) {
+SetScrollFromPosY_2 :: (_window: &ImGuiWindow, _local_y: f32, _center_y_ratio: f32 = 0.5f) {
     __c__SetScrollFromPosY_2(_window, _local_y, _center_y_ratio)
 }
 ScrollToBringRectIntoView :: (_window: &ImGuiWindow, _item_rect: ref ImRect) -> ImVec2 {
@@ -4650,13 +4650,13 @@ MarkItemEdited :: (_id: ImGuiID) {
 PushOverrideID :: (_id: ImGuiID) {
     __c__PushOverrideID(_id)
 }
-ItemSize :: (_size: ref ImVec2, _text_baseline_y: f32) {
+ItemSize :: (_size: ref ImVec2, _text_baseline_y: f32 = -1.0f) {
     __c__ItemSize(&_size, _text_baseline_y)
 }
-ItemSize_2 :: (_bb: ref ImRect, _text_baseline_y: f32) {
+ItemSize_2 :: (_bb: ref ImRect, _text_baseline_y: f32 = -1.0f) {
     __c__ItemSize_2(&_bb, _text_baseline_y)
 }
-ItemAdd :: (_bb: ref ImRect, _id: ImGuiID, _nav_bb: &ImRect) -> bool {
+ItemAdd :: (_bb: ref ImRect, _id: ImGuiID, _nav_bb: &ImRect = null) -> bool {
     result : bool = default
     __c__ItemAdd(&result, &_bb, _id, _nav_bb)
     return result
@@ -4714,7 +4714,7 @@ ShrinkWidths :: (_items: &ImGuiShrinkWidthItem, _count: i32, _width_excess: f32)
 LogBegin :: (_type: ImGuiLogType, _auto_open_depth: i32) {
     __c__LogBegin(_type, _auto_open_depth)
 }
-LogToBuffer :: (_auto_open_depth: i32) {
+LogToBuffer :: (_auto_open_depth: i32 = -1) {
     __c__LogToBuffer(_auto_open_depth)
 }
 OpenPopupEx :: (_id: ImGuiID) {
@@ -4736,7 +4736,7 @@ BeginPopupEx :: (_id: ImGuiID, _extra_flags: ImGuiWindowFlags) -> bool {
     __c__BeginPopupEx(&result, _id, _extra_flags)
     return result
 }
-BeginTooltipEx :: (_extra_flags: ImGuiWindowFlags, _override_previous_tooltip: bool) {
+BeginTooltipEx :: (_extra_flags: ImGuiWindowFlags, _override_previous_tooltip: bool = true) {
     __c__BeginTooltipEx(_extra_flags, _override_previous_tooltip)
 }
 GetTopMostPopupModal :: () -> &ImGuiWindow {
@@ -4749,7 +4749,7 @@ FindBestWindowPosForPopup :: (_window: &ImGuiWindow) -> ImVec2 {
     __c__FindBestWindowPosForPopup(&result, _window)
     return result
 }
-FindBestWindowPosForPopupEx :: (_ref_pos: ref ImVec2, _size: ref ImVec2, _last_dir: &ImGuiDir, _r_outer: ref ImRect, _r_avoid: ref ImRect, _policy: ImGuiPopupPositionPolicy) -> ImVec2 {
+FindBestWindowPosForPopupEx :: (_ref_pos: ref ImVec2, _size: ref ImVec2, _last_dir: &ImGuiDir, _r_outer: ref ImRect, _r_avoid: ref ImRect, _policy: ImGuiPopupPositionPolicy = ImGuiPopupPositionPolicy_Default) -> ImVec2 {
     result : ImVec2 = default
     __c__FindBestWindowPosForPopupEx(&result, &_ref_pos, &_size, _last_dir, &_r_outer, &_r_avoid, _policy)
     return result
@@ -4776,7 +4776,7 @@ GetNavInputAmount :: (_n: ImGuiNavInput, _mode: ImGuiInputReadMode) -> f32 {
     __c__GetNavInputAmount(&result, _n, _mode)
     return result
 }
-GetNavInputAmount2d :: (_dir_sources: ImGuiNavDirSourceFlags, _mode: ImGuiInputReadMode, _slow_factor: f32, _fast_factor: f32) -> ImVec2 {
+GetNavInputAmount2d :: (_dir_sources: ImGuiNavDirSourceFlags, _mode: ImGuiInputReadMode, _slow_factor: f32 = 0.0f, _fast_factor: f32 = 0.0f) -> ImVec2 {
     result : ImVec2 = default
     __c__GetNavInputAmount2d(&result, _dir_sources, _mode, _slow_factor, _fast_factor)
     return result
@@ -4795,7 +4795,7 @@ SetNavID :: (_id: ImGuiID, _nav_layer: i32) {
 SetNavIDWithRectRel :: (_id: ImGuiID, _nav_layer: i32, _rect_rel: ref ImRect) {
     __c__SetNavIDWithRectRel(_id, _nav_layer, &_rect_rel)
 }
-IsMouseDragPastThreshold :: (_button: ImGuiMouseButton, _lock_threshold: f32) -> bool {
+IsMouseDragPastThreshold :: (_button: ImGuiMouseButton, _lock_threshold: f32 = -1.0f) -> bool {
     result : bool = default
     __c__IsMouseDragPastThreshold(&result, _button, _lock_threshold)
     return result
@@ -4813,7 +4813,7 @@ IsDragDropPayloadBeingAccepted :: () -> bool {
     __c__IsDragDropPayloadBeingAccepted(&result)
     return result
 }
-BeginColumns :: (_str_id: &char8, _count: i32, _flags: ImGuiColumnsFlags) {
+BeginColumns :: (_str_id: &char8, _count: i32, _flags: ImGuiColumnsFlags = 0) {
     __c__BeginColumns(_str_id, _count, _flags)
 }
 EndColumns :: () {
@@ -4885,45 +4885,45 @@ TabItemLabelAndCloseButton :: (_draw_list: &ImDrawList, _bb: ref ImRect, _flags:
     __c__TabItemLabelAndCloseButton(&result, _draw_list, &_bb, _flags, &_frame_padding, _label, _tab_id, _close_button_id)
     return result
 }
-RenderText :: (_pos: ImVec2, _text: &char8, _text_end: &char8, _hide_text_after_hash: bool) {
+RenderText :: (_pos: ImVec2, _text: &char8, _text_end: &char8 = null, _hide_text_after_hash: bool = true) {
     __c__RenderText(&_pos, _text, _text_end, _hide_text_after_hash)
 }
 RenderTextWrapped :: (_pos: ImVec2, _text: &char8, _text_end: &char8, _wrap_width: f32) {
     __c__RenderTextWrapped(&_pos, _text, _text_end, _wrap_width)
 }
-RenderTextClipped :: (_pos_min: ref ImVec2, _pos_max: ref ImVec2, _text: &char8, _text_end: &char8, _text_size_if_known: &ImVec2, _align: ref ImVec2, _clip_rect: &ImRect) {
+RenderTextClipped :: (_pos_min: ref ImVec2, _pos_max: ref ImVec2, _text: &char8, _text_end: &char8, _text_size_if_known: &ImVec2, _align: ref ImVec2, _clip_rect: &ImRect = null) {
     __c__RenderTextClipped(&_pos_min, &_pos_max, _text, _text_end, _text_size_if_known, &_align, _clip_rect)
 }
-RenderTextClippedEx :: (_draw_list: &ImDrawList, _pos_min: ref ImVec2, _pos_max: ref ImVec2, _text: &char8, _text_end: &char8, _text_size_if_known: &ImVec2, _align: ref ImVec2, _clip_rect: &ImRect) {
+RenderTextClippedEx :: (_draw_list: &ImDrawList, _pos_min: ref ImVec2, _pos_max: ref ImVec2, _text: &char8, _text_end: &char8, _text_size_if_known: &ImVec2, _align: ref ImVec2, _clip_rect: &ImRect = null) {
     __c__RenderTextClippedEx(_draw_list, &_pos_min, &_pos_max, _text, _text_end, _text_size_if_known, &_align, _clip_rect)
 }
 RenderTextEllipsis :: (_draw_list: &ImDrawList, _pos_min: ref ImVec2, _pos_max: ref ImVec2, _clip_max_x: f32, _ellipsis_max_x: f32, _text: &char8, _text_end: &char8, _text_size_if_known: &ImVec2) {
     __c__RenderTextEllipsis(_draw_list, &_pos_min, &_pos_max, _clip_max_x, _ellipsis_max_x, _text, _text_end, _text_size_if_known)
 }
-RenderFrame :: (_p_min: ImVec2, _p_max: ImVec2, _fill_col: ImU32, _border: bool, _rounding: f32) {
+RenderFrame :: (_p_min: ImVec2, _p_max: ImVec2, _fill_col: ImU32, _border: bool = true, _rounding: f32 = 0.0f) {
     __c__RenderFrame(&_p_min, &_p_max, _fill_col, _border, _rounding)
 }
-RenderFrameBorder :: (_p_min: ImVec2, _p_max: ImVec2, _rounding: f32) {
+RenderFrameBorder :: (_p_min: ImVec2, _p_max: ImVec2, _rounding: f32 = 0.0f) {
     __c__RenderFrameBorder(&_p_min, &_p_max, _rounding)
 }
-RenderColorRectWithAlphaCheckerboard :: (_p_min: ImVec2, _p_max: ImVec2, _fill_col: ImU32, _grid_step: f32, _grid_off: ImVec2, _rounding: f32, _rounding_corners_flags: i32) {
+RenderColorRectWithAlphaCheckerboard :: (_p_min: ImVec2, _p_max: ImVec2, _fill_col: ImU32, _grid_step: f32, _grid_off: ImVec2, _rounding: f32 = 0.0f, _rounding_corners_flags: i32 = @bin_not(0)) {
     __c__RenderColorRectWithAlphaCheckerboard(&_p_min, &_p_max, _fill_col, _grid_step, &_grid_off, _rounding, _rounding_corners_flags)
 }
 RenderCheckMark :: (_pos: ImVec2, _col: ImU32, _sz: f32) {
     __c__RenderCheckMark(&_pos, _col, _sz)
 }
-RenderNavHighlight :: (_bb: ref ImRect, _id: ImGuiID, _flags: ImGuiNavHighlightFlags) {
+RenderNavHighlight :: (_bb: ref ImRect, _id: ImGuiID, _flags: ImGuiNavHighlightFlags = ImGuiNavHighlightFlags_TypeDefault) {
     __c__RenderNavHighlight(&_bb, _id, _flags)
 }
-FindRenderedTextEnd :: (_text: &char8, _text_end: &char8) -> &char8 {
+FindRenderedTextEnd :: (_text: &char8, _text_end: &char8 = null) -> &char8 {
     result : &char8 = default
     __c__FindRenderedTextEnd(&result, _text, _text_end)
     return result
 }
-LogRenderedText :: (_ref_pos: &ImVec2, _text: &char8, _text_end: &char8) {
+LogRenderedText :: (_ref_pos: &ImVec2, _text: &char8, _text_end: &char8 = null) {
     __c__LogRenderedText(_ref_pos, _text, _text_end)
 }
-RenderArrow :: (_draw_list: &ImDrawList, _pos: ImVec2, _col: ImU32, _dir: ImGuiDir, _scale: f32) {
+RenderArrow :: (_draw_list: &ImDrawList, _pos: ImVec2, _col: ImU32, _dir: ImGuiDir, _scale: f32 = 1.0f) {
     __c__RenderArrow(_draw_list, &_pos, _col, _dir, _scale)
 }
 RenderBullet :: (_draw_list: &ImDrawList, _pos: ImVec2, _col: ImU32) {
@@ -4938,10 +4938,10 @@ RenderArrowPointingAt :: (_draw_list: &ImDrawList, _pos: ImVec2, _half_sz: ImVec
 RenderRectFilledRangeH :: (_draw_list: &ImDrawList, _rect: ref ImRect, _col: ImU32, _x_start_norm: f32, _x_end_norm: f32, _rounding: f32) {
     __c__RenderRectFilledRangeH(_draw_list, &_rect, _col, _x_start_norm, _x_end_norm, _rounding)
 }
-TextEx :: (_text: &char8, _text_end: &char8, _flags: ImGuiTextFlags) {
+TextEx :: (_text: &char8, _text_end: &char8 = null, _flags: ImGuiTextFlags = 0) {
     __c__TextEx(_text, _text_end, _flags)
 }
-ButtonEx :: (_label: &char8, _size_arg: ref ImVec2, _flags: ImGuiButtonFlags) -> bool {
+ButtonEx :: (_label: &char8, _size_arg: ref ImVec2, _flags: ImGuiButtonFlags = 0) -> bool {
     result : bool = default
     __c__ButtonEx(&result, _label, &_size_arg, _flags)
     return result
@@ -4982,7 +4982,7 @@ GetWindowResizeID :: (_window: &ImGuiWindow, _n: i32) -> ImGuiID {
 SeparatorEx :: (_flags: ImGuiSeparatorFlags) {
     __c__SeparatorEx(_flags)
 }
-ButtonBehavior :: (_bb: ref ImRect, _id: ImGuiID, _out_hovered: &bool, _out_held: &bool, _flags: ImGuiButtonFlags) -> bool {
+ButtonBehavior :: (_bb: ref ImRect, _id: ImGuiID, _out_hovered: &bool, _out_held: &bool, _flags: ImGuiButtonFlags = 0) -> bool {
     result : bool = default
     __c__ButtonBehavior(&result, &_bb, _id, _out_hovered, _out_held, _flags)
     return result
@@ -4997,17 +4997,17 @@ SliderBehavior :: (_bb: ref ImRect, _id: ImGuiID, _data_type: ImGuiDataType, _p_
     __c__SliderBehavior(&result, &_bb, _id, _data_type, _p_v, _p_min, _p_max, _format, _power, _flags, _out_grab_bb)
     return result
 }
-SplitterBehavior :: (_bb: ref ImRect, _id: ImGuiID, _axis: ImGuiAxis, _size1: &f32, _size2: &f32, _min_size1: f32, _min_size2: f32, _hover_extend: f32, _hover_visibility_delay: f32) -> bool {
+SplitterBehavior :: (_bb: ref ImRect, _id: ImGuiID, _axis: ImGuiAxis, _size1: &f32, _size2: &f32, _min_size1: f32, _min_size2: f32, _hover_extend: f32 = 0.0f, _hover_visibility_delay: f32 = 0.0f) -> bool {
     result : bool = default
     __c__SplitterBehavior(&result, &_bb, _id, _axis, _size1, _size2, _min_size1, _min_size2, _hover_extend, _hover_visibility_delay)
     return result
 }
-TreeNodeBehavior :: (_id: ImGuiID, _flags: ImGuiTreeNodeFlags, _label: &char8, _label_end: &char8) -> bool {
+TreeNodeBehavior :: (_id: ImGuiID, _flags: ImGuiTreeNodeFlags, _label: &char8, _label_end: &char8 = null) -> bool {
     result : bool = default
     __c__TreeNodeBehavior(&result, _id, _flags, _label, _label_end)
     return result
 }
-TreeNodeBehaviorIsOpen :: (_id: ImGuiID, _flags: ImGuiTreeNodeFlags) -> bool {
+TreeNodeBehaviorIsOpen :: (_id: ImGuiID, _flags: ImGuiTreeNodeFlags = 0) -> bool {
     result : bool = default
     __c__TreeNodeBehaviorIsOpen(&result, _id, _flags)
     return result
@@ -5033,7 +5033,7 @@ DataTypeApplyOpFromText :: (_buf: &char8, _initial_value_buf: &char8, _data_type
     __c__DataTypeApplyOpFromText(&result, _buf, _initial_value_buf, _data_type, _p_data, _format)
     return result
 }
-InputTextEx :: (_label: &char8, _hint: &char8, _buf: &char8, _buf_size: i32, _size_arg: ref ImVec2, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback, _user_data: &void) -> bool {
+InputTextEx :: (_label: &char8, _hint: &char8, _buf: &char8, _buf_size: i32, _size_arg: ref ImVec2, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback = null, _user_data: &void = null) -> bool {
     result : bool = default
     __c__InputTextEx(&result, _label, _hint, _buf, _buf_size, &_size_arg, _flags, _callback, _user_data)
     return result
@@ -5213,7 +5213,7 @@ RenderWindowDecorations :: (_window: &ImGuiWindow, _title_bar_rect: ref ImRect, 
 RenderWindowTitleBarContents :: (_window: &ImGuiWindow, _title_bar_rect: ref ImRect, _name: &char8, _p_open: &bool) {
     __c__RenderWindowTitleBarContents(_window, &_title_bar_rect, _name, _p_open)
 }
-ImGui_ImplOpenGL3_Init :: (_glsl_version: &char8) -> bool {
+ImGui_ImplOpenGL3_Init :: (_glsl_version: &char8 = null) -> bool {
     result : bool = default
     __c__ImGui_ImplOpenGL3_Init(&result, _glsl_version)
     return result
@@ -5290,7 +5290,7 @@ __c__ImGuiIO_ClearInputCharacters_48 :: (self: &ImGuiIO);
 __c__ImGuiIO_new_80 :: (self: &ImGuiIO);
 __c__ImGuiInputTextCallbackData_new_12 :: (self: &ImGuiInputTextCallbackData);
 __c__ImGuiInputTextCallbackData_DeleteChars_13 :: (self: &ImGuiInputTextCallbackData, _pos: i32, _bytes_count: i32);
-__c__ImGuiInputTextCallbackData_InsertChars_14 :: (self: &ImGuiInputTextCallbackData, _pos: i32, _text: &char8, _text_end: &char8);
+__c__ImGuiInputTextCallbackData_InsertChars_14 :: (self: &ImGuiInputTextCallbackData, _pos: i32, _text: &char8, _text_end: &char8 = null);
 __c__ImGuiInputTextCallbackData_HasSelection_15 :: (self: &ImGuiInputTextCallbackData, ret: &bool);
 __c__ImGuiPayload_new_8 :: (self: &ImGuiPayload);
 __c__ImGuiPayload_Clear_9 :: (self: &ImGuiPayload);
@@ -5298,9 +5298,9 @@ __c__ImGuiPayload_IsDataType_10 :: (self: &ImGuiPayload, ret: &bool, _type: &cha
 __c__ImGuiPayload_IsPreview_11 :: (self: &ImGuiPayload, ret: &bool);
 __c__ImGuiPayload_IsDelivery_12 :: (self: &ImGuiPayload, ret: &bool);
 __c__ImGuiOnceUponAFrame_new_0 :: (self: &ImGuiOnceUponAFrame);
-__c__ImGuiTextFilter_new_0 :: (self: &ImGuiTextFilter, _default_filter: &char8);
-__c__ImGuiTextFilter_Draw_1 :: (self: &ImGuiTextFilter, ret: &bool, _label: &char8, _width: f32);
-__c__ImGuiTextFilter_PassFilter_2 :: (self: &ImGuiTextFilter, ret: &bool, _text: &char8, _text_end: &char8);
+__c__ImGuiTextFilter_new_0 :: (self: &ImGuiTextFilter, _default_filter: &char8 = "");
+__c__ImGuiTextFilter_Draw_1 :: (self: &ImGuiTextFilter, ret: &bool, _label: &char8 = "Filter (inc,-exc)", _width: f32 = 0.0f);
+__c__ImGuiTextFilter_PassFilter_2 :: (self: &ImGuiTextFilter, ret: &bool, _text: &char8, _text_end: &char8 = null);
 __c__ImGuiTextFilter_Build_3 :: (self: &ImGuiTextFilter);
 __c__ImGuiTextFilter_Clear_4 :: (self: &ImGuiTextFilter);
 __c__ImGuiTextFilter_IsActive_5 :: (self: &ImGuiTextFilter, ret: &bool);
@@ -5316,39 +5316,39 @@ __c__ImGuiTextBuffer_empty_7 :: (self: &ImGuiTextBuffer, ret: &bool);
 __c__ImGuiTextBuffer_clear_8 :: (self: &ImGuiTextBuffer);
 __c__ImGuiTextBuffer_reserve_9 :: (self: &ImGuiTextBuffer, _capacity: i32);
 __c__ImGuiTextBuffer_c_str_10 :: (self: &ImGuiTextBuffer, ret: &&char8);
-__c__ImGuiTextBuffer_append_11 :: (self: &ImGuiTextBuffer, _str: &char8, _str_end: &char8);
+__c__ImGuiTextBuffer_append_11 :: (self: &ImGuiTextBuffer, _str: &char8, _str_end: &char8 = null);
 __c__ImGuiTextBuffer_appendf_12 :: (self: &ImGuiTextBuffer, _fmt: &char8);
 __c__ImGuiTextBuffer_appendfv_13 :: (self: &ImGuiTextBuffer, _fmt: &char8, _args: va_list);
 __c__ImGuiStorage_Clear_2 :: (self: &ImGuiStorage);
-__c__ImGuiStorage_GetInt_3 :: (self: &ImGuiStorage, ret: &i32, _key: ImGuiID, _default_val: i32);
+__c__ImGuiStorage_GetInt_3 :: (self: &ImGuiStorage, ret: &i32, _key: ImGuiID, _default_val: i32 = 0);
 __c__ImGuiStorage_SetInt_4 :: (self: &ImGuiStorage, _key: ImGuiID, _val: i32);
-__c__ImGuiStorage_GetBool_5 :: (self: &ImGuiStorage, ret: &bool, _key: ImGuiID, _default_val: bool);
+__c__ImGuiStorage_GetBool_5 :: (self: &ImGuiStorage, ret: &bool, _key: ImGuiID, _default_val: bool = false);
 __c__ImGuiStorage_SetBool_6 :: (self: &ImGuiStorage, _key: ImGuiID, _val: bool);
-__c__ImGuiStorage_GetFloat_7 :: (self: &ImGuiStorage, ret: &f32, _key: ImGuiID, _default_val: f32);
+__c__ImGuiStorage_GetFloat_7 :: (self: &ImGuiStorage, ret: &f32, _key: ImGuiID, _default_val: f32 = 0.0f);
 __c__ImGuiStorage_SetFloat_8 :: (self: &ImGuiStorage, _key: ImGuiID, _val: f32);
 __c__ImGuiStorage_GetVoidPtr_9 :: (self: &ImGuiStorage, ret: &&void, _key: ImGuiID);
 __c__ImGuiStorage_SetVoidPtr_10 :: (self: &ImGuiStorage, _key: ImGuiID, _val: &void);
-__c__ImGuiStorage_GetIntRef_11 :: (self: &ImGuiStorage, ret: &&i32, _key: ImGuiID, _default_val: i32);
-__c__ImGuiStorage_GetBoolRef_12 :: (self: &ImGuiStorage, ret: &&bool, _key: ImGuiID, _default_val: bool);
-__c__ImGuiStorage_GetFloatRef_13 :: (self: &ImGuiStorage, ret: &&f32, _key: ImGuiID, _default_val: f32);
-__c__ImGuiStorage_GetVoidPtrRef_14 :: (self: &ImGuiStorage, ret: &&&void, _key: ImGuiID, _default_val: &void);
+__c__ImGuiStorage_GetIntRef_11 :: (self: &ImGuiStorage, ret: &&i32, _key: ImGuiID, _default_val: i32 = 0);
+__c__ImGuiStorage_GetBoolRef_12 :: (self: &ImGuiStorage, ret: &&bool, _key: ImGuiID, _default_val: bool = false);
+__c__ImGuiStorage_GetFloatRef_13 :: (self: &ImGuiStorage, ret: &&f32, _key: ImGuiID, _default_val: f32 = 0.0f);
+__c__ImGuiStorage_GetVoidPtrRef_14 :: (self: &ImGuiStorage, ret: &&&void, _key: ImGuiID, _default_val: &void = null);
 __c__ImGuiStorage_SetAllInt_15 :: (self: &ImGuiStorage, _val: i32);
 __c__ImGuiStorage_BuildSortByKey_16 :: (self: &ImGuiStorage);
 __c__ImGuiStoragePair_new_2 :: (self: &ImGuiStoragePair, __key: ImGuiID, __val_i: i32);
 __c__ImGuiStoragePair_new_3 :: (self: &ImGuiStoragePair, __key: ImGuiID, __val_f: f32);
 __c__ImGuiStoragePair_new_4 :: (self: &ImGuiStoragePair, __key: ImGuiID, __val_p: &void);
-__c__ImGuiListClipper_new_6 :: (self: &ImGuiListClipper, _items_count: i32, _items_height: f32);
+__c__ImGuiListClipper_new_6 :: (self: &ImGuiListClipper, _items_count: i32 = -1, _items_height: f32 = -1.0f);
 __c__ImGuiListClipper_dtor :: (self: &ImGuiListClipper);
 __c__ImGuiListClipper_Step_8 :: (self: &ImGuiListClipper, ret: &bool);
-__c__ImGuiListClipper_Begin_9 :: (self: &ImGuiListClipper, _items_count: i32, _items_height: f32);
+__c__ImGuiListClipper_Begin_9 :: (self: &ImGuiListClipper, _items_count: i32, _items_height: f32 = -1.0f);
 __c__ImGuiListClipper_End_10 :: (self: &ImGuiListClipper);
 __c__ImColor_new_1 :: (self: &ImColor);
-__c__ImColor_new_2 :: (self: &ImColor, _r: i32, _g: i32, _b: i32, _a: i32);
+__c__ImColor_new_2 :: (self: &ImColor, _r: i32, _g: i32, _b: i32, _a: i32 = 255);
 __c__ImColor_new_3 :: (self: &ImColor, _rgba: ImU32);
-__c__ImColor_new_4 :: (self: &ImColor, _r: f32, _g: f32, _b: f32, _a: f32);
+__c__ImColor_new_4 :: (self: &ImColor, _r: f32, _g: f32, _b: f32, _a: f32 = 1.0f);
 __c__ImColor_new_5 :: (self: &ImColor, _col: &ImVec4);
-__c__ImColor_SetHSV_8 :: (self: &ImColor, _h: f32, _s: f32, _v: f32, _a: f32);
-__c__ImColor_HSV_9 :: (self: &ImColor, ret: &ImColor, _h: f32, _s: f32, _v: f32, _a: f32);
+__c__ImColor_SetHSV_8 :: (self: &ImColor, _h: f32, _s: f32, _v: f32, _a: f32 = 1.0f);
+__c__ImColor_HSV_9 :: (self: &ImColor, ret: &ImColor, _h: f32, _s: f32, _v: f32, _a: f32 = 1.0f);
 __c__ImDrawCmd_new_7 :: (self: &ImDrawCmd);
 __c__ImDrawListSplitter_new_3 :: (self: &ImDrawListSplitter);
 __c__ImDrawListSplitter_dtor :: (self: &ImDrawListSplitter);
@@ -5359,42 +5359,42 @@ __c__ImDrawListSplitter_Merge_8 :: (self: &ImDrawListSplitter, _draw_list: &ImDr
 __c__ImDrawListSplitter_SetCurrentChannel_9 :: (self: &ImDrawListSplitter, _draw_list: &ImDrawList, _channel_idx: i32);
 __c__ImDrawList_new_14 :: (self: &ImDrawList, _shared_data: &ImDrawListSharedData);
 __c__ImDrawList_dtor :: (self: &ImDrawList);
-__c__ImDrawList_PushClipRect_16 :: (self: &ImDrawList, _clip_rect_min: &ImVec2, _clip_rect_max: &ImVec2, _intersect_with_current_clip_rect: bool);
+__c__ImDrawList_PushClipRect_16 :: (self: &ImDrawList, _clip_rect_min: &ImVec2, _clip_rect_max: &ImVec2, _intersect_with_current_clip_rect: bool = false);
 __c__ImDrawList_PushClipRectFullScreen_17 :: (self: &ImDrawList);
 __c__ImDrawList_PopClipRect_18 :: (self: &ImDrawList);
 __c__ImDrawList_PushTextureID_19 :: (self: &ImDrawList, _texture_id: ImTextureID);
 __c__ImDrawList_PopTextureID_20 :: (self: &ImDrawList);
 __c__ImDrawList_GetClipRectMin_21 :: (self: &ImDrawList, ret: &ImVec2);
 __c__ImDrawList_GetClipRectMax_22 :: (self: &ImDrawList, ret: &ImVec2);
-__c__ImDrawList_AddLine_23 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _col: ImU32, _thickness: f32);
-__c__ImDrawList_AddRect_24 :: (self: &ImDrawList, _p_min: &ImVec2, _p_max: &ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags, _thickness: f32);
-__c__ImDrawList_AddRectFilled_25 :: (self: &ImDrawList, _p_min: &ImVec2, _p_max: &ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags);
+__c__ImDrawList_AddLine_23 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _col: ImU32, _thickness: f32 = 1.0f);
+__c__ImDrawList_AddRect_24 :: (self: &ImDrawList, _p_min: &ImVec2, _p_max: &ImVec2, _col: ImU32, _rounding: f32 = 0.0f, _rounding_corners: ImDrawCornerFlags = ImDrawCornerFlags_All, _thickness: f32 = 1.0f);
+__c__ImDrawList_AddRectFilled_25 :: (self: &ImDrawList, _p_min: &ImVec2, _p_max: &ImVec2, _col: ImU32, _rounding: f32 = 0.0f, _rounding_corners: ImDrawCornerFlags = ImDrawCornerFlags_All);
 __c__ImDrawList_AddRectFilledMultiColor_26 :: (self: &ImDrawList, _p_min: &ImVec2, _p_max: &ImVec2, _col_upr_left: ImU32, _col_upr_right: ImU32, _col_bot_right: ImU32, _col_bot_left: ImU32);
-__c__ImDrawList_AddQuad_27 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _col: ImU32, _thickness: f32);
+__c__ImDrawList_AddQuad_27 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _col: ImU32, _thickness: f32 = 1.0f);
 __c__ImDrawList_AddQuadFilled_28 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _col: ImU32);
-__c__ImDrawList_AddTriangle_29 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _col: ImU32, _thickness: f32);
+__c__ImDrawList_AddTriangle_29 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _col: ImU32, _thickness: f32 = 1.0f);
 __c__ImDrawList_AddTriangleFilled_30 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _col: ImU32);
-__c__ImDrawList_AddCircle_31 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32, _thickness: f32);
-__c__ImDrawList_AddCircleFilled_32 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32);
-__c__ImDrawList_AddNgon_33 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32, _thickness: f32);
+__c__ImDrawList_AddCircle_31 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32 = 12, _thickness: f32 = 1.0f);
+__c__ImDrawList_AddCircleFilled_32 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32 = 12);
+__c__ImDrawList_AddNgon_33 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32, _thickness: f32 = 1.0f);
 __c__ImDrawList_AddNgonFilled_34 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32);
-__c__ImDrawList_AddText_35 :: (self: &ImDrawList, _pos: &ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8);
-__c__ImDrawList_AddText_36 :: (self: &ImDrawList, _font: &ImFont, _font_size: f32, _pos: &ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8, _wrap_width: f32, _cpu_fine_clip_rect: &ImVec4);
+__c__ImDrawList_AddText_35 :: (self: &ImDrawList, _pos: &ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8 = null);
+__c__ImDrawList_AddText_36 :: (self: &ImDrawList, _font: &ImFont, _font_size: f32, _pos: &ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8 = null, _wrap_width: f32 = 0.0f, _cpu_fine_clip_rect: &ImVec4 = null);
 __c__ImDrawList_AddPolyline_37 :: (self: &ImDrawList, _points: &ImVec2, _num_points: i32, _col: ImU32, _closed: bool, _thickness: f32);
 __c__ImDrawList_AddConvexPolyFilled_38 :: (self: &ImDrawList, _points: &ImVec2, _num_points: i32, _col: ImU32);
-__c__ImDrawList_AddBezierCurve_39 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _col: ImU32, _thickness: f32, _num_segments: i32);
-__c__ImDrawList_AddImage_40 :: (self: &ImDrawList, _user_texture_id: ImTextureID, _p_min: &ImVec2, _p_max: &ImVec2, _uv_min: &ImVec2, _uv_max: &ImVec2, _col: ImU32);
-__c__ImDrawList_AddImageQuad_41 :: (self: &ImDrawList, _user_texture_id: ImTextureID, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _uv1: &ImVec2, _uv2: &ImVec2, _uv3: &ImVec2, _uv4: &ImVec2, _col: ImU32);
-__c__ImDrawList_AddImageRounded_42 :: (self: &ImDrawList, _user_texture_id: ImTextureID, _p_min: &ImVec2, _p_max: &ImVec2, _uv_min: &ImVec2, _uv_max: &ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags);
+__c__ImDrawList_AddBezierCurve_39 :: (self: &ImDrawList, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _col: ImU32, _thickness: f32, _num_segments: i32 = 0);
+__c__ImDrawList_AddImage_40 :: (self: &ImDrawList, _user_texture_id: ImTextureID, _p_min: &ImVec2, _p_max: &ImVec2, _uv_min: &ImVec2, _uv_max: &ImVec2, _col: ImU32 = IM_COL32_WHITE);
+__c__ImDrawList_AddImageQuad_41 :: (self: &ImDrawList, _user_texture_id: ImTextureID, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _uv1: &ImVec2, _uv2: &ImVec2, _uv3: &ImVec2, _uv4: &ImVec2, _col: ImU32 = IM_COL32_WHITE);
+__c__ImDrawList_AddImageRounded_42 :: (self: &ImDrawList, _user_texture_id: ImTextureID, _p_min: &ImVec2, _p_max: &ImVec2, _uv_min: &ImVec2, _uv_max: &ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags = ImDrawCornerFlags_All);
 __c__ImDrawList_PathClear_43 :: (self: &ImDrawList);
 __c__ImDrawList_PathLineTo_44 :: (self: &ImDrawList, _pos: &ImVec2);
 __c__ImDrawList_PathLineToMergeDuplicate_45 :: (self: &ImDrawList, _pos: &ImVec2);
 __c__ImDrawList_PathFillConvex_46 :: (self: &ImDrawList, _col: ImU32);
-__c__ImDrawList_PathStroke_47 :: (self: &ImDrawList, _col: ImU32, _closed: bool, _thickness: f32);
-__c__ImDrawList_PathArcTo_48 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _a_min: f32, _a_max: f32, _num_segments: i32);
+__c__ImDrawList_PathStroke_47 :: (self: &ImDrawList, _col: ImU32, _closed: bool, _thickness: f32 = 1.0f);
+__c__ImDrawList_PathArcTo_48 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _a_min: f32, _a_max: f32, _num_segments: i32 = 10);
 __c__ImDrawList_PathArcToFast_49 :: (self: &ImDrawList, _center: &ImVec2, _radius: f32, _a_min_of_12: i32, _a_max_of_12: i32);
-__c__ImDrawList_PathBezierCurveTo_50 :: (self: &ImDrawList, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _num_segments: i32);
-__c__ImDrawList_PathRect_51 :: (self: &ImDrawList, _rect_min: &ImVec2, _rect_max: &ImVec2, _rounding: f32, _rounding_corners: ImDrawCornerFlags);
+__c__ImDrawList_PathBezierCurveTo_50 :: (self: &ImDrawList, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _num_segments: i32 = 0);
+__c__ImDrawList_PathRect_51 :: (self: &ImDrawList, _rect_min: &ImVec2, _rect_max: &ImVec2, _rounding: f32 = 0.0f, _rounding_corners: ImDrawCornerFlags = ImDrawCornerFlags_All);
 __c__ImDrawList_AddCallback_52 :: (self: &ImDrawList, _callback: ImDrawCallback, _callback_data: &void);
 __c__ImDrawList_AddDrawCmd_53 :: (self: &ImDrawList);
 __c__ImDrawList_CloneOutput_54 :: (self: &ImDrawList, ret: &&ImDrawList);
@@ -5424,7 +5424,7 @@ __c__ImFontGlyphRangesBuilder_Clear_2 :: (self: &ImFontGlyphRangesBuilder);
 __c__ImFontGlyphRangesBuilder_GetBit_3 :: (self: &ImFontGlyphRangesBuilder, ret: &bool, _n: i32);
 __c__ImFontGlyphRangesBuilder_SetBit_4 :: (self: &ImFontGlyphRangesBuilder, _n: i32);
 __c__ImFontGlyphRangesBuilder_AddChar_5 :: (self: &ImFontGlyphRangesBuilder, _c: ImWchar);
-__c__ImFontGlyphRangesBuilder_AddText_6 :: (self: &ImFontGlyphRangesBuilder, _text: &char8, _text_end: &char8);
+__c__ImFontGlyphRangesBuilder_AddText_6 :: (self: &ImFontGlyphRangesBuilder, _text: &char8, _text_end: &char8 = null);
 __c__ImFontGlyphRangesBuilder_AddRanges_7 :: (self: &ImFontGlyphRangesBuilder, _ranges: &ImWchar);
 __c__ImFontGlyphRangesBuilder_BuildRanges_8 :: (self: &ImFontGlyphRangesBuilder, _out_ranges: &__UNKNOWN__);
 __c__ImFontAtlasCustomRect_new_8 :: (self: &ImFontAtlasCustomRect);
@@ -5432,18 +5432,18 @@ __c__ImFontAtlasCustomRect_IsPacked_9 :: (self: &ImFontAtlasCustomRect, ret: &bo
 __c__ImFontAtlas_new_0 :: (self: &ImFontAtlas);
 __c__ImFontAtlas_dtor :: (self: &ImFontAtlas);
 __c__ImFontAtlas_AddFont_2 :: (self: &ImFontAtlas, ret: &&ImFont, _font_cfg: &ImFontConfig);
-__c__ImFontAtlas_AddFontDefault_3 :: (self: &ImFontAtlas, ret: &&ImFont, _font_cfg: &ImFontConfig);
-__c__ImFontAtlas_AddFontFromFileTTF_4 :: (self: &ImFontAtlas, ret: &&ImFont, _filename: &char8, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar);
-__c__ImFontAtlas_AddFontFromMemoryTTF_5 :: (self: &ImFontAtlas, ret: &&ImFont, _font_data: &void, _font_size: i32, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar);
-__c__ImFontAtlas_AddFontFromMemoryCompressedTTF_6 :: (self: &ImFontAtlas, ret: &&ImFont, _compressed_font_data: &void, _compressed_font_size: i32, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar);
-__c__ImFontAtlas_AddFontFromMemoryCompressedBase85TTF_7 :: (self: &ImFontAtlas, ret: &&ImFont, _compressed_font_data_base85: &char8, _size_pixels: f32, _font_cfg: &ImFontConfig, _glyph_ranges: &ImWchar);
+__c__ImFontAtlas_AddFontDefault_3 :: (self: &ImFontAtlas, ret: &&ImFont, _font_cfg: &ImFontConfig = null);
+__c__ImFontAtlas_AddFontFromFileTTF_4 :: (self: &ImFontAtlas, ret: &&ImFont, _filename: &char8, _size_pixels: f32, _font_cfg: &ImFontConfig = null, _glyph_ranges: &ImWchar = null);
+__c__ImFontAtlas_AddFontFromMemoryTTF_5 :: (self: &ImFontAtlas, ret: &&ImFont, _font_data: &void, _font_size: i32, _size_pixels: f32, _font_cfg: &ImFontConfig = null, _glyph_ranges: &ImWchar = null);
+__c__ImFontAtlas_AddFontFromMemoryCompressedTTF_6 :: (self: &ImFontAtlas, ret: &&ImFont, _compressed_font_data: &void, _compressed_font_size: i32, _size_pixels: f32, _font_cfg: &ImFontConfig = null, _glyph_ranges: &ImWchar = null);
+__c__ImFontAtlas_AddFontFromMemoryCompressedBase85TTF_7 :: (self: &ImFontAtlas, ret: &&ImFont, _compressed_font_data_base85: &char8, _size_pixels: f32, _font_cfg: &ImFontConfig = null, _glyph_ranges: &ImWchar = null);
 __c__ImFontAtlas_ClearInputData_8 :: (self: &ImFontAtlas);
 __c__ImFontAtlas_ClearTexData_9 :: (self: &ImFontAtlas);
 __c__ImFontAtlas_ClearFonts_10 :: (self: &ImFontAtlas);
 __c__ImFontAtlas_Clear_11 :: (self: &ImFontAtlas);
 __c__ImFontAtlas_Build_12 :: (self: &ImFontAtlas, ret: &bool);
-__c__ImFontAtlas_GetTexDataAsAlpha8_13 :: (self: &ImFontAtlas, _out_pixels: &&u8, _out_width: &i32, _out_height: &i32, _out_bytes_per_pixel: &i32);
-__c__ImFontAtlas_GetTexDataAsRGBA32_14 :: (self: &ImFontAtlas, _out_pixels: &&u8, _out_width: &i32, _out_height: &i32, _out_bytes_per_pixel: &i32);
+__c__ImFontAtlas_GetTexDataAsAlpha8_13 :: (self: &ImFontAtlas, _out_pixels: &&u8, _out_width: &i32, _out_height: &i32, _out_bytes_per_pixel: &i32 = null);
+__c__ImFontAtlas_GetTexDataAsRGBA32_14 :: (self: &ImFontAtlas, _out_pixels: &&u8, _out_width: &i32, _out_height: &i32, _out_bytes_per_pixel: &i32 = null);
 __c__ImFontAtlas_IsBuilt_15 :: (self: &ImFontAtlas, ret: &bool);
 __c__ImFontAtlas_SetTexID_16 :: (self: &ImFontAtlas, _id: ImTextureID);
 __c__ImFontAtlas_GetGlyphRangesDefault_17 :: (self: &ImFontAtlas, ret: &&ImWchar);
@@ -5466,15 +5466,15 @@ __c__ImFont_FindGlyphNoFallback_20 :: (self: &ImFont, ret: &&ImFontGlyph, _c: Im
 __c__ImFont_GetCharAdvance_21 :: (self: &ImFont, ret: &f32, _c: ImWchar);
 __c__ImFont_IsLoaded_22 :: (self: &ImFont, ret: &bool);
 __c__ImFont_GetDebugName_23 :: (self: &ImFont, ret: &&char8);
-__c__ImFont_CalcTextSizeA_24 :: (self: &ImFont, ret: &ImVec2, _size: f32, _max_width: f32, _wrap_width: f32, _text_begin: &char8, _text_end: &char8, _remaining: &&char8);
+__c__ImFont_CalcTextSizeA_24 :: (self: &ImFont, ret: &ImVec2, _size: f32, _max_width: f32, _wrap_width: f32, _text_begin: &char8, _text_end: &char8 = null, _remaining: &&char8 = null);
 __c__ImFont_CalcWordWrapPositionA_25 :: (self: &ImFont, ret: &&char8, _scale: f32, _text: &char8, _text_end: &char8, _wrap_width: f32);
 __c__ImFont_RenderChar_26 :: (self: &ImFont, _draw_list: &ImDrawList, _size: f32, _pos: &ImVec2, _col: ImU32, _c: ImWchar);
-__c__ImFont_RenderText_27 :: (self: &ImFont, _draw_list: &ImDrawList, _size: f32, _pos: &ImVec2, _col: ImU32, _clip_rect: &ImVec4, _text_begin: &char8, _text_end: &char8, _wrap_width: f32, _cpu_fine_clip: bool);
+__c__ImFont_RenderText_27 :: (self: &ImFont, _draw_list: &ImDrawList, _size: f32, _pos: &ImVec2, _col: ImU32, _clip_rect: &ImVec4, _text_begin: &char8, _text_end: &char8, _wrap_width: f32 = 0.0f, _cpu_fine_clip: bool = false);
 __c__ImFont_BuildLookupTable_28 :: (self: &ImFont);
 __c__ImFont_ClearOutputData_29 :: (self: &ImFont);
 __c__ImFont_GrowIndex_30 :: (self: &ImFont, _new_size: i32);
 __c__ImFont_AddGlyph_31 :: (self: &ImFont, _c: ImWchar, _x0: f32, _y0: f32, _x1: f32, _y1: f32, _u0: f32, _v0: f32, _u1: f32, _v1: f32, _advance_x: f32);
-__c__ImFont_AddRemapChar_32 :: (self: &ImFont, _dst: ImWchar, _src: ImWchar, _overwrite_dst: bool);
+__c__ImFont_AddRemapChar_32 :: (self: &ImFont, _dst: ImWchar, _src: ImWchar, _overwrite_dst: bool = true);
 __c__ImFont_SetFallbackChar_33 :: (self: &ImFont, _c: ImWchar);
 __c__ImBoolVector_new_1 :: (self: &ImBoolVector);
 __c__ImBoolVector_Resize_2 :: (self: &ImBoolVector, _sz: i32);
@@ -5552,10 +5552,10 @@ __c__ImGuiContext_new_172 :: (self: &ImGuiContext, _shared_font_atlas: &ImFontAt
 __c__ImGuiWindowTempData_new_40 :: (self: &ImGuiWindowTempData);
 __c__ImGuiWindow_new_76 :: (self: &ImGuiWindow, _context: &ImGuiContext, _name: &char8);
 __c__ImGuiWindow_dtor :: (self: &ImGuiWindow);
-__c__ImGuiWindow_GetID_78 :: (self: &ImGuiWindow, ret: &ImGuiID, _str: &char8, _str_end: &char8);
+__c__ImGuiWindow_GetID_78 :: (self: &ImGuiWindow, ret: &ImGuiID, _str: &char8, _str_end: &char8 = null);
 __c__ImGuiWindow_GetID_79 :: (self: &ImGuiWindow, ret: &ImGuiID, _ptr: &void);
 __c__ImGuiWindow_GetID_80 :: (self: &ImGuiWindow, ret: &ImGuiID, _n: i32);
-__c__ImGuiWindow_GetIDNoKeepAlive_81 :: (self: &ImGuiWindow, ret: &ImGuiID, _str: &char8, _str_end: &char8);
+__c__ImGuiWindow_GetIDNoKeepAlive_81 :: (self: &ImGuiWindow, ret: &ImGuiID, _str: &char8, _str_end: &char8 = null);
 __c__ImGuiWindow_GetIDNoKeepAlive_82 :: (self: &ImGuiWindow, ret: &ImGuiID, _ptr: &void);
 __c__ImGuiWindow_GetIDNoKeepAlive_83 :: (self: &ImGuiWindow, ret: &ImGuiID, _n: i32);
 __c__ImGuiWindow_GetIDFromRectangle_84 :: (self: &ImGuiWindow, ret: &ImGuiID, _r_abs: &ImRect);
@@ -5573,8 +5573,8 @@ __c__ImGuiTabBar_new_24 :: (self: &ImGuiTabBar);
 __c__ImGuiTabBar_GetTabOrder_25 :: (self: &ImGuiTabBar, ret: &i32, _tab: &ImGuiTabItem);
 __c__ImGuiTabBar_GetTabName_26 :: (self: &ImGuiTabBar, ret: &&char8, _tab: &ImGuiTabItem);
 __c__ImGuiStyleVarInfo_GetVarPtr_3 :: (self: &ImGuiStyleVarInfo, ret: &&void, _style: &ImGuiStyle);
-__c__CreateContext :: (ret: &&ImGuiContext, _shared_font_atlas: &ImFontAtlas);
-__c__DestroyContext :: (_ctx: &ImGuiContext);
+__c__CreateContext :: (ret: &&ImGuiContext, _shared_font_atlas: &ImFontAtlas = null);
+__c__DestroyContext :: (_ctx: &ImGuiContext = null);
 __c__GetCurrentContext :: (ret: &&ImGuiContext);
 __c__SetCurrentContext :: (_ctx: &ImGuiContext);
 __c__DebugCheckVersionAndDataLayout :: (ret: &bool, _version_str: &char8, _sz_io: size_t, _sz_style: size_t, _sz_vec2: size_t, _sz_vec4: size_t, _sz_drawvert: size_t, _sz_drawidx: size_t);
@@ -5584,46 +5584,46 @@ __c__NewFrame :: ();
 __c__EndFrame :: ();
 __c__Render :: ();
 __c__GetDrawData :: (ret: &&ImDrawData);
-__c__ShowDemoWindow :: (_p_open: &bool);
-__c__ShowAboutWindow :: (_p_open: &bool);
-__c__ShowMetricsWindow :: (_p_open: &bool);
-__c__ShowStyleEditor :: (_ref: &ImGuiStyle);
+__c__ShowDemoWindow :: (_p_open: &bool = null);
+__c__ShowAboutWindow :: (_p_open: &bool = null);
+__c__ShowMetricsWindow :: (_p_open: &bool = null);
+__c__ShowStyleEditor :: (_ref: &ImGuiStyle = null);
 __c__ShowStyleSelector :: (ret: &bool, _label: &char8);
 __c__ShowFontSelector :: (_label: &char8);
 __c__ShowUserGuide :: ();
 __c__GetVersion :: (ret: &&char8);
-__c__StyleColorsDark :: (_dst: &ImGuiStyle);
-__c__StyleColorsClassic :: (_dst: &ImGuiStyle);
-__c__StyleColorsLight :: (_dst: &ImGuiStyle);
-__c__Begin :: (ret: &bool, _name: &char8, _p_open: &bool, _flags: ImGuiWindowFlags);
+__c__StyleColorsDark :: (_dst: &ImGuiStyle = null);
+__c__StyleColorsClassic :: (_dst: &ImGuiStyle = null);
+__c__StyleColorsLight :: (_dst: &ImGuiStyle = null);
+__c__Begin :: (ret: &bool, _name: &char8, _p_open: &bool = null, _flags: ImGuiWindowFlags = 0);
 __c__End :: ();
-__c__BeginChild :: (ret: &bool, _str_id: &char8, _size: &ImVec2, _border: bool, _flags: ImGuiWindowFlags);
-__c__BeginChild_2 :: (ret: &bool, _id: ImGuiID, _size: &ImVec2, _border: bool, _flags: ImGuiWindowFlags);
+__c__BeginChild :: (ret: &bool, _str_id: &char8, _size: &ImVec2, _border: bool = false, _flags: ImGuiWindowFlags = 0);
+__c__BeginChild_2 :: (ret: &bool, _id: ImGuiID, _size: &ImVec2, _border: bool = false, _flags: ImGuiWindowFlags = 0);
 __c__EndChild :: ();
 __c__IsWindowAppearing :: (ret: &bool);
 __c__IsWindowCollapsed :: (ret: &bool);
-__c__IsWindowFocused :: (ret: &bool, _flags: ImGuiFocusedFlags);
-__c__IsWindowHovered :: (ret: &bool, _flags: ImGuiHoveredFlags);
+__c__IsWindowFocused :: (ret: &bool, _flags: ImGuiFocusedFlags = 0);
+__c__IsWindowHovered :: (ret: &bool, _flags: ImGuiHoveredFlags = 0);
 __c__GetWindowDrawList :: (ret: &&ImDrawList);
 __c__GetWindowPos :: (ret: &ImVec2);
 __c__GetWindowSize :: (ret: &ImVec2);
 __c__GetWindowWidth :: (ret: &f32);
 __c__GetWindowHeight :: (ret: &f32);
-__c__SetNextWindowPos :: (_pos: &ImVec2, _cond: ImGuiCond, _pivot: &ImVec2);
-__c__SetNextWindowSize :: (_size: &ImVec2, _cond: ImGuiCond);
-__c__SetNextWindowSizeConstraints :: (_size_min: &ImVec2, _size_max: &ImVec2, _custom_callback: ImGuiSizeCallback, _custom_callback_data: &void);
+__c__SetNextWindowPos :: (_pos: &ImVec2, _cond: ImGuiCond = 0, _pivot: &ImVec2);
+__c__SetNextWindowSize :: (_size: &ImVec2, _cond: ImGuiCond = 0);
+__c__SetNextWindowSizeConstraints :: (_size_min: &ImVec2, _size_max: &ImVec2, _custom_callback: ImGuiSizeCallback = null, _custom_callback_data: &void = null);
 __c__SetNextWindowContentSize :: (_size: &ImVec2);
-__c__SetNextWindowCollapsed :: (_collapsed: bool, _cond: ImGuiCond);
+__c__SetNextWindowCollapsed :: (_collapsed: bool, _cond: ImGuiCond = 0);
 __c__SetNextWindowFocus :: ();
 __c__SetNextWindowBgAlpha :: (_alpha: f32);
-__c__SetWindowPos :: (_pos: &ImVec2, _cond: ImGuiCond);
-__c__SetWindowSize :: (_size: &ImVec2, _cond: ImGuiCond);
-__c__SetWindowCollapsed :: (_collapsed: bool, _cond: ImGuiCond);
+__c__SetWindowPos :: (_pos: &ImVec2, _cond: ImGuiCond = 0);
+__c__SetWindowSize :: (_size: &ImVec2, _cond: ImGuiCond = 0);
+__c__SetWindowCollapsed :: (_collapsed: bool, _cond: ImGuiCond = 0);
 __c__SetWindowFocus :: ();
 __c__SetWindowFontScale :: (_scale: f32);
-__c__SetWindowPos_2 :: (_name: &char8, _pos: &ImVec2, _cond: ImGuiCond);
-__c__SetWindowSize_2 :: (_name: &char8, _size: &ImVec2, _cond: ImGuiCond);
-__c__SetWindowCollapsed_2 :: (_name: &char8, _collapsed: bool, _cond: ImGuiCond);
+__c__SetWindowPos_2 :: (_name: &char8, _pos: &ImVec2, _cond: ImGuiCond = 0);
+__c__SetWindowSize_2 :: (_name: &char8, _size: &ImVec2, _cond: ImGuiCond = 0);
+__c__SetWindowCollapsed_2 :: (_name: &char8, _collapsed: bool, _cond: ImGuiCond = 0);
 __c__SetWindowFocus_2 :: (_name: &char8);
 __c__GetContentRegionMax :: (ret: &ImVec2);
 __c__GetContentRegionAvail :: (ret: &ImVec2);
@@ -5636,42 +5636,42 @@ __c__GetScrollMaxX :: (ret: &f32);
 __c__GetScrollMaxY :: (ret: &f32);
 __c__SetScrollX :: (_scroll_x: f32);
 __c__SetScrollY :: (_scroll_y: f32);
-__c__SetScrollHereX :: (_center_x_ratio: f32);
-__c__SetScrollHereY :: (_center_y_ratio: f32);
-__c__SetScrollFromPosX :: (_local_x: f32, _center_x_ratio: f32);
-__c__SetScrollFromPosY :: (_local_y: f32, _center_y_ratio: f32);
+__c__SetScrollHereX :: (_center_x_ratio: f32 = 0.5f);
+__c__SetScrollHereY :: (_center_y_ratio: f32 = 0.5f);
+__c__SetScrollFromPosX :: (_local_x: f32, _center_x_ratio: f32 = 0.5f);
+__c__SetScrollFromPosY :: (_local_y: f32, _center_y_ratio: f32 = 0.5f);
 __c__PushFont :: (_font: &ImFont);
 __c__PopFont :: ();
 __c__PushStyleColor :: (_idx: ImGuiCol, _col: ImU32);
 __c__PushStyleColor_2 :: (_idx: ImGuiCol, _col: &ImVec4);
-__c__PopStyleColor :: (_count: i32);
+__c__PopStyleColor :: (_count: i32 = 1);
 __c__PushStyleVar :: (_idx: ImGuiStyleVar, _val: f32);
 __c__PushStyleVar_2 :: (_idx: ImGuiStyleVar, _val: &ImVec2);
-__c__PopStyleVar :: (_count: i32);
+__c__PopStyleVar :: (_count: i32 = 1);
 __c__GetStyleColorVec4 :: (ret: &&ImVec4, _idx: ImGuiCol);
 __c__GetFont :: (ret: &&ImFont);
 __c__GetFontSize :: (ret: &f32);
 __c__GetFontTexUvWhitePixel :: (ret: &ImVec2);
-__c__GetColorU32 :: (ret: &ImU32, _idx: ImGuiCol, _alpha_mul: f32);
+__c__GetColorU32 :: (ret: &ImU32, _idx: ImGuiCol, _alpha_mul: f32 = 1.0f);
 __c__GetColorU32_2 :: (ret: &ImU32, _col: &ImVec4);
 __c__GetColorU32_3 :: (ret: &ImU32, _col: ImU32);
 __c__PushItemWidth :: (_item_width: f32);
 __c__PopItemWidth :: ();
 __c__SetNextItemWidth :: (_item_width: f32);
 __c__CalcItemWidth :: (ret: &f32);
-__c__PushTextWrapPos :: (_wrap_local_pos_x: f32);
+__c__PushTextWrapPos :: (_wrap_local_pos_x: f32 = 0.0f);
 __c__PopTextWrapPos :: ();
 __c__PushAllowKeyboardFocus :: (_allow_keyboard_focus: bool);
 __c__PopAllowKeyboardFocus :: ();
 __c__PushButtonRepeat :: (_repeat: bool);
 __c__PopButtonRepeat :: ();
 __c__Separator :: ();
-__c__SameLine :: (_offset_from_start_x: f32, _spacing: f32);
+__c__SameLine :: (_offset_from_start_x: f32 = 0.0f, _spacing: f32 = -1.0f);
 __c__NewLine :: ();
 __c__Spacing :: ();
 __c__Dummy :: (_size: &ImVec2);
-__c__Indent :: (_indent_w: f32);
-__c__Unindent :: (_indent_w: f32);
+__c__Indent :: (_indent_w: f32 = 0.0f);
+__c__Unindent :: (_indent_w: f32 = 0.0f);
 __c__BeginGroup :: ();
 __c__EndGroup :: ();
 __c__GetCursorPos :: (ret: &ImVec2);
@@ -5696,7 +5696,7 @@ __c__PopID :: ();
 __c__GetID :: (ret: &ImGuiID, _str_id: &char8);
 __c__GetID_2 :: (ret: &ImGuiID, _str_id_begin: &char8, _str_id_end: &char8);
 __c__GetID_3 :: (ret: &ImGuiID, _ptr_id: &void);
-__c__TextUnformatted :: (_text: &char8, _text_end: &char8);
+__c__TextUnformatted :: (_text: &char8, _text_end: &char8 = null);
 __c__Text :: (_fmt: &char8);
 __c__TextV :: (_fmt: &char8, _args: va_list);
 __c__TextColored :: (_col: &ImVec4, _fmt: &char8);
@@ -5714,152 +5714,152 @@ __c__SmallButton :: (ret: &bool, _label: &char8);
 __c__InvisibleButton :: (ret: &bool, _str_id: &char8, _size: &ImVec2);
 __c__ArrowButton :: (ret: &bool, _str_id: &char8, _dir: ImGuiDir);
 __c__Image :: (_user_texture_id: ImTextureID, _size: &ImVec2, _uv0: &ImVec2, _uv1: &ImVec2, _tint_col: &ImVec4, _border_col: &ImVec4);
-__c__ImageButton :: (ret: &bool, _user_texture_id: ImTextureID, _size: &ImVec2, _uv0: &ImVec2, _uv1: &ImVec2, _frame_padding: i32, _bg_col: &ImVec4, _tint_col: &ImVec4);
+__c__ImageButton :: (ret: &bool, _user_texture_id: ImTextureID, _size: &ImVec2, _uv0: &ImVec2, _uv1: &ImVec2, _frame_padding: i32 = -1, _bg_col: &ImVec4, _tint_col: &ImVec4);
 __c__Checkbox :: (ret: &bool, _label: &char8, _v: &bool);
 __c__CheckboxFlags :: (ret: &bool, _label: &char8, _flags: &u32, _flags_value: u32);
 __c__RadioButton :: (ret: &bool, _label: &char8, _active: bool);
 __c__RadioButton_2 :: (ret: &bool, _label: &char8, _v: &i32, _v_button: i32);
-__c__ProgressBar :: (_fraction: f32, _size_arg: &ImVec2, _overlay: &char8);
+__c__ProgressBar :: (_fraction: f32, _size_arg: &ImVec2, _overlay: &char8 = null);
 __c__Bullet :: ();
-__c__BeginCombo :: (ret: &bool, _label: &char8, _preview_value: &char8, _flags: ImGuiComboFlags);
+__c__BeginCombo :: (ret: &bool, _label: &char8, _preview_value: &char8, _flags: ImGuiComboFlags = 0);
 __c__EndCombo :: ();
-__c__Combo :: (ret: &bool, _label: &char8, _current_item: &i32, _items: &&char8, _items_count: i32, _popup_max_height_in_items: i32);
-__c__Combo_2 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_separated_by_zeros: &char8, _popup_max_height_in_items: i32);
-__c__Combo_3 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _popup_max_height_in_items: i32);
-__c__DragFloat :: (ret: &bool, _label: &char8, _v: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
-__c__DragFloat2 :: (ret: &bool, _label: &char8, _v: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
-__c__DragFloat3 :: (ret: &bool, _label: &char8, _v: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
-__c__DragFloat4 :: (ret: &bool, _label: &char8, _v: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
-__c__DragFloatRange2 :: (ret: &bool, _label: &char8, _v_current_min: &f32, _v_current_max: &f32, _v_speed: f32, _v_min: f32, _v_max: f32, _format: &char8, _format_max: &char8, _power: f32);
-__c__DragInt :: (ret: &bool, _label: &char8, _v: &i32, _v_speed: f32, _v_min: i32, _v_max: i32, _format: &char8);
-__c__DragInt2 :: (ret: &bool, _label: &char8, _v: &i32, _v_speed: f32, _v_min: i32, _v_max: i32, _format: &char8);
-__c__DragInt3 :: (ret: &bool, _label: &char8, _v: &i32, _v_speed: f32, _v_min: i32, _v_max: i32, _format: &char8);
-__c__DragInt4 :: (ret: &bool, _label: &char8, _v: &i32, _v_speed: f32, _v_min: i32, _v_max: i32, _format: &char8);
-__c__DragIntRange2 :: (ret: &bool, _label: &char8, _v_current_min: &i32, _v_current_max: &i32, _v_speed: f32, _v_min: i32, _v_max: i32, _format: &char8, _format_max: &char8);
-__c__DragScalar :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _v_speed: f32, _p_min: &void, _p_max: &void, _format: &char8, _power: f32);
-__c__DragScalarN :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _components: i32, _v_speed: f32, _p_min: &void, _p_max: &void, _format: &char8, _power: f32);
-__c__SliderFloat :: (ret: &bool, _label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
-__c__SliderFloat2 :: (ret: &bool, _label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
-__c__SliderFloat3 :: (ret: &bool, _label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
-__c__SliderFloat4 :: (ret: &bool, _label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
-__c__SliderAngle :: (ret: &bool, _label: &char8, _v_rad: &f32, _v_degrees_min: f32, _v_degrees_max: f32, _format: &char8);
-__c__SliderInt :: (ret: &bool, _label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8);
-__c__SliderInt2 :: (ret: &bool, _label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8);
-__c__SliderInt3 :: (ret: &bool, _label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8);
-__c__SliderInt4 :: (ret: &bool, _label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8);
-__c__SliderScalar :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _p_min: &void, _p_max: &void, _format: &char8, _power: f32);
-__c__SliderScalarN :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _components: i32, _p_min: &void, _p_max: &void, _format: &char8, _power: f32);
-__c__VSliderFloat :: (ret: &bool, _label: &char8, _size: &ImVec2, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8, _power: f32);
-__c__VSliderInt :: (ret: &bool, _label: &char8, _size: &ImVec2, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8);
-__c__VSliderScalar :: (ret: &bool, _label: &char8, _size: &ImVec2, _data_type: ImGuiDataType, _p_data: &void, _p_min: &void, _p_max: &void, _format: &char8, _power: f32);
-__c__InputText :: (ret: &bool, _label: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback, _user_data: &void);
-__c__InputTextMultiline :: (ret: &bool, _label: &char8, _buf: &char8, _buf_size: size_t, _size: &ImVec2, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback, _user_data: &void);
-__c__InputTextWithHint :: (ret: &bool, _label: &char8, _hint: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback, _user_data: &void);
-__c__InputFloat :: (ret: &bool, _label: &char8, _v: &f32, _step: f32, _step_fast: f32, _format: &char8, _flags: ImGuiInputTextFlags);
-__c__InputFloat2 :: (ret: &bool, _label: &char8, _v: &f32, _format: &char8, _flags: ImGuiInputTextFlags);
-__c__InputFloat3 :: (ret: &bool, _label: &char8, _v: &f32, _format: &char8, _flags: ImGuiInputTextFlags);
-__c__InputFloat4 :: (ret: &bool, _label: &char8, _v: &f32, _format: &char8, _flags: ImGuiInputTextFlags);
-__c__InputInt :: (ret: &bool, _label: &char8, _v: &i32, _step: i32, _step_fast: i32, _flags: ImGuiInputTextFlags);
-__c__InputInt2 :: (ret: &bool, _label: &char8, _v: &i32, _flags: ImGuiInputTextFlags);
-__c__InputInt3 :: (ret: &bool, _label: &char8, _v: &i32, _flags: ImGuiInputTextFlags);
-__c__InputInt4 :: (ret: &bool, _label: &char8, _v: &i32, _flags: ImGuiInputTextFlags);
-__c__InputDouble :: (ret: &bool, _label: &char8, _v: &f64, _step: f64, _step_fast: f64, _format: &char8, _flags: ImGuiInputTextFlags);
-__c__InputScalar :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _p_step: &void, _p_step_fast: &void, _format: &char8, _flags: ImGuiInputTextFlags);
-__c__InputScalarN :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _components: i32, _p_step: &void, _p_step_fast: &void, _format: &char8, _flags: ImGuiInputTextFlags);
-__c__ColorEdit3 :: (ret: &bool, _label: &char8, _col: &f32, _flags: ImGuiColorEditFlags);
-__c__ColorEdit4 :: (ret: &bool, _label: &char8, _col: &f32, _flags: ImGuiColorEditFlags);
-__c__ColorPicker3 :: (ret: &bool, _label: &char8, _col: &f32, _flags: ImGuiColorEditFlags);
-__c__ColorPicker4 :: (ret: &bool, _label: &char8, _col: &f32, _flags: ImGuiColorEditFlags, _ref_col: &f32);
-__c__ColorButton :: (ret: &bool, _desc_id: &char8, _col: &ImVec4, _flags: ImGuiColorEditFlags, _size: &ImVec2);
+__c__Combo :: (ret: &bool, _label: &char8, _current_item: &i32, _items: &&char8, _items_count: i32, _popup_max_height_in_items: i32 = -1);
+__c__Combo_2 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_separated_by_zeros: &char8, _popup_max_height_in_items: i32 = -1);
+__c__Combo_3 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _popup_max_height_in_items: i32 = -1);
+__c__DragFloat :: (ret: &bool, _label: &char8, _v: &f32, _v_speed: f32 = 1.0f, _v_min: f32 = 0.0f, _v_max: f32 = 0.0f, _format: &char8 = "%.3f", _power: f32 = 1.0f);
+__c__DragFloat2 :: (ret: &bool, _label: &char8, _v: &f32, _v_speed: f32 = 1.0f, _v_min: f32 = 0.0f, _v_max: f32 = 0.0f, _format: &char8 = "%.3f", _power: f32 = 1.0f);
+__c__DragFloat3 :: (ret: &bool, _label: &char8, _v: &f32, _v_speed: f32 = 1.0f, _v_min: f32 = 0.0f, _v_max: f32 = 0.0f, _format: &char8 = "%.3f", _power: f32 = 1.0f);
+__c__DragFloat4 :: (ret: &bool, _label: &char8, _v: &f32, _v_speed: f32 = 1.0f, _v_min: f32 = 0.0f, _v_max: f32 = 0.0f, _format: &char8 = "%.3f", _power: f32 = 1.0f);
+__c__DragFloatRange2 :: (ret: &bool, _label: &char8, _v_current_min: &f32, _v_current_max: &f32, _v_speed: f32 = 1.0f, _v_min: f32 = 0.0f, _v_max: f32 = 0.0f, _format: &char8 = "%.3f", _format_max: &char8 = null, _power: f32 = 1.0f);
+__c__DragInt :: (ret: &bool, _label: &char8, _v: &i32, _v_speed: f32 = 1.0f, _v_min: i32 = 0, _v_max: i32 = 0, _format: &char8 = "%d");
+__c__DragInt2 :: (ret: &bool, _label: &char8, _v: &i32, _v_speed: f32 = 1.0f, _v_min: i32 = 0, _v_max: i32 = 0, _format: &char8 = "%d");
+__c__DragInt3 :: (ret: &bool, _label: &char8, _v: &i32, _v_speed: f32 = 1.0f, _v_min: i32 = 0, _v_max: i32 = 0, _format: &char8 = "%d");
+__c__DragInt4 :: (ret: &bool, _label: &char8, _v: &i32, _v_speed: f32 = 1.0f, _v_min: i32 = 0, _v_max: i32 = 0, _format: &char8 = "%d");
+__c__DragIntRange2 :: (ret: &bool, _label: &char8, _v_current_min: &i32, _v_current_max: &i32, _v_speed: f32 = 1.0f, _v_min: i32 = 0, _v_max: i32 = 0, _format: &char8 = "%d", _format_max: &char8 = null);
+__c__DragScalar :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _v_speed: f32, _p_min: &void = null, _p_max: &void = null, _format: &char8 = null, _power: f32 = 1.0f);
+__c__DragScalarN :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _components: i32, _v_speed: f32, _p_min: &void = null, _p_max: &void = null, _format: &char8 = null, _power: f32 = 1.0f);
+__c__SliderFloat :: (ret: &bool, _label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8 = "%.3f", _power: f32 = 1.0f);
+__c__SliderFloat2 :: (ret: &bool, _label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8 = "%.3f", _power: f32 = 1.0f);
+__c__SliderFloat3 :: (ret: &bool, _label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8 = "%.3f", _power: f32 = 1.0f);
+__c__SliderFloat4 :: (ret: &bool, _label: &char8, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8 = "%.3f", _power: f32 = 1.0f);
+__c__SliderAngle :: (ret: &bool, _label: &char8, _v_rad: &f32, _v_degrees_min: f32 = -360.0f, _v_degrees_max: f32 = +360.0f, _format: &char8 = "%.0f deg");
+__c__SliderInt :: (ret: &bool, _label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8 = "%d");
+__c__SliderInt2 :: (ret: &bool, _label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8 = "%d");
+__c__SliderInt3 :: (ret: &bool, _label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8 = "%d");
+__c__SliderInt4 :: (ret: &bool, _label: &char8, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8 = "%d");
+__c__SliderScalar :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _p_min: &void, _p_max: &void, _format: &char8 = null, _power: f32 = 1.0f);
+__c__SliderScalarN :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _components: i32, _p_min: &void, _p_max: &void, _format: &char8 = null, _power: f32 = 1.0f);
+__c__VSliderFloat :: (ret: &bool, _label: &char8, _size: &ImVec2, _v: &f32, _v_min: f32, _v_max: f32, _format: &char8 = "%.3f", _power: f32 = 1.0f);
+__c__VSliderInt :: (ret: &bool, _label: &char8, _size: &ImVec2, _v: &i32, _v_min: i32, _v_max: i32, _format: &char8 = "%d");
+__c__VSliderScalar :: (ret: &bool, _label: &char8, _size: &ImVec2, _data_type: ImGuiDataType, _p_data: &void, _p_min: &void, _p_max: &void, _format: &char8 = null, _power: f32 = 1.0f);
+__c__InputText :: (ret: &bool, _label: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags = 0, _callback: ImGuiInputTextCallback = null, _user_data: &void = null);
+__c__InputTextMultiline :: (ret: &bool, _label: &char8, _buf: &char8, _buf_size: size_t, _size: &ImVec2, _flags: ImGuiInputTextFlags = 0, _callback: ImGuiInputTextCallback = null, _user_data: &void = null);
+__c__InputTextWithHint :: (ret: &bool, _label: &char8, _hint: &char8, _buf: &char8, _buf_size: size_t, _flags: ImGuiInputTextFlags = 0, _callback: ImGuiInputTextCallback = null, _user_data: &void = null);
+__c__InputFloat :: (ret: &bool, _label: &char8, _v: &f32, _step: f32 = 0.0f, _step_fast: f32 = 0.0f, _format: &char8 = "%.3f", _flags: ImGuiInputTextFlags = 0);
+__c__InputFloat2 :: (ret: &bool, _label: &char8, _v: &f32, _format: &char8 = "%.3f", _flags: ImGuiInputTextFlags = 0);
+__c__InputFloat3 :: (ret: &bool, _label: &char8, _v: &f32, _format: &char8 = "%.3f", _flags: ImGuiInputTextFlags = 0);
+__c__InputFloat4 :: (ret: &bool, _label: &char8, _v: &f32, _format: &char8 = "%.3f", _flags: ImGuiInputTextFlags = 0);
+__c__InputInt :: (ret: &bool, _label: &char8, _v: &i32, _step: i32 = 1, _step_fast: i32 = 100, _flags: ImGuiInputTextFlags = 0);
+__c__InputInt2 :: (ret: &bool, _label: &char8, _v: &i32, _flags: ImGuiInputTextFlags = 0);
+__c__InputInt3 :: (ret: &bool, _label: &char8, _v: &i32, _flags: ImGuiInputTextFlags = 0);
+__c__InputInt4 :: (ret: &bool, _label: &char8, _v: &i32, _flags: ImGuiInputTextFlags = 0);
+__c__InputDouble :: (ret: &bool, _label: &char8, _v: &f64, _step: f64 = 0.0, _step_fast: f64 = 0.0, _format: &char8 = "%.6f", _flags: ImGuiInputTextFlags = 0);
+__c__InputScalar :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _p_step: &void = null, _p_step_fast: &void = null, _format: &char8 = null, _flags: ImGuiInputTextFlags = 0);
+__c__InputScalarN :: (ret: &bool, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _components: i32, _p_step: &void = null, _p_step_fast: &void = null, _format: &char8 = null, _flags: ImGuiInputTextFlags = 0);
+__c__ColorEdit3 :: (ret: &bool, _label: &char8, _col: &f32, _flags: ImGuiColorEditFlags = 0);
+__c__ColorEdit4 :: (ret: &bool, _label: &char8, _col: &f32, _flags: ImGuiColorEditFlags = 0);
+__c__ColorPicker3 :: (ret: &bool, _label: &char8, _col: &f32, _flags: ImGuiColorEditFlags = 0);
+__c__ColorPicker4 :: (ret: &bool, _label: &char8, _col: &f32, _flags: ImGuiColorEditFlags = 0, _ref_col: &f32 = null);
+__c__ColorButton :: (ret: &bool, _desc_id: &char8, _col: &ImVec4, _flags: ImGuiColorEditFlags = 0, _size: &ImVec2);
 __c__SetColorEditOptions :: (_flags: ImGuiColorEditFlags);
 __c__TreeNode :: (ret: &bool, _label: &char8);
 __c__TreeNode_2 :: (ret: &bool, _str_id: &char8, _fmt: &char8);
 __c__TreeNode_3 :: (ret: &bool, _ptr_id: &void, _fmt: &char8);
 __c__TreeNodeV :: (ret: &bool, _str_id: &char8, _fmt: &char8, _args: va_list);
 __c__TreeNodeV_2 :: (ret: &bool, _ptr_id: &void, _fmt: &char8, _args: va_list);
-__c__TreeNodeEx :: (ret: &bool, _label: &char8, _flags: ImGuiTreeNodeFlags);
+__c__TreeNodeEx :: (ret: &bool, _label: &char8, _flags: ImGuiTreeNodeFlags = 0);
 __c__TreeNodeEx_2 :: (ret: &bool, _str_id: &char8, _flags: ImGuiTreeNodeFlags, _fmt: &char8);
 __c__TreeNodeEx_3 :: (ret: &bool, _ptr_id: &void, _flags: ImGuiTreeNodeFlags, _fmt: &char8);
 __c__TreeNodeExV :: (ret: &bool, _str_id: &char8, _flags: ImGuiTreeNodeFlags, _fmt: &char8, _args: va_list);
 __c__TreeNodeExV_2 :: (ret: &bool, _ptr_id: &void, _flags: ImGuiTreeNodeFlags, _fmt: &char8, _args: va_list);
 __c__TreePush :: (_str_id: &char8);
-__c__TreePush_2 :: (_ptr_id: &void);
+__c__TreePush_2 :: (_ptr_id: &void = null);
 __c__TreePop :: ();
 __c__GetTreeNodeToLabelSpacing :: (ret: &f32);
-__c__CollapsingHeader :: (ret: &bool, _label: &char8, _flags: ImGuiTreeNodeFlags);
-__c__CollapsingHeader_2 :: (ret: &bool, _label: &char8, _p_open: &bool, _flags: ImGuiTreeNodeFlags);
-__c__SetNextItemOpen :: (_is_open: bool, _cond: ImGuiCond);
-__c__Selectable :: (ret: &bool, _label: &char8, _selected: bool, _flags: ImGuiSelectableFlags, _size: &ImVec2);
-__c__Selectable_2 :: (ret: &bool, _label: &char8, _p_selected: &bool, _flags: ImGuiSelectableFlags, _size: &ImVec2);
-__c__ListBox :: (ret: &bool, _label: &char8, _current_item: &i32, _items: &&char8, _items_count: i32, _height_in_items: i32);
-__c__ListBox_2 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32);
+__c__CollapsingHeader :: (ret: &bool, _label: &char8, _flags: ImGuiTreeNodeFlags = 0);
+__c__CollapsingHeader_2 :: (ret: &bool, _label: &char8, _p_open: &bool, _flags: ImGuiTreeNodeFlags = 0);
+__c__SetNextItemOpen :: (_is_open: bool, _cond: ImGuiCond = 0);
+__c__Selectable :: (ret: &bool, _label: &char8, _selected: bool = false, _flags: ImGuiSelectableFlags = 0, _size: &ImVec2);
+__c__Selectable_2 :: (ret: &bool, _label: &char8, _p_selected: &bool, _flags: ImGuiSelectableFlags = 0, _size: &ImVec2);
+__c__ListBox :: (ret: &bool, _label: &char8, _current_item: &i32, _items: &&char8, _items_count: i32, _height_in_items: i32 = -1);
+__c__ListBox_2 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_getter: fn(&void, i32, &&char8) -> bool, _data: &void, _items_count: i32, _height_in_items: i32 = -1);
 __c__ListBoxHeader :: (ret: &bool, _label: &char8, _size: &ImVec2);
-__c__ListBoxHeader_2 :: (ret: &bool, _label: &char8, _items_count: i32, _height_in_items: i32);
+__c__ListBoxHeader_2 :: (ret: &bool, _label: &char8, _items_count: i32, _height_in_items: i32 = -1);
 __c__ListBoxFooter :: ();
-__c__PlotLines :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: &ImVec2, _stride: i32);
-__c__PlotLines_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: &ImVec2);
-__c__PlotHistogram :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: &ImVec2, _stride: i32);
-__c__PlotHistogram_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32, _overlay_text: &char8, _scale_min: f32, _scale_max: f32, _graph_size: &ImVec2);
+__c__PlotLines :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = FLT_MAX, _scale_max: f32 = FLT_MAX, _graph_size: &ImVec2, _stride: i32);
+__c__PlotLines_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = FLT_MAX, _scale_max: f32 = FLT_MAX, _graph_size: &ImVec2);
+__c__PlotHistogram :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = FLT_MAX, _scale_max: f32 = FLT_MAX, _graph_size: &ImVec2, _stride: i32);
+__c__PlotHistogram_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = FLT_MAX, _scale_max: f32 = FLT_MAX, _graph_size: &ImVec2);
 __c__Value :: (_prefix: &char8, _b: bool);
 __c__Value_2 :: (_prefix: &char8, _v: i32);
 __c__Value_3 :: (_prefix: &char8, _v: u32);
-__c__Value_4 :: (_prefix: &char8, _v: f32, _float_format: &char8);
+__c__Value_4 :: (_prefix: &char8, _v: f32, _float_format: &char8 = null);
 __c__BeginMenuBar :: (ret: &bool);
 __c__EndMenuBar :: ();
 __c__BeginMainMenuBar :: (ret: &bool);
 __c__EndMainMenuBar :: ();
-__c__BeginMenu :: (ret: &bool, _label: &char8, _enabled: bool);
+__c__BeginMenu :: (ret: &bool, _label: &char8, _enabled: bool = true);
 __c__EndMenu :: ();
-__c__MenuItem :: (ret: &bool, _label: &char8, _shortcut: &char8, _selected: bool, _enabled: bool);
-__c__MenuItem_2 :: (ret: &bool, _label: &char8, _shortcut: &char8, _p_selected: &bool, _enabled: bool);
+__c__MenuItem :: (ret: &bool, _label: &char8, _shortcut: &char8 = null, _selected: bool = false, _enabled: bool = true);
+__c__MenuItem_2 :: (ret: &bool, _label: &char8, _shortcut: &char8, _p_selected: &bool, _enabled: bool = true);
 __c__BeginTooltip :: ();
 __c__EndTooltip :: ();
 __c__SetTooltip :: (_fmt: &char8);
 __c__SetTooltipV :: (_fmt: &char8, _args: va_list);
 __c__OpenPopup :: (_str_id: &char8);
-__c__BeginPopup :: (ret: &bool, _str_id: &char8, _flags: ImGuiWindowFlags);
-__c__BeginPopupContextItem :: (ret: &bool, _str_id: &char8, _mouse_button: ImGuiMouseButton);
-__c__BeginPopupContextWindow :: (ret: &bool, _str_id: &char8, _mouse_button: ImGuiMouseButton, _also_over_items: bool);
-__c__BeginPopupContextVoid :: (ret: &bool, _str_id: &char8, _mouse_button: ImGuiMouseButton);
-__c__BeginPopupModal :: (ret: &bool, _name: &char8, _p_open: &bool, _flags: ImGuiWindowFlags);
+__c__BeginPopup :: (ret: &bool, _str_id: &char8, _flags: ImGuiWindowFlags = 0);
+__c__BeginPopupContextItem :: (ret: &bool, _str_id: &char8 = null, _mouse_button: ImGuiMouseButton = 1);
+__c__BeginPopupContextWindow :: (ret: &bool, _str_id: &char8 = null, _mouse_button: ImGuiMouseButton = 1, _also_over_items: bool = true);
+__c__BeginPopupContextVoid :: (ret: &bool, _str_id: &char8 = null, _mouse_button: ImGuiMouseButton = 1);
+__c__BeginPopupModal :: (ret: &bool, _name: &char8, _p_open: &bool = null, _flags: ImGuiWindowFlags = 0);
 __c__EndPopup :: ();
-__c__OpenPopupOnItemClick :: (ret: &bool, _str_id: &char8, _mouse_button: ImGuiMouseButton);
+__c__OpenPopupOnItemClick :: (ret: &bool, _str_id: &char8 = null, _mouse_button: ImGuiMouseButton = 1);
 __c__IsPopupOpen :: (ret: &bool, _str_id: &char8);
 __c__CloseCurrentPopup :: ();
-__c__Columns :: (_count: i32, _id: &char8, _border: bool);
+__c__Columns :: (_count: i32 = 1, _id: &char8 = null, _border: bool = true);
 __c__NextColumn :: ();
 __c__GetColumnIndex :: (ret: &i32);
-__c__GetColumnWidth :: (ret: &f32, _column_index: i32);
+__c__GetColumnWidth :: (ret: &f32, _column_index: i32 = -1);
 __c__SetColumnWidth :: (_column_index: i32, _width: f32);
-__c__GetColumnOffset :: (ret: &f32, _column_index: i32);
+__c__GetColumnOffset :: (ret: &f32, _column_index: i32 = -1);
 __c__SetColumnOffset :: (_column_index: i32, _offset_x: f32);
 __c__GetColumnsCount :: (ret: &i32);
-__c__BeginTabBar :: (ret: &bool, _str_id: &char8, _flags: ImGuiTabBarFlags);
+__c__BeginTabBar :: (ret: &bool, _str_id: &char8, _flags: ImGuiTabBarFlags = 0);
 __c__EndTabBar :: ();
-__c__BeginTabItem :: (ret: &bool, _label: &char8, _p_open: &bool, _flags: ImGuiTabItemFlags);
+__c__BeginTabItem :: (ret: &bool, _label: &char8, _p_open: &bool = null, _flags: ImGuiTabItemFlags = 0);
 __c__EndTabItem :: ();
 __c__SetTabItemClosed :: (_tab_or_docked_window_label: &char8);
-__c__LogToTTY :: (_auto_open_depth: i32);
-__c__LogToFile :: (_auto_open_depth: i32, _filename: &char8);
-__c__LogToClipboard :: (_auto_open_depth: i32);
+__c__LogToTTY :: (_auto_open_depth: i32 = -1);
+__c__LogToFile :: (_auto_open_depth: i32 = -1, _filename: &char8 = null);
+__c__LogToClipboard :: (_auto_open_depth: i32 = -1);
 __c__LogFinish :: ();
 __c__LogButtons :: ();
 __c__LogText :: (_fmt: &char8);
-__c__BeginDragDropSource :: (ret: &bool, _flags: ImGuiDragDropFlags);
-__c__SetDragDropPayload :: (ret: &bool, _type: &char8, _data: &void, _sz: size_t, _cond: ImGuiCond);
+__c__BeginDragDropSource :: (ret: &bool, _flags: ImGuiDragDropFlags = 0);
+__c__SetDragDropPayload :: (ret: &bool, _type: &char8, _data: &void, _sz: size_t, _cond: ImGuiCond = 0);
 __c__EndDragDropSource :: ();
 __c__BeginDragDropTarget :: (ret: &bool);
-__c__AcceptDragDropPayload :: (ret: &&ImGuiPayload, _type: &char8, _flags: ImGuiDragDropFlags);
+__c__AcceptDragDropPayload :: (ret: &&ImGuiPayload, _type: &char8, _flags: ImGuiDragDropFlags = 0);
 __c__EndDragDropTarget :: ();
 __c__GetDragDropPayload :: (ret: &&ImGuiPayload);
 __c__PushClipRect :: (_clip_rect_min: &ImVec2, _clip_rect_max: &ImVec2, _intersect_with_current_clip_rect: bool);
 __c__PopClipRect :: ();
 __c__SetItemDefaultFocus :: ();
-__c__SetKeyboardFocusHere :: (_offset: i32);
-__c__IsItemHovered :: (ret: &bool, _flags: ImGuiHoveredFlags);
+__c__SetKeyboardFocusHere :: (_offset: i32 = 0);
+__c__IsItemHovered :: (ret: &bool, _flags: ImGuiHoveredFlags = 0);
 __c__IsItemActive :: (ret: &bool);
 __c__IsItemFocused :: (ret: &bool);
-__c__IsItemClicked :: (ret: &bool, _mouse_button: ImGuiMouseButton);
+__c__IsItemClicked :: (ret: &bool, _mouse_button: ImGuiMouseButton = 0);
 __c__IsItemVisible :: (ret: &bool);
 __c__IsItemEdited :: (ret: &bool);
 __c__IsItemActivated :: (ret: &bool);
@@ -5883,9 +5883,9 @@ __c__GetDrawListSharedData :: (ret: &&ImDrawListSharedData);
 __c__GetStyleColorName :: (ret: &&char8, _idx: ImGuiCol);
 __c__SetStateStorage :: (_storage: &ImGuiStorage);
 __c__GetStateStorage :: (ret: &&ImGuiStorage);
-__c__CalcTextSize :: (ret: &ImVec2, _text: &char8, _text_end: &char8, _hide_text_after_double_hash: bool, _wrap_width: f32);
+__c__CalcTextSize :: (ret: &ImVec2, _text: &char8, _text_end: &char8 = null, _hide_text_after_double_hash: bool = false, _wrap_width: f32 = -1.0f);
 __c__CalcListClipping :: (_items_count: i32, _items_height: f32, _out_items_display_start: &i32, _out_items_display_end: &i32);
-__c__BeginChildFrame :: (ret: &bool, _id: ImGuiID, _size: &ImVec2, _flags: ImGuiWindowFlags);
+__c__BeginChildFrame :: (ret: &bool, _id: ImGuiID, _size: &ImVec2, _flags: ImGuiWindowFlags = 0);
 __c__EndChildFrame :: ();
 __c__ColorConvertU32ToFloat4 :: (ret: &ImVec4, _in: ImU32);
 __c__ColorConvertFloat4ToU32 :: (ret: &ImU32, _in: &ImVec4);
@@ -5893,40 +5893,40 @@ __c__ColorConvertRGBtoHSV :: (_r: f32, _g: f32, _b: f32, _out_h: &f32, _out_s: &
 __c__ColorConvertHSVtoRGB :: (_h: f32, _s: f32, _v: f32, _out_r: &f32, _out_g: &f32, _out_b: &f32);
 __c__GetKeyIndex :: (ret: &i32, _imgui_key: ImGuiKey);
 __c__IsKeyDown :: (ret: &bool, _user_key_index: i32);
-__c__IsKeyPressed :: (ret: &bool, _user_key_index: i32, _repeat: bool);
+__c__IsKeyPressed :: (ret: &bool, _user_key_index: i32, _repeat: bool = true);
 __c__IsKeyReleased :: (ret: &bool, _user_key_index: i32);
 __c__GetKeyPressedAmount :: (ret: &i32, _key_index: i32, _repeat_delay: f32, _rate: f32);
-__c__CaptureKeyboardFromApp :: (_want_capture_keyboard_value: bool);
+__c__CaptureKeyboardFromApp :: (_want_capture_keyboard_value: bool = true);
 __c__IsMouseDown :: (ret: &bool, _button: ImGuiMouseButton);
-__c__IsMouseClicked :: (ret: &bool, _button: ImGuiMouseButton, _repeat: bool);
+__c__IsMouseClicked :: (ret: &bool, _button: ImGuiMouseButton, _repeat: bool = false);
 __c__IsMouseReleased :: (ret: &bool, _button: ImGuiMouseButton);
 __c__IsMouseDoubleClicked :: (ret: &bool, _button: ImGuiMouseButton);
-__c__IsMouseHoveringRect :: (ret: &bool, _r_min: &ImVec2, _r_max: &ImVec2, _clip: bool);
-__c__IsMousePosValid :: (ret: &bool, _mouse_pos: &ImVec2);
+__c__IsMouseHoveringRect :: (ret: &bool, _r_min: &ImVec2, _r_max: &ImVec2, _clip: bool = true);
+__c__IsMousePosValid :: (ret: &bool, _mouse_pos: &ImVec2 = null);
 __c__IsAnyMouseDown :: (ret: &bool);
 __c__GetMousePos :: (ret: &ImVec2);
 __c__GetMousePosOnOpeningCurrentPopup :: (ret: &ImVec2);
-__c__IsMouseDragging :: (ret: &bool, _button: ImGuiMouseButton, _lock_threshold: f32);
-__c__GetMouseDragDelta :: (ret: &ImVec2, _button: ImGuiMouseButton, _lock_threshold: f32);
-__c__ResetMouseDragDelta :: (_button: ImGuiMouseButton);
+__c__IsMouseDragging :: (ret: &bool, _button: ImGuiMouseButton, _lock_threshold: f32 = -1.0f);
+__c__GetMouseDragDelta :: (ret: &ImVec2, _button: ImGuiMouseButton = 0, _lock_threshold: f32 = -1.0f);
+__c__ResetMouseDragDelta :: (_button: ImGuiMouseButton = 0);
 __c__GetMouseCursor :: (ret: &ImGuiMouseCursor);
 __c__SetMouseCursor :: (_cursor_type: ImGuiMouseCursor);
-__c__CaptureMouseFromApp :: (_want_capture_mouse_value: bool);
+__c__CaptureMouseFromApp :: (_want_capture_mouse_value: bool = true);
 __c__GetClipboardText :: (ret: &&char8);
 __c__SetClipboardText :: (_text: &char8);
 __c__LoadIniSettingsFromDisk :: (_ini_filename: &char8);
-__c__LoadIniSettingsFromMemory :: (_ini_data: &char8, _ini_size: size_t);
+__c__LoadIniSettingsFromMemory :: (_ini_data: &char8, _ini_size: size_t = 0);
 __c__SaveIniSettingsToDisk :: (_ini_filename: &char8);
-__c__SaveIniSettingsToMemory :: (ret: &&char8, _out_ini_size: &size_t);
-__c__SetAllocatorFunctions :: (_alloc_func: fn(size_t, &void) -> &void, _free_func: fn(&void, &void) -> void, _user_data: &void);
+__c__SaveIniSettingsToMemory :: (ret: &&char8, _out_ini_size: &size_t = null);
+__c__SetAllocatorFunctions :: (_alloc_func: fn(size_t, &void) -> &void, _free_func: fn(&void, &void) -> void, _user_data: &void = null);
 __c__MemAlloc :: (ret: &&void, _size: size_t);
 __c__MemFree :: (_ptr: &void);
-__c__InputFloat_2 :: (ret: &bool, _label: &char8, _v: &f32, _step: f32, _step_fast: f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags);
-__c__InputFloat2_2 :: (ret: &bool, _label: &char8, _v: &f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags);
-__c__InputFloat3_2 :: (ret: &bool, _label: &char8, _v: &f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags);
-__c__InputFloat4_2 :: (ret: &bool, _label: &char8, _v: &f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags);
-__c__ImHashData :: (ret: &ImU32, _data: &void, _data_size: size_t, _seed: ImU32);
-__c__ImHashStr :: (ret: &ImU32, _data: &char8, _data_size: size_t, _seed: ImU32);
+__c__InputFloat_2 :: (ret: &bool, _label: &char8, _v: &f32, _step: f32, _step_fast: f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags = 0);
+__c__InputFloat2_2 :: (ret: &bool, _label: &char8, _v: &f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags = 0);
+__c__InputFloat3_2 :: (ret: &bool, _label: &char8, _v: &f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags = 0);
+__c__InputFloat4_2 :: (ret: &bool, _label: &char8, _v: &f32, _decimal_precision: i32, _flags: ImGuiInputTextFlags = 0);
+__c__ImHashData :: (ret: &ImU32, _data: &void, _data_size: size_t, _seed: ImU32 = 0);
+__c__ImHashStr :: (ret: &ImU32, _data: &char8, _data_size: size_t = 0, _seed: ImU32 = 0);
 __c__ImStricmp :: (ret: &i32, _str1: &char8, _str2: &char8);
 __c__ImStrnicmp :: (ret: &i32, _str1: &char8, _str2: &char8, _count: size_t);
 __c__ImStrncpy :: (_dst: &char8, _src: &char8, _count: size_t);
@@ -5947,7 +5947,7 @@ __c__ImParseFormatTrimDecorations :: (ret: &&char8, _format: &char8, _buf: &char
 __c__ImParseFormatPrecision :: (ret: &i32, _format: &char8, _default_value: i32);
 __c__ImTextStrToUtf8 :: (ret: &i32, _buf: &char8, _buf_size: i32, _in_text: &ImWchar, _in_text_end: &ImWchar);
 __c__ImTextCharFromUtf8 :: (ret: &i32, _out_char: &u32, _in_text: &char8, _in_text_end: &char8);
-__c__ImTextStrFromUtf8 :: (ret: &i32, _buf: &ImWchar, _buf_size: i32, _in_text: &char8, _in_text_end: &char8, _in_remaining: &&char8);
+__c__ImTextStrFromUtf8 :: (ret: &i32, _buf: &ImWchar, _buf_size: i32, _in_text: &char8, _in_text_end: &char8, _in_remaining: &&char8 = null);
 __c__ImTextCountCharsFromUtf8 :: (ret: &i32, _in_text: &char8, _in_text_end: &char8);
 __c__ImTextCountUtf8BytesFromChar :: (ret: &i32, _in_text: &char8, _in_text_end: &char8);
 __c__ImTextCountUtf8BytesFromStr :: (ret: &i32, _in_text: &ImWchar, _in_text_end: &ImWchar);
@@ -5956,7 +5956,7 @@ __c__ImFileClose :: (ret: &bool, _file: ImFileHandle);
 __c__ImFileGetSize :: (ret: &ImU64, _file: ImFileHandle);
 __c__ImFileRead :: (ret: &ImU64, _data: &void, _size: ImU64, _count: ImU64, _file: ImFileHandle);
 __c__ImFileWrite :: (ret: &ImU64, _data: &void, _size: ImU64, _count: ImU64, _file: ImFileHandle);
-__c__ImFileLoadToMemory :: (ret: &&void, _filename: &char8, _mode: &char8, _out_file_size: &size_t, _padding_bytes: i32);
+__c__ImFileLoadToMemory :: (ret: &&void, _filename: &char8, _mode: &char8, _out_file_size: &size_t = null, _padding_bytes: i32 = 0);
 __c__ImBezierCalc :: (ret: &ImVec2, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _t: f32);
 __c__ImBezierClosestPoint :: (ret: &ImVec2, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _p: &ImVec2, _num_segments: i32);
 __c__ImBezierClosestPointCasteljau :: (ret: &ImVec2, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _p: &ImVec2, _tess_tol: f32);
@@ -5977,9 +5977,9 @@ __c__CalcWindowExpectedSize :: (ret: &ImVec2, _window: &ImGuiWindow);
 __c__IsWindowChildOf :: (ret: &bool, _window: &ImGuiWindow, _potential_parent: &ImGuiWindow);
 __c__IsWindowNavFocusable :: (ret: &bool, _window: &ImGuiWindow);
 __c__GetWindowAllowedExtentRect :: (ret: &ImRect, _window: &ImGuiWindow);
-__c__SetWindowPos_3 :: (_window: &ImGuiWindow, _pos: &ImVec2, _cond: ImGuiCond);
-__c__SetWindowSize_3 :: (_window: &ImGuiWindow, _size: &ImVec2, _cond: ImGuiCond);
-__c__SetWindowCollapsed_3 :: (_window: &ImGuiWindow, _collapsed: bool, _cond: ImGuiCond);
+__c__SetWindowPos_3 :: (_window: &ImGuiWindow, _pos: &ImVec2, _cond: ImGuiCond = 0);
+__c__SetWindowSize_3 :: (_window: &ImGuiWindow, _size: &ImVec2, _cond: ImGuiCond = 0);
+__c__SetWindowCollapsed_3 :: (_window: &ImGuiWindow, _collapsed: bool, _cond: ImGuiCond = 0);
 __c__GcCompactTransientWindowBuffers :: (_window: &ImGuiWindow);
 __c__GcAwakeTransientWindowBuffers :: (_window: &ImGuiWindow);
 __c__SetCurrentFont :: (_font: &ImFont);
@@ -5997,8 +5997,8 @@ __c__FindOrCreateWindowSettings :: (ret: &&ImGuiWindowSettings, _name: &char8);
 __c__FindSettingsHandler :: (ret: &&ImGuiSettingsHandler, _type_name: &char8);
 __c__SetScrollX_2 :: (_window: &ImGuiWindow, _new_scroll_x: f32);
 __c__SetScrollY_2 :: (_window: &ImGuiWindow, _new_scroll_y: f32);
-__c__SetScrollFromPosX_2 :: (_window: &ImGuiWindow, _local_x: f32, _center_x_ratio: f32);
-__c__SetScrollFromPosY_2 :: (_window: &ImGuiWindow, _local_y: f32, _center_y_ratio: f32);
+__c__SetScrollFromPosX_2 :: (_window: &ImGuiWindow, _local_x: f32, _center_x_ratio: f32 = 0.5f);
+__c__SetScrollFromPosY_2 :: (_window: &ImGuiWindow, _local_y: f32, _center_y_ratio: f32 = 0.5f);
 __c__ScrollToBringRectIntoView :: (ret: &ImVec2, _window: &ImGuiWindow, _item_rect: &ImRect);
 __c__SetActiveID :: (_id: ImGuiID, _window: &ImGuiWindow);
 __c__SetFocusID :: (_id: ImGuiID, _window: &ImGuiWindow);
@@ -6008,9 +6008,9 @@ __c__SetHoveredID :: (_id: ImGuiID);
 __c__KeepAliveID :: (_id: ImGuiID);
 __c__MarkItemEdited :: (_id: ImGuiID);
 __c__PushOverrideID :: (_id: ImGuiID);
-__c__ItemSize :: (_size: &ImVec2, _text_baseline_y: f32);
-__c__ItemSize_2 :: (_bb: &ImRect, _text_baseline_y: f32);
-__c__ItemAdd :: (ret: &bool, _bb: &ImRect, _id: ImGuiID, _nav_bb: &ImRect);
+__c__ItemSize :: (_size: &ImVec2, _text_baseline_y: f32 = -1.0f);
+__c__ItemSize_2 :: (_bb: &ImRect, _text_baseline_y: f32 = -1.0f);
+__c__ItemAdd :: (ret: &bool, _bb: &ImRect, _id: ImGuiID, _nav_bb: &ImRect = null);
 __c__ItemHoverable :: (ret: &bool, _bb: &ImRect, _id: ImGuiID);
 __c__IsClippedEx :: (ret: &bool, _bb: &ImRect, _id: ImGuiID, _clip_even_when_logged: bool);
 __c__FocusableItemRegister :: (ret: &bool, _window: &ImGuiWindow, _id: ImGuiID);
@@ -6024,32 +6024,32 @@ __c__IsItemToggledSelection :: (ret: &bool);
 __c__GetContentRegionMaxAbs :: (ret: &ImVec2);
 __c__ShrinkWidths :: (_items: &ImGuiShrinkWidthItem, _count: i32, _width_excess: f32);
 __c__LogBegin :: (_type: ImGuiLogType, _auto_open_depth: i32);
-__c__LogToBuffer :: (_auto_open_depth: i32);
+__c__LogToBuffer :: (_auto_open_depth: i32 = -1);
 __c__OpenPopupEx :: (_id: ImGuiID);
 __c__ClosePopupToLevel :: (_remaining: i32, _restore_focus_to_window_under_popup: bool);
 __c__ClosePopupsOverWindow :: (_ref_window: &ImGuiWindow, _restore_focus_to_window_under_popup: bool);
 __c__IsPopupOpen_2 :: (ret: &bool, _id: ImGuiID);
 __c__BeginPopupEx :: (ret: &bool, _id: ImGuiID, _extra_flags: ImGuiWindowFlags);
-__c__BeginTooltipEx :: (_extra_flags: ImGuiWindowFlags, _override_previous_tooltip: bool);
+__c__BeginTooltipEx :: (_extra_flags: ImGuiWindowFlags, _override_previous_tooltip: bool = true);
 __c__GetTopMostPopupModal :: (ret: &&ImGuiWindow);
 __c__FindBestWindowPosForPopup :: (ret: &ImVec2, _window: &ImGuiWindow);
-__c__FindBestWindowPosForPopupEx :: (ret: &ImVec2, _ref_pos: &ImVec2, _size: &ImVec2, _last_dir: &ImGuiDir, _r_outer: &ImRect, _r_avoid: &ImRect, _policy: ImGuiPopupPositionPolicy);
+__c__FindBestWindowPosForPopupEx :: (ret: &ImVec2, _ref_pos: &ImVec2, _size: &ImVec2, _last_dir: &ImGuiDir, _r_outer: &ImRect, _r_avoid: &ImRect, _policy: ImGuiPopupPositionPolicy = ImGuiPopupPositionPolicy_Default);
 __c__NavInitWindow :: (_window: &ImGuiWindow, _force_reinit: bool);
 __c__NavMoveRequestButNoResultYet :: (ret: &bool);
 __c__NavMoveRequestCancel :: ();
 __c__NavMoveRequestForward :: (_move_dir: ImGuiDir, _clip_dir: ImGuiDir, _bb_rel: &ImRect, _move_flags: ImGuiNavMoveFlags);
 __c__NavMoveRequestTryWrapping :: (_window: &ImGuiWindow, _move_flags: ImGuiNavMoveFlags);
 __c__GetNavInputAmount :: (ret: &f32, _n: ImGuiNavInput, _mode: ImGuiInputReadMode);
-__c__GetNavInputAmount2d :: (ret: &ImVec2, _dir_sources: ImGuiNavDirSourceFlags, _mode: ImGuiInputReadMode, _slow_factor: f32, _fast_factor: f32);
+__c__GetNavInputAmount2d :: (ret: &ImVec2, _dir_sources: ImGuiNavDirSourceFlags, _mode: ImGuiInputReadMode, _slow_factor: f32 = 0.0f, _fast_factor: f32 = 0.0f);
 __c__CalcTypematicRepeatAmount :: (ret: &i32, _t0: f32, _t1: f32, _repeat_delay: f32, _repeat_rate: f32);
 __c__ActivateItem :: (_id: ImGuiID);
 __c__SetNavID :: (_id: ImGuiID, _nav_layer: i32);
 __c__SetNavIDWithRectRel :: (_id: ImGuiID, _nav_layer: i32, _rect_rel: &ImRect);
-__c__IsMouseDragPastThreshold :: (ret: &bool, _button: ImGuiMouseButton, _lock_threshold: f32);
+__c__IsMouseDragPastThreshold :: (ret: &bool, _button: ImGuiMouseButton, _lock_threshold: f32 = -1.0f);
 __c__BeginDragDropTargetCustom :: (ret: &bool, _bb: &ImRect, _id: ImGuiID);
 __c__ClearDragDrop :: ();
 __c__IsDragDropPayloadBeingAccepted :: (ret: &bool);
-__c__BeginColumns :: (_str_id: &char8, _count: i32, _flags: ImGuiColumnsFlags);
+__c__BeginColumns :: (_str_id: &char8, _count: i32, _flags: ImGuiColumnsFlags = 0);
 __c__EndColumns :: ();
 __c__PushColumnClipRect :: (_column_index: i32);
 __c__PushColumnsBackground :: ();
@@ -6067,25 +6067,25 @@ __c__TabItemEx :: (ret: &bool, _tab_bar: &ImGuiTabBar, _label: &char8, _p_open: 
 __c__TabItemCalcSize :: (ret: &ImVec2, _label: &char8, _has_close_button: bool);
 __c__TabItemBackground :: (_draw_list: &ImDrawList, _bb: &ImRect, _flags: ImGuiTabItemFlags, _col: ImU32);
 __c__TabItemLabelAndCloseButton :: (ret: &bool, _draw_list: &ImDrawList, _bb: &ImRect, _flags: ImGuiTabItemFlags, _frame_padding: &ImVec2, _label: &char8, _tab_id: ImGuiID, _close_button_id: ImGuiID);
-__c__RenderText :: (_pos: &ImVec2, _text: &char8, _text_end: &char8, _hide_text_after_hash: bool);
+__c__RenderText :: (_pos: &ImVec2, _text: &char8, _text_end: &char8 = null, _hide_text_after_hash: bool = true);
 __c__RenderTextWrapped :: (_pos: &ImVec2, _text: &char8, _text_end: &char8, _wrap_width: f32);
-__c__RenderTextClipped :: (_pos_min: &ImVec2, _pos_max: &ImVec2, _text: &char8, _text_end: &char8, _text_size_if_known: &ImVec2, _align: &ImVec2, _clip_rect: &ImRect);
-__c__RenderTextClippedEx :: (_draw_list: &ImDrawList, _pos_min: &ImVec2, _pos_max: &ImVec2, _text: &char8, _text_end: &char8, _text_size_if_known: &ImVec2, _align: &ImVec2, _clip_rect: &ImRect);
+__c__RenderTextClipped :: (_pos_min: &ImVec2, _pos_max: &ImVec2, _text: &char8, _text_end: &char8, _text_size_if_known: &ImVec2, _align: &ImVec2, _clip_rect: &ImRect = null);
+__c__RenderTextClippedEx :: (_draw_list: &ImDrawList, _pos_min: &ImVec2, _pos_max: &ImVec2, _text: &char8, _text_end: &char8, _text_size_if_known: &ImVec2, _align: &ImVec2, _clip_rect: &ImRect = null);
 __c__RenderTextEllipsis :: (_draw_list: &ImDrawList, _pos_min: &ImVec2, _pos_max: &ImVec2, _clip_max_x: f32, _ellipsis_max_x: f32, _text: &char8, _text_end: &char8, _text_size_if_known: &ImVec2);
-__c__RenderFrame :: (_p_min: &ImVec2, _p_max: &ImVec2, _fill_col: ImU32, _border: bool, _rounding: f32);
-__c__RenderFrameBorder :: (_p_min: &ImVec2, _p_max: &ImVec2, _rounding: f32);
-__c__RenderColorRectWithAlphaCheckerboard :: (_p_min: &ImVec2, _p_max: &ImVec2, _fill_col: ImU32, _grid_step: f32, _grid_off: &ImVec2, _rounding: f32, _rounding_corners_flags: i32);
+__c__RenderFrame :: (_p_min: &ImVec2, _p_max: &ImVec2, _fill_col: ImU32, _border: bool = true, _rounding: f32 = 0.0f);
+__c__RenderFrameBorder :: (_p_min: &ImVec2, _p_max: &ImVec2, _rounding: f32 = 0.0f);
+__c__RenderColorRectWithAlphaCheckerboard :: (_p_min: &ImVec2, _p_max: &ImVec2, _fill_col: ImU32, _grid_step: f32, _grid_off: &ImVec2, _rounding: f32 = 0.0f, _rounding_corners_flags: i32 = @bin_not(0));
 __c__RenderCheckMark :: (_pos: &ImVec2, _col: ImU32, _sz: f32);
-__c__RenderNavHighlight :: (_bb: &ImRect, _id: ImGuiID, _flags: ImGuiNavHighlightFlags);
-__c__FindRenderedTextEnd :: (ret: &&char8, _text: &char8, _text_end: &char8);
-__c__LogRenderedText :: (_ref_pos: &ImVec2, _text: &char8, _text_end: &char8);
-__c__RenderArrow :: (_draw_list: &ImDrawList, _pos: &ImVec2, _col: ImU32, _dir: ImGuiDir, _scale: f32);
+__c__RenderNavHighlight :: (_bb: &ImRect, _id: ImGuiID, _flags: ImGuiNavHighlightFlags = ImGuiNavHighlightFlags_TypeDefault);
+__c__FindRenderedTextEnd :: (ret: &&char8, _text: &char8, _text_end: &char8 = null);
+__c__LogRenderedText :: (_ref_pos: &ImVec2, _text: &char8, _text_end: &char8 = null);
+__c__RenderArrow :: (_draw_list: &ImDrawList, _pos: &ImVec2, _col: ImU32, _dir: ImGuiDir, _scale: f32 = 1.0f);
 __c__RenderBullet :: (_draw_list: &ImDrawList, _pos: &ImVec2, _col: ImU32);
 __c__RenderMouseCursor :: (_draw_list: &ImDrawList, _pos: &ImVec2, _scale: f32, _mouse_cursor: ImGuiMouseCursor, _col_fill: ImU32, _col_border: ImU32, _col_shadow: ImU32);
 __c__RenderArrowPointingAt :: (_draw_list: &ImDrawList, _pos: &ImVec2, _half_sz: &ImVec2, _direction: ImGuiDir, _col: ImU32);
 __c__RenderRectFilledRangeH :: (_draw_list: &ImDrawList, _rect: &ImRect, _col: ImU32, _x_start_norm: f32, _x_end_norm: f32, _rounding: f32);
-__c__TextEx :: (_text: &char8, _text_end: &char8, _flags: ImGuiTextFlags);
-__c__ButtonEx :: (ret: &bool, _label: &char8, _size_arg: &ImVec2, _flags: ImGuiButtonFlags);
+__c__TextEx :: (_text: &char8, _text_end: &char8 = null, _flags: ImGuiTextFlags = 0);
+__c__ButtonEx :: (ret: &bool, _label: &char8, _size_arg: &ImVec2, _flags: ImGuiButtonFlags = 0);
 __c__CloseButton :: (ret: &bool, _id: ImGuiID, _pos: &ImVec2);
 __c__CollapseButton :: (ret: &bool, _id: ImGuiID, _pos: &ImVec2);
 __c__ArrowButtonEx :: (ret: &bool, _str_id: &char8, _dir: ImGuiDir, _size_arg: &ImVec2, _flags: ImGuiButtonFlags);
@@ -6094,18 +6094,18 @@ __c__ScrollbarEx :: (ret: &bool, _bb: &ImRect, _id: ImGuiID, _axis: ImGuiAxis, _
 __c__GetWindowScrollbarID :: (ret: &ImGuiID, _window: &ImGuiWindow, _axis: ImGuiAxis);
 __c__GetWindowResizeID :: (ret: &ImGuiID, _window: &ImGuiWindow, _n: i32);
 __c__SeparatorEx :: (_flags: ImGuiSeparatorFlags);
-__c__ButtonBehavior :: (ret: &bool, _bb: &ImRect, _id: ImGuiID, _out_hovered: &bool, _out_held: &bool, _flags: ImGuiButtonFlags);
+__c__ButtonBehavior :: (ret: &bool, _bb: &ImRect, _id: ImGuiID, _out_hovered: &bool, _out_held: &bool, _flags: ImGuiButtonFlags = 0);
 __c__DragBehavior :: (ret: &bool, _id: ImGuiID, _data_type: ImGuiDataType, _p_v: &void, _v_speed: f32, _p_min: &void, _p_max: &void, _format: &char8, _power: f32, _flags: ImGuiDragFlags);
 __c__SliderBehavior :: (ret: &bool, _bb: &ImRect, _id: ImGuiID, _data_type: ImGuiDataType, _p_v: &void, _p_min: &void, _p_max: &void, _format: &char8, _power: f32, _flags: ImGuiSliderFlags, _out_grab_bb: &ImRect);
-__c__SplitterBehavior :: (ret: &bool, _bb: &ImRect, _id: ImGuiID, _axis: ImGuiAxis, _size1: &f32, _size2: &f32, _min_size1: f32, _min_size2: f32, _hover_extend: f32, _hover_visibility_delay: f32);
-__c__TreeNodeBehavior :: (ret: &bool, _id: ImGuiID, _flags: ImGuiTreeNodeFlags, _label: &char8, _label_end: &char8);
-__c__TreeNodeBehaviorIsOpen :: (ret: &bool, _id: ImGuiID, _flags: ImGuiTreeNodeFlags);
+__c__SplitterBehavior :: (ret: &bool, _bb: &ImRect, _id: ImGuiID, _axis: ImGuiAxis, _size1: &f32, _size2: &f32, _min_size1: f32, _min_size2: f32, _hover_extend: f32 = 0.0f, _hover_visibility_delay: f32 = 0.0f);
+__c__TreeNodeBehavior :: (ret: &bool, _id: ImGuiID, _flags: ImGuiTreeNodeFlags, _label: &char8, _label_end: &char8 = null);
+__c__TreeNodeBehaviorIsOpen :: (ret: &bool, _id: ImGuiID, _flags: ImGuiTreeNodeFlags = 0);
 __c__TreePushOverrideID :: (_id: ImGuiID);
 __c__DataTypeGetInfo :: (ret: &&ImGuiDataTypeInfo, _data_type: ImGuiDataType);
 __c__DataTypeFormatString :: (ret: &i32, _buf: &char8, _buf_size: i32, _data_type: ImGuiDataType, _p_data: &void, _format: &char8);
 __c__DataTypeApplyOp :: (_data_type: ImGuiDataType, _op: i32, _output: &void, _arg_1: &void, _arg_2: &void);
 __c__DataTypeApplyOpFromText :: (ret: &bool, _buf: &char8, _initial_value_buf: &char8, _data_type: ImGuiDataType, _p_data: &void, _format: &char8);
-__c__InputTextEx :: (ret: &bool, _label: &char8, _hint: &char8, _buf: &char8, _buf_size: i32, _size_arg: &ImVec2, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback, _user_data: &void);
+__c__InputTextEx :: (ret: &bool, _label: &char8, _hint: &char8, _buf: &char8, _buf_size: i32, _size_arg: &ImVec2, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback = null, _user_data: &void = null);
 __c__TempInputTextScalar :: (ret: &bool, _bb: &ImRect, _id: ImGuiID, _label: &char8, _data_type: ImGuiDataType, _p_data: &void, _format: &char8);
 __c__ColorTooltip :: (_text: &char8, _col: &f32, _flags: ImGuiColorEditFlags);
 __c__ColorEditOptionsPopup :: (_col: &f32, _flags: ImGuiColorEditFlags);
@@ -6155,7 +6155,7 @@ __c__UpdateDebugToolItemPicker :: ();
 __c__RenderWindowOuterBorders :: (_window: &ImGuiWindow);
 __c__RenderWindowDecorations :: (_window: &ImGuiWindow, _title_bar_rect: &ImRect, _title_bar_is_highlight: bool, _resize_grip_count: i32, _resize_grip_col: &ImU32, _resize_grip_draw_size: f32);
 __c__RenderWindowTitleBarContents :: (_window: &ImGuiWindow, _title_bar_rect: &ImRect, _name: &char8, _p_open: &bool);
-__c__ImGui_ImplOpenGL3_Init :: (ret: &bool, _glsl_version: &char8);
+__c__ImGui_ImplOpenGL3_Init :: (ret: &bool, _glsl_version: &char8 = null);
 __c__ImGui_ImplOpenGL3_Shutdown :: ();
 __c__ImGui_ImplOpenGL3_NewFrame :: ();
 __c__ImGui_ImplOpenGL3_RenderDrawData :: (_draw_data: &ImDrawData);

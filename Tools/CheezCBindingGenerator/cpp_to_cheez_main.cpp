@@ -53,9 +53,9 @@ struct Context {
     std::ostream* buffer = nullptr;
     uint64_t param_index = 0;
     uint64_t member_index = 0;
-    bool start_with_comma = false;
-    bool prefer_pointers = false;
     bool no_includes = true;
+
+    CXTranslationUnit tu;
 
     std::vector<Declaration> structs;
     std::vector<Declaration> enums;
@@ -86,6 +86,7 @@ struct Context {
     void emit_namespace(std::ostream& stream, size_t ns);
 
     void sort_stuff_into_lists(CXCursor tu, size_t namespac);
+    void emit_parameter_default_value(std::ostream& stream, CXCursor c, CXToken* tokens, int num_tokens, int default_value_start, bool emit_equals);
 
     std::string get_unique_function_name(CXString cxstr) {
         std::string str(clang_getCString(cxstr));
@@ -183,6 +184,7 @@ int main(int argc, char** argv)
     }
 
     Context ctx{  };
+    ctx.tu = unit;
     ctx.namespaces.push_back({ clang_getNullCursor(), 0 });
     ctx.sort_stuff_into_lists(clang_getTranslationUnitCursor(unit), 0);
 
@@ -219,6 +221,16 @@ int main(int argc, char** argv)
     cheez_file << "#file_scope\n\n";
     cheez_file << ctx.cheez_c_bindings.str();
     c_file << ctx.c_file.str();
+
+
+    {
+        //auto calcMaxMemberLength = [this](CXCursor c, CXCursor parent, CXClientData client_data) {
+        //    return CXChildVisit_Continue;
+        //};
+
+        //auto data = getFreeCallbackData(&calcMaxMemberLength, nullptr);
+        //clang_visitChildren(cursor, getFreeCallback(&calcMaxMemberLength), &data);
+    }
 }
 
 void Context::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
@@ -719,112 +731,235 @@ void Context::emit_function_decl(const Declaration& decl) {
     clang_disposeString(name_raw);
 }
 
+void Context::emit_parameter_default_value(std::ostream& stream, CXCursor c, CXToken* tokens, int num_tokens, int index, bool emit_equals) {
+    auto default_value_token = tokens[index];
+    auto kind = clang_getTokenKind(default_value_token);
+
+    // only generate default values for literals and NULL
+    if (kind == CXTokenKind::CXToken_Literal) {
+        auto token_str = clang_getTokenSpelling(tu, default_value_token);
+        if (emit_equals) stream << " = ";
+        stream << token_str;
+        clang_disposeString(token_str);
+    }
+    else if (kind == CXTokenKind::CXToken_Keyword) {
+        auto token_str = clang_getTokenSpelling(tu, default_value_token);
+        auto token_str_c = clang_getCString(token_str);
+
+        if (strcmp("false", token_str_c) == 0) {
+            if (emit_equals) stream << " = ";
+            stream << "false";
+        } else if (strcmp("true", token_str_c) == 0) {
+            if (emit_equals) stream << " = ";
+            stream << "true";
+        } else if (strcmp("sizeof", token_str_c) == 0) {
+            // @TODO: ignore for now
+        } else {
+            auto location = clang_getCursorLocation(c);
+            CXFile file;
+            unsigned line, column;
+            clang_getFileLocation(location, &file, &line, &column, nullptr);
+            std::cout << "[ERROR] TODO handle default vaule (keyword): " << token_str << "\n";
+            std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+        }
+
+        clang_disposeString(token_str);
+    }
+    else if (kind == CXTokenKind::CXToken_Punctuation) {
+        auto token_str = clang_getTokenSpelling(tu, default_value_token);
+        auto token_str_c = clang_getCString(token_str);
+
+        if (strcmp("-", token_str_c) == 0) {
+            if (emit_equals) stream << " = ";
+            stream << "-";
+            emit_parameter_default_value(stream, c, tokens, num_tokens, index + 1, false);
+        } else if (strcmp("+", token_str_c) == 0) {
+            if (emit_equals) stream << " = ";
+            stream << "+";
+            emit_parameter_default_value(stream, c, tokens, num_tokens, index + 1, false);
+        } else if (strcmp("~", token_str_c) == 0) {
+            if (emit_equals) stream << " = ";
+            stream << "@bin_not(";
+            emit_parameter_default_value(stream, c, tokens, num_tokens, index + 1, false);
+            stream << ")";
+        } else {
+            auto location = clang_getCursorLocation(c);
+            CXFile file;
+            unsigned line, column;
+            clang_getFileLocation(location, &file, &line, &column, nullptr);
+            std::cout << "[ERROR] TODO handle default vaule (punctuation): " << token_str << "\n";
+            std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+        }
+
+        clang_disposeString(token_str);
+    }
+    else if (kind == CXTokenKind::CXToken_Identifier) {
+        auto token_str = clang_getTokenSpelling(tu, default_value_token);
+        auto token_str_c = clang_getCString(token_str);
+
+        if (strcmp("NULL", token_str_c) == 0) {
+            if (emit_equals) stream << " = ";
+            stream << "null";
+        } else if (index == num_tokens - 1) {
+            // only one token which is an identifier, so probably a constant
+            if (emit_equals) stream << " = ";
+            stream << token_str;
+        } else if (index < num_tokens - 1) {
+            // more tokens following after this id, so we'll just ignore it
+        } else {
+            auto location = clang_getCursorLocation(c);
+            CXFile file;
+            unsigned line, column;
+            clang_getFileLocation(location, &file, &line, &column, nullptr);
+            std::cout << "[ERROR] TODO handle default vaule (identifier): " << token_str << "\n";
+            std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+        }
+
+        clang_disposeString(token_str);
+    }
+    else {
+        auto token_str = clang_getTokenSpelling(tu, default_value_token);
+        auto location = clang_getCursorLocation(c);
+        CXFile file;
+        unsigned line, column;
+        clang_getFileLocation(location, &file, &line, &column, nullptr);
+        std::cout << "[ERROR] TODO handle default vaule (" << kind << "): " << token_str << "\n";
+        std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+        clang_disposeString(token_str);
+    }
+}
+
 void Context::emit_cheez_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma, bool prefer_pointers) {
-    buffer = &stream;
     param_index = 0;
-    this->start_with_comma = start_with_comma;
-    this->prefer_pointers = prefer_pointers;
-
-    clang_visitChildren(func, [](CXCursor c, CXCursor parent, CXClientData client_data) {
-        Context& ctx = *(Context*)client_data;
-
+    auto visitAllChildren = [this, &stream, start_with_comma, prefer_pointers](CXCursor c, CXCursor parent, CXClientData client_data) {
         switch (c.kind) {
         case CXCursorKind::CXCursor_ParmDecl: {
             CXString name = clang_getCursorSpelling(c);
             CXType type = clang_getCursorType(c);
 
-            if (ctx.param_index > 0 || ctx.start_with_comma)
-                *ctx.buffer << ", ";
-            ctx.emit_param_name(*ctx.buffer, c, ctx.param_index);
-            *ctx.buffer << ": ";
-            ctx.emit_cheez_type(*ctx.buffer, type, true, false, ctx.prefer_pointers);
+            if (param_index > 0 || start_with_comma)
+                stream << ", ";
+            emit_param_name(stream, c, param_index);
+            stream << ": ";
+            emit_cheez_type(stream, type, true, false, prefer_pointers);
+
+            // emit default value
+            {
+                auto range = clang_getCursorExtent(c);
+                CXToken* tokens;
+                unsigned num_tokens;
+                clang_tokenize(tu, range, &tokens, &num_tokens);
+                    
+                bool has_default_value = false;
+                int default_value_start = 0;
+                for (int i = 0; i < num_tokens; i++) {
+                    auto token_str = clang_getTokenSpelling(tu, tokens[i]);
+                    auto token_str_c = clang_getCString(token_str);
+                    if (strcmp(token_str_c, "=") == 0) {
+                        has_default_value = true;
+                        default_value_start = i + 1;
+                        clang_disposeString(token_str);
+                        break;
+                    }
+                    clang_disposeString(token_str);
+                }
+
+                if (has_default_value && default_value_start >= num_tokens) {
+                    auto location = clang_getCursorLocation(c);
+                    CXFile file;
+                    unsigned line, column;
+                    clang_getFileLocation(location, &file, &line, &column, nullptr);
+                    std::cout << "[ERROR] failed to get default value from parameter\n";
+                    std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+                } else if (has_default_value) {
+                    emit_parameter_default_value(stream, c, tokens, num_tokens, default_value_start, true);
+                }
+            }
 
             clang_disposeString(name);
-            ctx.param_index += 1;
+            param_index += 1;
             break;
         }
         }
-
         return CXChildVisit_Continue;
-    }, this);
+    };
+
+    auto data = getFreeCallbackData(&visitAllChildren, nullptr);
+    clang_visitChildren(func, getFreeCallback(&visitAllChildren), &data);
 }
 
 void Context::emit_cheez_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
-    buffer = &stream;
     param_index = 0;
-    this->start_with_comma = start_with_comma;
 
-    clang_visitChildren(func, [](CXCursor c, CXCursor parent, CXClientData client_data) {
-        Context& ctx = *(Context*)client_data;
-
+    auto visitAllChildren = [this, &stream, start_with_comma](CXCursor c, CXCursor parent, CXClientData client_data) {
         switch (c.kind) {
         case CXCursorKind::CXCursor_ParmDecl: {
-            if (ctx.param_index > 0 || ctx.start_with_comma)
-                *ctx.buffer << ", ";
+            if (param_index > 0 || start_with_comma)
+                stream << ", ";
 
             CXType type = clang_getCursorType(c);
-            if (ctx.pass_type_by_pointer(type) || type.kind == CXType_LValueReference)
-                *ctx.buffer << "&";
-            ctx.emit_param_name(*ctx.buffer, c, ctx.param_index);
-            ctx.param_index += 1;
+            if (pass_type_by_pointer(type) || type.kind == CXType_LValueReference)
+                stream << "&";
+            emit_param_name(stream, c, param_index);
+            param_index += 1;
             break;
         }
         }
 
         return CXChildVisit_Continue;
-    }, this);
+    };
+
+    auto data = getFreeCallbackData(&visitAllChildren, nullptr);
+    clang_visitChildren(func, getFreeCallback(&visitAllChildren), &data);
 }
 
 void Context::emit_c_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
-    buffer = &stream;
     param_index = 0;
-    this->start_with_comma = start_with_comma;
 
-    clang_visitChildren(func, [](CXCursor c, CXCursor parent, CXClientData client_data) {
-        Context& ctx = *(Context*)client_data;
-
+    auto visitAllChildren = [this, &stream, start_with_comma](CXCursor c, CXCursor parent, CXClientData client_data) {
         switch (c.kind) {
         case CXCursorKind::CXCursor_ParmDecl: {
-            if (ctx.param_index > 0 || ctx.start_with_comma)
-                *ctx.buffer << ", ";
-            ctx.emit_c_type(*ctx.buffer, clang_getCursorType(c), ctx.get_param_name(c, ctx.param_index).c_str(), true);
-            ctx.param_index += 1;
+            if (param_index > 0 || start_with_comma)
+                stream << ", ";
+            emit_c_type(stream, clang_getCursorType(c), get_param_name(c, param_index).c_str(), true);
+            param_index += 1;
             break;
         }
         }
 
         return CXChildVisit_Continue;
-    }, this);
+    };
+
+    auto data = getFreeCallbackData(&visitAllChildren, nullptr);
+    clang_visitChildren(func, getFreeCallback(&visitAllChildren), &data);
 }
 
 void Context::emit_c_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
-    buffer = &stream;
     param_index = 0;
-    this->start_with_comma = start_with_comma;
 
-    clang_visitChildren(func, [](CXCursor c, CXCursor parent, CXClientData client_data) {
-        Context& ctx = *(Context*)client_data;
-
+    auto visitAllChildren = [this, &stream, start_with_comma](CXCursor c, CXCursor parent, CXClientData client_data) {
         switch (c.kind) {
         case CXCursorKind::CXCursor_ParmDecl: {
             CXString name = clang_getCursorSpelling(c);
             CXType type = clang_getCursorType(c);
 
-            if (ctx.param_index > 0 || ctx.start_with_comma)
-                *ctx.buffer << ", ";
+            if (param_index > 0 || start_with_comma)
+                stream << ", ";
 
-            if (ctx.pass_type_by_pointer(type) || type.kind == CXType_LValueReference)
-                *ctx.buffer << "*";
-            ctx.emit_param_name(*ctx.buffer, c, ctx.param_index);
+            if (pass_type_by_pointer(type) || type.kind == CXType_LValueReference)
+                stream << "*";
+            emit_param_name(stream, c, param_index);
 
             clang_disposeString(name);
-            ctx.param_index += 1;
+            param_index += 1;
             break;
         }
         }
-
         return CXChildVisit_Continue;
-    }, this);
+    };
+
+    auto data = getFreeCallbackData(&visitAllChildren, nullptr);
+    clang_visitChildren(func, getFreeCallback(&visitAllChildren), &data);
 }
 
 void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_func_param, bool behind_pointer, bool prefer_pointers) {
