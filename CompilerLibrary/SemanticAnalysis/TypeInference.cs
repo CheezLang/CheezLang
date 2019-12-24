@@ -3000,10 +3000,15 @@ namespace Cheez
                     continue;
                 }
 
-                if (!(arg.Expr.Type is IntType it))
+                switch (arg.Expr.Type)
                 {
-                    ReportError(arg, $"Argument must be of type int");
-                    return expr;
+                    case IntType _:
+                    case EnumType e when e.Declaration.IsReprC:
+                        break;
+
+                    default:
+                        ReportError(arg, $"Argument must be of type int");
+                        return expr;
                 }
             }
 
@@ -4975,9 +4980,18 @@ namespace Cheez
             var cast = new AstCastExpr(new AstTypeRef(to), expr, expr.Location);
             cast.Scope = expr.Scope;
 
-            // TODO: only do this for implicit casts
-            if (to == CheezType.Any)
-                return InferType(cast, to);
+            switch (to, from)
+            {
+                // TODO: only do this for implicit casts
+                case (CheezType t, _) when t == CheezType.Any:
+                    return InferType(cast, to);
+
+                case (IntType i, EnumType e) when e.Declaration.TagType == i && e.Declaration.IsReprC:
+                    return InferType(cast, to);
+
+                case (EnumType e, IntType i) when e.Declaration.TagType == i && e.Declaration.IsReprC:
+                    return InferType(cast, to);
+            }
 
             if (to is SliceType s && from is PointerType p && s.TargetType == p.TargetType)
                 return InferType(cast, to);
