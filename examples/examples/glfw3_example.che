@@ -2,8 +2,10 @@ use import std.mem.allocator
 use import std.string
 use import std.array
 use import std.math
-io :: import std.io
-C  :: import std.c
+use import std.time
+fmt :: import std.fmt
+io  :: import std.io
+C   :: import std.c
 
 use import glfw.glfw3
 use import opengl.opengl
@@ -51,11 +53,13 @@ for_extension_vec4 :: (vec: ref vec4, code: Code) #for {
 gladLoadGL :: () -> i32;
 
 onKeyDown :: (window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
-
 }
 
-onResize :: (window: &GLFWwindow, w: i32, h: i32) {
+on_framebuffer_resize :: (window: &GLFWwindow, w: i32, h: i32) {
     glViewport(0, 0, w, h)
+
+    width  = cast w
+    height = cast h
 }
 
 glfw_error_callback :: (error: i32, description: c_string) {
@@ -89,6 +93,9 @@ igListBoxStringArray :: (label: c_string, current_index: &i32, arr: ref Array[St
     return imgui.ListBoxFnPtr(label, current_index, array_string_getter, cast &arr, cast arr.get_length())
 }
 
+width  := 0
+height := 0
+
 Main :: () {
     glfwSetErrorCallback(glfw_error_callback)
 
@@ -100,8 +107,13 @@ Main :: () {
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
+    glfwWindowHint(GLFW_VISIBLE, 0)
+    glfwWindowHint(GLFW_MAXIMIZED, 1)
+    glfwWindowHint(GLFW_RESIZABLE, 1)
 
-    window := glfwCreateWindow(1280, 720, "Hello World", null, null)
+    vidmode := glfwGetVideoMode(glfwGetPrimaryMonitor())
+
+    window := glfwCreateWindow(vidmode.width, vidmode.height, "Hello World", null, null)
     if window == null {
         io.println("Failed to create window")
         return
@@ -109,13 +121,23 @@ Main :: () {
     defer glfwDestroyWindow(window)
 
     glfwMakeContextCurrent(window)
-    glfwSwapInterval(1)
+    glfwSwapInterval(0)
     if gladLoadGL() != 1 {
         return
     }
 
+    glfwShowWindow(window)
+
+    {
+        w := 0i32
+        h := 0i32
+        glfwGetFramebufferSize(window, &w, &h)
+        width = cast w
+        height = cast h
+    }
+
     glfwSetKeyCallback(window, onKeyDown)
-    glfwSetWindowSizeCallback(window, onResize)
+    glfwSetFramebufferSizeCallback(window, on_framebuffer_resize)
 
     // imgui setup
     if !init_imgui(window) {
@@ -124,8 +146,6 @@ Main :: () {
     defer shutdown_imgui()
 
     // opengl
-    glViewport(0, 0, 1080, 720)
-
     clear_color := vec4(1, 0, 1, 1)
 
     strings := Array[String].create()
@@ -139,7 +159,33 @@ Main :: () {
     C.memset(buff.data, 0, cast buff.length)
     defer free_n(buff)
 
+    last_frame_time := get_time_microseconds()
+
+    frame_timer := 0.0
+    fps_counter := 0
+    current_fps := 0
+
     while !glfwWindowShouldClose(window) {
+        this_frame_time     := get_time_microseconds()
+        last_frame_duration := this_frame_time - last_frame_time
+        last_frame_time = this_frame_time
+
+        // convert time from microseconds to seconds
+        delta_time := double(last_frame_duration) * 0.000001
+
+        frame_timer += delta_time
+        if frame_timer >= 1 {
+            current_fps = fps_counter
+            frame_timer -= 1
+            fps_counter = 0
+
+            // io.println(current_fps)
+            // io.println(1 / delta_time)
+            // io.println(delta_time)
+            // io.println("---")
+        }
+
+
         glfwPollEvents()
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
         glClear(GL_COLOR_BUFFER_BIT)
@@ -149,7 +195,29 @@ Main :: () {
 
         {
             open := true
-            imgui.Begin("Settings", &open, cast imgui.ImGuiWindowFlags_.None)
+
+            pos   := imgui.ImVec2(0, 0)
+            pivot := imgui.ImVec2(0, 0)
+            imgui.SetNextWindowPos(pos, imgui.ImGuiCond_.Always, pivot)
+
+            size_min := imgui.ImVec2(50, cast height)
+            size_max := imgui.ImVec2(500, cast height)
+            imgui.SetNextWindowSizeConstraints(size_min, size_max)
+            imgui.Begin("Settings", &open, @bin_or(
+                imgui.ImGuiWindowFlags_.NoMove,
+                imgui.ImGuiWindowFlags_.NoCollapse,
+                imgui.ImGuiWindowFlags_.NoFocusOnAppearing,
+                imgui.ImGuiWindowFlags_.NoBringToFrontOnFocus))
+
+
+            {
+                delta_time_str := fmt.format_any(delta_time)
+                imgui.LabelText("Frame duration", delta_time_str.as_cstring())
+                fps_str := fmt.format_any(1 / delta_time)
+                imgui.LabelText("Fps", fps_str.as_cstring())
+                fps_counted_str := fmt.format_any(current_fps)
+                imgui.LabelText("Fps", fps_counted_str.as_cstring())
+            }
 
             imgui.ColorPicker3("clear color", cast(&float)&clear_color, 0)
             imgui.Separator()
@@ -179,6 +247,8 @@ Main :: () {
 
         // present image
         glfwSwapBuffers(window)
+
+        fps_counter += 1
     }
 }
 
@@ -206,6 +276,10 @@ init_imgui :: (window: &GLFWwindow) -> bool {
     }
 
     imgui.StyleColorsDark(null)
+
+    // change corners so they are right angles instead of rounded
+    style := ref imgui.GetStyle()	
+    style.WindowRounding = 0.0	
 
     //
     if !imgui.ImGui_ImplGlfw_InitForOpenGL(window, true) {
