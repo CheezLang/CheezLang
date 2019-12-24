@@ -1,5 +1,5 @@
 #lib("./lib/Bindings.lib")
-#lib("./lib/cimgui.lib")
+#lib("./lib/imgui.lib")
 
 import std.alloca
 use import std.io.stdio
