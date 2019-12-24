@@ -517,6 +517,11 @@ void Context::emit_struct_decl(const Declaration& decl) {
 
         default: {
             std::cout << "[ERROR] struct member: " << "Cursor '" << clang_getCursorSpelling(c) << "' of kind '" << clang_getCursorKindSpelling(clang_getCursorKind(c)) << "'\n";
+            auto location = clang_getCursorLocation(c);
+            CXFile file;
+            unsigned line, column;
+            clang_getFileLocation(location, &file, &line, &column, nullptr);
+            std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
             break;
         }
         }
