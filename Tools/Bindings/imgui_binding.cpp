@@ -19,16 +19,16 @@ extern "C" void __c__ImGuiStyle_new_35(ImGuiStyle* self) {
 extern "C" void __c__ImGuiStyle_ScaleAllSizes_36(ImGuiStyle* self, float _scale_factor) {
     self->ScaleAllSizes(_scale_factor);
 }
-extern "C" void __c__ImGuiIO_AddInputCharacter_46(ImGuiIO* self, uint32_t _c) {
+extern "C" void __c__ImGuiIO_AddInputCharacter_53(ImGuiIO* self, uint32_t _c) {
     self->AddInputCharacter(_c);
 }
-extern "C" void __c__ImGuiIO_AddInputCharactersUTF8_47(ImGuiIO* self, char * _str) {
+extern "C" void __c__ImGuiIO_AddInputCharactersUTF8_54(ImGuiIO* self, char * _str) {
     self->AddInputCharactersUTF8(_str);
 }
-extern "C" void __c__ImGuiIO_ClearInputCharacters_48(ImGuiIO* self) {
+extern "C" void __c__ImGuiIO_ClearInputCharacters_55(ImGuiIO* self) {
     self->ClearInputCharacters();
 }
-extern "C" void __c__ImGuiIO_new_80(ImGuiIO* self) {
+extern "C" void __c__ImGuiIO_new_87(ImGuiIO* self) {
     new (self) ImGuiIO();
 }
 extern "C" void __c__ImGuiInputTextCallbackData_new_12(ImGuiInputTextCallbackData* self) {
@@ -42,6 +42,9 @@ extern "C" void __c__ImGuiInputTextCallbackData_InsertChars_14(ImGuiInputTextCal
 }
 extern "C" void __c__ImGuiInputTextCallbackData_HasSelection_15(ImGuiInputTextCallbackData* self, bool *ret) {
     *ret = (bool )self->HasSelection();
+}
+extern "C" void __c__ImGuiWindowClass_new_6(ImGuiWindowClass* self) {
+    new (self) ImGuiWindowClass();
 }
 extern "C" void __c__ImGuiPayload_new_8(ImGuiPayload* self) {
     new (self) ImGuiPayload();
@@ -406,19 +409,19 @@ extern "C" void __c__ImDrawList_UpdateClipRect_68(ImDrawList* self) {
 extern "C" void __c__ImDrawList_UpdateTextureID_69(ImDrawList* self) {
     self->UpdateTextureID();
 }
-extern "C" void __c__ImDrawData_new_8(ImDrawData* self) {
+extern "C" void __c__ImDrawData_new_9(ImDrawData* self) {
     new (self) ImDrawData();
 }
 extern "C" void __c__ImDrawData_dtor(ImDrawData* self) {
     self->~ImDrawData();
 }
-extern "C" void __c__ImDrawData_Clear_10(ImDrawData* self) {
+extern "C" void __c__ImDrawData_Clear_11(ImDrawData* self) {
     self->Clear();
 }
-extern "C" void __c__ImDrawData_DeIndexAllBuffers_11(ImDrawData* self) {
+extern "C" void __c__ImDrawData_DeIndexAllBuffers_12(ImDrawData* self) {
     self->DeIndexAllBuffers();
 }
-extern "C" void __c__ImDrawData_ScaleClipRects_12(ImDrawData* self, ImVec2 * _fb_scale) {
+extern "C" void __c__ImDrawData_ScaleClipRects_13(ImDrawData* self, ImVec2 * _fb_scale) {
     self->ScaleClipRects(*_fb_scale);
 }
 extern "C" void __c__ImFontConfig_new_19(ImFontConfig* self) {
@@ -595,6 +598,18 @@ extern "C" void __c__ImFont_AddRemapChar_32(ImFont* self, uint16_t _dst, uint16_
 extern "C" void __c__ImFont_SetFallbackChar_33(ImFont* self, uint16_t _c) {
     self->SetFallbackChar(_c);
 }
+extern "C" void __c__ImGuiPlatformMonitor_new_5(ImGuiPlatformMonitor* self) {
+    new (self) ImGuiPlatformMonitor();
+}
+extern "C" void __c__ImGuiPlatformIO_new_27(ImGuiPlatformIO* self) {
+    new (self) ImGuiPlatformIO();
+}
+extern "C" void __c__ImGuiViewport_new_14(ImGuiViewport* self) {
+    new (self) ImGuiViewport();
+}
+extern "C" void __c__ImGuiViewport_dtor(ImGuiViewport* self) {
+    self->~ImGuiViewport();
+}
 extern "C" void __c__ImBoolVector_new_1(ImBoolVector* self) {
     new (self) ImBoolVector();
 }
@@ -621,6 +636,9 @@ extern "C" void __c__ImVec2ih_new_2(ImVec2ih* self) {
 }
 extern "C" void __c__ImVec2ih_new_3(ImVec2ih* self, int16_t __x, int16_t __y) {
     new (self) ImVec2ih(__x, __y);
+}
+extern "C" void __c__ImVec2ih_new_4(ImVec2ih* self, ImVec2 * _rhs) {
+    new (self) ImVec2ih(*_rhs);
 }
 extern "C" void __c__ImRect_new_2(ImRect* self) {
     new (self) ImRect();
@@ -754,10 +772,10 @@ extern "C" void __c__ImGuiInputTextState_ClearSelection_25(ImGuiInputTextState* 
 extern "C" void __c__ImGuiInputTextState_SelectAll_26(ImGuiInputTextState* self) {
     self->SelectAll();
 }
-extern "C" void __c__ImGuiWindowSettings_new_4(ImGuiWindowSettings* self) {
+extern "C" void __c__ImGuiWindowSettings_new_9(ImGuiWindowSettings* self) {
     new (self) ImGuiWindowSettings();
 }
-extern "C" void __c__ImGuiWindowSettings_GetName_5(ImGuiWindowSettings* self, char * *ret) {
+extern "C" void __c__ImGuiWindowSettings_GetName_10(ImGuiWindowSettings* self, char * *ret) {
     *ret = (char * )self->GetName();
 }
 extern "C" void __c__ImGuiSettingsHandler_new_6(ImGuiSettingsHandler* self) {
@@ -787,16 +805,31 @@ extern "C" void __c__ImDrawDataBuilder_ClearFreeMemory_2(ImDrawDataBuilder* self
 extern "C" void __c__ImDrawDataBuilder_FlattenIntoSingleLayer_3(ImDrawDataBuilder* self) {
     self->FlattenIntoSingleLayer();
 }
+extern "C" void __c__ImGuiViewportP_new_18(ImGuiViewportP* self) {
+    new (self) ImGuiViewportP();
+}
+extern "C" void __c__ImGuiViewportP_dtor(ImGuiViewportP* self) {
+    self->~ImGuiViewportP();
+}
+extern "C" void __c__ImGuiViewportP_GetRect_20(ImGuiViewportP* self, ImRect *ret) {
+    *ret = (ImRect )self->GetRect();
+}
+extern "C" void __c__ImGuiViewportP_GetCenter_21(ImGuiViewportP* self, ImVec2 *ret) {
+    *ret = (ImVec2 )self->GetCenter();
+}
+extern "C" void __c__ImGuiViewportP_ClearRequestFlags_22(ImGuiViewportP* self) {
+    self->ClearRequestFlags();
+}
 extern "C" void __c__ImGuiNavMoveResult_new_7(ImGuiNavMoveResult* self) {
     new (self) ImGuiNavMoveResult();
 }
 extern "C" void __c__ImGuiNavMoveResult_Clear_8(ImGuiNavMoveResult* self) {
     self->Clear();
 }
-extern "C" void __c__ImGuiNextWindowData_new_14(ImGuiNextWindowData* self) {
+extern "C" void __c__ImGuiNextWindowData_new_19(ImGuiNextWindowData* self) {
     new (self) ImGuiNextWindowData();
 }
-extern "C" void __c__ImGuiNextWindowData_ClearFlags_15(ImGuiNextWindowData* self) {
+extern "C" void __c__ImGuiNextWindowData_ClearFlags_20(ImGuiNextWindowData* self) {
     self->ClearFlags();
 }
 extern "C" void __c__ImGuiNextItemData_new_4(ImGuiNextItemData* self) {
@@ -811,55 +844,94 @@ extern "C" void __c__ImGuiPtrOrIndex_new_2(ImGuiPtrOrIndex* self, void * _ptr) {
 extern "C" void __c__ImGuiPtrOrIndex_new_3(ImGuiPtrOrIndex* self, int32_t _index) {
     new (self) ImGuiPtrOrIndex(_index);
 }
-extern "C" void __c__ImGuiContext_new_172(ImGuiContext* self, ImFontAtlas * _shared_font_atlas) {
+extern "C" void __c__ImGuiDockNode_new_37(ImGuiDockNode* self, uint32_t _id) {
+    new (self) ImGuiDockNode(_id);
+}
+extern "C" void __c__ImGuiDockNode_dtor(ImGuiDockNode* self) {
+    self->~ImGuiDockNode();
+}
+extern "C" void __c__ImGuiDockNode_IsRootNode_39(ImGuiDockNode* self, bool *ret) {
+    *ret = (bool )self->IsRootNode();
+}
+extern "C" void __c__ImGuiDockNode_IsDockSpace_40(ImGuiDockNode* self, bool *ret) {
+    *ret = (bool )self->IsDockSpace();
+}
+extern "C" void __c__ImGuiDockNode_IsFloatingNode_41(ImGuiDockNode* self, bool *ret) {
+    *ret = (bool )self->IsFloatingNode();
+}
+extern "C" void __c__ImGuiDockNode_IsCentralNode_42(ImGuiDockNode* self, bool *ret) {
+    *ret = (bool )self->IsCentralNode();
+}
+extern "C" void __c__ImGuiDockNode_IsHiddenTabBar_43(ImGuiDockNode* self, bool *ret) {
+    *ret = (bool )self->IsHiddenTabBar();
+}
+extern "C" void __c__ImGuiDockNode_IsNoTabBar_44(ImGuiDockNode* self, bool *ret) {
+    *ret = (bool )self->IsNoTabBar();
+}
+extern "C" void __c__ImGuiDockNode_IsSplitNode_45(ImGuiDockNode* self, bool *ret) {
+    *ret = (bool )self->IsSplitNode();
+}
+extern "C" void __c__ImGuiDockNode_IsLeafNode_46(ImGuiDockNode* self, bool *ret) {
+    *ret = (bool )self->IsLeafNode();
+}
+extern "C" void __c__ImGuiDockNode_IsEmpty_47(ImGuiDockNode* self, bool *ret) {
+    *ret = (bool )self->IsEmpty();
+}
+extern "C" void __c__ImGuiDockNode_GetMergedFlags_48(ImGuiDockNode* self, ImGuiDockNodeFlags *ret) {
+    *ret = (int32_t )self->GetMergedFlags();
+}
+extern "C" void __c__ImGuiDockNode_Rect_49(ImGuiDockNode* self, ImRect *ret) {
+    *ret = (ImRect )self->Rect();
+}
+extern "C" void __c__ImGuiContext_new_182(ImGuiContext* self, ImFontAtlas * _shared_font_atlas) {
     new (self) ImGuiContext(_shared_font_atlas);
 }
 extern "C" void __c__ImGuiWindowTempData_new_40(ImGuiWindowTempData* self) {
     new (self) ImGuiWindowTempData();
 }
-extern "C" void __c__ImGuiWindow_new_76(ImGuiWindow* self, ImGuiContext * _context, char * _name) {
+extern "C" void __c__ImGuiWindow_new_99(ImGuiWindow* self, ImGuiContext * _context, char * _name) {
     new (self) ImGuiWindow(_context, _name);
 }
 extern "C" void __c__ImGuiWindow_dtor(ImGuiWindow* self) {
     self->~ImGuiWindow();
 }
-extern "C" void __c__ImGuiWindow_GetID_78(ImGuiWindow* self, ImGuiID *ret, char * _str, char * _str_end) {
+extern "C" void __c__ImGuiWindow_GetID_101(ImGuiWindow* self, ImGuiID *ret, char * _str, char * _str_end) {
     *ret = (uint32_t )self->GetID(_str, _str_end);
 }
-extern "C" void __c__ImGuiWindow_GetID_79(ImGuiWindow* self, ImGuiID *ret, void * _ptr) {
+extern "C" void __c__ImGuiWindow_GetID_102(ImGuiWindow* self, ImGuiID *ret, void * _ptr) {
     *ret = (uint32_t )self->GetID(_ptr);
 }
-extern "C" void __c__ImGuiWindow_GetID_80(ImGuiWindow* self, ImGuiID *ret, int32_t _n) {
+extern "C" void __c__ImGuiWindow_GetID_103(ImGuiWindow* self, ImGuiID *ret, int32_t _n) {
     *ret = (uint32_t )self->GetID(_n);
 }
-extern "C" void __c__ImGuiWindow_GetIDNoKeepAlive_81(ImGuiWindow* self, ImGuiID *ret, char * _str, char * _str_end) {
+extern "C" void __c__ImGuiWindow_GetIDNoKeepAlive_104(ImGuiWindow* self, ImGuiID *ret, char * _str, char * _str_end) {
     *ret = (uint32_t )self->GetIDNoKeepAlive(_str, _str_end);
 }
-extern "C" void __c__ImGuiWindow_GetIDNoKeepAlive_82(ImGuiWindow* self, ImGuiID *ret, void * _ptr) {
+extern "C" void __c__ImGuiWindow_GetIDNoKeepAlive_105(ImGuiWindow* self, ImGuiID *ret, void * _ptr) {
     *ret = (uint32_t )self->GetIDNoKeepAlive(_ptr);
 }
-extern "C" void __c__ImGuiWindow_GetIDNoKeepAlive_83(ImGuiWindow* self, ImGuiID *ret, int32_t _n) {
+extern "C" void __c__ImGuiWindow_GetIDNoKeepAlive_106(ImGuiWindow* self, ImGuiID *ret, int32_t _n) {
     *ret = (uint32_t )self->GetIDNoKeepAlive(_n);
 }
-extern "C" void __c__ImGuiWindow_GetIDFromRectangle_84(ImGuiWindow* self, ImGuiID *ret, ImRect * _r_abs) {
+extern "C" void __c__ImGuiWindow_GetIDFromRectangle_107(ImGuiWindow* self, ImGuiID *ret, ImRect * _r_abs) {
     *ret = (uint32_t )self->GetIDFromRectangle(*_r_abs);
 }
-extern "C" void __c__ImGuiWindow_Rect_85(ImGuiWindow* self, ImRect *ret) {
+extern "C" void __c__ImGuiWindow_Rect_108(ImGuiWindow* self, ImRect *ret) {
     *ret = (ImRect )self->Rect();
 }
-extern "C" void __c__ImGuiWindow_CalcFontSize_86(ImGuiWindow* self, float *ret) {
+extern "C" void __c__ImGuiWindow_CalcFontSize_109(ImGuiWindow* self, float *ret) {
     *ret = (float )self->CalcFontSize();
 }
-extern "C" void __c__ImGuiWindow_TitleBarHeight_87(ImGuiWindow* self, float *ret) {
+extern "C" void __c__ImGuiWindow_TitleBarHeight_110(ImGuiWindow* self, float *ret) {
     *ret = (float )self->TitleBarHeight();
 }
-extern "C" void __c__ImGuiWindow_TitleBarRect_88(ImGuiWindow* self, ImRect *ret) {
+extern "C" void __c__ImGuiWindow_TitleBarRect_111(ImGuiWindow* self, ImRect *ret) {
     *ret = (ImRect )self->TitleBarRect();
 }
-extern "C" void __c__ImGuiWindow_MenuBarHeight_89(ImGuiWindow* self, float *ret) {
+extern "C" void __c__ImGuiWindow_MenuBarHeight_112(ImGuiWindow* self, float *ret) {
     *ret = (float )self->MenuBarHeight();
 }
-extern "C" void __c__ImGuiWindow_MenuBarRect_90(ImGuiWindow* self, ImRect *ret) {
+extern "C" void __c__ImGuiWindow_MenuBarRect_113(ImGuiWindow* self, ImRect *ret) {
     *ret = (ImRect )self->MenuBarRect();
 }
 extern "C" void __c__ImGuiItemHoveredDataBackup_new_4(ImGuiItemHoveredDataBackup* self) {
@@ -871,7 +943,7 @@ extern "C" void __c__ImGuiItemHoveredDataBackup_Backup_5(ImGuiItemHoveredDataBac
 extern "C" void __c__ImGuiItemHoveredDataBackup_Restore_6(ImGuiItemHoveredDataBackup* self) {
     self->Restore();
 }
-extern "C" void __c__ImGuiTabItem_new_8(ImGuiTabItem* self) {
+extern "C" void __c__ImGuiTabItem_new_9(ImGuiTabItem* self) {
     new (self) ImGuiTabItem();
 }
 extern "C" void __c__ImGuiTabBar_new_24(ImGuiTabBar* self) {
@@ -885,6 +957,24 @@ extern "C" void __c__ImGuiTabBar_GetTabName_26(ImGuiTabBar* self, char * *ret, I
 }
 extern "C" void __c__ImGuiStyleVarInfo_GetVarPtr_3(ImGuiStyleVarInfo* self, void * *ret, ImGuiStyle * _style) {
     *ret = (void * )self->GetVarPtr(_style);
+}
+extern "C" void __c__ImGuiDockRequest_new_9(ImGuiDockRequest* self) {
+    new (self) ImGuiDockRequest();
+}
+extern "C" void __c__ImGuiDockPreviewData_new_9(ImGuiDockPreviewData* self) {
+    new (self) ImGuiDockPreviewData();
+}
+extern "C" void __c__ImGuiDockNodeSettings_new_10(ImGuiDockNodeSettings* self) {
+    new (self) ImGuiDockNodeSettings();
+}
+extern "C" void __c__ImGuiDockContext_new_4(ImGuiDockContext* self) {
+    new (self) ImGuiDockContext();
+}
+extern "C" void __c__ImGuiDockContextPruneNodeData_new_4(ImGuiDockContextPruneNodeData* self) {
+    new (self) ImGuiDockContextPruneNodeData();
+}
+extern "C" void __c__ImGuiDockNodeFindInfoResults_new_3(ImGuiDockNodeFindInfoResults* self) {
+    new (self) ImGuiDockNodeFindInfoResults();
 }
 extern "C" void __c__CreateContext(ImGuiContext * *ret, ImFontAtlas * _shared_font_atlas) {
     *ret = (ImGuiContext * )ImGui::CreateContext(_shared_font_atlas);
@@ -982,6 +1072,12 @@ extern "C" void __c__IsWindowHovered(bool *ret, int32_t _flags) {
 extern "C" void __c__GetWindowDrawList(ImDrawList * *ret) {
     *ret = (ImDrawList * )ImGui::GetWindowDrawList();
 }
+extern "C" void __c__GetWindowDpiScale(float *ret) {
+    *ret = (float )ImGui::GetWindowDpiScale();
+}
+extern "C" void __c__GetWindowViewport(ImGuiViewport * *ret) {
+    *ret = (ImGuiViewport * )ImGui::GetWindowViewport();
+}
 extern "C" void __c__GetWindowPos(ImVec2 *ret) {
     *ret = (ImVec2 )ImGui::GetWindowPos();
 }
@@ -1014,6 +1110,9 @@ extern "C" void __c__SetNextWindowFocus() {
 }
 extern "C" void __c__SetNextWindowBgAlpha(float _alpha) {
     ImGui::SetNextWindowBgAlpha(_alpha);
+}
+extern "C" void __c__SetNextWindowViewport(uint32_t _viewport_id) {
+    ImGui::SetNextWindowViewport(_viewport_id);
 }
 extern "C" void __c__SetWindowPos(ImVec2 * _pos, int32_t _cond) {
     ImGui::SetWindowPos(*_pos, _cond);
@@ -1684,6 +1783,24 @@ extern "C" void __c__EndTabItem() {
 extern "C" void __c__SetTabItemClosed(char * _tab_or_docked_window_label) {
     ImGui::SetTabItemClosed(_tab_or_docked_window_label);
 }
+extern "C" void __c__DockSpace(uint32_t _id, ImVec2 * _size, int32_t _flags, ImGuiWindowClass * _window_class) {
+    ImGui::DockSpace(_id, *_size, _flags, _window_class);
+}
+extern "C" void __c__DockSpaceOverViewport(ImGuiID *ret, ImGuiViewport * _viewport, int32_t _flags, ImGuiWindowClass * _window_class) {
+    *ret = (uint32_t )ImGui::DockSpaceOverViewport(_viewport, _flags, _window_class);
+}
+extern "C" void __c__SetNextWindowDockID(uint32_t _dock_id, int32_t _cond) {
+    ImGui::SetNextWindowDockID(_dock_id, _cond);
+}
+extern "C" void __c__SetNextWindowClass(ImGuiWindowClass * _window_class) {
+    ImGui::SetNextWindowClass(_window_class);
+}
+extern "C" void __c__GetWindowDockID(ImGuiID *ret) {
+    *ret = (uint32_t )ImGui::GetWindowDockID();
+}
+extern "C" void __c__IsWindowDocked(bool *ret) {
+    *ret = (bool )ImGui::IsWindowDocked();
+}
 extern "C" void __c__LogToTTY(int32_t _auto_open_depth) {
     ImGui::LogToTTY(_auto_open_depth);
 }
@@ -1803,6 +1920,12 @@ extern "C" void __c__GetBackgroundDrawList(ImDrawList * *ret) {
 }
 extern "C" void __c__GetForegroundDrawList(ImDrawList * *ret) {
     *ret = (ImDrawList * )ImGui::GetForegroundDrawList();
+}
+extern "C" void __c__GetBackgroundDrawList_2(ImDrawList * *ret, ImGuiViewport * _viewport) {
+    *ret = (ImDrawList * )ImGui::GetBackgroundDrawList(_viewport);
+}
+extern "C" void __c__GetForegroundDrawList_2(ImDrawList * *ret, ImGuiViewport * _viewport) {
+    *ret = (ImDrawList * )ImGui::GetForegroundDrawList(_viewport);
 }
 extern "C" void __c__GetDrawListSharedData(ImDrawListSharedData * *ret) {
     *ret = (ImDrawListSharedData * )ImGui::GetDrawListSharedData();
@@ -1929,6 +2052,27 @@ extern "C" void __c__MemAlloc(void * *ret, uint64_t _size) {
 }
 extern "C" void __c__MemFree(void * _ptr) {
     ImGui::MemFree(_ptr);
+}
+extern "C" void __c__GetPlatformIO(ImGuiPlatformIO * *ret) {
+    *ret = (ImGuiPlatformIO * )&ImGui::GetPlatformIO();
+}
+extern "C" void __c__GetMainViewport(ImGuiViewport * *ret) {
+    *ret = (ImGuiViewport * )ImGui::GetMainViewport();
+}
+extern "C" void __c__UpdatePlatformWindows() {
+    ImGui::UpdatePlatformWindows();
+}
+extern "C" void __c__RenderPlatformWindowsDefault(void * _platform_arg, void * _renderer_arg) {
+    ImGui::RenderPlatformWindowsDefault(_platform_arg, _renderer_arg);
+}
+extern "C" void __c__DestroyPlatformWindows() {
+    ImGui::DestroyPlatformWindows();
+}
+extern "C" void __c__FindViewportByID(ImGuiViewport * *ret, uint32_t _id) {
+    *ret = (ImGuiViewport * )ImGui::FindViewportByID(_id);
+}
+extern "C" void __c__FindViewportByPlatformHandle(ImGuiViewport * *ret, void * _platform_handle) {
+    *ret = (ImGuiViewport * )ImGui::FindViewportByPlatformHandle(_platform_handle);
 }
 extern "C" void __c__InputFloat_2(bool *ret, char * _label, float * _v, float _step, float _step_fast, int32_t _decimal_precision, int32_t _flags) {
     *ret = (bool )ImGui::InputFloat(_label, _v, _step, _step_fast, _decimal_precision, _flags);
@@ -2128,11 +2272,26 @@ extern "C" void __c__UpdateHoveredWindowAndCaptureFlags() {
 extern "C" void __c__StartMouseMovingWindow(ImGuiWindow * _window) {
     ImGui::StartMouseMovingWindow(_window);
 }
+extern "C" void __c__StartMouseMovingWindowOrNode(ImGuiWindow * _window, ImGuiDockNode * _node, bool _undock_floating_node) {
+    ImGui::StartMouseMovingWindowOrNode(_window, _node, _undock_floating_node);
+}
 extern "C" void __c__UpdateMouseMovingWindowNewFrame() {
     ImGui::UpdateMouseMovingWindowNewFrame();
 }
 extern "C" void __c__UpdateMouseMovingWindowEndFrame() {
     ImGui::UpdateMouseMovingWindowEndFrame();
+}
+extern "C" void __c__TranslateWindowsInViewport(ImGuiViewportP * _viewport, ImVec2 * _old_pos, ImVec2 * _new_pos) {
+    ImGui::TranslateWindowsInViewport(_viewport, *_old_pos, *_new_pos);
+}
+extern "C" void __c__ScaleWindowsInViewport(ImGuiViewportP * _viewport, float _scale) {
+    ImGui::ScaleWindowsInViewport(_viewport, _scale);
+}
+extern "C" void __c__DestroyPlatformWindow(ImGuiViewportP * _viewport) {
+    ImGui::DestroyPlatformWindow(_viewport);
+}
+extern "C" void __c__ShowViewportThumbnails() {
+    ImGui::ShowViewportThumbnails();
 }
 extern "C" void __c__MarkIniSettingsDirty() {
     ImGui::MarkIniSettingsDirty();
@@ -2305,6 +2464,93 @@ extern "C" void __c__SetNavIDWithRectRel(uint32_t _id, int32_t _nav_layer, ImRec
 extern "C" void __c__IsMouseDragPastThreshold(bool *ret, int32_t _button, float _lock_threshold) {
     *ret = (bool )ImGui::IsMouseDragPastThreshold(_button, _lock_threshold);
 }
+extern "C" void __c__DockContextInitialize(ImGuiContext * _ctx) {
+    ImGui::DockContextInitialize(_ctx);
+}
+extern "C" void __c__DockContextShutdown(ImGuiContext * _ctx) {
+    ImGui::DockContextShutdown(_ctx);
+}
+extern "C" void __c__DockContextOnLoadSettings(ImGuiContext * _ctx) {
+    ImGui::DockContextOnLoadSettings(_ctx);
+}
+extern "C" void __c__DockContextRebuildNodes(ImGuiContext * _ctx) {
+    ImGui::DockContextRebuildNodes(_ctx);
+}
+extern "C" void __c__DockContextUpdateUndocking(ImGuiContext * _ctx) {
+    ImGui::DockContextUpdateUndocking(_ctx);
+}
+extern "C" void __c__DockContextUpdateDocking(ImGuiContext * _ctx) {
+    ImGui::DockContextUpdateDocking(_ctx);
+}
+extern "C" void __c__DockContextGenNodeID(ImGuiID *ret, ImGuiContext * _ctx) {
+    *ret = (uint32_t )ImGui::DockContextGenNodeID(_ctx);
+}
+extern "C" void __c__DockContextQueueDock(ImGuiContext * _ctx, ImGuiWindow * _target, ImGuiDockNode * _target_node, ImGuiWindow * _payload, int32_t _split_dir, float _split_ratio, bool _split_outer) {
+    ImGui::DockContextQueueDock(_ctx, _target, _target_node, _payload, _split_dir, _split_ratio, _split_outer);
+}
+extern "C" void __c__DockContextQueueUndockWindow(ImGuiContext * _ctx, ImGuiWindow * _window) {
+    ImGui::DockContextQueueUndockWindow(_ctx, _window);
+}
+extern "C" void __c__DockContextQueueUndockNode(ImGuiContext * _ctx, ImGuiDockNode * _node) {
+    ImGui::DockContextQueueUndockNode(_ctx, _node);
+}
+extern "C" void __c__DockContextCalcDropPosForDocking(bool *ret, ImGuiWindow * _target, ImGuiDockNode * _target_node, ImGuiWindow * _payload, int32_t _split_dir, bool _split_outer, ImVec2 * _out_pos) {
+    *ret = (bool )ImGui::DockContextCalcDropPosForDocking(_target, _target_node, _payload, _split_dir, _split_outer, _out_pos);
+}
+extern "C" void __c__GetWindowAlwaysWantOwnTabBar(bool *ret, ImGuiWindow * _window) {
+    *ret = (bool )ImGui::GetWindowAlwaysWantOwnTabBar(_window);
+}
+extern "C" void __c__BeginDocked(ImGuiWindow * _window, bool * _p_open) {
+    ImGui::BeginDocked(_window, _p_open);
+}
+extern "C" void __c__BeginDockableDragDropSource(ImGuiWindow * _window) {
+    ImGui::BeginDockableDragDropSource(_window);
+}
+extern "C" void __c__BeginDockableDragDropTarget(ImGuiWindow * _window) {
+    ImGui::BeginDockableDragDropTarget(_window);
+}
+extern "C" void __c__SetWindowDock(ImGuiWindow * _window, uint32_t _dock_id, int32_t _cond) {
+    ImGui::SetWindowDock(_window, _dock_id, _cond);
+}
+extern "C" void __c__DockBuilderDockWindow(char * _window_name, uint32_t _node_id) {
+    ImGui::DockBuilderDockWindow(_window_name, _node_id);
+}
+extern "C" void __c__DockBuilderGetNode(ImGuiDockNode * *ret, uint32_t _node_id) {
+    *ret = (ImGuiDockNode * )ImGui::DockBuilderGetNode(_node_id);
+}
+extern "C" void __c__DockBuilderAddNode(ImGuiID *ret, uint32_t _node_id, int32_t _flags) {
+    *ret = (uint32_t )ImGui::DockBuilderAddNode(_node_id, _flags);
+}
+extern "C" void __c__DockBuilderRemoveNode(uint32_t _node_id) {
+    ImGui::DockBuilderRemoveNode(_node_id);
+}
+extern "C" void __c__DockBuilderRemoveNodeDockedWindows(uint32_t _node_id, bool _clear_persistent_docking_references) {
+    ImGui::DockBuilderRemoveNodeDockedWindows(_node_id, _clear_persistent_docking_references);
+}
+extern "C" void __c__DockBuilderRemoveNodeChildNodes(uint32_t _node_id) {
+    ImGui::DockBuilderRemoveNodeChildNodes(_node_id);
+}
+extern "C" void __c__DockBuilderSetNodePos(uint32_t _node_id, ImVec2* _pos) {
+    ImGui::DockBuilderSetNodePos(_node_id, *_pos);
+}
+extern "C" void __c__DockBuilderSetNodeSize(uint32_t _node_id, ImVec2* _size) {
+    ImGui::DockBuilderSetNodeSize(_node_id, *_size);
+}
+extern "C" void __c__DockBuilderSplitNode(ImGuiID *ret, uint32_t _node_id, int32_t _split_dir, float _size_ratio_for_node_at_dir, ImGuiID * _out_id_at_dir, ImGuiID * _out_id_at_opposite_dir) {
+    *ret = (uint32_t )ImGui::DockBuilderSplitNode(_node_id, _split_dir, _size_ratio_for_node_at_dir, _out_id_at_dir, _out_id_at_opposite_dir);
+}
+extern "C" void __c__DockBuilderCopyDockSpace(uint32_t _src_dockspace_id, uint32_t _dst_dockspace_id, ImVector<const char*> * _in_window_remap_pairs) {
+    ImGui::DockBuilderCopyDockSpace(_src_dockspace_id, _dst_dockspace_id, _in_window_remap_pairs);
+}
+extern "C" void __c__DockBuilderCopyNode(uint32_t _src_node_id, uint32_t _dst_node_id, ImVector<ImGuiID> * _out_node_remap_pairs) {
+    ImGui::DockBuilderCopyNode(_src_node_id, _dst_node_id, _out_node_remap_pairs);
+}
+extern "C" void __c__DockBuilderCopyWindowSettings(char * _src_name, char * _dst_name) {
+    ImGui::DockBuilderCopyWindowSettings(_src_name, _dst_name);
+}
+extern "C" void __c__DockBuilderFinish(uint32_t _node_id) {
+    ImGui::DockBuilderFinish(_node_id);
+}
 extern "C" void __c__BeginDragDropTargetCustom(bool *ret, ImRect * _bb, uint32_t _id) {
     *ret = (bool )ImGui::BeginDragDropTargetCustom(*_bb, _id);
 }
@@ -2341,11 +2587,17 @@ extern "C" void __c__GetColumnOffsetFromNorm(float *ret, ImGuiColumns * _columns
 extern "C" void __c__GetColumnNormFromOffset(float *ret, ImGuiColumns * _columns, float _offset) {
     *ret = (float )ImGui::GetColumnNormFromOffset(_columns, _offset);
 }
-extern "C" void __c__BeginTabBarEx(bool *ret, ImGuiTabBar * _tab_bar, ImRect * _bb, int32_t _flags) {
-    *ret = (bool )ImGui::BeginTabBarEx(_tab_bar, *_bb, _flags);
+extern "C" void __c__BeginTabBarEx(bool *ret, ImGuiTabBar * _tab_bar, ImRect * _bb, int32_t _flags, ImGuiDockNode * _dock_node) {
+    *ret = (bool )ImGui::BeginTabBarEx(_tab_bar, *_bb, _flags, _dock_node);
 }
 extern "C" void __c__TabBarFindTabByID(ImGuiTabItem * *ret, ImGuiTabBar * _tab_bar, uint32_t _tab_id) {
     *ret = (ImGuiTabItem * )ImGui::TabBarFindTabByID(_tab_bar, _tab_id);
+}
+extern "C" void __c__TabBarFindMostRecentlySelectedTabForActiveWindow(ImGuiTabItem * *ret, ImGuiTabBar * _tab_bar) {
+    *ret = (ImGuiTabItem * )ImGui::TabBarFindMostRecentlySelectedTabForActiveWindow(_tab_bar);
+}
+extern "C" void __c__TabBarAddTab(ImGuiTabBar * _tab_bar, int32_t _tab_flags, ImGuiWindow * _window) {
+    ImGui::TabBarAddTab(_tab_bar, _tab_flags, _window);
 }
 extern "C" void __c__TabBarRemoveTab(ImGuiTabBar * _tab_bar, uint32_t _tab_id) {
     ImGui::TabBarRemoveTab(_tab_bar, _tab_id);
@@ -2356,8 +2608,8 @@ extern "C" void __c__TabBarCloseTab(ImGuiTabBar * _tab_bar, ImGuiTabItem * _tab)
 extern "C" void __c__TabBarQueueChangeTabOrder(ImGuiTabBar * _tab_bar, ImGuiTabItem * _tab, int32_t _dir) {
     ImGui::TabBarQueueChangeTabOrder(_tab_bar, _tab, _dir);
 }
-extern "C" void __c__TabItemEx(bool *ret, ImGuiTabBar * _tab_bar, char * _label, bool * _p_open, int32_t _flags) {
-    *ret = (bool )ImGui::TabItemEx(_tab_bar, _label, _p_open, _flags);
+extern "C" void __c__TabItemEx(bool *ret, ImGuiTabBar * _tab_bar, char * _label, bool * _p_open, int32_t _flags, ImGuiWindow * _docked_window) {
+    *ret = (bool )ImGui::TabItemEx(_tab_bar, _label, _p_open, _flags, _docked_window);
 }
 extern "C" void __c__TabItemCalcSize(ImVec2 *ret, char * _label, bool _has_close_button) {
     *ret = (ImVec2 )ImGui::TabItemCalcSize(_label, _has_close_button);
@@ -2398,6 +2650,9 @@ extern "C" void __c__RenderCheckMark(ImVec2* _pos, uint32_t _col, float _sz) {
 extern "C" void __c__RenderNavHighlight(ImRect * _bb, uint32_t _id, int32_t _flags) {
     ImGui::RenderNavHighlight(*_bb, _id, _flags);
 }
+extern "C" void __c__RenderMouseCursor(ImVec2* _pos, float _scale, int32_t _mouse_cursor) {
+    ImGui::RenderMouseCursor(*_pos, _scale, _mouse_cursor);
+}
 extern "C" void __c__FindRenderedTextEnd(char * *ret, char * _text, char * _text_end) {
     *ret = (char * )ImGui::FindRenderedTextEnd(_text, _text_end);
 }
@@ -2410,14 +2665,20 @@ extern "C" void __c__RenderArrow(ImDrawList * _draw_list, ImVec2* _pos, uint32_t
 extern "C" void __c__RenderBullet(ImDrawList * _draw_list, ImVec2* _pos, uint32_t _col) {
     ImGui::RenderBullet(_draw_list, *_pos, _col);
 }
-extern "C" void __c__RenderMouseCursor(ImDrawList * _draw_list, ImVec2* _pos, float _scale, int32_t _mouse_cursor, uint32_t _col_fill, uint32_t _col_border, uint32_t _col_shadow) {
+extern "C" void __c__RenderMouseCursor_2(ImDrawList * _draw_list, ImVec2* _pos, float _scale, int32_t _mouse_cursor, uint32_t _col_fill, uint32_t _col_border, uint32_t _col_shadow) {
     ImGui::RenderMouseCursor(_draw_list, *_pos, _scale, _mouse_cursor, _col_fill, _col_border, _col_shadow);
 }
 extern "C" void __c__RenderArrowPointingAt(ImDrawList * _draw_list, ImVec2* _pos, ImVec2* _half_sz, int32_t _direction, uint32_t _col) {
     ImGui::RenderArrowPointingAt(_draw_list, *_pos, *_half_sz, _direction, _col);
 }
+extern "C" void __c__RenderArrowDockMenu(ImDrawList * _draw_list, ImVec2* _p_min, float _sz, uint32_t _col) {
+    ImGui::RenderArrowDockMenu(_draw_list, *_p_min, _sz, _col);
+}
 extern "C" void __c__RenderRectFilledRangeH(ImDrawList * _draw_list, ImRect * _rect, uint32_t _col, float _x_start_norm, float _x_end_norm, float _rounding) {
     ImGui::RenderRectFilledRangeH(_draw_list, *_rect, _col, _x_start_norm, _x_end_norm, _rounding);
+}
+extern "C" void __c__RenderRectFilledWithHole(ImDrawList * _draw_list, ImRect* _outer, ImRect* _inner, uint32_t _col, float _rounding) {
+    ImGui::RenderRectFilledWithHole(_draw_list, *_outer, *_inner, _col, _rounding);
 }
 extern "C" void __c__TextEx(char * _text, char * _text_end, int32_t _flags) {
     ImGui::TextEx(_text, _text_end, _flags);
@@ -2428,8 +2689,8 @@ extern "C" void __c__ButtonEx(bool *ret, char * _label, ImVec2 * _size_arg, int3
 extern "C" void __c__CloseButton(bool *ret, uint32_t _id, ImVec2 * _pos) {
     *ret = (bool )ImGui::CloseButton(_id, *_pos);
 }
-extern "C" void __c__CollapseButton(bool *ret, uint32_t _id, ImVec2 * _pos) {
-    *ret = (bool )ImGui::CollapseButton(_id, *_pos);
+extern "C" void __c__CollapseButton(bool *ret, uint32_t _id, ImVec2 * _pos, ImGuiDockNode * _dock_node) {
+    *ret = (bool )ImGui::CollapseButton(_id, *_pos, _dock_node);
 }
 extern "C" void __c__ArrowButtonEx(bool *ret, char * _str_id, int32_t _dir, ImVec2* _size_arg, int32_t _flags) {
     *ret = (bool )ImGui::ArrowButtonEx(_str_id, _dir, *_size_arg, _flags);
@@ -2530,6 +2791,9 @@ extern "C" void __c__ImFontAtlasBuildMultiplyRectAlpha8(uint8_t * _table, uint8_
 extern "C" void __c__SetCurrentWindow(ImGuiWindow * _window) {
     SetCurrentWindow(_window);
 }
+extern "C" void __c__SetWindowHitTestHole(ImGuiWindow * _window, ImVec2 * _pos, ImVec2 * _size) {
+    SetWindowHitTestHole(_window, *_pos, *_size);
+}
 extern "C" void __c__FindHoveredWindow() {
     FindHoveredWindow();
 }
@@ -2545,9 +2809,6 @@ extern "C" void __c__AddDrawListToDrawData(ImVector<ImDrawList*> * _out_list, Im
 extern "C" void __c__AddWindowToSortBuffer(ImVector<ImGuiWindow*> * _out_sorted_windows, ImGuiWindow * _window) {
     AddWindowToSortBuffer(_out_sorted_windows, _window);
 }
-extern "C" void __c__GetViewportRect(ImRect *ret) {
-    *ret = (ImRect )GetViewportRect();
-}
 extern "C" void __c__WindowSettingsHandler_ReadOpen(void * *ret, ImGuiContext * _0, ImGuiSettingsHandler * _1, char * _name) {
     *ret = (void * )WindowSettingsHandler_ReadOpen(_0, _1, _name);
 }
@@ -2562,9 +2823,6 @@ extern "C" void __c__GetClipboardTextFn_DefaultImpl(char * *ret, void * _user_da
 }
 extern "C" void __c__SetClipboardTextFn_DefaultImpl(void * _user_data, char * _text) {
     SetClipboardTextFn_DefaultImpl(_user_data, _text);
-}
-extern "C" void __c__ImeSetInputScreenPosFn_DefaultImpl(int32_t _x, int32_t _y) {
-    ImeSetInputScreenPosFn_DefaultImpl(_x, _y);
 }
 extern "C" void __c__BeginChildEx(bool *ret, char * _name, uint32_t _id, ImVec2 * _size_arg, bool _border, int32_t _flags) {
     *ret = (bool )ImGui::BeginChildEx(_name, _id, *_size_arg, _border, _flags);
@@ -2626,11 +2884,188 @@ extern "C" void __c__UpdateDebugToolItemPicker() {
 extern "C" void __c__RenderWindowOuterBorders(ImGuiWindow * _window) {
     ImGui::RenderWindowOuterBorders(_window);
 }
-extern "C" void __c__RenderWindowDecorations(ImGuiWindow * _window, ImRect * _title_bar_rect, bool _title_bar_is_highlight, int32_t _resize_grip_count, const ImU32 * _resize_grip_col, float _resize_grip_draw_size) {
-    ImGui::RenderWindowDecorations(_window, *_title_bar_rect, _title_bar_is_highlight, _resize_grip_count, _resize_grip_col, _resize_grip_draw_size);
+extern "C" void __c__RenderWindowDecorations(ImGuiWindow * _window, ImRect * _title_bar_rect, bool _title_bar_is_highlight, bool _handle_borders_and_resize_grips, int32_t _resize_grip_count, const ImU32 * _resize_grip_col, float _resize_grip_draw_size) {
+    ImGui::RenderWindowDecorations(_window, *_title_bar_rect, _title_bar_is_highlight, _handle_borders_and_resize_grips, _resize_grip_count, _resize_grip_col, _resize_grip_draw_size);
 }
 extern "C" void __c__RenderWindowTitleBarContents(ImGuiWindow * _window, ImRect * _title_bar_rect, char * _name, bool * _p_open) {
     ImGui::RenderWindowTitleBarContents(_window, *_title_bar_rect, _name, _p_open);
+}
+extern "C" void __c__EndFrameDrawDimmedBackgrounds() {
+    ImGui::EndFrameDrawDimmedBackgrounds();
+}
+extern "C" void __c__AddUpdateViewport(ImGuiViewportP * *ret, ImGuiWindow * _window, uint32_t _id, ImVec2 * _platform_pos, ImVec2 * _size, int32_t _flags) {
+    *ret = (ImGuiViewportP * )ImGui::AddUpdateViewport(_window, _id, *_platform_pos, *_size, _flags);
+}
+extern "C" void __c__UpdateViewportsNewFrame() {
+    ImGui::UpdateViewportsNewFrame();
+}
+extern "C" void __c__UpdateViewportsEndFrame() {
+    ImGui::UpdateViewportsEndFrame();
+}
+extern "C" void __c__UpdateSelectWindowViewport(ImGuiWindow * _window) {
+    ImGui::UpdateSelectWindowViewport(_window);
+}
+extern "C" void __c__UpdateTryMergeWindowIntoHostViewport(bool *ret, ImGuiWindow * _window, ImGuiViewportP * _host_viewport) {
+    *ret = (bool )ImGui::UpdateTryMergeWindowIntoHostViewport(_window, _host_viewport);
+}
+extern "C" void __c__UpdateTryMergeWindowIntoHostViewports(bool *ret, ImGuiWindow * _window) {
+    *ret = (bool )ImGui::UpdateTryMergeWindowIntoHostViewports(_window);
+}
+extern "C" void __c__SetCurrentViewport(ImGuiWindow * _window, ImGuiViewportP * _viewport) {
+    ImGui::SetCurrentViewport(_window, _viewport);
+}
+extern "C" void __c__GetWindowAlwaysWantOwnViewport(bool *ret, ImGuiWindow * _window) {
+    *ret = (bool )ImGui::GetWindowAlwaysWantOwnViewport(_window);
+}
+extern "C" void __c__FindPlatformMonitorForPos(int32_t *ret, ImVec2 * _pos) {
+    *ret = (int32_t )ImGui::FindPlatformMonitorForPos(*_pos);
+}
+extern "C" void __c__FindPlatformMonitorForRect(int32_t *ret, ImRect * _r) {
+    *ret = (int32_t )ImGui::FindPlatformMonitorForRect(*_r);
+}
+extern "C" void __c__UpdateViewportPlatformMonitor(ImGuiViewportP * _viewport) {
+    ImGui::UpdateViewportPlatformMonitor(_viewport);
+}
+extern "C" void __c__DockContextAddNode(ImGuiDockNode * *ret, ImGuiContext * _ctx, uint32_t _id) {
+    *ret = (ImGuiDockNode * )ImGui::DockContextAddNode(_ctx, _id);
+}
+extern "C" void __c__DockContextRemoveNode(ImGuiContext * _ctx, ImGuiDockNode * _node, bool _merge_sibling_into_parent_node) {
+    ImGui::DockContextRemoveNode(_ctx, _node, _merge_sibling_into_parent_node);
+}
+extern "C" void __c__DockContextQueueNotifyRemovedNode(ImGuiContext * _ctx, ImGuiDockNode * _node) {
+    ImGui::DockContextQueueNotifyRemovedNode(_ctx, _node);
+}
+extern "C" void __c__DockContextProcessDock(ImGuiContext * _ctx, ImGuiDockRequest * _req) {
+    ImGui::DockContextProcessDock(_ctx, _req);
+}
+extern "C" void __c__DockContextProcessUndockWindow(ImGuiContext * _ctx, ImGuiWindow * _window, bool _clear_persistent_docking_ref) {
+    ImGui::DockContextProcessUndockWindow(_ctx, _window, _clear_persistent_docking_ref);
+}
+extern "C" void __c__DockContextProcessUndockNode(ImGuiContext * _ctx, ImGuiDockNode * _node) {
+    ImGui::DockContextProcessUndockNode(_ctx, _node);
+}
+extern "C" void __c__DockContextPruneUnusedSettingsNodes(ImGuiContext * _ctx) {
+    ImGui::DockContextPruneUnusedSettingsNodes(_ctx);
+}
+extern "C" void __c__DockContextFindNodeByID(ImGuiDockNode * *ret, ImGuiContext * _ctx, uint32_t _id) {
+    *ret = (ImGuiDockNode * )ImGui::DockContextFindNodeByID(_ctx, _id);
+}
+extern "C" void __c__DockContextBindNodeToWindow(ImGuiDockNode * *ret, ImGuiContext * _ctx, ImGuiWindow * _window) {
+    *ret = (ImGuiDockNode * )ImGui::DockContextBindNodeToWindow(_ctx, _window);
+}
+extern "C" void __c__DockContextClearNodes(ImGuiContext * _ctx, uint32_t _root_id, bool _clear_persistent_docking_refs) {
+    ImGui::DockContextClearNodes(_ctx, _root_id, _clear_persistent_docking_refs);
+}
+extern "C" void __c__DockContextBuildNodesFromSettings(ImGuiContext * _ctx, ImGuiDockNodeSettings * _node_settings_array, int32_t _node_settings_count) {
+    ImGui::DockContextBuildNodesFromSettings(_ctx, _node_settings_array, _node_settings_count);
+}
+extern "C" void __c__DockContextBuildAddWindowsToNodes(ImGuiContext * _ctx, uint32_t _root_id) {
+    ImGui::DockContextBuildAddWindowsToNodes(_ctx, _root_id);
+}
+extern "C" void __c__DockNodeAddWindow(ImGuiDockNode * _node, ImGuiWindow * _window, bool _add_to_tab_bar) {
+    ImGui::DockNodeAddWindow(_node, _window, _add_to_tab_bar);
+}
+extern "C" void __c__DockNodeMoveWindows(ImGuiDockNode * _dst_node, ImGuiDockNode * _src_node) {
+    ImGui::DockNodeMoveWindows(_dst_node, _src_node);
+}
+extern "C" void __c__DockNodeMoveChildNodes(ImGuiDockNode * _dst_node, ImGuiDockNode * _src_node) {
+    ImGui::DockNodeMoveChildNodes(_dst_node, _src_node);
+}
+extern "C" void __c__DockNodeFindWindowByID(ImGuiWindow * *ret, ImGuiDockNode * _node, uint32_t _id) {
+    *ret = (ImGuiWindow * )ImGui::DockNodeFindWindowByID(_node, _id);
+}
+extern "C" void __c__DockNodeApplyPosSizeToWindows(ImGuiDockNode * _node) {
+    ImGui::DockNodeApplyPosSizeToWindows(_node);
+}
+extern "C" void __c__DockNodeRemoveWindow(ImGuiDockNode * _node, ImGuiWindow * _window, uint32_t _save_dock_id) {
+    ImGui::DockNodeRemoveWindow(_node, _window, _save_dock_id);
+}
+extern "C" void __c__DockNodeHideHostWindow(ImGuiDockNode * _node) {
+    ImGui::DockNodeHideHostWindow(_node);
+}
+extern "C" void __c__DockNodeUpdate(ImGuiDockNode * _node) {
+    ImGui::DockNodeUpdate(_node);
+}
+extern "C" void __c__DockNodeUpdateForRootNode(ImGuiDockNode * _node) {
+    ImGui::DockNodeUpdateForRootNode(_node);
+}
+extern "C" void __c__DockNodeUpdateVisibleFlagAndInactiveChilds(ImGuiDockNode * _node) {
+    ImGui::DockNodeUpdateVisibleFlagAndInactiveChilds(_node);
+}
+extern "C" void __c__DockNodeUpdateTabBar(ImGuiDockNode * _node, ImGuiWindow * _host_window) {
+    ImGui::DockNodeUpdateTabBar(_node, _host_window);
+}
+extern "C" void __c__DockNodeAddTabBar(ImGuiDockNode * _node) {
+    ImGui::DockNodeAddTabBar(_node);
+}
+extern "C" void __c__DockNodeRemoveTabBar(ImGuiDockNode * _node) {
+    ImGui::DockNodeRemoveTabBar(_node);
+}
+extern "C" void __c__DockNodeUpdateWindowMenu(ImGuiID *ret, ImGuiDockNode * _node, ImGuiTabBar * _tab_bar) {
+    *ret = (uint32_t )ImGui::DockNodeUpdateWindowMenu(_node, _tab_bar);
+}
+extern "C" void __c__DockNodeUpdateVisibleFlag(ImGuiDockNode * _node) {
+    ImGui::DockNodeUpdateVisibleFlag(_node);
+}
+extern "C" void __c__DockNodeStartMouseMovingWindow(ImGuiDockNode * _node, ImGuiWindow * _window) {
+    ImGui::DockNodeStartMouseMovingWindow(_node, _window);
+}
+extern "C" void __c__DockNodeIsDropAllowed(bool *ret, ImGuiWindow * _host_window, ImGuiWindow * _payload_window) {
+    *ret = (bool )ImGui::DockNodeIsDropAllowed(_host_window, _payload_window);
+}
+extern "C" void __c__DockNodePreviewDockSetup(ImGuiWindow * _host_window, ImGuiDockNode * _host_node, ImGuiWindow * _payload_window, ImGuiDockPreviewData * _preview_data, bool _is_explicit_target, bool _is_outer_docking) {
+    ImGui::DockNodePreviewDockSetup(_host_window, _host_node, _payload_window, _preview_data, _is_explicit_target, _is_outer_docking);
+}
+extern "C" void __c__DockNodePreviewDockRender(ImGuiWindow * _host_window, ImGuiDockNode * _host_node, ImGuiWindow * _payload_window, ImGuiDockPreviewData * _preview_data) {
+    ImGui::DockNodePreviewDockRender(_host_window, _host_node, _payload_window, _preview_data);
+}
+extern "C" void __c__DockNodeCalcTabBarLayout(ImGuiDockNode * _node, ImRect * _out_title_rect, ImRect * _out_tab_bar_rect, ImVec2 * _out_window_menu_button_pos) {
+    ImGui::DockNodeCalcTabBarLayout(_node, _out_title_rect, _out_tab_bar_rect, _out_window_menu_button_pos);
+}
+extern "C" void __c__DockNodeCalcSplitRects(ImVec2 * _pos_old, ImVec2 * _size_old, ImVec2 * _pos_new, ImVec2 * _size_new, int32_t _dir, ImVec2* _size_new_desired) {
+    ImGui::DockNodeCalcSplitRects(*_pos_old, *_size_old, *_pos_new, *_size_new, _dir, *_size_new_desired);
+}
+extern "C" void __c__DockNodeCalcDropRectsAndTestMousePos(bool *ret, ImRect * _parent, int32_t _dir, ImRect * _out_draw, bool _outer_docking, ImVec2 * _test_mouse_pos) {
+    *ret = (bool )ImGui::DockNodeCalcDropRectsAndTestMousePos(*_parent, _dir, *_out_draw, _outer_docking, _test_mouse_pos);
+}
+extern "C" void __c__DockNodeGetTabOrder(int32_t *ret, ImGuiWindow * _window) {
+    *ret = (int32_t )ImGui::DockNodeGetTabOrder(_window);
+}
+extern "C" void __c__DockNodeTreeSplit(ImGuiContext * _ctx, ImGuiDockNode * _parent_node, ImGuiAxis _split_axis, int32_t _split_first_child, float _split_ratio, ImGuiDockNode * _new_node) {
+    ImGui::DockNodeTreeSplit(_ctx, _parent_node, _split_axis, _split_first_child, _split_ratio, _new_node);
+}
+extern "C" void __c__DockNodeTreeMerge(ImGuiContext * _ctx, ImGuiDockNode * _parent_node, ImGuiDockNode * _merge_lead_child) {
+    ImGui::DockNodeTreeMerge(_ctx, _parent_node, _merge_lead_child);
+}
+extern "C" void __c__DockNodeTreeUpdatePosSize(ImGuiDockNode * _node, ImVec2* _pos, ImVec2* _size, bool _only_write_to_marked_nodes) {
+    ImGui::DockNodeTreeUpdatePosSize(_node, *_pos, *_size, _only_write_to_marked_nodes);
+}
+extern "C" void __c__DockNodeTreeUpdateSplitter(ImGuiDockNode * _node) {
+    ImGui::DockNodeTreeUpdateSplitter(_node);
+}
+extern "C" void __c__DockNodeTreeFindNodeByPos(ImGuiDockNode * *ret, ImGuiDockNode * _node, ImVec2* _pos) {
+    *ret = (ImGuiDockNode * )ImGui::DockNodeTreeFindNodeByPos(_node, *_pos);
+}
+extern "C" void __c__DockNodeTreeFindFallbackLeafNode(ImGuiDockNode * *ret, ImGuiDockNode * _node) {
+    *ret = (ImGuiDockNode * )ImGui::DockNodeTreeFindFallbackLeafNode(_node);
+}
+extern "C" void __c__DockSettingsRenameNodeReferences(uint32_t _old_node_id, uint32_t _new_node_id) {
+    ImGui::DockSettingsRenameNodeReferences(_old_node_id, _new_node_id);
+}
+extern "C" void __c__DockSettingsRemoveNodeReferences(ImGuiID * _node_ids, int32_t _node_ids_count) {
+    ImGui::DockSettingsRemoveNodeReferences(_node_ids, _node_ids_count);
+}
+extern "C" void __c__DockSettingsFindNodeSettings(ImGuiDockNodeSettings * *ret, ImGuiContext * _ctx, uint32_t _node_id) {
+    *ret = (ImGuiDockNodeSettings * )ImGui::DockSettingsFindNodeSettings(_ctx, _node_id);
+}
+extern "C" void __c__DockSettingsHandler_ReadOpen(void * *ret, ImGuiContext * _0, ImGuiSettingsHandler * _1, char * _name) {
+    *ret = (void * )ImGui::DockSettingsHandler_ReadOpen(_0, _1, _name);
+}
+extern "C" void __c__DockSettingsHandler_ReadLine(ImGuiContext * _0, ImGuiSettingsHandler * _1, void * _entry, char * _line) {
+    ImGui::DockSettingsHandler_ReadLine(_0, _1, _entry, _line);
+}
+extern "C" void __c__DockSettingsHandler_WriteAll(ImGuiContext * _imgui_ctx, ImGuiSettingsHandler * _handler, ImGuiTextBuffer * _buf) {
+    ImGui::DockSettingsHandler_WriteAll(_imgui_ctx, _handler, _buf);
 }
 extern "C" void __c__ImGui_ImplOpenGL3_Init(bool *ret, char * _glsl_version) {
     *ret = (bool )ImGui_ImplOpenGL3_Init(_glsl_version);
