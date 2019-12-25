@@ -17,12 +17,12 @@ ImGui :: import imgui.imgui_binding
 
 use import opengl_utils
 
+#export_scope
+
 vec2i :: Vector2[int]
 vec2 :: Vector2[float]
 vec3 :: Vector3[float]
 vec4 :: Vector4[float]
-
-#export_scope
 
 ShmupCallbacks :: trait {
     init :: (ref Self) -> bool;
@@ -32,7 +32,7 @@ ShmupCallbacks :: trait {
 EnabledEditors :: struct {
     editor      := true
     stats       := true
-    demo_window := false
+    demo_window := true
 }
 
 ShmupEngine :: struct {
@@ -45,7 +45,7 @@ ShmupEngine :: struct {
     enabled_editors     : EnabledEditors = default
     current_fps         := 0
     current_frame_time  := 0.0
-    clear_color         := vec4(1, 0, 1, 1)
+    clear_color         := vec4(0, 0, 0, 1)
 
     // window stuff
     glfw_window         : &GLFWwindow = null
@@ -239,7 +239,14 @@ impl ShmupEngine {
                 render_editor()
             }
 
-            // render game
+            // set window properties of viewport
+            ImGui.Begin("Viewport", null, @bin_or(
+                ImGui.ImGuiWindowFlags_.NoScrollbar,
+                ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
+                ImGui.ImGuiWindowFlags_.NoCollapse
+            ))
+            ImGui.End()
+
             { // get size of viewport window
                 ImGui.Begin("Viewport")
                 min := ImGui.GetWindowContentRegionMin()
@@ -248,6 +255,8 @@ impl ShmupEngine {
                 size := ImGui.ImVec2(max.x - min.x, max.y - min.y)
                 viewport_size = vec2i(int(size.x), int(size.y))
             }
+
+            // render game
             if viewport_size.x > 0 and viewport_size.y > 0 {
                 GL(glBindFramebuffer(GL_FRAMEBUFFER, viewport_frame_buffer))
                 GL(glViewport(0, 0, i32(viewport_size.x), i32(viewport_size.y)))
@@ -258,6 +267,7 @@ impl ShmupEngine {
                 callbacks.update()
                 glBindFramebuffer(GL_FRAMEBUFFER, 0)
             }
+
             { // draw viewport window
                 ImGui.Begin("Viewport")
                 if viewport_size.x > 0 and viewport_size.y > 0 {

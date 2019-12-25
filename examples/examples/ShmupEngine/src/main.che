@@ -14,6 +14,8 @@ Test :: struct {
     vbo : u32 = 0
     vao : u32 = 0
     shader_program : &Shader = null
+    color := vec3(0, 1, 0)
+    alpha := 0.5f
 }
 
 impl ShmupCallbacks for Test {
@@ -51,9 +53,13 @@ impl ShmupCallbacks for Test {
             #version 330 core
             layout(location = 0) out vec4 FragColor;
 
+            uniform vec3 color;
+            uniform float alpha;
+
             void main()
             {
                 FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+                FragColor = vec4(color, alpha);
             } 
             "
         match Shader.create(vertex_shader, fragment_shader) {
@@ -72,7 +78,14 @@ impl ShmupCallbacks for Test {
     }
 
     update :: (ref Self) {
+        ImGui.Begin("Test")
+        ImGui.ColorPicker3("Color", &color.x)
+        ImGui.End()
+
         shader_program.bind()
+        shader_program.set_uniform_vec3("color", color)
+        shader_program.set_uniform_float("alpha", alpha)
+
         GL(glBindVertexArray(vao))
         GL(glDrawArrays(GL_TRIANGLES, 0, 3))
         GL(glBindVertexArray(0))
@@ -100,6 +113,26 @@ impl Into[String] for String {
 impl Shader {
     bind :: (ref Self) {
         GL(glUseProgram(id))
+    }
+
+    set_uniform_vec3 :: (ref Self, name: c_string, data: vec3) -> bool {
+        loc := glGetUniformLocation(id, name)
+        if loc == -1 {
+            return false
+        }
+
+        GL(glUniform3f(loc, data.x, data.y, data.z))
+        return true
+    }
+
+    set_uniform_float :: (ref Self, name: c_string, data: f32) -> bool {
+        loc := glGetUniformLocation(id, name)
+        if loc == -1 {
+            return false
+        }
+
+        GL(glUniform1f(loc, data))
+        return true
     }
 
     create :: (vertex_source: string, fragment_source: string) -> Result[Shader, String] {
