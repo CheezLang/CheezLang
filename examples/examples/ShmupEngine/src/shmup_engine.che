@@ -1,0 +1,428 @@
+use import std.mem.allocator
+use import std.string
+use import std.array
+use import std.math
+use import std.time
+fmt :: import std.fmt
+io  :: import std.io
+C   :: import std.c
+
+use import glfw.glfw3
+use import opengl.glad_binding
+// use import opengl.opengl
+// use import opengl.constants
+// use import opengl.types
+// use import opengl.functions
+ImGui :: import imgui.imgui_binding
+
+use import opengl_utils
+
+vec2 :: Vector2[float]
+vec3 :: Vector3[float]
+vec4 :: Vector4[float]
+
+#export_scope
+
+ShmupCallbacks :: trait {
+    init :: (ref Self);
+    update :: (ref Self);
+}
+
+EnabledEditors :: struct {
+    editor      := true
+    stats       := true
+    demo_window := false
+}
+
+ShmupEngine :: struct {
+    //
+    width  : int = 0
+    height : int = 0
+
+    // game stuff
+    callbacks : ShmupCallbacks
+
+    // editor stuff
+    enabled_editors     : EnabledEditors = default
+    current_fps         := 0
+    current_frame_time  := 0.0
+    clear_color         := vec4(1, 0, 1, 1)
+
+    // window stuff
+    glfw_window : &GLFWwindow = null
+}
+
+impl ShmupEngine {
+    new :: (callbacks: ShmupCallbacks) -> ShmupEngine {
+        return ShmupEngine(
+            callbacks = callbacks
+        )
+    }
+
+    start :: (ref Self) {
+        on_framebuffer_resize :: (window: &GLFWwindow, w: i32, h: i32) {
+            engine := cast(&ShmupEngine) glfwGetWindowUserPointer(window)
+            engine.width  = cast w
+            engine.height = cast h
+
+            glViewport(0, 0, w, h)
+        }
+
+        glfwSetErrorCallback(glfw_error_callback)
+
+        // initialize glfw
+        if !glfwInit() {
+            io.println("[ERROR] Failed to initialize GLFW")
+            return
+        }
+        defer glfwTerminate()
+
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
+        glfwWindowHint(GLFW_VISIBLE, 0)
+        glfwWindowHint(GLFW_MAXIMIZED, 1)
+        glfwWindowHint(GLFW_RESIZABLE, 1)
+
+        vidmode := glfwGetVideoMode(glfwGetPrimaryMonitor())
+        glfw_window = glfwCreateWindow(vidmode.width, vidmode.height, "Hello World", null, null)
+        if glfw_window == null {
+            io.println("[ERROR] Failed to create window")
+            return
+        }
+        defer glfwDestroyWindow(glfw_window)
+
+        glfwSetWindowUserPointer(glfw_window, &self)
+        glfwMakeContextCurrent(glfw_window)
+        glfwSwapInterval(1)
+
+        // initialize glad
+        if gladLoadGL() != 1 {
+            return
+        }
+
+        glfwShowWindow(glfw_window)
+
+        // get initial size
+        {
+            w := 0i32
+            h := 0i32
+            glfwGetFramebufferSize(glfw_window, &w, &h)
+            width = cast w
+            height = cast h
+        }
+
+        // register callbacks
+        glfwSetKeyCallback(glfw_window, glfw_key_callback)
+        glfwSetFramebufferSizeCallback(glfw_window, on_framebuffer_resize)
+
+        // initialize imgui
+        if !init_imgui(glfw_window) {
+            return
+        }
+        defer shutdown_imgui()
+
+        render_loop()
+    }
+
+    glfw_key_callback :: (window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
+        engine := cast(&ShmupEngine) glfwGetWindowUserPointer(window)
+
+        match (action, key) {
+            (GLFW_PRESS, GLFW_KEY_F12) -> {
+                engine.enabled_editors.editor = !engine.enabled_editors.editor
+            }
+        }
+    }
+
+    render_loop :: (ref Self) {
+        callbacks.init()
+
+        last_frame_time := get_time_microseconds()
+
+        frame_timer := 0.0
+        fps_counter := 0
+
+        loop {
+            if glfwWindowShouldClose(glfw_window) then break
+            glfwPollEvents()
+
+            // handle time
+            this_frame_time     := get_time_microseconds()
+            last_frame_duration := this_frame_time - last_frame_time
+            last_frame_time = this_frame_time
+
+            // convert time from microseconds to seconds
+            delta_time := double(last_frame_duration) * 0.000001
+            current_frame_time = delta_time
+            frame_timer += delta_time
+            fps_counter += 1
+
+            if frame_timer >= 1 {
+                current_fps = fps_counter
+                frame_timer -= 1
+                fps_counter = 0
+            }
+
+            // start rendering
+            glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
+            glClear(GL_COLOR_BUFFER_BIT)
+
+            // render game
+
+            // render imgui gui
+            imgui_begin_frame()
+            if enabled_editors.editor {
+                create_dock_space()
+                render_menu_bar()
+                render_editor()
+            }
+            imgui_end_frame()
+
+            callbacks.update()
+
+            // swap buffers
+            glfwSwapBuffers(glfw_window)
+        }
+    }
+
+    render_menu_bar :: (ref Self) {
+        if ImGui.BeginMainMenuBar() {
+            if ImGui.BeginMenu("File") {
+                // ShowExampleMenuFile()
+                ImGui.EndMenu()
+            }
+            if ImGui.BeginMenu("Edit") {
+                if (ImGui.MenuItem("Undo", "CTRL+Z")) {}
+                if (ImGui.MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+                ImGui.Separator()
+                if (ImGui.MenuItem("Cut", "CTRL+X")) {}
+                if (ImGui.MenuItem("Copy", "CTRL+C")) {}
+                if (ImGui.MenuItem("Paste", "CTRL+V")) {}
+                ImGui.EndMenu()
+            }
+
+            if ImGui.BeginMenu("Debug") {
+                if ImGui.MenuItem_2("Show Stats", null, &enabled_editors.stats, true) {}
+                if ImGui.MenuItem_2("Show Demo Menu", null, &enabled_editors.demo_window, true) {}
+                ImGui.EndMenu()
+            }
+
+            ImGui.EndMainMenuBar()
+        }
+    }
+
+    render_editor :: (ref Self) {
+        if enabled_editors.demo_window {
+            ImGui.ShowDemoWindow(&enabled_editors.demo_window)
+        }
+
+        if enabled_editors.stats {
+            ImGui.SetNextWindowBgAlpha(0.35f) // Transparent background
+            overlay_flags := @bin_or(
+                // ImGui.ImGuiWindowFlags_.NoTitleBar,
+                // ImGui.ImGuiWindowFlags_.NoSavedSettings,
+                ImGui.ImGuiWindowFlags_.NoCollapse,
+                ImGui.ImGuiWindowFlags_.NoDocking,
+                ImGui.ImGuiWindowFlags_.NoResize,
+                ImGui.ImGuiWindowFlags_.AlwaysAutoResize,
+                ImGui.ImGuiWindowFlags_.NoFocusOnAppearing,
+                ImGui.ImGuiWindowFlags_.NoNav)
+            if ImGui.Begin("Stats", &enabled_editors.stats, overlay_flags) {
+                // show fps
+                {
+                    delta_time_str := fmt.format_any(current_frame_time)
+                    ImGui.LabelText("Frame duration", delta_time_str.as_cstring())
+                    fps_counted_str := fmt.format_any(current_fps)
+                    ImGui.LabelText("FPS", fps_counted_str.as_cstring())
+                }
+                ImGui.ColorPicker3("clear color", cast(&float)&clear_color, 0)
+            }
+            ImGui.End()
+        }
+    }
+}
+
+#file_scope
+
+imgui_begin_frame :: () {
+    ImGui.ImGui_ImplOpenGL3_NewFrame()
+    ImGui.ImGui_ImplGlfw_NewFrame()
+    ImGui.NewFrame()
+}
+
+imgui_end_frame :: () {
+    io := ImGui.GetIO()
+
+    // rendering
+    ImGui.EndFrame()
+    ImGui.Render()
+    ImGui.ImGui_ImplOpenGL3_RenderDrawData(ImGui.GetDrawData())
+
+    if @bin_and(io.ConfigFlags, i32(ImGui.ImGuiConfigFlags_.ViewportsEnable)) != 0 {	
+        backup_current_context := glfwGetCurrentContext()
+        ImGui.UpdatePlatformWindows()
+        ImGui.RenderPlatformWindowsDefault()
+        glfwMakeContextCurrent(backup_current_context)
+    }
+}
+
+init_imgui :: (window: &GLFWwindow) -> bool {
+    context := ImGui.CreateContext(null)
+
+    if context == null {
+        io.println("[ERROR] ImGui.CreateContext failed")
+        return false
+    }
+
+    imgui_io := ref ImGui.GetIO()
+    imgui_io.ConfigFlags = @bin_or(
+        imgui_io.ConfigFlags,
+        i32(ImGui.ImGuiConfigFlags_.DockingEnable),
+        i32(ImGui.ImGuiConfigFlags_.ViewportsEnable))
+
+    ImGui.StyleColorsDark(null)
+
+    // change corners so they are right angles instead of rounded
+    style := ref ImGui.GetStyle()	
+    style.WindowRounding = 0.0	
+
+    //
+    if !ImGui.ImGui_ImplGlfw_InitForOpenGL(window, true) {
+        io.println("[ERROR] ImGui.ImGui_ImplGlfw_InitForOpenGL failed")
+        return false
+    }
+    if !ImGui.ImGui_ImplOpenGL3_Init("#version 330") {
+        io.println("[ERROR] ImGui.ImGui_ImplOpenGL3_Init failed")
+        return false
+    }
+
+    return true
+}
+
+shutdown_imgui :: () {
+    ImGui.ImGui_ImplOpenGL3_Shutdown()
+    ImGui.ImGui_ImplGlfw_Shutdown()
+    ImGui.DestroyContext(null)
+}
+
+create_dock_space :: () {
+    dockspace_flags := ImGui.ImGuiDockNodeFlags_.PassthruCentralNode
+    window_flags    := @bin_or(ImGui.ImGuiWindowFlags_.MenuBar, ImGui.ImGuiWindowFlags_.NoDocking)
+
+    opt_fullscreen := true
+    if opt_fullscreen {
+        pivot := ImGui.ImVec2(0, 0)
+
+        viewport := ImGui.GetMainViewport()
+        ImGui.SetNextWindowPos(viewport.Pos, 0, pivot)
+        ImGui.SetNextWindowSize(viewport.Size)
+        ImGui.SetNextWindowViewport(viewport.ID)
+        ImGui.PushStyleVar(ImGui.ImGuiStyleVar_.WindowRounding, 0.0f)
+        ImGui.PushStyleVar(ImGui.ImGuiStyleVar_.WindowBorderSize, 0.0f)
+        window_flags = @bin_or(
+            window_flags,
+            ImGui.ImGuiWindowFlags_.NoTitleBar,
+            ImGui.ImGuiWindowFlags_.NoCollapse,
+            ImGui.ImGuiWindowFlags_.NoResize,
+            ImGui.ImGuiWindowFlags_.NoMove,
+            ImGui.ImGuiWindowFlags_.NoBringToFrontOnFocus,
+            ImGui.ImGuiWindowFlags_.NoNavFocus
+        )
+    }
+
+    // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background 
+    // and handle the pass-thru hole, so we ask Begin() to not render a background.
+    if int(@bin_and(dockspace_flags, ImGui.ImGuiDockNodeFlags_.PassthruCentralNode)) != 0 {
+        window_flags = @bin_or(window_flags, ImGui.ImGuiWindowFlags_.NoBackground)
+    }
+
+    // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
+    // This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
+    // all active windows docked into it will lose their parent and become undocked.
+    // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
+    // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
+    window_padding := ImGui.ImVec2(0.0f, 0.0f)
+    ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.WindowPadding, window_padding)
+
+    open := true
+    ImGui.Begin("DockSpace Demo", &open, window_flags)
+    ImGui.PopStyleVar()
+
+    if opt_fullscreen then ImGui.PopStyleVar(2)
+
+    // DockSpace
+    io := ref ImGui.GetIO()
+    if @bin_and(io.ConfigFlags, i32(ImGui.ImGuiConfigFlags_.DockingEnable)) != 0 {
+        dockspace_id := ImGui.GetID("MyDockSpace")
+        size := ImGui.ImVec2(0.0f, 0.0f)
+        ImGui.DockSpace(dockspace_id, size, dockspace_flags)
+    } else {
+        @assert(false)
+    }
+
+    ImGui.End()
+}
+
+ShowExampleMenuFile :: () {
+    //     ImGui.MenuItem("(dummy menu)", null, false, false)
+    //     if ImGui.MenuItem("New") {}
+    //     if ImGui.MenuItem("Open", "Ctrl+O") {}
+    //     if ImGui.BeginMenu("Open Recent") {
+    //         ImGui.MenuItem("fish_hat.c")
+    //         ImGui.MenuItem("fish_hat.inl")
+    //         ImGui.MenuItem("fish_hat.h")
+    //         if ImGui.BeginMenu("More..") {
+    //             ImGui.MenuItem("Hello")
+    //             ImGui.MenuItem("Sailor")
+    //             if ImGui.BeginMenu("Recurse..") {
+    //                 ShowExampleMenuFile()
+    //                 ImGui.EndMenu()
+    //             }
+    //             ImGui.EndMenu()
+    //         }
+    //         ImGui.EndMenu()
+    //     }
+    //     if (ImGui.MenuItem("Save", "Ctrl+S")) {}
+    //     if (ImGui.MenuItem("Save As..")) {}
+    //     ImGui.Separator()
+    //     if ImGui.BeginMenu("Options") {
+    //         enabled := true #static
+    //         ImGui.MenuItem_2("Enabled", "", &enabled)
+
+    //         size := ImGui.ImVec2(0, 60)
+    //         ImGui.BeginChild("child", size, true)
+
+    //         for i : 0..10 {
+    //             text := fmt.format("Scrolling Text {}", [i])
+    //             ImGui.Text(text.as_cstring())
+    //         }
+    //         ImGui.EndChild()
+    //         f := 0.5f #static
+    //         n := 0i32 #static
+    //         b := true #static
+    //         ImGui.SliderFloat("Value", &f, 0.0f, 1.0f)
+    //         ImGui.InputFloat("Input", &f, 0.1f)
+    //         ImGui.Combo_2("Combo", &n, "Yes\0No\0Maybe\0\0")
+    //         ImGui.Checkbox("Check", &b)
+    //         ImGui.EndMenu()
+    //     }
+    //     if (ImGui.BeginMenu("Colors"))
+    //     {
+    //         sz := ImGui.GetTextLineHeight()
+    //         for i : 0..int(ImGui.ImGuiCol_.COUNT) {
+    //             name := ImGui.GetStyleColorName(cast i)
+    //             p := ImGui.GetCursorScreenPos()
+    //             // ImGui.GetWindowDrawList().AddRectFilled(p, ImVec2(p.x+sz, p.y+sz), ImGui.GetColorU32((ImGuiCol)i))
+    //             size := ImGui.ImVec2(sz, sz)
+    //             ImGui.Dummy(size)
+    //             ImGui.SameLine()
+    //             ImGui.MenuItem(name)
+    //         }
+    //         ImGui.EndMenu()
+    //     }
+    //     if (ImGui.BeginMenu("Disabled", false)) {
+    //         @assert(false)
+    //     }
+    //     if (ImGui.MenuItem("Checked", null, true)) {}
+    //     if (ImGui.MenuItem("Quit", "Alt+F4")) {}
+}

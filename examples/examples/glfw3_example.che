@@ -8,16 +8,17 @@ io  :: import std.io
 C   :: import std.c
 
 use import glfw.glfw3
-use import opengl.opengl
-use import opengl.constants
-use import opengl.types
-use import opengl.functions
+use import opengl.glad_binding
+// use import opengl.opengl
+// use import opengl.constants
+// use import opengl.types
+// use import opengl.functions
 
 
-imgui :: import imgui.imgui_binding
-// use import imgui.cimgui_binding
-// use import imgui.cimgui_glfw_binding
-// use import imgui.cimgui_opengl3_binding
+ImGui :: import imgui.imgui_binding
+// use import ImGui.cimgui_binding
+// use import ImGui.cimgui_glfw_binding
+// use import ImGui.cimgui_opengl3_binding
 
 #export_scope
 
@@ -90,7 +91,7 @@ igListBoxStringArray :: (label: c_string, current_index: &i32, arr: ref Array[St
         return false
     }
 
-    return imgui.ListBoxFnPtr(label, current_index, array_string_getter, cast &arr, cast arr.get_length())
+    return ImGui.ListBoxFnPtr(label, current_index, array_string_getter, cast &arr, cast arr.get_length())
 }
 
 width  := 0
@@ -153,7 +154,7 @@ Main :: () {
     strings.add(String.from_string("World"))
     strings_selected := 0i32
 
-    show_demo_window := false
+    show_demo_window := true
 
     buff := alloc_n(char8, 256)
     C.memset(buff.data, 0, cast buff.length)
@@ -178,11 +179,6 @@ Main :: () {
             current_fps = fps_counter
             frame_timer -= 1
             fps_counter = 0
-
-            // io.println(current_fps)
-            // io.println(1 / delta_time)
-            // io.println(delta_time)
-            // io.println("---")
         }
 
 
@@ -193,55 +189,65 @@ Main :: () {
         //
         begin_frame()
 
+        // 
+        // create_dock_space()
+
+        // {
+        //     if ImGui.BeginMainMenuBar() {
+        //         if ImGui.BeginMenu("File") {
+        //             ShowExampleMenuFile()
+        //             ImGui.EndMenu()
+        //         }
+        //         if ImGui.BeginMenu("Edit") {
+        //             if (ImGui.MenuItem("Undo", "CTRL+Z")) {}
+        //             if (ImGui.MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+        //             ImGui.Separator()
+        //             if (ImGui.MenuItem("Cut", "CTRL+X")) {}
+        //             if (ImGui.MenuItem("Copy", "CTRL+C")) {}
+        //             if (ImGui.MenuItem("Paste", "CTRL+V")) {}
+        //             ImGui.EndMenu()
+        //         }
+        //         ImGui.EndMainMenuBar()
+        //     }
+        // }
+
         {
             open := true
 
-            pos   := imgui.ImVec2(0, 0)
-            pivot := imgui.ImVec2(0, 0)
-            imgui.SetNextWindowPos(pos, imgui.ImGuiCond_.Always, pivot)
-
-            size_min := imgui.ImVec2(50, cast height)
-            size_max := imgui.ImVec2(500, cast height)
-            imgui.SetNextWindowSizeConstraints(size_min, size_max)
-            imgui.Begin("Settings", &open, @bin_or(
-                imgui.ImGuiWindowFlags_.NoMove,
-                imgui.ImGuiWindowFlags_.NoCollapse,
-                imgui.ImGuiWindowFlags_.NoFocusOnAppearing,
-                imgui.ImGuiWindowFlags_.NoBringToFrontOnFocus))
-
+            ImGui.Begin("Settings", &open, ImGui.ImGuiWindowFlags_.None)
 
             {
                 delta_time_str := fmt.format_any(delta_time)
-                imgui.LabelText("Frame duration", delta_time_str.as_cstring())
+                ImGui.LabelText("Frame duration", delta_time_str.as_cstring())
                 fps_str := fmt.format_any(1 / delta_time)
-                imgui.LabelText("Fps", fps_str.as_cstring())
+                ImGui.LabelText("Fps", fps_str.as_cstring())
                 fps_counted_str := fmt.format_any(current_fps)
-                imgui.LabelText("Fps", fps_counted_str.as_cstring())
+                ImGui.LabelText("Fps", fps_counted_str.as_cstring())
             }
 
-            imgui.ColorPicker3("clear color", cast(&float)&clear_color, 0)
-            imgui.Separator()
+            ImGui.ColorPicker3("clear color", cast(&float)&clear_color, 0)
+            ImGui.Separator()
             
             for component : clear_color {
-                imgui.PushIDInt(i32(it_index))
-                imgui.InputFloat("##", &component)
-                imgui.PopID()
+                ImGui.PushIDInt(i32(it_index))
+                ImGui.InputFloat("##", &component)
+                ImGui.PopID()
             }
 
-            imgui.Separator()
-            imgui.InputText("String to add", buff.data, cast buff.length)
-            if imgui.SmallButton("Add String") {
+            ImGui.Separator()
+            ImGui.InputText("String to add", buff.data, cast buff.length)
+            if ImGui.SmallButton("Add String") {
                 strings.add(String.from_cstring(buff.data))
                 buff[0] = cast 0
             }
-            imgui.Separator()
+            ImGui.Separator()
 
             igListBoxStringArray("strings", &strings_selected, strings)
-            imgui.End()
+            ImGui.End()
         }
 
-        if show_demo_window then
-            imgui.ShowDemoWindow(&show_demo_window)
+        // if show_demo_window then
+        //     ImGui.ShowDemoWindow(&show_demo_window)
 
         end_frame()
 
@@ -252,42 +258,214 @@ Main :: () {
     }
 }
 
+dockspace_flags := ImGui.ImGuiDockNodeFlags_.None
+
+create_dock_space :: () {
+    window_flags := @bin_or(ImGui.ImGuiWindowFlags_.MenuBar, ImGui.ImGuiWindowFlags_.NoDocking)
+
+    opt_fullscreen := true
+    if opt_fullscreen {
+        pivot := ImGui.ImVec2(0, 0)
+
+        viewport := ImGui.GetMainViewport()
+        ImGui.SetNextWindowPos(viewport.Pos, 0, pivot)
+        ImGui.SetNextWindowSize(viewport.Size)
+        ImGui.SetNextWindowViewport(viewport.ID)
+        ImGui.PushStyleVar(ImGui.ImGuiStyleVar_.WindowRounding, 0.0f)
+        ImGui.PushStyleVar(ImGui.ImGuiStyleVar_.WindowBorderSize, 0.0f)
+        window_flags = @bin_or(
+            window_flags,
+            ImGui.ImGuiWindowFlags_.NoTitleBar,
+            ImGui.ImGuiWindowFlags_.NoCollapse,
+            ImGui.ImGuiWindowFlags_.NoResize,
+            ImGui.ImGuiWindowFlags_.NoMove,
+            ImGui.ImGuiWindowFlags_.NoBringToFrontOnFocus,
+            ImGui.ImGuiWindowFlags_.NoNavFocus
+        )
+    }
+
+    // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background 
+    // and handle the pass-thru hole, so we ask Begin() to not render a background.
+    if int(@bin_and(dockspace_flags, ImGui.ImGuiDockNodeFlags_.PassthruCentralNode)) != 0 {
+        window_flags = @bin_or(window_flags, ImGui.ImGuiWindowFlags_.NoBackground)
+    }
+
+    // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
+    // This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
+    // all active windows docked into it will lose their parent and become undocked.
+    // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
+    // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
+    window_padding := ImGui.ImVec2(0.0f, 0.0f)
+    ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.WindowPadding, window_padding)
+
+    open := true
+    ImGui.Begin("DockSpace Demo", &open, window_flags)
+    ImGui.PopStyleVar()
+
+    if opt_fullscreen then ImGui.PopStyleVar(2)
+
+    // DockSpace
+    io := ref ImGui.GetIO()
+    if @bin_and(io.ConfigFlags, i32(ImGui.ImGuiConfigFlags_.DockingEnable)) != 0 {
+        dockspace_id := ImGui.GetID("MyDockSpace")
+        size := ImGui.ImVec2(0.0f, 0.0f)
+        ImGui.DockSpace(dockspace_id, size, dockspace_flags)
+    } else {
+        @assert(false)
+    }
+
+    /*
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("Docking"))
+        {
+            // Disabling fullscreen would allow the window to be moved to the front of other windows,
+            // which we can't undo at the moment without finer window depth/z control.
+            //ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen_persistant);
+
+            if (ImGui::MenuItem("Flag: NoSplit",                "", (dockspace_flags & ImGuiDockNodeFlags_NoSplit) != 0))                 dockspace_flags ^= ImGuiDockNodeFlags_NoSplit;
+            if (ImGui::MenuItem("Flag: NoResize",               "", (dockspace_flags & ImGuiDockNodeFlags_NoResize) != 0))                dockspace_flags ^= ImGuiDockNodeFlags_NoResize;
+            if (ImGui::MenuItem("Flag: NoDockingInCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0))  dockspace_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode;
+            if (ImGui::MenuItem("Flag: PassthruCentralNode",    "", (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) != 0))     dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode;
+            if (ImGui::MenuItem("Flag: AutoHideTabBar",         "", (dockspace_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0))          dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar;
+            ImGui::Separator();
+            if (ImGui::MenuItem("Close DockSpace", NULL, false, p_open != NULL))
+                *p_open = false;
+            ImGui::EndMenu();
+        }
+        HelpMarker(
+            "When docking is enabled, you can ALWAYS dock MOST window into another! Try it now!" "\n\n"
+            " > if io.ConfigDockingWithShift==false (default):" "\n"
+            "   drag windows from title bar to dock" "\n"
+            " > if io.ConfigDockingWithShift==true:" "\n"
+            "   drag windows from anywhere and hold Shift to dock" "\n\n"
+            "This demo app has nothing to do with it!" "\n\n"
+            "This demo app only demonstrate the use of ImGui::DockSpace() which allows you to manually create a docking node _within_ another window. This is useful so you can decorate your main application window (e.g. with a menu bar)." "\n\n"
+            "ImGui::DockSpace() comes with one hard constraint: it needs to be submitted _before_ any window which may be docked into it. Therefore, if you use a dock spot as the central point of your application, you'll probably want it to be part of the very first window you are submitting to imgui every frame." "\n\n"
+            "(NB: because of this constraint, the implicit \"Debug\" window can not be docked into an explicit DockSpace() node, because that window is submitted as part of the NewFrame() call. An easy workaround is that you can create your own implicit \"Debug##2\" window after calling DockSpace() and leave it in the window stack for anyone to use.)"
+        );
+
+        ImGui::EndMenuBar();
+    }
+    */
+
+    ImGui.End()
+}
+
+ShowExampleMenuFile :: () {
+    ImGui.MenuItem("(dummy menu)", null, false, false)
+    if ImGui.MenuItem("New") {}
+    if ImGui.MenuItem("Open", "Ctrl+O") {}
+    if ImGui.BeginMenu("Open Recent") {
+        ImGui.MenuItem("fish_hat.c")
+        ImGui.MenuItem("fish_hat.inl")
+        ImGui.MenuItem("fish_hat.h")
+        if ImGui.BeginMenu("More..") {
+            ImGui.MenuItem("Hello")
+            ImGui.MenuItem("Sailor")
+            if ImGui.BeginMenu("Recurse..") {
+                ShowExampleMenuFile()
+                ImGui.EndMenu()
+            }
+            ImGui.EndMenu()
+        }
+        ImGui.EndMenu()
+    }
+    if (ImGui.MenuItem("Save", "Ctrl+S")) {}
+    if (ImGui.MenuItem("Save As..")) {}
+    ImGui.Separator()
+    if ImGui.BeginMenu("Options") {
+        enabled := true #static
+        ImGui.MenuItem_2("Enabled", "", &enabled)
+
+        size := ImGui.ImVec2(0, 60)
+        ImGui.BeginChild("child", size, true)
+
+        for i : 0..10 {
+            text := fmt.format("Scrolling Text {}", [i])
+            ImGui.Text(text.as_cstring())
+        }
+        ImGui.EndChild()
+        f := 0.5f #static
+        n := 0i32 #static
+        b := true #static
+        ImGui.SliderFloat("Value", &f, 0.0f, 1.0f)
+        ImGui.InputFloat("Input", &f, 0.1f)
+        ImGui.Combo_2("Combo", &n, "Yes\0No\0Maybe\0\0")
+        ImGui.Checkbox("Check", &b)
+        ImGui.EndMenu()
+    }
+    if (ImGui.BeginMenu("Colors"))
+    {
+        sz := ImGui.GetTextLineHeight()
+        for i : 0..int(ImGui.ImGuiCol_.COUNT) {
+            name := ImGui.GetStyleColorName(cast i)
+            p := ImGui.GetCursorScreenPos()
+            // ImGui.GetWindowDrawList().AddRectFilled(p, ImVec2(p.x+sz, p.y+sz), ImGui.GetColorU32((ImGuiCol)i))
+            size := ImGui.ImVec2(sz, sz)
+            ImGui.Dummy(size)
+            ImGui.SameLine()
+            ImGui.MenuItem(name)
+        }
+        ImGui.EndMenu()
+    }
+    if (ImGui.BeginMenu("Disabled", false)) {
+        @assert(false)
+    }
+    if (ImGui.MenuItem("Checked", null, true)) {}
+    if (ImGui.MenuItem("Quit", "Alt+F4")) {}
+}
+
+
 begin_frame :: () {
-    imgui.ImGui_ImplOpenGL3_NewFrame()
-    imgui.ImGui_ImplGlfw_NewFrame()
-    imgui.NewFrame()
+    ImGui.ImGui_ImplOpenGL3_NewFrame()
+    ImGui.ImGui_ImplGlfw_NewFrame()
+    ImGui.NewFrame()
 }
 
 end_frame :: () {
-    io := imgui.GetIO()
+    io := ImGui.GetIO()
 
     // rendering
-    imgui.EndFrame()
-    imgui.Render()
-    imgui.ImGui_ImplOpenGL3_RenderDrawData(imgui.GetDrawData())
+    ImGui.EndFrame()
+    ImGui.Render()
+    ImGui.ImGui_ImplOpenGL3_RenderDrawData(ImGui.GetDrawData())
+
+    if @bin_and(io.ConfigFlags, i32(ImGui.ImGuiConfigFlags_.ViewportsEnable)) != 0 {	
+        backup_current_context := glfwGetCurrentContext()
+        ImGui.UpdatePlatformWindows()
+        ImGui.RenderPlatformWindowsDefault()
+        glfwMakeContextCurrent(backup_current_context)
+    }
 }
 
 init_imgui :: (window: &GLFWwindow) -> bool {
-    context := imgui.CreateContext(null)
+    context := ImGui.CreateContext(null)
 
     if context == null {
-        io.println("[ERROR] imgui.CreateContext failed")
+        io.println("[ERROR] ImGui.CreateContext failed")
         return false
     }
 
-    imgui.StyleColorsDark(null)
+    imgui_io := ref ImGui.GetIO()
+    imgui_io.ConfigFlags = @bin_or(
+        imgui_io.ConfigFlags,
+        i32(ImGui.ImGuiConfigFlags_.DockingEnable),
+        i32(ImGui.ImGuiConfigFlags_.ViewportsEnable))
+
+    ImGui.StyleColorsDark(null)
 
     // change corners so they are right angles instead of rounded
-    style := ref imgui.GetStyle()	
+    style := ref ImGui.GetStyle()	
     style.WindowRounding = 0.0	
 
     //
-    if !imgui.ImGui_ImplGlfw_InitForOpenGL(window, true) {
-        io.println("[ERROR] imgui.ImGui_ImplGlfw_InitForOpenGL failed")
+    if !ImGui.ImGui_ImplGlfw_InitForOpenGL(window, true) {
+        io.println("[ERROR] ImGui.ImGui_ImplGlfw_InitForOpenGL failed")
         return false
     }
-    if !imgui.ImGui_ImplOpenGL3_Init("#version 130") {
-        io.println("[ERROR] imgui.ImGui_ImplOpenGL3_Init failed")
+    if !ImGui.ImGui_ImplOpenGL3_Init("#version 130") {
+        io.println("[ERROR] ImGui.ImGui_ImplOpenGL3_Init failed")
         return false
     }
 
@@ -295,7 +473,7 @@ init_imgui :: (window: &GLFWwindow) -> bool {
 }
 
 shutdown_imgui :: () {
-    imgui.ImGui_ImplOpenGL3_Shutdown()
-    imgui.ImGui_ImplGlfw_Shutdown()
-    imgui.DestroyContext(null)
+    ImGui.ImGui_ImplOpenGL3_Shutdown()
+    ImGui.ImGui_ImplGlfw_Shutdown()
+    ImGui.DestroyContext(null)
 }

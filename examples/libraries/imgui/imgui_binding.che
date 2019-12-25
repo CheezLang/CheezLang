@@ -3407,7 +3407,7 @@ PopStyleColor :: (_count: i32 = 1) {
 PushStyleVar :: (_idx: ImGuiStyleVar, _val: f32) {
     __c__PushStyleVar(_idx, _val)
 }
-PushStyleVar_2 :: (_idx: ImGuiStyleVar, _val: ref ImVec2) {
+PushStyleVarVec :: (_idx: ImGuiStyleVar, _val: ref ImVec2) {
     __c__PushStyleVar_2(_idx, &_val)
 }
 PopStyleVar :: (_count: i32 = 1) {

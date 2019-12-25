@@ -61,6 +61,9 @@ struct Context {
     std::vector<Declaration> enums;
     std::vector<Declaration> functions;
     std::vector<Declaration> typedefs;
+    std::vector<Declaration> macros;
+    std::vector<Declaration> variables;
+    std::vector<Declaration> macro_expansions;
     std::vector<Declaration> namespaces;
     std::unordered_map<std::string, int> duplicateFunctionNames;
 
@@ -71,9 +74,12 @@ struct Context {
     }
 
     void emit_function_decl(const Declaration& decl);
+    void emit_variable_decl(const Declaration& decl);
+    void emit_macro_expansion(const Declaration& decl);
     void emit_struct_decl(const Declaration& cursor);
     void emit_typedef_decl(CXCursor cursor);
     void emit_enum_decl(CXCursor cursor);
+    void emit_macro(CXCursor cursor);
     void emit_c_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma = false);
     void emit_c_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma = false);
     void emit_cheez_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma = false, bool prefer_pointers = false);
@@ -176,7 +182,9 @@ int main(int argc, char** argv)
         index,
         header_file_path, nullptr, 0,
         nullptr, 0,
-        CXTranslationUnit_None);
+        (CXTranslationUnit_None
+            | CXTranslationUnit_DetailedPreprocessingRecord
+        ));
     if (unit == nullptr)
     {
         std::cerr << "Unable to parse translation unit. Quitting.\n";
@@ -193,6 +201,11 @@ int main(int argc, char** argv)
         ctx.emit_typedef_decl(td.declaration);
     }
 
+    for (auto td : ctx.macros) {
+        ctx.reset();
+        ctx.emit_macro(td.declaration);
+    }
+
     for (auto td : ctx.enums) {
         ctx.reset();
         ctx.emit_enum_decl(td.declaration);
@@ -206,6 +219,16 @@ int main(int argc, char** argv)
     for (auto td : ctx.functions) {
         ctx.reset();
         ctx.emit_function_decl(td);
+    }
+
+    for (auto td : ctx.variables) {
+        ctx.reset();
+        ctx.emit_variable_decl(td);
+    }
+
+    for (auto td : ctx.macro_expansions) {
+        ctx.reset();
+        ctx.emit_macro_expansion(td);
     }
 
     clang_disposeTranslationUnit(unit);
@@ -267,6 +290,21 @@ void Context::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
             enums.push_back({ c, namespac });
             break;
 
+        case CXCursor_MacroDefinition:
+            macros.push_back({ c, namespac });
+            break;
+
+        case CXCursor_VarDecl:
+            variables.push_back({ c, namespac });
+            break;
+
+        case CXCursor_MacroExpansion:
+            macro_expansions.push_back({ c, namespac });
+            break;
+
+        case CXCursor_InclusionDirective:
+            break;
+
         case CXCursor_Constructor:
         case CXCursor_Destructor:
         case CXCursor_CXXMethod:
@@ -277,7 +315,6 @@ void Context::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
             break;
 
         case CXCursor_ClassTemplate:
-        case CXCursor_VarDecl:
         case CXCursor_UnexposedDecl:
         case CXCursor_FunctionTemplate:
             // can't handle those
@@ -285,6 +322,11 @@ void Context::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
 
         default: {
             std::cout << "[ERROR] TODO: " << "Cursor '" << clang_getCursorSpelling(c) << "' of kind '" << clang_getCursorKindSpelling(clang_getCursorKind(c)) << "'\n";
+            auto location = clang_getCursorLocation(c);
+            CXFile file;
+            unsigned line, column;
+            clang_getFileLocation(location, &file, &line, &column, nullptr);
+            std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
             break;
         }
         }
@@ -329,6 +371,99 @@ void Context::emit_typedef_decl(CXCursor cursor) {
     }
 
     //ctx.cheez_file << name << " :: struct {}\n";
+}
+
+void Context::emit_macro_expansion(const Declaration& decl) {
+    //auto visitAllChildren = [this](CXCursor c, CXCursor parent, CXClientData client_data) {
+    //    switch (c.kind) {
+
+    //    default: {
+    //        std::cout << "[ERROR] TODO emit_macro_expansion: " << "Cursor '" << clang_getCursorSpelling(c) << "' of kind '" << clang_getCursorKindSpelling(clang_getCursorKind(c)) << "'\n";
+    //        auto location = clang_getCursorLocation(c);
+    //        CXFile file;
+    //        unsigned line, column;
+    //        clang_getFileLocation(location, &file, &line, &column, nullptr);
+    //        std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+    //        break;
+    //    }
+    //    }
+    //    return CXChildVisit_Continue;
+    //};
+
+    //auto data = getFreeCallbackData(&visitAllChildren, nullptr);
+    //clang_visitChildren(decl.declaration, getFreeCallback(&visitAllChildren), &data);
+
+    //std::cout << "[ERROR] TODO emit_macro_expansion: " << "Cursor '" << clang_getCursorSpelling(decl.declaration) << "' of kind '" << clang_getCursorKindSpelling(clang_getCursorKind(decl.declaration)) << "'\n";
+    //auto location = clang_getCursorLocation(decl.declaration);
+    //CXFile file;
+    //unsigned line, column;
+    //clang_getFileLocation(location, &file, &line, &column, nullptr);
+    //std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+}
+
+void Context::emit_variable_decl(const Declaration& decl) {
+    auto name = clang_getCursorSpelling(decl.declaration);
+    auto name_c = clang_getCString(name);
+    auto type = clang_getCursorType(decl.declaration);
+
+    if (c_string_starts_with(name_c, "glad_gl")) {
+        auto sub_name = name_c + 5;
+
+        cheez_file << sub_name << " : ";
+        emit_cheez_type(cheez_file, type, false);
+        cheez_file << " #extern #linkname(\"" << name << "\")\n";
+        clang_disposeString(name);
+        return;
+    }
+
+    cheez_file << name << " : ";
+    emit_cheez_type(cheez_file, type, false);
+    cheez_file << " #extern\n";
+    clang_disposeString(name);
+}
+
+void Context::emit_macro(CXCursor cursor) {
+    auto name = clang_getCursorSpelling(cursor);
+    auto name_c = clang_getCString(name);
+
+    // ignore macros starting with __, builtin macros and function like macros
+    if (clang_Cursor_isMacroFunctionLike(cursor) || clang_Cursor_isMacroBuiltin(cursor))
+        return;
+    if (c_string_starts_with(name_c, "__")) {
+        clang_disposeString(name);
+        return;
+    }
+
+    // temp
+    if (c_string_starts_with(name_c, "gl")) {
+        clang_disposeString(name);
+        return;
+    }
+
+    // get tokens
+    auto range = clang_getCursorExtent(cursor);
+    CXToken* tokens;
+    unsigned num_tokens;
+    clang_tokenize(tu, range, &tokens, &num_tokens);
+
+    // first token should be the name of the macro
+    // if there is only one token, it's a macro like
+    // #define IDK
+    // so we don't need to translate it
+    if (num_tokens <= 1)
+        return;
+
+    cheez_file << name << " :: ";
+
+    for (int i = 1; i < num_tokens; i++) {
+        auto token_str = clang_getTokenSpelling(tu, tokens[i]);
+        auto token_str_c = clang_getCString(token_str);
+        cheez_file << token_str;
+        clang_disposeString(token_str);
+    }
+
+    cheez_file << "\n";
+    clang_disposeString(name);
 }
 
 void Context::emit_struct_decl(const Declaration& decl) {

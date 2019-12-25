@@ -41,7 +41,7 @@ namespace Cheez
             // initializer stuff
             if (v.Initializer == null)
             {
-                if (v.GetFlag(StmtFlags.GlobalScope))
+                if (v.GetFlag(StmtFlags.GlobalScope) && !v.HasDirective("extern"))
                     ReportError(v, $"Global variables must have an initializer");
             }
             else
