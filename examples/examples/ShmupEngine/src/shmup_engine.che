@@ -17,6 +17,7 @@ ImGui :: import imgui.imgui_binding
 
 use import opengl_utils
 
+vec2i :: Vector2[int]
 vec2 :: Vector2[float]
 vec3 :: Vector3[float]
 vec4 :: Vector4[float]
@@ -36,8 +37,6 @@ EnabledEditors :: struct {
 
 ShmupEngine :: struct {
     //
-    width  : int = 0
-    height : int = 0
 
     // game stuff
     callbacks : ShmupCallbacks
@@ -49,7 +48,16 @@ ShmupEngine :: struct {
     clear_color         := vec4(1, 0, 1, 1)
 
     // window stuff
-    glfw_window : &GLFWwindow = null
+    glfw_window         : &GLFWwindow = null
+    vsync_enabled       := true
+    window_size         := vec2i(0, 0)
+
+    // viewport stuff
+    viewport_size_max       := vec2i(0, 0)
+    viewport_size           := vec2i(0, 0)
+    viewport_frame_buffer   : u32 = 0
+    viewport_render_texture : u32 = 0
+    viewport_depth_texture  : u32 = 0
 }
 
 impl ShmupEngine {
@@ -62,9 +70,7 @@ impl ShmupEngine {
     start :: (ref Self) {
         on_framebuffer_resize :: (window: &GLFWwindow, w: i32, h: i32) {
             engine := cast(&ShmupEngine) glfwGetWindowUserPointer(window)
-            engine.width  = cast w
-            engine.height = cast h
-
+            engine.window_size = vec2i(int(w), int(h))
             glViewport(0, 0, w, h)
         }
 
@@ -85,6 +91,7 @@ impl ShmupEngine {
         glfwWindowHint(GLFW_RESIZABLE, 1)
 
         vidmode := glfwGetVideoMode(glfwGetPrimaryMonitor())
+        io.printfln("[LOG] primary monitor size: {} x {}", (vidmode.width, vidmode.height))
         // glfw_window = glfwCreateWindow(vidmode.width, vidmode.height, "Hello World", null, null)
         glfw_window = glfwCreateWindow(1280, 720, "Hello World", null, null)
         if glfw_window == null {
@@ -95,7 +102,7 @@ impl ShmupEngine {
 
         glfwSetWindowUserPointer(glfw_window, &self)
         glfwMakeContextCurrent(glfw_window)
-        glfwSwapInterval(1)
+        glfwSwapInterval(if vsync_enabled then 1 else 0)
 
         // initialize glad
         if gladLoadGL() != 1 {
@@ -106,11 +113,10 @@ impl ShmupEngine {
 
         // get initial size
         {
-            w := 0i32
-            h := 0i32
+            w : i32 = 0
+            h : i32 = 0
             glfwGetFramebufferSize(glfw_window, &w, &h)
-            width = cast w
-            height = cast h
+            window_size = vec2i(int(w), int(h))
             glViewport(0, 0, w, h)
         }
 
@@ -124,7 +130,59 @@ impl ShmupEngine {
         }
         defer shutdown_imgui()
 
+        viewport_size_max.x = int(vidmode.width)
+        viewport_size_max.y = int(vidmode.height)
+        if !initialize_viewport() {
+            io.println("[ERROR] Failed to create frame buffer for viewport")
+            return
+        }
+
         render_loop()
+    }
+
+    initialize_viewport :: (ref Self) -> bool {
+        texture_width := i32(viewport_size_max.x)
+        texture_height := i32(viewport_size_max.y)
+
+        // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
+        GL(glGenFramebuffers(1, &viewport_frame_buffer))
+        GL(glBindFramebuffer(GL_FRAMEBUFFER, viewport_frame_buffer))
+
+        // The texture we're going to render to
+        GL(glGenTextures(1, &viewport_render_texture))
+
+        // "Bind" the newly created texture : all future texture functions will modify this texture
+        GL(glBindTexture(GL_TEXTURE_2D, viewport_render_texture))
+
+        // Give an empty image to OpenGL ( the last "null" )
+        GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture_width, texture_height, 0, GL_RGB, GL_UNSIGNED_BYTE, null))
+
+        // Poor filtering. Needed !
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST))
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST))
+
+        // The depth buffer
+        GL(glGenRenderbuffers(1, &viewport_depth_texture))
+        GL(glBindRenderbuffer(GL_RENDERBUFFER, viewport_depth_texture))
+        GL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, texture_width, texture_height))
+        GL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, viewport_depth_texture))
+
+        // Set "viewport_render_texture" as our colour attachement #0
+        GL(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, viewport_render_texture, 0))
+
+        // Set the list of draw buffers.
+        draw_buffers := [u32(GL_COLOR_ATTACHMENT0)]
+        GL(glDrawBuffers(1, draw_buffers.data)) // "1" is the size of draw_buffers
+
+        // Always check that our framebuffer is ok
+        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE {
+            return false
+        }
+
+        glBindTexture(GL_TEXTURE_2D, 0)
+        glBindRenderbuffer(GL_RENDERBUFFER, 0)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        return true
     }
 
     glfw_key_callback :: (window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
@@ -169,22 +227,52 @@ impl ShmupEngine {
             }
 
             // start rendering
-            glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
+            glClearColor(1, 0, 1, 1)
             glClear(GL_COLOR_BUFFER_BIT)
+            imgui_begin_frame()
 
-            // render game
-            callbacks.update()
 
             // render imgui gui
             if enabled_editors.editor {
-                imgui_begin_frame()
                 create_dock_space()
                 render_menu_bar()
                 render_editor()
-                imgui_end_frame()
             }
 
-            // swap buffers
+            // render game
+            { // get size of viewport window
+                ImGui.Begin("Viewport")
+                min := ImGui.GetWindowContentRegionMin()
+                max := ImGui.GetWindowContentRegionMax()
+                ImGui.End()
+                size := ImGui.ImVec2(max.x - min.x, max.y - min.y)
+                viewport_size = vec2i(int(size.x), int(size.y))
+            }
+            if viewport_size.x > 0 and viewport_size.y > 0 {
+                GL(glBindFramebuffer(GL_FRAMEBUFFER, viewport_frame_buffer))
+                GL(glViewport(0, 0, i32(viewport_size.x), i32(viewport_size.y)))
+
+                glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
+                glClear(GL_COLOR_BUFFER_BIT)
+
+                callbacks.update()
+                glBindFramebuffer(GL_FRAMEBUFFER, 0)
+            }
+            { // draw viewport window
+                ImGui.Begin("Viewport")
+                if viewport_size.x > 0 and viewport_size.y > 0 {
+                    size    := ImGui.ImVec2(f32(viewport_size.x), f32(viewport_size.y))
+                    uv0     := ImGui.ImVec2(0, size.y / f32(viewport_size_max.y))
+                    uv1     := ImGui.ImVec2(size.x / f32(viewport_size_max.x), 0)
+                    tint    := ImGui.ImVec4(1, 1, 1, 1)
+                    border  := ImGui.ImVec4(0, 0, 0, 0)
+                    ImGui.Image(cast viewport_render_texture, size, uv0, uv1, tint, border)
+                }
+                ImGui.End()
+            }
+
+            // end frame
+            imgui_end_frame()
             glfwSwapBuffers(glfw_window)
         }
     }
@@ -233,12 +321,17 @@ impl ShmupEngine {
                 ImGui.ImGuiWindowFlags_.NoNav)
             if ImGui.Begin("Stats", &enabled_editors.stats, overlay_flags) {
                 // show fps
-                {
-                    delta_time_str := fmt.format_any(current_frame_time)
-                    ImGui.LabelText("Frame duration", delta_time_str.as_cstring())
-                    fps_counted_str := fmt.format_any(current_fps)
-                    ImGui.LabelText("FPS", fps_counted_str.as_cstring())
+                delta_time_str := fmt.format_any(current_frame_time)
+                ImGui.LabelText("Frame duration", delta_time_str.as_cstring())
+                fps_counted_str := fmt.format_any(current_fps)
+                ImGui.LabelText("FPS", fps_counted_str.as_cstring())
+
+                // enable/disable vsync
+                if ImGui.Checkbox("VSync", &vsync_enabled) {
+                    glfwSwapInterval(if vsync_enabled then 1 else 0)
                 }
+
+                // clear color
                 ImGui.ColorEdit3("clear color", cast(&float)&clear_color, 0)
             }
             ImGui.End()
@@ -310,7 +403,7 @@ shutdown_imgui :: () {
 }
 
 create_dock_space :: () {
-    dockspace_flags := ImGui.ImGuiDockNodeFlags_.PassthruCentralNode
+    dockspace_flags := ImGui.ImGuiDockNodeFlags_.None
     window_flags    := @bin_or(ImGui.ImGuiWindowFlags_.MenuBar, ImGui.ImGuiWindowFlags_.NoDocking)
 
     opt_fullscreen := true

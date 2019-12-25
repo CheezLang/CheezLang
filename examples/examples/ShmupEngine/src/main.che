@@ -5,6 +5,7 @@ io  :: import std.io
 C   :: import std.c
 
 use import opengl.glad_binding
+ImGui :: import imgui.imgui_binding
 
 use import shmup_engine
 use import opengl_utils
@@ -25,9 +26,8 @@ impl ShmupCallbacks for Test {
         vertices := [
             -1.0f, -1.0f, 0.0f
             1.0f, -1.0f, 0.0f
-            0.0f,  1.0f, 0.0f
+            0.5f,  1.0f, 0.0f
         ]
-
 
         GL(glBindVertexArray(vao))
         GL(glBindBuffer(GL_ARRAY_BUFFER, vbo))
@@ -49,7 +49,7 @@ impl ShmupCallbacks for Test {
             "
         fragment_shader := "
             #version 330 core
-            out vec4 FragColor;
+            layout(location = 0) out vec4 FragColor;
 
             void main()
             {
@@ -76,6 +76,7 @@ impl ShmupCallbacks for Test {
         GL(glBindVertexArray(vao))
         GL(glDrawArrays(GL_TRIANGLES, 0, 3))
         GL(glBindVertexArray(0))
+
     }
 }
 
