@@ -284,23 +284,36 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // create vars
             var type = CheezTypeToLLVMType(decl.Type);
 
-            var varPtr = module.AddGlobal(type, decl.Name.Name);
+            var name = decl.Name.Name;
+            if (decl.TryGetDirective("linkname", out var linkname))
+            {
+                name = linkname.Arguments[0].Value as string;
+            }
+
+            var varPtr = module.AddGlobal(type, name);
             varPtr.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
             if (decl.HasDirective("thread_local"))
                 varPtr.SetThreadLocal(true);
             //varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);// TODO?
 
-            var dExtern = decl.GetDirective("extern");
-            if (dExtern != null) varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
+            if (decl.HasDirective("extern"))
+            {
+                varPtr.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
+            }
+            else
+            {
+                LLVMValueRef initializer = LLVM.ConstNull(CheezTypeToLLVMType(decl.Type));
+                varPtr.SetInitializer(initializer);
+            }
 
-            LLVMValueRef initializer = LLVM.ConstNull(CheezTypeToLLVMType(decl.Type));
-
-            varPtr.SetInitializer(initializer);
             valueMap[decl] = varPtr;
 
             // do initialization TODO: other patterns
-            var x = GenerateExpression(decl.Initializer, true);
-            builder.CreateStore(x, varPtr);
+            if (decl.Initializer != null)
+            {
+                var x = GenerateExpression(decl.Initializer, true);
+                builder.CreateStore(x, varPtr);
+            }
 
             visited.Add(decl);
         }

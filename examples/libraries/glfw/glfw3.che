@@ -75,6 +75,8 @@ glfwSetWindowSizeCallback       :: (window: &GLFWwindow, callback: fn (&GLFWwind
 glfwSetFramebufferSizeCallback  :: (window: &GLFWwindow, callback: fn (&GLFWwindow, i32, i32));
 glfwWindowHint                  :: (hint: i32, value: i32);
 glfwSetErrorCallback            :: (glfw_error_callback: fn(i32, c_string));
+glfwSetWindowUserPointer        :: (window: &GLFWwindow, pointer: &void);
+glfwGetWindowUserPointer        :: (window: &GLFWwindow) -> &void;
 
 glfwGetFramebufferSize          :: (window: &GLFWwindow, width: &i32, height: &i32);
 

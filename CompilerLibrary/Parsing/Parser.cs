@@ -402,10 +402,7 @@ namespace Cheez.Parsing
                         }
                         if (CheckToken(TokenType.Colon))
                         {
-                            var decl = ParseDeclaration(expr, true, null);
-
-                            var directives = ParseDirectives();
-                            decl.Directives = directives;
+                            var decl = ParseDeclaration(expr, true, null, true);
                             return decl;
                         }
                         if (CheckTokens(TokenType.Equal, TokenType.AddEq, TokenType.SubEq, TokenType.MulEq, TokenType.DivEq, TokenType.ModEq))
@@ -432,7 +429,7 @@ namespace Cheez.Parsing
             }
         }
 
-        private AstDecl ParseDeclaration(AstExpression expr, bool allowCommaTuple, List<AstDirective> directives)
+        private AstDecl ParseDeclaration(AstExpression expr, bool allowCommaTuple, List<AstDirective> directives, bool parseDirectives)
         {
             if (expr == null)
                 expr = ParseExpression(allowCommaTuple);
@@ -440,11 +437,14 @@ namespace Cheez.Parsing
             Consume(TokenType.Colon, ErrMsg(":", "after pattern in declaration"));
 
             AstExpression typeExpr = null;
+            AstExpression initializer = null;
+            TokenLocation end = expr.End;
 
             // constant declaration
             if (!CheckTokens(TokenType.Colon, TokenType.Equal))
             {
                 typeExpr = ParseExpression(allowCommaTuple);
+                end = typeExpr.End;
             }
 
             // constant declaration
@@ -455,18 +455,34 @@ namespace Cheez.Parsing
                 return new AstConstantDeclaration(expr, typeExpr, init, directives, Location: new Location(expr.Beginning, init.End));
             }
 
+            // variable declaration without initializer but with directives
+            if (parseDirectives && CheckToken(TokenType.HashIdentifier))
+            {
+                Debug.Assert(directives == null);
+                directives = ParseDirectives();
+                return new AstVariableDecl(expr, typeExpr, null, directives, Location: new Location(expr.Beginning, directives.Last().End));
+            }
+
             // variable declaration with initializer
             if (CheckToken(TokenType.Equal))
             {
                 NextToken();
-                var init = ParseExpression(allowCommaTuple);
-                return new AstVariableDecl(expr, typeExpr, init, directives, Location: new Location(expr.Beginning, init.End));
+                initializer = ParseExpression(allowCommaTuple);
+                end = initializer.End;
+            }
+
+            // variable declaration with initializer and with directives
+            if (parseDirectives && CheckToken(TokenType.HashIdentifier))
+            {
+                Debug.Assert(directives == null);
+                directives = ParseDirectives();
+                end = directives.Last().End;
             }
 
             // variable declaration without initializer
             if (CheckToken(TokenType.NewLine))
             {
-                return new AstVariableDecl(expr, typeExpr, null, directives, Location: new Location(expr.Beginning, typeExpr.End));
+                return new AstVariableDecl(expr, typeExpr, initializer, directives, Location: new Location(expr.Beginning, end));
             }
 
             //
@@ -830,7 +846,7 @@ namespace Cheez.Parsing
                     break;
 
                 var memberDirectives = ParseDirectives(true);
-                declarations.Add(ParseDeclaration(null, true, memberDirectives));
+                declarations.Add(ParseDeclaration(null, true, memberDirectives, false));
 
                 SkipNewlines();
             }
@@ -1814,7 +1830,7 @@ namespace Cheez.Parsing
                     break;
 
                 var memberDirectives = ParseDirectives(true);
-                declarations.Add(ParseDeclaration(null, true, memberDirectives));
+                declarations.Add(ParseDeclaration(null, true, memberDirectives, false));
 
                 next = PeekToken();
                 if (next.type == TokenType.NewLine)
@@ -1871,7 +1887,7 @@ namespace Cheez.Parsing
                 AstDecl declaration = null;
                 if (CheckToken(TokenType.Colon))
                 {
-                    declaration = ParseDeclaration(name, true, memberDirectives);
+                    declaration = ParseDeclaration(name, true, memberDirectives, false);
                 }
                 else if (CheckToken(TokenType.Equal))
                 {
@@ -1941,7 +1957,7 @@ namespace Cheez.Parsing
                     break;
 
                 var memberDirectives = ParseDirectives(true);
-                declarations.Add(ParseDeclaration(null, true, memberDirectives));
+                declarations.Add(ParseDeclaration(null, true, memberDirectives, false));
 
                 next = PeekToken();
                 if (next.type == TokenType.NewLine)

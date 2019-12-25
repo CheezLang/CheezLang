@@ -1,0 +1,29 @@
+io :: import std.io
+C  :: import std.c
+
+use import opengl.opengl
+use import opengl.constants
+use import opengl.types
+use import opengl.functions
+
+import opengl.glad_binding
+
+#export_scope
+
+GL :: (code: Code) #macro {
+    @insert(code)
+    gl_check_errors()
+}
+
+gl_check_errors :: () {
+    loop {
+        err := glGetError()
+        if int(err) == int(GL_NO_ERROR) then break
+        io.printfln("[OpenGL] Error: {}", err)
+    }
+}
+
+glfw_error_callback :: (error: i32, description_c: c_string) {
+    description := string(cast description_c, cast C.strlen(description_c))
+    io.printfln("Glfw Error {}: {}", (error, ))
+}

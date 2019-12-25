@@ -27,7 +27,7 @@ get_time_microseconds :: () -> int {
         if err == -1 {
             return -1
         }
-        time_in_micros := 1000000 * int(tv.tv_sec) + int(tv.tv_usec);
+        time_in_micros := 1000000 * int(tv.tv_sec) + int(tv.tv_usec)
         return time_in_micros
     }
 }
@@ -51,7 +51,7 @@ get_time_milliseconds :: () -> int {
         if err == -1 {
             return -1
         }
-        time_in_micros := 1000000 * int(tv.tv_sec) + int(tv.tv_usec);
+        time_in_micros := 1000000 * int(tv.tv_sec) + int(tv.tv_usec)
         return time_in_micros / 1000
     }
 }
