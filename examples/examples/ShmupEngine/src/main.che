@@ -1,4 +1,8 @@
-io :: import std.io
+use import std.string
+mem :: import std.mem.allocator
+fmt :: import std.fmt
+io  :: import std.io
+C   :: import std.c
 
 use import opengl.glad_binding
 
@@ -8,82 +12,70 @@ use import opengl_utils
 Test :: struct {
     vbo : u32 = 0
     vao : u32 = 0
-    shaderProgram : u32 = 0
+    shader_program : &Shader = null
 }
 
 impl ShmupCallbacks for Test {
-    init :: (ref Self) {
+    init :: (ref Self) -> bool {
         gl_check_errors()
-
-        GL(glClearColor(1, 0, 1, 1))
 
         GL(glGenVertexArrays(1, &vao))
         GL(glGenBuffers(1, &vbo))
 
         vertices := [
-            50.0f, -50.0f, 0.0f
-            -50.0f, -50.0f, 0.0f
-            0.0f,  50.0f, 0.0f
+            -1.0f, -1.0f, 0.0f
+            1.0f, -1.0f, 0.0f
+            0.0f,  1.0f, 0.0f
         ]
 
 
         GL(glBindVertexArray(vao))
         GL(glBindBuffer(GL_ARRAY_BUFFER, vbo))
-        GL(glBufferData(GL_ARRAY_BUFFER, @sizeof(@typeof(vertices)), vertices.data, GL_STATIC_DRAW))
+        GL(glBufferData(GL_ARRAY_BUFFER, @sizeof(f32) * vertices.length, vertices.data, GL_STATIC_DRAW))
 
-        // todo: shader
-        {
-            vertex_shader := "
-#version 330 core
-layout (location = 0) in vec3 aPos;
+        GL(glEnableVertexAttribArray(0))
+        GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * @sizeof(f32), null))
+        GL(glBindVertexArray(0))
+        GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
 
-void main()
-{
-    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-}
-"c
-            fragment_shader := "
-#version 330 core
-out vec4 FragColor;
+        vertex_shader := "
+            #version 330 core
+            layout (location = 0) in vec3 aPos;
 
-void main()
-{
-    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-} 
-"c
-            vertexShader := 0u32
-            vertexShader = glCreateShader(GL_VERTEX_SHADER)
-            GL(glShaderSource(vertexShader, 1, &vertex_shader, null))
-            GL(glCompileShader(vertexShader))
+            void main()
+            {
+                gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+            }
+            "
+        fragment_shader := "
+            #version 330 core
+            out vec4 FragColor;
 
-            fragmentShader := 0u32
-            fragmentShader = glCreateShader(GL_FRAGMENT_SHADER)
-            GL(glShaderSource(fragmentShader, 1, &fragment_shader, null))
-            GL(glCompileShader(fragmentShader))
+            void main()
+            {
+                FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+            } 
+            "
+        match Shader.create(vertex_shader, fragment_shader) {
+            Ok($shader) -> {
+                shader_program = mem.alloc(Shader)
+                <<shader_program = shader
+            }
 
-            shaderProgram = glCreateProgram()
-
-            GL(glAttachShader(shaderProgram, vertexShader))
-            GL(glAttachShader(shaderProgram, fragmentShader))
-            GL(glLinkProgram(shaderProgram))
-
-            GL(glUseProgram(shaderProgram))
-
-            // GL(glDeleteShader(vertexShader))
-            // GL(glDeleteShader(fragmentShader))
-
+            Err($msg) -> {
+                io.println(msg)
+                return false
+            }
         }
 
-        GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * @sizeof(f32), null))
-        GL(glEnableVertexAttribArray(0))
+        return true
     }
 
     update :: (ref Self) {
-        // io.println("update")
-
-        GL(glUseProgram(shaderProgram))
+        shader_program.bind()
         GL(glBindVertexArray(vao))
         GL(glDrawArrays(GL_TRIANGLES, 0, 3))
+        GL(glBindVertexArray(0))
     }
 }
 
@@ -92,4 +84,68 @@ Main :: () {
 
     shmup_engine := ShmupEngine.new(test)
     shmup_engine.start()
+}
+
+Shader :: struct {
+    id : u32
+}
+
+impl Into[String] for String {
+    into :: (ref Self) -> String {
+        return self.clone()
+    }
+}
+
+impl Shader {
+    bind :: (ref Self) {
+        GL(glUseProgram(id))
+    }
+
+    create :: (vertex_source: string, fragment_source: string) -> Result[Shader, String] {
+        vertex_shader   := try(compile_sub_shader(vertex_source, GL_VERTEX_SHADER))
+        defer GL(glDeleteShader(vertex_shader))
+        fragment_shader := try(compile_sub_shader(fragment_source, GL_FRAGMENT_SHADER))
+        defer GL(glDeleteShader(fragment_shader))
+
+        shader_program := glCreateProgram()
+
+        GL(glAttachShader(shader_program, vertex_shader))
+        GL(glAttachShader(shader_program, fragment_shader))
+        GL(glLinkProgram(shader_program))
+
+        success := 0i32
+        GL(glGetProgramiv(shader_program, GL_LINK_STATUS, &success))
+        if success == 0 {
+            info_log : [512]char8 = default
+            GL(glGetProgramInfoLog(shader_program, cast info_log.length, null, info_log.data))
+            GL(glDeleteProgram(shader_program))
+
+            error_message := string(cast info_log.data, cast C.strlen(info_log.data))
+            return Err(fmt.format("[shader] {}", [error_message]))
+        }
+
+        return Ok(Shader(shader_program))
+    }
+
+    compile_sub_shader :: (source: string, typ: u32) -> Result[u32, String] {
+        sources := [source.bytes.data]
+        lengths := [i32(source.bytes.length)]
+        id := glCreateShader(typ)
+        GL(glShaderSource(id, 1, cast sources.data, lengths.data))
+        GL(glCompileShader(id))
+
+        success := 0i32
+        GL(glGetShaderiv(id, GL_COMPILE_STATUS, &success))
+
+        if success == 0 {
+            info_log : [512]char8 = default
+            GL(glGetShaderInfoLog(id, cast info_log.length, null, info_log.data))
+            GL(glDeleteShader(id))
+
+            error_message := string(cast info_log.data, cast C.strlen(info_log.data))
+            return Err(fmt.format("[{} shader] {}", ["vertex", error_message]))
+        }
+
+        return Ok(id)
+    }
 }

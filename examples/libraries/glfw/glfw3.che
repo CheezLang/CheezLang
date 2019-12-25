@@ -592,3 +592,5 @@ GLFW_X11_CLASS_NAME             :: 0x00024001
  *  [window hint](@ref GLFW_X11_CLASS_NAME_hint).
  */
 GLFW_X11_INSTANCE_NAME          :: 0x00024002
+
+GLFW_OPENGL_CORE_PROFILE        :: 0x00032001

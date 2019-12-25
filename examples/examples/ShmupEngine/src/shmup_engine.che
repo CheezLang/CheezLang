@@ -24,7 +24,7 @@ vec4 :: Vector4[float]
 #export_scope
 
 ShmupCallbacks :: trait {
-    init :: (ref Self);
+    init :: (ref Self) -> bool;
     update :: (ref Self);
 }
 
@@ -79,12 +79,14 @@ impl ShmupEngine {
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
         glfwWindowHint(GLFW_VISIBLE, 0)
-        glfwWindowHint(GLFW_MAXIMIZED, 1)
+        glfwWindowHint(GLFW_MAXIMIZED, 0)
         glfwWindowHint(GLFW_RESIZABLE, 1)
 
         vidmode := glfwGetVideoMode(glfwGetPrimaryMonitor())
-        glfw_window = glfwCreateWindow(vidmode.width, vidmode.height, "Hello World", null, null)
+        // glfw_window = glfwCreateWindow(vidmode.width, vidmode.height, "Hello World", null, null)
+        glfw_window = glfwCreateWindow(1280, 720, "Hello World", null, null)
         if glfw_window == null {
             io.println("[ERROR] Failed to create window")
             return
@@ -109,6 +111,7 @@ impl ShmupEngine {
             glfwGetFramebufferSize(glfw_window, &w, &h)
             width = cast w
             height = cast h
+            glViewport(0, 0, w, h)
         }
 
         // register callbacks
@@ -135,7 +138,9 @@ impl ShmupEngine {
     }
 
     render_loop :: (ref Self) {
-        callbacks.init()
+        if !callbacks.init() {
+            return
+        }
 
         last_frame_time := get_time_microseconds()
 
@@ -168,17 +173,16 @@ impl ShmupEngine {
             glClear(GL_COLOR_BUFFER_BIT)
 
             // render game
+            callbacks.update()
 
             // render imgui gui
-            imgui_begin_frame()
             if enabled_editors.editor {
+                imgui_begin_frame()
                 create_dock_space()
                 render_menu_bar()
                 render_editor()
+                imgui_end_frame()
             }
-            imgui_end_frame()
-
-            callbacks.update()
 
             // swap buffers
             glfwSwapBuffers(glfw_window)
@@ -235,7 +239,7 @@ impl ShmupEngine {
                     fps_counted_str := fmt.format_any(current_fps)
                     ImGui.LabelText("FPS", fps_counted_str.as_cstring())
                 }
-                ImGui.ColorPicker3("clear color", cast(&float)&clear_color, 0)
+                ImGui.ColorEdit3("clear color", cast(&float)&clear_color, 0)
             }
             ImGui.End()
         }

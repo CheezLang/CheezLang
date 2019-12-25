@@ -12,13 +12,23 @@ import opengl.glad_binding
 
 GL :: (code: Code) #macro {
     @insert(code)
-    gl_check_errors()
+
+    loop {
+        err := glGetError()
+        if int(err) == int(GL_NO_ERROR) then break
+
+        io.printfln("[OpenGL] Error: {}", err)
+
+        // this slows down compilation times a lot, so only use for debugging
+        // io.printfln("at {}:{}:{}", @macro_source_location())
+    }
 }
 
 gl_check_errors :: () {
     loop {
         err := glGetError()
         if int(err) == int(GL_NO_ERROR) then break
+
         io.printfln("[OpenGL] Error: {}", err)
     }
 }
