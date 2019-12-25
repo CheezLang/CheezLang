@@ -418,6 +418,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                     var bbCondition = currentLLVMFunction.AppendBasicBlock($"_switch_case_{c.Pattern}_condition");
                     var bbCase = currentLLVMFunction.AppendBasicBlock($"_switch_case_{c.Pattern}");
+                    var bbEnd = currentLLVMFunction.AppendBasicBlock($"_switch_case_{c.Pattern}_end");
                     bbNext = currentLLVMFunction.AppendBasicBlock($"_switch_next");
                     builder.CreateCondBr(patt, bbCondition, bbNext);
                     builder.PositionBuilderAtEnd(bbCondition);
@@ -437,6 +438,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                     builder.PositionBuilderAtEnd(bbCase);
                     var b = GenerateExpression(c.Body, true);
+
+                    if (!c.Body.GetFlag(ExprFlags.Returns) && !c.Body.GetFlag(ExprFlags.Breaks))
+                        builder.CreateBr(bbEnd);
+
+                    builder.PositionBuilderAtEnd(bbEnd);
                     if (m.Type != CheezType.Void && c.Body.Type != CheezType.Void)
                         builder.CreateStore(b, result);
 
@@ -1975,7 +1981,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         if (expr.Right.Name == "data")
                         {
-                            var dataPtr = builder.CreateStructGEP(value, 1, "");
+                            //var dataPtr = builder.CreateGEP(value, new LLVMValueRef[] { LLVM.ConstInt(LLVM.Int64Type(), 0, false) }, "");
+                            var dataPtr = builder.CreateStructGEP(value, 0, "");
                             return dataPtr;
                         }
                         else if (expr.Right.Name == "length")

@@ -2122,6 +2122,42 @@ namespace Cheez
                         return expr;
                     }
 
+                case "macro_source_location":
+                    {
+                        if (expr.Arguments.Count != 0)
+                        {
+                            ReportError(expr.Location, "@macro_source_location takes 0 arguments");
+                            return expr;
+                        }
+
+                        IAstNode node = expr.Parent;
+                        AstBlockExpr outermostBlock = null;
+                        while (node != null)
+                        {
+                            if (node is AstBlockExpr b && b.GetFlag(ExprFlags.FromMacroExpansion))
+                            {
+                                outermostBlock = b;
+                                break;
+                            }
+
+                            node = node.Parent;
+                        }
+
+                        if (outermostBlock != null)
+                        {
+                            var loc = outermostBlock.MacroCall.Location.Beginning;
+                            var file = new AstStringLiteral(loc.file, Location: expr.Location);
+                            var line = new AstNumberExpr(NumberData.FromBigInt(loc.line), Location: expr.Location);
+                            var col = new AstNumberExpr(NumberData.FromBigInt(loc.index - loc.lineStartIndex), Location: expr.Location);
+                            var tuple = new AstTupleExpr(new List<AstExpression>() { file, line, col }, expr.Location);
+                            tuple.Replace(expr);
+                            return InferTypeHelper(tuple, null, context);
+                        }
+
+                        ReportError(expr, "Not inside of macro");
+                        return expr;
+                    }
+
                 case "type_info":
                     {
                         if (expr.Arguments.Count != 1)
@@ -3743,6 +3779,7 @@ namespace Cheez
 
             var code = macro.Body.Clone() as AstBlockExpr;
             code.Parent = call.Parent;
+            code.MacroCall = call;
             code.SetFlag(ExprFlags.FromMacroExpansion, true);
 
             if (isTransparent)

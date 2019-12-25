@@ -324,6 +324,8 @@ namespace Cheez.Ast.Expressions
         public List<AstStatement> DeferredStatements { get; } = new List<AstStatement>();
         public List<AstStatement> Destructions { get; private set; } = null;
 
+        public AstCallExpr MacroCall { get; set; }
+
         public override bool IsPolymorphic => false;
 
         // flags
