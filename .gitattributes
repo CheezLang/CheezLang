@@ -1,4 +1,4 @@
-*.che linguist-language=Rust
+*.che linguist-language=Cheez
 
 ###############################################################################
 # Set default behavior to automatically normalize line endings.
