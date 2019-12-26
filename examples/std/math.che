@@ -191,7 +191,7 @@ impl(T: type) Vector2[T] {
         )
     }
 
-    change_type :: (ref Self, $TargetType: type) -> Vector2[TargetType] {
+    change_type :: (Self, $TargetType: type) -> Vector2[TargetType] {
         return Vector2[TargetType](TargetType(x), TargetType(y))
     }
 }
@@ -374,7 +374,7 @@ impl(T: type) Vector3[T] {
         )
     }
 
-    change_type :: (ref Self, $TargetType: type) -> Vector3[TargetType] {
+    change_type :: (Self, $TargetType: type) -> Vector3[TargetType] {
         return Vector3[TargetType](TargetType(x), TargetType(y), TargetType(z))
     }
 }

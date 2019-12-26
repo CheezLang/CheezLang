@@ -40,12 +40,12 @@ impl ShmupCallbacks for Test {
         GL(glGenBuffers(1, &vbo))
 
         vertices := [
-            -1.0f, -1.0f, 0.0f
-            1.0f, -1.0f, 0.0f
-            1.0f,  1.0f, 0.0f
-            -1.0f, -1.0f, 0.0f
-            1.0f, 1.0f, 0.0f
-            -1.0f,  1.0f, 0.0f
+            -0.5f, -0.5f, 0.0f
+             0.5f, -0.5f, 0.0f
+             0.5f,  0.5f, 0.0f
+            -0.5f, -0.5f, 0.0f
+             0.5f,  0.5f, 0.0f
+            -0.5f,  0.5f, 0.0f
         ]
 
         GL(glBindVertexArray(vao))
@@ -80,7 +80,7 @@ impl ShmupCallbacks for Test {
             void main()
             {
                 FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-                FragColor = vec4(color, alpha);
+                FragColor = vec4(color, 1.0f);
             } 
             "
         match Shader.create(vertex_shader, fragment_shader) {
@@ -112,28 +112,32 @@ impl ShmupCallbacks for Test {
         height := 10.0f
         width  := height * viewport_size.x / viewport_size.y
         projection_matrix = mat4.orthographic(-width * 0.5, width * 0.5, -height * 0.5, height * 0.5, -10, 10)
-        
-
-        {
-            translation := mat4.from_translation(offset)
-            rotation    := mat4.from_rotation_z(angle)
-            scale       := mat4.from_scale(scale)
-
-            model_matrix = mat4.id()
-            model_matrix.mulm(translation)
-            model_matrix.mulm(rotation)
-            model_matrix.mulm(scale)
-        }
 
         shader_program.bind()
-        shader_program.set_uniform_vec3("color", color)
-        shader_program.set_uniform_float("alpha", alpha)
         shader_program.set_uniform_mat4("m_projection", projection_matrix)
-        shader_program.set_uniform_mat4("m_model", model_matrix)
+        shader_program.set_uniform_vec3("color", color)
 
-        GL(glBindVertexArray(vao))
-        GL(glDrawArrays(GL_TRIANGLES, 0, 6))
-        GL(glBindVertexArray(0))
+        count :: 20
+        for(inclusive=true) y : 0 .. count {
+            for(inclusive=true) x : 0 .. count {
+                {
+                    translation := mat4.from_translation(vec3i(x - count / 2, y - count / 2, 0).change_type(f32))
+                    rotation    := mat4.from_rotation_z(angle / 360.0f * (3.1415f * 2.0f))
+                    scale       := mat4.from_scale(scale)
+
+                    model_matrix = mat4.id()
+                    model_matrix.mulm(translation)
+                    model_matrix.mulm(rotation)
+                    model_matrix.mulm(scale)
+                }
+
+                shader_program.set_uniform_mat4("m_model", model_matrix)
+
+                GL(glBindVertexArray(vao))
+                GL(glDrawArrays(GL_TRIANGLES, 0, 6))
+                GL(glBindVertexArray(0))
+            }
+        }
 
     }
 }
