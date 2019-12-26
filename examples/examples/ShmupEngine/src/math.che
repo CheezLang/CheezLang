@@ -1,0 +1,11 @@
+use import matrix
+use import std.math
+
+#export_scope
+
+mat4  :: Matrix4[f32]
+vec2i :: Vector2[int]
+vec3i :: Vector3[int]
+vec2  :: Vector2[f32]
+vec3  :: Vector3[f32]
+vec4  :: Vector4[f32]

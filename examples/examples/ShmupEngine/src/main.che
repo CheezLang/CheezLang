@@ -9,6 +9,8 @@ ImGui :: import imgui.imgui_binding
 
 use import shmup_engine
 use import opengl_utils
+use import shader
+use import math
 use import matrix
 
 Test :: struct {
@@ -19,6 +21,7 @@ Test :: struct {
 
     color := vec3(0, 1, 0)
     alpha := 0.5f
+    count := 2
 
     offset := vec3(0, 0, 0)
     scale  := 0.9f
@@ -54,33 +57,7 @@ impl ShmupCallbacks for Test {
         GL(glBindVertexArray(0))
         GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
 
-        vertex_shader := "
-            #version 330 core
-            layout (location = 0) in vec3 aPos;
-
-            uniform mat4 m_projection;
-            uniform mat4 m_model;
-
-            void main()
-            {
-                gl_Position = m_projection * m_model * vec4(aPos.x, aPos.y, aPos.z, 1.0);
-                gl_Position.w = 1.0f;
-            }
-            "
-        fragment_shader := "
-            #version 330 core
-            layout(location = 0) out vec4 FragColor;
-
-            uniform vec3 color;
-            uniform float alpha;
-
-            void main()
-            {
-                FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-                FragColor = vec4(color, 1.0f);
-            } 
-            "
-        match Shader.create(vertex_shader, fragment_shader) {
+        match Shader.from_file("../data/test_shader.shader") {
             Ok($shader) -> {
                 shader_program = mem.alloc(Shader)
                 <<shader_program = shader
@@ -101,13 +78,13 @@ impl ShmupCallbacks for Test {
         ImGui.InputFloat("Angle", &angle, 0.05, 0.2)
         ImGui.InputFloat("Size", &scale, 0.1, 0.5)
         ImGui.ColorEdit3("Color", &color.x)
+        ImGui.InputScalar("Count", ImGui.ImGuiDataType_.S64, cast &count)
         ImGui.End()
 
         shader_program.bind()
         shader_program.set_uniform_mat4("m_projection", engine.projection_matrix)
         shader_program.set_uniform_vec3("color", color)
 
-        count :: 20
         for(inclusive=true) y : 0 .. count {
             for(inclusive=true) x : 0 .. count {
                 {
@@ -115,10 +92,7 @@ impl ShmupCallbacks for Test {
                     rotation    := mat4.from_rotation_z(angle / 360.0f * (3.1415f * 2.0f))
                     scale       := mat4.from_scale(scale)
 
-                    model_matrix = mat4.id()
-                    model_matrix.mulm(translation)
-                    model_matrix.mulm(rotation)
-                    model_matrix.mulm(scale)
+                    model_matrix = translation * rotation * scale
                 }
 
                 shader_program.set_uniform_mat4("m_model", model_matrix)
@@ -137,98 +111,4 @@ Main :: () {
 
     shmup_engine := ShmupEngine.new(test)
     shmup_engine.start()
-}
-
-Shader :: struct {
-    id : u32
-}
-
-impl Into[String] for String {
-    into :: (ref Self) -> String {
-        return self.clone()
-    }
-}
-
-impl Shader {
-    bind :: (ref Self) {
-        GL(glUseProgram(id))
-    }
-
-    set_uniform_vec3 :: (ref Self, name: c_string, data: vec3) -> bool {
-        loc := glGetUniformLocation(id, name)
-        if loc == -1 {
-            return false
-        }
-
-        GL(glUniform3f(loc, data.x, data.y, data.z))
-        return true
-    }
-
-    set_uniform_float :: (ref Self, name: c_string, data: f32) -> bool {
-        loc := glGetUniformLocation(id, name)
-        if loc == -1 {
-            return false
-        }
-
-        GL(glUniform1f(loc, data))
-        return true
-    }
-
-    set_uniform_mat4 :: (ref Self, name: c_string, value: ref mat4) -> bool {
-        loc := glGetUniformLocation(id, name)
-        if loc == -1 {
-            return false
-        }
-
-        GL(glUniformMatrix4fv(loc, 1, 1, value.data()))
-        return true
-    }
-
-    create :: (vertex_source: string, fragment_source: string) -> Result[Shader, String] {
-        vertex_shader   := try(compile_sub_shader(vertex_source, GL_VERTEX_SHADER))
-        defer GL(glDeleteShader(vertex_shader))
-        fragment_shader := try(compile_sub_shader(fragment_source, GL_FRAGMENT_SHADER))
-        defer GL(glDeleteShader(fragment_shader))
-
-        shader_program := glCreateProgram()
-
-        GL(glAttachShader(shader_program, vertex_shader))
-        GL(glAttachShader(shader_program, fragment_shader))
-        GL(glLinkProgram(shader_program))
-
-        success := 0i32
-        GL(glGetProgramiv(shader_program, GL_LINK_STATUS, &success))
-        if success == 0 {
-            info_log : [512]char8 = default
-            GL(glGetProgramInfoLog(shader_program, cast info_log.length, null, info_log.data))
-            GL(glDeleteProgram(shader_program))
-
-            error_message := string(cast info_log.data, cast C.strlen(info_log.data))
-            return Err(fmt.format("[shader] {}", [error_message]))
-        }
-
-        return Ok(Shader(shader_program))
-    }
-
-    compile_sub_shader :: (source: string, typ: u32) -> Result[u32, String] {
-        sources := [source.bytes.data]
-        lengths := [i32(source.bytes.length)]
-        id := glCreateShader(typ)
-        GL(glShaderSource(id, 1, cast sources.data, lengths.data))
-        GL(glCompileShader(id))
-
-        success := 0i32
-        GL(glGetShaderiv(id, GL_COMPILE_STATUS, &success))
-
-        if success == 0 {
-            info_log : [512]char8 = default
-            GL(glGetShaderInfoLog(id, cast info_log.length, null, info_log.data))
-            GL(glDeleteShader(id))
-
-            error_message := string(cast info_log.data, cast C.strlen(info_log.data))
-            return Err(fmt.format("[{} shader] {}", ["vertex", error_message]))
-        }
-
-        return Ok(id)
-    }
 }

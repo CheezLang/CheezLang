@@ -1,0 +1,186 @@
+use import std.string
+use import std.hash_table
+fs  :: import std.io.fs
+io  :: import std.io
+C   :: import std.c
+fmt :: import std.fmt
+
+use import opengl.glad_binding
+
+use import math
+use import matrix
+use import opengl_utils
+
+#export_scope
+
+Shader :: struct {
+    id       : u32
+    uniforms := Table[string, i32].create(compare_strings)
+}
+
+impl Into[String] for String {
+    into :: (ref Self) -> String {
+        return self.clone()
+    }
+}
+
+impl Into[String] for fs.FsError {
+    into :: (ref Self) -> String {
+        return fmt.format("[ERROR] Failed to open file: {}", [self])
+    }
+}
+
+impl Shader {
+    from_file :: (file_name: string) -> Result[Shader, String] {
+        shader_source := try_with(fs.read_file(file_name), {
+            return Err(fmt.format("[ERROR] Failed to open file '{}': {}", [file_name, err]))
+        })
+
+        ShaderType :: enum #copy { Shared, Vertex, Fragment, Unknown }
+        current_target := ShaderType.Shared
+
+        SHADER_PREFIX :: "#shader"
+
+        vertex_source   := String.empty()
+        fragment_source := String.empty()
+
+        for line, line_index : shader_source.slice().lines() {
+            if line.starts_with(SHADER_PREFIX) {
+                typ := line.sub_string(SHADER_PREFIX.bytes.length).trim()
+                if streq("shared", typ) {
+                    current_target = ShaderType.Shared
+                } else if streq("vertex", typ) {
+                    current_target = ShaderType.Vertex
+                } else if streq("fragment", typ) {
+                    current_target = ShaderType.Fragment
+                } else {
+                    return Err(fmt.format("[shader] {}:{}: error: unknown shader type '{}'", [
+                        file_name
+                        line_index + 1
+                        typ
+                    ]))
+                    current_target = ShaderType.Unknown
+                }
+                continue
+            }
+
+            match current_target {
+                ShaderType.Shared -> {
+                    vertex_source.append_string(line)
+                    vertex_source.append_char('`n')
+                    fragment_source.append_string(line)
+                    fragment_source.append_char('`n')
+                }
+                ShaderType.Vertex -> {
+                    vertex_source.append_string(line)
+                    vertex_source.append_char('`n')
+                }
+                ShaderType.Fragment -> {
+                    fragment_source.append_string(line)
+                    fragment_source.append_char('`n')
+                }
+            }
+        }
+
+        return create(vertex_source.slice(), fragment_source.slice())
+    }
+
+    create :: (vertex_source: string, fragment_source: string) -> Result[Shader, String] {
+        vertex_shader   := try(compile_sub_shader(vertex_source, GL_VERTEX_SHADER))
+        defer GL(glDeleteShader(vertex_shader))
+        fragment_shader := try(compile_sub_shader(fragment_source, GL_FRAGMENT_SHADER))
+        defer GL(glDeleteShader(fragment_shader))
+
+        shader_program := glCreateProgram()
+
+        GL(glAttachShader(shader_program, vertex_shader))
+        GL(glAttachShader(shader_program, fragment_shader))
+        GL(glLinkProgram(shader_program))
+
+        success := 0i32
+        GL(glGetProgramiv(shader_program, GL_LINK_STATUS, &success))
+        if success == 0 {
+            info_log : [512]char8 = default
+            GL(glGetProgramInfoLog(shader_program, cast info_log.length, null, info_log.data))
+            GL(glDeleteProgram(shader_program))
+
+            error_message := string(cast info_log.data, cast C.strlen(info_log.data))
+            return Err(fmt.format("[shader] {}", [error_message]))
+        }
+
+        return Ok(Shader(shader_program))
+    }
+
+    compile_sub_shader :: (source: string, typ: u32) -> Result[u32, String] {
+        sources := [cast(&char8) source.bytes.data]
+        lengths := [cast(i32)    source.bytes.length]
+        id := glCreateShader(typ)
+        GL(glShaderSource(id, 1, sources.data, lengths.data))
+        GL(glCompileShader(id))
+
+        success := 0i32
+        GL(glGetShaderiv(id, GL_COMPILE_STATUS, &success))
+        if success == 0 {
+            info_log : [512]char8 = default
+            GL(glGetShaderInfoLog(id, cast info_log.length, null, info_log.data))
+            GL(glDeleteShader(id))
+
+            error_message := string(cast info_log.data, cast C.strlen(info_log.data))
+            return Err(fmt.format("[{} shader] {}", ["vertex", error_message]))
+        }
+
+        return Ok(id)
+    }
+
+    bind :: (ref Self) {
+        GL(glUseProgram(id))
+    }
+
+    get_uniform_location :: (ref Self, name: string) -> i32 {
+        return match uniforms.get(name) {
+            Some($loc) -> loc
+            None -> {
+                name_str := String.with_capacity(name.bytes.length + 1)
+                name_str.append_string(name)
+                loc := glGetUniformLocation(id, name_str.as_cstring())
+                uniforms.set(name, loc)
+                loc
+            }
+        }
+    }
+
+    set_uniform_vec3 :: (ref Self, name: string, value: vec3) -> bool {
+        loc := get_uniform_location(name)
+        if loc == -1 {
+            return false
+        }
+
+        GL(glUniform3f(loc, value.x, value.y, value.z))
+        return true
+    }
+
+    set_uniform_float :: (ref Self, name: string, value: f32) -> bool {
+        loc := get_uniform_location(name)
+        if loc == -1 {
+            return false
+        }
+
+        GL(glUniform1f(loc, value))
+        return true
+    }
+
+    set_uniform_mat4 :: (ref Self, name: string, value: ref mat4) -> bool {
+        loc := get_uniform_location(name)
+        if loc == -1 {
+            return false
+        }
+
+        GL(glUniformMatrix4fv(loc, 1, 1, value.data()))
+        return true
+    }
+}
+
+#file_scope
+compare_strings :: (a: string, b: string) -> bool {
+    return streq(a, b)
+}

@@ -12,16 +12,9 @@ use import opengl.glad_binding
 ImGui :: import imgui.imgui_binding
 
 use import opengl_utils
-use import matrix
+use import math
 
 #export_scope
-
-mat4  :: Matrix4[f32]
-vec2i :: Vector2[int]
-vec3i :: Vector3[int]
-vec2  :: Vector2[f32]
-vec3  :: Vector3[f32]
-vec4  :: Vector4[f32]
 
 ShmupCallbacks :: trait {
     init :: (ref Self, ref ShmupEngine) -> bool;
@@ -102,13 +95,17 @@ impl ShmupEngine {
         }
         defer glfwDestroyWindow(glfw_window)
 
-        glfwSetWindowUserPointer(glfw_window, &self)
         glfwMakeContextCurrent(glfw_window)
+        glfwSetWindowUserPointer(glfw_window, &self)
         glfwSwapInterval(if vsync_enabled then 1 else 0)
 
         // initialize glad
         if gladLoadGL() != 1 {
             return
+        }
+        { // get opengl version
+            opengl_version := glGetString(GL_VERSION)
+            io.printfln("[LOG] OpenGL version: {}", string(opengl_version, cast C.strlen(cast opengl_version)))
         }
 
         glfwShowWindow(glfw_window)

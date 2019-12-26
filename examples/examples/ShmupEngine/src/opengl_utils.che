@@ -35,5 +35,5 @@ gl_check_errors :: () {
 
 glfw_error_callback :: (error: i32, description_c: c_string) {
     description := string(cast description_c, cast C.strlen(description_c))
-    io.printfln("Glfw Error {}: {}", (error, ))
+    io.printfln("Glfw Error {}: {}", (error, description))
 }
