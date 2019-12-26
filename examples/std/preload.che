@@ -40,7 +40,7 @@ try :: (code: Code) #macro {
 try_with :: (code: Code, with: Code) #macro {
     match @insert(code, _break=break, _continue=continue) {
         Ok($val) -> val
-        Err($err) -> @insert(with, _break=break, _continue=continue)
+        Err($err) -> @insert(with, link=[err], _break=break, _continue=continue)
     }
 }
 
