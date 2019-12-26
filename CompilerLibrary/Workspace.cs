@@ -133,6 +133,11 @@ namespace Cheez
                 MainFunction = mains.First();
             }
 
+            if (MainFunction != null) {
+                var mainDecl = MainFunction.Parent as AstConstantDeclaration;
+                mainDecl.IsUsed = true;
+            }
+
             //ReportError("error");
         }
 

@@ -20,6 +20,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private string outDir;
 
         private bool emitDebugInfo = false;
+        private bool dontEmitUnusedDeclarations = true;
         
         private Module module;
         private LLVMContextRef context;
@@ -184,8 +185,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 // create declarations
                 foreach (var function in workspace.Functions)
+                {
                     if (!function.IsGeneric)
-                        GenerateFunctionHeader(function);
+                    {
+                        bool forceEmitCode = false;
+                        if (function.TraitFunction != null)
+                            forceEmitCode = true;
+                        GenerateFunctionHeader(function, forceEmitCode);
+                    }
+                }
 
                 foreach (var t in workspace.TypesWithDestructor)
                 {
@@ -209,7 +217,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 {
 
                     if (!function.IsGeneric)
-                        GenerateFunctionImplementation(function);
+                    {
+                        bool forceEmitCode = false;
+                        if (function.TraitFunction != null)
+                            forceEmitCode = true;
+                        GenerateFunctionImplementation(function, forceEmitCode);
+                    }
                 }
 
                 // generate destructors

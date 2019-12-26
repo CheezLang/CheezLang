@@ -23,6 +23,8 @@ namespace Cheez.Ast.Statements
 
         string ISymbol.Name => Name.Name;
 
+        public bool IsUsed { get; set; }
+
         public AstDecl(AstIdExpr name, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
         {
             this.Name = name;
@@ -167,7 +169,17 @@ namespace Cheez.Ast.Statements
         public bool IsForExtension { get; set; }
         public bool IsAnalysed { get; set; }
         public bool SignatureAnalysed { get; set; }
-
+        public bool IsUsed {
+            get {
+                if (Parent is AstConstantDeclaration c)
+                    return c.IsUsed;
+                return true;
+            }
+            set {
+                if (Parent is AstConstantDeclaration c)
+                    c.IsUsed = value;
+            }
+        }
 
         public AstFuncExpr(List<AstParameter> parameters,
             AstParameter returns,

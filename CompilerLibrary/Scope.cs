@@ -802,66 +802,6 @@ namespace Cheez
             return true;
         }
 
-        public List<AstFuncExpr> GetImplFunction(CheezType targetType, string name)
-        {
-            var impls = mImplTable.Where(kv =>
-            {
-                var implType = kv.Key.TargetType;
-                if (CheezType.TypesMatch(implType, targetType))
-                    return true;
-                return false;
-            });
-
-            var candidates = new List<AstFuncExpr>();
-
-            foreach (var impl in impls)
-            {
-                var list = impl.Value;
-                
-                var c = list?.FirstOrDefault(f => f.Name == name);
-                if (c != null)
-                    candidates.Add(c);
-
-            }
-
-            if (candidates.Count == 0)
-            {
-                if (Parent != null)
-                    return Parent.GetImplFunction(targetType, name);
-                return candidates;
-            }
-
-            return candidates;
-        }
-
-        public AstFuncExpr? GetImplFunctionWithDirective(CheezType targetType, string attribute)
-        {
-            var impls = mImplTable.Where(kv =>
-            {
-                var implType = kv.Key.TargetType;
-                if (CheezType.TypesMatch(implType, targetType))
-                    return true;
-                return false;
-            });
-
-            var candidates = new List<AstFuncExpr>();
-
-            foreach (var impl in impls)
-            {
-                var list = impl.Value;
-
-                var c = list?.FirstOrDefault(f => f.HasDirective(attribute));
-                if (c != null)
-                    candidates.Add(c);
-
-            }
-
-            if (candidates.Count == 0)
-                return Parent?.GetImplFunctionWithDirective(targetType, attribute);
-
-            return candidates[0];
-        }
-
         public override string ToString()
         {
             if (Parent != null)

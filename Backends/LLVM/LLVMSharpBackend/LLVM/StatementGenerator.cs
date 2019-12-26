@@ -13,8 +13,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 {
     public partial class LLVMCodeGenerator
     {
-        private void GenerateFunctionHeader(AstFuncExpr function)
+        private void GenerateFunctionHeader(AstFuncExpr function, bool forceEmitCode)
         {
+            // Don't emit global functions that aren't even used
+            if (!forceEmitCode && dontEmitUnusedDeclarations && !function.IsUsed)
+            {
+                return;
+            }
+
             if (function.IsMacroFunction)
                 return;
 
@@ -72,8 +78,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             valueMap[function] = lfunc;
         }
 
-        private void GenerateFunctionImplementation(AstFuncExpr function)
+        private void GenerateFunctionImplementation(AstFuncExpr function, bool forceEmitCode)
         {
+            // Don't emit global functions that aren't even used
+            if (!forceEmitCode && dontEmitUnusedDeclarations && !function.IsUsed)
+                return;
+
             if (function.Body == null || function.IsMacroFunction)
                 return;
 
@@ -280,6 +290,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         InitGlobalVariable(v, visited);
                 }
             }
+            visited.Add(decl);
+
+            // Don't emit global variables that aren't even used
+            if (dontEmitUnusedDeclarations && !decl.IsUsed)
+                return;
 
             // create vars
             var type = CheezTypeToLLVMType(decl.Type);
@@ -289,6 +304,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 name = linkname.Arguments[0].Value as string;
             }
+
 
             var varPtr = module.AddGlobal(type, name);
             varPtr.SetLinkage(LLVMLinkage.LLVMInternalLinkage);
@@ -315,7 +331,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 builder.CreateStore(x, varPtr);
             }
 
-            visited.Add(decl);
         }
 
         private void GenerateVariableDecl(AstVariableDecl decl)

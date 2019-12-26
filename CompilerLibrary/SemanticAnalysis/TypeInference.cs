@@ -472,9 +472,10 @@ namespace Cheez
 
             // check for macro stuff
             if (func.HasDirective("macro"))
-            {
                 func.IsMacroFunction = true;
-            }
+            if (func.HasDirective("unused"))
+                func.IsUsed = true;
+
             if (func.HasDirective("for"))
             {
                 func.IsMacroFunction = true;
@@ -3849,6 +3850,8 @@ namespace Cheez
             {
                 case FunctionType f:
                     {
+                        if (f.Declaration != null)
+                            f.Declaration.IsUsed = true;
                         var newExpr = InferRegularFunctionCall(f, expr, context);
 
                         // check if it is a macro call
@@ -4798,6 +4801,10 @@ namespace Cheez
                 context.dependencies.Add(decl);
             }
 
+            if (sym is AstDecl d) {
+                d.IsUsed = true;
+            }
+
             if (sym is AstConstantDeclaration con) {
                 expr.Type = con.Type;
                 expr.Value = con.Value;
@@ -4839,6 +4846,7 @@ namespace Cheez
             }
             else if (sym is AstFuncExpr func)
             {
+                func.IsUsed = true;
                 expr.Type = func.Type;
                 expr.Value = func;
                 if (func.SelfType != SelfParamType.None)
@@ -5086,14 +5094,17 @@ namespace Cheez
                 return expr;
             }
 
+            var func = result[0];
+            func.IsUsed = true;
+
             if (expr.Left.Type == CheezType.Type)
             {
-                expr.Type = result[0].Type;
+                expr.Type = func.Type;
                 return expr;
             }
             else
             {
-                var ufc = new AstUfcFuncExpr(expr.Left, result[0], expr);
+                var ufc = new AstUfcFuncExpr(expr.Left, func, expr);
                 ufc.Replace(expr);
                 ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                 return InferTypeHelper(ufc, null, context);
