@@ -78,41 +78,41 @@ bool Context::generate_bindings(const std::string& source_file_path, std::ostrea
         return false;
     }
 
-    tu = unit;
-    namespaces.push_back({ clang_getNullCursor(), 0 });
+    m_translation_unit = unit;
+    m_namespaces.push_back({ clang_getNullCursor(), 0 });
     sort_stuff_into_lists(clang_getTranslationUnitCursor(unit), 0);
 
-    for (auto td : typedefs) {
+    for (auto td : m_typedefs) {
         reset();
         emit_typedef_decl(td.declaration);
     }
 
-    for (auto td : macros) {
+    for (auto td : m_macros) {
         reset();
         emit_macro(td.declaration);
     }
 
-    for (auto td : enums) {
+    for (auto td : m_enums) {
         reset();
         emit_enum_decl(td.declaration);
     }
 
-    for (auto td : structs) {
+    for (auto td : m_structs) {
         reset();
         emit_struct_decl(td);
     }
 
-    for (auto td : functions) {
+    for (auto td : m_functions) {
         reset();
         emit_function_decl(td);
     }
 
-    for (auto td : variables) {
+    for (auto td : m_variables) {
         reset();
         emit_variable_decl(td);
     }
 
-    for (auto td : macro_expansions) {
+    for (auto td : m_macro_expansions) {
         reset();
         emit_macro_expansion(td);
     }
@@ -122,14 +122,14 @@ bool Context::generate_bindings(const std::string& source_file_path, std::ostrea
 
     cheez_file << "#lib(\"./__TODO__.lib\")\n\n";
     cheez_file << "#export_scope\n\n";
-    cheez_file << "__UNKNOWN__ :: struct #copy {}\n\n";
-    cheez_file << this->cheez_buffer.str() << "\n";
+    cheez_file << m_cheez_unknown_types.str() << "\n";
+    cheez_file << this->m_cheez_buffer.str() << "\n";
     cheez_file << "// ==========================================================\n";
     cheez_file << "// ==========================================================\n";
     cheez_file << "// ==========================================================\n\n";
     cheez_file << "#file_scope\n\n";
-    cheez_file << cheez_c_bindings.str();
-    cpp_file << c_buffer.str();
+    cheez_file << m_cheez_c_bindings.str();
+    cpp_file << m_cpp_buffer.str();
 
     return true;
 }
@@ -145,39 +145,39 @@ void Context::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
 
         switch (c.kind) {
         case CXCursor_Namespace:
-            namespaces.push_back({ c, namespac });
-            sort_stuff_into_lists(c, namespaces.size() - 1);
+            m_namespaces.push_back({ c, namespac });
+            sort_stuff_into_lists(c, m_namespaces.size() - 1);
             break;
 
         case CXCursor_FunctionDecl:
-            functions.push_back({ c, namespac });
+            m_functions.push_back({ c, namespac });
             break;
 
         case CXCursor_ClassDecl:
         case CXCursor_StructDecl:
-            namespaces.push_back({ c, namespac });
-            structs.push_back({ c, namespac });
-            sort_stuff_into_lists(c, namespaces.size() - 1);
+            m_namespaces.push_back({ c, namespac });
+            m_structs.push_back({ c, namespac });
+            sort_stuff_into_lists(c, m_namespaces.size() - 1);
             break;
 
         case CXCursor_TypedefDecl:
-            typedefs.push_back({ c, namespac });
+            m_typedefs.push_back({ c, namespac });
             break;
 
         case CXCursor_EnumDecl:
-            enums.push_back({ c, namespac });
+            m_enums.push_back({ c, namespac });
             break;
 
         case CXCursor_MacroDefinition:
-            macros.push_back({ c, namespac });
+            m_macros.push_back({ c, namespac });
             break;
 
         case CXCursor_VarDecl:
-            variables.push_back({ c, namespac });
+            m_variables.push_back({ c, namespac });
             break;
 
         case CXCursor_MacroExpansion:
-            macro_expansions.push_back({ c, namespac });
+            m_macro_expansions.push_back({ c, namespac });
             break;
 
         case CXCursor_InclusionDirective:
@@ -223,7 +223,7 @@ void Context::emit_typedef_decl(CXCursor cursor) {
 
     switch (type_decl.kind) {
     case CXCursor_StructDecl: {
-        cheez_buffer << clang_getCursorSpelling(cursor) << " :: struct #copy {}\n";
+        m_cheez_buffer << clang_getCursorSpelling(cursor) << " :: struct #copy {}\n";
         break;
     }
 
@@ -232,9 +232,9 @@ void Context::emit_typedef_decl(CXCursor cursor) {
     }
 
     default: {
-        cheez_buffer << clang_getCursorSpelling(cursor) << " :: ";
-        emit_cheez_type(cheez_buffer, elo, false);
-        cheez_buffer << "\n";
+        m_cheez_buffer << clang_getCursorSpelling(cursor) << " :: ";
+        emit_cheez_type(m_cheez_buffer, elo, false);
+        m_cheez_buffer << "\n";
         break;
     }
     }
@@ -278,16 +278,16 @@ void Context::emit_variable_decl(const Declaration& decl) {
     if (c_string_starts_with(name_c, "glad_gl")) {
         auto sub_name = name_c + 5;
 
-        cheez_buffer << sub_name << " : ";
-        emit_cheez_type(cheez_buffer, type, false);
-        cheez_buffer << " #extern #linkname(\"" << name << "\")\n";
+        m_cheez_buffer << sub_name << " : ";
+        emit_cheez_type(m_cheez_buffer, type, false);
+        m_cheez_buffer << " #extern #linkname(\"" << name << "\")\n";
         clang_disposeString(name);
         return;
     }
 
-    cheez_buffer << name << " : ";
-    emit_cheez_type(cheez_buffer, type, false);
-    cheez_buffer << " #extern\n";
+    m_cheez_buffer << name << " : ";
+    emit_cheez_type(m_cheez_buffer, type, false);
+    m_cheez_buffer << " #extern\n";
     clang_disposeString(name);
 }
 
@@ -298,7 +298,7 @@ void Context::emit_macro(CXCursor cursor) {
     // ignore macros starting with __, builtin macros and function like macros
     if (clang_Cursor_isMacroFunctionLike(cursor) || clang_Cursor_isMacroBuiltin(cursor))
         return;
-    if (c_string_starts_with(name_c, "__")) {
+    if (c_string_starts_with(name_c, "_")) {
         clang_disposeString(name);
         return;
     }
@@ -313,7 +313,7 @@ void Context::emit_macro(CXCursor cursor) {
     auto range = clang_getCursorExtent(cursor);
     CXToken* tokens;
     unsigned num_tokens;
-    clang_tokenize(tu, range, &tokens, &num_tokens);
+    clang_tokenize(m_translation_unit, range, &tokens, &num_tokens);
 
     // first token should be the name of the macro
     // if there is only one token, it's a macro like
@@ -322,16 +322,16 @@ void Context::emit_macro(CXCursor cursor) {
     if (num_tokens <= 1)
         return;
 
-    cheez_buffer << name << " :: ";
+    m_cheez_buffer << name << " :: ";
 
     for (int i = 1; i < num_tokens; i++) {
-        auto token_str = clang_getTokenSpelling(tu, tokens[i]);
+        auto token_str = clang_getTokenSpelling(m_translation_unit, tokens[i]);
         auto token_str_c = clang_getCString(token_str);
-        cheez_buffer << token_str;
+        m_cheez_buffer << token_str;
         clang_disposeString(token_str);
     }
 
-    cheez_buffer << "\n";
+    m_cheez_buffer << "\n";
     clang_disposeString(name);
 }
 
@@ -346,9 +346,9 @@ void Context::emit_struct_decl(const Declaration& decl) {
         return;
 
     // type declaration
-    cheez_buffer << name << " :: struct #copy {\n";
-    member_index = 0;
-    auto visitAllChildren = [this, &decl](CXCursor c, CXCursor parent, CXClientData client_data) {
+    m_cheez_buffer << name << " :: struct #copy {\n";
+    auto visitAllChildren = [this, &decl, member_index = 0]
+        (CXCursor c, CXCursor parent, CXClientData client_data) mutable {
         auto struct_name = clang_getCursorSpelling(parent);
         auto name = clang_getCursorSpelling(c);
         auto type = clang_getCursorType(c);
@@ -359,10 +359,10 @@ void Context::emit_struct_decl(const Declaration& decl) {
                 int a = 0;
             }
 
-            cheez_type_decl << "    " << name << " : ";
-            emit_cheez_type(cheez_type_decl, type, false);
-            cheez_type_decl << " = default";
-            cheez_type_decl << "\n";
+            m_cheez_type_decls << "    " << name << " : ";
+            emit_cheez_type(m_cheez_type_decls, type, false);
+            m_cheez_type_decls << " = default";
+            m_cheez_type_decls << "\n";
             break;
         }
 
@@ -374,70 +374,70 @@ void Context::emit_struct_decl(const Declaration& decl) {
 
             // cheez
             {
-                cheez_impl << "    " << name << " :: (ref Self";
-                emit_cheez_function_parameter_list(cheez_impl, c, true);
-                cheez_impl << ") ";
+                m_cheez_impls << "    " << name << " :: (ref Self";
+                emit_cheez_function_parameter_list(m_cheez_impls, c, true);
+                m_cheez_impls << ") ";
                 if (return_type.kind != CXTypeKind::CXType_Void) {
-                    cheez_impl << "-> ";
-                    emit_cheez_type(cheez_impl, return_type, true);
-                    cheez_impl << " ";
+                    m_cheez_impls << "-> ";
+                    emit_cheez_type(m_cheez_impls, return_type, true);
+                    m_cheez_impls << " ";
                 }
-                cheez_impl << "{\n";
+                m_cheez_impls << "{\n";
 
                 if (return_type.kind != CXTypeKind::CXType_Void) {
-                    cheez_impl << "        result : ";
-                    emit_cheez_type(cheez_impl, return_type, false, true, true);
-                    cheez_impl << " = default\n";
+                    m_cheez_impls << "        result : ";
+                    emit_cheez_type(m_cheez_impls, return_type, false, true, true);
+                    m_cheez_impls << " = default\n";
                 }
-                cheez_impl << "        __c__" << struct_name << "_" << name << "_" << member_index << "(&self";
+                m_cheez_impls << "        __c__" << struct_name << "_" << name << "_" << member_index << "(&self";
                 if (return_type.kind != CXTypeKind::CXType_Void) {
-                    cheez_impl << ", &result";
+                    m_cheez_impls << ", &result";
                 }
-                emit_cheez_function_argument_list(cheez_impl, c, true);
-                cheez_impl << ")\n";
+                emit_cheez_function_argument_list(m_cheez_impls, c, true);
+                m_cheez_impls << ")\n";
                 if (return_type.kind != CXTypeKind::CXType_Void) {
-                    cheez_impl << "        return ";
+                    m_cheez_impls << "        return ";
                     if (return_type.kind == CXTypeKind::CXType_LValueReference)
-                        cheez_impl << "<<";
-                    cheez_impl << "result\n";
+                        m_cheez_impls << "<<";
+                    m_cheez_impls << "result\n";
                 }
-                cheez_impl << "    }\n";
+                m_cheez_impls << "    }\n";
             }
 
             // cheez binding
             {
-                cheez_c_bindings << "__c__" << struct_name << "_" << name << "_" << member_index << " :: (self: &" << struct_name;
+                m_cheez_c_bindings << "__c__" << struct_name << "_" << name << "_" << member_index << " :: (self: &" << struct_name;
 
                 if (return_type.kind != CXTypeKind::CXType_Void) {
-                    cheez_c_bindings << ", ret: &";
-                    emit_cheez_type(cheez_c_bindings, return_type, false, true, true);
+                    m_cheez_c_bindings << ", ret: &";
+                    emit_cheez_type(m_cheez_c_bindings, return_type, false, true, true);
                 }
 
-                emit_cheez_function_parameter_list(cheez_c_bindings, c, true, true);
-                cheez_c_bindings << ");\n";
+                emit_cheez_function_parameter_list(m_cheez_c_bindings, c, true, true);
+                m_cheez_c_bindings << ");\n";
             }
 
             // c
             {
-                c_buffer << "extern \"C\" void __c__" << struct_name << "_" << name << "_" << member_index << "(" << struct_name << "* self";
+                m_cpp_buffer << "extern \"C\" void __c__" << struct_name << "_" << name << "_" << member_index << "(" << struct_name << "* self";
                 if (return_type.kind != CXTypeKind::CXType_Void) {
-                    c_buffer << ", ";
-                    emit_c_type(c_buffer, return_type, "*ret", true, true);
+                    m_cpp_buffer << ", ";
+                    emit_c_type(m_cpp_buffer, return_type, "*ret", true, true);
                 }
-                emit_c_function_parameter_list(c_buffer, c, true);
-                c_buffer << ") {\n";
-                c_buffer << "    ";
+                emit_c_function_parameter_list(m_cpp_buffer, c, true);
+                m_cpp_buffer << ") {\n";
+                m_cpp_buffer << "    ";
                 if (return_type.kind != CXTypeKind::CXType_Void) {
-                    c_buffer << "*ret = (";
-                    emit_c_type(c_buffer, return_type, "", false, false);
-                    c_buffer << ")";
+                    m_cpp_buffer << "*ret = (";
+                    emit_c_type(m_cpp_buffer, return_type, "", false, false);
+                    m_cpp_buffer << ")";
                     if (return_type.kind == CXTypeKind::CXType_LValueReference)
-                        c_buffer << "&";
+                        m_cpp_buffer << "&";
                 }
-                c_buffer << "self->" << name << "(";
-                emit_c_function_argument_list(c_buffer, c, false);
-                c_buffer << ");\n";
-                c_buffer << "}\n";
+                m_cpp_buffer << "self->" << name << "(";
+                emit_c_function_argument_list(m_cpp_buffer, c, false);
+                m_cpp_buffer << ");\n";
+                m_cpp_buffer << "}\n";
             }
             break;
         }
@@ -447,37 +447,37 @@ void Context::emit_struct_decl(const Declaration& decl) {
 
             // cheez
             {
-                cheez_impl << "    new :: (";
-                emit_cheez_function_parameter_list(cheez_impl, c, false);
-                cheez_impl << ") -> " << struct_name << " {\n";
-                cheez_impl << "        result : " << struct_name << " = default\n";
-                cheez_impl << "        __c__" << struct_name << "_new_" << member_index << "(&result";
-                emit_cheez_function_argument_list(cheez_impl, c, true);
-                cheez_impl << ")\n";
-                cheez_impl << "        return result\n";
-                cheez_impl << "    }\n";
+                m_cheez_impls << "    new :: (";
+                emit_cheez_function_parameter_list(m_cheez_impls, c, false);
+                m_cheez_impls << ") -> " << struct_name << " {\n";
+                m_cheez_impls << "        result : " << struct_name << " = default\n";
+                m_cheez_impls << "        __c__" << struct_name << "_new_" << member_index << "(&result";
+                emit_cheez_function_argument_list(m_cheez_impls, c, true);
+                m_cheez_impls << ")\n";
+                m_cheez_impls << "        return result\n";
+                m_cheez_impls << "    }\n";
             }
 
             // cheez binding
             {
-                cheez_c_bindings << "__c__" << struct_name << "_new_" << member_index << " :: (self: &" << struct_name;
-                emit_cheez_function_parameter_list(cheez_c_bindings, c, true, true);
-                cheez_c_bindings << ");\n";
+                m_cheez_c_bindings << "__c__" << struct_name << "_new_" << member_index << " :: (self: &" << struct_name;
+                emit_cheez_function_parameter_list(m_cheez_c_bindings, c, true, true);
+                m_cheez_c_bindings << ");\n";
             }
 
             // c
             {
-                c_buffer << "extern \"C\" void __c__" << struct_name << "_new_" << member_index << "(" << struct_name << "* self";
-                emit_c_function_parameter_list(c_buffer, c, true);
-                c_buffer << ") {\n";
+                m_cpp_buffer << "extern \"C\" void __c__" << struct_name << "_new_" << member_index << "(" << struct_name << "* self";
+                emit_c_function_parameter_list(m_cpp_buffer, c, true);
+                m_cpp_buffer << ") {\n";
 
 
-                c_buffer << "    new (self) ";
-                emit_namespace(c_buffer, decl.namespac);
-                c_buffer << struct_name << "(";
-                emit_c_function_argument_list(c_buffer, c, false);
-                c_buffer << ");\n";
-                c_buffer << "}\n";
+                m_cpp_buffer << "    new (self) ";
+                emit_namespace(m_cpp_buffer, decl.namespac);
+                m_cpp_buffer << struct_name << "(";
+                emit_c_function_argument_list(m_cpp_buffer, c, false);
+                m_cpp_buffer << ");\n";
+                m_cpp_buffer << "}\n";
             }
             break;
         }
@@ -485,21 +485,21 @@ void Context::emit_struct_decl(const Declaration& decl) {
         case CXCursorKind::CXCursor_Destructor: {
             // cheez
             {
-                cheez_drop_impl << "    drop :: (ref Self) {\n";
-                cheez_drop_impl << "        __c__" << struct_name << "_dtor(&self)\n";
-                cheez_drop_impl << "    }\n";
+                m_cheez_drop_impls << "    drop :: (ref Self) {\n";
+                m_cheez_drop_impls << "        __c__" << struct_name << "_dtor(&self)\n";
+                m_cheez_drop_impls << "    }\n";
             }
 
             // cheez binding
             {
-                cheez_c_bindings << "__c__" << struct_name << "_dtor :: (self: &" << struct_name << ");\n";
+                m_cheez_c_bindings << "__c__" << struct_name << "_dtor :: (self: &" << struct_name << ");\n";
             }
 
             // c
             {
-                c_buffer << "extern \"C\" void __c__" << struct_name << "_dtor(" << struct_name << "* self) {\n";
-                c_buffer << "    self->~" << struct_name << "();\n";
-                c_buffer << "}\n";
+                m_cpp_buffer << "extern \"C\" void __c__" << struct_name << "_dtor(" << struct_name << "* self) {\n";
+                m_cpp_buffer << "    self->~" << struct_name << "();\n";
+                m_cpp_buffer << "}\n";
             }
             break;
         }
@@ -539,22 +539,22 @@ void Context::emit_struct_decl(const Declaration& decl) {
     auto data = getFreeCallbackData(&visitAllChildren, nullptr);
     clang_visitChildren(cursor, getFreeCallback(&visitAllChildren), &data);
 
-    cheez_buffer << cheez_type_decl.str();
-    cheez_buffer << "}\n";
+    m_cheez_buffer << m_cheez_type_decls.str();
+    m_cheez_buffer << "}\n";
 
     // function implementations
-    auto impl = cheez_impl.str();
+    auto impl = m_cheez_impls.str();
     if (impl.size() > 0) {
-        cheez_buffer << "impl " << name << " {\n";
-        cheez_buffer << impl;
-        cheez_buffer << "}\n";
+        m_cheez_buffer << "impl " << name << " {\n";
+        m_cheez_buffer << impl;
+        m_cheez_buffer << "}\n";
     }
 
-    auto drop_impl = cheez_drop_impl.str();
+    auto drop_impl = m_cheez_drop_impls.str();
     if (drop_impl.size() > 0) {
-        cheez_buffer << "impl Drop for " << name << " {\n";
-        cheez_buffer << drop_impl;
-        cheez_buffer << "}\n";
+        m_cheez_buffer << "impl Drop for " << name << " {\n";
+        m_cheez_buffer << drop_impl;
+        m_cheez_buffer << "}\n";
     }
     clang_disposeString(name);
 }
@@ -590,8 +590,6 @@ void Context::emit_enum_decl(CXCursor cursor) {
             if (member_name_len > longest_member_name) {
                 longest_member_name = member_name_len;
             }
-
-            member_index += 1;
             return CXChildVisit_Continue;
         };
 
@@ -617,18 +615,16 @@ void Context::emit_enum_decl(CXCursor cursor) {
                 member_name_c += 1;
             }
 
-            cheez_type_decl << "    " << member_name_c;
+            m_cheez_type_decls << "    " << member_name_c;
 
-            indent(cheez_type_decl, longest_member_name - strlen(member_name_c));
+            indent(m_cheez_type_decls, longest_member_name - strlen(member_name_c));
 
             if (member_value >= 0) {
-                cheez_type_decl << " = 0x" << std::hex << member_value << std::dec << "\n";
+                m_cheez_type_decls << " = 0x" << std::hex << member_value << std::dec << "\n";
                 //cheez_type_decl << " = " << member_value << "\n";
             } else {
-                cheez_type_decl << " = " << member_value << "\n";
+                m_cheez_type_decls << " = " << member_value << "\n";
             }
-
-            member_index += 1;
             return CXChildVisit_Continue;
         };
         auto data = getFreeCallbackData(&visitAllChildren, nullptr);
@@ -637,9 +633,9 @@ void Context::emit_enum_decl(CXCursor cursor) {
 
     auto tag_type = clang_getEnumDeclIntegerType(cursor);
 
-    cheez_buffer << name << " :: enum #copy #repr(\"C\") #tag_type(";
-    emit_cheez_type(cheez_buffer, tag_type, false);
-    cheez_buffer << ") {\n" << cheez_type_decl.str() << "}\n";
+    m_cheez_buffer << name << " :: enum #copy #repr(\"C\") #tag_type(";
+    emit_cheez_type(m_cheez_buffer, tag_type, false);
+    m_cheez_buffer << ") {\n" << m_cheez_type_decls.str() << "}\n";
 }
 
 void Context::emit_function_decl(const Declaration& decl) {
@@ -666,76 +662,76 @@ void Context::emit_function_decl(const Declaration& decl) {
 
     // cheez
     {
-        cheez_impl << name << " :: (";
-        emit_cheez_function_parameter_list(cheez_impl, cursor, false);
-        cheez_impl << ") ";
+        m_cheez_impls << name << " :: (";
+        emit_cheez_function_parameter_list(m_cheez_impls, cursor, false);
+        m_cheez_impls << ") ";
         if (return_type.kind != CXTypeKind::CXType_Void) {
-            cheez_impl << "-> ";
-            emit_cheez_type(cheez_impl, return_type, true);
-            cheez_impl << " ";
+            m_cheez_impls << "-> ";
+            emit_cheez_type(m_cheez_impls, return_type, true);
+            m_cheez_impls << " ";
         }
-        cheez_impl << "{\n";
+        m_cheez_impls << "{\n";
 
         if (return_type.kind != CXTypeKind::CXType_Void) {
-            cheez_impl << "    result : ";
-            emit_cheez_type(cheez_impl, return_type, false, true, true);
-            cheez_impl << " = default\n";
+            m_cheez_impls << "    result : ";
+            emit_cheez_type(m_cheez_impls, return_type, false, true, true);
+            m_cheez_impls << " = default\n";
         }
-        cheez_impl << "    __c__" << name << "(";
+        m_cheez_impls << "    __c__" << name << "(";
         if (return_type.kind != CXTypeKind::CXType_Void) {
-            cheez_impl << "&result";
+            m_cheez_impls << "&result";
         }
-        emit_cheez_function_argument_list(cheez_impl, cursor, return_type.kind != CXTypeKind::CXType_Void);
-        cheez_impl << ")\n";
+        emit_cheez_function_argument_list(m_cheez_impls, cursor, return_type.kind != CXTypeKind::CXType_Void);
+        m_cheez_impls << ")\n";
         if (return_type.kind != CXTypeKind::CXType_Void) {
-            cheez_impl << "    return ";
+            m_cheez_impls << "    return ";
             if (return_type.kind == CXTypeKind::CXType_LValueReference)
-                cheez_impl << "<<";
-            cheez_impl << "result\n";
+                m_cheez_impls << "<<";
+            m_cheez_impls << "result\n";
         }
-        cheez_impl << "}\n";
+        m_cheez_impls << "}\n";
     }
 
     // cheez binding
     {
-        cheez_c_bindings << "__c__" << name << " :: (";
+        m_cheez_c_bindings << "__c__" << name << " :: (";
 
         if (return_type.kind != CXTypeKind::CXType_Void) {
-            cheez_c_bindings << "ret: &";
-            emit_cheez_type(cheez_c_bindings, return_type, false, true, true);
+            m_cheez_c_bindings << "ret: &";
+            emit_cheez_type(m_cheez_c_bindings, return_type, false, true, true);
         }
 
-        emit_cheez_function_parameter_list(cheez_c_bindings, cursor, return_type.kind != CXTypeKind::CXType_Void, true);
-        cheez_c_bindings << ");\n";
+        emit_cheez_function_parameter_list(m_cheez_c_bindings, cursor, return_type.kind != CXTypeKind::CXType_Void, true);
+        m_cheez_c_bindings << ");\n";
     }
 
     // c
     {
-        c_buffer << "extern \"C\" void __c__" << name << "(";
+        m_cpp_buffer << "extern \"C\" void __c__" << name << "(";
         if (return_type.kind != CXTypeKind::CXType_Void) {
-            emit_c_type(c_buffer, return_type, "*ret", true, true);
+            emit_c_type(m_cpp_buffer, return_type, "*ret", true, true);
         }
-        emit_c_function_parameter_list(c_buffer, cursor, return_type.kind != CXTypeKind::CXType_Void);
-        c_buffer << ") {\n";
-        c_buffer << "    ";
+        emit_c_function_parameter_list(m_cpp_buffer, cursor, return_type.kind != CXTypeKind::CXType_Void);
+        m_cpp_buffer << ") {\n";
+        m_cpp_buffer << "    ";
         if (return_type.kind != CXTypeKind::CXType_Void) {
-            c_buffer << "*ret = (";
-            emit_c_type(c_buffer, return_type, "", false, false);
-            c_buffer << ")";
+            m_cpp_buffer << "*ret = (";
+            emit_c_type(m_cpp_buffer, return_type, "", false, false);
+            m_cpp_buffer << ")";
             if (return_type.kind == CXTypeKind::CXType_LValueReference)
-                c_buffer << "&";
+                m_cpp_buffer << "&";
         }
 
-        emit_namespace(c_buffer, decl.namespac);
+        emit_namespace(m_cpp_buffer, decl.namespac);
 
-        c_buffer << name_raw << "(";
-        emit_c_function_argument_list(c_buffer, cursor, false);
-        c_buffer << ");\n";
-        c_buffer << "}\n";
+        m_cpp_buffer << name_raw << "(";
+        emit_c_function_argument_list(m_cpp_buffer, cursor, false);
+        m_cpp_buffer << ");\n";
+        m_cpp_buffer << "}\n";
     }
 
     // function implementations
-    cheez_buffer << cheez_impl.str();
+    m_cheez_buffer << m_cheez_impls.str();
 
     clang_disposeString(name_raw);
 }
@@ -746,13 +742,13 @@ void Context::emit_parameter_default_value(std::ostream& stream, CXCursor c, CXT
 
     // only generate default values for literals and NULL
     if (kind == CXTokenKind::CXToken_Literal) {
-        auto token_str = clang_getTokenSpelling(tu, default_value_token);
+        auto token_str = clang_getTokenSpelling(m_translation_unit, default_value_token);
         if (emit_equals) stream << " = ";
         stream << token_str;
         clang_disposeString(token_str);
     }
     else if (kind == CXTokenKind::CXToken_Keyword) {
-        auto token_str = clang_getTokenSpelling(tu, default_value_token);
+        auto token_str = clang_getTokenSpelling(m_translation_unit, default_value_token);
         auto token_str_c = clang_getCString(token_str);
 
         if (strcmp("false", token_str_c) == 0) {
@@ -775,7 +771,7 @@ void Context::emit_parameter_default_value(std::ostream& stream, CXCursor c, CXT
         clang_disposeString(token_str);
     }
     else if (kind == CXTokenKind::CXToken_Punctuation) {
-        auto token_str = clang_getTokenSpelling(tu, default_value_token);
+        auto token_str = clang_getTokenSpelling(m_translation_unit, default_value_token);
         auto token_str_c = clang_getCString(token_str);
 
         if (strcmp("-", token_str_c) == 0) {
@@ -803,7 +799,7 @@ void Context::emit_parameter_default_value(std::ostream& stream, CXCursor c, CXT
         clang_disposeString(token_str);
     }
     else if (kind == CXTokenKind::CXToken_Identifier) {
-        auto token_str = clang_getTokenSpelling(tu, default_value_token);
+        auto token_str = clang_getTokenSpelling(m_translation_unit, default_value_token);
         auto token_str_c = clang_getCString(token_str);
 
         if (strcmp("NULL", token_str_c) == 0) {
@@ -827,7 +823,7 @@ void Context::emit_parameter_default_value(std::ostream& stream, CXCursor c, CXT
         clang_disposeString(token_str);
     }
     else {
-        auto token_str = clang_getTokenSpelling(tu, default_value_token);
+        auto token_str = clang_getTokenSpelling(m_translation_unit, default_value_token);
         auto location = clang_getCursorLocation(c);
         CXFile file;
         unsigned line, column;
@@ -839,8 +835,8 @@ void Context::emit_parameter_default_value(std::ostream& stream, CXCursor c, CXT
 }
 
 void Context::emit_cheez_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma, bool prefer_pointers) {
-    param_index = 0;
-    auto visitAllChildren = [this, &stream, start_with_comma, prefer_pointers](CXCursor c, CXCursor parent, CXClientData client_data) {
+    auto visitAllChildren = [this, &stream, start_with_comma, prefer_pointers, param_index = 0]
+        (CXCursor c, CXCursor parent, CXClientData client_data) mutable {
         switch (c.kind) {
         case CXCursorKind::CXCursor_ParmDecl: {
             CXString name = clang_getCursorSpelling(c);
@@ -857,12 +853,12 @@ void Context::emit_cheez_function_parameter_list(std::ostream& stream, CXCursor 
                 auto range = clang_getCursorExtent(c);
                 CXToken* tokens;
                 unsigned num_tokens;
-                clang_tokenize(tu, range, &tokens, &num_tokens);
+                clang_tokenize(m_translation_unit, range, &tokens, &num_tokens);
                     
                 bool has_default_value = false;
                 int default_value_start = 0;
                 for (int i = 0; i < num_tokens; i++) {
-                    auto token_str = clang_getTokenSpelling(tu, tokens[i]);
+                    auto token_str = clang_getTokenSpelling(m_translation_unit, tokens[i]);
                     auto token_str_c = clang_getCString(token_str);
                     if (strcmp(token_str_c, "=") == 0) {
                         has_default_value = true;
@@ -898,9 +894,8 @@ void Context::emit_cheez_function_parameter_list(std::ostream& stream, CXCursor 
 }
 
 void Context::emit_cheez_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
-    param_index = 0;
-
-    auto visitAllChildren = [this, &stream, start_with_comma](CXCursor c, CXCursor parent, CXClientData client_data) {
+    auto visitAllChildren = [this, &stream, start_with_comma, param_index = 0]
+        (CXCursor c, CXCursor parent, CXClientData client_data) mutable {
         switch (c.kind) {
         case CXCursorKind::CXCursor_ParmDecl: {
             if (param_index > 0 || start_with_comma)
@@ -923,9 +918,8 @@ void Context::emit_cheez_function_argument_list(std::ostream& stream, CXCursor f
 }
 
 void Context::emit_c_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
-    param_index = 0;
-
-    auto visitAllChildren = [this, &stream, start_with_comma](CXCursor c, CXCursor parent, CXClientData client_data) {
+    auto visitAllChildren = [this, &stream, start_with_comma, param_index = 0]
+        (CXCursor c, CXCursor parent, CXClientData client_data) mutable {
         switch (c.kind) {
         case CXCursorKind::CXCursor_ParmDecl: {
             if (param_index > 0 || start_with_comma)
@@ -944,9 +938,8 @@ void Context::emit_c_function_parameter_list(std::ostream& stream, CXCursor func
 }
 
 void Context::emit_c_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
-    param_index = 0;
-
-    auto visitAllChildren = [this, &stream, start_with_comma](CXCursor c, CXCursor parent, CXClientData client_data) {
+    auto visitAllChildren = [this, &stream, start_with_comma, param_index = 0]
+        (CXCursor c, CXCursor parent, CXClientData client_data) mutable {
         switch (c.kind) {
         case CXCursorKind::CXCursor_ParmDecl: {
             CXString name = clang_getCursorSpelling(c);
@@ -1095,18 +1088,6 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
 
         if (behind_pointer) {
             auto typedef_decl = clang_getTypeDeclaration(type);
-            //auto elo = clang_getTypedefDeclUnderlyingType(typedef_decl);
-            //auto actual_type = clang_Type_getNamedType(elo);
-            //auto type_decl = clang_getTypeDeclaration(actual_type);
-
-            //std::stringstream ss;
-            //ss << clang_getTypeSpelling(type) << "\n";
-            //ss << clang_getCursorSpelling(typedef_decl) << "\n";
-            //ss << clang_getTypeSpelling(elo) << "\n";
-            //ss << clang_getTypeSpelling(actual_type) << "\n";
-            //ss << clang_getCursorSpelling(type_decl) << "\n";
-            //auto str = ss.str();
-            //stream << clang_getTypeSpelling(type);
             stream << clang_getCursorSpelling(typedef_decl);
         }
         else {
@@ -1129,7 +1110,6 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
 
             default:
                 stream << clang_getCursorSpelling(typedef_decl);
-                //emit_cheez_type(stream, elo, is_func_param, behind_pointer, prefer_pointers);
                 break;
             }
         }
@@ -1137,11 +1117,17 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
     }
 
     default: {
+        auto unknown = m_unknown_types.find(size);
+        if (unknown == m_unknown_types.end()) {
+            m_cheez_unknown_types << "__UNKNOWN_" << size << " :: struct #copy { _: [" << size << "]u8 = default }\n";
+            m_unknown_types.insert(size);
+        }
+
         auto spelling = clang_getTypeSpelling(type);
         if (prefer_pointers && !behind_pointer)
             stream << "&";
-        stream << "__UNKNOWN__";
-        std::cout << "[ERROR] Failed to translate type '" << spelling << "' (" << clang_getTypeKindSpelling(type.kind) << ")\n";
+        stream << "__UNKNOWN_" << size;
+        std::cout << "[ERROR] Failed to translate type to cheez '" << spelling << "' (" << clang_getTypeKindSpelling(type.kind) << ") - replaced with __UNKNOWN_" << size << "\n";
         break;
     }
     }
@@ -1391,10 +1377,41 @@ std::string Context::get_param_name(CXCursor cursor, int index) {
 }
 
 void Context::emit_namespace(std::ostream& stream, size_t ns) {
-    while (!clang_Cursor_isNull(namespaces[ns].declaration)) {
-        auto n = clang_getCursorSpelling(namespaces[ns].declaration);
+    while (!clang_Cursor_isNull(m_namespaces[ns].declaration)) {
+        auto n = clang_getCursorSpelling(m_namespaces[ns].declaration);
         stream << n << "::";
         clang_disposeString(n);
-        ns = namespaces[ns].namespac;
+        ns = m_namespaces[ns].namespac;
     }
+}
+
+std::string Context::get_unique_function_name(CXString cxstr) {
+    std::string str(clang_getCString(cxstr));
+
+    auto found = m_duplicate_function_names.find(str);
+
+    if (found == m_duplicate_function_names.end()) {
+        m_duplicate_function_names.insert_or_assign(str, 1);
+        return str;
+    }
+    else {
+        int count = std::get<1>(*found) + 1;
+        m_duplicate_function_names.insert_or_assign(str, count);
+
+        std::stringstream ss;
+        ss << str << "_" << count;
+        return ss.str();
+    }
+}
+
+void Context::indent(std::ostream& stream, int amount) {
+    for (int i = 0; i < amount; i++) {
+        stream << " ";
+    }
+}
+
+void Context::reset() {
+    m_cheez_type_decls.str(std::string());
+    m_cheez_drop_impls.str(std::string());
+    m_cheez_impls.str(std::string());
 }
