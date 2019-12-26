@@ -22,13 +22,13 @@ load_filec :: (filename: c_string) -> Result[String, String] {
 
     handle := CreateFileA(cast filename, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null)
     if (cast(int)handle) == -1 {
-        lastError := GetLastError();
+        lastError := GetLastError()
         return Err(fmt.format("failed to open file: 0x{:x}", [lastError]))
     }
 
     size : int = 0
     if GetFileSizeEx(handle, &size) == 0 {
-        lastError := GetLastError();
+        lastError := GetLastError()
         return Err(fmt.format("failed to get file size: 0x{:x}", [lastError]))
     }
 
@@ -36,12 +36,12 @@ load_filec :: (filename: c_string) -> Result[String, String] {
     
     bytesRead : u32 = 0
     if ReadFile(handle, content.get_raw(), cast(u32)size, &bytesRead, null) == 0 {
-        lastError := GetLastError();
+        lastError := GetLastError()
         return Err(fmt.format("failed to read content: 0x{:x}", [lastError]))
     }
 
     if CloseHandle(handle) == 0 {
-        lastError := GetLastError();
+        lastError := GetLastError()
         return Err(fmt.format("failed to close handle: 0x{:x}", [lastError]))
     }
 
