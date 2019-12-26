@@ -4,14 +4,17 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+
 #include <clang-c/Index.h>
+
+struct lua_State;
 
 struct Declaration {
     CXCursor declaration;
     size_t namespac = 0;
 };
 
-class Context {
+class CppToCheezGenerator {
 private:
     std::stringstream m_cheez_buffer, m_cpp_buffer;
     std::stringstream m_cheez_unknown_types;
@@ -34,12 +37,21 @@ private:
     std::unordered_map<std::string, int> m_duplicate_function_names;
     std::unordered_set<int> m_unknown_types;
 
+    lua_State* lua_state;
+
 public:
+    // CppToCheezGenerator();
+    ~CppToCheezGenerator();
+
+public:
+    bool set_custom_callbacks(const std::string& path);
     bool generate_bindings(const std::string& source_file_path, std::ostream& cheez_file, std::ostream& cpp_file);
 
 private:
     void sort_stuff_into_lists(CXCursor tu, size_t namespac);
     void reset();
+
+    bool call_custom_handler(const char* name);
 
     void emit_function_decl(const Declaration& decl);
     void emit_variable_decl(const Declaration& decl);

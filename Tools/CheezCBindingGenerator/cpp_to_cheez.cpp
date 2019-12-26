@@ -1,7 +1,15 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
+
 #include <clang-c/Index.h>
+
+extern "C"
+{
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
+}
 
 #include "cpp_to_cheez.hpp"
 
@@ -48,7 +56,58 @@ auto getFreeCallback(F f)
     };
 }
 
-bool Context::generate_bindings(const std::string& source_file_path, std::ostream& cheez_file, std::ostream& cpp_file)
+bool CheckLua(lua_State* L, int r) {
+    if (r) {
+        std::string errormsg = lua_tostring(L, -1);
+        std::cerr << errormsg << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool CppToCheezGenerator::set_custom_callbacks(const std::string& path) {
+    lua_state = luaL_newstate();
+    luaL_openlibs(lua_state);
+
+    int status = luaL_dofile(lua_state, path.c_str());
+    if (status) {
+        std::cerr << "[ERROR] Failed to load lua file '" << path << "'";
+        return false;
+    }
+
+    return true;
+}
+
+CppToCheezGenerator::~CppToCheezGenerator() {
+    if (lua_state != nullptr) {
+        lua_close(lua_state);
+    }
+}
+
+bool CppToCheezGenerator::call_custom_handler(const char* name) {
+    lua_getglobal(lua_state, name);
+    if (lua_isfunction(lua_state, -1)) {
+        lua_call(lua_state, 0, 1);
+        if (lua_isboolean(lua_state, -1)) {
+            bool done = lua_toboolean(lua_state, -1);
+            lua_pop(lua_state, 1);
+            return done;
+        } else {
+            std::cerr << "[LUA ERROR] " << name << " did not return a boolean\n";
+            return true;
+        }
+    } else if (!lua_isnil(lua_state, -1)) {
+        std::cerr << "[LUA ERROR] " << name << " is not a function\n";
+    }
+
+    // pop value which is either nil or not a function
+    // if it was a function we already popped it by calling it
+    lua_pop(lua_state, 1);
+
+    return false;
+}
+
+bool CppToCheezGenerator::generate_bindings(const std::string& source_file_path, std::ostream& cheez_file, std::ostream& cpp_file)
 {
     {
         std::string header(source_file_path);
@@ -134,7 +193,7 @@ bool Context::generate_bindings(const std::string& source_file_path, std::ostrea
     return true;
 }
 
-void Context::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
+void CppToCheezGenerator::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
     auto visitAllChildren = [this, namespac](CXCursor c, CXCursor parent, CXClientData client_data)
     {
         //if (strcmp("FILE", clang_getCString(name)) == 0) {
@@ -204,7 +263,7 @@ void Context::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
             CXFile file;
             unsigned line, column;
             clang_getFileLocation(location, &file, &line, &column, nullptr);
-            std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+            std::cout << "  at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
             break;
         }
         }
@@ -216,7 +275,7 @@ void Context::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
     clang_visitChildren(tu, getFreeCallback(&visitAllChildren), &data);
 }
 
-void Context::emit_typedef_decl(CXCursor cursor) {
+void CppToCheezGenerator::emit_typedef_decl(CXCursor cursor) {
     auto elo = clang_getTypedefDeclUnderlyingType(cursor);
     auto actual_type = clang_Type_getNamedType(elo);
     auto type_decl = clang_getTypeDeclaration(actual_type);
@@ -242,7 +301,7 @@ void Context::emit_typedef_decl(CXCursor cursor) {
     //ctx.cheez_file << name << " :: struct {}\n";
 }
 
-void Context::emit_macro_expansion(const Declaration& decl) {
+void CppToCheezGenerator::emit_macro_expansion(const Declaration& decl) {
     //auto visitAllChildren = [this](CXCursor c, CXCursor parent, CXClientData client_data) {
     //    switch (c.kind) {
 
@@ -252,7 +311,7 @@ void Context::emit_macro_expansion(const Declaration& decl) {
     //        CXFile file;
     //        unsigned line, column;
     //        clang_getFileLocation(location, &file, &line, &column, nullptr);
-    //        std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+    //        std::cout << " at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
     //        break;
     //    }
     //    }
@@ -267,14 +326,20 @@ void Context::emit_macro_expansion(const Declaration& decl) {
     //CXFile file;
     //unsigned line, column;
     //clang_getFileLocation(location, &file, &line, &column, nullptr);
-    //std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+    //std::cout << "  at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
 }
 
-void Context::emit_variable_decl(const Declaration& decl) {
+void CppToCheezGenerator::emit_variable_decl(const Declaration& decl) {
     auto name = clang_getCursorSpelling(decl.declaration);
     auto name_c = clang_getCString(name);
     auto type = clang_getCursorType(decl.declaration);
 
+    if (call_custom_handler("on_global_variable")) {
+        clang_disposeString(name);
+        return;
+    }
+
+    // TODO: move this to lua
     if (c_string_starts_with(name_c, "glad_gl")) {
         auto sub_name = name_c + 5;
 
@@ -291,7 +356,7 @@ void Context::emit_variable_decl(const Declaration& decl) {
     clang_disposeString(name);
 }
 
-void Context::emit_macro(CXCursor cursor) {
+void CppToCheezGenerator::emit_macro(CXCursor cursor) {
     auto name = clang_getCursorSpelling(cursor);
     auto name_c = clang_getCString(name);
 
@@ -335,7 +400,7 @@ void Context::emit_macro(CXCursor cursor) {
     clang_disposeString(name);
 }
 
-void Context::emit_struct_decl(const Declaration& decl) {
+void CppToCheezGenerator::emit_struct_decl(const Declaration& decl) {
     auto cursor = decl.declaration;
     auto name = clang_getCursorSpelling(cursor);
 
@@ -525,7 +590,7 @@ void Context::emit_struct_decl(const Declaration& decl) {
             CXFile file;
             unsigned line, column;
             clang_getFileLocation(location, &file, &line, &column, nullptr);
-            std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+            std::cout << "  at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
             break;
         }
         }
@@ -559,7 +624,7 @@ void Context::emit_struct_decl(const Declaration& decl) {
     clang_disposeString(name);
 }
 
-void Context::emit_enum_decl(CXCursor cursor) {
+void CppToCheezGenerator::emit_enum_decl(CXCursor cursor) {
     auto name = clang_getCursorSpelling(cursor);
 
     if (strlen(clang_getCString(name)) == 0)
@@ -638,7 +703,7 @@ void Context::emit_enum_decl(CXCursor cursor) {
     m_cheez_buffer << ") {\n" << m_cheez_type_decls.str() << "}\n";
 }
 
-void Context::emit_function_decl(const Declaration& decl) {
+void CppToCheezGenerator::emit_function_decl(const Declaration& decl) {
     auto cursor = decl.declaration;
     auto name_raw = clang_getCursorSpelling(cursor);
     auto name = get_unique_function_name(name_raw);
@@ -736,7 +801,7 @@ void Context::emit_function_decl(const Declaration& decl) {
     clang_disposeString(name_raw);
 }
 
-void Context::emit_parameter_default_value(std::ostream& stream, CXCursor c, CXToken* tokens, int num_tokens, int index, bool emit_equals) {
+void CppToCheezGenerator::emit_parameter_default_value(std::ostream& stream, CXCursor c, CXToken* tokens, int num_tokens, int index, bool emit_equals) {
     auto default_value_token = tokens[index];
     auto kind = clang_getTokenKind(default_value_token);
 
@@ -765,7 +830,7 @@ void Context::emit_parameter_default_value(std::ostream& stream, CXCursor c, CXT
             unsigned line, column;
             clang_getFileLocation(location, &file, &line, &column, nullptr);
             std::cout << "[ERROR] TODO handle default vaule (keyword): " << token_str << "\n";
-            std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+            std::cout << "  at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
         }
 
         clang_disposeString(token_str);
@@ -793,7 +858,7 @@ void Context::emit_parameter_default_value(std::ostream& stream, CXCursor c, CXT
             unsigned line, column;
             clang_getFileLocation(location, &file, &line, &column, nullptr);
             std::cout << "[ERROR] TODO handle default vaule (punctuation): " << token_str << "\n";
-            std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+            std::cout << "  at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
         }
 
         clang_disposeString(token_str);
@@ -817,7 +882,7 @@ void Context::emit_parameter_default_value(std::ostream& stream, CXCursor c, CXT
             unsigned line, column;
             clang_getFileLocation(location, &file, &line, &column, nullptr);
             std::cout << "[ERROR] TODO handle default vaule (identifier): " << token_str << "\n";
-            std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+            std::cout << "  at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
         }
 
         clang_disposeString(token_str);
@@ -829,12 +894,12 @@ void Context::emit_parameter_default_value(std::ostream& stream, CXCursor c, CXT
         unsigned line, column;
         clang_getFileLocation(location, &file, &line, &column, nullptr);
         std::cout << "[ERROR] TODO handle default vaule (" << kind << "): " << token_str << "\n";
-        std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+        std::cout << "  at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
         clang_disposeString(token_str);
     }
 }
 
-void Context::emit_cheez_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma, bool prefer_pointers) {
+void CppToCheezGenerator::emit_cheez_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma, bool prefer_pointers) {
     auto visitAllChildren = [this, &stream, start_with_comma, prefer_pointers, param_index = 0]
         (CXCursor c, CXCursor parent, CXClientData client_data) mutable {
         switch (c.kind) {
@@ -875,7 +940,7 @@ void Context::emit_cheez_function_parameter_list(std::ostream& stream, CXCursor 
                     unsigned line, column;
                     clang_getFileLocation(location, &file, &line, &column, nullptr);
                     std::cout << "[ERROR] failed to get default value from parameter\n";
-                    std::cout << "at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+                    std::cout << "  at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
                 } else if (has_default_value) {
                     emit_parameter_default_value(stream, c, tokens, num_tokens, default_value_start, true);
                 }
@@ -893,7 +958,7 @@ void Context::emit_cheez_function_parameter_list(std::ostream& stream, CXCursor 
     clang_visitChildren(func, getFreeCallback(&visitAllChildren), &data);
 }
 
-void Context::emit_cheez_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
+void CppToCheezGenerator::emit_cheez_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
     auto visitAllChildren = [this, &stream, start_with_comma, param_index = 0]
         (CXCursor c, CXCursor parent, CXClientData client_data) mutable {
         switch (c.kind) {
@@ -917,7 +982,7 @@ void Context::emit_cheez_function_argument_list(std::ostream& stream, CXCursor f
     clang_visitChildren(func, getFreeCallback(&visitAllChildren), &data);
 }
 
-void Context::emit_c_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
+void CppToCheezGenerator::emit_c_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
     auto visitAllChildren = [this, &stream, start_with_comma, param_index = 0]
         (CXCursor c, CXCursor parent, CXClientData client_data) mutable {
         switch (c.kind) {
@@ -937,7 +1002,7 @@ void Context::emit_c_function_parameter_list(std::ostream& stream, CXCursor func
     clang_visitChildren(func, getFreeCallback(&visitAllChildren), &data);
 }
 
-void Context::emit_c_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
+void CppToCheezGenerator::emit_c_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma) {
     auto visitAllChildren = [this, &stream, start_with_comma, param_index = 0]
         (CXCursor c, CXCursor parent, CXClientData client_data) mutable {
         switch (c.kind) {
@@ -964,7 +1029,7 @@ void Context::emit_c_function_argument_list(std::ostream& stream, CXCursor func,
     clang_visitChildren(func, getFreeCallback(&visitAllChildren), &data);
 }
 
-void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_func_param, bool behind_pointer, bool prefer_pointers) {
+void CppToCheezGenerator::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_func_param, bool behind_pointer, bool prefer_pointers) {
     long long size = clang_Type_getSizeOf(type);
 
     switch (type.kind) {
@@ -1127,13 +1192,13 @@ void Context::emit_cheez_type(std::ostream& stream, const CXType& type, bool is_
         if (prefer_pointers && !behind_pointer)
             stream << "&";
         stream << "__UNKNOWN_" << size;
-        std::cout << "[ERROR] Failed to translate type to cheez '" << spelling << "' (" << clang_getTypeKindSpelling(type.kind) << ") - replaced with __UNKNOWN_" << size << "\n";
+        //std::cerr << "[ERROR] Failed to translate type to cheez '" << spelling << "' (" << clang_getTypeKindSpelling(type.kind) << ") - replaced with __UNKNOWN_" << size << "\n";
         break;
     }
     }
 }
 
-void Context::emit_c_type(std::ostream& stream, const CXType& type, const char* name, bool is_func_param, bool behind_pointer) {
+void CppToCheezGenerator::emit_c_type(std::ostream& stream, const CXType& type, const char* name, bool is_func_param, bool behind_pointer) {
     long long size = clang_Type_getSizeOf(type);
 
     switch (type.kind) {
@@ -1298,7 +1363,7 @@ void Context::emit_c_type(std::ostream& stream, const CXType& type, const char* 
     }
 }
 
-bool Context::pass_type_by_pointer(const CXType& type) {
+bool CppToCheezGenerator::pass_type_by_pointer(const CXType& type) {
     switch (type.kind) {
     case CXTypeKind::CXType_Void:
     case CXTypeKind::CXType_UChar:
@@ -1361,7 +1426,7 @@ bool Context::pass_type_by_pointer(const CXType& type) {
     }
 }
 
-void Context::emit_param_name(std::ostream& stream, CXCursor cursor, int index) {
+void CppToCheezGenerator::emit_param_name(std::ostream& stream, CXCursor cursor, int index) {
     CXString name = clang_getCursorSpelling(cursor);
     if (strlen(clang_getCString(name)) == 0) {
         stream << "_" << index;
@@ -1370,13 +1435,13 @@ void Context::emit_param_name(std::ostream& stream, CXCursor cursor, int index) 
     }
 }
 
-std::string Context::get_param_name(CXCursor cursor, int index) {
+std::string CppToCheezGenerator::get_param_name(CXCursor cursor, int index) {
     std::stringstream stream;
     emit_param_name(stream, cursor, index);
     return stream.str();
 }
 
-void Context::emit_namespace(std::ostream& stream, size_t ns) {
+void CppToCheezGenerator::emit_namespace(std::ostream& stream, size_t ns) {
     while (!clang_Cursor_isNull(m_namespaces[ns].declaration)) {
         auto n = clang_getCursorSpelling(m_namespaces[ns].declaration);
         stream << n << "::";
@@ -1385,7 +1450,7 @@ void Context::emit_namespace(std::ostream& stream, size_t ns) {
     }
 }
 
-std::string Context::get_unique_function_name(CXString cxstr) {
+std::string CppToCheezGenerator::get_unique_function_name(CXString cxstr) {
     std::string str(clang_getCString(cxstr));
 
     auto found = m_duplicate_function_names.find(str);
@@ -1404,13 +1469,13 @@ std::string Context::get_unique_function_name(CXString cxstr) {
     }
 }
 
-void Context::indent(std::ostream& stream, int amount) {
+void CppToCheezGenerator::indent(std::ostream& stream, int amount) {
     for (int i = 0; i < amount; i++) {
         stream << " ";
     }
 }
 
-void Context::reset() {
+void CppToCheezGenerator::reset() {
     m_cheez_type_decls.str(std::string());
     m_cheez_drop_impls.str(std::string());
     m_cheez_impls.str(std::string());
