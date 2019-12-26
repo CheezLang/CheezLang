@@ -1,16 +1,16 @@
 File Name,Lines
+imgui_binding.che,6561
+glad_binding.che,2890
 clang.che,1185
-imgui_binding.che,964
 lexer.che,835
-cimgui_binding.che,703
 constants.che,652
+glfw3.che,577
 clap.che,377
 functions.che,339
 pixel_game_engine.che,275
 compiler_test.che,253
 cli.che,236
 pge_render_functions.che,231
-glfw3.che,208
 olc_win.che,183
 lua.che,171
 glfw_binding.che,165
@@ -28,7 +28,5 @@ cheez_compiler.che,24
 opengl.che,20
 types.che,16
 glew.che,15
-cimgui_glfw_binding.che,12
-cimgui_opengl3_binding.che,11
 bmp.che,4
-Total,7603
+Total,15733

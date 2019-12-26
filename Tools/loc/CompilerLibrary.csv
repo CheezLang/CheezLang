@@ -1,13 +1,13 @@
 File Name,Lines
-TypeInference.cs,4337
-Parser.cs,1811
+TypeInference.cs,4427
+Parser.cs,1826
 PassVariableLifetimes.cs,1009
 AnalyzedAstPrinter.cs,830
-AstExpression.cs,783
+AstExpression.cs,784
 Lexer.cs,727
-Scope.cs,721
-FunctionAnalysis.cs,697
-AstDeclaration.cs,491
+FunctionAnalysis.cs,699
+Scope.cs,674
+AstDeclaration.cs,503
 PrimitiveTypes.cs,489
 RawAstPrinter.cs,462
 TypeResolver.cs,449
@@ -18,7 +18,7 @@ Compiler.cs,294
 AstStatement.cs,273
 EnumStuff.cs,272
 IOperator.cs,266
-Workspace.cs,250
+Workspace.cs,254
 ImplStuff.cs,239
 StructStuff.cs,237
 Pass4.cs,200
@@ -43,10 +43,8 @@ ResetExpr.cs,32
 AstDirective.cs,24
 CompilerLibrary.AssemblyInfo.cs,20
 CompilerLibrary.AssemblyInfo.cs,20
-CompilerLibrary.AssemblyInfo.cs,20
-CompilerLibrary.AssemblyInfo.cs,20
-CompilerLibrary.AssemblyInfo.cs,20
+CompilerLibrary.AssemblyInfo.cs,15
 CompilerLibrary.AssemblyInfo.cs,15
 ICodeGenerator.cs,9
 Pass_.cs,6
-Total,18215
+Total,18247
