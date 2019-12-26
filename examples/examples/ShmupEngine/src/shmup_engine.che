@@ -25,7 +25,7 @@ vec3 :: Vector3[float]
 vec4 :: Vector4[float]
 
 ShmupCallbacks :: trait {
-    init :: (ref Self) -> bool;
+    init :: (ref Self, ref ShmupEngine) -> bool;
     update :: (ref Self);
 }
 
@@ -196,7 +196,7 @@ impl ShmupEngine {
     }
 
     render_loop :: (ref Self) {
-        if !callbacks.init() {
+        if !callbacks.init(self) {
             return
         }
 
@@ -257,9 +257,13 @@ impl ShmupEngine {
             }
 
             // render game
-            if viewport_size.x > 0 and viewport_size.y > 0 {
+            {
+                size := {
+                    size := viewport_size.clamped(0, int.max)
+                    size.change_type(i32)
+                }
                 GL(glBindFramebuffer(GL_FRAMEBUFFER, viewport_frame_buffer))
-                GL(glViewport(0, 0, i32(viewport_size.x), i32(viewport_size.y)))
+                GL(glViewport(0, 0, size.x, size.y))
 
                 glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
                 glClear(GL_COLOR_BUFFER_BIT)

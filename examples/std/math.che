@@ -183,6 +183,17 @@ impl(T: type) Vector2[T] {
     eq :: (a: ref Self, b: ref Self) -> bool #operator("==") {
         return a.x == b.x and a.y == b.y
     }
+
+    clamped :: (ref Self, min: T, max: T) -> Self {
+        return Vector2[T](
+            clamp(x, min, max)
+            clamp(y, min, max)
+        )
+    }
+
+    change_type :: (ref Self, $TargetType: type) -> Vector2[TargetType] {
+        return Vector2[TargetType](TargetType(x), TargetType(y))
+    }
 }
 
 impl(T: type) Vector3[T] {

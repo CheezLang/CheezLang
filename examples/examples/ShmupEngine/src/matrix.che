@@ -1,0 +1,100 @@
+use import std.math
+use import std.printable
+use import std.string
+
+#export_scope
+
+Matrix4 :: struct(T: type) #copy(T) {
+    values : [16]T = default
+}
+
+impl(T: type) Matrix4[T] {
+    id :: () -> Self {
+        return Self([
+            1, 0, 0, 0
+            0, 1, 0, 0
+            0, 0, 1, 0
+            0, 0, 0, 1 
+        ])
+    }
+
+    from_translation :: (t: Vector3[T]) -> Self {
+        return Self([
+            1, 0, 0, t.x
+            0, 1, 0, t.y
+            0, 0, 1, t.z
+            0, 0, 0, 1
+        ])
+    }
+
+    from_scale :: (s: T) -> Self {
+        return Self([
+            s, 0, 0, 0
+            0, s, 0, 0
+            0, 0, s, 0
+            0, 0, 0, 1
+        ])
+    }
+
+    from_rotation_z :: (angle: T) -> Self {
+        c := cosf(angle)
+        s := sinf(angle)
+        return Self([
+             c, s, 0, 0
+            -s, c, 0, 0
+             0, 0, 1, 0
+             0, 0, 0, 1
+        ])
+    }
+
+    orthographic :: (left: T, right: T, bottom: T, top: T, near: T, far: T) -> Self {
+        width  := right - left
+        height := top - bottom
+        depth  := far - near
+
+        return Self([
+            2.0f / width, 0             , 0             , -(right + left) / width
+            0           , 2.0f / height , 0             , -(top + bottom) / height
+            0           , 0             , -2.0f / depth , -(far + near)   / depth 
+            0           , 0             , 0             , 1
+        ])
+    }
+
+    data :: (ref Self) -> &T {
+        return values.data
+    }
+
+    muls :: (ref Self, s: T) {
+        values : []T = values
+        for(by_ref=true) values {
+            it *= s
+        }
+    }
+
+    mulm :: (ref Self, other: ref Matrix4[T]) {
+        // copy of own values
+        a := values
+        b : []T = other.values
+        for c : 0..4 {
+            for r : 0..4 {
+                sum : T = 0
+                for i : 0..4 {
+                    sum += a[i + r * 4] * b[c + i * 4]
+                }
+                values[c + r * 4] = sum
+            }
+        }
+    }
+}
+
+impl(T: type) Printable for Matrix4[T] {
+    print :: (ref Self, str: ref String, format: string) {
+        for r : 0..4 {
+            if r > 0 then str.append_string("`n")
+            for c : 0..4 {
+                if c > 0 then str.append_string(" | ")
+                str.appendf("{}", values[c + r * 4])
+            }
+        }
+    }
+}
