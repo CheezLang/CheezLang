@@ -64,14 +64,14 @@ impl(T: type) Matrix4[T] {
         return values.data
     }
 
-    muls :: (ref Self, s: T) {
+    muls :: (ref Self, s: T) #operator("*=") {
         values : []T = values
         for(by_ref=true) values {
             it *= s
         }
     }
 
-    mulm :: (ref Self, other: ref Matrix4[T]) {
+    mulm :: (ref Self, other: ref Matrix4[T]) #operator("*=") {
         // copy of own values
         a := values
         b : []T = other.values
@@ -84,6 +84,22 @@ impl(T: type) Matrix4[T] {
                 values[c + r * 4] = sum
             }
         }
+    }
+
+    mulmm :: (ma: Matrix4[T], mb: Matrix4[T]) -> Matrix4[T] #operator("*") {
+        a : []T = ma.values
+        b : []T = mb.values
+        result := Matrix4[T]()
+        for c : 0..4 {
+            for r : 0..4 {
+                sum : T = 0
+                for i : 0..4 {
+                    sum += a[i + r * 4] * b[c + i * 4]
+                }
+                result.values[c + r * 4] = sum
+            }
+        }
+        return result
     }
 }
 
