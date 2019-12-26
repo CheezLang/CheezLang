@@ -4,12 +4,7 @@
 
 #include <clang-c/Index.h>
 
-extern "C"
-{
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-}
+#include "lua/lua.hpp"
 
 #include "cpp_to_cheez.hpp"
 
@@ -59,7 +54,7 @@ auto getFreeCallback(F f)
 bool CheckLua(lua_State* L, int r) {
     if (r) {
         std::string errormsg = lua_tostring(L, -1);
-        std::cerr << errormsg << std::endl;
+        std::cerr << "[LUA] " << errormsg << std::endl;
         return false;
     }
     return true;
@@ -67,27 +62,31 @@ bool CheckLua(lua_State* L, int r) {
 
 bool CppToCheezGenerator::set_custom_callbacks(const std::string& path) {
     lua_state = luaL_newstate();
+    
+    // register this in lua extra space
+    *(CppToCheezGenerator**)lua_getextraspace(lua_state) = this;
     luaL_openlibs(lua_state);
 
-    int status = luaL_dofile(lua_state, path.c_str());
-    if (status) {
-        std::cerr << "[ERROR] Failed to load lua file '" << path << "'";
-        return false;
-    }
+    luaL_newlib(lua_state, lua_lib);
+    lua_setglobal(lua_state, "Type");
 
-    return true;
+    return CheckLua(lua_state, luaL_dofile(lua_state, path.c_str()));
 }
 
 CppToCheezGenerator::~CppToCheezGenerator() {
     if (lua_state != nullptr) {
+        *(CppToCheezGenerator**)lua_getextraspace(lua_state) = nullptr;
         lua_close(lua_state);
     }
 }
 
-bool CppToCheezGenerator::call_custom_handler(const char* name) {
+bool CppToCheezGenerator::call_custom_handler(const char* name, CXCursor cursor, const char* decl_name, CXType decl_type) {
     lua_getglobal(lua_state, name);
     if (lua_isfunction(lua_state, -1)) {
-        lua_call(lua_state, 0, 1);
+        lua_pushlightuserdata(lua_state, &cursor);
+        lua_pushstring(lua_state, decl_name);
+        lua_pushlightuserdata(lua_state, &decl_type);
+        lua_call(lua_state, 3, 1);
         if (lua_isboolean(lua_state, -1)) {
             bool done = lua_toboolean(lua_state, -1);
             lua_pop(lua_state, 1);
@@ -161,6 +160,11 @@ bool CppToCheezGenerator::generate_bindings(const std::string& source_file_path,
         emit_struct_decl(td);
     }
 
+    for (auto td : m_unions) {
+        reset();
+        emit_union_decl(td);
+    }
+
     for (auto td : m_functions) {
         reset();
         emit_function_decl(td);
@@ -216,6 +220,11 @@ void CppToCheezGenerator::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
         case CXCursor_StructDecl:
             m_namespaces.push_back({ c, namespac });
             m_structs.push_back({ c, namespac });
+            sort_stuff_into_lists(c, m_namespaces.size() - 1);
+            break;
+        case CXCursor_UnionDecl:
+            m_namespaces.push_back({ c, namespac });
+            m_unions.push_back({ c, namespac });
             sort_stuff_into_lists(c, m_namespaces.size() - 1);
             break;
 
@@ -334,7 +343,7 @@ void CppToCheezGenerator::emit_variable_decl(const Declaration& decl) {
     auto name_c = clang_getCString(name);
     auto type = clang_getCursorType(decl.declaration);
 
-    if (call_custom_handler("on_global_variable")) {
+    if (call_custom_handler("on_global_variable", decl.declaration, name_c, type)) {
         clang_disposeString(name);
         return;
     }
@@ -620,6 +629,18 @@ void CppToCheezGenerator::emit_struct_decl(const Declaration& decl) {
         m_cheez_buffer << "impl Drop for " << name << " {\n";
         m_cheez_buffer << drop_impl;
         m_cheez_buffer << "}\n";
+    }
+    clang_disposeString(name);
+}
+
+void CppToCheezGenerator::emit_union_decl(const Declaration& decl) {
+    auto name = clang_getCursorSpelling(decl.declaration);
+    auto name_c = clang_getCString(name);
+    auto type = clang_getCursorType(decl.declaration);
+
+    if (call_custom_handler("on_union", decl.declaration, name_c, type)) {
+        clang_disposeString(name);
+        return;
     }
     clang_disposeString(name);
 }
@@ -1357,7 +1378,7 @@ void CppToCheezGenerator::emit_c_type(std::ostream& stream, const CXType& type, 
         if (!behind_pointer)
             stream << "*";
         stream << " " << name;
-        std::cout << "[ERROR] Failed to translate type '" << spelling << "' (" << clang_getTypeKindSpelling(type.kind) << ")\n";
+        //std::cout << "[ERROR] Failed to translate type '" << spelling << "' (" << clang_getTypeKindSpelling(type.kind) << ")\n";
         break;
     }
     }

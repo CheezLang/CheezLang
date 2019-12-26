@@ -6,6 +6,7 @@
 #include <unordered_set>
 
 #include <clang-c/Index.h>
+#include "lua\lua.hpp"
 
 struct lua_State;
 
@@ -27,6 +28,7 @@ private:
     CXTranslationUnit m_translation_unit;
 
     std::vector<Declaration> m_structs;
+    std::vector<Declaration> m_unions;
     std::vector<Declaration> m_enums;
     std::vector<Declaration> m_functions;
     std::vector<Declaration> m_typedefs;
@@ -51,12 +53,11 @@ private:
     void sort_stuff_into_lists(CXCursor tu, size_t namespac);
     void reset();
 
-    bool call_custom_handler(const char* name);
-
     void emit_function_decl(const Declaration& decl);
     void emit_variable_decl(const Declaration& decl);
     void emit_macro_expansion(const Declaration& decl);
-    void emit_struct_decl(const Declaration& cursor);
+    void emit_struct_decl(const Declaration& decl);
+    void emit_union_decl(const Declaration& decl);
     void emit_typedef_decl(CXCursor cursor);
     void emit_enum_decl(CXCursor cursor);
     void emit_macro(CXCursor cursor);
@@ -75,4 +76,12 @@ private:
     bool pass_type_by_pointer(const CXType& type);
 
     void indent(std::ostream& stream, int amount);
+
+    // lua bindings
+    static const luaL_Reg lua_lib[4];
+    bool call_custom_handler(const char* handler_name, CXCursor cursor, const char* decl_name, CXType decl_type);
+
+    int to_cheez_string_lua(lua_State* L);
+    int to_c_string_lua(lua_State* L);
+    int get_size_lua(lua_State* L);
 };
