@@ -17,11 +17,6 @@ if const @is_os("windows") {
 
 #export_scope
 
-// StringBase :: struct(CharType: type) {
-//     data: []CharType
-//     length: int
-//     allocator: Allocator
-// }
 String :: struct {
     data: []u8
     length: int
@@ -211,7 +206,6 @@ impl String {
     }
 }
 
-
 impl String {
     append_print :: (ref Self, pr: Printable) -> ref Self #operator("+=") {
         pr.print(self, "")
@@ -325,6 +319,38 @@ impl String {
     }
 }
 
+StringLineIterator :: struct {
+    remaining: string
+}
+
+for_extension_string_line_iterator :: (self: StringLineIterator, body: Code) #for {
+    it_index := 0
+    bytes := self.remaining.bytes
+
+    loop {
+        if bytes.length <= 0 then break
+        defer {it_index += 1}
+
+        line_end  := -1
+        for c, i : bytes {
+            if char(c) == '`n' {
+                line_end = i
+                break
+            }
+        }
+
+        // if no newline was found, then the line is the remainder of the string
+        if line_end == -1 {
+            line_end = bytes.length
+        }
+
+        line    := bytes[0 .. line_end]
+        bytes   = bytes[(line_end + 1) .. bytes.length]
+        it      := string(line.data, line.length)
+        @insert(body)
+    }
+}
+
 impl Printable for String {
     print :: (ref Self, str: ref String, format: string) {
         str += self
@@ -388,6 +414,63 @@ impl string {
         return result
     }
 
+    lines :: (Self) -> StringLineIterator {
+        return StringLineIterator(self)
+    }
+
+    starts_with :: (Self, prefix: string) -> bool {
+        self_bytes := self.bytes
+        pref_bytes := prefix.bytes
+        if pref_bytes.length > self_bytes.length {
+            return false
+        }
+
+        for i : 0 .. pref_bytes.length {
+            if self_bytes[i] != pref_bytes[i] {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    sub_string :: (Self, from_byte: int, to_byte: int = -1) -> string {
+        if to_byte == -1 {
+            to_byte = self.bytes.length
+        }
+        @assert(
+            from_byte >= 0 and
+            from_byte < self.bytes.length and
+            from_byte <= to_byte and
+            to_byte <= self.bytes.length)
+        sub_bytes := self.bytes[from_byte .. to_byte]
+        return string(sub_bytes.data, sub_bytes.length)
+    }
+
+    trim :: (Self) -> string {
+        if self.bytes.length == 0 {
+            return ""
+        }
+
+        start := -1
+        end   := -1
+
+        for self.bytes {
+            c := char(it)
+            if !char.is_whitespace(c) {
+                if start == -1 {
+                    start = it_index
+                }
+
+                end = it_index
+            }
+        }
+
+        end += 1
+        @assert(start >= 0 and start < self.bytes.length and start <= end and end <= self.bytes.length)
+        return self.sub_string(start, end)
+    }
+
     to_cstring :: (Self) -> c_string {
         str_c := alloc_raw(char8, cast self.bytes.length + 1)
         str_c[self.bytes.length] = cast 0
@@ -406,6 +489,18 @@ impl string {
             return Err(())
         }
         return Ok(wide_char_str)
+    }
+}
+
+impl char {
+    is_whitespace :: (Self) -> bool {
+        return match self {
+            ' ' -> true
+            '`t' -> true
+            '`r' -> true
+            '`n' -> true
+            _ -> false
+        }
     }
 }
 
