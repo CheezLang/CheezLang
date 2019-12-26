@@ -11,8 +11,6 @@ use import shmup_engine
 use import opengl_utils
 use import matrix
 
-mat4 :: Matrix4[f32]
-
 Test :: struct {
     engine : &ShmupEngine = null
     vbo : u32 = 0
@@ -23,10 +21,9 @@ Test :: struct {
     alpha := 0.5f
 
     offset := vec3(0, 0, 0)
-    scale  := 1.0f
+    scale  := 0.9f
     angle  := 0.0f
 
-    projection_matrix := mat4.id()
     model_matrix      := mat4.id()
 }
 
@@ -95,8 +92,6 @@ impl ShmupCallbacks for Test {
             }
         }
 
-        projection_matrix = mat4.orthographic(-10, 10, -10, 10, -10, 10)
-
         return true
     }
 
@@ -108,13 +103,8 @@ impl ShmupCallbacks for Test {
         ImGui.ColorEdit3("Color", &color.x)
         ImGui.End()
 
-        viewport_size := engine.viewport_size.change_type(f32)
-        height := 10.0f
-        width  := height * viewport_size.x / viewport_size.y
-        projection_matrix = mat4.orthographic(-width * 0.5, width * 0.5, -height * 0.5, height * 0.5, -10, 10)
-
         shader_program.bind()
-        shader_program.set_uniform_mat4("m_projection", projection_matrix)
+        shader_program.set_uniform_mat4("m_projection", engine.projection_matrix)
         shader_program.set_uniform_vec3("color", color)
 
         count :: 20

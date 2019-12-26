@@ -9,21 +9,19 @@ C   :: import std.c
 
 use import glfw.glfw3
 use import opengl.glad_binding
-// use import opengl.opengl
-// use import opengl.constants
-// use import opengl.types
-// use import opengl.functions
 ImGui :: import imgui.imgui_binding
 
 use import opengl_utils
+use import matrix
 
 #export_scope
 
+mat4  :: Matrix4[f32]
 vec2i :: Vector2[int]
 vec3i :: Vector3[int]
-vec2 :: Vector2[float]
-vec3 :: Vector3[float]
-vec4 :: Vector4[float]
+vec2  :: Vector2[f32]
+vec3  :: Vector3[f32]
+vec4  :: Vector4[f32]
 
 ShmupCallbacks :: trait {
     init :: (ref Self, ref ShmupEngine) -> bool;
@@ -40,7 +38,10 @@ ShmupEngine :: struct {
     //
 
     // game stuff
-    callbacks : ShmupCallbacks
+    callbacks           : ShmupCallbacks
+    projection_matrix   := mat4.id()
+    camera_size         := 10.0f
+    aspect_ratio_axis   := 1.0f
 
     // editor stuff
     enabled_editors     : EnabledEditors = default
@@ -254,21 +255,19 @@ impl ShmupEngine {
                 max := ImGui.GetWindowContentRegionMax()
                 ImGui.End()
                 size := ImGui.ImVec2(max.x - min.x, max.y - min.y)
-                viewport_size = vec2i(int(size.x), int(size.y))
+                viewport_size = vec2i(int(size.x), int(size.y)).clamped(0, int.max)
             }
 
             // render game
             {
-                size := {
-                    size := viewport_size.clamped(0, int.max)
-                    size.change_type(i32)
-                }
+                size := viewport_size.change_type(i32)
                 GL(glBindFramebuffer(GL_FRAMEBUFFER, viewport_frame_buffer))
                 GL(glViewport(0, 0, size.x, size.y))
 
                 glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
                 glClear(GL_COLOR_BUFFER_BIT)
 
+                self.update_projection_matrix(viewport_size.change_type(f32))
                 callbacks.update()
                 glBindFramebuffer(GL_FRAMEBUFFER, 0)
             }
@@ -335,22 +334,55 @@ impl ShmupEngine {
                 ImGui.ImGuiWindowFlags_.NoFocusOnAppearing,
                 ImGui.ImGuiWindowFlags_.NoNav)
             if ImGui.Begin("Stats", &enabled_editors.stats, overlay_flags) {
+                // viewport dimensions
+                dimensions := fmt.format("{} x {}", [viewport_size.x, viewport_size.y])
+                ImGui.LabelText("Viewport Dimensions", dimensions.as_cstring())
+                ImGui.Separator()
+
                 // show fps
                 delta_time_str := fmt.format_any(current_frame_time)
                 ImGui.LabelText("Frame duration", delta_time_str.as_cstring())
                 fps_counted_str := fmt.format_any(current_fps)
                 ImGui.LabelText("FPS", fps_counted_str.as_cstring())
 
-                // enable/disable vsync
-                if ImGui.Checkbox("VSync", &vsync_enabled) {
-                    glfwSwapInterval(if vsync_enabled then 1 else 0)
-                }
-
-                // clear color
-                ImGui.ColorEdit3("clear color", cast(&float)&clear_color, 0)
             }
             ImGui.End()
         }
+
+        { // general game properties
+            if ImGui.Begin("Game Settings") {
+                // render settings
+                ImGui.Text("Render Settings")
+                if ImGui.Checkbox("VSync", &vsync_enabled) {
+                    glfwSwapInterval(if vsync_enabled then 1 else 0)
+                }
+                ImGui.ColorEdit3("clear color", cast(&float)&clear_color, 0)
+                ImGui.Separator()
+
+                // camera settings
+                ImGui.Text("Camera Settings")
+                ImGui.InputFloat("Camera Size", &camera_size, 0.1, 1)
+                ImGui.SliderFloat("Camera Aspect Ratio Axis", &aspect_ratio_axis, 0, 1)
+            }
+            ImGui.End()
+        }
+    }
+}
+
+impl ShmupEngine {
+    update_projection_matrix :: (ref Self, viewport_size: vec2) {
+        size    := viewport_size.change_type(f32)
+
+        height1 := camera_size
+        width1  := height1 * size.x / size.y
+
+        width2  := camera_size
+        height2 := width2 * size.y / size.x
+
+        width   := aspect_ratio_axis * width1  + (1 - aspect_ratio_axis) * width2
+        height  := aspect_ratio_axis * height1 + (1 - aspect_ratio_axis) * height2
+
+        projection_matrix = mat4.orthographic(-width * 0.5, width * 0.5, -height * 0.5, height * 0.5, -10, 10)
     }
 }
 

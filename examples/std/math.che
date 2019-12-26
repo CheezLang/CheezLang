@@ -184,7 +184,7 @@ impl(T: type) Vector2[T] {
         return a.x == b.x and a.y == b.y
     }
 
-    clamped :: (ref Self, min: T, max: T) -> Self {
+    clamped :: (Self, min: T, max: T) -> Self {
         return Vector2[T](
             clamp(x, min, max)
             clamp(y, min, max)
@@ -366,7 +366,7 @@ impl(T: type) Vector3[T] {
         return max(x, max(y, z))
     }
 
-    clamped :: (ref Self, min: T, max: T) -> Self {
+    clamped :: (Self, min: T, max: T) -> Self {
         return Vector3[T](
             clamp(x, min, max)
             clamp(y, min, max)
