@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <filesystem>
 
 #include <clang-c/Index.h>
 #include "lua\lua.hpp"
@@ -25,6 +26,7 @@ private:
     std::stringstream m_cheez_c_bindings;
     bool no_includes = true;
 
+    CXIndex m_index;
     CXTranslationUnit m_translation_unit;
 
     std::vector<Declaration> m_structs;
@@ -47,11 +49,16 @@ public:
 
 public:
     bool set_custom_callbacks(const std::string& path);
-    bool generate_bindings(const std::string& source_file_path, std::ostream& cheez_file, std::ostream& cpp_file);
+    bool generate_bindings_from_file(const std::string& source_file_path, std::ostream& cheez_file, std::ostream& cpp_file);
+    bool generate_bindings_from_lua(std::filesystem::path lua_file, std::ostream& cheez_file, std::ostream& cpp_file);
 
 private:
     void sort_stuff_into_lists(CXCursor tu, size_t namespac);
     void reset();
+
+    bool do_generate_bindings(std::ostream& cheez_file, std::ostream& cpp_file);
+    bool load_translation_unit_from_file(const std::string& file_name);
+    bool load_translation_unit_from_string(const char* content);
 
     void emit_function_decl(const Declaration& decl);
     void emit_variable_decl(const Declaration& decl);
@@ -79,7 +86,8 @@ private:
 
     // lua bindings
     static const luaL_Reg lua_lib[4];
-    bool call_custom_handler(const char* handler_name, CXCursor cursor, const char* decl_name, CXType decl_type);
+    bool call_custom_handler(std::ostream& stream, const char* handler_name, CXCursor cursor, const char* decl_name, CXType decl_type);
+    void call_custom_handler(std::ostream& stream, const char* handler_name);
 
     int to_cheez_string_lua(lua_State* L);
     int to_c_string_lua(lua_State* L);

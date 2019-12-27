@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
+#include <filesystem>
 
 #include <clang-c/Index.h>
 
@@ -78,18 +79,60 @@ CppToCheezGenerator::~CppToCheezGenerator() {
         *(CppToCheezGenerator**)lua_getextraspace(lua_state) = nullptr;
         lua_close(lua_state);
     }
+
+    clang_disposeTranslationUnit(m_translation_unit);
+    clang_disposeIndex(m_index);
 }
 
-bool CppToCheezGenerator::call_custom_handler(const char* name, CXCursor cursor, const char* decl_name, CXType decl_type) {
+void CppToCheezGenerator::call_custom_handler(std::ostream& stream, const char* handler_name) {
+    lua_getglobal(lua_state, handler_name);
+    if (lua_isfunction(lua_state, -1)) {
+        lua_call(lua_state, 0, 1);
+        if (lua_isstring(lua_state, -1)) {
+            auto str = lua_tostring(lua_state, -1);
+            stream << str << "\n";
+            lua_pop(lua_state, 2);
+        }
+        else {
+            std::cerr << "[LUA ERROR] " << handler_name << " did not return a string\n";
+            lua_pop(lua_state, 2);
+        }
+    }
+    else if (!lua_isnil(lua_state, -1)) {
+        std::cerr << "[LUA ERROR] " << handler_name << " is not a function\n";
+    }
+
+    // pop value which is either nil or not a function
+    // if it was a function we already popped it by calling it
+    lua_pop(lua_state, 1);
+}
+
+bool CppToCheezGenerator::call_custom_handler(std::ostream& stream, const char* name, CXCursor cursor, const char* decl_name, CXType decl_type) {
     lua_getglobal(lua_state, name);
     if (lua_isfunction(lua_state, -1)) {
         lua_pushlightuserdata(lua_state, &cursor);
         lua_pushstring(lua_state, decl_name);
         lua_pushlightuserdata(lua_state, &decl_type);
-        lua_call(lua_state, 3, 1);
-        if (lua_isboolean(lua_state, -1)) {
-            bool done = lua_toboolean(lua_state, -1);
-            lua_pop(lua_state, 1);
+        lua_call(lua_state, 3, 2);
+        if (lua_isboolean(lua_state, -2)) {
+            bool done = lua_toboolean(lua_state, -2);
+
+            if (done) {
+                if (lua_isstring(lua_state, -1)) {
+                    auto str = lua_tostring(lua_state, -1);
+                    stream << str << "\n";
+                    lua_pop(lua_state, 2);
+                    return true;
+                } else {
+                    std::cerr << "[LUA ERROR] " << name << " did not return a string as second parameter\n";
+                    lua_pop(lua_state, 2);
+                    return true;
+                }
+            } else {
+                lua_pop(lua_state, 2);
+                return false;
+            }
+
             return done;
         } else {
             std::cerr << "[LUA ERROR] " << name << " did not return a boolean\n";
@@ -106,7 +149,28 @@ bool CppToCheezGenerator::call_custom_handler(const char* name, CXCursor cursor,
     return false;
 }
 
-bool CppToCheezGenerator::generate_bindings(const std::string& source_file_path, std::ostream& cheez_file, std::ostream& cpp_file)
+bool CppToCheezGenerator::generate_bindings_from_lua(std::filesystem::path lua_file, std::ostream& cheez_file, std::ostream& cpp_file) {
+    if (!set_custom_callbacks(lua_file.string()))
+        return false;
+
+    lua_getglobal(lua_state, "source_file");
+    if (lua_isstring(lua_state, -1)) {
+        auto source = lua_tostring(lua_state, -1);
+        auto source_path = lua_file.parent_path() / source;
+        if (!load_translation_unit_from_file(source_path.string()))
+            return false;
+        return do_generate_bindings(cheez_file, cpp_file);
+    }
+    else {
+        std::cerr << "[LUA] No global string 'source_file' found\n";
+        lua_pop(lua_state, 1);
+        return false;
+    }
+
+    return true;
+}
+
+bool CppToCheezGenerator::generate_bindings_from_file(const std::string& source_file_path, std::ostream& cheez_file, std::ostream& cpp_file)
 {
     {
         std::string header(source_file_path);
@@ -118,27 +182,38 @@ bool CppToCheezGenerator::generate_bindings(const std::string& source_file_path,
         if (last == std::string::npos) last = 0;
         else last += 1;
         std::string header_name = header.substr(last);
-        cpp_file << "#include <memory>\n";
         cpp_file << "#include \"" << header_name << "\"\n\n";
     }
 
-    CXIndex index = clang_createIndex(0, 0);
-    CXTranslationUnit unit = clang_parseTranslationUnit(
-        index,
-        source_file_path.c_str(), nullptr, 0,
+    if (!load_translation_unit_from_file(source_file_path))
+        return false;
+    return do_generate_bindings(cheez_file, cpp_file);
+}
+
+bool CppToCheezGenerator::load_translation_unit_from_file(const std::string& file_name) {
+    m_index = clang_createIndex(0, 0);
+    m_translation_unit = clang_parseTranslationUnit(
+        m_index,
+        file_name.c_str(), nullptr, 0,
         nullptr, 0,
         (CXTranslationUnit_None
             | CXTranslationUnit_DetailedPreprocessingRecord
-        ));
-    if (unit == nullptr)
+            ));
+    if (m_translation_unit == nullptr)
     {
-        std::cerr << "Unable to parse translation unit. Quitting.\n";
+        std::cerr << "[ERROR] Unable to parse translation unit. Quitting.\n";
         return false;
     }
 
-    m_translation_unit = unit;
+    return true;
+}
+
+bool CppToCheezGenerator::do_generate_bindings(std::ostream& cheez_file, std::ostream& cpp_file) {
+    call_custom_handler(m_cpp_buffer, "prepend_to_cheez");
+    call_custom_handler(m_cpp_buffer, "prepend_to_cpp");
+
     m_namespaces.push_back({ clang_getNullCursor(), 0 });
-    sort_stuff_into_lists(clang_getTranslationUnitCursor(unit), 0);
+    sort_stuff_into_lists(clang_getTranslationUnitCursor(m_translation_unit), 0);
 
     for (auto td : m_typedefs) {
         reset();
@@ -180,9 +255,6 @@ bool CppToCheezGenerator::generate_bindings(const std::string& source_file_path,
         emit_macro_expansion(td);
     }
 
-    clang_disposeTranslationUnit(unit);
-    clang_disposeIndex(index);
-
     cheez_file << "#lib(\"./__TODO__.lib\")\n\n";
     cheez_file << "#export_scope\n\n";
     cheez_file << m_cheez_unknown_types.str() << "\n";
@@ -193,6 +265,9 @@ bool CppToCheezGenerator::generate_bindings(const std::string& source_file_path,
     cheez_file << "#file_scope\n\n";
     cheez_file << m_cheez_c_bindings.str();
     cpp_file << m_cpp_buffer.str();
+
+    call_custom_handler(cheez_file, "append_to_cheez");
+    call_custom_handler(cpp_file, "append_to_cpp");
 
     return true;
 }
@@ -343,21 +418,21 @@ void CppToCheezGenerator::emit_variable_decl(const Declaration& decl) {
     auto name_c = clang_getCString(name);
     auto type = clang_getCursorType(decl.declaration);
 
-    if (call_custom_handler("on_global_variable", decl.declaration, name_c, type)) {
+    if (call_custom_handler(m_cheez_buffer, "on_global_variable", decl.declaration, name_c, type)) {
         clang_disposeString(name);
         return;
     }
 
     // TODO: move this to lua
-    if (c_string_starts_with(name_c, "glad_gl")) {
-        auto sub_name = name_c + 5;
+    //if (c_string_starts_with(name_c, "glad_gl")) {
+    //    auto sub_name = name_c + 5;
 
-        m_cheez_buffer << sub_name << " : ";
-        emit_cheez_type(m_cheez_buffer, type, false);
-        m_cheez_buffer << " #extern #linkname(\"" << name << "\")\n";
-        clang_disposeString(name);
-        return;
-    }
+    //    m_cheez_buffer << sub_name << " : ";
+    //    emit_cheez_type(m_cheez_buffer, type, false);
+    //    m_cheez_buffer << " #extern #linkname(\"" << name << "\")\n";
+    //    clang_disposeString(name);
+    //    return;
+    //}
 
     m_cheez_buffer << name << " : ";
     emit_cheez_type(m_cheez_buffer, type, false);
@@ -638,7 +713,7 @@ void CppToCheezGenerator::emit_union_decl(const Declaration& decl) {
     auto name_c = clang_getCString(name);
     auto type = clang_getCursorType(decl.declaration);
 
-    if (call_custom_handler("on_union", decl.declaration, name_c, type)) {
+    if (call_custom_handler(m_cheez_buffer, "on_union", decl.declaration, name_c, type)) {
         clang_disposeString(name);
         return;
     }
