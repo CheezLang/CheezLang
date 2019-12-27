@@ -87,7 +87,7 @@ impl Game for MyGame {
         defer free(fullpath)
         wait_handle = FindFirstChangeNotificationA(fullpath, 0, 0x00000008)
         if wait_handle == null {
-            io.printfln("Failed to create file change watcher for file '{}'", string(cast fullpath, C.strlen(fullpath)))
+            io.printfln("Failed to create file change watcher for file '{}'", string(cast fullpath, cast C.strlen(fullpath)))
         } else {
             dir_change_thread = alloc(Thread)
             <<dir_change_thread = Thread.create(dir_change_thread_func, &self)

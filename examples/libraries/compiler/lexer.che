@@ -163,8 +163,14 @@ impl Lexer {
             return token
         }
 
-        curr, curr_len := { x := peek_char(0); x[0], int(x[1]) }
-        next, next_len := { x := peek_char(1); x[0], int(x[1]) }
+        curr, curr_len := {
+            x := peek_char(0)
+            x[0], int(x[1])
+        }
+        next, next_len := {
+            x := peek_char(1)
+            x[0], int(x[1])
+        }
 
         match curr, next {
             '<', '-' -> simple_token(token, TokenType.ReverseArrow,   curr_len + next_len, 2)
