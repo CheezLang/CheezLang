@@ -2,7 +2,9 @@
 
 #export_scope
 
-__UNKNOWN__ :: struct #copy {}
+__UNKNOWN_16 :: struct #copy { _: [16]u8 = default }
+__UNKNOWN_40 :: struct #copy { _: [40]u8 = default }
+__UNKNOWN_-2 :: struct #copy { _: [-2]u8 = default }
 
 ImTextureID :: &void
 ImGuiID :: u32
@@ -71,6 +73,287 @@ STB_TexteditState :: struct #copy {}
 StbTexteditRow :: struct #copy {}
 ImFileHandle :: &FILE
 ImPoolIdx :: i32
+BENIGN_RACE_BEGIN :: __pragma(warning(push))
+BENIGN_RACE_END :: __pragma(warning(pop))
+NO_COMPETING_THREAD_BEGIN :: __pragma(warning(push))
+NO_COMPETING_THREAD_END :: __pragma(warning(pop))
+NULL :: 0
+FLT_EVAL_METHOD :: 0
+DBL_DECIMAL_DIG :: 17
+DBL_DIG :: 15
+DBL_EPSILON :: 2.2204460492503131e-016
+DBL_HAS_SUBNORM :: 1
+DBL_MANT_DIG :: 53
+DBL_MAX :: 1.7976931348623158e+308
+DBL_MAX_10_EXP :: 308
+DBL_MAX_EXP :: 1024
+DBL_MIN :: 2.2250738585072014e-308
+DBL_MIN_10_EXP :: (-307)
+DBL_MIN_EXP :: (-1021)
+DBL_TRUE_MIN :: 4.9406564584124654e-324
+FLT_DECIMAL_DIG :: 9
+FLT_DIG :: 6
+FLT_EPSILON :: 1.192092896e-07F
+FLT_HAS_SUBNORM :: 1
+FLT_GUARD :: 0
+FLT_MANT_DIG :: 24
+FLT_MAX :: 3.402823466e+38F
+FLT_MAX_10_EXP :: 38
+FLT_MAX_EXP :: 128
+FLT_MIN :: 1.175494351e-38F
+FLT_MIN_10_EXP :: (-37)
+FLT_MIN_EXP :: (-125)
+FLT_NORMALIZE :: 0
+FLT_RADIX :: 2
+FLT_TRUE_MIN :: 1.401298464e-45F
+LDBL_DIG :: DBL_DIG
+LDBL_EPSILON :: DBL_EPSILON
+LDBL_HAS_SUBNORM :: DBL_HAS_SUBNORM
+LDBL_MANT_DIG :: DBL_MANT_DIG
+LDBL_MAX :: DBL_MAX
+LDBL_MAX_10_EXP :: DBL_MAX_10_EXP
+LDBL_MAX_EXP :: DBL_MAX_EXP
+LDBL_MIN :: DBL_MIN
+LDBL_MIN_10_EXP :: DBL_MIN_10_EXP
+LDBL_MIN_EXP :: DBL_MIN_EXP
+LDBL_TRUE_MIN :: DBL_TRUE_MIN
+DECIMAL_DIG :: DBL_DECIMAL_DIG
+FLT_ROUNDS :: (__fpe_flt_rounds())
+clear87 :: _clear87
+status87 :: _status87
+control87 :: _control87
+DBL_RADIX :: _DBL_RADIX
+DBL_ROUNDS :: _DBL_ROUNDS
+LDBL_RADIX :: _LDBL_RADIX
+LDBL_ROUNDS :: _LDBL_ROUNDS
+EM_AMBIGUIOUS :: _EM_AMBIGUOUS
+EM_AMBIGUOUS :: _EM_AMBIGUOUS
+MCW_EM :: _MCW_EM
+EM_INVALID :: _EM_INVALID
+EM_DENORMAL :: _EM_DENORMAL
+EM_ZERODIVIDE :: _EM_ZERODIVIDE
+EM_OVERFLOW :: _EM_OVERFLOW
+EM_UNDERFLOW :: _EM_UNDERFLOW
+EM_INEXACT :: _EM_INEXACT
+MCW_IC :: _MCW_IC
+IC_AFFINE :: _IC_AFFINE
+IC_PROJECTIVE :: _IC_PROJECTIVE
+MCW_RC :: _MCW_RC
+RC_CHOP :: _RC_CHOP
+RC_UP :: _RC_UP
+RC_DOWN :: _RC_DOWN
+RC_NEAR :: _RC_NEAR
+MCW_PC :: _MCW_PC
+PC_24 :: _PC_24
+PC_53 :: _PC_53
+PC_64 :: _PC_64
+CW_DEFAULT :: _CW_DEFAULT
+SW_INVALID :: _SW_INVALID
+SW_DENORMAL :: _SW_DENORMAL
+SW_ZERODIVIDE :: _SW_ZERODIVIDE
+SW_OVERFLOW :: _SW_OVERFLOW
+SW_UNDERFLOW :: _SW_UNDERFLOW
+SW_INEXACT :: _SW_INEXACT
+SW_UNEMULATED :: _SW_UNEMULATED
+SW_SQRTNEG :: _SW_SQRTNEG
+SW_STACKOVERFLOW :: _SW_STACKOVERFLOW
+SW_STACKUNDERFLOW :: _SW_STACKUNDERFLOW
+FPE_INVALID :: _FPE_INVALID
+FPE_DENORMAL :: _FPE_DENORMAL
+FPE_ZERODIVIDE :: _FPE_ZERODIVIDE
+FPE_OVERFLOW :: _FPE_OVERFLOW
+FPE_UNDERFLOW :: _FPE_UNDERFLOW
+FPE_INEXACT :: _FPE_INEXACT
+FPE_UNEMULATED :: _FPE_UNEMULATED
+FPE_SQRTNEG :: _FPE_SQRTNEG
+FPE_STACKOVERFLOW :: _FPE_STACKOVERFLOW
+FPE_STACKUNDERFLOW :: _FPE_STACKUNDERFLOW
+FPE_EXPLICITGEN :: _FPE_EXPLICITGEN
+va_start :: __crt_va_start
+va_arg :: __crt_va_arg
+va_end :: __crt_va_end
+errno :: (*_errno())
+errno :: (*_errno())
+EPERM :: 1
+ENOENT :: 2
+ESRCH :: 3
+EINTR :: 4
+EIO :: 5
+ENXIO :: 6
+E2BIG :: 7
+ENOEXEC :: 8
+EBADF :: 9
+ECHILD :: 10
+EAGAIN :: 11
+ENOMEM :: 12
+EACCES :: 13
+EFAULT :: 14
+EBUSY :: 16
+EEXIST :: 17
+EXDEV :: 18
+ENODEV :: 19
+ENOTDIR :: 20
+EISDIR :: 21
+ENFILE :: 23
+EMFILE :: 24
+ENOTTY :: 25
+EFBIG :: 27
+ENOSPC :: 28
+ESPIPE :: 29
+EROFS :: 30
+EMLINK :: 31
+EPIPE :: 32
+EDOM :: 33
+EDEADLK :: 36
+ENAMETOOLONG :: 38
+ENOLCK :: 39
+ENOSYS :: 40
+ENOTEMPTY :: 41
+EINVAL :: 22
+ERANGE :: 34
+EILSEQ :: 42
+STRUNCATE :: 80
+EDEADLOCK :: EDEADLK
+EADDRINUSE :: 100
+EADDRNOTAVAIL :: 101
+EAFNOSUPPORT :: 102
+EALREADY :: 103
+EBADMSG :: 104
+ECANCELED :: 105
+ECONNABORTED :: 106
+ECONNREFUSED :: 107
+ECONNRESET :: 108
+EDESTADDRREQ :: 109
+EHOSTUNREACH :: 110
+EIDRM :: 111
+EINPROGRESS :: 112
+EISCONN :: 113
+ELOOP :: 114
+EMSGSIZE :: 115
+ENETDOWN :: 116
+ENETRESET :: 117
+ENETUNREACH :: 118
+ENOBUFS :: 119
+ENODATA :: 120
+ENOLINK :: 121
+ENOMSG :: 122
+ENOPROTOOPT :: 123
+ENOSR :: 124
+ENOSTR :: 125
+ENOTCONN :: 126
+ENOTRECOVERABLE :: 127
+ENOTSOCK :: 128
+ENOTSUP :: 129
+EOPNOTSUPP :: 130
+EOTHER :: 131
+EOVERFLOW :: 132
+EOWNERDEAD :: 133
+EPROTO :: 134
+EPROTONOSUPPORT :: 135
+EPROTOTYPE :: 136
+ETIME :: 137
+ETIMEDOUT :: 138
+ETXTBSY :: 139
+EWOULDBLOCK :: 140
+wcswcs :: wcsstr
+IMGUI_VERSION :: "1.75 WIP"
+IMGUI_VERSION_NUM :: 17401
+IMGUI_HAS_VIEWPORT :: 1
+IMGUI_HAS_DOCK :: 1
+IMGUI_IMPL_API :: IMGUI_API
+IM_UNICODE_CODEPOINT_MAX :: 0xFFFF
+IM_UNICODE_CODEPOINT_INVALID :: 0xFFFD
+IMGUI_PAYLOAD_TYPE_COLOR_3F :: "_COL3F"
+IMGUI_PAYLOAD_TYPE_COLOR_4F :: "_COL4F"
+IM_COL32_R_SHIFT :: 0
+IM_COL32_G_SHIFT :: 8
+IM_COL32_B_SHIFT :: 16
+IM_COL32_A_SHIFT :: 24
+IM_COL32_A_MASK :: 0xFF000000
+IM_COL32_WHITE :: IM_COL32(255,255,255,255)
+IM_COL32_BLACK :: IM_COL32(0,0,0,255)
+IM_COL32_BLACK_TRANS :: IM_COL32(0,0,0,0)
+ImDrawCallback_ResetRenderState :: (ImDrawCallback)(-1)
+stdin :: (__acrt_iob_func(0))
+stdout :: (__acrt_iob_func(1))
+stderr :: (__acrt_iob_func(2))
+WEOF :: ((wint_t)(0xFFFF))
+BUFSIZ :: 512
+EOF :: (-1)
+L_tmpnam :: 260
+L_tmpnam_s :: L_tmpnam
+SEEK_CUR :: 1
+SEEK_END :: 2
+SEEK_SET :: 0
+FILENAME_MAX :: 260
+FOPEN_MAX :: 20
+TMP_MAX :: _CRT_INT_MAX
+TMP_MAX_S :: TMP_MAX
+SYS_OPEN :: _SYS_OPEN
+CHAR_BIT :: 8
+SCHAR_MIN :: (-128)
+SCHAR_MAX :: 127
+UCHAR_MAX :: 0xff
+CHAR_MIN :: SCHAR_MIN
+CHAR_MAX :: SCHAR_MAX
+MB_LEN_MAX :: 5
+SHRT_MIN :: (-32768)
+SHRT_MAX :: 32767
+USHRT_MAX :: 0xffff
+INT_MIN :: (-2147483647-1)
+INT_MAX :: 2147483647
+UINT_MAX :: 0xffffffff
+LONG_MIN :: (-2147483647L-1)
+LONG_MAX :: 2147483647L
+ULONG_MAX :: 0xffffffffUL
+LLONG_MAX :: 9223372036854775807i64
+LLONG_MIN :: (-9223372036854775807i64-1)
+ULLONG_MAX :: 0xffffffffffffffffui64
+SIZE_MAX :: _UI64_MAX
+RSIZE_MAX :: (SIZE_MAX>>1)
+EXIT_SUCCESS :: 0
+EXIT_FAILURE :: 1
+onexit_t :: _onexit_t
+errno :: (*_errno())
+RAND_MAX :: 0x7fff
+MB_CUR_MAX :: ___mb_cur_max_func()
+sys_errlist :: _sys_errlist
+sys_nerr :: _sys_nerr
+environ :: _environ
+INFINITY :: ((float)(_HUGE_ENUF*_HUGE_ENUF))
+HUGE_VAL :: ((double)INFINITY)
+HUGE_VALF :: ((float)INFINITY)
+HUGE_VALL :: ((longdouble)INFINITY)
+NAN :: ((float)(INFINITY*0.0F))
+FP_INFINITE :: _INFCODE
+FP_NAN :: _NANCODE
+FP_NORMAL :: _FINITE
+FP_SUBNORMAL :: _DENORM
+FP_ZERO :: 0
+FP_ILOGB0 :: (-0x7fffffff-_C2)
+FP_ILOGBNAN :: 0x7fffffff
+MATH_ERRNO :: 1
+MATH_ERREXCEPT :: 2
+math_errhandling :: (MATH_ERRNO|MATH_ERREXCEPT)
+DOMAIN :: _DOMAIN
+SING :: _SING
+OVERFLOW :: _OVERFLOW
+UNDERFLOW :: _UNDERFLOW
+TLOSS :: _TLOSS
+PLOSS :: _PLOSS
+matherr :: _matherr
+STB_TEXTEDIT_STRING :: ImGuiInputTextState
+STB_TEXTEDIT_CHARTYPE :: ImWchar
+STB_TEXTEDIT_GETWIDTH_NEWLINE :: -1.0f
+STB_TEXTEDIT_UNDOSTATECOUNT :: 99
+STB_TEXTEDIT_UNDOCHARCOUNT :: 999
+STB_TEXTEDIT_POSITIONTYPE :: int
+IMGUI_PAYLOAD_TYPE_WINDOW :: "_IMWINDOW"
+IM_PI :: 3.14159265358979323846f
+IM_NEWLINE :: "\r\n"
+IM_TABSIZE :: (4)
+IMGUI_CDECL :: __cdecl
+ImQsort :: qsort
 ImGuiWindowFlags_ :: enum #copy #repr("C") #tag_type(i32) {
     None                      = 0x0
     NoTitleBar                = 0x1
@@ -867,7 +1150,7 @@ ImGuiIO :: struct #copy {
     KeysDownDurationPrev : [512]f32 = default
     NavInputsDownDuration : [21]f32 = default
     NavInputsDownDurationPrev : [21]f32 = default
-    InputQueueCharacters : __UNKNOWN__ = default
+    InputQueueCharacters : __UNKNOWN_16 = default
 }
 impl ImGuiIO {
     AddInputCharacter :: (ref Self, _c: u32) {
@@ -985,7 +1268,7 @@ impl ImGuiOnceUponAFrame {
 }
 ImGuiTextFilter :: struct #copy {
     InputBuf : [256]char8 = default
-    Filters : __UNKNOWN__ = default
+    Filters : __UNKNOWN_16 = default
     CountGrep : i32 = default
 }
 impl ImGuiTextFilter {
@@ -1036,12 +1319,12 @@ impl ImGuiTextRange {
         __c__ImGuiTextRange_empty_4(&self, &result)
         return result
     }
-    split :: (ref Self, _separator: char8, _out: &__UNKNOWN__) {
+    split :: (ref Self, _separator: char8, _out: &__UNKNOWN_16) {
         __c__ImGuiTextRange_split_5(&self, _separator, _out)
     }
 }
 ImGuiTextBuffer :: struct #copy {
-    Buf : __UNKNOWN__ = default
+    Buf : __UNKNOWN_16 = default
 }
 impl ImGuiTextBuffer {
     new :: () -> ImGuiTextBuffer {
@@ -1091,7 +1374,7 @@ impl ImGuiTextBuffer {
     }
 }
 ImGuiStorage :: struct #copy {
-    Data : __UNKNOWN__ = default
+    Data : __UNKNOWN_16 = default
 }
 impl ImGuiStorage {
     Clear :: (ref Self) {
@@ -1267,13 +1550,13 @@ ImDrawVert :: struct #copy {
     col : ImU32 = default
 }
 ImDrawChannel :: struct #copy {
-    _CmdBuffer : __UNKNOWN__ = default
-    _IdxBuffer : __UNKNOWN__ = default
+    _CmdBuffer : __UNKNOWN_16 = default
+    _IdxBuffer : __UNKNOWN_16 = default
 }
 ImDrawListSplitter :: struct #copy {
     _Current : i32 = default
     _Count : i32 = default
-    _Channels : __UNKNOWN__ = default
+    _Channels : __UNKNOWN_16 = default
 }
 impl ImDrawListSplitter {
     new :: () -> ImDrawListSplitter {
@@ -1303,9 +1586,9 @@ impl Drop for ImDrawListSplitter {
     }
 }
 ImDrawList :: struct #copy {
-    CmdBuffer : __UNKNOWN__ = default
-    IdxBuffer : __UNKNOWN__ = default
-    VtxBuffer : __UNKNOWN__ = default
+    CmdBuffer : __UNKNOWN_16 = default
+    IdxBuffer : __UNKNOWN_16 = default
+    VtxBuffer : __UNKNOWN_16 = default
     Flags : ImDrawListFlags = default
     _Data : &ImDrawListSharedData = default
     _OwnerName : &char8 = default
@@ -1313,9 +1596,9 @@ ImDrawList :: struct #copy {
     _VtxCurrentIdx : u32 = default
     _VtxWritePtr : &ImDrawVert = default
     _IdxWritePtr : &ImDrawIdx = default
-    _ClipRectStack : __UNKNOWN__ = default
-    _TextureIdStack : __UNKNOWN__ = default
-    _Path : __UNKNOWN__ = default
+    _ClipRectStack : __UNKNOWN_16 = default
+    _TextureIdStack : __UNKNOWN_16 = default
+    _Path : __UNKNOWN_16 = default
     _Splitter : ImDrawListSplitter = default
 }
 impl ImDrawList {
@@ -1571,7 +1854,7 @@ ImFontGlyph :: struct #copy {
     V1 : f32 = default
 }
 ImFontGlyphRangesBuilder :: struct #copy {
-    UsedChars : __UNKNOWN__ = default
+    UsedChars : __UNKNOWN_16 = default
 }
 impl ImFontGlyphRangesBuilder {
     new :: () -> ImFontGlyphRangesBuilder {
@@ -1599,7 +1882,7 @@ impl ImFontGlyphRangesBuilder {
     AddRanges :: (ref Self, _ranges: &ImWchar) {
         __c__ImFontGlyphRangesBuilder_AddRanges_7(&self, _ranges)
     }
-    BuildRanges :: (ref Self, _out_ranges: &__UNKNOWN__) {
+    BuildRanges :: (ref Self, _out_ranges: &__UNKNOWN_16) {
         __c__ImFontGlyphRangesBuilder_BuildRanges_8(&self, _out_ranges)
     }
 }
@@ -1637,9 +1920,9 @@ ImFontAtlas :: struct #copy {
     TexHeight : i32 = default
     TexUvScale : ImVec2 = default
     TexUvWhitePixel : ImVec2 = default
-    Fonts : __UNKNOWN__ = default
-    CustomRects : __UNKNOWN__ = default
-    ConfigData : __UNKNOWN__ = default
+    Fonts : __UNKNOWN_16 = default
+    CustomRects : __UNKNOWN_16 = default
+    ConfigData : __UNKNOWN_16 = default
     CustomRectIds : [1]i32 = default
 }
 impl ImFontAtlas {
@@ -1779,11 +2062,11 @@ impl Drop for ImFontAtlas {
     }
 }
 ImFont :: struct #copy {
-    IndexAdvanceX : __UNKNOWN__ = default
+    IndexAdvanceX : __UNKNOWN_16 = default
     FallbackAdvanceX : f32 = default
     FontSize : f32 = default
-    IndexLookup : __UNKNOWN__ = default
-    Glyphs : __UNKNOWN__ = default
+    IndexLookup : __UNKNOWN_16 = default
+    Glyphs : __UNKNOWN_16 = default
     FallbackGlyph : &ImFontGlyph = default
     DisplayOffset : ImVec2 = default
     ContainerAtlas : &ImFontAtlas = default
@@ -1907,9 +2190,9 @@ ImGuiPlatformIO :: struct #copy {
     Renderer_SetWindowSize : fn(&ImGuiViewport, ImVec2) -> void = default
     Renderer_RenderWindow : fn(&ImGuiViewport, &void) -> void = default
     Renderer_SwapBuffers : fn(&ImGuiViewport, &void) -> void = default
-    Monitors : __UNKNOWN__ = default
+    Monitors : __UNKNOWN_16 = default
     MainViewport : &ImGuiViewport = default
-    Viewports : __UNKNOWN__ = default
+    Viewports : __UNKNOWN_16 = default
 }
 impl ImGuiPlatformIO {
     new :: () -> ImGuiPlatformIO {
@@ -1947,7 +2230,7 @@ impl Drop for ImGuiViewport {
     }
 }
 ImBoolVector :: struct #copy {
-    Storage : __UNKNOWN__ = default
+    Storage : __UNKNOWN_16 = default
 }
 impl ImBoolVector {
     new :: () -> ImBoolVector {
@@ -2193,9 +2476,9 @@ ImGuiInputTextState :: struct #copy {
     ID : ImGuiID = default
     CurLenW : i32 = default
     CurLenA : i32 = default
-    TextW : __UNKNOWN__ = default
-    TextA : __UNKNOWN__ = default
-    InitialTextA : __UNKNOWN__ = default
+    TextW : __UNKNOWN_16 = default
+    TextA : __UNKNOWN_16 = default
+    InitialTextA : __UNKNOWN_16 = default
     TextAIsValid : bool = default
     BufCapacityA : i32 = default
     ScrollX : f32 = default
@@ -2332,7 +2615,7 @@ ImGuiColumns :: struct #copy {
     HostCursorMaxPosX : f32 = default
     HostClipRect : ImRect = default
     HostWorkRect : ImRect = default
-    Columns : __UNKNOWN__ = default
+    Columns : __UNKNOWN_16 = default
 }
 impl ImGuiColumns {
     new :: () -> ImGuiColumns {
@@ -2361,7 +2644,7 @@ impl ImDrawListSharedData {
     }
 }
 ImDrawDataBuilder :: struct #copy {
-    Layers : [2]__UNKNOWN__ = default
+    Layers : [2]__UNKNOWN_16 = default
 }
 impl ImDrawDataBuilder {
     Clear :: (ref Self) {
@@ -2510,7 +2793,7 @@ ImGuiDockNode :: struct #copy {
     LocalFlags : ImGuiDockNodeFlags = default
     ParentNode : &ImGuiDockNode = default
     ChildNodes : [2]&ImGuiDockNode = default
-    Windows : __UNKNOWN__ = default
+    Windows : __UNKNOWN_16 = default
     TabBar : &ImGuiTabBar = default
     Pos : ImVec2 = default
     Size : ImVec2 = default
@@ -2630,10 +2913,10 @@ ImGuiContext :: struct #copy {
     WithinFrameScope : bool = default
     WithinFrameScopeWithImplicitWindow : bool = default
     WithinEndChild : bool = default
-    Windows : __UNKNOWN__ = default
-    WindowsFocusOrder : __UNKNOWN__ = default
-    WindowsSortBuffer : __UNKNOWN__ = default
-    CurrentWindowStack : __UNKNOWN__ = default
+    Windows : __UNKNOWN_16 = default
+    WindowsFocusOrder : __UNKNOWN_16 = default
+    WindowsSortBuffer : __UNKNOWN_16 = default
+    CurrentWindowStack : __UNKNOWN_16 = default
     WindowsById : ImGuiStorage = default
     WindowsActiveCount : i32 = default
     CurrentWindow : &ImGuiWindow = default
@@ -2671,12 +2954,12 @@ ImGuiContext :: struct #copy {
     LastActiveIdTimer : f32 = default
     NextWindowData : ImGuiNextWindowData = default
     NextItemData : ImGuiNextItemData = default
-    ColorModifiers : __UNKNOWN__ = default
-    StyleModifiers : __UNKNOWN__ = default
-    FontStack : __UNKNOWN__ = default
-    OpenPopupStack : __UNKNOWN__ = default
-    BeginPopupStack : __UNKNOWN__ = default
-    Viewports : __UNKNOWN__ = default
+    ColorModifiers : __UNKNOWN_16 = default
+    StyleModifiers : __UNKNOWN_16 = default
+    FontStack : __UNKNOWN_16 = default
+    OpenPopupStack : __UNKNOWN_16 = default
+    BeginPopupStack : __UNKNOWN_16 = default
+    Viewports : __UNKNOWN_16 = default
     CurrentDpiScale : f32 = default
     CurrentViewport : &ImGuiViewportP = default
     MouseViewport : &ImGuiViewportP = default
@@ -2745,12 +3028,12 @@ ImGuiContext :: struct #copy {
     DragDropAcceptIdCurr : ImGuiID = default
     DragDropAcceptIdPrev : ImGuiID = default
     DragDropAcceptFrameCount : i32 = default
-    DragDropPayloadBufHeap : __UNKNOWN__ = default
+    DragDropPayloadBufHeap : __UNKNOWN_16 = default
     DragDropPayloadBufLocal : [16]u8 = default
     CurrentTabBar : &ImGuiTabBar = default
-    TabBars : __UNKNOWN__ = default
-    CurrentTabBarStack : __UNKNOWN__ = default
-    ShrinkWidthBuffer : __UNKNOWN__ = default
+    TabBars : __UNKNOWN_40 = default
+    CurrentTabBarStack : __UNKNOWN_16 = default
+    ShrinkWidthBuffer : __UNKNOWN_16 = default
     LastValidMousePos : ImVec2 = default
     InputTextState : ImGuiInputTextState = default
     InputTextPasswordFont : ImFont = default
@@ -2764,7 +3047,7 @@ ImGuiContext :: struct #copy {
     DragSpeedDefaultRatio : f32 = default
     ScrollbarClickDeltaToGrabCenter : f32 = default
     TooltipOverrideCount : i32 = default
-    PrivateClipboard : __UNKNOWN__ = default
+    PrivateClipboard : __UNKNOWN_16 = default
     MultiSelectScopeId : ImGuiID = default
     PlatformImePos : ImVec2 = default
     PlatformImeLastPos : ImVec2 = default
@@ -2773,8 +3056,8 @@ ImGuiContext :: struct #copy {
     SettingsLoaded : bool = default
     SettingsDirtyTimer : f32 = default
     SettingsIniData : ImGuiTextBuffer = default
-    SettingsHandlers : __UNKNOWN__ = default
-    SettingsWindows : __UNKNOWN__ = default
+    SettingsHandlers : __UNKNOWN_16 = default
+    SettingsWindows : __UNKNOWN_16 = default
     LogEnabled : bool = default
     LogType : ImGuiLogType = default
     LogFile : ImFileHandle = default
@@ -2824,7 +3107,7 @@ ImGuiWindowTempData :: struct #copy {
     NavHasScroll : bool = default
     MenuBarAppending : bool = default
     MenuBarOffset : ImVec2 = default
-    ChildWindows : __UNKNOWN__ = default
+    ChildWindows : __UNKNOWN_16 = default
     StateStorage : &ImGuiStorage = default
     LayoutType : ImGuiLayoutType = default
     ParentLayoutType : ImGuiLayoutType = default
@@ -2833,10 +3116,10 @@ ImGuiWindowTempData :: struct #copy {
     ItemFlags : ImGuiItemFlags = default
     ItemWidth : f32 = default
     TextWrapPos : f32 = default
-    ItemFlagsStack : __UNKNOWN__ = default
-    ItemWidthStack : __UNKNOWN__ = default
-    TextWrapPosStack : __UNKNOWN__ = default
-    GroupStack : __UNKNOWN__ = default
+    ItemFlagsStack : __UNKNOWN_16 = default
+    ItemWidthStack : __UNKNOWN_16 = default
+    TextWrapPosStack : __UNKNOWN_16 = default
+    GroupStack : __UNKNOWN_16 = default
     StackSizesBackup : [6]i16 = default
     Indent : ImVec1 = default
     GroupOffset : ImVec1 = default
@@ -2907,7 +3190,7 @@ ImGuiWindow :: struct #copy {
     SetWindowDockAllowFlags : ImGuiCond = default
     SetWindowPosVal : ImVec2 = default
     SetWindowPosPivot : ImVec2 = default
-    IDStack : __UNKNOWN__ = default
+    IDStack : __UNKNOWN_16 = default
     DC : ImGuiWindowTempData = default
     OuterRectClipped : ImRect = default
     InnerRect : ImRect = default
@@ -2923,7 +3206,7 @@ ImGuiWindow :: struct #copy {
     ItemWidthDefault : f32 = default
     MenuColumns : ImGuiMenuColumns = default
     StateStorage : ImGuiStorage = default
-    ColumnsStorage : __UNKNOWN__ = default
+    ColumnsStorage : __UNKNOWN_16 = default
     FontWindowScale : f32 = default
     FontDpiScale : f32 = default
     SettingsOffset : i32 = default
@@ -3065,7 +3348,7 @@ impl ImGuiTabItem {
     }
 }
 ImGuiTabBar :: struct #copy {
-    Tabs : __UNKNOWN__ = default
+    Tabs : __UNKNOWN_16 = default
     ID : ImGuiID = default
     SelectedTabId : ImGuiID = default
     NextSelectedTabId : ImGuiID = default
@@ -5242,10 +5525,10 @@ DockBuilderSplitNode :: (_node_id: ImGuiID, _split_dir: ImGuiDir, _size_ratio_fo
     __c__DockBuilderSplitNode(&result, _node_id, _split_dir, _size_ratio_for_node_at_dir, _out_id_at_dir, _out_id_at_opposite_dir)
     return result
 }
-DockBuilderCopyDockSpace :: (_src_dockspace_id: ImGuiID, _dst_dockspace_id: ImGuiID, _in_window_remap_pairs: &__UNKNOWN__) {
+DockBuilderCopyDockSpace :: (_src_dockspace_id: ImGuiID, _dst_dockspace_id: ImGuiID, _in_window_remap_pairs: &__UNKNOWN_-2) {
     __c__DockBuilderCopyDockSpace(_src_dockspace_id, _dst_dockspace_id, _in_window_remap_pairs)
 }
-DockBuilderCopyNode :: (_src_node_id: ImGuiID, _dst_node_id: ImGuiID, _out_node_remap_pairs: &__UNKNOWN__) {
+DockBuilderCopyNode :: (_src_node_id: ImGuiID, _dst_node_id: ImGuiID, _out_node_remap_pairs: &__UNKNOWN_16) {
     __c__DockBuilderCopyNode(_src_node_id, _dst_node_id, _out_node_remap_pairs)
 }
 DockBuilderCopyWindowSettings :: (_src_name: &char8, _dst_name: &char8) {
@@ -5613,6 +5896,8 @@ ImGui_ImplGlfw_KeyCallback :: (_window: &GLFWwindow, _key: i32, _scancode: i32, 
 ImGui_ImplGlfw_CharCallback :: (_window: &GLFWwindow, _c: u32) {
     __c__ImGui_ImplGlfw_CharCallback(_window, _c)
 }
+EmptyString : [1]char8 #extern
+GImGui : &ImGuiContext #extern
 
 // ==========================================================
 // ==========================================================
@@ -5650,7 +5935,7 @@ __c__ImGuiTextFilter_IsActive_5 :: (self: &ImGuiTextFilter, ret: &bool);
 __c__ImGuiTextRange_new_2 :: (self: &ImGuiTextRange);
 __c__ImGuiTextRange_new_3 :: (self: &ImGuiTextRange, __b: &char8, __e: &char8);
 __c__ImGuiTextRange_empty_4 :: (self: &ImGuiTextRange, ret: &bool);
-__c__ImGuiTextRange_split_5 :: (self: &ImGuiTextRange, _separator: char8, _out: &__UNKNOWN__);
+__c__ImGuiTextRange_split_5 :: (self: &ImGuiTextRange, _separator: char8, _out: &__UNKNOWN_16);
 __c__ImGuiTextBuffer_new_2 :: (self: &ImGuiTextBuffer);
 __c__ImGuiTextBuffer_begin_4 :: (self: &ImGuiTextBuffer, ret: &&char8);
 __c__ImGuiTextBuffer_end_5 :: (self: &ImGuiTextBuffer, ret: &&char8);
@@ -5769,7 +6054,7 @@ __c__ImFontGlyphRangesBuilder_SetBit_4 :: (self: &ImFontGlyphRangesBuilder, _n: 
 __c__ImFontGlyphRangesBuilder_AddChar_5 :: (self: &ImFontGlyphRangesBuilder, _c: ImWchar);
 __c__ImFontGlyphRangesBuilder_AddText_6 :: (self: &ImFontGlyphRangesBuilder, _text: &char8, _text_end: &char8 = null);
 __c__ImFontGlyphRangesBuilder_AddRanges_7 :: (self: &ImFontGlyphRangesBuilder, _ranges: &ImWchar);
-__c__ImFontGlyphRangesBuilder_BuildRanges_8 :: (self: &ImFontGlyphRangesBuilder, _out_ranges: &__UNKNOWN__);
+__c__ImFontGlyphRangesBuilder_BuildRanges_8 :: (self: &ImFontGlyphRangesBuilder, _out_ranges: &__UNKNOWN_16);
 __c__ImFontAtlasCustomRect_new_8 :: (self: &ImFontAtlasCustomRect);
 __c__ImFontAtlasCustomRect_IsPacked_9 :: (self: &ImFontAtlasCustomRect, ret: &bool);
 __c__ImFontAtlas_new_0 :: (self: &ImFontAtlas);
@@ -6459,8 +6744,8 @@ __c__DockBuilderRemoveNodeChildNodes :: (_node_id: ImGuiID);
 __c__DockBuilderSetNodePos :: (_node_id: ImGuiID, _pos: &ImVec2);
 __c__DockBuilderSetNodeSize :: (_node_id: ImGuiID, _size: &ImVec2);
 __c__DockBuilderSplitNode :: (ret: &ImGuiID, _node_id: ImGuiID, _split_dir: ImGuiDir, _size_ratio_for_node_at_dir: f32, _out_id_at_dir: &ImGuiID, _out_id_at_opposite_dir: &ImGuiID);
-__c__DockBuilderCopyDockSpace :: (_src_dockspace_id: ImGuiID, _dst_dockspace_id: ImGuiID, _in_window_remap_pairs: &__UNKNOWN__);
-__c__DockBuilderCopyNode :: (_src_node_id: ImGuiID, _dst_node_id: ImGuiID, _out_node_remap_pairs: &__UNKNOWN__);
+__c__DockBuilderCopyDockSpace :: (_src_dockspace_id: ImGuiID, _dst_dockspace_id: ImGuiID, _in_window_remap_pairs: &__UNKNOWN_-2);
+__c__DockBuilderCopyNode :: (_src_node_id: ImGuiID, _dst_node_id: ImGuiID, _out_node_remap_pairs: &__UNKNOWN_16);
 __c__DockBuilderCopyWindowSettings :: (_src_name: &char8, _dst_name: &char8);
 __c__DockBuilderFinish :: (_node_id: ImGuiID);
 __c__BeginDragDropTargetCustom :: (ret: &bool, _bb: &ImRect, _id: ImGuiID);

@@ -15,7 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="imgui_binding_custom.lua" />
-    <None Include="glad_binding.lua" />
+    <None Include="glad\glad_binding.lua" />
+    <None Include="imgui_binding.lua" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="imgui_binding.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

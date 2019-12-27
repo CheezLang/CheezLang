@@ -1,5 +1,5 @@
 #include <memory>
-#include "imgui_binding_all.cpp"
+#include "imgui_binding_source.cpp"
 
 extern "C" void __c__ImVec2_new_2(ImVec2* self) {
     new (self) ImVec2();
@@ -2629,9 +2629,9 @@ extern "C" void __c__RenderCheckMark(ImVec2* _pos, uint32_t _col, float _sz) {
 extern "C" void __c__RenderNavHighlight(ImRect * _bb, uint32_t _id, int32_t _flags) {
     ImGui::RenderNavHighlight(*_bb, _id, _flags);
 }
-// extern "C" void __c__RenderMouseCursor(ImVec2* _pos, float _scale, int32_t _mouse_cursor) {
-//     ImGui::RenderMouseCursor(*_pos, _scale, _mouse_cursor);
-// }
+extern "C" void __c__RenderMouseCursor(ImVec2* _pos, float _scale, int32_t _mouse_cursor) {
+    ImGui::RenderMouseCursor(*_pos, _scale, _mouse_cursor);
+}
 extern "C" void __c__FindRenderedTextEnd(char * *ret, char * _text, char * _text_end) {
     *ret = (char * )ImGui::FindRenderedTextEnd(_text, _text_end);
 }
