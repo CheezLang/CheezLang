@@ -1,25 +1,23 @@
-#lib("./lib/glad.lib")
-#lib("./lib/Bindings.lib")
+#lib("./__TODO__.lib")
 
 #export_scope
 
-__GLsync :: struct #copy {}
 
 GLADloadproc :: fn(&char8) -> &void
 GLenum :: u32
 GLboolean :: u8
 GLbitfield :: u32
 GLvoid :: void
-GLbyte :: i8
-GLubyte :: u8
-GLshort :: i16
-GLushort :: u16
+GLbyte :: i32
+GLubyte :: i32
+GLshort :: i32
+GLushort :: i32
 GLint :: i32
 GLuint :: u32
 GLclampx :: i32
 GLsizei :: i32
-GLfloat :: f32
-GLclampf :: f32
+GLfloat :: i32
+GLclampf :: i32
 GLdouble :: f64
 GLclampd :: f64
 GLeglClientBufferEXT :: &void
@@ -27,17 +25,17 @@ GLeglImageOES :: &void
 GLchar :: char8
 GLcharARB :: char8
 GLhandleARB :: u32
-GLhalf :: u16
-GLhalfARB :: u16
+GLhalf :: i32
+GLhalfARB :: i32
 GLfixed :: i32
-GLintptr :: i64
-GLintptrARB :: i64
-GLsizeiptr :: i64
-GLsizeiptrARB :: i64
-GLint64 :: i64
-GLint64EXT :: i64
-GLuint64 :: u64
-GLuint64EXT :: u64
+GLintptr :: i32
+GLintptrARB :: i32
+GLsizeiptr :: i32
+GLsizeiptrARB :: i32
+GLint64 :: i32
+GLint64EXT :: i32
+GLuint64 :: i32
+GLuint64EXT :: i32
 GLsync :: &__GLsync
 GLDEBUGPROC :: fn(GLenum, GLenum, GLuint, GLenum, GLsizei, &GLchar, &void) -> void
 GLDEBUGPROCARB :: fn(GLenum, GLenum, GLuint, GLenum, GLsizei, &GLchar, &void) -> void
@@ -745,6 +743,9 @@ PFNGLSPECIALIZESHADERPROC :: fn(GLuint, &GLchar, GLuint, &GLuint, &GLuint) -> vo
 PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC :: fn(GLenum, &void, GLintptr, GLsizei, GLsizei) -> void
 PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC :: fn(GLenum, GLenum, &void, GLintptr, GLsizei, GLsizei) -> void
 PFNGLPOLYGONOFFSETCLAMPPROC :: fn(GLfloat, GLfloat, GLfloat) -> void
+APIENTRY :: __stdcall
+APIENTRYP :: APIENTRY*
+GLAPIENTRY :: APIENTRY
 GL_DEPTH_BUFFER_BIT :: 0x00000100
 GL_STENCIL_BUFFER_BIT :: 0x00000400
 GL_COLOR_BUFFER_BIT :: 0x00004000

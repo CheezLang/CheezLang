@@ -8,7 +8,12 @@ use import glfw.glfw3
 
 #export_scope
 
-__UNKNOWN__ :: struct #copy {}
+__UNKNOWN_16 :: struct #copy {
+    _: [16]u8 = default
+}
+__UNKNOWN_40 :: struct #copy {
+    _: [40]u8 = default
+}
 va_list :: &void
 size_t :: u64
 
@@ -81,6 +86,16 @@ STB_TexteditState :: struct #copy {}
 StbTexteditRow :: struct #copy {}
 ImFileHandle :: &FILE
 ImPoolIdx :: i32
+STB_TEXTEDIT_STRING :: ImGuiInputTextState
+STB_TEXTEDIT_CHARTYPE :: ImWchar
+STB_TEXTEDIT_GETWIDTH_NEWLINE :: -1.0f
+STB_TEXTEDIT_UNDOSTATECOUNT :: 99
+STB_TEXTEDIT_UNDOCHARCOUNT :: 999
+STB_TEXTEDIT_POSITIONTYPE :: i32
+IMGUI_PAYLOAD_TYPE_WINDOW :: "_IMWINDOW"
+IM_PI :: 3.14159265358979323846
+IM_NEWLINE :: "`r`n"
+IM_TABSIZE :: (4)
 ImGuiWindowFlags_ :: enum #copy #repr("C") #tag_type(i32) {
     None                      = 0x0
     NoTitleBar                = 0x1
@@ -877,7 +892,7 @@ ImGuiIO :: struct #copy {
     KeysDownDurationPrev : [512]f32 = default
     NavInputsDownDuration : [21]f32 = default
     NavInputsDownDurationPrev : [21]f32 = default
-    InputQueueCharacters : __UNKNOWN__ = default
+    InputQueueCharacters : __UNKNOWN_16 = default
 }
 impl ImGuiIO {
     AddInputCharacter :: (ref Self, _c: u32) {
@@ -995,7 +1010,7 @@ impl ImGuiOnceUponAFrame {
 }
 ImGuiTextFilter :: struct #copy {
     InputBuf : [256]char8 = default
-    Filters : __UNKNOWN__ = default
+    Filters : __UNKNOWN_16 = default
     CountGrep : i32 = default
 }
 impl ImGuiTextFilter {
@@ -1046,12 +1061,12 @@ impl ImGuiTextRange {
         __c__ImGuiTextRange_empty_4(&self, &result)
         return result
     }
-    split :: (ref Self, _separator: char8, _out: &__UNKNOWN__) {
+    split :: (ref Self, _separator: char8, _out: &__UNKNOWN_16) {
         __c__ImGuiTextRange_split_5(&self, _separator, _out)
     }
 }
 ImGuiTextBuffer :: struct #copy {
-    Buf : __UNKNOWN__ = default
+    Buf : __UNKNOWN_16 = default
 }
 impl ImGuiTextBuffer {
     new :: () -> ImGuiTextBuffer {
@@ -1101,7 +1116,7 @@ impl ImGuiTextBuffer {
     }
 }
 ImGuiStorage :: struct #copy {
-    Data : __UNKNOWN__ = default
+    Data : __UNKNOWN_16 = default
 }
 impl ImGuiStorage {
     Clear :: (ref Self) {
@@ -1277,13 +1292,13 @@ ImDrawVert :: struct #copy {
     col : ImU32 = default
 }
 ImDrawChannel :: struct #copy {
-    _CmdBuffer : __UNKNOWN__ = default
-    _IdxBuffer : __UNKNOWN__ = default
+    _CmdBuffer : __UNKNOWN_16 = default
+    _IdxBuffer : __UNKNOWN_16 = default
 }
 ImDrawListSplitter :: struct #copy {
     _Current : i32 = default
     _Count : i32 = default
-    _Channels : __UNKNOWN__ = default
+    _Channels : __UNKNOWN_16 = default
 }
 impl ImDrawListSplitter {
     new :: () -> ImDrawListSplitter {
@@ -1313,9 +1328,9 @@ impl Drop for ImDrawListSplitter {
     }
 }
 ImDrawList :: struct #copy {
-    CmdBuffer : __UNKNOWN__ = default
-    IdxBuffer : __UNKNOWN__ = default
-    VtxBuffer : __UNKNOWN__ = default
+    CmdBuffer : __UNKNOWN_16 = default
+    IdxBuffer : __UNKNOWN_16 = default
+    VtxBuffer : __UNKNOWN_16 = default
     Flags : ImDrawListFlags = default
     _Data : &ImDrawListSharedData = default
     _OwnerName : &char8 = default
@@ -1323,9 +1338,9 @@ ImDrawList :: struct #copy {
     _VtxCurrentIdx : u32 = default
     _VtxWritePtr : &ImDrawVert = default
     _IdxWritePtr : &ImDrawIdx = default
-    _ClipRectStack : __UNKNOWN__ = default
-    _TextureIdStack : __UNKNOWN__ = default
-    _Path : __UNKNOWN__ = default
+    _ClipRectStack : __UNKNOWN_16 = default
+    _TextureIdStack : __UNKNOWN_16 = default
+    _Path : __UNKNOWN_16 = default
     _Splitter : ImDrawListSplitter = default
 }
 impl ImDrawList {
@@ -1581,7 +1596,7 @@ ImFontGlyph :: struct #copy {
     V1 : f32 = default
 }
 ImFontGlyphRangesBuilder :: struct #copy {
-    UsedChars : __UNKNOWN__ = default
+    UsedChars : __UNKNOWN_16 = default
 }
 impl ImFontGlyphRangesBuilder {
     new :: () -> ImFontGlyphRangesBuilder {
@@ -1609,7 +1624,7 @@ impl ImFontGlyphRangesBuilder {
     AddRanges :: (ref Self, _ranges: &ImWchar) {
         __c__ImFontGlyphRangesBuilder_AddRanges_7(&self, _ranges)
     }
-    BuildRanges :: (ref Self, _out_ranges: &__UNKNOWN__) {
+    BuildRanges :: (ref Self, _out_ranges: &__UNKNOWN_16) {
         __c__ImFontGlyphRangesBuilder_BuildRanges_8(&self, _out_ranges)
     }
 }
@@ -1647,9 +1662,9 @@ ImFontAtlas :: struct #copy {
     TexHeight : i32 = default
     TexUvScale : ImVec2 = default
     TexUvWhitePixel : ImVec2 = default
-    Fonts : __UNKNOWN__ = default
-    CustomRects : __UNKNOWN__ = default
-    ConfigData : __UNKNOWN__ = default
+    Fonts : __UNKNOWN_16 = default
+    CustomRects : __UNKNOWN_16 = default
+    ConfigData : __UNKNOWN_16 = default
     CustomRectIds : [1]i32 = default
 }
 impl ImFontAtlas {
@@ -1789,11 +1804,11 @@ impl Drop for ImFontAtlas {
     }
 }
 ImFont :: struct #copy {
-    IndexAdvanceX : __UNKNOWN__ = default
+    IndexAdvanceX : __UNKNOWN_16 = default
     FallbackAdvanceX : f32 = default
     FontSize : f32 = default
-    IndexLookup : __UNKNOWN__ = default
-    Glyphs : __UNKNOWN__ = default
+    IndexLookup : __UNKNOWN_16 = default
+    Glyphs : __UNKNOWN_16 = default
     FallbackGlyph : &ImFontGlyph = default
     DisplayOffset : ImVec2 = default
     ContainerAtlas : &ImFontAtlas = default
@@ -1917,9 +1932,9 @@ ImGuiPlatformIO :: struct #copy {
     Renderer_SetWindowSize : fn(&ImGuiViewport, ImVec2) -> void = default
     Renderer_RenderWindow : fn(&ImGuiViewport, &void) -> void = default
     Renderer_SwapBuffers : fn(&ImGuiViewport, &void) -> void = default
-    Monitors : __UNKNOWN__ = default
+    Monitors : __UNKNOWN_16 = default
     MainViewport : &ImGuiViewport = default
-    Viewports : __UNKNOWN__ = default
+    Viewports : __UNKNOWN_16 = default
 }
 impl ImGuiPlatformIO {
     new :: () -> ImGuiPlatformIO {
@@ -1957,7 +1972,7 @@ impl Drop for ImGuiViewport {
     }
 }
 ImBoolVector :: struct #copy {
-    Storage : __UNKNOWN__ = default
+    Storage : __UNKNOWN_16 = default
 }
 impl ImBoolVector {
     new :: () -> ImBoolVector {
@@ -2203,9 +2218,9 @@ ImGuiInputTextState :: struct #copy {
     ID : ImGuiID = default
     CurLenW : i32 = default
     CurLenA : i32 = default
-    TextW : __UNKNOWN__ = default
-    TextA : __UNKNOWN__ = default
-    InitialTextA : __UNKNOWN__ = default
+    TextW : __UNKNOWN_16 = default
+    TextA : __UNKNOWN_16 = default
+    InitialTextA : __UNKNOWN_16 = default
     TextAIsValid : bool = default
     BufCapacityA : i32 = default
     ScrollX : f32 = default
@@ -2342,7 +2357,7 @@ ImGuiColumns :: struct #copy {
     HostCursorMaxPosX : f32 = default
     HostClipRect : ImRect = default
     HostWorkRect : ImRect = default
-    Columns : __UNKNOWN__ = default
+    Columns : __UNKNOWN_16 = default
 }
 impl ImGuiColumns {
     new :: () -> ImGuiColumns {
@@ -2371,7 +2386,7 @@ impl ImDrawListSharedData {
     }
 }
 ImDrawDataBuilder :: struct #copy {
-    Layers : [2]__UNKNOWN__ = default
+    Layers : [2]__UNKNOWN_16 = default
 }
 impl ImDrawDataBuilder {
     Clear :: (ref Self) {
@@ -2520,7 +2535,7 @@ ImGuiDockNode :: struct #copy {
     LocalFlags : ImGuiDockNodeFlags = default
     ParentNode : &ImGuiDockNode = default
     ChildNodes : [2]&ImGuiDockNode = default
-    Windows : __UNKNOWN__ = default
+    Windows : __UNKNOWN_16 = default
     TabBar : &ImGuiTabBar = default
     Pos : ImVec2 = default
     Size : ImVec2 = default
@@ -2640,10 +2655,10 @@ ImGuiContext :: struct #copy {
     WithinFrameScope : bool = default
     WithinFrameScopeWithImplicitWindow : bool = default
     WithinEndChild : bool = default
-    Windows : __UNKNOWN__ = default
-    WindowsFocusOrder : __UNKNOWN__ = default
-    WindowsSortBuffer : __UNKNOWN__ = default
-    CurrentWindowStack : __UNKNOWN__ = default
+    Windows : __UNKNOWN_16 = default
+    WindowsFocusOrder : __UNKNOWN_16 = default
+    WindowsSortBuffer : __UNKNOWN_16 = default
+    CurrentWindowStack : __UNKNOWN_16 = default
     WindowsById : ImGuiStorage = default
     WindowsActiveCount : i32 = default
     CurrentWindow : &ImGuiWindow = default
@@ -2681,12 +2696,12 @@ ImGuiContext :: struct #copy {
     LastActiveIdTimer : f32 = default
     NextWindowData : ImGuiNextWindowData = default
     NextItemData : ImGuiNextItemData = default
-    ColorModifiers : __UNKNOWN__ = default
-    StyleModifiers : __UNKNOWN__ = default
-    FontStack : __UNKNOWN__ = default
-    OpenPopupStack : __UNKNOWN__ = default
-    BeginPopupStack : __UNKNOWN__ = default
-    Viewports : __UNKNOWN__ = default
+    ColorModifiers : __UNKNOWN_16 = default
+    StyleModifiers : __UNKNOWN_16 = default
+    FontStack : __UNKNOWN_16 = default
+    OpenPopupStack : __UNKNOWN_16 = default
+    BeginPopupStack : __UNKNOWN_16 = default
+    Viewports : __UNKNOWN_16 = default
     CurrentDpiScale : f32 = default
     CurrentViewport : &ImGuiViewportP = default
     MouseViewport : &ImGuiViewportP = default
@@ -2755,12 +2770,12 @@ ImGuiContext :: struct #copy {
     DragDropAcceptIdCurr : ImGuiID = default
     DragDropAcceptIdPrev : ImGuiID = default
     DragDropAcceptFrameCount : i32 = default
-    DragDropPayloadBufHeap : __UNKNOWN__ = default
+    DragDropPayloadBufHeap : __UNKNOWN_16 = default
     DragDropPayloadBufLocal : [16]u8 = default
     CurrentTabBar : &ImGuiTabBar = default
-    TabBars : __UNKNOWN__ = default
-    CurrentTabBarStack : __UNKNOWN__ = default
-    ShrinkWidthBuffer : __UNKNOWN__ = default
+    TabBars : __UNKNOWN_40 = default
+    CurrentTabBarStack : __UNKNOWN_16 = default
+    ShrinkWidthBuffer : __UNKNOWN_16 = default
     LastValidMousePos : ImVec2 = default
     InputTextState : ImGuiInputTextState = default
     InputTextPasswordFont : ImFont = default
@@ -2774,7 +2789,7 @@ ImGuiContext :: struct #copy {
     DragSpeedDefaultRatio : f32 = default
     ScrollbarClickDeltaToGrabCenter : f32 = default
     TooltipOverrideCount : i32 = default
-    PrivateClipboard : __UNKNOWN__ = default
+    PrivateClipboard : __UNKNOWN_16 = default
     MultiSelectScopeId : ImGuiID = default
     PlatformImePos : ImVec2 = default
     PlatformImeLastPos : ImVec2 = default
@@ -2783,8 +2798,8 @@ ImGuiContext :: struct #copy {
     SettingsLoaded : bool = default
     SettingsDirtyTimer : f32 = default
     SettingsIniData : ImGuiTextBuffer = default
-    SettingsHandlers : __UNKNOWN__ = default
-    SettingsWindows : __UNKNOWN__ = default
+    SettingsHandlers : __UNKNOWN_16 = default
+    SettingsWindows : __UNKNOWN_16 = default
     LogEnabled : bool = default
     LogType : ImGuiLogType = ImGuiLogType.None
     LogFile : ImFileHandle = default
@@ -2834,7 +2849,7 @@ ImGuiWindowTempData :: struct #copy {
     NavHasScroll : bool = default
     MenuBarAppending : bool = default
     MenuBarOffset : ImVec2 = default
-    ChildWindows : __UNKNOWN__ = default
+    ChildWindows : __UNKNOWN_16 = default
     StateStorage : &ImGuiStorage = default
     LayoutType : ImGuiLayoutType = default
     ParentLayoutType : ImGuiLayoutType = default
@@ -2843,10 +2858,10 @@ ImGuiWindowTempData :: struct #copy {
     ItemFlags : ImGuiItemFlags = default
     ItemWidth : f32 = default
     TextWrapPos : f32 = default
-    ItemFlagsStack : __UNKNOWN__ = default
-    ItemWidthStack : __UNKNOWN__ = default
-    TextWrapPosStack : __UNKNOWN__ = default
-    GroupStack : __UNKNOWN__ = default
+    ItemFlagsStack : __UNKNOWN_16 = default
+    ItemWidthStack : __UNKNOWN_16 = default
+    TextWrapPosStack : __UNKNOWN_16 = default
+    GroupStack : __UNKNOWN_16 = default
     StackSizesBackup : [6]i16 = default
     Indent : ImVec1 = default
     GroupOffset : ImVec1 = default
@@ -2917,7 +2932,7 @@ ImGuiWindow :: struct #copy {
     SetWindowDockAllowFlags : ImGuiCond = default
     SetWindowPosVal : ImVec2 = default
     SetWindowPosPivot : ImVec2 = default
-    IDStack : __UNKNOWN__ = default
+    IDStack : __UNKNOWN_16 = default
     DC : ImGuiWindowTempData = default
     OuterRectClipped : ImRect = default
     InnerRect : ImRect = default
@@ -2933,7 +2948,7 @@ ImGuiWindow :: struct #copy {
     ItemWidthDefault : f32 = default
     MenuColumns : ImGuiMenuColumns = default
     StateStorage : ImGuiStorage = default
-    ColumnsStorage : __UNKNOWN__ = default
+    ColumnsStorage : __UNKNOWN_16 = default
     FontWindowScale : f32 = default
     FontDpiScale : f32 = default
     SettingsOffset : i32 = default
@@ -3075,7 +3090,7 @@ impl ImGuiTabItem {
     }
 }
 ImGuiTabBar :: struct #copy {
-    Tabs : __UNKNOWN__ = default
+    Tabs : __UNKNOWN_16 = default
     ID : ImGuiID = default
     SelectedTabId : ImGuiID = default
     NextSelectedTabId : ImGuiID = default
@@ -4051,16 +4066,16 @@ ListBoxHeader_2 :: (_label: &char8, _items_count: i32, _height_in_items: i32 = -
 ListBoxFooter :: () {
     __c__ListBoxFooter()
 }
-PlotLines :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = float.max, _scale_max: f32 = float.max, _graph_size: ImVec2, _stride: i32) {
+PlotLines :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = f32.max, _scale_max: f32 = f32.max, _graph_size: ImVec2, _stride: i32) {
     __c__PlotLines(_label, _values, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_graph_size, _stride)
 }
-PlotLines_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = float.max, _scale_max: f32 = float.max, _graph_size: ImVec2) {
+PlotLines_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = f32.max, _scale_max: f32 = f32.max, _graph_size: ImVec2) {
     __c__PlotLines_2(_label, _values_getter, _data, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_graph_size)
 }
-PlotHistogram :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = float.max, _scale_max: f32 = float.max, _graph_size: ImVec2, _stride: i32) {
+PlotHistogram :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = f32.max, _scale_max: f32 = f32.max, _graph_size: ImVec2, _stride: i32) {
     __c__PlotHistogram(_label, _values, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_graph_size, _stride)
 }
-PlotHistogram_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = float.max, _scale_max: f32 = float.max, _graph_size: ImVec2) {
+PlotHistogram_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = f32.max, _scale_max: f32 = f32.max, _graph_size: ImVec2) {
     __c__PlotHistogram_2(_label, _values_getter, _data, _values_count, _values_offset, _overlay_text, _scale_min, _scale_max, &_graph_size)
 }
 Value :: (_prefix: &char8, _b: bool) {
@@ -5252,10 +5267,10 @@ DockBuilderSplitNode :: (_node_id: ImGuiID, _split_dir: ImGuiDir, _size_ratio_fo
     __c__DockBuilderSplitNode(&result, _node_id, _split_dir, _size_ratio_for_node_at_dir, _out_id_at_dir, _out_id_at_opposite_dir)
     return result
 }
-DockBuilderCopyDockSpace :: (_src_dockspace_id: ImGuiID, _dst_dockspace_id: ImGuiID, _in_window_remap_pairs: &__UNKNOWN__) {
+DockBuilderCopyDockSpace :: (_src_dockspace_id: ImGuiID, _dst_dockspace_id: ImGuiID, _in_window_remap_pairs: &__UNKNOWN_16) {
     __c__DockBuilderCopyDockSpace(_src_dockspace_id, _dst_dockspace_id, _in_window_remap_pairs)
 }
-DockBuilderCopyNode :: (_src_node_id: ImGuiID, _dst_node_id: ImGuiID, _out_node_remap_pairs: &__UNKNOWN__) {
+DockBuilderCopyNode :: (_src_node_id: ImGuiID, _dst_node_id: ImGuiID, _out_node_remap_pairs: &__UNKNOWN_16) {
     __c__DockBuilderCopyNode(_src_node_id, _dst_node_id, _out_node_remap_pairs)
 }
 DockBuilderCopyWindowSettings :: (_src_name: &char8, _dst_name: &char8) {
@@ -5387,9 +5402,9 @@ RenderCheckMark :: (_pos: ImVec2, _col: ImU32, _sz: f32) {
 RenderNavHighlight :: (_bb: ref ImRect, _id: ImGuiID, _flags: ImGuiNavHighlightFlags = ImGuiNavHighlightFlags_.TypeDefault) {
     __c__RenderNavHighlight(&_bb, _id, _flags)
 }
-// RenderMouseCursor :: (_pos: ImVec2, _scale: f32, _mouse_cursor: ImGuiMouseCursor = ImGuiMouseCursor_.Arrow) {
-//     __c__RenderMouseCursor(&_pos, _scale, _mouse_cursor)
-// }
+RenderMouseCursor :: (_pos: ImVec2, _scale: f32, _mouse_cursor: ImGuiMouseCursor = ImGuiMouseCursor_.Arrow) {
+    __c__RenderMouseCursor(&_pos, _scale, _mouse_cursor)
+}
 FindRenderedTextEnd :: (_text: &char8, _text_end: &char8 = null) -> &char8 {
     result : &char8 = default
     __c__FindRenderedTextEnd(&result, _text, _text_end)
@@ -5623,6 +5638,8 @@ ImGui_ImplGlfw_KeyCallback :: (_window: &GLFWwindow, _key: i32, _scancode: i32, 
 ImGui_ImplGlfw_CharCallback :: (_window: &GLFWwindow, _c: u32) {
     __c__ImGui_ImplGlfw_CharCallback(_window, _c)
 }
+EmptyString : [1]char8 #extern
+GImGui : &ImGuiContext #extern
 
 // ==========================================================
 // ==========================================================
@@ -5660,7 +5677,7 @@ __c__ImGuiTextFilter_IsActive_5 :: (self: &ImGuiTextFilter, ret: &bool);
 __c__ImGuiTextRange_new_2 :: (self: &ImGuiTextRange);
 __c__ImGuiTextRange_new_3 :: (self: &ImGuiTextRange, __b: &char8, __e: &char8);
 __c__ImGuiTextRange_empty_4 :: (self: &ImGuiTextRange, ret: &bool);
-__c__ImGuiTextRange_split_5 :: (self: &ImGuiTextRange, _separator: char8, _out: &__UNKNOWN__);
+__c__ImGuiTextRange_split_5 :: (self: &ImGuiTextRange, _separator: char8, _out: &__UNKNOWN_16);
 __c__ImGuiTextBuffer_new_2 :: (self: &ImGuiTextBuffer);
 __c__ImGuiTextBuffer_begin_4 :: (self: &ImGuiTextBuffer, ret: &&char8);
 __c__ImGuiTextBuffer_end_5 :: (self: &ImGuiTextBuffer, ret: &&char8);
@@ -5779,7 +5796,7 @@ __c__ImFontGlyphRangesBuilder_SetBit_4 :: (self: &ImFontGlyphRangesBuilder, _n: 
 __c__ImFontGlyphRangesBuilder_AddChar_5 :: (self: &ImFontGlyphRangesBuilder, _c: ImWchar);
 __c__ImFontGlyphRangesBuilder_AddText_6 :: (self: &ImFontGlyphRangesBuilder, _text: &char8, _text_end: &char8 = null);
 __c__ImFontGlyphRangesBuilder_AddRanges_7 :: (self: &ImFontGlyphRangesBuilder, _ranges: &ImWchar);
-__c__ImFontGlyphRangesBuilder_BuildRanges_8 :: (self: &ImFontGlyphRangesBuilder, _out_ranges: &__UNKNOWN__);
+__c__ImFontGlyphRangesBuilder_BuildRanges_8 :: (self: &ImFontGlyphRangesBuilder, _out_ranges: &__UNKNOWN_16);
 __c__ImFontAtlasCustomRect_new_8 :: (self: &ImFontAtlasCustomRect);
 __c__ImFontAtlasCustomRect_IsPacked_9 :: (self: &ImFontAtlasCustomRect, ret: &bool);
 __c__ImFontAtlas_new_0 :: (self: &ImFontAtlas);
@@ -6174,10 +6191,10 @@ __c__ListBox_2 :: (ret: &bool, _label: &char8, _current_item: &i32, _items_gette
 __c__ListBoxHeader :: (ret: &bool, _label: &char8, _size: &ImVec2);
 __c__ListBoxHeader_2 :: (ret: &bool, _label: &char8, _items_count: i32, _height_in_items: i32 = -1);
 __c__ListBoxFooter :: ();
-__c__PlotLines :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = float.max, _scale_max: f32 = float.max, _graph_size: &ImVec2, _stride: i32);
-__c__PlotLines_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = float.max, _scale_max: f32 = float.max, _graph_size: &ImVec2);
-__c__PlotHistogram :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = float.max, _scale_max: f32 = float.max, _graph_size: &ImVec2, _stride: i32);
-__c__PlotHistogram_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = float.max, _scale_max: f32 = float.max, _graph_size: &ImVec2);
+__c__PlotLines :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = f32.max, _scale_max: f32 = f32.max, _graph_size: &ImVec2, _stride: i32);
+__c__PlotLines_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = f32.max, _scale_max: f32 = f32.max, _graph_size: &ImVec2);
+__c__PlotHistogram :: (_label: &char8, _values: &f32, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = f32.max, _scale_max: f32 = f32.max, _graph_size: &ImVec2, _stride: i32);
+__c__PlotHistogram_2 :: (_label: &char8, _values_getter: fn(&void, i32) -> f32, _data: &void, _values_count: i32, _values_offset: i32 = 0, _overlay_text: &char8 = null, _scale_min: f32 = f32.max, _scale_max: f32 = f32.max, _graph_size: &ImVec2);
 __c__Value :: (_prefix: &char8, _b: bool);
 __c__Value_2 :: (_prefix: &char8, _v: i32);
 __c__Value_3 :: (_prefix: &char8, _v: u32);
@@ -6469,8 +6486,8 @@ __c__DockBuilderRemoveNodeChildNodes :: (_node_id: ImGuiID);
 __c__DockBuilderSetNodePos :: (_node_id: ImGuiID, _pos: &ImVec2);
 __c__DockBuilderSetNodeSize :: (_node_id: ImGuiID, _size: &ImVec2);
 __c__DockBuilderSplitNode :: (ret: &ImGuiID, _node_id: ImGuiID, _split_dir: ImGuiDir, _size_ratio_for_node_at_dir: f32, _out_id_at_dir: &ImGuiID, _out_id_at_opposite_dir: &ImGuiID);
-__c__DockBuilderCopyDockSpace :: (_src_dockspace_id: ImGuiID, _dst_dockspace_id: ImGuiID, _in_window_remap_pairs: &__UNKNOWN__);
-__c__DockBuilderCopyNode :: (_src_node_id: ImGuiID, _dst_node_id: ImGuiID, _out_node_remap_pairs: &__UNKNOWN__);
+__c__DockBuilderCopyDockSpace :: (_src_dockspace_id: ImGuiID, _dst_dockspace_id: ImGuiID, _in_window_remap_pairs: &__UNKNOWN_16);
+__c__DockBuilderCopyNode :: (_src_node_id: ImGuiID, _dst_node_id: ImGuiID, _out_node_remap_pairs: &__UNKNOWN_16);
 __c__DockBuilderCopyWindowSettings :: (_src_name: &char8, _dst_name: &char8);
 __c__DockBuilderFinish :: (_node_id: ImGuiID);
 __c__BeginDragDropTargetCustom :: (ret: &bool, _bb: &ImRect, _id: ImGuiID);
@@ -6506,7 +6523,7 @@ __c__RenderFrameBorder :: (_p_min: &ImVec2, _p_max: &ImVec2, _rounding: f32 = 0.
 __c__RenderColorRectWithAlphaCheckerboard :: (_p_min: &ImVec2, _p_max: &ImVec2, _fill_col: ImU32, _grid_step: f32, _grid_off: &ImVec2, _rounding: f32 = 0.0f, _rounding_corners_flags: i32 = @bin_not(0));
 __c__RenderCheckMark :: (_pos: &ImVec2, _col: ImU32, _sz: f32);
 __c__RenderNavHighlight :: (_bb: &ImRect, _id: ImGuiID, _flags: ImGuiNavHighlightFlags = ImGuiNavHighlightFlags_.TypeDefault);
-//__c__RenderMouseCursor :: (_pos: &ImVec2, _scale: f32, _mouse_cursor: ImGuiMouseCursor = ImGuiMouseCursor_.Arrow);
+__c__RenderMouseCursor :: (_pos: &ImVec2, _scale: f32, _mouse_cursor: ImGuiMouseCursor = ImGuiMouseCursor_.Arrow);
 __c__FindRenderedTextEnd :: (ret: &&char8, _text: &char8, _text_end: &char8 = null);
 __c__LogRenderedText :: (_ref_pos: &ImVec2, _text: &char8, _text_end: &char8 = null);
 __c__RenderArrow :: (_draw_list: &ImDrawList, _pos: &ImVec2, _col: ImU32, _dir: ImGuiDir, _scale: f32 = 1.0f);

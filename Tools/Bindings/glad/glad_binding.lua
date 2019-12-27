@@ -4,6 +4,7 @@ function prepend_to_cpp()
 	return [[
 #include <memory>
 
+typedef void* (*GLADloadproc)(const char* name);
 extern "C" int gladLoadGL(void);
 extern "C" int gladLoadGLLoader(GLADloadproc);
 

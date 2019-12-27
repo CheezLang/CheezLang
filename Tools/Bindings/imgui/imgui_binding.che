@@ -5660,9 +5660,9 @@ RenderCheckMark :: (_pos: ImVec2, _col: ImU32, _sz: f32) {
 RenderNavHighlight :: (_bb: ref ImRect, _id: ImGuiID, _flags: ImGuiNavHighlightFlags = ImGuiNavHighlightFlags_TypeDefault) {
     __c__RenderNavHighlight(&_bb, _id, _flags)
 }
-RenderMouseCursor :: (_pos: ImVec2, _scale: f32, _mouse_cursor: ImGuiMouseCursor = ImGuiMouseCursor_Arrow) {
-    __c__RenderMouseCursor(&_pos, _scale, _mouse_cursor)
-}
+// RenderMouseCursor :: (_pos: ImVec2, _scale: f32, _mouse_cursor: ImGuiMouseCursor = ImGuiMouseCursor_Arrow) {
+//     __c__RenderMouseCursor(&_pos, _scale, _mouse_cursor)
+// }
 FindRenderedTextEnd :: (_text: &char8, _text_end: &char8 = null) -> &char8 {
     result : &char8 = default
     __c__FindRenderedTextEnd(&result, _text, _text_end)
@@ -6781,7 +6781,7 @@ __c__RenderFrameBorder :: (_p_min: &ImVec2, _p_max: &ImVec2, _rounding: f32 = 0.
 __c__RenderColorRectWithAlphaCheckerboard :: (_p_min: &ImVec2, _p_max: &ImVec2, _fill_col: ImU32, _grid_step: f32, _grid_off: &ImVec2, _rounding: f32 = 0.0f, _rounding_corners_flags: i32 = @bin_not(0));
 __c__RenderCheckMark :: (_pos: &ImVec2, _col: ImU32, _sz: f32);
 __c__RenderNavHighlight :: (_bb: &ImRect, _id: ImGuiID, _flags: ImGuiNavHighlightFlags = ImGuiNavHighlightFlags_TypeDefault);
-__c__RenderMouseCursor :: (_pos: &ImVec2, _scale: f32, _mouse_cursor: ImGuiMouseCursor = ImGuiMouseCursor_Arrow);
+// __c__RenderMouseCursor :: (_pos: &ImVec2, _scale: f32, _mouse_cursor: ImGuiMouseCursor = ImGuiMouseCursor_Arrow);
 __c__FindRenderedTextEnd :: (ret: &&char8, _text: &char8, _text_end: &char8 = null);
 __c__LogRenderedText :: (_ref_pos: &ImVec2, _text: &char8, _text_end: &char8 = null);
 __c__RenderArrow :: (_draw_list: &ImDrawList, _pos: &ImVec2, _col: ImU32, _dir: ImGuiDir, _scale: f32 = 1.0f);
