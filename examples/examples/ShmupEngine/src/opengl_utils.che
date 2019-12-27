@@ -1,12 +1,7 @@
 io :: import std.io
 C  :: import std.c
 
-use import opengl.opengl
-use import opengl.constants
-use import opengl.types
-use import opengl.functions
-
-import opengl.glad_binding
+use import opengl.glad_binding
 
 #export_scope
 
