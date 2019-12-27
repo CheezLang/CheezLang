@@ -82,16 +82,16 @@ extern "C" void __c__ImGuiTextFilter_Clear_4(ImGuiTextFilter* self) {
 extern "C" void __c__ImGuiTextFilter_IsActive_5(ImGuiTextFilter* self, bool *ret) {
     *ret = (bool )self->IsActive();
 }
-extern "C" void __c__ImGuiTextRange_new_2(ImGuiTextFilter::ImGuiTextRange * self) {
+extern "C" void __c__ImGuiTextRange_new_2(ImGuiTextRange* self) {
     new (self) ImGuiTextFilter::ImGuiTextRange();
 }
-extern "C" void __c__ImGuiTextRange_new_3(ImGuiTextFilter::ImGuiTextRange * self, char * __b, char * __e) {
+extern "C" void __c__ImGuiTextRange_new_3(ImGuiTextRange* self, char * __b, char * __e) {
     new (self) ImGuiTextFilter::ImGuiTextRange(__b, __e);
 }
-extern "C" void __c__ImGuiTextRange_empty_4(ImGuiTextFilter::ImGuiTextRange * self, bool *ret) {
+extern "C" void __c__ImGuiTextRange_empty_4(ImGuiTextRange* self, bool *ret) {
     *ret = (bool )self->empty();
 }
-extern "C" void __c__ImGuiTextRange_split_5(ImGuiTextFilter::ImGuiTextRange * self, char _separator, ImVector<ImGuiTextFilter::ImGuiTextRange> * _out) {
+extern "C" void __c__ImGuiTextRange_split_5(ImGuiTextRange* self, char _separator, __UNKNOWN__ * _out) {
     self->split(_separator, _out);
 }
 extern "C" void __c__ImGuiTextBuffer_new_2(ImGuiTextBuffer* self) {
@@ -172,13 +172,13 @@ extern "C" void __c__ImGuiStorage_SetAllInt_15(ImGuiStorage* self, int32_t _val)
 extern "C" void __c__ImGuiStorage_BuildSortByKey_16(ImGuiStorage* self) {
     self->BuildSortByKey();
 }
-extern "C" void __c__ImGuiStoragePair_new_2(ImGuiStorage::ImGuiStoragePair * self, uint32_t __key, int32_t __val_i) {
+extern "C" void __c__ImGuiStoragePair_new_2(ImGuiStoragePair* self, uint32_t __key, int32_t __val_i) {
     new (self) ImGuiStorage::ImGuiStoragePair(__key, __val_i);
 }
-extern "C" void __c__ImGuiStoragePair_new_3(ImGuiStorage::ImGuiStoragePair * self, uint32_t __key, float __val_f) {
+extern "C" void __c__ImGuiStoragePair_new_3(ImGuiStoragePair* self, uint32_t __key, float __val_f) {
     new (self) ImGuiStorage::ImGuiStoragePair(__key, __val_f);
 }
-extern "C" void __c__ImGuiStoragePair_new_4(ImGuiStorage::ImGuiStoragePair * self, uint32_t __key, void * __val_p) {
+extern "C" void __c__ImGuiStoragePair_new_4(ImGuiStoragePair* self, uint32_t __key, void * __val_p) {
     new (self) ImGuiStorage::ImGuiStoragePair(__key, __val_p);
 }
 extern "C" void __c__ImGuiListClipper_new_6(ImGuiListClipper* self, int32_t _items_count, float _items_height) {
@@ -448,7 +448,7 @@ extern "C" void __c__ImFontGlyphRangesBuilder_AddText_6(ImFontGlyphRangesBuilder
 extern "C" void __c__ImFontGlyphRangesBuilder_AddRanges_7(ImFontGlyphRangesBuilder* self, const ImWchar * _ranges) {
     self->AddRanges(_ranges);
 }
-extern "C" void __c__ImFontGlyphRangesBuilder_BuildRanges_8(ImFontGlyphRangesBuilder* self, ImVector<ImWchar> * _out_ranges) {
+extern "C" void __c__ImFontGlyphRangesBuilder_BuildRanges_8(ImFontGlyphRangesBuilder* self, __UNKNOWN__ * _out_ranges) {
     self->BuildRanges(_out_ranges);
 }
 extern "C" void __c__ImFontAtlasCustomRect_new_8(ImFontAtlasCustomRect* self) {
@@ -568,7 +568,7 @@ extern "C" void __c__ImFont_IsLoaded_22(ImFont* self, bool *ret) {
 extern "C" void __c__ImFont_GetDebugName_23(ImFont* self, char * *ret) {
     *ret = (char * )self->GetDebugName();
 }
-extern "C" void __c__ImFont_CalcTextSizeA_24(ImFont* self, ImVec2 *ret, float _size, float _max_width, float _wrap_width, char * _text_begin, char * _text_end, const char * * _remaining) {
+extern "C" void __c__ImFont_CalcTextSizeA_24(ImFont* self, ImVec2 *ret, float _size, float _max_width, float _wrap_width, char * _text_begin, char * _text_end, char * * _remaining) {
     *ret = (ImVec2 )self->CalcTextSizeA(_size, _max_width, _wrap_width, _text_begin, _text_end, _remaining);
 }
 extern "C" void __c__ImFont_CalcWordWrapPositionA_25(ImFont* self, char * *ret, float _scale, char * _text, char * _text_end, float _wrap_width) {
@@ -1420,7 +1420,7 @@ extern "C" void __c__Combo(bool *ret, char * _label, int32_t * _current_item, ch
 extern "C" void __c__Combo_2(bool *ret, char * _label, int32_t * _current_item, char * _items_separated_by_zeros, int32_t _popup_max_height_in_items) {
     *ret = (bool )ImGui::Combo(_label, _current_item, _items_separated_by_zeros, _popup_max_height_in_items);
 }
-extern "C" void __c__Combo_3(bool *ret, char * _label, int32_t * _current_item, bool (*_items_getter)(void * , int32_t , const char * * ), void * _data, int32_t _items_count, int32_t _popup_max_height_in_items) {
+extern "C" void __c__Combo_3(bool *ret, char * _label, int32_t * _current_item, bool (*_items_getter)(void * , int32_t , char * * ), void * _data, int32_t _items_count, int32_t _popup_max_height_in_items) {
     *ret = (bool )ImGui::Combo(_label, _current_item, _items_getter, _data, _items_count, _popup_max_height_in_items);
 }
 extern "C" void __c__DragFloat(bool *ret, char * _label, float * _v, float _v_speed, float _v_min, float _v_max, char * _format, float _power) {
@@ -1621,7 +1621,7 @@ extern "C" void __c__Selectable_2(bool *ret, char * _label, bool * _p_selected, 
 extern "C" void __c__ListBox(bool *ret, char * _label, int32_t * _current_item, char * * _items, int32_t _items_count, int32_t _height_in_items) {
     *ret = (bool )ImGui::ListBox(_label, _current_item, _items, _items_count, _height_in_items);
 }
-extern "C" void __c__ListBox_2(bool *ret, char * _label, int32_t * _current_item, bool (*_items_getter)(void * , int32_t , const char * * ), void * _data, int32_t _items_count, int32_t _height_in_items) {
+extern "C" void __c__ListBox_2(bool *ret, char * _label, int32_t * _current_item, bool (*_items_getter)(void * , int32_t , char * * ), void * _data, int32_t _items_count, int32_t _height_in_items) {
     *ret = (bool )ImGui::ListBox(_label, _current_item, _items_getter, _data, _items_count, _height_in_items);
 }
 extern "C" void __c__ListBoxHeader(bool *ret, char * _label, ImVec2 * _size) {
@@ -2131,7 +2131,7 @@ extern "C" void __c__ImTextStrToUtf8(int32_t *ret, char * _buf, int32_t _buf_siz
 extern "C" void __c__ImTextCharFromUtf8(int32_t *ret, uint32_t * _out_char, char * _in_text, char * _in_text_end) {
     *ret = (int32_t )ImTextCharFromUtf8(_out_char, _in_text, _in_text_end);
 }
-extern "C" void __c__ImTextStrFromUtf8(int32_t *ret, ImWchar * _buf, int32_t _buf_size, char * _in_text, char * _in_text_end, const char * * _in_remaining) {
+extern "C" void __c__ImTextStrFromUtf8(int32_t *ret, ImWchar * _buf, int32_t _buf_size, char * _in_text, char * _in_text_end, char * * _in_remaining) {
     *ret = (int32_t )ImTextStrFromUtf8(_buf, _buf_size, _in_text, _in_text_end, _in_remaining);
 }
 extern "C" void __c__ImTextCountCharsFromUtf8(int32_t *ret, char * _in_text, char * _in_text_end) {
@@ -2518,10 +2518,10 @@ extern "C" void __c__DockBuilderSetNodeSize(uint32_t _node_id, ImVec2* _size) {
 extern "C" void __c__DockBuilderSplitNode(ImGuiID *ret, uint32_t _node_id, int32_t _split_dir, float _size_ratio_for_node_at_dir, ImGuiID * _out_id_at_dir, ImGuiID * _out_id_at_opposite_dir) {
     *ret = (uint32_t )ImGui::DockBuilderSplitNode(_node_id, _split_dir, _size_ratio_for_node_at_dir, _out_id_at_dir, _out_id_at_opposite_dir);
 }
-extern "C" void __c__DockBuilderCopyDockSpace(uint32_t _src_dockspace_id, uint32_t _dst_dockspace_id, ImVector<const char*> * _in_window_remap_pairs) {
+extern "C" void __c__DockBuilderCopyDockSpace(uint32_t _src_dockspace_id, uint32_t _dst_dockspace_id, __UNKNOWN__ * _in_window_remap_pairs) {
     ImGui::DockBuilderCopyDockSpace(_src_dockspace_id, _dst_dockspace_id, _in_window_remap_pairs);
 }
-extern "C" void __c__DockBuilderCopyNode(uint32_t _src_node_id, uint32_t _dst_node_id, ImVector<ImGuiID> * _out_node_remap_pairs) {
+extern "C" void __c__DockBuilderCopyNode(uint32_t _src_node_id, uint32_t _dst_node_id, __UNKNOWN__ * _out_node_remap_pairs) {
     ImGui::DockBuilderCopyNode(_src_node_id, _dst_node_id, _out_node_remap_pairs);
 }
 extern "C" void __c__DockBuilderCopyWindowSettings(char * _src_name, char * _dst_name) {
