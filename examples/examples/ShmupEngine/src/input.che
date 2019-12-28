@@ -1,0 +1,56 @@
+mem :: import std.mem.allocator
+io  :: import std.io
+
+use import glfw.glfw3
+
+#export_scope
+
+Input :: struct {
+    keys_pressed  : [GLFW_KEY_LAST + 1]bool = default
+    keys_released : [GLFW_KEY_LAST + 1]bool = default
+    keys_down     : [GLFW_KEY_LAST + 1]bool = default
+}
+
+impl Input {
+    new :: () -> &Input {
+
+        input := mem.alloc(Input)
+        <<input = Input()
+        return input
+    }
+
+    set_key_state :: (ref Self, key: int, state: bool) {
+        if state {
+            keys_pressed[key] = true
+            keys_down[key] = true
+        } else {
+            keys_released[key] = true
+            keys_down[key] = false
+        }
+    }
+
+    release_all_keys :: (ref Self) {
+        for(inclusive=true) key : 0 .. GLFW_KEY_LAST {
+            keys_released[key] = false
+            keys_pressed[key] = false
+            keys_down[key] = false
+        }
+    }
+
+    reset :: (ref Self) {
+        for(inclusive=true) key : 0 .. GLFW_KEY_LAST {
+            keys_pressed[key] = false
+            keys_released[key] = false
+        }
+    }
+
+    key_down :: (ref Self, key: int) -> bool {
+        return keys_down[key]
+    }
+    key_pressed :: (ref Self, key: int) -> bool {
+        return keys_pressed[key]
+    }
+    key_released :: (ref Self, key: int) -> bool {
+        return keys_released[key]
+    }
+}

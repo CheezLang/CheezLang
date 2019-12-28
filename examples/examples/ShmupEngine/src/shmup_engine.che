@@ -14,13 +14,34 @@ ImGui :: import imgui.imgui_binding
 use import opengl_utils
 use import math
 use import renderer
+use import input
 
 #export_scope
 
 ShmupCallbacks :: trait {
     init :: (ref Self, engine: ref ShmupEngine) -> bool;
-    update :: (ref Self);
+    update :: (ref Self, dt: float, input: ref Input);
     render :: (ref Self, renderer: ref Renderer);
+}
+
+Layer :: struct {
+    input       : &Input
+    callbacks   : ShmupCallbacks
+}
+
+impl Layer {
+    on_key_event :: (ref Self, key: int, action: int) -> bool {
+        match (action, key) {
+            (GLFW_PRESS, $keycode) -> {
+                input.set_key_state(keycode, true)
+            }
+            (GLFW_RELEASE, $keycode) -> {
+                input.set_key_state(keycode, false)
+            }
+        }
+
+        return false
+    }
 }
 
 EnabledEditors :: struct {
@@ -34,13 +55,15 @@ PropertyEdit :: enum #copy {
 }
 
 ShmupEngine :: struct {
-    //
-
-    // game stuff
-    callbacks           : ShmupCallbacks
+    // engine stuff
+    layer_stack         := Array[Layer].create()
     projection_matrix   := mat4.id()
     aspect_ratio_axis   := 1.0f
     world_size          := vec3(10, 10, 0)
+
+    // io stuff
+    global_input        : &Input = null
+    game_input          : &Input = null
 
     // editor stuff
     enabled_editors     : EnabledEditors = default
@@ -60,16 +83,16 @@ ShmupEngine :: struct {
     viewport_frame_buffer   : u32 = 0
     viewport_render_texture : u32 = 0
     viewport_depth_texture  : u32 = 0
+    viewport_is_focused     := false
+    viewport_lost_focused   := false
 
     // rendering stuff
     renderer : &Renderer = null
 }
 
 impl ShmupEngine {
-    new :: (callbacks: ShmupCallbacks) -> ShmupEngine {
-        return ShmupEngine(
-            callbacks = callbacks
-        )
+    new :: () -> ShmupEngine {
+        return ShmupEngine()
     }
 
     start :: (ref Self) {
@@ -147,7 +170,9 @@ impl ShmupEngine {
         }
 
         // setup renderer
-        renderer = Renderer.create()
+        global_input = Input.new()
+        game_input   = Input.new()
+        renderer     = Renderer.create()
 
         render_loop()
     }
@@ -203,13 +228,44 @@ impl ShmupEngine {
         match (action, key) {
             (GLFW_PRESS, GLFW_KEY_F12) -> {
                 engine.enabled_editors.editor = !engine.enabled_editors.editor
+                return
+            }
+
+            (GLFW_PRESS, $keycode) -> {
+                engine.global_input.set_key_state(keycode, true)
+            }
+            (GLFW_RELEASE, $keycode) -> {
+                engine.global_input.set_key_state(keycode, false)
+            }
+        }
+
+        if engine.viewport_is_focused {
+            match (action, key) {
+                (GLFW_PRESS, $keycode) -> {
+                    engine.game_input.set_key_state(keycode, true)
+                }
+                (GLFW_RELEASE, $keycode) -> {
+                    engine.game_input.set_key_state(keycode, false)
+                }
+            }
+
+            match (action, key) {
+                ($action, $keycode) -> {
+                    for(reverse=true) layer : engine.layer_stack {
+                        if layer.on_key_event(int(key), int(action)) {
+                            break
+                        }
+                    }
+                }
             }
         }
     }
 
     render_loop :: (ref Self) {
-        if !callbacks.init(self) {
-            return
+        for layer : layer_stack {
+            if !layer.callbacks.init(self) {
+                return
+            }
         }
 
         last_frame_time := get_time_microseconds()
@@ -219,15 +275,13 @@ impl ShmupEngine {
 
         loop {
             if glfwWindowShouldClose(glfw_window) then break
-            glfwPollEvents()
-
             // handle time
             this_frame_time     := get_time_microseconds()
             last_frame_duration := this_frame_time - last_frame_time
             last_frame_time = this_frame_time
 
             // convert time from microseconds to seconds
-            delta_time := double(last_frame_duration) * 0.000001
+            delta_time := float(double(last_frame_duration) * 0.000001)
             current_frame_time = delta_time
             frame_timer += delta_time
             fps_counter += 1
@@ -243,12 +297,8 @@ impl ShmupEngine {
             glClear(GL_COLOR_BUFFER_BIT)
             imgui_begin_frame()
 
-
-            // render imgui gui
             if enabled_editors.editor {
                 create_dock_space()
-                render_menu_bar()
-                render_editor()
             }
 
             // set window properties of viewport
@@ -257,7 +307,30 @@ impl ShmupEngine {
                 ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
                 ImGui.ImGuiWindowFlags_.NoCollapse
             ))
+            { // calculate focused state
+                was_focused := viewport_is_focused
+                viewport_is_focused = ImGui.IsWindowFocused()
+                viewport_lost_focused = was_focused and !viewport_is_focused
+                // @todo: send focus event to layer_stack
+            }
             ImGui.End()
+
+            // handle events and input
+            global_input.reset()
+            game_input.reset()
+            for layer : layer_stack do layer.input.reset()
+            glfwPollEvents()
+            if viewport_lost_focused {
+                // release all keys in all layers
+                game_input.release_all_keys()
+                for layer : layer_stack do layer.input.release_all_keys()
+            }
+
+            // render imgui gui
+            if enabled_editors.editor {
+                render_menu_bar()
+                render_editor()
+            }
 
             { // get size of viewport window
                 ImGui.Begin("Viewport")
@@ -280,10 +353,15 @@ impl ShmupEngine {
                 self.update_projection_matrix(viewport_size.change_type(f32))
                 
                 properties_to_edit.clear()
-                callbacks.update()
+
+                for layer : layer_stack {
+                    layer.callbacks.update(delta_time, <<layer.input)
+                }
 
                 renderer.begin_scene(projection_matrix)
-                callbacks.render(<<renderer)
+                for layer : layer_stack {
+                    layer.callbacks.render(<<renderer)
+                }
                 renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.5)
                 glBindFramebuffer(GL_FRAMEBUFFER, 0)
             }
@@ -353,6 +431,7 @@ impl ShmupEngine {
                 // viewport dimensions
                 dimensions := fmt.format("{} x {}", [viewport_size.x, viewport_size.y])
                 ImGui.LabelText("Viewport Dimensions", dimensions.as_cstring())
+                ImGui.LabelText("Viewport focused", if viewport_is_focused then "true" else "false")
                 ImGui.Separator()
 
                 // show fps
@@ -401,6 +480,10 @@ impl ShmupEngine {
 }
 
 impl ShmupEngine {
+    push_layer :: (ref Self, callbacks: ShmupCallbacks) {
+        layer_stack.add(Layer(input = Input.new(), callbacks = callbacks))
+    }
+
     update_projection_matrix :: (ref Self, viewport_size: vec2) {
         size    := viewport_size.change_type(f32)
 

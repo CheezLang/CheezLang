@@ -7,6 +7,7 @@ C   :: import std.c
 
 use import opengl.glad_binding
 ImGui :: import imgui.imgui_binding
+glfw  :: import glfw.glfw3
 
 use import shmup_engine
 use import opengl_utils
@@ -15,6 +16,7 @@ use import math
 use import matrix
 use import renderer
 use import opengl_buffers
+use import input
 
 Test :: struct {
     engine : &ShmupEngine = null
@@ -27,10 +29,9 @@ Test :: struct {
     scale  := 0.9f
     angle  := 0.0f
 
-    model_matrix      := mat4.id()
-
     quad_pos  := vec3(0, 0, 0)
     quad_size := vec3(1, 1, 0)
+    speed     := 3.5f
 }
 
 impl ShmupCallbacks for Test {
@@ -40,7 +41,7 @@ impl ShmupCallbacks for Test {
         return true
     }
 
-    update :: (ref Self) {
+    update :: (ref Self, dt: float, input: ref Input) {
         ImGui.Begin("Test")
         ImGui.InputFloat3("quad pos",  &quad_pos.x)
         ImGui.InputFloat3("quad siez", &quad_size.x)
@@ -57,7 +58,26 @@ impl ShmupCallbacks for Test {
 
         engine.edit_property(PropertyEdit.EditFloat((&offset.x, "Offset X", 0.5)))
         engine.edit_property(PropertyEdit.EditFloat((&offset.y, "Offset Y", 0.5)))
+        engine.edit_property(PropertyEdit.EditFloat((&speed, "Speed", 0.1)))
 
+
+        in := engine.game_input
+        if in.key_down(glfw.GLFW_KEY_LEFT) {
+            quad_pos += vec3(-1, 0) * speed * dt
+        }
+        if in.key_down(glfw.GLFW_KEY_RIGHT) {
+            quad_pos += vec3(1, 0) * speed * dt
+        }
+        if in.key_down(glfw.GLFW_KEY_UP) {
+            quad_pos += vec3(0, 1) * speed * dt
+        }
+        if in.key_down(glfw.GLFW_KEY_DOWN) {
+            quad_pos += vec3(0, -1) * speed * dt
+        }
+
+        // if input.key_pressed(glfw.GLFW_KEY_SPACE)  then io.print("v")
+        // if input.key_down(glfw.GLFW_KEY_SPACE)     then io.print(".")
+        // if input.key_released(glfw.GLFW_KEY_SPACE) then io.println("^")
     }
 
     render :: (ref Self, renderer: ref Renderer) {
@@ -67,6 +87,8 @@ impl ShmupCallbacks for Test {
         } else {
             engine.aspect_ratio_axis = 0
         }
+
+        renderer.fill_quad(quad_pos, quad_size, 0, vec3(1, 0, 0))
 
         for(inclusive=true) y : 0 .. count {
             for(inclusive=true) x : 0 .. count {
@@ -81,6 +103,7 @@ impl ShmupCallbacks for Test {
 Main :: () {
     test := Test()
 
-    shmup_engine := ShmupEngine.new(test)
+    shmup_engine := ShmupEngine.new()
+    shmup_engine.push_layer(test)
     shmup_engine.start()
 }
