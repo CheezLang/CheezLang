@@ -51,7 +51,9 @@ EnabledEditors :: struct {
 }
 
 PropertyEdit :: enum #copy {
-    EditFloat : (ptr: &float, name: c_string, step: float)
+    EditFloat   : (ptr: &float, name: c_string, step: float)
+    EditVec3    : (ptr: &vec3, name: c_string)
+    EditColor3  : (ptr: &vec3, name: c_string)
 }
 
 ShmupEngine :: struct {
@@ -467,6 +469,12 @@ impl ShmupEngine {
                 match p {
                     PropertyEdit.EditFloat($e) -> {
                         ImGui.InputFloat(e.name, e.ptr, e.step, e.step * 5)
+                    }
+                    PropertyEdit.EditVec3($e) -> {
+                        ImGui.InputFloat3(e.name, cast e.ptr)
+                    }
+                    PropertyEdit.EditColor3($e) -> {
+                        ImGui.ColorEdit3(e.name, cast e.ptr)
                     }
                 }
             }

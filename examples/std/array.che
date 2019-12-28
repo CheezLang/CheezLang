@@ -110,6 +110,9 @@ impl(T: type) Array[T] {
     }
 
     access :: (ref Self, index: int) -> ref T #operator("[]") {
+        if !(index >= 0 and index < length) {
+            C.printf("%lld`n", index)
+        }
         @assert(index >= 0 and index < length, "Index was out of range")
         return data[index]
     }
