@@ -1,0 +1,214 @@
+use import std.array
+mem :: import std.mem.allocator
+io  :: import std.io
+
+use import opengl.glad_binding
+
+use import math
+
+#export_scope
+
+ShaderDataType :: enum #copy {
+    None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool
+}
+
+BufferElement :: struct {
+    name        : string
+    typ         : ShaderDataType
+    normalized  : bool = false
+    offset      : int  = 0
+}
+
+impl BufferElement {
+    get_component_count :: (ref Self) -> i32 {
+        return match typ {
+            ShaderDataType.Float  -> 1
+            ShaderDataType.Float2 -> 2
+            ShaderDataType.Float3 -> 3
+            ShaderDataType.Float4 -> 4
+            ShaderDataType.Mat3   -> 3 * 3
+            ShaderDataType.Mat4   -> 4 * 4
+            ShaderDataType.Int    -> 1
+            ShaderDataType.Int2   -> 2
+            ShaderDataType.Int3   -> 3
+            ShaderDataType.Int4   -> 4
+            ShaderDataType.Bool   -> 1
+
+            _ -> {@assert(false); 0}
+        }
+    }
+
+    get_size :: (ref Self) -> i32 {
+        return match typ {
+            ShaderDataType.Float  -> 4
+            ShaderDataType.Float2 -> 4 * 2
+            ShaderDataType.Float3 -> 4 * 3
+            ShaderDataType.Float4 -> 4 * 4
+            ShaderDataType.Mat3   -> 4 * 3 * 3
+            ShaderDataType.Mat4   -> 4 * 4 * 4
+            ShaderDataType.Int    -> 4
+            ShaderDataType.Int2   -> 4 * 2
+            ShaderDataType.Int3   -> 4 * 3
+            ShaderDataType.Int4   -> 4 * 4
+            ShaderDataType.Bool   -> 1
+
+            _ -> {@assert(false); 0}
+        }
+    }
+}
+
+BufferLayout :: struct {
+    stride : i32 = 0
+    elements := Array[BufferElement].create()
+}
+
+impl BufferLayout {
+    new :: (elements: []BufferElement) -> BufferLayout {
+        arr     := Array[BufferElement].create(elements.length)
+        stride  : i32 = 0
+
+        for e : elements {
+            arr.add(e)
+        }
+
+        { // calculate offsets and stride
+            offset := 0
+            for e : arr {
+                size := e.get_size()
+                e.offset = offset
+                offset += int(size)
+                stride += size
+            }
+        }
+
+        return BufferLayout(stride, arr)
+    }
+}
+
+//////////////////////////////////////////////
+
+VertexBuffer :: struct {
+    vbo    : u32
+    layout : BufferLayout
+}
+
+impl VertexBuffer {
+    create :: (vertices: []vec3) -> &VertexBuffer {
+        vbo : u32 = 0
+        glGenBuffers(1, &vbo)
+        glBindBuffer(GL_ARRAY_BUFFER, vbo)
+        glBufferData(GL_ARRAY_BUFFER, @sizeof(vec3) * vertices.length, vertices.data, GL_STATIC_DRAW)
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+
+        buff := mem.alloc(VertexBuffer)
+        <<buff = VertexBuffer(vbo, BufferLayout())
+        return buff
+    }
+
+    bind :: (ref Self) {
+        glBindBuffer(GL_ARRAY_BUFFER, vbo)
+    }
+
+    unbind :: (ref Self) {
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+    }
+}
+
+impl Drop for VertexBuffer {
+    drop :: (ref Self) {
+        glDeleteBuffers(1, &vbo)
+    }
+}
+
+IndexBuffer :: struct {
+    vbo   : u32
+    count : i32
+}
+
+impl IndexBuffer {
+    create :: (indices: []u32) -> &IndexBuffer {
+        vbo : u32 = 0
+        glGenBuffers(1, &vbo)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, @sizeof(u32) * indices.length, indices.data, GL_STATIC_DRAW)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
+
+        buff := mem.alloc(IndexBuffer)
+        <<buff = IndexBuffer(vbo, i32(indices.length))
+        return buff
+    }
+
+    bind :: (ref Self) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo)
+    }
+
+    unbind :: (ref Self) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
+    }
+}
+
+impl Drop for IndexBuffer {
+    drop :: (ref Self) {
+        glDeleteBuffers(1, &vbo)
+    }
+}
+
+////////////////////////////////
+
+VertexArray :: struct {
+    vao                       : u32
+    index_buffer              : &IndexBuffer = null
+    vertex_buffers            := Array[&VertexBuffer].create()
+    vertex_attrib_array_index : u32 = 0
+}
+
+impl VertexArray {
+    create :: () -> &VertexArray {
+        vao : u32 = 0
+        glGenVertexArrays(1, &vao)
+
+        buff := mem.alloc(VertexArray)
+        <<buff = VertexArray(vao)
+        return buff
+    }
+
+    bind :: (ref Self) {
+        glBindVertexArray(vao)
+    }
+
+    unbind :: (ref Self) {
+        glBindVertexArray(0)
+    }
+
+    set_index_buffer :: (ref Self, ib: &IndexBuffer) {
+        glBindVertexArray(vao)
+        ib.bind()
+        index_buffer = ib
+    }
+
+    add_vertex_buffer :: (ref Self, vb: &VertexBuffer) {
+        glBindVertexArray(vao)
+        vb.bind()
+
+        for element : vb.layout.elements {
+            glEnableVertexAttribArray(vertex_attrib_array_index)
+            glVertexAttribPointer(
+                vertex_attrib_array_index
+                element.get_component_count()
+                GL_FLOAT
+                if element.normalized then GL_TRUE else GL_FALSE
+                vb.layout.stride
+                cast(&void) element.offset)
+
+            vertex_attrib_array_index += 1
+        }
+
+        vertex_buffers.add(vb)
+    }
+}
+
+impl Drop for VertexArray {
+    drop :: (ref Self) {
+        glDeleteVertexArrays(1, &vao)
+    }
+}

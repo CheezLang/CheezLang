@@ -1,0 +1,105 @@
+use import std.math
+mem :: import std.mem.allocator
+io  :: import std.io
+fmt :: import std.fmt
+
+use import opengl.glad_binding
+
+use import math
+use import matrix
+use import opengl_buffers
+use import shader
+
+#export_scope
+
+Origin :: enum #copy {
+    Center, TopLeft, BottomLeft, TopRight, BottomRight
+}
+
+Renderer :: struct {
+    filled_quad_va : &VertexArray
+    color_shader : &Shader
+}
+
+impl Renderer {
+    create :: () -> &Renderer {
+        // load shader
+        shader := match Shader.from_file("../data/test_shader.shader") {
+            Ok($shader) -> {
+                shader_program   := mem.alloc(Shader)
+                <<shader_program = shader
+                shader_program
+            }
+
+            Err($msg) -> {
+                io.println(msg)
+                return null
+            }
+        }
+
+        // create vertex array for quad
+        vertex_array := VertexArray.create()
+
+        vertices := [
+            vec3(-0.5f, -0.5f, 0.0f)
+            vec3( 0.5f, -0.5f, 0.0f)
+            vec3( 0.5f,  0.5f, 0.0f)
+            vec3(-0.5f,  0.5f, 0.0f)
+        ]
+        vertex_buffer := VertexBuffer.create(vertices)
+        vertex_buffer.layout = BufferLayout.new([BufferElement("aPos", ShaderDataType.Float3)])
+        vertex_array.add_vertex_buffer(vertex_buffer)
+
+        index_buffer := IndexBuffer.create([0, 1, 2, 2, 3, 0])
+        vertex_array.set_index_buffer(index_buffer)
+
+        //
+        r := mem.alloc(Renderer)
+        <<r = Renderer(
+            filled_quad_va = vertex_array
+            color_shader = shader
+        )
+        return r
+    }
+
+    begin_scene :: (ref Self, projection_matrix: ref mat4) {
+        color_shader.bind()
+        color_shader.set_uniform_mat4("m_projection", projection_matrix)
+    }
+
+    draw_indexed :: (ref Self, vertex_array: &VertexArray) {
+        vertex_array.bind()
+        vertex_array.index_buffer.bind()
+        glDrawElements(GL_TRIANGLES, vertex_array.index_buffer.count, GL_UNSIGNED_INT, null)
+        glBindVertexArray(0)
+    }
+
+    draw_quad :: (ref Self, pos: vec3, size: vec3, angle: float, line_thickness: float, color: vec3 = vec3(1, 1, 1)) {
+        offset := size * 0.5f - vec3(line_thickness, line_thickness) * 0.5f
+
+        sin_a := sinf(-angle)
+        cos_a := cosf(-angle)
+
+        offset_x := vec3(cos_a, -sin_a) * offset.x
+        offset_y := vec3(sin_a, cos_a) * offset.y
+
+        self.fill_quad(pos - offset_x, vec3(line_thickness, size.y, 0), angle, color, Origin.Center)
+        self.fill_quad(pos + offset_x, vec3(line_thickness, size.y, 0), angle, color, Origin.Center)
+        self.fill_quad(pos - offset_y, vec3(size.x, line_thickness, 0), angle, color, Origin.Center)
+        self.fill_quad(pos + offset_y, vec3(size.x, line_thickness, 0), angle, color, Origin.Center)
+    }
+
+    fill_quad :: (ref Self, pos: vec3, size: vec3, angle: float, color: vec3 = vec3(1, 1, 1), origin: Origin = Origin.Center) {
+        color_shader.bind()
+        model_matrix := {
+            translation := mat4.from_translation(pos)
+            rotation    := mat4.from_rotation_z(angle)
+            scale       := mat4.from_scale(size)
+            translation * rotation * scale
+        }
+        color_shader.set_uniform_mat4("m_model", model_matrix)
+        color_shader.set_uniform_vec3("color", color)
+
+        draw_indexed(filled_quad_va)
+    }
+}

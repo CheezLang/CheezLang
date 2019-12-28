@@ -1,4 +1,5 @@
 use import std.string
+use import std.math
 mem :: import std.mem.allocator
 fmt :: import std.fmt
 io  :: import std.io
@@ -12,12 +13,11 @@ use import opengl_utils
 use import shader
 use import math
 use import matrix
+use import renderer
+use import opengl_buffers
 
 Test :: struct {
     engine : &ShmupEngine = null
-    vbo : u32 = 0
-    vao : u32 = 0
-    shader_program : &Shader = null
 
     color := vec3(0, 1, 0)
     alpha := 0.5f
@@ -28,81 +28,53 @@ Test :: struct {
     angle  := 0.0f
 
     model_matrix      := mat4.id()
+
+    quad_pos  := vec3(0, 0, 0)
+    quad_size := vec3(1, 1, 0)
 }
 
 impl ShmupCallbacks for Test {
     init :: (ref Self, engine: ref ShmupEngine) -> bool {
         self.engine = &engine
 
-        gl_check_errors()
-
-        GL(glGenVertexArrays(1, &vao))
-        GL(glGenBuffers(1, &vbo))
-
-        vertices := [
-            -0.5f, -0.5f, 0.0f
-             0.5f, -0.5f, 0.0f
-             0.5f,  0.5f, 0.0f
-            -0.5f, -0.5f, 0.0f
-             0.5f,  0.5f, 0.0f
-            -0.5f,  0.5f, 0.0f
-        ]
-
-        GL(glBindVertexArray(vao))
-        GL(glBindBuffer(GL_ARRAY_BUFFER, vbo))
-        GL(glBufferData(GL_ARRAY_BUFFER, @sizeof(f32) * vertices.length, vertices.data, GL_STATIC_DRAW))
-
-        GL(glEnableVertexAttribArray(0))
-        GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * @sizeof(f32), null))
-        GL(glBindVertexArray(0))
-        GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
-
-        match Shader.from_file("../data/test_shader.shader") {
-            Ok($shader) -> {
-                shader_program = mem.alloc(Shader)
-                <<shader_program = shader
-            }
-
-            Err($msg) -> {
-                io.println(msg)
-                return false
-            }
-        }
-
         return true
     }
 
     update :: (ref Self) {
         ImGui.Begin("Test")
+        ImGui.InputFloat3("quad pos",  &quad_pos.x)
+        ImGui.InputFloat3("quad siez", &quad_size.x)
+        ImGui.Separator()
         ImGui.InputFloat3("Position", &offset.x)
-        ImGui.InputFloat("Angle", &angle, 0.05, 0.2)
+        ImGui.InputFloat("Angle", &angle, 1, 5)
         ImGui.InputFloat("Size", &scale, 0.1, 0.5)
         ImGui.ColorEdit3("Color", &color.x)
-        ImGui.InputScalar("Count", ImGui.ImGuiDataType_.S64, cast &count)
+
+        step      := 1
+        step_fast := 10
+        ImGui.InputScalar("Count", ImGui.ImGuiDataType_.S64, cast &count, &step, &step_fast)
         ImGui.End()
 
-        shader_program.bind()
-        shader_program.set_uniform_mat4("m_projection", engine.projection_matrix)
-        shader_program.set_uniform_vec3("color", color)
+        engine.edit_property(PropertyEdit.EditFloat((&offset.x, "Offset X", 0.5)))
+        engine.edit_property(PropertyEdit.EditFloat((&offset.y, "Offset Y", 0.5)))
+
+    }
+
+    render :: (ref Self, renderer: ref Renderer) {
+        // set aspect_ratio_axis so that the game world always fits on screen
+        if (float(engine.viewport_size.x) / float(engine.viewport_size.y)) > (engine.world_size.x / engine.world_size.y) {
+            engine.aspect_ratio_axis = 1
+        } else {
+            engine.aspect_ratio_axis = 0
+        }
 
         for(inclusive=true) y : 0 .. count {
             for(inclusive=true) x : 0 .. count {
-                {
-                    translation := mat4.from_translation(vec3i(x - count / 2, y - count / 2, 0).change_type(f32))
-                    rotation    := mat4.from_rotation_z(angle / 360.0f * (3.1415f * 2.0f))
-                    scale       := mat4.from_scale(scale)
+                rotation := mat4.from_rotation_z(angle / 360.0f * (3.1415f * 2.0f))
 
-                    model_matrix = translation * rotation * scale
-                }
-
-                shader_program.set_uniform_mat4("m_model", model_matrix)
-
-                GL(glBindVertexArray(vao))
-                GL(glDrawArrays(GL_TRIANGLES, 0, 6))
-                GL(glBindVertexArray(0))
+                renderer.draw_quad(vec3i(x - count / 2, y - count / 2, 0).change_type(f32) + offset, vec3(scale, scale, 0), angle / 360.0f * (3.1415f * 2.0f), 0.1, color)
             }
         }
-
     }
 }
 

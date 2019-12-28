@@ -27,7 +27,7 @@ impl(T: type) Matrix4[T] {
         ])
     }
 
-    from_scale :: (s: T) -> Self {
+    from_scales :: (s: T) -> Self {
         return Self([
             s, 0, 0, 0
             0, s, 0, 0
@@ -36,14 +36,23 @@ impl(T: type) Matrix4[T] {
         ])
     }
 
+    from_scale :: (s: Vector3[T]) -> Self {
+        return Self([
+            s.x, 0, 0, 0
+            0, s.y, 0, 0
+            0, 0, s.z, 0
+            0, 0, 0, 1
+        ])
+    }
+
     from_rotation_z :: (angle: T) -> Self {
         c := cosf(angle)
         s := sinf(angle)
         return Self([
-             c, s, 0, 0
-            -s, c, 0, 0
-             0, 0, 1, 0
-             0, 0, 0, 1
+            c,-s, 0, 0
+            s, c, 0, 0
+            0, 0, 1, 0
+            0, 0, 0, 1
         ])
     }
 

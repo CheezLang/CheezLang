@@ -13,12 +13,14 @@ ImGui :: import imgui.imgui_binding
 
 use import opengl_utils
 use import math
+use import renderer
 
 #export_scope
 
 ShmupCallbacks :: trait {
-    init :: (ref Self, ref ShmupEngine) -> bool;
+    init :: (ref Self, engine: ref ShmupEngine) -> bool;
     update :: (ref Self);
+    render :: (ref Self, renderer: ref Renderer);
 }
 
 EnabledEditors :: struct {
@@ -27,20 +29,25 @@ EnabledEditors :: struct {
     demo_window := true
 }
 
+PropertyEdit :: enum #copy {
+    EditFloat : (ptr: &float, name: c_string, step: float)
+}
+
 ShmupEngine :: struct {
     //
 
     // game stuff
     callbacks           : ShmupCallbacks
     projection_matrix   := mat4.id()
-    camera_size         := 10.0f
     aspect_ratio_axis   := 1.0f
+    world_size          := vec3(10, 10, 0)
 
     // editor stuff
     enabled_editors     : EnabledEditors = default
     current_fps         := 0
     current_frame_time  := 0.0
     clear_color         := vec4(0, 0, 0, 1)
+    properties_to_edit  := Array[PropertyEdit].create()
 
     // window stuff
     glfw_window         : &GLFWwindow = null
@@ -53,6 +60,9 @@ ShmupEngine :: struct {
     viewport_frame_buffer   : u32 = 0
     viewport_render_texture : u32 = 0
     viewport_depth_texture  : u32 = 0
+
+    // rendering stuff
+    renderer : &Renderer = null
 }
 
 impl ShmupEngine {
@@ -135,6 +145,9 @@ impl ShmupEngine {
             io.println("[ERROR] Failed to create frame buffer for viewport")
             return
         }
+
+        // setup renderer
+        renderer = Renderer.create()
 
         render_loop()
     }
@@ -265,7 +278,13 @@ impl ShmupEngine {
                 glClear(GL_COLOR_BUFFER_BIT)
 
                 self.update_projection_matrix(viewport_size.change_type(f32))
+                
+                properties_to_edit.clear()
                 callbacks.update()
+
+                renderer.begin_scene(projection_matrix)
+                callbacks.render(<<renderer)
+                renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.5)
                 glBindFramebuffer(GL_FRAMEBUFFER, 0)
             }
 
@@ -358,11 +377,26 @@ impl ShmupEngine {
 
                 // camera settings
                 ImGui.Text("Camera Settings")
-                ImGui.InputFloat("Camera Size", &camera_size, 0.1, 1)
+                ImGui.InputFloat2("World Size", &world_size.x)
                 ImGui.SliderFloat("Camera Aspect Ratio Axis", &aspect_ratio_axis, 0, 1)
             }
             ImGui.End()
         }
+
+        if ImGui.Begin("Values") {
+            for p : properties_to_edit {
+                match p {
+                    PropertyEdit.EditFloat($e) -> {
+                        ImGui.InputFloat(e.name, e.ptr, e.step, e.step * 5)
+                    }
+                }
+            }
+        }
+        ImGui.End()
+    }
+
+    edit_property :: (ref Self, edit: PropertyEdit) {
+        properties_to_edit.add(edit)
     }
 }
 
@@ -370,10 +404,10 @@ impl ShmupEngine {
     update_projection_matrix :: (ref Self, viewport_size: vec2) {
         size    := viewport_size.change_type(f32)
 
-        height1 := camera_size
+        height1 := world_size.y
         width1  := height1 * size.x / size.y
 
-        width2  := camera_size
+        width2  := world_size.x
         height2 := width2 * size.y / size.x
 
         width   := aspect_ratio_axis * width1  + (1 - aspect_ratio_axis) * width2
