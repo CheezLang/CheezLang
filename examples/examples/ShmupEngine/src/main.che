@@ -1,10 +1,11 @@
 use import std.string
 use import std.array
 use import std.math
-mem :: import std.mem.allocator
-fmt :: import std.fmt
-io  :: import std.io
-C   :: import std.c
+mem  :: import std.mem.allocator
+fmt  :: import std.fmt
+io   :: import std.io
+C    :: import std.c
+util :: import std.util
 
 use import opengl.glad_binding
 ImGui :: import imgui.imgui_binding
@@ -22,8 +23,9 @@ use import input
 max_entities :: 1024
 
 Behaviour :: trait {
-    update :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, dt: float, input: ref Input);
-    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer);
+    update          :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, dt: float, input: ref Input);
+    render          :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer);
+    get_type_info   :: (ref Self) -> &TypeInfo;
 }
 
 Entity :: struct {
@@ -77,9 +79,14 @@ impl Behaviour for BasicMoveBehaviour {
     }
 
     render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
+    
+    get_type_info   :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
+    }
 }
 
 QuadBehaviour :: struct {
+    #color
     color : vec3
 }
 
@@ -88,7 +95,10 @@ impl Behaviour for QuadBehaviour {
         engine.edit_property(PropertyEdit.EditColor3(&color, "Color"))
     }
     render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
-        renderer.fill_quad(entity.position, entity.size, entity.angle, color)
+        renderer.fill_quad(entity.position, entity.size, entity.angle / 360.0f * (3.1415f * 2.0f), color)
+    }
+    get_type_info   :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
     }
 }
 
@@ -164,37 +174,28 @@ impl ShmupCallbacks for Test {
         entities.reserve(max_entities)
 
         e := self.new_entity()
-
         e.add_behaviour(BasicMoveBehaviour(vec3(1, 0, 0), 1.0f))
         e.add_behaviour(QuadBehaviour(vec3(1, 1, 1)))
+
+        e2 := self.new_entity()
+        e2.position.x = -5
+        e2.add_behaviour(QuadBehaviour(vec3(0, 0, 1)))
 
         return true
     }
 
     update :: (ref Self, dt: float, input: ref Input) {
         for i : first_entity .. last_entity {
+            if !entities[i].dead {
+                render_entity_inspector(entities[i])
+            }
+        }
+
+        for i : first_entity .. last_entity {
             if entities[i].active {
                 entities[i].update(<<engine, dt, input)
             }
         }
-
-        ImGui.Begin("Test")
-        ImGui.InputFloat3("quad pos",  &quad_pos.x)
-        ImGui.InputFloat3("quad siez", &quad_size.x)
-        ImGui.Separator()
-        ImGui.InputFloat3("Position", &offset.x)
-        ImGui.InputFloat("Angle", &angle, 1, 5)
-        ImGui.InputFloat("Size", &scale, 0.1, 0.5)
-        ImGui.ColorEdit3("Color", &color.x)
-
-        step      := 1
-        step_fast := 10
-        ImGui.InputScalar("Count", ImGui.ImGuiDataType_.S64, cast &count, &step, &step_fast)
-        ImGui.End()
-
-        // engine.edit_property(PropertyEdit.EditFloat((&offset.x, "Offset X", 0.5)))
-        // engine.edit_property(PropertyEdit.EditFloat((&offset.y, "Offset Y", 0.5)))
-        // engine.edit_property(PropertyEdit.EditFloat((&speed, "Speed", 0.1)))
 
         if input.key_down(glfw.GLFW_KEY_LEFT) {
             quad_pos += vec3(-1, 0) * speed * dt
@@ -212,8 +213,81 @@ impl ShmupCallbacks for Test {
         // if input.key_pressed(glfw.GLFW_KEY_SPACE)  then io.print("v")
         // if input.key_down(glfw.GLFW_KEY_SPACE)     then io.print(".")
         // if input.key_released(glfw.GLFW_KEY_SPACE) then io.println("^")
+    }
 
+    render_entity_inspector :: (ref Self, entity: ref Entity) {
+        ImGui.PushIDInt(cast entity.id)
+        if ImGui.Begin(if entity.id == 0 then "Inspector1" else "Inspector2") {
+            id_str := fmt.format_any(entity.id)
+            ImGui.LabelText("ID", id_str.as_cstring())
 
+            ImGui.Separator()
+
+            // transform
+            ImGui.InputFloat3("Position", &entity.position.x)
+            ImGui.InputFloat3("Size", &entity.size.x)
+            ImGui.InputFloat("angle", &entity.angle, 1, 5)
+
+            ImGui.Separator()
+
+            for b : entity.behaviours {
+                render_behaviour_inspector(b)
+                ImGui.Separator()
+            }
+
+            if ImGui.SmallButton("Add Behaviour") {
+                io.println("adding behaviour")
+            }
+        }
+        ImGui.End()
+        ImGui.PopID()
+    }
+
+    render_behaviour_inspector :: (ref Self, b: Behaviour) {
+        Trait :: struct {
+            v_table : &void
+            value   : &void
+        }
+        t := <<cast(&Trait)&b
+        ti := b.get_type_info()
+
+        // name of behaviour
+        name := String.with_capacity(ti.kind.Struct.name.bytes.length + 1)
+        name.append_string(ti.kind.Struct.name)
+
+        ImGui.Text(name.as_cstring())
+
+        for(by_ref=true) m : ti.kind.Struct.members {
+            imgui_input_property(util.pointer_add(t.value, m.offset), &m)
+        }
+    }
+
+    imgui_input_property :: (ref Self, ptr: &void, m: &TypeInfoStructMember) {
+        name := String.with_capacity(m.name.bytes.length + 1)
+        name.append_string(m.name)
+
+        match m.typ.kind {
+            TypeInfoKind.Float -> {
+                match m.typ.size {
+                    4 -> {
+                        ImGui.InputFloat(name.as_cstring(), cast ptr)
+                    }
+                    8 -> {
+                        f := <<cast(&float)ptr
+                        ImGui.InputFloat(name.as_cstring(), &f)
+                        <<cast(&float)ptr = f
+                    }
+                }
+            }
+
+            _ if m.typ == @type_info(vec3) -> {
+                if m.has_attribute("color") {
+                    ImGui.ColorEdit3(name.as_cstring(), cast ptr)
+                } else {
+                    ImGui.InputFloat3(name.as_cstring(), cast ptr)
+                }
+            }
+        }
     }
 
     render :: (ref Self, renderer: ref Renderer) {

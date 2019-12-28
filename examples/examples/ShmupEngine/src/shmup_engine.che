@@ -364,7 +364,7 @@ impl ShmupEngine {
                 for layer : layer_stack {
                     layer.callbacks.render(<<renderer)
                 }
-                renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.5)
+                renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
                 glBindFramebuffer(GL_FRAMEBUFFER, 0)
             }
 
