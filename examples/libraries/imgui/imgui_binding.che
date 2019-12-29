@@ -8,6 +8,19 @@ use import glfw.glfw3
 
 #export_scope
 
+Color32 :: (r: u8, g: u8, b: u8, a: u8 = 255) -> u32 {
+    r_shift :: 0
+    g_shift :: 8
+    b_shift :: 16
+    a_shift :: 24
+    return @bin_or(
+        @bin_lsl(u32(r), r_shift),
+        @bin_lsl(u32(g), g_shift),
+        @bin_lsl(u32(b), b_shift),
+        @bin_lsl(u32(a), a_shift)
+    )
+}
+
 __UNKNOWN_16 :: struct #copy {
     _: [16]u8 = default
 }
@@ -3222,12 +3235,12 @@ Begin :: (_name: &char8, _p_open: &bool = null, _flags: ImGuiWindowFlags = 0) ->
 End :: () {
     __c__End()
 }
-BeginChild :: (_str_id: &char8, _size: ref ImVec2, _border: bool = false, _flags: ImGuiWindowFlags = 0) -> bool {
+BeginChildStr :: (_str_id: &char8, _size: ref ImVec2, _border: bool = false, _flags: ImGuiWindowFlags = 0) -> bool {
     result : bool = default
     __c__BeginChild(&result, _str_id, &_size, _border, _flags)
     return result
 }
-BeginChild_2 :: (_id: ImGuiID, _size: ref ImVec2, _border: bool = false, _flags: ImGuiWindowFlags = 0) -> bool {
+BeginChildInt :: (_id: ImGuiID, _size: ref ImVec2, _border: bool = false, _flags: ImGuiWindowFlags = 0) -> bool {
     result : bool = default
     __c__BeginChild_2(&result, _id, &_size, _border, _flags)
     return result
