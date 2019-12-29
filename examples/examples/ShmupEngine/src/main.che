@@ -22,7 +22,7 @@ use import input
 
 max_entities :: 1024
 
-Behaviour :: trait {
+Component :: trait {
     update          :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, dt: float, input: ref Input);
     render          :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer);
     get_type_info   :: (ref Self) -> &TypeInfo;
@@ -35,46 +35,46 @@ Entity :: struct {
     position    : vec3
     size        : vec3
     angle       : float
-    behaviours  : Array[Behaviour]
+    components  : Array[Component]
 }
 
 impl Entity {
     update :: (ref Self, engine: ref ShmupEngine, dt: float, input: ref Input) {
-        for b : behaviours {
+        for b : components {
             b.update(self, engine, dt, input)
         }
     }
 
     render :: (ref Self, engine: ref ShmupEngine, renderer: ref Renderer) {
-        for b : behaviours {
+        for b : components {
             b.render(self, engine, renderer)
         }
     }
 
-    add_behaviour :: (ref Self, b: $T) {
+    add_component :: (ref Self, b: $T) {
         ptr := mem.alloc(T)
         <<ptr = b
-        behaviours.add(<<ptr)
+        components.add(<<ptr)
+    }
+
+    add_component2 :: (ref Self, b: Component) {
+        components.add(b)
     }
 
     free :: (ref Self) {
-        for b : behaviours {
+        for b : components {
             mem.free(&b)
         }
     }
 }
 
-BasicMoveBehaviour :: struct {
+BasicMoveComponent :: struct {
     velocity : vec3
     speed    : float
 }
 
-impl Behaviour for BasicMoveBehaviour {
+impl Component for BasicMoveComponent {
     update :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, dt: float, input: ref Input) {
-        engine.edit_property(PropertyEdit.EditVec3(&entity.position, "pos"))
-        engine.edit_property(PropertyEdit.EditVec3(&velocity, "vol"))
-        engine.edit_property(PropertyEdit.EditFloat(&speed, "speed", 0.1))
-
         entity.position += velocity * speed * dt
     }
 
@@ -85,14 +85,40 @@ impl Behaviour for BasicMoveBehaviour {
     }
 }
 
-QuadBehaviour :: struct {
+PlayerControlComponent :: struct {
+    speed : float
+}
+
+impl Component for PlayerControlComponent {
+    update :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, dt: float, input: ref Input) {
+        if input.key_down(glfw.GLFW_KEY_LEFT) {
+            entity.position += vec3(-1, 0) * speed * dt
+        }
+        if input.key_down(glfw.GLFW_KEY_RIGHT) {
+            entity.position += vec3(1, 0) * speed * dt
+        }
+        if input.key_down(glfw.GLFW_KEY_UP) {
+            entity.position += vec3(0, 1) * speed * dt
+        }
+        if input.key_down(glfw.GLFW_KEY_DOWN) {
+            entity.position += vec3(0, -1) * speed * dt
+        }
+    }
+
+    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
+    
+    get_type_info   :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
+    }
+}
+
+QuadComponent :: struct {
     #color
     color : vec3
 }
 
-impl Behaviour for QuadBehaviour {
+impl Component for QuadComponent {
     update :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, dt: float, input: ref Input) {
-        engine.edit_property(PropertyEdit.EditColor3(&color, "Color"))
     }
     render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
         renderer.fill_quad(entity.position, entity.size, entity.angle / 360.0f * (3.1415f * 2.0f), color)
@@ -100,6 +126,11 @@ impl Behaviour for QuadBehaviour {
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
     }
+}
+
+ComponentInfo :: struct {
+    type_info   : &TypeInfo
+    value       : &void
 }
 
 Test :: struct {
@@ -123,6 +154,11 @@ Test :: struct {
     next_entity     := 0
     first_entity    := 0
     last_entity     := 0
+
+    current_entity_index        : i32     = 0
+    current_entity              : &Entity = null
+    current_selected_component  : i32     = 0
+    component_infos             := Array[ComponentInfo].create()
 }
 
 impl Test {
@@ -150,7 +186,7 @@ impl Test {
                 position    = vec3()
                 size        = vec3(1, 1, 1)
                 angle       = 0
-                behaviours  = Array[Behaviour].create()
+                components  = Array[Component].create()
             ))
         }
         entity := &entities[next_entity]
@@ -158,7 +194,7 @@ impl Test {
         entity.position = vec3()
         entity.size     = vec3(1, 1, 1)
         entity.angle    = 0
-        entity.behaviours.clear()
+        entity.components.clear()
 
         while next_entity < entities.get_length() and entities[next_entity].active {
             next_entity += 1
@@ -166,58 +202,43 @@ impl Test {
 
         return entity
     }
-}
 
-impl ShmupCallbacks for Test {
-    init :: (ref Self, engine: ref ShmupEngine) -> bool {
-        self.engine = &engine
-        entities.reserve(max_entities)
-
-        e := self.new_entity()
-        e.add_behaviour(BasicMoveBehaviour(vec3(1, 0, 0), 1.0f))
-        e.add_behaviour(QuadBehaviour(vec3(1, 1, 1)))
-
-        e2 := self.new_entity()
-        e2.position.x = -5
-        e2.add_behaviour(QuadBehaviour(vec3(0, 0, 1)))
-
-        return true
+    register_component_info :: (ref Self, default_value: $T) {
+        ptr := mem.alloc(T)
+        <<ptr = default_value
+        component_infos.add(ComponentInfo(@type_info(T), ptr))
     }
 
-    update :: (ref Self, dt: float, input: ref Input) {
-        for i : first_entity .. last_entity {
-            if !entities[i].dead {
-                render_entity_inspector(entities[i])
+    render_entity_list :: (ref Self) {
+        ImGui.Begin("Inspector")
+        ImGui.End()
+
+        if current_entity_index >= 0 and current_entity_index < i32(entities.get_length()) {
+            current_entity = &entities.access(current_entity_index)
+            self.render_entity_inspector(<<current_entity)
+        }
+
+        // render list of entities
+        if ImGui.Begin("Hierachy") {
+            for i : first_entity .. last_entity {
+                e := ref entities[i]
+                if !e.dead {
+                    ImGui.PushIDInt(i32(i))
+                    name := fmt.format("Entity {}", [e.id])
+
+                    list_entry_size := ImGui.ImVec2(0, 0)
+                    if ImGui.Selectable(name.as_cstring(), i32(i) == current_entity_index, 0, list_entry_size) {
+                        current_entity_index = i32(i)
+                    }
+                    ImGui.PopID()
+                }
             }
         }
-
-        for i : first_entity .. last_entity {
-            if entities[i].active {
-                entities[i].update(<<engine, dt, input)
-            }
-        }
-
-        if input.key_down(glfw.GLFW_KEY_LEFT) {
-            quad_pos += vec3(-1, 0) * speed * dt
-        }
-        if input.key_down(glfw.GLFW_KEY_RIGHT) {
-            quad_pos += vec3(1, 0) * speed * dt
-        }
-        if input.key_down(glfw.GLFW_KEY_UP) {
-            quad_pos += vec3(0, 1) * speed * dt
-        }
-        if input.key_down(glfw.GLFW_KEY_DOWN) {
-            quad_pos += vec3(0, -1) * speed * dt
-        }
-
-        // if input.key_pressed(glfw.GLFW_KEY_SPACE)  then io.print("v")
-        // if input.key_down(glfw.GLFW_KEY_SPACE)     then io.print(".")
-        // if input.key_released(glfw.GLFW_KEY_SPACE) then io.println("^")
+        ImGui.End()
     }
 
     render_entity_inspector :: (ref Self, entity: ref Entity) {
-        ImGui.PushIDInt(cast entity.id)
-        if ImGui.Begin(if entity.id == 0 then "Inspector1" else "Inspector2") {
+        if ImGui.Begin("Inspector") {
             id_str := fmt.format_any(entity.id)
             ImGui.LabelText("ID", id_str.as_cstring())
 
@@ -230,20 +251,124 @@ impl ShmupCallbacks for Test {
 
             ImGui.Separator()
 
-            for b : entity.behaviours {
-                render_behaviour_inspector(b)
+            // render component ui and remove component
+            while i := 0, i < entity.components.get_length() {
+                index := i
+
+                ImGui.PushIDInt(i32(i))
+                b := entity.components[i]
+                if !render_component_inspector(b) {
+                    ImGui.OpenPopup("Delete Component")
+                } else {
+                    i += 1
+                }
+
+                if ImGui.BeginPopupModal("Delete Component") {
+                    ImGui.Text("Are you sure you want to remove this component?")
+                    ImGui.Separator()
+                    button_size := ImGui.ImVec2(120, 0)
+                    if ImGui.Button("Yes", button_size) {
+                        ImGui.CloseCurrentPopup()
+
+                        // remove current component
+                        // move all following components one slot down
+                        for k : index .. entity.components.get_length() - 1 {
+                            io.println("ok")
+                            entity.components[k] = entity.components[k + 1]
+                        }
+                        // pop last component which is now in the second last slot
+                        entity.components.pop()
+                    }
+                    ImGui.SameLine()
+                    if ImGui.Button("Cancel", button_size) {
+                        ImGui.CloseCurrentPopup()
+                    }
+                    ImGui.EndPopup()
+                }
+                ImGui.PopID()
                 ImGui.Separator()
             }
 
-            if ImGui.SmallButton("Add Behaviour") {
-                io.println("adding behaviour")
+            { // add component
+                button_size := ImGui.ImVec2(0, 0)
+                if ImGui.Button("Add Component", button_size) {
+                    ImGui.OpenPopup("Add Component")
+                }
+
+                popup_size := ImGui.ImVec2(500, 440)
+                ImGui.SetNextWindowSize(popup_size, ImGui.ImGuiCond_.FirstUseEver)
+                if ImGui.BeginPopupModal("Add Component") {
+                    { // list of components
+                        list_size := ImGui.ImVec2(150, 0)
+                        list_entry_size := ImGui.ImVec2(0, 0)
+                        ImGui.BeginChildStr("component list", list_size, true)
+                        for bi : component_infos {
+                            ImGui.PushIDInt(i32(it_index))
+                            name := String.from_string(bi.type_info.kind.Struct.name)
+
+                            if ImGui.Selectable(name.as_cstring(), i32(it_index) == current_selected_component, 0, list_entry_size) {
+                                current_selected_component = i32(it_index)
+                            }
+                            ImGui.PopID()
+                        }
+                        ImGui.EndChild()
+                    }
+
+                    ImGui.SameLine()
+
+                    ImGui.BeginGroup()
+                    { // info about selected component
+                        info_size := ImGui.ImVec2(0, -ImGui.GetFrameHeightWithSpacing())
+                        ImGui.BeginChildStr("component info", info_size, true)
+
+                        if current_selected_component >= 0 and current_selected_component < i32(component_infos.get_length()) {
+                            bi := ref component_infos.access(current_selected_component)
+                            name := String.from_string(bi.type_info.kind.Struct.name)
+                            ImGui.Text(name.as_cstring())
+                            ImGui.Separator()
+
+                            for(by_ref=true) m : bi.type_info.kind.Struct.members {
+                                imgui_input_property(util.pointer_add(bi.value, m.offset), &m)
+                            }
+                        }
+
+                        ImGui.EndChild()
+                    }
+
+                    { // ok - cancel - buttons
+                        button_size := ImGui.ImVec2(120, 0)
+                        if ImGui.Button("Ok", button_size) {
+                            if current_selected_component >= 0 and current_selected_component < i32(component_infos.get_length()) {
+                                // add component
+                                bi := ref component_infos.access(current_selected_component)
+                                ptr := cast(&void) mem.alloc_raw(u8, cast bi.type_info.size)
+                                C.memcpy(ptr, bi.value, cast bi.type_info.size)
+
+                                Trait :: struct {
+                                    v_table : &void
+                                    value   : &void
+                                }
+                                b := Trait(bi.type_info.kind.Struct.get_trait_impl(Component).vtable, ptr)
+
+                                entity.add_component2(<<cast(&Component)&b)
+                            }
+
+                            ImGui.CloseCurrentPopup()
+                        }
+                        ImGui.SameLine()
+                        if ImGui.Button("Cancel", button_size) {
+                            ImGui.CloseCurrentPopup()
+                        }
+                    }
+                    ImGui.EndGroup()
+                    ImGui.EndPopup()
+                }
             }
         }
         ImGui.End()
-        ImGui.PopID()
     }
 
-    render_behaviour_inspector :: (ref Self, b: Behaviour) {
+    render_component_inspector :: (ref Self, b: Component) -> bool {
         Trait :: struct {
             v_table : &void
             value   : &void
@@ -251,15 +376,23 @@ impl ShmupCallbacks for Test {
         t := <<cast(&Trait)&b
         ti := b.get_type_info()
 
-        // name of behaviour
+        // name of component
         name := String.with_capacity(ti.kind.Struct.name.bytes.length + 1)
         name.append_string(ti.kind.Struct.name)
 
-        ImGui.Text(name.as_cstring())
-
-        for(by_ref=true) m : ti.kind.Struct.members {
-            imgui_input_property(util.pointer_add(t.value, m.offset), &m)
+        open := true
+        ImGui.SetNextItemOpen(true, ImGui.ImGuiCond_.Once)
+        if ImGui.CollapsingHeader_2(name.as_cstring(), &open) {
+            for(by_ref=true) m : ti.kind.Struct.members {
+                imgui_input_property(util.pointer_add(t.value, m.offset), &m)
+            }
         }
+
+        if !open {
+            return false
+        }
+
+        return true
     }
 
     imgui_input_property :: (ref Self, ptr: &void, m: &TypeInfoStructMember) {
@@ -288,6 +421,54 @@ impl ShmupCallbacks for Test {
                 }
             }
         }
+    }
+}
+
+impl ShmupCallbacks for Test {
+    init :: (ref Self, engine: ref ShmupEngine) -> bool {
+        self.engine = &engine
+        entities.reserve(max_entities)
+
+        e := self.new_entity()
+        e.add_component(BasicMoveComponent(vec3(1, 0, 0), 1.0f))
+        e.add_component(QuadComponent(vec3(1, 1, 1)))
+
+        e2 := self.new_entity()
+        e2.position.x = -5
+        e2.add_component(QuadComponent(vec3(0, 0, 1)))
+
+        self.register_component_info(BasicMoveComponent(vec3(), 0))
+        self.register_component_info(QuadComponent(vec3(1, 1, 1)))
+        self.register_component_info(PlayerControlComponent(1))
+
+        return true
+    }
+
+    update :: (ref Self, dt: float, input: ref Input) {
+        self.render_entity_list()
+
+        for i : first_entity .. last_entity {
+            if entities[i].active {
+                entities[i].update(<<engine, dt, input)
+            }
+        }
+
+        if input.key_down(glfw.GLFW_KEY_LEFT) {
+            quad_pos += vec3(-1, 0) * speed * dt
+        }
+        if input.key_down(glfw.GLFW_KEY_RIGHT) {
+            quad_pos += vec3(1, 0) * speed * dt
+        }
+        if input.key_down(glfw.GLFW_KEY_UP) {
+            quad_pos += vec3(0, 1) * speed * dt
+        }
+        if input.key_down(glfw.GLFW_KEY_DOWN) {
+            quad_pos += vec3(0, -1) * speed * dt
+        }
+
+        // if input.key_pressed(glfw.GLFW_KEY_SPACE)  then io.print("v")
+        // if input.key_down(glfw.GLFW_KEY_SPACE)     then io.print(".")
+        // if input.key_released(glfw.GLFW_KEY_SPACE) then io.println("^")
     }
 
     render :: (ref Self, renderer: ref Renderer) {
