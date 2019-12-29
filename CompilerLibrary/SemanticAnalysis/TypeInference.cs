@@ -1535,6 +1535,9 @@ namespace Cheez
             var to = cast.Type;
             var from = cast.SubExpression.Type;
 
+            if (to == from)
+                return cast.SubExpression;
+
             // check for trait cast
             if (to is TraitType t)
             {
@@ -5018,6 +5021,11 @@ namespace Cheez
                 return expr;
 
             var from = expr.Type;
+
+            // if (to is ReferenceType rto)
+            //     to = rto.TargetType;
+            // if (from is ReferenceType rfrom)
+            //     from = rfrom.TargetType;
 
             if (from == to)
                 return expr;
