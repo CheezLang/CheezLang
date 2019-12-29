@@ -284,7 +284,7 @@ namespace Cheez
         {
             AstFuncExpr instance = null;
 
-            if (func.Declaration.ImplBlock != null && func.Declaration.ImplBlock.Trait != null)
+            if (func.Declaration.TraitFunction != null && func.Declaration.ImplBlock != null && func.Declaration.ImplBlock.Trait != null)
             {
                 return InstantiatePolyImplFunction(func, polyTypes, location);
             }
