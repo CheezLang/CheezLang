@@ -178,6 +178,9 @@ TypeInfoKind :: enum #copy {
     Void                         = 10
     String                       = 11
     Any                          = 12
+    Array                        = 13 // @todo
+    Function                     = 14 // @todo
+    Tuple                        = 15 // @todo
 }
 
 TypeInfoTrait :: struct #copy {

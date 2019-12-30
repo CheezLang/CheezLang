@@ -946,6 +946,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     VoidType _      => 10,
                     StringType _    => 11,
                     AnyType _       => 12,
+                    ArrayType _     => 13,
+                    FunctionType _  => 14,
+                    TupleType _     => 15,
                     _               => throw new NotImplementedException()
                 };
                 var kindPtr = builder.CreateStructGEP(global, 2, "ti.kind.ptr");
@@ -961,6 +964,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     case StringType _:
                     case CharType _:
                     case AnyType _:
+                    case ArrayType _:
+                    case FunctionType _:
+                    case TupleType _:
                         break;
 
                     case IntType i:
