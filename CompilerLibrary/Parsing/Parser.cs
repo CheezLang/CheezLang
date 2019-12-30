@@ -480,7 +480,7 @@ namespace Cheez.Parsing
             }
 
             // variable declaration without initializer
-            if (CheckToken(TokenType.NewLine))
+            if (CheckTokens(TokenType.NewLine, TokenType.EOF))
             {
                 return new AstVariableDecl(expr, typeExpr, initializer, directives, Location: new Location(expr.Beginning, end));
             }
