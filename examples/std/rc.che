@@ -1,34 +1,64 @@
+mem :: import std.mem.allocator
+io  :: import std.io
+
+#export_scope
+
+RcData :: struct(T: type) {
+    count : int
+    value : T
+}
+
 Rc :: struct(T: type) {
-    count   : &int
-    data    : &T
+    data : &RcData[T]
 }
 
 impl(T: type) Drop for Rc[T] {
     drop :: (ref Self) {
-        @assert(<<count > 0)
-        <<count -= 1
-        if <<count == 0 {
+        if data == null {
+            return
+        }
+        @assert(data.count > 0)
+        data.count -= 1
+        if data.count == 0 {
             Memory.drop(<<data)
-            free(data)
+            mem.free(data)
         }
     }
 }
 
 impl(T: type) Rc[T] {
-    create :: (value: T) -> Rc[T] {
-        count := alloc(int)
-        data  := alloc(T)
-        <<count = 1
-        <<data = value
-        return Rc[T](count, data)
+    empty :: () -> Rc[T] {
+        return Rc[T](null)
+    }
+
+    new :: (value: T) -> Rc[T] {
+        data := mem.alloc(RcData[T])
+        <<data = RcData[T](1, value)
+        return Rc[T](data)
     }
 
     clone :: (ref Self) -> Rc[T] {
-        <<count += 1
-        return Rc[T](count, data)
+        data.count += 1
+        return Rc[T](data)
+    }
+
+    count :: (ref Self) -> int {
+        @assert(data != null)
+        return data.count
+    }
+
+    is_null :: (ref Self) -> bool {
+        return data == null
+    }
+
+    try_get :: (ref Self) -> Option[ref T] {
+        return if data == null
+            then None
+            else Some(data.value)
     }
 
     get :: (ref Self) -> ref T {
-        return <<data
+        @assert(data != null)
+        return data.value
     }
 }
