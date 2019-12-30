@@ -19,9 +19,10 @@ use import input
 #export_scope
 
 ShmupCallbacks :: trait {
-    init :: (ref Self, engine: ref ShmupEngine) -> bool;
-    update :: (ref Self, dt: float, input: ref Input);
-    render :: (ref Self, renderer: ref Renderer);
+    init         :: (ref Self, engine: ref ShmupEngine) -> bool;
+    update       :: (ref Self, dt: float, input: ref Input);
+    render       :: (ref Self, renderer: ref Renderer);
+    imgui_render :: (ref Self);
 }
 
 Layer :: struct {
@@ -295,96 +296,131 @@ impl ShmupEngine {
             }
 
             // start rendering
-            glClearColor(1, 0, 1, 1)
-            glClear(GL_COLOR_BUFFER_BIT)
-            imgui_begin_frame()
-
             if enabled_editors.editor {
-                create_dock_space()
+                frame_with_editor(delta_time)
+            } else {
+                frame_without_editor(delta_time)
             }
-
-            // set window properties of viewport
-            ImGui.Begin("Viewport", null, @bin_or(
-                ImGui.ImGuiWindowFlags_.NoScrollbar,
-                ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
-                ImGui.ImGuiWindowFlags_.NoCollapse
-            ))
-            { // calculate focused state
-                was_focused := viewport_is_focused
-                viewport_is_focused = ImGui.IsWindowFocused()
-                viewport_lost_focused = was_focused and !viewport_is_focused
-                // @todo: send focus event to layer_stack
-            }
-            ImGui.End()
-
-            // handle events and input
-            global_input.reset()
-            game_input.reset()
-            for layer : layer_stack do layer.input.reset()
-            glfwPollEvents()
-            if viewport_lost_focused {
-                // release all keys in all layers
-                game_input.release_all_keys()
-                for layer : layer_stack do layer.input.release_all_keys()
-            }
-
-            // render imgui gui
-            if enabled_editors.editor {
-                render_menu_bar()
-                render_editor()
-            }
-
-            { // get size of viewport window
-                ImGui.Begin("Viewport")
-                min := ImGui.GetWindowContentRegionMin()
-                max := ImGui.GetWindowContentRegionMax()
-                ImGui.End()
-                size := ImGui.ImVec2(max.x - min.x, max.y - min.y)
-                viewport_size = vec2i(int(size.x), int(size.y)).clamped(0, int.max)
-            }
-
-            // render game
-            {
-                size := viewport_size.change_type(i32)
-                GL(glBindFramebuffer(GL_FRAMEBUFFER, viewport_frame_buffer))
-                GL(glViewport(0, 0, size.x, size.y))
-
-                glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
-                glClear(GL_COLOR_BUFFER_BIT)
-
-                self.update_projection_matrix(viewport_size.change_type(f32))
-                
-                properties_to_edit.clear()
-
-                for layer : layer_stack {
-                    layer.callbacks.update(delta_time, <<layer.input)
-                }
-
-                renderer.begin_scene(projection_matrix)
-                for layer : layer_stack {
-                    layer.callbacks.render(<<renderer)
-                }
-                renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
-                glBindFramebuffer(GL_FRAMEBUFFER, 0)
-            }
-
-            { // draw viewport window
-                ImGui.Begin("Viewport")
-                if viewport_size.x > 0 and viewport_size.y > 0 {
-                    size    := ImGui.ImVec2(f32(viewport_size.x), f32(viewport_size.y))
-                    uv0     := ImGui.ImVec2(0, size.y / f32(viewport_size_max.y))
-                    uv1     := ImGui.ImVec2(size.x / f32(viewport_size_max.x), 0)
-                    tint    := ImGui.ImVec4(1, 1, 1, 1)
-                    border  := ImGui.ImVec4(0, 0, 0, 0)
-                    ImGui.Image(cast viewport_render_texture, size, uv0, uv1, tint, border)
-                }
-                ImGui.End()
-            }
-
-            // end frame
-            imgui_end_frame()
+            
             glfwSwapBuffers(glfw_window)
         }
+    }
+
+    frame_without_editor :: (ref Self, delta_time: float) {
+        // handle events and input
+        global_input.reset()
+        game_input.reset()
+        for layer : layer_stack do layer.input.reset()
+        glfwPollEvents()
+
+        viewport_size = window_size
+        GL(glViewport(0, 0, cast viewport_size.x, cast viewport_size.y))
+
+        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
+        glClear(GL_COLOR_BUFFER_BIT)
+
+        self.update_projection_matrix(viewport_size.change_type(f32))
+        
+        for layer : layer_stack {
+            layer.callbacks.update(delta_time, <<layer.input)
+        }
+
+        renderer.begin_scene(projection_matrix)
+        for layer : layer_stack {
+            layer.callbacks.render(<<renderer)
+        }
+        renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
+    }
+
+    frame_with_editor :: (ref Self, delta_time: float) {
+        glClearColor(1, 0, 1, 1)
+        glClear(GL_COLOR_BUFFER_BIT)
+        imgui_begin_frame()
+
+        create_dock_space()
+
+        // set window properties of viewport
+        ImGui.Begin("Viewport", null, @bin_or(
+            ImGui.ImGuiWindowFlags_.NoScrollbar,
+            ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
+            ImGui.ImGuiWindowFlags_.NoCollapse
+        ))
+        { // calculate focused state
+            was_focused := viewport_is_focused
+            viewport_is_focused = ImGui.IsWindowFocused()
+            viewport_lost_focused = was_focused and !viewport_is_focused
+            // @todo: send focus event to layer_stack
+        }
+        ImGui.End()
+
+        // handle events and input
+        global_input.reset()
+        game_input.reset()
+        for layer : layer_stack do layer.input.reset()
+        glfwPollEvents()
+        if viewport_lost_focused {
+            // release all keys in all layers
+            game_input.release_all_keys()
+            for layer : layer_stack do layer.input.release_all_keys()
+        }
+
+        // render imgui gui
+        render_menu_bar()
+        render_editor()
+
+        { // get size of viewport window
+            ImGui.Begin("Viewport")
+            min := ImGui.GetWindowContentRegionMin()
+            max := ImGui.GetWindowContentRegionMax()
+            ImGui.End()
+            size := ImGui.ImVec2(max.x - min.x, max.y - min.y)
+            viewport_size = vec2i(int(size.x), int(size.y)).clamped(0, int.max)
+        }
+
+        // render game
+        {
+            size := viewport_size.change_type(i32)
+            GL(glBindFramebuffer(GL_FRAMEBUFFER, viewport_frame_buffer))
+            GL(glViewport(0, 0, size.x, size.y))
+
+            glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
+            glClear(GL_COLOR_BUFFER_BIT)
+
+            self.update_projection_matrix(viewport_size.change_type(f32))
+            
+            properties_to_edit.clear()
+
+            for layer : layer_stack {
+                layer.callbacks.update(delta_time, <<layer.input)
+            }
+
+            renderer.begin_scene(projection_matrix)
+            for layer : layer_stack {
+                layer.callbacks.render(<<renderer)
+            }
+            renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
+            glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        }
+
+        for layer : layer_stack {
+            layer.callbacks.imgui_render()
+        }
+
+        { // draw viewport window
+            ImGui.Begin("Viewport")
+            if viewport_size.x > 0 and viewport_size.y > 0 {
+                size    := ImGui.ImVec2(f32(viewport_size.x), f32(viewport_size.y))
+                uv0     := ImGui.ImVec2(0, size.y / f32(viewport_size_max.y))
+                uv1     := ImGui.ImVec2(size.x / f32(viewport_size_max.x), 0)
+                tint    := ImGui.ImVec4(1, 1, 1, 1)
+                border  := ImGui.ImVec4(0, 0, 0, 0)
+                ImGui.Image(cast viewport_render_texture, size, uv0, uv1, tint, border)
+            }
+            ImGui.End()
+        }
+
+        // end frame
+        imgui_end_frame()
     }
 
     render_menu_bar :: (ref Self) {
