@@ -181,8 +181,6 @@ namespace Cheez
                 decl.TypeExpr.AttachTo(decl);
                 decl.TypeExpr = ResolveTypeNow(decl.TypeExpr, out var t);
                 decl.Type = t;
-
-                // @todo: check if type is valid as struct member, eg no void
             }
 
             if (decl.Initializer != null && decl.Initializer.Type == null && (computeInitializer || decl.TypeExpr == null))
@@ -195,6 +193,29 @@ namespace Cheez
                     decl.Type = decl.Initializer.Type;
                 else
                     decl.Initializer = CheckType(decl.Initializer, decl.Type);
+            }
+
+            switch (decl.Type)
+            {
+                case IntType _:
+                case FloatType _:
+                case BoolType _:
+                case CharType _:
+                case SliceType _:
+                case StringType _:
+                case ArrayType _:
+                case StructType _:
+                case EnumType _:
+                case TraitType _:
+                case PointerType _:
+                case ReferenceType _:
+                case FunctionType _:
+                case AnyType _:
+                    break;
+
+                default:
+                    ReportError(decl, $"A struct member can't have type '{decl.Type}'");
+                    break;
             }
 
             ComputeTypeMembers(decl.Type);
