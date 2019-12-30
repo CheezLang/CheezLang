@@ -3362,7 +3362,8 @@ namespace Cheez
                         }
                     }
 
-                    ReportError(expr, $"Type {expr.SubExpression.Type} has no operator []");
+                    var argTypes = string.Join(", ", expr.Arguments.Select(a => a.Type));
+                    ReportError(expr, $"Type {expr.SubExpression.Type} has no operator [{argTypes}]");
                     break;
             }
 
