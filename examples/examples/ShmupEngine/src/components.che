@@ -1,0 +1,193 @@
+use import std.array
+use import std.math
+rand :: import std.random
+
+
+glfw :: import glfw.glfw3
+
+use import main
+use import shmup_engine
+use import input
+use import layer
+use import renderer
+use import entity
+use import math
+
+#export_scope
+
+Component :: trait {
+    update          :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float);
+    render          :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer);
+    get_type_info   :: (ref Self) -> &TypeInfo;
+}
+
+BasicMoveComponent :: struct {
+    velocity : vec3
+    speed    : float
+}
+
+impl Component for BasicMoveComponent {
+    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
+        entity.position += velocity * speed * dt
+    }
+
+    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
+    
+    get_type_info   :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
+    }
+}
+
+PlayerControlComponent :: struct {
+    speed : float
+}
+
+impl Component for PlayerControlComponent {
+    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
+        if layer.get_input().key_down(glfw.GLFW_KEY_LEFT) {
+            entity.position += vec3(-1, 0) * speed * dt
+        }
+        if layer.get_input().key_down(glfw.GLFW_KEY_RIGHT) {
+            entity.position += vec3(1, 0) * speed * dt
+        }
+        if layer.get_input().key_down(glfw.GLFW_KEY_UP) {
+            entity.position += vec3(0, 1) * speed * dt
+        }
+        if layer.get_input().key_down(glfw.GLFW_KEY_DOWN) {
+            entity.position += vec3(0, -1) * speed * dt
+        }
+    }
+
+    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
+    
+    get_type_info   :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
+    }
+}
+
+QuadComponent :: struct {
+    #color
+    color : vec3
+}
+
+impl Component for QuadComponent {
+    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
+    }
+    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
+        renderer.fill_quad(entity.position, entity.size, entity.angle / 360.0f * (3.1415f * 2.0f), color)
+    }
+    get_type_info   :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
+    }
+}
+
+KillComponent :: struct {
+    key : int
+}
+
+impl Component for KillComponent {
+    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
+        if layer.get_input().key_pressed(key) {
+            entity.dead = true
+        }
+    }
+    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
+    }
+    get_type_info   :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
+    }
+}
+
+KillRandomEntityComponent :: struct {
+    // test := Rc[Entity].empty()
+    timer               := 0.0f
+    entities_per_second := 1.0f
+}
+
+impl Component for KillRandomEntityComponent {
+    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
+        timer += dt
+        // while timer >= 1.0f / entities_per_second {
+        if layer.engine.global_input.key_pressed(glfw.GLFW_KEY_F1) {
+            timer -= 1.0f / entities_per_second
+
+            if layer.entities.get_length() <= 1 {
+                return
+            }
+            entity_to_kill_index := int(rand.PseudoRandom.next_double() * double(layer.entities.get_length() - 1)) + 1
+            entity_to_kill_id    := layer.entities[entity_to_kill_index].get().id
+            match layer.find_entity(entity_to_kill_id) {
+                Some($e) -> {
+                    // @todo
+                    // usually i would just write
+                    // test = e.clone()
+                    // but for some reason the copiler doesn't add
+                    // a destructor call for test, so we just drop it
+                    // manually and replace it with 'e.clone()'
+                    // Memory.drop(test <- e.clone())
+                    e.get().dead = true
+                }
+            }
+        } else if layer.engine.global_input.key_pressed(glfw.GLFW_KEY_F2) {
+            if layer.entities.get_length() <= 1 {
+                return
+            }
+            entity_to_kill_index := layer.entities.get_length() - 1
+            entity_to_kill_id    := layer.entities[entity_to_kill_index].get().id
+            match layer.find_entity(entity_to_kill_id) {
+                Some($e) -> {
+                    // @todo
+                    // usually i would just write
+                    // test = e.clone()
+                    // but for some reason the copiler doesn't add
+                    // a destructor call for test, so we just drop it
+                    // manually and replace it with 'e.clone()'
+                    // Memory.drop(test <- e.clone())
+                    e.get().dead = true
+                }
+            }
+        }
+
+    }
+    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
+    }
+    get_type_info   :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
+    }
+}
+
+CreateEntityComponent :: struct {
+    timer               := 0.0f
+    entities_per_second := 1.0f
+    color               := vec3()
+}
+
+impl Component for CreateEntityComponent {
+    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
+        timer += dt
+        while timer >= 1.0f / entities_per_second {
+            timer -= 1.0f / entities_per_second
+
+            e := layer.new_entity()
+            e.get().add_component(QuadComponent(color))
+
+            dir := vec3(
+                f32(rand.PseudoRandom.next_double() - 0.5)
+                f32(rand.PseudoRandom.next_double() - 0.5)
+            ).normalized()
+            speed := f32(rand.PseudoRandom.next_double())
+            e.get().add_component(BasicMoveComponent(dir, speed))
+        }
+    }
+    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
+    }
+    get_type_info   :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
+    }
+}
+
+
+ComponentInfo :: struct {
+    type_info   : &TypeInfo
+    value       : &void
+}

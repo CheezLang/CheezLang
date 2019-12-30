@@ -1,0 +1,62 @@
+use import std.array
+mem :: import std.mem.allocator
+
+use import shmup_engine
+use import math
+use import layer
+use import input
+use import renderer
+use import components
+
+#export_scope
+
+Entity :: struct {
+    id          : int
+    dead        : bool
+    active      : bool
+    position    : vec3
+    size        : vec3
+    angle       : float
+    components  : Array[Component]
+}
+
+impl Entity {
+    update :: (ref Self, layer: ref EntityLayer, dt: float) {
+        for b : components {
+            b.update(self, layer, dt)
+        }
+    }
+
+    render :: (ref Self, engine: ref ShmupEngine, renderer: ref Renderer) {
+        for b : components {
+            b.render(self, engine, renderer)
+        }
+    }
+
+    add_component :: (ref Self, b: $T) {
+        ptr := mem.alloc(T)
+        <<ptr = b
+        components.add(<<ptr)
+    }
+
+    add_component2 :: (ref Self, b: Component) {
+        components.add(b)
+    }
+
+    free :: (ref Self) {
+        for b : components {
+            mem.free(&b)
+        }
+    }
+}
+
+impl Drop for Entity {
+    drop :: (ref Self) {
+        // io.printfln("dropping entity {}", id)
+
+        // @todo: drop components
+        // for c : components {
+        //     value := cast(&void)
+        // }
+    }
+}

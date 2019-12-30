@@ -1,0 +1,35 @@
+use import std.array
+use import std.string
+use import std.rc
+use import std.math
+mem  :: import std.mem.allocator
+util :: import std.util
+fmt  :: import std.fmt
+io   :: import std.io
+C    :: import std.c
+
+use import glfw.glfw3
+ImGui :: import imgui.imgui_binding
+
+use import "../math"
+use import "../layer"
+use import "../components"
+use import "../input"
+use import "../renderer"
+use import "../shmup_engine"
+
+#export_scope
+
+Hierarchy :: struct {
+    layer : Layer = null
+}
+
+impl Hierarchy {
+    set_layer :: (ref Self, l: Layer) {
+        layer = l
+    }
+
+    render :: (ref Self) {
+        
+    }
+}

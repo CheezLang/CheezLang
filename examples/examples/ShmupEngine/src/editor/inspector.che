@@ -1,0 +1,249 @@
+use import std.array
+use import std.string
+use import std.rc
+use import std.math
+mem  :: import std.mem.allocator
+util :: import std.util
+fmt  :: import std.fmt
+io   :: import std.io
+C    :: import std.c
+
+use import glfw.glfw3
+ImGui :: import imgui.imgui_binding
+
+use import "../math"
+use import "../entity"
+use import "../components"
+use import "../input"
+use import "../renderer"
+use import "../shmup_engine"
+
+#export_scope
+
+EntityInspector :: struct {
+    entity                      := Rc[Entity].empty()
+    component_infos             := Array[ComponentInfo].create()
+    current_selected_component  : i32 = 0
+}
+
+impl EntityInspector {
+    set_entity :: (ref Self, e: Rc[Entity]) {
+        Memory.drop(entity <- e)
+    }
+
+    render :: (ref Self) {
+        ImGui.Begin("Inspector")
+        ImGui.End()
+        if !entity.is_null() then render_entity_inspector(entity.get())
+    }
+
+    register_component_info :: (ref Self, default_value: $T) {
+        ptr := mem.alloc(T)
+        <<ptr = default_value
+        component_infos.add(ComponentInfo(@type_info(T), ptr))
+    }
+
+    render_entity_inspector :: (ref Self, entity: ref Entity) {
+        if ImGui.Begin("Inspector") {
+            {
+                id_str := fmt.format_any(entity.id)
+                ImGui.LabelText("ID", id_str.as_cstring())
+            }
+            {
+                rc_count_str := fmt.format_any(self.entity.count())
+                ImGui.LabelText("RC count", rc_count_str.as_cstring())
+            }
+
+
+            ImGui.Separator()
+
+            // transform
+            ImGui.InputFloat3("Position", &entity.position.x)
+            ImGui.InputFloat3("Size", &entity.size.x)
+            ImGui.InputFloat("angle", &entity.angle, 1, 5)
+
+            ImGui.Separator()
+
+            // render component ui and remove component
+            while i := 0, i < entity.components.get_length() {
+                index := i
+
+                ImGui.PushIDInt(i32(i))
+                b := entity.components[i]
+                if !render_component_inspector(b) {
+                    ImGui.OpenPopup("Delete Component")
+                } else {
+                    i += 1
+                }
+
+                if ImGui.BeginPopupModal("Delete Component") {
+                    ImGui.Text("Are you sure you want to remove this component?")
+                    ImGui.Separator()
+                    button_size := ImGui.ImVec2(120, 0)
+                    if ImGui.Button("Yes", button_size) {
+                        ImGui.CloseCurrentPopup()
+
+                        // remove current component
+                        // move all following components one slot down
+                        for k : index .. entity.components.get_length() - 1 {
+                            entity.components[k] = entity.components[k + 1]
+                        }
+                        // pop last component which is now in the second last slot
+                        entity.components.pop()
+                    }
+                    ImGui.SameLine()
+                    if ImGui.Button("Cancel", button_size) {
+                        ImGui.CloseCurrentPopup()
+                    }
+                    ImGui.EndPopup()
+                }
+                ImGui.PopID()
+                ImGui.Separator()
+            }
+
+            { // add component
+                button_size := ImGui.ImVec2(0, 0)
+                if ImGui.Button("Add Component", button_size) {
+                    ImGui.OpenPopup("Add Component")
+                }
+
+                popup_size := ImGui.ImVec2(500, 440)
+                ImGui.SetNextWindowSize(popup_size, ImGui.ImGuiCond_.FirstUseEver)
+                if ImGui.BeginPopupModal("Add Component") {
+                    { // list of components
+                        list_size := ImGui.ImVec2(150, 0)
+                        list_entry_size := ImGui.ImVec2(0, 0)
+                        ImGui.BeginChildStr("component list", list_size, true)
+                        for bi : component_infos {
+                            ImGui.PushIDInt(i32(it_index))
+                            name := String.from_string(bi.type_info.kind.Struct.name)
+
+                            if ImGui.Selectable(name.as_cstring(), i32(it_index) == current_selected_component, 0, list_entry_size) {
+                                current_selected_component = i32(it_index)
+                            }
+                            ImGui.PopID()
+                        }
+                        ImGui.EndChild()
+                    }
+
+                    ImGui.SameLine()
+
+                    ImGui.BeginGroup()
+                    { // info about selected component
+                        info_size := ImGui.ImVec2(0, -ImGui.GetFrameHeightWithSpacing())
+                        ImGui.BeginChildStr("component info", info_size, true)
+
+                        if current_selected_component >= 0 and current_selected_component < i32(component_infos.get_length()) {
+                            bi := ref component_infos.access(current_selected_component)
+                            name := String.from_string(bi.type_info.kind.Struct.name)
+                            ImGui.Text(name.as_cstring())
+                            ImGui.Separator()
+
+                            for(by_ref=true) m : bi.type_info.kind.Struct.members {
+                                imgui_input_property(util.pointer_add(bi.value, m.offset), &m)
+                            }
+                        }
+
+                        ImGui.EndChild()
+                    }
+
+                    { // ok - cancel - buttons
+                        button_size := ImGui.ImVec2(120, 0)
+                        if ImGui.Button("Ok", button_size) {
+                            if current_selected_component >= 0 and current_selected_component < i32(component_infos.get_length()) {
+                                // add component
+                                bi := ref component_infos.access(current_selected_component)
+                                ptr := cast(&void) mem.alloc_raw(u8, cast bi.type_info.size)
+                                C.memcpy(ptr, bi.value, cast bi.type_info.size)
+
+                                Trait :: struct {
+                                    v_table : &void
+                                    value   : &void
+                                }
+                                b := Trait(bi.type_info.kind.Struct.get_trait_impl(Component).vtable, ptr)
+
+                                entity.add_component2(<<cast(&Component)&b)
+                            }
+
+                            ImGui.CloseCurrentPopup()
+                        }
+                        ImGui.SameLine()
+                        if ImGui.Button("Cancel", button_size) {
+                            ImGui.CloseCurrentPopup()
+                        }
+                    }
+                    ImGui.EndGroup()
+                    ImGui.EndPopup()
+                }
+            }
+        }
+        ImGui.End()
+    }
+
+    render_component_inspector :: (ref Self, b: Component) -> bool {
+        Trait :: struct {
+            v_table : &void
+            value   : &void
+        }
+        t := <<cast(&Trait)&b
+        ti := b.get_type_info()
+
+        // name of component
+        name := String.with_capacity(ti.kind.Struct.name.bytes.length + 1)
+        name.append_string(ti.kind.Struct.name)
+
+        open := true
+        ImGui.SetNextItemOpen(true, ImGui.ImGuiCond_.Once)
+        if ImGui.CollapsingHeader_2(name.as_cstring(), &open) {
+            for(by_ref=true) m : ti.kind.Struct.members {
+                imgui_input_property(util.pointer_add(t.value, m.offset), &m)
+            }
+        }
+
+        if !open {
+            return false
+        }
+
+        return true
+    }
+
+    imgui_input_property :: (ref Self, ptr: &void, m: &TypeInfoStructMember) {
+        name := String.with_capacity(m.name.bytes.length + 1)
+        name.append_string(m.name)
+
+        match m.typ.kind {
+            TypeInfoKind.Float -> {
+                match m.typ.size {
+                    4 -> {
+                        ImGui.InputFloat(name.as_cstring(), cast ptr)
+                    }
+                    8 -> {
+                        f := <<cast(&float)ptr
+                        ImGui.InputFloat(name.as_cstring(), &f)
+                        <<cast(&float)ptr = f
+                    }
+                }
+            }
+            TypeInfoKind.Int($ti) -> {
+                match m.typ.size {
+                    4 -> {
+                        ImGui.InputInt(name.as_cstring(), cast ptr)
+                    }
+                    8 -> {
+                        f := <<cast(&i32)ptr
+                        ImGui.InputInt(name.as_cstring(), &f)
+                        <<cast(&i32)ptr = f
+                    }
+                }
+            }
+
+            _ if m.typ == @type_info(vec3) -> {
+                if m.has_attribute("color") {
+                    ImGui.ColorEdit3(name.as_cstring(), cast ptr)
+                } else {
+                    ImGui.InputFloat3(name.as_cstring(), cast ptr)
+                }
+            }
+        }
+    }
+}

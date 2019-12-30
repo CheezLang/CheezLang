@@ -1,0 +1,205 @@
+use import std.array
+use import std.string
+use import std.rc
+use import std.math
+mem  :: import std.mem.allocator
+util :: import std.util
+fmt  :: import std.fmt
+io   :: import std.io
+C    :: import std.c
+
+use import glfw.glfw3
+ImGui :: import imgui.imgui_binding
+
+use import math
+use import entity
+use import components
+use import input
+use import renderer
+use import shmup_engine
+
+#export_scope
+
+EntityLayerCallbacks :: trait {
+    init         :: (ref Self, layer: ref EntityLayer) -> bool;
+    update       :: (ref Self, dt: float);
+    render       :: (ref Self, renderer: ref Renderer);
+    imgui_render :: (ref Self);
+}
+
+
+Layer :: trait {
+    get_name     :: (ref Self) -> c_string;
+    get_input    :: (ref Self) -> ref Input;
+    init         :: (ref Self) -> bool;
+    update       :: (ref Self, dt: float);
+    render       :: (ref Self, renderer: ref Renderer);
+    imgui_render :: (ref Self);
+    on_key_event :: (ref Self, key: int, action: int) -> bool;
+}
+
+LayerBase :: struct #extendable {
+    name        : String
+    engine      : ref ShmupEngine
+    input       : ref Input
+    callbacks   : EntityLayerCallbacks
+}
+
+EntityLayer :: struct #extend(LayerBase) {
+    entities                := Array[Rc[Entity]].create()
+    next_entity_id          := 0
+    current_entity_index    : i32 = 0
+}
+
+impl EntityLayer {
+    new :: (name: String, callbacks: EntityLayerCallbacks, engine: ref ShmupEngine, input: ref Input) -> EntityLayer {
+        return EntityLayer(name, engine, input, callbacks)
+    }
+
+    find_entity :: (ref Self, id: int) -> Option[Rc[Entity]] {
+        for e : entities {
+            if e.get().id == id {
+                return Some(e.clone())
+            }
+        }
+        return None
+    }
+
+    new_entity :: (ref Self) -> Rc[Entity] {
+        // io.printfln("new_entity {}", (next_entity_id))
+
+        ptr := Rc[Entity].new(Entity(
+            id          = next_entity_id
+            active      = true
+            dead        = false
+            position    = vec3()
+            size        = vec3(1, 1, 1)
+            angle       = 0
+            components  = Array[Component].create()
+        ))
+        entities.add(ptr.clone())
+        next_entity_id += 1
+        return ptr
+    }
+
+    render_entity_list :: (ref Self) {
+        if current_entity_index >= 0 and current_entity_index < i32(entities.get_length()) {
+            current_entity := entities.access(current_entity_index).clone()
+            engine.inspector.set_entity(current_entity)
+        }
+
+        // render list of entities
+        if ImGui.Begin("Hierachy") {
+            for e, i : entities {
+                ImGui.PushIDInt(i32(i))
+                name := fmt.format("Entity {}", [e.get().id])
+
+                list_entry_size := ImGui.ImVec2(0, 0)
+                if ImGui.Selectable(name.as_cstring(), i32(i) == current_entity_index, 0, list_entry_size) {
+                    current_entity_index = i32(i)
+                }
+
+                if !e.get().active {
+                    ImGui.SameLine()
+                    ImGui.Text(" - inactive")
+                }
+
+                ImGui.PopID()
+            }
+        }
+        ImGui.End()
+    }
+}
+
+impl Layer for EntityLayer {
+    get_name :: (ref Self) -> c_string {
+        return name.as_cstring()
+    }
+
+    get_input :: (ref Self) -> ref Input {
+        return input
+    }
+
+    init :: (ref Self) -> bool {
+        engine.inspector.register_component_info(BasicMoveComponent(vec3(), 0))
+        engine.inspector.register_component_info(QuadComponent(vec3(1, 1, 1)))
+        engine.inspector.register_component_info(PlayerControlComponent(1))
+        engine.inspector.register_component_info(KillComponent(0))
+        engine.inspector.register_component_info(KillRandomEntityComponent())
+        engine.inspector.register_component_info(CreateEntityComponent())
+
+        return callbacks.init(self)
+    }
+
+    update :: (ref Self, dt: float) {
+        callbacks.update(dt)
+
+        while i := 0, i < entities.get_length(), i += 1 {
+            e := ref entities[i].get()
+            if e.active {
+                e.update(self, dt)
+            }
+
+            if e.dead {
+                // try to delete e
+                rc_count := entities[i].count()
+                if rc_count != 1 {
+                    // there are more rc pointing to this entity
+                    // so don't actually destroy it, just deactivate it
+                    e.active = false
+                    io.printfln("[ERROR] Trying destroy entity {}, but there are still {} references to it", (e.id, rc_count - 1))
+                } else {
+                    // io.printfln("i: {}, cei: {}, e.len: {}", (i, current_entity_index, entities.get_length()))
+                    if i == entities.get_length() - 1 {
+                        // deleting last entity
+                        entities.pop()
+
+                        if int(current_entity_index) == i {
+                            current_entity_index -= 1
+                        }
+                    } else {
+                        // deleting entity somewhere in the middle
+                        last := entities.pop()
+                        Memory.drop(entities[i])
+                        entities[i] = last
+
+                        if int(current_entity_index) == entities.get_length() {
+                            current_entity_index = i32(i)
+                        }
+                    }
+
+                    // next iteration of loop on same index
+                    i -= 1
+                }
+            }
+        }
+    }
+
+    render :: (ref Self, renderer: ref Renderer) {
+        callbacks.render(renderer)
+
+        for e : entities {
+            if e.get().active {
+                e.get().render(engine, renderer)
+            }
+        }
+    }
+
+    imgui_render :: (ref Self) {
+        callbacks.imgui_render()
+        self.render_entity_list()
+    }
+
+    on_key_event :: (ref Self, key: int, action: int) -> bool {
+        match (action, key) {
+            (GLFW_PRESS, $keycode) -> {
+                input.set_key_state(keycode, true)
+            }
+            (GLFW_RELEASE, $keycode) -> {
+                input.set_key_state(keycode, false)
+            }
+        }
+
+        return false
+    }
+}

@@ -1,8 +1,9 @@
-use import std.mem.allocator
 use import std.string
 use import std.array
 use import std.math
 use import std.time
+use import std.rc
+mem :: import std.mem.allocator
 fmt :: import std.fmt
 io  :: import std.io
 C   :: import std.c
@@ -12,39 +13,15 @@ use import opengl.glad_binding
 ImGui :: import imgui.imgui_binding
 
 use import opengl_utils
+use import layer
 use import math
 use import renderer
 use import input
+use import entity
+use import components
+use import editor.inspector
 
 #export_scope
-
-ShmupCallbacks :: trait {
-    init         :: (ref Self, engine: ref ShmupEngine) -> bool;
-    update       :: (ref Self, dt: float, input: ref Input);
-    render       :: (ref Self, renderer: ref Renderer);
-    imgui_render :: (ref Self);
-}
-
-Layer :: struct {
-    input       : &Input
-    callbacks   : ShmupCallbacks
-}
-
-impl Layer {
-    on_key_event :: (ref Self, key: int, action: int) -> bool {
-        match (action, key) {
-            (GLFW_PRESS, $keycode) -> {
-                input.set_key_state(keycode, true)
-            }
-            (GLFW_RELEASE, $keycode) -> {
-                input.set_key_state(keycode, false)
-            }
-        }
-
-        return false
-    }
-}
-
 EnabledEditors :: struct {
     editor      := true
     stats       := true
@@ -74,6 +51,8 @@ ShmupEngine :: struct {
     current_frame_time  := 0.0
     clear_color         := vec4(0, 0, 0, 1)
     properties_to_edit  := Array[PropertyEdit].create()
+    inspector           : EntityInspector = default
+    current_layer_index : i32 = 0
 
     // window stuff
     glfw_window         : &GLFWwindow = null
@@ -266,7 +245,7 @@ impl ShmupEngine {
 
     render_loop :: (ref Self) {
         for layer : layer_stack {
-            if !layer.callbacks.init(self) {
+            if !layer.init() {
                 return
             }
         }
@@ -310,7 +289,7 @@ impl ShmupEngine {
         // handle events and input
         global_input.reset()
         game_input.reset()
-        for layer : layer_stack do layer.input.reset()
+        for layer : layer_stack do layer.get_input().reset()
         glfwPollEvents()
 
         viewport_size = window_size
@@ -322,12 +301,12 @@ impl ShmupEngine {
         self.update_projection_matrix(viewport_size.change_type(f32))
         
         for layer : layer_stack {
-            layer.callbacks.update(delta_time, <<layer.input)
+            layer.update(delta_time)
         }
 
         renderer.begin_scene(projection_matrix)
         for layer : layer_stack {
-            layer.callbacks.render(<<renderer)
+            layer.render(<<renderer)
         }
         renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
     }
@@ -356,12 +335,12 @@ impl ShmupEngine {
         // handle events and input
         global_input.reset()
         game_input.reset()
-        for layer : layer_stack do layer.input.reset()
+        for layer : layer_stack do layer.get_input().reset()
         glfwPollEvents()
         if viewport_lost_focused {
             // release all keys in all layers
             game_input.release_all_keys()
-            for layer : layer_stack do layer.input.release_all_keys()
+            for layer : layer_stack do layer.get_input().release_all_keys()
         }
 
         // render imgui gui
@@ -391,20 +370,20 @@ impl ShmupEngine {
             properties_to_edit.clear()
 
             for layer : layer_stack {
-                layer.callbacks.update(delta_time, <<layer.input)
+                layer.update(delta_time)
             }
 
             renderer.begin_scene(projection_matrix)
             for layer : layer_stack {
-                layer.callbacks.render(<<renderer)
+                layer.render(<<renderer)
             }
             renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
             glBindFramebuffer(GL_FRAMEBUFFER, 0)
         }
 
-        for layer : layer_stack {
-            layer.callbacks.imgui_render()
-        }
+        // for layer : layer_stack {
+        //     layer.imgui_render()
+        // }
 
         { // draw viewport window
             ImGui.Begin("Viewport")
@@ -515,6 +494,24 @@ impl ShmupEngine {
                 }
             }
         }
+
+        { // layers
+            if ImGui.Begin("Layers") {
+                for l : layer_stack {
+                    list_entry_size := ImGui.ImVec2(0, 0)
+                    if ImGui.Selectable(l.get_name(), current_layer_index == i32(it_index), 0, list_entry_size) {
+                        current_layer_index = i32(it_index)
+                    }
+                }
+            }
+            ImGui.End()
+        }
+
+        if current_layer_index >= 0 and current_layer_index < i32(layer_stack.get_length()) {
+            layer_stack[int(current_layer_index)].imgui_render()
+        }
+
+        inspector.render()
         ImGui.End()
     }
 
@@ -524,8 +521,10 @@ impl ShmupEngine {
 }
 
 impl ShmupEngine {
-    push_layer :: (ref Self, callbacks: ShmupCallbacks) {
-        layer_stack.add(Layer(input = Input.new(), callbacks = callbacks))
+    push_entity_layer :: (ref Self, name: String, callbacks: EntityLayerCallbacks) {
+        ptr := mem.alloc(EntityLayer)
+        <<ptr = EntityLayer.new(name, callbacks, self, <<Input.new())
+        layer_stack.add(<<ptr)
     }
 
     update_projection_matrix :: (ref Self, viewport_size: vec2) {
