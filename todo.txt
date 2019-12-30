@@ -1,3 +1,11 @@
+
+when importing a file but with an uppercase letter, e.g.
+    file: test.che
+    code: import Test
+the compiler successfully imports it but as a new file, causing other errors
+we should report an error at the import location
+
+
 - labeled block + break from block
     + add label to block
     + break from block
