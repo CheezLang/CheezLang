@@ -20,6 +20,8 @@ use import input
 use import entity
 use import components
 use import editor.inspector
+use import editor.hierarchy
+use import editor.console
 
 #export_scope
 EnabledEditors :: struct {
@@ -52,7 +54,9 @@ ShmupEngine :: struct {
     clear_color         := vec4(0, 0, 0, 1)
     properties_to_edit  := Array[PropertyEdit].create()
     inspector           : EntityInspector = default
+    hierarchy           : Hierarchy = default
     current_layer_index : i32 = 0
+    console             := Rc[Console].empty()
 
     // window stuff
     glfw_window         : &GLFWwindow = null
@@ -155,6 +159,10 @@ impl ShmupEngine {
         global_input = Input.new()
         game_input   = Input.new()
         renderer     = Renderer.create()
+
+        // setup editors
+        hierarchy.engine = &self
+        console = Rc[Console].new(Console.new())
 
         render_loop()
     }
@@ -508,10 +516,17 @@ impl ShmupEngine {
         }
 
         if current_layer_index >= 0 and current_layer_index < i32(layer_stack.get_length()) {
-            layer_stack[int(current_layer_index)].imgui_render()
+            hierarchy.set_layer(layer_stack[int(current_layer_index)])
         }
 
         inspector.render()
+        hierarchy.render()
+        console.get().render()
+
+        if global_input.key_pressed(GLFW_KEY_ENTER) {
+            console.get().log(String.from_string("lols"))
+        }
+
         ImGui.End()
     }
 

@@ -28,13 +28,24 @@ EntityInspector :: struct {
 
 impl EntityInspector {
     set_entity :: (ref Self, e: Rc[Entity]) {
+        if !e.is_null() and e.get().dead {
+            e = Rc[Entity].empty()
+        }
         Memory.drop(entity <- e)
     }
 
     render :: (ref Self) {
         ImGui.Begin("Inspector")
         ImGui.End()
-        if !entity.is_null() then render_entity_inspector(entity.get())
+        if !entity.is_null() {
+            if entity.get().dead {
+                // entity wants to be destroyed but we're still holding a reference to it, preventing it
+                // from being deleted, so remove the reference
+                set_entity(Rc[Entity].empty())
+            } else {
+                render_entity_inspector(entity.get())
+            }
+        }
     }
 
     register_component_info :: (ref Self, default_value: $T) {
@@ -53,7 +64,6 @@ impl EntityInspector {
                 rc_count_str := fmt.format_any(self.entity.count())
                 ImGui.LabelText("RC count", rc_count_str.as_cstring())
             }
-
 
             ImGui.Separator()
 

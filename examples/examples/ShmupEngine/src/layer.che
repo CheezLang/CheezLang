@@ -30,6 +30,7 @@ EntityLayerCallbacks :: trait {
 
 Layer :: trait {
     get_name     :: (ref Self) -> c_string;
+    get_base     :: (ref Self) -> ref LayerBase;
     get_input    :: (ref Self) -> ref Input;
     init         :: (ref Self) -> bool;
     update       :: (ref Self, dt: float);
@@ -46,9 +47,8 @@ LayerBase :: struct #extendable {
 }
 
 EntityLayer :: struct #extend(LayerBase) {
-    entities                := Array[Rc[Entity]].create()
-    next_entity_id          := 0
-    current_entity_index    : i32 = 0
+    entities        := Array[Rc[Entity]].create()
+    next_entity_id  := 0
 }
 
 impl EntityLayer {
@@ -81,39 +81,15 @@ impl EntityLayer {
         next_entity_id += 1
         return ptr
     }
-
-    render_entity_list :: (ref Self) {
-        if current_entity_index >= 0 and current_entity_index < i32(entities.get_length()) {
-            current_entity := entities.access(current_entity_index).clone()
-            engine.inspector.set_entity(current_entity)
-        }
-
-        // render list of entities
-        if ImGui.Begin("Hierachy") {
-            for e, i : entities {
-                ImGui.PushIDInt(i32(i))
-                name := fmt.format("Entity {}", [e.get().id])
-
-                list_entry_size := ImGui.ImVec2(0, 0)
-                if ImGui.Selectable(name.as_cstring(), i32(i) == current_entity_index, 0, list_entry_size) {
-                    current_entity_index = i32(i)
-                }
-
-                if !e.get().active {
-                    ImGui.SameLine()
-                    ImGui.Text(" - inactive")
-                }
-
-                ImGui.PopID()
-            }
-        }
-        ImGui.End()
-    }
 }
 
 impl Layer for EntityLayer {
     get_name :: (ref Self) -> c_string {
         return name.as_cstring()
+    }
+
+    get_base :: (ref Self) -> ref LayerBase {
+        return self
     }
 
     get_input :: (ref Self) -> ref Input {
@@ -153,19 +129,11 @@ impl Layer for EntityLayer {
                     if i == entities.get_length() - 1 {
                         // deleting last entity
                         entities.pop()
-
-                        if int(current_entity_index) == i {
-                            current_entity_index -= 1
-                        }
                     } else {
                         // deleting entity somewhere in the middle
                         last := entities.pop()
                         Memory.drop(entities[i])
                         entities[i] = last
-
-                        if int(current_entity_index) == entities.get_length() {
-                            current_entity_index = i32(i)
-                        }
                     }
 
                     // next iteration of loop on same index
@@ -187,7 +155,6 @@ impl Layer for EntityLayer {
 
     imgui_render :: (ref Self) {
         callbacks.imgui_render()
-        self.render_entity_list()
     }
 
     on_key_event :: (ref Self, key: int, action: int) -> bool {

@@ -3423,10 +3423,10 @@ PushFont :: (_font: &ImFont) {
 PopFont :: () {
     __c__PopFont()
 }
-PushStyleColor :: (_idx: ImGuiCol, _col: ImU32) {
+PushStyleColorInt :: (_idx: ImGuiCol, _col: ImU32) {
     __c__PushStyleColor(_idx, _col)
 }
-PushStyleColor_2 :: (_idx: ImGuiCol, _col: ref ImVec4) {
+PushStyleColorVec :: (_idx: ImGuiCol, _col: ref ImVec4) {
     __c__PushStyleColor_2(_idx, &_col)
 }
 PopStyleColor :: (_count: i32 = 1) {
