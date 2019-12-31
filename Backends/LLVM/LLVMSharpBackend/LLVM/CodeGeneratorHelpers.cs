@@ -540,6 +540,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case ArrayType arr when arr.TargetType is CharType ct && v is string s:
                     return LLVM.ConstArray(CheezTypeToLLVMType(ct), s.ToCharArray().Select(c => CheezValueToLLVMValue(ct, c)).ToArray());
 
+                case TraitType _ when v == null: return LLVM.ConstNamedStruct(CheezTypeToLLVMType(type), new LLVMValueRef[]{
+                    LLVM.ConstPointerNull(pointerType),
+                    LLVM.ConstPointerNull(pointerType)
+                });
+
                 case FunctionType f when f.Declaration != null:
                     return valueMap[f.Declaration];
 

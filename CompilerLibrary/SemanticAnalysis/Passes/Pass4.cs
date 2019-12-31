@@ -223,6 +223,10 @@ namespace Cheez
                 case AstBoolExpr _:
                     break;
 
+                case AstDotExpr d:
+                    CollectPolyTypeNames(d.Left, result);
+                    break;
+
                 default: throw new NotImplementedException($"Type {typeExpr}");
             }
         }
