@@ -167,7 +167,7 @@ impl ThreadPool {
         data := alloc(ThreadPoolData)
         <<data = ThreadPoolData(
             threads = Array[Thread].create(num_threads)
-            functions = RingQueue[ThreadPoolFunc].create(10)
+            functions = RingQueue[ThreadPoolFunc].new(10)
             mutex = Mutex.create()
             running = true
             empty_queue  = false

@@ -466,6 +466,11 @@ impl string {
             }
         }
 
+        if start == -1 and end == -1 {
+            // only whitespace in string
+            return ""
+        }
+
         end += 1
         @assert(start >= 0 and start < self.bytes.length and start <= end and end <= self.bytes.length)
         return self.sub_string(start, end)
