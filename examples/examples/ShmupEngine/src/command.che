@@ -1,0 +1,22 @@
+
+
+
+#export_scope
+
+Command :: enum {
+    #name("help")
+    #help("Displays this help message")
+    Help
+
+    #name("quit")
+    #help("Quits the engine")
+    Quit
+
+    #name("play")
+    #help("Enter play mode")
+    EnterPlayMode
+
+    #name("stop")
+    #help("Stop play mode")
+    StopPlayMode
+}

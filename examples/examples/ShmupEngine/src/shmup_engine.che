@@ -3,6 +3,7 @@ use import std.array
 use import std.math
 use import std.time
 use import std.rc
+use import std.mem.std_heap_allocator
 mem :: import std.mem.allocator
 fmt :: import std.fmt
 io  :: import std.io
@@ -19,6 +20,7 @@ use import renderer
 use import input
 use import entity
 use import components
+use import command
 use import editor.inspector
 use import editor.hierarchy
 use import editor.console
@@ -36,12 +38,146 @@ PropertyEdit :: enum #copy {
     EditColor3  : (ptr: &vec3, name: c_string)
 }
 
-ShmupEngine :: struct {
-    // engine stuff
+EngineMode :: trait {
+    reset_input     :: (ref Self);
+    release_input   :: (ref Self);
+    init            :: (ref Self);
+    update          :: (ref Self, dt: float);
+    render          :: (ref Self, renderer: ref Renderer);
+    imgui_render    :: (ref Self);
+    on_key_event    :: (ref Self, key: int, action: int);
+}
+
+EngineModeBase :: struct #extendable {
+    engine              : &ShmupEngine = null
     layer_stack         := Array[Layer].create()
     projection_matrix   := mat4.id()
     aspect_ratio_axis   := 1.0f
+}
+
+EditMode :: struct #extend(EngineModeBase) {
+}
+
+impl EngineMode for EditMode {
+    reset_input :: (ref Self) {
+
+    }
+
+    release_input :: (ref Self) {
+
+    }
+
+    init :: (ref Self) {
+        for layer : layer_stack {
+            if !layer.init() {
+                return
+            }
+        }
+    }
+
+    update :: (ref Self, dt: float) {
+
+    }
+
+    render :: (ref Self, renderer: ref Renderer) {
+        for layer : layer_stack {
+            layer.render(renderer)
+        }
+    }
+
+    imgui_render :: (ref Self) {
+
+    }
+
+    on_key_event :: (ref Self, key: int, action: int) {
+    }
+}
+
+PlayMode :: struct #extend(EngineModeBase) {
+}
+
+impl PlayMode {
+    initialize :: (ref Self, edit_mode: ref EditMode) {
+        layer_stack.clear()
+        for l : edit_mode.layer_stack {
+            match l.clone() {
+                Some($l) -> {
+                    layer_stack.add(l)
+                }
+            }
+        }
+        self.init()
+    }
+}
+
+impl EngineMode for PlayMode {
+    reset_input :: (ref Self) {
+        for layer : layer_stack do layer.get_input().reset()
+    }
+
+    release_input :: (ref Self) {
+        for layer : layer_stack do layer.get_input().release_all_keys()
+    }
+
+    init :: (ref Self) {
+        for layer : layer_stack {
+            if !layer.init() {
+                return
+            }
+        }
+    }
+
+    update :: (ref Self, dt: float) {
+        for layer : layer_stack {
+            layer.update(dt)
+        }
+    }
+
+    render :: (ref Self, renderer: ref Renderer) {
+        for layer : layer_stack {
+            layer.render(renderer)
+        }
+    }
+
+    imgui_render :: (ref Self) {
+
+    }
+
+    on_key_event :: (ref Self, key: int, action: int) {
+        if engine.viewport_is_focused {
+            match (action, key) {
+                (GLFW_PRESS, $keycode) -> {
+                    engine.game_input.set_key_state(keycode, true)
+                }
+                (GLFW_RELEASE, $keycode) -> {
+                    engine.game_input.set_key_state(keycode, false)
+                }
+            }
+
+            match (action, key) {
+                ($action, $keycode) -> {
+                    for(reverse=true) layer : layer_stack {
+                        if layer.on_key_event(int(key), int(action)) {
+                            break
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+ShmupEngine :: struct {
+    // engine stuff
+    // layer_stack         := Array[Layer].create()
+    projection_matrix   := mat4.id()
+    aspect_ratio_axis   := 1.0f
     world_size          := vec3(10, 10, 0)
+
+    current_engine_mode : EngineMode = null
+    current_mode_base   : &EngineModeBase = null
+    edit_mode           := EditMode()
+    play_mode           := PlayMode()
 
     // io stuff
     global_input        : &Input = null
@@ -57,6 +193,8 @@ ShmupEngine :: struct {
     hierarchy           : Hierarchy = default
     current_layer_index : i32 = 0
     console             := Rc[Console].empty()
+    editor_edit_mode_color := vec3()
+    editor_play_mode_color := vec3(0.027f, 0.2f, 0.047f)
 
     // window stuff
     glfw_window         : &GLFWwindow = null
@@ -77,8 +215,17 @@ ShmupEngine :: struct {
 }
 
 impl ShmupEngine {
-    new :: () -> ShmupEngine {
-        return ShmupEngine()
+    new :: () -> &ShmupEngine {
+        ptr := mem.alloc(ShmupEngine)
+        <<ptr = ShmupEngine()
+
+        // setup modes
+        ptr.edit_mode.engine = ptr
+        ptr.play_mode.engine = ptr
+        ptr.current_engine_mode = ptr.edit_mode
+        ptr.current_mode_base = cast &ptr.edit_mode
+
+        return ptr
     }
 
     start :: (ref Self) {
@@ -162,7 +309,13 @@ impl ShmupEngine {
 
         // setup editors
         hierarchy.engine = &self
-        console = Rc[Console].new(Console.new())
+        console = Rc[Console].new(Console.new(cast self.on_command))
+        
+        {
+            bg := ImGui.GetStyle().Colors[int(ImGui.ImGuiCol_.WindowBg)]
+            editor_edit_mode_color = vec3(bg.x, bg.y, bg.z)
+            self.set_editor_background_color(editor_edit_mode_color)
+        }
 
         render_loop()
     }
@@ -215,48 +368,30 @@ impl ShmupEngine {
     glfw_key_callback :: (window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
         engine := cast(&ShmupEngine) glfwGetWindowUserPointer(window)
 
-        match (action, key) {
-            (GLFW_PRESS, GLFW_KEY_F12) -> {
+        match (action, key, mods) {
+            (GLFW_PRESS, GLFW_KEY_F12, _) -> {
                 engine.enabled_editors.editor = !engine.enabled_editors.editor
                 return
             }
 
-            (GLFW_PRESS, $keycode) -> {
+            (GLFW_PRESS, GLFW_KEY_F5, _) -> {
+                engine.toggle_play_mode()
+                return
+            }
+
+            (GLFW_PRESS, $keycode, _) -> {
                 engine.global_input.set_key_state(keycode, true)
             }
-            (GLFW_RELEASE, $keycode) -> {
+            (GLFW_RELEASE, $keycode, _) -> {
                 engine.global_input.set_key_state(keycode, false)
             }
         }
 
-        if engine.viewport_is_focused {
-            match (action, key) {
-                (GLFW_PRESS, $keycode) -> {
-                    engine.game_input.set_key_state(keycode, true)
-                }
-                (GLFW_RELEASE, $keycode) -> {
-                    engine.game_input.set_key_state(keycode, false)
-                }
-            }
-
-            match (action, key) {
-                ($action, $keycode) -> {
-                    for(reverse=true) layer : engine.layer_stack {
-                        if layer.on_key_event(int(key), int(action)) {
-                            break
-                        }
-                    }
-                }
-            }
-        }
+        engine.current_engine_mode.on_key_event(int(key), int(action))
     }
 
     render_loop :: (ref Self) {
-        for layer : layer_stack {
-            if !layer.init() {
-                return
-            }
-        }
+        current_engine_mode.init()
 
         last_frame_time := get_time_microseconds()
 
@@ -297,7 +432,7 @@ impl ShmupEngine {
         // handle events and input
         global_input.reset()
         game_input.reset()
-        for layer : layer_stack do layer.get_input().reset()
+        current_engine_mode.reset_input()
         glfwPollEvents()
 
         viewport_size = window_size
@@ -308,15 +443,14 @@ impl ShmupEngine {
 
         self.update_projection_matrix(viewport_size.change_type(f32))
         
-        for layer : layer_stack {
-            layer.update(delta_time)
-        }
+        // update mode
+        current_engine_mode.update(delta_time)
 
+        // render mode
         renderer.begin_scene(projection_matrix)
-        for layer : layer_stack {
-            layer.render(<<renderer)
-        }
+        current_engine_mode.render(<<renderer)
         renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
+        // renderer.end_scene()
     }
 
     frame_with_editor :: (ref Self, delta_time: float) {
@@ -343,12 +477,12 @@ impl ShmupEngine {
         // handle events and input
         global_input.reset()
         game_input.reset()
-        for layer : layer_stack do layer.get_input().reset()
+        current_engine_mode.reset_input()
         glfwPollEvents()
         if viewport_lost_focused {
             // release all keys in all layers
             game_input.release_all_keys()
-            for layer : layer_stack do layer.get_input().release_all_keys()
+            current_engine_mode.release_input()
         }
 
         // render imgui gui
@@ -377,15 +511,15 @@ impl ShmupEngine {
             
             properties_to_edit.clear()
 
-            for layer : layer_stack {
-                layer.update(delta_time)
-            }
+            // update mode
+            current_engine_mode.update(delta_time)
 
+            // render mode
             renderer.begin_scene(projection_matrix)
-            for layer : layer_stack {
-                layer.render(<<renderer)
-            }
+            current_engine_mode.render(<<renderer)
             renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
+            // renderer.end_scene()
+
             glBindFramebuffer(GL_FRAMEBUFFER, 0)
         }
 
@@ -476,7 +610,8 @@ impl ShmupEngine {
                 if ImGui.Checkbox("VSync", &vsync_enabled) {
                     glfwSwapInterval(if vsync_enabled then 1 else 0)
                 }
-                ImGui.ColorEdit3("clear color", cast(&float)&clear_color, 0)
+                ImGui.ColorEdit3("clear color", &clear_color.x, 0)
+                ImGui.ColorEdit3("play mode editor background", &editor_play_mode_color.x, 0)
                 ImGui.Separator()
 
                 // camera settings
@@ -505,7 +640,7 @@ impl ShmupEngine {
 
         { // layers
             if ImGui.Begin("Layers") {
-                for l : layer_stack {
+                for l : current_mode_base.layer_stack {
                     list_entry_size := ImGui.ImVec2(0, 0)
                     if ImGui.Selectable(l.get_name(), current_layer_index == i32(it_index), 0, list_entry_size) {
                         current_layer_index = i32(it_index)
@@ -515,17 +650,13 @@ impl ShmupEngine {
             ImGui.End()
         }
 
-        if current_layer_index >= 0 and current_layer_index < i32(layer_stack.get_length()) {
-            hierarchy.set_layer(layer_stack[int(current_layer_index)])
+        if current_layer_index >= 0 and current_layer_index < i32(current_mode_base.layer_stack.get_length()) {
+            hierarchy.set_layer(current_mode_base.layer_stack[int(current_layer_index)])
         }
 
         inspector.render()
         hierarchy.render()
         console.get().render()
-
-        if global_input.key_pressed(GLFW_KEY_ENTER) {
-            console.get().log(String.from_string("lols"))
-        }
 
         ImGui.End()
     }
@@ -539,7 +670,7 @@ impl ShmupEngine {
     push_entity_layer :: (ref Self, name: String, callbacks: EntityLayerCallbacks) {
         ptr := mem.alloc(EntityLayer)
         <<ptr = EntityLayer.new(name, callbacks, self, <<Input.new())
-        layer_stack.add(<<ptr)
+        current_mode_base.layer_stack.add(<<ptr)
     }
 
     update_projection_matrix :: (ref Self, viewport_size: vec2) {
@@ -555,6 +686,65 @@ impl ShmupEngine {
         height  := aspect_ratio_axis * height1 + (1 - aspect_ratio_axis) * height2
 
         projection_matrix = mat4.orthographic(-width * 0.5, width * 0.5, -height * 0.5, height * 0.5, -10, 10)
+    }
+
+    on_command :: (ref Self, cmd: ref Command) {
+        match cmd {
+            Command.Quit -> {
+                glfwSetWindowShouldClose(glfw_window, 1)
+            }
+
+            Command.EnterPlayMode -> {
+                enter_play_mode()
+            }
+
+            Command.StopPlayMode -> {
+                exit_play_mode()
+            }
+
+            $c -> {
+                io.println(fmt.format("Can't execute command {}", [c]))
+            }
+        }
+    }
+
+    toggle_play_mode :: (ref Self) {
+        if int(current_mode_base) == int(&play_mode) {
+            exit_play_mode()
+        } else {
+            enter_play_mode()
+        }
+    }
+
+    enter_play_mode :: (ref Self) {
+        if int(current_mode_base) == int(&play_mode) {
+            console.get().log(String.from_string("Already in play mode"))
+            return
+        }
+        console.get().log(String.from_string("Entering play mode"))
+
+        play_mode.initialize(edit_mode)
+        current_engine_mode = play_mode
+        current_mode_base = cast &play_mode
+
+        set_editor_background_color(editor_play_mode_color)
+    }
+
+    exit_play_mode :: (ref Self) {
+        if int(current_mode_base) == int(&edit_mode) {
+            console.get().log(String.from_string("Already in edit mode"))
+            return
+        }
+
+        console.get().log(String.from_string("Exiting play mode"))
+        current_engine_mode = edit_mode
+        current_mode_base = cast &edit_mode
+
+        set_editor_background_color(editor_edit_mode_color)
+    }
+
+    set_editor_background_color :: (ref Self, col: vec3) {
+        ImGui.GetStyle().Colors[int(ImGui.ImGuiCol_.WindowBg)] = ImGui.ImVec4(col.x, col.y, col.z, 1)
     }
 }
 

@@ -37,6 +37,7 @@ Layer :: trait {
     render       :: (ref Self, renderer: ref Renderer);
     imgui_render :: (ref Self);
     on_key_event :: (ref Self, key: int, action: int) -> bool;
+    clone        :: (ref Self) -> Option[Layer];
 }
 
 LayerBase :: struct #extendable {
@@ -168,5 +169,20 @@ impl Layer for EntityLayer {
         }
 
         return false
+    }
+
+    clone :: (ref Self) -> Option[Layer] {
+        result := mem.alloc(EntityLayer)
+        <<result = EntityLayer.new(name.clone(), callbacks, engine, input)
+
+        for e : entities {
+            e_new := result.new_entity()
+
+            for comp : e.get().components {
+                e_new.get().add_component(comp.clone())
+            }
+        }
+
+        return Some(<<result)
     }
 }

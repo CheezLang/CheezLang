@@ -10,6 +10,7 @@ io   :: import std.io
 C    :: import std.c
 
 use import glfw.glfw3
+clap  :: import clap.clap
 ImGui :: import imgui.imgui_binding
 
 use import "../math"
@@ -17,6 +18,7 @@ use import "../layer"
 use import "../components"
 use import "../input"
 use import "../renderer"
+use import "../command"
 use import "../shmup_engine"
 
 #export_scope
@@ -35,15 +37,27 @@ ConsoleEntry :: struct {
 Console :: struct {
     m_buffer         : []char8
     items            : RingQueue[ConsoleEntry]
+    on_command       : Fn(ref Command)
     scroll_to_bottom : bool = true
     auto_scroll      : bool = true
 }
 
+impl Drop for Console {
+    drop :: (ref Self) {
+        mem.free_n(m_buffer)
+    }
+}
+
 impl Console {
-    new :: () -> Console {
+    new :: (on_command: Fn(ref Command)) -> Console {
         buff := mem.alloc_n(char8, 1024)
         buff[0] = char8(0)
-        return Console(buff, RingQueue[ConsoleEntry].new(1024))
+
+        return Console(
+            m_buffer   = buff
+            items      = RingQueue[ConsoleEntry].new(1024)
+            on_command = on_command
+        )
     }
 
     log :: (ref Self, msg: String) {
@@ -58,9 +72,27 @@ impl Console {
         items.push(ConsoleEntry(typ, log))
     }
 
-    execute_command :: (ref Self, cmd: String) {
+    execute_command :: (ref Self, cmd_string: String) {
         scroll_to_bottom = true
-        add_entry(MessageType.Command, fmt.format("> {}", [cmd]))
+
+        cmd := clap.parse_arguments(Command, [cmd_string.clone()])
+
+        if cmd == null {
+            add_entry(MessageType.Error, fmt.format("> Failed to execute command '{}'. Enter 'help' to get a list of commands", [cmd_string]))
+        } else {
+            defer mem.free(cmd)
+
+            add_entry(MessageType.Command, fmt.format("> {}", [cmd_string]))
+            match ref <<cmd {
+                Command.Help -> {
+                    add_entry(MessageType.Log, clap.get_help_message(@type_info(Command)))
+                }
+
+                $c -> {
+                    on_command(c)
+                }
+            }
+        }
     }
 
     auto_complete :: (ref Self, data: &ImGui.ImGuiInputTextCallbackData) -> i32 {
