@@ -845,11 +845,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             if (to is FunctionType fto && fto.IsFatFunction && cast.SubExpression is AstUfcFuncExpr ufc)
             {
+                var llvmType = CheezTypeToLLVMType(to);
+                var funcType = llvmType.StructGetTypeAtIndex(0);
+
                 var func = GenerateExpression(cast.SubExpression, true);
+                func = builder.CreatePointerCast(func, funcType, "");
                 var data = GenerateExpression(ufc.SelfArg, false);
                 data = builder.CreatePointerCast(data, LLVM.Int8Type().GetPointerTo(), "");
 
-                var result = LLVM.GetUndef(CheezTypeToLLVMType(to));
+                var result = LLVM.GetUndef(llvmType);
                 result = builder.CreateInsertValue(result, func, 0, "");
                 result = builder.CreateInsertValue(result, data, 1, "");
                 return result;

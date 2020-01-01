@@ -307,7 +307,7 @@ namespace Cheez.Types.Complex
         public CallingConvention CC { get; } = CallingConvention.Default;
 
         public FunctionType((string name, CheezType type, AstExpression defaultValue)[] parameterTypes, CheezType returnType, bool isFatFunc, CallingConvention cc)
-            : base(PointerType.PointerSize, PointerType.PointerAlignment, true)
+            : base(isFatFunc ? 2 * PointerType.PointerSize : PointerType.PointerSize, PointerType.PointerAlignment, true)
         {
             if (parameterTypes.Any(p => p.type == null))
             {
