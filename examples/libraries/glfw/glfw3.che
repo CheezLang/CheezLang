@@ -60,6 +60,7 @@ glfwTerminate                   :: ();
 
 glfwCreateWindow                :: (width: i32, height: i32, title: c_string, monitor: &GLFWmonitor, share: &GLFWwindow) -> &GLFWwindow;
 glfwDestroyWindow               :: (window: &GLFWwindow);
+glfwSetWindowShouldClose        :: (_window: &GLFWwindow, _value: i32) -> void;
 glfwShowWindow                  :: (windows: &GLFWwindow);
 glfwWindowShouldClose           :: (window: &GLFWwindow) -> bool;
 glfwPollEvents                  :: ();
