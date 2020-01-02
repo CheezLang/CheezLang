@@ -111,6 +111,14 @@ namespace Cheez
                 InferTypeFuncExpr(f);
                 CheckForSelfParam(f);
 
+                switch (f.SelfType)
+                {
+                    case SelfParamType.None:
+                    case SelfParamType.Value:
+                        f.ExcludeFromVTable = true;
+                        break;
+                }
+
                 foreach (var p in f.Parameters)
                 {
                     if (SizeOfTypeDependsOnSelfType(p.Type))

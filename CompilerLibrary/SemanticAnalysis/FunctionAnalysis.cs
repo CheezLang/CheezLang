@@ -734,6 +734,7 @@ namespace Cheez
                         }
 
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
+                        ass.Value = HandleReference(ass.Value, r.TargetType, null);
                         return CheckType(ass.Value, r.TargetType, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 

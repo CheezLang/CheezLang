@@ -65,7 +65,9 @@ namespace Cheez
             if (m_typeImplMap == null)
             {
                 m_typeImplMap = new Dictionary<CheezType, TypeImplList>();
+            }
 
+            {
                 foreach (var td in mAllImpls)
                 {
                     if (td.TargetType?.IsErrorType ?? true)
@@ -109,6 +111,11 @@ namespace Cheez
                     var tmpList = lists.temp;
                     lists.temp = lists.potentialImpls;
                     lists.potentialImpls = tmpList;
+                }
+
+                if (m_typeImplMap.Count > mapCopy.Count)
+                {
+                    changes = true;
                 }
             }
         }
@@ -277,6 +284,10 @@ namespace Cheez
                 }
 
                 return result;
+            }
+            else
+            {
+                m_typeImplMap.Add(type, new TypeImplList(mAllImpls));
             }
 
             return new List<Dictionary<string, CheezType>>();

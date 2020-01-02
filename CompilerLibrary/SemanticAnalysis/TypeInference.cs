@@ -852,6 +852,56 @@ namespace Cheez
             return expr;
         }
 
+        private AstExpression InferTypeMatchOnTypeExpr(AstMatchExpr expr, CheezType expected, TypeInferenceContext context)
+        {
+            var matchType = expr.SubExpression.Value as CheezType;
+
+            foreach (var cas in expr.Cases)
+            {
+                // check for condition
+                if (cas.Condition != null)
+                {
+                    ReportError(cas.Condition, $"Can't have a condition on cases when matching on a type");
+                    continue;
+                }
+
+                // check for _ pattern
+                if (cas.Pattern is AstIdExpr _id && _id.Name == "_")
+                {
+                    cas.Body.Replace(expr);
+                    return InferTypeHelper(cas.Body, expected, context);
+                }
+
+                cas.Pattern.AttachTo(expr);
+                cas.Pattern = InferTypeHelper(cas.Pattern, CheezType.Type, context);
+                if (cas.Pattern.Type.IsErrorType)
+                    continue;
+                if (cas.Pattern.Type != CheezType.Type)
+                {
+                    ReportError(cas.Pattern, $"Pattern of case must be a type but is '{cas.Pattern.Type}'");
+                    continue;
+                }
+
+                var casType = cas.Pattern.Value as CheezType;
+
+                if (CheezType.TypesMatch(matchType, casType))
+                {
+                    var polyTypes = new Dictionary<string, CheezType>();
+                    CollectPolyTypes(casType, matchType, polyTypes);
+
+                    var subScope = new Scope("~", expr.Scope, expr.Scope);
+                    foreach (var (name, type) in polyTypes)
+                    {
+                        subScope.DefineLocalSymbol(new TypeSymbol(name, type));
+                    }
+                    cas.Body.Replace(expr, subScope);
+                    return InferTypeHelper(cas.Body, expected, context);
+                }
+            }
+
+            return expr;
+        }
+
         private AstExpression InferTypeMatchExpr(AstMatchExpr expr, CheezType expected, TypeInferenceContext context)
         {
             expr.SubExpression.SetFlag(ExprFlags.ValueRequired, true);
@@ -860,6 +910,9 @@ namespace Cheez
 
             if (expr.SubExpression.Type.IsErrorType)
                 return expr;
+
+            if (expr.SubExpression.Type == CheezType.Type)
+                return InferTypeMatchOnTypeExpr(expr, expected, context);
 
             ConvertLiteralTypeToDefaultType(expr.SubExpression, null);
 
@@ -2300,6 +2353,71 @@ namespace Cheez
                         return InferType(block, expected);
                     }
 
+
+                case "for_struct_members":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr.Location, "@for_struct_members takes 2 arguments");
+                            return expr;
+                        }
+
+                        var typeArg = InferArg(0, CheezType.Type);
+                        if (typeArg.Type != CheezType.Type)
+                        {
+                            ReportError(typeArg, $"First argument must be a type, but is {typeArg.Type}");
+                            return expr;
+                        }
+                        var type = typeArg.Value as StructType;
+                        if (type == null)
+                        {
+                            ReportError(typeArg, $"First argument must be a struct type, but is {typeArg.Value}");
+                            return expr;
+                        }
+
+                        var lambdaArg = expr.Arguments[1].Expr;
+                        if (!(lambdaArg is AstLambdaExpr lambda))
+                        {
+                            ReportError(lambdaArg, "Second argument must be a lambda");
+                            return expr;
+                        }
+
+                        if (lambda.Parameters.Count != 3)
+                        {
+                            ReportError(lambda, "Lambda must take exactly three arguments");
+                            return expr;
+                        }
+
+                        var nameParam = lambda.Parameters[0];
+                        var typeParam = lambda.Parameters[1];
+                        var offsetParam = lambda.Parameters[2];
+
+                        var statements = new List<AstStatement>();
+
+                        int index = 0;
+                        GetSizeOfType(type);
+                        foreach (var member in type.Declaration.Members)
+                        {
+                            AstStatement stmt = new AstExprStmt(lambda.Body.Clone(), lambda.Body.Location);
+
+                            stmt.Scope = new Scope("for_struct_member", expr.Scope);
+                            stmt.Scope.DefineLocalSymbol(new ConstSymbol(nameParam.Name.Name, CheezType.StringLiteral, member.Name));
+                            stmt.Scope.DefineLocalSymbol(new TypeSymbol(typeParam.Name.Name, member.Type));
+                            stmt.Scope.DefineLocalSymbol(new ConstSymbol(offsetParam.Name.Name, IntType.LiteralType, NumberData.FromBigInt(member.Offset)));
+                            stmt = AnalyseStatement(stmt, out var s);
+                            Debug.Assert(s == null || s.Count == 0);
+
+                            statements.Add(stmt);
+
+                            index++;
+                        }
+
+                        var block = new AstBlockExpr(statements, Location: expr);
+                        block.Replace(expr);
+                        block.Type = CheezType.Void;
+                        return block;
+                    }
+
                 case "is_os":
                     {
                         if (expr.Arguments.Count != 1)
@@ -2879,6 +2997,65 @@ namespace Cheez
                         var result = new AstStringLiteral(type.ToString(), Location: expr);
                         result.AttachTo(expr);
                         return InferTypeHelper(result, null, context);
+                    }
+
+                case "is_struct":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr, $"@is_struct takes one argument");
+                            return expr;
+                        }
+
+                        var arg = InferArg(0, CheezType.Type);
+                        if (arg.Type.IsErrorType)
+                            return expr;
+
+                        if (arg.Type != CheezType.Type)
+                        {
+                            ReportError(arg, $"Argument must be a type but is '{arg.Type}'");
+                            return expr;
+                        }
+
+                        expr.Type = CheezType.Bool;
+                        expr.Value = arg.Value is StructType;
+                        return expr;
+                    }
+
+                case "type_has_trait":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr, $"@type_has_trait takes two arguments");
+                            return expr;
+                        }
+
+                        var typeArg = InferArg(0, CheezType.Type);
+                        if (typeArg.Type.IsErrorType)
+                            return expr;
+                        var traitArg = InferArg(1, CheezType.Type);
+                        if (traitArg.Type.IsErrorType)
+                            return expr;
+
+                        if (typeArg.Type != CheezType.Type)
+                        {
+                            ReportError(typeArg, $"Argument must be a type but is '{typeArg.Type}'");
+                            return expr;
+                        }
+                        if (traitArg.Type != CheezType.Type || !(traitArg.Value is TraitType))
+                        {
+                            ReportError(traitArg, $"Argument must be a trait type but is '{traitArg.Type}'");
+                            return expr;
+                        }
+
+                        var type = typeArg.Value as CheezType;
+                        var trait = traitArg.Value as TraitType;
+
+                        UpdateTypeImplMap();
+
+                        expr.Type = CheezType.Bool;
+                        expr.Value = trait.Declaration.Implementations.ContainsKey(type);
+                        return expr;
                     }
 
                 case "alloca":

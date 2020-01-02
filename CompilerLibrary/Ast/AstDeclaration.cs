@@ -261,6 +261,7 @@ namespace Cheez.Ast.Statements
         public CheezType Type => Decl.Type;
         public ILocation Location => Decl.Location;
         public int Index { get; }
+        public int Offset { get; set; }
 
 
         public AstStructMemberNew(AstVariableDecl decl, bool pub, bool readOnly, int index)

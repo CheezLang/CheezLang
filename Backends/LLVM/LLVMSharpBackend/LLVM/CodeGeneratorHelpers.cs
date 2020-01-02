@@ -1069,7 +1069,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var memberSlice = CreateSlice(
                 sTypeInfoTraitFunction,
                 $"ti.{traitType.Declaration.Name}.functions",
-                traitType.Declaration.Functions.Select(m => LLVM.ConstNamedStruct(rttiTypeInfoTraitFunction, new LLVMValueRef[]
+                traitType.Declaration.Functions.Where(m => !m.ExcludeFromVTable).Select(m => LLVM.ConstNamedStruct(rttiTypeInfoTraitFunction, new LLVMValueRef[]
                 {
                     CheezValueToLLVMValue(CheezType.String, m.Name),
                     LLVM.ConstInt(LLVM.Int64Type(), (ulong)vtableIndices[m], false)

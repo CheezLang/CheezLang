@@ -412,12 +412,12 @@ namespace Cheez
                             {
                                 if (arg.Index >= c.FunctionType.Parameters.Length)
                                 {
-                                    b &= Move(paramType, arg.Expr, symStatTable);
+                                    b &= Move(paramType, arg.Expr, symStatTable, arg.Location);
                                 }
                                 else if (arg.Index < c.FunctionType.Parameters.Length
                                     && !paramType.IsCopy)
                                 {
-                                    b &= Move(paramType, arg.Expr, symStatTable);
+                                    b &= Move(paramType, arg.Expr, symStatTable, arg.Location);
                                 }
                             }
                             else
@@ -499,7 +499,7 @@ namespace Cheez
                         var arrType = (a.Type as ArrayType)!;
                         if (!PassVLExpr(sub, symStatTable))
                             return false;
-                        if (!Move(arrType.TargetType, sub, symStatTable))
+                        if (!Move(arrType.TargetType, sub, symStatTable, sub.Location))
                             return false;
                     }
                     return true;
@@ -514,12 +514,12 @@ namespace Cheez
                     if (c.Type == CheezType.Any)
                         return true;
 
-                    return Move(c.Type, c.SubExpression, symStatTable);
+                    return Move(c.Type, c.SubExpression, symStatTable, c.SubExpression.Location);
 
                 case AstArrayAccessExpr c:
                     if (!PassVLExpr(c.SubExpression, symStatTable)) return false;
                     if (!PassVLExpr(c.Arguments[0], symStatTable)) return false;
-                    if (!Move(c.Arguments[0].Type, c.Arguments[0], symStatTable))
+                    if (!Move(c.Arguments[0].Type, c.Arguments[0], symStatTable, c.Arguments[0].Location))
                         return false;
                     return true;
 
@@ -531,7 +531,7 @@ namespace Cheez
                             var structType = (sv.Type as StructType)!;
                             var mem = structType.Declaration.Members.First(m => m.Index == arg.Index);
                             if (PassVLExpr(arg.Value, symStatTable))
-                                b &= Move(mem.Type, arg.Value, symStatTable);
+                                b &= Move(mem.Type, arg.Value, symStatTable, arg.Value.Location);
                             else
                                 b = false;
                         }
@@ -549,11 +549,11 @@ namespace Cheez
                         var rangeType = (r.Type as RangeType)!;
                         if (!PassVLExpr(r.From, symStatTable))
                             return false;
-                        if (!Move(rangeType.TargetType, r.From, symStatTable))
+                        if (!Move(rangeType.TargetType, r.From, symStatTable, r.From.Location))
                             return false;
                         if (!PassVLExpr(r.To, symStatTable))
                             return false;
-                        if (!Move(rangeType.TargetType, r.To, symStatTable))
+                        if (!Move(rangeType.TargetType, r.To, symStatTable, r.To.Location))
                             return false;
                         return true;
                     }
@@ -573,7 +573,7 @@ namespace Cheez
                         {
                             if (!PassVLExpr(v, symStatTable))
                                 return false;
-                            if (!Move(v.Type, v, symStatTable))
+                            if (!Move(v.Type, v, symStatTable, v.Location))
                                 return false;
                         }
 
@@ -587,7 +587,7 @@ namespace Cheez
                         mMovedTempVars.Add(t);
                         if (!PassVLExpr(t.Expr, symStatTable))
                             return false;
-                        if (!Move(t.Type, t.Expr, symStatTable))
+                        if (!Move(t.Type, t.Expr, symStatTable, t.Expr.Location))
                             return false;
                         return true;
                     }
@@ -649,7 +649,8 @@ namespace Cheez
                         if (!PassVLExpr(var.Initializer, symStatTable))
                             return false;
                         symStatTable.UpdateSymbolStatus(var, SymbolStatus.Kind.initialized, var);
-                        if (!Move(var.Type, var.Initializer, symStatTable))
+
+                        if (!Move(var.Type, var.Initializer, symStatTable, var.Initializer.Location))
                             return false;
                     }
                     else
@@ -1038,7 +1039,21 @@ namespace Cheez
                             break;
 
                         default:
-                            ass.AddDestruction(Destruct(ass.Pattern));
+                            {
+                                var type = ass.Pattern.Type;
+                                if (type is ReferenceType r)
+                                {
+                                    var tempVar = new AstTempVarExpr(ass.Pattern);
+                                    ass.Pattern = InferTypeHelper(tempVar, type, null);
+
+                                    var tmp = InferTypeHelper(new AstDereferenceExpr(tempVar, ass.Pattern.Location) { Reference = true }, r.TargetType, null);
+                                    ass.AddDestruction(Destruct(tmp));
+                                } 
+                                else
+                                {
+                                    ass.AddDestruction(Destruct(ass.Pattern));
+                                }
+                            }
                             break;
                     }
                 }
@@ -1058,7 +1073,12 @@ namespace Cheez
 
             // move value if no operator assignment (otherwise the operator call handles this)=
             if (ass.Operator == null)
-                result &= Move(ass.Pattern.Type, ass.Value, symStatTable);
+            {
+                var targetType = ass.Pattern.Type;
+                if (targetType is ReferenceType r)
+                    targetType = r.TargetType;
+                result &= Move(targetType, ass.Value, symStatTable, ass.Value.Location);
+            }
             return result;
         }
 
@@ -1068,7 +1088,7 @@ namespace Cheez
             {
                 if (!PassVLExpr(e.Argument, symStatTable))
                     return false;
-                return Move(e.Member.AssociatedType, e.Argument, symStatTable);
+                return Move(e.Member.AssociatedType, e.Argument, symStatTable, e.Argument.Location);
             }
             return true;
         }
@@ -1080,7 +1100,7 @@ namespace Cheez
             {
                 if (!PassVLExpr(ret.ReturnValue, symStatTable))
                     return false;
-                if (!Move(currentFunction.ReturnType, ret.ReturnValue, symStatTable))
+                if (!Move(currentFunction.ReturnType, ret.ReturnValue, symStatTable, ret.ReturnValue.Location))
                     return false;
             }
 

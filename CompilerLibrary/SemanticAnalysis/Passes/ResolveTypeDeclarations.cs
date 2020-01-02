@@ -63,6 +63,7 @@ namespace Cheez
 
                                 var (ms, ma) = ComputeSizeAndAlignmentOfType(m.Type, path);
 
+                                m.Offset = Utilities.GetNextAligned(size, ma);
                                 alignment = Math.Max(alignment, ma);
                                 size += ms;
                                 size = Utilities.GetNextAligned(size, ma);

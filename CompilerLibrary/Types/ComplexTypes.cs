@@ -156,7 +156,6 @@ namespace Cheez.Types.Complex
         public override bool IsCopy { get; }
         public AstStructTypeExpr DeclarationTemplate => Declaration.Template ?? Declaration;
 
-
         public StructType(AstStructTypeExpr decl, bool isCopy, string name, CheezType[] args = null)
         {
             Declaration = decl;

@@ -116,9 +116,9 @@ namespace Cheez.Ast.Expressions
                 return Accept(new RawAstPrinter(new StringWriter()));
         }
 
-        public void Replace(AstExpression expr)
+        public void Replace(AstExpression expr, Scope scope = null)
         {
-            this.Scope = expr.Scope;
+            this.Scope = scope ?? expr.Scope;
             this.Parent = expr.Parent;
             this.mFlags = expr.mFlags;
         }

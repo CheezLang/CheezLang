@@ -211,6 +211,7 @@ namespace Cheez
                 case ReferenceType _:
                 case FunctionType _:
                 case AnyType _:
+                case TupleType _:
                     break;
 
                 default:

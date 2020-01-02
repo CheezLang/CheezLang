@@ -10,8 +10,14 @@ namespace Cheez
 {
     public partial class Workspace
     {
-        private bool Move(CheezType targetType, AstExpression expr, SymbolStatusTable symStatTable, ILocation location = null)
+        private bool Move(CheezType targetType, AstExpression expr, SymbolStatusTable symStatTable, ILocation location)
         {
+            if (!(targetType is ReferenceType) && expr.Type is ReferenceType r && !r.TargetType.IsCopy)
+            {
+                ReportError(location, $"Can't move out of reference, the type '{r.TargetType}' can't be copied");
+                return false;
+            }
+
             switch (expr)
             {
                 //case AstTempVarExpr tmp:
@@ -34,14 +40,13 @@ namespace Cheez
                         return true;
                     }
 
+                case AstDereferenceExpr d when (!(targetType is ReferenceType) && d.Reference):
+                    {
+                        return Move(targetType, d.SubExpression, symStatTable, location);
+                    }
+
                 case AstIdExpr id:
                     {
-                        if (id.Type is ReferenceType && !(targetType is ReferenceType))
-                        {
-                            ReportError(id, $"Can't move out of reference");
-                            return false;
-                        }
-
                         if (symStatTable.TryGetSymbolStatus(id.Symbol, out var status))
                         {
                             if (status.kind != SymbolStatus.Kind.initialized)

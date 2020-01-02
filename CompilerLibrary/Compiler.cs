@@ -78,6 +78,7 @@ namespace Cheez
             ModulePaths["clap"]     = exePath + "/libraries";
             ModulePaths["compiler"] = exePath + "/libraries";
             ModulePaths["libclang"] = exePath + "/libraries";
+            ModulePaths["serpa"]    = exePath + "/libraries";
 
             mGlobalConstIfScope = new Scope("global_const_if");
             mGlobalConstIfScope.DefineBuiltInTypes();

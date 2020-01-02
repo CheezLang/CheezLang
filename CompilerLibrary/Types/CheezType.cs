@@ -139,15 +139,27 @@ namespace Cheez.Types
             if (a is PolyType || b is PolyType)
                 return true;
 
-            if (a is SliceType sla && b is SliceType slb)
+            switch (a, b)
             {
-                return TypesMatch(sla.TargetType, slb.TargetType);
+                case (SliceType aa, SliceType bb): return TypesMatch(aa.TargetType, bb.TargetType);
+                case (ArrayType aa, ArrayType bb): return aa.Length == bb.Length && TypesMatch(aa.TargetType, bb.TargetType);
+                case (RangeType aa, RangeType bb): return TypesMatch(aa.TargetType, bb.TargetType);
+
+                case (TupleType aa, TupleType bb):
+                    {
+                        if (aa.Members.Length != bb.Members.Length)
+                            return false;
+
+                        for (int i = 0; i < aa.Members.Length; i++)
+                        {
+                            if (!TypesMatch(aa.Members[i].type, bb.Members[i].type))
+                                return false;
+                        }
+
+                        return true;
+                    }
             }
-            else if (a is RangeType ra && b is RangeType rb)
-            {
-                return TypesMatch(ra.TargetType, rb.TargetType);
-            }
-            else if (a is StructType sa && b is StructType sb)
+            if (a is StructType sa && b is StructType sb)
             {
                 if (sa.Name != sb.Name)
                     return false;
