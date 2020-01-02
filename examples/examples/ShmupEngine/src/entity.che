@@ -1,5 +1,8 @@
 use import std.array
+use import std.rc
 mem :: import std.mem.allocator
+io  :: import std.io
+fmt :: import std.fmt
 
 use import shmup_engine
 use import math
@@ -12,41 +15,53 @@ use import components
 
 Entity :: struct {
     id          : int
-    dead        : bool
-    active      : bool
-    position    : vec3
-    size        : vec3
-    angle       : float
-    components  : Array[Component]
+    dead        := false
+    active      := true
+    position    := vec3(0, 0, 0)
+    size        := vec3(1, 1, 1)
+    angle       := 0.0f
+    components  := Array[ComponentData].create()
 }
 
 impl Entity {
     update :: (ref Self, layer: ref EntityLayer, dt: float) {
-        for b : components {
-            b.update(self, layer, dt)
+        for components {
+            it.component.update(self, layer, dt)
         }
     }
 
     render :: (ref Self, engine: ref ShmupEngine, renderer: ref Renderer) {
-        for b : components {
-            b.render(self, engine, renderer)
+        for components {
+            it.component.render(self, engine, renderer)
         }
     }
 
-    add_component :: (ref Self, b: $T) {
-        ptr := mem.alloc(T)
-        <<ptr = b
-        components.add(<<ptr)
+    add_component :: (ref Self, component: Rc[$T]) {
+        entry := ComponentData(
+            component = Component(component.get())
+            value     = component.change_type(())
+            type_info = @type_info(T)
+        )
+        components.add(entry)
     }
 
-    add_component2 :: (ref Self, b: Component) {
-        components.add(b)
+    add_component2 :: (ref Self, c: Component) {
+        ptr     := Traits.get_trait_object_value(c, ())
+        entry := ComponentData(
+            component = c
+            value     = Rc[()].from_pointer(ptr, false)
+            type_info = c.get_type_info()
+        )
+        components.add(entry)
     }
 
-    free :: (ref Self) {
-        for b : components {
-            mem.free(&b)
-        }
+    add_component3 :: (ref Self, vtable: &void, rc: Rc[()]) {
+        entry := ComponentData(
+            component = Traits.from_vtable_and_pointer(Component, vtable, &rc.get())
+            value     = rc
+            type_info = @type_info(void)
+        )
+        components.add(entry)
     }
 }
 

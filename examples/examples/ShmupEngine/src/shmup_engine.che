@@ -391,6 +391,7 @@ impl ShmupEngine {
     }
 
     render_loop :: (ref Self) {
+        self.register_builtin_components()
         current_engine_mode.init()
 
         last_frame_time := get_time_microseconds()
@@ -667,6 +668,15 @@ impl ShmupEngine {
 }
 
 impl ShmupEngine {
+    register_builtin_components :: (ref Self) {
+        self.inspector.register_component_info(BasicMoveComponent(vec3(), 0))
+        self.inspector.register_component_info(QuadComponent(vec3(1, 1, 1)))
+        self.inspector.register_component_info(PlayerControlComponent(1))
+        self.inspector.register_component_info(KillComponent(0))
+        self.inspector.register_component_info(KillRandomEntityComponent())
+        self.inspector.register_component_info(CreateEntityComponent())
+    }
+
     push_entity_layer :: (ref Self, name: String, callbacks: EntityLayerCallbacks) {
         ptr := mem.alloc(EntityLayer)
         <<ptr = EntityLayer.new(name, callbacks, self, <<Input.new())

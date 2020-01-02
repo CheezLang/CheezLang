@@ -67,20 +67,28 @@ impl EntityLayer {
     }
 
     new_entity :: (ref Self) -> Rc[Entity] {
-        // io.printfln("new_entity {}", (next_entity_id))
+        return new_entity_with_id(next_entity_id)
+    }
 
-        ptr := Rc[Entity].new(Entity(
-            id          = next_entity_id
-            active      = true
-            dead        = false
-            position    = vec3()
-            size        = vec3(1, 1, 1)
-            angle       = 0
-            components  = Array[Component].create()
-        ))
+    new_entity_with_id :: (ref Self, id: int) -> Rc[Entity] {
+        // io.printfln("new_entity_with_id {}", id)
+        if next_entity_id <= id {
+            next_entity_id = id + 1
+        }
+
+        ptr := Rc[Entity].new(Entity(id))
         entities.add(ptr.clone())
-        next_entity_id += 1
         return ptr
+    }
+
+    new_component :: (ref Self, value: $T) -> Rc[T] {
+        return Rc[T].new(value)
+    }
+
+    new_component2 :: (ref Self, ti: &TypeInfo) -> Rc[()] {
+        ptr := mem.alloc_raw(u8, cast ti.size)
+        C.memset(ptr, 0, cast ti.size)
+        return Rc[()].from_pointer(cast ptr, false)
     }
 }
 
@@ -98,13 +106,6 @@ impl Layer for EntityLayer {
     }
 
     init :: (ref Self) -> bool {
-        engine.inspector.register_component_info(BasicMoveComponent(vec3(), 0))
-        engine.inspector.register_component_info(QuadComponent(vec3(1, 1, 1)))
-        engine.inspector.register_component_info(PlayerControlComponent(1))
-        engine.inspector.register_component_info(KillComponent(0))
-        engine.inspector.register_component_info(KillRandomEntityComponent())
-        engine.inspector.register_component_info(CreateEntityComponent())
-
         return callbacks.init(self)
     }
 
@@ -133,7 +134,7 @@ impl Layer for EntityLayer {
                     } else {
                         // deleting entity somewhere in the middle
                         last := entities.pop()
-                        Memory.drop(entities[i])
+                        // entities[i].drop()a
                         entities[i] = last
                     }
 
@@ -176,10 +177,18 @@ impl Layer for EntityLayer {
         <<result = EntityLayer.new(name.clone(), callbacks, engine, input)
 
         for e : entities {
-            e_new := result.new_entity()
+            e_new := result.new_entity_with_id(e.get().id)
+            e_new.get().active      = e.get().active
+            e_new.get().position    = e.get().position
+            e_new.get().size        = e.get().size
+            e_new.get().angle       = e.get().angle
 
-            for comp : e.get().components {
-                e_new.get().add_component(comp.clone())
+            for e.get().components {
+                type_info := it.component.get_type_info()
+                vtable    := Traits.get_trait_object_vtable(it.component)
+                rc        := self.new_component2(type_info)
+                C.memcpy(&rc.get(), &it.value.get(), cast type_info.size)
+                e_new.get().add_component3(vtable, rc)
             }
         }
 

@@ -7,7 +7,7 @@
 // import examples.snake.snake
 // import examples.pathtracer
 // import examples.command_line_parser
-import examples.ShmupEngine.src.main
+// import examples.ShmupEngine.src.main
 // import examples.CBindingGenerator.src.main
 // import compiler.cli
 // import compiler.compiler_test
@@ -25,6 +25,101 @@ import examples.ShmupEngine.src.main
 // import bugs.bug1
 
 // import "../Tools/Bindings/imgui_binding"
+
+
+//*
+#test_expect_output("")
+
+// use import std.os.windows_functions
+// use import std.os.windows_types
+// use import std.os.windows_constants
+// use import std.io.file
+// use import std.io.fs
+use import std.printable
+use import std.string
+use import std.array
+use import std.rc
+// use import std.hash_table
+mem :: import std.mem.allocator
+io  :: import std.io
+fmt :: import std.fmt
+C   :: import std.c
+util:: import std.util
+
+use import compiler.lexer
+use import compiler.error_handler
+use import compiler.string_database
+serpa :: import serpa.serpa
+
+impl TextProvider for string {
+    get_text :: (ref Self, filename: string) -> string {
+        return self
+    }
+}
+
+impl(T: type) serpa.Parser[Rc[T]] for Rc[T] if T : serpa.Parser[T] {
+    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+        return match T.parse(lexer, error_handler) {
+            Some($i) -> Some(Rc[T].new(i))
+            None -> None
+        }
+    }
+}
+
+impl(T: type) Printable for Rc[T] if T : Printable {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("Rc(count = {}, value = {})", (self.count(), Printable(self.get())))
+    }
+}
+
+Bar :: struct {
+    x : char
+    f: Foo
+}
+
+Foo :: struct {
+    a : int
+    b : bool
+    c : string
+}
+
+Main :: () {
+    file := "
+Bar {
+    x = '😀'
+    f = Foo {
+        a = 123
+        b = true
+        c = `"bar`"
+        a = 987
+        b = false
+        c = `"lol`"
+    }
+}
+"
+
+    console_error_handler := ConsoleErrorHandler.new(null)
+    string_db := StringDatabase.new()
+    lexer := Lexer.from_string(String.from_string(file), string_db)
+    console_error_handler.text_provider = file
+
+    // result := bool.parse(lexer, console_error_handler)
+    // result := Array[Array[char]].parse(lexer, console_error_handler)
+    // result := Rc[Foo].parse(lexer, console_error_handler)
+    // result := Foo.parse(lexer, console_error_handler)
+    result := serpa.ParserHelper.parse(Bar, lexer, console_error_handler)
+
+    io.println(@typename(@typeof(result)))
+    io.println(fmt.format_any(result))
+
+    // loop {
+    //     token := lexer.next_token()
+    //     if int(token.ttype) == int(TokenType.EOF) then break
+
+        
+    // }
+}
+// */
 
 /*
 #test_expect_output("")

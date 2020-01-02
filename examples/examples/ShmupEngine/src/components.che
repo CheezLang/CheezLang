@@ -1,7 +1,11 @@
 use import std.array
 use import std.math
+use import std.rc
 rand :: import std.random
 mem  :: import std.mem.allocator
+io   :: import std.io
+fmt  :: import std.fmt
+C    :: import std.c
 
 
 glfw :: import glfw.glfw3
@@ -25,7 +29,30 @@ Component :: trait {
     update          :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float);
     render          :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer);
     get_type_info   :: (ref Self) -> &TypeInfo;
-    clone           :: (ref Self) -> Component;
+}
+
+ComponentData :: struct {
+    component : Component
+    value     : Rc[()]
+    type_info : &TypeInfo
+}
+
+impl ComponentData {
+    from_raw :: (type_info: &TypeInfo, vtable: &void, rc: Rc[()]) -> ComponentData {
+        component := Traits.from_vtable_and_pointer(Component, vtable, &rc.get())
+        return ComponentData(component, rc, type_info)
+    }
+
+    clone2 :: (ref Self, to: Rc[()]) -> ComponentData {
+        vtable    := Traits.get_trait_object_vtable(component)
+        value_ptr := Traits.get_trait_object_value(component, ())
+        C.memcpy(&to.get(), &value_ptr, cast type_info.size)
+        return ComponentData.from_raw(type_info, vtable, to)
+    }
+
+    clone :: (ref Self) -> ComponentData {
+        return ComponentData(component, value.clone(), type_info)
+    }
 }
 
 BasicMoveComponent :: struct {
@@ -42,12 +69,6 @@ impl Component for BasicMoveComponent {
     
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
-    }
-
-    clone :: (ref Self) -> Component {
-        result := mem.alloc(Self)
-        <<result = self
-        return <<result
     }
 }
 
@@ -76,12 +97,6 @@ impl Component for PlayerControlComponent {
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
     }
-
-    clone :: (ref Self) -> Component {
-        result := mem.alloc(Self)
-        <<result = self
-        return <<result
-    }
 }
 
 QuadComponent :: struct {
@@ -97,12 +112,6 @@ impl Component for QuadComponent {
     }
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
-    }
-
-    clone :: (ref Self) -> Component {
-        result := mem.alloc(Self)
-        <<result = QuadComponent(vec3(0, 1, 0))
-        return <<result
     }
 }
 
@@ -120,12 +129,6 @@ impl Component for KillComponent {
     }
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
-    }
-
-    clone :: (ref Self) -> Component {
-        result := mem.alloc(Self)
-        <<result = self
-        return <<result
     }
 }
 
@@ -185,12 +188,6 @@ impl Component for KillRandomEntityComponent {
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
     }
-
-    clone :: (ref Self) -> Component {
-        result := mem.alloc(Self)
-        <<result = self
-        return <<result
-    }
 }
 
 CreateEntityComponent :: struct {
@@ -206,25 +203,19 @@ impl Component for CreateEntityComponent {
             timer -= 1.0f / entities_per_second
 
             e := layer.new_entity()
-            e.get().add_component(QuadComponent(color))
+            e.get().add_component(layer.new_component(QuadComponent(color)))
 
             dir := vec3(
                 f32(rand.PseudoRandom.next_double() - 0.5)
                 f32(rand.PseudoRandom.next_double() - 0.5)
             ).normalized()
             speed := f32(rand.PseudoRandom.next_double())
-            e.get().add_component(BasicMoveComponent(dir, speed))
+            e.get().add_component(layer.new_component(BasicMoveComponent(dir, speed)))
         }
     }
     render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
     }
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
-    }
-
-    clone :: (ref Self) -> Component {
-        result := mem.alloc(Self)
-        <<result = self
-        return <<result
     }
 }

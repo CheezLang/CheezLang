@@ -37,6 +37,8 @@ impl EntityInspector {
     render :: (ref Self) {
         ImGui.Begin("Inspector")
         ImGui.End()
+
+        
         if !entity.is_null() {
             if entity.get().dead {
                 // entity wants to be destroyed but we're still holding a reference to it, preventing it
@@ -79,8 +81,8 @@ impl EntityInspector {
                 index := i
 
                 ImGui.PushIDInt(i32(i))
-                b := entity.components[i]
-                if !render_component_inspector(b) {
+                it := ref entity.components[i]
+                if !render_component_inspector(it) {
                     ImGui.OpenPopup("Delete Component")
                 } else {
                     i += 1
@@ -92,14 +94,14 @@ impl EntityInspector {
                     button_size := ImGui.ImVec2(120, 0)
                     if ImGui.Button("Yes", button_size) {
                         ImGui.CloseCurrentPopup()
-
                         // remove current component
                         // move all following components one slot down
                         for k : index .. entity.components.get_length() - 1 {
-                            entity.components[k] = entity.components[k + 1]
+                            entity.components[k] = entity.components[k + 1].clone()
                         }
                         // pop last component which is now in the second last slot
-                        entity.components.pop()
+                        last := entity.components.pop()
+                        io.println(last.value.count())
                     }
                     ImGui.SameLine()
                     if ImGui.Button("Cancel", button_size) {
@@ -190,13 +192,8 @@ impl EntityInspector {
         ImGui.End()
     }
 
-    render_component_inspector :: (ref Self, b: Component) -> bool {
-        Trait :: struct {
-            v_table : &void
-            value   : &void
-        }
-        t := <<cast(&Trait)&b
-        ti := b.get_type_info()
+    render_component_inspector :: (ref Self, component_data: ref ComponentData) -> bool {
+        ti := component_data.type_info
 
         // name of component
         name := String.with_capacity(ti.kind.Struct.name.bytes.length + 1)
@@ -205,8 +202,12 @@ impl EntityInspector {
         open := true
         ImGui.SetNextItemOpen(true, ImGui.ImGuiCond_.Once)
         if ImGui.CollapsingHeader_2(name.as_cstring(), &open) {
+            {
+                rc_count_str := fmt.format_any(component_data.value.count())
+                ImGui.LabelText("RC count", rc_count_str.as_cstring())
+            }
             for(by_ref=true) m : ti.kind.Struct.members {
-                imgui_input_property(util.pointer_add(t.value, m.offset), &m)
+                imgui_input_property(util.pointer_add(&component_data.value.get(), m.offset), &m)
             }
         }
 

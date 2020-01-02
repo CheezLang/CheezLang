@@ -68,7 +68,7 @@ impl Hierarchy {
 
             entity_index = clamp(entity_index, 0i32, i32(layer.entities.get_length() - 1))
 
-            if entity_index != current_entity_index and entity_index >= 0 and entity_index < i32(layer.entities.get_length()) {
+            if entity_index >= 0 and entity_index < i32(layer.entities.get_length()) {
                 current_entity_index = entity_index
                 current_entity := layer.entities[int(current_entity_index)].clone()
                 engine.inspector.set_entity(current_entity)

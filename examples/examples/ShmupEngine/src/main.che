@@ -54,18 +54,21 @@ impl EntityLayerCallbacks for Test {
         self.layer = &layer
 
         e := layer.new_entity()
-        e.get().add_component(KillRandomEntityComponent())
+
+        e.get().add_component(layer.new_component(KillRandomEntityComponent()))
+        // e.get().add_component(KillRandomEntityComponent())
         // e.get().add_component(CreateEntityComponent(color = color, entities_per_second = cast entities_per_second))
         for 0..15 {
             e := layer.new_entity()
-            e.get().add_component(QuadComponent(color))
+
+            e.get().add_component(layer.new_component(QuadComponent(color)))
 
             dir := vec3(
                 f32(rand.PseudoRandom.next_double() - 0.5)
                 f32(rand.PseudoRandom.next_double() - 0.5)
             ).normalized()
             speed := f32(rand.PseudoRandom.next_double())
-            e.get().add_component(BasicMoveComponent(dir, speed))
+            e.get().add_component(layer.new_component(BasicMoveComponent(dir, speed)))
         }
 
 
