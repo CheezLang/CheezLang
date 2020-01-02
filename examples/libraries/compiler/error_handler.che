@@ -1,6 +1,7 @@
 use import lexer
 
 use import std.math
+use import std.string
 io  :: import std.io
 fmt :: import std.fmt
 
@@ -9,6 +10,7 @@ fmt :: import std.fmt
 ErrorHandler :: trait {
     has_errors :: (ref Self) -> bool;
     report_error :: (ref Self, location: ref Location, message: string);
+    report_errorf :: (ref Self, location: ref Location, message: string, args: []any);
 }
 
 TextProvider :: trait {
@@ -32,6 +34,11 @@ impl ConsoleErrorHandler {
 impl ErrorHandler for ConsoleErrorHandler {
     has_errors :: (ref Self) -> bool {
         return error_count > 0
+    }
+
+    report_errorf :: (ref Self, location: ref Location, message: string, args: []any) {
+        msg := fmt.format(message, args)
+        self.report_error(location, msg.slice())
     }
 
     report_error :: (ref Self, location: ref Location, message: string) {

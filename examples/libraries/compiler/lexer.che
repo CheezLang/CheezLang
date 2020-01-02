@@ -116,6 +116,15 @@ impl Lexer {
         return Ok(l)
     }
 
+    expect_token :: (ref Self, typ: TokenType) -> bool, Token {
+        token := next_token()
+        if int(token.ttype) == int(typ) {
+            return true, token
+        } else {
+            return false, token
+        }
+    }
+
     peek_token :: (ref Self) -> Token {
         return match peek {
             Some($tok) -> tok
@@ -557,7 +566,7 @@ impl Lexer {
             // TODO: report
         }
 
-        str := text[start..location.byte_index]
+        str := text[start .. location.byte_index - 1]
         token.data = TokenData.String(string_db.intern(str))
     }
 
