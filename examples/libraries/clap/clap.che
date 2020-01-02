@@ -216,7 +216,7 @@ parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, resul
 
             mem_info.set = true
         } else {
-            io.printfln("[CLP] Error: not implemented, arg: {}", arg)
+            io.printfln("[CLP] Error: not implemented, arg: {}", arg.slice())
             @assert(false, "Not implemented")
             return false
         }
