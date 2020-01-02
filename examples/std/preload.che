@@ -143,6 +143,29 @@ for_extension_slice :: (arr: []$T, code: Code, reverse: bool = false, by_ref: bo
 //     }
 // }
 
+// trait stuff
+__Trait :: struct {
+    vtable : &void
+    value  : &void
+}
+
+Traits :: struct {
+    get_trait_object_value :: (to: $T, $R: type) -> &R {
+        t := cast(&__Trait)&to
+        return cast t.value
+    }
+
+    get_trait_object_vtable :: (to: $T) -> &void {
+        t := cast(&__Trait)&to
+        return t.vtable
+    }
+
+    from_vtable_and_pointer :: ($T: type, vtable: &void, value: &void) -> T {
+        t := __Trait(vtable, value)
+        return <<cast(&T)&t
+    }
+}
+
 // type info stuff
 __ti_type_info := @type_info(TypeInfo)
 TypeInfo :: struct #copy {

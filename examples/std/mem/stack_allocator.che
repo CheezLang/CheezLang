@@ -43,7 +43,7 @@ impl Printable for StackAllocator {
             if i > 0 {
                 s += ", "
             }
-            s.appendf("{}", allocations[i])
+            s.appendf("{}", Printable(allocations[i]))
         }
         s += "]"
 
@@ -91,7 +91,7 @@ impl StackAllocator {
             if i > 0 {
                 s += ", "
             }
-            s.appendf("{}", allocations[i])
+            s.appendf("{}", Printable(allocations[i]))
         }
         s += "]"
 

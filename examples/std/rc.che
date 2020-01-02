@@ -3,13 +3,15 @@ io  :: import std.io
 
 #export_scope
 
-RcData :: struct(T: type) {
-    count : int
-    value : T
+RcData :: struct {
+    count           : int
+    internal_count  : int
 }
 
 Rc :: struct(T: type) {
-    data : &RcData[T]
+    data        : &RcData
+    value       : &T
+    owns_memory : bool
 }
 
 impl(T: type) Drop for Rc[T] {
@@ -17,29 +19,44 @@ impl(T: type) Drop for Rc[T] {
         if data == null {
             return
         }
+        if data.count <= 0 {
+            io.println(data.count)
+        }
         @assert(data.count > 0)
         data.count -= 1
         if data.count == 0 {
-            Memory.drop(<<data)
-            mem.free(data)
+            Memory.drop(<<value)
+            if owns_memory {
+                mem.free(data)
+            }
         }
     }
 }
 
 impl(T: type) Rc[T] {
     empty :: () -> Rc[T] {
-        return Rc[T](null)
+        return Rc[T](null, null, false)
+    }
+
+    from_pointer :: (ptr: &T, owned: bool) -> Rc[T] {
+        data := mem.alloc(RcData)
+        <<data = RcData(1, 1)
+        return Rc[T](data, ptr, owned)
     }
 
     new :: (value: T) -> Rc[T] {
-        data := mem.alloc(RcData[T])
-        <<data = RcData[T](1, value)
-        return Rc[T](data)
+        Combined :: struct {
+            data  : RcData
+            value : T
+        }
+        data := mem.alloc(Combined)
+        <<data = Combined(RcData(1, 1), value)
+        return Rc[T](&data.data, &data.value, true)
     }
 
     clone :: (ref Self) -> Rc[T] {
         data.count += 1
-        return Rc[T](data)
+        return Rc[T](data, value, owns_memory)
     }
 
     count :: (ref Self) -> int {
@@ -48,17 +65,24 @@ impl(T: type) Rc[T] {
     }
 
     is_null :: (ref Self) -> bool {
-        return data == null
+        return value == null
     }
 
     try_get :: (ref Self) -> Option[ref T] {
-        return if data == null
+        return if value == null
             then None
-            else Some(data.value)
+            else Some(<<value)
     }
 
     get :: (ref Self) -> ref T {
-        @assert(data != null)
-        return data.value
+        @assert(value != null)
+        return <<value
+    }
+
+    change_type :: (Self, $R: type) -> Rc[R] {
+        result := Rc[R](data, cast value, owns_memory)
+        data = null
+        value = null
+        return result
     }
 }

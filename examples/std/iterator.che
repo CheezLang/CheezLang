@@ -114,7 +114,7 @@ impl(T: type, X: type) Iterator[X] for MapIterator[T, X] {
 }
 
 // range
-RangeIterator :: struct {
+RangeIterator :: struct #copy {
     from    : int
     to      : int
 }

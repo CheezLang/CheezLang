@@ -51,10 +51,10 @@ impl Printable for Type {
             FloatType($t)     -> str.appendf("f{}", t.size * 8)
             BoolType($t)      -> str.appendf("bool", ())
             StringType($t)    -> str.appendf("string", ())
-            PointerType($t)   -> str.appendf("&{}", t.target)
-            ReferenceType($t) -> str.appendf("ref {}", t.target)
-            SliceType($t)     -> str.appendf("[]{}", t.target)
-            ArrayType($t)     -> str.appendf("[{}]{}", (t.length, t.target))
+            PointerType($t)   -> str.appendf("&{}", Printable(t.target))
+            ReferenceType($t) -> str.appendf("ref {}", Printable(t.target))
+            SliceType($t)     -> str.appendf("[]{}", Printable(t.target))
+            ArrayType($t)     -> str.appendf("[{}]{}", (Printable(t.length), Printable(t.target)))
         }
     }
 }

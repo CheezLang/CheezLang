@@ -1,3 +1,4 @@
+use import std.array
 use import std.string
 use import std.math
 
@@ -23,7 +24,19 @@ impl Printable for string {
     }
 }
 
-impl Printable for char {
+impl Printable for char8 {
+    print :: (ref Self, str: ref String, format: string) {
+        str.append_char(cast self)
+    }
+}
+
+impl Printable for char16 {
+    print :: (ref Self, str: ref String, format: string) {
+        str.append_char(cast self)
+    }
+}
+
+impl Printable for char32 {
     print :: (ref Self, str: ref String, format: string) {
         str.append_char(self)
     }
@@ -108,7 +121,10 @@ impl Printable for u64 {
 impl(T: type) Printable for Option[T] if T: Printable {
     print :: (ref Self, str: ref String, format: string) {
         match self {
-            Some($v) -> str.appendf("Some({})", v)
+            Some($v) -> {
+                v_str := fmt.format("Some({})", [v])
+                str.append(v_str)
+            }
             None -> str.append_string("None")
         }
     }
@@ -137,6 +153,19 @@ impl Printable for TypeInfo {
             Float    -> str.appendf("f{}", size * 8)
             $_       -> {}
         }
+    }
+}
+
+impl(T: type) Printable for Array[T] if T : Printable {
+    print :: (ref Self, str: ref String, format: string) {
+        str.append_string("[")
+
+        for self.slice() {
+            if it_index > 0 then str.append_string(", ")
+            str.appendf("{}", Printable(it))
+        }
+
+        str.append_string("]")
     }
 }
 
