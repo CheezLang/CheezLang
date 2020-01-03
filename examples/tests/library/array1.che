@@ -43,12 +43,6 @@ Foo :: struct {
     x: int
 }
 
-impl Foo {
-    bar :: (ref Self) {
-        self.x += 10
-    }
-}
-
 test :: (a: ref int) {
     a = 5
 }
