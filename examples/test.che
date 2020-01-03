@@ -39,7 +39,8 @@ use import std.printable
 use import std.string
 use import std.array
 use import std.rc
-// use import std.hash_table
+use import std.math
+use import std.hash_table
 mem :: import std.mem.allocator
 io  :: import std.io
 fmt :: import std.fmt
@@ -57,7 +58,7 @@ impl TextProvider for string {
     }
 }
 
-impl(T: type) serpa.Parser[Rc[T]] for Rc[T] if T : serpa.Parser[T] {
+impl(T: type) serpa.IParser[Rc[T]] for Rc[T] if T : serpa.IParser[T] {
     parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return match T.parse(lexer, error_handler) {
             Some($i) -> Some(Rc[T].new(i))
@@ -72,29 +73,111 @@ impl(T: type) Printable for Rc[T] if T : Printable {
     }
 }
 
-Bar :: struct {
-    x : char
-    f: Foo
+impl Printable for ComponentData {
+    print :: (ref Self, str: ref String, format: string) {
+        msg := fmt.format_any(any(type_info, &value.get()))
+        str.append(msg)
+    }
 }
 
-Foo :: struct {
-    a : int
-    b : bool
-    c : string
+impl serpa.IParser[ComponentData] for ComponentData {
+    parse :: (parser: ref serpa.Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[ComponentData] {
+        eat_token :: (typ: TokenType) #macro {
+            if (ok, t) := @link(lexer).expect_token(typ), ok {
+                t
+            } else {
+                @link(error_handler).report_errorf(t.location, "Expected '{}', got {}", [typ, t.ttype])
+                return None
+            }
+        }
+
+        name_token := eat_token(TokenType.Identifier)
+        struct_name := name_token.data.String
+
+        // io.printfln("parsing component {}", struct_name)
+        @for_trait_impls(Component, (T) => {
+            // io.printfln("trying with type {}", @typename(T))
+            if streq(@typename(T), struct_name) {
+                result := mem.alloc(T)
+                if !parser.parse_struct_into(result, lexer, error_handler) {
+                    mem.free(result)
+                    return None
+                }
+
+                ptr := Rc[T].from_pointer(result, true)
+                return Some(ComponentData(
+                    ptr.get()
+                    ptr.change_type(())
+                    @type_info(T)
+                ))
+            }
+        })
+
+        error_handler.report_errorf(name_token.location, "'{}' is not a valid component", [struct_name])
+        return None
+    }
+}
+
+vec3 :: Vector3[float]
+
+Component :: trait {
+    update :: (ref Self);
+}
+
+ComponentData :: struct {
+    component : Component
+    value     : Rc[()]
+    type_info : &TypeInfo
+}
+
+Entity :: struct {
+    name : string
+    pos  : vec3
+    coms : Array[ComponentData]
+}
+
+QuadComponent   :: struct {
+    color : vec3
+}
+LolComponent    :: struct {
+    lol : int
+}
+StringComponent :: struct {
+    str : String
+}
+
+impl Component for QuadComponent {
+    update :: (ref Self) {
+        io.printfln("QuadComponent.update({}, {}, {})", (color.x, color.y, color.z))
+    }
+}
+impl Component for LolComponent {
+    update :: (ref Self) {
+        io.printfln("LolComponent.update({})", lol)
+    }
+}
+impl Component for StringComponent {
+    update :: (ref Self) {
+        io.printfln("StringComponent.update({})", str.slice())
+    }
 }
 
 Main :: () {
     file := "
-Bar {
-    x = '😀'
-    f = Foo {
-        a = 123
-        b = true
-        c = `"bar`"
-        a = 987
-        b = false
-        c = `"lol`"
-    }
+{
+    name = `"entity`"
+    pos  = {x = 9, y = 6, z = 3}
+    coms = [
+        QuadComponent {
+            color = {
+                x = 4
+                y = 5
+                z = 6
+            }
+        }
+        LolComponent {lol = 147}
+        StringComponent {str = `"wassup`"}
+    ]
 }
 "
 
@@ -103,14 +186,21 @@ Bar {
     lexer := Lexer.from_string(String.from_string(file), string_db)
     console_error_handler.text_provider = file
 
-    // result := bool.parse(lexer, console_error_handler)
-    // result := Array[Array[char]].parse(lexer, console_error_handler)
-    // result := Rc[Foo].parse(lexer, console_error_handler)
-    // result := Foo.parse(lexer, console_error_handler)
-    result := serpa.ParserHelper.parse(Bar, lexer, console_error_handler)
+    parser := serpa.Parser(expect_struct_name=false)
+    result := parser.parse(Entity, lexer, console_error_handler)
 
     io.println(@typename(@typeof(result)))
     io.println(fmt.format_any(result))
+
+    match result {
+        Some($entity) -> {
+            io.println(entity.name)
+            io.println(fmt.format_any(entity.pos))
+            for cd : entity.coms {
+                cd.component.update()
+            }
+        }
+    }
 
     // loop {
     //     token := lexer.next_token()

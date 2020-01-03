@@ -10,44 +10,55 @@ use import compiler.lexer
 use import compiler.error_handler
 use import compiler.string_database
 
-#export_scope 
+#export_scope
 
-Parser :: trait(T: type) {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T];
+IParser :: trait(T: type) {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T];
 }
 
+Parser :: struct {
+    expect_struct_name := true
+}
 
-ParserHelper :: struct {}
-impl ParserHelper {
-    parse :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T] {
-        if const @type_has_trait(T, Parser[T]) {
-            return T.parse(lexer, error_handler)
+impl Parser {
+    parse :: (ref Self, $T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T] {
+        if const @type_has_trait(T, IParser[T]) {
+            return T.parse(self, lexer, error_handler)
         } else if const @is_struct(T) {
-            return parse_struct(T, lexer, error_handler)
+            return self.parse_struct(T, lexer, error_handler)
         } else {
             return None
         }
     }
 
-    parse_struct :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T] {
-        result := mem.alloc(T)
-        defer mem.free(result)
+    parse_struct_into :: (ref Self, result: &$T, lexer: ref Lexer, error_handler: ErrorHandler) -> bool {
+        eat_token :: (typ: TokenType) #macro {
+            if (ok, t) := @link(lexer).expect_token(typ), ok {
+                t
+            } else {
+                @link(error_handler).report_errorf(t.location, "Expected '{}', got {}", [typ, t.ttype])
+                return false
+            }
+        }
 
         lexer.skip_newlines_and_comments()
-        name := lexer.next_token()
 
-        match name.ttype {
-            TokenType.Identifier -> {
-                if !streq(name.data.String, @typename(T)) {
-                    error_handler.report_errorf(name.location, "Expected identifier '{}', got '{}'", [@typename(T), name.data.String])
-                    return None
+        if expect_struct_name {
+            name_token := lexer.next_token()
+
+            match name_token.ttype {
+                TokenType.Identifier -> {
+                    if !streq(name_token.data.String, @typename(T)) {
+                        error_handler.report_errorf(name_token.location, "Expected identifier '{}', got '{}'", [@typename(T), name_token.data.String])
+                        return false
+                    }
                 }
-            }
 
-            _ -> {
-                msg := "Expected identifier, got {}"
-                error_handler.report_errorf(name.location, "Expected identifier, got {}", [name.ttype])
-                return None
+                _ -> {
+                    msg := "Expected identifier, got {}"
+                    error_handler.report_errorf(name_token.location, "Expected identifier, got {}", [name_token.ttype])
+                    return false
+                }
             }
         }
 
@@ -64,130 +75,153 @@ impl ParserHelper {
             }
 
             name_token := eat_token(TokenType.Identifier)
-
             eat_token(TokenType.Equal)
 
+            found_member := false
             @for_struct_members(T, (name, typ, offset) => {
-                // io.printfln("{}: {} @{}", (name, @typename(typ), offset))
+                // io.printfln("{}: {} @{}  ?= {}", (name, @typename(typ), offset, name_token.data.String))
                 if streq(name_token.data.String, name) {
                     member_ptr := cast(&typ) util.pointer_add(result, offset)
 
-                    match ParserHelper.parse(typ, lexer, error_handler) {
+                    match self.parse(typ, lexer, error_handler) {
                         Some($v) -> {
                             <<member_ptr = v
-                            continue
+                            found_member = true
                         }
                         None -> {
-                            return None
+                            return false
                         }
                     }
                 }
             })
-            
-            // temp
-            error_handler.report_errorf(name_token.location, "Unexpected name. '{}' is not a member of struct {}", [name_token.data.String, @typename(T)])
-            lexer.next_token()
+
+            if found_member {
+                token := lexer.peek_token()
+                match token.ttype {
+                    TokenType.Comma -> lexer.next_token()
+                    TokenType.NewLine -> lexer.next_token()
+                    TokenType.ClosingBrace -> break
+                    TokenType.EOF -> break
+                    _ -> {
+                        error_handler.report_errorf(token.location, "Expected ',' | '\n' | '}' | EOF. Got '{}'", [token.ttype])
+                        lexer.next_token()
+                        return false
+                    }
+                }
+            } else {
+                error_handler.report_errorf(name_token.location, "Unexpected name. '{}' is not a member of struct {}", [name_token.data.String, @typename(T)])
+                lexer.next_token()
+                return false
+            }
         }
 
         eat_token(TokenType.ClosingBrace)
-        lexer.skip_newlines_and_comments()
+
+        return true
+    }
+
+    parse_struct :: (ref Self, $T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T] {
+        result := mem.alloc(T)
+        defer mem.free(result)
+        if !parse_struct_into(result, lexer, error_handler) {
+            return None
+        }
         return Some(<<result)
     }
 }
 
 // integer types
-impl Parser[i8] for i8 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[i8] for i8 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
-impl Parser[i16] for i16 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[i16] for i16 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
-impl Parser[i32] for i32 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[i32] for i32 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
-impl Parser[i64] for i64 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[i64] for i64 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
 // unsigned
-impl Parser[u8] for u8 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[u8] for u8 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
-impl Parser[u16] for u16 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[u16] for u16 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
-impl Parser[u32] for u32 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[u32] for u32 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
-impl Parser[u64] for u64 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[u64] for u64 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
 // char types
-impl Parser[char8] for char8 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[char8] for char8 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_char(Self, lexer, error_handler)
     }
 }
 
-impl Parser[char16] for char16 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[char16] for char16 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_char(Self, lexer, error_handler)
     }
 }
 
-impl Parser[char32] for char32 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[char32] for char32 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_char(Self, lexer, error_handler)
     }
 }
 
 // float types
-impl Parser[f32] for f32 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[f32] for f32 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_float(Self, lexer, error_handler)
     }
 }
 
-impl Parser[f64] for f64 {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[f64] for f64 {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_float(Self, lexer, error_handler)
     }
 }
 
 // bool
-impl Parser[bool] for bool {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[bool] for bool {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         lexer.skip_newlines_and_comments()
         token := lexer.next_token()
         return match token.ttype {
             TokenType.KwTrue -> Some(true)
             TokenType.KwFalse -> Some(false)
             _ -> {
-                msg := fmt.format("Unexpected token {}, expected true/false", [token.ttype])
-                error_handler.report_error(token.location, msg.slice())
+                error_handler.report_errorf(token.location, "Unexpected token {}, expected true/false", [token.ttype])
                 None
             }
         }
@@ -195,21 +229,21 @@ impl Parser[bool] for bool {
 }
 
 // strings
-impl Parser[string] for string {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[string] for string {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_string(Self, lexer, error_handler)
     }
 }
 
-impl Parser[String] for String {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+impl IParser[String] for String {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
         return parse_data_string(Self, lexer, error_handler)
     }
 }
 
 // array
-impl(T: type) Parser[Array[T]] for Array[T] if T : Parser[T] {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Array[T]] {
+impl(T: type) IParser[Array[T]] for Array[T] if T : IParser[T] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Array[T]] {
         result := Array[T].create()
 
         lexer.skip_newlines_and_comments()
@@ -230,7 +264,7 @@ impl(T: type) Parser[Array[T]] for Array[T] if T : Parser[T] {
                 TokenType.ClosingBracket -> break
             }
 
-            match T.parse(lexer, error_handler) {
+            match parser.parse(T, lexer, error_handler) {
                 Some($d) -> result.add(d)
                 None -> {return None}
             }
@@ -354,8 +388,6 @@ parse_data_string :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) -
         }
     }
 }
-
-#file_scope
 
 eat_token :: (typ: TokenType) #macro {
     if (ok, t) := @link(lexer).expect_token(typ), ok {
